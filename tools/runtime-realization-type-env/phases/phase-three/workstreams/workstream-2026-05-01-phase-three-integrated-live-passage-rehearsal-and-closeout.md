@@ -187,7 +187,7 @@ Stop conditions:
 | What it proves | One contained Oracle app/runtime story can derive/compile, provision providers, start a real local Elysia/Bun listener, cross Elysia -> oRPC -> server harness -> `ProcessExecutionRuntime`, cross contained Inngest -> async harness -> same runtime envelope, project redacted telemetry/control-plane evidence, stop listener/harnesses/providers/runtime, and reject post-stop listener/server/async passages without further runtime delegation. |
 | What it does not prove | Parent-Repo Migration authorization, production host lifecycle, durable Inngest semantics, live HyperDX product visibility, RuntimeCatalog persistence, production control-plane topology, final public API/DX law, production config/secret policy, or final Nx/generator ratchet. |
 | Phase Three status | Closed as contained live-runtime-passage migration-decision evidence, still below Lab-Production Proof. |
-| Next likely container | Externality/design residual scoping before any final structure/Nx/generator ratchet or Parent-Repo Migration. |
+| Next likely container | Bounded Phase Four container/setup adjustment around the Reference Runtime attractor; externality/design residuals stay as constraints, not the next program attractor. |
 
 ### Prior Child Assimilation
 
@@ -295,10 +295,10 @@ Layered review completed after leaf gates.
 | Proof honesty / authority | Sartre | Main proof category is correctly fenced as `simulation-proof`; blocker matched mechanical closure-order issue. Also found stale production Elysia residual wording in the program doc. | Accepted. Program residual narrowed to production/deployed host lifecycle after child 5/6/7 lab Elysia proofs. Closure-order issue repaired here and in program final output. |
 | Architecture / semantics | Bernoulli | Boundary separation is coherent; one issue: child 7 should either share `EffectRuntimeAccess` across provider provisioning and process runtime or narrow the runtime-envelope claim. | Accepted with stronger fix. The test now injects one counted `EffectRuntimeAccess` into provider provisioning and `createProcessExecutionRuntime`; proof wording keeps the integrated runtime-envelope claim. |
 | Information design / handoff | Kant | Blocked until child 7 contained its own next-program packet and stale pending/open wording was repaired. | Accepted. Added self-contained next-program packet and repaired README/child-5/program stale wording. |
-| Program health / coordination / leverage | Hilbert | Directionally sound to close Phase Three after the integrated contained rehearsal and route next work to externality/design residual scoping, but closure could not stand while review/final verification were pending. | Accepted. Review and verification are now recorded before final commit; next-program residual scoping remains the accepted leverage move. |
+| Program health / coordination / leverage | Hilbert | Directionally sound to close Phase Three after the integrated contained rehearsal and route next work to the bounded Phase Four container/setup adjustment, but closure could not stand while review/final verification were pending. | Accepted. Review and verification are now recorded before final commit; Phase Four container/setup is the accepted next leverage move. |
 | Post-repair mechanical lifecycle | Linnaeus | Found stale lifecycle wording in the closed child-5 report and one present-tense open-state row in the program map. No child-7 closeout structure blocker remained. | Accepted. Repaired child-5 active/pending focus wording and changed the historical program-map row to past-tense opened state. |
 | Post-repair proof/architecture | Bohr | Broad proof category and architecture boundaries were sound, but the exact resource-access subclaim still needed the oracle to fail if descriptors stopped calling `requireResource`. | Accepted with stronger fix. The test now wraps resource access, logs successful `requireResource` calls, and asserts both server and async descriptors consume `EmailSenderResource.id`. |
-| Post-repair program health / leverage | Harvey | No program-health, coordination, or leverage blockers remained. Next-program routing to externality/design residual scoping is sound. | Accepted. No repair required. |
+| Post-repair program health / leverage | Harvey | No program-health, coordination, or leverage blockers remained. The next-program routing is now superseded by the bounded Phase Four container/setup adjustment that preserves the same residual constraints. | Accepted. No repair required. |
 
 Pattern decisions from review:
 
@@ -334,7 +334,7 @@ Child 7 final result:
   - listener/harness/provider/runtime stop/finalization;
   - post-stop listener/server/async rejection without further runtime
     delegation.
-- The proof does not prove production runtime passage, production HTTP/worker
+- The proof does not prove Lab-Production Proof, production HTTP/worker
   lifecycle, durable Inngest semantics, live HyperDX product visibility,
   RuntimeCatalog persistence, production control-plane topology, final public
   API/DX law, production config/secret-store policy, final Nx/generator
@@ -405,7 +405,7 @@ Earned proof ceiling:
 
 Do not claim:
 
-- production runtime passage;
+- Lab-Production Proof;
 - production HTTP/worker lifecycle;
 - durable Inngest scheduling/retry/replay/idempotency/run history;
 - live HyperDX product visibility/query/dashboard/retention;
@@ -417,8 +417,9 @@ Do not claim:
 
 Next likely program:
 
-- Externality/design residual scoping before the final structure/Nx/generator
-  ratchet or Parent-Repo Migration.
+- Phase Four Reference Runtime container/setup preparation: reserve the
+  dossier and README-level source/test containers, make current materialization
+  explicit, and keep Phase Four closed until a later explicit opening.
 
 First commands:
 
@@ -437,7 +438,7 @@ bunx nx run runtime-realization-type-env:report
 
 Consume these residual buckets:
 
-- Externality/design: durable async semantics, product observability,
+- Later externality/design: durable async semantics, product observability,
   native-host telemetry/error taxonomy, public API/DX laws, product async
   policy.
 - Parent-Repo Migration: deployed host lifecycle, production config/secrets,
@@ -452,6 +453,5 @@ Stop if:
 - a green claim requires Parent-Repo Migration;
 - a lab simulation or vendor-proof would be promoted into Lab-Production Proof;
 - a residual lacks an authority home and re-entry trigger;
-- the next program tries to jump directly into final Nx/generator ratchet or
-  Parent-Repo Migration without accepting or routing the externality/design
-  residuals.
+- the next program treats container/setup preparation as Phase Four being open,
+  Lab-Production Proof, final Nx/generator ratchet, or Parent-Repo Migration.

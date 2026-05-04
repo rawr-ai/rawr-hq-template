@@ -52,7 +52,7 @@ export const GetWorkItemDescriptor = service.items.get.effect(function* ({ input
 
   return {
     id: input.id,
-    title: "Fixture item",
+    title: "Work item",
     status: "open" as const,
   };
 });

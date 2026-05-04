@@ -14,10 +14,10 @@ import {
   createRuntimeBoundaryPolicy,
   createProviderProvisioningModules,
   createProviderProvisioningTrace,
-  executeOracleBootgraph,
+  executeRuntimeBootgraph,
   providerBootResourceKey,
   providerBootResourceModuleId,
-  type OracleBootgraphModule,
+  type RuntimeBootgraphModule,
 } from "../../../src/oracle";
 import type { InMemoryRuntimeCatalog } from "../../../src/runtime/catalog";
 import { deriveProviderDependencyGraph } from "../../../src/spine/derive";
@@ -73,7 +73,7 @@ function assertNoLiveHandles(value: unknown): void {
 }
 
 function providerIdsFor(
-  modules: readonly OracleBootgraphModule[],
+  modules: readonly RuntimeBootgraphModule[],
   moduleIds: readonly string[],
 ): readonly string[] {
   const providerByModuleId = new Map(
@@ -273,7 +273,7 @@ describe("provider provisioning lowering", () => {
 
     expect(graph?.diagnostics).toEqual([]);
 
-    const result = await executeOracleBootgraph({ modules });
+    const result = await executeRuntimeBootgraph({ modules });
 
     expect(result.status).toBe("started");
     if (result.status !== "started") throw result.error;
@@ -343,7 +343,7 @@ describe("provider provisioning lowering", () => {
       ]),
     });
 
-    const result = await executeOracleBootgraph({ modules });
+    const result = await executeRuntimeBootgraph({ modules });
 
     expect(result.status).toBe("started");
     if (result.status !== "started") throw result.error;
@@ -397,7 +397,7 @@ describe("provider provisioning lowering", () => {
       },
     });
 
-    const result = await executeOracleBootgraph({ modules });
+    const result = await executeRuntimeBootgraph({ modules });
 
     expect(result.status).toBe("failed");
     if (result.status !== "failed") return;
@@ -546,7 +546,7 @@ describe("provider provisioning lowering", () => {
       },
     });
 
-    const result = await executeOracleBootgraph({ modules });
+    const result = await executeRuntimeBootgraph({ modules });
 
     expect(result.status).toBe("failed");
     if (result.status !== "failed") return;
@@ -613,7 +613,7 @@ describe("provider provisioning lowering", () => {
       },
     });
 
-    const result = await executeOracleBootgraph({ modules });
+    const result = await executeRuntimeBootgraph({ modules });
 
     expect(result.status).toBe("started");
     if (result.status !== "started") throw result.error;
@@ -679,7 +679,7 @@ describe("provider provisioning lowering", () => {
       },
     });
 
-    const result = await executeOracleBootgraph({ modules });
+    const result = await executeRuntimeBootgraph({ modules });
 
     expect(result.status).toBe("started");
     if (result.status !== "started") throw result.error;
@@ -750,7 +750,7 @@ describe("provider provisioning lowering", () => {
       processId: "process-1",
     });
 
-    const result = await executeOracleBootgraph({ modules });
+    const result = await executeRuntimeBootgraph({ modules });
 
     expect(result.status).toBe("failed");
     if (result.status !== "failed") return;

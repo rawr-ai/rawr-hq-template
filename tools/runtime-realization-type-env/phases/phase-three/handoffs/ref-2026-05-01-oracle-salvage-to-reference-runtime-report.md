@@ -9,6 +9,12 @@ This report is informative continuity for the runtime-realization lab. It is
 not architecture authority, proof authority, Lab-Production Proof, or an
 implementation plan for the future reference runtime.
 
+Supersession note, 2026-05-01: keep this report's classification logic for
+copy/adapt/mine/retire decisions. Do not use its older path inventory as
+current topology authority. Current paths and plane ownership come from
+`guidance/guardrails-lab-plane-topology.md`, the post-Phase-Three reorg
+report, and the Phase Four preparation container.
+
 No public APIs, runtime code, proof categories, manifest entries, or vendor
 claims change in this step. The report only tells the next DRA what can be
 copied, adapted, mined, or retired when the future full runtime-in-a-folder
@@ -287,13 +293,17 @@ Repo/Graphite state:
 
 Recommended next workstream:
 
-- Design and build the first full runtime-in-a-folder reference-smoke phase.
+- Complete the bounded Phase Four Reference Runtime container/setup packet.
+  Design/build of the first full runtime-in-a-folder reference-smoke phase is
+  later and requires an explicit Phase Four opening decision.
 
 Why this is next:
 
 - The salvage inventory shows enough reusable substrate to stop broad modeling.
-- The post-Phase-Three reframe says the next proof target should be a working
-  Reference Runtime, not another Oracle-only simulation pass.
+- The post-Phase-Three reframe says the next proof target should eventually be
+  a working Reference Runtime, not another Oracle-only simulation pass.
+- The current adjustment first makes the container and routing honest without
+  opening Phase Four or adding a false gate.
 - A first smoke target will reveal which salvage clusters really compose under
   a target-shaped runtime folder.
 

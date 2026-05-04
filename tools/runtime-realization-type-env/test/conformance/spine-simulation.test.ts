@@ -16,7 +16,7 @@ import {
   CreateWorkItemRef,
   PortableArtifact,
 } from "../../scenarios/work-items/app-and-plan-artifacts";
-import { RuntimeFixtureProfile } from "../../scenarios/work-items/resource-provider-profile";
+import { WorkItemsRuntimeProfile } from "../../scenarios/work-items/resource-provider-profile";
 import type { WorkItem } from "../../scenarios/work-items/work-items-service";
 import { WorkItemsServerApiServices } from "../../scenarios/work-items/server-api-plugin";
 import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
@@ -38,7 +38,7 @@ function createClients(): {
               get(request) {
                 return Effect.succeed({
                   id: request.id,
-                  title: "Fixture item",
+                  title: "Work item",
                   status: "open",
                 } satisfies WorkItem);
               },
@@ -276,11 +276,11 @@ describe("runtime realization type env simulation", () => {
   });
 
   test("profile provider requirements are closed before boot", () => {
-    expect(validateProviderClosure(RuntimeFixtureProfile)).toEqual([]);
+    expect(validateProviderClosure(WorkItemsRuntimeProfile)).toEqual([]);
 
     const missingClockProfile = {
-      ...RuntimeFixtureProfile,
-      providerSelections: RuntimeFixtureProfile.providerSelections.filter(
+      ...WorkItemsRuntimeProfile,
+      providerSelections: WorkItemsRuntimeProfile.providerSelections.filter(
         (selection) => selection.resource.id !== "clock",
       ),
     };

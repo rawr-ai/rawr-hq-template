@@ -15,12 +15,12 @@ import {
   createProviderProvisioningModules,
   createProviderProvisioningTrace,
   createRuntimeBoundaryPolicy,
-  executeOracleBootgraph,
+  executeRuntimeBootgraph,
   exportRuntimeTelemetryOtlpTraces,
   projectRuntimeCatalogToTelemetryRecords,
   projectRuntimeEventsToTelemetryRecords,
   providerBootResourceModuleId,
-  type OracleBootgraphModule,
+  type RuntimeBootgraphModule,
 } from "../../../src/oracle";
 import { deriveProviderDependencyGraph } from "../../../src/spine/derive";
 import {
@@ -195,7 +195,7 @@ describe("runtime telemetry export projection", () => {
       },
     });
 
-    const result = await executeOracleBootgraph({ modules });
+    const result = await executeRuntimeBootgraph({ modules });
     expect(result.status).toBe("started");
     if (result.status !== "started") throw result.error;
     await result.finalize();
@@ -227,9 +227,9 @@ describe("runtime telemetry export projection", () => {
   });
 
   test("projects bootgraph catalog records without started module values", async () => {
-    const modules: OracleBootgraphModule[] = [
+    const modules: RuntimeBootgraphModule[] = [
       {
-        kind: "oracle.boot-module",
+        kind: "runtime.boot-module",
         id: "telemetry.module",
         metadata: {
           publicLabel: "telemetry module",
@@ -243,7 +243,7 @@ describe("runtime telemetry export projection", () => {
         },
       },
     ];
-    const result = await executeOracleBootgraph({ modules });
+    const result = await executeRuntimeBootgraph({ modules });
 
     expect(result.status).toBe("started");
     if (result.status !== "started") throw result.error;

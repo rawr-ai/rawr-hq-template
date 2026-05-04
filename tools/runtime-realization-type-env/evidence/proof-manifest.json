@@ -5,7 +5,7 @@
   },
   "currentExperiment": {
     "id": "phase-three.closed-integrated-live-passage",
-    "focus": "Phase Three is closed as contained live-runtime-passage `simulation-proof` and migration-decision evidence: child 7 composes the earned focused slices into one contained Oracle run while preserving non-promotion boundaries for production runtime passage, durable async, product observability, RuntimeCatalog persistence, public API/DX, production config/secrets, and final Nx/generator ratchet work.",
+    "focus": "Phase Three is closed as contained live-runtime-passage `simulation-proof` and migration-decision evidence: child 7 composes the earned focused slices into one contained Oracle run while preserving non-promotion boundaries for Lab-Production Proof, durable async, product observability, RuntimeCatalog persistence, public API/DX, production config/secrets, and final Nx/generator ratchet work.",
     "relatedEntries": [
       "audit.p3.integrated-live-passage-rehearsal-closeout",
       "audit.p3.contained-elysia-listen-lifecycle-passage",

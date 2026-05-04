@@ -9,45 +9,45 @@ import {
   type RuntimeRecordAttributes,
 } from "./catalog";
 
-export interface OracleResourceDefinition<TValue = unknown> {
+export interface ContainedRuntimeResourceDefinition<TValue = unknown> {
   readonly id: string;
   readonly value: TValue;
   readonly metadata?: Record<string, unknown>;
 }
 
-export interface OracleResourceRecord {
+export interface ContainedRuntimeResourceRecord {
   readonly kind: "runtime.resource-record";
   readonly resourceId: string;
   readonly metadata: RuntimeRecordAttributes;
 }
 
-export interface OracleTopologyRecord {
+export interface ContainedRuntimeTopologyRecord {
   readonly kind: "runtime.topology-record";
   readonly record: RuntimeRecordAttributes;
 }
 
-export interface OracleDiagnosticRecord {
+export interface ContainedRuntimeDiagnosticRecord {
   readonly kind: "runtime.diagnostic-record";
   readonly code: string;
   readonly message: string;
   readonly attributes?: RuntimeRecordAttributes;
 }
 
-export interface OracleTelemetryEvent {
+export interface ContainedRuntimeTelemetryEvent {
   readonly kind: "runtime.telemetry-event";
   readonly name: string;
   readonly attributes?: RuntimeRecordAttributes;
 }
 
 /**
- * Oracle-only probe over the canonical-looking RuntimeResourceAccess seam.
+ * Contained probe over the canonical-looking RuntimeResourceAccess seam.
  *
  * This type deliberately exposes sanctioned lookup plus redacted observation
  * sinks, while leaving raw resource catalogs, host handles, and final public
  * method law outside the lab. Future migration work may copy the authority
  * boundary, not this exact helper as public API.
  */
-export type OracleResourceAccess = RuntimeResourceAccess & {
+export type ContainedRuntimeResourceAccess = RuntimeResourceAccess & {
   requireResource<TValue = unknown>(resourceId: string): TValue;
   optionalResource<TValue = unknown>(resourceId: string): TValue | undefined;
   resourceMetadata(resourceId: string): RuntimeRecordAttributes | undefined;
@@ -58,11 +58,11 @@ export type OracleResourceAccess = RuntimeResourceAccess & {
   }): void;
 };
 
-export type OracleResourceAccessProbe = OracleResourceAccess & {
-  records(): readonly OracleResourceRecord[];
-  topologyRecords(): readonly OracleTopologyRecord[];
-  diagnosticRecords(): readonly OracleDiagnosticRecord[];
-  telemetryEvents(): readonly OracleTelemetryEvent[];
+export type ContainedRuntimeResourceAccessProbe = ContainedRuntimeResourceAccess & {
+  records(): readonly ContainedRuntimeResourceRecord[];
+  topologyRecords(): readonly ContainedRuntimeTopologyRecord[];
+  diagnosticRecords(): readonly ContainedRuntimeDiagnosticRecord[];
+  telemetryEvents(): readonly ContainedRuntimeTelemetryEvent[];
 };
 
 /**
@@ -74,13 +74,13 @@ export type OracleResourceAccessProbe = OracleResourceAccess & {
  * checks, not a production catalog, telemetry exporter, or dependency-injection
  * container.
  */
-export function createOracleResourceAccess(
-  resources: readonly OracleResourceDefinition[],
-): OracleResourceAccessProbe {
-  const byId = new Map<string, OracleResourceDefinition>();
-  const topologyRecords: OracleTopologyRecord[] = [];
-  const diagnosticRecords: OracleDiagnosticRecord[] = [];
-  const telemetryEvents: OracleTelemetryEvent[] = [];
+export function createContainedRuntimeResourceAccess(
+  resources: readonly ContainedRuntimeResourceDefinition[],
+): ContainedRuntimeResourceAccessProbe {
+  const byId = new Map<string, ContainedRuntimeResourceDefinition>();
+  const topologyRecords: ContainedRuntimeTopologyRecord[] = [];
+  const diagnosticRecords: ContainedRuntimeDiagnosticRecord[] = [];
+  const telemetryEvents: ContainedRuntimeTelemetryEvent[] = [];
 
   const telemetry: RuntimeTelemetry = {
     event(name, attributes) {
@@ -137,20 +137,20 @@ export function createOracleResourceAccess(
           : undefined,
       });
     },
-    records(): readonly OracleResourceRecord[] {
+    records(): readonly ContainedRuntimeResourceRecord[] {
       return [...byId.values()].map((resource) => ({
         kind: "runtime.resource-record" as const,
         resourceId: resource.id,
         metadata: redactRuntimeRecordAttributes(resource.metadata),
       }));
     },
-    topologyRecords(): readonly OracleTopologyRecord[] {
+    topologyRecords(): readonly ContainedRuntimeTopologyRecord[] {
       return topologyRecords.map((record) => ({
         kind: record.kind,
         record: { ...record.record },
       }));
     },
-    diagnosticRecords(): readonly OracleDiagnosticRecord[] {
+    diagnosticRecords(): readonly ContainedRuntimeDiagnosticRecord[] {
       return diagnosticRecords.map((record) => ({
         kind: record.kind,
         code: record.code,
@@ -158,7 +158,7 @@ export function createOracleResourceAccess(
         attributes: record.attributes ? { ...record.attributes } : undefined,
       }));
     },
-    telemetryEvents(): readonly OracleTelemetryEvent[] {
+    telemetryEvents(): readonly ContainedRuntimeTelemetryEvent[] {
       return telemetryEvents.map((event) => ({
         kind: event.kind,
         name: event.name,
@@ -167,5 +167,5 @@ export function createOracleResourceAccess(
     },
   };
 
-  return Object.freeze(access) as OracleResourceAccessProbe;
+  return Object.freeze(access) as ContainedRuntimeResourceAccessProbe;
 }

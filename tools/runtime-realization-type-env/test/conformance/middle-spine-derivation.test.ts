@@ -18,7 +18,7 @@ import {
   ClockResource,
   EmailProvider,
   EmailSenderResource,
-  RuntimeFixtureProfile,
+  WorkItemsRuntimeProfile,
 } from "../../scenarios/work-items/resource-provider-profile";
 import { WorkItemsServerApiPlugin } from "../../scenarios/work-items/server-api-plugin";
 
@@ -41,7 +41,7 @@ function deriveFixtureSpine() {
   return deriveRuntimeSpine({
     kind: "runtime.spine-derivation-input",
     appId: "hq",
-    profile: RuntimeFixtureProfile,
+    profile: WorkItemsRuntimeProfile,
     executions: [
       {
         kind: "runtime.execution-derivation-input",
@@ -226,7 +226,7 @@ describe("middle spine derivation and compiler simulation", () => {
         fromProviderId: "email.sender.memory",
         toResourceId: "clock",
         optional: false,
-        reason: "timestamp outbound fixture mail",
+        reason: "timestamp outbound work item mail",
         matchedProviderId: "clock.system",
         matchedProviderKey: {
           kind: "provider.dependency-node",

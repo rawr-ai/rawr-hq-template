@@ -19,3 +19,11 @@ not runtime authority, proof authority, or Parent-Repo Migration authorization.
 | Post-Phase-Three reframe | `handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md` |
 | Oracle salvage reference | `handoffs/ref-2026-05-01-oracle-salvage-to-reference-runtime-report.md` |
 | Post-Phase-Three Lab plane topology cleanup | `workstreams/workstream-2026-05-01-post-phase-three-runtime-lab-plane-reorg-plan.md` |
+| Phase Four container/setup adjustment | `workstreams/workstream-2026-05-01-phase-three-phase-four-container-adjustment.md` |
+
+## Current Next
+
+The bounded Phase Four container/setup adjustment is closed. The next
+operational decision is whether to open Phase Four and name the first narrow
+Reference Runtime proof slice. Phase Four is not opened by this dossier, and
+the Reference Runtime is not proven.

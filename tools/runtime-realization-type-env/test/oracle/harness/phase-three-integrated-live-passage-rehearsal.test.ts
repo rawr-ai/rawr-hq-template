@@ -8,12 +8,12 @@ import {
   createExecutionRegistry,
   createMigrationControlPlaneObservationPacket,
   createManagedEffectRuntimeAccess,
-  createOracleResourceAccess,
+  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   createProviderProvisioningModules,
   createProviderProvisioningTrace,
   createRuntimeBoundaryPolicy,
-  executeOracleBootgraph,
+  executeRuntimeBootgraph,
   exportRuntimeTelemetryOtlpTraces,
   mountOracleAsyncHarness,
   mountOracleServerHarness,
@@ -25,8 +25,8 @@ import {
   providerBootResourceModuleId,
   startRuntimeElysiaListener,
   type EffectRuntimeAccess,
-  type OracleResourceAccessProbe,
-  type OracleResourceDefinition,
+  type ContainedRuntimeResourceAccessProbe,
+  type ContainedRuntimeResourceDefinition,
   type ProcessExecutionRuntime,
   type ProviderProvisionedValue,
   type RuntimeInngestAsyncStepResponse,
@@ -51,7 +51,7 @@ import {
 import {
   EmailProvider,
   EmailSenderResource,
-  RuntimeFixtureProfile,
+  WorkItemsRuntimeProfile,
 } from "../../../scenarios/work-items/resource-provider-profile";
 import { WorkItemsServerApiPlugin } from "../../../scenarios/work-items/server-api-plugin";
 import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
@@ -119,7 +119,7 @@ function deriveAndCompileSpine(): RuntimeSpineCompilation {
     run(input) {
       const invocation = input as {
         readonly context: {
-          readonly resources: OracleResourceAccessProbe;
+          readonly resources: ContainedRuntimeResourceAccessProbe;
         };
       };
       invocation.context.resources.requireResource(EmailSenderResource.id);
@@ -131,7 +131,7 @@ function deriveAndCompileSpine(): RuntimeSpineCompilation {
     ref: SyncWorkItemStepDescriptor.ref,
     run(input) {
       const invocation = input as {
-        readonly resources: OracleResourceAccessProbe;
+        readonly resources: ContainedRuntimeResourceAccessProbe;
       };
       invocation.resources.requireResource(EmailSenderResource.id);
       return SyncWorkItemStepDescriptor.run(input as never);
@@ -142,7 +142,7 @@ function deriveAndCompileSpine(): RuntimeSpineCompilation {
     deriveRuntimeSpine({
       kind: "runtime.spine-derivation-input",
       appId: "hq",
-      profile: RuntimeFixtureProfile,
+      profile: WorkItemsRuntimeProfile,
       executions: [
         {
           kind: "runtime.execution-derivation-input",
@@ -280,7 +280,7 @@ function createClients(): ConstructionBoundServiceClients<
 
 function providerResourcesFromStartedValues(
   startedValues: ReadonlyMap<string, unknown>,
-): readonly OracleResourceDefinition[] {
+): readonly ContainedRuntimeResourceDefinition[] {
   return [...startedValues.values()].flatMap((started) => {
     const providerValue = started as ProviderProvisionedValue | undefined;
     if (!providerValue || providerValue.kind !== "provider.provisioned-value") {
@@ -312,11 +312,11 @@ function workflowDispatcher(): WorkflowDispatcher {
 }
 
 function createObservedResourceAccess(
-  resources: readonly OracleResourceDefinition[],
+  resources: readonly ContainedRuntimeResourceDefinition[],
   onAvailableResources?: (records: readonly string[]) => void,
   onRequiredResource?: (resourceId: string) => void,
-): OracleResourceAccessProbe {
-  const resourceAccess = createOracleResourceAccess(resources);
+): ContainedRuntimeResourceAccessProbe {
+  const resourceAccess = createContainedRuntimeResourceAccess(resources);
   onAvailableResources?.(
     resourceAccess.records().map((record) => record.resourceId),
   );
@@ -355,11 +355,11 @@ function createObservedResourceAccess(
     telemetryEvents() {
       return resourceAccess.telemetryEvents();
     },
-  } satisfies OracleResourceAccessProbe;
+  } satisfies ContainedRuntimeResourceAccessProbe;
 }
 
 function createServerInvocationContext(
-  resources: readonly OracleResourceDefinition[],
+  resources: readonly ContainedRuntimeResourceDefinition[],
   onAvailableResources?: (records: readonly string[]) => void,
   onRequiredResource?: (resourceId: string) => void,
 ) {
@@ -394,7 +394,7 @@ function createServerInvocationContext(
 }
 
 function createAsyncInvocationContext(
-  resources: readonly OracleResourceDefinition[],
+  resources: readonly ContainedRuntimeResourceDefinition[],
   onAvailableResources?: (records: readonly string[]) => void,
   onRequiredResource?: (resourceId: string) => void,
 ) {
@@ -539,8 +539,8 @@ describe("phase three integrated live-passage rehearsal", () => {
     }
 
     const providerModules = createProviderProvisioningModules({
-      profileId: RuntimeFixtureProfile.id,
-      providerSelections: RuntimeFixtureProfile.providerSelections,
+      profileId: WorkItemsRuntimeProfile.id,
+      providerSelections: WorkItemsRuntimeProfile.providerSelections,
       providerDependencyGraph: compilation.providerDependencyGraph,
       processId: "phase-three-integrated-live-passage",
       trace: providerTrace,
@@ -564,7 +564,7 @@ describe("phase three integrated live-passage rehearsal", () => {
         });
       },
     });
-    const providerResult = await executeOracleBootgraph({ modules: providerModules });
+    const providerResult = await executeRuntimeBootgraph({ modules: providerModules });
     expect(providerResult.status).toBe("started");
     if (providerResult.status !== "started") throw providerResult.error;
     const effectRunCountAfterProviderStart = effectRuntimeRunCount;

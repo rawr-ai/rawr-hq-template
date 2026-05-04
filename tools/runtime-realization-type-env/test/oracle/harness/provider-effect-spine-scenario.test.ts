@@ -19,15 +19,15 @@ import {
   createExecutionDescriptorTable,
   createExecutionRegistry,
   createManagedEffectRuntimeAccess,
-  createOracleResourceAccess,
+  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   createProviderProvisioningModules,
   createProviderProvisioningTrace,
   createRuntimeBoundaryPolicy,
-  executeOracleBootgraph,
+  executeRuntimeBootgraph,
   providerBootResourceModuleId,
   type EffectRuntimeAccess,
-  type OracleResourceDefinition,
+  type ContainedRuntimeResourceDefinition,
   type ProviderProvisionedValue,
 } from "../../../src/oracle";
 import { deriveProviderDependencyGraph } from "../../../src/spine/derive";
@@ -158,7 +158,7 @@ function createCountingEffectRuntime(): {
 
 function providerResourceDefinitionsFromStartedValues(
   startedValues: ReadonlyMap<string, unknown>,
-): readonly OracleResourceDefinition[] {
+): readonly ContainedRuntimeResourceDefinition[] {
   return [...startedValues.values()].flatMap((started) => {
     const providerValue = started as ProviderProvisionedValue | undefined;
     if (!providerValue || providerValue.kind !== "provider.provisioned-value") {
@@ -311,11 +311,11 @@ describe("phase two provider/config/effect spine scenario", () => {
 
     expect(graph?.diagnostics).toEqual([]);
 
-    const boot = await executeOracleBootgraph({ modules });
+    const boot = await executeRuntimeBootgraph({ modules });
     expect(boot.status).toBe("started");
     if (boot.status !== "started") throw boot.error;
 
-    const resources = createOracleResourceAccess(
+    const resources = createContainedRuntimeResourceAccess(
       providerResourceDefinitionsFromStartedValues(boot.startedValues()),
     );
     const descriptor = {

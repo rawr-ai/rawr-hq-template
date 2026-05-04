@@ -13,6 +13,10 @@
         "report",
         "typecheck",
         "negative",
+        "vendor-effect",
+        "vendor-boundaries",
+        "oracle",
+        "middle-spine",
         "simulate",
         "gate"
       ]

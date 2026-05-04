@@ -4,7 +4,7 @@ This dossier holds closed Phase Two coordination artifacts, workstream records,
 and the post-phase handoff.
 
 Phase Two closed as contained spine-composition proof. It did not prove
-Lab-Production Proof, production runtime passages, live HyperDX dashboard/query
+Lab-Production Proof, Reference Runtime passage, live HyperDX dashboard/query
 visibility, final public DX, or readiness to start Parent-Repo Migration.
 
 ## Dossier Map

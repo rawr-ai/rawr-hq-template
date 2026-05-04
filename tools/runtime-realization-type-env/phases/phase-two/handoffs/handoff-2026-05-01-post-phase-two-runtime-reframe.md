@@ -17,8 +17,8 @@ important outcome is that these pieces are no longer only isolated sketches:
 they can be arranged around one contained runtime story and exercised with
 falsifiable lab gates.
 
-The honest boundary is just as important. Phase Two did not prove live
-production runtime passages, live HyperDX product visibility, production host
+The honest boundary is just as important. Phase Two did not prove
+Lab-Production Proof, Reference Runtime passage, live HyperDX product visibility, production host
 lifecycle, durable Inngest semantics, real Elysia serving, final public API/DX,
 RuntimeCatalog persistence, Parent-Repo Migration authorization, or the final
 Nx/generator ratchet.

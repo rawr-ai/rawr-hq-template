@@ -91,12 +91,13 @@ under `guidance/`.
 
 ## Required Reading
 
-Before adding or changing tests, fixtures, manifest entries, or evidence docs, read:
+Use the fast path first, then add the task-specific reads for the work in
+front of you.
+
+Fast path for any lab change:
 
 - `README.md`
 - `RUNBOOK.md`
-- `evidence/AGENTS.md`
-- `evidence/README.md`
 - `guidance/guardrails-design.md`
 - `guidance/guardrails-lab-plane-topology.md`
 - `evidence/current-lab-state.md`
@@ -108,6 +109,23 @@ Before adding or changing tests, fixtures, manifest entries, or evidence docs, r
 - `evidence/vendors/README.md`
 - `evidence/runtime-spine-verification-diagnostic.md`
 - `guidance/workflow-phased-agent-verification.md`
+
+Task-specific reads:
+
+- Evidence docs or proof/status changes: `evidence/AGENTS.md`,
+  `evidence/README.md`, `evidence/proof-manifest.json`,
+  `evidence/runtime-spine-verification-diagnostic.md`,
+  `evidence/systems/README.md`, and `evidence/vendors/README.md`.
+- Phase or workstream changes: the relevant phase dossier under `phases/**`
+  and `guidance/workflow-phased-agent-verification.md`.
+- Source, test, scenario, fixture, or gate changes: the owning source/test
+  files, `project.json`, and:
+
+  ```sh
+  bunx nx show project runtime-realization-type-env --json
+  ```
+- Reference Runtime preparation: `phases/phase-four/README.md`,
+  `src/reference-runtime/README.md`, and `test/reference-runtime/README.md`.
 
 ## Evidence Rules
 

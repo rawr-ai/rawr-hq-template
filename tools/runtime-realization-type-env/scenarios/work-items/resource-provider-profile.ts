@@ -63,7 +63,7 @@ export const EmailProvider = defineRuntimeProvider({
   requires: [
     resourceRequirement(ClockResource, {
       lifetime: "process",
-      reason: "timestamp outbound fixture mail",
+      reason: "timestamp outbound work item mail",
     }),
   ],
   configSchema: EmailSenderConfigSchema,
@@ -82,9 +82,9 @@ export const EmailProvider = defineRuntimeProvider({
   },
 });
 
-export const RuntimeFixtureProfile = defineRuntimeProfile({
+export const WorkItemsRuntimeProfile = defineRuntimeProfile({
   kind: "runtime.profile",
-  id: "runtime-realization.fixture",
+  id: "work-items.lab-scenario",
   providerSelections: [
     providerSelection({
       resource: EmailSenderResource,

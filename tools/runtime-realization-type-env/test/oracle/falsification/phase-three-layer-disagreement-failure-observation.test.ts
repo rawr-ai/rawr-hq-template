@@ -10,7 +10,7 @@ import {
   createExecutionDescriptorTable,
   createExecutionRegistry,
   createMigrationControlPlaneObservationPacket,
-  createOracleResourceAccess,
+  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   createRuntimeObservationRecorder,
   exportRuntimeTelemetryOtlpTraces,
@@ -117,7 +117,7 @@ function createServerInvocationContext(request: {
         },
       },
       clients: {},
-      resources: createOracleResourceAccess([
+      resources: createContainedRuntimeResourceAccess([
         {
           id: "server-layer-resource",
           value: { seen: true },
@@ -149,7 +149,7 @@ function createAsyncInvocationContext(event: {
       data: event.data,
     },
     clients: {},
-    resources: createOracleResourceAccess([
+    resources: createContainedRuntimeResourceAccess([
       {
         id: "async-layer-resource",
         value: { seen: true },

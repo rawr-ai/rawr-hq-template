@@ -61,7 +61,7 @@ Phase Three is a contained live-runtime-passage investigation program inside
 `tools/runtime-realization-type-env/**`.
 
 Phase Two proved contained spine composition, mostly as `simulation-proof`. It
-did not prove production runtime passage, Parent-Repo Migration authorization, real
+did not prove Lab-Production Proof, Parent-Repo Migration authorization, real
 Elysia production serving, durable Inngest semantics, HyperDX product
 observability, RuntimeCatalog persistence, production config/secrets policy,
 control-plane topology, final public API/DX law, or the final Nx/generator
@@ -142,9 +142,10 @@ async, product observability, RuntimeCatalog/control-plane persistence,
 production config/secrets policy, final public API/DX law, and the final
 Nx/generator ratchet remain fenced.
 
-The next likely program should open from the child-7 next-program packet and
-scope externality/design residuals before the final structure/Nx/generator
-ratchet or Parent-Repo Migration.
+The next adjustment should normalize active packets around the Phase Four
+Reference Runtime container/setup attractor before full Phase Four opens.
+Externality/design residuals remain constraints for that setup, not the next
+program attractor.
 
 ## Authority Stack
 
@@ -696,9 +697,9 @@ Detailed frame to carry:
 - DRA owns sequence and proof promotion.
 - Child reports recommend; DRA decides.
 - No proof claim crosses its earned category.
-- The active/default next move is the next-program packet from child 7:
-  externality/design residual scoping before final structure/Nx/generator
-  ratchet or Parent-Repo Migration.
+- The active/default next move is the bounded Phase Four Reference Runtime
+  container/setup adjustment: reserve the phase/source/test containers, update
+  routing docs, and keep Phase Four closed until a later explicit opening.
 
 ## Skills To Reach For
 

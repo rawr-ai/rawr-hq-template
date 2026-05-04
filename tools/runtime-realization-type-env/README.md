@@ -35,6 +35,16 @@ ownership, test topology, or scenario placement.
 | Reference Runtime | `src/reference-runtime/**`, `test/reference-runtime/**` | Future production-shaped contained runtime-in-a-folder for Lab-Production Proof gates. |
 | Scenario packs | `scenarios/**` | Business capability examples consumed by Oracle, conformance tests, and future Reference Runtime flows. |
 
+Current materialization:
+
+- Phase Three is closed as contained Oracle `simulation-proof`.
+- Phase Four is not open.
+- Shared runtime, Oracle, scenarios, and current tests exist.
+- Reference Runtime source, Reference Runtime tests, and a Reference Runtime
+  gate do not exist beyond README-level scaffolds.
+- The Lab is a contained semantic mirror, not the final Nx/package/generator
+  topology.
+
 ## Evidence Lanes And Proof Ceilings
 
 - Type/shape proof: authoring signatures, descriptor refs, portable artifacts, and negative misuse cases compile or fail as expected.

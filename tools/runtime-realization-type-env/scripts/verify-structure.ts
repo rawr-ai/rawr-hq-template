@@ -25,6 +25,13 @@ function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
+function assertArrayEquals(actual: string[], expected: string[], message: string): void {
+  assert(
+    JSON.stringify(actual) === JSON.stringify(expected),
+    `${message}: expected [${expected.join(", ")}], got [${actual.join(", ")}]`,
+  );
+}
+
 function walk(dir: string): string[] {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   return entries.flatMap((entry) => {
@@ -594,8 +601,9 @@ const project = readJson<{
   name: string;
   root: string;
   tags: string[];
-  targets: Record<string, unknown>;
+  targets: Record<string, { options?: { command?: string } }>;
 }>("tools/runtime-realization-type-env/project.json");
+const projectTargetNames = Object.keys(project.targets);
 
 assert(project.name === "runtime-realization-type-env", "project name drifted");
 assert(project.root === "tools/runtime-realization-type-env", "project root drifted");
@@ -618,17 +626,74 @@ for (const target of [
   assert(target in project.targets, `project missing target ${target}`);
 }
 
-const gateTargets = new Set([
-  "structural",
-  "report",
-  "typecheck",
-  "negative",
-  "vendor-effect",
-  "vendor-boundaries",
-  "oracle",
-  "middle-spine",
-  "simulate",
-]);
+const architectureInventory = readJson<{
+  projects: Record<
+    string,
+    {
+      config: string;
+      targets: string[];
+    }
+  >;
+}>("tools/architecture-inventory/runtime-realization-type-env.json");
+const inventoryProject = architectureInventory.projects["runtime-realization-type-env"];
+assert(inventoryProject, "architecture inventory missing runtime-realization-type-env");
+assert(
+  inventoryProject.config === "tools/runtime-realization-type-env/project.json",
+  "architecture inventory config drifted for runtime-realization-type-env",
+);
+assertArrayEquals(
+  inventoryProject.targets,
+  projectTargetNames,
+  "architecture inventory targets drifted from project.json",
+);
+
+for (const referenceRuntimeDir of ["src/reference-runtime", "test/reference-runtime"]) {
+  const referenceRuntimePath = `tools/runtime-realization-type-env/${referenceRuntimeDir}`;
+  if (!exists(referenceRuntimePath)) continue;
+
+  assert(
+    exists(`${referenceRuntimePath}/README.md`),
+    `${referenceRuntimePath} must contain README.md before deeper scaffolding`,
+  );
+
+  const referenceRuntimeTsFiles = walk(path.join(toolRoot, referenceRuntimeDir))
+    .map((filePath) => path.relative(toolRoot, filePath).split(path.sep).join("/"))
+    .filter((filePath) => /\.(?:c|m)?tsx?$/.test(filePath));
+  assert(
+    "reference-runtime" in project.targets || referenceRuntimeTsFiles.length === 0,
+    `Reference Runtime TypeScript requires an explicit reference-runtime target: ${referenceRuntimeTsFiles.join(", ")}`,
+  );
+
+  if (!("reference-runtime" in project.targets)) {
+    const referenceRuntimeFiles = walk(path.join(toolRoot, referenceRuntimeDir))
+      .map((filePath) => path.relative(path.join(toolRoot, referenceRuntimeDir), filePath).split(path.sep).join("/"))
+      .filter((filePath) => filePath !== "README.md");
+    assert(
+      referenceRuntimeFiles.length === 0,
+      `Reference Runtime scaffold must stay README-only before an explicit reference-runtime target: ${referenceRuntimeFiles.join(", ")}`,
+    );
+  }
+}
+
+const gateTargets = new Set(
+  projectTargetNames.filter((target) => target !== "sync" && target !== "gate"),
+);
+const proofBearingTargets = projectTargetNames.filter(
+  (target) => !["sync", "structural", "report", "gate"].includes(target),
+);
+const gateCommand = project.targets.gate?.options?.command ?? "";
+for (const target of proofBearingTargets) {
+  assert(
+    gateCommand.includes(`runtime-realization-type-env:${target}`),
+    `gate target must invoke proof-bearing target ${target}`,
+  );
+}
+const structuralOnlyTargets = new Set(["structural", "report"]);
+const simulationBehaviorTargets = new Set(["oracle", "simulate", "middle-spine"]);
+const vendorBehaviorTargets = new Set(["vendor-effect", "vendor-boundaries"]);
+if ("reference-runtime" in project.targets) {
+  simulationBehaviorTargets.add("reference-runtime");
+}
 
 type ManifestStatus =
   | "proof"
@@ -701,6 +766,22 @@ for (const entry of manifest.entries) {
     for (const gate of entry.gates ?? []) {
       assert(gateTargets.has(gate), `manifest entry ${entry.id} names unknown gate ${gate}`);
     }
+    assert(
+      (entry.gates ?? []).some((gate) => !structuralOnlyTargets.has(gate)),
+      `manifest entry ${entry.id} cannot be gated only by structural/report`,
+    );
+    if (entry.status === "simulation-proof") {
+      assert(
+        (entry.gates ?? []).some((gate) => simulationBehaviorTargets.has(gate)),
+        `simulation-proof entry ${entry.id} must include oracle, simulate, middle-spine, or reference-runtime when available`,
+      );
+    }
+    if (entry.status === "vendor-proof") {
+      assert(
+        (entry.gates ?? []).some((gate) => vendorBehaviorTargets.has(gate)),
+        `vendor-proof entry ${entry.id} must include vendor-effect or vendor-boundaries`,
+      );
+    }
   }
 
   for (const fixture of entry.fixtures ?? []) {
@@ -772,10 +853,49 @@ const rawEffectAllowedPrefixes = [
   "src/vendor/effect/",
   "test/vendor/",
 ];
+const importSpecifierPattern =
+  /(?:import|export)\s+(?:type\s+)?(?:[^"']*?\s+from\s+)?["']([^"']+)["']|import\(\s*["']([^"']+)["']\s*\)/g;
+
+function importSpecifiers(source: string): string[] {
+  return Array.from(source.matchAll(importSpecifierPattern), (match) => match[1] ?? match[2]);
+}
+
+function resolvedImportPath(relativeSourceFile: string, specifier: string): string | undefined {
+  if (!specifier.startsWith(".")) return undefined;
+  return path.normalize(path.join(path.dirname(relativeSourceFile), specifier)).split(path.sep).join("/");
+}
+
+function importsToolPath(
+  relativeSourceFile: string,
+  specifier: string,
+  prefixes: string[],
+): boolean {
+  const resolvedPath = resolvedImportPath(relativeSourceFile, specifier);
+  if (!resolvedPath) return false;
+  return prefixes.some(
+    (prefix) => resolvedPath === prefix || resolvedPath.startsWith(`${prefix}/`),
+  );
+}
+
+function importsParentRepoPath(relativeSourceFile: string, specifier: string): boolean {
+  if (
+    /^@rawr\/(?!sdk(?:\/|$)|spec-env(?:\/|$))/.test(specifier) ||
+    /^@(?:apps|packages|services|plugins)\//.test(specifier)
+  ) {
+    return true;
+  }
+
+  const resolvedPath = resolvedImportPath(relativeSourceFile, specifier);
+  return Boolean(
+    resolvedPath &&
+      /^(?:(?:\.\.\/)+)?(?:apps|packages|services|plugins)(?:\/|$)/.test(resolvedPath),
+  );
+}
 
 for (const sourceFile of sourceFiles) {
   const source = fs.readFileSync(sourceFile, "utf8");
   const relativeSourceFile = path.relative(toolRoot, sourceFile).split(path.sep).join("/");
+  const specifiers = importSpecifiers(source);
   assert(
     !forbiddenImportPattern.test(source),
     `forbidden production import in ${path.relative(repoRoot, sourceFile)}`,
@@ -802,6 +922,125 @@ for (const sourceFile of sourceFiles) {
         relativeSourceFile === allowedPath || relativeSourceFile.startsWith(allowedPath),
       ),
       `raw effect import is not allowed in ${path.relative(repoRoot, sourceFile)}`,
+    );
+  }
+
+  if (
+    relativeSourceFile.startsWith("src/reference-runtime/") ||
+    relativeSourceFile.startsWith("test/reference-runtime/")
+  ) {
+    for (const specifier of specifiers) {
+      assert(
+        !importsToolPath(relativeSourceFile, specifier, ["src/oracle"]),
+        `Reference Runtime must not import Oracle in ${path.relative(repoRoot, sourceFile)}`,
+      );
+      assert(
+        !importsParentRepoPath(relativeSourceFile, specifier),
+        `Reference Runtime must not import parent repo apps/packages/services/plugins in ${path.relative(repoRoot, sourceFile)}`,
+      );
+    }
+  }
+
+  if (relativeSourceFile.startsWith("scenarios/")) {
+    for (const specifier of specifiers) {
+      assert(
+        !importsToolPath(relativeSourceFile, specifier, [
+          "src/oracle",
+          "src/reference-runtime",
+          "src/runtime",
+          "src/adapters",
+          "src/vendor",
+          "src/spine",
+        ]),
+        `scenarios must not import Oracle, Reference Runtime, or runtime internals in ${path.relative(repoRoot, sourceFile)}`,
+      );
+      assert(
+        !importsParentRepoPath(relativeSourceFile, specifier),
+        `scenarios must not import parent repo apps/packages/services/plugins in ${path.relative(repoRoot, sourceFile)}`,
+      );
+    }
+  }
+}
+
+const activeNamingFiles = toolFiles.filter((filePath) => {
+  if (filePath === "scripts/verify-structure.ts") return false;
+  if (!/\.(?:md|json|tsx?)$/.test(filePath)) return false;
+  return !filePath.startsWith("phases/");
+});
+const allowedOracleNamingPrefix = "src/oracle/";
+const retiredSharedRuntimeNames = [
+  ["Oracle", "Bootgraph"].join(""),
+  ["execute", "Oracle", "Bootgraph"].join(""),
+  ["Oracle", "Service", "Binding"].join(""),
+  ["create", "Oracle", "Resource", "Access"].join(""),
+  ["create", "Oracle", "Service", "Binding", "Cache"].join(""),
+];
+const retiredOracleBootKindPattern =
+  /(?:["']?kind["']?\s*[:=]\s*["']oracle\.boot-[^"']+["']|kind\s+["']oracle\.boot-[^"']+["'])/;
+for (const activeNamingFile of activeNamingFiles) {
+  if (activeNamingFile.startsWith(allowedOracleNamingPrefix)) continue;
+
+  const content = read(`tools/runtime-realization-type-env/${activeNamingFile}`);
+  for (const retiredSharedRuntimeName of retiredSharedRuntimeNames) {
+    assert(
+      !content.includes(retiredSharedRuntimeName),
+      `${activeNamingFile} contains retired Oracle shared-runtime name: ${retiredSharedRuntimeName}`,
+    );
+  }
+  assert(
+    !retiredOracleBootKindPattern.test(content),
+    `${activeNamingFile} contains retired oracle.boot-* kind naming`,
+  );
+}
+
+const scenarioNamingFiles = toolFiles.filter(
+  (filePath) => filePath.startsWith("scenarios/") && /\.(?:md|json|tsx?)$/.test(filePath),
+);
+const retiredScenarioNames = [
+  "RuntimeFixtureProfile",
+  "FixtureApp",
+  "StartedFixtureApp",
+  "runtime-realization.fixture",
+  "Fixture item",
+];
+for (const scenarioNamingFile of scenarioNamingFiles) {
+  const content = read(`tools/runtime-realization-type-env/${scenarioNamingFile}`);
+  for (const retiredScenarioName of retiredScenarioNames) {
+    assert(
+      !content.includes(retiredScenarioName),
+      `${scenarioNamingFile} contains retired scenario fixture naming: ${retiredScenarioName}`,
+    );
+  }
+}
+
+const activeDocStalePhrasePaths = [
+  "tools/runtime-realization-type-env/AGENTS.md",
+  "tools/runtime-realization-type-env/README.md",
+  "tools/runtime-realization-type-env/RUNBOOK.md",
+  "tools/runtime-realization-type-env/evidence/current-lab-state.md",
+  "tools/runtime-realization-type-env/evidence/AGENTS.md",
+  "tools/runtime-realization-type-env/evidence/README.md",
+  "tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md",
+  "tools/runtime-realization-type-env/guidance/README.md",
+  "tools/runtime-realization-type-env/guidance/guardrails-design.md",
+  "tools/runtime-realization-type-env/guidance/guardrails-lab-plane-topology.md",
+  "tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md",
+  "tools/runtime-realization-type-env/phases/phase-three/workflow-phase-three-program-dra.md",
+  "tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md",
+  "tools/runtime-realization-type-env/phases/phase-three/workstreams/workstream-2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md",
+  "tools/runtime-realization-type-env/phases/phase-three/workstreams/workstream-2026-05-01-phase-three-program-workstream.md",
+];
+const staleExternalityDesignAttractorPatterns = [
+  /externality\/design residual scoping/i,
+  /externality\/design residuals? before (?:any )?final structure\/Nx\/generator/i,
+  /production runtime passage/i,
+];
+for (const activeDocPath of activeDocStalePhrasePaths) {
+  const content = read(activeDocPath);
+  for (const stalePattern of staleExternalityDesignAttractorPatterns) {
+    assert(
+      !stalePattern.test(content),
+      `${activeDocPath} contains stale externality/design residual scoping attractor`,
     );
   }
 }
