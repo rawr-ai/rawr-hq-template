@@ -32,6 +32,7 @@ Before adding or changing tests, fixtures, manifest entries, or evidence docs, r
 - `evidence/README.md`
 - `evidence/design-guardrails.md`
 - `evidence/dra-phase-two-level-zero-workflow.md`
+- `evidence/phase-two-production-critical-claim-ledger.md`
 - `evidence/focus-log.md`
 - `evidence/runtime-realization-research-program.md`
 - `evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md`

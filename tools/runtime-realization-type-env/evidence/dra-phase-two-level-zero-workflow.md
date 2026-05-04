@@ -345,6 +345,13 @@ This workflow is not a launch note for child workstream 1. It is my
 program-wide operating rule for every Phase Two child workstream until final
 program closeout.
 
+A child workstream closeout is a boundary, not a stopping point. After each
+child closes, I clean up, carry its accepted artifacts and next packet into the
+next child, reset from the anchors, and continue. I am not done until the final
+Phase Two closeout artifact exists and records proof categories, residuals,
+migration-decision evidence, phase-three handoff inputs, verification, review,
+and clean repo/Graphite state.
+
 For every child workstream, I repeat this loop:
 
 1. Recover context from this Level Zero workflow, the Phase Two program
@@ -410,11 +417,13 @@ execution sequence is:
 1. Recover through this Level Zero workflow.
 2. Verify repo/Graphite/Nx/spec state.
 3. Reopen the Phase Two program workstream document.
-4. Launch child workstream 1 with the workstream template, opening packet,
-   phase-local planning, agents, gates, and closeout rules.
-5. Close child workstream 1 completely, consume its next packet, reset through
-   the Program-Wide Loop above, and continue into child workstream 2.
-6. Repeat the same open/run/verify/review/close/reset loop for every remaining
+4. Identify the next child workstream from the checkpoint, the latest
+   workstream report, and the Phase Two program workstream.
+5. Open that child with the workstream template, opening packet, phase-local
+   planning, agents, gates, and closeout rules.
+6. Close the child completely, consume its next packet, reset through the
+   Program-Wide Loop above, and continue into the next child.
+7. Repeat the same open/run/verify/review/close/reset loop for every remaining
    child workstream until the Phase Two closeout artifact marks program
    completion.
 
@@ -426,14 +435,15 @@ future compaction recovery. I do not expand this workflow into a session log.
 Update this block only at Level Zero boundaries or after compaction recovery.
 
 ```text
-Current level: Level 2 boundary after child workstream 1 closeout; Phase Two program is open.
-Current branch at latest checkpoint: codex/runtime-phase-two-regrounding-recertification.
-Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-program-regrounding-evidence-recertification.md.
+Current level: Level 2 boundary after child workstream 2 closeout; Phase Two program is open.
+Current branch at latest checkpoint: codex/runtime-phase-two-scenario-proof-ledger.
+Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-scenario-proof-ledger.md.
 Prelaunch cleanup report: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-prelaunch-workspace-preparation.md.
-Next required action after this checkpoint: open child workstream 2, Contained Production-Critical Scenario And Proof Ledger, through the full Program-Wide Loop.
-Next required gates before child workstream 2: repo/Graphite clean, Nx project truth, manifest spec hash check, child 1 next packet consumed.
-Stop condition currently active: do not begin vendor/live-boundary work before child workstream 2 defines the scenario and claim ledger.
-Focus-log/manifest note: they mark `phase-two.program-regrounding-evidence-recertification`; child workstream 2 owns the next currentExperiment update when it opens.
+Scenario and claim ledger: tools/runtime-realization-type-env/evidence/phase-two-production-critical-claim-ledger.md.
+Next required action after this checkpoint: open child workstream 3, Effect + Provider/Resource/Config/Secret Spine, through the full Program-Wide Loop.
+Next required gates before child workstream 3: repo/Graphite clean, Nx project truth, manifest spec hash check, child 2 next packet consumed.
+Stop condition currently active: keep final ProviderEffectPlan shape, production config precedence, platform secret-store policy, provider refresh/retry scheduling, and public policy API/DX fenced unless the provider workstream reaches a genuine design wall.
+Focus-log/manifest note: they mark `phase-two.production-critical-scenario-ledger`; child workstream 3 owns the next currentExperiment update when it opens.
 ```
 
 ## Verification For This Document
@@ -442,7 +452,8 @@ The initial document-writing step verified the workflow artifact and lab
 structure only. The prelaunch workspace-preparation pass later cleaned the
 workspace surface and recorded its own closeout.
 
-Before launching Phase Two proper, rerun the current launch gates:
+At the current and future Phase Two boundaries, rerun the current launch gates
+before opening the next child workstream:
 
 Required commands:
 

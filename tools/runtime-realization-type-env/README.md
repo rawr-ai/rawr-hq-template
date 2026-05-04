@@ -53,6 +53,8 @@ Agents working in this lab should start with `AGENTS.md`, `RUNBOOK.md`, and `evi
 - `evidence/phased-agent-verification-workflow.md` captures the repeatable phased review workflow for future spec and migration burn-down work.
 - `evidence/dra-phase-two-level-zero-workflow.md` is the current DRA
   re-orientation and prelaunch workflow for Phase Two.
+- `evidence/phase-two-production-critical-claim-ledger.md` is the active
+  Phase Two scenario and claim ledger consumed by child workstreams.
 - `evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md`
   is the current Level 2 program workstream document for Phase Two.
 
