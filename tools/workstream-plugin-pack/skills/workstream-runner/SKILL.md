@@ -85,6 +85,7 @@ program, phase, or runtime-specific language.
 | `references/primitive-boundary.md` | Workstream/program/phase boundaries are at risk |
 | `references/input-and-scratch-discipline.md` | Inputs, scratch, and process feedback need clear authority boundaries |
 | `references/records-and-packets.md` | You need record, Agent Packet, Wave Packet, or Next Packet guidance |
+| `references/coordination-patterns.md` | Multiple lanes share an artifact, or a Phase 0 decision must reach a later phase's worker briefs |
 | `references/steward-agents.md` | You need to decide whether to invoke companion stewards |
 | `references/closure.md` | You are closing, abandoning, or handing off a workstream |
 
