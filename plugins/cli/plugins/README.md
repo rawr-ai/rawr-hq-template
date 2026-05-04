@@ -29,6 +29,7 @@ rawr undo
 This performs a full deterministic sync pipeline by default:
 - syncs to Codex + Claude targets,
 - builds Cowork `.plugin` artifacts,
+- optionally builds Codex plugin package artifacts when `--codex-package` is set,
 - refreshes Claude install + enable,
 - retires stale managed plugins from rename/delete operations,
 - uses `--force` and `--gc` defaults for deterministic convergence.
@@ -44,6 +45,20 @@ By default, `rawr plugins sync ...` also generates a Cowork artifact for each sy
 - Disable: `--no-cowork`
 
 The `.zip` is generated from **RAWR HQ source content** using the same mapping rules as Claude sync (`workflows -> commands`, `skills`, `scripts`, and optionally `agents`), so it stays in parity with what Claude would see.
+
+## Codex plugin package artifacts
+
+Codex package generation is explicit and artifact-only until the local Codex CLI exposes runtime plugin install support.
+
+- Enable: `--codex-package`
+- Output (default): `dist/codex/plugins/<pluginName>/`
+- Override: `--codex-out <dir>`
+
+Generated packages include:
+- `.codex-plugin/plugin.json`
+- `skills/`
+
+Custom agents, hooks, MCP, and settings are intentionally not packaged yet; direct Codex agent sync uses standalone TOML under `<codex-home>/agents/` when `sync.providers.codex.includeAgents` is enabled.
 
 ## Claude marketplace refresh (install + enable)
 
@@ -83,6 +98,7 @@ Only these top-level directories are synced:
 - `skills/`
 - `workflows/`
 - `scripts/`
+- `agents/` (provider-specific; Claude on by default, Codex opt-in)
 
 Anything outside those directories is ignored.
 
@@ -92,10 +108,12 @@ Anything outside those directories is ignored.
   - `workflows/*.md -> <codex-home>/prompts/*.md`
   - `skills/<name>/** -> <codex-home>/skills/<name>/**`
   - `scripts/<file> -> <codex-home>/scripts/<pluginName>--<file>`
+  - `agents/*.md -> <codex-home>/agents/*.toml` only when Codex agent sync is enabled; Claude-only frontmatter is dropped and reported as adapter-required projection metadata.
 - Claude:
   - `workflows/*.md -> <claude-home>/plugins/<pluginName>/commands/*.md`
   - `skills/<name>/** -> <claude-home>/plugins/<pluginName>/skills/<name>/**`
   - `scripts/<file> -> <claude-home>/plugins/<pluginName>/scripts/<file>`
+  - `agents/*.md -> <claude-home>/plugins/<pluginName>/agents/*.md`
 
 ## Important script boundary
 

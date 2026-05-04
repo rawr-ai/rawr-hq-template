@@ -77,6 +77,62 @@ export async function syncFileWithConflictPolicy(input: {
   return true;
 }
 
+export async function syncTextWithConflictPolicy(input: {
+  content: string;
+  source: string;
+  dest: string;
+  kind: SyncItemResult["kind"];
+  options: SyncFileOptions;
+  result: SyncTargetResult;
+  claimedByOtherPlugin?: boolean;
+}): Promise<boolean> {
+  const { content, source, dest, kind, options, result, claimedByOtherPlugin } = input;
+  const existing = await options.resources.files.readTextFile(dest);
+
+  if (existing !== null) {
+    if (existing === content) {
+      pushItem(result, { action: "skipped", kind, source, target: dest, message: "identical" });
+      return true;
+    }
+
+    if (!options.force) {
+      pushItem(result, {
+        action: "conflict",
+        kind,
+        source,
+        target: dest,
+        message: claimedByOtherPlugin ? "owned by another plugin" : "destination differs; use --force",
+      });
+      return false;
+    }
+
+    if (!options.dryRun) {
+      await options.undoCapture?.captureWriteTarget(dest);
+      await options.resources.files.writeTextFile(dest, content);
+    }
+    pushItem(result, { action: options.dryRun ? "planned" : "updated", kind, source, target: dest, message: "overwrote" });
+    return true;
+  }
+
+  if (claimedByOtherPlugin && !options.force) {
+    pushItem(result, {
+      action: "conflict",
+      kind,
+      source,
+      target: dest,
+      message: "name claimed by another plugin",
+    });
+    return false;
+  }
+
+  if (!options.dryRun) {
+    await options.undoCapture?.captureWriteTarget(dest);
+    await options.resources.files.writeTextFile(dest, content);
+  }
+  pushItem(result, { action: options.dryRun ? "planned" : "copied", kind, source, target: dest });
+  return true;
+}
+
 export async function syncSkillDirWithConflictPolicy(input: {
   srcDir: string;
   destDir: string;

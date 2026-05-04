@@ -15,7 +15,8 @@
 import { module } from "./module";
 import { resolveProviderContent as resolveServiceProviderContent } from "../../shared/source-content/helpers/provider-content";
 import { summarizeScannedContent } from "../../shared/helpers/sync-results";
-import type { SyncTargetResult } from "../../shared/entities/sync-results";
+import { buildProviderProjections } from "../../shared/helpers/projections";
+import type { ProviderProjection, SyncTargetResult } from "../../shared/entities/sync-results";
 import { syncClaudeHomes } from "./helpers/sync-claude-homes";
 import { syncCodexHomes } from "./helpers/sync-codex-homes";
 
@@ -25,6 +26,7 @@ import { syncCodexHomes } from "./helpers/sync-codex-homes";
  */
 const runSync = module.runSync.handler(async ({ context, input }) => {
   const targets: SyncTargetResult[] = [];
+  const projections: ProviderProjection[] = [];
   const options = {
     dryRun: input.dryRun,
     force: input.force,
@@ -42,6 +44,14 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
       base: input.content,
       resources: context.resources,
     });
+    projections.push(...await buildProviderProjections({
+      provider: "codex",
+      sourcePlugin: input.sourcePlugin,
+      content: codexContent,
+      homes: input.codexHomes,
+      includeAgentsInCodex: input.includeAgentsInCodex,
+      resources: context.resources,
+    }));
 
     targets.push(...await syncCodexHomes({
       sourcePlugin: input.sourcePlugin,
@@ -58,6 +68,14 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
       base: input.content,
       resources: context.resources,
     });
+    projections.push(...await buildProviderProjections({
+      provider: "claude",
+      sourcePlugin: input.sourcePlugin,
+      content: claudeContent,
+      homes: input.claudeHomes,
+      includeAgentsInClaude: input.includeAgentsInClaude,
+      resources: context.resources,
+    }));
 
     targets.push(...await syncClaudeHomes({
       sourcePlugin: input.sourcePlugin,
@@ -72,6 +90,7 @@ const runSync = module.runSync.handler(async ({ context, input }) => {
     sourcePlugin: input.sourcePlugin,
     scanned: summarizeScannedContent(input.content),
     targets,
+    projections,
   };
 });
 

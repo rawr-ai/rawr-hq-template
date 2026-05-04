@@ -29,6 +29,10 @@ export function createNodeAgentConfigSyncResources(): AgentConfigSyncResources {
           return null;
         }
       },
+      writeTextFile: async (filePath, content) => {
+        await ensureDir(path.dirname(filePath));
+        await fs.writeFile(filePath, content, "utf8");
+      },
       readJsonFile,
       writeJsonFile,
       ensureDir,
@@ -62,14 +66,6 @@ export function createNodeAgentConfigSyncResources(): AgentConfigSyncResources {
         }
       },
     },
-    path: {
-      join: (...parts) => path.join(...parts),
-      resolve: (...parts) => path.resolve(...parts),
-      dirname: (targetPath) => path.dirname(targetPath),
-      basename: (targetPath) => path.basename(targetPath),
-      relative: (from, to) => path.relative(from, to),
-      isAbsolute: (targetPath) => path.isAbsolute(targetPath),
-      sep: path.sep,
-    },
+    path,
   };
 }

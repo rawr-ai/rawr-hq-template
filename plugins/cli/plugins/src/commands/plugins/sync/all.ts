@@ -6,9 +6,11 @@ import {
   collectWorkspaceSourcePaths,
   createWorkspaceSyncPlanInput,
   installAndEnableClaudePlugin,
+  packageCodexPlugin,
   packageCoworkPlugin,
   planWorkspaceSync,
   PLUGINS_SYNC_UNDO_PROVIDER,
+  resolveDefaultCodexOutDir,
   resolveDefaultCoworkOutDir,
   resolveProviderContent,
   retireStaleManagedPlugins,
@@ -53,6 +55,14 @@ export default class PluginsSyncAll extends RawrCommand {
     }),
     "cowork-out": Flags.string({
       description: "Output directory for Cowork .zip artifacts (default: <workspaceRoot>/dist/cowork/plugins)",
+    }),
+    "codex-package": Flags.boolean({
+      description: "Build official Codex plugin package artifacts (artifact-only; no runtime install)",
+      default: false,
+      allowNo: true,
+    }),
+    "codex-out": Flags.string({
+      description: "Output directory for Codex plugin package artifacts (default: <workspaceRoot>/dist/codex/plugins)",
     }),
     "claude-install": Flags.boolean({
       description: "Install/refresh synced plugins in Claude Code via marketplace",
@@ -109,6 +119,7 @@ export default class PluginsSyncAll extends RawrCommand {
       const includeOclif = Boolean((flags as any)["include-oclif"]);
       const scope = String((flags as any).scope) as SyncScope;
       const coworkEnabled = Boolean((flags as any).cowork);
+      const codexPackageEnabled = Boolean((flags as any)["codex-package"]);
       const claudeInstallEnabled = Boolean((flags as any)["claude-install"]);
       const claudeEnableEnabled = Boolean((flags as any)["claude-enable"]);
       const installReconcileEnabled = Boolean((flags as any)["install-reconcile"]);
@@ -185,6 +196,12 @@ export default class PluginsSyncAll extends RawrCommand {
         const candidate = raw.trim();
         return path.isAbsolute(candidate) ? candidate : path.resolve(workspaceRoot, candidate);
       })();
+      const codexOutDirAbs = (() => {
+        const raw = (flags as any)["codex-out"] as string | undefined;
+        if (!raw || raw.trim().length === 0) return resolveDefaultCodexOutDir(workspaceRoot);
+        const candidate = raw.trim();
+        return path.isAbsolute(candidate) ? candidate : path.resolve(workspaceRoot, candidate);
+      })();
 
       const results: Array<{
         dirName: string;
@@ -201,6 +218,15 @@ export default class PluginsSyncAll extends RawrCommand {
         }>;
       }> = [];
       const coworkPackages: Array<{ plugin: string; outFile: string; action: "planned" | "written" | "skipped"; reason?: string }> = [];
+      const codexPackages: Array<{
+        plugin: string;
+        outDir: string;
+        action: "planned" | "written" | "skipped";
+        manifestPath?: string;
+        skillCount?: number;
+        validationNotes?: string[];
+        reason?: string;
+      }> = [];
       const claudeInstall: Array<Record<string, unknown>> = [];
       let retireOrphans: Awaited<ReturnType<typeof retireStaleManagedPlugins>> = {
         ok: true,
@@ -264,6 +290,42 @@ export default class PluginsSyncAll extends RawrCommand {
                 outFile: path.join(coworkOutDirAbs, `${run.sourcePlugin.dirName}.zip`),
                 action: "skipped",
                 reason: `cowork package failed: ${err instanceof Error ? err.message : String(err)}`,
+              });
+            }
+          }
+        }
+
+        if (codexPackageEnabled) {
+          const isWorkspacePlugin = path.resolve(run.sourcePlugin.absPath).startsWith(path.resolve(workspaceRoot) + path.sep);
+          if (!isWorkspacePlugin) {
+            codexPackages.push({
+              plugin: run.sourcePlugin.dirName,
+              outDir: path.join(codexOutDirAbs, run.sourcePlugin.dirName),
+              action: "skipped",
+              reason: "not a workspace plugin (skip Codex package artifact)",
+            });
+          } else {
+            try {
+              const codexContent = await resolveProviderContent({
+                agent: "codex",
+                sourcePlugin: run.sourcePlugin,
+                base: content,
+                repoRoot: workspaceRoot,
+              });
+              codexPackages.push(await packageCodexPlugin({
+                sourcePlugin: run.sourcePlugin,
+                content: codexContent,
+                outDirAbs: codexOutDirAbs,
+                dryRun: baseFlags.dryRun,
+                undoCapture,
+              }));
+            } catch (err) {
+              postStepFailed = true;
+              codexPackages.push({
+                plugin: run.sourcePlugin.dirName,
+                outDir: path.join(codexOutDirAbs, run.sourcePlugin.dirName),
+                action: "skipped",
+                reason: `codex package failed: ${err instanceof Error ? err.message : String(err)}`,
               });
             }
           }
@@ -373,6 +435,7 @@ export default class PluginsSyncAll extends RawrCommand {
             partialReasons: allowPartial ? partialReasons : [],
             skipped: mergedSkipped,
             results,
+            codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
             cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
             claudeInstall,
             retireOrphans,
@@ -386,6 +449,7 @@ export default class PluginsSyncAll extends RawrCommand {
               skippedCount: mergedSkipped.length,
               postStepFailed,
               partialReasons: allowPartial ? partialReasons : [],
+              codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
               cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
               claudeInstall,
               retireOrphans,
@@ -425,6 +489,7 @@ export default class PluginsSyncAll extends RawrCommand {
               );
             }
           }
+          if (codexPackageEnabled) this.log(`Codex package out: ${codexOutDirAbs}`);
           this.log(`Install reconcile: ${(installReconcile as any).action}`);
           if (coworkEnabled) this.log(`Cowork out: ${coworkOutDirAbs}`);
           if (undo.available) this.log(`Undo: rawr undo (capsule=${undo.capsuleId})`);

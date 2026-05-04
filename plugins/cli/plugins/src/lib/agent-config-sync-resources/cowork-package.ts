@@ -26,6 +26,15 @@ type PackageJson = {
   description?: unknown;
 };
 
+type CoworkManifestSummary = {
+  name: string;
+  version: string;
+  commands: number;
+  skills: number;
+  scripts: number;
+  agents: number;
+};
+
 /**
  * Converts host paths to portable zip entry paths.
  */
@@ -91,7 +100,7 @@ async function readOrCreatePluginManifest(input: {
   sourcePlugin: HostSourcePlugin;
   stagingRootAbs: string;
   dryRun: boolean;
-}): Promise<void> {
+}): Promise<ClaudePluginManifest> {
   const sourceManifestPath = path.join(
     input.sourcePlugin.absPath,
     ".claude-plugin",
@@ -108,7 +117,7 @@ async function readOrCreatePluginManifest(input: {
     if (!input.dryRun) {
       await fs.writeFile(stagingManifestPath, raw, "utf8");
     }
-    return;
+    return JSON.parse(raw) as ClaudePluginManifest;
   }
 
   const packageJsonPath = path.join(input.sourcePlugin.absPath, "package.json");
@@ -131,6 +140,7 @@ async function readOrCreatePluginManifest(input: {
   if (!input.dryRun) {
     await writeJsonFile(stagingManifestPath, manifest);
   }
+  return manifest;
 }
 
 /**
@@ -140,7 +150,21 @@ export type CoworkPackageResult = {
   plugin: string;
   outFile: string;
   action: "planned" | "written";
+  sizeBytes?: number;
+  manifestSummary: CoworkManifestSummary;
+  warnings: string[];
 };
+
+function validateCoworkManifestSummary(summary: CoworkManifestSummary): string[] {
+  const warnings: string[] = [];
+  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(summary.name)) {
+    warnings.push("plugin name should be lowercase kebab-case and <= 64 characters");
+  }
+  if (summary.version.trim().length === 0 || summary.version === "1.0.0") {
+    warnings.push("plugin version should be explicit and meaningful");
+  }
+  return warnings;
+}
 
 /**
  * Packages provider-effective Claude content into a Cowork-compatible archive.
@@ -159,8 +183,22 @@ export async function packageCoworkPlugin(input: {
   };
 }): Promise<CoworkPackageResult> {
   const outFile = path.join(input.outDirAbs, `${input.sourcePlugin.dirName}.zip`);
+  const baseSummary: CoworkManifestSummary = {
+    name: input.sourcePlugin.dirName,
+    version: input.sourcePlugin.version ?? "1.0.0",
+    commands: input.content.workflowFiles.length,
+    skills: input.content.skills.length,
+    scripts: input.content.scripts.length,
+    agents: input.includeAgents ? input.content.agentFiles.length : 0,
+  };
   if (input.dryRun) {
-    return { plugin: input.sourcePlugin.dirName, outFile, action: "planned" };
+    return {
+      plugin: input.sourcePlugin.dirName,
+      outFile,
+      action: "planned",
+      manifestSummary: baseSummary,
+      warnings: validateCoworkManifestSummary(baseSummary),
+    };
   }
 
   const stagingRoot = await fs.mkdtemp(
@@ -182,11 +220,16 @@ export async function packageCoworkPlugin(input: {
       ensureDir(agentsDir),
     ]);
 
-    await readOrCreatePluginManifest({
+    const manifest = await readOrCreatePluginManifest({
       sourcePlugin: input.sourcePlugin,
       stagingRootAbs: pluginRoot,
       dryRun: false,
     });
+    const manifestSummary: CoworkManifestSummary = {
+      ...baseSummary,
+      name: typeof manifest.name === "string" ? manifest.name : baseSummary.name,
+      version: typeof manifest.version === "string" ? manifest.version : baseSummary.version,
+    };
 
     for (const workflow of input.content.workflowFiles) {
       await fs.copyFile(
@@ -213,9 +256,20 @@ export async function packageCoworkPlugin(input: {
 
     await input.undoCapture?.captureWriteTarget(outFile);
     await zipDirToFile({ dirAbs: pluginRoot, outFileAbs: outFile });
+    const sizeBytes = (await fs.stat(outFile)).size;
+    const warnings = validateCoworkManifestSummary(manifestSummary);
+    if (sizeBytes >= 45 * 1024 * 1024) {
+      warnings.push("package size is near Cowork's 50 MB practical limit");
+    }
+    return {
+      plugin: input.sourcePlugin.dirName,
+      outFile,
+      action: "written",
+      sizeBytes,
+      manifestSummary,
+      warnings,
+    };
   } finally {
     await fs.rm(stagingRoot, { recursive: true, force: true });
   }
-
-  return { plugin: input.sourcePlugin.dirName, outFile, action: "written" };
 }

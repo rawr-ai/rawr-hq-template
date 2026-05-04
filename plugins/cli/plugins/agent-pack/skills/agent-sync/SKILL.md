@@ -18,6 +18,7 @@ Canonical source directories inside a plugin:
 - `skills/` (skill directories containing `SKILL.md`)
 - `workflows/` (markdown workflows; maps to prompts/commands)
 - `scripts/` (shipped helper scripts)
+- `agents/` (Claude agents by default; Codex standalone TOML only when Codex agent sync is enabled)
 
 Anything outside those directories is ignored.
 
@@ -53,6 +54,20 @@ You can:
 - disable packaging: `--no-cowork`
 
 This `.zip` is generated from the **RAWR HQ plugin source** using the same mapping rules as Claude sync (workflows -> commands, skills, scripts, and optionally agents).
+
+## Codex plugin package artifacts
+
+Codex official plugin package generation is explicit and artifact-only:
+
+```bash
+rawr plugins sync <plugin-ref> --codex-package
+rawr plugins sync all --codex-package
+```
+
+Default output:
+- `dist/codex/plugins/<pluginName>/`
+
+The package includes `.codex-plugin/plugin.json` and `skills/` only. Custom agents are not packaged yet; Codex direct agent sync writes standalone TOML to `<codex-home>/agents/` only when config enables `sync.providers.codex.includeAgents`.
 
 Compatibility alias (deprecated):
 ```bash

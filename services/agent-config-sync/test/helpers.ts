@@ -5,16 +5,19 @@ import {
   createEmbeddedPlaceholderLoggerAdapter,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import type { CreateClientOptions } from "../src/client";
 import type { Service } from "../src/service/base";
 import type { AgentConfigSyncResources } from "../src/service/shared/resources";
+import type { SourceContent, SourcePlugin } from "../src/types";
 
 export function createFakeResources(): AgentConfigSyncResources {
   return {
     files: {
       pathExists: async () => false,
       readTextFile: async () => null,
+      writeTextFile: async () => {},
       readJsonFile: async () => null,
       writeJsonFile: async () => {},
       ensureDir: async () => {},
@@ -69,6 +72,10 @@ export function createNodeTestResources(): AgentConfigSyncResources {
         } catch {
           return null;
         }
+      },
+      writeTextFile: async (filePath, content) => {
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        await fs.writeFile(filePath, content, "utf8");
       },
       readJsonFile: async <T>(filePath: string) => {
         try {
@@ -159,4 +166,106 @@ export function createClientOptions(input: {
     },
     config: {},
   };
+}
+
+export type ParityWorkspace = {
+  workspaceRoot: string;
+  pluginRoot: string;
+  sourcePlugin: SourcePlugin;
+  content: SourceContent;
+};
+
+export async function makeParityWorkspace(input: {
+  pluginName?: string;
+  packageName?: string;
+  agentFrontmatter?: Record<string, unknown>;
+} = {}): Promise<ParityWorkspace> {
+  const pluginName = input.pluginName ?? "plugin-demo";
+  const packageName = input.packageName ?? "@rawr/plugin-demo";
+  const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-parity-ws-"));
+  const pluginRoot = path.join(workspaceRoot, "plugins", "cli", pluginName);
+  const workflowPath = path.join(pluginRoot, "workflows", "hello.md");
+  const skillRoot = path.join(pluginRoot, "skills", "demo-skill");
+  const scriptPath = path.join(pluginRoot, "scripts", "demo.sh");
+  const agentPath = path.join(pluginRoot, "agents", "researcher.md");
+
+  await Promise.all([
+    fs.mkdir(path.dirname(workflowPath), { recursive: true }),
+    fs.mkdir(skillRoot, { recursive: true }),
+    fs.mkdir(path.dirname(scriptPath), { recursive: true }),
+    fs.mkdir(path.dirname(agentPath), { recursive: true }),
+  ]);
+
+  await fs.writeFile(path.join(workspaceRoot, "package.json"), JSON.stringify({ name: "workspace" }), "utf8");
+  await fs.writeFile(
+    path.join(pluginRoot, "package.json"),
+    JSON.stringify({
+      name: packageName,
+      version: "1.2.3",
+      description: "Demo plugin",
+      rawr: { kind: "toolkit", capability: "demo" },
+    }),
+    "utf8",
+  );
+  await fs.writeFile(workflowPath, "# hello\n", "utf8");
+  await fs.writeFile(path.join(skillRoot, "SKILL.md"), "# Demo Skill\n", "utf8");
+  await fs.writeFile(scriptPath, "echo demo\n", "utf8");
+
+  const frontmatter = input.agentFrontmatter ?? { description: "Research helper" };
+  const yaml = Object.entries(frontmatter)
+    .map(([key, value]) => `${key}: ${Array.isArray(value) ? JSON.stringify(value) : JSON.stringify(value)}`)
+    .join("\n");
+  await fs.writeFile(agentPath, `---\n${yaml}\n---\nFollow the evidence.\n`, "utf8");
+
+  return {
+    workspaceRoot,
+    pluginRoot,
+    sourcePlugin: {
+      ref: pluginName,
+      absPath: pluginRoot,
+      dirName: pluginName,
+      packageName,
+      description: "Demo plugin",
+      version: "1.2.3",
+      rawrKind: "toolkit",
+    },
+    content: {
+      workflowFiles: [{ name: "hello", absPath: workflowPath }],
+      skills: [{ name: "demo-skill", absPath: skillRoot }],
+      scripts: [{ name: "demo.sh", absPath: scriptPath }],
+      agentFiles: [{ name: "researcher", absPath: agentPath }],
+    },
+  };
+}
+
+export async function makeProviderHomes(): Promise<{ codexHome: string; claudeHome: string }> {
+  const [codexHome, claudeHome] = await Promise.all([
+    fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-codex-home-")),
+    fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-claude-home-")),
+  ]);
+  return { codexHome, claudeHome };
+}
+
+export async function snapshotProviderState(rootPath: string): Promise<Record<string, string>> {
+  const snapshot: Record<string, string> = {};
+
+  async function walk(absDir: string): Promise<void> {
+    let dirents: Array<{ name: string; isDirectory(): boolean; isFile(): boolean }>;
+    try {
+      dirents = await fs.readdir(absDir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const dirent of dirents) {
+      const absPath = path.join(absDir, dirent.name);
+      if (dirent.isDirectory()) {
+        await walk(absPath);
+      } else if (dirent.isFile()) {
+        snapshot[path.relative(rootPath, absPath)] = await fs.readFile(absPath, "utf8");
+      }
+    }
+  }
+
+  await walk(rootPath);
+  return Object.fromEntries(Object.entries(snapshot).sort(([left], [right]) => left.localeCompare(right)));
 }

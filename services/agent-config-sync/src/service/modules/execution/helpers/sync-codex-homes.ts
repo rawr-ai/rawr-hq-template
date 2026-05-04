@@ -11,8 +11,10 @@ import {
   deleteIfExists,
   syncFileWithConflictPolicy,
   syncSkillDirWithConflictPolicy,
+  syncTextWithConflictPolicy,
 } from "../../../shared/repositories/destination-sync-repository";
 import { pushItem } from "../../../shared/helpers/sync-results";
+import { buildCodexAgentProjection } from "../../../shared/source-content/helpers/codex-agent";
 
 type DestinationSyncOptions = {
   dryRun: boolean;
@@ -38,12 +40,14 @@ export async function syncCodexHomes(input: {
     const promptsDir = pathOps.join(codexHome, "prompts");
     const skillsDir = pathOps.join(codexHome, "skills");
     const scriptsDir = pathOps.join(codexHome, "scripts");
+    const agentsDir = pathOps.join(codexHome, "agents");
 
     if (!input.options.dryRun) {
       await Promise.all([
         input.options.resources.files.ensureDir(promptsDir),
         input.options.resources.files.ensureDir(skillsDir),
         input.options.resources.files.ensureDir(scriptsDir),
+        input.options.resources.files.ensureDir(agentsDir),
         input.options.resources.files.ensureDir(pathOps.join(codexHome, "plugins")),
       ]);
     }
@@ -53,6 +57,7 @@ export async function syncCodexHomes(input: {
       prompts: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.promptsByPlugin),
       skills: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.skillsByPlugin),
       scripts: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.scriptsByPlugin),
+      agents: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.agentsByPlugin),
     };
 
     for (const workflow of input.content.workflowFiles) {
@@ -89,12 +94,33 @@ export async function syncCodexHomes(input: {
       });
     }
 
+    const includeAgentsInCodex = input.options.includeAgentsInCodex ?? false;
+    if (includeAgentsInCodex) {
+      for (const agent of input.content.agentFiles) {
+        const rendered = await buildCodexAgentProjection({
+          agent,
+          sourcePlugin: input.sourcePlugin,
+          resources: input.options.resources,
+        });
+        await syncTextWithConflictPolicy({
+          content: rendered.toml,
+          source: agent.absPath,
+          dest: pathOps.join(agentsDir, rendered.targetName),
+          kind: "agent",
+          options: input.options,
+          result,
+          claimedByOtherPlugin: claimedOthers.agents.has(agent.name),
+        });
+      }
+    }
+
     if (input.options.gc) {
       const newPrompts = new Set(input.content.workflowFiles.map((workflow) => workflow.name));
       const newSkills = new Set(input.content.skills.map((skill) => skill.name));
       const newScripts = new Set(
         input.content.scripts.map((script) => buildCodexScriptName(input.sourcePlugin.dirName, script.name)),
       );
+      const newAgents = new Set(includeAgentsInCodex ? input.content.agentFiles.map((agent) => agent.name) : []);
 
       for (const oldPrompt of registry.claimedSets.promptsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
         if (newPrompts.has(oldPrompt) || claimedOthers.prompts.has(oldPrompt)) continue;
@@ -120,6 +146,16 @@ export async function syncCodexHomes(input: {
           result,
         });
       }
+
+      for (const oldAgent of registry.claimedSets.agentsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
+        if (newAgents.has(oldAgent) || claimedOthers.agents.has(oldAgent)) continue;
+        await deleteIfExists({
+          target: pathOps.join(agentsDir, `${oldAgent}.toml`),
+          kind: "agent",
+          options: input.options,
+          result,
+        });
+      }
     }
 
     if (!input.options.dryRun) {
@@ -129,6 +165,7 @@ export async function syncCodexHomes(input: {
       codexHome,
       sourcePlugin: input.sourcePlugin,
       content: input.content,
+      includeAgents: input.options.includeAgentsInCodex ?? false,
       dryRun: input.options.dryRun,
       existingData: registry.data,
       resources: input.options.resources,
