@@ -2,7 +2,7 @@
 
 Status: `closed`.
 Branch: `workstream-runner-skill-improvements` (stacked on `docs/workstream-runner-skill-improvement-plan`).
-Head commit at finalize: see `git log workstream-runner-skill-improvements`. Six Phase-1 atomic commits + one Phase-2 voice-repair commit + Phase 0 / DRA-finalize / closure commits.
+Head commit at finalize: `304e040d` (DRA-finalize commit). Subsequent commits are closure-steward verdict capture and post-PR §Final Output update only. Six Phase-1 atomic commits + one Phase-2 voice-repair commit + Phase 0 / DRA-finalize / closure commits.
 DRA: Claude Opus 4.7 (1M context).
 Dates: 2026-05-04 -> 2026-05-04.
 
