@@ -56,10 +56,10 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - `2026-04-30-phase-two-server-orpc-elysia-boundary.md`
-- `../phase-two-production-critical-claim-ledger.md`
+- `../phases/phase-two/phase-two-production-critical-claim-ledger.md`
 - `README.md`
 - `TEMPLATE.md`
 
@@ -396,7 +396,7 @@ Artifacts:
 - `../runtime-spine-verification-diagnostic.md`
 - `../spine-audit-map.md`
 - `../vendor-fidelity.md`
-- `../phase-two-production-critical-claim-ledger.md`
+- `../phases/phase-two/phase-two-production-critical-claim-ledger.md`
 - `../../fixtures/inline-negative/vendor-boundaries.ts`
 - `../../fixtures/todo/async-effect-bridge-lowering.todo.ts`
 - `../../fixtures/todo/first-server-async-harness-mounting.todo.ts`
@@ -442,10 +442,10 @@ Why this is next:
 
 Required first reads:
 
-- `../dra-phase-two-level-zero-workflow.md`
+- `../phases/phase-two/dra-phase-two-level-zero-workflow.md`
 - `2026-04-30-phase-two-production-readiness-program-workstream.md`
 - This report.
-- `../phase-two-production-critical-claim-ledger.md`
+- `../phases/phase-two/phase-two-production-critical-claim-ledger.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - `../spine-audit-map.md`

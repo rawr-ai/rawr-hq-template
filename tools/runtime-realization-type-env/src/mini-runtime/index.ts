@@ -13,4 +13,6 @@ export * from "./boundary-policy";
 export * from "./telemetry-export";
 export * from "./migration-control-plane-observation";
 export * from "./adapters/orpc-server";
+export * from "./adapters/elysia-host";
+export * from "./adapters/elysia-listener";
 export * from "./adapters/inngest-async";

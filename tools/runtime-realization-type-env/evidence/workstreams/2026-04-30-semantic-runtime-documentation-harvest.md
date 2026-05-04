@@ -71,8 +71,8 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../phased-agent-verification-workflow.md`
 - `README.md`
 - `TEMPLATE.md`
@@ -312,8 +312,8 @@ Semantic JSDoc/comment trailing pass:
   - `../../src/sdk/effect.ts`
   - `README.md`
   - `TEMPLATE.md`
-  - `../dra-runtime-research-program-workflow.md`
-  - `../runtime-realization-research-program.md`
+  - `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+  - `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - Host retained the boundary-policy and managed-runtime comments from PR #267
   after reviewing them for overclaim risk.
 - Comments were deliberately not added for final public `ProviderEffectPlan`
@@ -444,8 +444,8 @@ Artifacts:
 - `../../src/sdk/effect.ts`
 - `README.md`
 - `TEMPLATE.md`
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../proof-manifest.json`
 - `../focus-log.md`
 
@@ -486,8 +486,8 @@ Why this is next:
 Required first reads:
 
 - this report after closeout
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - `2026-04-30-boundary-policy-matrix.md`

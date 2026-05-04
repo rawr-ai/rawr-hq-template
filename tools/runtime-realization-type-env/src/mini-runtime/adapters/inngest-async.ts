@@ -41,6 +41,9 @@ export interface RuntimeInngestAsyncBoundaryRecord {
   readonly executionId?: string;
   readonly status?: "success" | "failure";
   readonly httpStatus?: number;
+  readonly protocolOperations?: readonly string[];
+  readonly protocolOperationStatus?: "failure";
+  readonly protocolPayloadRuntimeStatus?: "success" | "failure";
 }
 
 export interface RuntimeInngestAsyncRequestInput {
@@ -93,6 +96,73 @@ function createResponse(input: {
     stepId: input.payload.stepId,
     eventName: input.eventName,
   };
+}
+
+interface RuntimeInngestProtocolObservation {
+  readonly protocolOperations?: readonly string[];
+  readonly protocolOperationStatus?: "failure";
+  readonly protocolPayloadRuntimeStatus?: "success" | "failure";
+  readonly hasFailure: boolean;
+}
+
+function protocolPayloadRuntimeStatusFromData(
+  data: unknown,
+): "success" | "failure" | undefined {
+  if (!data || typeof data !== "object") return undefined;
+  const status = (data as { readonly status?: unknown }).status;
+  return status === "success" || status === "failure" ? status : undefined;
+}
+
+async function observeResponseProtocol(
+  response: Response,
+): Promise<RuntimeInngestProtocolObservation> {
+  // Inngest can report step failure as protocol operations inside a 206
+  // response, so boundary observations must inspect the protocol body.
+  try {
+    const body = await response.clone().json();
+    const entries = Array.isArray(body) ? body : [body];
+    const protocolOperations: string[] = [];
+    let protocolOperationStatus: "failure" | undefined;
+    let protocolPayloadRuntimeStatus: "success" | "failure" | undefined;
+    let hasFailure = false;
+
+    for (const entry of entries) {
+      if (!entry || typeof entry !== "object") continue;
+
+      const operation = (entry as { readonly op?: unknown }).op;
+      if (typeof operation === "string") {
+        if (!protocolOperations.includes(operation)) {
+          protocolOperations.push(operation);
+        }
+        if (operation === "StepError" || operation === "StepFailed") {
+          hasFailure = true;
+          protocolOperationStatus = "failure";
+        }
+      }
+
+      const dataStatus = protocolPayloadRuntimeStatusFromData(
+        (entry as { readonly data?: unknown }).data,
+      );
+      if (dataStatus === "failure") {
+        hasFailure = true;
+        protocolPayloadRuntimeStatus = "failure";
+      } else if (
+        dataStatus === "success" &&
+        protocolPayloadRuntimeStatus !== "failure"
+      ) {
+        protocolPayloadRuntimeStatus = "success";
+      }
+    }
+
+    return {
+      hasFailure,
+      ...(protocolOperations.length > 0 ? { protocolOperations } : {}),
+      ...(protocolOperationStatus ? { protocolOperationStatus } : {}),
+      ...(protocolPayloadRuntimeStatus ? { protocolPayloadRuntimeStatus } : {}),
+    };
+  } catch {
+    return { hasFailure: false };
+  }
 }
 
 /**
@@ -178,7 +248,7 @@ export function mountRuntimeInngestAsyncBoundary(input: {
           boundaryId: input.boundaryId,
           phase: "inngest.handler.finished",
           executionId: input.payload.ref.executionId,
-          status: "success",
+          status: stepResponse.status,
         }),
       );
 
@@ -239,12 +309,31 @@ export function mountRuntimeInngestAsyncBoundary(input: {
       );
 
       const response = await handler(request);
+      const protocolObservation = await observeResponseProtocol(response);
       records.push(
         record({
           boundaryId: input.boundaryId,
           phase: "inngest.serve.responded",
           httpStatus: response.status,
-          status: response.status >= 400 ? "failure" : "success",
+          status:
+            response.status >= 400 || protocolObservation.hasFailure
+              ? "failure"
+              : "success",
+          ...(protocolObservation.protocolOperations
+            ? { protocolOperations: protocolObservation.protocolOperations }
+            : {}),
+          ...(protocolObservation.protocolOperationStatus
+            ? {
+                protocolOperationStatus:
+                  protocolObservation.protocolOperationStatus,
+              }
+            : {}),
+          ...(protocolObservation.protocolPayloadRuntimeStatus
+            ? {
+                protocolPayloadRuntimeStatus:
+                  protocolObservation.protocolPayloadRuntimeStatus,
+              }
+            : {}),
         }),
       );
       return response;

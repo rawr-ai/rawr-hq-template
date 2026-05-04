@@ -1,14 +1,28 @@
 # Phase Two Production-Readiness Program Workstream
 
-Status: `active sequence anchor; Phase Two opened and continuing through child workstreams`.
+Status: `closed; completion marker is 2026-04-30-phase-two-closeout-phase-three-handoff.md`.
 Branch: `codex/runtime-phase-two-program-workstream`.
-Latest active branch checkpoint: `codex/runtime-phase-two-integrated-spine-rehearsal`.
+Latest active branch checkpoint: `codex/runtime-phase-two-closeout-handoff`.
 PR: `none`.
 
 This document defines the top-level Phase Two program workstream. It is a
 coordination artifact for the active DRA run. It is not runtime architecture
 authority, not proof authority, not an implementation report for Phase Two, and
 not authorization to migrate production code.
+
+Completion note:
+
+- Phase Two closed through child workstream 8,
+  `2026-04-30-phase-two-closeout-phase-three-handoff.md`.
+- The closeout artifact, not any single child proof, is the Phase Two program
+  completion marker.
+- Phase Two produces contained-lab migration-decision evidence only. It does
+  not authorize production migration and does not implement Phase Three final
+  structure, Nx enforcement, generators, generator idempotency, or ratchet/lock.
+- Post-closeout realignment lives in
+  `../handoffs/2026-05-01-post-phase-two-runtime-reframe.md`. It reframes the
+  likely next program as live-runtime-passage investigation before any
+  structure/Nx/generator ratchet.
 
 ## Frame
 
@@ -36,11 +50,11 @@ Levels:
 
 | Level | Scope | Status |
 | --- | --- | --- |
-| 0 | DRA-over-program operating workflow | Active in `dra-phase-two-level-zero-workflow.md`. |
+| 0 | DRA-over-program operating workflow | Closed in `../phases/phase-two/dra-phase-two-level-zero-workflow.md`. |
 | 1 | This composition workstream | Closed; this document is now the Level 2 sequence anchor. |
-| 2 | Phase Two program workstream | Open; child workstreams run until final closeout. |
-| 3 | Phase Two child workstreams | Planned recursively only when each child workstream opens. |
-| 4 | Phase-local implementation, verification, and review loops | Owned by the active child workstream. |
+| 2 | Phase Two program workstream | Closed by child workstream 8 closeout. |
+| 3 | Phase Two child workstreams | Closed; each child opened recursively when reached. |
+| 4 | Phase-local implementation, verification, and review loops | Closed with each child workstream. |
 
 Containment boundary:
 
@@ -81,8 +95,8 @@ Runtime/proof authority:
    `tools/runtime-realization-type-env/evidence/spine-audit-map.md`,
    and `tools/runtime-realization-type-env/evidence/focus-log.md`
 4. Coordination inputs:
-   `tools/runtime-realization-type-env/evidence/runtime-realization-research-program.md`,
-   `tools/runtime-realization-type-env/evidence/dra-runtime-research-program-workflow.md`,
+   `tools/runtime-realization-type-env/evidence/_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`,
+   `tools/runtime-realization-type-env/evidence/_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`,
    `tools/runtime-realization-type-env/evidence/phased-agent-verification-workflow.md`,
    this document, and completed workstream reports
 5. Provenance only:

@@ -72,8 +72,8 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../phased-agent-verification-workflow.md`
 - `README.md`
 - `TEMPLATE.md`
@@ -481,8 +481,8 @@ Artifacts:
 - `evidence/proof-manifest.json`
 - `evidence/focus-log.md`
 - `evidence/runtime-spine-verification-diagnostic.md`
-- `evidence/runtime-realization-research-program.md`
-- `evidence/dra-runtime-research-program-workflow.md`
+- `evidence/_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
+- `evidence/_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
 - `evidence/spine-audit-map.md`
 - `evidence/workstreams/2026-04-30-migration-control-plane-observation.md`
 
@@ -524,8 +524,8 @@ Why this is next:
 Required first reads:
 
 - this report after closeout
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 

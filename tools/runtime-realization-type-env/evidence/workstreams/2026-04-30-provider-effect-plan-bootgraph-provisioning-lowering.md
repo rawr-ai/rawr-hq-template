@@ -43,7 +43,7 @@ Opening input:
 - User control input: implement the DRA runtime-realization research program
   plan.
 - DRA workflow document:
-  `../dra-runtime-research-program-workflow.md`.
+  `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`.
 - Program recommendation: make `ProviderEffectPlan -> Bootgraph/Provisioning
   Lowering` the next domino after middle-spine verification.
 
@@ -60,9 +60,9 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../phased-agent-verification-workflow.md`
-- `../dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
 
 Evidence inputs:
 
@@ -508,7 +508,7 @@ Process tension notes:
 
 Artifacts:
 
-- `evidence/dra-runtime-research-program-workflow.md`
+- `evidence/_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
 - `evidence/phased-agent-verification-workflow.md`
 - `evidence/workstreams/README.md`
 - `evidence/workstreams/TEMPLATE.md`
@@ -560,7 +560,7 @@ Why this is next:
 
 Required first reads:
 
-- `../dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - this report after closeout

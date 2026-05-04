@@ -77,8 +77,8 @@ Artifacts:
 - `../../../../.gitattributes`
 - `../proof-manifest.json`
 - `../focus-log.md`
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../effect-integration-map.md`
 
 Verification run:

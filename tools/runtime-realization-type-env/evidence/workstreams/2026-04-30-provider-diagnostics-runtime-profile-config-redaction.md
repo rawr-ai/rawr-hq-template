@@ -57,8 +57,8 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../dra-runtime-research-program-workflow.md`
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../phased-agent-verification-workflow.md`
 
 Evidence inputs:
@@ -480,7 +480,7 @@ Artifacts:
 - `evidence/runtime-spine-verification-diagnostic.md`
 - `evidence/spine-audit-map.md`
 - `evidence/focus-log.md`
-- `evidence/runtime-realization-research-program.md`
+- `evidence/_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 
 Verification run:
 
@@ -516,7 +516,7 @@ Why this is next:
 
 Required first reads:
 
-- `../dra-runtime-research-program-workflow.md`
+- `../_archive/default-research-program-2026-04-30/dra-runtime-research-program-workflow.md`
 - `../proof-manifest.json`
 - `../runtime-spine-verification-diagnostic.md`
 - this report after closeout

@@ -34,7 +34,7 @@ Runtime/proof authority inputs:
 
 Coordination inputs:
 
-- `../runtime-realization-research-program.md`
+- `../_archive/default-research-program-2026-04-30/runtime-realization-research-program.md`
 - `../phased-agent-verification-workflow.md`
 
 Evidence inputs:

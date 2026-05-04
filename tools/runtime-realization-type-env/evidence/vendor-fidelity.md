@@ -34,12 +34,42 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
 
 ## Elysia
 
-- `elysia` is present in the lockfile through other workspace dependency graphs
-  but is not root-resolvable from the runtime-realization lab.
-- Phase Two child workstream 4 therefore does not promote Elysia proof. Any
-  future Elysia claim must install/exercise a real Elysia mount/request
-  lifecycle in a lab-contained way and update this file and the proof manifest
-  with the exact boundary crossed.
+- Installed package: `elysia@1.4.24`.
+- Phase Two child workstream 4 did not promote Elysia proof because the package
+  was present only through `apps/server` and was not root/lab-resolvable.
+- Phase Three child 5 adds `elysia` as an explicit root/lab dependency and
+  exercises a real Elysia app/request path inside the mini-runtime lab. The
+  contained adapter uses `new Elysia().all('/rpc*', ({ request }) => ..., {
+  parse: 'none' })` to forward the raw Web `Request` into the existing
+  contained `@orpc/server/fetch` boundary without letting Elysia pre-parse the
+  oRPC body.
+- The child 5 proof uses `Elysia.handle(new Request(fullUrl, ...))`, which official
+  Elysia docs describe as a unit-test/simulated HTTP request path. It proves
+  contained app/request host passage only.
+- Phase Three child 6 adds contained local listener lifecycle evidence using
+  the installed Bun/Elysia path. The proof starts the existing child-5 host app
+  with `app.listen({ hostname: "127.0.0.1", port: 0 })`, derives the request
+  base from `app.server.url`, sends a direct real network
+  `globalThis.fetch(...)`, records request entry through Elysia `onRequest`,
+  and stops with `app.stop(true)`. Installed-source evidence shows
+  `app.listen(...)` returns the app while assigning `app.server`, runs
+  `onStart`, and `app.stop(...)` clears `app.server` before `onStop`/stop
+  completion records finish.
+- The child 6 proof is still a contained Bun/Elysia local-listener proof. It
+  does not prove production HTTP serving, deployment/process-supervision
+  lifecycle, TLS/proxy/load-balancer behavior, Node adapter parity,
+  OpenAPI/Eden behavior, auth/logging, native host telemetry/error mapping,
+  product API policy, deployment topology, or production migration readiness.
+- Phase Three child 7 reuses the child-5 and child-6 Elysia findings inside a
+  composed integrated rehearsal. It adds no new Elysia vendor semantics beyond
+  the existing contained app/request and local listener proof; its added value
+  is composition with the started provider/runtime/server/async/stop envelope,
+  including shared `EffectRuntimeAccess` and observed provider-resource
+  `requireResource` calls.
+- The official `.mount('/prefix', fetchFn)` pattern remains supporting Fetch
+  interop evidence, not the primary oRPC body-preservation oracle. The accepted
+  oracle for this lab is the official oRPC/Elysia route-forwarding shape with
+  `{ parse: 'none' }`.
 
 ## TypeBox
 
@@ -54,6 +84,21 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
 - Phase Two additionally exercises a contained Inngest-facing boundary through
   a real `inngest/bun` Fetch handler, absolute function-id routing, and
   `step.run(...)` before delegating to the RAWR mini async harness.
+- Phase Three started-passage proof records that a stopped async harness
+  rejection surfaces through Inngest as a protocol-native `StepError` operation
+  inside a `206` step response. The contained boundary now classifies that
+  response as failure in its own observation record after inspecting the
+  protocol body. Future Inngest failure oracles must inspect the step response
+  body and runtime-delegation evidence; HTTP status alone is not enough.
+- Phase Three layer-disagreement proof records that a `StepRun` operation can
+  carry a RAWR async-step payload whose `status` is `failure`. The lab records
+  this as `protocolPayloadRuntimeStatus`, not as Inngest protocol status or
+  durable Inngest run status.
+- Phase Three child 7 reuses existing contained Inngest Bun serve/function/step
+  behavior in the integrated rehearsal. It adds composition evidence with the
+  Elysia listener and started process envelope, including observed provider
+  resource `requireResource` calls through the async invocation context, not new
+  durable Inngest vendor semantics.
 - The lab does not claim durable scheduling, retries, idempotency, or production Inngest host semantics.
 
 ## HyperDX / OTLP
@@ -65,6 +110,10 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
   gate proves deterministic serialization, endpoint selection, and redaction
   before export; it does not prove product dashboards, queries, alerting,
   retention, production OpenTelemetry bootstrap, or durable catalog storage.
+- Phase Three child 7 projects the integrated rehearsal into the same
+  OTLP-shaped and migration/control-plane observation model. It adds no product
+  HyperDX visibility, query, dashboard, alerting, retention, or production
+  OpenTelemetry bootstrap proof.
 - Local `rawr-hq-hyperdx` Docker ingest smoke is supporting lab evidence only.
   It can show that a reachable local OTLP endpoint accepts the payload, but it
   is not a production deployment, query semantics proof, dashboard proof, or
@@ -75,3 +124,21 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
 - The `codex/semantica-first-pipeline-implementation` branch is inspected read-only as evidence discovery only.
 - That branch diverges from the runtime lab stack and must not be merged into this implementation branch.
 - Semantica output may point reviewers to source spans, but it is not architecture authority and cannot promote a manifest entry to proof without a concrete gate.
+
+## Service Package Effect/oRPC Integration Snapshot
+
+- Reference resource:
+  `docs/projects/rawr-final-architecture-migration/resources/research/service-package-effect-orpc-integration-snapshot.md`.
+- This snapshot is a golden integration exemplar for native-fit vendor design:
+  keep the author-facing surface vendor-native where that improves DX, while
+  RAWR owns lifecycle, runtime construction, import law, diagnostics, telemetry
+  correlation, policy, context projection, and finalization seams.
+- It is not authority over runtime boundaries, runtime lifecycle, public runtime
+  SDK names, adapter lowering, provider acquisition/finalization, proof
+  categories, or production migration readiness. The manifest-pinned runtime
+  realization spec wins those conflicts.
+- Known stale detail: the snapshot's older `.handler(...)` / `.effect(...)`
+  terminal split is superseded by current runtime-realization authority. RAWR
+  `.effect(...)` remains the canonical execution terminal for
+  runtime-realization service/plugin authoring; public `.handler(...)` /
+  Promise branches must not be reintroduced from the snapshot.

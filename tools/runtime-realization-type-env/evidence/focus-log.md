@@ -4,12 +4,22 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-two.integrated-runtime-spine-rehearsal`
-- Focus: prove the earned Phase Two provider, server, async, telemetry,
-  catalog, derivation, and compilation claims compose in one contained
-  runtime-spine rehearsal with executable falsifiers, while keeping production
-  migration readiness and Phase Three topology/Nx/generator work fenced.
+- ID: `phase-three.closed-integrated-live-passage`
+- Focus: Phase Three is closed as contained live-runtime-passage
+  `simulation-proof` and migration-decision evidence. Child 7 composes the
+  earned focused slices into one toy-contained run while preserving
+  non-promotion boundaries for production runtime passage, durable async,
+  product observability, RuntimeCatalog persistence, public API/DX, production
+  config/secrets, and final Nx/generator ratchet work.
 - Related manifest entries:
+  - `audit.p3.integrated-live-passage-rehearsal-closeout`
+  - `audit.p3.contained-elysia-listen-lifecycle-passage`
+  - `audit.p3.contained-elysia-host-passage`
+  - `audit.p3.layer-disagreement-failure-observation-proof`
+  - `audit.p3.native-boundary-observation-failure-semantics-ledger`
+  - `audit.p3.started-process-assembly-stop-finalization-passage`
+  - `audit.p3.live-runtime-passage-scope-claim-ledger`
+  - `audit.p3.phase-three-program-workstream`
   - `accepted.effect-only-authoring`
   - `accepted.invocation-bound-clients`
   - `simulation.middle-spine-derivation-compiler`
@@ -29,6 +39,7 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
   - `audit.p2.async-inngest-function-step-boundary`
   - `audit.p2.telemetry-integrated-observation-spine`
   - `audit.p2.integrated-runtime-spine-rehearsal`
+  - `audit.p2.phase-two-program-closeout`
   - `simulation.async-step-owner-membership-artifacts`
   - `simulation.adapter-callback-bridge-lowering`
   - `simulation.first-server-async-harness-mounts`
