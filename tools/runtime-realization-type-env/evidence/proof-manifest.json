@@ -4,11 +4,12 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "phase-two.telemetry-hyperdx-catalog-observation",
-    "focus": "Prove a contained provider/server/async/catalog observation spine can project redacted records into OTLP/HyperDX-shaped export evidence and non-persistent migration/control-plane packets while keeping product observability, persistence, topology, and production telemetry policy fenced.",
+    "id": "phase-two.integrated-runtime-spine-rehearsal",
+    "focus": "Prove the earned Phase Two provider, server, async, telemetry, catalog, derivation, and compilation claims compose in one contained runtime-spine rehearsal with executable falsifiers, while keeping production migration readiness and Phase Three topology/Nx/generator work fenced.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.invocation-bound-clients",
+      "simulation.middle-spine-derivation-compiler",
       "audit.telemetry.hyperdx-observation",
       "audit.telemetry.hyperdx-observation.residual",
       "audit.migration.control-plane-observation",
@@ -24,6 +25,7 @@
       "audit.p2.server-orpc-fetch-boundary",
       "audit.p2.async-inngest-function-step-boundary",
       "audit.p2.telemetry-integrated-observation-spine",
+      "audit.p2.integrated-runtime-spine-rehearsal",
       "simulation.async-step-owner-membership-artifacts",
       "simulation.adapter-callback-bridge-lowering",
       "simulation.first-server-async-harness-mounts",
@@ -632,6 +634,28 @@
       "gates": [
         "typecheck",
         "mini-runtime"
+      ]
+    },
+    {
+      "id": "audit.p2.integrated-runtime-spine-rehearsal",
+      "status": "simulation-proof",
+      "source": "Phase Two claim ledger row p2.integrated.rehearsal; runtime spec sections 9, 12, 15, 18, 19, 20, 21, 22, 23, 24, and 29",
+      "oracle": "A lab-contained integrated rehearsal derives and compiles the fixture spine, preserves refs-only portable artifacts, emits adapter lowering payloads from derived route/async identity, provisions provider modules through the mini bootgraph, mounts contained oRPC server and Inngest async boundaries from compiled artifacts, delegates both boundaries through ProcessExecutionRuntime, finalizes the provider bootgraph, projects provider/server/async/catalog records into redacted telemetry, exports a stable OTLP payload through injected fetch, and creates a non-persistent migration/control-plane packet. A focused falsifier matrix keeps child proofs independently falsifiable by checking invalid provider config fails before build without secret leakage, unmatched oRPC paths do not invoke the harness, unknown Inngest function ids do not invoke the async harness, and telemetry run-id drift is rejected. This is integrated contained proof and migration-decision evidence only; it does not prove production migration readiness, Elysia, production HTTP/worker hosting, durable async semantics, product observability, RuntimeCatalog persistence, control-plane topology, native host telemetry/error mapping, platform secret-store precedence, arbitrary DLP, final public API/DX, or Phase Three topology/Nx/generator readiness.",
+      "fixtures": [
+        "src/spine/derive.ts",
+        "src/spine/compiler.ts",
+        "src/mini-runtime/provider-lowering.ts",
+        "src/mini-runtime/adapters/orpc-server.ts",
+        "src/mini-runtime/adapters/inngest-async.ts",
+        "src/mini-runtime/telemetry-export.ts",
+        "src/mini-runtime/migration-control-plane-observation.ts",
+        "test/mini-runtime/phase-two-integrated-runtime-spine-rehearsal.test.ts",
+        "evidence/workstreams/2026-04-30-phase-two-integrated-runtime-spine-rehearsal.md"
+      ],
+      "gates": [
+        "typecheck",
+        "mini-runtime",
+        "middle-spine"
       ]
     },
     {
