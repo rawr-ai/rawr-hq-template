@@ -3,7 +3,7 @@
 Status: `closed`.
 Branch: `codex/runtime-phase-two-prelaunch-cleanup`.
 PR: `none`.
-Commit: `pending`.
+Commit: `42f0de13`.
 
 This report is informative continuity for the runtime-realization lab. It is
 not architecture authority, proof authority, or Phase Two program execution.

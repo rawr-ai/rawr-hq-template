@@ -426,16 +426,14 @@ future compaction recovery. I do not expand this workflow into a session log.
 Update this block only at Level Zero boundaries or after compaction recovery.
 
 ```text
-Current level: Level 0, prelaunch workspace preparation complete; Phase Two program proper not opened yet.
-Current branch at latest checkpoint: codex/runtime-phase-two-prelaunch-cleanup.
-Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md.
+Current level: Level 2 boundary after child workstream 1 closeout; Phase Two program is open.
+Current branch at latest checkpoint: codex/runtime-phase-two-regrounding-recertification.
+Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-program-regrounding-evidence-recertification.md.
 Prelaunch cleanup report: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-prelaunch-workspace-preparation.md.
-Next required action after this checkpoint: launch Phase Two proper with child workstream 1, Program Re-grounding And Evidence Recertification, as the first cycle in the full Program-Wide Loop.
-Next required gates before launch: repo/Graphite clean, Nx project truth, manifest spec hash check.
-Stop condition currently active: do not skip the child-workstream opening packet/template when launching Phase Two, and do not stop after child workstream 1 unless a Level Zero stop condition applies.
-Focus-log/manifest note: they still mark the last proof experiment,
-lab-v2.runtime-research-program-closeout; child workstream 1 owns any focus
-or manifest currentExperiment update after it opens.
+Next required action after this checkpoint: open child workstream 2, Contained Production-Critical Scenario And Proof Ledger, through the full Program-Wide Loop.
+Next required gates before child workstream 2: repo/Graphite clean, Nx project truth, manifest spec hash check, child 1 next packet consumed.
+Stop condition currently active: do not begin vendor/live-boundary work before child workstream 2 defines the scenario and claim ledger.
+Focus-log/manifest note: they mark `phase-two.program-regrounding-evidence-recertification`; child workstream 2 owns the next currentExperiment update when it opens.
 ```
 
 ## Verification For This Document

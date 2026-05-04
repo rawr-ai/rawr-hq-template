@@ -1,11 +1,12 @@
 # Phase Two Production-Readiness Program Workstream
 
-Status: `composition artifact; Phase Two not started`.
+Status: `active sequence anchor; Phase Two opened by child workstream 1`.
 Branch: `codex/runtime-phase-two-program-workstream`.
+Active launch branch: `codex/runtime-phase-two-regrounding-recertification`.
 PR: `none`.
 
 This document defines the top-level Phase Two program workstream. It is a
-coordination artifact for a future DRA run. It is not runtime architecture
+coordination artifact for the active DRA run. It is not runtime architecture
 authority, not proof authority, not an implementation report for Phase Two, and
 not authorization to migrate production code.
 

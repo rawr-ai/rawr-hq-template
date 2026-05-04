@@ -4,10 +4,11 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "lab-v2.runtime-research-program-closeout",
-    "focus": "Close the bounded runtime-realization research program after the default DRA domino sequence, preserving earned proof categories and residual decision packets without promoting production runtime readiness.",
+    "id": "phase-two.program-regrounding-evidence-recertification",
+    "focus": "Recertify Phase Two authority, proof/status artifacts, stale-input exclusions, residuals, and gate adequacy before live-boundary proof starts.",
     "relatedEntries": [
       "audit.runtime-research-program-closeout",
+      "audit.canonical-spec-authority-refresh",
       "audit.p0.async-step-membership",
       "audit.p1.provider-effect-plan-shape",
       "audit.p1.effect-managed-runtime-substrate",

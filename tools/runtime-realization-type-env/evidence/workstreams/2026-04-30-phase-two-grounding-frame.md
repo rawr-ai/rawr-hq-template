@@ -37,6 +37,9 @@ Lab operating and evidence authority:
 - `tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-runtime-research-program-closeout.md`
 - `tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-runtime-telemetry-hyperdx-observation.md`
 - `tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-migration-control-plane-observation.md`
+
+Cautionary provenance, read last:
+
 - `tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-runtime-prod-contamination-lessons.md`
 
 The runtime realization spec wins for runtime mechanics. The architecture spec
