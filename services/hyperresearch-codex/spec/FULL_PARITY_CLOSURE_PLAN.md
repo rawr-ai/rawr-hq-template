@@ -48,7 +48,7 @@ Target 8-12 official Inngest documentation sources from `inngest.com/docs`, incl
 
 - `HR-CODEX-035`: keep native child lifecycle separate from service packet fan-in. The focused diagnostic in `spec/evidence/20260503T193257Z-child-agent-completion/` proved same-process child wait/close but failed across bare `codex-rawr exec resume` because original child handles returned `not_found`. The accepted closure path is explicit child resume after parent resume, with ledgered replacement attempts as fallback for child attempts that still classify non-clean.
 - Native Codex surfaces: do not pivot to app-server, Codex SDK, or OpenAI SDK by assumption. `NATIVE_CODEX_SURFACE_REVIEW.md` records that app-server is the preferred native reproduction surface and that explicit-child-resume evidence proves runtime recovery after the Codex status-seeding fix. TypeScript Codex SDK wraps `codex exec`, and raw OpenAI SDKs are a different runtime.
-- Hooks/MCP: keep hooks reference-only unless current Codex config/tooling can prove them safely; keep MCP parked unless a future spec promotes it. Default claim boundary is that hooks and MCP are not required for full-tier service parity.
+- Hooks/MCP: keep service hooks as fixtures/evidence only; distributable hook source belongs downstream under `plugins/agents/hyperresearch/hooks/`. Keep MCP parked unless a future spec promotes it. Default claim boundary is that hooks and MCP are not required for full-tier service parity.
 - Global downstream drift: repair only if dry-run evidence shows it is safe and scoped. Otherwise document it as separate from Hyperresearch scoped sync.
 
 ## Current Closure Result
@@ -72,7 +72,7 @@ Evidence-found fixes:
 
 Remaining non-claims:
 
-- Hook runtime parity is still reference-only, and MCP is parked.
+- Hook guardrail runtime behavior is fixture-proven; managed hook projection/install remains separate, and MCP is parked.
 - Production Inngest readiness is not claimed by this proof.
 - Native automatic descendant rehydration remains a separate runtime track. Same-process child lifecycle passed, but bare `codex-rawr exec resume` could not wait/close original child handles after resume. The accepted recovery strategy is explicit child resume for known child ids after parent resume; replacement-attempt metadata remains fallback hardening for child attempts that still classify non-clean.
 

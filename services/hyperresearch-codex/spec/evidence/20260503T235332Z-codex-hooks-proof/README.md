@@ -1,6 +1,6 @@
 # Codex Hooks Guardrail Proof
 
-Status: fixture-proven guardrails, reference-only installation.
+Status: fixture-proven guardrails; downstream hook source placed separately; managed installation unclaimed.
 
 This bundle proves the two core Hyperresearch Codex hook guardrails in a disposable `CODEX_HOME`; it does not mutate or install anything into the active `~/.codex-rawr` home.
 
@@ -17,7 +17,7 @@ This bundle proves the two core Hyperresearch Codex hook guardrails in a disposa
 ## Important non-claims
 
 - Hook events do not replace source capture, artifact hashes, claim trace, patch log, or final service validation.
-- This is not plugin-packaged hook projection. Downstream material remains reference-only until agent-sync supports managed hook material with dry-run, sync, update, drift, and removal evidence.
+- This is not plugin-packaged hook projection. Downstream hook source now lives under `plugins/agents/hyperresearch/hooks/`, but installation remains unclaimed until agent-sync supports managed hook material with dry-run, sync, update, drift, and removal evidence.
 - MCP, lifecycle hook parity, automatic descendant rehydration, production readiness, and unrelated global plugin drift remain unclaimed.
 
 ## Files

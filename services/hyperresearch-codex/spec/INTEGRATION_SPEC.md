@@ -90,7 +90,7 @@ The `--no-install-reconcile` and `--no-cowork` flags are intentional for scoped 
 
 Hook and MCP drafts must stay in skill references until they are real, verified provider config. Do not place note-only draft material under source `hooks/` or `mcp/` directories. Current hook and MCP policy is recorded in `HOOKS_MCP_PARITY.md`, and the concrete hook proof ladder is `HOOKS_GUARDRAIL_PLAN.md`: Codex `PreToolUse` and `Stop` can become guardrails after fixture proof, missing subagent/compaction hook events are handled by durable ledger and child-session evidence, and Hyperresearch MCP writes are denied by default.
 
-Provider projection rule: downstream Hyperresearch hook material stays reference-only until RAWR agent-sync has a managed hook material kind with dry-run, sync, force/update, drift detection, and removal/garbage-collection evidence. A one-off local `hooks.json` fixture proves local hook runtime behavior only; it does not prove plugin-packaged hook installation.
+Provider projection rule: downstream Hyperresearch hook source lives under `plugins/agents/hyperresearch/hooks/`, but installation/projection remains unclaimed until RAWR agent-sync has a managed hook material kind with dry-run, sync, force/update, drift detection, and removal/garbage-collection evidence. A one-off local `hooks.json` fixture proves local hook runtime behavior only; it does not prove plugin-packaged hook installation.
 
 ## Security And Trust
 

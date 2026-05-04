@@ -39,6 +39,6 @@ For RAWR HQ runtime realization, which Inngest primitives and operational semant
 
 ## Non-Claims
 
-- This does not prove Hooks/MCP runtime parity. Hooks/MCP remain reference-only until their config projection, tool lists, read/write policy, and failure modes are separately validated.
+- This earlier full-tier packet proof did not prove Hooks/MCP runtime parity. Hook guardrail proof is tracked separately; MCP remains parked until its config projection, tool lists, read/write policy, and failure modes are separately validated.
 - This does not prove production Inngest readiness for RAWR. The report recommends spec and proof gates; production claims still require environment-specific Inngest Dev Server, Cloud, or self-hosted proof.
 - This does not resolve unrelated downstream global plugin drift outside scoped Hyperresearch material.

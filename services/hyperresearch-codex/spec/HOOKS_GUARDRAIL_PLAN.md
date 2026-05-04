@@ -32,7 +32,10 @@ Observed proof:
 - Direct fixture execution blocked missing/incomplete/red ledgers and allowed a green ledger with `validation.passed:true`.
 - Runtime `Stop` payload is preserved at `payloads/stop-runtime.jsonl`; the observed payload had `stop_hook_active:false`, so red/green final-answer blocking is proven by direct fixture execution rather than a live final-answer block.
 
-Reference hook candidates live under `services/hyperresearch-codex/references/codex-hooks/`. They are not installed into active Codex homes and do not prove agent-sync hook projection.
+Service-local fixture scripts live under `services/hyperresearch-codex/spec/fixtures/hooks/`.
+The distributable Hyperresearch hook source lives downstream under
+`plugins/agents/hyperresearch/hooks/`. That downstream placement does not by
+itself prove agent-sync hook projection or installation.
 
 ## Non-Claims
 
@@ -130,17 +133,17 @@ DRA proof fill-in:
 - Evidence lives under `spec/evidence/20260503T235332Z-codex-hooks-proof/`.
 - Active `~/.codex-rawr` was not mutated.
 
-### Phase 2: Candidate Hook Material
+### Phase 2: Downstream Hook Source
 
-- Status: complete as reference-only material.
-- Candidate scripts live under `references/codex-hooks/`.
+- Status: complete for source placement.
+- Distributable hook source lives downstream under `plugins/agents/hyperresearch/hooks/`.
+- The service package keeps only fixtures and evidence copies of hook scripts.
 - Local tests cover payload parsing, source guard block/allow, red/green `Stop` decisions, malformed payloads, unsupported events, ledger path precedence, missing validation markers, and timeout classification.
 
 ### Phase 3: Downstream Projection
 
 - Extend RAWR agent-sync to scan and project hook material only after the runtime fixture is green.
 - Prove dry-run, sync, force/update, drift detection, and removal/garbage collection for hook material.
-- Only then move hook material out of reference-only status.
 - Status: open. This phase is not part of the current parity claim.
 
 ## Acceptance
@@ -150,7 +153,7 @@ Core hook guardrail proof is complete when:
 - `PreToolUse` source guard and `Stop` validation guard are fixture-proven;
 - evidence is committed under `spec/evidence`;
 - docs state the exact block/allow behavior and payload shape observed;
-- downstream material is synced only as reference unless a proven hook projection path exists;
+- downstream hook source exists, but managed projection/install remains unclaimed until a proven hook projection path exists;
 - missing lifecycle hooks remain explicit non-claims.
 
 Plugin-packaged hook parity is complete only after agent-sync hook projection exists and has install/update/dry-run/drift/removal evidence.
