@@ -37,6 +37,11 @@ export type MiniBootgraphExecutionResult =
       readonly kind: "mini-runtime.bootgraph-result";
       readonly status: "started";
       readonly startupOrder: readonly string[];
+      /**
+       * Live started values for contained process assembly tests. These values
+       * are not catalog records and must not be treated as portable output.
+       */
+      startedValues(): ReadonlyMap<string, unknown>;
       catalog(): InMemoryRuntimeCatalog;
       finalize(): Promise<InMemoryRuntimeCatalog>;
     }
@@ -217,6 +222,7 @@ export async function executeMiniBootgraph(input: {
     kind: "mini-runtime.bootgraph-result",
     status: "started",
     startupOrder,
+    startedValues: () => new Map(startedById),
     catalog: () => recorder.catalog(),
     async finalize() {
       if (finalized) {

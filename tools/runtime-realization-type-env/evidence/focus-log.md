@@ -4,33 +4,27 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-two.production-critical-scenario-ledger`
-- Focus: define the representative lab-contained production-critical runtime
-  scenario and claim ledger that future Phase Two child workstreams burn down.
+- ID: `phase-two.provider-config-effect-spine`
+- Focus: prove the contained provider/config/secret/Effect spine can provision
+  representative resources into runtime-owned process invocation access without
+  promoting production provider policy.
 - Related manifest entries:
   - `accepted.provider-profile-closure`
   - `vendor.effect.runtime-substrate`
-  - `vendor.boundary.orpc-native-shape`
-  - `vendor.boundary.inngest-handoff-shape`
-  - `simulation.middle-spine-derivation-compiler`
-  - `audit.p0.async-step-membership`
   - `audit.p1.provider-effect-plan-shape`
   - `audit.p1.provider-effect-plan-lowering`
   - `audit.p1.effect-boundary-policy-matrix`
   - `audit.p1.effect-boundary-policy-matrix.residual`
-  - `audit.p1.dispatcher-access`
   - `audit.p1.runtime-resource-access`
   - `audit.p2.runtime-profile-config-redaction`
+  - `audit.p2.provider-effect-process-spine`
   - `audit.p2.server-route-derivation`
   - `audit.p2.adapter-effect-callback-lowering`
   - `audit.p2.async-effect-bridge-lowering`
   - `audit.p2.production-harness-mounting`
   - `audit.p2.first-resource-provider-cut`
-  - `audit.telemetry.hyperdx-observation`
-  - `audit.telemetry.hyperdx-observation.residual`
-  - `audit.migration.control-plane-observation`
-  - `audit.migration.control-plane-observation.residual`
-  - `audit.runtime-research-program-closeout`
+  - `simulation.service-binding-cache-runtime-access`
+  - `simulation.mini-runtime-registry-invocation`
 
 ## Status Meanings
 
