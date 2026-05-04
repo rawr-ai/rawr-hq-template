@@ -1,5 +1,9 @@
 # RAWR Spec Landscape — A Four-Tier Map of a Platform That Refuses to Own What It Manages
 
+Status: current research input / informative / not canonical specification authority.
+
+This report is the broad corpus audit for the next spec-update phase. Use it as a map of cross-spec gaps and follow-up candidates; do not treat it as the active edit plan for any one canonical spec.
+
 ## Executive Summary and Landscape Map
 
 RAWR's specification corpus reads, on careful inspection, as a constitution: thirteen documents in which exactly one — the Effect Runtime Realization System spec — claims runtime authority through a `runtime_authority: yes` declaration, and twelve subordinate themselves explicitly through `runtime_authority: no`, identical vocabulary, and disciplined deferrals [[rawr-effect-runtime-realization-system-spec-analysis-authoritative]] [[rawr-system-architecture-spec-analysis]]. The corpus decomposes into four engineering-coherent platform tiers — Core Runtime, Coordination, Semantic-Composition, and Governance — each anchored by specs whose membership reflects a distinct primary engineering concern rather than a generic architectural label. Per spec, the corpus grades close to A: twelve of the thirteen documents land at A or A−, the architectural separations are crisp, and the standing-on-shoulders-of-giants posture is articulated as a precise ten-rule descriptor-first checklist that every per-vendor integration satisfies in principle [[rawr-service-package-effect-vendor-integration-shape-reference]]. Per system, the corpus grades B+ — held back from a clean A by exactly three integration-law seams that cross spec boundaries unrealized, plus a small cluster of operational-substrate gaps that any production deployment will surface.
