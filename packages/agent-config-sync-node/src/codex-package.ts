@@ -39,8 +39,9 @@ export async function packageCodexPlugin(input: {
   };
 
   if (!input.dryRun) {
-    await ensureDir(path.dirname(manifestPath));
     await input.undoCapture?.captureWriteTarget(pluginDir);
+    await fs.rm(pluginDir, { recursive: true, force: true });
+    await ensureDir(path.dirname(manifestPath));
     await writeJsonFile(manifestPath, manifest);
 
     for (const skill of input.content.skills) {

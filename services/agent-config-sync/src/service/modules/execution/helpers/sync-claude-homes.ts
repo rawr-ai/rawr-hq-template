@@ -131,7 +131,7 @@ export async function syncClaudeHomes(input: {
             if (currentAgents.has(oldAgent)) continue;
             await deleteIfExists({
               target: pathOps.join(agentsDir, `${oldAgent}.md`),
-              kind: "workflow",
+              kind: "agent",
               options: input.options,
               result,
             });
@@ -141,9 +141,20 @@ export async function syncClaudeHomes(input: {
     }
 
     if (!input.options.dryRun) {
-      const pluginManifestTarget = pathOps.join(claudeHome, "plugins", input.sourcePlugin.dirName, "plugin.json");
+      const pluginManifestTarget = pathOps.join(
+        claudeHome,
+        "plugins",
+        input.sourcePlugin.dirName,
+        ".claude-plugin",
+        "plugin.json",
+      );
       const marketplaceTarget = pathOps.join(claudeHome, ".claude-plugin", "marketplace.json");
-      const syncManifestTarget = pathOps.join(claudeHome, "plugins", input.sourcePlugin.dirName, "sync-manifest.json");
+      const syncManifestTarget = pathOps.join(
+        claudeHome,
+        "plugins",
+        input.sourcePlugin.dirName,
+        ".rawr-sync-manifest.json",
+      );
 
       await Promise.all([
         input.options.undoCapture?.captureWriteTarget(marketplaceTarget),

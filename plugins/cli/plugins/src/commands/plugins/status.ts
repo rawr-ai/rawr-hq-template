@@ -3,6 +3,7 @@ import {
   assessWorkspaceSync,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncAssessInput,
+  resolveSourceWorkspaceSelection,
   type SyncScope,
 } from "../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
@@ -13,7 +14,6 @@ import {
   reconcileWorkspaceInstallLinks,
   runtimePluginSnapshot,
 } from "../../lib/plugin-install-service";
-import { findWorkspaceRoot } from "@rawr/core";
 import type { PluginInstallStateStatus } from "@rawr/hq-ops/types";
 
 type SyncStatus = "IN_SYNC" | "DRIFT_DETECTED" | "CONFLICTS";
@@ -51,6 +51,9 @@ export default class PluginsStatus extends RawrCommand {
       description: "Include installed/linked oclif plugins as sync sources where supported",
       default: true,
     }),
+    "source-workspace": Flags.string({
+      description: "RAWR workspace to scan as the source of sync truth",
+    }),
     agent: Flags.string({
       description: "Sync/install status target agent",
       options: ["codex", "claude", "all"],
@@ -78,29 +81,36 @@ export default class PluginsStatus extends RawrCommand {
     const includeSync = checks === "sync" || checks === "all";
     const includeInstall = checks === "install" || checks === "all";
     const includeMetadata = !(flags as any)["material-only"];
+    const includeOclifRequested = Boolean((flags as any)["include-oclif"]);
     const repair = Boolean(flags.repair);
     const noFail = Boolean((flags as any)["no-fail"]);
     const runtimePlugins = runtimePluginSnapshot(this.config.plugins);
 
     try {
-      const workspaceRoot = await findWorkspaceRoot(process.cwd());
-      if (!workspaceRoot) {
-        const result = this.fail("Unable to locate workspace root (expected a ./plugins directory)", { code: "WORKSPACE_ROOT_MISSING" });
-        this.outputResult(result, { flags: baseFlags });
-        this.exit(2);
-        return;
-      }
+      const cwd = process.cwd();
+      const invocationLayered = await loadLayeredRawrConfigForCwd(cwd);
+      const sourceWorkspace = await resolveSourceWorkspaceSelection({
+        cwd,
+        sourceWorkspaceFlag: (flags as any)["source-workspace"] as string | undefined,
+        config: invocationLayered.config ?? undefined,
+        configWorkspacePath: invocationLayered.workspacePath,
+        configGlobalPath: invocationLayered.globalPath,
+      });
+      const workspaceRoot = sourceWorkspace.sourceWorkspaceRoot;
 
       const sync = includeSync
         ? await (async () => {
-            const layered = await loadLayeredRawrConfigForCwd(workspaceRoot);
+            const layered = sourceWorkspace.external
+              ? await loadLayeredRawrConfigForCwd(workspaceRoot)
+              : invocationLayered;
             return assessWorkspaceSync({
               repoRoot: workspaceRoot,
               request: createWorkspaceSyncAssessInput({
                 cwd: workspaceRoot,
+                workspaceRoot,
                 sourcePaths: collectWorkspaceSourcePaths({
                   config: layered.config ?? undefined,
-                  includeOclif: Boolean((flags as any)["include-oclif"]),
+                  includeOclif: includeOclifRequested && !sourceWorkspace.external,
                   configPlugins: this.config.plugins,
                 }),
                 includeMetadata,
@@ -115,15 +125,22 @@ export default class PluginsStatus extends RawrCommand {
           })()
         : null;
 
+      let installError: { message: string; code: string } | null = null;
       let install = includeInstall
         ? await assessPluginInstallState({
             workspaceRoot,
             oclifDataDir: (this.config as any).dataDir as string | undefined,
             runtimePlugins,
             traceId: "plugin-plugins.plugin-install.status-assess",
+          }).catch((error) => {
+            installError = {
+              message: error instanceof Error ? error.message : String(error),
+              code: "INSTALL_STATUS_ASSESSMENT_FAILED",
+            };
+            return null;
           })
         : null;
-      const repairAttempt = repair && includeInstall
+      const repairAttempt = repair && includeInstall && !installError
         ? await reconcileWorkspaceInstallLinks({
             workspaceRoot,
             dryRun: baseFlags.dryRun,
@@ -142,16 +159,19 @@ export default class PluginsStatus extends RawrCommand {
       }
 
       const syncStatus = sync?.status ?? "IN_SYNC";
-      const installStatus = (install?.status ?? "IN_SYNC") as PluginInstallStateStatus;
+      const installStatus = (install?.status ?? (installError ? "DRIFT_DETECTED" : "IN_SYNC")) as PluginInstallStateStatus;
       const overall: OverallStatus =
         (includeSync && syncStatus !== "IN_SYNC") || (includeInstall && installStatus !== "IN_SYNC")
           ? "NEEDS_CONVERGENCE"
           : "HEALTHY";
 
       const actions: Array<{ command: string; reason: string }> = [];
+      const sourceWorkspaceArg = sourceWorkspace.selectedBy === "flag"
+        ? ` --source-workspace ${sourceWorkspace.sourceWorkspaceRoot}`
+        : "";
       if (sync && sync.status !== "IN_SYNC") {
         actions.push({
-          command: "rawr plugins sync all --json",
+          command: `rawr plugins sync all --json${sourceWorkspaceArg}`,
           reason: "Converge content sync drift and refresh provider-side artifacts",
         });
       }
@@ -163,6 +183,13 @@ export default class PluginsStatus extends RawrCommand {
             reason: "Reconcile local command plugin links against workspace sources",
           });
         }
+      }
+      const installErrorMessage = (installError as { message: string; code: string } | null)?.message;
+      if (installErrorMessage) {
+        actions.push({
+          command: "rawr plugins status --checks sync --json",
+          reason: `Install check failed before link assessment: ${installErrorMessage}`,
+        });
       }
 
       const dedupedActions = actions.filter(
@@ -194,6 +221,7 @@ export default class PluginsStatus extends RawrCommand {
         },
         sync,
         install,
+        installError,
         actions: dedupedActions,
       });
 
@@ -205,6 +233,7 @@ export default class PluginsStatus extends RawrCommand {
           this.log(`sync: ${includeSync ? syncStatus : "SKIPPED"}`);
           this.log(`install: ${includeInstall ? installStatus : "SKIPPED"}`);
           this.log(`overall: ${overall}`);
+          if (installErrorMessage) this.log(`install error: ${installErrorMessage}`);
           if (repair) {
             this.log(`repair: ${repairAttempt?.action ?? (includeInstall ? "skipped" : "unavailable")}`);
           }

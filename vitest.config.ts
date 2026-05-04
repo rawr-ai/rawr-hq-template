@@ -67,6 +67,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/agent-config-sync-node"),
+        test: { name: "agent-config-sync-node", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("services/example-todo"),
         test: { name: "example-todo", environment: "node", include: [...includes] },
       },

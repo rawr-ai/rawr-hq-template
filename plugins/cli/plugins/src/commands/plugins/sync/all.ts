@@ -13,6 +13,7 @@ import {
   resolveDefaultCodexOutDir,
   resolveDefaultCoworkOutDir,
   resolveProviderContent,
+  resolveSourceWorkspaceSelection,
   retireStaleManagedPlugins,
   runSync,
   type SyncItemResult,
@@ -37,6 +38,9 @@ export default class PluginsSyncAll extends RawrCommand {
     "include-oclif": Flags.boolean({
       description: "Include installed/linked oclif plugins as sync sources",
       default: true,
+    }),
+    "source-workspace": Flags.string({
+      description: "RAWR workspace to scan as the source of sync truth",
     }),
     agent: Flags.string({
       description: "Sync target agent",
@@ -115,8 +119,19 @@ export default class PluginsSyncAll extends RawrCommand {
 
     try {
       const cwd = process.cwd();
-      const layered = await loadLayeredRawrConfigForCwd(process.cwd());
-      const includeOclif = Boolean((flags as any)["include-oclif"]);
+      const invocationLayered = await loadLayeredRawrConfigForCwd(cwd);
+      const sourceWorkspace = await resolveSourceWorkspaceSelection({
+        cwd,
+        sourceWorkspaceFlag: (flags as any)["source-workspace"] as string | undefined,
+        config: invocationLayered.config ?? undefined,
+        configWorkspacePath: invocationLayered.workspacePath,
+        configGlobalPath: invocationLayered.globalPath,
+      });
+      const workspaceRoot = sourceWorkspace.sourceWorkspaceRoot;
+      const layered = sourceWorkspace.external
+        ? await loadLayeredRawrConfigForCwd(workspaceRoot)
+        : invocationLayered;
+      const includeOclif = Boolean((flags as any)["include-oclif"]) && !sourceWorkspace.external;
       const scope = String((flags as any).scope) as SyncScope;
       const coworkEnabled = Boolean((flags as any).cowork);
       const codexPackageEnabled = Boolean((flags as any)["codex-package"]);
@@ -130,7 +145,8 @@ export default class PluginsSyncAll extends RawrCommand {
       const gcEnabled = Boolean(flags.gc);
 
       const planRequest = createWorkspaceSyncPlanInput({
-        cwd,
+        cwd: workspaceRoot,
+        workspaceRoot,
         sourcePaths: collectWorkspaceSourcePaths({
           config: layered.config ?? undefined,
           includeOclif,
@@ -156,11 +172,11 @@ export default class PluginsSyncAll extends RawrCommand {
         },
       });
       const plan = await planWorkspaceSync({
-        repoRoot: cwd,
+        repoRoot: workspaceRoot,
         request: planRequest,
         traceId: "plugin-plugins.agent-config-sync.plan-workspace-sync-all",
       });
-      const { workspaceRoot, syncable, skipped: mergedSkipped } = plan;
+      const { syncable, skipped: mergedSkipped } = plan;
       const partialReasons = plan.fullSyncPolicy.partialReasons;
       const includeAgentsInCodex = plan.includeAgentsInCodex;
       const includeAgentsInClaude = plan.includeAgentsInClaude;

@@ -17,12 +17,14 @@ import {
   beginPluginsSyncUndoCapture as beginServicePluginsSyncUndoCapture,
   PLUGINS_SYNC_UNDO_PROVIDER,
 } from "@rawr/agent-config-sync/undo";
+import {
+  createNodeAgentConfigSyncResources,
+  installAndEnableClaudePlugin,
+  packageCodexPlugin,
+  packageCoworkPlugin,
+} from "@rawr/agent-config-sync-node";
 import { createAgentConfigSyncClient } from "./agent-config-sync-binding";
-import { installAndEnableClaudePlugin } from "./agent-config-sync-resources/claude-cli";
-import { packageCodexPlugin } from "./agent-config-sync-resources/codex-package";
-import { packageCoworkPlugin } from "./agent-config-sync-resources/cowork-package";
-import { createNodeAgentConfigSyncResources } from "./agent-config-sync-resources/resources";
-import type { HostSourceContent as SourceContent, HostSourcePlugin as SourcePlugin } from "./agent-config-sync-resources/types";
+import type { HostSourceContent as SourceContent, HostSourcePlugin as SourcePlugin } from "@rawr/agent-config-sync-node/types";
 import { findWorkspaceRoot } from "@rawr/core";
 
 export type UndoCaptureLike = AgentConfigSyncUndoCapture;
@@ -42,6 +44,9 @@ type SyncDestinationConfig = {
 
 type LayeredSyncConfig = {
   sync?: {
+    sourceWorkspace?: {
+      rootPath?: string;
+    };
     sources?: {
       paths?: string[];
     };
@@ -56,6 +61,13 @@ type LayeredSyncConfig = {
       };
     };
   };
+};
+
+export type SourceWorkspaceSelection = {
+  invocationWorkspaceRoot: string | null;
+  sourceWorkspaceRoot: string;
+  external: boolean;
+  selectedBy: "flag" | "config" | "cwd";
 };
 
 /**
@@ -85,6 +97,55 @@ function expandTilde(inputPath: string): string {
   if (inputPath === "~") return homeDir();
   if (inputPath.startsWith("~/")) return path.join(homeDir(), inputPath.slice(2));
   return inputPath;
+}
+
+function resolveWorkspaceCandidate(input: {
+  rawPath: string;
+  baseDir: string;
+}): string {
+  const expanded = expandTilde(input.rawPath);
+  return path.isAbsolute(expanded) ? path.resolve(expanded) : path.resolve(input.baseDir, expanded);
+}
+
+/**
+ * Resolves the RAWR workspace whose plugin content is the sync source of truth.
+ */
+export async function resolveSourceWorkspaceSelection(input: {
+  cwd: string;
+  sourceWorkspaceFlag?: string;
+  config?: LayeredSyncConfig | null;
+  configWorkspacePath?: string | null;
+  configGlobalPath?: string | null;
+}): Promise<SourceWorkspaceSelection> {
+  const invocationWorkspaceRoot = await findWorkspaceRoot(input.cwd);
+  const configured = input.config?.sync?.sourceWorkspace?.rootPath?.trim();
+  const selectedBy = input.sourceWorkspaceFlag && input.sourceWorkspaceFlag.trim().length > 0
+    ? "flag"
+    : configured && configured.length > 0
+      ? "config"
+      : "cwd";
+  const configBaseDir = input.configWorkspacePath
+    ? path.dirname(input.configWorkspacePath)
+    : input.configGlobalPath
+      ? path.dirname(input.configGlobalPath)
+      : input.cwd;
+  const candidate = selectedBy === "flag"
+    ? resolveWorkspaceCandidate({ rawPath: input.sourceWorkspaceFlag!.trim(), baseDir: input.cwd })
+    : selectedBy === "config"
+      ? resolveWorkspaceCandidate({ rawPath: configured!, baseDir: configBaseDir })
+      : input.cwd;
+  const sourceWorkspaceRoot = await findWorkspaceRoot(candidate);
+
+  if (!sourceWorkspaceRoot) {
+    throw new Error(`Unable to locate source workspace root for ${candidate}`);
+  }
+
+  return {
+    invocationWorkspaceRoot,
+    sourceWorkspaceRoot,
+    external: invocationWorkspaceRoot ? path.resolve(invocationWorkspaceRoot) !== path.resolve(sourceWorkspaceRoot) : false,
+    selectedBy,
+  };
 }
 
 /**
@@ -190,6 +251,7 @@ export function collectWorkspaceSourcePaths(input: {
  */
 export function createWorkspaceSyncPlanInput(input: {
   cwd: string;
+  workspaceRoot?: string;
   sourcePaths: string[];
   includeMetadata: boolean;
   scope: SyncScope;
@@ -202,6 +264,7 @@ export function createWorkspaceSyncPlanInput(input: {
   const syncPolicy = syncProviderPolicy(input.config);
   return {
     cwd: input.cwd,
+    ...(input.workspaceRoot ? { workspaceRoot: input.workspaceRoot } : {}),
     sourcePaths: input.sourcePaths,
     includeMetadata: input.includeMetadata,
     scope: input.scope,
@@ -222,6 +285,7 @@ export function createWorkspaceSyncPlanInput(input: {
  */
 export function createWorkspaceSyncAssessInput(input: {
   cwd: string;
+  workspaceRoot?: string;
   sourcePaths: string[];
   includeMetadata: boolean;
   scope: SyncScope;
@@ -233,6 +297,7 @@ export function createWorkspaceSyncAssessInput(input: {
   const syncPolicy = syncProviderPolicy(input.config);
   return {
     cwd: input.cwd,
+    ...(input.workspaceRoot ? { workspaceRoot: input.workspaceRoot } : {}),
     sourcePaths: input.sourcePaths,
     includeMetadata: input.includeMetadata,
     scope: input.scope,

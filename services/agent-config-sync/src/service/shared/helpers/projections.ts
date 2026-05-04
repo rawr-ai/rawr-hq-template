@@ -214,7 +214,7 @@ function buildClaudeProjections(input: {
     source: input.sourcePlugin.dirName,
     sourcePath: input.sourcePlugin.absPath,
     targetPaths: pluginDirs.flatMap((dir) => [
-      pathOps.join(dir, "plugin.json"),
+      pathOps.join(dir, ".claude-plugin", "plugin.json"),
       pathOps.join(dir, ".rawr-sync-manifest.json"),
     ]),
     distributionMode: "local_plugin_install",

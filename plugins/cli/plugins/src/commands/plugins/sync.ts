@@ -14,11 +14,11 @@ import {
   resolveDefaultCodexOutDir,
   resolveDefaultCoworkOutDir,
   resolveProviderContent,
+  resolveSourceWorkspaceSelection,
   runSync,
 } from "../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
-import { findWorkspaceRoot } from "@rawr/core";
 
 import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "../../lib/plugin-install-service";
 
@@ -81,6 +81,9 @@ export default class PluginsSync extends RawrCommand {
       description: "Codex home path (repeatable)",
       multiple: true,
     }),
+    "source-workspace": Flags.string({
+      description: "RAWR workspace to scan as the source of sync truth",
+    }),
     "claude-home": Flags.string({
       description: "Claude local home path (repeatable, e.g. ~/.claude/plugins/local)",
       multiple: true,
@@ -104,16 +107,18 @@ export default class PluginsSync extends RawrCommand {
     try {
       const pluginRef = String(args["plugin-ref"]);
       const cwd = process.cwd();
-
-      const workspaceRoot = await findWorkspaceRoot(cwd);
-      if (!workspaceRoot) {
-        const result = this.fail("Unable to locate workspace root (expected a ./plugins directory)", { code: "WORKSPACE_ROOT_MISSING" });
-        this.outputResult(result, { flags: baseFlags });
-        this.exit(2);
-        return;
-      }
-
-      const layered = await loadLayeredRawrConfigForCwd(cwd);
+      const invocationLayered = await loadLayeredRawrConfigForCwd(cwd);
+      const sourceWorkspace = await resolveSourceWorkspaceSelection({
+        cwd,
+        sourceWorkspaceFlag: (flags as any)["source-workspace"] as string | undefined,
+        config: invocationLayered.config ?? undefined,
+        configWorkspacePath: invocationLayered.workspacePath,
+        configGlobalPath: invocationLayered.globalPath,
+      });
+      const workspaceRoot = sourceWorkspace.sourceWorkspaceRoot;
+      const layered = sourceWorkspace.external
+        ? await loadLayeredRawrConfigForCwd(workspaceRoot)
+        : invocationLayered;
       const coworkEnabled = Boolean((flags as any).cowork);
       const claudeInstallEnabled = Boolean((flags as any)["claude-install"]);
       const claudeEnableEnabled = Boolean((flags as any)["claude-enable"]);
@@ -121,7 +126,8 @@ export default class PluginsSync extends RawrCommand {
       const plan = await planWorkspaceSync({
         repoRoot: workspaceRoot,
         request: createWorkspaceSyncPlanInput({
-          cwd,
+          cwd: workspaceRoot,
+          workspaceRoot,
           sourcePaths: collectWorkspaceSourcePaths({
             config: layered.config ?? undefined,
             includeOclif: false,
@@ -149,7 +155,7 @@ export default class PluginsSync extends RawrCommand {
         }),
         traceId: "plugin-plugins.agent-config-sync.plan-single-sync",
       });
-      const planned = findPlannedSyncable({ plan, pluginRef, cwd });
+      const planned = findPlannedSyncable({ plan, pluginRef, cwd: workspaceRoot });
       if (!planned) {
         const result = this.fail("Unable to resolve sync source plugin", {
           code: "PLUGIN_SOURCE_NOT_FOUND",

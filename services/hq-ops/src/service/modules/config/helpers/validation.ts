@@ -123,6 +123,12 @@ export function validateRawrConfig(
     sync: cfg.sync
       ? {
           ...cfg.sync,
+          sourceWorkspace: cfg.sync.sourceWorkspace
+            ? {
+                ...cfg.sync.sourceWorkspace,
+                rootPath: cfg.sync.sourceWorkspace.rootPath?.trim(),
+              }
+            : cfg.sync.sourceWorkspace,
           sources: cfg.sync.sources
             ? {
                 ...cfg.sync.sources,

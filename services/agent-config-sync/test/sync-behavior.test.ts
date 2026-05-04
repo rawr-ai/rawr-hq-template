@@ -149,6 +149,51 @@ describe("agent-config-sync service behavior", () => {
     expect(registry.plugins[0]).toMatchObject({ name: "plugin-demo", agents: ["researcher"] });
   });
 
+  it("projects Codex direct mirror material without claiming unsupported hook parity", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    await fs.mkdir(path.join(workspace.pluginRoot, "hooks"), { recursive: true });
+    await fs.writeFile(path.join(workspace.pluginRoot, "hooks", "pre-tool-use.json"), "{\"type\":\"PreToolUse\"}\n", "utf8");
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+
+    const result = await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      includeAgentsInCodex: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-codex-direct-supported-material" } } });
+
+    expect(result.ok).toBe(true);
+    await expect(fs.readFile(path.join(codexHome, "prompts", "hello.md"), "utf8")).resolves.toBe("# hello\n");
+    await expect(fs.readFile(path.join(codexHome, "skills", "demo-skill", "SKILL.md"), "utf8")).resolves.toBe("# Demo Skill\n");
+    await expect(fs.readFile(path.join(codexHome, "scripts", "plugin-demo--demo.sh"), "utf8")).resolves.toBe("echo demo\n");
+    await expect(fs.readFile(path.join(codexHome, "agents", "researcher.toml"), "utf8")).resolves.toContain("developer_instructions");
+    await expect(fs.stat(path.join(codexHome, "hooks"))).rejects.toThrow();
+    expect(result.projections.map((projection) => projection.materialKind)).toEqual(expect.arrayContaining([
+      "workflow",
+      "skill",
+      "script",
+      "agent",
+      "plugin_metadata",
+    ]));
+    expect(result.projections.some((projection) => projection.materialKind === "hook")).toBe(false);
+    const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
+    expect(registry.plugins[0]).toMatchObject({
+      name: "plugin-demo",
+      prompts: ["hello"],
+      skills: ["demo-skill"],
+      scripts: ["plugin-demo--demo.sh"],
+      agents: ["researcher"],
+    });
+  });
+
   it("keeps Codex agent projection opt-in and records unsupported projection metadata when disabled", async () => {
     const workspace = await makeParityWorkspace();
     const { codexHome } = await makeProviderHomes();
@@ -225,6 +270,33 @@ describe("agent-config-sync service behavior", () => {
     await expect(fs.readFile(path.join(codexHome, "agents", "unmanaged.toml"), "utf8")).resolves.toBe("name = \"unmanaged\"\n");
   });
 
+  it("replaces managed skill directories so removed files do not survive convergence", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const skillDir = path.join(codexHome, "skills", "demo-skill");
+    await fs.mkdir(skillDir, { recursive: true });
+    await fs.writeFile(path.join(skillDir, "SKILL.md"), "# stale\n", "utf8");
+    await fs.writeFile(path.join(skillDir, "removed.md"), "stale\n", "utf8");
+
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+    const result = await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-skill-dir-replacement" } } });
+
+    expect(result.ok).toBe(true);
+    await expect(fs.readFile(path.join(skillDir, "SKILL.md"), "utf8")).resolves.toBe("# Demo Skill\n");
+    await expect(fs.stat(path.join(skillDir, "removed.md"))).rejects.toThrow();
+  });
+
   it("resolves provider overlay content through the service with primitive file resources", async () => {
     const sourceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-provider-content-"));
     tempDirs.push(sourceRoot);
@@ -280,6 +352,132 @@ describe("agent-config-sync service behavior", () => {
     expect(resolved.scripts).toEqual([
       { name: "claude.sh", absPath: path.join(sourceRoot, "providers", "claude", "scripts", "claude.sh") },
     ]);
+  });
+
+  it("preserves base-disabled material when provider overlay omits an include mask", async () => {
+    const sourceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-provider-include-"));
+    tempDirs.push(sourceRoot);
+    await fs.mkdir(path.join(sourceRoot, "base", "workflows"), { recursive: true });
+    await fs.mkdir(path.join(sourceRoot, "providers", "codex", "workflows"), { recursive: true });
+    await fs.writeFile(
+      path.join(sourceRoot, "package.json"),
+      JSON.stringify({
+        name: "@rawr/plugin-provider-include",
+        rawr: {
+          pluginContent: {
+            version: 1,
+            contentRoot: "base",
+            include: { workflows: false, skills: true, scripts: true, agents: true },
+            providers: {
+              codex: {
+                overlayRoot: "providers/codex",
+              },
+            },
+          },
+        },
+      }),
+      "utf8",
+    );
+    await fs.writeFile(path.join(sourceRoot, "base", "workflows", "base.md"), "# base\n", "utf8");
+    await fs.writeFile(path.join(sourceRoot, "providers", "codex", "workflows", "codex.md"), "# codex\n", "utf8");
+
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+    const resolved = await client.execution.resolveProviderContent({
+      agent: "codex",
+      sourcePlugin: {
+        ref: "provider-include",
+        absPath: sourceRoot,
+        dirName: "provider-include",
+        packageName: "@rawr/plugin-provider-include",
+      },
+      base: {
+        workflowFiles: [],
+        skills: [],
+        scripts: [],
+        agentFiles: [],
+      },
+    }, { context: { invocation: { traceId: "test-provider-include-mask" } } });
+
+    expect(resolved.workflowFiles).toEqual([]);
+  });
+
+  it("writes and reports Claude metadata at provider-native plugin paths", async () => {
+    const workspace = await makeParityWorkspace();
+    const { claudeHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, claudeHome);
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+
+    const result = await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [],
+      claudeHomes: [claudeHome],
+      includeCodex: false,
+      includeClaude: true,
+      includeAgentsInClaude: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-claude-metadata-paths" } } });
+
+    const pluginDir = path.join(claudeHome, "plugins", "plugin-demo");
+    await expect(fs.readFile(path.join(pluginDir, ".claude-plugin", "plugin.json"), "utf8")).resolves.toContain("plugin-demo");
+    await expect(fs.readFile(path.join(pluginDir, ".rawr-sync-manifest.json"), "utf8")).resolves.toContain("plugin-demo");
+    expect(result.projections).toContainEqual(expect.objectContaining({
+      provider: "claude",
+      materialKind: "plugin_metadata",
+      targetPaths: [
+        path.join(pluginDir, ".claude-plugin", "plugin.json"),
+        path.join(pluginDir, ".rawr-sync-manifest.json"),
+      ],
+    }));
+  });
+
+  it("reports Claude GC item kinds for stale workflows and stale agents accurately", async () => {
+    const workspace = await makeParityWorkspace();
+    const { claudeHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, claudeHome);
+    const pluginDir = path.join(claudeHome, "plugins", "plugin-demo");
+    await fs.mkdir(path.join(pluginDir, "commands"), { recursive: true });
+    await fs.mkdir(path.join(pluginDir, "agents"), { recursive: true });
+    await fs.writeFile(path.join(pluginDir, "commands", "old-workflow.md"), "# old\n", "utf8");
+    await fs.writeFile(path.join(pluginDir, "agents", "old-agent.md"), "# old\n", "utf8");
+    await fs.writeFile(
+      path.join(pluginDir, ".rawr-sync-manifest.json"),
+      JSON.stringify({
+        plugin: "plugin-demo",
+        sourcePluginPath: workspace.pluginRoot,
+        workflows: ["old-workflow"],
+        skills: [],
+        scripts: [],
+        agents: ["old-agent"],
+        syncedAt: "2026-01-01T00:00:00.000Z",
+        managedBy: "@rawr/plugin-plugins",
+      }, null, 2),
+      "utf8",
+    );
+
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+    const result = await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: { workflowFiles: [], skills: [], scripts: [], agentFiles: [] },
+      codexHomes: [],
+      claudeHomes: [claudeHome],
+      includeCodex: false,
+      includeClaude: true,
+      includeAgentsInClaude: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-claude-gc-kind-metadata" } } });
+
+    expect(result.ok).toBe(true);
+    await expect(fs.stat(path.join(pluginDir, "commands", "old-workflow.md"))).rejects.toThrow();
+    await expect(fs.stat(path.join(pluginDir, "agents", "old-agent.md"))).rejects.toThrow();
+    expect(result.targets[0]?.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ action: "deleted", kind: "workflow", target: path.join(pluginDir, "commands", "old-workflow.md") }),
+      expect.objectContaining({ action: "deleted", kind: "agent", target: path.join(pluginDir, "agents", "old-agent.md") }),
+    ]));
   });
 
   it("retires stale managed Codex entries through service-owned retirement behavior", async () => {

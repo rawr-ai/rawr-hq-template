@@ -45,15 +45,15 @@ Do not weaken partial-mode guardrails by default.
 - Any change to defaults/flags must update:
   - `plugins/cli/plugins/README.md`
   - `plugins/cli/plugins/agent-pack/skills/agent-sync/SKILL.md`
-  - `docs/process/PLUGIN_E2E_WORKFLOW.md` (if operator behavior changes)
+  - `services/agent-config-sync/test/TESTING_PLAN.md` (if sync guarantees or gates change)
 
 ## Verification Loop
 
 From repo root:
 
 ```bash
-bunx nx run-many -t build --projects=@rawr/agent-config-sync,@rawr/plugin-plugins
-bunx nx run-many -t test --projects=@rawr/agent-config-sync,@rawr/plugin-plugins
+bunx nx run-many -t build --projects=@rawr/agent-config-sync,@rawr/agent-config-sync-node,@rawr/plugin-plugins
+bunx nx run-many -t test --projects=@rawr/agent-config-sync,@rawr/agent-config-sync-node,@rawr/plugin-plugins
 rawr plugins sync all --dry-run --json
 ```
 
@@ -65,6 +65,6 @@ rawr plugins sync all --json
 
 ## Related Guidance
 
-- `docs/process/PLUGIN_E2E_WORKFLOW.md`
-- `plugins/agents/hq/skills/plugin-content/SKILL.md`
-- `plugins/agents/hq/workflows/manage.md`
+- `services/agent-config-sync/test/TESTING_PLAN.md`
+- `plugins/cli/plugins/README.md`
+- `plugins/cli/plugins/agent-pack/skills/agent-sync/SKILL.md`

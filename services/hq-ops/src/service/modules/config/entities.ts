@@ -60,6 +60,14 @@ export const SyncConfigSchema = Type.Object(
         { additionalProperties: false },
       ),
     ),
+    sourceWorkspace: Type.Optional(
+      Type.Object(
+        {
+          rootPath: Type.Optional(Type.String({ minLength: 1 })),
+        },
+        { additionalProperties: false },
+      ),
+    ),
     sources: Type.Optional(
       Type.Object(
         {
