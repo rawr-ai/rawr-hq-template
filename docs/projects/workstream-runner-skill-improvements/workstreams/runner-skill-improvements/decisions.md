@@ -1,6 +1,6 @@
 # Decisions — Workstream-Runner Skill Improvements Workstream
 
-Status: Phase 0 complete (2026-05-04). Six DRA-default decisions seeded from meta-design passes; brief-borderline items resolved at framing time. Phase 1 unblocked.
+Status: workstream closed (2026-05-04). Six DRA-default decisions seeded from meta-design passes at Phase 0; D-4 resolved at Phase 2 framing as Option B (leave `workstream-review-loops/` unchanged) after voice review came back clean. All decisions locked.
 
 This document is the canonical record of every workstream-level execution-scope choice the brief explicitly leaves to the executing DRA, plus the meta-design pass output the brief mandates (Recommendation #1). It is the dogfooded `decisions.md` for this workstream — the same artifact Recommendation #2 promotes to a core canonical artifact.
 
@@ -113,11 +113,11 @@ Output: the brief is **research-grade and decision-locked**. It typed-distinguis
 - **B — Leave unchanged.** Avoids touching a sibling skill. The custom lane is documented in this workstream's record and decisions; future DRAs will see the pattern in the workstream artifacts.
 - **C — Defer to Phase 2.** Decide based on whether the voice-review lane's design surfaces other minor edits; bundle them or skip together.
 
-**Chosen:** **Option C — defer to Phase 2.**
+**Chosen at Phase 2 framing: Option B — leave `review-lanes.md` unchanged.**
 
-**Rationale:** the brief makes this DRA judgment, and the right judgment depends on whether the voice reviewer's design surfaces a concrete one-line addition that genuinely belongs in `review-lanes.md`. If it does, A is cheap and adds discoverability. If it does not, B avoids an unnecessary touch. Defer to Phase 2 framing.
+**Rationale:** the Phase 2 voice-review lane was defined ad-hoc with a tightly-scoped prompt and produced a clean pass verdict (0 P1, 1 P2, 3 P3) without surfacing a concrete one-line addition that genuinely belongs in the sibling skill's lane patterns list. The lane pattern is fully documented in this workstream's `record.md` §Review, `lane-plan.md`, and the voice-review finding artifact — those are sufficient discoverability for any future DRA who searches the workstream evidence. Option A would add a row whose substantive content is "see this workstream's artifacts," which is reverse-discoverability — pointing the canonical skill at one workstream's pattern is exactly the layer-crossing the brief warned against in §4.
 
-**Downstream effect:** Phase 2 voice-review lane definition triggers a re-decision of A vs B. Record outcome here at that point.
+**Downstream effect:** `tools/workstream-plugin-pack/skills/workstream-review-loops/` not touched. This workstream's containment boundary tightens to `tools/workstream-plugin-pack/skills/workstream-runner/` exclusively.
 
 ### D-5 — Sync question disposition
 
@@ -125,15 +125,15 @@ Output: the brief is **research-grade and decision-locked**. It typed-distinguis
 
 **Options:**
 
-- **A — Resolve in this workstream.** Investigate `install-local-codex-pack.ts` and confirm the sync command for `~/.claude/plugins/local/plugins/habitat/`. Add to closure verification.
+- **A — Resolve in this workstream.** Investigate `install-local-codex-pack.ts` and confirm the sync command for the deployed plugin copy on the user's local machine. Add to closure verification.
 - **B — Escalate as Next-Packet finding with all data the user needs.** Investigate enough to confirm sync is manual and to identify the path mismatch; surface the unresolved sub-question to user.
 - **C — Defer entirely without investigation.** Note as a follow-up; let user discover at next session.
 
 **Chosen:** **Option B.**
 
-**Rationale:** the install script is manual (no watcher, no hook, no auto-sync), confirmed from `tools/workstream-plugin-pack/scripts/install-local-codex-pack.ts` and `tools/workstream-plugin-pack/notes/downstream-port-notes.md`. But the script's `--target=downstream` writes to `<downstream-root>/plugins/agents/habitat/`, which does not match the deployed copy at `~/.claude/plugins/local/plugins/habitat/`. The mismatch is a real question that requires user input on what `~/.claude/plugins/local/...` is governed by. Option A would expand scope beyond the brief; Option C would leave the user without context. Option B answers what the code permits and surfaces what only the user knows.
+**Rationale:** the install script is manual (no watcher, no hook, no auto-sync), confirmed from `tools/workstream-plugin-pack/scripts/install-local-codex-pack.ts` and `tools/workstream-plugin-pack/notes/downstream-port-notes.md`. But the script's `--target=downstream` writes to a configured downstream root that does not match the path layout where the deployed plugin copy lives on the user's local machine. The mismatch is a real question that requires user input on what governs the deployed copy's location. Option A would expand scope beyond the brief; Option C would leave the user without context. Option B answers what the code permits and surfaces what only the user knows.
 
-**Downstream effect:** Next Packet entry at closure includes (a) confirmed: sync is manual; (b) sub-question: is `~/.claude/plugins/local/plugins/habitat/` the same target as `<downstream-root>/plugins/agents/habitat/` via configured `--downstream-root`, or is it a different sync mechanism?
+**Downstream effect:** Next Packet entry at closure includes (a) confirmed: sync is manual; (b) sub-question: is the deployed plugin copy on the user's local machine the same target as the install script's `--target=downstream` via configured `--downstream-root`, or is it a different sync mechanism?
 
 ### D-6 — Record sizing
 

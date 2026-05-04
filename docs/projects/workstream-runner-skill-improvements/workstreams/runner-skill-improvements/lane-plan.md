@@ -36,7 +36,7 @@ Lanes are sequenced by SKILL.md write order so step renumbering is correct on fi
 - Restructuring the skill schema (existing section ordering, frontmatter, file naming).
 - Adding files outside the brief's enumerated targets.
 - Editing companion-steward agent briefs at `tools/workstream-plugin-pack/agents/`.
-- Touching `~/.claude/plugins/local/plugins/habitat/` directly.
+- Touching the deployed plugin copy on the user's local machine directly.
 - Editing `workstream-review-loops/` beyond a one-line acknowledgment row in `references/review-lanes.md`, and only if Decision D-4 resolves to do so.
 - Subject-matter changes to existing references / assets that are not enumerated in the lane (e.g., L4 may reinforce `closure.md` for Rec #3's DRA Finalize step but may not edit unrelated guidance).
 
