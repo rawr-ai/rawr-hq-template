@@ -7,8 +7,8 @@
 // - Layer/Scope construction and disposal as provisioning/finalization mechanics.
 // - no public service/plugin/app/provider declaration receiving runtime handles.
 //
-// This remains xfail because the current lab uses inert RawrEffect sentinels and
-// does not compile against or execute the real Effect runtime.
+// This remains xfail because the lab now proves real Effect mechanics but has
+// not locked the final RAWR-owned runtime-substrate public/internal contract.
 
 export interface ExpectedManagedRuntimeSubstrateProof {
   readonly owner: "runtime-substrate";

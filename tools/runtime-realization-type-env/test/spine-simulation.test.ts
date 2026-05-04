@@ -131,6 +131,36 @@ describe("runtime realization type env simulation", () => {
         },
       ]),
     ).toThrow("descriptor table entry mismatch");
+
+    const sameIdDifferentIdentityRef = {
+      ...CreateWorkItemRef,
+      routePath: ["items", "rename"],
+    };
+    const sameIdDifferentIdentityDescriptor = {
+      ...CreateWorkItemDescriptor,
+      ref: sameIdDifferentIdentityRef,
+    };
+
+    expect(() =>
+      createExecutionDescriptorTable([
+        {
+          ref: CreateWorkItemRef,
+          descriptor: sameIdDifferentIdentityDescriptor,
+        },
+      ]),
+    ).toThrow("descriptor table entry mismatch");
+
+    expect(() =>
+      createExecutionRegistry({
+        plans: [
+          {
+            ...CreateWorkItemPlan,
+            ref: sameIdDifferentIdentityRef,
+          },
+        ],
+        descriptorTable: table,
+      }),
+    ).toThrow("execution plan descriptor mismatch");
   });
 
   test("supplies runtime-bound values through invocation context", async () => {
@@ -153,52 +183,55 @@ describe("runtime realization type env simulation", () => {
       descriptorTable: table,
     });
     const runtime = createProcessExecutionRuntime({ registry });
-
-    const result = runtime.invoke<WorkItem>({
-      ref: CreateWorkItemRef,
-      context: {
-        input: {
-          title: "From invocation",
-        },
+    try {
+      const result = await runtime.invoke<WorkItem>({
+        ref: CreateWorkItemRef,
         context: {
-          request: {
-            async requireActor() {
-              return { id: "actor-1" };
-            },
+          input: {
+            title: "From invocation",
           },
-          clients,
-          resources: {
-            kind: "runtime.resource-access",
-          } as RuntimeResourceAccess,
-          workflows: dispatcher,
+          context: {
+            request: {
+              async requireActor() {
+                return { id: "actor-1" };
+              },
+            },
+            clients,
+            resources: {
+              kind: "runtime.resource-access",
+            } as RuntimeResourceAccess,
+            workflows: dispatcher,
+          },
+          telemetry: {
+            event() {},
+          },
+          execution: {
+            traceId: "trace-1",
+          },
         },
-        telemetry: {
-          event() {},
-        },
-        execution: {
-          traceId: "trace-1",
-        },
-      },
-    });
+      });
 
-    expect(result.status).toBe("success");
-    if (result.status !== "success") throw result.error;
+      expect(result.status).toBe("success");
+      if (result.status !== "success") throw result.error;
 
-    expect(result.output).toEqual({
-      id: "created-1",
-      title: "From invocation",
-      status: "open",
-    });
-    expect(traces).toEqual(["trace-1"]);
-    expect(result.events.map((event) => event.name)).toEqual([
-      "runtime.invoke.start",
-      "runtime.registry.resolve",
-      "runtime.effect-runtime.enter",
-      "runtime.invoke.success",
-    ]);
+      expect(result.output).toEqual({
+        id: "created-1",
+        title: "From invocation",
+        status: "open",
+      });
+      expect(traces).toEqual(["trace-1"]);
+      expect(result.events.map((event) => event.name)).toEqual([
+        "runtime.invoke.start",
+        "runtime.registry.resolve",
+        "runtime.effect-runtime.enter",
+        "runtime.invoke.success",
+      ]);
+    } finally {
+      await runtime.dispose();
+    }
   });
 
-  test("runs direct RawrEffect descriptor bodies through the same runtime path", () => {
+  test("runs direct RawrEffect descriptor bodies through the same runtime path", async () => {
     const directEffectDescriptor = {
       ...CreateWorkItemDescriptor,
       run() {
@@ -221,15 +254,18 @@ describe("runtime realization type env simulation", () => {
       descriptorTable: table,
     });
     const runtime = createProcessExecutionRuntime({ registry });
+    try {
+      const result = await runtime.invoke<WorkItem>({
+        ref: CreateWorkItemRef,
+        context: {},
+      });
 
-    const result = runtime.invoke<WorkItem>({
-      ref: CreateWorkItemRef,
-      context: {},
-    });
-
-    expect(result.status).toBe("success");
-    if (result.status !== "success") throw result.error;
-    expect(result.output.id).toBe("direct-1");
+      expect(result.status).toBe("success");
+      if (result.status !== "success") throw result.error;
+      expect(result.output.id).toBe("direct-1");
+    } finally {
+      await runtime.dispose();
+    }
   });
 
   test("portable artifact carries refs and no executable table", () => {

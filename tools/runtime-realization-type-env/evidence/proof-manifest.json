@@ -1,16 +1,24 @@
 {
   "spec": {
-    "path": "/Users/mateicanavra/Downloads/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md",
-    "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
+    "path": "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md",
+    "sha256": "4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654"
   },
   "currentExperiment": {
-    "id": "review.effect-native-integration-todo-coverage",
-    "focus": "Make remaining Effect-native integration categories visible as fenced TODO/xfail evidence without turning the lab into the runtime substrate.",
+    "id": "lab-v2.effect-native-runtime-proof",
+    "focus": "Use real effect@3.21.2 and a miniature process runtime to separate proven vendor/runtime behavior from still-open runtime-spine experiments.",
     "relatedEntries": [
       "accepted.effect-only-authoring",
       "accepted.curated-effect-public-surface",
       "audit.p1.effect-managed-runtime-substrate",
       "audit.p1.process-local-coordination-resources",
+      "vendor.effect.runtime-substrate",
+      "vendor.effect.process-local-coordination",
+      "vendor.boundary.typebox-runtime-schema",
+      "vendor.boundary.orpc-native-shape",
+      "vendor.boundary.inngest-handoff-shape",
+      "simulation.mini-runtime-registry-invocation",
+      "simulation.adapter-callback-delegation",
+      "simulation.deployment-handoff",
       "audit.p1.provider-effect-plan-shape",
       "audit.p1.provider-effect-plan-lowering",
       "audit.p1.effect-boundary-policy-matrix",
@@ -29,6 +37,10 @@
       "fixtures": [
         "fixtures/positive/app-and-plan-artifacts.ts",
         "fixtures/inline-negative/descriptor-refs.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative"
       ]
     },
     {
@@ -40,26 +52,43 @@
         "fixtures/positive/work-items-service.ts",
         "fixtures/positive/server-api-plugin.ts",
         "fixtures/inline-negative/authoring-contracts.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative"
       ]
     },
     {
       "id": "accepted.curated-effect-public-surface",
-      "status": "proof",
+      "status": "vendor-proof",
       "source": "Runtime spec sections 5, 9, and 25",
-      "oracle": "The public @rawr/sdk/effect facade rejects raw runtime constructors, raw Effect public type leaks, and the unverified Effect.pipe spelling.",
+      "oracle": "The lab @rawr/sdk/effect facade is backed by real effect@3.21.2 while the public authoring surface rejects raw runtime constructors and the unverified Effect.pipe spelling.",
       "fixtures": [
-        "fixtures/inline-negative/effect-public-surface.ts"
+        "fixtures/inline-negative/effect-public-surface.ts",
+        "test/vendor-effect/effect-runtime.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative",
+        "vendor-effect"
       ]
     },
     {
       "id": "accepted.invocation-bound-clients",
-      "status": "proof",
+      "status": "simulation-proof",
       "source": "Runtime spec sections 11.8 and 12.5",
-      "oracle": "Process runtime simulation resolves a registry boundary and supplies runtime-bound clients through invocation context; service calls still require .withInvocation(...).",
+      "oracle": "The mini runtime resolves a registry boundary and supplies runtime-bound clients through invocation context; service calls still require .withInvocation(...).",
       "fixtures": [
         "fixtures/positive/server-api-plugin.ts",
         "fixtures/inline-negative/service-client-boundaries.ts",
-        "test/spine-simulation.test.ts"
+        "test/spine-simulation.test.ts",
+        "test/mini-runtime/process-runtime.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative",
+        "simulate",
+        "mini-runtime"
       ]
     },
     {
@@ -70,6 +99,10 @@
       "fixtures": [
         "fixtures/positive/app-and-plan-artifacts.ts",
         "fixtures/fail/portable-closure.fail.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative"
       ]
     },
     {
@@ -80,16 +113,143 @@
       "fixtures": [
         "fixtures/positive/resource-provider-profile.ts",
         "fixtures/inline-negative/authoring-contracts.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative"
       ]
     },
     {
       "id": "accepted.provider-profile-closure",
-      "status": "proof",
+      "status": "simulation-proof",
       "source": "Runtime spec sections 13 and 24",
       "oracle": "Profile-selected providers must cover non-optional provider resource requirements before boot.",
       "fixtures": [
         "fixtures/positive/resource-provider-profile.ts",
         "test/spine-simulation.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "simulate"
+      ]
+    },
+    {
+      "id": "vendor.effect.runtime-substrate",
+      "status": "vendor-proof",
+      "source": "Runtime spec sections 9 and 24; Effect-native addendum substrate categories",
+      "oracle": "Real effect@3.21.2 executes Effect.gen, root pipe, value .pipe, Exit/Cause failure modes, interruption, scoped acquire/release, finalizers, and a process-owned ManagedRuntime wrapper.",
+      "fixtures": [
+        "src/sdk/effect.ts",
+        "src/mini-runtime/managed-runtime.ts",
+        "test/vendor-effect/effect-runtime.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "vendor-effect",
+        "mini-runtime"
+      ]
+    },
+    {
+      "id": "vendor.effect.process-local-coordination",
+      "status": "vendor-proof",
+      "source": "Runtime spec section 14; Effect-native addendum process-local resource categories",
+      "oracle": "Real Effect Queue, PubSub, Ref, Deferred, Schedule, and Stream work as process-local coordination primitives without implying durable async state or domain truth.",
+      "fixtures": [
+        "src/mini-runtime/process-resources.ts",
+        "test/vendor-effect/effect-runtime.test.ts"
+      ],
+      "gates": [
+        "vendor-effect"
+      ]
+    },
+    {
+      "id": "vendor.boundary.typebox-runtime-schema",
+      "status": "vendor-proof",
+      "source": "Runtime spec RuntimeSchema import surface and boundary validation claims",
+      "oracle": "TypeBox schemas provide static inference and runtime validation only after RAWR adapts them through RuntimeSchema.",
+      "fixtures": [
+        "src/vendor/boundaries/typebox.ts",
+        "fixtures/inline-negative/vendor-boundaries.ts",
+        "test/vendor-boundaries/boundary-shapes.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative",
+        "vendor-boundaries"
+      ]
+    },
+    {
+      "id": "vendor.boundary.orpc-native-shape",
+      "status": "vendor-proof",
+      "source": "Runtime spec server-plugin lowering claims and oRPC boundary shape",
+      "oracle": "Native oRPC contracts and handlers are available as vendor boundary shapes, while RAWR .effect(...) remains SDK-owned and is not overclaimed as native oRPC.",
+      "fixtures": [
+        "src/vendor/boundaries/orpc.ts",
+        "fixtures/inline-negative/vendor-boundaries.ts",
+        "test/vendor-boundaries/boundary-shapes.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative",
+        "vendor-boundaries"
+      ]
+    },
+    {
+      "id": "vendor.boundary.inngest-handoff-shape",
+      "status": "vendor-proof",
+      "source": "Runtime spec async host handoff claims and Inngest boundary shape",
+      "oracle": "Inngest client/function/Bun serve handoff shapes are constructible, while durable scheduling semantics remain outside this lab proof.",
+      "fixtures": [
+        "src/vendor/boundaries/inngest.ts",
+        "fixtures/inline-negative/vendor-boundaries.ts",
+        "test/vendor-boundaries/boundary-shapes.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "negative",
+        "vendor-boundaries"
+      ]
+    },
+    {
+      "id": "simulation.mini-runtime-registry-invocation",
+      "status": "simulation-proof",
+      "source": "Runtime spec descriptor table, registry, and process runtime lifecycle",
+      "oracle": "The mini runtime assembles descriptor table and registry from refs, checks full ref identity, and invokes descriptors through runtime-owned Effect access.",
+      "fixtures": [
+        "src/mini-runtime/process-runtime.ts",
+        "test/mini-runtime/process-runtime.test.ts",
+        "test/spine-simulation.test.ts"
+      ],
+      "gates": [
+        "simulate",
+        "mini-runtime"
+      ]
+    },
+    {
+      "id": "simulation.adapter-callback-delegation",
+      "status": "simulation-proof",
+      "source": "Runtime spec server/internal/async adapter lowering lifecycle",
+      "oracle": "Fake host adapters delegate to ProcessExecutionRuntime instead of executing descriptors directly.",
+      "fixtures": [
+        "src/mini-runtime/adapters/server.ts",
+        "src/mini-runtime/adapters/async.ts",
+        "test/mini-runtime/process-runtime.test.ts"
+      ],
+      "gates": [
+        "mini-runtime"
+      ]
+    },
+    {
+      "id": "simulation.deployment-handoff",
+      "status": "simulation-proof",
+      "source": "Runtime spec lifecycle/deployment handoff boundary",
+      "oracle": "Deployment handoff carries portable artifacts and compiled process plans without descriptor tables or live runtime handles.",
+      "fixtures": [
+        "src/mini-runtime/deployment-handoff.ts",
+        "test/mini-runtime/process-runtime.test.ts"
+      ],
+      "gates": [
+        "mini-runtime"
       ]
     },
     {
@@ -223,7 +383,7 @@
       "id": "audit.source-hygiene",
       "status": "out-of-scope",
       "source": "M2 core-spine audit P1",
-      "oracle": "Repo-local stale authority drift is source hygiene, not a type-spine proof.",
+      "oracle": "Older non-authoritative runtime/effect documents must be subordinated before migration agents rely on indexed docs; this is source hygiene, not a type-spine proof.",
       "fixtures": []
     }
   ]
