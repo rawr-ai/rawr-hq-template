@@ -2,12 +2,15 @@
 
 ## Status
 
-This document is the durable reconciliation spec for the accidental split between:
+This document began as the durable reconciliation spec for the accidental split between:
 
 - `agent-codex-agent-sync-parity-closure`
 - `codex/agent-config-sync-parity-semantics`
 
-It is a plan, not the reconciliation implementation. The implementation should not start until the next explicit go-ahead.
+The reconciliation has now been implemented on this same branch in
+`1f26392b feat(agent-config-sync): report semantic support residuals`. Treat the
+branch as the reconciled agent-config-sync parity implementation, not a
+planning-only stop.
 
 The winning base is `agent-codex-agent-sync-parity-closure` at `ee91644b`. The semantics branch is evidence-only. Its useful semantic modeling lives in `f24253f0 feat(agent-sync): model agent projection semantics`, but its branch topology is wrong and its tree is older than the closure lane.
 
