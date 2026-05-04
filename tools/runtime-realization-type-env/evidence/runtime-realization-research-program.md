@@ -34,7 +34,9 @@ confidence in the already-specified middle of the spine:
   reverse finalization, failed-finalizer records, and redacted lifecycle/catalog
   records;
 - runtime access and service binding cache proof covers sanctioned access,
-  construction-time structural cache identity, and invocation exclusion;
+  explicit lab service dependency graph validation, dependency-before-dependent
+  binding construction, construction-time structural cache identity, and
+  invocation exclusion;
 - fake server and async adapters delegate through `ProcessExecutionRuntime`;
 - deployment handoff rejects descriptor tables, executable closures, runtime
   access, live handles, app id mismatches, and raw secret fields.
@@ -87,7 +89,7 @@ explicit replan, blocker, or accepted architecture decision.
 | `audit.p1.effect-boundary-policy-matrix` | `xfail` | Timeout, retry, interruption, telemetry, redaction, and error/exit mapping need locked metadata. | Manifest, diagnostic, todo fixture. | Provider/harness work reaches a boundary where default policy would otherwise become observable behavior. | Harness or provider proof would otherwise choose default boundary policy. | Boundary Policy Matrix | spec |
 | `audit.p1.safe-effect-composition-surface` | `xfail` | Curated helper list and names remain open beyond the proven current facade. | Manifest, spine map, todo fixture. | Public or pseudo-public authoring code needs a stable helper set or DX simplification. | Public/DX review finds Effect authoring ceremony or capability loss. | Boundary Policy Matrix | spec |
 | `audit.p1.dispatcher-access` | `xfail` | Dispatcher operation descriptors need explicit access policy. | Manifest, diagnostic, todo fixture. | Async/server work has concrete dispatcher operations to classify as ambient, explicit, or disallowed. | Async or server plan wants workflow dispatcher operations. | Dispatcher Access + Async Step Membership | spec |
-| `audit.p1.runtime-resource-access` | `xfail` | Mini runtime proves a narrow facade, but final method law is not locked. | Manifest, diagnostic, todo fixture. | Provisioned resources exist in the lab and service binding needs final access methods. | Service binding or adapters need final access semantics. | RuntimeResourceAccess Law + Service Binding DAG | spec |
+| `audit.p1.runtime-resource-access` | `xfail` | Mini runtime proves a narrow sanctioned facade and service binding DAG behavior, but final method law is not locked. | Manifest, diagnostic, todo fixture. | Architecture accepts the final method law or revises it explicitly. | Adapters, dispatchers, or harnesses need methods beyond the lab facade. | Dispatcher Access + Async Step Membership or Boundary Policy Matrix | spec |
 | `audit.p2.server-route-derivation` | `xfail` | Cold route factory derivation mechanics need a stated import-safety rule. | Manifest, diagnostic, todo fixture. | Server adapter proof requires route callbacks and can state import-safety without production Elysia mounting. | Server adapter proof would otherwise execute or infer route factories unsafely. | Server Route Derivation | spec |
 | `audit.p2.adapter-effect-callback-lowering` | `xfail` | Fake callbacks prove delegation; real native callback lowering remains open. | Manifest, diagnostic, todo fixture. | Server route derivation and runtime access law are stable enough for real callback payloads. | Fake adapter proof becomes insufficient for real harness mounting. | Real Adapter Callback + Async Bridge Lowering | lab/spec |
 | `audit.p2.async-effect-bridge-lowering` | `xfail` | Async bridge needs step membership and dispatcher access decisions first. | Manifest, diagnostic, todo fixture. | Async membership/access decisions are accepted. | Async host proof would otherwise be theater. | Real Adapter Callback + Async Bridge Lowering | lab/spec |

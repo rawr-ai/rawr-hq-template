@@ -24,6 +24,8 @@ interface MiniServiceBindingCacheEntry<TClient> {
   readonly client: TClient;
 }
 
+type ServiceBindingVisitState = "visiting" | "visited";
+
 function stableJson(value: unknown): string {
   if (Array.isArray(value)) {
     return `[${value.map((item) => stableJson(item)).join(",")}]`;
@@ -55,6 +57,10 @@ function serviceBindingKey(plan: ServiceBindingPlan): string {
   });
 }
 
+function serviceBindingInstanceId(plan: ServiceBindingPlan): string {
+  return plan.serviceInstance ?? plan.serviceId;
+}
+
 export function serviceBindingConstructionIdentity(
   plan: ServiceBindingPlan,
   processId = "process",
@@ -73,6 +79,94 @@ export function serviceBindingConstructionIdentity(
   });
 }
 
+function indexServiceBindingInstances(
+  plans: readonly ServiceBindingPlan[],
+): ReadonlyMap<string, readonly ServiceBindingPlan[]> {
+  const byInstance = new Map<string, ServiceBindingPlan[]>();
+
+  for (const plan of plans) {
+    const instanceId = serviceBindingInstanceId(plan);
+    byInstance.set(instanceId, [...(byInstance.get(instanceId) ?? []), plan]);
+  }
+
+  return byInstance;
+}
+
+function resolveServiceBindingDependency(input: {
+  readonly plan: ServiceBindingPlan;
+  readonly dependencyInstance: string;
+  readonly byInstance: ReadonlyMap<string, readonly ServiceBindingPlan[]>;
+}): ServiceBindingPlan {
+  const matches = input.byInstance.get(input.dependencyInstance) ?? [];
+  const planId = serviceBindingInstanceId(input.plan);
+
+  if (matches.length === 0) {
+    throw new Error(
+      `runtime.service-binding.dependency.missing: ${planId} -> ${input.dependencyInstance}`,
+    );
+  }
+
+  if (matches.length > 1) {
+    throw new Error(
+      `runtime.service-binding.dependency.ambiguous: ${planId} -> ${input.dependencyInstance}`,
+    );
+  }
+
+  return matches[0] as ServiceBindingPlan;
+}
+
+function validateServiceBindingDependencyGraph(input: {
+  readonly plans: readonly ServiceBindingPlan[];
+  readonly byInstance: ReadonlyMap<string, readonly ServiceBindingPlan[]>;
+}): void {
+  const state = new Map<string, ServiceBindingVisitState>();
+
+  // This validates explicit lab ServiceBindingPlan dependency inputs only. It
+  // is not the production service compiler or the final service ownership law.
+  function visit(
+    plan: ServiceBindingPlan,
+    path: readonly ServiceBindingPlan[],
+  ): void {
+    const key = serviceBindingKey(plan);
+    const visitState = state.get(key);
+
+    if (visitState === "visited") return;
+
+    if (visitState === "visiting") {
+      const cycleStart = path.findIndex(
+        (pathPlan) => serviceBindingKey(pathPlan) === key,
+      );
+      const cycle = [
+        ...(cycleStart >= 0 ? path.slice(cycleStart) : path),
+        plan,
+      ].map(serviceBindingInstanceId);
+
+      throw new Error(
+        `runtime.service-binding.dependency.cycle: ${cycle.join(" -> ")}`,
+      );
+    }
+
+    state.set(key, "visiting");
+
+    for (const dependencyInstance of plan.dependencyInstances) {
+      visit(
+        resolveServiceBindingDependency({
+          plan,
+          dependencyInstance,
+          byInstance: input.byInstance,
+        }),
+        [...path, plan],
+      );
+    }
+
+    state.set(key, "visited");
+  }
+
+  for (const plan of input.plans) {
+    visit(plan, []);
+  }
+}
+
 export function createMiniServiceBindingCache<TClient>(input: {
   readonly processId?: string;
   readonly plans: readonly ServiceBindingPlan[];
@@ -80,6 +174,7 @@ export function createMiniServiceBindingCache<TClient>(input: {
 }): MiniServiceBindingCache<TClient> {
   const byKey = new Map<string, MiniServiceBindingCacheEntry<TClient>>();
   const allowedPlans = new Map<string, ServiceBindingPlan>();
+  const byInstance = indexServiceBindingInstances(input.plans);
 
   for (const plan of input.plans) {
     const key = serviceBindingKey(plan);
@@ -88,6 +183,11 @@ export function createMiniServiceBindingCache<TClient>(input: {
     }
     allowedPlans.set(key, plan);
   }
+
+  validateServiceBindingDependencyGraph({
+    plans: input.plans,
+    byInstance,
+  });
 
   function createEntry(plan: ServiceBindingPlan): MiniServiceBindingCacheEntry<TClient> {
     const constructionIdentity = serviceBindingConstructionIdentity(
@@ -101,6 +201,29 @@ export function createMiniServiceBindingCache<TClient>(input: {
     };
   }
 
+  // The mini cache is the lab proof point for binding lifecycle order: a
+  // dependent is materialized only after its declared service-instance
+  // prerequisites have construction identities in this process.
+  function getOrCreateAllowedPlan(plan: ServiceBindingPlan): TClient {
+    const key = serviceBindingKey(plan);
+    const existing = byKey.get(key);
+    if (existing) return existing.client;
+
+    for (const dependencyInstance of plan.dependencyInstances) {
+      getOrCreateAllowedPlan(
+        resolveServiceBindingDependency({
+          plan,
+          dependencyInstance,
+          byInstance,
+        }),
+      );
+    }
+
+    const entry = createEntry(plan);
+    byKey.set(key, entry);
+    return entry.client;
+  }
+
   return {
     kind: "service.binding-cache",
     getOrCreate(plan) {
@@ -112,12 +235,7 @@ export function createMiniServiceBindingCache<TClient>(input: {
         );
       }
 
-      const existing = byKey.get(key);
-      if (existing) return existing.client;
-
-      const entry = createEntry(allowedPlan);
-      byKey.set(key, entry);
-      return entry.client;
+      return getOrCreateAllowedPlan(allowedPlan);
     },
     records() {
       return [...byKey.values()].map((entry) => ({
