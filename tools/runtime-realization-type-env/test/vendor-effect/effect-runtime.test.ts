@@ -1,15 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import {
   Cause,
-  Chunk,
-  Deferred,
   Effect,
   Exit,
-  PubSub,
-  Queue,
-  Ref,
-  Schedule,
-  Stream,
   createEmptyManagedRuntime,
   effectVersionProof,
   pipe,
@@ -131,55 +124,6 @@ describe("Effect vendor-native runtime lane", () => {
       deferredValue: "deferred-ready",
       scheduleOutput: 2,
       streamValues: [1, 2, 3],
-    });
-  });
-
-  test("uses vendor queues, pubsub, refs, deferred, schedule, and stream directly", async () => {
-    const program = Effect.gen(function* () {
-      const queue = yield* Queue.unbounded<number>();
-      yield* Queue.offer(queue, 10);
-      const queueValue = yield* Queue.take(queue);
-
-      const pubSub = yield* PubSub.unbounded<string>();
-      const pubSubValue = yield* Effect.scoped(
-        Effect.gen(function* () {
-          const subscription = yield* PubSub.subscribe(pubSub);
-          yield* PubSub.publish(pubSub, "published");
-          return yield* Queue.take(subscription);
-        }),
-      );
-
-      const ref = yield* Ref.make(41);
-      yield* Ref.update(ref, (value) => value + 1);
-      const refValue = yield* Ref.get(ref);
-
-      const deferred = yield* Deferred.make<string>();
-      yield* Deferred.succeed(deferred, "done");
-      const deferredValue = yield* Deferred.await(deferred);
-
-      const scheduleOutput = yield* Effect.repeat(
-        Effect.succeed("tick"),
-        Schedule.recurs(1),
-      );
-      const collected = yield* Stream.runCollect(Stream.fromIterable([4, 5]));
-
-      return {
-        queueValue,
-        pubSubValue,
-        refValue,
-        deferredValue,
-        scheduleOutput,
-        streamValues: Chunk.toArray(collected),
-      };
-    });
-
-    await expect(Effect.runPromise(program)).resolves.toEqual({
-      queueValue: 10,
-      pubSubValue: "published",
-      refValue: 42,
-      deferredValue: "done",
-      scheduleOutput: 1,
-      streamValues: [4, 5],
     });
   });
 

@@ -15,7 +15,7 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
 - `@rawr/sdk/effect` remains a RAWR facade, but in Lab V2 `RawrEffect<A, E, R>` is backed by real `Effect.Effect<A, E, R>`.
 - The facade intentionally exposes curated authoring helpers, root `pipe`, value `.pipe(...)`, `TaggedError`, and policy types. It does not expose raw `ManagedRuntime`, `Layer`, `Queue`, `PubSub`, `Stream`, `Schedule`, or runtime constructors.
 - `TaggedError("Tag")<{ ... }>` is backed by Effect's `Data.TaggedError` spelling.
-- Vendor tests run real Effect programs for `Effect.gen`, `yield*`, root `pipe`, value `.pipe(...)`, `Exit`, `Cause`, typed failure, defects, interruption through `AbortSignal`, scoped acquire/release, finalizer ordering, `ManagedRuntime`, `Queue`, `PubSub`, `Ref`, `Deferred`, `Schedule`, and `Stream`.
+- Vendor tests run real Effect programs for `Effect.gen`, `yield*`, root `pipe`, value `.pipe(...)`, `Exit`, `Cause`, typed failure, defects, interruption through `AbortSignal`, scoped acquire/release, finalizer ordering, and `ManagedRuntime`. Process-local `Queue`, `PubSub`, `Ref`, `Deferred`, `Schedule`, and `Stream` behavior is exercised only through the lab's RAWR-owned process-local resource probe, not as standalone vendor demonstrations.
 - `Effect.repeat(effect, Schedule.recurs(n))` returns schedule output. The vendor lane records this explicitly; examples must not assume the repeated action output is returned.
 - `Stream.runCollect(...)` returns a `Chunk`, so lab code converts with `Chunk.toArray(...)` at boundaries.
 - Root/subpath exports inspected and now used where relevant include `Effect`, `Layer`, `Scope`, `ManagedRuntime`, `Queue`, `PubSub`, `Ref`, `Deferred`, `Schedule`, `Stream`, `Fiber`, `FiberRef`, `Config`, `Logger`, `Tracer`, `Metric`, and `Data`.
@@ -26,7 +26,7 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
 
 - Installed packages: `@orpc/contract` and `@orpc/server` `1.13.5`.
 - The vendor boundary probe compiles native `oc.router(...)`, `implement(contract).$context<...>()`, and native `.handler(...)` shapes.
-- `.effect(...)` in this lab means the RAWR runtime-realization authoring terminal, not native oRPC API surface. The negative fixture rejects native oRPC `.effect(...)`.
+- `.effect(...)` in this lab means the RAWR runtime-realization authoring terminal, not native oRPC API surface. The lab does not assert a fake oRPC `.effect(...)` negative because oRPC never claimed that API.
 
 ## TypeBox
 
