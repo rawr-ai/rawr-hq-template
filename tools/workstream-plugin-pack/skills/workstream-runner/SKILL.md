@@ -33,8 +33,19 @@ program, phase, or runtime-specific language.
 
 ## Default Workflow
 
-1. **Ground the workstream.** Check repo state, active branch/stack, user
-   constraints, and the current authority inputs.
+1. **Ground the workstream.** Check repo state (branch, working tree, recent
+   history, related branches), repo conventions (any `docs/process/*`
+   runbooks, the local stacking/submission tooling, project-specific
+   AGENTS.md or CLAUDE.md, hook configuration, lint/CI conventions,
+   permission boundaries the user has configured), authority inputs
+   (canonical specs, governing docs, prior decisions), and any project-local
+   quarantine or archive directories so they get fenced as stale-input
+   rather than silently consumed.
+
+   The categories are tool-agnostic. Check whether the repo uses a stacking
+   convention, not whether a specific stacking tool is installed; check
+   whether canonical specs exist, not which spec a particular project
+   happens to use. Project-specific runbooks fill in the names.
 2. **Frame the objective.** State the objective, containment boundary,
    non-goals, done condition, authority order, and stop conditions.
 3. **Type the inputs.** Separate opening inputs, authority inputs,
