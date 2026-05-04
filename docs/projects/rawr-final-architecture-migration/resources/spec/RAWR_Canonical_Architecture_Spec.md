@@ -22,7 +22,7 @@ It fixes:
 - the default topology and growth model;
 - the enforcement orientation.
 
-This specification is the canonical integrated plug-and-play architecture layer. Subsystem specifications attach to it at named integration boundaries enumerated in §10.14. The runtime realization specification (`RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`) is the current canonical companion document for all runtime concerns; it is authoritative on mechanics within each integration boundary this specification names. It defines the whole system, the vocabulary the system uses, the architectural laws that keep it coherent, and the integration points where deeper subsystem blueprints attach.
+This specification is the canonical integrated plug-and-play architecture layer. Subsystem specifications attach to it at named integration boundaries enumerated in §10.14, governed by the names-versus-mechanics carve-out in §4.3a. The runtime realization specification (`RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`) is the current canonical companion document for all runtime concerns; it is authoritative on mechanics within each integration boundary this specification names. It defines the whole system, the vocabulary the system uses, the architectural laws that keep it coherent, and the integration points where deeper subsystem blueprints attach.
 
 The architecture is organized around three durable separations.
 
@@ -1656,7 +1656,7 @@ definition -> selection -> derivation -> compilation -> provisioning -> mounting
 | --- | --- | --- | --- |
 | Definition | Import-safe service, plugin, resource, provider, app, and profile declarations | Authors | SDK derivation |
 | Selection | App membership, runtime profile, provider selections, process roles, selected harnesses | App/entrypoint | SDK/runtime compiler |
-| Derivation | Normalized authoring graph, service binding plans, surface runtime plans, workflow dispatcher descriptors, portable plan artifacts | `@rawr/sdk` | Runtime compiler |
+| Derivation | Normalized authoring graph, portable plan artifacts, non-portable execution descriptor table, service binding plans, surface runtime plans, workflow dispatcher descriptors — artifact shapes defined in the canonical runtime realization specification, §15 | `@rawr/sdk` | Runtime compiler |
 | Compilation | Compiled process plan, provider dependency graph, compiled service/surface/harness plans | Runtime compiler | Bootgraph, process runtime, adapters |
 | Provisioning | Provisioned process, live process access, live role access, startup records | Bootgraph and provisioning kernel | Process runtime |
 | Mounting | Bound services, cache records, mounted surface runtime records, adapter-lowered payloads, started harness handles | Process runtime, adapters, harnesses | Native hosts and catalog |
@@ -1833,7 +1833,7 @@ Each boundary names the architecture-spec section that establishes it, the runti
 | Runtime compiler | §10.5 | §16 | Arch-spec: compiler role in the chain | Runtime-spec: validation list, CompiledProcessPlan shape, emission contract | `CompiledProcessPlan`, `CompiledExecutionPlan` | Runtime realization spec |
 | Bootgraph and provisioning kernel | §10.6 | §17 | Arch-spec: RAWR-vs-Effect control split naming | Runtime-spec: bootgraph ordering, Effect kernel construction, ProvisionedProcess, rollback mechanics | `Bootgraph`, `ProvisionedProcess` | Runtime realization spec |
 | Runtime access | §10.8 | §18.1–§18.2 | Arch-spec: runtime access noun taxonomy | Runtime-spec: RuntimeAccess scoping, ProcessRuntimeAccess, RoleRuntimeAccess shapes | `RuntimeAccess`, `ProcessRuntimeAccess`, `RoleRuntimeAccess` | Runtime realization spec; TBD: observability companion spec |
-| Service binding | §10.9 | §18.3–§18.5 | Arch-spec: cache-key exclusion rule | Runtime-spec: ServiceBindingCache mechanics, bindService contract | `ServiceBindingCache`, `ServiceBindingCacheKey` | Runtime realization spec |
+| Service binding | §10.9 | §18.3–§18.5 | Arch-spec: cache-key exclusion rule | Runtime-spec: ServiceBindingCache mechanics, bindService contract | `ServiceBindingCache`, `ServiceBindingCacheKey`; five context lanes: `deps`, `scope`, `config`, `invocation`, `provided` | Runtime realization spec |
 | Workflow dispatcher | §10.10 | §19 | Arch-spec: dispatcher role as server-internal→async bridge | Runtime-spec: WorkflowDispatcher materialization, FunctionBundle lowering, async step-local Effect | `WorkflowDispatcher`, `FunctionBundle` | Runtime realization spec |
 | Surface adapter lowering | §10.11 | §20 | Arch-spec: adapter layer position in the chain | Runtime-spec: CompiledSurfacePlan → native payload closure contract, SurfaceAdapter interface | `CompiledSurfacePlan`, `SurfaceAdapter` | Runtime realization spec; TBD: additional vendor harness specs |
 | Harness and native boundary | §10.12 | §21 | Arch-spec: harness role taxonomy and vendor assignments | Runtime-spec: per-harness input/output contracts, HarnessDescriptor mount protocol | `HarnessDescriptor`, `StartedHarness`, per-harness: `FunctionBundle` (Inngest), oRPC route payloads (Elysia), command payloads (OCLIF) | Runtime realization spec; TBD: vendor harness companion specs (incl. OpenShell vendor contract per §13.5) |
@@ -2792,12 +2792,14 @@ RuntimeAccess != diagnostics
 - runtime realization follows `definition -> selection -> derivation -> compilation -> provisioning -> mounting -> observation`;
 - finalization and rollback records are observation behavior, not a new lifecycle phase;
 - live runtime access nouns are `RuntimeAccess`, `ProcessRuntimeAccess`, and `RoleRuntimeAccess`;
+- service handlers do not receive broad `RuntimeAccess`; only their declared `deps`, `scope`, `config`, per-call `invocation`, and execution-derived `provided`;
 - runtime access never exposes raw Effect internals, provider internals, or unredacted config secrets;
 - runtime compiler emits one compiled process plan for one start selection;
 - surface adapters lower compiled surface plans, not raw authoring declarations;
 - harnesses consume mounted surface records or adapter-lowered payloads;
 - `RuntimeCatalog` is a diagnostic read model, not live access and not app composition.
 - an async role process binds exactly one Inngest harness mode per started process; serve-mode and connect-worker mode are mutually exclusive within a single process.
+- all runtime mechanics, artifact shapes, named coordination resources, and substrate internals are defined in the canonical runtime realization specification (`RAWR_Effect_Runtime_Realization_System_Canonical_Spec`); this specification owns the integration vocabulary and invariant statements, not the mechanic implementations.
 
 ### 17.9 Plugin invariants
 
