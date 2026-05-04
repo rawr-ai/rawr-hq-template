@@ -116,6 +116,20 @@ better evidence. A larger phase team is justified only when the lanes are
 independent enough that the host can verify and integrate their results without
 turning review into shape checking.
 
+For heavier research/evaluation phases, agents should keep scratch documents
+while working. A scratch document is running context for one
+workstream/phase/lane/agent. It should capture notes, evidence candidates,
+dead ends, and open threads so the final report is not dependent on memory.
+Scratch is never authority and never proof.
+
+The final agent output should be an internal report to the host/DRA that states
+evidence, confidence, proposed disposition, and what it must not be used to
+prove. Agents do not report to the user. The host integrates that report into
+the workstream report or other real artifacts. Before closeout, intermediate
+scratch documents must be deleted, archived as provenance, or quarantined with a
+clear non-authority header. Do not leave scratch documents in place where future
+agents can confuse them with completed workstream artifacts.
+
 ## Phases And Artifacts
 
 | Phase | Output artifact | Gate |
@@ -150,6 +164,8 @@ Minimum fields:
 - expected gates;
 - authority files and excluded stale inputs;
 - stop conditions for user escalation.
+- scratch-document expectations and final disposition when a lane needs deep
+  research or evaluation.
 
 A workstream closes only when all required outputs are present, acceptance loops are satisfied or explicitly waived, deferred items have authority homes and re-entry triggers, and repo/Graphite state is recorded.
 
@@ -261,6 +277,11 @@ Stop or escalate when:
 - A semantic or evidence tool is treated as architecture authority.
 - A fixture chooses an unresolved architecture shape.
 - A test would still pass if the RAWR-owned integration layer were removed.
+- A critical design wall would fundamentally renegotiate architecture,
+  public-DX law, vendor/product policy, topology, or migration sequence.
+
+Do not stop for routine implementation details, local workflow mechanics, or
+residuals that can be fenced honestly without weakening the current proof.
 - A green label depends only on type, vendor, or simulation evidence while claiming production readiness.
 - The next step would mutate production code when the current artifact is only a lab proof.
 - A fixture or implementation chooses a public API, method law, lifecycle law, telemetry/error taxonomy, or vendor-boundary behavior that the spec has not accepted.

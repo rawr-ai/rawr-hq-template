@@ -91,6 +91,13 @@ Each workstream report should contain:
 - Record phase teams when agents are used. Each phase may use a different team,
   agents may rotate inside a phase, and no more than 6 agents should be active
   concurrently for a single workstream phase.
+- For heavier research/evaluation phases, require agent scratch documents.
+  Scratch docs are running notes only: they must be marked non-authoritative,
+  tied to one workstream/phase/lane/agent, summarized into the final report or
+  other real artifact, and archived, quarantined, or deleted before closeout.
+  Do not leave intermediate scratch beside completed workstream artifacts where
+  a future agent could mistake it for authority. Agent reports are internal
+  inputs to the host/DRA, not user-facing reports.
 - For substantial TypeScript or lab-runtime edits, record the semantic
   JSDoc/comment trailing pass in `Workflow` and `Review Result`: files reviewed,
   comments added or intentionally skipped, and any repair demand. This is a
