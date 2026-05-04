@@ -90,6 +90,12 @@ function deriveFixtureSpine() {
         surface: "api",
         capability: "work-items",
         workflowIds: ["work-items.sync"],
+        operations: [
+          {
+            operation: "dispatch",
+            workflowId: "work-items.sync",
+          },
+        ],
       },
     ],
   });
@@ -161,14 +167,13 @@ describe("middle spine derivation and compiler simulation", () => {
         surface: "api",
         capability: "work-items",
         workflowRefs: [{ workflowId: "work-items.sync" }],
-        operations: [],
-        diagnostics: [
+        operations: [
           {
-            code: "runtime.dispatcher-access.reserved",
-            message:
-              "dispatcher descriptor records operation inventory only; dispatcher access declaration remains unresolved",
+            operation: "dispatch",
+            workflowId: "work-items.sync",
           },
         ],
+        diagnostics: [],
       },
     ]);
     expect("providerDependencyGraph" in derivation).toBeFalse();
@@ -285,6 +290,191 @@ describe("middle spine derivation and compiler simulation", () => {
     });
     expect(registry.get(serverRef).descriptor.ref).toEqual(serverRef);
     expect(registry.get(asyncRef).descriptor.ref).toEqual(asyncRef);
+  });
+
+  test("keeps dispatcher workflow refs inert without declared operations", () => {
+    const derivation = deriveRuntimeSpine({
+      kind: "runtime.spine-derivation-input",
+      appId: "hq",
+      executions: [],
+      dispatchers: [
+        {
+          kind: "workflow.dispatcher-derivation-input",
+          descriptorId: "dispatcher:work-items",
+          role: "server",
+          surface: "api",
+          capability: "work-items",
+          workflowIds: ["work-items.sync"],
+        },
+      ],
+    });
+
+    expect(derivation.workflowDispatcherDescriptors).toEqual([
+      {
+        kind: "workflow.dispatcher-descriptor",
+        descriptorId: "dispatcher:work-items",
+        appId: "hq",
+        role: "server",
+        surface: "api",
+        capability: "work-items",
+        workflowRefs: [{ workflowId: "work-items.sync" }],
+        operations: [],
+        diagnostics: [
+          {
+            code: "runtime.dispatcher-access.reserved",
+            message:
+              "dispatcher descriptor records operation inventory only; dispatcher access declaration remains unresolved",
+          },
+        ],
+      },
+    ]);
+    expect(derivation.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      "runtime.dispatcher-access.reserved",
+    );
+  });
+
+  test("reports dispatcher operations that target undeclared workflows", () => {
+    const derivation = deriveRuntimeSpine({
+      kind: "runtime.spine-derivation-input",
+      appId: "hq",
+      executions: [],
+      dispatchers: [
+        {
+          kind: "workflow.dispatcher-derivation-input",
+          descriptorId: "dispatcher:work-items",
+          role: "server",
+          surface: "api",
+          capability: "work-items",
+          workflowIds: ["work-items.sync"],
+          operations: [
+            {
+              operation: "dispatch",
+              workflowId: "work-items.missing",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(derivation.workflowDispatcherDescriptors[0]?.operations).toEqual([
+      {
+        operation: "dispatch",
+        workflowId: "work-items.missing",
+      },
+    ]);
+    expect(derivation.diagnostics).toContainEqual({
+      code: "runtime.dispatcher-access.workflow-unlisted",
+      message:
+        "dispatcher operation dispatch targets undeclared workflow work-items.missing",
+    });
+  });
+
+  test("validates async step owner membership without executing descriptor bodies", () => {
+    let bodyExecutions = 0;
+    const derivation = deriveRuntimeSpine({
+      kind: "runtime.spine-derivation-input",
+      appId: "hq",
+      executions: [
+        {
+          kind: "runtime.execution-derivation-input",
+          boundary: "plugin.async-step",
+          executionId: "exec:async:work-items.sync:sync-work-item",
+          role: "async",
+          surface: "workflow",
+          capability: "work-items",
+          workflowId: "work-items.sync",
+          stepId: "sync-work-item",
+          descriptor: {
+            kind: "execution.descriptor",
+            run() {
+              bodyExecutions += 1;
+              throw new Error("derivation executed async body");
+            },
+          } as any,
+        },
+      ],
+    });
+
+    expect(derivation.executionDescriptorRefs).toEqual([
+      {
+        kind: "execution.descriptor-ref",
+        boundary: "plugin.async-step",
+        executionId: "exec:async:work-items.sync:sync-work-item",
+        appId: "hq",
+        role: "async",
+        surface: "workflow",
+        capability: "work-items",
+        workflowId: "work-items.sync",
+        stepId: "sync-work-item",
+      },
+    ]);
+    expect(derivation.diagnostics).toEqual([]);
+    expect(bodyExecutions).toBe(0);
+  });
+
+  test("reports duplicate and widened invalid async step memberships", () => {
+    const derivation = deriveRuntimeSpine({
+      kind: "runtime.spine-derivation-input",
+      appId: "hq",
+      executions: [
+        {
+          kind: "runtime.execution-derivation-input",
+          boundary: "plugin.async-step",
+          executionId: "exec:async:work-items.sync:first",
+          role: "async",
+          surface: "workflow",
+          capability: "work-items",
+          workflowId: "work-items.sync",
+          stepId: "sync-work-item",
+        },
+        {
+          kind: "runtime.execution-derivation-input",
+          boundary: "plugin.async-step",
+          executionId: "exec:async:work-items.sync:second",
+          role: "async",
+          surface: "workflow",
+          capability: "work-items",
+          workflowId: "work-items.sync",
+          stepId: "sync-work-item",
+        },
+        {
+          kind: "runtime.execution-derivation-input",
+          boundary: "plugin.async-step",
+          executionId: "exec:async:missing-owner",
+          role: "async",
+          surface: "workflow",
+          capability: "work-items",
+          stepId: "sync-work-item",
+        } as any,
+        {
+          kind: "runtime.execution-derivation-input",
+          boundary: "plugin.async-step",
+          executionId: "exec:async:multiple-owner",
+          role: "async",
+          surface: "workflow",
+          capability: "work-items",
+          workflowId: "work-items.sync",
+          scheduleId: "work-items.hourly",
+          stepId: "sync-work-item",
+        } as any,
+      ],
+    });
+
+    expect(derivation.diagnostics).toContainEqual({
+      code: "runtime.async-step-membership.duplicate",
+      message:
+        "duplicate async step membership for workflow work-items.sync step sync-work-item",
+    });
+    expect(derivation.diagnostics).toContainEqual({
+      code: "runtime.async-step-membership.invalid-owner",
+      message:
+        "async step exec:async:missing-owner must declare exactly one workflow, schedule, or consumer owner",
+    });
+    expect(derivation.diagnostics).toContainEqual({
+      code: "runtime.async-step-membership.invalid-owner",
+      message:
+        "async step exec:async:multiple-owner must declare exactly one workflow, schedule, or consumer owner",
+    });
   });
 
   test("reports provider coverage and duplicate provider selections without lowering providers", () => {
