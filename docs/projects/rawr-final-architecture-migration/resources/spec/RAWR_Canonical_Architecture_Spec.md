@@ -415,6 +415,24 @@ It does not own domain correctness, durable orchestration, service truth, or ste
 
 ## 4. Canonical laws
 
+### 4.0 Execution ownership law
+
+The canonical execution ownership split is:
+
+```text
+RAWR owns semantic/runtime boundaries.
+oRPC owns callable contract mechanics.
+Effect owns local execution mechanics.
+Inngest owns durable async.
+Native hosts own host interiors after RAWR adapter lowering.
+The SDK derives.
+The runtime realizes.
+Harnesses mount.
+Diagnostics observe.
+```
+
+This statement is the most compact, most memorable, most normative integration statement carried by this specification. Companion subsystem specifications and vendor integration authors may cite this paragraph directly when defending their boundary. Per the names-versus-mechanics carve-out (§4.3a), the arch-spec owns the canonical wording of this law as integration vocabulary; the runtime realization specification cross-references this section as the canonical source.
+
 ### 4.1 Ownership law
 
 The strongest practical rule is:
@@ -1654,51 +1672,21 @@ A provider may contain Effect-native acquisition code, but it remains cold until
 
 ### 10.4 SDK derivation
 
-The SDK derives explicit artifacts from compact authoring declarations.
-
-The SDK owns:
-
-- normalized authoring graph;
-- canonical identities;
-- resource requirements;
-- normalized provider selections;
-- service binding plans;
-- surface runtime plan descriptors;
-- workflow dispatcher descriptors;
-- portable plan artifacts;
-- derivation diagnostics.
+The SDK derives structured plan artifacts and an in-process execution descriptor table from compact authoring declarations. SDK derivation is the public authoring boundary: SDK output is the sole input to the runtime compiler.
 
 The SDK does not acquire resources, execute providers, construct managed runtime roots, construct native harness payloads, mount harnesses, or define native framework semantics.
 
+The specific artifact types, their portability classification, and the producer/consumer contract for each artifact are defined in the runtime realization specification, §15.
+
 ### 10.5 Runtime compiler
 
-The runtime compiler turns a normalized authoring graph plus entrypoint selection into one `CompiledProcessPlan`.
+The runtime compiler consumes SDK-derived artifacts plus the entrypoint's selected app, profile, and harness configuration, validates coverage and dependency closure against architectural invariants, and emits one `CompiledProcessPlan` plus diagnostics.
 
-It validates:
-
-- selected roles and surfaces;
-- topology and builder agreement;
-- provider coverage;
-- provider dependency closure;
-- service dependency closure;
-- service binding DAG shape;
-- harness targets;
-- surface adapter targets.
-
-It emits:
-
-- compiled process plan;
-- provider dependency graph;
-- compiled resource plans;
-- compiled service binding plans;
-- compiled surface plans;
-- compiled workflow dispatcher plans;
-- harness plans;
-- bootgraph input;
-- topology seed;
-- runtime diagnostics.
+Compilation precedes provisioning and harness mounting. A compilation failure aborts startup before any resource is acquired.
 
 The runtime compiler does not acquire resources, bind live services, construct native functions, mount harnesses, or write final runtime catalog state.
+
+The complete validation rules, emission contract, and `CompiledProcessPlan` shape are defined in the runtime realization specification, §16.
 
 ### 10.6 Bootgraph and provisioning kernel
 
@@ -1713,18 +1701,9 @@ RAWR plans identity, order, dependency, lifetime, and boundary policy.
 Effect executes scoped acquisition, release, runtime ownership, and process-local coordination.
 ```
 
-The provisioning kernel owns:
+The provisioning kernel owns one root managed runtime per started process; process and role lifetime scopes; scoped resource acquisition and release from compiled provider plans; validated and redacted config loading; structured runtime errors; lifecycle and provider acquisition telemetry; and reverse-order deterministic disposal.
 
-- one root managed runtime per started process;
-- process scope and role child scopes;
-- resource acquisition and release from compiled provider plans;
-- config loading, validation, and redaction;
-- structured runtime errors;
-- runtime-local queues, pubsub, refs, schedules, caches, fibers, and semaphores as process-local mechanics;
-- runtime annotations, spans, lifecycle telemetry, and provider acquisition telemetry;
-- reverse-order deterministic disposal.
-
-Process-local coordination primitives do not become durable workflow ownership.
+Process-local coordination is not durable workflow ownership. The named RAWR-owned process-local coordination resources and the Effect-internal substrate primitives they wrap are defined in the runtime realization specification, §14 and §17.3.
 
 ### 10.7 Runtime-owned lifetimes
 
@@ -2262,12 +2241,14 @@ services/*
   -> bootgraph and provisioning kernel
   -> process runtime and async surface adapter
   -> FunctionBundle
-  -> Inngest harness
+  -> Inngest harness [serve-mode | connect-worker mode]
 ```
 
 Inngest owns durable async execution semantics. It does not own workflow meaning, service truth, caller-facing API semantics, app membership, provider selection, or runtime provisioning.
 
 **Integration contract.** The Inngest harness receives a `FunctionBundle` (runtime-spec §19.3) — not `MountedSurfaceRuntimeRecord` entries — along with the selected Inngest runtime resource and async harness mode. It must return a `StartedHarness`. RAWR owns async surface plan compilation, FunctionBundle derivation, and workflow dispatch semantics; Inngest owns durable async execution semantics. The complete contract and mode specifications are defined in the runtime realization specification, §21.2.
+
+**Mode.** The async harness operates in one of two modes — serve-mode (HTTP listener via `inngest/bun` or other framework adapters) or connect-worker mode (outbound persistent connection via `inngest/connect`). Mode choice changes the process's ingress topology (inbound HTTP vs outbound WebSocket) and is a harness-selection fact at process-start time. This specification declares no default mode at the architecture level; default-selection is a profile/deployment concern. Mechanics for both modes are defined in the runtime realization specification, §21.2.
 
 ### 13.3 CLI harness posture
 
@@ -2793,7 +2774,7 @@ RuntimeAccess != diagnostics
 - finalizers run deterministically in reverse order;
 - each started process owns one root managed runtime;
 - process, role, invocation, and call-local remain distinct runtime lifetimes;
-- runtime-local queues, pubsub, schedules, refs, fibers, and caches are process-local mechanics.
+- RAWR-owned process-local coordination resources are defined in the runtime realization specification, §14; their underlying Effect-internal primitives are runtime substrate detail and are not enumerated in this invariant set.
 
 ### 17.7 Service binding invariants
 
@@ -2816,6 +2797,7 @@ RuntimeAccess != diagnostics
 - surface adapters lower compiled surface plans, not raw authoring declarations;
 - harnesses consume mounted surface records or adapter-lowered payloads;
 - `RuntimeCatalog` is a diagnostic read model, not live access and not app composition.
+- an async role process binds exactly one Inngest harness mode per started process; serve-mode and connect-worker mode are mutually exclusive within a single process.
 
 ### 17.9 Plugin invariants
 
@@ -2890,7 +2872,7 @@ The following patterns are forbidden in the canonical architecture:
 - a broad-access shell treated as a public concierge across untrusted users;
 - shell-owned governed repo mutation in governed scopes;
 - a shell that becomes a second orchestrator or shadow control plane;
-- public raw `Layer`, `Context.Tag`, `Effect.Service`, `ManagedRuntime`, `Scope`, or `FiberRef` authoring for ordinary service, plugin, app, or entrypoint work;
+- public raw `Layer`, `Context.Tag`, `ManagedRuntime`, `Scope`, or `FiberRef` authoring for ordinary service, plugin, app, or entrypoint work;
 - re-merging `deps` and `provided`;
 - seeding `provided` at the package boundary as a general pattern;
 - introducing a generic DI-container vocabulary as public architecture;
