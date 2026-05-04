@@ -1,0 +1,54 @@
+{
+  "jobId": "08-corpus-critic-2-fetcher",
+  "role": "hyperresearch-fetcher",
+  "status": "complete",
+  "summary": "Verified the carried-forward corpus critic results artifact. It supports the corpus-critic step by confirming the captured official Inngest corpus is sufficient for normative RAWR plugin/runtime workflow spec recommendations while preserving the production-proof caveat.",
+  "evidence": [
+    "research/temp/codex-agent-packets/08-corpus-critic-2-fetcher.json",
+    "research/temp/corpus-critic-results.md",
+    "research/temp/source-capture-log.md",
+    "research/temp/claims-width.json",
+    "research/temp/depth-investigation-log.md",
+    "research/notes/serve-inngest-documentation.md",
+    "research/notes/create-function-inngest-documentation.md",
+    "research/notes/inngest-steps-inngest-documentation.md",
+    "research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md",
+    "research/notes/errors-retries-inngest-documentation.md",
+    "research/notes/rollbacks-inngest-documentation.md",
+    "research/notes/wait-for-an-event-inngest-documentation.md",
+    "research/notes/batching-events-inngest-documentation.md",
+    "research/notes/flow-control-inngest-documentation.md",
+    "research/notes/throttling-inngest-documentation.md",
+    "research/notes/rate-limiting-inngest-documentation.md",
+    "research/notes/local-development-inngest-documentation.md",
+    "research/notes/security-inngest-documentation.md",
+    "research/notes/connect-inngest-documentation.md",
+    "research/notes/render-inngest-documentation.md",
+    "research/notes/self-hosting-inngest-documentation.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/corpus-critic-results.md",
+      "sha256": "8aac64bb64b5dedbf7d4bf05a8d197686874bade31262de338f7bd708d324815",
+      "summary": "Carried-forward corpus critic results assessing official Inngest corpus sufficiency, coverage strengths, remaining gaps, and final-report caveats for RAWR durable plugin workflow specs."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/learn/how-functions-are-executed",
+    "https://www.inngest.com/docs/guides/error-handling",
+    "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/guides/flow-control",
+    "https://www.inngest.com/docs/guides/throttling",
+    "https://www.inngest.com/docs/guides/rate-limiting",
+    "https://www.inngest.com/docs/local-development",
+    "https://www.inngest.com/docs/learn/security",
+    "https://www.inngest.com/docs/setup/connect",
+    "https://www.inngest.com/docs/deploy/render",
+    "https://www.inngest.com/docs/self-hosting"
+  ]
+}

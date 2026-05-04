@@ -1,0 +1,17 @@
+{
+  "decisions": [
+    {
+      "id": "decision-1",
+      "decision": "No readability edits were applied to the final report.",
+      "rationale": "The report's current structure is readable and the service patch guard requires preserving the final report SHA unless an edit is necessary.",
+      "finalReportCarriedForwardUnchanged": true
+    }
+  ],
+  "finalReport": {
+    "path": "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "carriedForwardUnchanged": true,
+    "sha256": "7da5cf139cc581a40c5fd2650636a0682514721ec92fc5da6d8341b8e26b9359"
+  },
+  "recommendationsPath": "research/readability-recommendations.json",
+  "expectedNetCharDelta": 0
+}

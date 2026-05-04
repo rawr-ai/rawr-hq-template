@@ -1,0 +1,61 @@
+{
+  "jobId": "16-readability-audit-1-readability-recommender",
+  "role": "hyperresearch-readability-recommender",
+  "canonicalQuery": "What do Python packaging standards require installers to understand about pyproject.toml metadata? Use official Python Packaging Authority sources.",
+  "pipelinePosition": "Step 16-readability-audit (Readability audit) in the Hyperresearch V8 route.",
+  "stepId": "16-readability-audit",
+  "stepTitle": "Readability audit",
+  "vaultTag": "what-do-python-packaging-standards-require-insta",
+  "inputArtifacts": [],
+  "stepRequiredArtifacts": [
+    "research/claim-trace.json",
+    "research/readability-recommendations.json",
+    "research/readability-decisions.json",
+    "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+  ],
+  "requiredArtifacts": [
+    "research/claim-trace.json",
+    "research/readability-recommendations.json",
+    "research/readability-decisions.json",
+    "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+  ],
+  "artifactContract": {
+    "assignedRequiredArtifacts": [
+      "research/claim-trace.json",
+      "research/readability-recommendations.json",
+      "research/readability-decisions.json",
+      "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+    ],
+    "stepRequiredArtifacts": [
+      "research/claim-trace.json",
+      "research/readability-recommendations.json",
+      "research/readability-decisions.json",
+      "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+    ],
+    "fanInRule": "The parent service validates artifactWrites across every job for this step. Write or verify your assignedRequiredArtifacts; do not invent substitutes for another job's assigned artifacts unless you are explicitly carrying that artifact forward."
+  },
+  "expectedOutputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json",
+  "outputSchema": {
+    "jobId": "16-readability-audit-1-readability-recommender",
+    "logicalJobId": "16-readability-audit-1-readability-recommender",
+    "attemptId": "16-readability-audit-1-readability-recommender-a1",
+    "attemptNumber": 1,
+    "replacementAttemptRule": "For a cold-resumed child handle that cannot be cleanly completed, write the replacement packet output for this same jobId with attemptNumber > 1, a new attemptId, replacesAttemptId, replacementReason, and originalAttemptClassification. Replacement success proves service fan-in only; it does not make the original attempt clean_completed.",
+    "status": "complete|failed",
+    "summary": "string",
+    "evidence": [
+      "path-or-source-id"
+    ],
+    "artifactWrites": [
+      {
+        "path": "research/temp/example-artifact.json",
+        "sha256": "sha256-of-file-content",
+        "summary": "what this required artifact supports; include carried-forward artifacts too"
+      }
+    ],
+    "sourceUrls": [
+      "https://example.com/source-url"
+    ]
+  },
+  "failureBehavior": "Write the expected output path with status=failed and a failure reason if the role cannot complete."
+}

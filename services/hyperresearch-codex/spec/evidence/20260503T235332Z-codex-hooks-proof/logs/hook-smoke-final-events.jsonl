@@ -1,0 +1,6 @@
+{"type":"thread.started","thread_id":"019df047-66bb-7602-8909-ba28fca976fe"}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_0","type":"command_execution","command":"/bin/zsh -lc 'echo hyperresearch-hook-smoke-final'","aggregated_output":"","exit_code":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_0","type":"command_execution","command":"/bin/zsh -lc 'echo hyperresearch-hook-smoke-final'","aggregated_output":"hyperresearch-hook-smoke-final\n","exit_code":0,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_1","type":"agent_message","text":"done"}}
+{"type":"turn.completed","usage":{"input_tokens":35142,"cached_input_tokens":19712,"output_tokens":129,"reasoning_output_tokens":50}}

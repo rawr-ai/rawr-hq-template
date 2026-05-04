@@ -1,0 +1,112 @@
+## I. Executive Answer
+
+RAWR HQ should encode durable plugin workflows as an Inngest-shaped runtime contract. Inngest is a durable execution platform: it persists function state outside the handler, retries failed work, and resumes runs by memoizing completed step output. That model only helps RAWR if plugin authors declare stable workflow semantics and the runtime owns the infrastructure that makes those semantics durable [[how-inngest-functions-are-executed-durable-execution-inngest-documentation]] [[inngest-steps-inngest-documentation]].
+
+RAWR plugin workflow specs should model Inngest functions as durable runtime-owned execution units, not plugin-local scripts. Plugins should declare workflow identity, event or cron triggers, step boundaries, side-effect categories, retry and idempotency policy, wait contracts, batching intent, and flow-control intent. The runtime should own the Inngest client, function registry, `/api/inngest` ingress, `serve()` adapter, signing and event keys, app sync, topology, observability, and production proof [[serve-inngest-documentation]] [[create-function-inngest-documentation]].
+
+The current RAWR runtime-realization evidence should remain bounded: it supports the spec direction around `serve()`, `createFunction`, and `step.run`, but it does not prove memoized resume, retry replay, `step.waitForEvent` resumption, run history, production signing, or production topology. Those claims require an Inngest Dev Server, Inngest Cloud, or self-hosted control-plane path where the queue, runner, executor, and state store participate in the test [[local-development-inngest-documentation]] [[self-hosting-inngest-documentation]].
+
+## II. Runtime-Owned Ingress And Topology
+
+### A. `serve()` And `/api/inngest`
+
+`serve()` is the HTTP API (application programming interface) handler that lets Inngest read function configuration and invoke function code. It takes an Inngest client and an explicit array of functions, and the official docs recommend `/api/inngest` as the serve path. The same endpoint handles metadata or a development landing page by `GET`, function invocation by `POST`, and registration or sync by `PUT` [[serve-inngest-documentation]].
+
+That makes `/api/inngest` runtime ingress: the controlled entry point where signed Inngest traffic reaches RAWR-owned compute. It should not be a browser-facing plugin route, a plugin REST endpoint, or an author-supplied boilerplate file. The runtime should build the function registry from accepted plugin workflow declarations and pass that registry to `serve({ client, functions })` [[serve-inngest-documentation]].
+
+RAWR production guidance should treat /api/inngest ingress, serve() configuration, and signing-key verification as runtime-owned infrastructure rather than plugin author boilerplate. Inngest signs platform-to-application requests with an environment-specific signing key; SDK (software development kit) serve adapters verify signatures and timestamps to reject replay; event keys authenticate event sends. RAWR should require per-environment `INNGEST_SIGNING_KEY` and `INNGEST_EVENT_KEY`, no hard-coded secrets, a rotation procedure, and explicit separation between local exceptions and production behavior [[security-inngest-documentation]] [[render-inngest-documentation]].
+
+### B. `serve()` Baseline, Connect Option
+
+`serve()` should be RAWR's conservative baseline because it fits ordinary HTTP-hosted apps and serverless-compatible deployment paths. Connect is a runtime/operator topology choice: it uses outbound persistent WebSocket workers, supports horizontal workers, graceful shutdown, app versions, instance IDs, and worker concurrency, but the captured docs mark it Public Beta and require long-running servers rather than serverless runtimes [[connect-inngest-documentation]].
+
+Plugin declarations should stay topology-neutral. A plugin should not know whether the runtime projects its workflow through HTTP `serve()`, Connect workers, Inngest Cloud, or self-hosted Inngest. The plugin declares durable intent; the runtime chooses deployment topology and carries the burden of ingress, keys, sync, worker health, and observation [[serve-inngest-documentation]] [[connect-inngest-documentation]].
+
+## III. Workflow Declaration Contract
+
+### A. Stable Function Identity
+
+RAWR should require each durable plugin workflow to declare stable function ids, event triggers, and step boundaries before it can make production durability claims. Inngest `createFunction` requires a unique `id` that should not change between deploys, and its configuration also carries triggers plus operational policy fields such as retries, `onFailure`, idempotency, batching, flow control, cancellation, and timeouts [[create-function-inngest-documentation]].
+
+RAWR should map `workflow.id` to the Inngest function ID and treat display names as non-durable labels. IDs generated from install paths, timestamps, random values, deploy hashes, branch names, or editable copy should fail validation. Trigger event names or cron schedules should be first-class fields, with expected payload schema and optional CEL (Common Expression Language) predicates where filtering or matching is needed [[create-function-inngest-documentation]].
+
+Function and step renames should be treated as compatibility-sensitive until RAWR has a dedicated migration policy. The captured corpus proves that IDs are durable keys, but it does not prove a safe rename procedure. The conservative interim rule is explicit versioning or migration annotation for changed workflow IDs, trigger contracts, or step IDs [[create-function-inngest-documentation]] [[inngest-steps-inngest-documentation]].
+
+### B. Stable Step Identity
+
+Inngest uses the first argument of every step method as the step ID, and it uses that ID to memoize step state across function versions. Each step is a discrete unit of work that can be retried, debugged, or recovered independently. RAWR should therefore reject unstable step IDs derived from array position, timestamps, install paths, deploy hashes, user-facing copy, or runtime event data [[inngest-steps-inngest-documentation]].
+
+Top-level function handlers should be deterministic orchestration zones. They may inspect event data, branch on stable values, compose `step.*` calls, and assemble return values. Database writes, external API calls, filesystem mutations, event sends, and time/random-dependent side effects should cross a durable step boundary because Inngest can re-enter handlers while injecting memoized results for completed steps [[how-inngest-functions-are-executed-durable-execution-inngest-documentation]].
+
+## IV. Step Semantics, Retries, And Status
+
+### A. `step.run` As The Side-Effect Boundary
+
+Inngest step.run boundaries give RAWR a natural place to encode retryable side effects, idempotency expectations, and observable progress. `step.run` runs synchronous or asynchronous code as a retriable step; when it succeeds, the response is saved in function run state and the step will not re-run. Inngest executes steps incrementally and persists step results outside the function execution context [[inngest-steps-inngest-documentation]] [[how-inngest-functions-are-executed-durable-execution-inngest-documentation]].
+
+Each side-effecting step should declare its step ID, side-effect class, input source, output shape, retry policy, timeout, idempotency strategy, rollback or fallback behavior, and observability labels. Idempotency means repeated execution does not create unintended additional effects; safe patterns include upserts, unique constraints, external idempotency keys, deduplicated event IDs, or compensating cleanup. A retried side effect without an idempotency story should fail conformance unless the workflow explicitly accepts duplicate effects [[errors-retries-inngest-documentation]].
+
+### B. Errors, Failures, And Layered Status
+
+Inngest distinguishes errors from failures. An error causes a step to retry; after retries are exhausted, the step fails and is not attempted again in that run. Unhandled failed steps bubble to function failure and cancel future executions. `createFunction` supports retry counts from `0` to `20` and documents a default of `4`, but RAWR should require explicit retry policy by workflow class or deliberately opt into a runtime default [[errors-retries-inngest-documentation]] [[create-function-inngest-documentation]].
+
+Rollback semantics are step-scoped. A failed step that exhausts retries can throw `StepError`, which may be caught so the workflow can recover, ignore non-critical work, fall back to another provider, or run a compensating rollback step. If unhandled, the function is marked failed [[rollbacks-inngest-documentation]].
+
+RAWR should not collapse those states into one boolean. Durable workflow status should preserve HTTP/control-plane result, Inngest run status, step status, retry attempt and exhaustion state, handled fallback or rollback result, and RAWR payload status. That separation is necessary because transport success, durable execution success, and plugin-domain success can disagree.
+
+## V. Continuations, Batching, And Flow Control
+
+### A. `step.waitForEvent`
+
+`step.waitForEvent` should be modeled as a continuation contract, not a callback hidden in implementation code. It pauses a function until a named event arrives or a timeout returns `null`; it can match on event fields and is the preferred event-resumed pattern because events fan out, decouple code, and provide audit trails [[wait-for-an-event-inngest-documentation]].
+
+RAWR wait declarations should include awaited event name, match predicate, timeout, timeout branch, matched branch, correlation fields, emitting actor, and whether the continuation crosses plugin or human-in-the-loop boundaries. They also need race mitigation: Inngest begins listening only when the code reaches the wait, so events sent earlier are not handled by that wait [[wait-for-an-event-inngest-documentation]].
+
+### B. Batching And Flow Control
+
+Batching is an explicit workflow capability, not a transparent optimization. `batchEvents` groups multiple events into one run using `maxSize`, `timeout`, optional `key`, and optional `if`; the handler receives an `events` array. The batching docs warn about memory and performance, enforce a 10 MiB safety limit, and state that batching cannot be combined with idempotency, rate limiting, cancellation events, or priority [[batching-events-inngest-documentation]] [[create-function-inngest-documentation]].
+
+RAWR should require a batch-safe operation contract: batch key, maximum size, timeout, partial-failure behavior, memory rationale, item-level deduplication, and ordering expectations. If per-event idempotency or must-process behavior is central, batching should be rejected unless RAWR adds explicit safeguards inside the batch step [[batching-events-inngest-documentation]].
+
+| Primitive | Inngest Semantics | RAWR Rule |
+| --- | --- | --- |
+| Concurrency | Limits executing steps across runs | Use for capacity and per-tenant or per-provider isolation |
+| Throttling | Limits new run starts and queues excess work first-in, first-out | Prefer for must-process work that needs smoothing |
+| Rate limiting | Skips excess function runs beyond a hard limit | Allow only when lost executions are explicitly acceptable |
+| Debounce | Coalesces bursty invocations over a window | Use when latest-state processing is enough |
+| Priority | Changes execution order | Treat as scheduling policy, not correctness policy |
+| Batching | Groups multiple events into one run | Require batch-safe side effects and reject incompatible controls |
+
+Flow-control primitives should remain distinct in the spec. Rate limiting is lossy; throttling delays; concurrency constrains executing work; debounce collapses redundant events; priority reorders; batching changes payload shape and failure granularity. RAWR should validate these choices before a plugin workflow reaches the runtime [[flow-control-inngest-documentation]] [[throttling-inngest-documentation]] [[rate-limiting-inngest-documentation]].
+
+## VI. Testing Gates And Production Caveats
+
+### A. Proof Gates
+
+RAWR should use layered proof gates:
+
+| Gate | What It Proves | What It Does Not Prove |
+| --- | --- | --- |
+| Static conformance | Stable IDs, route ownership, primitive use, side-effect placement, policy validation | Durable scheduling, memoized resume, retries, waits, signing |
+| Dev Server or self-hosted test | Local durable semantics, retries, waits, batches, run and step history | Production keys, firewall, hosted sync, exact deploy topology |
+| Production-like ingress | Signed sync/invocation, environment keys, app sync, path/origin behavior, observation | Long-term production reliability without operational soak and runbooks |
+
+The Inngest Dev Server can discover or manually register local `/api/inngest` endpoints, poll apps for function changes, call functions directly, accept test events, and expose endpoint diagnostics. Self-hosted Inngest exposes the durable substrate more explicitly: Event API, event stream, Runner, Queue, Executor, state store, database, API, and UI [[local-development-inngest-documentation]] [[self-hosting-inngest-documentation]].
+
+A meaningful RAWR durability suite should include a memoized `step.run` resume, a retried step that succeeds after failure, an exhausted step handled as `StepError`, an unhandled function failure, a matched `step.waitForEvent`, a timeout branch, a batch-safe workflow if batching is supported, and a signed `/api/inngest` sync/invocation path. It should capture workflow IDs, Inngest function IDs, run IDs, step IDs, attempts, event payloads, step outputs, and payload-level outcomes [[errors-retries-inngest-documentation]] [[rollbacks-inngest-documentation]] [[wait-for-an-event-inngest-documentation]].
+
+### B. Caveats
+
+Local development is not production evidence. The Dev Server is useful for local and CI testing, but local event keys may be dummy values and `INNGEST_DEV=1` disables signature verification in the documented TypeScript path. A passing local test can justify "locally durable-tested"; it cannot justify production signing, firewall, hosted sync, or deployment-topology claims [[local-development-inngest-documentation]] [[security-inngest-documentation]].
+
+Self-hosting also needs careful language. The default self-hosted setup can use SQLite plus an in-memory Redis server with snapshots; external Redis and Postgres are the stronger reliability and scaling path. A single-node proof can validate semantics, but it is not high-availability production readiness [[self-hosting-inngest-documentation]].
+
+Hooks and MCP are not part of the active Hyperresearch Codex parity claim until their runtime configuration and failure modes are separately proven. MCP (Model Context Protocol) and hook guardrails may later support workflow operations, but they should not be folded into the Inngest durable-workflow proof without their own runtime configuration, failure-mode tests, and evidence.
+
+## VII. Strategic Outlook
+
+The forward-looking design is a manifest-to-runtime compiler. Plugin authors should declare stable workflow identity, triggers, steps, side-effect classes, idempotency, retries, waits, batching, and loss/ordering tolerance in a reviewable schema. The runtime should compile that schema into Inngest `createFunction` declarations, step wrappers, policy fields, event schemas, a controlled registry, and deployment-specific `serve()` or Connect wiring [[create-function-inngest-documentation]] [[serve-inngest-documentation]] [[connect-inngest-documentation]].
+
+That separation lets RAWR evolve topology without changing the plugin contract. `serve()` can remain the baseline, Connect can become an operator option for long-running workers, and self-hosted Inngest can support controlled proofs where RAWR needs direct visibility into queue and state-store behavior. The workflow should move through explicit states: declared, statically conformant, locally durable-tested, production-synced, and production-observed [[local-development-inngest-documentation]] [[self-hosting-inngest-documentation]].
+
+The immediate implementation move is to encode the contract and build the proof suite, not to claim production readiness. Durable plugin workflows become credible only when RAWR can show stable identity, runtime-owned ingress, retryable step boundaries, idempotent side effects, race-aware waits, validated batching and flow control, signed ingress, and observable run history under the environment being claimed.

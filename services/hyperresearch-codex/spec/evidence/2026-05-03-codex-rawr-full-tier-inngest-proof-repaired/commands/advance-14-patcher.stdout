@@ -1,0 +1,140 @@
+# advance 14 patcher fan-in
+cwd=/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity
+ledger=/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json
+timestamp=2026-05-03T09:03:19Z
+{
+  "ok": false,
+  "error": {
+    "message": "Hyperresearch Codex V8 advance blocked by integrity findings",
+    "code": "HYPERRESEARCH_CODEX_V8_INTEGRITY_BLOCKED",
+    "details": {
+      "ledgerPath": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json",
+      "runId": "hpr-v8-c673c42e-c6da-46e7-b8fa-48c286a9572b",
+      "status": "blocked",
+      "completed": false,
+      "currentStepId": "15-polish",
+      "tier": "full",
+      "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+      "completedSteps": [
+        "01-decompose",
+        "02-width-sweep",
+        "03-contradiction-graph",
+        "04-loci-analysis",
+        "05-depth-investigation",
+        "06-cross-locus-reconcile",
+        "07-source-tensions",
+        "08-corpus-critic",
+        "09-evidence-digest",
+        "10-triple-draft",
+        "11-synthesize",
+        "12-critics",
+        "13-gap-fetch",
+        "14-patcher"
+      ],
+      "pendingAgentJobs": [
+        {
+          "id": "15-polish-1-polish-auditor",
+          "role": "hyperresearch-polish-auditor",
+          "packetPath": "research/temp/codex-agent-packets/15-polish-1-polish-auditor.json",
+          "expectedOutputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json"
+        }
+      ],
+      "cliCalls": [
+        {
+          "operation": "init",
+          "exitCode": 0
+        },
+        {
+          "operation": "search",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "note",
+          "exitCode": 0
+        }
+      ],
+      "integrity": [
+        {
+          "severity": "warning",
+          "code": "awaiting-agent-output",
+          "stepId": "15-polish",
+          "message": "Agent job is awaiting output: 15-polish-1-polish-auditor"
+        },
+        {
+          "severity": "blocking",
+          "code": "patch-only-violation",
+          "message": "Final report changed after snapshot without a covering research/patch-log.json entry: research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+        },
+        {
+          "severity": "warning",
+          "code": "incomplete-run",
+          "message": "Hyperresearch Codex run has not completed all steps"
+        }
+      ]
+    }
+  }
+}

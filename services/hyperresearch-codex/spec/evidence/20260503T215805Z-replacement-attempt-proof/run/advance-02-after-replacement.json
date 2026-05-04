@@ -1,0 +1,59 @@
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hr-replacement-proof-TqN7eo/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-042d0668-3d5c-46c5-b9e0-5bab9ca69cf0",
+    "status": "awaiting_agents",
+    "completed": false,
+    "currentStepId": "10-triple-draft",
+    "tier": "light",
+    "vaultTag": "what-do-python-packaging-standards-require-insta",
+    "completedSteps": [
+      "01-decompose",
+      "02-width-sweep"
+    ],
+    "pendingAgentJobs": [
+      {
+        "id": "10-triple-draft-1-draft-orchestrator",
+        "role": "hyperresearch-draft-orchestrator",
+        "packetPath": "research/temp/codex-agent-packets/10-triple-draft-1-draft-orchestrator.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json"
+      }
+    ],
+    "cliCalls": [
+      {
+        "operation": "init",
+        "exitCode": 0
+      },
+      {
+        "operation": "search",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "note",
+        "exitCode": 0
+      }
+    ],
+    "integrity": [
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "10-triple-draft",
+        "message": "Agent job is awaiting output: 10-triple-draft-1-draft-orchestrator"
+      },
+      {
+        "severity": "warning",
+        "code": "incomplete-run",
+        "message": "Hyperresearch Codex run has not completed all steps"
+      }
+    ]
+  }
+}

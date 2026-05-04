@@ -1,0 +1,55 @@
+{
+  "jobId": "14-patcher-1-patcher",
+  "role": "hyperresearch-patcher",
+  "status": "complete",
+  "summary": "Repaired the patch log for service-integrity coverage of the already-completed final-report edits and updated artifact write hashes.",
+  "evidence": [
+    "research/critic-findings-dialectic.json",
+    "research/critic-findings-depth.json",
+    "research/critic-findings-width.json",
+    "research/critic-findings-instruction.json",
+    "research/corpus-critic-gaps.json",
+    "research/temp/source-capture-log.md",
+    "research/temp/post-critic-fetch-log.md",
+    "research/notes/serve-inngest-documentation.md",
+    "research/notes/create-function-inngest-documentation.md",
+    "research/notes/inngest-steps-inngest-documentation.md",
+    "research/notes/wait-for-an-event-inngest-documentation.md",
+    "research/notes/batching-events-inngest-documentation.md",
+    "research/notes/connect-inngest-documentation.md",
+    "research/notes/security-inngest-documentation.md",
+    "research/notes/local-development-inngest-documentation.md",
+    "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "research/patch-log.json"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/patch-log.json",
+      "sha256": "f56943c1e1fdd7cce61f8e361e7a202317a19742bd3a061fa096ac4e9a45b9d7",
+      "summary": "Accepted integrity-repair patch entry covering the entire synthesis snapshot and current final report texts."
+    },
+    {
+      "path": "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+      "sha256": "7da5cf139cc581a40c5fd2650636a0682514721ec92fc5da6d8341b8e26b9359",
+      "summary": "Current final report carried forward unchanged after patch-log repair."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/learn/how-functions-are-executed",
+    "https://www.inngest.com/docs/guides/error-handling",
+    "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+    "https://www.inngest.com/docs/guides/flow-control",
+    "https://www.inngest.com/docs/guides/throttling",
+    "https://www.inngest.com/docs/guides/rate-limiting",
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/local-development",
+    "https://www.inngest.com/docs/learn/security",
+    "https://www.inngest.com/docs/setup/connect",
+    "https://www.inngest.com/docs/deploy/render",
+    "https://www.inngest.com/docs/self-hosting"
+  ]
+}

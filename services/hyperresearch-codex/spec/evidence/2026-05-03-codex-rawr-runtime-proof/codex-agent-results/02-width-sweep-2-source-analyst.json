@@ -1,0 +1,29 @@
+{
+  "jobId": "02-width-sweep-2-source-analyst",
+  "role": "hyperresearch-source-analyst",
+  "status": "complete",
+  "summary": "Completed the width-sweep source analyst packet using only official PyPA documentation. Wrote a source capture log and a concise JSON claim set covering pyproject.toml build metadata, core metadata installer behavior, and dependency-groups compatibility boundaries.",
+  "evidence": [
+    "research/temp/source-capture-log.md",
+    "research/temp/claims-width.json",
+    "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/source-capture-log.md",
+      "sha256": "a9d38a4928c0e905c0bad030c6fa66bfc5f49f1bde75f48eb5a88f726342241b",
+      "summary": "Logs the official PyPA sources reviewed and the evidence anchors used for pyproject.toml, core metadata, dependency groups, and practical build/install behavior."
+    },
+    {
+      "path": "research/temp/claims-width.json",
+      "sha256": "0fa1ac9794c02d7997611891e93b21f03e29a1f0318d169b04a8afbb27ab3d99",
+      "summary": "Provides ten concise source-backed compatibility claims about installer behavior for pyproject.toml, core metadata, extras, dynamic metadata, and dependency groups."
+    }
+  ],
+  "sourceUrls": [
+    "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+    "https://packaging.python.org/en/latest/specifications/core-metadata/",
+    "https://packaging.python.org/en/latest/specifications/dependency-groups/",
+    "https://packaging.python.org/en/latest/tutorials/packaging-projects/"
+  ]
+}

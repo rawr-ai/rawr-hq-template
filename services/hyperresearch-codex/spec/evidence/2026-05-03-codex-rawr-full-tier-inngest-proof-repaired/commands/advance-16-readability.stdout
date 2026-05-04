@@ -1,0 +1,164 @@
+# advance 16 readability fan-in
+cwd=/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity
+ledger=/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json
+timestamp=2026-05-03T09:11:20Z
+{
+  "ok": false,
+  "error": {
+    "message": "Hyperresearch Codex V8 advance blocked by integrity findings",
+    "code": "HYPERRESEARCH_CODEX_V8_INTEGRITY_BLOCKED",
+    "details": {
+      "ledgerPath": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json",
+      "runId": "hpr-v8-c673c42e-c6da-46e7-b8fa-48c286a9572b",
+      "status": "blocked",
+      "completed": true,
+      "tier": "full",
+      "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+      "completedSteps": [
+        "01-decompose",
+        "02-width-sweep",
+        "03-contradiction-graph",
+        "04-loci-analysis",
+        "05-depth-investigation",
+        "06-cross-locus-reconcile",
+        "07-source-tensions",
+        "08-corpus-critic",
+        "09-evidence-digest",
+        "10-triple-draft",
+        "11-synthesize",
+        "12-critics",
+        "13-gap-fetch",
+        "14-patcher",
+        "15-polish",
+        "16-readability-audit"
+      ],
+      "pendingAgentJobs": [],
+      "cliCalls": [
+        {
+          "operation": "init",
+          "exitCode": 0
+        },
+        {
+          "operation": "search",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "fetch",
+          "exitCode": 0
+        },
+        {
+          "operation": "note",
+          "exitCode": 0
+        },
+        {
+          "operation": "lint",
+          "exitCode": 0
+        },
+        {
+          "operation": "sync",
+          "exitCode": 0
+        },
+        {
+          "operation": "lint",
+          "exitCode": 0
+        },
+        {
+          "operation": "export",
+          "exitCode": 0
+        }
+      ],
+      "integrity": [
+        {
+          "severity": "blocking",
+          "code": "missing-claim-trace",
+          "artifact": "research/claim-trace.json",
+          "message": "Claim trace entry 1 references a missing report location: research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md:5"
+        },
+        {
+          "severity": "blocking",
+          "code": "missing-claim-trace",
+          "artifact": "research/claim-trace.json",
+          "message": "Claim trace entry 2 references a missing report location: research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md:37"
+        },
+        {
+          "severity": "blocking",
+          "code": "missing-claim-trace",
+          "artifact": "research/claim-trace.json",
+          "message": "Claim trace entry 3 references a missing report location: research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md:57"
+        },
+        {
+          "severity": "blocking",
+          "code": "missing-claim-trace",
+          "artifact": "research/claim-trace.json",
+          "message": "Claim trace entry 4 references a missing report location: research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md:21"
+        },
+        {
+          "severity": "blocking",
+          "code": "missing-claim-trace",
+          "artifact": "research/claim-trace.json",
+          "message": "Claim trace entry 5 references a missing report location: research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md:130"
+        }
+      ]
+    }
+  }
+}

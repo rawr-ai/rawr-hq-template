@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "HYPERRESEARCH_HOOK_PAYLOAD_LOG=/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/payloads/pre-tool-use-runtime.jsonl HYPERRESEARCH_HOOK_EVENT_LOG=/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/logs/hook-events-runtime.jsonl bun /tmp/hyperresearch-codex-hooks-20260503T235332Z-codex-hooks-proof/codex-home/hooks/pre_tool_use_source_guard.ts"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "HYPERRESEARCH_CODEX_LEDGER=/tmp/hyperresearch-codex-hooks-20260503T235332Z-codex-hooks-proof/project/research/temp/hyperresearch-codex-run.json HYPERRESEARCH_HOOK_PAYLOAD_LOG=/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/payloads/stop-runtime.jsonl HYPERRESEARCH_HOOK_EVENT_LOG=/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/logs/hook-events-runtime.jsonl bun /tmp/hyperresearch-codex-hooks-20260503T235332Z-codex-hooks-proof/codex-home/hooks/stop_validation_guard.ts"
+          }
+        ]
+      }
+    ]
+  }
+}

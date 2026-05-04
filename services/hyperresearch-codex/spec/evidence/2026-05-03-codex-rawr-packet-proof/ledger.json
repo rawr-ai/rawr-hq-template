@@ -1,0 +1,353 @@
+{
+  "version": 2,
+  "runId": "hpr-v8-dd42e7c4-b95e-49da-80f5-3ba374b5696a",
+  "canonicalQuery": "What is Python and what organization maintains it? Use python.org/about as the source.",
+  "tier": "light",
+  "tierSource": "user",
+  "vaultTag": "what-is-python-and-what-organization-maintains-i",
+  "vaultRoot": "/tmp/hyperresearch-codex-proof.CD9fhB",
+  "artifactRoot": "/tmp/hyperresearch-codex-proof.CD9fhB",
+  "stepsRoot": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps",
+  "queryFilePath": "/tmp/hyperresearch-codex-proof.CD9fhB/research/query-what-is-python-and-what-organization-maintains-i.md",
+  "routeStepIds": [
+    "01-decompose",
+    "02-width-sweep",
+    "10-triple-draft",
+    "15-polish",
+    "16-readability-audit"
+  ],
+  "wrapperRequirements": [],
+  "completed": true,
+  "createdAt": "2026-05-03T03:08:02.852Z",
+  "updatedAt": "2026-05-03T03:09:38.724Z",
+  "steps": [
+    {
+      "id": "01-decompose",
+      "title": "Decompose query and classify tier",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-1-decompose.md",
+      "requiredArtifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "artifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "startedAt": "2026-05-03T03:08:19.968Z",
+      "loaded": {
+        "stepId": "01-decompose",
+        "title": "Decompose query and classify tier",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-1-decompose.md",
+        "sha256": "b43bdf4516363d880c166b23543cb7e3c1473bc51e836b00b6496e3591e8c39a",
+        "loadedAt": "2026-05-03T03:08:19.969Z"
+      },
+      "completedAt": "2026-05-03T03:08:19.973Z"
+    },
+    {
+      "id": "02-width-sweep",
+      "title": "Width sweep and source capture",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-2-width-sweep.md",
+      "requiredArtifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "artifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "startedAt": "2026-05-03T03:08:19.973Z",
+      "loaded": {
+        "stepId": "02-width-sweep",
+        "title": "Width sweep and source capture",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-2-width-sweep.md",
+        "sha256": "dfb6460b29f46297ace63d80b41c71a2aa869cda431f29b7a2aa56be9957c327",
+        "loadedAt": "2026-05-03T03:08:19.973Z"
+      },
+      "completedAt": "2026-05-03T03:08:36.000Z"
+    },
+    {
+      "id": "10-triple-draft",
+      "title": "Triple draft or light final draft",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-10-triple-draft.md",
+      "requiredArtifacts": [
+        "research/temp/draft-angles.md",
+        "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+      ],
+      "artifacts": [
+        "research/temp/draft-angles.md",
+        "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+      ],
+      "startedAt": "2026-05-03T03:08:36.000Z",
+      "loaded": {
+        "stepId": "10-triple-draft",
+        "title": "Triple draft or light final draft",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-10-triple-draft.md",
+        "sha256": "d2531ceb5c404a0bb6dfe854a241eab20629f73f05e52a03c0a088a36f6c8284",
+        "loadedAt": "2026-05-03T03:08:36.001Z"
+      },
+      "completedAt": "2026-05-03T03:08:57.712Z"
+    },
+    {
+      "id": "15-polish",
+      "title": "Polish and lint",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-15-polish.md",
+      "requiredArtifacts": [
+        "research/polish-log.json",
+        "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+      ],
+      "artifacts": [
+        "research/polish-log.json",
+        "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+      ],
+      "startedAt": "2026-05-03T03:08:57.712Z",
+      "loaded": {
+        "stepId": "15-polish",
+        "title": "Polish and lint",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-15-polish.md",
+        "sha256": "5875cce6af61defe82f81387b922762e21ed5b3a1e6d14c883c76c263d98f1ed",
+        "loadedAt": "2026-05-03T03:08:57.713Z"
+      },
+      "completedAt": "2026-05-03T03:09:17.396Z"
+    },
+    {
+      "id": "16-readability-audit",
+      "title": "Readability audit",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-16-readability-audit.md",
+      "requiredArtifacts": [
+        "research/claim-trace.json",
+        "research/readability-recommendations.json",
+        "research/readability-decisions.json",
+        "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+      ],
+      "artifacts": [
+        "research/claim-trace.json",
+        "research/readability-recommendations.json",
+        "research/readability-decisions.json",
+        "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md"
+      ],
+      "startedAt": "2026-05-03T03:09:17.397Z",
+      "loaded": {
+        "stepId": "16-readability-audit",
+        "title": "Readability audit",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-16-readability-audit.md",
+        "sha256": "dade539a5d3067703a7caa45c3a739d95eb95b5dc70931f3edfdab4f2044766d",
+        "loadedAt": "2026-05-03T03:09:17.397Z"
+      },
+      "completedAt": "2026-05-03T03:09:38.724Z"
+    }
+  ],
+  "cliCalls": [
+    {
+      "operation": "init",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-proof.CD9fhB",
+      "startedAt": "2026-05-03T03:08:02.853Z",
+      "completedAt": "2026-05-03T03:08:03.155Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"vault_path\": \"/private/tmp/hyperresearch-codex-proof.CD9fhB\",\n    \"name\": \"Research Base\"\n  },\n  \"timestamp\": \"2026-05-03T03:08:03.133667+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "search",
+      "args": [
+        "What is Python and what organization maintains it? Use python.org/about as the source.",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-proof.CD9fhB",
+      "startedAt": "2026-05-03T03:08:35.006Z",
+      "completedAt": "2026-05-03T03:08:35.292Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"query\": \"What is Python and what organization maintains it? Use python.org/about as the source.\",\n    \"results\": [],\n    \"total\": 0\n  },\n  \"count\": 0,\n  \"vault\": \"/private/tmp/hyperresearch-codex-proof.CD9fhB\",\n  \"timestamp\": \"2026-05-03T03:08:35.269603+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.python.org/about/",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-proof.CD9fhB",
+      "startedAt": "2026-05-03T03:08:35.292Z",
+      "completedAt": "2026-05-03T03:08:35.822Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"about-python-pythonorg\",\n    \"title\": \"About Python™ | Python.org\",\n    \"url\": \"https://www.python.org/about/\",\n    \"domain\": \"www.python.org\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/about-python-pythonorg.md\",\n    \"word_count\": 360,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-proof.CD9fhB\",\n  \"timestamp\": \"2026-05-03T03:08:35.783127+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "note",
+      "args": [
+        "new",
+        "--json",
+        "Hyperresearch Codex V8 fixture source"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-proof.CD9fhB",
+      "startedAt": "2026-05-03T03:08:35.822Z",
+      "completedAt": "2026-05-03T03:08:35.999Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"id\": \"hyperresearch-codex-v8-fixture-source\",\n    \"path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n    \"title\": \"Hyperresearch Codex V8 fixture source\"\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-proof.CD9fhB\",\n  \"timestamp\": \"2026-05-03T03:08:35.979033+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "lint",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-proof.CD9fhB",
+      "startedAt": "2026-05-03T03:09:17.095Z",
+      "completedAt": "2026-05-03T03:09:17.396Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"issues\": [\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-is-python-and-what-organization-maintains-i\",\n        \"note_path\": \"research/notes/final_report_what-is-python-and-what-organization-maintains-i.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"about-python-pythonorg\",\n        \"note_path\": \"research/notes/about-python-pythonorg.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-is-python-and-what-organization-maintains-i\",\n        \"note_path\": \"research/notes/final_report_what-is-python-and-what-organization-maintains-i.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"about-python-pythonorg\",\n        \"note_path\": \"research/notes/about-python-pythonorg.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-is-python-and-what-organization-maintains-i\",\n        \"note_path\": \"research/notes/final_report_what-is-python-and-what-organization-maintains-i.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"extract-coverage\",\n        \"severity\": \"error\",\n        \"note_id\": \"<vault>\",\n        \"message\": \"Vault has 1 fetched source notes but only 0 real source-linked extract notes (0% coverage, need ≥1). The analyst was skipped on most sources or the source->extract chain of custody is broken. Spawn an analyst subagent on the unanalyzed sources during curation. Target: at least 1 extract (≥150 words, with `parent=<source-note-id>`) per 3 sources (floor of 1 for any corpus size). Minting stub notes to pass this gate is lint-gaming and will not satisfy.\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"about-python-pythonorg\",\n        \"note_path\": \"research/notes/about-python-pythonorg.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"final_report_what-is-python-and-what-organization-maintains-i\",\n        \"note_path\": \"research/notes/final_report_what-is-python-and-what-organization-maintains-i.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      }\n    ],\n    \"summary\": {\n      \"errors\": 1,\n      \"warnings\": 25,\n      \"info\": 9,\n      \"total\": 35\n    }\n  },\n  \"count\": 35,\n  \"vault\": \"/private/tmp/hyperresearch-codex-proof.CD9fhB\",\n  \"timestamp\": \"2026-05-03T03:09:17.373079+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "sync",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-proof.CD9fhB",
+      "startedAt": "2026-05-03T03:09:38.138Z",
+      "completedAt": "2026-05-03T03:09:38.374Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"added\": 0,\n    \"updated\": 0,\n    \"deleted\": 0,\n    \"unchanged\": 9,\n    \"errors\": [],\n    \"duration_ms\": 0.4\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-proof.CD9fhB\",\n  \"timestamp\": \"2026-05-03T03:09:38.354123+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "lint",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-proof.CD9fhB",
+      "startedAt": "2026-05-03T03:09:38.374Z",
+      "completedAt": "2026-05-03T03:09:38.548Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"issues\": [\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-is-python-and-what-organization-maintains-i\",\n        \"note_path\": \"research/notes/final_report_what-is-python-and-what-organization-maintains-i.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-title\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef.md\",\n        \"message\": \"Note has no meaningful title.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"about-python-pythonorg\",\n        \"note_path\": \"research/notes/about-python-pythonorg.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-is-python-and-what-organization-maintains-i\",\n        \"note_path\": \"research/notes/final_report_what-is-python-and-what-organization-maintains-i.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-tags\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef.md\",\n        \"message\": \"Note has no tags.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"about-python-pythonorg\",\n        \"note_path\": \"research/notes/about-python-pythonorg.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"final_report_what-is-python-and-what-organization-maintains-i\",\n        \"note_path\": \"research/notes/final_report_what-is-python-and-what-organization-maintains-i.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"missing-summary\",\n        \"severity\": \"warning\",\n        \"note_id\": \"10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef.md\",\n        \"message\": \"Note has no summary. Add one for better search and listings.\"\n      },\n      {\n        \"rule\": \"extract-coverage\",\n        \"severity\": \"error\",\n        \"note_id\": \"<vault>\",\n        \"message\": \"Vault has 1 fetched source notes but only 0 real source-linked extract notes (0% coverage, need ≥1). The analyst was skipped on most sources or the source->extract chain of custody is broken. Spawn an analyst subagent on the unanalyzed sources during curation. Target: at least 1 extract (≥150 words, with `parent=<source-note-id>`) per 3 sources (floor of 1 for any corpus size). Minting stub notes to pass this gate is lint-gaming and will not satisfy.\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"search-plan\",\n        \"note_path\": \"research/temp/search-plan.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"coverage-matrix\",\n        \"note_path\": \"research/temp/coverage-matrix.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"source-capture-log\",\n        \"note_path\": \"research/temp/source-capture-log.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"scored-urls\",\n        \"note_path\": \"research/temp/scored-urls.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"about-python-pythonorg\",\n        \"note_path\": \"research/notes/about-python-pythonorg.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"hyperresearch-codex-v8-fixture-source\",\n        \"note_path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"draft-angles\",\n        \"note_path\": \"research/temp/draft-angles.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"final_report_what-is-python-and-what-organization-maintains-i\",\n        \"note_path\": \"research/notes/final_report_what-is-python-and-what-organization-maintains-i.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      },\n      {\n        \"rule\": \"orphaned-notes\",\n        \"severity\": \"info\",\n        \"note_id\": \"10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef\",\n        \"note_path\": \"research/temp/report-snapshots/10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef.md\",\n        \"message\": \"Note is orphaned (no links in or out).\"\n      }\n    ],\n    \"summary\": {\n      \"errors\": 1,\n      \"warnings\": 25,\n      \"info\": 9,\n      \"total\": 35\n    }\n  },\n  \"count\": 35,\n  \"vault\": \"/private/tmp/hyperresearch-codex-proof.CD9fhB\",\n  \"timestamp\": \"2026-05-03T03:09:38.524715+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "export",
+      "args": [
+        "json",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-proof.CD9fhB",
+      "startedAt": "2026-05-03T03:09:38.548Z",
+      "completedAt": "2026-05-03T03:09:38.723Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"path\": \"/private/tmp/hyperresearch-codex-proof.CD9fhB/.hyperresearch/exports/vault.json\",\n    \"count\": 9\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-proof.CD9fhB\",\n  \"timestamp\": \"2026-05-03T03:09:38.701931+00:00\"\n}\n",
+      "stderr": ""
+    }
+  ],
+  "agentJobs": [
+    {
+      "id": "02-width-sweep-1-fetcher",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-fetcher",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-1-fetcher.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "createdAt": "2026-05-03T03:08:19.973Z",
+      "outputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "completedAt": "2026-05-03T03:08:35.005Z"
+    },
+    {
+      "id": "02-width-sweep-2-source-analyst",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-source-analyst",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-2-source-analyst.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "createdAt": "2026-05-03T03:08:19.974Z",
+      "outputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "completedAt": "2026-05-03T03:08:35.005Z"
+    },
+    {
+      "id": "10-triple-draft-1-draft-orchestrator",
+      "stepId": "10-triple-draft",
+      "role": "hyperresearch-draft-orchestrator",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/10-triple-draft-1-draft-orchestrator.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+      "createdAt": "2026-05-03T03:08:36.001Z",
+      "outputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+      "completedAt": "2026-05-03T03:08:57.710Z"
+    },
+    {
+      "id": "15-polish-1-polish-auditor",
+      "stepId": "15-polish",
+      "role": "hyperresearch-polish-auditor",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/15-polish-1-polish-auditor.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json",
+      "createdAt": "2026-05-03T03:08:57.713Z",
+      "outputPath": "research/temp/codex-agent-results/15-polish-1-polish-auditor.json",
+      "completedAt": "2026-05-03T03:09:17.095Z"
+    },
+    {
+      "id": "16-readability-audit-1-readability-recommender",
+      "stepId": "16-readability-audit",
+      "role": "hyperresearch-readability-recommender",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/16-readability-audit-1-readability-recommender.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json",
+      "createdAt": "2026-05-03T03:09:17.398Z",
+      "outputPath": "research/temp/codex-agent-results/16-readability-audit-1-readability-recommender.json",
+      "completedAt": "2026-05-03T03:09:38.138Z"
+    }
+  ],
+  "reviewDispositions": [],
+  "reportSnapshots": [
+    {
+      "stepId": "10-triple-draft",
+      "path": "research/temp/report-snapshots/10-triple-draft-6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef.md",
+      "sha256": "6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef",
+      "createdAt": "2026-05-03T03:08:57.712Z"
+    }
+  ],
+  "sourceCaptures": [
+    {
+      "url": "https://www.python.org/about/",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.python.org/about/"
+      ],
+      "cliCallIndexes": [
+        2
+      ],
+      "capturedAt": "2026-05-03T03:08:35.292Z",
+      "noteIds": [
+        "about-python-pythonorg"
+      ]
+    }
+  ],
+  "patchGuard": {
+    "snapshotPath": "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md",
+    "snapshotSha256": "6d8b29885f92b6575ffb15bea67f832c78d086da2cda8cfd9301fc353582c8ef",
+    "violations": []
+  },
+  "resumes": [],
+  "failures": []
+}

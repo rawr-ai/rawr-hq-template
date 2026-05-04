@@ -1,0 +1,64 @@
+import { Flags } from "@oclif/core";
+import { RawrCommand } from "@rawr/core";
+import { createHyperresearchCodexClientForBackend } from "../../../lib/hyperresearch-codex-binding";
+import { summarizeV8ValidationResult } from "../../../lib/v8-result";
+
+export default class HyperresearchCodexValidate extends RawrCommand {
+  static description = "Validate Hyperresearch Codex V8 integrity gates";
+
+  static flags = {
+    ...RawrCommand.baseFlags,
+    ledger: Flags.string({
+      required: true,
+      description: "Path to research/temp/hyperresearch-codex-run.json",
+    }),
+    backend: Flags.string({
+      options: ["real", "fixture"],
+      default: "fixture",
+      description: "Accepted for start/advance command symmetry; validation reads the existing ledger and does not execute backend CLI calls",
+    }),
+  } as const;
+
+  async run() {
+    const { flags } = await this.parseRawr(HyperresearchCodexValidate);
+    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const client = createHyperresearchCodexClientForBackend({
+      repoRoot: process.cwd(),
+      backend: String(flags.backend) as "fixture" | "real",
+    });
+
+    try {
+      const resultData = await client.runs.validateV8Run({
+        ledgerPath: String(flags.ledger),
+      }, {
+        context: {
+          invocation: {
+            traceId: `hyperresearch-codex-v8-validate-${Date.now()}`,
+          },
+        },
+      });
+      const responseData = summarizeV8ValidationResult(resultData);
+      const result = !resultData.passed
+        ? this.fail("Hyperresearch Codex V8 validation blocked by integrity findings", {
+            code: "HYPERRESEARCH_CODEX_V8_INTEGRITY_BLOCKED",
+            details: responseData,
+          })
+        : this.ok(responseData);
+      this.outputResult(result, {
+        flags: baseFlags,
+        human: () => {
+          this.log(`hyperresearch codex v8: ${resultData.status}`);
+          this.log(`ledger: ${resultData.ledgerPath}`);
+        },
+      });
+      if (!resultData.passed) this.exit(1);
+    } catch (error) {
+      if ((error as { code?: string } | null)?.code === "EEXIT") throw error;
+      const result = this.fail(error instanceof Error ? error.message : String(error), {
+        code: "HYPERRESEARCH_CODEX_V8_VALIDATE_FAILED",
+      });
+      this.outputResult(result, { flags: baseFlags });
+      this.exit(1);
+    }
+  }
+}

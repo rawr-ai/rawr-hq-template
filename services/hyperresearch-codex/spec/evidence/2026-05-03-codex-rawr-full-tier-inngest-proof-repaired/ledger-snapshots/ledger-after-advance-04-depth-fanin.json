@@ -1,0 +1,1226 @@
+{
+  "version": 2,
+  "runId": "hpr-v8-c673c42e-c6da-46e7-b8fa-48c286a9572b",
+  "canonicalQuery": "For RAWR HQ runtime realization, which Inngest primitives and operational semantics should the plugin/runtime specs encode for durable plugin workflows? Ground the analysis in the existing RAWR runtime-realization evidence and spec-gap findings, then use official Inngest documentation to answer how serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress should shape plugin workflow boundaries, testing, and production caveats.",
+  "tier": "full",
+  "tierSource": "user",
+  "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+  "vaultRoot": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+  "artifactRoot": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+  "stepsRoot": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps",
+  "queryFilePath": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/query-for-rawr-hq-runtime-realization-which-inngest-pr.md",
+  "routeStepIds": [
+    "01-decompose",
+    "02-width-sweep",
+    "03-contradiction-graph",
+    "04-loci-analysis",
+    "05-depth-investigation",
+    "06-cross-locus-reconcile",
+    "07-source-tensions",
+    "08-corpus-critic",
+    "09-evidence-digest",
+    "10-triple-draft",
+    "11-synthesize",
+    "12-critics",
+    "13-gap-fetch",
+    "14-patcher",
+    "15-polish",
+    "16-readability-audit"
+  ],
+  "wrapperRequirements": [],
+  "currentStepId": "08-corpus-critic",
+  "completed": false,
+  "createdAt": "2026-05-03T08:05:02.148Z",
+  "updatedAt": "2026-05-03T08:24:36.471Z",
+  "steps": [
+    {
+      "id": "01-decompose",
+      "title": "Decompose query and classify tier",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-1-decompose.md",
+      "requiredArtifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "artifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "startedAt": "2026-05-03T08:05:09.592Z",
+      "loaded": {
+        "stepId": "01-decompose",
+        "title": "Decompose query and classify tier",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-1-decompose.md",
+        "sha256": "b43bdf4516363d880c166b23543cb7e3c1473bc51e836b00b6496e3591e8c39a",
+        "loadedAt": "2026-05-03T08:05:09.593Z"
+      },
+      "completedAt": "2026-05-03T08:05:09.595Z"
+    },
+    {
+      "id": "02-width-sweep",
+      "title": "Width sweep and source capture",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-2-width-sweep.md",
+      "requiredArtifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "artifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "startedAt": "2026-05-03T08:05:09.595Z",
+      "loaded": {
+        "stepId": "02-width-sweep",
+        "title": "Width sweep and source capture",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-2-width-sweep.md",
+        "sha256": "dfb6460b29f46297ace63d80b41c71a2aa869cda431f29b7a2aa56be9957c327",
+        "loadedAt": "2026-05-03T08:05:09.595Z"
+      },
+      "completedAt": "2026-05-03T08:17:33.713Z"
+    },
+    {
+      "id": "03-contradiction-graph",
+      "title": "Contradiction graph",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-3-contradiction-graph.md",
+      "requiredArtifacts": [
+        "research/temp/contradiction-graph.json",
+        "research/temp/consensus-claims.json"
+      ],
+      "artifacts": [
+        "research/temp/contradiction-graph.json",
+        "research/temp/consensus-claims.json"
+      ],
+      "startedAt": "2026-05-03T08:17:33.715Z",
+      "loaded": {
+        "stepId": "03-contradiction-graph",
+        "title": "Contradiction graph",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-3-contradiction-graph.md",
+        "sha256": "7811c357982c6dc6dcfa10278d8a33023d6d207961f174ce72165fd8c42b2db1",
+        "loadedAt": "2026-05-03T08:17:33.715Z"
+      },
+      "completedAt": "2026-05-03T08:17:33.716Z"
+    },
+    {
+      "id": "04-loci-analysis",
+      "title": "Loci analysis",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-4-loci-analysis.md",
+      "requiredArtifacts": [
+        "research/loci.json"
+      ],
+      "artifacts": [
+        "research/loci.json"
+      ],
+      "startedAt": "2026-05-03T08:17:33.716Z",
+      "loaded": {
+        "stepId": "04-loci-analysis",
+        "title": "Loci analysis",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-4-loci-analysis.md",
+        "sha256": "6a9a62ab5762d5c28371983220fc423e90f51d76353c85c305c6d8e7a7af5f69",
+        "loadedAt": "2026-05-03T08:17:33.716Z"
+      },
+      "completedAt": "2026-05-03T08:21:11.955Z"
+    },
+    {
+      "id": "05-depth-investigation",
+      "title": "Depth investigation",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-5-depth-investigation.md",
+      "requiredArtifacts": [
+        "research/temp/depth-investigation-log.md"
+      ],
+      "artifacts": [
+        "research/temp/depth-investigation-log.md"
+      ],
+      "startedAt": "2026-05-03T08:21:11.957Z",
+      "loaded": {
+        "stepId": "05-depth-investigation",
+        "title": "Depth investigation",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-5-depth-investigation.md",
+        "sha256": "01466de1416be677e516c49bcf67cf340fa211621daf96ec3d70d010df3f6e0c",
+        "loadedAt": "2026-05-03T08:21:11.958Z"
+      },
+      "completedAt": "2026-05-03T08:24:36.468Z"
+    },
+    {
+      "id": "06-cross-locus-reconcile",
+      "title": "Cross-locus reconciliation",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-6-cross-locus-reconcile.md",
+      "requiredArtifacts": [
+        "research/comparisons.md"
+      ],
+      "artifacts": [
+        "research/comparisons.md"
+      ],
+      "startedAt": "2026-05-03T08:24:36.469Z",
+      "loaded": {
+        "stepId": "06-cross-locus-reconcile",
+        "title": "Cross-locus reconciliation",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-6-cross-locus-reconcile.md",
+        "sha256": "f20220dbc9d937e9bcf4b360b912042f66e30983c25fd67fbfa65a101369d9ff",
+        "loadedAt": "2026-05-03T08:24:36.469Z"
+      },
+      "completedAt": "2026-05-03T08:24:36.470Z"
+    },
+    {
+      "id": "07-source-tensions",
+      "title": "Source tensions",
+      "status": "complete",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-7-source-tensions.md",
+      "requiredArtifacts": [
+        "research/temp/source-tensions.json"
+      ],
+      "artifacts": [
+        "research/temp/source-tensions.json"
+      ],
+      "startedAt": "2026-05-03T08:24:36.470Z",
+      "loaded": {
+        "stepId": "07-source-tensions",
+        "title": "Source tensions",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-7-source-tensions.md",
+        "sha256": "9c7f3eaa36532ddbf397bda6c23151185a1815727f7140f04f3370472e8c61d5",
+        "loadedAt": "2026-05-03T08:24:36.470Z"
+      },
+      "completedAt": "2026-05-03T08:24:36.471Z"
+    },
+    {
+      "id": "08-corpus-critic",
+      "title": "Corpus critic",
+      "status": "awaiting_agents",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-8-corpus-critic.md",
+      "requiredArtifacts": [
+        "research/corpus-critic-gaps.json",
+        "research/temp/corpus-critic-results.md"
+      ],
+      "artifacts": [],
+      "startedAt": "2026-05-03T08:24:36.471Z",
+      "loaded": {
+        "stepId": "08-corpus-critic",
+        "title": "Corpus critic",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-8-corpus-critic.md",
+        "sha256": "3bfaafb9d03925fbae433d95545c8d555e00dd57226a19ad81fb6629ac87c299",
+        "loadedAt": "2026-05-03T08:24:36.471Z"
+      }
+    },
+    {
+      "id": "09-evidence-digest",
+      "title": "Evidence digest",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-9-evidence-digest.md",
+      "requiredArtifacts": [
+        "research/temp/evidence-digest.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "10-triple-draft",
+      "title": "Triple draft or light final draft",
+      "status": "pending",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-10-triple-draft.md",
+      "requiredArtifacts": [
+        "research/temp/draft-angles.md",
+        "research/temp/draft-a.md",
+        "research/temp/draft-b.md",
+        "research/temp/draft-c.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "11-synthesize",
+      "title": "Synthesize final report",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-11-synthesize.md",
+      "requiredArtifacts": [
+        "research/temp/synthesis-conflicts.md",
+        "research/temp/synthesis-plan.md",
+        "research/temp/synthesis-outline.md",
+        "research/temp/synthesis-pass1.md",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "12-critics",
+      "title": "Adversarial critics",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-12-critics.md",
+      "requiredArtifacts": [
+        "research/critic-findings-dialectic.json",
+        "research/critic-findings-depth.json",
+        "research/critic-findings-width.json",
+        "research/critic-findings-instruction.json"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "13-gap-fetch",
+      "title": "Post-critic gap fetch",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-13-gap-fetch.md",
+      "requiredArtifacts": [
+        "research/temp/post-critic-fetch-log.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "14-patcher",
+      "title": "Patch accepted findings",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-14-patcher.md",
+      "requiredArtifacts": [
+        "research/patch-log.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "15-polish",
+      "title": "Polish and lint",
+      "status": "pending",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-15-polish.md",
+      "requiredArtifacts": [
+        "research/polish-log.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "16-readability-audit",
+      "title": "Readability audit",
+      "status": "pending",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-16-readability-audit.md",
+      "requiredArtifacts": [
+        "research/claim-trace.json",
+        "research/readability-recommendations.json",
+        "research/readability-decisions.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": []
+    }
+  ],
+  "cliCalls": [
+    {
+      "operation": "init",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:05:02.150Z",
+      "completedAt": "2026-05-03T08:05:02.416Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"vault_path\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n    \"name\": \"Research Base\"\n  },\n  \"timestamp\": \"2026-05-03T08:05:02.394177+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "search",
+      "args": [
+        "For RAWR HQ runtime realization, which Inngest primitives and operational semantics should the plugin/runtime specs encode for durable plugin workflows? Ground the analysis in the existing RAWR runtime-realization evidence and spec-gap findings, then use official Inngest documentation to answer how serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress should shape plugin workflow boundaries, testing, and production caveats.",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:24.805Z",
+      "completedAt": "2026-05-03T08:17:25.126Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"query\": \"For RAWR HQ runtime realization, which Inngest primitives and operational semantics should the plugin/runtime specs encode for durable plugin workflows? Ground the analysis in the existing RAWR runtime-realization evidence and spec-gap findings, then use official Inngest documentation to answer how serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress should shape plugin workflow boundaries, testing, and production caveats.\",\n    \"results\": [],\n    \"total\": 0\n  },\n  \"count\": 0,\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:25.105247+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/reference/serve",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:25.126Z",
+      "completedAt": "2026-05-03T08:17:25.768Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"serve-inngest-documentation\",\n    \"title\": \"Serve - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/reference/serve\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/serve-inngest-documentation.md\",\n    \"word_count\": 443,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:25.730536+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:25.768Z",
+      "completedAt": "2026-05-03T08:17:26.181Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"create-function-inngest-documentation\",\n    \"title\": \"Create Function - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/reference/typescript/functions/create\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/create-function-inngest-documentation.md\",\n    \"word_count\": 2167,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:26.144711+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:26.181Z",
+      "completedAt": "2026-05-03T08:17:26.650Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"inngest-steps-inngest-documentation\",\n    \"title\": \"Inngest Steps - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/learn/inngest-steps\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/inngest-steps-inngest-documentation.md\",\n    \"word_count\": 1256,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:26.613743+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:26.650Z",
+      "completedAt": "2026-05-03T08:17:27.038Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"how-inngest-functions-are-executed-durable-execution-inngest-documentation\",\n    \"title\": \"How Inngest functions are executed: Durable Execution - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/learn/how-functions-are-executed\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md\",\n    \"word_count\": 1757,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:26.998175+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/guides/error-handling",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:27.038Z",
+      "completedAt": "2026-05-03T08:17:27.461Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"errors-retries-inngest-documentation\",\n    \"title\": \"Errors & Retries - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/guides/error-handling\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/errors-retries-inngest-documentation.md\",\n    \"word_count\": 276,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:27.421250+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:27.461Z",
+      "completedAt": "2026-05-03T08:17:28.222Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"rollbacks-inngest-documentation\",\n    \"title\": \"Rollbacks - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/rollbacks-inngest-documentation.md\",\n    \"word_count\": 416,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:28.171178+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:28.223Z",
+      "completedAt": "2026-05-03T08:17:28.859Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"wait-for-an-event-inngest-documentation\",\n    \"title\": \"Wait for an Event - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/wait-for-an-event-inngest-documentation.md\",\n    \"word_count\": 619,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:28.814106+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/guides/batching",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:28.860Z",
+      "completedAt": "2026-05-03T08:17:29.365Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"batching-events-inngest-documentation\",\n    \"title\": \"Batching events - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/guides/batching\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/batching-events-inngest-documentation.md\",\n    \"word_count\": 837,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:29.316944+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/guides/flow-control",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:29.365Z",
+      "completedAt": "2026-05-03T08:17:29.857Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"flow-control-inngest-documentation\",\n    \"title\": \"Flow Control - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/guides/flow-control\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/flow-control-inngest-documentation.md\",\n    \"word_count\": 206,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:29.804659+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/learn/security",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:29.857Z",
+      "completedAt": "2026-05-03T08:17:30.380Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"security-inngest-documentation\",\n    \"title\": \"Security - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/learn/security\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/security-inngest-documentation.md\",\n    \"word_count\": 1042,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:30.337944+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/local-development",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:30.380Z",
+      "completedAt": "2026-05-03T08:17:30.906Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"local-development-inngest-documentation\",\n    \"title\": \"Local development - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/local-development\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/local-development-inngest-documentation.md\",\n    \"word_count\": 1792,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:30.857587+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/setup/connect",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:30.906Z",
+      "completedAt": "2026-05-03T08:17:31.518Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"connect-inngest-documentation\",\n    \"title\": \"Connect - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/setup/connect\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/connect-inngest-documentation.md\",\n    \"word_count\": 2815,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:31.462668+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/deploy/render",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:31.518Z",
+      "completedAt": "2026-05-03T08:17:31.944Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"render-inngest-documentation\",\n    \"title\": \"Render - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/deploy/render\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/render-inngest-documentation.md\",\n    \"word_count\": 483,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:31.896263+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/self-hosting",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:31.944Z",
+      "completedAt": "2026-05-03T08:17:32.489Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"self-hosting-inngest-documentation\",\n    \"title\": \"Self-hosting - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/self-hosting\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/self-hosting-inngest-documentation.md\",\n    \"word_count\": 1901,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:32.442369+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/guides/throttling",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:32.489Z",
+      "completedAt": "2026-05-03T08:17:32.986Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"throttling-inngest-documentation\",\n    \"title\": \"Throttling - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/guides/throttling\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/throttling-inngest-documentation.md\",\n    \"word_count\": 720,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:32.940654+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fetch",
+      "args": [
+        "https://www.inngest.com/docs/guides/rate-limiting",
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:32.986Z",
+      "completedAt": "2026-05-03T08:17:33.523Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"note_id\": \"rate-limiting-inngest-documentation\",\n    \"title\": \"Rate limiting - Inngest Documentation\",\n    \"url\": \"https://www.inngest.com/docs/guides/rate-limiting\",\n    \"domain\": \"www.inngest.com\",\n    \"provider\": \"builtin\",\n    \"path\": \"research/notes/rate-limiting-inngest-documentation.md\",\n    \"word_count\": 643,\n    \"assets\": [],\n    \"raw_file\": null\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:33.476054+00:00\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "note",
+      "args": [
+        "new",
+        "--json",
+        "Hyperresearch Codex V8 fixture source"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul",
+      "startedAt": "2026-05-03T08:17:33.523Z",
+      "completedAt": "2026-05-03T08:17:33.710Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"id\": \"hyperresearch-codex-v8-fixture-source\",\n    \"path\": \"research/notes/hyperresearch-codex-v8-fixture-source.md\",\n    \"title\": \"Hyperresearch Codex V8 fixture source\"\n  },\n  \"vault\": \"/private/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul\",\n  \"timestamp\": \"2026-05-03T08:17:33.686266+00:00\"\n}\n",
+      "stderr": ""
+    }
+  ],
+  "agentJobs": [
+    {
+      "id": "02-width-sweep-1-fetcher",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-fetcher",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-1-fetcher.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "createdAt": "2026-05-03T08:05:09.595Z",
+      "outputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "completedAt": "2026-05-03T08:17:24.803Z"
+    },
+    {
+      "id": "02-width-sweep-2-source-analyst",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-source-analyst",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-2-source-analyst.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "createdAt": "2026-05-03T08:05:09.596Z",
+      "outputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "completedAt": "2026-05-03T08:17:24.804Z"
+    },
+    {
+      "id": "04-loci-analysis-1-loci-analyst",
+      "stepId": "04-loci-analysis",
+      "role": "hyperresearch-loci-analyst",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/04-loci-analysis-1-loci-analyst.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/04-loci-analysis-1-loci-analyst.json",
+      "createdAt": "2026-05-03T08:17:33.717Z",
+      "outputPath": "research/temp/codex-agent-results/04-loci-analysis-1-loci-analyst.json",
+      "completedAt": "2026-05-03T08:21:11.951Z"
+    },
+    {
+      "id": "04-loci-analysis-2-loci-analyst",
+      "stepId": "04-loci-analysis",
+      "role": "hyperresearch-loci-analyst",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/04-loci-analysis-2-loci-analyst.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/04-loci-analysis-2-loci-analyst.json",
+      "createdAt": "2026-05-03T08:17:33.717Z",
+      "outputPath": "research/temp/codex-agent-results/04-loci-analysis-2-loci-analyst.json",
+      "completedAt": "2026-05-03T08:21:11.951Z"
+    },
+    {
+      "id": "05-depth-investigation-1-depth-investigator",
+      "stepId": "05-depth-investigation",
+      "role": "hyperresearch-depth-investigator",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/05-depth-investigation-1-depth-investigator.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/05-depth-investigation-1-depth-investigator.json",
+      "createdAt": "2026-05-03T08:21:11.958Z",
+      "outputPath": "research/temp/codex-agent-results/05-depth-investigation-1-depth-investigator.json",
+      "completedAt": "2026-05-03T08:24:36.465Z"
+    },
+    {
+      "id": "05-depth-investigation-2-depth-investigator",
+      "stepId": "05-depth-investigation",
+      "role": "hyperresearch-depth-investigator",
+      "status": "complete",
+      "packetPath": "research/temp/codex-agent-packets/05-depth-investigation-2-depth-investigator.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/05-depth-investigation-2-depth-investigator.json",
+      "createdAt": "2026-05-03T08:21:11.958Z",
+      "outputPath": "research/temp/codex-agent-results/05-depth-investigation-2-depth-investigator.json",
+      "completedAt": "2026-05-03T08:24:36.466Z"
+    },
+    {
+      "id": "08-corpus-critic-1-corpus-critic",
+      "stepId": "08-corpus-critic",
+      "role": "hyperresearch-corpus-critic",
+      "status": "pending",
+      "packetPath": "research/temp/codex-agent-packets/08-corpus-critic-1-corpus-critic.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/08-corpus-critic-1-corpus-critic.json",
+      "createdAt": "2026-05-03T08:24:36.471Z"
+    },
+    {
+      "id": "08-corpus-critic-2-fetcher",
+      "stepId": "08-corpus-critic",
+      "role": "hyperresearch-fetcher",
+      "status": "pending",
+      "packetPath": "research/temp/codex-agent-packets/08-corpus-critic-2-fetcher.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/08-corpus-critic-2-fetcher.json",
+      "createdAt": "2026-05-03T08:24:36.471Z"
+    }
+  ],
+  "reviewDispositions": [],
+  "reportSnapshots": [],
+  "sourceCaptures": [
+    {
+      "url": "https://www.inngest.com/docs/reference/serve",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        2
+      ],
+      "capturedAt": "2026-05-03T08:17:25.126Z",
+      "noteIds": [
+        "serve-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/reference/typescript/functions/create",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        3
+      ],
+      "capturedAt": "2026-05-03T08:17:25.768Z",
+      "noteIds": [
+        "create-function-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/learn/inngest-steps",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        4
+      ],
+      "capturedAt": "2026-05-03T08:17:26.181Z",
+      "noteIds": [
+        "inngest-steps-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/learn/how-functions-are-executed",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        5
+      ],
+      "capturedAt": "2026-05-03T08:17:26.650Z",
+      "noteIds": [
+        "how-inngest-functions-are-executed-durable-execution-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/guides/error-handling",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        6
+      ],
+      "capturedAt": "2026-05-03T08:17:27.038Z",
+      "noteIds": [
+        "errors-retries-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        7
+      ],
+      "capturedAt": "2026-05-03T08:17:27.461Z",
+      "noteIds": [
+        "rollbacks-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        8
+      ],
+      "capturedAt": "2026-05-03T08:17:28.223Z",
+      "noteIds": [
+        "wait-for-an-event-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/guides/batching",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        9
+      ],
+      "capturedAt": "2026-05-03T08:17:28.860Z",
+      "noteIds": [
+        "batching-events-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/guides/flow-control",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        10
+      ],
+      "capturedAt": "2026-05-03T08:17:29.365Z",
+      "noteIds": [
+        "flow-control-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/learn/security",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        11
+      ],
+      "capturedAt": "2026-05-03T08:17:29.857Z",
+      "noteIds": [
+        "security-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/local-development",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        12
+      ],
+      "capturedAt": "2026-05-03T08:17:30.380Z",
+      "noteIds": [
+        "local-development-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/setup/connect",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-1-fetcher",
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        13
+      ],
+      "capturedAt": "2026-05-03T08:17:30.906Z",
+      "noteIds": [
+        "connect-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/deploy/render",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        14
+      ],
+      "capturedAt": "2026-05-03T08:17:31.518Z",
+      "noteIds": [
+        "render-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/self-hosting",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        15
+      ],
+      "capturedAt": "2026-05-03T08:17:31.944Z",
+      "noteIds": [
+        "self-hosting-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/guides/throttling",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/rate-limiting"
+      ],
+      "cliCallIndexes": [
+        16
+      ],
+      "capturedAt": "2026-05-03T08:17:32.489Z",
+      "noteIds": [
+        "throttling-inngest-documentation"
+      ]
+    },
+    {
+      "url": "https://www.inngest.com/docs/guides/rate-limiting",
+      "stepIds": [
+        "02-width-sweep"
+      ],
+      "suggestedByAgentJobIds": [
+        "02-width-sweep-2-source-analyst"
+      ],
+      "evidence": [
+        "https://www.inngest.com/docs/guides/rate-limiting",
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed",
+        "https://www.inngest.com/docs/guides/throttling"
+      ],
+      "cliCallIndexes": [
+        17
+      ],
+      "capturedAt": "2026-05-03T08:17:32.986Z",
+      "noteIds": [
+        "rate-limiting-inngest-documentation"
+      ]
+    }
+  ],
+  "patchGuard": {
+    "violations": []
+  },
+  "resumes": [],
+  "failures": []
+}

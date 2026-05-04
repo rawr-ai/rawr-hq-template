@@ -1,0 +1,79 @@
+{
+  "jobId": "11-synthesize-1-synthesizer",
+  "role": "hyperresearch-synthesizer",
+  "status": "complete",
+  "summary": "Synthesized a concise wikilink-cited final report at research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md. Final length: 2099 words / 16597 characters with 46 citations. Pass 1 length: 2608 words / 20390 characters; pass 2 cut 509 words / 3793 characters. Pass 2 removed repeated ownership framing, duplicate production-proof caveats, and repeated batching/flow-control warnings; normalized headings and terminology, tightened the proof-boundary voice, and made required claim sentences and technical definitions explicit. No sections remain flagged as weak.",
+  "evidence": [
+    "research/query-for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "research/prompt-decomposition.json",
+    "research/temp/draft-a.md",
+    "research/temp/draft-b.md",
+    "research/temp/draft-c.md",
+    "research/temp/evidence-digest.md",
+    "research/temp/synthesis-conflicts.md",
+    "research/temp/synthesis-plan.md",
+    "research/temp/synthesis-outline.md",
+    "research/temp/source-capture-log.md",
+    "serve-inngest-documentation",
+    "create-function-inngest-documentation",
+    "inngest-steps-inngest-documentation",
+    "how-inngest-functions-are-executed-durable-execution-inngest-documentation",
+    "errors-retries-inngest-documentation",
+    "rollbacks-inngest-documentation",
+    "wait-for-an-event-inngest-documentation",
+    "batching-events-inngest-documentation",
+    "flow-control-inngest-documentation",
+    "throttling-inngest-documentation",
+    "rate-limiting-inngest-documentation",
+    "local-development-inngest-documentation",
+    "security-inngest-documentation",
+    "connect-inngest-documentation",
+    "render-inngest-documentation",
+    "self-hosting-inngest-documentation"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/synthesis-conflicts.md",
+      "sha256": "2897f05d5ffdc736fae6d5030331603ffeaaf4faa55a7a605290e0e4fa32dc02",
+      "summary": "Verified carried-forward conflict guidance used to preserve proof-boundary, ownership, topology, migration, and required-claim decisions."
+    },
+    {
+      "path": "research/temp/synthesis-plan.md",
+      "sha256": "fda1647ab4e556bf0abbb20ddc86dee0b3537fece55351eb2b432b48e09690da",
+      "summary": "Verified carried-forward synthesis plan used as the architectural brief for the final report."
+    },
+    {
+      "path": "research/temp/synthesis-outline.md",
+      "sha256": "0e90e8cb12ed24aa80dcfbab5d2537f4bded365ec4cfe8dcd63eecdb2bf79133",
+      "summary": "Verified carried-forward outline whose section order and commitments are reflected in the final report."
+    },
+    {
+      "path": "research/temp/synthesis-pass1.md",
+      "sha256": "861c590f1a98d0d264306b8d33ee8259f0233ea0931cfd25a6359c00778aaf52",
+      "summary": "Integrated rough pass retained as the pass-1 synthesis artifact for debugging and delta comparison."
+    },
+    {
+      "path": "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+      "sha256": "584f8e6a81d800d47d20263fffa251ab73c40efd0b58d808417132d47c3f7502",
+      "summary": "Cleaned final report synthesizing the three drafts into a concise RAWR/Inngest durable workflow recommendation with all five required claim sentences."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/learn/how-functions-are-executed",
+    "https://www.inngest.com/docs/guides/error-handling",
+    "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/guides/flow-control",
+    "https://www.inngest.com/docs/guides/throttling",
+    "https://www.inngest.com/docs/guides/rate-limiting",
+    "https://www.inngest.com/docs/local-development",
+    "https://www.inngest.com/docs/learn/security",
+    "https://www.inngest.com/docs/setup/connect",
+    "https://www.inngest.com/docs/deploy/render",
+    "https://www.inngest.com/docs/self-hosting"
+  ]
+}

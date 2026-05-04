@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "bad-output",
+  "classification": "artifact_only_succeeded",
+  "cleanPass": false,
+  "child": {
+    "agentId": "019def63-9384-7d71-b430-71ccb550a857",
+    "completed": true,
+    "finalMessage": "DONE bad-output",
+    "closeReturned": true,
+    "closePreviousStatus": {
+      "completed": "DONE bad-output"
+    }
+  },
+  "artifact": {
+    "path": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/bad-output.json",
+    "exists": true,
+    "bytes": 46,
+    "jsonValid": false,
+    "parseError": "Expected double-quoted property name in JSON at position 46 (line 2 column 1)"
+  },
+  "blockingFindings": [
+    {
+      "severity": "blocking",
+      "kind": "malformed_json",
+      "path": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/bad-output.json",
+      "message": "Child artifact is malformed JSON: it ends after a trailing comma and cannot be parsed as JSON."
+    }
+  ]
+}

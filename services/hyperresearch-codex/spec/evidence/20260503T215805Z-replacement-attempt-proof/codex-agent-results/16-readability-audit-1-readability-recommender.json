@@ -1,0 +1,41 @@
+{
+  "jobId": "16-readability-audit-1-readability-recommender",
+  "role": "hyperresearch-readability-recommender",
+  "logicalJobId": "16-readability-audit-1-readability-recommender",
+  "attemptId": "16-readability-audit-1-readability-recommender-a1",
+  "attemptNumber": 1,
+  "status": "complete",
+  "summary": "Wrote claim trace plus readability recommendation and decision artifacts; final report carried forward unchanged.",
+  "evidence": [
+    "research/claim-trace.json",
+    "research/readability-recommendations.json",
+    "research/readability-decisions.json",
+    "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/claim-trace.json",
+      "sha256": "fe22fe89fb5d09efe5f05b663a9e7e0ee044b8e4eea0c1c01d2c2e8b9175bb19",
+      "summary": "Claim trace maps final report claims to captured official sources."
+    },
+    {
+      "path": "research/readability-recommendations.json",
+      "sha256": "5e0df87259afa75a3186fa6166b25b1139dec96a617ec602183468ce7087e03c",
+      "summary": "Readability recommendations; no changes required."
+    },
+    {
+      "path": "research/readability-decisions.json",
+      "sha256": "de9da0f91089bc3038943b248bd4c8fbb8ee402879b586964b730643bc0f16ad",
+      "summary": "Readability decisions for the no-change audit."
+    },
+    {
+      "path": "research/notes/final_report_what-do-python-packaging-standards-require-insta.md",
+      "sha256": "a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695",
+      "summary": "Carried-forward final report verified unchanged."
+    }
+  ],
+  "sourceUrls": [
+    "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+    "https://packaging.python.org/en/latest/specifications/core-metadata/"
+  ]
+}

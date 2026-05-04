@@ -1,0 +1,38 @@
+{
+  "jobId": "12-critics-4-instruction-critic",
+  "role": "hyperresearch-instruction-critic",
+  "status": "complete",
+  "summary": "Instruction critic completed. Wrote two findings: one blocking decomposition-gap finding and one warning for weak RAWR evidence traceability in the final report.",
+  "evidence": [
+    "research/temp/codex-agent-packets/12-critics-4-instruction-critic.json",
+    "research/query-for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "research/prompt-decomposition.json",
+    "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "research/temp/source-capture-log.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/critic-findings-instruction.json",
+      "sha256": "11bf1671ccf9ba1969dd2aeb9ec849b9e14485a472701a4faeb7e235162f7f61",
+      "summary": "Instruction-following critic findings for decomposition coverage and final-report prompt grounding."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/learn/how-functions-are-executed",
+    "https://www.inngest.com/docs/guides/error-handling",
+    "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+    "https://www.inngest.com/docs/guides/flow-control",
+    "https://www.inngest.com/docs/guides/throttling",
+    "https://www.inngest.com/docs/guides/rate-limiting",
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/local-development",
+    "https://www.inngest.com/docs/learn/security",
+    "https://www.inngest.com/docs/setup/connect",
+    "https://www.inngest.com/docs/deploy/render",
+    "https://www.inngest.com/docs/self-hosting"
+  ]
+}

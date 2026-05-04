@@ -1,0 +1,94 @@
+{
+  "scope_note": "This is a closed-corpus rawr-spec-landscape analysis. The user constrained the research to 13 named local specifications + the canonical Effect Runtime Realization spec. The codebase is explicitly off-limits. Standard step-8 web/PDF fetch wave does not apply — there are no external sources whose absence could overturn committed positions, because the corpus IS the canonical source. The corpus-critic gap analysis below was performed analytically against the closed corpus, asking 'what spec section have we not yet read deeply that could pre-resolve a recommendation?' and 'what hypothetical out-of-corpus spec, if it existed, would shift confidence?'",
+  "time_periods_pre_flight": "prompt-decomposition.json -> time_periods is empty. No period-pinned primary-source check needed.",
+  "gaps_attempted": [
+    {
+      "id": "g1",
+      "type": "overturning",
+      "target_position": "Four-tier platform-level-shape committed position (L1)",
+      "search_target": "Future Governance/Tensions/RFDs spec — would it explicitly map both Authoring Classifier and Factory Bundle Export into Coordination or Governance, collapsing the proposed Semantic-Composition tier?",
+      "result": "Out-of-corpus. The Habitat SDK Layers L8 governance spec is named in the corpus but not authored. L1 explicitly names this as the 'what would change my mind' condition and acknowledges the resolution may shift if such a spec is later authored. Within the authorized 13-spec scope, no overturning evidence exists. Position retained at ~70% confidence.",
+      "priority": "critical"
+    },
+    {
+      "id": "g2",
+      "type": "overturning",
+      "target_position": "System-level B+ verdict (L4) on three blocking integration-law seams",
+      "search_target": "Runtime-realization spec §19 WorkflowDispatcher — does it already enumerate per-role emission rights at a depth the L4 depth investigator did not reach?",
+      "result": "L4 explicitly notes it did not read §19 at maximum depth. The corpus-critic analytical pass cannot definitively close this without re-reading the spec body. Soft caveat applied: system-level B+ position confidence ADJUSTED FROM HIGH TO MEDIUM-HIGH. The committed position stands but the `agent-role direct-emission rights` blocking seam may already be partially closed in the runtime spec at the source-text level. Recommendation: when synthesizing §10 'Open Gaps', mark the agent-role-emission seam as 'medium-high confidence gap' rather than 'confirmed gap.'",
+      "priority": "critical"
+    },
+    {
+      "id": "g3",
+      "type": "overturning",
+      "target_position": "L5 top-5 operational-substrate gaps (bundle signing, OTel propagation, MFA/step-up, idempotency+dead-letter, MAWE profile→manifest)",
+      "search_target": "Are any of these gaps already addressed in spec sections that the L5 investigator did not reach?",
+      "result": "Spot-check via L5's own evidence: each gap is sourced from a 'Silences' or 'Don't-own-still-manage frontier' section that explicitly enumerates the absence. Bundle signing is named absent in Factory Bundle Export §1 non-goals + §30 reserved seams equivalent; OTel propagation is named absent in Async Runtime spec; MFA/step-up `assurance` field is in Auth spec without flow specification; idempotency-key + dead-letter are named absent in Async Runtime; MAWE profile→manifest is illustrative not normative per MAWE spec self-acknowledgement. No overturning evidence exists. Position retained at high confidence.",
+      "priority": "high"
+    },
+    {
+      "id": "g4",
+      "type": "overturning",
+      "target_position": "L2 universal-principle / bespoke-shapes verdict for vendor integration",
+      "search_target": "Is there a `defineVendorIntegration` macro or equivalent structural abstraction in any spec that would make the universal-template reading correct?",
+      "result": "Analytical scan of all 13 specs: no such macro exists. The closest candidate is the 10-rule descriptor-first checklist in Service-Package-Effect, which is a normative principle list, not a code-level template. Each integration's seam shape (oRPC EffectExecutionDescriptor, Inngest WorkflowDispatcherDescriptor + FunctionBundle, Auth Resource + provider families, Deployment TargetProfile chain, MAWE Manifest + ProviderCapabilitySet, Factory Bundle Retargeter) is structurally distinct. Position retained at >85% confidence.",
+      "priority": "high"
+    },
+    {
+      "id": "g5",
+      "type": "strengthening",
+      "target_position": "L3 three flagged gaps (Inngest event interface, classifier LLM call, bundle registry/signing)",
+      "search_target": "Do L4 and L5 surface the same gap pattern from independent angles, strengthening confidence?",
+      "result": "STRENGTHENED. L3 surfaces the gap pattern from a 'don't-own-still-manage descriptor-first checklist' angle. L4 surfaces the Inngest connect-worker as a 'shape-correct vs. authoritative reconciliation' issue. L5 surfaces the gaps as 'field-without-protocol' operational-substrate problems. Three independent investigators converge on the Inngest event interface and the bundle registry/signing seams. The classifier LLM call is L3-only at the level of 'integration-law absent' but L5 confirms 'no resource/provider abstraction, no facade.' Convergence raises joint confidence; recommendation set is robust.",
+      "priority": "medium"
+    },
+    {
+      "id": "g6",
+      "type": "independent-verification",
+      "target_position": "Habitat-vs-RAWR naming as a load-bearing finding for the landscape report",
+      "search_target": "Does the corpus contain a canonical decision document for the rebrand?",
+      "result": "Twelve of thirteen specs use 'RAWR' throughout. Only Habitat SDK Layers Draft uses '@habitat/*' naming and frames RAWR as 'the governance flavor atop Habitat physics.' The Habitat SDK Layers spec is explicitly DRAFT; no other spec has adopted the rebrand. CLASSIFICATION: cosmetic/branding for the landscape report (decision-relevance: low); architectural for ongoing canon work (decision-relevance: high). The landscape report should retain 'RAWR' as the platform name throughout and note the framing observation as an aside, not a structural finding.",
+      "priority": "low"
+    }
+  ],
+  "summary": "Six gaps attempted. Two priority-critical gaps: (g1) the future Governance/Tensions/RFDs spec is the explicit mind-changer for L1's four-tier position but is out-of-scope; (g2) the runtime-realization §19 WorkflowDispatcher subsection may already partially close L4's agent-role-emission blocking seam, so confidence on that one seam is adjusted from HIGH to MEDIUM-HIGH. Three priority-high gaps confirmed positions held under adversarial scrutiny. One priority-low gap (Habitat-vs-RAWR naming) classified as cosmetic for the landscape report. Convergence across L3 + L4 + L5 strengthens the recommendation set on Inngest event interface and bundle registry/signing.",
+  "no_web_fetch_rationale": "This is a closed-corpus internal-doc analysis task. The 13 source specs ARE the primary canonical sources. No external web search would surface evidence relevant to RAWR's spec-corpus completeness; out-of-corpus specs (future governance, services/authoring-plans, event-schema-registry) are explicitly named as future work in the corpus itself and cannot be fetched. Step 13 (gap-fetch) is correctly a no-op for this run.",
+  "confidence_updates": [
+    {
+      "position": "Four-tier platform-level-shape (L1)",
+      "before": "~70% medium-high",
+      "after": "~70% medium-high (unchanged)",
+      "rationale": "The mind-changer condition is explicit and out-of-scope. No in-corpus evidence shifts the position."
+    },
+    {
+      "position": "System-level B+ verdict (L4) — agent-role WorkflowDispatcher emission rights blocking seam",
+      "before": "high",
+      "after": "medium-high",
+      "rationale": "L4 explicitly did not read runtime-realization §19 at full depth. The blocking seam may be partially closed at source-text level. Recommendation list keeps the seam but flags it as 'medium-high confidence gap' rather than 'confirmed gap.'"
+    },
+    {
+      "position": "L4 — Inngest connect-worker Effect Layer blocking seam",
+      "before": "high",
+      "after": "high (unchanged)",
+      "rationale": "Spot-checked against Async Runtime spec analysis: the missing Effect Layer is explicit in the spec body. No overturning evidence."
+    },
+    {
+      "position": "L4 — Auth-specific compiler gate closure blocking seam",
+      "before": "high",
+      "after": "high (unchanged)",
+      "rationale": "Auth spec §22 contributes a gate list; runtime compiler section enumerates a different set. No overturning evidence."
+    },
+    {
+      "position": "L2 universal-principle / bespoke-shapes",
+      "before": ">85%",
+      "after": ">85% (unchanged)",
+      "rationale": "No `defineVendorIntegration` macro exists. Per-vendor seam topology variance is direct corpus evidence."
+    },
+    {
+      "position": "L3 + L5 convergent gap set",
+      "before": "high",
+      "after": "high+ (strengthened by triple-angle convergence)",
+      "rationale": "Three independent investigations converge on the Inngest event interface, bundle registry/signing, and classifier LLM call gaps."
+    }
+  ]
+}

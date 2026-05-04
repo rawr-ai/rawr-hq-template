@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hyperresearch-codex-proof.CD9fhB/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-dd42e7c4-b95e-49da-80f5-3ba374b5696a",
+    "status": "complete",
+    "passed": true,
+    "completed": true,
+    "tier": "light",
+    "vaultTag": "what-is-python-and-what-organization-maintains-i",
+    "blockingFindings": [],
+    "warningFindings": []
+  }
+}

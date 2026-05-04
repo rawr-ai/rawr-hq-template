@@ -1,0 +1,29 @@
+{
+  "jobId": "15-polish-1-polish-auditor",
+  "role": "hyperresearch-polish-auditor",
+  "logicalJobId": "15-polish-1-polish-auditor",
+  "attemptId": "15-polish-1-polish-auditor-a1",
+  "attemptNumber": 1,
+  "status": "complete",
+  "summary": "Accepted the final report unchanged and wrote the polish log.",
+  "evidence": [
+    "research/polish-log.json",
+    "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/polish-log.json",
+      "sha256": "b041b119ac2d6138af7ae807824c6acdbda2eb8e784c0ee8662771e247fb3ce7",
+      "summary": "Polish acceptance log."
+    },
+    {
+      "path": "research/notes/final_report_what-do-python-packaging-standards-require-insta.md",
+      "sha256": "a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695",
+      "summary": "Carried-forward final report verified unchanged."
+    }
+  ],
+  "sourceUrls": [
+    "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+    "https://packaging.python.org/en/latest/specifications/core-metadata/"
+  ]
+}

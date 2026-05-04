@@ -1,0 +1,64 @@
+{
+  "sub_questions": [
+    "What changes (if any) must be made to the canonical overall system architecture specification so it aligns with the runtime realization specification?",
+    "How are the two source documents structured today, and what does each currently contain vs. not contain?",
+    "Where are the boundaries between the two documents — which topics are runtime-internal (runtime spec authoritative) vs. system-integration (architecture spec authoritative)?",
+    "What integration points (interfaces, boundaries, conditions, rules) must the canonical architecture spec make explicit so companion subsystem documents plug in cleanly?",
+    "What runtime-driven concepts must be propagated UP into the architecture spec at the integration-surface level WITHOUT duplicating runtime internal details?",
+    "Where does the canonical architecture spec currently duplicate runtime internals, and what should be removed or replaced with a pointer to the runtime spec?",
+    "Are there design contradictions between the two documents that cannot be resolved by the 'runtime realization spec is authoritative on runtime concerns' heuristic?",
+    "What division-of-responsibility guidance applies to companion subsystem documents (i.e., other subsystem specs that will sit alongside the runtime spec under the canonical architecture umbrella)?",
+    "When the specs reference vendor / borrowed technology (Effect, Inngest, oRPC, OCLIF, Elysia, Bun, harness/native-host), do their integration claims hold up against the vendor's actual capability/lifecycle/integration shape — and only where load-bearing for an alignment recommendation?"
+  ],
+  "entities": [
+    {"name": "RAWR Effect Runtime Realization System Canonical Spec", "type": "source-document", "required_fields": ["full ToC with line numbers", "scope/exclusions/authority claims", "integration boundaries", "per-section duplication-vs-complementarity judgement vs. sibling spec"], "path": "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md"},
+    {"name": "RAWR Canonical Architecture Spec", "type": "source-document", "required_fields": ["full ToC with line numbers", "scope/exclusions/authority claims", "integration boundaries", "per-section duplication-vs-complementarity judgement vs. sibling spec"], "path": "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md"},
+    {"name": "companion subsystem documents", "type": "concept", "required_fields": ["how they plug in", "integration contract the architecture spec must expose"]},
+    {"name": "Effect", "type": "vendor", "required_fields": ["Layer composition / provider provisioning if load-bearing"]},
+    {"name": "Inngest", "type": "vendor", "required_fields": ["worker/connect lifecycle if load-bearing"]},
+    {"name": "oRPC", "type": "vendor", "required_fields": ["procedure middleware / caller-class boundary if load-bearing"]},
+    {"name": "OCLIF", "type": "vendor", "required_fields": ["command lifecycle / plugin model if load-bearing"]},
+    {"name": "Elysia", "type": "vendor", "required_fields": ["plugin / handler model if load-bearing"]},
+    {"name": "Bun", "type": "vendor", "required_fields": ["runtime/process model if load-bearing"]},
+    {"name": "harness/native-host technologies", "type": "vendor-class", "required_fields": ["host integration shape if load-bearing"]},
+    {"name": "prior alignment final report", "type": "comparison-only-artifact", "path": "research/_comparison/prior_final_report_runtime-canon-arch-align.md", "use": "comparison-only — read once after fresh report is final, may surface a brief 'Comparison to prior run' appendix; never cite, never use as draft, never consume as evidence"}
+  ],
+  "required_formats": [
+    "two gospel-rank source-analysis notes (one per spec) with full ToC + line numbers, scope/exclusions/authority claims, integration boundaries, per-section duplication-vs-complementarity judgements",
+    "vendor-verification notes tagged distinctly from spec-analysis notes (e.g., kind: vendor-verification) with explicit URL + library version citations",
+    "in-report citations using note IDs plus line refs back to source spec lines for spec evidence, and URL + library version for vendor evidence",
+    "per-recommendation traceability (each recommended change must point at the spec section/line it modifies and the runtime-spec evidence that drives it)",
+    "explicit contradiction flags (terminal section 5) where the runtime-authoritative heuristic does not resolve a conflict"
+  ],
+  "required_sections": [
+    "## 1. Document scope and structural diff",
+    "## 2. Integration surface the canonical architecture spec must own",
+    "## 3. Runtime-driven additions the canonical architecture spec is missing",
+    "## 4. Recommended changes to the canonical architecture specification",
+    "## 5. Flagged contradictions requiring user resolution",
+    "## 6. Division-of-responsibility guidance for companion subsystem documents"
+  ],
+  "required_section_headings": [
+    "## 1. Document scope and structural diff",
+    "## 2. Integration surface the canonical architecture spec must own",
+    "## 3. Runtime-driven additions the canonical architecture spec is missing",
+    "## 4. Recommended changes to the canonical architecture specification",
+    "## 5. Flagged contradictions requiring user resolution",
+    "## 6. Division-of-responsibility guidance for companion subsystem documents"
+  ],
+  "time_horizons": [],
+  "time_periods": [],
+  "scope_conditions": [
+    "For all runtime concerns, the runtime realization spec is authoritative; the canonical architecture spec must NOT duplicate runtime internals.",
+    "The canonical architecture spec's role is the core integration document explaining how the entire platform works at a system level.",
+    "Width corpus is primarily the two source spec files; vendor verification only when a claim is load-bearing for an alignment recommendation.",
+    "Vendor research uses mcp__docs__resolve-library-id + mcp__docs__query-docs FIRST; falls back to WebFetch / WebSearch / GitHub for primary-source confirmation.",
+    "Skip generic web breadth, adversarial web search, and academic search — there are no relevant external sources for the alignment question itself.",
+    "Source spec files live in the main worktree path (rawr-hq-template/docs/projects/rawr-final-architecture-migration/resources/spec/), NOT in this worktree — that is the canonical location.",
+    "The prior final report at research/_comparison/prior_final_report_runtime-canon-arch-align.md is COMPARISON-ONLY; never cite, never use as draft, never consume as evidence; read once after fresh report is complete to surface a brief 'Comparison to prior run' appendix.",
+    "When contradictions cannot be resolved by the 'runtime realization spec is authoritative on runtime concerns' heuristic, flag explicitly in terminal section 5 — do not silently resolve."
+  ],
+  "pipeline_tier": "full",
+  "response_format": "argumentative",
+  "citation_style": "wikilink"
+}

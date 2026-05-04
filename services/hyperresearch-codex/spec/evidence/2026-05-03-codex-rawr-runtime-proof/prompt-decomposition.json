@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "fixture": true,
+  "stepId": "01-decompose",
+  "title": "Decompose query and classify tier",
+  "canonicalQuery": "What are the practical compatibility implications of Python's packaging metadata standards for modern Python project installers? Focus on how pyproject.toml, core metadata, and dependency groups affect installer behavior, and cite only Python Packaging Authority or official Python documentation sources.",
+  "vaultTag": "what-are-the-practical-compatibility-implication"
+}

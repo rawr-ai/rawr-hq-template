@@ -1,0 +1,29 @@
+{
+  "jobId": "10-triple-draft-1-draft-orchestrator",
+  "role": "hyperresearch-draft-orchestrator",
+  "logicalJobId": "10-triple-draft-1-draft-orchestrator",
+  "attemptId": "10-triple-draft-1-draft-orchestrator-a1",
+  "attemptNumber": 1,
+  "status": "complete",
+  "summary": "Drafted a concise source-backed final report and draft-angle note.",
+  "evidence": [
+    "research/temp/draft-angles.md",
+    "research/notes/final_report_what-do-python-packaging-standards-require-insta.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/draft-angles.md",
+      "sha256": "c02a66dd8a1de70865db18c92e761621650a9dbb00ab3345ff73a064c4255a57",
+      "summary": "Draft strategy for the light route final report."
+    },
+    {
+      "path": "research/notes/final_report_what-do-python-packaging-standards-require-insta.md",
+      "sha256": "a3195357c1350066e554ce632367e5d3c5d15bd7b3d41623d136cfe0961c6695",
+      "summary": "Final report with three traceable material claims."
+    }
+  ],
+  "sourceUrls": [
+    "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+    "https://packaging.python.org/en/latest/specifications/core-metadata/"
+  ]
+}

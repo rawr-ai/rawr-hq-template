@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "runId": "20260503T193257Z-child-agent-completion",
+  "codeHome": "/Users/mateicanavra/.codex-rawr",
+  "sessionSearchRoot": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03",
+  "sessions": [
+    {
+      "threadId": "019def59-65a1-77d0-81a6-009583ae913c",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-38-26-019def59-65a1-77d0-81a6-009583ae913c.jsonl",
+      "bytes": 130290,
+      "sha256": "6b9aa5b819a8058ad5bfd4f61f15fcb0813ac279f008eb9057ddc6d14397bc13",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def59-91a3-7612-9872-7d7bca69049a",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-38-37-019def59-91a3-7612-9872-7d7bca69049a.jsonl",
+      "bytes": 100523,
+      "sha256": "3fd8da13c1b52c2229ec65520cbe6f30dbf66a6811b0ac86ea90cdb8ba5ca00c",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def5a-ea04-7aa0-801a-32a1219ac9c5",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-40-06-019def5a-ea04-7aa0-801a-32a1219ac9c5.jsonl",
+      "bytes": 163683,
+      "sha256": "b43531afbb41792e907420162c254b5226c5d3b58e32268fed9d4d6f1e353d03",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def5b-86e5-7ab0-a515-f02a8e2ccfce",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-40-46-019def5b-86e5-7ab0-a515-f02a8e2ccfce.jsonl",
+      "bytes": 102048,
+      "sha256": "5349d74c08a6e39212641dc4aa24a2494148da7ce0f85834db53c2dc4c40f081",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def5b-8705-7631-b469-383b78aa6f36",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-40-46-019def5b-8705-7631-b469-383b78aa6f36.jsonl",
+      "bytes": 100932,
+      "sha256": "5da5b580881e1fb15b14fcea88fef73d1a39e6bb1fb9404def42963ce3e1d985",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def5b-8743-7642-b223-9aa1995e0be1",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-40-46-019def5b-8743-7642-b223-9aa1995e0be1.jsonl",
+      "bytes": 101000,
+      "sha256": "c3e170c7932248474ad57c1d602636893a2ff5ef96cef39ca144c4b65fa75c94",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def5d-4f73-79c3-9911-954d36ae65ca",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-42-43-019def5d-4f73-79c3-9911-954d36ae65ca.jsonl",
+      "bytes": 188887,
+      "sha256": "1888882eab6b06149052a6b604e3100922b565115baff79757630b88e25f5629",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def5d-e8b5-7392-849f-46a7114c1fd2",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-43-22-019def5d-e8b5-7392-849f-46a7114c1fd2.jsonl",
+      "bytes": 101830,
+      "sha256": "086af0972d422cf55328ea6c6ed917ffbd04ad6332a5afc522d20b56c6b98f34",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def5d-e8d1-7a01-82d5-2191f0e4c127",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-43-22-019def5d-e8d1-7a01-82d5-2191f0e4c127.jsonl",
+      "bytes": 101249,
+      "sha256": "58a413230dc236e9313fc3d420bb3ded10ca9b514a0c7a64a7c381ba6636ceec",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def5d-e902-7923-a33e-1ee586daaf6c",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-43-22-019def5d-e902-7923-a33e-1ee586daaf6c.jsonl",
+      "bytes": 101232,
+      "sha256": "0431290c23cc2e27048eb66e30f098e533a64a64b03c0868bafc1e6e3c486a46",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def60-723f-7f90-b6ce-700c6ee33445",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-46-08-019def60-723f-7f90-b6ce-700c6ee33445.jsonl",
+      "bytes": 246076,
+      "sha256": "9d4bbe5f3e11279202a0b7049bce0ec3bd2cbb460c502966de6f5c000d8a7473",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def61-0a43-7a82-9bf9-c3c78482e033",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-46-47-019def61-0a43-7a82-9bf9-c3c78482e033.jsonl",
+      "bytes": 156999,
+      "sha256": "6a2eb5c4b1c747295deeaaf9354672b077da09f34e3e2f1223af03699ac7a76b",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def63-3792-7551-a014-74cf57968e19",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-49-10-019def63-3792-7551-a014-74cf57968e19.jsonl",
+      "bytes": 134796,
+      "sha256": "4d3d5c2e4da023eb93357bc45456040285867f1a6d3c1ee03bf8c4e2eea4eca8",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    },
+    {
+      "threadId": "019def63-9384-7d71-b430-71ccb550a857",
+      "resolved": true,
+      "sourcePath": "/Users/mateicanavra/.codex-rawr/sessions/2026/05/03/rollout-2026-05-03T15-49-33-019def63-9384-7d71-b430-71ccb550a857.jsonl",
+      "bytes": 108649,
+      "sha256": "f4f368a0f30d4531fedadd73a4106b592c9ca795051fb69cebe0055689974d85",
+      "copied": false,
+      "note": "Resolved by local session filename; not copied to keep the evidence bundle compact. Raw parent event JSONL is preserved in events/."
+    }
+  ]
+}

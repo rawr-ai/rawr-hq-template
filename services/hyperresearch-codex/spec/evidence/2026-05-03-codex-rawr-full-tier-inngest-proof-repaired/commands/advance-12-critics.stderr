@@ -1,0 +1,10 @@
+$ bun src/index.ts hyperresearch codex advance --ledger "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json" --agent-mode packets --backend real --json
+ ›   Warning: @rawr/plugin-chatgpt-corpus is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.
+ ›   Warning: @rawr/plugin-hello is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.
+ ›   Warning: @rawr/plugin-session-tools is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.
+ ›   Warning: @rawr/plugin-plugins is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.
+exit_code=0

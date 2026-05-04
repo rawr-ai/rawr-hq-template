@@ -1,0 +1,44 @@
+{
+  "jobId": "05-depth-investigation-1-depth-investigator",
+  "role": "hyperresearch-depth-investigator",
+  "canonicalQuery": "For RAWR HQ runtime realization, which Inngest primitives and operational semantics should the plugin/runtime specs encode for durable plugin workflows? Ground the analysis in the existing RAWR runtime-realization evidence and spec-gap findings, then use official Inngest documentation to answer how serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress should shape plugin workflow boundaries, testing, and production caveats.",
+  "pipelinePosition": "Step 05-depth-investigation (Depth investigation) in the Hyperresearch V8 route.",
+  "stepId": "05-depth-investigation",
+  "stepTitle": "Depth investigation",
+  "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+  "inputArtifacts": [],
+  "stepRequiredArtifacts": [
+    "research/temp/depth-investigation-log.md"
+  ],
+  "requiredArtifacts": [
+    "research/temp/depth-investigation-log.md"
+  ],
+  "artifactContract": {
+    "assignedRequiredArtifacts": [
+      "research/temp/depth-investigation-log.md"
+    ],
+    "stepRequiredArtifacts": [
+      "research/temp/depth-investigation-log.md"
+    ],
+    "fanInRule": "The parent service validates artifactWrites across every job for this step. Write or verify your assignedRequiredArtifacts; do not invent substitutes for another job's assigned artifacts unless you are explicitly carrying that artifact forward."
+  },
+  "expectedOutputPath": "research/temp/codex-agent-results/05-depth-investigation-1-depth-investigator.json",
+  "outputSchema": {
+    "status": "complete|failed",
+    "summary": "string",
+    "evidence": [
+      "path-or-source-id"
+    ],
+    "artifactWrites": [
+      {
+        "path": "research/temp/example-artifact.json",
+        "sha256": "sha256-of-file-content",
+        "summary": "what this required artifact supports; include carried-forward artifacts too"
+      }
+    ],
+    "sourceUrls": [
+      "https://example.com/source-url"
+    ]
+  },
+  "failureBehavior": "Write the expected output path with status=failed and a failure reason if the role cannot complete."
+}

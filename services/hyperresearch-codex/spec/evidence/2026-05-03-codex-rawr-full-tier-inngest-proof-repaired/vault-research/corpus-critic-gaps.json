@@ -1,0 +1,102 @@
+{
+  "gaps": [
+    {
+      "id": "gap-live-durable-control-plane-proof",
+      "severity": "critical",
+      "currentDirection": "The current corpus supports normative RAWR spec requirements for stable Inngest function and step identity, step.run side-effect boundaries, retry/idempotency semantics, wait continuations, and /api/inngest ingress, but it does not support a claim that RAWR has proven durable scheduling, memoized resume, retry replay, wait resumption, or run-history behavior.",
+      "missingEvidence": "A RAWR-owned integration artifact showing a real workflow executed against Inngest Dev Server, Inngest Cloud, or self-hosted Inngest, including at least one memoized successful step that is skipped on resume, one failing step that retries and then succeeds or exhausts into StepError handling, one waitForEvent timeout/match path, and captured run/step history.",
+      "whyItMatters": "Without this, the final draft must stay at spec-design and conformance-test guidance. A successful gate would strengthen the production-facing test recommendations; a failed gate would overturn any language implying RAWR's contained lab proof already demonstrates Inngest durability.",
+      "recommendedFetchOrAction": "Run or fetch a RAWR integration proof against Inngest Dev Server or self-hosted Inngest using the captured local-development/self-hosting docs as the harness reference; capture logs, event payloads, run IDs, retry attempts, and run-history screenshots or API output.",
+      "sourceType": "runtime-test",
+      "searchQueries": [
+        "RAWR Inngest Dev Server durable retry resume run history",
+        "RAWR step.run memoization waitForEvent integration proof",
+        "Inngest self-hosted RAWR workflow retry StepError test"
+      ]
+    },
+    {
+      "id": "gap-function-step-versioning-migration",
+      "severity": "critical",
+      "currentDirection": "The draft direction treats function IDs and step IDs as durable compatibility keys and says renames should require explicit migration/versioning policy.",
+      "missingEvidence": "The official Inngest versioning or long-running-function migration guidance that explains how changes to function IDs, step IDs, step order, app versions, or function configuration affect active runs and memoized state.",
+      "whyItMatters": "The current evidence strongly supports stable IDs, but the migration policy is partly inferred from memoization docs. A dedicated versioning source could refine whether RAWR should forbid renames, allow dual-registration, require appVersion transitions, or support another migration pattern.",
+      "recommendedFetchOrAction": "Fetch the official Inngest versioning guide referenced by the durable-execution note and search for function/step rename, appVersion, in-flight run, and long-running workflow migration guidance.",
+      "sourceType": "official-docs",
+      "searchQueries": [
+        "site:inngest.com/docs Inngest versioning long running functions step ID",
+        "site:inngest.com/docs Inngest function ID rename step ID migration",
+        "site:inngest.com/docs Inngest appVersion rolling deploy function configuration active runs"
+      ]
+    },
+    {
+      "id": "gap-observability-status-api",
+      "severity": "high",
+      "currentDirection": "The corpus recommends layered observation across HTTP/protocol status, Inngest run status, step status, retry attempts, StepError/fallback outcome, and RAWR payload status.",
+      "missingEvidence": "Official Inngest documentation for run statuses, dashboard run history, logs, REST or GraphQL APIs, event history, worker status, alerting, and the exact fields available for correlating RAWR workflow IDs to Inngest run IDs and attempts.",
+      "whyItMatters": "Layered status is a sound design conclusion, but the exact observable fields and alerting surface are not proven by the current notes. A concrete observability source would turn a conceptual taxonomy into implementable test and production runbook requirements.",
+      "recommendedFetchOrAction": "Fetch official Inngest docs for runs, logs, dashboard/API observability, REST/GraphQL run lookup, worker observability, and runId correlation; compare the available fields against the proposed RAWR status taxonomy.",
+      "sourceType": "official-docs",
+      "searchQueries": [
+        "site:inngest.com/docs Inngest run history status logs runId",
+        "site:inngest.com/docs Inngest REST API function runs attempts",
+        "site:inngest.com/docs Inngest dashboard worker observability connection status"
+      ]
+    },
+    {
+      "id": "gap-production-security-operational-details",
+      "severity": "high",
+      "currentDirection": "The draft direction requires environment-scoped signing/event keys, SDK signature verification, key rotation, local-dev exceptions, optional firewall allowlisting, and no browser/API-origin access to /api/inngest.",
+      "missingEvidence": "Captured official operational docs for key rotation steps, current IP allowlists, API key scoping, end-to-end encryption middleware, and any gateway/proxy requirements that affect signature verification behind reverse proxies.",
+      "whyItMatters": "The security note establishes the principles, but several operational details are only referenced, not captured. Missing details could refine RAWR's production caveats, especially for secret rotation, reverse-proxy origin/path handling, sensitive step output, and firewall rules.",
+      "recommendedFetchOrAction": "Fetch the official Inngest key-rotation, IP allowlist, API-key, encryption middleware, and proxy/origin docs referenced from the captured security and serve notes; do not hard-code IP ranges in the draft unless the source is captured at fetch time.",
+      "sourceType": "official-docs",
+      "searchQueries": [
+        "site:inngest.com/docs Inngest rotate signing event keys",
+        "site:inngest.com/docs Inngest encryption middleware step output",
+        "site:inngest.com/docs Inngest serveOrigin reverse proxy signature verification"
+      ]
+    },
+    {
+      "id": "gap-connect-topology-maturity-and-migration",
+      "severity": "high",
+      "currentDirection": "The current direction keeps serve() as the conservative baseline and treats Connect as an operator-selected topology option because the captured Connect doc marks it Public Beta and excludes serverless runtimes.",
+      "missingEvidence": "Current official Connect maturity, migration-from-serve, self-host support, worker-concurrency, health-check, and rollout/rollback guidance, plus any release-phase update that changes Connect from beta to production-recommended for container workers.",
+      "whyItMatters": "If Connect has moved beyond beta or has explicit migration guidance, the draft should give it stronger production weight for RAWR worker deployments. If self-host Connect remains limited or migration is explicitly immature, the draft should keep Connect caveats firm.",
+      "recommendedFetchOrAction": "Refresh the official Connect docs and adjacent migration/release-phase pages, then compare them against the captured note's beta, serverless-exclusion, self-host-development, appVersion, instanceId, and maxWorkerConcurrency statements.",
+      "sourceType": "official-docs",
+      "searchQueries": [
+        "site:inngest.com/docs Connect Public Beta migration from serve",
+        "site:inngest.com/docs Inngest Connect self-hosted gateway support",
+        "site:inngest.com/docs Inngest Connect appVersion rollback worker concurrency health check"
+      ]
+    },
+    {
+      "id": "gap-rawr-original-evidence-verification",
+      "severity": "critical",
+      "currentDirection": "The corpus uses local RAWR runtime-realization evidence and archived spec-gap findings as grounding context, while official Inngest docs provide vendor authority for the durable workflow semantics.",
+      "missingEvidence": "Full captures or checked-in note snapshots for the RAWR runtime-realization source files named in the width/depth artifacts, including the async Inngest boundary workstream, runtime-spine evidence map, vendor evidence note, Phase Three live-proof reframe, and archived workflow spec-gap assessment.",
+      "whyItMatters": "The current vault contains strong official Inngest notes but mostly references RAWR grounding files by external path. If those original RAWR files contain caveats, different terminology, or narrower proof boundaries than the summaries imply, the final draft could misstate what RAWR has already proven.",
+      "recommendedFetchOrAction": "Capture the named RAWR local-context files into vault notes or verify them directly before drafting; check especially whether RAWR has only constructibility/boundary proof, whether /api/inngest was actually mounted, and whether step.run passage was simulated or vendor-backed.",
+      "sourceType": "local-source-verification",
+      "searchQueries": [
+        "runtime-realization async Inngest boundary step.run evidence",
+        "runtime-spine evidence map Inngest layer disagreement",
+        "Phase Three live proof reframe Inngest durable workflow caveats"
+      ]
+    },
+    {
+      "id": "gap-sdk-version-and-adapter-fit",
+      "severity": "high",
+      "currentDirection": "The official docs captured are current TypeScript SDK docs and the RAWR conclusions assume their serve(), createFunction, step.run, retry, batching, flow-control, local-dev, and Connect semantics map cleanly onto the RAWR runtime adapter.",
+      "missingEvidence": "Evidence of the exact Inngest SDK version, framework adapter, and package behavior used or intended by RAWR, including Bun adapter support, TypeScript SDK v3 versus v4 differences, and whether RAWR's runtime can project every required policy field without lossy wrappers.",
+      "whyItMatters": "If RAWR is pinned to an older SDK or adapter with different defaults, unsupported policy fields, or different serve/connect behavior, the spec recommendations remain directionally right but the implementation and test gates must be version-scoped.",
+      "recommendedFetchOrAction": "Inspect RAWR package manifests and adapter code, then fetch official SDK migration/version docs or adapter reference pages for the exact Inngest SDK and framework adapter in use.",
+      "sourceType": "code-and-official-docs",
+      "searchQueries": [
+        "RAWR package.json inngest version adapter serve",
+        "site:inngest.com/docs TypeScript SDK v4 migration createFunction serve step.run",
+        "site:inngest.com/docs inngest bun adapter serve TypeScript SDK"
+      ]
+    }
+  ]
+}

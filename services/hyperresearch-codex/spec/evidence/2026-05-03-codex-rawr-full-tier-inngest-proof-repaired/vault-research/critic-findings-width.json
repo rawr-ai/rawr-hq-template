@@ -1,0 +1,66 @@
+{
+  "critic_type": "width",
+  "findings": [
+    {
+      "id": "width-001-serve-adapter-diagnostics-and-path-origin-undercovered",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The report covers `serve()` and `/api/inngest` ownership, but under-translates the captured `serve()` and local-development details about path/origin configuration, SDK diagnostics, streaming, and signing-key fallback into testable RAWR requirements.",
+      "evidence": [
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md:13-17 explains `/api/inngest`, GET/POST/PUT, and signing-key ownership, but does not mention `servePath`, `serveOrigin`, `INNGEST_SERVE_PATH`, streaming, `signingKeyFallback`, or the SDK debug endpoint.",
+        "research/notes/serve-inngest-documentation.md records `servePath`, `serveOrigin`, `INNGEST_SERVE_PATH`, streaming, `signingKeyFallback`, and that client-level signing-key configuration is preferred over hard-coding.",
+        "research/notes/local-development-inngest-documentation.md records the SDK debug endpoint and explicit local serve URL checks."
+      ],
+      "recommendation": "In section II.A or VI.A, add a short implementation-facing paragraph saying RAWR should test and document the resolved `servePath`/origin behind proxies, capture the SDK `GET /api/inngest` diagnostic output during local/preproduction gates, keep signing-key configuration on the runtime client/environment, and treat streaming or signing-key fallback as runtime options requiring explicit production justification."
+    },
+    {
+      "id": "width-002-connect-worker-lifecycle-undercovered",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The report correctly keeps Connect topology-neutral and optional, but under-treats the captured Connect worker lifecycle, observability, health-check, rollback, HTTP fallback, and capacity semantics that matter for production caveats.",
+      "evidence": [
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md:19-23 mentions Public Beta, long-running servers, app versions, instance IDs, and worker concurrency, but stops before the worker lifecycle implications.",
+        "research/notes/connect-inngest-documentation.md records automatic reconnect, graceful shutdown, WebSocket-to-HTTP fallback for in-flight steps, dashboard worker connection status, heartbeat, connected timestamp, app version, health-check recommendations, rolling releases, rollback by bringing back old workers, and worker-capacity errors/re-enqueueing.",
+        "research/temp/claims-width.json category `production-topology` includes graceful shutdown, app versions, instance IDs, and worker concurrency as topology caveats rather than plugin primitives."
+      ],
+      "recommendation": "In section II.B or VI.B, add a compact caveat that Connect adoption would require RAWR operator checks for worker health/readiness, heartbeat/connection status, app version and rollback behavior, max worker concurrency, in-flight step flushing or HTTP fallback, and dashboard-observable instance IDs. Keep it framed as topology evidence, not a plugin spec field."
+    },
+    {
+      "id": "width-003-sensitive-state-and-encryption-undercovered",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The report covers signing keys and ingress security but does not cover the corpus-supported caveat that Inngest stores step/function state, so sensitive outputs need payload minimization, redaction, or end-to-end encryption policy.",
+      "evidence": [
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md:17 and 100 discuss signing, replay protection, event keys, and local signature exceptions, but not persisted sensitive step output.",
+        "research/notes/security-inngest-documentation.md covers encryption at rest/in transit and end-to-end encryption middleware for added control of data.",
+        "research/notes/how-inngest-functions-are-executed-durable-execution-inngest-documentation.md and research/notes/self-hosting-inngest-documentation.md describe persisted function state, step outputs, step errors, queues, state store, database, and run history.",
+        "research/temp/draft-c.md retained this point explicitly, but the final report dropped it."
+      ],
+      "recommendation": "In section IV.A or VI.B, add one sentence that side-effect step outputs and function outputs can become durable Inngest state, so RAWR specs should require payload minimization/redaction for sensitive data and evaluate Inngest end-to-end encryption middleware for regulated workflows."
+    },
+    {
+      "id": "width-004-step-event-and-policy-primitives-only-listed",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The report lists function-level policy fields such as `onFailure`, cancellation, and timeouts, and bans non-durable top-level event sends, but it does not translate `step.sendEvent`, `onFailure`, `cancelOn`, and timeout behavior into concrete workflow-boundary rules.",
+      "evidence": [
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md:29 lists `onFailure`, cancellation, and timeouts, while 39 says event sends should cross a durable step boundary, but section IV focuses almost entirely on `step.run` and `StepError`.",
+        "research/temp/depth-investigation-log.md recommends preferring `step.sendEvent` over raw `inngest.send()` from within functions and preserving cancellation, `onFailure`, and timeout behavior as observable/tested semantics.",
+        "research/notes/create-function-inngest-documentation.md captures function-level fields including `onFailure`, `cancelOn`, timeouts, and policy options."
+      ],
+      "recommendation": "In section IV.A or IV.B, add a short paragraph that approved durable step primitives include reliable in-function event emission through `step.sendEvent` where RAWR supports it, and that `onFailure`, `cancelOn`, and start/finish timeouts should be explicit policy fields with tests separate from normal retry/rollback paths."
+    },
+    {
+      "id": "width-005-production-provider-scope-caveat-could-be-clearer",
+      "severity": "note",
+      "status": "open",
+      "summary": "The report uses Render as deployment evidence and mentions firewall/key caveats, but the corpus critic specifically warns that production-provider and IP allowlist coverage is limited; the final could more clearly prevent readers from generalizing Render into a full RAWR production runbook.",
+      "evidence": [
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md:17 and 96 cite Render and security docs for environment keys, app sync, and signed ingress tests.",
+        "research/temp/corpus-critic-results.md warns that provider coverage is limited to Render and that gateway behavior, firewall/IP allowlisting pages, and exact operational alerting fields were not deeply captured.",
+        "research/notes/security-inngest-documentation.md points to current IP allowlist pages rather than embedding fixed IP ranges."
+      ],
+      "recommendation": "In section VI.B, add a qualifier that Render is only an example deployment source in this corpus, firewall/IP allowlist details must be fetched fresh from official Inngest IP pages, and this report should not be read as complete provider-specific production runbook coverage."
+    }
+  ]
+}

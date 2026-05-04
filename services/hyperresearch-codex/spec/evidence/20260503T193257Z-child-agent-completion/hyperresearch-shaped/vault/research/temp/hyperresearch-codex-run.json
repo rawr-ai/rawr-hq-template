@@ -1,0 +1,153 @@
+{
+  "version": 2,
+  "runId": "hpr-v8-f45aabb9-397f-43ba-a94d-26feb5b56288",
+  "canonicalQuery": "Child completion diagnostic packet loop",
+  "tier": "light",
+  "tierSource": "user",
+  "vaultTag": "child-completion-diagnostic-packet-loop",
+  "vaultRoot": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/hyperresearch-shaped/vault",
+  "artifactRoot": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/hyperresearch-shaped/vault",
+  "stepsRoot": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps",
+  "queryFilePath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/hyperresearch-shaped/vault/research/query-child-completion-diagnostic-packet-loop.md",
+  "routeStepIds": [
+    "01-decompose",
+    "02-width-sweep",
+    "10-triple-draft",
+    "15-polish",
+    "16-readability-audit"
+  ],
+  "wrapperRequirements": [],
+  "currentStepId": "02-width-sweep",
+  "completed": false,
+  "createdAt": "2026-05-03T19:46:07.123Z",
+  "updatedAt": "2026-05-03T19:48:49.013Z",
+  "steps": [
+    {
+      "id": "01-decompose",
+      "title": "Decompose query and classify tier",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-1-decompose.md",
+      "requiredArtifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "artifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "startedAt": "2026-05-03T19:46:07.509Z",
+      "loaded": {
+        "stepId": "01-decompose",
+        "title": "Decompose query and classify tier",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-1-decompose.md",
+        "sha256": "b43bdf4516363d880c166b23543cb7e3c1473bc51e836b00b6496e3591e8c39a",
+        "loadedAt": "2026-05-03T19:46:07.510Z"
+      },
+      "completedAt": "2026-05-03T19:46:07.512Z"
+    },
+    {
+      "id": "02-width-sweep",
+      "title": "Width sweep and source capture",
+      "status": "awaiting_agents",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-2-width-sweep.md",
+      "requiredArtifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "artifacts": [],
+      "startedAt": "2026-05-03T19:46:07.513Z",
+      "loaded": {
+        "stepId": "02-width-sweep",
+        "title": "Width sweep and source capture",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-2-width-sweep.md",
+        "sha256": "dfb6460b29f46297ace63d80b41c71a2aa869cda431f29b7a2aa56be9957c327",
+        "loadedAt": "2026-05-03T19:46:07.513Z"
+      }
+    },
+    {
+      "id": "10-triple-draft",
+      "title": "Triple draft or light final draft",
+      "status": "pending",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-10-triple-draft.md",
+      "requiredArtifacts": [
+        "research/temp/draft-angles.md",
+        "research/notes/final_report_child-completion-diagnostic-packet-loop.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "15-polish",
+      "title": "Polish and lint",
+      "status": "pending",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-15-polish.md",
+      "requiredArtifacts": [
+        "research/polish-log.json",
+        "research/notes/final_report_child-completion-diagnostic-packet-loop.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "16-readability-audit",
+      "title": "Readability audit",
+      "status": "pending",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-16-readability-audit.md",
+      "requiredArtifacts": [
+        "research/claim-trace.json",
+        "research/readability-recommendations.json",
+        "research/readability-decisions.json",
+        "research/notes/final_report_child-completion-diagnostic-packet-loop.md"
+      ],
+      "artifacts": []
+    }
+  ],
+  "cliCalls": [
+    {
+      "operation": "init",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/hyperresearch-shaped/vault",
+      "startedAt": "2026-05-03T19:46:07.125Z",
+      "completedAt": "2026-05-03T19:46:07.125Z",
+      "exitCode": 0,
+      "stdout": "{\"ok\":true,\"operation\":\"init\"}"
+    }
+  ],
+  "agentJobs": [
+    {
+      "id": "02-width-sweep-1-fetcher",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-fetcher",
+      "status": "pending",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-1-fetcher.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "createdAt": "2026-05-03T19:46:07.514Z"
+    },
+    {
+      "id": "02-width-sweep-2-source-analyst",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-source-analyst",
+      "status": "pending",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-2-source-analyst.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "createdAt": "2026-05-03T19:46:07.514Z"
+    }
+  ],
+  "reviewDispositions": [],
+  "reportSnapshots": [],
+  "sourceCaptures": [],
+  "patchGuard": {
+    "violations": []
+  },
+  "resumes": [],
+  "failures": []
+}

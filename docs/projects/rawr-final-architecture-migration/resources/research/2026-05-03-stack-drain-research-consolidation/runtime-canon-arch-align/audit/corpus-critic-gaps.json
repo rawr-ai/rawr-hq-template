@@ -1,0 +1,61 @@
+{
+  "preflight_period_pinned_check": {
+    "status": "n/a",
+    "rationale": "prompt-decomposition.json -> time_periods is empty. The alignment task is not period-pinned."
+  },
+  "scope_boundary": "Per the user's canonical query: 'Skip generic web breadth/adversarial/academic search — there are no relevant external sources for the alignment question itself, only for verifying vendor integration assertions.' The corpus-critic check is therefore narrowed to: (a) whether either spec file has a more recent version than what we read, (b) whether existing companion specs already exist in the repo that we missed, (c) whether project decisions/plans/issues record counter-decisions to the recommendations.",
+  "checks_performed": [
+    {
+      "id": "spec-freshness-check",
+      "question": "Are the two spec files we read the most recent versions, or is there a newer revision elsewhere?",
+      "method": "stat the source files; ls the spec/ directory + spec/quarantine/; ls the resources/_archive/ directory.",
+      "finding": "The spec files at the canonical paths are dated 2026-04-26 (arch-spec) and 2026-04-30 (runtime-spec); the canonical query is dated 2026-05-02. No newer-named spec exists in spec/ or anywhere else under the project. The _archive/ directory contains older versions: RAWR_Canonical_Architecture_Spec_V1.md, RAWR_Canonical_Architecture_Spec_V2.md, RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md (older 'Subsystem' name → renamed to 'Realization' in the current spec), RAWR_Future_Architecture_V1.md, RAWR_Future_Architecture_V2.md. None of these are newer than the current specs.",
+      "result": "no overturning evidence — recommendations stand"
+    },
+    {
+      "id": "companion-spec-discovery",
+      "question": "Does an existing companion subsystem spec already exist in the repo at the level the recommendations address?",
+      "method": "ls spec/, spec/quarantine/, _archive/, .context/; grep for OpenShell / companion spec / subsystem spec; review subordinate docs.",
+      "finding": "Subordinate docs exist: (a) RAWR_Canonical_Testing_Plan.md (in quarantine — explicitly subordinate; references both target specs by name; not a competing companion subsystem spec), (b) m2-guardrails-and-enforcement.md (in quarantine — names an authority order list, see check id 'authority-order-cross-check' below), (c) RAWR_Architecture_Migration_Plan.md (in quarantine — migration plan, not a runtime/system companion spec), (d) the M2 milestone doc and the M2 issue docs (under milestones/ and issues/). NO existing companion subsystem spec covers OpenShell, deployment, observability, or any other vendor-integration plane. The companion-spec attachment-points registry recommendation (Locus C) does not collide with any existing companion spec — it is genuinely additive.",
+      "result": "no overturning evidence — recommendations stand; the gap is real."
+    },
+    {
+      "id": "authority-order-cross-check",
+      "question": "Does any project-level document already record an authority order or companion-spec model that contradicts our recommendations?",
+      "method": "Read quarantine/m2-guardrails-and-enforcement.md authority order. Read .context/M2-migration-planning-packet/01-primary-authorities.md.",
+      "finding": "TWO project-level documents already establish an informal authority order: (1) quarantine/m2-guardrails-and-enforcement.md lists [arch-spec, runtime-spec (older 'Subsystem' name), Testing Plan, Migration Plan, M2 milestone, M2 issues, this doc] in priority order. (2) .context/M2-migration-planning-packet/01-primary-authorities.md lists [arch-spec (Top-level ontology, ownership laws, system geometry, terminology, subsystem boundaries, and integration points), runtime-spec (Runtime realization topology, lifecycle, SDK/runtime split, resource/provider/profile model, runtime compiler/provisioning/process runtime, live access, diagnostics, and finalization), repo audit, regenerated M2 plan]. Neither document is referenced by name in the arch-spec itself. Both align with the recommendations: arch-spec is authority #1 on integration; runtime-spec is authority #2 on runtime mechanics. The migration packet's Source #1 description for the arch-spec ('Top-level ontology, ownership laws, system geometry, terminology, subsystem boundaries, and integration points') almost exactly captures the role the lifecycle-authority depth investigator (Locus A) is recommending the arch-spec formalize. This is STRONG support, not overturning evidence.",
+      "result": "STRENGTHENING evidence for Recommendation #1 (lifecycle scope rewrite) and Recommendation #2 (companion-spec attachment-points registry). The recommendations formalize informal practice already documented in the M2 migration packet."
+    },
+    {
+      "id": "spec-name-staleness",
+      "question": "Does the M2 guardrails doc still point at the OLD runtime spec name (Subsystem) and is that a concern for the recommendations?",
+      "method": "Grep quarantine/m2-guardrails-and-enforcement.md for spec references.",
+      "finding": "quarantine/m2-guardrails-and-enforcement.md authority-order item #2 points at `RAWR_Effect_Runtime_Subsystem_Canonical_Spec.md` (the OLD 'Subsystem' name, archived under _archive/) instead of the current `RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`. The .context/M2-migration-planning-packet/01-primary-authorities.md uses the CURRENT name. This staleness is in a quarantined document and does not affect the alignment recommendations directly, but worth noting as supporting evidence: the lack of a formal companion-spec registry in the arch-spec means stale references are likely to accumulate elsewhere (M2 guardrails being an example).",
+      "result": "no overturning evidence; minor SUPPORTING evidence for the companion-spec-registry recommendation (without a registry, name updates don't propagate to subordinate docs)."
+    },
+    {
+      "id": "spec-review-questions-cross-check",
+      "question": "Does the spec-review.md doc contain user questions about the runtime spec that might overturn or modify any of our recommendations?",
+      "method": "Read quarantine/spec-review.md heads.",
+      "finding": "spec-review.md contains substantive user-authored review questions about the runtime spec — covering 'view' concepts, why three resource-definition helpers exist, repository structure (top-level runtime/ vs SDK), and other items. These are UPSTREAM design questions about the runtime spec itself; they would be answered by amendments to the runtime spec, not the arch-spec. None of them contradict our alignment recommendations — they're a parallel review thread that may produce future runtime-spec changes the arch-spec must subsequently re-align with. This actually REINFORCES the value of the companion-spec attachment-points registry: when the runtime spec evolves in response to spec-review.md, a registry-based attachment makes the propagation tractable.",
+      "result": "no overturning evidence; tangential strengthening evidence for the companion-spec registry."
+    },
+    {
+      "id": "vendor-claim-overturning-check",
+      "question": "Could a newer vendor doc revision overturn any of our load-bearing vendor recommendations (Effect, Inngest, oRPC)?",
+      "method": "Vendor verifications already exist for Effect (vendor-verification-effect-v3-api-surface-2), Inngest (vendor-verification-inngest-integration-mode-2), oRPC (vendor-verification-orpc-context-lanes-and-local-first-callable-boundary-2). All cite library version + URL. The Inngest mode locus depth investigator confirmed the verification was current as of 2026-05-02 for Inngest 4.2.6 (no follow-up fetch needed).",
+      "finding": "Vendor evidence is fresh. No vendor-doc revision could overturn the recommendations because the recommendations defer mechanics to the runtime spec at the integration level — they only require that the named integration shapes (e.g., Inngest serve vs connect-worker mode existing as live options; Effect ManagedRuntime / Layer / Context.Tag / FiberRef being current API names; oRPC procedure middleware and context lanes being current) remain true. A future vendor-API rename would require updates to the runtime spec, which would then propagate to the arch-spec via the new registry.",
+      "result": "no overturning evidence."
+    }
+  ],
+  "summary": {
+    "overturning_findings": 0,
+    "strengthening_findings": 3,
+    "concerning_findings": 0,
+    "verdict": "All seven recommendations stand. Two specific pieces of strengthening evidence: (a) the M2 migration packet's existing informal authority order matches the recommendations exactly; (b) a quarantined doc still references the old runtime spec name, illustrating the cost of not having a formal registry. No web fetches, vendor verifications, or new searches required."
+  },
+  "fetch_wave_decision": {
+    "needed": false,
+    "rationale": "User scope explicitly excludes generic web search. Vendor verifications already exist and are current. Spec freshness confirmed. No counter-evidence identified. Spawning fetcher subagents would produce no value."
+  }
+}

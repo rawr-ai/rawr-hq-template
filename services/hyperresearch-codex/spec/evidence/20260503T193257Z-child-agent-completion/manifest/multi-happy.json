@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "runId": "20260503T193257Z-child-agent-completion",
+  "scenarioId": "multi-happy",
+  "kind": "positive",
+  "passed": true,
+  "classification": "clean_completed",
+  "parentSessionId": null,
+  "children": [
+    {
+      "logicalChildId": "multi-1",
+      "attemptId": "multi-1-a1",
+      "childSessionId": "019def5b-86e5-7ab0-a515-f02a8e2ccfce",
+      "agentId": "019def5b-86e5-7ab0-a515-f02a8e2ccfce",
+      "childFinalState": "Completed",
+      "parentWaitResult": {
+        "timedOut": false,
+        "status": {
+          "completed": "DONE multi-1"
+        }
+      },
+      "parentCloseResult": {
+        "previousStatus": {
+          "completed": "DONE multi-1"
+        }
+      },
+      "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/multi-1.json",
+      "expectedOutputSha256": "b872f8b7eff4400f3c11cd267bb415af0a29be2df23d7f4ec4b121abb3102c3b",
+      "diagnosticClassification": "clean_completed",
+      "eventChain": [
+        "spawned",
+        "wait_completed",
+        "close_completed",
+        "output_hashed"
+      ]
+    },
+    {
+      "logicalChildId": "multi-2",
+      "attemptId": "multi-2-a1",
+      "childSessionId": "019def5b-8705-7631-b469-383b78aa6f36",
+      "agentId": "019def5b-8705-7631-b469-383b78aa6f36",
+      "childFinalState": "Completed",
+      "parentWaitResult": {
+        "timedOut": false,
+        "status": {
+          "completed": "DONE multi-2"
+        }
+      },
+      "parentCloseResult": {
+        "previousStatus": {
+          "completed": "DONE multi-2"
+        }
+      },
+      "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/multi-2.json",
+      "expectedOutputSha256": "e5fd849892c8f7d1aa145df2aa238fb193d6351548a09a5a6ea04d50a9dfcbfc",
+      "diagnosticClassification": "clean_completed",
+      "eventChain": [
+        "spawned",
+        "wait_completed",
+        "close_completed",
+        "output_hashed"
+      ]
+    },
+    {
+      "logicalChildId": "multi-3",
+      "attemptId": "multi-3-a1",
+      "childSessionId": "019def5b-8743-7642-b223-9aa1995e0be1",
+      "agentId": "019def5b-8743-7642-b223-9aa1995e0be1",
+      "childFinalState": "Completed",
+      "parentWaitResult": {
+        "timedOut": false,
+        "status": {
+          "completed": "DONE multi-3"
+        }
+      },
+      "parentCloseResult": {
+        "previousStatus": {
+          "completed": "DONE multi-3"
+        }
+      },
+      "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/multi-3.json",
+      "expectedOutputSha256": "18e113a078d9ad146ce406543880b3701c17d2fb32179f1bfba06ccbbf31e67a",
+      "diagnosticClassification": "clean_completed",
+      "eventChain": [
+        "spawned",
+        "wait_completed",
+        "close_completed",
+        "output_hashed"
+      ]
+    }
+  ],
+  "blockingFindings": [],
+  "warningFindings": []
+}

@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "runId": "20260503T193257Z-child-agent-completion",
+  "scenarioId": "hyperresearch-shaped-packet-loop",
+  "kind": "positive",
+  "passed": true,
+  "classification": "clean_completed",
+  "diagnosticClassification": "clean_completed",
+  "parentSessionId": "019def60-723f-7f90-b6ce-700c6ee33445",
+  "children": [
+    {
+      "logicalChildId": "hyperresearch-shaped-1",
+      "attemptId": "hyperresearch-shaped-1-a1",
+      "role": "hyperresearch-fetcher",
+      "jobId": "02-width-sweep-1-fetcher",
+      "childSessionId": "019def61-0a43-7a82-9bf9-c3c78482e033",
+      "childAgentId": "019def61-0a43-7a82-9bf9-c3c78482e033",
+      "agentId": "019def61-0a43-7a82-9bf9-c3c78482e033",
+      "childFinalState": "Completed",
+      "childFinalAnswer": "DONE hyperresearch-shaped-1",
+      "parentWaitResult": {
+        "timedOut": false,
+        "status": {
+          "completed": "DONE hyperresearch-shaped-1"
+        }
+      },
+      "parentCloseResult": {
+        "previousStatus": {
+          "completed": "DONE hyperresearch-shaped-1"
+        }
+      },
+      "selectedPacketPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/hyperresearch-shaped/selected-packet.json",
+      "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/hyperresearch-shaped/vault/research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "expectedOutputSha256": "d83000b8156f42725f415d8da8c7790b31023fb28cf44439df1fac1b07490c75",
+      "artifactWrites": [
+        {
+          "path": "research/temp/search-plan.md",
+          "sha256": "b7efc7ad79832a26d1a44ed987f4637e6a95ceab83a85f8587cea64f3a259580",
+          "summary": "Deterministic child diagnostic artifact."
+        },
+        {
+          "path": "research/temp/scored-urls.md",
+          "sha256": "b7efc7ad79832a26d1a44ed987f4637e6a95ceab83a85f8587cea64f3a259580",
+          "summary": "Deterministic child diagnostic artifact."
+        }
+      ],
+      "sourceUrls": [],
+      "diagnosticClassification": "clean_completed",
+      "eventChain": [
+        "spawned",
+        "wait_completed",
+        "close_completed",
+        "output_hashed"
+      ]
+    }
+  ],
+  "blockingFindings": [],
+  "warningFindings": [],
+  "selectedPacketPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/hyperresearch-shaped/selected-packet.json",
+  "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/hyperresearch-shaped/vault/research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+  "expectedOutputSha256": "d83000b8156f42725f415d8da8c7790b31023fb28cf44439df1fac1b07490c75",
+  "childSessionId": "019def61-0a43-7a82-9bf9-c3c78482e033",
+  "childAgentId": "019def61-0a43-7a82-9bf9-c3c78482e033",
+  "childFinalState": "Completed",
+  "childFinalAnswer": "DONE hyperresearch-shaped-1",
+  "parentWaitResult": "wait_completed",
+  "parentCloseResult": "close_ok",
+  "eventChain": [
+    {
+      "event": "spawn_agent",
+      "result": "spawned",
+      "childSessionId": "019def61-0a43-7a82-9bf9-c3c78482e033",
+      "role": "hyperresearch-fetcher"
+    },
+    {
+      "event": "wait_agent",
+      "result": "wait_completed",
+      "childFinalAnswer": "DONE hyperresearch-shaped-1"
+    },
+    {
+      "event": "close_agent",
+      "result": "close_ok",
+      "previousStatus": "completed"
+    },
+    {
+      "event": "sha256",
+      "result": "hash_present",
+      "path": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/hyperresearch-shaped/vault/research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "sha256": "d83000b8156f42725f415d8da8c7790b31023fb28cf44439df1fac1b07490c75"
+    }
+  ]
+}

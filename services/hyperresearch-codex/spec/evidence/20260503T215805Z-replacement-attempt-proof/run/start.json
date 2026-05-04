@@ -1,0 +1,27 @@
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hr-replacement-proof-TqN7eo/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-042d0668-3d5c-46c5-b9e0-5bab9ca69cf0",
+    "status": "running",
+    "completed": false,
+    "currentStepId": "01-decompose",
+    "tier": "light",
+    "vaultTag": "what-do-python-packaging-standards-require-insta",
+    "completedSteps": [],
+    "pendingAgentJobs": [],
+    "cliCalls": [
+      {
+        "operation": "init",
+        "exitCode": 0
+      }
+    ],
+    "integrity": [
+      {
+        "severity": "warning",
+        "code": "incomplete-run",
+        "message": "Hyperresearch Codex run has not completed all steps"
+      }
+    ]
+  }
+}

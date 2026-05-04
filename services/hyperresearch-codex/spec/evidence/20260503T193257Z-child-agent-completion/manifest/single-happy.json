@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "runId": "20260503T193257Z-child-agent-completion",
+  "scenarioId": "single-happy",
+  "kind": "positive",
+  "passed": true,
+  "classification": "clean_completed",
+  "children": [
+    {
+      "logicalChildId": "single-1",
+      "attemptId": "single-1-a1",
+      "childSessionId": "019def59-91a3-7612-9872-7d7bca69049a",
+      "childAgentId": "019def59-91a3-7612-9872-7d7bca69049a",
+      "childFinalState": "Completed",
+      "childFinalAnswer": "DONE single-1",
+      "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/single-1.json",
+      "expectedOutputSha256": "b36e5c2f24a5b5cdf5cf86140b3df01ec4bc1b61e699549c201717534fe97a46"
+    }
+  ],
+  "blockingFindings": [],
+  "warningFindings": [],
+  "childSessionId": "019def59-91a3-7612-9872-7d7bca69049a",
+  "childAgentId": "019def59-91a3-7612-9872-7d7bca69049a",
+  "childFinalState": "Completed",
+  "parentWaitResult": "wait_completed",
+  "parentCloseResult": "close_ok",
+  "expectedOutputPath": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/single-1.json",
+  "expectedOutputSha256": "b36e5c2f24a5b5cdf5cf86140b3df01ec4bc1b61e699549c201717534fe97a46",
+  "diagnosticClassification": "clean_completed",
+  "eventChain": [
+    {
+      "event": "spawn_agent",
+      "result": "spawned",
+      "childSessionId": "019def59-91a3-7612-9872-7d7bca69049a"
+    },
+    {
+      "event": "wait_agent",
+      "result": "wait_completed",
+      "childFinalAnswer": "DONE single-1"
+    },
+    {
+      "event": "close_agent",
+      "result": "close_ok",
+      "previousStatus": "completed"
+    },
+    {
+      "event": "sha256",
+      "result": "hash_present",
+      "path": "/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/single-1.json",
+      "sha256": "b36e5c2f24a5b5cdf5cf86140b3df01ec4bc1b61e699549c201717534fe97a46"
+    }
+  ]
+}

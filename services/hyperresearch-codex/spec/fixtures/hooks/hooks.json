@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun spec/fixtures/hooks/pre_tool_use_source_guard.ts"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun spec/fixtures/hooks/stop_validation_guard.ts"
+          }
+        ]
+      }
+    ]
+  }
+}

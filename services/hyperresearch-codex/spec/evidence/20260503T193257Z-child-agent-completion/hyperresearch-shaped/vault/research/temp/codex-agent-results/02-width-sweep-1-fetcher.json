@@ -1,0 +1,20 @@
+{
+  "jobId": "02-width-sweep-1-fetcher",
+  "role": "hyperresearch-fetcher",
+  "status": "complete",
+  "summary": "DONE hyperresearch-shaped-1",
+  "evidence": [],
+  "artifactWrites": [
+    {
+      "path": "research/temp/search-plan.md",
+      "sha256": "b7efc7ad79832a26d1a44ed987f4637e6a95ceab83a85f8587cea64f3a259580",
+      "summary": "Deterministic child diagnostic artifact."
+    },
+    {
+      "path": "research/temp/scored-urls.md",
+      "sha256": "b7efc7ad79832a26d1a44ed987f4637e6a95ceab83a85f8587cea64f3a259580",
+      "summary": "Deterministic child diagnostic artifact."
+    }
+  ],
+  "sourceUrls": []
+}

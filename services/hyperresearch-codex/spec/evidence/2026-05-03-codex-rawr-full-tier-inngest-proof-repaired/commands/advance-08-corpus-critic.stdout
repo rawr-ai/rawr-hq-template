@@ -1,0 +1,150 @@
+# advance 08 corpus critic fan-in
+cwd=/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity
+ledger=/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json
+timestamp=2026-05-03T08:35:37Z
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-c673c42e-c6da-46e7-b8fa-48c286a9572b",
+    "status": "awaiting_agents",
+    "completed": false,
+    "currentStepId": "10-triple-draft",
+    "tier": "full",
+    "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+    "completedSteps": [
+      "01-decompose",
+      "02-width-sweep",
+      "03-contradiction-graph",
+      "04-loci-analysis",
+      "05-depth-investigation",
+      "06-cross-locus-reconcile",
+      "07-source-tensions",
+      "08-corpus-critic",
+      "09-evidence-digest"
+    ],
+    "pendingAgentJobs": [
+      {
+        "id": "10-triple-draft-1-draft-orchestrator",
+        "role": "hyperresearch-draft-orchestrator",
+        "packetPath": "research/temp/codex-agent-packets/10-triple-draft-1-draft-orchestrator.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json"
+      },
+      {
+        "id": "10-triple-draft-2-draft-orchestrator",
+        "role": "hyperresearch-draft-orchestrator",
+        "packetPath": "research/temp/codex-agent-packets/10-triple-draft-2-draft-orchestrator.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-2-draft-orchestrator.json"
+      },
+      {
+        "id": "10-triple-draft-3-draft-orchestrator",
+        "role": "hyperresearch-draft-orchestrator",
+        "packetPath": "research/temp/codex-agent-packets/10-triple-draft-3-draft-orchestrator.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-3-draft-orchestrator.json"
+      }
+    ],
+    "cliCalls": [
+      {
+        "operation": "init",
+        "exitCode": 0
+      },
+      {
+        "operation": "search",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "note",
+        "exitCode": 0
+      }
+    ],
+    "integrity": [
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "10-triple-draft",
+        "message": "Agent job is awaiting output: 10-triple-draft-1-draft-orchestrator"
+      },
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "10-triple-draft",
+        "message": "Agent job is awaiting output: 10-triple-draft-2-draft-orchestrator"
+      },
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "10-triple-draft",
+        "message": "Agent job is awaiting output: 10-triple-draft-3-draft-orchestrator"
+      },
+      {
+        "severity": "warning",
+        "code": "incomplete-run",
+        "message": "Hyperresearch Codex run has not completed all steps"
+      }
+    ]
+  }
+}

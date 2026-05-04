@@ -1,0 +1,17 @@
+Stopped at the first packet gate.
+
+- Ledger path: `/tmp/hyperresearch-codex-runtime-vault-rSLoGr/research/temp/hyperresearch-codex-run.json`
+- Vault root: `/tmp/hyperresearch-codex-runtime-vault-rSLoGr`
+- Current status: `awaiting_agents`, `currentStepId: 02-width-sweep`, `completed: false`
+- Pending packet paths:
+  - `/tmp/hyperresearch-codex-runtime-vault-rSLoGr/research/temp/codex-agent-packets/02-width-sweep-1-fetcher.json`
+  - `/tmp/hyperresearch-codex-runtime-vault-rSLoGr/research/temp/codex-agent-packets/02-width-sweep-2-source-analyst.json`
+- Visible thread id: `019debf6-73ab-7622-8d58-3afc26212616`
+- Command JSON outputs:
+  - `/tmp/hr-codex-runtime-proof-Zsld23/commands/start.json`
+  - `/tmp/hr-codex-runtime-proof-Zsld23/commands/advance-01.json`
+
+I did not spawn packet agents and did not use `hyperresearch research`. Repo state remains dirty only with the pre-existing spec README modification and untracked proof plan.
+
+Skills used: hyperresearch-codex.
+

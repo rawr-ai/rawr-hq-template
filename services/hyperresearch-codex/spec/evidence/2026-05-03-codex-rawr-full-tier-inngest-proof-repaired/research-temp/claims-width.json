@@ -1,0 +1,175 @@
+{
+  "claims": [
+    {
+      "claim": "RAWR plugin/runtime specs should treat Inngest `serve()` as a runtime-owned ingress bundle at `/api/inngest`, composed from one Inngest client and an explicit function registry, not as a browser-facing or arbitrary plugin API route.",
+      "category": "ingress-boundary",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/learn/security"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/vendors/inngest.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md"
+      ],
+      "confidence": "high",
+      "notes": "`serve()` is documented as the HTTP API handler for metadata, invocation, and registration/sync; official docs recommend `/api/inngest`. Local RAWR evidence already treats `/api/inngest` as runtime ingress, but only as contained boundary proof."
+    },
+    {
+      "claim": "Workflow declarations need stable Inngest function IDs, trigger event names, and function-level policy fields because `createFunction` IDs should not change between deploys and function configuration carries retries, flow control, batching, cancellation, and timeout behavior.",
+      "category": "function-identity",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/reference/typescript/functions/create"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/systems/runtime-spine-evidence-map.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-two/workstreams/workstream-2026-04-30-phase-two-async-inngest-boundary.md"
+      ],
+      "confidence": "high",
+      "notes": "The RAWR lab preserved async owner-to-step identity but does not yet encode final public async membership syntax; official docs make function ID stability normative."
+    },
+    {
+      "claim": "Every non-deterministic plugin side effect in a durable workflow should be inside a stable `step.run` boundary, and RAWR tests should treat top-level handler side effects as unsafe because Inngest can re-enter handlers while memoizing successful steps.",
+      "category": "step-semantics",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/vendors/inngest.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-two/workstreams/workstream-2026-04-30-phase-two-async-inngest-boundary.md"
+      ],
+      "confidence": "high",
+      "notes": "Official docs state step IDs memoize state and `step.run` saves successful results. Local proof only crossed `step.run`; durable memoization and resume need a vendor/local-dev gate."
+    },
+    {
+      "claim": "Retry/error policy must include idempotency requirements, explicit retry counts, failure classification, and failure/rollback handling; RAWR must not collapse HTTP/protocol success, Inngest step status, and RAWR runtime payload status into one status bit.",
+      "category": "retries-errors",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/reference/typescript/functions/create"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/vendors/inngest.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/systems/runtime-spine-evidence-map.md"
+      ],
+      "confidence": "high",
+      "notes": "This aligns directly with RAWR layer-disagreement evidence: a 206/protocol response can contain a RAWR failure payload, so specs need layered observation."
+    },
+    {
+      "claim": "`step.waitForEvent` workflow boundaries should specify awaited event names, CEL match predicates, timeout duration, timeout branch behavior, and race-condition mitigation because waits only begin listening when the code reaches the wait.",
+      "category": "waits-human-in-loop",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/learn/inngest-steps"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md"
+      ],
+      "confidence": "high",
+      "notes": "The archived spec gap identified workflow boundary docs as implementation-useful but missing dev/error details; official wait docs add a concrete race caveat."
+    },
+    {
+      "claim": "Batching should be modeled as an explicit workflow capability with `maxSize`, `timeout`, optional `key`/`if`, batch-safe operation contracts, memory-size caveats, and incompatible-policy checks.",
+      "category": "batching",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/reference/typescript/functions/create"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md"
+      ],
+      "confidence": "high",
+      "notes": "Official docs say batching is incompatible with idempotency, rate limiting, cancellation events, and priority; this must be a validation rule if RAWR exposes batching."
+    },
+    {
+      "claim": "Flow-control primitives are not interchangeable: throttling delays and queues excess runs, rate limiting skips excess runs, concurrency limits executing steps, debounce coalesces bursty events, and priority changes ordering.",
+      "category": "flow-control",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting",
+        "https://www.inngest.com/docs/reference/typescript/functions/create"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md"
+      ],
+      "confidence": "high",
+      "notes": "The spec-gap assessment named rateLimit/throttle/debounce/batching guidance as missing; official docs provide the distinction RAWR should encode."
+    },
+    {
+      "claim": "Local development/testing must distinguish Inngest Dev Server behavior from production behavior: local apps can be auto-discovered or manually registered, functions are called directly, local event keys may be dummy values, and the SDK debug endpoint can verify endpoint configuration.",
+      "category": "local-development-testing",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/local-development"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md"
+      ],
+      "confidence": "high",
+      "notes": "RAWR's next phase should add a vendor-local/dev-server gate before claiming durable async behavior."
+    },
+    {
+      "claim": "Production `/api/inngest` ingress requires environment-specific signing keys, event keys for sending events, signature/timestamp verification through SDK adapters, key rotation, and preferably gateway/firewall allowlisting; dev-mode key behavior is not production proof.",
+      "category": "security-production",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/reference/serve"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/vendors/inngest.md"
+      ],
+      "confidence": "high",
+      "notes": "The archived spec says browser/API-originated traffic must be denied at `/api/inngest`; official docs explain signing keys, event keys, rotation, and allowlist posture."
+    },
+    {
+      "claim": "Production topology remains a RAWR design decision: `serve()` supports inbound HTTP execution, while Connect uses outbound persistent worker connections with horizontal scaling, graceful shutdown, app versions, instance IDs, and worker concurrency; RAWR should not promote the contained `serve()` lab proof into production topology proof.",
+      "category": "production-topology",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/deploy/render"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/systems/runtime-spine-evidence-map.md"
+      ],
+      "confidence": "medium-high",
+      "notes": "Connect is documented as Public Beta, so it should be tracked as an option/caveat rather than a required RAWR baseline."
+    },
+    {
+      "claim": "Durable behavior requires an Inngest control-plane/state-store path, not merely package constructibility: self-hosted architecture includes Event API, Runner, Queue, Executor, state store, database, API, and UI, with queue/state/history persistence choices.",
+      "category": "durability-proof-boundary",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/self-hosting",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/vendors/inngest.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md"
+      ],
+      "confidence": "high",
+      "notes": "This is the main correction for RAWR runtime realization: current lab evidence is useful boundary/conformance evidence, not durable scheduling/retry/replay/run-history proof."
+    },
+    {
+      "claim": "RAWR testing should have layered gates: pure spec/conformance tests for identity and no-context-smuggling, local Dev Server or self-host tests for durable execution/retry/wait behavior, and production/pre-production checks for sync, keys, ingress, app versioning, and observation.",
+      "category": "testing-strategy",
+      "officialSourceUrls": [
+        "https://www.inngest.com/docs/local-development",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/deploy/render",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/self-hosting"
+      ],
+      "localContextPaths": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md"
+      ],
+      "confidence": "high",
+      "notes": "This directly implements the Phase Three reframe: keep Oracle for conformance, add a reference runtime/vendor-local gate for claims that involve durable Inngest behavior."
+    }
+  ]
+}

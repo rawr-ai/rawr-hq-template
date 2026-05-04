@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "multi-resume-happy",
+  "classification": "resume_pending",
+  "children": [
+    {
+      "logicalChildId": "resume-1",
+      "attemptId": "resume-1-a1",
+      "agentId": "019def5d-e8b5-7392-849f-46a7114c1fd2",
+      "nickname": "Dewey"
+    },
+    {
+      "logicalChildId": "resume-2",
+      "attemptId": "resume-2-a1",
+      "agentId": "019def5d-e8d1-7a01-82d5-2191f0e4c127",
+      "nickname": "Archimedes"
+    },
+    {
+      "logicalChildId": "resume-3",
+      "attemptId": "resume-3-a1",
+      "agentId": "019def5d-e902-7923-a33e-1ee586daaf6c",
+      "nickname": "Copernicus"
+    }
+  ]
+}

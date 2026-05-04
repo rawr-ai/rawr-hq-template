@@ -1,0 +1,28 @@
+{
+  "jobId": "02-width-sweep-1-fetcher",
+  "role": "hyperresearch-fetcher",
+  "status": "complete",
+  "summary": "Wrote the assigned width-sweep search plan and official-source scoring artifacts for Python packaging metadata compatibility, constrained to PyPA documentation sources.",
+  "evidence": [
+    "research/temp/search-plan.md",
+    "research/temp/scored-urls.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/search-plan.md",
+      "sha256": "fa01579b9c4a5e6c5363be2a8de2528c572b57a59c6fffd0ca9e00429183de85",
+      "summary": "Defines the official-only source queue, extraction plan, working compatibility hypotheses, and exclusion rules for the width sweep."
+    },
+    {
+      "path": "research/temp/scored-urls.md",
+      "sha256": "ed30f749ffc388dc9f3652a63217dd6f5dd8e3872058026610a9cc205a87afda",
+      "summary": "Scores four official PyPA URLs by authority, relevance, specificity, and installer-behavior signal for downstream source capture."
+    }
+  ],
+  "sourceUrls": [
+    "https://packaging.python.org/en/latest/specifications/pyproject-toml/",
+    "https://packaging.python.org/en/latest/specifications/core-metadata/",
+    "https://packaging.python.org/en/latest/specifications/dependency-groups/",
+    "https://packaging.python.org/en/latest/tutorials/packaging-projects/"
+  ]
+}

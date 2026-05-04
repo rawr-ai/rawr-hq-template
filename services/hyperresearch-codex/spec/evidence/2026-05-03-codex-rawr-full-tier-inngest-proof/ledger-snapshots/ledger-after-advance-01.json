@@ -1,0 +1,298 @@
+{
+  "version": 2,
+  "runId": "hpr-v8-de11ec6b-bdad-4622-a4bf-57de8edab8bb",
+  "canonicalQuery": "For RAWR HQ runtime realization, which Inngest primitives and operational semantics should the plugin/runtime specs encode for durable plugin workflows? Ground the analysis in the existing RAWR runtime-realization evidence and spec-gap findings, then use official Inngest documentation to answer how serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress should shape plugin workflow boundaries, testing, and production caveats.",
+  "tier": "full",
+  "tierSource": "user",
+  "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+  "vaultRoot": "/tmp/hyperresearch-codex-full-vault.px1Yg1",
+  "artifactRoot": "/tmp/hyperresearch-codex-full-vault.px1Yg1",
+  "stepsRoot": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps",
+  "queryFilePath": "/tmp/hyperresearch-codex-full-vault.px1Yg1/research/query-for-rawr-hq-runtime-realization-which-inngest-pr.md",
+  "routeStepIds": [
+    "01-decompose",
+    "02-width-sweep",
+    "03-contradiction-graph",
+    "04-loci-analysis",
+    "05-depth-investigation",
+    "06-cross-locus-reconcile",
+    "07-source-tensions",
+    "08-corpus-critic",
+    "09-evidence-digest",
+    "10-triple-draft",
+    "11-synthesize",
+    "12-critics",
+    "13-gap-fetch",
+    "14-patcher",
+    "15-polish",
+    "16-readability-audit"
+  ],
+  "wrapperRequirements": [],
+  "currentStepId": "02-width-sweep",
+  "completed": false,
+  "createdAt": "2026-05-03T07:50:33.859Z",
+  "updatedAt": "2026-05-03T07:50:50.306Z",
+  "steps": [
+    {
+      "id": "01-decompose",
+      "title": "Decompose query and classify tier",
+      "status": "complete",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-1-decompose.md",
+      "requiredArtifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "artifacts": [
+        "research/scaffold.md",
+        "research/prompt-decomposition.json",
+        "research/temp/coverage-matrix.md"
+      ],
+      "startedAt": "2026-05-03T07:50:50.302Z",
+      "loaded": {
+        "stepId": "01-decompose",
+        "title": "Decompose query and classify tier",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-1-decompose.md",
+        "sha256": "b43bdf4516363d880c166b23543cb7e3c1473bc51e836b00b6496e3591e8c39a",
+        "loadedAt": "2026-05-03T07:50:50.304Z"
+      },
+      "completedAt": "2026-05-03T07:50:50.305Z"
+    },
+    {
+      "id": "02-width-sweep",
+      "title": "Width sweep and source capture",
+      "status": "awaiting_agents",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-2-width-sweep.md",
+      "requiredArtifacts": [
+        "research/temp/search-plan.md",
+        "research/temp/scored-urls.md",
+        "research/temp/source-capture-log.md",
+        "research/temp/claims-width.json"
+      ],
+      "artifacts": [],
+      "startedAt": "2026-05-03T07:50:50.306Z",
+      "loaded": {
+        "stepId": "02-width-sweep",
+        "title": "Width sweep and source capture",
+        "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps/hyperresearch-2-width-sweep.md",
+        "sha256": "dfb6460b29f46297ace63d80b41c71a2aa869cda431f29b7a2aa56be9957c327",
+        "loadedAt": "2026-05-03T07:50:50.306Z"
+      }
+    },
+    {
+      "id": "03-contradiction-graph",
+      "title": "Contradiction graph",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-3-contradiction-graph.md",
+      "requiredArtifacts": [
+        "research/temp/contradiction-graph.json",
+        "research/temp/consensus-claims.json"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "04-loci-analysis",
+      "title": "Loci analysis",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-4-loci-analysis.md",
+      "requiredArtifacts": [
+        "research/loci.json"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "05-depth-investigation",
+      "title": "Depth investigation",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-5-depth-investigation.md",
+      "requiredArtifacts": [
+        "research/temp/depth-investigation-log.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "06-cross-locus-reconcile",
+      "title": "Cross-locus reconciliation",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-6-cross-locus-reconcile.md",
+      "requiredArtifacts": [
+        "research/comparisons.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "07-source-tensions",
+      "title": "Source tensions",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-7-source-tensions.md",
+      "requiredArtifacts": [
+        "research/temp/source-tensions.json"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "08-corpus-critic",
+      "title": "Corpus critic",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-8-corpus-critic.md",
+      "requiredArtifacts": [
+        "research/corpus-critic-gaps.json",
+        "research/temp/corpus-critic-results.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "09-evidence-digest",
+      "title": "Evidence digest",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-9-evidence-digest.md",
+      "requiredArtifacts": [
+        "research/temp/evidence-digest.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "10-triple-draft",
+      "title": "Triple draft or light final draft",
+      "status": "pending",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-10-triple-draft.md",
+      "requiredArtifacts": [
+        "research/temp/draft-angles.md",
+        "research/temp/draft-a.md",
+        "research/temp/draft-b.md",
+        "research/temp/draft-c.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "11-synthesize",
+      "title": "Synthesize final report",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-11-synthesize.md",
+      "requiredArtifacts": [
+        "research/temp/synthesis-conflicts.md",
+        "research/temp/synthesis-plan.md",
+        "research/temp/synthesis-outline.md",
+        "research/temp/synthesis-pass1.md",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "12-critics",
+      "title": "Adversarial critics",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-12-critics.md",
+      "requiredArtifacts": [
+        "research/critic-findings-dialectic.json",
+        "research/critic-findings-depth.json",
+        "research/critic-findings-width.json",
+        "research/critic-findings-instruction.json"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "13-gap-fetch",
+      "title": "Post-critic gap fetch",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-13-gap-fetch.md",
+      "requiredArtifacts": [
+        "research/temp/post-critic-fetch-log.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "14-patcher",
+      "title": "Patch accepted findings",
+      "status": "pending",
+      "tierGate": "full",
+      "sourceFileName": "hyperresearch-14-patcher.md",
+      "requiredArtifacts": [
+        "research/patch-log.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "15-polish",
+      "title": "Polish and lint",
+      "status": "pending",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-15-polish.md",
+      "requiredArtifacts": [
+        "research/polish-log.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": []
+    },
+    {
+      "id": "16-readability-audit",
+      "title": "Readability audit",
+      "status": "pending",
+      "tierGate": "all",
+      "sourceFileName": "hyperresearch-16-readability-audit.md",
+      "requiredArtifacts": [
+        "research/claim-trace.json",
+        "research/readability-recommendations.json",
+        "research/readability-decisions.json",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md"
+      ],
+      "artifacts": []
+    }
+  ],
+  "cliCalls": [
+    {
+      "operation": "init",
+      "args": [
+        "--json"
+      ],
+      "cwd": "/tmp/hyperresearch-codex-full-vault.px1Yg1",
+      "startedAt": "2026-05-03T07:50:33.860Z",
+      "completedAt": "2026-05-03T07:50:34.144Z",
+      "exitCode": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"data\": {\n    \"vault_path\": \"/private/tmp/hyperresearch-codex-full-vault.px1Yg1\",\n    \"name\": \"Research Base\"\n  },\n  \"timestamp\": \"2026-05-03T07:50:34.122796+00:00\"\n}\n",
+      "stderr": ""
+    }
+  ],
+  "agentJobs": [
+    {
+      "id": "02-width-sweep-1-fetcher",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-fetcher",
+      "status": "pending",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-1-fetcher.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-1-fetcher.json",
+      "createdAt": "2026-05-03T07:50:50.306Z"
+    },
+    {
+      "id": "02-width-sweep-2-source-analyst",
+      "stepId": "02-width-sweep",
+      "role": "hyperresearch-source-analyst",
+      "status": "pending",
+      "packetPath": "research/temp/codex-agent-packets/02-width-sweep-2-source-analyst.json",
+      "expectedOutputPath": "research/temp/codex-agent-results/02-width-sweep-2-source-analyst.json",
+      "createdAt": "2026-05-03T07:50:50.306Z"
+    }
+  ],
+  "reviewDispositions": [],
+  "reportSnapshots": [],
+  "sourceCaptures": [],
+  "patchGuard": {
+    "violations": []
+  },
+  "resumes": [],
+  "failures": []
+}

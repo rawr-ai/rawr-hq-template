@@ -1,0 +1,314 @@
+{
+  "ok": true,
+  "passed": true,
+  "classification": "explicit_child_resume_recovered_clean_completion",
+  "root": "/var/folders/jm/kcfb9h7d4rd12343rb95ddsc0000gn/T/codex-appserver-explicit-child-0pUD2b",
+  "codexHome": "/var/folders/jm/kcfb9h7d4rd12343rb95ddsc0000gn/T/codex-appserver-explicit-child-0pUD2b/codex-home",
+  "cwd": "/var/folders/jm/kcfb9h7d4rd12343rb95ddsc0000gn/T/codex-appserver-explicit-child-0pUD2b/workspace",
+  "serverUri": "http://127.0.0.1:54177",
+  "initialized": {
+    "userAgent": "rawr_explicit_child_resume_harness/0.126.0-alpha.3 (Mac OS 15.6.1; arm64) WarpTerminal/v0.2026.04.08.08.36.stable_05 (rawr_explicit_child_resume_harness; 0.0.0)",
+    "codexHome": "/private/var/folders/jm/kcfb9h7d4rd12343rb95ddsc0000gn/T/codex-appserver-explicit-child-0pUD2b/codex-home",
+    "platformFamily": "unix",
+    "platformOs": "macos"
+  },
+  "threadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+  "childThreadId": "019defb9-b389-7220-8621-4fbeb3a623e2",
+  "turnId": "019defb9-b369-7641-99c2-f6e0e6916028",
+  "resumeTurnId": "019defb9-bfd1-75c3-8a64-a253c023ea58",
+  "primaryNotificationMethods": [
+    "thread/started",
+    "thread/status/changed",
+    "turn/started",
+    "warning",
+    "item/started",
+    "item/completed",
+    "account/rateLimits/updated",
+    "thread/tokenUsage/updated",
+    "account/rateLimits/updated",
+    "item/started",
+    "thread/status/changed",
+    "item/completed",
+    "thread/status/changed",
+    "turn/started",
+    "thread/tokenUsage/updated",
+    "account/rateLimits/updated",
+    "item/started",
+    "item/completed",
+    "thread/tokenUsage/updated",
+    "account/rateLimits/updated",
+    "warning",
+    "thread/status/changed",
+    "turn/completed",
+    "item/started",
+    "item/completed",
+    "account/rateLimits/updated",
+    "item/started",
+    "item/completed",
+    "thread/tokenUsage/updated",
+    "account/rateLimits/updated",
+    "thread/status/changed",
+    "turn/completed"
+  ],
+  "primaryLiveCollabItems": [
+    {
+      "method": "item/started",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-spawn-call-1",
+        "tool": "spawnAgent",
+        "status": "inProgress",
+        "senderThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+        "receiverThreadIds": [],
+        "prompt": "explicit child writes deterministic result",
+        "model": "gpt-5.2",
+        "reasoningEffort": "low",
+        "agentsStates": {}
+      }
+    },
+    {
+      "method": "item/completed",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-spawn-call-1",
+        "tool": "spawnAgent",
+        "status": "completed",
+        "senderThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+        "receiverThreadIds": [
+          "019defb9-b389-7220-8621-4fbeb3a623e2"
+        ],
+        "prompt": "explicit child writes deterministic result",
+        "model": "gpt-5.2",
+        "reasoningEffort": "low",
+        "agentsStates": {
+          "019defb9-b389-7220-8621-4fbeb3a623e2": {
+            "status": "pendingInit",
+            "message": null
+          }
+        }
+      }
+    }
+  ],
+  "primaryHistoryCollab": [
+    {
+      "type": "collabAgentToolCall",
+      "id": "explicit-spawn-call-1",
+      "tool": "spawnAgent",
+      "status": "completed",
+      "senderThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+      "receiverThreadIds": [
+        "019defb9-b389-7220-8621-4fbeb3a623e2"
+      ],
+      "prompt": "explicit child writes deterministic result",
+      "model": "gpt-5.2",
+      "reasoningEffort": "low",
+      "agentsStates": {
+        "019defb9-b389-7220-8621-4fbeb3a623e2": {
+          "status": "pendingInit",
+          "message": null
+        }
+      }
+    }
+  ],
+  "resumeThreadStatus": {
+    "type": "idle"
+  },
+  "loadedAfterResume": {
+    "data": [
+      "019defb9-b353-7493-bca5-1d0b4e9676a2"
+    ],
+    "nextCursor": null
+  },
+  "resumedLiveCollabItems": [
+    {
+      "method": "item/started",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-resume-call-1",
+        "tool": "resumeAgent",
+        "status": "inProgress",
+        "senderThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+        "receiverThreadIds": [
+          "019defb9-b389-7220-8621-4fbeb3a623e2"
+        ],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {}
+      }
+    },
+    {
+      "method": "item/completed",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-resume-call-1",
+        "tool": "resumeAgent",
+        "status": "completed",
+        "senderThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+        "receiverThreadIds": [
+          "019defb9-b389-7220-8621-4fbeb3a623e2"
+        ],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {
+          "019defb9-b389-7220-8621-4fbeb3a623e2": {
+            "status": "completed",
+            "message": "{\"explicit_child_result\":\"ok\"}"
+          }
+        }
+      }
+    },
+    {
+      "method": "item/started",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-wait-call-1",
+        "tool": "wait",
+        "status": "inProgress",
+        "senderThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+        "receiverThreadIds": [
+          "019defb9-b389-7220-8621-4fbeb3a623e2"
+        ],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {}
+      }
+    },
+    {
+      "method": "item/completed",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-wait-call-1",
+        "tool": "wait",
+        "status": "completed",
+        "senderThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+        "receiverThreadIds": [
+          "019defb9-b389-7220-8621-4fbeb3a623e2"
+        ],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {
+          "019defb9-b389-7220-8621-4fbeb3a623e2": {
+            "status": "completed",
+            "message": "{\"explicit_child_result\":\"ok\"}"
+          }
+        }
+      }
+    },
+    {
+      "method": "item/started",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-close-call-1",
+        "tool": "closeAgent",
+        "status": "inProgress",
+        "senderThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+        "receiverThreadIds": [
+          "019defb9-b389-7220-8621-4fbeb3a623e2"
+        ],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {}
+      }
+    },
+    {
+      "method": "item/completed",
+      "item": {
+        "type": "collabAgentToolCall",
+        "id": "explicit-close-call-1",
+        "tool": "closeAgent",
+        "status": "completed",
+        "senderThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+        "receiverThreadIds": [
+          "019defb9-b389-7220-8621-4fbeb3a623e2"
+        ],
+        "prompt": null,
+        "model": null,
+        "reasoningEffort": null,
+        "agentsStates": {
+          "019defb9-b389-7220-8621-4fbeb3a623e2": {
+            "status": "completed",
+            "message": "{\"explicit_child_result\":\"ok\"}"
+          }
+        }
+      }
+    }
+  ],
+  "resumedHistoryCollab": [
+    {
+      "type": "collabAgentToolCall",
+      "id": "explicit-spawn-call-1",
+      "tool": "spawnAgent",
+      "status": "completed",
+      "senderThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+      "receiverThreadIds": [
+        "019defb9-b389-7220-8621-4fbeb3a623e2"
+      ],
+      "prompt": "explicit child writes deterministic result",
+      "model": "gpt-5.2",
+      "reasoningEffort": "low",
+      "agentsStates": {
+        "019defb9-b389-7220-8621-4fbeb3a623e2": {
+          "status": "pendingInit",
+          "message": null
+        }
+      }
+    }
+  ],
+  "resumeStatus": "completed",
+  "waitStatus": "completed",
+  "closeStatus": "completed",
+  "toolOutputs": {
+    "explicit-spawn-call-1": {
+      "agent_id": "019defb9-b389-7220-8621-4fbeb3a623e2",
+      "nickname": "Nietzsche"
+    },
+    "explicit-resume-call-1": {
+      "status": {
+        "completed": "{\"explicit_child_result\":\"ok\"}"
+      }
+    },
+    "explicit-wait-call-1": {
+      "status": {
+        "019defb9-b389-7220-8621-4fbeb3a623e2": {
+          "completed": "{\"explicit_child_result\":\"ok\"}"
+        }
+      },
+      "timed_out": false
+    },
+    "explicit-close-call-1": {
+      "previous_status": {
+        "completed": "{\"explicit_child_result\":\"ok\"}"
+      }
+    }
+  },
+  "resumeRecoveredHandle": true,
+  "waitObservedFinal": true,
+  "closeAddressedChild": true,
+  "notFoundStatuses": [],
+  "mockState": {
+    "requests": 7,
+    "parentSpawnResponses": 1,
+    "childResponses": 1,
+    "resumeResponses": 1,
+    "waitResponses": 1,
+    "closeResponses": 1,
+    "finalResponses": 2,
+    "seenAgentIds": [
+      "019defb9-b353-7493-bca5-1d0b4e9676a2",
+      "019defb9-b389-7220-8621-4fbeb3a623e2"
+    ]
+  },
+  "files": {
+    "jsonrpcLog": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/jsonrpc.jsonl",
+    "stderrLog": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/app-server.stderr.log",
+    "requestsLog": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/mock-responses-requests.jsonl",
+    "summaryPath": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/explicit-child-resume/summary.json",
+    "manifestPath": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/manifest.json",
+    "shaPath": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/spec/evidence/20260503T213000Z-app-server-explicit-child-resume/sha256sums.txt"
+  }
+}

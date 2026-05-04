@@ -1,0 +1,48 @@
+{
+  "jobId": "10-triple-draft-1-draft-orchestrator",
+  "role": "hyperresearch-draft-orchestrator",
+  "canonicalQuery": "What are the practical compatibility implications of Python's packaging metadata standards for modern Python project installers? Focus on how pyproject.toml, core metadata, and dependency groups affect installer behavior, and cite only Python Packaging Authority or official Python documentation sources.",
+  "pipelinePosition": "Step 10-triple-draft (Triple draft or light final draft) in the Hyperresearch V8 route.",
+  "stepId": "10-triple-draft",
+  "stepTitle": "Triple draft or light final draft",
+  "vaultTag": "what-are-the-practical-compatibility-implication",
+  "inputArtifacts": [],
+  "stepRequiredArtifacts": [
+    "research/temp/draft-angles.md",
+    "research/notes/final_report_what-are-the-practical-compatibility-implication.md"
+  ],
+  "requiredArtifacts": [
+    "research/temp/draft-angles.md",
+    "research/notes/final_report_what-are-the-practical-compatibility-implication.md"
+  ],
+  "artifactContract": {
+    "assignedRequiredArtifacts": [
+      "research/temp/draft-angles.md",
+      "research/notes/final_report_what-are-the-practical-compatibility-implication.md"
+    ],
+    "stepRequiredArtifacts": [
+      "research/temp/draft-angles.md",
+      "research/notes/final_report_what-are-the-practical-compatibility-implication.md"
+    ],
+    "fanInRule": "The parent service validates artifactWrites across every job for this step. Write or verify your assignedRequiredArtifacts; do not invent substitutes for another job's assigned artifacts unless you are explicitly carrying that artifact forward."
+  },
+  "expectedOutputPath": "research/temp/codex-agent-results/10-triple-draft-1-draft-orchestrator.json",
+  "outputSchema": {
+    "status": "complete|failed",
+    "summary": "string",
+    "evidence": [
+      "path-or-source-id"
+    ],
+    "artifactWrites": [
+      {
+        "path": "research/temp/example-artifact.json",
+        "sha256": "sha256-of-file-content",
+        "summary": "what this required artifact supports; include carried-forward artifacts too"
+      }
+    ],
+    "sourceUrls": [
+      "https://example.com/source-url"
+    ]
+  },
+  "failureBehavior": "Write the expected output path with status=failed and a failure reason if the role cannot complete."
+}

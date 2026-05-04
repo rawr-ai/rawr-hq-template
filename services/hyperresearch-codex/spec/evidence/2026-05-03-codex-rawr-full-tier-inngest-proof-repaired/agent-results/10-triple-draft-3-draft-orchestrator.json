@@ -1,0 +1,62 @@
+{
+  "jobId": "10-triple-draft-3-draft-orchestrator",
+  "role": "hyperresearch-draft-orchestrator",
+  "status": "complete",
+  "summary": "Wrote draft-c.md from the plugin-authoring/runtime-boundary angle. The draft argues that plugin specs should expose stable workflow identity, allowed durable primitives, retry/idempotency/failure/wait/batch/flow-control contracts, while the runtime owns /api/inngest ingress, keys, registry, topology, sync, observability, and production proof gates.",
+  "evidence": [
+    "research/temp/codex-agent-packets/10-triple-draft-3-draft-orchestrator.json",
+    "research/query-for-rawr-hq-runtime-realization-which-inngest-pr.md",
+    "research/prompt-decomposition.json",
+    "research/temp/claims-width.json",
+    "research/loci.json",
+    "research/comparisons.md",
+    "research/temp/source-tensions.json",
+    "research/corpus-critic-gaps.json",
+    "research/temp/evidence-digest.md",
+    "research/temp/source-capture-log.md",
+    "research/temp/depth-investigation-log.md",
+    "research/temp/corpus-critic-results.md",
+    "serve-inngest-documentation",
+    "create-function-inngest-documentation",
+    "inngest-steps-inngest-documentation",
+    "how-inngest-functions-are-executed-durable-execution-inngest-documentation",
+    "errors-retries-inngest-documentation",
+    "rollbacks-inngest-documentation",
+    "wait-for-an-event-inngest-documentation",
+    "batching-events-inngest-documentation",
+    "flow-control-inngest-documentation",
+    "throttling-inngest-documentation",
+    "rate-limiting-inngest-documentation",
+    "local-development-inngest-documentation",
+    "security-inngest-documentation",
+    "connect-inngest-documentation",
+    "render-inngest-documentation",
+    "self-hosting-inngest-documentation",
+    "hyperresearch-codex-v8-fixture-source"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/draft-c.md",
+      "sha256": "deeea37608ec3a993d18f8fe43d0eeb07ab51c5473535173656c0bec8a4ff25f",
+      "summary": "Plugin-authoring/runtime-boundary draft for the Inngest durable workflow spec surface, runtime-owned ingress/security/topology, and required proof gates before production claims."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/setup/connect",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/guides/error-handling",
+    "https://www.inngest.com/docs/guides/flow-control",
+    "https://www.inngest.com/docs/learn/how-functions-are-executed",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/local-development",
+    "https://www.inngest.com/docs/guides/rate-limiting",
+    "https://www.inngest.com/docs/deploy/render",
+    "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+    "https://www.inngest.com/docs/learn/security",
+    "https://www.inngest.com/docs/self-hosting",
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/guides/throttling",
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event"
+  ]
+}

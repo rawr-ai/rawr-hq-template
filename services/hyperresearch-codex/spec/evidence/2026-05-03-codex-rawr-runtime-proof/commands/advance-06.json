@@ -1,0 +1,66 @@
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hyperresearch-codex-runtime-vault-rSLoGr/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-7cf4660d-4219-496f-8d69-12d9abe1a529",
+    "status": "complete",
+    "completed": true,
+    "tier": "light",
+    "vaultTag": "what-are-the-practical-compatibility-implication",
+    "completedSteps": [
+      "01-decompose",
+      "02-width-sweep",
+      "10-triple-draft",
+      "15-polish",
+      "16-readability-audit"
+    ],
+    "pendingAgentJobs": [],
+    "cliCalls": [
+      {
+        "operation": "init",
+        "exitCode": 0
+      },
+      {
+        "operation": "search",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "note",
+        "exitCode": 0
+      },
+      {
+        "operation": "lint",
+        "exitCode": 0
+      },
+      {
+        "operation": "sync",
+        "exitCode": 0
+      },
+      {
+        "operation": "lint",
+        "exitCode": 0
+      },
+      {
+        "operation": "export",
+        "exitCode": 0
+      }
+    ],
+    "integrity": []
+  }
+}

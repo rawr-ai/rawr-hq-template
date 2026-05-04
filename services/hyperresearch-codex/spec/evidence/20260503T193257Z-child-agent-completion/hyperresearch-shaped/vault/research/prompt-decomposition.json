@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "generatedBy": "hyperresearch-codex-service",
+  "stepId": "01-decompose",
+  "title": "Decompose query and classify tier",
+  "canonicalQuery": "Child completion diagnostic packet loop",
+  "vaultTag": "child-completion-diagnostic-packet-loop",
+  "tier": "light",
+  "atomicItems": [
+    {
+      "id": "query-1",
+      "text": "Child completion diagnostic packet loop",
+      "source": "canonical-query"
+    }
+  ],
+  "namedTopics": [],
+  "requiredEvidence": [
+    "preserve source URL provenance for externally sourced claims",
+    "preserve report claim trace for final material claims",
+    "record uncertainty for scope boundaries that are not source-backed"
+  ],
+  "proofBoundaries": [
+    "do not claim Hooks/MCP runtime parity unless explicitly proven",
+    "do not claim production runtime readiness from local or fixture-only proof"
+  ]
+}

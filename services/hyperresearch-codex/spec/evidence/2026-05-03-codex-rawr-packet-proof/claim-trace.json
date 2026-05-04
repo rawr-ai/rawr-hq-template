@@ -1,0 +1,37 @@
+{
+  "claims": [
+    {
+      "claim": "Python is a programming language that lets you work quickly and integrate systems effectively.",
+      "reportLocation": "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md",
+      "sources": [
+        {
+          "url": "https://www.python.org/about/"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "accepted-source-backed"
+    },
+    {
+      "claim": "The Python Software Foundation is the organization behind Python.",
+      "reportLocation": "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md",
+      "sources": [
+        {
+          "url": "https://www.python.org/about/"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "accepted-source-backed"
+    },
+    {
+      "claim": "Python runs on Windows, Linux/Unix, macOS, and has been ported to Java and .NET virtual machines.",
+      "reportLocation": "research/notes/final_report_what-is-python-and-what-organization-maintains-i.md",
+      "sources": [
+        {
+          "url": "https://www.python.org/about/"
+        }
+      ],
+      "confidence": "high",
+      "reviewerDisposition": "accepted-source-backed"
+    }
+  ]
+}

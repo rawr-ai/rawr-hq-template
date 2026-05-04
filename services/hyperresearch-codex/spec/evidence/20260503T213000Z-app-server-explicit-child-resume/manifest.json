@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "surface": "codex app-server",
+  "transport": "stdio",
+  "threadResumeMode": "cold_resume_explicit_child_resume",
+  "passed": true,
+  "classification": "explicit_child_resume_recovered_clean_completion",
+  "rawJsonRpcLog": "explicit-child-resume/jsonrpc.jsonl",
+  "collabEventsObserved": true,
+  "directChildLifecycleApiObserved": false,
+  "parentThreadId": "019defb9-b353-7493-bca5-1d0b4e9676a2",
+  "originalChildThreadIds": [
+    "019defb9-b389-7220-8621-4fbeb3a623e2"
+  ],
+  "threadReadIncludedTurns": true,
+  "loadedThreadIdsAfterResume": [
+    "019defb9-b353-7493-bca5-1d0b4e9676a2"
+  ],
+  "collabToolsObserved": [
+    "resumeAgent",
+    "resumeAgent",
+    "wait",
+    "wait",
+    "closeAgent",
+    "closeAgent"
+  ],
+  "toolOutputs": {
+    "explicit-spawn-call-1": {
+      "agent_id": "019defb9-b389-7220-8621-4fbeb3a623e2",
+      "nickname": "Nietzsche"
+    },
+    "explicit-resume-call-1": {
+      "status": {
+        "completed": "{\"explicit_child_result\":\"ok\"}"
+      }
+    },
+    "explicit-wait-call-1": {
+      "status": {
+        "019defb9-b389-7220-8621-4fbeb3a623e2": {
+          "completed": "{\"explicit_child_result\":\"ok\"}"
+        }
+      },
+      "timed_out": false
+    },
+    "explicit-close-call-1": {
+      "previous_status": {
+        "completed": "{\"explicit_child_result\":\"ok\"}"
+      }
+    }
+  },
+  "resumeRecoveredHandle": true,
+  "waitObservedFinal": true,
+  "closeAddressedChild": true,
+  "notFoundStatuses": [],
+  "summary": "explicit-child-resume/summary.json"
+}

@@ -1,0 +1,3 @@
+Reading prompt from stdin...
+2026-05-03T19:47:36.139721Z ERROR codex_core::session: failed to record rollout items: thread 019def61-0a43-7a82-9bf9-c3c78482e033 not found
+2026-05-03T19:48:46.440321Z ERROR codex_core::session: failed to record rollout items: thread 019def60-723f-7f90-b6ce-700c6ee33445 not found

@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "runId": "hook-green",
+  "completed": true,
+  "steps": [
+    { "id": "01-decompose", "status": "complete" },
+    { "id": "16-readability-audit", "status": "complete" }
+  ],
+  "failures": [],
+  "reviewDispositions": [],
+  "patchGuard": { "violations": [] },
+  "validation": { "passed": true }
+}

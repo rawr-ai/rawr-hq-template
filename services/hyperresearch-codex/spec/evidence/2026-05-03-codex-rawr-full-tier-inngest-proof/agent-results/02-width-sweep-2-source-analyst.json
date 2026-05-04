@@ -1,0 +1,43 @@
+{
+  "jobId": "02-width-sweep-2-source-analyst",
+  "role": "hyperresearch-source-analyst",
+  "status": "complete",
+  "summary": "Completed the width-level source analyst packet for official Inngest semantics. Wrote a source-capture matrix and candidate claims that preserve RAWR's local proof boundary while mapping official Inngest docs to plugin/runtime spec implications for ingress, function definitions, steps, retries/errors, event waits, batching, flow control, local development, signing keys, and production caveats.",
+  "evidence": [
+    "/tmp/hyperresearch-codex-full-vault.px1Yg1/research/temp/search-plan.md",
+    "/tmp/hyperresearch-codex-full-vault.px1Yg1/research/temp/scored-urls.md",
+    "/tmp/hyperresearch-codex-full-vault.px1Yg1/research/temp/source-capture-log.md",
+    "/tmp/hyperresearch-codex-full-vault.px1Yg1/research/temp/claims-width.json",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/vendors/inngest.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/systems/runtime-spine-evidence-map.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-two/workstreams/workstream-2026-04-30-phase-two-async-inngest-boundary.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md",
+    "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md"
+  ],
+  "artifactWrites": [
+    {
+      "path": "research/temp/source-capture-log.md",
+      "sha256": "0b6a03719c7637457bbf08e1bcb5631872a81a061d23a7273e5bed8b724a5ffc",
+      "summary": "Official Inngest source-capture matrix with vendor claim focus, RAWR relevance, and caveats separating local RAWR grounding from vendor authority."
+    },
+    {
+      "path": "research/temp/claims-width.json",
+      "sha256": "b0b4e027adafd211aa662a7c3812ee30d759b2e974158d940ca06a7206a0dc6a",
+      "summary": "Width-level candidate claims linking official Inngest semantics to RAWR plugin/runtime spec implications, with official source URLs and local context paths separated."
+    }
+  ],
+  "sourceUrls": [
+    "https://www.inngest.com/docs/reference/serve",
+    "https://www.inngest.com/docs/reference/typescript/functions/create",
+    "https://www.inngest.com/docs/learn/inngest-steps",
+    "https://www.inngest.com/docs/guides/error-handling",
+    "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+    "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+    "https://www.inngest.com/docs/guides/flow-control",
+    "https://www.inngest.com/docs/guides/throttling",
+    "https://www.inngest.com/docs/guides/rate-limiting",
+    "https://www.inngest.com/docs/guides/batching",
+    "https://www.inngest.com/docs/local-development",
+    "https://www.inngest.com/docs/learn/security"
+  ]
+}

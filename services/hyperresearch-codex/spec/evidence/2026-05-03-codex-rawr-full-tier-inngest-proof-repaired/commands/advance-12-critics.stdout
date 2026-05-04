@@ -1,0 +1,129 @@
+# advance 12 critics fan-in
+cwd=/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity
+ledger=/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json
+timestamp=2026-05-03T08:55:07Z
+{
+  "ok": true,
+  "data": {
+    "ledgerPath": "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json",
+    "runId": "hpr-v8-c673c42e-c6da-46e7-b8fa-48c286a9572b",
+    "status": "awaiting_agents",
+    "completed": false,
+    "currentStepId": "13-gap-fetch",
+    "tier": "full",
+    "vaultTag": "for-rawr-hq-runtime-realization-which-inngest-pr",
+    "completedSteps": [
+      "01-decompose",
+      "02-width-sweep",
+      "03-contradiction-graph",
+      "04-loci-analysis",
+      "05-depth-investigation",
+      "06-cross-locus-reconcile",
+      "07-source-tensions",
+      "08-corpus-critic",
+      "09-evidence-digest",
+      "10-triple-draft",
+      "11-synthesize",
+      "12-critics"
+    ],
+    "pendingAgentJobs": [
+      {
+        "id": "13-gap-fetch-1-fetcher",
+        "role": "hyperresearch-fetcher",
+        "packetPath": "research/temp/codex-agent-packets/13-gap-fetch-1-fetcher.json",
+        "expectedOutputPath": "research/temp/codex-agent-results/13-gap-fetch-1-fetcher.json"
+      }
+    ],
+    "cliCalls": [
+      {
+        "operation": "init",
+        "exitCode": 0
+      },
+      {
+        "operation": "search",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "fetch",
+        "exitCode": 0
+      },
+      {
+        "operation": "note",
+        "exitCode": 0
+      }
+    ],
+    "integrity": [
+      {
+        "severity": "warning",
+        "code": "awaiting-agent-output",
+        "stepId": "13-gap-fetch",
+        "message": "Agent job is awaiting output: 13-gap-fetch-1-fetcher"
+      },
+      {
+        "severity": "warning",
+        "code": "incomplete-run",
+        "message": "Hyperresearch Codex run has not completed all steps"
+      }
+    ]
+  }
+}

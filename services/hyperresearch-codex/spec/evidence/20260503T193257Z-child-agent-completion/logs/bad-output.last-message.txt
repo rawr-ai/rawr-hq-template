@@ -1,0 +1,15 @@
+Completed `bad-output`.
+
+Child lifecycle:
+- Spawned child `019def63-9384-7d71-b430-71ccb550a857`
+- Wait returned `DONE bad-output`
+- Close returned previous completed status
+
+Artifact result:
+- Child wrote `/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/outputs/bad-output.json`
+- JSON parse failed as expected: trailing comma / malformed JSON
+- Parent manifest written to `/tmp/codex-rawr-child-diagnostic-20260503T193257Z-child-agent-completion/manifest/bad-output.json`
+- Classification: `artifact_only_succeeded`
+- `blockingFindings` includes the malformed JSON failure
+
+I did not use MCP, did not test hooks, and did not edit the repo. Repo status still shows the pre-existing untracked evidence directory only.

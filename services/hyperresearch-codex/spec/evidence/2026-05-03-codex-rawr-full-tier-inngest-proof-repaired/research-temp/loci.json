@@ -1,0 +1,112 @@
+{
+  "loci": [
+    {
+      "id": "durable-step-identity-and-side-effect-boundaries",
+      "question": "Which Inngest durable execution semantics should RAWR encode as stable plugin workflow contract fields: function IDs, trigger event names, step IDs, step.run boundaries, memoized step outputs, and the ban on non-deterministic top-level handler side effects?",
+      "whyItMatters": "The width corpus says RAWR has only proven contained passage through serve(), createFunction(), and step.run(), while Inngest docs make durable behavior depend on stable function IDs, stable step IDs, step memoization, independently retried steps, and persisted step output. A depth packet should turn that into concrete plugin/runtime spec fields and test gates instead of letting the current lab proof overclaim durability.",
+      "sourceUrls": [
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed"
+      ],
+      "localContextNeeded": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/vendors/inngest.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/systems/runtime-spine-evidence-map.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-two/workstreams/workstream-2026-04-30-phase-two-async-inngest-boundary.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md"
+      ],
+      "expectedDepthArtifacts": [
+        "Primitive-to-RAWR-spec-field matrix for createFunction, triggers, step IDs, step.run, and durable memoization.",
+        "Concrete rule set for where plugin side effects may execute and what tests can prove without a live Inngest control plane.",
+        "Compatibility guidance for renaming function IDs or step IDs across plugin versions."
+      ],
+      "priority": "P0"
+    },
+    {
+      "id": "runtime-ingress-security-and-worker-topology",
+      "question": "What should RAWR specs require for runtime-owned /api/inngest ingress, signing/event keys, app sync, and the serve() versus Connect topology choice, and which of those requirements belong to plugin declarations versus runtime/operator policy?",
+      "whyItMatters": "The captured docs establish serve() as an HTTP function handler with metadata, invocation, and registration methods at the recommended /api/inngest path, while security and Connect docs add signing keys, event keys, key rotation, app versioning, instance identity, worker connections, and local-dev exceptions. RAWR needs a precise ingress boundary so plugin specs do not expose /api/inngest as a browser/API route or confuse local Dev Server behavior with production topology proof.",
+      "sourceUrls": [
+        "https://www.inngest.com/docs/reference/serve",
+        "https://www.inngest.com/docs/learn/security",
+        "https://www.inngest.com/docs/setup/connect",
+        "https://www.inngest.com/docs/local-development"
+      ],
+      "localContextNeeded": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/vendors/inngest.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md"
+      ],
+      "expectedDepthArtifacts": [
+        "Ingress/security checklist for /api/inngest including allowed callers, required methods, signing verification, key roles, rotation, and gateway/firewall posture.",
+        "serve() versus Connect topology decision table with production caveats and local-dev exclusions.",
+        "Spec boundary recommendation separating plugin workflow declarations from host/runtime deployment policy."
+      ],
+      "priority": "P0"
+    },
+    {
+      "id": "retry-idempotency-and-layered-failure-semantics",
+      "question": "How should RAWR encode retry counts, idempotency obligations, StepError handling, onFailure/rollback hooks, and layered status reporting so HTTP/protocol success, Inngest step status, and RAWR runtime payload status remain distinct?",
+      "whyItMatters": "The width claims tie official Inngest retry/error docs to a local RAWR gap: the current evidence observed layer disagreement, where transport or protocol success can contain a RAWR failure payload. Depth work should decide the normative failure taxonomy and validations that prevent durable workflow specs from collapsing retriable errors, exhausted step failures, function failure, and compensating recovery into one status bit.",
+      "sourceUrls": [
+        "https://www.inngest.com/docs/guides/error-handling",
+        "https://www.inngest.com/docs/features/inngest-functions/error-retries/rollbacks",
+        "https://www.inngest.com/docs/reference/typescript/functions/create",
+        "https://www.inngest.com/docs/learn/how-functions-are-executed"
+      ],
+      "localContextNeeded": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/vendors/inngest.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/systems/runtime-spine-evidence-map.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-two/workstreams/workstream-2026-04-30-phase-two-async-inngest-boundary.md"
+      ],
+      "expectedDepthArtifacts": [
+        "Failure taxonomy covering retriable step errors, exhausted retries, StepError, handled rollback/fallback paths, function failure, and RAWR payload failure.",
+        "Idempotency contract for plugin step bodies, including examples of safe upsert/dedup patterns versus unsafe side effects.",
+        "Testing and observation matrix showing which gates can prove protocol shape, retry behavior, and durable recovery."
+      ],
+      "priority": "P0"
+    },
+    {
+      "id": "wait-for-event-continuation-contracts",
+      "question": "How should RAWR plugin workflow specs model step.waitForEvent continuations, including awaited event names, match predicates, timeout/null branches, race conditions for events emitted before the wait starts, and cross-plugin or human-in-the-loop audit semantics?",
+      "whyItMatters": "The search plan and claims identify waitForEvent as central to durable plugin workflows but not resolved by current local proof. The official docs state waits resume from matching future events or return null on timeout and explicitly do not catch events sent before the wait begins, which creates a spec-critical race boundary for human approvals, external joins, and cross-plugin continuations.",
+      "sourceUrls": [
+        "https://www.inngest.com/docs/features/inngest-functions/steps-workflows/wait-for-event",
+        "https://www.inngest.com/docs/learn/inngest-steps",
+        "https://www.inngest.com/docs/self-hosting"
+      ],
+      "localContextNeeded": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/phases/phase-three/handoffs/handoff-2026-05-01-post-phase-three-live-proof-reframe.md"
+      ],
+      "expectedDepthArtifacts": [
+        "waitForEvent contract template with event name, match expression, timeout, null branch, and pre-wait race mitigation fields.",
+        "Cross-plugin continuation guidance distinguishing event audit trail, resume semantics, and caller-facing trigger APIs.",
+        "Test cases for timeout handling, matched-event continuation, and race mitigation."
+      ],
+      "priority": "P1"
+    },
+    {
+      "id": "batching-and-flow-control-policy-boundaries",
+      "question": "Which batching and flow-control knobs should RAWR expose as plugin-declared workflow semantics, which should remain operator/platform policy, and how should specs prevent lossy or incompatible combinations such as must-process workflows with rate limiting or batching with unsupported controls?",
+      "whyItMatters": "The official docs distinguish concurrency, throttling, rate limiting, debounce, priority, and batchEvents with materially different semantics: throttling queues, rate limiting skips, batching changes handler input shape and has size/incompatibility caveats. The local spec-gap evidence says these controls are missing; depth should produce validation rules so RAWR durable plugin workflows do not silently drop required work or encode controls that the runtime cannot honor safely.",
+      "sourceUrls": [
+        "https://www.inngest.com/docs/guides/flow-control",
+        "https://www.inngest.com/docs/guides/batching",
+        "https://www.inngest.com/docs/guides/throttling",
+        "https://www.inngest.com/docs/guides/rate-limiting",
+        "https://www.inngest.com/docs/reference/typescript/functions/create"
+      ],
+      "localContextNeeded": [
+        "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-research-rawr-spec-landscape/docs/projects/_archive/orpc-ingest-workflows-spec/session-artifacts/prework-reshape-cleanup-2026-02-18/_SCRATCH_IMPLEMENTATION_FITNESS_ASSESSMENT.md",
+        "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template/tools/runtime-realization-type-env/evidence/systems/runtime-spine-evidence-map.md"
+      ],
+      "expectedDepthArtifacts": [
+        "Flow-control semantics table distinguishing concurrency, throttling, rate limiting, debounce, priority, batching, and timeout behavior.",
+        "Validation matrix for lossy versus must-process workflows and incompatible batching/control combinations.",
+        "Recommendation for which controls are plugin spec fields, runtime defaults, or operator override policy."
+      ],
+      "priority": "P1"
+    }
+  ]
+}

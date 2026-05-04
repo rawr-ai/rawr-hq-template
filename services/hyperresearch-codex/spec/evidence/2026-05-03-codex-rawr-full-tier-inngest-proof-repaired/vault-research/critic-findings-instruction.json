@@ -1,0 +1,27 @@
+{
+  "findings": [
+    {
+      "id": "instruction-001",
+      "severity": "blocking",
+      "status": "open",
+      "summary": "The prompt decomposition did not decompose the canonical query into its named atoms.",
+      "evidence": [
+        "research/query-for-rawr-hq-runtime-realization-which-inngest-pr.md:7 asks for RAWR runtime-realization grounding plus serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress.",
+        "research/prompt-decomposition.json:1-8 contains only ok, fixture, stepId, title, canonicalQuery, and vaultTag; it has no atomic items, required entities, required formats, or section/coverage requirements."
+      ],
+      "recommendation": "Regenerate or patch the decomposition before final orchestration so it explicitly lists the RAWR grounding requirement and each named Inngest primitive/operational topic as checkable atoms."
+    },
+    {
+      "id": "instruction-002",
+      "severity": "warning",
+      "status": "open",
+      "summary": "The final report grounds conclusions in RAWR evidence only generically, not through traceable runtime-realization/spec-gap findings.",
+      "evidence": [
+        "research/query-for-rawr-hq-runtime-realization-which-inngest-pr.md:7 explicitly says to ground the analysis in existing RAWR runtime-realization evidence and spec-gap findings.",
+        "research/notes/final_report_for-rawr-hq-runtime-realization-which-inngest-pr.md:7 says the current evidence is bounded but does not identify the specific RAWR evidence files or spec-gap findings.",
+        "research/temp/source-capture-log.md:28-34 lists RAWR grounding inputs that are not directly mapped or cited in the final report."
+      ],
+      "recommendation": "Add a compact grounding paragraph or table near the executive answer that maps the RAWR lab evidence and spec-gap inputs to the report's claims: what RAWR has proven, what remains unproven, and which Inngest primitive each gap affects."
+    }
+  ]
+}

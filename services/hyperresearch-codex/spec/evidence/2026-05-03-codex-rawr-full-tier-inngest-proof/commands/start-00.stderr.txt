@@ -1,0 +1,9 @@
+$ bun src/index.ts hyperresearch codex start --query "For RAWR HQ runtime realization, which Inngest primitives and operational semantics should the plugin/runtime specs encode for durable plugin workflows? Ground the analysis in the existing RAWR runtime-realization evidence and spec-gap findings, then use official Inngest documentation to answer how serve(), createFunction, step.run, retries/errors, step.waitForEvent, batching, flow control, local development, signing keys, and /api/inngest ingress should shape plugin workflow boundaries, testing, and production caveats." --vault "/tmp/hyperresearch-codex-full-vault.px1Yg1" --steps "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/services/hyperresearch-codex/references/v8-steps" --tier full --backend real --json
+ ›   Warning: @rawr/plugin-chatgpt-corpus is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.
+ ›   Warning: @rawr/plugin-hello is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.
+ ›   Warning: @rawr/plugin-plugins is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.
+ ›   Warning: @rawr/plugin-session-tools is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.

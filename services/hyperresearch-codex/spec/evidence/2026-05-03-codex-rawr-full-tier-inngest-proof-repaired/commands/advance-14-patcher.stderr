@@ -1,0 +1,39 @@
+$ bun src/index.ts hyperresearch codex advance --ledger "/tmp/hyperresearch-codex-full-vault-repaired.u8a3Ul/research/temp/hyperresearch-codex-run.json" --agent-mode packets --backend real --json
+ ›   Warning: @rawr/plugin-chatgpt-corpus is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.
+ ›   Warning: @rawr/plugin-hello is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.
+ ›   Warning: @rawr/plugin-session-tools is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.
+ ›   Warning: @rawr/plugin-plugins is a linked ESM module and cannot be 
+ ›   auto-transpiled. Existing compiled source will be used instead.
+Error: EEXIT: 1
+    at exit (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/node_modules/.bun/@oclif+core@4.8.0/node_modules/@oclif/core/lib/errors/exit.js:6:22)
+    at exit (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/node_modules/.bun/@oclif+core@4.8.0/node_modules/@oclif/core/lib/command.js:219:16)
+    at run (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/plugins/cli/hyperresearch/dist/commands/hyperresearch/codex/advance.js:71:22)
+    at async _run (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/node_modules/.bun/@oclif+core@4.8.0/node_modules/@oclif/core/lib/command.js:182:33)
+    at processTicksAndRejections (native:7:39)
+Error: Intercepted process.exit(1)
+    at <anonymous> (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/apps/cli/src/index.ts:89:15)
+    at exit (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/node_modules/.bun/@oclif+core@4.8.0/node_modules/@oclif/core/lib/errors/handle.js:23:17)
+    at handle (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/node_modules/.bun/@oclif+core@4.8.0/node_modules/@oclif/core/lib/errors/handle.js:53:22)
+    at main (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/apps/cli/src/index.ts:100:9)
+    at processTicksAndRejections (native:7:39)
+84 |   resetJournalContext();
+85 | 
+86 |   let exitCode = 0;
+87 |   const originalExit = process.exit;
+88 |   (process as any).exit = (code?: number) => {
+89 |     throw new InterceptedExit(typeof code === "number" ? code : 0);
+               ^
+error: Intercepted process.exit(1)
+ code: 1,
+
+      at <anonymous> (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/apps/cli/src/index.ts:89:11)
+      at exit (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/node_modules/.bun/@oclif+core@4.8.0/node_modules/@oclif/core/lib/errors/handle.js:23:17)
+      at handle (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/node_modules/.bun/@oclif+core@4.8.0/node_modules/@oclif/core/lib/errors/handle.js:58:22)
+      at main (/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-hyperresearch-codex-parity/apps/cli/src/index.ts:100:9)
+
+Bun v1.3.7 (macOS arm64)
+error: script "rawr" exited with code 1
+exit_code=1

@@ -1,0 +1,117 @@
+{
+  "corpus_note": "The corpus for this run consists of two normative specifications (the runtime realization spec and the canonical architecture spec) plus three vendor-verification notes (Effect, Inngest, oRPC). These two specs ARE the sources; their disagreements ARE the source tensions. Each tension below treats the arch-spec as Side A and the runtime-spec as Side B; the resolution applies the user-supplied heuristic ('runtime realization spec is authoritative on runtime concerns') where it cleanly resolves, and flags the remainder as user-decision items.",
+  "tensions": [
+    {
+      "name": "Authority over the runtime realization lifecycle: arch-spec 'fixes' it vs runtime-spec is canonical",
+      "side_a": {
+        "position": "The canonical architecture spec asserts in its Section 1 scope that it 'fixes... the runtime realization lifecycle' (arch-spec L17) and 'the process-local runtime substrate' (arch-spec L12) — staking ownership of both naming and structure of the lifecycle.",
+        "evidence": "arch-spec L9-L22 enumerates 'the runtime realization lifecycle' and 'the process-local runtime substrate' among the things this spec fixes. arch-spec L1633-L1641 publishes the seven-phase lifecycle table with producer/consumer columns. arch-spec L1708-L1709 publishes the RAWR/Effect control split.",
+        "proponents": ["rawr-canonical-architecture-spec-source", "source-analysis-rawr-canonical-architecture-specification"]
+      },
+      "side_b": {
+        "position": "The runtime realization spec is declared canonical on runtime realization including provisioning, process runtime binding, execution mechanics, adapter lowering, harness mounting, diagnostics, telemetry, and deterministic finalization (runtime-spec L1-L4). On lock it supersedes older indexed runtime/effect documents (runtime-spec L5).",
+        "evidence": "runtime-spec L1-L5 (Status: Canonical with stated scope). runtime-spec L7-L11 (purpose and explicit non-ownership list). runtime-spec §29 (L5260-L5264) lock authority and stale-source containment.",
+        "proponents": ["rawr-effect-runtime-realization-system-canonical-spec-source", "source-analysis-rawr-runtime-realization-system-canonical-spec"]
+      },
+      "resolution": "The user heuristic resolves the mechanics dispute (runtime spec wins on phase mechanics, sub-sequencing, artifact shapes, substrate internals) but does NOT resolve how the arch-spec must reword its scope language. The committed resolution from the lifecycle-authority depth investigator (high confidence): split the arch-spec L9-L22 claims into a two-part formula — arch-spec owns canonical PHASE NAMES + integration-boundary handoffs; runtime-spec owns mechanics within each phase. Explicitly cross-reference the runtime realization spec by name. This is non-trivial because the arch-spec currently never names the runtime realization spec at all. Once the principle is adopted in §1, the same principle drives §10.4-§10.6 compressions and the §10.14 companion-spec registry.",
+      "origin": "contradiction-graph",
+      "decision_relevance": "high"
+    },
+    {
+      "name": "Provisioning-kernel primitive inventory: arch-spec enumerates Effect-internal primitives at runtime-internal depth",
+      "side_a": {
+        "position": "The canonical architecture spec enumerates Effect kernel-owned process-local primitives — 'runtime-local queues, pubsub, refs, schedules, caches, fibers, and semaphores' (arch-spec L1712-L1722) — and re-asserts the same enumeration in §17.6 invariants (L2668-L2678). Treats the inventory as architecture-level ownership.",
+        "evidence": "arch-spec L1712-L1722 (provisioning kernel primitive list). arch-spec L2668-L2678 (bootgraph/provisioning invariants repeating the list).",
+        "proponents": ["rawr-canonical-architecture-spec-source", "source-analysis-rawr-canonical-architecture-specification (§5.1)"]
+      },
+      "side_b": {
+        "position": "The runtime realization spec scopes RAWR-owned process-local coordination to a named four-resource catalogue (`ProcessQueueHubResource`, `ProcessPubSubHubResource`, `ProcessConcurrencyLimiterResource`, `ProcessCacheHubResource`) at runtime-spec §14 (L3047-L3211), and treats the deeper Effect-internal primitives (Effect's local fibers, queues, schedules, pubsub, refs, streams, caches) as substrate-level mechanics the kernel WRAPS — not first-class RAWR vocabulary.",
+        "evidence": "runtime-spec §14 L3047-L3211 (four named coordination resources, each with explicit lifetime and non-durability). runtime-spec L3700-L3704 (kernel responsibilities; Effect-internal primitives are wrapped substrate). runtime-spec §3.2 (authority planes — process-local mechanics is a runtime concern).",
+        "proponents": ["rawr-effect-runtime-realization-system-canonical-spec-source", "source-analysis-rawr-runtime-realization-system-canonical-spec (§5)"]
+      },
+      "resolution": "Cleanly resolved by the user heuristic — runtime-spec wins. The arch-spec's enumeration mixes two classes (RAWR-owned coordination resources + Effect-internal substrate primitives) that the runtime spec cleanly separates. Provisioning-kernel-reduction depth investigator (high confidence): drop the primitive enumeration from arch-spec §10.6 and §17.6; preserve the irreducible 'RAWR plans, Effect executes' split, the one-managed-runtime-per-process rule, the high-level provisioning guarantees, and the non-durability boundary. Defer named coordination resources to runtime-spec §14 and Effect kernel substrate to runtime-spec §17.3. Do NOT name the four `Process*HubResource` types in the arch-spec — the category is integration-level vocabulary; the names are runtime-spec territory.",
+      "origin": "contradiction-graph",
+      "decision_relevance": "high"
+    },
+    {
+      "name": "Inngest harness integration mode: arch-spec silent vs runtime-spec specifies BOTH serve-mode and connect-worker mode",
+      "side_a": {
+        "position": "The canonical architecture spec names Inngest as the durable async harness but never specifies the integration mode at the architecture level. Its async stack diagram terminates at `FunctionBundle -> Inngest harness` without indicating whether the async process is an HTTP listener (serve-mode) or initiates an outbound persistent connection (connect-worker mode). The async role's network ingress topology is therefore architecturally undefined.",
+        "evidence": "arch-spec §13.2 L2178-L2192 (async harness posture). arch-spec L2189 (FunctionBundle → Inngest harness in stack diagram, no mode annotation). arch-spec L1878-L1880 (async role harness statement).",
+        "proponents": ["rawr-canonical-architecture-spec-source", "source-analysis-rawr-canonical-architecture-specification (§6.2, §7.2)"]
+      },
+      "side_b": {
+        "position": "The runtime realization spec at §21.2 explicitly declares Inngest harness output as 'connected worker or serve-mode runtime ingress, native Inngest functions, native async handles' (runtime-spec L4287-L4291). Both modes are first-class. Mode choice changes ingress topology and is selected at process-start time as a harness-selection fact (runtime-spec L1549). Vendor verification (`vendor-verification-inngest-integration-mode-2`) confirms both modes are live in Inngest 4.2.6 via separate SDK entry points (`inngest/bun` for serve, `inngest/connect` for connect-worker).",
+        "evidence": "runtime-spec L4287-L4291 (§21.2 Inngest harness contract). runtime-spec L1549 (harness-selection facts in startApp). runtime-spec L131-L133 (Inngest owns durable async semantics). vendor-verification-inngest-integration-mode-2 (URL + library version 4.2.6).",
+        "proponents": ["rawr-effect-runtime-realization-system-canonical-spec-source", "source-analysis-rawr-runtime-realization-system-canonical-spec (§7.2)", "vendor-verification-inngest-integration-mode-2"]
+      },
+      "resolution": "Not directly resolved by the user heuristic — `resolves_under_user_heuristic: false` because this is a GAP in the arch-spec, not a runtime-mechanics dispute. The Inngest-mode depth investigator (high confidence): add a single paragraph to arch-spec §13.2 naming both modes and stating that mode is a harness-selection fact at process-start, with mechanics deferred to runtime-spec §21.2. Add a §17.8 invariant: 'an async role process binds exactly one Inngest harness mode per started process; serve-mode and connect-worker mode are mutually exclusive within a single process.' Annotate the §13.2 stack diagram with `[serve-mode | connect-worker mode]`. Whether to declare serve-mode the default (lab uses only serve-mode; production examples use serve-mode via `inngest.cloud(...)`) is a user decision flagged in terminal section 5 — recommendation is NOT to declare a default at architecture level because mode-selection is a profile/deployment concern.",
+      "origin": "contradiction-graph",
+      "decision_relevance": "high"
+    },
+    {
+      "name": "Companion-spec attachment promise unfulfilled: arch-spec asserts attachment 'at integration boundaries' without enumerating them",
+      "side_a": {
+        "position": "The canonical architecture spec asserts at L24: 'Subsystem specifications attach to it at explicit integration boundaries. It defines... the integration points where deeper subsystem blueprints attach.' But the spec contains no integration-boundaries registry, no formal pointer to the runtime realization specification by name, and no protocol for resolving naming or scope conflicts between the arch-spec and a companion spec.",
+        "evidence": "arch-spec L24 (assertion). arch-spec ToC: no section labelled 'Companion specifications', 'Integration boundaries registry', 'Attachment points', or similar. The runtime realization spec is never named by file or title in the arch-spec.",
+        "proponents": ["rawr-canonical-architecture-spec-source", "source-analysis-rawr-canonical-architecture-specification (§4d, §6.7, §8)"]
+      },
+      "side_b": {
+        "position": "The runtime realization spec is, in fact, a companion subsystem document attaching to the arch-spec at multiple boundaries — lifecycle vocabulary (runtime-spec §22.1, §24.2), SDK derivation (§15), runtime compiler (§16), bootgraph + Effect kernel (§17), runtime access (§18), service binding (§18.5), workflow dispatcher (§19), surface adapter lowering (§20), per-harness mount (§21), and RuntimeCatalog/diagnostics/telemetry (§22). Despite being the canonical companion, it is never named by reference in the arch-spec.",
+        "evidence": "runtime-spec §15-§22 (each section is an attachment point). runtime-spec L23.5 / L4637 (reserved detail boundaries — implies further companion specs lock at later implementation slices).",
+        "proponents": ["rawr-effect-runtime-realization-system-canonical-spec-source", "source-analysis-rawr-runtime-realization-system-canonical-spec (§6, §8.5)"]
+      },
+      "resolution": "Not resolvable by the user heuristic alone — this is a structural gap in the arch-spec, not a runtime-mechanics dispute. The companion-spec-registry depth investigator (high confidence on content; medium confidence on placement): add a NET-NEW arch-spec §10.14 (or as a top-level section — see user-decision item 1) containing an 11-row registry table mapping each integration boundary to its owning runtime-spec section, a 6-rule attachment protocol companion specs must follow, and a worked example using the runtime realization spec as the canonical companion at every row. Upgrade arch-spec §1 L24 from a promise into a pointer: 'Subsystem specifications attach to it at named integration boundaries enumerated in §10.14. The runtime realization specification (`RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`) is the current canonical companion document for all runtime concerns; it is authoritative on mechanics within each integration boundary this specification names.'",
+      "origin": "contradiction-graph",
+      "decision_relevance": "high"
+    },
+    {
+      "name": "Platform external interfaces named at runtime-spec but not at arch-spec: PortableRuntimePlanArtifact missing from architecture-level vocabulary",
+      "side_a": {
+        "position": "The canonical architecture spec mentions RuntimeCatalog, RuntimeDiagnostic, and RuntimeTelemetry briefly at §10.13 (L1813-L1823) and references 'control-plane touchpoints' at §15.7 (L2568-L2569), but does NOT name PortableRuntimePlanArtifact at the architecture level. There is no consolidated 'platform external interfaces' table that would tell deployment, observability, or control-plane companion specs which artifacts they consume.",
+        "evidence": "arch-spec L1813-L1823 (RuntimeCatalog/diagnostics/telemetry mention without integration-table treatment). arch-spec L2568-L2569 (control-plane touchpoints mention without artifact names). Absence: no 'Platform external interfaces' section.",
+        "proponents": ["rawr-canonical-architecture-spec-source", "source-analysis-rawr-canonical-architecture-specification (§4f, §4g)"]
+      },
+      "side_b": {
+        "position": "The runtime realization spec explicitly designates two external integration surfaces with consumer classes: PortableRuntimePlanArtifact (runtime-spec §15.7, L3409-L3437) consumed by 'runtime compiler, diagnostic tooling, topology export, and deployment/control-plane touchpoints', and RuntimeCatalog (runtime-spec §22.3, L4470-L4511) consumed by 'diagnostic readers/control-plane touchpoints'. Together with RuntimeDiagnostic (§22.1) and RuntimeTelemetry (§22.2), these are the platform's formal external integration interfaces.",
+        "evidence": "runtime-spec L3409-L3437 (§15.7 PortableRuntimePlanArtifact). runtime-spec L4470-L4511 (§22.3 RuntimeCatalog). runtime-spec L4336-L4388 (§22.1 RuntimeDiagnostic). runtime-spec L4392-L4468 (§22.2 RuntimeTelemetry). runtime-spec §27 component contract summary.",
+        "proponents": ["rawr-effect-runtime-realization-system-canonical-spec-source", "source-analysis-rawr-runtime-realization-system-canonical-spec (§6.6, §6.7, §4.6, §4.7)"]
+      },
+      "resolution": "Not directly resolved by the user heuristic; a naming omission in arch-spec, not a mechanics dispute. The platform-external-interfaces depth investigator (high confidence): add a 4-row Platform External Interfaces table at new arch-spec §15.8 (after existing §15.7) covering PortableRuntimePlanArtifact, RuntimeCatalog, RuntimeDiagnostic, RuntimeTelemetry. Each row: interface name | role/purpose | producer | consumer class | owning runtime-spec section | integration constraints. Amend arch-spec §17.12 (Control-plane invariant) to name all four artifacts. Add a cross-reference from §10.13 to §15.8.",
+      "origin": "contradiction-graph",
+      "decision_relevance": "high"
+    },
+    {
+      "name": "Execution ownership law: runtime-spec gives a single compact paragraph; arch-spec covers the same content diffusely without a single integration-law statement",
+      "side_a": {
+        "position": "The canonical architecture spec covers the vendor / execution-layer ownership law diffusely across §4.1 (ownership law), §4.9 (harness/substrate downstream), §13 (stack binding), §13.7 (harness law), §16 (mechanical enforcement), §17 (canonical invariants), and §18 (forbidden patterns). The closest single-statement form is at L2153-L2154: 'Effect stays inside runtime realization. oRPC, Elysia, Inngest, OCLIF, web hosts, desktop hosts, and OpenShell keep their jobs.' No single-paragraph compact restatement of the full ownership split exists.",
+        "evidence": "arch-spec §4.1, §4.9, §13.7, §16, §17. arch-spec L2153-L2154 (closest single-statement form).",
+        "proponents": ["rawr-canonical-architecture-spec-source", "source-analysis-rawr-canonical-architecture-specification"]
+      },
+      "side_b": {
+        "position": "The runtime realization spec gives the canonical compact law in one paragraph at runtime-spec L37-L47: 'RAWR owns semantic/runtime boundaries. oRPC owns callable contract mechanics. Effect owns local execution mechanics. Inngest owns durable async. Native hosts own host interiors after RAWR adapter lowering. The SDK derives. The runtime realizes. Harnesses mount. Diagnostics observe.' This is the most compact, most memorable, most normative integration statement in either document.",
+        "evidence": "runtime-spec L37-L47 (execution ownership law).",
+        "proponents": ["rawr-effect-runtime-realization-system-canonical-spec-source", "source-analysis-rawr-runtime-realization-system-canonical-spec (§4.3)"]
+      },
+      "resolution": "Compactness gap, not a contradiction. Resolves under the user heuristic in the sense that the runtime-spec's compact statement is the load-bearing form. Recommendation (medium confidence — depth investigator skipped because mechanical): promote the ownership law into the arch-spec at the system-integration level by either (a) restating the runtime spec's L37-L47 verbatim near the top of arch-spec §4 (Canonical laws) as 'Execution ownership law' or (b) consolidating arch-spec §4.1 + §4.9 + §13.7 into a single compact 'Vendor ownership and execution-layer law' subsection. Companion specs would benefit from a single architectural statement of the ownership split they must respect. Treat this as Recommendation #6 or #7 in terminal section 4 — important but lower decision-relevance than the structural changes.",
+      "origin": "contradiction-graph",
+      "decision_relevance": "medium"
+    },
+    {
+      "name": "Agent / OpenShell vendor status: both specs explicitly defer; user heuristic does not resolve",
+      "side_a": {
+        "position": "The canonical architecture spec names OpenShell as 'the default runtime substrate and policy envelope beneath the shell-facing part of the agent role' (arch-spec L2022-L2023) and 'a reserved boundary with locked integration hooks' (arch-spec L1398-L1399), but does not state whether OpenShell is RAWR-internal, third-party, or hybrid. Its API surface, integration model, and policy contract are undefined.",
+        "evidence": "arch-spec L2022-L2046 (§12.1 OpenShell posture). arch-spec L1398-L1399.",
+        "proponents": ["rawr-canonical-architecture-spec-source", "source-analysis-rawr-canonical-architecture-specification (§7.6, §8 — committed position notes OpenShell as the most opaque vendor claim)"]
+      },
+      "side_b": {
+        "position": "The runtime realization spec at §21.5 (L4314-L4322) declares Agent/OpenShell harness as 'a reserved boundary with locked integration hooks' and at L11 explicitly excludes 'shell governance' from runtime realization scope — distinguishing the harness adapter shape (RAWR's territory) from OpenShell's internal governance model (not RAWR's territory).",
+        "evidence": "runtime-spec L11 (exclusion list). runtime-spec L4314-L4322 (§21.5 agent/OpenShell harness).",
+        "proponents": ["rawr-effect-runtime-realization-system-canonical-spec-source", "source-analysis-rawr-runtime-realization-system-canonical-spec (§8.4, §8.6)"]
+      },
+      "resolution": "NOT RESOLVABLE by the user heuristic alone — both specs converge on 'reserved with locked integration hooks' but neither resolves OpenShell's vendor status. This is a deferred design decision both specs explicitly carry forward. Surface as a USER-DECISION ITEM in terminal section 5 with the recommended option set: (a) declare OpenShell RAWR-internal (and produce an OpenShell internal-spec under packages/core/runtime/harnesses/agent), (b) declare OpenShell third-party with a vendor integration contract under runtime-spec §21.5, or (c) formally defer to a forthcoming OpenShell companion specification listed in the §10.14 companion-spec registry (with a placeholder row noting reserved-detail-boundary status per the runtime-spec L4637 model). Recommendation: option (c) until a concrete OpenShell implementation triggers the lock.",
+      "origin": "comparisons + contradiction-graph (orphan from skip_loci)",
+      "decision_relevance": "high"
+    }
+  ]
+}
