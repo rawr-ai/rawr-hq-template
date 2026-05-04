@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { pathExists, readJsonFile, writeJsonFile } from "./fs-utils";
+import { resolveInstallScope, type InstallScope } from "./install-scope";
 
 type KnownMarketplaceRecord = {
   installLocation?: string;
@@ -18,11 +19,11 @@ type KnownMarketplacesFile = Record<string, KnownMarketplaceRecord>;
  * Projection result for local Claude plugin installation and enablement.
  */
 export type ClaudeInstallAction =
-  | { action: "planned"; home: string; plugin: string; marketplace?: string }
-  | { action: "installed"; home: string; plugin: string; marketplace: string }
-  | { action: "enabled"; home: string; plugin: string; marketplace: string }
-  | { action: "skipped"; home: string; plugin: string; reason: string; marketplace?: string }
-  | { action: "failed"; home: string; plugin: string; error: string; marketplace?: string };
+  | { action: "planned"; home: string; plugin: string; installScope: InstallScope; marketplace?: string }
+  | { action: "installed"; home: string; plugin: string; installScope: InstallScope; marketplace: string }
+  | { action: "enabled"; home: string; plugin: string; installScope: InstallScope; marketplace: string }
+  | { action: "skipped"; home: string; plugin: string; installScope: InstallScope; reason: string; marketplace?: string }
+  | { action: "failed"; home: string; plugin: string; installScope: InstallScope; error: string; marketplace?: string };
 
 /**
  * Injectable process runner used by tests and local Claude CLI orchestration.
@@ -31,6 +32,7 @@ export type ExecFn = (input: {
   cmd: string;
   args: string[];
   cwd?: string;
+  env?: NodeJS.ProcessEnv;
 }) => Promise<{
   code: number;
   stdout: string;
@@ -54,8 +56,12 @@ export function defaultClaudePluginsDir(): string {
 /**
  * Executes Claude CLI commands for projection-owned install/enable operations.
  */
-export const defaultExec: ExecFn = async ({ cmd, args, cwd }) => {
-  const child = spawn(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"] });
+export const defaultExec: ExecFn = async ({ cmd, args, cwd, env }) => {
+  const child = spawn(cmd, args, {
+    cwd,
+    env: env ? { ...process.env, ...env } : process.env,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
   let stdout = "";
   let stderr = "";
   child.stdout.on("data", (chunk) => {
@@ -97,10 +103,12 @@ function findMarketplaceNameForInstallLocation(
  */
 export async function ensureClaudeMarketplace(input: {
   claudeLocalHome: string;
+  installScope?: InstallScope | string;
   claudePluginsDir?: string;
   dryRun: boolean;
   exec?: ExecFn;
 }): Promise<{ marketplaceName: string }> {
+  const installScope = resolveInstallScope(input.installScope);
   const pluginsDir = input.claudePluginsDir ?? defaultClaudePluginsDir();
   const exec = input.exec ?? defaultExec;
 
@@ -118,7 +126,9 @@ export async function ensureClaudeMarketplace(input: {
 
   const result = await exec({
     cmd: "claude",
-    args: ["plugin", "marketplace", "add", path.resolve(input.claudeLocalHome)],
+    // TODO: widen install-scope support when RAWR intentionally supports
+    // Claude project/local/managed installation semantics.
+    args: ["plugin", "marketplace", "add", "--scope", installScope, path.resolve(input.claudeLocalHome)],
   });
   if (result.code !== 0) {
     throw new Error(
@@ -148,11 +158,13 @@ export async function ensureClaudeMarketplace(input: {
 export async function installAndEnableClaudePlugin(input: {
   claudeLocalHome: string;
   pluginName: string;
+  installScope?: InstallScope | string;
   dryRun: boolean;
   enable: boolean;
   claudePluginsDir?: string;
   exec?: ExecFn;
 }): Promise<ClaudeInstallAction[]> {
+  const installScope = resolveInstallScope(input.installScope);
   const exec = input.exec ?? defaultExec;
 
   const isAlreadyInstalled = (text: string): boolean =>
@@ -162,6 +174,7 @@ export async function installAndEnableClaudePlugin(input: {
 
   const { marketplaceName } = await ensureClaudeMarketplace({
     claudeLocalHome: input.claudeLocalHome,
+    installScope,
     claudePluginsDir: input.claudePluginsDir,
     dryRun: input.dryRun,
     exec,
@@ -173,6 +186,7 @@ export async function installAndEnableClaudePlugin(input: {
         action: "planned",
         home: input.claudeLocalHome,
         plugin: input.pluginName,
+        installScope,
         marketplace: marketplaceName,
       },
     ];
@@ -191,6 +205,7 @@ export async function installAndEnableClaudePlugin(input: {
           action: "skipped",
           home: input.claudeLocalHome,
           plugin: input.pluginName,
+          installScope,
           marketplace: marketplaceName,
           reason: "already installed",
         },
@@ -201,6 +216,7 @@ export async function installAndEnableClaudePlugin(input: {
         action: "failed",
         home: input.claudeLocalHome,
         plugin: input.pluginName,
+        installScope,
         marketplace: marketplaceName,
         error: installText,
       },
@@ -212,6 +228,7 @@ export async function installAndEnableClaudePlugin(input: {
       action: "installed",
       home: input.claudeLocalHome,
       plugin: input.pluginName,
+      installScope,
       marketplace: marketplaceName,
     },
   ];
@@ -229,6 +246,7 @@ export async function installAndEnableClaudePlugin(input: {
         action: "skipped",
         home: input.claudeLocalHome,
         plugin: input.pluginName,
+        installScope,
         marketplace: marketplaceName,
         reason: "already enabled",
       });
@@ -239,6 +257,7 @@ export async function installAndEnableClaudePlugin(input: {
       action: "failed",
       home: input.claudeLocalHome,
       plugin: input.pluginName,
+      installScope,
       marketplace: marketplaceName,
       error: enableText,
     });
@@ -249,6 +268,7 @@ export async function installAndEnableClaudePlugin(input: {
     action: "enabled",
     home: input.claudeLocalHome,
     plugin: input.pluginName,
+    installScope,
     marketplace: marketplaceName,
   });
   return actions;

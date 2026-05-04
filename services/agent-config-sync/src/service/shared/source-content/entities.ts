@@ -12,6 +12,11 @@ export const PluginContentIncludeSchema = Type.Object(
     skills: Type.Optional(Type.Boolean()),
     scripts: Type.Optional(Type.Boolean()),
     agents: Type.Optional(Type.Boolean()),
+    hooks: Type.Optional(Type.Boolean()),
+    mcpServers: Type.Optional(Type.Boolean()),
+    settings: Type.Optional(Type.Boolean()),
+    assets: Type.Optional(Type.Boolean()),
+    orchestration: Type.Optional(Type.Boolean()),
   },
   { additionalProperties: false },
 );

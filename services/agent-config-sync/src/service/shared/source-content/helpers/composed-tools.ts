@@ -80,12 +80,23 @@ export async function scanComposedToolkitContent(input: {
     skills: [],
     scripts: [],
     agentFiles: [],
+    hooks: [],
+    hookConfigs: [],
+    mcpServers: [],
+    settings: [],
+    assets: [],
+    orchestration: [],
   };
   const includeAll: NormalizedPluginContentInclude = {
     workflows: true,
     skills: true,
     scripts: true,
     agents: true,
+    hooks: true,
+    mcpServers: true,
+    settings: true,
+    assets: true,
+    orchestration: true,
   };
 
   for (const toolkit of selectedToolkits) {
@@ -107,17 +118,46 @@ export async function scanComposedToolkitContent(input: {
     for (const script of toolkitContent.scripts) {
       content.scripts.push({ name: `${toolkit.dirName}--${script.name}`, absPath: script.absPath });
     }
+    for (const hook of toolkitContent.hooks ?? []) {
+      content.hooks?.push({ name: `${toolkit.dirName}--${hook.name}`, absPath: hook.absPath });
+    }
+    for (const hookConfig of toolkitContent.hookConfigs ?? []) {
+      content.hookConfigs?.push({ name: `${toolkit.dirName}--${hookConfig.name}`, absPath: hookConfig.absPath });
+    }
+    for (const mcpServer of toolkitContent.mcpServers ?? []) {
+      content.mcpServers?.push({ name: `${toolkit.dirName}--${mcpServer.name}`, absPath: mcpServer.absPath });
+    }
+    for (const setting of toolkitContent.settings ?? []) {
+      content.settings?.push({ name: `${toolkit.dirName}--${setting.name}`, absPath: setting.absPath });
+    }
+    for (const asset of toolkitContent.assets ?? []) {
+      content.assets?.push({ name: `${toolkit.dirName}--${asset.name}`, absPath: asset.absPath });
+    }
+    for (const spec of toolkitContent.orchestration ?? []) {
+      content.orchestration?.push({ ...spec, name: `${toolkit.dirName}--${spec.name}` });
+    }
   }
 
   content.workflowFiles.sort((a, b) => a.name.localeCompare(b.name));
   content.skills.sort((a, b) => a.name.localeCompare(b.name));
   content.agentFiles.sort((a, b) => a.name.localeCompare(b.name));
   content.scripts.sort((a, b) => a.name.localeCompare(b.name));
+  content.hooks?.sort((a, b) => a.name.localeCompare(b.name));
+  content.hookConfigs?.sort((a, b) => a.name.localeCompare(b.name));
+  content.mcpServers?.sort((a, b) => a.name.localeCompare(b.name));
+  content.settings?.sort((a, b) => a.name.localeCompare(b.name));
+  content.assets?.sort((a, b) => a.name.localeCompare(b.name));
+  content.orchestration?.sort((a, b) => a.name.localeCompare(b.name));
 
   assertUnique("workflow", content.workflowFiles.map((workflow) => workflow.name));
   assertUnique("skill", content.skills.map((skill) => skill.name));
   assertUnique("agent", content.agentFiles.map((agent) => agent.name));
   assertUnique("script", content.scripts.map((script) => script.name));
+  assertUnique("hook", (content.hooks ?? []).map((hook) => hook.name));
+  assertUnique("hook config", (content.hookConfigs ?? []).map((hookConfig) => hookConfig.name));
+  assertUnique("MCP server", (content.mcpServers ?? []).map((mcpServer) => mcpServer.name));
+  assertUnique("settings", (content.settings ?? []).map((setting) => setting.name));
+  assertUnique("asset", (content.assets ?? []).map((asset) => asset.name));
 
   return content;
 }

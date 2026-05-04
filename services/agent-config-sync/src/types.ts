@@ -3,10 +3,13 @@
  */
 export type {
   RawrPluginKind,
+  ContentFile,
   DistributionMode,
   EvidenceLevel,
   MaterialKind,
+  OrchestrationSpec,
   ProviderKey,
+  SemanticCapabilityKind,
   SourceContent,
   SourcePlugin,
   SupportStatus,

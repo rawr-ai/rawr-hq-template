@@ -22,8 +22,22 @@ export const MaterialKindSchema = Type.Union([
   Type.Literal("script"),
   Type.Literal("agent"),
   Type.Literal("plugin_metadata"),
+  Type.Literal("orchestration"),
   Type.Literal("hook"),
   Type.Literal("mcp"),
+  Type.Literal("settings"),
+  Type.Literal("asset"),
+]);
+
+export const SemanticCapabilityKindSchema = Type.Union([
+  Type.Literal("agent_role"),
+  Type.Literal("skill_invocation"),
+  Type.Literal("task_spawn"),
+  Type.Literal("todo_state"),
+  Type.Literal("tool_lock"),
+  Type.Literal("model_selection"),
+  Type.Literal("hook"),
+  Type.Literal("mcp_server"),
   Type.Literal("settings"),
   Type.Literal("asset"),
 ]);
@@ -82,6 +96,19 @@ export const ContentFileSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const OrchestrationSpecSchema = Type.Object(
+  {
+    name: Type.String({ minLength: 1 }),
+    absPath: Type.String({ minLength: 1 }),
+    provider: Type.Literal("claude"),
+    sourceKind: Type.Union([Type.Literal("workflow"), Type.Literal("skill"), Type.Literal("agent")]),
+    skillInvocations: Type.Array(Type.String({ minLength: 1 })),
+    taskSpawns: Type.Array(Type.String({ minLength: 1 })),
+    todoState: Type.Boolean(),
+  },
+  { additionalProperties: false },
+);
+
 export const SourcePluginSchema = Type.Object(
   {
     ref: Type.String({ minLength: 1 }),
@@ -101,6 +128,12 @@ export const SourceContentSchema = Type.Object(
     skills: Type.Array(ContentFileSchema),
     scripts: Type.Array(ContentFileSchema),
     agentFiles: Type.Array(ContentFileSchema),
+    hooks: Type.Optional(Type.Array(ContentFileSchema)),
+    hookConfigs: Type.Optional(Type.Array(ContentFileSchema)),
+    mcpServers: Type.Optional(Type.Array(ContentFileSchema)),
+    settings: Type.Optional(Type.Array(ContentFileSchema)),
+    assets: Type.Optional(Type.Array(ContentFileSchema)),
+    orchestration: Type.Optional(Type.Array(OrchestrationSpecSchema)),
   },
   { additionalProperties: false },
 );
@@ -109,10 +142,13 @@ export type RawrPluginKind = Static<typeof RawrPluginKindSchema>;
 export type SyncAgent = Static<typeof SyncAgentSchema>;
 export type ProviderKey = Static<typeof ProviderKeySchema>;
 export type MaterialKind = Static<typeof MaterialKindSchema>;
+export type SemanticCapabilityKind = Static<typeof SemanticCapabilityKindSchema>;
 export type DistributionMode = Static<typeof DistributionModeSchema>;
 export type SupportStatus = Static<typeof SupportStatusSchema>;
 export type EvidenceLevel = Static<typeof EvidenceLevelSchema>;
 export type SyncScope = Static<typeof SyncScopeSchema>;
 export type SyncAction = Static<typeof SyncActionSchema>;
 export type SourcePlugin = Static<typeof SourcePluginSchema>;
+export type ContentFile = Static<typeof ContentFileSchema>;
+export type OrchestrationSpec = Static<typeof OrchestrationSpecSchema>;
 export type SourceContent = Static<typeof SourceContentSchema>;

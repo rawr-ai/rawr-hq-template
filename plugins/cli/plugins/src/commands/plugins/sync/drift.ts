@@ -124,15 +124,22 @@ export default class PluginsSyncDrift extends RawrCommand {
           this.log(`scope: ${scope}`);
           this.log(`status: ${assessment.status}`);
           this.log(
-            `summary: plugins=${plugins.length} targets=${assessment.summary.totalTargets} materialChanges=${assessment.summary.totalMaterialChanges} metadataChanges=${assessment.summary.totalMetadataChanges} conflicts=${assessment.summary.totalConflicts}`,
+            `summary: plugins=${plugins.length} targets=${assessment.summary.totalTargets} materialChanges=${assessment.summary.totalMaterialChanges} metadataChanges=${assessment.summary.totalMetadataChanges} conflicts=${assessment.summary.totalConflicts} projectionResiduals=${assessment.summary.totalProjectionResiduals}`,
           );
           if (!inSync) {
             this.log("drift:");
             for (const plugin of plugins) {
-              if (plugin.conflicts === 0 && plugin.driftItems.length === 0) continue;
+              if (plugin.conflicts === 0 && plugin.driftItems.length === 0 && plugin.projectionResiduals.length === 0) continue;
               this.log(
-                `- ${plugin.dirName}: material=${plugin.materialChanges} metadata=${plugin.metadataChanges} conflicts=${plugin.conflicts}`,
+                `- ${plugin.dirName}: material=${plugin.materialChanges} metadata=${plugin.metadataChanges} conflicts=${plugin.conflicts} projectionResiduals=${plugin.projectionResiduals.length}`,
               );
+            }
+          }
+          if (inSync && assessment.summary.totalProjectionResiduals > 0) {
+            this.log("projection residuals:");
+            for (const plugin of plugins) {
+              if (plugin.projectionResiduals.length === 0) continue;
+              this.log(`- ${plugin.dirName}: projectionResiduals=${plugin.projectionResiduals.length}`);
             }
           }
         },

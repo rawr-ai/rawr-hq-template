@@ -58,11 +58,8 @@ ${CODEX_HOME:-~/.codex-rawr}/
 ├── scripts/*                    # Scripts (prefixed by plugin name)
 └── plugins/registry.json        # Declarative index of synced content
 
-# Optional upstream mirror target (pass via --mirror-home or CODEX_MIRROR_HOME)
-${CODEX_MIRROR_HOME:-~/.codex}/
-
-# Optional explicit fork target (legacy alias; usually same as CODEX_HOME)
-${CODEX_FORK_HOME:-~/.codex-rawr}/
+# Additional Codex homes are explicit sync destinations only:
+# pass repeatable --codex-home, RAWR_AGENT_SYNC_CODEX_HOMES, or config destinations.
 ```
 
 **Sync command (canonical):**

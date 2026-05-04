@@ -56,6 +56,9 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
         skills: string[];
         scripts: string[];
         agents: string[];
+        hookScripts: string[];
+        hookConfigs: string[];
+        mcpServers: string[];
         sourcePluginPath?: string;
       }> = [];
 
@@ -77,6 +80,9 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
           skills: toStringArray(plugin.skills),
           scripts: toStringArray(plugin.scripts),
           agents: toStringArray(plugin.agents),
+          hookScripts: toStringArray(plugin.hookScripts ?? plugin.hooks),
+          hookConfigs: toStringArray(plugin.hookConfigs),
+          mcpServers: toStringArray(plugin.mcpServers),
           sourcePluginPath: typeof plugin.source_plugin_path === "string" ? plugin.source_plugin_path : undefined,
         });
       }

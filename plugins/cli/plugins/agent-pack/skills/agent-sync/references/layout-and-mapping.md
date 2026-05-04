@@ -12,7 +12,7 @@ Only these directories are eligible for sync:
 ### Codex
 
 - `workflows/*.md` -> `<codex-home>/prompts/*.md`
-- `skills/<name>/**` -> `<codex-home>/skills/<name>/**`
+- `skills/<name>/**` -> `<runtime-user-skill-root>/<name>/**`
 - `scripts/<file>` -> `<codex-home>/scripts/<pluginName>--<file>`
 
 Codex registry metadata is updated at:

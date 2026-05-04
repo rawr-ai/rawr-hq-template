@@ -1,7 +1,9 @@
 import { type Static, Type } from "typebox";
 import {
+  MaterialKindSchema,
   SourceContentSchema,
   SourcePluginSchema,
+  SupportStatusSchema,
   SyncActionSchema,
   SyncAgentSchema,
   SyncScopeSchema,
@@ -114,6 +116,11 @@ export const DriftItemSchema = Type.Object(
       Type.Literal("skill"),
       Type.Literal("script"),
       Type.Literal("agent"),
+      Type.Literal("hook"),
+      Type.Literal("mcp"),
+      Type.Literal("settings"),
+      Type.Literal("asset"),
+      Type.Literal("orchestration"),
       Type.Literal("metadata"),
     ]),
     target: Type.String({ minLength: 1 }),
@@ -122,9 +129,24 @@ export const DriftItemSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const ProjectionResidualSchema = Type.Object(
+  {
+    provider: SyncAgentSchema,
+    materialKind: MaterialKindSchema,
+    source: Type.String({ minLength: 1 }),
+    supportStatus: SupportStatusSchema,
+    message: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+
 export const SyncAssessmentSchema = Type.Object(
   {
-    status: Type.Union([Type.Literal("IN_SYNC"), Type.Literal("DRIFT_DETECTED"), Type.Literal("CONFLICTS")]),
+    status: Type.Union([
+      Type.Literal("IN_SYNC"),
+      Type.Literal("DRIFT_DETECTED"),
+      Type.Literal("CONFLICTS"),
+    ]),
     includeMetadata: Type.Boolean(),
     scope: SyncScopeSchema,
     summary: Type.Object(
@@ -135,6 +157,7 @@ export const SyncAssessmentSchema = Type.Object(
         totalMaterialChanges: Type.Number(),
         totalMetadataChanges: Type.Number(),
         totalDriftItems: Type.Number(),
+        totalProjectionResiduals: Type.Number(),
       },
       { additionalProperties: false },
     ),
@@ -148,6 +171,7 @@ export const SyncAssessmentSchema = Type.Object(
           materialChanges: Type.Number(),
           metadataChanges: Type.Number(),
           driftItems: Type.Array(DriftItemSchema),
+          projectionResiduals: Type.Array(ProjectionResidualSchema),
         },
         { additionalProperties: false },
       ),

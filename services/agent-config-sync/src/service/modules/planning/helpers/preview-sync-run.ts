@@ -11,6 +11,16 @@ import {
   loadCodexRegistry,
   upsertCodexRegistry,
 } from "../../../shared/repositories/codex-registry-repository";
+import { buildCodexManagedConfig } from "../../../shared/repositories/codex-config-repository";
+import {
+  buildCodexHooksFile,
+  pruneCodexHooksForPlugin,
+} from "../../../shared/repositories/codex-hooks-repository";
+import {
+  getCodexManagedMcpDir,
+  getCodexRetiredRootSkillsDir,
+  getCodexRuntimeSkillsDir,
+} from "../../../shared/repositories/codex-runtime-paths";
 import {
   readClaudeSyncManifest,
   upsertClaudeMarketplace,
@@ -65,16 +75,24 @@ export async function previewSyncRun(input: {
     for (const codexHome of input.codexHomes) {
       const result: SyncTargetResult = { agent: "codex", home: codexHome, items: [], conflicts: [] };
       const promptsDir = pathOps.join(codexHome, "prompts");
-      const skillsDir = pathOps.join(codexHome, "skills");
+      const retiredRootSkillsDir = getCodexRetiredRootSkillsDir(codexHome, pathOps);
+      const runtimeSkillsDir = getCodexRuntimeSkillsDir(codexHome, pathOps);
       const scriptsDir = pathOps.join(codexHome, "scripts");
       const agentsDir = pathOps.join(codexHome, "agents");
+      const hooksDir = pathOps.join(codexHome, "hooks", "rawr", input.sourcePlugin.dirName);
+      const mcpDir = getCodexManagedMcpDir(codexHome, input.sourcePlugin.dirName, pathOps);
       const registry = await loadCodexRegistry(codexHome, input.resources);
       const claimedOthers = {
         prompts: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.promptsByPlugin),
         skills: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.skillsByPlugin),
         scripts: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.scriptsByPlugin),
         agents: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.agentsByPlugin),
+        hookScripts: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.hookScriptsByPlugin),
+        mcpServers: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.mcpServersByPlugin),
       };
+      const newMcpServers = new Set((codexContent.mcpServers ?? []).map((server) => server.name));
+      const staleMcpServers = [...(registry.claimedSets.mcpServersByPlugin[input.sourcePlugin.dirName] ?? new Set<string>())]
+        .filter((server) => !newMcpServers.has(server) && !claimedOthers.mcpServers.has(server));
 
       for (const workflow of codexContent.workflowFiles) {
         await syncFileWithConflictPolicy({
@@ -90,7 +108,7 @@ export async function previewSyncRun(input: {
       for (const skill of codexContent.skills) {
         await syncSkillDirWithConflictPolicy({
           srcDir: skill.absPath,
-          destDir: pathOps.join(skillsDir, skill.name),
+          destDir: pathOps.join(runtimeSkillsDir, skill.name),
           skillName: skill.name,
           options,
           result,
@@ -110,7 +128,63 @@ export async function previewSyncRun(input: {
         });
       }
 
-      const includeAgentsInCodex = options.includeAgentsInCodex ?? false;
+      for (const hook of codexContent.hooks ?? []) {
+        await syncFileWithConflictPolicy({
+          src: hook.absPath,
+          dest: pathOps.join(hooksDir, hook.name),
+          kind: "hook",
+          options,
+          result,
+          claimedByOtherPlugin: claimedOthers.hookScripts.has(hook.name),
+        });
+      }
+
+      for (const mcpServer of codexContent.mcpServers ?? []) {
+        if (mcpServer.name.endsWith(".json") || mcpServer.name.endsWith(".toml")) continue;
+        await syncFileWithConflictPolicy({
+          src: mcpServer.absPath,
+          dest: pathOps.join(mcpDir, mcpServer.name),
+          kind: "mcp",
+          options,
+          result,
+        });
+      }
+
+      if ((codexContent.hookConfigs ?? []).length > 0 || (registry.claimedSets.hookConfigsByPlugin[input.sourcePlugin.dirName]?.size ?? 0) > 0) {
+        const hooksJsonPath = pathOps.join(codexHome, "hooks.json");
+        const existingHooks = await input.resources.files.readJsonFile<unknown>(hooksJsonPath);
+        const hooksFile = await buildCodexHooksFile({
+          pluginName: input.sourcePlugin.dirName,
+          hookConfigs: codexContent.hookConfigs ?? [],
+          hookScripts: codexContent.hooks ?? [],
+          hooksDir,
+          existing: existingHooks,
+          resources: input.resources,
+        }) ?? pruneCodexHooksForPlugin({
+          pluginName: input.sourcePlugin.dirName,
+          existing: existingHooks,
+        });
+        await syncTextWithConflictPolicy({
+          content: `${JSON.stringify(hooksFile, null, 2)}\n`,
+          source: input.sourcePlugin.absPath,
+          dest: hooksJsonPath,
+          kind: "hook",
+          options,
+          result,
+        });
+      }
+
+      await previewCodexConfigToml({
+        codexHome,
+        sourcePlugin: input.sourcePlugin,
+        content: codexContent,
+        mcpRuntimeDir: mcpDir,
+        pruneMcpServerNames: staleMcpServers,
+        options,
+        result,
+      });
+
+      const includeAgentsInCodex = options.includeAgentsInCodex ?? true;
       if (includeAgentsInCodex) {
         for (const agent of codexContent.agentFiles) {
           const rendered = await buildCodexAgentProjection({
@@ -136,15 +210,19 @@ export async function previewSyncRun(input: {
         codexContent.scripts.map((script) => buildCodexScriptName(input.sourcePlugin.dirName, script.name)),
       );
       const newAgents = new Set(includeAgentsInCodex ? codexContent.agentFiles.map((agent) => agent.name) : []);
-
+      const newHooks = new Set([
+        ...(codexContent.hookConfigs ?? []).map((hook) => hook.name),
+      ]);
+      const newHookScripts = new Set((codexContent.hooks ?? []).map((hook) => hook.name));
       for (const oldPrompt of registry.claimedSets.promptsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
         if (newPrompts.has(oldPrompt) || claimedOthers.prompts.has(oldPrompt)) continue;
         await deleteIfExists({ target: pathOps.join(promptsDir, `${oldPrompt}.md`), kind: "workflow", options, result });
       }
 
       for (const oldSkill of registry.claimedSets.skillsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
+        await deleteIfExists({ target: pathOps.join(retiredRootSkillsDir, oldSkill), kind: "skill", options, result });
         if (newSkills.has(oldSkill) || claimedOthers.skills.has(oldSkill)) continue;
-        await deleteIfExists({ target: pathOps.join(skillsDir, oldSkill), kind: "skill", options, result });
+        await deleteIfExists({ target: pathOps.join(runtimeSkillsDir, oldSkill), kind: "skill", options, result });
       }
 
       for (const oldScript of registry.claimedSets.scriptsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
@@ -155,6 +233,37 @@ export async function previewSyncRun(input: {
       for (const oldAgent of registry.claimedSets.agentsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
         if (newAgents.has(oldAgent) || claimedOthers.agents.has(oldAgent)) continue;
         await deleteIfExists({ target: pathOps.join(agentsDir, `${oldAgent}.toml`), kind: "agent", options, result });
+      }
+
+      for (const oldHook of registry.claimedSets.hookScriptsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
+        if (newHookScripts.has(oldHook) || claimedOthers.hookScripts.has(oldHook)) continue;
+        await deleteIfExists({ target: pathOps.join(hooksDir, oldHook), kind: "hook", options, result });
+      }
+
+      if (
+        (registry.claimedSets.hookConfigsByPlugin[input.sourcePlugin.dirName]?.size ?? 0) > 0 &&
+        newHooks.size === 0
+      ) {
+        const hooksJsonPath = pathOps.join(codexHome, "hooks.json");
+        const existingHooks = await input.resources.files.readJsonFile<unknown>(hooksJsonPath);
+        if (existingHooks) {
+          await syncTextWithConflictPolicy({
+            content: `${JSON.stringify(pruneCodexHooksForPlugin({
+              pluginName: input.sourcePlugin.dirName,
+              existing: existingHooks,
+            }), null, 2)}\n`,
+            source: input.sourcePlugin.absPath,
+            dest: hooksJsonPath,
+            kind: "hook",
+            options,
+            result,
+          });
+        }
+      }
+
+      for (const oldMcpServer of registry.claimedSets.mcpServersByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
+        if (newMcpServers.has(oldMcpServer) || claimedOthers.mcpServers.has(oldMcpServer)) continue;
+        await deleteIfExists({ target: pathOps.join(mcpDir, oldMcpServer), kind: "mcp", options, result });
       }
 
       const codexRegistry = await upsertCodexRegistry({
@@ -343,4 +452,63 @@ export async function previewSyncRun(input: {
     targets,
     projections,
   };
+}
+
+async function previewCodexConfigToml(input: {
+  codexHome: string;
+  sourcePlugin: SourcePlugin;
+  content: SourceContent;
+  mcpRuntimeDir: string;
+  pruneMcpServerNames: string[];
+  options: {
+    dryRun: boolean;
+    force: boolean;
+    resources: AgentConfigSyncResources;
+  };
+  result: SyncTargetResult;
+}): Promise<void> {
+  const config = await buildCodexManagedConfig({
+    codexHome: input.codexHome,
+    sourcePlugin: input.sourcePlugin,
+    content: input.content,
+    force: input.options.force,
+    mcpRuntimeDir: input.mcpRuntimeDir,
+    pruneMcpServerNames: input.pruneMcpServerNames,
+    resources: input.options.resources,
+  });
+
+  if (config.conflictMessages.length > 0) {
+    for (const message of config.conflictMessages) {
+      pushItem(input.result, {
+        action: "conflict",
+        kind: "settings",
+        source: input.sourcePlugin.absPath,
+        target: config.configPath,
+        message,
+      });
+    }
+    return;
+  }
+
+  for (const message of config.validationNotes) {
+    pushItem(input.result, {
+      action: "skipped",
+      kind: "settings",
+      source: input.sourcePlugin.absPath,
+      target: config.configPath,
+      message,
+    });
+  }
+
+  if (!config.content) return;
+  const existing = await input.options.resources.files.readTextFile(config.configPath);
+  pushItem(input.result, {
+    action: existing === config.content ? "skipped" : "planned",
+    kind: "settings",
+    source: config.sourcePaths[0] ?? input.sourcePlugin.absPath,
+    target: config.configPath,
+    message: existing === config.content
+      ? "identical managed Codex config"
+      : "merge managed Codex hooks/MCP/settings config",
+  });
 }

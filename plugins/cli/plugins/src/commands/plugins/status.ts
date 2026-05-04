@@ -97,6 +97,9 @@ export default class PluginsStatus extends RawrCommand {
         configGlobalPath: invocationLayered.globalPath,
       });
       const workspaceRoot = sourceWorkspace.sourceWorkspaceRoot;
+      const installWorkspaceRoot = sourceWorkspace.external && sourceWorkspace.invocationWorkspaceRoot
+        ? sourceWorkspace.invocationWorkspaceRoot
+        : workspaceRoot;
 
       const sync = includeSync
         ? await (async () => {
@@ -128,7 +131,7 @@ export default class PluginsStatus extends RawrCommand {
       let installError: { message: string; code: string } | null = null;
       let install = includeInstall
         ? await assessPluginInstallState({
-            workspaceRoot,
+            workspaceRoot: installWorkspaceRoot,
             oclifDataDir: (this.config as any).dataDir as string | undefined,
             runtimePlugins,
             traceId: "plugin-plugins.plugin-install.status-assess",
@@ -142,7 +145,7 @@ export default class PluginsStatus extends RawrCommand {
         : null;
       const repairAttempt = repair && includeInstall && !installError
         ? await reconcileWorkspaceInstallLinks({
-            workspaceRoot,
+            workspaceRoot: installWorkspaceRoot,
             dryRun: baseFlags.dryRun,
             enabled: true,
             oclifDataDir: (this.config as any).dataDir as string | undefined,
@@ -151,7 +154,7 @@ export default class PluginsStatus extends RawrCommand {
         : null;
       if (repairAttempt && repairAttempt.action !== "planned") {
         install = await assessPluginInstallState({
-          workspaceRoot,
+          workspaceRoot: installWorkspaceRoot,
           oclifDataDir: (this.config as any).dataDir as string | undefined,
           runtimePlugins,
           traceId: "plugin-plugins.plugin-install.status-assess-after-repair",
@@ -173,6 +176,12 @@ export default class PluginsStatus extends RawrCommand {
         actions.push({
           command: `rawr plugins sync all --json${sourceWorkspaceArg}`,
           reason: "Converge content sync drift and refresh provider-side artifacts",
+        });
+      }
+      if (sync && sync.summary.totalProjectionResiduals > 0) {
+        actions.push({
+          command: `rawr plugins sync drift --include-items --json${sourceWorkspaceArg}`,
+          reason: "Inspect adapter-required projection residuals before claiming provider parity",
         });
       }
       if (install) {
@@ -233,6 +242,7 @@ export default class PluginsStatus extends RawrCommand {
           this.log(`sync: ${includeSync ? syncStatus : "SKIPPED"}`);
           this.log(`install: ${includeInstall ? installStatus : "SKIPPED"}`);
           this.log(`overall: ${overall}`);
+          if (sync) this.log(`projection residuals: ${sync.summary.totalProjectionResiduals}`);
           if (installErrorMessage) this.log(`install error: ${installErrorMessage}`);
           if (repair) {
             this.log(`repair: ${repairAttempt?.action ?? (includeInstall ? "skipped" : "unavailable")}`);

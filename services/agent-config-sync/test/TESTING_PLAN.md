@@ -52,9 +52,9 @@ Prevent:
 
 Oracles:
 
-- Codex direct mirror writes workflows to `prompts/`, skills to `skills/`, scripts to plugin-prefixed `scripts/`, optional standalone TOML agents to `agents/`, and ownership to `plugins/registry.json`.
+- Codex direct mirror writes workflows to `prompts/`, skills to the runtime user skill root (`.agents/skills/` for test homes, `$HOME/.agents/skills/` for real `.codex*` homes), scripts to plugin-prefixed `scripts/`, standalone TOML agents to `agents/` unless explicitly disabled, managed hooks/MCP/settings into `config.toml` plus runtime support files, and ownership to `plugins/registry.json`.
 - Claude local plugin sync writes commands, skills, scripts, agents, `.claude-plugin/plugin.json`, `.rawr-sync-manifest.json`, and marketplace metadata.
-- Codex package artifacts include `.codex-plugin/plugin.json` and `skills/` only until runtime support for agents/hooks/MCP/settings is locally verified.
+- Codex marketplace packages include `.codex-plugin/plugin.json`, skills, MCP config/files, assets, and `.agents/plugins/marketplace.json`; custom agents, settings, and hooks are omitted because the current RAWR Codex plugin manifest does not accept them.
 - Cowork artifacts are valid ZIPs with manifest summaries for commands, skills, scripts, and agents.
 
 ### 3. Drift And Dry-Run Fidelity
@@ -105,16 +105,17 @@ Prevent:
 - Claude install/enable running during dry-run;
 - package/install failures being hidden while sync claims full success;
 - host resource packages re-owning service semantics.
+- implicit provider install scope drifting between Claude and Codex without being visible in operator output.
 
-Oracle: service tests use injected resources and temp homes; CLI tests fake process execution and assert rendered success/failure metadata.
+Oracle: service tests use injected resources and temp homes; CLI tests fake process execution and assert rendered success/failure metadata. Node adapter tests prove the only supported install scope is `user`, Claude marketplace registration passes `--scope user`, and Codex records `installScope: "user"` without passing unsupported scope arguments.
 
 ### 7. Unsupported And Adapter-Required Semantics
 
-Guarantee: unsupported provider capabilities are explicit. `IN_SYNC` means managed sync material is aligned, not that every Codex or Claude runtime feature in the source repo is fully installed.
+Guarantee: unsupported provider capabilities are explicit. `IN_SYNC` means managed sync material is aligned, not that every provider runtime surface receives every source capability through every distribution lane.
 
 Prevent:
 
-- hooks, MCP, settings, or unverified plugin-provided agents being silently treated as synced;
+- plugin-lane hooks/settings/agents or Claude-only semantic fields being silently treated as fully synced;
 - status output implying Codex cleanup/alignment for material the sync engine does not model;
 - tests passing because unsupported material is ignored without a projection/status classification.
 
@@ -174,9 +175,9 @@ Run mutating sync against personal `rawr-hq` only when the operator intends to u
 
 ## Current Gaps
 
-- Hooks, MCP, settings, and Codex plugin-provided agents are not implemented as managed projections. Tests must not let `IN_SYNC` imply those are aligned.
+- Codex plugin-provided agents, settings, and hooks are intentionally not emitted by the current package lane. Tests must not let package install success imply those plugin-lane capabilities are aligned.
 - Undo restoration needs a full two-provider destination snapshot test.
 - Failure injection should prove bounded reporting for write, package, and install failures.
 - Multi-home precedence and deduplication need a dedicated fixture.
-- Cowork tests should inspect ZIP entries, not only the ZIP header and summary.
+- Cowork org-marketplace/admin install automation is not modeled. Current guarantees stop at valid manual-upload ZIP artifacts with deterministic root entries and manifest-path validation.
 - Personal-repo e2e should add real agent and hook fixtures before claiming readiness for the next content authoring wave.

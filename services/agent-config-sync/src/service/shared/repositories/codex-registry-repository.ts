@@ -17,6 +17,10 @@ export type CodexRegistryClaims = {
   skillsByPlugin: Record<string, Set<string>>;
   scriptsByPlugin: Record<string, Set<string>>;
   agentsByPlugin: Record<string, Set<string>>;
+  hooksByPlugin: Record<string, Set<string>>;
+  hookScriptsByPlugin: Record<string, Set<string>>;
+  hookConfigsByPlugin: Record<string, Set<string>>;
+  mcpServersByPlugin: Record<string, Set<string>>;
 };
 
 export type CodexRegistryPlugin = {
@@ -27,6 +31,10 @@ export type CodexRegistryPlugin = {
   skills?: string[];
   scripts?: string[];
   agents?: string[];
+  hooks?: string[];
+  hookScripts?: string[];
+  hookConfigs?: string[];
+  mcpServers?: string[];
   source_plugin_path?: string;
   managed_by?: string;
   synced_at?: string;
@@ -67,6 +75,10 @@ export async function loadCodexRegistry(
     skillsByPlugin: {},
     scriptsByPlugin: {},
     agentsByPlugin: {},
+    hooksByPlugin: {},
+    hookScriptsByPlugin: {},
+    hookConfigsByPlugin: {},
+    mcpServersByPlugin: {},
   };
 
   for (const plugin of data.plugins ?? []) {
@@ -74,6 +86,12 @@ export async function loadCodexRegistry(
     claimedSets.skillsByPlugin[plugin.name] = new Set(plugin.skills ?? []);
     claimedSets.scriptsByPlugin[plugin.name] = new Set(plugin.scripts ?? []);
     claimedSets.agentsByPlugin[plugin.name] = new Set(plugin.agents ?? []);
+    const hookScripts = plugin.hookScripts ?? plugin.hooks ?? [];
+    const hookConfigs = plugin.hookConfigs ?? [];
+    claimedSets.hookScriptsByPlugin[plugin.name] = new Set(hookScripts);
+    claimedSets.hookConfigsByPlugin[plugin.name] = new Set(hookConfigs);
+    claimedSets.hooksByPlugin[plugin.name] = new Set([...hookScripts, ...hookConfigs]);
+    claimedSets.mcpServersByPlugin[plugin.name] = new Set(plugin.mcpServers ?? []);
   }
 
   return { filePath, data, claimedSets };
@@ -121,9 +139,16 @@ export async function upsertCodexRegistry(input: {
     skills: input.content.skills.map((skill) => skill.name),
     scripts: input.content.scripts.map((script) => buildCodexScriptName(pluginName, script.name)),
     agents: input.includeAgents ? input.content.agentFiles.map((agent) => agent.name) : [],
+    hookScripts: (input.content.hooks ?? []).map((hook) => hook.name),
+    hookConfigs: (input.content.hookConfigs ?? []).map((hook) => hook.name),
+    mcpServers: (input.content.mcpServers ?? []).map((mcpServer) => mcpServer.name),
     source_plugin_path: input.sourcePlugin.absPath,
     managed_by: "@rawr/plugin-plugins",
   };
+  nextPluginEntry.hooks = [
+    ...(nextPluginEntry.hookScripts ?? []),
+    ...(nextPluginEntry.hookConfigs ?? []),
+  ];
   if (input.sourcePlugin.description) nextPluginEntry.description = input.sourcePlugin.description;
   if (input.sourcePlugin.version) nextPluginEntry.version = input.sourcePlugin.version;
 

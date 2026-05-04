@@ -20,18 +20,29 @@ const CLAUDE_ONLY_FRONTMATTER_FIELDS = [
   "permissionMode",
   "skills",
   "model",
+  "color",
 ] as const;
 
 type ParsedMarkdownAgent = {
   frontmatter: Record<string, unknown>;
   body: string;
+  frontmatterError?: string;
 };
 
 function parseMarkdownAgent(raw: string): ParsedMarkdownAgent {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
   if (!match) return { frontmatter: {}, body: raw.trim() };
 
-  const parsed = YAML.parse(match[1] ?? "");
+  let parsed: unknown;
+  try {
+    parsed = YAML.parse(match[1] ?? "");
+  } catch (err) {
+    return {
+      frontmatter: {},
+      body: raw.slice(match[0].length).trim(),
+      frontmatterError: err instanceof Error ? err.message : String(err),
+    };
+  }
   const frontmatter = parsed && typeof parsed === "object" && !Array.isArray(parsed)
     ? parsed as Record<string, unknown>
     : {};
@@ -54,9 +65,11 @@ export async function buildCodexAgentProjection(input: {
     input.sourcePlugin.description ??
     `Synced RAWR agent ${input.agent.name}`;
 
-  const droppedSemantics = CLAUDE_ONLY_FRONTMATTER_FIELDS.filter((field) =>
-    Object.prototype.hasOwnProperty.call(parsed.frontmatter, field)
-  );
+  const droppedSemantics = parsed.frontmatterError
+    ? ["unparseable_frontmatter"]
+    : CLAUDE_ONLY_FRONTMATTER_FIELDS.filter((field) =>
+        Object.prototype.hasOwnProperty.call(parsed.frontmatter, field)
+      );
 
   const toml = stringify({
     name: input.agent.name,
@@ -71,8 +84,16 @@ export async function buildCodexAgentProjection(input: {
     toml: toml.endsWith("\n") ? toml : `${toml}\n`,
     droppedSemantics,
     adapterRequiredSemantics: droppedSemantics,
-    validationNotes: droppedSemantics.length > 0
-      ? ["Claude-only frontmatter was not mapped into Codex TOML"]
-      : ["Mapped safe Codex fields only: name, description, developer_instructions"],
+    validationNotes: [
+      ...(parsed.frontmatterError
+        ? [`Agent frontmatter could not be parsed; mapped body with fallback metadata: ${parsed.frontmatterError}`]
+        : []),
+      ...(droppedSemantics.length > 0 && !parsed.frontmatterError
+        ? ["Claude-only frontmatter was not mapped into Codex TOML"]
+        : []),
+      ...(droppedSemantics.length === 0
+        ? ["Mapped safe Codex fields only: name, description, developer_instructions"]
+        : []),
+    ],
   };
 }

@@ -18,6 +18,10 @@
       "types": "./src/claude-cli.ts",
       "default": "./src/claude-cli.ts"
     },
+    "./codex-cli": {
+      "types": "./src/codex-cli.ts",
+      "default": "./src/codex-cli.ts"
+    },
     "./codex-package": {
       "types": "./src/codex-package.ts",
       "default": "./src/codex-package.ts"

@@ -5,6 +5,7 @@ import {
   beginPluginsSyncUndoCapture,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncPlanInput,
+  installCodexMarketplacePlugins,
   installAndEnableClaudePlugin,
   packageCodexPlugin,
   packageCoworkPlugin,
@@ -61,12 +62,25 @@ export default class PluginsSyncAll extends RawrCommand {
       description: "Output directory for Cowork .zip artifacts (default: <workspaceRoot>/dist/cowork/plugins)",
     }),
     "codex-package": Flags.boolean({
-      description: "Build official Codex plugin package artifacts (artifact-only; no runtime install)",
+      description: "Build official Codex plugin marketplace packages",
       default: false,
       allowNo: true,
     }),
     "codex-out": Flags.string({
-      description: "Output directory for Codex plugin package artifacts (default: <workspaceRoot>/dist/codex/plugins)",
+      description: "Output directory for Codex marketplace root (default: <workspaceRoot>/dist/codex)",
+    }),
+    "codex-install": Flags.boolean({
+      description: "Register and install generated Codex plugin packages through RAWR Codex",
+      default: true,
+      allowNo: true,
+    }),
+    "codex-bin": Flags.string({
+      description: "Codex binary for marketplace registration/install (default: RAWR_CODEX_BIN, then ~/.local/bin/codex, then codex)",
+    }),
+    "install-scope": Flags.string({
+      description: "Provider plugin install scope (reserved; currently only user-local installs are supported)",
+      options: ["user"],
+      default: "user",
     }),
     "claude-install": Flags.boolean({
       description: "Install/refresh synced plugins in Claude Code via marketplace",
@@ -128,6 +142,9 @@ export default class PluginsSyncAll extends RawrCommand {
         configGlobalPath: invocationLayered.globalPath,
       });
       const workspaceRoot = sourceWorkspace.sourceWorkspaceRoot;
+      const installWorkspaceRoot = sourceWorkspace.external && sourceWorkspace.invocationWorkspaceRoot
+        ? sourceWorkspace.invocationWorkspaceRoot
+        : workspaceRoot;
       const layered = sourceWorkspace.external
         ? await loadLayeredRawrConfigForCwd(workspaceRoot)
         : invocationLayered;
@@ -135,6 +152,9 @@ export default class PluginsSyncAll extends RawrCommand {
       const scope = String((flags as any).scope) as SyncScope;
       const coworkEnabled = Boolean((flags as any).cowork);
       const codexPackageEnabled = Boolean((flags as any)["codex-package"]);
+      const codexInstallEnabled = Boolean((flags as any)["codex-install"]);
+      const codexBin = (flags as any)["codex-bin"] as string | undefined;
+      const installScope = (flags as any)["install-scope"] as "user";
       const claudeInstallEnabled = Boolean((flags as any)["claude-install"]);
       const claudeEnableEnabled = Boolean((flags as any)["claude-enable"]);
       const installReconcileEnabled = Boolean((flags as any)["install-reconcile"]);
@@ -239,10 +259,20 @@ export default class PluginsSyncAll extends RawrCommand {
         outDir: string;
         action: "planned" | "written" | "skipped";
         manifestPath?: string;
+        marketplaceName?: string;
+        marketplaceRoot?: string;
+        marketplacePath?: string;
+        marketplaceAction?: "planned" | "written";
+        marketplacePluginCount?: number;
         skillCount?: number;
         validationNotes?: string[];
         reason?: string;
       }> = [];
+      let codexInstall: Record<string, unknown> = {
+        ok: true,
+        installScope,
+        actions: [{ action: "skipped", installScope, reason: "not run" }],
+      };
       const claudeInstall: Array<Record<string, unknown>> = [];
       let retireOrphans: Awaited<ReturnType<typeof retireStaleManagedPlugins>> = {
         ok: true,
@@ -253,6 +283,7 @@ export default class PluginsSyncAll extends RawrCommand {
       let postStepFailed = false;
 
       const activePluginNames = new Set(plan.activePluginNames);
+      const packageActivePluginNames = scope === "all" ? activePluginNames : undefined;
 
       for (const { sourcePlugin, content } of syncable) {
         const run = await runSync({
@@ -316,9 +347,9 @@ export default class PluginsSyncAll extends RawrCommand {
           if (!isWorkspacePlugin) {
             codexPackages.push({
               plugin: run.sourcePlugin.dirName,
-              outDir: path.join(codexOutDirAbs, run.sourcePlugin.dirName),
+              outDir: path.join(codexOutDirAbs, "plugins", run.sourcePlugin.dirName),
               action: "skipped",
-              reason: "not a workspace plugin (skip Codex package artifact)",
+              reason: "not a workspace plugin (skip Codex marketplace package)",
             });
           } else {
             try {
@@ -333,13 +364,14 @@ export default class PluginsSyncAll extends RawrCommand {
                 content: codexContent,
                 outDirAbs: codexOutDirAbs,
                 dryRun: baseFlags.dryRun,
+                activePluginNames: packageActivePluginNames,
                 undoCapture,
               }));
             } catch (err) {
               postStepFailed = true;
               codexPackages.push({
                 plugin: run.sourcePlugin.dirName,
-                outDir: path.join(codexOutDirAbs, run.sourcePlugin.dirName),
+                outDir: path.join(codexOutDirAbs, "plugins", run.sourcePlugin.dirName),
                 action: "skipped",
                 reason: `codex package failed: ${err instanceof Error ? err.message : String(err)}`,
               });
@@ -351,13 +383,14 @@ export default class PluginsSyncAll extends RawrCommand {
         if (claudeInstallEnabled) {
           for (const t of run.targets.filter((t) => t.agent === "claude")) {
             if (t.conflicts.length > 0 && !baseFlags.dryRun) {
-              claudeInstall.push({ action: "skipped", home: t.home, plugin: run.sourcePlugin.dirName, reason: "sync conflicts" });
+              claudeInstall.push({ action: "skipped", home: t.home, plugin: run.sourcePlugin.dirName, installScope, reason: "sync conflicts" });
               continue;
             }
             try {
               const actions = await installAndEnableClaudePlugin({
                 claudeLocalHome: t.home,
                 pluginName: run.sourcePlugin.dirName,
+                installScope,
                 dryRun: baseFlags.dryRun,
                 enable: claudeEnableEnabled,
               });
@@ -369,6 +402,7 @@ export default class PluginsSyncAll extends RawrCommand {
                 action: "failed",
                 home: t.home,
                 plugin: run.sourcePlugin.dirName,
+                installScope,
                 error: err instanceof Error ? err.message : String(err),
               });
             }
@@ -422,8 +456,34 @@ export default class PluginsSyncAll extends RawrCommand {
         if (!retireOrphans.ok) postStepFailed = true;
       }
 
+      const installableCodexPackages = codexPackages.filter((pkg) => pkg.action !== "skipped" && pkg.marketplacePath);
+      if (codexPackageEnabled && codexInstallEnabled && installableCodexPackages.length > 0) {
+        const first = installableCodexPackages[0]!;
+        codexInstall = await installCodexMarketplacePlugins({
+          codexBin,
+          codexHome: targets.homes.codexHomes[0],
+          installScope,
+          marketplaceRoot: String(first.marketplaceRoot),
+          marketplacePath: String(first.marketplacePath),
+          plugins: installableCodexPackages.map((pkg) => pkg.plugin),
+          dryRun: baseFlags.dryRun,
+        });
+        if (!(codexInstall as any).ok) postStepFailed = true;
+      } else {
+        codexInstall = {
+          ok: true,
+          installScope,
+          actions: [{
+            action: "skipped",
+            codexBin,
+            installScope,
+            reason: codexPackageEnabled ? "disabled by flag or no generated packages" : "codex package disabled",
+          }],
+        };
+      }
+
       installReconcile = await reconcileWorkspaceInstallLinks({
-        workspaceRoot,
+        workspaceRoot: installWorkspaceRoot,
         dryRun: baseFlags.dryRun,
         enabled: installReconcileEnabled,
         runtimePlugins,
@@ -448,10 +508,13 @@ export default class PluginsSyncAll extends RawrCommand {
         ? this.ok({
             workspaceRoot,
             scope,
+            installScope,
             partialReasons: allowPartial ? partialReasons : [],
             skipped: mergedSkipped,
             results,
             codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
+            codexMarketplace: summarizeCodexMarketplace(codexPackages),
+            codexInstall,
             cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
             claudeInstall,
             retireOrphans,
@@ -464,8 +527,11 @@ export default class PluginsSyncAll extends RawrCommand {
               conflictPlugins: results.filter((r) => !r.ok).map((r) => ({ dirName: r.dirName, conflictCount: r.conflictCount })),
               skippedCount: mergedSkipped.length,
               postStepFailed,
+              installScope,
               partialReasons: allowPartial ? partialReasons : [],
               codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
+              codexMarketplace: summarizeCodexMarketplace(codexPackages),
+              codexInstall,
               cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
               claudeInstall,
               retireOrphans,
@@ -505,7 +571,13 @@ export default class PluginsSyncAll extends RawrCommand {
               );
             }
           }
-          if (codexPackageEnabled) this.log(`Codex package out: ${codexOutDirAbs}`);
+          if (codexPackageEnabled) {
+            this.log(`Codex package out: ${codexOutDirAbs}`);
+            const marketplacePath = codexPackages.find((p) => p.marketplacePath)?.marketplacePath;
+            if (marketplacePath) this.log(`Codex marketplace: ${marketplacePath}`);
+            this.log(`Codex install: ${(codexInstall as any).ok ? "ok" : "failed"}`);
+            this.log(`Install scope: ${installScope}`);
+          }
           this.log(`Install reconcile: ${(installReconcile as any).action}`);
           if (coworkEnabled) this.log(`Cowork out: ${coworkOutDirAbs}`);
           if (undo.available) this.log(`Undo: rawr undo (capsule=${undo.capsuleId})`);
@@ -538,4 +610,29 @@ export default class PluginsSyncAll extends RawrCommand {
       this.exit(1);
     }
   }
+}
+
+function summarizeCodexMarketplace(packages: Array<{
+  marketplaceName?: string;
+  marketplaceRoot?: string;
+  marketplacePath?: string;
+  marketplaceAction?: "planned" | "written";
+  marketplacePluginCount?: number;
+}>) {
+  const marketplacePackages = packages.filter((pkg) => pkg.marketplacePath);
+  const marketplacePackage = marketplacePackages[marketplacePackages.length - 1];
+  return marketplacePackage
+    ? {
+        name: marketplacePackage.marketplaceName,
+        root: marketplacePackage.marketplaceRoot,
+        path: marketplacePackage.marketplacePath,
+        action: marketplacePackage.marketplaceAction,
+        pluginCount: marketplacePackage.marketplaceAction === "planned"
+          ? marketplacePackages.length
+          : marketplacePackage.marketplacePluginCount,
+      }
+    : {
+        action: "skipped",
+        reason: "no Codex marketplace package generated",
+      };
 }

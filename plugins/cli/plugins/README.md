@@ -28,8 +28,8 @@ rawr undo
 
 This performs a full deterministic sync pipeline by default:
 - syncs to Codex + Claude targets,
-- builds Cowork `.plugin` artifacts,
-- optionally builds Codex plugin package artifacts when `--codex-package` is set,
+- builds Cowork `.zip` artifacts,
+- optionally builds/registers/installs Codex marketplace packages when `--codex-package` is set,
 - refreshes Claude install + enable,
 - retires stale managed plugins from rename/delete operations,
 - uses `--force` and `--gc` defaults for deterministic convergence.
@@ -46,19 +46,24 @@ By default, `rawr plugins sync ...` also generates a Cowork artifact for each sy
 
 The `.zip` is generated from **RAWR HQ source content** using the same mapping rules as Claude sync (`workflows -> commands`, `skills`, `scripts`, and optionally `agents`), so it stays in parity with what Claude would see.
 
-## Codex plugin package artifacts
+## Codex marketplace packages
 
-Codex package generation is explicit and artifact-only until the local Codex CLI exposes runtime plugin install support.
+Codex package generation is explicit. When `--codex-package` is set, this command writes a local Codex marketplace root and, by default, registers and installs generated plugins through the RAWR Codex CLI/app-server. Use `--no-codex-install` to generate packages without installing them.
 
 - Enable: `--codex-package`
-- Output (default): `dist/codex/plugins/<pluginName>/`
+- Install toggle: `--codex-install` / `--no-codex-install`
+- Codex binary override: `--codex-bin <path>` (default: `RAWR_CODEX_BIN`, then `~/.local/bin/codex`, then `codex` on `PATH`)
+- Install scope: `--install-scope user` (default; currently the only supported scope)
+- Marketplace root (default): `dist/codex/`
+- Package output: `dist/codex/plugins/<pluginName>/`
 - Override: `--codex-out <dir>`
 
 Generated packages include:
 - `.codex-plugin/plugin.json`
 - `skills/`
+- MCP config/files and assets when modeled
 
-Custom agents, hooks, MCP, and settings are intentionally not packaged yet; direct Codex agent sync uses standalone TOML under `<codex-home>/agents/` when `sync.providers.codex.includeAgents` is enabled.
+Custom agents, settings, and hooks are intentionally not emitted in Codex plugin packages for the current RAWR Codex manifest. Direct Codex sync owns standalone TOML agents, managed hook config, MCP/settings config fragments, prompts, scripts, and runtime skill mirrors.
 
 ## Claude marketplace refresh (install + enable)
 
@@ -66,11 +71,14 @@ Sync writes into a Claude local marketplace directory (default `~/.claude/plugin
 
 By default, after syncing to Claude targets, this command also refreshes the plugin via Claude Code:
 
+- Marketplace registration: `claude plugin marketplace add --scope user <claude-local-home>`
 - Install/refresh: `claude plugin install <plugin>@<marketplace>`
 - Enable: `claude plugin enable <plugin>@<marketplace>`
 
 Disable with:
 - `--no-claude-install` and/or `--no-claude-enable`
+
+`--install-scope user` is accepted on both `rawr plugins sync` and `rawr plugins sync all` so the default user-local install scope is explicit in CLI help, JSON output, and install adapter results. Other scopes are reserved for a future provider-scope decision and are rejected today.
 
 ## Partial mode guard (advanced)
 
@@ -98,7 +106,11 @@ Only these top-level directories are synced:
 - `skills/`
 - `workflows/`
 - `scripts/`
-- `agents/` (provider-specific; Claude on by default, Codex opt-in)
+- `agents/` (provider-specific; Claude and Codex on by default unless explicitly disabled)
+- `hooks/`
+- `mcp/` and root `.mcp.json`
+- `settings/`
+- `assets/`
 
 Anything outside those directories is ignored.
 
@@ -106,9 +118,10 @@ Anything outside those directories is ignored.
 
 - Codex:
   - `workflows/*.md -> <codex-home>/prompts/*.md`
-  - `skills/<name>/** -> <codex-home>/skills/<name>/**`
+  - `skills/<name>/** -> <runtime-user-skill-root>/<name>/**` (`$HOME/.agents/skills` for real `.codex*` homes)
   - `scripts/<file> -> <codex-home>/scripts/<pluginName>--<file>`
-  - `agents/*.md -> <codex-home>/agents/*.toml` only when Codex agent sync is enabled; Claude-only frontmatter is dropped and reported as adapter-required projection metadata.
+  - `agents/*.md -> <codex-home>/agents/*.toml`; Claude-only frontmatter is dropped and reported as adapter-required projection metadata.
+  - `hooks/`, `mcp/`, `.mcp.json`, and `settings/` merge into managed Codex config/runtime support paths.
 - Claude:
   - `workflows/*.md -> <claude-home>/plugins/<pluginName>/commands/*.md`
   - `skills/<name>/** -> <claude-home>/plugins/<pluginName>/skills/<name>/**`
@@ -145,8 +158,14 @@ Or by environment variables:
 - `RAWR_AGENT_SYNC_CODEX_HOMES` (comma-separated)
 - `RAWR_AGENT_SYNC_CLAUDE_HOMES` (comma-separated)
 
-Back-compat:
-- `CODEX_HOME` and `CODEX_MIRROR_HOME` are used when `RAWR_AGENT_SYNC_CODEX_HOMES` is not set.
+Default Codex target selection:
+- `RAWR_AGENT_SYNC_CODEX_HOMES` wins when set and may include multiple homes.
+- Otherwise `CODEX_HOME` is used as the primary active Codex home.
+- Otherwise the default is `~/.codex-rawr`.
+
+Additional Codex homes are explicit sync destinations only: pass repeatable
+`--codex-home`, include them in `RAWR_AGENT_SYNC_CODEX_HOMES`, or add them as
+enabled config destinations.
 
 ## Lifecycle Quality Commands
 

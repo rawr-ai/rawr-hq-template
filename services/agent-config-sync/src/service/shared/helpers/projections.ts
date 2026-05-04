@@ -3,6 +3,7 @@ import type { ProviderProjection } from "../entities/sync-results";
 import type { AgentConfigSyncResources } from "../resources";
 import { buildCodexAgentProjection } from "../source-content/helpers/codex-agent";
 import { buildCodexScriptName } from "../repositories/codex-registry-repository";
+import { getCodexManagedMcpDir, getCodexRuntimeSkillsDir } from "../repositories/codex-runtime-paths";
 
 export async function buildProviderProjections(input: {
   provider: SyncAgent;
@@ -50,13 +51,13 @@ async function buildCodexProjections(input: {
       materialKind: "skill",
       source: skill.name,
       sourcePath: skill.absPath,
-      targetPaths: input.homes.map((home) => pathOps.join(home, "skills", skill.name)),
+      targetPaths: input.homes.map((home) => pathOps.join(getCodexRuntimeSkillsDir(home, pathOps), skill.name)),
       distributionMode: "direct_mirror",
       supportStatus: "native",
       evidenceLevel: "official",
       droppedSemantics: [],
       adapterRequiredSemantics: [],
-      validationNotes: ["Mirrored to Codex skills directory"],
+      validationNotes: ["Mirrored to Codex runtime user skills"],
     });
   }
 
@@ -77,7 +78,117 @@ async function buildCodexProjections(input: {
     });
   }
 
-  if (input.includeAgentsInCodex) {
+  for (const hook of input.content.hooks ?? []) {
+    projections.push({
+      provider: "codex",
+      materialKind: "hook",
+      source: hook.name,
+      sourcePath: hook.absPath,
+      targetPaths: input.homes.flatMap((home) => [
+        pathOps.join(home, "hooks", "rawr", input.sourcePlugin.dirName, hook.name),
+      ]),
+      distributionMode: "direct_mirror",
+      supportStatus: "native",
+      evidenceLevel: "official",
+      droppedSemantics: [],
+      adapterRequiredSemantics: [],
+      validationNotes: ["Hook executable is copied only as managed support material for modeled Codex lifecycle config"],
+    });
+  }
+
+  for (const hookConfig of input.content.hookConfigs ?? []) {
+    projections.push({
+      provider: "codex",
+      materialKind: "hook",
+      source: hookConfig.name,
+      sourcePath: hookConfig.absPath,
+      targetPaths: input.homes.flatMap((home) => [
+        pathOps.join(home, "hooks.json"),
+        pathOps.join(home, "config.toml"),
+      ]),
+      distributionMode: "direct_mirror",
+      supportStatus: "native",
+      evidenceLevel: "official",
+      droppedSemantics: [],
+      adapterRequiredSemantics: [],
+      validationNotes: ["Codex hook event/matcher config is preserved through managed hooks.json merge"],
+    });
+  }
+
+  for (const mcpServer of input.content.mcpServers ?? []) {
+    projections.push({
+      provider: "codex",
+      materialKind: "mcp",
+      source: mcpServer.name,
+      sourcePath: mcpServer.absPath,
+      targetPaths: input.homes.flatMap((home) => [
+        pathOps.join(home, "config.toml"),
+        ...(mcpServer.name.endsWith(".json") || mcpServer.name.endsWith(".toml")
+          ? []
+          : [pathOps.join(getCodexManagedMcpDir(home, input.sourcePlugin.dirName, pathOps), mcpServer.name)]),
+      ]),
+      distributionMode: "direct_mirror",
+      supportStatus: "native",
+      evidenceLevel: "official",
+      droppedSemantics: [],
+      adapterRequiredSemantics: [],
+      validationNotes: ["Codex MCP servers are copied to a managed runtime path and projected into [mcp_servers.*] config"],
+    });
+  }
+
+  for (const setting of input.content.settings ?? []) {
+    projections.push({
+      provider: "codex",
+      materialKind: "settings",
+      source: setting.name,
+      sourcePath: setting.absPath,
+      targetPaths: input.homes.map((home) => pathOps.join(home, "config.toml")),
+      distributionMode: "direct_mirror",
+      supportStatus: "native",
+      evidenceLevel: "official",
+      droppedSemantics: [],
+      adapterRequiredSemantics: [],
+      validationNotes: ["Codex settings are merged as managed TOML fragments without overwriting unrelated config"],
+    });
+  }
+
+  for (const asset of input.content.assets ?? []) {
+    projections.push({
+      provider: "codex",
+      materialKind: "asset",
+      source: asset.name,
+      sourcePath: asset.absPath,
+      targetPaths: input.homes.map((home) => pathOps.join(home, "plugins", "rawr-managed", input.sourcePlugin.dirName, "assets", asset.name)),
+      distributionMode: "package_artifact",
+      supportStatus: "unknown",
+      evidenceLevel: "inferred",
+      droppedSemantics: [],
+      adapterRequiredSemantics: [],
+      validationNotes: ["Assets are meaningful for plugin package surfaces, not legacy direct mirror runtime"],
+    });
+  }
+
+  for (const spec of input.content.orchestration ?? []) {
+    projections.push({
+      provider: "codex",
+      materialKind: "orchestration",
+      source: spec.name,
+      sourcePath: spec.absPath,
+      targetPaths: [],
+      distributionMode: "operator_only",
+      supportStatus: "adapter_required",
+      evidenceLevel: "source_code",
+      droppedSemantics: [],
+      adapterRequiredSemantics: [
+        ...spec.skillInvocations.map((skill) => `Claude Skill invocation requires Codex orchestration adapter: ${skill}`),
+        ...spec.taskSpawns.map((task) => `Claude Task/subagent invocation requires Codex spawn-agent adapter: ${task}`),
+        ...(spec.todoState ? ["Claude TodoWrite state requires Codex checklist/artifact adapter"] : []),
+      ],
+      validationNotes: ["Claude-shaped orchestration references are detected but not native Codex runtime parity"],
+    });
+  }
+
+  if (input.includeAgentsInCodex ?? true) {
     for (const agent of input.content.agentFiles) {
       const rendered = await buildCodexAgentProjection({
         agent,
@@ -109,7 +220,7 @@ async function buildCodexProjections(input: {
       evidenceLevel: "source_code",
       droppedSemantics: ["agents omitted because sync.providers.codex.includeAgents is false"],
       adapterRequiredSemantics: [],
-      validationNotes: ["Codex agent projection is opt-in"],
+      validationNotes: ["Codex agent projection was explicitly disabled"],
     });
   }
 
@@ -187,6 +298,86 @@ function buildClaudeProjections(input: {
       droppedSemantics: [],
       adapterRequiredSemantics: [],
       validationNotes: ["Mapped to Claude plugin scripts"],
+    });
+  }
+
+  for (const hook of input.content.hooks ?? []) {
+    projections.push({
+      provider: "claude",
+      materialKind: "hook",
+      source: hook.name,
+      sourcePath: hook.absPath,
+      targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "hooks", hook.name)),
+      distributionMode: "local_plugin_install",
+      supportStatus: "adapter_required",
+      evidenceLevel: "official",
+      droppedSemantics: [],
+      adapterRequiredSemantics: ["Claude hook settings require explicit settings merge/install behavior"],
+      validationNotes: ["Hook material is detected and reported instead of being silently ignored"],
+    });
+  }
+
+  for (const mcpServer of input.content.mcpServers ?? []) {
+    projections.push({
+      provider: "claude",
+      materialKind: "mcp",
+      source: mcpServer.name,
+      sourcePath: mcpServer.absPath,
+      targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "mcp", mcpServer.name)),
+      distributionMode: "local_plugin_install",
+      supportStatus: "adapter_required",
+      evidenceLevel: "official",
+      droppedSemantics: [],
+      adapterRequiredSemantics: ["Claude MCP/settings wiring is provider-specific and must be installed explicitly"],
+      validationNotes: ["MCP material is detected and reported instead of being silently ignored"],
+    });
+  }
+
+  for (const setting of input.content.settings ?? []) {
+    projections.push({
+      provider: "claude",
+      materialKind: "settings",
+      source: setting.name,
+      sourcePath: setting.absPath,
+      targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "settings", setting.name)),
+      distributionMode: "local_plugin_install",
+      supportStatus: "adapter_required",
+      evidenceLevel: "official",
+      droppedSemantics: [],
+      adapterRequiredSemantics: ["Claude settings must merge as managed fragments without overwriting unmanaged settings"],
+      validationNotes: ["Settings are modeled so status can distinguish sync from runtime install"],
+    });
+  }
+
+  for (const asset of input.content.assets ?? []) {
+    projections.push({
+      provider: "claude",
+      materialKind: "asset",
+      source: asset.name,
+      sourcePath: asset.absPath,
+      targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "assets", asset.name)),
+      distributionMode: "local_plugin_install",
+      supportStatus: "unknown",
+      evidenceLevel: "inferred",
+      droppedSemantics: [],
+      adapterRequiredSemantics: [],
+      validationNotes: ["Assets are package/install surface material"],
+    });
+  }
+
+  for (const spec of input.content.orchestration ?? []) {
+    projections.push({
+      provider: "claude",
+      materialKind: "orchestration",
+      source: spec.name,
+      sourcePath: spec.absPath,
+      targetPaths: [],
+      distributionMode: "local_plugin_install",
+      supportStatus: "native",
+      evidenceLevel: "source_code",
+      droppedSemantics: [],
+      adapterRequiredSemantics: [],
+      validationNotes: ["Claude skill/task orchestration references are preserved in source Markdown"],
     });
   }
 
