@@ -31,7 +31,7 @@ Optional alternative: dedicated lane branches that the DRA merges in order.
 Use when the patch-file pattern would lose semantic context (e.g., multiline
 structural edits where AFTER blocks are hard to read in isolation).
 
-Working reference: `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/findings/lane-1-1-patch.md`. The patch file uses explicit BEFORE/AFTER blocks that the DRA applied via Edit.
+Working reference: `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/findings/lane-1-1-patch.md`. The patch file uses explicit BEFORE/AFTER blocks that the DRA applied serially.
 
 ## When neither pattern fits
 
