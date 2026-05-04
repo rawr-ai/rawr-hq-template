@@ -2,7 +2,7 @@ import type { RawrEffect, RawrEffectYield } from "../effect";
 import {
   createProviderEffectPlan,
   createTryProviderEffectPlan,
-} from "./provider-plan-internals";
+} from "../../runtime/provider-plan-internals";
 import type { RuntimeSchema } from "./schema";
 import type {
   ResourceRequirement,

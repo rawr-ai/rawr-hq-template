@@ -14,7 +14,7 @@ All agents using this workflow must keep these concepts distinct:
 | --- | --- |
 | Runtime Realization Lab | `tools/runtime-realization-type-env`, the contained environment where runtime realization evidence is built. |
 | Oracle | The existing falsifiable proof harness and regression substrate under `src/oracle` and `test/oracle`; separate from the future Reference Runtime. |
-| Lab-Production Proof | Production-level evidence earned inside the Lab by a full contained runtime/reference system, with named gates, test oracles, proof ceilings, and residuals. |
+| Lab-Production Proof | Future lab-contained, production-shaped proof earned by the Reference Runtime with named gates, test oracles, proof ceilings, required vendor-live checks, and residuals. |
 | Reference Runtime | The full runtime-in-a-folder system built inside the Lab to earn Lab-Production Proof. |
 | Parent-Repo Migration | Later migration/adaptation of accepted Lab results into parent repo packages, apps, services, deployment topology, or public surfaces. |
 
@@ -86,19 +86,12 @@ professional TypeScript judgment. They are not runtime architecture authority.
 
 ## Refresher Rule
 
-The host/DRI must refresh this workflow and
-`ref-runtime-realization-research-program.md` before opening a new workstream and
+The host/DRI must refresh this workflow, `evidence/current-lab-state.md`, and
+the relevant `phases/<phase>/` dossier before opening a new workstream and
 after context compaction, resume, or long interruption. If the host is fully
 confident the active state is already loaded, the refresh can be skipped, but
 the workstream report should still make the opening packet and current
 authority inputs explicit.
-
-Phase Three override: while the Phase Three runtime-realization program is open,
-the active control objects are
-`phases/phase-three/workstreams/workstream-2026-05-01-phase-three-program-workstream.md` and
-`phases/phase-three/workflow-phase-three-program-dra.md`.
-`ref-runtime-realization-research-program.md` is historical/provenance unless a DRA
-explicitly reopens it as source-mining input.
 
 ## Roles
 
@@ -329,9 +322,9 @@ For `runtime-realization-type-env`, apply this workflow as follows:
 - Evidence ledger: `proof-manifest.json`.
 - Focus marker: `current-lab-state.md`.
 - Program map: the relevant phase dossier under `phases/<phase>/`.
-- Workstream reports: `phases/<phase>/workstreams/workstream-YYYY-MM-DD-phase-<one|two|three>-<slug>.md`.
+- Workstream reports: `phases/<phase>/workstreams/workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md`.
 - Workstream template: `guidance/template-workstream-report.md`.
-- Guardrails: `AGENTS.md`, `RUNBOOK.md`, and `guardrails-design.md`.
+- Guardrails: `AGENTS.md`, `RUNBOOK.md`, `guardrails-design.md`, and `guardrails-lab-plane-topology.md`.
 - Verification: focused Nx target first, then `runtime-realization-type-env:gate`.
 
 Do not promote Lab results into Lab-Production Proof or Parent-Repo Migration

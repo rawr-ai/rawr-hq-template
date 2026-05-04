@@ -12,7 +12,7 @@ theatrical tests, hidden architecture decisions, or false confidence.
 | --- | --- |
 | Runtime Realization Lab | `tools/runtime-realization-type-env`, the self-contained runtime container/lab. |
 | Oracle | The existing falsifiable RAWR-owned proof harness and regression substrate under `src/oracle` and `test/oracle`. Oracle is separate from the future Reference Runtime. |
-| Lab-Production Proof | Production-level evidence earned inside the Lab by a full contained runtime/reference system, with named gates, test oracles, proof ceilings, and residuals. |
+| Lab-Production Proof | Future lab-contained, production-shaped proof earned by the Reference Runtime with named gates, test oracles, proof ceilings, required vendor-live checks, and residuals. |
 | Reference Runtime | The full runtime-in-a-folder system built inside the Lab to earn Lab-Production Proof. |
 | Parent-Repo Migration | Later migration/adaptation of accepted Lab results into parent repo packages, apps, services, deployment topology, or public surfaces. |
 
@@ -99,9 +99,10 @@ Use `workflow-phased-agent-verification.md` for the repeatable team workflow tha
 - `todo` to `xfail`: when a concrete unresolved architecture question has a fixture or test oracle.
 - `xfail` to `proof`: only after the spec decision is accepted and a gate proves the claim.
 - `vendor-proof` to `simulation-proof`: only when a RAWR-owned wrapper or adapter consumes the vendor behavior.
-- `simulation-proof` to Lab-Production Proof: only when the claim names the
-  Lab surface, test oracle, proof ceiling, and remaining residuals. Oracle proof by
-  itself is regression substrate, not the full Lab-Production Proof story.
+- `simulation-proof` to Lab-Production Proof: never by metadata alone. Oracle
+  and simulation evidence remain regression substrate until a Reference Runtime
+  gate plus required vendor-live/product gates prove the lab-contained,
+  production-shaped path.
 - Lab-Production Proof to Parent-Repo Migration: only through an explicit
   Parent-Repo Migration slice that accepts parent repo/package/deployment risk.
 - Removed proof: delete or downgrade the manifest entry in the same change that removes the gate.

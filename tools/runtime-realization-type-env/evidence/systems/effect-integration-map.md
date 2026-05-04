@@ -124,10 +124,10 @@ runtime-realization service/plugin authoring.
 
 | Integration area | Manifest entries | Primary phase/source pointers |
 | --- | --- | --- |
-| Managed runtime substrate | `vendor.effect.runtime-substrate`, `audit.p1.effect-managed-runtime-substrate` | `../vendors/effect.md`, `../../test/vendor-effect/effect-runtime.test.ts`, `../../src/vendor/effect/runtime.ts` |
-| Process-local coordination resources | `vendor.effect.process-local-coordination`, `audit.p1.process-local-coordination-resources` | `../vendors/effect.md`, `../../test/vendor-effect/effect-runtime.test.ts` |
+| Managed runtime substrate | `vendor.effect.runtime-substrate`, `audit.p1.effect-managed-runtime-substrate` | `../vendors/effect.md`, `../../test/vendor/effect-runtime.test.ts`, `../../src/vendor/effect/runtime.ts` |
+| Process-local coordination resources | `vendor.effect.process-local-coordination`, `audit.p1.process-local-coordination-resources` | `../vendors/effect.md`, `../../test/vendor/effect-runtime.test.ts` |
 | Provider plan lowering | `audit.p1.provider-effect-plan-lowering`, `audit.p2.provider-effect-process-spine` | `../../phases/phase-one/workstreams/workstream-2026-04-30-phase-one-provider-effect-plan-bootgraph-provisioning-lowering.md`, `../../phases/phase-two/workstreams/workstream-2026-04-30-phase-two-provider-config-effect-spine.md` |
 | Boundary policy matrix | `audit.p1.effect-boundary-policy-matrix`, `audit.p1.effect-boundary-policy-matrix.residual` | `../../phases/phase-one/workstreams/workstream-2026-04-30-phase-one-boundary-policy-matrix.md` |
 | Safe authoring facade | `accepted.curated-effect-public-surface`, `accepted.effect-only-authoring` | `../vendors/effect.md`, `../../src/sdk/effect.ts`, `../../fixtures/inline-negative/authoring-contracts.ts` |
 | Adapter callback and async bridge lowering | `simulation.adapter-callback-bridge-lowering`, `audit.p2.adapter-effect-callback-lowering`, `audit.p2.async-effect-bridge-lowering` | `runtime-spine-evidence-map.md`, `../../phases/phase-one/workstreams/workstream-2026-04-30-phase-one-real-adapter-callback-async-bridge-lowering.md` |
-| Runtime profile config and redaction | `audit.p2.runtime-profile-config-redaction`, `audit.p2.provider-effect-process-spine` | `../../phases/phase-one/workstreams/workstream-2026-04-30-phase-one-provider-diagnostics-runtime-profile-config-redaction.md`, `../../test/oracle/provider-provisioning.test.ts` |
+| Runtime profile config and redaction | `audit.p2.runtime-profile-config-redaction`, `audit.p2.provider-effect-process-spine` | `../../phases/phase-one/workstreams/workstream-2026-04-30-phase-one-provider-diagnostics-runtime-profile-config-redaction.md`, `../../test/oracle/harness/provider-provisioning.test.ts` |

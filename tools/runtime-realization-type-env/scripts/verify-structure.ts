@@ -83,7 +83,9 @@ const requiredPaths = [
   "tools/runtime-realization-type-env/phases/phase-three/handoffs/ref-2026-05-01-oracle-salvage-to-reference-runtime-report.md",
   "tools/runtime-realization-type-env/phases/phase-three/workstreams/workstream-2026-05-01-phase-three-program-workstream.md",
   "tools/runtime-realization-type-env/phases/phase-three/workstreams/workstream-2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md",
+  "tools/runtime-realization-type-env/phases/phase-three/workstreams/workstream-2026-05-01-post-phase-three-runtime-lab-plane-reorg-plan.md",
   "tools/runtime-realization-type-env/guidance/README.md",
+  "tools/runtime-realization-type-env/guidance/guardrails-lab-plane-topology.md",
   "tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md",
   "tools/runtime-realization-type-env/guidance/template-workstream-report.md",
   "tools/runtime-realization-type-env/evidence/proof-manifest.json",
@@ -94,14 +96,32 @@ const requiredPaths = [
   "tools/runtime-realization-type-env/src/sdk/plugins/async.ts",
   "tools/runtime-realization-type-env/src/spine/artifacts.ts",
   "tools/runtime-realization-type-env/src/spine/simulate.ts",
-  "tools/runtime-realization-type-env/src/oracle/process-runtime.ts",
-  "tools/runtime-realization-type-env/src/oracle/managed-runtime.ts",
-  "tools/runtime-realization-type-env/src/oracle/process-resources.ts",
+  "tools/runtime-realization-type-env/src/adapters/async.ts",
+  "tools/runtime-realization-type-env/src/adapters/delegation.ts",
+  "tools/runtime-realization-type-env/src/adapters/server.ts",
+  "tools/runtime-realization-type-env/src/runtime/bootgraph.ts",
+  "tools/runtime-realization-type-env/src/runtime/boundary-policy.ts",
+  "tools/runtime-realization-type-env/src/runtime/catalog.ts",
+  "tools/runtime-realization-type-env/src/runtime/deployment-handoff.ts",
+  "tools/runtime-realization-type-env/src/runtime/diagnostics.ts",
+  "tools/runtime-realization-type-env/src/runtime/process-runtime.ts",
+  "tools/runtime-realization-type-env/src/runtime/effect-runtime.ts",
+  "tools/runtime-realization-type-env/src/runtime/observation/telemetry-export.ts",
+  "tools/runtime-realization-type-env/src/runtime/observation/migration-control-plane-observation.ts",
+  "tools/runtime-realization-type-env/src/runtime/provider-lowering.ts",
+  "tools/runtime-realization-type-env/src/runtime/provider-plan-internals.ts",
+  "tools/runtime-realization-type-env/src/runtime/runtime-access.ts",
+  "tools/runtime-realization-type-env/src/runtime/service-binding-cache.ts",
+  "tools/runtime-realization-type-env/src/vendor/effect/process-resources.ts",
   "tools/runtime-realization-type-env/src/vendor/effect/runtime.ts",
   "tools/runtime-realization-type-env/src/vendor/boundaries/typebox.ts",
   "tools/runtime-realization-type-env/src/vendor/boundaries/orpc.ts",
   "tools/runtime-realization-type-env/src/vendor/boundaries/inngest.ts",
-  "tools/runtime-realization-type-env/fixtures/positive/work-items-service.ts",
+  "tools/runtime-realization-type-env/scenarios/work-items/work-items-service.ts",
+  "tools/runtime-realization-type-env/scenarios/work-items/app-and-plan-artifacts.ts",
+  "tools/runtime-realization-type-env/scenarios/work-items/async-workflow.ts",
+  "tools/runtime-realization-type-env/scenarios/work-items/resource-provider-profile.ts",
+  "tools/runtime-realization-type-env/scenarios/work-items/server-api-plugin.ts",
   "tools/runtime-realization-type-env/fixtures/inline-negative/authoring-contracts.ts",
   "tools/runtime-realization-type-env/fixtures/inline-negative/vendor-boundaries.ts",
   "tools/runtime-realization-type-env/fixtures/fail/portable-closure.fail.ts",
@@ -109,10 +129,14 @@ const requiredPaths = [
   "tools/runtime-realization-type-env/scripts/assert-negative-types.ts",
   "tools/runtime-realization-type-env/scripts/report-results.ts",
   "tools/runtime-realization-type-env/scripts/verify-structure.ts",
-  "tools/runtime-realization-type-env/test/oracle/process-runtime.test.ts",
-  "tools/runtime-realization-type-env/test/spine-simulation.test.ts",
-  "tools/runtime-realization-type-env/test/vendor-boundaries/boundary-shapes.test.ts",
-  "tools/runtime-realization-type-env/test/vendor-effect/effect-runtime.test.ts",
+  "tools/runtime-realization-type-env/test/oracle/harness/process-runtime.test.ts",
+  "tools/runtime-realization-type-env/test/oracle/harness/provider-provisioning.test.ts",
+  "tools/runtime-realization-type-env/test/oracle/harness/phase-three-integrated-live-passage-rehearsal.test.ts",
+  "tools/runtime-realization-type-env/test/oracle/falsification/migration-control-plane-observation.test.ts",
+  "tools/runtime-realization-type-env/test/conformance/spine-simulation.test.ts",
+  "tools/runtime-realization-type-env/test/conformance/middle-spine-derivation.test.ts",
+  "tools/runtime-realization-type-env/test/vendor/boundary-shapes.test.ts",
+  "tools/runtime-realization-type-env/test/vendor/effect-runtime.test.ts",
   "tools/architecture-inventory/runtime-realization-type-env.json",
 ];
 
@@ -166,6 +190,22 @@ for (const retiredPath of [
   "tools/runtime-realization-type-env/evidence/workflow-runtime-spine-diagnostic-work-plan.md",
   `tools/runtime-realization-type-env/src/${retiredOraclePathSegment}`,
   `tools/runtime-realization-type-env/test/${retiredOraclePathSegment}`,
+  "tools/runtime-realization-type-env/src/oracle/process-runtime.ts",
+  "tools/runtime-realization-type-env/src/oracle/managed-runtime.ts",
+  "tools/runtime-realization-type-env/src/oracle/process-resources.ts",
+  "tools/runtime-realization-type-env/src/oracle/provider-lowering.ts",
+  "tools/runtime-realization-type-env/src/oracle/runtime-access.ts",
+  "tools/runtime-realization-type-env/src/oracle/service-binding-cache.ts",
+  "tools/runtime-realization-type-env/src/oracle/deployment-handoff.ts",
+  "tools/runtime-realization-type-env/src/oracle/catalog.ts",
+  "tools/runtime-realization-type-env/src/oracle/telemetry-export.ts",
+  "tools/runtime-realization-type-env/src/oracle/migration-control-plane-observation.ts",
+  "tools/runtime-realization-type-env/src/oracle/adapters/async.ts",
+  "tools/runtime-realization-type-env/src/oracle/adapters/delegation.ts",
+  "tools/runtime-realization-type-env/src/oracle/adapters/server.ts",
+  "tools/runtime-realization-type-env/fixtures/positive",
+  "tools/runtime-realization-type-env/test/vendor-effect",
+  "tools/runtime-realization-type-env/test/vendor-boundaries",
   `tools/runtime-realization-type-env/phases/phase-three/handoffs/ref-2026-05-01-${retiredOraclePathSegment}-salvage-to-reference-runtime-report.md`,
   `tools/runtime-realization-type-env/phases/phase-two/workstreams/workstream-2026-04-30-${retiredPhaseTwoOverclaimSlug}`,
 ]) {
@@ -194,6 +234,7 @@ const namingFramePaths = [
   "tools/runtime-realization-type-env/evidence/AGENTS.md",
   "tools/runtime-realization-type-env/evidence/README.md",
   "tools/runtime-realization-type-env/guidance/guardrails-design.md",
+  "tools/runtime-realization-type-env/guidance/guardrails-lab-plane-topology.md",
   "tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md",
 ];
 const requiredNamingTerms = [
@@ -346,7 +387,16 @@ assert(
   `guidance files must be README.md or use guardrails-, workflow-, or template- prefixes: ${invalidGuidanceFiles.join(", ")}`,
 );
 
-for (const phaseName of ["phase-one", "phase-two", "phase-three"]) {
+const phaseNames = fs
+  .readdirSync(path.join(repoRoot, "tools/runtime-realization-type-env/phases"), {
+    withFileTypes: true,
+  })
+  .filter((entry) => entry.isDirectory() && /^phase-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(entry.name))
+  .map((entry) => entry.name)
+  .sort();
+assert(phaseNames.length > 0, "phases directory must contain phase-* dossiers");
+
+for (const phaseName of phaseNames) {
   const phaseEntries = fs.readdirSync(
     path.join(repoRoot, "tools/runtime-realization-type-env/phases", phaseName),
     { withFileTypes: true },
@@ -645,13 +695,16 @@ assert(
 const sourceFiles = walk(toolRoot).filter((filePath) => filePath.endsWith(".ts"));
 const forbiddenImportPattern =
   /from\s+["'](?:@rawr\/(?:core|server|cli|web|hq-app|hq-sdk|runtime-context|bootgraph|example-todo|plugin-|agent-config-sync|session-intelligence|chatgpt-corpus)|\.\.\/\.\.\/(?:apps|packages|services|plugins)\/)/;
+const staleRuntimePlaneImportPattern =
+  /from\s+["'][^"']*src\/oracle\/(?:process-runtime|managed-runtime|process-resources|provider-lowering|runtime-access|service-binding-cache|deployment-handoff|catalog|telemetry-export|migration-control-plane-observation|adapters\/(?:async|delegation|server))/;
+const sharedPlaneOracleImportPattern = /from\s+["'][^"']*\/oracle(?:\/|["'])/;
 const rawEffectImportPattern = /from\s+["']effect(?:\/[^"']*)?["']/;
 const rawEffectAllowedPrefixes = [
   "src/sdk/effect.ts",
-  "src/sdk/runtime/provider-plan-internals.ts",
+  "src/runtime/",
   "src/oracle/",
   "src/vendor/effect/",
-  "test/vendor-effect/",
+  "test/vendor/",
 ];
 
 for (const sourceFile of sourceFiles) {
@@ -661,6 +714,22 @@ for (const sourceFile of sourceFiles) {
     !forbiddenImportPattern.test(source),
     `forbidden production import in ${path.relative(repoRoot, sourceFile)}`,
   );
+  assert(
+    !staleRuntimePlaneImportPattern.test(source),
+    `stale Oracle-as-runtime import in ${path.relative(repoRoot, sourceFile)}`,
+  );
+  if (
+    relativeSourceFile.startsWith("src/spine/") ||
+    relativeSourceFile.startsWith("src/runtime/") ||
+    relativeSourceFile.startsWith("src/adapters/") ||
+    relativeSourceFile.startsWith("src/sdk/") ||
+    relativeSourceFile.startsWith("src/vendor/")
+  ) {
+    assert(
+      !sharedPlaneOracleImportPattern.test(source),
+      `shared/source plane must not import Oracle in ${path.relative(repoRoot, sourceFile)}`,
+    );
+  }
   if (rawEffectImportPattern.test(source)) {
     assert(
       rawEffectAllowedPrefixes.some((allowedPath) =>

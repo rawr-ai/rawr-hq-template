@@ -40,8 +40,8 @@
 
 | Topic | Manifest entries | Primary phase/source pointers |
 | --- | --- | --- |
-| Vendor handoff shape | `vendor.boundary.inngest-handoff-shape` | `../../test/vendor-boundaries/boundary-shapes.test.ts` |
-| Phase Two contained async boundary | `audit.p2.async-inngest-function-step-boundary` | `../../phases/phase-two/workstreams/workstream-2026-04-30-phase-two-async-inngest-boundary.md`, `../../test/oracle/inngest-async-boundary.test.ts` |
+| Vendor handoff shape | `vendor.boundary.inngest-handoff-shape` | `../../test/vendor/boundary-shapes.test.ts` |
+| Phase Two contained async boundary | `audit.p2.async-inngest-function-step-boundary` | `../../phases/phase-two/workstreams/workstream-2026-04-30-phase-two-async-inngest-boundary.md`, `../../test/oracle/harness/inngest-async-boundary.test.ts` |
 | Started passage and post-stop failure | `audit.p3.started-process-assembly-stop-finalization-passage` | `../../phases/phase-three/workstreams/workstream-2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md` |
 | Layer disagreement | `audit.p3.layer-disagreement-failure-observation-proof` | `../../phases/phase-three/workstreams/workstream-2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md` |
 | Integrated rehearsal | `audit.p3.integrated-live-passage-rehearsal-closeout` | `../../phases/phase-three/workstreams/workstream-2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md` |

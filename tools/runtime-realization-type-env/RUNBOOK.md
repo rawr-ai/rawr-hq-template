@@ -15,7 +15,7 @@ Parent-Repo Migration planning depends on them.
 | --- | --- |
 | Runtime Realization Lab, or the Lab | `tools/runtime-realization-type-env`, the self-contained runtime container/lab. |
 | Oracle | The existing falsifiable RAWR-owned proof harness and regression substrate under `src/oracle` and `test/oracle`; separate from the future Reference Runtime. |
-| Lab-Production Proof | Production-level evidence earned inside the Lab by a full contained runtime/reference system, with named gates, test oracles, proof ceilings, and residuals. |
+| Lab-Production Proof | Future lab-contained, production-shaped proof earned by the Reference Runtime with named gates, test oracles, proof ceilings, required vendor-live checks, and residuals. |
 | Reference Runtime | The full runtime-in-a-folder system built inside the Lab to earn Lab-Production Proof. |
 | Parent-Repo Migration | Later migration/adaptation of accepted Lab results into parent repo packages, apps, services, deployment topology, or public surfaces. |
 
@@ -49,11 +49,12 @@ When sources conflict, use this order:
 2. This runbook for operating the containment lab.
 3. `AGENTS.md` for local lab boundaries and required reading.
 4. `guidance/guardrails-design.md` for proof categories, violation categories, review categories, and promotion rules.
-5. `evidence/proof-manifest.json` for current evidence entries, gates, fixtures, and pinned spec hash.
-6. `evidence/runtime-spine-verification-diagnostic.md` for the derived red/yellow/green spine status.
-7. `evidence/current-lab-state.md` for the current experiment marker.
-8. `evidence/systems/` and `evidence/vendors/` for subsystem and vendor evidence maps.
-9. Migration plans, audits, and quarantined docs as provenance or directional inputs only.
+5. `guidance/guardrails-lab-plane-topology.md` for Lab source/test/scenario ownership and dependency direction.
+6. `evidence/proof-manifest.json` for current evidence entries, gates, fixtures, and pinned spec hash.
+7. `evidence/runtime-spine-verification-diagnostic.md` for the derived red/yellow/green spine status.
+8. `evidence/current-lab-state.md` for the current experiment marker.
+9. `evidence/systems/` and `evidence/vendors/` for subsystem and vendor evidence maps.
+10. Migration plans, audits, and quarantined docs as provenance or directional inputs only.
 
 The canonical runtime spec remains the conflict-winning architecture source. This lab may expose a spec gap, but it must not become the source of a hidden architecture decision.
 
@@ -72,13 +73,14 @@ Then read, in order:
 1. `tools/runtime-realization-type-env/AGENTS.md`
 2. `tools/runtime-realization-type-env/RUNBOOK.md`
 3. `tools/runtime-realization-type-env/guidance/guardrails-design.md`
-4. `tools/runtime-realization-type-env/evidence/AGENTS.md`
-5. `tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md`
-6. `tools/runtime-realization-type-env/evidence/proof-manifest.json`
-7. `tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md`
-8. `tools/runtime-realization-type-env/evidence/current-lab-state.md`
-9. The relevant phase dossier under `tools/runtime-realization-type-env/phases/`.
-10. The fixtures/tests for the active focus only.
+4. `tools/runtime-realization-type-env/guidance/guardrails-lab-plane-topology.md`
+5. `tools/runtime-realization-type-env/evidence/current-lab-state.md`
+6. `tools/runtime-realization-type-env/evidence/AGENTS.md`
+7. `tools/runtime-realization-type-env/guidance/workflow-phased-agent-verification.md`
+8. `tools/runtime-realization-type-env/evidence/proof-manifest.json`
+9. `tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md`
+10. The relevant phase dossier under `tools/runtime-realization-type-env/phases/`.
+11. The source/test/scenario files for the active focus only.
 
 Use Nx for project and target truth. Use source files for local authority. Use Narsil or other code intelligence as evidence discovery when useful, not as architecture authority.
 
@@ -104,8 +106,10 @@ Use the proof categories exactly as defined in `guidance/guardrails-design.md`.
 
 Every `proof`, `vendor-proof`, and `simulation-proof` entry must name a gate
 that would fail on regression. `vendor-proof` is not runtime proof.
-`simulation-proof` is not Lab-Production Proof by itself and does not authorize
-Parent-Repo Migration unless the claim explicitly earns that ceiling.
+`simulation-proof` is not Lab-Production Proof by itself. Lab-Production Proof
+requires a Reference Runtime gate plus required vendor-live/product gates, and
+it still does not authorize Parent-Repo Migration without a separate accepted
+migration slice.
 
 ## Red/Yellow/Green Spine Map Upkeep
 
@@ -168,7 +172,7 @@ At the end of each meaningful burn-down, persist one completed session report in
 the owning phase dossier:
 
 ```text
-tools/runtime-realization-type-env/phases/<phase>/workstreams/workstream-YYYY-MM-DD-phase-<one|two|three>-<slug>.md
+tools/runtime-realization-type-env/phases/<phase>/workstreams/workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md
 ```
 
 Those reports are informative continuity containers. They should preserve the
@@ -185,7 +189,7 @@ Use this placement map when creating lab documentation:
 | Vendor evidence map | `evidence/vendors/` | `<vendor-or-boundary>.md` |
 | Reusable operator guidance | `guidance/` | `guardrails-*`, `workflow-*`, or `template-*` |
 | Phase DRA/operator anchor | `phases/<phase>/` | `workflow-*` or `ref-*` |
-| Phase workstream report | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<one|two|three>-<slug>.md` |
+| Phase workstream report | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md` |
 | Workstream-produced reference | `phases/<phase>/workstreams/` | `ref-YYYY-MM-DD-<slug>.md` |
 | Phase handoff | `phases/<phase>/handoffs/` | `handoff-YYYY-MM-DD-<slug>.md` |
 | Handoff-attached reference | `phases/<phase>/handoffs/` | `ref-YYYY-MM-DD-<slug>.md` |

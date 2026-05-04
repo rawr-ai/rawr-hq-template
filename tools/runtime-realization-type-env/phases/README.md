@@ -6,8 +6,8 @@ phase is a bounded proof campaign inside the larger contained lab effort.
 Phase dossiers are continuity and coordination surfaces. They explain what was
 framed, run, reviewed, closed, and handed off. Current proof status remains in
 `../evidence/proof-manifest.json`,
-`../evidence/runtime-spine-verification-diagnostic.md`, the source, fixtures,
-tests, and named gates.
+`../evidence/runtime-spine-verification-diagnostic.md`, the source, scenario
+packs, fixtures, tests, and named gates.
 
 ## Program Topology
 
@@ -18,8 +18,8 @@ tests, and named gates.
 | Phase Two | `phase-two/` | Contained spine-composition proof |
 | Phase Three | `phase-three/` | Contained live-runtime-passage proof |
 
-Keep the topology limited to these three phase buckets unless a later explicit
-program decision creates a new phase.
+New phases may be added only by an explicit program decision and should use the
+same `phase-<phase-slug>/` dossier shape.
 
 ## Dossier Map
 
@@ -27,7 +27,7 @@ program decision creates a new phase.
 | --- | --- | --- | --- |
 | Phase overview | `README.md` | `README.md` | Phase navigation |
 | Phase DRA/operator anchor | phase root | `workflow-*` or `ref-*` | Singular normative workflow or reference opened repeatedly by the DRA |
-| Child or program workstream | `workstreams/` | `workstream-YYYY-MM-DD-phase-<one|two|three>-<slug>.md` | Closed/abandoned workstream report |
+| Child or program workstream | `workstreams/` | `workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md` | Closed/abandoned workstream report |
 | Workstream-produced reference | `workstreams/` | `ref-YYYY-MM-DD-<slug>.md` | Concrete reference produced by or attached to workstream execution |
 | Phase handoff | `handoffs/` | `handoff-YYYY-MM-DD-<slug>.md` | Transition/orientation |
 | Handoff-attached reference | `handoffs/` | `ref-YYYY-MM-DD-<slug>.md` | Concrete reference that travels with a handoff |

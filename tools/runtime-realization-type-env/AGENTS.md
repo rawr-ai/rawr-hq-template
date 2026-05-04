@@ -18,7 +18,7 @@ Use this vocabulary consistently:
 | --- | --- | --- |
 | Environment | Runtime Realization Lab, or the Lab | `tools/runtime-realization-type-env`, the self-contained runtime container/lab. |
 | Proof harness | Oracle | The existing falsifiable RAWR-owned proof harness and regression substrate under `src/oracle` and `test/oracle`; separate from the future Reference Runtime. |
-| Lab goal | Lab-Production Proof | Production-level evidence earned inside the Lab by a full contained runtime/reference system, with named gates, test oracles, proof ceilings, and residuals. |
+| Lab goal | Lab-Production Proof | Future lab-contained, production-shaped proof earned by the Reference Runtime with named gates, test oracles, proof ceilings, required vendor-live checks, and residuals. |
 | Runtime artifact | Reference Runtime | The full runtime-in-a-folder system built inside the Lab to earn Lab-Production Proof. |
 | Repo transfer | Parent-Repo Migration | Later migration/adaptation of accepted Lab results into parent repo packages, apps, services, deployment topology, or public surfaces. |
 
@@ -26,19 +26,24 @@ Do not use unqualified production-ready phrasing when the distinction matters.
 Say Lab-Production Proof for the Lab goal and Parent-Repo Migration for moving
 accepted results into the parent repo.
 
-## Structure
+## Plane Routing
 
-- `src/sdk/**`: local pseudo-SDK facade for canonical-looking `@rawr/sdk/*` imports.
-- `src/spine/**`: shared runtime spine artifact and compatibility simulation helpers.
-- `src/oracle/**`: contained Oracle proof runtime path.
-- `src/vendor/**`: narrow vendor probes and adapters for real dependencies.
-- `fixtures/positive/**`: authoring and artifact examples that must typecheck.
-- `fixtures/inline-negative/**`: `@ts-expect-error` misuse checks compiled by the normal typecheck.
-- `fixtures/fail/*.fail.ts`: one-file expected failures checked by `scripts/assert-negative-types.ts`.
-- `fixtures/todo/**`: unresolved design experiments excluded from positive typecheck.
-- `test/vendor-effect/**`: real Effect behavior used by the facade/runtime lanes.
-- `test/vendor-boundaries/**`: vendor boundary shape smoke checks only.
-- `test/oracle/**`: contained RAWR Oracle behavior.
+Open `guidance/guardrails-lab-plane-topology.md` before changing ownership,
+imports, test lanes, or scenario placement. The working map is:
+
+| Plane | Paths | Use | Proof ceiling |
+| --- | --- | --- | --- |
+| Shared SDK/runtime source | `src/sdk/**`, `src/spine/**`, `src/runtime/**`, `src/adapters/**`, `src/vendor/**` | Candidate SDK facade, portable refs/artifacts, runtime substrate, shared adapter contracts, and vendor seams. | Type/shape proof, vendor-proof, or Oracle substrate proof when exercised by gates. |
+| Oracle | `src/oracle/**`, `test/oracle/**` | Falsification harness, controlled hosts, failure observation, and regression substrate. | `simulation-proof`; not Lab-Production Proof by itself. |
+| Reference Runtime | `src/reference-runtime/**`, `test/reference-runtime/**` | Future production-shaped contained runtime-in-a-folder used to earn Lab-Production Proof. | Lab-Production Proof only after honest Reference Runtime gates pass. |
+| Scenario packs | `scenarios/**` | Business capability examples consumed by Oracle, conformance, and future Reference Runtime lanes. | Scenario evidence only; proof strength comes from the consuming test lane. |
+
+Use `fixtures/**` only for test mechanics: inline negative cases, expected
+failures, and fenced TODO experiments. Positive authored business examples
+belong in `scenarios/**`, not a fixture directory.
+
+## Operational Surfaces
+
 - `evidence/**`: produced proof/status authority plus operational system and vendor evidence maps.
 - `guidance/**`: reusable operator guidance, guardrails, workflows, and templates.
 - `phases/**`: phase-owned operator anchors, produced workstream reports, handoffs, handoff references, and archives; informative continuity only.
@@ -70,7 +75,7 @@ only unprefixed filename exception.
 | Reusable operator guidance | `guidance/` | `guardrails-*`, `workflow-*`, or `template-*` | Process/template reference |
 | Phase overview | `phases/<phase>/README.md` | `README.md` | Phase navigation |
 | Phase operator anchor | `phases/<phase>/` | `workflow-*` or `ref-*` | Phase process/reference anchor |
-| Phase workstream report | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<one|two|three>-<slug>.md` | Continuity/report |
+| Phase workstream report | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<phase-slug>-<slug>.md` | Continuity/report |
 | Workstream-produced reference | `phases/<phase>/workstreams/` | `ref-YYYY-MM-DD-<slug>.md` | Reference artifact |
 | Phase handoff | `phases/<phase>/handoffs/` | `handoff-YYYY-MM-DD-<slug>.md` | Orientation/transition |
 | Handoff-attached reference | `phases/<phase>/handoffs/` | `ref-YYYY-MM-DD-<slug>.md` | Reference artifact |
@@ -93,6 +98,7 @@ Before adding or changing tests, fixtures, manifest entries, or evidence docs, r
 - `evidence/AGENTS.md`
 - `evidence/README.md`
 - `guidance/guardrails-design.md`
+- `guidance/guardrails-lab-plane-topology.md`
 - `evidence/current-lab-state.md`
 - `evidence/systems/README.md`
 - the relevant phase dossier under `phases/**`

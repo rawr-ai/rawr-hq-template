@@ -7,12 +7,12 @@ import {
   implementService,
   type ServiceProcedureExecutionContext,
 } from "@rawr/sdk/service";
-import { EmailSenderResource } from "../positive/resource-provider-profile";
+import { EmailSenderResource } from "../../scenarios/work-items/resource-provider-profile";
 import {
   WorkItemsService,
   WorkItemNotFound,
   type WorkItem,
-} from "../positive/work-items-service";
+} from "../../scenarios/work-items/work-items-service";
 
 void (undefined as unknown as EffectRuntimeAccess);
 

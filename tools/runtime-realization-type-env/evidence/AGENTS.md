@@ -14,7 +14,7 @@ reports, handoffs, reusable templates, or reusable workflows.
 | --- | --- |
 | Runtime Realization Lab | `tools/runtime-realization-type-env`, the self-contained runtime container/lab. |
 | Oracle | The existing falsifiable RAWR-owned proof harness and regression substrate under `../src/oracle` and `../test/oracle`; separate from the future Reference Runtime. |
-| Lab-Production Proof | Production-level evidence earned inside the Lab by a full contained runtime/reference system, with named gates, test oracles, proof ceilings, and residuals. |
+| Lab-Production Proof | Future lab-contained, production-shaped proof earned by the Reference Runtime with named gates, test oracles, proof ceilings, required vendor-live checks, and residuals. |
 | Reference Runtime | The full runtime-in-a-folder system built inside the Lab to earn Lab-Production Proof. |
 | Parent-Repo Migration | Later migration/adaptation of accepted Lab results into parent repo packages, apps, services, deployment topology, or public surfaces. |
 

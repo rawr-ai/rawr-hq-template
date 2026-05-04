@@ -1,6 +1,6 @@
 // @expected-error TS2353
 import type { CompiledExecutionPlan } from "@rawr/sdk/spine";
-import { CreateWorkItemRef } from "../positive/app-and-plan-artifacts";
+import { CreateWorkItemRef } from "../../scenarios/work-items/app-and-plan-artifacts";
 
 export const BadPlan = {
   kind: "compiled.execution-plan",

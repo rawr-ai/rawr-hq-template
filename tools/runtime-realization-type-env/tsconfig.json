@@ -16,12 +16,12 @@
       "@rawr/sdk/plugins/async": ["src/sdk/plugins/async.ts"],
       "@rawr/sdk/spine": ["src/spine/artifacts.ts"],
       "@rawr/spec-env/spine/simulate": ["src/spine/simulate.ts"],
-      "@rawr/spec-env/fixtures/*": ["fixtures/positive/*"]
+      "@rawr/spec-env/scenarios/work-items/*": ["scenarios/work-items/*"]
     }
   },
   "include": [
     "src/**/*.ts",
-    "fixtures/positive/**/*.ts",
+    "scenarios/**/*.ts",
     "fixtures/inline-negative/**/*.ts"
   ],
   "exclude": [

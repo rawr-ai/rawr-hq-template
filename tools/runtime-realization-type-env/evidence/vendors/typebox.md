@@ -22,7 +22,7 @@
 - `vendor.boundary.typebox-runtime-schema`
 - `audit.p2.runtime-profile-config-redaction`
 - `src/vendor/boundaries/typebox.ts`
-- `test/vendor-boundaries/boundary-shapes.test.ts`
+- `test/vendor/boundary-shapes.test.ts`
 
 ## Not Proven
 
