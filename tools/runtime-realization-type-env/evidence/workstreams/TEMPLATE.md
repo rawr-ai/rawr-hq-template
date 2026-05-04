@@ -125,6 +125,8 @@ Implementation summary:
 Semantic JSDoc/comment trailing pass:
 
 - `<passed/skipped/failed>`: `<files reviewed>`, `<comments added or why none were warranted>`, `<any repair demand>`
+- Proof boundary: comments are review/migration substrate only; proof promotion
+  still requires an executable oracle and named gate.
 
 Verification:
 

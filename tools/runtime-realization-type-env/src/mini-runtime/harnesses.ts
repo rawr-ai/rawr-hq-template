@@ -107,6 +107,11 @@ function assertAsyncPayload(value: unknown): asserts value is AsyncStepBridgePay
   }
 }
 
+/**
+ * Dispatch keys are execution ids from compiled adapter payloads only.
+ * The harness intentionally does not derive routes, workflow schedules, or
+ * ownership from source descriptors at mount time.
+ */
 function payloadByExecutionId<TPayload extends { readonly ref: { readonly executionId: string } }>(
   payloads: readonly TPayload[],
 ): Map<string, TPayload> {
