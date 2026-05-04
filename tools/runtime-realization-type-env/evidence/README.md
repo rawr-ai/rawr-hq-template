@@ -65,6 +65,9 @@ spine map, source, fixtures, tests, and gates.
 - `handoffs/2026-05-01-post-phase-two-runtime-reframe.md`: current
   post-Phase-Two reframe for designing the next phase without prematurely
   locking its scope.
+- `handoffs/2026-05-01-post-phase-three-live-proof-reframe.md`: current
+  post-Phase-Three correction for designing the next phase around layered live
+  proof instead of another broad micro-lab modeling pass.
 
 Handoffs are orientation, not proof authority and not implementation scripts.
 
