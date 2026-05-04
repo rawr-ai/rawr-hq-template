@@ -4,7 +4,7 @@
 // The contained lab now proves native-shaped server callback payloads that
 // preserve route/ref identity and delegate through ProcessExecutionRuntime.
 // Remaining work is real host integration: Elysia/oRPC callback lifecycle,
-// StartedHarness mounting, boundary policy, and production package topology.
+// boundary policy, and production package topology.
 
 export interface ExpectedAdapterEffectCallbackLowering {
   readonly provenLabInput: "adapter.server-callback-payload";
@@ -12,6 +12,6 @@ export interface ExpectedAdapterEffectCallbackLowering {
   readonly invocationRuntime: "process-execution-runtime";
   readonly rawEffectExecutionInAdapter: "forbidden";
   readonly remainingNativeHosts: readonly ["server", "async", "cli", "web", "agent", "desktop"];
-  readonly remainingHostMounting: "required";
   readonly remainingBoundaryPolicy: "required";
+  readonly remainingProductionHostLifecycle: "required";
 }
