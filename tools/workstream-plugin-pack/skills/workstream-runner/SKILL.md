@@ -33,8 +33,24 @@ program, phase, or runtime-specific language.
 
 ## Default Workflow
 
-1. **Ground the workstream.** Check repo state, active branch/stack, user
-   constraints, and the current authority inputs.
+0. **Before you frame.** Run four mandatory meta-design passes — team design,
+   perspective cycling, system design, information assessment — and capture
+   their output. The passes are non-optional; the skills that implement them
+   are. See `references/before-you-frame.md`.
+
+1. **Ground the workstream.** Check repo state (branch, working tree, recent
+   history, related branches), repo conventions (any `docs/process/*`
+   runbooks, the local stacking/submission tooling, project-specific
+   AGENTS.md or CLAUDE.md, hook configuration, lint/CI conventions,
+   permission boundaries the user has configured), authority inputs
+   (canonical specs, governing docs, prior decisions), and any project-local
+   quarantine or archive directories so they get fenced as stale-input
+   rather than silently consumed.
+
+   The categories are tool-agnostic. Check whether the repo uses a stacking
+   convention, not whether a specific stacking tool is installed; check
+   whether canonical specs exist, not which spec a particular project
+   happens to use. Project-specific runbooks fill in the names.
 2. **Frame the objective.** State the objective, containment boundary,
    non-goals, done condition, authority order, and stop conditions.
 3. **Type the inputs.** Separate opening inputs, authority inputs,
@@ -42,7 +58,9 @@ program, phase, or runtime-specific language.
    inputs before drawing conclusions.
 4. **Create the record.** Copy `assets/minimal-workstream-record.md` for small
    workstreams or `assets/workstream-record.md` for complex workstreams. Do not
-   invent a second schema.
+   invent a second schema. Open `assets/decisions.md` as a sibling artifact for
+   user-decision items, execution-scope choices, and meta-design pass output
+   that produces decisions; decisions do not live inside the record.
 5. **Plan the lanes.** Use host-only execution unless parallel lanes reduce real
    risk. Use `assets/agent-packet.md` and `assets/wave-packet.md` when
    delegation is useful.
@@ -50,7 +68,12 @@ program, phase, or runtime-specific language.
    proof changes, gate results, waivers, deferrals, and closure.
 7. **Review and repair.** Use `workstream-review-loops` for review lane design,
    finding disposition, waivers, and repair loops.
-8. **Close or hand off.** Record final outputs, verification, repo/Graphite
+8. **DRA finalize.** Stage and commit pending edits (decisions register,
+   deferrals, finding records). Update the workstream record header (status,
+   current phase, branch/commit pointer). Populate the Findings index, Outcome
+   Record, Review Result, Final Output, and Next Packet sections from the
+   now-complete child artifacts. Then invoke the closure-readiness stewards.
+9. **Close or hand off.** Record final outputs, verification, repo/Graphite
    state, deferred inventory, review disposition, and a zero-context Next
    Packet.
 
@@ -58,9 +81,11 @@ program, phase, or runtime-specific language.
 
 | Reference | Use when |
 | --- | --- |
+| `references/before-you-frame.md` | You are about to draft the Frame and must complete the four meta-design passes |
 | `references/primitive-boundary.md` | Workstream/program/phase boundaries are at risk |
 | `references/input-and-scratch-discipline.md` | Inputs, scratch, and process feedback need clear authority boundaries |
 | `references/records-and-packets.md` | You need record, Agent Packet, Wave Packet, or Next Packet guidance |
+| `references/coordination-patterns.md` | Multiple lanes share an artifact, or a Phase 0 decision must reach a later phase's worker briefs |
 | `references/steward-agents.md` | You need to decide whether to invoke companion stewards |
 | `references/closure.md` | You are closing, abandoning, or handing off a workstream |
 
@@ -70,6 +95,7 @@ program, phase, or runtime-specific language.
 | --- | --- |
 | `assets/minimal-workstream-record.md` | Small workstream record scaffold |
 | `assets/workstream-record.md` | Full scaffold for complex, multi-lane, review-heavy, or handoff-heavy workstreams |
+| `assets/decisions.md` | Recording user-decision items and execution-scope choices with rationale |
 | `assets/agent-packet.md` | Delegating one bounded lane |
 | `assets/wave-packet.md` | Coordinating multiple lanes inside one phase |
 | `assets/finding-record.md` | Recording review findings and dispositions |
@@ -97,6 +123,8 @@ Before final response or closure:
 - Objective outcome is stated as achieved, partially achieved, or not achieved,
   with residual objective gaps named.
 - The output contract is satisfied or explicitly revised.
+- Every borderline call has explicit rationale recorded in `decisions.md` or in
+  a finding record.
 - Review findings are accepted, rejected, invalidated, waived, or deferred.
 - Gates are recorded with commands, results, and skipped-check rationale.
 - Deferred items have context, owner/future DRA, authority home, and trigger.
