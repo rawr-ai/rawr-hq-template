@@ -26,7 +26,20 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
 
 - Installed packages: `@orpc/contract` and `@orpc/server` `1.13.5`.
 - The vendor boundary probe compiles native `oc.router(...)`, `implement(contract).$context<...>()`, and native `.handler(...)` shapes.
+- The Phase Two server-boundary lane also exercises a real `@orpc/server/fetch`
+  `RPCHandler` with a Fetch `Request`. That proof is contained lab request
+  handling plus RAWR mini-runtime delegation; it is not OpenAPI publication,
+  product API policy, production HTTP serving, or an Elysia mount.
 - `.effect(...)` in this lab means the RAWR runtime-realization authoring terminal, not native oRPC API surface. The lab does not assert a fake oRPC `.effect(...)` negative because oRPC never claimed that API.
+
+## Elysia
+
+- `elysia` is present in the lockfile through other workspace dependency graphs
+  but is not root-resolvable from the runtime-realization lab.
+- Phase Two child workstream 4 therefore does not promote Elysia proof. Any
+  future Elysia claim must install/exercise a real Elysia mount/request
+  lifecycle in a lab-contained way and update this file and the proof manifest
+  with the exact boundary crossed.
 
 ## TypeBox
 

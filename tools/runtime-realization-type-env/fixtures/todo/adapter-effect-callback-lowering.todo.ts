@@ -3,8 +3,10 @@
 //
 // The contained lab now proves native-shaped server callback payloads that
 // preserve route/ref identity and delegate through ProcessExecutionRuntime.
-// Remaining work is real host integration: Elysia/oRPC callback lifecycle,
-// boundary policy, and production package topology.
+// A contained oRPC Fetch request can now enter this path through the mini
+// server harness. Remaining work is real host integration: Elysia mounting,
+// production oRPC lifecycle, native host error mapping, boundary policy, and
+// production package topology.
 
 export interface ExpectedAdapterEffectCallbackLowering {
   readonly provenLabInput: "adapter.server-callback-payload";

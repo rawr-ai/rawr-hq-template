@@ -1,9 +1,11 @@
 // TODO/P2 residual: prove production server and async harness mounting.
 //
 // The contained lab can start mini harnesses from adapter payloads and delegate
-// through ProcessExecutionRuntime. Remaining work is native Elysia/oRPC/Inngest
-// host mounting, StartedHarness production lifecycle, deployment wiring,
-// boundary policy, and durable async behavior.
+// through ProcessExecutionRuntime; the server harness can also be reached
+// through a contained oRPC Fetch request boundary. Remaining work is native
+// Elysia/oRPC/Inngest host mounting, StartedHarness production lifecycle,
+// deployment wiring, boundary policy, native host error mapping, and durable
+// async behavior.
 
 export interface ExpectedProductionHarnessMounting {
   readonly provenLabHarnesses: readonly ["server", "async"];

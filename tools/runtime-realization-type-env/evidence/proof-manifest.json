@@ -4,24 +4,20 @@
     "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "phase-two.provider-config-effect-spine",
-    "focus": "Prove the contained provider/config/secret/Effect spine can provision representative resources into runtime-owned process invocation access without promoting production provider policy.",
+    "id": "phase-two.server-orpc-elysia-boundary",
+    "focus": "Prove a contained oRPC Fetch request boundary can delegate through the server harness into ProcessExecutionRuntime while keeping Elysia and production server mounting fenced.",
     "relatedEntries": [
-      "accepted.provider-profile-closure",
-      "vendor.effect.runtime-substrate",
-      "audit.p1.provider-effect-plan-shape",
-      "audit.p1.provider-effect-plan-lowering",
+      "accepted.effect-only-authoring",
+      "accepted.invocation-bound-clients",
+      "vendor.boundary.orpc-native-shape",
       "audit.p1.effect-boundary-policy-matrix",
       "audit.p1.effect-boundary-policy-matrix.residual",
       "audit.p1.runtime-resource-access",
-      "audit.p2.runtime-profile-config-redaction",
-      "audit.p2.provider-effect-process-spine",
       "audit.p2.server-route-derivation",
       "audit.p2.adapter-effect-callback-lowering",
-      "audit.p2.async-effect-bridge-lowering",
       "audit.p2.production-harness-mounting",
-      "audit.p2.first-resource-provider-cut",
-      "simulation.service-binding-cache-runtime-access",
+      "audit.p2.provider-effect-process-spine",
+      "audit.p2.server-orpc-fetch-boundary",
       "simulation.mini-runtime-registry-invocation"
     ]
   },
@@ -508,7 +504,7 @@
       "id": "audit.p2.server-route-derivation",
       "status": "xfail",
       "source": "M2 core-spine audit P2",
-      "oracle": "Final public route import-safety law, production route module topology, native oRPC/Elysia adapter lowering, OpenAPI publication, and real HTTP request path remain unresolved; the lab proves contained cold route factory artifacts only.",
+      "oracle": "Final public route import-safety law, production route module topology, native Elysia adapter lowering, OpenAPI publication, and production HTTP request path remain unresolved; the lab proves contained cold route factory artifacts and a contained oRPC Fetch request boundary only.",
       "fixtures": [
         "fixtures/todo/server-route-derivation.todo.ts"
       ]
@@ -517,7 +513,7 @@
       "id": "audit.p2.adapter-effect-callback-lowering",
       "status": "xfail",
       "source": "Runtime spec sections 12, 20, 21, and 24",
-      "oracle": "Contained native-shaped callback payload lowering and first mini harness mounting are proven, but production host callbacks, Elysia/oRPC request lifecycle, and final boundary policy remain unresolved.",
+      "oracle": "Contained native-shaped callback payload lowering, first mini harness mounting, and a contained oRPC Fetch request boundary are proven, but production host callbacks, Elysia mounting, native host error mapping, and final boundary policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/adapter-effect-callback-lowering.todo.ts"
       ]
@@ -535,7 +531,7 @@
       "id": "audit.p2.production-harness-mounting",
       "status": "xfail",
       "source": "Runtime spec harness mounting lifecycle",
-      "oracle": "First contained server/async mini harnesses are proven, but production Elysia/oRPC/Inngest mounting, deployment wiring, full StartedHarness lifecycle, other host kinds, durable async semantics, and final boundary policy remain unresolved.",
+      "oracle": "First contained server/async mini harnesses and a contained oRPC Fetch request boundary are proven, but production Elysia/oRPC/Inngest mounting, deployment wiring, full StartedHarness lifecycle, other host kinds, durable async semantics, and final boundary policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/first-server-async-harness-mounting.todo.ts"
       ]
@@ -573,6 +569,22 @@
         "src/mini-runtime/runtime-access.ts",
         "src/mini-runtime/process-runtime.ts",
         "test/mini-runtime/provider-effect-spine-scenario.test.ts"
+      ],
+      "gates": [
+        "typecheck",
+        "mini-runtime"
+      ]
+    },
+    {
+      "id": "audit.p2.server-orpc-fetch-boundary",
+      "status": "simulation-proof",
+      "source": "Phase Two claim ledger rows p2.server.orpc-live-boundary and p2.server.elysia-mount; runtime spec sections 11, 12, 20, 21, 23, and 24",
+      "oracle": "A lab-contained @orpc/server/fetch RPCHandler receives a real Fetch Request, matches the /rpc prefix, assembles invocation context server-side from JSON-shaped request data, delegates only through a server adapter payload and started mini server harness into ProcessExecutionRuntime, preserves route/ref identity across boundary, adapter, harness, and runtime records, rejects unmatched paths before harness invocation, and keeps request/context/resource secrets out of response and observation records. Elysia mounting, production HTTP serving, OpenAPI/product API policy, final route topology/import-safety law, auth/logging semantics, native host error mapping, and production migration readiness remain fenced.",
+      "fixtures": [
+        "src/mini-runtime/adapters/orpc-server.ts",
+        "src/mini-runtime/adapters/server.ts",
+        "src/mini-runtime/harnesses.ts",
+        "test/mini-runtime/server-orpc-boundary.test.ts"
       ],
       "gates": [
         "typecheck",
