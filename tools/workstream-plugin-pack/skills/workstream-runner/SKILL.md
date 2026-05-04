@@ -68,7 +68,12 @@ program, phase, or runtime-specific language.
    proof changes, gate results, waivers, deferrals, and closure.
 7. **Review and repair.** Use `workstream-review-loops` for review lane design,
    finding disposition, waivers, and repair loops.
-8. **Close or hand off.** Record final outputs, verification, repo/Graphite
+8. **DRA finalize.** Stage and commit pending edits (decisions register,
+   deferrals, finding records). Update the workstream record header (status,
+   current phase, branch/commit pointer). Populate the Findings index, Outcome
+   Record, Review Result, Final Output, and Next Packet sections from the
+   now-complete child artifacts. Then invoke the closure-readiness stewards.
+9. **Close or hand off.** Record final outputs, verification, repo/Graphite
    state, deferred inventory, review disposition, and a zero-context Next
    Packet.
 

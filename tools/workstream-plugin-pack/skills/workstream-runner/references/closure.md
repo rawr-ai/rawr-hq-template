@@ -13,6 +13,13 @@ Closure needs:
 - repo and Graphite state when applicable;
 - a zero-context Next Packet.
 
+The closure-readiness stewards audit what the DRA has finalized; they do not
+substitute for finalization. Before invoking them, complete Step 8 (DRA
+finalize) in the Default Workflow: stage and commit pending edits, update the
+record header, and populate Findings, Outcome, Review Result, Final Output,
+and Next Packet from the now-complete child artifacts. A steward run against
+an unfinalized workstream returns warns the DRA could have prevented.
+
 Planning-only workstreams can close with a design lock, implementation packet,
 accepted plan, and first commands instead of code changes.
 
