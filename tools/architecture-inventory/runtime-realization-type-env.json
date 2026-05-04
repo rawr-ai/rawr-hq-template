@@ -1,0 +1,21 @@
+{
+  "projects": {
+    "runtime-realization-type-env": {
+      "config": "tools/runtime-realization-type-env/project.json",
+      "tags": [
+        "type:tool",
+        "migration-slice:runtime-realization",
+        "spec-conformance"
+      ],
+      "targets": [
+        "sync",
+        "structural",
+        "report",
+        "typecheck",
+        "negative",
+        "simulate",
+        "gate"
+      ]
+    }
+  }
+}
