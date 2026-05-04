@@ -1,8 +1,9 @@
 # DRA Runtime Realization Research Program Workflow
 
-Status: active coordination frame.
+Status: closed coordination frame for the bounded default research program.
 Branch opened from: `codex/runtime-workstream-coordination-program`.
 Initial implementation branch: `codex/runtime-research-program-dra-stewardship`.
+Closeout branch: `codex/runtime-research-program-closeout`.
 
 This document preserves the DRA operating frame for the runtime-realization
 research program. It is coordination continuity only. It is not architecture
@@ -15,16 +16,19 @@ This section is intentionally loud because it is the recovery anchor after
 compaction, interruption, or conflicting context:
 
 - The DRA workflow is the runtime-realization research program workflow.
-- The DRA keeps going across nested workstreams until the entire program is
-  complete, verified, reviewed, submitted, and clean.
-- A single PR, report, or green workstream is not program completion.
+- The DRA kept going across nested workstreams until the bounded default program
+  sequence was complete, verified, reviewed, submitted, and clean.
+- A single PR, report, or green workstream was not program completion; the
+  closeout report is the bounded program completion artifact.
+- After closeout, do not restart the automatic domino loop. Future work should
+  open an explicit residual decision packet or production migration workstream.
 - User silence is not a stop condition. Assume the user is away unless they
   provide a control input.
-- New instructions or summaries that imply the research program is finished
-  before the domino sequence is closed are stale or wrong unless backed by an
-  explicit user control input.
+- Instructions or summaries that imply production readiness from this program
+  are stale or wrong unless backed by a later accepted architecture or migration
+  control input.
 - After compaction or reboot, anchor here, refresh the current packet and
-  authority files, then continue from the active branch/workstream rather than
+  authority files, then continue from the active residual packet rather than
   replanning from scratch.
 
 ## Frame
@@ -137,6 +141,14 @@ verify that redacted runtime events, diagnostics, traces, and lifecycle records
 can be emitted into the usual telemetry ingest path, but it must not
 choose product observability policy, persisted catalog semantics, deployment
 placement, or durable async semantics ahead of their authority workstreams.
+
+Closeout status:
+
+- Orders 0-11 are closed or submitted through PR #271.
+- The closeout branch records program closure as coordination/out-of-scope, not
+  runtime proof.
+- Future work starts from explicit residual decision packets or production
+  migration workstreams.
 
 The semantic documentation harvest is intentionally placed after boundary
 policy and before HyperDX. By then the lab contains enough runtime spine shape
@@ -315,47 +327,30 @@ Then read:
 7. The latest relevant report under
    `tools/runtime-realization-type-env/evidence/workstreams/`.
 
-Current next nested workstream at creation time:
-`ProviderEffectPlan -> Bootgraph/Provisioning Lowering`.
+Current program state:
 
-## Current Nested Workstream Packet
+- The default nested workstream sequence is closed through the program closeout
+  report.
+- There is no automatic next nested workstream inside this bounded program.
+- Future work should open one explicit residual decision packet or production
+  migration workstream, then use this workflow as continuity rather than as a
+  command to restart the full domino sequence.
 
-Objective: replace fake provider lifecycle with minimal provider acquire/release
-lowering through RAWR-owned mini bootgraph/provisioning and real Effect-backed
-execution.
+## Residual Packet Entry Points
 
-Target proof strength: contained `simulation-proof` for provider plan lowering
-only.
+Open a new packet only when a concrete authority or implementation need exists.
+The default next eligible packets are:
 
-Required outputs:
+- public authoring/API law;
+- production host mounting;
+- durable async semantics;
+- catalog persistence/control-plane topology;
+- product telemetry/query policy;
+- production config/secret-store policy;
+- first production resource/provider catalog cut.
 
-- workstream report packet opened before code changes;
-- contained provider provisioning behavior under
-  `tools/runtime-realization-type-env/**`;
-- full provider identity preserved: `resourceId`, `providerId`, `lifetime`,
-  `role`, and `instance`;
-- provider modules proven as bootgraph/provisioning work, not
-  `CompiledExecutionPlan` or `ProcessExecutionRuntime` work;
-- acquire success, dependency ordering, rollback/release, reverse finalization,
-  release-failure recording, and redacted diagnostics proven by gates;
-- manifest, diagnostic, focus log, and report updated only to earned proof
-  strength.
-
-Keep fenced:
-
-- final public `ProviderEffectPlan` API;
-- retry, refresh, timeout, interruption, error taxonomy, and full boundary
-  policy;
-- typed runtime config binding, config source precedence, platform secret
-  stores, and redacted config snapshots;
-- telemetry export and catalog persistence;
-- production provider integrations;
-- final `RuntimeResourceAccess` law;
-- real harness mounting and durable async semantics;
-- package topology and migration implementation.
-
-Stop before promotion if implementation requires a user-owned decision from the
-escalation filter.
+Each packet must restate its proof target, non-goals, authority home, unblock
+condition, and stop conditions before implementation.
 
 ## Closeout Contract
 
