@@ -9,6 +9,16 @@ This minimal record preserves state and handoff context for the bounded workstre
 
 Sizing: minimal record per the very rubric introduced by Recommendation #6 (single execution phase, ≤ 8 child artifacts, single-worker serial — no full record needed). Decisions and findings live in sibling files; this record is the spine.
 
+## Workstream State
+
+Phase: 0 -> 1 (next).
+
+Selected skills: `habitat:workstream-runner`, `habitat:workstream-review-loops`, `cognition:team-design`, `cognition:perspective`, `cognition:system-design`, `cognition:information-design`.
+
+Selected agents: `habitat:workstream-opening-steward` (Phase 0, complete), `habitat:workstream-closure-steward` (Phase 2). Skipped: `habitat:workstream-proof-ledger-auditor` per decisions D-3.
+
+Selected hooks: none.
+
 ## Frame
 
 Objective: land the six recommendations from the brief in-place against the workstream-runner skill, voice-matched and voice-reviewed, producing the canonical workstream artifacts (record + decisions.md + findings/) and a PR ready for user review.
@@ -28,6 +38,14 @@ Authority inputs:
 - `docs/projects/workstream-runner-skill-improvements/README.md` — handoff brief, full authority over scope.
 - `tools/workstream-plugin-pack/skills/workstream-runner/SKILL.md` and existing references — authority over voice/conventions for new content.
 - `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/{decisions.md,findings/wave-1-packet.md,findings/lane-1-1-patch.md}` on branch `align-arch-spec-with-runtime-realization` — pattern evidence only, not authority over voice.
+
+Authority order on conflict: brief (`README.md`) > existing skill files (voice/conventions in `SKILL.md` and current references) > pattern-evidence references on `align-arch-spec-with-runtime-realization`. Conflicts resolved by editing the brief first per brief §7, not by reinterpreting the workstream.
+
+Stale / excluded inputs (read-only fenced):
+
+- The cross-branch pattern-evidence references on `align-arch-spec-with-runtime-realization` are pattern evidence only, not authority over voice.
+- The deployed plugin copy at `~/.claude/plugins/local/plugins/habitat/` is out-of-scope per Non-goals; sync question dispositioned to Next Packet per decisions D-5.
+- Prior session transcript that produced the brief is non-authority; the brief itself supersedes it per brief §7.
 
 Non-goals:
 

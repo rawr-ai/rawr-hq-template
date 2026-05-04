@@ -19,7 +19,7 @@ Concept: roles, count, model tier, coordination pattern, failure mode per role. 
 Output:
 
 - **DRA:** 1 (this session). Owns synthesis, scope, canonicality, repo state, finding disposition, closure.
-- **Worker:** 1, single-thread serial. Sees Decision D-1 below. Failure mode: voice drift; mitigated by per-lane self-check + Phase 2 voice review lane.
+- **Worker:** 1, single-thread serial, heavyweight model tier (voice-match-sensitive content; the worker's prose is the rec output, so model quality at the prose layer is load-bearing). Sees Decision D-1 below. Failure mode: voice drift; mitigated by per-lane self-check + Phase 2 voice review lane.
 - **Reviewers:** 2 — `skill-authoring-quality` (custom, not registered as steward) + `habitat:workstream-closure-steward` (registered). Failure mode: coverage theater on no-evidence claims; mitigated by Decision D-3 (skip proof-ledger auditor).
 - **Stewards:** `habitat:workstream-opening-steward` (Phase 0), `habitat:workstream-closure-steward` (Phase 2). Both read-only.
 

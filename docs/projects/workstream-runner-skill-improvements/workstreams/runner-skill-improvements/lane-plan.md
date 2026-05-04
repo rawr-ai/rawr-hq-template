@@ -6,6 +6,8 @@ This file enumerates the six Phase-1 lanes, their inputs, allowed edit surfaces,
 
 Three phases: Phase 0 (Frame, this commit), Phase 1 (Execute, six lanes), Phase 2 (Review + DRA Finalize + Close).
 
+No wave structure: Phase 1 is single-worker serial across six sequenced lanes (per Decision D-1), not a parallel wave.
+
 ## Lanes
 
 | Lane | Rec | Files (allowed edit surface) | Depends on |
@@ -71,12 +73,13 @@ Worker writes one paragraph in `findings/lane-LX-finding.md` per lane confirming
 - Rec scope honored (no scope creep into adjacent recs).
 - Cross-references to other skill files use the `references/...` or `assets/...` path form already established.
 - For Rec #1: brittleness-guard wording matches brief §3.1 verbatim.
+- For Rec #3 (L4): Default Workflow numbering integrity. After insertion, `SKILL.md` Default Workflow steps read 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 contiguously; no orphan step references in `references/closure.md`, `references/before-you-frame.md`, or any other reference. Run `grep -nE "Step [0-9]+" tools/workstream-plugin-pack/skills/workstream-runner/{SKILL.md,references/*.md}` and confirm cross-references match the new numbering.
 
 ## Phase-2 review lanes
 
 Composed lanes (per `workstream-review-loops` Lane Menu, smallest covering set):
 
-1. **`skill-authoring-quality` (custom).** Concern: voice consistency, conciseness, imperative phrasing, opinionated-where-earned tone, tool-agnostic phrasing. Evidence base: existing `SKILL.md` + `references/primitive-boundary.md` + `references/input-and-scratch-discipline.md` read first; then grade each rec's new content. Forbidden scope: subject correctness of recommendations, schema changes. Required output per rec: pass / warn / fail + specific quotes + suggested rephrase. Spawn via general-purpose Agent with tightly-scoped prompt. Output to `findings/composed-voice-review.md`.
+1. **`skill-authoring-quality` (custom).** Concern: voice consistency, conciseness, imperative phrasing, opinionated-where-earned tone, tool-agnostic phrasing. Evidence base: existing `SKILL.md` + `references/primitive-boundary.md` + `references/input-and-scratch-discipline.md` read first; then grade each rec's new content. Forbidden scope: subject correctness of recommendations, schema changes. Required output per rec: pass / warn / fail + specific quotes + suggested rephrase. Required additional check for Rec #1: brittleness-guard wording in `references/before-you-frame.md` matches brief §3.1 verbatim (strict-equality check; `grep -F` of the load-bearing sentence "the four passes are still mandatory"). Spawn via general-purpose Agent with tightly-scoped prompt. Output to `findings/composed-voice-review.md`.
 2. **`closure-readiness`** via `habitat:workstream-closure-steward`. Output to `findings/composed-closure-steward.md`.
 
 Skipped: `workstream-proof-ledger-auditor` (Decision D-3).
