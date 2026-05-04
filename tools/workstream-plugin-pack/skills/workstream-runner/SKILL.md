@@ -33,6 +33,11 @@ program, phase, or runtime-specific language.
 
 ## Default Workflow
 
+0. **Before you frame.** Run four mandatory meta-design passes — team design,
+   perspective cycling, system design, information assessment — and capture
+   their output. The passes are non-optional; the skills that implement them
+   are. See `references/before-you-frame.md`.
+
 1. **Ground the workstream.** Check repo state (branch, working tree, recent
    history, related branches), repo conventions (any `docs/process/*`
    runbooks, the local stacking/submission tooling, project-specific
@@ -69,6 +74,7 @@ program, phase, or runtime-specific language.
 
 | Reference | Use when |
 | --- | --- |
+| `references/before-you-frame.md` | You are about to draft the Frame and must complete the four meta-design passes |
 | `references/primitive-boundary.md` | Workstream/program/phase boundaries are at risk |
 | `references/input-and-scratch-discipline.md` | Inputs, scratch, and process feedback need clear authority boundaries |
 | `references/records-and-packets.md` | You need record, Agent Packet, Wave Packet, or Next Packet guidance |
