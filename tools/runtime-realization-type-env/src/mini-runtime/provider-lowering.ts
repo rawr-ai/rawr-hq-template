@@ -22,6 +22,12 @@ import {
   type RuntimeRecordAttributes,
   type RuntimeRecordValue,
 } from "./catalog";
+import {
+  createRuntimeBoundaryPolicyRecord,
+  runtimeBoundaryPolicyRecordAttributes,
+  type RuntimeBoundaryPolicy,
+  type RuntimeBoundaryPolicyRecord,
+} from "./boundary-policy";
 
 export interface ProviderBootResourceKey {
   readonly resourceId: string;
@@ -92,6 +98,15 @@ export interface ProviderProvisioningModulesInput {
   readonly processId: string;
   readonly effectRuntime?: EffectRuntimeAccess;
   readonly trace?: ProviderProvisioningTrace;
+  /**
+   * Record-only policy hook scoped to provider acquire/release effects. It marks
+   * the boundary in the proof trace without changing provider scheduling,
+   * retry, timeout, or release-handle ownership.
+   */
+  readonly boundaryPolicy?: (input: {
+    readonly phase: "acquire" | "release";
+    readonly key: ProviderBootResourceKey;
+  }) => RuntimeBoundaryPolicy | undefined;
 }
 
 function stableJson(value: unknown): string {
@@ -347,6 +362,37 @@ function pushDiagnostic(
   );
 }
 
+function boundaryPolicyRecordAttributes(
+  record: RuntimeBoundaryPolicyRecord,
+): RuntimeRecordAttributes {
+  return runtimeBoundaryPolicyRecordAttributes(record);
+}
+
+/**
+ * Emits provider acquire/release policy records through the same redacted event
+ * shape as process execution. Record scope is provider identity plus resource
+ * identity; provisioned values and release callbacks stay out of trace data.
+ */
+function pushBoundaryPolicyRecord(
+  trace: ProviderProvisioningTrace | undefined,
+  input: {
+    readonly policy: RuntimeBoundaryPolicy | undefined;
+    readonly phase: RuntimeBoundaryPolicyRecord["phase"];
+    readonly exit?: Exit.Exit<unknown, unknown>;
+    readonly attributes?: Record<string, unknown>;
+  },
+): void {
+  if (!input.policy) return;
+
+  const record = createRuntimeBoundaryPolicyRecord({
+    policy: input.policy,
+    phase: input.phase,
+    exit: input.exit,
+    attributes: input.attributes,
+  });
+  pushEvent(trace, record.phase, boundaryPolicyRecordAttributes(record));
+}
+
 /**
  * Keeps provider failure records diagnostic-safe in the lab. Final Exit/Cause
  * mapping and public error payload policy belong to the boundary matrix.
@@ -525,7 +571,25 @@ export function createProviderProvisioningModules(
           );
         }
 
+        const acquirePolicy = input.boundaryPolicy?.({ phase: "acquire", key });
+        pushBoundaryPolicyRecord(input.trace, {
+          policy: acquirePolicy,
+          phase: "boundary.policy.enter",
+          attributes: {
+            providerId: key.providerId,
+            resourceId: key.resourceId,
+          },
+        });
         const exit = await effectRuntime.runPromiseExit(internals.acquire());
+        pushBoundaryPolicyRecord(input.trace, {
+          policy: acquirePolicy,
+          phase: "boundary.policy.exit",
+          exit,
+          attributes: {
+            providerId: key.providerId,
+            resourceId: key.resourceId,
+          },
+        });
         if (Exit.isFailure(exit)) {
           pushEvent(input.trace, "provider.acquire.failure", {
             providerId: key.providerId,
@@ -552,11 +616,31 @@ export function createProviderProvisioningModules(
       async finalize(started) {
         if (!started.release) return;
 
+        // Release policy is sampled separately so acquire and release remain
+        // distinct matrix cells instead of a single generic provider boundary.
+        const releasePolicy = input.boundaryPolicy?.({ phase: "release", key });
         pushEvent(input.trace, "provider.release.start", {
           providerId: key.providerId,
           resourceId: key.resourceId,
         });
+        pushBoundaryPolicyRecord(input.trace, {
+          policy: releasePolicy,
+          phase: "boundary.policy.enter",
+          attributes: {
+            providerId: key.providerId,
+            resourceId: key.resourceId,
+          },
+        });
         const exit = await effectRuntime.runPromiseExit(started.release(started.value));
+        pushBoundaryPolicyRecord(input.trace, {
+          policy: releasePolicy,
+          phase: "boundary.policy.exit",
+          exit,
+          attributes: {
+            providerId: key.providerId,
+            resourceId: key.resourceId,
+          },
+        });
         if (Exit.isFailure(exit)) {
           pushEvent(input.trace, "provider.release.failure", {
             providerId: key.providerId,
