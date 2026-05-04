@@ -1,6 +1,6 @@
 # Decisions — Runtime-Architecture Alignment Workstream
 
-Status: Phase 0 in progress. Five decisions locked by DRA per user posture "bake all defaults; escalate only OpenShell." Decision #2 awaits user gate.
+Status: Phase 0 complete (2026-05-04). Five DRA-default decisions locked + Decision #2 (OpenShell) resolved at user gate as Option B + four workstream-level execution-scope decisions locked. Phase 1 unblocked.
 
 This document is the canonical record of every user-decision item from §5 of `runtime-architecture-alignment-plan.md` plus workstream-level execution-scope choices not surfaced in §5 but required to begin Phase 1.
 
@@ -35,11 +35,19 @@ For each decision, the entry records: the question, the options considered (verb
 - **B — Declare third-party with vendor integration contract:** parallels treatment of Inngest/oRPC/Effect/Elysia/OCLIF/Bun; requires a third-party-vendor governance contract that doesn't exist yet; requires identifying or building the third-party OpenShell vendor.
 - **C — Formally defer to a forthcoming OpenShell companion spec (plan recommended, but borderline):** honors the runtime-spec L4637 reserved-detail-boundaries pattern; lets §10.14 carry an explicit placeholder row noting reserved-detail-boundary status. Stronger con: OpenShell is the named substrate beneath the agent role (one of six canonical RAWR roles); deferring its vendor status is more load-bearing than deferring "telemetry sink choice" or "RuntimeCatalog storage backend."
 
-**Chosen:** **PENDING USER GATE.** This decision is escalated per the workstream design's user-gate posture. The plan flags this as borderline ("genuinely close — a reader who weighs 'no role ships with a placeholder substrate' more heavily than 'respect the reserved-detail-boundary pattern' should prefer Option A").
+**Chosen:** **Option B (third-party with vendor integration contract).**
 
-**Provisional default if no answer:** Option C (defer formally) — matches plan recommendation and the M1 archive's existing "reserved boundary with locked integration hooks" phrasing in both arch-spec L1398–L1399 and runtime-spec L4322. But the workstream will not advance to Phase 1 without explicit user resolution.
+**Rationale:** user resolution at Phase 0 user gate (2026-05-04). User selected Option B over the plan's Option C recommendation. Treating OpenShell as a third-party vendor parallels the existing platform treatment of Inngest, oRPC, Effect, Elysia, OCLIF, and Bun — all named as third-party vendors with explicit integration contracts at §13.x — and avoids the load-bearing risk the plan flagged for Option C ("ships an integration document with a structurally undefined substrate beneath one of its six canonical roles"). The cost — authoring a third-party vendor governance contract that doesn't exist yet — is absorbed by Phase 1 Lane 1.3 with an extended §13.5 contract paragraph, and the "identify or build the third-party OpenShell vendor" follow-up becomes a deferred-inventory entry at closure.
 
-**Downstream effect:** Option C → §10.14 registry has 12 rows (eleven boundaries plus an OpenShell placeholder row marked `reserved-detail-boundary; locks no later than the first implementation slice that triggers its need`); §12 (OpenShell posture) gains a cross-reference to that placeholder. Option A → registry stays at 11 rows but a new arch-spec sub-section is added documenting RAWR-internal OpenShell scope. Option B → registry stays at 11 rows but the third-party vendor integration contract is added to §13.5 (agent harness).
+**Downstream effect:**
+- §10.14 registry stays at **11 rows** (no placeholder row added).
+- Lane 1.3 (Rec #3, §10.12 + §13.x) extends its §13.5 paragraph to:
+  - name OpenShell as a third-party vendor (parallel to Inngest at §13.2);
+  - add a third-party-vendor integration contract paragraph naming input boundary type (`MountedSurfaceRuntimeRecord` for agent harness), output type (`StartedHarness`), what RAWR owns vs what the OpenShell vendor owns (governance model + agent-role substrate + policy envelope), and a cross-reference to runtime-spec §21.5;
+  - explicitly call out that the OpenShell vendor identity (which third-party implementation) is reserved-detail-boundary status, locks at first implementation slice — but the **vendor-contract shape** is now locked at this alignment release.
+- Existing §12 (OpenShell posture, arch-spec L2022–L2046) gains a cross-reference to the new §13.5 vendor contract paragraph.
+- Existing arch-spec L1398–L1399 + runtime-spec L4322 "reserved boundary with locked integration hooks" phrasing is preserved (the boundary remains reserved at the role level; what changes is that the *vendor governance contract* now exists at §13.5).
+- Closure deferred-inventory: "Identify or build the third-party OpenShell vendor; audit §13.5 vendor contract against the chosen vendor when an implementation slice triggers."
 
 ---
 
@@ -159,7 +167,7 @@ These are not in §5 of the alignment plan but are required to lock Phase 0 desi
 | # | Topic | Chosen | Status |
 |---|---|---|---|
 | 1 | Registry placement | A (§10.14) | Locked |
-| 2 | OpenShell vendor status | PENDING | User gate active |
+| 2 | OpenShell vendor status | B (third-party with vendor contract) | Locked (user) |
 | 3 | Inngest mode default | B (no default) | Locked |
 | 4 | Harness type subset | A (full 7) | Locked |
 | 5 | `RuntimeDiagnosticContributor` row | B (omit) | Locked |
