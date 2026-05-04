@@ -435,17 +435,18 @@ future compaction recovery. I do not expand this workflow into a session log.
 Update this block only at Level Zero boundaries or after compaction recovery.
 
 ```text
-Current level: Level 2 boundary after child workstream 4 closeout; Phase Two program is open.
-Current branch at latest checkpoint: codex/runtime-phase-two-server-orpc-elysia-boundary.
-Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-server-orpc-elysia-boundary.md.
+Current level: Level 2 boundary after child workstream 5 closeout; Phase Two program is open.
+Current branch at latest checkpoint: codex/runtime-phase-two-async-inngest-boundary.
+Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-async-inngest-boundary.md.
 Prelaunch cleanup report: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-prelaunch-workspace-preparation.md.
 Scenario and claim ledger: tools/runtime-realization-type-env/evidence/phase-two-production-critical-claim-ledger.md.
 Provider/config/Effect proof: tools/runtime-realization-type-env/test/mini-runtime/provider-effect-spine-scenario.test.ts and manifest entry `audit.p2.provider-effect-process-spine`.
 Server/oRPC proof: tools/runtime-realization-type-env/test/mini-runtime/server-orpc-boundary.test.ts and manifest entry `audit.p2.server-orpc-fetch-boundary`.
-Next required action after this checkpoint: open child workstream 5, Async/Inngest Live Boundary, through the full Program-Wide Loop.
-Next required gates before child workstream 5: repo/Graphite clean, Nx project truth, manifest spec hash check, child 4 next packet consumed.
-Stop condition currently active: keep final async membership syntax, dispatcher public DX, durable Inngest semantics, production worker/serve topology, and product async policy fenced unless the async workstream exercises and labels a real contained Inngest-facing boundary honestly.
-Focus-log/manifest note: they mark `phase-two.server-orpc-elysia-boundary`; child workstream 5 owns the next currentExperiment update when it opens.
+Async/Inngest proof: tools/runtime-realization-type-env/test/mini-runtime/inngest-async-boundary.test.ts and manifest entry `audit.p2.async-inngest-function-step-boundary`.
+Next required action after this checkpoint: open child workstream 6, Telemetry, Logging, HyperDX, Catalog Observation, through the full Program-Wide Loop.
+Next required gates before child workstream 6: repo/Graphite clean, Nx project truth, manifest spec hash check, child 5 next packet consumed.
+Stop condition currently active: keep product observability/query/dashboard/retention/alerting policy, production OpenTelemetry bootstrap, RuntimeCatalog persistence, deployment/control-plane topology, native host telemetry/error mapping, durable async run history, platform secret-store precedence, and arbitrary free-form diagnostic DLP fenced unless the telemetry/catalog workstream exercises and labels a real contained observation boundary honestly.
+Focus-log/manifest note: they mark `phase-two.async-inngest-boundary`; child workstream 6 owns the next currentExperiment update when it opens.
 ```
 
 ## Verification For This Document

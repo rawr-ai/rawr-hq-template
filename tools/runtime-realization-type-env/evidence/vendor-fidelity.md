@@ -51,6 +51,9 @@ This lab uses canonical-looking imports to test the RAWR authoring spine. Those 
 
 - Installed package: `inngest` `3.51.0`.
 - The boundary probe constructs an `Inngest` client, a `createFunction(...)` step callback, and the `inngest/bun` `serve({ client, functions })` handoff shape.
+- Phase Two additionally exercises a contained Inngest-facing boundary through
+  a real `inngest/bun` Fetch handler, absolute function-id routing, and
+  `step.run(...)` before delegating to the RAWR mini async harness.
 - The lab does not claim durable scheduling, retries, idempotency, or production Inngest host semantics.
 
 ## Semantica
