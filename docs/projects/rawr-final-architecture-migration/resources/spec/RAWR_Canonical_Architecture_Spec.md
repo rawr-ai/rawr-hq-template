@@ -15,8 +15,8 @@ It fixes:
 - the service-boundary and runtime-resource ownership model;
 - the public SDK posture;
 - the app composition and entrypoint model;
-- the runtime realization lifecycle;
-- the process-local runtime substrate;
+- the canonical lifecycle phase vocabulary and integration-boundary handoffs for runtime realization (definition → selection → derivation → compilation → provisioning → mounting → observation); phase mechanics, sub-sequencing, artifact shapes, and substrate internals are defined in the canonical runtime realization specification (RAWR_Effect_Runtime_Realization_System_Canonical_Spec);
+- the canonical name and ownership split of the process-local runtime substrate (RAWR plans identity, order, dependency, lifetime, and boundary policy; Effect executes scoped acquisition, release, runtime ownership, and process-local coordination); substrate internals, named coordination resources, and kernel mechanics are defined in the canonical runtime realization specification;
 - the relationship between the `agent` role and the `async` role;
 - the operational mapping on service-centric platforms;
 - the default topology and growth model;
@@ -475,6 +475,10 @@ entrypoint
 ```
 
 Bootgraph, provisioning, process runtime, adapters, harnesses, and diagnostics bridge the semantic shell to running software. They are not additional top-level semantic layers.
+
+### 4.3a Names-versus-mechanics carve-out
+
+The canonical architecture specification owns the durable integration vocabulary for runtime realization: the lifecycle phase names, the canonical RAWR-vs-Effect control split, the role and surface taxonomy, and the producer/consumer handoff contract at each phase boundary. It does not own the mechanics within each phase — phase implementation, sub-sequencing, artifact type shapes, named substrate primitives, and kernel internals are owned by the canonical runtime realization specification (`RAWR_Effect_Runtime_Realization_System_Canonical_Spec`). When a companion subsystem specification needs to understand what a lifecycle phase does, the arch-spec provides the boundary vocabulary; the runtime spec provides the contract. A change to mechanics within a phase does not require updating the arch-spec; a change to phase names, their order, or their integration handoffs requires updating both specifications in concert.
 
 ### 4.4 Service boundary first
 
