@@ -16,6 +16,12 @@ import type {
 import type { EffectRuntimeAccess } from "./managed-runtime";
 import { runRawrEffectExit } from "./managed-runtime";
 import type { MiniBootgraphModule } from "./bootgraph";
+import {
+  redactRuntimeRecordAttributes,
+  redactRuntimeRecordValue,
+  type RuntimeRecordAttributes,
+  type RuntimeRecordValue,
+} from "./catalog";
 
 export interface ProviderBootResourceKey {
   readonly resourceId: string;
@@ -27,11 +33,12 @@ export interface ProviderBootResourceKey {
 
 export interface ProviderProvisioningEvent {
   readonly name: string;
-  readonly attributes?: Record<string, string | number | boolean>;
+  readonly attributes?: RuntimeRecordAttributes;
 }
 
 export interface ProviderProvisioningDiagnostic {
   readonly message: string;
+  readonly attributes?: RuntimeRecordAttributes;
 }
 
 export interface ProviderProvisioningTrace {
@@ -55,6 +62,27 @@ export interface ProviderProvisionedValue<TValue = unknown> {
 export type ProviderConfigMap =
   | ReadonlyMap<string, unknown>
   | { readonly [key: string]: unknown };
+
+interface ProviderConfigSelection {
+  readonly value: unknown;
+  readonly source: "module" | "provider" | "default";
+  readonly sourceKey?: string;
+}
+
+type ProviderConfigValidation =
+  | {
+      readonly status: "valid";
+      readonly config: unknown;
+      readonly snapshot: RuntimeRecordValue;
+      readonly schemaId?: string;
+    }
+  | {
+      readonly status: "invalid";
+      readonly snapshot: RuntimeRecordValue;
+      readonly schemaId?: string;
+      readonly message: string;
+      readonly attributes: Record<string, unknown>;
+    };
 
 export interface ProviderProvisioningModulesInput {
   readonly profileId: string;
@@ -147,19 +175,45 @@ function providerDependencyNodeKey(node: ProviderDependencyGraphNode): ProviderB
   });
 }
 
+/**
+ * Chooses between module-scoped and provider-id fixture config for this lab
+ * proof only. It is not production config source precedence.
+ */
 function configFor(
   configs: ProviderConfigMap | undefined,
   key: ProviderBootResourceKey,
-): unknown {
-  if (!configs) return {};
+): ProviderConfigSelection {
+  if (!configs) {
+    return { value: {}, source: "default" };
+  }
 
   const moduleId = providerBootResourceModuleId(key);
   if (isReadonlyMap(configs)) {
-    return configs.get(moduleId) ?? configs.get(key.providerId) ?? {};
+    if (configs.has(moduleId)) {
+      return { value: configs.get(moduleId), source: "module", sourceKey: moduleId };
+    }
+    if (configs.has(key.providerId)) {
+      return {
+        value: configs.get(key.providerId),
+        source: "provider",
+        sourceKey: key.providerId,
+      };
+    }
+    return { value: {}, source: "default" };
   }
 
   const configRecord = configs as { readonly [key: string]: unknown };
-  return configRecord[moduleId] ?? configRecord[key.providerId] ?? {};
+  if (Object.prototype.hasOwnProperty.call(configRecord, moduleId)) {
+    return { value: configRecord[moduleId], source: "module", sourceKey: moduleId };
+  }
+  if (Object.prototype.hasOwnProperty.call(configRecord, key.providerId)) {
+    return {
+      value: configRecord[key.providerId],
+      source: "provider",
+      sourceKey: key.providerId,
+    };
+  }
+  return { value: {}, source: "default" };
 }
 
 function isReadonlyMap(value: ProviderConfigMap): value is ReadonlyMap<string, unknown> {
@@ -267,27 +321,95 @@ function resourceMapForDependencies(
 function pushEvent(
   trace: ProviderProvisioningTrace | undefined,
   name: string,
-  attributes?: Record<string, string | number | boolean>,
+  attributes?: Record<string, unknown>,
 ): void {
-  trace?.events.push({ name, attributes });
+  trace?.events.push(
+    attributes
+      ? { name, attributes: redactRuntimeRecordAttributes(attributes) }
+      : { name },
+  );
 }
 
+/**
+ * Redacts structured trace diagnostic attributes only. Provider-authored
+ * diagnostic messages remain free-form strings and are not proof of arbitrary
+ * message redaction.
+ */
 function pushDiagnostic(
   trace: ProviderProvisioningTrace | undefined,
   message: string,
+  attributes?: Record<string, unknown>,
 ): void {
-  trace?.diagnostics.push({ message });
+  trace?.diagnostics.push(
+    attributes
+      ? { message, attributes: redactRuntimeRecordAttributes(attributes) }
+      : { message },
+  );
 }
 
+/**
+ * Keeps provider failure records diagnostic-safe in the lab. Final Exit/Cause
+ * mapping and public error payload policy belong to the boundary matrix.
+ */
 function providerFailureMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return String(error);
+  if (error instanceof Error) return error.name || "Error";
+  if (error && typeof error === "object" && "_tag" in error) {
+    return String((error as { readonly _tag: unknown })._tag);
+  }
+  return "provider failure";
 }
 
 function assertRuntimeProvider(
   provider: ProviderSelection["provider"],
 ): RuntimeProvider {
   return provider as RuntimeProvider;
+}
+
+/**
+ * Validates lab-supplied provider config for the contained provisioning proof.
+ * It is not final config source precedence, production secret binding, or
+ * public diagnostics policy.
+ */
+function validateProviderConfig(input: {
+  readonly provider: RuntimeProvider;
+  readonly key: ProviderBootResourceKey;
+  readonly selection: ProviderConfigSelection;
+}): ProviderConfigValidation {
+  const schema = input.provider.configSchema;
+  const snapshot = redactRuntimeRecordValue(input.selection.value);
+
+  if (!schema) {
+    return {
+      status: "valid",
+      config: input.selection.value,
+      snapshot,
+    };
+  }
+
+  try {
+    return {
+      status: "valid",
+      config: schema.parse(input.selection.value),
+      snapshot,
+      schemaId: schema.id,
+    };
+  } catch {
+    return {
+      status: "invalid",
+      snapshot,
+      schemaId: schema.id,
+      message: `provider.config.invalid: provider ${input.key.providerId} config invalid for schema ${schema.id}`,
+      attributes: {
+        code: "provider.config.invalid",
+        providerId: input.key.providerId,
+        resourceId: input.key.resourceId,
+        schemaId: schema.id,
+        configSource: input.selection.source,
+        configSourceKey: input.selection.sourceKey,
+        config: snapshot,
+      },
+    };
+  }
 }
 
 /**
@@ -313,6 +435,7 @@ export function createProviderProvisioningModules(
   return input.providerSelections.map((selection) => {
     const key = selectedProviderKey(selection);
     const moduleId = providerBootResourceModuleId(key);
+    const provider = assertRuntimeProvider(selection.provider);
     const dependencies = input.providerDependencyGraph
       ? (dependencyEdges.get(moduleId) ?? []).flatMap((edge) =>
           edge.matchedProviderKey
@@ -329,7 +452,7 @@ export function createProviderProvisioningModules(
         }).map((dependencySelection) =>
           providerBootResourceModuleId(selectedProviderKey(dependencySelection)),
         );
-    const config = configFor(input.configs, key);
+    const configSelection = configFor(input.configs, key);
 
     return {
       kind: "mini-runtime.boot-module",
@@ -342,7 +465,10 @@ export function createProviderProvisioningModules(
         lifetime: key.lifetime,
         role: key.role,
         instance: key.instance,
-        config,
+        configSchemaId: provider.configSchema?.id,
+        configSource: configSelection.source,
+        configSourceKey: configSelection.sourceKey,
+        configSnapshot: redactRuntimeRecordValue(configSelection.value),
         providerGraphNode: nodeByModuleId.get(moduleId),
       },
       async start(context) {
@@ -350,9 +476,32 @@ export function createProviderProvisioningModules(
           providerId: key.providerId,
           resourceId: key.resourceId,
         });
-        const provider = assertRuntimeProvider(selection.provider);
+        const configValidation = validateProviderConfig({
+          provider,
+          key,
+          selection: configSelection,
+        });
+        if (configValidation.status === "invalid") {
+          pushEvent(input.trace, "provider.config.invalid", configValidation.attributes);
+          pushDiagnostic(
+            input.trace,
+            "provider config validation failed",
+            configValidation.attributes,
+          );
+          throw new Error(configValidation.message);
+        }
+
+        pushEvent(input.trace, "provider.config.validated", {
+          providerId: key.providerId,
+          resourceId: key.resourceId,
+          schemaId: configValidation.schemaId,
+          configSource: configSelection.source,
+          configSourceKey: configSelection.sourceKey,
+          config: configValidation.snapshot,
+        });
+
         const plan = provider.build({
-          config,
+          config: configValidation.config,
           resources: resourceMapForDependencies(context.dependencyValues),
           scope: {
             processId: input.processId,

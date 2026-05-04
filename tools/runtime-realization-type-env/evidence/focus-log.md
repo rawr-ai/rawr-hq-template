@@ -4,8 +4,8 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `lab-v2.provider-effect-plan-bootgraph-provisioning-lowering`
-- Focus: use the contained runtime realization lab to verify provider acquire/release lowering through the mini bootgraph/provisioning path without deciding final public `ProviderEffectPlan` shape or claiming production runtime readiness.
+- ID: `lab-v2.provider-diagnostics-runtime-profile-config-redaction`
+- Focus: use the contained runtime realization lab to verify provider config validation, diagnostic-safe validation failures, redacted config snapshots, and no secret/live-handle leakage without deciding production config source precedence or secret-store strategy.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.curated-effect-public-surface`
