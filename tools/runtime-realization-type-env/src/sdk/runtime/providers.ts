@@ -1,4 +1,8 @@
 import type { RawrEffect, RawrEffectYield } from "../effect";
+import {
+  createProviderEffectPlan,
+  createTryProviderEffectPlan,
+} from "./provider-plan-internals";
 import type { RuntimeSchema } from "./schema";
 import type {
   ResourceRequirement,
@@ -75,22 +79,14 @@ export const providerFx = {
     readonly acquire: ProviderAcquire<TValue>;
     readonly release?: ProviderRelease<TValue>;
   }): ProviderEffectPlan<TValue> {
-    void input;
-    return {
-      kind: "provider.effect-plan",
-      boundary: "provider.acquire",
-    };
+    return createProviderEffectPlan(input);
   },
 
   tryAcquire<TValue, TError>(input: {
     readonly acquire: () => Promise<TValue> | TValue;
     readonly catch: (cause: unknown) => TError;
   }): ProviderEffectPlan<TValue, TError> {
-    void input;
-    return {
-      kind: "provider.effect-plan",
-      boundary: "provider.acquire",
-    };
+    return createTryProviderEffectPlan(input);
   },
 
   withSpan<TValue, TError>(
