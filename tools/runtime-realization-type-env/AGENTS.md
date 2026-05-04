@@ -29,10 +29,12 @@ Before adding or changing tests, fixtures, manifest entries, or evidence docs, r
 
 - `README.md`
 - `RUNBOOK.md`
+- `evidence/README.md`
 - `evidence/design-guardrails.md`
+- `evidence/dra-phase-two-level-zero-workflow.md`
 - `evidence/focus-log.md`
 - `evidence/runtime-realization-research-program.md`
-- `evidence/middle-spine-verification-work-plan.md`
+- `evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md`
 - `evidence/workstreams/README.md`
 - `evidence/workstreams/TEMPLATE.md`
 - `evidence/proof-manifest.json`

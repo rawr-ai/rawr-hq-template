@@ -92,9 +92,18 @@ Before continuing I state:
 
 ## Workspace Preparation Before Program Launch
 
-After this workflow exists and before launching the Phase Two program
-workstream, I open a Level Zero workspace-preparation pass. That pass is about
-cleaning the operating surface so Phase Two starts from a clear lab container.
+Before launching the Phase Two program workstream, I open a Level Zero
+workspace-preparation pass. That pass is about cleaning the operating surface
+so Phase Two starts from a clear lab container.
+
+Completed checkpoint:
+
+- The prelaunch workspace-preparation pass closed in
+  `workstreams/2026-04-30-phase-two-prelaunch-workspace-preparation.md`.
+- Stale prior-phase work plans were moved under
+  `_archive/pre-phase-two-2026-04-30/`.
+- Do not rerun this pass before Phase Two unless a new compaction/recovery check
+  finds fresh context bleed or stale active inputs.
 
 I inspect:
 
@@ -330,18 +339,84 @@ residual, I choose the conservative path and continue without asking the user.
 A single green child workstream, PR, report, or useful artifact is not program
 completion. The Phase Two closeout artifact is the completion marker.
 
+## Program-Wide Loop
+
+This workflow is not a launch note for child workstream 1. It is my
+program-wide operating rule for every Phase Two child workstream until final
+program closeout.
+
+For every child workstream, I repeat this loop:
+
+1. Recover context from this Level Zero workflow, the Phase Two program
+   workstream, the active or latest report, the manifest, the diagnostic, the
+   spine map, and the focus log.
+2. Verify repo, Graphite, Nx, and manifest-pinned spec state before opening the
+   workstream.
+3. Open the child workstream with `workstreams/TEMPLATE.md`, including
+   objective, authority inputs, output contract, expected gates, phase-local
+   agent topology, stop conditions, and closure criteria.
+4. Run the workstream's discovery, design, implementation, verification,
+   review, and proof-status handling at the rigor required by that proof slice.
+5. Use Explorer agents only for fact-finding and mechanical inventory; use
+   default or strategy agents for reasoning, review, adversarial critique, and
+   evidence honesty.
+6. Close the workstream with gates recorded, leaf and parent reviews recorded,
+   proof/non-proof deltas handled, deferred items assigned authority homes,
+   scratch disposed, and repo/Graphite state clean or explicitly blocked.
+7. Produce the next workstream packet.
+8. Reset from this workflow and the Phase Two program workstream, then
+   continue into the next child workstream unless a stop condition applies.
+
+The Phase Two sequence is:
+
+1. Program Re-grounding And Evidence Recertification.
+2. Contained Production-Critical Scenario And Proof Ledger.
+3. Effect + Provider/Resource/Config/Secret Spine.
+4. Server oRPC/Elysia Live Boundary.
+5. Async/Inngest Live Boundary.
+6. Telemetry, Logging, HyperDX, Catalog Observation.
+7. Integrated Runtime-Spine Rehearsal.
+8. Closeout And Phase Three Handoff.
+
+The order can change only through recorded evidence, failed gates,
+parent-review invalidation, explicit user control input, or a blocker that
+proves the program order is wrong. A reorder is recorded in the active
+workstream report and carried into the Phase Two closeout.
+
+At every workstream boundary I record:
+
+- current level;
+- current branch and Graphite state;
+- just-closed workstream and accepted artifacts;
+- next workstream packet;
+- deferred items to consume;
+- required first reads and first gates;
+- whether scratch, stale input, or context-bleed cleanup is needed.
+
 ## Execution Sequencing
 
-When the user says "implement plan" for this Level Zero workflow:
+The initial Level Zero document-writing sequence was:
 
 1. Write this document first.
 2. Verify repo/Graphite/Nx/spec state.
 3. Run the document-only verification gates.
 4. Commit the workflow document.
-5. On the next implementation signal for the program, use this workflow
-   immediately: start with workspace preparation/cleanup, reopen the Phase Two
-   program workstream document, and proceed through the child workstream
-   sequence until closeout.
+5. On the next implementation signal for the program, run the prelaunch
+   workspace-preparation pass.
+
+That prelaunch workspace-preparation pass is now complete. The current
+execution sequence is:
+
+1. Recover through this Level Zero workflow.
+2. Verify repo/Graphite/Nx/spec state.
+3. Reopen the Phase Two program workstream document.
+4. Launch child workstream 1 with the workstream template, opening packet,
+   phase-local planning, agents, gates, and closeout rules.
+5. Close child workstream 1 completely, consume its next packet, reset through
+   the Program-Wide Loop above, and continue into child workstream 2.
+6. Repeat the same open/run/verify/review/close/reset loop for every remaining
+   child workstream until the Phase Two closeout artifact marks program
+   completion.
 
 At each phase boundary I update only concise checkpoint fields needed for
 future compaction recovery. I do not expand this workflow into a session log.
@@ -351,18 +426,25 @@ future compaction recovery. I do not expand this workflow into a session log.
 Update this block only at Level Zero boundaries or after compaction recovery.
 
 ```text
-Current level: Level 0, workflow authored; Phase Two program not opened by this document.
-Current branch at authoring: codex/runtime-phase-two-level-zero-workflow.
+Current level: Level 0, prelaunch workspace preparation complete; Phase Two program proper not opened yet.
+Current branch at latest checkpoint: codex/runtime-phase-two-prelaunch-cleanup.
 Last accepted artifact: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md.
-Next required action after this document: workspace-preparation cleanup pass before launching Phase Two.
-Next required gates for this document: structural, report if useful, diff check, repo/Graphite clean.
-Stop condition currently active: do not run Phase Two or move/archive cleanup targets from this document-writing step.
+Prelaunch cleanup report: tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-prelaunch-workspace-preparation.md.
+Next required action after this checkpoint: launch Phase Two proper with child workstream 1, Program Re-grounding And Evidence Recertification, as the first cycle in the full Program-Wide Loop.
+Next required gates before launch: repo/Graphite clean, Nx project truth, manifest spec hash check.
+Stop condition currently active: do not skip the child-workstream opening packet/template when launching Phase Two, and do not stop after child workstream 1 unless a Level Zero stop condition applies.
+Focus-log/manifest note: they still mark the last proof experiment,
+lab-v2.runtime-research-program-closeout; child workstream 1 owns any focus
+or manifest currentExperiment update after it opens.
 ```
 
 ## Verification For This Document
 
-This document-writing step verifies the workflow artifact and lab structure
-only. It does not execute Phase Two and does not clean the workspace yet.
+The initial document-writing step verified the workflow artifact and lab
+structure only. The prelaunch workspace-preparation pass later cleaned the
+workspace surface and recorded its own closeout.
+
+Before launching Phase Two proper, rerun the current launch gates:
 
 Required commands:
 

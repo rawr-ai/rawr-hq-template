@@ -46,8 +46,14 @@ Agents working in this lab should start with `AGENTS.md`, `RUNBOOK.md`, and `evi
 
 - `RUNBOOK.md` is the canonical operating guide for lab continuity, authority order, red/yellow/green upkeep, spec feedback, and handoff shape.
 - `AGENTS.md` defines the local lab structure, containment rules, and required reading.
+- `evidence/README.md` is the visible map for active authority, active
+  coordination, completed continuity, and archived provenance.
 - `evidence/design-guardrails.md` defines proof categories, violation categories, review categories, and test-theater rules.
 - `evidence/runtime-spine-verification-diagnostic.md` is the living red/yellow/green runtime spine status view.
 - `evidence/phased-agent-verification-workflow.md` captures the repeatable phased review workflow for future spec and migration burn-down work.
+- `evidence/dra-phase-two-level-zero-workflow.md` is the current DRA
+  re-orientation and prelaunch workflow for Phase Two.
+- `evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md`
+  is the current Level 2 program workstream document for Phase Two.
 
 Do not duplicate the manifest or diagnostic tables in new docs. Link to them and update the source artifact when status changes.

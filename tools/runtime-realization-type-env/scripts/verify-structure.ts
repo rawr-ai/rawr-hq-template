@@ -42,19 +42,22 @@ const requiredPaths = [
   "tools/runtime-realization-type-env/tsconfig.json",
   "tools/runtime-realization-type-env/tsconfig.fail-base.json",
   "tools/runtime-realization-type-env/evidence/focus-log.md",
+  "tools/runtime-realization-type-env/evidence/README.md",
   "tools/runtime-realization-type-env/evidence/effect-integration-map.md",
-  "tools/runtime-realization-type-env/evidence/effect-integration-work-plan.md",
   "tools/runtime-realization-type-env/evidence/design-guardrails.md",
-  "tools/runtime-realization-type-env/evidence/middle-spine-verification-work-plan.md",
+  "tools/runtime-realization-type-env/evidence/dra-phase-two-level-zero-workflow.md",
   "tools/runtime-realization-type-env/evidence/phased-agent-verification-workflow.md",
   "tools/runtime-realization-type-env/evidence/proof-manifest.json",
   "tools/runtime-realization-type-env/evidence/runtime-realization-research-program.md",
-  "tools/runtime-realization-type-env/evidence/runtime-realization-lab-v2-plan.md",
   "tools/runtime-realization-type-env/evidence/runtime-spine-verification-diagnostic.md",
   "tools/runtime-realization-type-env/evidence/spine-audit-map.md",
   "tools/runtime-realization-type-env/evidence/vendor-fidelity.md",
+  "tools/runtime-realization-type-env/evidence/_archive/README.md",
+  "tools/runtime-realization-type-env/evidence/_archive/pre-phase-two-2026-04-30/README.md",
   "tools/runtime-realization-type-env/evidence/workstreams/README.md",
   "tools/runtime-realization-type-env/evidence/workstreams/TEMPLATE.md",
+  "tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md",
+  "tools/runtime-realization-type-env/evidence/workstreams/2026-04-30-phase-two-prelaunch-workspace-preparation.md",
   "tools/runtime-realization-type-env/src/sdk/effect.ts",
   "tools/runtime-realization-type-env/src/sdk/service.ts",
   "tools/runtime-realization-type-env/src/sdk/plugins/server.ts",
@@ -85,6 +88,18 @@ const requiredPaths = [
 
 for (const requiredPath of requiredPaths) {
   assert(exists(requiredPath), `missing required path: ${requiredPath}`);
+}
+
+for (const archivedActivePath of [
+  "tools/runtime-realization-type-env/evidence/effect-integration-work-plan.md",
+  "tools/runtime-realization-type-env/evidence/middle-spine-verification-work-plan.md",
+  "tools/runtime-realization-type-env/evidence/runtime-realization-lab-v2-plan.md",
+  "tools/runtime-realization-type-env/evidence/runtime-spine-diagnostic-work-plan.md",
+]) {
+  assert(
+    !exists(archivedActivePath),
+    `archived pre-Phase-Two work plan must not remain active: ${archivedActivePath}`,
+  );
 }
 
 assert(
