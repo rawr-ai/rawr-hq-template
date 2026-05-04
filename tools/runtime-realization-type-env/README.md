@@ -1,6 +1,20 @@
 # Runtime Realization Type Environment
 
-This project is a contained spec conformance lab for the Runtime Realization spine. It is not the SDK, not the runtime, and not migration implementation.
+This project is the Runtime Realization Lab: the contained environment for
+building, testing, and proving the Runtime Realization spine without changing
+parent repo packages, apps, services, deployment topology, or public surfaces.
+It is not the parent repo SDK/runtime and not Parent-Repo Migration
+implementation.
+
+Use these names consistently:
+
+| Term | Meaning |
+| --- | --- |
+| Runtime Realization Lab | This contained tool/environment. |
+| Oracle | Existing falsifiable proof harness and regression substrate under `src/oracle` and `test/oracle`; separate from the future Reference Runtime. |
+| Lab-Production Proof | Production-level evidence earned inside the Lab by a full contained runtime/reference system, with named gates, test oracles, proof ceilings, and residuals. |
+| Reference Runtime | The full runtime-in-a-folder system built inside the Lab to earn Lab-Production Proof. |
+| Parent-Repo Migration | Later migration/adaptation of accepted Lab results into parent repo packages, apps, services, deployment topology, or public surfaces. |
 
 Pinned authority for the current lab:
 
@@ -13,10 +27,19 @@ The lab has four proof strengths:
 
 - Type/shape proof: authoring signatures, descriptor refs, portable artifacts, and negative misuse cases compile or fail as expected.
 - Vendor proof: real `effect@3.21.2`, TypeBox, oRPC, Inngest, and Bun boundary behavior is exercised only in narrow lab lanes.
-- Mini-runtime proof: descriptor table/registry assembly, runtime-owned Effect execution, adapter delegation, deployment handoff, and invocation-time context binding run through a contained miniature runtime.
-- Compatibility simulation proof: the original simulation lane remains as a compatibility check while the mini-runtime lane grows.
+- Oracle proof: descriptor table/registry assembly,
+  runtime-owned Effect execution, adapter delegation, deployment handoff, and
+  invocation-time context binding run through Oracle. These Oracle tests are
+  useful substrate for the future Reference Runtime, but they are not the whole
+  Lab-Production Proof story.
+- Compatibility simulation proof: the original simulation lane remains as a
+  compatibility check while Oracle grows.
 
-It does not prove production oRPC adapter behavior, provider plan final shape, durable workflow scheduling, telemetry export, persistence, network transport, or bootgraph execution. Open architecture gaps stay marked as `xfail` or `todo` in `evidence/proof-manifest.json`.
+Current gates do not yet earn Lab-Production Proof for final oRPC adapter
+behavior, provider plan shape, durable workflow scheduling, telemetry export,
+persistence, network transport, or bootgraph execution. They also do not
+authorize Parent-Repo Migration. Open architecture gaps stay marked as `xfail`
+or `todo` in `evidence/proof-manifest.json`.
 
 ## Commands
 
@@ -26,7 +49,7 @@ bunx nx run runtime-realization-type-env:typecheck
 bunx nx run runtime-realization-type-env:negative
 bunx nx run runtime-realization-type-env:vendor-effect
 bunx nx run runtime-realization-type-env:vendor-boundaries
-bunx nx run runtime-realization-type-env:mini-runtime
+bunx nx run runtime-realization-type-env:oracle
 bunx nx run runtime-realization-type-env:simulate
 bunx nx run runtime-realization-type-env:structural
 bunx nx run runtime-realization-type-env:gate
@@ -34,28 +57,56 @@ bunx nx run runtime-realization-type-env:gate
 
 ## Iteration Rule
 
-When the spec changes, update the smallest SDK facade, mini-runtime behavior, and fixture set needed to prove the new spine rule. Move the related proof manifest entry from `todo` or `xfail` to `proof`, `vendor-proof`, or `simulation-proof` only when its named gate is green.
+When the spec changes, update the smallest SDK facade, Oracle behavior,
+Reference Runtime behavior when it exists, and fixture set needed to
+prove the new spine rule. Move the related proof manifest entry from `todo` or
+`xfail` to `proof`, `vendor-proof`, or `simulation-proof` only when its named
+gate is green.
 
-If a change requires production code, split it into migration work. This tool may reveal a spec gap; it must not resolve architecture silently.
+If a change requires modifying parent repo packages, apps, services, deployment
+topology, or public surfaces, split it into Parent-Repo Migration work. If it
+can be proven by a production-shaped contained runtime path, keep that proof
+inside the Lab. This tool may reveal a spec gap; it must not resolve
+architecture silently.
 
-Use `evidence/focus-log.md` to record the current experiment and `evidence/vendor-fidelity.md` to keep vendor-shaped facades honest. Do not expand either into a parallel planning system.
+Use `evidence/current-lab-state.md` to identify the current experiment,
+`evidence/systems/` to read evidence by runtime subsystem, and
+`evidence/vendors/` to keep vendor-shaped facades honest. Do not expand any of
+these into a parallel planning system.
 
 ## Continuity And Guardrails
 
-Agents working in this lab should start with `AGENTS.md`, `RUNBOOK.md`, and `evidence/design-guardrails.md`.
+Agents working in this lab should start with `AGENTS.md`, `RUNBOOK.md`, and `guidance/guardrails-design.md`.
 
 - `RUNBOOK.md` is the canonical operating guide for lab continuity, authority order, red/yellow/green upkeep, spec feedback, and handoff shape.
 - `AGENTS.md` defines the local lab structure, containment rules, and required reading.
-- `evidence/README.md` is the visible map for active authority, active
-  coordination, completed continuity, and archived provenance.
-- `evidence/design-guardrails.md` defines proof categories, violation categories, review categories, and test-theater rules.
+- `evidence/README.md` maps global proof/status authority.
+- `evidence/AGENTS.md` defines evidence-specific placement rules.
+- `evidence/current-lab-state.md` is the explicit current lab state pointer.
+- `evidence/systems/README.md` maps evidence by runtime subsystem.
+- `evidence/vendors/README.md` maps evidence by vendor concept.
+- `guidance/guardrails-design.md` defines proof categories, violation categories, review categories, and test-theater rules.
 - `evidence/runtime-spine-verification-diagnostic.md` is the living red/yellow/green runtime spine status view.
-- `evidence/phased-agent-verification-workflow.md` captures the repeatable phased review workflow for future spec and migration burn-down work.
-- `evidence/dra-phase-two-level-zero-workflow.md` is the current DRA
-  re-orientation and prelaunch workflow for Phase Two.
-- `evidence/phase-two-production-critical-claim-ledger.md` is the active
-  Phase Two scenario and claim ledger consumed by child workstreams.
-- `evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md`
-  is the current Level 2 program workstream document for Phase Two.
+- `guidance/workflow-phased-agent-verification.md` captures the repeatable phased review workflow for future spec and migration burn-down work.
+- `guidance/**` holds reusable operator guardrails, workflows, and templates.
+- `phases/**` holds phase dossiers: phase root anchors for DRA-critical
+  workflow/reference files, produced workstream reports, phase handoffs,
+  handoff references, and archives.
+- `guidance/template-workstream-report.md` is the reusable report scaffold.
+
+## Artifact Map
+
+| Artifact you need | Location | Name shape |
+| --- | --- | --- |
+| Proof/status authority | `evidence/` | Existing canonical filenames |
+| Current lab state | `evidence/` | `current-lab-state.md` |
+| System/subsystem evidence | `evidence/systems/` | `<concept>-map.md` or `<concept>-evidence-map.md` |
+| Vendor evidence | `evidence/vendors/` | `<vendor-or-boundary>.md` |
+| Reusable operator guidance | `guidance/` | `guardrails-*`, `workflow-*`, or `template-*` |
+| Phase DRA/operator anchor | `phases/<phase>/` | `workflow-*` or `ref-*` |
+| Phase-owned workstream report | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<one|two|three>-<slug>.md` |
+| Workstream-produced reference | `phases/<phase>/workstreams/` | `ref-YYYY-MM-DD-<slug>.md` |
+| Phase handoff | `phases/<phase>/handoffs/` | `handoff-YYYY-MM-DD-<slug>.md` |
+| Handoff-attached reference | `phases/<phase>/handoffs/` | `ref-YYYY-MM-DD-<slug>.md` |
 
 Do not duplicate the manifest or diagnostic tables in new docs. Link to them and update the source artifact when status changes.

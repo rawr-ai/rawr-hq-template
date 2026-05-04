@@ -5,7 +5,7 @@
   },
   "currentExperiment": {
     "id": "phase-three.closed-integrated-live-passage",
-    "focus": "Phase Three is closed as contained live-runtime-passage simulation proof and migration-decision evidence: child 7 composes the earned focused slices into one toy-contained run while preserving non-promotion boundaries for production runtime passage, durable async, product observability, RuntimeCatalog persistence, public API/DX, production config/secrets, and final Nx/generator ratchet work.",
+    "focus": "Phase Three is closed as contained live-runtime-passage `simulation-proof` and migration-decision evidence: child 7 composes the earned focused slices into one contained Oracle run while preserving non-promotion boundaries for production runtime passage, durable async, product observability, RuntimeCatalog persistence, public API/DX, production config/secrets, and final Nx/generator ratchet work.",
     "relatedEntries": [
       "audit.p3.integrated-live-passage-rehearsal-closeout",
       "audit.p3.contained-elysia-listen-lifecycle-passage",
@@ -38,7 +38,7 @@
       "simulation.async-step-owner-membership-artifacts",
       "simulation.adapter-callback-bridge-lowering",
       "simulation.first-server-async-harness-mounts",
-      "simulation.mini-runtime-registry-invocation"
+      "simulation.oracle-registry-invocation"
     ]
   },
   "entries": [
@@ -90,18 +90,18 @@
       "id": "accepted.invocation-bound-clients",
       "status": "simulation-proof",
       "source": "Runtime spec sections 11.8 and 12.5",
-      "oracle": "The mini runtime resolves a registry boundary and supplies runtime-bound clients through invocation context; service calls still require .withInvocation(...).",
+      "oracle": "The Oracle resolves a registry boundary and supplies runtime-bound clients through invocation context; service calls still require .withInvocation(...).",
       "fixtures": [
         "fixtures/positive/server-api-plugin.ts",
         "fixtures/inline-negative/service-client-boundaries.ts",
         "test/spine-simulation.test.ts",
-        "test/mini-runtime/process-runtime.test.ts"
+        "test/oracle/process-runtime.test.ts"
       ],
       "gates": [
         "typecheck",
         "negative",
         "simulate",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
@@ -155,13 +155,13 @@
       "oracle": "Real effect@3.21.2 executes Effect.gen, root pipe, value .pipe, Exit/Cause failure modes, interruption, scoped acquire/release, finalizers, and a process-owned ManagedRuntime wrapper.",
       "fixtures": [
         "src/sdk/effect.ts",
-        "src/mini-runtime/managed-runtime.ts",
+        "src/oracle/managed-runtime.ts",
         "test/vendor-effect/effect-runtime.test.ts"
       ],
       "gates": [
         "typecheck",
         "vendor-effect",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
@@ -170,7 +170,7 @@
       "source": "Runtime spec section 14",
       "oracle": "Real Effect Queue, PubSub, Ref, Deferred, Schedule, and Stream work behind the lab's RAWR-owned process-local resource probe without implying final resource API shape, durable async state, or domain truth.",
       "fixtures": [
-        "src/mini-runtime/process-resources.ts",
+        "src/oracle/process-resources.ts",
         "test/vendor-effect/effect-runtime.test.ts"
       ],
       "gates": [
@@ -295,45 +295,45 @@
       "source": "Runtime spec bootgraph, provisioning, RuntimeCatalog, diagnostics, and finalization record requirements",
       "oracle": "Fake boot modules start after dependencies, roll back only started modules on failure, finalize in reverse order while continuing after finalizer failure, and record redacted startup/rollback/finalization/catalog entries without live handles; compiler bootgraph input preserves provider resource, lifetime, role, and instance identity.",
       "fixtures": [
-        "src/mini-runtime/bootgraph.ts",
-        "src/mini-runtime/catalog.ts",
-        "test/mini-runtime/process-runtime.test.ts"
+        "src/oracle/bootgraph.ts",
+        "src/oracle/catalog.ts",
+        "test/oracle/process-runtime.test.ts"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
       "id": "simulation.service-binding-cache-runtime-access",
       "status": "simulation-proof",
       "source": "Runtime spec service binding cache and RuntimeResourceAccess boundary requirements",
-      "oracle": "The mini-runtime cache validates explicit lab ServiceBindingPlan dependency inputs as an acyclic graph before cache construction, rejects missing, ambiguous, and cyclic dependency refs before client construction, materializes dependencies before dependents, lazily reuses bindings for identical construction-time process/role/surface/capability/service/config/dependency inputs, excludes invocation from cache identity, and exposes only sanctioned runtime resource/optional resource/telemetry/diagnostic/topology access methods.",
+      "oracle": "The oracle cache validates explicit lab ServiceBindingPlan dependency inputs as an acyclic graph before cache construction, rejects missing, ambiguous, and cyclic dependency refs before client construction, materializes dependencies before dependents, lazily reuses bindings for identical construction-time process/role/surface/capability/service/config/dependency inputs, excludes invocation from cache identity, and exposes only sanctioned runtime resource/optional resource/telemetry/diagnostic/topology access methods.",
       "fixtures": [
-        "src/mini-runtime/runtime-access.ts",
-        "src/mini-runtime/service-binding-cache.ts",
+        "src/oracle/runtime-access.ts",
+        "src/oracle/service-binding-cache.ts",
         "fixtures/inline-negative/runtime-access-boundaries.ts",
-        "test/mini-runtime/process-runtime.test.ts"
+        "test/oracle/process-runtime.test.ts"
       ],
       "gates": [
         "typecheck",
         "negative",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
-      "id": "simulation.mini-runtime-registry-invocation",
+      "id": "simulation.oracle-registry-invocation",
       "status": "simulation-proof",
       "source": "Runtime spec descriptor table, registry, and process runtime lifecycle",
-      "oracle": "The mini runtime assembles descriptor table and registry from refs, checks full ref identity, and invokes descriptors through runtime-owned Effect access.",
+      "oracle": "The Oracle assembles descriptor table and registry from refs, checks full ref identity, and invokes descriptors through runtime-owned Effect access.",
       "fixtures": [
-        "src/mini-runtime/process-runtime.ts",
-        "test/mini-runtime/process-runtime.test.ts",
+        "src/oracle/process-runtime.ts",
+        "test/oracle/process-runtime.test.ts",
         "test/spine-simulation.test.ts"
       ],
       "gates": [
         "simulate",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
@@ -342,16 +342,16 @@
       "source": "Runtime spec server/internal/async adapter lowering lifecycle",
       "oracle": "Instrumented fake server and async host adapters accept only their boundary-specific descriptor refs and delegate to ProcessExecutionRuntime instead of executing descriptors directly.",
       "fixtures": [
-        "src/mini-runtime/adapters/delegation.ts",
-        "src/mini-runtime/adapters/server.ts",
-        "src/mini-runtime/adapters/async.ts",
+        "src/oracle/adapters/delegation.ts",
+        "src/oracle/adapters/server.ts",
+        "src/oracle/adapters/async.ts",
         "fixtures/inline-negative/runtime-access-boundaries.ts",
-        "test/mini-runtime/process-runtime.test.ts"
+        "test/oracle/process-runtime.test.ts"
       ],
       "gates": [
         "typecheck",
         "negative",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
@@ -362,18 +362,18 @@
       "fixtures": [
         "src/spine/artifacts.ts",
         "src/spine/compiler.ts",
-        "src/mini-runtime/adapters/delegation.ts",
-        "src/mini-runtime/adapters/server.ts",
-        "src/mini-runtime/adapters/async.ts",
+        "src/oracle/adapters/delegation.ts",
+        "src/oracle/adapters/server.ts",
+        "src/oracle/adapters/async.ts",
         "fixtures/positive/app-and-plan-artifacts.ts",
         "fixtures/inline-negative/runtime-access-boundaries.ts",
-        "test/mini-runtime/process-runtime.test.ts",
+        "test/oracle/process-runtime.test.ts",
         "test/middle-spine-derivation.test.ts"
       ],
       "gates": [
         "typecheck",
         "negative",
-        "mini-runtime",
+        "oracle",
         "middle-spine"
       ]
     },
@@ -383,16 +383,16 @@
       "source": "Runtime spec harness mounting lifecycle and adapter lowering prerequisites",
       "oracle": "Lab-local server and async started harnesses consume only adapter lowering payloads, expose route/step invocation callbacks, preserve full payload ref identity, reject raw descriptors and compiler plans before invocation, record start/invoke/stop lifecycle events, reject stopped invocations before adapter delegation, and delegate through ProcessExecutionRuntime.",
       "fixtures": [
-        "src/mini-runtime/harnesses.ts",
-        "src/mini-runtime/adapters/server.ts",
-        "src/mini-runtime/adapters/async.ts",
+        "src/oracle/harnesses.ts",
+        "src/oracle/adapters/server.ts",
+        "src/oracle/adapters/async.ts",
         "fixtures/inline-negative/runtime-access-boundaries.ts",
-        "test/mini-runtime/process-runtime.test.ts"
+        "test/oracle/process-runtime.test.ts"
       ],
       "gates": [
         "typecheck",
         "negative",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
@@ -401,13 +401,13 @@
       "source": "Runtime spec lifecycle/deployment handoff boundary",
       "oracle": "Deployment handoff carries coherent portable artifacts and compiled process plans without descriptor tables, executable closures, live runtime handles, runtime access, or raw secret fields; app id mismatches and widened bad values are rejected at runtime, and object-literal live handles fail the negative type fixture.",
       "fixtures": [
-        "src/mini-runtime/deployment-handoff.ts",
+        "src/oracle/deployment-handoff.ts",
         "fixtures/fail/deployment-live-handle.fail.ts",
-        "test/mini-runtime/process-runtime.test.ts"
+        "test/oracle/process-runtime.test.ts"
       ],
       "gates": [
         "negative",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
@@ -452,16 +452,16 @@
       "id": "audit.p1.provider-effect-plan-lowering",
       "status": "simulation-proof",
       "source": "Runtime spec sections 13, 17, 23, and 24",
-      "oracle": "Lab-internal ProviderEffectPlan acquire/release hooks lower through RAWR-owned mini bootgraph/provisioning modules with real Effect execution, provider dependency graph diagnostics fail closed before provisioning, graph edges drive dependency ordering, rollback/release runs on failed acquire, finalization runs in reverse, release failures are recorded, provider identity is preserved, and catalog records are redacted.",
+      "oracle": "Lab-internal ProviderEffectPlan acquire/release hooks lower through RAWR-owned Oracle bootgraph/provisioning modules with real Effect execution, provider dependency graph diagnostics fail closed before provisioning, graph edges drive dependency ordering, rollback/release runs on failed acquire, finalization runs in reverse, release failures are recorded, provider identity is preserved, and catalog records are redacted.",
       "fixtures": [
         "src/sdk/runtime/provider-plan-internals.ts",
-        "src/mini-runtime/provider-lowering.ts",
-        "src/mini-runtime/bootgraph.ts",
-        "test/mini-runtime/provider-provisioning.test.ts"
+        "src/oracle/provider-lowering.ts",
+        "src/oracle/bootgraph.ts",
+        "test/oracle/provider-provisioning.test.ts"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
@@ -470,18 +470,18 @@
       "source": "Runtime spec sections 9, 23, 24, and 25",
       "oracle": "Contained executable/provider boundary policy records preserve exact execution/provider boundary kind, timeout metadata, retry-attempt declaration without retry scheduling, AbortSignal interruption propagation and classification, Effect Exit/Cause success/failure/defect/interruption classification, record-only telemetry metadata, redacted attributes, adapter-inherited runtime policy records, and provider acquire/release policy records. Final public policy API/DX, production retry/backoff, durable async semantics, HyperDX export/query, production host mapping, and catalog persistence remain fenced.",
       "fixtures": [
-        "src/mini-runtime/boundary-policy.ts",
-        "src/mini-runtime/managed-runtime.ts",
-        "src/mini-runtime/process-runtime.ts",
-        "src/mini-runtime/provider-lowering.ts",
+        "src/oracle/boundary-policy.ts",
+        "src/oracle/managed-runtime.ts",
+        "src/oracle/process-runtime.ts",
+        "src/oracle/provider-lowering.ts",
         "fixtures/inline-negative/runtime-access-boundaries.ts",
-        "test/mini-runtime/process-runtime.test.ts",
-        "test/mini-runtime/provider-provisioning.test.ts"
+        "test/oracle/process-runtime.test.ts",
+        "test/oracle/provider-provisioning.test.ts"
       ],
       "gates": [
         "typecheck",
         "negative",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
@@ -533,7 +533,7 @@
       "id": "audit.p2.adapter-effect-callback-lowering",
       "status": "xfail",
       "source": "Runtime spec sections 12, 20, 21, and 24",
-      "oracle": "Contained native-shaped callback payload lowering, first mini harness mounting, and a contained oRPC Fetch request boundary are proven, but production host callbacks, Elysia mounting, native host error mapping, and final boundary policy remain unresolved.",
+      "oracle": "Contained native-shaped callback payload lowering, first Oracle harness mounting, and a contained oRPC Fetch request boundary are proven, but production host callbacks, Elysia mounting, native host error mapping, and final boundary policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/adapter-effect-callback-lowering.todo.ts"
       ]
@@ -551,7 +551,7 @@
       "id": "audit.p2.production-harness-mounting",
       "status": "xfail",
       "source": "Runtime spec harness mounting lifecycle",
-      "oracle": "First contained server/async mini harnesses, a contained oRPC Fetch request boundary, and a contained Inngest-facing Bun serve/function/step boundary are proven, but production Elysia/oRPC/Inngest mounting, deployment wiring, full StartedHarness lifecycle, other host kinds, durable async semantics, and final boundary policy remain unresolved.",
+      "oracle": "First contained server/async Oracle harnesses, a contained oRPC Fetch request boundary, and a contained Inngest-facing Bun serve/function/step boundary are proven, but production Elysia/oRPC/Inngest mounting, deployment wiring, full StartedHarness lifecycle, other host kinds, durable async semantics, and final boundary policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/first-server-async-harness-mounting.todo.ts"
       ]
@@ -571,99 +571,99 @@
       "source": "Runtime spec sections 13, 24, and 25; deployment spec runtime handoff sections",
       "oracle": "Lab-contained provider config validates through RuntimeSchema before provider build/acquire, invalid config fails closed with diagnostic-safe errors, module/provider-id config snapshots and provisioning trace attributes are redacted, acquire/release failure records do not leak config secrets or live handles, and production config precedence/secret stores stay fenced.",
       "fixtures": [
-        "test/mini-runtime/provider-provisioning.test.ts"
+        "test/oracle/provider-provisioning.test.ts"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
       "id": "audit.p2.provider-effect-process-spine",
       "status": "simulation-proof",
       "source": "Phase Two claim ledger rows p2.compiler.provider-coverage, p2.provider.config-secret, p2.effect.boundary-policy, and p2.process-runtime.binding-access; runtime spec sections 13, 17, 23, 24, and 25",
-      "oracle": "A scenario provider set validates config, lowers provider acquire/release through a shared runtime-owned EffectRuntimeAccess into the mini bootgraph, exposes provisioned provider values only through sanctioned runtime resource access for a ProcessExecutionRuntime descriptor, records provider and executable boundary policies, and keeps raw config secrets/live handles out of catalog, trace, runtime-access observation, and process events. Final ProviderEffectPlan shape, production config precedence, platform secret stores, provider refresh/retry scheduling, public policy API/DX, RuntimeResourceAccess method law, native host error mapping, and production migration readiness remain fenced.",
+      "oracle": "A scenario provider set validates config, lowers provider acquire/release through a shared runtime-owned EffectRuntimeAccess into the Oracle bootgraph, exposes provisioned provider values only through sanctioned runtime resource access for a ProcessExecutionRuntime descriptor, records provider and executable boundary policies, and keeps raw config secrets/live handles out of catalog, trace, runtime-access observation, and process events. Final ProviderEffectPlan shape, production config precedence, platform secret stores, provider refresh/retry scheduling, public policy API/DX, RuntimeResourceAccess method law, native host error mapping, and Parent-Repo Migration authorization remain fenced.",
       "fixtures": [
-        "src/mini-runtime/bootgraph.ts",
-        "src/mini-runtime/provider-lowering.ts",
-        "src/mini-runtime/runtime-access.ts",
-        "src/mini-runtime/process-runtime.ts",
-        "test/mini-runtime/provider-effect-spine-scenario.test.ts"
+        "src/oracle/bootgraph.ts",
+        "src/oracle/provider-lowering.ts",
+        "src/oracle/runtime-access.ts",
+        "src/oracle/process-runtime.ts",
+        "test/oracle/provider-effect-spine-scenario.test.ts"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
       "id": "audit.p2.server-orpc-fetch-boundary",
       "status": "simulation-proof",
       "source": "Phase Two claim ledger rows p2.server.orpc-live-boundary and p2.server.elysia-mount; runtime spec sections 11, 12, 20, 21, 23, and 24",
-      "oracle": "A lab-contained @orpc/server/fetch RPCHandler receives a real Fetch Request, matches the /rpc prefix, assembles invocation context server-side from JSON-shaped request data, delegates only through a server adapter payload and started mini server harness into ProcessExecutionRuntime, preserves route/ref identity across boundary, adapter, harness, and runtime records, rejects unmatched paths before harness invocation, and keeps request/context/resource secrets out of response and observation records. Elysia mounting, production HTTP serving, OpenAPI/product API policy, final route topology/import-safety law, auth/logging semantics, native host error mapping, and production migration readiness remain fenced.",
+      "oracle": "A lab-contained @orpc/server/fetch RPCHandler receives a real Fetch Request, matches the /rpc prefix, assembles invocation context server-side from JSON-shaped request data, delegates only through a server adapter payload and started Oracle server harness into ProcessExecutionRuntime, preserves route/ref identity across boundary, adapter, harness, and runtime records, rejects unmatched paths before harness invocation, and keeps request/context/resource secrets out of response and observation records. Elysia mounting, production HTTP serving, OpenAPI/product API policy, final route topology/import-safety law, auth/logging semantics, native host error mapping, and Parent-Repo Migration authorization remain fenced.",
       "fixtures": [
-        "src/mini-runtime/adapters/orpc-server.ts",
-        "src/mini-runtime/adapters/server.ts",
-        "src/mini-runtime/harnesses.ts",
-        "test/mini-runtime/server-orpc-boundary.test.ts"
+        "src/oracle/adapters/orpc-server.ts",
+        "src/oracle/adapters/server.ts",
+        "src/oracle/harnesses.ts",
+        "test/oracle/server-orpc-boundary.test.ts"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
       "id": "audit.p2.async-inngest-function-step-boundary",
       "status": "simulation-proof",
       "source": "Phase Two claim ledger rows p2.async.inngest-handoff, p2.async.callback-step, and p2.async.durable-residual; runtime spec sections 12, 19, 20, 21, 23, and 24",
-      "oracle": "A lab-contained inngest/bun serve handler receives a real Fetch Request, routes to a real Inngest.createFunction handler by absolute function id, crosses step.run with the stable async step id, delegates only through an async bridge payload and started mini async harness into ProcessExecutionRuntime, preserves owner/ref/step identity across boundary, adapter, harness, and runtime records, rejects unknown function ids before harness invocation, and keeps event/resource/execution secrets out of response and observation records. Durable scheduling, retry, replay, idempotency, run history, production worker topology, final async membership syntax, dispatcher public DX, product async policy, and production migration readiness remain fenced.",
+      "oracle": "A lab-contained inngest/bun serve handler receives a real Fetch Request, routes to a real Inngest.createFunction handler by absolute function id, crosses step.run with the stable async step id, delegates only through an async bridge payload and started Oracle async harness into ProcessExecutionRuntime, preserves owner/ref/step identity across boundary, adapter, harness, and runtime records, rejects unknown function ids before harness invocation, and keeps event/resource/execution secrets out of response and observation records. Durable scheduling, retry, replay, idempotency, run history, production worker topology, final async membership syntax, dispatcher public DX, product async policy, and Parent-Repo Migration authorization remain fenced.",
       "fixtures": [
-        "src/mini-runtime/adapters/inngest-async.ts",
-        "src/mini-runtime/adapters/async.ts",
-        "src/mini-runtime/harnesses.ts",
-        "test/mini-runtime/inngest-async-boundary.test.ts"
+        "src/oracle/adapters/inngest-async.ts",
+        "src/oracle/adapters/async.ts",
+        "src/oracle/harnesses.ts",
+        "test/oracle/inngest-async-boundary.test.ts"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
       "id": "audit.p2.telemetry-integrated-observation-spine",
       "status": "simulation-proof",
       "source": "Phase Two claim ledger rows p2.telemetry.redacted-records, p2.hyperdx.provider-proof, and p2.catalog.control-plane; runtime spec sections 22, 23.3, 23.5, 24, and 29",
-      "oracle": "A lab-contained Phase Two scenario composes provider provisioning/finalization records, oRPC server boundary records, Inngest async boundary records, process-runtime events, in-memory catalog records, injected-fetch OTLP export, and a migration/control-plane observation packet. The focused gate proves records are redacted before export, live handles and raw secrets are absent from OTLP payloads/export bodies/packet summaries, HyperDX-shaped export uses the explicit /v1/traces endpoint, packet summaries do not copy OTLP payload or export response bodies, and placement remains candidate-only. Product dashboards, query semantics, alerting, retention, production OpenTelemetry bootstrap, RuntimeCatalog persistence, control-plane topology, durable async run history, native host telemetry/error mapping, platform secret-store precedence, arbitrary DLP, and production migration readiness remain fenced.",
+      "oracle": "A lab-contained Phase Two scenario composes provider provisioning/finalization records, oRPC server boundary records, Inngest async boundary records, process-runtime events, in-memory catalog records, injected-fetch OTLP export, and a migration/control-plane observation packet. The focused gate proves records are redacted before export, live handles and raw secrets are absent from OTLP payloads/export bodies/packet summaries, HyperDX-shaped export uses the explicit /v1/traces endpoint, packet summaries do not copy OTLP payload or export response bodies, and placement remains candidate-only. Product dashboards, query semantics, alerting, retention, production OpenTelemetry bootstrap, RuntimeCatalog persistence, control-plane topology, durable async run history, native host telemetry/error mapping, platform secret-store precedence, arbitrary DLP, and Parent-Repo Migration authorization remain fenced.",
       "fixtures": [
-        "src/mini-runtime/telemetry-export.ts",
-        "src/mini-runtime/migration-control-plane-observation.ts",
-        "src/mini-runtime/adapters/orpc-server.ts",
-        "src/mini-runtime/adapters/inngest-async.ts",
-        "test/mini-runtime/phase-two-observation-spine.test.ts",
-        "evidence/workstreams/2026-04-30-phase-two-telemetry-hyperdx-catalog-observation.md"
+        "src/oracle/telemetry-export.ts",
+        "src/oracle/migration-control-plane-observation.ts",
+        "src/oracle/adapters/orpc-server.ts",
+        "src/oracle/adapters/inngest-async.ts",
+        "test/oracle/phase-two-observation-spine.test.ts",
+        "phases/phase-two/workstreams/workstream-2026-04-30-phase-two-telemetry-hyperdx-catalog-observation.md"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
       "id": "audit.p2.integrated-runtime-spine-rehearsal",
       "status": "simulation-proof",
       "source": "Phase Two claim ledger row p2.integrated.rehearsal; runtime spec sections 9, 12, 15, 18, 19, 20, 21, 22, 23, 24, and 29",
-      "oracle": "A lab-contained integrated rehearsal derives and compiles the fixture spine, preserves refs-only portable artifacts, emits adapter lowering payloads from derived route/async identity, provisions provider modules through the mini bootgraph, mounts contained oRPC server and Inngest async boundaries from compiled artifacts, delegates both boundaries through ProcessExecutionRuntime, finalizes the provider bootgraph, projects provider/server/async/catalog records into redacted telemetry, exports a stable OTLP payload through injected fetch, and creates a non-persistent migration/control-plane packet. A focused falsifier matrix keeps child proofs independently falsifiable by checking invalid provider config fails before build without secret leakage, unmatched oRPC paths do not invoke the harness, unknown Inngest function ids do not invoke the async harness, and telemetry run-id drift is rejected. This is integrated contained proof and migration-decision evidence only; it does not prove production migration readiness, Elysia, production HTTP/worker hosting, durable async semantics, product observability, RuntimeCatalog persistence, control-plane topology, native host telemetry/error mapping, platform secret-store precedence, arbitrary DLP, final public API/DX, or Phase Three topology/Nx/generator readiness.",
+      "oracle": "A lab-contained integrated rehearsal derives and compiles the fixture spine, preserves refs-only portable artifacts, emits adapter lowering payloads from derived route/async identity, provisions provider modules through the Oracle bootgraph, mounts contained oRPC server and Inngest async boundaries from compiled artifacts, delegates both boundaries through ProcessExecutionRuntime, finalizes the provider bootgraph, projects provider/server/async/catalog records into redacted telemetry, exports a stable OTLP payload through injected fetch, and creates a non-persistent migration/control-plane packet. A focused falsifier matrix keeps child proofs independently falsifiable by checking invalid provider config fails before build without secret leakage, unmatched oRPC paths do not invoke the harness, unknown Inngest function ids do not invoke the async harness, and telemetry run-id drift is rejected. This is integrated contained proof and migration-decision evidence only; it does not prove Parent-Repo Migration authorization, Elysia, production HTTP/worker hosting, durable async semantics, product observability, RuntimeCatalog persistence, control-plane topology, native host telemetry/error mapping, platform secret-store precedence, arbitrary DLP, final public API/DX, or Phase Three topology/Nx/generator readiness.",
       "fixtures": [
         "src/spine/derive.ts",
         "src/spine/compiler.ts",
-        "src/mini-runtime/provider-lowering.ts",
-        "src/mini-runtime/adapters/orpc-server.ts",
-        "src/mini-runtime/adapters/inngest-async.ts",
-        "src/mini-runtime/telemetry-export.ts",
-        "src/mini-runtime/migration-control-plane-observation.ts",
-        "test/mini-runtime/phase-two-integrated-runtime-spine-rehearsal.test.ts",
-        "evidence/workstreams/2026-04-30-phase-two-integrated-runtime-spine-rehearsal.md"
+        "src/oracle/provider-lowering.ts",
+        "src/oracle/adapters/orpc-server.ts",
+        "src/oracle/adapters/inngest-async.ts",
+        "src/oracle/telemetry-export.ts",
+        "src/oracle/migration-control-plane-observation.ts",
+        "test/oracle/phase-two-integrated-runtime-spine-rehearsal.test.ts",
+        "phases/phase-two/workstreams/workstream-2026-04-30-phase-two-integrated-runtime-spine-rehearsal.md"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime",
+        "oracle",
         "middle-spine"
       ]
     },
@@ -671,20 +671,20 @@
       "id": "audit.semantic-runtime-jsdoc-harvest",
       "status": "out-of-scope",
       "source": "DRA research program workflow semantic documentation harvest",
-      "oracle": "High-signal runtime JSDoc/comments were harvested as migration/documentation substrate only; comment presence is not proof, runtime authority, final public API authority, or production readiness.",
+      "oracle": "High-signal runtime JSDoc/comments were harvested as migration/documentation substrate only; comment presence is not proof, runtime authority, final public API authority, or Lab-Production Proof.",
       "fixtures": [
-        "evidence/workstreams/2026-04-30-semantic-runtime-documentation-harvest.md"
+        "phases/phase-one/workstreams/workstream-2026-04-30-phase-one-semantic-runtime-documentation-harvest.md"
       ]
     },
     {
       "id": "audit.p2.phase-two-program-closeout",
       "status": "out-of-scope",
       "source": "Phase Two program workstream child 8 closeout and post-Phase-Two reframe handoff",
-      "oracle": "Phase Two closeout reconciles child workstream reports, proof manifest entries, diagnostic/spine/focus status, residuals, migration-decision evidence, and historical Phase Three structure/Nx inputs. Closeout itself adds no runtime behavior proof, does not authorize production migration, does not prove live runtime passage, and does not implement Phase Three final structure, Nx enforcement boundaries, Nx generators, generator idempotency, or ratchet/lock mechanics. Immediate next-phase sequencing is now governed by the post-Phase-Two reframe handoff.",
+      "oracle": "Phase Two closeout reconciles child workstream reports, proof manifest entries, diagnostic/spine/focus status, residuals, migration-decision evidence, and historical Phase Three structure/Nx inputs. Closeout itself adds no runtime behavior proof, does not authorize Parent-Repo Migration, does not prove live runtime passage, and does not implement Phase Three final structure, Nx enforcement boundaries, Nx generators, generator idempotency, or ratchet/lock mechanics. Immediate next-phase sequencing is now governed by the post-Phase-Two reframe handoff.",
       "fixtures": [
-        "evidence/workstreams/2026-04-30-phase-two-closeout-phase-three-handoff.md",
-        "evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md",
-        "evidence/handoffs/2026-05-01-post-phase-two-runtime-reframe.md"
+        "phases/phase-two/workstreams/workstream-2026-04-30-phase-two-closeout-phase-three-handoff.md",
+        "phases/phase-two/workstreams/workstream-2026-04-30-phase-two-spine-composition-program-workstream.md",
+        "phases/phase-two/handoffs/handoff-2026-05-01-post-phase-two-runtime-reframe.md"
       ],
       "gates": [
         "structural",
@@ -696,11 +696,11 @@
       "id": "audit.p3.phase-three-program-workstream",
       "status": "out-of-scope",
       "source": "Phase Three program workstream and DRA workflow",
-      "oracle": "The Phase Three program workstream document and DRA workflow define the approved recursive coordination object for live-runtime-passage investigation inside the mini-runtime lab, including authority order, child-workstream lifecycle, proof ceilings, artifacts, review loops, residual routing, and closeout criteria. Phase Three opened after explicit user approval on 2026-05-01, and child 1 is closed as coordination-only scope/claim ledger. This entry adds no runtime behavior proof, does not open production migration, does not prove production readiness, and does not implement final structure/Nx/generator ratchet.",
+      "oracle": "The Phase Three program workstream document and DRA workflow define the approved recursive coordination object for live-runtime-passage investigation inside the Runtime Realization Lab, including authority order, child-workstream lifecycle, proof ceilings, artifacts, review loops, residual routing, and closeout criteria. Phase Three opened after explicit user approval on 2026-05-01, and child 1 is closed as coordination-only scope/claim ledger. This entry adds no runtime behavior proof, does not open Parent-Repo Migration, does not prove Lab-Production Proof, and does not implement final structure/Nx/generator ratchet.",
       "fixtures": [
-        "evidence/workstreams/2026-05-01-phase-three-program-workstream.md",
-        "evidence/phases/phase-three/dra-phase-three-program-workstream-workflow-draft.md",
-        "evidence/handoffs/2026-05-01-post-phase-two-runtime-reframe.md"
+        "phases/phase-three/workstreams/workstream-2026-05-01-phase-three-program-workstream.md",
+        "phases/phase-three/workflow-phase-three-program-dra.md",
+        "phases/phase-two/handoffs/handoff-2026-05-01-post-phase-two-runtime-reframe.md"
       ],
       "gates": [
         "structural",
@@ -711,14 +711,14 @@
       "id": "audit.p3.started-process-assembly-stop-finalization-passage",
       "status": "simulation-proof",
       "source": "Phase Three child 2 started process assembly plus stop/finalization passage",
-      "oracle": "A lab-contained started runtime passage derives and compiles fixture declarations, provisions provider resources through the mini bootgraph, assembles one instrumented ProcessExecutionRuntime, mounts contained oRPC Fetch and Inngest Bun serve/function/step boundaries, invokes both through the runtime, projects safe observation/control-plane evidence, stops server/async harnesses, finalizes provider/runtime resources, and rejects post-stop boundary invocations before runtime delegation. The oracle records post-stop oRPC failure by HTTP error, post-stop Inngest failure by protocol-native StepError in the step response and failure-classified boundary record despite HTTP 206, stopped harness records, unchanged runtime invocation count after stop, explicit runtime disposal evidence, redacted OTLP-shaped export, and candidate-only migration packet summaries. This remains contained simulation proof and does not imply production migration readiness, durable async semantics, product HyperDX observability, RuntimeCatalog persistence, native host telemetry/error mapping, final public API/DX law, or final structure/Nx/generator ratchet.",
+      "oracle": "A lab-contained started runtime passage derives and compiles fixture declarations, provisions provider resources through the Oracle bootgraph, assembles one instrumented ProcessExecutionRuntime, mounts contained oRPC Fetch and Inngest Bun serve/function/step boundaries, invokes both through the runtime, projects safe observation/control-plane evidence, stops server/async harnesses, finalizes provider/runtime resources, and rejects post-stop boundary invocations before runtime delegation. The oracle records post-stop oRPC failure by HTTP error, post-stop Inngest failure by protocol-native StepError in the step response and failure-classified boundary record despite HTTP 206, stopped harness records, unchanged runtime invocation count after stop, explicit runtime disposal evidence, redacted OTLP-shaped export, and candidate-only migration packet summaries. This remains contained simulation proof and does not imply Parent-Repo Migration authorization, durable async semantics, product HyperDX observability, RuntimeCatalog persistence, native host telemetry/error mapping, final public API/DX law, or final structure/Nx/generator ratchet.",
       "fixtures": [
-        "test/mini-runtime/phase-three-started-process-assembly-stop-finalization-passage.test.ts",
-        "evidence/workstreams/2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md",
-        "evidence/workstreams/2026-05-01-phase-three-started-passage-vendor-integration-reference.md"
+        "test/oracle/phase-three-started-process-assembly-stop-finalization-passage.test.ts",
+        "phases/phase-three/workstreams/workstream-2026-05-01-phase-three-started-process-assembly-stop-finalization-passage.md",
+        "phases/phase-three/workstreams/ref-2026-05-01-phase-three-started-passage-vendor-integration-reference.md"
       ],
       "gates": [
-        "mini-runtime",
+        "oracle",
         "report",
         "structural"
       ]
@@ -727,9 +727,9 @@
       "id": "audit.p3.native-boundary-observation-failure-semantics-ledger",
       "status": "out-of-scope",
       "source": "Phase Three child 3 native boundary observation and failure semantics ledger",
-      "oracle": "Closed semantics ledger for native boundary failure and observation behavior across oRPC, Inngest, Elysia if considered, OpenTelemetry/OTLP, and HyperDX. The child maps vendor envelopes, RAWR runtime outcomes, harness/boundary records, telemetry projection, product observability residuals, public/native host error mapping, and layer-disagreement projection rules, then recommends the next executable proof slice. It adds no runtime behavior proof and does not imply production migration readiness, durable async semantics, product observability, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
+      "oracle": "Closed semantics ledger for native boundary failure and observation behavior across oRPC, Inngest, Elysia if considered, OpenTelemetry/OTLP, and HyperDX. The child maps vendor envelopes, RAWR runtime outcomes, harness/boundary records, telemetry projection, product observability residuals, public/native host error mapping, and layer-disagreement projection rules, then recommends the next executable proof slice. It adds no runtime behavior proof and does not imply Parent-Repo Migration authorization, durable async semantics, product observability, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
       "fixtures": [
-        "evidence/workstreams/2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md"
+        "phases/phase-three/workstreams/workstream-2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md"
       ],
       "gates": [
         "structural",
@@ -740,16 +740,16 @@
       "id": "audit.p3.layer-disagreement-failure-observation-proof",
       "status": "simulation-proof",
       "source": "Phase Three child 4 layer-disagreement failure observation proof",
-      "oracle": "Contained proof that representative oRPC and Inngest boundary responses preserve layer-specific disagreement inside the mini-runtime lab instead of collapsing into false-green readiness. The focused oracle proves oRPC HTTP 200 can carry a RAWR failure body, Inngest HTTP 206 StepRun can carry a RAWR payload failure, boundary records distinguish HTTP/protocol/payload status, telemetry projection preserves runtime/adapter/harness/boundary failure attributes before export, OTLP export failure remains observation-plane only, and the migration/control-plane packet keeps run/source/name/export summary correlation without becoming status, persistence, placement, or product observability authority. This does not imply production migration readiness, real Elysia serving, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
+      "oracle": "Contained proof that representative oRPC and Inngest boundary responses preserve layer-specific disagreement inside the Runtime Realization Lab instead of collapsing into false-green readiness. The focused oracle proves oRPC HTTP 200 can carry a RAWR failure body, Inngest HTTP 206 StepRun can carry a RAWR payload failure, boundary records distinguish HTTP/protocol/payload status, telemetry projection preserves runtime/adapter/harness/boundary failure attributes before export, OTLP export failure remains observation-plane only, and the migration/control-plane packet keeps run/source/name/export summary correlation without becoming status, persistence, placement, or product observability authority. This does not imply Parent-Repo Migration authorization, real Elysia serving, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, native host telemetry/error mapping, public API/DX law, or final structure/Nx/generator ratchet.",
       "fixtures": [
-        "src/mini-runtime/adapters/inngest-async.ts",
-        "src/mini-runtime/migration-control-plane-observation.ts",
-        "test/mini-runtime/phase-three-layer-disagreement-failure-observation.test.ts",
-        "evidence/workstreams/2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md"
+        "src/oracle/adapters/inngest-async.ts",
+        "src/oracle/migration-control-plane-observation.ts",
+        "test/oracle/phase-three-layer-disagreement-failure-observation.test.ts",
+        "phases/phase-three/workstreams/workstream-2026-05-01-phase-three-layer-disagreement-failure-observation-proof.md"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime",
+        "oracle",
         "structural",
         "report"
       ]
@@ -758,15 +758,15 @@
       "id": "audit.p3.contained-elysia-host-passage",
       "status": "simulation-proof",
       "source": "Phase Three child 5 contained Elysia host passage",
-      "oracle": "A lab-contained Elysia app receives full Web Requests through Elysia.handle, routes /rpc* with .all(..., { parse: 'none' }), forwards the raw Elysia context.request into the contained @orpc/server/fetch RPCHandler boundary, delegates through the mini server harness into ProcessExecutionRuntime, preserves separate Elysia host, oRPC, RAWR runtime, adapter, harness, telemetry, OTLP export, and control-plane summary layers, rejects host-unmatched routes before oRPC/runtime delegation, keeps RAWR runtime failure distinct from host delegation success, and redacts request/resource/execution/telemetry/control-plane secrets and live handles. This is contained app/request host passage proof only; it does not prove production HTTP serving, production listen/port/server lifecycle, OpenAPI/product policy, auth/logging, native host telemetry/error mapping, production migration readiness, public API/DX law, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, or final structure/Nx/generator ratchet.",
+      "oracle": "A lab-contained Elysia app receives full Web Requests through Elysia.handle, routes /rpc* with .all(..., { parse: 'none' }), forwards the raw Elysia context.request into the contained @orpc/server/fetch RPCHandler boundary, delegates through the Oracle server harness into ProcessExecutionRuntime, preserves separate Elysia host, oRPC, RAWR runtime, adapter, harness, telemetry, OTLP export, and control-plane summary layers, rejects host-unmatched routes before oRPC/runtime delegation, keeps RAWR runtime failure distinct from host delegation success, and redacts request/resource/execution/telemetry/control-plane secrets and live handles. This is contained app/request host passage proof only; it does not prove production HTTP serving, production listen/port/server lifecycle, OpenAPI/product policy, auth/logging, native host telemetry/error mapping, Parent-Repo Migration authorization, public API/DX law, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, or final structure/Nx/generator ratchet.",
       "fixtures": [
-        "src/mini-runtime/adapters/elysia-host.ts",
-        "test/mini-runtime/phase-three-contained-elysia-host-passage.test.ts",
-        "evidence/workstreams/2026-05-01-phase-three-contained-elysia-host-passage.md"
+        "src/oracle/adapters/elysia-host.ts",
+        "test/oracle/phase-three-contained-elysia-host-passage.test.ts",
+        "phases/phase-three/workstreams/workstream-2026-05-01-phase-three-contained-elysia-host-passage.md"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime",
+        "oracle",
         "structural",
         "report"
       ]
@@ -775,15 +775,15 @@
       "id": "audit.p3.contained-elysia-listen-lifecycle-passage",
       "status": "simulation-proof",
       "source": "Phase Three child 6 contained Elysia listen/lifecycle passage",
-      "oracle": "A lab-contained Elysia/Bun listener starts on 127.0.0.1 with an ephemeral port around the contained Elysia -> oRPC -> mini-runtime path, receives a direct real network globalThis.fetch(...) to /rpc/invoke, delegates through the existing Elysia route-forwarding host, @orpc/server/fetch RPCHandler, mini server harness, and ProcessExecutionRuntime, records separate listener request evidence through Elysia onRequest plus host, oRPC, harness, adapter, runtime, telemetry, OTLP export, and control-plane summary layers, stops with app.stop(true), clears app.server, and rejects post-stop network passage without further host/oRPC/harness/runtime delegation. This is contained local listener lifecycle proof only; it does not prove production HTTP serving, deployment/process-supervision lifecycle, TLS/proxy/load-balancer behavior, auth/logging, OpenAPI/product policy, native host telemetry/error mapping, production migration readiness, public API/DX law, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, or final structure/Nx/generator ratchet.",
+      "oracle": "A lab-contained Elysia/Bun listener starts on 127.0.0.1 with an ephemeral port around the contained Elysia -> oRPC -> oracle path, receives a direct real network globalThis.fetch(...) to /rpc/invoke, delegates through the existing Elysia route-forwarding host, @orpc/server/fetch RPCHandler, Oracle server harness, and ProcessExecutionRuntime, records separate listener request evidence through Elysia onRequest plus host, oRPC, harness, adapter, runtime, telemetry, OTLP export, and control-plane summary layers, stops with app.stop(true), clears app.server, and rejects post-stop network passage without further host/oRPC/harness/runtime delegation. This is contained local listener lifecycle proof only; it does not prove production HTTP serving, deployment/process-supervision lifecycle, TLS/proxy/load-balancer behavior, auth/logging, OpenAPI/product policy, native host telemetry/error mapping, Parent-Repo Migration authorization, public API/DX law, durable async semantics, live HyperDX product visibility, RuntimeCatalog persistence, or final structure/Nx/generator ratchet.",
       "fixtures": [
-        "src/mini-runtime/adapters/elysia-listener.ts",
-        "test/mini-runtime/phase-three-contained-elysia-listen-lifecycle-passage.test.ts",
-        "evidence/workstreams/2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md"
+        "src/oracle/adapters/elysia-listener.ts",
+        "test/oracle/phase-three-contained-elysia-listen-lifecycle-passage.test.ts",
+        "phases/phase-three/workstreams/workstream-2026-05-01-phase-three-contained-elysia-listen-lifecycle-passage.md"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime",
+        "oracle",
         "structural",
         "report"
       ]
@@ -792,14 +792,14 @@
       "id": "audit.p3.integrated-live-passage-rehearsal-closeout",
       "status": "simulation-proof",
       "source": "Phase Three child 7 integrated live-passage rehearsal and closeout",
-      "oracle": "A lab-contained integrated rehearsal composes the derived/compiled fixture spine, provider bootgraph startup/finalization, one shared counted EffectRuntimeAccess for provider provisioning and process execution, one counted ProcessExecutionRuntime, a real local Elysia/Bun listener, raw Elysia request forwarding, @orpc/server/fetch RPCHandler, mini server harness, contained Inngest Bun serve/function/step async harness, actual provider-started resource access observed as successful requireResource calls in server and async invocation contexts, OTLP-shaped telemetry projection, non-persistent migration/control-plane packet, ordered listener/harness/provider/runtime stop/finalization, and post-stop listener/server/async rejection without further runtime delegation. It proves only one toy-contained live-passage envelope plus Phase Three proof reconciliation; it does not imply production migration readiness, production HTTP/worker lifecycle, durable Inngest semantics, live HyperDX product visibility, RuntimeCatalog persistence, production control-plane topology, final public API/DX law, production config/secret-store policy, or final structure/Nx/generator ratchet.",
+      "oracle": "A lab-contained integrated rehearsal composes the derived/compiled fixture spine, provider bootgraph startup/finalization, one shared counted EffectRuntimeAccess for provider provisioning and process execution, one counted ProcessExecutionRuntime, a real local Elysia/Bun listener, raw Elysia request forwarding, @orpc/server/fetch RPCHandler, Oracle server harness, contained Inngest Bun serve/function/step async harness, actual provider-started resource access observed as successful requireResource calls in server and async invocation contexts, OTLP-shaped telemetry projection, non-persistent migration/control-plane packet, ordered listener/harness/provider/runtime stop/finalization, and post-stop listener/server/async rejection without further runtime delegation. It proves only one contained Oracle live-passage envelope plus Phase Three proof reconciliation; it does not imply Parent-Repo Migration authorization, production HTTP/worker lifecycle, durable Inngest semantics, live HyperDX product visibility, RuntimeCatalog persistence, production control-plane topology, final public API/DX law, production config/secret-store policy, or final structure/Nx/generator ratchet.",
       "fixtures": [
-        "test/mini-runtime/phase-three-integrated-live-passage-rehearsal.test.ts",
-        "evidence/workstreams/2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md"
+        "test/oracle/phase-three-integrated-live-passage-rehearsal.test.ts",
+        "phases/phase-three/workstreams/workstream-2026-05-01-phase-three-integrated-live-passage-rehearsal-and-closeout.md"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime",
+        "oracle",
         "structural",
         "report"
       ]
@@ -808,9 +808,9 @@
       "id": "audit.p3.live-runtime-passage-scope-claim-ledger",
       "status": "out-of-scope",
       "source": "Phase Three child 1 live-runtime-passage scope and claim ledger",
-      "oracle": "The child 1 workstream maps live-runtime-passage dimensions, proof ceilings, residual containers, and the first executable proof-slice recommendation for DRA disposition. It adds no runtime behavior proof, does not promote Phase Two lab evidence to production readiness, and does not implement production migration, durable async semantics, product observability, RuntimeCatalog persistence, final public API/DX law, or final structure/Nx/generator ratchet.",
+      "oracle": "The child 1 workstream maps live-runtime-passage dimensions, proof ceilings, residual containers, and the first executable proof-slice recommendation for DRA disposition. It adds no runtime behavior proof, does not promote Phase Two lab evidence to Lab-Production Proof, and does not implement Parent-Repo Migration, durable async semantics, product observability, RuntimeCatalog persistence, final public API/DX law, or final structure/Nx/generator ratchet.",
       "fixtures": [
-        "evidence/workstreams/2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md"
+        "phases/phase-three/workstreams/workstream-2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md"
       ],
       "gates": [
         "structural",
@@ -821,15 +821,15 @@
       "id": "audit.telemetry.hyperdx-observation",
       "status": "simulation-proof",
       "source": "Runtime spec sections 22, 23.3, and 29; DRA research program workflow Runtime Telemetry + HyperDX Observation cycle",
-      "oracle": "Lab-contained telemetry projection/export takes already-redacted mini-runtime process, provider, and catalog records, preserves useful runtime identity fields, rejects live handles/raw secrets/descriptor bodies/provider values/runtime access objects, builds stable OTLP trace payloads, and emits through the explicit local exporter path. Local HyperDX/OTLP ingest smoke is supporting lab observation only and does not prove production observability policy, persistence, deployment placement, native host telemetry, dashboard/query policy, or durable async semantics.",
+      "oracle": "Lab-contained telemetry projection/export takes already-redacted oracle process, provider, and catalog records, preserves useful runtime identity fields, rejects live handles/raw secrets/descriptor bodies/provider values/runtime access objects, builds stable OTLP trace payloads, and emits through the explicit local exporter path. Local HyperDX/OTLP ingest smoke is supporting lab observation only and does not prove production observability policy, persistence, deployment placement, native host telemetry, dashboard/query policy, or durable async semantics.",
       "fixtures": [
-        "src/mini-runtime/telemetry-export.ts",
-        "test/mini-runtime/telemetry-export.test.ts",
-        "evidence/workstreams/2026-04-30-runtime-telemetry-hyperdx-observation.md"
+        "src/oracle/telemetry-export.ts",
+        "test/oracle/telemetry-export.test.ts",
+        "phases/phase-one/workstreams/workstream-2026-04-30-phase-one-runtime-telemetry-hyperdx-observation.md"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
@@ -838,22 +838,22 @@
       "source": "Runtime spec sections 22, 23.3, 23.5, and 29; residual from audit.telemetry.hyperdx-observation",
       "oracle": "Product observability policy, dashboard/query policy, retention, alerting, correlation naming, production OpenTelemetry bootstrap, persisted RuntimeCatalog storage, deployment/control-plane placement, native Elysia/oRPC/Inngest host telemetry, durable async run history, platform secret-store precedence, and arbitrary free-form diagnostic string redaction remain unresolved beyond the contained telemetry projection/export proof.",
       "fixtures": [
-        "evidence/workstreams/2026-04-30-runtime-telemetry-hyperdx-observation.md"
+        "phases/phase-one/workstreams/workstream-2026-04-30-phase-one-runtime-telemetry-hyperdx-observation.md"
       ]
     },
     {
       "id": "audit.migration.control-plane-observation",
       "status": "simulation-proof",
       "source": "Runtime spec sections 15.7, 22.2, 22.3, 23.5, 24.2, and 27; DRA research program workflow Migration/Control-Plane Observation cycle",
-      "oracle": "A lab-contained, non-persistent migration/control-plane observation packet can summarize an already-safe deployment handoff, in-memory runtime catalog snapshot, redacted telemetry records, and export status for migration review; preserve app/run/trace/correlation identity; record placement candidates only as candidate facts; reject widened descriptor tables, executable closures, live handles, runtime access objects, provider values, app id drift, and telemetry run id drift; strip raw keyed secrets from reportable attributes; and avoid copying OTLP payload bodies or export response bodies. This does not prove RuntimeCatalog persistence, control-plane storage, placement policy, deployment orchestration, production telemetry/queryability, dashboard semantics, durable async history, arbitrary DLP, or production migration readiness.",
+      "oracle": "A lab-contained, non-persistent migration/control-plane observation packet can summarize an already-safe deployment handoff, in-memory runtime catalog snapshot, redacted telemetry records, and export status for migration review; preserve app/run/trace/correlation identity; record placement candidates only as candidate facts; reject widened descriptor tables, executable closures, live handles, runtime access objects, provider values, app id drift, and telemetry run id drift; strip raw keyed secrets from reportable attributes; and avoid copying OTLP payload bodies or export response bodies. This does not prove RuntimeCatalog persistence, control-plane storage, placement policy, deployment orchestration, production telemetry/queryability, dashboard semantics, durable async history, arbitrary DLP, or Parent-Repo Migration authorization.",
       "fixtures": [
-        "src/mini-runtime/migration-control-plane-observation.ts",
-        "test/mini-runtime/migration-control-plane-observation.test.ts",
-        "evidence/workstreams/2026-04-30-migration-control-plane-observation.md"
+        "src/oracle/migration-control-plane-observation.ts",
+        "test/oracle/migration-control-plane-observation.test.ts",
+        "phases/phase-one/workstreams/workstream-2026-04-30-phase-one-migration-control-plane-observation.md"
       ],
       "gates": [
         "typecheck",
-        "mini-runtime"
+        "oracle"
       ]
     },
     {
@@ -862,16 +862,16 @@
       "source": "Runtime spec sections 22.3, 23.5, 24.2, and 27; residual from audit.migration.control-plane-observation",
       "oracle": "Production RuntimeCatalog storage backend, indexing, retention, rehydration, exact persistence format, control-plane service/package topology, deployment placement policy, orchestration, product observability/query/dashboard/alerting semantics, production OpenTelemetry bootstrap, native host telemetry, durable async run history, platform secret-store precedence, production config source order, and arbitrary free-form diagnostic string DLP remain unresolved beyond the contained observation packet proof.",
       "fixtures": [
-        "evidence/workstreams/2026-04-30-migration-control-plane-observation.md"
+        "phases/phase-one/workstreams/workstream-2026-04-30-phase-one-migration-control-plane-observation.md"
       ]
     },
     {
       "id": "audit.runtime-research-program-closeout",
       "status": "out-of-scope",
       "source": "DRA runtime-realization research program closeout",
-      "oracle": "The bounded DRA research program sequence can close as coordination continuity only after workstreams 0-11 are submitted, proof categories remain unchanged, and residual decision packets stay authority-homed. Closeout is not runtime proof, production runtime readiness, production migration readiness, or an accepted architecture decision.",
+      "oracle": "The bounded DRA research program sequence can close as coordination continuity only after workstreams 0-11 are submitted, proof categories remain unchanged, and residual decision packets stay authority-homed. Closeout is not runtime proof, Lab-Production Proof, Parent-Repo Migration authorization, or an accepted architecture decision.",
       "fixtures": [
-        "evidence/workstreams/2026-04-30-runtime-research-program-closeout.md"
+        "phases/phase-one/workstreams/workstream-2026-04-30-phase-one-runtime-research-program-closeout.md"
       ]
     },
     {
@@ -880,7 +880,7 @@
       "source": "User control input and runtime spec lock authority section 29",
       "oracle": "The repo-pinned canonical runtime realization spec must match the external locked spec snapshot before future proof promotion; replacing the stale repo copy and manifest hash is authority hygiene, not runtime proof.",
       "fixtures": [
-        "evidence/workstreams/2026-04-30-canonical-spec-authority-refresh.md"
+        "phases/phase-one/workstreams/workstream-2026-04-30-phase-one-canonical-spec-authority-refresh.md"
       ]
     },
     {

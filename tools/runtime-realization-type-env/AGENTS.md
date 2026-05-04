@@ -4,13 +4,33 @@
 
 This file applies to `tools/runtime-realization-type-env/**`.
 
-This project is a contained runtime realization lab. It is not production SDK code, not production runtime code, and not migration implementation. Keep changes inside this tool unless the user explicitly asks for a migration slice.
+This project is the Runtime Realization Lab: the contained environment for
+building, testing, and proving the runtime realization system without changing
+parent repo packages, apps, services, deployment topology, or public surfaces.
+It is not parent repo SDK/runtime code and not Parent-Repo Migration
+implementation.
+
+## Naming Frame
+
+Use this vocabulary consistently:
+
+| Concept | Canonical term | Meaning |
+| --- | --- | --- |
+| Environment | Runtime Realization Lab, or the Lab | `tools/runtime-realization-type-env`, the self-contained runtime container/lab. |
+| Proof harness | Oracle | The existing falsifiable RAWR-owned proof harness and regression substrate under `src/oracle` and `test/oracle`; separate from the future Reference Runtime. |
+| Lab goal | Lab-Production Proof | Production-level evidence earned inside the Lab by a full contained runtime/reference system, with named gates, test oracles, proof ceilings, and residuals. |
+| Runtime artifact | Reference Runtime | The full runtime-in-a-folder system built inside the Lab to earn Lab-Production Proof. |
+| Repo transfer | Parent-Repo Migration | Later migration/adaptation of accepted Lab results into parent repo packages, apps, services, deployment topology, or public surfaces. |
+
+Do not use unqualified production-ready phrasing when the distinction matters.
+Say Lab-Production Proof for the Lab goal and Parent-Repo Migration for moving
+accepted results into the parent repo.
 
 ## Structure
 
 - `src/sdk/**`: local pseudo-SDK facade for canonical-looking `@rawr/sdk/*` imports.
 - `src/spine/**`: shared runtime spine artifact and compatibility simulation helpers.
-- `src/mini-runtime/**`: contained miniature RAWR-owned runtime path.
+- `src/oracle/**`: contained Oracle proof runtime path.
 - `src/vendor/**`: narrow vendor probes and adapters for real dependencies.
 - `fixtures/positive/**`: authoring and artifact examples that must typecheck.
 - `fixtures/inline-negative/**`: `@ts-expect-error` misuse checks compiled by the normal typecheck.
@@ -18,10 +38,51 @@ This project is a contained runtime realization lab. It is not production SDK co
 - `fixtures/todo/**`: unresolved design experiments excluded from positive typecheck.
 - `test/vendor-effect/**`: real Effect behavior used by the facade/runtime lanes.
 - `test/vendor-boundaries/**`: vendor boundary shape smoke checks only.
-- `test/mini-runtime/**`: contained RAWR mini-runtime behavior.
-- `evidence/**`: proof manifest, focus log, vendor notes, diagnostic reports, and guardrails.
-- `evidence/workstreams/**`: completed burn-down reports and next-workstream input packets; informative continuity only.
+- `test/oracle/**`: contained RAWR Oracle behavior.
+- `evidence/**`: produced proof/status authority plus operational system and vendor evidence maps.
+- `guidance/**`: reusable operator guidance, guardrails, workflows, and templates.
+- `phases/**`: phase-owned operator anchors, produced workstream reports, handoffs, handoff references, and archives; informative continuity only.
 - `RUNBOOK.md`: canonical operating guide for lab continuity, authority order, red/yellow/green upkeep, spec feedback, and handoff shape.
+
+## Evidence Terminology
+
+- Program: the whole runtime-realization effort.
+- Phase: a bounded proof campaign inside the program.
+- Phase program workstream: the coordinating artifact for one phase.
+- Child workstream: a scoped proof, research, or execution slice inside a phase.
+- Handoff: a phase-bound transition or orientation artifact.
+
+Evidence root files are authority/status surfaces. Phase dossiers are continuity
+and coordination surfaces. Workstream reports and handoffs never override the
+manifest, diagnostic, runtime spec, source, fixtures, tests, or gates.
+
+## Artifact Placement Map
+
+Use this map before creating or moving lab documentation. `README.md` is the
+only unprefixed filename exception.
+
+| Creating or updating | Place it here | Name it like | Source status |
+| --- | --- | --- | --- |
+| Global proof/status authority | `evidence/` | Existing canonical filename | Authority/status surface |
+| Current lab state | `evidence/` | `current-lab-state.md` | Current experiment pointer |
+| System/subsystem evidence map | `evidence/systems/` | `<concept>-map.md` or `<concept>-evidence-map.md` | Evidence map |
+| Vendor evidence map | `evidence/vendors/` | `<vendor-or-boundary>.md` | Vendor fact/proof-boundary map |
+| Reusable operator guidance | `guidance/` | `guardrails-*`, `workflow-*`, or `template-*` | Process/template reference |
+| Phase overview | `phases/<phase>/README.md` | `README.md` | Phase navigation |
+| Phase operator anchor | `phases/<phase>/` | `workflow-*` or `ref-*` | Phase process/reference anchor |
+| Phase workstream report | `phases/<phase>/workstreams/` | `workstream-YYYY-MM-DD-phase-<one|two|three>-<slug>.md` | Continuity/report |
+| Workstream-produced reference | `phases/<phase>/workstreams/` | `ref-YYYY-MM-DD-<slug>.md` | Reference artifact |
+| Phase handoff | `phases/<phase>/handoffs/` | `handoff-YYYY-MM-DD-<slug>.md` | Orientation/transition |
+| Handoff-attached reference | `phases/<phase>/handoffs/` | `ref-YYYY-MM-DD-<slug>.md` | Reference artifact |
+| Phase archive/provenance | `phases/<phase>/_archive/<group>/` | Preserve or add `workflow-` / `ref-` / `workstream-` prefix | Historical provenance |
+
+Do not create `evidence/phases/`, `evidence/workstreams/`,
+`evidence/handoffs/`, `evidence/_archive/`, root `workflows/`, root
+`templates/`, phase `refs/`, or phase `workflows/`. If a future file is
+phase-owned and singular/normative for the DRA, keep it at `phases/<phase>/`.
+If it is produced work, place it under the phase `workstreams/` or `handoffs/`
+surface that owns it. If it is reusable process or template material, place it
+under `guidance/`.
 
 ## Required Reading
 
@@ -29,30 +90,32 @@ Before adding or changing tests, fixtures, manifest entries, or evidence docs, r
 
 - `README.md`
 - `RUNBOOK.md`
+- `evidence/AGENTS.md`
 - `evidence/README.md`
-- `evidence/design-guardrails.md`
-- `evidence/dra-phase-two-level-zero-workflow.md`
-- `evidence/phase-two-production-critical-claim-ledger.md`
-- `evidence/focus-log.md`
-- `evidence/runtime-realization-research-program.md`
-- `evidence/workstreams/2026-04-30-phase-two-production-readiness-program-workstream.md`
-- `evidence/workstreams/README.md`
-- `evidence/workstreams/TEMPLATE.md`
+- `guidance/guardrails-design.md`
+- `evidence/current-lab-state.md`
+- `evidence/systems/README.md`
+- the relevant phase dossier under `phases/**`
+- `guidance/template-workstream-report.md`
 - `evidence/proof-manifest.json`
-- `evidence/vendor-fidelity.md`
+- `evidence/vendors/README.md`
 - `evidence/runtime-spine-verification-diagnostic.md`
-- `evidence/phased-agent-verification-workflow.md`
+- `guidance/workflow-phased-agent-verification.md`
 
 ## Evidence Rules
 
-- Use `proof`, `vendor-proof`, `simulation-proof`, `xfail`, `todo`, and `out-of-scope` exactly as defined in `evidence/design-guardrails.md`.
+- Use `proof`, `vendor-proof`, `simulation-proof`, `xfail`, `todo`, and `out-of-scope` exactly as defined in `guidance/guardrails-design.md`.
 - Vendor-shape checks must not be described as RAWR runtime proof.
-- Mini-runtime tests must not be described as production runtime proof.
+- Oracle tests must not be described as Lab-Production Proof by
+  themselves; they are Oracle construction and regression substrate for the
+  future Reference Runtime.
 - TODO fixtures are not proof. They are fenced experiments or known design gaps.
 - Every proof entry must name a gate that would fail if the claim regressed.
 - Every new TODO fixture must be listed in `proof-manifest.json`.
-- Experiment changes must keep `evidence/focus-log.md` and `proof-manifest.currentExperiment` aligned.
-- Before promoting proof or changing red/yellow/green status, use `RUNBOOK.md` and `evidence/phased-agent-verification-workflow.md` to verify the authority order, review axes, and promotion condition.
+- Experiment changes must keep `evidence/current-lab-state.md` and `proof-manifest.currentExperiment` aligned.
+- Vendor-specific behavior or shape changes must update the relevant `evidence/vendors/*.md` concept map.
+- Runtime subsystem evidence changes must update the relevant `evidence/systems/*.md` concept map.
+- Before promoting proof or changing red/yellow/green status, use `RUNBOOK.md` and `guidance/workflow-phased-agent-verification.md` to verify the authority order, review axes, and promotion condition.
 
 ## Test-Theater Rules
 
@@ -70,7 +133,8 @@ Keep vendor probes only when they protect a RAWR adaptation boundary, and label 
 ## Containment Rules
 
 - Do not add `tools/runtime-realization-type-env/package.json`.
-- Do not add this tool to workspaces, root build/typecheck/test, package exports, or production imports.
+- Do not add this tool to parent workspaces, root build/typecheck/test, package
+  exports, or parent repo production imports.
 - Do not import production `apps/*`, `packages/*`, `services/*`, or `plugins/*` code.
 - Real `effect@3.21.2` remains a root dev dependency for this lab only.
 - Canonical-looking `@rawr/sdk/*` imports remain local `tsconfig` aliases.

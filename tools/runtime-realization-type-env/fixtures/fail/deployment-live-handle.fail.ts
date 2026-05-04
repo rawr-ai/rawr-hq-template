@@ -1,5 +1,5 @@
 // @expected-error TS2353
-import type { DeploymentRuntimeHandoff } from "../../src/mini-runtime/deployment-handoff";
+import type { DeploymentRuntimeHandoff } from "../../src/oracle/deployment-handoff";
 
 export const BadDeploymentRuntimeHandoff = {
   kind: "deployment.runtime-handoff",
