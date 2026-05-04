@@ -58,7 +58,9 @@ program, phase, or runtime-specific language.
    inputs before drawing conclusions.
 4. **Create the record.** Copy `assets/minimal-workstream-record.md` for small
    workstreams or `assets/workstream-record.md` for complex workstreams. Do not
-   invent a second schema.
+   invent a second schema. Open `assets/decisions.md` as a sibling artifact for
+   user-decision items, execution-scope choices, and meta-design pass output
+   that produces decisions; decisions do not live inside the record.
 5. **Plan the lanes.** Use host-only execution unless parallel lanes reduce real
    risk. Use `assets/agent-packet.md` and `assets/wave-packet.md` when
    delegation is useful.
@@ -87,6 +89,7 @@ program, phase, or runtime-specific language.
 | --- | --- |
 | `assets/minimal-workstream-record.md` | Small workstream record scaffold |
 | `assets/workstream-record.md` | Full scaffold for complex, multi-lane, review-heavy, or handoff-heavy workstreams |
+| `assets/decisions.md` | Recording user-decision items and execution-scope choices with rationale |
 | `assets/agent-packet.md` | Delegating one bounded lane |
 | `assets/wave-packet.md` | Coordinating multiple lanes inside one phase |
 | `assets/finding-record.md` | Recording review findings and dispositions |
@@ -114,6 +117,8 @@ Before final response or closure:
 - Objective outcome is stated as achieved, partially achieved, or not achieved,
   with residual objective gaps named.
 - The output contract is satisfied or explicitly revised.
+- Every borderline call has explicit rationale recorded in `decisions.md` or in
+  a finding record.
 - Review findings are accepted, rejected, invalidated, waived, or deferred.
 - Gates are recorded with commands, results, and skipped-check rationale.
 - Deferred items have context, owner/future DRA, authority home, and trigger.
