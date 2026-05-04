@@ -1,5 +1,9 @@
 ## I. Executive Answer
 
+Status: elevated source report / informative / not production readiness proof.
+
+This report preserves durable Inngest workflow findings and proof boundaries from the Hyperresearch proof run. Use it as source evidence for later spec work; do not treat it as proof that production Inngest topology is ready.
+
 RAWR HQ should encode durable plugin workflows as an Inngest-shaped runtime contract. Inngest is a durable execution platform: it persists function state outside the handler, retries failed work, and resumes runs by memoizing completed step output. That model only helps RAWR if plugin authors declare stable workflow semantics and the runtime owns the infrastructure that makes those semantics durable [[how-inngest-functions-are-executed-durable-execution-inngest-documentation]] [[inngest-steps-inngest-documentation]].
 
 RAWR plugin workflow specs should model Inngest functions as durable runtime-owned execution units, not plugin-local scripts. Plugins should declare workflow identity, event or cron triggers, step boundaries, side-effect categories, retry and idempotency policy, wait contracts, batching intent, and flow-control intent. The runtime should own the Inngest client, function registry, `/api/inngest` ingress, `serve()` adapter, signing and event keys, app sync, topology, observability, and production proof [[serve-inngest-documentation]] [[create-function-inngest-documentation]].
