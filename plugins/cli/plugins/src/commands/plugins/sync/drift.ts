@@ -124,22 +124,27 @@ export default class PluginsSyncDrift extends RawrCommand {
           this.log(`scope: ${scope}`);
           this.log(`status: ${assessment.status}`);
           this.log(
-            `summary: plugins=${plugins.length} targets=${assessment.summary.totalTargets} materialChanges=${assessment.summary.totalMaterialChanges} metadataChanges=${assessment.summary.totalMetadataChanges} conflicts=${assessment.summary.totalConflicts} projectionResiduals=${assessment.summary.totalProjectionResiduals}`,
+            `summary: plugins=${plugins.length} targets=${assessment.summary.totalTargets} materialChanges=${assessment.summary.totalMaterialChanges} metadataChanges=${assessment.summary.totalMetadataChanges} conflicts=${assessment.summary.totalConflicts} materialProjectionResiduals=${assessment.summary.totalMaterialProjectionResiduals} semanticSupportResiduals=${assessment.summary.totalSemanticSupportResiduals}`,
           );
           if (!inSync) {
             this.log("drift:");
             for (const plugin of plugins) {
-              if (plugin.conflicts === 0 && plugin.driftItems.length === 0 && plugin.projectionResiduals.length === 0) continue;
+              if (
+                plugin.conflicts === 0 &&
+                plugin.driftItems.length === 0 &&
+                plugin.materialProjectionResiduals.length === 0 &&
+                plugin.semanticSupportResiduals.length === 0
+              ) continue;
               this.log(
-                `- ${plugin.dirName}: material=${plugin.materialChanges} metadata=${plugin.metadataChanges} conflicts=${plugin.conflicts} projectionResiduals=${plugin.projectionResiduals.length}`,
+                `- ${plugin.dirName}: material=${plugin.materialChanges} metadata=${plugin.metadataChanges} conflicts=${plugin.conflicts} materialProjectionResiduals=${plugin.materialProjectionResiduals.length} semanticSupportResiduals=${plugin.semanticSupportResiduals.length}`,
               );
             }
           }
-          if (inSync && assessment.summary.totalProjectionResiduals > 0) {
-            this.log("projection residuals:");
+          if (inSync && assessment.summary.totalSemanticSupportResiduals > 0) {
+            this.log("semantic support residuals:");
             for (const plugin of plugins) {
-              if (plugin.projectionResiduals.length === 0) continue;
-              this.log(`- ${plugin.dirName}: projectionResiduals=${plugin.projectionResiduals.length}`);
+              if (plugin.semanticSupportResiduals.length === 0) continue;
+              this.log(`- ${plugin.dirName}: semanticSupportResiduals=${plugin.semanticSupportResiduals.length}`);
             }
           }
         },

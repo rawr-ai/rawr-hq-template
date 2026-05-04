@@ -3,6 +3,8 @@ import {
   DistributionModeSchema,
   EvidenceLevelSchema,
   MaterialKindSchema,
+  ProjectionSupportStatusSchema,
+  SemanticCapabilityKindSchema,
   SourcePluginSchema,
   SupportStatusSchema,
   SyncActionSchema,
@@ -82,6 +84,20 @@ export const SyncTargetResultSchema = Type.Object(
 
 export type SyncTargetResult = Static<typeof SyncTargetResultSchema>;
 
+export const ProjectionSupportSchema = Type.Object(
+  {
+    provider: SyncAgentSchema,
+    semanticKind: SemanticCapabilityKindSchema,
+    source: Type.String({ minLength: 1 }),
+    supportStatus: ProjectionSupportStatusSchema,
+    evidenceLevel: EvidenceLevelSchema,
+    notes: Type.Array(Type.String({ minLength: 1 })),
+  },
+  { additionalProperties: false },
+);
+
+export type ProjectionSupport = Static<typeof ProjectionSupportSchema>;
+
 export const ProviderProjectionSchema = Type.Object(
   {
     provider: SyncAgentSchema,
@@ -92,6 +108,7 @@ export const ProviderProjectionSchema = Type.Object(
     distributionMode: DistributionModeSchema,
     supportStatus: SupportStatusSchema,
     evidenceLevel: EvidenceLevelSchema,
+    semanticSupport: Type.Array(ProjectionSupportSchema),
     droppedSemantics: Type.Array(Type.String({ minLength: 1 })),
     adapterRequiredSemantics: Type.Array(Type.String({ minLength: 1 })),
     validationNotes: Type.Array(Type.String({ minLength: 1 })),

@@ -160,9 +160,20 @@ describe("agent-config-sync service behavior", () => {
       provider: "codex",
       materialKind: "agent",
       source: "researcher",
-      supportStatus: "adapter_required",
+      supportStatus: "native",
       droppedSemantics: ["tools", "hooks", "mcpServers", "permissionMode", "skills", "model"],
     }));
+    const previewAgentProjection = preview.projections.find((projection) =>
+      projection.provider === "codex" &&
+      projection.materialKind === "agent" &&
+      projection.source === "researcher"
+    );
+    expect(previewAgentProjection?.semanticSupport).toEqual(expect.arrayContaining([
+      expect.objectContaining({ semanticKind: "agent_role", supportStatus: "native" }),
+      expect.objectContaining({ semanticKind: "tool_lock", supportStatus: "unsupported" }),
+      expect.objectContaining({ semanticKind: "model_selection", supportStatus: "adapter_required" }),
+      expect.objectContaining({ semanticKind: "mcp_server", supportStatus: "unsupported" }),
+    ]));
 
     const applied = await client.execution.runSync({
       sourcePlugin: workspace.sourcePlugin,
@@ -190,6 +201,81 @@ describe("agent-config-sync service behavior", () => {
 
     const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
     expect(registry.plugins[0]).toMatchObject({ name: "plugin-demo", agents: ["researcher"] });
+  });
+
+  it("keeps material sync IN_SYNC while reporting Codex semantic support residuals", async () => {
+    const workspace = await makeParityWorkspace({
+      agentFrontmatter: {
+        description: "Research helper",
+        tools: ["Read", "Task"],
+        mcpServers: { research: {} },
+        model: "claude-opus-4-1",
+      },
+    });
+    await fs.writeFile(
+      workspace.content.agentFiles[0]!.absPath,
+      "---\ndescription: \"Research helper\"\ntools: [\"Read\", \"Task\"]\nmcpServers:\n  research: {}\nmodel: \"claude-opus-4-1\"\n---\nTask(subagent_type: \"researcher\", prompt: \"map evidence\")\n",
+      "utf8",
+    );
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+
+    await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      includeAgentsInCodex: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-codex-semantic-residual-apply" } } });
+
+    const plan = await client.planning.planWorkspaceSync({
+      cwd: workspace.workspaceRoot,
+      sourcePaths: [],
+      includeMetadata: true,
+      scope: "toolkit",
+      agent: "codex",
+      targetHomeCandidates: {
+        codexHomesFromFlags: [codexHome],
+        claudeHomesFromFlags: [],
+        codexHomesFromEnvironment: [],
+        claudeHomesFromEnvironment: [],
+        codexHomesFromConfig: [],
+        claudeHomesFromConfig: [],
+        codexDefaultHomes: [],
+        claudeDefaultHomes: [],
+      },
+      includeAgentsInCodex: true,
+      includeAgentsInClaude: true,
+      fullSyncPolicy: {
+        agent: "codex",
+        scope: "toolkit",
+        coworkEnabled: true,
+        claudeInstallEnabled: true,
+        claudeEnableEnabled: true,
+        installReconcileEnabled: true,
+        retireOrphansEnabled: true,
+        force: true,
+        gc: true,
+        allowPartial: true,
+      },
+    }, { context: { invocation: { traceId: "test-codex-semantic-residual-plan" } } });
+
+    expect(plan.assessment.status).toBe("IN_SYNC");
+    expect(plan.assessment.summary.totalSemanticSupportResiduals).toBeGreaterThan(0);
+    expect(plan.assessment.plugins[0]?.semanticSupportResiduals).toEqual(expect.arrayContaining([
+      expect.objectContaining({ materialKind: "agent", semanticKind: "tool_lock", supportStatus: "unsupported" }),
+      expect.objectContaining({ materialKind: "agent", semanticKind: "model_selection", supportStatus: "adapter_required" }),
+      expect.objectContaining({ materialKind: "agent", semanticKind: "task_spawn", supportStatus: "adapter_required" }),
+    ]));
   });
 
   it("does not abort Codex projection when Claude agent frontmatter is malformed", async () => {
@@ -221,8 +307,16 @@ describe("agent-config-sync service behavior", () => {
       provider: "codex",
       materialKind: "agent",
       source: "researcher",
-      supportStatus: "adapter_required",
+      supportStatus: "native",
       droppedSemantics: ["unparseable_frontmatter"],
+    }));
+    expect(result.projections).toContainEqual(expect.objectContaining({
+      provider: "codex",
+      materialKind: "agent",
+      source: "researcher",
+      semanticSupport: expect.arrayContaining([
+        expect.objectContaining({ semanticKind: "settings", supportStatus: "unknown" }),
+      ]),
     }));
     const toml = parseToml(await fs.readFile(path.join(codexHome, "agents", "researcher.toml"), "utf8")) as Record<string, unknown>;
     expect(toml).toMatchObject({
@@ -383,11 +477,20 @@ describe("agent-config-sync service behavior", () => {
       "skill:synthetic-hyperresearch-1-decompose",
     ]));
     expect(plan.assessment.summary.totalProjectionResiduals).toBeGreaterThan(0);
-    const residualKinds = plan.assessment.plugins[0]?.projectionResiduals.map((item) => item.materialKind) ?? [];
+    expect(plan.assessment.summary.totalSemanticSupportResiduals).toBeGreaterThan(0);
+    const residualKinds = plan.assessment.plugins[0]?.materialProjectionResiduals.map((item) => item.materialKind) ?? [];
     expect(residualKinds).toEqual(expect.arrayContaining([
-      "agent",
       "asset",
       "orchestration",
+    ]));
+    const semanticKinds = plan.assessment.plugins[0]?.semanticSupportResiduals.map((item) => item.semanticKind) ?? [];
+    expect(semanticKinds).toEqual(expect.arrayContaining([
+      "skill_invocation",
+      "parallel_task_join",
+      "todo_state",
+      "tool_lock",
+      "model_selection",
+      "mcp_server",
     ]));
     expect(residualKinds).not.toContain("hook");
     expect(residualKinds).not.toContain("mcp");

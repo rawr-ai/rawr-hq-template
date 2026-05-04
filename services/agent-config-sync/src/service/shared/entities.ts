@@ -31,14 +31,19 @@ export const MaterialKindSchema = Type.Union([
 
 export const SemanticCapabilityKindSchema = Type.Union([
   Type.Literal("agent_role"),
+  Type.Literal("skill_step"),
   Type.Literal("skill_invocation"),
   Type.Literal("task_spawn"),
+  Type.Literal("parallel_task_join"),
   Type.Literal("todo_state"),
   Type.Literal("tool_lock"),
   Type.Literal("model_selection"),
   Type.Literal("hook"),
   Type.Literal("mcp_server"),
   Type.Literal("settings"),
+  Type.Literal("bootstrap"),
+  Type.Literal("cosmetic"),
+  Type.Literal("artifact_state"),
   Type.Literal("asset"),
 ]);
 
@@ -55,6 +60,13 @@ export const SupportStatusSchema = Type.Union([
   Type.Literal("native"),
   Type.Literal("adapter_required"),
   Type.Literal("legacy_or_deprecated"),
+  Type.Literal("unsupported"),
+  Type.Literal("unknown"),
+]);
+
+export const ProjectionSupportStatusSchema = Type.Union([
+  Type.Literal("native"),
+  Type.Literal("adapter_required"),
   Type.Literal("unsupported"),
   Type.Literal("unknown"),
 ]);
@@ -145,6 +157,7 @@ export type MaterialKind = Static<typeof MaterialKindSchema>;
 export type SemanticCapabilityKind = Static<typeof SemanticCapabilityKindSchema>;
 export type DistributionMode = Static<typeof DistributionModeSchema>;
 export type SupportStatus = Static<typeof SupportStatusSchema>;
+export type ProjectionSupportStatus = Static<typeof ProjectionSupportStatusSchema>;
 export type EvidenceLevel = Static<typeof EvidenceLevelSchema>;
 export type SyncScope = Static<typeof SyncScopeSchema>;
 export type SyncAction = Static<typeof SyncActionSchema>;
