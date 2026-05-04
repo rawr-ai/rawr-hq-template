@@ -1,19 +1,19 @@
 # Workstream Record — Runtime-Architecture Alignment
 
-Status: active-draft
+Status: closing (Phase 5)
 Branch: `align-arch-spec-with-runtime-realization`
-PR: pending (opens at Phase 4 close)
-Commit: HEAD on branch
+PR: pending (opens at Phase 5 close)
+Commit: HEAD on branch (10+ commits across Phases 0-5)
 DRA: Claude Opus 4.7 (this session)
-Dates: 2026-05-04 → active
+Dates: 2026-05-04 (single-day execution)
 
 ## Workstream State
 
 - Workstream record path: `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/record.md`
-- Status: active-draft
+- Status: closing (Phase 5 mechanics audit + closure commit + PR open pending)
 - DRA: Claude Opus 4.7 (current session, autonomous mode active)
 - Branch/stack: feature branch `align-arch-spec-with-runtime-realization` off `main`; no graphite stack
-- Current phase: Phase 0 (Internalization & Decision Resolution)
+- Current phase: Phase 5 (closure)
 - Selected skills: `habitat:workstream-runner`, `habitat:workstream-review-loops`
 - Selected agents: `workstream-opening-steward` (Phase 0 close), `workstream-proof-ledger-auditor` (Phase 5), `workstream-closure-steward` (Phase 5); ad-hoc Sonnet workers + Opus inquisitors via Agent tool per fleet design
 - Selected hooks: none (no automated hooks govern this workstream)
@@ -142,30 +142,117 @@ No long-form scratch documents. All evidence flows through finding records or th
 
 ## Findings
 
-(Populated during execution. Each finding follows the `finding-record.md` schema.)
+All finding records live under `findings/` in this workstream directory:
+
+| File | Phase | Layer | Status |
+|---|---|---|---|
+| `wave-1-packet.md` | 1 | wave packet | n/a (planning artifact) |
+| `lane-1-1-patch.md` | 1 | worker output | applied |
+| `lane-1-1-finding.md` | 1 | leaf review | pass, 0 findings |
+| `lane-1-2-patch.md` | 1 | worker output | applied |
+| `lane-1-2-finding.md` | 1 | leaf review | pass, 1 P3 informational |
+| `lane-1-3-patch.md` | 1 | worker output | applied |
+| `lane-1-3-finding.md` | 1 | leaf review | pass, 8 findings all clean |
+| `lane-1-4-patch.md` | 1 | worker output | applied |
+| `lane-1-4-finding.md` | 1 | leaf review | pass, 0 findings |
+| `wave-1-composed-finding.md` | 1 | composed review | pass, 1 P4 informational |
+| `lane-2-1-patch.md` | 2 | worker output | applied |
+| `lane-2-2-patch.md` | 2 | worker output | applied |
+| `lane-2-3-patch.md` | 2 | worker output | applied (2.3.B skipped per DRA judgment) |
+| `wave-2-leaf-finding.md` | 2 | consolidated leaf review | pass, 19 findings all clean |
+| `wave-2-composed-finding.md` | 2 | composed review | pass, 9/9 tests pass |
+| `lane-3-patch.md` | 3 | worker output | applied (Lane 3.6 no-op, already in Phase 1) |
+| `phase-4-cross-spec-finding.md` | 4 | cross-spec integrated review | pass, 5/5 tests pass |
+| `phase-5-closure-steward.md` | 5 | closure steward | warn → repaired in this commit |
+| `phase-5-proof-ledger.md` | 5 | proof ledger auditor | pass |
+
+Total: 7 lane patches (8 sub-edits in Lane 1.3, 4 in Lane 2.2, 5 in Lane 3, others 1-3 each); 19 finding records; zero accepted P1/P2 findings; one DRA-skipped sub-edit (2.3.B) with documented rationale.
 
 ## Outcome Record
 
-(Populated at Phase 5.)
+- **Objective outcome:** **achieved.**
+- **Residual objective gaps:** none. All seven recommendations from `runtime-architecture-alignment-plan.md` applied or formally addressed (Rec #7 sub-edit 2.3.B intentionally skipped because §4.9 already carries an equivalent negative-form sentence).
+- **Implementation summary:** see commit log on branch `align-arch-spec-with-runtime-realization`. Spans Phase 0 (scaffold + decisions) → Phase 1 (4 lanes, structural cohort: scope rewrite, §10.14 registry, §10.12 named types + per-harness contracts + §13.8, §15.8 external interfaces) → Phase 2 (3 lanes, cleanup cohort: Inngest mode, §10.4-§10.6 + §17.6 compressions, §4.0 ownership law + Effect.Service correction + runtime-spec L36 cross-ref) → Phase 3 (1 consolidated lane, downstream audit: §10.2 derivation row + §17.8 invariants + L25 §4.3a cross-ref + §10.14 5-lane enumeration + RuntimeAccess scoping) → Phase 4 (1 cross-spec integrator, all 5 tests pass) → Phase 5 (closure steward repairs + proof ledger pass + PR).
+- **Decisions:** see `decisions.md`. Six §5 user-decision items resolved (5 default DRA picks + 1 user gate for OpenShell = Option B). Four W-* workstream-level decisions locked.
+- **Evidence:** every applied edit has plan-section evidence link in finding records. Cross-references verified by grep. Per-name rule grep audit returns 0 hits for forbidden runtime-spec-only names.
+- **Verification:** Phase 4 cross-spec review tests (information shape, per-name rule, boundary honesty, registry coherence, cross-spec coherence) all pass. Proof Ledger Auditor pass. See `findings/phase-4-cross-spec-finding.md` and `findings/phase-5-proof-ledger.md`.
 
 ## Deferred Inventory
 
-(Populated at Phase 5. Provisional entries — confirmed at closure:)
+Five entries logged in `deferrals.md` at the project level (not in this record — this record points at the canonical location):
 
-- Regenerate M2 migration plan against aligned arch-spec.
-- Author deployment companion spec.
-- Author observability companion spec.
-- Author profile companion spec.
-- Lock OpenShell vendor status (conditional — only if user picks Option C in Phase 0 and no implementation slice has triggered yet).
+- D-1: Regenerate M2 migration plan against aligned arch-spec
+- D-2: Author deployment companion specification
+- D-3: Author observability companion specification
+- D-4: Author profile companion specification
+- D-5: Identify or build third-party OpenShell vendor; audit §13.5 contract
+
+Each entry has owner, authority home, trigger, and evidence link. See `docs/projects/rawr-final-architecture-migration/deferrals.md`.
 
 ## Review Result
 
-(Populated as review loops complete.)
+- **Layer 1 (per-edit leaf reviews):** all 4 Phase 1 lanes pass clean (Opus inquisitors); Phase 2 consolidated leaf pass (19 findings all clean); Phase 3 audit subsumed into Phase 4.
+- **Layer 2 (per-cohort composed reviews):** Wave 1 pass (8/8 cross-lane tests + 1 P4 informational accepted-as-is); Wave 2 pass (9/9 cross-lane tests; length sanity confirmed: 3073 → 3055 lines).
+- **Layer 3 (cross-spec integrated):** Phase 4 pass (5/5 tests).
+- **Layer 4 (closure mechanics):** Closure Steward warn → repaired in Phase 5 closure commit (this commit). Proof Ledger Auditor pass.
+- **Waivers:** none. All findings either accepted clean or accepted-as-is (P3/P4 informational).
+- **Invalidations:** none.
+- **Repair demands closed:** zero open. The closure-steward warn flagged three mechanical gaps (uncommitted backlog/deferrals + stale workstream record + missing Next Packet); all three close in this Phase 5 commit.
+- **DRA-skipped sub-edits:** Lane 2.3 sub-edit 2.3.B (negative-form append at §4.9) skipped because the existing §4.9 closing sentence already carries an equivalent (more comprehensive) negative-form claim. Documented in `lane-2-3-patch.md`, `wave-2-leaf-finding.md` F-2.3.4, and `wave-2-composed-finding.md`. Proof-ledger auditor confirmed soundness.
 
 ## Final Output
 
-(Populated at Phase 5.)
+- **Edited spec files:**
+  - `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md` (primary edit target; ~+200 lines net additions across all phases)
+  - `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md` (single line edit at L36 for Rec #7 Option B cross-reference)
+- **Workstream artifacts:** this `record.md` + `decisions.md` + `findings/*.md` (19 finding records).
+- **Backlog updates:** `docs/projects/rawr-final-architecture-migration/resources/research/SPEC_UPDATE_BACKLOG.md` updated; the runtime-architecture alignment item moved to Completed Updates section with PR/closure note.
+- **Deferrals:** `docs/projects/rawr-final-architecture-migration/deferrals.md` updated with five new entries (D-1 through D-5).
+- **Verification run:** see `findings/phase-4-cross-spec-finding.md` for grep audit results and integration test outcomes.
+- **Repo/Graphite state:** branch `align-arch-spec-with-runtime-realization` off `main`. 12+ commits. No graphite stack. Working tree clean after Phase 5 closure commit. PR opens immediately after this commit lands.
 
 ## Next Packet
 
-(Populated at Phase 5.)
+This packet is for the future DRA(s) who will continue the broader migration project after this alignment release ships.
+
+### Successor workstreams
+
+The aligned arch-spec unblocks the following downstream workstreams. Each is a Next Packet target:
+
+1. **Regenerate M2 migration plan against aligned arch-spec** (D-1).
+   - **What to inspect first:** `.context/M2-migration-planning-packet/01-primary-authorities.md` (authority order); `resources/spec/RAWR_Canonical_Architecture_Spec.md` (now-aligned); `.context/M2-migration-planning-packet/04-runtime-realization-core-spine-audit.md` (P0/P1 audit items still open).
+   - **First action:** open M2 regeneration workstream; review whether the four P0/P1 items from the audit are still open or have been addressed by the alignment edits; build the migration container.
+2. **Author deployment companion specification** (D-2).
+   - **What to inspect first:** arch-spec §10.14 row "Control-plane and deployment interface" + arch-spec §15.8 row 1 (`PortableRuntimePlanArtifact`).
+   - **First action:** identify deployment-platform target; open deployment-companion-spec workstream attaching at the named integration boundaries.
+3. **Author observability companion specification** (D-3).
+   - **What to inspect first:** arch-spec §10.14 rows "Runtime access" + "Diagnostics, telemetry, and observation"; arch-spec §15.8 rows 2-4 (`RuntimeCatalog`, `RuntimeDiagnostic`, `RuntimeTelemetry`).
+   - **First action:** select telemetry backend; open observability-companion-spec workstream.
+4. **Author profile companion specification** (D-4) — when profile catalog formalization triggers.
+5. **Identify or build third-party OpenShell vendor** (D-5) — when the first OpenShell implementation slice triggers; the §13.5 vendor-contract shape is locked but the vendor identity is reserved-detail-boundary.
+
+### Required first reads (zero-context resumption)
+
+For any of the above workstreams:
+
+1. `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md` (full read; now functions as the integration document — start at §1 → §10 → §13 → §15 → §17).
+2. `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md` (mechanics reference).
+3. `docs/projects/rawr-final-architecture-migration/resources/research/runtime-architecture-alignment-plan.md` §6 only (per-name rule + 6-rule attachment protocol + reserved-detail-boundary pattern).
+4. This workstream record (`workstreams/runtime-architecture-alignment/record.md`).
+5. `decisions.md` (in this workstream directory).
+6. `deferrals.md` (project-level).
+
+### First commands (any successor workstream)
+
+```bash
+# Verify alignment release merged
+git log main --oneline | head -20
+# Inspect aligned arch-spec headings
+grep -nE "^#{1,3} " docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md | head -100
+# Confirm registry exists
+sed -n '1820,1900p' docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+```
+
+### Deferred items to consume
+
+D-1 through D-5 (see `deferrals.md`). Successor workstreams should pick up the deferred entry that matches their objective, satisfy its trigger, and close it in their own closure record.

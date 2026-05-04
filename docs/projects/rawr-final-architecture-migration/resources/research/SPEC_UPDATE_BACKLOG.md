@@ -6,9 +6,13 @@ This backlog tracks known spec-update inputs surfaced by the current research se
 
 ## Known Needed Updates
 
-| Item | Source Input | Notes |
+(none currently; all known items have been resolved or moved to Future Intake)
+
+## Completed Updates
+
+| Item | Source Input | Resolution |
 | --- | --- | --- |
-| Align the system architecture with the runtime validation/runtime realization specification. | `runtime-architecture-alignment-plan.md` | Definite next-phase item. The current report frames the split as architecture owning canonical names and integration-boundary vocabulary while the runtime realization spec owns mechanics within each phase. |
+| Align the system architecture with the runtime validation/runtime realization specification. | `runtime-architecture-alignment-plan.md` | **Complete** (2026-05-04). All seven recommendations applied across both canonical specs via the runtime-architecture-alignment workstream. Six user-decision items resolved (see `workstreams/runtime-architecture-alignment/decisions.md`). PR pending merge. The arch-spec now functions as the integration document the plan describes: §10.14 registry of attachment boundaries; §15.8 platform external interfaces; §10.12 named harness-mount types; §13.x per-harness contracts; §13.8 companion harness attachment requirements; §4.3a names-vs-mechanics carve-out; §4.0 execution-ownership law (arch-spec authoritative). |
 
 ## Future Intake
 
@@ -20,8 +24,7 @@ This backlog tracks known spec-update inputs surfaced by the current research se
 
 ## Not Started Here
 
-- Architecture spec edits.
 - Runtime async spec edits.
-- Runtime realization spec edits.
+- Runtime realization spec edits beyond the L36 canonical-source cross-reference applied for Rec #7 Option B.
 - Priority ranking.
 - Implementation planning.
