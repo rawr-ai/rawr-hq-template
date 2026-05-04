@@ -4,13 +4,18 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
 
 ## Current Experiment
 
-- ID: `phase-two.async-inngest-boundary`
-- Focus: prove a contained Inngest-facing Bun serve/function/step path can
-  delegate through the async harness into `ProcessExecutionRuntime` while
-  keeping durable semantics and production worker topology fenced.
+- ID: `phase-two.telemetry-hyperdx-catalog-observation`
+- Focus: prove a contained provider/server/async/catalog observation spine can
+  project redacted records into OTLP/HyperDX-shaped export evidence and
+  non-persistent migration/control-plane packets while keeping product
+  observability, persistence, topology, and production telemetry policy fenced.
 - Related manifest entries:
   - `accepted.effect-only-authoring`
   - `accepted.invocation-bound-clients`
+  - `audit.telemetry.hyperdx-observation`
+  - `audit.telemetry.hyperdx-observation.residual`
+  - `audit.migration.control-plane-observation`
+  - `audit.migration.control-plane-observation.residual`
   - `vendor.boundary.inngest-handoff-shape`
   - `audit.p1.effect-boundary-policy-matrix`
   - `audit.p1.effect-boundary-policy-matrix.residual`
@@ -19,7 +24,9 @@ This is a lightweight marker for the lab's current experiment. It is not a proje
   - `audit.p2.async-effect-bridge-lowering`
   - `audit.p2.production-harness-mounting`
   - `audit.p2.provider-effect-process-spine`
+  - `audit.p2.server-orpc-fetch-boundary`
   - `audit.p2.async-inngest-function-step-boundary`
+  - `audit.p2.telemetry-integrated-observation-spine`
   - `simulation.async-step-owner-membership-artifacts`
   - `simulation.adapter-callback-bridge-lowering`
   - `simulation.first-server-async-harness-mounts`
