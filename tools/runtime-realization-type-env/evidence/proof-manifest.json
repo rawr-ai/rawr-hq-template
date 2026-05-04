@@ -1,12 +1,13 @@
 {
   "spec": {
     "path": "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md",
-    "sha256": "4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654"
+    "sha256": "483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b"
   },
   "currentExperiment": {
-    "id": "lab-v2.semantic-runtime-documentation-harvest",
-    "focus": "Harvest high-signal semantic JSDoc/comments from contained runtime realization seams for future production migration copy/paste guidance without treating comments as proof, runtime authority, final public API/DX, or production readiness.",
+    "id": "lab-v2.canonical-spec-authority-refresh",
+    "focus": "Replace the stale repo-pinned runtime realization spec with the external canonical spec snapshot, refresh the manifest hash, and record that this authority rebaseline is not proof promotion.",
     "relatedEntries": [
+      "audit.canonical-spec-authority-refresh",
       "accepted.effect-only-authoring",
       "accepted.curated-effect-public-surface",
       "audit.p1.effect-managed-runtime-substrate",
@@ -150,7 +151,7 @@
     {
       "id": "vendor.effect.runtime-substrate",
       "status": "vendor-proof",
-      "source": "Runtime spec sections 9 and 24; Effect-native addendum substrate categories",
+      "source": "Runtime spec sections 9, 17, 18, and 24",
       "oracle": "Real effect@3.21.2 executes Effect.gen, root pipe, value .pipe, Exit/Cause failure modes, interruption, scoped acquire/release, finalizers, and a process-owned ManagedRuntime wrapper.",
       "fixtures": [
         "src/sdk/effect.ts",
@@ -166,7 +167,7 @@
     {
       "id": "vendor.effect.process-local-coordination",
       "status": "vendor-proof",
-      "source": "Runtime spec section 14; Effect-native addendum process-local resource categories",
+      "source": "Runtime spec section 14",
       "oracle": "Real Effect Queue, PubSub, Ref, Deferred, Schedule, and Stream work behind the lab's RAWR-owned process-local resource probe without implying final resource API shape, durable async state, or domain truth.",
       "fixtures": [
         "src/mini-runtime/process-resources.ts",
@@ -432,7 +433,7 @@
     {
       "id": "audit.p1.effect-managed-runtime-substrate",
       "status": "xfail",
-      "source": "Runtime spec sections 9 and 24; Effect-native addendum sections 12, 38, and 45.3",
+      "source": "Runtime spec sections 9, 17, 18, 24, and 25.11",
       "oracle": "One process-owned Effect managed runtime, internal EffectRuntimeAccess, Layer/Scope construction, and disposal/finalization remain runtime-substrate work, not public authoring.",
       "fixtures": [
         "fixtures/todo/effect-managed-runtime-substrate.todo.ts"
@@ -441,7 +442,7 @@
     {
       "id": "audit.p1.process-local-coordination-resources",
       "status": "xfail",
-      "source": "Runtime spec section 14; Effect-native addendum sections 32-35 and 45.7",
+      "source": "Runtime spec sections 14 and 25.10",
       "oracle": "Process queue, pubsub, cache, and concurrency resources must be local runtime resource contracts and must not imply durable async or domain truth semantics.",
       "fixtures": [
         "fixtures/todo/process-local-coordination-resources.todo.ts"
@@ -450,7 +451,7 @@
     {
       "id": "audit.p1.provider-effect-plan-lowering",
       "status": "simulation-proof",
-      "source": "Runtime spec sections 13 and 24; Effect-native addendum sections 15, 37, and 42",
+      "source": "Runtime spec sections 13, 17, 23, and 24",
       "oracle": "Lab-internal ProviderEffectPlan acquire/release hooks lower through RAWR-owned mini bootgraph/provisioning modules with real Effect execution, provider dependency graph diagnostics fail closed before provisioning, graph edges drive dependency ordering, rollback/release runs on failed acquire, finalization runs in reverse, release failures are recorded, provider identity is preserved, and catalog records are redacted.",
       "fixtures": [
         "src/sdk/runtime/provider-plan-internals.ts",
@@ -466,7 +467,7 @@
     {
       "id": "audit.p1.effect-boundary-policy-matrix",
       "status": "simulation-proof",
-      "source": "Runtime spec sections 9, 24, and 25; Effect-native addendum sections 40-42",
+      "source": "Runtime spec sections 9, 23, 24, and 25",
       "oracle": "Contained executable/provider boundary policy records preserve exact execution/provider boundary kind, timeout metadata, retry-attempt declaration without retry scheduling, AbortSignal interruption propagation and classification, Effect Exit/Cause success/failure/defect/interruption classification, record-only telemetry metadata, redacted attributes, adapter-inherited runtime policy records, and provider acquire/release policy records. Final public policy API/DX, production retry/backoff, durable async semantics, HyperDX export/query, production host mapping, and catalog persistence remain fenced.",
       "fixtures": [
         "src/mini-runtime/boundary-policy.ts",
@@ -486,7 +487,7 @@
     {
       "id": "audit.p1.effect-boundary-policy-matrix.residual",
       "status": "xfail",
-      "source": "Runtime spec sections 9, 24, and 25; Effect-native addendum sections 40-42; residual from audit.p1.effect-boundary-policy-matrix",
+      "source": "Runtime spec sections 9, 23, 24, and 25; residual from audit.p1.effect-boundary-policy-matrix",
       "oracle": "Final public boundary policy API/DX, production retry/backoff, timeout enforcement, durable async policy, native host error mapping, HyperDX export/query, product observability policy, catalog persistence, provider refresh policy, config precedence, platform secret stores, and arbitrary free-form diagnostic string redaction remain unresolved beyond the contained record-only policy proof.",
       "fixtures": [
         "fixtures/todo/effect-boundary-policy-matrix.todo.ts"
@@ -495,7 +496,7 @@
     {
       "id": "audit.p1.safe-effect-composition-surface",
       "status": "xfail",
-      "source": "Runtime spec sections 5, 9, and 25; Effect-native addendum sections 8, 10, and 45.6",
+      "source": "Runtime spec sections 5, 9, and 25",
       "oracle": "Curated Effect composition helpers must be selected deliberately, with root pipe or value .pipe(...) spelling and no public raw runtime constructors.",
       "fixtures": [
         "fixtures/todo/safe-effect-composition-surface.todo.ts"
@@ -531,7 +532,7 @@
     {
       "id": "audit.p2.adapter-effect-callback-lowering",
       "status": "xfail",
-      "source": "Runtime spec sections 12 and 24; Effect-native addendum section 39",
+      "source": "Runtime spec sections 12, 20, 21, and 24",
       "oracle": "Contained native-shaped callback payload lowering and first mini harness mounting are proven, but production host callbacks, Elysia/oRPC request lifecycle, and final boundary policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/adapter-effect-callback-lowering.todo.ts"
@@ -540,7 +541,7 @@
     {
       "id": "audit.p2.async-effect-bridge-lowering",
       "status": "xfail",
-      "source": "Runtime spec sections 12, 19, and 24; Effect-native addendum section 28",
+      "source": "Runtime spec sections 12, 19, 20, 21, and 24",
       "oracle": "Contained async bridge payload lowering is proven, but native Inngest FunctionBundle/worker mounting, durable scheduling, retry/idempotency, and final async host policy remain unresolved.",
       "fixtures": [
         "fixtures/todo/async-effect-bridge-lowering.todo.ts"
@@ -594,6 +595,15 @@
       "fixtures": [
         "evidence/runtime-realization-research-program.md",
         "evidence/dra-runtime-research-program-workflow.md"
+      ]
+    },
+    {
+      "id": "audit.canonical-spec-authority-refresh",
+      "status": "out-of-scope",
+      "source": "User control input and runtime spec lock authority section 29",
+      "oracle": "The repo-pinned canonical runtime realization spec must match the external locked spec snapshot before future proof promotion; replacing the stale repo copy and manifest hash is authority hygiene, not runtime proof.",
+      "fixtures": [
+        "evidence/workstreams/2026-04-30-canonical-spec-authority-refresh.md"
       ]
     },
     {

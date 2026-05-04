@@ -21,6 +21,12 @@ The canonical runtime spec pinned in `proof-manifest.json` remains the
 architecture authority. The lab may reveal spec gaps, but it must not silently
 decide them in fixtures or helper code.
 
+On 2026-04-30 a user control input identified that the repo-pinned spec was
+stale. The repo copy now matches the external locked snapshot at
+`483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b`.
+Future proof promotion must refresh against that snapshot and its lock
+authority/stale-source handling section.
+
 ## DRA Continuity Anchor
 
 The DRA workflow is this research program workflow. The DRA should keep moving
