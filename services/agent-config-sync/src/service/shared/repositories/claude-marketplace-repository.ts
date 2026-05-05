@@ -67,14 +67,9 @@ export async function upsertClaudePluginManifest(input: {
   const existing = (await input.resources.files.readJsonFile<ClaudePluginManifest>(filePath)) ?? {};
 
   const next: ClaudePluginManifest = {
-    ...existing,
     name: input.sourcePlugin.dirName,
     version: input.sourcePlugin.version ?? existing.version ?? "1.0.0",
     description: input.sourcePlugin.description ?? existing.description ?? "Synced from RAWR HQ plugin",
-    skills: "./skills",
-    agents: "./agents",
-    ...(input.content?.hookConfigs?.length ? { hooks: "./hooks/hooks.json" } : {}),
-    ...(input.content?.mcpServers?.length ? { mcpServers: "./.mcp.json" } : {}),
   };
   const changed = !stableJsonEqual(existing, next);
 
@@ -98,6 +93,8 @@ export async function upsertClaudeMarketplace(input: {
       $schema: "https://anthropic.com/claude-code/marketplace.schema.json",
       name: "local",
       version: "1.0.0",
+      description: "Local RAWR-managed Claude Code plugins",
+      owner: { name: "RAWR HQ" },
       plugins: [],
     };
 
@@ -116,6 +113,8 @@ export async function upsertClaudeMarketplace(input: {
 
   const next: ClaudeMarketplaceFile = {
     ...existing,
+    description: existing.description ?? "Local RAWR-managed Claude Code plugins",
+    owner: existing.owner ?? { name: "RAWR HQ" },
     plugins: [...plugins].sort((a, b) => a.name.localeCompare(b.name)),
   };
   const changed = !stableJsonEqual(existing, next);

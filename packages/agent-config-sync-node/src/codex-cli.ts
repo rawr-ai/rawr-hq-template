@@ -170,6 +170,10 @@ export async function installCodexMarketplacePlugins(input: {
   const exec = input.exec ?? defaultExec;
 
   try {
+    if (input.codexHome) {
+      await fs.mkdir(input.codexHome, { recursive: true });
+    }
+
     const version = await requireSuccessfulCommand(exec, {
       cmd: codexBin,
       args: ["--version"],

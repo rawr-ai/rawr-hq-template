@@ -916,8 +916,16 @@ describe("agent-config-sync service behavior", () => {
     await expect(fs.readFile(path.join(pluginDir, "assets", "icon.txt"), "utf8")).resolves.toBe("synthetic asset\n");
     const pluginJson = JSON.parse(await fs.readFile(path.join(pluginDir, ".claude-plugin", "plugin.json"), "utf8"));
     expect(pluginJson).toMatchObject({
-      hooks: "./hooks/hooks.json",
-      mcpServers: "./.mcp.json",
+      name: "synthetic-hyperresearch",
+      version: "1.2.3",
+    });
+    expect(pluginJson).not.toHaveProperty("agents");
+    expect(pluginJson).not.toHaveProperty("hooks");
+    expect(pluginJson).not.toHaveProperty("mcpServers");
+    const marketplaceJson = JSON.parse(await fs.readFile(path.join(claudeHome, ".claude-plugin", "marketplace.json"), "utf8"));
+    expect(marketplaceJson).toMatchObject({
+      description: "Local RAWR-managed Claude Code plugins",
+      owner: { name: "RAWR HQ" },
     });
   });
 
