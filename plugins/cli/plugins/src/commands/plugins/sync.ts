@@ -22,6 +22,7 @@ import {
   resolveProviderContent,
   resolveSourceWorkspaceSelection,
   runSync,
+  syncCodexNativeAgentRoles,
 } from "#lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
 import { loadLayeredRawrConfigForCwd } from "#lib/layered-config";
@@ -174,6 +175,7 @@ export default class PluginsSync extends RawrCommand {
           codexHomes: (flags["codex-home"] as string[] | undefined) ?? [],
           claudeHomes: (flags["claude-home"] as string[] | undefined) ?? [],
           config: layered.config ?? undefined,
+          includeCodexDestinationProjection: destinationProjectionEnabled,
           fullSyncPolicy: {
             agent: String(flags.agent) as "codex" | "claude" | "all",
             scope: "all",
@@ -281,6 +283,29 @@ export default class PluginsSync extends RawrCommand {
       const claudeInstall: Array<Record<string, unknown>> = [];
       let installReconcile: Record<string, unknown> = { action: "skipped", reason: "not run" };
       let postStepFailed = false;
+      const codexNativeAgentRoles = !destinationProjectionEnabled && targets.agents.includes("codex")
+        ? await syncCodexNativeAgentRoles({
+            sourcePlugin,
+            content,
+            options: {
+              dryRun: baseFlags.dryRun,
+              force: Boolean(flags.force),
+              gc: Boolean(flags.gc),
+              includeAgentsInCodex,
+              undoCapture,
+            },
+            codexHomes: targets.homes.codexHomes,
+            includeCodex: true,
+          })
+        : null;
+      if (codexNativeAgentRoles && !codexNativeAgentRoles.ok) postStepFailed = true;
+      const effectiveSyncResult = codexNativeAgentRoles
+        ? {
+            ...syncResult,
+            targets: [...syncResult.targets, ...codexNativeAgentRoles.targets],
+            projections: [...syncResult.projections, ...codexNativeAgentRoles.projections],
+          }
+        : syncResult;
 
       if (coworkEnabled) {
         try {
@@ -472,8 +497,9 @@ export default class PluginsSync extends RawrCommand {
       if ((installReconcile as any).action === "failed") postStepFailed = true;
 
       const enriched = {
-        ...syncResult,
+        ...effectiveSyncResult,
         installScope,
+        codexNativeAgentRoles,
         codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
         codexMarketplace: summarizeCodexMarketplace(codexPackages),
         codexInstall,
@@ -484,11 +510,11 @@ export default class PluginsSync extends RawrCommand {
       };
       warnings = buildProviderWorkflowMirrorWarnings({
         cleanupBehind,
-        syncTargets: syncResult.targets,
+        syncTargets: effectiveSyncResult.targets,
       });
 
-      const conflictCount = syncResult.targets.reduce((sum, t) => sum + t.conflicts.length, 0);
-      const ok = syncResult.ok && !postStepFailed;
+      const conflictCount = effectiveSyncResult.targets.reduce((sum, t) => sum + t.conflicts.length, 0);
+      const ok = effectiveSyncResult.ok && !postStepFailed;
       const undoCapsule = undoCapture ? await undoCapture.finalize({ status: ok ? "ready" : "ready-partial" }) : null;
       const undo =
         undoCapsule
@@ -522,18 +548,18 @@ export default class PluginsSync extends RawrCommand {
               installReconcile,
               warnings,
               undo,
-              targets: syncResult.targets.map((t) => ({ agent: t.agent, home: t.home, conflicts: t.conflicts.length })),
+              targets: effectiveSyncResult.targets.map((t) => ({ agent: t.agent, home: t.home, conflicts: t.conflicts.length })),
             },
           });
 
       this.outputResult(payload, {
         flags: baseFlags,
         human: () => {
-          this.log(`Source plugin: ${syncResult.sourcePlugin.dirName} (${syncResult.sourcePlugin.absPath})`);
+          this.log(`Source plugin: ${effectiveSyncResult.sourcePlugin.dirName} (${effectiveSyncResult.sourcePlugin.absPath})`);
           this.log(
-            `Scanned: workflows=${syncResult.scanned.workflows.length}, skills=${syncResult.scanned.skills.length}, scripts=${syncResult.scanned.scripts.length}, agents=${syncResult.scanned.agents.length}`,
+            `Scanned: workflows=${effectiveSyncResult.scanned.workflows.length}, skills=${effectiveSyncResult.scanned.skills.length}, scripts=${effectiveSyncResult.scanned.scripts.length}, agents=${effectiveSyncResult.scanned.agents.length}`,
           );
-          for (const target of syncResult.targets) {
+          for (const target of effectiveSyncResult.targets) {
             const copied = target.items.filter((i) => i.action === "copied" || i.action === "updated").length;
             const skipped = target.items.filter((i) => i.action === "skipped").length;
             const deleted = target.items.filter((i) => i.action === "deleted").length;
@@ -546,8 +572,8 @@ export default class PluginsSync extends RawrCommand {
               this.log(`  conflict: [${conflict.kind}] ${conflict.target} (${conflict.message ?? ""})`);
             }
           }
-          const cowork = coworkPackages.find((p) => p.plugin === syncResult.sourcePlugin.dirName);
-          const codexPackage = codexPackages.find((p) => p.plugin === syncResult.sourcePlugin.dirName);
+          const cowork = coworkPackages.find((p) => p.plugin === effectiveSyncResult.sourcePlugin.dirName);
+          const codexPackage = codexPackages.find((p) => p.plugin === effectiveSyncResult.sourcePlugin.dirName);
           if (codexPackage) this.log(`Codex package: ${codexPackage.action} -> ${codexPackage.outDir}${codexPackage.reason ? ` (${codexPackage.reason})` : ""}`);
           if (codexPackage?.marketplacePath) this.log(`Codex marketplace: ${codexPackage.marketplaceAction} -> ${codexPackage.marketplacePath}`);
           this.log(`Codex install: ${(codexInstall as any).ok ? "ok" : "failed"}`);

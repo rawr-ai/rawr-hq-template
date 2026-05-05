@@ -194,6 +194,81 @@ export async function upsertCodexRegistry(input: {
   return { nextData, filePath, changed };
 }
 
+/**
+ * Updates only the Codex native custom-agent role claims for one plugin.
+ *
+ * @remarks
+ * Codex custom agents are native config files under `<codex-home>/agents`.
+ * This updater intentionally preserves legacy/auxiliary prompt, script, hook,
+ * skill, and MCP claims so cleanup-behind can still account for them.
+ */
+export async function upsertCodexRegistryAgentClaims(input: {
+  codexHome: string;
+  sourcePlugin: SourcePlugin;
+  agentNames: string[];
+  dryRun: boolean;
+  existingData: CodexRegistryFile;
+  resources: AgentConfigSyncResources;
+}): Promise<{ nextData: CodexRegistryFile; filePath: string; changed: boolean }> {
+  const filePath = input.resources.path.join(input.codexHome, "plugins", "registry.json");
+  const pluginName = input.sourcePlugin.dirName;
+  const nowIso = new Date().toISOString();
+  const plugins = [...(input.existingData.plugins ?? [])];
+  const existingIndex = plugins.findIndex((plugin) => plugin.name === pluginName);
+  const priorPlugin = existingIndex >= 0 ? plugins[existingIndex] : undefined;
+  if (!priorPlugin && input.agentNames.length === 0) {
+    return {
+      nextData: input.existingData,
+      filePath,
+      changed: false,
+    };
+  }
+  const nextPlugin: CodexRegistryPlugin = {
+    ...(priorPlugin ?? { name: pluginName }),
+    name: pluginName,
+    agents: [...input.agentNames].sort((a, b) => a.localeCompare(b)),
+    source_plugin_path: input.sourcePlugin.absPath,
+    managed_by: "@rawr/plugin-plugins",
+  };
+  if (input.sourcePlugin.description) nextPlugin.description = input.sourcePlugin.description;
+  if (input.sourcePlugin.version) nextPlugin.version = input.sourcePlugin.version;
+
+  const pluginStableChanged = !stableJsonEqual(
+    normalizeRegistryPluginForDrift(priorPlugin),
+    normalizeRegistryPluginForDrift(nextPlugin),
+  );
+
+  if (existingIndex >= 0) {
+    plugins[existingIndex] = {
+      ...nextPlugin,
+      synced_at: pluginStableChanged ? nowIso : priorPlugin?.synced_at ?? nowIso,
+    };
+  } else {
+    plugins.push({
+      ...nextPlugin,
+      synced_at: nowIso,
+    });
+  }
+
+  const nextData: CodexRegistryFile = {
+    ...input.existingData,
+    canonical_source: input.existingData.canonical_source ?? input.sourcePlugin.absPath,
+    sync_direction: input.existingData.sync_direction ?? "rawr-hq plugin -> codex/claude",
+    plugins: [...plugins].sort((a, b) => a.name.localeCompare(b.name)),
+  };
+  const changed = !stableJsonEqual(
+    normalizeRegistryForDrift(input.existingData),
+    normalizeRegistryForDrift(nextData),
+  );
+  nextData.last_synced = changed ? nowIso : input.existingData.last_synced ?? nowIso;
+
+  if (!input.dryRun && changed) {
+    await input.resources.files.writeJsonFile(filePath, nextData);
+  }
+
+  return { nextData, filePath, changed };
+}
+
 function normalizeRegistryPluginForDrift(plugin: CodexRegistryPlugin | undefined): CodexRegistryPlugin | null {
   if (!plugin) return null;
   const normalized: CodexRegistryPlugin = { ...plugin };

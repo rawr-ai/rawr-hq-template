@@ -32,6 +32,8 @@ import { findWorkspaceRoot } from "@rawr/core";
 export type UndoCaptureLike = AgentConfigSyncUndoCapture;
 type RunSyncInput = Parameters<Client["execution"]["runSync"]>[0];
 type RunSyncOptions = NonNullable<Parameters<Client["execution"]["runSync"]>[1]>;
+type SyncCodexNativeAgentRolesInput = Parameters<Client["execution"]["syncCodexNativeAgentRoles"]>[0];
+type SyncCodexNativeAgentRolesOptions = NonNullable<Parameters<Client["execution"]["syncCodexNativeAgentRoles"]>[1]>;
 type ResolveProviderContentInput = Parameters<Client["execution"]["resolveProviderContent"]>[0];
 type ResolveProviderContentOptions = NonNullable<Parameters<Client["execution"]["resolveProviderContent"]>[1]>;
 type RetireStaleManagedInput = Parameters<Client["retirement"]["retireStaleManaged"]>[0];
@@ -269,6 +271,7 @@ export function createWorkspaceSyncPlanInput(input: {
   codexHomes: string[];
   claudeHomes: string[];
   config?: LayeredSyncConfig;
+  includeCodexDestinationProjection?: boolean;
   fullSyncPolicy: PlanWorkspaceSyncInput["fullSyncPolicy"];
 }): PlanWorkspaceSyncInput {
   const syncPolicy = syncProviderPolicy(input.config);
@@ -286,6 +289,7 @@ export function createWorkspaceSyncPlanInput(input: {
     }),
     includeAgentsInCodex: syncPolicy.includeAgentsInCodex,
     includeAgentsInClaude: syncPolicy.includeAgentsInClaude,
+    includeCodexDestinationProjection: input.includeCodexDestinationProjection ?? true,
     fullSyncPolicy: input.fullSyncPolicy,
   };
 }
@@ -303,6 +307,7 @@ export function createWorkspaceSyncAssessInput(input: {
   codexHomes: string[];
   claudeHomes: string[];
   config?: LayeredSyncConfig;
+  includeCodexDestinationProjection?: boolean;
 }): AssessWorkspaceSyncInput {
   const syncPolicy = syncProviderPolicy(input.config);
   return {
@@ -319,6 +324,7 @@ export function createWorkspaceSyncAssessInput(input: {
     }),
     includeAgentsInCodex: syncPolicy.includeAgentsInCodex,
     includeAgentsInClaude: syncPolicy.includeAgentsInClaude,
+    includeCodexDestinationProjection: input.includeCodexDestinationProjection ?? false,
   };
 }
 
@@ -439,6 +445,50 @@ export async function runSync(input: {
     },
   } satisfies RunSyncOptions;
   return client.execution.runSync(runInput, options);
+}
+
+/**
+ * Runs Codex's native custom-agent role config lane without generic Codex
+ * destination projection.
+ */
+export async function syncCodexNativeAgentRoles(input: {
+  sourcePlugin: SourcePlugin;
+  content: SourceContent;
+  options: {
+    dryRun: boolean;
+    force: boolean;
+    gc: boolean;
+    includeAgentsInCodex?: boolean;
+    undoCapture?: UndoCaptureLike;
+  };
+  codexHomes: string[];
+  includeCodex: boolean;
+}): Promise<SyncRunResult> {
+  const repoRoot = await repoRootForCall(input.sourcePlugin);
+  const client = createAgentConfigSyncClient({ repoRoot, undoCapture: input.options.undoCapture });
+
+  const runInput = {
+    sourcePlugin: input.sourcePlugin,
+    content: input.content,
+    codexHomes: input.codexHomes,
+    claudeHomes: [],
+    includeCodex: input.includeCodex,
+    includeClaude: false,
+    includeAgentsInCodex: input.options.includeAgentsInCodex,
+    force: input.options.force,
+    gc: input.options.gc,
+    dryRun: input.options.dryRun,
+  } satisfies SyncCodexNativeAgentRolesInput;
+  const options = {
+    context: {
+      invocation: {
+        traceId: input.options.dryRun
+          ? "plugin-plugins.agent-config-sync.codex-native-agent-roles-dry-run"
+          : "plugin-plugins.agent-config-sync.codex-native-agent-roles-apply",
+      },
+    },
+  } satisfies SyncCodexNativeAgentRolesOptions;
+  return client.execution.syncCodexNativeAgentRoles(runInput, options);
 }
 
 /**
@@ -649,7 +699,7 @@ export function emptyCleanupBehindResult(reason = "not run") {
 }
 
 const CODEX_PROMPT_MIGRATION_WARNING =
-  "Current Codex guidance favors skills for reusable workflows. Codex prompts/ output from RAWR sync is a legacy/auxiliary compatibility mirror, not native Codex workflow or plugin parity; migrate repeatable prompts/workflows into skills when possible.";
+  "Current Codex guidance favors skills for reusable workflows. Codex prompts/ output and supporting scripts from RAWR sync are legacy/auxiliary compatibility mirrors, not native Codex workflow or plugin parity; migrate repeatable prompts/workflows into skills when possible.";
 const CLAUDE_COMMAND_MIGRATION_WARNING =
   "Claude Code custom commands have been merged into skills. Claude commands/ output from RAWR sync remains a supported compatibility/direct-invocation mirror, but skills are the preferred richer structure for repeatable workflows; migrate repeatable commands/workflows into skills when possible.";
 
@@ -670,10 +720,12 @@ export function buildProviderWorkflowMirrorWarnings(input: {
     items: Array<Pick<SyncItemResult, "action" | "kind" | "target">>;
   }>;
 }): string[] {
-  const retainedPromptMirror = (input.cleanupBehind?.retainedResidue ?? []).some((item) => {
+  const retainedCodexAuxiliaryMirror = (input.cleanupBehind?.retainedResidue ?? []).some((item) => {
     const record = item as Record<string, unknown>;
     const target = typeof record.target === "string" ? record.target : "";
-    return record.agent === "codex" && record.reason === "projection-only-retained" && pathHasSegment(target, "prompts");
+    return record.agent === "codex" &&
+      record.reason === "projection-only-retained" &&
+      (pathHasSegment(target, "prompts") || pathHasSegment(target, "scripts"));
   });
   const retainedCommandMirror = (input.cleanupBehind?.retainedResidue ?? []).some((item) => {
     const record = item as Record<string, unknown>;
@@ -698,7 +750,7 @@ export function buildProviderWorkflowMirrorWarnings(input: {
   );
 
   const warnings: string[] = [];
-  if (retainedPromptMirror || projectedPromptMirror) warnings.push(CODEX_PROMPT_MIGRATION_WARNING);
+  if (retainedCodexAuxiliaryMirror || projectedPromptMirror) warnings.push(CODEX_PROMPT_MIGRATION_WARNING);
   if (retainedCommandMirror || projectedCommandMirror) warnings.push(CLAUDE_COMMAND_MIGRATION_WARNING);
 
   return warnings;

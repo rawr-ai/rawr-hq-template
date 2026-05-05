@@ -10,6 +10,7 @@ import {
   getClaimsFromOtherPlugins,
   loadCodexRegistry,
   upsertCodexRegistry,
+  upsertCodexRegistryAgentClaims,
 } from "#repositories/codex-registry-repository";
 import { buildCodexManagedConfig } from "#repositories/codex-config-repository";
 import {
@@ -42,6 +43,7 @@ export async function previewSyncRun(input: {
   claudeHomes: string[];
   includeAgentsInCodex?: boolean;
   includeAgentsInClaude?: boolean;
+  includeCodexDestinationProjection?: boolean;
   resources: AgentConfigSyncResources;
 }): Promise<SyncRunResult> {
   const pathOps = input.resources.path;
@@ -63,10 +65,25 @@ export async function previewSyncRun(input: {
       base: input.content,
       resources: input.resources,
     });
+    const includeCodexDestinationProjection = input.includeCodexDestinationProjection ?? true;
+    const codexProjectionContent = includeCodexDestinationProjection
+      ? codexContent
+      : {
+          ...codexContent,
+          workflowFiles: [],
+          skills: [],
+          scripts: [],
+          hooks: [],
+          hookConfigs: [],
+          mcpServers: [],
+          settings: [],
+          assets: [],
+          orchestration: [],
+        };
     projections.push(...await buildProviderProjections({
       provider: "codex",
       sourcePlugin: input.sourcePlugin,
-      content: codexContent,
+      content: codexProjectionContent,
       homes: input.codexHomes,
       includeAgentsInCodex: input.includeAgentsInCodex,
       resources: input.resources,
@@ -90,6 +107,55 @@ export async function previewSyncRun(input: {
         hookScripts: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.hookScriptsByPlugin),
         mcpServers: getClaimsFromOtherPlugins(input.sourcePlugin.dirName, registry.claimedSets.mcpServersByPlugin),
       };
+      const includeAgentsInCodex = options.includeAgentsInCodex ?? true;
+
+      if (!includeCodexDestinationProjection) {
+        if (includeAgentsInCodex) {
+          for (const agent of codexContent.agentFiles) {
+            const rendered = await buildCodexAgentProjection({
+              agent,
+              sourcePlugin: input.sourcePlugin,
+              resources: input.resources,
+            });
+            await syncTextWithConflictPolicy({
+              content: rendered.toml,
+              source: agent.absPath,
+              dest: pathOps.join(agentsDir, rendered.targetName),
+              kind: "agent",
+              options,
+              result,
+              claimedByOtherPlugin: claimedOthers.agents.has(agent.name),
+            });
+          }
+        }
+
+        const newAgents = new Set(includeAgentsInCodex ? codexContent.agentFiles.map((agent) => agent.name) : []);
+        for (const oldAgent of registry.claimedSets.agentsByPlugin[input.sourcePlugin.dirName] ?? new Set<string>()) {
+          if (newAgents.has(oldAgent) || claimedOthers.agents.has(oldAgent)) continue;
+          await deleteIfExists({ target: pathOps.join(agentsDir, `${oldAgent}.toml`), kind: "agent", options, result });
+        }
+
+        const codexRegistry = await upsertCodexRegistryAgentClaims({
+          codexHome,
+          sourcePlugin: input.sourcePlugin,
+          agentNames: [...newAgents],
+          dryRun: true,
+          existingData: registry.data,
+          resources: input.resources,
+        });
+        if (codexRegistry.changed) {
+          pushItem(result, {
+            action: "planned",
+            kind: "metadata",
+            target: codexRegistry.filePath,
+            message: "registry agent claim upsert",
+          });
+        }
+
+        targets.push(result);
+        continue;
+      }
+
       const newMcpServers = new Set((codexContent.mcpServers ?? []).map((server) => server.name));
       const staleMcpServers = [...(registry.claimedSets.mcpServersByPlugin[input.sourcePlugin.dirName] ?? new Set<string>())]
         .filter((server) => !newMcpServers.has(server) && !claimedOthers.mcpServers.has(server));
@@ -184,7 +250,6 @@ export async function previewSyncRun(input: {
         result,
       });
 
-      const includeAgentsInCodex = options.includeAgentsInCodex ?? true;
       if (includeAgentsInCodex) {
         for (const agent of codexContent.agentFiles) {
           const rendered = await buildCodexAgentProjection({

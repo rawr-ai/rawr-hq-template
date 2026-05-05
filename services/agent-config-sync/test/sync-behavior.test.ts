@@ -160,7 +160,8 @@ describe("agent-config-sync service behavior", () => {
       provider: "codex",
       materialKind: "agent",
       source: "researcher",
-      supportStatus: "legacy_or_deprecated",
+      distributionMode: "native_provider_config",
+      supportStatus: "native",
       droppedSemantics: ["tools", "hooks", "mcpServers", "permissionMode", "skills", "model"],
     }));
     const previewAgentProjection = preview.projections.find((projection) =>
@@ -169,7 +170,7 @@ describe("agent-config-sync service behavior", () => {
       projection.source === "researcher"
     );
     expect(previewAgentProjection?.semanticSupport).toEqual(expect.arrayContaining([
-      expect.objectContaining({ semanticKind: "agent_role", supportStatus: "legacy_or_deprecated" }),
+      expect.objectContaining({ semanticKind: "agent_role", supportStatus: "native" }),
       expect.objectContaining({ semanticKind: "tool_lock", supportStatus: "unsupported" }),
       expect.objectContaining({ semanticKind: "model_selection", supportStatus: "adapter_required" }),
       expect.objectContaining({ semanticKind: "mcp_server", supportStatus: "unsupported" }),
@@ -276,6 +277,9 @@ describe("agent-config-sync service behavior", () => {
       expect.objectContaining({ materialKind: "agent", semanticKind: "model_selection", supportStatus: "adapter_required" }),
       expect.objectContaining({ materialKind: "agent", semanticKind: "task_spawn", supportStatus: "adapter_required" }),
     ]));
+    expect(plan.assessment.plugins[0]?.semanticSupportResiduals).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ materialKind: "agent", semanticKind: "agent_role" }),
+    ]));
   });
 
   it("does not abort Codex projection when Claude agent frontmatter is malformed", async () => {
@@ -307,7 +311,7 @@ describe("agent-config-sync service behavior", () => {
       provider: "codex",
       materialKind: "agent",
       source: "researcher",
-      supportStatus: "legacy_or_deprecated",
+      supportStatus: "native",
       droppedSemantics: ["unparseable_frontmatter"],
     }));
     expect(result.projections).toContainEqual(expect.objectContaining({
@@ -428,6 +432,114 @@ describe("agent-config-sync service behavior", () => {
     await expect(fs.readFile(path.join(codexHome, "agents", "researcher.toml"), "utf8")).resolves.toContain("Research helper");
     const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
     expect(registry.plugins[0]).toMatchObject({ name: "plugin-demo", agents: ["researcher"] });
+  });
+
+  it("syncs Codex native agent roles without generic destination projection", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    await fs.mkdir(path.join(codexHome, "plugins"), { recursive: true });
+    await fs.writeFile(
+      path.join(codexHome, "plugins", "registry.json"),
+      JSON.stringify({
+        plugins: [{
+          name: "plugin-demo",
+          prompts: ["hello"],
+          skills: ["demo-skill"],
+          scripts: ["plugin-demo--demo.sh"],
+          agents: ["old-agent"],
+          managed_by: "@rawr/plugin-plugins",
+          source_plugin_path: workspace.pluginRoot,
+        }],
+      }, null, 2),
+      "utf8",
+    );
+    await fs.mkdir(path.join(codexHome, "agents"), { recursive: true });
+    await fs.writeFile(path.join(codexHome, "agents", "old-agent.toml"), "name = \"old-agent\"\n", "utf8");
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+
+    const result = await client.execution.syncCodexNativeAgentRoles({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      includeAgentsInCodex: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-codex-native-agent-role-sync" } } });
+
+    expect(result.ok).toBe(true);
+    expect(result.projections).toContainEqual(expect.objectContaining({
+      provider: "codex",
+      materialKind: "agent",
+      distributionMode: "native_provider_config",
+      supportStatus: "native",
+    }));
+    await expect(fs.readFile(path.join(codexHome, "agents", "researcher.toml"), "utf8")).resolves.toContain("Research helper");
+    await expect(fs.stat(path.join(codexHome, "agents", "old-agent.toml"))).rejects.toThrow();
+    await expect(fs.stat(path.join(codexHome, "prompts", "hello.md"))).rejects.toThrow();
+    const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
+    expect(registry.plugins[0]).toMatchObject({
+      name: "plugin-demo",
+      prompts: ["hello"],
+      skills: ["demo-skill"],
+      scripts: ["plugin-demo--demo.sh"],
+      agents: ["researcher"],
+    });
+  });
+
+  it("assesses native Codex agent-role status without legacy destination projection drift", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+
+    await client.execution.syncCodexNativeAgentRoles({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      includeAgentsInCodex: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-native-codex-agent-status-apply" } } });
+
+    const assessment = await client.planning.assessWorkspaceSync({
+      cwd: workspace.workspaceRoot,
+      sourcePaths: [],
+      includeMetadata: true,
+      scope: "toolkit",
+      agent: "codex",
+      targetHomeCandidates: {
+        codexHomesFromFlags: [codexHome],
+        claudeHomesFromFlags: [],
+        codexHomesFromEnvironment: [],
+        claudeHomesFromEnvironment: [],
+        codexHomesFromConfig: [],
+        claudeHomesFromConfig: [],
+        codexDefaultHomes: [],
+        claudeDefaultHomes: [],
+      },
+      includeAgentsInCodex: true,
+      includeAgentsInClaude: true,
+      includeCodexDestinationProjection: false,
+    }, { context: { invocation: { traceId: "test-native-codex-agent-status-assess" } } });
+
+    expect(assessment.status).toBe("IN_SYNC");
+    expect(assessment.summary.totalMaterialChanges).toBe(0);
+    expect(assessment.plugins[0]?.driftItems).toEqual([]);
+    expect(assessment.plugins[0]?.semanticSupportResiduals).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ materialKind: "agent", semanticKind: "agent_role" }),
+    ]));
   });
 
   it("scans Hyperresearch-like hooks, MCP, settings, assets, and orchestration as explicit material", async () => {
@@ -1206,8 +1318,10 @@ describe("agent-config-sync service behavior", () => {
     expect(result.retainedResidue).toEqual(expect.arrayContaining([
       expect.objectContaining({ reason: "projection-only-retained", target: prompt }),
       expect.objectContaining({ reason: "projection-only-retained", target: script }),
-      expect.objectContaining({ reason: "projection-only-retained", target: agent }),
       expect.objectContaining({ reason: "under-specified-config-retained" }),
+    ]));
+    expect(result.retainedResidue).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ target: agent }),
     ]));
   });
 

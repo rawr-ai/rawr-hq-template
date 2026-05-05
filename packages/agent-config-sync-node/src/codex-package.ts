@@ -99,11 +99,7 @@ export async function packageCodexPlugin(input: {
       capabilities: [
         ...(input.content.skills.length > 0 ? ["skills"] : []),
         ...(hasHookLifecycleConfig ? ["hooks"] : []),
-        ...(scripts.length > 0 ? ["scripts"] : []),
-        ...(input.content.agentFiles.length > 0 ? ["agents"] : []),
         ...((input.content.mcpServers ?? []).length > 0 ? ["mcp"] : []),
-        ...((input.content.settings ?? []).length > 0 ? ["settings"] : []),
-        ...((input.content.assets ?? []).length > 0 ? ["assets"] : []),
       ],
     },
   };
@@ -208,10 +204,11 @@ export async function packageCodexPlugin(input: {
     validationNotes: [
       "Codex package generation writes an installable local marketplace root",
       "Marketplace registration uses `codex plugin marketplace add`; plugin installation uses Codex app-server `plugin/install`",
-      "Skills, hooks, MCP config, agents, settings, and assets are packaged when modeled by RAWR source content",
+      "Skills, hooks, MCP config, and source/support material are packaged when modeled by RAWR source content",
       "Codex plugin hook material is emitted using the documented `hooks/hooks.json` lifecycle config path",
       "Codex plugin hook runtime verification requires app-server `hooks/list` and provider feature `plugin_hooks` until Codex stabilizes plugin-bundled hooks",
-      "Custom agents and settings are packaged as RAWR source/support material until Codex exposes provider-native activation semantics for those surfaces",
+      "Custom agents are packaged as RAWR source/support material; active Codex custom-agent roles are installed through native TOML config under the Codex home",
+      "Scripts, settings, and assets are packaged as RAWR source/support material unless Codex exposes provider-native activation semantics for those surfaces",
     ],
   };
 }

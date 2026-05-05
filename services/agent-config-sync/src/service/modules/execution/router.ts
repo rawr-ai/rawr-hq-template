@@ -18,6 +18,7 @@ import { summarizeScannedContent } from "#common/helpers/sync-results";
 import { buildProviderProjections } from "#common/helpers/projections";
 import type { ProviderProjection, SyncTargetResult } from "#common/entities/sync-results";
 import { syncClaudeHomes } from "./helpers/sync-claude-homes";
+import { syncCodexNativeAgentRoleHomes } from "./helpers/sync-codex-native-agent-roles";
 import { syncCodexHomes } from "./helpers/sync-codex-homes";
 
 /**
@@ -108,9 +109,67 @@ const resolveProviderContent = module.resolveProviderContent.handler(async ({ co
 });
 
 /**
+ * Execution procedure for Codex's native custom-agent role config lane.
+ */
+const syncCodexNativeAgentRoles = module.syncCodexNativeAgentRoles.handler(async ({ context, input }) => {
+  const options = {
+    dryRun: input.dryRun,
+    force: input.force,
+    gc: input.gc,
+    includeAgentsInCodex: input.includeAgentsInCodex,
+    includeAgentsInClaude: input.includeAgentsInClaude,
+    undoCapture: input.dryRun ? undefined : context.undoCapture,
+    resources: context.resources,
+  };
+  const codexContent = await resolveServiceProviderContent({
+    agent: "codex",
+    sourcePlugin: input.sourcePlugin,
+    base: input.content,
+    resources: context.resources,
+  });
+  const agentContent = {
+    ...codexContent,
+    workflowFiles: [],
+    skills: [],
+    scripts: [],
+    hooks: [],
+    hookConfigs: [],
+    mcpServers: [],
+    settings: [],
+    assets: [],
+    orchestration: [],
+  };
+  const projections = await buildProviderProjections({
+    provider: "codex",
+    sourcePlugin: input.sourcePlugin,
+    content: agentContent,
+    homes: input.codexHomes,
+    includeAgentsInCodex: input.includeAgentsInCodex,
+    resources: context.resources,
+  });
+  const targets = input.includeCodex
+    ? await syncCodexNativeAgentRoleHomes({
+        sourcePlugin: input.sourcePlugin,
+        content: agentContent,
+        codexHomes: input.codexHomes,
+        options,
+      })
+    : [];
+
+  return {
+    ok: targets.every((target) => target.conflicts.length === 0),
+    sourcePlugin: input.sourcePlugin,
+    scanned: summarizeScannedContent(input.content),
+    targets,
+    projections,
+  };
+});
+
+/**
  * Router export for agent destination sync execution.
  */
 export const router = module.router({
   runSync,
   resolveProviderContent,
+  syncCodexNativeAgentRoles,
 });

@@ -22,6 +22,7 @@ import {
   resolveSourceWorkspaceSelection,
   retireStaleManagedPlugins,
   runSync,
+  syncCodexNativeAgentRoles,
   type SyncItemResult,
   type SyncScope,
 } from "#lib/agent-config-sync";
@@ -196,13 +197,14 @@ export default class PluginsSyncAll extends RawrCommand {
         codexHomes: (flags["codex-home"] as string[] | undefined) ?? [],
         claudeHomes: (flags["claude-home"] as string[] | undefined) ?? [],
         config: layered.config ?? undefined,
-          fullSyncPolicy: {
-            agent: String(flags.agent) as "codex" | "claude" | "all",
-            scope,
-            coworkEnabled,
-            codexPackageEnabled,
-            codexInstallEnabled,
-            claudeInstallEnabled,
+        includeCodexDestinationProjection: destinationProjectionEnabled,
+        fullSyncPolicy: {
+          agent: String(flags.agent) as "codex" | "claude" | "all",
+          scope,
+          coworkEnabled,
+          codexPackageEnabled,
+          codexInstallEnabled,
+          claudeInstallEnabled,
           claudeEnableEnabled,
           installReconcileEnabled,
           retireOrphansEnabled,
@@ -295,6 +297,11 @@ export default class PluginsSyncAll extends RawrCommand {
         validationNotes?: string[];
         reason?: string;
       }> = [];
+      const codexNativeAgentRoleRuns: Array<{
+        plugin: string;
+        ok: boolean;
+        targets: Array<{ home: string; conflicts: number; actionCounts: Record<string, number> }>;
+      }> = [];
       let codexInstall: Record<string, unknown> = {
         ok: true,
         installScope,
@@ -336,15 +343,52 @@ export default class PluginsSyncAll extends RawrCommand {
           includeCodex: destinationProjectionEnabled && targets.agents.includes("codex"),
           includeClaude: targets.agents.includes("claude"),
         });
-        syncTargetsForWarnings.push(...run.targets);
+        const nativeAgentRun = !destinationProjectionEnabled && targets.agents.includes("codex")
+          ? await syncCodexNativeAgentRoles({
+              sourcePlugin,
+              content,
+              options: {
+                dryRun: baseFlags.dryRun,
+                force: forceEnabled,
+                gc: gcEnabled,
+                includeAgentsInCodex,
+                undoCapture,
+              },
+              codexHomes: targets.homes.codexHomes,
+              includeCodex: true,
+            })
+          : null;
+        if (nativeAgentRun && !nativeAgentRun.ok) postStepFailed = true;
+        if (nativeAgentRun) {
+          codexNativeAgentRoleRuns.push({
+            plugin: sourcePlugin.dirName,
+            ok: nativeAgentRun.ok,
+            targets: nativeAgentRun.targets.map((target) => ({
+              home: target.home,
+              conflicts: target.conflicts.length,
+              actionCounts: target.items.reduce<Record<string, number>>((acc, item) => {
+                acc[item.action] = (acc[item.action] ?? 0) + 1;
+                return acc;
+              }, {}),
+            })),
+          });
+        }
+        const effectiveRun = nativeAgentRun
+          ? {
+              ...run,
+              targets: [...run.targets, ...nativeAgentRun.targets],
+              projections: [...run.projections, ...nativeAgentRun.projections],
+            }
+          : run;
+        syncTargetsForWarnings.push(...effectiveRun.targets);
 
         // Cowork packaging: only for workspace-root plugins (SSOT in this repo).
         if (coworkEnabled) {
-          const isWorkspacePlugin = path.resolve(run.sourcePlugin.absPath).startsWith(path.resolve(workspaceRoot) + path.sep);
+          const isWorkspacePlugin = path.resolve(effectiveRun.sourcePlugin.absPath).startsWith(path.resolve(workspaceRoot) + path.sep);
           if (!isWorkspacePlugin) {
             coworkPackages.push({
-              plugin: run.sourcePlugin.dirName,
-              outFile: path.join(coworkOutDirAbs, `${run.sourcePlugin.dirName}.zip`),
+              plugin: effectiveRun.sourcePlugin.dirName,
+              outFile: path.join(coworkOutDirAbs, `${effectiveRun.sourcePlugin.dirName}.zip`),
               action: "skipped",
               reason: "not a workspace plugin (skip cowork packaging)",
             });
@@ -352,12 +396,12 @@ export default class PluginsSyncAll extends RawrCommand {
             try {
               const claudeContent = await resolveProviderContent({
                 agent: "claude",
-                sourcePlugin: run.sourcePlugin,
+                sourcePlugin: effectiveRun.sourcePlugin,
                 base: content,
                 repoRoot: workspaceRoot,
               });
               const pkg = await packageCoworkPlugin({
-                sourcePlugin: run.sourcePlugin,
+                sourcePlugin: effectiveRun.sourcePlugin,
                 content: claudeContent,
                 outDirAbs: coworkOutDirAbs,
                 dryRun: baseFlags.dryRun,
@@ -368,8 +412,8 @@ export default class PluginsSyncAll extends RawrCommand {
             } catch (err) {
               postStepFailed = true;
               coworkPackages.push({
-                plugin: run.sourcePlugin.dirName,
-                outFile: path.join(coworkOutDirAbs, `${run.sourcePlugin.dirName}.zip`),
+                plugin: effectiveRun.sourcePlugin.dirName,
+                outFile: path.join(coworkOutDirAbs, `${effectiveRun.sourcePlugin.dirName}.zip`),
                 action: "skipped",
                 reason: `cowork package failed: ${err instanceof Error ? err.message : String(err)}`,
               });
@@ -378,11 +422,11 @@ export default class PluginsSyncAll extends RawrCommand {
         }
 
         if (codexPackageEnabled && targets.agents.includes("codex")) {
-          const isWorkspacePlugin = path.resolve(run.sourcePlugin.absPath).startsWith(path.resolve(workspaceRoot) + path.sep);
+          const isWorkspacePlugin = path.resolve(effectiveRun.sourcePlugin.absPath).startsWith(path.resolve(workspaceRoot) + path.sep);
           if (!isWorkspacePlugin) {
             codexPackages.push({
-              plugin: run.sourcePlugin.dirName,
-              outDir: path.join(codexOutDirAbs, "plugins", run.sourcePlugin.dirName),
+              plugin: effectiveRun.sourcePlugin.dirName,
+              outDir: path.join(codexOutDirAbs, "plugins", effectiveRun.sourcePlugin.dirName),
               action: "skipped",
               reason: "not a workspace plugin (skip Codex marketplace package)",
             });
@@ -390,12 +434,12 @@ export default class PluginsSyncAll extends RawrCommand {
             try {
               const codexContent = await resolveProviderContent({
                 agent: "codex",
-                sourcePlugin: run.sourcePlugin,
+                sourcePlugin: effectiveRun.sourcePlugin,
                 base: content,
                 repoRoot: workspaceRoot,
               });
               codexPackages.push(await packageCodexPlugin({
-                sourcePlugin: run.sourcePlugin,
+                sourcePlugin: effectiveRun.sourcePlugin,
                 content: codexContent,
                 outDirAbs: codexOutDirAbs,
                 dryRun: baseFlags.dryRun,
@@ -405,8 +449,8 @@ export default class PluginsSyncAll extends RawrCommand {
             } catch (err) {
               postStepFailed = true;
               codexPackages.push({
-                plugin: run.sourcePlugin.dirName,
-                outDir: path.join(codexOutDirAbs, "plugins", run.sourcePlugin.dirName),
+                plugin: effectiveRun.sourcePlugin.dirName,
+                outDir: path.join(codexOutDirAbs, "plugins", effectiveRun.sourcePlugin.dirName),
                 action: "skipped",
                 reason: `codex package failed: ${err instanceof Error ? err.message : String(err)}`,
               });
@@ -416,15 +460,15 @@ export default class PluginsSyncAll extends RawrCommand {
 
         // Claude marketplace refresh: per-claude target, only if no sync conflicts for that home.
         if (claudeInstallEnabled) {
-          for (const t of run.targets.filter((t) => t.agent === "claude")) {
+          for (const t of effectiveRun.targets.filter((t) => t.agent === "claude")) {
             if (t.conflicts.length > 0 && !baseFlags.dryRun) {
-              claudeInstall.push({ action: "skipped", home: t.home, plugin: run.sourcePlugin.dirName, installScope, reason: "sync conflicts" });
+              claudeInstall.push({ action: "skipped", home: t.home, plugin: effectiveRun.sourcePlugin.dirName, installScope, reason: "sync conflicts" });
               continue;
             }
             try {
               const actions = await installAndEnableClaudePlugin({
                 claudeLocalHome: t.home,
-                pluginName: run.sourcePlugin.dirName,
+                pluginName: effectiveRun.sourcePlugin.dirName,
                 installScope,
                 dryRun: baseFlags.dryRun,
                 enable: claudeEnableEnabled,
@@ -436,7 +480,7 @@ export default class PluginsSyncAll extends RawrCommand {
               claudeInstall.push({
                 action: "failed",
                 home: t.home,
-                plugin: run.sourcePlugin.dirName,
+                plugin: effectiveRun.sourcePlugin.dirName,
                 installScope,
                 error: err instanceof Error ? err.message : String(err),
               });
@@ -445,11 +489,11 @@ export default class PluginsSyncAll extends RawrCommand {
         }
 
         results.push({
-          dirName: run.sourcePlugin.dirName,
-          absPath: run.sourcePlugin.absPath,
-          ok: run.ok,
-          conflictCount: run.targets.reduce((sum, t) => sum + t.conflicts.length, 0),
-          targets: run.targets.map((t) => {
+          dirName: effectiveRun.sourcePlugin.dirName,
+          absPath: effectiveRun.sourcePlugin.absPath,
+          ok: effectiveRun.ok,
+          conflictCount: effectiveRun.targets.reduce((sum, t) => sum + t.conflicts.length, 0),
+          targets: effectiveRun.targets.map((t) => {
             const actionCounts = t.items.reduce<Record<string, number>>((acc, item) => {
               acc[item.action] = (acc[item.action] ?? 0) + 1;
               return acc;
@@ -579,6 +623,7 @@ export default class PluginsSyncAll extends RawrCommand {
             partialReasons: allowPartial ? partialReasons : [],
             skipped: mergedSkipped,
             results,
+            codexNativeAgentRoles: codexNativeAgentRoleRuns,
             codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
             codexMarketplace: summarizeCodexMarketplace(codexPackages),
             codexInstall,
@@ -598,6 +643,7 @@ export default class PluginsSyncAll extends RawrCommand {
               installScope,
               partialReasons: allowPartial ? partialReasons : [],
               codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
+              codexNativeAgentRoles: codexNativeAgentRoleRuns,
               codexMarketplace: summarizeCodexMarketplace(codexPackages),
               codexInstall,
               cleanupBehind,

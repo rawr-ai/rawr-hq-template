@@ -15,7 +15,11 @@ describe("agent-config-sync service shell", () => {
       "assessWorkspaceSync",
       "evaluateFullSyncPolicy",
     ]);
-    expect(Object.keys(contract.execution)).toEqual(["runSync", "resolveProviderContent"]);
+    expect(Object.keys(contract.execution)).toEqual([
+      "runSync",
+      "syncCodexNativeAgentRoles",
+      "resolveProviderContent",
+    ]);
     expect(Object.keys(contract.retirement)).toEqual(["retireStaleManaged", "cleanupBehindProviderSync"]);
     expect(Object.keys(contract.undo)).toEqual(["runUndo"]);
   });

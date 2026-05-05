@@ -223,7 +223,7 @@ export async function applyCleanupBehindCodex(input: {
         candidate: input.candidate,
         target: input.resources.path.join(input.candidate.home, "prompts", `${prompt}.md`),
         reason: "projection-only-retained",
-        message: "workflow prompts are not proven native Codex provider activation",
+        message: "workflow prompt retained as a legacy/auxiliary compatibility mirror; migrate repeatable workflows into skills",
       }));
     }
     for (const script of toStringArray(plugin.scripts)) {
@@ -231,15 +231,7 @@ export async function applyCleanupBehindCodex(input: {
         candidate: input.candidate,
         target: input.resources.path.join(input.candidate.home, "scripts", script),
         reason: "projection-only-retained",
-        message: "scripts are not proven native Codex provider activation",
-      }));
-    }
-    for (const agent of toStringArray(plugin.agents)) {
-      retainedResidue.push(retain({
-        candidate: input.candidate,
-        target: input.resources.path.join(input.candidate.home, "agents", `${agent}.toml`),
-        reason: "projection-only-retained",
-        message: "custom agents are not proven native Codex provider activation",
+        message: "script retained as legacy/auxiliary compatibility support for prompt/skill material",
       }));
     }
 

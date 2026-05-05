@@ -54,8 +54,9 @@ Non-goals:
 - Do not delete downstream `packages/agent-sync`.
 - Do not treat direct projection as provider parity.
 - Do not add a broad filesystem janitor.
-- Do not claim MCP/custom-agent/settings parity where provider activation is
-  not proven.
+- Do not claim MCP/settings parity where provider activation is not proven.
+- Do not claim plugin-package custom-agent activation; active Codex custom
+  agents are native role TOML config under the Codex home.
 
 Done means:
 
@@ -201,8 +202,10 @@ Implementation summary:
 
 Decisions:
 
-- Projection-only prompts, scripts, agents, settings/config remain retained by
+- Projection-only prompts, scripts, and settings/config remain retained by
   default.
+- Codex custom-agent TOML role files are retained as native role config, not
+  projection-only residue.
 - MCP `config.toml` entries remain retained without exact key ownership.
 - Shared runtime skill deletion checks sibling Codex homes that share
   `$HOME/.agents/skills`.

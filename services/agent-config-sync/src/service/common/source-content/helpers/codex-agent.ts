@@ -53,9 +53,9 @@ export async function buildCodexAgentProjection(input: {
       provider: "codex",
       semanticKind: "agent_role",
       source: input.agent.name,
-      supportStatus: "legacy_or_deprecated",
-      evidenceLevel: "source_code",
-      notes: ["Codex standalone role TOML projection supports name, description, and developer_instructions, but is not native provider plugin deployment"],
+      supportStatus: "native",
+      evidenceLevel: "local_verified",
+      notes: ["Codex standalone role TOML supports native custom agent activation for name, description, and developer_instructions"],
     },
     ...(!parsed.frontmatterError
       ? droppedSemantics.map((field) => supportForCodexAgentFrontmatterField({
@@ -106,7 +106,7 @@ export async function buildCodexAgentProjection(input: {
         ? [`Agent frontmatter could not be parsed; mapped body with fallback metadata: ${parsed.frontmatterError}`]
         : []),
       ...(droppedSemantics.length > 0 && !parsed.frontmatterError
-        ? ["Claude-only frontmatter was not mapped into Codex TOML"]
+        ? ["Claude-only frontmatter was not mapped into Codex native role TOML"]
         : []),
       ...(droppedSemantics.length === 0
         ? ["Mapped safe Codex fields only: name, description, developer_instructions"]
