@@ -52,6 +52,11 @@ Scratch-first policy for mutating multi-phase commands:
 - `docs/process/UPSTREAM_SYNC_RUNBOOK.md` (template -> personal sync)
 - `docs/process/GRAPHITE.md` (branch/stack workflow)
 
+## Related Implementation Handoffs
+
+- `services/agent-config-sync/docs/NATIVE_SUPERSEDED_PROJECTION_CLEANUP_HANDOFF.md`
+  (forward-looking service handoff for duplicate legacy Codex projection claims)
+
 ## Quarantined Runbooks
 
 Quarantined runbooks live under `docs/process/runbooks/quarantine/`. They are preserved intact for later rewrite/mining, but are not current instructions.
