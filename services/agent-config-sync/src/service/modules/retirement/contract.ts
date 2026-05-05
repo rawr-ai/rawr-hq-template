@@ -4,6 +4,9 @@ import { ocBase } from "../../base";
 import { SyncScopeSchema } from "#shared/entities";
 import { RetireActionSchema, RetiredPluginRefSchema } from "./entities";
 
+/**
+ * Cleanup request scoped to the active workspace and selected provider homes.
+ */
 const RetireStaleManagedInputSchema = Type.Object(
   {
     workspaceRoot: Type.String({ minLength: 1 }),
@@ -16,6 +19,10 @@ const RetireStaleManagedInputSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Managed-artifact cleanup ledger returned after planning or applying
+ * retirement.
+ */
 const RetireStaleManagedResultSchema = Type.Object(
   {
     ok: Type.Boolean(),

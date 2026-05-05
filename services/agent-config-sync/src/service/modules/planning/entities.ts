@@ -8,6 +8,7 @@ import {
   SupportStatusSchema,
   SyncActionSchema,
   SyncAgentSchema,
+  SyncItemKindSchema,
   SyncScopeSchema,
 } from "#shared/entities";
 
@@ -149,18 +150,7 @@ export type FullSyncPolicyResult = Static<typeof FullSyncPolicyResultSchema>;
 export const DriftItemSchema = Type.Object(
   {
     action: SyncActionSchema,
-    kind: Type.Union([
-      Type.Literal("workflow"),
-      Type.Literal("skill"),
-      Type.Literal("script"),
-      Type.Literal("agent"),
-      Type.Literal("hook"),
-      Type.Literal("mcp"),
-      Type.Literal("settings"),
-      Type.Literal("asset"),
-      Type.Literal("orchestration"),
-      Type.Literal("metadata"),
-    ]),
+    kind: SyncItemKindSchema,
     target: Type.String({ minLength: 1 }),
     message: Type.Optional(Type.String({ minLength: 1 })),
   },

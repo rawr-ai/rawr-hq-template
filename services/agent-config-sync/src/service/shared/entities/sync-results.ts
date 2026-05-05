@@ -9,6 +9,7 @@ import {
   SupportStatusSchema,
   SyncActionSchema,
   SyncAgentSchema,
+  SyncItemKindSchema,
 } from "../entities";
 
 /**
@@ -51,18 +52,7 @@ export type SyncScannedSummary = Static<typeof SyncScannedSummarySchema>;
 export const SyncItemResultSchema = Type.Object(
   {
     action: SyncActionSchema,
-    kind: Type.Union([
-      Type.Literal("workflow"),
-      Type.Literal("skill"),
-      Type.Literal("script"),
-      Type.Literal("agent"),
-      Type.Literal("hook"),
-      Type.Literal("mcp"),
-      Type.Literal("settings"),
-      Type.Literal("asset"),
-      Type.Literal("orchestration"),
-      Type.Literal("metadata"),
-    ]),
+    kind: SyncItemKindSchema,
     source: Type.Optional(Type.String({ minLength: 1 })),
     target: Type.String({ minLength: 1 }),
     message: Type.Optional(Type.String({ minLength: 1 })),

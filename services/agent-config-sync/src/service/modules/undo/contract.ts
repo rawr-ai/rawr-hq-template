@@ -3,6 +3,21 @@ import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
 import { UndoApplyItemSchema } from "./entities";
 
+/**
+ * Undo request mode; dry runs report the reverse operations without touching
+ * destination homes.
+ */
+const RunUndoInputSchema = Type.Object(
+  {
+    dryRun: Type.Boolean(),
+  },
+  { additionalProperties: false },
+);
+
+/**
+ * Undo command result, either the applied operation ledger or the operator-safe
+ * reason the capsule could not be replayed.
+ */
 const UndoRunResultSchema = Type.Union([
   Type.Object(
     {
@@ -45,15 +60,6 @@ export type UndoRunResult = Static<typeof UndoRunResultSchema>;
 export const contract = {
   runUndo: ocBase
     .meta({ idempotent: false, entity: "undo" })
-    .input(
-      schema(
-        Type.Object(
-          {
-            dryRun: Type.Boolean(),
-          },
-          { additionalProperties: false },
-        ),
-      ),
-    )
+    .input(schema(RunUndoInputSchema))
     .output(schema(UndoRunResultSchema)),
 };

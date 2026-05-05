@@ -148,6 +148,25 @@ export const SyncActionSchema = Type.Union([
 ]);
 
 /**
+ * Operator-visible destination ledger kind.
+ *
+ * This vocabulary follows what preview and execution rows report, including
+ * metadata and orchestration rows that are not source material families.
+ */
+export const SyncItemKindSchema = Type.Union([
+  Type.Literal("workflow"),
+  Type.Literal("skill"),
+  Type.Literal("script"),
+  Type.Literal("agent"),
+  Type.Literal("hook"),
+  Type.Literal("mcp"),
+  Type.Literal("settings"),
+  Type.Literal("asset"),
+  Type.Literal("orchestration"),
+  Type.Literal("metadata"),
+]);
+
+/**
  * Source file reference after workspace discovery normalizes a plugin root.
  */
 export const ContentFileSchema = Type.Object(
@@ -223,6 +242,7 @@ export type ProjectionSupportStatus = Static<typeof ProjectionSupportStatusSchem
 export type EvidenceLevel = Static<typeof EvidenceLevelSchema>;
 export type SyncScope = Static<typeof SyncScopeSchema>;
 export type SyncAction = Static<typeof SyncActionSchema>;
+export type SyncItemKind = Static<typeof SyncItemKindSchema>;
 export type SourcePlugin = Static<typeof SourcePluginSchema>;
 export type ContentFile = Static<typeof ContentFileSchema>;
 export type OrchestrationSpec = Static<typeof OrchestrationSpecSchema>;

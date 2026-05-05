@@ -38,6 +38,19 @@ const RunSyncInputSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Provider-effective content request used by packaging and preview callers that
+ * need overlay resolution without destination writes.
+ */
+const ResolveProviderContentInputSchema = Type.Object(
+  {
+    agent: SyncAgentSchema,
+    sourcePlugin: SourcePluginSchema,
+    base: SourceContentSchema,
+  },
+  { additionalProperties: false },
+);
+
 export type RunSyncInput = Static<typeof RunSyncInputSchema>;
 export type SyncScannedSummary = Static<typeof SyncScannedSummarySchema>;
 export type SyncItemResult = Static<typeof SyncItemResultSchema>;
@@ -66,17 +79,6 @@ export const contract = {
    */
   resolveProviderContent: ocBase
     .meta({ idempotent: true, entity: "execution" })
-    .input(
-      schema(
-        Type.Object(
-          {
-            agent: SyncAgentSchema,
-            sourcePlugin: SourcePluginSchema,
-            base: SourceContentSchema,
-          },
-          { additionalProperties: false },
-        ),
-      ),
-    )
+    .input(schema(ResolveProviderContentInputSchema))
     .output(schema(SourceContentSchema)),
 };

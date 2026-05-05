@@ -1,4 +1,5 @@
 import { type Static, Type } from "typebox";
+import { SyncAgentSchema } from "#shared/entities";
 
 /**
  * agent-config-sync: retirement cleanup entities.
@@ -14,7 +15,7 @@ import { type Static, Type } from "typebox";
  */
 export const RetireActionSchema = Type.Object(
   {
-    agent: Type.Union([Type.Literal("codex"), Type.Literal("claude")]),
+    agent: SyncAgentSchema,
     home: Type.String({ minLength: 1 }),
     plugin: Type.String({ minLength: 1 }),
     target: Type.String({ minLength: 1 }),
@@ -37,7 +38,7 @@ export type RetireAction = Static<typeof RetireActionSchema>;
  */
 export const RetiredPluginRefSchema = Type.Object(
   {
-    agent: Type.Union([Type.Literal("codex"), Type.Literal("claude")]),
+    agent: SyncAgentSchema,
     home: Type.String({ minLength: 1 }),
     plugin: Type.String({ minLength: 1 }),
   },
