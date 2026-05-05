@@ -5,6 +5,7 @@ import {
   beginPluginsSyncUndoCapture,
   buildCleanupBehindCodexCandidates,
   buildCleanupBehindCodexClaimCheckHomes,
+  buildProviderWorkflowMirrorWarnings,
   cleanupBehindProviderSync,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncPlanInput,
@@ -144,6 +145,7 @@ export default class PluginsSyncAll extends RawrCommand {
     const { flags } = await this.parseRawr(PluginsSyncAll);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
     let undoCapture: Awaited<ReturnType<typeof beginPluginsSyncUndoCapture>> | undefined;
+    let warnings: string[] = [];
 
     try {
       const cwd = process.cwd();
@@ -307,6 +309,10 @@ export default class PluginsSyncAll extends RawrCommand {
       };
       let installReconcile: Record<string, unknown> = { action: "skipped", reason: "not run" };
       let postStepFailed = false;
+      const syncTargetsForWarnings: Array<{
+        agent: string;
+        items: Array<Pick<SyncItemResult, "action" | "kind" | "target">>;
+      }> = [];
 
       const activePluginNames = new Set(plan.activePluginNames);
       const packageActivePluginNames = scope === "all" ? activePluginNames : undefined;
@@ -330,6 +336,7 @@ export default class PluginsSyncAll extends RawrCommand {
           includeCodex: destinationProjectionEnabled && targets.agents.includes("codex"),
           includeClaude: targets.agents.includes("claude"),
         });
+        syncTargetsForWarnings.push(...run.targets);
 
         // Cowork packaging: only for workspace-root plugins (SSOT in this repo).
         if (coworkEnabled) {
@@ -548,6 +555,10 @@ export default class PluginsSyncAll extends RawrCommand {
       if ((installReconcile as any).action === "failed") postStepFailed = true;
 
       const ok = results.every((r) => r.ok) && !postStepFailed && retireOrphans.ok;
+      warnings = buildProviderWorkflowMirrorWarnings({
+        cleanupBehind,
+        syncTargets: syncTargetsForWarnings,
+      });
       const undoCapsule = undoCapture ? await undoCapture.finalize({ status: ok ? "ready" : "ready-partial" }) : null;
       const undo =
         undoCapsule
@@ -577,7 +588,7 @@ export default class PluginsSyncAll extends RawrCommand {
             retireOrphans,
             installReconcile,
             undo,
-          })
+          }, undefined, warnings.length > 0 ? warnings : undefined)
         : this.fail(results.some((r) => !r.ok) ? "Sync-all completed with conflicts" : "Sync-all completed but post-sync steps failed", {
             code: results.some((r) => !r.ok) ? "SYNC_CONFLICTS" : "SYNC_POST_STEPS_FAILED",
             details: {
@@ -594,6 +605,7 @@ export default class PluginsSyncAll extends RawrCommand {
               claudeInstall,
               retireOrphans,
               installReconcile,
+              warnings,
               undo,
             },
           });
@@ -637,6 +649,7 @@ export default class PluginsSyncAll extends RawrCommand {
             this.log(`Cleanup behind: ${cleanupBehind.ok ? "ok" : "failed"} (${cleanupBehind.actions.length} actions)`);
             this.log(`Install scope: ${installScope}`);
           }
+          for (const warning of warnings) this.log(`warning: ${warning}`);
           this.log(`Install reconcile: ${(installReconcile as any).action}`);
           if (coworkEnabled) this.log(`Cowork out: ${coworkOutDirAbs}`);
           if (undo.available) this.log(`Undo: rawr undo (capsule=${undo.capsuleId})`);
@@ -664,7 +677,7 @@ export default class PluginsSyncAll extends RawrCommand {
         }
       }
 
-      const result = this.fail(message, { code, details: { undo } });
+      const result = this.fail(message, { code, details: { undo, warnings } });
       this.outputResult(result, { flags: baseFlags });
       this.exit(1);
     }

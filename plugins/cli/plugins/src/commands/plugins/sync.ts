@@ -5,6 +5,7 @@ import {
   beginPluginsSyncUndoCapture,
   buildCleanupBehindCodexCandidates,
   buildCleanupBehindCodexClaimCheckHomes,
+  buildProviderWorkflowMirrorWarnings,
   cleanupBehindProviderSync,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncPlanInput,
@@ -131,6 +132,7 @@ export default class PluginsSync extends RawrCommand {
     const { args, flags } = await this.parseRawr(PluginsSync);
     const baseFlags = RawrCommand.extractBaseFlags(flags);
     let undoCapture: Awaited<ReturnType<typeof beginPluginsSyncUndoCapture>> | undefined;
+    let warnings: string[] = [];
 
     try {
       const pluginRef = String(args["plugin-ref"]);
@@ -480,6 +482,10 @@ export default class PluginsSync extends RawrCommand {
         claudeInstall,
         installReconcile,
       };
+      warnings = buildProviderWorkflowMirrorWarnings({
+        cleanupBehind,
+        syncTargets: syncResult.targets,
+      });
 
       const conflictCount = syncResult.targets.reduce((sum, t) => sum + t.conflicts.length, 0);
       const ok = syncResult.ok && !postStepFailed;
@@ -500,7 +506,7 @@ export default class PluginsSync extends RawrCommand {
         ? this.ok({
             ...enriched,
             undo,
-          })
+          }, undefined, warnings.length > 0 ? warnings : undefined)
         : this.fail(conflictCount > 0 ? "Sync completed with conflicts" : "Sync completed but post-sync steps failed", {
             code: conflictCount > 0 ? "SYNC_CONFLICTS" : "SYNC_POST_STEPS_FAILED",
             details: {
@@ -514,6 +520,7 @@ export default class PluginsSync extends RawrCommand {
               cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
               claudeInstall,
               installReconcile,
+              warnings,
               undo,
               targets: syncResult.targets.map((t) => ({ agent: t.agent, home: t.home, conflicts: t.conflicts.length })),
             },
@@ -545,6 +552,7 @@ export default class PluginsSync extends RawrCommand {
           if (codexPackage?.marketplacePath) this.log(`Codex marketplace: ${codexPackage.marketplaceAction} -> ${codexPackage.marketplacePath}`);
           this.log(`Codex install: ${(codexInstall as any).ok ? "ok" : "failed"}`);
           this.log(`Cleanup behind: ${cleanupBehind.ok ? "ok" : "failed"} (${cleanupBehind.actions.length} actions)`);
+          for (const warning of warnings) this.log(`warning: ${warning}`);
           this.log(`Install scope: ${installScope}`);
           if (cowork) this.log(`Cowork: ${cowork.action} -> ${cowork.outFile}${cowork.reason ? ` (${cowork.reason})` : ""}`);
           this.log(`Install reconcile: ${(installReconcile as any).action}`);
@@ -569,7 +577,7 @@ export default class PluginsSync extends RawrCommand {
         }
       }
 
-      const result = this.fail(message, { code: "SYNC_ERROR", details: { undo } });
+      const result = this.fail(message, { code: "SYNC_ERROR", details: { undo, warnings } });
       this.outputResult(result, { flags: baseFlags });
       this.exit(1);
     }

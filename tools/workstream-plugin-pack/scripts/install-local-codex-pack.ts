@@ -128,36 +128,34 @@ function habitatPackageJson(): string {
 function habitatReadme(): string {
   return `# Habitat Agent Plugin
 
-Habitat contains coordination-oriented agent runtime material. The current
-Workstream content in this plugin is a projected working copy from upstream
-\`rawr-hq-template/tools/workstream-plugin-pack/\`.
+Habitat contains coordination-oriented agent runtime material. This downstream
+plugin is now the distributable source for Workstream content. The upstream
+\`rawr-hq-template/tools/workstream-plugin-pack/\` copy is a deprecated
+bridge/recovery copy while the template-side migration still carries it.
 
-Do not treat this directory as the source of truth yet. Until
-\`agent-config-sync\` supports hook projection and the Workstream plugin has
-been used successfully a few times, update the upstream pack first and
-re-project this plugin.
+Make durable Workstream skill, agent, hook, and asset changes here first. Do
+not use the template bridge as the source of truth for new content.
 
 ## Contents
 
 - \`skills/workstream-runner/\`: Workstream runner skill.
 - \`skills/workstream-review-loops/\`: Review-loop skill.
 - \`agents/\`: Provider-neutral steward role briefs.
-- \`hooks/\`: Provider-specific hook source material. These hooks are not
-  synced or activated by this plugin yet.
+- \`hooks/\`: Provider-specific hook source material, synced as native plugin
+  hook material by \`agent-config-sync\`.
 `;
 }
 
 function habitatTodo(): string {
   return `# Habitat Workstream TODO
 
-- Keep upstream \`rawr-hq-template/tools/workstream-plugin-pack/\` as canonical
-  for now.
-- Re-project this plugin after upstream Workstream pack changes.
-- Remove this temporary bridge once \`agent-config-sync\` supports hook
-  projection and the Workstream plugin has been used successfully a few times
-  without issues.
-- Do not sync or install this plugin until that activation path is explicitly
-  requested.
+- Treat this downstream plugin as the distributable Habitat/Workstream source.
+- Keep \`rawr-hq-template/tools/workstream-plugin-pack/\` as a deprecated bridge
+  or recovery copy only until the template-side migration removes it.
+- Move any future durable Workstream skill, agent, hook, or asset changes here
+  first; do not update the template bridge as the source of truth.
+- Burn down any remaining Codex prompt mirrors by moving repeatable workflows
+  into skills.
 `;
 }
 

@@ -6,6 +6,7 @@ import { afterEach } from "vitest";
 import { describe, expect, it } from "vitest";
 import {
   buildCleanupBehindCodexCandidates,
+  buildProviderWorkflowMirrorWarnings,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncPlanInput,
   resolveSourceWorkspaceSelection,
@@ -157,6 +158,75 @@ describe("@rawr/plugin-plugins", () => {
     });
 
     expect(candidates).toEqual([]);
+  });
+
+  it("warns when Codex prompt mirrors remain after native sync cleanup", () => {
+    const warnings = buildProviderWorkflowMirrorWarnings({
+      cleanupBehind: {
+        ok: true,
+        cleanedPlugins: [],
+        actions: [],
+        retainedResidue: [{
+          agent: "codex",
+          home: "/tmp/codex-home",
+          plugin: "plugin-demo",
+          target: "/tmp/codex-home/prompts/demo.md",
+          reason: "projection-only-retained",
+        }],
+      },
+    });
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("Codex guidance favors skills");
+    expect(warnings[0]).toContain("legacy/auxiliary compatibility mirror");
+  });
+
+  it("warns when Claude command mirrors are projected or retained", () => {
+    const warnings = buildProviderWorkflowMirrorWarnings({
+      cleanupBehind: {
+        ok: true,
+        cleanedPlugins: [],
+        actions: [],
+        retainedResidue: [{
+          agent: "claude",
+          home: "/tmp/claude-home",
+          plugin: "plugin-demo",
+          target: "/tmp/claude-home/plugins/plugin-demo/commands/demo.md",
+          reason: "projection-only-retained",
+        }],
+      },
+      syncTargets: [{
+        agent: "claude",
+        items: [{
+          action: "planned",
+          kind: "workflow",
+          target: "/tmp/claude-home/plugins/plugin-demo/commands/another-demo.md",
+        }],
+      }],
+    });
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("Claude Code custom commands have been merged into skills");
+    expect(warnings[0]).toContain("supported compatibility/direct-invocation mirror");
+  });
+
+  it("does not issue provider workflow mirror warnings for unrelated retained residue", () => {
+    const warnings = buildProviderWorkflowMirrorWarnings({
+      cleanupBehind: {
+        ok: true,
+        cleanedPlugins: [],
+        actions: [],
+        retainedResidue: [{
+          agent: "claude",
+          home: "/tmp/claude-home",
+          plugin: "plugin-demo",
+          target: "/tmp/claude-home/prompts/demo.md",
+          reason: "projection-only-retained",
+        }],
+      },
+    });
+
+    expect(warnings).toEqual([]);
   });
 
   it("checks install state from the invocation workspace during external source sync status", async () => {

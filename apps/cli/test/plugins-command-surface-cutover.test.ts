@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,6 +42,21 @@ function makeIsolatedSyncEnv(home: string): Record<string, string> {
     CODEX_HOME: path.join(home, ".codex-rawr"),
     CLAUDE_PLUGINS_LOCAL: path.join(home, ".claude", "plugins", "local"),
   };
+}
+
+function seedCodexPromptResidue(codexHome: string, plugin: string, prompt: string) {
+  mkdirSync(path.join(codexHome, "plugins"), { recursive: true });
+  writeFileSync(
+    path.join(codexHome, "plugins", "registry.json"),
+    JSON.stringify({
+      plugins: [{
+        name: plugin,
+        managed_by: "@rawr/plugin-plugins",
+        prompts: [prompt],
+      }],
+    }, null, 2),
+    "utf8",
+  );
 }
 
 afterEach(() => {
@@ -102,6 +117,8 @@ describe("plugin command surface cutover", () => {
     const tempHome = mkdtempSync(path.join(os.tmpdir(), "rawr-plugins-sync-dry-run-"));
     tempDirs.push(tempHome);
     const syncEnv = makeIsolatedSyncEnv(tempHome);
+    const codexHome = path.join(tempHome, ".codex-rawr");
+    seedCodexPromptResidue(codexHome, "plugins", "legacy-check");
 
     const single = runRawr(
       [
@@ -113,7 +130,7 @@ describe("plugin command surface cutover", () => {
         "--agent",
         "codex",
         "--codex-home",
-        path.join(tempHome, ".codex-rawr"),
+        codexHome,
         "--no-cowork",
         "--no-install-reconcile",
       ],
@@ -125,6 +142,15 @@ describe("plugin command surface cutover", () => {
     expect(singleJson.data.codexPackage?.packages?.[0]?.plugin).toBe("plugins");
     expect(singleJson.data.codexInstall?.actions?.[0]?.plugin).toBe("plugins");
     expect(singleJson.data.cleanupBehind?.actions).toBeTruthy();
+    expect(singleJson.data.cleanupBehind?.retainedResidue).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        reason: "projection-only-retained",
+        target: expect.stringContaining("/prompts/legacy-check.md"),
+      }),
+    ]));
+    expect(singleJson.warnings).toEqual(expect.arrayContaining([
+      expect.stringContaining("Codex guidance favors skills"),
+    ]));
 
     const all = runRawr(
       [
@@ -139,7 +165,7 @@ describe("plugin command surface cutover", () => {
         "--agent",
         "codex",
         "--codex-home",
-        path.join(tempHome, ".codex-rawr"),
+        codexHome,
       ],
       syncEnv,
     );
@@ -147,7 +173,46 @@ describe("plugin command surface cutover", () => {
     const allJson = parseJson(all);
     expect(allJson.ok).toBe(true);
     expect(allJson.data.cleanupBehind?.actions).toBeTruthy();
+    expect(allJson.data.cleanupBehind?.retainedResidue).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        reason: "projection-only-retained",
+        target: expect.stringContaining("/prompts/legacy-check.md"),
+      }),
+    ]));
+    expect(allJson.warnings).toEqual(expect.arrayContaining([
+      expect.stringContaining("Codex guidance favors skills"),
+    ]));
     expect(allJson.data.installReconcile?.action).toBeTruthy();
+
+    const claudeHome = path.join(tempHome, ".claude", "plugins", "local");
+    const claude = runRawr(
+      [
+        "plugins",
+        "sync",
+        "hq",
+        "--dry-run",
+        "--json",
+        "--agent",
+        "claude",
+        "--claude-home",
+        claudeHome,
+        "--no-cowork",
+        "--no-install-reconcile",
+      ],
+      syncEnv,
+    );
+    expect(claude.status).toBe(0);
+    const claudeJson = parseJson(claude);
+    expect(claudeJson.ok).toBe(true);
+    expect(claudeJson.data.targets?.[0]?.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        kind: "workflow",
+        target: expect.stringContaining("/commands/"),
+      }),
+    ]));
+    expect(claudeJson.warnings).toEqual(expect.arrayContaining([
+      expect.stringContaining("Claude Code custom commands have been merged into skills"),
+    ]));
   });
 
   it("supports plugins sync sources add/list/remove", { timeout: 45000 }, () => {

@@ -515,6 +515,7 @@ export async function cleanupBehindProviderSync(input: {
 }
 
 export type CleanupBehindCandidate = CleanupBehindProviderSyncInput["candidates"][number];
+type CleanupBehindResultLike = Awaited<ReturnType<typeof cleanupBehindProviderSync>>;
 
 type CleanupBehindCodexPackage = {
   plugin: string;
@@ -645,6 +646,62 @@ export function emptyCleanupBehindResult(reason = "not run") {
           message: reason,
         }],
   };
+}
+
+const CODEX_PROMPT_MIGRATION_WARNING =
+  "Current Codex guidance favors skills for reusable workflows. Codex prompts/ output from RAWR sync is a legacy/auxiliary compatibility mirror, not native Codex workflow or plugin parity; migrate repeatable prompts/workflows into skills when possible.";
+const CLAUDE_COMMAND_MIGRATION_WARNING =
+  "Claude Code custom commands have been merged into skills. Claude commands/ output from RAWR sync remains a supported compatibility/direct-invocation mirror, but skills are the preferred richer structure for repeatable workflows; migrate repeatable commands/workflows into skills when possible.";
+
+function pathHasSegment(inputPath: string, segment: string): boolean {
+  const parts = inputPath.split(/[\\/]+/).filter(Boolean);
+  return parts.includes(segment);
+}
+
+/**
+ * Produces post-sync warnings when provider workflow mirrors are retained or
+ * projected. This keeps the destructive cleanup service policy-neutral while
+ * making the CLI output honest about legacy prompt/command debt.
+ */
+export function buildProviderWorkflowMirrorWarnings(input: {
+  cleanupBehind?: CleanupBehindResultLike;
+  syncTargets?: Array<{
+    agent: string;
+    items: Array<Pick<SyncItemResult, "action" | "kind" | "target">>;
+  }>;
+}): string[] {
+  const retainedPromptMirror = (input.cleanupBehind?.retainedResidue ?? []).some((item) => {
+    const record = item as Record<string, unknown>;
+    const target = typeof record.target === "string" ? record.target : "";
+    return record.agent === "codex" && record.reason === "projection-only-retained" && pathHasSegment(target, "prompts");
+  });
+  const retainedCommandMirror = (input.cleanupBehind?.retainedResidue ?? []).some((item) => {
+    const record = item as Record<string, unknown>;
+    const target = typeof record.target === "string" ? record.target : "";
+    return record.agent === "claude" && record.reason === "projection-only-retained" && pathHasSegment(target, "commands");
+  });
+  const projectedPromptMirror = (input.syncTargets ?? []).some((target) =>
+    target.agent === "codex" &&
+    target.items.some((item) =>
+      item.kind === "workflow" &&
+      item.action !== "deleted" &&
+      pathHasSegment(item.target, "prompts")
+    )
+  );
+  const projectedCommandMirror = (input.syncTargets ?? []).some((target) =>
+    target.agent === "claude" &&
+    target.items.some((item) =>
+      item.kind === "workflow" &&
+      item.action !== "deleted" &&
+      pathHasSegment(item.target, "commands")
+    )
+  );
+
+  const warnings: string[] = [];
+  if (retainedPromptMirror || projectedPromptMirror) warnings.push(CODEX_PROMPT_MIGRATION_WARNING);
+  if (retainedCommandMirror || projectedCommandMirror) warnings.push(CLAUDE_COMMAND_MIGRATION_WARNING);
+
+  return warnings;
 }
 
 /**
