@@ -471,7 +471,10 @@ describe("agent-config-sync service behavior", () => {
     }, { context: { invocation: { traceId: "test-hyperresearch-like-scan" } } });
 
     const content = plan.syncable[0]?.content;
-    expect(content?.hooks?.map((item) => item.name)).toContain("pre-tool-use.mjs");
+    expect(content?.hooks?.map((item) => item.name)).toEqual([
+      "hook-helper.mjs",
+      "pre-tool-use.mjs",
+    ]);
     expect(content?.hooks?.map((item) => item.name)).not.toContain("README.md");
     expect(content?.hookConfigs?.map((item) => item.name)).toContain("hooks.json");
     expect(content?.mcpServers?.map((item) => item.name)).toContain("synthetic-research.mjs");
@@ -538,7 +541,7 @@ describe("agent-config-sync service behavior", () => {
     }));
     const hookPath = path.join(codexHome, "hooks", "rawr", "synthetic-hyperresearch", "pre-tool-use.mjs");
     const mcpPath = path.join(codexHome, "mcp", "rawr", "synthetic-hyperresearch", "synthetic-research.mjs");
-    await expect(fs.readFile(hookPath, "utf8")).resolves.toContain("hook_event_name");
+    await expect(fs.readFile(hookPath, "utf8")).resolves.toContain("hookEventName");
     await expect(fs.readFile(mcpPath, "utf8")).resolves.toContain("synthetic_search");
     const hooksJson = JSON.parse(await fs.readFile(path.join(codexHome, "hooks.json"), "utf8"));
     expect(hooksJson.hooks.PreToolUse).toEqual(expect.arrayContaining([
@@ -571,7 +574,7 @@ describe("agent-config-sync service behavior", () => {
     const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
     expect(registry.plugins[0]).toMatchObject({
       name: "synthetic-hyperresearch",
-      hookScripts: ["pre-tool-use.mjs"],
+      hookScripts: ["hook-helper.mjs", "pre-tool-use.mjs"],
       hookConfigs: ["hooks.json"],
       mcpServers: ["synthetic-research.mjs"],
     });
@@ -903,7 +906,8 @@ describe("agent-config-sync service behavior", () => {
 
     expect(result.ok).toBe(true);
     const pluginDir = path.join(claudeHome, "plugins", "synthetic-hyperresearch");
-    await expect(fs.readFile(path.join(pluginDir, "hooks", "pre-tool-use.mjs"), "utf8")).resolves.toContain("hook_event_name");
+    await expect(fs.readFile(path.join(pluginDir, "hooks", "pre-tool-use.mjs"), "utf8")).resolves.toContain("hookEventName");
+    await expect(fs.readFile(path.join(pluginDir, "hooks", "hook-helper.mjs"), "utf8")).resolves.toContain("hookEventName");
     const hooksJson = JSON.parse(await fs.readFile(path.join(pluginDir, "hooks", "hooks.json"), "utf8"));
     expect(hooksJson.hooks.PreToolUse[0].hooks[0].command).toContain("${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use.mjs");
     const mcpJson = JSON.parse(await fs.readFile(path.join(pluginDir, ".mcp.json"), "utf8"));
