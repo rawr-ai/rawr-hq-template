@@ -1,18 +1,17 @@
 import { type Static, Type } from "typebox";
 
 /**
- * Shared retirement entities.
+ * agent-config-sync: retirement cleanup entities.
  *
  * @remarks
  * The retirement module performs destructive cleanup of *managed* artifacts in
- * agent homes. These entities represent stable data shapes that:
- * - the contract exposes (procedure outputs), and
- * - the router authors (procedure implementations).
- *
- * Keeping these in `entities.ts` prevents the contract from becoming a type-bucket
- * that service code imports from.
+ * agent homes. These entities describe stale managed plugins and the cleanup
+ * actions planned or applied for each destination.
  */
 
+/**
+ * One managed-artifact retirement action planned or applied by the module.
+ */
 export const RetireActionSchema = Type.Object(
   {
     agent: Type.Union([Type.Literal("codex"), Type.Literal("claude")]),
@@ -33,6 +32,9 @@ export const RetireActionSchema = Type.Object(
 
 export type RetireAction = Static<typeof RetireActionSchema>;
 
+/**
+ * Managed plugin identity that retirement found stale in a destination home.
+ */
 export const RetiredPluginRefSchema = Type.Object(
   {
     agent: Type.Union([Type.Literal("codex"), Type.Literal("claude")]),

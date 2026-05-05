@@ -16,13 +16,13 @@ import {
  *
  * @remarks
  * Both planning and execution need to describe the same "what would / did happen"
- * shape: a scan summary plus per-home item/conflict lists. These entities are
- * service-owned so routers and helpers never import types from `contract.ts`.
+ * ledger: a scan summary, per-home item/conflict lists, and provider projection
+ * support records.
  */
 
 /**
- * Summary entity for what source content was available before provider-specific
- * overlays were applied to each destination.
+ * Source content inventory observed before provider-specific overlays are
+ * applied.
  */
 export const SyncScannedSummarySchema = Type.Object(
   {
@@ -43,7 +43,10 @@ export const SyncScannedSummarySchema = Type.Object(
 export type SyncScannedSummary = Static<typeof SyncScannedSummarySchema>;
 
 /**
- * Per-target sync result entry shared by Codex and Claude destination writers.
+ * Outcome for one destination path.
+ *
+ * Conflicts use the same shape as writes so operators can inspect the affected
+ * path, material kind, and reason without switching result models.
  */
 export const SyncItemResultSchema = Type.Object(
   {
@@ -70,7 +73,7 @@ export const SyncItemResultSchema = Type.Object(
 export type SyncItemResult = Static<typeof SyncItemResultSchema>;
 
 /**
- * Destination-level sync result that keeps conflicts beside all attempted work.
+ * Result ledger for one provider home.
  */
 export const SyncTargetResultSchema = Type.Object(
   {
@@ -84,6 +87,9 @@ export const SyncTargetResultSchema = Type.Object(
 
 export type SyncTargetResult = Static<typeof SyncTargetResultSchema>;
 
+/**
+ * Support ledger row for one semantic capability in one source item.
+ */
 export const ProjectionSupportSchema = Type.Object(
   {
     provider: SyncAgentSchema,
@@ -98,6 +104,11 @@ export const ProjectionSupportSchema = Type.Object(
 
 export type ProjectionSupport = Static<typeof ProjectionSupportSchema>;
 
+/**
+ * Records how one source material item is exposed to a provider, including
+ * target paths, distribution mode, material support, and semantic support
+ * losses.
+ */
 export const ProviderProjectionSchema = Type.Object(
   {
     provider: SyncAgentSchema,
@@ -119,7 +130,7 @@ export const ProviderProjectionSchema = Type.Object(
 export type ProviderProjection = Static<typeof ProviderProjectionSchema>;
 
 /**
- * Top-level execution result for one source plugin sync run.
+ * Complete preview or execution ledger for one source plugin.
  */
 export const SyncRunResultSchema = Type.Object(
   {

@@ -15,14 +15,23 @@ import {
  * agent-config-sync: planning entities.
  *
  * @remarks
- * These schemas/types are shared between the planning contract and its helpers.
- * They must live outside `contract.ts` so other service code never imports from
- * a contract module to get data shapes.
+ * Planning owns workspace discovery output, target-home selection, sync policy
+ * decisions, and dry-run assessment records.
  */
 
+/**
+ * Planner-facing provider selector; `all` expands to every enabled provider
+ * after target-home resolution.
+ */
 export const SyncAgentSelectionSchema = Type.Union([SyncAgentSchema, Type.Literal("all")]);
 export type SyncAgentSelection = Static<typeof SyncAgentSelectionSchema>;
 
+/**
+ * Raw configured destination home entry.
+ *
+ * This stays module-private because only target-home resolution needs the
+ * partially configured shape; resolved homes are represented by `TargetHomes`.
+ */
 const DestinationConfigSchema = Type.Object(
   {
     rootPath: Type.Optional(Type.String({ minLength: 1 })),
@@ -31,6 +40,10 @@ const DestinationConfigSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * All candidate destination homes gathered from CLI flags, environment,
+ * service config, and provider defaults before agent/scope filtering.
+ */
 export const TargetHomeCandidatesSchema = Type.Object(
   {
     codexHomesFromFlags: Type.Array(Type.String({ minLength: 1 })),
@@ -46,6 +59,9 @@ export const TargetHomeCandidatesSchema = Type.Object(
 );
 export type TargetHomeCandidates = Static<typeof TargetHomeCandidatesSchema>;
 
+/**
+ * Destination homes selected after agent filtering and path normalization.
+ */
 export const TargetHomesSchema = Type.Object(
   {
     codexHomes: Type.Array(Type.String({ minLength: 1 })),
@@ -55,6 +71,10 @@ export const TargetHomesSchema = Type.Object(
 );
 export type TargetHomes = Static<typeof TargetHomesSchema>;
 
+/**
+ * Source plugin directory excluded from planning with the operator-visible
+ * reason.
+ */
 export const WorkspaceSkipSchema = Type.Object(
   {
     dirName: Type.String({ minLength: 1 }),
@@ -65,6 +85,9 @@ export const WorkspaceSkipSchema = Type.Object(
 );
 export type WorkspaceSkip = Static<typeof WorkspaceSkipSchema>;
 
+/**
+ * Source plugin plus canonical content inventory ready to plan or execute.
+ */
 export const WorkspaceSyncableSchema = Type.Object(
   {
     sourcePlugin: SourcePluginSchema,
@@ -74,6 +97,10 @@ export const WorkspaceSyncableSchema = Type.Object(
 );
 export type WorkspaceSyncable = Static<typeof WorkspaceSyncableSchema>;
 
+/**
+ * Flags that determine whether a requested sync is complete enough to be
+ * treated as the canonical full-sync command.
+ */
 export const FullSyncPolicyInputSchema = Type.Object(
   {
     agent: SyncAgentSelectionSchema,
@@ -93,6 +120,10 @@ export const FullSyncPolicyInputSchema = Type.Object(
 );
 export type FullSyncPolicyInput = Static<typeof FullSyncPolicyInputSchema>;
 
+/**
+ * Full-sync gate decision, including partial-mode reasons and the canonical
+ * command the operator should prefer.
+ */
 export const FullSyncPolicyResultSchema = Type.Object(
   {
     allowed: Type.Boolean(),
@@ -112,6 +143,9 @@ export const FullSyncPolicyResultSchema = Type.Object(
 );
 export type FullSyncPolicyResult = Static<typeof FullSyncPolicyResultSchema>;
 
+/**
+ * Destination material delta discovered by a dry-run preview.
+ */
 export const DriftItemSchema = Type.Object(
   {
     action: SyncActionSchema,
@@ -133,6 +167,9 @@ export const DriftItemSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Material-level provider limitation surfaced during preview planning.
+ */
 export const ProjectionResidualSchema = Type.Object(
   {
     provider: SyncAgentSchema,
@@ -144,6 +181,9 @@ export const ProjectionResidualSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Semantic capability limitation surfaced during preview planning.
+ */
 export const SemanticSupportResidualSchema = Type.Object(
   {
     provider: SyncAgentSchema,
@@ -156,6 +196,12 @@ export const SemanticSupportResidualSchema = Type.Object(
   { additionalProperties: false },
 );
 
+/**
+ * Workspace-level health report computed from dry-run provider previews.
+ *
+ * The assessment compresses per-plugin preview ledgers into operator-facing
+ * status, totals, skipped sources, drift, conflicts, and projection residuals.
+ */
 export const SyncAssessmentSchema = Type.Object(
   {
     status: Type.Union([
@@ -201,6 +247,13 @@ export const SyncAssessmentSchema = Type.Object(
 );
 export type SyncAssessment = Static<typeof SyncAssessmentSchema>;
 
+/**
+ * Execution-ready plan for a workspace sync request.
+ *
+ * The plan preserves the discovered sources, selected destinations, provider
+ * inclusion flags, active plugin names, policy gate, and preview assessment so
+ * projections can render or execute without re-running planning.
+ */
 export const WorkspaceSyncPlanSchema = Type.Object(
   {
     workspaceRoot: Type.String({ minLength: 1 }),

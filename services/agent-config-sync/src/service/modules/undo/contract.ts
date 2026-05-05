@@ -1,23 +1,7 @@
 import { schema } from "@rawr/hq-sdk";
 import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
-
-const UndoApplyItemSchema = Type.Object(
-  {
-    seq: Type.Number(),
-    type: Type.Union([Type.Literal("create-path"), Type.Literal("restore-path")]),
-    target: Type.String({ minLength: 1 }),
-    status: Type.Union([
-      Type.Literal("planned"),
-      Type.Literal("restored"),
-      Type.Literal("deleted"),
-      Type.Literal("skipped-missing"),
-      Type.Literal("failed"),
-    ]),
-    message: Type.Optional(Type.String({ minLength: 1 })),
-  },
-  { additionalProperties: false },
-);
+import { UndoApplyItemSchema } from "./entities";
 
 const UndoRunResultSchema = Type.Union([
   Type.Object(
