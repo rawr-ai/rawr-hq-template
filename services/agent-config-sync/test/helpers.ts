@@ -263,6 +263,7 @@ export async function makeHyperresearchLikeWorkspace(): Promise<ParityWorkspace>
   const stepOne = path.join(workspace.pluginRoot, "skills", "synthetic-hyperresearch-1-decompose");
   const stepTwo = path.join(workspace.pluginRoot, "skills", "synthetic-hyperresearch-2-width");
   const hookPath = path.join(workspace.pluginRoot, "hooks", "pre-tool-use.mjs");
+  const hookHelperPath = path.join(workspace.pluginRoot, "hooks", "hook-helper.mjs");
   const hookConfigPath = path.join(workspace.pluginRoot, "hooks", "hooks.json");
   const hookReadmePath = path.join(workspace.pluginRoot, "hooks", "README.md");
   const mcpPath = path.join(workspace.pluginRoot, "mcp", "synthetic-research.mjs");
@@ -306,12 +307,19 @@ export async function makeHyperresearchLikeWorkspace(): Promise<ParityWorkspace>
     "",
   ].join("\n"), "utf8");
   await fs.writeFile(hookPath, [
+    "import { hookEventName } from './hook-helper.mjs';",
     "const chunks = [];",
     "process.stdin.on('data', (chunk) => chunks.push(chunk));",
     "process.stdin.on('end', () => {",
     "  const input = chunks.join('') || '{}';",
-    "  process.stdout.write(JSON.stringify({ ok: true, received: JSON.parse(input).hook_event_name ?? null }));",
+    "  process.stdout.write(JSON.stringify({ ok: true, received: hookEventName(JSON.parse(input)) }));",
     "});",
+    "",
+  ].join("\n"), "utf8");
+  await fs.writeFile(hookHelperPath, [
+    "export function hookEventName(input) {",
+    "  return input.hook_event_name ?? null;",
+    "}",
     "",
   ].join("\n"), "utf8");
   await fs.writeFile(hookReadmePath, "# Synthetic hook notes\n", "utf8");
@@ -323,7 +331,7 @@ export async function makeHyperresearchLikeWorkspace(): Promise<ParityWorkspace>
           hooks: [
             {
               type: "command",
-              command: "node ./hooks/pre-tool-use.mjs",
+              command: "node \"$(git rev-parse --show-toplevel)/plugins/agents/synthetic-hyperresearch/hooks/pre-tool-use.mjs\"",
               timeout: 30,
             },
           ],
@@ -345,7 +353,10 @@ export async function makeHyperresearchLikeWorkspace(): Promise<ParityWorkspace>
     { name: "synthetic-hyperresearch-1-decompose", absPath: stepOne },
     { name: "synthetic-hyperresearch-2-width", absPath: stepTwo },
   ];
-  workspace.content.hooks = [{ name: "pre-tool-use.mjs", absPath: hookPath }];
+  workspace.content.hooks = [
+    { name: "hook-helper.mjs", absPath: hookHelperPath },
+    { name: "pre-tool-use.mjs", absPath: hookPath },
+  ];
   workspace.content.hookConfigs = [{ name: "hooks.json", absPath: hookConfigPath }];
   workspace.content.mcpServers = [{ name: "synthetic-research.mjs", absPath: mcpPath }];
   workspace.content.settings = [{ name: "codex/config.toml", absPath: settingsPath }];

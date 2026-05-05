@@ -417,19 +417,27 @@ async function buildClaudeMcpConfig(input: {
 
 function rewriteClaudePluginRootHookCommand(value: string, hookNames: Set<string>): string {
   for (const hookName of hookNames) {
-    const escaped = escapeRegExp(hookName);
-    const patterns = [
-      new RegExp(`(^|\\s)\\.\\/hooks\\/${escaped}(?=$|\\s)`, "g"),
-      new RegExp(`(^|\\s)hooks\\/${escaped}(?=$|\\s)`, "g"),
-      new RegExp(`(^|\\s)\\.\\/${escaped}(?=$|\\s)`, "g"),
-    ];
-    let next = value;
-    for (const pattern of patterns) {
-      next = next.replace(pattern, (_match, prefix: string) => `${prefix}\${CLAUDE_PLUGIN_ROOT}/hooks/${hookName}`);
-    }
-    value = next;
+    value = rewriteHookPathReferences(value, hookName, `\${CLAUDE_PLUGIN_ROOT}/hooks/${hookName}`);
   }
   return value;
+}
+
+function rewriteHookPathReferences(value: string, hookName: string, targetPath: string): string {
+  const normalizedName = hookName.replaceAll("\\", "/");
+  const escapedName = escapeRegExp(normalizedName);
+  const escapedBase = escapeRegExp(normalizedName.split("/").pop() ?? normalizedName);
+  const patterns = [
+    new RegExp(`(^|[\\s"'])\\.\\/hooks\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])hooks\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])\\.\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])(?:\\$\\([^)]*\\)|[^\\s"'])*\\/hooks\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])(?:\\$\\([^)]*\\)|[^\\s"'])*\\/hooks\\/${escapedBase}(?=$|[\\s"'])`, "g"),
+  ];
+  let next = value;
+  for (const pattern of patterns) {
+    next = next.replace(pattern, (_match, prefix: string) => `${prefix}${targetPath}`);
+  }
+  return next;
 }
 
 function rewriteJsonStrings(value: unknown, rewrite: (value: string) => string): unknown {

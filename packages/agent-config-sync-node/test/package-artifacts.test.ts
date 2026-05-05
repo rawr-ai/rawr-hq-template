@@ -111,7 +111,7 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
         PreToolUse: [
           {
             matcher: "Bash",
-            hooks: [{ type: "command", command: "node ./hooks/pre-tool-use.mjs" }],
+            hooks: [{ type: "command", command: `node "${pluginRoot}/hooks/pre-tool-use.mjs"` }],
           },
         ],
       },
@@ -171,7 +171,7 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
         PreToolUse: [
           {
             matcher: "Bash",
-            hooks: [{ type: "command", command: "node ${CODEX_PLUGIN_ROOT}/hooks/pre-tool-use.mjs" }],
+            hooks: [{ type: "command", command: "node \"${CODEX_PLUGIN_ROOT}/hooks/pre-tool-use.mjs\"" }],
           },
         ],
       },

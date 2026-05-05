@@ -448,19 +448,27 @@ function normalizeHookCommandsForPackage(
 
 function rewriteHookCommand(value: string, hookNames: Set<string>): string {
   for (const hookName of hookNames) {
-    const escaped = escapeRegExp(hookName);
-    const patterns = [
-      new RegExp(`(^|\\s)\\.\\/hooks\\/${escaped}(?=$|\\s)`, "g"),
-      new RegExp(`(^|\\s)hooks\\/${escaped}(?=$|\\s)`, "g"),
-      new RegExp(`(^|\\s)\\.\\/${escaped}(?=$|\\s)`, "g"),
-    ];
-    let next = value;
-    for (const pattern of patterns) {
-      next = next.replace(pattern, (_match, prefix: string) => `${prefix}\${CODEX_PLUGIN_ROOT}/hooks/${hookName}`);
-    }
-    value = next;
+    value = rewriteHookPathReferences(value, hookName, `\${CODEX_PLUGIN_ROOT}/hooks/${hookName}`);
   }
   return value;
+}
+
+function rewriteHookPathReferences(value: string, hookName: string, targetPath: string): string {
+  const normalizedName = hookName.replaceAll("\\", "/");
+  const escapedName = escapeRegExp(normalizedName);
+  const escapedBase = escapeRegExp(path.basename(normalizedName));
+  const patterns = [
+    new RegExp(`(^|[\\s"'])\\.\\/hooks\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])hooks\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])\\.\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])(?:\\$\\([^)]*\\)|[^\\s"'])*\\/hooks\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])(?:\\$\\([^)]*\\)|[^\\s"'])*\\/hooks\\/${escapedBase}(?=$|[\\s"'])`, "g"),
+  ];
+  let next = value;
+  for (const pattern of patterns) {
+    next = next.replace(pattern, (_match, prefix: string) => `${prefix}${targetPath}`);
+  }
+  return next;
 }
 
 function rewriteJsonStrings(value: unknown, rewrite: (value: string) => string): unknown {

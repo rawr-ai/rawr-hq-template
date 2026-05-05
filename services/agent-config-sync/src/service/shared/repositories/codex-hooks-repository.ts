@@ -141,20 +141,35 @@ function rewriteManagedHookCommand(input: {
   let command = input.command;
   for (const script of input.hookScripts) {
     const absPath = input.pathOps.join(input.hooksDir, script.name);
-    const names = new Set([script.name, input.pathOps.basename(script.absPath)]);
-    const replacements = [...names].flatMap((name) => [
-      `./hooks/${name}`,
-      `hooks/${name}`,
-      `./${name}`,
-    ]);
-    for (const candidate of replacements) {
-      command = command
-        .replaceAll(JSON.stringify(candidate), JSON.stringify(absPath))
-        .replaceAll(`'${candidate}'`, JSON.stringify(absPath))
-        .replaceAll(candidate, JSON.stringify(absPath));
-    }
+    command = rewriteHookPathReferences(command, script.name, absPath, input.pathOps);
   }
   return command;
+}
+
+function rewriteHookPathReferences(
+  command: string,
+  hookName: string,
+  targetPath: string,
+  pathOps: AgentConfigSyncPathResources,
+): string {
+  const escapedName = escapeRegExp(hookName.replaceAll("\\", "/"));
+  const escapedBase = escapeRegExp(pathOps.basename(hookName));
+  const patterns = [
+    new RegExp(`(^|[\\s"'])\\.\\/hooks\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])hooks\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])\\.\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])(?:\\$\\([^)]*\\)|[^\\s"'])*\\/hooks\\/${escapedName}(?=$|[\\s"'])`, "g"),
+    new RegExp(`(^|[\\s"'])(?:\\$\\([^)]*\\)|[^\\s"'])*\\/hooks\\/${escapedBase}(?=$|[\\s"'])`, "g"),
+  ];
+  let next = command;
+  for (const pattern of patterns) {
+    next = next.replace(pattern, (_match, prefix: string) => `${prefix}${targetPath}`);
+  }
+  return next;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function asHooksFile(value: unknown): CodexHooksFile {

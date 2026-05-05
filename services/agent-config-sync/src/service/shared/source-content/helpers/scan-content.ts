@@ -78,8 +78,13 @@ export async function scanCanonicalContentAtRoot(input: {
       rootAbsPath: hooksDir,
       resources: input.resources,
     });
-    content.hooks = hookFiles.filter((hook) => !isHookConfigFile(hook.name) && !isHookDocumentationFile(hook.name));
     content.hookConfigs = hookFiles.filter((hook) => isHookConfigFile(hook.name));
+    content.hooks = await selectHookMaterial({
+      hookFiles,
+      hookConfigs: content.hookConfigs,
+      hooksDir,
+      resources: input.resources,
+    });
   }
 
   if (input.include.mcpServers) {
@@ -129,9 +134,178 @@ function isHookConfigFile(name: string): boolean {
   return name === "hooks.json" || name.endsWith("/hooks.json");
 }
 
-function isHookDocumentationFile(name: string): boolean {
-  const basename = name.split(/[\\/]/).pop()?.toLowerCase() ?? name.toLowerCase();
-  return basename.endsWith(".md");
+async function selectHookMaterial(input: {
+  hookFiles: ContentFile[];
+  hookConfigs: ContentFile[];
+  hooksDir: string;
+  resources: AgentConfigSyncResources;
+}): Promise<ContentFile[]> {
+  const candidates = input.hookFiles.filter((hook) => !isHookConfigFile(hook.name));
+  if (candidates.length === 0) return [];
+
+  const candidateByName = new Map(candidates.map((hook) => [normalizeRelativePath(hook.name), hook]));
+  const selected = new Map<string, ContentFile>();
+
+  for (const command of await readHookCommands(input.hookConfigs, input.resources)) {
+    for (const hook of candidates) {
+      if (commandReferencesHook(command, hook, input.hooksDir, input.resources)) {
+        selected.set(normalizeRelativePath(hook.name), hook);
+      }
+    }
+  }
+
+  if (selected.size === 0) {
+    for (const hook of candidates) {
+      if (await hasRuntimeHookSignature(hook, input.resources)) selected.set(normalizeRelativePath(hook.name), hook);
+    }
+  }
+
+  for (const hook of [...selected.values()]) {
+    await addLocalHookDependencies({
+      hook,
+      selected,
+      candidateByName,
+      resources: input.resources,
+    });
+  }
+
+  return [...selected.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function readHookCommands(
+  hookConfigs: ContentFile[],
+  resources: AgentConfigSyncResources,
+): Promise<string[]> {
+  const commands: string[] = [];
+  for (const config of hookConfigs) {
+    const parsed = await resources.files.readJsonFile<unknown>(config.absPath);
+    collectCommandStrings(parsed, commands);
+  }
+  return commands;
+}
+
+function collectCommandStrings(value: unknown, commands: string[]): void {
+  if (Array.isArray(value)) {
+    for (const item of value) collectCommandStrings(item, commands);
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+
+  for (const [key, child] of Object.entries(value)) {
+    if (key === "command" && typeof child === "string") commands.push(child);
+    else collectCommandStrings(child, commands);
+  }
+}
+
+function commandReferencesHook(
+  command: string,
+  hook: ContentFile,
+  hooksDir: string,
+  resources: AgentConfigSyncResources,
+): boolean {
+  const rel = normalizeRelativePath(hook.name);
+  const basename = resources.path.basename(rel);
+  const absPath = normalizeRelativePath(hook.absPath);
+  const absFromHooksDir = normalizeRelativePath(resources.path.join(hooksDir, rel));
+  const normalizedCommand = normalizeRelativePath(command);
+  const references = [
+    rel,
+    basename,
+    `./${rel}`,
+    `hooks/${rel}`,
+    `./hooks/${rel}`,
+    `\${CODEX_PLUGIN_ROOT}/hooks/${rel}`,
+    `\${CLAUDE_PLUGIN_ROOT}/hooks/${rel}`,
+    absPath,
+    absFromHooksDir,
+  ];
+  return references.some((reference) => normalizedCommand.includes(reference));
+}
+
+async function addLocalHookDependencies(input: {
+  hook: ContentFile;
+  selected: Map<string, ContentFile>;
+  candidateByName: Map<string, ContentFile>;
+  resources: AgentConfigSyncResources;
+}): Promise<void> {
+  const text = await input.resources.files.readTextFile(input.hook.absPath);
+  if (!text) return;
+
+  for (const specifier of collectRelativeModuleSpecifiers(text)) {
+    const resolved = resolveHookModuleSpecifier({
+      importerName: input.hook.name,
+      specifier,
+      candidateByName: input.candidateByName,
+      pathOps: input.resources.path,
+    });
+    if (!resolved) continue;
+    const key = normalizeRelativePath(resolved.name);
+    if (input.selected.has(key)) continue;
+    input.selected.set(key, resolved);
+    await addLocalHookDependencies({
+      hook: resolved,
+      selected: input.selected,
+      candidateByName: input.candidateByName,
+      resources: input.resources,
+    });
+  }
+}
+
+function collectRelativeModuleSpecifiers(text: string): string[] {
+  const specifiers: string[] = [];
+  const patterns = [
+    /\b(?:import|export)\s+(?:[^"'()]*?\s+from\s+)?["']([^"']+)["']/g,
+    /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
+    /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g,
+  ];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const specifier = match[1];
+      if (specifier?.startsWith(".")) specifiers.push(specifier);
+    }
+  }
+  return [...new Set(specifiers)].sort();
+}
+
+function resolveHookModuleSpecifier(input: {
+  importerName: string;
+  specifier: string;
+  candidateByName: Map<string, ContentFile>;
+  pathOps: AgentConfigSyncResources["path"];
+}): ContentFile | undefined {
+  const importerDir = input.pathOps.dirname(input.importerName);
+  const base = normalizeRelativePath(input.pathOps.normalize(input.pathOps.join(importerDir, input.specifier)));
+  const candidates = [
+    base,
+    ...[".ts", ".tsx", ".js", ".mjs", ".cjs", ".jsx", ".json"].map((ext) => `${base}${ext}`),
+    ...[".ts", ".tsx", ".js", ".mjs", ".cjs", ".jsx", ".json"].map((ext) => `${base}/index${ext}`),
+  ];
+  for (const candidate of candidates) {
+    const hook = input.candidateByName.get(normalizeRelativePath(candidate));
+    if (hook) return hook;
+  }
+  return undefined;
+}
+
+async function hasRuntimeHookSignature(hook: ContentFile, resources: AgentConfigSyncResources): Promise<boolean> {
+  const runtimeExtensions = new Set([
+    ".cjs",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".py",
+    ".sh",
+    ".ts",
+    ".tsx",
+  ]);
+  if (runtimeExtensions.has(resources.path.extname(hook.name).toLowerCase())) return true;
+
+  const text = await resources.files.readTextFile(hook.absPath);
+  return Boolean(text?.startsWith("#!"));
+}
+
+function normalizeRelativePath(value: string): string {
+  return value.replaceAll("\\", "/");
 }
 
 async function scanFilesRecursive(input: {
