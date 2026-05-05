@@ -28,6 +28,23 @@ function materialSupport(input: {
   }];
 }
 
+function codexDestinationProjectionSemanticSupport(supports: ProjectionSupport[]): ProjectionSupport[] {
+  return supports.map((support) => {
+    if (support.provider !== "codex" || support.supportStatus !== "native") return support;
+    return {
+      ...support,
+      supportStatus: "legacy_or_deprecated",
+      evidenceLevel: support.evidenceLevel === "official" || support.evidenceLevel === "local_verified"
+        ? "source_code"
+        : support.evidenceLevel,
+      notes: [
+        ...support.notes,
+        "This is represented only through generic destination projection here; native provider parity must be proven through plugin install.",
+      ],
+    };
+  });
+}
+
 export async function buildProviderProjections(input: {
   provider: SyncAgent;
   sourcePlugin: SourcePlugin;
@@ -64,7 +81,7 @@ async function buildCodexProjections(input: {
       source: workflow.name,
       sourcePath: workflow.absPath,
       targetPaths: input.homes.map((home) => pathOps.join(home, "prompts", `${workflow.name}.md`)),
-      distributionMode: "direct_mirror",
+      distributionMode: "destination_projection",
       supportStatus: "legacy_or_deprecated",
       evidenceLevel: "source_code",
       semanticSupport: materialSupport({
@@ -87,19 +104,19 @@ async function buildCodexProjections(input: {
       source: skill.name,
       sourcePath: skill.absPath,
       targetPaths: input.homes.map((home) => pathOps.join(getCodexRuntimeSkillsDir(home, pathOps), skill.name)),
-      distributionMode: "direct_mirror",
-      supportStatus: "native",
-      evidenceLevel: "official",
+      distributionMode: "destination_projection",
+      supportStatus: "legacy_or_deprecated",
+      evidenceLevel: "source_code",
       semanticSupport: [
         ...materialSupport({
           provider: "codex",
           semanticKind: "skill_step",
           source: skill.name,
-          supportStatus: "native",
-          evidenceLevel: "local_verified",
-          notes: ["Codex skill directory is mirrored to the runtime user skill root"],
+          supportStatus: "legacy_or_deprecated",
+          evidenceLevel: "source_code",
+          notes: ["Codex skill directory projection is material convergence, not native provider plugin install"],
         }),
-        ...relatedSemanticSupport({ source: skill.name, semanticSupport }),
+        ...codexDestinationProjectionSemanticSupport(relatedSemanticSupport({ source: skill.name, semanticSupport })),
       ],
       droppedSemantics: [],
       adapterRequiredSemantics: nonNativeSemanticSupport(relatedSemanticSupport({ source: skill.name, semanticSupport }))
@@ -116,7 +133,7 @@ async function buildCodexProjections(input: {
       source: script.name,
       sourcePath: script.absPath,
       targetPaths: input.homes.map((home) => pathOps.join(home, "scripts", scriptName)),
-      distributionMode: "direct_mirror",
+      distributionMode: "destination_projection",
       supportStatus: "adapter_required",
       evidenceLevel: "source_code",
       semanticSupport: materialSupport({
@@ -141,16 +158,16 @@ async function buildCodexProjections(input: {
       targetPaths: input.homes.flatMap((home) => [
         pathOps.join(home, "hooks", "rawr", input.sourcePlugin.dirName, hook.name),
       ]),
-      distributionMode: "direct_mirror",
-      supportStatus: "native",
-      evidenceLevel: "official",
+      distributionMode: "destination_projection",
+      supportStatus: "legacy_or_deprecated",
+      evidenceLevel: "source_code",
       semanticSupport: materialSupport({
         provider: "codex",
         semanticKind: "hook",
         source: hook.name,
-        supportStatus: "native",
-        evidenceLevel: "official",
-        notes: ["Direct Codex hook executable material is copied to a managed runtime path"],
+        supportStatus: "legacy_or_deprecated",
+        evidenceLevel: "source_code",
+        notes: ["Direct Codex hook executable projection is support material, not native provider plugin hook activation"],
       }),
       droppedSemantics: [],
       adapterRequiredSemantics: [],
@@ -168,16 +185,16 @@ async function buildCodexProjections(input: {
         pathOps.join(home, "hooks.json"),
         pathOps.join(home, "config.toml"),
       ]),
-      distributionMode: "direct_mirror",
-      supportStatus: "native",
-      evidenceLevel: "official",
+      distributionMode: "destination_projection",
+      supportStatus: "legacy_or_deprecated",
+      evidenceLevel: "source_code",
       semanticSupport: materialSupport({
         provider: "codex",
         semanticKind: "hook",
         source: hookConfig.name,
-        supportStatus: "native",
-        evidenceLevel: "official",
-        notes: ["Direct Codex hook config is preserved through managed hooks.json merge"],
+        supportStatus: "legacy_or_deprecated",
+        evidenceLevel: "source_code",
+        notes: ["Direct Codex hook config projection is support material, not native provider plugin hook activation"],
       }),
       droppedSemantics: [],
       adapterRequiredSemantics: [],
@@ -197,16 +214,16 @@ async function buildCodexProjections(input: {
           ? []
           : [pathOps.join(getCodexManagedMcpDir(home, input.sourcePlugin.dirName, pathOps), mcpServer.name)]),
       ]),
-      distributionMode: "direct_mirror",
-      supportStatus: "native",
-      evidenceLevel: "official",
+      distributionMode: "destination_projection",
+      supportStatus: "legacy_or_deprecated",
+      evidenceLevel: "source_code",
       semanticSupport: materialSupport({
         provider: "codex",
         semanticKind: "mcp_server",
         source: mcpServer.name,
-        supportStatus: "native",
-        evidenceLevel: "official",
-        notes: ["Direct Codex MCP material is projected into managed runtime config"],
+        supportStatus: "legacy_or_deprecated",
+        evidenceLevel: "source_code",
+        notes: ["Direct Codex MCP projection is support material, not native provider plugin install"],
       }),
       droppedSemantics: [],
       adapterRequiredSemantics: [],
@@ -221,16 +238,16 @@ async function buildCodexProjections(input: {
       source: setting.name,
       sourcePath: setting.absPath,
       targetPaths: input.homes.map((home) => pathOps.join(home, "config.toml")),
-      distributionMode: "direct_mirror",
-      supportStatus: "native",
-      evidenceLevel: "official",
+      distributionMode: "destination_projection",
+      supportStatus: "legacy_or_deprecated",
+      evidenceLevel: "source_code",
       semanticSupport: materialSupport({
         provider: "codex",
         semanticKind: "settings",
         source: setting.name,
-        supportStatus: "native",
-        evidenceLevel: "official",
-        notes: ["Direct Codex settings material is merged as a managed TOML fragment"],
+        supportStatus: "legacy_or_deprecated",
+        evidenceLevel: "source_code",
+        notes: ["Direct Codex settings projection is a managed TOML fragment, not native provider plugin config activation"],
       }),
       droppedSemantics: [],
       adapterRequiredSemantics: [],
@@ -258,7 +275,7 @@ async function buildCodexProjections(input: {
       }),
       droppedSemantics: [],
       adapterRequiredSemantics: [],
-      validationNotes: ["Assets are meaningful for plugin package surfaces, not legacy direct mirror runtime"],
+      validationNotes: ["Assets are meaningful for plugin package surfaces, not generic destination projection runtime"],
     });
   }
 
@@ -272,10 +289,10 @@ async function buildCodexProjections(input: {
       distributionMode: "operator_only",
       supportStatus: "adapter_required",
       evidenceLevel: "source_code",
-      semanticSupport: relatedSemanticSupport({
-        source: spec.name.includes(":") ? spec.name.slice(spec.name.indexOf(":") + 1) : spec.name,
-        semanticSupport,
-      }),
+        semanticSupport: codexDestinationProjectionSemanticSupport(relatedSemanticSupport({
+          source: spec.name.includes(":") ? spec.name.slice(spec.name.indexOf(":") + 1) : spec.name,
+          semanticSupport,
+        })),
       droppedSemantics: [],
       adapterRequiredSemantics: [
         ...spec.skillInvocations.map((skill) => `Claude Skill invocation requires Codex orchestration adapter: ${skill}`),
@@ -299,12 +316,12 @@ async function buildCodexProjections(input: {
         source: agent.name,
         sourcePath: agent.absPath,
         targetPaths: input.homes.map((home) => pathOps.join(home, "agents", rendered.targetName)),
-        distributionMode: "direct_mirror",
-        supportStatus: "native",
-        evidenceLevel: "official",
+        distributionMode: "destination_projection",
+        supportStatus: "legacy_or_deprecated",
+        evidenceLevel: "source_code",
         semanticSupport: [
-          ...rendered.semanticSupport,
-          ...relatedSemanticSupport({ source: agent.name, semanticSupport }),
+          ...codexDestinationProjectionSemanticSupport(rendered.semanticSupport),
+          ...codexDestinationProjectionSemanticSupport(relatedSemanticSupport({ source: agent.name, semanticSupport })),
         ],
         droppedSemantics: rendered.droppedSemantics,
         adapterRequiredSemantics: [
@@ -343,7 +360,7 @@ async function buildCodexProjections(input: {
     source: input.sourcePlugin.dirName,
     sourcePath: input.sourcePlugin.absPath,
     targetPaths: input.homes.map((home) => pathOps.join(home, "plugins", "registry.json")),
-    distributionMode: "direct_mirror",
+    distributionMode: "destination_projection",
     supportStatus: "adapter_required",
     evidenceLevel: "source_code",
     semanticSupport: materialSupport({
@@ -355,7 +372,7 @@ async function buildCodexProjections(input: {
     }),
     droppedSemantics: [],
     adapterRequiredSemantics: ["registry records RAWR ownership and drift metadata outside Codex official plugin install"],
-    validationNotes: ["RAWR owns direct mirror conflict detection, GC, and stale retirement metadata"],
+    validationNotes: ["RAWR owns generic projection conflict detection, GC, and stale retirement metadata"],
   });
 
   return projections;
@@ -385,7 +402,7 @@ async function buildClaudeProjections(input: {
       source: workflow.name,
       sourcePath: workflow.absPath,
       targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "commands", `${workflow.name}.md`)),
-      distributionMode: "local_plugin_install",
+      distributionMode: "native_provider_plugin",
       supportStatus: "native",
       evidenceLevel: "official",
       semanticSupport: materialSupport({
@@ -409,7 +426,7 @@ async function buildClaudeProjections(input: {
       source: skill.name,
       sourcePath: skill.absPath,
       targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "skills", skill.name)),
-      distributionMode: "local_plugin_install",
+      distributionMode: "native_provider_plugin",
       supportStatus: "native",
       evidenceLevel: "official",
       semanticSupport: [
@@ -436,7 +453,7 @@ async function buildClaudeProjections(input: {
       source: script.name,
       sourcePath: script.absPath,
       targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "scripts", script.name)),
-      distributionMode: "local_plugin_install",
+      distributionMode: "native_provider_plugin",
       supportStatus: "native",
       evidenceLevel: "official",
       semanticSupport: materialSupport({
@@ -460,20 +477,20 @@ async function buildClaudeProjections(input: {
       source: hook.name,
       sourcePath: hook.absPath,
       targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "hooks", hook.name)),
-      distributionMode: "local_plugin_install",
-      supportStatus: "adapter_required",
+      distributionMode: "native_provider_plugin",
+      supportStatus: "native",
       evidenceLevel: "official",
       semanticSupport: materialSupport({
         provider: "claude",
         semanticKind: "hook",
         source: hook.name,
-        supportStatus: "adapter_required",
+        supportStatus: "native",
         evidenceLevel: "official",
-        notes: ["Claude hook settings require explicit settings merge/install behavior"],
+        notes: ["Mapped to Claude plugin hooks"],
       }),
       droppedSemantics: [],
-      adapterRequiredSemantics: ["Claude hook settings require explicit settings merge/install behavior"],
-      validationNotes: ["Hook material is detected and reported instead of being silently ignored"],
+      adapterRequiredSemantics: [],
+      validationNotes: ["Mapped to Claude plugin hooks/hooks.json material"],
     });
   }
 
@@ -484,20 +501,20 @@ async function buildClaudeProjections(input: {
       source: mcpServer.name,
       sourcePath: mcpServer.absPath,
       targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "mcp", mcpServer.name)),
-      distributionMode: "local_plugin_install",
-      supportStatus: "adapter_required",
+      distributionMode: "native_provider_plugin",
+      supportStatus: "native",
       evidenceLevel: "official",
       semanticSupport: materialSupport({
         provider: "claude",
         semanticKind: "mcp_server",
         source: mcpServer.name,
-        supportStatus: "adapter_required",
+        supportStatus: "native",
         evidenceLevel: "official",
-        notes: ["Claude MCP/settings wiring is provider-specific and must be installed explicitly"],
+        notes: ["Mapped to Claude plugin .mcp.json material"],
       }),
       droppedSemantics: [],
-      adapterRequiredSemantics: ["Claude MCP/settings wiring is provider-specific and must be installed explicitly"],
-      validationNotes: ["MCP material is detected and reported instead of being silently ignored"],
+      adapterRequiredSemantics: [],
+      validationNotes: ["Mapped to Claude plugin MCP material"],
     });
   }
 
@@ -508,20 +525,20 @@ async function buildClaudeProjections(input: {
       source: setting.name,
       sourcePath: setting.absPath,
       targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "settings", setting.name)),
-      distributionMode: "local_plugin_install",
-      supportStatus: "adapter_required",
+      distributionMode: "native_provider_plugin",
+      supportStatus: "native",
       evidenceLevel: "official",
       semanticSupport: materialSupport({
         provider: "claude",
         semanticKind: "settings",
         source: setting.name,
-        supportStatus: "adapter_required",
+        supportStatus: "native",
         evidenceLevel: "official",
-        notes: ["Claude settings must merge as managed fragments without overwriting unmanaged settings"],
+        notes: ["Mapped to Claude plugin settings.json/settings support material"],
       }),
       droppedSemantics: [],
-      adapterRequiredSemantics: ["Claude settings must merge as managed fragments without overwriting unmanaged settings"],
-      validationNotes: ["Settings are modeled so status can distinguish sync from runtime install"],
+      adapterRequiredSemantics: [],
+      validationNotes: ["Mapped to Claude plugin settings material"],
     });
   }
 
@@ -532,7 +549,7 @@ async function buildClaudeProjections(input: {
       source: asset.name,
       sourcePath: asset.absPath,
       targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "assets", asset.name)),
-      distributionMode: "local_plugin_install",
+      distributionMode: "native_provider_plugin",
       supportStatus: "unknown",
       evidenceLevel: "inferred",
       semanticSupport: materialSupport({
@@ -556,7 +573,7 @@ async function buildClaudeProjections(input: {
       source: spec.name,
       sourcePath: spec.absPath,
       targetPaths: [],
-      distributionMode: "local_plugin_install",
+      distributionMode: "native_provider_plugin",
       supportStatus: "native",
       evidenceLevel: "source_code",
       semanticSupport: relatedSemanticSupport({
@@ -577,7 +594,7 @@ async function buildClaudeProjections(input: {
         source: agent.name,
         sourcePath: agent.absPath,
         targetPaths: pluginDirs.map((dir) => pathOps.join(dir, "agents", `${agent.name}.md`)),
-        distributionMode: "local_plugin_install",
+        distributionMode: "native_provider_plugin",
         supportStatus: "native",
         evidenceLevel: "official",
         semanticSupport: [
@@ -607,7 +624,7 @@ async function buildClaudeProjections(input: {
       pathOps.join(dir, ".claude-plugin", "plugin.json"),
       pathOps.join(dir, ".rawr-sync-manifest.json"),
     ]),
-    distributionMode: "local_plugin_install",
+    distributionMode: "native_provider_plugin",
     supportStatus: "native",
     evidenceLevel: "official",
     semanticSupport: materialSupport({

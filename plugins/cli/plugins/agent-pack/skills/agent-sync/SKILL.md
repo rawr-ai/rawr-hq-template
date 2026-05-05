@@ -1,18 +1,20 @@
 ---
 name: agent-sync
 description: |
-  Sync a RAWR HQ plugin's canonical content (skills/workflows/scripts) into Codex and Claude agent plugin directories.
+  Deploy a RAWR HQ plugin's canonical content through native Codex and Claude provider plugin paths.
 
   Use this when the user asks to "sync skills", "deploy skills", "ship workflows", or "mirror a plugin to Codex/Claude".
 
-  Key triggers: "sync to codex", "sync to claude", "agent plugins", "deploy skills", "skill registry", "workflows directory".
+  Key triggers: "sync to codex", "sync to claude", "agent plugins", "deploy skills", "skill registry", "workflows directory", "plugin export".
 ---
 
 # Agent Sync (RAWR HQ -> Codex + Claude)
 
 ## What this does
 
-This skill guides you to run the RAWR CLI command that syncs a source plugin's **canonical content** to agent directories.
+This skill guides you to run the RAWR CLI command that deploys a source
+plugin's **canonical content** through native Codex and Claude provider plugin
+paths. Use projection/export only for explicit mapped filesystem destinations.
 
 Canonical source directories inside a plugin:
 - `skills/` (skill directories containing `SKILL.md`)
@@ -37,7 +39,7 @@ Codex custom agents are projected as standalone TOML with only:
 
 Claude-only fields such as `tools`, `hooks`, `mcpServers`, `permissionMode`, `skills`, `model`, and `color` are reported as semantic support residuals instead of being written into Codex TOML. Claude-style `Skill(...)`, `Task(...)`, and `TodoWrite` orchestration is also reported as semantic support status, not material drift.
 
-Direct Codex sync still owns native material for modeled hooks, MCP, settings/config fragments, prompts, scripts, runtime skill mirrors, standalone agents, and registry metadata. Codex marketplace package/install is a separate lane from direct home sync.
+Native provider plugins are the sanctioned Codex and Claude deployment path. Direct filesystem projection is retained only as generic destination projection/export for explicit mapped destinations, fixtures, repair, migration, ad-hoc packaging, and non-CLI systems.
 
 ## Important boundary: shipped scripts vs plugin-internal scripts
 
@@ -72,16 +74,16 @@ You can:
 
 This `.zip` is generated from the **RAWR HQ plugin source** using the same mapping rules as Claude sync (workflows -> commands, skills, scripts, and optionally agents).
 
-## Codex marketplace packages
+## Codex native marketplace packages
 
-Codex official plugin package generation is explicit. With `--codex-package`, RAWR writes a local Codex marketplace and installs generated plugins through the RAWR Codex CLI by default:
+Codex official plugin package generation is the default native deployment path. RAWR writes a local Codex marketplace and installs generated plugins through the selected Codex CLI by default:
 
 ```bash
-rawr plugins sync <plugin-ref> --codex-package
-rawr plugins sync all --codex-package
+rawr plugins sync <plugin-ref>
+rawr plugins sync all
 ```
 
-Use `--no-codex-install` to generate the marketplace without installing it. Use `--codex-bin <path>` to choose a Codex binary; default resolution is `RAWR_CODEX_BIN`, then `~/.local/bin/codex`, then `codex` on `PATH`.
+Use `--no-codex-package` to skip package generation, or `--no-codex-install` to generate the marketplace without installing it. Use `--codex-bin <path>` to choose a Codex binary; default resolution is `RAWR_CODEX_BIN`, then `~/.local/bin/codex`, then `codex` on `PATH`.
 
 Use `--install-scope user` when you need to be explicit. `user` is the default and currently the only supported install scope; other scopes are intentionally reserved until RAWR supports them end to end.
 
@@ -89,7 +91,24 @@ Default outputs:
 - `dist/codex/.agents/plugins/marketplace.json`
 - `dist/codex/plugins/<pluginName>/`
 
-The package includes `.codex-plugin/plugin.json`, `skills/`, MCP config/files when modeled, and assets. Custom agents, settings, and hooks are not emitted in Codex plugin packages for the current RAWR Codex manifest; direct Codex sync owns standalone TOML agents, managed hook config, MCP/settings config fragments, prompts, scripts, and runtime skill mirrors.
+The package includes `.codex-plugin/plugin.json`, `skills/`, `hooks/hooks.json` when hook lifecycle config is modeled, hook scripts as support material, MCP config/files when modeled, shipped scripts, custom agents, settings/config material, and assets.
+
+Codex plugin hooks require a provider with the `plugin_hooks` feature. If the default `codex-rawr` binary is behind upstream, use `--codex-bin <latest-codex>` for hook verification, for example `/Users/mateicanavra/.volta/bin/codex`.
+
+## Generic destination projection
+
+Use projection only when you intentionally need RAWR-modeled content copied to explicit filesystem destinations without native provider install:
+
+```bash
+rawr plugins export <plugin-ref> --agent codex|claude|all --codex-home <path> --claude-home <path>
+rawr plugins export all --agent codex|claude|all --codex-home <path> --claude-home <path>
+```
+
+Projection requires explicit destination homes for the selected agent shape. It
+does not fall back to `CODEX_HOME`, `RAWR_AGENT_SYNC_*`, configured provider
+homes, or provider default homes.
+
+`rawr plugins sync --destination-projection` can be used when a workstream needs native deployment plus auxiliary filesystem projection in one run. Projection is not a Codex or Claude deployment fallback.
 
 Compatibility alias (deprecated):
 ```bash
@@ -150,9 +169,10 @@ Defaults (when flags are omitted):
   - `$RAWR_AGENT_SYNC_CLAUDE_HOMES` (comma-separated), else
   - `~/.claude/plugins/local`
 
-Additional Codex homes are explicit sync destinations only. Include them with
-repeatable `--codex-home`, `$RAWR_AGENT_SYNC_CODEX_HOMES`, or an enabled config
-destination when multi-home convergence is intentional.
+Native Codex package install currently uses the first selected Codex home for
+the provider app-server session. Additional Codex homes are explicit generic
+projection destinations only when `rawr plugins export` or
+`--destination-projection` is used.
 
 ## Conflicts and safety
 

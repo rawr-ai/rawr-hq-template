@@ -20,7 +20,9 @@ type KnownMarketplacesFile = Record<string, KnownMarketplaceRecord>;
  */
 export type ClaudeInstallAction =
   | { action: "planned"; home: string; plugin: string; installScope: InstallScope; marketplace?: string }
+  | { action: "validated"; home: string; plugin: string; installScope: InstallScope; marketplace: string }
   | { action: "installed"; home: string; plugin: string; installScope: InstallScope; marketplace: string }
+  | { action: "updated"; home: string; plugin: string; installScope: InstallScope; marketplace: string }
   | { action: "enabled"; home: string; plugin: string; installScope: InstallScope; marketplace: string }
   | { action: "skipped"; home: string; plugin: string; installScope: InstallScope; reason: string; marketplace?: string }
   | { action: "failed"; home: string; plugin: string; installScope: InstallScope; error: string; marketplace?: string };
@@ -193,24 +195,12 @@ export async function installAndEnableClaudePlugin(input: {
   }
 
   const pluginRef = `${input.pluginName}@${marketplaceName}`;
-  const installResult = await exec({
+  const validateResult = await exec({
     cmd: "claude",
-    args: ["plugin", "install", pluginRef],
+    args: ["plugin", "validate", input.claudeLocalHome],
   });
-  const installText = `${installResult.stderr || ""}\n${installResult.stdout || ""}`.trim();
-  if (installResult.code !== 0) {
-    if (isAlreadyInstalled(installText)) {
-      return [
-        {
-          action: "skipped",
-          home: input.claudeLocalHome,
-          plugin: input.pluginName,
-          installScope,
-          marketplace: marketplaceName,
-          reason: "already installed",
-        },
-      ];
-    }
+  const validateText = `${validateResult.stderr || ""}\n${validateResult.stdout || ""}`.trim();
+  if (validateResult.code !== 0) {
     return [
       {
         action: "failed",
@@ -218,20 +208,71 @@ export async function installAndEnableClaudePlugin(input: {
         plugin: input.pluginName,
         installScope,
         marketplace: marketplaceName,
-        error: installText,
+        error: validateText,
       },
     ];
   }
 
   const actions: ClaudeInstallAction[] = [
     {
-      action: "installed",
+      action: "validated",
       home: input.claudeLocalHome,
       plugin: input.pluginName,
       installScope,
       marketplace: marketplaceName,
     },
   ];
+
+  const installResult = await exec({
+    cmd: "claude",
+    args: ["plugin", "install", pluginRef],
+  });
+  const installText = `${installResult.stderr || ""}\n${installResult.stdout || ""}`.trim();
+  if (installResult.code !== 0) {
+    if (isAlreadyInstalled(installText)) {
+      const updateResult = await exec({
+        cmd: "claude",
+        args: ["plugin", "update", pluginRef],
+      });
+      const updateText = `${updateResult.stderr || ""}\n${updateResult.stdout || ""}`.trim();
+      if (updateResult.code !== 0) {
+        actions.push({
+          action: "failed",
+          home: input.claudeLocalHome,
+          plugin: input.pluginName,
+          installScope,
+          marketplace: marketplaceName,
+          error: updateText,
+        });
+        return actions;
+      }
+      actions.push({
+        action: "updated",
+        home: input.claudeLocalHome,
+        plugin: input.pluginName,
+        installScope,
+        marketplace: marketplaceName,
+      });
+    } else {
+      actions.push({
+        action: "failed",
+        home: input.claudeLocalHome,
+        plugin: input.pluginName,
+        installScope,
+        marketplace: marketplaceName,
+        error: installText,
+      });
+      return actions;
+    }
+  } else {
+    actions.push({
+      action: "installed",
+      home: input.claudeLocalHome,
+      plugin: input.pluginName,
+      installScope,
+      marketplace: marketplaceName,
+    });
+  }
 
   if (!input.enable) return actions;
 

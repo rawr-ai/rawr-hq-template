@@ -5,6 +5,13 @@ export function evaluateFullSyncPolicy(input: FullSyncPolicyInput): FullSyncPoli
   if (input.agent !== "all") partialReasons.push(`agent=${input.agent}`);
   if (input.scope !== "all") partialReasons.push(`scope=${input.scope}`);
   if (!input.coworkEnabled) partialReasons.push("cowork disabled");
+  const codexSelected = input.agent === "all" || input.agent === "codex";
+  const codexPackageEnabled = input.codexPackageEnabled ?? true;
+  const codexInstallEnabled = input.codexInstallEnabled ?? true;
+  if (codexSelected && !codexPackageEnabled) partialReasons.push("codex package disabled");
+  if (codexSelected && codexPackageEnabled && !codexInstallEnabled) {
+    partialReasons.push("codex install disabled");
+  }
   if (!input.claudeInstallEnabled) partialReasons.push("claude install disabled");
   if (input.claudeInstallEnabled && !input.claudeEnableEnabled) {
     partialReasons.push("claude enable disabled");

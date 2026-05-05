@@ -119,6 +119,29 @@ describe("agent-config-sync workspace planning", () => {
     expect(policy.failure?.code).toBe("PARTIAL_MODE_REQUIRES_ALLOW_PARTIAL");
   });
 
+  it("treats disabled Codex native package/install as partial full sync mode", async () => {
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+
+    const policy = await client.planning.evaluateFullSyncPolicy({
+      agent: "all",
+      scope: "all",
+      coworkEnabled: true,
+      codexPackageEnabled: true,
+      codexInstallEnabled: false,
+      claudeInstallEnabled: true,
+      claudeEnableEnabled: true,
+      installReconcileEnabled: true,
+      retireOrphansEnabled: true,
+      force: true,
+      gc: true,
+      allowPartial: false,
+    }, { context: { invocation: { traceId: "test-codex-native-install-policy" } } });
+
+    expect(policy.allowed).toBe(false);
+    expect(policy.partialReasons).toEqual(["codex install disabled"]);
+    expect(policy.failure?.code).toBe("PARTIAL_MODE_REQUIRES_ALLOW_PARTIAL");
+  });
+
   it("uses explicit source workspace authority instead of invocation workspace content", async () => {
     const invocation = await makeWorkspace({
       pluginName: "template-plugin",

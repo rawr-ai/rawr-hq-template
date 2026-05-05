@@ -1,159 +1,182 @@
-# Agent Config Sync Parity Investigation Report
+# Agent Config Sync Parity Report
 
-Status: investigation report for `codex/agent-config-sync-parity-reconciliation-plan`
-and child follow-up planning.
+Status: current handoff for
+`codex/agent-C-agent-config-sync-managed-provider-plugin-parity`.
 
 ## Current State
 
-The service has enough documentation to understand the gap, but the useful
-truth is split across current, mixed, and historical artifacts.
+`agent-config-sync` now has one sanctioned provider-deployment model:
+RAWR plugin source is scanned into provider-effective content, then installed
+through native provider plugin paths for Codex and Claude. Direct filesystem
+sync remains only as generic destination projection/export.
+
+The current reliable planning artifacts are:
 
 | Artifact | Status | Use it for |
 | --- | --- | --- |
-| `services/agent-config-sync/docs/CURRENT_STATE.md` | Current | First-hop operational truth. It says Codex direct sync and Codex package/install are two unequal tracks, and package install is not full parity. |
-| `services/agent-config-sync/test/TESTING_PLAN.md` | Current | Canonical gap/testing register. It names plugin-lane Codex agents/settings/hooks, undo, failure injection, multi-home, Cowork, and personal e2e gaps. |
-| `services/agent-config-sync/docs/agent-sync-parity-reconciliation-plan.md` | Partially superseded | Useful reconciliation history and material-vs-semantic contract, but it still contains stale implementation-branch and Graphite wording. |
-| `services/agent-config-sync/test/AGENT_SYNC_PARITY_CLOSURE_SPEC.md` | Mixed living spec | Useful acceptance/evidence history, but some "remaining" Codex package/install work has since been implemented. Treat runtime-smoke claims as unproven unless rerun. |
-| `plugins/cli/plugins/README.md` and `plugins/cli/plugins/agent-pack/skills/agent-sync/SKILL.md` | Current operator docs | CLI-facing sync behavior, explicit Codex package lane, Claude install, and direct Codex hook/config ownership. |
+| `PARITY_INVESTIGATION_REPORT.md` | Current | Provider parity truth and remaining risks. |
+| `MANAGED_PROVIDER_PLUGIN_PARITY_WORKSTREAM.md` | Current | Workstream record, evidence, verification, and closure notes. |
+| `MANAGED_PROVIDER_PLUGIN_PARITY_DECISIONS.md` | Current | Decision log for native-provider vs projection split. |
+| `CURRENT_STATE.md` | Partially stale | Historical service state before this parity workstream. |
+| `agent-sync-parity-reconciliation-plan.md` | Superseded history | Reconciliation context only. |
+| `TESTING_PLAN.md` and `AGENT_SYNC_PARITY_CLOSURE_SPEC.md` | Mixed | Historical gap register; re-check claims against this report and tests. |
 
-Concrete branch facts:
+The important provider facts are:
 
-- Top branch inspected: `d7aeda1f` (`codex/agent-config-sync-parity-reconciliation-plan`), with this report on child branch `codex/agent-config-sync-parity-investigation-report`.
-- The branch already implements provider projections, external source workspace sync, semantic support residuals, Codex runtime skill destination cleanup, Codex package generation/install adapters, Claude install adapters, and direct Codex hook/MCP/settings/config sync.
-- The branch does not prove Codex package-installed hook parity, package-installed custom agents, package-installed settings/config fragments, direct/package deduplication, or true provider uninstall/update parity.
+- Claude Code native plugins support commands, skills, agents, hooks, MCP, and
+  install/update/enable lifecycle commands.
+- Codex official docs and current upstream examples describe plugin-bundled
+  hooks via `plugin.json#hooks` and `hooks/hooks.json`.
+- Latest native `@openai/codex@0.128.0` exposes `hooks/list` and successfully
+  reports installed plugin hooks when app-server is started with
+  `--enable plugin_hooks`.
+- Current `codex-rawr` / `~/.local/bin/codex` is `0.126.0-alpha.3` and does
+  not have that provider surface yet. Use `--codex-bin
+  /Users/mateicanavra/.volta/bin/codex` for hook-provider verification until
+  the RAWR fork catches up.
+- `PluginDetail` still does not include hooks. Provider-visible Codex hook
+  proof must use app-server `hooks/list` and match `pluginId`.
+- Codex does not currently publish a durable npm TypeScript/API package for
+  plugin manifests or app-server plugin/hook methods. The provider-supported
+  local type surface is generated from the installed binary with
+  `codex app-server generate-ts` or `generate-json-schema`.
 
 ## Parity Matrix
 
-Legend:
+Legend: `native` means the provider runtime/install path carries the capability.
+`packaged-support` means material is packaged but not provider-activated as a
+first-class runtime feature. `projection-only` is auxiliary export/repair, not
+provider deployment.
 
-- `native`: implemented through the provider's current supported path.
-- `direct-only`: implemented only through direct filesystem convergence.
-- `package`: implemented in provider package/install lane.
-- `adapter-required`: modeled, but needs provider-specific install/merge semantics.
-- `missing`: not currently implemented.
-- `legacy`: useful compatibility/migration behavior, not the future claim.
-
-| Capability | Codex direct sync | Codex package/install | Claude local plugin/install | Notes |
+| Capability | Codex native plugin | Claude native plugin | Generic projection/export | Notes |
 | --- | --- | --- | --- | --- |
-| Skills | `native` | `package` | `native` | Codex direct sync writes runtime `.agents/skills`; package lane emits `.codex-plugin/plugin.json` with `skills: "./skills/"`. |
-| Workflows/prompts/commands | `legacy` | `missing` | `native` | Codex mirrors workflows into `prompts/`; Claude maps workflows to plugin `commands/`. |
-| Scripts | `direct-only` | `missing` | `native` | Codex stores prefixed utility scripts, not provider-native commands. |
-| Agents | `direct-only` | `missing` | `native` | Codex direct sync projects Markdown agents to TOML and reports dropped Claude-only semantics. |
-| Hooks | `native/direct-only` | `missing` | `adapter-required` | Codex direct sync copies hook scripts, merges `hooks.json`, and enables `codex_hooks`. Codex package lane intentionally omits hooks. Claude projections model hooks as adapter-required; Claude sync execution does not currently write hooks. |
-| MCP | `native/direct-only` | `package` for modeled MCP | `adapter-required` | Codex direct sync copies MCP runtime files and merges `config.toml`; Codex package emits `.mcp.json` and files where modeled. Claude projection reports MCP/settings install work as adapter-required. |
-| Settings/config | `native/direct-only` | `missing` | `adapter-required` | Codex direct sync merges TOML fragments into `config.toml`. Package lane omits settings/config. |
-| Assets | `unknown` direct runtime | `package` | `unknown/package material` | Assets are useful for package surfaces; runtime semantics depend on consumer. |
-| Registry/GC | `direct-only` | partial package output pruning | plugin manifest GC for synced Claude material | Codex direct sync has strongest ownership registry and stale retirement. Package lane prunes generated package dirs/marketplace entries, but does not reconcile provider runtime duplicates. |
-| Install/update/uninstall | file convergence + undo | install implemented; update/uninstall incomplete | install/enable implemented; update/uninstall incomplete | Codex uses marketplace add + app-server install/verify. Claude uses marketplace add + install + enable. Provider update/remove adapters are not complete. |
+| Skills | `native` | `native` | `projection-only` | Codex package writes `.codex-plugin/plugin.json` + `skills/`; Claude writes plugin `skills/`. Projection output is never counted as provider parity. |
+| Commands/workflows | `packaged-support` gap | `native` | `projection-only` | Claude maps workflows to `commands/`. Codex command activation remains a provider gap unless future source proves otherwise. |
+| Scripts | `packaged-support` | `native/support` | `projection-only` | Codex package now includes `scripts/` support material. Hook/MCP scripts are referenced by provider configs. |
+| Agents | `packaged-support` gap | `native` | `projection-only` | Codex package includes agent files as material, but provider activation is not yet proven. |
+| Hooks | `native` in latest Codex with `plugin_hooks`; blocked in current `codex-rawr` | `native` | `projection-only` | Codex package advertises hooks only when lifecycle hook config exists, writes `hooks/hooks.json`, and verifies with `hooks/list`. Hook scripts alone are support material. |
+| MCP | `native` for `.mcp.json` | `native` for `.mcp.json` | `projection-only` | Provider configs are generated from modeled MCP material. |
+| Settings/config | `packaged-support` gap | `native/support` | `projection-only` | Codex provider-native config fragments remain unproven; do not hide that with direct config writes. |
+| Assets/apps | `native/support` where provider consumes them | `native/support` where provider consumes them | `projection-only` | Assets are packaged; activation depends on provider surface. |
+| Install/update/uninstall | install + verified hooks; provider update/remove still limited | validate/install/update/enable implemented | n/a | Claude update now runs when install reports already installed. Codex uninstall exists in app-server but is not fully wired as a lifecycle command. |
+| Registry/GC | generated marketplace/package pruning | RAWR manifest + marketplace source pruning | managed projection registry/GC | Reconciliation must avoid duplicate active provider claims. |
 
 ## Legacy Vs Go-Forward
 
-The real problem is not "can Codex run hooks." Direct Codex sync already proves
-Codex can consume modeled hook material through runtime config. The problem is
-that installable provider-plugin parity is incomplete: hooks, custom agents,
-settings/config, full reconciliation, and update/uninstall semantics do not yet
-work through one Codex/Claude native install process.
-
-Direct sync is legacy in product direction but not disposable:
-
-- It is the complete Codex local convergence path today.
-- It owns the current working hook path.
-- Removing it before package parity would lose hooks, standalone Codex agents,
-settings/config fragments, full `config.toml` merge behavior, and direct-home
-GC/registry convergence.
-
-The go-forward path is native provider plugin/package install:
-
-- Codex package/install is already real for skills, modeled MCP, assets,
-marketplace registration, app-server install, and verification.
-- Claude marketplace install/enable is already real for the current local plugin
-material.
-- The target abstraction should be "managed provider plugin" with provider
-install flows owning delivery, while direct sync narrows to migration/repair.
-
-Ownership boundary:
-
-- `services/agent-config-sync`: source authority, provider-effective content,
-projection status, semantic residuals, registry/GC, retirement, and direct-vs-package reconciliation.
-- `packages/agent-config-sync-node`: package artifact writers and local provider CLI/app-server adapters.
-- `plugins/cli/plugins`: command flags, orchestration, operator output, and process wiring.
-- `services/hq-ops`: HQ plugin catalog, command-plugin install health, and lifecycle policy; not provider hook sync.
-
-## Visual
+Go-forward: **managed native provider plugins**.
 
 ```mermaid
 flowchart TD
-  source["RAWR plugin source<br/>skills workflows scripts agents hooks MCP settings assets"]
-  service["agent-config-sync<br/>provider-effective content + residuals"]
-  direct["Codex direct sync<br/>local convergence"]
-  codexpkg["Codex package/install<br/>native package lane"]
-  claude["Claude local plugin/install"]
-  codexhome["Codex home<br/>prompts skills scripts agents hooks.json config.toml registry"]
-  codexnative["Codex installed plugin<br/>skills + modeled MCP today"]
-  claudehome["Claude plugin<br/>commands skills scripts agents metadata today"]
-  future["Future unified mode<br/>managed provider plugins + reconciliation"]
+  source["RAWR plugin source<br/>skills, hooks, agents, settings, MCP, scripts, assets"]
+  model["agent-config-sync<br/>RAWR agent plugin model + provider-effective content"]
+  codexpkg["Codex native package<br/>.codex-plugin/plugin.json + marketplace"]
+  claudepkg["Claude native plugin<br/>.claude-plugin/plugin.json + marketplace"]
+  codexinstall["Codex app-server install/read/hooks-list"]
+  claudeinstall["Claude validate/install/update/enable"]
+  projection["Generic destination projection<br/>explicit export/repair only"]
 
-  source --> service
-  service --> direct --> codexhome
-  service --> codexpkg --> codexnative
-  service --> claude --> claudehome
-  codexhome -. "temporary coexistence / duplicate risk" .-> codexnative
-  codexpkg --> future
-  claude --> future
-  direct -. "narrow to migration/repair after parity" .-> future
+  source --> model
+  model --> codexpkg --> codexinstall
+  model --> claudepkg --> claudeinstall
+  model -. "not provider deployment" .-> projection
 ```
+
+Direct sync is retained as **generic destination projection** only:
+
+- It can copy RAWR-modeled content to arbitrary mapped destinations.
+- It remains useful for fixtures, repair, migration, ad-hoc packaging, and
+  non-CLI agent systems.
+- It is not allowed as a sanctioned Codex or Claude deployment fallback.
+- Export commands require explicit destinations and do not fall back to provider
+  homes or environment defaults.
+- Any provider-native gap must surface as a blocker or residual, not as a
+  silent direct write.
+
+## Implemented Workstream Changes
+
+- Codex package generation now emits:
+  - hook lifecycle config at `hooks/hooks.json` only when modeled hook config
+    exists,
+  - hook scripts under `hooks/`,
+  - hook commands rewritten to `${CODEX_PLUGIN_ROOT}/hooks/<script>`,
+  - MCP config and server files,
+  - scripts, agents, settings, and assets as package material.
+- Codex install verification now:
+  - starts app-server with `--enable plugin_hooks` only when hook handlers are
+    present,
+  - verifies hooks through `hooks/list`,
+  - counts enabled hooks by `pluginId`,
+  - fails rather than claiming parity when provider hook activation is absent.
+- Claude local plugin staging now includes hooks, MCP, settings, assets, and
+  manifest fields for `hooks` and `mcpServers`.
+- Claude install now validates the local marketplace and runs `plugin update`
+  when `plugin install` reports the plugin is already installed.
+- CLI default `rawr plugins sync` / `sync all` is native provider deployment;
+  generic projection is available as `rawr plugins export` / `export all` and
+  by explicit `--destination-projection`.
+- Codex generic destination projections now report `legacy_or_deprecated` or
+  adapter-required support instead of native provider support.
 
 ## Recommendation
 
-The next bulk of work should be native package/install parity and
-reconciliation, not more feature growth in direct sync.
+The next bulk work should **not** improve direct sync for Codex/Claude. The
+correct path is to keep closing native provider parity and use direct sync only
+as generic projection/export.
 
-Use direct sync operationally for hooks right now, because it is the only
-implemented full Codex local convergence path. Do not pretend Codex package
-install provides hook parity yet. Do not remove direct sync until native package
-install can carry hooks, custom agents, settings/config, and reconciliation
-without capability loss.
+For immediate hook-blocking work:
 
-The next workstream should:
+1. Use latest native Codex for verification:
+   `--codex-bin /Users/mateicanavra/.volta/bin/codex`.
+2. Keep `codex-rawr` as the primary/default binary, but record its current
+   hook-plugin limitation until the fork rebases to a provider with
+   `plugin_hooks`.
+3. Treat Codex settings/config, commands, and agent activation as provider
+   residuals unless provider docs/source/runtime prove native semantics.
 
-1. Make package/install the primary convergence target for Codex and Claude.
-2. Add package-provided hooks first: hook scripts, lifecycle config,
-   install/update/uninstall, GC, rollback, and status reporting.
-3. Add package-provided agents and settings/config fragments, with the same
-   material-vs-semantic residual honesty used by direct sync.
-4. Add service-owned reconciliation so package-installed material can absorb or
-   supersede direct-sync material without duplicate provider-visible output.
-5. Keep direct sync as compatibility/migration/repair until package parity is
-   proven by tests and real provider install verification.
+## Evidence
 
-This is the cleanest path because it converges on one native provider-plugin
-process without losing the currently working hook capability.
+- Official Codex plugin docs describe `hooks: "./hooks/hooks.json"` and say
+  Codex also checks `./hooks/hooks.json` by default:
+  <https://developers.openai.com/codex/plugins/build>
+- Official Codex hooks docs define the top-level `{ "hooks": { ... } }`
+  lifecycle config shape:
+  <https://developers.openai.com/codex/hooks>
+- Official `openai/plugins` examples repo includes plugin companion surfaces:
+  <https://github.com/openai/plugins>
+- Official app-server docs describe version-specific generated TypeScript and
+  JSON Schema outputs:
+  <https://developers.openai.com/codex/app-server>
+- Open upstream issue documenting the historical docs/runtime mismatch for
+  plugin-local hooks:
+  <https://github.com/openai/codex/issues/16430>
+- Local generated latest native app-server types show `hooks/list` and
+  `HookMetadata.pluginId`, while `PluginDetail` omits hooks.
+- Live temp-home smoke using `/Users/mateicanavra/.volta/bin/codex`
+  `codex-cli 0.128.0` verified a generated RAWR package hook through
+  `hooks/list` with `source: "plugin"` and `pluginId: "plugin-demo@rawr"`.
 
 ## Gap Register
 
-| Gap | Owner area | Evidence | Suggested next branch |
+| Gap | Status | Owner area | Next action |
 | --- | --- | --- | --- |
-| Codex package hooks | `agent-config-sync` model + `agent-config-sync-node` package/install adapters | `codex-package.ts` explicitly removes `hooks` and returns `hookCount: 0`; `CURRENT_STATE.md` names package-provided hooks as remaining work. | `codex/agent-config-sync-package-hooks` |
-| Claude hook material install | `agent-config-sync` Claude projection/execution + provider package adapter | Claude projections mark hooks adapter-required; `sync-claude-homes.ts` does not currently write hooks. | `codex/agent-config-sync-claude-hooks` |
-| Package-installed custom agents | service projection + package writer | Codex package lane omits `agents`; direct sync projects TOML agents only. | `codex/agent-config-sync-package-agents` |
-| Package-installed settings/config | service projection + package writer + provider merge semantics | Codex package lane omits `settings`; direct sync merges TOML fragments into `config.toml`. | `codex/agent-config-sync-package-settings` |
-| Direct/package reconciliation | new or expanded service reconciliation module | `CURRENT_STATE.md` warns package install plus direct sync can duplicate provider-visible material. | `codex/agent-config-sync-package-reconciliation` |
-| Update/uninstall semantics | provider install adapters + service retirement model | Codex and Claude install paths exist; update/remove/uninstall parity is not implemented end to end. | `codex/agent-config-sync-provider-lifecycle` |
-| Live provider smoke | CLI/e2e gates | Current tests are strong deterministic unit/adapter tests, but live RAWR Codex temp-home smoke is not proven by committed tests. | `codex/agent-config-sync-live-smoke` |
+| Codex plugin hooks in current `codex-rawr` | Provider-version gap | Codex fork/runtime | Rebase or upgrade fork to a provider with `plugin_hooks`; use native Codex binary for current verification. |
+| Codex command/workflow activation | Provider gap | Codex adapter + provider docs | Research/verify whether Codex plugin commands are active; otherwise keep as package support material only. |
+| Codex custom agent activation | Provider gap | Codex adapter + provider docs | Verify plugin agent activation surface before claiming native parity. |
+| Codex settings/config fragments | Provider gap | Codex adapter + provider docs | Do not direct-merge config as deployment; wait for native config/plugin requirement surface. |
+| Provider uninstall/remove lifecycle | Partial | `agent-config-sync-node`, CLI | Wire Codex app-server uninstall and Claude uninstall into explicit lifecycle/retirement commands. |
+| Duplicate legacy provider claims | Partial | service reconciliation | Retire only RAWR-managed legacy projection claims; preserve unmanaged user files. |
 
 ## Acceptance Answers
 
-- We do have remaining-work material. The reliable current pair is
-  `CURRENT_STATE.md` plus `TESTING_PLAN.md`; the reconciliation plan and closure
-  spec are useful but partially stale.
-- We understand the problem: direct sync has material capability; package/native
-  install parity is incomplete, especially for hooks.
-- Legacy path: direct filesystem convergence. Go-forward path: managed provider
-  plugin/package install through Codex and Claude native flows.
-- Gap between paths: hooks, custom agents, settings/config, reconciliation, and
-  provider update/uninstall semantics.
-- Hooks require package/native install support for scripts, lifecycle config,
-  install/update/uninstall, config merge, GC, rollback, and duplicate prevention
-  across both Codex and Claude.
-- Next bulk work: package/install parity plus reconciliation. Keep direct sync as
-  the immediate hook path and fallback until that work is proven.
+- Yes, we had docs/specs/plans, but they were partly stale. This report is now
+  the current handoff artifact.
+- The problem is precise: provider-native install parity, especially hooks,
+  not generic file copying.
+- Legacy path: direct filesystem convergence. Retained path: generic
+  destination projection/export. Go-forward path: native Codex/Claude provider
+  plugin deployment.
+- Hooks are installable through Claude native plugins and through latest native
+  Codex with `plugin_hooks`; current `codex-rawr` must catch up or be bypassed
+  with `--codex-bin` for verification.
+- The next workstream should focus on provider-native residuals and lifecycle
+  reconciliation, not direct-sync feature growth.

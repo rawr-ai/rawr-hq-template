@@ -48,7 +48,8 @@ export const SemanticCapabilityKindSchema = Type.Union([
 ]);
 
 export const DistributionModeSchema = Type.Union([
-  Type.Literal("direct_mirror"),
+  Type.Literal("native_provider_plugin"),
+  Type.Literal("destination_projection"),
   Type.Literal("local_plugin_install"),
   Type.Literal("package_artifact"),
   Type.Literal("manual_upload"),
@@ -67,6 +68,7 @@ export const SupportStatusSchema = Type.Union([
 export const ProjectionSupportStatusSchema = Type.Union([
   Type.Literal("native"),
   Type.Literal("adapter_required"),
+  Type.Literal("legacy_or_deprecated"),
   Type.Literal("unsupported"),
   Type.Literal("unknown"),
 ]);

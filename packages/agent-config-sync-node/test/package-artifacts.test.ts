@@ -28,13 +28,16 @@ async function listZipEntries(zipPath: string): Promise<string[]> {
 }
 
 describe("@rawr/agent-config-sync-node package artifacts", () => {
-  it("builds baseline Codex plugin package artifacts without unsupported agent/hook/settings output", async () => {
+  it("builds baseline Codex native plugin package artifacts with source support material", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-node-codex-package-"));
     tempDirs.push(root);
     const pluginRoot = path.join(root, "plugin-demo");
     const skillRoot = path.join(pluginRoot, "skills", "demo-skill");
+    const agentPath = path.join(pluginRoot, "agents", "researcher.md");
     await fs.mkdir(skillRoot, { recursive: true });
+    await fs.mkdir(path.dirname(agentPath), { recursive: true });
     await fs.writeFile(path.join(skillRoot, "SKILL.md"), "# Demo Skill\n", "utf8");
+    await fs.writeFile(agentPath, "# Researcher\n", "utf8");
     const outDir = path.join(root, "dist");
 
     const result = await packageCodexPlugin({
@@ -50,7 +53,7 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
         workflowFiles: [],
         skills: [{ name: "demo-skill", absPath: skillRoot }],
         scripts: [],
-        agentFiles: [{ name: "researcher", absPath: path.join(pluginRoot, "agents", "researcher.md") }],
+        agentFiles: [{ name: "researcher", absPath: agentPath }],
       },
       outDirAbs: outDir,
       dryRun: false,
@@ -60,6 +63,7 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
       plugin: "plugin-demo",
       action: "written",
       skillCount: 1,
+      agentCount: 1,
     });
     const packageDir = path.join(outDir, "plugins", "plugin-demo");
     const manifest = JSON.parse(await fs.readFile(path.join(packageDir, ".codex-plugin", "plugin.json"), "utf8"));
@@ -72,16 +76,16 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
         displayName: "plugin-demo",
         shortDescription: "Demo plugin",
         category: "rawr",
-        capabilities: ["skills"],
+        capabilities: ["skills", "agents"],
       },
     });
     await expect(fs.readFile(path.join(packageDir, "skills", "demo-skill", "SKILL.md"), "utf8")).resolves.toBe("# Demo Skill\n");
-    await expect(fs.stat(path.join(packageDir, "agents"))).rejects.toThrow();
+    await expect(fs.readFile(path.join(packageDir, "agents", "researcher.md"), "utf8")).resolves.toBe("# Researcher\n");
     await expect(fs.stat(path.join(packageDir, "hooks"))).rejects.toThrow();
-    expect(result.validationNotes).toContain("Custom agents and settings are intentionally omitted from Codex plugin packages because the current RAWR Codex plugin manifest does not accept them");
+    expect(result.validationNotes).toContain("Custom agents and settings are packaged as RAWR source/support material until Codex exposes provider-native activation semantics for those surfaces");
   });
 
-  it("builds Codex package artifacts with MCP/assets and omits package-lane hooks", async () => {
+  it("builds Codex package artifacts with hooks, MCP, settings, and assets", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-node-codex-runtime-package-"));
     tempDirs.push(root);
     const pluginRoot = path.join(root, "plugin-demo");
@@ -89,11 +93,15 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
     const hookPath = path.join(pluginRoot, "hooks", "pre-tool-use.mjs");
     const hookConfigPath = path.join(pluginRoot, "hooks", "hooks.json");
     const mcpPath = path.join(pluginRoot, "mcp", "demo-server.mjs");
+    const scriptPath = path.join(pluginRoot, "scripts", "support.sh");
+    const settingPath = path.join(pluginRoot, "settings", "config.toml");
     const assetPath = path.join(pluginRoot, "assets", "icon.txt");
     await Promise.all([
       fs.mkdir(skillRoot, { recursive: true }),
       fs.mkdir(path.dirname(hookPath), { recursive: true }),
       fs.mkdir(path.dirname(mcpPath), { recursive: true }),
+      fs.mkdir(path.dirname(scriptPath), { recursive: true }),
+      fs.mkdir(path.dirname(settingPath), { recursive: true }),
       fs.mkdir(path.dirname(assetPath), { recursive: true }),
     ]);
     await fs.writeFile(path.join(skillRoot, "SKILL.md"), "# Demo Skill\n", "utf8");
@@ -109,6 +117,8 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
       },
     }, null, 2)}\n`, "utf8");
     await fs.writeFile(mcpPath, "console.log('mcp')\n", "utf8");
+    await fs.writeFile(scriptPath, "echo support\n", "utf8");
+    await fs.writeFile(settingPath, "model = \"gpt-5\"\n", "utf8");
     await fs.writeFile(assetPath, "asset\n", "utf8");
 
     const result = await packageCodexPlugin({
@@ -123,12 +133,12 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
       content: {
         workflowFiles: [],
         skills: [{ name: "demo-skill", absPath: skillRoot }],
-        scripts: [],
+        scripts: [{ name: "support.sh", absPath: scriptPath }],
         agentFiles: [],
         hooks: [{ name: "pre-tool-use.mjs", absPath: hookPath }],
         hookConfigs: [{ name: "hooks.json", absPath: hookConfigPath }],
         mcpServers: [{ name: "demo-server.mjs", absPath: mcpPath }],
-        settings: [],
+        settings: [{ name: "config.toml", absPath: settingPath }],
         assets: [{ name: "icon.txt", absPath: assetPath }],
         orchestration: [],
       },
@@ -137,21 +147,36 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
     });
 
     expect(result).toMatchObject({
-      hookCount: 0,
+      hookCount: 1,
+      hookConfigCount: 1,
+      scriptCount: 1,
       mcpServerCount: 1,
+      settingsCount: 1,
       assetCount: 1,
     });
     const outDir = path.join(root, "dist", "plugins", "plugin-demo");
     const manifest = JSON.parse(await fs.readFile(path.join(outDir, ".codex-plugin", "plugin.json"), "utf8"));
     expect(manifest).toMatchObject({
       skills: "./skills/",
+      hooks: "./hooks/hooks.json",
       mcpServers: "./.mcp.json",
       interface: {
-        capabilities: ["skills", "mcp"],
+        capabilities: ["skills", "hooks", "scripts", "mcp", "settings", "assets"],
       },
     });
-    expect(manifest).not.toHaveProperty("hooks");
-    await expect(fs.stat(path.join(outDir, "hooks"))).rejects.toThrow();
+    await expect(fs.readFile(path.join(outDir, "hooks", "pre-tool-use.mjs"), "utf8")).resolves.toContain("hook");
+    const hooksJson = JSON.parse(await fs.readFile(path.join(outDir, "hooks", "hooks.json"), "utf8"));
+    expect(hooksJson).toEqual({
+      hooks: {
+        PreToolUse: [
+          {
+            matcher: "Bash",
+            hooks: [{ type: "command", command: "node ${CODEX_PLUGIN_ROOT}/hooks/pre-tool-use.mjs" }],
+          },
+        ],
+      },
+    });
+    await expect(fs.readFile(path.join(outDir, "scripts", "support.sh"), "utf8")).resolves.toBe("echo support\n");
     await expect(fs.readFile(path.join(outDir, "mcp", "demo-server.mjs"), "utf8")).resolves.toContain("mcp");
     const mcpJson = JSON.parse(await fs.readFile(path.join(outDir, ".mcp.json"), "utf8"));
     expect(mcpJson).toEqual({
@@ -162,7 +187,48 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
     });
     await expect(fs.readFile(path.join(outDir, "assets", "icon.txt"), "utf8")).resolves.toBe("asset\n");
     await expect(fs.stat(path.join(outDir, "agents"))).rejects.toThrow();
-    await expect(fs.stat(path.join(outDir, "settings"))).rejects.toThrow();
+    await expect(fs.readFile(path.join(outDir, "settings", "config.toml"), "utf8")).resolves.toBe("model = \"gpt-5\"\n");
+  });
+
+  it("packages hook scripts as support material without advertising inert hook lifecycle support", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-node-codex-hook-script-only-"));
+    tempDirs.push(root);
+    const pluginRoot = path.join(root, "plugin-demo");
+    const hookPath = path.join(pluginRoot, "hooks", "pre-tool-use.mjs");
+    await fs.mkdir(path.dirname(hookPath), { recursive: true });
+    await fs.writeFile(hookPath, "console.log('hook')\n", "utf8");
+
+    const result = await packageCodexPlugin({
+      sourcePlugin: {
+        ref: "plugin-demo",
+        absPath: pluginRoot,
+        dirName: "plugin-demo",
+        packageName: "@rawr/plugin-demo",
+        version: "1.2.3",
+        description: "Demo plugin",
+      },
+      content: {
+        workflowFiles: [],
+        skills: [],
+        scripts: [],
+        agentFiles: [],
+        hooks: [{ name: "pre-tool-use.mjs", absPath: hookPath }],
+        hookConfigs: [],
+      },
+      outDirAbs: path.join(root, "dist"),
+      dryRun: false,
+    });
+
+    expect(result).toMatchObject({
+      hookCount: 1,
+      hookConfigCount: 0,
+    });
+    const outDir = path.join(root, "dist", "plugins", "plugin-demo");
+    const manifest = JSON.parse(await fs.readFile(path.join(outDir, ".codex-plugin", "plugin.json"), "utf8"));
+    expect(manifest.hooks).toBeUndefined();
+    expect(manifest.interface.capabilities).not.toContain("hooks");
+    await expect(fs.readFile(path.join(outDir, "hooks", "pre-tool-use.mjs"), "utf8")).resolves.toContain("hook");
+    await expect(fs.stat(path.join(outDir, "hooks", "hooks.json"))).rejects.toThrow();
   });
 
   it("removes stale Codex package output before rewriting skills", async () => {
