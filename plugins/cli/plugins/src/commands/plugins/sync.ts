@@ -17,11 +17,11 @@ import {
   resolveProviderContent,
   resolveSourceWorkspaceSelection,
   runSync,
-} from "../../lib/agent-config-sync";
+} from "#lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
-import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
+import { loadLayeredRawrConfigForCwd } from "#lib/layered-config";
 
-import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "../../lib/plugin-install-service";
+import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "#lib/plugin-install-service";
 
 /**
  * Syncs one source plugin into selected agent destinations.

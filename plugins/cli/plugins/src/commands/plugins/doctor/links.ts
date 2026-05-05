@@ -6,9 +6,9 @@ import {
   pluginInstallActionCommandText,
   reconcileWorkspaceInstallLinks,
   runtimePluginSnapshot,
-} from "../../../lib/plugin-install-service";
-import { resolveSourceWorkspaceSelection } from "../../../lib/agent-config-sync";
-import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
+} from "#lib/plugin-install-service";
+import { resolveSourceWorkspaceSelection } from "#lib/agent-config-sync";
+import { loadLayeredRawrConfigForCwd } from "#lib/layered-config";
 
 /**
  * Diagnoses and optionally repairs local oclif command-plugin link drift.

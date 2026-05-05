@@ -1,7 +1,7 @@
 import { Flags } from "@oclif/core";
 import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
-import { checkScratchPolicy, planSweepCandidates } from "../../lib/plugin-lifecycle-service";
-import { runCommand } from "../../lib/process-execution";
+import { checkScratchPolicy, planSweepCandidates } from "#lib/plugin-lifecycle-service";
+import { runCommand } from "#lib/process-execution";
 
 /**
  * Queues lifecycle remediation work for plugin-system hygiene.

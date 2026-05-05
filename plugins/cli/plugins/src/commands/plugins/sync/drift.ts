@@ -5,9 +5,9 @@ import {
   createWorkspaceSyncAssessInput,
   resolveSourceWorkspaceSelection,
   type SyncScope,
-} from "../../../lib/agent-config-sync";
+} from "#lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
-import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
+import { loadLayeredRawrConfigForCwd } from "#lib/layered-config";
 
 /**
  * Reports destination drift by asking agent-config-sync to assess source plugins

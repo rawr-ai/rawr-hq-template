@@ -5,15 +5,15 @@ import {
   createWorkspaceSyncAssessInput,
   resolveSourceWorkspaceSelection,
   type SyncScope,
-} from "../../lib/agent-config-sync";
+} from "#lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
-import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
+import { loadLayeredRawrConfigForCwd } from "#lib/layered-config";
 import {
   assessPluginInstallState,
   pluginInstallActionCommandText,
   reconcileWorkspaceInstallLinks,
   runtimePluginSnapshot,
-} from "../../lib/plugin-install-service";
+} from "#lib/plugin-install-service";
 import type { PluginInstallStateStatus } from "@rawr/hq-ops/types";
 
 type SyncStatus = "IN_SYNC" | "DRIFT_DETECTED" | "CONFLICTS";

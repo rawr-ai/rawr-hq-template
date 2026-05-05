@@ -7,7 +7,7 @@ import {
   gitTrackedFiles,
   resolveLifecycleTarget,
   verifySyncAndDrift,
-} from "../../../lib/plugin-lifecycle-service";
+} from "#lib/plugin-lifecycle-service";
 import type { LifecycleType } from "@rawr/hq-ops/types";
 import { findWorkspaceRoot } from "@rawr/core";
 

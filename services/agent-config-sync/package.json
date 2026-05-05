@@ -5,6 +5,20 @@
   "packageManager": "bun@1.3.7",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "imports": {
+    "#repositories/*": {
+      "types": "./src/service/shared/repositories/*.ts",
+      "default": "./src/service/shared/repositories/*.ts"
+    },
+    "#shared/*": {
+      "types": "./src/service/shared/*.ts",
+      "default": "./src/service/shared/*.ts"
+    },
+    "#source-content/*": {
+      "types": "./src/service/shared/source-content/*.ts",
+      "default": "./src/service/shared/source-content/*.ts"
+    }
+  },
   "exports": {
     ".": {
       "types": "./src/index.ts",

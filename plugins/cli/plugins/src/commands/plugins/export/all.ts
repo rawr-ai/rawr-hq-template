@@ -8,9 +8,9 @@ import {
   resolveSourceWorkspaceSelection,
   runSync,
   type SyncScope,
-} from "../../../lib/agent-config-sync";
+} from "#lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
-import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
+import { loadLayeredRawrConfigForCwd } from "#lib/layered-config";
 
 /**
  * Projects all selected RAWR plugin material to explicit filesystem
