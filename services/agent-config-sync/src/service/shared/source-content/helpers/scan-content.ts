@@ -78,7 +78,7 @@ export async function scanCanonicalContentAtRoot(input: {
       rootAbsPath: hooksDir,
       resources: input.resources,
     });
-    content.hooks = hookFiles.filter((hook) => !isHookConfigFile(hook.name));
+    content.hooks = hookFiles.filter((hook) => !isHookConfigFile(hook.name) && !isHookDocumentationFile(hook.name));
     content.hookConfigs = hookFiles.filter((hook) => isHookConfigFile(hook.name));
   }
 
@@ -127,6 +127,11 @@ export async function scanCanonicalContentAtRoot(input: {
 
 function isHookConfigFile(name: string): boolean {
   return name === "hooks.json" || name.endsWith("/hooks.json");
+}
+
+function isHookDocumentationFile(name: string): boolean {
+  const basename = name.split(/[\\/]/).pop()?.toLowerCase() ?? name.toLowerCase();
+  return basename.endsWith(".md");
 }
 
 async function scanFilesRecursive(input: {
