@@ -36,6 +36,8 @@ type ResolveProviderContentInput = Parameters<Client["execution"]["resolveProvid
 type ResolveProviderContentOptions = NonNullable<Parameters<Client["execution"]["resolveProviderContent"]>[1]>;
 type RetireStaleManagedInput = Parameters<Client["retirement"]["retireStaleManaged"]>[0];
 type RetireStaleManagedOptions = NonNullable<Parameters<Client["retirement"]["retireStaleManaged"]>[1]>;
+type CleanupBehindProviderSyncInput = Parameters<Client["retirement"]["cleanupBehindProviderSync"]>[0];
+type CleanupBehindProviderSyncOptions = NonNullable<Parameters<Client["retirement"]["cleanupBehindProviderSync"]>[1]>;
 type PlanWorkspaceSyncOptions = NonNullable<Parameters<Client["planning"]["planWorkspaceSync"]>[1]>;
 type AssessWorkspaceSyncOptions = NonNullable<Parameters<Client["planning"]["assessWorkspaceSync"]>[1]>;
 
@@ -486,6 +488,163 @@ export async function retireStaleManagedPlugins(input: {
     context: { invocation: { traceId: "plugin-plugins.agent-config-sync.retirement" } },
   } satisfies RetireStaleManagedOptions;
   return client.retirement.retireStaleManaged(retireInput, options);
+}
+
+/**
+ * Calls service cleanup-behind behavior for managed residue superseded by a
+ * successful provider sync.
+ */
+export async function cleanupBehindProviderSync(input: {
+  workspaceRoot: string;
+  claimCheckCodexHomes: string[];
+  candidates: CleanupBehindProviderSyncInput["candidates"];
+  dryRun: boolean;
+  undoCapture?: UndoCaptureLike;
+}) {
+  const client = createAgentConfigSyncClient({ repoRoot: input.workspaceRoot, undoCapture: input.undoCapture });
+  const cleanupInput = {
+    workspaceRoot: input.workspaceRoot,
+    claimCheckCodexHomes: input.claimCheckCodexHomes,
+    candidates: input.candidates,
+    dryRun: input.dryRun,
+  } satisfies CleanupBehindProviderSyncInput;
+  const options = {
+    context: { invocation: { traceId: "plugin-plugins.agent-config-sync.cleanup-behind" } },
+  } satisfies CleanupBehindProviderSyncOptions;
+  return client.retirement.cleanupBehindProviderSync(cleanupInput, options);
+}
+
+export type CleanupBehindCandidate = CleanupBehindProviderSyncInput["candidates"][number];
+
+type CleanupBehindCodexPackage = {
+  plugin: string;
+  action: string;
+  skillCount?: number;
+  hookConfigCount?: number;
+  mcpServerCount?: number;
+};
+
+function asRecords(value: unknown): Array<Record<string, unknown>> {
+  return Array.isArray(value)
+    ? value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+    : [];
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function asNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function packageByPlugin(packages: CleanupBehindCodexPackage[]): Map<string, CleanupBehindCodexPackage> {
+  return new Map(
+    packages
+      .filter((pkg) => pkg.action !== "skipped")
+      .map((pkg) => [pkg.plugin, pkg]),
+  );
+}
+
+/**
+ * Derives provider cleanup candidates from Codex install/package outcomes.
+ */
+export function buildCleanupBehindCodexCandidates(input: {
+  enabled: boolean;
+  destinationProjectionEnabled: boolean;
+  codexPackageEnabled: boolean;
+  codexInstallEnabled: boolean;
+  dryRun: boolean;
+  codexInstall: Record<string, unknown>;
+  codexPackages: CleanupBehindCodexPackage[];
+  sourcePluginRootsByName: ReadonlyMap<string, string>;
+  fallbackCodexHome?: string;
+}): CleanupBehindCandidate[] {
+  if (!input.enabled || input.destinationProjectionEnabled || !input.codexPackageEnabled || !input.codexInstallEnabled) return [];
+  if (!input.dryRun && input.codexInstall.ok !== true) return [];
+
+  const packages = packageByPlugin(input.codexPackages);
+  const candidates: CleanupBehindCandidate[] = [];
+  for (const action of asRecords(input.codexInstall.actions)) {
+    const actionKind = asString(action.action);
+    const plugin = asString(action.plugin);
+    if (!plugin) continue;
+    const sourcePluginRoot = input.sourcePluginRootsByName.get(plugin);
+    if (!sourcePluginRoot) continue;
+    const home = asString(action.codexHome) ?? input.fallbackCodexHome;
+    if (!home) continue;
+
+    if (actionKind === "verified" && action.installed === true && action.enabled === true) {
+      candidates.push({
+        provider: "codex",
+        home,
+        plugin,
+        sourcePluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "verified",
+        verifiedCapabilities: {
+          skills: asNumber(action.skillCount) > 0 && asNumber(action.visiblePluginSkillCount) >= asNumber(action.skillCount),
+          hooks: asNumber(action.providerHookCount) > 0,
+          mcp: asNumber(action.mcpServerCount) > 0,
+        },
+      });
+      continue;
+    }
+
+    if (input.dryRun && actionKind === "planned") {
+      const pkg = packages.get(plugin);
+      if (!pkg) continue;
+      candidates.push({
+        provider: "codex",
+        home,
+        plugin,
+        sourcePluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "dry-run-planned",
+        verifiedCapabilities: {
+          skills: asNumber(pkg.skillCount) > 0,
+          hooks: asNumber(pkg.hookConfigCount) > 0,
+          mcp: asNumber(pkg.mcpServerCount) > 0,
+        },
+      });
+    }
+  }
+
+  return candidates;
+}
+
+/**
+ * Adds well-known sibling Codex homes that share the user runtime skill root.
+ */
+export function buildCleanupBehindCodexClaimCheckHomes(codexHomes: string[]): string[] {
+  const homes = new Set<string>();
+  for (const codexHome of codexHomes) {
+    homes.add(codexHome);
+    const basename = path.basename(codexHome);
+    if (basename !== ".codex" && basename !== ".codex-rawr") continue;
+    const userRoot = path.dirname(codexHome);
+    homes.add(path.join(userRoot, ".codex"));
+    homes.add(path.join(userRoot, ".codex-rawr"));
+  }
+  return [...homes];
+}
+
+export function emptyCleanupBehindResult(reason = "not run") {
+  return {
+    ok: true,
+    cleanedPlugins: [],
+    retainedResidue: [],
+    actions: reason === "not run"
+      ? []
+      : [{
+          agent: "codex" as const,
+          home: "*",
+          plugin: "*",
+          target: "*",
+          action: "skipped" as const,
+          message: reason,
+        }],
+  };
 }
 
 /**

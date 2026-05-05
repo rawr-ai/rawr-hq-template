@@ -16,8 +16,9 @@ The current reliable planning artifacts are:
 | --- | --- | --- |
 | `PARITY_INVESTIGATION_REPORT.md` | Current | Provider parity truth and remaining risks. |
 | `MANAGED_PROVIDER_PLUGIN_PARITY_WORKSTREAM.md` | Current | Workstream record, evidence, verification, and closure notes. |
+| `NATIVE_PROVIDER_CLEANUP_BEHIND_WORKSTREAM.md` | Active | Workstream record for generic cleanup-behind provider sync implementation. |
 | `MANAGED_PROVIDER_PLUGIN_PARITY_DECISIONS.md` | Current | Decision log for native-provider vs projection split. |
-| `NATIVE_SUPERSEDED_PROJECTION_CLEANUP_HANDOFF.md` | Current | Forward-looking handoff for retiring active-plugin legacy Codex projections after native install. |
+| `NATIVE_SUPERSEDED_PROJECTION_CLEANUP_HANDOFF.md` | Implemented as generic cleanup-behind | Original handoff for the first cleanup-behind policy: Codex native install superseding direct projection residue. |
 | `CURRENT_STATE.md` | Partially stale | Historical service state before this parity workstream. |
 | `agent-sync-parity-reconciliation-plan.md` | Superseded history | Reconciliation context only. |
 | `TESTING_PLAN.md` and `AGENT_SYNC_PARITY_CLOSURE_SPEC.md` | Mixed | Historical gap register; re-check claims against this report and tests. |
@@ -165,7 +166,7 @@ For immediate hook-blocking work:
 | Codex custom agent activation | Provider gap | Codex adapter + provider docs | Verify plugin agent activation surface before claiming native parity. |
 | Codex settings/config fragments | Provider gap | Codex adapter + provider docs | Do not direct-merge config as deployment; wait for native config/plugin requirement surface. |
 | Provider uninstall/remove lifecycle | Partial | `agent-config-sync-node`, CLI | Wire Codex app-server uninstall and Claude uninstall into explicit lifecycle/retirement commands. |
-| Duplicate legacy provider claims | Partial | service reconciliation | Implement `NATIVE_SUPERSEDED_PROJECTION_CLEANUP_HANDOFF.md`: after verified native Codex install, retire only same-plugin RAWR-managed legacy projection claims while preserving unmanaged user files. |
+| Duplicate legacy provider claims | Narrowed | service reconciliation | Generic `cleanupBehindProviderSync` now removes RAWR-managed native-superseded residue after verified provider sync. Remaining risk is explicit provider uninstall/remove lifecycle and any future provider surface whose activation cannot be proven. |
 
 ## Acceptance Answers
 

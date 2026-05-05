@@ -75,6 +75,7 @@ describe("plugin command surface cutover", () => {
     expect(syncOut).toContain("--codex-package");
     expect(syncOut).toContain("--codex-install");
     expect(syncOut).toContain("--codex-bin");
+    expect(syncOut).toContain("--cleanup-behind");
     expect(syncOut).toContain("--destination-projection");
 
     const exportHelp = runRawr(["plugins", "export", "--help"]);
@@ -123,6 +124,7 @@ describe("plugin command surface cutover", () => {
     expect(singleJson.ok).toBe(true);
     expect(singleJson.data.codexPackage?.packages?.[0]?.plugin).toBe("plugins");
     expect(singleJson.data.codexInstall?.actions?.[0]?.plugin).toBe("plugins");
+    expect(singleJson.data.cleanupBehind?.actions).toBeTruthy();
 
     const all = runRawr(
       [
@@ -144,6 +146,7 @@ describe("plugin command surface cutover", () => {
     expect(all.status).toBe(0);
     const allJson = parseJson(all);
     expect(allJson.ok).toBe(true);
+    expect(allJson.data.cleanupBehind?.actions).toBeTruthy();
     expect(allJson.data.installReconcile?.action).toBeTruthy();
   });
 

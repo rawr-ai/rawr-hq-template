@@ -3,8 +3,12 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 import {
   beginPluginsSyncUndoCapture,
+  buildCleanupBehindCodexCandidates,
+  buildCleanupBehindCodexClaimCheckHomes,
+  cleanupBehindProviderSync,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncPlanInput,
+  emptyCleanupBehindResult,
   installCodexMarketplacePlugins,
   installAndEnableClaudePlugin,
   packageCodexPlugin,
@@ -102,6 +106,11 @@ export default class PluginsSyncAll extends RawrCommand {
       default: false,
       allowNo: true,
     }),
+    "cleanup-behind": Flags.boolean({
+      description: "Clean RAWR-managed residue superseded by successful native provider sync",
+      default: true,
+      allowNo: true,
+    }),
     "retire-orphans": Flags.boolean({
       description: "Retire stale managed plugins caused by plugin rename/delete",
       default: true,
@@ -169,6 +178,7 @@ export default class PluginsSyncAll extends RawrCommand {
       const allowPartial = Boolean((flags as any)["allow-partial"]);
       const forceEnabled = Boolean(flags.force);
       const gcEnabled = Boolean(flags.gc);
+      const cleanupBehindEnabled = Boolean((flags as any)["cleanup-behind"]);
 
       const planRequest = createWorkspaceSyncPlanInput({
         cwd: workspaceRoot,
@@ -288,6 +298,7 @@ export default class PluginsSyncAll extends RawrCommand {
         installScope,
         actions: [{ action: "skipped", installScope, reason: "not run" }],
       };
+      let cleanupBehind: Awaited<ReturnType<typeof cleanupBehindProviderSync>> = emptyCleanupBehindResult();
       const claudeInstall: Array<Record<string, unknown>> = [];
       let retireOrphans: Awaited<ReturnType<typeof retireStaleManagedPlugins>> = {
         ok: true,
@@ -299,8 +310,10 @@ export default class PluginsSyncAll extends RawrCommand {
 
       const activePluginNames = new Set(plan.activePluginNames);
       const packageActivePluginNames = scope === "all" ? activePluginNames : undefined;
+      const sourcePluginRootsByName = new Map<string, string>();
 
       for (const { sourcePlugin, content } of syncable) {
+        sourcePluginRootsByName.set(sourcePlugin.dirName, sourcePlugin.absPath);
         const run = await runSync({
           sourcePlugin,
           content,
@@ -497,6 +510,34 @@ export default class PluginsSyncAll extends RawrCommand {
         };
       }
 
+      const cleanupCandidates = buildCleanupBehindCodexCandidates({
+        enabled: cleanupBehindEnabled,
+        destinationProjectionEnabled,
+        codexPackageEnabled,
+        codexInstallEnabled,
+        dryRun: baseFlags.dryRun,
+        codexInstall,
+        codexPackages,
+        sourcePluginRootsByName,
+        fallbackCodexHome: targets.homes.codexHomes[0],
+      });
+      if (cleanupCandidates.length > 0) {
+        cleanupBehind = await cleanupBehindProviderSync({
+          workspaceRoot,
+          claimCheckCodexHomes: buildCleanupBehindCodexClaimCheckHomes(targets.homes.codexHomes),
+          candidates: cleanupCandidates,
+          dryRun: baseFlags.dryRun,
+          undoCapture,
+        });
+        if (!cleanupBehind.ok) postStepFailed = true;
+      } else {
+        cleanupBehind = emptyCleanupBehindResult(
+          cleanupBehindEnabled
+            ? "cleanup behind skipped: no verified or planned native provider install candidates"
+            : "cleanup behind disabled by flag",
+        );
+      }
+
       installReconcile = await reconcileWorkspaceInstallLinks({
         workspaceRoot: installWorkspaceRoot,
         dryRun: baseFlags.dryRun,
@@ -530,6 +571,7 @@ export default class PluginsSyncAll extends RawrCommand {
             codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
             codexMarketplace: summarizeCodexMarketplace(codexPackages),
             codexInstall,
+            cleanupBehind,
             cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
             claudeInstall,
             retireOrphans,
@@ -547,6 +589,7 @@ export default class PluginsSyncAll extends RawrCommand {
               codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
               codexMarketplace: summarizeCodexMarketplace(codexPackages),
               codexInstall,
+              cleanupBehind,
               cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
               claudeInstall,
               retireOrphans,
@@ -591,6 +634,7 @@ export default class PluginsSyncAll extends RawrCommand {
             const marketplacePath = codexPackages.find((p) => p.marketplacePath)?.marketplacePath;
             if (marketplacePath) this.log(`Codex marketplace: ${marketplacePath}`);
             this.log(`Codex install: ${(codexInstall as any).ok ? "ok" : "failed"}`);
+            this.log(`Cleanup behind: ${cleanupBehind.ok ? "ok" : "failed"} (${cleanupBehind.actions.length} actions)`);
             this.log(`Install scope: ${installScope}`);
           }
           this.log(`Install reconcile: ${(installReconcile as any).action}`);

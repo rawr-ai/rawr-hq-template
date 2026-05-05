@@ -54,6 +54,7 @@ export type CodexInstallAction =
       enabled: boolean;
       skillCount: number;
       visibleSkillCount: number;
+      visiblePluginSkillCount: number;
       mcpServerCount: number;
       hookCount: number;
       providerHookCount: number;
@@ -317,6 +318,7 @@ export async function installCodexMarketplacePlugins(input: {
           enabled: summary?.enabled === true,
           skillCount: pluginDetailArrayLength(detail, "skills"),
           visibleSkillCount: skillsListSkillCount(skillsResponse),
+          visiblePluginSkillCount: skillsListVisiblePluginSkillCount(skillsResponse, pluginDetailStringArray(detail, "skills")),
           mcpServerCount: pluginDetailArrayLength(detail, "mcpServers"),
           hookCount: packageMetadata.hookHandlerCount,
           providerHookCount,
@@ -547,6 +549,18 @@ function pluginDetailArrayLength(response: Record<string, unknown>, key: string)
   return Array.isArray(value) ? value.length : 0;
 }
 
+function pluginDetailStringArray(response: Record<string, unknown>, key: string): string[] {
+  const plugin = asRecord(response.plugin);
+  const value = plugin[key];
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      const record = asRecord(item);
+      return stringField(record, "name") ?? stringField(record, "id") ?? stringField(record, "slug");
+    })
+    .filter((item): item is string => typeof item === "string" && item.length > 0);
+}
+
 function skillsListSkillCount(response: Record<string, unknown>): number {
   const data = Array.isArray(response.data) ? response.data : [];
   return data.reduce((sum, item) => {
@@ -554,6 +568,23 @@ function skillsListSkillCount(response: Record<string, unknown>): number {
     const skills = Array.isArray(record.skills) ? record.skills : [];
     return sum + skills.length;
   }, 0);
+}
+
+function skillsListVisiblePluginSkillCount(response: Record<string, unknown>, expectedSkillNames: string[]): number {
+  const expected = new Set(expectedSkillNames);
+  if (expected.size === 0) return 0;
+  const visible = new Set<string>();
+  const data = Array.isArray(response.data) ? response.data : [];
+  for (const item of data) {
+    const record = asRecord(item);
+    const skills = Array.isArray(record.skills) ? record.skills : [];
+    for (const skill of skills) {
+      const skillRecord = asRecord(skill);
+      const name = stringField(skillRecord, "name") ?? stringField(skillRecord, "id") ?? stringField(skillRecord, "slug");
+      if (name && expected.has(name)) visible.add(name);
+    }
+  }
+  return visible.size;
 }
 
 function stringField(record: Record<string, unknown>, key: string): string | undefined {

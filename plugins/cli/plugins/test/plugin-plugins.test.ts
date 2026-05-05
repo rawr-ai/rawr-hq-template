@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach } from "vitest";
 import { describe, expect, it } from "vitest";
 import {
+  buildCleanupBehindCodexCandidates,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncPlanInput,
   resolveSourceWorkspaceSelection,
@@ -76,8 +77,10 @@ describe("@rawr/plugin-plugins", () => {
 
     for (const source of [syncSource, syncAllSource]) {
       expect(source).toContain("\"codex-package\": Flags.boolean");
+      expect(source).toContain("\"cleanup-behind\": Flags.boolean");
       expect(source).toContain("default: true");
       expect(source).toContain("includeCodex: destinationProjectionEnabled && targets.agents.includes(\"codex\")");
+      expect(source).toContain("cleanupBehind");
     }
     expect(syncAllSource).toContain("codexPackageEnabled,");
     expect(syncAllSource).toContain("codexInstallEnabled,");
@@ -86,6 +89,74 @@ describe("@rawr/plugin-plugins", () => {
       expect(source).toContain("PROJECTION_DESTINATION_REQUIRED");
       expect(source).toContain("projectionMode: \"generic_destination_projection\"");
     }
+  });
+
+  it("requires plugin-scoped Codex skill visibility before cleanup-behind verifies skills", () => {
+    const sourcePluginRootsByName = new Map([["plugin-demo", "/tmp/source/plugins/plugin-demo"]]);
+
+    const candidates = buildCleanupBehindCodexCandidates({
+      enabled: true,
+      destinationProjectionEnabled: false,
+      codexPackageEnabled: true,
+      codexInstallEnabled: true,
+      dryRun: false,
+      sourcePluginRootsByName,
+      fallbackCodexHome: "/tmp/codex-home",
+      codexPackages: [],
+      codexInstall: {
+        ok: true,
+        actions: [{
+          action: "verified",
+          plugin: "plugin-demo",
+          codexHome: "/tmp/codex-home",
+          installed: true,
+          enabled: true,
+          skillCount: 1,
+          visibleSkillCount: 10,
+          visiblePluginSkillCount: 0,
+          providerHookCount: 0,
+          mcpServerCount: 0,
+        }],
+      },
+    });
+
+    expect(candidates).toEqual([expect.objectContaining({
+      plugin: "plugin-demo",
+      verifiedCapabilities: {
+        skills: false,
+        hooks: false,
+        mcp: false,
+      },
+    })]);
+  });
+
+  it("suppresses cleanup-behind when Codex install reports failure", () => {
+    const candidates = buildCleanupBehindCodexCandidates({
+      enabled: true,
+      destinationProjectionEnabled: false,
+      codexPackageEnabled: true,
+      codexInstallEnabled: true,
+      dryRun: false,
+      sourcePluginRootsByName: new Map([["plugin-demo", "/tmp/source/plugins/plugin-demo"]]),
+      fallbackCodexHome: "/tmp/codex-home",
+      codexPackages: [],
+      codexInstall: {
+        ok: false,
+        actions: [{
+          action: "verified",
+          plugin: "plugin-demo",
+          codexHome: "/tmp/codex-home",
+          installed: true,
+          enabled: true,
+          skillCount: 1,
+          visiblePluginSkillCount: 1,
+          providerHookCount: 0,
+          mcpServerCount: 0,
+        }],
+      },
+    });
+
+    expect(candidates).toEqual([]);
   });
 
   it("checks install state from the invocation workspace during external source sync status", async () => {

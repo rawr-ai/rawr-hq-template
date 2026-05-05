@@ -3,8 +3,12 @@ import path from "node:path";
 import { Args, Flags } from "@oclif/core";
 import {
   beginPluginsSyncUndoCapture,
+  buildCleanupBehindCodexCandidates,
+  buildCleanupBehindCodexClaimCheckHomes,
+  cleanupBehindProviderSync,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncPlanInput,
+  emptyCleanupBehindResult,
   findPlannedSyncable,
   installCodexMarketplacePlugins,
   installAndEnableClaudePlugin,
@@ -96,6 +100,11 @@ export default class PluginsSync extends RawrCommand {
       default: false,
       allowNo: true,
     }),
+    "cleanup-behind": Flags.boolean({
+      description: "Clean RAWR-managed residue superseded by successful native provider sync",
+      default: true,
+      allowNo: true,
+    }),
     "codex-home": Flags.string({
       description: "Codex home path (repeatable)",
       multiple: true,
@@ -140,6 +149,7 @@ export default class PluginsSync extends RawrCommand {
         : invocationLayered;
       const coworkEnabled = Boolean((flags as any).cowork);
       const destinationProjectionEnabled = Boolean((flags as any)["destination-projection"]);
+      const cleanupBehindEnabled = Boolean((flags as any)["cleanup-behind"]);
       const codexPackageEnabled = Boolean((flags as any)["codex-package"]);
       const codexInstallEnabled = Boolean((flags as any)["codex-install"]);
       const claudeInstallEnabled = Boolean((flags as any)["claude-install"]);
@@ -265,6 +275,7 @@ export default class PluginsSync extends RawrCommand {
         installScope,
         actions: [{ action: "skipped", installScope, reason: "not run" }],
       };
+      let cleanupBehind: Awaited<ReturnType<typeof cleanupBehindProviderSync>> = emptyCleanupBehindResult();
       const claudeInstall: Array<Record<string, unknown>> = [];
       let installReconcile: Record<string, unknown> = { action: "skipped", reason: "not run" };
       let postStepFailed = false;
@@ -387,6 +398,34 @@ export default class PluginsSync extends RawrCommand {
         };
       }
 
+      const cleanupCandidates = buildCleanupBehindCodexCandidates({
+        enabled: cleanupBehindEnabled,
+        destinationProjectionEnabled,
+        codexPackageEnabled,
+        codexInstallEnabled,
+        dryRun: baseFlags.dryRun,
+        codexInstall,
+        codexPackages,
+        sourcePluginRootsByName: new Map([[sourcePlugin.dirName, sourcePlugin.absPath]]),
+        fallbackCodexHome: targets.homes.codexHomes[0],
+      });
+      if (cleanupCandidates.length > 0) {
+        cleanupBehind = await cleanupBehindProviderSync({
+          workspaceRoot,
+          claimCheckCodexHomes: buildCleanupBehindCodexClaimCheckHomes(targets.homes.codexHomes),
+          candidates: cleanupCandidates,
+          dryRun: baseFlags.dryRun,
+          undoCapture,
+        });
+        if (!cleanupBehind.ok) postStepFailed = true;
+      } else {
+        cleanupBehind = emptyCleanupBehindResult(
+          cleanupBehindEnabled
+            ? "cleanup behind skipped: no verified or planned native provider install candidates"
+            : "cleanup behind disabled by flag",
+        );
+      }
+
       const claudeTargets = syncResult.targets.filter((t) => t.agent === "claude");
       if (claudeInstallEnabled && claudeTargets.length > 0) {
         for (const t of claudeTargets) {
@@ -436,6 +475,7 @@ export default class PluginsSync extends RawrCommand {
         codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
         codexMarketplace: summarizeCodexMarketplace(codexPackages),
         codexInstall,
+        cleanupBehind,
         cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
         claudeInstall,
         installReconcile,
@@ -470,6 +510,7 @@ export default class PluginsSync extends RawrCommand {
               codexPackage: { outDir: codexOutDirAbs, packages: codexPackages },
               codexMarketplace: summarizeCodexMarketplace(codexPackages),
               codexInstall,
+              cleanupBehind,
               cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
               claudeInstall,
               installReconcile,
@@ -503,6 +544,7 @@ export default class PluginsSync extends RawrCommand {
           if (codexPackage) this.log(`Codex package: ${codexPackage.action} -> ${codexPackage.outDir}${codexPackage.reason ? ` (${codexPackage.reason})` : ""}`);
           if (codexPackage?.marketplacePath) this.log(`Codex marketplace: ${codexPackage.marketplaceAction} -> ${codexPackage.marketplacePath}`);
           this.log(`Codex install: ${(codexInstall as any).ok ? "ok" : "failed"}`);
+          this.log(`Cleanup behind: ${cleanupBehind.ok ? "ok" : "failed"} (${cleanupBehind.actions.length} actions)`);
           this.log(`Install scope: ${installScope}`);
           if (cowork) this.log(`Cowork: ${cowork.action} -> ${cowork.outFile}${cowork.reason ? ` (${cowork.reason})` : ""}`);
           this.log(`Install reconcile: ${(installReconcile as any).action}`);

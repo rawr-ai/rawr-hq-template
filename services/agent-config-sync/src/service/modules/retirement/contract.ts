@@ -2,7 +2,12 @@ import { schema } from "@rawr/hq-sdk";
 import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
 import { SyncScopeSchema } from "#common/entities";
-import { RetireActionSchema, RetiredPluginRefSchema } from "./entities";
+import {
+  CleanupBehindCandidateSchema,
+  RetainedResidueSchema,
+  RetireActionSchema,
+  RetiredPluginRefSchema,
+} from "./entities";
 
 /**
  * Cleanup request scoped to the active workspace and selected provider homes.
@@ -32,12 +37,38 @@ const RetireStaleManagedResultSchema = Type.Object(
   { additionalProperties: false },
 );
 
+const CleanupBehindProviderSyncInputSchema = Type.Object(
+  {
+    workspaceRoot: Type.String({ minLength: 1 }),
+    claimCheckCodexHomes: Type.Array(Type.String({ minLength: 1 })),
+    candidates: Type.Array(CleanupBehindCandidateSchema),
+    dryRun: Type.Boolean(),
+  },
+  { additionalProperties: false },
+);
+
+const CleanupBehindProviderSyncResultSchema = Type.Object(
+  {
+    ok: Type.Boolean(),
+    cleanedPlugins: Type.Array(RetiredPluginRefSchema),
+    retainedResidue: Type.Array(RetainedResidueSchema),
+    actions: Type.Array(RetireActionSchema),
+  },
+  { additionalProperties: false },
+);
+
 export type RetireStaleManagedInput = Static<typeof RetireStaleManagedInputSchema>;
 export type RetireStaleManagedResult = Static<typeof RetireStaleManagedResultSchema>;
+export type CleanupBehindProviderSyncInput = Static<typeof CleanupBehindProviderSyncInputSchema>;
+export type CleanupBehindProviderSyncResult = Static<typeof CleanupBehindProviderSyncResultSchema>;
 
 export const contract = {
   retireStaleManaged: ocBase
     .meta({ idempotent: false, entity: "retirement" })
     .input(schema(RetireStaleManagedInputSchema))
     .output(schema(RetireStaleManagedResultSchema)),
+  cleanupBehindProviderSync: ocBase
+    .meta({ idempotent: false, entity: "retirement" })
+    .input(schema(CleanupBehindProviderSyncInputSchema))
+    .output(schema(CleanupBehindProviderSyncResultSchema)),
 };
