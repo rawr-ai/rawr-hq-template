@@ -66,8 +66,13 @@ describe("@rawr/agent-config-sync-node Codex CLI install adapter", () => {
   });
 
   it("registers a marketplace and installs plugins through Codex app-server", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-codex-install-"));
+    tempDirs.push(root);
+    const codexHome = path.join(root, "codex-home");
     const calls: Array<{ cmd: string; args: string[]; env?: NodeJS.ProcessEnv }> = [];
     const exec: ExecFn = async (input) => {
+      const homeStat = await fs.stat(codexHome);
+      expect(homeStat.isDirectory()).toBe(true);
       calls.push({ cmd: input.cmd, args: input.args, env: input.env });
       if (input.args.join(" ") === "--version") return { code: 0, stdout: "codex-cli 0.126.0-alpha.3\n", stderr: "" };
       return { code: 0, stdout: "ok\n", stderr: "" };
@@ -123,7 +128,7 @@ describe("@rawr/agent-config-sync-node Codex CLI install adapter", () => {
 
     const result = await installCodexMarketplacePlugins({
       codexBin: "/Users/mateicanavra/.local/bin/codex",
-      codexHome: "/tmp/codex-home",
+      codexHome,
       marketplaceRoot: "/tmp/dist/codex",
       marketplacePath: "/tmp/dist/codex/.agents/plugins/marketplace.json",
       plugins: ["plugin-demo"],
@@ -139,7 +144,7 @@ describe("@rawr/agent-config-sync-node Codex CLI install adapter", () => {
       ["app-server", "--help"],
       ["plugin", "marketplace", "add", "/tmp/dist/codex"],
     ]);
-    expect(calls.every((call) => call.env?.CODEX_HOME === "/tmp/codex-home")).toBe(true);
+    expect(calls.every((call) => call.env?.CODEX_HOME === codexHome)).toBe(true);
     expect(appServerCalls).toEqual([
       "initialize",
       "plugin/list:{\"cwds\":[\"/tmp/dist/codex\"]}",
@@ -153,7 +158,7 @@ describe("@rawr/agent-config-sync-node Codex CLI install adapter", () => {
     expect(result.actions).toContainEqual({
       action: "installed",
       codexBin: "/Users/mateicanavra/.local/bin/codex",
-      codexHome: "/tmp/codex-home",
+      codexHome,
       installScope: "user",
       marketplacePath: "/tmp/dist/codex/.agents/plugins/marketplace.json",
       plugin: "plugin-demo",
@@ -163,7 +168,7 @@ describe("@rawr/agent-config-sync-node Codex CLI install adapter", () => {
     expect(result.actions).toContainEqual({
       action: "verified",
       codexBin: "/Users/mateicanavra/.local/bin/codex",
-      codexHome: "/tmp/codex-home",
+      codexHome,
       installScope: "user",
       marketplacePath: "/tmp/dist/codex/.agents/plugins/marketplace.json",
       plugin: "plugin-demo",
