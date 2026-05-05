@@ -9,7 +9,7 @@ import { defineService, type ServiceOf } from "@rawr/hq-sdk";
 import type {
   AgentConfigSyncResources,
   AgentConfigSyncUndoCapture,
-} from "./shared/resources";
+} from "./common/resources";
 
 type InitialContext = {
   deps: {

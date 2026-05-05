@@ -17,8 +17,8 @@
  */
 import { module } from "./module";
 import type { RetireAction, RetiredPluginRef } from "./entities";
-import type { SyncScope } from "#shared/entities";
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#shared/resources";
+import type { SyncScope } from "#common/entities";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#common/resources";
 import { loadCodexRegistry, type CodexRegistryFile } from "#repositories/codex-registry-repository";
 import {
   readClaudeSyncManifest,

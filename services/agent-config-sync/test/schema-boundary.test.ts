@@ -7,7 +7,7 @@ type SchemaClassification = {
   path: string;
   symbol: string;
   owner:
-    | "shared-entity"
+    | "common-entity"
     | "source-content-entity"
     | "planning-entity"
     | "execution-contract"
@@ -54,31 +54,31 @@ const schemaLedger: SchemaClassification[] = [
   { path: "services/agent-config-sync/src/service/modules/undo/contract.ts", symbol: "RunUndoInputSchema", owner: "undo-contract", form: "typebox" },
   { path: "services/agent-config-sync/src/service/modules/undo/contract.ts", symbol: "UndoRunResultSchema", owner: "undo-contract", form: "typebox" },
   { path: "services/agent-config-sync/src/service/modules/undo/entities.ts", symbol: "UndoApplyItemSchema", owner: "undo-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "RawrPluginKindSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "SyncAgentSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "ProviderKeySchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "MaterialKindSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "SemanticCapabilityKindSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "DistributionModeSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "SupportStatusSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "ProjectionSupportStatusSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "EvidenceLevelSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "SyncScopeSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "SyncActionSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "SyncItemKindSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "ContentFileSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "OrchestrationSpecSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "SourcePluginSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities.ts", symbol: "SourceContentSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities/sync-results.ts", symbol: "SyncScannedSummarySchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities/sync-results.ts", symbol: "SyncItemResultSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities/sync-results.ts", symbol: "SyncTargetResultSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities/sync-results.ts", symbol: "ProjectionSupportSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities/sync-results.ts", symbol: "ProviderProjectionSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/entities/sync-results.ts", symbol: "SyncRunResultSchema", owner: "shared-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/source-content/entities.ts", symbol: "PluginContentIncludeSchema", owner: "source-content-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/source-content/entities.ts", symbol: "PluginContentProviderSchema", owner: "source-content-entity", form: "typebox" },
-  { path: "services/agent-config-sync/src/service/shared/source-content/entities.ts", symbol: "PluginContentManifestV1Schema", owner: "source-content-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "RawrPluginKindSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "SyncAgentSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "ProviderKeySchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "MaterialKindSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "SemanticCapabilityKindSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "DistributionModeSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "SupportStatusSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "ProjectionSupportStatusSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "EvidenceLevelSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "SyncScopeSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "SyncActionSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "SyncItemKindSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "ContentFileSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "OrchestrationSpecSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "SourcePluginSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities.ts", symbol: "SourceContentSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities/sync-results.ts", symbol: "SyncScannedSummarySchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities/sync-results.ts", symbol: "SyncItemResultSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities/sync-results.ts", symbol: "SyncTargetResultSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities/sync-results.ts", symbol: "ProjectionSupportSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities/sync-results.ts", symbol: "ProviderProjectionSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/entities/sync-results.ts", symbol: "SyncRunResultSchema", owner: "common-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/source-content/entities.ts", symbol: "PluginContentIncludeSchema", owner: "source-content-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/source-content/entities.ts", symbol: "PluginContentProviderSchema", owner: "source-content-entity", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/common/source-content/entities.ts", symbol: "PluginContentManifestV1Schema", owner: "source-content-entity", form: "typebox" },
 ];
 
 function collectFiles(root: string): string[] {

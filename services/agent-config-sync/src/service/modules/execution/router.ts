@@ -8,15 +8,15 @@
  *
  * Boundary notes:
  * - Path/FS are injected ports; this module must not import host adapters.
- * - Content layout/merge policy lives in `shared/source-content`, not in the CLI.
+ * - Content layout/merge policy lives in `common/source-content`, not in the CLI.
  * - Registry/manifest writes are treated as part of the capability, not as
  *   incidental "metadata" helpers.
  */
 import { module } from "./module";
 import { resolveProviderContent as resolveServiceProviderContent } from "#source-content/helpers/provider-content";
-import { summarizeScannedContent } from "#shared/helpers/sync-results";
-import { buildProviderProjections } from "#shared/helpers/projections";
-import type { ProviderProjection, SyncTargetResult } from "#shared/entities/sync-results";
+import { summarizeScannedContent } from "#common/helpers/sync-results";
+import { buildProviderProjections } from "#common/helpers/projections";
+import type { ProviderProjection, SyncTargetResult } from "#common/entities/sync-results";
 import { syncClaudeHomes } from "./helpers/sync-claude-homes";
 import { syncCodexHomes } from "./helpers/sync-codex-homes";
 

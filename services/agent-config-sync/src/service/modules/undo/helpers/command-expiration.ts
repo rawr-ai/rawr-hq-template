@@ -1,4 +1,4 @@
-import type { AgentConfigSyncResources } from "#shared/resources";
+import type { AgentConfigSyncResources } from "#common/resources";
 import { PLUGINS_SYNC_UNDO_PROVIDER } from "../entities";
 import { clearActiveUndoCapsule, loadActiveUndoCapsule } from "./capsule-store";
 

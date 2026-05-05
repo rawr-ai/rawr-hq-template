@@ -27,11 +27,11 @@ import {
   upsertClaudePluginManifest,
   writeClaudeSyncManifest,
 } from "#repositories/claude-marketplace-repository";
-import { pushItem, summarizeScannedContent } from "#shared/helpers/sync-results";
-import type { SyncRunResult, SyncTargetResult } from "#shared/entities/sync-results";
-import type { SourceContent, SourcePlugin } from "#shared/entities";
-import type { AgentConfigSyncResources } from "#shared/resources";
-import { buildProviderProjections } from "#shared/helpers/projections";
+import { pushItem, summarizeScannedContent } from "#common/helpers/sync-results";
+import type { SyncRunResult, SyncTargetResult } from "#common/entities/sync-results";
+import type { SourceContent, SourcePlugin } from "#common/entities";
+import type { AgentConfigSyncResources } from "#common/resources";
+import { buildProviderProjections } from "#common/helpers/projections";
 import { buildCodexAgentProjection } from "#source-content/helpers/codex-agent";
 
 export async function previewSyncRun(input: {

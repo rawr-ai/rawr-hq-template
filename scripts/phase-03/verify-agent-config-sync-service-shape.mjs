@@ -14,24 +14,24 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/contract.ts",
   "services/agent-config-sync/src/service/impl.ts",
   "services/agent-config-sync/src/service/router.ts",
-  "services/agent-config-sync/src/service/shared/README.md",
-  "services/agent-config-sync/src/service/shared/errors.ts",
-  "services/agent-config-sync/src/service/shared/internal-errors.ts",
-  "services/agent-config-sync/src/service/shared/resources.ts",
-  "services/agent-config-sync/src/service/shared/entities.ts",
-  "services/agent-config-sync/src/service/shared/entities/sync-results.ts",
-  "services/agent-config-sync/src/service/shared/internal/source-scope.ts",
-  "services/agent-config-sync/src/service/shared/source-content/entities.ts",
-  "services/agent-config-sync/src/service/shared/source-content/helpers/composed-tools.ts",
-  "services/agent-config-sync/src/service/shared/source-content/helpers/manifest.ts",
-  "services/agent-config-sync/src/service/shared/source-content/helpers/merge-content.ts",
-  "services/agent-config-sync/src/service/shared/source-content/helpers/provider-content.ts",
-  "services/agent-config-sync/src/service/shared/source-content/helpers/scan-content.ts",
-  "services/agent-config-sync/src/service/shared/source-content/helpers/source-plugin-content.ts",
-  "services/agent-config-sync/src/service/shared/helpers/sync-results.ts",
-  "services/agent-config-sync/src/service/shared/repositories/destination-sync-repository.ts",
-  "services/agent-config-sync/src/service/shared/repositories/codex-registry-repository.ts",
-  "services/agent-config-sync/src/service/shared/repositories/claude-marketplace-repository.ts",
+  "services/agent-config-sync/src/service/common/README.md",
+  "services/agent-config-sync/src/service/common/errors.ts",
+  "services/agent-config-sync/src/service/common/internal-errors.ts",
+  "services/agent-config-sync/src/service/common/resources.ts",
+  "services/agent-config-sync/src/service/common/entities.ts",
+  "services/agent-config-sync/src/service/common/entities/sync-results.ts",
+  "services/agent-config-sync/src/service/common/internal/source-scope.ts",
+  "services/agent-config-sync/src/service/common/source-content/entities.ts",
+  "services/agent-config-sync/src/service/common/source-content/helpers/composed-tools.ts",
+  "services/agent-config-sync/src/service/common/source-content/helpers/manifest.ts",
+  "services/agent-config-sync/src/service/common/source-content/helpers/merge-content.ts",
+  "services/agent-config-sync/src/service/common/source-content/helpers/provider-content.ts",
+  "services/agent-config-sync/src/service/common/source-content/helpers/scan-content.ts",
+  "services/agent-config-sync/src/service/common/source-content/helpers/source-plugin-content.ts",
+  "services/agent-config-sync/src/service/common/helpers/sync-results.ts",
+  "services/agent-config-sync/src/service/common/repositories/destination-sync-repository.ts",
+  "services/agent-config-sync/src/service/common/repositories/codex-registry-repository.ts",
+  "services/agent-config-sync/src/service/common/repositories/claude-marketplace-repository.ts",
   "services/agent-config-sync/src/service/modules/planning/contract.ts",
   "services/agent-config-sync/src/service/modules/planning/helpers/assessment-summary.ts",
   "services/agent-config-sync/src/service/modules/planning/helpers/full-sync-policy.ts",
@@ -87,10 +87,10 @@ const [
   contractSource,
   routerSource,
   clientSource,
-  sharedReadme,
+  commonReadme,
   serviceShapeTest,
   baseSource,
-  sharedResources,
+  commonResources,
   executionContract,
   executionRouter,
   executionMiddleware,
@@ -101,16 +101,16 @@ const [
   retirementModule,
   undoMiddleware,
   undoModule,
-  sharedSchemas,
+  commonSchemas,
   pluginPluginsPackageJson,
 ] = await Promise.all([
   readFile("services/agent-config-sync/src/service/contract.ts"),
   readFile("services/agent-config-sync/src/service/router.ts"),
   readFile("services/agent-config-sync/src/client.ts"),
-  readFile("services/agent-config-sync/src/service/shared/README.md"),
+  readFile("services/agent-config-sync/src/service/common/README.md"),
   readFile("services/agent-config-sync/test/service-shape.test.ts"),
   readFile("services/agent-config-sync/src/service/base.ts"),
-  readFile("services/agent-config-sync/src/service/shared/resources.ts"),
+  readFile("services/agent-config-sync/src/service/common/resources.ts"),
   readFile("services/agent-config-sync/src/service/modules/execution/contract.ts"),
   readFile("services/agent-config-sync/src/service/modules/execution/router.ts"),
   readFile("services/agent-config-sync/src/service/modules/execution/middleware.ts"),
@@ -121,7 +121,7 @@ const [
   readFile("services/agent-config-sync/src/service/modules/retirement/module.ts"),
   readFile("services/agent-config-sync/src/service/modules/undo/middleware.ts"),
   readFile("services/agent-config-sync/src/service/modules/undo/module.ts"),
-  readFile("services/agent-config-sync/src/service/shared/entities.ts"),
+  readFile("services/agent-config-sync/src/service/common/entities.ts"),
   readFile("plugins/cli/plugins/package.json"),
 ]);
 
@@ -132,8 +132,8 @@ for (const key of ["planning", "execution", "retirement", "undo"]) {
 }
 
 assertCondition(baseSource.includes("resources: AgentConfigSyncResources"), "agent-config-sync base deps must declare concrete resource deps");
-assertCondition(!sharedResources.includes("sources:"), "agent-config-sync resources must not expose semantic sources ports");
-assertCondition(!sharedResources.includes("readProviderOverlay"), "agent-config-sync resources must not expose provider overlay readers");
+assertCondition(!commonResources.includes("sources:"), "agent-config-sync resources must not expose semantic sources ports");
+assertCondition(!commonResources.includes("readProviderOverlay"), "agent-config-sync resources must not expose provider overlay readers");
 assertCondition(executionContract.includes("resolveProviderContent"), "execution contract must expose service-owned provider content resolution");
 assertCondition(executionRouter.includes("resolveProviderContent"), "execution router must implement provider content resolution");
 assertCondition(!baseSource.includes("planningRuntime"), "agent-config-sync base deps must not declare planningRuntime");
@@ -164,7 +164,7 @@ for (const [label, source] of Object.entries({
 }
 
 for (const forbidden of ["SyncAgentSelection", "TargetHomes", "WorkspaceSkip", "SyncPolicy"]) {
-  assertCondition(!sharedSchemas.includes(forbidden), `shared schemas must not contain planning-only ${forbidden}`);
+  assertCondition(!commonSchemas.includes(forbidden), `common schemas must not contain planning-only ${forbidden}`);
 }
 
 const modulesRoot = "services/agent-config-sync/src/service/modules";
@@ -180,17 +180,17 @@ for (const moduleDir of await fs.readdir(modulesRoot, { withFileTypes: true })) 
   }
 }
 
-const sharedInternalRoot = "services/agent-config-sync/src/service/shared/internal";
-const allowedSharedInternal = new Set([`${sharedInternalRoot}/source-scope.ts`]);
-for (const entry of await fs.readdir(sharedInternalRoot, { withFileTypes: true })) {
-  const relPath = path.posix.join(sharedInternalRoot, entry.name);
-  assertCondition(entry.isFile(), `${relPath} must not be a shared/internal directory`);
-  assertCondition(allowedSharedInternal.has(relPath), `${relPath} is shared/internal junk; move it to its owning module`);
+const commonInternalRoot = "services/agent-config-sync/src/service/common/internal";
+const allowedCommonInternal = new Set([`${commonInternalRoot}/source-scope.ts`]);
+for (const entry of await fs.readdir(commonInternalRoot, { withFileTypes: true })) {
+  const relPath = path.posix.join(commonInternalRoot, entry.name);
+  assertCondition(entry.isFile(), `${relPath} must not be a common/internal directory`);
+  assertCondition(allowedCommonInternal.has(relPath), `${relPath} is common/internal junk; move it to its owning module`);
 }
 
 for (const relPath of [
   "packages/agent-config-sync-host",
-  "services/agent-config-sync/src/service/shared/ports",
+  "services/agent-config-sync/src/service/common/ports",
   "services/agent-config-sync/src/service/modules/execution/effective-content.ts",
   "services/agent-config-sync/src/service/modules/execution/repository.ts",
   "services/agent-config-sync/src/service/modules/execution/sync-engine.ts",
@@ -205,7 +205,7 @@ for (const relPath of [
   "services/agent-config-sync/src/service/modules/undo/repository.ts",
   "services/agent-config-sync/src/service/modules/undo/sync-undo.ts",
   "services/agent-config-sync/src/service/modules/source-content",
-  "services/agent-config-sync/src/service/shared/schemas.ts",
+  "services/agent-config-sync/src/service/common/schemas.ts",
   "services/agent-config-sync/src/service/modules/planning/schemas.ts",
   "services/agent-config-sync/src/service/modules/execution/schemas.ts",
   "services/agent-config-sync/src/service/modules/retirement/schemas.ts",
@@ -222,7 +222,7 @@ for (const [label, source] of Object.entries({ pluginPluginsPackageJson })) {
   assertCondition(!source.includes("agent-config-sync-host"), `${label} must not reference agent-config-sync-host`);
 }
 
-assertCondition(sharedReadme.includes("example-todo"), "shared README must anchor the example-todo service shape");
+assertCondition(commonReadme.includes("example-todo"), "common README must anchor the example-todo service shape");
 assertCondition(clientSource.includes("defineServicePackage(router)"), "agent-config-sync client must keep defineServicePackage(router)");
 assertCondition(!(await pathExists("packages/agent-sync")), "legacy packages/agent-sync must not exist");
 

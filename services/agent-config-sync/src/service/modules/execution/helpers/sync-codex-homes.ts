@@ -1,6 +1,6 @@
-import type { SourceContent, SourcePlugin } from "#shared/entities";
-import type { SyncTargetResult } from "#shared/entities/sync-results";
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#shared/resources";
+import type { SourceContent, SourcePlugin } from "#common/entities";
+import type { SyncTargetResult } from "#common/entities/sync-results";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#common/resources";
 import {
   buildCodexScriptName,
   getClaimsFromOtherPlugins,
@@ -23,7 +23,7 @@ import {
   syncSkillDirWithConflictPolicy,
   syncTextWithConflictPolicy,
 } from "#repositories/destination-sync-repository";
-import { pushItem } from "#shared/helpers/sync-results";
+import { pushItem } from "#common/helpers/sync-results";
 import { buildCodexAgentProjection } from "#source-content/helpers/codex-agent";
 
 type DestinationSyncOptions = {

@@ -74,11 +74,11 @@ Separate material projection status from semantic support status.
 
 Expected service files:
 
-- `services/agent-config-sync/src/service/shared/entities.ts`
-- `services/agent-config-sync/src/service/shared/entities/sync-results.ts`
+- `services/agent-config-sync/src/service/common/entities.ts`
+- `services/agent-config-sync/src/service/common/entities/sync-results.ts`
 - `services/agent-config-sync/src/types.ts`
-- `services/agent-config-sync/src/service/shared/helpers/projections.ts`
-- `services/agent-config-sync/src/service/shared/source-content/helpers/codex-agent.ts`
+- `services/agent-config-sync/src/service/common/helpers/projections.ts`
+- `services/agent-config-sync/src/service/common/source-content/helpers/codex-agent.ts`
 - `services/agent-config-sync/src/service/modules/planning/entities.ts`
 - `services/agent-config-sync/src/service/modules/planning/helpers/assessment-summary.ts`
 - `services/agent-config-sync/src/service/modules/planning/helpers/preview-sync-run.ts`
@@ -86,7 +86,7 @@ Expected service files:
 
 Possible new helper:
 
-- `services/agent-config-sync/src/service/shared/source-content/helpers/claude-semantics.ts`
+- `services/agent-config-sync/src/service/common/source-content/helpers/claude-semantics.ts`
 
 Expected CLI/plugin display files:
 
@@ -105,7 +105,7 @@ Expected tests:
 ## Implementation Sequence
 
 1. Create an implementation branch as a child of `codex/agent-config-sync-parity-reconciliation-plan`.
-2. Update schemas and public aliases first in the shared entity/type files.
+2. Update schemas and public aliases first in the common entity/type files.
 3. Manually port semantic parsing ideas from `f24253f0`, especially `Skill(...)`, `Task(...)`, TodoWrite, model selection, tool locks, hooks, MCP/settings, and cosmetic metadata.
 4. Update `codex-agent.ts` so generated Codex TOML writes only safe native fields while dropped Claude-only fields become classified semantic support records.
 5. Update `projections.ts` to preserve closure material statuses and attach semantic support arrays beside them.

@@ -1,7 +1,7 @@
 import { schema } from "@rawr/hq-sdk";
 import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
-import { SyncScopeSchema } from "#shared/entities";
+import { SyncScopeSchema } from "#common/entities";
 import {
   FullSyncPolicyInputSchema,
   FullSyncPolicyResultSchema,
@@ -38,7 +38,7 @@ const WORKSPACE_ROOT_NOT_FOUND = {
 } as const;
 
 /**
- * Shared request envelope for planning calls that inspect workspace sync state
+ * Common request envelope for planning calls that inspect workspace sync state
  * without applying destination writes.
  */
 const WorkspacePlanningBaseInputSchema = Type.Object(
@@ -77,7 +77,7 @@ const PlanWorkspaceSyncInputSchema = Type.Object(
 );
 
 /**
- * Assessment uses the shared planning envelope because it previews current
+ * Assessment uses the common planning envelope because it previews current
  * state without evaluating full-sync command completeness.
  */
 const AssessWorkspaceSyncInputSchema = WorkspacePlanningBaseInputSchema;
