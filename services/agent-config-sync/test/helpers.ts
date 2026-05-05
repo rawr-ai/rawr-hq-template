@@ -264,6 +264,7 @@ export async function makeHyperresearchLikeWorkspace(): Promise<ParityWorkspace>
   const stepTwo = path.join(workspace.pluginRoot, "skills", "synthetic-hyperresearch-2-width");
   const hookPath = path.join(workspace.pluginRoot, "hooks", "pre-tool-use.mjs");
   const hookConfigPath = path.join(workspace.pluginRoot, "hooks", "hooks.json");
+  const hookReadmePath = path.join(workspace.pluginRoot, "hooks", "README.md");
   const mcpPath = path.join(workspace.pluginRoot, "mcp", "synthetic-research.mjs");
   const settingsPath = path.join(workspace.pluginRoot, "settings", "codex", "config.toml");
   const assetPath = path.join(workspace.pluginRoot, "assets", "icon.txt");
@@ -313,6 +314,7 @@ export async function makeHyperresearchLikeWorkspace(): Promise<ParityWorkspace>
     "});",
     "",
   ].join("\n"), "utf8");
+  await fs.writeFile(hookReadmePath, "# Synthetic hook notes\n", "utf8");
   await fs.writeFile(hookConfigPath, `${JSON.stringify({
     hooks: {
       PreToolUse: [

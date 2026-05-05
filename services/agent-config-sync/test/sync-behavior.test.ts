@@ -472,6 +472,7 @@ describe("agent-config-sync service behavior", () => {
 
     const content = plan.syncable[0]?.content;
     expect(content?.hooks?.map((item) => item.name)).toContain("pre-tool-use.mjs");
+    expect(content?.hooks?.map((item) => item.name)).not.toContain("README.md");
     expect(content?.hookConfigs?.map((item) => item.name)).toContain("hooks.json");
     expect(content?.mcpServers?.map((item) => item.name)).toContain("synthetic-research.mjs");
     expect(content?.settings?.map((item) => item.name)).toContain("codex/config.toml");
