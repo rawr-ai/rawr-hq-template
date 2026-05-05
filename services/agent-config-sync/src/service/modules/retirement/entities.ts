@@ -65,6 +65,7 @@ export const CleanupBehindCapabilitiesSchema = Type.Object(
     skills: Type.Boolean(),
     hooks: Type.Boolean(),
     mcp: Type.Boolean(),
+    scripts: Type.Boolean(),
   },
   { additionalProperties: false },
 );

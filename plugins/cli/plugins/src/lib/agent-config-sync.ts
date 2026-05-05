@@ -571,6 +571,7 @@ type CleanupBehindCodexPackage = {
   plugin: string;
   action: string;
   skillCount?: number;
+  scriptCount?: number;
   hookConfigCount?: number;
   mcpServerCount?: number;
 };
@@ -637,6 +638,8 @@ export function buildCleanupBehindCodexCandidates(input: {
           skills: asNumber(action.skillCount) > 0 && asNumber(action.visiblePluginSkillCount) >= asNumber(action.skillCount),
           hooks: asNumber(action.providerHookCount) > 0,
           mcp: asNumber(action.mcpServerCount) > 0,
+          // Codex packages carry scripts as support files, not an active provider script surface.
+          scripts: false,
         },
       });
       continue;
@@ -656,6 +659,8 @@ export function buildCleanupBehindCodexCandidates(input: {
           skills: asNumber(pkg.skillCount) > 0,
           hooks: asNumber(pkg.hookConfigCount) > 0,
           mcp: asNumber(pkg.mcpServerCount) > 0,
+          // Codex packages carry scripts as support files, not an active provider script surface.
+          scripts: false,
         },
       });
     }

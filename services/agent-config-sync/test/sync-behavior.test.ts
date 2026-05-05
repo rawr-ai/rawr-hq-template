@@ -1286,7 +1286,7 @@ describe("agent-config-sync service behavior", () => {
         sourcePluginRoot: workspace.pluginRoot,
         reason: "codex_native_superseded_projection",
         verification: "verified",
-        verifiedCapabilities: { skills: true, hooks: true, mcp: true },
+        verifiedCapabilities: { skills: true, hooks: true, mcp: true, scripts: false },
       }],
       dryRun: false,
     }, { context: { invocation: { traceId: "test-cleanup-behind-codex" } } });
@@ -1325,6 +1325,56 @@ describe("agent-config-sync service behavior", () => {
     ]));
   });
 
+  it("cleans managed script residue when scripts are verified as superseded", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const script = path.join(codexHome, "scripts", "plugin-demo--demo.sh");
+    await Promise.all([
+      fs.mkdir(path.dirname(script), { recursive: true }),
+      fs.mkdir(path.join(codexHome, "plugins"), { recursive: true }),
+    ]);
+    await fs.writeFile(script, "echo stale script\n", "utf8");
+    await fs.writeFile(path.join(codexHome, "plugins", "registry.json"), JSON.stringify({
+      plugins: [{
+        name: "plugin-demo",
+        scripts: ["plugin-demo--demo.sh"],
+        managed_by: "@rawr/plugin-plugins",
+        source_plugin_path: workspace.pluginRoot,
+      }],
+    }, null, 2), "utf8");
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+    const result = await client.retirement.cleanupBehindProviderSync({
+      workspaceRoot: workspace.workspaceRoot,
+      claimCheckCodexHomes: [codexHome],
+      candidates: [{
+        provider: "codex",
+        home: codexHome,
+        plugin: "plugin-demo",
+        sourcePluginRoot: workspace.pluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "verified",
+        verifiedCapabilities: { skills: false, hooks: false, mcp: false, scripts: true },
+      }],
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-cleanup-behind-script" } } });
+
+    expect(result.ok).toBe(true);
+    expect(result.cleanedPlugins).toEqual([{ agent: "codex", home: codexHome, plugin: "plugin-demo" }]);
+    expect(result.retainedResidue).toEqual([]);
+    expect(result.actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ action: "deleted", target: script }),
+      expect.objectContaining({ action: "updated", target: path.join(codexHome, "plugins", "registry.json") }),
+    ]));
+    await expect(fs.stat(script)).rejects.toThrow();
+    const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
+    expect(registry.plugins).toEqual([]);
+  });
+
   it("does not infer cleanup ownership from unmanaged matching paths", async () => {
     const workspace = await makeParityWorkspace();
     const { codexHome } = await makeProviderHomes();
@@ -1352,7 +1402,7 @@ describe("agent-config-sync service behavior", () => {
         sourcePluginRoot: workspace.pluginRoot,
         reason: "codex_native_superseded_projection",
         verification: "verified",
-        verifiedCapabilities: { skills: true, hooks: false, mcp: false },
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
       }],
       dryRun: false,
     }, { context: { invocation: { traceId: "test-cleanup-behind-unmanaged" } } });
@@ -1370,6 +1420,7 @@ describe("agent-config-sync service behavior", () => {
     const outsideRuntimeSkill = path.join(codexHome, ".agents", "outside-skill");
     const outsideHook = path.join(codexHome, "hooks", "rawr", "outside-hook.js");
     const outsideMcp = path.join(codexHome, "mcp", "rawr", "outside-mcp.js");
+    const outsideScript = path.join(codexHome, "outside-script.sh");
     await Promise.all([
       fs.mkdir(outsideRootSkill, { recursive: true }),
       fs.mkdir(outsideRuntimeSkill, { recursive: true }),
@@ -1381,10 +1432,12 @@ describe("agent-config-sync service behavior", () => {
     await fs.writeFile(path.join(outsideRuntimeSkill, "SKILL.md"), "# outside runtime\n", "utf8");
     await fs.writeFile(outsideHook, "console.log('outside hook')\n", "utf8");
     await fs.writeFile(outsideMcp, "console.log('outside mcp')\n", "utf8");
+    await fs.writeFile(outsideScript, "echo outside script\n", "utf8");
     await fs.writeFile(path.join(codexHome, "plugins", "registry.json"), JSON.stringify({
       plugins: [{
         name: "plugin-demo",
         skills: ["../outside-skill"],
+        scripts: ["../outside-script.sh"],
         hookScripts: ["../outside-hook.js"],
         hooks: ["../outside-hook.js"],
         mcpServers: ["../outside-mcp.js"],
@@ -1407,7 +1460,7 @@ describe("agent-config-sync service behavior", () => {
         sourcePluginRoot: workspace.pluginRoot,
         reason: "codex_native_superseded_projection",
         verification: "verified",
-        verifiedCapabilities: { skills: true, hooks: true, mcp: true },
+        verifiedCapabilities: { skills: true, hooks: true, mcp: true, scripts: true },
       }],
       dryRun: false,
     }, { context: { invocation: { traceId: "test-cleanup-behind-unsafe-claims" } } });
@@ -1415,11 +1468,13 @@ describe("agent-config-sync service behavior", () => {
     expect(result.cleanedPlugins).toEqual([]);
     expect(result.retainedResidue).toEqual(expect.arrayContaining([
       expect.objectContaining({ reason: "unsafe-registry-claim-retained", target: expect.stringContaining("../outside-skill") }),
+      expect.objectContaining({ reason: "unsafe-registry-claim-retained", target: expect.stringContaining("../outside-script.sh") }),
       expect.objectContaining({ reason: "unsafe-registry-claim-retained", target: expect.stringContaining("../outside-hook.js") }),
       expect.objectContaining({ reason: "unsafe-registry-claim-retained", target: expect.stringContaining("../outside-mcp.js") }),
     ]));
     expect(result.actions).toEqual(expect.arrayContaining([
       expect.objectContaining({ action: "skipped", target: expect.stringContaining("../outside-skill") }),
+      expect.objectContaining({ action: "skipped", target: expect.stringContaining("../outside-script.sh") }),
       expect.objectContaining({ action: "skipped", target: expect.stringContaining("../outside-hook.js") }),
       expect.objectContaining({ action: "skipped", target: expect.stringContaining("../outside-mcp.js") }),
     ]));
@@ -1427,10 +1482,12 @@ describe("agent-config-sync service behavior", () => {
     await expect(fs.readFile(path.join(outsideRuntimeSkill, "SKILL.md"), "utf8")).resolves.toBe("# outside runtime\n");
     await expect(fs.readFile(outsideHook, "utf8")).resolves.toBe("console.log('outside hook')\n");
     await expect(fs.readFile(outsideMcp, "utf8")).resolves.toBe("console.log('outside mcp')\n");
+    await expect(fs.readFile(outsideScript, "utf8")).resolves.toBe("echo outside script\n");
     const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
     expect(registry.plugins).toEqual([expect.objectContaining({
       name: "plugin-demo",
       skills: ["../outside-skill"],
+      scripts: ["../outside-script.sh"],
       hookScripts: ["../outside-hook.js"],
       mcpServers: ["../outside-mcp.js"],
     })]);
@@ -1468,7 +1525,7 @@ describe("agent-config-sync service behavior", () => {
         sourcePluginRoot: workspace.pluginRoot,
         reason: "codex_native_superseded_projection",
         verification: "dry-run-planned",
-        verifiedCapabilities: { skills: true, hooks: false, mcp: false },
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
       }],
       dryRun: true,
     }, { context: { invocation: { traceId: "test-cleanup-behind-dry-run" } } });
@@ -1530,7 +1587,7 @@ describe("agent-config-sync service behavior", () => {
         sourcePluginRoot: workspace.pluginRoot,
         reason: "codex_native_superseded_projection",
         verification: "verified",
-        verifiedCapabilities: { skills: true, hooks: false, mcp: false },
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
       }],
       dryRun: false,
     }, { context: { invocation: { traceId: "test-cleanup-behind-multi-home" } } });
@@ -1586,7 +1643,7 @@ describe("agent-config-sync service behavior", () => {
         sourcePluginRoot: workspace.pluginRoot,
         reason: "codex_native_superseded_projection",
         verification: "verified",
-        verifiedCapabilities: { skills: true, hooks: false, mcp: false },
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
       }],
       dryRun: false,
     }, { context: { invocation: { traceId: "test-cleanup-behind-shared-claim" } } });
@@ -1648,7 +1705,7 @@ describe("agent-config-sync service behavior", () => {
         sourcePluginRoot: workspace.pluginRoot,
         reason: "codex_native_superseded_projection",
         verification: "verified",
-        verifiedCapabilities: { skills: true, hooks: false, mcp: false },
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
       }],
       dryRun: false,
     }, { context: { invocation: { traceId: "test-cleanup-behind-shared-runtime-root" } } });
@@ -1695,7 +1752,7 @@ describe("agent-config-sync service behavior", () => {
         sourcePluginRoot: workspace.pluginRoot,
         reason: "codex_native_superseded_projection",
         verification: "verified",
-        verifiedCapabilities: { skills: true, hooks: false, mcp: false },
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
       }],
       dryRun: false,
     }, { context: { invocation: { traceId: "test-cleanup-behind-source-collision" } } });

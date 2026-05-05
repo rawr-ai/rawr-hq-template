@@ -115,6 +115,7 @@ describe("@rawr/plugin-plugins", () => {
           skillCount: 1,
           visibleSkillCount: 10,
           visiblePluginSkillCount: 0,
+          scriptCount: 1,
           providerHookCount: 0,
           mcpServerCount: 0,
         }],
@@ -127,6 +128,7 @@ describe("@rawr/plugin-plugins", () => {
         skills: false,
         hooks: false,
         mcp: false,
+        scripts: false,
       },
     })]);
   });

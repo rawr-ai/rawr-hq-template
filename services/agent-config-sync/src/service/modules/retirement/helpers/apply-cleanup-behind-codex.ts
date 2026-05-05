@@ -226,13 +226,58 @@ export async function applyCleanupBehindCodex(input: {
         message: "workflow prompt retained as a legacy/auxiliary compatibility mirror; migrate repeatable workflows into skills",
       }));
     }
-    for (const script of toStringArray(plugin.scripts)) {
-      retainedResidue.push(retain({
-        candidate: input.candidate,
-        target: input.resources.path.join(input.candidate.home, "scripts", script),
-        reason: "projection-only-retained",
-        message: "script retained as legacy/auxiliary compatibility support for prompt/skill material",
-      }));
+
+    if (input.candidate.verifiedCapabilities.scripts) {
+      const retainedScripts: string[] = [];
+      const originalScripts = toStringArray(plugin.scripts);
+      const scriptsRoot = input.resources.path.join(input.candidate.home, "scripts");
+      for (const script of originalScripts) {
+        const target = targetUnderRoot(input.resources, scriptsRoot, script);
+        if (!target) {
+          const unsafeTarget = unsafeTargetLabel(input.resources, scriptsRoot, script);
+          retainedScripts.push(script);
+          retainedResidue.push(retain({
+            candidate: input.candidate,
+            target: unsafeTarget,
+            reason: "unsafe-registry-claim-retained",
+            message: "managed registry script claim resolves outside the bounded cleanup root",
+          }));
+          actions.push(action({
+            candidate: input.candidate,
+            target: unsafeTarget,
+            action: "skipped",
+            message: "retained managed script claim because it resolves outside the bounded cleanup root",
+          }));
+          continue;
+        }
+
+        const deleteAction = await deletePathIfPresent({
+          dryRun: input.dryRun,
+          target,
+          undoCapture: input.undoCapture,
+          resources: input.resources,
+        });
+        actions.push(action({
+          candidate: input.candidate,
+          target,
+          action: deleteAction,
+          message: cleanupMessage(input.candidate, "retired managed script residue"),
+        }));
+      }
+      nextPlugin = { ...nextPlugin, scripts: retainedScripts };
+      if (retainedScripts.length !== originalScripts.length) {
+        cleanedAny = true;
+        registryChanged = true;
+      }
+    } else {
+      for (const script of toStringArray(plugin.scripts)) {
+        retainedResidue.push(retain({
+          candidate: input.candidate,
+          target: input.resources.path.join(input.candidate.home, "scripts", script),
+          reason: "projection-only-retained",
+          message: "script retained as legacy/auxiliary compatibility support for prompt/skill material",
+        }));
+      }
     }
 
     if (input.candidate.verifiedCapabilities.skills) {
