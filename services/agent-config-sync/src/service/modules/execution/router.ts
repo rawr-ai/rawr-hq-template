@@ -13,10 +13,10 @@
  *   incidental "metadata" helpers.
  */
 import { module } from "./module";
-import { resolveProviderContent as resolveServiceProviderContent } from "../../shared/source-content/helpers/provider-content";
-import { summarizeScannedContent } from "../../shared/helpers/sync-results";
-import { buildProviderProjections } from "../../shared/helpers/projections";
-import type { ProviderProjection, SyncTargetResult } from "../../shared/entities/sync-results";
+import { resolveProviderContent as resolveServiceProviderContent } from "#source-content/helpers/provider-content";
+import { summarizeScannedContent } from "#shared/helpers/sync-results";
+import { buildProviderProjections } from "#shared/helpers/projections";
+import type { ProviderProjection, SyncTargetResult } from "#shared/entities/sync-results";
 import { syncClaudeHomes } from "./helpers/sync-claude-homes";
 import { syncCodexHomes } from "./helpers/sync-codex-homes";
 

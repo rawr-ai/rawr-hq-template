@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
+import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
@@ -54,6 +55,13 @@ export type CodexInstallAction =
       skillCount: number;
       visibleSkillCount: number;
       mcpServerCount: number;
+      hookCount: number;
+      providerHookCount: number;
+      pluginHooksFeatureRequired: boolean;
+      packagedSupport: {
+        agentCount: number;
+        settingsCount: number;
+      };
     }
   | {
       action: "skipped";
@@ -89,7 +97,9 @@ export type CodexAppServerSession = {
   pluginList(params: { cwds?: string[] }): Promise<Record<string, unknown>>;
   pluginRead(params: { marketplacePath: string; pluginName: string }): Promise<Record<string, unknown>>;
   pluginInstall(params: { marketplacePath: string; pluginName: string }): Promise<Record<string, unknown>>;
+  pluginUninstall?(params: { pluginId: string }): Promise<Record<string, unknown>>;
   skillsList(params: { cwds: string[]; forceReload: boolean }): Promise<Record<string, unknown>>;
+  hooksList?(params: { cwds: string[] }): Promise<Record<string, unknown>>;
   close(): Promise<void>;
 };
 
@@ -178,6 +188,18 @@ export async function installCodexMarketplacePlugins(input: {
       env,
       label: "codex app-server --help",
     });
+    const packageMetadataByPlugin = new Map(
+      await Promise.all(uniquePlugins.map(async (plugin) => [
+        plugin,
+        await readCodexPackageMetadata({
+          marketplaceRoot: input.marketplaceRoot,
+          marketplacePath: input.marketplacePath,
+          plugin,
+        }),
+      ] as const)),
+    );
+    const requiresPluginHooks = [...packageMetadataByPlugin.values()]
+      .some((metadata) => metadata.hookHandlerCount > 0);
     actions.push({
       action: "preflight",
       codexBin,
@@ -206,12 +228,18 @@ export async function installCodexMarketplacePlugins(input: {
     const appServer = input.appServer ?? await startCodexAppServer({
       codexBin,
       codexHome: input.codexHome,
+      enablePluginHooks: requiresPluginHooks,
     });
     try {
       await appServer.initialize();
       await appServer.pluginList({ cwds: [input.marketplaceRoot] });
 
       for (const plugin of uniquePlugins) {
+        const packageMetadata = packageMetadataByPlugin.get(plugin) ?? {
+          hookHandlerCount: 0,
+          agentCount: 0,
+          settingsCount: 0,
+        };
         await appServer.pluginRead({ marketplacePath: input.marketplacePath, pluginName: plugin });
         const installResponse = await appServer.pluginInstall({
           marketplacePath: input.marketplacePath,
@@ -234,6 +262,46 @@ export async function installCodexMarketplacePlugins(input: {
         const detail = await appServer.pluginRead({ marketplacePath: input.marketplacePath, pluginName: plugin });
         const skillsResponse = await appServer.skillsList({ cwds: [input.marketplaceRoot], forceReload: true });
         const summary = findPluginSummary(listResponse, input.marketplacePath, plugin);
+        let providerHookCount = 0;
+        if (packageMetadata.hookHandlerCount > 0) {
+          if (!appServer.hooksList) {
+            actions.push({
+              action: "failed",
+              codexBin,
+              codexHome: input.codexHome,
+              installScope,
+              marketplacePath: input.marketplacePath,
+              plugin,
+              error: [
+                `Codex package '${plugin}' includes ${packageMetadata.hookHandlerCount} lifecycle hook handler(s),`,
+                "but this Codex app-server does not expose hooks/list for provider-visible hook verification.",
+                "Use a Codex provider with plugin-bundled hook support, or pass --codex-bin to a newer native Codex binary.",
+              ].join(" "),
+            });
+            continue;
+          }
+          const hooksResponse = await appServer.hooksList({ cwds: [input.marketplaceRoot] });
+          providerHookCount = countProviderPluginHooks(
+            hooksResponse,
+            stringField(summary ?? {}, "id") ?? `${plugin}@${packageMetadata.marketplaceName ?? ""}`,
+          );
+        }
+        if (packageMetadata.hookHandlerCount > 0 && providerHookCount < packageMetadata.hookHandlerCount) {
+          actions.push({
+            action: "failed",
+            codexBin,
+            codexHome: input.codexHome,
+            installScope,
+            marketplacePath: input.marketplacePath,
+            plugin,
+            error: [
+              `Codex package '${plugin}' includes ${packageMetadata.hookHandlerCount} lifecycle hook handler(s),`,
+              `but provider hooks/list exposed ${providerHookCount} enabled plugin hook handler(s) for this plugin.`,
+              "Use a Codex provider with plugin-bundled hook support and the plugin_hooks feature enabled before treating native Codex deployment as parity.",
+            ].join(" "),
+          });
+          continue;
+        }
         actions.push({
           action: "verified",
           codexBin,
@@ -246,6 +314,13 @@ export async function installCodexMarketplacePlugins(input: {
           skillCount: pluginDetailArrayLength(detail, "skills"),
           visibleSkillCount: skillsListSkillCount(skillsResponse),
           mcpServerCount: pluginDetailArrayLength(detail, "mcpServers"),
+          hookCount: packageMetadata.hookHandlerCount,
+          providerHookCount,
+          pluginHooksFeatureRequired: packageMetadata.hookHandlerCount > 0,
+          packagedSupport: {
+            agentCount: packageMetadata.agentCount,
+            settingsCount: packageMetadata.settingsCount,
+          },
         });
       }
     } finally {
@@ -311,8 +386,11 @@ async function requireSuccessfulCommand(
 async function startCodexAppServer(input: {
   codexBin: string;
   codexHome?: string;
+  enablePluginHooks?: boolean;
 }): Promise<CodexAppServerSession> {
-  const child = spawn(input.codexBin, ["app-server", "--listen", "stdio://", "--enable", "plugins"], {
+  const args = ["app-server", "--listen", "stdio://", "--enable", "plugins"];
+  if (input.enablePluginHooks) args.push("--enable", "plugin_hooks");
+  const child = spawn(input.codexBin, args, {
     env: codexEnv(input.codexHome),
     stdio: ["pipe", "pipe", "pipe"],
   });
@@ -374,10 +452,22 @@ class JsonRpcCodexAppServerSession implements CodexAppServerSession {
     });
   }
 
+  pluginUninstall(params: { pluginId: string }): Promise<Record<string, unknown>> {
+    return this.request("plugin/uninstall", {
+      pluginId: params.pluginId,
+    });
+  }
+
   skillsList(params: { cwds: string[]; forceReload: boolean }): Promise<Record<string, unknown>> {
     return this.request("skills/list", {
       cwds: params.cwds,
       forceReload: params.forceReload,
+    });
+  }
+
+  hooksList(params: { cwds: string[] }): Promise<Record<string, unknown>> {
+    return this.request("hooks/list", {
+      cwds: params.cwds,
     });
   }
 
@@ -465,6 +555,129 @@ function skillsListSkillCount(response: Record<string, unknown>): number {
 function stringField(record: Record<string, unknown>, key: string): string | undefined {
   const value = record[key];
   return typeof value === "string" ? value : undefined;
+}
+
+async function readCodexPackageMetadata(input: {
+  marketplaceRoot: string;
+  marketplacePath: string;
+  plugin: string;
+}): Promise<{
+  pluginDir?: string;
+  marketplaceName?: string;
+  version?: string;
+  hookHandlerCount: number;
+  agentCount: number;
+  settingsCount: number;
+}> {
+  const marketplace = await readJsonFile<Record<string, unknown>>(input.marketplacePath);
+  const plugins = Array.isArray(marketplace?.plugins) ? marketplace.plugins : [];
+  const entry = plugins.map(asRecord).find((plugin) => plugin.name === input.plugin);
+  const source = asRecord(entry?.source);
+  const relativeSource = typeof source.path === "string" && source.path.startsWith("./")
+    ? source.path.slice(2)
+    : null;
+  if (!relativeSource) return { hookHandlerCount: 0, agentCount: 0, settingsCount: 0 };
+
+  const pluginDir = path.join(input.marketplaceRoot, ...relativeSource.split(/[\\/]+/));
+  const manifest = await readJsonFile<Record<string, unknown>>(path.join(pluginDir, ".codex-plugin", "plugin.json"));
+  const version = typeof manifest?.version === "string" ? manifest.version : undefined;
+  const hookConfigPaths = await resolveCodexHookConfigPaths({ pluginDir, manifest });
+  return {
+    pluginDir,
+    marketplaceName: typeof marketplace?.name === "string" ? marketplace.name : undefined,
+    version,
+    hookHandlerCount: await countCodexHookHandlers(hookConfigPaths),
+    agentCount: await countFiles(path.join(pluginDir, "agents")),
+    settingsCount: await countFiles(path.join(pluginDir, "settings")),
+  };
+}
+
+async function resolveCodexHookConfigPaths(input: {
+  pluginDir: string;
+  manifest: Record<string, unknown> | null;
+}): Promise<string[]> {
+  const explicit = hookManifestPaths(input.manifest?.hooks)
+    .map((entry) => entry.startsWith("./") ? entry.slice(2) : entry)
+    .filter((entry) => entry && !path.isAbsolute(entry) && !entry.split(/[\\/]+/).some((part) => part === ".."));
+  const paths = explicit.length > 0
+    ? explicit
+    : ["hooks/hooks.json"];
+
+  const resolved: string[] = [];
+  for (const relativePath of paths) {
+    const candidate = path.join(input.pluginDir, ...relativePath.split(/[\\/]+/));
+    try {
+      const stat = await fs.stat(candidate);
+      if (stat.isFile()) resolved.push(candidate);
+    } catch {
+      // Missing hook config means no runtime hook handlers to verify.
+    }
+  }
+  return resolved;
+}
+
+function hookManifestPaths(value: unknown): string[] {
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+  return [];
+}
+
+async function countCodexHookHandlers(configPaths: string[]): Promise<number> {
+  let count = 0;
+  for (const configPath of configPaths) {
+    const parsed = await readJsonFile<Record<string, unknown>>(configPath);
+    const hooks = asRecord(parsed?.hooks);
+    for (const groups of Object.values(hooks)) {
+      if (!Array.isArray(groups)) continue;
+      for (const group of groups) {
+        const handlers = asRecord(group).hooks;
+        if (Array.isArray(handlers)) count += handlers.length;
+      }
+    }
+  }
+  return count;
+}
+
+function countProviderPluginHooks(response: Record<string, unknown>, pluginId: string): number {
+  let count = 0;
+  const data = Array.isArray(response.data) ? response.data : [];
+  for (const item of data) {
+    const hooks = Array.isArray(asRecord(item).hooks) ? asRecord(item).hooks as unknown[] : [];
+    for (const hook of hooks) {
+      const record = asRecord(hook);
+      if (record.pluginId !== pluginId) continue;
+      if (record.enabled === false) continue;
+      count += 1;
+    }
+  }
+  return count;
+}
+
+async function readJsonFile<T>(filePath: string): Promise<T | null> {
+  try {
+    return JSON.parse(await fs.readFile(filePath, "utf8")) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function countFiles(dirPath: string): Promise<number> {
+  let count = 0;
+  async function walk(absDir: string): Promise<void> {
+    let dirents: import("node:fs").Dirent[];
+    try {
+      dirents = await fs.readdir(absDir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const dirent of dirents) {
+      const absPath = path.join(absDir, dirent.name);
+      if (dirent.isDirectory()) await walk(absPath);
+      else if (dirent.isFile()) count += 1;
+    }
+  }
+  await walk(dirPath);
+  return count;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

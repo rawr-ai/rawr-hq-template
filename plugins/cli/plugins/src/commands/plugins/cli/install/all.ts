@@ -4,7 +4,7 @@ import path from "node:path";
 import { Flags } from "@oclif/core";
 import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 
-import { createHqOpsCallOptions, createHqOpsClient } from "../../../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "#lib/hq-ops-client";
 
 type PlannedLink = {
   pluginId: string;

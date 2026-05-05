@@ -9,6 +9,7 @@ type CodexPluginManifest = {
   version: string;
   description: string;
   skills: string;
+  hooks?: string;
   mcpServers?: string;
   interface?: {
     displayName?: string;
@@ -50,8 +51,12 @@ export type CodexPackageResult = {
   marketplaceAction: "planned" | "written";
   marketplacePluginCount: number;
   skillCount: number;
+  scriptCount: number;
+  agentCount: number;
   hookCount: number;
+  hookConfigCount: number;
   mcpServerCount: number;
+  settingsCount: number;
   assetCount: number;
   validationNotes: string[];
 };
@@ -78,6 +83,10 @@ export async function packageCodexPlugin(input: {
     input.marketplaceName ?? await inferMarketplaceName(input.sourcePlugin.absPath),
   );
   const marketplaceCategory = input.marketplaceCategory ?? input.sourcePlugin.rawrKind ?? "rawr";
+  const hooks = input.content.hooks ?? [];
+  const hookConfigs = input.content.hookConfigs ?? [];
+  const scripts = input.content.scripts ?? [];
+  const hasHookLifecycleConfig = hookConfigs.length > 0;
   const manifest: CodexPluginManifest = {
     name: input.sourcePlugin.dirName,
     version: input.sourcePlugin.version ?? "1.0.0",
@@ -89,12 +98,19 @@ export async function packageCodexPlugin(input: {
       category: marketplaceCategory,
       capabilities: [
         ...(input.content.skills.length > 0 ? ["skills"] : []),
+        ...(hasHookLifecycleConfig ? ["hooks"] : []),
+        ...(scripts.length > 0 ? ["scripts"] : []),
+        ...(input.content.agentFiles.length > 0 ? ["agents"] : []),
         ...((input.content.mcpServers ?? []).length > 0 ? ["mcp"] : []),
+        ...((input.content.settings ?? []).length > 0 ? ["settings"] : []),
+        ...((input.content.assets ?? []).length > 0 ? ["assets"] : []),
       ],
     },
   };
   const mcpServers = input.content.mcpServers ?? [];
+  const settings = input.content.settings ?? [];
   const assets = input.content.assets ?? [];
+  if (hasHookLifecycleConfig) manifest.hooks = "./hooks/hooks.json";
   if (mcpServers.length > 0) manifest.mcpServers = "./.mcp.json";
 
   if (!input.dryRun) {
@@ -116,19 +132,42 @@ export async function packageCodexPlugin(input: {
       await copyDirTree(skill.absPath, skillDir);
     }
 
+    for (const agent of input.content.agentFiles) {
+      const agentPath = path.join(pluginDir, "agents", `${agent.name}.md`);
+      await ensureDir(path.dirname(agentPath));
+      await fs.copyFile(agent.absPath, agentPath);
+    }
+
+    for (const hook of hooks) {
+      const hookPath = path.join(pluginDir, "hooks", hook.name);
+      await ensureDir(path.dirname(hookPath));
+      await fs.copyFile(hook.absPath, hookPath);
+    }
+
+    if (hasHookLifecycleConfig) {
+      await writeCodexHooksConfig({ pluginDir, hooks, hookConfigs });
+    }
+
+    for (const script of scripts) {
+      const scriptPath = path.join(pluginDir, "scripts", script.name);
+      await ensureDir(path.dirname(scriptPath));
+      await fs.copyFile(script.absPath, scriptPath);
+    }
+
     if (mcpServers.length > 0) {
       await writeCodexMcpConfig({ pluginDir, mcpServers });
+    }
+
+    for (const setting of settings) {
+      const settingPath = path.join(pluginDir, "settings", setting.name);
+      await ensureDir(path.dirname(settingPath));
+      await fs.copyFile(setting.absPath, settingPath);
     }
 
     for (const asset of assets) {
       const assetPath = path.join(pluginDir, "assets", asset.name);
       await ensureDir(path.dirname(assetPath));
       await fs.copyFile(asset.absPath, assetPath);
-    }
-
-    const unsupportedDirs = ["agents", "hooks", "settings"];
-    for (const dir of unsupportedDirs) {
-      await fs.rm(path.join(pluginDir, dir), { recursive: true, force: true });
     }
 
     await input.undoCapture?.captureWriteTarget(marketplacePath);
@@ -159,15 +198,20 @@ export async function packageCodexPlugin(input: {
     marketplaceAction: input.dryRun ? "planned" : "written",
     marketplacePluginCount,
     skillCount: input.content.skills.length,
-    hookCount: 0,
+    scriptCount: scripts.length,
+    agentCount: input.content.agentFiles.length,
+    hookCount: hooks.length,
+    hookConfigCount: hookConfigs.length,
     mcpServerCount: mcpServers.length,
+    settingsCount: settings.length,
     assetCount: assets.length,
     validationNotes: [
       "Codex package generation writes an installable local marketplace root",
       "Marketplace registration uses `codex plugin marketplace add`; plugin installation uses Codex app-server `plugin/install`",
-      "Skills, MCP config, and assets are packaged when modeled by RAWR source content",
-      "Hook scripts/config are omitted from Codex plugin packages because the current RAWR Codex plugin manifest does not accept a hooks field; direct Codex sync owns hook projection",
-      "Custom agents and settings are intentionally omitted from Codex plugin packages because the current RAWR Codex plugin manifest does not accept them",
+      "Skills, hooks, MCP config, agents, settings, and assets are packaged when modeled by RAWR source content",
+      "Codex plugin hook material is emitted using the documented `hooks/hooks.json` lifecycle config path",
+      "Codex plugin hook runtime verification requires app-server `hooks/list` and provider feature `plugin_hooks` until Codex stabilizes plugin-bundled hooks",
+      "Custom agents and settings are packaged as RAWR source/support material until Codex exposes provider-native activation semantics for those surfaces",
     ],
   };
 }
@@ -362,6 +406,77 @@ async function writeCodexMcpConfig(input: {
   }
 
   await writeJsonFile(path.join(input.pluginDir, ".mcp.json"), generatedConfig);
+}
+
+async function writeCodexHooksConfig(input: {
+  pluginDir: string;
+  hooks: Array<{ name: string; absPath: string }>;
+  hookConfigs: Array<{ name: string; absPath: string }>;
+}): Promise<void> {
+  const hooksConfig = await readFirstHooksConfig(input.hookConfigs);
+  if (!hooksConfig) {
+    await writeJsonFile(path.join(input.pluginDir, "hooks", "hooks.json"), { hooks: {} });
+    return;
+  }
+
+  await writeJsonFile(path.join(input.pluginDir, "hooks", "hooks.json"), normalizeHookCommandsForPackage(hooksConfig, input.hooks));
+}
+
+async function readFirstHooksConfig(
+  hookConfigs: Array<{ name: string; absPath: string }>,
+): Promise<Record<string, unknown> | null> {
+  for (const config of hookConfigs) {
+    try {
+      const raw = await fs.readFile(config.absPath, "utf8");
+      const parsed = JSON.parse(raw) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as Record<string, unknown>;
+    } catch {
+      // Ignore invalid/non-JSON hook configs here; provider validation reports
+      // malformed runtime config after package generation.
+    }
+  }
+  return null;
+}
+
+function normalizeHookCommandsForPackage(
+  config: Record<string, unknown>,
+  hooks: Array<{ name: string; absPath: string }>,
+): Record<string, unknown> {
+  const hookNames = new Set(hooks.map((hook) => hook.name));
+  return rewriteJsonStrings(config, (value) => rewriteHookCommand(value, hookNames)) as Record<string, unknown>;
+}
+
+function rewriteHookCommand(value: string, hookNames: Set<string>): string {
+  for (const hookName of hookNames) {
+    const escaped = escapeRegExp(hookName);
+    const patterns = [
+      new RegExp(`(^|\\s)\\.\\/hooks\\/${escaped}(?=$|\\s)`, "g"),
+      new RegExp(`(^|\\s)hooks\\/${escaped}(?=$|\\s)`, "g"),
+      new RegExp(`(^|\\s)\\.\\/${escaped}(?=$|\\s)`, "g"),
+    ];
+    let next = value;
+    for (const pattern of patterns) {
+      next = next.replace(pattern, (_match, prefix: string) => `${prefix}\${CODEX_PLUGIN_ROOT}/hooks/${hookName}`);
+    }
+    value = next;
+  }
+  return value;
+}
+
+function rewriteJsonStrings(value: unknown, rewrite: (value: string) => string): unknown {
+  if (typeof value === "string") return rewrite(value);
+  if (Array.isArray(value)) return value.map((item) => rewriteJsonStrings(item, rewrite));
+  if (!value || typeof value !== "object") return value;
+
+  const next: Record<string, unknown> = {};
+  for (const [key, child] of Object.entries(value)) {
+    next[key] = rewriteJsonStrings(child, rewrite);
+  }
+  return next;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function normalizeComponentName(name: string): string {

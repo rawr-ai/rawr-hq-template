@@ -11,8 +11,8 @@ import {
   planWriteFile,
   renderWorkflowSource,
   renderWorkflowTestSource,
-} from "../../../lib/factory";
-import { recordArtifact } from "../../../lib/journal-context";
+} from "#lib/factory";
+import { recordArtifact } from "#lib/journal-context";
 import { findWorkspaceRoot } from "@rawr/core";
 
 /**

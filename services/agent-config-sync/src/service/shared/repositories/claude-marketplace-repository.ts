@@ -46,6 +46,11 @@ export type ClaudeManagedPluginManifest = {
   skills: string[];
   scripts: string[];
   agents: string[];
+  hooks?: string[];
+  hookConfigs?: string[];
+  mcpServers?: string[];
+  settings?: string[];
+  assets?: string[];
   syncedAt: string;
   managedBy: string;
 };
@@ -53,6 +58,7 @@ export type ClaudeManagedPluginManifest = {
 export async function upsertClaudePluginManifest(input: {
   claudeLocalHome: string;
   sourcePlugin: SourcePlugin;
+  content?: SourceContent;
   dryRun: boolean;
   resources: AgentConfigSyncResources;
 }): Promise<{ filePath: string; changed: boolean }> {
@@ -65,6 +71,10 @@ export async function upsertClaudePluginManifest(input: {
     name: input.sourcePlugin.dirName,
     version: input.sourcePlugin.version ?? existing.version ?? "1.0.0",
     description: input.sourcePlugin.description ?? existing.description ?? "Synced from RAWR HQ plugin",
+    skills: "./skills",
+    agents: "./agents",
+    ...(input.content?.hookConfigs?.length ? { hooks: "./hooks/hooks.json" } : {}),
+    ...(input.content?.mcpServers?.length ? { mcpServers: "./.mcp.json" } : {}),
   };
   const changed = !stableJsonEqual(existing, next);
 
@@ -140,6 +150,11 @@ export async function writeClaudeSyncManifest(input: {
     skills: input.content.skills.map((skill) => skill.name),
     scripts: input.content.scripts.map((script) => script.name),
     agents: input.content.agentFiles.map((agent) => agent.name),
+    hooks: (input.content.hooks ?? []).map((hook) => hook.name),
+    hookConfigs: (input.content.hookConfigs ?? []).map((hookConfig) => hookConfig.name),
+    mcpServers: (input.content.mcpServers ?? []).map((server) => server.name),
+    settings: (input.content.settings ?? []).map((setting) => setting.name),
+    assets: (input.content.assets ?? []).map((asset) => asset.name),
     managedBy: "@rawr/plugin-plugins",
     syncedAt: nowIso,
   };
@@ -181,6 +196,11 @@ function normalizeSyncManifest(
     skills: [...manifest.skills].sort(),
     scripts: [...manifest.scripts].sort(),
     agents: [...manifest.agents].sort(),
+    hooks: [...(manifest.hooks ?? [])].sort(),
+    hookConfigs: [...(manifest.hookConfigs ?? [])].sort(),
+    mcpServers: [...(manifest.mcpServers ?? [])].sort(),
+    settings: [...(manifest.settings ?? [])].sort(),
+    assets: [...(manifest.assets ?? [])].sort(),
     managedBy: manifest.managedBy,
   };
 }

@@ -1,6 +1,6 @@
 import { Args } from "@oclif/core";
 import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
-import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "#lib/hq-ops-client";
 
 /**
  * Disables one catalog-resolved runtime web plugin in persisted repo state.

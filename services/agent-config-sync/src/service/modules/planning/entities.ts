@@ -9,7 +9,7 @@ import {
   SyncActionSchema,
   SyncAgentSchema,
   SyncScopeSchema,
-} from "../../shared/entities";
+} from "#shared/entities";
 
 /**
  * agent-config-sync: planning entities.
@@ -79,6 +79,8 @@ export const FullSyncPolicyInputSchema = Type.Object(
     agent: SyncAgentSelectionSchema,
     scope: SyncScopeSchema,
     coworkEnabled: Type.Boolean(),
+    codexPackageEnabled: Type.Optional(Type.Boolean()),
+    codexInstallEnabled: Type.Optional(Type.Boolean()),
     claudeInstallEnabled: Type.Boolean(),
     claudeEnableEnabled: Type.Boolean(),
     installReconcileEnabled: Type.Boolean(),

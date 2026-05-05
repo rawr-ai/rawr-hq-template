@@ -53,9 +53,9 @@ export async function buildCodexAgentProjection(input: {
       provider: "codex",
       semanticKind: "agent_role",
       source: input.agent.name,
-      supportStatus: "native",
-      evidenceLevel: "local_verified",
-      notes: ["Codex role TOML supports name, description, and developer_instructions"],
+      supportStatus: "legacy_or_deprecated",
+      evidenceLevel: "source_code",
+      notes: ["Codex standalone role TOML projection supports name, description, and developer_instructions, but is not native provider plugin deployment"],
     },
     ...(!parsed.frontmatterError
       ? droppedSemantics.map((field) => supportForCodexAgentFrontmatterField({

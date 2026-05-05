@@ -15,6 +15,20 @@
         "test"
       ]
     },
+    "@rawr/agent-config-sync-node": {
+      "config": "packages/agent-config-sync-node/package.json",
+      "tags": [
+        "type:package",
+        "migration-slice:structural-tranche"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "structural",
+        "typecheck",
+        "test"
+      ]
+    },
     "@rawr/session-intelligence": {
       "config": "services/session-intelligence/package.json",
       "tags": [

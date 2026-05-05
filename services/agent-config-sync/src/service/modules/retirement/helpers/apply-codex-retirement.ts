@@ -1,13 +1,13 @@
 import type { RetireAction, RetiredPluginRef } from "../entities";
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../../shared/resources";
-import type { CodexRegistryFile } from "../../../shared/repositories/codex-registry-repository";
-import { buildCodexManagedConfig } from "../../../shared/repositories/codex-config-repository";
-import { pruneCodexHooksForPlugin } from "../../../shared/repositories/codex-hooks-repository";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#shared/resources";
+import type { CodexRegistryFile } from "#repositories/codex-registry-repository";
+import { buildCodexManagedConfig } from "#repositories/codex-config-repository";
+import { pruneCodexHooksForPlugin } from "#repositories/codex-hooks-repository";
 import {
   getCodexManagedMcpDir,
   getCodexRetiredRootSkillsDir,
   getCodexRuntimeSkillsDir,
-} from "../../../shared/repositories/codex-runtime-paths";
+} from "#repositories/codex-runtime-paths";
 import { deletePathIfPresent, writeJsonWithUndoCapture, writeTextWithUndoCapture } from "./filesystem-actions";
 
 type CodexStalePlugin = {

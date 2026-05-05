@@ -1,4 +1,4 @@
-import type { AgentConfigSyncResources } from "../../../shared/resources";
+import type { AgentConfigSyncResources } from "#shared/resources";
 import type { UndoCapsule } from "../entities";
 import { undoCapsuleDir, undoManifestPath } from "./capsule-paths";
 

@@ -1,6 +1,8 @@
 # `@rawr/plugin-plugins`
 
-Sync canonical plugin content from RAWR HQ into Codex and Claude agent plugin directories.
+Deploy canonical RAWR plugin content through native Codex and Claude provider
+plugin paths. Use `rawr plugins export` only for explicit generic filesystem
+projection.
 
 ## Command
 
@@ -29,7 +31,7 @@ rawr undo
 This performs a full deterministic sync pipeline by default:
 - syncs to Codex + Claude targets,
 - builds Cowork `.zip` artifacts,
-- optionally builds/registers/installs Codex marketplace packages when `--codex-package` is set,
+- builds/registers/installs Codex marketplace packages through the native provider path,
 - refreshes Claude install + enable,
 - retires stale managed plugins from rename/delete operations,
 - uses `--force` and `--gc` defaults for deterministic convergence.
@@ -46,11 +48,11 @@ By default, `rawr plugins sync ...` also generates a Cowork artifact for each sy
 
 The `.zip` is generated from **RAWR HQ source content** using the same mapping rules as Claude sync (`workflows -> commands`, `skills`, `scripts`, and optionally `agents`), so it stays in parity with what Claude would see.
 
-## Codex marketplace packages
+## Codex native marketplace packages
 
-Codex package generation is explicit. When `--codex-package` is set, this command writes a local Codex marketplace root and, by default, registers and installs generated plugins through the RAWR Codex CLI/app-server. Use `--no-codex-install` to generate packages without installing them.
+Codex package generation is the default native deployment path. By default, this command writes a local Codex marketplace root, registers it with the selected Codex CLI/app-server, and installs generated plugins. Use `--no-codex-package` to skip package generation, or `--no-codex-install` to generate packages without installing them.
 
-- Enable: `--codex-package`
+- Package toggle: `--codex-package` / `--no-codex-package`
 - Install toggle: `--codex-install` / `--no-codex-install`
 - Codex binary override: `--codex-bin <path>` (default: `RAWR_CODEX_BIN`, then `~/.local/bin/codex`, then `codex` on `PATH`)
 - Install scope: `--install-scope user` (default; currently the only supported scope)
@@ -61,9 +63,13 @@ Codex package generation is explicit. When `--codex-package` is set, this comman
 Generated packages include:
 - `.codex-plugin/plugin.json`
 - `skills/`
-- MCP config/files and assets when modeled
+- `hooks/hooks.json` when hook lifecycle config is modeled, plus hook scripts as support material
+- MCP config/files when modeled
+- shipped scripts, custom agents, settings/config material, and assets as provider package support material
 
-Custom agents, settings, and hooks are intentionally not emitted in Codex plugin packages for the current RAWR Codex manifest. Direct Codex sync owns standalone TOML agents, managed hook config, MCP/settings config fragments, prompts, scripts, and runtime skill mirrors.
+Codex plugin hooks require a provider with the `plugin_hooks` feature. Current `codex-rawr` may lag upstream; for hook verification use `--codex-bin <latest-codex>` when needed, for example `/Users/mateicanavra/.volta/bin/codex`.
+
+Direct Codex filesystem projection is not the sanctioned deployment path. Use `rawr plugins export` or `rawr plugins export all` for generic projection/repair destinations.
 
 ## Claude marketplace refresh (install + enable)
 
@@ -79,6 +85,21 @@ Disable with:
 - `--no-claude-install` and/or `--no-claude-enable`
 
 `--install-scope user` is accepted on both `rawr plugins sync` and `rawr plugins sync all` so the default user-local install scope is explicit in CLI help, JSON output, and install adapter results. Other scopes are reserved for a future provider-scope decision and are rejected today.
+
+## Generic destination projection (advanced)
+
+Use these commands when you intentionally need RAWR-modeled content copied to explicit filesystem destinations without native provider install:
+
+```bash
+rawr plugins export <plugin-ref> --agent codex|claude|all --codex-home <path> --claude-home <path>
+rawr plugins export all --agent codex|claude|all --codex-home <path> --claude-home <path>
+```
+
+Projection commands require explicit destination homes for the selected agent
+shape. They do not fall back to `CODEX_HOME`, `RAWR_AGENT_SYNC_*`, configured
+provider homes, or provider default homes.
+
+`rawr plugins sync` also has `--destination-projection` when a workstream needs native deployment plus auxiliary filesystem projection in one run. This is for fixtures, migration, repair, ad-hoc packaging, and non-CLI systems. It is not a fallback for Codex or Claude plugin deployment.
 
 ## Partial mode guard (advanced)
 
@@ -114,7 +135,7 @@ Only these top-level directories are synced:
 
 Anything outside those directories is ignored.
 
-## Mapping
+## Generic Projection Mapping
 
 - Codex:
   - `workflows/*.md -> <codex-home>/prompts/*.md`
@@ -127,6 +148,8 @@ Anything outside those directories is ignored.
   - `skills/<name>/** -> <claude-home>/plugins/<pluginName>/skills/<name>/**`
   - `scripts/<file> -> <claude-home>/plugins/<pluginName>/scripts/<file>`
   - `agents/*.md -> <claude-home>/plugins/<pluginName>/agents/*.md`
+
+These mappings describe `rawr plugins export` and `--destination-projection`, not the default native provider deployment lane.
 
 ## Important script boundary
 
@@ -163,9 +186,10 @@ Default Codex target selection:
 - Otherwise `CODEX_HOME` is used as the primary active Codex home.
 - Otherwise the default is `~/.codex-rawr`.
 
-Additional Codex homes are explicit sync destinations only: pass repeatable
-`--codex-home`, include them in `RAWR_AGENT_SYNC_CODEX_HOMES`, or add them as
-enabled config destinations.
+Native Codex package install currently uses the first selected Codex home for
+the provider app-server session. Additional Codex homes are explicit generic
+projection destinations only when `rawr plugins export` or
+`--destination-projection` is used.
 
 ## Lifecycle Quality Commands
 

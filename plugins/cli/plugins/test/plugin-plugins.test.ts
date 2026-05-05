@@ -68,6 +68,26 @@ describe("@rawr/plugin-plugins", () => {
     }
   });
 
+  it("keeps native Codex deployment defaulted and destination projection explicit", async () => {
+    const syncSource = await fs.readFile(path.join(testDir, "..", "src", "commands", "plugins", "sync.ts"), "utf8");
+    const syncAllSource = await fs.readFile(path.join(testDir, "..", "src", "commands", "plugins", "sync", "all.ts"), "utf8");
+    const exportSource = await fs.readFile(path.join(testDir, "..", "src", "commands", "plugins", "export.ts"), "utf8");
+    const exportAllSource = await fs.readFile(path.join(testDir, "..", "src", "commands", "plugins", "export", "all.ts"), "utf8");
+
+    for (const source of [syncSource, syncAllSource]) {
+      expect(source).toContain("\"codex-package\": Flags.boolean");
+      expect(source).toContain("default: true");
+      expect(source).toContain("includeCodex: destinationProjectionEnabled && targets.agents.includes(\"codex\")");
+    }
+    expect(syncAllSource).toContain("codexPackageEnabled,");
+    expect(syncAllSource).toContain("codexInstallEnabled,");
+    for (const source of [exportSource, exportAllSource]) {
+      expect(source).toContain("Generic projection requires explicit destination homes");
+      expect(source).toContain("PROJECTION_DESTINATION_REQUIRED");
+      expect(source).toContain("projectionMode: \"generic_destination_projection\"");
+    }
+  });
+
   it("checks install state from the invocation workspace during external source sync status", async () => {
     const commandSource = await fs.readFile(
       path.join(testDir, "..", "src", "commands", "plugins", "status.ts"),

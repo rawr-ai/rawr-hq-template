@@ -1,4 +1,4 @@
-import type { AgentConfigSyncResources } from "../../../shared/resources";
+import type { AgentConfigSyncResources } from "#shared/resources";
 import type { UndoPathKind } from "../entities";
 
 export async function removePathIfPresent(

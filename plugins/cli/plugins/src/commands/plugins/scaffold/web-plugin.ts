@@ -8,8 +8,8 @@ import {
   type FactoryPlannedWrite,
   type FactoryWriteMode,
   planWriteFile,
-} from "../../../lib/factory";
-import { recordArtifact } from "../../../lib/journal-context";
+} from "#lib/factory";
+import { recordArtifact } from "#lib/journal-context";
 import { findWorkspaceRoot } from "@rawr/core";
 
 type PluginKind = "server" | "web" | "both";

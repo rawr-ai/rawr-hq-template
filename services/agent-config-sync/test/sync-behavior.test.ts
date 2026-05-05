@@ -160,7 +160,7 @@ describe("agent-config-sync service behavior", () => {
       provider: "codex",
       materialKind: "agent",
       source: "researcher",
-      supportStatus: "native",
+      supportStatus: "legacy_or_deprecated",
       droppedSemantics: ["tools", "hooks", "mcpServers", "permissionMode", "skills", "model"],
     }));
     const previewAgentProjection = preview.projections.find((projection) =>
@@ -169,7 +169,7 @@ describe("agent-config-sync service behavior", () => {
       projection.source === "researcher"
     );
     expect(previewAgentProjection?.semanticSupport).toEqual(expect.arrayContaining([
-      expect.objectContaining({ semanticKind: "agent_role", supportStatus: "native" }),
+      expect.objectContaining({ semanticKind: "agent_role", supportStatus: "legacy_or_deprecated" }),
       expect.objectContaining({ semanticKind: "tool_lock", supportStatus: "unsupported" }),
       expect.objectContaining({ semanticKind: "model_selection", supportStatus: "adapter_required" }),
       expect.objectContaining({ semanticKind: "mcp_server", supportStatus: "unsupported" }),
@@ -307,7 +307,7 @@ describe("agent-config-sync service behavior", () => {
       provider: "codex",
       materialKind: "agent",
       source: "researcher",
-      supportStatus: "native",
+      supportStatus: "legacy_or_deprecated",
       droppedSemantics: ["unparseable_frontmatter"],
     }));
     expect(result.projections).toContainEqual(expect.objectContaining({
@@ -326,7 +326,7 @@ describe("agent-config-sync service behavior", () => {
     });
   });
 
-  it("projects Codex direct mirror material from normalized source content", async () => {
+  it("projects Codex generic destination material without provider-deployment claims", async () => {
     const workspace = await makeParityWorkspace();
     const { codexHome } = await makeProviderHomes();
     tempDirs.push(workspace.workspaceRoot, codexHome);
@@ -360,6 +360,10 @@ describe("agent-config-sync service behavior", () => {
       "plugin_metadata",
     ]));
     expect(result.projections.some((projection) => projection.materialKind === "hook")).toBe(false);
+    expect(result.projections.some((projection) => (projection.distributionMode as string) === "direct_mirror")).toBe(false);
+    for (const projection of result.projections.filter((entry) => entry.distributionMode === "destination_projection")) {
+      expect(projection.supportStatus).not.toBe("native");
+    }
     const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
     expect(registry.plugins[0]).toMatchObject({
       name: "plugin-demo",
@@ -528,7 +532,7 @@ describe("agent-config-sync service behavior", () => {
     expect(result.projections).toContainEqual(expect.objectContaining({
       provider: "codex",
       materialKind: "hook",
-      supportStatus: "native",
+      supportStatus: "legacy_or_deprecated",
       source: "pre-tool-use.mjs",
     }));
     const hookPath = path.join(codexHome, "hooks", "rawr", "synthetic-hyperresearch", "pre-tool-use.mjs");
@@ -875,6 +879,41 @@ describe("agent-config-sync service behavior", () => {
         path.join(pluginDir, ".rawr-sync-manifest.json"),
       ],
     }));
+  });
+
+  it("stages Claude native plugin hooks, MCP, settings, and assets", async () => {
+    const workspace = await makeHyperresearchLikeWorkspace();
+    const { claudeHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, claudeHome);
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+
+    const result = await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [],
+      claudeHomes: [claudeHome],
+      includeCodex: false,
+      includeClaude: true,
+      includeAgentsInClaude: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-claude-native-hook-mcp-settings" } } });
+
+    expect(result.ok).toBe(true);
+    const pluginDir = path.join(claudeHome, "plugins", "synthetic-hyperresearch");
+    await expect(fs.readFile(path.join(pluginDir, "hooks", "pre-tool-use.mjs"), "utf8")).resolves.toContain("hook_event_name");
+    const hooksJson = JSON.parse(await fs.readFile(path.join(pluginDir, "hooks", "hooks.json"), "utf8"));
+    expect(hooksJson.hooks.PreToolUse[0].hooks[0].command).toContain("${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use.mjs");
+    const mcpJson = JSON.parse(await fs.readFile(path.join(pluginDir, ".mcp.json"), "utf8"));
+    expect(mcpJson.mcpServers.synthetic_research ?? mcpJson.mcpServers["synthetic-research"]).toBeDefined();
+    await expect(fs.readFile(path.join(pluginDir, "settings", "codex", "config.toml"), "utf8")).resolves.toContain("codex_hooks");
+    await expect(fs.readFile(path.join(pluginDir, "assets", "icon.txt"), "utf8")).resolves.toBe("synthetic asset\n");
+    const pluginJson = JSON.parse(await fs.readFile(path.join(pluginDir, ".claude-plugin", "plugin.json"), "utf8"));
+    expect(pluginJson).toMatchObject({
+      hooks: "./hooks/hooks.json",
+      mcpServers: "./.mcp.json",
+    });
   });
 
   it("reports Claude GC item kinds for stale workflows and stale agents accurately", async () => {

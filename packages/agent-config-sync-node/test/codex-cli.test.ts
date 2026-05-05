@@ -112,6 +112,10 @@ describe("@rawr/agent-config-sync-node Codex CLI install adapter", () => {
         appServerCalls.push(`skills/list:${JSON.stringify(params)}`);
         return { data: [{ cwd: "/tmp/dist/codex", skills: [{ name: "demo-skill" }], errors: [] }] };
       },
+      async hooksList(params) {
+        appServerCalls.push(`hooks/list:${JSON.stringify(params)}`);
+        return { data: [{ cwd: "/tmp/dist/codex", hooks: [], errors: [] }] };
+      },
       async close() {
         appServerCalls.push("close");
       },
@@ -168,7 +172,222 @@ describe("@rawr/agent-config-sync-node Codex CLI install adapter", () => {
       skillCount: 1,
       visibleSkillCount: 1,
       mcpServerCount: 1,
+      hookCount: 0,
+      providerHookCount: 0,
+      pluginHooksFeatureRequired: false,
+      packagedSupport: {
+        agentCount: 0,
+        settingsCount: 0,
+      },
     });
+  });
+
+  it("blocks native Codex parity claims when packaged hooks are not provider-visible", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-codex-hook-provider-gap-"));
+    tempDirs.push(root);
+    const marketplaceRoot = path.join(root, "dist", "codex");
+    const marketplacePath = path.join(marketplaceRoot, ".agents", "plugins", "marketplace.json");
+    const pluginDir = path.join(marketplaceRoot, "plugins", "plugin-demo");
+    await fs.mkdir(path.join(pluginDir, ".codex-plugin"), { recursive: true });
+    await fs.mkdir(path.join(pluginDir, "hooks"), { recursive: true });
+    await fs.writeFile(path.join(pluginDir, "hooks", "pre-tool-use.mjs"), "console.log('hook')\n", "utf8");
+    await fs.writeFile(
+      path.join(pluginDir, "hooks", "hooks.json"),
+      `${JSON.stringify({
+        hooks: {
+          PreToolUse: [
+            {
+              matcher: "Bash",
+              hooks: [{ type: "command", command: "node ${CODEX_PLUGIN_ROOT}/hooks/pre-tool-use.mjs" }],
+            },
+          ],
+        },
+      }, null, 2)}\n`,
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(pluginDir, ".codex-plugin", "plugin.json"),
+      `${JSON.stringify({ name: "plugin-demo", version: "1.0.0", skills: "./skills/", hooks: "./hooks/hooks.json" }, null, 2)}\n`,
+      "utf8",
+    );
+    await fs.mkdir(path.dirname(marketplacePath), { recursive: true });
+    await fs.writeFile(
+      marketplacePath,
+      `${JSON.stringify({
+        name: "local",
+        plugins: [
+          {
+            name: "plugin-demo",
+            source: { source: "local", path: "./plugins/plugin-demo" },
+            policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
+          },
+        ],
+      }, null, 2)}\n`,
+      "utf8",
+    );
+
+    const exec: ExecFn = async (input) => {
+      if (input.args.join(" ") === "--version") return { code: 0, stdout: "codex-cli 0.126.0-alpha.3\n", stderr: "" };
+      return { code: 0, stdout: "ok\n", stderr: "" };
+    };
+    const appServer: CodexAppServerSession = {
+      async initialize() {},
+      async pluginList() {
+        return {
+          marketplaces: [{
+            path: marketplacePath,
+            plugins: [{ name: "plugin-demo", installed: true, enabled: true }],
+          }],
+        };
+      },
+      async pluginRead(params) {
+        return {
+          plugin: {
+            name: params.pluginName,
+            skills: [],
+            mcpServers: [],
+          },
+        };
+      },
+      async pluginInstall() {
+        return { authPolicy: "on-install", appsNeedingAuth: [] };
+      },
+      async skillsList() {
+        return { data: [] };
+      },
+      async hooksList() {
+        return { data: [{ cwd: marketplaceRoot, hooks: [], errors: [] }] };
+      },
+      async close() {},
+    };
+
+    const result = await installCodexMarketplacePlugins({
+      codexBin: "/Users/mateicanavra/.local/bin/codex",
+      codexHome: "/tmp/codex-home",
+      marketplaceRoot,
+      marketplacePath,
+      plugins: ["plugin-demo"],
+      dryRun: false,
+      exec,
+      appServer,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.actions).toContainEqual(expect.objectContaining({
+      action: "failed",
+      plugin: "plugin-demo",
+      error: expect.stringContaining("provider hooks/list exposed 0 enabled plugin hook handler"),
+    }));
+  });
+
+  it("verifies provider-visible Codex plugin hooks through hooks/list", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-codex-hook-provider-ok-"));
+    tempDirs.push(root);
+    const marketplaceRoot = path.join(root, "dist", "codex");
+    const marketplacePath = path.join(marketplaceRoot, ".agents", "plugins", "marketplace.json");
+    const pluginDir = path.join(marketplaceRoot, "plugins", "plugin-demo");
+    await fs.mkdir(path.join(pluginDir, ".codex-plugin"), { recursive: true });
+    await fs.mkdir(path.join(pluginDir, "hooks"), { recursive: true });
+    await fs.writeFile(path.join(pluginDir, "hooks", "pre-tool-use.mjs"), "console.log('hook')\n", "utf8");
+    await fs.writeFile(
+      path.join(pluginDir, "hooks", "hooks.json"),
+      `${JSON.stringify({
+        hooks: {
+          PreToolUse: [
+            {
+              matcher: "Bash",
+              hooks: [{ type: "command", command: "node ${CODEX_PLUGIN_ROOT}/hooks/pre-tool-use.mjs" }],
+            },
+          ],
+        },
+      }, null, 2)}\n`,
+      "utf8",
+    );
+    await fs.writeFile(
+      path.join(pluginDir, ".codex-plugin", "plugin.json"),
+      `${JSON.stringify({ name: "plugin-demo", version: "1.0.0", skills: "./skills/", hooks: "./hooks/hooks.json" }, null, 2)}\n`,
+      "utf8",
+    );
+    await fs.mkdir(path.dirname(marketplacePath), { recursive: true });
+    await fs.writeFile(
+      marketplacePath,
+      `${JSON.stringify({
+        name: "local",
+        plugins: [
+          {
+            name: "plugin-demo",
+            source: { source: "local", path: "./plugins/plugin-demo" },
+            policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
+          },
+        ],
+      }, null, 2)}\n`,
+      "utf8",
+    );
+
+    const exec: ExecFn = async (input) => {
+      if (input.args.join(" ") === "--version") return { code: 0, stdout: "codex-cli 0.128.0\n", stderr: "" };
+      return { code: 0, stdout: "ok\n", stderr: "" };
+    };
+    const appServer: CodexAppServerSession = {
+      async initialize() {},
+      async pluginList() {
+        return {
+          marketplaces: [{
+            path: marketplacePath,
+            plugins: [{ id: "plugin-demo@local", name: "plugin-demo", installed: true, enabled: true }],
+          }],
+        };
+      },
+      async pluginRead(params) {
+        return {
+          plugin: {
+            name: params.pluginName,
+            skills: [],
+            mcpServers: [],
+          },
+        };
+      },
+      async pluginInstall() {
+        return { authPolicy: "on-install", appsNeedingAuth: [] };
+      },
+      async skillsList() {
+        return { data: [] };
+      },
+      async hooksList() {
+        return {
+          data: [{
+            cwd: marketplaceRoot,
+            hooks: [{ pluginId: "plugin-demo@local", enabled: true, source: "plugin" }],
+            errors: [],
+          }],
+        };
+      },
+      async close() {},
+    };
+
+    const result = await installCodexMarketplacePlugins({
+      codexBin: "/Users/mateicanavra/.volta/bin/codex",
+      codexHome: "/tmp/codex-home",
+      marketplaceRoot,
+      marketplacePath,
+      plugins: ["plugin-demo"],
+      dryRun: false,
+      exec,
+      appServer,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.actions).toContainEqual(expect.objectContaining({
+      action: "verified",
+      plugin: "plugin-demo",
+      hookCount: 1,
+      providerHookCount: 1,
+      pluginHooksFeatureRequired: true,
+      packagedSupport: {
+        agentCount: 0,
+        settingsCount: 0,
+      },
+    }));
   });
 
   it("reports preflight failures without claiming install success", async () => {

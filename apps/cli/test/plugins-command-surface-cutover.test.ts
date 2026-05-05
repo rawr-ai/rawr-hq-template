@@ -65,6 +65,27 @@ describe("plugin command surface cutover", () => {
     expect(out).toContain("plugins converge");
   });
 
+  it("exposes native sync and generic export command surfaces", { timeout: 30000 }, () => {
+    const sync = runRawr(["plugins", "sync", "--help"]);
+    expect(sync.status).toBe(0);
+
+    const syncOut = `${sync.stdout}\n${sync.stderr}`;
+    expect(syncOut).toContain("Deploy one RAWR plugin through native provider plugin paths");
+    expect(syncOut).toContain("--source-workspace");
+    expect(syncOut).toContain("--codex-package");
+    expect(syncOut).toContain("--codex-install");
+    expect(syncOut).toContain("--codex-bin");
+    expect(syncOut).toContain("--destination-projection");
+
+    const exportHelp = runRawr(["plugins", "export", "--help"]);
+    expect(exportHelp.status).toBe(0);
+
+    const exportOut = `${exportHelp.stdout}\n${exportHelp.stderr}`;
+    expect(exportOut).toContain("Project one RAWR plugin to explicit filesystem destinations");
+    expect(exportOut).toContain("--source-workspace");
+    expect(exportOut).toContain("plugins export all");
+  });
+
   it("removes legacy command surfaces", { timeout: 45000 }, () => {
     const hq = runRawr(["hq", "plugins", "list", "--json"]);
     expect((hq.status ?? 1) !== 0).toBe(true);
@@ -100,7 +121,8 @@ describe("plugin command surface cutover", () => {
     expect(single.status).toBe(0);
     const singleJson = parseJson(single);
     expect(singleJson.ok).toBe(true);
-    expect(singleJson.data.targets?.[0]?.agent).toBe("codex");
+    expect(singleJson.data.codexPackage?.packages?.[0]?.plugin).toBe("plugins");
+    expect(singleJson.data.codexInstall?.actions?.[0]?.plugin).toBe("plugins");
 
     const all = runRawr(
       [

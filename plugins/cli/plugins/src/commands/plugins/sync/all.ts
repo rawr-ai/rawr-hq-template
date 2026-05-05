@@ -19,10 +19,10 @@ import {
   runSync,
   type SyncItemResult,
   type SyncScope,
-} from "../../../lib/agent-config-sync";
+} from "#lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
-import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
-import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "../../../lib/plugin-install-service";
+import { loadLayeredRawrConfigForCwd } from "#lib/layered-config";
+import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "#lib/plugin-install-service";
 
 /**
  * Runs the canonical full plugin sync across all active sources.
@@ -32,7 +32,7 @@ import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "../../../
  * reconciliation stays HQ-owned.
  */
 export default class PluginsSyncAll extends RawrCommand {
-  static description = "Canonical full sync: source plugins -> Codex + Claude + Cowork + stale-plugin retirement";
+  static description = "Canonical native provider plugin sync across active RAWR plugin sources";
 
   static flags = {
     ...RawrCommand.baseFlags,
@@ -62,8 +62,8 @@ export default class PluginsSyncAll extends RawrCommand {
       description: "Output directory for Cowork .zip artifacts (default: <workspaceRoot>/dist/cowork/plugins)",
     }),
     "codex-package": Flags.boolean({
-      description: "Build official Codex plugin marketplace packages",
-      default: false,
+      description: "Build Codex native marketplace packages (default native Codex deployment path)",
+      default: true,
       allowNo: true,
     }),
     "codex-out": Flags.string({
@@ -95,6 +95,11 @@ export default class PluginsSyncAll extends RawrCommand {
     "install-reconcile": Flags.boolean({
       description: "Reconcile local CLI plugin-manager links after sync",
       default: true,
+      allowNo: true,
+    }),
+    "destination-projection": Flags.boolean({
+      description: "Also run auxiliary filesystem destination projection; not a sanctioned Codex/Claude deployment path",
+      default: false,
       allowNo: true,
     }),
     "retire-orphans": Flags.boolean({
@@ -151,6 +156,7 @@ export default class PluginsSyncAll extends RawrCommand {
       const includeOclif = Boolean((flags as any)["include-oclif"]) && !sourceWorkspace.external;
       const scope = String((flags as any).scope) as SyncScope;
       const coworkEnabled = Boolean((flags as any).cowork);
+      const destinationProjectionEnabled = Boolean((flags as any)["destination-projection"]);
       const codexPackageEnabled = Boolean((flags as any)["codex-package"]);
       const codexInstallEnabled = Boolean((flags as any)["codex-install"]);
       const codexBin = (flags as any)["codex-bin"] as string | undefined;
@@ -178,11 +184,13 @@ export default class PluginsSyncAll extends RawrCommand {
         codexHomes: (flags["codex-home"] as string[] | undefined) ?? [],
         claudeHomes: (flags["claude-home"] as string[] | undefined) ?? [],
         config: layered.config ?? undefined,
-        fullSyncPolicy: {
-          agent: String(flags.agent) as "codex" | "claude" | "all",
-          scope,
-          coworkEnabled,
-          claudeInstallEnabled,
+          fullSyncPolicy: {
+            agent: String(flags.agent) as "codex" | "claude" | "all",
+            scope,
+            coworkEnabled,
+            codexPackageEnabled,
+            codexInstallEnabled,
+            claudeInstallEnabled,
           claudeEnableEnabled,
           installReconcileEnabled,
           retireOrphansEnabled,
@@ -265,6 +273,13 @@ export default class PluginsSyncAll extends RawrCommand {
         marketplaceAction?: "planned" | "written";
         marketplacePluginCount?: number;
         skillCount?: number;
+        scriptCount?: number;
+        agentCount?: number;
+        hookCount?: number;
+        hookConfigCount?: number;
+        mcpServerCount?: number;
+        settingsCount?: number;
+        assetCount?: number;
         validationNotes?: string[];
         reason?: string;
       }> = [];
@@ -299,7 +314,7 @@ export default class PluginsSyncAll extends RawrCommand {
           },
           codexHomes: targets.homes.codexHomes,
           claudeHomes: targets.homes.claudeHomes,
-          includeCodex: targets.agents.includes("codex"),
+          includeCodex: destinationProjectionEnabled && targets.agents.includes("codex"),
           includeClaude: targets.agents.includes("claude"),
         });
 
@@ -342,7 +357,7 @@ export default class PluginsSyncAll extends RawrCommand {
           }
         }
 
-        if (codexPackageEnabled) {
+        if (codexPackageEnabled && targets.agents.includes("codex")) {
           const isWorkspacePlugin = path.resolve(run.sourcePlugin.absPath).startsWith(path.resolve(workspaceRoot) + path.sep);
           if (!isWorkspacePlugin) {
             codexPackages.push({

@@ -1,4 +1,4 @@
-import type { AgentConfigSyncPathResources } from "../../../shared/resources";
+import type { AgentConfigSyncPathResources } from "#shared/resources";
 
 export function undoCapsuleDir(workspaceRoot: string, pathOps: AgentConfigSyncPathResources): string {
   return pathOps.join(workspaceRoot, ".rawr", "state", "undo", "last");

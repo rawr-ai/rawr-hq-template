@@ -1,7 +1,7 @@
 import { schema } from "@rawr/hq-sdk";
 import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
-import { SyncScopeSchema, SyncAgentSchema } from "../../shared/entities";
+import { SyncScopeSchema, SyncAgentSchema } from "#shared/entities";
 import {
   FullSyncPolicyInputSchema,
   FullSyncPolicyResultSchema,

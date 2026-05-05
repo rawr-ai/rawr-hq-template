@@ -1,10 +1,10 @@
 # Agent Config Sync Testing Plan
 
-Status: canonical testing plan for `@rawr/agent-config-sync`, its Node resource package, and the `rawr plugins sync ...` CLI projection. This plan lives with the service tests because the service owns sync semantics; CLI tests consume this contract only at the binding and orchestration layer.
+Status: canonical testing plan for `@rawr/agent-config-sync`, its Node resource package, native provider package/install adapters, and the explicit `rawr plugins export ...` generic projection lane. This plan lives with the service tests because the service owns sync semantics; CLI tests consume this contract only at the binding and orchestration layer.
 
 ## Core Claim
 
-Agent config sync projects canonical RAWR plugin material into provider-specific destinations repeatedly and safely. RAWR stays source of truth; each provider receives an honest projection; managed ownership is precise; drift/status reports describe the managed sync contract without pretending unsupported provider features are aligned.
+Agent config sync projects canonical RAWR plugin material into native provider plugin packages for Codex and Claude, plus explicit generic destinations when requested. RAWR stays source of truth; each provider receives an honest native package/install path; managed ownership is precise; drift/status reports describe the managed sync contract without pretending unsupported provider features are aligned.
 
 ## Adequacy Standard
 
@@ -52,9 +52,9 @@ Prevent:
 
 Oracles:
 
-- Codex direct mirror writes workflows to `prompts/`, skills to the runtime user skill root (`.agents/skills/` for test homes, `$HOME/.agents/skills/` for real `.codex*` homes), scripts to plugin-prefixed `scripts/`, standalone TOML agents to `agents/` unless explicitly disabled, managed hooks/MCP/settings into `config.toml` plus runtime support files, and ownership to `plugins/registry.json`.
+- Codex generic destination projection writes workflows to `prompts/`, skills to the runtime user skill root (`.agents/skills/` for test homes, `$HOME/.agents/skills` for real `.codex*` homes), scripts to plugin-prefixed `scripts/`, standalone TOML agents to `agents/` unless explicitly disabled, managed hooks/MCP/settings into `config.toml` plus runtime support files, and ownership to `plugins/registry.json`. This projection is legacy/auxiliary support material, not native Codex deployment parity.
 - Claude local plugin sync writes commands, skills, scripts, agents, `.claude-plugin/plugin.json`, `.rawr-sync-manifest.json`, and marketplace metadata.
-- Codex marketplace packages include `.codex-plugin/plugin.json`, skills, MCP config/files, assets, and `.agents/plugins/marketplace.json`; custom agents, settings, and hooks are omitted because the current RAWR Codex plugin manifest does not accept them.
+- Codex marketplace packages include `.codex-plugin/plugin.json`, skills, hook lifecycle config when modeled, hook scripts as support material, MCP config/files, custom agents/settings as support material, assets, and `.agents/plugins/marketplace.json`. Provider-visible hook proof comes from app-server `hooks/list`, not package file presence.
 - Cowork artifacts are valid ZIPs with manifest summaries for commands, skills, scripts, and agents.
 
 ### 3. Drift And Dry-Run Fidelity
@@ -89,7 +89,7 @@ Guarantee: `rawr plugins sync all` is the deterministic daily convergence path, 
 
 Prevent:
 
-- disabling Cowork, Claude install, force, GC, install reconcile, or orphan retirement without `--allow-partial`;
+- disabling Cowork, Codex package/install, Claude install, force, GC, install reconcile, or orphan retirement without `--allow-partial`;
 - letting single-plugin sync inherit destructive full-sync defaults;
 - adding a new side effect without updating partial-mode policy.
 

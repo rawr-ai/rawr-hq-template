@@ -1,11 +1,11 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { checkScratchPolicy } from "../../lib/plugin-lifecycle-service";
-import { runRawrFromSource } from "../../lib/rawr-source-runner";
+import { checkScratchPolicy } from "#lib/plugin-lifecycle-service";
+import { runRawrFromSource } from "#lib/rawr-source-runner";
 
 import { findWorkspaceRoot } from "@rawr/core";
-import { resolveSourceWorkspaceSelection } from "../../lib/agent-config-sync";
-import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
+import { resolveSourceWorkspaceSelection } from "#lib/agent-config-sync";
+import { loadLayeredRawrConfigForCwd } from "#lib/layered-config";
 
 type StepRun = {
   step: "install-repair" | "sync-all" | "final-status";

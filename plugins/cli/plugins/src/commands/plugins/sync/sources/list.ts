@@ -1,5 +1,5 @@
 import { RawrCommand } from "@rawr/core";
-import { createHqOpsCallOptions, createHqOpsClient } from "../../../../lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "#lib/hq-ops-client";
 
 /**
  * Lists explicit sync sources persisted in global RAWR config.
