@@ -17,12 +17,12 @@
  */
 import { module } from "./module";
 import type { RetainedResidue, RetireAction, RetiredPluginRef } from "./entities";
-import type { SyncScope } from "#common/entities";
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#common/resources";
-import { loadCodexRegistry, type CodexRegistryFile } from "#repositories/codex-registry-repository";
+import type { SyncScope } from "../../common/entities";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../common/resources";
+import { loadCodexRegistry, type CodexRegistryFile } from "../../common/repositories/codex-registry-repository";
 import {
   readClaudeSyncManifest,
-} from "#repositories/claude-marketplace-repository";
+} from "../../common/repositories/claude-marketplace-repository";
 import { applyClaudeRetirement } from "./helpers/apply-claude-retirement";
 import { applyCleanupBehindCodex } from "./helpers/apply-cleanup-behind-codex";
 import { applyCodexRetirement } from "./helpers/apply-codex-retirement";

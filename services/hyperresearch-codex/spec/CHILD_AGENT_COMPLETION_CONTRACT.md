@@ -463,6 +463,6 @@ Diagnostic evidence should stay outside service source and under `spec/evidence/
 
 Any service hardening must stay inside the existing topology:
 
-- allowed likely touchpoints: `src/service/modules/runs/helpers/agent-packets.ts`, `src/service/modules/runs/helpers/ledger.ts`, `src/service/modules/runs/helpers/result.ts`, `src/service/modules/runs/router.ts`, `src/service/shared/entities.ts`, and focused tests;
+- allowed likely touchpoints: `src/service/modules/runs/helpers/agent-packets.ts`, `src/service/modules/runs/helpers/ledger.ts`, `src/service/modules/runs/helpers/result.ts`, `src/service/modules/runs/router.ts`, `src/service/common/entities.ts`, and focused tests;
 - do not create `runtime`, `modules/common`, `modules/*/services`, module-root business files, `shared/helpers`, a child-session manager, a scheduler, or a new callable surface;
 - keep behavior under `runs.advanceV8Run` and the existing packet/job flow.

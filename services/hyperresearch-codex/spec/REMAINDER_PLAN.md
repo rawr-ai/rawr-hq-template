@@ -52,7 +52,7 @@ Goal: make the current service easy to extend without reintroducing the topology
 - Split `runs/router.ts` into a small procedure-flow router plus `modules/runs/helpers/*` for agent packets/output validation, source capture, artifact writing, V8 ledger handling, V8 step loading, V8 integrity validation, and result/status construction.
 - Keep synthetic fixture-only ledger/step/integrity behavior under `modules/fixtures/helpers/*`; do not route fixture business logic through `runs` or `shared`.
 - Keep procedure schemas in `modules/runs/contract.ts`.
-- Keep shared durable entities/resources in `service/shared`; the only shared adapter is the low-level Hyperresearch CLI backend wrapper. Do not put V8 business logic in top-level `shared/helpers`.
+- Keep shared durable entities/resources in `service/common`; the only shared adapter is the low-level Hyperresearch CLI backend wrapper. Do not put V8 business logic in top-level `shared/helpers`.
 - Do not create `modules/common`, `modules/*/services`, or decorative pass-through runner facades.
 - Tighten public exports so consumers import service DTOs from an explicit type surface instead of broad contract-derived internals.
 - Refresh stale docs: service spec index, parity matrix, testing plan, review ledger, and CLI/plugin README wording.

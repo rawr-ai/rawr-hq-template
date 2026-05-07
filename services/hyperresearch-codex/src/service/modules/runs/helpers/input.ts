@@ -1,4 +1,4 @@
-import type { HyperresearchTier } from "../../../shared/entities";
+import type { HyperresearchTier } from "../../../common/entities";
 
 export type TierRequest = "auto" | "light" | "full";
 

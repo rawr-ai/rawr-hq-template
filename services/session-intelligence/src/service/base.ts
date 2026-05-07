@@ -1,6 +1,6 @@
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
-import type { SessionIndexRuntime } from "./shared/ports/session-index-runtime";
-import type { SessionSourceRuntime } from "./shared/ports/session-source-runtime";
+import type { SessionIndexRuntime } from "./common/ports/session-index-runtime";
+import type { SessionSourceRuntime } from "./common/ports/session-source-runtime";
 
 type InitialContext = {
   deps: {

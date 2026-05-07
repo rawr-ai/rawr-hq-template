@@ -1,5 +1,5 @@
-import type { HqOpsResources } from "../../../shared/ports/resources";
-import { discoverWorkspacePluginCatalog } from "../../../shared/repositories/workspace-plugin-catalog-repository";
+import type { HqOpsResources } from "../../../common/ports/resources";
+import { discoverWorkspacePluginCatalog } from "../../../common/repositories/workspace-plugin-catalog-repository";
 import {
   CANONICAL_SYNC_PLUGIN_NAME,
   LEGACY_SYNC_PLUGIN_NAMES,

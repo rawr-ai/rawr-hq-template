@@ -1,6 +1,6 @@
-import { resolveSourceScopeForPath, scopeAllows } from "#common/internal/source-scope";
-import type { SyncScope } from "#common/entities";
-import type { AgentConfigSyncPathResources } from "#common/resources";
+import { resolveSourceScopeForPath, scopeAllows } from "../../../common/internal/source-scope";
+import type { SyncScope } from "../../../common/entities";
+import type { AgentConfigSyncPathResources } from "../../../common/resources";
 
 export const MANAGED_BY = "@rawr/plugin-plugins";
 

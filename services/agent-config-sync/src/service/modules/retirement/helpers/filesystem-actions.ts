@@ -1,4 +1,4 @@
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#common/resources";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../../common/resources";
 import type { RetireAction } from "../entities";
 
 export async function deletePathIfPresent(input: {

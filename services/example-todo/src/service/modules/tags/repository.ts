@@ -12,7 +12,7 @@
  * Keep procedure boundary concerns out of this file.
  */
 import type { Sql } from "@rawr/hq-sdk";
-import { UnexpectedInternalError } from "../../shared/internal-errors";
+import { UnexpectedInternalError } from "../../common/internal-errors";
 import type { Tag } from "./schemas";
 
 export function createRepository(sql: Sql, workspaceId: string) {

@@ -7,7 +7,7 @@
  * storage mechanics.
  *
  * Boundary notes:
- * - Format parsing and metadata normalization live in `shared/normalization`.
+ * - Format parsing and metadata normalization live in `common/normalization`.
  * - Index persistence/query mechanics are behind repositories (module-owned),
  *   not embedded directly in router/procedure bodies.
  * - Errors are thrown via contract-attached module errors (example-todo style).
@@ -18,7 +18,7 @@ import {
   getClaudeSessionMetadata,
   getCodexSessionMetadata,
   inferProjectFromCwd,
-} from "../../shared/normalization";
+} from "../../common/normalization";
 import type {
   DiscoveredSessionFile,
   RoleFilter,
@@ -26,10 +26,10 @@ import type {
   SessionSource,
   SessionSourceFilter,
   SessionStatus,
-} from "../../shared/entities";
-import { discoverCodexSessionsFromIndexOrNull } from "../../shared/repositories/codex-indexed-discovery-repository";
-import type { SessionIndexRuntime } from "../../shared/ports/session-index-runtime";
-import type { SessionSourceRuntime } from "../../shared/ports/session-source-runtime";
+} from "../../common/entities";
+import { discoverCodexSessionsFromIndexOrNull } from "../../common/repositories/codex-indexed-discovery-repository";
+import type { SessionIndexRuntime } from "../../common/ports/session-index-runtime";
+import type { SessionSourceRuntime } from "../../common/ports/session-source-runtime";
 import type { MetadataSearchHit, SearchHit } from "./entities";
 import { clearCachedSearchText } from "./repositories/search-cache-repository";
 import {

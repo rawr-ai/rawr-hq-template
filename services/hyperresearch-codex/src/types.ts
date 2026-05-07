@@ -20,4 +20,4 @@ export type {
   HyperresearchTier,
   HyperresearchV8RunLedger,
   V8RunStatus,
-} from "./service/shared/entities";
+} from "./service/common/entities";

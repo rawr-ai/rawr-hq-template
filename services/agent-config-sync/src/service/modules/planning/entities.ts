@@ -10,7 +10,7 @@ import {
   SyncAgentSchema,
   SyncItemKindSchema,
   SyncScopeSchema,
-} from "#common/entities";
+} from "../../common/entities";
 
 /**
  * agent-config-sync: planning entities.

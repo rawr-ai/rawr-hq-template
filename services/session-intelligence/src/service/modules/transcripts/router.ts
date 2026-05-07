@@ -12,8 +12,8 @@ import {
   extractCodexMessages,
   getClaudeSessionMetadata,
   getCodexSessionMetadata,
-} from "../../shared/normalization";
-import type { SessionMessage } from "../../shared/entities";
+} from "../../common/normalization";
+import type { SessionMessage } from "../../common/entities";
 
 function dedupeMessages(messages: SessionMessage[]): SessionMessage[] {
   const seen = new Set<string>();

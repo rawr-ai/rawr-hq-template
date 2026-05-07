@@ -12,7 +12,7 @@
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
-import { READ_ONLY_MODE } from "../../shared/errors";
+import { READ_ONLY_MODE } from "../../common/errors";
 import { TagSchema } from "./schemas";
 
 export const contract = {

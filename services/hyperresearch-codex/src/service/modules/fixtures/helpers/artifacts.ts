@@ -1,5 +1,5 @@
-import type { HyperresearchStepRecord } from "../../../shared/entities";
-import type { HyperresearchCodexIO } from "../../../shared/resources";
+import type { HyperresearchStepRecord } from "../../../common/entities";
+import type { HyperresearchCodexIO } from "../../../common/resources";
 
 export async function writeSyntheticArtifact(input: {
   step: HyperresearchStepRecord;

@@ -1,4 +1,4 @@
-import type { HqOpsResources, SqliteDatabase } from "../../../shared/ports/resources";
+import type { HqOpsResources, SqliteDatabase } from "../../../common/ports/resources";
 import type { JournalEvent, JournalSearchRow, JournalSnippet } from "../entities";
 import { eventJsonPath, eventsDir, indexDbPath, snippetJsonPath, snippetsDir } from "./paths";
 

@@ -6,8 +6,8 @@
  * the oRPC procedure flow stays readable without becoming a pass-through
  * wrapper over another runner.
  */
-import { runHyperresearchCli } from "../../shared/adapters/hyperresearch-cli";
-import type { HyperresearchV8RunLedger } from "../../shared/entities";
+import { runHyperresearchCli } from "../../common/adapters/hyperresearch-cli";
+import type { HyperresearchV8RunLedger } from "../../common/entities";
 import { validateHyperresearchRunIntegrity } from "./helpers/integrity";
 import {
   assertV8LedgerMatches,

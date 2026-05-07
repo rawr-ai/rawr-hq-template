@@ -16,7 +16,7 @@ import type {
 import type {
   HyperresearchCliBackend,
   HyperresearchCodexIO,
-} from "../src/service/shared/resources";
+} from "../src/service/common/resources";
 
 async function pathExists(filePath: string): Promise<boolean> {
   try {

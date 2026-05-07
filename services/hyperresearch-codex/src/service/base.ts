@@ -5,7 +5,7 @@ import { defineService, type ServiceOf } from "@rawr/hq-sdk";
 import type {
   HyperresearchCliBackend,
   HyperresearchCodexIO,
-} from "./shared/resources";
+} from "./common/resources";
 
 type InitialContext = {
   deps: {

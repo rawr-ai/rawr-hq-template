@@ -5,7 +5,7 @@
  * search text cache. The search router uses it as a persistence boundary so
  * query strings and table shapes do not leak into procedures.
  */
-import type { SessionIndexRuntime, SessionSearchCacheEntry, SessionSearchCacheKey } from "../../../shared/ports/session-index-runtime";
+import type { SessionIndexRuntime, SessionSearchCacheEntry, SessionSearchCacheKey } from "../../../common/ports/session-index-runtime";
 
 async function initializeSearchIndex(indexRuntime: SessionIndexRuntime, indexPath: string): Promise<void> {
   await indexRuntime.execute({

@@ -1,4 +1,4 @@
-import type { HqOpsResources } from "../../../shared/ports/resources";
+import type { HqOpsResources } from "../../../common/ports/resources";
 
 type ConfigResources = Pick<HqOpsResources, "fs" | "path">;
 

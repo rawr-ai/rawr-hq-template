@@ -12,7 +12,7 @@
  */
 import { ORPCError } from "@orpc/server";
 import { createServiceMiddleware } from "../base";
-import { READ_ONLY_MODE } from "../shared/errors";
+import { READ_ONLY_MODE } from "../common/errors";
 
 /**
  * Zero-config service guard.

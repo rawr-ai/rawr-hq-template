@@ -6,7 +6,7 @@ import {
   HyperresearchIntegrityFindingSchema,
   HyperresearchV8RunLedgerSchema,
   V8RunStatusSchema,
-} from "../../shared/entities";
+} from "../../common/entities";
 
 const HyperresearchTierInputSchema = Type.Union([
   Type.Literal("auto"),

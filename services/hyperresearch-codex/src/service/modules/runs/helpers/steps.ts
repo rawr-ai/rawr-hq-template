@@ -2,8 +2,8 @@ import type {
   HyperresearchTier,
   HyperresearchStepDefinition,
   LoadedHyperresearchStep,
-} from "../../../shared/entities";
-import type { HyperresearchCodexIO } from "../../../shared/resources";
+} from "../../../common/entities";
+import type { HyperresearchCodexIO } from "../../../common/resources";
 
 export const v8HyperresearchSteps: HyperresearchStepDefinition[] = [
   {

@@ -1,8 +1,8 @@
-# Session Intelligence Shared Area
+# Session Intelligence Common Area
 
-This service follows the `services/example-todo` topology. Shared files here
+This service follows the `services/example-todo` topology. Common files here
 hold only cross-module primitives, pure source normalization, resource ports,
-and shared boundary errors.
+and common boundary errors.
 
 Module-owned behavior belongs in `service/modules/<module>/router.ts`, with
 only precise reusable helpers under `service/modules/<module>/helpers/`.

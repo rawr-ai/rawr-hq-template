@@ -1,6 +1,6 @@
-import type { HqOpsResources } from "../../../shared/ports/resources";
-import type { WorkspacePluginCatalogEntry, WorkspacePluginKind } from "../../../shared/entities/workspace-plugin-catalog";
-import { discoverWorkspacePluginCatalog } from "../../../shared/repositories/workspace-plugin-catalog-repository";
+import type { HqOpsResources } from "../../../common/ports/resources";
+import type { WorkspacePluginCatalogEntry, WorkspacePluginKind } from "../../../common/entities/workspace-plugin-catalog";
+import { discoverWorkspacePluginCatalog } from "../../../common/repositories/workspace-plugin-catalog-repository";
 import type { LifecycleType } from "../entities";
 import { module } from "../module";
 import { isAbsolutePath, toPosix } from "../helpers/path-utils";

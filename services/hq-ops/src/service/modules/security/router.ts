@@ -6,7 +6,7 @@
  * report format with tolerance gates. Projections should not shell out or
  * decide severity policy independently.
  */
-import type { HqOpsResources } from "../../shared/ports/resources";
+import type { HqOpsResources } from "../../common/ports/resources";
 import { runBunAudit, runBunPmUntrusted } from "./helpers/audit";
 import { getRepoRoot } from "./helpers/process";
 import {

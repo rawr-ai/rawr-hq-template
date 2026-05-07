@@ -11,7 +11,7 @@
  * preview behavior.
  */
 import { module } from "./module";
-import type { SyncRunResult } from "#common/entities/sync-results";
+import type { SyncRunResult } from "../../common/entities/sync-results";
 import { summarizeWorkspaceRun } from "./helpers/assessment-summary";
 import { evaluateFullSyncPolicy as evaluatePolicy } from "./helpers/full-sync-policy";
 import { previewSyncRun } from "./helpers/preview-sync-run";

@@ -1,4 +1,4 @@
-import type { SessionListItem } from "../../../shared/entities";
+import type { SessionListItem } from "../../../common/entities";
 import type { MetadataSearchHit } from "../entities";
 
 function metadataMatchScore(session: SessionListItem, needle: string): number {

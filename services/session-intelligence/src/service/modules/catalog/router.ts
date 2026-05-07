@@ -12,14 +12,14 @@ import {
   getCodexSessionMetadata,
   inferProjectFromCwd,
   inferStatusFromPath,
-} from "../../shared/normalization";
-import { looksLikePath, stem } from "../../shared/path-utils";
+} from "../../common/normalization";
+import { looksLikePath, stem } from "../../common/path-utils";
 import type {
   DiscoveredSessionFile,
   SessionListItem,
   SessionStatus,
-} from "../../shared/entities";
-import { discoverCodexSessionsFromIndexOrNull } from "../../shared/repositories/codex-indexed-discovery-repository";
+} from "../../common/entities";
+import { discoverCodexSessionsFromIndexOrNull } from "../../common/repositories/codex-indexed-discovery-repository";
 import {
   hasMetadataFilters,
   matchesListFilters,

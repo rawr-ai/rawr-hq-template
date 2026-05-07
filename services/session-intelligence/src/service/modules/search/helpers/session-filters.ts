@@ -1,8 +1,8 @@
-import { looksLikePath } from "../../../shared/path-utils";
+import { looksLikePath } from "../../../common/path-utils";
 import type {
   DiscoveredSessionFile,
   SessionListItem,
-} from "../../../shared/entities";
+} from "../../../common/entities";
 
 export type SearchSessionFilters = {
   project?: string;
