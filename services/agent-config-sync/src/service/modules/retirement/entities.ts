@@ -33,6 +33,8 @@ export const RetireActionSchema = Type.Object(
 
 export type RetireAction = Static<typeof RetireActionSchema>;
 
+export const MANAGED_BY = "@rawr/plugin-plugins";
+
 /**
  * Managed plugin identity that retirement found stale in a destination home.
  */

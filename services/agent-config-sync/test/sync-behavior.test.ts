@@ -6,6 +6,7 @@ import { parse as parseToml } from "smol-toml";
 import { afterEach, describe, expect, it } from "vitest";
 import { createClient } from "../src/client";
 import { getCodexRuntimeSkillsDir } from "../src/service/common/repositories/codex-runtime-paths";
+import { beginPluginsSyncUndoCapture } from "../src/undo";
 import {
   createClientOptions,
   createNodeTestResources,
@@ -123,6 +124,54 @@ describe("agent-config-sync service behavior", () => {
     await expect(fs.readFile(path.join(codexHome, "prompts", "hello.md"), "utf8")).resolves.toBe("# hello\n");
     const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
     expect(registry.plugins[0]).toMatchObject({ name: "demo", prompts: ["hello"], managed_by: "@rawr/plugin-plugins" });
+  });
+
+  it("replays the captured undo capsule through the public undo procedure", async () => {
+    const workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-undo-ws-"));
+    tempDirs.push(workspaceRoot);
+    const resources = createNodeTestResources();
+    const target = path.join(workspaceRoot, "plugins", "demo", "payload.txt");
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, "before\n", "utf8");
+
+    const capture = await beginPluginsSyncUndoCapture({
+      workspaceRoot,
+      commandId: "plugins sync",
+      argv: ["plugins", "sync"],
+      resources,
+    });
+    await capture.captureWriteTarget(target);
+    await fs.writeFile(target, "after\n", "utf8");
+    await capture.finalize({ status: "ready" });
+
+    const client = createClient(createClientOptions({ repoRoot: workspaceRoot, resources }));
+    const dryRun = await client.undo.runUndo(
+      { dryRun: true },
+      { context: { invocation: { traceId: "test-undo-dry-run" } } },
+    );
+    expect(dryRun.ok).toBe(true);
+    if (dryRun.ok) {
+      expect(dryRun.summary).toMatchObject({ planned: 1, restored: 0, deleted: 0, failed: 0 });
+      expect(dryRun.operations[0]).toMatchObject({ status: "planned", target });
+    }
+    await expect(fs.readFile(target, "utf8")).resolves.toBe("after\n");
+
+    const applied = await client.undo.runUndo(
+      { dryRun: false },
+      { context: { invocation: { traceId: "test-undo-apply" } } },
+    );
+    expect(applied.ok).toBe(true);
+    if (applied.ok) {
+      expect(applied.summary).toMatchObject({ planned: 0, restored: 1, deleted: 0, failed: 0 });
+      expect(applied.operations[0]).toMatchObject({ status: "restored", target });
+    }
+    await expect(fs.readFile(target, "utf8")).resolves.toBe("before\n");
+
+    const empty = await client.undo.runUndo(
+      { dryRun: true },
+      { context: { invocation: { traceId: "test-undo-cleared" } } },
+    );
+    expect(empty).toMatchObject({ ok: false, code: "UNDO_NOT_AVAILABLE" });
   });
 
   it("projects RAWR markdown agents into standalone Codex TOML with dropped Claude-only semantics", async () => {

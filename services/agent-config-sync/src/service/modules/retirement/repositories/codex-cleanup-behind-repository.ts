@@ -1,4 +1,4 @@
-import type { CleanupBehindCandidate, RetainedResidue, RetireAction, RetiredPluginRef } from "../entities";
+import { MANAGED_BY, type CleanupBehindCandidate, type RetainedResidue, type RetireAction, type RetiredPluginRef } from "../entities";
 import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../../common/resources";
 import {
   loadCodexRegistry,
@@ -11,8 +11,7 @@ import {
   getCodexRetiredRootSkillsDir,
   getCodexRuntimeSkillsDir,
 } from "../../../common/repositories/codex-runtime-paths";
-import { deletePathIfPresent, writeJsonWithUndoCapture } from "./filesystem-actions-repository";
-import { MANAGED_BY } from "./managed-source-repository";
+import { deletePathIfPresent, writeJsonWithUndoCapture } from "../../../common/helpers/retirement-filesystem-actions";
 
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];

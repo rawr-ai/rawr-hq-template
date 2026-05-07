@@ -8,7 +8,7 @@ import {
   getCodexRetiredRootSkillsDir,
   getCodexRuntimeSkillsDir,
 } from "../../../common/repositories/codex-runtime-paths";
-import { deletePathIfPresent, writeJsonWithUndoCapture, writeTextWithUndoCapture } from "./filesystem-actions-repository";
+import { deletePathIfPresent, writeJsonWithUndoCapture, writeTextWithUndoCapture } from "../../../common/helpers/retirement-filesystem-actions";
 
 type CodexStalePlugin = {
   pluginName: string;

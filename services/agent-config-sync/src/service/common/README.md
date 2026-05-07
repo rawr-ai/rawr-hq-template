@@ -18,6 +18,9 @@ retirement stale-managed behavior belongs in `modules/retirement`, and undo
 capsule/apply behavior belongs in `modules/undo`.
 
 Module routers use `router/index.ts` as the single oRPC composition point and
-cohesive `router/*.router.ts` fragments for callable stories. Substantial
-module-owned file/registry/capsule mechanics live in `repositories/*-repository.ts`;
-they do not move into common unless multiple modules need the same behavior.
+cohesive `router/*.router.ts` fragments for callable stories, orchestration,
+and local policy. Module `repositories/*-repository.ts` files are allowed only
+when they encapsulate real source, destination, or persistence state boundaries;
+they are not a place to park policy, path helpers, or replay flow. Shared
+filesystem, registry, projection, and capsule mechanics move into named
+`service/common/**` boundaries only when multiple module stories need them.

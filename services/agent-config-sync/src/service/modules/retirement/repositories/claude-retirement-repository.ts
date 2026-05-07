@@ -1,6 +1,6 @@
 import type { RetireAction, RetiredPluginRef } from "../entities";
 import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../../common/resources";
-import { deletePathIfPresent, writeJsonWithUndoCapture } from "./filesystem-actions-repository";
+import { deletePathIfPresent, writeJsonWithUndoCapture } from "../../../common/helpers/retirement-filesystem-actions";
 import type { ClaudeMarketplaceFile } from "../../../common/repositories/claude-marketplace-repository";
 
 type ClaudeStalePlugin = {

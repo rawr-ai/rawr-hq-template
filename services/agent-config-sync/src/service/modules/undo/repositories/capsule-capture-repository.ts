@@ -6,7 +6,7 @@ import {
   type UndoOperation,
   type UndoPathKind,
 } from "../entities";
-import { undoBackupsDir, undoCapsuleDir, undoManifestPath } from "./capsule-paths-repository";
+import { undoBackupsDir, undoCapsuleDir, undoManifestPath } from "./capsule-store-repository";
 import { clearActiveUndoCapsule } from "./capsule-store-repository";
 import { copyPathSnapshot } from "./path-snapshot-repository";
 

@@ -1,5 +1,8 @@
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../../common/resources";
-import type { RetireAction } from "../entities";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../resources";
+
+type DeletePathAction = "planned" | "deleted" | "skipped";
+type WriteJsonAction = "planned" | "updated";
+type WriteTextAction = "planned" | "updated" | "skipped";
 
 export async function deletePathIfPresent(input: {
   dryRun: boolean;
@@ -7,7 +10,7 @@ export async function deletePathIfPresent(input: {
   recursive?: boolean;
   undoCapture?: Pick<AgentConfigSyncUndoCapture, "captureDeleteTarget">;
   resources: AgentConfigSyncResources;
-}): Promise<Extract<RetireAction["action"], "planned" | "deleted" | "skipped">> {
+}): Promise<DeletePathAction> {
   const kind = await input.resources.files.statPathKind(input.target);
   if (!kind) return "skipped";
   if (input.dryRun) return "planned";
@@ -23,7 +26,7 @@ export async function writeJsonWithUndoCapture(input: {
   data: unknown;
   undoCapture?: Pick<AgentConfigSyncUndoCapture, "captureWriteTarget">;
   resources: AgentConfigSyncResources;
-}): Promise<Extract<RetireAction["action"], "planned" | "updated">> {
+}): Promise<WriteJsonAction> {
   if (input.dryRun) return "planned";
   await input.undoCapture?.captureWriteTarget(input.target);
   await input.resources.files.writeJsonFile(input.target, input.data);
@@ -36,7 +39,7 @@ export async function writeTextWithUndoCapture(input: {
   content: string;
   undoCapture?: Pick<AgentConfigSyncUndoCapture, "captureWriteTarget">;
   resources: AgentConfigSyncResources;
-}): Promise<Extract<RetireAction["action"], "planned" | "updated" | "skipped">> {
+}): Promise<WriteTextAction> {
   const existing = await input.resources.files.readTextFile(input.target);
   if (existing === input.content) return "skipped";
   if (input.dryRun) return "planned";

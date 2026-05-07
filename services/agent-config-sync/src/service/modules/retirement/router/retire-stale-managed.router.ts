@@ -16,18 +16,32 @@
  * Helpers remain mechanical (delete-if-present, write-json-with-undo).
  */
 import { module } from "../module";
-import type { RetireAction, RetiredPluginRef } from "../entities";
+import { MANAGED_BY, type RetireAction, type RetiredPluginRef } from "../entities";
 import { loadCodexRegistry, type CodexRegistryFile } from "../../../common/repositories/codex-registry-repository";
 import {
   readClaudeSyncManifest,
 } from "../../../common/repositories/claude-marketplace-repository";
 import { applyClaudeRetirement } from "../repositories/claude-retirement-repository";
 import { applyCodexRetirement } from "../repositories/codex-retirement-repository";
-import { MANAGED_BY, pluginMatchesScope } from "../repositories/managed-source-repository";
+import { resolveSourceScopeForPath, scopeAllows } from "../../../common/internal/source-scope";
+import type { SyncScope } from "../../../common/entities";
+import type { AgentConfigSyncPathResources } from "../../../common/resources";
 
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string" && item.length > 0);
+}
+
+function pluginMatchesScope(input: {
+  pathOps: AgentConfigSyncPathResources;
+  sourcePluginPath: unknown;
+  workspaceRoot: string;
+  scope: SyncScope;
+}): boolean {
+  if (input.scope === "all") return true;
+  if (typeof input.sourcePluginPath !== "string" || input.sourcePluginPath.length === 0) return false;
+  const resolved = resolveSourceScopeForPath(input.pathOps, input.sourcePluginPath, input.workspaceRoot);
+  return scopeAllows(input.scope, resolved);
 }
 
 export const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, input }) => {

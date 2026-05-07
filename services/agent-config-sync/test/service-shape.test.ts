@@ -11,6 +11,20 @@ import { createClientOptions } from "./helpers";
 
 const serviceModulesRoot = new URL("../src/service/modules/", import.meta.url);
 const serviceModuleNames = ["planning", "execution", "retirement", "undo"];
+const moduleRepositoryFiles = new Map([
+  ["planning", new Set(["source-plugin-repository.ts", "workspace-root-repository.ts"])],
+  ["execution", new Set([
+    "claude-destination-sync-repository.ts",
+    "codex-destination-sync-repository.ts",
+    "codex-native-agent-role-repository.ts",
+  ])],
+  ["retirement", new Set([
+    "claude-retirement-repository.ts",
+    "codex-cleanup-behind-repository.ts",
+    "codex-retirement-repository.ts",
+  ])],
+  ["undo", new Set(["capsule-capture-repository.ts", "capsule-store-repository.ts", "path-snapshot-repository.ts"])],
+]);
 const forbiddenModuleDirs = new Set([
   "helpers",
   "operations",
@@ -70,14 +84,24 @@ describe("agent-config-sync service shell", () => {
         `${moduleName}/router only allows index.ts and *.router.ts`,
       ).toBe(true);
 
-      if (moduleEntryNames.has("repositories")) {
+      const allowedRepositories = moduleRepositoryFiles.get(moduleName) ?? new Set<string>();
+      if (allowedRepositories.size > 0) {
+        expect(moduleEntryNames.has("repositories"), `${moduleName} keeps only real repositories`).toBe(true);
         const repositoryEntries = await readdir(new URL(`${moduleName}/repositories/`, serviceModulesRoot), {
           withFileTypes: true,
         });
+        const repositoryNames = new Set(repositoryEntries.map((entry) => entry.name));
         expect(
-          repositoryEntries.every((entry) => entry.isFile() && /^[a-z0-9-]+-repository\.ts$/u.test(entry.name)),
-          `${moduleName}/repositories only allows explicit *-repository.ts files`,
+          repositoryEntries.every((entry) =>
+            entry.isFile() &&
+            /^[a-z0-9-]+-repository\.ts$/u.test(entry.name) &&
+            allowedRepositories.has(entry.name)
+          ),
+          `${moduleName}/repositories only allows explicit real *-repository.ts files`,
         ).toBe(true);
+        expect(repositoryNames, `${moduleName}/repositories must not hide fake repositories`).toEqual(allowedRepositories);
+      } else {
+        expect(moduleEntryNames.has("repositories"), `${moduleName} has no real repositories`).toBe(false);
       }
     }
   });

@@ -1,6 +1,17 @@
-import type { AgentConfigSyncResources } from "../../../common/resources";
+import type { AgentConfigSyncPathResources, AgentConfigSyncResources } from "../../../common/resources";
 import type { UndoCapsule } from "../entities";
-import { undoCapsuleDir, undoManifestPath } from "./capsule-paths-repository";
+
+export function undoCapsuleDir(workspaceRoot: string, pathOps: AgentConfigSyncPathResources): string {
+  return pathOps.join(workspaceRoot, ".rawr", "state", "undo", "last");
+}
+
+export function undoBackupsDir(workspaceRoot: string, pathOps: AgentConfigSyncPathResources): string {
+  return pathOps.join(undoCapsuleDir(workspaceRoot, pathOps), "backups");
+}
+
+export function undoManifestPath(workspaceRoot: string, pathOps: AgentConfigSyncPathResources): string {
+  return pathOps.join(undoCapsuleDir(workspaceRoot, pathOps), "manifest.json");
+}
 
 export async function loadActiveUndoCapsule(
   workspaceRoot: string,

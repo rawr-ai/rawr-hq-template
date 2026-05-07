@@ -1,8 +1,8 @@
 # Workstream Record: agent-config-sync router-native reshape
 
-Status: closed
+Status: closing
 Started: 2026-05-07
-Closed: 2026-05-07
+Closed: pending semantic repository repair commit/submission
 DRA: Codex
 Branch: `codex/agent-config-sync-router-native-reshape`
 Parent branch at opening: `codex/workstream-b-preparation`
@@ -25,9 +25,10 @@ Done means:
 - Callable implementation is exposed through `router/index.ts` and cohesive
   `router/*.router.ts` fragments. `router/index.ts` is the single
   `module.router({ ... })` attach point.
-- Substantial module-owned file/registry/capsule mechanics live in explicit
-  `repositories/*-repository.ts` files. Cross-module support stays in
-  `common/`. Router roots do not contain nested support directories.
+- Module-owned repositories remain only where they encapsulate real source,
+  destination, or persistence state. Policy, path helpers, orchestration, and
+  replay flow are not repositories. Cross-module support stays in `common/`.
+  Router roots do not contain nested support directories.
 - Structural ratchets enforce the new shape so future agents do not drift back
   to `helpers/`, `operations/`, or one-procedure-file sprawl.
 - Repo is clean, green, and Graphite stack is ready and published after review
@@ -164,6 +165,22 @@ Design refinement after user correction:
   modules need the same behavior, in which case it belongs under
   `service/common/**`.
 
+Semantic repository correction after user clarification:
+
+- User clarified that `repositories/` is acceptable; the bug was naming
+  non-repositories as repositories.
+- Accepted rule: repositories own real source, destination, or persistence
+  state boundaries. Routers own callable story, orchestration, policy,
+  planning simulation, cleanup flow, and undo replay behavior.
+- Rejected peer recommendation: blanket removal of module-level repositories.
+  Rationale: the user explicitly allowed real repositories, and execution,
+  retirement, planning source discovery, and undo capsule storage have real
+  repository gravity.
+- Correction loop scope: keep real module repositories by explicit allowlist,
+  fold fake repository files into router fragments or `service/common/helpers`,
+  update ratchets/tests/docs, add direct undo replay coverage, recommit and
+  republish PR #320.
+
 ## Verbatim Plan
 
 ```md
@@ -299,7 +316,7 @@ Acceptance scenarios:
 | Router-native architecture peer | read-only peer | Reviews module vs leaf-router boundaries, router gravity, oRPC-native shape, no fake DSL. | original peer timed out/closed; replacement classifier completed |
 | Structural-ratchet peer | read-only peer | Reviews verifier/test shape before and after implementation. | design pass and watcher pass completed; findings accepted |
 | Behavior-preservation peer | read-only peer | Reviews coverage and final diff for behavior drift. | completed; findings accepted/deferred below |
-| Closure steward | `workstream-closure-steward` | Reviews output contract, gates, repo/Graphite state, deferred inventory, Next Packet. | pending |
+| Closure steward | `workstream-closure-steward` | Reviews output contract, gates, repo/Graphite state, deferred inventory, Next Packet. | warn; no code blocker, record/commit/submission cleanup required |
 
 ## Agent Packets
 
@@ -379,6 +396,20 @@ as targeted review lanes, not as a parallel implementation wave.
 - 2026-05-07: Published Graphite stack:
   - parent preparation PR: https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/319
   - router-native reshape PR: https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/320
+- 2026-05-07: User clarified the semantic repair target: `repositories/` is
+  fine, but only for things that are actually repositories.
+- 2026-05-07: Implemented semantic repository repair:
+  - kept real source/destination/persistence repositories by explicit allowlist
+  - folded planning policy, assessment, preview orchestration, and target
+    selection out of fake planning repositories and into router fragments
+  - moved shared retirement write/delete mechanics to
+    `service/common/helpers/retirement-filesystem-actions.ts`
+  - kept cleanup-behind Codex state repair as a real retirement repository
+    after classifier review
+  - folded undo apply behavior into `run-undo.router.ts`
+  - folded undo capsule paths into `capsule-store-repository.ts`
+  - deleted unused command-expiration code
+  - added direct public undo replay coverage
 
 ## Findings Disposition
 
@@ -445,6 +476,41 @@ Closure steward:
 - Blocking gap: work was not yet committed or published. Accepted; commit and
   Graphite publish remain the next action after this record repair.
 
+Semantic repository repair closure steward:
+
+- Finding: no code-shape blocker before commit/submit. Accepted.
+- Finding: record status and closure lane were stale because semantic repair was
+  dirty/unsubmitted while the record still said closed. Accepted and repaired
+  before commit.
+- Finding: after commit/submit, record final commit hash, PR state, and clean
+  Git/Graphite state. Accepted; this is the final closure action.
+
+Semantic repository repair peers:
+
+- Repository classifier: finding that remaining module repositories all earned
+  the repository name after the initial repair. Accepted.
+- Repository classifier: finding that `cleanup-behind-provider-sync.router.ts`
+  still contained Codex destination state repair and should remain a
+  repository-grade boundary. Accepted; restored
+  `codex-cleanup-behind-repository.ts` as an allowed retirement repository and
+  kept the router thin.
+- Repository classifier: finding that `workspace-sync.router.ts` remains large
+  after folding preview mechanics into it. Accepted as non-blocking. Rationale:
+  the preview flow is read-only planning simulation/orchestration, not a source
+  or destination repository; creating a new non-repository bucket would
+  reintroduce the semantic blur this repair is removing.
+- Structural-ratchet peer: finding that the repository allowlist was not
+  self-enforcing because required repository files were duplicated in
+  `REQUIRED_PATHS`. Accepted; verifier now derives required real repository
+  paths directly from `MODULE_REPOSITORY_FILES`.
+- Structural-ratchet peer: note that `service/common/helpers` remains
+  open-ended. Accepted as non-blocking. Rationale: this workstream targets
+  module repository semantics; common helper allowlisting is a broader common
+  boundary hygiene question and current common helpers already existed as an
+  allowed shared service boundary.
+- Behavior-preservation peer: no findings. Accepted. The added direct public
+  undo replay test was judged adequate for this repair.
+
 ## Gate Results
 
 Final gates:
@@ -457,7 +523,8 @@ bunx nx run @rawr/agent-config-sync:typecheck --skip-nx-cache
 # pass
 
 bunx nx run @rawr/agent-config-sync:test --skip-nx-cache
-# pass: 4 files, 43 tests
+# pass before semantic repair: 4 files, 43 tests
+# pass after semantic repair: 4 files, 44 tests
 
 bunx nx run @rawr/agent-config-sync:structural --skip-nx-cache
 # pass
@@ -469,6 +536,9 @@ bunx nx run @rawr/agent-config-sync-node:typecheck --skip-nx-cache
 # pass
 
 bunx nx run-many -t typecheck -p @rawr/agent-config-sync,@rawr/plugin-plugins,@rawr/cli --output-style=stream --skip-nx-cache
+# pass
+
+bunx nx run-many -t typecheck,test -p @rawr/agent-config-sync,@rawr/plugin-plugins --output-style=stream --skip-nx-cache
 # pass
 ```
 
@@ -488,13 +558,12 @@ bunx nx run-many -t typecheck -p @rawr/agent-config-sync,@rawr/plugin-plugins,@r
   - Trigger: next change to retirement stale-managed semantics.
   - Rationale: useful coverage, but this workstream did not change retirement
     behavior and retained-residue tests passed.
-- Add direct `client.undo.runUndo` replay assertions, including one cleanup
-  capsule variant.
+- Add a cleanup-backed `client.undo.runUndo` replay assertion.
   - Owner: future behavior-hardening workstream.
-  - Trigger: next change to undo capsule replay, undo capture, or cleanup
-    filesystem mutation.
-  - Rationale: useful coverage, but this workstream only moved implementation
-    ownership and preserved the public undo helper export.
+  - Trigger: next change to cleanup filesystem mutation or undo capsule replay.
+  - Rationale: this workstream added direct public undo replay coverage for a
+    captured write/restore capsule; cleanup-backed undo is useful follow-up
+    coverage but not required to prove this semantic repository repair.
 
 ## Next Packet
 
@@ -504,16 +573,21 @@ Current state:
 - Parent branch: `codex/workstream-b-preparation`.
 - Commit: `86e89c2e`
   (`refactor(agent-config-sync): reshape modules around routers`).
+- Follow-up commit to create: `refactor(agent-config-sync): classify module
+  repositories semantically`.
 - Graphite PR: https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/320
 - Parent Graphite PR: https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/319
 - Closure steward found no code-shape blocker.
-- All final gates listed above passed.
+- Semantic repair gates listed above passed locally before final commit.
 
 Exact next action:
 
-1. Monitor/respond to PR review or CI if needed.
-2. If this record changes after publish, amend/resubmit this branch and verify
-   `git status` / `gt ls` again.
+1. Commit semantic repair with
+   `gt modify -c -m "refactor(agent-config-sync): classify module repositories semantically"`.
+2. Submit updated stack with
+   `gt submit --stack --publish --no-edit --no-ai --no-interactive`.
+3. Verify `git status`, `gt status`, `gt ls`, and PR #320.
+4. Monitor/respond to PR review or CI if needed.
 
 Inspect first:
 

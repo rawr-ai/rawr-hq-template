@@ -7,6 +7,27 @@ const SERVICE_MODULES = ["planning", "execution", "retirement", "undo"];
 const MODULE_ROOT_FILE = /^(contract|router|errors|entities|module|middleware)\.ts$/u;
 const ROUTER_ROOT_FILE = /^(index|[a-z0-9-]+\.router)\.ts$/u;
 const REPOSITORY_FILE = /^[a-z0-9-]+-repository\.ts$/u;
+const MODULE_REPOSITORY_FILES = new Map([
+  ["planning", new Set([
+    "source-plugin-repository.ts",
+    "workspace-root-repository.ts",
+  ])],
+  ["execution", new Set([
+    "claude-destination-sync-repository.ts",
+    "codex-destination-sync-repository.ts",
+    "codex-native-agent-role-repository.ts",
+  ])],
+  ["retirement", new Set([
+    "claude-retirement-repository.ts",
+    "codex-cleanup-behind-repository.ts",
+    "codex-retirement-repository.ts",
+  ])],
+  ["undo", new Set([
+    "capsule-capture-repository.ts",
+    "capsule-store-repository.ts",
+    "path-snapshot-repository.ts",
+  ])],
+]);
 const FORBIDDEN_MODULE_DIRS = new Set([
   "helpers",
   "operations",
@@ -45,29 +66,23 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/common/source-content/helpers/source-plugin-content.ts",
   "services/agent-config-sync/src/service/common/helpers/sync-results.ts",
   "services/agent-config-sync/src/service/common/helpers/projections.ts",
+  "services/agent-config-sync/src/service/common/helpers/retirement-filesystem-actions.ts",
   "services/agent-config-sync/src/service/common/repositories/destination-sync-repository.ts",
   "services/agent-config-sync/src/service/common/repositories/codex-registry-repository.ts",
+  "services/agent-config-sync/src/service/common/repositories/codex-config-repository.ts",
+  "services/agent-config-sync/src/service/common/repositories/codex-hooks-repository.ts",
+  "services/agent-config-sync/src/service/common/repositories/codex-runtime-paths.ts",
   "services/agent-config-sync/src/service/common/repositories/claude-marketplace-repository.ts",
   "services/agent-config-sync/src/service/modules/planning/contract.ts",
   "services/agent-config-sync/src/service/modules/planning/entities.ts",
   "services/agent-config-sync/src/service/modules/planning/middleware.ts",
   "services/agent-config-sync/src/service/modules/planning/module.ts",
-  "services/agent-config-sync/src/service/modules/planning/repositories/full-sync-policy-repository.ts",
-  "services/agent-config-sync/src/service/modules/planning/repositories/source-plugin-repository.ts",
-  "services/agent-config-sync/src/service/modules/planning/repositories/sync-assessment-repository.ts",
-  "services/agent-config-sync/src/service/modules/planning/repositories/sync-preview-repository.ts",
-  "services/agent-config-sync/src/service/modules/planning/repositories/target-home-selection-repository.ts",
-  "services/agent-config-sync/src/service/modules/planning/repositories/workspace-root-repository.ts",
-  "services/agent-config-sync/src/service/modules/planning/repositories/workspace-source-repository.ts",
   "services/agent-config-sync/src/service/modules/planning/router/index.ts",
   "services/agent-config-sync/src/service/modules/planning/router/full-sync-policy.router.ts",
   "services/agent-config-sync/src/service/modules/planning/router/workspace-sync.router.ts",
   "services/agent-config-sync/src/service/modules/execution/contract.ts",
   "services/agent-config-sync/src/service/modules/execution/middleware.ts",
   "services/agent-config-sync/src/service/modules/execution/module.ts",
-  "services/agent-config-sync/src/service/modules/execution/repositories/claude-destination-sync-repository.ts",
-  "services/agent-config-sync/src/service/modules/execution/repositories/codex-destination-sync-repository.ts",
-  "services/agent-config-sync/src/service/modules/execution/repositories/codex-native-agent-role-repository.ts",
   "services/agent-config-sync/src/service/modules/execution/router/index.ts",
   "services/agent-config-sync/src/service/modules/execution/router/codex-native-agent-roles.router.ts",
   "services/agent-config-sync/src/service/modules/execution/router/provider-sync.router.ts",
@@ -75,11 +90,6 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/modules/retirement/entities.ts",
   "services/agent-config-sync/src/service/modules/retirement/middleware.ts",
   "services/agent-config-sync/src/service/modules/retirement/module.ts",
-  "services/agent-config-sync/src/service/modules/retirement/repositories/claude-retirement-repository.ts",
-  "services/agent-config-sync/src/service/modules/retirement/repositories/codex-cleanup-behind-repository.ts",
-  "services/agent-config-sync/src/service/modules/retirement/repositories/codex-retirement-repository.ts",
-  "services/agent-config-sync/src/service/modules/retirement/repositories/filesystem-actions-repository.ts",
-  "services/agent-config-sync/src/service/modules/retirement/repositories/managed-source-repository.ts",
   "services/agent-config-sync/src/service/modules/retirement/router/index.ts",
   "services/agent-config-sync/src/service/modules/retirement/router/cleanup-behind-provider-sync.router.ts",
   "services/agent-config-sync/src/service/modules/retirement/router/retire-stale-managed.router.ts",
@@ -87,12 +97,6 @@ const REQUIRED_PATHS = [
   "services/agent-config-sync/src/service/modules/undo/entities.ts",
   "services/agent-config-sync/src/service/modules/undo/middleware.ts",
   "services/agent-config-sync/src/service/modules/undo/module.ts",
-  "services/agent-config-sync/src/service/modules/undo/repositories/capsule-capture-repository.ts",
-  "services/agent-config-sync/src/service/modules/undo/repositories/capsule-paths-repository.ts",
-  "services/agent-config-sync/src/service/modules/undo/repositories/capsule-store-repository.ts",
-  "services/agent-config-sync/src/service/modules/undo/repositories/command-expiration-repository.ts",
-  "services/agent-config-sync/src/service/modules/undo/repositories/path-snapshot-repository.ts",
-  "services/agent-config-sync/src/service/modules/undo/repositories/undo-apply-repository.ts",
   "services/agent-config-sync/src/service/modules/undo/router/index.ts",
   "services/agent-config-sync/src/service/modules/undo/router/run-undo.router.ts",
   "services/agent-config-sync/test/helpers.ts",
@@ -101,6 +105,13 @@ const REQUIRED_PATHS = [
 
 for (const relPath of REQUIRED_PATHS) {
   assertCondition(await pathExists(relPath), `missing required agent-config-sync path: ${relPath}`);
+}
+
+for (const [moduleName, repositoryFiles] of MODULE_REPOSITORY_FILES) {
+  for (const repositoryFile of repositoryFiles) {
+    const relPath = `services/agent-config-sync/src/service/modules/${moduleName}/repositories/${repositoryFile}`;
+    assertCondition(await pathExists(relPath), `missing required real repository: ${relPath}`);
+  }
 }
 
 const pkg = await readJson("services/agent-config-sync/package.json");
@@ -210,7 +221,7 @@ for (const moduleDir of await fs.readdir(modulesRoot, { withFileTypes: true })) 
     if (entry.isFile() && entry.name.endsWith(".ts")) {
       assertCondition(
         MODULE_ROOT_FILE.test(entry.name),
-        `${relPath} must not exist as a module-root behavior file; keep callable flow in router/index.ts + router/*.router.ts or repository behavior in repositories/*-repository.ts`,
+        `${relPath} must not exist as a module-root behavior file; keep callable flow and policy in router/index.ts + router/*.router.ts or external-state mechanics in explicitly allowed repositories/*-repository.ts`,
       );
       continue;
     }
@@ -243,10 +254,21 @@ for (const moduleDir of await fs.readdir(modulesRoot, { withFileTypes: true })) 
   }
 
   if (await pathExists(`${moduleRoot}/repositories`)) {
+    const allowedRepositories = MODULE_REPOSITORY_FILES.get(moduleDir.name) ?? new Set();
     for (const entry of await fs.readdir(`${moduleRoot}/repositories`, { withFileTypes: true })) {
       const relPath = path.posix.join(`${moduleRoot}/repositories`, entry.name);
       assertCondition(entry.isFile(), `${relPath} must not be a repository subdirectory`);
       assertCondition(REPOSITORY_FILE.test(entry.name), `${relPath} must use the explicit *-repository.ts form`);
+      assertCondition(
+        allowedRepositories.has(entry.name),
+        `${relPath} must not exist as a fake repository; repositories are only for source/destination/persistence state boundaries`,
+      );
+    }
+    for (const requiredRepository of allowedRepositories) {
+      assertCondition(
+        await pathExists(`${moduleRoot}/repositories/${requiredRepository}`),
+        `${moduleRoot}/repositories/${requiredRepository} must exist as an allowed real repository`,
+      );
     }
   }
 }
@@ -277,9 +299,19 @@ for (const relPath of [
   "services/agent-config-sync/src/service/modules/retirement/helpers/claude-stale-managed.ts",
   "services/agent-config-sync/src/service/modules/retirement/helpers/codex-stale-managed.ts",
   "services/agent-config-sync/src/service/modules/planning/helpers",
+  "services/agent-config-sync/src/service/modules/planning/repositories/full-sync-policy-repository.ts",
+  "services/agent-config-sync/src/service/modules/planning/repositories/sync-assessment-repository.ts",
+  "services/agent-config-sync/src/service/modules/planning/repositories/sync-preview-repository.ts",
+  "services/agent-config-sync/src/service/modules/planning/repositories/target-home-selection-repository.ts",
+  "services/agent-config-sync/src/service/modules/planning/repositories/workspace-source-repository.ts",
   "services/agent-config-sync/src/service/modules/execution/helpers",
   "services/agent-config-sync/src/service/modules/retirement/helpers",
+  "services/agent-config-sync/src/service/modules/retirement/repositories/filesystem-actions-repository.ts",
+  "services/agent-config-sync/src/service/modules/retirement/repositories/managed-source-repository.ts",
   "services/agent-config-sync/src/service/modules/undo/helpers",
+  "services/agent-config-sync/src/service/modules/undo/repositories/capsule-paths-repository.ts",
+  "services/agent-config-sync/src/service/modules/undo/repositories/command-expiration-repository.ts",
+  "services/agent-config-sync/src/service/modules/undo/repositories/undo-apply-repository.ts",
   "services/agent-config-sync/src/service/modules/undo/repository.ts",
   "services/agent-config-sync/src/service/modules/undo/sync-undo.ts",
   "services/agent-config-sync/src/service/modules/source-content",
