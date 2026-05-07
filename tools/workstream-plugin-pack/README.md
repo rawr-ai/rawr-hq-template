@@ -1,12 +1,14 @@
 # Workstream Plugin Pack
 
-This pack is the local source of truth for reusable workstream operation while
-the workstream plugin is recovered and reviewed in this repository.
+This pack is a deprecated bridge and recovery copy for reusable workstream
+operation. The downstream Habitat plugin is now the distributable source of
+truth for Workstream skills, role briefs, hooks, and reusable assets:
 
-The pack owns generic workstream mechanics: skills, role briefs, reusable
-templates, and mechanical hook scripts. Repo docs, runtime-lab docs, and Codex
-project files may point here, but they must not redefine the generic
-workstream model.
+`/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq/plugins/agents/habitat/`
+
+Do not make new durable Workstream content changes here. If this bridge
+contains useful material, migrate it downstream first and then remove the
+bridge in the template cleanup pass.
 
 Mental model: the workstream is durable coordination state. Sessions, threads,
 worktrees, tickets, workflows, and transcripts are useful projections or
@@ -16,19 +18,19 @@ resources, but they do not own continuity by themselves.
 
 | Surface | Path | Status |
 | --- | --- | --- |
-| Workstream runner skill | `skills/workstream-runner/` | Canonical source |
-| Review-loop skill | `skills/workstream-review-loops/` | Canonical source |
-| Provider-neutral steward roles | `agents/` | Canonical source |
-| Reusable hook scripts | `hooks/` | Canonical source |
+| Workstream runner skill | `skills/workstream-runner/` | Deprecated bridge copy |
+| Review-loop skill | `skills/workstream-review-loops/` | Deprecated bridge copy |
+| Provider-neutral steward roles | `agents/` | Deprecated bridge copy |
+| Reusable hook scripts | `hooks/` | Deprecated bridge copy |
 | Local install scripts | `scripts/` | Projection helpers |
-| Copy-forward scaffolds | `skills/workstream-runner/assets/` | Canonical source |
+| Copy-forward scaffolds | `skills/workstream-runner/assets/` | Deprecated bridge copy |
 | Downstream port notes | `notes/downstream-port-notes.md` | Porting guide |
 | Immediate follow-up | `notes/next-work.md` | Current review plan |
 
 ## Local Activation
 
-The pack is source. Local runtime surfaces are projections used only when this
-repo needs to test the pack in Codex.
+This bridge copy can still project local runtime surfaces when the template repo
+needs to test recovered Workstream material in Codex.
 
 - `scripts/install-local-codex-pack.ts --target local` projects pack content
   into local Codex runtime surfaces when local activation is needed. This is
@@ -47,8 +49,8 @@ runtime files are real projections of pack content.
 
 ## Downstream Projection
 
-For temporary faster iteration, the install script can also project this pack
-into downstream `rawr-hq/plugins/agents/habitat`:
+The downstream Habitat plugin should be edited directly. The install script's
+downstream projection mode is retained only as a recovery bridge:
 
 ```bash
 bun tools/workstream-plugin-pack/scripts/install-local-codex-pack.ts \
@@ -56,9 +58,8 @@ bun tools/workstream-plugin-pack/scripts/install-local-codex-pack.ts \
   --downstream-root /Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq
 ```
 
-This downstream plugin is a working copy, not the source of truth. Remove this
-bridge after `agent-config-sync` supports hook projection and the Workstream
-plugin has been used successfully a few times without issues.
+Do not use this projection path as the normal authoring workflow. Remove this
+bridge when the template-side migration no longer needs a recovery copy.
 
 ## Boundary
 

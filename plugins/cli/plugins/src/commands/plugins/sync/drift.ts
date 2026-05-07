@@ -26,6 +26,11 @@ export default class PluginsSyncDrift extends RawrCommand {
     "source-workspace": Flags.string({
       description: "RAWR workspace to scan as the source of sync truth",
     }),
+    "destination-projection": Flags.boolean({
+      description: "Include legacy/auxiliary Codex destination projection in drift assessment",
+      default: false,
+      allowNo: true,
+    }),
     "include-metadata": Flags.boolean({
       description: "Count metadata upserts (registry/manifest updates) as drift",
       default: true,
@@ -99,6 +104,7 @@ export default class PluginsSyncDrift extends RawrCommand {
           codexHomes: (flags["codex-home"] as string[] | undefined) ?? [],
           claudeHomes: (flags["claude-home"] as string[] | undefined) ?? [],
           config: layered.config ?? undefined,
+          includeCodexDestinationProjection: Boolean((flags as any)["destination-projection"]),
         }),
         traceId: "plugin-plugins.agent-config-sync.assess-workspace-drift",
       });

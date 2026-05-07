@@ -32,10 +32,14 @@ import { findWorkspaceRoot } from "@rawr/core";
 export type UndoCaptureLike = AgentConfigSyncUndoCapture;
 type RunSyncInput = Parameters<Client["execution"]["runSync"]>[0];
 type RunSyncOptions = NonNullable<Parameters<Client["execution"]["runSync"]>[1]>;
+type SyncCodexNativeAgentRolesInput = Parameters<Client["execution"]["syncCodexNativeAgentRoles"]>[0];
+type SyncCodexNativeAgentRolesOptions = NonNullable<Parameters<Client["execution"]["syncCodexNativeAgentRoles"]>[1]>;
 type ResolveProviderContentInput = Parameters<Client["execution"]["resolveProviderContent"]>[0];
 type ResolveProviderContentOptions = NonNullable<Parameters<Client["execution"]["resolveProviderContent"]>[1]>;
 type RetireStaleManagedInput = Parameters<Client["retirement"]["retireStaleManaged"]>[0];
 type RetireStaleManagedOptions = NonNullable<Parameters<Client["retirement"]["retireStaleManaged"]>[1]>;
+type CleanupBehindProviderSyncInput = Parameters<Client["retirement"]["cleanupBehindProviderSync"]>[0];
+type CleanupBehindProviderSyncOptions = NonNullable<Parameters<Client["retirement"]["cleanupBehindProviderSync"]>[1]>;
 type PlanWorkspaceSyncOptions = NonNullable<Parameters<Client["planning"]["planWorkspaceSync"]>[1]>;
 type AssessWorkspaceSyncOptions = NonNullable<Parameters<Client["planning"]["assessWorkspaceSync"]>[1]>;
 
@@ -267,6 +271,7 @@ export function createWorkspaceSyncPlanInput(input: {
   codexHomes: string[];
   claudeHomes: string[];
   config?: LayeredSyncConfig;
+  includeCodexDestinationProjection?: boolean;
   fullSyncPolicy: PlanWorkspaceSyncInput["fullSyncPolicy"];
 }): PlanWorkspaceSyncInput {
   const syncPolicy = syncProviderPolicy(input.config);
@@ -284,6 +289,7 @@ export function createWorkspaceSyncPlanInput(input: {
     }),
     includeAgentsInCodex: syncPolicy.includeAgentsInCodex,
     includeAgentsInClaude: syncPolicy.includeAgentsInClaude,
+    includeCodexDestinationProjection: input.includeCodexDestinationProjection ?? true,
     fullSyncPolicy: input.fullSyncPolicy,
   };
 }
@@ -301,6 +307,7 @@ export function createWorkspaceSyncAssessInput(input: {
   codexHomes: string[];
   claudeHomes: string[];
   config?: LayeredSyncConfig;
+  includeCodexDestinationProjection?: boolean;
 }): AssessWorkspaceSyncInput {
   const syncPolicy = syncProviderPolicy(input.config);
   return {
@@ -317,6 +324,7 @@ export function createWorkspaceSyncAssessInput(input: {
     }),
     includeAgentsInCodex: syncPolicy.includeAgentsInCodex,
     includeAgentsInClaude: syncPolicy.includeAgentsInClaude,
+    includeCodexDestinationProjection: input.includeCodexDestinationProjection ?? false,
   };
 }
 
@@ -440,6 +448,50 @@ export async function runSync(input: {
 }
 
 /**
+ * Runs Codex's native custom-agent role config lane without generic Codex
+ * destination projection.
+ */
+export async function syncCodexNativeAgentRoles(input: {
+  sourcePlugin: SourcePlugin;
+  content: SourceContent;
+  options: {
+    dryRun: boolean;
+    force: boolean;
+    gc: boolean;
+    includeAgentsInCodex?: boolean;
+    undoCapture?: UndoCaptureLike;
+  };
+  codexHomes: string[];
+  includeCodex: boolean;
+}): Promise<SyncRunResult> {
+  const repoRoot = await repoRootForCall(input.sourcePlugin);
+  const client = createAgentConfigSyncClient({ repoRoot, undoCapture: input.options.undoCapture });
+
+  const runInput = {
+    sourcePlugin: input.sourcePlugin,
+    content: input.content,
+    codexHomes: input.codexHomes,
+    claudeHomes: [],
+    includeCodex: input.includeCodex,
+    includeClaude: false,
+    includeAgentsInCodex: input.options.includeAgentsInCodex,
+    force: input.options.force,
+    gc: input.options.gc,
+    dryRun: input.options.dryRun,
+  } satisfies SyncCodexNativeAgentRolesInput;
+  const options = {
+    context: {
+      invocation: {
+        traceId: input.options.dryRun
+          ? "plugin-plugins.agent-config-sync.codex-native-agent-roles-dry-run"
+          : "plugin-plugins.agent-config-sync.codex-native-agent-roles-apply",
+      },
+    },
+  } satisfies SyncCodexNativeAgentRolesOptions;
+  return client.execution.syncCodexNativeAgentRoles(runInput, options);
+}
+
+/**
  * Requests provider-effective content from the service for CLI-owned packaging.
  */
 export async function resolveProviderContent(input: {
@@ -486,6 +538,227 @@ export async function retireStaleManagedPlugins(input: {
     context: { invocation: { traceId: "plugin-plugins.agent-config-sync.retirement" } },
   } satisfies RetireStaleManagedOptions;
   return client.retirement.retireStaleManaged(retireInput, options);
+}
+
+/**
+ * Calls service cleanup-behind behavior for managed residue superseded by a
+ * successful provider sync.
+ */
+export async function cleanupBehindProviderSync(input: {
+  workspaceRoot: string;
+  claimCheckCodexHomes: string[];
+  candidates: CleanupBehindProviderSyncInput["candidates"];
+  dryRun: boolean;
+  undoCapture?: UndoCaptureLike;
+}) {
+  const client = createAgentConfigSyncClient({ repoRoot: input.workspaceRoot, undoCapture: input.undoCapture });
+  const cleanupInput = {
+    workspaceRoot: input.workspaceRoot,
+    claimCheckCodexHomes: input.claimCheckCodexHomes,
+    candidates: input.candidates,
+    dryRun: input.dryRun,
+  } satisfies CleanupBehindProviderSyncInput;
+  const options = {
+    context: { invocation: { traceId: "plugin-plugins.agent-config-sync.cleanup-behind" } },
+  } satisfies CleanupBehindProviderSyncOptions;
+  return client.retirement.cleanupBehindProviderSync(cleanupInput, options);
+}
+
+export type CleanupBehindCandidate = CleanupBehindProviderSyncInput["candidates"][number];
+type CleanupBehindResultLike = Awaited<ReturnType<typeof cleanupBehindProviderSync>>;
+
+type CleanupBehindCodexPackage = {
+  plugin: string;
+  action: string;
+  skillCount?: number;
+  scriptCount?: number;
+  hookConfigCount?: number;
+  mcpServerCount?: number;
+};
+
+function asRecords(value: unknown): Array<Record<string, unknown>> {
+  return Array.isArray(value)
+    ? value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+    : [];
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function asNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function packageByPlugin(packages: CleanupBehindCodexPackage[]): Map<string, CleanupBehindCodexPackage> {
+  return new Map(
+    packages
+      .filter((pkg) => pkg.action !== "skipped")
+      .map((pkg) => [pkg.plugin, pkg]),
+  );
+}
+
+/**
+ * Derives provider cleanup candidates from Codex install/package outcomes.
+ */
+export function buildCleanupBehindCodexCandidates(input: {
+  enabled: boolean;
+  destinationProjectionEnabled: boolean;
+  codexPackageEnabled: boolean;
+  codexInstallEnabled: boolean;
+  dryRun: boolean;
+  codexInstall: Record<string, unknown>;
+  codexPackages: CleanupBehindCodexPackage[];
+  sourcePluginRootsByName: ReadonlyMap<string, string>;
+  fallbackCodexHome?: string;
+}): CleanupBehindCandidate[] {
+  if (!input.enabled || input.destinationProjectionEnabled || !input.codexPackageEnabled || !input.codexInstallEnabled) return [];
+  if (!input.dryRun && input.codexInstall.ok !== true) return [];
+
+  const packages = packageByPlugin(input.codexPackages);
+  const candidates: CleanupBehindCandidate[] = [];
+  for (const action of asRecords(input.codexInstall.actions)) {
+    const actionKind = asString(action.action);
+    const plugin = asString(action.plugin);
+    if (!plugin) continue;
+    const sourcePluginRoot = input.sourcePluginRootsByName.get(plugin);
+    if (!sourcePluginRoot) continue;
+    const home = asString(action.codexHome) ?? input.fallbackCodexHome;
+    if (!home) continue;
+
+    if (actionKind === "verified" && action.installed === true && action.enabled === true) {
+      candidates.push({
+        provider: "codex",
+        home,
+        plugin,
+        sourcePluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "verified",
+        verifiedCapabilities: {
+          skills: asNumber(action.skillCount) > 0 && asNumber(action.visiblePluginSkillCount) >= asNumber(action.skillCount),
+          hooks: asNumber(action.providerHookCount) > 0,
+          mcp: asNumber(action.mcpServerCount) > 0,
+          // Codex packages carry scripts as support files, not an active provider script surface.
+          scripts: false,
+        },
+      });
+      continue;
+    }
+
+    if (input.dryRun && actionKind === "planned") {
+      const pkg = packages.get(plugin);
+      if (!pkg) continue;
+      candidates.push({
+        provider: "codex",
+        home,
+        plugin,
+        sourcePluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "dry-run-planned",
+        verifiedCapabilities: {
+          skills: asNumber(pkg.skillCount) > 0,
+          hooks: asNumber(pkg.hookConfigCount) > 0,
+          mcp: asNumber(pkg.mcpServerCount) > 0,
+          // Codex packages carry scripts as support files, not an active provider script surface.
+          scripts: false,
+        },
+      });
+    }
+  }
+
+  return candidates;
+}
+
+/**
+ * Adds well-known sibling Codex homes that share the user runtime skill root.
+ */
+export function buildCleanupBehindCodexClaimCheckHomes(codexHomes: string[]): string[] {
+  const homes = new Set<string>();
+  for (const codexHome of codexHomes) {
+    homes.add(codexHome);
+    const basename = path.basename(codexHome);
+    if (basename !== ".codex" && basename !== ".codex-rawr") continue;
+    const userRoot = path.dirname(codexHome);
+    homes.add(path.join(userRoot, ".codex"));
+    homes.add(path.join(userRoot, ".codex-rawr"));
+  }
+  return [...homes];
+}
+
+export function emptyCleanupBehindResult(reason = "not run") {
+  return {
+    ok: true,
+    cleanedPlugins: [],
+    retainedResidue: [],
+    actions: reason === "not run"
+      ? []
+      : [{
+          agent: "codex" as const,
+          home: "*",
+          plugin: "*",
+          target: "*",
+          action: "skipped" as const,
+          message: reason,
+        }],
+  };
+}
+
+const CODEX_PROMPT_MIGRATION_WARNING =
+  "Current Codex guidance favors skills for reusable workflows. Codex prompts/ output and supporting scripts from RAWR sync are legacy/auxiliary compatibility mirrors, not native Codex workflow or plugin parity; migrate repeatable prompts/workflows into skills when possible.";
+const CLAUDE_COMMAND_MIGRATION_WARNING =
+  "Claude Code custom commands have been merged into skills. Claude commands/ output from RAWR sync remains a supported compatibility/direct-invocation mirror, but skills are the preferred richer structure for repeatable workflows; migrate repeatable commands/workflows into skills when possible.";
+
+function pathHasSegment(inputPath: string, segment: string): boolean {
+  const parts = inputPath.split(/[\\/]+/).filter(Boolean);
+  return parts.includes(segment);
+}
+
+/**
+ * Produces post-sync warnings when provider workflow mirrors are retained or
+ * projected. This keeps the destructive cleanup service policy-neutral while
+ * making the CLI output honest about legacy prompt/command debt.
+ */
+export function buildProviderWorkflowMirrorWarnings(input: {
+  cleanupBehind?: CleanupBehindResultLike;
+  syncTargets?: Array<{
+    agent: string;
+    items: Array<Pick<SyncItemResult, "action" | "kind" | "target">>;
+  }>;
+}): string[] {
+  const retainedCodexAuxiliaryMirror = (input.cleanupBehind?.retainedResidue ?? []).some((item) => {
+    const record = item as Record<string, unknown>;
+    const target = typeof record.target === "string" ? record.target : "";
+    return record.agent === "codex" &&
+      record.reason === "projection-only-retained" &&
+      (pathHasSegment(target, "prompts") || pathHasSegment(target, "scripts"));
+  });
+  const retainedCommandMirror = (input.cleanupBehind?.retainedResidue ?? []).some((item) => {
+    const record = item as Record<string, unknown>;
+    const target = typeof record.target === "string" ? record.target : "";
+    return record.agent === "claude" && record.reason === "projection-only-retained" && pathHasSegment(target, "commands");
+  });
+  const projectedPromptMirror = (input.syncTargets ?? []).some((target) =>
+    target.agent === "codex" &&
+    target.items.some((item) =>
+      item.kind === "workflow" &&
+      item.action !== "deleted" &&
+      pathHasSegment(item.target, "prompts")
+    )
+  );
+  const projectedCommandMirror = (input.syncTargets ?? []).some((target) =>
+    target.agent === "claude" &&
+    target.items.some((item) =>
+      item.kind === "workflow" &&
+      item.action !== "deleted" &&
+      pathHasSegment(item.target, "commands")
+    )
+  );
+
+  const warnings: string[] = [];
+  if (retainedCodexAuxiliaryMirror || projectedPromptMirror) warnings.push(CODEX_PROMPT_MIGRATION_WARNING);
+  if (retainedCommandMirror || projectedCommandMirror) warnings.push(CLAUDE_COMMAND_MIGRATION_WARNING);
+
+  return warnings;
 }
 
 /**

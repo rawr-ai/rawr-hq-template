@@ -54,6 +54,11 @@ export default class PluginsStatus extends RawrCommand {
     "source-workspace": Flags.string({
       description: "RAWR workspace to scan as the source of sync truth",
     }),
+    "destination-projection": Flags.boolean({
+      description: "Include legacy/auxiliary Codex destination projection in sync status",
+      default: false,
+      allowNo: true,
+    }),
     agent: Flags.string({
       description: "Sync/install status target agent",
       options: ["codex", "claude", "all"],
@@ -122,6 +127,7 @@ export default class PluginsStatus extends RawrCommand {
                 codexHomes: (flags["codex-home"] as string[] | undefined) ?? [],
                 claudeHomes: (flags["claude-home"] as string[] | undefined) ?? [],
                 config: layered.config ?? undefined,
+                includeCodexDestinationProjection: Boolean((flags as any)["destination-projection"]),
               }),
               traceId: "plugin-plugins.agent-config-sync.assess-status",
             });

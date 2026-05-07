@@ -75,6 +75,7 @@ const planWorkspaceSync = module.planWorkspaceSync.handler(async ({ context, inp
       claudeHomes: targetSelection.homes.claudeHomes,
       includeAgentsInCodex: input.includeAgentsInCodex,
       includeAgentsInClaude: input.includeAgentsInClaude,
+      includeCodexDestinationProjection: input.includeCodexDestinationProjection,
       resources: context.resources,
     }));
   }
@@ -156,6 +157,7 @@ const assessWorkspaceSync = module.assessWorkspaceSync.handler(async ({ context,
       claudeHomes: targetSelection.homes.claudeHomes,
       includeAgentsInCodex: input.includeAgentsInCodex,
       includeAgentsInClaude: input.includeAgentsInClaude,
+      includeCodexDestinationProjection: input.includeCodexDestinationProjection,
       resources: context.resources,
     }));
   }

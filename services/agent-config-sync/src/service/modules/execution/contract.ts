@@ -52,6 +52,7 @@ const ResolveProviderContentInputSchema = Type.Object(
 );
 
 export type RunSyncInput = Static<typeof RunSyncInputSchema>;
+export type SyncCodexNativeAgentRolesInput = Static<typeof RunSyncInputSchema>;
 export type SyncScannedSummary = Static<typeof SyncScannedSummarySchema>;
 export type SyncItemResult = Static<typeof SyncItemResultSchema>;
 export type ProjectionSupport = Static<typeof ProjectionSupportSchema>;
@@ -70,6 +71,18 @@ export const contract = {
    * Applies or previews a sync run into Codex and/or Claude homes.
    */
   runSync: ocBase
+    .meta({ idempotent: false, entity: "execution" })
+    .input(schema(RunSyncInputSchema))
+    .output(schema(SyncRunResultSchema)),
+  /**
+   * Applies or previews the native Codex custom-agent role config lane.
+   *
+   * This writes only `<codex-home>/agents/*.toml` plus the managed registry's
+   * `agents` claim. It is deliberately separate from generic Codex destination
+   * projection so native custom agents can stay current without re-emitting
+   * prompt/script/skill mirrors.
+   */
+  syncCodexNativeAgentRoles: ocBase
     .meta({ idempotent: false, entity: "execution" })
     .input(schema(RunSyncInputSchema))
     .output(schema(SyncRunResultSchema)),

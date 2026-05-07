@@ -52,6 +52,7 @@ const WorkspacePlanningBaseInputSchema = Type.Object(
     targetHomeCandidates: TargetHomeCandidatesSchema,
     includeAgentsInCodex: Type.Optional(Type.Boolean()),
     includeAgentsInClaude: Type.Optional(Type.Boolean()),
+    includeCodexDestinationProjection: Type.Optional(Type.Boolean()),
   },
   { additionalProperties: false },
 );
@@ -71,6 +72,7 @@ const PlanWorkspaceSyncInputSchema = Type.Object(
     targetHomeCandidates: TargetHomeCandidatesSchema,
     includeAgentsInCodex: Type.Optional(Type.Boolean()),
     includeAgentsInClaude: Type.Optional(Type.Boolean()),
+    includeCodexDestinationProjection: Type.Optional(Type.Boolean()),
     fullSyncPolicy: FullSyncPolicyInputSchema,
   },
   { additionalProperties: false },

@@ -79,6 +79,7 @@ export const SemanticCapabilityKindSchema = Type.Union([
  */
 export const DistributionModeSchema = Type.Union([
   Type.Literal("native_provider_plugin"),
+  Type.Literal("native_provider_config"),
   Type.Literal("destination_projection"),
   Type.Literal("local_plugin_install"),
   Type.Literal("package_artifact"),

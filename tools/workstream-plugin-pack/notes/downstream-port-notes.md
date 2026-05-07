@@ -1,6 +1,6 @@
 # Downstream Port Notes
 
-Temporary downstream target:
+Downstream target:
 
 ```text
 plugins/agents/habitat/
@@ -18,17 +18,17 @@ Mapping:
 - `agents/*.md` -> downstream `agents/*.md`.
 - `hooks/*.ts` -> downstream `hooks/*.ts` as provider-specific source
   material.
-- `hooks/hooks.json` -> downstream `hooks/hooks.json` as example activation
-  config. It is not synced or installed automatically yet.
+- `hooks/hooks.json` -> downstream `hooks/hooks.json` as provider-specific
+  hook config.
 
-Temporary bridge:
+Bridge status:
 
-- Upstream `tools/workstream-plugin-pack/` remains canonical for now.
-- `scripts/install-local-codex-pack.ts --target downstream` projects a working
-  copy into downstream `plugins/agents/habitat`.
-- Remove this projection bridge after `agent-config-sync` supports hook
-  projection and the Workstream plugin has been used successfully a few times
-  without issues.
+- Downstream `plugins/agents/habitat` is now the distributable Workstream
+  plugin source.
+- Upstream `tools/workstream-plugin-pack/` is a deprecated bridge/recovery copy.
+- `scripts/install-local-codex-pack.ts --target downstream` is retained only
+  for recovery while the template-side migration still carries this directory.
+- Remove this projection bridge once no template migration step depends on it.
 
 Do not port local generated activation outputs as source:
 
@@ -37,12 +37,9 @@ Do not port local generated activation outputs as source:
 - `.codex/hooks/*.ts` and `.codex/hooks.json` are local hook activation
   outputs.
 
-Known gaps:
+Known posture:
 
-- Hook activation may still require provider-local config even when reusable
-  hook scripts live in a plugin.
-- Provider-neutral agent briefs can move cleanly, but Codex `.toml` projection
-  may require separate sync support.
-
-Do not sync or install the downstream Habitat plugin until activation is
-explicitly requested.
+- Native provider sync now packages and installs Habitat skills, agents, and
+  hooks through downstream `rawr-hq/plugins/agents/habitat`.
+- Remaining Codex prompt mirrors are legacy/auxiliary compatibility output and
+  should be migrated into skills over time.

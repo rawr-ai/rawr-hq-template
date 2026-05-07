@@ -160,7 +160,8 @@ describe("agent-config-sync service behavior", () => {
       provider: "codex",
       materialKind: "agent",
       source: "researcher",
-      supportStatus: "legacy_or_deprecated",
+      distributionMode: "native_provider_config",
+      supportStatus: "native",
       droppedSemantics: ["tools", "hooks", "mcpServers", "permissionMode", "skills", "model"],
     }));
     const previewAgentProjection = preview.projections.find((projection) =>
@@ -169,7 +170,7 @@ describe("agent-config-sync service behavior", () => {
       projection.source === "researcher"
     );
     expect(previewAgentProjection?.semanticSupport).toEqual(expect.arrayContaining([
-      expect.objectContaining({ semanticKind: "agent_role", supportStatus: "legacy_or_deprecated" }),
+      expect.objectContaining({ semanticKind: "agent_role", supportStatus: "native" }),
       expect.objectContaining({ semanticKind: "tool_lock", supportStatus: "unsupported" }),
       expect.objectContaining({ semanticKind: "model_selection", supportStatus: "adapter_required" }),
       expect.objectContaining({ semanticKind: "mcp_server", supportStatus: "unsupported" }),
@@ -276,6 +277,9 @@ describe("agent-config-sync service behavior", () => {
       expect.objectContaining({ materialKind: "agent", semanticKind: "model_selection", supportStatus: "adapter_required" }),
       expect.objectContaining({ materialKind: "agent", semanticKind: "task_spawn", supportStatus: "adapter_required" }),
     ]));
+    expect(plan.assessment.plugins[0]?.semanticSupportResiduals).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ materialKind: "agent", semanticKind: "agent_role" }),
+    ]));
   });
 
   it("does not abort Codex projection when Claude agent frontmatter is malformed", async () => {
@@ -307,7 +311,7 @@ describe("agent-config-sync service behavior", () => {
       provider: "codex",
       materialKind: "agent",
       source: "researcher",
-      supportStatus: "legacy_or_deprecated",
+      supportStatus: "native",
       droppedSemantics: ["unparseable_frontmatter"],
     }));
     expect(result.projections).toContainEqual(expect.objectContaining({
@@ -428,6 +432,114 @@ describe("agent-config-sync service behavior", () => {
     await expect(fs.readFile(path.join(codexHome, "agents", "researcher.toml"), "utf8")).resolves.toContain("Research helper");
     const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
     expect(registry.plugins[0]).toMatchObject({ name: "plugin-demo", agents: ["researcher"] });
+  });
+
+  it("syncs Codex native agent roles without generic destination projection", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    await fs.mkdir(path.join(codexHome, "plugins"), { recursive: true });
+    await fs.writeFile(
+      path.join(codexHome, "plugins", "registry.json"),
+      JSON.stringify({
+        plugins: [{
+          name: "plugin-demo",
+          prompts: ["hello"],
+          skills: ["demo-skill"],
+          scripts: ["plugin-demo--demo.sh"],
+          agents: ["old-agent"],
+          managed_by: "@rawr/plugin-plugins",
+          source_plugin_path: workspace.pluginRoot,
+        }],
+      }, null, 2),
+      "utf8",
+    );
+    await fs.mkdir(path.join(codexHome, "agents"), { recursive: true });
+    await fs.writeFile(path.join(codexHome, "agents", "old-agent.toml"), "name = \"old-agent\"\n", "utf8");
+    const client = createClient(createClientOptions({ resources: createNodeTestResources() }));
+
+    const result = await client.execution.syncCodexNativeAgentRoles({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      includeAgentsInCodex: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-codex-native-agent-role-sync" } } });
+
+    expect(result.ok).toBe(true);
+    expect(result.projections).toContainEqual(expect.objectContaining({
+      provider: "codex",
+      materialKind: "agent",
+      distributionMode: "native_provider_config",
+      supportStatus: "native",
+    }));
+    await expect(fs.readFile(path.join(codexHome, "agents", "researcher.toml"), "utf8")).resolves.toContain("Research helper");
+    await expect(fs.stat(path.join(codexHome, "agents", "old-agent.toml"))).rejects.toThrow();
+    await expect(fs.stat(path.join(codexHome, "prompts", "hello.md"))).rejects.toThrow();
+    const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
+    expect(registry.plugins[0]).toMatchObject({
+      name: "plugin-demo",
+      prompts: ["hello"],
+      skills: ["demo-skill"],
+      scripts: ["plugin-demo--demo.sh"],
+      agents: ["researcher"],
+    });
+  });
+
+  it("assesses native Codex agent-role status without legacy destination projection drift", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+
+    await client.execution.syncCodexNativeAgentRoles({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [codexHome],
+      claudeHomes: [],
+      includeCodex: true,
+      includeClaude: false,
+      includeAgentsInCodex: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-native-codex-agent-status-apply" } } });
+
+    const assessment = await client.planning.assessWorkspaceSync({
+      cwd: workspace.workspaceRoot,
+      sourcePaths: [],
+      includeMetadata: true,
+      scope: "toolkit",
+      agent: "codex",
+      targetHomeCandidates: {
+        codexHomesFromFlags: [codexHome],
+        claudeHomesFromFlags: [],
+        codexHomesFromEnvironment: [],
+        claudeHomesFromEnvironment: [],
+        codexHomesFromConfig: [],
+        claudeHomesFromConfig: [],
+        codexDefaultHomes: [],
+        claudeDefaultHomes: [],
+      },
+      includeAgentsInCodex: true,
+      includeAgentsInClaude: true,
+      includeCodexDestinationProjection: false,
+    }, { context: { invocation: { traceId: "test-native-codex-agent-status-assess" } } });
+
+    expect(assessment.status).toBe("IN_SYNC");
+    expect(assessment.summary.totalMaterialChanges).toBe(0);
+    expect(assessment.plugins[0]?.driftItems).toEqual([]);
+    expect(assessment.plugins[0]?.semanticSupportResiduals).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ materialKind: "agent", semanticKind: "agent_role" }),
+    ]));
   });
 
   it("scans Hyperresearch-like hooks, MCP, settings, assets, and orchestration as explicit material", async () => {
@@ -1104,6 +1216,554 @@ describe("agent-config-sync service behavior", () => {
     expect(configToml).toContain("[mcp_servers.manual]");
     const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
     expect(registry.plugins).toEqual([]);
+  });
+
+  it("cleans managed residue behind verified Codex provider sync while retaining projection-only claims", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const rootSkill = path.join(codexHome, "skills", "demo-skill");
+    const runtimeSkill = path.join(codexHome, ".agents", "skills", "demo-skill");
+    const prompt = path.join(codexHome, "prompts", "hello.md");
+    const script = path.join(codexHome, "scripts", "plugin-demo--demo.sh");
+    const agent = path.join(codexHome, "agents", "researcher.toml");
+    const hookScript = path.join(codexHome, "hooks", "rawr", "plugin-demo", "pre.mjs");
+    const mcpServer = path.join(codexHome, "mcp", "rawr", "plugin-demo", "server.mjs");
+    await Promise.all([
+      fs.mkdir(rootSkill, { recursive: true }),
+      fs.mkdir(runtimeSkill, { recursive: true }),
+      fs.mkdir(path.dirname(prompt), { recursive: true }),
+      fs.mkdir(path.dirname(script), { recursive: true }),
+      fs.mkdir(path.dirname(agent), { recursive: true }),
+      fs.mkdir(path.dirname(hookScript), { recursive: true }),
+      fs.mkdir(path.dirname(mcpServer), { recursive: true }),
+      fs.mkdir(path.join(codexHome, "plugins"), { recursive: true }),
+    ]);
+    await Promise.all([
+      fs.writeFile(path.join(rootSkill, "SKILL.md"), "# stale root\n", "utf8"),
+      fs.writeFile(path.join(runtimeSkill, "SKILL.md"), "# stale runtime\n", "utf8"),
+      fs.writeFile(prompt, "# prompt\n", "utf8"),
+      fs.writeFile(script, "echo script\n", "utf8"),
+      fs.writeFile(agent, "name = \"researcher\"\n", "utf8"),
+      fs.writeFile(hookScript, "console.log('hook')\n", "utf8"),
+      fs.writeFile(mcpServer, "console.log('mcp')\n", "utf8"),
+      fs.writeFile(path.join(codexHome, "hooks.json"), JSON.stringify({
+        hooks: {
+          PreToolUse: [
+            { matcher: "Read", hooks: [{ type: "command", command: "echo manual", statusMessage: "manual hook" }] },
+            { matcher: "Bash", hooks: [{ type: "command", command: "node ./hooks/rawr/plugin-demo/pre.mjs", statusMessage: "RAWR plugin-demo: hooks.json#1" }] },
+          ],
+        },
+      }, null, 2), "utf8"),
+      fs.writeFile(path.join(codexHome, "plugins", "registry.json"), JSON.stringify({
+        plugins: [{
+          name: "plugin-demo",
+          prompts: ["hello"],
+          skills: ["demo-skill"],
+          scripts: ["plugin-demo--demo.sh"],
+          agents: ["researcher"],
+          hookScripts: ["pre.mjs"],
+          hookConfigs: ["hooks.json"],
+          hooks: ["pre.mjs", "hooks.json"],
+          mcpServers: ["server.mjs", "server.json"],
+          managed_by: "@rawr/plugin-plugins",
+          source_plugin_path: workspace.pluginRoot,
+        }],
+      }, null, 2), "utf8"),
+    ]);
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+    const result = await client.retirement.cleanupBehindProviderSync({
+      workspaceRoot: workspace.workspaceRoot,
+      claimCheckCodexHomes: [codexHome],
+      candidates: [{
+        provider: "codex",
+        home: codexHome,
+        plugin: "plugin-demo",
+        sourcePluginRoot: workspace.pluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "verified",
+        verifiedCapabilities: { skills: true, hooks: true, mcp: true, scripts: false },
+      }],
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-cleanup-behind-codex" } } });
+
+    expect(result.ok).toBe(true);
+    expect(result.cleanedPlugins).toEqual([{ agent: "codex", home: codexHome, plugin: "plugin-demo" }]);
+    await expect(fs.stat(rootSkill)).rejects.toThrow();
+    await expect(fs.stat(runtimeSkill)).rejects.toThrow();
+    await expect(fs.stat(hookScript)).rejects.toThrow();
+    await expect(fs.stat(mcpServer)).rejects.toThrow();
+    await expect(fs.readFile(prompt, "utf8")).resolves.toBe("# prompt\n");
+    await expect(fs.readFile(script, "utf8")).resolves.toBe("echo script\n");
+    await expect(fs.readFile(agent, "utf8")).resolves.toBe("name = \"researcher\"\n");
+    const hooksJson = JSON.parse(await fs.readFile(path.join(codexHome, "hooks.json"), "utf8"));
+    expect(JSON.stringify(hooksJson)).toContain("manual hook");
+    expect(JSON.stringify(hooksJson)).not.toContain("RAWR plugin-demo:");
+    const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
+    expect(registry.plugins).toEqual([expect.objectContaining({
+      name: "plugin-demo",
+      prompts: ["hello"],
+      skills: [],
+      scripts: ["plugin-demo--demo.sh"],
+      agents: ["researcher"],
+      hookScripts: [],
+      hookConfigs: [],
+      hooks: [],
+      mcpServers: ["server.json"],
+    })]);
+    expect(result.retainedResidue).toEqual(expect.arrayContaining([
+      expect.objectContaining({ reason: "projection-only-retained", target: prompt }),
+      expect.objectContaining({ reason: "projection-only-retained", target: script }),
+      expect.objectContaining({ reason: "under-specified-config-retained" }),
+    ]));
+    expect(result.retainedResidue).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ target: agent }),
+    ]));
+  });
+
+  it("cleans managed script residue when scripts are verified as superseded", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const script = path.join(codexHome, "scripts", "plugin-demo--demo.sh");
+    await Promise.all([
+      fs.mkdir(path.dirname(script), { recursive: true }),
+      fs.mkdir(path.join(codexHome, "plugins"), { recursive: true }),
+    ]);
+    await fs.writeFile(script, "echo stale script\n", "utf8");
+    await fs.writeFile(path.join(codexHome, "plugins", "registry.json"), JSON.stringify({
+      plugins: [{
+        name: "plugin-demo",
+        scripts: ["plugin-demo--demo.sh"],
+        managed_by: "@rawr/plugin-plugins",
+        source_plugin_path: workspace.pluginRoot,
+      }],
+    }, null, 2), "utf8");
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+    const result = await client.retirement.cleanupBehindProviderSync({
+      workspaceRoot: workspace.workspaceRoot,
+      claimCheckCodexHomes: [codexHome],
+      candidates: [{
+        provider: "codex",
+        home: codexHome,
+        plugin: "plugin-demo",
+        sourcePluginRoot: workspace.pluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "verified",
+        verifiedCapabilities: { skills: false, hooks: false, mcp: false, scripts: true },
+      }],
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-cleanup-behind-script" } } });
+
+    expect(result.ok).toBe(true);
+    expect(result.cleanedPlugins).toEqual([{ agent: "codex", home: codexHome, plugin: "plugin-demo" }]);
+    expect(result.retainedResidue).toEqual([]);
+    expect(result.actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ action: "deleted", target: script }),
+      expect.objectContaining({ action: "updated", target: path.join(codexHome, "plugins", "registry.json") }),
+    ]));
+    await expect(fs.stat(script)).rejects.toThrow();
+    const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
+    expect(registry.plugins).toEqual([]);
+  });
+
+  it("does not infer cleanup ownership from unmanaged matching paths", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const rootSkill = path.join(codexHome, "skills", "demo-skill");
+    const runtimeSkill = path.join(codexHome, ".agents", "skills", "demo-skill");
+    await Promise.all([
+      fs.mkdir(rootSkill, { recursive: true }),
+      fs.mkdir(runtimeSkill, { recursive: true }),
+    ]);
+    await fs.writeFile(path.join(rootSkill, "SKILL.md"), "# unmanaged root\n", "utf8");
+    await fs.writeFile(path.join(runtimeSkill, "SKILL.md"), "# unmanaged runtime\n", "utf8");
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+    const result = await client.retirement.cleanupBehindProviderSync({
+      workspaceRoot: workspace.workspaceRoot,
+      claimCheckCodexHomes: [codexHome],
+      candidates: [{
+        provider: "codex",
+        home: codexHome,
+        plugin: "plugin-demo",
+        sourcePluginRoot: workspace.pluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "verified",
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
+      }],
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-cleanup-behind-unmanaged" } } });
+
+    expect(result.cleanedPlugins).toEqual([]);
+    await expect(fs.readFile(path.join(rootSkill, "SKILL.md"), "utf8")).resolves.toBe("# unmanaged root\n");
+    await expect(fs.readFile(path.join(runtimeSkill, "SKILL.md"), "utf8")).resolves.toBe("# unmanaged runtime\n");
+  });
+
+  it("retains managed cleanup claims that resolve outside bounded cleanup roots", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const outsideRootSkill = path.join(codexHome, "outside-skill");
+    const outsideRuntimeSkill = path.join(codexHome, ".agents", "outside-skill");
+    const outsideHook = path.join(codexHome, "hooks", "rawr", "outside-hook.js");
+    const outsideMcp = path.join(codexHome, "mcp", "rawr", "outside-mcp.js");
+    const outsideScript = path.join(codexHome, "outside-script.sh");
+    await Promise.all([
+      fs.mkdir(outsideRootSkill, { recursive: true }),
+      fs.mkdir(outsideRuntimeSkill, { recursive: true }),
+      fs.mkdir(path.dirname(outsideHook), { recursive: true }),
+      fs.mkdir(path.dirname(outsideMcp), { recursive: true }),
+      fs.mkdir(path.join(codexHome, "plugins"), { recursive: true }),
+    ]);
+    await fs.writeFile(path.join(outsideRootSkill, "SKILL.md"), "# outside root\n", "utf8");
+    await fs.writeFile(path.join(outsideRuntimeSkill, "SKILL.md"), "# outside runtime\n", "utf8");
+    await fs.writeFile(outsideHook, "console.log('outside hook')\n", "utf8");
+    await fs.writeFile(outsideMcp, "console.log('outside mcp')\n", "utf8");
+    await fs.writeFile(outsideScript, "echo outside script\n", "utf8");
+    await fs.writeFile(path.join(codexHome, "plugins", "registry.json"), JSON.stringify({
+      plugins: [{
+        name: "plugin-demo",
+        skills: ["../outside-skill"],
+        scripts: ["../outside-script.sh"],
+        hookScripts: ["../outside-hook.js"],
+        hooks: ["../outside-hook.js"],
+        mcpServers: ["../outside-mcp.js"],
+        managed_by: "@rawr/plugin-plugins",
+        source_plugin_path: workspace.pluginRoot,
+      }],
+    }, null, 2), "utf8");
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+    const result = await client.retirement.cleanupBehindProviderSync({
+      workspaceRoot: workspace.workspaceRoot,
+      claimCheckCodexHomes: [codexHome],
+      candidates: [{
+        provider: "codex",
+        home: codexHome,
+        plugin: "plugin-demo",
+        sourcePluginRoot: workspace.pluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "verified",
+        verifiedCapabilities: { skills: true, hooks: true, mcp: true, scripts: true },
+      }],
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-cleanup-behind-unsafe-claims" } } });
+
+    expect(result.cleanedPlugins).toEqual([]);
+    expect(result.retainedResidue).toEqual(expect.arrayContaining([
+      expect.objectContaining({ reason: "unsafe-registry-claim-retained", target: expect.stringContaining("../outside-skill") }),
+      expect.objectContaining({ reason: "unsafe-registry-claim-retained", target: expect.stringContaining("../outside-script.sh") }),
+      expect.objectContaining({ reason: "unsafe-registry-claim-retained", target: expect.stringContaining("../outside-hook.js") }),
+      expect.objectContaining({ reason: "unsafe-registry-claim-retained", target: expect.stringContaining("../outside-mcp.js") }),
+    ]));
+    expect(result.actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ action: "skipped", target: expect.stringContaining("../outside-skill") }),
+      expect.objectContaining({ action: "skipped", target: expect.stringContaining("../outside-script.sh") }),
+      expect.objectContaining({ action: "skipped", target: expect.stringContaining("../outside-hook.js") }),
+      expect.objectContaining({ action: "skipped", target: expect.stringContaining("../outside-mcp.js") }),
+    ]));
+    await expect(fs.readFile(path.join(outsideRootSkill, "SKILL.md"), "utf8")).resolves.toBe("# outside root\n");
+    await expect(fs.readFile(path.join(outsideRuntimeSkill, "SKILL.md"), "utf8")).resolves.toBe("# outside runtime\n");
+    await expect(fs.readFile(outsideHook, "utf8")).resolves.toBe("console.log('outside hook')\n");
+    await expect(fs.readFile(outsideMcp, "utf8")).resolves.toBe("console.log('outside mcp')\n");
+    await expect(fs.readFile(outsideScript, "utf8")).resolves.toBe("echo outside script\n");
+    const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
+    expect(registry.plugins).toEqual([expect.objectContaining({
+      name: "plugin-demo",
+      skills: ["../outside-skill"],
+      scripts: ["../outside-script.sh"],
+      hookScripts: ["../outside-hook.js"],
+      mcpServers: ["../outside-mcp.js"],
+    })]);
+  });
+
+  it("plans cleanup behind provider sync without mutating during dry-run", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const rootSkill = path.join(codexHome, "skills", "demo-skill");
+    await fs.mkdir(rootSkill, { recursive: true });
+    await fs.mkdir(path.join(codexHome, "plugins"), { recursive: true });
+    await fs.writeFile(path.join(rootSkill, "SKILL.md"), "# stale\n", "utf8");
+    await fs.writeFile(path.join(codexHome, "plugins", "registry.json"), JSON.stringify({
+      plugins: [{
+        name: "plugin-demo",
+        skills: ["demo-skill"],
+        managed_by: "@rawr/plugin-plugins",
+        source_plugin_path: workspace.pluginRoot,
+      }],
+    }, null, 2), "utf8");
+    const before = await snapshotProviderState(codexHome);
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+    const result = await client.retirement.cleanupBehindProviderSync({
+      workspaceRoot: workspace.workspaceRoot,
+      claimCheckCodexHomes: [codexHome],
+      candidates: [{
+        provider: "codex",
+        home: codexHome,
+        plugin: "plugin-demo",
+        sourcePluginRoot: workspace.pluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "dry-run-planned",
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
+      }],
+      dryRun: true,
+    }, { context: { invocation: { traceId: "test-cleanup-behind-dry-run" } } });
+
+    expect(result.actions).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        action: "planned",
+        target: rootSkill,
+        message: expect.stringContaining("not provider-verified"),
+      }),
+      expect.objectContaining({
+        action: "planned",
+        target: path.join(codexHome, "plugins", "registry.json"),
+        message: expect.stringContaining("not provider-verified"),
+      }),
+    ]));
+    expect(result.cleanedPlugins).toEqual([]);
+    expect(await snapshotProviderState(codexHome)).toEqual(before);
+  });
+
+  it("cleans only verified home-local residue when multiple Codex homes exist", async () => {
+    const workspace = await makeParityWorkspace();
+    const first = await makeProviderHomes();
+    const second = await makeProviderHomes();
+    const verifiedHome = first.codexHome;
+    const unverifiedHome = second.codexHome;
+    tempDirs.push(workspace.workspaceRoot, verifiedHome, first.claudeHome, unverifiedHome, second.claudeHome);
+
+    const verifiedSkill = path.join(verifiedHome, "skills", "demo-skill");
+    const unverifiedSkill = path.join(unverifiedHome, "skills", "demo-skill");
+    await Promise.all([
+      fs.mkdir(verifiedSkill, { recursive: true }),
+      fs.mkdir(unverifiedSkill, { recursive: true }),
+      fs.mkdir(path.join(verifiedHome, "plugins"), { recursive: true }),
+      fs.mkdir(path.join(unverifiedHome, "plugins"), { recursive: true }),
+    ]);
+    await fs.writeFile(path.join(verifiedSkill, "SKILL.md"), "# verified stale\n", "utf8");
+    await fs.writeFile(path.join(unverifiedSkill, "SKILL.md"), "# unverified stale\n", "utf8");
+    const registryEntry = {
+      name: "plugin-demo",
+      skills: ["demo-skill"],
+      managed_by: "@rawr/plugin-plugins",
+      source_plugin_path: workspace.pluginRoot,
+    };
+    await fs.writeFile(path.join(verifiedHome, "plugins", "registry.json"), JSON.stringify({ plugins: [registryEntry] }, null, 2), "utf8");
+    await fs.writeFile(path.join(unverifiedHome, "plugins", "registry.json"), JSON.stringify({ plugins: [registryEntry] }, null, 2), "utf8");
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+    const result = await client.retirement.cleanupBehindProviderSync({
+      workspaceRoot: workspace.workspaceRoot,
+      claimCheckCodexHomes: [verifiedHome, unverifiedHome],
+      candidates: [{
+        provider: "codex",
+        home: verifiedHome,
+        plugin: "plugin-demo",
+        sourcePluginRoot: workspace.pluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "verified",
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
+      }],
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-cleanup-behind-multi-home" } } });
+
+    expect(result.cleanedPlugins).toEqual([{ agent: "codex", home: verifiedHome, plugin: "plugin-demo" }]);
+    await expect(fs.stat(verifiedSkill)).rejects.toThrow();
+    await expect(fs.readFile(path.join(unverifiedSkill, "SKILL.md"), "utf8")).resolves.toBe("# unverified stale\n");
+    const unverifiedRegistry = JSON.parse(await fs.readFile(path.join(unverifiedHome, "plugins", "registry.json"), "utf8"));
+    expect(unverifiedRegistry.plugins).toEqual([expect.objectContaining({ name: "plugin-demo", skills: ["demo-skill"] })]);
+  });
+
+  it("preserves shared managed skill targets while removing only the superseded claim", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const rootSkill = path.join(codexHome, "skills", "demo-skill");
+    const runtimeSkill = path.join(codexHome, ".agents", "skills", "demo-skill");
+    await Promise.all([
+      fs.mkdir(rootSkill, { recursive: true }),
+      fs.mkdir(runtimeSkill, { recursive: true }),
+      fs.mkdir(path.join(codexHome, "plugins"), { recursive: true }),
+    ]);
+    await fs.writeFile(path.join(rootSkill, "SKILL.md"), "# shared root\n", "utf8");
+    await fs.writeFile(path.join(runtimeSkill, "SKILL.md"), "# shared runtime\n", "utf8");
+    await fs.writeFile(path.join(codexHome, "plugins", "registry.json"), JSON.stringify({
+      plugins: [
+        {
+          name: "plugin-demo",
+          skills: ["demo-skill"],
+          managed_by: "@rawr/plugin-plugins",
+          source_plugin_path: workspace.pluginRoot,
+        },
+        {
+          name: "other-plugin",
+          skills: ["demo-skill"],
+          managed_by: "@rawr/plugin-plugins",
+          source_plugin_path: path.join(workspace.workspaceRoot, "plugins", "agents", "other-plugin"),
+        },
+      ],
+    }, null, 2), "utf8");
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+    const result = await client.retirement.cleanupBehindProviderSync({
+      workspaceRoot: workspace.workspaceRoot,
+      claimCheckCodexHomes: [codexHome],
+      candidates: [{
+        provider: "codex",
+        home: codexHome,
+        plugin: "plugin-demo",
+        sourcePluginRoot: workspace.pluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "verified",
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
+      }],
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-cleanup-behind-shared-claim" } } });
+
+    expect(result.retainedResidue).toEqual(expect.arrayContaining([
+      expect.objectContaining({ reason: "shared-claim-retained", target: rootSkill }),
+      expect.objectContaining({ reason: "shared-runtime-claim-retained", target: runtimeSkill }),
+    ]));
+    await expect(fs.readFile(path.join(rootSkill, "SKILL.md"), "utf8")).resolves.toBe("# shared root\n");
+    await expect(fs.readFile(path.join(runtimeSkill, "SKILL.md"), "utf8")).resolves.toBe("# shared runtime\n");
+    const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
+    expect(registry.plugins).toEqual([expect.objectContaining({ name: "other-plugin", skills: ["demo-skill"] })]);
+  });
+
+  it("preserves shared runtime skill roots across sibling Codex homes", async () => {
+    const workspace = await makeParityWorkspace();
+    const userRoot = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-user-root-"));
+    const codexRawr = path.join(userRoot, ".codex-rawr");
+    const codex = path.join(userRoot, ".codex");
+    tempDirs.push(workspace.workspaceRoot, userRoot);
+    const rootSkill = path.join(codexRawr, "skills", "demo-skill");
+    const runtimeSkill = path.join(userRoot, ".agents", "skills", "demo-skill");
+    await Promise.all([
+      fs.mkdir(rootSkill, { recursive: true }),
+      fs.mkdir(runtimeSkill, { recursive: true }),
+      fs.mkdir(path.join(codexRawr, "plugins"), { recursive: true }),
+      fs.mkdir(path.join(codex, "plugins"), { recursive: true }),
+    ]);
+    await fs.writeFile(path.join(rootSkill, "SKILL.md"), "# rawr root\n", "utf8");
+    await fs.writeFile(path.join(runtimeSkill, "SKILL.md"), "# shared runtime\n", "utf8");
+    await fs.writeFile(path.join(codexRawr, "plugins", "registry.json"), JSON.stringify({
+      plugins: [{
+        name: "plugin-demo",
+        skills: ["demo-skill"],
+        managed_by: "@rawr/plugin-plugins",
+        source_plugin_path: workspace.pluginRoot,
+      }],
+    }, null, 2), "utf8");
+    await fs.writeFile(path.join(codex, "plugins", "registry.json"), JSON.stringify({
+      plugins: [{
+        name: "other-plugin",
+        skills: ["demo-skill"],
+        managed_by: "@rawr/plugin-plugins",
+        source_plugin_path: path.join(workspace.workspaceRoot, "plugins", "agents", "other-plugin"),
+      }],
+    }, null, 2), "utf8");
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+    const result = await client.retirement.cleanupBehindProviderSync({
+      workspaceRoot: workspace.workspaceRoot,
+      claimCheckCodexHomes: [codexRawr, codex],
+      candidates: [{
+        provider: "codex",
+        home: codexRawr,
+        plugin: "plugin-demo",
+        sourcePluginRoot: workspace.pluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "verified",
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
+      }],
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-cleanup-behind-shared-runtime-root" } } });
+
+    expect(result.retainedResidue).toEqual(expect.arrayContaining([
+      expect.objectContaining({ reason: "shared-runtime-claim-retained", target: runtimeSkill }),
+    ]));
+    await expect(fs.stat(rootSkill)).rejects.toThrow();
+    await expect(fs.readFile(path.join(runtimeSkill, "SKILL.md"), "utf8")).resolves.toBe("# shared runtime\n");
+  });
+
+  it("retains same-name managed entries from a different existing source root", async () => {
+    const workspace = await makeParityWorkspace();
+    const { codexHome } = await makeProviderHomes();
+    const otherSource = path.join(workspace.workspaceRoot, "plugins", "agents", "plugin-demo");
+    tempDirs.push(workspace.workspaceRoot, codexHome);
+    const rootSkill = path.join(codexHome, "skills", "demo-skill");
+    await Promise.all([
+      fs.mkdir(rootSkill, { recursive: true }),
+      fs.mkdir(otherSource, { recursive: true }),
+      fs.mkdir(path.join(codexHome, "plugins"), { recursive: true }),
+    ]);
+    await fs.writeFile(path.join(rootSkill, "SKILL.md"), "# collision\n", "utf8");
+    await fs.writeFile(path.join(codexHome, "plugins", "registry.json"), JSON.stringify({
+      plugins: [{
+        name: "plugin-demo",
+        skills: ["demo-skill"],
+        managed_by: "@rawr/plugin-plugins",
+        source_plugin_path: otherSource,
+      }],
+    }, null, 2), "utf8");
+
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+    const result = await client.retirement.cleanupBehindProviderSync({
+      workspaceRoot: workspace.workspaceRoot,
+      claimCheckCodexHomes: [codexHome],
+      candidates: [{
+        provider: "codex",
+        home: codexHome,
+        plugin: "plugin-demo",
+        sourcePluginRoot: workspace.pluginRoot,
+        reason: "codex_native_superseded_projection",
+        verification: "verified",
+        verifiedCapabilities: { skills: true, hooks: false, mcp: false, scripts: false },
+      }],
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-cleanup-behind-source-collision" } } });
+
+    expect(result.cleanedPlugins).toEqual([]);
+    expect(result.retainedResidue).toEqual(expect.arrayContaining([
+      expect.objectContaining({ reason: "source-collision" }),
+    ]));
+    await expect(fs.readFile(path.join(rootSkill, "SKILL.md"), "utf8")).resolves.toBe("# collision\n");
+    const registry = JSON.parse(await fs.readFile(path.join(codexHome, "plugins", "registry.json"), "utf8"));
+    expect(registry.plugins).toEqual([expect.objectContaining({ name: "plugin-demo", skills: ["demo-skill"] })]);
   });
 
   it("retires stale managed Claude entries through service-owned retirement behavior", async () => {

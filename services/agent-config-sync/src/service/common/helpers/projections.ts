@@ -316,12 +316,12 @@ async function buildCodexProjections(input: {
         source: agent.name,
         sourcePath: agent.absPath,
         targetPaths: input.homes.map((home) => pathOps.join(home, "agents", rendered.targetName)),
-        distributionMode: "destination_projection",
-        supportStatus: "legacy_or_deprecated",
-        evidenceLevel: "source_code",
+        distributionMode: "native_provider_config",
+        supportStatus: "native",
+        evidenceLevel: "local_verified",
         semanticSupport: [
-          ...codexDestinationProjectionSemanticSupport(rendered.semanticSupport),
-          ...codexDestinationProjectionSemanticSupport(relatedSemanticSupport({ source: agent.name, semanticSupport })),
+          ...rendered.semanticSupport,
+          ...relatedSemanticSupport({ source: agent.name, semanticSupport }),
         ],
         droppedSemantics: rendered.droppedSemantics,
         adapterRequiredSemantics: [

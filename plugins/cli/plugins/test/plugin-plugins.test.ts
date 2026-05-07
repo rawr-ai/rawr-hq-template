@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { afterEach } from "vitest";
 import { describe, expect, it } from "vitest";
 import {
+  buildCleanupBehindCodexCandidates,
+  buildProviderWorkflowMirrorWarnings,
   collectWorkspaceSourcePaths,
   createWorkspaceSyncPlanInput,
   resolveSourceWorkspaceSelection,
@@ -76,8 +78,10 @@ describe("@rawr/plugin-plugins", () => {
 
     for (const source of [syncSource, syncAllSource]) {
       expect(source).toContain("\"codex-package\": Flags.boolean");
+      expect(source).toContain("\"cleanup-behind\": Flags.boolean");
       expect(source).toContain("default: true");
       expect(source).toContain("includeCodex: destinationProjectionEnabled && targets.agents.includes(\"codex\")");
+      expect(source).toContain("cleanupBehind");
     }
     expect(syncAllSource).toContain("codexPackageEnabled,");
     expect(syncAllSource).toContain("codexInstallEnabled,");
@@ -86,6 +90,145 @@ describe("@rawr/plugin-plugins", () => {
       expect(source).toContain("PROJECTION_DESTINATION_REQUIRED");
       expect(source).toContain("projectionMode: \"generic_destination_projection\"");
     }
+  });
+
+  it("requires plugin-scoped Codex skill visibility before cleanup-behind verifies skills", () => {
+    const sourcePluginRootsByName = new Map([["plugin-demo", "/tmp/source/plugins/plugin-demo"]]);
+
+    const candidates = buildCleanupBehindCodexCandidates({
+      enabled: true,
+      destinationProjectionEnabled: false,
+      codexPackageEnabled: true,
+      codexInstallEnabled: true,
+      dryRun: false,
+      sourcePluginRootsByName,
+      fallbackCodexHome: "/tmp/codex-home",
+      codexPackages: [],
+      codexInstall: {
+        ok: true,
+        actions: [{
+          action: "verified",
+          plugin: "plugin-demo",
+          codexHome: "/tmp/codex-home",
+          installed: true,
+          enabled: true,
+          skillCount: 1,
+          visibleSkillCount: 10,
+          visiblePluginSkillCount: 0,
+          scriptCount: 1,
+          providerHookCount: 0,
+          mcpServerCount: 0,
+        }],
+      },
+    });
+
+    expect(candidates).toEqual([expect.objectContaining({
+      plugin: "plugin-demo",
+      verifiedCapabilities: {
+        skills: false,
+        hooks: false,
+        mcp: false,
+        scripts: false,
+      },
+    })]);
+  });
+
+  it("suppresses cleanup-behind when Codex install reports failure", () => {
+    const candidates = buildCleanupBehindCodexCandidates({
+      enabled: true,
+      destinationProjectionEnabled: false,
+      codexPackageEnabled: true,
+      codexInstallEnabled: true,
+      dryRun: false,
+      sourcePluginRootsByName: new Map([["plugin-demo", "/tmp/source/plugins/plugin-demo"]]),
+      fallbackCodexHome: "/tmp/codex-home",
+      codexPackages: [],
+      codexInstall: {
+        ok: false,
+        actions: [{
+          action: "verified",
+          plugin: "plugin-demo",
+          codexHome: "/tmp/codex-home",
+          installed: true,
+          enabled: true,
+          skillCount: 1,
+          visiblePluginSkillCount: 1,
+          providerHookCount: 0,
+          mcpServerCount: 0,
+        }],
+      },
+    });
+
+    expect(candidates).toEqual([]);
+  });
+
+  it("warns when Codex prompt mirrors remain after native sync cleanup", () => {
+    const warnings = buildProviderWorkflowMirrorWarnings({
+      cleanupBehind: {
+        ok: true,
+        cleanedPlugins: [],
+        actions: [],
+        retainedResidue: [{
+          agent: "codex",
+          home: "/tmp/codex-home",
+          plugin: "plugin-demo",
+          target: "/tmp/codex-home/prompts/demo.md",
+          reason: "projection-only-retained",
+        }],
+      },
+    });
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("Codex guidance favors skills");
+    expect(warnings[0]).toContain("legacy/auxiliary compatibility mirror");
+  });
+
+  it("warns when Claude command mirrors are projected or retained", () => {
+    const warnings = buildProviderWorkflowMirrorWarnings({
+      cleanupBehind: {
+        ok: true,
+        cleanedPlugins: [],
+        actions: [],
+        retainedResidue: [{
+          agent: "claude",
+          home: "/tmp/claude-home",
+          plugin: "plugin-demo",
+          target: "/tmp/claude-home/plugins/plugin-demo/commands/demo.md",
+          reason: "projection-only-retained",
+        }],
+      },
+      syncTargets: [{
+        agent: "claude",
+        items: [{
+          action: "planned",
+          kind: "workflow",
+          target: "/tmp/claude-home/plugins/plugin-demo/commands/another-demo.md",
+        }],
+      }],
+    });
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("Claude Code custom commands have been merged into skills");
+    expect(warnings[0]).toContain("supported compatibility/direct-invocation mirror");
+  });
+
+  it("does not issue provider workflow mirror warnings for unrelated retained residue", () => {
+    const warnings = buildProviderWorkflowMirrorWarnings({
+      cleanupBehind: {
+        ok: true,
+        cleanedPlugins: [],
+        actions: [],
+        retainedResidue: [{
+          agent: "claude",
+          home: "/tmp/claude-home",
+          plugin: "plugin-demo",
+          target: "/tmp/claude-home/prompts/demo.md",
+          reason: "projection-only-retained",
+        }],
+      },
+    });
+
+    expect(warnings).toEqual([]);
   });
 
   it("checks install state from the invocation workspace during external source sync status", async () => {

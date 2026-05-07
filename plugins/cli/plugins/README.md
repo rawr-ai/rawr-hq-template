@@ -101,6 +101,14 @@ provider homes, or provider default homes.
 
 `rawr plugins sync` also has `--destination-projection` when a workstream needs native deployment plus auxiliary filesystem projection in one run. This is for fixtures, migration, repair, ad-hoc packaging, and non-CLI systems. It is not a fallback for Codex or Claude plugin deployment.
 
+By default, successful native provider sync also runs cleanup behind the
+provider install through the generic `cleanupBehind` result surface. The first
+implemented policy is Codex native install superseding RAWR-managed direct
+projection residue. Cleanup removes only registry-owned residue that the same
+Codex home's provider install has verified, reports retained residue in JSON,
+and is suppressed by `--destination-projection`, `--no-codex-install`, or
+`--no-cleanup-behind`.
+
 ## Partial mode guard (advanced)
 
 `rawr plugins sync all` blocks partial mode by default. If you intentionally disable part of the full pipeline (example: `--agent claude`, `--scope agents`, `--no-cowork`, `--no-claude-install`, `--no-force`, `--no-gc`, `--no-retire-orphans`), you must add:
@@ -190,6 +198,10 @@ Native Codex package install currently uses the first selected Codex home for
 the provider app-server session. Additional Codex homes are explicit generic
 projection destinations only when `rawr plugins export` or
 `--destination-projection` is used.
+
+Cleanup behind native install is scoped to the same Codex home that provider
+install verified. Shared runtime skill roots are checked against sibling Codex
+homes before a physical runtime skill directory is removed.
 
 ## Lifecycle Quality Commands
 

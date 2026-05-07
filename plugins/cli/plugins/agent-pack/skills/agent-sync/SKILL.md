@@ -110,6 +110,13 @@ homes, or provider default homes.
 
 `rawr plugins sync --destination-projection` can be used when a workstream needs native deployment plus auxiliary filesystem projection in one run. Projection is not a Codex or Claude deployment fallback.
 
+By default, successful native provider sync also exposes the generic
+`cleanupBehind` result surface. The first implemented policy is Codex native
+install superseding RAWR-managed direct projection residue. Cleanup removes only
+registry-owned residue that the same Codex home's provider install has
+verified, reports retained residue in JSON, and is suppressed by
+`--destination-projection`, `--no-codex-install`, or `--no-cleanup-behind`.
+
 Compatibility alias (deprecated):
 ```bash
 rawr agent sync <plugin-ref>
@@ -173,6 +180,13 @@ Native Codex package install currently uses the first selected Codex home for
 the provider app-server session. Additional Codex homes are explicit generic
 projection destinations only when `rawr plugins export` or
 `--destination-projection` is used.
+
+Cleanup behind native install is exposed through the generic `cleanupBehind`
+result surface. The first implemented policy is Codex native install
+superseding RAWR-managed direct projection residue. It is scoped to the same
+Codex home that provider install verified. Shared runtime skill roots are
+checked against sibling Codex homes before a physical runtime skill directory is
+removed.
 
 ## Conflicts and safety
 

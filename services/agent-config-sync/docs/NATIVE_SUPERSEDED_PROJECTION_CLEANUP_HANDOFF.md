@@ -1,6 +1,6 @@
 # Native-Superseded Projection Cleanup Handoff
 
-Status: forward-looking implementation handoff.
+Status: implemented as the first generic cleanup-behind provider sync policy.
 
 Audience: an external senior/pro agent starting cold in this repository.
 
@@ -8,6 +8,11 @@ Primary objective: when a RAWR agent plugin is successfully installed through
 native Codex provider plugin deployment, retire that same plugin's old
 RAWR-managed direct Codex projections so the provider skill picker and runtime
 state do not show duplicate legacy entries.
+
+Implementation note: the durable service surface is intentionally generic:
+`cleanupBehindProviderSync`. The first policy is
+`codex_native_superseded_projection`, but future provider cleanup policies
+should reuse the same cleanup-behind shape instead of adding one-off commands.
 
 ## Start Here
 
@@ -23,8 +28,8 @@ Read these files first:
 - `services/agent-config-sync/src/service/modules/retirement/router.ts`
 - `services/agent-config-sync/src/service/modules/retirement/helpers/apply-codex-retirement.ts`
 - `services/agent-config-sync/src/service/modules/execution/helpers/sync-codex-homes.ts`
-- `services/agent-config-sync/src/service/shared/repositories/codex-runtime-paths.ts`
-- `services/agent-config-sync/src/service/shared/repositories/codex-registry-repository.ts`
+- `services/agent-config-sync/src/service/common/repositories/codex-runtime-paths.ts`
+- `services/agent-config-sync/src/service/common/repositories/codex-registry-repository.ts`
 - `packages/agent-config-sync-node/src/codex-cli.ts`
 - `plugins/cli/plugins/src/commands/plugins/sync.ts`
 - `plugins/cli/plugins/src/commands/plugins/sync/all.ts`
@@ -186,20 +191,22 @@ Do not touch:
 
 ## Recommended Design
 
-Add a new retirement capability rather than overloading stale-plugin
-retirement.
+Add a new cleanup-behind retirement capability rather than overloading
+stale-plugin retirement.
 
-Proposed service procedure:
+Implemented service procedure:
 
 ```ts
-retireNativeSupersededCodexProjections({
+cleanupBehindProviderSync({
   workspaceRoot: string;
   claimCheckCodexHomes: string[];
   candidates: Array<{
-    codexHome: string;
+    provider: "codex";
+    home: string;
     plugin: string;
     sourcePluginRoot: string;
-    verifiedNativeCapabilities: {
+    reason: "codex_native_superseded_projection";
+    verifiedCapabilities: {
       skills: boolean;
       hooks: boolean;
       mcp: boolean;
@@ -210,12 +217,21 @@ retireNativeSupersededCodexProjections({
 })
 ```
 
-Output should reuse or extend the existing retirement action shape:
+Output reuses the existing retirement action shape and adds retained-residue
+reporting:
 
 ```ts
 {
   ok: boolean;
-  retiredPlugins: Array<{ agent: "codex"; home: string; plugin: string }>;
+  cleanedPlugins: Array<{ agent: "codex"; home: string; plugin: string }>;
+  retainedResidue: Array<{
+    agent: "codex";
+    home: string;
+    plugin: string;
+    target: string;
+    reason: string;
+    message?: string;
+  }>;
   actions: RetireAction[];
 }
 ```
@@ -259,19 +275,22 @@ In `plugins sync <plugin-ref>`:
    `enabled === true`.
 4. Build cleanup candidates from those verified actions, preserving each
    action's `codexHome`; do not fan a verified action out to other Codex homes.
-5. Derive cleanup capability booleans from the verified action and package
-   metadata. For example, native skills require provider-visible native skills,
-   hooks require provider-visible hooks, and MCP requires native MCP servers.
+5. Derive cleanup capability booleans from same-plugin verified action data and
+   package metadata. Native skills require plugin-scoped provider-visible native
+   skills, hooks require provider-visible plugin hooks, and MCP requires
+   provider-recognized plugin MCP servers.
 6. Build `claimCheckCodexHomes` from selected target homes plus known sibling
    homes that share runtime skill roots with those targets.
 7. If native cleanup is enabled, call
-   `retireNativeSupersededCodexProjections`.
+   `cleanupBehindProviderSync`.
 8. Include the result in JSON output, for example:
 
 ```json
 {
-  "nativeProjectionCleanup": {
+  "cleanupBehind": {
     "ok": true,
+    "cleanedPlugins": [],
+    "retainedResidue": [],
     "actions": []
   }
 }
@@ -288,7 +307,7 @@ non-verified.
 Recommended flag policy:
 
 - default native cleanup on
-- add `--no-native-projection-cleanup` only if a real fallback need appears
+- expose `--cleanup-behind` / `--no-cleanup-behind`
 - suppress cleanup automatically when `--destination-projection` is enabled
 - suppress mutating cleanup when `--dry-run`, but still show planned actions
 
@@ -430,7 +449,7 @@ Required CLI cases:
 1. Default native sync calls cleanup after verified install.
 2. `--destination-projection` suppresses cleanup.
 3. `--no-codex-install` suppresses cleanup.
-4. JSON output includes `nativeProjectionCleanup`.
+4. JSON output includes `cleanupBehind`.
 
 If mocking `codexInstall.actions`, model the real verified action shape from
 `packages/agent-config-sync-node/src/codex-cli.ts`.

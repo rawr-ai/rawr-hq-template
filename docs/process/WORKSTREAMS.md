@@ -1,13 +1,16 @@
 # Workstreams
 
-This repository uses the local Workstream Plugin Pack for reusable workstream
-operation.
+This repository still contains a local Workstream Plugin Pack as a deprecated
+bridge/recovery copy. The downstream Habitat plugin is now the distributable
+source of truth for reusable Workstream operation:
 
-Canonical generic workstream source:
+`/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq/plugins/agents/habitat/`
 
-`tools/workstream-plugin-pack/`
+The bridge copy remains at `tools/workstream-plugin-pack/` only until the
+template-side migration removes it. Do not make new durable Workstream content
+changes in the template bridge; migrate any useful material downstream first.
 
-The pack owns:
+Habitat owns:
 
 - the workstream runner and review-loop skills;
 - reusable record, packet, finding, deferred-inventory, and Next Packet assets;
@@ -15,9 +18,8 @@ The pack owns:
 - reusable mechanical hook scripts.
 
 Repo-local Codex skill, agent, hook, and hook-config activation files are
-generated from the pack only when needed by running the pack install script.
-They must not be checked in as placeholders or redefine generic workstream
-mechanics.
+native plugin install outputs from downstream Habitat. They must not be
+checked in as placeholders or redefine generic workstream mechanics.
 
 Runtime Realization Lab material under `tools/runtime-realization-type-env/`
 may specialize workstreams with lab-specific authority order, proof/evidence

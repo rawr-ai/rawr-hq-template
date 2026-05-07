@@ -76,13 +76,13 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
         displayName: "plugin-demo",
         shortDescription: "Demo plugin",
         category: "rawr",
-        capabilities: ["skills", "agents"],
+        capabilities: ["skills"],
       },
     });
     await expect(fs.readFile(path.join(packageDir, "skills", "demo-skill", "SKILL.md"), "utf8")).resolves.toBe("# Demo Skill\n");
     await expect(fs.readFile(path.join(packageDir, "agents", "researcher.md"), "utf8")).resolves.toBe("# Researcher\n");
     await expect(fs.stat(path.join(packageDir, "hooks"))).rejects.toThrow();
-    expect(result.validationNotes).toContain("Custom agents and settings are packaged as RAWR source/support material until Codex exposes provider-native activation semantics for those surfaces");
+    expect(result.validationNotes).toContain("Custom agents are packaged as RAWR source/support material; active Codex custom-agent roles are installed through native TOML config under the Codex home");
   });
 
   it("builds Codex package artifacts with hooks, MCP, settings, and assets", async () => {
@@ -161,7 +161,7 @@ describe("@rawr/agent-config-sync-node package artifacts", () => {
       hooks: "./hooks/hooks.json",
       mcpServers: "./.mcp.json",
       interface: {
-        capabilities: ["skills", "hooks", "scripts", "mcp", "settings", "assets"],
+        capabilities: ["skills", "hooks", "mcp"],
       },
     });
     await expect(fs.readFile(path.join(outDir, "hooks", "pre-tool-use.mjs"), "utf8")).resolves.toContain("hook");

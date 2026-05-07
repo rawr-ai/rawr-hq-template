@@ -176,6 +176,7 @@ describe("@rawr/agent-config-sync-node Codex CLI install adapter", () => {
       enabled: true,
       skillCount: 1,
       visibleSkillCount: 1,
+      visiblePluginSkillCount: 1,
       mcpServerCount: 1,
       hookCount: 0,
       providerHookCount: 0,
@@ -185,6 +186,65 @@ describe("@rawr/agent-config-sync-node Codex CLI install adapter", () => {
         settingsCount: 0,
       },
     });
+  });
+
+  it("keeps plugin-scoped visible skill proof separate from total visible skills", async () => {
+    const codexHome = await fs.mkdtemp(path.join(os.tmpdir(), "agent-config-sync-codex-home-"));
+    tempDirs.push(codexHome);
+    const exec: ExecFn = async (input) => {
+      if (input.args.join(" ") === "--version") return { code: 0, stdout: "codex-cli 0.128.0\n", stderr: "" };
+      return { code: 0, stdout: "ok\n", stderr: "" };
+    };
+    const appServer: CodexAppServerSession = {
+      async initialize() {},
+      async pluginList() {
+        return {
+          marketplaces: [{
+            path: "/tmp/dist/codex/.agents/plugins/marketplace.json",
+            plugins: [{ name: "plugin-demo", installed: true, enabled: true }],
+          }],
+        };
+      },
+      async pluginRead(params) {
+        return {
+          plugin: {
+            name: params.pluginName,
+            skills: [{ name: "plugin-demo:demo-skill" }],
+            mcpServers: [],
+          },
+        };
+      },
+      async pluginInstall() {
+        return { authPolicy: "on-install", appsNeedingAuth: [] };
+      },
+      async skillsList() {
+        return { data: [{ cwd: "/tmp/dist/codex", skills: [{ name: "other-plugin:other-skill" }], errors: [] }] };
+      },
+      async hooksList() {
+        return { data: [{ cwd: "/tmp/dist/codex", hooks: [], errors: [] }] };
+      },
+      async close() {},
+    };
+
+    const result = await installCodexMarketplacePlugins({
+      codexBin: "/Users/mateicanavra/.local/bin/codex",
+      codexHome,
+      marketplaceRoot: "/tmp/dist/codex",
+      marketplacePath: "/tmp/dist/codex/.agents/plugins/marketplace.json",
+      plugins: ["plugin-demo"],
+      dryRun: false,
+      exec,
+      appServer,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.actions).toContainEqual(expect.objectContaining({
+      action: "verified",
+      plugin: "plugin-demo",
+      skillCount: 1,
+      visibleSkillCount: 1,
+      visiblePluginSkillCount: 0,
+    }));
   });
 
   it("blocks native Codex parity claims when packaged hooks are not provider-visible", async () => {

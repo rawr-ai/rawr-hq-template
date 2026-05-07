@@ -2,97 +2,101 @@
 
 Status: current operational state as of this branch.
 
-This document is intentionally loud because the service is in a temporary
-two-track state. Do not read package install success as proof of full Codex
-parity yet.
+This document is intentionally loud because Codex has more than one native
+surface. Do not read package install success as proof that every source
+artifact is activated by the Codex plugin loader itself.
 
 ## Current State: Two Tracks, Not Equal
 
-Agent config sync currently has two Codex output tracks:
+Agent config sync currently has three Codex output tracks:
 
-1. Direct sync into a Codex home.
-2. Codex plugin package generation and package installation.
+1. Codex plugin package generation and package installation.
+2. Native Codex custom-agent role config under `<codex-home>/agents/*.toml`.
+3. Explicit generic destination projection/export for legacy mirrors.
 
-They pull from the same RAWR source material, but they do not produce the same
-runtime result today.
+They pull from the same RAWR source material, but the activation mechanism is
+not identical for every material kind.
 
-Direct sync writes managed material directly into the selected Codex home:
+Native Codex plugin package/install writes an installable marketplace package
+and asks Codex to install it. Today that package track activates:
+
+- `.codex-plugin/plugin.json`
+- `skills/`
+- hook lifecycle config where the selected Codex binary exposes plugin hooks
+- MCP config/files where modeled by the package lane
+- assets/interface metadata
+- marketplace metadata
+
+Native Codex custom-agent role config writes managed TOML role files directly
+to the selected Codex home:
+
+- `<codex-home>/agents/<agent>.toml`
+- the managed registry's `agents` ownership claim
+
+Codex discovers those role TOMLs as native custom agents. This is not the same
+as Codex plugin-package `agents/*.md` activation; plugin-packaged agent
+markdown remains source/support material unless Codex later exposes a plugin
+agent activation surface.
+
+Generic destination projection/export can still write legacy mirrors:
 
 - prompts
 - runtime user skills
 - scripts
-- standalone Codex TOML agents
 - hook scripts and `hooks.json` lifecycle entries
 - MCP files and managed `config.toml` fragments
 - settings/config fragments
 - registry/GC metadata
 
-Codex package/install writes an installable marketplace package and asks Codex
-to install it. Today that package track carries a smaller surface:
-
-- `.codex-plugin/plugin.json`
-- `skills/`
-- MCP config/files where modeled by the package lane
-- assets/interface metadata
-- marketplace metadata
-
-The package track does not currently carry every surface that direct sync
-carries. In particular, hooks, standalone custom agents, and settings/config
-fragments are not package-installed today.
+Those projection outputs are compatibility material, not the default native
+deployment path.
 
 ## Current Direction
 
-The likely product direction is to make managed plugin/package installation the
-primary route for both Codex and Claude: source material becomes a managed
-plugin, and the provider install flow owns delivery instead of RAWR maintaining
-long-lived direct filesystem synchronization for each provider.
+Native provider sync is now the default route for this operator.
 
-That is the direction we are leaning, but it is not a committed product
-decision yet. Before deprecating direct sync, come back and double-check that
-managed package installation can carry the surfaces RAWR needs and has the
-right install, update, uninstall, and rollback semantics.
+For Codex that means two native surfaces are used together:
 
-Direct sync is very likely a transitional path that should eventually be
-deprecated or narrowed, but it must not be removed yet.
+- Codex plugin package/install for active plugin package capabilities.
+- Codex native-direct custom-agent role TOMLs under `<codex-home>/agents`.
 
-## Why Package Install Is Not At Parity Yet
+For Claude that means the local plugin marketplace path.
 
-The package/install track is incomplete mostly because we did not finish this
-as a dedicated agent-config-sync workstream.
+Generic destination projection remains available only as an explicit
+legacy/repair/migration lane via `--destination-projection`. Do not count it as
+the native deployment path.
 
-This is not the same as saying "Codex cannot run hooks." Codex can run hooks
-from its runtime config. The current gap is that the Codex plugin package loader
-and the RAWR package writer do not yet model every direct-sync surface as a
-package-installed plugin surface.
+## Remaining Native-Surface Debt
 
-Remaining package/install parity work includes:
+The remaining debt is not "agents are unverified." Codex custom agents are
+native through role TOML config, and this branch treats that surface as
+native-direct provider config.
 
-- Package-provided hooks: hook scripts, lifecycle config, install/update, and
-  uninstall/GC behavior.
-- Package-provided custom agents: the package equivalent of direct-sync
-  standalone TOML agents, including semantic reporting for Claude-only fields.
-- Package-provided settings/config fragments: especially config that direct
-  sync currently merges into `config.toml`.
-- MCP/settings reconciliation: MCP package support exists for modeled MCP
-  files, but the package lane still needs a clear parity story for any
-  provider config/settings behavior that direct sync currently owns.
-- Reconciliation and deduplication between direct-sync outputs and
-  package-installed outputs.
+Known remaining debt:
 
-Treat this as a dedicated future workstream for `agent-config-sync`. Do not let
-it become incidental cleanup inside an unrelated stack drain.
+- Codex `prompts/` output and supporting scripts are legacy/auxiliary mirrors.
+  Reusable workflows should be migrated into skills over time.
+- Claude commands remain a supported direct-invocation mirror, but Claude's
+  richer repeatable workflow structure is skills.
+- Codex plugin-package `agents/*.md` is source/support material today. Active
+  Codex custom-agent activation is `<codex-home>/agents/*.toml`.
+- Claude-only agent frontmatter such as `tools`, `model`, and `color` is not
+  equivalent to Codex role TOML semantics and remains reported as semantic
+  adaptation debt.
+- Generic projection cleanup is intentionally narrow. It retires registry-owned
+  residue superseded by successful native provider sync and preserves unmanaged
+  files, source collisions, shared claims, and the shared runtime skill root.
 
 ## Temporary Coexistence Requires Reconciliation
 
 While both tracks exist, reconciliation is required.
 
-Today, direct sync may leave managed files at top-level Codex-home runtime
+Today, legacy projection may leave managed files at top-level Codex-home runtime
 locations such as:
 
 - `<codex-home>/prompts`
 - `<codex-home>/.agents/skills`
 - `<codex-home>/scripts`
-- `<codex-home>/agents`
 - `<codex-home>/hooks/rawr/<plugin>`
 - `<codex-home>/hooks.json`
 - `<codex-home>/config.toml`
@@ -100,7 +104,8 @@ locations such as:
 - `<codex-home>/plugins/registry.json`
 
 Package install writes and installs plugin artifacts through the Codex plugin
-system. These are different topologies.
+system. Native custom agents are installed through the Codex role config root.
+These are different topologies.
 
 If direct sync and package install come from the same RAWR source, the service
 should reconcile them instead of producing duplicate downstream projections.
@@ -119,54 +124,44 @@ complete today.
 
 ## Conceptual Modes
 
-These names describe the current and future model.
+These names describe the current operating model.
 
-### Local Convergence
+### Native Provider Sync
 
-Where we are right now for full local Codex parity.
+Default mode. Codex receives plugin packages plus native agent role TOMLs.
+Claude receives local plugin marketplace installs. Cleanup-behind can retire
+registry-owned projection residue after native provider proof.
 
-Direct sync mutates the selected Codex home so managed runtime files/config are
-materially converged. This is the complete local parity path today.
+### Legacy Destination Projection
 
-### Package Validation
+Explicit mode. `--destination-projection` writes compatibility mirrors into
+provider homes. Use it for debugging, migration, or repair only; it is not a
+provider-parity fallback.
 
-Where we are right now for Codex package/install.
+### Export/Package Validation
 
-Package generation and package install prove the managed plugin package lane for
-the subset of surfaces it currently carries. It should be used only for isolated
-package validation and not as proof that a real Codex home has full parity.
+Isolated validation mode. Package/export commands can inspect artifacts without
+mutating provider homes.
 
-### Future Unified Mode
+## Operator Invocation Note
 
-Where we likely want to go.
+During the template-to-downstream migration, downstream local Oclif links may
+point `@rawr/plugin-plugins` at downstream source. To force the template
+operator to use this repository's workspace implementation without changing the
+global Oclif link, run it with a clean Oclif data dir, for example:
 
-Everything becomes a managed provider plugin. Codex and Claude receive managed
-plugins through their package/install routes. Direct sync is deprecated,
-narrowed, or retained only as a migration/repair tool. Reconciliation retires
-or absorbs old direct-sync material so package install does not duplicate or
-fight previous direct-sync output.
+```bash
+XDG_DATA_HOME=/tmp/rawr-template-oclif-data \
+  bun run rawr -- plugins sync all --source-workspace /path/to/rawr-hq ...
+```
 
-This is the target direction, not the current state.
-
-## Safety Warning
-
-Do not use Codex package install as the real-home convergence path right now.
-
-Running package install against a Codex home that already has direct-sync output
-can create ambiguous or duplicated provider-visible material. It may leave the
-operator with some surfaces coming from direct sync and some surfaces coming
-from package install, with no completed reconciliation step to prove which
-projection should win.
-
-Until package/direct reconciliation exists, use package install only for
-isolated validation or explicitly scoped experiments. Use direct sync for full
-local convergence.
+`bun run rawr -- plugins sync --help` should show native flags such as
+`--codex-package`, `--codex-install`, `--codex-bin`,
+`--destination-projection`, and `--cleanup-behind` before using the template
+operator for release proof.
 
 ## Done For This Branch
 
-This branch has reconciled the prior agent-config-sync parity split and
-documented the current two-track state.
-
-Park this branch after committing this document. Future work should open a
-dedicated agent-config-sync package parity/reconciliation workstream instead of
-keeping this branch open-ended.
+This branch reconciles the prior agent-config-sync parity split around Codex
+custom agents, cleanup-behind reporting, package capability claims, and
+status/drift planning.
