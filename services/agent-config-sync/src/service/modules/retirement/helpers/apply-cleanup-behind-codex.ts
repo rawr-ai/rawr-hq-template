@@ -1,5 +1,5 @@
 import type { CleanupBehindCandidate, RetainedResidue, RetireAction, RetiredPluginRef } from "../entities";
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#shared/resources";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#common/resources";
 import {
   loadCodexRegistry,
   type CodexRegistryFile,

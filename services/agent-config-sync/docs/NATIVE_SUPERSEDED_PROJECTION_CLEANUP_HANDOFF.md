@@ -28,8 +28,8 @@ Read these files first:
 - `services/agent-config-sync/src/service/modules/retirement/router.ts`
 - `services/agent-config-sync/src/service/modules/retirement/helpers/apply-codex-retirement.ts`
 - `services/agent-config-sync/src/service/modules/execution/helpers/sync-codex-homes.ts`
-- `services/agent-config-sync/src/service/shared/repositories/codex-runtime-paths.ts`
-- `services/agent-config-sync/src/service/shared/repositories/codex-registry-repository.ts`
+- `services/agent-config-sync/src/service/common/repositories/codex-runtime-paths.ts`
+- `services/agent-config-sync/src/service/common/repositories/codex-registry-repository.ts`
 - `packages/agent-config-sync-node/src/codex-cli.ts`
 - `plugins/cli/plugins/src/commands/plugins/sync.ts`
 - `plugins/cli/plugins/src/commands/plugins/sync/all.ts`
