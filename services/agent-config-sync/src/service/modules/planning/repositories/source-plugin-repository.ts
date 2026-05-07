@@ -6,7 +6,7 @@ import type {
   SourcePlugin,
 } from "../../../common/entities";
 import type { WorkspaceSkip, WorkspaceSyncable } from "../entities";
-import { listWorkspacePluginDirs } from "./workspace-roots";
+import { listWorkspacePluginDirs } from "./workspace-root-repository";
 
 type PackageJson = {
   name?: unknown;

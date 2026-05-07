@@ -16,3 +16,8 @@ Module-owned behavior does not live here. Planning assessment types belong in
 `modules/planning`, execution apply semantics belong in `modules/execution`,
 retirement stale-managed behavior belongs in `modules/retirement`, and undo
 capsule/apply behavior belongs in `modules/undo`.
+
+Module routers use `router/index.ts` as the single oRPC composition point and
+cohesive `router/*.router.ts` fragments for callable stories. Substantial
+module-owned file/registry/capsule mechanics live in `repositories/*-repository.ts`;
+they do not move into common unless multiple modules need the same behavior.

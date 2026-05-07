@@ -11,8 +11,8 @@ import {
   getCodexRetiredRootSkillsDir,
   getCodexRuntimeSkillsDir,
 } from "../../../common/repositories/codex-runtime-paths";
-import { deletePathIfPresent, writeJsonWithUndoCapture } from "./filesystem-actions";
-import { MANAGED_BY } from "./managed-source";
+import { deletePathIfPresent, writeJsonWithUndoCapture } from "./filesystem-actions-repository";
+import { MANAGED_BY } from "./managed-source-repository";
 
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];

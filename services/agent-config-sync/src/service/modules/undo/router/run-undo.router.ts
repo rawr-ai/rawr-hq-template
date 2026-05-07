@@ -9,12 +9,12 @@
  * - It only supports the plugin-sync provider capsule format.
  * - It uses injected path/FS ports so the module remains host-agnostic.
  */
-import { module } from "./module";
-import { PLUGINS_SYNC_UNDO_PROVIDER, type UndoApplyItem } from "./entities";
-import { applyUndoOperation } from "./helpers/apply-operation";
-import { clearActiveUndoCapsule, loadActiveUndoCapsule } from "./helpers/capsule-store";
+import { module } from "../module";
+import { PLUGINS_SYNC_UNDO_PROVIDER, type UndoApplyItem } from "../entities";
+import { applyUndoOperation } from "../repositories/undo-apply-repository";
+import { clearActiveUndoCapsule, loadActiveUndoCapsule } from "../repositories/capsule-store-repository";
 
-const runUndo = module.runUndo.handler(async ({ context, input }) => {
+export const runUndo = module.runUndo.handler(async ({ context, input }) => {
   const workspaceRoot = context.resources.path.resolve(context.repoRoot);
   const capsule = await loadActiveUndoCapsule(workspaceRoot, context.resources);
 
@@ -89,8 +89,4 @@ const runUndo = module.runUndo.handler(async ({ context, input }) => {
     operations,
     summary,
   };
-});
-
-export const router = module.router({
-  runUndo,
 });

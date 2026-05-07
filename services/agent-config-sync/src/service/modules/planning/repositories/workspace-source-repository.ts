@@ -7,7 +7,7 @@ import {
   loadWorkspaceSourcePlugins,
   resolveSourcePlugin,
   scanSourcePlugin,
-} from "./source-plugins";
+} from "./source-plugin-repository";
 
 export async function discoverWorkspaceSources(input: {
   cwd: string;

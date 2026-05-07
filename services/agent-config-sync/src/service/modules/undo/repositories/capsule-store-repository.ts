@@ -1,6 +1,6 @@
 import type { AgentConfigSyncResources } from "../../../common/resources";
 import type { UndoCapsule } from "../entities";
-import { undoCapsuleDir, undoManifestPath } from "./capsule-paths";
+import { undoCapsuleDir, undoManifestPath } from "./capsule-paths-repository";
 
 export async function loadActiveUndoCapsule(
   workspaceRoot: string,

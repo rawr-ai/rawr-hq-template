@@ -10,16 +10,16 @@
  * rendering, while the service defines the planning semantics and the exact
  * preview behavior.
  */
-import { module } from "./module";
-import type { SyncRunResult } from "../../common/entities/sync-results";
-import { summarizeWorkspaceRun } from "./helpers/assessment-summary";
-import { evaluateFullSyncPolicy as evaluatePolicy } from "./helpers/full-sync-policy";
-import { previewSyncRun } from "./helpers/preview-sync-run";
-import { resolveTargetHomes } from "./helpers/target-homes";
-import { discoverWorkspaceSources, filterByScope } from "./helpers/workspace-discovery";
-import { resolveWorkspaceRoot } from "./helpers/workspace-roots";
+import { module } from "../module";
+import type { SyncRunResult } from "../../../common/entities/sync-results";
+import { evaluateFullSyncPolicy as evaluatePolicy } from "../repositories/full-sync-policy-repository";
+import { summarizeWorkspaceRun } from "../repositories/sync-assessment-repository";
+import { previewSyncRun } from "../repositories/sync-preview-repository";
+import { resolveTargetHomes } from "../repositories/target-home-selection-repository";
+import { discoverWorkspaceSources, filterByScope } from "../repositories/workspace-source-repository";
+import { resolveWorkspaceRoot } from "../repositories/workspace-root-repository";
 
-const planWorkspaceSync = module.planWorkspaceSync.handler(async ({ context, input, errors }) => {
+export const planWorkspaceSync = module.planWorkspaceSync.handler(async ({ context, input, errors }) => {
   const workspaceRoot = await resolveWorkspaceRoot({
     cwd: input.cwd,
     workspaceRoot: input.workspaceRoot,
@@ -101,7 +101,7 @@ const planWorkspaceSync = module.planWorkspaceSync.handler(async ({ context, inp
   };
 });
 
-const assessWorkspaceSync = module.assessWorkspaceSync.handler(async ({ context, input, errors }) => {
+export const assessWorkspaceSync = module.assessWorkspaceSync.handler(async ({ context, input, errors }) => {
   const workspaceRoot = await resolveWorkspaceRoot({
     cwd: input.cwd,
     workspaceRoot: input.workspaceRoot,
@@ -169,14 +169,4 @@ const assessWorkspaceSync = module.assessWorkspaceSync.handler(async ({ context,
     scope: input.scope,
   });
   return assessment;
-});
-
-const evaluateFullSyncPolicy = module.evaluateFullSyncPolicy.handler(async ({ context, input }) => {
-  return evaluatePolicy(input);
-});
-
-export const router = module.router({
-  planWorkspaceSync,
-  assessWorkspaceSync,
-  evaluateFullSyncPolicy,
 });

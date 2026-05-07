@@ -6,9 +6,9 @@ import {
   type UndoOperation,
   type UndoPathKind,
 } from "../entities";
-import { undoBackupsDir, undoCapsuleDir, undoManifestPath } from "./capsule-paths";
-import { clearActiveUndoCapsule } from "./capsule-store";
-import { copyPathSnapshot } from "./path-snapshots";
+import { undoBackupsDir, undoCapsuleDir, undoManifestPath } from "./capsule-paths-repository";
+import { clearActiveUndoCapsule } from "./capsule-store-repository";
+import { copyPathSnapshot } from "./path-snapshot-repository";
 
 export class PluginsSyncUndoCapture {
   private readonly workspaceRoot: string;

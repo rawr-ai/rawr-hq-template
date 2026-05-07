@@ -1,7 +1,7 @@
 import type { AgentConfigSyncResources } from "../../../common/resources";
 import type { UndoApplyItem, UndoOperation } from "../entities";
-import { undoCapsuleDir } from "./capsule-paths";
-import { removePathIfPresent, restoreSnapshot } from "./path-snapshots";
+import { undoCapsuleDir } from "./capsule-paths-repository";
+import { removePathIfPresent, restoreSnapshot } from "./path-snapshot-repository";
 
 export async function applyUndoOperation(input: {
   workspaceRoot: string;

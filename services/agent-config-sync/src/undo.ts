@@ -3,7 +3,7 @@
  */
 export {
   beginPluginsSyncUndoCapture,
-} from "./service/modules/undo/helpers/capture";
+} from "./service/modules/undo/repositories/capsule-capture-repository";
 export {
   PLUGINS_SYNC_UNDO_PROVIDER,
   type UndoCapsule,

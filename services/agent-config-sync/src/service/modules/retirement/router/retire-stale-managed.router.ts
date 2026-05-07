@@ -15,25 +15,22 @@
  *
  * Helpers remain mechanical (delete-if-present, write-json-with-undo).
  */
-import { module } from "./module";
-import type { RetainedResidue, RetireAction, RetiredPluginRef } from "./entities";
-import type { SyncScope } from "../../common/entities";
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../common/resources";
-import { loadCodexRegistry, type CodexRegistryFile } from "../../common/repositories/codex-registry-repository";
+import { module } from "../module";
+import type { RetireAction, RetiredPluginRef } from "../entities";
+import { loadCodexRegistry, type CodexRegistryFile } from "../../../common/repositories/codex-registry-repository";
 import {
   readClaudeSyncManifest,
-} from "../../common/repositories/claude-marketplace-repository";
-import { applyClaudeRetirement } from "./helpers/apply-claude-retirement";
-import { applyCleanupBehindCodex } from "./helpers/apply-cleanup-behind-codex";
-import { applyCodexRetirement } from "./helpers/apply-codex-retirement";
-import { MANAGED_BY, pluginMatchesScope } from "./helpers/managed-source";
+} from "../../../common/repositories/claude-marketplace-repository";
+import { applyClaudeRetirement } from "../repositories/claude-retirement-repository";
+import { applyCodexRetirement } from "../repositories/codex-retirement-repository";
+import { MANAGED_BY, pluginMatchesScope } from "../repositories/managed-source-repository";
 
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string" && item.length > 0);
 }
 
-const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, input }) => {
+export const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, input }) => {
   const resources = context.resources;
   const workspaceRoot = input.workspaceRoot;
   const scope = input.scope;
@@ -180,54 +177,3 @@ const retireStaleManaged = module.retireStaleManaged.handler(async ({ context, i
 
   return { ok, stalePlugins, actions };
 });
-
-const cleanupBehindProviderSync = module.cleanupBehindProviderSync.handler(async ({ context, input }) => {
-  const resources = context.resources;
-  const undoCapture = input.dryRun ? undefined : context.undoCapture;
-  const actions: RetireAction[] = [];
-  const cleanedPlugins: RetiredPluginRef[] = [];
-  const retainedResidue: RetainedResidue[] = [];
-  let ok = true;
-
-  for (const candidate of input.candidates) {
-    if (candidate.provider === "codex" && candidate.reason === "codex_native_superseded_projection") {
-      try {
-        const result = await applyCleanupBehindCodex({
-          dryRun: input.dryRun,
-          candidate,
-          claimCheckCodexHomes: input.claimCheckCodexHomes,
-          resources,
-          undoCapture,
-        });
-        if (!result.ok) ok = false;
-        actions.push(...result.actions);
-        cleanedPlugins.push(...result.cleanedPlugins);
-        retainedResidue.push(...result.retainedResidue);
-      } catch (err) {
-        ok = false;
-        actions.push({
-          agent: candidate.provider,
-          home: candidate.home,
-          plugin: candidate.plugin,
-          target: candidate.home,
-          action: "failed",
-          message: err instanceof Error ? err.message : String(err),
-        });
-      }
-      continue;
-    }
-
-    actions.push({
-      agent: candidate.provider,
-      home: candidate.home,
-      plugin: candidate.plugin,
-      target: candidate.home,
-      action: "skipped",
-      message: `cleanup-behind policy not implemented: ${candidate.reason}`,
-    });
-  }
-
-  return { ok, cleanedPlugins, retainedResidue, actions };
-});
-
-export const router = module.router({ retireStaleManaged, cleanupBehindProviderSync });
