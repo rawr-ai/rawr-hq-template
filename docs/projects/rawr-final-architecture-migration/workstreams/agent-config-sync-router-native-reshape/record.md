@@ -1,8 +1,8 @@
 # Workstream Record: agent-config-sync router-native reshape
 
-Status: closing
+Status: closed
 Started: 2026-05-07
-Closed: pending semantic repository repair commit/submission
+Closed: 2026-05-07
 DRA: Codex
 Branch: `codex/agent-config-sync-router-native-reshape`
 Parent branch at opening: `codex/workstream-b-preparation`
@@ -410,6 +410,12 @@ as targeted review lanes, not as a parallel implementation wave.
   - folded undo capsule paths into `capsule-store-repository.ts`
   - deleted unused command-expiration code
   - added direct public undo replay coverage
+- 2026-05-07: Ran final semantic repair gates; all passed.
+- 2026-05-07: Committed semantic repair as `5dc4683f`
+  (`refactor(agent-config-sync): classify module repositories semantically`).
+- 2026-05-07: Submitted updated Graphite stack; PR #320 updated and remains
+  open/non-draft with Graphite mergeability pending while parent PR #319 is
+  downstack.
 
 ## Findings Disposition
 
@@ -483,7 +489,7 @@ Semantic repository repair closure steward:
   dirty/unsubmitted while the record still said closed. Accepted and repaired
   before commit.
 - Finding: after commit/submit, record final commit hash, PR state, and clean
-  Git/Graphite state. Accepted; this is the final closure action.
+  Git/Graphite state. Accepted and repaired here.
 
 Semantic repository repair peers:
 
@@ -571,23 +577,24 @@ Current state:
 
 - Branch: `codex/agent-config-sync-router-native-reshape`.
 - Parent branch: `codex/workstream-b-preparation`.
-- Commit: `86e89c2e`
+- Original topology commit: `86e89c2e`
   (`refactor(agent-config-sync): reshape modules around routers`).
-- Follow-up commit to create: `refactor(agent-config-sync): classify module
-  repositories semantically`.
+- Semantic repository repair commit: `5dc4683f`
+  (`refactor(agent-config-sync): classify module repositories semantically`).
 - Graphite PR: https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/320
 - Parent Graphite PR: https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/319
 - Closure steward found no code-shape blocker.
-- Semantic repair gates listed above passed locally before final commit.
+- Semantic repair gates listed above passed locally.
+- After submit, `git status` and `gt status` were clean and the branch was up
+  to date with origin.
+- PR #320 was open, non-draft, and updated; Graphite mergeability was pending
+  because parent PR #319 remains downstack.
 
 Exact next action:
 
-1. Commit semantic repair with
-   `gt modify -c -m "refactor(agent-config-sync): classify module repositories semantically"`.
-2. Submit updated stack with
-   `gt submit --stack --publish --no-edit --no-ai --no-interactive`.
-3. Verify `git status`, `gt status`, `gt ls`, and PR #320.
-4. Monitor/respond to PR review or CI if needed.
+1. Monitor/respond to PR review or CI if needed.
+2. Merge through Graphite as a stack once parent PR #319 and PR #320 satisfy
+   review/check requirements.
 
 Inspect first:
 
