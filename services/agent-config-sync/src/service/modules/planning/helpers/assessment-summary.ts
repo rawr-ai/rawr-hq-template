@@ -1,6 +1,6 @@
-import type { SyncRunResult } from "#shared/entities/sync-results";
+import type { SyncRunResult } from "#common/entities/sync-results";
 import type { SyncAssessment, WorkspaceSkip } from "../entities";
-import type { SyncScope } from "#shared/entities";
+import type { SyncScope } from "#common/entities";
 
 const RESIDUAL_MATERIAL_KINDS = new Set(["agent", "hook", "mcp", "settings", "asset", "orchestration"]);
 

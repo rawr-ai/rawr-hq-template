@@ -7,16 +7,16 @@
   "types": "./src/index.ts",
   "imports": {
     "#repositories/*": {
-      "types": "./src/service/shared/repositories/*.ts",
-      "default": "./src/service/shared/repositories/*.ts"
+      "types": "./src/service/common/repositories/*.ts",
+      "default": "./src/service/common/repositories/*.ts"
     },
-    "#shared/*": {
-      "types": "./src/service/shared/*.ts",
-      "default": "./src/service/shared/*.ts"
+    "#common/*": {
+      "types": "./src/service/common/*.ts",
+      "default": "./src/service/common/*.ts"
     },
     "#source-content/*": {
-      "types": "./src/service/shared/source-content/*.ts",
-      "default": "./src/service/shared/source-content/*.ts"
+      "types": "./src/service/common/source-content/*.ts",
+      "default": "./src/service/common/source-content/*.ts"
     }
   },
   "exports": {
@@ -37,16 +37,16 @@
       "default": "./src/service/contract.ts"
     },
     "./resources": {
-      "types": "./src/service/shared/resources.ts",
-      "default": "./src/service/shared/resources.ts"
+      "types": "./src/service/common/resources.ts",
+      "default": "./src/service/common/resources.ts"
     },
     "./undo": {
       "types": "./src/undo.ts",
       "default": "./src/undo.ts"
     },
     "./entities": {
-      "types": "./src/service/shared/entities.ts",
-      "default": "./src/service/shared/entities.ts"
+      "types": "./src/service/common/entities.ts",
+      "default": "./src/service/common/entities.ts"
     },
     "./router": {
       "types": "./src/router.ts",

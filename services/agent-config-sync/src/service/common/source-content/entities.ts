@@ -54,5 +54,10 @@ export const PluginContentManifestV1Schema = Type.Object(
 );
 
 export type PluginContentInclude = Static<typeof PluginContentIncludeSchema>;
+
+/**
+ * Fully expanded include mask after defaults and provider overlays are merged.
+ */
 export type NormalizedPluginContentInclude = Required<PluginContentInclude>;
+
 export type PluginContentManifestV1 = Static<typeof PluginContentManifestV1Schema>;

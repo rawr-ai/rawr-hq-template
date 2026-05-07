@@ -1,5 +1,5 @@
 import type { RetireAction, RetiredPluginRef } from "../entities";
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#shared/resources";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#common/resources";
 import type { CodexRegistryFile } from "#repositories/codex-registry-repository";
 import { buildCodexManagedConfig } from "#repositories/codex-config-repository";
 import { pruneCodexHooksForPlugin } from "#repositories/codex-hooks-repository";

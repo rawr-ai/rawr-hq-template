@@ -1,9 +1,9 @@
-# Agent Config Sync Shared Service Anchors
+# Agent Config Sync Common Service Anchors
 
 `services/agent-config-sync` follows the `example-todo` service shell, with a
-strict shared allowlist.
+strict common allowlist.
 
-Allowed shared files:
+Allowed common files:
 
 - `errors.ts` for reusable ORPC boundary errors once multiple modules need them.
 - `internal-errors.ts` for unexpected internal-only failures.

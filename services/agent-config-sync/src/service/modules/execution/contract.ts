@@ -5,7 +5,7 @@ import {
   SourceContentSchema,
   SourcePluginSchema,
   SyncAgentSchema,
-} from "#shared/entities";
+} from "#common/entities";
 import {
   SyncItemResultSchema,
   ProviderProjectionSchema,
@@ -13,7 +13,7 @@ import {
   SyncRunResultSchema,
   SyncScannedSummarySchema,
   SyncTargetResultSchema,
-} from "#shared/entities/sync-results";
+} from "#common/entities/sync-results";
 
 /**
  * Execution input for applying or previewing destination sync.
@@ -34,6 +34,19 @@ const RunSyncInputSchema = Type.Object(
     force: Type.Boolean(),
     gc: Type.Boolean(),
     dryRun: Type.Boolean(),
+  },
+  { additionalProperties: false },
+);
+
+/**
+ * Provider-effective content request used by packaging and preview callers that
+ * need overlay resolution without destination writes.
+ */
+const ResolveProviderContentInputSchema = Type.Object(
+  {
+    agent: SyncAgentSchema,
+    sourcePlugin: SourcePluginSchema,
+    base: SourceContentSchema,
   },
   { additionalProperties: false },
 );
@@ -66,17 +79,6 @@ export const contract = {
    */
   resolveProviderContent: ocBase
     .meta({ idempotent: true, entity: "execution" })
-    .input(
-      schema(
-        Type.Object(
-          {
-            agent: SyncAgentSchema,
-            sourcePlugin: SourcePluginSchema,
-            base: SourceContentSchema,
-          },
-          { additionalProperties: false },
-        ),
-      ),
-    )
+    .input(schema(ResolveProviderContentInputSchema))
     .output(schema(SourceContentSchema)),
 };

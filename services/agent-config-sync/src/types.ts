@@ -16,7 +16,7 @@ export type {
   SupportStatus,
   SyncAgent,
   SyncScope,
-} from "./service/shared/entities";
+} from "./service/common/entities";
 export type {
   ProjectionSupport,
   ProviderProjection,

@@ -1,5 +1,5 @@
 import type { SyncAgentSelection, TargetHomeCandidates, TargetHomes } from "../entities";
-import type { AgentConfigSyncPathResources } from "#shared/resources";
+import type { AgentConfigSyncPathResources } from "#common/resources";
 
 function dedupePaths(paths: string[], pathOps: AgentConfigSyncPathResources): string[] {
   return [...new Set(paths.map((entry) => pathOps.resolve(entry)))];

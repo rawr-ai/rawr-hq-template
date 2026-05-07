@@ -9,7 +9,7 @@ import os from "node:os";
 import path from "node:path";
 import type { CreateClientOptions } from "../src/client";
 import type { Service } from "../src/service/base";
-import type { AgentConfigSyncResources } from "../src/service/shared/resources";
+import type { AgentConfigSyncResources } from "../src/service/common/resources";
 import type { SourceContent, SourcePlugin } from "../src/types";
 
 export function createFakeResources(): AgentConfigSyncResources {

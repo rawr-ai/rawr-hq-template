@@ -1,5 +1,5 @@
-import type { AgentConfigSyncResources } from "#shared/resources";
-import type { RawrPluginKind } from "#shared/entities";
+import type { AgentConfigSyncResources } from "#common/resources";
+import type { RawrPluginKind } from "#common/entities";
 
 const WORKSPACE_PLUGIN_ROOTS: Array<{ scope: RawrPluginKind; relPath: string[] }> = [
   { scope: "toolkit", relPath: ["plugins", "cli"] },

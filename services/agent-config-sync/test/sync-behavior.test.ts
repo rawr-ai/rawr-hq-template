@@ -5,7 +5,7 @@ import path from "node:path";
 import { parse as parseToml } from "smol-toml";
 import { afterEach, describe, expect, it } from "vitest";
 import { createClient } from "../src/client";
-import { getCodexRuntimeSkillsDir } from "../src/service/shared/repositories/codex-runtime-paths";
+import { getCodexRuntimeSkillsDir } from "../src/service/common/repositories/codex-runtime-paths";
 import {
   createClientOptions,
   createNodeTestResources,
