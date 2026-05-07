@@ -1,17 +1,17 @@
-import type { SourceContent, SourcePlugin } from "#common/entities";
-import type { SyncTargetResult } from "#common/entities/sync-results";
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#common/resources";
+import type { SourceContent, SourcePlugin } from "../../../common/entities";
+import type { SyncTargetResult } from "../../../common/entities/sync-results";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../../common/resources";
 import {
   getClaimsFromOtherPlugins,
   loadCodexRegistry,
   upsertCodexRegistryAgentClaims,
-} from "#repositories/codex-registry-repository";
+} from "../../../common/repositories/codex-registry-repository";
 import {
   deleteIfExists,
   syncTextWithConflictPolicy,
-} from "#repositories/destination-sync-repository";
-import { pushItem } from "#common/helpers/sync-results";
-import { buildCodexAgentProjection } from "#source-content/helpers/codex-agent";
+} from "../../../common/repositories/destination-sync-repository";
+import { pushItem } from "../../../common/helpers/sync-results";
+import { buildCodexAgentProjection } from "../../../common/source-content/helpers/codex-agent";
 
 type NativeAgentRoleOptions = {
   dryRun: boolean;

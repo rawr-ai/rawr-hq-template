@@ -1,8 +1,8 @@
 import type {
   HyperresearchIntegrityFinding,
   HyperresearchRunLedger,
-} from "../../../shared/entities";
-import type { HyperresearchCodexIO } from "../../../shared/resources";
+} from "../../../common/entities";
+import type { HyperresearchCodexIO } from "../../../common/resources";
 
 /**
  * Estimates whether a post-synthesis report still behaves like a patch.

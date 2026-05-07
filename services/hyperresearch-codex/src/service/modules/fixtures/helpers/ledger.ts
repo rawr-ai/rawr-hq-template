@@ -1,8 +1,8 @@
 import type {
   HyperresearchRunLedger,
   HyperresearchStepDefinition,
-} from "../../../shared/entities";
-import type { HyperresearchCodexIO } from "../../../shared/resources";
+} from "../../../common/entities";
+import type { HyperresearchCodexIO } from "../../../common/resources";
 
 function createSyntheticRunLedger(input: {
   canonicalQuery: string;

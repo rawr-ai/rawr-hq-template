@@ -1,5 +1,5 @@
 import { type Static, Type } from "typebox";
-import { SyncAgentSchema } from "#common/entities";
+import { SyncAgentSchema } from "../../common/entities";
 
 /**
  * agent-config-sync: retirement cleanup entities.

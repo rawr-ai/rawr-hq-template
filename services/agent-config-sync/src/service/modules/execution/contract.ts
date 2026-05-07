@@ -5,7 +5,7 @@ import {
   SourceContentSchema,
   SourcePluginSchema,
   SyncAgentSchema,
-} from "#common/entities";
+} from "../../common/entities";
 import {
   SyncItemResultSchema,
   ProviderProjectionSchema,
@@ -13,7 +13,7 @@ import {
   SyncRunResultSchema,
   SyncScannedSummarySchema,
   SyncTargetResultSchema,
-} from "#common/entities/sync-results";
+} from "../../common/entities/sync-results";
 
 /**
  * Execution input for applying or previewing destination sync.

@@ -8,12 +8,12 @@ import type { CreateClientOptions } from "../src/client";
 import type {
   SessionIndexRuntime,
   SessionIndexStatement,
-} from "../src/service/shared/ports/session-index-runtime";
+} from "../src/service/common/ports/session-index-runtime";
 import type {
   DiscoverSessionsInput,
   SessionSourceRuntime,
-} from "../src/service/shared/ports/session-source-runtime";
-import type { DiscoveredSessionFile, SessionFileStat, SessionSource, SessionStatus } from "../src/service/shared/entities";
+} from "../src/service/common/ports/session-source-runtime";
+import type { DiscoveredSessionFile, SessionFileStat, SessionSource, SessionStatus } from "../src/service/common/entities";
 import {
   CLAUDE_FIXTURE,
   CLAUDE_FIXTURE_PATH,

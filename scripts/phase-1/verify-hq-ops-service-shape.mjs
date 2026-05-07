@@ -15,12 +15,12 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/contract.ts",
   "services/hq-ops/src/service/impl.ts",
   "services/hq-ops/src/service/router.ts",
-  "services/hq-ops/src/service/shared/README.md",
-  "services/hq-ops/src/service/shared/errors.ts",
-  "services/hq-ops/src/service/shared/internal-errors.ts",
-  "services/hq-ops/src/service/shared/ports/resources.ts",
-  "services/hq-ops/src/service/shared/entities/workspace-plugin-catalog.ts",
-  "services/hq-ops/src/service/shared/repositories/workspace-plugin-catalog-repository.ts",
+  "services/hq-ops/src/service/common/README.md",
+  "services/hq-ops/src/service/common/errors.ts",
+  "services/hq-ops/src/service/common/internal-errors.ts",
+  "services/hq-ops/src/service/common/ports/resources.ts",
+  "services/hq-ops/src/service/common/entities/workspace-plugin-catalog.ts",
+  "services/hq-ops/src/service/common/repositories/workspace-plugin-catalog-repository.ts",
   "services/hq-ops/src/service/modules/config/contract.ts",
   "services/hq-ops/src/service/modules/config/entities.ts",
   "services/hq-ops/src/service/modules/config/helpers/load.ts",
@@ -91,18 +91,18 @@ const RUNTIME_HELPER_PATHS = [
   "services/hq-ops/src/service/modules/security/support.ts",
 ];
 
-const ALLOWED_SHARED_PATHS = [
-  "services/hq-ops/src/service/shared/README.md",
-  "services/hq-ops/src/service/shared/errors.ts",
-  "services/hq-ops/src/service/shared/internal-errors.ts",
-  "services/hq-ops/src/service/shared/ports/resources.ts",
-  "services/hq-ops/src/service/shared/entities/workspace-plugin-catalog.ts",
-  "services/hq-ops/src/service/shared/repositories/workspace-plugin-catalog-repository.ts",
+const ALLOWED_COMMON_PATHS = [
+  "services/hq-ops/src/service/common/README.md",
+  "services/hq-ops/src/service/common/errors.ts",
+  "services/hq-ops/src/service/common/internal-errors.ts",
+  "services/hq-ops/src/service/common/ports/resources.ts",
+  "services/hq-ops/src/service/common/entities/workspace-plugin-catalog.ts",
+  "services/hq-ops/src/service/common/repositories/workspace-plugin-catalog-repository.ts",
 ];
 
 const REQUIRED_RESOURCE_PORT_CONSUMERS = [
   "services/hq-ops/src/service/base.ts",
-  "services/hq-ops/src/service/shared/repositories/workspace-plugin-catalog-repository.ts",
+  "services/hq-ops/src/service/common/repositories/workspace-plugin-catalog-repository.ts",
   "services/hq-ops/src/service/modules/config/helpers/paths.ts",
   "services/hq-ops/src/service/modules/journal/helpers/paths.ts",
   "services/hq-ops/src/service/modules/journal/helpers/storage.ts",
@@ -144,9 +144,9 @@ for (const relPath of RUNTIME_HELPER_PATHS) {
 }
 
 assertExactSet(
-  await listFilesUnder("services/hq-ops/src/service/shared"),
-  ALLOWED_SHARED_PATHS,
-  "hq-ops service/shared file allowlist",
+  await listFilesUnder("services/hq-ops/src/service/common"),
+  ALLOWED_COMMON_PATHS,
+  "hq-ops service/common file allowlist",
 );
 
 const pkg = await readJson("services/hq-ops/package.json");
@@ -190,8 +190,8 @@ const [contractSource, routerSource, clientSource, serviceShapeSource, baseSourc
   readFile("services/hq-ops/src/client.ts"),
   readFile("services/hq-ops/test/service-shape.test.ts"),
   readFile("services/hq-ops/src/service/base.ts"),
-  readFile("services/hq-ops/src/service/shared/ports/resources.ts"),
-  readFile("services/hq-ops/src/service/shared/README.md"),
+  readFile("services/hq-ops/src/service/common/ports/resources.ts"),
+  readFile("services/hq-ops/src/service/common/README.md"),
 ]);
 
 for (const key of ["config", "repoState", "journal", "security", "pluginCatalog", "pluginInstall", "pluginLifecycle"]) {
@@ -238,13 +238,13 @@ for (const relPath of REQUIRED_RESOURCE_PORT_CONSUMERS) {
   const source = await readFile(relPath);
   assertCondition(
     source.includes("ports/resources"),
-    `${relPath} must consume the shared primitive HQ Ops resources port (services/hq-ops/src/service/shared/ports/resources.ts)`,
+    `${relPath} must consume the common primitive HQ Ops resources port (services/hq-ops/src/service/common/ports/resources.ts)`,
   );
 }
 
 assertCondition(
   sharedReadmeSource.includes("Keep module-owned config, repo-state, journal, and security behavior inside the owning module directory."),
-  "hq-ops shared README must document module-local behavior ownership",
+  "hq-ops common README must document module-local behavior ownership",
 );
 
 assertCondition(clientSource.includes("defineServicePackage(router)"), "hq-ops client must keep defineServicePackage(router)");
@@ -345,10 +345,10 @@ for (const relPath of [
   "services/hq-ops/src/service/modules/plugin-lifecycle/model.ts",
   "services/hq-ops/src/service/modules/plugin-lifecycle/repository.ts",
   "services/hq-ops/src/service/modules/plugin-lifecycle/schemas.ts",
-  "services/hq-ops/src/service/shared/ports/config-store.ts",
-  "services/hq-ops/src/service/shared/ports/repo-state-store.ts",
-  "services/hq-ops/src/service/shared/ports/journal-store.ts",
-  "services/hq-ops/src/service/shared/ports/security-runtime.ts",
+  "services/hq-ops/src/service/common/ports/config-store.ts",
+  "services/hq-ops/src/service/common/ports/repo-state-store.ts",
+  "services/hq-ops/src/service/common/ports/journal-store.ts",
+  "services/hq-ops/src/service/common/ports/security-runtime.ts",
 ]) {
   assertCondition(!(await pathExists(relPath)), `obsolete high-level HQ Ops behavior port must not survive: ${relPath}`);
 }

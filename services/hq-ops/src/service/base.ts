@@ -21,7 +21,7 @@
  * `src/service/middleware/*`.
  */
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
-import type { HqOpsResources } from "./shared/ports/resources";
+import type { HqOpsResources } from "./common/ports/resources";
 
 /**
  * Construction-time context supplied when the in-process client is created.

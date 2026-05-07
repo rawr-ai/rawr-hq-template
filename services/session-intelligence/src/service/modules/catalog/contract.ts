@@ -1,14 +1,14 @@
 import { schema } from "@rawr/hq-sdk";
 import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
-import { SESSION_NOT_FOUND, UNKNOWN_SESSION_FORMAT } from "../../shared/errors";
+import { SESSION_NOT_FOUND, UNKNOWN_SESSION_FORMAT } from "../../common/errors";
 import {
   SessionMetadataSchema,
   SessionListItemSchema,
   SessionSourceFilterSchema,
   SessionSourceSchema,
   SessionStatusSchema,
-} from "../../shared/entities";
+} from "../../common/entities";
 
 const SessionFiltersSchema = Type.Object(
   {

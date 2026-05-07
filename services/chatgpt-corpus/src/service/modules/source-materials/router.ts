@@ -7,7 +7,7 @@
  * duplicating parsing rules.
  */
 import { SOURCE_MATERIAL_DIRECTORIES } from "../../../shared/layout";
-import { buildSnapshotRecords } from "../../shared/helpers/source-records";
+import { buildSnapshotRecords } from "../../common/helpers/source-records";
 import { module } from "./module";
 
 const readSnapshot = module.readSnapshot.handler(async ({ context, errors }) => {

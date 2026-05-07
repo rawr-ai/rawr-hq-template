@@ -1,16 +1,16 @@
 import type { CleanupBehindCandidate, RetainedResidue, RetireAction, RetiredPluginRef } from "../entities";
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#common/resources";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../../common/resources";
 import {
   loadCodexRegistry,
   type CodexRegistryFile,
   type CodexRegistryPlugin,
-} from "#repositories/codex-registry-repository";
-import { pruneCodexHooksForPlugin } from "#repositories/codex-hooks-repository";
+} from "../../../common/repositories/codex-registry-repository";
+import { pruneCodexHooksForPlugin } from "../../../common/repositories/codex-hooks-repository";
 import {
   getCodexManagedMcpDir,
   getCodexRetiredRootSkillsDir,
   getCodexRuntimeSkillsDir,
-} from "#repositories/codex-runtime-paths";
+} from "../../../common/repositories/codex-runtime-paths";
 import { deletePathIfPresent, writeJsonWithUndoCapture } from "./filesystem-actions";
 import { MANAGED_BY } from "./managed-source";
 

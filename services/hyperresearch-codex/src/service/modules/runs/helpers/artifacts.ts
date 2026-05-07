@@ -5,8 +5,8 @@ import type {
   HyperresearchStepDefinition,
   HyperresearchStepRecord,
   HyperresearchV8RunLedger,
-} from "../../../shared/entities";
-import type { HyperresearchCodexIO } from "../../../shared/resources";
+} from "../../../common/entities";
+import type { HyperresearchCodexIO } from "../../../common/resources";
 
 export function jsonContent(value: unknown) {
   return `${JSON.stringify(value, null, 2)}\n`;

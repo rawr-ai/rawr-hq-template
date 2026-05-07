@@ -1,10 +1,10 @@
-import { scanSourcePluginContent } from "#source-content/helpers/source-plugin-content";
-import type { AgentConfigSyncResources } from "#common/resources";
+import { scanSourcePluginContent } from "../../../common/source-content/helpers/source-plugin-content";
+import type { AgentConfigSyncResources } from "../../../common/resources";
 import type {
   RawrPluginKind,
   SourceContent,
   SourcePlugin,
-} from "#common/entities";
+} from "../../../common/entities";
 import type { WorkspaceSkip, WorkspaceSyncable } from "../entities";
 import { listWorkspacePluginDirs } from "./workspace-roots";
 

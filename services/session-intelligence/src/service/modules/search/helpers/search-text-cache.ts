@@ -1,7 +1,7 @@
-import type { RoleFilter, SessionSource } from "../../../shared/entities";
-import type { SessionIndexRuntime } from "../../../shared/ports/session-index-runtime";
-import type { SessionSourceRuntime } from "../../../shared/ports/session-source-runtime";
-import { extractClaudeMessages, extractCodexMessages } from "../../../shared/normalization";
+import type { RoleFilter, SessionSource } from "../../../common/entities";
+import type { SessionIndexRuntime } from "../../../common/ports/session-index-runtime";
+import type { SessionSourceRuntime } from "../../../common/ports/session-source-runtime";
+import { extractClaudeMessages, extractCodexMessages } from "../../../common/normalization";
 import { buildSearchText, rolesKey } from "./search-text";
 import { readCachedSearchText, writeCachedSearchText } from "../repositories/search-cache-repository";
 

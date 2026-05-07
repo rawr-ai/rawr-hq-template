@@ -19,8 +19,8 @@
       "default": "./src/router.ts"
     },
     "./resources": {
-      "types": "./src/service/shared/resources.ts",
-      "default": "./src/service/shared/resources.ts"
+      "types": "./src/service/common/resources.ts",
+      "default": "./src/service/common/resources.ts"
     },
     "./service/contract": {
       "types": "./src/service/contract.ts",

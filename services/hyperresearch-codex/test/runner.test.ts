@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createClient } from "../src";
-import { assertAllowedHyperresearchOperation } from "../src/service/shared/adapters/hyperresearch-cli";
+import { assertAllowedHyperresearchOperation } from "../src/service/common/adapters/hyperresearch-cli";
 import { createClientOptions, invocation, RecordingCli } from "./helpers";
 
 const tempDirs: string[] = [];

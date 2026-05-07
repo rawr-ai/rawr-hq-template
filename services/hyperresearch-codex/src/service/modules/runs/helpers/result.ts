@@ -2,8 +2,8 @@ import { validateHyperresearchRunIntegrity } from "./integrity";
 import type {
   HyperresearchV8RunLedger,
   V8RunStatus,
-} from "../../../shared/entities";
-import type { HyperresearchCodexIO } from "../../../shared/resources";
+} from "../../../common/entities";
+import type { HyperresearchCodexIO } from "../../../common/resources";
 
 export function allPendingAgentJobs(ledger: HyperresearchV8RunLedger) {
   return ledger.agentJobs.filter((job) => job.status === "pending");

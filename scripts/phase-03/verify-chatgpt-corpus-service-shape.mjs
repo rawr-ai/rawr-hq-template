@@ -15,7 +15,7 @@ const REQUIRED_PATHS = [
   `${SERVICE_ROOT}/src/service/contract.ts`,
   `${SERVICE_ROOT}/src/service/impl.ts`,
   `${SERVICE_ROOT}/src/service/router.ts`,
-  `${SERVICE_ROOT}/src/service/shared/errors.ts`,
+  `${SERVICE_ROOT}/src/service/common/errors.ts`,
   `${SERVICE_ROOT}/src/service/modules/source-materials/contract.ts`,
   `${SERVICE_ROOT}/src/service/modules/source-materials/entities.ts`,
   `${SERVICE_ROOT}/src/service/modules/source-materials/helpers/normalize.ts`,

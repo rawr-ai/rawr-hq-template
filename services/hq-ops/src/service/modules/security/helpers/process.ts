@@ -1,4 +1,4 @@
-import type { HqOpsResources } from "../../../shared/ports/resources";
+import type { HqOpsResources } from "../../../common/ports/resources";
 
 export function bytesToText(bytes: Uint8Array): string {
   return Buffer.from(bytes).toString("utf8");

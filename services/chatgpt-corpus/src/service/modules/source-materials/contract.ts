@@ -4,7 +4,7 @@ import { ocBase } from "../../base";
 import {
   INVALID_CONVERSATION_EXPORT,
   INVALID_CONVERSATION_JSON,
-} from "../../shared/errors";
+} from "../../common/errors";
 import { SourceSnapshotSchema } from "./entities";
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });

@@ -1,19 +1,19 @@
-import type { SourceContent, SourcePlugin } from "#common/entities";
-import type { SyncTargetResult } from "#common/entities/sync-results";
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#common/resources";
+import type { SourceContent, SourcePlugin } from "../../../common/entities";
+import type { SyncTargetResult } from "../../../common/entities/sync-results";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../../common/resources";
 import {
   readClaudeSyncManifest,
   upsertClaudeMarketplace,
   upsertClaudePluginManifest,
   writeClaudeSyncManifest,
-} from "#repositories/claude-marketplace-repository";
+} from "../../../common/repositories/claude-marketplace-repository";
 import {
   deleteIfExists,
   syncFileWithConflictPolicy,
   syncSkillDirWithConflictPolicy,
   syncTextWithConflictPolicy,
-} from "#repositories/destination-sync-repository";
-import { pushItem } from "#common/helpers/sync-results";
+} from "../../../common/repositories/destination-sync-repository";
+import { pushItem } from "../../../common/helpers/sync-results";
 
 type DestinationSyncOptions = {
   dryRun: boolean;

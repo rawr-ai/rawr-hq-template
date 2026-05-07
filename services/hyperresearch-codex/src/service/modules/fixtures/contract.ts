@@ -8,7 +8,7 @@ import {
   HyperresearchIntegrityFindingSchema,
   HyperresearchRunLedgerSchema,
   HyperresearchTierSchema,
-} from "../../shared/entities";
+} from "../../common/entities";
 
 const RunSyntheticSliceInputSchema = Type.Object(
   {

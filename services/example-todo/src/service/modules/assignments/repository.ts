@@ -6,7 +6,7 @@
  * handlers can decide caller-actionable boundary errors explicitly.
  */
 import type { Sql } from "@rawr/hq-sdk";
-import { UnexpectedInternalError } from "../../shared/internal-errors";
+import { UnexpectedInternalError } from "../../common/internal-errors";
 import type { Assignment } from "./schemas";
 
 export function createRepository(sql: Sql, workspaceId: string) {

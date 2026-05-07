@@ -4,7 +4,7 @@
  * The fixture module is intentionally separate from V8 runs: it proves the
  * reusable control-plane mechanics with a tiny route and fakeable CLI backend.
  */
-import { runHyperresearchCli } from "../../shared/adapters/hyperresearch-cli";
+import { runHyperresearchCli } from "../../common/adapters/hyperresearch-cli";
 import { validateSyntheticRunIntegrity } from "./helpers/integrity";
 import {
   nextSyntheticPendingStep,

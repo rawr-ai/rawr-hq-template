@@ -1,14 +1,14 @@
-import { runHyperresearchCli } from "../../../shared/adapters/hyperresearch-cli";
+import { runHyperresearchCli } from "../../../common/adapters/hyperresearch-cli";
 import type {
   HyperresearchAgentOutput,
   HyperresearchSourceCapture,
   HyperresearchStepDefinition,
   HyperresearchV8RunLedger,
-} from "../../../shared/entities";
+} from "../../../common/entities";
 import type {
   HyperresearchCliBackend,
   HyperresearchCodexIO,
-} from "../../../shared/resources";
+} from "../../../common/resources";
 
 function isHttpUrl(value: string): boolean {
   try {

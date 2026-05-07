@@ -8,7 +8,7 @@
  */
 import { SOURCE_MATERIAL_DIRECTORIES } from "../../../shared/layout";
 import type { SourceSnapshot } from "../source-materials/entities";
-import { buildSnapshotRecords } from "../../shared/helpers/source-records";
+import { buildSnapshotRecords } from "../../common/helpers/source-records";
 import { createArtifactFiles } from "./helpers/artifact-bundle";
 import { detectAnomalies } from "./helpers/anomalies";
 import { buildFamilyGraphs, buildRelationships } from "./helpers/families";

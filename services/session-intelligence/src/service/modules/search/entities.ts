@@ -1,5 +1,5 @@
 import { type Static, Type } from "typebox";
-import { SessionListItemSchema } from "../../shared/entities";
+import { SessionListItemSchema } from "../../common/entities";
 
 /**
  * search module entities.

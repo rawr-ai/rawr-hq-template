@@ -1,6 +1,6 @@
-import { resolveSourceScopeForPath, scopeAllows } from "#common/internal/source-scope";
-import type { AgentConfigSyncResources } from "#common/resources";
-import type { SyncScope } from "#common/entities";
+import { resolveSourceScopeForPath, scopeAllows } from "../../../common/internal/source-scope";
+import type { AgentConfigSyncResources } from "../../../common/resources";
+import type { SyncScope } from "../../../common/entities";
 import type { WorkspaceSkip, WorkspaceSyncable } from "../entities";
 import {
   hasAnyContent,

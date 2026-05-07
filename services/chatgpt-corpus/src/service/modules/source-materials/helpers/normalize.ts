@@ -3,5 +3,5 @@ export {
   createConversationRecord,
   createDocumentRecord,
   type SourceRecordNormalizationError,
-} from "../../../shared/helpers/source-records";
+} from "../../../common/helpers/source-records";
 

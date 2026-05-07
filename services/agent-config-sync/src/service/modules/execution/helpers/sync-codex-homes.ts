@@ -1,30 +1,30 @@
-import type { SourceContent, SourcePlugin } from "#common/entities";
-import type { SyncTargetResult } from "#common/entities/sync-results";
-import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "#common/resources";
+import type { SourceContent, SourcePlugin } from "../../../common/entities";
+import type { SyncTargetResult } from "../../../common/entities/sync-results";
+import type { AgentConfigSyncResources, AgentConfigSyncUndoCapture } from "../../../common/resources";
 import {
   buildCodexScriptName,
   getClaimsFromOtherPlugins,
   loadCodexRegistry,
   upsertCodexRegistry,
-} from "#repositories/codex-registry-repository";
-import { buildCodexManagedConfig } from "#repositories/codex-config-repository";
+} from "../../../common/repositories/codex-registry-repository";
+import { buildCodexManagedConfig } from "../../../common/repositories/codex-config-repository";
 import {
   buildCodexHooksFile,
   pruneCodexHooksForPlugin,
-} from "#repositories/codex-hooks-repository";
+} from "../../../common/repositories/codex-hooks-repository";
 import {
   getCodexManagedMcpDir,
   getCodexRetiredRootSkillsDir,
   getCodexRuntimeSkillsDir,
-} from "#repositories/codex-runtime-paths";
+} from "../../../common/repositories/codex-runtime-paths";
 import {
   deleteIfExists,
   syncFileWithConflictPolicy,
   syncSkillDirWithConflictPolicy,
   syncTextWithConflictPolicy,
-} from "#repositories/destination-sync-repository";
-import { pushItem } from "#common/helpers/sync-results";
-import { buildCodexAgentProjection } from "#source-content/helpers/codex-agent";
+} from "../../../common/repositories/destination-sync-repository";
+import { pushItem } from "../../../common/helpers/sync-results";
+import { buildCodexAgentProjection } from "../../../common/source-content/helpers/codex-agent";
 
 type DestinationSyncOptions = {
   dryRun: boolean;

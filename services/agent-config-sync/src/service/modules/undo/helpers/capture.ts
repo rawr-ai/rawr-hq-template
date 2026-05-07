@@ -1,4 +1,4 @@
-import type { AgentConfigSyncResources } from "#common/resources";
+import type { AgentConfigSyncResources } from "../../../common/resources";
 import {
   PLUGINS_SYNC_UNDO_PROVIDER,
   type UndoCapsule,

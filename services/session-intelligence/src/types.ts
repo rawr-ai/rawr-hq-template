@@ -12,7 +12,7 @@ export type {
   SessionSource,
   SessionSourceFilter,
   SessionStatus,
-} from "./service/shared/entities";
+} from "./service/common/entities";
 
 export type SessionListItem = Awaited<ReturnType<Client["catalog"]["list"]>>["sessions"][number];
 export type ResolveResult = Awaited<ReturnType<Client["catalog"]["resolve"]>>;

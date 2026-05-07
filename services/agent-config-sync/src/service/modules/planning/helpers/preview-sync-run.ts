@@ -1,39 +1,39 @@
-import { resolveProviderContent } from "#source-content/helpers/provider-content";
+import { resolveProviderContent } from "../../../common/source-content/helpers/provider-content";
 import {
   deleteIfExists,
   syncFileWithConflictPolicy,
   syncSkillDirWithConflictPolicy,
   syncTextWithConflictPolicy,
-} from "#repositories/destination-sync-repository";
+} from "../../../common/repositories/destination-sync-repository";
 import {
   buildCodexScriptName,
   getClaimsFromOtherPlugins,
   loadCodexRegistry,
   upsertCodexRegistry,
   upsertCodexRegistryAgentClaims,
-} from "#repositories/codex-registry-repository";
-import { buildCodexManagedConfig } from "#repositories/codex-config-repository";
+} from "../../../common/repositories/codex-registry-repository";
+import { buildCodexManagedConfig } from "../../../common/repositories/codex-config-repository";
 import {
   buildCodexHooksFile,
   pruneCodexHooksForPlugin,
-} from "#repositories/codex-hooks-repository";
+} from "../../../common/repositories/codex-hooks-repository";
 import {
   getCodexManagedMcpDir,
   getCodexRetiredRootSkillsDir,
   getCodexRuntimeSkillsDir,
-} from "#repositories/codex-runtime-paths";
+} from "../../../common/repositories/codex-runtime-paths";
 import {
   readClaudeSyncManifest,
   upsertClaudeMarketplace,
   upsertClaudePluginManifest,
   writeClaudeSyncManifest,
-} from "#repositories/claude-marketplace-repository";
-import { pushItem, summarizeScannedContent } from "#common/helpers/sync-results";
-import type { SyncRunResult, SyncTargetResult } from "#common/entities/sync-results";
-import type { SourceContent, SourcePlugin } from "#common/entities";
-import type { AgentConfigSyncResources } from "#common/resources";
-import { buildProviderProjections } from "#common/helpers/projections";
-import { buildCodexAgentProjection } from "#source-content/helpers/codex-agent";
+} from "../../../common/repositories/claude-marketplace-repository";
+import { pushItem, summarizeScannedContent } from "../../../common/helpers/sync-results";
+import type { SyncRunResult, SyncTargetResult } from "../../../common/entities/sync-results";
+import type { SourceContent, SourcePlugin } from "../../../common/entities";
+import type { AgentConfigSyncResources } from "../../../common/resources";
+import { buildProviderProjections } from "../../../common/helpers/projections";
+import { buildCodexAgentProjection } from "../../../common/source-content/helpers/codex-agent";
 
 export async function previewSyncRun(input: {
   sourcePlugin: SourcePlugin;

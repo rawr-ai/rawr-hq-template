@@ -67,12 +67,12 @@ const MODULE_OWNED_SCHEMA_EXPORTS = new Set([
   "ReindexResultSchema",
   "ReindexResult",
 ]);
-const FORBIDDEN_SHARED_LOGIC_FILES = [
-  `${SERVICE_ROOT}/src/service/shared/catalog-logic.ts`,
-  `${SERVICE_ROOT}/src/service/shared/transcript-logic.ts`,
-  `${SERVICE_ROOT}/src/service/shared/search-logic.ts`,
+const FORBIDDEN_COMMON_LOGIC_FILES = [
+  `${SERVICE_ROOT}/src/service/common/catalog-logic.ts`,
+  `${SERVICE_ROOT}/src/service/common/transcript-logic.ts`,
+  `${SERVICE_ROOT}/src/service/common/search-logic.ts`,
 ];
-const FORBIDDEN_SHARED_LOGIC_IMPORTS = [
+const FORBIDDEN_COMMON_LOGIC_IMPORTS = [
   "../../shared/catalog-logic",
   "../../shared/transcript-logic",
   "../../shared/search-logic",
@@ -176,11 +176,11 @@ async function verifyServiceShape(findings) {
     `${SERVICE_ROOT}/src/service/contract.ts`,
     `${SERVICE_ROOT}/src/service/impl.ts`,
     `${SERVICE_ROOT}/src/service/router.ts`,
-    `${SERVICE_ROOT}/src/service/shared/README.md`,
-    `${SERVICE_ROOT}/src/service/shared/errors.ts`,
-    `${SERVICE_ROOT}/src/service/shared/entities.ts`,
-    `${SERVICE_ROOT}/src/service/shared/ports/session-source-runtime.ts`,
-    `${SERVICE_ROOT}/src/service/shared/ports/session-index-runtime.ts`,
+    `${SERVICE_ROOT}/src/service/common/README.md`,
+    `${SERVICE_ROOT}/src/service/common/errors.ts`,
+    `${SERVICE_ROOT}/src/service/common/entities.ts`,
+    `${SERVICE_ROOT}/src/service/common/ports/session-source-runtime.ts`,
+    `${SERVICE_ROOT}/src/service/common/ports/session-index-runtime.ts`,
     `${SERVICE_ROOT}/test/service-shape.test.ts`,
   ];
 
@@ -190,8 +190,8 @@ async function verifyServiceShape(findings) {
     }
   }
   requiredPaths.push(
-    `${SERVICE_ROOT}/src/service/shared/repositories/codex-indexed-discovery-repository.ts`,
-    `${SERVICE_ROOT}/src/service/shared/repositories/codex-discovery-index-repository.ts`,
+    `${SERVICE_ROOT}/src/service/common/repositories/codex-indexed-discovery-repository.ts`,
+    `${SERVICE_ROOT}/src/service/common/repositories/codex-discovery-index-repository.ts`,
     `${SERVICE_ROOT}/src/service/modules/search/repositories/search-cache-repository.ts`,
     `${SERVICE_ROOT}/src/service/modules/search/helpers/search-text.ts`,
   );
@@ -379,13 +379,13 @@ async function verifyPluginDoesNotOwnDatabaseSemantics(findings) {
 }
 
 async function verifyModuleSchemaOwnership(findings) {
-  const sharedSchemasPath = `${SERVICE_ROOT}/src/service/shared/entities.ts`;
-  const sharedSchemasSource = await readFileIfExists(sharedSchemasPath, findings, sharedSchemasPath, false);
-  if (sharedSchemasSource) {
+  const commonSchemasPath = `${SERVICE_ROOT}/src/service/common/entities.ts`;
+  const commonSchemasSource = await readFileIfExists(commonSchemasPath, findings, commonSchemasPath, false);
+  if (commonSchemasSource) {
     for (const schemaName of MODULE_OWNED_SCHEMA_EXPORTS) {
       const exportPattern = new RegExp(`\\bexport\\s+(?:const|type)\\s+${schemaName}\\b`, "u");
-      if (exportPattern.test(sharedSchemasSource)) {
-        findings.push(`${sharedSchemasPath} must not export module-owned schema ${schemaName}`);
+      if (exportPattern.test(commonSchemasSource)) {
+        findings.push(`${commonSchemasPath} must not export module-owned schema ${schemaName}`);
       }
     }
   }
@@ -401,7 +401,7 @@ async function verifyModuleSchemaOwnership(findings) {
 }
 
 async function verifyNoSameDomainSharedLogicDelegation(findings) {
-  for (const relPath of FORBIDDEN_SHARED_LOGIC_FILES) {
+  for (const relPath of FORBIDDEN_COMMON_LOGIC_FILES) {
     if (await pathExists(relPath)) {
       findings.push(`${relPath} must not exist; move same-domain service logic into its owning module`);
     }
@@ -420,7 +420,7 @@ async function verifyNoSameDomainSharedLogicDelegation(findings) {
 
       const source = await readFile(sourcePath);
       const specifiers = collectModuleSpecifiers(sourcePath, source);
-      for (const forbidden of FORBIDDEN_SHARED_LOGIC_IMPORTS) {
+      for (const forbidden of FORBIDDEN_COMMON_LOGIC_IMPORTS) {
         if (specifiers.includes(forbidden)) {
           findings.push(`${sourcePath} must not delegate same-domain behavior to ${forbidden}`);
         }

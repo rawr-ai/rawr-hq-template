@@ -13,7 +13,7 @@
  * actionable errors from returned values.
  */
 import type { Sql } from "@rawr/hq-sdk";
-import { UnexpectedInternalError } from "../../shared/internal-errors";
+import { UnexpectedInternalError } from "../../common/internal-errors";
 import type { Task } from "./schemas";
 
 export function createRepository(sql: Sql, workspaceId: string) {

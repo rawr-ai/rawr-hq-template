@@ -1,4 +1,4 @@
-import type { HqOpsResources } from "../../../shared/ports/resources";
+import type { HqOpsResources } from "../../../common/ports/resources";
 
 export function journalRoot(resources: HqOpsResources, repoRoot: string): string {
   return resources.path.join(repoRoot, ".rawr", "journal");

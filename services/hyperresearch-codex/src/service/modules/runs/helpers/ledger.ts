@@ -3,8 +3,8 @@ import type {
   HyperresearchRunLedger,
   HyperresearchStepDefinition,
   HyperresearchV8RunLedger,
-} from "../../../shared/entities";
-import type { HyperresearchCodexIO } from "../../../shared/resources";
+} from "../../../common/entities";
+import type { HyperresearchCodexIO } from "../../../common/resources";
 
 export async function writeHyperresearchRunLedger(input: {
   ledgerPath: string;

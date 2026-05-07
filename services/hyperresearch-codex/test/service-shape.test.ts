@@ -42,10 +42,10 @@ describe("hyperresearch-codex service shell", () => {
     ]);
   });
 
-  it("rejects generic module buckets, module-root implementation files, and top-level shared helpers", async () => {
+  it("rejects generic module buckets, module-root implementation files, and top-level common helpers", async () => {
     const serviceDir = path.resolve(dirname(fileURLToPath(import.meta.url)), "../src/service");
     const moduleDir = path.join(serviceDir, "modules");
-    const sharedDir = path.join(serviceDir, "shared");
+    const commonDir = path.join(serviceDir, "common");
     const moduleNames = (await fs.readdir(moduleDir, { withFileTypes: true }))
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
@@ -69,11 +69,11 @@ describe("hyperresearch-codex service shell", () => {
       expect(entries).not.toContain("v8-runner.ts");
     }
 
-    expect((await fs.readdir(sharedDir)).sort()).toEqual([
+    expect((await fs.readdir(commonDir)).sort()).toEqual([
       "adapters",
       "entities.ts",
       "resources.ts",
     ]);
-    await expect(fs.stat(path.join(sharedDir, "helpers"))).rejects.toThrow();
+    await expect(fs.stat(path.join(commonDir, "helpers"))).rejects.toThrow();
   });
 });

@@ -6,9 +6,9 @@
  * sibling modules so callers can choose read vs write capabilities explicitly.
  */
 import { module } from "./module";
-import { discoverWorkspacePluginCatalog } from "../../shared/repositories/workspace-plugin-catalog-repository";
-import type { HqOpsResources } from "../../shared/ports/resources";
-import type { WorkspacePluginCatalogEntry } from "../../shared/entities/workspace-plugin-catalog";
+import { discoverWorkspacePluginCatalog } from "../../common/repositories/workspace-plugin-catalog-repository";
+import type { HqOpsResources } from "../../common/ports/resources";
+import type { WorkspacePluginCatalogEntry } from "../../common/entities/workspace-plugin-catalog";
 
 async function loadWorkspacePluginCatalog(input: {
   workspaceRoot?: string;

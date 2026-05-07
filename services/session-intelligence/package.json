@@ -23,16 +23,16 @@
       "default": "./src/service/contract.ts"
     },
     "./ports/session-source-runtime": {
-      "types": "./src/service/shared/ports/session-source-runtime.ts",
-      "default": "./src/service/shared/ports/session-source-runtime.ts"
+      "types": "./src/service/common/ports/session-source-runtime.ts",
+      "default": "./src/service/common/ports/session-source-runtime.ts"
     },
     "./ports/session-index-runtime": {
-      "types": "./src/service/shared/ports/session-index-runtime.ts",
-      "default": "./src/service/shared/ports/session-index-runtime.ts"
+      "types": "./src/service/common/ports/session-index-runtime.ts",
+      "default": "./src/service/common/ports/session-index-runtime.ts"
     },
     "./entities": {
-      "types": "./src/service/shared/entities.ts",
-      "default": "./src/service/shared/entities.ts"
+      "types": "./src/service/common/entities.ts",
+      "default": "./src/service/common/entities.ts"
     },
     "./router": {
       "types": "./src/router.ts",

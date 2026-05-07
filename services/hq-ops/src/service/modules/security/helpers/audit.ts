@@ -1,4 +1,4 @@
-import type { HqOpsResources } from "../../../shared/ports/resources";
+import type { HqOpsResources } from "../../../common/ports/resources";
 import type { SecurityFinding } from "../entities";
 import { bytesToText } from "./process";
 

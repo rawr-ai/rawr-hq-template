@@ -4,7 +4,7 @@ import { Type } from "typebox";
 import {
   INVALID_CONVERSATION_EXPORT,
   INVALID_CONVERSATION_JSON,
-} from "../../shared/errors";
+} from "../../common/errors";
 import { ocBase } from "../../base";
 import { SourceSnapshotSchema } from "../source-materials/entities";
 import {

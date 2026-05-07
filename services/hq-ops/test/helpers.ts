@@ -13,7 +13,7 @@ import {
 import type { CreateClientOptions } from "../src/client";
 import type { RawrConfig } from "../src/service/modules/config/entities";
 import type { Service } from "../src/service/base";
-import type { ExecResult, HqOpsResources, SqliteDatabase } from "../src/service/shared/ports/resources";
+import type { ExecResult, HqOpsResources, SqliteDatabase } from "../src/service/common/ports/resources";
 
 type ClientOptions = {
   deps?: Partial<Service["Deps"]>;

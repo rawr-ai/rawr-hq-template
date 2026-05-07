@@ -1,4 +1,4 @@
-import type { RoleFilter, SessionMessage } from "../../../shared/entities";
+import type { RoleFilter, SessionMessage } from "../../../common/entities";
 
 /**
  * Builds the searchable text representation for a session transcript.
