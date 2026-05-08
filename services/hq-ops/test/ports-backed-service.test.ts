@@ -182,7 +182,7 @@ describe("hq-ops service resource-backed behavior", () => {
 
     const evaluation = await client.security.gateEnable(
       {
-        pluginId: "@rawr/plugin-mfe-demo",
+        pluginId: "@rawr/plugin-test-web",
         riskTolerance: "balanced",
         mode: "repo",
       },
@@ -190,7 +190,7 @@ describe("hq-ops service resource-backed behavior", () => {
     );
     expect(evaluation.allowed).toBe(false);
     expect(evaluation.requiresForce).toBe(true);
-    expect(evaluation.report.meta?.pluginId).toBe("@rawr/plugin-mfe-demo");
+    expect(evaluation.report.meta?.pluginId).toBe("@rawr/plugin-test-web");
 
     const latest = await client.security.getSecurityReport({}, invocation("trace-report"));
     expect(latest?.meta?.repoRoot).toBe(repoRoot);

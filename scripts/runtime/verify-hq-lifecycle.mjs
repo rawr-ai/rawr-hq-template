@@ -19,21 +19,37 @@ await Promise.all([
   mustExist("apps/cli/test/hq-legacy-surface.test.ts"),
   mustExist("scripts/dev/hq.sh"),
   mustExist("docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md"),
-  mustExist("docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md"),
   mustExist("scripts/runtime/verify-hq-lifecycle.mjs"),
 ]);
 
-const [scripts, rootPackageRaw, toolsExportSource, hqStatusSource, hqShellSource, runtimeRunbookSource, coordinationRunbookSource] = await Promise.all([
+const activeRuntimeDocPaths = [
+  "docs/process/RUNBOOKS.md",
+  "docs/process/HQ_USAGE.md",
+  "docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md",
+  "docs/process/DESIGN_INTEGRATION_GOALS.md",
+  "docs/process/DESIGN_DATA_INTEGRATION_PLAN.md",
+];
+
+const [scripts, rootPackageRaw, toolsExportSource, hqStatusSource, hqShellSource, runtimeRunbookSource, ...activeRuntimeDocs] = await Promise.all([
   readPackageScripts(),
   readFile("package.json"),
   readFile("apps/cli/src/commands/tools/export.ts"),
   readFile("apps/cli/src/lib/hq-status.ts"),
   readFile("scripts/dev/hq.sh"),
   readFile("docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md"),
-  readFile("docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md"),
+  ...activeRuntimeDocPaths.map((path) => readFile(path)),
 ]);
 
 const rootPackage = JSON.parse(rootPackageRaw);
+const activeRuntimeDocsSource = activeRuntimeDocs.join("\n");
+const retiredGuidanceNeedles = [
+  ["COORDINATION", "CANVAS", "OPERATIONS.md"].join("_"),
+  ["coordination", "canvas"].join(" "),
+  `/${"coordination"}`,
+  `/rpc/${"coordination"}`,
+  ["workflow", "coord"].join(" "),
+  `.rawr/${"coordination"}`,
+];
 
 assertCondition(
   !("dev:up" in rootPackage.scripts),
@@ -101,9 +117,24 @@ assertCondition(
   "HQ runtime runbook must remove legacy lifecycle aliases and env names",
 );
 assertCondition(
-  coordinationRunbookSource.includes("HQ_RUNTIME_OPERATIONS.md")
-    && coordinationRunbookSource.includes("managed HQ runtime is already running"),
-  "coordination runbook must delegate generic lifecycle behavior to the canonical HQ runtime runbook",
+  hqShellSource.includes("none|app|app+inngest|all")
+    && hqStatusSource.includes('"none", "app", "app+inngest", "all"')
+    && runtimeRunbookSource.includes("--open none|app|app+inngest|all"),
+  "HQ runtime open policy must be limited to none, app, app+inngest, and all",
+);
+assertCondition(
+  rootPackage.scripts["dev:workflows"] === "bun run --cwd apps/server dev:inngest"
+    && rootPackage.scripts["dev:inngest"] === "bun run dev:workflows",
+  "package.json must preserve dev:workflows and dev:inngest",
+);
+assertCondition(
+  runtimeRunbookSource.includes("http://localhost:3000/api/inngest")
+    && runtimeRunbookSource.includes("bun run dev:workflows"),
+  "HQ runtime runbook must preserve Inngest runtime checks and dev:workflows debugging guidance",
+);
+assertCondition(
+  retiredGuidanceNeedles.every((needle) => !activeRuntimeDocsSource.includes(needle)),
+  "active runtime/process docs must not advertise retired coordination guidance",
 );
 
 assertScriptEquals(

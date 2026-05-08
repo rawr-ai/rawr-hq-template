@@ -107,11 +107,6 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("plugins/web/mfe-demo"),
-        test: { name: "plugin-mfe-demo", environment: "jsdom", include: [...includes] },
-      },
-      {
-        extends: true,
         root: r("plugins/cli/session-tools"),
         test: { name: "plugin-session-tools", environment: "node", include: [...includes] },
       },

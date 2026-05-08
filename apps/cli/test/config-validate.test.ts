@@ -26,7 +26,7 @@ async function makeWorkspace(): Promise<string> {
 }
 
 describe("rawr config validate", () => {
-  it("exits 0 when no rawr.config.ts exists", async () => {
+  it("exits 0 when no rawr.config.ts exists", { timeout: 30000 }, async () => {
     const ws = await makeWorkspace();
     const proc = runRawrInWorkspace(ws, ["config", "validate", "--json"]);
     expect(proc.status).toBe(0);

@@ -286,17 +286,6 @@
         "@rawr/runtime-context": "workspace:*",
       },
     },
-    "plugins/web/mfe-demo": {
-      "name": "@rawr/plugin-mfe-demo",
-      "version": "0.1.0",
-      "dependencies": {
-        "@rawr/ui-sdk": "workspace:*",
-      },
-      "devDependencies": {
-        "@types/node": "^22.14.0",
-        "typescript": "^5.9.3",
-      },
-    },
     "services/agent-config-sync": {
       "name": "@rawr/agent-config-sync",
       "dependencies": {
@@ -1058,8 +1047,6 @@
     "@rawr/plugin-hq": ["@rawr/plugin-hq@workspace:plugins/agents/hq"],
 
     "@rawr/plugin-hyperresearch": ["@rawr/plugin-hyperresearch@workspace:plugins/cli/hyperresearch"],
-
-    "@rawr/plugin-mfe-demo": ["@rawr/plugin-mfe-demo@workspace:plugins/web/mfe-demo"],
 
     "@rawr/plugin-plugins": ["@rawr/plugin-plugins@workspace:plugins/cli/plugins"],
 

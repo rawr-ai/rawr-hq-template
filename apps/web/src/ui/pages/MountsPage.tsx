@@ -137,7 +137,7 @@ export function MountsPage() {
             <p className="m-0 text-sm text-muted-foreground">Loading plugin state…</p>
           ) : enabled.length === 0 ? (
             <p className="m-0 rounded-sm border border-border/70 bg-muted/55 p-3 text-sm text-muted-foreground">
-              No enabled plugins. Try <code>rawr plugins web enable mfe-demo --risk off</code>.
+              No enabled web plugins. Use <code>rawr plugins web list</code> to find one to enable.
             </p>
           ) : (
             <ul className="m-0 list-none space-y-4 p-0">
