@@ -30,7 +30,14 @@ import type {
 import { discoverCodexSessionsFromIndexOrNull } from "../../common/repositories/codex-indexed-discovery-repository";
 import type { SessionIndexRuntime } from "../../common/ports/session-index-runtime";
 import type { SessionSourceRuntime } from "../../common/ports/session-source-runtime";
-import type { MetadataSearchHit, SearchHit } from "./entities";
+import {
+  DEFAULT_FACET_CANDIDATE_LIMIT,
+  type FacetSearchHit,
+  type MetadataSearchHit,
+  type SearchHit,
+  type SessionFacetFilters,
+  type SessionFacets,
+} from "./entities";
 import { clearCachedSearchText } from "./repositories/search-cache-repository";
 import {
   hasMetadataFilters,
@@ -43,11 +50,21 @@ import {
   getSearchTextCached,
   getSearchTextUncached,
 } from "./helpers/search-text-cache";
+import {
+  extractSessionFacets,
+  facetFiltersHaveValues,
+  facetsMatchAll,
+} from "./helpers/session-facets";
 
 type SearchSessionSelection = {
   source: SessionSourceFilter;
   filters?: SearchSessionFilters;
   limit: number;
+};
+
+type FacetSelection = {
+  sessions: SessionListItem[];
+  facetsByPath: Map<string, SessionFacets>;
 };
 
 function asSearchSource(source: SessionSource | "unknown"): SessionSource {
@@ -150,19 +167,93 @@ async function loadSearchSessions(
   return limit ? filtered.slice(0, limit) : filtered;
 }
 
+function resolvedCandidateLimit(input: { candidateLimit?: number }): number {
+  return input.candidateLimit ?? DEFAULT_FACET_CANDIDATE_LIMIT;
+}
+
+async function selectSessionsByFacets(input: {
+  runtime: SessionSourceRuntime;
+  sessions: SessionListItem[];
+  facetFilters?: SessionFacetFilters;
+  includeFacets?: boolean;
+}): Promise<FacetSelection> {
+  const facetsByPath = new Map<string, SessionFacets>();
+  const selected: SessionListItem[] = [];
+  const shouldFilter = facetFiltersHaveValues(input.facetFilters);
+
+  if (!shouldFilter && !input.includeFacets) {
+    return { sessions: input.sessions, facetsByPath };
+  }
+
+  for (const session of input.sessions) {
+    const facets = await extractSessionFacets(input.runtime, session.path);
+    facetsByPath.set(session.path, facets);
+    if (!shouldFilter || facetsMatchAll(facets, input.facetFilters)) {
+      selected.push(session);
+    }
+  }
+
+  return { sessions: selected, facetsByPath };
+}
+
+async function withRequestedFacets<Hit extends { path: string }>(
+  runtime: SessionSourceRuntime,
+  hits: Hit[],
+  facetsByPath: Map<string, SessionFacets>,
+): Promise<Array<Hit & { facets?: SessionFacets }>> {
+  const out: Array<Hit & { facets?: SessionFacets }> = [];
+  for (const hit of hits) {
+    let facets = facetsByPath.get(hit.path);
+    if (!facets) {
+      facets = await extractSessionFacets(runtime, hit.path);
+      facetsByPath.set(hit.path, facets);
+    }
+    out.push({ ...hit, facets });
+  }
+  return out;
+}
+
 const metadata = module.metadata.handler(async ({ context, input }) => {
-  const sessions = await loadSearchSessions(context.sourceRuntime, context.indexRuntime, input);
-  return { hits: searchSessionsByMetadata(sessions, input.needle, input.limit) };
+  const hasFacetFilters = facetFiltersHaveValues(input.facetFilters);
+  const sessions = await loadSearchSessions(context.sourceRuntime, context.indexRuntime, {
+    source: input.source,
+    filters: input.filters,
+    limit: hasFacetFilters ? resolvedCandidateLimit(input) : input.limit,
+  });
+  const selected = await selectSessionsByFacets({
+    runtime: context.sourceRuntime,
+    sessions,
+    facetFilters: input.facetFilters,
+    includeFacets: input.includeFacets,
+  });
+  const hits = searchSessionsByMetadata(selected.sessions, input.needle, input.limit);
+
+  return {
+    hits: input.includeFacets
+      ? await withRequestedFacets(context.sourceRuntime, hits, selected.facetsByPath)
+      : hits,
+  };
 });
 
 const content = module.content.handler(async ({ context, input, errors }) => {
   try {
     const rx = new RegExp(input.pattern, input.ignoreCase ? "gmi" : "gm");
     const hits: SearchHit[] = [];
-    const sessions = await loadSearchSessions(context.sourceRuntime, context.indexRuntime, input);
+    const hasFacetFilters = facetFiltersHaveValues(input.facetFilters);
+    const sessions = await loadSearchSessions(context.sourceRuntime, context.indexRuntime, {
+      source: input.source,
+      filters: input.filters,
+      limit: hasFacetFilters ? resolvedCandidateLimit(input) : input.limit,
+    });
+    const selected = await selectSessionsByFacets({
+      runtime: context.sourceRuntime,
+      sessions,
+      facetFilters: input.facetFilters,
+      includeFacets: input.includeFacets,
+    });
     const indexPath = context.indexRuntime.defaultIndexPath();
 
-    for (const session of sessions) {
+    for (const session of selected.sessions) {
       const source = asSearchSource(
         await detectSessionFormat(context.sourceRuntime, session.path),
       );
@@ -208,7 +299,12 @@ const content = module.content.handler(async ({ context, input, errors }) => {
         : b.matchCount - a.matchCount,
     );
 
-    return { hits: input.maxMatches > 0 ? hits.slice(0, input.maxMatches) : hits };
+    const limited = input.maxMatches > 0 ? hits.slice(0, input.maxMatches) : hits;
+    return {
+      hits: input.includeFacets
+        ? await withRequestedFacets(context.sourceRuntime, limited, selected.facetsByPath)
+        : limited,
+    };
   } catch (err) {
     if (err instanceof SyntaxError) {
       throw errors.INVALID_REGEX({
@@ -218,6 +314,26 @@ const content = module.content.handler(async ({ context, input, errors }) => {
     }
     throw err;
   }
+});
+
+const facets = module.facets.handler(async ({ context, input }) => {
+  const sessions = await loadSearchSessions(context.sourceRuntime, context.indexRuntime, {
+    source: input.source,
+    filters: input.filters,
+    limit: resolvedCandidateLimit(input),
+  });
+  const selected = await selectSessionsByFacets({
+    runtime: context.sourceRuntime,
+    sessions,
+    facetFilters: input.facetFilters,
+    includeFacets: input.includeFacets || facetFiltersHaveValues(input.facetFilters),
+  });
+  const limited = input.limit > 0 ? selected.sessions.slice(0, input.limit) : selected.sessions;
+  const hits: FacetSearchHit[] = input.includeFacets
+    ? await withRequestedFacets(context.sourceRuntime, limited, selected.facetsByPath)
+    : limited;
+
+  return { hits };
 });
 
 const reindex = module.reindex.handler(async ({ context, input }) => {
@@ -261,6 +377,7 @@ const clearIndex = module.clearIndex.handler(async ({ context, input }) => {
 export const router = module.router({
   metadata,
   content,
+  facets,
   reindex,
   clearIndex,
 });

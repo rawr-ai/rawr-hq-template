@@ -11,7 +11,12 @@ import {
   setSessionIntelligenceClientFactoryForTest,
   type SessionIntelligenceClient,
 } from "../src/lib/session-intelligence-client";
-import type { ExtractedSession, ResolveResult, SessionListItem } from "../src/lib/session-types";
+import type {
+  ExtractedSession,
+  ResolveResult,
+  SessionFacets,
+  SessionListItem,
+} from "../src/lib/session-types";
 
 const tempPaths: string[] = [];
 const envKeys = ["HOME", "CODEX_HOME", "RAWR_SESSION_INDEX_PATH", "RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS"] as const;
@@ -66,6 +71,14 @@ const extracted: ExtractedSession = {
     { role: "user", content: "Find the rawr fixture." },
     { role: "assistant", content: "The oclif command saw it." },
   ],
+};
+
+const sessionFacets: SessionFacets = {
+  xmlBlockTags: ["proposed_plan"],
+  directives: ["automation-update", "code-comment"],
+  toolCalls: ["apply_patch", "exec_command"],
+  topLevelTypes: ["event_msg", "response_item", "session_meta"],
+  payloadTypes: ["custom_tool_call", "custom_tool_call_output", "message"],
 };
 
 beforeEach(() => {
@@ -144,6 +157,7 @@ function createFakeClient(overrides: Partial<SessionIntelligenceClient> = {}): S
     search: {
       metadata: vi.fn(async () => ({ hits: [{ ...session, matchScore: 3 }] })),
       content: vi.fn(async () => ({ hits: [{ ...session, matchCount: 1, matchSnippet: "A: The oclif command saw it." }] })),
+      facets: vi.fn(async () => ({ hits: [{ ...session, facets: sessionFacets }] })),
       clearIndex: vi.fn(async () => ({ cleared: true })),
       reindex: vi.fn(async () => ({ indexed: 1, total: 1 })),
     },
@@ -263,6 +277,171 @@ describe("@rawr/plugin-session-tools", () => {
     expect(data.hits[0]?.matchScore).toBe(3);
   });
 
+  it("passes normalized facet flags to metadata search and writes requested facets", async () => {
+    const client = installFakeClient(
+      createFakeClient({
+        search: {
+          metadata: vi.fn(async () => ({ hits: [{ ...session, matchScore: 3, facets: sessionFacets }] })),
+        } as unknown as SessionIntelligenceClient["search"],
+      }),
+    );
+    const outDir = await makeTempDir("rawr-plugin-session-search-facets-");
+    const outputSpy = spyOutput(SessionsSearch);
+
+    await SessionsSearch.run([
+      "--query-metadata",
+      "rawr-fixture",
+      "--source",
+      "all",
+      "--limit",
+      "5",
+      "--has-tag",
+      "Proposed Plan",
+      "--has-directive",
+      "code-comment",
+      "--has-tool",
+      "apply_patch",
+      "--has-payload-type",
+      "custom_tool_call",
+      "--has-top-type",
+      "response_item",
+      "--candidate-limit",
+      "9",
+      "--print-facets",
+      "--out-dir",
+      outDir,
+      "--json",
+    ]);
+
+    expect(client.search.metadata).toHaveBeenCalledWith(
+      {
+        source: "all",
+        filters: {
+          project: undefined,
+          cwdContains: undefined,
+          branch: undefined,
+          model: undefined,
+          since: undefined,
+          until: undefined,
+        },
+        needle: "rawr-fixture",
+        limit: 5,
+        facetFilters: {
+          tags: ["proposed_plan"],
+          directives: ["code-comment"],
+          tools: ["apply_patch"],
+          payloadTypes: ["custom_tool_call"],
+          topTypes: ["response_item"],
+        },
+        candidateLimit: 9,
+        includeFacets: true,
+      },
+      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.search.metadata" } } }),
+    );
+    const data = firstOutputData<{ hits: Array<SessionListItem & { matchScore: number; facets?: SessionFacets }> }>(
+      outputSpy,
+    );
+    expect(data.hits[0]?.facets).toEqual(sessionFacets);
+
+    const written = JSON.parse(await fs.readFile(path.join(outDir, "search-results.json"), "utf8")) as any;
+    expect(written.mode).toBe("query-metadata");
+    expect(written.hits[0].facets).toEqual(sessionFacets);
+  });
+
+  it("calls facet-only search when only --has-* filters are provided", async () => {
+    const client = installFakeClient();
+    const outDir = await makeTempDir("rawr-plugin-session-facet-only-");
+    const outputSpy = spyOutput(SessionsSearch);
+
+    await SessionsSearch.run([
+      "--source",
+      "codex",
+      "--has-tag",
+      "proposed_plan",
+      "--has-tool",
+      "Apply Patch",
+      "--limit",
+      "2",
+      "--candidate-limit",
+      "7",
+      "--print-facets",
+      "--out-dir",
+      outDir,
+      "--json",
+    ]);
+
+    expect(client.search.metadata).not.toHaveBeenCalled();
+    expect(client.search.content).not.toHaveBeenCalled();
+    expect(client.search.facets).toHaveBeenCalledWith(
+      {
+        source: "codex",
+        filters: {
+          project: undefined,
+          cwdContains: undefined,
+          branch: undefined,
+          model: undefined,
+          since: undefined,
+          until: undefined,
+        },
+        facetFilters: {
+          tags: ["proposed_plan"],
+          tools: ["apply_patch"],
+        },
+        limit: 2,
+        candidateLimit: 7,
+        includeFacets: true,
+      },
+      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.search.facets" } } }),
+    );
+    const data = firstOutputData<{ query: string | null; hits: Array<SessionListItem & { facets?: SessionFacets }> }>(
+      outputSpy,
+    );
+    expect(data.query).toBeNull();
+    expect(data.hits[0]?.facets).toEqual(sessionFacets);
+
+    const written = JSON.parse(await fs.readFile(path.join(outDir, "search-results.json"), "utf8")) as any;
+    expect(written.mode).toBe("facets");
+    expect(written.hits[0].facets).toEqual(sessionFacets);
+  });
+
+  it("passes facet filters and candidate bounds to content search separately from maxMatches", async () => {
+    const client = installFakeClient();
+    const outputSpy = spyOutput(SessionsSearch);
+
+    await SessionsSearch.run([
+      "--query",
+      "oclif",
+      "--source",
+      "codex",
+      "--limit",
+      "1",
+      "--max-matches",
+      "1",
+      "--has-tag",
+      "proposed_plan",
+      "--candidate-limit",
+      "2",
+      "--json",
+    ]);
+
+    expect(client.search.content).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "codex",
+        limit: 1,
+        pattern: "oclif",
+        maxMatches: 1,
+        facetFilters: {
+          tags: ["proposed_plan"],
+        },
+        candidateLimit: 2,
+      }),
+      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.search.content" } } }),
+    );
+    const data = firstOutputData<{ query: string; hits: Array<SessionListItem & { matchCount: number }> }>(outputSpy);
+    expect(data.query).toBe("oclif");
+    expect(data.hits[0]?.matchCount).toBe(1);
+  });
+
   it("preserves ambiguous search query validation before client work", async () => {
     const client = installFakeClient();
     const outputSpy = spyOutput(SessionsSearch);
@@ -274,6 +453,20 @@ describe("@rawr/plugin-session-tools", () => {
     expect(client.catalog.list).not.toHaveBeenCalled();
     expect(client.search.metadata).not.toHaveBeenCalled();
     expect(firstOutputError(outputSpy).code).toBe("AMBIGUOUS_QUERY");
+  });
+
+  it("keeps missing search query validation when no facet filters are provided", async () => {
+    const client = installFakeClient();
+    const outputSpy = spyOutput(SessionsSearch);
+
+    await expect(SessionsSearch.run(["--json"])).rejects.toMatchObject({
+      oclif: { exit: 2 },
+    });
+
+    expect(client.search.metadata).not.toHaveBeenCalled();
+    expect(client.search.content).not.toHaveBeenCalled();
+    expect(client.search.facets).not.toHaveBeenCalled();
+    expect(firstOutputError(outputSpy).code).toBe("MISSING_QUERY");
   });
 
   it("extracts split chunk outputs with plugin-local transcript formatting", async () => {
