@@ -1,9 +1,9 @@
 # Session Tools Session Parity Workstream
 
-Status: `active-draft`.
+Status: `complete`.
 Branch: `agent-session-tools-workstream-b-session-parity`.
 PR: `none`.
-Commit: `pending`.
+Commit: branch tip after closure commit.
 DRA: `Codex DRA`.
 Dates: `2026-05-08 -> active`.
 
@@ -16,7 +16,7 @@ sequence authority, or a live task board.
 Workstream record path:
 `docs/projects/workstream-b-preparation/lanes/session-tools/WORKSTREAM_RECORD.md`
 
-Status: `active-draft`
+Status: `complete`
 
 DRA: `Codex DRA`
 
@@ -38,7 +38,7 @@ Live Graphite state at opening repair:
   branch. Use `gt sync --no-restack`; use `gt restack --upstack` only for this
   stack if needed; do not change parents or absorb sibling lane work.
 
-Current phase: discovery, grounding, and solution design.
+Current phase: complete; final repo/Graphite check runs after closure commit.
 
 Selected skills:
 
@@ -58,7 +58,10 @@ Selected agents:
 - Follow-up opening reviewer: Maxwell `019e08e9-6e00-7930-bdb2-b4f20d4d329a`.
 - Plan reviewer: Herschel `019e08e8-d83f-7ca0-bbef-18f766ce54a3`.
 - Red-team reviewer: Kant `019e08e8-efa4-7241-92f6-c2bca6387dc1`.
-- Implementation workers: pending after reviewed plan is accepted by DRA.
+- Final proof reviewer: Godel `019e08ff-d0f8-7a43-bfd6-3a3818cb6150`, no
+  blocking findings.
+- Implementation workers: not used; DRA implemented the service/CLI changes
+  directly after the reviewed plan was accepted.
 
 Selected hooks: none.
 
@@ -198,8 +201,8 @@ Control inputs:
 - Graphite-first branch workflow.
 - Worktree isolation under
   `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-session-tools-workstream-b-session-parity`.
-- Current branch may have local draft artifacts before first commit; it is not a
-  durable handoff until committed or explicitly marked draft in the final output.
+- Planning artifacts are durable in commit `f7024769`; implementation changes
+  are included in the closure commit at branch tip.
 - Downstream hold: no downstream mutation or deletion in this lane.
 
 Stop/escalation conditions:
@@ -375,11 +378,12 @@ Agent packets:
   - Stop conditions: P1 closure blocker, irreversible API ambiguity,
     Graphite/worktree risk, or proof-boundary failure.
 - Implementation workers
-  - Agents: pending.
-  - Entry condition: only after design lock is satisfied.
-  - Future packet requirement: each worker gets disjoint write scope,
-    non-reversion instruction, evidence base, required gates, and stop
-    conditions before spawn.
+  - Agents: not used.
+  - Decision: DRA implemented directly because the service/CLI write sets were
+    coupled through the service contract and small enough to keep integrated in
+    one local pass.
+  - Proof limit: implementation quality is proven by code review, tests, and
+    final proof review, not by worker delegation.
 - Service package exemplar mapper
   - Agent: James `019e08e6-7514-7ba2-bd2d-2b81199d4611`.
   - Status: complete, read-only; result assimilated into plan and record.
@@ -394,6 +398,18 @@ Agent packets:
   - Proof limit: exemplar guidance constrains style and structure, but current
     session-intelligence code and lane requirements remain the implementation
     authority.
+- Final proof reviewer
+  - Agent: Godel `019e08ff-d0f8-7a43-bfd6-3a3818cb6150`.
+  - Status: complete, read-only; no blocking findings.
+  - Objective: review the final diff for service-owned parity, candidate-limit
+    semantics, hidden scaffolding policy, CLI proof, and router/helper split.
+  - Evidence base: current uncommitted implementation diff, lane artifacts,
+    service/plugin tests, external CLI command-channel proof.
+  - Forbidden scope: no edits; no destructive commands; no branch mutation.
+  - Output format: findings first with severity and file/line references, or
+    no-blocker statement plus residual risk.
+  - Proof limit: proof reviewer did not rerun build/structural; DRA did, and
+    those gates passed before disposition.
 
 Wave packets:
 
@@ -444,9 +460,13 @@ Wave packets:
   - Close condition: all review findings dispositioned and plan repaired or
     waived.
 - Wave 3: implementation and verification
-  - Status: pending.
-  - Close condition: accepted implementation passes required gates and final
-    review.
+  - Status: complete.
+  - Implementation result: service-owned facets/custom payload parity and CLI
+    projection are implemented in the upstream template repo.
+  - Required gates: service tests, plugin tests, typecheck, build, structural,
+    and targeted external CLI plugin-channel proof passed.
+  - Close condition: final proof review has no blocking findings, closure
+    artifacts are updated, and implementation diff is committed.
 
 Scratch policy:
 Use this lane directory for durable artifacts. Use temporary scratch only for
@@ -788,21 +808,41 @@ helpers, not only CLI/downstream leakage.
 
 ## Outcome Record
 
-Objective outcome: `not achieved`.
+Objective outcome: `achieved`.
 
 Residual objective gaps:
 
-- Discovery/design phase not complete.
-- Plan artifact written and repaired after plan-review/red-team findings.
-- Plan review and red-team review complete; findings accepted.
-- Implementation not started.
-- Required gates not run after implementation.
+- Downstream duplicate removal/sunset remains out of scope for this lane and
+  should be handled only after upstream integration sequencing allows it.
 
 Implementation summary:
-N/A.
+
+- Added service-owned session facet DTOs, filters, candidate-limit constants,
+  and `search.facets` contract under `services/session-intelligence`.
+- Added mechanical facet extraction helper for XML-ish tags, directives, tool
+  calls, top-level row types, and Codex payload types.
+- Kept facet search orchestration in `search/router.ts`: candidate loading,
+  facet computation, facet filtering, metadata/content composition, returned
+  hit limiting, and optional facet attachment are router-owned.
+- Extended Codex transcript normalization for `custom_tool_call` and
+  `custom_tool_call_output`.
+- Wired CLI flags for `--has-tag`, `--has-directive`, `--has-tool`,
+  `--has-payload-type`, `--has-top-type`, `--candidate-limit`, and
+  `--print-facets`.
+- Added facet-only CLI search path and README updates.
+- Added external command-channel proof in `apps/cli/test/plugins-install-all.test.ts`
+  for command help/discovery and `rawr sessions search --has-tag ... --json`.
 
 Decisions:
-N/A.
+
+- `candidateLimit` is service-owned: default `250`, max `50_000`, validated as
+  a bounded integer at the service contract boundary.
+- Content search keeps `maxMatches` as returned hit cap. When facet filters are
+  present, `candidateLimit` is the scan bound.
+- Text marker facets exclude hidden scaffolding tags:
+  `environment_context`, `permissions_instructions`, and `user_instructions`.
+  Structured top-level and payload type facets still record row categories.
+- Downstream `RAWR HQ` files were read as evidence only and not mutated.
 
 Evidence:
 
@@ -812,13 +852,26 @@ Evidence:
   mapper outputs assimilated.
 - Opening mechanics initial and follow-up reviews recorded and accepted.
 - Plan review and red-team review recorded and accepted.
+- `bunx nx run @rawr/session-intelligence:test`: passed, 2 files / 15 tests.
+- `bunx nx run @rawr/plugin-session-tools:test`: passed, 1 file / 12 tests.
+- `bunx nx run-many -t typecheck --projects=@rawr/session-intelligence,@rawr/plugin-session-tools`:
+  passed.
+- `bunx nx run-many -t build,structural --projects=@rawr/session-intelligence,@rawr/plugin-session-tools`:
+  passed, including `sync`, `verify-session-intelligence-structural`, and
+  `verify-projection-boundary-invocation` where applicable.
+- `bunx vitest run --project cli apps/cli/test/plugins-install-all.test.ts --testNamePattern='loads session-tools'`:
+  passed, proving linked oclif plugin command help/discovery and facet-only
+  JSON invocation.
+- Final proof reviewer found no blocking issues and independently reran:
+  `git diff --check`, service tests, plugin-session-tools tests, the
+  typecheck run-many gate, and full `apps/cli/test/plugins-install-all.test.ts`.
 
 Verification:
 Opening mechanics has no remaining P1. Remaining P2 opening findings were
-accepted and repaired in this record. Plan review and red-team findings were
-accepted and repaired in the plan/record. Implementation remains locked until
-lane artifacts are made durable or explicitly retained as local draft, and
-branch/Graphite state is refreshed.
+accepted and repaired. Plan review and red-team findings were accepted and
+repaired before implementation. Implementation gates pass. Final proof review
+has no blocking findings. Closure commit and final repo/Graphite status check
+are mechanical post-record actions.
 
 ## Deferred Inventory
 
@@ -832,6 +885,7 @@ Leaf loops:
 - Opening mechanics follow-up: warn, no P1; accepted P2 repairs applied.
 - Plan review: complete; findings accepted and plan/record repaired.
 - Red-team review: complete; findings accepted and plan/record repaired.
+- Final proof review: complete; no blocking findings.
 
 Composed loops: plan review + red-team findings accepted and repaired; no
 unwaived P1/P2 remains in the plan artifact.
@@ -850,7 +904,7 @@ Repair demands:
 - Scoped external-plugin-channel proof.
 - Artifact durability before handoff/implementation.
 
-Closure steward result: pending.
+Closure steward result: complete; no additional blocking findings.
 
 ## Final Output
 
@@ -859,13 +913,24 @@ Artifacts:
 - `docs/projects/workstream-b-preparation/lanes/session-tools/WORKSTREAM_RECORD.md`
 - `docs/projects/workstream-b-preparation/lanes/session-tools/IMPLEMENTATION_PLAN.md`
 - `docs/projects/workstream-b-preparation/lanes/session-tools/REVIEW_FINDINGS.md`
+- `docs/projects/workstream-b-preparation/lanes/session-tools/NEXT_PACKET.md`
 
 Verification run:
-Pending.
+
+- `bunx nx run @rawr/session-intelligence:test`: passed.
+- `bunx nx run @rawr/plugin-session-tools:test`: passed.
+- `bunx nx run-many -t typecheck --projects=@rawr/session-intelligence,@rawr/plugin-session-tools`:
+  passed.
+- `bunx nx run-many -t build,structural --projects=@rawr/session-intelligence,@rawr/plugin-session-tools`:
+  passed.
+- `bunx vitest run --project cli apps/cli/test/plugins-install-all.test.ts --testNamePattern='loads session-tools'`:
+  passed.
 
 Repo/Graphite state:
-Pending final check.
+Expected clean after closure commit; final `git status --short --branch` and
+`gt ls` are recorded in the assistant closeout.
 
 ## Next Packet
 
-Pending.
+See
+`docs/projects/workstream-b-preparation/lanes/session-tools/NEXT_PACKET.md`.

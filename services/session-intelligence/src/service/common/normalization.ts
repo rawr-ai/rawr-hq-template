@@ -158,12 +158,26 @@ export async function extractCodexMessages(runtime: SessionSourceRuntime, filePa
     if (!data) continue;
     if (data.type === "response_item") {
       const payload = asRecord(data.payload) ?? {};
-      if (payload.type === "function_call" || payload.type === "function_call_output" || payload.type === "reasoning") {
+      const payloadType = payload.type;
+      if (
+        payloadType === "function_call" ||
+        payloadType === "function_call_output" ||
+        payloadType === "custom_tool_call" ||
+        payloadType === "custom_tool_call_output" ||
+        payloadType === "reasoning"
+      ) {
         if (!includeTools || (!roles.includes("all") && !roles.includes("tool"))) continue;
-        const tool = payload.type === "reasoning" ? { type: payload.type, summary: payload.summary } : { type: payload.type, name: payload.name, arguments: payload.arguments, output: payload.output };
+        const tool =
+          payloadType === "reasoning"
+            ? { type: payloadType, summary: payload.summary }
+            : payloadType === "custom_tool_call"
+              ? { type: payloadType, name: payload.name, input: payload.input }
+              : payloadType === "custom_tool_call_output"
+                ? { type: payloadType, output: payload.output }
+                : { type: payloadType, name: payload.name, arguments: payload.arguments, output: payload.output };
         const text = JSON.stringify(tool, null, 2).slice(0, 20000).trim();
         if (text) out.push({ role: "tool", content: text, timestamp: typeof data.timestamp === "string" ? data.timestamp : undefined });
-      } else if (payload.type === "message") {
+      } else if (payloadType === "message") {
         const role = payload.role;
         const text = extractCodexMessageTextContent(payload.content).trim();
         if (!text || text.includes("<environment_context>") || text.includes("<user_instructions>")) continue;

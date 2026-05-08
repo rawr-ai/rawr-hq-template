@@ -6,7 +6,15 @@ import {
   RoleFilterSchema,
   SessionSourceFilterSchema,
 } from "../../common/entities";
-import { MetadataSearchHitSchema, ReindexResultSchema, SearchHitSchema } from "./entities";
+import {
+  DEFAULT_FACET_CANDIDATE_LIMIT,
+  FacetSearchHitSchema,
+  MAX_FACET_CANDIDATE_LIMIT,
+  MetadataSearchHitSchema,
+  ReindexResultSchema,
+  SearchHitSchema,
+  SessionFacetFiltersSchema,
+} from "./entities";
 
 const SearchSessionFiltersSchema = Type.Object(
   {
@@ -24,6 +32,12 @@ export type MetadataSearchHit = Static<typeof MetadataSearchHitSchema>;
 export type SearchHit = Static<typeof SearchHitSchema>;
 export type ReindexResult = Static<typeof ReindexResultSchema>;
 
+const CandidateLimitSchema = Type.Optional(Type.Integer({
+  minimum: 1,
+  maximum: MAX_FACET_CANDIDATE_LIMIT,
+  default: DEFAULT_FACET_CANDIDATE_LIMIT,
+}));
+
 export const contract = {
   metadata: ocBase
     .meta({ idempotent: true, entity: "search" })
@@ -35,6 +49,9 @@ export const contract = {
             filters: Type.Optional(SearchSessionFiltersSchema),
             needle: Type.String(),
             limit: Type.Number(),
+            facetFilters: Type.Optional(SessionFacetFiltersSchema),
+            includeFacets: Type.Optional(Type.Boolean()),
+            candidateLimit: CandidateLimitSchema,
           },
           { additionalProperties: false },
         ),
@@ -57,6 +74,9 @@ export const contract = {
             roles: Type.Array(RoleFilterSchema),
             includeTools: Type.Boolean(),
             useIndex: Type.Boolean(),
+            facetFilters: Type.Optional(SessionFacetFiltersSchema),
+            includeFacets: Type.Optional(Type.Boolean()),
+            candidateLimit: CandidateLimitSchema,
           },
           { additionalProperties: false },
         ),
@@ -64,6 +84,24 @@ export const contract = {
     )
     .output(schema(Type.Object({ hits: Type.Array(SearchHitSchema) }, { additionalProperties: false })))
     .errors({ INVALID_REGEX }),
+  facets: ocBase
+    .meta({ idempotent: true, entity: "search" })
+    .input(
+      schema(
+        Type.Object(
+          {
+            source: SessionSourceFilterSchema,
+            filters: Type.Optional(SearchSessionFiltersSchema),
+            facetFilters: SessionFacetFiltersSchema,
+            limit: Type.Number(),
+            candidateLimit: CandidateLimitSchema,
+            includeFacets: Type.Optional(Type.Boolean()),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    )
+    .output(schema(Type.Object({ hits: Type.Array(FacetSearchHitSchema) }, { additionalProperties: false }))),
   reindex: ocBase
     .meta({ idempotent: false, entity: "search" })
     .input(

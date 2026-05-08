@@ -1,6 +1,6 @@
 # Session Tools Implementation Plan
 
-Status: `draft-for-review`.
+Status: `implemented`.
 DRA: `Codex DRA`.
 Branch: `agent-session-tools-workstream-b-session-parity`.
 Record: `docs/projects/workstream-b-preparation/lanes/session-tools/WORKSTREAM_RECORD.md`.

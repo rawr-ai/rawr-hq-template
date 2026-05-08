@@ -71,6 +71,15 @@ function writeCodexFixture(codexHome: string) {
           content: "direct rawr sessions proof",
         },
       }),
+      JSON.stringify({
+        type: "response_item",
+        timestamp: "2026-04-19T01:02:05.000Z",
+        payload: {
+          type: "message",
+          role: "developer",
+          content: "<proposed_plan>\nprove external facet flags\n</proposed_plan>",
+        },
+      }),
     ].join("\n") + "\n",
   );
 }
@@ -118,6 +127,11 @@ describe("plugins cli install all", () => {
     expect(parsed.data.sessions).toHaveLength(1);
     expect(parsed.data.sessions[0].sessionId).toBe("agent-d-direct-command-proof");
 
+    const help = runRawr(["sessions", "search", "--help"], env);
+    expect(help.status).toBe(0);
+    expect(`${help.stdout}\n${help.stderr}`).toContain("--has-tag");
+    expect(`${help.stdout}\n${help.stderr}`).toContain("--candidate-limit");
+
     const search = runRawr(
       [
         "sessions",
@@ -137,6 +151,28 @@ describe("plugins cli install all", () => {
     expect(searchParsed.ok).toBe(true);
     expect(searchParsed.data.hits).toHaveLength(1);
     expect(searchParsed.data.hits[0].sessionId).toBe("agent-d-direct-command-proof");
+
+    const facetOnlySearch = runRawr(
+      [
+        "sessions",
+        "search",
+        "--source",
+        "codex",
+        "--has-tag",
+        "proposed_plan",
+        "--candidate-limit",
+        "2",
+        "--json",
+      ],
+      env,
+    );
+    expect(`${facetOnlySearch.stdout}\n${facetOnlySearch.stderr}`).not.toContain("command sessions:search not found");
+    expect(facetOnlySearch.status).toBe(0);
+
+    const facetOnlyParsed = JSON.parse(facetOnlySearch.stdout) as any;
+    expect(facetOnlyParsed.ok).toBe(true);
+    expect(facetOnlyParsed.data.hits).toHaveLength(1);
+    expect(facetOnlyParsed.data.hits[0].sessionId).toBe("agent-d-direct-command-proof");
 
     const reindexSearch = runRawr(
       [

@@ -1,6 +1,6 @@
 # Session Tools Review Findings
 
-Status: `active`.
+Status: `complete`.
 DRA: `Codex DRA`.
 Plan under review:
 `docs/projects/workstream-b-preparation/lanes/session-tools/IMPLEMENTATION_PLAN.md`.
@@ -71,10 +71,38 @@ Findings:
   helpers. Accepted. Repaired by constraining helpers to mechanical extraction
   and requiring router-visible orchestration/tests.
 
+### Final Proof Review
+
+Reviewer: Godel `019e08ff-d0f8-7a43-bfd6-3a3818cb6150`.
+
+Status: complete; no blocking findings.
+
+Scope:
+
+- implementation diff across `services/session-intelligence/**`,
+  `plugins/cli/session-tools/**`, `apps/cli/test/plugins-install-all.test.ts`,
+  and lane artifacts;
+- service-owned candidate-limit validation and content `maxMatches` semantics;
+- hidden scaffolding facet policy;
+- CLI facet-only behavior and external command-channel proof;
+- router/helper split against the `agent-config-sync` / `example-todo`
+  service-package structure constraint.
+
+Findings:
+
+- No blocking issues found.
+- Residual risk: implementation and closure artifacts were uncommitted at the
+  time of proof review; DRA must commit and run final repo/Graphite checks.
+- Residual risk: proof reviewer did not rerun build/structural, but DRA ran
+  `bunx nx run-many -t build,structural --projects=@rawr/session-intelligence,@rawr/plugin-session-tools`
+  successfully before disposition.
+
 ## DRA Disposition Summary
 
 All plan-review and red-team findings are accepted. The plan has been repaired
 for service-owned bounds, content `maxMatches` semantics, source-policy
 scaffolding, CLI proof, build/structural gates, and router/helper split.
-Implementation remains locked until lane artifacts are made durable or
-explicitly retained as local draft and branch/Graphite state is refreshed.
+Implementation entered after lane artifacts were committed and branch/Graphite
+state was refreshed. Required implementation gates pass. Final proof review
+found no blockers. Remaining closure action is commit plus final repo/Graphite
+checks.

@@ -6,16 +6,49 @@ import {
   createSessionIntelligenceClient,
   defaultSessionIndexPathSync,
 } from "../../lib/session-intelligence-client";
-import type { MetadataSearchHit, RoleFilter, SearchHit, SessionSourceFilter } from "../../lib/session-types";
+import type {
+  FacetSearchHit,
+  MetadataSearchHit,
+  RoleFilter,
+  SearchHit,
+  SessionFacetFilters,
+  SessionSourceFilter,
+} from "../../lib/session-types";
 
 type SearchMetadataOptions = NonNullable<Parameters<Client["search"]["metadata"]>[1]>;
 type SearchContentOptions = NonNullable<Parameters<Client["search"]["content"]>[1]>;
+type SearchFacetsOptions = NonNullable<Parameters<Client["search"]["facets"]>[1]>;
 type SearchClearIndexOptions = NonNullable<Parameters<Client["search"]["clearIndex"]>[1]>;
 type SearchReindexOptions = NonNullable<Parameters<Client["search"]["reindex"]>[1]>;
+
+function normalizeFacetToken(input: string): string {
+  return input
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/_+/g, "_");
+}
+
+function facetFlagValues(value: unknown): string[] | undefined {
+  const values = Array.isArray(value) ? value : value == null ? [] : [value];
+  const normalized = [...new Set(values.map((item) => normalizeFacetToken(String(item))).filter(Boolean))].sort();
+  return normalized.length ? normalized : undefined;
+}
+
+function hasFacetFilters(filters: SessionFacetFilters): boolean {
+  return Boolean(
+    filters.tags?.length ||
+      filters.directives?.length ||
+      filters.tools?.length ||
+      filters.payloadTypes?.length ||
+      filters.topTypes?.length,
+  );
+}
 
 export default class SessionsSearch extends RawrCommand {
   static description = "Search sessions by metadata or transcript content";
   private static readonly DEFAULT_SAFE_LIMIT = 5;
+  private static readonly DEFAULT_FACET_CANDIDATE_LIMIT = 250;
 
   static flags = {
     ...RawrCommand.baseFlags,
@@ -51,6 +84,18 @@ export default class SessionsSearch extends RawrCommand {
       default: ["user", "assistant"],
     }),
     "include-tools": Flags.boolean({ description: "Include tool / non-dialog events in content search", default: false }),
+    "has-tag": Flags.string({ description: "Require XML-ish block tag facet (repeatable)", multiple: true }),
+    "has-directive": Flags.string({ description: "Require directive facet such as code-comment (repeatable)", multiple: true }),
+    "has-tool": Flags.string({ description: "Require tool call facet such as apply_patch (repeatable)", multiple: true }),
+    "has-payload-type": Flags.string({ description: "Require Codex payload.type facet (repeatable)", multiple: true }),
+    "has-top-type": Flags.string({ description: "Require top-level JSONL type facet (repeatable)", multiple: true }),
+    "candidate-limit": Flags.integer({
+      description: "Max sessions to scan for structured facets",
+      default: SessionsSearch.DEFAULT_FACET_CANDIDATE_LIMIT,
+      min: 1,
+      max: 50_000,
+    }),
+    "print-facets": Flags.boolean({ description: "Include computed facets in --out-dir JSON", default: false }),
     project: Flags.string({ description: "Filter Claude sessions by project (path or name substring)" }),
     "cwd-contains": Flags.string({ description: "Filter by cwd substring" }),
     branch: Flags.string({ description: "Filter by git branch substring" }),
@@ -72,6 +117,7 @@ export default class SessionsSearch extends RawrCommand {
     const limit = Number(flags.limit);
     const maxMatches = Number(flags["max-matches"]);
     const reindexLimit = Number(flags["reindex-limit"]);
+    const candidateLimit = Number(flags["candidate-limit"]);
     const filters = {
       project: flags.project ? String(flags.project) : undefined,
       cwdContains: flags["cwd-contains"] ? String(flags["cwd-contains"]) : undefined,
@@ -80,6 +126,19 @@ export default class SessionsSearch extends RawrCommand {
       since: flags.since ? String(flags.since) : undefined,
       until: flags.until ? String(flags.until) : undefined,
     };
+    const facetFilters: SessionFacetFilters = {};
+    const tags = facetFlagValues(flags["has-tag"]);
+    const directives = facetFlagValues(flags["has-directive"]);
+    const tools = facetFlagValues(flags["has-tool"]);
+    const payloadTypes = facetFlagValues(flags["has-payload-type"]);
+    const topTypes = facetFlagValues(flags["has-top-type"]);
+    if (tags) facetFilters.tags = tags;
+    if (directives) facetFilters.directives = directives;
+    if (tools) facetFilters.tools = tools;
+    if (payloadTypes) facetFilters.payloadTypes = payloadTypes;
+    if (topTypes) facetFilters.topTypes = topTypes;
+    const hasFacets = hasFacetFilters(facetFilters);
+    const includeFacets = Boolean(flags["print-facets"]);
 
     if (metadataQuery && flags.reindex) {
       const result = this.fail("--reindex is only supported for content search (use --query)", { code: "REINDEX_WITH_METADATA_QUERY" });
@@ -94,8 +153,15 @@ export default class SessionsSearch extends RawrCommand {
       this.exit(2);
       return;
     }
-    if (!metadataQuery && !contentQuery && !flags.reindex) {
-      const result = this.fail("Provide either --query-metadata, --query, or --reindex", { code: "MISSING_QUERY" });
+    if (hasFacets && flags.reindex && !contentQuery) {
+      const result = this.fail("--reindex with structured facet filters requires --query", { code: "REINDEX_WITH_FACET_FILTERS" });
+      this.outputResult(result, { flags: baseFlags });
+      this.exit(2);
+      return;
+    }
+
+    if (!metadataQuery && !contentQuery && !flags.reindex && !hasFacets) {
+      const result = this.fail("Provide either --query-metadata, --query, --reindex, or at least one --has-* facet filter", { code: "MISSING_QUERY" });
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
@@ -104,6 +170,7 @@ export default class SessionsSearch extends RawrCommand {
     const sessionFetchLimit = (() => {
       if (metadataQuery) return limit;
       if (flags.reindex && reindexLimit === 0) return 0; // explicit opt-in for unbounded reindex
+      if (contentQuery && hasFacets) return limit;
       if (contentQuery) return Math.max(maxMatches, reindexLimit);
       if (flags.reindex) return reindexLimit;
       return limit;
@@ -112,14 +179,25 @@ export default class SessionsSearch extends RawrCommand {
     const indexPath = contentQuery || flags.reindex ? String(flags["index-path"]) : undefined;
     const client = await createSessionIntelligenceClient(indexPath ? { indexPath } : {});
 
-    let hits: Array<SearchHit | MetadataSearchHit> = [];
+    let hits: Array<SearchHit | MetadataSearchHit | FacetSearchHit> = [];
+    let mode: "query-metadata" | "query" | "facets" = metadataQuery ? "query-metadata" : contentQuery ? "query" : "facets";
     if (metadataQuery) {
       const metadataOptions = {
         context: { invocation: { traceId: "plugin-session-tools.search.metadata" } },
       } satisfies SearchMetadataOptions;
-      const response = await client.search.metadata({ source, filters, needle: metadataQuery, limit }, metadataOptions);
+      const response = await client.search.metadata(
+        {
+          source,
+          filters,
+          needle: metadataQuery,
+          limit,
+          ...(hasFacets ? { facetFilters, candidateLimit } : {}),
+          ...(includeFacets ? { includeFacets: true } : {}),
+        },
+        metadataOptions,
+      );
       hits = response.hits;
-    } else {
+    } else if (contentQuery || flags.reindex) {
       const roles = (flags.roles as unknown as string[]).map(String) as RoleFilter[];
       const includeTools = Boolean(flags["include-tools"]);
 
@@ -174,8 +252,26 @@ export default class SessionsSearch extends RawrCommand {
           source,
           filters,
           limit: sessionFetchLimit,
+          ...(hasFacets ? { facetFilters, candidateLimit } : {}),
+          ...(includeFacets ? { includeFacets: true } : {}),
         },
         contentOptions,
+      );
+      hits = response.hits;
+    } else {
+      const facetsOptions = {
+        context: { invocation: { traceId: "plugin-session-tools.search.facets" } },
+      } satisfies SearchFacetsOptions;
+      const response = await client.search.facets(
+        {
+          source,
+          filters,
+          facetFilters,
+          limit,
+          candidateLimit,
+          ...(includeFacets ? { includeFacets: true } : {}),
+        },
+        facetsOptions,
       );
       hits = response.hits;
     }
@@ -183,7 +279,7 @@ export default class SessionsSearch extends RawrCommand {
     if (outDir) {
       await ensureDir(outDir);
       await writeJsonFile(outDir, "search-results.json", {
-        mode: metadataQuery ? "query-metadata" : "query",
+        mode,
         query: metadataQuery ?? contentQuery,
         hits,
       });
@@ -199,6 +295,15 @@ export default class SessionsSearch extends RawrCommand {
             const id = h.sessionId ? h.sessionId.slice(0, 10) : "?";
             const title = (h.title ?? "").replaceAll(/\s+/g, " ").slice(0, 120);
             this.log(`${h.matchScore}  ${h.source} ${id}  ${title}  (${h.path})`);
+          }
+          return;
+        }
+
+        if (mode === "facets") {
+          for (const h of hits as FacetSearchHit[]) {
+            const id = h.sessionId ? h.sessionId.slice(0, 10) : "?";
+            const title = (h.title ?? "").replaceAll(/\s+/g, " ").slice(0, 120);
+            this.log(`${h.source} ${id}  ${title}  (${h.path})`);
           }
           return;
         }

@@ -19,7 +19,13 @@ export type ResolveResult = Awaited<ReturnType<Client["catalog"]["resolve"]>>;
 export type ExtractedSession = Awaited<ReturnType<Client["transcripts"]["extract"]>>;
 export type MetadataSearchHit = Awaited<ReturnType<Client["search"]["metadata"]>>["hits"][number];
 export type SearchHit = Awaited<ReturnType<Client["search"]["content"]>>["hits"][number];
+export type FacetSearchHit = Awaited<ReturnType<Client["search"]["facets"]>>["hits"][number];
 export type ReindexResult = Awaited<ReturnType<Client["search"]["reindex"]>>;
+
+export type {
+  SessionFacetFilters,
+  SessionFacets,
+} from "./service/modules/search/entities";
 
 export type ErrorResult = {
   error: string;
