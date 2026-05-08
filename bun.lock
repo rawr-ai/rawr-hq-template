@@ -38,6 +38,8 @@
         "@oclif/plugin-help": "^6.2.27",
         "@oclif/plugin-plugins": "^5.4.36",
         "@orpc/client": "^1.13.5",
+        "@rawr/agent-config-sync": "workspace:*",
+        "@rawr/agent-config-sync-node": "workspace:*",
         "@rawr/core": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
         "@rawr/orpc-client": "workspace:*",
