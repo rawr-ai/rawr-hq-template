@@ -336,6 +336,31 @@ Repo/Graphite state:
 - Opening state clean on `codex/platform-spec-finalization`.
 - Closure commit is expected on `codex/platform-spec-finalization` after this record update.
 
+## Optimization Pass - 2026-05-08
+
+Objective: optimize the RAWR Specification System companion after review identified three risks: flat rule-ledger structure, runtime over-dominance, and status-object drift.
+
+Artifacts added or updated:
+
+- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Specification_System_Spec.md`
+- `docs/projects/rawr-final-architecture-migration/workstreams/platform-architecture-finalization/spec-system-optimization-review.md`
+
+Review loop:
+
+- Leaf lanes: information shape/cold-read usability, authority governance/status-object boundary, source preservation/platform-runtime scoping.
+- Repair loop: accepted and repaired all material P2 findings plus useful P3 tightening.
+- Composed closure lane: returned close verdict with no material P1/P2/P3 findings.
+
+Outcome:
+
+- Purpose, audience, and through line moved to the opening.
+- Specification shapes and build paths now distinguish hub specs, companions, decision packets, harvest packets, review reports, read models, and process records.
+- Specifications are explicitly separated from status/reference metadata.
+- Attachment protocol is conditional on companion specs and restores `Authority owner`.
+- Platform/runtime rules are scoped as an application profile.
+- Acceptance gates now include a failed-gate output contract.
+- Reserved decisions are labeled as an inventory, not a full deferral ledger.
+
 ## Next Packet
 
 Continuation target: downstream Platform Architecture Specification finalization.
@@ -346,7 +371,7 @@ Why this is next: The platform spec should reference the spec-system companion r
 
 Current branch/stack: `codex/platform-spec-finalization`.
 
-What changed: Added the spec-system companion and supporting workstream artifacts.
+What changed: Added the spec-system companion and supporting workstream artifacts, then optimized the companion around reader workflow, document-shape applicability, authority-metadata separation, and platform/runtime application-profile scoping.
 
 What is done: Spec-system companion written, evidence table written, boundary/red-team reviews dispositioned, deferred inventory populated, source note written.
 
@@ -355,6 +380,7 @@ What is not done: Downstream platform spec rewrite, `_inbox/latest` harvest matr
 What to inspect first:
 
 - `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Specification_System_Spec.md`
+- `spec-system-optimization-review.md`
 - `spec-system-invariant-extraction-table.md`
 - `spec-system-boundary-review.md`
 - `spec-system-red-team-review.md`

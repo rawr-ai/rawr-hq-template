@@ -1,20 +1,100 @@
 # RAWR Specification System
 
-Status: Normative project-scoped companion specification for RAWR final architecture migration.
+Reference metadata:
 
-Authority scope: Cross-specification governance for RAWR architecture specifications.
+- Canonical path: `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Specification_System_Spec.md`
+- Normative role: project-scoped companion specification for RAWR architecture-specification governance.
+- Authority scope: cross-specification governance for RAWR architecture specifications.
+- Non-ownership: this specification does not own platform ontology, runtime mechanics, service/domain semantics, implementation code, process methodology, or the internal mechanics of any future companion specification.
 
-This specification defines the corpus-level rules that govern how RAWR architecture specifications relate to one another. It owns the hub/companion model, authority ownership discipline, attachment protocol, reserved-boundary rules, deferral-vs-gap discipline, supersession and stale-copy handling, and the rules that prevent one document from silently redefining another document's ontology or mechanics.
+This metadata helps a reader locate and rely on the document. It is not what makes the document a specification. A specification is an owned normative claim set with a declared scope. Status, provenance, cleanup state, and exactness labels are reference metadata used to manage authority around specifications and supporting evidence.
 
-It does not own platform ontology, runtime realization mechanics, service/domain semantics, implementation code, or the internal mechanics of any future companion specification.
+## 1. What This Spec Is For
 
-## 1. Status and Authority
+This specification tells future RAWR spec authors, reviewers, and directly responsible agents how architecture specifications relate to one another without authority drift.
 
-This document is the companion authority for RAWR specification-system governance inside the final architecture migration project. It lives under `docs/projects/rawr-final-architecture-migration/resources/spec/` because `docs/DOCS.md` defines that directory as the home for project-scoped normative specs and guardrails.
+Use it when you need to:
 
-Future platform, runtime, deployment, observability, harness, agent, desktop, and other architecture companion specifications should use it as the reference sheet for how to attach, delegate authority, preserve boundaries, and classify current/provenance/stale material.
+- decide whether a document should be a hub specification, companion specification, decision packet, provenance packet, review report, read model, or process artifact;
+- attach a companion specification to a hub without redefining hub ontology;
+- decide which document owns a claim when two sources overlap;
+- classify harvested, stale, superseded, archived, quarantined, generated, or scratch material before using it;
+- preserve reserved decisions and deferrals without hiding missing design work;
+- review high-risk boundary leakage, including the current platform/runtime boundary.
 
-General authority model:
+The through line is:
+
+1. Identify the kind of document or surface you are touching.
+2. Identify the smallest claim that needs authority.
+3. Find the owner for that claim.
+4. Attach, delegate, harvest, reserve, or defer explicitly.
+5. Run the acceptance gates that apply to that document type.
+
+This specification keeps the Platform Architecture Specification narrow. The platform hub should own platform ontology, vocabulary, laws, and attachment points; it should not carry the whole corpus-governance system inline.
+
+## 2. What This Spec Does Not Do
+
+This specification must not be used to turn specifications into status objects.
+
+Specifications contain owned normative claims. Authority-management metadata exists around them so agents can know whether a source is current, stale, harvested, illustrative, generated, or deferred. Inline headers may mirror that metadata, but the header is not the authority source by itself.
+
+This specification also does not:
+
+- supersede `docs/DOCS.md` or repo documentation architecture;
+- define generic Habitat workstream mechanics or process-document methodology;
+- write the final Platform Architecture Specification;
+- rewrite the Runtime Realization System specification;
+- decide every future companion specification;
+- implement code migration;
+- perform repo-wide stale-copy cleanup;
+- define runtime type shapes, lifecycle internals, registry mechanics, provider lowering, diagnostic inventories, or enforcement implementation.
+
+## 3. Specification Shapes
+
+Not every architecture-related artifact is a specification, and not every specification is a companion. Pick the smallest shape that fits the work.
+
+| Shape | What it is | Required authority handling | Must not do |
+| --- | --- | --- | --- |
+| Hub specification | Owns system-level ontology, vocabulary, laws, boundary names, handoffs, and attachment points for a domain. | Declare owned scope, non-owned scope, attachment points, and affected companion owners. | Copy companion mechanics or treat unowned detail as settled. |
+| Companion specification | Attaches to a named parent boundary and owns deeper detail inside that boundary. | Declare parent, attachment boundary, owned concern, forbidden concerns, upstream owners, and review gates. | Redefine hub ontology or another companion's mechanics without explicit transfer. |
+| Decision packet | Settles or proposes a specific unresolved decision. | Name the claim, owner, evidence, proposed default, disposition, and lock trigger. | Pretend to be a broad specification. |
+| Harvest/provenance packet | Processes useful language or rules from non-authoritative material. | Mark each item as adopt, adapt, reject, or defer with destination owner. | Promote source material merely because it is polished, newer-looking, or easier to find. |
+| Review report | Records findings against a spec or packet. | Name evidence, severity, disposition, repair demand, and owner/future DRA. | Become architecture truth without owner acceptance. |
+| Read model or generated artifact | Exposes evidence, diagnostics, indexes, graphs, summaries, or derived views. | Label exactness and provenance; route authority to the owning spec or packet. | Compose authority by aggregation or presentation. |
+| Process or workstream record | Preserves execution state, decisions, gates, and handoff context. | Link to authority surfaces; keep workstream state separate from spec truth. | Become a spec merely because it contains useful decisions. |
+
+Minimum metadata depends on shape. A companion needs an attachment declaration. A review report does not. A read model needs exactness/provenance labels. A hub needs ontology and attachment ownership. Do not force every artifact through the companion template.
+
+Build path by shape:
+
+| Shape | Choose this when | Minimum fields or sections | Required gates | Common overreach |
+| --- | --- | --- | --- | --- |
+| Hub specification | The document owns shared vocabulary, laws, and attachment points. | Scope, owned ontology, non-owned concerns, laws, boundaries, attachment surface, open decisions. | Base gates, hub-only gates, evidence/read-model gates where examples or generated material appear. | Copying companion mechanics into hub authority. |
+| Companion specification | The document deepens a named parent boundary. | Attachment declaration, owned concern, forbidden concerns, authority owner, borrowed nouns/mechanics, reserved boundaries, review gates. | Base gates, companion-only gates, relevant application-profile gates. | Redefining parent ontology or another companion's mechanics. |
+| Decision packet | One claim or open decision needs a lock point. | Claim, authority owner, evidence, proposed default, disposition, lock trigger. | Base gates, metadata gate, stale-source gate. | Expanding into a broad spec without owning that scope. |
+| Harvest/provenance packet | Useful source material needs adopt/adapt/reject/defer handling. | Source, candidate rule, current owner, disposition, destination, trigger for deferred items. | Base gates, stale-source gate, evidence/read-model gates. | Letting polished source wording become authority by inertia. |
+| Review report | A spec or packet needs findings and repair demands. | Evidence, finding, severity, owner/future DRA, disposition, repair or waiver/defer trigger. | Base gates, evidence/read-model gates. | Treating findings as accepted architecture before DRA disposition. |
+| Read model or generated artifact | A derived view helps readers inspect evidence. | Provenance, exactness, source set, generated/illustrative limits, owning spec or packet. | Exactness gate, read-model gate, stale-source gate if sources vary. | Presenting aggregation as authority. |
+
+## 4. Authority Metadata Axes
+
+Authority metadata is external reference information about a surface. It helps agents decide whether and how to rely on a document, but it does not make the document a specification.
+
+Use separate axes instead of one overloaded status label:
+
+| Axis | Values | Meaning |
+| --- | --- | --- |
+| Document shape | hub spec, companion spec, decision packet, harvest packet, review report, read model, process record, scratch/provenance | What kind of surface this is. |
+| Authority role | current owner, companion owner, delegated owner, non-authority reference | Whether the surface can decide a claim. |
+| Source disposition | adopted, adapted, rejected, deferred, stale/superseded, archived/quarantined | How a source or claim was processed. |
+| Cleanup state | active, fenced, archived, quarantined, cleanup deferred | What should happen to the physical or indexed source. |
+| Exactness | normative, illustrative, generated/read-model, example-only | Which parts can be relied on as spec truth. |
+
+When reliance affects authority, promotion, cleanup, or normative claims, the reviewing agent must classify the source using these axes in the owning spec, authority index, review packet, promotion packet, or workstream record. Inline labels are useful mirrors, but they are not sufficient when they conflict with current owner decisions.
+
+## 5. Core Authority Model
+
+General authority rules:
 
 1. The current owner for the smallest claim wins.
 2. A hub wins for hub ontology, vocabulary, laws, boundary names, and attachment points.
@@ -22,102 +102,32 @@ General authority model:
 4. This spec-system companion wins only for cross-specification governance rules.
 5. Harvest, research, scratch, generated, archived, quarantined, and stale sources do not decide current authority unless an owner explicitly promotes or revalidates them.
 
-The source ladder used to produce this document is workstream-specific and is recorded in `spec-system-source-note.md`. Future specifications must not inherit `_inbox/latest`, this workstream's plan docs, or this worktree's branch state as standing corpus authority.
+Every architectural truth must have one authority owner at the level of the claim. More detail does not create authority. Calling a document canonical does not create authority if a current owner supersedes or fences it.
+
+Authority transfer must be explicit and must update the affected owners in concert. A transfer must name:
+
+- delegating owner;
+- receiving owner;
+- delegated concern;
+- boundary of delegation;
+- retained concerns;
+- update requirement if either side changes.
+
+When two current authorities appear to claim the same truth:
+
+1. Identify the smallest claim in conflict.
+2. Identify which specification owns that claim under this document.
+3. Treat the non-owner's statement as boundary wording, provenance, or conflict evidence.
+4. Repair, waive, or defer the conflict explicitly.
+5. Do not resolve it by smoothing prose until the ownership question is settled.
 
 Epistemic markers are authority markers. Words such as `reserved`, `candidate`, `expected`, `may`, `may not be final`, `not always`, `flexible`, and `deferred` must survive synthesis unless a current authority explicitly settles them. Do not polish uncertainty into false authority.
 
-## 2. Purpose and Scope
+The source ladder used to produce this document is workstream-specific and is recorded in `spec-system-source-note.md`. Future specifications must not inherit `_inbox/latest`, that workstream's plan docs, or that worktree's branch state as standing corpus authority.
 
-This specification exists so the final Platform Architecture Specification can remain the platform hub without carrying the whole specification-governance system inline.
+## 6. Hub And Companion Model
 
-In scope:
-
-- how hub and companion specifications relate;
-- how architectural truth gets an owner;
-- how companion specifications attach to a hub boundary;
-- how a companion deepens a boundary without redefining another owner's truth;
-- how reserved decisions differ from gaps;
-- how stale, superseded, harvested, and current specification copies are classified;
-- how platform/runtime boundaries and runtime noun placement are reviewed.
-
-Out of scope:
-
-- superseding `docs/DOCS.md` or repo documentation architecture;
-- defining process docs, generic workstream methodology, or Habitat workstream mechanics;
-- writing the final Platform Architecture Specification;
-- rewriting the Runtime Realization System specification;
-- deciding every future companion specification;
-- implementation migration;
-- repo-wide stale-copy cleanup;
-- runtime mechanics, type shapes, lifecycle internals, registry mechanics, provider lowering mechanics, diagnostic inventories, or enforcement implementation.
-
-## 3. Definitions
-
-**Specification corpus** means the set of RAWR architecture specifications, companion subsystem specifications, harvested provenance documents, stale copies, archives, and quarantine inputs that future agents may encounter while changing architecture specifications. Workstream packets, process docs, and review reports may inform the corpus, but they are coordination/evidence surfaces unless explicitly promoted by an owner.
-
-**Hub specification** means a specification that owns system-level ontology, vocabulary, laws, phase names, boundary names, handoffs, and attachment points for a domain. In the current final-architecture migration, the Platform Architecture Specification is the platform hub.
-
-**Companion specification** means a specification that attaches to a named hub boundary and owns deeper subsystem detail inside that boundary. A companion may deepen what the hub names; it must not silently redefine hub ontology or another companion's mechanics.
-
-**Authority owner** means the single document or specification surface that decides a specific architectural truth. More detail does not create authority.
-
-**Attachment boundary** means the named hub boundary at which a companion specification attaches. A boundary can be a lifecycle phase, role/surface boundary, runtime interface, external interface, harness/native seam, operational placement seam, or another hub-declared attachment point.
-
-**Integration vocabulary** means names and laws needed for cross-spec coordination: phase names, boundary names, role/surface taxonomy, handoff names, and externally consumed interface names.
-
-**Mechanics** means internal behavior, type shapes, sub-sequencing, implementation contracts, artifact fields, validation algorithms, runtime internals, adapter details, provider lowering, registry matching, diagnostic inventories, and enforcement implementation.
-
-**Reserved boundary** means a named boundary whose owner, integration hook, input/output contract, enforcement or diagnostic hook, and lock trigger are known, while deeper design remains intentionally not final.
-
-**Deferral** means an explicit decision to leave work for a later owner/future DRA with enough context and a trigger to resume.
-
-**Gap** means missing design work. A silence without owner, seam, contract, hook, and trigger is a gap, not a deferral.
-
-**Harvested provenance** means useful wording, framing, or candidate rules from a non-authoritative source. Harvested material must be adopted, adapted, rejected, or deferred before it affects current authority.
-
-**Stale copy** means a document that may still call itself canonical or current but is not current authority under the active authority ladder.
-
-**Supersession** means a later authority has replaced, subordinated, or fenced an older authority.
-
-**Runtime noun** means a named runtime-realization component, interface, lifecycle phase, access object, diagnostic object, registry, provider plan, runtime artifact, or harness contract.
-
-## 4. Specification Corpus Model
-
-The RAWR specification corpus uses a hub/companion model.
-
-The hub names the shared architecture surface. Companions attach to named boundaries and deepen them. Provenance can explain why a rule exists, but provenance does not become authority by being older, more detailed, more polished, or easier to find.
-
-Every specification surface must be classifiable as one of:
-
-- **current authority**: may decide the truth it owns;
-- **current companion authority**: may decide deeper detail inside its declared attachment boundary;
-- **harvested provenance**: may supply language or candidate rules after classification;
-- **reserved/deferred**: intentionally not final, with owner and trigger;
-- **stale/superseded**: may explain history but must not guide implementation unless revalidated;
-- **scratch/research/evidence**: can inform findings but cannot decide authority by itself.
-
-Every current or candidate canonical specification must declare:
-
-- status;
-- scope;
-- authority owner;
-- what it owns;
-- what it does not own;
-- parent or companion relationship, if any;
-- what it supersedes, harvests, subordinates, or leaves as provenance.
-
-Indexes, ledgers, reports, diagnostics, catalogs, semantic graphs, generated summaries, and review dashboards are read models unless explicitly promoted by the owning spec. They can explain or expose evidence; they do not compose authority by themselves.
-
-Core corpus rules:
-
-1. Every architectural truth must have one authority owner.
-2. A document does not gain authority by being more detailed.
-3. A document does not gain authority by calling itself canonical if a newer current authority supersedes it.
-4. A companion spec may deepen a named boundary but must not silently redefine hub ontology or another spec's mechanics.
-5. Authority transfer must be explicit and must update the affected owners in concert.
-6. Examples clarify rules; they must not introduce new authority beyond the rule they illustrate.
-
-## 5. Hub Specification Rules
+The hub/companion model is the default shape for architecture areas where one document owns shared vocabulary and another document owns deeper subsystem detail.
 
 A hub specification owns:
 
@@ -133,40 +143,21 @@ A hub attachment registry, or equivalent attachment surface, should record:
 
 - boundary name;
 - hub section or owned hub anchor;
-- mechanics owner;
 - naming owner;
+- mechanics owner;
 - named interface contract types, if any;
 - companion specifications that attach there.
 
 A hub specification must not:
 
 - copy a companion's internal mechanics;
-- duplicate runtime type shapes or implementation contracts;
-- promote integration-facing runtime nouns into top-level ontology;
-- use companion details to bypass the companion's authority;
+- duplicate subsystem type shapes or implementation contracts;
+- promote integration-facing subsystem nouns into top-level hub ontology;
+- use companion details to bypass companion authority;
 - treat unowned detail as settled architecture;
 - hide open questions inside polished prose.
 
-When a hub references a companion-owned area, it should name the boundary and the owning companion. It may state the law or integration vocabulary the hub owns. It must route mechanics to the companion owner.
-
-If a hub changes a phase name, boundary name, role/surface taxonomy, ownership law, or producer/consumer handoff that a companion consumes, the affected companion must be reviewed. If a companion changes only mechanics within its owned boundary, the hub does not need to change unless the boundary vocabulary or handoff contract changes.
-
-## 6. Companion Specification Rules
-
 A companion specification owns deeper subsystem detail only inside its declared attachment boundary.
-
-A companion specification must declare:
-
-- parent hub;
-- attachment boundary;
-- owned subsystem concern;
-- forbidden concerns;
-- authority owner;
-- what it deepens;
-- what it may not redefine;
-- upstream authority references;
-- reserved boundaries, if any;
-- supersession or provenance relationship to older documents.
 
 A companion specification may:
 
@@ -181,54 +172,34 @@ A companion specification must not:
 - redefine hub ontology unless the hub explicitly transfers authority;
 - redefine another companion's mechanics unless authority transfer is explicit;
 - duplicate mechanics from another owner as if they were local truth;
-- introduce a new role, surface, harness, provider class, control-plane touchpoint, durable authority, or runtime owner without updating the hub boundary registry or equivalent attachment surface;
+- introduce a new role, surface, harness, provider class, control-plane touchpoint, durable authority, subsystem owner, or equivalent cross-boundary owner without updating the hub attachment surface;
 - use "fixes" language on mechanics it does not own.
 
-Informative example: a deployment companion may deepen deployment placement rules and consume platform external interfaces. It must not redefine runtime compiler validation, provider lowering, `RuntimeCatalog` mechanics, or platform ontology. This example illustrates the deepening rule; it does not introduce a deployment companion authority by itself.
+When a hub references a companion-owned area, it should name the boundary and the owning companion. It may state the law or integration vocabulary the hub owns. It must route mechanics to the companion owner.
 
-## 7. Authority Ownership and Delegation
+If a hub changes a phase name, boundary name, role/surface taxonomy, ownership law, or producer/consumer handoff that a companion consumes, the affected companion must be reviewed. If a companion changes only mechanics within its owned boundary, the hub does not need to change unless boundary vocabulary or handoff contracts change.
 
-Authority is singular at the level of a claim. Each rule, noun, lifecycle phase, interface, type shape, or decision must have one owner.
+## 7. Companion Attachment Protocol
 
-Authority delegation must name:
+Use this protocol only for companion specifications or surfaces that are explicitly attaching to a parent authority. Do not require it for ordinary review reports, harvest packets, process records, or read models.
 
-- delegating owner;
-- receiving owner;
-- delegated concern;
-- boundary of delegation;
-- retained concerns;
-- update requirement if either side changes.
-
-The most detailed document does not automatically win. A runtime companion can be more detailed than the platform hub and still not own platform ontology. A platform hub can name a runtime integration boundary and still not own runtime mechanics. A stale document can contain useful wording and still lose authority to current specs.
-
-Authority-plane models are reading maps, not ontology. They can help readers see which kind of authority a noun exercises, but they must not create new truth objects or ownership layers by themselves.
-
-When two current authorities appear to claim the same truth:
-
-1. Identify the smallest claim in conflict.
-2. Identify which specification owns that claim under this document.
-3. Treat the non-owner's statement as boundary wording, provenance, or conflict evidence.
-4. Repair or defer the conflict explicitly; do not resolve it by smoothing prose.
-
-## 8. Attachment Protocol
-
-A new or revised companion specification must include an attachment declaration equivalent to this:
+A companion specification must include an attachment declaration equivalent to this:
 
 ```text
-Parent hub:
-Parent hub path:
+Parent authority or hub:
+Parent authority path:
 Attachment boundary:
 Hub section / registry row:
-Owning spec section:
+Owning companion section:
+Authority owner:
 Naming owner:
 Mechanics owner:
 Conflict-resolution owner:
 Owned subsystem concern:
 Forbidden concerns:
-Authority owner:
 What this companion deepens:
 What this companion must not redefine:
-Runtime-shaped claims, if any:
+Borrowed nouns or mechanics:
 Reserved boundaries:
 Supersedes / harvests / subordinates:
 Review gates:
@@ -236,26 +207,38 @@ Review gates:
 
 Attachment rules:
 
-1. The companion must name a hub boundary, not an internal alias.
+1. The companion must name a parent authority boundary, not an internal alias.
 2. The companion must state its owned concern and forbidden concerns.
 3. The companion must identify the current authority owner for every borrowed noun or mechanic.
-4. Runtime-shaped claims must route through the runtime realization boundary unless the platform hub explicitly owns the system-level law.
+4. Domain-shaped claims must route through the owning domain specification unless the hub explicitly owns the system-level law.
 5. Integration-facing names may live in hub vocabulary. Names consumed only inside mechanics live in the owning companion.
-6. Reserved details must name seam, owner, input/output contract, enforcement or diagnostic hook, and trigger for later locking.
-7. The companion must classify older related documents as current authority, harvested provenance, stale/superseded, archived/quarantined, or deferred cleanup.
+6. Reserved details must name boundary/seam, owner, input/output contract, enforcement or diagnostic hook, and trigger for later locking.
+7. Older related documents must be classified before reliance as current authority, harvested provenance, stale/superseded, archived/quarantined, or deferred cleanup.
 
-If a companion includes diagrams, generated examples, schema excerpts, contract tables, or illustrative code, it must label their exactness. The label can be lightweight, but it must say which parts are normative and which parts are illustrative. A useful pattern is:
+## 8. Non-Authority Material And Exactness
+
+Examples, diagrams, generated excerpts, schemas, contract tables, indexes, reports, diagnostics, ledgers, semantic graphs, and generated summaries can clarify a specification. They must not create authority by presentation.
+
+Use exactness metadata when a surface could be mistaken for normative truth:
 
 ```text
 Layer:
 Exactness:
 ```
 
-Use this metadata to prevent examples, diagrams, and generated views from becoming accidental authority.
+The label may be lightweight, but it must say which parts are normative and which parts are illustrative, generated, derived, or example-only.
 
-## 9. Reserved Boundaries, Deferrals, and Gaps
+Read models are evidence surfaces unless explicitly promoted by an owner. They can explain or expose evidence; they do not compose authority by themselves.
 
-Reserved boundaries are named architecture surfaces with locked owners and integration hooks. They are not omissions.
+Authority-plane models are reading maps, not ontology. They can help readers see which kind of authority a noun exercises, but they must not create new truth objects or ownership layers by themselves.
+
+Examples clarify rules. They must not introduce new owners, nouns, mechanics, or obligations beyond the rule they illustrate.
+
+Example: a generated semantic graph may show that two specifications mention the same noun. The graph can help a reviewer find a possible overlap, but it does not decide which specification owns the noun. The reviewer must route that ownership question through the owning spec, review packet, or decision packet.
+
+## 9. Reserved Boundaries, Deferrals, And Gaps
+
+Reserved boundaries are named architecture surfaces with known owners and integration hooks. They are not omissions.
 
 A reserved boundary must name:
 
@@ -283,18 +266,7 @@ A silence without those elements is a gap. A gap is a review finding, not a futu
 
 Flexible is not the same as unowned. Flexible areas may vary without reopening architecture, but they still need owner, boundary, and constraints.
 
-## 10. Supersession, Harvesting, and Stale Copies
-
-Every specification or specification-like source must have an authority state before future agents rely on it:
-
-- `current authority`
-- `current companion authority`
-- `harvested provenance`
-- `stale/superseded`
-- `archived/quarantined provenance`
-- `deferred cleanup`
-
-Superseded or stale documents that still self-identify as canonical must be updated, renamed as superseded, moved to an archive/quarantine location, or explicitly subordinated before migration-planning agents rely on indexed docs.
+## 10. Harvesting, Supersession, And Stale Copies
 
 Harvesting is not promotion. A harvest source must be processed as:
 
@@ -303,27 +275,83 @@ Harvesting is not promotion. A harvest source must be processed as:
 - `reject`: wording or rule conflicts with current authority;
 - `defer`: valid but outside current scope, with owner and trigger.
 
-When a harvested source is especially polished or more recent-looking than current authority, record its authority state explicitly. The risk is not bad wording; the risk is useful wording carrying hidden authority changes.
+When a harvested source is polished, current-looking, or easier to find than current authority, record its authority state explicitly. The risk is not bad wording; the risk is useful wording carrying hidden authority changes.
 
-Stale-source containment is a corpus readiness gate. It is not a new architecture decision by itself. The DRA must not reopen architecture merely because a stale copy exists; the DRA must classify, subordinate, archive, quarantine, or defer cleanup with a trigger.
+Before reliance, stale or superseded copies must be classified in the current authority index, owning spec, review packet, promotion packet, or workstream record. Where practical, update, rename, archive, quarantine, or explicitly subordinate stale copies that still self-identify as canonical. If physical cleanup is not practical, create a `deferred cleanup` record with owner or future DRA, authority home, and re-entry trigger.
 
-## 11. Platform/Runtime Boundary Rules
+Stale-source containment is a corpus readiness gate. It is not a new architecture decision by itself. A DRA must not reopen architecture merely because a stale copy exists; the DRA must classify, subordinate, archive, quarantine, or defer cleanup with a trigger.
 
-The Platform Architecture Specification owns platform ontology, laws, vocabulary, boundaries, handoffs, and companion attachment points.
+## 11. Acceptance Checklist
 
-The Runtime Realization System specification owns runtime mechanics: phase implementation, sub-sequencing, artifact type shapes, substrate internals, registry matching, provider lowering, process runtime internals, adapter contracts, harness implementation contracts, diagnostic inventories, and runtime enforcement mechanisms.
+Run the base gates for every new or revised architecture specification.
 
-The platform spec may own compact system-level laws such as execution ownership and integration handoffs. The runtime spec may reproduce those laws as context, but the platform law remains authoritative when the runtime spec says so.
+When a gate fails, the review output must name the failed gate, exact claim or surface, current owner or future DRA, required repair action, and disposition: `repair`, `waive`, or `defer`.
 
-The runtime spec may define mechanics for runtime-owned areas. It must not redefine service domain authority, projection meaning, app identity, deployment placement, durable workflow semantics, shell governance, desktop-native behavior, web framework semantics, or native host interiors unless a current owning spec explicitly delegates that concern.
+Base gates:
 
-The spec-system companion owns neither side's mechanics. It owns the routing rules that keep each side from silently absorbing the other's authority.
+- **Reader task gate:** the document says who should use it and for what decision or action.
+- **Shape gate:** the document shape is declared or obvious: hub, companion, decision packet, harvest packet, review report, read model, process record, or provenance.
+- **Owner gate:** every normative rule has a clear owner.
+- **Boundary gate:** the document says what it owns and what it does not own.
+- **Metadata gate:** authority role, source disposition, cleanup state, and exactness are recorded where reliance depends on them.
+- **Stale-source gate:** current, harvested, stale, archived, and deferred sources are classified before reliance.
+- **Example gate:** examples clarify existing rules and introduce no new authority.
+- **Cold-read gate:** a future agent can apply the rules without the prompt or session transcript.
 
-## 12. Runtime Noun Placement Rules
+Hub-only gates:
+
+- **Ontology gate:** hub vocabulary and ontology are stable and not imported from a companion by accident.
+- **Attachment-surface gate:** companion attachment points and mechanics owners are named where companions exist.
+- **Handoff gate:** producer/consumer or boundary handoffs are stated at hub level without copying mechanics.
+
+Companion-only gates:
+
+- **Attachment gate:** the companion names parent authority, boundary, owned concern, and forbidden concerns.
+- **Delegation gate:** borrowed nouns or mechanics name their current owners.
+- **Deepening gate:** companion detail deepens the boundary without redefining parent ontology.
+
+Evidence/read-model gates:
+
+- **Exactness gate:** diagrams, examples, generated excerpts, schemas, and contract tables say which parts are normative and which parts are illustrative.
+- **Read-model gate:** indexes, reports, diagnostics, ledgers, semantic graphs, and generated summaries are not treated as authority unless promoted by an owner.
+
+Application-profile gates:
+
+- Run domain-specific gates only when the profile applies. For this migration, platform/runtime noun placement is a high-risk profile gate, not a universal rule for every RAWR architecture spec.
+
+## 12. Common Failure Modes And Repairs
+
+| Failure mode | Symptom | Repair |
+| --- | --- | --- |
+| False authority | Polished prose turns candidate, expected, reserved, or deferred language into settled law. | Restore the epistemic marker or record the owner decision that settled it. |
+| Detail wins by accident | A detailed companion appears to outrank the hub or another owner. | Identify the smallest claim and route authority to the owner. |
+| Status-object drift | Specs start carrying lifecycle/cleanup state as if that state defines the spec. | Separate normative claims from authority metadata; move state to an owner, index, review packet, or workstream record. |
+| Shape overreach | A review report, read model, or process record is treated like a specification. | Classify the surface and promote only owner-accepted claims. |
+| Attachment overreach | Every document is forced into the companion attachment template. | Apply the template only to companion specs or explicit attachment surfaces. |
+| Reserved-as-gap | A reserved boundary lacks owner, hook, contract, or trigger. | Add the missing fields or mark it as a gap. |
+| Gap-as-deferral | Missing design is labeled deferred without enough continuation context. | Add owner, authority home, evidence needed, unblock condition, and trigger. |
+| Stale canonical claim | An older document still says canonical and future agents follow it. | Classify it before reliance and, where practical, archive, quarantine, rename, or subordinate it. |
+| Example leakage | An example introduces a new rule or mechanic the rule itself did not authorize. | Label the example informative or remove the new rule/mechanic. |
+| Domain noun promotion | A subsystem-owned noun becomes hub ontology because it was useful to name. | Reframe as a boundary reference or route mechanics to the owning spec. |
+
+## 13. Application Profile: Platform/Runtime Boundary
+
+This profile applies to the current final architecture migration because platform and runtime specifications are known to overlap. It is a high-risk application of the general authority model, not the whole purpose of this specification.
+
+Generic profile rule: domain-specific nouns may appear outside their owner only as boundary references needed for ownership, handoff, attachment, or external interface clarity. Naming a mechanism does not transfer ownership of its mechanics.
+
+For the current platform/runtime pair:
+
+- The Platform Architecture Specification owns platform ontology, laws, vocabulary, boundaries, handoffs, and companion attachment points.
+- The Runtime Realization System specification owns runtime mechanics: phase implementation, sub-sequencing, artifact type shapes, substrate internals, registry matching, provider lowering, process runtime internals, adapter contracts, harness implementation contracts, diagnostic inventories, and runtime enforcement mechanisms.
+- The platform spec may own compact system-level laws such as execution ownership and integration handoffs.
+- The runtime spec may reproduce platform laws as context when it clearly preserves platform authority.
+- The runtime spec may define mechanics for runtime-owned areas. It must not redefine service domain authority, projection meaning, app identity, deployment placement, durable workflow semantics, shell governance, desktop-native behavior, web framework semantics, or native host interiors unless a current owning spec explicitly delegates that concern.
+- The spec-system companion owns neither side's mechanics. It owns the routing rules that keep each side from silently absorbing the other's authority.
 
 Runtime nouns may appear in platform or hub prose only when they are integration-facing boundary references needed to define ownership, handoff, or attachment.
 
-Allowed as boundary references:
+Allowed as boundary references in this profile:
 
 - runtime lifecycle phase names;
 - runtime-owned component names when they name a producer/consumer boundary;
@@ -331,57 +359,69 @@ Allowed as boundary references:
 - diagnostics or telemetry nouns when they define observation boundaries;
 - named runtime laws that the platform hub owns as integration vocabulary.
 
-Not allowed as hub ontology:
+Not allowed as platform ontology:
 
 - treating runtime components as top-level platform kinds;
 - copying runtime type shapes;
 - copying registry, provider lowering, bootgraph, adapter, harness, diagnostic inventory, or execution policy mechanics;
-- using a named runtime mechanism to imply hub ownership of that mechanism;
+- using a named runtime mechanism to imply platform ownership of that mechanism;
 - using platform prose to settle runtime implementation detail.
 
-Names-versus-mechanics rule: naming a runtime mechanism in a hub spec does not transfer ownership of its mechanics to the hub.
-
-If a future platform spec needs a runtime noun, it must classify the noun as:
+If a future platform spec needs a runtime noun, classify it as:
 
 - `boundary reference`: allowed in platform prose;
 - `external interface`: allowed if the platform exposes it to companion specs or tooling;
 - `runtime-owned mechanic`: route to runtime spec;
 - `forbidden ontology promotion`: remove or reframe.
 
-## 13. Review Gates and Failure Modes
+## 14. Current Reserved Decision Inventory
 
-Before accepting a new or revised architecture specification, run these gates:
+These items are intentionally not settled by this specification. This is a reserved decision inventory, not a full deferral ledger. If an item becomes work rather than context, create a deferral or decision packet with owner or future DRA, authority home, evidence needed, unblock condition, and re-entry trigger.
 
-- **Owner gate:** every rule has a clear owner.
-- **Attachment gate:** every companion names parent hub, boundary, owned concern, and forbidden concerns.
-- **Boundary gate:** platform ontology, runtime mechanics, and corpus governance are separated.
-- **Reserved gate:** reserved and deferred items name owner, contract/hook, and trigger; silence is flagged as a gap.
-- **Stale-source gate:** current, harvested, stale, archived, and deferred sources are classified.
-- **Runtime noun gate:** every runtime noun is boundary reference, external interface, runtime-owned mechanic, or forbidden ontology promotion.
-- **Example gate:** examples clarify existing rules and introduce no new authority.
-- **Cold-read gate:** a future agent can apply the rules without the prompt or session transcript.
-- **Exactness gate:** diagrams, examples, generated excerpts, schemas, and contract tables say which parts are normative and which parts are illustrative.
-- **Read-model gate:** indexes, reports, diagnostics, ledgers, semantic graphs, and generated summaries are not treated as authority unless promoted by an owner.
+Platform finalization:
 
-Common failure modes:
-
-- **False authority:** polished prose turns candidate or reserved language into settled law.
-- **Detail wins by accident:** a detailed companion appears to outrank the owner.
-- **Runtime noun promotion:** a runtime mechanic becomes platform ontology because it was useful to name.
-- **Reserved-as-gap:** a reserved boundary lacks owner, hook, contract, or trigger.
-- **Gap-as-deferral:** missing design is labeled deferred without enough continuation context.
-- **Stale canonical claim:** an older document still says canonical and future agents follow it.
-- **Example leakage:** an example introduces a new rule or mechanic the rule itself did not authorize.
-
-## 14. Open Questions or Reserved Decisions
-
-These items are intentionally not settled by this specification:
-
-- The exact final list of runtime nouns allowed in the final Platform Architecture Specification. This belongs to the platform spec finalization pass, using the runtime noun placement rules above.
+- The exact final list of runtime nouns allowed in the final Platform Architecture Specification.
 - Whether the platform spec should add an explicit sentence banning Effect-prefixed semantic kinds such as `EffectService` and `EffectPlugin`, and where that sentence belongs if adopted.
 - Where the Platform Architecture Specification and project indexes should link this companion once platform finalization consumes it.
+
+Owning companion or future DRA:
+
 - Platform/deployment external-interface lock points beyond the current boundary rules.
 - OpenShell governance/vendor details beyond harness/native-interior status and already named reserved-boundary handling.
 - Repo-wide stale-copy cleanup. This spec defines classification and follow-up triggers; it does not perform cleanup.
 
 If any of these become blockers in a downstream workstream, create a decision packet with source evidence, authority owner, proposed default, and lock trigger. Do not hide the question inside polished specification prose.
+
+## 15. Glossary
+
+**Specification** means an owned normative claim set with a declared scope.
+
+**Reference metadata** means authority-management information around a surface: document shape, authority role, source disposition, cleanup state, and exactness. It helps agents decide reliance; it is not the spec's essence.
+
+**Specification corpus** means the set of RAWR architecture specifications, companion subsystem specifications, decision packets, harvested provenance documents, stale copies, archives, quarantine inputs, read models, and evidence surfaces that future agents may encounter while changing architecture specifications.
+
+**Hub specification** means a specification that owns system-level ontology, vocabulary, laws, phase names, boundary names, handoffs, and attachment points for a domain.
+
+**Companion specification** means a specification that attaches to a named parent boundary and owns deeper subsystem detail inside that boundary.
+
+**Authority owner** means the single document or specification surface that decides a specific architectural truth.
+
+**Attachment boundary** means the named parent boundary at which a companion specification attaches. A boundary can be a lifecycle phase, role/surface boundary, runtime interface, external interface, harness/native boundary, operational placement boundary, or another hub-declared attachment point.
+
+**Integration vocabulary** means names and laws needed for cross-spec coordination: phase names, boundary names, role/surface taxonomy, handoff names, and externally consumed interface names.
+
+**Mechanics** means internal behavior, type shapes, sub-sequencing, implementation contracts, artifact fields, validation algorithms, runtime internals, adapter details, provider lowering, registry matching, diagnostic inventories, and enforcement implementation.
+
+**Reserved boundary** means a named boundary whose owner, integration hook, input/output contract, enforcement or diagnostic hook, and lock trigger are known, while deeper design remains intentionally not final.
+
+**Deferral** means an explicit decision to leave work for a later owner or future DRA with enough context and a trigger to resume.
+
+**Gap** means missing design work. A silence without owner, seam, contract, hook, and trigger is a gap, not a deferral.
+
+**Harvested provenance** means useful wording, framing, or candidate rules from a non-authoritative source. Harvested material must be adopted, adapted, rejected, or deferred before it affects current authority.
+
+**Stale copy** means a document that may still call itself canonical or current but is not current authority under the active authority decision.
+
+**Supersession** means a later authority has replaced, subordinated, or fenced an older authority.
+
+**Runtime noun** means a named runtime-realization component, interface, lifecycle phase, access object, diagnostic object, registry, provider plan, runtime artifact, or harness contract.
