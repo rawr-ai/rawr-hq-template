@@ -23,10 +23,14 @@ export default class Undo extends RawrCommand {
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
 
     if (!workspaceRoot) {
-      this.outputResult(this.fail("Could not find a RAWR workspace root", {
+      const result: RawrResult<UndoCommandData> = this.fail("Could not find a RAWR workspace root", {
         code: "WORKSPACE_ROOT_MISSING",
         details: { cwd: process.cwd() },
-      }), { flags: baseFlags });
+      });
+      this.outputResult(result, {
+        flags: baseFlags,
+        human: (humanResult) => this.renderHuman(humanResult),
+      });
       process.exit(2);
       return;
     }
@@ -58,6 +62,7 @@ export default class Undo extends RawrCommand {
     if (!result.ok) {
       this.log(`error: ${result.error.message}`);
       if (result.error.code) this.log(`code: ${result.error.code}`);
+      if (result.error.details !== undefined) this.log(`details: ${this.stringifyDetails(result.error.details)}`);
       return;
     }
 
@@ -81,5 +86,13 @@ export default class Undo extends RawrCommand {
         `failed=${undo.summary.failed}`,
       ].join(" "),
     );
+  }
+
+  private stringifyDetails(details: unknown): string {
+    try {
+      return JSON.stringify(details);
+    } catch {
+      return String(details);
+    }
   }
 }

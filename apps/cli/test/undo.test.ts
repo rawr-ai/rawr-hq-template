@@ -62,6 +62,12 @@ async function seedCapturedCreatePathCapsule(workspaceRoot: string, targetRel = 
   return { target, manifest: path.join(workspaceRoot, ".rawr", "state", "undo", "last", "manifest.json") };
 }
 
+async function mutateCapsuleProvider(manifest: string, provider: string) {
+  const capsule = JSON.parse(await fs.readFile(manifest, "utf8")) as Record<string, unknown>;
+  capsule.provider = provider;
+  await fs.writeFile(manifest, `${JSON.stringify(capsule, null, 2)}\n`, "utf8");
+}
+
 afterEach(async () => {
   await Promise.all(tempDirs.splice(0).map((dir) => fs.rm(dir, { recursive: true, force: true })));
 });
@@ -147,6 +153,30 @@ describe("rawr undo", () => {
     expect(parsed.error.details.workspaceRoot).toBe(workspaceRoot);
   });
 
+  it("prints human service failure output and exits 1 when no capsule exists", { timeout: 30000 }, async () => {
+    const workspaceRoot = await makeWorkspace();
+
+    const proc = runRawr(["undo"], { cwd: workspaceRoot });
+
+    expect(proc.status).toBe(1);
+    expect(proc.stdout).toContain("error: No undo capsule is available");
+    expect(proc.stdout).toContain("code: UNDO_NOT_AVAILABLE");
+    expect(proc.stdout).toContain(`details: {"workspaceRoot":"${workspaceRoot}"}`);
+  });
+
+  it("prints human service failure details for unsupported providers", { timeout: 30000 }, async () => {
+    const workspaceRoot = await makeWorkspace();
+    const { manifest } = await seedCapturedCreatePathCapsule(workspaceRoot);
+    await mutateCapsuleProvider(manifest, "other.provider");
+
+    const proc = runRawr(["undo"], { cwd: workspaceRoot });
+
+    expect(proc.status).toBe(1);
+    expect(proc.stdout).toContain("error: Unsupported undo provider: other.provider");
+    expect(proc.stdout).toContain("code: UNDO_PROVIDER_UNSUPPORTED");
+    expect(proc.stdout).toContain(`details: {"workspaceRoot":"${workspaceRoot}","service":{"provider":"other.provider"}}`);
+  });
+
   it("returns WORKSPACE_ROOT_MISSING JSON and exits 2 outside a workspace", { timeout: 30000 }, async () => {
     const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-undo-not-ws-"));
     tempDirs.push(cwd);
@@ -163,6 +193,23 @@ describe("rawr undo", () => {
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(false);
     expect(parsed.error.code).toBe("WORKSPACE_ROOT_MISSING");
+  });
+
+  it("prints human WORKSPACE_ROOT_MISSING output and exits 2 outside a workspace", { timeout: 30000 }, async () => {
+    const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-undo-not-ws-"));
+    tempDirs.push(cwd);
+
+    const proc = runRawr(["undo"], {
+      cwd,
+      env: {
+        RAWR_WORKSPACE_ROOT: undefined,
+        RAWR_HQ_ROOT: undefined,
+      },
+    });
+
+    expect(proc.status).toBe(2);
+    expect(proc.stdout).toContain("error: Could not find a RAWR workspace root");
+    expect(proc.stdout).toContain("code: WORKSPACE_ROOT_MISSING");
   });
 
   it("does not block command execution when entrypoint lifecycle expiration fails", { timeout: 30000 }, async () => {
@@ -188,5 +235,15 @@ describe("rawr undo", () => {
 
     expect(proc.status).toBe(0);
     await expect(fs.stat(manifest)).rejects.toThrow();
+  });
+
+  it("preserves a public-captured capsule before plugin sync help dispatches", { timeout: 30000 }, async () => {
+    const workspaceRoot = await makeWorkspace();
+    const { manifest } = await seedCapturedCreatePathCapsule(workspaceRoot);
+
+    const proc = runRawr(["plugins", "sync", "--help"], { cwd: workspaceRoot });
+
+    expect(proc.status).toBe(0);
+    await expect(fs.stat(manifest)).resolves.toBeTruthy();
   });
 });
