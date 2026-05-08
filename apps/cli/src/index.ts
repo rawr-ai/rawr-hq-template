@@ -8,6 +8,7 @@ import {
 import { getJournalContext, resetJournalContext } from "./lib/journal-context";
 import { journalId, safePreview } from "./lib/journal-projection";
 import { findWorkspaceRoot } from "@rawr/core";
+import { expireUndoCapsuleBeforeCommand } from "./lib/undo-lifecycle";
 
 class InterceptedExit extends Error {
   code: number;
@@ -90,6 +91,7 @@ async function main(): Promise<void> {
   };
 
   try {
+    await expireUndoCapsuleBeforeCommand({ cwd, argv, env: process.env });
     await run(argv, import.meta.url);
     await flush();
   } catch (err) {

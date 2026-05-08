@@ -5,6 +5,9 @@ export {
   beginPluginsSyncUndoCapture,
 } from "./service/modules/undo/helpers/capture";
 export {
+  expireUndoCapsuleOnUnrelatedCommand,
+} from "./service/modules/undo/helpers/command-expiration";
+export {
   PLUGINS_SYNC_UNDO_PROVIDER,
   type UndoCapsule,
   type UndoProvider,

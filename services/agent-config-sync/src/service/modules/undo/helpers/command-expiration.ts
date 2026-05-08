@@ -6,15 +6,16 @@ function nonFlagTokens(argv: string[]): string[] {
   return argv.filter((arg) => typeof arg === "string" && arg.length > 0 && !arg.startsWith("-"));
 }
 
+function isUndoArgv(argv: string[]): boolean {
+  const parts = nonFlagTokens(argv);
+  return parts[0] === "undo";
+}
+
 function isPluginsSyncRelatedArgv(argv: string[]): boolean {
   const parts = nonFlagTokens(argv);
   if (parts.length === 0) return false;
 
-  if (parts[0] === "undo") return true;
-  if (parts[0] === "plugins" && parts[1] === "sync") return true;
-  if (parts[0] === "sync") return true;
-
-  return false;
+  return (parts[0] === "plugins" && parts[1] === "sync") || parts[0] === "sync";
 }
 
 export async function expireUndoCapsuleOnUnrelatedCommand(input: {
@@ -28,6 +29,10 @@ export async function expireUndoCapsuleOnUnrelatedCommand(input: {
 
   const capsule = await loadActiveUndoCapsule(workspaceRoot, input.resources);
   if (!capsule) return { workspaceRoot, cleared: false, reason: "no-capsule" };
+
+  if (isUndoArgv(input.argv)) {
+    return { workspaceRoot, cleared: false, reason: "related-command" };
+  }
 
   if (capsule.provider === PLUGINS_SYNC_UNDO_PROVIDER && isPluginsSyncRelatedArgv(input.argv)) {
     return { workspaceRoot, cleared: false, reason: "related-command" };
