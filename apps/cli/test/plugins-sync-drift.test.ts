@@ -74,6 +74,7 @@ describe("plugins sync drift", () => {
         "--allow-partial",
         "--no-cowork",
         "--no-claude-install",
+        "--no-codex-install",
         "--codex-home",
         codexHome,
       ],
