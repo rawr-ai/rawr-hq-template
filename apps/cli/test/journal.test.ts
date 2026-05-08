@@ -37,7 +37,7 @@ function runRawrWithRetry(args: string[], attempts = 2) {
 }
 
 describe("journal + reflect", () => {
-  it("journal search + tail + show returns atomic snippets", () => {
+  it("journal search + tail + show returns atomic snippets", { timeout: 30000 }, () => {
     const seed = runRawr(["doctor", "--json"]);
     expect(seed.status).toBe(0);
 

@@ -4,7 +4,6 @@ Use this runbook when you need to start, stop, inspect, or debug the managed loc
 
 Related docs:
 - `docs/process/HQ_USAGE.md`
-- `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md`
 - `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md`
 
 ## Scope
@@ -65,7 +64,7 @@ Observability controls:
 - `RAWR_HQ_OBSERVABILITY=<mode>`
 
 Browser/open controls:
-- `--open none|coordination|app|app+inngest|all`
+- `--open none|app|app+inngest|all`
 - `RAWR_HQ_OPEN=<policy>`
 
 Mode precedence for observability:
@@ -109,7 +108,6 @@ In that case, fix or relink the external user plugin-manager state; do not patch
 
 Canonical shell surfaces:
 - host shell home: `http://localhost:5173/`
-- coordination route inside the shell: `http://localhost:5173/coordination`
 
 Utility surfaces:
 - Inngest
@@ -118,7 +116,6 @@ Utility surfaces:
 
 Current behavior:
 - HQ reuses and focuses an existing HQ browser context when possible.
-- `coordination` is a shell route inside the HQ UI, not a separate canonical utility surface.
 - Inngest, HyperDX, and Nx Graph launchers live in the shell sidebar.
 - utility surfaces open only as needed
 - `rawr hq graph` opens Nx Graph on demand; it is not part of runtime health

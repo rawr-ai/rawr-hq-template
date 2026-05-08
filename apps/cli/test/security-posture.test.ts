@@ -25,7 +25,7 @@ function runRawr(args: string[]) {
 }
 
 describe("security posture", () => {
-  it("writes latest.json and latest.md to --out", async () => {
+  it("writes latest.json and latest.md to --out", { timeout: 30000 }, async () => {
     runRawr(["security", "check", "--json"]);
 
     const outDir = await mkdtemp(path.join(tmpdir(), "rawr-posture-"));

@@ -1,7 +1,7 @@
-# Coordination Canvas Design Integration Goals
+# Design Integration Goals
 
 ## Purpose
-Define the long-term operating model for integrating external design platforms (Magic Patterns first, provider-agnostic by design) with the RAWR coordination canvas runtime implementation.
+Define the operating model for integrating external design platforms (Magic Patterns first, provider-agnostic by design) with RAWR runtime-backed web surfaces.
 
 This document establishes:
 1. What the system should optimize for.
@@ -42,7 +42,7 @@ Normalizes provider artifacts into internal design contracts.
 3. Frontend integration layer:
 Maps design contracts to interactive components and hook-driven state.
 4. Backend/domain layer:
-Provides canonical workflow/run state and invariants over stable endpoints.
+Provides canonical runtime state and invariants over stable endpoints.
 
 ### 2) Adapter Contract (Provider-Agnostic)
 Each provider adapter must expose a stable ingestion contract:
@@ -156,7 +156,7 @@ To stay swappable:
 1. Design parity gate:
 Component structure, spacing, typography, and interaction parity vs approved design artifact.
 2. Runtime behavior gate:
-Save-before-run, structured errors, polling safety, status lifecycle.
+Structured errors, polling safety, and status lifecycle.
 3. Accessibility gate:
 Focus order/visibility, labels, live region announcements, reduced motion.
 4. Legacy purge gate:

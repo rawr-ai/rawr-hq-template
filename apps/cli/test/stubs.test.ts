@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,15 +7,54 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const TEST_HOME = mkdtempSync(path.join(os.tmpdir(), "rawr-test-stubs-"));
+const CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const CLI_ENTRYPOINT = path.join(CLI_ROOT, "src", "index.ts");
 
-function runRawr(args: string[]) {
-  const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  return spawnSync("bun", ["src/index.ts", ...args], {
-    cwd: projectRoot,
+function writeJson(filePath: string, value: unknown) {
+  mkdirSync(path.dirname(filePath), { recursive: true });
+  writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+function createPluginWorkspace() {
+  const workspaceRoot = mkdtempSync(path.join(os.tmpdir(), "rawr-test-plugin-workspace-"));
+  writeJson(path.join(workspaceRoot, "package.json"), { private: true, type: "module" });
+  writeJson(path.join(workspaceRoot, "plugins", "cli", "hello", "package.json"), {
+    name: "@rawr/plugin-hello",
+    private: true,
+    rawr: {
+      kind: "toolkit",
+      capability: "hello",
+    },
+  });
+  writeJson(path.join(workspaceRoot, "plugins", "web", "fixture-web", "package.json"), {
+    name: "@rawr/plugin-test-web",
+    private: true,
+    exports: {
+      "./web": "./dist/web.js",
+    },
+    rawr: {
+      kind: "web",
+      capability: "fixture-web",
+    },
+  });
+  mkdirSync(path.join(workspaceRoot, "plugins", "web", "fixture-web", "dist"), { recursive: true });
+  writeFileSync(
+    path.join(workspaceRoot, "plugins", "web", "fixture-web", "dist", "web.js"),
+    "export function mount() { return { unmount() {} }; }\n",
+    "utf8",
+  );
+  return workspaceRoot;
+}
+
+function runRawr(args: string[], options: { cwd?: string } = {}) {
+  const cwd = options.cwd ?? CLI_ROOT;
+  return spawnSync("bun", [CLI_ENTRYPOINT, ...args], {
+    cwd,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
+      RAWR_WORKSPACE_ROOT: cwd,
       HOME: TEST_HOME,
       XDG_CONFIG_HOME: path.join(TEST_HOME, ".config"),
       XDG_DATA_HOME: path.join(TEST_HOME, ".local", "share"),
@@ -44,12 +83,13 @@ describe("rawr command surfaces", () => {
   });
 
   it("plugins web list finds workspace plugins", { timeout: 30000 }, () => {
-    const proc = runRawr(["plugins", "web", "list", "--json"]);
+    const workspaceRoot = createPluginWorkspace();
+    const proc = runRawr(["plugins", "web", "list", "--json"], { cwd: workspaceRoot });
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
     expect(Array.isArray(parsed.data.plugins)).toBe(true);
-    expect(parsed.data.plugins.length).toBeGreaterThan(0);
+    expect(parsed.data.plugins.map((plugin: any) => plugin.id)).toContain("@rawr/plugin-test-web");
     expect(parsed.data.plugins.every((plugin: any) => plugin.kind === "web")).toBe(true);
     expect(parsed.data.plugins.every((plugin: any) => typeof plugin.capability === "string" && plugin.capability.length > 0)).toBe(
       true,
@@ -59,40 +99,42 @@ describe("rawr command surfaces", () => {
   });
 
   it("plugins web enable enforces rawr.kind and enables web plugins", { timeout: 45000 }, () => {
-    const blocked = runRawr(["plugins", "web", "enable", "hello", "--json", "--risk", "off"]);
+    const workspaceRoot = createPluginWorkspace();
+    const blocked = runRawr(["plugins", "web", "enable", "hello", "--json", "--risk", "off"], { cwd: workspaceRoot });
     expectExit(blocked, [1, 2]);
     const blockedParsed = parseJson(blocked);
     expect(blockedParsed.ok).toBe(false);
     expect(blockedParsed.error.code).toBe("PLUGIN_KIND_MISMATCH");
     expect(blockedParsed.error.details.kind).toBe("toolkit");
 
-    const proc = runRawr(["plugins", "web", "enable", "mfe-demo", "--json", "--risk", "off"]);
+    const proc = runRawr(["plugins", "web", "enable", "fixture-web", "--json", "--risk", "off"], { cwd: workspaceRoot });
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
-    expect(parsed.data.pluginId).toBe("@rawr/plugin-mfe-demo");
+    expect(parsed.data.pluginId).toBe("@rawr/plugin-test-web");
     expect(parsed.data.evaluation.allowed).toBe(true);
     expect(parsed.data.state).toBeTruthy();
-    expect(parsed.data.state.plugins.enabled).toContain("@rawr/plugin-mfe-demo");
+    expect(parsed.data.state.plugins.enabled).toContain("@rawr/plugin-test-web");
   });
 
   it("plugins web status reflects persisted enable/disable state", { timeout: 45000 }, () => {
-    runRawr(["plugins", "web", "enable", "mfe-demo", "--json", "--risk", "off"]);
-    const enabledProc = runRawr(["plugins", "web", "status", "--json"]);
+    const workspaceRoot = createPluginWorkspace();
+    runRawr(["plugins", "web", "enable", "fixture-web", "--json", "--risk", "off"], { cwd: workspaceRoot });
+    const enabledProc = runRawr(["plugins", "web", "status", "--json"], { cwd: workspaceRoot });
     expect(enabledProc.status).toBe(0);
     const enabled = parseJson(enabledProc);
     expect(enabled.ok).toBe(true);
-    const plugin = enabled.data.plugins.find((p: any) => p.id === "@rawr/plugin-mfe-demo");
+    const plugin = enabled.data.plugins.find((p: any) => p.id === "@rawr/plugin-test-web");
     expect(plugin).toBeTruthy();
     expect(plugin.enabled).toBe(true);
 
-    const disableProc = runRawr(["plugins", "web", "disable", "mfe-demo", "--json"]);
+    const disableProc = runRawr(["plugins", "web", "disable", "fixture-web", "--json"], { cwd: workspaceRoot });
     expect(disableProc.status).toBe(0);
 
-    const disabledProc = runRawr(["plugins", "web", "status", "--json"]);
+    const disabledProc = runRawr(["plugins", "web", "status", "--json"], { cwd: workspaceRoot });
     expect(disabledProc.status).toBe(0);
     const disabled = parseJson(disabledProc);
-    const plugin2 = disabled.data.plugins.find((p: any) => p.id === "@rawr/plugin-mfe-demo");
+    const plugin2 = disabled.data.plugins.find((p: any) => p.id === "@rawr/plugin-test-web");
     expect(plugin2).toBeTruthy();
     expect(plugin2.enabled).toBe(false);
   });

@@ -69,7 +69,10 @@ Required gates:
 - separate targeted MFE removal checks,
 - separate coordination cleanup checks,
 - separate Inngest/runtime preservation checks,
-- `bun run phase-1:gate:no-live-coordination`,
+- `bun run upstream-fallout:gate`,
+- `bun run phase-1:gate:no-live-coordination` is historical proxy evidence
+  only unless its missing Phase 1 ledger dependency and active-docs coverage are
+  repaired,
 - server/CLI/web tests touched by fixture replacement.
 
 Lane done condition: upstream no longer exposes or advertises MFE demo or

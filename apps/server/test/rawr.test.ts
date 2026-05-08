@@ -52,19 +52,19 @@ async function createPluginFixture(input: { dirName: string; pluginId: string })
 
 describe("rawr server routes", () => {
   it("does not serve plugin web modules when disabled", async () => {
-    const fixtureRoot = await createPluginFixture({ dirName: "mfe-demo", pluginId: "@rawr/plugin-mfe-demo" });
+    const fixtureRoot = await createPluginFixture({ dirName: "fixture-web", pluginId: "@rawr/plugin-test-web" });
     const app = registerRawrRoutes(createServerApp(), { repoRoot: fixtureRoot, enabledPluginIds: new Set() });
-    const res = await app.handle(new Request("http://localhost/rawr/plugins/web/mfe-demo"));
+    const res = await app.handle(new Request("http://localhost/rawr/plugins/web/fixture-web"));
     expect(res.status).toBe(404);
   });
 
   it("serves plugin web modules when enabled", async () => {
-    const fixtureRoot = await createPluginFixture({ dirName: "mfe-demo", pluginId: "@rawr/plugin-mfe-demo" });
+    const fixtureRoot = await createPluginFixture({ dirName: "fixture-web", pluginId: "@rawr/plugin-test-web" });
     const app = registerRawrRoutes(createServerApp(), {
       repoRoot: fixtureRoot,
-      enabledPluginIds: new Set(["@rawr/plugin-mfe-demo"]),
+      enabledPluginIds: new Set(["@rawr/plugin-test-web"]),
     });
-    const res = await app.handle(new Request("http://localhost/rawr/plugins/web/mfe-demo"));
+    const res = await app.handle(new Request("http://localhost/rawr/plugins/web/fixture-web"));
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/javascript");
   });

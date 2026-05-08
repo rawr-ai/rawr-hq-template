@@ -17,7 +17,6 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 | --- | --- |
 | Run a bounded workstream as a coordination object | `docs/process/WORKSTREAMS.md` |
 | Operate the managed local HQ runtime | `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md` |
-| Operate coordination canvas workflows and run diagnostics | `docs/process/runbooks/COORDINATION_CANVAS_OPERATIONS.md` |
 | Contain migration-doc drift with quarantine-first topology | `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md` |
 | Drain Graphite stacks safely (publish/merge/prune loop) | `docs/process/runbooks/STACK_DRAIN_LOOP.md` |
 | Integrate template -> personal with sync-first sequencing | `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md` |
