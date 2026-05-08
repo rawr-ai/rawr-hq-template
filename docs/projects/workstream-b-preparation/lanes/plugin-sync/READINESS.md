@@ -30,7 +30,7 @@ Forbidden scope:
 - deleting downstream plugin content,
 - treating `source-workspace` as architecture authority,
 - hiding provider gaps with projection fallback,
-- downstream duplicate removal before upstream parity proof.
+- downstream duplicate removal during this upstream lane.
 
 Evidence paths:
 
@@ -59,17 +59,33 @@ Required gates:
   stale-doc cleanup.
 
 Lane done condition: upstream sync/tooling parity is proven; downstream
-duplicate sync authority has a precise removal plan; downstream content remains
-safe until imported/sunset.
+duplicate sync authority has a precise removal plan; downstream content and
+duplicate implementation remain in place until the final downstream sunset
+phase.
 
 DRA decision point: approve any downstream duplicate removal only after upstream
 parity proof and content/source boundaries are recorded.
 
+## Execution Position
+
+Run this after `undo` has settled the narrow `agent-config-sync` undo public
+surface, or keep this lane read-only until that branch is stable. The safe
+parallel work before `undo` lands is downstream inventory and non-mutating
+source-workspace proof only.
+
+Keep downstream `packages/agent-sync`, downstream plugin CLI paths, and
+downstream content in place for now. This lane prepares the removal plan; it
+does not execute downstream sunset.
+
 ## First Reads
 
+- `docs/projects/workstream-b-preparation/NEXT_PACKET.md`
 - `docs/projects/workstream-b-preparation/AUTHORITY_MAP.md`
+- `docs/projects/workstream-b-preparation/REVIEW_LEDGER.md`
+- `docs/projects/workstream-b-preparation/LESSONS.md`
 - `docs/projects/workstream-b-preparation/lanes/plugin-sync/DISCOVERY.md`
 - `docs/projects/workstream-b-preparation/lanes/plugin-sync/SPEC.md`
+- `docs/projects/workstream-b-preparation/lanes/plugin-sync/ROUGH_PLAN.md`
 - `services/agent-config-sync/docs/PARITY_INVESTIGATION_REPORT.md`
 - `services/agent-config-sync/docs/NATIVE_SUPERSEDED_PROJECTION_CLEANUP_HANDOFF.md`
 - upstream and downstream package files listed above.
@@ -96,6 +112,20 @@ rg -n "source-workspace|cleanup-behind|retire|retirement|managed|agent-config-sy
 - [x] Downstream behavior inventory requirement captured.
 - [x] Non-mutating `--source-workspace` proof requirement captured.
 - [x] Downstream plugin CLI paths classified as inventory before deletion.
+
+## Pause Conditions
+
+Pause and ask the DRA before continuing if:
+
+- mutating service work would collide with an active `undo` branch,
+- parity proof requires mutating global provider homes,
+- `--source-workspace` cannot inspect downstream content in bounded dry-run,
+  status, or drift mode,
+- managed cleanup cannot prove ownership before deletion,
+- a downstream-only behavior remains valuable but has no upstream equivalent or
+  test home, or
+- the lane would delete downstream packages, plugin CLI paths, docs, or content
+  before the final downstream sunset phase.
 
 ## Deferred Risks
 

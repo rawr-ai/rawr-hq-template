@@ -46,7 +46,7 @@
    - Do not preserve continuing split-model language.
 
 7. Downstream sunset planning:
-   - After upstream migration is proven, plan downstream removal of
+   - After upstream migration is proven, plan final downstream removal of
      `packages/dev` and `plugins/cli/devops` as duplicate authority.
 
 ## Likely Touch Surfaces
@@ -82,6 +82,11 @@ rg -n "packages/dev|plugins/cli/devops|personal-owned|personal mechanical dev wo
 ```
 
 ## Sequencing Notes
+
+Run this lane late. It benefits from the `upstream-fallout` cleanup landing
+first and from `plugin-sync` settling sync/link authority assumptions. It is the
+largest migration lane and should not carry unrelated cleanup or downstream
+sunset work.
 
 Migrate package behavior before CLI projection. Then update docs. Downstream
 removal is later and only after upstream commands are tested.

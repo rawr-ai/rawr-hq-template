@@ -24,7 +24,7 @@ Allowed edit surfaces:
 
 Forbidden scope:
 
-- downstream mutation before upstream parity is verified,
+- downstream mutation or downstream duplicate removal in this upstream lane,
 - recreating downstream `packages/session-tools` as upstream authority,
 - global plugin sync/link repair,
 - unrelated session/corpus architecture.
@@ -50,17 +50,31 @@ Required gates:
   payload fixtures, returned `limit`, and candidate/scan semantics.
 
 Lane done condition: upstream service and CLI prove facet/custom-payload parity,
-README matches implementation, and downstream duplicate sunset can be planned
-without preserving dual authority.
+README matches implementation, and downstream duplicate sunset is ready for the
+final downstream phase without preserving dual authority.
 
 DRA decision point: approve the service-owned bounded facet-only search shape
 before CLI-only implementation proceeds.
 
+## Execution Position
+
+This is the independent parity lane. It can run in parallel with
+`upstream-fallout`, `undo`, or `plugin-sync` if a spare team is available
+because it does not share the `agent-config-sync` surface.
+
+Keep downstream `packages/session-tools` and downstream session-tools CLI paths
+in place for now. They are behavior evidence only during this lane; removal
+waits for the final downstream sunset phase.
+
 ## First Reads
 
+- `docs/projects/workstream-b-preparation/NEXT_PACKET.md`
 - `docs/projects/workstream-b-preparation/AUTHORITY_MAP.md`
+- `docs/projects/workstream-b-preparation/REVIEW_LEDGER.md`
+- `docs/projects/workstream-b-preparation/LESSONS.md`
 - `docs/projects/workstream-b-preparation/lanes/session-tools/DISCOVERY.md`
 - `docs/projects/workstream-b-preparation/lanes/session-tools/SPEC.md`
+- `docs/projects/workstream-b-preparation/lanes/session-tools/ROUGH_PLAN.md`
 - `plugins/cli/session-tools/src/commands/sessions/search.ts`
 - `services/session-intelligence/src/service/common/normalization.ts`
 - downstream files listed in Evidence paths.
@@ -86,6 +100,18 @@ rg -n "custom_tool_call|custom_tool_call_output|has-tag|has-directive|has-tool|h
 - [x] Downstream package-level proof separated from unproven downstream CLI
   behavior.
 - [x] Bounded facet-only mode and limit/candidate semantics captured.
+
+## Pause Conditions
+
+Pause and ask the DRA before continuing if:
+
+- facet filtering requires unbounded transcript reads by default,
+- the implementation cannot keep facet search service-owned,
+- a downstream file would need to be changed or deleted before upstream parity
+  is proven,
+- CLI behavior would be advertised without upstream service and CLI tests, or
+- current code has drifted enough that this packet no longer matches the
+  service/projection shape.
 
 ## Deferred Risks
 

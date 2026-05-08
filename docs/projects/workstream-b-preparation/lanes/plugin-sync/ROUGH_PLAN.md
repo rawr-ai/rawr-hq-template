@@ -77,11 +77,19 @@ Do not run mutating global sync as a preparation or incidental validation step.
 
 ## Sequencing Notes
 
-Upstream parity proof must precede downstream removal. Downstream duplicate
-inventory can run in parallel with upstream parity proof because it is read-only.
+Run mutating service work after `undo` settles the narrow
+`agent-config-sync` undo public surface. Before that, safe parallel work is
+limited to downstream inventory and bounded non-mutating source-workspace
+proof.
 
-Downstream sunset should be its own branch/workstream after upstream authority is
-explicit and tested.
+Upstream parity proof must precede the final downstream sunset phase.
+Downstream duplicate inventory can run in parallel with upstream parity proof
+because it is read-only.
+
+Downstream sunset should be its own final branch/workstream after upstream
+authority is explicit and tested across the relevant lanes. Do not remove
+downstream sync packages, plugin paths, docs, or content during this upstream
+implementation lane.
 
 ## Stop Conditions
 

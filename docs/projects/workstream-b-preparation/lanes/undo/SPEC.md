@@ -105,7 +105,8 @@ Preserve upstream:
 Remove later downstream:
 
 - downstream root command and old `@rawr/agent-sync` undo authority after
-  upstream root command is consumed downstream.
+  upstream root command is consumed downstream, in the final downstream sunset
+  phase.
 
 Ignore:
 
@@ -142,6 +143,7 @@ bunx nx run-many -t typecheck --projects=@rawr/agent-config-sync,@rawr/agent-con
 - Do not reintroduce `@rawr/agent-sync` upstream.
 - Do not broaden undo beyond plugin-sync capsules.
 - Do not make undo lifecycle expiration block normal command execution.
+- Do not remove downstream undo material during this upstream lane.
 - Do not run real plugin sync as a test setup unless the future DRA explicitly
   scopes a reversible fixture.
 

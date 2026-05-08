@@ -53,6 +53,79 @@ Open a lane-specific implementation design session and ask it to design the
 implementation workstream for exactly one lane, using that lane's packet, the
 authority map, the review ledger, and lesson capture as opening context.
 
+## Execution Approach
+
+Run Workstream B as a staged lane sequence that minimizes coordination cost.
+Do not run every lane as a peer implementation branch unless the user explicitly
+chooses speed over coordination simplicity.
+
+Recommended sequence:
+
+1. `upstream-fallout`: clean upstream baseline first by removing MFE demo and
+   stale coordination guidance while preserving Inngest/runtime hooks.
+2. `undo`: settle the narrow `agent-config-sync` undo public surface and root
+   CLI behavior.
+3. `plugin-sync`: consume the settled `agent-config-sync` surface and prove
+   upstream sync/tooling parity.
+4. `session-tools`: implement independent session parity. This may run earlier
+   in parallel if a spare team is available because it does not share the
+   `agent-config-sync` surface.
+5. `devops`: run the large upstream migration after baseline cleanup and after
+   sync/link authority assumptions are settled.
+6. downstream sunset: remove downstream duplicates only in a later end-phase
+   after upstream lane parity is proven and DRA approval is explicit.
+
+Dependency graph:
+
+```mermaid
+flowchart TD
+  UF["upstream-fallout<br/>baseline cleanup"]
+  UNDO["undo<br/>root CLI + undo lifecycle"]
+  PS["plugin-sync<br/>sync substrate parity"]
+  ST["session-tools<br/>session parity"]
+  DEV["devops<br/>large upstream migration"]
+  DS["downstream sunset<br/>later removal phase"]
+
+  UF --> DEV
+  UF -. light test/doc baseline .-> UNDO
+  UNDO --> PS
+  PS -. sync/link authority settled .-> DEV
+
+  ST -. independent; can run anytime .-> DS
+  PS --> DS
+  DEV --> DS
+
+  classDef cleanup fill:#fef3c7,stroke:#b45309,color:#111827
+  classDef shared fill:#dbeafe,stroke:#1d4ed8,color:#111827
+  classDef independent fill:#dcfce7,stroke:#15803d,color:#111827
+  classDef large fill:#fce7f3,stroke:#be185d,color:#111827
+  classDef later fill:#e5e7eb,stroke:#374151,color:#111827
+
+  class UF cleanup
+  class UNDO,PS shared
+  class ST independent
+  class DEV large
+  class DS later
+```
+
+Parallelism rule:
+
+- Safe early parallel lane: `session-tools`.
+- Best first lane: `upstream-fallout`.
+- Shared-service sequence: `undo` before mutating `plugin-sync` service work.
+- Largest lane: `devops`, preferably after upstream fallout and sync/link
+  authority assumptions are settled.
+
+Downstream hold:
+
+- Keep downstream implementations and content in place for every lane during
+  this upstream implementation phase.
+- Downstream paths are behavior evidence and content/source inputs, not removal
+  targets.
+- Do not delete downstream duplicates lane-by-lane. Sunset belongs to the final
+  downstream phase after all relevant upstream lanes are complete, parity is
+  proven, lessons are preserved, and DRA approval is explicit.
+
 Required first reads:
 
 - `AGENTS.md`
@@ -126,8 +199,8 @@ Allowed edit surfaces: lane-specific. Start with the lane `READINESS.md`.
 
 Forbidden files:
 
-- Downstream `RAWR HQ` files unless the future lane explicitly reaches its
-  downstream sunset phase.
+- Downstream `RAWR HQ` files. Downstream sunset is not part of the first
+  upstream lane implementation pass; it waits for the final downstream phase.
 - Inngest runtime files for the upstream-fallout lane, except preservation docs
   or references that distinguish Inngest from removed coordination canvas.
 - Any generated provider home, global plugin install state, or link-repair

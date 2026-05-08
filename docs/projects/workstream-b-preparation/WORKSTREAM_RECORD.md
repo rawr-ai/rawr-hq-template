@@ -32,7 +32,9 @@ Branch/stack:
 ```
 
 Current phase: review-repaired closure packet. Future sessions should consume
-the lane packets and `REVIEW_LEDGER.md` before planning implementation.
+the lane packets and `REVIEW_LEDGER.md` before planning implementation, then
+follow the execution sequence in `NEXT_PACKET.md` to minimize coordination
+cost.
 
 Selected skills:
 
@@ -161,6 +163,9 @@ Control inputs:
 - Use `codex/...` branch names.
 - Do not leave the repo dirty.
 - Keep downstream read-only during this preparation branch.
+- Keep downstream implementations and content in place during the first upstream
+  lane implementation pass. Downstream sunset is a later end-phase after all
+  relevant upstream parity is proven and DRA approval is explicit.
 - Preserve removal lessons in `LESSONS.md` before later implementation deletes
   material that contains hard-won operational or design knowledge.
 

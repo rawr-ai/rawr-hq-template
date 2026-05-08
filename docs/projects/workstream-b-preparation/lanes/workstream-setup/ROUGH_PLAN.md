@@ -33,6 +33,15 @@ Setup must precede future lane implementation sessions. Future sessions should
 not edit setup artifacts unless they discover a factual error in preparation
 evidence or the user changes the authority frame.
 
+The execution sequence now lives in `NEXT_PACKET.md` and is reflected in lane
+readiness docs: `upstream-fallout`, `undo`, `plugin-sync`, `session-tools`,
+`devops`, then final downstream sunset. `session-tools` may run earlier in
+parallel because it is independent.
+
+Downstream implementations stay in place during the upstream lane
+implementation pass. Setup changes must not authorize downstream deletion
+before the final downstream sunset phase.
+
 ## Stop Conditions
 
 - Repo is dirty with unrelated changes before edits.

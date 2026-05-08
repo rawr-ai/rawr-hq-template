@@ -12,7 +12,7 @@ Temporary content/source input:
 
 - downstream `RAWR HQ` plugin content and source workspace.
 
-Duplicate downstream authority to sunset later:
+Duplicate downstream authority to sunset only in the final downstream phase:
 
 - `packages/agent-sync`
 - downstream sync implementation inside `plugins/cli/plugins`.
@@ -114,7 +114,7 @@ Preserve upstream:
 Remove later downstream:
 
 - `packages/agent-sync` once upstream parity and downstream consumption are
-  proven.
+  proven and the final downstream sunset phase is explicitly opened.
 - downstream duplicate sync implementation and stale package references.
 - stale docs that present downstream sync code as continuing authority.
 
@@ -125,7 +125,7 @@ Ignore:
 
 ## Test And Evidence Contract
 
-Future implementation must prove before downstream removal:
+Future implementation must prove before the final downstream sunset phase:
 
 - Upstream sync/status/drift covers required downstream behavior.
 - `source-workspace` can read downstream content without transferring
@@ -147,16 +147,19 @@ bunx nx run @rawr/plugin-plugins:test
 bunx nx run-many -t typecheck --projects=@rawr/agent-config-sync,@rawr/agent-config-sync-node,@rawr/plugin-plugins
 ```
 
-Expected downstream sunset gates should be defined in the downstream removal
-workstream after upstream parity is proven.
+Expected downstream sunset gates should be defined in the final downstream
+removal workstream after upstream parity is proven across the relevant lanes.
 
 ## Non-Goals
 
 - Do not delete downstream plugin content during upstream parity work.
+- Do not remove downstream sync packages, plugin paths, docs, or content during
+  this upstream lane.
 - Do not run global `rawr plugins sync` or link repair in preparation.
 - Do not treat projection/export as provider deployment.
 - Do not hide provider-native gaps with silent direct writes.
-- Do not remove downstream duplicate authority before upstream parity proof.
+- Do not remove downstream duplicate authority before the final downstream
+  sunset phase.
 
 ## DRA Disposition
 

@@ -52,6 +52,8 @@ Preserve:
 - Graphite branch hygiene.
 - Downstream read-only inspection during preparation.
 - Explicit distinction between preparation and implementation.
+- Cross-lane execution sequence in `NEXT_PACKET.md`.
+- Downstream hold until the final downstream sunset phase.
 
 Remove:
 
@@ -84,6 +86,7 @@ Required artifact checks:
 - No repo-wide docs cleanup outside this artifact tree.
 - No global sync/link repair.
 - No branch submission.
+- No downstream deletion authorization before final sunset.
 
 ## DRA Disposition
 

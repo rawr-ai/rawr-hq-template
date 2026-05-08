@@ -102,8 +102,9 @@ Preserve upstream:
 
 Remove later downstream:
 
-- downstream duplicate session tooling implementation after upstream parity is
-  proven and downstream consumes the upstream surface.
+- downstream duplicate session tooling implementation only in the final
+  downstream sunset phase after relevant upstream lanes are complete, upstream
+  parity is proven, and downstream consumes the upstream surface.
 
 Ignore:
 
@@ -138,7 +139,7 @@ bunx nx run-many -t typecheck --projects=@rawr/session-intelligence,@rawr/plugin
 - Do not move back to a downstream-style `packages/session-tools` authority.
 - Do not solve global plugin install/link state.
 - Do not broaden session-tools into a general transcript/corpus platform.
-- Do not remove downstream implementation until upstream parity is verified.
+- Do not remove downstream implementation during this upstream lane.
 
 ## DRA Disposition
 

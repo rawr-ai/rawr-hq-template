@@ -130,6 +130,8 @@ Remove/change:
 
 - Text that frames DevOps as personal-owned.
 - Docs that describe a continuing DevOps split model.
+- Downstream DevOps package/plugin duplicates only in the final downstream
+  sunset phase, not during the upstream migration lane.
 
 Ignore:
 
@@ -174,6 +176,7 @@ record.
 - Do not add global sync/link repair as an implicit preparation validation step.
 - Do not migrate unrelated operational plugins.
 - Do not let stale docs reopen the locked migration decision.
+- Do not remove downstream DevOps material during this upstream lane.
 
 ## DRA Disposition
 

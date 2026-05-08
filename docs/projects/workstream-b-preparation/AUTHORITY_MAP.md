@@ -65,6 +65,31 @@ sunset.
 - Deletion/sunset work must preserve important operational and design lessons
   in `LESSONS.md` or a lane-local lesson artifact before removal.
 
+## Execution Sequence And Downstream Hold
+
+Workstream B should minimize coordination cost by sequencing shared surfaces
+instead of running every lane as a peer implementation branch.
+
+Recommended order:
+
+1. `upstream-fallout`
+2. `undo`
+3. `plugin-sync`
+4. `session-tools`
+5. `devops`
+6. downstream sunset
+
+`session-tools` may run earlier in parallel if capacity is available because it
+does not share the `agent-config-sync` surface. `undo` should settle the narrow
+undo public surface before mutating `plugin-sync` service work. `devops` should
+prefer a cleaned upstream baseline and settled sync/link assumptions before
+large migration work starts.
+
+Downstream implementations remain in place during the upstream lane
+implementation phase. Future lane teams may inspect downstream as evidence, but
+they should not delete downstream packages, plugins, docs, or content until the
+final downstream sunset phase is explicitly opened and approved by the DRA.
+
 ## Lane Authority Notes
 
 ### Workstream Setup

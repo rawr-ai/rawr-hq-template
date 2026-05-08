@@ -26,7 +26,7 @@ Allowed edit surfaces:
 Forbidden scope:
 
 - upstream `@rawr/agent-sync`,
-- downstream mutation before upstream parity,
+- downstream mutation or downstream undo removal in this upstream lane,
 - broad undo redesign,
 - real global plugin sync as incidental validation.
 
@@ -58,17 +58,31 @@ Required gates:
 
 Lane done condition: `rawr undo` works through upstream service semantics,
 plugin sync hints point at a valid command, lifecycle expiration is best-effort
-and tested, and downstream old undo authority can be sunset later.
+and tested, and downstream old undo authority is ready for the final downstream
+sunset phase.
 
 DRA decision point: none on service API shape. The implementation may choose
 the small app CLI binding helper, but the lifecycle export and command contract
 are fixed.
 
+## Execution Position
+
+Run this after `upstream-fallout` when possible, and before mutating
+`plugin-sync` service work. This lane settles the narrow `agent-config-sync`
+undo public surface that plugin-sync may later consume.
+
+Keep downstream undo files in place for now. They are behavior evidence only
+during this upstream lane; removal waits for the final downstream sunset phase.
+
 ## First Reads
 
+- `docs/projects/workstream-b-preparation/NEXT_PACKET.md`
 - `docs/projects/workstream-b-preparation/AUTHORITY_MAP.md`
+- `docs/projects/workstream-b-preparation/REVIEW_LEDGER.md`
+- `docs/projects/workstream-b-preparation/LESSONS.md`
 - `docs/projects/workstream-b-preparation/lanes/undo/DISCOVERY.md`
 - `docs/projects/workstream-b-preparation/lanes/undo/SPEC.md`
+- `docs/projects/workstream-b-preparation/lanes/undo/ROUGH_PLAN.md`
 - `services/agent-config-sync/src/service/modules/undo/router.ts`
 - `services/agent-config-sync/src/service/modules/undo/helpers/command-expiration.ts`
 - downstream root command and lifecycle files listed above.
@@ -94,6 +108,19 @@ rg -n "rawr undo|Undo:|command-expiration|apps/cli/src/commands/undo|expireUndoC
 - [x] Non-goal against `@rawr/agent-sync` revival captured.
 - [x] Public lifecycle export decision captured.
 - [x] JSON/human failure, dry-run, and exit behavior captured.
+
+## Pause Conditions
+
+Pause and ask the DRA before continuing if:
+
+- `services/agent-config-sync` no longer exposes the expected undo/runUndo
+  contract,
+- lifecycle expiration would block normal command execution instead of running
+  best-effort,
+- implementation pressure would revive upstream `@rawr/agent-sync` or mutate
+  downstream undo files,
+- another active lane is editing the same `agent-config-sync` undo files, or
+- root CLI workspace-root resolution cannot match plugin sync capsule storage.
 
 ## Deferred Risks
 

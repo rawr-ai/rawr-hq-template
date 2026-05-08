@@ -66,6 +66,11 @@ rg -n "custom_tool_call|has-tag|extractSessionFacets|print-facets" services/sess
 
 ## Sequencing Notes
 
+This lane is independent and may run in parallel with the baseline cleanup or
+`agent-config-sync` lanes if a spare team is available. It does not need to wait
+for `undo` or `plugin-sync` unless future code drift introduces a shared
+dependency.
+
 Service parser/facet behavior should land before CLI flags. If the CLI flags
 land first, the command will repeat the current README problem: advertised
 surface without service-owned implementation.
@@ -75,7 +80,8 @@ advertises `--has-*` searches that can run without metadata/content query
 input.
 
 Downstream removal is a later sunset step after upstream parity is tested and
-consumed downstream.
+consumed downstream. Do not remove downstream session-tools material during this
+upstream implementation lane.
 
 ## Stop Conditions
 

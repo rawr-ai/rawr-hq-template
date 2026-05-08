@@ -64,11 +64,17 @@ bunx nx run-many -t typecheck --projects=@rawr/agent-config-sync,@rawr/agent-con
 
 ## Sequencing Notes
 
+Run this after `upstream-fallout` when practical and before mutating
+`plugin-sync` service work. The purpose is to settle the narrow
+`agent-config-sync` undo public surface so the broader sync substrate lane does
+not race the root undo lane.
+
 Wire the command after confirming the service client binding shape. Add
 lifecycle expiration after the command so tests can share capsule fixtures.
 
 Downstream sunset should happen only after upstream root command is integrated
-downstream and plugin sync hints point to a working command.
+downstream and plugin sync hints point to a working command. Do not remove
+downstream undo material during this upstream implementation lane.
 
 ## Stop Conditions
 

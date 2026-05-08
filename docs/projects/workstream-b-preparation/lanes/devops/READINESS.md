@@ -32,6 +32,7 @@ Forbidden scope:
 
 - preserving downstream DevOps architecture authority,
 - copying stale personal-owned language,
+- deleting downstream DevOps package/plugin paths during this upstream lane,
 - running global plugin sync/link repair as incidental validation,
 - broad Graphite workflow redesign,
 - unrelated operational plugin migration.
@@ -65,17 +66,32 @@ Required gates:
 
 Lane done condition: upstream owns DevOps package/plugin behavior; docs no
 longer claim a continuing DevOps split model; downstream duplicate authority is
-ready for a later sunset lane.
+ready for the final downstream sunset phase.
 
 DRA decision point: no default decision remains. `--converge-after` and
 `--heal-links` are opt-in template defaults; DRA should only approve deviations
 from those defaults.
 
+## Execution Position
+
+Run this late. Prefer starting after `upstream-fallout` has cleaned package/doc
+baseline noise and after `plugin-sync` has settled sync/link authority
+assumptions. This is the largest migration lane and should not be used to
+reopen the upstream/downstream authority decision.
+
+Keep downstream `packages/dev` and `plugins/cli/devops` in place for now. They
+are the behavior source for upstream migration, not deletion targets during this
+upstream lane.
+
 ## First Reads
 
+- `docs/projects/workstream-b-preparation/NEXT_PACKET.md`
 - `docs/projects/workstream-b-preparation/AUTHORITY_MAP.md`
+- `docs/projects/workstream-b-preparation/REVIEW_LEDGER.md`
+- `docs/projects/workstream-b-preparation/LESSONS.md`
 - `docs/projects/workstream-b-preparation/lanes/devops/DISCOVERY.md`
 - `docs/projects/workstream-b-preparation/lanes/devops/SPEC.md`
+- `docs/projects/workstream-b-preparation/lanes/devops/ROUGH_PLAN.md`
 - downstream DevOps files listed above.
 - stale upstream docs listed above.
 
@@ -103,6 +119,22 @@ rg -n "packages/dev|plugins/cli/devops|rawr dev stack|rawr dev repo|rawr dev wor
 - [x] Graphite/worktree/noninteractive invariants captured.
 - [x] JSON fixture and mocked command test requirements captured.
 - [x] Docs cleanup is classified as straightforward, not reconciliation.
+
+## Pause Conditions
+
+Pause and ask the DRA before continuing if:
+
+- the lane would hard-code machine-specific paths or local branch names as
+  template defaults,
+- a command would run global plugin sync, link repair, or Graphite mutation by
+  default without explicit operator intent,
+- Graphite/worktree command safety cannot be tested with mocks or dry-run
+  fixtures,
+- implementation would preserve stale split-model docs as current authority,
+- upstream package/plugin registration cannot follow current workspace
+  conventions, or
+- the lane would delete downstream DevOps files before the final downstream
+  sunset phase.
 
 ## Deferred Risks
 

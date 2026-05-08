@@ -147,6 +147,7 @@ not include it in the validation project list after removal.
 - Do not remove Inngest.
 - Do not remove `/api/workflows/*` or future runtime hooks.
 - Do not redesign coordination.
+- Do not mutate downstream `RAWR HQ`.
 - Do not preserve MFE demo as a fixture if the user decision still says it can
   be removed.
 - Do not run global plugin sync/link repair.

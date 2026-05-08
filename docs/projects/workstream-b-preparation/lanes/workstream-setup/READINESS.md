@@ -53,11 +53,21 @@ asking authority questions.
 
 DRA decision point: accept or reject any proposed change to the authority order.
 
+## Execution Position
+
+This lane is already executed by the preparation branch. Reopen it only to fix
+factual errors in the preparation packet, update the cross-lane execution
+sequence, or apply a new user/DRA authority decision.
+
+The setup lane is docs-only. It must not become a backdoor for code migration,
+downstream mutation, global sync, or link repair.
+
 ## First Reads
 
+- `docs/projects/workstream-b-preparation/NEXT_PACKET.md`
 - `docs/projects/workstream-b-preparation/AUTHORITY_MAP.md`
 - `docs/projects/workstream-b-preparation/LANE_PACKET_TEMPLATE.md`
-- `docs/projects/workstream-b-preparation/NEXT_PACKET.md`
+- `docs/projects/workstream-b-preparation/REVIEW_LEDGER.md`
 
 ## First Commands
 
@@ -79,6 +89,15 @@ rg -n "<repair hygiene pattern>" docs/projects/workstream-b-preparation -g '!REP
 - [x] Removal lessons capture added.
 - [x] Lane packet shape captured.
 - [x] Future lane startup instructions captured.
+
+## Pause Conditions
+
+Pause and ask the DRA before continuing if:
+
+- a proposed setup edit changes the authority order,
+- a proposed setup edit changes the lane execution sequence,
+- a proposed setup edit authorizes downstream deletion before final sunset, or
+- the packet correction requires code migration, global sync, or link repair.
 
 ## Deferred Risks
 

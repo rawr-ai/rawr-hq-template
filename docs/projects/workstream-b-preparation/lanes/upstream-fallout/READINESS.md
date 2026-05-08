@@ -35,6 +35,7 @@ Forbidden scope:
 - deleting `/api/workflows/*`,
 - redesigning future coordination,
 - preserving `mfe-demo` as a package,
+- mutating downstream `RAWR HQ`,
 - global plugin sync/link repair.
 
 Evidence paths:
@@ -79,11 +80,23 @@ DRA decision point: approve a test-local web plugin fixture strategy before
 removing tests that currently use `mfe-demo`; do not preserve `mfe-demo` as the
 fixture.
 
+## Execution Position
+
+Run this first. It is the baseline cleanup lane that reduces later package,
+test, and docs conflicts for DevOps and other upstream work.
+
+This lane is upstream-only. Do not touch downstream `RAWR HQ`; downstream
+cleanup/sunset remains a final end-phase after upstream authority is complete.
+
 ## First Reads
 
+- `docs/projects/workstream-b-preparation/NEXT_PACKET.md`
 - `docs/projects/workstream-b-preparation/AUTHORITY_MAP.md`
+- `docs/projects/workstream-b-preparation/REVIEW_LEDGER.md`
+- `docs/projects/workstream-b-preparation/LESSONS.md`
 - `docs/projects/workstream-b-preparation/lanes/upstream-fallout/DISCOVERY.md`
 - `docs/projects/workstream-b-preparation/lanes/upstream-fallout/SPEC.md`
+- `docs/projects/workstream-b-preparation/lanes/upstream-fallout/ROUGH_PLAN.md`
 - evidence paths listed above.
 
 ## First Commands
@@ -110,6 +123,19 @@ rg -n "api/inngest|dev:workflows|dev:inngest|/api/workflows" package.json apps/s
 - [x] Coordination cleanup checks split from Inngest preservation checks.
 - [x] `.gitkeep` requirement captured.
 - [x] No future coordination redesign required.
+
+## Pause Conditions
+
+Pause and ask the DRA before continuing if:
+
+- a proposed cleanup would remove `/api/inngest`, `dev:inngest`,
+  `dev:workflows`, or future runtime hooks,
+- replacing `mfe-demo` tests would require preserving `mfe-demo` as the fixture,
+- active docs cannot be cleaned without deciding future coordination
+  architecture,
+- the lane would mutate downstream `RAWR HQ`, or
+- code/docs slated for deletion carry important lessons that have not been
+  preserved in `LESSONS.md` or a lane-local lesson artifact.
 
 ## Deferred Risks
 

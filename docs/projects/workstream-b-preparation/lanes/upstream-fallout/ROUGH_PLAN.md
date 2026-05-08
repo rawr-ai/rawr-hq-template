@@ -78,6 +78,9 @@ bunx nx run @rawr/web:test
 
 ## Sequencing Notes
 
+Run this first. It removes upstream demo/coordination noise that would otherwise
+raise package, lockfile, test, and docs conflicts for later lanes.
+
 Remove MFE demo and update package lists, Vitest config, and lockfile before
 running tests. Replace tests in the same branch so runtime web plugin behavior
 remains covered.
@@ -85,6 +88,9 @@ remains covered.
 Clean active coordination docs separately from Inngest preservation. A simple
 rule is enough: coordination canvas references go away; Inngest runtime ingress
 stays.
+
+This lane is upstream-only. Do not mutate downstream `RAWR HQ`; downstream
+sunset remains a final end-phase.
 
 ## Stop Conditions
 
