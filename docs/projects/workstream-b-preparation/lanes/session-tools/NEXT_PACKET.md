@@ -94,7 +94,7 @@ Read these first in a continuation:
 1. `docs/projects/workstream-b-preparation/lanes/session-tools/WORKSTREAM_RECORD.md`
 2. `docs/projects/workstream-b-preparation/lanes/session-tools/REVIEW_FINDINGS.md`
 3. `docs/projects/workstream-b-preparation/lanes/session-tools/IMPLEMENTATION_PLAN.md`
-4. Current `git diff`
+4. `docs/projects/workstream-b-preparation/lanes/session-tools/COMPLETION_AUDIT.md`
 5. Latest final repo/Graphite status
 
 ## First Commands

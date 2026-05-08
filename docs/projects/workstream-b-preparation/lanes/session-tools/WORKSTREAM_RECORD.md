@@ -3,7 +3,7 @@
 Status: `complete`.
 Branch: `agent-session-tools-workstream-b-session-parity`.
 PR: `none`.
-Commit: branch tip after closure commit.
+Commit: implementation commit `e07bdf6c` plus closure audit commit at branch tip.
 DRA: `Codex DRA`.
 Dates: `2026-05-08 -> active`.
 
@@ -247,6 +247,7 @@ Surfaces touched:
 - `docs/projects/workstream-b-preparation/lanes/session-tools/IMPLEMENTATION_PLAN.md`
 - `docs/projects/workstream-b-preparation/lanes/session-tools/REVIEW_FINDINGS.md`
 - `docs/projects/workstream-b-preparation/lanes/session-tools/NEXT_PACKET.md`
+- `docs/projects/workstream-b-preparation/lanes/session-tools/COMPLETION_AUDIT.md`
 - Expected implementation surfaces:
   - `services/session-intelligence/src/service/common/normalization.ts`
   - `services/session-intelligence/src/service/modules/search/**`
