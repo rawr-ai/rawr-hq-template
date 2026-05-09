@@ -31,7 +31,7 @@ gt merge --no-interactive
 ```
 3. Drain/prune until stable:
 ```bash
-gt sync --no-restack --force --no-interactive
+gt sync --no-restack --no-interactive
 gt ls
 ```
 4. Validate template `main`:
@@ -74,7 +74,7 @@ bun run test
 ```bash
 gt ss --publish --ai --stack --no-interactive
 gt merge --no-interactive
-gt sync --no-restack --force --no-interactive
+gt sync --no-restack --no-interactive
 ```
 
 ## Phase 3: Restack remaining personal branches

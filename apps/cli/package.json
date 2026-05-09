@@ -11,8 +11,11 @@
     "@rawr/agent-config-sync": "workspace:*",
     "@rawr/agent-config-sync-node": "workspace:*",
     "@rawr/core": "workspace:*",
+    "@rawr/dev": "workspace:*",
+    "@rawr/dev-node": "workspace:*",
     "@rawr/hq-ops": "workspace:*",
     "@rawr/orpc-client": "workspace:*",
+    "@rawr/plugin-devops": "workspace:*",
     "@rawr/plugin-hyperresearch": "workspace:*",
     "@rawr/plugin-plugins": "workspace:*",
     "zod": "^3.24.3"
@@ -29,6 +32,7 @@
     "plugins": [
       "@oclif/plugin-help",
       "@oclif/plugin-plugins",
+      "@rawr/plugin-devops",
       "@rawr/plugin-hyperresearch",
       "@rawr/plugin-plugins"
     ],

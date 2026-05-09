@@ -1,5 +1,13 @@
 # DevOps Discovery
 
+## Implementation Supersession
+
+This discovery file records the opening-state evidence that drove the DevOps
+migration. It is intentionally historical after this branch: upstream no longer
+lacks DevOps implementation paths in the implemented branch. Use
+`COMPLETION_AUDIT.md`, `WORKSTREAM_RECORD.md`, and `NEXT_PACKET.md` for current
+post-implementation facts.
+
 ## Frame
 
 This lane prepares implementation planning for moving DevOps upstream.
@@ -12,14 +20,14 @@ claims as docs-to-update; do not reconcile them as competing authority.
 Downstream currently owns plugin content and proven behavior, but not future
 architecture authority.
 
-## Current Upstream State
+## Opening Upstream State
 
-Upstream does not currently have DevOps implementation paths:
+At lane opening, upstream did not have DevOps implementation paths:
 
 - `plugins/cli/devops` is missing.
 - `packages/dev` is missing.
 
-Current upstream docs still describe the old split model:
+At lane opening, upstream docs still described the old split model:
 
 - `AGENTS_SPLIT.md:35` says operator-specific dev workflow mechanics
   `packages/dev/**` and `plugins/cli/devops/**` belong in personal `RAWR HQ`.

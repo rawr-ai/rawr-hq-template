@@ -1,24 +1,33 @@
 # DevOps Rough Plan
 
+## Implementation Supersession
+
+This rough plan is now historical planning input. The implemented branch
+realizes the service / Node adapter / CLI projection shape described below. Use
+`COMPLETION_AUDIT.md`, `WORKSTREAM_RECORD.md`, and `NEXT_PACKET.md` for current
+post-implementation status and remaining work.
+
 ## Implementation Slices
 
 1. Upstream project scaffolding:
-   - Add `packages/dev`.
+   - Add `services/dev`.
+   - Add `packages/dev-node`.
    - Add `plugins/cli/devops`.
    - Register Nx/package metadata consistently with existing template packages
      and CLI plugins.
 
-2. Package migration:
-   - Port Graphite doctor/drain modules.
-   - Port repo sync module.
-   - Port worktree cleanup module.
-   - Port scratch policy module.
-   - Keep process execution testable.
+2. Service migration:
+   - Implement service-owned Graphite doctor/drain modules.
+   - Implement service-owned repo sync module.
+   - Implement service-owned worktree cleanup module.
+   - Implement service-owned scratch policy module.
+   - Keep host process/filesystem/path access behind resource ports.
+   - Keep Node resources in `packages/dev-node`.
 
 3. CLI migration:
    - Port command files.
-   - Bind `@rawr/dev` package behavior.
-   - Preserve dry-run and JSON output.
+   - Bind the `@rawr/dev` service client.
+   - Preserve planning-by-default and JSON output.
    - Enforce scratch policy for mutating commands.
    - Wire with template-safe defaults: no plugin convergence unless
      `--converge-after`; no link healing unless `--heal-links`.
@@ -29,12 +38,14 @@
    - Parameterize local paths and branch prefixes.
    - Ensure no command silently runs global plugin sync/link repair unless the
      operator explicitly asks for it.
-   - Encode Graphite/worktree/noninteractive invariants in package tests.
+   - Encode Graphite/worktree/noninteractive invariants in service tests.
 
 5. Tests:
-   - Add package unit tests for scratch policy and command planning.
+   - Add service unit tests for scratch policy and command planning.
+   - Add node adapter tests for resource fixtures.
    - Add CLI projection tests for commands and JSON output.
-   - Add no-mutation dry-run tests.
+   - Add no-mutation planning-mode tests.
+   - Add applied-path failure tests.
    - Add fixture-backed JSON contracts for stack doctor, stack drain, repo
      sync, worktree cleanup, and scratch policy.
    - Mock Graphite, repo, and worktree command execution.
@@ -51,7 +62,8 @@
 
 ## Likely Touch Surfaces
 
-- `packages/dev/**`
+- `services/dev/**`
+- `packages/dev-node/**`
 - `plugins/cli/devops/**`
 - `package.json`
 - `apps/cli/package.json`
@@ -69,16 +81,18 @@ git status --short --branch
 gt ls
 bunx nx show projects
 bunx nx show project @rawr/dev --json
+bunx nx show project @rawr/dev-node --json
 bunx nx show project @rawr/plugin-devops --json
 bunx nx run @rawr/dev:test
+bunx nx run @rawr/dev-node:test
 bunx nx run @rawr/plugin-devops:test
-bunx nx run-many -t typecheck --projects=@rawr/dev,@rawr/plugin-devops
+bunx nx run-many -t typecheck --projects=@rawr/dev,@rawr/dev-node,@rawr/plugin-devops
 ```
 
 Additional targeted checks:
 
 ```bash
-rg -n "packages/dev|plugins/cli/devops|personal-owned|personal mechanical dev workflows|stays personal-owned" AGENTS_SPLIT.md docs/process
+rg -n "packages/dev/|personal-owned|personal mechanical dev workflows|stays personal-owned" AGENTS_SPLIT.md docs/process
 ```
 
 ## Sequencing Notes

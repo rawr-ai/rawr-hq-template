@@ -1,5 +1,11 @@
 # DevOps Spec
 
+## Implementation Supersession
+
+This spec records the target contract used by the implemented DevOps migration.
+Use `COMPLETION_AUDIT.md`, `WORKSTREAM_RECORD.md`, and `NEXT_PACKET.md` for
+current integration and downstream-sunset handoff state.
+
 ## Ownership
 
 Future authority:
@@ -8,8 +14,10 @@ Future authority:
 
 Expected upstream implementation surfaces:
 
-- shared package for DevOps mechanics, likely `packages/dev`.
-- CLI plugin for projection, likely `plugins/cli/devops`.
+- service package for DevOps mechanics: `services/dev` as `@rawr/dev`.
+- Node host adapter for process/fs/path/clock resources:
+  `packages/dev-node` as `@rawr/dev-node`.
+- CLI plugin for projection: `plugins/cli/devops`.
 
 Downstream `RAWR HQ` provides behavior evidence and current plugin content. It
 does not retain architecture authority after migration.
@@ -32,9 +40,9 @@ Expected command surface:
 
 ```bash
 rawr dev stack doctor [--json]
-rawr dev stack drain [--dry-run] [--json] [--max-cycles <n>] [--sleep-seconds <n>]
-rawr dev repo sync-upstream [--dry-run] [--json] [--upstream-ref <ref>] [--branch-prefix <prefix>] [--converge-after]
-rawr dev worktree cleanup [--dry-run] [--json] [--prefix <text>] [--merged-only|--no-merged-only] [--heal-links]
+rawr dev stack drain [--apply] [--json] [--max-cycles <n>] [--sleep-seconds <n>]
+rawr dev repo sync-upstream [--apply] [--json] [--upstream-ref <ref>] [--branch-prefix <prefix>] [--converge-after]
+rawr dev worktree cleanup [--apply] [--json] [--prefix <text>] [--merged-only|--no-merged-only] [--heal-links]
 ```
 
 Exact flags should be confirmed from downstream command files during
@@ -62,13 +70,15 @@ Worktree invariants:
 
 - Never remove the current worktree.
 - Default cleanup to merged branches only.
-- Require dry-run support for all removals.
+- Default all removals to planning mode; require `--apply` to remove.
 - Require explicit confirmation or opt-in flags for link healing or other repair
   behavior.
 
 Noninteractive invariants:
 
-- All mutating commands must support `--dry-run` and `--json`.
+- All mutating commands must default to planning mode and support `--json`.
+- Applied execution failures must be reflected in the service result and CLI
+  exit status.
 - JSON output must be fixture-backed and stable enough for agent automation.
 - Commands must fail closed when repo/worktree/Graphite state is ambiguous.
 - No command may run global plugin sync, link repair, or convergence unless the
@@ -76,22 +86,26 @@ Noninteractive invariants:
 
 ## Internal Boundaries
 
-Package-owned:
+Service-owned:
 
 - Graphite stack analysis.
 - Drain command planning/execution.
 - Upstream sync command planning/execution.
 - Worktree cleanup candidate selection and removal.
 - Scratch policy checks.
-- Process execution wrapper and result DTOs.
 - JSON report/result DTOs backed by tests and fixtures.
+
+Node-adapter-owned:
+
+- Process, filesystem, path, sleep, and clock resources.
+- Test-only spawned-process fixture seam.
 
 CLI-owned:
 
 - oclif command registration.
 - flag parsing and defaults.
 - workspace root resolution.
-- scratch policy enforcement before mutating commands.
+- host-resource binding.
 - JSON/human output.
 
 Docs-owned:
@@ -105,7 +119,7 @@ Docs-owned:
 Bring upstream:
 
 - `stack doctor` analysis and action recommendations.
-- `stack drain` non-interactive Graphite drain loop, including dry-run plan.
+- `stack drain` non-interactive Graphite drain loop, including planning mode.
 - `repo sync-upstream` structured fetch/branch/merge/sync/restack flow.
 - `worktree cleanup` candidate detection and merged-only filtering.
 - scratch policy checks and bypass controls.
@@ -116,7 +130,7 @@ Preserve:
 - Graphite-first policy.
 - `gt sync --no-restack` in parallel worktree contexts.
 - Non-interactive command shapes for automation.
-- Dry-run support for mutating workflows.
+- Planning-by-default support for mutating workflows.
 
 Parameterize or review before preserving:
 
@@ -144,7 +158,9 @@ Future implementation must prove:
 
 - Upstream projects exist in Nx.
 - CLI commands are discoverable through oclif.
-- Dry-run modes do not mutate.
+- Default planning mode does not mutate.
+- `--apply` paths fail closed when required command steps fail.
+- Repo sync checks Graphite readability before creating/merging a branch.
 - Stack doctor parses git/Graphite output and recommends safe actions.
 - Stack drain command sequence is non-interactive and Graphite-first.
 - Worktree cleanup excludes current worktree and defaults to merged-only.
@@ -160,10 +176,12 @@ Expected gates:
 
 ```bash
 bunx nx show project @rawr/dev --json
+bunx nx show project @rawr/dev-node --json
 bunx nx show project @rawr/plugin-devops --json
 bunx nx run @rawr/dev:test
+bunx nx run @rawr/dev-node:test
 bunx nx run @rawr/plugin-devops:test
-bunx nx run-many -t typecheck --projects=@rawr/dev,@rawr/plugin-devops
+bunx nx run-many -t typecheck --projects=@rawr/dev,@rawr/dev-node,@rawr/plugin-devops
 ```
 
 If the project names change, update the commands in the future implementation

@@ -9,6 +9,8 @@ AGENTS_SPLIT.md
 rawr.config.ts
 apps/cli/**
 services/agent-config-sync/**
+services/dev/**
+packages/dev-node/**
 packages/control-plane/**
 packages/core/**
 packages/journal/**
@@ -19,9 +21,9 @@ services/state/**
 packages/test-utils/**
 packages/ui-sdk/**
 plugins/cli/plugins/**
+plugins/cli/devops/**
 # HQ/plugin-management template domain.
 plugins/agents/hq/**
-# Intentionally excluded: packages/dev/** (personal-owned downstream).
 scripts/githooks/**
 scripts/dev/activate-global-rawr.sh
 scripts/dev/auto-refresh-main.sh

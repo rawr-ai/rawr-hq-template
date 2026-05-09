@@ -1,11 +1,17 @@
 # DevOps Readiness
 
+## Implementation Supersession
+
+This readiness packet is now historical planning input for the implemented
+DevOps migration branch. Use `COMPLETION_AUDIT.md`, `WORKSTREAM_RECORD.md`, and
+`NEXT_PACKET.md` as the current post-implementation handoff surfaces. Keep this
+file only for the original lane contract and pause conditions.
+
 ## Readiness Verdict
 
-Prepared for lane-specific planning after review repair. The lane has a locked
-migration decision, clear downstream behavior evidence, concrete safety
-invariants, and stale upstream docs classified as docs-to-change rather than
-authority.
+Prepared for lane-specific planning after review repair. In the implemented
+branch, upstream now has the DevOps service, Node adapter, and CLI projection
+described in the completion artifacts.
 
 ## Pair Packet
 
@@ -18,7 +24,8 @@ capability and remove old split-model claims when implementation lands.
 
 Allowed edit surfaces:
 
-- `packages/dev/**`
+- `services/dev/**`
+- `packages/dev-node/**`
 - `plugins/cli/devops/**`
 - package/Nx metadata required to register the projects.
 - `apps/cli/package.json`
@@ -110,7 +117,7 @@ rg -n "packages/dev|plugins/cli/devops|rawr dev stack|rawr dev repo|rawr dev wor
 ## Ready-To-Plan Checklist
 
 - [x] Locked upstream migration decision captured.
-- [x] Current upstream absence captured.
+- [x] Historical upstream absence captured before implementation.
 - [x] Stale upstream split docs captured.
 - [x] Downstream package/plugin surfaces captured.
 - [x] DevOps command surface captured.

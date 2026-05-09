@@ -11,10 +11,13 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
   - `packages/core`
   - `packages/test-utils`
   - `packages/ui-sdk`
+  - `services/dev`
+  - `packages/dev-node`
   - `services/hq-ops`
   - `services/agent-config-sync`
   - `services/session-intelligence`
 - You are changing shared CLI projection contracts:
+  - `plugins/cli/devops`
   - `plugins/cli/session-tools`
 - You are changing template-wide scaffolding, governance docs, or baseline workflows.
 - You are changing fixture/example plugin contracts used to validate template behavior.
@@ -32,7 +35,6 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - The change is plugin-only and does not alter shared core contracts.
 - The change is project/product customization not meant for all template consumers.
 - You are authoring or evolving operational plugins.
-- You are implementing operator-specific dev workflow mechanics (`packages/dev/**`, `plugins/cli/devops/**`).
 - You are authoring operational surface plugins under:
   - `plugins/server/api/**`
   - `plugins/async/workflows/**`
@@ -64,7 +66,8 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
   - `plugins/async/workflows/**`
   - `plugins/async/schedules/**`
   - `plugins/web/**`
-  - `plugins/cli/**` (outside `plugins/cli/plugins/**`)
+  - `plugins/cli/**` (outside `plugins/cli/plugins/**` and
+    `plugins/cli/devops/**`)
   - `plugins/agents/**` (outside `plugins/agents/hq/**`)
   - `plugins/mcp/**`
 - Promote non-HQ personal plugin artifacts to template only when they are truly baseline fixture/example material.
@@ -83,7 +86,8 @@ This file tells agents where to make changes during the `RAWR HQ-Template` / `RA
 - Intended behavior:
   - In template repo: guard is inactive.
   - In downstream personal repo: guard warns or blocks when staged files match template-managed paths.
-- Shared package guard scope is explicitly narrowed; `packages/dev/**` stays personal-owned.
+- Shared DevOps service/projection paths are template-owned:
+  `services/dev/**`, `packages/dev-node/**`, and `plugins/cli/devops/**`.
 - Mode controls (downstream):
   - `RAWR_TEMPLATE_GUARD_MODE=off|warn|block`
   - `git config rawr.templateGuardMode <off|warn|block>`

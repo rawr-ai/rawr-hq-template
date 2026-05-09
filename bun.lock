@@ -41,8 +41,11 @@
         "@rawr/agent-config-sync": "workspace:*",
         "@rawr/agent-config-sync-node": "workspace:*",
         "@rawr/core": "workspace:*",
+        "@rawr/dev": "workspace:*",
+        "@rawr/dev-node": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
         "@rawr/orpc-client": "workspace:*",
+        "@rawr/plugin-devops": "workspace:*",
         "@rawr/plugin-hyperresearch": "workspace:*",
         "@rawr/plugin-plugins": "workspace:*",
         "zod": "^3.24.3",
@@ -162,6 +165,16 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/dev-node": {
+      "name": "@rawr/dev-node",
+      "dependencies": {
+        "@rawr/dev": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.14.0",
+        "typescript": "^5.9.3",
+      },
+    },
     "packages/hq-sdk": {
       "name": "@rawr/hq-sdk",
       "dependencies": {
@@ -211,6 +224,21 @@
         "@oclif/core": "^4.2.10",
         "@rawr/chatgpt-corpus": "workspace:*",
         "@rawr/core": "workspace:*",
+        "@rawr/hq-sdk": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.14.0",
+        "typescript": "^5.9.3",
+      },
+    },
+    "plugins/cli/devops": {
+      "name": "@rawr/plugin-devops",
+      "version": "0.1.0",
+      "dependencies": {
+        "@oclif/core": "^4.8.0",
+        "@rawr/core": "workspace:*",
+        "@rawr/dev": "workspace:*",
+        "@rawr/dev-node": "workspace:*",
         "@rawr/hq-sdk": "workspace:*",
       },
       "devDependencies": {
@@ -314,6 +342,22 @@
         "typebox": "^1.0.81",
       },
       "devDependencies": {
+        "@types/node": "^22.14.0",
+        "typescript": "^5.9.3",
+      },
+    },
+    "services/dev": {
+      "name": "@rawr/dev",
+      "dependencies": {
+        "@opentelemetry/api": "^1.9.0",
+        "@orpc/contract": "^1.13.5",
+        "@orpc/server": "^1.13.5",
+        "@rawr/hq-sdk": "workspace:*",
+        "typebox": "^1.0.81",
+      },
+      "devDependencies": {
+        "@opentelemetry/context-async-hooks": "^2.6.0",
+        "@opentelemetry/sdk-trace-base": "^2.6.0",
         "@types/node": "^22.14.0",
         "typescript": "^5.9.3",
       },
@@ -1030,6 +1074,10 @@
 
     "@rawr/core": ["@rawr/core@workspace:packages/core"],
 
+    "@rawr/dev": ["@rawr/dev@workspace:services/dev"],
+
+    "@rawr/dev-node": ["@rawr/dev-node@workspace:packages/dev-node"],
+
     "@rawr/example-todo": ["@rawr/example-todo@workspace:services/example-todo"],
 
     "@rawr/hq-app": ["@rawr/hq-app@workspace:apps/hq"],
@@ -1043,6 +1091,8 @@
     "@rawr/orpc-client": ["@rawr/orpc-client@workspace:packages/orpc-client"],
 
     "@rawr/plugin-chatgpt-corpus": ["@rawr/plugin-chatgpt-corpus@workspace:plugins/cli/chatgpt-corpus"],
+
+    "@rawr/plugin-devops": ["@rawr/plugin-devops@workspace:plugins/cli/devops"],
 
     "@rawr/plugin-hello": ["@rawr/plugin-hello@workspace:plugins/cli/hello"],
 

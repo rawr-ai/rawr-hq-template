@@ -9,8 +9,11 @@ This is the canonical workflow model for operating both repos on one machine.
 - Shared HQ/plugin-management baseline is template-owned in:
   - `plugins/agents/hq/**`
   - `plugins/cli/plugins/**`
+  - `services/dev/**`, `packages/dev-node/**`, and `plugins/cli/devops/**`
   - shared package surfaces (explicitly listed in `scripts/githooks/template-managed-paths.txt`)
-- Personal mechanical dev workflows (stack/worktree orchestration) are personal-owned in `packages/dev/**` and `plugins/cli/devops/**`.
+- Personal mechanical dev workflow overrides remain personal-owned only when
+  they are machine-specific. Shared stack/repo/worktree semantics belong in the
+  template DevOps service and projection.
 
 ## Journey 1: Create an Operational Plugin
 
@@ -63,7 +66,8 @@ Hooks refresh global wiring only when the current checkout is the active owner.
 - HQ/plugin-management ownership split is path-based and explicit:
   - template-managed full HQ agent office under `plugins/agents/hq/**`
   - template-managed plugin lifecycle/runtime toolkit under `plugins/cli/plugins/**`
-  - template-managed shared packages are explicit and intentionally exclude `packages/dev/**`
+  - template-managed DevOps workflow service/projection under `services/dev/**`,
+    `packages/dev-node/**`, and `plugins/cli/devops/**`
 - Modes:
   - `off`: disabled
   - `warn` (default): warn and continue
