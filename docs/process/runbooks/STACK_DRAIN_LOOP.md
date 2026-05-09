@@ -32,7 +32,7 @@ Run this cycle until `gt ls` stabilizes and merged branches are pruned:
 ```bash
 gt ss --publish --ai --stack --no-interactive
 gt merge --no-interactive
-gt sync --no-restack --force --no-interactive
+gt sync --no-restack --no-interactive
 gt ls
 ```
 
@@ -53,7 +53,7 @@ git worktree list
 ```
 - Remove disposable worktrees pinning merged branches, then rerun:
 ```bash
-gt sync --no-restack --force --no-interactive
+gt sync --no-restack --no-interactive
 ```
 
 4. Stack ordering/drift looks wrong:

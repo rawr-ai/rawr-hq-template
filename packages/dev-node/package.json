@@ -1,0 +1,41 @@
+{
+  "name": "@rawr/dev-node",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./resources": {
+      "types": "./src/resources.ts",
+      "default": "./src/resources.ts"
+    },
+    "./scratch-policy": {
+      "types": "./src/scratch-policy.ts",
+      "default": "./src/scratch-policy.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "sync": "bun run --cwd ../.. sync:check --project @rawr/dev-node",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --project dev-node"
+  },
+  "dependencies": {
+    "@rawr/dev": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:package",
+      "migration-slice:workstream-b-devops"
+    ]
+  }
+}

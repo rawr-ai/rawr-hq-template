@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 export const HQ_OPEN_POLICIES = ["none", "app", "app+inngest", "all"] as const;
@@ -167,10 +167,29 @@ const HQ_PORTS = {
   observabilityOtlp: 4318,
 };
 
-function commandExists(command: string): boolean {
-  const proc = spawnSync("sh", ["-lc", `command -v ${command} >/dev/null 2>&1`], {
+const PROBE_TIMEOUT_MS = 750;
+const disabledProbeCommands = new Set<string>();
+
+function runProbe(command: string, args: string[]): SpawnSyncReturns<string> {
+  return spawnSync(command, args, {
     encoding: "utf8",
+    timeout: PROBE_TIMEOUT_MS,
   });
+}
+
+function probeTimedOut(proc: SpawnSyncReturns<string>): boolean {
+  return (proc.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT";
+}
+
+function commandExists(command: string): boolean {
+  if (disabledProbeCommands.has(command)) {
+    return false;
+  }
+  const proc = runProbe("sh", ["-lc", `command -v ${command} >/dev/null 2>&1`]);
+  if (probeTimedOut(proc)) {
+    disabledProbeCommands.add(command);
+    return false;
+  }
   return proc.status === 0;
 }
 
@@ -284,7 +303,10 @@ function getChildPids(pid: number): number[] {
     return [];
   }
 
-  const proc = spawnSync("pgrep", ["-P", String(pid)], { encoding: "utf8" });
+  const proc = runProbe("pgrep", ["-P", String(pid)]);
+  if (probeTimedOut(proc)) {
+    return [];
+  }
   if (proc.status !== 0 && proc.stdout.trim() === "") {
     return [];
   }
@@ -297,28 +319,33 @@ function getChildPids(pid: number): number[] {
 
 function getListenerPids(port: number): { listenerPids: number[]; unknownOwnership: boolean } {
   if (commandExists("lsof")) {
-    const proc = spawnSync("lsof", ["-nP", `-iTCP:${port}`, "-sTCP:LISTEN", "-t"], {
-      encoding: "utf8",
-    });
-    const listenerPids = proc.stdout
-      .split(/\r?\n/)
-      .map((value) => Number.parseInt(value.trim(), 10))
-      .filter((value) => Number.isInteger(value) && value > 0);
-    return { listenerPids: Array.from(new Set(listenerPids)), unknownOwnership: false };
+    const proc = runProbe("lsof", ["-nP", `-iTCP:${port}`, "-sTCP:LISTEN", "-t"]);
+    if (probeTimedOut(proc) || proc.error) {
+      disabledProbeCommands.add("lsof");
+    } else {
+      const listenerPids = proc.stdout
+        .split(/\r?\n/)
+        .map((value) => Number.parseInt(value.trim(), 10))
+        .filter((value) => Number.isInteger(value) && value > 0);
+      return { listenerPids: Array.from(new Set(listenerPids)), unknownOwnership: false };
+    }
   }
 
   if (commandExists("ss")) {
-    const proc = spawnSync("sh", ["-lc", `ss -ltnp 2>/dev/null | awk '$4 ~ /:${port}$/ { print $0 }'`], {
-      encoding: "utf8",
-    });
-    const lines = proc.stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-    return { listenerPids: [], unknownOwnership: lines.length > 0 };
+    const proc = runProbe("sh", ["-lc", `ss -ltnp 2>/dev/null | awk '$4 ~ /:${port}$/ { print $0 }'`]);
+    if (probeTimedOut(proc) || proc.error) {
+      disabledProbeCommands.add("ss");
+    } else {
+      const lines = proc.stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      return { listenerPids: [], unknownOwnership: lines.length > 0 };
+    }
   }
 
   if (commandExists("netstat")) {
-    const proc = spawnSync("sh", ["-lc", `netstat -an 2>/dev/null | awk '$4 ~ /\\.${port}$/ && /LISTEN/ { print $0 }'`], {
-      encoding: "utf8",
-    });
+    const proc = runProbe("sh", ["-lc", `netstat -an 2>/dev/null | awk '$4 ~ /\\.${port}$/ && /LISTEN/ { print $0 }'`]);
+    if (probeTimedOut(proc) || proc.error) {
+      return { listenerPids: [], unknownOwnership: true };
+    }
     const lines = proc.stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
     return { listenerPids: [], unknownOwnership: lines.length > 0 };
   }
@@ -408,9 +435,10 @@ function getDockerContainerState(containerName: string): { available: boolean; r
     return { available: false, running: false, exists: false };
   }
 
-  const runningProc = spawnSync("docker", ["inspect", "--format", "{{.State.Running}}", containerName], {
-    encoding: "utf8",
-  });
+  const runningProc = runProbe("docker", ["inspect", "--format", "{{.State.Running}}", containerName]);
+  if (probeTimedOut(runningProc) || runningProc.error) {
+    return { available: true, running: false, exists: false };
+  }
   if (runningProc.status === 0) {
     return {
       available: true,
@@ -419,7 +447,10 @@ function getDockerContainerState(containerName: string): { available: boolean; r
     };
   }
 
-  const existsProc = spawnSync("docker", ["inspect", containerName], { encoding: "utf8" });
+  const existsProc = runProbe("docker", ["inspect", containerName]);
+  if (probeTimedOut(existsProc) || existsProc.error) {
+    return { available: true, running: false, exists: false };
+  }
   return {
     available: true,
     running: false,

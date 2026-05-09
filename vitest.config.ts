@@ -47,6 +47,16 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("services/dev"),
+        test: { name: "dev", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("packages/dev-node"),
+        test: { name: "dev-node", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("services/chatgpt-corpus"),
         test: { name: "chatgpt-corpus", environment: "node", include: [...includes] },
       },
@@ -99,6 +109,11 @@ export default defineConfig({
         extends: true,
         root: r("plugins/cli/chatgpt-corpus"),
         test: { name: "plugin-chatgpt-corpus", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("plugins/cli/devops"),
+        test: { name: "plugin-devops", environment: "node", include: [...includes] },
       },
       {
         extends: true,

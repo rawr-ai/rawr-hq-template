@@ -1,0 +1,51 @@
+{
+  "name": "@rawr/plugin-devops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RAWR DevOps command projections for Graphite, repo, and worktree workflows",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@oclif/core": "^4.8.0",
+    "@rawr/core": "workspace:*",
+    "@rawr/dev": "workspace:*",
+    "@rawr/dev-node": "workspace:*",
+    "@rawr/hq-sdk": "workspace:*"
+  },
+  "oclif": {
+    "commands": "./dist/commands",
+    "topicSeparator": " ",
+    "typescript": {
+      "commands": "./src/commands"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "sync": "bun run --cwd ../../.. sync:check --project @rawr/plugin-devops",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --project plugin-devops"
+  },
+  "rawr": {
+    "kind": "toolkit",
+    "capability": "devops"
+  },
+  "nx": {
+    "tags": [
+      "type:plugin",
+      "migration-slice:workstream-b-devops"
+    ]
+  }
+}
