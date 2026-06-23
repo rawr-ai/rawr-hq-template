@@ -30,6 +30,8 @@ const scopeRoots = [
 const schemaLedger: SchemaClassification[] = [
   { path: "services/agent-config-sync/src/service/modules/execution/contract.ts", symbol: "RunSyncInputSchema", owner: "execution-contract", form: "typebox" },
   { path: "services/agent-config-sync/src/service/modules/execution/contract.ts", symbol: "ResolveProviderContentInputSchema", owner: "execution-contract", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/modules/execution/contract.ts", symbol: "ResolveProviderVersionInputSchema", owner: "execution-contract", form: "typebox" },
+  { path: "services/agent-config-sync/src/service/modules/execution/contract.ts", symbol: "ProviderContentVersionSchema", owner: "execution-contract", form: "typebox" },
   { path: "services/agent-config-sync/src/service/modules/planning/contract.ts", symbol: "WorkspaceRootErrorDataSchema", owner: "planning-contract", form: "typebox" },
   { path: "services/agent-config-sync/src/service/modules/planning/contract.ts", symbol: "WorkspacePlanningBaseInputSchema", owner: "planning-contract", form: "typebox" },
   { path: "services/agent-config-sync/src/service/modules/planning/contract.ts", symbol: "PlanWorkspaceSyncInputSchema", owner: "planning-contract", form: "typebox" },

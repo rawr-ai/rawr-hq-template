@@ -19,6 +19,7 @@ export type {
 } from "./service/common/entities";
 export type {
   ProjectionSupport,
+  ProviderContentVersion,
   ProviderProjection,
   SyncItemResult,
   SyncRunResult,

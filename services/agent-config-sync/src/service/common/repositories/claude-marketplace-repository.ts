@@ -1,6 +1,7 @@
 import type { AgentConfigSyncResources } from "../resources";
 import type { SourceContent, SourcePlugin } from "../entities";
 import { stableJsonEqual } from "../helpers/stable-json";
+import type { ProviderContentVersion } from "../source-content/helpers/provider-version";
 
 /**
  * agent-config-sync: Claude marketplace repository.
@@ -42,6 +43,8 @@ export type ClaudeMarketplaceFile = {
 export type ClaudeManagedPluginManifest = {
   plugin: string;
   sourcePluginPath: string;
+  contentHash: string;
+  providerVersion: string;
   workflows: string[];
   skills: string[];
   scripts: string[];
@@ -58,7 +61,7 @@ export type ClaudeManagedPluginManifest = {
 export async function upsertClaudePluginManifest(input: {
   claudeLocalHome: string;
   sourcePlugin: SourcePlugin;
-  content?: SourceContent;
+  providerVersion: ProviderContentVersion;
   dryRun: boolean;
   resources: AgentConfigSyncResources;
 }): Promise<{ filePath: string; changed: boolean }> {
@@ -68,7 +71,7 @@ export async function upsertClaudePluginManifest(input: {
 
   const next: ClaudePluginManifest = {
     name: input.sourcePlugin.dirName,
-    version: input.sourcePlugin.version ?? existing.version ?? "1.0.0",
+    version: input.providerVersion.providerVersion,
     description: input.sourcePlugin.description ?? existing.description ?? "Synced from RAWR HQ plugin",
   };
   const changed = !stableJsonEqual(existing, next);
@@ -130,6 +133,7 @@ export async function writeClaudeSyncManifest(input: {
   claudeLocalHome: string;
   sourcePlugin: SourcePlugin;
   content: SourceContent;
+  providerVersion: ProviderContentVersion;
   dryRun: boolean;
   resources: AgentConfigSyncResources;
 }): Promise<{ filePath: string; manifest: ClaudeManagedPluginManifest; changed: boolean }> {
@@ -145,6 +149,8 @@ export async function writeClaudeSyncManifest(input: {
   const stableManifest: ClaudeManagedPluginManifest = {
     plugin: input.sourcePlugin.dirName,
     sourcePluginPath: input.sourcePlugin.absPath,
+    contentHash: input.providerVersion.contentHash,
+    providerVersion: input.providerVersion.providerVersion,
     workflows: input.content.workflowFiles.map((workflow) => workflow.name),
     skills: input.content.skills.map((skill) => skill.name),
     scripts: input.content.scripts.map((script) => script.name),
@@ -184,6 +190,43 @@ export async function readClaudeSyncManifest(
   return resources.files.readJsonFile<ClaudeManagedPluginManifest>(filePath);
 }
 
+export function claudeInstalledCacheManifestPath(input: {
+  claudeLocalHome: string;
+  pluginName: string;
+  providerVersion: string;
+  resources: AgentConfigSyncResources;
+}): string {
+  const marketplaceName = input.resources.path.basename(input.resources.path.resolve(input.claudeLocalHome));
+  return input.resources.path.join(
+    input.resources.path.dirname(input.resources.path.resolve(input.claudeLocalHome)),
+    "cache",
+    marketplaceName,
+    input.pluginName,
+    input.providerVersion,
+    ".rawr-sync-manifest.json",
+  );
+}
+
+export async function readClaudeInstalledCacheSyncManifest(input: {
+  claudeLocalHome: string;
+  pluginName: string;
+  providerVersion: string;
+  resources: AgentConfigSyncResources;
+}): Promise<{ filePath: string; manifest: ClaudeManagedPluginManifest | null }> {
+  const filePath = claudeInstalledCacheManifestPath(input);
+  return {
+    filePath,
+    manifest: await input.resources.files.readJsonFile<ClaudeManagedPluginManifest>(filePath),
+  };
+}
+
+export function claudeSyncManifestsEqual(
+  left: ClaudeManagedPluginManifest | null | undefined,
+  right: ClaudeManagedPluginManifest | null | undefined,
+): boolean {
+  return stableJsonEqual(normalizeSyncManifest(left), normalizeSyncManifest(right));
+}
+
 function normalizeSyncManifest(
   manifest: ClaudeManagedPluginManifest | null | undefined,
 ): Omit<ClaudeManagedPluginManifest, "syncedAt"> | null {
@@ -191,6 +234,8 @@ function normalizeSyncManifest(
   return {
     plugin: manifest.plugin,
     sourcePluginPath: manifest.sourcePluginPath,
+    contentHash: manifest.contentHash,
+    providerVersion: manifest.providerVersion,
     workflows: [...manifest.workflows].sort(),
     skills: [...manifest.skills].sort(),
     scripts: [...manifest.scripts].sort(),

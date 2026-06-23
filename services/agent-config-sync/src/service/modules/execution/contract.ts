@@ -51,6 +51,22 @@ const ResolveProviderContentInputSchema = Type.Object(
   { additionalProperties: false },
 );
 
+const ResolveProviderVersionInputSchema = Type.Object(
+  {
+    sourcePlugin: SourcePluginSchema,
+    content: SourceContentSchema,
+  },
+  { additionalProperties: false },
+);
+
+const ProviderContentVersionSchema = Type.Object(
+  {
+    contentHash: Type.String({ minLength: 64 }),
+    providerVersion: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+
 export type RunSyncInput = Static<typeof RunSyncInputSchema>;
 export type SyncCodexNativeAgentRolesInput = Static<typeof RunSyncInputSchema>;
 export type SyncScannedSummary = Static<typeof SyncScannedSummarySchema>;
@@ -59,6 +75,7 @@ export type ProjectionSupport = Static<typeof ProjectionSupportSchema>;
 export type ProviderProjection = Static<typeof ProviderProjectionSchema>;
 export type SyncTargetResult = Static<typeof SyncTargetResultSchema>;
 export type SyncRunResult = Static<typeof SyncRunResultSchema>;
+export type ProviderContentVersion = Static<typeof ProviderContentVersionSchema>;
 
 /**
  * Public agent-config-sync execution API.
@@ -94,4 +111,12 @@ export const contract = {
     .meta({ idempotent: true, entity: "execution" })
     .input(schema(ResolveProviderContentInputSchema))
     .output(schema(SourceContentSchema)),
+  /**
+   * Resolves the deterministic provider package identity for already-resolved
+   * provider-effective content.
+   */
+  resolveProviderVersion: ocBase
+    .meta({ idempotent: true, entity: "execution" })
+    .input(schema(ResolveProviderVersionInputSchema))
+    .output(schema(ProviderContentVersionSchema)),
 };
