@@ -23,7 +23,9 @@ import {
   getCodexRuntimeSkillsDir,
 } from "../../../common/repositories/codex-runtime-paths";
 import {
+  claudeSyncManifestsEqual,
   readClaudeSyncManifest,
+  readClaudeInstalledCacheSyncManifest,
   upsertClaudeMarketplace,
   upsertClaudePluginManifest,
   writeClaudeSyncManifest,
@@ -34,6 +36,7 @@ import type { SourceContent, SourcePlugin } from "../../../common/entities";
 import type { AgentConfigSyncResources } from "../../../common/resources";
 import { buildProviderProjections } from "../../../common/helpers/projections";
 import { buildCodexAgentProjection } from "../../../common/source-content/helpers/codex-agent";
+import { resolveProviderVersion } from "../../../common/source-content/helpers/provider-version";
 
 export async function previewSyncRun(input: {
   sourcePlugin: SourcePlugin;
@@ -360,6 +363,11 @@ export async function previewSyncRun(input: {
       base: input.content,
       resources: input.resources,
     });
+    const providerVersion = await resolveProviderVersion({
+      sourcePlugin: input.sourcePlugin,
+      content: claudeContent,
+      resources: input.resources,
+    });
     projections.push(...await buildProviderProjections({
       provider: "claude",
       sourcePlugin: input.sourcePlugin,
@@ -463,6 +471,7 @@ export async function previewSyncRun(input: {
       const pluginManifest = await upsertClaudePluginManifest({
         claudeLocalHome: claudeHome,
         sourcePlugin: input.sourcePlugin,
+        providerVersion,
         dryRun: true,
         resources: input.resources,
       });
@@ -494,6 +503,7 @@ export async function previewSyncRun(input: {
         claudeLocalHome: claudeHome,
         sourcePlugin: input.sourcePlugin,
         content: claudeContent,
+        providerVersion,
         dryRun: true,
         resources: input.resources,
       });
@@ -503,6 +513,21 @@ export async function previewSyncRun(input: {
           kind: "metadata",
           target: syncManifest.filePath,
           message: "sync manifest upsert",
+        });
+      }
+
+      const cacheManifest = await readClaudeInstalledCacheSyncManifest({
+        claudeLocalHome: claudeHome,
+        pluginName: input.sourcePlugin.dirName,
+        providerVersion: providerVersion.providerVersion,
+        resources: input.resources,
+      });
+      if (!claudeSyncManifestsEqual(syncManifest.manifest, cacheManifest.manifest)) {
+        pushItem(result, {
+          action: "planned",
+          kind: "metadata",
+          target: cacheManifest.filePath,
+          message: "Claude installed cache manifest mismatch",
         });
       }
 

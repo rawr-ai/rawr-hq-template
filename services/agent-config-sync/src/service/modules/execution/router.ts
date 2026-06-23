@@ -14,6 +14,7 @@
  */
 import { module } from "./module";
 import { resolveProviderContent as resolveServiceProviderContent } from "../../common/source-content/helpers/provider-content";
+import { resolveProviderVersion as resolveServiceProviderVersion } from "../../common/source-content/helpers/provider-version";
 import { summarizeScannedContent } from "../../common/helpers/sync-results";
 import { buildProviderProjections } from "../../common/helpers/projections";
 import type { ProviderProjection, SyncTargetResult } from "../../common/entities/sync-results";
@@ -108,6 +109,14 @@ const resolveProviderContent = module.resolveProviderContent.handler(async ({ co
   });
 });
 
+const resolveProviderVersion = module.resolveProviderVersion.handler(async ({ context, input }) => {
+  return resolveServiceProviderVersion({
+    sourcePlugin: input.sourcePlugin,
+    content: input.content,
+    resources: context.resources,
+  });
+});
+
 /**
  * Execution procedure for Codex's native custom-agent role config lane.
  */
@@ -171,5 +180,6 @@ const syncCodexNativeAgentRoles = module.syncCodexNativeAgentRoles.handler(async
 export const router = module.router({
   runSync,
   resolveProviderContent,
+  resolveProviderVersion,
   syncCodexNativeAgentRoles,
 });

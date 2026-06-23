@@ -16,6 +16,7 @@ export function createFakeResources(): AgentConfigSyncResources {
   return {
     files: {
       pathExists: async () => false,
+      readFileBytes: async () => null,
       readTextFile: async () => null,
       writeTextFile: async () => {},
       readJsonFile: async () => null,
@@ -66,6 +67,13 @@ export function createNodeTestResources(): AgentConfigSyncResources {
   return {
     files: {
       pathExists,
+      readFileBytes: async (filePath) => {
+        try {
+          return await fs.readFile(filePath);
+        } catch {
+          return null;
+        }
+      },
       readTextFile: async (filePath) => {
         try {
           return await fs.readFile(filePath, "utf8");

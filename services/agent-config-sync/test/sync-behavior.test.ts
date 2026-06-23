@@ -985,8 +985,17 @@ describe("agent-config-sync service behavior", () => {
     }, { context: { invocation: { traceId: "test-claude-metadata-paths" } } });
 
     const pluginDir = path.join(claudeHome, "plugins", "plugin-demo");
-    await expect(fs.readFile(path.join(pluginDir, ".claude-plugin", "plugin.json"), "utf8")).resolves.toContain("plugin-demo");
-    await expect(fs.readFile(path.join(pluginDir, ".rawr-sync-manifest.json"), "utf8")).resolves.toContain("plugin-demo");
+    const pluginJson = JSON.parse(await fs.readFile(path.join(pluginDir, ".claude-plugin", "plugin.json"), "utf8"));
+    const syncManifest = JSON.parse(await fs.readFile(path.join(pluginDir, ".rawr-sync-manifest.json"), "utf8"));
+    expect(pluginJson).toMatchObject({
+      name: "plugin-demo",
+      version: expect.stringMatching(/^0\.0\.0-rawr\.[a-f0-9]{12}$/),
+    });
+    expect(syncManifest).toMatchObject({
+      plugin: "plugin-demo",
+      providerVersion: pluginJson.version,
+      contentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+    });
     expect(result.projections).toContainEqual(expect.objectContaining({
       provider: "claude",
       materialKind: "plugin_metadata",
@@ -994,6 +1003,74 @@ describe("agent-config-sync service behavior", () => {
         path.join(pluginDir, ".claude-plugin", "plugin.json"),
         path.join(pluginDir, ".rawr-sync-manifest.json"),
       ],
+    }));
+  });
+
+  it("reports Claude installed cache manifest drift", async () => {
+    const workspace = await makeParityWorkspace();
+    const { claudeHome } = await makeProviderHomes();
+    tempDirs.push(workspace.workspaceRoot, claudeHome);
+    const client = createClient(createClientOptions({
+      repoRoot: workspace.workspaceRoot,
+      resources: createNodeTestResources(),
+    }));
+
+    await client.execution.runSync({
+      sourcePlugin: workspace.sourcePlugin,
+      content: workspace.content,
+      codexHomes: [],
+      claudeHomes: [claudeHome],
+      includeCodex: false,
+      includeClaude: true,
+      includeAgentsInClaude: true,
+      force: true,
+      gc: true,
+      dryRun: false,
+    }, { context: { invocation: { traceId: "test-claude-cache-drift-apply" } } });
+
+    const syncManifest = JSON.parse(
+      await fs.readFile(path.join(claudeHome, "plugins", "plugin-demo", ".rawr-sync-manifest.json"), "utf8"),
+    );
+    const cacheManifestPath = path.join(
+      path.dirname(claudeHome),
+      "cache",
+      path.basename(claudeHome),
+      "plugin-demo",
+      syncManifest.providerVersion,
+      ".rawr-sync-manifest.json",
+    );
+    await fs.mkdir(path.dirname(cacheManifestPath), { recursive: true });
+    await fs.writeFile(cacheManifestPath, `${JSON.stringify({
+      ...syncManifest,
+      skills: [],
+      syncedAt: "2026-06-23T00:00:00.000Z",
+    }, null, 2)}\n`, "utf8");
+
+    const assessment = await client.planning.assessWorkspaceSync({
+      cwd: workspace.workspaceRoot,
+      sourcePaths: [],
+      includeMetadata: true,
+      scope: "toolkit",
+      agent: "claude",
+      targetHomeCandidates: {
+        codexHomesFromFlags: [],
+        claudeHomesFromFlags: [claudeHome],
+        codexHomesFromEnvironment: [],
+        claudeHomesFromEnvironment: [],
+        codexHomesFromConfig: [],
+        claudeHomesFromConfig: [],
+        codexDefaultHomes: [],
+        claudeDefaultHomes: [],
+      },
+      includeAgentsInCodex: true,
+      includeAgentsInClaude: true,
+    }, { context: { invocation: { traceId: "test-claude-cache-drift-assess" } } });
+
+    expect(assessment.status).toBe("DRIFT_DETECTED");
+    expect(assessment.plugins[0]?.driftItems).toContainEqual(expect.objectContaining({
+      kind: "metadata",
+      target: cacheManifestPath,
+      message: "Claude installed cache manifest mismatch",
     }));
   });
 
@@ -1029,7 +1106,7 @@ describe("agent-config-sync service behavior", () => {
     const pluginJson = JSON.parse(await fs.readFile(path.join(pluginDir, ".claude-plugin", "plugin.json"), "utf8"));
     expect(pluginJson).toMatchObject({
       name: "synthetic-hyperresearch",
-      version: "1.2.3",
+      version: expect.stringMatching(/^0\.0\.0-rawr\.[a-f0-9]{12}$/),
     });
     expect(pluginJson).not.toHaveProperty("agents");
     expect(pluginJson).not.toHaveProperty("hooks");

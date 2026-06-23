@@ -22,6 +22,13 @@ export function createNodeAgentConfigSyncResources(): AgentConfigSyncResources {
   return {
     files: {
       pathExists,
+      readFileBytes: async (filePath) => {
+        try {
+          return await fs.readFile(filePath);
+        } catch {
+          return null;
+        }
+      },
       readTextFile: async (filePath) => {
         try {
           return await fs.readFile(filePath, "utf8");
