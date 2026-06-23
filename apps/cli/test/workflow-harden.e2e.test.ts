@@ -2,15 +2,24 @@ import { describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { stat } from "node:fs/promises";
+import { tmpdir } from "node:os";
 
 function runRawr(args: string[]) {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  return spawnSync("bun", ["src/index.ts", ...args], {
+  const outputDir = mkdtempSync(path.join(tmpdir(), "rawr-workflow-harden-"));
+  const stdoutPath = path.join(outputDir, "stdout.json");
+  const proc = spawnSync("bash", ["-lc", 'bun src/index.ts "$@" > "$RAWR_STDOUT"', "rawr", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
-    env: { ...process.env },
+    env: { ...process.env, RAWR_STDOUT: stdoutPath },
   });
+
+  const stdout = readFileSync(stdoutPath, "utf8");
+  rmSync(outputDir, { recursive: true, force: true });
+
+  return { ...proc, stdout };
 }
 
 async function exists(p: string): Promise<boolean> {
@@ -47,4 +56,3 @@ describe("workflow harden (e2e)", () => {
     }
   }, 30_000);
 });
-
