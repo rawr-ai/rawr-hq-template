@@ -39,7 +39,10 @@ Codex custom agents are projected as standalone TOML with only:
 
 Claude-only fields such as `tools`, `hooks`, `mcpServers`, `permissionMode`, `skills`, `model`, and `color` are reported as semantic support residuals instead of being written into Codex TOML. Claude-style `Skill(...)`, `Task(...)`, and `TodoWrite` orchestration is also reported as semantic support status, not material drift.
 
-Native provider plugins are the sanctioned Codex and Claude deployment path. Direct filesystem projection is retained only as generic destination projection/export for explicit mapped destinations, fixtures, repair, migration, ad-hoc packaging, and non-CLI systems.
+Native provider plugins are the Codex and Claude harness sync path. Filesystem
+projection is a separate destination-path output lane for explicit mapped
+destinations, fixtures, repair, migration, ad-hoc packaging, repo dumps, and
+non-CLI systems.
 
 ## Important boundary: shipped scripts vs plugin-internal scripts
 
@@ -95,9 +98,10 @@ The package includes `.codex-plugin/plugin.json`, `skills/`, `hooks/hooks.json` 
 
 Codex plugin hooks require a provider with the `plugin_hooks` feature. If the default `codex-rawr` binary is behind upstream, use `--codex-bin <latest-codex>` for hook verification, for example `/Users/mateicanavra/.volta/bin/codex`.
 
-## Generic destination projection
+## Destination-path projection
 
-Use projection only when you intentionally need RAWR-modeled content copied to explicit filesystem destinations without native provider install:
+Use projection when you intentionally need RAWR-modeled content copied to
+explicit filesystem destinations without native provider install:
 
 ```bash
 rawr plugins export <plugin-ref> --agent codex|claude|all --codex-home <path> --claude-home <path>
@@ -108,7 +112,9 @@ Projection requires explicit destination homes for the selected agent shape. It
 does not fall back to `CODEX_HOME`, `RAWR_AGENT_SYNC_*`, configured provider
 homes, or provider default homes.
 
-`rawr plugins sync --destination-projection` can be used when a workstream needs native deployment plus auxiliary filesystem projection in one run. Projection is not a Codex or Claude deployment fallback.
+`rawr plugins sync --destination-projection` can be used when a workstream needs
+native deployment plus destination-path filesystem output in one run. Projection
+is not a Codex or Claude harness sync fallback.
 
 By default, successful native provider sync also exposes the generic
 `cleanupBehind` result surface. The first implemented policy is Codex native
@@ -177,8 +183,8 @@ Defaults (when flags are omitted):
   - `~/.claude/plugins/local`
 
 Native Codex package install currently uses the first selected Codex home for
-the provider app-server session. Additional Codex homes are explicit generic
-projection destinations only when `rawr plugins export` or
+the provider app-server session. Additional Codex homes are explicit
+destination-path projection targets only when `rawr plugins export` or
 `--destination-projection` is used.
 
 Cleanup behind native install is exposed through the generic `cleanupBehind`
