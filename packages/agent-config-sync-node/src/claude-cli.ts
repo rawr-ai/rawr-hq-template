@@ -14,6 +14,12 @@ type KnownMarketplaceRecord = {
 };
 
 type KnownMarketplacesFile = Record<string, KnownMarketplaceRecord>;
+type RawrSyncManifest = {
+  plugin?: string;
+  providerVersion?: string;
+  syncedAt?: string;
+  [key: string]: unknown;
+};
 
 /**
  * Projection result for local Claude plugin installation and enablement.
@@ -21,9 +27,12 @@ type KnownMarketplacesFile = Record<string, KnownMarketplaceRecord>;
 export type ClaudeInstallAction =
   | { action: "planned"; home: string; plugin: string; installScope: InstallScope; marketplace?: string }
   | { action: "validated"; home: string; plugin: string; installScope: InstallScope; marketplace: string }
+  | { action: "marketplace-updated"; home: string; plugin: string; installScope: InstallScope; marketplace: string }
   | { action: "installed"; home: string; plugin: string; installScope: InstallScope; marketplace: string }
   | { action: "updated"; home: string; plugin: string; installScope: InstallScope; marketplace: string }
   | { action: "enabled"; home: string; plugin: string; installScope: InstallScope; marketplace: string }
+  | { action: "cache-verified"; home: string; plugin: string; installScope: InstallScope; marketplace: string; cachePath: string }
+  | { action: "cache-repaired"; home: string; plugin: string; installScope: InstallScope; marketplace: string; cachePath: string }
   | { action: "skipped"; home: string; plugin: string; installScope: InstallScope; reason: string; marketplace?: string }
   | { action: "failed"; home: string; plugin: string; installScope: InstallScope; error: string; marketplace?: string };
 
@@ -100,6 +109,133 @@ function findMarketplaceNameForInstallLocation(
   return null;
 }
 
+function sourceSyncManifestPath(claudeLocalHome: string, pluginName: string): string {
+  return path.join(claudeLocalHome, "plugins", pluginName, ".rawr-sync-manifest.json");
+}
+
+function cacheSyncManifestPath(input: {
+  claudePluginsDir: string;
+  marketplaceName: string;
+  pluginName: string;
+  providerVersion: string;
+}): string {
+  return path.join(
+    input.claudePluginsDir,
+    "cache",
+    input.marketplaceName,
+    input.pluginName,
+    input.providerVersion,
+    ".rawr-sync-manifest.json",
+  );
+}
+
+function normalizeRawrSyncManifest(manifest: RawrSyncManifest | null | undefined): Record<string, unknown> | null {
+  if (!manifest) return null;
+  const { syncedAt: _syncedAt, ...stable } = manifest;
+  return stable;
+}
+
+function rawrSyncManifestsEqual(
+  expected: RawrSyncManifest | null | undefined,
+  actual: RawrSyncManifest | null | undefined,
+): boolean {
+  return JSON.stringify(normalizeRawrSyncManifest(expected)) === JSON.stringify(normalizeRawrSyncManifest(actual));
+}
+
+async function verifyInstalledCache(input: {
+  claudeLocalHome: string;
+  claudePluginsDir: string;
+  marketplaceName: string;
+  pluginName: string;
+}): Promise<{ ok: boolean; cachePath: string; error?: string }> {
+  const sourceManifest = await readJsonFile<RawrSyncManifest>(sourceSyncManifestPath(input.claudeLocalHome, input.pluginName));
+  if (!sourceManifest) {
+    return {
+      ok: false,
+      cachePath: "",
+      error: "source .rawr-sync-manifest.json is missing",
+    };
+  }
+  if (typeof sourceManifest.providerVersion !== "string" || sourceManifest.providerVersion.length === 0) {
+    return {
+      ok: false,
+      cachePath: "",
+      error: "source .rawr-sync-manifest.json is missing providerVersion",
+    };
+  }
+
+  const cachePath = cacheSyncManifestPath({
+    claudePluginsDir: input.claudePluginsDir,
+    marketplaceName: input.marketplaceName,
+    pluginName: input.pluginName,
+    providerVersion: sourceManifest.providerVersion,
+  });
+  const cacheManifest = await readJsonFile<RawrSyncManifest>(cachePath);
+  if (!rawrSyncManifestsEqual(sourceManifest, cacheManifest)) {
+    return {
+      ok: false,
+      cachePath,
+      error: "installed cache manifest does not match source manifest",
+    };
+  }
+
+  return { ok: true, cachePath };
+}
+
+async function repairInstalledCache(input: {
+  claudeLocalHome: string;
+  claudePluginsDir: string;
+  marketplaceName: string;
+  pluginName: string;
+  installScope: InstallScope;
+  enable: boolean;
+  exec: ExecFn;
+}): Promise<{ ok: true; cachePath: string } | { ok: false; error: string }> {
+  const pluginRef = `${input.pluginName}@${input.marketplaceName}`;
+  const cacheRoot = path.join(input.claudePluginsDir, "cache", input.marketplaceName, input.pluginName);
+  const uninstallResult = await input.exec({
+    cmd: "claude",
+    args: ["plugin", "uninstall", pluginRef, "--scope", input.installScope, "--keep-data", "--yes"],
+  });
+  if (uninstallResult.code !== 0) {
+    return { ok: false, error: `${uninstallResult.stderr || uninstallResult.stdout}`.trim() };
+  }
+
+  await fs.rm(cacheRoot, { recursive: true, force: true });
+
+  const installResult = await input.exec({
+    cmd: "claude",
+    args: ["plugin", "install", pluginRef],
+  });
+  if (installResult.code !== 0) {
+    return { ok: false, error: `${installResult.stderr || installResult.stdout}`.trim() };
+  }
+
+  if (input.enable) {
+    const enableResult = await input.exec({
+      cmd: "claude",
+      args: ["plugin", "enable", pluginRef],
+    });
+    if (enableResult.code !== 0) {
+      const enableText = `${enableResult.stderr || ""}\n${enableResult.stdout || ""}`.trim();
+      if (!/already enabled|is already enabled|not found in disabled plugins/i.test(enableText)) {
+        return { ok: false, error: enableText };
+      }
+    }
+  }
+
+  const verification = await verifyInstalledCache({
+    claudeLocalHome: input.claudeLocalHome,
+    claudePluginsDir: input.claudePluginsDir,
+    marketplaceName: input.marketplaceName,
+    pluginName: input.pluginName,
+  });
+  if (!verification.ok) {
+    return { ok: false, error: verification.error ?? "installed cache verification failed after repair" };
+  }
+  return { ok: true, cachePath: verification.cachePath };
+}
+
 /**
  * Ensures the local Claude plugin home is registered as a marketplace.
  */
@@ -168,6 +304,7 @@ export async function installAndEnableClaudePlugin(input: {
 }): Promise<ClaudeInstallAction[]> {
   const installScope = resolveInstallScope(input.installScope);
   const exec = input.exec ?? defaultExec;
+  const claudePluginsDir = input.claudePluginsDir ?? defaultClaudePluginsDir();
 
   const isAlreadyInstalled = (text: string): boolean =>
     /already installed|is already installed/i.test(text);
@@ -177,7 +314,7 @@ export async function installAndEnableClaudePlugin(input: {
   const { marketplaceName } = await ensureClaudeMarketplace({
     claudeLocalHome: input.claudeLocalHome,
     installScope,
-    claudePluginsDir: input.claudePluginsDir,
+    claudePluginsDir,
     dryRun: input.dryRun,
     exec,
   });
@@ -222,6 +359,30 @@ export async function installAndEnableClaudePlugin(input: {
       marketplace: marketplaceName,
     },
   ];
+
+  const marketplaceUpdateResult = await exec({
+    cmd: "claude",
+    args: ["plugin", "marketplace", "update", marketplaceName],
+  });
+  const marketplaceUpdateText = `${marketplaceUpdateResult.stderr || ""}\n${marketplaceUpdateResult.stdout || ""}`.trim();
+  if (marketplaceUpdateResult.code !== 0) {
+    actions.push({
+      action: "failed",
+      home: input.claudeLocalHome,
+      plugin: input.pluginName,
+      installScope,
+      marketplace: marketplaceName,
+      error: marketplaceUpdateText,
+    });
+    return actions;
+  }
+  actions.push({
+    action: "marketplace-updated",
+    home: input.claudeLocalHome,
+    plugin: input.pluginName,
+    installScope,
+    marketplace: marketplaceName,
+  });
 
   const installResult = await exec({
     cmd: "claude",
@@ -274,43 +435,89 @@ export async function installAndEnableClaudePlugin(input: {
     });
   }
 
-  if (!input.enable) return actions;
-
-  const enableResult = await exec({
-    cmd: "claude",
-    args: ["plugin", "enable", pluginRef],
-  });
-  const enableText = `${enableResult.stderr || ""}\n${enableResult.stdout || ""}`.trim();
-  if (enableResult.code !== 0) {
-    if (isAlreadyEnabled(enableText)) {
+  if (input.enable) {
+    const enableResult = await exec({
+      cmd: "claude",
+      args: ["plugin", "enable", pluginRef],
+    });
+    const enableText = `${enableResult.stderr || ""}\n${enableResult.stdout || ""}`.trim();
+    if (enableResult.code !== 0) {
+      if (isAlreadyEnabled(enableText)) {
+        actions.push({
+          action: "skipped",
+          home: input.claudeLocalHome,
+          plugin: input.pluginName,
+          installScope,
+          marketplace: marketplaceName,
+          reason: "already enabled",
+        });
+      } else {
+        actions.push({
+          action: "failed",
+          home: input.claudeLocalHome,
+          plugin: input.pluginName,
+          installScope,
+          marketplace: marketplaceName,
+          error: enableText,
+        });
+        return actions;
+      }
+    } else {
       actions.push({
-        action: "skipped",
+        action: "enabled",
         home: input.claudeLocalHome,
         plugin: input.pluginName,
         installScope,
         marketplace: marketplaceName,
-        reason: "already enabled",
       });
-      return actions;
     }
+  }
 
+  const cacheVerification = await verifyInstalledCache({
+    claudeLocalHome: input.claudeLocalHome,
+    claudePluginsDir,
+    marketplaceName,
+    pluginName: input.pluginName,
+  });
+  if (cacheVerification.ok) {
+    actions.push({
+      action: "cache-verified",
+      home: input.claudeLocalHome,
+      plugin: input.pluginName,
+      installScope,
+      marketplace: marketplaceName,
+      cachePath: cacheVerification.cachePath,
+    });
+    return actions;
+  }
+
+  const repairResult = await repairInstalledCache({
+    claudeLocalHome: input.claudeLocalHome,
+    claudePluginsDir,
+    marketplaceName,
+    pluginName: input.pluginName,
+    installScope,
+    enable: input.enable,
+    exec,
+  });
+  if (!repairResult.ok) {
     actions.push({
       action: "failed",
       home: input.claudeLocalHome,
       plugin: input.pluginName,
       installScope,
       marketplace: marketplaceName,
-      error: enableText,
+      error: repairResult.error,
     });
     return actions;
   }
-
   actions.push({
-    action: "enabled",
+    action: "cache-repaired",
     home: input.claudeLocalHome,
     plugin: input.pluginName,
     installScope,
     marketplace: marketplaceName,
+    cachePath: repairResult.cachePath,
   });
   return actions;
 }

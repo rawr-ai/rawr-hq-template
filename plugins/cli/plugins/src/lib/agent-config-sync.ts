@@ -6,6 +6,7 @@ import type { AgentConfigSyncUndoCapture } from "@rawr/agent-config-sync/resourc
 import type {
   AssessWorkspaceSyncInput,
   PlanWorkspaceSyncInput,
+  ProviderContentVersion,
   SyncAssessment,
   SyncItemResult,
   SyncRunResult,
@@ -36,6 +37,8 @@ type SyncCodexNativeAgentRolesInput = Parameters<Client["execution"]["syncCodexN
 type SyncCodexNativeAgentRolesOptions = NonNullable<Parameters<Client["execution"]["syncCodexNativeAgentRoles"]>[1]>;
 type ResolveProviderContentInput = Parameters<Client["execution"]["resolveProviderContent"]>[0];
 type ResolveProviderContentOptions = NonNullable<Parameters<Client["execution"]["resolveProviderContent"]>[1]>;
+type ResolveProviderVersionInput = Parameters<Client["execution"]["resolveProviderVersion"]>[0];
+type ResolveProviderVersionOptions = NonNullable<Parameters<Client["execution"]["resolveProviderVersion"]>[1]>;
 type RetireStaleManagedInput = Parameters<Client["retirement"]["retireStaleManaged"]>[0];
 type RetireStaleManagedOptions = NonNullable<Parameters<Client["retirement"]["retireStaleManaged"]>[1]>;
 type CleanupBehindProviderSyncInput = Parameters<Client["retirement"]["cleanupBehindProviderSync"]>[0];
@@ -511,6 +514,26 @@ export async function resolveProviderContent(input: {
     context: { invocation: { traceId: `plugin-plugins.agent-config-sync.provider-content.${input.agent}` } },
   } satisfies ResolveProviderContentOptions;
   return client.execution.resolveProviderContent(request, options);
+}
+
+/**
+ * Resolves deterministic provider package identity for provider-effective content.
+ */
+export async function resolveProviderVersion(input: {
+  sourcePlugin: SourcePlugin;
+  content: SourceContent;
+  repoRoot?: string;
+}): Promise<ProviderContentVersion> {
+  const repoRoot = input.repoRoot ?? await repoRootForCall(input.sourcePlugin);
+  const client = createAgentConfigSyncClient({ repoRoot });
+  const request = {
+    sourcePlugin: input.sourcePlugin,
+    content: input.content,
+  } satisfies ResolveProviderVersionInput;
+  const options = {
+    context: { invocation: { traceId: "plugin-plugins.agent-config-sync.provider-version" } },
+  } satisfies ResolveProviderVersionOptions;
+  return client.execution.resolveProviderVersion(request, options);
 }
 
 /**

@@ -113,6 +113,7 @@ async function zipDirToFile(input: {
 async function readOrCreatePluginManifest(input: {
   sourcePlugin: HostSourcePlugin;
   stagingRootAbs: string;
+  providerVersion?: string;
   dryRun: boolean;
 }): Promise<ClaudePluginManifest> {
   const sourceManifestPath = path.join(
@@ -136,11 +137,12 @@ async function readOrCreatePluginManifest(input: {
   const packageJsonPath = path.join(input.sourcePlugin.absPath, "package.json");
   const packageJson = (await readJsonFile<PackageJson>(packageJsonPath)) ?? {};
   const version =
-    typeof sourceManifest?.version === "string"
+    input.providerVersion ??
+    (typeof sourceManifest?.version === "string"
       ? sourceManifest.version
       : typeof packageJson.version === "string"
       ? packageJson.version
-      : input.sourcePlugin.version ?? "1.0.0";
+      : input.sourcePlugin.version ?? "1.0.0");
   const description =
     typeof sourceManifest?.description === "string"
       ? sourceManifest.description
@@ -246,6 +248,7 @@ export async function packageCoworkPlugin(input: {
   content: HostSourceContent;
   outDirAbs: string;
   dryRun: boolean;
+  providerVersion?: string;
   includeAgents: boolean;
   undoCapture?: {
     captureWriteTarget(target: string): Promise<void>;
@@ -254,7 +257,7 @@ export async function packageCoworkPlugin(input: {
   const outFile = path.join(input.outDirAbs, `${input.sourcePlugin.dirName}.zip`);
   const baseSummary: CoworkManifestSummary = {
     name: input.sourcePlugin.dirName,
-    version: input.sourcePlugin.version ?? "1.0.0",
+    version: input.providerVersion ?? input.sourcePlugin.version ?? "1.0.0",
     commands: input.content.workflowFiles.length,
     skills: input.content.skills.length,
     scripts: input.content.scripts.length,
@@ -293,6 +296,7 @@ export async function packageCoworkPlugin(input: {
     const manifest = await readOrCreatePluginManifest({
       sourcePlugin: input.sourcePlugin,
       stagingRootAbs: pluginRoot,
+      providerVersion: input.providerVersion,
       dryRun: false,
     });
     const manifestSummary: CoworkManifestSummary = {
