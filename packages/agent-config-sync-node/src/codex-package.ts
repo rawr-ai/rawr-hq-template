@@ -66,6 +66,7 @@ export async function packageCodexPlugin(input: {
   content: HostSourceContent;
   outDirAbs: string;
   dryRun: boolean;
+  providerVersion?: string;
   activePluginNames?: Iterable<string>;
   marketplaceName?: string;
   marketplaceDisplayName?: string;
@@ -89,7 +90,7 @@ export async function packageCodexPlugin(input: {
   const hasHookLifecycleConfig = hookConfigs.length > 0;
   const manifest: CodexPluginManifest = {
     name: input.sourcePlugin.dirName,
-    version: input.sourcePlugin.version ?? "1.0.0",
+    version: input.providerVersion ?? input.sourcePlugin.version ?? "1.0.0",
     description: input.sourcePlugin.description ?? "Synced from RAWR HQ",
     skills: "./skills/",
     interface: {

@@ -20,6 +20,7 @@ import {
   resolveDefaultCodexOutDir,
   resolveDefaultCoworkOutDir,
   resolveProviderContent,
+  resolveProviderVersion,
   resolveSourceWorkspaceSelection,
   runSync,
   syncCodexNativeAgentRoles,
@@ -326,11 +327,17 @@ export default class PluginsSync extends RawrCommand {
               base: content,
               repoRoot: workspaceRoot,
             });
+            const claudeProviderVersion = await resolveProviderVersion({
+              sourcePlugin,
+              content: claudeContent,
+              repoRoot: workspaceRoot,
+            });
             const pkg = await packageCoworkPlugin({
               sourcePlugin,
               content: claudeContent,
               outDirAbs: coworkOutDirAbs,
               dryRun: baseFlags.dryRun,
+              providerVersion: claudeProviderVersion.providerVersion,
               includeAgents: includeAgentsInClaude,
               undoCapture,
             });
@@ -373,11 +380,17 @@ export default class PluginsSync extends RawrCommand {
               base: content,
               repoRoot: workspaceRoot,
             });
+            const codexProviderVersion = await resolveProviderVersion({
+              sourcePlugin,
+              content: codexContent,
+              repoRoot: workspaceRoot,
+            });
             codexPackages.push(await packageCodexPlugin({
               sourcePlugin,
               content: codexContent,
               outDirAbs: codexOutDirAbs,
               dryRun: baseFlags.dryRun,
+              providerVersion: codexProviderVersion.providerVersion,
               undoCapture,
             }));
           }
