@@ -105,7 +105,8 @@ export default class PluginsSyncAll extends RawrCommand {
       allowNo: true,
     }),
     "destination-projection": Flags.boolean({
-      description: "Also run auxiliary filesystem destination projection; not a sanctioned Codex/Claude deployment path",
+      description:
+        "Also write modeled content to explicit filesystem destination paths; not a Codex/Claude harness sync fallback",
       default: false,
       allowNo: true,
     }),

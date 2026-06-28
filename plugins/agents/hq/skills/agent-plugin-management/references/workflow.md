@@ -16,6 +16,11 @@ The "plugin loop" means a fixed, repeatable sequence:
 5. Confirm outputs and zero drift signals.
 
 No ad-hoc destination edits. No hidden side effects.
+Destination-path projection is a separate export/output lane. Use it only when
+you intentionally need modeled content written to an explicit filesystem target,
+such as a fixture, repair destination, migration target, ad-hoc package, repo
+dump, or non-CLI system. Do not use it as a fallback for Codex or Claude harness
+sync.
 
 ## Steps
 
@@ -104,6 +109,8 @@ Typical temporary exceptions:
 - scoped run: `--scope agents`
 - target-limited run: `--agent codex`
 - disabling Cowork/Claude steps in a controlled maintenance window
+- destination-path output: `--destination-projection` for explicit filesystem
+  export/repair/migration output alongside native sync
 
 ## Failure modes
 

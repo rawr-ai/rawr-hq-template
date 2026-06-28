@@ -27,7 +27,7 @@ export default class PluginsSyncDrift extends RawrCommand {
       description: "RAWR workspace to scan as the source of sync truth",
     }),
     "destination-projection": Flags.boolean({
-      description: "Include legacy/auxiliary Codex destination projection in drift assessment",
+      description: "Include explicit filesystem destination-path projection in drift assessment",
       default: false,
       allowNo: true,
     }),
