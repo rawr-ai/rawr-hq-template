@@ -1,6 +1,6 @@
 # C1 Atomic Controller Execution Record
 
-**Status:** ARCHIVED_RECORD_PENDING_LANDING
+**Status:** CLOSED
 
 **Change:** `atomize-rawr-controller-authority`
 
@@ -27,12 +27,14 @@ The two personal Git objects are audit/design provenance. This Template change h
 | Bootstrap worktree/branch | `wt-template-atomize-rawr-controller-authority` / `codex/atomize-rawr-controller-authority` (merged and drained) |
 | Reviewed implementation commit | `6e6f7aadc46e9ce87beb97dc3ea1ab7475bd4d28` |
 | Source landed `main` | `5aad2da932e3c74c586a64a5f381a5c4a80424d2` (PR #333) |
-| Implementation worktree/branch | `wt-template-c1-atomic-controller` / `codex/c1-atomic-controller` (merged; drain waits for archive landing) |
-| Archive worktree/branch | `wt-template-c1-archive` / `codex/c1-controller-authority-archive` |
+| Reviewed archive commit | `0fbfadbdd300ff0e8d3d0a3e3f2690b1544839e5` |
+| Archive landed `main` | `ce816a7b4bdb0a23b575ac5fb01e64625647b452` (PR #334) |
+| Implementation worktree/branch | `wt-template-c1-atomic-controller` / `codex/c1-atomic-controller` (merged and drained) |
+| Archive worktree/branch | `wt-template-c1-archive` / `codex/c1-controller-authority-archive` (merged and drained) |
 | Archive path | `openspec/changes/archive/2026-07-16-atomize-rawr-controller-authority` |
 | OpenSpec CLI | `@fission-ai/openspec@1.3.1` |
 | Bootstrap command | `bunx @fission-ai/openspec@1.3.1 init . --tools codex --profile core` |
-| Current gate | source landed, post-main proof green, canonical specs synced, and record archived; archive-record landing pending |
+| Current gate | C1 closed; 41/41 tasks complete; C2 bootstrap may proceed independently from landed Template `main` |
 
 The worktree started clean from exact Template `main`. The initial Nx first hop failed only because a new worktree had no dependencies; `bun install --frozen-lockfile` restored the workspace, after which `bunx nx show projects`, `show project @rawr/cli --json`, and `nx graph --print` succeeded.
 
@@ -174,9 +176,13 @@ Cross-repository acceptance binds artifact handle, payload digest, schema/protoc
 | post-main installed acceptance | PASS | digest `7170a505a2e7e8de7ddf574fd027f2911d0ca224a2cd9ce4a79ce11e8ef07c58`; source removed; 97 fresh processes; 67 manifest commands; full external recovery; `ambientStartupExecuted=false`. |
 | canonical spec sync | PASS | both all-`ADDED` deltas were copied verbatim beneath canonical Purpose/Requirements headings; exact tail comparison passed; pre-move strict validation passed the active change plus both canonical specs (3/3), and post-move strict validation passed both canonical specs (2/2) with no active changes remaining. |
 | guarded archive move | PASS | the source was a non-symlink direct child of canonical `openspec/changes`, the archive directory was a non-symlink direct child on the same filesystem, the dated destination was absent including broken symlinks, and one directory `mv` completed without recursive removal. |
+| archive landing | PASS | Graphite PR #334 merged archive commit `0fbfadbdd300ff0e8d3d0a3e3f2690b1544839e5` as Template `main` commit `ce816a7b4bdb0a23b575ac5fb01e64625647b452`. |
+| post-archive main proof | PASS | exact merged `main` passed strict canonical-spec validation (2/2), reported no active OpenSpec changes, retained 6 external-extension and 7 controller requirements, passed all three C1 architecture ratchets, and passed `git diff --check`. |
+| Graphite and worktree drain | PASS | clean C1 implementation, archive, and detached proof worktrees were removed only through `git worktree remove`; `gt sync --force --no-restack --no-interactive` pruned both merged local C1 branches; `gt ls` contains no C1 stack; the two unrelated retained worktrees are clean; `main` and `origin/main` both equal `ce816a7b4bdb0a23b575ac5fb01e64625647b452`. Merged GitHub PR heads are historical remote refs, not active local Graphite branches. |
+| feature-worktree authority absence | PASS | installed acceptance already proved controller operation after source deletion, every C1 disposable worktree path is now absent, and no controller identity, release, link, registry, or runtime state was stored beneath one. |
 
 ## Closure
 
 C1 settles only when every task is truthful, B01-B03/B32 and positive/violation probes pass at their declared layers, standing reviews have no unresolved P1/P2, the affected Nx graph and clean-home controller acceptance are green, source deletion does not break operation, Template `main` contains the reviewed implementation, the OpenSpec record is archived after landing, and all C1 Graphite branches/worktrees are drained. No personal mutation or protected-lane output is part of C1 closure.
 
-At archive preparation, 39 of 41 tasks are complete. Tasks 10.2 and 10.3 remain intentionally open because archive-record landing and the subsequent branch/worktree drain cannot be observed before this record moves and lands. The next Template-only C2 bootstrap is the downstream closure attestation: it records the exact archive `main` commit and clean drain evidence in this archived record, checks those two tasks, and lands before C2 implementation opens. This bookkeeping does not create lifecycle authority or a recursive closure branch.
+The Template-only C2 bootstrap supplies the promised downstream closure attestation for the archive commit and drain events that could not be recorded by their own branch. All 41 C1 tasks are now complete. C1 is settled at source `main` commit `5aad2da932e3c74c586a64a5f381a5c4a80424d2` plus archive `main` commit `ce816a7b4bdb0a23b575ac5fb01e64625647b452`; no C1 implementation or archive worktree, local Graphite branch, controller identity, release, link, or runtime state remains under a feature checkout. This bookkeeping creates no lifecycle authority and does not open C2 implementation before the bootstrap itself lands.

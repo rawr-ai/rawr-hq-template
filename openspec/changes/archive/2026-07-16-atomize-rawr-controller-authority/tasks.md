@@ -66,5 +66,5 @@
 ## 10. Landing And Closure
 
 - [x] 10.1 Commit through Graphite, submit the complete reviewed C1 stack with `--ai`, merge it to Template `main`, and rerun the required main-branch build/test/controller acceptance gates.
-- [ ] 10.2 Archive the completed OpenSpec change only after source commits land, then land the archive record if required by the pinned workflow; record exact main commits and proof labels.
-- [ ] 10.3 Drain every C1 Graphite branch and disposable worktree, prove Template status/main/stack cleanliness, and leave no controller identity, release, link, or state under a feature worktree.
+- [x] 10.2 Archive the completed OpenSpec change only after source commits land, then land the archive record if required by the pinned workflow; record exact main commits and proof labels.
+- [x] 10.3 Drain every C1 Graphite branch and disposable worktree, prove Template status/main/stack cleanliness, and leave no controller identity, release, link, or state under a feature worktree.
