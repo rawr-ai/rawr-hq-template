@@ -44,15 +44,15 @@ Telemetry subsystem docs and proof-lane runbooks are quarantined. Mine them thro
 
 Start the managed HQ runtime:
 ```bash
-bun run rawr hq up --observability required
+rawr hq up --observability required
 ```
 
 Canonical lifecycle controls:
 ```bash
-bun run rawr hq status
-bun run rawr hq attach
-bun run rawr hq restart
-bun run rawr hq down
+rawr hq status
+rawr hq attach
+rawr hq restart
+rawr hq down
 ```
 
 Use `--observability auto` only when you intentionally want HQ to degrade cleanly without the managed HyperDX stack.
@@ -82,27 +82,20 @@ The managed runtime contract is backed by:
 
 `rawr hq status --json` writes `.rawr/hq/status.json`.
 
-## External Plugin-Manager Noise
+## Controller Provenance Failures
 
-If `rawr hq up` emits `Error: command hq:status not found`, first inspect the stack trace before treating it as a repo-owned runtime failure.
+If an official `hq` command is missing or its stack resolves through a checkout,
+stop. Official commands must come from one verified installed controller and are
+never repaired through Oclif user state.
 
-Classification rule:
-- If every stack frame points at the current workspace, search and fix the local colon-form invocation.
-- If stack frames point at another checkout, classify it as external oclif/plugin-manager noise.
-
-Useful checks:
 ```bash
-rg -n "hq:status|command hq:status" .rawr/hq/runtime.log
-node -e 'const fs=require("fs"), os=require("os"), path=require("path"); const p=path.join(os.homedir(), ".local/share/@rawr/cli/package.json"); console.log(p); console.log(fs.readFileSync(p, "utf8"))'
+rawr doctor global --json
+command -v rawr
 ```
 
-Known observed external case:
-- current workspace command: `rawr hq up`
-- emitted stack path: `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq/apps/cli/src/index.ts`
-- local status path still wrote this workspace's `.rawr/hq/status.json`
-- the user oclif manager manifest linked `@rawr/cli` and workspace CLI plugins to `/Users/mateicanavra/Documents/.nosync/DEV/rawr-hq`
-
-In that case, fix or relink the external user plugin-manager state; do not patch this template checkout unless a local `hq:status` caller is found.
+Build/select a verified release with `scripts/dev/install-global-rawr.sh` when the
+installed controller is absent. Do not link `@rawr/cli`, relink official plugins,
+or point the global command at a source checkout.
 
 ## Browser Behavior
 
@@ -122,17 +115,17 @@ Current behavior:
 
 Examples:
 ```bash
-RAWR_HQ_OPEN=none bun run rawr hq up
-RAWR_HQ_OBSERVABILITY=required bun run rawr hq up
-bun run rawr hq restart --open all --observability auto
-bun run rawr hq graph
+RAWR_HQ_OPEN=none rawr hq up
+RAWR_HQ_OBSERVABILITY=required rawr hq up
+rawr hq restart --open all --observability auto
+rawr hq graph
 ```
 
 ## Basic Runtime Checks
 
 1. Confirm runtime status and artifact write:
 ```bash
-bun run rawr hq status --json
+rawr hq status --json
 ```
 Expected:
 - `summary` is present
@@ -155,7 +148,7 @@ Expected: `200` response from the Inngest serve handler.
 
 4. Tail correlated runtime logs:
 ```bash
-bun run rawr hq attach
+rawr hq attach
 ```
 
 ## Debug Surfaces

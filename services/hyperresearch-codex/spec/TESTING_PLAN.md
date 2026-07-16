@@ -7,9 +7,9 @@ The current claim is that Codex can orchestrate the Hyperresearch control-plane 
 Evidence exists at two levels:
 
 - Synthetic slice: three-step smoke for fresh step loading, ledger resume, CLI audit, and final artifact integrity.
-- V8 fixture slice: all 16 V8 step references, light/full tier routing, packet-mode agent fan-out/fan-in, required CLI-call failures, patch-snapshot state, validation, and downstream Codex sync surface.
+- V8 fixture slice: all 16 V8 step references, light/full tier routing, packet-mode agent fan-out/fan-in, required CLI-call failures, patch-snapshot state, validation, and versioned content-interface fixtures.
 
-The long research-quality proof class is now represented by the repaired full-tier Inngest run. The original child-agent completion diagnostic failed bare `codex-rawr exec resume`, but the app-server explicit-child-resume harness now passes after the Codex runtime status-seeding fix and is the accepted recovery strategy for known child ids after parent resume. Remaining release evidence is scoped to downstream/install hygiene, Graphite submission state, and any separately promoted MCP, production Inngest runtime, automatic descendant-rehydration, or managed hook-projection claims. MCP is parked unless explicitly promoted by a future spec.
+The long research-quality proof class is now represented by the repaired full-tier Inngest run. The original child-agent completion diagnostic failed bare `codex-rawr exec resume`, but the app-server explicit-child-resume harness now passes after the Codex runtime status-seeding fix and is the accepted recovery strategy for known child ids after parent resume. Remaining release evidence is scoped to Template package hygiene, Graphite submission state, and any separately promoted versioned content integration, MCP, production Inngest runtime, automatic descendant-rehydration, or managed hook-projection claims. MCP is parked unless explicitly promoted by a future spec.
 
 ## Correctness Oracles
 
@@ -22,7 +22,7 @@ The long research-quality proof class is now represented by the repaired full-ti
 - Completed V8 runs include `research/claim-trace.json`, and claim-trace source URLs must map to captured sources or explicit uncertainty.
 - Final-report edits after the synthesis snapshot require a covering accepted patch log entry with before/after hashes, finding IDs, and hunks that match the pre/post report text and cover changed lines.
 - Final acceptance blocks on failed CLI calls, failed steps, missing artifacts, or unclosed blocking review findings.
-- Final plugin-system proof uses actual Codex skill/plugin runtime after RAWR sync. Current evidence proves synced skill/agent install, CLI fixture execution, a fresh Codex-RAWR exec packet-mode light run with real source capture and claim trace, a short multi-source `codex-rawr exec resume` runtime proof, and a repaired full-tier Inngest proof with all 16 V8 steps, 20 role-agent packet jobs, 16 official source captures, patch/claim-trace validation, and backend sync/lint/export.
+- Final plugin-system proof uses an actual Codex skill/plugin runtime installed from a digest-bound curated-content artifact through a Template-owned lifecycle/provider interface. Historical evidence proves CLI fixture execution, a fresh Codex-RAWR exec packet-mode light run with real source capture and claim trace, a short multi-source `codex-rawr exec resume` runtime proof, and a repaired full-tier Inngest proof with all 16 V8 steps, 20 role-agent packet jobs, 16 official source captures, patch/claim-trace validation, and backend sync/lint/export. It does not yet prove the corrected artifact interface.
 
 ## Component Gates
 
@@ -81,8 +81,8 @@ Current observed component evidence:
 ## Codex Runtime Gates
 
 1. Install template CLI topic. Current status: template CLI topic exists in the implementation worktree, builds into oclif command discovery, and passes fixture smoke.
-2. Sync downstream RAWR HQ skill/reference/agent material into Codex. Current status: observed for the scoped Hyperresearch plugin after V8 workflow and 14 role-agent updates.
-3. Invoke the synced skill in a fresh Codex session. Current status: fresh `codex-rawr exec` proofs passed; the sessions used `hyperresearch-codex`, read the service plan, and executed the V8 service CLI workflow.
+2. Bind an immutable curated-content artifact to its exact interface version, release-set digest, and governed record digests. Current status: pending the owning agent-plugin lifecycle container.
+3. Invoke the artifact-backed skill in a fresh disposable Codex home. Current status: historical `codex-rawr exec` proofs passed for the service workflow, but the corrected artifact-backed install remains pending.
 4. Verify ledger, artifacts, source-capture provenance, claim trace, patch log, and CLI call audit trail from the CLI-backed fixture workflow. Current status: run-fixture proof exists; direct CLI packet-mode real-backend light-route proof exists for artifact writes; fresh Codex-RAWR packet-mode proof exists with real source capture and claim trace; short multi-source runtime proof exists with four official source captures and five traced claims; repaired full-tier proof exists with 16 official Inngest captures and a passed final claim trace.
 5. Verify a compaction/resume handoff can continue from ledger state. Current status: service-level packet/resume test passed, and actual `codex-rawr exec resume` continued the short runtime proof from the same ledger. The full-tier proof also survived interrupted/stuck child-agent handles by replacement packet outputs against the same ledger. The focused `codex-rawr exec resume` diagnostic failed for bare parent wait/close against children spawned before resume; the app-server explicit-child-resume harness proves the accepted recovery path for known child ids after parent resume. Replacement attempts remain fallback hardening for child attempts that still classify non-clean.
 6. Verify replacement-attempt semantics:
@@ -130,7 +130,7 @@ Core `PreToolUse` and `Stop` hook guardrails are fixture-proven. The concrete pl
 3. Routed source allow: direct fixture execution allows Hyperresearch service commands and explicitly routed source URLs. Allow stdout/stderr are expected-empty; decision evidence is in `logs/hook-events.jsonl` and `logs/hook-events-routed-source.jsonl`.
 4. Stop guard red/green: direct fixture execution blocks missing/incomplete/red ledgers and allows a green ledger with `validation.passed:true`. The live runtime `Stop` payload had `stop_hook_active:false`, so red/green final-answer blocking remains direct-fixture evidence rather than live closure-interruption evidence.
 5. Negative hooks: tests cover malformed JSON, unsupported event name, missing Bash command, stale/missing ledger, missing validation marker, and timeout classification. The evidence bundle also preserves a negative config probe where a missing top-level `hooks` wrapper did not invoke hooks.
-6. Plugin/config projection: required only before claiming downstream plugin material installs Hyperresearch hooks. Current agent-sync scans skills, workflows, scripts, and agents; hook install/update/removal projection is unclaimed.
+6. Plugin/config projection: required only before claiming a released curated-content artifact installs Hyperresearch hooks. Template's provider adapter must prove plan, apply, idempotence, drift, and removal; hook projection is currently unclaimed.
 
 Hook proof evidence:
 
@@ -147,14 +147,12 @@ MCP remains parked and optional:
 2. If MCP is ever promoted later, first specify controlled install/version pinning, Codex registration/removal, observed tool schemas, read/check/write classification, write-deny enforcement, failure/retry classification, and parity-equivalent ledger/provenance evidence for any allowlisted write.
 3. Until that future spec exists, MCP is not a blocker for the active Hyperresearch Codex parity claim because the direct CLI backend already owns the authoritative loop.
 
-Current observed Codex sync evidence:
+Historical Codex projection evidence:
 
-- `bun run rawr plugins sync hyperresearch --dry-run --agent codex --json`
-- `bun run rawr plugins sync hyperresearch --agent codex --no-install-reconcile --no-cowork --json`
-- Verified synced prompt, skill, role-agent TOML files, and Codex registry entry under the active Codex homes.
-- Post-artifact scoped sync updated the managed Hyperresearch workflow and skill directory; direct installed-file verification confirms the active prompt now requires `artifactWrites`, `sourceUrls`, `research/claim-trace.json`, and covering `research/patch-log.json` entries.
+- The superseded checkout projection verified prompt, skill, role-agent TOML files, and a Codex registry entry under disposable Codex homes.
+- Direct installed-file verification confirmed the prompt required `artifactWrites`, `sourceUrls`, `research/claim-trace.json`, and covering `research/patch-log.json` entries.
 - Fresh `codex-rawr exec` proof is no longer blocked. The active RAWR forked CLI reports `OpenAI Codex v0.126.0-alpha.3` and successfully ran with `gpt-5.5`. The proof also exposed that `validate` lacked the `--backend` flag accepted by `start` and `advance`; the CLI now accepts `validate --backend real|fixture` for command-surface symmetry, while validation remains ledger-only.
-- `rawr plugins sync drift --agent codex --json` is globally red from existing workspace drift/residuals; Hyperresearch scoped sync has no conflicts and all items are skipped/identical after the final sync pass.
+- This evidence does not authorize the old projection. Corrected cross-repository acceptance remains pending an immutable artifact and versioned Template interface.
 
 ## Live Research Gates
 

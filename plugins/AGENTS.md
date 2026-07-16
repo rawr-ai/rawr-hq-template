@@ -35,8 +35,8 @@
 - A plugin’s id is either:
   - `package.json#name` (preferred), or
   - the leaf directory name (fallback).
-- Workspace runtime enablement uses:
-  - `rawr plugins web enable <id>`
+- Package identity does not grant lifecycle authority. External Oclif extensions
+  and curated agent plugins are separate closed channels.
 
 ## Manifest Conventions
 - Always include a `package.json` at the plugin root.
@@ -55,7 +55,9 @@
   - `bunx nx run @rawr/plugin-hello:test`
 - Unit tests live in `test/**/*.test.ts` and are wired in root `vitest.config.ts`.
 
-## Security And Enablement
-- Enablement is an explicit activation boundary:
-  - `rawr plugins web enable <id>` runs security gating and persists state.
-- Security model reference: `docs/SECURITY_MODEL.md`.
+## Lifecycle Boundaries
+- External Oclif extensions use `rawr plugins ...` and native Oclif state only.
+- Curated agent plugins use `rawr agent plugins ...` and immutable release records only.
+- Web/server/app composition may mount declared capabilities but does not own
+  installation, release, provider reconciliation, or lifecycle repair.
+- Security model reference: `docs/system/SECURITY_MODEL.md`.

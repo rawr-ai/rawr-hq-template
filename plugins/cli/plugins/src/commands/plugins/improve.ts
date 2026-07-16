@@ -10,8 +10,8 @@ import {
   resolveLifecycleTarget,
   runJudge,
   verifySyncAndDrift,
-} from "#lib/plugin-lifecycle-service";
-import { runCommand } from "#lib/process-execution";
+} from "../../lib/plugin-lifecycle-service";
+import { runCommand } from "../../lib/process-execution";
 import type { DecideMergePolicyResult, LifecycleCheckData, LifecycleType, PrContext } from "@rawr/hq-ops/types";
 import { findWorkspaceRoot } from "@rawr/core";
 

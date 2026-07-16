@@ -10,7 +10,7 @@ const cliRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const testHome = mkdtempSync(path.join(os.tmpdir(), "rawr-cli-hq-home-"));
 
 function runRawr(args: string[], options?: { cwd?: string; env?: Record<string, string | undefined> }) {
-  return spawnSync("bun", ["src/index.ts", ...args], {
+  return spawnSync("bun", ["test/command-fixture/command-test-cli.ts", ...args], {
     cwd: options?.cwd ?? cliRoot,
     encoding: "utf8",
     env: {

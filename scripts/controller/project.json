@@ -1,0 +1,36 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@rawr/controller-build",
+  "root": "scripts/controller",
+  "sourceRoot": "scripts/controller",
+  "projectType": "application",
+  "tags": ["type:app", "role:controller-build"],
+  "implicitDependencies": ["@rawr/controller-release", "@rawr/cli"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx tsc -p scripts/controller/tsconfig.json --noEmit"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx eslint --max-warnings 0 scripts/controller --ext .ts"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test scripts/controller/test"
+      }
+    },
+    "acceptance": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "bun scripts/controller/accept-installed-blackbox.ts"
+      }
+    }
+  }
+}

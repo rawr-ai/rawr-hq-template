@@ -11,8 +11,8 @@ This service uses a contained `Discover -> Review -> Act` loop for Hyperresearch
 ## Agent Loop Shape
 
 - Discovery agents map V8 step/role/source/test facts and do not edit files.
-- Implementation agents get disjoint write scopes: service modules, shared service helpers/entities, CLI commands, spec/docs, downstream plugin material, or tests.
-- Review agents inspect service topology, parity/security, downstream sync, and testing evidence.
+- Implementation agents get disjoint write scopes: service modules, shared service helpers/entities, CLI commands, spec/docs, versioned interface fixtures, or tests.
+- Review agents inspect service topology, parity/security, artifact/interface boundaries, and testing evidence.
 - The coordinator owns fan-in, final code integration, commits, and the decision about whether a finding blocks phase exit.
 
 ## Phase Exit
@@ -22,4 +22,9 @@ A phase exits only when:
 - the relevant tests or dry-run gates pass,
 - no blocking review finding remains open for that phase,
 - the ledger/spec reflects any new limitation or deferral,
-- both involved repos have explicit clean/dirty status recorded before handoff.
+- the Template repository has explicit clean/dirty status recorded before handoff.
+
+If a later proof consumes a separately released curated-content artifact, that
+content repository runs its own process. This runbook records only the artifact
+handle, digests, and interface version; it never coordinates source branches or
+checkout state across repositories.

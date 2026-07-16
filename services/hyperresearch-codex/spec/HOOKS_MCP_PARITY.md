@@ -71,7 +71,11 @@ The detailed plan is `HOOKS_GUARDRAIL_PLAN.md`. The core fixture proof supplied:
 8. Negative config evidence showing missing top-level `hooks` did not run hooks.
 9. Unit coverage for malformed JSON, unsupported events, missing command text, URL bypasses, allowed routed commands, missing/incomplete/red ledgers, missing passed validation marker, ledger path precedence, green ledgers, and timeout classification.
 
-Plugin/config projection remains unclaimed until agent-sync has managed hook material projection and a fixture proves install, update, dry-run, drift, and removal behavior for Hyperresearch hook material. A local runtime fixture for `PreToolUse` or `Stop` is not enough to claim plugin-packaged hook projection.
+Plugin/config projection remains unclaimed until the Template-owned agent-plugin
+lifecycle and provider adapter accept a versioned immutable curated-content
+artifact and a fixture proves install, update, dry-run, idempotence, drift, and
+removal behavior for Hyperresearch hook material. A local runtime fixture for
+`PreToolUse` or `Stop` is not enough to claim plugin-packaged hook projection.
 
 ## Hyperresearch MCP Surface
 

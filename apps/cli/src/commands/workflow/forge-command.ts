@@ -9,7 +9,7 @@ import {
 } from "../../lib/hq-ops-client";
 import { recordArtifact, recordStep } from "../../lib/journal-context";
 import { journalId, safePreview } from "../../lib/journal-projection";
-import { resolveCliEntrypoint, runStep, type StepResult } from "../../lib/subprocess";
+import { resolveCliReentry, runStep, type StepResult } from "../../lib/subprocess";
 import { findWorkspaceRoot } from "@rawr/core";
 
 type ForgeStep = StepResult & { stdoutJson?: any };
@@ -52,16 +52,16 @@ export default class WorkflowForgeCommand extends RawrCommand {
     const description = String(flags.description);
     const skipTests = Boolean((flags as Record<string, unknown>)["skip-tests"]);
 
-    const entrypoint = resolveCliEntrypoint();
+    const rawr = resolveCliReentry();
     const commandPath = path.join(workspaceRoot, "apps", "cli", "src", "commands", topic, `${name}.ts`);
     const testPath = path.join(workspaceRoot, "apps", "cli", "test", `${topic}-${name}.test.ts`);
 
     const planned: ForgeStep[] = [
       {
         name: "scaffold",
-        cmd: "bun",
+        cmd: rawr.cmd,
         args: [
-          entrypoint,
+          ...rawr.args,
           "plugins",
           "scaffold",
           "command",
@@ -71,7 +71,7 @@ export default class WorkflowForgeCommand extends RawrCommand {
           description,
           "--json",
         ],
-        cwd: workspaceRoot,
+        cwd: rawr.cwd,
         status: "planned",
       },
       {
@@ -109,6 +109,7 @@ export default class WorkflowForgeCommand extends RawrCommand {
         cmd: step.cmd,
         args: step.args,
         cwd: step.cwd,
+        ...(step.name === "tests" ? {} : { env: rawr.env }),
         inheritStdio: !baseFlags.json,
       });
 

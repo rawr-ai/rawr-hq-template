@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { createHqOpsCallOptions, createHqOpsClient } from "#lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../../../lib/hq-ops-client";
 
 /**
  * Expands user-facing home paths before removing explicit sync sources.

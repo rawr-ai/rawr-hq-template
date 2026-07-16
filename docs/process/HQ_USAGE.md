@@ -13,36 +13,36 @@ This guide targets maintainers working inside `RAWR HQ-Template`.
    - `bun run test` for the fast default gate.
    - `bun run test:web` when touching the web-only lane (without the pretest build gate).
 5. Commit scoped changes.
-6. For stack drains or cross-repo integrations, follow canonical policy in `docs/process/HQ_OPERATIONS.md`:
-   - repo boundary guard,
-   - transient test-failure policy,
-   - final acceptance checklist.
+6. For stack drains or cross-repository interface acceptance, follow
+   `docs/process/HQ_OPERATIONS.md` and `docs/process/CROSS_REPO_WORKFLOWS.md`.
 
-## Global CLI Setup (Bun)
+## Installed Controller Setup
 
-Activate this checkout as the explicit global `rawr` owner:
+Materialize and select an immutable controller release from a clean Template
+revision:
 
 ```bash
-./scripts/dev/activate-global-rawr.sh
+./scripts/dev/install-global-rawr.sh
 rawr --version
 rawr doctor global --json
 ```
 
 Mode contract:
-- Canonical local-global mode is Bun-bin symlink install via `scripts/dev/install-global-rawr.sh`.
-- Do not depend on `bun link --global @rawr/cli` for this monorepo shape; workspace dependencies are not a reliable Bun-global package install target.
-- Re-run the activation script in the checkout you want global `rawr` to target.
+- The global shim points to one stable Template-owned launcher under the controller
+  data root, never a checkout.
+- `install-global-rawr.sh` builds, verifies, installs, and selects a release.
+- `activate-global-rawr.sh <digest>` selects an already installed verified release;
+  it does not build from source.
+- A checkout, hook, alias, or Oclif link cannot become controller identity.
 
-## Plugin Authoring
+## Plugin Boundaries
 
-- Template plugin packages live under channelized roots:
-  - `plugins/cli/*`
-  - `plugins/web/*`
-  - `plugins/agents/*`
-- These are fixture/example packages for baseline validation and demos.
-- Operational plugin authoring belongs in downstream personal `RAWR HQ` repos.
-- Runtime workspace commands: `rawr plugins web ...`
-- External oclif plugin manager: `rawr plugins ...`
+- Template fixtures validate controller and generic lifecycle behavior; they are not
+  personal curated content.
+- External Oclif extension management uses `rawr plugins ...` only.
+- Curated agent-plugin source and records live in personal `RAWR HQ`; their
+  lifecycle uses `rawr agent plugins ...` only.
+- App composition consumes explicit outputs and never repairs or rewrites lifecycle state.
 
 ## Publishing
 
@@ -52,11 +52,8 @@ Before publishing a plugin:
 - Run `bun run test:web` if the change affects the web-only lane
 - Verify package metadata and docs.
 
-Note: full plugin sync commands (`rawr plugins sync all`) are personal-repo runtime actions, not template publishing actions.
-
-## Upstream Sync
-
-Follow `UPDATING.md` when pulling from `RAWR HQ-Template`.
+Personal content publication is independent and consumes only published versioned
+interfaces or immutable artifacts. Follow `UPDATING.md` for interface updates.
 
 ## Auto-Refresh On Main Updates
 
@@ -66,4 +63,5 @@ Enable shipped hooks once per clone:
 git config core.hooksPath scripts/githooks
 ```
 
-Then `post-merge` and `post-checkout` refresh dependencies and global wiring only when this checkout is the active owner.
+Then `post-merge` and `post-checkout` may refresh repository dependencies. They do
+not build, activate, or relink the installed controller.

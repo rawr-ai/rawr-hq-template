@@ -86,3 +86,17 @@ Use this map when historical references resolve to missing routers:
 2. Archived-doc command drift is explicitly fenced in `docs/_archive/README.md` with canonical Channel A/Channel B pointers.
 3. `packages/control-plane` and `packages/session-tools` remain routed by `packages/AGENTS.md` by default.
    - Create package-local `AGENTS.md` only when package-specific policy/routing exceeds parent-router scope.
+
+## Authority Correction (2026-07-16 Addendum)
+
+This historical matrix predates repository separation. Its claims that both
+repositories share an identical router/tree topology, a downstream relationship,
+or the `plugins web` lifecycle route are superseded.
+
+- Template root/docs/scripts routers now direct executable and generic lifecycle
+  work to Template and curated agent content/records to personal.
+- Repository interaction routes through `docs/process/CROSS_REPO_WORKFLOWS.md` and
+  explicit versioned data/artifact interfaces.
+- No Template-to-personal sync runbook or Template-managed executable-path guard is active.
+- This archived inventory remains provenance only and must not be used to recreate
+  mirrored routers or executable paths in personal.

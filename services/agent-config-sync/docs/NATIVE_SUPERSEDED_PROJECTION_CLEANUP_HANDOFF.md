@@ -474,7 +474,6 @@ bun apps/cli/src/index.ts plugins sync hyperresearch \
   --codex-home /Users/mateicanavra/.codex-rawr \
   --source-workspace /Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq \
   --codex-bin /Users/mateicanavra/.volta/bin/codex \
-  --no-install-reconcile \
   --no-cowork
 ```
 

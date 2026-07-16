@@ -1,7 +1,7 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { findWorkspaceRoot } from "@rawr/core";
-import { resolveCliEntrypoint, runStep, type StepResult } from "../../lib/subprocess";
+import { resolveCliReentry, runStep, type StepResult } from "../../lib/subprocess";
 
 export default class RoutineCheck extends RawrCommand {
   static description = "Run the routine dev hygiene loop (doctor + security + tests)";
@@ -40,27 +40,27 @@ export default class RoutineCheck extends RawrCommand {
     const shouldContinue = Boolean(flags.continue);
     const skipTests = Boolean((flags as Record<string, unknown>)["skip-tests"]);
 
-    const entrypoint = resolveCliEntrypoint();
+    const rawr = resolveCliReentry();
 
     const planned: StepResult[] = [
       {
         name: "doctor",
-        cmd: "bun",
-        args: [entrypoint, "doctor", ...(baseFlags.json ? ["--json"] : [])],
-        cwd: workspaceRoot,
+        cmd: rawr.cmd,
+        args: [...rawr.args, "doctor", ...(baseFlags.json ? ["--json"] : [])],
+        cwd: rawr.cwd,
         status: "planned",
       },
       {
         name: "security",
-        cmd: "bun",
+        cmd: rawr.cmd,
         args: [
-          entrypoint,
+          ...rawr.args,
           "security",
           "check",
           ...(mode === "staged" ? ["--staged"] : ["--repo"]),
           ...(baseFlags.json ? ["--json"] : []),
         ],
-        cwd: workspaceRoot,
+        cwd: rawr.cwd,
         status: "planned",
       },
       {
@@ -97,6 +97,7 @@ export default class RoutineCheck extends RawrCommand {
         cmd: step.cmd,
         args: step.args,
         cwd: step.cwd,
+        ...(step.name === "tests" ? {} : { env: rawr.env }),
         inheritStdio: !baseFlags.json,
       });
 

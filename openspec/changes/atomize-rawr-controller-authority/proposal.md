@@ -12,7 +12,7 @@ RAWR's official command modules and launcher are currently coupled to mutable Oc
 
 - **BREAKING**: classify every supported Template-owned command module as an immutable member of one controller release and prevent official modules from being installed, linked, shadowed, or repaired through Oclif user state.
 - Replace checkout-owner symlinks and post-checkout executable refresh with activation of a complete controller release under stable Template runtime data.
-- Add a controller manifest and provenance checks that bind the launcher and every official command module to one release identity and fail read-only on mismatch.
+- Add a controller manifest and provenance checks that bind the payload release entry and every official command module to one release identity and fail read-only on mismatch; the stable selector launcher remains outside that identity.
 - Preserve `rawr plugins install|link|uninstall|list|inspect|update|reset` for genuine external extensions, with reserved package, command, topic, alias, and hook validation before extension code can load.
 - Make startup and removal recovery-safe when an external extension is missing, broken, colliding, or later deleted.
 - Expand `rawr doctor global` to report the selected controller release, launcher, official-module closure, stable data root, and external-extension health without repairing any authority.

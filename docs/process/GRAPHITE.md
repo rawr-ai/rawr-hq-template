@@ -28,11 +28,11 @@ gt ls
 gt log --all
 ```
 
-For canonical merge/prune and cross-repo integration loops, use:
+For canonical merge/prune and repository/interface workflows, use:
 - `docs/process/runbooks/STACK_DRAIN_LOOP.md`
-- `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md`
-- `docs/process/HQ_OPERATIONS.md` (repo boundary guard + retry/acceptance policy)
+- `docs/process/CROSS_REPO_WORKFLOWS.md`
+- `docs/process/HQ_OPERATIONS.md` (retry and independent acceptance policy)
 
 ## Related workflow docs
 
-- End-to-end agent loops: `docs/process/AGENT_LOOPS.md`
+- Repository separation and artifact interfaces: `docs/process/CROSS_REPO_WORKFLOWS.md`

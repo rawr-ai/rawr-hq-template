@@ -1,10 +1,17 @@
 # Hyperresearch Codex Full Parity Closure Plan
 
-This is the active closure plan after the packet-provenance implementation and short Codex-RAWR runtime proof. It builds from template commit `b7ea4e20` and downstream commit `f2e102eb`.
+This is a completed historical proof plan after the packet-provenance
+implementation and short Codex-RAWR runtime proof. The recorded Template and
+personal commits are audit provenance only. The repository-separation
+correction supersedes every checkout-copy or projection step below; none is
+current operational guidance.
 
 ## Goal
 
-Close the remaining Hyperresearch Codex parity gap with honest evidence: a full-tier Codex-RAWR run that uses the service-owned V8 control plane, real Hyperresearch CLI backend operations, native Codex role-agent fan-out, durable resume, critic/patch gates, source-backed claim trace, and downstream synced plugin material.
+Close the then-remaining Hyperresearch Codex service parity gap with honest
+evidence: a full-tier Codex-RAWR run using the service-owned V8 control plane,
+real Hyperresearch CLI backend operations, native Codex role-agent fan-out,
+durable resume, critic/patch gates, and source-backed claim trace.
 
 Do not reopen the completed packet-provenance service design unless the full-tier proof exposes a concrete defect.
 
@@ -48,8 +55,8 @@ Target 8-12 official Inngest documentation sources from `inngest.com/docs`, incl
 
 - `HR-CODEX-035`: keep native child lifecycle separate from service packet fan-in. The focused diagnostic in `spec/evidence/20260503T193257Z-child-agent-completion/` proved same-process child wait/close but failed across bare `codex-rawr exec resume` because original child handles returned `not_found`. The accepted closure path is explicit child resume after parent resume, with ledgered replacement attempts as fallback for child attempts that still classify non-clean.
 - Native Codex surfaces: do not pivot to app-server, Codex SDK, or OpenAI SDK by assumption. `NATIVE_CODEX_SURFACE_REVIEW.md` records that app-server is the preferred native reproduction surface and that explicit-child-resume evidence proves runtime recovery after the Codex status-seeding fix. TypeScript Codex SDK wraps `codex exec`, and raw OpenAI SDKs are a different runtime.
-- Hooks/MCP: keep service hooks as fixtures/evidence only; distributable hook source belongs downstream under `plugins/agents/hyperresearch/hooks/`. Keep MCP parked unless a future spec promotes it. Default claim boundary is that hooks and MCP are not required for full-tier service parity.
-- Global downstream drift: repair only if dry-run evidence shows it is safe and scoped. Otherwise document it as separate from Hyperresearch scoped sync.
+- Hooks/MCP: keep service hooks as fixtures/evidence only. Curated hook content and generic provider projection have separate owners. Keep MCP parked unless a future spec promotes it. Default claim boundary is that hooks and MCP are not required for full-tier service parity.
+- Repository integration: this historical proof does not establish a current cross-repository integration path.
 
 ## Current Closure Result
 
@@ -89,13 +96,12 @@ Preserve only reviewable, non-secret evidence:
 
 Do not preserve SQLite vault internals, credentials, auth files, unrelated temp state, or full raw temp directories.
 
-## Downstream And Release Gates
+## Historical Release Gates
 
-After the service evidence is committed:
+The original plan included cross-repository copy/projection gates. Those gates
+are void. Current release acceptance instead requires:
 
-- copy updated spec/evidence material into downstream Hyperresearch skill references;
-- run scoped Hyperresearch sync dry-run, apply sync if needed, then rerun dry-run until installed material is identical;
-- run default-agent reviews for topology/style/spec adherence, evidence honesty, and downstream sync/install state;
-- run service, CLI plugin, evidence, sync, and repo hygiene gates;
-- commit template and downstream separately;
-- run Graphite dry-run submission checks and submit/push only if the branches are ready.
+- run reviews for topology/style/spec adherence and evidence honesty;
+- run service, CLI plugin, evidence, and Template repository hygiene gates;
+- land Template changes through its own Graphite process;
+- defer cross-repository acceptance until an immutable curated-content artifact can bind to an exact published interface without checkout access.

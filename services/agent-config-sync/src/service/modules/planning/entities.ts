@@ -111,7 +111,6 @@ export const FullSyncPolicyInputSchema = Type.Object(
     codexInstallEnabled: Type.Optional(Type.Boolean()),
     claudeInstallEnabled: Type.Boolean(),
     claudeEnableEnabled: Type.Boolean(),
-    installReconcileEnabled: Type.Boolean(),
     retireOrphansEnabled: Type.Boolean(),
     force: Type.Boolean(),
     gc: Type.Boolean(),

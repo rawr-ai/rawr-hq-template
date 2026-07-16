@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "paths": {
+      "@rawr/controller-release": ["packages/controller-release/src/index.ts"]
+    }
+  },
+  "include": ["*.ts", "lib/**/*.ts"],
+  "exclude": ["test/**"]
+}

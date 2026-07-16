@@ -17,6 +17,7 @@
       },
       "devDependencies": {
         "@nx/eslint-plugin": "^22.5.4",
+        "@rawr/controller-release": "workspace:*",
         "@types/node": "^22.14.0",
         "@typescript-eslint/parser": "^8.57.1",
         "@vitest/ui": "^4.0.18",
@@ -40,14 +41,18 @@
         "@orpc/client": "^1.13.5",
         "@rawr/agent-config-sync": "workspace:*",
         "@rawr/agent-config-sync-node": "workspace:*",
+        "@rawr/controller-release": "workspace:*",
         "@rawr/core": "workspace:*",
         "@rawr/dev": "workspace:*",
         "@rawr/dev-node": "workspace:*",
         "@rawr/hq-ops": "workspace:*",
         "@rawr/orpc-client": "workspace:*",
+        "@rawr/plugin-chatgpt-corpus": "workspace:*",
         "@rawr/plugin-devops": "workspace:*",
         "@rawr/plugin-hyperresearch": "workspace:*",
         "@rawr/plugin-plugins": "workspace:*",
+        "@rawr/plugin-session-tools": "workspace:*",
+        "tar": "7.5.7",
         "zod": "^3.24.3",
       },
       "devDependencies": {
@@ -141,6 +146,12 @@
     },
     "packages/bootgraph": {
       "name": "@rawr/bootgraph",
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/controller-release": {
+      "name": "@rawr/controller-release",
       "devDependencies": {
         "typescript": "^5.9.3",
       },
@@ -342,6 +353,7 @@
         "typebox": "^1.0.81",
       },
       "devDependencies": {
+        "@types/bun": "^1.2.10",
         "@types/node": "^22.14.0",
         "typescript": "^5.9.3",
       },
@@ -1071,6 +1083,8 @@
     "@rawr/chatgpt-corpus": ["@rawr/chatgpt-corpus@workspace:services/chatgpt-corpus"],
 
     "@rawr/cli": ["@rawr/cli@workspace:apps/cli"],
+
+    "@rawr/controller-release": ["@rawr/controller-release@workspace:packages/controller-release"],
 
     "@rawr/core": ["@rawr/core@workspace:packages/core"],
 

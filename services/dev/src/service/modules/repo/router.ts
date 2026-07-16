@@ -40,11 +40,10 @@ const syncUpstream = module.syncUpstream.handler(async ({ context, input }) => {
     planned("gt", ["sync", "--no-restack"]),
     planned("gt", ["restack", "--upstack"]),
   ];
-  const followUpCommands = input.convergeAfter
+  const followUpCommands = input.inspectAfter
     ? [
-        planned("rawr", ["plugins", "status", "--checks", "install", "--repair", "--no-fail", "--json"]),
-        planned("rawr", ["plugins", "sync", "all", "--json"]),
-        planned("rawr", ["plugins", "status", "--checks", "all", "--json"]),
+        planned("rawr", ["doctor", "global", "--json"]),
+        planned("rawr", ["plugins", "list", "--json"]),
       ]
     : [];
   const issues = [];
@@ -84,8 +83,11 @@ const syncUpstream = module.syncUpstream.handler(async ({ context, input }) => {
   } else if (scratchPolicy.mode === "warn" && scratchPolicy.missing.length > 0 && apply) {
     issues.push(warning("SCRATCH_POLICY_WARNING", "Scratch policy warning.", { missing: scratchPolicy.missing }));
   }
-  if (input.convergeAfter) {
-    issues.push(warning("CONVERGE_AFTER_PLANNED_ONLY", "Plugin convergence is emitted as explicit follow-up commands, not executed inside DevOps sync."));
+  if (input.inspectAfter) {
+    issues.push(warning(
+      "INSPECT_AFTER_PLANNED_ONLY",
+      "Controller and external-extension diagnostics are emitted as explicit follow-up commands, not executed inside DevOps sync.",
+    ));
   }
 
   const check = preflight(issues);

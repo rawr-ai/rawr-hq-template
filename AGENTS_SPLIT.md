@@ -1,99 +1,67 @@
 # Agent Routing: Template vs Personal Repo
 
-This file tells agents where to make changes during the `RAWR HQ-Template` / `RAWR HQ` split model.
+This file is the repository authority boundary. `RAWR HQ-Template` and personal
+`RAWR HQ` are independent repositories, not an upstream/downstream fork pair.
 
 ## Modify `RAWR HQ-Template` (`rawr-ai/rawr-hq-template`) when:
 
-- The change should apply to all downstream users.
-- You are changing shared CLI contracts or command UX.
-- You are changing shared packages:
-  - `apps/cli`
-  - `packages/core`
-  - `packages/test-utils`
-  - `packages/ui-sdk`
-  - `services/dev`
-  - `packages/dev-node`
-  - `services/hq-ops`
-  - `services/agent-config-sync`
-  - `services/session-intelligence`
-- You are changing shared CLI projection contracts:
-  - `plugins/cli/devops`
-  - `plugins/cli/session-tools`
-- You are changing template-wide scaffolding, governance docs, or baseline workflows.
-- You are changing fixture/example plugin contracts used to validate template behavior.
+- You are changing the installed controller or official CLI command set.
+- You are changing generic lifecycle behavior, provider/export adapters, schemas,
+  tooling implementations, or generic validators.
+- You are changing Template-owned packages, services, fixtures, repository process,
+  or executable release/activation mechanics.
+- You are changing the guarded external Oclif extension surface under `rawr plugins`.
 
-## Do NOT put in template:
+## Do NOT put in Template:
 
-- Personal experiments.
-- Machine-specific settings and local-only workflows.
-- Project-specific plugins that are not intended for broad reuse.
-- Operational plugins owned by a personal HQ instance.
+- Personal curated agent-plugin source or release/channel decisions.
+- Personal vendor provenance, policy, evaluation inputs, or lifecycle records.
+- Machine-specific settings and personal workflows.
+- A personal checkout locator encoded as controller, artifact, channel, ledger,
+  receipt, provider identity, or release identity.
 
 ## Modify personal `RAWR HQ` (`rawr-ai/rawr-hq`) when:
 
-- The behavior is specific to one user's local HQ.
-- The change is plugin-only and does not alter shared core contracts.
-- The change is project/product customization not meant for all template consumers.
-- You are authoring or evolving operational plugins.
-- You are authoring operational surface plugins under:
-  - `plugins/server/api/**`
-  - `plugins/async/workflows/**`
-  - `plugins/async/schedules/**`
-  - `plugins/web/**`
-  - `plugins/cli/**`
-  - `plugins/agents/**` (outside `plugins/agents/hq/**`)
-  - `plugins/mcp/**`
-
-## Promotion Path (Personal -> Template)
-
-1. Prove the change in personal repo.
-2. Confirm it is broadly useful and not user-specific.
-3. Open PR to `rawr-ai/rawr-hq-template`.
-4. Update docs (`README`, `SYSTEM`, `PROCESS`, `PLUGINS`) if contracts changed.
+- You are authoring curated agent-plugin source/content.
+- You are recording content vendor provenance, policy, evaluation, acceptance,
+  release, or channel state.
+- You are changing personal repository process or configuration.
+- You are updating declarative inputs consumed by an exact released version of a
+  Template-owned tool.
 
 ## Quick Decision Rule
 
-- "Will every template user benefit from this by default?" -> template.
-- "Is this only for this HQ or operational plugin set?" -> personal repo.
+- "Does this execute or implement generic lifecycle behavior?" -> Template.
+- "Is this curated agent content or a governed decision about that content?" -> personal.
+- If one change appears to require both repositories, split it at a versioned
+  schema/artifact interface; never copy implementation across the boundary.
 
 ## Plugin Ownership Rule (Hard)
 
-- Template-managed HQ/plugin-management domain includes:
-  - `plugins/agents/hq/**` (full ownership)
-  - `plugins/cli/plugins/**` (shared lifecycle/runtime command surface)
-- Operational plugin development in other plugin roots starts in personal `RAWR HQ`, including:
-  - `plugins/server/api/**`
-  - `plugins/async/workflows/**`
-  - `plugins/async/schedules/**`
-  - `plugins/web/**`
-  - `plugins/cli/**` (outside `plugins/cli/plugins/**` and
-    `plugins/cli/devops/**`)
-  - `plugins/agents/**` (outside `plugins/agents/hq/**`)
-  - `plugins/mcp/**`
-- Promote non-HQ personal plugin artifacts to template only when they are truly baseline fixture/example material.
+- Template owns external CLI extension policy and generic agent lifecycle tooling.
+- Personal owns the closed curated agent-plugin content set and its governance records.
+- External Oclif extensions live only under `rawr plugins`.
+- Curated agent lifecycle lives only under `rawr agent plugins`.
+- App composition is a consumer and never a lifecycle owner.
 
 ## Global CLI Wiring Ownership
 
-- Shared CLI contracts (including `rawr doctor global`) are template-owned.
-- CLI publishing ownership is template-only.
-- Baseline global wiring scripts (`scripts/dev/install-global-rawr.sh`, `scripts/dev/auto-refresh-main.sh`, `scripts/githooks/*`) are template baseline and should land here first.
-- Downstream personal repos may keep machine-only overrides, but those are not template defaults.
+- CLI contracts, controller releases, activation, and `rawr doctor global` are
+  Template-owned.
+- The global launcher selects an installed immutable controller release, never a
+  Template or personal checkout.
+- Personal checks may invoke an externally installed Template-owned tool at an
+  exact interface version. Personal does not vendor that tool.
 
-## Template-Managed Commit Guard
+## Repository Separation Rule (Hard)
 
-- Template-managed path manifest: `scripts/githooks/template-managed-paths.txt`.
-- Pre-commit guard implementation: `scripts/githooks/check-template-managed.ts`.
-- Intended behavior:
-  - In template repo: guard is inactive.
-  - In downstream personal repo: guard warns or blocks when staged files match template-managed paths.
-- Shared DevOps service/projection paths are template-owned:
-  `services/dev/**`, `packages/dev-node/**`, and `plugins/cli/devops/**`.
-- Mode controls (downstream):
-  - `RAWR_TEMPLATE_GUARD_MODE=off|warn|block`
-  - `git config rawr.templateGuardMode <off|warn|block>`
-  - Optional owner default block:
-    - `git config rawr.templateGuardOwnerEmail <you@example.com>`
-    - `git config rawr.templateGuardOwnerMode block`
+- No Template-to-personal merge, cherry-pick, transplant, or ancestry relationship.
+- No manual duplicate implementation or personal fork/copy of Template runtime code.
+- No standing tree-equivalence guard or Template-managed executable path manifest
+  in personal.
+- Each repository owns its own hooks, Graphite state, docs, and process records.
+- Cross-repository acceptance binds versioned schema/protocol IDs, immutable
+  artifact digests, and governed record digests. Git commits are audit provenance only.
 
 ## Graphite Policy
 

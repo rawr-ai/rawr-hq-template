@@ -69,14 +69,8 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
   } else if (scratchPolicy.mode === "warn" && scratchPolicy.missing.length > 0 && apply) {
     issues.push(warning("SCRATCH_POLICY_WARNING", "Scratch policy warning.", { missing: scratchPolicy.missing }));
   }
-  if (input.healLinks) {
-    issues.push(warning("HEAL_LINKS_PLANNED_ONLY", "Link repair is emitted as an explicit follow-up command, not executed inside worktree cleanup."));
-  }
-
   const plannedRemovals = candidates.map((candidate) => planned("git", ["worktree", "remove", candidate.path]));
-  const followUpCommands = input.healLinks
-    ? [planned("rawr", ["plugins", "status", "--checks", "install", "--repair", "--no-fail", "--json"])]
-    : [];
+  const followUpCommands: ReturnType<typeof planned>[] = [];
   const check = preflight(issues);
   if (!apply || !check.ok) {
     return {

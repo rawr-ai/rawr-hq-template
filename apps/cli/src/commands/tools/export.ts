@@ -29,7 +29,6 @@ const TOOLS: ToolExport[] = [
   { command: "plugins web disable <id>", description: "Disable a workspace runtime web plugin (persisted)" },
   { command: "plugins web status", description: "Show whether workspace runtime web plugins are enabled" },
   { command: "plugins web enable all", description: "Enable all workspace runtime web plugins (gated)" },
-  { command: "plugins cli install all", description: "Link all workspace command plugins into the local oclif manager" },
   { command: "plugins sync all", description: "Canonical full plugin sync (Codex + Claude + Cowork + orphan retirement)" },
   { command: "plugins sync <plugin-ref>", description: "Sync a single plugin source (focused/debug path)" },
   { command: "plugins sync drift", description: "Report material plugin drift (ignores metadata-only upserts by default)" },

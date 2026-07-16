@@ -231,16 +231,6 @@ describe("@rawr/plugin-plugins", () => {
     expect(warnings).toEqual([]);
   });
 
-  it("checks install state from the invocation workspace during external source sync status", async () => {
-    const commandSource = await fs.readFile(
-      path.join(testDir, "..", "src", "commands", "plugins", "status.ts"),
-      "utf8",
-    );
-
-    expect(commandSource).toContain("const installWorkspaceRoot = sourceWorkspace.external && sourceWorkspace.invocationWorkspaceRoot");
-    expect(commandSource).toContain("workspaceRoot: installWorkspaceRoot");
-  });
-
   it("selects an external source workspace without treating sync.sources.paths as workspace authority", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "plugin-plugins-source-workspace-"));
     tempDirs.push(root);
@@ -295,7 +285,6 @@ describe("@rawr/plugin-plugins", () => {
         coworkEnabled: true,
         claudeInstallEnabled: true,
         claudeEnableEnabled: true,
-        installReconcileEnabled: true,
         retireOrphansEnabled: true,
         force: true,
         gc: true,
@@ -329,7 +318,6 @@ describe("@rawr/plugin-plugins", () => {
           coworkEnabled: true,
           claudeInstallEnabled: true,
           claudeEnableEnabled: true,
-          installReconcileEnabled: true,
           retireOrphansEnabled: true,
           force: true,
           gc: true,
@@ -369,7 +357,6 @@ describe("@rawr/plugin-plugins", () => {
           coworkEnabled: true,
           claudeInstallEnabled: true,
           claudeEnableEnabled: true,
-          installReconcileEnabled: true,
           retireOrphansEnabled: true,
           force: true,
           gc: true,
@@ -403,7 +390,6 @@ describe("@rawr/plugin-plugins", () => {
           coworkEnabled: true,
           claudeInstallEnabled: true,
           claudeEnableEnabled: true,
-          installReconcileEnabled: true,
           retireOrphansEnabled: true,
           force: true,
           gc: true,

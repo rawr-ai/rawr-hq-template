@@ -6,7 +6,7 @@
 
 ## Entry Points
 
-- Runtime bootstrap and journaling boundary: `src/index.ts`.
+- Installed controller bootstrap and dispatch boundary: `src/index.ts`.
 - Command tree root: `src/commands/`.
 - Shared command helpers: `src/lib/`.
 
@@ -14,12 +14,17 @@
 
 - General commands: `src/commands/{doctor,reflect,...}.ts`
 - Topic commands: `src/commands/<topic>/*.ts`
-- Workspace plugin management: `plugins/cli/plugins/src/commands/plugins/web/*.ts`
+- External extension projections: `src/commands/plugins/**`
+- Interim mixed lifecycle commands under `plugins/cli/plugins/**` are migration
+  evidence only and must not gain new authority.
 
 ## Command Surface Invariant
 
-- Use `rawr plugins web ...` for workspace runtime plugins.
-- Reserve `rawr plugins ...` for external CLI plugin channel guidance.
+- `rawr plugins ...` manages external Oclif extensions only.
+- `rawr agent plugins ...` manages curated agent-plugin lifecycle only.
+- App composition does not install, release, reconcile, or repair either channel.
+- Production/operational proof uses a materialized installed controller, not the
+  source entrypoint.
 
 ## Routing
 

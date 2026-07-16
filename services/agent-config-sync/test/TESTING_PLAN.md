@@ -89,7 +89,7 @@ Guarantee: `rawr plugins sync all` is the deterministic daily convergence path, 
 
 Prevent:
 
-- disabling Cowork, Codex package/install, Claude install, force, GC, install reconcile, or orphan retirement without `--allow-partial`;
+- disabling Cowork, Codex package/install, Claude install, force, GC, or orphan retirement without `--allow-partial`;
 - letting single-plugin sync inherit destructive full-sync defaults;
 - adding a new side effect without updating partial-mode policy.
 

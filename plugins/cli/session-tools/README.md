@@ -4,21 +4,16 @@ Session listing/search/extraction commands for the RAWR CLI.
 
 ## Local dev
 
-- Link the plugin:
-  - From repo root (runs with cwd = `apps/cli`): `bun run rawr plugins link ../../plugins/cli/session-tools`
-  - Or explicitly: `cd apps/cli && bun src/index.ts plugins link ../../plugins/cli/session-tools`
+- Build and select a controller release after changing this official module:
+  - `./scripts/dev/install-global-rawr.sh --json`
 - Run commands:
-  - `bun run rawr sessions list --table`
-  - `bun run rawr sessions resolve <id>`
-  - `bun run rawr sessions search --query-metadata oclif`
-  - `bun run rawr sessions extract <id> --format markdown`
+  - `rawr sessions list --table`
+  - `rawr sessions resolve <id>`
+  - `rawr sessions search --query-metadata oclif`
+  - `rawr sessions extract <id> --format markdown`
 
-> **Heads-up: the “disposable worktree” trap**
-> - `rawr plugins link` stores an **absolute path** to the plugin directory.
-> - If you link from a **disposable git worktree** and later delete it, `rawr` can fail at startup (missing `package.json`).
-> - Prefer linking from a **stable checkout path** (your primary worktree), using an absolute path.
-> - Recovery: `rawr plugins uninstall <plugin>` (or `rawr plugins reset` to wipe all user-linked plugins).
-> - If available, prefer the repo-root helper: `rawr plugins install all`.
+Session Tools is an immutable controller member. Do not link it into the native
+external-extension registry.
 
 ## Structured facet filters
 
@@ -39,9 +34,9 @@ facet-only search:
 
 Examples:
 
-- `bun run rawr sessions search --has-tag proposed_plan --limit 50`
-- `bun run rawr sessions search --has-directive code-comment --has-tool apply_patch --query "Updated the following files"`
-- `bun run rawr sessions search --has-payload-type message --has-top-type assistant --query "gt move"`
+- `rawr sessions search --has-tag proposed_plan --limit 50`
+- `rawr sessions search --has-directive code-comment --has-tool apply_patch --query "Updated the following files"`
+- `rawr sessions search --has-payload-type message --has-top-type assistant --query "gt move"`
 
 Facet-only search is bounded by `--candidate-limit` and returns at most
 `--limit` hits. Content search keeps `--max-matches` as the returned hit cap;

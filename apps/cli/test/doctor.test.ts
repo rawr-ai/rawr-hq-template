@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 describe("rawr doctor", () => {
   it("prints ok", () => {
     const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-    const proc = spawnSync("bun", ["src/index.ts", "doctor"], {
+    const proc = spawnSync("bun", ["test/command-fixture/command-test-cli.ts", "doctor"], {
       cwd: projectRoot,
       encoding: "utf8",
       env: { ...process.env },

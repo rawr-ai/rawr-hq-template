@@ -8,7 +8,7 @@ import {
 } from "../../lib/hq-ops-client";
 import { journalId, safePreview } from "../../lib/journal-projection";
 import { recordArtifact, recordStep } from "../../lib/journal-context";
-import { resolveCliEntrypoint, runStep, type StepResult } from "../../lib/subprocess";
+import { resolveCliReentry, runStep, type StepResult } from "../../lib/subprocess";
 import { findWorkspaceRoot } from "@rawr/core";
 
 type HardenStep = StepResult & { stdoutJson?: any };
@@ -48,41 +48,41 @@ export default class WorkflowHarden extends RawrCommand {
     const snapshotOutDir = path.join(workspaceRoot, ".rawr", "routines", tsDir);
     const postureOutDir = path.join(workspaceRoot, ".rawr", "security", "posture", tsDir);
 
-    const entrypoint = resolveCliEntrypoint();
+    const rawr = resolveCliReentry();
 
     const planned: HardenStep[] = [
       {
         name: "snapshot",
-        cmd: "bun",
-        args: [entrypoint, "routine", "snapshot", "--json", "--out", snapshotOutDir],
-        cwd: workspaceRoot,
+        cmd: rawr.cmd,
+        args: [...rawr.args, "routine", "snapshot", "--json", "--out", snapshotOutDir],
+        cwd: rawr.cwd,
         status: "planned",
       },
       {
         name: "security",
-        cmd: "bun",
+        cmd: rawr.cmd,
         args: [
-          entrypoint,
+          ...rawr.args,
           "security",
           "check",
           "--json",
           ...(mode === "staged" ? ["--staged"] : ["--repo"]),
         ],
-        cwd: workspaceRoot,
+        cwd: rawr.cwd,
         status: "planned",
       },
       {
         name: "posture",
-        cmd: "bun",
-        args: [entrypoint, "security", "posture", "--json", "--out", postureOutDir],
-        cwd: workspaceRoot,
+        cmd: rawr.cmd,
+        args: [...rawr.args, "security", "posture", "--json", "--out", postureOutDir],
+        cwd: rawr.cwd,
         status: "planned",
       },
       {
         name: "routine-check",
-        cmd: "bun",
-        args: [entrypoint, "routine", "check", "--json", "--mode", mode],
-        cwd: workspaceRoot,
+        cmd: rawr.cmd,
+        args: [...rawr.args, "routine", "check", "--json", "--mode", mode],
+        cwd: rawr.cwd,
         status: includeCheck ? "planned" : "skipped",
       },
     ];
@@ -114,6 +114,7 @@ export default class WorkflowHarden extends RawrCommand {
         cmd: step.cmd,
         args: step.args,
         cwd: step.cwd,
+        env: rawr.env,
         inheritStdio: !baseFlags.json,
       });
 

@@ -116,3 +116,17 @@ Status: Complete
    - linked from `docs/PROCESS.md` and root `AGENTS.md`.
 5. Coverage matrix governance decisions updated:
    - default parent-router policy retained for `packages/control-plane` and `packages/session-tools`.
+
+## Addendum (2026-07-16: Repository Authority Correction)
+
+The upstream/downstream and shared-tree operating model recorded above is no longer
+active. `RAWR HQ-Template` and personal `RAWR HQ` are fully separate repositories.
+
+- Template owns controller/runtime/tooling implementations.
+- Personal owns curated agent content and its governed content records.
+- The historical upstream-sync runbook and Template-managed path guard were removed.
+- Cross-repository work uses versioned schemas/protocols and immutable artifacts,
+  never Git ancestry, code copies, or standing tree equivalence.
+
+This report remains archived provenance; its earlier validation results are not
+current operating guidance.

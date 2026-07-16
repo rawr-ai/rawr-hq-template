@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 function runRawr(args: string[]) {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  return spawnSync("bun", ["src/index.ts", ...args], {
+  return spawnSync("bun", ["test/command-fixture/command-test-cli.ts", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
     env: { ...process.env },

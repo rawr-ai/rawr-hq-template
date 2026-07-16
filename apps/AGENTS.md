@@ -26,6 +26,7 @@
 ## Invariants
 
 - Reuse `@rawr/*` packages; avoid cross-app internal coupling.
-- Keep command examples aligned with channel split:
-  - `rawr plugins ...` (external CLI plugins)
-  - `rawr plugins web ...` (workspace runtime plugins)
+- Keep authority boundaries explicit:
+  - `rawr plugins ...` manages external Oclif extensions.
+  - `rawr agent plugins ...` manages curated agent-plugin lifecycle.
+  - server/web app composition consumes declared outputs and owns no lifecycle state.

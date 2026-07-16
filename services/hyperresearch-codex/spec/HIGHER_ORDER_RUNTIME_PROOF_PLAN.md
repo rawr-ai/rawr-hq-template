@@ -1,11 +1,17 @@
 # Higher-Order Runtime Proof Plan
 
-This plan defines the first acceptance proof after the packet-provenance service contract. It is intentionally narrower than full Hyperresearch V8 parity: it proves live Codex/RAWR runtime behavior that was previously unproven, while keeping Hooks/MCP, full-tier depth work, and long-form research quality out of scope until separately validated.
+This completed historical plan defined the first acceptance proof after the
+packet-provenance service contract. It is intentionally narrower than full
+Hyperresearch V8 parity: it proved live Codex/RAWR runtime behavior that was
+previously unproven, while keeping Hooks/MCP, full-tier depth work, and
+long-form research quality out of scope until separately validated. Personal
+commit references are audit provenance only and do not define an integration
+path.
 
 ## Baseline
 
 - Template baseline: `220885d1 test(hyperresearch): prove codex rawr packet workflow`.
-- Downstream baseline: `af264960 docs(hyperresearch): sync codex rawr proof evidence`.
+- Historical personal evidence commit: `af264960 docs(hyperresearch): sync codex rawr proof evidence` (audit provenance only).
 - Completed claim: service implementation and packet provenance contract are green.
 - Remaining target: runtime evidence that native `codex-rawr exec` can drive the synced Hyperresearch workflow with role-agent fan-out, resume, multiple source captures, final claim trace, and service validation.
 
@@ -68,7 +74,7 @@ This proof does not claim:
 - Hooks/MCP runtime parity,
 - long-form report quality parity,
 - automatic parent-side orchestration without prompt guidance,
-- global downstream plugin drift resolution,
+- personal repository or provider-home drift resolution,
 - PR submission or release readiness.
 
 ## Evidence To Preserve
@@ -93,7 +99,7 @@ After the proof, run a default-agent review pass focused on:
 - whether the evidence actually proves native role-agent fan-out,
 - whether resume was real and ledgered,
 - whether claim trace/source capture validation is honest,
-- whether specs and downstream material need updates,
+- whether specs or versioned artifact contracts need updates,
 - whether any topology or service-law regression was introduced.
 
 ## Result

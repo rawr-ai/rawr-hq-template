@@ -17,7 +17,7 @@ This keeps the service contract aligned with how Hyperresearch actually consumes
 - Hooks parity. Hooks remain a separate track.
 - MCP parity. MCP remains parked because the direct Hyperresearch CLI backend is still the authoritative loop.
 - Production Inngest readiness.
-- Unrelated downstream global plugin drift.
+- Personal repository and provider-home drift, which have separate owners.
 - Automatic Codex descendant rehydration from bare parent resume.
 
 ## Implementation Contract
@@ -45,7 +45,7 @@ The fallback proof must show:
 - replacement success never changes the original attempt classification to `clean_completed`;
 - malformed replacement output, missing audit metadata, bad artifact hash, missing source capture, or conflicting duplicate output blocks;
 - final `validate --backend real` still requires source capture, claim trace, patch-log coverage, and artifact integrity;
-- downstream installed material tells parent coordinators to prefer explicit child resume and use replacement attempts only for non-clean child attempts.
+- artifact-backed installed material tells parent coordinators to prefer explicit child resume and use replacement attempts only for non-clean child attempts; the artifact is bound to an exact Template interface version and is not read from a personal checkout.
 
 ## Review Loop
 

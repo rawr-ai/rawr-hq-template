@@ -16,7 +16,6 @@ export function evaluateFullSyncPolicy(input: FullSyncPolicyInput): FullSyncPoli
   if (input.claudeInstallEnabled && !input.claudeEnableEnabled) {
     partialReasons.push("claude enable disabled");
   }
-  if (!input.installReconcileEnabled) partialReasons.push("install reconcile disabled");
   if (!input.retireOrphansEnabled) partialReasons.push("stale managed plugin retirement disabled");
   if (!input.force) partialReasons.push("force disabled");
   if (!input.gc) partialReasons.push("gc disabled");

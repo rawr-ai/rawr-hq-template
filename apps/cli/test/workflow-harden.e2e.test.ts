@@ -10,7 +10,7 @@ function runRawr(args: string[]) {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const outputDir = mkdtempSync(path.join(tmpdir(), "rawr-workflow-harden-"));
   const stdoutPath = path.join(outputDir, "stdout.json");
-  const proc = spawnSync("bash", ["-lc", 'bun src/index.ts "$@" > "$RAWR_STDOUT"', "rawr", ...args], {
+  const proc = spawnSync("bash", ["-lc", 'bun test/command-fixture/command-test-cli.ts "$@" > "$RAWR_STDOUT"', "rawr", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
     env: { ...process.env, RAWR_STDOUT: stdoutPath },

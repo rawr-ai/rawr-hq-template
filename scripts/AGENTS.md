@@ -11,28 +11,21 @@
 
 ## Git Hooks
 - Shipped hooks live in `scripts/githooks/**`.
-- `scripts/githooks/pre-commit` runs repository hygiene checks:
-  - template-managed path guard in downstream repos:
-    - policy manifest: `scripts/githooks/template-managed-paths.txt`
-    - check implementation: `scripts/githooks/check-template-managed.ts`
-    - modes: `off|warn|block` (`warn` default downstream)
-    - controls: `RAWR_TEMPLATE_GUARD_MODE`, `rawr.templateGuardMode`
-  - `rawr plugins status --checks all` to make sync/install drift unmissable before commit
-  - bypass knob: `RAWR_SKIP_SYNC_DRIFT_CHECK=1` (one-off only)
 - `scripts/githooks/post-merge` and `scripts/githooks/post-checkout` run main-branch auto-refresh:
   - refresh dependencies when needed
-  - refresh Bun-global `rawr` symlink only when this checkout is the active owner
-  - run a CLI smoke check (`rawr --version`)
+  - never build, select, relink, or rewrite the installed controller
 - `scripts/githooks/pre-push` enforces cross-repo remote safety:
   - remote must be `origin`
-  - remotes must match personal repo expectations (`origin=rawr-hq`, `upstream=rawr-hq-template`)
+  - origin must match this Template repository
+- Do not ship a Template-managed path guard for personal. The repositories own
+  separate trees and process configuration; there is no sync or equivalence relation.
 - To enable repo-local hooks:
   - `git config core.hooksPath scripts/githooks`
 
 ## Conventions
 - Hook output should be short and actionable (avoid noisy logs).
-- Security model reference: `docs/SECURITY_MODEL.md`.
-- Global CLI installer: `scripts/dev/install-global-rawr.sh`.
-- Global CLI owner activation: `scripts/dev/activate-global-rawr.sh`.
+- Security model reference: `docs/system/SECURITY_MODEL.md`.
+- Controller release installer: `scripts/dev/install-global-rawr.sh`.
+- Existing-release selector: `scripts/dev/activate-global-rawr.sh`.
 - Remote verifier: `scripts/dev/check-remotes.sh`.
-- Main-branch auto-refresh driver: `scripts/dev/auto-refresh-main.sh`.
+- Main-branch dependency refresh driver: `scripts/dev/auto-refresh-main.sh`.

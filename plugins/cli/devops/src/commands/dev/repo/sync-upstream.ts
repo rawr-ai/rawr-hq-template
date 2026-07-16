@@ -12,8 +12,8 @@ export default class DevRepoSyncUpstream extends RawrCommand {
     apply: Flags.boolean({ description: "Execute the planned upstream sync", default: false }),
     "upstream-ref": Flags.string({ description: "Upstream ref. Defaults to git config rawr.upstreamRef, then origin/main." }),
     "branch-prefix": Flags.string({ description: "Prefix for generated sync branch", default: "chore/upstream-sync" }),
-    "converge-after": Flags.boolean({
-      description: "Emit explicit plugin convergence follow-up commands",
+    "inspect-after": Flags.boolean({
+      description: "Emit controller and external-extension inspection follow-up commands",
       default: false,
     }),
   } as const;
@@ -33,7 +33,7 @@ export default class DevRepoSyncUpstream extends RawrCommand {
       apply: Boolean(flags.apply) && !baseFlags.dryRun,
       upstreamRef: flags["upstream-ref"] ? String(flags["upstream-ref"]) : undefined,
       branchPrefix: String(flags["branch-prefix"]),
-      convergeAfter: Boolean(flags["converge-after"]),
+      inspectAfter: Boolean(flags["inspect-after"]),
       scratchPolicy: await resolveNodeScratchPolicyInput({ workspaceRoot }),
     }, { context: { invocation: { traceId: "plugin-devops.repo.sync-upstream" } } });
     const result = this.ok(data);

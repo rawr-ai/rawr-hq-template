@@ -26,17 +26,15 @@ import {
   syncCodexNativeAgentRoles,
   type SyncItemResult,
   type SyncScope,
-} from "#lib/agent-config-sync";
+} from "../../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
-import { loadLayeredRawrConfigForCwd } from "#lib/layered-config";
-import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "#lib/plugin-install-service";
+import { loadLayeredRawrConfigForCwd } from "../../../lib/layered-config";
 
 /**
  * Runs the canonical full plugin sync across all active sources.
  *
- * The command orchestrates across agent-config-sync and HQ Ops without merging
- * the two service domains: destination sync stays standalone, while install
- * reconciliation stays HQ-owned.
+ * The command orchestrates provider/content sync only. External CLI extension
+ * state is owned separately by the native Oclif manager.
  */
 export default class PluginsSyncAll extends RawrCommand {
   static description = "Canonical native provider plugin sync across active RAWR plugin sources";
@@ -99,11 +97,6 @@ export default class PluginsSyncAll extends RawrCommand {
       default: true,
       allowNo: true,
     }),
-    "install-reconcile": Flags.boolean({
-      description: "Reconcile local CLI plugin-manager links after sync",
-      default: true,
-      allowNo: true,
-    }),
     "destination-projection": Flags.boolean({
       description:
         "Also write modeled content to explicit filesystem destination paths; not a Codex/Claude harness sync fallback",
@@ -161,9 +154,6 @@ export default class PluginsSyncAll extends RawrCommand {
         configGlobalPath: invocationLayered.globalPath,
       });
       const workspaceRoot = sourceWorkspace.sourceWorkspaceRoot;
-      const installWorkspaceRoot = sourceWorkspace.external && sourceWorkspace.invocationWorkspaceRoot
-        ? sourceWorkspace.invocationWorkspaceRoot
-        : workspaceRoot;
       const layered = sourceWorkspace.external
         ? await loadLayeredRawrConfigForCwd(workspaceRoot)
         : invocationLayered;
@@ -177,8 +167,6 @@ export default class PluginsSyncAll extends RawrCommand {
       const installScope = (flags as any)["install-scope"] as "user";
       const claudeInstallEnabled = Boolean((flags as any)["claude-install"]);
       const claudeEnableEnabled = Boolean((flags as any)["claude-enable"]);
-      const installReconcileEnabled = Boolean((flags as any)["install-reconcile"]);
-      const runtimePlugins = runtimePluginSnapshot(this.config.plugins);
       const retireOrphansEnabled = Boolean((flags as any)["retire-orphans"]);
       const allowPartial = Boolean((flags as any)["allow-partial"]);
       const forceEnabled = Boolean(flags.force);
@@ -208,7 +196,6 @@ export default class PluginsSyncAll extends RawrCommand {
           codexInstallEnabled,
           claudeInstallEnabled,
           claudeEnableEnabled,
-          installReconcileEnabled,
           retireOrphansEnabled,
           force: forceEnabled,
           gc: gcEnabled,
@@ -316,7 +303,6 @@ export default class PluginsSyncAll extends RawrCommand {
         stalePlugins: [],
         actions: [],
       };
-      let installReconcile: Record<string, unknown> = { action: "skipped", reason: "not run" };
       let postStepFailed = false;
       const syncTargetsForWarnings: Array<{
         agent: string;
@@ -603,15 +589,6 @@ export default class PluginsSyncAll extends RawrCommand {
         );
       }
 
-      installReconcile = await reconcileWorkspaceInstallLinks({
-        workspaceRoot: installWorkspaceRoot,
-        dryRun: baseFlags.dryRun,
-        enabled: installReconcileEnabled,
-        runtimePlugins,
-        oclifDataDir: (this.config as any).dataDir as string | undefined,
-      });
-      if ((installReconcile as any).action === "failed") postStepFailed = true;
-
       const ok = results.every((r) => r.ok) && !postStepFailed && retireOrphans.ok;
       warnings = buildProviderWorkflowMirrorWarnings({
         cleanupBehind,
@@ -645,7 +622,6 @@ export default class PluginsSyncAll extends RawrCommand {
             cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
             claudeInstall,
             retireOrphans,
-            installReconcile,
             undo,
           }, undefined, warnings.length > 0 ? warnings : undefined)
         : this.fail(results.some((r) => !r.ok) ? "Sync-all completed with conflicts" : "Sync-all completed but post-sync steps failed", {
@@ -664,7 +640,6 @@ export default class PluginsSyncAll extends RawrCommand {
               cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
               claudeInstall,
               retireOrphans,
-              installReconcile,
               warnings,
               undo,
             },
@@ -710,7 +685,6 @@ export default class PluginsSyncAll extends RawrCommand {
             this.log(`Install scope: ${installScope}`);
           }
           for (const warning of warnings) this.log(`warning: ${warning}`);
-          this.log(`Install reconcile: ${(installReconcile as any).action}`);
           if (coworkEnabled) this.log(`Cowork out: ${coworkOutDirAbs}`);
           if (undo.available) this.log(`Undo: rawr undo (capsule=${undo.capsuleId})`);
         },
