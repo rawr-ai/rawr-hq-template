@@ -77,6 +77,26 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/agent-plugin-release"),
+        test: { name: "agent-plugin-release", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("services/agent-plugin-build"),
+        test: { name: "agent-plugin-build", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("services/agent-plugin-export"),
+        test: { name: "agent-plugin-export", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("services/agent-plugin-packaging"),
+        test: { name: "agent-plugin-packaging", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("packages/agent-config-sync-node"),
         test: { name: "agent-config-sync-node", environment: "node", include: [...includes] },
       },
