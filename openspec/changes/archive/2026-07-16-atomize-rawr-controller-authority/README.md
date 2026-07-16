@@ -1,6 +1,6 @@
 # C1 Atomic Controller Execution Record
 
-**Status:** READY_TO_SUBMIT
+**Status:** ARCHIVED_RECORD_PENDING_LANDING
 
 **Change:** `atomize-rawr-controller-authority`
 
@@ -25,11 +25,14 @@ The two personal Git objects are audit/design provenance. This Template change h
 | Bootstrap parent `main` | `4daa77b1904212d13f50bf6af0c88b4cc96a1ad7` |
 | Bootstrap landed `main` | `161fb4f5de6596a6d6aa369c0a2d904165474a7e` (PR #332) |
 | Bootstrap worktree/branch | `wt-template-atomize-rawr-controller-authority` / `codex/atomize-rawr-controller-authority` (merged and drained) |
-| Active implementation worktree | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-c1-atomic-controller` |
-| Active Graphite branch | `codex/c1-atomic-controller` (created by this implementation-opening record) |
+| Reviewed implementation commit | `6e6f7aadc46e9ce87beb97dc3ea1ab7475bd4d28` |
+| Source landed `main` | `5aad2da932e3c74c586a64a5f381a5c4a80424d2` (PR #333) |
+| Implementation worktree/branch | `wt-template-c1-atomic-controller` / `codex/c1-atomic-controller` (merged; drain waits for archive landing) |
+| Archive worktree/branch | `wt-template-c1-archive` / `codex/c1-controller-authority-archive` |
+| Archive path | `openspec/changes/archive/2026-07-16-atomize-rawr-controller-authority` |
 | OpenSpec CLI | `@fission-ai/openspec@1.3.1` |
 | Bootstrap command | `bunx @fission-ai/openspec@1.3.1 init . --tools codex --profile core` |
-| Current gate | reviewed implementation committed and exact committed-tree proof green; Graphite submission pending |
+| Current gate | source landed, post-main proof green, canonical specs synced, and record archived; archive-record landing pending |
 
 The worktree started clean from exact Template `main`. The initial Nx first hop failed only because a new worktree had no dependencies; `bun install --frozen-lockfile` restored the workspace, after which `bunx nx show projects`, `show project @rawr/cli --json`, and `nx graph --print` succeeded.
 
@@ -161,11 +164,19 @@ Cross-repository acceptance binds artifact handle, payload digest, schema/protoc
 | official lifecycle projections | PASS | `@rawr/plugin-plugins` build/typecheck/lint/test/sync/structural passed after mechanically replacing 31 same-project `#lib/*` imports with behavior-equivalent relative imports, 16/16 tests; `@rawr/plugin-devops` build/typecheck/test/sync passed, 1/1 test; every other changed official or external-fixture plugin's declared build/typecheck/test/structural targets passed in the affected graph. |
 | inherited structural baselines | PASS | the CLI projection client now uses the established typed `bindService` boundary; exact Dev/Dev Node/DevOps roots, tags, and declared targets are recorded in the architecture inventory and all three sync checks pass; the ESLint fixture gate proves one positive fixture clean and three intentional negative fixtures fail only severity-2 `@nx/enforce-module-boundaries`. |
 | architecture ratchets | PASS | controller classification, no-official-relink authority, and repository-separation guards passed; `git diff --check` passed |
-| affected working-tree graph | PASS after delete repair | uncached `nx affected -t test,lint,typecheck,build,structural --base=161fb4f5de6596a6d6aa369c0a2d904165474a7e` intentionally omitted `--head` so Nx included uncommitted implementation state; the post-repair rerun passed all targets for 33 projects plus 17 dependent tasks. The exact committed `--head=HEAD` rerun remains the pre-submit gate. |
-| affected committed-tree graph | PASS | after the implementation commit, the same uncached 33-project/17-dependent-task graph passed with exact `--base=161fb4f5de6596a6d6aa369c0a2d904165474a7e --head=HEAD`; a final post-record-amend rerun is the no-further-change submission check. |
+| affected working-tree graph | PASS after delete repair | uncached `nx affected -t test,lint,typecheck,build,structural --base=161fb4f5de6596a6d6aa369c0a2d904165474a7e` intentionally omitted `--head` so Nx included uncommitted implementation state; the post-repair rerun passed all targets for 33 projects plus 17 dependent tasks. |
+| affected committed-tree graph | PASS | after the implementation commit and final record amendment, the same uncached 33-project/17-dependent-task graph passed with exact `--base=161fb4f5de6596a6d6aa369c0a2d904165474a7e --head=HEAD`. |
 | installed controller acceptance | PASS after delete repair | the post-repair uncached clean-home/source-deletion acceptance materialized one verified controller, removed its source checkout, executed 97 fresh processes and all 67 manifest commands, completed guarded external lifecycle recovery, and reported `ambientStartupExecuted=false`. |
 | final standing review | PASS after delete-safety repair | TypeScript, behavior/transaction, delete-safety, and structural-quality reviews report no unresolved P1/P2. A dedicated delete audit found two P2s; both were repaired, independently re-audited, and included in the refreshed full proof before the final structural return. |
+| source landing | PASS | Graphite submission used `--ai`; Template PR #333 merged reviewed feature commit `6e6f7aadc46e9ce87beb97dc3ea1ab7475bd4d28` as `main` commit `5aad2da932e3c74c586a64a5f381a5c4a80424d2`. |
+| post-main specification and ratchets | PASS | detached exact-main proof passed pinned strict OpenSpec validation, controller classification (9 complete), no-official-relink authority, repository separation, and `git diff --check`. |
+| post-main affected graph | PASS | exact merged `HEAD` passed the uncached 33-project/17-dependent-task `test,lint,typecheck,build,structural` graph from bootstrap `161fb4f5de6596a6d6aa369c0a2d904165474a7e`. |
+| post-main installed acceptance | PASS | digest `7170a505a2e7e8de7ddf574fd027f2911d0ca224a2cd9ce4a79ce11e8ef07c58`; source removed; 97 fresh processes; 67 manifest commands; full external recovery; `ambientStartupExecuted=false`. |
+| canonical spec sync | PASS | both all-`ADDED` deltas were copied verbatim beneath canonical Purpose/Requirements headings; exact tail comparison passed; pre-move strict validation passed the active change plus both canonical specs (3/3), and post-move strict validation passed both canonical specs (2/2) with no active changes remaining. |
+| guarded archive move | PASS | the source was a non-symlink direct child of canonical `openspec/changes`, the archive directory was a non-symlink direct child on the same filesystem, the dated destination was absent including broken symlinks, and one directory `mv` completed without recursive removal. |
 
 ## Closure
 
 C1 settles only when every task is truthful, B01-B03/B32 and positive/violation probes pass at their declared layers, standing reviews have no unresolved P1/P2, the affected Nx graph and clean-home controller acceptance are green, source deletion does not break operation, Template `main` contains the reviewed implementation, the OpenSpec record is archived after landing, and all C1 Graphite branches/worktrees are drained. No personal mutation or protected-lane output is part of C1 closure.
+
+At archive preparation, 39 of 41 tasks are complete. Tasks 10.2 and 10.3 remain intentionally open because archive-record landing and the subsequent branch/worktree drain cannot be observed before this record moves and lands. The next Template-only C2 bootstrap is the downstream closure attestation: it records the exact archive `main` commit and clean drain evidence in this archived record, checks those two tasks, and lands before C2 implementation opens. This bookkeeping does not create lifecycle authority or a recursive closure branch.
