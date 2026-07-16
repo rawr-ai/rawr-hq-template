@@ -17,6 +17,10 @@
       },
       "devDependencies": {
         "@nx/eslint-plugin": "^22.5.4",
+        "@rawr/agent-plugin-build": "workspace:*",
+        "@rawr/agent-plugin-export": "workspace:*",
+        "@rawr/agent-plugin-packaging": "workspace:*",
+        "@rawr/agent-plugin-release": "workspace:*",
         "@rawr/controller-release": "workspace:*",
         "@types/node": "^22.14.0",
         "@typescript-eslint/parser": "^8.57.1",
@@ -41,6 +45,7 @@
         "@orpc/client": "^1.13.5",
         "@rawr/agent-config-sync": "workspace:*",
         "@rawr/agent-config-sync-node": "workspace:*",
+        "@rawr/agent-plugin-export": "workspace:*",
         "@rawr/controller-release": "workspace:*",
         "@rawr/core": "workspace:*",
         "@rawr/dev": "workspace:*",
@@ -141,6 +146,12 @@
       "devDependencies": {
         "@types/node": "^22.14.0",
         "@types/yazl": "^3.2.6",
+        "typescript": "^5.9.3",
+      },
+    },
+    "packages/agent-plugin-release": {
+      "name": "@rawr/agent-plugin-release",
+      "devDependencies": {
         "typescript": "^5.9.3",
       },
     },
@@ -341,6 +352,35 @@
       "devDependencies": {
         "@opentelemetry/context-async-hooks": "^2.6.0",
         "@opentelemetry/sdk-trace-base": "^2.6.0",
+        "typescript": "^5.9.3",
+      },
+    },
+    "services/agent-plugin-build": {
+      "name": "@rawr/agent-plugin-build",
+      "dependencies": {
+        "@rawr/agent-plugin-release": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
+    "services/agent-plugin-export": {
+      "name": "@rawr/agent-plugin-export",
+      "dependencies": {
+        "@rawr/agent-plugin-release": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
+    "services/agent-plugin-packaging": {
+      "name": "@rawr/agent-plugin-packaging",
+      "dependencies": {
+        "@rawr/agent-plugin-release": "workspace:*",
+        "yazl": "^3.3.1",
+      },
+      "devDependencies": {
+        "@types/yazl": "^3.3.0",
         "typescript": "^5.9.3",
       },
     },
@@ -1077,6 +1117,14 @@
     "@rawr/agent-config-sync": ["@rawr/agent-config-sync@workspace:services/agent-config-sync"],
 
     "@rawr/agent-config-sync-node": ["@rawr/agent-config-sync-node@workspace:packages/agent-config-sync-node"],
+
+    "@rawr/agent-plugin-build": ["@rawr/agent-plugin-build@workspace:services/agent-plugin-build"],
+
+    "@rawr/agent-plugin-export": ["@rawr/agent-plugin-export@workspace:services/agent-plugin-export"],
+
+    "@rawr/agent-plugin-packaging": ["@rawr/agent-plugin-packaging@workspace:services/agent-plugin-packaging"],
+
+    "@rawr/agent-plugin-release": ["@rawr/agent-plugin-release@workspace:packages/agent-plugin-release"],
 
     "@rawr/bootgraph": ["@rawr/bootgraph@workspace:packages/bootgraph"],
 

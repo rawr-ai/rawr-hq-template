@@ -14,7 +14,7 @@ The Template-owned check application MUST accept an explicit content-workspace G
 - **AND** path similarity, shared ancestry, or tree equivalence does not grant authority
 
 ### Requirement: Eligible build is commit-aligned and fail-closed
-The Template-owned build application MUST construct release bytes only after the same source eligibility proof succeeds and MUST consume exactly the bytes represented by the claimed commit and tree. One Git-object snapshot capability MUST resolve the canonical repository and exact commit/tree, enumerate every admitted path and Git object ID, and return bounded owned byte copies read from those immutable Git objects. The worktree filesystem is eligibility evidence only and MUST NOT supply release payload bytes. Build MUST revalidate repository identity, HEAD, index, worktree, ignored and untracked consumed paths, tree, and object bindings before opening artifact staging and immediately before publication. A failed eligibility, ownership, or canonicalization check MUST close every durable output port before artifact publication. Check and build MUST be separate owner-specific application entrypoints and MUST NOT delegate to the inherited mixed `agent-config-sync` or plugin aggregate.
+The Template-owned build application MUST construct release bytes only after the same source eligibility proof succeeds and MUST consume exactly the bytes represented by the claimed commit and tree. One Git-object snapshot capability MUST resolve the canonical repository and exact commit/tree, enumerate every admitted path and Git object ID, and return bounded owned byte copies read from those immutable Git objects. The worktree filesystem is eligibility evidence only and MUST NOT supply release payload bytes. Build MUST revalidate repository identity, HEAD, index, worktree, ignored and untracked consumed paths, tree, and object bindings before opening artifact staging and immediately before publication. Its final eligibility linearization observation MUST be one bounded Git status view that includes tracked, index, untracked, and ignored state after the closing repository anchor; a late consumed untracked or ignored entry observed there MUST reject before publication. A failed eligibility, ownership, or canonicalization check MUST close every durable output port before artifact publication. Check and build MUST be separate owner-specific application entrypoints and MUST NOT delegate to the inherited mixed `agent-config-sync` or plugin aggregate.
 
 #### Scenario: Ineligible source emits no durable bytes
 - **WHEN** build encounters any dirty, staged, untracked-consumed, ignored-consumed, wrong-repository, wrong-tree, aliased, payload-misaligned, or ownership-conflicting input
@@ -30,6 +30,11 @@ The Template-owned build application MUST construct release bytes only after the
 - **WHEN** a consumed worktree file changes between eligibility probes while the claimed commit and tree remain available
 - **THEN** every candidate payload byte still comes only from the exact immutable Git blob object and final eligibility revalidation blocks publication
 - **AND** no filesystem read, ambient retry, or later worktree state substitutes for the claimed object snapshot
+
+#### Scenario: Late consumed path is visible at final eligibility
+- **WHEN** a consumed untracked or ignored path appears after the final index/object observations but before the closing bounded status view
+- **THEN** build rejects before the first durable artifact publication
+- **AND** the closing status, not an earlier tracked-only scan, remains the supported ordinary-race linearization point
 
 ### Requirement: C2 proof isolates protected lanes
 C2 implementation and acceptance proof MUST use generated fixture repositories and exact protected-root access and output traps. C2 applications and tests MUST NOT open, read, hash, materialize, build, package, export, release, distribute, rewrite, or re-evaluate the actual protected oRPC, effect-oRPC, Inngest, or effect-Inngest bytes. The accepted oRPC and effect-oRPC evidence set MUST remain read-only provenance, and pending HF01 MUST remain an external precondition to the later personal migration container. Generic check and build applications MUST NOT parse, validate, infer, or own the governed protected-lane record.
@@ -47,10 +52,10 @@ C2 implementation and acceptance proof MUST use generated fixture repositories a
 ### Requirement: Stable exact artifact storage
 The artifact store MUST persist immutable releases, release sets, and related mechanical artifacts below a branded `ArtifactStoreRoot` derived only by the CLI-owned agent-plugin layout from verified `ControllerRuntimeContext.dataRoot` and injected into the service. The service MUST NOT read `HOME`, cwd, environment variables, a content path, or an independently discovered fallback to select that root. Every payload member MUST be an independently stored regular file; publication and verification MUST reject symlinks, outside-resolving links, and regular files whose link count is greater than one. Every handle MUST be an explicit digest or validated artifact path bound to a canonical manifest and bytes; a content checkout path, research-vault path, worktree, Git remote, or lifecycle record MUST NOT be an artifact handle. Lookup and verification MUST fail on missing, malformed, tampered, aliased, or digest-mismatched data and MUST NOT rebuild source as a substitute.
 
-#### Scenario: Source and research locations disappear
-- **WHEN** a verified artifact is published and every source checkout and research-vault path is then removed
+#### Scenario: Disposable source locator becomes unavailable
+- **WHEN** a verified artifact is published from a generated fixture repository and that disposable fixture checkout is then made unavailable
 - **THEN** digest lookup and artifact verification still return the exact immutable release bytes
-- **AND** no path formerly used to locate source participates in artifact identity
+- **AND** no path formerly used to locate source participates in artifact identity; the actual personal checkout and protected research locations are never used or mutated by this fixture
 
 #### Scenario: Missing or tampered accepted artifact blocks
 - **WHEN** a referenced artifact is deleted or any manifest, mode, link, or payload byte differs from its claimed digest
@@ -117,7 +122,7 @@ A complete build MUST publish and verify every member release artifact before it
 - **AND** no partial member graph is returned as a complete set
 
 ### Requirement: Pin-aware and ownership-bounded retention
-Retention MUST receive a closed `RetentionPinsV1` containing only `ReleaseArtifactRef | CompleteSetArtifactRef` values through an explicit consumer-owned read port. It MUST verify each release ref's release/artifact pair and expand each complete-set ref to its set envelope plus every ordered member `ReleaseArtifactRef`; a missing or mismatched pinned graph MUST block the plan rather than label any reachable member collectible. Bare release, artifact, or set digest strings MUST NOT be accepted as pins. The artifact store MUST NOT parse, infer, select, or mutate a governed channel or acceptance record. C2 retention MUST be read-only planning: it MUST report only entries outside the verified expanded pin graph and independently eligible under a deterministic age or space policy, and it MUST NOT delete from a snapshot whose channel selection can race removal. Activating deletion requires a later race-safe authorization contract with the channel owner; pins alone MUST NOT authorize it. Before recursive removal of current-operation private staging, the store MUST prove immediately that the candidate is the exact canonical non-symlink directory it created directly below the expected private staging parent, its basename satisfies the owner-created private prefix, and its realpath equals the validated candidate. A failed type, containment, alias, link, or ownership check MUST preserve it and fail closed.
+Retention MUST receive a closed `RetentionPinsV1` containing only `ReleaseArtifactRef | CompleteSetArtifactRef` values through an explicit consumer-owned read port. It MUST verify each release ref's release/artifact pair and expand each complete-set ref to its set envelope plus every ordered member `ReleaseArtifactRef`; a missing or mismatched pinned graph MUST block the plan rather than label any reachable member collectible. Bare release, artifact, or set digest strings MUST NOT be accepted as pins. The artifact store MUST NOT parse, infer, select, or mutate a governed channel or acceptance record. C2 retention MUST be read-only planning: it MUST report only entries outside the verified expanded pin graph and independently eligible under a deterministic age or space policy, and it MUST NOT delete from a snapshot whose channel selection can race removal. Activating deletion requires a later race-safe authorization contract with the channel owner; pins alone MUST NOT authorize it. Current-operation private staging cleanup MUST prove immediately that the candidate is the exact canonical non-symlink directory it created directly below the expected private staging parent, its basename satisfies the owner-created private prefix, and its realpath equals the validated candidate. It MUST reconcile the visible tree to its operation-local owned-entry ledger, individually unlink only captured regular files, and remove captured empty directories bottom-up with nonrecursive `rmdir`; production build code MUST NOT invoke recursive removal. A failed type, containment, alias, link, identity, visible-tree, or ownership check MUST preserve the candidate and fail closed.
 
 #### Scenario: Active channel pins the exact artifact graph
 - **WHEN** the channel owner supplies verified release and complete-set refs and retention evaluates old entries
@@ -131,7 +136,7 @@ Retention MUST receive a closed `RetentionPinsV1` containing only `ReleaseArtifa
 
 #### Scenario: Symlink and non-directory staging targets are preserved
 - **WHEN** a private staging candidate is replaced by a symlink, regular file, path alias, outside-parent target, wrong-prefix child, or directory not created by the current operation
-- **THEN** recursive cleanup is rejected before removal
+- **THEN** guarded cleanup is rejected before any unlink or `rmdir`
 - **AND** the candidate target and every unrelated source, artifact, provider, destination, and repository path remain unchanged
 
 ### Requirement: Build owner remains isolated and inactive
