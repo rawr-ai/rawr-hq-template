@@ -20,7 +20,7 @@ function runRawr(args: string[], envOverrides?: Record<string, string>) {
   const testHome = mkdtempSync(path.join(os.tmpdir(), "rawr-test-sync-drift-home-"));
   tempDirs.push(testHome);
 
-  return spawnSync("bun", ["src/index.ts", ...args], {
+  return spawnSync("bun", ["test/command-fixture/command-test-cli.ts", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,

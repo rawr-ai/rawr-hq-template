@@ -1,14 +1,7 @@
-import { flush, handle, run } from "@oclif/core";
-import {
-  createHqOpsClient,
-  createHqOpsCallOptions,
-  type HqOpsJournalEvent,
-  type HqOpsJournalSnippet,
-} from "./lib/hq-ops-client";
-import { getJournalContext, resetJournalContext } from "./lib/journal-context";
-import { journalId, safePreview } from "./lib/journal-projection";
-import { findWorkspaceRoot } from "@rawr/core";
-import { expireUndoCapsuleBeforeCommand } from "./lib/undo-lifecycle";
+import { flush, handle, run, type Interfaces } from "@oclif/core";
+
+import { prepareControllerInvocation } from "./lib/controller/entry-bootstrap";
+import { loadControllerRuntimeContext } from "./lib/controller/runtime-context";
 
 class InterceptedExit extends Error {
   code: number;
@@ -18,72 +11,10 @@ class InterceptedExit extends Error {
   }
 }
 
-function guessCommandId(argv: string[]): string | undefined {
-  const first = argv.find((a) => !a.startsWith("-"));
-  return first ? String(first) : undefined;
-}
-
-async function tryWriteJournal(opts: {
-  cwd: string;
-  argv: string[];
-  exitCode: number;
-  durationMs: number;
-}): Promise<void> {
-  const workspaceRoot = await findWorkspaceRoot(opts.cwd);
-  if (!workspaceRoot) return;
-
-  const nowIso = new Date().toISOString();
-  const id = journalId();
-  const ctx = getJournalContext();
-  const commandId = guessCommandId(opts.argv);
-
-  const event: HqOpsJournalEvent = {
-    id,
-    ts: nowIso,
-    cwd: opts.cwd,
-    argv: opts.argv,
-    commandId,
-    exitCode: opts.exitCode,
-    durationMs: opts.durationMs,
-    artifacts: ctx.artifacts.length ? ctx.artifacts : undefined,
-    steps: ctx.steps.length ? ctx.steps : undefined,
-  };
-
-  const cmd = ["rawr", ...opts.argv].join(" ").trim();
-  const snippet: HqOpsJournalSnippet = {
-    id: `${id}-cmd`,
-    ts: nowIso,
-    kind: "command",
-    title: cmd ? `$ ${cmd}` : "$ rawr",
-    preview: safePreview(`exitCode=${opts.exitCode} durationMs=${opts.durationMs} cwd=${opts.cwd}`),
-    body: [
-      cmd ? `cmd: ${cmd}` : "cmd: rawr",
-      `cwd: ${opts.cwd}`,
-      `exitCode: ${opts.exitCode}`,
-      `durationMs: ${opts.durationMs}`,
-      ctx.steps.length ? `steps: ${ctx.steps.length}` : undefined,
-    ]
-      .filter(Boolean)
-      .join("\n"),
-    tags: ["command", commandId].filter((t): t is string => Boolean(t)),
-    sourceEventId: id,
-  };
-
-  try {
-    const client = createHqOpsClient(workspaceRoot);
-    await client.journal.writeEvent(event, createHqOpsCallOptions("cli.journal.write-event"));
-    await client.journal.writeSnippet(snippet, createHqOpsCallOptions("cli.journal.write-snippet"));
-  } catch {
-    // Best-effort; never block command execution on journaling.
-  }
-}
-
-async function main(): Promise<void> {
-  const startedAt = Date.now();
-  const argv = process.argv.slice(2);
-  const cwd = process.cwd();
-  resetJournalContext();
-
+async function runCli(
+  argv: string[] = process.argv.slice(2),
+  options: Interfaces.LoadOptions = import.meta.url,
+): Promise<void> {
   let exitCode = 0;
   const originalExit = process.exit;
   (process as any).exit = (code?: number) => {
@@ -91,8 +22,7 @@ async function main(): Promise<void> {
   };
 
   try {
-    await expireUndoCapsuleBeforeCommand({ cwd, argv, env: process.env });
-    await run(argv, import.meta.url);
+    await run(argv, options);
     await flush();
   } catch (err) {
     if (err instanceof InterceptedExit) {
@@ -109,16 +39,36 @@ async function main(): Promise<void> {
   } finally {
     (process as any).exit = originalExit;
     process.exitCode = exitCode;
-    await tryWriteJournal({
-      cwd,
-      argv,
-      exitCode,
-      durationMs: Date.now() - startedAt,
-    });
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exitCode = 1;
-});
+export async function runControllerCli(input: Readonly<{
+  argv?: readonly string[];
+  entryUrl: string | URL;
+}>): Promise<void> {
+  const argv = [...(input.argv ?? process.argv.slice(2))];
+  let context;
+  try {
+    context = await loadControllerRuntimeContext({ entryUrl: input.entryUrl });
+  } catch (error) {
+    process.stderr.write(`rawr: ${errorMessage(error)}\n`);
+    process.exitCode = 78;
+    return;
+  }
+
+  try {
+    const invocation = await prepareControllerInvocation({ argv, context });
+    await runCli(argv, invocation.config);
+  } catch (error) {
+    process.stderr.write(`rawr: ${errorMessage(error)}\n`);
+    process.exitCode = 1;
+  }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+if (import.meta.main) {
+  await runControllerCli({ entryUrl: import.meta.url });
+}

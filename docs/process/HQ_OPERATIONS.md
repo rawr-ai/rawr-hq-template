@@ -1,80 +1,64 @@
 # RAWR HQ Operations Playbook
 
-This file is the canonical operations policy for repo boundary, validation retries, and cross-repo acceptance checks.
+This file is canonical for Template operational validation, transient failures,
+and independent cross-repository acceptance.
 
-## Repo Boundary Guard (Template vs Personal)
+## Repository Boundary
 
-Run these actions only in personal `RAWR HQ`:
-- `rawr plugins sync all`
-- `rawr plugins sync all --dry-run`
-- global runtime convergence commands (`rawr doctor global`, `rawr plugins converge`, `rawr plugins status --checks all`)
+- Run controller builds, generic lifecycle/tooling tests, provider-adapter tests,
+  schema publication, and controller release activation in `RAWR HQ-Template`.
+- Run curated content authoring, provenance/policy/evaluation checks, and governed
+  content acceptance/release/channel records in personal `RAWR HQ`.
+- Never merge, cherry-pick, transplant, mirror, or tree-compare executable roots
+  between the repositories.
+- Personal may invoke an externally installed Template-owned tool only through an
+  exact versioned interface.
 
-Run these actions in either repo when relevant:
-- `bun run build`
-- `bun run test`
-- Graphite stack operations (`gt ls`, `gt sync --no-restack`, `gt merge --no-interactive`)
+## Command Boundary
 
-Never run full plugin sync from template during stack drains. Template is upstream baseline; personal is runtime owner.
+- `rawr plugins ...` manages external Oclif extensions only.
+- `rawr agent plugins ...` manages curated agent-plugin lifecycle only.
+- `rawr doctor global` is an installed-controller read model; it never selects,
+  builds, repairs, or relinks a controller.
+- App composition and repository hooks own no lifecycle mutation.
 
-## Fixed vs Customizable Zones
+## Pre-Change Impact Check
 
-Treat these as upstream-governed (fixed by default):
-- `apps/cli`
-- shared `packages/*` core contracts
-- canonical docs and governance files
+- Is this executable or generic lifecycle behavior? Put it in Template.
+- Is this curated agent content or a governed decision about that content? Put it in personal.
+- Does a cross-repository need have an explicit schema/protocol version and artifact digest?
+- Would the proposed change create a copy, fallback, aggregate, or second state owner?
 
-Treat these as customization zones:
-- `plugins/api/*`, `plugins/workflows/*`, `plugins/web/*`, `plugins/cli/*`, `plugins/agents/*`, `plugins/mcp/*` (unless promoted to template scaffold)
-- personal workflow docs in downstream repos
+## Safety And Verification
 
-Manifest-first runtime composition contract:
-- cross-surface composition is authored in `rawr.hq.ts`,
-- `apps/*` host fixtures mount manifest outputs and do not author per-capability composition logic,
-- the previous manifest-composition runbook is preserved at `docs/process/runbooks/quarantine/RAWR_HQ_MANIFEST_COMPOSITION.md` for later rewrite.
-
-## Pre-Change Impact Checklist
-
-- Is this a core-for-everyone change?
-- Does it alter a command contract?
-- Does it alter plugin runtime behavior?
-- Does it require migration guidance in `UPDATING.md`?
-
-## Upstream Sync Conflict Policy
-
-- Prefer upstream decisions in shared core areas.
-- Preserve local behavior in downstream-specific plugin areas.
-- Record intentional forks in downstream docs.
-
-## Safety and Verification
-
-After significant merges or updates:
-- `bun run build`
-- `bun run test`
-- `bun run test:web` (web-only lane)
+For Template changes, run the affected Nx targets and the relevant installed
+controller acceptance. For personal changes, run repository-owned content checks
+and exact-version interface validation. Mutating provider/Oclif acceptance uses
+explicit disposable homes until its owning container authorizes settlement.
 
 ## Transient Test Failure Policy
 
-Use this policy before patching code for a red test during drain/integration:
 1. Re-run the failing test once in isolation.
-2. Re-run the full suite once.
+2. Re-run the full owning suite once.
 3. Treat it as transient only if both reruns pass.
-4. If reproducible, fix the root cause and re-run the full suite.
-5. If still non-deterministic, stop merge progression and log a blocker with command/output summary.
+4. If reproducible, fix the root cause and re-run the full owning suite.
+5. If still non-deterministic, stop promotion and record the command and observed state.
 
-## Final Acceptance Checklist (Template + Personal)
+## Final Acceptance
 
-For template `RAWR HQ-Template`:
-1. `git status --short` is clean.
-2. `git branch --show-current` is `main`.
-3. `bun run build` passes.
-4. `bun run test` passes.
-5. `gt ls` is stable for intended drain state.
+For each repository independently:
 
-For personal `RAWR HQ`:
-1. `git status --short` is clean.
-2. `git branch --show-current` is `main`.
-3. `bun run build` passes.
-4. `bun run test` passes.
-5. `rawr plugins sync all --dry-run` passes.
-6. `rawr plugins sync all` passes.
-7. `rawr plugins status --checks all --json` reports healthy/in-sync.
+1. canonical `main` is checked out and matches its own origin;
+2. the worktree, Graphite stack, and auxiliary worktrees are clean/drained;
+3. repository-owned build, test, lint, and architecture gates pass;
+4. no lifecycle override or compatibility path is active.
+
+For cross-repository protocol acceptance:
+
+1. bind exact controller/tool release, schema/protocol, content/release-set, and
+   governed-record digests;
+2. verify personal contains no Template executable mirror or workspace link;
+3. reconcile only the explicitly named provider/export destination;
+4. repeat the converged operation and prove it performs no writes.
+
+Git commit/tree IDs may be recorded as audit provenance only.

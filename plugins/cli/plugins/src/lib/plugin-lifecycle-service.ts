@@ -11,6 +11,7 @@ import type {
   ScratchPolicyCheck,
   ScratchPolicyMode,
 } from "@rawr/hq-ops/types";
+import { resolveControllerReentry } from "@rawr/core";
 import { createHqOpsClient, type HqOpsClient } from "./hq-ops-client";
 import { runCommand, tryParseJson } from "./process-execution";
 
@@ -148,16 +149,17 @@ export async function verifySyncAndDrift(workspaceRoot: string): Promise<{
   driftVerified: boolean;
   driftDetected: boolean;
 }> {
+  const rawr = resolveControllerReentry();
   const sync = await runCommand(
-    "bun",
-    ["run", "rawr", "--", "plugins", "sync", "all", "--dry-run", "--json"],
-    { cwd: workspaceRoot, timeoutMs: 120_000 },
+    rawr.cmd,
+    [...rawr.args, "plugins", "sync", "all", "--dry-run", "--json"],
+    { cwd: rawr.cwd, env: rawr.env, timeoutMs: 120_000 },
   );
 
   const drift = await runCommand(
-    "bun",
-    ["run", "rawr", "--", "plugins", "sync", "drift", "--no-fail-on-drift", "--json"],
-    { cwd: workspaceRoot, timeoutMs: 120_000 },
+    rawr.cmd,
+    [...rawr.args, "plugins", "sync", "drift", "--no-fail-on-drift", "--json"],
+    { cwd: rawr.cwd, env: rawr.env, timeoutMs: 120_000 },
   );
 
   const driftParsed = tryParseJson<{

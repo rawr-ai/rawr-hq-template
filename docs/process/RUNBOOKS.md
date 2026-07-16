@@ -7,7 +7,7 @@ Use this when you need exact commands for:
 - running a bounded workstream as a coordination object,
 - containing migration-doc drift with path-obvious quarantine,
 - draining Graphite stacks,
-- syncing template/personal work.
+- validating explicit data/artifact interfaces across independent repositories.
 
 Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks that predate or cross the final architecture migration have been moved to `docs/process/runbooks/quarantine/`.
 
@@ -19,22 +19,17 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 | Operate the managed local HQ runtime | `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md` |
 | Contain migration-doc drift with quarantine-first topology | `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md` |
 | Drain Graphite stacks safely (publish/merge/prune loop) | `docs/process/runbooks/STACK_DRAIN_LOOP.md` |
-| Integrate template -> personal with sync-first sequencing | `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md` |
+| Validate Template/personal separation and artifact bindings | `docs/process/CROSS_REPO_WORKFLOWS.md` |
 | Canonical repo-boundary + transient retry + final acceptance policy | `docs/process/HQ_OPERATIONS.md` |
 
 ## Command Surface Invariant
 
-- Channel A: `rawr plugins ...` (oclif plugin manager)
-- Channel B: `rawr plugins web ...` (workspace runtime plugins)
-- In this repo's local dev checkout, invoke the CLI as `bun run rawr ...`.
+- External Oclif extensions: `rawr plugins ...`
+- Curated agent-plugin lifecycle: `rawr agent plugins ...`
+- Controller development uses repository-local build/test targets; production and
+  operational proof invokes an installed controller release, not `apps/cli` source.
 
-Do not mix command families.
-
-## Convergence Shortcuts
-
-- Health/drift view: `rawr plugins status --checks all`
-- Link/install diagnosis: `rawr plugins doctor links --json`
-- End-to-end converge loop: `rawr plugins converge --json`
+Do not mix command families or give app composition lifecycle authority.
 
 Scratch-first policy for mutating multi-phase commands:
 - Required docs: `docs/projects/*/PLAN_SCRATCH.md` and `docs/projects/*/WORKING_PAD.md`
@@ -45,10 +40,9 @@ Scratch-first policy for mutating multi-phase commands:
 
 ## Related Process Docs
 
-- `docs/process/WORKSTREAMS.md` (repo pointer to the Workstream Plugin Pack)
+- `docs/process/WORKSTREAMS.md` (Template-owned generic coordination pack)
 - `docs/process/PLUGIN_AUTONOMY_READINESS_SCORECARD.md` (autonomy readiness and drift scorecard)
-- `docs/process/CROSS_REPO_WORKFLOWS.md` (template/personal workflow model)
-- `docs/process/UPSTREAM_SYNC_RUNBOOK.md` (template -> personal sync)
+- `docs/process/CROSS_REPO_WORKFLOWS.md` (repository separation and artifact interfaces)
 - `docs/process/GRAPHITE.md` (branch/stack workflow)
 
 ## Related Implementation Handoffs

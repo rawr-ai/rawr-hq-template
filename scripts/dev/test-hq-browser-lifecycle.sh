@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-HQ_CMD=(bun run rawr hq)
+HQ_CMD=(rawr hq)
 
 detect_default_browser_bundle_id() {
   local launch_services_plist="${HOME}/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist"

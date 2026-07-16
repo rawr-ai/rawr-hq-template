@@ -11,8 +11,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"tools/eslint-fixtures/**/*.{js,jsx,ts,tsx}\""
-      }
+        "command": "bun scripts/phase-03/verify-eslint-fixtures-lint.mjs"
+      },
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/scripts/phase-03/verify-eslint-fixtures-lint.mjs"
+      ]
     },
     "sync": {
       "executor": "nx:run-commands",

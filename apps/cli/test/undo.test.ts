@@ -9,14 +9,14 @@ import { createNodeAgentConfigSyncResources } from "@rawr/agent-config-sync-node
 import { afterEach, describe, expect, it } from "vitest";
 
 const CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const CLI_ENTRYPOINT = path.join(CLI_ROOT, "src", "index.ts");
+const COMMAND_TEST_CLI = path.join(CLI_ROOT, "test", "command-fixture", "command-test-cli.ts");
 const tempDirs: string[] = [];
 
 function runRawr(args: string[], options: {
   cwd?: string;
   env?: Record<string, string | undefined>;
 } = {}) {
-  return spawnSync("bun", [CLI_ENTRYPOINT, ...args], {
+  return spawnSync("bun", [COMMAND_TEST_CLI, ...args], {
     cwd: options.cwd ?? CLI_ROOT,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
@@ -212,8 +212,9 @@ describe("rawr undo", () => {
     expect(proc.stdout).toContain("code: WORKSPACE_ROOT_MISSING");
   });
 
-  it("does not block command execution when entrypoint lifecycle expiration fails", { timeout: 30000 }, async () => {
+  it("ignores the removed universal lifecycle-expiration control", { timeout: 30000 }, async () => {
     const workspaceRoot = await makeWorkspace();
+    const { manifest } = await seedCapturedCreatePathCapsule(workspaceRoot);
 
     const proc = runRawr(["doctor", "--json"], {
       cwd: workspaceRoot,
@@ -225,16 +226,17 @@ describe("rawr undo", () => {
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
+    await expect(fs.stat(manifest)).resolves.toBeTruthy();
   });
 
-  it("expires a public-captured capsule before an unrelated command dispatches", { timeout: 30000 }, async () => {
+  it("preserves a public-captured capsule before an unrelated command dispatches", { timeout: 30000 }, async () => {
     const workspaceRoot = await makeWorkspace();
     const { manifest } = await seedCapturedCreatePathCapsule(workspaceRoot);
 
     const proc = runRawr(["doctor", "--json"], { cwd: workspaceRoot });
 
     expect(proc.status).toBe(0);
-    await expect(fs.stat(manifest)).rejects.toThrow();
+    await expect(fs.stat(manifest)).resolves.toBeTruthy();
   });
 
   it("preserves a public-captured capsule before plugin sync help dispatches", { timeout: 30000 }, async () => {

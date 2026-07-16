@@ -5,13 +5,12 @@ Sample oclif plugin shipped by `RAWR HQ-Template`.
 ## Local usage
 
 ```bash
-bun run rawr -- plugins link plugins/cli/hello --install
-bun run rawr -- hello --json
+./scripts/dev/install-global-rawr.sh --json
+rawr plugins link "$(pwd -P)/plugins/cli/hello"
+rawr hello --json
 ```
 
-> **Heads-up: the “disposable worktree” trap**
-> - `rawr plugins link` stores an **absolute path** to the plugin directory.
-> - If you link from a **disposable git worktree** and later delete it, `rawr` can fail at startup (missing `package.json`).
-> - Prefer linking from a **stable checkout path** (your primary worktree), using an absolute path.
-> - Recovery: `rawr plugins uninstall <plugin>` (or `rawr plugins reset` to wipe all user-linked plugins).
-> - If available, prefer the repo-root helper: `rawr plugins install all`.
+`hello` is intentionally external-only. The native Oclif registry stores the
+absolute linked root. Removing that checkout quarantines only this extension;
+the installed controller and `rawr plugins uninstall @rawr/plugin-hello`
+remain available for recovery.

@@ -17,7 +17,7 @@
 
 ## Resume Flow
 
-1. Read this spec packet and the downstream durable plan.
+1. Read this Template-owned spec packet and service contract.
 2. Read `research/temp/hyperresearch-codex-run.json`.
 3. Inspect completed artifacts instead of reconstructing from chat.
 4. Add a resume event with reason and next step.
@@ -50,10 +50,11 @@
 
 ## Final Plugin-System Proof Flow
 
-1. From RAWR HQ-Template, build/install the Hyperresearch CLI topic.
-2. From RAWR HQ, sync Hyperresearch Codex skill/reference/agent material to the active Codex home.
-3. Start Codex in a fresh vault directory.
-4. Invoke the synced Hyperresearch skill.
+1. Install the Hyperresearch CLI topic from an immutable RAWR HQ-Template controller release.
+2. Bind a governed immutable curated-content artifact to its exact Template interface version, release-set digest, and record digests.
+3. Use the Template-owned agent-plugin lifecycle and provider adapter to install that artifact into an explicit disposable Codex home.
+4. Start Codex in a fresh vault directory and invoke the artifact-backed Hyperresearch skill.
 5. Confirm the service runner is used, not `hyperresearch research`.
 6. Confirm CLI calls, step hashes, subagent outputs, artifacts, lint/export, and final report.
 7. Run a short real query with 2-4 expected sources before any long full run.
+8. Repeat the converged lifecycle operation and prove that it performs reads only.

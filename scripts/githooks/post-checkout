@@ -11,5 +11,5 @@ if [ "${IS_BRANCH_SWITCH}" != "1" ]; then
 fi
 
 if ! "${ROOT_DIR}/scripts/dev/auto-refresh-main.sh" "${OLD_REF}" "${NEW_REF}" "post-checkout"; then
-  echo "[rawr-auto-refresh] warning: post-checkout refresh failed; run scripts/dev/install-global-rawr.sh manually" >&2
+  echo "[rawr-auto-refresh] warning: post-checkout dependency refresh failed; run bun install manually" >&2
 fi

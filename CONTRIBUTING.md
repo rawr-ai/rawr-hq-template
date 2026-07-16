@@ -2,39 +2,47 @@
 
 ## Purpose
 
-This repository (`RAWR HQ-Template`) is the canonical upstream template.
-Contributions here should improve the shared baseline for all downstream `RAWR HQ` repos.
+This repository owns the executable controller and generic lifecycle/tooling
+authority. Personal `RAWR HQ` is a separate curated-content repository, not a
+downstream fork.
 
 ## Contribution Types
 
-- Core contribution (upstream): shared CLI contracts, control-plane behavior, security/state/journal architecture, template docs.
-- Template fixture/example plugin contribution: baseline demo/validation artifacts only.
+- Controller contribution: official CLI contracts, controller release behavior,
+  generic lifecycle services, provider adapters, schemas, tooling, and validators.
+- Fixture contribution: non-personal artifacts used only to validate Template behavior.
 
-## What Belongs Upstream
+## What Belongs Here
 
-Contribute upstream when the change is expected to benefit most template users:
+Contribute here when the change implements generic executable behavior:
 - CLI UX and command contract improvements.
 - Shared package behavior (`@rawr/core`, `@rawr/control-plane`, `@rawr/state`, `@rawr/security`, `@rawr/journal`).
 - Template governance/docs/process improvements.
 
-## What Usually Stays Downstream (`RAWR HQ`)
+## What Belongs In Personal `RAWR HQ`
 
-- Personal workflows, one-off commands, product-specific integrations.
-- Custom plugins not intended as reusable template scaffolds.
+- Curated agent-plugin source/content and vendor provenance.
+- Declarative policy/evaluation inputs.
+- Content acceptance, release, and channel records.
+- Personal repository process and configuration.
 
-## Plugin Promotion Policy
+Do not copy Template runtime code into personal or merge repository histories.
+Publish a versioned data/artifact interface when the two products must interact.
 
-A plugin can be promoted into `RAWR HQ-Template` only when:
+## Fixture Admission Policy
+
+A plugin can be added as a Template fixture only when:
 - Its behavior is generally reusable.
 - It has stable command/runtime contracts.
 - It includes tests and documentation.
-- It does not encode personal/machine-specific assumptions.
-- It is explicitly marked as `fixture` or `example` in `package.json#rawr.templateRole`.
+- It contains no personal curated content or machine-specific assumptions.
+- Its package ID has an explicit `external-fixture` row in `apps/cli/src/lib/controller/classification.ts`.
 
 ## API Surface Policy
 
-- Canonical workspace runtime plugin commands are `rawr plugins web ...`.
-- `rawr plugins ...` is reserved for Channel A (oclif plugin manager commands).
+- `rawr plugins ...` is reserved for external Oclif extension management.
+- `rawr agent plugins ...` is reserved for curated agent-plugin lifecycle.
+- App composition commands do not acquire lifecycle authority.
 - Command-surface changes require migration notes in `UPDATING.md`.
 - CLI publish ownership for `@rawr/cli` is template-only.
 

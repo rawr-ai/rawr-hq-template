@@ -26,6 +26,11 @@ Before extension command or hook modules load, the system MUST parse static pack
 - **THEN** the entry is excluded from active Oclif configuration and reported as quarantined for that invocation
 - **AND** startup performs no registry or package mutation
 
+#### Scenario: Static named-hook metadata is not rewritten
+- **WHEN** an accepted static package manifest declares a hook target with a named export identifier
+- **THEN** guarded activation projects that exact target and identifier into Oclif without dynamic discovery
+- **AND** omission alone selects Oclif's `default` identifier
+
 ### Requirement: Recovery-safe core dispatch (B03)
 A missing, broken, colliding, or throwing external extension MUST NOT prevent core startup or `rawr`, `doctor global`, and `plugins list|inspect|uninstall|reset` recovery behavior. Recovery dispatch MUST execute without active external hooks.
 
@@ -40,7 +45,7 @@ A missing, broken, colliding, or throwing external extension MUST NOT prevent co
 - **AND** uninstall or reset can restore a healthy external registry
 
 ### Requirement: Guarded native external mutation (B03)
-The Template projection MUST return exactly `delegate-native`, `converged`, or `reject` and MUST NOT write registry package JSON, lock data, installed trees, or link entries. Install MUST delegate the exact inspected local package artifact. Link MUST require a static manifest, disable dependency installation, and compare the actual linked manifest after native return. Update MUST run without package scripts or external hooks and MUST validate the actual resulting entries before activation. Native commands MUST run by exact path through the invocation's already-verified bundled Bun binary in a dedicated `userPlugins:false` subprocess launched with platform-null explicit config and temporary HOME/XDG, controller cwd, no-env/no-install flags, and scrubbed preload/env/module inputs. No selected-release or user-controlled bootstrap config/home may be consulted. Package scripts MUST be disabled, manager lifecycle hooks reserved, nested candidate plugins rejected, ambient discovery scrubbed, and a runtime import sandbox installed. A filesystem module may load only when both its normalized requested/resolved path and canonical realpath are inside the selected controller release; outside-to-inside aliases reject. Candidate code, hooks, package scripts, env files, and dynamic manifest generation MUST NOT execute even when nested native `Config.load` falls back. Rejection MUST occur before native mutation, while invalid post-mutation results MUST remain quarantined and unactivated. `reset --reinstall` MUST reject before native dispatch. Staging output MUST be removed. Uninstall and reset MUST operate without loading candidate code.
+The Template projection MUST return exactly `delegate-native`, `converged`, or `reject` and MUST NOT write registry package JSON, lock data, installed trees, or link entries. Install MUST delegate the exact inspected local package artifact. Link MUST require a static manifest, disable dependency installation, and compare the actual linked manifest after native return. Update MUST run without package scripts or external hooks and MUST validate the actual resulting entries before activation. Native commands MUST run by exact path through the selected release's bundled Bun in a dedicated `userPlugins:false` subprocess launched with explicit null config, controller cwd, no-env/no-install flags, and scrubbed preload/env/module inputs. Package scripts MUST be disabled, manager lifecycle hooks reserved, nested candidate plugins rejected, ambient discovery scrubbed, and a runtime import sandbox installed. A filesystem module may load only when both its normalized requested/resolved path and canonical realpath are inside the selected controller release; outside-to-inside aliases reject. Candidate code, hooks, package scripts, env files, and dynamic manifest generation MUST NOT execute even when nested native `Config.load` falls back. Rejection MUST occur before native mutation, while invalid post-mutation results MUST remain quarantined and unactivated. `reset --reinstall` MUST reject before native dispatch. Staging output MUST be removed. Uninstall and reset MUST operate without loading candidate code.
 
 #### Scenario: Failed link leaves no partial activation
 - **WHEN** a candidate passes package acquisition but fails reserved-surface or runtime verification
@@ -57,14 +62,24 @@ The Template projection MUST return exactly `delegate-native`, `converged`, or `
 - **THEN** guarded postvalidation evaluates the actual resulting native root before any candidate command, hook, or script executes
 - **AND** a mismatch or reserved identity remains quarantined rather than inheriting approval from preflight
 
+#### Scenario: Native user entry and dependency provenance stay bound
+- **WHEN** an otherwise valid installed root has a native user entry with no package dependency, or its content-addressed entry URL and dependency spec bind different artifact or static-manifest digests
+- **THEN** guarded discovery quarantines the user entry with the exact missing or mismatch classification
+- **AND** install and update cannot report convergence from that unbound state
+
+#### Scenario: Converged install never creates staging output
+- **WHEN** read-only hashing and static inspection identify an already installed user entry with matching entry URL, dependency provenance, artifact digest, and guarded static fingerprint
+- **THEN** install reports `converged` before the private staging boundary
+- **AND** performs zero copy, chmod, rename, staging cleanup, native dispatch, registry write, or metadata change
+
 #### Scenario: Nested native loading cannot execute candidate code
 - **WHEN** install or link encounters a missing or version-mismatched root/child manifest, candidate-declared nested Oclif plugin, ambient candidate user plugin, ESM/CommonJS dynamic-discovery fallback, or outside symlink/file URL whose canonical target is a controller module
 - **THEN** the controller-root-only import sandbox rejects every candidate module resolution before evaluation
 - **AND** the native operation fails or leaves quarantined residue while controller and prior external command state remain usable
 
-#### Scenario: Runtime mismatch refuses native mutation
-- **WHEN** the launcher or manager child observes a Bun path/digest/platform/architecture/version/full revision different from the controller envelope, the trampoline target identity mismatches, or a hostile cwd/global/selected-release bunfig, bootstrap-home tree, `.env`, `BUN_OPTIONS`, `NODE_OPTIONS`, or preload tries to execute before its entrypoint
-- **THEN** it fails closed before importing the native command class or candidate module
+#### Scenario: Ambient startup injection cannot reach native mutation
+- **WHEN** a hostile cwd/global bunfig, `.env`, `BUN_OPTIONS`, `NODE_OPTIONS`, or preload tries to execute before the manager entrypoint
+- **THEN** the bounded launch environment suppresses it before importing the native command class or candidate module
 - **AND** the hostile sentinel, native registry, candidate staging, controller selection, and every unrelated state owner record zero writes
 
 #### Scenario: Reset cannot bypass per-candidate guarding
@@ -77,11 +92,16 @@ The Template projection MUST return exactly `delegate-native`, `converged`, or `
 - **THEN** pre-dispatch policy verifies native state, reports `converged`, and does not dispatch the native mutation command
 - **AND** performs zero registry/package write, reinstall, hook load, metadata churn, controller mutation, or non-Oclif mutation
 
+#### Scenario: Mixed local and native update has no unsafe global fallback
+- **WHEN** update observes at least one proven-local content-addressed install whose private staging path is gone and at least one unfamiliar native-manager entry
+- **THEN** local-only input reports `converged`, native-only input delegates through public `plugins:update`, and the mixed set reports `reject` with code `mixed-update-no-safe-native-seam`
+- **AND** the mixed rejection performs zero native dispatch or write and directs the operator to separate the local install from the native update before reinstalling it
+
 ### Requirement: Hermetic recovery survives source deletion (B02, B03, B32)
-Clean-home acceptance MUST use a fresh process after deleting every source and verifier checkout, with isolated HOME/XDG/data roots, scrubbed workspace/module environment, and a foreign cwd. The same run MUST combine official command use with missing, colliding, and throwing-extension recovery.
+Clean-home acceptance MUST use a fresh process after deleting every source checkout, with isolated HOME/XDG/data roots, scrubbed workspace/module environment, and a foreign cwd. The same run MUST combine official command use with missing, colliding, and throwing-extension recovery.
 
 #### Scenario: Fresh process uses only installed authority
-- **WHEN** source and verifier trees are deleted and a fresh process starts with a valid-static-manifest extension whose top-level command import throws
+- **WHEN** source trees are deleted and a fresh process starts with a valid-static-manifest extension whose top-level command import throws
 - **THEN** official commands, global doctor, and external list/inspect/uninstall/reset operate from the installed controller and native registry only
 - **AND** recovery never imports the throwing candidate, resolves a workspace module, or reads the foreign cwd as authority
 

@@ -1,6 +1,16 @@
 #!/usr/bin/env bun
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import {
+  cpSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const PACK_ROOT = ["tools", "workstream-plugin-pack"];
 const SKILLS = ["workstream-runner", "workstream-review-loops"] as const;
@@ -26,17 +36,12 @@ const AGENTS = [
     description: "Workstream closure steward for checking outputs, review disposition, scratch cleanup, gates, repo state, deferred inventory, and zero-context Next Packet.",
   },
 ] as const;
-const TARGETS = ["local", "downstream", "all"] as const;
-type Target = typeof TARGETS[number];
-
 function repoRoot(): string {
-  let current = resolve(process.cwd());
-  while (true) {
-    if (existsSync(join(current, ".git"))) return current;
-    const parent = dirname(current);
-    if (parent === current) return resolve(process.cwd());
-    current = parent;
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+  if (!existsSync(join(root, ".git")) || !existsSync(join(root, "package.json"))) {
+    throw new Error(`installer is not running from a RAWR HQ-Template checkout: ${root}`);
   }
+  return root;
 }
 
 function read(path: string): string {
@@ -55,8 +60,60 @@ function logCopy(source: string, target: string): void {
   console.log(`${source} -> ${target}`);
 }
 
-function copyTree(source: string, target: string, dryRun: boolean): void {
+function isInside(root: string, candidate: string): boolean {
+  const candidateRelative = relative(root, candidate);
+  return candidateRelative !== ""
+    && candidateRelative !== ".."
+    && !candidateRelative.startsWith(`..${sep}`)
+    && !isAbsolute(candidateRelative);
+}
+
+function lstatIfPresent(entryPath: string): ReturnType<typeof lstatSync> | null {
+  try {
+    return lstatSync(entryPath);
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+function assertOwnedProjectionTarget(
+  root: string,
+  target: string,
+  allowedTargets: ReadonlySet<string>,
+): void {
+  const normalizedRoot = resolve(root);
+  const normalizedTarget = resolve(target);
+  if (!allowedTargets.has(normalizedTarget) || !isInside(normalizedRoot, normalizedTarget)) {
+    throw new Error(`refusing unowned projection target: ${target}`);
+  }
+
+  let cursor = normalizedRoot;
+  for (const segment of relative(normalizedRoot, normalizedTarget).split(sep)) {
+    cursor = join(cursor, segment);
+    if (lstatIfPresent(cursor)?.isSymbolicLink()) {
+      throw new Error(`refusing aliased projection target: ${cursor}`);
+    }
+  }
+
+  let existingAncestor = normalizedTarget;
+  while (!lstatIfPresent(existingAncestor)) existingAncestor = dirname(existingAncestor);
+  const canonicalRoot = realpathSync(normalizedRoot);
+  const canonicalAncestor = realpathSync(existingAncestor);
+  if (canonicalAncestor !== canonicalRoot && !isInside(canonicalRoot, canonicalAncestor)) {
+    throw new Error(`refusing projection outside repository: ${target}`);
+  }
+}
+
+function copyTree(
+  root: string,
+  source: string,
+  target: string,
+  allowedTargets: ReadonlySet<string>,
+  dryRun: boolean,
+): void {
   if (!existsSync(source)) throw new Error(`missing source: ${source}`);
+  assertOwnedProjectionTarget(root, target, allowedTargets);
   logCopy(source, target);
   if (dryRun) return;
   rmSync(target, { recursive: true, force: true });
@@ -64,7 +121,14 @@ function copyTree(source: string, target: string, dryRun: boolean): void {
   cpSync(source, target, { recursive: true });
 }
 
-function writeFile(target: string, content: string, dryRun: boolean): void {
+function writeOwnedFile(
+  root: string,
+  target: string,
+  content: string,
+  allowedTargets: ReadonlySet<string>,
+  dryRun: boolean,
+): void {
+  assertOwnedProjectionTarget(root, target, allowedTargets);
   console.log(`write ${target}`);
   if (dryRun) return;
   mkdirSync(dirname(target), { recursive: true });
@@ -91,181 +155,66 @@ function localHooksJson(): string {
   );
 }
 
-function downstreamHooksJson(pluginRootFromRepoRoot: string): string {
-  const source = read(join(repoRoot(), ...PACK_ROOT, "hooks", "hooks.json"));
-  return source.replaceAll(
-    "tools/workstream-plugin-pack/hooks/",
-    `${pluginRootFromRepoRoot}/hooks/`,
-  );
-}
-
-function downstreamHookSource(packRoot: string, hookFile: string, pluginRootFromRepoRoot: string): string {
-  return read(join(packRoot, "hooks", hookFile)).replaceAll(
-    "tools/workstream-plugin-pack",
-    pluginRootFromRepoRoot,
-  );
-}
-
-function habitatPackageJson(): string {
-  return `${JSON.stringify({
-    name: "@rawr/plugin-habitat",
-    private: true,
-    type: "module",
-    packageManager: "bun@1.3.7",
-    rawr: {
-      kind: "agent",
-      pluginContent: {
-        version: 1,
-      },
-      capability: "habitat",
-    },
-    scripts: {
-      lint: "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\"",
-    },
-  }, null, 2)}\n`;
-}
-
-function habitatReadme(): string {
-  return `# Habitat Agent Plugin
-
-Habitat contains coordination-oriented agent runtime material. This downstream
-plugin is now the distributable source for Workstream content. The upstream
-\`rawr-hq-template/tools/workstream-plugin-pack/\` copy is a deprecated
-bridge/recovery copy while the template-side migration still carries it.
-
-Make durable Workstream skill, agent, hook, and asset changes here first. Do
-not use the template bridge as the source of truth for new content.
-
-## Contents
-
-- \`skills/workstream-runner/\`: Workstream runner skill.
-- \`skills/workstream-review-loops/\`: Review-loop skill.
-- \`agents/\`: Provider-neutral steward role briefs.
-- \`hooks/\`: Provider-specific hook source material, synced as native plugin
-  hook material by \`agent-config-sync\`.
-`;
-}
-
-function habitatTodo(): string {
-  return `# Habitat Workstream TODO
-
-- Treat this downstream plugin as the distributable Habitat/Workstream source.
-- Keep \`rawr-hq-template/tools/workstream-plugin-pack/\` as a deprecated bridge
-  or recovery copy only until the template-side migration removes it.
-- Move any future durable Workstream skill, agent, hook, or asset changes here
-  first; do not update the template bridge as the source of truth.
-- Burn down any remaining Codex prompt mirrors by moving repeatable workflows
-  into skills.
-`;
-}
-
-function parseArgs(argv: string[]): { dryRun: boolean; target: Target; downstreamRoot: string | null } {
-  let target: Target = "local";
-  let downstreamRoot: string | null = null;
-  const dryRun = argv.includes("--dry-run");
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === "--target") {
-      const value = argv[index + 1];
-      if (!TARGETS.includes(value as Target)) {
-        throw new Error(`--target must be one of: ${TARGETS.join(", ")}`);
-      }
-      target = value as Target;
-      index += 1;
-    } else if (arg === "--downstream-root") {
-      const value = argv[index + 1];
-      if (!value) throw new Error("--downstream-root requires a path");
-      downstreamRoot = resolve(value);
-      index += 1;
-    }
+function parseArgs(argv: string[]): { dryRun: boolean } {
+  for (const arg of argv) {
+    if (arg !== "--dry-run") throw new Error(`unsupported argument: ${arg}`);
   }
-
-  return { dryRun, target, downstreamRoot };
-}
-
-function defaultDownstreamRoot(root: string): string {
-  return resolve(dirname(root), "rawr-hq");
+  return { dryRun: argv.includes("--dry-run") };
 }
 
 function projectLocal(root: string, packRoot: string, dryRun: boolean): void {
+  const allowedTargets = new Set([
+    ...SKILLS.map((skill) => resolve(root, ".agents", "skills", skill)),
+    ...AGENTS.map((agent) => resolve(root, ".codex", "agents", `${agent.name}.toml`)),
+    ...HOOK_FILES.map((hookFile) => resolve(root, ".codex", "hooks", hookFile)),
+    resolve(root, ".codex", "hooks.json"),
+  ]);
+
   for (const skill of SKILLS) {
     copyTree(
+      root,
       join(packRoot, "skills", skill),
       join(root, ".agents", "skills", skill),
+      allowedTargets,
       dryRun,
     );
   }
 
   for (const agent of AGENTS) {
     const brief = read(join(packRoot, "agents", agent.source));
-    writeFile(
+    writeOwnedFile(
+      root,
       join(root, ".codex", "agents", `${agent.name}.toml`),
       codexAgentToml(agent.name, agent.description, brief),
+      allowedTargets,
       dryRun,
     );
   }
 
   for (const hookFile of HOOK_FILES) {
     copyTree(
+      root,
       join(packRoot, "hooks", hookFile),
       join(root, ".codex", "hooks", hookFile),
+      allowedTargets,
       dryRun,
     );
   }
 
-  writeFile(join(root, ".codex", "hooks.json"), localHooksJson(), dryRun);
+  writeOwnedFile(
+    root,
+    join(root, ".codex", "hooks.json"),
+    localHooksJson(),
+    allowedTargets,
+    dryRun,
+  );
 }
 
-function projectDownstream(packRoot: string, downstreamRoot: string, dryRun: boolean): void {
-  if (!existsSync(join(downstreamRoot, "plugins", "agents"))) {
-    throw new Error(`downstream root does not look like rawr-hq: ${downstreamRoot}`);
-  }
-
-  const pluginRoot = join(downstreamRoot, "plugins", "agents", "habitat");
-  const pluginRootFromRepoRoot = "plugins/agents/habitat";
-
-  writeFile(join(pluginRoot, "package.json"), habitatPackageJson(), dryRun);
-  writeFile(join(pluginRoot, "README.md"), habitatReadme(), dryRun);
-  writeFile(join(pluginRoot, "TODO.md"), habitatTodo(), dryRun);
-
-  for (const skill of SKILLS) {
-    copyTree(
-      join(packRoot, "skills", skill),
-      join(pluginRoot, "skills", skill),
-      dryRun,
-    );
-  }
-
-  copyTree(join(packRoot, "agents"), join(pluginRoot, "agents"), dryRun);
-
-  for (const hookFile of HOOK_FILES) {
-    const target = join(pluginRoot, "hooks", hookFile);
-    console.log(`${join(packRoot, "hooks", hookFile)} -> ${target}`);
-    writeFile(
-      join(pluginRoot, "hooks", hookFile),
-      downstreamHookSource(packRoot, hookFile, pluginRootFromRepoRoot),
-      dryRun,
-    );
-  }
-  writeFile(join(pluginRoot, "hooks", "hooks.json"), downstreamHooksJson(pluginRootFromRepoRoot), dryRun);
-
-  console.log(`Projected Workstream Plugin Pack into ${pluginRoot}`);
-}
-
-const { dryRun, target, downstreamRoot: explicitDownstreamRoot } = parseArgs(process.argv.slice(2));
+const { dryRun } = parseArgs(process.argv.slice(2));
 const root = repoRoot();
 const packRoot = join(root, ...PACK_ROOT);
-const downstreamRoot = explicitDownstreamRoot ?? defaultDownstreamRoot(root);
-
-if (target === "local" || target === "all") {
-  projectLocal(root, packRoot, dryRun);
-}
-
-if (target === "downstream" || target === "all") {
-  projectDownstream(packRoot, downstreamRoot, dryRun);
-}
+projectLocal(root, packRoot, dryRun);
 
 if (!dryRun) {
-  console.log(`Workstream Plugin Pack projection complete for target: ${target}.`);
+  console.log("Workstream Plugin Pack local projection complete.");
 }

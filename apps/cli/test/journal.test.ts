@@ -1,16 +1,44 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { lstatSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 
-const TEST_HOME = mkdtempSync(path.join(tmpdir(), "rawr-test-journal-"));
+import type { HqOpsJournalSnippet } from "../src/lib/hq-ops-client";
+
+const TEST_ROOT_PREFIX = "rawr-test-journal-";
+const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const COMMAND_TEST_CLI = path.join(PROJECT_ROOT, "test", "command-fixture", "command-test-cli.ts");
+const JOURNAL_SEED = path.join(PROJECT_ROOT, "test", "command-fixture", "seed-journal.ts");
+const TEST_ROOT = realpathSync(mkdtempSync(path.join(realpathSync(tmpdir()), TEST_ROOT_PREFIX)));
+const TEST_HOME = path.join(TEST_ROOT, "home");
+const TEST_WORKSPACE = path.join(TEST_ROOT, "workspace");
+mkdirSync(TEST_HOME, { recursive: true });
+mkdirSync(path.join(TEST_WORKSPACE, "plugins"), { recursive: true });
+writeFileSync(path.join(TEST_WORKSPACE, "package.json"), JSON.stringify({ private: true }));
+
+function removeTestRoot(): void {
+  const canonicalTemporaryRoot = realpathSync(tmpdir());
+  const canonicalTestRoot = realpathSync(TEST_ROOT);
+  const status = lstatSync(TEST_ROOT);
+  if (
+    !status.isDirectory()
+    || status.isSymbolicLink()
+    || canonicalTestRoot !== TEST_ROOT
+    || path.dirname(canonicalTestRoot) !== canonicalTemporaryRoot
+    || !path.basename(canonicalTestRoot).startsWith(TEST_ROOT_PREFIX)
+  ) {
+    throw new Error(`refusing to remove invalid journal test root: ${TEST_ROOT}`);
+  }
+  rmSync(canonicalTestRoot, { recursive: true, force: true });
+}
+
+afterAll(removeTestRoot);
 
 function runRawr(args: string[]) {
-  const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  return spawnSync("bun", ["src/index.ts", ...args], {
-    cwd: projectRoot,
+  return spawnSync("bun", [COMMAND_TEST_CLI, ...args], {
+    cwd: TEST_WORKSPACE,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
     env: {
@@ -19,6 +47,24 @@ function runRawr(args: string[]) {
       XDG_CONFIG_HOME: path.join(TEST_HOME, ".config"),
       XDG_DATA_HOME: path.join(TEST_HOME, ".local", "share"),
       XDG_STATE_HOME: path.join(TEST_HOME, ".local", "state"),
+      RAWR_WORKSPACE_ROOT: TEST_WORKSPACE,
+      RAWR_HQ_ROOT: TEST_WORKSPACE,
+    },
+  });
+}
+
+function seedJournal(snippet: HqOpsJournalSnippet) {
+  return spawnSync("bun", [JOURNAL_SEED, TEST_WORKSPACE, JSON.stringify(snippet)], {
+    cwd: TEST_WORKSPACE,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      HOME: TEST_HOME,
+      XDG_CONFIG_HOME: path.join(TEST_HOME, ".config"),
+      XDG_DATA_HOME: path.join(TEST_HOME, ".local", "share"),
+      XDG_STATE_HOME: path.join(TEST_HOME, ".local", "state"),
+      RAWR_WORKSPACE_ROOT: TEST_WORKSPACE,
+      RAWR_HQ_ROOT: TEST_WORKSPACE,
     },
   });
 }
@@ -37,9 +83,18 @@ function runRawrWithRetry(args: string[], attempts = 2) {
 }
 
 describe("journal + reflect", () => {
-  it("journal search + tail + show returns atomic snippets", { timeout: 30000 }, () => {
-    const seed = runRawr(["doctor", "--json"]);
-    expect(seed.status).toBe(0);
+  it("journal search + tail + show returns explicitly owned snippets", { timeout: 30000 }, () => {
+    const snippet: HqOpsJournalSnippet = {
+      id: "journal-command-fixture-doctor",
+      ts: new Date().toISOString(),
+      kind: "command",
+      title: "$ rawr doctor",
+      preview: "explicit journal command fixture",
+      body: "cmd: rawr doctor",
+      tags: ["command", "doctor"],
+    };
+    const seed = seedJournal(snippet);
+    expect(seed.status, seed.stderr).toBe(0);
 
     const searchProc = runRawr(["journal", "search", "--query", "doctor", "--limit", "5", "--json"]);
     expect(searchProc.status).toBe(0);
@@ -47,9 +102,9 @@ describe("journal + reflect", () => {
     expect(search.ok).toBe(true);
     expect(search.data).toBeTruthy();
     expect(Array.isArray(search.data.snippets)).toBe(true);
-    expect(search.data.snippets.length).toBeGreaterThan(0);
+    expect(search.data.snippets).toContainEqual(expect.objectContaining({ id: snippet.id }));
 
-    const id = search.data.snippets[0].id as string;
+    const id = snippet.id;
     expect(typeof id).toBe("string");
 
     const tailProc = runRawr(["journal", "tail", "--limit", "15", "--json"]);

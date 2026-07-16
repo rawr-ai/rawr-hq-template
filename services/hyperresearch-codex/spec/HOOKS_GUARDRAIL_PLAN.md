@@ -33,9 +33,9 @@ Observed proof:
 - Runtime `Stop` payload is preserved at `payloads/stop-runtime.jsonl`; the observed payload had `stop_hook_active:false`, so red/green final-answer blocking is proven by direct fixture execution rather than a live final-answer block.
 
 Service-local fixture scripts live under `services/hyperresearch-codex/spec/fixtures/hooks/`.
-The distributable Hyperresearch hook source lives downstream under
-`plugins/agents/hyperresearch/hooks/`. That downstream placement does not by
-itself prove agent-sync hook projection or installation.
+Separately governed curated Hyperresearch hook content may be released by a
+content repository, but it is not an implementation input to this package. Its
+existence does not prove artifact-backed projection or installation.
 
 ## Non-Claims
 
@@ -43,7 +43,7 @@ itself prove agent-sync hook projection or installation.
 - `SubagentStart` and `SubagentStop` parity is not claimed. Child lifecycle evidence remains in `CHILD_AGENT_COMPLETION_CONTRACT.md`.
 - `PreCompact` and `SessionEnd` parity is not claimed. Durable ledgers and resume packets carry compaction/resume obligations.
 - `Notification` parity is not claimed.
-- Plugin-packaged Hyperresearch hook installation is not claimed until RAWR agent-sync has managed hook projection with install, update, dry-run, drift, and removal evidence.
+- Plugin-packaged Hyperresearch hook installation is not claimed until the Template-owned provider adapter accepts a versioned curated-content artifact and has install, update, dry-run, drift, and removal evidence.
 - MCP remains parked and is not part of this hook track.
 
 ## Hook Tiers
@@ -122,7 +122,7 @@ DRA proof fill-in:
 - routed-source allow evidence: `logs/hook-events-routed-source.jsonl` plus expected-empty stdout in `logs/source-guard-routed-allow.txt`;
 - `Stop` red/green evidence: block output in `logs/stop-red.txt`, allow decision in `logs/hook-events.jsonl`, and expected-empty allow stdout in `logs/stop-green.txt`;
 - config negative probe: `logs/hook-smoke-events.jsonl` shows the initial missing top-level `hooks` wrapper did not run hooks;
-- no downstream hook projection or install claim is made.
+- no cross-repository hook projection or install claim is made.
 
 ## Implementation Phases
 
@@ -133,17 +133,17 @@ DRA proof fill-in:
 - Evidence lives under `spec/evidence/20260503T235332Z-codex-hooks-proof/`.
 - Active `~/.codex-rawr` was not mutated.
 
-### Phase 2: Downstream Hook Source
+### Phase 2: Curated Hook Artifact
 
-- Status: complete for source placement.
-- Distributable hook source lives downstream under `plugins/agents/hyperresearch/hooks/`.
-- The service package keeps only fixtures and evidence copies of hook scripts.
+- Status: pending a governed content release and exact interface version.
+- Curated hook source remains in its owning content repository and reaches Template only as an immutable artifact.
+- The service package keeps only Template-owned fixtures and evidence copies of hook scripts.
 - Local tests cover payload parsing, source guard block/allow, red/green `Stop` decisions, malformed payloads, unsupported events, ledger path precedence, missing validation markers, and timeout classification.
 
-### Phase 3: Downstream Projection
+### Phase 3: Provider Projection
 
-- Extend RAWR agent-sync to scan and project hook material only after the runtime fixture is green.
-- Prove dry-run, sync, force/update, drift detection, and removal/garbage collection for hook material.
+- Use only the Template-owned agent-plugin lifecycle and provider adapter after the runtime fixture and versioned artifact interface are green.
+- Prove plan, apply, idempotence, force/update, drift detection, and removal/garbage collection for hook material.
 - Status: open. This phase is not part of the current parity claim.
 
 ## Acceptance
@@ -153,7 +153,7 @@ Core hook guardrail proof is complete when:
 - `PreToolUse` source guard and `Stop` validation guard are fixture-proven;
 - evidence is committed under `spec/evidence`;
 - docs state the exact block/allow behavior and payload shape observed;
-- downstream hook source exists, but managed projection/install remains unclaimed until a proven hook projection path exists;
+- curated hook artifact publication and managed projection/install remain unclaimed until their separately owned proof paths exist;
 - missing lifecycle hooks remain explicit non-claims.
 
-Plugin-packaged hook parity is complete only after agent-sync hook projection exists and has install/update/dry-run/drift/removal evidence.
+Plugin-packaged hook parity is complete only after Template-owned artifact-backed projection has install/update/dry-run/drift/removal evidence.

@@ -1,6 +1,6 @@
 # C1 Atomic Controller Execution Record
 
-**Status:** BOOTSTRAP_READY_TO_LAND
+**Status:** READY_TO_SUBMIT
 
 **Change:** `atomize-rawr-controller-authority`
 
@@ -9,10 +9,11 @@
 Authority is applied in this order:
 
 1. Repository separation amendment at personal RAWR HQ `main` commit `43a49d48ab6c6a29b4877f20576b42b533fc82ba`, file `docs/projects/agent-plugin-lifecycle-normalization/AUTHORITY_AMENDMENT.md`, blob `10bb040317d62834806b86b36a3a14f13c539fbc`.
-2. Accepted lifecycle packet provenance at personal RAWR HQ commit `cc631f60c9254802be647d66662823ae47d5e7db`, project tree `97f0a634fcd8d1d24d4a95fcb57d277e9bf75ae3`.
-3. The packet's normative proposal, C1 workstream container, B01-B03/B32 behavior rows, and I01-I02/I08/I17-I18 invariants, except repository-relationship clauses superseded by item 1.
-4. This Template-owned OpenSpec execution record.
-5. Current code, tests, manifests, history, and live state as migration/proof evidence only.
+2. C1 authority-scope correction in `AUTHORITY_SCOPE_CORRECTION.md`, which excludes hostile replacement of the installed controller/selector and recursive launcher-security machinery.
+3. Accepted lifecycle packet provenance at personal RAWR HQ commit `cc631f60c9254802be647d66662823ae47d5e7db`, project tree `97f0a634fcd8d1d24d4a95fcb57d277e9bf75ae3`.
+4. The packet's normative proposal, C1 workstream container, B01-B03/B32 behavior rows, and I01-I02/I08/I17-I18 invariants, except repository-relationship clauses superseded by item 1 and bootstrap-threat interpretations superseded by item 2.
+5. This Template-owned OpenSpec execution record.
+6. Current code, tests, manifests, history, and live state as migration/proof evidence only.
 
 The two personal Git objects are audit/design provenance. This Template change has no ancestry, merge, cherry-pick, transplant, import, workspace link, runtime selection, or executable-tree relationship with them.
 
@@ -21,12 +22,14 @@ The two personal Git objects are audit/design provenance. This Template change h
 | Field | Value |
 | --- | --- |
 | Owning repository | RAWR HQ-Template |
-| Parent `main` | `4daa77b1904212d13f50bf6af0c88b4cc96a1ad7` |
-| Worktree | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-atomize-rawr-controller-authority` |
-| Graphite branch | `codex/atomize-rawr-controller-authority` (created by the bootstrap commit) |
+| Bootstrap parent `main` | `4daa77b1904212d13f50bf6af0c88b4cc96a1ad7` |
+| Bootstrap landed `main` | `161fb4f5de6596a6d6aa369c0a2d904165474a7e` (PR #332) |
+| Bootstrap worktree/branch | `wt-template-atomize-rawr-controller-authority` / `codex/atomize-rawr-controller-authority` (merged and drained) |
+| Active implementation worktree | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-c1-atomic-controller` |
+| Active Graphite branch | `codex/c1-atomic-controller` (created by this implementation-opening record) |
 | OpenSpec CLI | `@fission-ai/openspec@1.3.1` |
 | Bootstrap command | `bunx @fission-ai/openspec@1.3.1 init . --tools codex --profile core` |
-| Current gate | changeset-only landing and drain before implementation code |
+| Current gate | reviewed implementation committed and exact committed-tree proof green; Graphite submission pending |
 
 The worktree started clean from exact Template `main`. The initial Nx first hop failed only because a new worktree had no dependencies; `bun install --frozen-lockfile` restored the workspace, after which `bunx nx show projects`, `show project @rawr/cli --json`, and `nx graph --print` succeeded.
 
@@ -38,14 +41,15 @@ Make one self-contained Template controller release the immutable source of ever
 
 ### Hard core
 
-- One selected release supplies the launcher, the platform/architecture-specific pinned Bun runtime bytes, and the complete official module closure.
-- One target-specific non-shell native Template bootstrap trampoline parses one canonical selector record, verifies the contained self-verifying launcher and bundled runtime, and uses no release-controlled pre-entry config/home before JavaScript; the selector-hashed launcher is a built-in-only single-file verifier until full release acceptance, and neither layer has command or fallback authority.
+- One selected release supplies the payload-bound `app/rawr.mjs` release entry, the platform/architecture-specific pinned Bun runtime bytes, and the complete official module closure.
+- One stable bounded Template selector launcher at `controller/bin/rawr` reads one atomic selected digest, neutralizes ambient Bun startup inputs, and starts the selected release with its bundled Bun; it is outside release identity and has no command, repair, authentication, or fallback authority.
 - Controller selection and bytes live under the stable Template data root, never a checkout.
 - Official membership is explicit and closed; no scan, link, alias, or fallback can add a member.
 - Raw external registry entries never load before reserved-surface validation.
 - The native Oclif registry remains the sole external-extension state owner.
 - Core recovery works without loading external code or hooks.
 - No lifecycle command rewrites Oclif or next-invocation controller authority.
+- Exact requested-state convergence is read-only; selector-equal launcher or alias drift is explicit auxiliary settlement and never rewrites controller authority.
 - Template and personal repositories share only future versioned data/artifact interfaces, never executable source or Git ancestry.
 
 ### Exterior
@@ -59,6 +63,7 @@ Agent releases, provider deployment, export, packaging, promotion, app compositi
 - A self-contained release requires a worktree, personal path, merge relation, or full repository snapshot.
 - A proposed module mutates controller selection and external registry in one transaction.
 - Hook-only interception is the only way to guard a candidate after Oclif already loaded it.
+- Launcher mechanics require a target-specific security protocol, recursive verifier, or defense against a writer who controls the complete installed state.
 
 Any such finding pauses C1 before compensating machinery is added.
 
@@ -67,7 +72,7 @@ Any such finding pauses C1 before compensating machinery is added.
 | State or fact | Sole owner | C1 use | Forbidden owner/path |
 | --- | --- | --- | --- |
 | controller classification and release manifest | Template controller | build and verify closed official set | workspace scan, Oclif registry, personal repo |
-| selected controller | Template activation script in stable data | atomic canonical selector record | supported RAWR command, checkout hook |
+| selected controller | Template activation script in stable data | atomic selected-digest value | supported RAWR command, checkout hook |
 | external extension state | native Oclif user registry | guarded explicit lifecycle | lifecycle sync, controller builder |
 | external activation policy | Template guarded adapter | validate against controller reserved surface | extension hook, second registry |
 | global provenance | `doctor global` read model | report live verified state | repair or relink path |
@@ -78,7 +83,7 @@ Any such finding pauses C1 before compensating machinery is added.
 | Row | Owner and oracle | Primary evidence |
 | --- | --- | --- |
 | B01 / I01 | Template controller; `ControllerClosureOracle` | controller A/B substitution, empty external registry, official-link rejection, mutation traps |
-| B02 / I02 / I17 | Template controller; corrected `LocatorIsolationOracle` | materialized release, hostile foreign and selected-release config/env, platform-null bootstrap, source-local refusal, source/verifier deletion |
+| B02 / I02 / I17 | Template controller; corrected `LocatorIsolationOracle` | materialized release, hostile foreign cwd/config/env, bounded clean launch, source-local refusal, source deletion |
 | B03 / I08 | external adapter over native Oclif owner; `RecoveryGuardOracle` | collision matrix, import sentinel, pre-dispatch rejection, post-native residue quarantine, recovery dispatch |
 | B32 | Template controller/data-root owner; `StableAuthorityPathOracle` | XDG/`RAWR_DATA_DIR`, realpath containment, idempotent activation, selector failpoints |
 | I18 | director/Graphite process | landed Template main, archived record, drained branch/worktree |
@@ -87,16 +92,21 @@ Correctness is observable state and call absence. Source-text matching is used o
 
 ## Write Set
 
-- `apps/cli/{package.json,bin/**,src/index.ts,src/commands/doctor/global.ts,src/lib/controller/**,src/lib/external-extensions/**,test/controller-fixture/**,test/agent-plugin-lifecycle/**}`
+- `apps/cli/{package.json,bin/**,src/index.ts,src/commands/{plugins/**,doctor/global.ts,routine/**,tools/export.ts,workflow/**},src/lib/{controller/**,external-extensions/**,agent-config-sync-client.ts,subprocess.ts,undo-lifecycle.ts},test/**}` for release-only bootstrap, closed official composition, guarded external projections, verified nested reentry, removal of universal undo/journal startup authority, structurally valid projection binding, diagnostics, and behavior proof;
 - `packages/controller-release/**` for pure payload/envelope values, canonical identity, and verification, plus `scripts/controller/**` for filesystem build/activation adapters;
-- `apps/cli/src/commands/plugins/**` for the sole user-facing external-extension projections and `apps/cli/src/lib/external-extensions/**` for convergence classification, reserved-surface policy, guarded discovery, and delegation to the native `@oclif/plugin-plugins` mutation owner;
-- official command manifests under `plugins/cli/{devops,hyperresearch,session-tools,chatgpt-corpus,plugins}/**` only where controller classification/build output or official relink removal requires it;
+- `packages/core/**` for the bootstrap-bound verified controller reentry authority used by nested official commands, with no ambient or source-derived selector;
+- official command manifests under `plugins/cli/{devops,hyperresearch,session-tools,chatgpt-corpus,plugins}/**` only where controller classification/build output or official relink removal requires it, plus `plugins/cli/hello/README.md` only to bind Hello as an external fixture;
 - C1-owned interim relink paths under `plugins/cli/plugins/src/commands/plugins/{cli/install,doctor/links,converge,status,sync}/**` and `src/lib/{plugin-install-service,rawr-source-runner}.ts`;
-- `scripts/dev/{install-global-rawr.sh,activate-global-rawr.sh,auto-refresh-main.sh}`, relevant post-checkout/post-merge hooks, controller architecture guards, and legacy positive ratchets that require official links;
-- root `package.json`, `bun.lock`, Nx/test configuration, and C1-owned active controller/external-extension guidance;
+- `services/agent-config-sync/**`, `services/dev/**`, and `plugins/cli/devops/**` only to remove install-reconcile/link-healing authority and retype former convergence followups as read-only inspection;
+- `services/hq-ops/**` only to delete the `plugin-install` aggregate module and its router/contract/test exposure after evidence showed that module existed solely to plan official workspace-link mutation; the remaining HQ Ops domains stay outside C1;
+- `scripts/dev/{install-global-rawr.sh,activate-global-rawr.sh,auto-refresh-main.sh,test-hq-browser-lifecycle.sh}`, `scripts/githooks/**`, controller architecture guards, and legacy positive ratchets that require official links;
+- `tools/workstream-plugin-pack/**`, `services/hyperresearch-codex/**`, repository `AGENTS` files, and active root/`docs/**` guidance only to remove source-controller, merge-first, tree-equivalence, or official-link instructions and bind installed-controller/repository-separation usage; archived readiness records receive explicit supersession annotations rather than new authority;
+- root `package.json`, `bun.lock`, Nx/test configuration, `tools/architecture-inventory/workstream-b-devops.json`, and phase/architecture ratchets required by the controller closure;
+- `tools/eslint-fixtures/project.json` and `scripts/phase-03/verify-eslint-fixtures-lint.mjs` to replace direct linting of intentional negative fixtures with an assertion gate that requires the positive fixture to be clean and each negative fixture to fail only the declared module-boundary rule;
 - this OpenSpec change and generated `.codex/` OpenSpec integration.
 
-HQ Ops aggregate internals may be mined read-only but remain unchanged/unreachable in C1 unless evidence proves an official-link write cannot otherwise be removed; broader aggregate deletion remains C5.
+The evidence-driven `plugin-install` module deletion is not preservation or redesign of the HQ Ops aggregate. Broader mixed-owner aggregate deletion remains C5.
+The projection binding, architecture inventory, and fixture-gate repairs restore inherited mandatory checks without adding lifecycle authority.
 
 ## Protected Lanes
 
@@ -133,15 +143,28 @@ Cross-repository acceptance binds artifact handle, payload digest, schema/protoc
 | Template parent/worktree | PASS | clean parent `4daa77b1...`; dedicated worktree; primary Template stack untouched |
 | Nx first hop | PASS after dependency install | projects, resolved `@rawr/cli`, CLI plugin projects, full graph inspected |
 | pinned OpenSpec init | PASS | version `1.3.1`; `.codex/` integration and this change created |
-| strict validation | PASS on draft | `bunx @fission-ai/openspec@1.3.1 validate atomize-rawr-controller-authority --strict --no-interactive` |
+| strict validation | PASS after settlement repair | `bunx @fission-ai/openspec@1.3.1 validate atomize-rawr-controller-authority --strict --no-interactive`; full-state convergence, auxiliary settlement, and post-selector failure semantics now match implementation |
 | baseline CLI tests | PASS after prescribed retry | initial suite exposed order-dependent missing DevOps build (3 failures); isolated rerun passed; full rerun passed 26 files / 79 tests, confirming the controller-closure failure class |
 | pinned native manager audit | PASS | installed `@oclif/plugin-plugins@5.4.56` publicly exports its command classes/hooks only; its `Plugins` mutator is package-internal, so C1 projections delegate mutation through exported command classes and never deep-import or replace it; current upstream `5.4.84` has the same export boundary |
+| external provenance review repair | PASS | guarded discovery now requires every native user entry to have a dependency and compares both sides of content-addressed local provenance; converged install performs read-only inspection before staging; update classifies each entry and rejects mixed proven-local/native input before the pinned manager's global update. Focused external-extension proof passed 9 files / 89 tests, including missing/mismatched dependency, staging write-trap, local-only convergence, native-only delegation, and mixed-set rejection falsifiers. |
 | manager import-sandbox spike | PASS | Bun `1.3.14` revision `0d9b296af33f2b851fcbf4df3e9ec89751734ba4` runtime plugins intercepted and rejected both dynamic `import()` and CommonJS `require()` resolution; C1 updates the repository pin, binds the exact runtime contract in each envelope, and proves mismatch refuses native dispatch |
-| pre-entry config spike | PASS with design correction | an explicit hostile `--config` preload executed despite no-env/no-install; `--config=/dev/null` with null HOME/XDG did not. C1 therefore accepts no selected-release bootstrap config/home input and adds hostile-release sentinels |
-| TypeScript/refactoring review | PASS | target-specific trampoline/selector types are closed; the generated single-file launcher preserves the pure verifier as sole source owner; no pre-acceptance filesystem-module edge or duplicate implementation remains |
-| behavior-first testing review | PASS | platform-null bootstrap inputs, selector/runtime/launcher tampering, cross-target mismatch, and verifier-import sentinels close the observed pre-entry execution paths |
-| structural authority review | PASS | one Template controller/trampoline/selector chain remains; no personal coupling, compatibility aggregate, release-controlled bootstrap input, or second state owner remains |
-| bootstrap landing | PENDING | no implementation code may open first |
+| pre-entry config spike | PASS with bounded use | an explicit bunfig preload executed despite no-env/no-install; `--config=/dev/null` with null HOME/XDG did not. C1 uses that bounded neutralizer for ambient startup inputs and adds no recursive verification layer |
+| authority-scope correction | PASS | hostile replacement of complete installed state is excluded; native target protocol, TLV selector, hashed runtime/launcher chain, and recursive self-verifier were stopped and removed before landing implementation |
+| pre-correction standing review | SUPERSEDED | the repository-separation findings remain useful, but the accepted scope correction rejects the reviewed native/TLV/self-verifier mechanism |
+| scope-corrected authority review | PASS after repair | review found one P1 in a substitution scenario and two P2s in launcher naming and hardlink closure; the record now permits the release entry to perform ordinary verification before command/hook dispatch, distinguishes the stable selector launcher from the payload-bound release entry, and rejects mutable shared hardlinks |
+| bootstrap landing | PASS | Template PR #332; `main` commit `161fb4f5de6596a6d6aa369c0a2d904165474a7e`; bootstrap branch and worktree drained before this fresh implementation worktree opened |
+| pure controller product | PASS | `@rawr/controller-release` build/typecheck/lint/test passed, 34/34 tests; controller-build typecheck/lint passed |
+| activation and cleanup transactions | PASS | controller-build tests passed 80/80, including selector failpoints, full-state zero-write convergence, auxiliary retry, selector/alias races, guarded recursive cleanup, and primary-plus-cleanup failure preservation |
+| recursive-delete boundary | PASS after dedicated audit | the audit found and closed two P2s: external-artifact cleanup now proves its canonical owned temporary child is a non-symlink directory immediately before recursive removal, and the release-inspector fixture keeps staging/final siblings inside one private `mkdtemp` parent instead of pre-deleting an unowned digest sibling. Every product recursive removal now requires canonical direct-child/prefix ownership plus type/alias checks; regular-file and alias substitution fail closed, and 17/17 focused tests pass. |
+| verified nested reentry | PASS | core build/typecheck/lint/test passed, 12/12 tests; CLI subprocess proof overwrites hook-mutated controller/startup values including `BUN_RUNTIME_TRANSPILER_CACHE_PATH=0`; focused reentry test passed 1/1 |
+| CLI behavior | PASS | full `@rawr/cli` build/typecheck/lint/test passed after the recursive-delete repair, 37 files / 211 tests; the focused delete-boundary subset passed 17/17. |
+| official lifecycle projections | PASS | `@rawr/plugin-plugins` build/typecheck/lint/test/sync/structural passed after mechanically replacing 31 same-project `#lib/*` imports with behavior-equivalent relative imports, 16/16 tests; `@rawr/plugin-devops` build/typecheck/test/sync passed, 1/1 test; every other changed official or external-fixture plugin's declared build/typecheck/test/structural targets passed in the affected graph. |
+| inherited structural baselines | PASS | the CLI projection client now uses the established typed `bindService` boundary; exact Dev/Dev Node/DevOps roots, tags, and declared targets are recorded in the architecture inventory and all three sync checks pass; the ESLint fixture gate proves one positive fixture clean and three intentional negative fixtures fail only severity-2 `@nx/enforce-module-boundaries`. |
+| architecture ratchets | PASS | controller classification, no-official-relink authority, and repository-separation guards passed; `git diff --check` passed |
+| affected working-tree graph | PASS after delete repair | uncached `nx affected -t test,lint,typecheck,build,structural --base=161fb4f5de6596a6d6aa369c0a2d904165474a7e` intentionally omitted `--head` so Nx included uncommitted implementation state; the post-repair rerun passed all targets for 33 projects plus 17 dependent tasks. The exact committed `--head=HEAD` rerun remains the pre-submit gate. |
+| affected committed-tree graph | PASS | after the implementation commit, the same uncached 33-project/17-dependent-task graph passed with exact `--base=161fb4f5de6596a6d6aa369c0a2d904165474a7e --head=HEAD`; a final post-record-amend rerun is the no-further-change submission check. |
+| installed controller acceptance | PASS after delete repair | the post-repair uncached clean-home/source-deletion acceptance materialized one verified controller, removed its source checkout, executed 97 fresh processes and all 67 manifest commands, completed guarded external lifecycle recovery, and reported `ambientStartupExecuted=false`. |
+| final standing review | PASS after delete-safety repair | TypeScript, behavior/transaction, delete-safety, and structural-quality reviews report no unresolved P1/P2. A dedicated delete audit found two P2s; both were repaired, independently re-audited, and included in the refreshed full proof before the final structural return. |
 
 ## Closure
 

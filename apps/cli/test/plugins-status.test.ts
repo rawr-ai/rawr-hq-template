@@ -20,7 +20,7 @@ function runRawr(args: string[], envOverrides?: Record<string, string>) {
   const baseHome = envOverrides?.HOME ?? mkdtempSync(path.join(os.tmpdir(), "rawr-test-plugins-status-home-"));
   if (!envOverrides?.HOME) tempDirs.push(baseHome);
 
-  return spawnSync("bun", ["src/index.ts", ...args], {
+  return spawnSync("bun", ["test/command-fixture/command-test-cli.ts", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
@@ -41,17 +41,7 @@ function parseJson(proc: ReturnType<typeof runRawr>) {
 }
 
 describe("plugins status", () => {
-  it("returns non-zero by default when install drift exists", () => {
-    const proc = runRawr(["plugins", "status", "--json", "--checks", "install"]);
-    expect(proc.status).toBe(1);
-    const parsed = parseJson(proc);
-    expect(parsed.ok).toBe(true);
-    expect(parsed.data.statuses.install).toBe("DRIFT_DETECTED");
-    expect(parsed.data.statuses.overall).toBe("NEEDS_CONVERGENCE");
-    expect(parsed.data.actions.some((a: any) => String(a.command).includes("plugins cli install all"))).toBe(true);
-  });
-
-  it("shows sync DRIFT then IN_SYNC after apply (sync-only checks)", { timeout: 60000 }, () => {
+  it("shows sync DRIFT then IN_SYNC after apply", { timeout: 60000 }, () => {
     const sharedHome = mkdtempSync(path.join(os.tmpdir(), "rawr-test-plugins-status-sync-"));
     const codexHome = path.join(sharedHome, "codex-home");
     tempDirs.push(sharedHome);
@@ -64,7 +54,7 @@ describe("plugins status", () => {
     };
 
     const before = runRawr(
-      ["plugins", "status", "--json", "--checks", "sync", "--agent", "codex", "--codex-home", codexHome, "--material-only"],
+      ["plugins", "status", "--json", "--agent", "codex", "--codex-home", codexHome, "--material-only"],
       env,
     );
     expect(before.status).toBe(1);
@@ -92,7 +82,7 @@ describe("plugins status", () => {
     expect(apply.status).toBe(0);
 
     const after = runRawr(
-      ["plugins", "status", "--json", "--checks", "sync", "--agent", "codex", "--codex-home", codexHome, "--material-only"],
+      ["plugins", "status", "--json", "--agent", "codex", "--codex-home", codexHome, "--material-only"],
       env,
     );
     expect(after.status).toBe(0);
@@ -102,35 +92,23 @@ describe("plugins status", () => {
     expect(afterJson.data.statuses.overall).toBe("HEALTHY");
   });
 
-  it("prints clear human status sections", () => {
-    const proc = runRawr(["plugins", "status", "--checks", "install", "--no-fail"]);
-    expect(proc.status).toBe(0);
-    const out = `${proc.stdout}\n${proc.stderr}`;
-    expect(out).toContain("checks: install");
-    expect(out).toContain("sync: SKIPPED");
-    expect(out).toContain("install: DRIFT_DETECTED");
-    expect(out).toContain("overall: NEEDS_CONVERGENCE");
-    expect(out).toContain("actions:");
-  });
-
-  it("applies install repair when requested", { timeout: 60000 }, () => {
-    const sharedHome = mkdtempSync(path.join(os.tmpdir(), "rawr-test-plugins-status-repair-"));
+  it("prints provider-content status without an install section", () => {
+    const sharedHome = mkdtempSync(path.join(os.tmpdir(), "rawr-test-plugins-status-human-"));
+    const codexHome = path.join(sharedHome, "codex-home");
     tempDirs.push(sharedHome);
 
-    const repaired = runRawr(
-      ["plugins", "status", "--json", "--checks", "install", "--repair", "--no-fail"],
-      {
-        HOME: sharedHome,
-        XDG_CONFIG_HOME: path.join(sharedHome, ".config"),
-        XDG_DATA_HOME: path.join(sharedHome, ".local", "share"),
-        XDG_STATE_HOME: path.join(sharedHome, ".local", "state"),
-      },
-    );
-    expect(repaired.status).toBe(0);
-    const repairedJson = parseJson(repaired);
-    expect(repairedJson.ok).toBe(true);
-    expect(repairedJson.data.repair.action).toBe("applied");
-    expect(repairedJson.data.statuses.install).toBe("IN_SYNC");
-    expect(repairedJson.data.statuses.overall).toBe("HEALTHY");
+    const proc = runRawr(["plugins", "status", "--agent", "codex", "--codex-home", codexHome, "--no-fail"]);
+    expect(proc.status).toBe(0);
+    const out = `${proc.stdout}\n${proc.stderr}`;
+    expect(out).toContain("sync:");
+    expect(out).toContain("overall: NEEDS_CONVERGENCE");
+    expect(out).toContain("actions:");
+    expect(out).not.toContain("install:");
+  });
+
+  it("has no compatibility flag for external install repair", () => {
+    const proc = runRawr(["plugins", "status", "--repair", "--no-fail"]);
+    expect(proc.status).not.toBe(0);
+    expect(`${proc.stdout}\n${proc.stderr}`).toContain("--repair");
   });
 });

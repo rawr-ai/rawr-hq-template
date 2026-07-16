@@ -4,7 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { findWorkspaceRoot } from "@rawr/core";
-import { resolveCliEntrypoint } from "../../lib/subprocess";
+import { resolveCliReentry } from "../../lib/subprocess";
 
 type Snapshot = {
   timestamp: string;
@@ -16,12 +16,17 @@ type Snapshot = {
   securityReport: unknown;
 };
 
-function runCapture(cmd: string, args: string[], cwd: string): { status: number; stdout: string; stderr: string } {
+function runCapture(
+  cmd: string,
+  args: readonly string[],
+  cwd: string,
+  env: NodeJS.ProcessEnv,
+): { status: number; stdout: string; stderr: string } {
   const proc = spawnSync(cmd, args, {
     cwd,
     encoding: "utf8",
     stdio: "pipe",
-    env: { ...process.env },
+    env: { ...env },
   });
   return {
     status: proc.status ?? 1,
@@ -76,16 +81,16 @@ export default class RoutineSnapshot extends RawrCommand {
 
     await mkdir(outDir, { recursive: true });
 
-    const entrypoint = resolveCliEntrypoint();
+    const rawr = resolveCliReentry();
 
-    const rawrVersion = runCapture("bun", [entrypoint, "--version"], workspaceRoot).stdout.trim();
-    const bunVersion = runCapture("bun", ["--version"], workspaceRoot).stdout.trim();
-    const toolsExport = safeJson(runCapture("bun", [entrypoint, "tools", "export", "--json"], workspaceRoot).stdout);
+    const rawrVersion = runCapture(rawr.cmd, [...rawr.args, "--version"], rawr.cwd, rawr.env).stdout.trim();
+    const bunVersion = runCapture(rawr.cmd, ["--config=/dev/null", "--no-env-file", "--no-install", "--version"], rawr.cwd, rawr.env).stdout.trim();
+    const toolsExport = safeJson(runCapture(rawr.cmd, [...rawr.args, "tools", "export", "--json"], rawr.cwd, rawr.env).stdout);
     const pluginsList = safeJson(
-      runCapture("bun", [entrypoint, "plugins", "web", "list", "--json"], workspaceRoot).stdout,
+      runCapture(rawr.cmd, [...rawr.args, "plugins", "web", "list", "--json"], rawr.cwd, rawr.env).stdout,
     );
     const securityReport = safeJson(
-      runCapture("bun", [entrypoint, "security", "report", "--json"], workspaceRoot).stdout,
+      runCapture(rawr.cmd, [...rawr.args, "security", "report", "--json"], rawr.cwd, rawr.env).stdout,
     );
 
     const snapshot: Snapshot = {

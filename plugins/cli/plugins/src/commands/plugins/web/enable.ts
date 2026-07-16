@@ -1,6 +1,6 @@
 import { Args, Flags } from "@oclif/core";
 import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
-import { createHqOpsCallOptions, createHqOpsClient } from "#lib/hq-ops-client";
+import { createHqOpsCallOptions, createHqOpsClient } from "../../../lib/hq-ops-client";
 
 /**
  * Enables one catalog-resolved runtime web plugin after HQ security gating.

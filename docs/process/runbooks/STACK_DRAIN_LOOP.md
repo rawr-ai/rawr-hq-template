@@ -21,9 +21,10 @@ gt log --all
 ```bash
 gt sync --no-restack
 ```
-3. Apply repo boundary guard from `docs/process/HQ_OPERATIONS.md`:
-- Run `rawr plugins sync all` only in personal `RAWR HQ`, never in template.
+3. Apply repository boundary policy from `docs/process/HQ_OPERATIONS.md`:
+- Do not run controller or content lifecycle mutation as part of stack mechanics.
 - Keep stack mutation Graphite-first (`gt`), not ad-hoc `git rebase`.
+- Promote Template and personal independently; never merge one repository into the other.
 
 ## Canonical drain loop
 
@@ -77,4 +78,4 @@ Use Graphite publish/merge/sync/prune behavior as canonical.
 - Merged branches are pruned by Graphite.
 - `gt ls` reflects the expected stable stack state.
 - `git status --short` is clean.
-- Cross-repo drains satisfy `docs/process/HQ_OPERATIONS.md` final acceptance checklist.
+- Each repository independently satisfies `docs/process/HQ_OPERATIONS.md` final acceptance checklist.

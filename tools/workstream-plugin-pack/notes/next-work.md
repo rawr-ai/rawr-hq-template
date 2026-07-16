@@ -3,18 +3,15 @@
 ## Status
 
 The pack is contained locally and reviewable as one unit. Generic workstream
-skills, assets, steward briefs, hook scripts, hook config, and downstream port
-notes live under `tools/workstream-plugin-pack/`.
+skills, assets, steward briefs, hook scripts, and hook config live under
+`tools/workstream-plugin-pack/` as Template-owned tooling.
 
 Live `.agents/.codex` activation files are intentionally absent. Use
 `scripts/install-local-codex-pack.ts` only when local activation/testing is
 needed.
 
-Temporary downstream projection is now part of the bridge plan:
-`scripts/install-local-codex-pack.ts --target downstream` can project this pack
-into downstream `rawr-hq/plugins/agents/habitat`, but upstream
-`tools/workstream-plugin-pack/` remains canonical until hook projection lands in
-`agent-config-sync`.
+The installer projects only into the current Template checkout. It has no
+personal-repository or cross-repository projection mode.
 
 Runtime Realization Lab docs are overlays only. They may add lab authority,
 proof classes, gates, evidence homes, and phase dossier guidance, but they must
@@ -34,14 +31,9 @@ not own the generic workstream lifecycle or record model.
 
 ## Deferred
 
-- Remove the temporary upstream-to-downstream projection bridge after
-  `agent-config-sync` supports hook projection and the Workstream plugin has
-  been used successfully a few times without issues.
-- Decide downstream hook activation mechanics when the plugin sync surface is
-  ready; reusable hook scripts can move before provider-local activation is
-  automatic.
-- Do not sync or install downstream `plugins/agents/habitat` until activation
-  is explicitly requested.
+- Publish a versioned generic-tool artifact only if a concrete consumer needs
+  one; do not use a checkout path or copied tree as the interface.
+- Keep provider-local activation separate from the generic workstream model.
 
 ## Green Locally Means
 
@@ -49,7 +41,7 @@ not own the generic workstream lifecycle or record model.
 - The runner and review-loop skills close objective, execution, review, repair,
   closure, and handoff loops.
 - Runtime-lab docs remain complementary overlays.
-- `scripts/install-local-codex-pack.ts --target local --dry-run` and
-  `--target downstream --dry-run` show the expected projections.
+- `scripts/install-local-codex-pack.ts --dry-run` shows only the expected
+  Template-local projections.
 - Hook smoke checks, pack hook JSON parse, runtime structural guard, and
   `git diff --check` pass.

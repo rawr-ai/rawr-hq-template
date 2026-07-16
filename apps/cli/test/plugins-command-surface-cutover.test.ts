@@ -13,7 +13,7 @@ tempDirs.push(DEFAULT_TEST_HOME);
 function runRawr(args: string[], envOverrides?: Record<string, string>) {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const baseHome = envOverrides?.HOME ?? DEFAULT_TEST_HOME;
-  return spawnSync("bun", ["src/index.ts", ...args], {
+  return spawnSync("bun", ["test/command-fixture/command-test-cli.ts", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
@@ -67,17 +67,19 @@ afterEach(() => {
 });
 
 describe("plugin command surface cutover", () => {
-  it("exposes web/cli/scaffold/sync under plugins topic", { timeout: 30000 }, () => {
+  it("keeps external, web, scaffold, and sync surfaces without official relink commands", { timeout: 30000 }, () => {
     const proc = runRawr(["plugins", "--help"]);
     expect(proc.status).toBe(0);
 
     const out = `${proc.stdout}\n${proc.stderr}`;
     expect(out).toContain("plugins web");
-    expect(out).toContain("plugins cli");
     expect(out).toContain("plugins scaffold");
     expect(out).toContain("plugins sync");
-    expect(out).toContain("plugins doctor");
-    expect(out).toContain("plugins converge");
+    expect(out).toContain("plugins install");
+    expect(out).toContain("plugins link");
+    expect(out).not.toContain("plugins cli");
+    expect(out).not.toContain("plugins doctor links");
+    expect(out).not.toContain("plugins converge");
   });
 
   it("exposes native sync and generic export command surfaces", { timeout: 30000 }, () => {
@@ -132,7 +134,6 @@ describe("plugin command surface cutover", () => {
         "--codex-home",
         codexHome,
         "--no-cowork",
-        "--no-install-reconcile",
       ],
       syncEnv,
     );
@@ -182,7 +183,7 @@ describe("plugin command surface cutover", () => {
     expect(allJson.warnings).toEqual(expect.arrayContaining([
       expect.stringContaining("Codex guidance favors skills"),
     ]));
-    expect(allJson.data.installReconcile?.action).toBeTruthy();
+    expect(allJson.data.installReconcile).toBeUndefined();
 
     const claudeHome = path.join(tempHome, ".claude", "plugins", "local");
     const claude = runRawr(
@@ -197,7 +198,6 @@ describe("plugin command surface cutover", () => {
         "--claude-home",
         claudeHome,
         "--no-cowork",
-        "--no-install-reconcile",
       ],
       syncEnv,
     );

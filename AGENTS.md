@@ -17,16 +17,22 @@
 
 ## Repo Role Boundary
 
-- `RAWR HQ-Template` is the upstream baseline for shared core behavior and docs.
-- Personal/local customization belongs in downstream `RAWR HQ` unless intentionally promoted upstream.
-- Use `AGENTS_SPLIT.md` first for template-vs-personal destination decisions.
-- Template plugins are fixture/example-only by default; operational plugin authoring belongs downstream.
+- `RAWR HQ-Template` owns the executable controller, official CLI, provider adapters,
+  generic lifecycle services, schemas/tooling implementations, and generic validators.
+- Personal `RAWR HQ` owns curated agent-plugin content, vendor provenance,
+  declarative policy/evaluation inputs, and its own governed release/channel records.
+- The repositories are independent. Do not merge, cherry-pick, transplant, mirror, or
+  preserve Template executable paths in personal.
+- Cross-repository use is limited to explicit versioned data/artifact interfaces. A
+  repository path is a content locator, never controller identity or Git ancestry.
+- Use `AGENTS_SPLIT.md` first for Template-vs-personal destination decisions.
 
 ## Command Surface Policy
 
 - External CLI plugin channel: `rawr plugins ...`
-- Workspace runtime plugin channel: `rawr plugins web ...`
-- Do not mix the two command surfaces in guidance or examples.
+- Curated agent-plugin lifecycle channel: `rawr agent plugins ...`
+- App composition may consume outputs but never owns either lifecycle.
+- Do not mix these command surfaces in guidance or examples.
 
 ## Graphite Requirement
 
@@ -49,9 +55,7 @@
 - CLI/plugin path index (start here): `docs/process/RUNBOOKS.md`.
 - Nx-first agent workflow: `docs/process/NX_AGENT_WORKFLOW.md`.
 - Graphite stack drain loop: `docs/process/runbooks/STACK_DRAIN_LOOP.md`.
-- Template->personal integration loop: `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md`.
-- Upstream sync workflow: `docs/process/UPSTREAM_SYNC_RUNBOOK.md`.
-- Cross-repo workflow model: `docs/process/CROSS_REPO_WORKFLOWS.md`.
+- Repository separation and artifact-interface workflow: `docs/process/CROSS_REPO_WORKFLOWS.md`.
 - Graphite-first branch/stack operations: `docs/process/GRAPHITE.md`.
 - Ongoing doc/process health cadence: `docs/process/MAINTENANCE_CADENCE.md`.
 - Operational usage conventions: `docs/process/HQ_USAGE.md`, `docs/process/HQ_OPERATIONS.md`.

@@ -4,13 +4,13 @@
 
 - Harden `RAWR HQ-Template` governance and naming.
 - Stabilize plugin channel separation.
-- Improve downstream update guidance.
+- Complete repository separation and versioned artifact interfaces.
 
 ## Near-Term Milestones
 
-1. Complete command-surface migration to `rawr plugins web ...`.
-2. Expand template docs and publishing rails.
-3. Finalize upstream sync operating model.
+1. Close official controller and external-extension authority under Template.
+2. Publish curated agent lifecycle schemas/protocols and immutable artifacts.
+3. Complete independent personal content migration and provider/export settlement.
 
 ## Later (Parked / Future)
 

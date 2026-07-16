@@ -1,14 +1,8 @@
 # Workstream Plugin Pack
 
-This pack is a deprecated bridge and recovery copy for reusable workstream
-operation. The downstream Habitat plugin is now the distributable source of
-truth for Workstream skills, role briefs, hooks, and reusable assets:
-
-`/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq/plugins/agents/habitat/`
-
-Do not make new durable Workstream content changes here. If this bridge
-contains useful material, migrate it downstream first and then remove the
-bridge in the template cleanup pass.
+This is the Template-owned generic tooling pack for reusable workstream
+operation. Its skills, role briefs, hooks, and reusable assets are maintained
+here independently from any curated-content repository.
 
 Mental model: the workstream is durable coordination state. Sessions, threads,
 worktrees, tickets, workflows, and transcripts are useful projections or
@@ -18,23 +12,22 @@ resources, but they do not own continuity by themselves.
 
 | Surface | Path | Status |
 | --- | --- | --- |
-| Workstream runner skill | `skills/workstream-runner/` | Deprecated bridge copy |
-| Review-loop skill | `skills/workstream-review-loops/` | Deprecated bridge copy |
-| Provider-neutral steward roles | `agents/` | Deprecated bridge copy |
-| Reusable hook scripts | `hooks/` | Deprecated bridge copy |
-| Local install scripts | `scripts/` | Projection helpers |
-| Copy-forward scaffolds | `skills/workstream-runner/assets/` | Deprecated bridge copy |
-| Downstream port notes | `notes/downstream-port-notes.md` | Porting guide |
-| Immediate follow-up | `notes/next-work.md` | Current review plan |
+| Workstream runner skill | `skills/workstream-runner/` | Generic Template tool |
+| Review-loop skill | `skills/workstream-review-loops/` | Generic Template tool |
+| Provider-neutral steward roles | `agents/` | Generic Template tool |
+| Reusable hook scripts | `hooks/` | Generic Template tool |
+| Local install script | `scripts/` | Template-local projection helper |
+| Copy-forward scaffolds | `skills/workstream-runner/assets/` | Generic Template tool |
+| Immediate follow-up | `notes/next-work.md` | Current review notes |
 
 ## Local Activation
 
-This bridge copy can still project local runtime surfaces when the template repo
-needs to test recovered Workstream material in Codex.
+The pack can project local runtime surfaces when this Template checkout needs
+to use or test Workstream material in Codex.
 
-- `scripts/install-local-codex-pack.ts --target local` projects pack content
-  into local Codex runtime surfaces when local activation is needed. This is
-  also the default when no target is provided.
+- `scripts/install-local-codex-pack.ts` projects pack content into this
+  checkout's local Codex runtime surfaces. `--dry-run` reports the exact
+  destinations without changing them.
 - Pack skills copy to `.agents/skills/`.
 - Pack agent briefs generate `.codex/agents/*.toml`.
 - Pack hook scripts/config copy to `.codex/hooks/` and `.codex/hooks.json`.
@@ -44,22 +37,17 @@ activates only `SessionStart` and `Stop`; unavailable events such as
 `PreCompact` are portability notes, not guard failures.
 
 Do not keep checked-in placeholder activation files for skills, agents, hooks,
-or hook config. When local testing is needed, run the install script so active
-runtime files are real projections of pack content.
+or hook config. When local testing is needed, run the installer from this
+checkout. It rejects destinations outside its closed Template-local allowlist,
+including aliases, before any recursive removal.
 
-## Downstream Projection
+## Repository Boundary
 
-The downstream Habitat plugin should be edited directly. The install script's
-downstream projection mode is retained only as a recovery bridge:
-
-```bash
-bun tools/workstream-plugin-pack/scripts/install-local-codex-pack.ts \
-  --target downstream \
-  --downstream-root /Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq
-```
-
-Do not use this projection path as the normal authoring workflow. Remove this
-bridge when the template-side migration no longer needs a recovery copy.
+The installer has no personal-checkout, repository-sync, or copy target.
+Personal RAWR HQ owns curated agent-plugin content and its own lifecycle
+records; this pack remains Template-owned generic tooling. Any future exchange
+must use an explicit versioned data or immutable-artifact interface rather than
+a repository path, copied implementation, or tree-equivalence rule.
 
 ## Boundary
 

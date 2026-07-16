@@ -1,70 +1,26 @@
-# Plugins Toolkit Router
+# Interim Plugin Lifecycle Package
 
 ## Scope
 
-- Applies to `plugins/cli/plugins/**`.
+- Applies to `plugins/cli/plugins/**` during lifecycle normalization.
 
-## Purpose
+## Authority
 
-- Keep the `rawr plugins sync ...` command surface deterministic and explicit.
-- Preserve full-convergence as the default daily path.
-- Prevent silent drift and stale carryovers during plugin lifecycle changes.
+This package is migration evidence, not the target lifecycle owner. Do not add new
+aggregate sync, official link/relink, external Oclif mutation, curated release,
+provider reconciliation, export, compatibility, or fallback behavior here.
 
-## Canonical Command Contract
+- External Oclif extension lifecycle belongs to Template root commands under
+  `rawr plugins ...` and delegates mutation solely to the native manager.
+- Curated agent-plugin lifecycle belongs to `rawr agent plugins ...` and the
+  generic Template services introduced by its owning container.
+- App composition remains useful but owns no lifecycle state.
 
-- Full convergence: `rawr plugins sync all`
-- Plan first: `rawr plugins sync all --dry-run --json`
-- Partial behavior is advanced-only and must be explicit with `--allow-partial`.
+C1 removes official link/relink and native mutation reachability. C5 owns deletion
+of the remaining mixed aggregate after qualified capabilities have explicit owners.
 
-Do not weaken partial-mode guardrails by default.
+## Verification
 
-## Invariants
-
-- Keep `rawr plugins sync all` as the canonical “sync everything” command.
-- Keep stale managed orphan retirement enabled by default.
-- Keep deterministic overwrite + managed GC defaults for full sync.
-- Keep command-surface clarity:
-  - `rawr plugins sync ...` for cross-type sync orchestration.
-  - `rawr plugins web ...` for runtime web enable/disable/status.
-  - `rawr plugins cli ...` for toolkit batch operations.
-
-## Lifecycle Handling (Update/Rename/Move/Delete)
-
-### Command/behavior update
-
-- After changing sync logic, run plugin tests/build and perform a sync dry-run.
-- Validate JSON output remains stable and explicit.
-
-### Source plugin rename/move/delete handling
-
-- Ensure full sync still retires stale managed destinations for renamed/deleted plugins.
-- Preserve explicit reporting for retirement actions and failures.
-
-### Flag or flow changes
-
-- Any change to defaults/flags must update:
-  - `plugins/cli/plugins/README.md`
-  - `plugins/cli/plugins/agent-pack/skills/agent-sync/SKILL.md`
-  - `services/agent-config-sync/test/TESTING_PLAN.md` (if sync guarantees or gates change)
-
-## Verification Loop
-
-From repo root:
-
-```bash
-bunx nx run-many -t build --projects=@rawr/agent-config-sync,@rawr/agent-config-sync-node,@rawr/plugin-plugins
-bunx nx run-many -t test --projects=@rawr/agent-config-sync,@rawr/agent-config-sync-node,@rawr/plugin-plugins
-rawr plugins sync all --dry-run --json
-```
-
-When applying full convergence intentionally:
-
-```bash
-rawr plugins sync all --json
-```
-
-## Related Guidance
-
-- `services/agent-config-sync/test/TESTING_PLAN.md`
-- `plugins/cli/plugins/README.md`
-- `plugins/cli/plugins/agent-pack/skills/agent-sync/SKILL.md`
+Run the package's Nx test/lint targets plus the controller architecture guards.
+Any remaining command must be read-only, ontology-valid, and unable to mutate Oclif,
+controller selection, curated release, provider, or export state.

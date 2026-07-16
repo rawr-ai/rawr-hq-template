@@ -2,6 +2,10 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+export {
+  resolveControllerReentry as resolveCliReentry,
+} from "@rawr/core";
+
 export type StepStatus = "planned" | "skipped" | "ok" | "failed";
 
 export type StepResult = {
@@ -20,16 +24,12 @@ export function resolveCliRoot(): string {
   return resolve(SUBPROCESS_DIR, "../..");
 }
 
-export function resolveCliEntrypoint(): string {
-  return resolve(resolveCliRoot(), "src/index.ts");
-}
-
 export function runStep(input: {
   name: string;
   cmd: string;
   args: string[];
   cwd: string;
-  env?: Record<string, string | undefined>;
+  env?: NodeJS.ProcessEnv;
   inheritStdio?: boolean;
 }): StepResult & { proc: SpawnSyncReturns<string> } {
   const started = Date.now();
@@ -37,7 +37,7 @@ export function runStep(input: {
     cwd: input.cwd,
     encoding: "utf8",
     stdio: input.inheritStdio ? "inherit" : "pipe",
-    env: { ...process.env, ...(input.env ?? {}) },
+    env: input.env === undefined ? { ...process.env } : { ...input.env },
   });
   const durationMs = Date.now() - started;
   const exitCode = proc.status ?? 1;

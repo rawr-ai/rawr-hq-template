@@ -11,7 +11,7 @@ git status --short
 gt trunk
 ./scripts/dev/check-remotes.sh
 rawr doctor global --json
-rg -n "rawr plugins enable|rawr plugins disable|rawr plugins status|rawr plugins list" docs/PRODUCT.md docs/PROCESS.md docs/ROADMAP.md docs/system docs/process apps plugins --glob '!docs/_archive/**' --glob '!**/quarantine/**' --glob '!docs/process/MAINTENANCE_CADENCE.md'
+rg -n "upstream sync|merge-first|template-managed paths|rawr plugins converge|rawr plugins doctor links" README.md AGENTS.md AGENTS_SPLIT.md CONTRIBUTING.md UPDATING.md docs scripts --glob '!docs/_archive/**' --glob '!**/quarantine/**' --glob '!openspec/changes/**' --glob '!docs/process/MAINTENANCE_CADENCE.md'
 rg -n "\]\(([^)#]+)\)" docs --glob '*.md'
 ```
 
@@ -19,22 +19,20 @@ Interpretation:
 - `git status` must be clean before and after the check.
 - `gt trunk` must print `main`.
 - `check-remotes.sh` must pass.
-- `doctor global` should be healthy only when template checkout is intentionally activated as global owner.
-- The first `rg` command should return no active Channel B misuse outside archive or quarantine.
+- `doctor global` should report one verified installed controller release and no
+  checkout owner.
+- The first `rg` command should return no active repository-sync, tree-preservation,
+  or removed lifecycle-command guidance outside archive/quarantine/provenance.
 - The second `rg` command is a quick markdown-link surface scan used before deeper audits.
 
-## Monthly Upstream-Sync Rehearsal (Personal Repo)
+## Monthly Interface Rehearsal
 
-Run in `RAWR HQ` using:
-- `docs/process/UPSTREAM_SYNC_RUNBOOK.md`
+Use disposable homes and an immutable content fixture to verify:
 
-Required rehearsal:
-1. One merge-based sync simulation branch.
-2. Build + test verification for the merge simulation.
-3. Cleanup of temporary rehearsal branches.
-
-Rebase rehearsal is not part of routine cadence.
-Only run rebase drills as an explicit incident/escape-hatch exercise.
+1. the exact installed Template tool accepts the declared schema/protocol version;
+2. content and governed record digests bind the result;
+3. no personal executable mirror or cross-repository workspace link exists;
+4. repeated convergence performs no writes.
 
 ## Routing Change Contract
 

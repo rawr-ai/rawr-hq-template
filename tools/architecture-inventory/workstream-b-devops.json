@@ -1,0 +1,44 @@
+{
+  "projects": {
+    "@rawr/dev": {
+      "config": "services/dev/package.json",
+      "tags": [
+        "type:service",
+        "role:servicepackage",
+        "migration-slice:workstream-b-devops"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/dev-node": {
+      "config": "packages/dev-node/package.json",
+      "tags": [
+        "type:package",
+        "migration-slice:workstream-b-devops"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "typecheck",
+        "test"
+      ]
+    },
+    "@rawr/plugin-devops": {
+      "config": "plugins/cli/devops/package.json",
+      "tags": [
+        "type:plugin",
+        "migration-slice:workstream-b-devops"
+      ],
+      "targets": [
+        "build",
+        "sync",
+        "typecheck",
+        "test"
+      ]
+    }
+  }
+}

@@ -8,7 +8,7 @@ const cliRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const workspaceRoot = path.resolve(cliRoot, "..", "..");
 
 function runRawr(args: string[]) {
-  return spawnSync("bun", ["src/index.ts", ...args], {
+  return spawnSync("bun", ["test/command-fixture/command-test-cli.ts", ...args], {
     cwd: cliRoot,
     encoding: "utf8",
     env: { ...process.env },

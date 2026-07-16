@@ -15,7 +15,6 @@ export default class DevWorktreeCleanup extends RawrCommand {
     trunk: Flags.string({ description: "Trunk branch used for merged checks", default: "main" }),
     "pin-path": Flags.string({ description: "Worktree path to exclude (repeatable)", multiple: true }),
     "pin-branch": Flags.string({ description: "Branch to exclude (repeatable)", multiple: true }),
-    "heal-links": Flags.boolean({ description: "Emit explicit plugin link-repair follow-up command", default: false }),
   } as const;
 
   async run() {
@@ -36,7 +35,6 @@ export default class DevWorktreeCleanup extends RawrCommand {
       trunk: String(flags.trunk),
       pinnedPaths: (flags["pin-path"] as string[] | undefined) ?? [],
       pinnedBranches: (flags["pin-branch"] as string[] | undefined) ?? [],
-      healLinks: Boolean(flags["heal-links"]),
       scratchPolicy: await resolveNodeScratchPolicyInput({ workspaceRoot }),
     }, { context: { invocation: { traceId: "plugin-devops.worktree.cleanup" } } });
     const result = this.ok(data);

@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 
 const TEST_HOME = mkdtempSync(path.join(os.tmpdir(), "rawr-test-stubs-"));
 const CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const CLI_ENTRYPOINT = path.join(CLI_ROOT, "src", "index.ts");
+const COMMAND_TEST_CLI = path.join(CLI_ROOT, "test", "command-fixture", "command-test-cli.ts");
 
 function writeJson(filePath: string, value: unknown) {
   mkdirSync(path.dirname(filePath), { recursive: true });
@@ -48,7 +48,7 @@ function createPluginWorkspace() {
 
 function runRawr(args: string[], options: { cwd?: string } = {}) {
   const cwd = options.cwd ?? CLI_ROOT;
-  return spawnSync("bun", [CLI_ENTRYPOINT, ...args], {
+  return spawnSync("bun", [COMMAND_TEST_CLI, ...args], {
     cwd,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,

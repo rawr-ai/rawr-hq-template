@@ -18,7 +18,8 @@ import { afterEach, describe, expect, it } from "vitest";
 type CliProc = ReturnType<typeof runRawrFrom>;
 
 const tempDirs: string[] = [];
-const cliEntry = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "src", "index.ts");
+const cliRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const commandTestCli = path.join(cliRoot, "test", "command-fixture", "command-test-cli.ts");
 
 afterEach(() => {
   while (tempDirs.length > 0) {
@@ -33,7 +34,7 @@ function runRawrFrom(input: {
   home: string;
   env?: Record<string, string>;
 }) {
-  return spawnSync("bun", [cliEntry, ...input.args], {
+  return spawnSync("bun", [commandTestCli, ...input.args], {
     cwd: input.cwd,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
@@ -311,8 +312,6 @@ describe("plugins --source-workspace sync proof", () => {
         "plugins",
         "status",
         "--json",
-        "--checks",
-        "sync",
         "--no-fail",
         "--material-only",
         "--agent",
@@ -325,11 +324,11 @@ describe("plugins --source-workspace sync proof", () => {
         source.workspaceRoot,
       ],
     });
-    expect(status.status).toBe(0);
+    expect(status.status, status.stderr).toBe(0);
     const statusJson = parseJson(status);
     expect(statusJson.ok).toBe(true);
     expect(statusJson.data.workspaceRoot).toBe(source.workspaceRoot);
-    expect(statusJson.data.statuses.install).toBe("SKIPPED");
+    expect(statusJson.data.statuses.install).toBeUndefined();
     expect(statusJson.data.sync.plugins.map((plugin: any) => plugin.dirName)).toEqual(["personal-agent"]);
     expect(statusJson.data.sync.plugins.map((plugin: any) => plugin.dirName)).not.toContain("template-plugin");
 
@@ -414,7 +413,7 @@ describe("plugins --source-workspace sync proof", () => {
         target: path.join(home, ".agents", "skills", "personal-skill"),
       }),
     ]));
-    expect(syncAllJson.data.installReconcile.action).toBe("skipped");
+    expect(syncAllJson.data.installReconcile).toBeUndefined();
     expect(syncAllJson.data.undo.available).toBe(false);
     expect(syncAllJson.data.cleanupBehind.actions).toEqual(expect.arrayContaining([
       expect.objectContaining({

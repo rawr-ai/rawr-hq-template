@@ -1,10 +1,13 @@
 # Hyperresearch Codex Evidence
 
-This file records durable proof claims for the `@rawr/hyperresearch-codex` service package. Keep it aligned with `TESTING_PLAN.md`, `REVIEW_LEDGER.md`, and downstream synced references.
+This file records durable proof claims for the `@rawr/hyperresearch-codex`
+service package. Keep it aligned with `TESTING_PLAN.md` and
+`REVIEW_LEDGER.md`. References to the former checkout-projection mechanism are
+historical evidence only and cannot authorize current integration.
 
 ## Current Hook Evidence Status
 
-Status: fixture-proven guardrails; downstream hook source placed; managed installation unclaimed.
+Status: fixture-proven guardrails; curated hook artifact and managed installation unclaimed.
 
 Core Hyperresearch-specific `PreToolUse` and `Stop` runtime fixture evidence is committed under `services/hyperresearch-codex/spec/evidence/20260503T235332Z-codex-hooks-proof/`.
 
@@ -21,7 +24,10 @@ Proof summary:
 - The evidence bundle preserves the initial negative config probe where a missing top-level `hooks` wrapper did not run hooks.
 - Focused tests cover malformed JSON, unsupported event names, missing commands, source bypass detection, allowed Hyperresearch/routed-source commands, missing/incomplete/red ledgers, missing passed validation marker, ledger path precedence, green ledgers, and timeout classification.
 
-Projection status: source placed, installation unclaimed. Distributable hook source now lives downstream under `plugins/agents/hyperresearch/hooks/`, but managed agent-sync hook projection has no install, update, dry-run, drift, or removal evidence yet.
+Projection status: installation unclaimed. The service contains only its own
+fixtures/evidence. Curated hook content remains separately governed, and the
+Template-owned artifact/provider path has no install, update, dry-run, drift,
+or removal evidence yet.
 
 Current claim boundary: service plus packet parity remains authoritative. Hooks are guardrails only. MCP, lifecycle hook parity, plugin-packaged hook projection, automatic descendant rehydration, production readiness, and unrelated global plugin drift remain unclaimed.
 
@@ -229,7 +235,7 @@ Non-claims:
 - This does not prove Hooks/MCP runtime parity.
 - This does not prove production Inngest readiness for RAWR.
 - This does not prove clean child-session completion or parent wait/close ergonomics.
-- This does not resolve unrelated downstream global plugin drift outside scoped Hyperresearch material.
+- This does not resolve personal repository or provider-home drift.
 
 ## 2026-05-03 Codex-RAWR Runtime Proof
 
@@ -291,7 +297,7 @@ Non-claims:
 
 - This is not a full-tier long research-quality proof.
 - This does not prove Hooks/MCP runtime parity.
-- This does not resolve unrelated global downstream plugin drift.
+- This does not resolve personal repository or provider-home drift.
 
 ## 2026-05-03 Codex-RAWR Exec Packet Proof
 

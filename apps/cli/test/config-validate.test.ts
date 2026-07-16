@@ -5,13 +5,11 @@ import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
 
-function cliEntrypoint(): string {
-  const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  return path.join(projectRoot, "src", "index.ts");
-}
+const CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const COMMAND_TEST_CLI = path.join(CLI_ROOT, "test", "command-fixture", "command-test-cli.ts");
 
 function runRawrInWorkspace(workspaceRoot: string, args: string[]) {
-  return spawnSync("bun", [cliEntrypoint(), ...args], {
+  return spawnSync("bun", [COMMAND_TEST_CLI, ...args], {
     cwd: workspaceRoot,
     encoding: "utf8",
     env: { ...process.env },

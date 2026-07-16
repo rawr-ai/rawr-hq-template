@@ -10,7 +10,7 @@ Statuses:
 
 | Claude / Hyperresearch construct | Codex decision | Status | Required guard or proof |
 |---|---|---:|---|
-| Entry skill `hyperresearch.md` | Codex skill entrypoint synced from RAWR HQ | mapped | Skill must call/load template runner docs and not rely on chat memory |
+| Entry skill `hyperresearch.md` | Codex skill entrypoint installed from a governed immutable curated-content artifact | mapped | Artifact and exact Template interface version are bound before the skill calls the Template runner; no checkout path or chat memory is an authority |
 | Sixteen V8 step skills | File-backed step references loaded fresh before each step | guarded-workaround | Ledger records path, SHA-256, and load timestamp for every step |
 | Nested `Skill(skill: "...")` calls | Explicit step loader until callable nested skill semantics are proven | guarded-workaround | Fixture required before using nested skills as runtime mechanism |
 | `Task` subagent spawn | Codex `spawn_agent` packets or custom TOML agents | mapped | Parent packet includes query, pipeline position, input artifacts, role-assigned required artifacts, full step artifact context, output path/schema, and artifact commitments with hashes |

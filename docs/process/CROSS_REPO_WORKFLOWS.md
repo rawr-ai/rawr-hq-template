@@ -1,94 +1,89 @@
-# Cross-Repo Workflows (`RAWR HQ-Template` + `RAWR HQ`)
+# Repository Separation And Artifact Workflows
 
-This is the canonical workflow model for operating both repos on one machine.
+This document is canonical and normative for interactions between
+`RAWR HQ-Template` and personal `RAWR HQ`.
 
-## Repo Roles (non-negotiable)
+## Repository Authorities
 
-- `RAWR HQ-Template` owns shared CLI/core contracts and template baseline.
-- `RAWR HQ` owns operational plugin authoring, local customization, and personal workflows.
-- Shared HQ/plugin-management baseline is template-owned in:
-  - `plugins/agents/hq/**`
-  - `plugins/cli/plugins/**`
-  - `services/dev/**`, `packages/dev-node/**`, and `plugins/cli/devops/**`
-  - shared package surfaces (explicitly listed in `scripts/githooks/template-managed-paths.txt`)
-- Personal mechanical dev workflow overrides remain personal-owned only when
-  they are machine-specific. Shared stack/repo/worktree semantics belong in the
-  template DevOps service and projection.
+`RAWR HQ-Template` owns executable controller code, official commands, provider
+adapters, generic lifecycle services, schemas/tooling implementations, and generic
+validators.
 
-## Journey 1: Create an Operational Plugin
+Personal `RAWR HQ` owns curated agent-plugin source/content, vendor provenance,
+declarative policy/evaluation inputs, and its own governed acceptance, release, and
+channel records.
 
-1. Work in personal repo: `rawr-hq`.
-2. Scaffold plugin with `rawr plugins scaffold ...`.
-3. Build/test locally.
-4. Enable via `rawr plugins web ...`.
-5. Publish from personal repo only if needed.
+Each repository owns its own Git history, `main`, Graphite state, worktrees, hooks,
+configuration, and process records.
 
-Do not create operational plugins in template.
+## Forbidden Relationships
 
-## Journey 2: Promote Shared Core Change
+- Do not merge, rebase, cherry-pick, transplant, or establish ancestry between the repositories.
+- Do not copy, fork, vendor, or manually duplicate Template runtime code in personal.
+- Do not preserve Template-managed executable paths in personal through a guard,
+  manifest, tree-equivalence check, or compatibility layer.
+- Do not use a checkout path as controller, artifact, channel, ledger, receipt,
+  release, provider, or export identity.
+- Do not make upstream synchronization a product or repository-process dependency.
 
-1. Prove behavior in personal repo if needed.
-2. Implement shared contract change in template repo.
-3. Land via Graphite stack.
-4. Sync template -> personal using sync branch flow.
+## Allowed Interface
 
-## Journey 3: Sync Template into Personal
+Template may operate on personal content only through an explicit versioned
+data/artifact interface. A complete binding names:
 
-Use `docs/process/UPSTREAM_SYNC_RUNBOOK.md` in personal repo.
-Use merge-first as the only normal flow.
-Rebase is escape-hatch only when merge is blocked by a concrete constraint.
-For end-to-end sequencing and recovery handling, use:
-- `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md`
-- `docs/process/runbooks/STACK_DRAIN_LOOP.md`
+- schema or protocol ID and version;
+- installed tool/controller release digest;
+- immutable content or release artifact digest;
+- curated release-set digest where applicable;
+- governed record digests;
+- provider/export destination identity when mutation is requested.
 
-## Journey 4: Global CLI Ownership Switching
+Personal Git commits and trees may be retained as audit provenance. They do not
+replace any interface field above.
 
-Global `rawr` owner is explicit.
+## Template Publication
 
-```bash
-# in desired checkout
-./scripts/dev/activate-global-rawr.sh
-rawr doctor global --json
-```
+1. Implement and verify the generic behavior in Template.
+2. Publish the versioned schema/protocol and immutable tool or controller artifact.
+3. Record its digest and compatibility declaration.
+4. Land through Template's own Graphite stack and canonical `main`.
 
-Hooks refresh global wiring only when the current checkout is the active owner.
+No personal checkout participates in controller build, selection, or release identity.
 
-## Remote Safety Rails
+## Personal Acceptance
 
-- `scripts/githooks/pre-push` blocks wrong-remote pushes.
-- `scripts/dev/check-remotes.sh` validates expected remote topology.
+1. Start from clean personal `main` and its own repository process record.
+2. Author or update only curated content and governed content records.
+3. Invoke an externally installed Template-owned tool at the exact accepted
+   interface version; do not vendor the tool.
+4. Bind the produced/accepted artifact and record digests.
+5. Land through personal's own Graphite stack and canonical `main`.
 
-## Template-Managed Path Guard (Downstream Personal Repo)
+Repository location may be supplied as a content-workspace locator. The tool must
+verify content identity from Git/data inputs rather than treating the path as authority.
 
-- Manifest: `scripts/githooks/template-managed-paths.txt`.
-- Hook implementation: `scripts/githooks/check-template-managed.ts` (invoked from `pre-commit`).
-- Purpose: prevent accidental personal-repo commits to template-owned core surfaces.
-- HQ/plugin-management ownership split is path-based and explicit:
-  - template-managed full HQ agent office under `plugins/agents/hq/**`
-  - template-managed plugin lifecycle/runtime toolkit under `plugins/cli/plugins/**`
-  - template-managed DevOps workflow service/projection under `services/dev/**`,
-    `packages/dev-node/**`, and `plugins/cli/devops/**`
-- Modes:
-  - `off`: disabled
-  - `warn` (default): warn and continue
-  - `block`: fail commit
-- Controls:
-  - `RAWR_TEMPLATE_GUARD_MODE=off|warn|block`
-  - `git config rawr.templateGuardMode <off|warn|block>`
-  - Optional owner-default block:
-    - `git config rawr.templateGuardOwnerEmail <you@example.com>`
-    - `git config rawr.templateGuardOwnerMode block`
+## Operational Acceptance
 
-## Command Surface Invariant
+Cross-repository acceptance is a protocol compatibility check, not a Git integration:
 
-- Channel A: `rawr plugins ...`
-- Channel B: `rawr plugins web ...`
+1. verify each repository is clean on its own canonical `main`;
+2. verify the installed controller release and interface versions;
+3. verify personal content and governed records against that exact interface;
+4. reconcile only the explicitly named provider home or export destination;
+5. repeat the operation and prove inspection may occur but no state changes;
+6. verify no executable mirror, workspace link, compatibility alias, or lifecycle
+   override connects the repositories.
 
-Never mix command families in docs or scripts.
+## Command Boundaries
 
-## Shared Convergence Baseline
+- `rawr plugins ...` owns external Oclif extension operations.
+- `rawr agent plugins ...` owns curated agent-plugin lifecycle operations.
+- Provider/export commands mutate only the named destination through its declared owner.
+- App composition consumes declared outputs and owns no lifecycle state.
 
-Across both repos, use these plugin-management checks before/after cross-repo sync:
-- `rawr plugins doctor links --json`
-- `rawr plugins status --checks all --json`
-- `rawr plugins converge --json`
+## Repository Promotion
+
+Promote repositories independently. A Template release may become a prerequisite
+for validating a personal interface version, but it is never merged into personal.
+A personal content release may become an input to Template tooling, but personal
+source is never imported as executable controller code.

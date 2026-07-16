@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 function runRawr(args: string[]) {
   const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  return spawnSync("bun", ["src/index.ts", ...args], {
+  return spawnSync("bun", ["test/command-fixture/command-test-cli.ts", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
     env: { ...process.env },
@@ -19,8 +19,13 @@ describe("routine check", () => {
     const parsed = JSON.parse(proc.stdout) as any;
     expect(parsed.ok).toBe(true);
     expect(parsed.data.steps.map((s: any) => s.name)).toEqual(["doctor", "security", "tests"]);
-    expect(parsed.data.steps[0].cmd).toBe("bun");
+    expect(path.isAbsolute(parsed.data.steps[0].cmd)).toBe(true);
+    expect(path.basename(parsed.data.steps[0].cmd)).toContain("bun");
+    expect(parsed.data.steps[0].args.slice(0, 3)).toEqual([
+      "--config=/dev/null",
+      "--no-env-file",
+      "--no-install",
+    ]);
     expect(parsed.data.steps[2].args).toEqual(["run", "test"]);
   });
 });
-

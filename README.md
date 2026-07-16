@@ -1,10 +1,11 @@
 # RAWR HQ-Template
 
-`RAWR HQ-Template` is the canonical upstream template for building local-first AI headquarters with a single CLI entrypoint (`rawr`).
+`RAWR HQ-Template` owns the executable `rawr` controller and generic lifecycle
+tooling for local-first AI headquarters.
 
-This template is designed to be used in two roles:
-- `RAWR HQ-Template`: shared baseline and upstream for core CLI + architecture.
-- `RAWR HQ`: your personal repo created from this template, where you customize and diverge.
+Personal `RAWR HQ` is a separate curated-content repository. It owns agent-plugin
+source, provenance, policy/evaluation inputs, and governed content lifecycle
+records. It does not inherit, mirror, or merge this repository's runtime code.
 
 ## Quickstart
 
@@ -38,7 +39,8 @@ Then verify from your MCP client or HTTP transport by confirming the repo appear
 
 Use the Nx CLI first for workspace graph, routing, generator, and target questions.
 
-If your downstream agent environment installs the official Nx skills, use them as a companion to the CLI rather than as a repo-local source of truth in this template.
+If your agent environment installs the official Nx skills, use them as a companion
+to the CLI rather than as a repo-local source of truth in this repository.
 
 Use the Nx CLI first for most workspace graph and target questions:
 
@@ -54,48 +56,42 @@ bunx nx graph
 - Nx MCP is intentionally out of scope for the current repo posture. If we bring it back later, it should be as a hosted/managed service rather than per-client local stdio wiring.
 - For the integrated agent workflow, see [`docs/process/NX_AGENT_WORKFLOW.md`](docs/process/NX_AGENT_WORKFLOW.md).
 
-## Core vs Extensions
+## Authority Boundaries
 
-- Core lives in this template (`apps/cli`, `packages/core`, `packages/control-plane`, `packages/state`, `packages/security`, `packages/journal`).
-- Template plugins are fixture/example baseline artifacts.
-- Operational plugin authoring should usually happen in personal `RAWR HQ`.
-
-Two plugin channels are intentionally separate:
-- Channel A: external oclif plugins (`rawr plugins install|link|update|...`).
-- Channel B: RAWR HQ workspace runtime plugins (`rawr plugins web list|enable|disable|status`).
-
-## Local-Only vs Connected
-
-- Local-only (default): build and run everything from your repo without a registry dependency.
-- Connected (opt-in): install external CLI plugins from npm/GitHub and sync from upstream template.
+- The controller, official commands, provider adapters, generic lifecycle services,
+  schemas/tooling implementations, and generic validators live here.
+- External Oclif extensions are managed only by `rawr plugins ...`.
+- Curated agent-plugin lifecycle is managed only by `rawr agent plugins ...`.
+- Personal curated content enters through explicit versioned data or immutable
+  artifact interfaces. A repository path is only a locator.
+- App composition consumes declared outputs; it does not own lifecycle state.
 
 ## Contribution Boundaries
 
-- Core changes intended for all users should go upstream to `RAWR HQ-Template`.
-- Personal/project-specific behavior should stay in `RAWR HQ` plugins unless intentionally promoted.
-- CLI publishing ownership remains template-only.
+- Executable and generic tooling changes belong in `RAWR HQ-Template`.
+- Curated agent content and governed content records belong in personal `RAWR HQ`.
+- A concept may be reimplemented intentionally on either side of a published
+  interface, but code is never copied or synchronized between repositories.
 
 ## Agent Routing
 
 - If you are deciding where to implement a change, use [`AGENTS_SPLIT.md`](AGENTS_SPLIT.md).
 - Template-side contribution rules are defined in [`CONTRIBUTING.md`](CONTRIBUTING.md).
-- Personal-repo sync expectations are defined in [`UPDATING.md`](UPDATING.md).
+- Controller and interface update rules are defined in [`UPDATING.md`](UPDATING.md).
 
 ## Operational Runbooks
 
-- Upstream sync workflow: [`docs/process/UPSTREAM_SYNC_RUNBOOK.md`](docs/process/UPSTREAM_SYNC_RUNBOOK.md)
-- Cross-repo workflows: [`docs/process/CROSS_REPO_WORKFLOWS.md`](docs/process/CROSS_REPO_WORKFLOWS.md)
-- Plugin E2E workflow: [`docs/process/PLUGIN_E2E_WORKFLOW.md`](docs/process/PLUGIN_E2E_WORKFLOW.md)
+- Repository separation and artifact interfaces: [`docs/process/CROSS_REPO_WORKFLOWS.md`](docs/process/CROSS_REPO_WORKFLOWS.md)
+- Active runbook index: [`docs/process/RUNBOOKS.md`](docs/process/RUNBOOKS.md)
 - Graphite workflow: [`docs/process/GRAPHITE.md`](docs/process/GRAPHITE.md)
 
 ## Canonical Docs
 
-- [`docs/SYSTEM.md`](docs/SYSTEM.md)
 - [`docs/PROCESS.md`](docs/PROCESS.md)
 - [`docs/PRODUCT.md`](docs/PRODUCT.md)
 - [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - [`docs/DOCS.md`](docs/DOCS.md)
-- [`docs/system/PLUGINS.md`](docs/system/PLUGINS.md)
-- [`docs/system/TELEMETRY.md`](docs/system/TELEMETRY.md)
+- [`docs/process/CROSS_REPO_WORKFLOWS.md`](docs/process/CROSS_REPO_WORKFLOWS.md)
+- [`docs/system/SECURITY_MODEL.md`](docs/system/SECURITY_MODEL.md)
 - [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - [`UPDATING.md`](UPDATING.md)

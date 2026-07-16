@@ -7,14 +7,16 @@
 
 LLM “judge” assessment is **parked** (doc only) until explicitly un-parked.
 
-## Gate point: `plugins web enable` (gateEnable)
+## App Composition Gate
 
-Enabling a plugin is treated as an explicit “activation” boundary.
+Mounting app capabilities is an explicit composition boundary. Deterministic
+security checks may gate that composition, but composition state is not external
+extension state or curated agent lifecycle state. It cannot install, release,
+reconcile, or repair either channel.
 
-- `rawr plugins web enable <id>` runs the security checks and calls the gate.
-- If blocked, the command exits non-zero unless `--force` is provided.
-- Successful enablement updates persisted repo-local state in `.rawr/state/state.json`.
-- Runtime boundary: enabled plugin state is consumed by server/web plugin loading paths.
+The interim `plugins web` command tree is migration evidence and is not canonical
+lifecycle guidance. Its eventual qualified app-composition surface must preserve
+the same gate without retaining the mixed plugin aggregate.
 
 ## Deterministic checks (v1)
 
@@ -34,7 +36,9 @@ Reports are written to:
 The repo does not run dependency or staged security checks from `scripts/githooks/pre-commit`.
 Security checks remain explicit command and plugin-enablement gates.
 
-The pre-commit hook is reserved for repository hygiene checks such as template-managed path routing and plugin install drift.
+Repository hooks do not run controller lifecycle commands or preserve a mirrored
+Template tree in another repository. Lifecycle validation is an explicit
+exact-version tool operation at its owning boundary.
 
 ## What this is not
 

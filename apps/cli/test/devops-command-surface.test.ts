@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 const CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const CLI_ENTRYPOINT = path.join(CLI_ROOT, "src", "index.ts");
+const COMMAND_TEST_CLI = path.join(CLI_ROOT, "test", "command-fixture", "command-test-cli.ts");
 const tempDirs: string[] = [];
 
 afterEach(async () => {
@@ -54,7 +54,7 @@ async function makeFixture(): Promise<{ fixturePath: string; logPath: string; ho
 }
 
 function runRawr(args: string[], env: Record<string, string>) {
-  return spawnSync("bun", [CLI_ENTRYPOINT, ...args], {
+  return spawnSync("bun", [COMMAND_TEST_CLI, ...args], {
     cwd: CLI_ROOT,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,

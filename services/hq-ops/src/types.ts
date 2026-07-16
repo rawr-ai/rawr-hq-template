@@ -7,19 +7,6 @@
  */
 import type { Client } from "./client";
 
-export type {
-  PluginInstallAction,
-  PluginInstallDriftIssue,
-  PluginInstallExpectedLink,
-  PluginInstallManagerEntry,
-  PluginInstallRuntimeSnapshot,
-  PluginInstallStateStatus,
-} from "./service/modules/plugin-install/entities";
-export type {
-  PluginInstallRepairPlan,
-  PluginInstallStateReport,
-} from "./service/modules/plugin-install/contract";
-
 type AsyncReturn<T> = T extends (...args: infer _Args) => infer TResult ? Awaited<TResult> : never;
 
 export type ResolveLifecycleTargetInput = Parameters<Client["pluginLifecycle"]["resolveLifecycleTarget"]>[0];

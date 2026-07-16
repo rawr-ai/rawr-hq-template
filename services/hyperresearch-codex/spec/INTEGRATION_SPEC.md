@@ -2,7 +2,10 @@
 
 ## Objective
 
-Run Hyperresearch inside Codex with a template-owned service and CLI topic while using downstream RAWR HQ as the current sync source for Codex runtime materials.
+Run Hyperresearch inside Codex with a Template-owned service and CLI topic.
+Keep separately governed curated agent-plugin content independent: integration
+may bind an exact interface version and immutable artifact, never a personal
+checkout, copied implementation, or Git relationship.
 
 ## Ownership Boundaries
 
@@ -14,12 +17,15 @@ RAWR HQ-Template owns:
 - Backend resource ports for direct calls to the installed Python `hyperresearch` CLI.
 - Service modules: `fixtures.runSyntheticSlice` for the synthetic proof path and `runs.startV8Run` / `runs.advanceV8Run` / `runs.inspectV8Run` / `runs.validateV8Run` for durable V8 orchestration. Shared mechanics are not modules.
 
-RAWR HQ owns for now:
+Personal RAWR HQ owns:
 
-- Codex-facing skill entrypoint material.
-- Codex-facing reference material for hook/MCP adoption decisions.
-- Codex custom-agent source material for the current sync projection.
-- The `rawr plugins sync ...` source inventory used for final plugin-system proof.
+- curated Codex-facing skill, reference, and custom-agent content;
+- vendor provenance and declarative policy/evaluation inputs for that content;
+- repository-governed release, acceptance, and channel records.
+
+Neither repository owns a copy of the other's implementation. Template does
+not read personal source at runtime, and personal does not vendor this service,
+CLI topic, provider adapters, schemas, or lifecycle tooling.
 
 Hyperresearch Python owns:
 
@@ -70,27 +76,31 @@ Post-synthesis report snapshots are copied into `research/temp/report-snapshots/
 
 ## Final Codex Plugin-System Proof
 
-The final integration test uses this split:
+The final cross-repository integration proof is gated on a versioned
+agent-plugin artifact interface. Once that interface exists, the test uses this
+split:
 
-1. Install or run the Hyperresearch CLI topic from RAWR HQ-Template.
-2. In RAWR HQ, sync the Hyperresearch Codex skill/reference/agent materials into the active Codex home.
-3. Start Codex with the synced skill available.
+1. Install the Hyperresearch CLI topic from an immutable RAWR HQ-Template controller release.
+2. Obtain a personal-repository release record and immutable curated-content artifact with exact digest and interface version.
+3. Use the Template-owned agent-plugin lifecycle and provider adapter to project that artifact into an explicit disposable Codex home.
 4. Invoke the Codex Hyperresearch entry skill against a fresh vault.
 5. Verify the runner ledger, vault notes/sources, lint/export outputs, subagent outputs, critic findings, patch log, and final report.
+6. Repeat the converged operation and prove that it inspects live state without changing it.
 
-This test must not pass by relying only on template service unit tests. The proof target is the actual Codex plugin/skill runtime after RAWR sync.
-
-Current sync source is `plugins/agents/hyperresearch` in downstream RAWR HQ. The scoped Codex sync command is:
-
-```bash
-bun run rawr plugins sync hyperresearch --agent codex --no-install-reconcile --no-cowork --json
-```
-
-The `--no-install-reconcile` and `--no-cowork` flags are intentional for scoped testing so unrelated CLI plugin links and Cowork packaging are not mutated during the Hyperresearch proof loop.
+This test must not pass by relying only on Template service unit tests. It also
+must not use a personal checkout path or the external-Oclif `rawr plugins`
+channel for curated content. Until the versioned artifact/lifecycle interface
+is available, this package claims service/CLI proof only and records the
+cross-repository plugin-system proof as pending.
 
 Hook and MCP drafts must stay in skill references until they are real, verified provider config. Do not place note-only draft material under source `hooks/` or `mcp/` directories. Current hook and MCP policy is recorded in `HOOKS_MCP_PARITY.md`, and the concrete hook proof ladder is `HOOKS_GUARDRAIL_PLAN.md`: Codex `PreToolUse` and `Stop` can become guardrails after fixture proof, missing subagent/compaction hook events are handled by durable ledger and child-session evidence, and Hyperresearch MCP writes are denied by default.
 
-Provider projection rule: downstream Hyperresearch hook source lives under `plugins/agents/hyperresearch/hooks/`, but installation/projection remains unclaimed until RAWR agent-sync has a managed hook material kind with dry-run, sync, force/update, drift detection, and removal/garbage-collection evidence. A one-off local `hooks.json` fixture proves local hook runtime behavior only; it does not prove plugin-packaged hook installation.
+Provider projection rule: service-local hook fixtures prove only local hook
+runtime behavior. Curated hook content, if released by the personal repository,
+is data in a bound immutable artifact. Template's generic provider adapter is
+the sole projection implementation and must prove plan, apply, idempotence,
+drift detection, and removal before plugin-packaged hook installation is
+claimed. A one-off local `hooks.json` fixture is not distribution proof.
 
 ## Security And Trust
 

@@ -1,7 +1,7 @@
 import { Flags } from "@oclif/core";
-import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
-import { checkScratchPolicy, planSweepCandidates } from "#lib/plugin-lifecycle-service";
-import { runCommand } from "#lib/process-execution";
+import { findWorkspaceRoot, RawrCommand, resolveControllerReentry } from "@rawr/core";
+import { checkScratchPolicy, planSweepCandidates } from "../../lib/plugin-lifecycle-service";
+import { runCommand } from "../../lib/process-execution";
 
 /**
  * Queues lifecycle remediation work for plugin-system hygiene.
@@ -113,11 +113,10 @@ export default class PluginsSweep extends RawrCommand {
         }
       }
 
+      const rawr = resolveControllerReentry();
       for (const item of limited) {
         const cmd = [
-          "run",
-          "rawr",
-          "--",
+          ...rawr.args,
           "plugins",
           "improve",
           "--target",
@@ -131,13 +130,17 @@ export default class PluginsSweep extends RawrCommand {
         ];
 
         if (baseFlags.dryRun) {
-          actions.push({ action: `bun ${cmd.join(" ")}`, status: "planned" });
+          actions.push({ action: `rawr plugins improve --target ${item.target}`, status: "planned" });
           continue;
         }
 
-        const r = await runCommand("bun", cmd, { cwd: workspaceRoot, timeoutMs: 300_000 });
+        const r = await runCommand(rawr.cmd, cmd, {
+          cwd: rawr.cwd,
+          env: rawr.env,
+          timeoutMs: 300_000,
+        });
         actions.push({
-          action: `bun ${cmd.join(" ")}`,
+          action: `rawr plugins improve --target ${item.target}`,
           status: r.exitCode === 0 ? "done" : "failed",
           notes: r.exitCode === 0 ? undefined : r.stderr || r.stdout,
         });

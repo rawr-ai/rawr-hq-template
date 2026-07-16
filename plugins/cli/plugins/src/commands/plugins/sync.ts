@@ -24,18 +24,15 @@ import {
   resolveSourceWorkspaceSelection,
   runSync,
   syncCodexNativeAgentRoles,
-} from "#lib/agent-config-sync";
+} from "../../lib/agent-config-sync";
 import { RawrCommand } from "@rawr/core";
-import { loadLayeredRawrConfigForCwd } from "#lib/layered-config";
-
-import { reconcileWorkspaceInstallLinks, runtimePluginSnapshot } from "#lib/plugin-install-service";
+import { loadLayeredRawrConfigForCwd } from "../../lib/layered-config";
 
 /**
  * Syncs one source plugin into selected agent destinations.
  *
  * Planning and destination sync semantics come from agent-config-sync; this
- * command handles user flags, Cowork archive creation, Claude CLI install, and
- * optional local command-plugin link reconciliation.
+ * command handles user flags, Cowork archive creation, and Claude CLI install.
  */
 export default class PluginsSync extends RawrCommand {
   static description = "Deploy one RAWR plugin through native provider plugin paths";
@@ -90,11 +87,6 @@ export default class PluginsSync extends RawrCommand {
     }),
     "claude-enable": Flags.boolean({
       description: "Enable the plugin in Claude Code after install/refresh",
-      default: true,
-      allowNo: true,
-    }),
-    "install-reconcile": Flags.boolean({
-      description: "Reconcile local CLI plugin-manager links after sync",
       default: true,
       allowNo: true,
     }),
@@ -159,7 +151,6 @@ export default class PluginsSync extends RawrCommand {
       const codexInstallEnabled = Boolean((flags as any)["codex-install"]);
       const claudeInstallEnabled = Boolean((flags as any)["claude-install"]);
       const claudeEnableEnabled = Boolean((flags as any)["claude-enable"]);
-      const installReconcileEnabled = Boolean((flags as any)["install-reconcile"]);
       const plan = await planWorkspaceSync({
         repoRoot: workspaceRoot,
         request: createWorkspaceSyncPlanInput({
@@ -186,7 +177,6 @@ export default class PluginsSync extends RawrCommand {
             codexInstallEnabled,
             claudeInstallEnabled,
             claudeEnableEnabled,
-            installReconcileEnabled,
             retireOrphansEnabled: true,
             force: Boolean(flags.force),
             gc: Boolean(flags.gc),
@@ -237,8 +227,6 @@ export default class PluginsSync extends RawrCommand {
         includeClaude: targets.agents.includes("claude"),
       });
 
-      const runtimePlugins = runtimePluginSnapshot(this.config.plugins);
-
       const codexBin = (flags as any)["codex-bin"] as string | undefined;
       const installScope = (flags as any)["install-scope"] as "user";
       const codexOutDirAbs = (() => {
@@ -283,7 +271,6 @@ export default class PluginsSync extends RawrCommand {
       };
       let cleanupBehind: Awaited<ReturnType<typeof cleanupBehindProviderSync>> = emptyCleanupBehindResult();
       const claudeInstall: Array<Record<string, unknown>> = [];
-      let installReconcile: Record<string, unknown> = { action: "skipped", reason: "not run" };
       let postStepFailed = false;
       const codexNativeAgentRoles = !destinationProjectionEnabled && targets.agents.includes("codex")
         ? await syncCodexNativeAgentRoles({
@@ -501,15 +488,6 @@ export default class PluginsSync extends RawrCommand {
         }
       }
 
-      installReconcile = await reconcileWorkspaceInstallLinks({
-        workspaceRoot,
-        dryRun: baseFlags.dryRun,
-        enabled: installReconcileEnabled,
-        runtimePlugins,
-        oclifDataDir: (this.config as any).dataDir as string | undefined,
-      });
-      if ((installReconcile as any).action === "failed") postStepFailed = true;
-
       const enriched = {
         ...effectiveSyncResult,
         installScope,
@@ -520,7 +498,6 @@ export default class PluginsSync extends RawrCommand {
         cleanupBehind,
         cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
         claudeInstall,
-        installReconcile,
       };
       warnings = buildProviderWorkflowMirrorWarnings({
         cleanupBehind,
@@ -559,7 +536,6 @@ export default class PluginsSync extends RawrCommand {
               cleanupBehind,
               cowork: { outDir: coworkOutDirAbs, packages: coworkPackages },
               claudeInstall,
-              installReconcile,
               warnings,
               undo,
               targets: effectiveSyncResult.targets.map((t) => ({ agent: t.agent, home: t.home, conflicts: t.conflicts.length })),
@@ -595,7 +571,6 @@ export default class PluginsSync extends RawrCommand {
           for (const warning of warnings) this.log(`warning: ${warning}`);
           this.log(`Install scope: ${installScope}`);
           if (cowork) this.log(`Cowork: ${cowork.action} -> ${cowork.outFile}${cowork.reason ? ` (${cowork.reason})` : ""}`);
-          this.log(`Install reconcile: ${(installReconcile as any).action}`);
           if (undo.available) this.log(`Undo: rawr undo (capsule=${undo.capsuleId})`);
         },
       });

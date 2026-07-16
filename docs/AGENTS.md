@@ -18,13 +18,11 @@ Applies to `docs/**`.
 
 - `docs/system/SECURITY_MODEL.md`
 - `docs/process/NX_AGENT_WORKFLOW.md`
-- `docs/process/AGENT_LOOPS.md`
 - `docs/process/GRAPHITE.md`
-- `docs/process/UPSTREAM_SYNC_RUNBOOK.md`
 - `docs/process/RUNBOOKS.md`
+- `docs/process/CROSS_REPO_WORKFLOWS.md`
 - `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md`
 - `docs/process/runbooks/STACK_DRAIN_LOOP.md`
-- `docs/process/runbooks/TEMPLATE_TO_PERSONAL_INTEGRATION_LOOP.md`
 - `docs/process/MAINTENANCE_CADENCE.md`
 - `docs/process/HQ_USAGE.md`
 - `docs/process/HQ_OPERATIONS.md`
