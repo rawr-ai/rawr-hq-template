@@ -1,6 +1,6 @@
 # C2 Agent Plugin Release Product Execution Record
 
-**Status:** READY_TO_SUBMIT
+**Status:** ARCHIVE_READY_TO_SUBMIT
 
 **Change:** `establish-agent-plugin-release-product`
 
@@ -29,8 +29,10 @@ The two personal Git objects are accepted design-packet provenance only. This Te
 | Bootstrap worktree / branch | `wt-template-c2-release-product-bootstrap` / `codex/c2-agent-release-product-bootstrap` (merged and drained) |
 | Implementation parent `main` | `23d1f1efcf54a4860fa55261df7f29e5c68d063f` |
 | Implementation worktree / branch | `wt-template-c2-agent-release-product` / `codex/c2-agent-release-product` |
+| C2 source reviewed / landed `main` | `e8bf7b31a673def65c04f1246cdc8a08a04482e3` / `dac4c6407dcc8d75adc34738f5ae9995a43a1810` (PR #336) |
+| Archive worktree / branch | `wt-template-c2-agent-release-product-archive` / `codex/c2-agent-release-product-archive` |
 | OpenSpec CLI | `@fission-ai/openspec@1.3.1` |
-| Current gate | C2 implementation and standing review complete from the exact landed bootstrap `main`; source landing is next, while public command and provider reachability remain closed |
+| Current gate | C2 source is landed and exact-tree post-main proof is green; five capability specs are synchronized and this archived record is ready to submit, while public command and provider reachability remain closed |
 
 ## Director Frame
 
@@ -214,8 +216,10 @@ Bounded implementation workers receive disjoint owner paths only after this boot
 | owner implementation suites | PASS | uncached build/typecheck/lint/test passed for release 23/23, build 53/53, packaging 35/35, export 61/61, and CLI 273/273; one overloaded parallel CLI wave hit an unrelated existing 5-second test timeout, then the isolated test and complete serial CLI suite passed |
 | integrated lifecycle proof | PASS | exact complete-set `rs1_a4a8855417b561c295e49da0f592a3851efb3bbdd782b50ab0cebcac4ffd7dfc`; package `pkg1_0c9c14769d2da69b5cd6b12d0fe23784841448466c9297de24e771572fd8c4ec`; first build/package/export mutate, repeats return `ReadOnlyConverged`; two destinations and 14 actions undo to restored state; 378 read-only Git commands, zero forbidden mutation calls, zero converged tree writes |
 | permanent architecture and strict record gates | PASS | all inherited and C2 permanent gates, repository separation, projection boundaries, sync check, direct integration proof, pinned strict OpenSpec 3/3, `git diff --check`, and new-file trailing-whitespace scan passed |
-| exact affected graph | PASS | uncached build/typecheck/lint/test passed for all 37 projects affected from `23d1f1efcf54a4860fa55261df7f29e5c68d063f` in both the complete uncommitted state and the committed source state; the post-main rerun remains task 10.1 |
+| exact affected graph | PASS | uncached build/typecheck/lint/test passed for all 37 projects affected from `23d1f1efcf54a4860fa55261df7f29e5c68d063f` in the complete uncommitted state, committed source state, and exact landed `origin/main` tree |
 | standing implementation reviews | PASS | TypeScript/refactoring repaired typed capsule failure classification so wording cannot change result codes; architecture/authority, behavior-first testing, and structural-quality reviews approved with no remaining packet-invariant, supported-behavior, or material-maintainability P1/P2 |
+| source landing and post-main proof | PASS | PR #336 landed reviewed source as `dac4c6407dcc8d75adc34738f5ae9995a43a1810`; reviewed and landed trees both equal `acc62e861ee970d6567c2fb477ff2b796ea7a327`; pinned strict OpenSpec, permanent architecture/integration proof, and the exact uncached 37-project affected graph passed against landed `origin/main` |
+| canonical spec synchronization and archive move | PASS | pinned OpenSpec archive synchronized 40 added requirements into five canonical capability specs and moved the active change to `archive/2026-07-16-establish-agent-plugin-release-product` after same-device and absent-destination checks; no recursive shell removal was used |
 
 ## Closure
 

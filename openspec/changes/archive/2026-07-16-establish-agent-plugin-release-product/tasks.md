@@ -76,7 +76,7 @@
 
 ## 10. Landing, Archive, And Drain
 
-- [ ] 10.1 Commit and submit the reviewed C2 source through Graphite with `--ai`, merge to canonical Template `main`, and rerun exact post-main OpenSpec, architecture, affected-graph, and inert end-to-end proof.
-- [ ] 10.2 Sync the five truthful capability deltas into canonical specs and move the completed change to its dated archive through a guarded same-filesystem non-recursive move only after source landing.
+- [x] 10.1 Commit and submit the reviewed C2 source through Graphite with `--ai`, merge to canonical Template `main`, and rerun exact post-main OpenSpec, architecture, affected-graph, and inert end-to-end proof.
+- [x] 10.2 Sync the five truthful capability deltas into canonical specs and move the completed change to its dated archive through a guarded same-filesystem non-recursive move only after source landing.
 - [ ] 10.3 Land the archive record through Graphite, prove canonical Template `main` and repository status clean/green, and record exact source/archive commits and PRs.
 - [ ] 10.4 Remove every C2 disposable worktree only through `git worktree remove`, prune merged local Graphite branches without restacking unrelated work, prove no C2 stack node or worktree-backed authority remains, and open C3 only after full drain.
