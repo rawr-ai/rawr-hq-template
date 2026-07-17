@@ -9,16 +9,11 @@ import type { NativeMemberObservation } from "@rawr/agent-plugin-lifecycle/ports
 import type { ProviderId, ProviderTarget } from "@rawr/agent-plugin-lifecycle/ports/providers";
 import type { ContentAuthority } from "@rawr/agent-plugin-lifecycle/release";
 import type { ProviderMemberRestoreContext, ProviderOwnerRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
-import type {
-  NativeMemberRestorationPort,
-  NativeMemberRestorationSource,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+import type { NativeMemberRestorationPort } from "@rawr/agent-plugin-lifecycle/ports/providers";
 import type { NodeProjectionStore } from "./projections";
 import type { NodeTargetStateStore } from "./target-state";
 
 export type { NativeMemberRestorationPort } from "@rawr/agent-plugin-lifecycle/ports/providers";
-
-export type PriorProjectionMemberSource = NativeMemberRestorationSource;
 
 export type NativeMemberRestorationPorts =
   | Readonly<Record<ProviderId, NativeMemberRestorationPort>>
@@ -128,17 +123,10 @@ export function createNodeProviderOwnerRuntime(input: Readonly<{
         });
         if (!changed.ok) return changed;
       }
-      const priorSource = prior === null
-        ? success(null)
-        : context.kind === "InstallMember"
-          ? marketplaceFailure("Install inverse cannot read a prior projection")
-          : await input.projections.readArchivedMember(context.priorProjectionDigest, prior);
-      if (!priorSource.ok) return priorSource;
       const restored = await port.restoreExact({
         target,
         expected,
         prior,
-        priorSource: priorSource.value,
       });
       if (!restored.ok) return restored;
     }

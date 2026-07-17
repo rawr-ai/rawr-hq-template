@@ -9,7 +9,6 @@ export {
   createNodeProviderOwnerRuntime,
   type NativeMemberRestorationPort,
   type NativeMemberRestorationPorts,
-  type PriorProjectionMemberSource,
 } from "./owner-runtime";
 
 export interface NodeProviderState {

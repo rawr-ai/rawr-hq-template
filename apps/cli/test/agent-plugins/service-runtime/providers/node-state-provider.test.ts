@@ -240,8 +240,6 @@ describe("node provider state", () => {
         restores += 1;
         expect(input.expected).toBeNull();
         expect(input.prior).toEqual(prior);
-        expect(input.priorSource?.memberFingerprint).toBe(prior.memberFingerprint);
-        expect(input.priorSource?.path.startsWith(state.layout.projection.root)).toBe(true);
         member = input.prior;
         return providerSuccess(null);
       },
