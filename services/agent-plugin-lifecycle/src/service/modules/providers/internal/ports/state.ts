@@ -48,6 +48,7 @@ export interface ProviderProjectionMaterializer {
 export interface MarketplaceMaterializationObservation {
   readonly kind: "existing" | "published";
   readonly projectionDigest: MarketplaceProjectionDigest;
+  readonly sourceDigest: ProviderMarketplaceRegistration["sourceDigest"];
 }
 
 export interface ProviderMarketplaceMaterializer {
@@ -58,7 +59,6 @@ export interface ProviderMarketplaceMaterializer {
 }
 
 export interface ProviderMarketplaceSource {
-  readonly path: string;
   readonly projectionDigest: MarketplaceProjectionDigest;
   readonly sourceDigest: ProviderMarketplaceRegistration["sourceDigest"];
 }

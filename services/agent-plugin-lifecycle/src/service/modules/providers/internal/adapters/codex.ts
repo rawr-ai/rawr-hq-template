@@ -29,8 +29,6 @@ import {
   type NativePluginProcessObservation,
   type NativeProviderAdapter,
   type NativeProviderBridge,
-  type StableProjectionSource,
-  type StableProjectionSourceReader,
 } from "./native";
 
 export const CODEX_ADAPTER_PROTOCOL = requireProtocol("rawr-provider-adapter/codex@v1");
@@ -69,7 +67,7 @@ export interface CodexProcessPort {
     home: string;
     prior: ProviderMarketplaceObservation;
     registration: ProviderMarketplaceRegistration | null;
-    sourcePath: string | null;
+    source: ProviderMarketplaceSource | null;
     targetDigest: ProviderTargetDigest;
   }>): Promise<void>;
   inventoryMarketplace(input: Readonly<{ home: string }>): Promise<readonly CodexMarketplacePlugin[]>;
@@ -79,7 +77,6 @@ export interface CodexProcessPort {
     artifactAuthority: ProviderArtifactAuthority;
     providerSourceIdentity: ProviderSourceIdentity;
     marketplaceIdentity: string;
-    sourcePath: string;
     memberFingerprint: ProviderMemberFingerprint;
     targetDigest: ProviderTargetDigest;
   }>): Promise<void>;
@@ -116,7 +113,6 @@ export function createCodexProviderAdapter(input: Readonly<{
   appServer: CodexAppServerPort;
   session: CodexSessionPort;
   marketplaceSources: ProviderMarketplaceSourceReader;
-  projectionSources: StableProjectionSourceReader;
 }>): CodexProviderAdapter {
   const bridge: NativeProviderBridge = {
     probe: async (home): Promise<NativeCapabilityProbe> => await input.process.probe({ home }),
@@ -187,16 +183,15 @@ export function createCodexProviderAdapter(input: Readonly<{
         home: target.home,
         prior,
         registration,
-        sourcePath: verifiedMarketplaceSourcePath(source, registration),
+        source: verifiedMarketplaceSource(source, registration),
         targetDigest: target.targetDigest,
       }),
-    install: async ({ target, member, source }) => await input.process.installMarketplacePlugin({
+    install: async ({ target, member }) => await input.process.installMarketplacePlugin({
       home: target.home,
       nativeIdentity: member.nativeIdentity,
       artifactAuthority: member.artifactAuthority,
       providerSourceIdentity: member.providerSourceIdentity,
       marketplaceIdentity: member.providerSourceIdentity,
-      sourcePath: verifiedSourcePath(source, member.memberFingerprint),
       memberFingerprint: member.memberFingerprint,
       targetDigest: target.targetDigest,
     }),
@@ -218,7 +213,6 @@ export function createCodexProviderAdapter(input: Readonly<{
     adapterProtocol: CODEX_ADAPTER_PROTOCOL,
     bridge,
     marketplaceSources: input.marketplaceSources,
-    projectionSources: input.projectionSources,
   });
   return Object.freeze({
     ...adapter,
@@ -226,23 +220,22 @@ export function createCodexProviderAdapter(input: Readonly<{
   });
 }
 
-function verifiedMarketplaceSourcePath(
+function verifiedMarketplaceSource(
   source: ProviderMarketplaceSource | null,
   registration: ProviderMarketplaceRegistration | null,
-): string | null {
+): ProviderMarketplaceSource | null {
   if (registration === null) {
     if (source !== null) throw new Error("Codex marketplace removal cannot carry a source");
     return null;
   }
   if (
     source === null
-    || !source.path.startsWith("/")
     || source.projectionDigest !== registration.projectionDigest
     || source.sourceDigest !== registration.sourceDigest
   ) {
     throw new Error("Codex marketplace source does not bind the requested registration");
   }
-  return source.path;
+  return source;
 }
 
 function createCodexRestorationPort(
@@ -270,7 +263,7 @@ function createCodexRestorationPort(
         home: target.home,
         prior: expected,
         registration,
-        sourcePath: verifiedMarketplaceSourcePath(source, registration),
+        source: verifiedMarketplaceSource(source, registration),
         targetDigest: target.targetDigest,
       });
       const verified = await readMarketplace(target);
@@ -307,7 +300,6 @@ function createCodexRestorationPort(
     target,
     expected,
     prior,
-    priorSource,
   }) => {
     try {
       const nativeIdentity = inverseIdentity(expected, prior);
@@ -332,7 +324,6 @@ function createCodexRestorationPort(
         return success(null);
       }
 
-      const sourcePath = verifiedInverseSourcePath(priorSource, prior.memberFingerprint);
       if (expected === null) {
         await process.installMarketplacePlugin({
           home: target.home,
@@ -340,7 +331,6 @@ function createCodexRestorationPort(
           artifactAuthority: prior.artifactAuthority,
           providerSourceIdentity: prior.providerSourceIdentity,
           marketplaceIdentity: prior.providerSourceIdentity,
-          sourcePath,
           memberFingerprint: prior.memberFingerprint,
           targetDigest: target.targetDigest,
         });
@@ -403,16 +393,6 @@ function inverseIdentity(
   return identity;
 }
 
-function verifiedInverseSourcePath(
-  source: Parameters<NativeMemberRestorationPort["restoreExact"]>[0]["priorSource"],
-  expected: ProviderMemberFingerprint,
-): string {
-  if (source === null || source.memberFingerprint !== expected || !source.path.startsWith("/")) {
-    throw new Error("Codex inverse source is not the exact stable prior projection member");
-  }
-  return source.path;
-}
-
 function uniqueByIdentity<T extends Readonly<{ nativeIdentity: string }>>(
   entries: readonly T[],
   label: string,
@@ -423,13 +403,6 @@ function uniqueByIdentity<T extends Readonly<{ nativeIdentity: string }>>(
     result.set(entry.nativeIdentity, entry);
   }
   return result;
-}
-
-function verifiedSourcePath(source: StableProjectionSource, expected: ProviderMemberFingerprint): string {
-  if (source.memberFingerprint !== expected || !source.path.startsWith("/")) {
-    throw new Error("Codex install source is not an exact stable projection materialization");
-  }
-  return source.path;
 }
 
 function requireProtocol(value: string): AdapterProtocol {

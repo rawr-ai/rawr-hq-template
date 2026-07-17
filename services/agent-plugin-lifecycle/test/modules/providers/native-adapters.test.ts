@@ -12,8 +12,6 @@ import {
   type ProviderProjectionMember,
 } from "../../../src/service/modules/providers/internal";
 import {
-  failure,
-  issue,
   success,
 } from "../../../src/service/modules/providers/internal/domain/result";
 import {
@@ -38,9 +36,12 @@ describe("native provider adapters", () => {
       process: {
         probe: async () => ({ adapterProtocol: CODEX_ADAPTER_PROTOCOL, available: ALL_CAPABILITIES }),
         inventoryMarketplaceRegistration: async () => marketplace,
-        setMarketplaceRegistration: async ({ registration: next, sourcePath }) => {
+        setMarketplaceRegistration: async ({ registration: next, source }) => {
           writes += 1;
-          expect(sourcePath).toBe("/tmp/rawr-runtime/marketplace");
+          expect(source).toEqual({
+            projectionDigest: registration.projectionDigest,
+            sourceDigest: registration.sourceDigest,
+          });
           marketplace = next === null ? absentMarketplace() : presentMarketplace(next);
         },
         inventoryMarketplace: async () => [],
@@ -52,7 +53,6 @@ describe("native provider adapters", () => {
       appServer: { inspectVisiblePlugins: async () => [] },
       session: { inspectConfiguredPlugins: async () => [] },
       marketplaceSources: marketplaceSourceReader(),
-      projectionSources: { read: async () => failure([issue("PROJECTION_MISMATCH", "source", "unused")]) },
     });
     const prior = absentMarketplace();
     const applied = await adapter.apply({
@@ -92,6 +92,15 @@ describe("native provider adapters", () => {
         setMarketplaceRegistration: async () => {},
         inventoryMarketplace: async () => plugins,
         installMarketplacePlugin: async (request) => {
+          expect(Object.keys(request).sort()).toEqual([
+            "artifactAuthority",
+            "home",
+            "marketplaceIdentity",
+            "memberFingerprint",
+            "nativeIdentity",
+            "providerSourceIdentity",
+            "targetDigest",
+          ]);
           calls.push("install");
           plugins.push({
             pluginId: "alpha" as CodexMarketplacePlugin["pluginId"],
@@ -128,9 +137,6 @@ describe("native provider adapters", () => {
       },
       session: { inspectConfiguredPlugins: async () => [...enabled].map((nativeIdentity) => ({ nativeIdentity, providerSourceIdentity: member.providerSourceIdentity, enablement: "enabled" as const })) },
       marketplaceSources: marketplaceSourceReader(),
-      projectionSources: {
-        read: async () => success({ path: "/tmp/rawr-runtime/projection-member.json", projectionDigest: PROJECTION_DIGEST, memberFingerprint: member.memberFingerprint }),
-      },
     });
 
     const installed = await adapter.apply({ kind: "InstallMember", target, priorMarketplace: null, activeMarketplace, projectionDigest: PROJECTION_DIGEST, member });
@@ -173,9 +179,6 @@ describe("native provider adapters", () => {
       },
       session: { inspectConfiguredPlugins: async () => [...enabled].map((nativeIdentity) => ({ nativeIdentity, providerSourceIdentity: member.providerSourceIdentity, enablement: "enabled" as const })) },
       marketplaceSources: marketplaceSourceReader(),
-      projectionSources: {
-        read: async () => success({ path: "/tmp/rawr-runtime/projection-member.json", projectionDigest: PROJECTION_DIGEST, memberFingerprint: member.memberFingerprint }),
-      },
     });
 
     const prior = mustInventoryMember(await adapter.readInventory(target), member.nativeIdentity);
@@ -190,47 +193,6 @@ describe("native provider adapters", () => {
     });
     expect(result.ok).toBe(true);
     expect(enableCalls).toBe(1);
-  });
-
-  it("rejects a source from another projection before native mutation", async () => {
-    const target = mustTarget("codex", "/tmp/rawr-c3-adapter-codex-wrong-projection");
-    const member = projectedMember("alpha", "a");
-    const activeMarketplace = marketplaceRegistration("codex", CODEX_ADAPTER_PROTOCOL, [member]);
-    let mutations = 0;
-    const adapter = createCodexProviderAdapter({
-      process: {
-        probe: async () => ({ adapterProtocol: CODEX_ADAPTER_PROTOCOL, available: ALL_CAPABILITIES }),
-        inventoryMarketplaceRegistration: async () => presentMarketplace(activeMarketplace),
-        setMarketplaceRegistration: async () => {},
-        inventoryMarketplace: async () => [],
-        installMarketplacePlugin: async () => { mutations += 1; },
-        enableMarketplacePlugin: async () => { mutations += 1; },
-        disableMarketplacePlugin: async () => { mutations += 1; },
-        uninstallMarketplacePlugin: async () => { mutations += 1; },
-      },
-      appServer: { inspectVisiblePlugins: async () => [] },
-      session: { inspectConfiguredPlugins: async () => [] },
-      marketplaceSources: marketplaceSourceReader(),
-      projectionSources: {
-        read: async () => success({
-          path: "/tmp/rawr-runtime/another-projection",
-          projectionDigest: `ap1_${"8".repeat(64)}` as AgentProviderProjection["projectionDigest"],
-          memberFingerprint: member.memberFingerprint,
-        }),
-      },
-    });
-
-    const result = await adapter.apply({
-      kind: "InstallMember",
-      target,
-      priorMarketplace: null,
-      activeMarketplace,
-      projectionDigest: PROJECTION_DIGEST,
-      member,
-    });
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.issues[0].code).toBe("MUTATION_FAILED");
-    expect(mutations).toBe(0);
   });
 
   it("fails a Codex visibility port without mutation or fallback", async () => {
@@ -250,24 +212,22 @@ describe("native provider adapters", () => {
       appServer: { inspectVisiblePlugins: async () => { throw new Error("app server unavailable"); } },
       session: { inspectConfiguredPlugins: async () => [] },
       marketplaceSources: marketplaceSourceReader(),
-      projectionSources: { read: async () => failure([issue("PROJECTION_MISMATCH", "source", "missing")]) },
     });
     const result = await adapter.readInventory(target);
     expect(result.ok).toBe(false);
     expect(mutations).toBe(0);
   });
 
-  it("uses Claude native cache identity for exact managed uninstall", async () => {
+  it("uses the Claude native selector identity for exact managed uninstall", async () => {
     const target = mustTarget("claude", "/tmp/rawr-c3-adapter-claude");
     const member = projectedMember("alpha", "c");
     const plugins: ClaudeNativePlugin[] = [{
       ...nativePlugin("alpha", "c"),
-      cacheIdentity: "cache:alpha:c",
       enablement: "enabled",
       visibleSkills: member.visible.skills,
       visibleHooks: member.visible.hooks,
     }];
-    let removedCache = "";
+    let removedIdentity = "";
     const adapter = createClaudeProviderAdapter({
       process: {
         probe: async () => ({ adapterProtocol: CLAUDE_ADAPTER_PROTOCOL, available: ALL_CAPABILITIES }),
@@ -278,13 +238,12 @@ describe("native provider adapters", () => {
         installNativePlugin: async () => {},
         enableNativePlugin: async () => {},
         disableNativePlugin: async () => {},
-        uninstallNativePlugin: async ({ cacheIdentity }) => {
-          removedCache = cacheIdentity;
+        uninstallNativePlugin: async ({ nativeIdentity }) => {
+          removedIdentity = nativeIdentity;
           plugins.splice(0, 1);
         },
       },
       marketplaceSources: marketplaceSourceReader(),
-      projectionSources: { read: async () => success({ path: "/tmp/rawr-runtime/member.json", projectionDigest: PROJECTION_DIGEST, memberFingerprint: member.memberFingerprint }) },
     });
     const prior = mustInventoryMember(await adapter.readInventory(target), member.nativeIdentity);
     const result = await adapter.apply({
@@ -297,10 +256,10 @@ describe("native provider adapters", () => {
       proof: "receipt",
     });
     expect(result.ok).toBe(true);
-    expect(removedCache).toBe("cache:alpha:c");
+    expect(removedIdentity).toBe("rawr:alpha");
   });
 
-  it("restores Codex retired bytes and enablement from the stable prior projection source", async () => {
+  it("restores Codex retired bytes and enablement through its exact native selector", async () => {
     const target = mustTarget("codex", "/tmp/rawr-c3-adapter-codex-inverse");
     const member = projectedMember("alpha", "d");
     const prior = observedMember(member, "enabled");
@@ -314,7 +273,7 @@ describe("native provider adapters", () => {
         setMarketplaceRegistration: async () => {},
         inventoryMarketplace: async () => plugins,
         installMarketplacePlugin: async (request) => {
-          calls.push(`install:${request.sourcePath}`);
+          calls.push("install");
           plugins.push({
             pluginId: member.pluginId,
             nativeIdentity: request.nativeIdentity,
@@ -344,14 +303,12 @@ describe("native provider adapters", () => {
           enablement: "enabled" as const,
         })),
       },
-      projectionSources: { read: async () => success({ path: "/tmp/current.json", projectionDigest: PROJECTION_DIGEST, memberFingerprint: member.memberFingerprint }) },
     });
 
     expect((await adapter.restoreExact({
       target,
       expected: null,
       prior,
-      priorSource: { path: "/tmp/prior.json", memberFingerprint: prior.memberFingerprint },
     })).ok).toBe(true);
     expect(await adapter.readMember(target, prior.nativeIdentity)).toEqual({ ok: true, value: prior });
     const disabledPrior = Object.freeze({ ...prior, enablement: "disabled" as const });
@@ -359,9 +316,8 @@ describe("native provider adapters", () => {
       target,
       expected: prior,
       prior: disabledPrior,
-      priorSource: { path: "/tmp/prior.json", memberFingerprint: prior.memberFingerprint },
     })).ok).toBe(true);
-    expect(calls).toEqual(["install:/tmp/prior.json", "enable", "disable"]);
+    expect(calls).toEqual(["install", "enable", "disable"]);
   });
 
   it("restores Claude retired bytes but blocks a substituted marketplace source before uninstall", async () => {
@@ -378,14 +334,13 @@ describe("native provider adapters", () => {
         inventoryNativePlugins: async () => plugins,
         inventoryStandaloneExposures: async () => [],
         installNativePlugin: async (request) => {
-          calls.push(`install:${request.sourcePath}`);
+          calls.push("install");
           plugins.push({
             pluginId: member.pluginId,
             nativeIdentity: request.nativeIdentity,
             artifactAuthority: request.artifactAuthority,
             providerSourceIdentity: request.providerSourceIdentity,
             marketplaceIdentity: request.marketplaceIdentity,
-            cacheIdentity: `cache:${request.memberFingerprint}`,
             memberFingerprint: request.memberFingerprint,
             enablement: "disabled",
             visibleSkills: member.visible.skills,
@@ -398,29 +353,27 @@ describe("native provider adapters", () => {
           if (plugin !== undefined) plugins[0] = Object.freeze({ ...plugin, enablement: "enabled" });
         },
         disableNativePlugin: async () => { calls.push("disable"); },
-        uninstallNativePlugin: async ({ cacheIdentity }) => { calls.push(`uninstall:${cacheIdentity}`); plugins.splice(0); },
+        uninstallNativePlugin: async ({ nativeIdentity }) => { calls.push(`uninstall:${nativeIdentity}`); plugins.splice(0); },
       },
       marketplaceSources: marketplaceSourceReader(),
-      projectionSources: { read: async () => success({ path: "/tmp/current.json", projectionDigest: PROJECTION_DIGEST, memberFingerprint: member.memberFingerprint }) },
     });
 
     expect((await adapter.restoreExact({
       target,
       expected: null,
       prior,
-      priorSource: { path: "/tmp/prior.json", memberFingerprint: prior.memberFingerprint },
     })).ok).toBe(true);
     const installed = plugins[0];
     if (installed === undefined) throw new Error("Claude inverse fixture did not install");
     plugins[0] = Object.freeze({ ...installed, marketplaceIdentity: "substituted" });
-    expect((await adapter.restoreExact({ target, expected: prior, prior: null, priorSource: null })).ok).toBe(false);
+    expect((await adapter.restoreExact({ target, expected: prior, prior: null })).ok).toBe(false);
     expect(calls.some((call) => call.startsWith("uninstall:"))).toBe(false);
     plugins[0] = installed;
-    expect((await adapter.restoreExact({ target, expected: prior, prior: null, priorSource: null })).ok).toBe(true);
+    expect((await adapter.restoreExact({ target, expected: prior, prior: null })).ok).toBe(true);
     expect(calls).toEqual([
-      "install:/tmp/prior.json",
+      "install",
       "enable",
-      `uninstall:cache:${prior.memberFingerprint}`,
+      "uninstall:rawr:alpha",
     ]);
   });
 
@@ -474,13 +427,6 @@ describe("native provider adapters", () => {
         })),
       },
       marketplaceSources: marketplaceSourceReader(),
-      projectionSources: {
-        read: async () => success({
-          path: "/tmp/rawr-runtime/refreshed-alpha",
-          projectionDigest: PROJECTION_DIGEST,
-          memberFingerprint: nextMember.memberFingerprint,
-        }),
-      },
     });
     const prior = observedMember(priorMember, "enabled");
 
@@ -541,9 +487,6 @@ describe("native provider adapters", () => {
         })),
       },
       marketplaceSources: marketplaceSourceReader(),
-      projectionSources: {
-        read: async () => failure([issue("PROJECTION_MISMATCH", "source", "unused")]),
-      },
     });
 
     const result = await adapter.apply({
@@ -606,7 +549,6 @@ function absentMarketplace(): ProviderMarketplaceObservation {
 function marketplaceSourceReader() {
   return {
     read: async (_target: unknown, registration: ProviderMarketplaceRegistration) => success({
-      path: "/tmp/rawr-runtime/marketplace",
       projectionDigest: registration.projectionDigest,
       sourceDigest: registration.sourceDigest,
     }),

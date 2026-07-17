@@ -166,7 +166,6 @@ export type {
 export type {
   NativeMutationObservation,
   NativeMemberRestorationPort,
-  NativeMemberRestorationSource,
   NativeProviderMutationAction,
   ProviderTargetMutator,
   ProviderTargetReader,
@@ -187,6 +186,17 @@ export type {
   TargetReceiptReader,
   TargetReceiptWriter,
 } from "./ports/state";
+export type {
+  FlatProjectionRecordCollection,
+  ImmutableProviderTreeCollection,
+  ImmutableProviderTreeFile,
+  ImmutableProviderTreeKey,
+  ImmutableProviderTreeObservation,
+  ImmutableProviderTreePublication,
+  ProjectionRecordKey,
+  ProjectionRecordObservation,
+  ProjectionRecordPublication,
+} from "./ports/projection-storage";
 
 export {
   CODEX_ADAPTER_PROTOCOL,
@@ -198,8 +208,6 @@ export {
 } from "./adapters/claude";
 export type {
   NativeProviderAdapter,
-  StableProjectionSource,
-  StableProjectionSourceReader,
 } from "./adapters/native";
 export {
   createResourceCodexProviderAdapter,
@@ -209,6 +217,10 @@ export {
   createResourceClaudeProviderAdapter,
   type ResourceClaudeProviderAdapterOptions,
 } from "./adapters/resource-claude";
+export {
+  createPathlessProjectionStorage,
+  type PathlessProjectionStorage,
+} from "./adapters/projection-storage";
 export type {
   ClaudeNativeResourceSession,
   CodexNativeResourceSession,
@@ -217,7 +229,9 @@ export type {
   NativeResourceJsonObservation,
   NativeResourcePackageEntry,
   NativeResourcePackageObservation,
-  NativeResourcePackageReadInput,
+  NativeResourceMarketplaceReadInput,
+  NativeResourcePackageReadLimits,
+  NativeResourcePluginReadInput,
   NativeResourceSessionInput,
 } from "./adapters/resource-port";
 

@@ -458,6 +458,18 @@ function renderMarketplace(
       identity,
     )]);
   }
+  return success(Object.freeze({
+    identity,
+    files: Object.freeze([renderProviderMarketplaceManifestFile(provider, identity, members)]),
+  }));
+}
+
+/** One canonical owner for provider-native marketplace manifest bytes. */
+export function renderProviderMarketplaceManifestFile(
+  provider: ProviderId,
+  identity: ProviderSourceIdentity,
+  members: readonly Pick<ProviderProjectionMember, "pluginId">[],
+): ProviderPackageFile {
   const manifestPath = parseGeneratedPath(provider === "codex"
     ? ".agents/plugins/marketplace.json"
     : ".claude-plugin/marketplace.json");
@@ -484,15 +496,12 @@ function renderMarketplace(
         })),
       };
   const bytes = canonicalBytes(manifestValue);
-  return success(Object.freeze({
-    identity,
-    files: Object.freeze([Object.freeze({
-      path: manifestPath,
-      mode: 0o644,
-      contentDigest: contentDigest(bytes),
-      bytes,
-    })]),
-  }));
+  return Object.freeze({
+    path: manifestPath,
+    mode: 0o644,
+    contentDigest: contentDigest(bytes),
+    bytes,
+  });
 }
 
 export function providerSourceTreeValue(

@@ -18,7 +18,6 @@ import {
   type ClaudeProcessPort,
   type ClaudeProviderAdapter,
 } from "./claude";
-import type { StableProjectionSourceReader } from "./native";
 import {
   NATIVE_PACKAGE_READ_LIMITS,
   inspectNativePluginPackage,
@@ -40,16 +39,13 @@ import {
   requireRecord,
   requireString,
   sameMarketplaceObservation,
-  sameRegistration,
 } from "./resource-shared";
 
 export interface ResourceClaudeProviderAdapterOptions {
   readonly resource: NativeProviderResourcePort;
   readonly executablePath: string;
-  readonly marketplaceSourceRoot: string;
   readonly contentAuthority: ContentAuthority;
   readonly marketplaceSources: ProviderMarketplaceSourceReader;
-  readonly projectionSources: StableProjectionSourceReader;
 }
 
 export function createResourceClaudeProviderAdapter(
@@ -82,12 +78,9 @@ export function createResourceClaudeProviderAdapter(
       .filter((entry) => entry.name === input.contentAuthority);
     if (matches.length === 0) return Object.freeze({ kind: "absent" });
     if (matches.length !== 1) throw new Error("Claude managed marketplace identity is ambiguous");
-    const source = matches[0];
-    if (source === undefined) throw new Error("Claude managed marketplace disappeared during observation");
-    const sourceSession = await session(input.marketplaceSourceRoot);
+    if (matches[0] === undefined) throw new Error("Claude managed marketplace disappeared during observation");
     const registration = await readMarketplaceSource(
-      (request) => sourceSession.readPackage(request),
-      source.path,
+      await provider.readMarketplace({ identity: input.contentAuthority, ...NATIVE_PACKAGE_READ_LIMITS }),
       "claude",
       CLAUDE_ADAPTER_PROTOCOL,
     );
@@ -98,7 +91,7 @@ export function createResourceClaudeProviderAdapter(
     home,
     prior,
     registration,
-    sourcePath,
+    source,
   }) => {
     const provider = await session(home);
     const current = await inventoryMarketplaceRegistration({ home });
@@ -111,18 +104,12 @@ export function createResourceClaudeProviderAdapter(
       await provider.removeMarketplace({ identity: input.contentAuthority });
     }
     if (registration !== null) {
-      if (sourcePath === null) throw new Error("Claude marketplace registration has no stable source");
-      const sourceSession = await session(input.marketplaceSourceRoot);
-      const verified = await readMarketplaceSource(
-        (request) => sourceSession.readPackage(request),
-        sourcePath,
-        "claude",
-        CLAUDE_ADAPTER_PROTOCOL,
-      );
-      if (!sameRegistration(verified, registration)) {
-        throw new Error("Claude marketplace source changed before registration");
+      if (source === null
+        || source.projectionDigest !== registration.projectionDigest
+        || source.sourceDigest !== registration.sourceDigest) {
+        throw new Error("Claude marketplace registration has no exact semantic source");
       }
-      await provider.addMarketplace({ sourcePath });
+      await provider.addMarketplace(source);
     }
     const post = await inventoryMarketplaceRegistration({ home });
     if (!sameMarketplaceObservation(post, desired)) {
@@ -135,8 +122,8 @@ export function createResourceClaudeProviderAdapter(
     const observations: ClaudeNativePlugin[] = [];
     for (const plugin of (await listPlugins(home)).filter((entry) =>
       entry.marketplaceName === input.contentAuthority)) {
-      const inspected = inspectNativePluginPackage(await provider.readPackage({
-        root: plugin.installPath,
+      const inspected = inspectNativePluginPackage(await provider.readPlugin({
+        selector: plugin.selector,
         ...NATIVE_PACKAGE_READ_LIMITS,
       }), "claude");
       if (
@@ -151,7 +138,6 @@ export function createResourceClaudeProviderAdapter(
         artifactAuthority: inspected.artifactAuthority,
         providerSourceIdentity: inspected.providerSourceIdentity,
         marketplaceIdentity: inspected.providerSourceIdentity,
-        cacheIdentity: plugin.installPath,
         memberFingerprint: inspected.memberFingerprint,
         enablement: plugin.enabled ? "enabled" : "disabled",
         visibleSkills: inspected.visibleSkills,
@@ -166,8 +152,8 @@ export function createResourceClaudeProviderAdapter(
     const plugins = await listPlugins(home);
     const exposures: NativeStandaloneExposureObservation[] = [];
     for (const plugin of plugins.filter((entry) => entry.marketplaceName !== input.contentAuthority)) {
-      const visible = inspectNativePluginVisibility(await provider.readPackage({
-        root: plugin.installPath,
+      const visible = inspectNativePluginVisibility(await provider.readPlugin({
+        selector: plugin.selector,
         ...NATIVE_PACKAGE_READ_LIMITS,
       }));
       exposures.push(Object.freeze({
@@ -233,7 +219,6 @@ export function createResourceClaudeProviderAdapter(
   return createClaudeProviderAdapter({
     process,
     marketplaceSources: input.marketplaceSources,
-    projectionSources: input.projectionSources,
   });
 }
 
@@ -249,7 +234,6 @@ interface ClaudeListPlugin {
   readonly name: PluginId;
   readonly marketplaceName: string;
   readonly enabled: boolean;
-  readonly installPath: string;
 }
 
 function parseListPlugin(input: unknown): ClaudeListPlugin {
@@ -265,8 +249,6 @@ function parseListPlugin(input: unknown): ClaudeListPlugin {
     !name.ok
     || !/^[a-z0-9][a-z0-9_-]*$/u.test(marketplaceName)
     || typeof record.enabled !== "boolean"
-    || typeof record.installPath !== "string"
-    || !record.installPath.startsWith("/")
     || record.scope !== "user"
   ) {
     throw new Error("Claude installed plugin entry is invalid");
@@ -276,21 +258,15 @@ function parseListPlugin(input: unknown): ClaudeListPlugin {
     name: name.value,
     marketplaceName,
     enabled: record.enabled,
-    installPath: record.installPath,
   });
 }
 
-function parseMarketplaceEntry(input: unknown): Readonly<{ name: string; path: string }> {
+function parseMarketplaceEntry(input: unknown): Readonly<{ name: string }> {
   const record = requireRecord(input, "Claude marketplace entry");
-  if (
-    typeof record.name !== "string"
-    || typeof record.path !== "string"
-    || !record.path.startsWith("/")
-    || record.source !== "directory"
-  ) {
+  if (typeof record.name !== "string") {
     throw new Error("Claude marketplace entry is invalid");
   }
-  return Object.freeze({ name: record.name, path: record.path });
+  return Object.freeze({ name: record.name });
 }
 
 function parseConfiguredPluginExposures(

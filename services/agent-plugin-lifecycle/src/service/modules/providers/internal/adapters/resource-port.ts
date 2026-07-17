@@ -25,14 +25,20 @@ export interface NativeResourcePackageEntry {
 }
 
 export interface NativeResourcePackageObservation {
-  readonly root: string;
   readonly entries: readonly NativeResourcePackageEntry[];
 }
 
-export interface NativeResourcePackageReadInput {
-  readonly root: string;
+export interface NativeResourcePackageReadLimits {
   readonly maxEntries: number;
   readonly maxBytes: number;
+}
+
+export interface NativeResourceMarketplaceReadInput extends NativeResourcePackageReadLimits {
+  readonly identity: string;
+}
+
+export interface NativeResourcePluginReadInput extends NativeResourcePackageReadLimits {
+  readonly selector: string;
 }
 
 interface NativeResourceSessionBase {
@@ -40,10 +46,11 @@ interface NativeResourceSessionBase {
   readonly home: string;
   probe(): Promise<NativeResourceCapabilityProbe>;
   listMarketplaces(): Promise<NativeResourceJsonObservation>;
-  addMarketplace(input: Readonly<{ sourcePath: string }>): Promise<unknown>;
+  readMarketplace(input: NativeResourceMarketplaceReadInput): Promise<NativeResourcePackageObservation>;
+  addMarketplace(input: ProviderMarketplaceSource): Promise<unknown>;
   removeMarketplace(input: Readonly<{ identity: string }>): Promise<unknown>;
   listPlugins(): Promise<NativeResourceJsonObservation>;
-  readPackage(input: NativeResourcePackageReadInput): Promise<NativeResourcePackageObservation>;
+  readPlugin(input: NativeResourcePluginReadInput): Promise<NativeResourcePackageObservation>;
 }
 
 export interface CodexNativeResourceSession extends NativeResourceSessionBase {
@@ -52,7 +59,10 @@ export interface CodexNativeResourceSession extends NativeResourceSessionBase {
   removePlugin(input: Readonly<{ selector: string }>): Promise<unknown>;
   inspectAppServer(): Promise<Readonly<{ plugins: unknown; hooks: unknown }>>;
   readConfiguration(): Promise<unknown>;
-  setMarketplaceSource(input: Readonly<{ identity: string; sourcePath: string }>): Promise<unknown>;
+  setMarketplaceSource(input: Readonly<{
+    identity: string;
+    source: ProviderMarketplaceSource;
+  }>): Promise<unknown>;
   setPluginEnabled(input: Readonly<{ selector: string; enabled: boolean }>): Promise<unknown>;
 }
 
@@ -70,3 +80,4 @@ export interface NativeProviderResourcePort {
   acquireCodex(input: NativeResourceSessionInput): Promise<CodexNativeResourceSession>;
   acquireClaude(input: NativeResourceSessionInput): Promise<ClaudeNativeResourceSession>;
 }
+import type { ProviderMarketplaceSource } from "../ports/state";

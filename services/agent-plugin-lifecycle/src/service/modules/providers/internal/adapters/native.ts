@@ -14,7 +14,6 @@ import type {
   ProviderArtifactAuthority,
   ProviderCapability,
   ProviderMemberFingerprint,
-  ProjectionDigest,
   ProviderProjectionMember,
   ProviderSourceIdentity,
 } from "../domain/projection";
@@ -38,20 +37,6 @@ import type {
 import type { ProviderMarketplaceSource, ProviderMarketplaceSourceReader } from "../ports/state";
 
 type NativeMemberMutationAction = Exclude<NativeProviderMutationAction, { readonly kind: "SetMarketplace" }>;
-
-export interface StableProjectionSource {
-  readonly path: string;
-  readonly projectionDigest: ProjectionDigest;
-  readonly memberFingerprint: ProviderMemberFingerprint;
-}
-
-export interface StableProjectionSourceReader {
-  read(input: Readonly<{
-    target: ProviderTarget;
-    projectionDigest: ProjectionDigest;
-    member: ProviderProjectionMember;
-  }>): Promise<DeploymentResult<StableProjectionSource>>;
-}
 
 export interface NativePluginProcessObservation {
   readonly pluginId: PluginId;
@@ -86,7 +71,6 @@ export interface NativeProviderBridge {
   install(input: Readonly<{
     target: ProviderTarget;
     member: ProviderProjectionMember;
-    source: StableProjectionSource;
   }>): Promise<void>;
   enable(input: Readonly<{
     target: ProviderTarget;
@@ -105,7 +89,6 @@ export function createNativeProviderAdapter(input: Readonly<{
   adapterProtocol: AdapterProtocol;
   bridge: NativeProviderBridge;
   marketplaceSources: ProviderMarketplaceSourceReader;
-  projectionSources: StableProjectionSourceReader;
 }>): NativeProviderAdapter {
   const projectionAdapterProtocol = (
     target: ProviderTarget,
@@ -314,25 +297,7 @@ export function createNativeProviderAdapter(input: Readonly<{
     try {
       switch (action.kind) {
         case "InstallMember": {
-          const source = await input.projectionSources.read({
-            target: action.target,
-            projectionDigest: action.projectionDigest,
-            member: action.member,
-          });
-          if (!source.ok) return source;
-          if (
-            source.value.projectionDigest !== action.projectionDigest
-            || source.value.memberFingerprint !== action.member.memberFingerprint
-          ) {
-            return failure([issue(
-              "MUTATION_FAILED",
-              "projectionSource",
-              "Stable projection source does not bind the requested projection and member",
-              `${action.projectionDigest}/${action.member.memberFingerprint}`,
-              `${source.value.projectionDigest}/${source.value.memberFingerprint}`,
-            )]);
-          }
-          await input.bridge.install({ target: action.target, member: action.member, source: source.value });
+          await input.bridge.install({ target: action.target, member: action.member });
           break;
         }
         case "EnableMember":

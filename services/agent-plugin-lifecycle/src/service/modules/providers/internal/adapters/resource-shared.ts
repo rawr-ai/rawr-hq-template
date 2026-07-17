@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import {
   parseContentAuthority,
   parsePluginId,
@@ -19,9 +17,6 @@ import type {
 } from "../domain/projection";
 import type { ProviderId } from "../domain/target";
 import { inspectMarketplaceSource } from "./resource-marketplace";
-import {
-  NATIVE_PACKAGE_READ_LIMITS,
-} from "./resource-package";
 import type {
   NativeResourceSessionInput,
   NativeResourcePackageObservation,
@@ -45,17 +40,12 @@ export function createSessionCache<Session>(
 }
 
 export async function readMarketplaceSource(
-  readPackage: (input: Readonly<{
-    root: string;
-    maxEntries: number;
-    maxBytes: number;
-  }>) => Promise<NativeResourcePackageObservation>,
-  sourcePath: string,
+  observation: NativeResourcePackageObservation,
   provider: ProviderId,
   adapterProtocol: AdapterProtocol,
 ): Promise<ProviderMarketplaceRegistration> {
   return inspectMarketplaceSource({
-    observation: await readPackage({ root: sourcePath, ...NATIVE_PACKAGE_READ_LIMITS }),
+    observation,
     provider,
     adapterProtocol,
   });
@@ -129,24 +119,12 @@ export function sameMarketplaceObservation(
     : right.kind === "present" && sameMarketplaceState(left.state, right.state);
 }
 
-export function sameRegistration(
-  left: ProviderMarketplaceRegistration,
-  right: ProviderMarketplaceRegistration,
-): boolean {
-  return sameMarketplaceState(left, right)
-    && JSON.stringify(left.members) === JSON.stringify(right.members);
-}
-
 export function desiredMarketplace(
   registration: ProviderMarketplaceRegistration | null,
 ): ProviderMarketplaceObservation {
   return registration === null
     ? Object.freeze({ kind: "absent" })
     : Object.freeze({ kind: "present", state: marketplaceState(registration) });
-}
-
-export function joinProviderPath(root: string, ...segments: readonly string[]): string {
-  return path.posix.join(root, ...segments);
 }
 
 export function requireArray(value: unknown, label: string): readonly unknown[] {

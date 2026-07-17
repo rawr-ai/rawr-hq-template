@@ -54,7 +54,6 @@ export function inspectMarketplaceSource(input: Readonly<{
   if (
     decoded.projectionDigest !== registration.projectionDigest
     || decoded.sourceDigest !== registration.sourceDigest
-    || basename(input.observation.root) !== registration.projectionDigest
   ) {
     throw new Error("Provider marketplace source digest metadata is invalid");
   }
@@ -110,11 +109,6 @@ function decodeJson(bytes: Uint8Array): unknown {
   } catch {
     throw new Error("Provider marketplace source metadata is not canonical UTF-8 JSON");
   }
-}
-
-function basename(value: string): string {
-  const normalized = value.endsWith("/") ? value.slice(0, -1) : value;
-  return normalized.slice(normalized.lastIndexOf("/") + 1);
 }
 
 function requireParsed<T>(result: Readonly<{ ok: true; value: T } | { ok: false }>): T {

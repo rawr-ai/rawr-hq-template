@@ -24,10 +24,10 @@ import type { ProviderId } from "../domain/target";
 import type {
   NativeResourcePackageEntry,
   NativeResourcePackageObservation,
-  NativeResourcePackageReadInput,
+  NativeResourcePackageReadLimits,
 } from "./resource-port";
 
-export const NATIVE_PACKAGE_READ_LIMITS: Omit<NativeResourcePackageReadInput, "root"> = Object.freeze({
+export const NATIVE_PACKAGE_READ_LIMITS: NativeResourcePackageReadLimits = Object.freeze({
   maxEntries: 200_000,
   maxBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
 });

@@ -2,7 +2,6 @@ import type {
   AdapterProtocol,
   AgentProviderProjection,
   CapabilityObservation,
-  ProviderMemberFingerprint,
 } from "../domain/projection";
 import type { ContentAuthority } from "../../../../shared/release";
 import type {
@@ -52,11 +51,6 @@ export interface ProviderTargetMutator {
   apply(action: NativeProviderMutationAction): Promise<DeploymentResult<NativeMutationObservation>>;
 }
 
-export interface NativeMemberRestorationSource {
-  readonly path: string;
-  readonly memberFingerprint: ProviderMemberFingerprint;
-}
-
 export interface NativeMemberRestorationPort {
   readMarketplace(
     target: ProviderTarget,
@@ -75,6 +69,5 @@ export interface NativeMemberRestorationPort {
     target: ProviderTarget;
     expected: NativeMemberObservation | null;
     prior: NativeMemberObservation | null;
-    priorSource: NativeMemberRestorationSource | null;
   }>): Promise<DeploymentResult<null>>;
 }

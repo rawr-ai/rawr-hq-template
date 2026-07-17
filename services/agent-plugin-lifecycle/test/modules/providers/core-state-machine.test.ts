@@ -1702,7 +1702,11 @@ class Harness {
           if (registration.members.some((member) => !this.archivedFingerprints.has(member.memberFingerprint))) {
             return failure([issue("PROJECTION_MISMATCH", "marketplace.materialization", "marketplace member archive missing")]);
           }
-          return success({ kind: "published" as const, projectionDigest: registration.projectionDigest });
+          return success({
+            kind: "published" as const,
+            projectionDigest: registration.projectionDigest,
+            sourceDigest: registration.sourceDigest,
+          });
         },
       },
       priorProjections: {

@@ -25,8 +25,6 @@ import {
   type NativePluginProcessObservation,
   type NativeProviderAdapter,
   type NativeProviderBridge,
-  type StableProjectionSource,
-  type StableProjectionSourceReader,
 } from "./native";
 
 export const CLAUDE_ADAPTER_PROTOCOL = requireProtocol("rawr-provider-adapter/claude@v1");
@@ -37,7 +35,6 @@ export interface ClaudeNativePlugin {
   readonly artifactAuthority: ProviderArtifactAuthority;
   readonly providerSourceIdentity: ProviderSourceIdentity;
   readonly marketplaceIdentity: string;
-  readonly cacheIdentity: string;
   readonly memberFingerprint: ProviderMemberFingerprint;
   readonly enablement: "disabled" | "enabled";
   readonly visibleSkills: readonly string[];
@@ -56,7 +53,7 @@ export interface ClaudeProcessPort {
     home: string;
     prior: ProviderMarketplaceObservation;
     registration: ProviderMarketplaceRegistration | null;
-    sourcePath: string | null;
+    source: ProviderMarketplaceSource | null;
     targetDigest: ProviderTargetDigest;
   }>): Promise<void>;
   inventoryNativePlugins(input: Readonly<{ home: string }>): Promise<readonly ClaudeNativePlugin[]>;
@@ -67,7 +64,6 @@ export interface ClaudeProcessPort {
     artifactAuthority: ProviderArtifactAuthority;
     providerSourceIdentity: ProviderSourceIdentity;
     marketplaceIdentity: string;
-    sourcePath: string;
     memberFingerprint: ProviderMemberFingerprint;
     targetDigest: ProviderTargetDigest;
   }>): Promise<void>;
@@ -83,7 +79,6 @@ export interface ClaudeProcessPort {
     home: string;
     nativeIdentity: string;
     providerSourceIdentity: ProviderSourceIdentity;
-    cacheIdentity: string;
     memberFingerprint: ProviderMemberFingerprint;
     targetDigest: ProviderTargetDigest;
   }>): Promise<void>;
@@ -94,7 +89,6 @@ export interface ClaudeProviderAdapter extends NativeProviderAdapter, NativeMemb
 export function createClaudeProviderAdapter(input: Readonly<{
   process: ClaudeProcessPort;
   marketplaceSources: ProviderMarketplaceSourceReader;
-  projectionSources: StableProjectionSourceReader;
 }>): ClaudeProviderAdapter {
   const bridge: NativeProviderBridge = {
     probe: async (home) => await input.process.probe({ home }),
@@ -104,9 +98,6 @@ export function createClaudeProviderAdapter(input: Readonly<{
         input.process.inventoryStandaloneExposures({ home }),
       ]);
       const members = plugins.map((plugin): NativePluginProcessObservation => {
-        if (plugin.cacheIdentity.length === 0) {
-          throw new Error(`Claude cache identity is missing for ${plugin.nativeIdentity}`);
-        }
         return Object.freeze({
           pluginId: plugin.pluginId,
           nativeIdentity: plugin.nativeIdentity,
@@ -130,16 +121,15 @@ export function createClaudeProviderAdapter(input: Readonly<{
         home: target.home,
         prior,
         registration,
-        sourcePath: verifiedMarketplaceSourcePath(source, registration),
+        source: verifiedMarketplaceSource(source, registration),
         targetDigest: target.targetDigest,
       }),
-    install: async ({ target, member, source }) => await input.process.installNativePlugin({
+    install: async ({ target, member }) => await input.process.installNativePlugin({
       home: target.home,
       nativeIdentity: member.nativeIdentity,
       artifactAuthority: member.artifactAuthority,
       providerSourceIdentity: member.providerSourceIdentity,
       marketplaceIdentity: member.providerSourceIdentity,
-      sourcePath: verifiedSourcePath(source, member.memberFingerprint),
       memberFingerprint: member.memberFingerprint,
       targetDigest: target.targetDigest,
     }),
@@ -161,7 +151,6 @@ export function createClaudeProviderAdapter(input: Readonly<{
         home: target.home,
         nativeIdentity: prior.nativeIdentity,
         providerSourceIdentity: prior.providerSourceIdentity,
-        cacheIdentity: exact.cacheIdentity,
         memberFingerprint: prior.memberFingerprint,
         targetDigest: target.targetDigest,
       });
@@ -172,7 +161,6 @@ export function createClaudeProviderAdapter(input: Readonly<{
     adapterProtocol: CLAUDE_ADAPTER_PROTOCOL,
     bridge,
     marketplaceSources: input.marketplaceSources,
-    projectionSources: input.projectionSources,
   });
   return Object.freeze({
     ...adapter,
@@ -180,23 +168,22 @@ export function createClaudeProviderAdapter(input: Readonly<{
   });
 }
 
-function verifiedMarketplaceSourcePath(
+function verifiedMarketplaceSource(
   source: ProviderMarketplaceSource | null,
   registration: ProviderMarketplaceRegistration | null,
-): string | null {
+): ProviderMarketplaceSource | null {
   if (registration === null) {
     if (source !== null) throw new Error("Claude marketplace removal cannot carry a source");
     return null;
   }
   if (
     source === null
-    || !source.path.startsWith("/")
     || source.projectionDigest !== registration.projectionDigest
     || source.sourceDigest !== registration.sourceDigest
   ) {
     throw new Error("Claude marketplace source does not bind the requested registration");
   }
-  return source.path;
+  return source;
 }
 
 function createClaudeRestorationPort(
@@ -224,7 +211,7 @@ function createClaudeRestorationPort(
         home: target.home,
         prior: expected,
         registration,
-        sourcePath: verifiedMarketplaceSourcePath(source, registration),
+        source: verifiedMarketplaceSource(source, registration),
         targetDigest: target.targetDigest,
       });
       const verified = await readMarketplace(target);
@@ -261,7 +248,6 @@ function createClaudeRestorationPort(
     target,
     expected,
     prior,
-    priorSource,
   }) => {
     try {
       const nativeIdentity = inverseIdentity(expected, prior);
@@ -274,19 +260,17 @@ function createClaudeRestorationPort(
         throw new Error("Claude inverse precondition no longer matches the exact expected native member");
       }
       if (prior === null) {
-        if (expected === null || exact === undefined) throw new Error("Claude inverse uninstall cache identity is unavailable");
+        if (expected === null || exact === undefined) throw new Error("Claude inverse uninstall identity is unavailable");
         await process.uninstallNativePlugin({
           home: target.home,
           nativeIdentity,
           providerSourceIdentity: expected.providerSourceIdentity,
-          cacheIdentity: exact.cacheIdentity,
           memberFingerprint: expected.memberFingerprint,
           targetDigest: target.targetDigest,
         });
         return success(null);
       }
 
-      const sourcePath = verifiedInverseSourcePath(priorSource, prior.memberFingerprint);
       if (expected === null) {
         await process.installNativePlugin({
           home: target.home,
@@ -294,7 +278,6 @@ function createClaudeRestorationPort(
           artifactAuthority: prior.artifactAuthority,
           providerSourceIdentity: prior.providerSourceIdentity,
           marketplaceIdentity: prior.providerSourceIdentity,
-          sourcePath,
           memberFingerprint: prior.memberFingerprint,
           targetDigest: target.targetDigest,
         });
@@ -331,8 +314,7 @@ function sameClaudePlugin(plugin: ClaudeNativePlugin, expected: NativeMemberObse
     && plugin.marketplaceIdentity === expected.providerSourceIdentity
     && plugin.providerSourceIdentity === expected.providerSourceIdentity
     && sameAuthority(plugin.artifactAuthority, expected.artifactAuthority)
-    && plugin.memberFingerprint === expected.memberFingerprint
-    && plugin.cacheIdentity.length > 0;
+    && plugin.memberFingerprint === expected.memberFingerprint;
 }
 
 function sameArtifactVersion(left: NativeMemberObservation, right: NativeMemberObservation): boolean {
@@ -356,23 +338,6 @@ function inverseIdentity(
     throw new Error("Claude inverse must bind exactly one native identity");
   }
   return identity;
-}
-
-function verifiedInverseSourcePath(
-  source: Parameters<NativeMemberRestorationPort["restoreExact"]>[0]["priorSource"],
-  expected: ProviderMemberFingerprint,
-): string {
-  if (source === null || source.memberFingerprint !== expected || !source.path.startsWith("/")) {
-    throw new Error("Claude inverse source is not the exact stable prior projection member");
-  }
-  return source.path;
-}
-
-function verifiedSourcePath(source: StableProjectionSource, expected: ProviderMemberFingerprint): string {
-  if (source.memberFingerprint !== expected || !source.path.startsWith("/")) {
-    throw new Error("Claude install source is not an exact stable projection materialization");
-  }
-  return source.path;
 }
 
 function requireProtocol(value: string): AdapterProtocol {

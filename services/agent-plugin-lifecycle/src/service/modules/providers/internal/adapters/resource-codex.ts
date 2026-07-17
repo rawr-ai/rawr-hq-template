@@ -22,7 +22,6 @@ import {
   type CodexSessionPort,
   type CodexVisiblePlugin,
 } from "./codex";
-import type { StableProjectionSourceReader } from "./native";
 import {
   NATIVE_PACKAGE_READ_LIMITS,
   inspectNativePluginPackage,
@@ -36,7 +35,6 @@ import {
   capabilitiesFromCommands,
   createSessionCache,
   desiredMarketplace,
-  joinProviderPath,
   parseSourceIdentity,
   pluginSelector,
   readMarketplaceSource,
@@ -45,16 +43,13 @@ import {
   requireRecord,
   requireString,
   sameMarketplaceObservation,
-  sameRegistration,
 } from "./resource-shared";
 
 export interface ResourceCodexProviderAdapterOptions {
   readonly resource: NativeProviderResourcePort;
   readonly executablePath: string;
-  readonly marketplaceSourceRoot: string;
   readonly contentAuthority: ContentAuthority;
   readonly marketplaceSources: ProviderMarketplaceSourceReader;
-  readonly projectionSources: StableProjectionSourceReader;
 }
 
 export function createResourceCodexProviderAdapter(
@@ -91,12 +86,9 @@ export function createResourceCodexProviderAdapter(
       .filter((entry) => entry.name === input.contentAuthority);
     if (matches.length === 0) return Object.freeze({ kind: "absent" });
     if (matches.length !== 1) throw new Error("Codex managed marketplace identity is ambiguous");
-    const source = matches[0];
-    if (source === undefined) throw new Error("Codex managed marketplace disappeared during observation");
-    const sourceSession = await session(input.marketplaceSourceRoot);
+    if (matches[0] === undefined) throw new Error("Codex managed marketplace disappeared during observation");
     const registration = await readMarketplaceSource(
-      (request) => sourceSession.readPackage(request),
-      source.root,
+      await provider.readMarketplace({ identity: input.contentAuthority, ...NATIVE_PACKAGE_READ_LIMITS }),
       "codex",
       CODEX_ADAPTER_PROTOCOL,
     );
@@ -107,7 +99,7 @@ export function createResourceCodexProviderAdapter(
     home,
     prior,
     registration,
-    sourcePath,
+    source,
   }) => {
     const provider = await session(home);
     const current = await inventoryMarketplaceRegistration({ home });
@@ -120,21 +112,15 @@ export function createResourceCodexProviderAdapter(
       await provider.removeMarketplace({ identity: input.contentAuthority });
     }
     if (registration !== null) {
-      if (sourcePath === null) throw new Error("Codex marketplace registration has no stable source");
-      const sourceSession = await session(input.marketplaceSourceRoot);
-      const verified = await readMarketplaceSource(
-        (request) => sourceSession.readPackage(request),
-        sourcePath,
-        "codex",
-        CODEX_ADAPTER_PROTOCOL,
-      );
-      if (!sameRegistration(verified, registration)) {
-        throw new Error("Codex marketplace source changed before registration");
+      if (source === null
+        || source.projectionDigest !== registration.projectionDigest
+        || source.sourceDigest !== registration.sourceDigest) {
+        throw new Error("Codex marketplace registration has no exact semantic source");
       }
       if (current.kind === "present") {
-        await provider.setMarketplaceSource({ identity: input.contentAuthority, sourcePath });
+        await provider.setMarketplaceSource({ identity: input.contentAuthority, source });
       } else {
-        await provider.addMarketplace({ sourcePath });
+        await provider.addMarketplace(source);
       }
     }
     const post = await inventoryMarketplaceRegistration({ home });
@@ -148,9 +134,8 @@ export function createResourceCodexProviderAdapter(
     const observations: CodexMarketplacePlugin[] = [];
     for (const plugin of (await listPlugins(home)).filter((entry) =>
       entry.installed && entry.marketplaceName === input.contentAuthority)) {
-      const packageRoot = installedPackageRoot(home, plugin);
-      const inspected = inspectNativePluginPackage(await provider.readPackage({
-        root: packageRoot,
+      const inspected = inspectNativePluginPackage(await provider.readPlugin({
+        selector: pluginSelectorFor(plugin),
         ...NATIVE_PACKAGE_READ_LIMITS,
       }), "codex");
       if (
@@ -227,8 +212,8 @@ export function createResourceCodexProviderAdapter(
       const hooksByPlugin = parseAppServerHooks(observation.hooks, home, plugins);
       const visible: CodexVisiblePlugin[] = [];
       for (const plugin of plugins) {
-        const packageVisibility = inspectNativePluginVisibility(await provider.readPackage({
-          root: installedPackageRoot(home, plugin),
+        const packageVisibility = inspectNativePluginVisibility(await provider.readPlugin({
+          selector: pluginSelectorFor(plugin),
           ...NATIVE_PACKAGE_READ_LIMITS,
         }));
         visible.push(Object.freeze({
@@ -253,7 +238,6 @@ export function createResourceCodexProviderAdapter(
     appServer,
     session: configured,
     marketplaceSources: input.marketplaceSources,
-    projectionSources: input.projectionSources,
   });
 }
 
@@ -295,16 +279,12 @@ function parseListPlugin(input: unknown): CodexListPlugin {
   });
 }
 
-function parseMarketplaceEntry(input: unknown): Readonly<{ name: string; root: string }> {
+function parseMarketplaceEntry(input: unknown): Readonly<{ name: string }> {
   const record = requireRecord(input, "Codex marketplace entry");
-  if (
-    typeof record.name !== "string"
-    || typeof record.root !== "string"
-    || !record.root.startsWith("/")
-  ) {
+  if (typeof record.name !== "string") {
     throw new Error("Codex marketplace entry is invalid");
   }
-  return Object.freeze({ name: record.name, root: record.root });
+  return Object.freeze({ name: record.name });
 }
 
 function parseAppServerPlugins(input: unknown): readonly CodexListPlugin[] {
@@ -413,10 +393,6 @@ function parseAppServerPluginConfiguration(input: unknown): readonly CodexConfig
       enablement: entry.enabled ? "enabled" as const : "disabled" as const,
     });
   }));
-}
-
-function installedPackageRoot(home: string, plugin: CodexListPlugin): string {
-  return joinProviderPath(home, "plugins", "cache", plugin.marketplaceName, plugin.name, plugin.version);
 }
 
 function pluginSelectorFor(plugin: CodexListPlugin): string {

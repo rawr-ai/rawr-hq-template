@@ -54,7 +54,6 @@ export type {
 export type {
   NativeMutationObservation,
   NativeMemberRestorationPort,
-  NativeMemberRestorationSource,
   NativeProviderMutationAction,
   ProviderTargetMutator,
   ProviderTargetReader,
@@ -75,6 +74,17 @@ export type {
   TargetReceiptReader,
   TargetReceiptWriter,
 } from "./internal/ports/state";
+export type {
+  FlatProjectionRecordCollection,
+  ImmutableProviderTreeCollection,
+  ImmutableProviderTreeFile,
+  ImmutableProviderTreeKey,
+  ImmutableProviderTreeObservation,
+  ImmutableProviderTreePublication,
+  ProjectionRecordKey,
+  ProjectionRecordObservation,
+  ProjectionRecordPublication,
+} from "./internal/ports/projection-storage";
 
 // The service owns native lifecycle interpretation. Runtime bindings provide
 // only the selected resource implementation and explicit acquisition inputs.
@@ -119,6 +129,7 @@ export {
   CODEX_ADAPTER_PROTOCOL,
   createResourceClaudeProviderAdapter,
   createResourceCodexProviderAdapter,
+  createPathlessProjectionStorage,
   type ClaudeNativeResourceSession,
   type ClaudeProviderAdapter,
   type CodexNativeResourceSession,
@@ -129,10 +140,11 @@ export {
   type NativeResourceJsonObservation,
   type NativeResourcePackageEntry,
   type NativeResourcePackageObservation,
-  type NativeResourcePackageReadInput,
+  type NativeResourceMarketplaceReadInput,
+  type NativeResourcePackageReadLimits,
+  type NativeResourcePluginReadInput,
   type NativeResourceSessionInput,
   type ResourceClaudeProviderAdapterOptions,
   type ResourceCodexProviderAdapterOptions,
-  type StableProjectionSource,
-  type StableProjectionSourceReader,
+  type PathlessProjectionStorage,
 } from "./internal";

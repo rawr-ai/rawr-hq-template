@@ -40,8 +40,9 @@ import {
 } from "../../../src/service/modules/providers/internal/adapters/resource-codex";
 import type {
   CodexNativeResourceSession,
+  NativeResourceMarketplaceReadInput,
   NativeResourcePackageEntry,
-  NativeResourcePackageReadInput,
+  NativeResourcePluginReadInput,
   NativeResourceSessionInput,
 } from "../../../src/service/modules/providers/internal/adapters/resource-port";
 import {
@@ -96,7 +97,6 @@ describe("native provider resource interpretation", () => {
     if (alpha === undefined) throw new Error("Native projection fixture has no alpha member");
 
     const inspected = inspectNativePluginPackage({
-      root: `/tmp/provider-home/cache/${alpha.pluginId}`,
       entries: alpha.files.map((file) => ({
         path: file.path,
         mode: file.mode,
@@ -129,7 +129,6 @@ describe("native provider resource interpretation", () => {
     });
     expect(inspectMarketplaceSource({
       observation: {
-        root: `/tmp/provider-marketplaces/${registration.projectionDigest}`,
         entries: [{ path: ".rawr/marketplace.json", mode: 0o644, bytes: metadata }],
       },
       provider,
@@ -156,7 +155,7 @@ describe("native provider resource interpretation", () => {
         : new Uint8Array(file.bytes),
     }));
 
-    expect(inspectNativePluginPackage({ root: "/tmp/provider-home/cache/alpha", entries }, "codex")
+    expect(inspectNativePluginPackage({ entries }, "codex")
       .memberFingerprint).not.toBe(alpha.memberFingerprint);
   });
 
@@ -196,7 +195,6 @@ describe("native provider resource interpretation", () => {
         command: "node hooks/session-start/handler.ts",
         timeoutSec: 10,
         statusMessage: null,
-        sourcePath: "/tmp/rawr-native-hook-provider/hooks/hooks.json",
         source: "plugin",
         pluginId: "alpha@personal-rawr-hq",
         displayOrder: 0,
@@ -215,19 +213,17 @@ async function verifyCodexHookVisibility(hooks: readonly Record<string, unknown>
   const projection = hookedCodexProjection();
   const home = "/tmp/rawr-native-hook-provider";
   const executablePath = "/opt/rawr/bin/codex";
-  const marketplaceSourceRoot = "/tmp/rawr-native-hook-marketplaces";
   const registration = marketplaceRegistration(projection);
-  const marketplaceRoot = `${marketplaceSourceRoot}/${registration.projectionDigest}`;
-  const packageEntries = new Map<string, readonly NativeResourcePackageEntry[]>();
-  packageEntries.set(marketplaceRoot, Object.freeze([Object.freeze({
+  const marketplaceEntries = Object.freeze([Object.freeze({
     path: ".rawr/marketplace.json",
     mode: 0o644,
     bytes: marketplaceMetadata(registration),
-  })]));
+  })]);
+  const packageEntries = new Map<string, readonly NativeResourcePackageEntry[]>();
   const pluginRows = projection.members.map((member) => {
     const version = `0.0.0-rawr.${member.artifactAuthority.sourceCommit.slice(0, 12)}`;
     packageEntries.set(
-      `${home}/plugins/cache/${member.providerSourceIdentity}/${member.pluginId}/${version}`,
+      `${member.pluginId}@${member.providerSourceIdentity}`,
       member.files.map((file) => Object.freeze({
         path: file.path,
         mode: file.mode,
@@ -257,8 +253,12 @@ async function verifyCodexHookVisibility(hooks: readonly Record<string, unknown>
     listMarketplaces: async () => Object.freeze({
       stdout: "",
       stderr: "",
-      json: { marketplaces: [{ name: registration.marketplaceIdentity, root: marketplaceRoot }] },
+      json: { marketplaces: [{ name: registration.marketplaceIdentity }] },
     }),
+    readMarketplace: async ({ identity }: NativeResourceMarketplaceReadInput) => {
+      if (identity !== registration.marketplaceIdentity) throw new Error(`Unexpected marketplace: ${identity}`);
+      return Object.freeze({ entries: marketplaceEntries });
+    },
     addMarketplace: async () => undefined,
     removeMarketplace: async () => undefined,
     listPlugins: async () => Object.freeze({
@@ -266,10 +266,10 @@ async function verifyCodexHookVisibility(hooks: readonly Record<string, unknown>
       stderr: "",
       json: { installed: pluginRows, available: [] },
     }),
-    readPackage: async ({ root }: NativeResourcePackageReadInput) => {
-      const entries = packageEntries.get(root);
-      if (entries === undefined) throw new Error(`Unexpected package root: ${root}`);
-      return Object.freeze({ root, entries });
+    readPlugin: async ({ selector }: NativeResourcePluginReadInput) => {
+      const entries = packageEntries.get(selector);
+      if (entries === undefined) throw new Error(`Unexpected package selector: ${selector}`);
+      return Object.freeze({ entries });
     },
     addPlugin: async () => undefined,
     removePlugin: async () => undefined,
@@ -303,14 +303,8 @@ async function verifyCodexHookVisibility(hooks: readonly Record<string, unknown>
       },
     }),
     executablePath,
-    marketplaceSourceRoot,
     contentAuthority: projection.artifactAuthority.contentAuthority,
     marketplaceSources: {
-      read: async () => {
-        throw new Error("unused");
-      },
-    },
-    projectionSources: {
       read: async () => {
         throw new Error("unused");
       },
