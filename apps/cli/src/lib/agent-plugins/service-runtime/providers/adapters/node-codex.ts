@@ -179,11 +179,11 @@ export function createNodeCodexPorts(input: Readonly<{
 
   const process: CodexProcessPort = {
     probe: async ({ home }) => {
-      const [pluginHelp, marketplaceHelp] = await Promise.all([
-        runner.run(home, ["plugin", "--help"]),
-        runner.run(home, ["plugin", "marketplace", "--help"]),
-        appServer.inspect(home),
-      ]);
+      // A fresh Codex home initializes provider-owned SQLite and system skills.
+      // Serialize the probes so independent processes cannot race that setup.
+      await appServer.inspect(home);
+      const pluginHelp = await runner.run(home, ["plugin", "--help"]);
+      const marketplaceHelp = await runner.run(home, ["plugin", "marketplace", "--help"]);
       return Object.freeze({
         adapterProtocol: CODEX_ADAPTER_PROTOCOL,
         available: codexCapabilitiesFromHelp(pluginHelp.stdout, marketplaceHelp.stdout),
