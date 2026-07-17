@@ -76,4 +76,4 @@
 
 - [x] 11.1 Commit and submit reviewed C3 source through Graphite with `--ai`, merge to canonical Template `main`, and rerun exact post-main OpenSpec, architecture, affected-graph, and disposable-home proof.
 - [x] 11.2 Synchronize the six truthful capability deltas and archive the completed C3 record only after source landing through the guarded OpenSpec path.
-- [ ] 11.3 Land the archive record through Graphite, record exact reviewed/landed commits, trees, PRs, and post-main proof, then drain every C3 local Graphite node and disposable worktree before C5 depends on C3.
+- [x] 11.3 Land the archive record through Graphite, record exact reviewed/landed commits, trees, PRs, and post-main proof, then drain every C3 local Graphite node and disposable worktree before C5 depends on C3.
