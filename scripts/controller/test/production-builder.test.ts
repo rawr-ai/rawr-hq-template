@@ -124,7 +124,12 @@ describe("production controller dependency boundary", () => {
   it("pins the external runtime closure and excludes protected Inngest bytes", async () => {
     const dependencies = await loadProductionDependencies();
     expect(dependencies.inngest).toBeUndefined();
-    expect(dependencies["@oclif/plugin-plugins"]).toBe("5.4.56");
+    expect(dependencies["@effect/platform"]).toBe("0.96.1");
+    expect(dependencies["@effect/platform-node"]).toBe("0.107.0");
+    expect(dependencies["@oclif/core"]).toBe("4.11.14");
+    expect(dependencies["@oclif/plugin-plugins"]).toBe("5.4.84");
+    expect(dependencies.effect).toBe("3.21.3");
+    expect(dependencies.typebox).toBe("1.3.6");
     expect(Object.values(dependencies).every((version) => !version.startsWith("^") && !version.startsWith("~"))).toBe(true);
   });
 

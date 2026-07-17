@@ -211,7 +211,8 @@ export async function probeControllerCleanStart(options: {
           { cwd: options.releaseRoot, env: environment },
         );
       } catch (error) {
-        throw new Error(`CONTROLLER_CLEAN_START_FAILED:${command.name}`, { cause: error });
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new Error(`CONTROLLER_CLEAN_START_FAILED:${command.name}: ${detail}`, { cause: error });
       }
       await assertNoAmbientStartup(command.name);
     }
