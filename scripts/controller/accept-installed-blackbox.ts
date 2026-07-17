@@ -1,10 +1,13 @@
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   cp,
   lstat,
   mkdir,
   mkdtemp,
+  readdir,
   readFile,
+  readlink,
   realpath,
   rename,
   rm,
@@ -14,6 +17,12 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import {
+  canonicalSerializeAgentPluginReleaseInput,
+  createAgentPluginPayload,
+  createAgentPluginReleaseInput,
+} from "@rawr/agent-plugin-lifecycle/release";
 
 import { controllerLauncherPath } from "./layout.ts";
 import { installProductionController } from "./production/builder.ts";
@@ -34,6 +43,27 @@ type ProcessResult = Readonly<{
 type LauncherRun = Readonly<{
   argv: readonly string[];
   result: ProcessResult;
+}>;
+
+type FilesystemReceipt = Readonly<{
+  path: string;
+  kind: "directory" | "file" | "missing" | "symlink";
+  mode?: number;
+  size?: number;
+  mtimeMs?: number;
+  digest?: string;
+  link?: string;
+}>;
+
+type LifecycleContentFixture = Readonly<{
+  root: string;
+  repositoryIdentity: string;
+  contentAuthority: string;
+  refName: string;
+  sourceCommit: string;
+  sourceTree: string;
+  releaseInputPath: string;
+  gitExecutable: string;
 }>;
 
 async function runCaptured(input: Readonly<{
@@ -109,6 +139,35 @@ function requireJsonErrorDetails(result: ProcessResult, label: string): Record<s
   return requireRecord(error.details, `${label} error details`);
 }
 
+function requireLifecycleResult(
+  result: ProcessResult,
+  operation: string,
+  admittedKinds: readonly string[],
+  label: string,
+): Record<string, unknown> {
+  const data = requireJsonData(result, label);
+  const value = requireRecord(data.result, `${label} result`);
+  if (data.operation !== operation || !admittedKinds.includes(String(value.kind))) {
+    throw new Error(`${label} returned an unexpected lifecycle result: ${result.stdout.trim()}`);
+  }
+  return value;
+}
+
+function requireProviderOutcome(
+  result: ProcessResult,
+  operation: string,
+  status: string,
+  label: string,
+): Record<string, unknown> {
+  const data = requireJsonData(result, label);
+  const providerResult = requireRecord(data.result, `${label} result`);
+  const value = requireRecord(providerResult.value, `${label} result value`);
+  if (data.operation !== operation || providerResult.ok !== true || value.status !== status) {
+    throw new Error(`${label} returned an unexpected provider outcome: ${result.stdout.trim()}`);
+  }
+  return value;
+}
+
 function requireOperationDisposition(
   result: ProcessResult,
   operation: string,
@@ -151,6 +210,67 @@ async function requireMissing(target: string, label: string): Promise<void> {
   throw new Error(`${label} unexpectedly exists: ${target}`);
 }
 
+async function snapshotExternalRegistry(dataRoot: string): Promise<readonly FilesystemReceipt[]> {
+  const receipts: FilesystemReceipt[] = [];
+  for (const name of ["package.json", "node_modules", "package-lock.json", "yarn.lock", "bun.lock"]) {
+    await snapshotFilesystemEntry(dataRoot, path.join(dataRoot, name), receipts);
+  }
+  return receipts.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+async function snapshotFilesystemTree(root: string): Promise<readonly FilesystemReceipt[]> {
+  const receipts: FilesystemReceipt[] = [];
+  await snapshotFilesystemEntry(root, root, receipts);
+  return receipts.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+async function snapshotLifecycleOwnedProviderHome(home: string): Promise<readonly FilesystemReceipt[]> {
+  const receipts: FilesystemReceipt[] = [];
+  for (const name of ["config.toml", "plugins", "skills", "hooks"]) {
+    await snapshotFilesystemEntry(home, path.join(home, name), receipts);
+  }
+  return receipts.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+async function snapshotFilesystemEntry(
+  root: string,
+  target: string,
+  receipts: FilesystemReceipt[],
+): Promise<void> {
+  const relative = path.relative(root, target).split(path.sep).join("/");
+  let status;
+  try {
+    status = await lstat(target);
+  } catch (error) {
+    if (isMissing(error)) {
+      receipts.push({ path: relative, kind: "missing" });
+      return;
+    }
+    throw error;
+  }
+  const common = {
+    path: relative,
+    mode: status.mode,
+    size: status.size,
+    mtimeMs: status.mtimeMs,
+  } as const;
+  if (status.isSymbolicLink()) {
+    receipts.push({ ...common, kind: "symlink", link: await readlink(target) });
+    return;
+  }
+  if (status.isDirectory()) {
+    receipts.push({ ...common, kind: "directory" });
+    const children = await readdir(target);
+    for (const child of children.sort()) {
+      await snapshotFilesystemEntry(root, path.join(target, child), receipts);
+    }
+    return;
+  }
+  if (!status.isFile()) throw new Error(`unsupported external registry entry: ${target}`);
+  const digest = createHash("sha256").update(await readFile(target)).digest("hex");
+  receipts.push({ ...common, kind: "file", digest });
+}
+
 function snapshotFilter(workspaceRoot: string): (source: string) => boolean {
   return (source) => {
     const relative = path.relative(workspaceRoot, source).split(path.sep).join("/");
@@ -189,6 +309,159 @@ async function initializeSnapshotRepository(sourceRoot: string): Promise<void> {
     const result = await runCaptured({ executable: "git", args, cwd: sourceRoot });
     requireSuccess(result, label);
   }
+}
+
+function requireCreated<T>(
+  result: Readonly<{ ok: true; value: T }> | Readonly<{ ok: false; issues: readonly unknown[] }>,
+  label: string,
+): T {
+  if (result.ok) return result.value;
+  throw new Error(`${label} fixture construction failed: ${JSON.stringify(result.issues)}`);
+}
+
+async function writeLifecycleContentFixture(acceptanceRoot: string): Promise<LifecycleContentFixture> {
+  const root = path.join(acceptanceRoot, "lifecycle-content");
+  const releaseInputPath = ".rawr/release-input.json";
+  const skillRelativePath = "skills/example/SKILL.md";
+  const pluginId = "fixture-plugin";
+  const repositoryIdentity = "git:fixture-agent-plugins";
+  const contentAuthority = "fixture-authority";
+  const payloadBytes = new TextEncoder().encode("# Fixture\n");
+  const payload = requireCreated(createAgentPluginPayload([{
+    path: skillRelativePath,
+    mode: 0o644,
+    bytes: payloadBytes,
+  }]), "lifecycle payload");
+  const releaseInput = requireCreated(createAgentPluginReleaseInput({
+    schemaVersion: 1,
+    contentAuthority,
+    members: [{
+      kind: "agent-plugin",
+      pluginId,
+      skillInventory: [{ identity: "example", manifestPath: skillRelativePath }],
+      payload: {
+        protocolVersion: 1,
+        manifest: payload.manifest,
+        payloadDigest: payload.payloadDigest,
+      },
+      vendor: [],
+      curation: [],
+    }],
+    ownershipClaims: [{ kind: "skill", identity: "example", ownerPluginId: pluginId }],
+    locks: [],
+    qualityPolicies: [],
+  }), "lifecycle release input");
+  const skillPath = path.join(root, "plugins", "agent", pluginId, skillRelativePath);
+  await Promise.all([
+    mkdir(path.dirname(skillPath), { recursive: true }),
+    mkdir(path.join(root, ".rawr"), { recursive: true }),
+  ]);
+  await Promise.all([
+    writeFile(skillPath, payloadBytes),
+    writeFile(
+      path.join(root, releaseInputPath),
+      canonicalSerializeAgentPluginReleaseInput(releaseInput),
+    ),
+  ]);
+  const gitExecutable = await realpath("/usr/bin/git");
+  for (const [args, label] of [
+    [["init", "--quiet", "--initial-branch=main"], "lifecycle git init"],
+    [["remote", "add", "origin", repositoryIdentity], "lifecycle git remote"],
+    [["add", "--all"], "lifecycle git add"],
+    [[
+      "-c",
+      "user.name=RAWR Lifecycle Acceptance",
+      "-c",
+      "user.email=lifecycle-acceptance@invalid.local",
+      "commit",
+      "--quiet",
+      "-m",
+      "test(lifecycle): create installed controller fixture",
+    ], "lifecycle git commit"],
+  ] as const) {
+    requireSuccess(await runCaptured({ executable: gitExecutable, args, cwd: root }), label);
+  }
+  const readObject = async (revision: string, label: string): Promise<string> => {
+    const result = await runCaptured({
+      executable: gitExecutable,
+      args: ["rev-parse", "--verify", revision],
+      cwd: root,
+    });
+    requireSuccess(result, label);
+    return result.stdout.trim();
+  };
+  return Object.freeze({
+    root,
+    repositoryIdentity,
+    contentAuthority,
+    refName: "refs/heads/main",
+    sourceCommit: await readObject("HEAD^{commit}", "lifecycle commit identity"),
+    sourceTree: await readObject("HEAD^{tree}", "lifecycle tree identity"),
+    releaseInputPath,
+    gitExecutable,
+  });
+}
+
+async function requireInstalledLifecycleSchemaRealm(input: Readonly<{
+  releaseRoot: string;
+  environment: NodeJS.ProcessEnv;
+  fixture: LifecycleContentFixture;
+}>): Promise<void> {
+  const appRoot = path.join(input.releaseRoot, "app");
+  const typeboxManifest = requireRecord(
+    JSON.parse(await readFile(path.join(appRoot, "node_modules", "typebox", "package.json"), "utf8")) as unknown,
+    "installed TypeBox manifest",
+  );
+  if (typeboxManifest.version !== "1.3.6") {
+    throw new Error(`installed lifecycle schema realm resolved TypeBox ${String(typeboxManifest.version)}`);
+  }
+  const validInput = {
+    contentWorkspace: {
+      locator: input.fixture.root,
+      repositoryIdentity: input.fixture.repositoryIdentity,
+      contentAuthority: input.fixture.contentAuthority,
+      remoteName: "origin",
+      remoteUrl: input.fixture.repositoryIdentity,
+      refName: input.fixture.refName,
+      sourceCommit: input.fixture.sourceCommit,
+      sourceTree: input.fixture.sourceTree,
+      releaseInputPath: input.fixture.releaseInputPath,
+      pluginRoot: "plugins/agent",
+    },
+    mode: { kind: "complete-set" },
+  } as const;
+  const invalidInput = {
+    ...validInput,
+    contentWorkspace: {
+      ...validInput.contentWorkspace,
+      releaseInputPath: ".rawr/../release-input.json",
+    },
+  } as const;
+  const schemaProbe = await runCaptured({
+    executable: path.join(input.releaseRoot, "runtime", "bun"),
+    args: [
+      "--config=/dev/null",
+      "--no-env-file",
+      "--no-install",
+      "-e",
+      [
+        'import { Value } from "./node_modules/typebox/build/value/index.mjs";',
+        'import { CheckInputSchema } from "./node_modules/@rawr/agent-plugin-lifecycle/dist/service/modules/releases/schemas.js";',
+        `const valid = ${JSON.stringify(validInput)};`,
+        `const invalid = ${JSON.stringify(invalidInput)};`,
+        'if (!Value.Check(CheckInputSchema, valid)) throw new Error("installed schema rejected the valid fixture");',
+        'if (Value.Check(CheckInputSchema, invalid)) throw new Error("installed schema dropped Refine semantics");',
+        'process.stdout.write("installed-schema-refine-ok\\n");',
+      ].join("\n"),
+    ],
+    cwd: appRoot,
+    env: scrubbedBunEnvironment({
+      ...input.environment,
+      BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0",
+    }),
+  });
+  requireSuccess(schemaProbe, "installed lifecycle schema realm");
+  requireIncludes(schemaProbe.stdout, "installed-schema-refine-ok", "installed lifecycle schema realm");
 }
 
 async function removeAcceptanceRoot(root: string): Promise<void> {
@@ -454,6 +727,7 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
   if (sourceStatus.stdout.length !== 0) {
     throw new Error(`controller acceptance snapshot is dirty:\n${sourceStatus.stdout}`);
   }
+  const lifecycleContent = await writeLifecycleContentFixture(acceptanceRoot);
   const installed = await installProductionController({
     workspaceRoot: sourceRoot,
     dataRoot,
@@ -485,6 +759,11 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
   process.chdir(acceptanceRoot);
   await removeSourceSnapshot(acceptanceRoot, sourceRoot);
   await requireMissing(sourceRoot, "Template source snapshot");
+  await requireInstalledLifecycleSchemaRealm({
+    releaseRoot: installed.release.releaseRoot,
+    environment: hostile.env,
+    fixture: lifecycleContent,
+  });
 
   const runs: LauncherRun[] = [];
   const invoke = async (argv: readonly string[], label: string): Promise<ProcessResult> => {
@@ -623,6 +902,308 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
   );
   requireSuccess(activeInspection, "installed rawr plugins inspect active extension");
   requireInspection(activeInspection, "active", "active plugin inspection");
+
+  const externalRegistryBeforeLifecycle = await snapshotExternalRegistry(dataRoot);
+  const lifecycleCommandIds = officialCommandIds.filter((id) => id.startsWith("agent:plugins:"));
+  if (lifecycleCommandIds.length === 0) {
+    throw new Error("production controller manifest contains no qualified agent plugin commands");
+  }
+  for (const commandId of lifecycleCommandIds) {
+    const commandHelp = await invoke(
+      [...commandId.split(":"), "--help"],
+      `qualified lifecycle ${commandId}`,
+    );
+    requireSuccess(commandHelp, `installed qualified lifecycle command ${commandId}`);
+  }
+  const vendorStatusArgs = [
+    "agent",
+    "plugins",
+    "vendors",
+    "status",
+    "--content-workspace",
+    lifecycleContent.root,
+    "--repository-identity",
+    lifecycleContent.repositoryIdentity,
+    "--content-authority",
+    lifecycleContent.contentAuthority,
+    "--ref",
+    lifecycleContent.refName,
+    "--source-commit",
+    lifecycleContent.sourceCommit,
+    "--source-tree",
+    lifecycleContent.sourceTree,
+    "--release-input",
+    lifecycleContent.releaseInputPath,
+    "--git-executable",
+    lifecycleContent.gitExecutable,
+    "--json",
+  ] as const;
+  const lifecycleContentBefore = await snapshotFilesystemTree(lifecycleContent.root);
+  const vendorStatus = await invoke(vendorStatusArgs, "installed vendor status");
+  requireSuccess(vendorStatus, "installed rawr agent plugins vendors status");
+  const vendorStatusData = requireJsonData(vendorStatus, "installed vendor status");
+  const vendorStatusResult = requireRecord(vendorStatusData.result, "installed vendor status result");
+  if (
+    vendorStatusData.operation !== "vendors.status"
+    || vendorStatusResult.kind !== "VendorStatus"
+    || !Array.isArray(vendorStatusResult.sources)
+    || vendorStatusResult.sources.length !== 0
+  ) {
+    throw new Error(`installed vendor status returned the wrong result: ${vendorStatus.stdout.trim()}`);
+  }
+  const repeatedVendorStatus = await invoke(vendorStatusArgs, "repeated installed vendor status");
+  requireSuccess(repeatedVendorStatus, "repeated installed rawr agent plugins vendors status");
+  if (repeatedVendorStatus.stdout !== vendorStatus.stdout) {
+    throw new Error("repeated installed vendor status changed its observable result");
+  }
+  const lifecycleContentAfter = await snapshotFilesystemTree(lifecycleContent.root);
+  if (JSON.stringify(lifecycleContentAfter) !== JSON.stringify(lifecycleContentBefore)) {
+    throw new Error("repeated installed vendor status changed the content workspace");
+  }
+
+  const buildArgs = [
+    "agent",
+    "plugins",
+    "build",
+    "--content-workspace",
+    lifecycleContent.root,
+    "--repository-identity",
+    lifecycleContent.repositoryIdentity,
+    "--content-authority",
+    lifecycleContent.contentAuthority,
+    "--remote-name",
+    "origin",
+    "--remote-url",
+    lifecycleContent.repositoryIdentity,
+    "--ref",
+    lifecycleContent.refName,
+    "--source-commit",
+    lifecycleContent.sourceCommit,
+    "--source-tree",
+    lifecycleContent.sourceTree,
+    "--release-input",
+    lifecycleContent.releaseInputPath,
+    "--plugin-root",
+    "plugins/agent",
+    "--plugin",
+    "fixture-plugin",
+    "--git-executable",
+    lifecycleContent.gitExecutable,
+    "--json",
+  ] as const;
+  const built = await invoke(buildArgs, "installed lifecycle build");
+  requireSuccess(built, "installed rawr agent plugins build");
+  const builtResult = requireLifecycleResult(
+    built,
+    "releases.build",
+    ["Published"],
+    "installed lifecycle build",
+  );
+  const builtRef = requireRecord(builtResult.ref, "installed lifecycle build ref");
+  if (
+    builtRef.kind !== "release"
+    || typeof builtRef.releaseDigest !== "string"
+    || typeof builtRef.artifactDigest !== "string"
+  ) {
+    throw new Error(`installed lifecycle build returned an invalid artifact ref: ${built.stdout.trim()}`);
+  }
+  const releaseHandle = `release:${builtRef.releaseDigest}:${builtRef.artifactDigest}`;
+  if (JSON.stringify(await snapshotFilesystemTree(lifecycleContent.root)) !== JSON.stringify(lifecycleContentBefore)) {
+    throw new Error("installed lifecycle build changed the content workspace");
+  }
+  const controllerAfterBuild = await snapshotFilesystemTree(dataRoot);
+  const repeatedBuild = await invoke(buildArgs, "repeated installed lifecycle build");
+  requireSuccess(repeatedBuild, "repeated installed rawr agent plugins build");
+  requireLifecycleResult(
+    repeatedBuild,
+    "releases.build",
+    ["ReadOnlyConverged"],
+    "repeated installed lifecycle build",
+  );
+  if (
+    JSON.stringify(await snapshotFilesystemTree(dataRoot)) !== JSON.stringify(controllerAfterBuild)
+    || JSON.stringify(await snapshotFilesystemTree(lifecycleContent.root)) !== JSON.stringify(lifecycleContentBefore)
+  ) {
+    throw new Error("repeated installed lifecycle build changed controller data or content bytes");
+  }
+
+  const codexExecutable = process.env.RAWR_CODEX_EXECUTABLE;
+  if (codexExecutable !== undefined) {
+    const canonicalCodexExecutable = await realpath(codexExecutable);
+    if (canonicalCodexExecutable !== codexExecutable) {
+      throw new Error("installed provider acceptance requires a canonical Codex executable path");
+    }
+    const providerHome = path.join(acceptanceRoot, "codex-home");
+    await mkdir(providerHome);
+    const providerHomeBefore = await snapshotLifecycleOwnedProviderHome(providerHome);
+    const providerTestArgs = [
+      "agent",
+      "plugins",
+      "test",
+      "--release",
+      releaseHandle,
+      "--evaluation-profile",
+      "provider-smoke@v1",
+      "--target",
+      `codex=${providerHome}`,
+      "--provider-executable",
+      `codex=${canonicalCodexExecutable}`,
+      "--json",
+    ] as const;
+    const testedProvider = await invoke(providerTestArgs, "installed lifecycle provider test");
+    requireSuccess(testedProvider, "installed rawr agent plugins test");
+    requireProviderOutcome(
+      testedProvider,
+      "providers.targetedTest",
+      "Mutated",
+      "installed lifecycle provider test",
+    );
+    const providerHomeAfterFirst = await snapshotLifecycleOwnedProviderHome(providerHome);
+    const controllerAfterProvider = await snapshotFilesystemTree(dataRoot);
+    const repeatedProvider = await invoke(
+      providerTestArgs,
+      "repeated installed lifecycle provider test",
+    );
+    requireSuccess(repeatedProvider, "repeated installed rawr agent plugins test");
+    requireProviderOutcome(
+      repeatedProvider,
+      "providers.targetedTest",
+      "ReadOnlyConverged",
+      "repeated installed lifecycle provider test",
+    );
+    if (
+      JSON.stringify(await snapshotLifecycleOwnedProviderHome(providerHome))
+        !== JSON.stringify(providerHomeAfterFirst)
+      || JSON.stringify(await snapshotFilesystemTree(dataRoot))
+        !== JSON.stringify(controllerAfterProvider)
+    ) {
+      throw new Error("repeated installed provider test changed lifecycle-owned provider or controller state");
+    }
+
+    const providerUndo = await invoke(
+      [
+        "agent",
+        "plugins",
+        "undo",
+        "--provider-executable",
+        `codex=${canonicalCodexExecutable}`,
+        "--json",
+      ],
+      "installed provider undo",
+    );
+    requireSuccess(providerUndo, "installed rawr agent plugins undo after provider test");
+    const providerUndoData = requireJsonData(providerUndo, "installed provider undo");
+    const providerUndoResult = requireRecord(providerUndoData.result, "installed provider undo result");
+    if (
+      providerUndoData.operation !== "controller.undo"
+      || providerUndoResult.kind !== "RestoredAndCleared"
+      || JSON.stringify(await snapshotLifecycleOwnedProviderHome(providerHome))
+        !== JSON.stringify(providerHomeBefore)
+    ) {
+      throw new Error(`installed provider undo did not restore its disposable home: ${providerUndo.stdout.trim()}`);
+    }
+  }
+
+  const packageRoot = path.join(acceptanceRoot, "package-output");
+  const packageOutput = path.join(packageRoot, "fixture.cowork.zip");
+  await mkdir(packageRoot);
+  const packageArgs = [
+    "agent",
+    "plugins",
+    "package",
+    "--artifact",
+    releaseHandle,
+    "--format",
+    "cowork-v1",
+    "--output",
+    packageOutput,
+    "--json",
+  ] as const;
+  const packaged = await invoke(packageArgs, "installed lifecycle package");
+  requireSuccess(packaged, "installed rawr agent plugins package");
+  requireLifecycleResult(
+    packaged,
+    "packaging.package",
+    ["OutputReplacedVerified"],
+    "installed lifecycle package",
+  );
+  const packageAfterFirst = await snapshotFilesystemTree(packageRoot);
+  const repeatedPackage = await invoke(packageArgs, "repeated installed lifecycle package");
+  requireSuccess(repeatedPackage, "repeated installed rawr agent plugins package");
+  requireLifecycleResult(
+    repeatedPackage,
+    "packaging.package",
+    ["ReadOnlyConverged"],
+    "repeated installed lifecycle package",
+  );
+  if (JSON.stringify(await snapshotFilesystemTree(packageRoot)) !== JSON.stringify(packageAfterFirst)) {
+    throw new Error("repeated installed lifecycle package changed its output");
+  }
+
+  const exportRoot = path.join(acceptanceRoot, "export-destination");
+  await mkdir(exportRoot);
+  const exportArgs = [
+    "agent",
+    "plugins",
+    "export",
+    "--artifact",
+    releaseHandle,
+    "--mode",
+    "targeted-release",
+    "--layout",
+    "codex-v1",
+    "--destination",
+    exportRoot,
+    "--overwrite",
+    "managed-only",
+    "--json",
+  ] as const;
+  const exported = await invoke(exportArgs, "installed lifecycle export");
+  requireSuccess(exported, "installed rawr agent plugins export");
+  requireLifecycleResult(
+    exported,
+    "exports.apply",
+    ["MutatedSettled"],
+    "installed lifecycle export",
+  );
+  const exportAfterFirst = await snapshotFilesystemTree(exportRoot);
+  const controllerAfterExport = await snapshotFilesystemTree(dataRoot);
+  const repeatedExport = await invoke(exportArgs, "repeated installed lifecycle export");
+  requireSuccess(repeatedExport, "repeated installed rawr agent plugins export");
+  requireLifecycleResult(
+    repeatedExport,
+    "exports.apply",
+    ["ReadOnlyConverged"],
+    "repeated installed lifecycle export",
+  );
+  if (
+    JSON.stringify(await snapshotFilesystemTree(exportRoot)) !== JSON.stringify(exportAfterFirst)
+    || JSON.stringify(await snapshotFilesystemTree(dataRoot)) !== JSON.stringify(controllerAfterExport)
+  ) {
+    throw new Error("repeated installed lifecycle export changed managed state");
+  }
+  const invalidLifecycle = await invoke(
+    [
+      "agent",
+      "plugins",
+      "package",
+      "--artifact",
+      "not-an-artifact",
+      "--format",
+      "cowork-v1",
+      "--output",
+      path.join(hostile.cwd, "invalid.cowork.zip"),
+      "--json",
+    ],
+    "invalid qualified lifecycle input",
+  );
+  requireFailure(invalidLifecycle, "invalid qualified lifecycle input");
+  const retiredAggregate = await invoke(["agent", "sync"], "retired agent sync aggregate");
+  requireFailure(retiredAggregate, "retired agent sync aggregate");
+  const externalRegistryAfterLifecycle = await snapshotExternalRegistry(dataRoot);
+  if (JSON.stringify(externalRegistryAfterLifecycle) !== JSON.stringify(externalRegistryBeforeLifecycle)) {
+    throw new Error("qualified agent plugin commands changed external Oclif registry state");
+  }
 
   const hello = await invoke(["hello"], "external hello");
   requireSuccess(hello, "installed rawr hello");
@@ -778,6 +1359,16 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
       startup: ["--version", "--help", "routine snapshot", "doctor global", "plugins list", "plugins reset"],
       manifestCommandCount: officialCommandIds.length,
       manifestCommandIds: officialCommandIds,
+      qualifiedLifecycleCommandCount: lifecycleCommandIds.length,
+      externalRegistryUnchanged: true,
+    },
+    installedLifecycle: {
+      schemaRealm: "typebox@1.3.6-refine-enforced",
+      vendorsStatus: "repeated-read-only-converged",
+      contentWorkspaceUnchanged: true,
+      build: "published-then-read-only-converged",
+      package: "published-then-read-only-converged",
+      export: "mutated-settled-then-read-only-converged",
     },
     externalLifecycle: [
       "empty-reset",
