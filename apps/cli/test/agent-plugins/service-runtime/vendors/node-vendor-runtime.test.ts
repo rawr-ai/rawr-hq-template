@@ -22,7 +22,7 @@ import {
   type VendorContentWorkspaceRef,
   type VendorSourceIdentity,
 } from "@rawr/agent-plugin-lifecycle/ports/vendors";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createProductionLifecycleClient } from "../../../../src/lib/agent-plugins/service-runtime/client";
 import {
@@ -59,6 +59,7 @@ describe("node vendor lifecycle runtime", () => {
   let fixture: OwnedFixtureRoot | undefined;
 
   afterEach(async () => {
+    vi.unstubAllEnvs();
     if (fixture !== undefined) await removeOwnedFixtureRoot(fixture);
     fixture = undefined;
   });
@@ -68,6 +69,7 @@ describe("node vendor lifecycle runtime", () => {
     const upstream = await createUpstreamRepository(fixture.path);
     const content = await createContentRepository(fixture.path, upstream.initialIdentity);
     const client = await createProductionLifecycleClient("vendors.status", lifecycleBinding());
+    await isolatePrivateContentWorkspaceRoots(fixture.path);
     const recordPaths = [
       "vendor/sources/example.json",
       "vendor/provenance/example.json",
@@ -106,6 +108,7 @@ describe("node vendor lifecycle runtime", () => {
       contentWorkspace: content.workspace,
       sourceIds: Object.freeze(["example"]),
     });
+    await isolatePrivateContentWorkspaceRoots(fixture.path);
     const changedPaths = [
       ".rawr/release-input.json",
       "plugins/example/vendor",
@@ -349,6 +352,15 @@ async function privateContentWorkspaceRoots(): Promise<readonly string[]> {
     if ((await stat(candidate)).isDirectory()) roots.push(candidate);
   }
   return roots;
+}
+
+async function isolatePrivateContentWorkspaceRoots(ownerRoot: string): Promise<void> {
+  const privateTemporaryRoot = path.join(ownerRoot, "private-tmp");
+  await mkdir(privateTemporaryRoot, { mode: 0o700 });
+  vi.stubEnv("TMPDIR", privateTemporaryRoot);
+  if (path.resolve(tmpdir()) !== privateTemporaryRoot) {
+    throw new Error("test runtime did not select its private temporary root");
+  }
 }
 
 function lifecycleBinding() {
