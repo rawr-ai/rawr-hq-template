@@ -14,6 +14,9 @@ import {
   createEmbeddedPlaceholderLoggerAdapter,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import {
+  makeNodeContentWorkspacePort,
+} from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import {
   bindService,
   type ProcessView,
   type RoleView,
@@ -40,7 +43,6 @@ import {
   createFilesystemMechanicalEvidenceReader,
   createGitContentWorkspaceSnapshotReader,
 } from "./releases";
-import { createNodeVendorLifecycleRuntime } from "./vendors/repository";
 import { createReadOnlyGitAdapter } from "./governance/adapters/git";
 import { createHostedApprovalAdapter } from "./governance/adapters/hosted";
 import { createNodeGithubHostedGovernanceBackend } from "./governance/adapters/node-github";
@@ -98,9 +100,12 @@ export const createProductionLifecycleClient: LifecycleClientFactory = async (
       undoWriter: createLazyExportUndoWriter(layout.capsuleRoot),
     });
   } else if (operation === "vendors.status" || operation === "vendors.update") {
-    deps.vendors = await createNodeVendorLifecycleRuntime({
-      gitExecutable: requiredGitExecutable(binding, operation),
-    });
+    deps.vendors = {
+      contentWorkspace: makeNodeContentWorkspacePort({
+        gitExecutable: requiredGitExecutable(binding, operation),
+      }),
+      clock: { now: () => new Date() },
+    };
   } else if (operation === "governance.attestPromotion") {
     deps.governance = await productionGovernanceRuntime(binding, operation, layout.artifactStoreRoot);
   } else if (operation.startsWith("providers.")) {

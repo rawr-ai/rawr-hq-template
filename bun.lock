@@ -53,6 +53,7 @@
         "@rawr/plugin-devops": "workspace:*",
         "@rawr/plugin-hyperresearch": "workspace:*",
         "@rawr/plugin-session-tools": "workspace:*",
+        "@rawr/resource-content-workspace": "workspace:*",
         "@rawr/resource-controller-authority": "workspace:*",
         "tar": "7.5.7",
         "yazl": "^3.3.1",

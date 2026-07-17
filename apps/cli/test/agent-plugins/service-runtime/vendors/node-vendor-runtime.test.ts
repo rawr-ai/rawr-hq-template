@@ -4,8 +4,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
+import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
 import {
   canonicalSerializeAgentPluginReleaseInput,
+  contentDigest,
   createAgentPluginPayload,
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
@@ -17,14 +19,12 @@ import {
   VENDOR_LOCK_PROTOCOL,
   VENDOR_PROVENANCE_PROTOCOL,
   VENDOR_SOURCE_PROTOCOL,
-  type VendorAuthoringPlan,
   type VendorContentWorkspaceRef,
   type VendorSourceIdentity,
 } from "@rawr/agent-plugin-lifecycle/ports/vendors";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { canonicalJsonBytes, sha256ContentDigest } from "../../../../src/lib/agent-plugins/service-runtime/vendors/canonical";
-import { createNodeVendorLifecycleRuntime } from "../../../../src/lib/agent-plugins/service-runtime/vendors/repository";
+import { createProductionLifecycleClient } from "../../../../src/lib/agent-plugins/service-runtime/client";
 import {
   createOwnedFixtureRoot,
   removeOwnedFixtureRoot,
@@ -33,7 +33,27 @@ import {
 
 const execFileAsync = promisify(execFile);
 const GIT = "/usr/bin/git";
-const TEMP_PREFIX = "rawr-vendor-git-";
+const TEMP_PREFIX = "rawr-content-workspace-git-";
+
+bindVerifiedControllerReentryAuthority({
+  runtimePath: "/usr/bin/false",
+  entryPath: "/tmp/rawr-vendor-controller/entry.ts",
+  releaseRoot: "/tmp/rawr-vendor-controller",
+  dataRoot: "/tmp/rawr-vendor-controller/data",
+  controllerDigest: "0".repeat(64),
+  operatorCwd: "/tmp",
+  operatorHome: undefined,
+  operatorConfigHome: undefined,
+});
+
+const invocation = {
+  context: {
+    invocation: {
+      traceId: "trace-node-vendor-runtime",
+      commandId: "command-node-vendor-runtime",
+    },
+  },
+} as const;
 
 describe("node vendor lifecycle runtime", () => {
   let fixture: OwnedFixtureRoot | undefined;
@@ -43,176 +63,86 @@ describe("node vendor lifecycle runtime", () => {
     fixture = undefined;
   });
 
-  it("observes metadata, prepares self-contained bytes, and leaves no private Git repository", async () => {
-    fixture = await createOwnedFixtureRoot();
-    const upstream = await createUpstreamRepository(fixture.path);
-    const before = await privateVendorRoots();
-    const runtime = await createNodeVendorLifecycleRuntime({
-      gitExecutable: GIT,
-      now: () => new Date("2026-07-17T18:20:30.123Z"),
-    });
-
-    const observed = await runtime.upstream.observe({
-      sourceId: "example",
-      repositoryIdentity: upstream.root,
-      refName: "refs/heads/main",
-      sourcePath: "source",
-      admitted: upstream.initialIdentity,
-    });
-
-    expect(observed).toMatchObject({
-      kind: "Observed",
-      ancestry: "same",
-      observedAt: "2026-07-17T18:20:30.123Z",
-    });
-    if (observed.kind !== "Observed") throw new Error(`unexpected upstream observation: ${observed.kind}`);
-
-    const prepared = await runtime.upstream.prepare({
-      sourceId: "example",
-      repositoryIdentity: upstream.root,
-      refName: "refs/heads/main",
-      sourcePath: "source",
-      admitted: upstream.initialIdentity,
-      expected: observed.identity,
-      expectedEntries: observed.entries,
-    });
-
-    expect(prepared).toMatchObject({ kind: "Prepared", payload: { identity: observed.identity } });
-    if (prepared.kind !== "Prepared") throw new Error(`unexpected upstream preparation: ${prepared.kind}`);
-    expect(new TextDecoder().decode(prepared.payload.entries[0]?.bytes)).toBe("initial\n");
-    expect(await privateVendorRoots()).toEqual(before);
-  });
-
-  it("authors only the planned content records, payload, and binding digests", async () => {
+  it("routes corrupt governed records through service refusal without repository effects", async () => {
     fixture = await createOwnedFixtureRoot();
     const upstream = await createUpstreamRepository(fixture.path);
     const content = await createContentRepository(fixture.path, upstream.initialIdentity);
-    const runtime = await createNodeVendorLifecycleRuntime({
-      gitExecutable: GIT,
-      now: () => new Date("2026-07-17T18:20:30.123Z"),
-    });
-    const initial = await runtime.repository.observe(content.workspace);
-    if (initial.kind !== "Observed") throw new Error(`unexpected repository observation: ${JSON.stringify(initial)}`);
+    const client = await createProductionLifecycleClient("vendors.status", lifecycleBinding());
+    const recordPaths = [
+      "vendor/sources/example.json",
+      "vendor/provenance/example.json",
+      "vendor/locks/example.json",
+    ] as const;
 
+    for (const relativePath of recordPaths) {
+      const recordPath = path.join(content.root, relativePath);
+      const original = await readFile(recordPath);
+      try {
+        await writeFile(recordPath, "{\"schemaVersion\":999}\n");
+        const before = await repositoryState(content.root);
+
+        const result = await client.vendors.status({ contentWorkspace: content.workspace }, invocation);
+
+        expect.soft(result, relativePath).toMatchObject({
+          kind: "Rejected",
+          issues: [{ code: "PayloadMismatch" }],
+        });
+        expect.soft(await repositoryState(content.root), relativePath).toEqual(before);
+      } finally {
+        await writeFile(recordPath, original);
+      }
+    }
+  });
+
+  it("authors service-owned records once and stutters without bytes, metadata, or temp effects", async () => {
+    fixture = await createOwnedFixtureRoot();
+    const upstream = await createUpstreamRepository(fixture.path);
+    const content = await createContentRepository(fixture.path, upstream.initialIdentity);
     await writeFile(path.join(upstream.root, "source", "payload.txt"), "updated\n");
     await git(upstream.root, ["add", "--all"]);
     await git(upstream.root, ["commit", "-m", "update"]);
-    const upstreamObservation = await runtime.upstream.observe({
-      sourceId: "example",
-      repositoryIdentity: upstream.root,
-      refName: "refs/heads/main",
-      sourcePath: "source",
-      admitted: upstream.initialIdentity,
+    const client = await createProductionLifecycleClient("vendors.update", lifecycleBinding());
+    const request = Object.freeze({
+      contentWorkspace: content.workspace,
+      sourceIds: Object.freeze(["example"]),
     });
-    expect(upstreamObservation).toMatchObject({ kind: "Observed", ancestry: "fast-forward" });
-    if (upstreamObservation.kind !== "Observed") throw new Error(`unexpected upstream observation: ${upstreamObservation.kind}`);
-    const prepared = await runtime.upstream.prepare({
-      sourceId: "example",
-      repositoryIdentity: upstream.root,
-      refName: "refs/heads/main",
-      sourcePath: "source",
-      admitted: upstream.initialIdentity,
-      expected: upstreamObservation.identity,
-      expectedEntries: upstreamObservation.entries,
-    });
-    if (prepared.kind !== "Prepared") throw new Error(`unexpected upstream preparation: ${prepared.kind}`);
-
-    const source = initial.observation.sources[0]!;
-    const nextDeclaration = Object.freeze({ ...source.declaration, curationRevision: 2 });
-    const nextProvenance = Object.freeze({
-      ...source.provenance!,
-      admitted: upstreamObservation.identity,
-      importedPayloadDigest: upstreamObservation.identity.payloadDigest,
-      curationRevision: 2,
-      observedLatest: upstreamObservation.identity,
-      observedAt: upstreamObservation.observedAt,
-      disposition: "review-required" as const,
-    });
-    const nextLock = Object.freeze({ ...source.lock!, admitted: upstreamObservation.identity });
-    const changedPaths = Object.freeze([
+    const changedPaths = [
       ".rawr/release-input.json",
       "plugins/example/vendor",
       "vendor/locks/example.json",
       "vendor/provenance/example.json",
       "vendor/sources/example.json",
-    ]);
-    const plan: VendorAuthoringPlan = Object.freeze({
-      contentWorkspace: content.workspace,
-      expectedSnapshotDigest: initial.observation.snapshotDigest,
-      releaseInputPath: content.workspace.releaseInputPath,
-      sourceChanges: Object.freeze([Object.freeze({
-        sourceId: "example",
-        prior: upstream.initialIdentity,
-        next: upstreamObservation.identity,
-        memberPluginId: "example",
-        declarationBinding: source.declarationBinding,
-        provenanceBinding: source.provenanceBinding!,
-        lockBinding: source.lockBinding!,
-        priorRecords: Object.freeze({
-          declaration: source.declaration,
-          provenance: source.provenance!,
-          lock: source.lock!,
-        }),
-        nextRecords: Object.freeze({
-          declaration: nextDeclaration,
-          provenance: nextProvenance,
-          lock: nextLock,
-        }),
-        payload: prepared.payload,
-        declarationPath: source.declarationBinding.id,
-        destinationPath: source.declaration.destinationPath,
-        provenancePath: source.provenanceBinding!.id,
-        lockPath: source.lockBinding!.id,
-      })]),
-      changedPaths,
-    });
+    ];
 
-    const captured = await runtime.authoring.capture(plan);
-    expect(captured.kind).toBe("Captured");
-    if (captured.kind !== "Captured") throw new Error(`unexpected preimage capture: ${captured.kind}`);
-
-    const releaseInputPath = path.join(content.root, ".rawr/release-input.json");
-    const payloadPath = path.join(content.root, "plugins/example/vendor/payload.txt");
-    const declarationPath = path.join(content.root, "vendor/sources/example.json");
-    const provenancePath = path.join(content.root, "vendor/provenance/example.json");
-    const lockPath = path.join(content.root, "vendor/locks/example.json");
-    const beforeConcurrentEdit = await Promise.all([
-      readFile(releaseInputPath),
-      readFile(payloadPath),
-      readFile(provenancePath),
-      readFile(lockPath),
-    ]);
-    await writeFile(declarationPath, "concurrent edit\n");
-    expect(await runtime.authoring.apply(plan, captured.preimageHandle)).toMatchObject({
-      kind: "FailedBeforeMutation",
-      detail: expect.stringContaining("changed after preimage capture"),
-    });
-    expect(await readFile(declarationPath, "utf8")).toBe("concurrent edit\n");
-    expect(await Promise.all([
-      readFile(releaseInputPath),
-      readFile(payloadPath),
-      readFile(provenancePath),
-      readFile(lockPath),
-    ])).toEqual(beforeConcurrentEdit);
-
-    await writeFile(declarationPath, canonicalJsonBytes(source.declaration));
-    expect(await runtime.authoring.apply(plan, captured.preimageHandle)).toEqual({
-      kind: "Applied",
+    expect(await client.vendors.update(request, invocation)).toEqual({
+      kind: "AuthoredReviewableChanges",
+      sourceIds: ["example"],
       changedPaths,
     });
 
     expect(await readFile(path.join(content.root, "plugins/example/vendor/payload.txt"), "utf8")).toBe("updated\n");
-    expect(new Uint8Array(await readFile(path.join(content.root, "vendor/sources/example.json")))).toEqual(canonicalJsonBytes(nextDeclaration));
-    expect(new Uint8Array(await readFile(path.join(content.root, "vendor/provenance/example.json")))).toEqual(canonicalJsonBytes(nextProvenance));
-    expect(new Uint8Array(await readFile(path.join(content.root, "vendor/locks/example.json")))).toEqual(canonicalJsonBytes(nextLock));
     const release = decodeAgentPluginReleaseInput(await readFile(path.join(content.root, ".rawr/release-input.json")));
     expect(release.ok).toBe(true);
     if (!release.ok) throw new Error("authored release input did not decode");
-    expect(Object.fromEntries(release.value.body.members[0]?.vendor.map((binding) => [binding.id, binding.contentDigest]) ?? [])).toEqual({
-      "vendor/sources/example.json": sha256ContentDigest(canonicalJsonBytes(nextDeclaration)),
-      "vendor/provenance/example.json": sha256ContentDigest(canonicalJsonBytes(nextProvenance)),
+    const governedPaths = [
+      "vendor/sources/example.json",
+      "vendor/provenance/example.json",
+      "vendor/locks/example.json",
+    ] as const;
+    const declaredDigests = new Map<string, string>([
+      ...(release.value.body.members[0]?.vendor ?? []),
+      ...release.value.body.locks,
+    ].map((binding) => [String(binding.id), binding.contentDigest]));
+    for (const relativePath of governedPaths) {
+      expect(declaredDigests.get(relativePath)).toBe(contentDigest(await readFile(path.join(content.root, relativePath))));
+    }
+
+    const convergedState = await repositoryState(content.root);
+    expect(await client.vendors.update(request, invocation)).toEqual({
+      kind: "ReadOnlyConverged",
+      sourceIds: ["example"],
     });
-    expect(release.value.body.locks[0]?.contentDigest).toBe(sha256ContentDigest(canonicalJsonBytes(nextLock)));
+    expect(await repositoryState(content.root)).toEqual(convergedState);
   });
 });
 
@@ -222,6 +152,7 @@ async function createUpstreamRepository(parent: string): Promise<Readonly<{
 }>> {
   const root = path.join(parent, "upstream");
   await mkdir(path.join(root, "source"), { recursive: true, mode: 0o700 });
+  await writeFile(path.join(root, "source", "SKILL.md"), "# Vendor fixture\n");
   await writeFile(path.join(root, "source", "payload.txt"), "initial\n");
   await git(root, ["init", "-b", "main"]);
   await configureGit(root);
@@ -229,23 +160,20 @@ async function createUpstreamRepository(parent: string): Promise<Readonly<{
   await git(root, ["commit", "-m", "initial"]);
   const sourceCommit = await git(root, ["rev-parse", "HEAD"]);
   const sourceTree = await git(root, ["rev-parse", "HEAD:source"]);
+  const skillBlob = await git(root, ["rev-parse", "HEAD:source/SKILL.md"]);
+  const payloadBlob = await git(root, ["rev-parse", "HEAD:source/payload.txt"]);
   const repositoryIdentity = `file://${root}`;
-  const runtime = await createNodeVendorLifecycleRuntime({ gitExecutable: GIT });
-  const observed = await runtime.upstream.observe({
-    sourceId: "example",
+  const initialIdentity = Object.freeze({
     repositoryIdentity,
     refName: "refs/heads/main",
-    sourcePath: "source",
-    admitted: {
-      repositoryIdentity,
-      refName: "refs/heads/main",
-      sourceCommit,
-      sourceTree,
-      payloadDigest: `sha256_${"0".repeat(64)}`,
-    },
+    sourceCommit,
+    sourceTree,
+    payloadDigest: contentDigest(jsonLine([
+      { blob: skillBlob, mode: "100644", path: "SKILL.md" },
+      { blob: payloadBlob, mode: "100644", path: "payload.txt" },
+    ])),
   });
-  if (observed.kind !== "Observed") throw new Error(`could not observe fixture upstream: ${observed.kind}`);
-  return Object.freeze({ root, initialIdentity: observed.identity });
+  return Object.freeze({ root, initialIdentity });
 }
 
 async function createContentRepository(parent: string, admitted: VendorSourceIdentity): Promise<Readonly<{
@@ -279,9 +207,35 @@ async function createContentRepository(parent: string, admitted: VendorSourceIde
     disposition: "admitted" as const,
   });
   const lock = Object.freeze({ schemaVersion: 1 as const, sourceId: "example", admitted });
-  const declarationBytes = canonicalJsonBytes(declaration);
-  const provenanceBytes = canonicalJsonBytes(provenance);
-  const lockBytes = canonicalJsonBytes(lock);
+  const declarationBytes = jsonLine({
+    curationRevision: declaration.curationRevision,
+    destinationPath: declaration.destinationPath,
+    lockPath: declaration.lockPath,
+    policy: declaration.policy,
+    provenancePath: declaration.provenancePath,
+    refName: declaration.refName,
+    repositoryIdentity: declaration.repositoryIdentity,
+    schemaVersion: declaration.schemaVersion,
+    sourceId: declaration.sourceId,
+    sourcePath: declaration.sourcePath,
+    supportedBaseline: declaration.supportedBaseline,
+  });
+  const provenanceBytes = jsonLine({
+    admitted: identityValue(provenance.admitted),
+    curationRevision: provenance.curationRevision,
+    disposition: provenance.disposition,
+    importedPayloadDigest: provenance.importedPayloadDigest,
+    observedAt: provenance.observedAt,
+    observedLatest: identityValue(provenance.observedLatest),
+    schemaVersion: provenance.schemaVersion,
+    sourceId: provenance.sourceId,
+    supportedBaseline: provenance.supportedBaseline,
+  });
+  const lockBytes = jsonLine({
+    admitted: identityValue(lock.admitted),
+    schemaVersion: lock.schemaVersion,
+    sourceId: lock.sourceId,
+  });
   const pluginPayloadPath = must(parseReleaseRelativePath("skills/example/SKILL.md"));
   const pluginPayload = must(createAgentPluginPayload([{
     path: pluginPayloadPath,
@@ -297,13 +251,13 @@ async function createContentRepository(parent: string, admitted: VendorSourceIde
       skillInventory: [{ identity: "example", manifestPath: pluginPayloadPath }],
       payload: { protocolVersion: 1, manifest: pluginPayload.manifest, payloadDigest: pluginPayload.payloadDigest },
       vendor: [
-        { id: "vendor/sources/example.json", protocol: VENDOR_SOURCE_PROTOCOL, contentDigest: sha256ContentDigest(declarationBytes) },
-        { id: "vendor/provenance/example.json", protocol: VENDOR_PROVENANCE_PROTOCOL, contentDigest: sha256ContentDigest(provenanceBytes) },
+        { id: "vendor/sources/example.json", protocol: VENDOR_SOURCE_PROTOCOL, contentDigest: contentDigest(declarationBytes) },
+        { id: "vendor/provenance/example.json", protocol: VENDOR_PROVENANCE_PROTOCOL, contentDigest: contentDigest(provenanceBytes) },
       ],
       curation: [],
     }],
     ownershipClaims: [{ kind: "skill", identity: "example", ownerPluginId: must(parsePluginId("example")) }],
-    locks: [{ id: "vendor/locks/example.json", protocol: VENDOR_LOCK_PROTOCOL, contentDigest: sha256ContentDigest(lockBytes) }],
+    locks: [{ id: "vendor/locks/example.json", protocol: VENDOR_LOCK_PROTOCOL, contentDigest: contentDigest(lockBytes) }],
     qualityPolicies: [],
   }));
   await mkdir(path.join(root, ".rawr"), { recursive: true, mode: 0o700 });
@@ -316,6 +270,7 @@ async function createContentRepository(parent: string, admitted: VendorSourceIde
   await writeFile(path.join(root, "vendor/sources/example.json"), declarationBytes);
   await writeFile(path.join(root, "vendor/provenance/example.json"), provenanceBytes);
   await writeFile(path.join(root, "vendor/locks/example.json"), lockBytes);
+  await writeFile(path.join(root, "plugins/example/vendor/SKILL.md"), "# Vendor fixture\n");
   await writeFile(path.join(root, "plugins/example/vendor/payload.txt"), "initial\n");
   await writeFile(path.join(root, "plugins/example/skills/example/SKILL.md"), "# Fixture\n");
   await git(root, ["init", "-b", "main"]);
@@ -347,7 +302,46 @@ async function git(root: string, args: readonly string[]): Promise<string> {
   return result.stdout.trim();
 }
 
-async function privateVendorRoots(): Promise<readonly string[]> {
+async function repositoryState(root: string) {
+  return Object.freeze({
+    status: await git(root, ["status", "--porcelain=v1", "-z", "--untracked-files=all"]),
+    tree: await snapshotTree(root),
+    privateRoots: await privateContentWorkspaceRoots(),
+  });
+}
+
+interface SnapshotEntry {
+  readonly path: string;
+  readonly kind: "directory" | "file";
+  readonly mode: string;
+  readonly size: string;
+  readonly mtimeNs: string;
+  readonly bytes: readonly number[] | null;
+}
+
+async function snapshotTree(root: string, relative = ""): Promise<readonly SnapshotEntry[]> {
+  const entries: SnapshotEntry[] = [];
+  const current = relative === "" ? root : path.join(root, relative);
+  for (const entry of (await readdir(current, { withFileTypes: true })).sort((left, right) => left.name.localeCompare(right.name))) {
+    if (relative === "" && entry.name === ".git") continue;
+    const childRelative = relative === "" ? entry.name : `${relative}/${entry.name}`;
+    const child = path.join(root, childRelative);
+    const info = await stat(child, { bigint: true });
+    const kind = entry.isDirectory() ? "directory" as const : "file" as const;
+    entries.push(Object.freeze({
+      path: childRelative,
+      kind,
+      mode: info.mode.toString(8),
+      size: info.size.toString(),
+      mtimeNs: info.mtimeNs.toString(),
+      bytes: kind === "file" ? Object.freeze([...await readFile(child)]) : null,
+    }));
+    if (kind === "directory") entries.push(...await snapshotTree(root, childRelative));
+  }
+  return Object.freeze(entries);
+}
+
+async function privateContentWorkspaceRoots(): Promise<readonly string[]> {
   const names = await readdir(tmpdir());
   const roots: string[] = [];
   for (const name of names.filter((candidate) => candidate.startsWith(TEMP_PREFIX)).sort()) {
@@ -355,6 +349,29 @@ async function privateVendorRoots(): Promise<readonly string[]> {
     if ((await stat(candidate)).isDirectory()) roots.push(candidate);
   }
   return roots;
+}
+
+function lifecycleBinding() {
+  return Object.freeze({
+    gitExecutable: GIT,
+    providerExecutables: Object.freeze({}),
+  });
+}
+
+function jsonLine(value: unknown): Uint8Array {
+  const serialized = JSON.stringify(value);
+  if (serialized === undefined) throw new Error("fixture value is not JSON serializable");
+  return new TextEncoder().encode(`${serialized}\n`);
+}
+
+function identityValue(identity: VendorSourceIdentity) {
+  return Object.freeze({
+    payloadDigest: identity.payloadDigest,
+    refName: identity.refName,
+    repositoryIdentity: identity.repositoryIdentity,
+    sourceCommit: identity.sourceCommit,
+    sourceTree: identity.sourceTree,
+  });
 }
 
 function must<T>(result: Readonly<{ ok: true; value: T } | { ok: false; issues?: readonly unknown[] }>): T {
