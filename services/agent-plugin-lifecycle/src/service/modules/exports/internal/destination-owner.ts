@@ -178,7 +178,11 @@ function capturedDirectory(
 
 function ownerFilesystemError(error: unknown, phase: string): ExportFilesystemError {
   if (isResourceFailure(error)) return new ExportFilesystemError(failure(
-    error.reason === "IdentityChanged" ? "PathChanged" : "VerificationFailed",
+    error.reason === "IdentityChanged"
+      ? "PathChanged"
+      : error.reason === "LimitExceeded"
+        ? "ManagedStateMismatch"
+        : "VerificationFailed",
     `${phase}:${error.operation}:${error.reason}`,
     error.detail,
     error.path,

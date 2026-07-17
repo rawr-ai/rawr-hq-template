@@ -1,7 +1,9 @@
 import type {
   ExportDestinationAsyncPort,
+  ExportDestinationCapture,
   ExportDestinationEntryObservation,
   ExportDestinationFailure as ExportDestinationResourceFailure,
+  ExportDestinationMutation,
 } from "@rawr/resource-agent-plugin-export-destination";
 
 import {
@@ -22,12 +24,14 @@ import type {
   UndoFailure,
   UndoReleaseResult,
 } from "./contract";
+import { bytesEqual } from "./canonical";
 import { failure } from "./filesystem-model";
 import {
   createExportAppliedObservation,
   createExportInverseAction,
   directoryPriorFromDestinationObservation,
   exportInverseActionDigest,
+  fileStateBytes,
   fileStateFromBytes,
   fileStateFromDestinationObservation,
   observedDestinationEntry,
@@ -36,6 +40,9 @@ import {
 } from "./inverse-action";
 import { EXPORT_LEDGER_FILENAME } from "./ledger";
 import type { DestinationExportPlan } from "./plan";
+
+const MAX_ACTION_CAPTURE_ENTRIES = 1_000_000;
+const MAX_ACTION_CAPTURE_BYTES = 1024 * 1024 * 1024;
 
 export interface ExportMutationSession {
   readonly capsule: {
@@ -73,6 +80,11 @@ interface StagedAction {
   readonly action: ExportInverseActionV1;
   readonly digest: ReturnType<typeof exportInverseActionDigest>;
   readonly actionHandle: string;
+}
+
+interface ActionStep {
+  readonly action: ExportInverseActionV1;
+  readonly mutation: ExportDestinationMutation;
 }
 
 export function planDestinationInverseActions(
@@ -152,95 +164,194 @@ export async function executeDestinationPlan(
   expectedActionEndIndex = session.admittedActionSequence.entries.length,
 ): Promise<DestinationTransactionResult> {
   const actions = planDestinationInverseActions(plan);
-  const staged: StagedAction[] = [];
-  for (const action of actions) {
-    const result = await stageAction(session, action);
-    if ("failure" in result) {
-      const failures = await releaseBeforeApply(plan, resource, result.failure);
-      return result.visibleOrAmbiguous
-        ? Object.freeze({ kind: "Unsettled", applied: Object.freeze([]), failures })
-        : Object.freeze({ kind: "Rejected", failures });
-    }
-    staged.push(result);
-    try {
-      await hit(session, "AfterInverseStaged", plan.destination.path, action.relativePath);
-    } catch (error) {
-      const failures = await releaseBeforeApply(
-        plan,
-        resource,
-        singleFailure(failure("FailpointFailed", "AfterInverseStaged", errorMessage(error), action.relativePath)),
-      );
-      return Object.freeze({
+  const steps = actionSteps(plan, actions);
+  if (steps === undefined) {
+    const primary = failure(
+      "UndoAdmissionFailed",
+      "destination-action-plan",
+      "Service-authored inverse actions do not match the exact destination mutation sequence",
+      plan.destination.path,
+    );
+    const released = await releaseCapturedPlan(plan, resource);
+    return released.kind === "Released"
+      ? Object.freeze({ kind: "Rejected", failures: singleFailure(primary) })
+      : Object.freeze({
         kind: "Unsettled",
         applied: Object.freeze([]),
-        failures,
+        failures: Object.freeze({
+          kind: "PrimaryAndCleanup",
+          primary,
+          cleanup: released.kind === "Failed"
+            ? released.failure
+            : failure(
+              "VerificationFailed",
+              "destination-release",
+              "Unmutated destination capture unexpectedly requires restore",
+              plan.destination.path,
+            ),
+        }),
+      });
+  }
+
+  const planningRelease = await releaseCapturedPlan(plan, resource);
+  if (planningRelease.kind !== "Released") {
+    const primary = planningRelease.kind === "Failed"
+      ? planningRelease.failure
+      : failure(
+        "VerificationFailed",
+        "destination-release",
+        "Unmutated destination capture unexpectedly requires restore",
+        plan.destination.path,
+      );
+    return Object.freeze({
+      kind: "Unsettled",
+      applied: Object.freeze([]),
+      failures: singleFailure(primary),
+    });
+  }
+
+  const applied: ExportAppliedEvent[] = [];
+  for (const step of steps) {
+    const staged = await stageAction(session, step.action);
+    if ("failure" in staged) {
+      return transactionFailure(applied, staged.failure, staged.visibleOrAmbiguous);
+    }
+    try {
+      await hit(session, "AfterInverseStaged", plan.destination.path, step.action.relativePath);
+    } catch (error) {
+      return rejectStagedBeforeMutation(
+        session,
+        staged,
+        applied,
+        failure("FailpointFailed", "AfterInverseStaged", errorMessage(error), step.action.relativePath),
+      );
+    }
+
+    let capture: ExportDestinationCapture;
+    try {
+      capture = await resource.capture({
+        destination: plan.destination.path,
+        readToken: `export-action-${staged.digest}`,
+        paths: [step.action.relativePath],
+        maxEntries: MAX_ACTION_CAPTURE_ENTRIES,
+        maxBytes: MAX_ACTION_CAPTURE_BYTES,
+      });
+    } catch (error) {
+      return rejectStagedBeforeMutation(
+        session,
+        staged,
+        applied,
+        resourceFailure(error, "destination-action-capture"),
+      );
+    }
+    const prior = capture.entries[0];
+    if (
+      capture.canonicalDestination !== plan.destination.path
+      || capture.entries.length !== 1
+      || prior === undefined
+      || prior.path !== step.action.relativePath
+      || !observationMatchesPrior(prior, step.action)
+    ) {
+      return restoreOrRejectAction(
+        session,
+        staged,
+        applied,
+        resource,
+        capture,
+        staged.digest,
+        failure(
+          "PathChanged",
+          "destination-action-prior",
+          "Destination action prior differs from its admitted service-authored action",
+          step.action.relativePath,
+        ),
+      );
+    }
+
+    let receipt;
+    try {
+      receipt = await resource.apply({
+        destination: plan.destination.path,
+        planDigest: staged.digest,
+        readToken: capture.readToken,
+        captureHandle: capture.handle,
+        mutations: [step.mutation],
+      });
+    } catch (error) {
+      return restoreOrRejectAction(
+        session,
+        staged,
+        applied,
+        resource,
+        capture,
+        staged.digest,
+        resourceFailure(error, "destination-action-apply"),
+      );
+    }
+    const post = receipt.entries[0];
+    if (
+      receipt.planDigest !== staged.digest
+      || receipt.readToken !== capture.readToken
+      || receipt.entries.length !== 1
+      || post === undefined
+      || post.path !== step.action.relativePath
+      || !observationMatchesExpected(post, step.action)
+    ) {
+      return restoreOrRejectAction(
+        session,
+        staged,
+        applied,
+        resource,
+        capture,
+        staged.digest,
+        failure(
+          "VerificationFailed",
+          "destination-action-post",
+          "Applied destination differs from its admitted service-authored action",
+          step.action.relativePath,
+        ),
+      );
+    }
+
+    const appliedEvent = event(step.action, staged.digest);
+    try {
+      if (step.action.mutation === "create-directory") {
+        await hit(session, "AfterDirectoriesCreated", plan.destination.path, step.action.relativePath);
+      }
+    } catch (error) {
+      return unsettledVisibleAction(
+        applied,
+        appliedEvent,
+        resource,
+        capture,
+        staged.digest,
+        failure("FailpointFailed", "AfterDirectoriesCreated", errorMessage(error), step.action.relativePath),
+      );
+    }
+
+    const marked = await markApplied(session, staged, post);
+    if (marked !== undefined) {
+      return unsettledVisibleAction(applied, appliedEvent, resource, capture, staged.digest, marked);
+    }
+    applied.push(appliedEvent);
+    const settled = await settleActionCapture(resource, capture, staged.digest, "destination-action-settle");
+    if (settled !== undefined) {
+      return Object.freeze({
+        kind: "Unsettled",
+        applied: Object.freeze([...applied]),
+        failures: singleFailure(settled),
       });
     }
   }
-
-  let receipt;
-  try {
-    receipt = await resource.apply({
-      destination: plan.destination.path,
-      planDigest: plan.planDigest,
-      readToken: plan.capture.readToken,
-      captureHandle: plan.capture.handle,
-      mutations: plan.mutations,
-    });
-  } catch (error) {
-    const primary = resourceFailure(error, "destination-apply");
-    return restoreRejectedPlan(plan, session, resource, staged, primary);
-  }
-  if (
-    receipt.planDigest !== plan.planDigest
-    || receipt.readToken !== plan.capture.readToken
-    || receipt.entries.length !== plan.capture.entries.length
-  ) {
-    return restoreRejectedPlan(
-      plan,
-      session,
-      resource,
-      staged,
-      failure("VerificationFailed", "destination-apply-receipt", "Destination provider returned a receipt for another exact plan"),
-    );
-  }
-
-  const postByPath = new Map(receipt.entries.map((entry) => [entry.path, entry]));
-  const applied: ExportAppliedEvent[] = [];
-  for (const item of staged) {
-    const post = postByPath.get(item.action.relativePath);
-    if (post === undefined || !observationMatchesExpected(post, item.action)) {
-      return unsettledAfterApplied(
-        plan,
-        resource,
-        applied,
-        failure("VerificationFailed", "destination-post-observation", "Applied destination differs from its service-authored plan", item.action.relativePath),
-      );
-    }
-    const marked = await markApplied(session, item, post);
-    const appliedEvent = event(item.action, item.digest);
-    applied.push(appliedEvent);
-    if (marked !== undefined) return unsettledAfterApplied(plan, resource, applied, marked);
-  }
   if (session.admittedActionSequence.nextIndex !== expectedActionEndIndex) {
-    return unsettledAfterApplied(plan, resource, applied, failure(
-      "UndoAdmissionFailed",
-      "undo-sequence",
-      "Destination completed without consuming its exact admitted inverse-action sequence",
-    ));
-  }
-  try {
-    await resource.settle({
-      destination: plan.destination.path,
-      planDigest: plan.planDigest,
-      readToken: plan.capture.readToken,
-      captureHandle: plan.capture.handle,
-    });
-  } catch (error) {
     return Object.freeze({
       kind: "Unsettled",
       applied: Object.freeze(applied),
-      failures: singleFailure(resourceFailure(error, "destination-settle")),
+      failures: singleFailure(failure(
+        "UndoAdmissionFailed",
+        "undo-sequence",
+        "Destination completed without consuming its exact admitted inverse-action sequence",
+      )),
     });
   }
   return Object.freeze({
@@ -254,71 +365,51 @@ export async function executeDestinationPlan(
   });
 }
 
-async function restoreRejectedPlan(
+function actionSteps(
   plan: DestinationExportPlan,
+  actions: readonly ExportInverseActionV1[],
+): readonly ActionStep[] | undefined {
+  if (actions.length !== plan.mutations.length) return undefined;
+  const steps: ActionStep[] = [];
+  for (let index = 0; index < actions.length; index += 1) {
+    const action = actions[index];
+    const mutation = plan.mutations[index];
+    if (action === undefined || mutation === undefined || !mutationMatchesAction(mutation, action)) return undefined;
+    steps.push(Object.freeze({ action, mutation }));
+  }
+  return Object.freeze(steps);
+}
+
+function mutationMatchesAction(
+  mutation: ExportDestinationMutation,
+  action: ExportInverseActionV1,
+): boolean {
+  if (mutation.path !== action.relativePath) return false;
+  if (action.mutation === "create-directory") {
+    return mutation.kind === "EnsureDirectory"
+      && action.expectedPost.kind === "Directory"
+      && mutation.mode === action.expectedPost.mode;
+  }
+  if (action.mutation === "retire-payload") return mutation.kind === "RemoveFile";
+  if (action.mutation === "retire-directory") return mutation.kind === "RemoveEmptyDirectory";
+  return mutation.kind === "WriteFile"
+    && action.expectedPost.kind === "Present"
+    && mutation.mode === action.expectedPost.mode
+    && contentDigest(mutation.bytes) === action.expectedPost.contentDigest
+    && bytesEqual(mutation.bytes, fileStateBytes(action.expectedPost));
+}
+
+async function rejectStagedBeforeMutation(
   session: ExportMutationSession,
-  resource: ExportDestinationAsyncPort,
-  staged: readonly StagedAction[],
+  staged: StagedAction,
+  applied: readonly ExportAppliedEvent[],
   primary: ExportFailure,
 ): Promise<DestinationTransactionResult> {
-  const release = await releaseCapturedPlan(plan, resource);
-  if (release.kind === "Released") {
-    const discarded = await discardStagedActions(session, staged, primary);
-    return discarded === undefined
-      ? Object.freeze({ kind: "Rejected", failures: singleFailure(primary) })
-      : Object.freeze({
-        kind: "Unsettled",
-        applied: Object.freeze([]),
-        failures: Object.freeze({ kind: "PrimaryAndCleanup", primary, cleanup: discarded }),
-      });
-  }
-  if (release.kind === "Failed") {
-    return Object.freeze({
-      kind: "Unsettled",
-      applied: Object.freeze([]),
-      failures: Object.freeze({ kind: "PrimaryAndCleanup", primary, cleanup: release.failure }),
-    });
-  }
-  try {
-    await resource.restore({
-      destination: plan.destination.path,
-      planDigest: plan.planDigest,
-      readToken: plan.capture.readToken,
-      captureHandle: plan.capture.handle,
-    });
-  } catch (error) {
-    return Object.freeze({
-      kind: "Unsettled",
-      applied: Object.freeze([]),
-      failures: Object.freeze({ kind: "PrimaryAndCleanup", primary, cleanup: resourceFailure(error, "destination-restore") }),
-    });
-  }
-  const discarded = await discardStagedActions(session, staged, primary);
-  try {
-    await resource.settle({
-      destination: plan.destination.path,
-      planDigest: plan.planDigest,
-      readToken: plan.capture.readToken,
-      captureHandle: plan.capture.handle,
-    });
-  } catch (error) {
-    return Object.freeze({
-      kind: "Unsettled",
-      applied: Object.freeze([]),
-      failures: Object.freeze({
-        kind: "PrimaryAndCleanup",
-        primary,
-        cleanup: resourceFailure(error, "destination-settle-restored"),
-      }),
-    });
-  }
-  return discarded === undefined
-    ? Object.freeze({ kind: "Rejected", failures: singleFailure(primary) })
-    : Object.freeze({ kind: "Unsettled", applied: Object.freeze([]), failures: Object.freeze({
-      kind: "PrimaryAndCleanup",
-      primary,
-      cleanup: discarded,
-    }) });
+  const discarded = await discardStagedActions(session, [staged], primary);
+  const failures = discarded === undefined
+    ? singleFailure(primary)
+    : Object.freeze({ kind: "PrimaryAndCleanup" as const, primary, cleanup: discarded });
+  return transactionFailure(applied, failures, discarded !== undefined);
 }
 
 type CapturedReleaseResult =
@@ -345,50 +436,110 @@ async function releaseCapturedPlan(
   }
 }
 
-async function releaseBeforeApply(
-  plan: DestinationExportPlan,
-  resource: ExportDestinationAsyncPort,
-  failures: ExportFailureSet,
-): Promise<ExportFailureSet> {
-  const released = await releaseCapturedPlan(plan, resource);
-  if (released.kind === "Released") return failures;
-  const cleanup = released.kind === "Failed"
-    ? released.failure
-    : failure(
-      "VerificationFailed",
-      "destination-release",
-      "Unmutated destination capture unexpectedly requires restore",
-      plan.destination.path,
-    );
-  return failures.kind === "PrimaryAndCleanup"
-    ? failures
-    : Object.freeze({ kind: "PrimaryAndCleanup", primary: failures.primary, cleanup });
-}
-
-async function unsettledAfterApplied(
-  plan: DestinationExportPlan,
-  resource: ExportDestinationAsyncPort,
+async function restoreOrRejectAction(
+  session: ExportMutationSession,
+  staged: StagedAction,
   applied: readonly ExportAppliedEvent[],
+  resource: ExportDestinationAsyncPort,
+  capture: ExportDestinationCapture,
+  planDigest: string,
   primary: ExportFailure,
 ): Promise<DestinationTransactionResult> {
-  let cleanup: ExportFailure | undefined;
-  try {
-    await resource.settle({
-      destination: plan.destination.path,
-      planDigest: plan.planDigest,
-      readToken: plan.capture.readToken,
-      captureHandle: plan.capture.handle,
-    });
-  } catch (error) {
-    cleanup = resourceFailure(error, "destination-settle-unsettled");
+  const released = await releaseCapturedCapture(resource, capture);
+  let cleanup = released.kind === "Failed" ? released.failure : undefined;
+  if (released.kind === "RequiresRestore") {
+    try {
+      await resource.restore({
+        destination: capture.canonicalDestination,
+        planDigest,
+        readToken: capture.readToken,
+        captureHandle: capture.handle,
+      });
+      cleanup = await settleActionCapture(resource, capture, planDigest, "destination-action-settle-restored");
+    } catch (error) {
+      cleanup = resourceFailure(error, "destination-action-restore");
+    }
   }
+  if (cleanup !== undefined) {
+    return Object.freeze({
+      kind: "Unsettled",
+      applied: Object.freeze([...applied]),
+      failures: Object.freeze({ kind: "PrimaryAndCleanup", primary, cleanup }),
+    });
+  }
+  return rejectStagedBeforeMutation(session, staged, applied, primary);
+}
+
+async function unsettledVisibleAction(
+  applied: readonly ExportAppliedEvent[],
+  appliedEvent: ExportAppliedEvent,
+  resource: ExportDestinationAsyncPort,
+  capture: ExportDestinationCapture,
+  planDigest: string,
+  primary: ExportFailure,
+): Promise<DestinationTransactionResult> {
+  const exactApplied = Object.freeze([...applied, appliedEvent]);
+  const cleanup = await settleActionCapture(
+    resource,
+    capture,
+    planDigest,
+    "destination-action-settle-unsettled",
+  );
   return Object.freeze({
     kind: "Unsettled",
-    applied: Object.freeze([...applied]),
+    applied: exactApplied,
     failures: cleanup === undefined
       ? singleFailure(primary)
       : Object.freeze({ kind: "PrimaryAndCleanup", primary, cleanup }),
   });
+}
+
+async function settleActionCapture(
+  resource: ExportDestinationAsyncPort,
+  capture: ExportDestinationCapture,
+  planDigest: string,
+  phase: string,
+): Promise<ExportFailure | undefined> {
+  try {
+    await resource.settle({
+      destination: capture.canonicalDestination,
+      planDigest,
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    });
+    return undefined;
+  } catch (error) {
+    return resourceFailure(error, phase);
+  }
+}
+
+async function releaseCapturedCapture(
+  resource: ExportDestinationAsyncPort,
+  capture: ExportDestinationCapture,
+): Promise<CapturedReleaseResult> {
+  try {
+    await resource.release({
+      destination: capture.canonicalDestination,
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    });
+    return Object.freeze({ kind: "Released" });
+  } catch (error) {
+    if (isResourceFailure(error) && error.operation === "release" && error.reason === "HandleState") {
+      return Object.freeze({ kind: "RequiresRestore" });
+    }
+    return Object.freeze({ kind: "Failed", failure: resourceFailure(error, "destination-action-release") });
+  }
+}
+
+function transactionFailure(
+  applied: readonly ExportAppliedEvent[],
+  failures: ExportFailureSet,
+  visibleOrAmbiguous: boolean,
+): DestinationTransactionResult {
+  return visibleOrAmbiguous || applied.length > 0
+    ? Object.freeze({ kind: "Unsettled", applied: Object.freeze([...applied]), failures })
+    : Object.freeze({ kind: "Rejected", failures });
 }
 
 async function stageAction(
@@ -480,6 +631,24 @@ async function discardStagedActions(
     }
   }
   return undefined;
+}
+
+function observationMatchesPrior(
+  observed: ExportDestinationEntryObservation,
+  action: ExportInverseActionV1,
+): boolean {
+  if (action.prior.kind === "Absent") return observed.kind === "Absent";
+  if (action.prior.kind === "Directory") {
+    return observed.kind === "Directory"
+      && observed.mode === action.prior.mode
+      && observed.stat.dev === action.prior.dev
+      && observed.stat.ino === action.prior.ino
+      && observed.stat.birthtimeNs === action.prior.birthtimeNs;
+  }
+  return observed.kind === "File"
+    && observed.mode === action.prior.mode
+    && contentDigest(observed.bytes) === action.prior.contentDigest
+    && bytesEqual(observed.bytes, fileStateBytes(action.prior));
 }
 
 function observationMatchesExpected(

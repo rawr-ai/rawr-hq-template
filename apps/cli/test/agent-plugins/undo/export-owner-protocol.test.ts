@@ -23,11 +23,11 @@ import {
 } from "../../../src/lib/agent-plugins/undo";
 import { exportArtifactFixture } from "../../../../../services/agent-plugin-lifecycle/test/modules/exports/artifact-fixture";
 import {
+  createExportTestClient,
   FakeArtifactReader,
   FakeKnownNativeHomesReader,
   knownHomes,
-} from "../service-runtime/exports/fakes";
-import { createExportTestClient } from "../service-runtime/exports/lifecycle-client";
+} from "./export-runtime-fixture";
 import { InMemoryCapsuleStateStoreV1 } from "./memory-store";
 import { createOwnedFixtureRoot, type OwnedFixtureRoot } from "./owned-fixture-root";
 

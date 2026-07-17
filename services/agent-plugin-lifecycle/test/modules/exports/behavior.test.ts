@@ -9,6 +9,7 @@ import { makeNodeExportDestinationPort } from "@rawr/resource-agent-plugin-expor
 import type { VerifiedArtifactSnapshotV1 } from "../../../src/service/shared/release/index";
 
 import {
+  createExportOwnerStateReader,
   createKnownNativeHomesSnapshot,
   executeExportInverseActionWithResource,
   verifyExportLedgerBytes,
@@ -156,6 +157,49 @@ describe("export service destination authority", () => {
     await expectAllCapturedAuthorityReleased(probe);
   });
 
+  it("admits and applies one canonical action sequence for reversed destination input", async () => {
+    const left = await createRoot();
+    const right = await createRoot();
+    const fixture = alphaOnlyArtifactFixture();
+    const undo = new RecordingUndoWriter();
+    const canonicalDestinations = [left.path, right.path].sort();
+    const runtime = lifecycleRuntime(
+      artifactReader([fixture.complete]),
+      undo,
+      makeNodeExportDestinationPort(),
+    );
+
+    const result = await executeExportAgentPlugins(
+      requestForDestinations(fixture.complete.ref, "complete-set", [...canonicalDestinations].reverse()),
+      runtime,
+    );
+
+    expect(result.kind).toBe("MutatedSettled");
+    const appliedDestinations = undo.committed.map(({ action }) => action.canonicalDestination);
+    expect(appliedDestinations).toEqual([...appliedDestinations].sort());
+    expect(new Set(appliedDestinations)).toEqual(new Set(canonicalDestinations));
+    expect(undo.stageCalls).toBe(undo.markCalls);
+  });
+
+  it("keeps owner recovery reads within the admitted action byte bound", async () => {
+    const root = await createRoot();
+    const relativePath = "managed/oversized.txt";
+    await mkdir(dirname(join(root.path, relativePath)), { recursive: true });
+    await writeFile(join(root.path, relativePath), "bounded-owner-state\n");
+    const state = createExportOwnerStateReader(makeNodeExportDestinationPort());
+    const destination = await state.captureDestination(root.path);
+
+    await expect(state.capturePath(destination, relativePath, 4)).rejects.toMatchObject({
+      failure: {
+        code: "ManagedStateMismatch",
+        phase: expect.stringContaining("LimitExceeded"),
+      },
+    });
+    await expect(state.capturePath(destination, relativePath, 64)).resolves.toMatchObject({
+      kind: "Present",
+    });
+  });
+
   it("releases the destination capture when the post-plan failpoint rejects", async () => {
     const root = await createRoot();
     const fixture = alphaOnlyArtifactFixture();
@@ -194,7 +238,7 @@ describe("export service destination authority", () => {
     },
   );
 
-  it("releases the destination capture when inverse staging stops before apply", async () => {
+  it("rejects and releases the destination capture when inverse staging stops before apply", async () => {
     const root = await createRoot();
     const fixture = alphaOnlyArtifactFixture();
     const probe = captureProbe();
@@ -210,7 +254,7 @@ describe("export service destination authority", () => {
 
     const result = await executeExportAgentPlugins(request(fixture.complete.ref, "complete-set", root.path), runtime);
 
-    expect(result.kind).toBe("MutatedUnsettled");
+    expect(result.kind).toBe("RejectedBeforeMutation");
     await expectAllCapturedAuthorityReleased(probe);
     await expect(lstat(join(root.path, "codex"))).rejects.toMatchObject({ code: "ENOENT" });
   });
@@ -365,16 +409,14 @@ class RecordingUndoWriter implements UndoWriter {
       handle: `action-${this.beginCalls}-${index}`,
       phase: "planned",
     }));
-    let nextStage = 0;
     let closed = false;
     const session: UndoApplyingSession = Object.freeze({
       stage: async (input: Parameters<UndoApplyingSession["stage"]>[0]) => {
         const { actionHandle } = input;
         this.stageCalls += 1;
-        const action = actions[nextStage];
+        const action = actions.find((candidate) => candidate.phase !== "applied");
         if (closed || action?.handle !== actionHandle || action.phase !== "planned") return rejectedWrite("stage refused");
         action.phase = "staged";
-        nextStage += 1;
         return acceptedWrite(this.#nextGeneration());
       },
       discardStaged: async (input: Parameters<UndoApplyingSession["discardStaged"]>[0]) => {
