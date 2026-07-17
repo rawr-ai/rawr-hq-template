@@ -6,7 +6,7 @@
 - [Plugin Ids](#plugin-ids)
 - [Manifest Conventions](#manifest-conventions)
 - [Build, Test, Lint](#build-test-lint)
-- [Security And Enablement](#security-and-enablement)
+- [Lifecycle Boundaries](#lifecycle-boundaries)
 
 ## Scope
 - Applies to everything under `plugins/**`.
@@ -51,13 +51,14 @@
   - `bun run lint`
   - `bun run test`
 - Package-only (Nx project examples):
-  - `bunx nx run @rawr/plugin-plugins:lint`
+  - `bunx nx run @rawr/plugin-hq:lint`
   - `bunx nx run @rawr/plugin-hello:test`
 - Unit tests live in `test/**/*.test.ts` and are wired in root `vitest.config.ts`.
 
 ## Lifecycle Boundaries
 - External Oclif extensions use `rawr plugins ...` and native Oclif state only.
 - Curated agent plugins use `rawr agent plugins ...` and immutable release records only.
-- Web/server/app composition may mount declared capabilities but does not own
-  installation, release, provider reconciliation, or lifecycle repair.
-- Security model reference: `docs/system/SECURITY_MODEL.md`.
+- Authoring changes source only. It never triggers build, export, provider
+  convergence, or retirement automatically.
+- App, web, and runtime composition are outside both lifecycle channels.
+- Security model reference: [[docs/system/SECURITY_MODEL]].

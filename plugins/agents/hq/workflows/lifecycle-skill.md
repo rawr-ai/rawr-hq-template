@@ -1,31 +1,17 @@
 ---
-description: Run full lifecycle quality checks for skill changes
-argument-hint: "TARGET=<path|id>"
+description: Review a skill change as source owned and released by its parent agent plugin
+argument-hint: "PLUGIN=<id> SKILL=<name>"
 ---
 
-# Lifecycle: Skill
+# Lifecycle: Skill Source
 
-Use `docs/process/runbooks/LIFECYCLE_SKILL.md` as canonical guidance.
+1. Review the skill entrypoint, references, assets, tests, and dependent links.
+2. Confirm the skill exists under exactly one parent `plugins/agents/<plugin>`
+   distribution owner.
+3. Stop at source verification. Do not edit provider homes or start lifecycle
+   mutation automatically.
+4. When explicitly requested, verify the parent plugin through
+   [[plugins/agents/hq/workflows/lifecycle-agent-plugin]], beginning with
+   `rawr agent plugins check`.
 
-## HQ Authoring Routing
-
-- For net-new or substantial content authoring, start with:
-  - `/hq:create-content`
-  - `/hq:create-plugin`
-
-## Steps
-
-1. Apply skill artifact updates.
-2. Update required tests/docs.
-3. Audit/update dependents.
-4. Run:
-```bash
-rawr plugins sync all --dry-run --json
-rawr plugins sync drift --json
-rawr plugins lifecycle check --target "$TARGET" --type skill --json
-```
-5. Resolve lifecycle blockers.
-
-## Done
-
-- lifecycle check returns `ok: true` and `status: pass`.
+The skill has no independent sync, export, channel, or provider identity.
