@@ -6,6 +6,7 @@ import {
   createAcceptanceEvidence,
   createMechanicalEvidenceObservation,
   createValidateGovernedAcceptance,
+  type HostedApprovalHistory,
 } from "../../../src/service/modules/governance/internal";
 import {
   MemoryApprovalReader,
@@ -37,10 +38,22 @@ describe("governed acceptance (B12)", () => {
     expect(fixture.evidenceReader.calls).toBe(2);
     expect(fixture.approvalReader.calls).toBe(1);
     expect(fixture.approvalReader.queries).toEqual([{
-      object: fixture.acceptanceObject,
-      approverIdentity: fixture.policy.body.humanApproverIdentity,
-      outcome: "accepted",
+      provider: "github",
+      repositoryIdentity: fixture.request.body.repositoryIdentity,
+      pullRequest: 42,
+      revision: fixture.acceptanceObject.commit,
     }]);
+    expect(result).toMatchObject({
+      kind: "GovernedAccepted",
+      observation: {
+        approval: {
+          provider: "github",
+          pullRequest: 42,
+          recordId: "github-review-9001",
+          object: fixture.acceptanceObject,
+        },
+      },
+    });
   });
 
   it("blocks schema-valid self-issued accepted evidence before evidence or approval reads", async () => {
@@ -102,19 +115,13 @@ describe("governed acceptance (B12)", () => {
     expect(approvals.calls).toBe(1);
   });
 
-  it("blocks approval from the right human when it names another exact object", async () => {
+  it("blocks mechanically valid history that echoes another governed selector", async () => {
     const fixture = promotionFixture();
-    const approval = fixture.approvalReader.observation;
-    if (approval === undefined) throw new Error("Expected fixture approval");
+    const history = fixture.approvalReader.history;
+    if (history === undefined) throw new Error("Expected fixture approval history");
     const approvals = new MemoryApprovalReader({
-      ...approval,
-      object: pointer({
-        ref: approval.object.ref,
-        commit: approval.object.commit,
-        tree: approval.object.tree,
-        path: approval.object.path,
-        blob: oid("8"),
-      }),
+      ...history,
+      selector: { ...history.selector, pullRequest: 43 },
     });
     const validate = createValidateGovernedAcceptance({
       git: fixture.git,
@@ -132,6 +139,164 @@ describe("governed acceptance (B12)", () => {
     expect(result).toMatchObject({
       kind: "BlockedAcceptanceAuthority",
       code: "BLOCKED_ACCEPTANCE_AUTHORITY",
+    });
+  });
+
+  it("blocks when the latest policy-named authority review revokes an earlier exact approval", async () => {
+    const fixture = promotionFixture();
+    const history = fixture.approvalReader.history;
+    if (history === undefined) throw new Error("Expected fixture approval history");
+    const approvals = new MemoryApprovalReader({
+      ...history,
+      observations: [
+        ...history.observations,
+        {
+          recordId: 9002,
+          state: "CHANGES_REQUESTED",
+          revision: fixture.acceptanceObject.commit,
+          actorIdentity: fixture.policy.body.humanApproverIdentity,
+        },
+      ],
+    });
+    const validate = createValidateGovernedAcceptance({
+      git: fixture.git,
+      evidence: fixture.evidenceReader,
+      approvals,
+    });
+
+    const result = await validate({
+      locator: fixture.locator,
+      policyObject: fixture.policyObject,
+      requestObject: fixture.requestObject,
+      acceptanceObject: fixture.acceptanceObject,
+    });
+
+    expect(result).toMatchObject({
+      kind: "BlockedAcceptanceAuthority",
+      reason: expect.stringContaining("latest policy-named authority review"),
+    });
+  });
+
+  it("blocks review history that does not attest oldest-to-newest ordering", async () => {
+    const fixture = promotionFixture();
+    const history = fixture.approvalReader.history;
+    if (history === undefined) throw new Error("Expected fixture approval history");
+    fixture.approvalReader.history = {
+      ...history,
+      order: "newest-to-oldest",
+      observations: [...history.observations].reverse(),
+    } as unknown as HostedApprovalHistory;
+    const validate = createValidateGovernedAcceptance({
+      git: fixture.git,
+      evidence: fixture.evidenceReader,
+      approvals: fixture.approvalReader,
+    });
+
+    const result = await validate({
+      locator: fixture.locator,
+      policyObject: fixture.policyObject,
+      requestObject: fixture.requestObject,
+      acceptanceObject: fixture.acceptanceObject,
+    });
+
+    expect(result).toMatchObject({
+      kind: "BlockedAcceptanceAuthority",
+      reason: expect.stringContaining("oldest-to-newest"),
+    });
+  });
+
+  it("blocks when the latest policy-named approval names another revision", async () => {
+    const fixture = promotionFixture();
+    const history = fixture.approvalReader.history;
+    if (history === undefined) throw new Error("Expected fixture approval history");
+    fixture.approvalReader.history = {
+      ...history,
+      observations: [
+        ...history.observations,
+        {
+          recordId: 9002,
+          state: "APPROVED",
+          revision: oid("8"),
+          actorIdentity: fixture.policy.body.humanApproverIdentity,
+        },
+      ],
+    };
+    const validate = createValidateGovernedAcceptance({
+      git: fixture.git,
+      evidence: fixture.evidenceReader,
+      approvals: fixture.approvalReader,
+    });
+
+    const result = await validate({
+      locator: fixture.locator,
+      policyObject: fixture.policyObject,
+      requestObject: fixture.requestObject,
+      acceptanceObject: fixture.acceptanceObject,
+    });
+
+    expect(result).toMatchObject({
+      kind: "BlockedAcceptanceAuthority",
+      reason: expect.stringContaining("exact acceptance revision"),
+    });
+  });
+
+  it("retains an exact approval across later non-authority review rows", async () => {
+    const fixture = promotionFixture();
+    const history = fixture.approvalReader.history;
+    if (history === undefined) throw new Error("Expected fixture approval history");
+    fixture.approvalReader.history = {
+      ...history,
+      observations: [
+        ...history.observations,
+        {
+          recordId: 9002,
+          state: "COMMENTED",
+          revision: oid("8"),
+          actorIdentity: fixture.policy.body.humanApproverIdentity,
+        },
+      ],
+    };
+    const validate = createValidateGovernedAcceptance({
+      git: fixture.git,
+      evidence: fixture.evidenceReader,
+      approvals: fixture.approvalReader,
+    });
+
+    const result = await validate({
+      locator: fixture.locator,
+      policyObject: fixture.policyObject,
+      requestObject: fixture.requestObject,
+      acceptanceObject: fixture.acceptanceObject,
+    });
+
+    expect(result.kind).toBe("GovernedAccepted");
+  });
+
+  it("blocks duplicate review identities instead of selecting by array position", async () => {
+    const fixture = promotionFixture();
+    const history = fixture.approvalReader.history;
+    const review = history?.observations[0];
+    if (history === undefined || review === undefined) throw new Error("Expected fixture approval history");
+    fixture.approvalReader.history = {
+      ...history,
+      observations: [review, { ...review, state: "COMMENTED" }],
+    };
+    const validate = createValidateGovernedAcceptance({
+      git: fixture.git,
+      evidence: fixture.evidenceReader,
+      approvals: fixture.approvalReader,
+    });
+
+    const result = await validate({
+      locator: fixture.locator,
+      policyObject: fixture.policyObject,
+      requestObject: fixture.requestObject,
+      acceptanceObject: fixture.acceptanceObject,
+    });
+
+    expect(result).toMatchObject({
+      kind: "BlockedAcceptanceAuthority",
+      reason: expect.stringContaining("duplicate review observation"),
     });
   });
 

@@ -102,12 +102,19 @@ const LifecyclePolicySchema = Type.Object(
 
 const AcceptanceRequestBodySchema = Type.Object(
   {
-    schemaVersion: Type.Literal(1),
+    schemaVersion: Type.Literal(2),
     repositoryIdentity: RepositoryIdentitySchema,
     contentAuthority: ContentAuthoritySchema,
     policyIdentity: CanonicalIdSchema,
     releaseSetDigest: ReleaseSetDigestSchema,
     releaseInputObject: ExactGitBlobPointerSchema,
+    hostedApproval: Type.Object(
+      {
+        provider: Type.Literal("github"),
+        pullRequest: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
+      },
+      { additionalProperties: false },
+    ),
     projections: Type.Array(ProviderAcceptanceBindingSchema, { maxItems: 128 }),
     evidence: Type.Array(MechanicalEvidenceHandleSchema, { maxItems: 128 }),
     evaluationProfile: CanonicalIdSchema,
@@ -119,7 +126,7 @@ const AcceptanceRequestBodySchema = Type.Object(
 
 const AcceptanceRequestSchema = Type.Object(
   {
-    schemaVersion: Type.Literal(1),
+    schemaVersion: Type.Literal(2),
     requestDigest: AcceptanceRequestDigestSchema,
     body: AcceptanceRequestBodySchema,
   },
@@ -165,7 +172,8 @@ const AcceptanceEvidenceSchema = Type.Object(
 
 const HostedApprovalObservationSchema = Type.Object(
   {
-    provider: Type.Union([Type.Literal("graphite"), Type.Literal("github")]),
+    provider: Type.Literal("github"),
+    pullRequest: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
     recordId: CanonicalIdSchema,
     object: ExactGitBlobPointerSchema,
     approverIdentity: CanonicalIdSchema,

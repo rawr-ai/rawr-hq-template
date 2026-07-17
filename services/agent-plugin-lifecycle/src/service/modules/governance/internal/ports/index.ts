@@ -87,16 +87,45 @@ export interface MechanicalEvidenceReader {
   readonly read: (handle: MechanicalEvidenceHandle) => Promise<MechanicalEvidenceReadResult>;
 }
 
-export type HostedGovernanceProvider = "graphite" | "github";
+export type HostedGovernanceProvider = "github";
 
-export interface HostedApprovalQuery {
-  readonly object: ExactGitBlobPointer;
-  readonly approverIdentity: CanonicalId;
-  readonly outcome: "accepted";
+export type HostedReviewState =
+  | "APPROVED"
+  | "CHANGES_REQUESTED"
+  | "COMMENTED"
+  | "DISMISSED"
+  | "PENDING";
+
+export interface HostedApprovalHistoryQuery {
+  readonly provider: HostedGovernanceProvider;
+  readonly repositoryIdentity: RepositoryIdentity;
+  readonly pullRequest: number;
+  readonly revision: GitCommitId;
+}
+
+export interface HostedReviewObservation {
+  readonly recordId: number;
+  readonly state: HostedReviewState;
+  readonly revision: string;
+  readonly actorIdentity: string;
+}
+
+export interface HostedApprovalHistory {
+  readonly provider: string;
+  readonly selector: Readonly<{
+    readonly provider: string;
+    readonly repositoryIdentity: string;
+    readonly pullRequest: number;
+    readonly revision: string;
+  }>;
+  /** Required order for selecting the latest authority-changing review. */
+  readonly order: "oldest-to-newest";
+  readonly observations: readonly HostedReviewObservation[];
 }
 
 export interface HostedApprovalObservation {
   readonly provider: HostedGovernanceProvider;
+  readonly pullRequest: number;
   readonly recordId: CanonicalId;
   readonly object: ExactGitBlobPointer;
   readonly approverIdentity: CanonicalId;
@@ -104,16 +133,16 @@ export interface HostedApprovalObservation {
   readonly outcome: "accepted";
 }
 
-export type HostedApprovalReadResult =
-  | { readonly ok: true; readonly observation: HostedApprovalObservation }
+export type HostedApprovalHistoryReadResult =
+  | { readonly ok: true; readonly history: HostedApprovalHistory }
   | {
     readonly ok: false;
     readonly failure: {
-      readonly code: "MissingApproval" | "WrongObject" | "UnavailableApproval";
+      readonly code: "UnavailableApproval";
       readonly message: string;
     };
   };
 
-export interface HostedApprovalReader {
-  readonly read: (query: HostedApprovalQuery) => Promise<HostedApprovalReadResult>;
+export interface HostedApprovalHistoryReader {
+  readonly read: (query: HostedApprovalHistoryQuery) => Promise<HostedApprovalHistoryReadResult>;
 }

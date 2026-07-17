@@ -21,12 +21,16 @@ import {
 import type { ExactGitBlobPointer, GitLocator } from "../domain/git";
 import type {
   ExactGitReader,
+  HostedApprovalHistoryReader,
   HostedApprovalObservation,
-  HostedApprovalReader,
   MechanicalEvidenceReader,
   RepositoryInspection,
 } from "../ports/index";
 import { readExactBlob } from "./git-read";
+import {
+  createHostedApprovalHistoryQuery,
+  selectHostedApproval,
+} from "./hosted-approval";
 
 export interface ValidateGovernedAcceptanceInput {
   readonly locator: GitLocator;
@@ -62,7 +66,7 @@ export type GovernedAcceptanceResult =
 export interface GovernedAcceptanceDependencies {
   readonly git: ExactGitReader;
   readonly evidence: MechanicalEvidenceReader;
-  readonly approvals: HostedApprovalReader;
+  readonly approvals: HostedApprovalHistoryReader;
 }
 
 export function createValidateGovernedAcceptance(
@@ -87,21 +91,18 @@ export function createValidateGovernedAcceptance(
     const evidenceFailure = await validateMechanicalEvidence(dependencies.evidence, request);
     if (evidenceFailure !== undefined) return evidenceFailure;
 
-    const approval = await dependencies.approvals.read({
-      object: input.acceptanceObject,
-      approverIdentity: policy.body.humanApproverIdentity,
-      outcome: "accepted",
-    });
-    if (!approval.ok) {
-      return blocked(`Hosted approval is missing, unavailable, or bound to another object: ${approval.failure.message}`);
+    const approvalQuery = createHostedApprovalHistoryQuery(request, input.acceptanceObject);
+    const approvalHistory = await dependencies.approvals.read(approvalQuery);
+    if (!approvalHistory.ok) {
+      return blocked(`Hosted approval history is unavailable: ${approvalHistory.failure.message}`);
     }
-    if (
-      approval.observation.decision !== "approved"
-      || approval.observation.approverIdentity !== policy.body.humanApproverIdentity
-      || !sameApprovalObject(approval.observation, input.acceptanceObject)
-    ) {
-      return blocked("Hosted approval does not bind the exact acceptance object and policy-named human authority");
-    }
+    const approval = selectHostedApproval(
+      approvalHistory.history,
+      approvalQuery,
+      input.acceptanceObject,
+      policy.body.humanApproverIdentity,
+    );
+    if (!approval.ok) return blocked(approval.reason);
 
     return {
       kind: "GovernedAccepted",
@@ -256,19 +257,6 @@ function classifyRepositoryAuthority(
     return blocked("Repository inspection resolved a different canonical policy ref");
   }
   return undefined;
-}
-
-function sameApprovalObject(
-  approval: HostedApprovalObservation,
-  object: ExactGitBlobPointer,
-): boolean {
-  return approval.object.repositoryIdentity === object.repositoryIdentity
-    && approval.object.ref === object.ref
-    && approval.object.commit === object.commit
-    && approval.object.tree === object.tree
-    && approval.object.path === object.path
-    && approval.object.blob === object.blob
-    && approval.outcome === "accepted";
 }
 
 function blocked(reason: string): GovernedAcceptanceResult {

@@ -74,6 +74,7 @@ export function makeGithubCliHostedGovernanceResource(
       return Object.freeze({
         provider: "github",
         selector: Object.freeze({ ...selector }),
+        order: "oldest-to-newest",
         observations,
       }) satisfies HostedApprovalHistory;
     },

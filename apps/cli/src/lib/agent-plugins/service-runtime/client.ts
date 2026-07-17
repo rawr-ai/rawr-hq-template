@@ -33,6 +33,7 @@ import {
   type LifecycleClientFactory,
   type LifecycleOperation,
 } from "../commands/binding";
+import { createGithubHostedApprovalHistoryReader } from "../bindings/governance";
 import { createNodeAtomicPackageOutput } from "./packaging/node-atomic-output";
 import { nodeCoworkV1Runtime } from "./packaging/node-cowork-v1";
 import { createExportLifecycleRuntime } from "./exports/runtime";
@@ -44,8 +45,6 @@ import {
   createGitContentWorkspaceSnapshotReader,
 } from "./releases";
 import { createReadOnlyGitAdapter } from "./governance/adapters/git";
-import { createHostedApprovalAdapter } from "./governance/adapters/hosted";
-import { createNodeGithubHostedGovernanceBackend } from "./governance/adapters/node-github";
 import { createNodeReadOnlyGitBackend } from "./governance/adapters/node-git";
 import { createGovernanceLifecycleRuntime } from "./governance/runtime";
 import { createNodeMechanicalEvidenceRuntime } from "./evidence/node-mechanical";
@@ -179,9 +178,9 @@ async function productionGovernanceRuntime(
       gitExecutable: requiredGitExecutable(binding, operation),
     })),
     evidence: createNodeMechanicalEvidenceRuntime(artifactStoreRoot).governance,
-    approvals: createHostedApprovalAdapter(createNodeGithubHostedGovernanceBackend({
+    approvals: createGithubHostedApprovalHistoryReader({
       githubExecutable,
-    })),
+    }),
   });
 }
 

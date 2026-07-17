@@ -50,11 +50,22 @@ import {
   type ExactGitBlobPointer,
 } from "./git";
 import { failures, issue, success, type PromotionIssue, type PromotionResult } from "./result";
-import { boundedArray, collect, exactRecord, reportDuplicateOrOrder } from "./schema";
+import {
+  boundedArray,
+  collect,
+  exactRecord,
+  parseBoundedInteger,
+  reportDuplicateOrOrder,
+} from "./schema";
 
-export const ACCEPTANCE_REQUEST_SCHEMA_VERSION = 1 as const;
+export const ACCEPTANCE_REQUEST_SCHEMA_VERSION = 2 as const;
 export const ACCEPTANCE_EVIDENCE_SCHEMA_VERSION = 1 as const;
 export const LIFECYCLE_POLICY_SCHEMA_VERSION = 1 as const;
+
+export interface HostedApprovalSelector {
+  readonly provider: "github";
+  readonly pullRequest: number;
+}
 
 export interface AcceptanceRequestBody {
   readonly schemaVersion: typeof ACCEPTANCE_REQUEST_SCHEMA_VERSION;
@@ -63,6 +74,7 @@ export interface AcceptanceRequestBody {
   readonly policyIdentity: CanonicalId;
   readonly releaseSetDigest: ReleaseSetDigest;
   readonly releaseInputObject: ExactGitBlobPointer;
+  readonly hostedApproval: HostedApprovalSelector;
   readonly projections: readonly ProviderAcceptanceBinding[];
   readonly evidence: readonly MechanicalEvidenceHandle[];
   readonly evaluationProfile: CanonicalId;
@@ -246,6 +258,10 @@ export function acceptanceRequestBodyValue(body: AcceptanceRequestBody): Canonic
     policyIdentity: body.policyIdentity,
     releaseSetDigest: body.releaseSetDigest,
     releaseInputObject: gitPointerValue(body.releaseInputObject),
+    hostedApproval: {
+      provider: body.hostedApproval.provider,
+      pullRequest: body.hostedApproval.pullRequest,
+    },
     projections: body.projections.map(providerBindingValue),
     evidence: body.evidence.map(evidenceHandleValue),
     evaluationProfile: body.evaluationProfile,
@@ -306,6 +322,7 @@ function parseAcceptanceRequestBody(
     "evaluationProfile",
     "evidence",
     "freshAgentTarget",
+    "hostedApproval",
     "policyIdentity",
     "projections",
     "releaseInputObject",
@@ -322,6 +339,7 @@ function parseAcceptanceRequestBody(
   const policyIdentity = collect(parseCanonicalId(record.policyIdentity, `${path}.policyIdentity`), issues);
   const releaseSetDigest = collect(parseReleaseSet(record.releaseSetDigest, `${path}.releaseSetDigest`), issues);
   const releaseInputObject = collect(parseExactGitBlobPointer(record.releaseInputObject, `${path}.releaseInputObject`), issues);
+  const hostedApproval = parseHostedApprovalSelector(record.hostedApproval, `${path}.hostedApproval`, issues);
   const projections = parseProviderBindings(record.projections, `${path}.projections`, issues, canonicalize);
   const evidence = parseEvidenceHandles(record.evidence, `${path}.evidence`, issues, canonicalize);
   const evaluationProfile = collect(parseCanonicalId(record.evaluationProfile, `${path}.evaluationProfile`), issues);
@@ -340,6 +358,7 @@ function parseAcceptanceRequestBody(
     || policyIdentity === undefined
     || releaseSetDigest === undefined
     || releaseInputObject === undefined
+    || hostedApproval === undefined
     || projections === undefined
     || evidence === undefined
     || evaluationProfile === undefined
@@ -355,12 +374,39 @@ function parseAcceptanceRequestBody(
     policyIdentity,
     releaseSetDigest,
     releaseInputObject,
+    hostedApproval,
     projections,
     evidence,
     evaluationProfile,
     freshAgentTarget,
     acceptancePath,
   }));
+}
+
+function parseHostedApprovalSelector(
+  input: unknown,
+  path: string,
+  issues: PromotionIssue[],
+): HostedApprovalSelector | undefined {
+  const record = exactRecord(input, ["provider", "pullRequest"], path, issues);
+  if (record === undefined) return undefined;
+  if (record.provider !== "github") {
+    issues.push(issue(
+      "INVALID_CANONICAL_VALUE",
+      `${path}.provider`,
+      "Hosted approval provider must be github",
+    ));
+  }
+  const pullRequest = parseBoundedInteger(
+    record.pullRequest,
+    `${path}.pullRequest`,
+    1,
+    Number.MAX_SAFE_INTEGER,
+    issues,
+  );
+  return record.provider === "github" && pullRequest !== undefined
+    ? Object.freeze({ provider: "github", pullRequest })
+    : undefined;
 }
 
 function parseAcceptanceEvidenceBody(

@@ -12,7 +12,7 @@ done
 
 case "$endpoint" in
   repos/example/personal-rawr-hq/pulls/42/reviews?per_page=100)
-    printf '%s' '[[{"id":9001,"state":"APPROVED","commit_id":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","user":{"login":"repository-owner"}},{"id":9002,"state":"CHANGES_REQUESTED","commit_id":"ffffffffffffffffffffffffffffffffffffffff","user":{"login":"repository-owner"}},{"id":9003,"state":"COMMENTED","commit_id":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","user":{"login":"review-observer"}}]]'
+    printf '%s' '[[{"id":9001,"state":"APPROVED","commit_id":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","user":{"login":"repository-owner"}}],[{"id":9002,"state":"CHANGES_REQUESTED","commit_id":"ffffffffffffffffffffffffffffffffffffffff","user":{"login":"repository-owner"}},{"id":9003,"state":"COMMENTED","commit_id":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","user":{"login":"review-observer"}}]]'
     ;;
   repos/example/personal-rawr-hq/pulls/43/reviews?per_page=100)
     printf '%s' 'not-json'

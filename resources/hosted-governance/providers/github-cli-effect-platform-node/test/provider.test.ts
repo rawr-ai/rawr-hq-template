@@ -36,7 +36,7 @@ describe("GitHub CLI Effect Platform hosted-governance provider", () => {
     expectFailure(result, "Unavailable");
   });
 
-  it("executes one exact read-only argv and schema-decodes mechanical review observations", async () => {
+  it("preserves oldest-to-newest review order across paginated read-only results", async () => {
     const fixture = await createFixtureExecutable();
     const resource = makeGithubCliHostedGovernanceResource({ githubExecutable: fixture.executable });
 
@@ -47,6 +47,7 @@ describe("GitHub CLI Effect Platform hosted-governance provider", () => {
       value: {
         provider: "github",
         selector: selector(42),
+        order: "oldest-to-newest",
         observations: [
           {
             recordId: 9001,

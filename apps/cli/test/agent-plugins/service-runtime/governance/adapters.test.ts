@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { createReadOnlyGitAdapter } from "../../../../src/lib/agent-plugins/service-runtime/governance/adapters/git";
-import { createHostedApprovalAdapter } from "../../../../src/lib/agent-plugins/service-runtime/governance/adapters/hosted";
 import {
   MAIN_REF,
   REPOSITORY,
@@ -77,81 +76,5 @@ describe("read-only Git adapter", () => {
       fixture.landedInputObject.commit,
       fixture.currentInputObject.commit,
     )).toMatchObject({ ok: false });
-  });
-});
-
-describe("hosted-governance adapter", () => {
-  it("returns approval only when repository/ref/commit/tree/path/blob/outcome all match", async () => {
-    const fixture = promotionFixture();
-    const approval = fixture.approvalReader.observation;
-    if (approval === undefined) throw new Error("Expected fixture approval");
-    const adapter = createHostedApprovalAdapter({ readApproval: async () => approval });
-
-    const result = await adapter.read({
-      object: fixture.acceptanceObject,
-      approverIdentity: approval.approverIdentity,
-      outcome: "accepted",
-    });
-
-    expect(result).toMatchObject({ ok: true, observation: { decision: "approved" } });
-  });
-
-  it.each([
-    ["repository", { repositoryIdentity: "git:github.com/example/other" }],
-    ["ref", { ref: "refs/heads/other" }],
-    ["commit", { commit: oid("1") }],
-    ["tree", { tree: oid("2") }],
-    ["path", { path: "plugins/agents/.lifecycle/acceptances/other.json" }],
-    ["blob", { blob: oid("3") }],
-  ] as const)("rejects approval bound to another %s", async (_label, replacement) => {
-    const fixture = promotionFixture();
-    const approval = fixture.approvalReader.observation;
-    if (approval === undefined) throw new Error("Expected fixture approval");
-    const adapter = createHostedApprovalAdapter({
-      readApproval: async () => ({
-        ...approval,
-        object: { ...approval.object, ...replacement },
-      }),
-    });
-
-    const result = await adapter.read({
-      object: fixture.acceptanceObject,
-      approverIdentity: approval.approverIdentity,
-      outcome: "accepted",
-    });
-
-    expect(result).toMatchObject({ ok: false, failure: { code: "WrongObject" } });
-  });
-
-  it("rejects approval bound to another approver authority", async () => {
-    const fixture = promotionFixture();
-    const approval = fixture.approvalReader.observation;
-    if (approval === undefined) throw new Error("Expected fixture approval");
-    const adapter = createHostedApprovalAdapter({
-      readApproval: async () => ({ ...approval, approverIdentity: "other-authority" }),
-    });
-
-    const result = await adapter.read({
-      object: fixture.acceptanceObject,
-      approverIdentity: approval.approverIdentity,
-      outcome: "accepted",
-    });
-
-    expect(result).toMatchObject({ ok: false, failure: { code: "WrongObject" } });
-  });
-
-  it("rejects an approval whose outcome is not accepted", async () => {
-    const fixture = promotionFixture();
-    const approval = fixture.approvalReader.observation;
-    if (approval === undefined) throw new Error("Expected fixture approval");
-    const adapter = createHostedApprovalAdapter({
-      readApproval: async () => ({ ...approval, outcome: "rejected" }),
-    });
-
-    expect(await adapter.read({
-      object: fixture.acceptanceObject,
-      approverIdentity: approval.approverIdentity,
-      outcome: "accepted",
-    })).toMatchObject({ ok: false, failure: { code: "WrongObject" } });
   });
 });

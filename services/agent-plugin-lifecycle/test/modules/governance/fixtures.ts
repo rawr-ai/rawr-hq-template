@@ -36,9 +36,10 @@ import {
   type GitBlobSelection,
   type GitLocator,
   type GovernedAcceptanceObservation,
+  type HostedApprovalHistory,
+  type HostedApprovalHistoryQuery,
+  type HostedApprovalHistoryReader,
   type HostedApprovalObservation,
-  type HostedApprovalQuery,
-  type HostedApprovalReader,
   type LifecyclePolicy,
   type MechanicalEvidenceHandle,
   type MechanicalEvidenceObservation,
@@ -189,12 +190,13 @@ export function promotionFixture(): PromotionFixture {
     humanApproverIdentity: "repository-owner",
   }));
   const request = mustPromotion(createAcceptanceRequest({
-    schemaVersion: 1,
+    schemaVersion: 2,
     repositoryIdentity: REPOSITORY,
     contentAuthority: CONTENT_AUTHORITY,
     policyIdentity: policy.body.policyIdentity,
     releaseSetDigest,
     releaseInputObject: sourceInputObject,
+    hostedApproval: { provider: "github", pullRequest: 42 },
     projections: [projections[0], projections[1]],
     evidence: [handles[1], handles[0]],
     evaluationProfile: "fresh-agent-v1",
@@ -264,12 +266,20 @@ export function promotionFixture(): PromotionFixture {
   git.changedPaths = [PROMOTION_PATH, CURRENT_MAIN_PATH];
   const evidenceReader = new MemoryEvidenceReader(observations);
   const approvalReader = new MemoryApprovalReader({
-    provider: "graphite",
-    recordId: mustCanonicalId("graphite-review-42"),
-    object: acceptanceObject,
-    approverIdentity: mustCanonicalId("repository-owner"),
-    decision: "approved",
-    outcome: "accepted",
+    provider: "github",
+    selector: {
+      provider: "github",
+      repositoryIdentity: REPOSITORY,
+      pullRequest: 42,
+      revision: acceptanceObject.commit,
+    },
+    order: "oldest-to-newest",
+    observations: [{
+      recordId: 9001,
+      state: "APPROVED",
+      revision: acceptanceObject.commit,
+      actorIdentity: "repository-owner",
+    }],
   });
   return {
     locator,
@@ -355,27 +365,39 @@ export class MemoryEvidenceReader implements MechanicalEvidenceReader {
   };
 }
 
-export class MemoryApprovalReader implements HostedApprovalReader {
+export class MemoryApprovalReader implements HostedApprovalHistoryReader {
   calls = 0;
-  queries: HostedApprovalQuery[] = [];
-  observation: HostedApprovalObservation | undefined;
+  queries: HostedApprovalHistoryQuery[] = [];
+  history: HostedApprovalHistory | undefined;
 
-  constructor(observation: HostedApprovalObservation | undefined) {
-    this.observation = observation;
+  constructor(history: HostedApprovalHistory | undefined) {
+    this.history = history;
   }
 
-  read = async (query: HostedApprovalQuery) => {
+  read = async (query: HostedApprovalHistoryQuery) => {
     this.calls += 1;
     this.queries.push(query);
-    return this.observation === undefined
-      ? { ok: false as const, failure: { code: "MissingApproval" as const, message: "missing fixture approval" } }
-      : { ok: true as const, observation: this.observation };
+    return this.history === undefined
+      ? { ok: false as const, failure: { code: "UnavailableApproval" as const, message: "missing fixture approval history" } }
+      : { ok: true as const, history: this.history };
   };
 }
 
 export function governedObservation(fixture: PromotionFixture): GovernedAcceptanceObservation {
-  const approval = fixture.approvalReader.observation;
-  if (approval === undefined) throw new Error("Fixture approval missing");
+  const history = fixture.approvalReader.history;
+  const review = history?.observations[0];
+  if (history === undefined || review === undefined) throw new Error("Fixture approval missing");
+  const recordId = mustCanonicalId(`github-review-${review.recordId}`);
+  const approverIdentity = mustCanonicalId(review.actorIdentity);
+  const approval: HostedApprovalObservation = {
+    provider: "github",
+    pullRequest: history.selector.pullRequest,
+    recordId,
+    object: fixture.acceptanceObject,
+    approverIdentity,
+    decision: "approved",
+    outcome: "accepted",
+  };
   return {
     policy: fixture.policy,
     request: fixture.request,

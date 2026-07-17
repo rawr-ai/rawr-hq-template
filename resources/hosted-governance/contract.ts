@@ -28,6 +28,8 @@ export interface HostedReviewObservation {
 export interface HostedApprovalHistory {
   readonly provider: HostedGovernanceProvider;
   readonly selector: HostedApprovalSelector;
+  /** GitHub's List Reviews order, preserved across paginated pages. */
+  readonly order: "oldest-to-newest";
   readonly observations: readonly HostedReviewObservation[];
 }
 

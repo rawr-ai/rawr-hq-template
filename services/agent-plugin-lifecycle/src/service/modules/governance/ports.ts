@@ -1,13 +1,13 @@
 import type {
   ExactGitReader,
-  HostedApprovalReader,
+  HostedApprovalHistoryReader,
   MechanicalEvidenceReader,
 } from "./internal/ports";
 
 export interface GovernanceLifecycleRuntime {
   readonly git: ExactGitReader;
   readonly evidence: MechanicalEvidenceReader;
-  readonly approvals: HostedApprovalReader;
+  readonly approvals: HostedApprovalHistoryReader;
 }
 
 export type {
@@ -18,10 +18,13 @@ export type {
   GitReadFailure,
   GitReadFailureCode,
   HostedApprovalObservation,
-  HostedApprovalQuery,
-  HostedApprovalReadResult,
-  HostedApprovalReader,
+  HostedApprovalHistory,
+  HostedApprovalHistoryQuery,
+  HostedApprovalHistoryReadResult,
+  HostedApprovalHistoryReader,
   HostedGovernanceProvider,
+  HostedReviewObservation,
+  HostedReviewState,
   MechanicalEvidenceReadResult,
   MechanicalEvidenceReader,
   RepositoryInspection,

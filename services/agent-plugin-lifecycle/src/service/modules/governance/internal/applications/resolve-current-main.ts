@@ -23,7 +23,7 @@ import {
 import type { ExactGitBlobObservation, GitLocator } from "../domain/git";
 import type {
   ExactGitReader,
-  HostedApprovalReader,
+  HostedApprovalHistoryReader,
   MechanicalEvidenceReader,
   RepositoryInspection,
 } from "../ports/index";
@@ -58,7 +58,7 @@ export type CurrentMainResolution =
 export interface ResolveCurrentMainDependencies {
   readonly git: ExactGitReader;
   readonly evidence: MechanicalEvidenceReader;
-  readonly approvals: HostedApprovalReader;
+  readonly approvals: HostedApprovalHistoryReader;
 }
 
 export function createResolveCurrentMain(

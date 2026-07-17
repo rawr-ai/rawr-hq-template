@@ -83,7 +83,7 @@ describe("fixed current-main resolution (B14)", () => {
 
   it("blocks a valid-looking channel when hosted acceptance authority is unavailable", async () => {
     const fixture = promotionFixture();
-    fixture.approvalReader.observation = undefined;
+    fixture.approvalReader.history = undefined;
     const result = await resolve(fixture);
 
     expect(result.kind).toBe("BLOCKED_ACCEPTANCE_AUTHORITY");

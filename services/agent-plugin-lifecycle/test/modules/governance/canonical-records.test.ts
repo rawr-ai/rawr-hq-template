@@ -69,6 +69,46 @@ describe("bounded canonical promotion records", () => {
     if (!oversized.ok) expect(oversized.issues.some((entry) => entry.code === "COUNT_LIMIT_EXCEEDED")).toBe(true);
   });
 
+  it("persists one explicit GitHub pull request without admitting ambient revision inference", () => {
+    const fixture = promotionFixture();
+    expect(fixture.request.body.hostedApproval).toEqual({
+      provider: "github",
+      pullRequest: 42,
+    });
+    const anotherPullRequest = createAcceptanceRequest({
+      ...fixture.request.body,
+      hostedApproval: { provider: "github", pullRequest: 43 },
+    });
+    expect(anotherPullRequest.ok).toBe(true);
+    if (anotherPullRequest.ok) {
+      expect(anotherPullRequest.value.requestDigest).not.toBe(fixture.request.requestDigest);
+    }
+    expect(createAcceptanceRequest({
+      ...fixture.request.body,
+      hostedApproval: { provider: "graphite", pullRequest: 42 },
+    }).ok).toBe(false);
+    expect(createAcceptanceRequest({
+      ...fixture.request.body,
+      hostedApproval: { provider: "github", pullRequest: 0 },
+    }).ok).toBe(false);
+    expect(createAcceptanceRequest({
+      ...fixture.request.body,
+      hostedApproval: {
+        provider: "github",
+        pullRequest: 42,
+        revision: fixture.acceptanceObject.commit,
+      },
+    }).ok).toBe(false);
+  });
+
+  it("rejects the superseded acceptance-request v1 envelope", () => {
+    const fixture = promotionFixture();
+    expect(createAcceptanceRequest({
+      ...fixture.request.body,
+      schemaVersion: 1,
+    }).ok).toBe(false);
+  });
+
   it("rejects altered and noncanonical request bytes", () => {
     const fixture = promotionFixture();
     const wire = JSON.parse(decoder.decode(canonicalSerializeAcceptanceRequest(fixture.request))) as {

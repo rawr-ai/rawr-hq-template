@@ -64,6 +64,7 @@ export function promotionFixture() {
   if (!recordId.ok || !approver.ok) throw new Error("Fixture approval identity is invalid");
   const observation: HostedApprovalObservation = {
     provider: "github",
+    pullRequest: 42,
     recordId: recordId.value,
     object: acceptanceObject,
     approverIdentity: approver.value,
