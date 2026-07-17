@@ -5,6 +5,7 @@ import * as buildSurface from "../../../../src/lib/agent-plugins/service-runtime
 describe("release runtime adapter surface", () => {
   it("exports one closed Git content reader and no arbitrary command-runner constructor", () => {
     expect(buildSurface.createGitContentWorkspaceSnapshotReader).toBeTypeOf("function");
+    expect(buildSurface.MECHANICAL_EVIDENCE_PROTOCOL_VERSION).toBe(1);
     for (const forbidden of [
       "createGitCommandRunner",
       "createGitObjectSnapshotReader",
