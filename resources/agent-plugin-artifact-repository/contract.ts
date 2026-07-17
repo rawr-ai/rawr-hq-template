@@ -2,6 +2,13 @@ import type { Effect } from "effect";
 
 export type ArtifactFileMode = 0o444 | 0o644 | 0o755;
 
+declare const artifactTreeLocationBrand: unique symbol;
+
+/** Provider-issued canonical location for one fully admitted artifact tree. */
+export type ArtifactTreeLocation = string & {
+  readonly [artifactTreeLocationBrand]: "ArtifactTreeLocation";
+};
+
 /** Mechanical address inside one explicit immutable artifact repository. */
 export interface ArtifactObjectAddress {
   readonly repositoryRoot: string;
@@ -44,6 +51,19 @@ export interface ArtifactRepositoryIssue {
 export type ArtifactTreeObservation =
   | Readonly<{ kind: "Missing"; address: ArtifactObjectAddress }>
   | Readonly<{ kind: "Present"; snapshot: ArtifactTreeSnapshot }>
+  | Readonly<{
+    kind: "Mismatch";
+    address: ArtifactObjectAddress;
+    issues: readonly [ArtifactRepositoryIssue, ...ArtifactRepositoryIssue[]];
+  }>;
+
+export type ArtifactTreeLocationObservation =
+  | Readonly<{ kind: "Missing"; address: ArtifactObjectAddress }>
+  | Readonly<{
+    kind: "Present";
+    address: ArtifactObjectAddress;
+    location: ArtifactTreeLocation;
+  }>
   | Readonly<{
     kind: "Mismatch";
     address: ArtifactObjectAddress;
@@ -105,7 +125,13 @@ export type ArtifactRepositoryFailureReason =
 
 export interface ArtifactRepositoryFailure {
   readonly _tag: "ArtifactRepositoryFailure";
-  readonly operation: "read-tree" | "publish-tree" | "read-evidence" | "publish-evidence" | "cleanup";
+  readonly operation:
+    | "locate-tree"
+    | "read-tree"
+    | "publish-tree"
+    | "read-evidence"
+    | "publish-evidence"
+    | "cleanup";
   readonly reason: ArtifactRepositoryFailureReason;
   readonly path?: string;
   readonly detail: string;
@@ -124,6 +150,15 @@ export interface ArtifactPublicationControl {
 }
 
 export interface ArtifactRepositoryResource<R = never> {
+  /**
+   * Locates a tree only after the same bounded mechanical admission as readTree.
+   * The opaque location is an implementation handoff, not semantic artifact state.
+   */
+  readonly locateTree: (input: Readonly<{
+    address: ArtifactObjectAddress;
+    limits: ArtifactReadLimits;
+  }>) => Effect.Effect<ArtifactTreeLocationObservation, ArtifactRepositoryFailure, R>;
+
   readonly readTree: (input: Readonly<{
     address: ArtifactObjectAddress;
     limits: ArtifactReadLimits;

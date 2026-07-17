@@ -1,4 +1,4 @@
-import { lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, rmdir } from "node:fs/promises";
+import { link, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, rmdir, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -36,6 +36,210 @@ afterEach(async () => {
 });
 
 describe("Effect Platform Node artifact repository provider", () => {
+  test("locates one fully admitted tree at its exact canonical destination", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "artifact-location");
+    const resource = makeArtifactRepositoryResource();
+    unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries: releaseEntries("location"),
+      limits: LIMITS,
+    })));
+    const destination = path.join(address.repositoryRoot, ...address.namespace, address.objectId);
+
+    const located = unwrap(await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS })));
+
+    expect(located.kind).toBe("Present");
+    if (located.kind === "Present") {
+      expect(located.address).toEqual(address);
+      expect(located.location).toBe(await realpath(destination));
+    }
+  });
+
+  test("reports a missing tree without creating repository state", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "artifact-missing-location");
+    const resource = makeArtifactRepositoryResource();
+
+    const located = unwrap(await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS })));
+
+    expect(located).toEqual({ kind: "Missing", address });
+    expect(await Bun.file(address.repositoryRoot).exists()).toBe(false);
+  });
+
+  test("refuses aliased and hard-linked trees as locations", async () => {
+    const parent = await createFixture();
+    const repositoryRoot = path.join(parent, "repository");
+    const resource = makeArtifactRepositoryResource();
+
+    const aliasedAddress = artifactAddress(repositoryRoot, "artifact-aliased-location");
+    unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address: aliasedAddress,
+      entries: releaseEntries("aliased-location"),
+      limits: LIMITS,
+    })));
+    const aliasedDestination = path.join(repositoryRoot, ...aliasedAddress.namespace, aliasedAddress.objectId);
+    const preserved = `${aliasedDestination}.preserved`;
+    await rename(aliasedDestination, preserved);
+    await symlink(preserved, aliasedDestination, "dir");
+
+    const aliased = unwrap(await runNodeArtifactRepository(resource.locateTree({
+      address: aliasedAddress,
+      limits: LIMITS,
+    })));
+    expect(aliased).toMatchObject({
+      kind: "Mismatch",
+      issues: [{ code: "AliasedEntry" }],
+    });
+
+    const linkedAddress = artifactAddress(repositoryRoot, "artifact-linked-location");
+    unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address: linkedAddress,
+      entries: releaseEntries("linked-location"),
+      limits: LIMITS,
+    })));
+    const linkedDestination = path.join(repositoryRoot, ...linkedAddress.namespace, linkedAddress.objectId);
+    await link(
+      path.join(linkedDestination, "release.json"),
+      path.join(linkedDestination, "release-copy.json"),
+    );
+
+    const linked = unwrap(await runNodeArtifactRepository(resource.locateTree({
+      address: linkedAddress,
+      limits: LIMITS,
+    })));
+    expect(linked.kind).toBe("Mismatch");
+    if (linked.kind === "Mismatch") {
+      expect(linked.issues.some((candidate) =>
+        candidate.code === "SharedInode" && candidate.path === "release-copy.json")).toBe(true);
+    }
+  });
+
+  test("reports identity drift instead of issuing a location", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "artifact-drifting-location");
+    const resource = makeArtifactRepositoryResource();
+    unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries: releaseEntries("drifting-location"),
+      limits: LIMITS,
+    })));
+    const target = path.join(address.repositoryRoot, ...address.namespace, address.objectId, "payload", "tool.sh");
+    let targetStats = 0;
+
+    const attempted = await runWithFileSystem(resource.locateTree({ address, limits: LIMITS }), (base) =>
+      fileSystemProxy(base, {
+        stat(candidate) {
+          return base.stat(candidate).pipe(Effect.map((info) =>
+            candidate === target && ++targetStats === 2
+              ? Object.freeze({ ...info, dev: info.dev + 1 })
+              : info));
+        },
+      }));
+
+    expect(attempted._tag).toBe("Right");
+    if (attempted._tag === "Left") throw attempted.left;
+    expect(attempted.right).toMatchObject({
+      kind: "Mismatch",
+      issues: [{ code: "IdentityChanged", path: "payload/tool.sh" }],
+    });
+  });
+
+  test("reports nested directory substitution instead of issuing a location", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "artifact-substituted-location");
+    const resource = makeArtifactRepositoryResource();
+    unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries: releaseEntries("substituted-location"),
+      limits: LIMITS,
+    })));
+    const target = path.join(address.repositoryRoot, ...address.namespace, address.objectId, "payload");
+    const preserved = `${target}.preserved`;
+    let substituted = false;
+
+    const attempted = await runWithFileSystem(resource.locateTree({ address, limits: LIMITS }), (base) =>
+      fileSystemProxy(base, {
+        readDirectory(candidate) {
+          if (candidate !== target || substituted) return base.readDirectory(candidate);
+          substituted = true;
+          return Effect.promise(async () => {
+            await rename(target, preserved);
+            await mkdir(target);
+          }).pipe(Effect.zipRight(base.readDirectory(candidate)));
+        },
+      }));
+
+    expect(attempted._tag).toBe("Right");
+    if (attempted._tag === "Left") throw attempted.left;
+    expect(attempted.right).toMatchObject({
+      kind: "Mismatch",
+      issues: [{ code: "IdentityChanged", path: "payload" }],
+    });
+    expect((await lstat(target)).isDirectory()).toBe(true);
+    expect((await lstat(preserved)).isDirectory()).toBe(true);
+  });
+
+  test("reports artifact root substitution instead of issuing a location", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "artifact-substituted-root");
+    const resource = makeArtifactRepositoryResource();
+    unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries: releaseEntries("substituted-root"),
+      limits: LIMITS,
+    })));
+    const target = path.join(address.repositoryRoot, ...address.namespace, address.objectId);
+    const preserved = `${target}.preserved`;
+    let substituted = false;
+
+    const attempted = await runWithFileSystem(resource.locateTree({ address, limits: LIMITS }), (base) =>
+      fileSystemProxy(base, {
+        readDirectory(candidate) {
+          if (candidate !== target || substituted) return base.readDirectory(candidate);
+          substituted = true;
+          return Effect.promise(async () => {
+            await rename(target, preserved);
+            await mkdir(target);
+          }).pipe(Effect.zipRight(base.readDirectory(candidate)));
+        },
+      }));
+
+    expect(attempted._tag).toBe("Right");
+    if (attempted._tag === "Left") throw attempted.left;
+    expect(attempted.right).toMatchObject({
+      kind: "Mismatch",
+      issues: [{ code: "IdentityChanged" }],
+    });
+    expect((await lstat(target)).isDirectory()).toBe(true);
+    expect((await lstat(preserved)).isDirectory()).toBe(true);
+  });
+
+  test("repeated location is read-only and preserves tree metadata", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "artifact-location-repeat");
+    const resource = makeArtifactRepositoryResource();
+    unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries: releaseEntries("location-repeat"),
+      limits: LIMITS,
+    })));
+    const destination = path.join(address.repositoryRoot, ...address.namespace, address.objectId);
+    const payload = path.join(destination, "payload", "tool.sh");
+    const beforeTree = await lstat(destination, { bigint: true });
+    const beforePayload = await lstat(payload, { bigint: true });
+
+    const first = unwrap(await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS })));
+    const second = unwrap(await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS })));
+    const afterTree = await lstat(destination, { bigint: true });
+    const afterPayload = await lstat(payload, { bigint: true });
+
+    expect(first.kind).toBe("Present");
+    expect(second).toEqual(first);
+    expect(stableMetadata(afterTree)).toEqual(stableMetadata(beforeTree));
+    expect(stableMetadata(afterPayload)).toEqual(stableMetadata(beforePayload));
+  });
+
   test("publishes and reads one contained immutable tree", async () => {
     const parent = await createFixture();
     const address = artifactAddress(path.join(parent, "repository"), "artifact-a");
@@ -396,6 +600,16 @@ function unwrap<A>(result: NodeArtifactRepositoryResult<A>): A {
 function text(bytes: Uint8Array | undefined): string {
   if (bytes === undefined) throw new Error("Expected bytes");
   return new TextDecoder().decode(bytes);
+}
+
+function stableMetadata(info: Awaited<ReturnType<typeof lstat>>): object {
+  return Object.freeze({
+    dev: info.dev,
+    ino: info.ino,
+    mode: info.mode,
+    mtimeMs: info.mtimeMs,
+    ctimeMs: info.ctimeMs,
+  });
 }
 
 async function createFixture(): Promise<string> {

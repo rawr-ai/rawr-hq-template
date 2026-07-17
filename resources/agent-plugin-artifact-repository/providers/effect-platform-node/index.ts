@@ -16,6 +16,8 @@ import type {
   ArtifactRepositoryResource,
   ArtifactTreeDirectoryEntry,
   ArtifactTreeEntry,
+  ArtifactTreeLocation,
+  ArtifactTreeLocationObservation,
   ArtifactTreeObservation,
   ArtifactTreeSnapshot,
 } from "@rawr/resource-agent-plugin-artifact-repository";
@@ -80,6 +82,17 @@ type NoReplaceResult =
 export function makeArtifactRepositoryResource(
   options: EffectPlatformNodeArtifactRepositoryOptions = {},
 ): ArtifactRepositoryResource<ProviderRequirements> {
+  const locateTree = Effect.fn("artifactRepository.locateTree")(function* (
+    input: Readonly<{ address: ArtifactObjectAddress; limits: ArtifactReadLimits }>,
+  ) {
+    const fs = yield* FileSystem.FileSystem;
+    const paths = yield* Path.Path;
+    const resolved = yield* checked("locate-tree", () => resolveAddress(paths, input.address, "locate-tree"));
+    yield* checked("locate-tree", () => validateLimits(input.limits, "locate-tree"));
+    const observed = yield* readTreeAtAddress(fs, paths, resolved, input.limits, "locate-tree");
+    return treeLocationObservation(observed, resolved.destination);
+  });
+
   const readTree = Effect.fn("artifactRepository.readTree")(function* (
     input: Readonly<{ address: ArtifactObjectAddress; limits: ArtifactReadLimits }>,
   ) {
@@ -170,7 +183,7 @@ export function makeArtifactRepositoryResource(
     );
   });
 
-  return Object.freeze({ readTree, publishTree, readEvidence, publishEvidence });
+  return Object.freeze({ locateTree, readTree, publishTree, readEvidence, publishEvidence });
 }
 
 export const artifactRepositoryResource = makeArtifactRepositoryResource();
@@ -357,6 +370,7 @@ function inspectTree(
     const issues: ArtifactRepositoryIssue[] = [];
     const budget: ReadBudget = { entries: 0, bytes: 0, limits };
     yield* walkTree(fs, paths, root, root, directories, entries, issues, budget, operation);
+    yield* revalidateInspectedDirectory(fs, root, rootInfo, undefined, issues, operation);
     directories.sort((left, right) => compareDirectoryPath(left.path, right.path));
     entries.sort((left, right) => compareText(left.path, right.path));
     return Object.freeze({
@@ -397,6 +411,7 @@ function walkTree(
       if (before.type === "Directory") {
         directories.push(Object.freeze({ path: relative, mode: before.mode & 0o777 }));
         yield* walkTree(fs, paths, root, child, directories, entries, issues, budget, operation);
+        yield* revalidateInspectedDirectory(fs, child, before, relative, issues, operation);
         continue;
       }
       if (before.type !== "File") {
@@ -431,6 +446,28 @@ function walkTree(
         continue;
       }
       entries.push(Object.freeze({ path: relative, mode, bytes: new Uint8Array(bytes) }));
+    }
+  });
+}
+
+function revalidateInspectedDirectory(
+  fs: FileSystem.FileSystem,
+  directory: string,
+  before: FileSystem.File.Info,
+  relative: string | undefined,
+  issues: ArtifactRepositoryIssue[],
+  operation: ArtifactRepositoryFailure["operation"],
+): Effect.Effect<void, ArtifactRepositoryFailure> {
+  return Effect.gen(function* () {
+    const canonical = yield* fs.realPath(directory).pipe(mapPlatform(operation, directory));
+    const after = yield* fs.stat(directory).pipe(mapPlatform(operation, directory));
+    if (
+      canonical !== directory
+      || after.type !== "Directory"
+      || before.dev !== after.dev
+      || !Equal.equals(before.ino, after.ino)
+    ) {
+      issues.push(issue("IdentityChanged", relative, "Artifact directory changed while it was read"));
     }
   });
 }
@@ -1099,6 +1136,18 @@ function compareText(left: string, right: string): number {
 
 function missing(address: ArtifactObjectAddress): ArtifactTreeObservation {
   return Object.freeze({ kind: "Missing", address });
+}
+
+function treeLocationObservation(
+  observed: ArtifactTreeObservation,
+  canonicalLocation: string,
+): ArtifactTreeLocationObservation {
+  if (observed.kind !== "Present") return observed;
+  return Object.freeze({
+    kind: "Present",
+    address: observed.snapshot.address,
+    location: canonicalLocation as ArtifactTreeLocation,
+  });
 }
 
 function mismatch(
