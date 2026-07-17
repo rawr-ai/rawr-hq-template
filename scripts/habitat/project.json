@@ -1,0 +1,22 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@rawr/habitat-consumer",
+  "root": "scripts/habitat",
+  "sourceRoot": "scripts/habitat",
+  "projectType": "application",
+  "tags": ["type:tool", "role:structural-check-consumer"],
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx eslint scripts/habitat --ext .mjs"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test scripts/habitat/provision.test.mjs"
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "$comment": "RAWR-owned rule identity and owner discovery for the standalone Habitat check edge.",
+  "schemaVersion": 2,
+  "ownerRoots": {
+    "@rawr/agent-plugin-lifecycle": "services/agent-plugin-lifecycle"
+  }
+}

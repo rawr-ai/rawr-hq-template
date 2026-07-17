@@ -1,0 +1,42 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "curated-agent-command-namespace"
+root = "apps/cli/src/commands/agent"
+kind = "directory"
+mode = "closed"
+required = [
+  "plugins",
+]
+allowed = []
+
+[[scopes]]
+name = "curated-agent-plugin-command-channel"
+root = "apps/cli/src/commands/agent/plugins"
+kind = "directory"
+mode = "closed"
+required = [
+  "*.ts",
+  "vendors",
+]
+allowed = []
+
+[[scopes]]
+name = "curated-agent-plugin-vendor-command-channel"
+root = "apps/cli/src/commands/agent/plugins/vendors"
+kind = "directory"
+mode = "closed"
+required = [
+  "*.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "external-oclif-extension-command-channel"
+root = "apps/cli/src/commands/plugins"
+kind = "directory"
+mode = "closed"
+required = [
+  "*.ts",
+]
+allowed = []

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "id": "preserve_agent_plugin_lifecycle_dependency_direction",
+  "title": "Preserve Agent Plugin Lifecycle Dependency Direction",
+  "placement": {
+    "niche": "rawr/agent-plugin-lifecycle",
+    "blueprint": "_self",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/agent-plugin-lifecycle",
+  "lane": "enforced",
+  "forbids": "service imports of concrete resource providers or controller implementation, and CLI imports of lifecycle service internals",
+  "why": "The service owns lifecycle semantics behind resource contracts. Concrete providers and controller composition stay at the CLI edge, which consumes only declared lifecycle package exports.",
+  "remediate": "Depend on a resource contract from the service, bind its provider at the CLI edge, and import lifecycle behavior through a declared public package subpath.",
+  "message": "Lifecycle dependencies must point from controller composition through public service ports to resource contracts.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "services/agent-plugin-lifecycle/src/**/*.ts",
+        "apps/cli/src/**/*.ts"
+      ]
+    }
+  ],
+  "scanRoots": [
+    "services/agent-plugin-lifecycle/src",
+    "apps/cli/src"
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/rawr/agent-plugin-lifecycle/rules/preserve_agent_plugin_lifecycle_dependency_direction/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/rawr/agent-plugin-lifecycle/rules/preserve_agent_plugin_lifecycle_dependency_direction/pattern.md"
+    },
+    "patternName": "preserve_agent_plugin_lifecycle_dependency_direction"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 2,
+  "id": "require_agent_plugin_command_channel_topology",
+  "title": "Require Agent Plugin Command Channel Topology",
+  "placement": {
+    "niche": "rawr/agent-plugin-lifecycle",
+    "blueprint": "_self",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/agent-plugin-lifecycle",
+  "lane": "enforced",
+  "forbids": "a second curated command namespace, nested command aliases, or external-extension commands under the curated channel",
+  "why": "Command authority is determined by its namespace axis: curated lifecycle is under rawr agent plugins, while external Oclif extension management is under rawr plugins.",
+  "remediate": "Place curated lifecycle commands under agent/plugins, vendor commands under agent/plugins/vendors, and external extension commands under plugins.",
+  "message": "Plugin commands must remain in their closed curated or external channel.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "apps/cli/src/commands/agent/**",
+        "apps/cli/src/commands/plugins/**"
+      ]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/rawr/agent-plugin-lifecycle/rules/require_agent_plugin_command_channel_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/rawr/agent-plugin-lifecycle/rules/require_agent_plugin_command_channel_topology/structure.toml"
+    }
+  }
+}
