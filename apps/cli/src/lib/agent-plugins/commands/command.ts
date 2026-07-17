@@ -40,12 +40,12 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
       this.rejectInput("--dry-run and --yes are not part of the closed lifecycle procedure contract", baseFlags);
       return;
     }
+    let exitCode: 0 | 1;
     try {
       const binding = parseControllerProjectionBinding(flags, requirements);
       const result = await projectLifecycleOperation(request, binding);
-      const exitCode = lifecycleResultExitCode(request.operation, result);
+      exitCode = lifecycleResultExitCode(request.operation, result);
       this.outputResult(this.ok({ operation: request.operation, result }), { flags: baseFlags });
-      if (exitCode !== 0) this.exit(exitCode);
     } catch (error) {
       if (error instanceof LifecycleInputError || error instanceof LifecycleAuthorityBindingError) {
         this.rejectInput(error.message, baseFlags, error.code);
@@ -58,6 +58,7 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
       }), { flags: baseFlags });
       this.exit(1);
     }
+    if (exitCode !== 0) this.exit(exitCode);
   }
 
   protected rejectInput(

@@ -26,14 +26,14 @@ export default class AgentPluginsUndo extends RawrCommand {
       this.exit(2);
       return;
     }
+    let exitCode: 0 | 1;
     try {
       const binding = parseControllerProjectionBinding(flags, {
         admittedProviders: ["claude", "codex"],
       });
       const result = await invokeAgentPluginUndo(binding);
       this.outputResult(this.ok({ operation: "controller.undo", result }), { flags: baseFlags });
-      const exitCode = undoResultExitCode(result);
-      if (exitCode !== 0) this.exit(exitCode);
+      exitCode = undoResultExitCode(result);
     } catch (error) {
       const binding = error instanceof LifecycleAuthorityBindingError;
       this.outputResult(this.fail(
@@ -45,5 +45,6 @@ export default class AgentPluginsUndo extends RawrCommand {
       ), { flags: baseFlags });
       this.exit(binding ? 2 : 1);
     }
+    if (exitCode !== 0) this.exit(exitCode);
   }
 }

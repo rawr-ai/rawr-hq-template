@@ -1,5 +1,7 @@
 import { spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -233,6 +235,36 @@ describe("qualified lifecycle command boundary", () => {
       input: parseStatusRequest(providerWorkspace()),
     });
     expect(writes).toBe(0);
+  });
+
+  it("emits one typed result when a lifecycle procedure exits nonzero", () => {
+    const missingWorkspace = path.join(tmpdir(), `rawr-c5-missing-content-${randomUUID()}`);
+    const result = runRawr([
+      "agent", "plugins", "check",
+      "--content-workspace", missingWorkspace,
+      "--repository-identity", "github:rawr/hq",
+      "--content-authority", "rawr-hq",
+      "--remote-name", "origin",
+      "--remote-url", "https://example.invalid/rawr-hq.git",
+      "--ref", "refs/heads/main",
+      "--source-commit", hex40,
+      "--source-tree", hex64,
+      "--release-input", "records/release-input.json",
+      "--plugin-root", "plugins/agents",
+      "--plugin", "alpha",
+      "--git-executable", "/usr/bin/git",
+      "--json",
+    ]);
+
+    expect(result.status, result.stderr).toBe(1);
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      ok: true,
+      data: {
+        operation: "releases.check",
+        result: { kind: "IneligibleReport" },
+      },
+    });
+    expect(result.stdout).not.toContain("LIFECYCLE_PROCEDURE_FAILED");
   });
 });
 
