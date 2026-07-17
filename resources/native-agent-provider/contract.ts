@@ -1,22 +1,25 @@
 import type { Effect } from "effect";
 
+import type { ArtifactTreeLocation } from "@rawr/resource-agent-plugin-artifact-repository";
+
 export type NativeAgentProviderId = "claude" | "codex";
 
 export type NativeAgentProviderOperation =
   | "acquire"
   | "probe"
   | "marketplace-list"
+  | "marketplace-read"
   | "marketplace-add"
   | "marketplace-remove"
   | "plugin-list"
+  | "plugin-read"
   | "plugin-install"
   | "plugin-enable"
   | "plugin-disable"
   | "plugin-remove"
   | "app-server-inspect"
   | "config-read"
-  | "config-write"
-  | "package-read";
+  | "config-write";
 
 export type NativeAgentProviderFailureReason =
   | "InvalidInput"
@@ -70,7 +73,6 @@ export interface NativeProviderPackageEntry {
 }
 
 export interface NativeProviderPackageObservation {
-  readonly root: string;
   readonly entries: readonly NativeProviderPackageEntry[];
 }
 
@@ -79,14 +81,17 @@ export interface NativeProviderSessionInput {
   readonly home: string;
 }
 
-export interface NativeProviderPackageReadInput {
-  readonly root: string;
+export interface NativeProviderPackageReadLimits {
   readonly maxEntries: number;
   readonly maxBytes: number;
 }
 
-export interface NativeProviderMarketplaceSourceInput {
-  readonly sourcePath: string;
+export interface NativeProviderMarketplaceReadInput extends NativeProviderPackageReadLimits {
+  readonly identity: string;
+}
+
+export interface NativeProviderPluginReadInput extends NativeProviderPackageReadLimits {
+  readonly selector: string;
 }
 
 export interface NativeProviderMarketplaceIdentityInput {
@@ -104,14 +109,17 @@ export interface NativeAgentProviderSessionBase {
   readonly probe: () => Effect.Effect<NativeProviderCapabilityProbe, NativeAgentProviderFailure>;
   readonly listMarketplaces: () => Effect.Effect<NativeProviderJsonObservation, NativeAgentProviderFailure>;
   readonly addMarketplace: (
-    input: NativeProviderMarketplaceSourceInput,
+    source: ArtifactTreeLocation,
   ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
+  readonly readMarketplace: (
+    input: NativeProviderMarketplaceReadInput,
+  ) => Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure>;
   readonly removeMarketplace: (
     input: NativeProviderMarketplaceIdentityInput,
   ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
   readonly listPlugins: () => Effect.Effect<NativeProviderJsonObservation, NativeAgentProviderFailure>;
-  readonly readPackage: (
-    input: NativeProviderPackageReadInput,
+  readonly readPlugin: (
+    input: NativeProviderPluginReadInput,
   ) => Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure>;
 }
 
@@ -131,7 +139,7 @@ export interface CodexNativeAgentProviderSession extends NativeAgentProviderSess
   readonly inspectAppServer: () => Effect.Effect<CodexAppServerObservation, NativeAgentProviderFailure>;
   readonly readConfiguration: () => Effect.Effect<NativeProviderJsonValue, NativeAgentProviderFailure>;
   readonly setMarketplaceSource: (
-    input: Readonly<{ identity: string; sourcePath: string }>,
+    input: Readonly<{ identity: string; source: ArtifactTreeLocation }>,
   ) => Effect.Effect<void, NativeAgentProviderFailure>;
   readonly setPluginEnabled: (
     input: Readonly<{ selector: string; enabled: boolean }>,

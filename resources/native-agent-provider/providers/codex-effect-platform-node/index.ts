@@ -82,19 +82,37 @@ export const codexEffectPlatformNodeProvider: NativeAgentProviderResource<
         }) satisfies NativeProviderCapabilityProbe;
       });
 
+      const listMarketplaces: CodexNativeAgentProviderSession["listMarketplaces"] = () =>
+        kernel.run("marketplace-list", [
+          "plugin",
+          "marketplace",
+          "list",
+          "--json",
+        ]).pipe(Effect.flatMap((result) => parseJsonObservation("codex", "marketplace-list", result)));
+
+      const listPlugins: CodexNativeAgentProviderSession["listPlugins"] = () =>
+        kernel.run("plugin-list", [
+          "plugin",
+          "list",
+          "--available",
+          "--json",
+        ]).pipe(Effect.flatMap((result) => parseJsonObservation("codex", "plugin-list", result)));
+
       return Object.freeze({
         provider: "codex",
         executablePath: kernel.executablePath,
         home: kernel.home,
         probe,
-        listMarketplaces: () => kernel.run("marketplace-list", [
-          "plugin",
-          "marketplace",
-          "list",
-          "--json",
-        ]).pipe(Effect.flatMap((result) => parseJsonObservation("codex", "marketplace-list", result))),
-        addMarketplace: (request: Parameters<CodexNativeAgentProviderSession["addMarketplace"]>[0]) =>
-          kernel.requireCanonicalDirectory("marketplace-add", request.sourcePath).pipe(
+        listMarketplaces,
+        readMarketplace: (request: Parameters<CodexNativeAgentProviderSession["readMarketplace"]>[0]) =>
+          requireMarketplaceIdentity("codex", "marketplace-read", request.identity).pipe(
+            Effect.flatMap((identity) => listMarketplaces().pipe(
+              Effect.flatMap((observation) => selectMarketplaceRoot(observation.json, identity)),
+            )),
+            Effect.flatMap((root) => kernel.readMarketplacePackage(root, request)),
+          ),
+        addMarketplace: (source: Parameters<CodexNativeAgentProviderSession["addMarketplace"]>[0]) =>
+          kernel.requireCanonicalDirectory("marketplace-add", source).pipe(
           Effect.flatMap((canonicalSource) => kernel.run("marketplace-add", [
             "plugin",
             "marketplace",
@@ -113,12 +131,14 @@ export const codexEffectPlatformNodeProvider: NativeAgentProviderResource<
             "--json",
           ])),
         ),
-        listPlugins: () => kernel.run("plugin-list", [
-          "plugin",
-          "list",
-          "--available",
-          "--json",
-        ]).pipe(Effect.flatMap((result) => parseJsonObservation("codex", "plugin-list", result))),
+        listPlugins,
+        readPlugin: (request: Parameters<CodexNativeAgentProviderSession["readPlugin"]>[0]) =>
+          requirePluginSelector("codex", "plugin-read", request.selector).pipe(
+            Effect.flatMap((selector) => listPlugins().pipe(
+              Effect.flatMap((observation) => selectInstalledPluginRoot(kernel, observation.json, selector)),
+            )),
+            Effect.flatMap((root) => kernel.readPluginPackage(root, request)),
+          ),
         addPlugin: (request: Parameters<CodexNativeAgentProviderSession["addPlugin"]>[0]) =>
           requirePluginSelector("codex", "plugin-install", request.selector).pipe(
           Effect.flatMap((canonicalSelector) => kernel.run("plugin-install", ["plugin", "add", canonicalSelector, "--json"])),
@@ -131,18 +151,103 @@ export const codexEffectPlatformNodeProvider: NativeAgentProviderResource<
         readConfiguration,
         setMarketplaceSource: (request: Parameters<CodexNativeAgentProviderSession["setMarketplaceSource"]>[0]) => Effect.gen(function* () {
           const canonicalIdentity = yield* requireMarketplaceIdentity("codex", "config-write", request.identity);
-          const canonicalSource = yield* kernel.requireCanonicalDirectory("config-write", request.sourcePath);
+          const canonicalSource = yield* kernel.requireCanonicalDirectory("config-write", request.source);
           yield* setConfigurationValue(`marketplaces.${canonicalIdentity}.source`, canonicalSource);
         }),
         setPluginEnabled: (request: Parameters<CodexNativeAgentProviderSession["setPluginEnabled"]>[0]) =>
           requirePluginSelector("codex", "config-write", request.selector).pipe(
           Effect.flatMap((canonicalSelector) => setConfigurationValue(`plugins.${canonicalSelector}.enabled`, request.enabled)),
         ),
-        readPackage: kernel.readPackage,
       });
     }),
   ),
 });
+
+function selectMarketplaceRoot(
+  json: NativeProviderJsonValue,
+  identity: string,
+): Effect.Effect<string, NativeAgentProviderFailure> {
+  if (!isJsonRecord(json) || !Array.isArray(json.marketplaces)) {
+    return Effect.fail(providerFailure(
+      "marketplace-read",
+      "ProtocolFailed",
+      "Codex marketplace list did not contain a marketplaces array",
+    ));
+  }
+  const matches: string[] = [];
+  for (const entry of json.marketplaces) {
+    if (!isJsonRecord(entry) || typeof entry.name !== "string") {
+      return Effect.fail(providerFailure("marketplace-read", "ProtocolFailed", "Codex marketplace entry is invalid"));
+    }
+    if (entry.name !== identity) continue;
+    if (typeof entry.root !== "string") {
+      return Effect.fail(providerFailure("marketplace-read", "ProtocolFailed", "Codex marketplace root is invalid"));
+    }
+    matches.push(entry.root);
+  }
+  return selectUniqueRoot("marketplace-read", matches, "Codex marketplace identity");
+}
+
+function selectInstalledPluginRoot(
+  kernel: Readonly<{ homePath: (...segments: readonly string[]) => string }>,
+  json: NativeProviderJsonValue,
+  selector: string,
+): Effect.Effect<string, NativeAgentProviderFailure> {
+  if (!isJsonRecord(json) || !Array.isArray(json.installed)) {
+    return Effect.fail(providerFailure(
+      "plugin-read",
+      "ProtocolFailed",
+      "Codex plugin list did not contain an installed array",
+    ));
+  }
+  const matches: string[] = [];
+  for (const entry of json.installed) {
+    if (!isJsonRecord(entry)) {
+      return Effect.fail(providerFailure("plugin-read", "ProtocolFailed", "Codex installed plugin entry is invalid"));
+    }
+    const name = entry.name;
+    const marketplaceName = entry.marketplaceName;
+    const version = entry.version;
+    const pluginId = entry.pluginId;
+    if (
+      typeof name !== "string"
+      || !/^[a-z0-9][a-z0-9._-]*$/u.test(name)
+      || typeof marketplaceName !== "string"
+      || !/^[a-z0-9][a-z0-9_-]*$/u.test(marketplaceName)
+      || typeof version !== "string"
+      || !/^[0-9A-Za-z][0-9A-Za-z.+-]*$/u.test(version)
+      || typeof pluginId !== "string"
+      || pluginId !== `${name}@${marketplaceName}`
+      || entry.installed !== true
+    ) {
+      return Effect.fail(providerFailure("plugin-read", "ProtocolFailed", "Codex installed plugin entry is invalid"));
+    }
+    if (pluginId === selector) {
+      matches.push(kernel.homePath("plugins", "cache", marketplaceName, name, version));
+    }
+  }
+  return selectUniqueRoot("plugin-read", matches, "Codex installed plugin selector");
+}
+
+function selectUniqueRoot(
+  operation: "marketplace-read" | "plugin-read",
+  matches: readonly string[],
+  label: string,
+): Effect.Effect<string, NativeAgentProviderFailure> {
+  if (matches.length === 0) {
+    return Effect.fail(providerFailure(operation, "Missing", `${label} is absent`));
+  }
+  if (matches.length !== 1 || matches[0] === undefined) {
+    return Effect.fail(providerFailure(operation, "ProtocolFailed", `${label} is ambiguous`));
+  }
+  return Effect.succeed(matches[0]);
+}
+
+function isJsonRecord(
+  value: NativeProviderJsonValue,
+): value is Readonly<Record<string, NativeProviderJsonValue>> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
 
 function providerFailure(
   operation: NativeAgentProviderFailure["operation"],

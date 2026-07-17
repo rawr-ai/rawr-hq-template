@@ -26,7 +26,10 @@ import {
   openNodeCapsuleStateStoreV1,
 } from "../../undo";
 import { createNodeMechanicalEvidenceRuntime } from "../evidence/node-mechanical";
-import { createNodeNativeProviderAdapter } from "../../bindings/providers";
+import {
+  createNodeMarketplaceLocationResolver,
+  createNodeNativeProviderAdapter,
+} from "../../bindings/providers";
 import { createProviderReleaseReader } from "./artifact-reader";
 import {
   createNodeProviderOwnerRuntime,
@@ -60,6 +63,7 @@ export function createNodeNativeProviderAdapterResolver(
       await state.projections.readMarketplace({ target, registration }),
   };
   const marketplaceSources = Object.freeze(marketplaceSourcePort);
+  const marketplaceLocations = createNodeMarketplaceLocationResolver(state.layout.projection.root);
   const adapter = (provider: ProviderId, contentAuthority: ContentAuthority) => {
     const key = `${provider}\0${contentAuthority}`;
     const existing = adapters.get(key);
@@ -70,10 +74,9 @@ export function createNodeNativeProviderAdapterResolver(
     }
     const common = {
       executablePath,
-      marketplaceSourceRoot: state.layout.projection.marketplaces,
       contentAuthority,
       marketplaceSources,
-      projectionSources: state.projections,
+      marketplaceLocations,
     } as const;
     const created = createNodeNativeProviderAdapter({ ...common, provider });
     adapters.set(key, created);

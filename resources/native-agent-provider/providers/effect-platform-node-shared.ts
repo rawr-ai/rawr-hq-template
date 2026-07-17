@@ -10,7 +10,7 @@ import type {
   NativeProviderJsonObservation,
   NativeProviderJsonValue,
   NativeProviderPackageObservation,
-  NativeProviderPackageReadInput,
+  NativeProviderPackageReadLimits,
   NativeProviderSessionInput,
 } from "../contract";
 
@@ -36,9 +36,15 @@ export interface EffectPlatformNodeProviderKernel {
     operation: NativeAgentProviderOperation,
     requests: readonly CodexAppServerRequest[],
   ) => Effect.Effect<readonly NativeProviderJsonValue[], NativeAgentProviderFailure>;
-  readonly readPackage: (
-    input: NativeProviderPackageReadInput,
+  readonly readMarketplacePackage: (
+    root: string,
+    limits: NativeProviderPackageReadLimits,
   ) => Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure>;
+  readonly readPluginPackage: (
+    root: string,
+    limits: NativeProviderPackageReadLimits,
+  ) => Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure>;
+  readonly homePath: (...segments: readonly string[]) => string;
   readonly readHomeJsonFile: (
     relativePath: string,
     maxBytes: number,
@@ -91,8 +97,13 @@ export function acquireEffectPlatformNodeProvider(
         executor,
       }));
 
-    const readPackage: EffectPlatformNodeProviderKernel["readPackage"] = (packageInput) =>
-      readProviderPackage(fs, paths, provider, home, packageInput);
+    const readMarketplacePackage: EffectPlatformNodeProviderKernel["readMarketplacePackage"] = (root, limits) =>
+      readProviderPackage(fs, paths, provider, "marketplace-read", home, root, limits, false);
+
+    const readPluginPackage: EffectPlatformNodeProviderKernel["readPluginPackage"] = (root, limits) =>
+      readProviderPackage(fs, paths, provider, "plugin-read", home, root, limits, true);
+
+    const homePath: EffectPlatformNodeProviderKernel["homePath"] = (...segments) => paths.join(home, ...segments);
 
     const readHomeJsonFile: EffectPlatformNodeProviderKernel["readHomeJsonFile"] = (relativePath, maxBytes) =>
       readOptionalHomeJsonFile(fs, paths, provider, home, relativePath, maxBytes);
@@ -106,7 +117,9 @@ export function acquireEffectPlatformNodeProvider(
       home,
       run,
       runCodexAppServer,
-      readPackage,
+      readMarketplacePackage,
+      readPluginPackage,
+      homePath,
       readHomeJsonFile,
       requireCanonicalDirectory: requireDirectory,
     });
@@ -362,24 +375,27 @@ function readProviderPackage(
   fs: FileSystem.FileSystem,
   paths: Path.Path,
   provider: NativeAgentProviderId,
+  operation: "marketplace-read" | "plugin-read",
   home: string,
-  input: NativeProviderPackageReadInput,
+  rootInput: string,
+  limits: NativeProviderPackageReadLimits,
+  requireHomeContainment: boolean,
 ): Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure> {
   return Effect.gen(function* () {
-    if (!Number.isSafeInteger(input.maxEntries) || input.maxEntries <= 0) {
-      return yield* fail(provider, "package-read", "InvalidInput", input.root, "maxEntries must be a positive safe integer");
+    if (!Number.isSafeInteger(limits.maxEntries) || limits.maxEntries <= 0) {
+      return yield* fail(provider, operation, "InvalidInput", rootInput, "maxEntries must be a positive safe integer");
     }
-    if (!Number.isSafeInteger(input.maxBytes) || input.maxBytes <= 0) {
-      return yield* fail(provider, "package-read", "InvalidInput", input.root, "maxBytes must be a positive safe integer");
+    if (!Number.isSafeInteger(limits.maxBytes) || limits.maxBytes <= 0) {
+      return yield* fail(provider, operation, "InvalidInput", rootInput, "maxBytes must be a positive safe integer");
     }
-    const root = yield* requireCanonicalDirectory(fs, paths, provider, "package-read", input.root, false);
-    if (!isContained(paths, home, root)) {
-      return yield* fail(provider, "package-read", "Aliased", root, "Package root escaped the explicit provider home");
+    const root = yield* requireCanonicalDirectory(fs, paths, provider, operation, rootInput, false);
+    if (requireHomeContainment && !isContained(paths, home, root)) {
+      return yield* fail(provider, operation, "Aliased", root, "Installed plugin root escaped the explicit provider home");
     }
     const budget = { entries: 0, bytes: 0 };
-    const entries = yield* walkPackage(fs, paths, provider, root, "", input, budget);
+    const entries = yield* walkPackage(fs, paths, provider, operation, root, "", limits, budget);
     entries.sort((left, right) => compareText(left.path, right.path));
-    return Object.freeze({ root, entries: Object.freeze(entries) });
+    return Object.freeze({ entries: Object.freeze(entries) });
   });
 }
 
@@ -387,36 +403,41 @@ function walkPackage(
   fs: FileSystem.FileSystem,
   paths: Path.Path,
   provider: NativeAgentProviderId,
+  operation: "marketplace-read" | "plugin-read",
   root: string,
   relativeRoot: string,
-  limits: NativeProviderPackageReadInput,
+  limits: NativeProviderPackageReadLimits,
   budget: { entries: number; bytes: number },
 ): Effect.Effect<NativeProviderPackageObservation["entries"][number][], NativeAgentProviderFailure> {
   const directory = relativeRoot === "" ? root : paths.join(root, relativeRoot);
   return fs.readDirectory(directory).pipe(
-    mapPlatform(provider, "package-read", directory),
+    mapPlatform(provider, operation, directory),
     Effect.flatMap((names) => Effect.forEach([...names].sort(compareText), (name) => Effect.gen(function* () {
       const relativePath = relativeRoot === "" ? name : paths.join(relativeRoot, name);
       const candidate = paths.join(root, relativePath);
-      const resolved = yield* fs.realPath(candidate).pipe(mapPlatform(provider, "package-read", candidate));
-      if (resolved !== candidate) {
-        return yield* fail(provider, "package-read", "UnsupportedEntry", candidate, "Package cannot contain aliases or symlinks");
-      }
-      const status = yield* fs.stat(candidate).pipe(mapPlatform(provider, "package-read", candidate));
-      if (status.type === "Directory") {
-        return yield* walkPackage(fs, paths, provider, root, relativePath, limits, budget);
-      }
-      if (status.type !== "File") {
-        return yield* fail(provider, "package-read", "UnsupportedEntry", candidate, "Package contains an unsupported entry");
-      }
       budget.entries += 1;
       if (budget.entries > limits.maxEntries) {
-        return yield* fail(provider, "package-read", "LimitExceeded", candidate, "Package exceeds maxEntries");
+        return yield* fail(provider, operation, "LimitExceeded", candidate, "Package exceeds maxEntries");
       }
-      const bytes = yield* fs.readFile(candidate).pipe(mapPlatform(provider, "package-read", candidate));
-      budget.bytes += bytes.byteLength;
-      if (budget.bytes > limits.maxBytes) {
-        return yield* fail(provider, "package-read", "LimitExceeded", candidate, "Package exceeds maxBytes");
+      const resolved = yield* fs.realPath(candidate).pipe(mapPlatform(provider, operation, candidate));
+      if (resolved !== candidate) {
+        return yield* fail(provider, operation, "UnsupportedEntry", candidate, "Package cannot contain aliases or symlinks");
+      }
+      const status = yield* fs.stat(candidate).pipe(mapPlatform(provider, operation, candidate));
+      if (status.type === "Directory") {
+        return yield* walkPackage(fs, paths, provider, operation, root, relativePath, limits, budget);
+      }
+      if (status.type !== "File") {
+        return yield* fail(provider, operation, "UnsupportedEntry", candidate, "Package contains an unsupported entry");
+      }
+      const size = Number(status.size);
+      budget.bytes += size;
+      if (!Number.isSafeInteger(size) || size < 0 || budget.bytes > limits.maxBytes) {
+        return yield* fail(provider, operation, "LimitExceeded", candidate, "Package exceeds maxBytes");
+      }
+      const bytes = yield* fs.readFile(candidate).pipe(mapPlatform(provider, operation, candidate));
+      if (bytes.byteLength !== size) {
+        return yield* fail(provider, operation, "FilesystemFailed", candidate, "Package file size changed while reading");
       }
       return [Object.freeze({
         path: relativePath.split(paths.sep).join("/"),

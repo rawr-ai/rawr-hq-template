@@ -7,10 +7,23 @@ import {
   type NativeMemberRestorationPort,
   type NativeProviderAdapter,
   type NativeProviderResourcePort,
+  type NativeResourceSessionInput,
   type ProviderId,
+  type ProviderMarketplaceSource,
   type ResourceClaudeProviderAdapterOptions,
   type ResourceCodexProviderAdapterOptions,
 } from "@rawr/agent-plugin-lifecycle/ports/providers";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "@rawr/agent-plugin-lifecycle/release";
+import type {
+  ArtifactObjectAddress,
+  ArtifactReadLimits,
+  ArtifactTreeLocation,
+  ArtifactTreeLocationObservation,
+} from "@rawr/resource-agent-plugin-artifact-repository";
+import {
+  artifactRepositoryResource,
+  runNodeArtifactRepository,
+} from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import type {
   ClaudeNativeAgentProviderSession,
   CodexNativeAgentProviderSession,
@@ -19,73 +32,143 @@ import { claudeEffectPlatformNodeProvider } from "@rawr/resource-native-agent-pr
 import { codexEffectPlatformNodeProvider } from "@rawr/resource-native-agent-provider/providers/codex-effect-platform-node";
 import { Effect } from "effect";
 
+import { LifecycleAuthorityBindingError } from "../../commands/binding";
+
+const MARKETPLACE_TREE_LIMITS: ArtifactReadLimits = Object.freeze({
+  maxEntries: 200_000,
+  maxBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
+});
+const MARKETPLACE_NAMESPACE: ArtifactObjectAddress["namespace"] = Object.freeze(["marketplaces"]);
+
 export type NodeNativeProviderAdapter = NativeProviderAdapter & NativeMemberRestorationPort;
 
 export type NodeNativeProviderBindingOptions = Omit<
   ResourceCodexProviderAdapterOptions & ResourceClaudeProviderAdapterOptions,
   "resource"
-> & Readonly<{ provider: ProviderId }>;
+> & Readonly<{
+  provider: ProviderId;
+  marketplaceLocations: NodeMarketplaceLocationResolver;
+}>;
+
+export interface NodeMarketplaceLocationResolver {
+  readonly locate: (source: ProviderMarketplaceSource) => Promise<ArtifactTreeLocation>;
+}
+
+interface NodeMarketplaceTreeLocator {
+  readonly locateTree: (input: Readonly<{
+    address: ArtifactObjectAddress;
+    limits: ArtifactReadLimits;
+  }>) => Promise<ArtifactTreeLocationObservation>;
+}
+
+/** Resolves one admitted projection tree without exposing its location to service state. */
+export function createNodeMarketplaceLocationResolver(
+  projectionRoot: string,
+  treeLocator: NodeMarketplaceTreeLocator = nodeMarketplaceTreeLocator,
+): NodeMarketplaceLocationResolver {
+  return Object.freeze({
+    async locate(source: ProviderMarketplaceSource): Promise<ArtifactTreeLocation> {
+      const address: ArtifactObjectAddress = Object.freeze({
+        repositoryRoot: projectionRoot,
+        namespace: MARKETPLACE_NAMESPACE,
+        objectId: source.projectionDigest,
+      });
+      const observation = await treeLocator.locateTree({
+        address,
+        limits: MARKETPLACE_TREE_LIMITS,
+      });
+      if (observation.kind === "Present") return observation.location;
+      if (observation.kind === "Missing") {
+        throw new LifecycleAuthorityBindingError(
+          `Marketplace projection ${source.projectionDigest} is not materialized`,
+        );
+      }
+      throw new LifecycleAuthorityBindingError(
+        `Marketplace projection ${source.projectionDigest} failed mechanical admission: ${observation.issues
+          .map((entry) => entry.detail)
+          .join("; ")}`,
+      );
+    },
+  });
+}
 
 /** Selects one Effect Platform provider; all lifecycle interpretation stays in the service. */
 export function createNodeNativeProviderAdapter(
   options: NodeNativeProviderBindingOptions,
 ): NodeNativeProviderAdapter {
   const common = Object.freeze({
-    resource: nodeNativeProviderResource,
+    resource: createNodeNativeProviderResource(options.marketplaceLocations),
     executablePath: options.executablePath,
-    marketplaceSourceRoot: options.marketplaceSourceRoot,
     contentAuthority: options.contentAuthority,
     marketplaceSources: options.marketplaceSources,
-    projectionSources: options.projectionSources,
   });
   return options.provider === "codex"
     ? createResourceCodexProviderAdapter(common)
     : createResourceClaudeProviderAdapter(common);
 }
 
-const nativeProviderResource: NativeProviderResourcePort = {
-  acquireCodex: async (input) => adaptCodexSession(await runNodeProvider(
-    codexEffectPlatformNodeProvider.acquire(input),
-  )),
-  acquireClaude: async (input) => adaptClaudeSession(await runNodeProvider(
-    claudeEffectPlatformNodeProvider.acquire(input),
-  )),
-};
+export function createNodeNativeProviderResource(
+  marketplaceLocations: NodeMarketplaceLocationResolver,
+): NativeProviderResourcePort {
+  return Object.freeze({
+    acquireCodex: async (input: NativeResourceSessionInput) => adaptCodexSession(
+      await runNodeProvider(codexEffectPlatformNodeProvider.acquire(input)),
+      marketplaceLocations,
+    ),
+    acquireClaude: async (input: NativeResourceSessionInput) => adaptClaudeSession(
+      await runNodeProvider(claudeEffectPlatformNodeProvider.acquire(input)),
+      marketplaceLocations,
+    ),
+  });
+}
 
-export const nodeNativeProviderResource = Object.freeze(nativeProviderResource);
-
-function adaptCodexSession(session: CodexNativeAgentProviderSession): CodexNativeResourceSession {
+function adaptCodexSession(
+  session: CodexNativeAgentProviderSession,
+  marketplaceLocations: NodeMarketplaceLocationResolver,
+): CodexNativeResourceSession {
   const adapted: CodexNativeResourceSession = {
     provider: session.provider,
     executablePath: session.executablePath,
     home: session.home,
     probe: () => runNodeProvider(session.probe()),
     listMarketplaces: () => runNodeProvider(session.listMarketplaces()),
-    addMarketplace: (input) => runNodeProvider(session.addMarketplace(input)),
+    readMarketplace: (input) => runNodeProvider(session.readMarketplace(input)),
+    addMarketplace: async (source) => runNodeProvider(
+      session.addMarketplace(await marketplaceLocations.locate(source)),
+    ),
     removeMarketplace: (input) => runNodeProvider(session.removeMarketplace(input)),
     listPlugins: () => runNodeProvider(session.listPlugins()),
-    readPackage: (input) => runNodeProvider(session.readPackage(input)),
+    readPlugin: (input) => runNodeProvider(session.readPlugin(input)),
     addPlugin: (input) => runNodeProvider(session.addPlugin(input)),
     removePlugin: (input) => runNodeProvider(session.removePlugin(input)),
     inspectAppServer: () => runNodeProvider(session.inspectAppServer()),
     readConfiguration: () => runNodeProvider(session.readConfiguration()),
-    setMarketplaceSource: (input) => runNodeProvider(session.setMarketplaceSource(input)),
+    setMarketplaceSource: async (input) => runNodeProvider(session.setMarketplaceSource({
+      identity: input.identity,
+      source: await marketplaceLocations.locate(input.source),
+    })),
     setPluginEnabled: (input) => runNodeProvider(session.setPluginEnabled(input)),
   };
   return Object.freeze(adapted);
 }
 
-function adaptClaudeSession(session: ClaudeNativeAgentProviderSession): ClaudeNativeResourceSession {
+function adaptClaudeSession(
+  session: ClaudeNativeAgentProviderSession,
+  marketplaceLocations: NodeMarketplaceLocationResolver,
+): ClaudeNativeResourceSession {
   const adapted: ClaudeNativeResourceSession = {
     provider: session.provider,
     executablePath: session.executablePath,
     home: session.home,
     probe: () => runNodeProvider(session.probe()),
     listMarketplaces: () => runNodeProvider(session.listMarketplaces()),
-    addMarketplace: (input) => runNodeProvider(session.addMarketplace(input)),
+    readMarketplace: (input) => runNodeProvider(session.readMarketplace(input)),
+    addMarketplace: async (source) => runNodeProvider(
+      session.addMarketplace(await marketplaceLocations.locate(source)),
+    ),
     removeMarketplace: (input) => runNodeProvider(session.removeMarketplace(input)),
     listPlugins: () => runNodeProvider(session.listPlugins()),
-    readPackage: (input) => runNodeProvider(session.readPackage(input)),
+    readPlugin: (input) => runNodeProvider(session.readPlugin(input)),
     installPlugin: (input) => runNodeProvider(session.installPlugin(input)),
     enablePlugin: (input) => runNodeProvider(session.enablePlugin(input)),
     disablePlugin: (input) => runNodeProvider(session.disablePlugin(input)),
@@ -94,6 +177,18 @@ function adaptClaudeSession(session: ClaudeNativeAgentProviderSession): ClaudeNa
   };
   return Object.freeze(adapted);
 }
+
+const nodeMarketplaceTreeLocator: NodeMarketplaceTreeLocator = Object.freeze({
+  async locateTree(input: Parameters<NodeMarketplaceTreeLocator["locateTree"]>[0]) {
+    const located = await runNodeArtifactRepository(artifactRepositoryResource.locateTree(input));
+    if (!located.ok) {
+      throw new LifecycleAuthorityBindingError(
+        `Marketplace projection location failed: ${located.failure.detail}`,
+      );
+    }
+    return located.value;
+  },
+});
 
 function runNodeProvider<A, E>(
   operation: Effect.Effect<A, E, NodeContext.NodeContext>,
