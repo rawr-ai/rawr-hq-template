@@ -2,7 +2,7 @@ import { constants } from "node:fs";
 import { lstat, open } from "node:fs/promises";
 import path from "node:path";
 
-import type { ProviderId, ProviderOwnerRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
+import type { ProviderId } from "@rawr/agent-plugin-lifecycle/ports/providers";
 import { createProviderOwnerRuntime } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import { resolveControllerReentry } from "@rawr/core";
 
@@ -21,6 +21,7 @@ import {
 } from "../undo";
 import {
   createNodeNativeProviderAdapterResolver,
+  createProviderOwnerCodecRegistration,
   createNodeProviderRecordState,
 } from "./providers/node-runtime";
 import {
@@ -46,7 +47,7 @@ export async function undoAgentPluginCapsuleAtDataRoot(
       synchronization: Object.freeze({ kind: "NotAcquired" }),
     });
   }
-  const codecRegistration = createProviderOwnerProtocolRegistration(unavailableProviderOwnerRuntime());
+  const codecRegistration = createProviderOwnerCodecRegistration();
   const codecRegistry = createAgentPluginOwnerProtocolRegistryV1({}, codecRegistration);
   const observed = await readCapsuleState(layout.capsuleRoot, codecRegistry);
   validateProviderExecutableBindings(
@@ -104,22 +105,6 @@ async function createProductionOwnerRegistry(
     {},
     createProviderOwnerProtocolRegistration(ownerRuntime),
   );
-}
-
-function unavailableProviderOwnerRuntime(): ProviderOwnerRuntime {
-  const unavailable = async (): Promise<never> => {
-    throw new LifecycleAuthorityBindingError("Codec-only provider owner runtime cannot inspect or mutate state");
-  };
-  return Object.freeze({
-    readIdentity: unavailable,
-    removeIdentityExact: unavailable,
-    readMarketplace: unavailable,
-    restoreMarketplaceExact: unavailable,
-    readMember: unavailable,
-    restoreMemberExact: unavailable,
-    readReceipt: unavailable,
-    restoreReceiptExact: unavailable,
-  });
 }
 
 function capsuleUsesProviderOwner(state: CapsuleStateEnvelopeV1): boolean {

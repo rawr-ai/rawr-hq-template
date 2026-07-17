@@ -22,6 +22,12 @@ import {
   type VerifiedReleaseArtifactV1,
 } from "@rawr/agent-plugin-lifecycle/release";
 import {
+  EXPORT_APPLICATION_PROTOCOL_VERSION,
+  type ExportAgentPluginsRequest,
+  type UndoCandidateInput,
+  type UndoWriter,
+} from "@rawr/agent-plugin-lifecycle/bindings/exports";
+import {
   createProviderMarketplaceRegistration,
   createTargetReceipt,
   failure,
@@ -44,9 +50,11 @@ import {
   openNodeCapsuleStateStoreV1,
 } from "../../../src/lib/agent-plugins/undo";
 import { CODEX_ADAPTER_PROTOCOL } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import { createNodeExportUndoWriter } from "../../../src/lib/agent-plugins/service-runtime/client";
 import { createNodeProviderLifecycleRuntime } from "../../../src/lib/agent-plugins/service-runtime/providers/node-runtime";
 import { createNodeProviderRecordState } from "../../../src/lib/agent-plugins/service-runtime/providers/node-runtime";
 import {
+  createExpectedProviderOwnerObservedPost,
   createProviderOwnerAction,
   createProviderOwnerProtocolRegistration,
   providerOwnerTargetBinding,
@@ -56,6 +64,13 @@ import {
 import { undoAgentPluginCapsuleAtDataRoot } from "../../../src/lib/agent-plugins/service-runtime/undo";
 import { createCanonicalStatus } from "../../../../../services/agent-plugin-lifecycle/src/service/modules/providers/internal/applications/canonical-status";
 import { createManagedRetire } from "../../../../../services/agent-plugin-lifecycle/src/service/modules/providers/internal/applications/managed-retire";
+import { exportArtifactFixture } from "../../../../../services/agent-plugin-lifecycle/test/modules/exports/artifact-fixture";
+import {
+  createExportTestClient,
+  FakeArtifactReader,
+  FakeKnownNativeHomesReader,
+  knownHomes,
+} from "../undo/export-runtime-fixture";
 import { productFixture } from "./providers/product-fixture";
 
 describe("production lifecycle read-only binding", () => {
@@ -205,6 +220,53 @@ describe("production lifecycle read-only binding", () => {
   );
 
   it.runIf("Bun" in globalThis)(
+    "carries a committed provider capsule through a changed export admission",
+    async () => {
+      fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-c5-read-only-")));
+      const dataRoot = path.join(fixtureRoot, "controller-data");
+      const home = path.join(fixtureRoot, "codex-home");
+      const destination = path.join(fixtureRoot, "export-destination");
+      await Promise.all([mkdir(dataRoot), mkdir(home), mkdir(destination)]);
+      const candidate = await captureExportCandidate(destination);
+      await seedCommittedReceiptCapsule(dataRoot, home);
+      const layout = deriveAgentPluginControllerLayout({ dataRoot });
+      const writer = createNodeExportUndoWriter(layout.capsuleRoot);
+
+      expect(await writer.preflight(candidate)).toEqual({ kind: "Accepted" });
+      const begun = await writer.begin(candidate);
+      expect(begun.kind).toBe("Accepted");
+      if (begun.kind !== "Accepted") throw new Error(begun.failure.message);
+      expect(await begun.session.abort()).toMatchObject({
+        kind: "Accepted",
+        synchronization: { kind: "Released" },
+      });
+      const restored = await readCapsuleVariant(dataRoot);
+      if (restored.kind !== "idle") throw new Error("export abort did not restore prior idle state");
+      expect(restored.committed?.capsule.owner).toBe(PROVIDER_OWNER);
+    },
+  );
+
+  it.runIf("Bun" in globalThis)(
+    "refuses export admission while a provider candidate is applying",
+    async () => {
+      fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-c5-read-only-")));
+      const dataRoot = path.join(fixtureRoot, "controller-data");
+      const home = path.join(fixtureRoot, "codex-home");
+      const destination = path.join(fixtureRoot, "export-destination");
+      await Promise.all([mkdir(dataRoot), mkdir(home), mkdir(destination)]);
+      const candidate = await captureExportCandidate(destination);
+      await seedApplyingCodexProviderCapsule(dataRoot, home);
+      const before = await exactTree(dataRoot);
+      const layout = deriveAgentPluginControllerLayout({ dataRoot });
+
+      await expect(createNodeExportUndoWriter(layout.capsuleRoot).preflight(candidate))
+        .rejects.toThrow("Applying provider lifecycle state requires qualified recovery");
+      expect(await exactTree(dataRoot)).toEqual(before);
+      expect((await readCapsuleVariant(dataRoot)).kind).toBe("applying");
+    },
+  );
+
+  it.runIf("Bun" in globalThis)(
     "inspects receipt-free native state before classifying managed retirement without writes",
     async () => {
       fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-c5-read-only-")));
@@ -312,6 +374,83 @@ async function seedApplyingCodexProviderCapsule(dataRoot: string, home: string):
   if (staged.kind !== "Accepted") throw new Error(staged.failure.message);
   const suspended = await admitted.session.suspend();
   if (suspended.kind !== "Released") throw new Error(suspended.failure.message);
+}
+
+async function seedCommittedReceiptCapsule(dataRoot: string, home: string): Promise<void> {
+  const layout = deriveAgentPluginControllerLayout({ dataRoot });
+  await mkdir(path.dirname(layout.capsuleRoot), { recursive: true });
+  const registration = createProviderOwnerProtocolRegistration(unavailableProviderOwnerRuntime());
+  const registry = createAgentPluginOwnerProtocolRegistryV1({}, registration);
+  const opened = await openNodeCapsuleStateStoreV1({ root: layout.capsuleRoot, registry });
+  if (opened.kind === "Rejected") throw new Error(opened.failure.message);
+  const controller = new CapsuleControllerWriterV1({ store: opened.store, registry });
+  const plan = providerPlan(home);
+  const receiptStep = plan.steps.find((step) =>
+    step.kind === "mutate" && step.action.kind === "PublishReceipt");
+  if (receiptStep?.kind !== "mutate" || receiptStep.action.kind !== "PublishReceipt") {
+    throw new Error("provider capsule fixture has no receipt publication");
+  }
+  const receiptPlan: ProviderTargetPlan = Object.freeze({
+    ...plan,
+    steps: Object.freeze([receiptStep]),
+  });
+  const begun = await controller.begin(capsuleCandidateForPlan(receiptPlan));
+  if (begun.kind !== "Accepted") throw new Error(begun.failure.message);
+  const admitted = begun.admittedActions[0];
+  if (admitted === undefined) throw new Error("provider receipt admission has no action");
+  const staged = await begun.session.stage({ actionHandle: admitted.actionHandle });
+  if (staged.kind !== "Accepted") throw new Error(staged.failure.message);
+  const binding = providerOwnerTargetBinding(receiptStep.action.target, receiptStep.action.prior);
+  const observed = createExpectedProviderOwnerObservedPost(
+    createProviderOwnerAction(receiptStep.action),
+    binding,
+  );
+  const applied = await begun.session.markApplied({
+    actionHandle: admitted.actionHandle,
+    observedPost: observed,
+  });
+  if (applied.kind !== "Accepted") throw new Error(applied.failure.message);
+  const settled = await begun.session.settle();
+  if (settled.kind !== "Accepted") throw new Error(settled.failure.message);
+}
+
+async function captureExportCandidate(destination: string): Promise<UndoCandidateInput> {
+  const artifact = exportArtifactFixture().alpha;
+  const artifacts = new FakeArtifactReader();
+  artifacts.add(artifact);
+  let candidate: UndoCandidateInput | undefined;
+  const captureWriter: UndoWriter = Object.freeze({
+    async preflight(input: UndoCandidateInput) {
+      candidate = input;
+      return Object.freeze({
+        kind: "Rejected" as const,
+        failure: Object.freeze({
+          code: "FixtureCapture",
+          phase: "fixture-capture",
+          message: "capture export candidate without mutation",
+        }),
+      });
+    },
+    async begin(): Promise<never> {
+      throw new Error("capture writer must reject before export admission");
+    },
+  });
+  const client = createExportTestClient({
+    artifactReader: artifacts,
+    knownNativeHomesReader: new FakeKnownNativeHomesReader(knownHomes()),
+    undoWriter: captureWriter,
+  });
+  const request: ExportAgentPluginsRequest = Object.freeze({
+    protocolVersion: EXPORT_APPLICATION_PROTOCOL_VERSION,
+    artifactRef: artifact.ref,
+    mode: "targeted-release",
+    layout: "codex-v1",
+    destinations: Object.freeze([destination]),
+    overwritePolicy: "managed-only",
+  });
+  await client.exports.apply(request);
+  if (candidate === undefined) throw new Error("export candidate capture did not reach preflight");
+  return candidate;
 }
 
 async function seedReceiptApplying(

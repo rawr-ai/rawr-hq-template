@@ -52,8 +52,10 @@ import { createNodeMechanicalEvidenceRuntime } from "./evidence/node-mechanical"
 import {
   createNodeProviderLifecycleRuntime,
   createNodeProviderRecordState,
+  createProviderOwnerCodecRegistration,
   type NodeProviderRecordState,
 } from "./providers/node-runtime";
+import { PROVIDER_OWNER } from "./providers/owner-protocol";
 import {
   applyingRecoveryBlockingFailure,
   CapsuleControllerWriterV1,
@@ -202,7 +204,7 @@ async function createSelectedLifecycleRuntime(input: Readonly<{
       runtime: createExportLifecycleRuntime({
         artifactReader: createExportArtifactReader(artifactReader),
         knownNativeHomesReader: createKnownNativeHomesReader(providerState),
-        undoWriter: createLazyExportUndoWriter(layout.capsuleRoot),
+        undoWriter: createNodeExportUndoWriter(layout.capsuleRoot),
       }),
     });
   }
@@ -325,18 +327,37 @@ function createKnownNativeHomesReader(
   });
 }
 
-function createLazyExportUndoWriter(capsuleRoot: Parameters<typeof openNodeCapsuleStateStoreV1>[0]["root"]): UndoWriter {
+export function createNodeExportUndoWriter(
+  capsuleRoot: Parameters<typeof openNodeCapsuleStateStoreV1>[0]["root"],
+): UndoWriter {
   const writer = lazy(async () => {
-    const registry = createAgentPluginOwnerProtocolRegistryV1();
+    const registry = createAgentPluginOwnerProtocolRegistryV1(
+      {},
+      createProviderOwnerCodecRegistration(),
+    );
     const opened = await openNodeCapsuleStateStoreV1({ root: capsuleRoot, registry });
     if (opened.kind === "Rejected") {
       throw new LifecycleAuthorityBindingError(opened.failure.message);
+    }
+    const observed = await opened.store.read();
+    if (observed.kind === "Rejected") {
+      throw new LifecycleAuthorityBindingError(observed.failure.message);
+    }
+    if (
+      observed.observation.state.body.state.kind === "applying"
+      && observed.observation.state.body.state.candidate.owner === PROVIDER_OWNER
+    ) {
+      throw new LifecycleAuthorityBindingError(
+        "Applying provider lifecycle state requires qualified recovery before export mutation",
+      );
     }
     const controller = new CapsuleControllerWriterV1({
       store: opened.store,
       registry,
     });
-    const recovery = await controller.recoverApplying();
+    const recovery = await controller.recoverApplying({
+      expectedStateDigest: observed.observation.state.stateDigest,
+    });
     const recoveryFailure = applyingRecoveryBlockingFailure(recovery);
     if (recoveryFailure !== null) {
       throw new LifecycleAuthorityBindingError(recoveryFailure.message);

@@ -10,6 +10,7 @@ import {
   type NativeProviderMutationAction,
   type ProviderId,
   type ProviderLifecycleRuntime,
+  type ProviderOwnerRuntime,
   type AgentProviderProjection,
   type ProviderTarget,
   type ProviderTargetMutator,
@@ -65,6 +66,26 @@ export interface NodeProviderRecordRoots {
 export type NodeProviderRecordState = ProviderRecordState & Readonly<{
   projectionRepositoryRoot: string;
 }>;
+
+/** Parses provider-owned capsule state without granting provider inspection or mutation authority. */
+export function createProviderOwnerCodecRegistration() {
+  const unavailable = async (): Promise<never> => {
+    throw new LifecycleAuthorityBindingError(
+      "Codec-only provider owner runtime cannot inspect or mutate state",
+    );
+  };
+  const runtime: ProviderOwnerRuntime = Object.freeze({
+    readIdentity: unavailable,
+    removeIdentityExact: unavailable,
+    readMarketplace: unavailable,
+    restoreMarketplaceExact: unavailable,
+    readMember: unavailable,
+    restoreMemberExact: unavailable,
+    readReceipt: unavailable,
+    restoreReceiptExact: unavailable,
+  });
+  return createProviderOwnerProtocolRegistration(runtime);
+}
 
 /** One production resource owner shared by forward lifecycle and controller undo. */
 export function createNodeProviderRecordState(
