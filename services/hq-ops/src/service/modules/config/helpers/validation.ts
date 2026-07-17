@@ -36,7 +36,6 @@ export function validateRawrConfig(
 
   const normalized: RawrConfig = {
     ...cfg,
-    plugins: cfg.plugins,
     journal: cfg.journal?.semantic
       ? {
           ...cfg.journal,

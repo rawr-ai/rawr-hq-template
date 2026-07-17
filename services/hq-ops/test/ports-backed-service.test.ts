@@ -27,12 +27,11 @@ describe("hq-ops service resource-backed behavior", () => {
 
     await writeGlobalRawrConfig(homeDir, {
       version: 1,
-      plugins: { defaultRiskTolerance: "strict" },
+      journal: { semantic: { candidateLimit: 25 } },
       server: { port: 4100 },
     });
     await writeRawrConfig(repoRoot, {
       version: 1,
-      plugins: { defaultRiskTolerance: "balanced" },
       server: { baseUrl: "http://127.0.0.1:4100" },
     });
 
@@ -46,7 +45,8 @@ describe("hq-ops service resource-backed behavior", () => {
     const layered = await client.config.getLayeredConfig({}, invocation("trace-config"));
     expect(layered.global.path).toBe(path.join(homeDir, ".rawr", "config.json"));
     expect(layered.workspace.path).toBe(path.join(repoRoot, "rawr.config.ts"));
-    expect(layered.merged?.plugins?.defaultRiskTolerance).toBe("balanced");
+    expect(layered.merged).not.toHaveProperty("plugins");
+    expect(layered.merged?.journal?.semantic?.candidateLimit).toBe(25);
     expect(layered.merged?.server).toEqual({ port: 4100, baseUrl: "http://127.0.0.1:4100" });
   });
 

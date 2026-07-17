@@ -33,10 +33,6 @@ const getLayeredConfig = module.getLayeredConfig.handler(async ({ context }) => 
 
   const merged: RawrConfig = {
     version: 1,
-    plugins:
-      g?.plugins || w?.plugins
-        ? { defaultRiskTolerance: w?.plugins?.defaultRiskTolerance ?? g?.plugins?.defaultRiskTolerance }
-        : undefined,
     journal: { ...(g?.journal ?? {}), ...(w?.journal ?? {}) },
     server:
       g?.server || w?.server

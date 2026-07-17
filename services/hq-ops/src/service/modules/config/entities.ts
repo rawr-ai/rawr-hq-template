@@ -7,26 +7,9 @@ export function clampJournalCandidateLimit(value: number | undefined): number {
   return clampInt(value ?? 200, 1, 500);
 }
 
-export const RiskToleranceSchema = Type.Union([
-  Type.Literal("strict"),
-  Type.Literal("balanced"),
-  Type.Literal("permissive"),
-  Type.Literal("off"),
-]);
-
-export type RiskTolerance = Static<typeof RiskToleranceSchema>;
-
 export const RawrConfigV1Schema = Type.Object(
   {
     version: Type.Literal(1),
-    plugins: Type.Optional(
-      Type.Object(
-        {
-          defaultRiskTolerance: Type.Optional(RiskToleranceSchema),
-        },
-        { additionalProperties: false },
-      ),
-    ),
     journal: Type.Optional(
       Type.Object(
         {
