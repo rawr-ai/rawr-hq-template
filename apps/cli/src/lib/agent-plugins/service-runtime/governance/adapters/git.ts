@@ -5,7 +5,7 @@ import {
   sameGitSelection,
   type GitBlobSelection,
   type GitLocator,
-} from "@rawr/agent-plugin-lifecycle/ports/governance";
+} from "@rawr/agent-plugin-lifecycle/bindings/governance";
 import {
   parseCanonicalRef,
   parseCommit,
@@ -13,7 +13,7 @@ import {
   parseRepository,
   parseTree,
   sortCanonical,
-} from "@rawr/agent-plugin-lifecycle/ports/governance";
+} from "@rawr/agent-plugin-lifecycle/bindings/governance";
 import type {
   ExactGitReader,
   GitBlobReadResult,

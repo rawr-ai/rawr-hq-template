@@ -11,7 +11,7 @@ import {
   parseProviderTarget,
   renderCompleteProjection,
   type ProviderId,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import {
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,

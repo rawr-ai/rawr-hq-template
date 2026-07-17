@@ -30,12 +30,6 @@ export type {
   RepositoryInspection,
 } from "./internal/ports";
 
-// Read-only Git and hosted-governance adapters consume these service-owned
-// value constructors; concrete I/O remains in the CLI runtime binding.
-export * from "./internal/domain/git";
-export {
-  createMechanicalEvidenceObservation,
-  createProviderAcceptanceBinding,
-  type ProviderAcceptanceBinding,
-} from "./internal/domain/evidence";
-export * from "./internal/domain/primitives";
+export type * from "./internal/domain/git";
+export type * from "./internal/domain/evidence";
+export type * from "./internal/domain/primitives";

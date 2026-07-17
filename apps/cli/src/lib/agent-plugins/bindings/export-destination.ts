@@ -4,7 +4,7 @@ import {
   type ExecuteExportInverseOptions,
   type ExportInverseReplayResult,
   type ExportLifecycleRuntime,
-} from "@rawr/agent-plugin-lifecycle/ports/exports";
+} from "@rawr/agent-plugin-lifecycle/bindings/exports";
 import { makeNodeExportDestinationPort } from "@rawr/resource-agent-plugin-export-destination/providers/effect-platform-node";
 
 export const nodeExportDestinationRuntime = makeNodeExportDestinationPort();

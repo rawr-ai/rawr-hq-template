@@ -3,9 +3,10 @@ level: error
 ---
 # Preserve Agent Plugin Lifecycle Dependency Direction
 
-The lifecycle service consumes resource contracts, never concrete provider or
-controller implementation. CLI code consumes the lifecycle package only
-through declared public subpaths, never through its source or service tree.
+The lifecycle service consumes resource contracts, never concrete providers or
+controller implementation. Module ports publish protocols and types only. CLI
+runtime values enter through the service client or one exact binding facade;
+type-only protocol imports remain available through `ports/*`.
 
 ```grit
 language js(typescript)
@@ -26,6 +27,29 @@ or {
   `import($source)` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/.*\.ts$",
     $source <: r"^[\"']?(?:@rawr/resource-[^/]+/providers/|@rawr/cli(?:/|[\"'])|(?:\.\./)+.*(?:resources/[^/]+/providers/|apps/cli/)).*"
+  },
+  `export * from $source` as $export where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/[^/]+/ports\.ts$",
+    $source <: r"^[\"']?\./internal(?:/|[\"'])",
+    ! $export <: includes "export type *"
+  },
+  `export { $exports } from $source` as $export where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/[^/]+/ports\.ts$",
+    $source <: r"^[\"']?\./internal(?:/|[\"'])",
+    ! $export <: includes "export type",
+    ! $export <: includes "export { type",
+    ! $export <: includes "export {type"
+  },
+  import_statement(source=$source) as $import where {
+    $filename <: r".*apps/cli/src/.*\.ts$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/|[\"'])",
+    ! $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$",
+    ! $import <: includes "import type"
+  },
+  `import($source)` where {
+    $filename <: r".*apps/cli/src/.*\.ts$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/|[\"'])",
+    ! $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$"
   },
   import_statement(source=$source) where {
     $filename <: r".*apps/cli/src/.*\.ts$",
@@ -54,7 +78,23 @@ import { makeProvider } from "@rawr/resource-native-agent-provider/providers/cod
 
 export const provider = makeProvider;
 
-// @filename: apps/cli/src/lib/agent-plugins/bypass.ts
+// @filename: services/agent-plugin-lifecycle/src/service/modules/providers/ports.ts
+export { createResourceCodexProviderAdapter } from "./internal";
+
+// @filename: services/agent-plugin-lifecycle/src/service/modules/releases/ports.ts
+export * from "./internal/resource-artifact-repository";
+
+// @filename: apps/cli/src/lib/agent-plugins/value-port-bypass.ts
+import { createResourceCodexProviderAdapter } from "@rawr/agent-plugin-lifecycle/ports/providers";
+
+export const adapter = createResourceCodexProviderAdapter;
+
+// @filename: apps/cli/src/lib/agent-plugins/value-surface-bypass.ts
+import { contentDigest } from "@rawr/agent-plugin-lifecycle/release";
+
+export const digest = contentDigest;
+
+// @filename: apps/cli/src/lib/agent-plugins/internal-bypass.ts
 import { application } from "@rawr/agent-plugin-lifecycle/service/modules/releases/internal/application";
 
 export const release = application;
@@ -66,10 +106,22 @@ export const release = application;
 // @filename: services/agent-plugin-lifecycle/src/service/modules/providers/ports.ts
 import type { NativeAgentProvider } from "@rawr/resource-native-agent-provider";
 
+export type * from "./internal/domain/projection";
+export type { NativeProviderAdapter } from "./internal";
 export type ProviderPort = NativeAgentProvider;
 
-// @filename: apps/cli/src/lib/agent-plugins/bindings/providers/native.ts
+// @filename: apps/cli/src/lib/agent-plugins/protocol.ts
 import type { ProviderLifecycleRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
 
 export type Runtime = ProviderLifecycleRuntime;
+
+// @filename: apps/cli/src/lib/agent-plugins/client.ts
+import { createClient } from "@rawr/agent-plugin-lifecycle/client";
+
+export const client = createClient;
+
+// @filename: apps/cli/src/lib/agent-plugins/bindings/providers.ts
+import { createResourceCodexProviderAdapter } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+
+export const adapter = createResourceCodexProviderAdapter;
 ```

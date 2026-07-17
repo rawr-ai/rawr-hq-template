@@ -13,7 +13,7 @@ import {
   parseReleaseSetDigest,
   parseRepositoryIdentity,
   type ArtifactRef,
-} from "@rawr/agent-plugin-lifecycle/release";
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 
 type InputOf<T> = T extends (...args: infer TArgs) => unknown ? TArgs[0] : never;

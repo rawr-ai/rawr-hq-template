@@ -12,10 +12,10 @@
   },
   "ownerProject": "@rawr/agent-plugin-lifecycle",
   "lane": "enforced",
-  "forbids": "service imports of concrete resource providers or controller implementation, and CLI imports of lifecycle service internals",
-  "why": "The service owns lifecycle semantics behind resource contracts. Concrete providers and controller composition stay at the CLI edge, which consumes only declared lifecycle package exports.",
-  "remediate": "Depend on a resource contract from the service, bind its provider at the CLI edge, and import lifecycle behavior through a declared public package subpath.",
-  "message": "Lifecycle dependencies must point from controller composition through public service ports to resource contracts.",
+  "forbids": "service imports of concrete providers or controller implementation, runtime exports from module ports, and CLI runtime imports outside the client or exact binding facades",
+  "why": "The service owns lifecycle semantics behind type-only resource protocols. Runtime construction crosses one named binding facade, so a port or deep service path cannot become a second executable owner.",
+  "remediate": "Keep ports protocol/type-only, bind concrete resources through src/bindings, and consume runtime values only through the service client or an exact bindings/* package export.",
+  "message": "Lifecycle dependencies must point from controller composition through exact binding facades and type-only service ports to resource contracts.",
   "pathCoverage": [
     {
       "kind": "exact-path",

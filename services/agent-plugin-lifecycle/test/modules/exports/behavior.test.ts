@@ -26,7 +26,7 @@ import {
   type UndoTerminalWriteResult,
   type UndoWriteResult,
   type UndoWriter,
-} from "../../../src/service/modules/exports/ports";
+} from "../../../src/bindings/exports";
 import { executeExportAgentPlugins } from "../../../src/service/modules/exports/internal/export-agent-plugins";
 import { alphaOnlyArtifactFixture, exportArtifactFixture } from "./artifact-fixture";
 

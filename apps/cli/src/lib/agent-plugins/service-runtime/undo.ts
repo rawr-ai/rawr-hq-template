@@ -2,11 +2,8 @@ import { constants } from "node:fs";
 import { lstat, open } from "node:fs/promises";
 import path from "node:path";
 
-import {
-  createProviderOwnerRuntime,
-  type ProviderId,
-  type ProviderOwnerRuntime,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+import type { ProviderId, ProviderOwnerRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
+import { createProviderOwnerRuntime } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import { resolveControllerReentry } from "@rawr/core";
 
 import type { ControllerProjectionBinding } from "../commands/binding";

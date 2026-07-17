@@ -5,7 +5,7 @@ import {
   type ExactGitBlobPointer,
   type GitLocator,
   type HostedApprovalObservation,
-} from "@rawr/agent-plugin-lifecycle/ports/governance";
+} from "@rawr/agent-plugin-lifecycle/bindings/governance";
 
 export const REPOSITORY = "git:github.com/example/personal-rawr-hq";
 export const MAIN_REF = "refs/heads/main";

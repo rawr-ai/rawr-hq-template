@@ -1,24 +1,18 @@
-import {
-  VENDOR_LOCK_PROTOCOL,
-  VENDOR_PROVENANCE_PROTOCOL,
-  VENDOR_SOURCE_PROTOCOL,
-  type VendorLockRecord,
-  type VendorProvenanceRecord,
-  type VendorRecordBinding,
-  type VendorSourceDeclaration,
-  type VendorSourceIdentity,
+import type {
+  VendorLockRecord,
+  VendorProvenanceRecord,
+  VendorRecordBinding,
+  VendorSourceDeclaration,
+  VendorSourceIdentity,
 } from "./model/dto/vendor-records";
 import type { ContentWorkspaceAsyncPort } from "@rawr/resource-content-workspace";
 
-export {
-  VENDOR_LOCK_PROTOCOL,
-  VENDOR_PROVENANCE_PROTOCOL,
-  VENDOR_SOURCE_PROTOCOL,
-  type VendorLockRecord,
-  type VendorProvenanceRecord,
-  type VendorRecordBinding,
-  type VendorSourceDeclaration,
-  type VendorSourceIdentity,
+export type {
+  VendorLockRecord,
+  VendorProvenanceRecord,
+  VendorRecordBinding,
+  VendorSourceDeclaration,
+  VendorSourceIdentity,
 } from "./model/dto/vendor-records";
 
 export interface VendorContentWorkspaceRef {

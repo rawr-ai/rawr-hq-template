@@ -16,7 +16,7 @@ import {
   type KnownNativeHomeV1,
   type KnownNativeHomesReader,
   type KnownNativeHomesSnapshotV1,
-} from "@rawr/agent-plugin-lifecycle/ports/exports";
+} from "@rawr/agent-plugin-lifecycle/bindings/exports";
 import type { ProviderLifecycleRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,

@@ -22,7 +22,7 @@ import { createPackageAgentPluginApplication } from "../../../src/service/module
 import {
   createResourcePackageOutputRuntime,
   type ResourcePackageOutputOptions,
-} from "../../../src/service/modules/packaging/ports";
+} from "../../../src/bindings/packaging";
 import { packagingArtifactFixture } from "./artifact-fixture";
 import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "./owned-fixture-root";
 

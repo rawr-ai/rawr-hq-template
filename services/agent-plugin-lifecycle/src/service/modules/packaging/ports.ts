@@ -51,8 +51,4 @@ export type {
   PackagingFailureCode,
 };
 
-export {
-  coworkV1PackageDigest,
-  createResourcePackageOutputRuntime,
-  type ResourcePackageOutputOptions,
-} from "./internal/resource-package-output";
+export type { ResourcePackageOutputOptions } from "./internal/resource-package-output";

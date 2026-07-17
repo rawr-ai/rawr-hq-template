@@ -5,16 +5,16 @@ import {
   marketplaceState,
   type ProviderMarketplaceObservation,
   type ProviderMarketplaceRegistration,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type {
   AdapterProtocol,
   ProviderMemberFingerprint,
   ProviderSourceIdentity,
   ProjectionDigest,
 } from "@rawr/agent-plugin-lifecycle/ports/providers";
-import { success } from "@rawr/agent-plugin-lifecycle/ports/providers";
-import { createTargetIdentitySidecar, type ProviderMutationAction, type TargetIdentityObservation } from "@rawr/agent-plugin-lifecycle/ports/providers";
-import { parseProviderTarget } from "@rawr/agent-plugin-lifecycle/ports/providers";
+import { success } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import { createTargetIdentitySidecar, type ProviderMutationAction, type TargetIdentityObservation } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import { parseProviderTarget } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import {
   createProviderOwnerAction,
   createProviderOwnerObservedPost,

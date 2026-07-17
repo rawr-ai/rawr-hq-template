@@ -1,0 +1,32 @@
+export type * from "../service/modules/releases/ports";
+export type * from "../service/shared/release";
+
+export {
+  createResourceArtifactReader,
+  createResourceArtifactStore,
+} from "../service/modules/releases/internal/resource-artifact-repository";
+export {
+  MAX_MECHANICAL_EVIDENCE_BYTES,
+  MAX_PAYLOAD_BYTES_PER_MEMBER,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+  addReleaseSetPayloadBytes,
+  compareCanonicalText,
+  contentDigest,
+  createAgentPluginPayload,
+  createCompleteSetArtifactRef,
+  createMechanicalEvidenceHandle,
+  createReleaseArtifactRef,
+  decodeAgentPluginReleaseInput,
+  mechanicalEvidenceDigest,
+  parseArtifactDigest,
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseMechanicalEvidenceHandle,
+  parsePluginId,
+  parseReleaseDigest,
+  parseReleaseRelativePath,
+  parseReleaseSetDigest,
+  parseRepositoryIdentity,
+} from "../service/shared/release";

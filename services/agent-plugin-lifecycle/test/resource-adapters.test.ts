@@ -18,11 +18,11 @@ import {
   coworkV1PackageDigest,
   createResourcePackageOutputRuntime,
   type ResourcePackageOutputOptions,
-} from "../src/service/modules/packaging/ports";
+} from "../src/bindings/packaging";
 import {
   createResourceArtifactReader,
   createResourceArtifactStore,
-} from "../src/service/modules/releases/ports";
+} from "../src/bindings/releases";
 import { packagingArtifactFixture } from "./modules/packaging/artifact-fixture";
 import {
   createOwnedFixtureRoot,

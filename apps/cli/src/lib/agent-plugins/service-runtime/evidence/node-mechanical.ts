@@ -1,13 +1,13 @@
 import {
   createMechanicalEvidenceHandle as createStoreHandle,
   type MechanicalEvidenceStore,
-} from "@rawr/agent-plugin-lifecycle/release";
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import {
   createMechanicalEvidenceObservation,
   createProviderAcceptanceBinding,
   type MechanicalEvidenceReader as GovernanceEvidenceReader,
   type ProviderAcceptanceBinding,
-} from "@rawr/agent-plugin-lifecycle/ports/governance";
+} from "@rawr/agent-plugin-lifecycle/bindings/governance";
 import {
   decodeMechanicalProviderEvidence,
   failure,
@@ -17,7 +17,7 @@ import {
   type MechanicalEvidenceDigest,
   type MechanicalEvidencePublisher,
   type MechanicalProviderEvidence,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
 import { createFilesystemMechanicalEvidenceStore } from "../releases/artifact-store/evidence-store";
 import type { ArtifactStoreRoot } from "../../layout";

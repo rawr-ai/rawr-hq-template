@@ -8,7 +8,7 @@ import {
   type ProviderUndoSession,
   type ProviderUndoWriter,
   type ReceiptObservation,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
 import type {
   CapsuleActionHandle,

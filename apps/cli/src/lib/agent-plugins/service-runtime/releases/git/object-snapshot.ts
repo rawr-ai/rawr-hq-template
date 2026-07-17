@@ -19,7 +19,7 @@ import {
   type AgentPluginReleaseInput,
   type PluginId,
   type ReleaseRelativePath,
-} from "@rawr/agent-plugin-lifecycle/release";
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import type {
   ContentWorkspaceInspection,
   ContentWorkspacePolicy,

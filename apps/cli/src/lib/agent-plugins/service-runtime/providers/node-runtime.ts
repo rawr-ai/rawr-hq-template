@@ -19,7 +19,7 @@ import {
   type NativeMemberRestorationPort,
   type NativeProviderObserver,
   type ProviderRecordState,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type { ArtifactReader } from "@rawr/agent-plugin-lifecycle/ports/releases";
 import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import { makeNodeAgentProviderRecordsAsyncPort } from "@rawr/resource-agent-provider-records/providers/effect-platform-node";

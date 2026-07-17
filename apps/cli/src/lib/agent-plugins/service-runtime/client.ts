@@ -6,7 +6,7 @@ import {
   type KnownNativeHomesReader,
   type UndoCandidateInput,
   type UndoWriter,
-} from "@rawr/agent-plugin-lifecycle/ports/exports";
+} from "@rawr/agent-plugin-lifecycle/bindings/exports";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
 } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";

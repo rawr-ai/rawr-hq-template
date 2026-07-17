@@ -2,7 +2,7 @@ import {
   createExactGitBlobPointer,
   type HostedApprovalHistory,
   type HostedApprovalHistoryQuery,
-} from "@rawr/agent-plugin-lifecycle/ports/governance";
+} from "@rawr/agent-plugin-lifecycle/bindings/governance";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const provider = vi.hoisted(() => ({

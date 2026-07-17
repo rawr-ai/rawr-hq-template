@@ -15,12 +15,9 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
 } from "@rawr/agent-plugin-lifecycle/release";
-import {
-  VENDOR_LOCK_PROTOCOL,
-  VENDOR_PROVENANCE_PROTOCOL,
-  VENDOR_SOURCE_PROTOCOL,
-  type VendorContentWorkspaceRef,
-  type VendorSourceIdentity,
+import type {
+  VendorContentWorkspaceRef,
+  VendorSourceIdentity,
 } from "@rawr/agent-plugin-lifecycle/ports/vendors";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -34,6 +31,9 @@ import {
 const execFileAsync = promisify(execFile);
 const GIT = "/usr/bin/git";
 const TEMP_PREFIX = "rawr-content-workspace-git-";
+const VENDOR_SOURCE_PROTOCOL = "rawr-vendor-source@v1";
+const VENDOR_PROVENANCE_PROTOCOL = "rawr-vendor-provenance@v1";
+const VENDOR_LOCK_PROTOCOL = "rawr-vendor-lock@v1";
 
 bindVerifiedControllerReentryAuthority({
   runtimePath: "/usr/bin/false",

@@ -34,7 +34,7 @@ import {
   type ProviderMutationAction,
   type ProviderOwnerRuntime,
   type ProviderTargetPlan,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { deriveAgentPluginControllerLayout } from "../../../src/lib/agent-plugins/layout";
@@ -43,7 +43,7 @@ import {
   createAgentPluginOwnerProtocolRegistryV1,
   openNodeCapsuleStateStoreV1,
 } from "../../../src/lib/agent-plugins/undo";
-import { CODEX_ADAPTER_PROTOCOL } from "@rawr/agent-plugin-lifecycle/ports/providers";
+import { CODEX_ADAPTER_PROTOCOL } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import { createNodeProviderLifecycleRuntime } from "../../../src/lib/agent-plugins/service-runtime/providers/node-runtime";
 import {
   createExpectedProviderOwnerObservedPost,

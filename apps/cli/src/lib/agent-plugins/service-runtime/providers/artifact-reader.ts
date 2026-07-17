@@ -4,7 +4,7 @@ import {
   issue,
   success,
   type VerifiedReleaseReader,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
 /** Adapts the immutable release store without adding another artifact owner. */
 export function createProviderReleaseReader(reader: ArtifactReader): VerifiedReleaseReader {

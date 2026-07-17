@@ -22,6 +22,26 @@
       "types": "./src/service/shared/release/index.ts",
       "default": "./src/service/shared/release/index.ts"
     },
+    "./bindings/exports": {
+      "types": "./src/bindings/exports.ts",
+      "default": "./src/bindings/exports.ts"
+    },
+    "./bindings/governance": {
+      "types": "./src/bindings/governance.ts",
+      "default": "./src/bindings/governance.ts"
+    },
+    "./bindings/packaging": {
+      "types": "./src/bindings/packaging.ts",
+      "default": "./src/bindings/packaging.ts"
+    },
+    "./bindings/providers": {
+      "types": "./src/bindings/providers.ts",
+      "default": "./src/bindings/providers.ts"
+    },
+    "./bindings/releases": {
+      "types": "./src/bindings/releases.ts",
+      "default": "./src/bindings/releases.ts"
+    },
     "./ports/releases": {
       "types": "./src/service/modules/releases/ports.ts",
       "default": "./src/service/modules/releases/ports.ts"

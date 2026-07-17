@@ -15,8 +15,8 @@ import {
   type ProviderMarketplaceSource,
   type ResourceClaudeProviderAdapterOptions,
   type ResourceCodexProviderAdapterOptions,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "@rawr/agent-plugin-lifecycle/release";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import type {
   ArtifactObjectAddress,
   ArtifactReadLimits,

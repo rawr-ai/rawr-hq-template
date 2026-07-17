@@ -21,12 +21,14 @@ import {
   VENDOR_LOCK_PROTOCOL,
   VENDOR_PROVENANCE_PROTOCOL,
   VENDOR_SOURCE_PROTOCOL,
-  type VendorContentWorkspaceRef,
-  type VendorLifecycleRuntime,
-  type VendorLockRecord,
-  type VendorProvenanceRecord,
-  type VendorSourceDeclaration,
-  type VendorSourceIdentity,
+} from "../../../src/service/modules/vendors/model/dto/vendor-records";
+import type {
+  VendorContentWorkspaceRef,
+  VendorLifecycleRuntime,
+  VendorLockRecord,
+  VendorProvenanceRecord,
+  VendorSourceDeclaration,
+  VendorSourceIdentity,
 } from "../../../src/service/modules/vendors/ports";
 import {
   encodeVendorLockRecord,

@@ -101,75 +101,127 @@ export type {
   TargetRecordWriteObservation,
 } from "./internal/ports/target-record-storage";
 
-// The service owns native lifecycle interpretation. Runtime bindings provide
-// only the selected resource implementation and explicit acquisition inputs.
-export * from "./internal/domain/canonical";
-export * from "./internal/domain/evidence";
-export * from "./internal/domain/evidence-codec";
-export * from "./internal/domain/marketplace";
-export * from "./internal/domain/mode";
-export * from "./internal/domain/native-homes";
-export * from "./internal/domain/outcome";
-export * from "./internal/domain/projection";
-export {
-  canonicalSerializeTargetReceipt,
-  createTargetReceipt,
-  decodeTargetReceipt,
-  parseLifecycleRecordDigest,
-  receiptBodyValue,
-  verifyTargetReceipt,
-  visibleFingerprint,
-  type CanonicalAcceptedScope,
-  type CompleteTestScope,
-  type LifecycleRecordDigest,
-  type ManagedMemberClaim,
-  type ReceiptLineage,
-  type TargetReceipt,
-  type TargetReceiptBody,
-  type TargetReceiptDigest,
-  type TargetReceiptScope,
-  type TargetedTestScope,
-  type VerifiedMemberIdentity,
-  type VisibleFingerprint,
+export type { CanonicalValue } from "./internal/domain/canonical";
+export type {
+  MechanicalEvidenceDigest,
+  MechanicalEvidenceSource,
+  MechanicalProviderEvidence,
+  MechanicalProviderEvidenceBody,
+  MechanicalTargetFactDigest,
+  ProviderVerificationFact,
+} from "./internal/domain/evidence";
+export type {
+  MarketplaceProjectionDigest,
+  ProviderMarketplaceMemberSource,
+  ProviderMarketplaceObservation,
+  ProviderMarketplaceRegistration,
+  ProviderMarketplaceState,
+} from "./internal/domain/marketplace";
+export type {
+  CanonicalStatusRequest,
+  CanonicalSync,
+  CompleteTest,
+  ContentRecordLocator,
+  ContentWorkspaceRoot,
+  EvaluationProfile,
+  ManagedRetireRequest,
+  ProviderDeploymentRequest,
+  ProviderRequestDigest,
+  TargetedTest,
+} from "./internal/domain/mode";
+export type {
+  CompleteNativeHomesDigest,
+  CompleteNativeHomesObservation,
+} from "./internal/domain/native-homes";
+export type {
+  CanonicalStatusOutcome,
+  CanonicalTargetStatus,
+  ProviderEvent,
+  ProviderOperationOutcome,
+  TargetOperationOutcome,
+} from "./internal/domain/outcome";
+export type {
+  AdapterProtocol,
+  AgentProviderProjection,
+  CapabilityEvaluation,
+  CapabilityObservation,
+  CapabilityProfile,
+  CapabilityProfileDigest,
+  ProjectionDigest,
+  ProjectionSource,
+  ProviderArtifactAuthority,
+  ProviderCapability,
+  ProviderMarketplaceProjection,
+  ProviderMemberFingerprint,
+  ProviderPackageFile,
+  ProviderProjectionMember,
+  ProviderSourceDigest,
+  ProviderSourceIdentity,
+  ProviderVisibleClaimSet,
+  RendererProtocol,
+} from "./internal/domain/projection";
+export type {
+  CanonicalAcceptedScope,
+  CompleteTestScope,
+  LifecycleRecordDigest,
+  ManagedMemberClaim,
+  ReceiptLineage,
+  TargetReceipt,
+  TargetReceiptBody,
+  TargetReceiptDigest,
+  TargetReceiptScope,
+  TargetedTestScope,
+  VerifiedMemberIdentity,
+  VisibleFingerprint,
 } from "./internal/domain/receipt";
-export * from "./internal/domain/result";
-export * from "./internal/domain/state";
-export * from "./internal/domain/target";
+export type {
+  DeploymentResult,
+  NonEmptyReadonlyArray,
+  ProviderDeploymentIssue,
+  ProviderDeploymentIssueCode,
+} from "./internal/domain/result";
+export type {
+  DeploymentAuthority,
+  InventoryFingerprint,
+  NativeMemberObservation,
+  NativeStandaloneExposureObservation,
+  PlanTargetInput,
+  ProviderInventory,
+  ProviderMutationAction,
+  ProviderMutationPostState,
+  ProviderPlanStep,
+  ProviderTargetPlan,
+  ReceiptObservation,
+  TargetIdentityDigest,
+  TargetIdentityObservation,
+  TargetIdentitySidecar,
+} from "./internal/domain/state";
+export type {
+  ProviderHome,
+  ProviderId,
+  ProviderTarget,
+  ProviderTargetDigest,
+} from "./internal/domain/target";
 export type {
   ProviderMemberRestoreContext,
   ProviderOwnerRuntime,
 } from "./internal/ports/owner";
-export {
-  CLAUDE_ADAPTER_PROTOCOL,
-  CODEX_ADAPTER_PROTOCOL,
-  createProviderOwnerRuntime,
-  createResourceClaudeProviderAdapter,
-  createResourceClaudeProviderObserver,
-  createResourceCodexProviderAdapter,
-  createResourceCodexProviderObserver,
-  createResourceProviderRecordState,
-  createPathlessProjectionStorage,
-  createPathlessTargetState,
-  type ClaudeNativeResourceSession,
-  type ClaudeProviderAdapter,
-  type CodexNativeResourceSession,
-  type CodexProviderAdapter,
-  type NativeProviderAdapter,
-  type NativeProviderObserver,
-  type NativeProviderResourcePort,
-  type NativeResourceCapabilityProbe,
-  type NativeResourceJsonObservation,
-  type NativeResourcePackageEntry,
-  type NativeResourcePackageObservation,
-  type NativeResourceMarketplaceReadInput,
-  type NativeResourcePackageReadLimits,
-  type NativeResourcePluginReadInput,
-  type NativeResourceSessionInput,
-  type ResourceClaudeProviderAdapterOptions,
-  type ResourceClaudeProviderObserverOptions,
-  type ResourceCodexProviderAdapterOptions,
-  type ResourceCodexProviderObserverOptions,
-  type ProviderRecordState,
-  type ResourceProviderRecordStateOptions,
-  type PathlessProjectionStorage,
+export type {
+  ClaudeNativeResourceSession,
+  ClaudeProviderAdapter,
+  CodexNativeResourceSession,
+  CodexProviderAdapter,
+  NativeProviderAdapter,
+  NativeProviderResourcePort,
+  NativeResourceCapabilityProbe,
+  NativeResourceJsonObservation,
+  NativeResourcePackageEntry,
+  NativeResourcePackageObservation,
+  NativeResourceMarketplaceReadInput,
+  NativeResourcePackageReadLimits,
+  NativeResourcePluginReadInput,
+  NativeResourceSessionInput,
+  PathlessProjectionStorage,
+  ResourceClaudeProviderAdapterOptions,
+  ResourceCodexProviderAdapterOptions,
 } from "./internal";

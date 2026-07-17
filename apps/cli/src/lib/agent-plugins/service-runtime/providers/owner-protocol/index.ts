@@ -4,9 +4,9 @@ import {
   parsePluginId,
   type ContentAuthority,
   type PluginId,
-} from "@rawr/agent-plugin-lifecycle/release";
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 
-import { canonicalDigest, compareCanonical, type CanonicalValue } from "@rawr/agent-plugin-lifecycle/ports/providers";
+import { canonicalDigest, compareCanonical, type CanonicalValue } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import {
   createProviderMarketplaceRegistration,
   marketplaceObservationValue,
@@ -17,7 +17,7 @@ import {
   type ProviderMarketplaceRegistration,
   type ProviderMarketplaceState,
   type MarketplaceProjectionDigest,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import {
   PROVIDER_ARTIFACT_AUTHORITY_PROTOCOL,
   parseAdapterProtocol,
@@ -28,13 +28,13 @@ import {
   type ProviderSourceDigest,
   type ProviderSourceIdentity,
   type ProjectionDigest,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import {
   receiptBodyValue,
   verifyTargetReceipt,
   type TargetReceipt,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
-import { failure, issue, success, type DeploymentResult } from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import { failure, issue, success, type DeploymentResult } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import {
   createTargetIdentitySidecar,
   type NativeMemberObservation,
@@ -43,8 +43,8 @@ import {
   type ReceiptObservation,
   type TargetIdentityObservation,
   type TargetIdentitySidecar,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
-import { parseProviderTarget, type ProviderTarget } from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import { parseProviderTarget, type ProviderTarget } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type { ProviderMemberRestoreContext, ProviderOwnerRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
 
 export type { ProviderOwnerRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";

@@ -23,7 +23,7 @@ import {
   type AgentProviderProjection,
   type NativeMemberRestorationPort,
   type ProviderTarget,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { deriveAgentPluginControllerLayout } from "../../../../src/lib/agent-plugins/layout";

@@ -22,7 +22,7 @@ import {
   type MechanicalEvidenceReader,
   type MechanicalEvidenceStore,
   type MechanicalEvidenceStoreFailpointEvent,
-} from "@rawr/agent-plugin-lifecycle/release";
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 
 import {
   createBunFfiNoReplacePublisher,

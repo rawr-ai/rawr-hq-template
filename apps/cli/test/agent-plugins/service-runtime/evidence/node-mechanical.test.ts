@@ -14,10 +14,10 @@ import {
   createMechanicalProviderEvidence,
   parseProviderTarget,
   renderCompleteProjection,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
 import { createNodeMechanicalEvidenceRuntimeFromStore } from "../../../../src/lib/agent-plugins/service-runtime/evidence/node-mechanical";
-import { CODEX_ADAPTER_PROTOCOL } from "@rawr/agent-plugin-lifecycle/ports/providers";
+import { CODEX_ADAPTER_PROTOCOL } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import { productFixture } from "../providers/product-fixture";
 
 describe("node mechanical evidence runtime", () => {

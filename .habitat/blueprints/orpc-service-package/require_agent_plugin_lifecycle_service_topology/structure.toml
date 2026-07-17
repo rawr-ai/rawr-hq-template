@@ -6,11 +6,26 @@ root = "services/agent-plugin-lifecycle/src"
 kind = "directory"
 mode = "closed"
 required = [
+  "bindings",
   "client.ts",
   "index.ts",
   "router.ts",
   "service",
   "types.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-binding-facades"
+root = "services/agent-plugin-lifecycle/src/bindings"
+kind = "directory"
+mode = "closed"
+required = [
+  "exports.ts",
+  "governance.ts",
+  "packaging.ts",
+  "providers.ts",
+  "releases.ts",
 ]
 allowed = []
 

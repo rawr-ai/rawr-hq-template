@@ -10,7 +10,7 @@ import {
   type ExportFailpoints,
   type UndoApplyingSession,
   type UndoWriter,
-} from "@rawr/agent-plugin-lifecycle/ports/exports";
+} from "@rawr/agent-plugin-lifecycle/bindings/exports";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {

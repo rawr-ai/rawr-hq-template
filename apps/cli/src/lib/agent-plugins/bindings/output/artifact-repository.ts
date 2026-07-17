@@ -1,7 +1,7 @@
 import {
   createResourceArtifactReader,
   createResourceArtifactStore,
-} from "@rawr/agent-plugin-lifecycle/ports/releases";
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 
 import type { ArtifactStoreRoot } from "../../layout";

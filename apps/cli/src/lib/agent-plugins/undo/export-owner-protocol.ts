@@ -14,7 +14,7 @@ import {
   type ExportInverseActionV1,
   type UndoApplyingSession,
   type UndoWriter,
-} from "@rawr/agent-plugin-lifecycle/ports/exports";
+} from "@rawr/agent-plugin-lifecycle/bindings/exports";
 import {
   executeExportInverseAction,
   nodeExportOwnerStateReader,
