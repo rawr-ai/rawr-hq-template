@@ -37,8 +37,7 @@ or {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/[^/]+/ports\.ts$",
     $source <: r"^[\"']?\./internal(?:/|[\"'])",
     ! $export <: includes "export type",
-    ! $export <: includes "export { type",
-    ! $export <: includes "export {type"
+    ! $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from"
   },
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.ts$",
@@ -50,6 +49,19 @@ or {
     $filename <: r".*apps/cli/src/.*\.ts$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/|[\"'])",
     ! $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$"
+  },
+  `export { $exports } from $source` as $export where {
+    $filename <: r".*apps/cli/src/.*\.ts$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/|[\"'])",
+    ! $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$",
+    ! $export <: includes "export type",
+    ! $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from"
+  },
+  `export * from $source` as $export where {
+    $filename <: r".*apps/cli/src/.*\.ts$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/|[\"'])",
+    ! $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$",
+    ! $export <: includes "export type *"
   },
   import_statement(source=$source) where {
     $filename <: r".*apps/cli/src/.*\.ts$",
@@ -84,6 +96,9 @@ export { createResourceCodexProviderAdapter } from "./internal";
 // @filename: services/agent-plugin-lifecycle/src/service/modules/releases/ports.ts
 export * from "./internal/resource-artifact-repository";
 
+// @filename: services/agent-plugin-lifecycle/src/service/modules/exports/ports.ts
+export { type ExportPlan, createExportOwner } from "./internal/owner-protocol";
+
 // @filename: apps/cli/src/lib/agent-plugins/value-port-bypass.ts
 import { createResourceCodexProviderAdapter } from "@rawr/agent-plugin-lifecycle/ports/providers";
 
@@ -93,6 +108,20 @@ export const adapter = createResourceCodexProviderAdapter;
 import { contentDigest } from "@rawr/agent-plugin-lifecycle/release";
 
 export const digest = contentDigest;
+
+// @filename: apps/cli/src/lib/agent-plugins/value-surface-reexport.ts
+export {
+  createMechanicalEvidenceHandle,
+} from "@rawr/agent-plugin-lifecycle/release";
+
+// @filename: apps/cli/src/lib/agent-plugins/mixed-value-surface-reexport.ts
+export {
+  type MechanicalEvidenceHandleV1,
+  createMechanicalEvidenceHandle,
+} from "@rawr/agent-plugin-lifecycle/release";
+
+// @filename: apps/cli/src/lib/agent-plugins/value-surface-star.ts
+export * from "@rawr/agent-plugin-lifecycle/release";
 
 // @filename: apps/cli/src/lib/agent-plugins/internal-bypass.ts
 import { application } from "@rawr/agent-plugin-lifecycle/service/modules/releases/internal/application";
@@ -108,12 +137,22 @@ import type { NativeAgentProvider } from "@rawr/resource-native-agent-provider";
 
 export type * from "./internal/domain/projection";
 export type { NativeProviderAdapter } from "./internal";
+export { type ProviderTarget, type ProviderInventory } from "./internal/domain/state";
 export type ProviderPort = NativeAgentProvider;
 
 // @filename: apps/cli/src/lib/agent-plugins/protocol.ts
 import type { ProviderLifecycleRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
 
 export type Runtime = ProviderLifecycleRuntime;
+
+// @filename: apps/cli/src/lib/agent-plugins/release-protocol.ts
+export type {
+  ContentAuthority,
+  MechanicalEvidenceHandleV1,
+} from "@rawr/agent-plugin-lifecycle/release";
+
+// @filename: apps/cli/src/lib/agent-plugins/release-protocol-star.ts
+export type * from "@rawr/agent-plugin-lifecycle/release";
 
 // @filename: apps/cli/src/lib/agent-plugins/client.ts
 import { createClient } from "@rawr/agent-plugin-lifecycle/client";
@@ -124,4 +163,9 @@ export const client = createClient;
 import { createResourceCodexProviderAdapter } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
 export const adapter = createResourceCodexProviderAdapter;
+
+// @filename: apps/cli/src/lib/agent-plugins/bindings/releases.ts
+export {
+  createMechanicalEvidenceHandle,
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 ```
