@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "files": [
+    "contract.ts",
+    "providers/cowork-v1-effect-platform-node/index.ts"
+  ]
+}
