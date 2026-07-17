@@ -2,6 +2,11 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
+import type {
+  ControllerExecutableAuthority,
+  ControllerProviderHomeAuthority,
+} from "@rawr/resource-controller-authority";
+import { preflightNodeControllerAuthority } from "@rawr/resource-controller-authority/providers/effect-platform-node";
 import type { UndoResult } from "../undo";
 import { createProductionLifecycleClient } from "../service-runtime/client";
 import { createProductionAgentPluginUndo } from "../service-runtime/undo";
@@ -103,6 +108,7 @@ export async function projectLifecycleOperation(
   binding: ControllerProjectionBinding,
   factory: LifecycleClientFactory = createProductionLifecycleClient,
 ): Promise<unknown> {
+  await preflightLifecycleAuthority(request, binding);
   const client = await factory(request.operation, binding);
   return invokeLifecycleProcedure(client, request);
 }
@@ -144,6 +150,7 @@ export async function invokeAgentPluginUndo(
   binding: ControllerProjectionBinding,
   application: UndoApplication = createProductionAgentPluginUndo,
 ): Promise<UndoResult> {
+  await preflightBindingAuthority(binding, []);
   return application(binding);
 }
 
@@ -192,6 +199,59 @@ function invocation(operation: LifecycleOperation) {
       },
     },
   } satisfies LifecycleCallOptions;
+}
+
+async function preflightLifecycleAuthority(
+  request: LifecycleOperationRequest,
+  binding: ControllerProjectionBinding,
+): Promise<void> {
+  await preflightBindingAuthority(binding, providerHomes(request));
+}
+
+async function preflightBindingAuthority(
+  binding: ControllerProjectionBinding,
+  homes: readonly ControllerProviderHomeAuthority[],
+): Promise<void> {
+  const executables: ControllerExecutableAuthority[] = [];
+  if (binding.gitExecutable !== undefined) {
+    executables.push({ kind: "git", name: "git", path: binding.gitExecutable });
+  }
+  if (binding.hostedGovernanceExecutable !== undefined) {
+    executables.push({
+      kind: "hosted-governance",
+      name: "hosted-governance",
+      path: binding.hostedGovernanceExecutable,
+    });
+  }
+  const providerNames: readonly ("claude" | "codex")[] = ["claude", "codex"];
+  for (const provider of providerNames) {
+    const executable = binding.providerExecutables[provider];
+    if (executable !== undefined) {
+      executables.push({ kind: "provider", name: provider, path: executable });
+    }
+  }
+  const result = await preflightNodeControllerAuthority({ executables, providerHomes: homes });
+  if (result.ok) return;
+  if (result.failure.boundary === "provider-home") {
+    throw new LifecycleInputError(result.failure.detail);
+  }
+  throw new LifecycleAuthorityBindingError(result.failure.detail);
+}
+
+function providerHomes(request: LifecycleOperationRequest): readonly ControllerProviderHomeAuthority[] {
+  switch (request.operation) {
+    case "providers.targetedTest":
+    case "providers.completeTest":
+    case "providers.canonicalSync":
+    case "providers.canonicalStatus":
+    case "providers.managedRetire":
+      return request.input.targets.map((target) => ({
+        provider: target.provider,
+        path: target.home,
+      }));
+    default:
+      return [];
+  }
 }
 
 function parseProviderExecutables(input: unknown): Partial<Record<"claude" | "codex", string>> {

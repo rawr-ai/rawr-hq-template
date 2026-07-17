@@ -11,22 +11,20 @@ const boundaryRule = [
       "../server/src/logging",
       "@rawr/hq-app/manifest",
       "@rawr/hq-app/legacy-cutover",
-      "@rawr/hq-ops/service/contract",
-      "@rawr/agent-config-sync",
-      "@rawr/agent-config-sync/*"
+      "@rawr/hq-ops/service/contract"
     ],
     depConstraints: [
       {
         sourceTag: "app:hq",
-        onlyDependOnLibsWithTags: ["type:package", "type:plugin", "type:service"]
+        onlyDependOnLibsWithTags: ["type:package", "type:plugin", "type:provider", "type:resource", "type:service"]
       },
       {
         sourceTag: "type:app",
-        onlyDependOnLibsWithTags: ["type:package", "type:plugin", "type:service"]
+        onlyDependOnLibsWithTags: ["type:package", "type:plugin", "type:provider", "type:resource", "type:service"]
       },
       {
         sourceTag: "type:service",
-        onlyDependOnLibsWithTags: ["type:package", "type:service"]
+        onlyDependOnLibsWithTags: ["type:package", "type:resource", "type:service"]
       },
       {
         sourceTag: "type:package",
@@ -34,7 +32,15 @@ const boundaryRule = [
       },
       {
         sourceTag: "type:plugin",
-        onlyDependOnLibsWithTags: ["type:package", "type:service"]
+        onlyDependOnLibsWithTags: ["type:package", "type:resource", "type:service"]
+      },
+      {
+        sourceTag: "type:provider",
+        onlyDependOnLibsWithTags: ["type:package", "type:resource"]
+      },
+      {
+        sourceTag: "type:resource",
+        onlyDependOnLibsWithTags: ["type:package", "type:resource"]
       }
     ],
     enforceBuildableLibDependency: false
@@ -104,15 +110,17 @@ export default [
       "**/.nx/**",
       "**/coverage/**",
       "**/.tmp/**",
-      "**/test/**",
-      "**/*.test.*",
       "apps/cli/bin/**",
       "apps/server/openapi/**",
       "apps/server/scripts/**"
     ]
   },
   {
-    files: ["**/*.{js,cjs,mjs,ts,tsx,jsx}"],
+    files: ["**/*.{js,jsx,cjs,mjs,ts,tsx,cts,mts}"],
+    linterOptions: {
+      noInlineConfig: true,
+      reportUnusedDisableDirectives: "error"
+    },
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -131,7 +139,7 @@ export default [
     }
   },
   {
-    files: ["apps/**/*.{js,jsx,ts,tsx}", "services/**/*.{js,jsx,ts,tsx}", "packages/**/*.{js,jsx,ts,tsx}", "plugins/**/*.{js,jsx,ts,tsx}"],
+    files: ["apps/**/*.{js,jsx,ts,tsx,cts,mts}", "services/**/*.{js,jsx,ts,tsx,cts,mts}", "packages/**/*.{js,jsx,ts,tsx,cts,mts}", "plugins/**/*.{js,jsx,ts,tsx,cts,mts}", "resources/**/*.{js,jsx,ts,tsx,cts,mts}"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -139,7 +147,7 @@ export default [
           patterns: [
             {
               group: ["@rawr/agent-sync", "@rawr/agent-sync/*"],
-              message: "The legacy @rawr/agent-sync package is removed; use @rawr/agent-config-sync and plugin/app-local concrete resources."
+              message: "The legacy @rawr/agent-sync package is removed; curated lifecycle belongs to the typed @rawr/agent-plugin-lifecycle service boundary."
             },
             {
               group: ["@rawr/session-tools", "@rawr/session-tools/*"],
@@ -190,6 +198,35 @@ export default [
           ]
         }
       ]
+    }
+  },
+  {
+    // Repository scripts and the compiler contract environment are not Nx
+    // production dependency layers. They are still linted, but the Nx boundary
+    // rule does not describe their import topology.
+    files: [
+      "scripts/**/*.{js,jsx,cjs,mjs,ts,tsx,cts,mts}",
+      "tools/runtime-realization-type-env/**/*.{js,jsx,cjs,mjs,ts,tsx,cts,mts}"
+    ],
+    rules: {
+      "@nx/enforce-module-boundaries": "off"
+    }
+  },
+  {
+    // Tests intentionally reach package-private seams and fixture processes.
+    // Keep every test file in the lint population while exempting only the Nx
+    // production dependency-layer rule that does not model that topology.
+    files: ["**/test/**/*.{js,jsx,cjs,mjs,ts,tsx,cts,mts}", "**/*.test.{js,jsx,cjs,mjs,ts,tsx,cts,mts}"],
+    rules: {
+      "@nx/enforce-module-boundaries": "off"
+    }
+  },
+  {
+    // These two package files are accepted pre-ratchet boundary debt. Keep the
+    // exemption exact so the repository-wide lint gate catches any new debt.
+    files: ["packages/dev-node/src/resources.ts", "packages/dev-node/src/scratch-policy.ts"],
+    rules: {
+      "@nx/enforce-module-boundaries": "off"
     }
   }
 ];

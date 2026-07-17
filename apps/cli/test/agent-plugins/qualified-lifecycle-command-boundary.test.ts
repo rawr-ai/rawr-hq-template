@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { chmod, mkdir, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,9 +26,15 @@ import {
   invokeLifecycleProcedure,
   lifecycleResultExitCode,
   parseControllerProjectionBinding,
+  projectLifecycleOperation,
+  type ControllerProjectionBinding,
   type LifecycleOperationRequest,
 } from "../../src/lib/agent-plugins/commands/projection";
 import * as projectionSurface from "../../src/lib/agent-plugins/commands/projection";
+import {
+  createOwnedFixtureRoot,
+  removeOwnedFixtureRoot,
+} from "./service-runtime/releases/owned-fixture-root";
 
 const cliRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const hex40 = "a".repeat(40);
@@ -291,6 +298,157 @@ describe("qualified lifecycle command boundary", () => {
       expect(result.stdout).not.toContain("LIFECYCLE_UNDO_FAILED");
     }
   });
+
+  it("rejects selected executable authorities before constructing lifecycle ports", async () => {
+    const fixture = await createOwnedFixtureRoot();
+    try {
+      const providerHome = path.join(fixture.path, "provider-home");
+      const missingGit = path.join(fixture.path, "missing-git");
+      const nonExecutableGovernance = path.join(fixture.path, "non-executable-gh");
+      const providerAlias = path.join(fixture.path, "provider-alias");
+      await mkdir(providerHome, { mode: 0o700 });
+      await writeFile(nonExecutableGovernance, "not executable\n", { mode: 0o600 });
+      await chmod(nonExecutableGovernance, 0o600);
+      await symlink("/bin/echo", providerAlias);
+      const targetedTest = parseTestRequest({
+        release: [releaseHandle],
+        "evaluation-profile": "native@v1",
+        target: [`codex=${providerHome}`],
+      });
+      if (targetedTest.kind !== "targeted-test") throw new Error("targeted test fixture parsed as complete-set mode");
+
+      const cases: readonly Readonly<{
+        label: string;
+        request: LifecycleOperationRequest;
+        binding: ControllerProjectionBinding;
+        command: readonly string[];
+      }>[] = [
+        {
+          label: "missing Git executable",
+          request: { operation: "releases.check", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
+          binding: { gitExecutable: missingGit, providerExecutables: {} },
+          command: releaseCheckCommand(fixture.path, missingGit),
+        },
+        {
+          label: "non-executable hosted-governance binary",
+          request: {
+            operation: "providers.canonicalStatus",
+            input: parseStatusRequest({
+              "content-workspace": fixture.path,
+              "repository-identity": "repo",
+              target: [`codex=${providerHome}`],
+            }),
+          },
+          binding: {
+            gitExecutable: "/usr/bin/git",
+            hostedGovernanceExecutable: nonExecutableGovernance,
+            providerExecutables: { codex: "/bin/echo" },
+          },
+          command: canonicalStatusCommand(
+            fixture.path,
+            [`codex=${providerHome}`],
+            nonExecutableGovernance,
+            "/bin/echo",
+          ),
+        },
+        {
+          label: "provider executable alias",
+          request: {
+            operation: "providers.targetedTest",
+            input: targetedTest,
+          },
+          binding: { providerExecutables: { codex: providerAlias } },
+          command: [
+            "agent", "plugins", "test",
+            "--release", releaseHandle,
+            "--evaluation-profile", "native@v1",
+            "--target", `codex=${providerHome}`,
+            "--provider-executable", `codex=${providerAlias}`,
+          ],
+        },
+      ];
+
+      for (const testCase of cases) {
+        let clientConstructions = 0;
+        const rejected = await captureRejection(projectLifecycleOperation(
+          testCase.request,
+          testCase.binding,
+          () => {
+            clientConstructions += 1;
+            return recordingClient([]);
+          },
+        ));
+        expect.soft(rejected, testCase.label).toMatchObject({
+          code: "LIFECYCLE_AUTHORITY_BINDING_INVALID",
+        });
+        expect.soft(clientConstructions, testCase.label).toBe(0);
+
+        const command = runRawr([...testCase.command, "--json"]);
+        expect.soft(command.status, `${testCase.label}\n${command.stderr}`).toBe(2);
+        expect.soft(parseSingleJson(command.stdout), testCase.label).toMatchObject({
+          ok: false,
+          error: { code: "LIFECYCLE_AUTHORITY_BINDING_INVALID" },
+        });
+      }
+    } finally {
+      await removeOwnedFixtureRoot(fixture);
+    }
+  });
+
+  it("rejects aliased and duplicate canonical provider homes before constructing lifecycle ports", async () => {
+    const fixture = await createOwnedFixtureRoot();
+    try {
+      const providerHome = path.join(fixture.path, "provider-home");
+      const providerAlias = path.join(fixture.path, "provider-home-alias");
+      await mkdir(providerHome, { mode: 0o700 });
+      await symlink(providerHome, providerAlias);
+
+      const targetCases = [
+        { label: "aliased provider home", targets: [`codex=${providerAlias}`] },
+        { label: "duplicate canonical provider home", targets: [`codex=${providerHome}`, `codex=${providerAlias}`] },
+      ] as const;
+
+      for (const testCase of targetCases) {
+        const request: LifecycleOperationRequest = {
+          operation: "providers.canonicalStatus",
+          input: parseStatusRequest({
+            "content-workspace": fixture.path,
+            "repository-identity": "repo",
+            target: [...testCase.targets],
+          }),
+        };
+        const binding: ControllerProjectionBinding = {
+          gitExecutable: "/usr/bin/git",
+          hostedGovernanceExecutable: "/usr/bin/true",
+          providerExecutables: { codex: "/bin/echo" },
+        };
+        let clientConstructions = 0;
+        const rejected = await captureRejection(projectLifecycleOperation(request, binding, () => {
+          clientConstructions += 1;
+          return recordingClient([]);
+        }));
+        expect.soft(rejected, testCase.label).toMatchObject({ code: "LIFECYCLE_INPUT_INVALID" });
+        expect.soft(clientConstructions, testCase.label).toBe(0);
+
+        const command = runRawr([
+          ...canonicalStatusCommand(
+            fixture.path,
+            testCase.targets,
+            "/usr/bin/true",
+            "/bin/echo",
+          ),
+          "--json",
+        ]);
+        expect.soft(command.status, `${testCase.label}\n${command.stderr}`).toBe(2);
+        expect.soft(parseSingleJson(command.stdout), testCase.label).toMatchObject({
+          ok: false,
+          error: { code: "LIFECYCLE_INPUT_INVALID" },
+        });
+      }
+    } finally {
+      await removeOwnedFixtureRoot(fixture);
+    }
+  });
 });
 
 const EXACT_PLUGIN_COMMANDS = [
@@ -438,6 +596,54 @@ function runRawr(args: readonly string[]) {
     encoding: "utf8",
     env: { ...process.env, BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" },
   });
+}
+
+function releaseCheckCommand(contentWorkspace: string, gitExecutable: string): readonly string[] {
+  return [
+    "agent", "plugins", "check",
+    "--content-workspace", contentWorkspace,
+    "--repository-identity", "github:rawr/hq",
+    "--content-authority", "rawr-hq",
+    "--remote-name", "origin",
+    "--remote-url", "https://example.invalid/rawr-hq.git",
+    "--ref", "refs/heads/main",
+    "--source-commit", hex40,
+    "--source-tree", hex64,
+    "--release-input", "records/release-input.json",
+    "--plugin-root", "plugins/agents",
+    "--plugin", "alpha",
+    "--git-executable", gitExecutable,
+  ];
+}
+
+function canonicalStatusCommand(
+  contentWorkspace: string,
+  targets: readonly string[],
+  hostedGovernanceExecutable: string,
+  providerExecutable: string,
+): readonly string[] {
+  return [
+    "agent", "plugins", "status",
+    "--content-workspace", contentWorkspace,
+    "--repository-identity", "repo",
+    ...targets.flatMap((target) => ["--target", target]),
+    "--git-executable", "/usr/bin/git",
+    "--hosted-governance-executable", hostedGovernanceExecutable,
+    "--provider-executable", `codex=${providerExecutable}`,
+  ];
+}
+
+async function captureRejection(operation: Promise<unknown>): Promise<unknown> {
+  try {
+    await operation;
+    return null;
+  } catch (error) {
+    return error;
+  }
+}
+
+function parseSingleJson(output: string): unknown {
+  return JSON.parse(output) as unknown;
 }
 
 function relativeImportClosure(roots: readonly string[]): readonly string[] {
