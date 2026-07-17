@@ -17,6 +17,7 @@ import type {
   ProviderTargetRecordCapture,
   ProviderTargetRecordKind,
   ProviderTargetRecordMutation,
+  ProviderTargetRecordReleaseReceipt,
   ProviderTargetRecordRestoreReceipt,
   ProviderTargetRecordSettleReceipt,
   ProviderTargetRecordWriteReceipt,
@@ -243,6 +244,43 @@ export function makeAgentProviderRecordsResource(
       readToken: input.readToken,
       observation: copyObservation(preimage),
     }) satisfies ProviderTargetRecordCapture;
+  });
+
+  const releaseTargetOperation = Effect.fn("agentProviderRecords.releaseTarget")(function* (
+    input: Readonly<{
+      address: ProviderTargetRecordAddress;
+      readToken: string;
+      captureHandle: string;
+    }>,
+  ) {
+    const paths = yield* Path.Path;
+    const roots = yield* resolveRoots(paths, options, "release-target");
+    yield* validateOpaque(input.readToken, "readToken", "release-target");
+    yield* validateOpaque(input.captureHandle, "captureHandle", "release-target");
+    const resolved = yield* resolveTargetRecord(paths, roots, input.address, "release-target");
+    const authority = yield* requireCaptureAuthority(
+      captures,
+      consumedHandles,
+      input,
+      "release-target",
+      true,
+    );
+    if (authority.lifecycle !== "Captured") {
+      return yield* rejected(
+        "release-target",
+        "HandleState",
+        "capture-lifecycle",
+        resolved.path,
+        `Capture handle cannot release from ${authority.lifecycle}; restore mutated authority instead`,
+      );
+    }
+    captures.delete(input.captureHandle);
+    consumedHandles.add(input.captureHandle);
+    return Object.freeze({
+      readToken: input.readToken,
+      outcome: "Released",
+      handle: input.captureHandle,
+    }) satisfies ProviderTargetRecordReleaseReceipt;
   });
 
   const writeTargetOperation = Effect.fn("agentProviderRecords.writeTarget")(function* (
@@ -474,19 +512,8 @@ export function makeAgentProviderRecordsResource(
     yield* validateOpaque(input.captureHandle, "captureHandle", "settle-target");
     const resolved = yield* resolveTargetRecord(paths, roots, input.address, "settle-target");
     const authority = yield* requireCaptureAuthority(captures, consumedHandles, input, "settle-target", true);
-    if (authority.planDigest === undefined) authority.planDigest = input.planDigest;
-    if (authority.planDigest !== input.planDigest) {
-      return yield* rejected(
-        "settle-target",
-        "WrongPlan",
-        "settle-binding",
-        resolved.path,
-        "Settlement plan does not match the captured write",
-      );
-    }
     if (
-      authority.lifecycle !== "Captured"
-      && authority.lifecycle !== "Applied"
+      authority.lifecycle !== "Applied"
       && authority.lifecycle !== "Converged"
       && authority.lifecycle !== "Restored"
     ) {
@@ -498,10 +525,17 @@ export function makeAgentProviderRecordsResource(
         `Capture handle cannot settle from ${authority.lifecycle}`,
       );
     }
+    if (authority.planDigest !== input.planDigest) {
+      return yield* rejected(
+        "settle-target",
+        "WrongPlan",
+        "settle-binding",
+        resolved.path,
+        "Settlement plan does not match the captured write",
+      );
+    }
     const current = yield* readRecord(fs, paths, roots, resolved, authority.maxBytes, "settle-target");
-    const expected = authority.lifecycle === "Captured"
-      ? authority.preimage
-      : authority.postimage;
+    const expected = authority.postimage;
     const verified = authority.lifecycle === "Restored"
       ? sameObservationValue(current, authority.preimage)
       : expected !== undefined && sameObservationExact(current, expected);
@@ -530,6 +564,8 @@ export function makeAgentProviderRecordsResource(
     readTarget,
     scanTargets,
     captureTarget,
+    releaseTarget: (input: Parameters<typeof releaseTargetOperation>[0]) =>
+      targetMutationFence.withPermits(1)(releaseTargetOperation(input)),
     writeTarget: (input: Parameters<typeof writeTargetOperation>[0]) =>
       targetMutationFence.withPermits(1)(writeTargetOperation(input)),
     restoreTarget: (input: Parameters<typeof restoreTargetOperation>[0]) =>
@@ -569,6 +605,8 @@ export function makeNodeAgentProviderRecordsAsyncPort(
       runOrReject(resource.scanTargets(input)),
     captureTarget: (input: Parameters<typeof resource.captureTarget>[0]) =>
       runOrReject(resource.captureTarget(input)),
+    releaseTarget: (input: Parameters<typeof resource.releaseTarget>[0]) =>
+      runOrReject(resource.releaseTarget(input)),
     writeTarget: (input: Parameters<typeof resource.writeTarget>[0]) =>
       runOrReject(resource.writeTarget(input)),
     restoreTarget: (input: Parameters<typeof resource.restoreTarget>[0]) =>
@@ -1100,7 +1138,7 @@ function requireCaptureAuthority(
     readToken: string;
     captureHandle: string;
   }>,
-  operation: "write-target" | "restore-target" | "settle-target",
+  operation: "release-target" | "write-target" | "restore-target" | "settle-target",
   allowRestored = false,
 ): Effect.Effect<CaptureAuthority, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
@@ -1110,7 +1148,7 @@ function requireCaptureAuthority(
         "HandleConsumed",
         "capture-handle",
         undefined,
-        "Capture handle has already been settled",
+        "Capture handle has already been consumed",
       );
     }
     const authority = captures.get(input.captureHandle);

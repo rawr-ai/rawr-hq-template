@@ -159,6 +159,195 @@ describe("effect-platform-node agent provider records", () => {
     if (!reused.ok) expect(reused.failure.reason).toBe("HandleConsumed");
   });
 
+  it("releases one unmutated target capture exactly once", async () => {
+    fixtureRoot = await createFixture();
+    const resource = makeAgentProviderRecordsResource(fixtureLayout(fixtureRoot.path));
+    const address = targetAddress("Identity", "pt1_release");
+    const captured = await capture(resource, address, "read-release");
+    const releaseInput = {
+      address,
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+    };
+
+    const wrongToken = await run(resource.releaseTarget({
+      ...releaseInput,
+      readToken: "wrong-read-release",
+    }));
+    expect(wrongToken.ok).toBe(false);
+    if (!wrongToken.ok) expect(wrongToken.failure.reason).toBe("WrongToken");
+
+    expect(await run(resource.releaseTarget(releaseInput))).toEqual({
+      ok: true,
+      value: {
+        readToken: captured.readToken,
+        outcome: "Released",
+        handle: captured.handle,
+      },
+    });
+    const repeated = await run(resource.releaseTarget(releaseInput));
+    expect(repeated.ok).toBe(false);
+    if (!repeated.ok) expect(repeated.failure.reason).toBe("HandleConsumed");
+
+    const writeAfterRelease = await run(resource.writeTarget({
+      ...releaseInput,
+      planDigest: "plan-after-release",
+      mutation: { kind: "Put", bytes: encoder.encode('{"identity":1}\n') },
+    }));
+    expect(writeAfterRelease.ok).toBe(false);
+    if (!writeAfterRelease.ok) expect(writeAfterRelease.failure.reason).toBe("HandleConsumed");
+    expect(await readTarget(resource, address)).toEqual({ kind: "Absent", address });
+  });
+
+  it("refuses to settle a captured handle without binding the proposed plan", async () => {
+    fixtureRoot = await createFixture();
+    const resource = makeAgentProviderRecordsResource(fixtureLayout(fixtureRoot.path));
+    const address = targetAddress("Receipt", "pt1_unbound_settle");
+    const captured = await capture(resource, address, "read-unbound-settle");
+
+    const manufactured = await run(resource.settleTarget({
+      address,
+      planDigest: "manufactured-plan",
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+    }));
+    expect(manufactured.ok).toBe(false);
+    if (!manufactured.ok) expect(manufactured.failure.reason).toBe("HandleState");
+
+    const legitimate = {
+      address,
+      planDigest: "legitimate-plan",
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+      mutation: { kind: "Put" as const, bytes: encoder.encode('{"receipt":1}\n') },
+    };
+    expect(await run(resource.writeTarget(legitimate))).toMatchObject({
+      ok: true,
+      value: { outcome: "Applied" },
+    });
+    expect(await run(resource.settleTarget(legitimate))).toMatchObject({
+      ok: true,
+      value: { outcome: "Settled" },
+    });
+  });
+
+  it("serializes capture release with an in-flight target write", async () => {
+    fixtureRoot = await createFixture();
+    const layout = fixtureLayout(fixtureRoot.path);
+    const commitEntered = Promise.withResolvers<void>();
+    const continueCommit = Promise.withResolvers<void>();
+    const resource = makeAgentProviderRecordsResource({
+      ...layout,
+      async onEvent(event: AgentProviderRecordsEvent) {
+        if (event.kind === "BeforeAtomicCommit" && event.address.scope === "Target") {
+          commitEntered.resolve();
+          await continueCommit.promise;
+        }
+      },
+    });
+    const address = targetAddress("Identity", "pt1_release_fence");
+    const captured = await capture(resource, address, "read-release-fence");
+    const writeInput = {
+      address,
+      planDigest: "plan-release-fence",
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+      mutation: { kind: "Put" as const, bytes: encoder.encode('{"identity":1}\n') },
+    };
+
+    const writing = run(resource.writeTarget(writeInput));
+    await commitEntered.promise;
+    const releasing = run(resource.releaseTarget(writeInput));
+    const releasedDuringWrite = await Promise.race([
+      releasing.then(() => true),
+      new Promise<false>((resolve) => setTimeout(() => resolve(false), 50)),
+    ]);
+    expect(releasedDuringWrite).toBe(false);
+    continueCommit.resolve();
+
+    expect(await writing).toMatchObject({ ok: true, value: { outcome: "Applied" } });
+    const releaseAfterWrite = await releasing;
+    expect(releaseAfterWrite.ok).toBe(false);
+    if (!releaseAfterWrite.ok) expect(releaseAfterWrite.failure.reason).toBe("HandleState");
+    expect(await run(resource.restoreTarget(writeInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Restored", changed: true },
+    });
+    expect(await run(resource.settleTarget(writeInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Settled" },
+    });
+  });
+
+  it("refuses release after an applied or partial write while preserving restore and settle", async () => {
+    fixtureRoot = await createFixture();
+    const layout = fixtureLayout(fixtureRoot.path);
+    let interruptBeforeCommit = true;
+    const resource = makeAgentProviderRecordsResource({
+      ...layout,
+      onEvent(event: AgentProviderRecordsEvent) {
+        if (
+          interruptBeforeCommit
+          && event.kind === "BeforeAtomicCommit"
+          && event.address.scope === "Target"
+          && event.address.targetKey === "pt1_partial_release"
+        ) {
+          interruptBeforeCommit = false;
+          throw new Error("stop before partial write commit");
+        }
+      },
+    });
+
+    const appliedAddress = targetAddress("Receipt", "pt1_applied_release");
+    const appliedCapture = await capture(resource, appliedAddress, "read-applied-release");
+    const appliedInput = {
+      address: appliedAddress,
+      planDigest: "plan-applied-release",
+      readToken: appliedCapture.readToken,
+      captureHandle: appliedCapture.handle,
+      mutation: { kind: "Put" as const, bytes: encoder.encode('{"receipt":"applied"}\n') },
+    };
+    expect(await run(resource.writeTarget(appliedInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Applied" },
+    });
+    const appliedRelease = await run(resource.releaseTarget(appliedInput));
+    expect(appliedRelease.ok).toBe(false);
+    if (!appliedRelease.ok) expect(appliedRelease.failure.reason).toBe("HandleState");
+    expect(await run(resource.restoreTarget(appliedInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Restored", changed: true },
+    });
+    expect(await run(resource.settleTarget(appliedInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Settled" },
+    });
+
+    const partialAddress = targetAddress("Receipt", "pt1_partial_release");
+    const partialCapture = await capture(resource, partialAddress, "read-partial-release");
+    const partialInput = {
+      address: partialAddress,
+      planDigest: "plan-partial-release",
+      readToken: partialCapture.readToken,
+      captureHandle: partialCapture.handle,
+      mutation: { kind: "Put" as const, bytes: encoder.encode('{"receipt":"partial"}\n') },
+    };
+    const partialWrite = await run(resource.writeTarget(partialInput));
+    expect(partialWrite.ok).toBe(false);
+    if (!partialWrite.ok) expect(partialWrite.failure.phase).toBe("event:BeforeAtomicCommit");
+    const partialRelease = await run(resource.releaseTarget(partialInput));
+    expect(partialRelease.ok).toBe(false);
+    if (!partialRelease.ok) expect(partialRelease.failure.reason).toBe("HandleState");
+    expect(await run(resource.restoreTarget(partialInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Restored", changed: false },
+    });
+    expect(await run(resource.settleTarget(partialInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Settled" },
+    });
+  });
+
   it("restores exact prior bytes after replacement and removal before settlement", async () => {
     fixtureRoot = await createFixture();
     const resource = makeAgentProviderRecordsResource(fixtureLayout(fixtureRoot.path));

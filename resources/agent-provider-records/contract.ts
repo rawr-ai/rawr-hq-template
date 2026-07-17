@@ -70,6 +70,13 @@ export interface ProviderTargetRecordRestoreReceipt {
   readonly changed: boolean;
 }
 
+/** Receipt for discarding an unmutated capture without admitting a semantic plan. */
+export interface ProviderTargetRecordReleaseReceipt {
+  readonly readToken: string;
+  readonly outcome: "Released";
+  readonly handle: string;
+}
+
 export interface ProviderTargetRecordSettleReceipt {
   readonly planDigest: string;
   readonly readToken: string;
@@ -102,6 +109,7 @@ export interface AgentProviderRecordsFailure {
     | "read-target"
     | "scan-targets"
     | "capture-target"
+    | "release-target"
     | "write-target"
     | "restore-target"
     | "settle-target"
@@ -157,6 +165,13 @@ export interface AgentProviderRecordsResource<R = never> {
     maxBytes: number;
   }>) => Effect.Effect<ProviderTargetRecordCapture, AgentProviderRecordsFailure, R>;
 
+  /** Consumes only a still-unmutated capture. Mutated authority must be restored and settled. */
+  readonly releaseTarget: (input: Readonly<{
+    address: ProviderTargetRecordAddress;
+    readToken: string;
+    captureHandle: string;
+  }>) => Effect.Effect<ProviderTargetRecordReleaseReceipt, AgentProviderRecordsFailure, R>;
+
   readonly writeTarget: (input: Readonly<{
     address: ProviderTargetRecordAddress;
     planDigest: string;
@@ -197,6 +212,9 @@ export interface AgentProviderRecordsAsyncPort {
   readonly captureTarget: (
     input: Parameters<AgentProviderRecordsResource["captureTarget"]>[0],
   ) => Promise<ProviderTargetRecordCapture>;
+  readonly releaseTarget: (
+    input: Parameters<AgentProviderRecordsResource["releaseTarget"]>[0],
+  ) => Promise<ProviderTargetRecordReleaseReceipt>;
   readonly writeTarget: (
     input: Parameters<AgentProviderRecordsResource["writeTarget"]>[0],
   ) => Promise<ProviderTargetRecordWriteReceipt>;
