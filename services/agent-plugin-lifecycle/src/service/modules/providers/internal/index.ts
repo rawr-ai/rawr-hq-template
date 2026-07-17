@@ -189,6 +189,39 @@ export type {
 } from "./ports/state";
 
 export {
+  CODEX_ADAPTER_PROTOCOL,
+  type CodexProviderAdapter,
+} from "./adapters/codex";
+export {
+  CLAUDE_ADAPTER_PROTOCOL,
+  type ClaudeProviderAdapter,
+} from "./adapters/claude";
+export type {
+  NativeProviderAdapter,
+  StableProjectionSource,
+  StableProjectionSourceReader,
+} from "./adapters/native";
+export {
+  createResourceCodexProviderAdapter,
+  type ResourceCodexProviderAdapterOptions,
+} from "./adapters/resource-codex";
+export {
+  createResourceClaudeProviderAdapter,
+  type ResourceClaudeProviderAdapterOptions,
+} from "./adapters/resource-claude";
+export type {
+  ClaudeNativeResourceSession,
+  CodexNativeResourceSession,
+  NativeProviderResourcePort,
+  NativeResourceCapabilityProbe,
+  NativeResourceJsonObservation,
+  NativeResourcePackageEntry,
+  NativeResourcePackageObservation,
+  NativeResourcePackageReadInput,
+  NativeResourceSessionInput,
+} from "./adapters/resource-port";
+
+export {
   createTargetedTest,
   type TargetedTestApplication,
   type TargetedTestDependencies,

@@ -76,8 +76,8 @@ export type {
   TargetReceiptWriter,
 } from "./internal/ports/state";
 
-// Native controller adapters consume the service-owned provider vocabulary
-// through this boundary; implementations remain at the CLI runtime edge.
+// The service owns native lifecycle interpretation. Runtime bindings provide
+// only the selected resource implementation and explicit acquisition inputs.
 export * from "./internal/domain/canonical";
 export * from "./internal/domain/evidence";
 export * from "./internal/domain/evidence-codec";
@@ -114,3 +114,25 @@ export type {
   ProviderMemberRestoreContext,
   ProviderOwnerRuntime,
 } from "./internal/ports/owner";
+export {
+  CLAUDE_ADAPTER_PROTOCOL,
+  CODEX_ADAPTER_PROTOCOL,
+  createResourceClaudeProviderAdapter,
+  createResourceCodexProviderAdapter,
+  type ClaudeNativeResourceSession,
+  type ClaudeProviderAdapter,
+  type CodexNativeResourceSession,
+  type CodexProviderAdapter,
+  type NativeProviderAdapter,
+  type NativeProviderResourcePort,
+  type NativeResourceCapabilityProbe,
+  type NativeResourceJsonObservation,
+  type NativeResourcePackageEntry,
+  type NativeResourcePackageObservation,
+  type NativeResourcePackageReadInput,
+  type NativeResourceSessionInput,
+  type ResourceClaudeProviderAdapterOptions,
+  type ResourceCodexProviderAdapterOptions,
+  type StableProjectionSource,
+  type StableProjectionSourceReader,
+} from "./internal";
