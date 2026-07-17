@@ -1,6 +1,6 @@
 # C4 Legacy Membership Retirement And Qualified Authoring Execution Record
 
-**Status:** READY_TO_LAND
+**Status:** ARCHIVE_REVIEW
 
 **Change:** `normalize-app-composition-authoring`
 
@@ -40,11 +40,14 @@ The personal commit and project-tree OID are design-packet provenance only. C4 s
 | C2 reviewed source / landed `main` | `e8bf7b31a673def65c04f1246cdc8a08a04482e3` / `dac4c6407dcc8d75adc34738f5ae9995a43a1810` (PR #336) |
 | C2 reviewed archive / landed `main` | `bba27c52941ef8cb5f66e1b801c446eb7378349e` / `9d0c1797fc051f40e1c79b4ea7bab680d18f3ad2` (PR #337) |
 | C3 source / archive / closeout landed `main` | `3f09e6a4fa1614d218317b411b60719a2603f5e3` / `7e208f4b87aee24c35bc8dbf015d131c9d955a93` / `feb311b41cb6b18c132c680781967a24976b60b5` (PRs #338-#340) |
-| C4 worktree / branch | `wt-template-c4-app-composition-authoring` / `codex/c4-app-composition-authoring` |
+| C4 source worktree / branch | `wt-template-c4-app-composition-authoring` / `codex/c4-app-composition-authoring` (drained after source landing) |
+| C4 reviewed source / landed `main` | `42d52acb4afb76872b287da335804c4038428011` / `2371d9b989c5d9ff92cc4fb799365634f2634e2e` (PR #341) |
+| C4 reviewed/landed source tree | `765bf9cbb028d3013b46c67733cdf1e542f8be28` |
+| C4 archive worktree / branch | `wt-template-c4-app-composition-authoring-archive` / `codex/c4-app-composition-authoring-archive` |
 | Graphite parent | `main` |
 | OpenSpec CLI | `@fission-ai/openspec@1.3.1` |
 | Dependency shape | landed C1-C3; C4 removes only legacy membership/scaffold ownership and does not activate C3; C5 waits for C4 |
-| Current gate | Corrected implementation, standing review, and pre-landing proof are complete; Graphite landing remains open |
+| Current gate | Source is landed and drained; canonical specs are synchronized and the archived record is ready for Graphite landing |
 
 Record-only proof on 2026-07-16: `bunx @fission-ai/openspec@1.3.1 validate normalize-app-composition-authoring --strict` passed, and a no-index whitespace check passed for every untracked record file. These results validate the amendment shape only; implementation, behavior proof, standing review, landing, and closure remain open.
 
@@ -156,6 +159,14 @@ The complete corrected implementation was reviewed at clean Template commit `fb5
 - A production controller built from the clean reviewed commit materialized immutable digest `849d27883d8dba95be35f91faa13e171d12135dbb1098493bbc3079625f33e99`. From a foreign disposable directory it discovered exactly the three creators and rejected all 14 retired composition, web, scaffold, and forge command IDs.
 - Installed external-extension creation returned `AuthoringDryRun`, `AuthoringAuthored`, then `AuthoringConverged`. The 11-entry generated tree retained identical digest, size, mode, and file/directory/link mtimes on repeat; the package independently installed, built, and tested with no workspace dependency.
 - Controller selection/digest, native Oclif state, disposable HOME/XDG/Codex/Claude state, and isolated release/build/package/export/provider/promotion/process/personal-record sentinels were byte-, link-, mode-, and mtime-identical before and after. Guarded cleanup removed only the owned prefixed temporary root; no shell recursive removal, `fs.rm`, canonical path, or global state was used.
+
+### Landed-Main Proof And C5 Handoff
+
+- PR #341 landed the exact reviewed tree on canonical Template `main` at `2371d9b989c5d9ff92cc4fb799365634f2634e2e`. Post-main strict OpenSpec validation, all three lifecycle architecture gates, `git diff --check`, and the 28-test focused creator/semantic-absence suite passed.
+- The landed immutable controller materialized digest `8a6f3dd9b8e658e1fdb0bef688008bca1cd5d2ccb8e53eb7e98c32023685c8fd`. Its foreign-directory acceptance again found exactly three creators, rejected all 14 retired IDs, returned `AuthoringDryRun -> AuthoringAuthored -> AuthoringConverged`, preserved the exact 11-entry output tree and all mtimes, independently installed/built/tested the extension, and left every disposable adjacent authority unchanged.
+- The pre-landing exact 38-project uncached affected graph passed on the same landed tree. A post-main rerun passed every non-CLI project and 290 of 292 CLI tests; the two failures were the inherited `plugins-sync-drift` and `plugins-status` cases concurrently invoking the mixed `rawr plugins sync` aggregate against one shared workspace export. A single isolated diagnostic invocation completed its planned apply, confirming the failure belongs to the old aggregate's shared-output test model rather than the C4 tree.
+- C4 does not serialize, repair, or harden that invalid aggregate. C5 owns deletion of the two legacy tests together with `rawr plugins sync`, its shared workspace output, and the mixed owner. This is an explicit C5 migration oracle, not a green claim for legacy lifecycle behavior.
+- The diagnostic used a disposable provider home, performed no native install, and removed its guarded temporary root. The Template checkout remains tracked-clean; no canonical controller or provider state changed.
 
 ## Closure
 

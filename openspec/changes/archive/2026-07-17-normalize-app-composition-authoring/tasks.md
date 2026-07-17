@@ -54,7 +54,7 @@
 
 ## 8. Landing And Closure
 
-- [ ] 8.1 Commit and submit reviewed C4 source through Graphite with `--ai`, merge to canonical Template `main`, and rerun exact post-main OpenSpec, architecture, affected-graph, command, semantic-absence, and foreign-directory proof.
-- [ ] 8.2 Synchronize the two truthful capability deltas and archive the completed C4 record only after source landing through the guarded OpenSpec path.
+- [x] 8.1 Commit and submit reviewed C4 source through Graphite with `--ai`, merge to canonical Template `main`, and rerun exact post-main OpenSpec, architecture, affected-graph, command, semantic-absence, and foreign-directory proof, retaining the two C5-owned legacy aggregate test failures as explicit migration evidence rather than repairing them in C4.
+- [x] 8.2 Synchronize the two truthful capability deltas and archive the completed C4 record only after source landing through the guarded OpenSpec path.
 - [ ] 8.3 Land the archive record through Graphite, record exact reviewed/landed commits, trees, PRs, and post-main proof, then drain every C4 Graphite node and worktree before C5 depends on C4.
 - [ ] 8.4 Close C4 with an explicit statement that legacy web/state membership and scaffold ownership are retired and three source creators are qualified, while aggregate lifecycle cutover, app composition, and runtime realization remain deferred and unclaimed.
