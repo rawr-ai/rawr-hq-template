@@ -28,6 +28,79 @@ export interface ParsedOwnerActionV1 {
   readonly inspection: OwnerActionInspectionV1;
 }
 
+export function eraseOwnerProtocolRegistrationV1<Action, ObservedPost>(
+  source: OwnerProtocolRegistrationV1<Action, ObservedPost>,
+): OwnerProtocolRegistrationV1 {
+  const parseAction = (value: unknown): Action => source.codec.parseAction(value);
+  const parseObservedPost = (action: Action, value: unknown): ObservedPost =>
+    source.codec.parseObservedPost(action, value);
+
+  const registration: OwnerProtocolRegistrationV1 = {
+    codec: {
+      owner: source.codec.owner,
+      protocolVersion: source.codec.protocolVersion,
+      parseAction,
+      encodeAction: (value) => source.codec.encodeAction(parseAction(value)),
+      inspectAction: (value) => source.codec.inspectAction(parseAction(value)),
+      parseObservedPost: (action, value) => parseObservedPost(parseAction(action), value),
+      encodeObservedPost: (action, observedPost) => {
+        const parsedAction = parseAction(action);
+        return source.codec.encodeObservedPost(
+          parsedAction,
+          parseObservedPost(parsedAction, observedPost),
+        );
+      },
+      validateActionSequence: ({ actions, mode }) => source.codec.validateActionSequence({
+        actions: actions.map(parseAction),
+        mode,
+      }),
+      selectTargetBindings: ({ bindings, actions }) => source.codec.selectTargetBindings({
+        bindings,
+        actions: actions.map(parseAction),
+      }),
+    },
+    applyingRecovery: {
+      owner: source.applyingRecovery.owner,
+      protocolVersion: source.applyingRecovery.protocolVersion,
+      classifyStaged: ({ action, targets }) => source.applyingRecovery.classifyStaged({
+        action: parseAction(action),
+        targets,
+      }),
+    },
+    replay: {
+      owner: source.replay.owner,
+      protocolVersion: source.replay.protocolVersion,
+      classify: ({ action, observedPost, targets }) => {
+        const parsedAction = parseAction(action);
+        return source.replay.classify({
+          action: parsedAction,
+          observedPost: parseObservedPost(parsedAction, observedPost),
+          targets,
+        });
+      },
+      restore: ({ action, observedPost, targets }) => {
+        const parsedAction = parseAction(action);
+        return source.replay.restore({
+          action: parsedAction,
+          observedPost: parseObservedPost(parsedAction, observedPost),
+          targets,
+        });
+      },
+      verifyPrior: ({ actions, targets }) => source.replay.verifyPrior({
+        actions: actions.map(({ action, observedPost }) => {
+          const parsedAction = parseAction(action);
+          return Object.freeze({
+            action: parsedAction,
+            observedPost: parseObservedPost(parsedAction, observedPost),
+          });
+        }),
+        targets,
+      }),
+    },
+  };
+  return Object.freeze(registration);
+}
+
 interface ErasedRegistration {
   readonly codec: OwnerProtocolRegistrationV1["codec"];
   readonly applyingRecovery: OwnerProtocolRegistrationV1["applyingRecovery"];

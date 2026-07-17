@@ -20,7 +20,9 @@
         "@rawr/agent-plugin-build": "workspace:*",
         "@rawr/agent-plugin-export": "workspace:*",
         "@rawr/agent-plugin-packaging": "workspace:*",
+        "@rawr/agent-plugin-promotion": "workspace:*",
         "@rawr/agent-plugin-release": "workspace:*",
+        "@rawr/agent-provider-deployment": "workspace:*",
         "@rawr/controller-release": "workspace:*",
         "@types/node": "^22.14.0",
         "@typescript-eslint/parser": "^8.57.1",
@@ -45,7 +47,11 @@
         "@orpc/client": "^1.13.5",
         "@rawr/agent-config-sync": "workspace:*",
         "@rawr/agent-config-sync-node": "workspace:*",
+        "@rawr/agent-plugin-build": "workspace:*",
         "@rawr/agent-plugin-export": "workspace:*",
+        "@rawr/agent-plugin-promotion": "workspace:*",
+        "@rawr/agent-plugin-release": "workspace:*",
+        "@rawr/agent-provider-deployment": "workspace:*",
         "@rawr/controller-release": "workspace:*",
         "@rawr/core": "workspace:*",
         "@rawr/dev": "workspace:*",
@@ -381,6 +387,24 @@
       },
       "devDependencies": {
         "@types/yazl": "^3.3.0",
+        "typescript": "^5.9.3",
+      },
+    },
+    "services/agent-plugin-promotion": {
+      "name": "@rawr/agent-plugin-promotion",
+      "dependencies": {
+        "@rawr/agent-plugin-release": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
+    "services/agent-provider-deployment": {
+      "name": "@rawr/agent-provider-deployment",
+      "dependencies": {
+        "@rawr/agent-plugin-release": "workspace:*",
+      },
+      "devDependencies": {
         "typescript": "^5.9.3",
       },
     },
@@ -1124,7 +1148,11 @@
 
     "@rawr/agent-plugin-packaging": ["@rawr/agent-plugin-packaging@workspace:services/agent-plugin-packaging"],
 
+    "@rawr/agent-plugin-promotion": ["@rawr/agent-plugin-promotion@workspace:services/agent-plugin-promotion"],
+
     "@rawr/agent-plugin-release": ["@rawr/agent-plugin-release@workspace:packages/agent-plugin-release"],
+
+    "@rawr/agent-provider-deployment": ["@rawr/agent-provider-deployment@workspace:services/agent-provider-deployment"],
 
     "@rawr/bootgraph": ["@rawr/bootgraph@workspace:packages/bootgraph"],
 

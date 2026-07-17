@@ -34,6 +34,23 @@ export {
   type NoReplacePublisher,
 } from "./artifact-store/no-replace-publisher";
 export {
+  MAX_MECHANICAL_EVIDENCE_BYTES,
+  MECHANICAL_EVIDENCE_PROTOCOL_VERSION,
+  createFilesystemMechanicalEvidenceReader,
+  createFilesystemMechanicalEvidenceStore,
+  createMechanicalEvidenceHandle,
+  mechanicalEvidenceDigest,
+  parseMechanicalEvidenceHandle,
+  type MechanicalEvidenceDigest,
+  type MechanicalEvidenceHandleV1,
+  type MechanicalEvidenceIssue,
+  type MechanicalEvidencePublicationResult,
+  type MechanicalEvidenceReadResult,
+  type MechanicalEvidenceReader,
+  type MechanicalEvidenceStore,
+  type MechanicalEvidenceStoreFailpointEvent,
+} from "./artifact-store/evidence-store";
+export {
   createAgentPluginBuildApplications,
   type AgentPluginBuildApplications,
   type AgentPluginBuildRequest,
@@ -55,5 +72,6 @@ export {
   type RetentionPinsV1,
   type RetentionPlanner,
   type RetentionResult,
+  type RetentionRef,
   type RetentionSpacePolicyV1,
 } from "./retention";

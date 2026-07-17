@@ -16,7 +16,7 @@ import {
   type ArtifactStoreRoot,
 } from "../src/artifact-store/artifact-reader";
 import { createFilesystemArtifactStore } from "../src/artifact-store/filesystem-store";
-import { createGitContentWorkspaceSnapshotReader } from "../src/index";
+import { createGitContentWorkspaceSnapshotReader, createMechanicalEvidenceHandle } from "../src/index";
 import { createRetentionPlanner, parseRetentionPinsV1 } from "../src/retention";
 import {
   GIT_EXECUTABLE,
@@ -106,6 +106,42 @@ describe("closed read-only retention planning", () => {
       blockedEntries: [{ detail: expect.stringContaining("overflows") }],
     });
     expect("delete" in planner).toBe(false);
+  });
+
+  it("pins governed mechanical evidence through the artifact owner's opaque reader", async () => {
+    const bytes = new TextEncoder().encode("governed evidence bytes\n");
+    const handle = createMechanicalEvidenceHandle(bytes);
+    const artifacts: ArtifactReader = {
+      async read() {
+        throw new Error("release artifact reader must not receive an evidence handle");
+      },
+    };
+    const planner = createRetentionPlanner({
+      pins: { async read() { return { schemaVersion: 1, refs: [handle] }; } },
+      inventory: { async read() { return [{ ref: handle, storedBytes: bytes.byteLength }]; } },
+      artifacts,
+      evidence: {
+        async read(requested) {
+          return { kind: "Verified", handle: requested, bytes };
+        },
+      },
+    });
+
+    await expect(planner.plan({ kind: "space-v1", maximumUnpinnedBytes: 0 })).resolves.toMatchObject({
+      kind: "RetentionPlan",
+      pinned: [handle],
+      retained: [],
+      collectible: [],
+    });
+    const unavailable = createRetentionPlanner({
+      pins: { async read() { return { schemaVersion: 1, refs: [handle] }; } },
+      inventory: { async read() { return []; } },
+      artifacts,
+    });
+    await expect(unavailable.plan({ kind: "space-v1", maximumUnpinnedBytes: 0 })).resolves.toMatchObject({
+      kind: "BlockedPinnedGraph",
+      issues: [{ ref: handle, detail: expect.stringContaining("missing") }],
+    });
   });
 
   async function buildCompleteSet() {
