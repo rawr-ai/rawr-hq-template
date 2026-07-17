@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "@rawr/agent-plugin-promotion": {
+      "config": "services/agent-plugin-promotion/package.json",
+      "tags": ["type:service", "role:agent-plugin-promotion"],
+      "targets": ["build", "lint", "typecheck", "test"]
+    },
+    "@rawr/agent-provider-deployment": {
+      "config": "services/agent-provider-deployment/package.json",
+      "tags": ["type:service", "role:agent-provider-deployment"],
+      "targets": ["build", "lint", "typecheck", "test"]
+    }
+  }
+}

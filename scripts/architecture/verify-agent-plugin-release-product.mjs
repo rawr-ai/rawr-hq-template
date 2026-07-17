@@ -22,6 +22,9 @@ const projects = {
       "@rawr/agent-plugin-build",
       "@rawr/agent-plugin-export",
       "@rawr/agent-plugin-packaging",
+      "@rawr/agent-plugin-promotion",
+      "@rawr/agent-provider-deployment",
+      "@rawr/cli",
     ],
   },
   "@rawr/agent-plugin-build": {
@@ -29,7 +32,7 @@ const projects = {
     tags: ["type:service", "role:agent-plugin-build"],
     runtimeDependencies: ["@rawr/agent-plugin-release"],
     workspaceDependencies: ["@rawr/agent-plugin-release"],
-    workspaceDependents: [],
+    workspaceDependents: ["@rawr/cli"],
   },
   "@rawr/agent-plugin-export": {
     root: "services/agent-plugin-export",
@@ -56,6 +59,15 @@ const recursiveFixtureFiles = new Set([
   "services/agent-plugin-packaging/test/owned-fixture-root.ts",
 ]);
 const cliControllerRuntimePackages = new Set(["@rawr/agent-plugin-export"]);
+const cliCompositionRuntimePackages = new Set([
+  "@rawr/agent-plugin-build",
+  "@rawr/agent-plugin-export",
+  "@rawr/agent-plugin-promotion",
+  "@rawr/agent-plugin-release",
+  "@rawr/agent-provider-deployment",
+  "@rawr/agent-provider-deployment/node-state",
+  "@rawr/agent-provider-deployment/owner-protocol",
+]);
 const cliControllerDynamicModules = new Set(["bun:ffi"]);
 const cliControllerRuntimeBuiltins = new Set([
   "node:crypto",
@@ -567,6 +579,11 @@ function validateCliControllerImportBoundary() {
 
 function cliControllerImportBoundaryIssues(sourceFile, sourcePath, controllerRoot) {
   const issues = [];
+  const runtimePackages = sourcePath !== undefined
+    && controllerRoot !== undefined
+    && isContainedPath(path.join(controllerRoot, "composition"), sourcePath)
+    ? cliCompositionRuntimePackages
+    : cliControllerRuntimePackages;
   for (const reference of collectModuleReferences(sourceFile)) {
     if (!isRuntimeModuleReference(reference.declaration)) continue;
     if (reference.loading === "dynamic" && !cliControllerDynamicModules.has(reference.specifier)) {
@@ -583,9 +600,9 @@ function cliControllerImportBoundaryIssues(sourceFile, sourcePath, controllerRoo
       reference.loading === "static"
       && !reference.specifier.startsWith(".")
       && !cliControllerRuntimeBuiltins.has(reference.specifier)
-      && !cliControllerRuntimePackages.has(reference.specifier)
+      && !runtimePackages.has(reference.specifier)
     ) {
-      issues.push(`imports runtime package ${reference.specifier}; C2 CLI controller code admits only declared C2 owners and builtins`);
+      issues.push(`imports runtime package ${reference.specifier}; CLI lifecycle code admits only declared owners and builtins`);
     }
   }
   return issues;

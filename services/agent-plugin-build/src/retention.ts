@@ -2,22 +2,27 @@ import {
   compareCanonicalText,
   parseArtifactRef,
   type ArtifactRef,
-  type CompleteSetArtifactRef,
-  type ReleaseArtifactRef,
 } from "@rawr/agent-plugin-release";
 
 import type { ArtifactReader } from "./artifact-store/artifact-reader";
+import {
+  parseMechanicalEvidenceHandle,
+  type MechanicalEvidenceHandleV1,
+  type MechanicalEvidenceReader,
+} from "./artifact-store/evidence-store";
 
 const MAX_RETENTION_REFS = 16_384;
 
 export interface RetentionIssue {
-  readonly ref?: ArtifactRef;
+  readonly ref?: RetentionRef;
   readonly detail: string;
 }
 
+export type RetentionRef = ArtifactRef | MechanicalEvidenceHandleV1;
+
 export interface RetentionPinsV1 {
   readonly schemaVersion: 1;
-  readonly refs: readonly (ReleaseArtifactRef | CompleteSetArtifactRef)[];
+  readonly refs: readonly RetentionRef[];
 }
 
 export interface RetentionPinsReader {
@@ -29,7 +34,7 @@ export interface RetentionInventoryReader {
 }
 
 export interface RetentionInventoryEntry {
-  readonly ref: ArtifactRef;
+  readonly ref: RetentionRef;
   readonly storedBytes: number;
 }
 
@@ -41,7 +46,7 @@ export interface RetentionSpacePolicyV1 {
 export type RetentionResult =
   | Readonly<{
     kind: "RetentionPlan";
-    pinned: readonly ArtifactRef[];
+    pinned: readonly RetentionRef[];
     retained: readonly RetentionInventoryEntry[];
     collectible: readonly RetentionInventoryEntry[];
     blockedEntries: readonly RetentionIssue[];
@@ -59,6 +64,7 @@ export function createRetentionPlanner(options: {
   readonly pins: RetentionPinsReader;
   readonly inventory: RetentionInventoryReader;
   readonly artifacts: ArtifactReader;
+  readonly evidence?: MechanicalEvidenceReader;
 }): RetentionPlanner {
   const planner: RetentionPlanner = {
     async plan(policy) {
@@ -68,9 +74,20 @@ export function createRetentionPlanner(options: {
       const pins = parseRetentionPinsV1(await options.pins.read());
       if (!pins.ok) return blocked(pins.issues);
 
-      const pinned = new Map<string, ArtifactRef>();
+      const pinned = new Map<string, RetentionRef>();
       const pinIssues: RetentionIssue[] = [];
       for (const ref of pins.value.refs) {
+        if (ref.kind === "mechanical-evidence") {
+          const evidence = options.evidence === undefined
+            ? { kind: "Missing" as const }
+            : await options.evidence.read(ref);
+          if (evidence.kind !== "Verified") {
+            pinIssues.push(Object.freeze({ ref, detail: `pinned artifact is ${evidence.kind.toLowerCase()}` }));
+            continue;
+          }
+          pinned.set(refKey(ref), ref);
+          continue;
+        }
         const result = await options.artifacts.read(ref);
         if (result.kind !== "Verified") {
           pinIssues.push(Object.freeze({ ref, detail: `pinned artifact is ${result.kind.toLowerCase()}` }));
@@ -90,7 +107,11 @@ export function createRetentionPlanner(options: {
       const unpinned: RetentionInventoryEntry[] = [];
       for (const entry of inventory.entries) {
         if (pinned.has(refKey(entry.ref))) continue;
-        const verified = await options.artifacts.read(entry.ref);
+        const verified = entry.ref.kind === "mechanical-evidence"
+          ? options.evidence === undefined
+            ? { kind: "Missing" as const }
+            : await options.evidence.read(entry.ref)
+          : await options.artifacts.read(entry.ref);
         if (verified.kind !== "Verified") {
           blockedEntries.push(Object.freeze({ ref: entry.ref, detail: `inventory artifact is ${verified.kind.toLowerCase()}` }));
           continue;
@@ -138,12 +159,17 @@ export function parseRetentionPinsV1(input: unknown):
   if (input.refs.length > MAX_RETENTION_REFS) {
     return { ok: false, issues: [{ detail: `retention pins exceed ${MAX_RETENTION_REFS} refs` }] };
   }
-  const refs: ArtifactRef[] = [];
+  const refs: RetentionRef[] = [];
   const issues: RetentionIssue[] = [];
   for (const candidate of input.refs) {
     const parsed = parseArtifactRef(candidate);
-    if (!parsed.ok) issues.push(Object.freeze({ detail: "retention pin is not a closed artifact ref" }));
-    else refs.push(parsed.value);
+    if (parsed.ok) {
+      refs.push(parsed.value);
+      continue;
+    }
+    const evidence = parseMechanicalEvidenceHandle(candidate);
+    if (evidence.ok) refs.push(evidence.value);
+    else issues.push(Object.freeze({ detail: "retention pin is not a closed artifact or evidence ref" }));
   }
   if (issues.length > 0) {
     return { ok: false, issues: nonEmptyIssues(issues) };
@@ -175,24 +201,30 @@ function parseInventory(input: unknown): {
       issues.push(Object.freeze({ detail: "inventory entry is not closed" }));
       continue;
     }
-    const ref = parseArtifactRef(candidate.ref);
-    if (!ref.ok || !Number.isSafeInteger(candidate.storedBytes) || (candidate.storedBytes as number) < 0) {
+    const artifactRef = parseArtifactRef(candidate.ref);
+    const evidenceRef = artifactRef.ok ? undefined : parseMechanicalEvidenceHandle(candidate.ref);
+    const ref = artifactRef.ok
+      ? artifactRef.value
+      : evidenceRef?.ok
+        ? evidenceRef.value
+        : undefined;
+    if (ref === undefined || !Number.isSafeInteger(candidate.storedBytes) || (candidate.storedBytes as number) < 0) {
       issues.push(Object.freeze({ detail: "inventory entry has an invalid ref or byte count" }));
       continue;
     }
     const storedBytes = candidate.storedBytes as number;
     if (!Number.isSafeInteger(aggregateBytes + storedBytes)) {
-      issues.push(Object.freeze({ ref: ref.value, detail: "inventory aggregate byte count overflows" }));
+      issues.push(Object.freeze({ ref, detail: "inventory aggregate byte count overflows" }));
       continue;
     }
     aggregateBytes += storedBytes;
-    const key = refKey(ref.value);
+    const key = refKey(ref);
     if (seen.has(key)) {
-      issues.push(Object.freeze({ ref: ref.value, detail: "inventory contains a duplicate ref" }));
+      issues.push(Object.freeze({ ref, detail: "inventory contains a duplicate ref" }));
       continue;
     }
     seen.add(key);
-    entries.push(Object.freeze({ ref: ref.value, storedBytes }));
+    entries.push(Object.freeze({ ref, storedBytes }));
   }
   return { entries: Object.freeze(entries), issues: Object.freeze(issues) };
 }
@@ -204,10 +236,12 @@ function isExactRecord(input: unknown, keys: readonly string[]): input is Record
   return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
 }
 
-function refKey(ref: ArtifactRef): string {
+function refKey(ref: RetentionRef): string {
   return ref.kind === "release"
     ? `release:${ref.releaseDigest}:${ref.artifactDigest}`
-    : `complete-set:${ref.releaseSetDigest}`;
+    : ref.kind === "complete-set"
+      ? `complete-set:${ref.releaseSetDigest}`
+      : `mechanical-evidence:${ref.digest}`;
 }
 
 function blocked(issues: readonly RetentionIssue[]): Extract<RetentionResult, { kind: "BlockedPinnedGraph" }> {

@@ -24,7 +24,10 @@ import type {
   CapsuleUndoWriterV1,
   OwnerProtocolRegistrationV1,
 } from "./contract";
-import { ClosedOwnerProtocolRegistryV1 } from "./protocol-registry";
+import {
+  ClosedOwnerProtocolRegistryV1,
+  eraseOwnerProtocolRegistrationV1,
+} from "./protocol-registry";
 
 export function createExportOwnerProtocolRegistrationV1(
   options: ExecuteExportInverseOptions = {},
@@ -101,14 +104,16 @@ export function createExportOwnerProtocolRegistrationV1(
       },
     },
   };
-  return registration as OwnerProtocolRegistrationV1;
+  return eraseOwnerProtocolRegistrationV1(registration);
 }
 
 export function createAgentPluginOwnerProtocolRegistryV1(
   options: ExecuteExportInverseOptions = {},
+  providerRegistration?: OwnerProtocolRegistrationV1,
 ): ClosedOwnerProtocolRegistryV1 {
   return new ClosedOwnerProtocolRegistryV1([
     createExportOwnerProtocolRegistrationV1(options),
+    ...(providerRegistration === undefined ? [] : [providerRegistration]),
   ]);
 }
 

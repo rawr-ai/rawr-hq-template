@@ -1,6 +1,6 @@
 # C2 Agent Plugin Release Product Execution Record
 
-**Status:** ARCHIVE_READY_TO_SUBMIT
+**Status:** CLOSED
 
 **Change:** `establish-agent-plugin-release-product`
 
@@ -28,11 +28,14 @@ The two personal Git objects are accepted design-packet provenance only. This Te
 | C2 bootstrap reviewed / landed `main` | `8638870ff396ed431f8d49788c0811df45ee8204` / `23d1f1efcf54a4860fa55261df7f29e5c68d063f` (PR #335) |
 | Bootstrap worktree / branch | `wt-template-c2-release-product-bootstrap` / `codex/c2-agent-release-product-bootstrap` (merged and drained) |
 | Implementation parent `main` | `23d1f1efcf54a4860fa55261df7f29e5c68d063f` |
-| Implementation worktree / branch | `wt-template-c2-agent-release-product` / `codex/c2-agent-release-product` |
+| Implementation worktree / branch | `wt-template-c2-agent-release-product` / `codex/c2-agent-release-product` (merged and drained) |
 | C2 source reviewed / landed `main` | `e8bf7b31a673def65c04f1246cdc8a08a04482e3` / `dac4c6407dcc8d75adc34738f5ae9995a43a1810` (PR #336) |
-| Archive worktree / branch | `wt-template-c2-agent-release-product-archive` / `codex/c2-agent-release-product-archive` |
+| C2 source tree | `acc62e861ee970d6567c2fb477ff2b796ea7a327` (reviewed and landed) |
+| Archive worktree / branch | `wt-template-c2-agent-release-product-archive` / `codex/c2-agent-release-product-archive` (merged and drained) |
+| C2 archive reviewed / landed `main` | `bba27c52941ef8cb5f66e1b801c446eb7378349e` / `9d0c1797fc051f40e1c79b4ea7bab680d18f3ad2` (PR #337) |
+| C2 archive tree | `ba692eb5bf22b83b8389ae98c069d454ad7961c9` (reviewed and landed) |
 | OpenSpec CLI | `@fission-ai/openspec@1.3.1` |
-| Current gate | C2 source is landed and exact-tree post-main proof is green; five capability specs are synchronized and this archived record is ready to submit, while public command and provider reachability remain closed |
+| Current gate | C2 is closed on canonical Template `main`; C3 may consume only its landed contracts and remains responsible for provider reachability, while public command reachability stays closed until C5 |
 
 ## Director Frame
 
@@ -220,9 +223,11 @@ Bounded implementation workers receive disjoint owner paths only after this boot
 | standing implementation reviews | PASS | TypeScript/refactoring repaired typed capsule failure classification so wording cannot change result codes; architecture/authority, behavior-first testing, and structural-quality reviews approved with no remaining packet-invariant, supported-behavior, or material-maintainability P1/P2 |
 | source landing and post-main proof | PASS | PR #336 landed reviewed source as `dac4c6407dcc8d75adc34738f5ae9995a43a1810`; reviewed and landed trees both equal `acc62e861ee970d6567c2fb477ff2b796ea7a327`; pinned strict OpenSpec, permanent architecture/integration proof, and the exact uncached 37-project affected graph passed against landed `origin/main` |
 | canonical spec synchronization and archive move | PASS | pinned OpenSpec archive synchronized 40 added requirements into five canonical capability specs and moved the active change to `archive/2026-07-16-establish-agent-plugin-release-product` after same-device and absent-destination checks; no recursive shell removal was used |
+| archive landing and post-main proof | PASS | PR #337 landed reviewed archive commit `bba27c52941ef8cb5f66e1b801c446eb7378349e` as exact Template `main` `9d0c1797fc051f40e1c79b4ea7bab680d18f3ad2`; reviewed and landed trees both equal `ba692eb5bf22b83b8389ae98c069d454ad7961c9`; pinned strict canonical-spec validation passed 7/7, no active change remained, permanent architecture gates passed, and repository status was clean |
+| Graphite and worktree drain | PASS | both C2 disposable worktrees were removed only through `git worktree remove`; Graphite metadata records each merged PR head with parent `main`, and `gt delete` removed the two merged local nodes without restacking C3 or unrelated work; `gt ls` and `git worktree list` contain no C2 node or worktree. Merged GitHub PR heads remain historical remote refs, not active local Graphite branches |
 
 ## Closure
 
 The bootstrap settles when the changeset is complete and strict-valid, each in-scope B/I row has an owner and oracle, standing reviews have no unresolved P1/P2, the combined C1 attestation and C2 record land on canonical Template `main`, post-main validation is green, and this bootstrap Graphite branch/worktree are drained. Only then may a fresh C2 implementation worktree start from the exact landed bootstrap commit recorded above.
 
-C2 itself closes later only when all implementation tasks and spec deltas are truthful, owner-specific and exact affected proof is green, no command or provider path can reach the inert applications, source deletion and repeat-convergence oracles pass, the source and archived records land on Template `main`, and every C2 branch/worktree is drained. C3 may depend on C2 only after that closure. Personal C6 starts independently from clean personal `main`; it never consumes Template through ancestry or executable-tree equivalence.
+C2 is settled at source `main` commit `dac4c6407dcc8d75adc34738f5ae9995a43a1810` plus archive `main` commit `9d0c1797fc051f40e1c79b4ea7bab680d18f3ad2`. All implementation tasks and spec deltas are truthful, owner-specific and exact affected proof is green, no command or provider path reaches the inert applications, source-deletion and repeat-convergence oracles pass, and no C2 local Graphite node or disposable worktree remains. C3 starts independently from that exact clean Template `main`. Personal C6 starts independently from clean personal `main`; it never consumes Template through ancestry or executable-tree equivalence.
