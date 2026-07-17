@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "files": [
+    "contract.ts",
+    "providers/effect-platform-node-shared.ts",
+    "providers/codex-effect-platform-node/index.ts",
+    "providers/claude-effect-platform-node/index.ts"
+  ]
+}
