@@ -1,0 +1,40 @@
+{
+  "name": "provider-agent-plugin-export-destination-effect-platform-node",
+  "projectType": "library",
+  "sourceRoot": "resources/agent-plugin-export-destination/providers/effect-platform-node",
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:agent-plugin-export-destination",
+    "provider:effect-platform-node"
+  ],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{workspaceRoot}/resources/agent-plugin-export-destination/dist"
+      ],
+      "options": {
+        "command": "tsc -p resources/agent-plugin-export-destination/tsconfig.build.json"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"{projectRoot}/**/*.ts\""
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p {projectRoot}/tsconfig.json --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx vitest run --config {projectRoot}/vitest.config.ts"
+      }
+    }
+  }
+}
