@@ -56,6 +56,7 @@ export {
   type CapsuleControllerWriterOptionsV1,
   type CapsuleOpaqueSourceV1,
 } from "./writer";
+export { applyingRecoveryBlockingFailure } from "./recovery";
 export {
   CapsuleUndoControllerV1,
   type CapsuleUndoControllerOptionsV1,

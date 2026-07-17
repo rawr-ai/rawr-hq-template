@@ -55,6 +55,7 @@ import {
   type NodeProviderRecordState,
 } from "./providers/node-runtime";
 import {
+  applyingRecoveryBlockingFailure,
   CapsuleControllerWriterV1,
   createAgentPluginOwnerProtocolRegistryV1,
   createExportUndoWriterV1,
@@ -331,10 +332,16 @@ function createLazyExportUndoWriter(capsuleRoot: Parameters<typeof openNodeCapsu
     if (opened.kind === "Rejected") {
       throw new LifecycleAuthorityBindingError(opened.failure.message);
     }
-    return createExportUndoWriterV1(new CapsuleControllerWriterV1({
+    const controller = new CapsuleControllerWriterV1({
       store: opened.store,
       registry,
-    }));
+    });
+    const recovery = await controller.recoverApplying();
+    const recoveryFailure = applyingRecoveryBlockingFailure(recovery);
+    if (recoveryFailure !== null) {
+      throw new LifecycleAuthorityBindingError(recoveryFailure.message);
+    }
+    return createExportUndoWriterV1(controller);
   });
   return Object.freeze({
     async preflight(input: UndoCandidateInput) {

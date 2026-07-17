@@ -45,13 +45,14 @@ import {
 } from "../../../src/lib/agent-plugins/undo";
 import { CODEX_ADAPTER_PROTOCOL } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import { createNodeProviderLifecycleRuntime } from "../../../src/lib/agent-plugins/service-runtime/providers/node-runtime";
+import { createNodeProviderRecordState } from "../../../src/lib/agent-plugins/service-runtime/providers/node-runtime";
 import {
-  createExpectedProviderOwnerObservedPost,
   createProviderOwnerAction,
   createProviderOwnerProtocolRegistration,
   providerOwnerTargetBinding,
+  PROVIDER_OWNER,
+  PROVIDER_OWNER_PROTOCOL_VERSION,
 } from "../../../src/lib/agent-plugins/service-runtime/providers/owner-protocol";
-import { createProviderUndoWriterV1 } from "../../../src/lib/agent-plugins/service-runtime/providers/provider-capsule";
 import { undoAgentPluginCapsuleAtDataRoot } from "../../../src/lib/agent-plugins/service-runtime/undo";
 import { createCanonicalStatus } from "../../../../../services/agent-plugin-lifecycle/src/service/modules/providers/internal/applications/canonical-status";
 import { createManagedRetire } from "../../../../../services/agent-plugin-lifecycle/src/service/modules/providers/internal/applications/managed-retire";
@@ -129,6 +130,81 @@ describe("production lifecycle read-only binding", () => {
   });
 
   it.runIf("Bun" in globalThis)(
+    "recovers a staged provider record at its exact prior before qualified undo",
+    async () => {
+      fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-c5-read-only-")));
+      const dataRoot = path.join(fixtureRoot, "controller-data");
+      const home = path.join(fixtureRoot, "codex-home");
+      await Promise.all([mkdir(dataRoot), mkdir(home)]);
+      const seeded = await seedReceiptApplying(dataRoot, home, "prior");
+
+      expect(await undoAgentPluginCapsuleAtDataRoot(
+        Object.freeze({ providerExecutables: Object.freeze({}) }),
+        dataRoot,
+      )).toEqual({
+        kind: "NoCommittedCapsule",
+        synchronization: { kind: "Released" },
+      });
+      expect(await seeded.records.targets.receipts.read(seeded.target)).toEqual({
+        ok: true,
+        value: { kind: "absent" },
+      });
+      expect((await readCapsuleVariant(dataRoot)).kind).toBe("idle");
+    },
+  );
+
+  it.runIf("Bun" in globalThis)(
+    "recovers an applied provider record to committed and replays it through qualified undo",
+    async () => {
+      fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-c5-read-only-")));
+      const dataRoot = path.join(fixtureRoot, "controller-data");
+      const home = path.join(fixtureRoot, "codex-home");
+      await Promise.all([mkdir(dataRoot), mkdir(home)]);
+      const seeded = await seedReceiptApplying(dataRoot, home, "post");
+
+      expect(await undoAgentPluginCapsuleAtDataRoot(
+        Object.freeze({ providerExecutables: Object.freeze({}) }),
+        dataRoot,
+      )).toEqual({
+        kind: "RestoredAndCleared",
+        synchronization: { kind: "Released" },
+      });
+      expect(await seeded.records.targets.receipts.read(seeded.target)).toEqual({
+        ok: true,
+        value: { kind: "absent" },
+      });
+      expect(await readCapsuleVariant(dataRoot)).toEqual({ kind: "idle", committed: null });
+    },
+  );
+
+  it.runIf("Bun" in globalThis)(
+    "refuses ambiguous provider recovery and preserves both live and capsule state",
+    async () => {
+      fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-c5-read-only-")));
+      const dataRoot = path.join(fixtureRoot, "controller-data");
+      const home = path.join(fixtureRoot, "codex-home");
+      await Promise.all([mkdir(dataRoot), mkdir(home)]);
+      const seeded = await seedReceiptApplying(dataRoot, home, "ambiguous");
+      const before = await exactTree(dataRoot);
+
+      expect(await undoAgentPluginCapsuleAtDataRoot(
+        Object.freeze({ providerExecutables: Object.freeze({}) }),
+        dataRoot,
+      )).toMatchObject({
+        kind: "RejectedBeforeReplay",
+        failure: { code: "ReplayBlocked", phase: "applying-classify" },
+        synchronization: { kind: "Released" },
+      });
+      expect(await exactTree(dataRoot)).toEqual(before);
+      expect(await seeded.records.targets.receipts.read(seeded.target)).toEqual({
+        ok: true,
+        value: { kind: "present", receipt: seeded.liveReceipt },
+      });
+      expect((await readCapsuleVariant(dataRoot)).kind).toBe("applying");
+    },
+  );
+
+  it.runIf("Bun" in globalThis)(
     "inspects receipt-free native state before classifying managed retirement without writes",
     async () => {
       fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-c5-read-only-")));
@@ -193,7 +269,7 @@ describe("production lifecycle read-only binding", () => {
       fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-c5-read-only-")));
       const dataRoot = path.join(fixtureRoot, "controller-data");
       await mkdir(dataRoot);
-      await seedCodexProviderCapsule(dataRoot, path.join(fixtureRoot, "codex-home"));
+      await seedApplyingCodexProviderCapsule(dataRoot, path.join(fixtureRoot, "codex-home"));
       const before = await exactTree(dataRoot);
 
       await expect(undoAgentPluginCapsuleAtDataRoot(
@@ -216,43 +292,139 @@ describe("production lifecycle read-only binding", () => {
   );
 });
 
-async function seedCodexProviderCapsule(dataRoot: string, home: string): Promise<void> {
+async function seedApplyingCodexProviderCapsule(dataRoot: string, home: string): Promise<void> {
   const layout = deriveAgentPluginControllerLayout({ dataRoot });
   await mkdir(path.dirname(layout.capsuleRoot), { recursive: true });
   const registration = createProviderOwnerProtocolRegistration(unavailableProviderOwnerRuntime());
   const registry = createAgentPluginOwnerProtocolRegistryV1({}, registration);
   const opened = await openNodeCapsuleStateStoreV1({ root: layout.capsuleRoot, registry });
   if (opened.kind === "Rejected") throw new Error(opened.failure.message);
-  const writer = createProviderUndoWriterV1(new CapsuleControllerWriterV1({
+  const controller = new CapsuleControllerWriterV1({
     store: opened.store,
     registry,
-  }));
-  const plan = providerPlan(home);
-  const candidate = Object.freeze({
-    protocol: "agent-plugin-lifecycle/provider-undo@v1" as const,
-    plans: Object.freeze([plan]),
   });
-  const preflight = await writer.preflight(candidate);
-  if (!preflight.ok) throw new Error(preflight.issues[0]?.message ?? "provider capsule preflight failed");
-  const begun = await writer.begin(candidate);
-  if (!begun.ok) throw new Error(begun.issues[0]?.message ?? "provider capsule admission failed");
-  const binding = providerOwnerTargetBinding(plan.target, Object.freeze({ kind: "absent" }));
-  for (const step of plan.steps) {
-    if (step.kind !== "mutate") continue;
-    const staged = await begun.value.stage(step.action);
-    if (!staged.ok) throw new Error(staged.issues[0]?.message ?? "provider capsule stage failed");
-    const observed = createExpectedProviderOwnerObservedPost(
-      createProviderOwnerAction(step.action),
-      binding,
-    );
-    const applied = await begun.value.applied({ action: step.action, post: observed.post });
-    if (!applied.ok) throw new Error(applied.issues[0]?.message ?? "provider capsule apply failed");
-  }
-  const settled = await begun.value.settle();
-  if (!settled.ok) throw new Error(settled.issues[0]?.message ?? "provider capsule settlement failed");
+  const plan = providerPlan(home);
+  const admitted = await controller.begin(capsuleCandidateForPlan(plan));
+  if (admitted.kind !== "Accepted") throw new Error(admitted.failure.message);
+  const first = admitted.admittedActions[0];
+  if (first === undefined) throw new Error("provider capsule fixture has no mutation");
+  const staged = await admitted.session.stage({ actionHandle: first.actionHandle });
+  if (staged.kind !== "Accepted") throw new Error(staged.failure.message);
+  const suspended = await admitted.session.suspend();
+  if (suspended.kind !== "Released") throw new Error(suspended.failure.message);
 }
 
-function providerPlan(home: string): ProviderTargetPlan {
+async function seedReceiptApplying(
+  dataRoot: string,
+  home: string,
+  live: "prior" | "post" | "ambiguous",
+) {
+  const layout = deriveAgentPluginControllerLayout({ dataRoot });
+  const roots = Object.freeze({
+    controllerDataRoot: dataRoot,
+    providerProjectionRoot: layout.providerProjectionRoot,
+    providerTargetStateRoot: layout.providerTargetStateRoot,
+  });
+  const records = createNodeProviderRecordState(roots);
+  await mkdir(path.dirname(layout.capsuleRoot), { recursive: true });
+  const registration = createProviderOwnerProtocolRegistration(unavailableProviderOwnerRuntime());
+  const registry = createAgentPluginOwnerProtocolRegistryV1({}, registration);
+  const opened = await openNodeCapsuleStateStoreV1({ root: layout.capsuleRoot, registry });
+  if (opened.kind === "Rejected") throw new Error(opened.failure.message);
+  const controller = new CapsuleControllerWriterV1({
+    store: opened.store,
+    registry,
+  });
+  const plan = providerPlan(home);
+  const receiptStep = plan.steps.find((step) =>
+    step.kind === "mutate" && step.action.kind === "PublishReceipt");
+  if (receiptStep?.kind !== "mutate" || receiptStep.action.kind !== "PublishReceipt") {
+    throw new Error("provider capsule fixture has no receipt publication");
+  }
+  const receiptPlan: ProviderTargetPlan = Object.freeze({
+    ...plan,
+    steps: Object.freeze([receiptStep]),
+  });
+  const begun = await controller.begin(capsuleCandidateForPlan(receiptPlan));
+  if (begun.kind !== "Accepted") throw new Error(begun.failure.message);
+  const admitted = begun.admittedActions[0];
+  if (admitted === undefined) throw new Error("provider receipt admission has no action");
+  const staged = await begun.session.stage({ actionHandle: admitted.actionHandle });
+  if (staged.kind !== "Accepted") throw new Error(staged.failure.message);
+
+  let liveReceipt = receiptStep.action.receipt;
+  if (live === "ambiguous") {
+    const alternatePlan = providerPlan(home, "provider-ambiguous@v1");
+    const alternate = alternatePlan.steps.find((step) =>
+      step.kind === "mutate" && step.action.kind === "PublishReceipt");
+    if (alternate?.kind !== "mutate" || alternate.action.kind !== "PublishReceipt") {
+      throw new Error("alternate provider receipt fixture has no publication");
+    }
+    liveReceipt = alternate.action.receipt;
+  }
+  if (live !== "prior") {
+    const published = await records.targets.receipts.publish(
+      receiptStep.action.target,
+      receiptStep.action.prior,
+      liveReceipt,
+    );
+    if (!published.ok) throw new Error(published.issues[0]?.message ?? "provider receipt fixture publish failed");
+  }
+  const suspended = await begun.session.suspend();
+  if (suspended.kind !== "Released") throw new Error(suspended.failure.message);
+  return Object.freeze({
+    records,
+    target: receiptStep.action.target,
+    liveReceipt,
+  });
+}
+
+function capsuleCandidateForPlan(plan: ProviderTargetPlan) {
+  const receipt = plan.steps.find((step) => step.kind === "mutate"
+    && (step.action.kind === "PublishReceipt"
+      || step.action.kind === "NormalizeReceipt"
+      || step.action.kind === "RemoveReceipt"));
+  if (receipt?.kind !== "mutate"
+    || (receipt.action.kind !== "PublishReceipt"
+      && receipt.action.kind !== "NormalizeReceipt"
+      && receipt.action.kind !== "RemoveReceipt")) {
+    throw new Error("provider capsule plan has no receipt authority");
+  }
+  const receiptAction = receipt.action;
+  const prior = receiptAction.kind === "PublishReceipt"
+    ? receiptAction.prior
+    : Object.freeze({ kind: "present" as const, receipt: receiptAction.prior });
+  const contentAuthority = plan.projection?.artifactAuthority.contentAuthority;
+  if (contentAuthority === undefined) throw new Error("provider capsule plan has no content authority");
+  const actions = plan.steps.flatMap((step) => step.kind === "mutate"
+    ? [Object.freeze({ action: createProviderOwnerAction(step.action) })]
+    : []);
+  return Object.freeze({
+    owner: PROVIDER_OWNER,
+    ownerProtocolVersion: PROVIDER_OWNER_PROTOCOL_VERSION,
+    contentAuthority,
+    targets: Object.freeze([providerOwnerTargetBinding(plan.target, prior)]),
+    actions: Object.freeze(actions),
+  });
+}
+
+async function readCapsuleVariant(dataRoot: string) {
+  const layout = deriveAgentPluginControllerLayout({ dataRoot });
+  const registry = createAgentPluginOwnerProtocolRegistryV1(
+    {},
+    createProviderOwnerProtocolRegistration(unavailableProviderOwnerRuntime()),
+  );
+  const opened = await openNodeCapsuleStateStoreV1({ root: layout.capsuleRoot, registry });
+  if (opened.kind === "Rejected") throw new Error(opened.failure.message);
+  const read = await opened.store.read();
+  if (read.kind === "Rejected") throw new Error(read.failure.message);
+  return read.observation.state.body.state;
+}
+
+function providerPlan(
+  home: string,
+  evaluationProfile = "provider-smoke@v1",
+): ProviderTargetPlan {
   const fixture = productFixture();
   const target = mustResult(parseProviderTarget({ provider: "codex", home }));
   const snapshot: Extract<VerifiedArtifactSnapshotV1, { kind: "complete-set" }> = Object.freeze({
@@ -280,7 +452,7 @@ function providerPlan(home: string): ProviderTargetPlan {
   const request = mustResult(parseProviderDeploymentRequest({
     kind: "complete-test",
     releaseSet: snapshot.ref,
-    evaluationProfile: "provider-smoke@v1",
+    evaluationProfile,
     targets: [{ provider: "codex", home }],
   }));
   if (request.kind !== "complete-test") throw new Error("provider capsule fixture request mode changed");

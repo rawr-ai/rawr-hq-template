@@ -10,6 +10,8 @@ import type { ControllerProjectionBinding } from "../commands/binding";
 import { LifecycleAuthorityBindingError } from "../commands/binding";
 import { deriveAgentPluginControllerLayout } from "../layout";
 import {
+  applyingRecoveryBlockingFailure,
+  CapsuleControllerWriterV1,
   CapsuleUndoControllerV1,
   createAgentPluginOwnerProtocolRegistryV1,
   openNodeCapsuleStateStoreV1,
@@ -56,8 +58,26 @@ export async function undoAgentPluginCapsuleAtDataRoot(
     : createAgentPluginOwnerProtocolRegistryV1();
   const opened = await openNodeCapsuleStateStoreV1({ root: layout.capsuleRoot, registry });
   if (opened.kind === "Rejected") throw new LifecycleAuthorityBindingError(opened.failure.message);
+  let replayState = observed;
+  if (observed.body.state.kind === "applying") {
+    const recovery = await new CapsuleControllerWriterV1({ store: opened.store, registry })
+      .recoverApplying({ expectedStateDigest: observed.stateDigest });
+    const recoveryFailure = applyingRecoveryBlockingFailure(recovery);
+    if (recoveryFailure !== null) {
+      return Object.freeze({
+        kind: "RejectedBeforeReplay",
+        failure: recoveryFailure,
+        synchronization: recovery.synchronization,
+      });
+    }
+    replayState = await readCapsuleState(layout.capsuleRoot, registry);
+    validateProviderExecutableCoverage(
+      binding.providerExecutables as Readonly<Partial<Record<ProviderId, string>>>,
+      requiredProviderExecutables(replayState, codecRegistration),
+    );
+  }
   return await new CapsuleUndoControllerV1({ store: opened.store, registry }).undo({
-    expectedStateDigest: observed.stateDigest,
+    expectedStateDigest: replayState.stateDigest,
   });
 }
 
@@ -144,12 +164,43 @@ function requiredProviderExecutables(
   registration: ProviderOwnerProtocolRegistration,
 ): ReadonlySet<ProviderId> {
   const variant = state.body.state;
-  const committed = variant.kind === "applying"
-    ? variant.prior
-    : variant.committed;
-  if (committed === null || committed.capsule.owner !== PROVIDER_OWNER) return new Set();
   const providers = new Set<ProviderId>();
-  for (const stored of committed.capsule.actions) {
+  if (variant.kind === "applying") {
+    addRequiredProviderExecutables(
+      providers,
+      variant.candidate.owner,
+      variant.candidate.actions,
+      registration,
+    );
+    if (variant.prior !== null) {
+      addRequiredProviderExecutables(
+        providers,
+        variant.prior.capsule.owner,
+        variant.prior.capsule.actions,
+        registration,
+      );
+    }
+    return providers;
+  }
+  if (variant.committed !== null) {
+    addRequiredProviderExecutables(
+      providers,
+      variant.committed.capsule.owner,
+      variant.committed.capsule.actions,
+      registration,
+    );
+  }
+  return providers;
+}
+
+function addRequiredProviderExecutables(
+  providers: Set<ProviderId>,
+  owner: string,
+  actions: readonly Readonly<{ action: unknown }>[],
+  registration: ProviderOwnerProtocolRegistration,
+): void {
+  if (owner !== PROVIDER_OWNER) return;
+  for (const stored of actions) {
     const action = registration.codec.parseAction(stored.action);
     if (
       action.kind === "SetMarketplace"
@@ -158,7 +209,6 @@ function requiredProviderExecutables(
       || action.kind === "RetireMember"
     ) providers.add(action.target.provider);
   }
-  return providers;
 }
 
 function validateProviderExecutableBindings(
@@ -173,6 +223,18 @@ function validateProviderExecutableBindings(
   ) {
     throw new LifecycleAuthorityBindingError(
       `Undo requires exact provider executable bindings: ${expected.length === 0 ? "none" : expected.join(",")}`,
+    );
+  }
+}
+
+function validateProviderExecutableCoverage(
+  bindings: Readonly<Partial<Record<ProviderId, string>>>,
+  required: ReadonlySet<ProviderId>,
+): void {
+  const missing = [...required].filter((provider) => bindings[provider] === undefined).sort();
+  if (missing.length > 0) {
+    throw new LifecycleAuthorityBindingError(
+      `Undo recovery requires provider executable bindings: ${missing.join(",")}`,
     );
   }
 }
