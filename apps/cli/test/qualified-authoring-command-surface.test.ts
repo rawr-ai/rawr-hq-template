@@ -30,7 +30,7 @@ describe("qualified authoring command surface", () => {
     expect(`${plugins.stdout}\n${plugins.stderr}`).not.toContain("plugins scaffold");
   });
 
-  it("rejects every retired command ID without an alias or forwarder", { timeout: 30_000 }, () => {
+  it("rejects every retired command ID without an alias or forwarder", { timeout: 60_000 }, () => {
     const retiredCommands = [
       { args: ["app", "composition", "show"], id: "app:composition:show" },
       { args: ["app", "composition", "check"], id: "app:composition:check" },

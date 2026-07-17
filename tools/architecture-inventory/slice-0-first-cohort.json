@@ -40,10 +40,11 @@
         "structural"
       ]
     },
-    "@rawr/plugin-plugins": {
-      "config": "plugins/cli/plugins/package.json",
+    "@rawr/agent-plugin-lifecycle": {
+      "config": "services/agent-plugin-lifecycle/package.json",
       "tags": [
-        "type:plugin",
+        "type:service",
+        "role:servicepackage",
         "migration-slice:structural-tranche"
       ],
       "targets": [

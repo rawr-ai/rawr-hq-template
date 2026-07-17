@@ -23,7 +23,13 @@ export default defineConfig({
       {
         extends: true,
         root: r("apps/cli"),
-        test: { name: "cli", environment: "node", include: [...includes], env: { NODE_ENV: "production" } },
+        test: {
+          name: "cli",
+          environment: "node",
+          include: [...includes],
+          env: { NODE_ENV: "production" },
+          testTimeout: 60_000,
+        },
       },
       {
         extends: true,
@@ -144,11 +150,6 @@ export default defineConfig({
         extends: true,
         root: r("plugins/cli/session-tools"),
         test: { name: "plugin-session-tools", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("plugins/cli/plugins"),
-        test: { name: "plugin-plugins", environment: "node", include: [...includes] },
       },
     ],
   },

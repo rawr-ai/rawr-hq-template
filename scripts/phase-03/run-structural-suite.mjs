@@ -84,14 +84,6 @@ const suiteCommandsByProject = {
     ],
     runtime: ["bun run runtime:gate:hq-lifecycle"],
   },
-  "@rawr/plugin-plugins": {
-    default: [
-      "bun scripts/phase-03/verify-projection-boundary-invocation.mjs",
-      "bun run architecture:gate:legacy-membership-authoring",
-    ],
-    "phase-a-baseline": ["bun run architecture:gate:legacy-membership-authoring"],
-    "phase-a-completion": ["bun run architecture:gate:legacy-membership-authoring"],
-  },
   "@rawr/plugin-chatgpt-corpus": {
     default: ["bun scripts/phase-03/verify-projection-boundary-invocation.mjs"],
   },
