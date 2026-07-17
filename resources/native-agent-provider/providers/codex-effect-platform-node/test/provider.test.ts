@@ -128,7 +128,7 @@ describe("codex-effect-platform-node", () => {
       "plugin add demo@rawr-hq --json",
       "plugin remove demo@rawr-hq --json",
       "plugin marketplace list --json",
-      "plugin list --available --json",
+      "plugin list --json",
     ]);
     expect(await readLines(path.join(fixture.home, "app-server-input.log"))).toEqual([
       ...appServerSessionLines([
@@ -322,7 +322,7 @@ elif [ "$*" = "plugin --help" ]; then
   printf 'Commands:\\n  list  list plugins\\n  add  add plugin\\n  remove  remove plugin\\n'
 elif [ "$*" = "plugin marketplace --help" ]; then
   printf 'Commands:\\n  list  list markets\\n  add  add market\\n  remove  remove market\\n'
-elif [ "$*" = "plugin list --available --json" ]; then
+elif [ "$*" = "plugin list --json" ]; then
   if [ -f "$HOME/codex-plugins.json" ]; then cat "$HOME/codex-plugins.json"; else printf '%s\\n' '{"installed":[],"available":[]}'; fi
 elif [ "$*" = "plugin marketplace list --json" ]; then
   if [ -f "$HOME/codex-marketplaces.json" ]; then cat "$HOME/codex-marketplaces.json"; else printf '%s\\n' '{"marketplaces":[]}'; fi

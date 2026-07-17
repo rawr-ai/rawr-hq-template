@@ -94,7 +94,6 @@ export const codexEffectPlatformNodeProvider: NativeAgentProviderResource<
         kernel.run("plugin-list", [
           "plugin",
           "list",
-          "--available",
           "--json",
         ]).pipe(Effect.flatMap((result) => parseJsonObservation("codex", "plugin-list", result)));
 
