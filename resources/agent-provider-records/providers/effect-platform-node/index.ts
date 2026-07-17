@@ -85,6 +85,7 @@ export function makeAgentProviderRecordsResource(
 ): AgentProviderRecordsResource<ProviderRequirements> {
   const captures = new Map<string, CaptureAuthority>();
   const consumedHandles = new Set<string>();
+  const targetMutationFence = Effect.unsafeMakeSemaphore(1);
 
   const readProjection = Effect.fn("agentProviderRecords.readProjection")(function* (
     input: Readonly<{ address: ProviderProjectionRecordAddress; maxBytes: number }>,
@@ -111,7 +112,9 @@ export function makeAgentProviderRecordsResource(
     const resolved = yield* resolveProjectionRecord(paths, roots, input.address, "publish-projection");
     const prior = yield* readRecord(fs, paths, roots, resolved, input.maxBytes, "publish-projection");
     if (prior.kind === "Present") {
-      if (equalBytes(prior.bytes, input.bytes)) return publication("ReadOnlyConverged", input.address);
+      if (recordMatches(input.bytes, prior, RECORD_MODE)) {
+        return publication("ReadOnlyConverged", input.address);
+      }
       return yield* rejected(
         "publish-projection",
         "Occupied",
@@ -242,7 +245,7 @@ export function makeAgentProviderRecordsResource(
     }) satisfies ProviderTargetRecordCapture;
   });
 
-  const writeTarget = Effect.fn("agentProviderRecords.writeTarget")(function* (
+  const writeTargetOperation = Effect.fn("agentProviderRecords.writeTarget")(function* (
     input: Readonly<{
       address: ProviderTargetRecordAddress;
       planDigest: string;
@@ -325,7 +328,14 @@ export function makeAgentProviderRecordsResource(
       authority.lifecycle = "Partial";
       return yield* Effect.fail(attempted.left);
     }
-    const postimage = yield* readRecord(fs, paths, roots, resolved, authority.maxBytes, "write-target");
+    const observedPostimage = yield* Effect.either(
+      readRecord(fs, paths, roots, resolved, authority.maxBytes, "write-target"),
+    );
+    if (observedPostimage._tag === "Left") {
+      authority.lifecycle = "Partial";
+      return yield* Effect.fail(observedPostimage.left);
+    }
+    const postimage = observedPostimage.right;
     if (!mutationMatches(input.mutation, postimage)) {
       authority.lifecycle = "Partial";
       return yield* rejected(
@@ -341,7 +351,7 @@ export function makeAgentProviderRecordsResource(
     return writeReceipt(input, "Applied");
   });
 
-  const restoreTarget = Effect.fn("agentProviderRecords.restoreTarget")(function* (
+  const restoreTargetOperation = Effect.fn("agentProviderRecords.restoreTarget")(function* (
     input: Readonly<{
       address: ProviderTargetRecordAddress;
       planDigest: string;
@@ -520,8 +530,10 @@ export function makeAgentProviderRecordsResource(
     readTarget,
     scanTargets,
     captureTarget,
-    writeTarget,
-    restoreTarget,
+    writeTarget: (input: Parameters<typeof writeTargetOperation>[0]) =>
+      targetMutationFence.withPermits(1)(writeTargetOperation(input)),
+    restoreTarget: (input: Parameters<typeof restoreTargetOperation>[0]) =>
+      targetMutationFence.withPermits(1)(restoreTargetOperation(input)),
     settleTarget,
   });
 }
@@ -585,7 +597,7 @@ function publishProjectionRecord(
     yield* hit(options, { kind: "AfterTemporaryWrite", address: resolved.address }, "publish-projection", resolved.path);
     const prior = yield* readRecord(fs, paths, roots, resolved, maxBytes, "publish-projection");
     if (prior.kind === "Present") {
-      return equalBytes(prior.bytes, bytes)
+      return recordMatches(bytes, prior, RECORD_MODE)
         ? publication("ReadOnlyConverged", resolved.address)
         : yield* rejected(
           "publish-projection",
@@ -607,7 +619,7 @@ function publishProjectionRecord(
         ));
       }
       const winner = yield* readRecord(fs, paths, roots, resolved, maxBytes, "publish-projection");
-      if (winner.kind === "Present" && equalBytes(winner.bytes, bytes)) {
+      if (winner.kind === "Present" && recordMatches(bytes, winner, RECORD_MODE)) {
         return publication("ReadOnlyConverged", resolved.address);
       }
       return yield* rejected(
@@ -624,7 +636,7 @@ function publishProjectionRecord(
     yield* hit(options, { kind: "AfterAtomicCommit", address: resolved.address }, "publish-projection", resolved.path);
     yield* syncPath(fs, resolved.directory, "publish-projection", "projection-parent-sync");
     const published = yield* readRecord(fs, paths, roots, resolved, maxBytes, "publish-projection");
-    if (published.kind !== "Present" || !equalBytes(published.bytes, bytes)) {
+    if (published.kind !== "Present" || !recordMatches(bytes, published, RECORD_MODE)) {
       return yield* rejected(
         "publish-projection",
         "IdentityChanged",
@@ -1309,7 +1321,15 @@ function mutationMatches(
 ): boolean {
   return mutation.kind === "Remove"
     ? observation.kind === "Absent"
-    : observation.kind === "Present" && equalBytes(mutation.bytes, observation.bytes);
+    : observation.kind === "Present" && recordMatches(mutation.bytes, observation, RECORD_MODE);
+}
+
+function recordMatches<A extends ProviderRecordAddress>(
+  bytes: Uint8Array,
+  observation: Extract<ProviderRecordObservation<A>, { readonly kind: "Present" }>,
+  mode: number,
+): boolean {
+  return equalBytes(bytes, observation.bytes) && (observation.identity.mode & 0o777) === mode;
 }
 
 function observationMutation(

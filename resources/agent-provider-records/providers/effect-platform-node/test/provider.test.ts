@@ -1,13 +1,16 @@
 import {
+  chmod,
   lstat,
   mkdir,
   mkdtemp,
   readFile,
   readdir,
   realpath,
+  rename,
   rm,
   stat,
   symlink,
+  unlink,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -27,8 +30,14 @@ import {
 const encoder = new TextEncoder();
 const MAX_BYTES = 1024 * 1024;
 
+interface OwnedFixture {
+  readonly path: string;
+  readonly dev: number;
+  readonly ino: number;
+}
+
 describe("effect-platform-node agent provider records", () => {
-  let fixtureRoot: string | null = null;
+  let fixtureRoot: OwnedFixture | null = null;
 
   afterEach(async () => {
     if (fixtureRoot !== null) await removeOwnedFixture(fixtureRoot);
@@ -37,7 +46,7 @@ describe("effect-platform-node agent provider records", () => {
 
   it("publishes exact immutable projection bytes and leaves a converged repeat read-only", async () => {
     fixtureRoot = await createFixture();
-    const layout = fixtureLayout(fixtureRoot);
+    const layout = fixtureLayout(fixtureRoot.path);
     const resource = makeAgentProviderRecordsResource(layout);
     const address = projectionAddress("Manifest", "ap1_manifest");
     const bytes = encoder.encode('{"projection":1}\n');
@@ -55,6 +64,7 @@ describe("effect-platform-node agent provider records", () => {
     const destination = path.join(layout.projectionRoot, "manifests", "ap1_manifest.json");
     expect(new Uint8Array(await readFile(destination))).toEqual(bytes);
     const before = await stat(destination);
+    expect(before.mode & 0o777).toBe(0o600);
 
     expect(await run(resource.publishProjection({ address, bytes, maxBytes: MAX_BYTES }))).toEqual({
       ok: true,
@@ -65,6 +75,15 @@ describe("effect-platform-node agent provider records", () => {
       ino: before.ino,
       mtimeMs: before.mtimeMs,
     });
+
+    await chmod(destination, 0o644);
+    const nonCanonicalRepeat = await run(resource.publishProjection({
+      address,
+      bytes,
+      maxBytes: MAX_BYTES,
+    }));
+    expect(nonCanonicalRepeat.ok).toBe(false);
+    if (!nonCanonicalRepeat.ok) expect(nonCanonicalRepeat.failure.reason).toBe("Occupied");
 
     const occupied = await run(resource.publishProjection({
       address,
@@ -78,7 +97,7 @@ describe("effect-platform-node agent provider records", () => {
 
   it("captures, atomically writes, scans, converges, and settles one target record", async () => {
     fixtureRoot = await createFixture();
-    const layout = fixtureLayout(fixtureRoot);
+    const layout = fixtureLayout(fixtureRoot.path);
     const resource = makeAgentProviderRecordsResource(layout);
     const address = targetAddress("Identity", "pt1_target");
     const bytes = encoder.encode('{"identity":1}\n');
@@ -98,6 +117,7 @@ describe("effect-platform-node agent provider records", () => {
     });
     const destination = path.join(layout.targetRecordsRoot, "identities", "pt1_target.json");
     const before = await stat(destination);
+    expect(before.mode & 0o777).toBe(0o600);
 
     expect(await run(resource.writeTarget(writeInput))).toMatchObject({
       ok: true,
@@ -141,7 +161,7 @@ describe("effect-platform-node agent provider records", () => {
 
   it("restores exact prior bytes after replacement and removal before settlement", async () => {
     fixtureRoot = await createFixture();
-    const resource = makeAgentProviderRecordsResource(fixtureLayout(fixtureRoot));
+    const resource = makeAgentProviderRecordsResource(fixtureLayout(fixtureRoot.path));
     const address = targetAddress("Receipt", "pt1_target");
     const firstBytes = encoder.encode('{"generation":1}\n');
     const secondBytes = encoder.encode('{"generation":2}\n');
@@ -195,9 +215,101 @@ describe("effect-platform-node agent provider records", () => {
     expect(await run(resource.settleTarget(removeInput))).toMatchObject({ ok: true });
   });
 
+  it("rewrites matching target bytes to canonical mode instead of claiming read-only convergence", async () => {
+    fixtureRoot = await createFixture();
+    const layout = fixtureLayout(fixtureRoot.path);
+    const resource = makeAgentProviderRecordsResource(layout);
+    const address = targetAddress("Identity", "pt1_mode");
+    const bytes = encoder.encode('{"identity":1}\n');
+    await seedTarget(resource, address, bytes, "seed-mode");
+    const destination = path.join(layout.targetRecordsRoot, "identities", "pt1_mode.json");
+    await chmod(destination, 0o644);
+
+    const captured = await capture(resource, address, "read-mode");
+    const input = {
+      address,
+      planDigest: "plan-mode",
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+      mutation: { kind: "Put" as const, bytes },
+    };
+    expect(await run(resource.writeTarget(input))).toMatchObject({
+      ok: true,
+      value: { outcome: "Applied" },
+    });
+    expect((await stat(destination)).mode & 0o777).toBe(0o600);
+    expect(await run(resource.settleTarget(input))).toMatchObject({ ok: true });
+  });
+
+  it("serializes target mutations so a concurrent replacement cannot be moved into removal cleanup", async () => {
+    fixtureRoot = await createFixture();
+    const layout = fixtureLayout(fixtureRoot.path);
+    const base = makeAgentProviderRecordsResource(layout);
+    const address = targetAddress("Receipt", "pt1_serialized");
+    const priorBytes = encoder.encode('{"generation":1}\n');
+    const replacementBytes = encoder.encode('{"generation":2}\n');
+    await seedTarget(base, address, priorBytes, "seed-serialized");
+
+    const firstCommitEntered = Promise.withResolvers<void>();
+    const releaseFirstCommit = Promise.withResolvers<void>();
+    const overlappingCommitEntered = Promise.withResolvers<void>();
+    let commitCount = 0;
+    const resource = makeAgentProviderRecordsResource({
+      ...layout,
+      async onEvent(event: AgentProviderRecordsEvent) {
+        if (event.kind !== "BeforeAtomicCommit" || event.address.scope !== "Target") return;
+        commitCount += 1;
+        if (commitCount === 1) {
+          firstCommitEntered.resolve();
+          await releaseFirstCommit.promise;
+        } else {
+          overlappingCommitEntered.resolve();
+        }
+      },
+    });
+    const removeCapture = await capture(resource, address, "read-serialized-remove");
+    const replaceCapture = await capture(resource, address, "read-serialized-replace");
+    const removeInput = {
+      address,
+      planDigest: "plan-serialized-remove",
+      readToken: removeCapture.readToken,
+      captureHandle: removeCapture.handle,
+      mutation: { kind: "Remove" as const },
+    };
+    const replaceInput = {
+      address,
+      planDigest: "plan-serialized-replace",
+      readToken: replaceCapture.readToken,
+      captureHandle: replaceCapture.handle,
+      mutation: { kind: "Put" as const, bytes: replacementBytes },
+    };
+
+    const removing = run(resource.writeTarget(removeInput));
+    await firstCommitEntered.promise;
+    const replacing = run(resource.writeTarget(replaceInput));
+    const overlapped = await Promise.race([
+      overlappingCommitEntered.promise.then(() => true),
+      new Promise<false>((resolve) => setTimeout(() => resolve(false), 50)),
+    ]);
+    releaseFirstCommit.resolve();
+    const [removed, replaced] = await Promise.all([removing, replacing]);
+
+    expect(overlapped).toBe(false);
+    expect(removed).toMatchObject({ ok: true, value: { outcome: "Applied" } });
+    expect(replaced.ok).toBe(false);
+    if (!replaced.ok) {
+      expect(replaced.failure).toMatchObject({
+        reason: "IdentityChanged",
+        phase: "preimage-revalidation",
+      });
+    }
+    expect(await readTarget(resource, address)).toEqual({ kind: "Absent", address });
+    expect(await run(resource.settleTarget(removeInput))).toMatchObject({ ok: true });
+  });
+
   it("leaves prior bytes intact when a write stops before atomic commit and cleans its scoped temporary", async () => {
     fixtureRoot = await createFixture();
-    const layout = fixtureLayout(fixtureRoot);
+    const layout = fixtureLayout(fixtureRoot.path);
     const base = makeAgentProviderRecordsResource(layout);
     const address = targetAddress("Receipt", "pt1_atomic");
     const priorBytes = encoder.encode('{"generation":1}\n');
@@ -237,9 +349,59 @@ describe("effect-platform-node agent provider records", () => {
     expect(await run(resource.settleTarget(input))).toMatchObject({ ok: true });
   });
 
+  it("keeps an after-effect post-observation failure recoverable as Partial", async () => {
+    fixtureRoot = await createFixture();
+    const layout = fixtureLayout(fixtureRoot.path);
+    const base = makeAgentProviderRecordsResource(layout);
+    const address = targetAddress("Receipt", "pt1_post_observation");
+    const priorBytes = encoder.encode('{"generation":1}\n');
+    const nextBytes = encoder.encode('{"generation":2}\n');
+    await seedTarget(base, address, priorBytes, "seed-post-observation");
+    const destination = path.join(layout.targetRecordsRoot, "receipts", "pt1_post_observation.json");
+    const parked = path.join(layout.targetRecordsRoot, "receipts", "pt1_post_observation.parked");
+    let interruptPostObservation = true;
+    const resource = makeAgentProviderRecordsResource({
+      ...layout,
+      async onEvent(event: AgentProviderRecordsEvent) {
+        if (
+          interruptPostObservation
+          && event.kind === "AfterAtomicCommit"
+          && event.address.scope === "Target"
+        ) {
+          interruptPostObservation = false;
+          await rename(destination, parked);
+          await symlink(parked, destination);
+        }
+      },
+    });
+    const captured = await capture(resource, address, "read-post-observation");
+    const input = {
+      address,
+      planDigest: "plan-post-observation",
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+      mutation: { kind: "Put" as const, bytes: nextBytes },
+    };
+
+    const failed = await run(resource.writeTarget(input));
+    expect(failed.ok).toBe(false);
+    if (!failed.ok) expect(failed.failure.reason).toBe("Aliased");
+    await unlink(destination);
+    await rename(parked, destination);
+
+    expect(await run(resource.restoreTarget(input))).toMatchObject({
+      ok: true,
+      value: { outcome: "Restored", changed: true },
+    });
+    const restored = await readTarget(resource, address);
+    expect(restored.kind).toBe("Present");
+    if (restored.kind === "Present") expect(restored.bytes).toEqual(priorBytes);
+    expect(await run(resource.settleTarget(input))).toMatchObject({ ok: true });
+  });
+
   it("rejects path escape, outside roots, and aliased record roots without mutation", async () => {
     fixtureRoot = await createFixture();
-    const layout = fixtureLayout(fixtureRoot);
+    const layout = fixtureLayout(fixtureRoot.path);
     const resource = makeAgentProviderRecordsResource(layout);
     const escaped = await run(resource.readTarget({
       address: targetAddress("Receipt", "../escape"),
@@ -251,7 +413,7 @@ describe("effect-platform-node agent provider records", () => {
 
     const outside = makeAgentProviderRecordsResource({
       ...layout,
-      projectionRoot: path.join(fixtureRoot, "outside"),
+      projectionRoot: path.join(fixtureRoot.path, "outside"),
     });
     const outsideRead = await run(outside.readProjection({
       address: projectionAddress("Member", "pm1_member"),
@@ -275,6 +437,15 @@ describe("effect-platform-node agent provider records", () => {
     expect(aliasedRead.ok).toBe(false);
     if (!aliasedRead.ok) expect(aliasedRead.failure.reason).toBe("Aliased");
     expect(await readdir(actualTarget)).toEqual([]);
+  });
+
+  it("refuses recursive fixture cleanup when the retained allocation identity does not match", async () => {
+    fixtureRoot = await createFixture();
+    await expect(removeOwnedFixture({
+      ...fixtureRoot,
+      ino: fixtureRoot.ino + 1,
+    })).rejects.toThrow("Refusing fixture cleanup");
+    expect((await lstat(fixtureRoot.path)).isDirectory()).toBe(true);
   });
 });
 
@@ -337,10 +508,14 @@ function targetAddress(
   return Object.freeze({ scope: "Target", kind, targetKey });
 }
 
-async function createFixture(): Promise<string> {
+async function createFixture(): Promise<OwnedFixture> {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-agent-provider-records-")));
+  const allocation = await lstat(root);
+  if (!allocation.isDirectory() || allocation.isSymbolicLink()) {
+    throw new Error("Fixture allocation is not one owned directory");
+  }
   await mkdir(path.join(root, "controller-data"));
-  return root;
+  return Object.freeze({ path: root, dev: allocation.dev, ino: allocation.ino });
 }
 
 function fixtureLayout(root: string) {
@@ -352,14 +527,23 @@ function fixtureLayout(root: string) {
   });
 }
 
-async function removeOwnedFixture(root: string): Promise<void> {
+async function removeOwnedFixture(allocation: OwnedFixture): Promise<void> {
   const temporaryRoot = await realpath(tmpdir());
-  if (path.dirname(root) !== temporaryRoot || !path.basename(root).startsWith("rawr-agent-provider-records-")) {
+  if (
+    path.dirname(allocation.path) !== temporaryRoot
+    || !path.basename(allocation.path).startsWith("rawr-agent-provider-records-")
+  ) {
     throw new Error("Refusing fixture cleanup outside the owned temporary family");
   }
-  const info = await lstat(root);
-  if (!info.isDirectory() || info.isSymbolicLink() || await realpath(root) !== root) {
+  const info = await lstat(allocation.path);
+  if (
+    !info.isDirectory()
+    || info.isSymbolicLink()
+    || await realpath(allocation.path) !== allocation.path
+    || info.dev !== allocation.dev
+    || info.ino !== allocation.ino
+  ) {
     throw new Error("Refusing fixture cleanup of a non-canonical owned directory");
   }
-  await rm(root, { recursive: true });
+  await rm(allocation.path, { recursive: true });
 }
