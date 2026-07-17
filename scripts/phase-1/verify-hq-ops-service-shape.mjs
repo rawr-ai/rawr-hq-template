@@ -29,12 +29,6 @@ const REQUIRED_PATHS = [
   "services/hq-ops/src/service/modules/config/middleware.ts",
   "services/hq-ops/src/service/modules/config/module.ts",
   "services/hq-ops/src/service/modules/config/router.ts",
-  "services/hq-ops/src/service/modules/repo-state/contract.ts",
-  "services/hq-ops/src/service/modules/repo-state/entities.ts",
-  "services/hq-ops/src/service/modules/repo-state/helpers/storage.ts",
-  "services/hq-ops/src/service/modules/repo-state/middleware.ts",
-  "services/hq-ops/src/service/modules/repo-state/module.ts",
-  "services/hq-ops/src/service/modules/repo-state/router.ts",
   "services/hq-ops/src/service/modules/journal/contract.ts",
   "services/hq-ops/src/service/modules/journal/entities.ts",
   "services/hq-ops/src/service/modules/journal/helpers/paths.ts",
@@ -99,7 +93,6 @@ const REQUIRED_RESOURCE_PORT_CONSUMERS = [
   "services/hq-ops/src/service/modules/config/helpers/paths.ts",
   "services/hq-ops/src/service/modules/journal/helpers/paths.ts",
   "services/hq-ops/src/service/modules/journal/helpers/storage.ts",
-  "services/hq-ops/src/service/modules/repo-state/helpers/storage.ts",
   "services/hq-ops/src/service/modules/security/router.ts",
   "services/hq-ops/src/service/modules/security/helpers/audit.ts",
   "services/hq-ops/src/service/modules/security/helpers/process.ts",
@@ -187,7 +180,7 @@ const [contractSource, routerSource, clientSource, serviceShapeSource, baseSourc
   readFile("services/hq-ops/src/service/common/README.md"),
 ]);
 
-for (const key of ["config", "repoState", "journal", "security", "pluginCatalog", "pluginLifecycle"]) {
+for (const key of ["config", "journal", "security", "pluginCatalog", "pluginLifecycle"]) {
   assertCondition(contractSource.includes(`  ${key},`) || contractSource.includes(`\n  ${key},`), `root contract is missing ${key}`);
   assertCondition(routerSource.includes(`  ${key},`) || routerSource.includes(`\n  ${key},`), `root router is missing ${key}`);
 }
@@ -236,7 +229,7 @@ for (const relPath of REQUIRED_RESOURCE_PORT_CONSUMERS) {
 }
 
 assertCondition(
-  sharedReadmeSource.includes("Keep module-owned config, repo-state, journal, and security behavior inside the owning module directory."),
+  sharedReadmeSource.includes("Keep module-owned config, journal, and security behavior inside the owning module directory."),
   "hq-ops common README must document module-local behavior ownership",
 );
 
@@ -247,10 +240,6 @@ const moduleExpectations = [
   {
     contractPath: "services/hq-ops/src/service/modules/config/contract.ts",
     expected: ["getWorkspaceConfig", "getGlobalConfig", "getLayeredConfig", "listGlobalSyncSources", "addGlobalSyncSource", "removeGlobalSyncSource"],
-  },
-  {
-    contractPath: "services/hq-ops/src/service/modules/repo-state/contract.ts",
-    expected: ["getState", "enablePlugin", "disablePlugin"],
   },
   {
     contractPath: "services/hq-ops/src/service/modules/journal/contract.ts",

@@ -26,7 +26,7 @@ describe("orpc openapi", () => {
   });
 
   it("serves openapi spec at /api/orpc/openapi.json", async () => {
-    const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
+    const app = registerRawrRoutes(createServerApp(), { repoRoot });
     const res = await app.handle(new Request("http://localhost/api/orpc/openapi.json"));
 
     expect(res.status).toBe(200);

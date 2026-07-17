@@ -67,13 +67,13 @@ afterEach(() => {
 });
 
 describe("plugin command surface cutover", () => {
-  it("keeps external, web, scaffold, and sync surfaces without official relink commands", { timeout: 30000 }, () => {
+  it("keeps external and sync surfaces without runtime web, scaffold, or official relink commands", { timeout: 30000 }, () => {
     const proc = runRawr(["plugins", "--help"]);
     expect(proc.status).toBe(0);
 
     const out = `${proc.stdout}\n${proc.stderr}`;
-    expect(out).toContain("plugins web");
-    expect(out).toContain("plugins scaffold");
+    expect(out).not.toContain("plugins web");
+    expect(out).not.toContain("plugins scaffold");
     expect(out).toContain("plugins sync");
     expect(out).toContain("plugins install");
     expect(out).toContain("plugins link");
@@ -110,6 +110,9 @@ describe("plugin command surface cutover", () => {
 
     const factory = runRawr(["factory", "plugin", "new", "legacy-check", "--dry-run", "--json"]);
     expect((factory.status ?? 1) !== 0).toBe(true);
+
+    const web = runRawr(["plugins", "web", "list", "--json"]);
+    expect((web.status ?? 1) !== 0).toBe(true);
 
     const sync = runRawr(["sync", "status", "tools", "--json"]);
     expect((sync.status ?? 1) !== 0).toBe(true);

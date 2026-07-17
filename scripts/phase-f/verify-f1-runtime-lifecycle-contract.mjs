@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import fs from "node:fs/promises";
 import {
   assertCondition,
   assertScriptEquals,
@@ -8,16 +9,26 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("services/hq-ops/src/service/modules/repo-state/helpers/storage.ts"),
+  mustExist("apps/server/src/bootstrap.ts"),
   mustExist("apps/server/src/rawr.ts"),
-  mustExist("apps/server/test/repo-state-store.concurrent.test.ts"),
   mustExist("apps/server/test/rawr.test.ts"),
+  mustExist("scripts/architecture/verify-app-composition-authoring.mjs"),
 ]);
 
-const [repoStateSource, rawrSource, repoStateTestSource, rawrTestSource, scripts] = await Promise.all([
-  readFile("services/hq-ops/src/service/modules/repo-state/helpers/storage.ts"),
+const retiredPaths = [
+  "services/hq-ops/src/service/modules/repo-state/helpers/storage.ts",
+  "apps/server/src/plugins.ts",
+  "apps/server/test/repo-state-store.concurrent.test.ts",
+  "apps/server/test/storage-lock-route-guard.test.ts",
+];
+for (const relPath of retiredPaths) {
+  const present = await fs.access(relPath).then(() => true, () => false);
+  assertCondition(!present, `${relPath} must remain retired`);
+}
+
+const [bootstrapSource, rawrSource, rawrTestSource, scripts] = await Promise.all([
+  readFile("apps/server/src/bootstrap.ts"),
   readFile("apps/server/src/rawr.ts"),
-  readFile("apps/server/test/repo-state-store.concurrent.test.ts"),
   readFile("apps/server/test/rawr.test.ts"),
   readPackageScripts(),
 ]);
@@ -31,7 +42,7 @@ assertScriptEquals(
 assertScriptEquals(
   scripts,
   "phase-f:gate:f1-runtime-lifecycle-runtime",
-  "bunx vitest run --project server apps/server/test/repo-state-store.concurrent.test.ts && bunx vitest run --project server apps/server/test/rawr.test.ts --testNamePattern='no-legacy-composition-authority: keeps runtime authority stable when initialized from alias repo roots' && bunx vitest run --project server apps/server/test/route-boundary-matrix.test.ts && bun run phase-c:gate:c1-storage-lock-runtime",
+  "bunx vitest run --project server apps/server/test/rawr.test.ts apps/server/test/route-boundary-matrix.test.ts && bun run phase-c:gate:c1-storage-lock-runtime",
 );
 assertScriptEquals(
   scripts,
@@ -44,70 +55,40 @@ assertScriptEquals(
   "bun run phase-f:f1:quick && bun run phase-a:gate:no-legacy-composition-authority",
 );
 
-const checks = [
-  {
-    id: "repo-state-authority-root-helper",
-    message: "repo-state must canonicalize authority root with realpath fallback",
-    pass: /async function resolveRepoStateAuthorityRoot\(resources: HqOpsResources, repoRoot: string\): Promise<string>[\s\S]*return \(await resources\.path\.realpath\(resolvedRoot\)\) \?\? resolvedRoot;/u.test(
-      repoStateSource,
-    ),
-  },
-  {
-    id: "repo-state-read-authority-root",
-    message: "getRepoState must read from canonical authority root",
-    pass:
-      /export async function getRepoStateWithAuthority\(/u.test(repoStateSource) &&
-      /state: await readStateFile\(resources, authorityRepoRoot\)/u.test(repoStateSource),
-  },
-  {
-    id: "repo-state-mutate-authority-root",
-    message: "mutateRepoStateAtomically must lock/write through canonical authority root",
-    pass:
-      /const lockPath = stateLockPath\(resources, authorityRoot\);/u.test(repoStateSource) &&
-      /const resolvedStatePath = statePath\(resources, authorityRoot\);/u.test(repoStateSource) &&
-      /return withLocalMutationQueue\(resources, authorityRoot, async \(\) =>/u.test(repoStateSource),
-  },
-  {
-    id: "rawr-fs-import",
-    message: "rawr route registration must import node:fs sync API for canonicalization",
-    pass: /import fsSync from "node:fs";/u.test(rawrSource),
-  },
-  {
-    id: "rawr-authority-root-helper",
-    message: "rawr route registration must canonicalize repo root with realpath fallback",
-    pass: /function resolveAuthorityRepoRoot\(repoRoot: string\): string[\s\S]*fsSync\.realpathSync\(resolvedRoot\)[\s\S]*return resolvedRoot;/u.test(
-      rawrSource,
-    ),
-  },
-  {
-    id: "rawr-authority-root-plumbing",
-    message: "rawr route registration must pass canonical authority root to runtime/context",
-    pass:
-      /const authorityRepoRoot = resolveAuthorityRepoRoot\(opts\.repoRoot\);/u.test(rawrSource) &&
-      /createHostInngestBundle\(\{\s*repoRoot: authorityRepoRoot,\s*\}\)/u.test(rawrSource) &&
-      /const boundaryContextDeps: RawrBoundaryContextDeps = \{[\s\S]*repoRoot: authorityRepoRoot,/u.test(rawrSource),
-  },
-  {
-    id: "route-family-lock",
-    message: "rawr route mount families must remain explicit and unchanged",
-    pass:
-      /app\.all\(\s*"\/api\/inngest"/u.test(rawrSource) &&
-      /app\.all\(\s*"\/api\/workflows\/\*"/u.test(rawrSource) &&
-      /registerOrpcRoutes\(app, \{/u.test(rawrSource),
-  },
-  {
-    id: "f1-runtime-test-coverage",
-    message: "F1 runtime tests must cover canonical/alias authority seam behavior",
-    pass:
-      /uses one authority root across canonical and alias repo paths/u.test(repoStateTestSource) &&
-      /keeps runtime authority stable when initialized from alias repo roots/u.test(rawrTestSource),
-  },
-];
+for (const token of [
+  "loadWorkspaceServerPlugins",
+  "mountServerPlugins",
+  "loadRuntimeStateFromHost",
+  "enabledPluginIds",
+  "enabledPlugins",
+  "repoState.",
+]) {
+  assertCondition(!bootstrapSource.includes(token), `bootstrap retains retired membership token ${token}`);
+}
+for (const token of [
+  "/rawr/plugins/web/",
+  "/rawr/composition",
+  "enabledPluginIds",
+]) {
+  assertCondition(!rawrSource.includes(token), `rawr route registration retains retired token ${token}`);
+}
 
-const failedChecks = checks.filter((check) => !check.pass);
 assertCondition(
-  failedChecks.length === 0,
-  `phase-f f1 contract drift detected: ${failedChecks.map((check) => `${check.id}: ${check.message}`).join("; ")}`,
+  /function resolveAuthorityRepoRoot\(repoRoot: string\): string[\s\S]*fsSync\.realpathSync\(resolvedRoot\)[\s\S]*return resolvedRoot;/u.test(
+    rawrSource,
+  ),
+  "rawr route registration must keep canonical repo-root resolution for surviving runtime context",
+);
+assertCondition(
+  rawrSource.includes('app.all(\n    "/api/inngest"') &&
+    rawrSource.includes('app.all(\n    "/api/workflows/*"') &&
+    rawrSource.includes("registerOrpcRoutes(app, {"),
+  "surviving route families must remain explicit",
+);
+assertCondition(
+  rawrTestSource.includes("does not expose retired web modules or an interim composition endpoint") &&
+    rawrTestSource.includes("ignores stale persisted enablement without migrating or deleting it"),
+  "F1 runtime proof must cover route retirement and stale-state non-authority",
 );
 
-console.log("phase-f f1 runtime lifecycle contract verified");
+console.log("phase-f f1 retired membership lifecycle contract verified");

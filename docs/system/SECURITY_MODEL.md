@@ -14,9 +14,9 @@ security checks may gate that composition, but composition state is not external
 extension state or curated agent lifecycle state. It cannot install, release,
 reconcile, or repair either channel.
 
-The interim `plugins web` command tree is migration evidence and is not canonical
-lifecycle guidance. Its eventual qualified app-composition surface must preserve
-the same gate without retaining the mixed plugin aggregate.
+The retired web-membership command tree has no active compatibility or guidance
+surface. The dedicated runtime architecture must preserve the same composition
+gate without inheriting repository-state membership or plugin lifecycle authority.
 
 ## Deterministic checks (v1)
 

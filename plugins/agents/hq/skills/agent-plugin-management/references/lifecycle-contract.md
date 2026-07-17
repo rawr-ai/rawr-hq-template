@@ -19,7 +19,7 @@ For each unit of change, all steps are mandatory unless explicitly marked `N/A` 
 
 1. **Artifact step**
 - create/update/delete the target artifact(s) only in canonical source paths.
-- keep command-surface boundaries explicit (`rawr plugins ...` vs `rawr plugins web ...`).
+- keep agent-plugin convergence separate from app composition and runtime realization; retired web-membership and scaffold command families remain absent.
 
 2. **Tests step**
 - update or add tests for behavior and failure modes affected by the change.

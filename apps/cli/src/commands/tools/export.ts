@@ -24,11 +24,6 @@ const TOOLS: ToolExport[] = [
   { command: "sessions search --query-metadata <q>", description: "Search sessions by metadata (example plugin)" },
   { command: "sessions search --query <regex>", description: "Search sessions by transcript content (example plugin)" },
   { command: "sessions extract <id>", description: "Extract a session transcript (example plugin)" },
-  { command: "plugins web list", description: "List workspace runtime web plugins" },
-  { command: "plugins web enable <id>", description: "Enable a workspace runtime web plugin (gated)" },
-  { command: "plugins web disable <id>", description: "Disable a workspace runtime web plugin (persisted)" },
-  { command: "plugins web status", description: "Show whether workspace runtime web plugins are enabled" },
-  { command: "plugins web enable all", description: "Enable all workspace runtime web plugins (gated)" },
   { command: "plugins sync all", description: "Canonical full plugin sync (Codex + Claude + Cowork + orphan retirement)" },
   { command: "plugins sync <plugin-ref>", description: "Sync a single plugin source (focused/debug path)" },
   { command: "plugins sync drift", description: "Report material plugin drift (ignores metadata-only upserts by default)" },
@@ -46,10 +41,9 @@ const TOOLS: ToolExport[] = [
   { command: "journal show <id>", description: "Show a specific snippet" },
   { command: "reflect", description: "Suggest commands/workflows based on journal" },
   { command: "workflow harden", description: "Run snapshot + security + posture workflow" },
-  { command: "workflow forge-command", description: "Forge a new durable command via plugin scaffolding" },
-  { command: "plugins scaffold command <topic> <name>", description: "Generate a new CLI command + test" },
-  { command: "plugins scaffold workflow <name>", description: "Generate a new workflow command + test" },
-  { command: "plugins scaffold web-plugin <dirName>", description: "Generate a new plugin package skeleton" },
+  { command: "cli command create <topic> <name>", description: "Create one official CLI command" },
+  { command: "cli extension create <id> --destination <path>", description: "Create portable external extension source" },
+  { command: "agent plugins create <id> --content-workspace <path>", description: "Create curated agent-plugin content" },
 ];
 
 export default class ToolsExport extends RawrCommand {

@@ -124,7 +124,7 @@ Typical temporary exceptions:
 **Fix**: run full `rawr plugins sync all` with stale retirement enabled (default).
 </failure>
 <failure name="surface-confusion">
-**Symptom**: trying to solve sync drift with `rawr plugins web ...`.
-**Fix**: use `rawr plugins sync ...` for agent-plugin distribution and keep runtime enablement separate.
+**Symptom**: trying to solve agent-plugin drift through retired web-membership or app-composition paths.
+**Fix**: use the agent-plugin convergence workflow and keep runtime realization separate.
 </failure>
 </failure-modes>

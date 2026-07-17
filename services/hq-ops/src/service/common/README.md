@@ -4,10 +4,10 @@ Cross-module, service-internal HQ Ops primitives live here.
 
 ## Rules
 
-- Keep module-owned config, repo-state, journal, and security behavior inside the owning module directory.
+- Keep module-owned config, journal, and security behavior inside the owning module directory.
 - Promote to `service/common/` only when multiple modules need the exact same primitive.
 - Keep concrete runtime implementations outside `src/service/**`; app/plugin layers provide concrete resources through the service boundary.
-- Keep `ports/resources.ts` limited to primitive resource capability shapes, not high-level behavior ports such as config stores, repo-state stores, journal stores, or security runtimes.
+- Keep `ports/resources.ts` limited to primitive resource capability shapes, not high-level behavior ports such as config stores, journal stores, or security runtimes.
 - Keep common errors focused on reusable cross-module boundary/internal error seams. Module-specific errors stay module-local.
 
 ## Current Common Files

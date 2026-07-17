@@ -9,7 +9,6 @@ describe("hq-ops service shell", () => {
     expect(router).toBeDefined();
     expect(Object.keys(contract)).toEqual([
       "config",
-      "repoState",
       "journal",
       "security",
       "pluginCatalog",
@@ -23,7 +22,6 @@ describe("hq-ops service shell", () => {
       "addGlobalSyncSource",
       "removeGlobalSyncSource",
     ]);
-    expect(Object.keys(contract.repoState)).toEqual(["getState", "enablePlugin", "disablePlugin"]);
     expect(Object.keys(contract.journal)).toEqual([
       "writeEvent",
       "writeSnippet",

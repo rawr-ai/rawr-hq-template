@@ -635,7 +635,13 @@ function isRuntimeModuleReference(declaration) {
 
 function validateActivationBoundary() {
   const commandRoot = path.join(root, "apps/cli/src/commands/agent/plugins");
-  if (fs.existsSync(commandRoot)) failures.push("C2 agent-plugin commands became reachable");
+  const reachableCommands = fs.existsSync(commandRoot)
+    ? walk(commandRoot).map(relative).sort(compareCanonicalText)
+    : [];
+  const c4AuthoringOnly = ["apps/cli/src/commands/agent/plugins/create.ts"];
+  if (JSON.stringify(reachableCommands) !== JSON.stringify(c4AuthoringOnly)) {
+    failures.push("agent-plugin command reachability exceeds the C4 content-authoring surface");
+  }
 
   const cliManifest = JSON.parse(fs.readFileSync(path.join(root, "apps/cli/package.json"), "utf8"));
   const activationSources = [

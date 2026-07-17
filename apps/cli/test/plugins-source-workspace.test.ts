@@ -46,6 +46,7 @@ function runRawrFrom(input: {
       XDG_STATE_HOME: path.join(input.home, ".local", "state"),
       CODEX_HOME: path.join(input.home, ".codex-rawr"),
       CLAUDE_PLUGINS_LOCAL: path.join(input.home, ".claude", "plugins", "local"),
+      BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0",
       RAWR_WORKSPACE_ROOT: "",
       RAWR_HQ_ROOT: "",
       ...(input.env ?? {}),

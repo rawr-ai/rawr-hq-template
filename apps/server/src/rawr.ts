@@ -1,12 +1,11 @@
 import fsSync from "node:fs";
-import fs from "node:fs/promises";
 import path from "node:path";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
 import { createRawrHqLegacyRouteAuthority } from "@rawr/hq-app/legacy-cutover";
 import { createHostLoggerAdapter } from "./logging";
-import type { AnyElysia } from "./plugins";
+import type { RawrServerApp } from "./app";
 import { registerOrpcRoutes } from "./orpc";
 import {
   createRequestScopedBoundaryContext,
@@ -18,7 +17,6 @@ import { createRawrWorkflowRuntime } from "./workflows/runtime";
 
 export type RawrRoutesOptions = {
   repoRoot: string;
-  enabledPluginIds: ReadonlySet<string>;
   baseUrl?: string;
 };
 
@@ -133,39 +131,6 @@ export async function verifyInngestIngressRequest(request: Request): Promise<boo
   return false;
 }
 
-function isSafeDirName(input: string): boolean {
-  return /^[a-z0-9][a-z0-9-]*$/.test(input);
-}
-
-async function readPluginId(pluginRoot: string, dirName: string): Promise<string> {
-  try {
-    const raw = await fs.readFile(path.join(pluginRoot, "package.json"), "utf8");
-    const parsed = JSON.parse(raw) as { name?: unknown };
-    return typeof parsed.name === "string" ? parsed.name : dirName;
-  } catch {
-    return dirName;
-  }
-}
-
-async function resolveWebModulePath(pluginRoot: string): Promise<string | null> {
-  const candidates = [
-    path.join(pluginRoot, "dist", "web.js"),
-    path.join(pluginRoot, "dist", "src", "web.js"),
-    path.join(pluginRoot, "dist", "web", "index.js"),
-    path.join(pluginRoot, "dist", "src", "web", "index.js"),
-  ];
-
-  for (const p of candidates) {
-    try {
-      const st = await fs.stat(p);
-      if (st.isFile()) return p;
-    } catch {
-      // ignore
-    }
-  }
-  return null;
-}
-
 function resolveAuthorityRepoRoot(repoRoot: string): string {
   const resolvedRoot = path.resolve(repoRoot);
   try {
@@ -227,49 +192,10 @@ export function createHostInngestBundle(input: { repoRoot: string }): HostInnges
  * - request/process materialization outside host-owned server surfaces
  * - restart authority outside `@rawr/hq-app/legacy-cutover`
  */
-export function registerRawrRoutes<TApp extends AnyElysia>(app: TApp, opts: RawrRoutesOptions): TApp {
+export function registerRawrRoutes<TApp extends RawrServerApp>(app: TApp, opts: RawrRoutesOptions): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
   const hostLogger = createHostLoggerAdapter();
   const rawrHostSeam = rawrHostAuthority.realization;
-
-  app.get("/rawr/plugins/web/:dirName", async ({ params }) => {
-    const dirName =
-      typeof params === "object" &&
-      params !== null &&
-      "dirName" in params &&
-      typeof (params as { dirName?: unknown }).dirName === "string"
-        ? (params as { dirName: string }).dirName
-        : "";
-    if (!isSafeDirName(dirName)) return new Response("not found", { status: 404 });
-
-    const pluginRoot = path.join(authorityRepoRoot, "plugins", "web", dirName);
-    try {
-      const st = await fs.stat(pluginRoot);
-      if (!st.isDirectory()) return new Response("not found", { status: 404 });
-    } catch {
-      return new Response("not found", { status: 404 });
-    }
-    const pluginId = await readPluginId(pluginRoot, dirName);
-    if (!opts.enabledPluginIds.has(pluginId) && !opts.enabledPluginIds.has(dirName)) {
-      return new Response("not found", { status: 404 });
-    }
-
-    const webModulePath = await resolveWebModulePath(pluginRoot);
-    if (!webModulePath) return new Response("not found", { status: 404 });
-
-    try {
-      const raw = await fs.readFile(webModulePath, "utf8");
-      return new Response(raw, {
-        status: 200,
-        headers: {
-          "content-type": "text/javascript; charset=utf-8",
-          "cache-control": "no-store",
-        },
-      });
-    } catch {
-      return new Response("not found", { status: 404 });
-    }
-  });
 
   const hostInngest = createHostInngestBundle({
     repoRoot: authorityRepoRoot,

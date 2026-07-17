@@ -76,7 +76,6 @@ describe("hq app declaration seam guard", () => {
     const fakeBootstrapped = {
       app: { listen },
       config: { port: 3100, baseUrl: "http://localhost:3100" },
-      enabledPlugins: new Set<string>(),
       telemetry: { shutdown: vi.fn() },
     } as never;
 

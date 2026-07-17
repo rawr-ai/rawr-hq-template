@@ -1,5 +1,4 @@
 import { registerExampleTodoApiPlugin } from "@rawr/plugin-server-api-example-todo/server";
-import { registerStateApiPlugin } from "@rawr/plugin-server-api-state/server";
 
 /**
  * @agents-style seam-law declaration -> host binding -> request/process materialization
@@ -18,7 +17,6 @@ import { registerStateApiPlugin } from "@rawr/plugin-server-api-state/server";
  */
 export function createRawrHqManifest() {
   const api = {
-    state: registerStateApiPlugin(),
     exampleTodo: registerExampleTodoApiPlugin(),
   } as const;
 

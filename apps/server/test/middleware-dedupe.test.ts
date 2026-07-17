@@ -42,7 +42,7 @@ async function createRouteRuntimeDeps() {
 
 describe("middleware dedupe", () => {
   it("caches heavy middleware marker values per request", () => {
-    const request = new Request("http://localhost/rpc/state/getRuntimeState");
+    const request = new Request("http://localhost/rpc/exampleTodo/tasks/create");
     let evaluationCount = 0;
 
     const first = resolveRequestScopedMiddlewareValue(request, RPC_AUTH_MARKER, () => {
@@ -60,7 +60,7 @@ describe("middleware dedupe", () => {
   });
 
   it("shares marker cache across contexts for the same request", () => {
-    const request = new Request("http://localhost/rpc/state/getRuntimeState");
+    const request = new Request("http://localhost/rpc/exampleTodo/tasks/get");
     const contextA = createRequestScopedBoundaryContext(request, TEST_DEPS);
     const contextB = createRequestScopedBoundaryContext(request, TEST_DEPS);
 
@@ -72,7 +72,7 @@ describe("middleware dedupe", () => {
   });
 
   it("enforces heavy middleware marker policy for request contexts", () => {
-    const request = new Request("http://localhost/rpc/state/getRuntimeState");
+    const request = new Request("http://localhost/rpc/exampleTodo/tasks/get");
     const context = createRequestScopedBoundaryContext(request, TEST_DEPS);
 
     expect(() =>
@@ -97,10 +97,10 @@ describe("middleware dedupe", () => {
     });
 
     const res = await app.handle(
-      new Request("http://localhost/rpc/state/getRuntimeState", {
+      new Request("http://localhost/rpc/exampleTodo/tasks/create", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
-        body: JSON.stringify({ json: {} }),
+        body: JSON.stringify({ json: { title: "Dedupe proof" } }),
       }),
     );
 
@@ -122,10 +122,10 @@ describe("middleware dedupe", () => {
     });
 
     const res = await app.handle(
-      new Request("http://localhost/rpc/state/getRuntimeState", {
+      new Request("http://localhost/rpc/exampleTodo/tasks/get", {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
-        body: JSON.stringify({ json: {} }),
+        body: JSON.stringify({ json: { id: "dedupe-failure" } }),
       }),
     );
 

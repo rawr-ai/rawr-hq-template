@@ -66,7 +66,7 @@ describe("ingress signature observability", () => {
     delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
 
     try {
-      const app = registerRawrRoutes(createServerApp(), { repoRoot: fixtureRoot, enabledPluginIds: new Set() });
+      const app = registerRawrRoutes(createServerApp(), { repoRoot: fixtureRoot });
       const response = await app.handle(
         new Request("http://localhost/api/inngest", {
           method: "POST",
@@ -101,7 +101,7 @@ describe("ingress signature observability", () => {
     delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
 
     try {
-      const app = registerRawrRoutes(createServerApp(), { repoRoot: fixtureRoot, enabledPluginIds: new Set() });
+      const app = registerRawrRoutes(createServerApp(), { repoRoot: fixtureRoot });
       const response = await app.handle(
         new Request("http://localhost/api/inngest", {
           method: "POST",

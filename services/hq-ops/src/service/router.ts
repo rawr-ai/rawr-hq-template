@@ -11,7 +11,6 @@ import { router as config } from "./modules/config/router";
 import { router as journal } from "./modules/journal/router";
 import { router as pluginCatalog } from "./modules/plugin-catalog/router";
 import { router as pluginLifecycle } from "./modules/plugin-lifecycle/router";
-import { router as repoState } from "./modules/repo-state/router";
 import { router as security } from "./modules/security/router";
 import { impl } from "./impl";
 
@@ -21,7 +20,6 @@ import { impl } from "./impl";
  */
 export const router = impl.router({
   config,
-  repoState,
   journal,
   security,
   pluginCatalog,

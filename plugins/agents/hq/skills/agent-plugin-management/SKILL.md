@@ -37,7 +37,7 @@ Use this skill to operate agent-plugin sync in a deterministic, low-drift way.
 <invariant name="dry-run-before-apply">Run `--dry-run --json` before apply when validating a change set or debugging.</invariant>
 <invariant name="partial-gated">Do not run partial sync flags unless `--allow-partial` is explicitly present.</invariant>
 <invariant name="orphan-retirement-on">Keep stale managed plugin retirement enabled for rename/delete safety.</invariant>
-<invariant name="scope-clarity">Do not mix command surfaces: `rawr plugins ...` for sync/orchestration, `rawr plugins web ...` for runtime enablement only.</invariant>
+<invariant name="scope-clarity">Keep agent-plugin convergence separate from app composition and runtime realization; the retired web-membership command family is not a fallback.</invariant>
 </invariants>
 
 ## Anti-patterns to avoid
@@ -45,7 +45,7 @@ Use this skill to operate agent-plugin sync in a deterministic, low-drift way.
 - **Silent partial mode**: disabling parts of sync without `--allow-partial`.
 - **Manual destination edits**: editing target homes directly instead of syncing from source plugins.
 - **Rename orphan buildup**: renaming/deleting source plugins without retirement pass.
-- **Surface mixing**: using `rawr plugins web ...` for agent-office sync operations.
+- **Runtime fallback**: using retired web-membership or app-composition paths for agent-office sync operations.
 
 ## Grounding in this repo
 

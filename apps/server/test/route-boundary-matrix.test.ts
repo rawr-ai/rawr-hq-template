@@ -52,9 +52,9 @@ const MATRIX_CASES: MatrixCase[] = [
     suiteId: "suite:web:first-party-rpc",
     assertionKey: "assertion:keep-first-party-rpc-on-rpc",
     method: "POST",
-    path: "/rpc/state/getRuntimeState",
+    path: "/rpc/exampleTodo/tasks/create",
     headers: FIRST_PARTY_RPC_HEADERS,
-    body: JSON.stringify({ json: {} }),
+    body: JSON.stringify({ json: { title: "First-party proof task" } }),
     expectedStatus: 200,
   },
   {
@@ -70,9 +70,9 @@ const MATRIX_CASES: MatrixCase[] = [
     suiteId: "suite:api:boundary",
     assertionKey: "assertion:reject-rpc-from-external-callers",
     method: "POST",
-    path: "/rpc/state/getRuntimeState",
+    path: "/rpc/exampleTodo/tasks/create",
     headers: EXTERNAL_API_HEADERS,
-    body: JSON.stringify({ json: {} }),
+    body: JSON.stringify({ json: { title: "External rejection proof" } }),
     expectedStatus: 403,
   },
   {
@@ -100,20 +100,20 @@ const MATRIX_CASES: MatrixCase[] = [
     suiteId: "suite:cli:in-process",
     assertionKey: "assertion:in-process-no-local-http-self-call",
     method: "POST",
-    path: "/rpc/state/getRuntimeState",
+    path: "/rpc/exampleTodo/tasks/create",
     headers: {
       "content-type": "application/json",
       "x-rawr-caller-surface": "runtime-ingress",
       "x-rawr-service-auth": "verified",
     },
-    body: JSON.stringify({ json: {} }),
+    body: JSON.stringify({ json: { title: "Runtime rejection proof" } }),
     expectedStatus: 403,
   },
   {
     suiteId: "suite:workflow:trigger-status",
     assertionKey: "assertion:reject-rpc-workflows-route-family",
     method: "POST",
-    path: "/rpc/workflows/state/getRuntimeState",
+    path: "/rpc/workflows/exampleTodo/tasks/get",
     headers: FIRST_PARTY_RPC_HEADERS,
     body: JSON.stringify({ json: {} }),
     expectedStatus: 404,
@@ -122,7 +122,7 @@ const MATRIX_CASES: MatrixCase[] = [
     suiteId: "suite:cross-surface:metadata-import-boundary",
     assertionKey: "assertion:runtime-ingress-no-caller-boundary-semantics",
     method: "GET",
-    path: "/api/workflows/state/runtime",
+    path: "/api/workflows/exampleTodo/runtime",
     expectedStatus: 404,
   },
 ];
@@ -130,7 +130,6 @@ const MATRIX_CASES: MatrixCase[] = [
 function createApp() {
   return registerRawrRoutes(createServerApp(), {
     repoRoot,
-    enabledPluginIds: new Set(),
     baseUrl: "http://localhost:3000",
   });
 }
