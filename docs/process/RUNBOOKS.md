@@ -15,21 +15,36 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 
 | Goal | Runbook |
 | --- | --- |
-| Run a bounded workstream as a coordination object | `docs/process/WORKSTREAMS.md` |
-| Operate the managed local HQ runtime | `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md` |
-| Contain migration-doc drift with quarantine-first topology | `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md` |
-| Drain Graphite stacks safely (publish/merge/prune loop) | `docs/process/runbooks/STACK_DRAIN_LOOP.md` |
-| Validate Template/personal separation and artifact bindings | `docs/process/CROSS_REPO_WORKFLOWS.md` |
-| Canonical repo-boundary + transient retry + final acceptance policy | `docs/process/HQ_OPERATIONS.md` |
+| Run a bounded workstream as a coordination object | [[docs/process/WORKSTREAMS]] |
+| Operate the managed local HQ runtime | [[docs/process/runbooks/HQ_RUNTIME_OPERATIONS]] |
+| Contain migration-doc drift with quarantine-first topology | [[docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW]] |
+| Drain Graphite stacks safely (publish/merge/prune loop) | [[docs/process/runbooks/STACK_DRAIN_LOOP]] |
+| Validate Template/personal separation and artifact bindings | [[docs/process/CROSS_REPO_WORKFLOWS]] |
+| Canonical repo-boundary + transient retry + final acceptance policy | [[docs/process/HQ_OPERATIONS]] |
 
 ## Command Surface Invariant
 
 - External Oclif extensions: `rawr plugins ...`
 - Curated agent-plugin lifecycle: `rawr agent plugins ...`
+- Agent-plugin authoring ends at source and review. Build, test, export, provider
+  convergence, retirement, and undo are separate explicit lifecycle operations.
 - Controller development uses repository-local build/test targets; production and
   operational proof invokes an installed controller release, not `apps/cli` source.
 
-Do not mix command families or give app composition lifecycle authority.
+Do not mix command families. App, web, and runtime composition are not lifecycle
+fallbacks.
+
+## Required Repository Ratchet
+
+- Local pre-push feedback and remote CI both run `bun run ratchet:required`.
+- Root lint and typecheck dynamically include every admitted Nx target.
+- Habitat evaluates the RAWR-owned positive `.habitat` topology through a
+  checksum-pinned standalone Civ7 release compiled with Bun 1.4. The SDK source
+  is not vendored here.
+- The ordinary pull-request, merge-group, and push-to-`main` workflow publishes
+  `Repository Ratchet / Required lint, typecheck, and topology`.
+- Protected `main` must require that exact context. Remote branch protection,
+  not the bypassable local hook, is merge authority.
 
 Scratch-first policy for mutating multi-phase commands:
 - Required docs: `docs/projects/*/PLAN_SCRATCH.md` and `docs/projects/*/WORKING_PAD.md`
@@ -40,15 +55,12 @@ Scratch-first policy for mutating multi-phase commands:
 
 ## Related Process Docs
 
-- `docs/process/WORKSTREAMS.md` (Template-owned generic coordination pack)
-- `docs/process/PLUGIN_AUTONOMY_READINESS_SCORECARD.md` (autonomy readiness and drift scorecard)
-- `docs/process/CROSS_REPO_WORKFLOWS.md` (repository separation and artifact interfaces)
-- `docs/process/GRAPHITE.md` (branch/stack workflow)
-
-## Related Implementation Handoffs
-
-- `services/agent-config-sync/docs/NATIVE_SUPERSEDED_PROJECTION_CLEANUP_HANDOFF.md`
-  (forward-looking service handoff for duplicate legacy Codex projection claims)
+- [[docs/process/WORKSTREAMS]] (Template-owned generic coordination pack)
+- [[docs/process/PLUGIN_AUTONOMY_READINESS_SCORECARD]] (autonomy readiness and
+  drift scorecard)
+- [[docs/process/CROSS_REPO_WORKFLOWS]] (repository separation and artifact
+  interfaces)
+- [[docs/process/GRAPHITE]] (branch/stack workflow)
 
 ## Quarantined Runbooks
 

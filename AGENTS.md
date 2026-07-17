@@ -25,39 +25,51 @@
   preserve Template executable paths in personal.
 - Cross-repository use is limited to explicit versioned data/artifact interfaces. A
   repository path is a content locator, never controller identity or Git ancestry.
-- Use `AGENTS_SPLIT.md` first for Template-vs-personal destination decisions.
+- Use [[AGENTS_SPLIT|the repository destination guide]] first for
+  Template-vs-personal destination decisions.
 
 ## Command Surface Policy
 
 - External CLI plugin channel: `rawr plugins ...`
 - Curated agent-plugin lifecycle channel: `rawr agent plugins ...`
-- App composition may consume outputs but never owns either lifecycle.
+- App, web, and runtime composition are outside these lifecycle command
+  surfaces and must not become a fallback owner for either one.
 - Do not mix these command surfaces in guidance or examples.
 
 ## Graphite Requirement
 
 - Graphite is required in this repo.
 - Trunk must remain `main` (`gt trunk`).
-- Branch/stack workflow contract: `docs/process/GRAPHITE.md`.
+- Follow [[docs/process/GRAPHITE|the Graphite branch and stack workflow]].
+- `bun install` configures the repository-owned hooks. Before a push, the local
+  hook runs the required repository ratchet: every admitted Nx lint and
+  typecheck target plus the positive Habitat lifecycle topology check.
+- The ordinary `pull_request`, `merge_group`, and `push`-to-`main` workflow
+  publishes `Repository Ratchet / Required lint, typecheck, and topology` for
+  the candidate SHA. Remote branch protection requiring that check is merge
+  authority; the local pre-push pass is fast feedback, not proof.
 
 ## Routing
 
-- `AGENTS_SPLIT.md` for "where should this change land?" (template vs personal).
-- `apps/AGENTS.md` for runtime surfaces (`cli`, `server`, `web`).
-- `packages/AGENTS.md` for shared libraries and dependency direction.
-- `plugins/AGENTS.md` for plugin package contracts and enablement.
-- `scripts/AGENTS.md` for hook/script conventions.
-- `docs/AGENTS.md` for canonical documentation entrypoints.
-- `docs/process/NX_AGENT_WORKFLOW.md` for the integrated Nx CLI / Nx skills / Narsil posture, plus the deferred note on a future hosted Nx integration.
+- [[AGENTS_SPLIT]] for "where should this change land?" (Template vs personal).
+- [[apps/AGENTS]] for runtime surfaces (`cli`, `server`, `web`).
+- [[packages/AGENTS]] for shared libraries and dependency direction.
+- [[plugins/AGENTS]] for plugin package contracts and enablement.
+- [[scripts/AGENTS]] for hook/script conventions.
+- [[docs/AGENTS]] for canonical documentation entrypoints.
+- [[docs/process/NX_AGENT_WORKFLOW]] for the integrated Nx CLI / Nx skills /
+  Narsil posture, plus the deferred note on a future hosted Nx integration.
 
 ## Process Runbooks
 
-- CLI/plugin path index (start here): `docs/process/RUNBOOKS.md`.
-- Nx-first agent workflow: `docs/process/NX_AGENT_WORKFLOW.md`.
-- Graphite stack drain loop: `docs/process/runbooks/STACK_DRAIN_LOOP.md`.
-- Repository separation and artifact-interface workflow: `docs/process/CROSS_REPO_WORKFLOWS.md`.
-- Graphite-first branch/stack operations: `docs/process/GRAPHITE.md`.
-- Ongoing doc/process health cadence: `docs/process/MAINTENANCE_CADENCE.md`.
-- Operational usage conventions: `docs/process/HQ_USAGE.md`, `docs/process/HQ_OPERATIONS.md`.
-- Documentation architecture contract: `docs/DOCS.md`.
+- CLI/plugin path index (start here): [[docs/process/RUNBOOKS]].
+- Nx-first agent workflow: [[docs/process/NX_AGENT_WORKFLOW]].
+- Graphite stack drain loop: [[docs/process/runbooks/STACK_DRAIN_LOOP]].
+- Repository separation and artifact-interface workflow:
+  [[docs/process/CROSS_REPO_WORKFLOWS]].
+- Graphite-first branch/stack operations: [[docs/process/GRAPHITE]].
+- Ongoing doc/process health cadence: [[docs/process/MAINTENANCE_CADENCE]].
+- Operational usage conventions: [[docs/process/HQ_USAGE]] and
+  [[docs/process/HQ_OPERATIONS]].
+- Documentation architecture contract: [[docs/DOCS]].
 - Quarantined docs live under `quarantine/` directories and are provenance only.

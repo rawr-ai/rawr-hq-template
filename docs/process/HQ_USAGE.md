@@ -6,15 +6,17 @@ This guide targets maintainers working inside `RAWR HQ-Template`.
 
 1. Pull latest local branch.
 2. Run the local HQ runtime and targeted dev tasks as needed:
-   - use `docs/process/runbooks/HQ_RUNTIME_OPERATIONS.md` for `rawr hq up|down|status|restart|attach`, browser behavior, and runtime checks
-   - use `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md` before relying on quarantined telemetry proof docs
+   - use [[docs/process/runbooks/HQ_RUNTIME_OPERATIONS]] for
+     `rawr hq up|down|status|restart|attach`, browser behavior, and runtime checks
+   - use [[docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW]]
+     before relying on quarantined telemetry proof docs
 3. Maintain shared core/template contracts.
 4. Run tests for touched areas:
    - `bun run test` for the fast default gate.
    - `bun run test:web` when touching the web-only lane (without the pretest build gate).
 5. Commit scoped changes.
 6. For stack drains or cross-repository interface acceptance, follow
-   `docs/process/HQ_OPERATIONS.md` and `docs/process/CROSS_REPO_WORKFLOWS.md`.
+   [[docs/process/HQ_OPERATIONS]] and [[docs/process/CROSS_REPO_WORKFLOWS]].
 
 ## Installed Controller Setup
 
@@ -42,7 +44,8 @@ Mode contract:
 - External Oclif extension management uses `rawr plugins ...` only.
 - Curated agent-plugin source and records live in personal `RAWR HQ`; their
   lifecycle uses `rawr agent plugins ...` only.
-- App composition consumes explicit outputs and never repairs or rewrites lifecycle state.
+- App, web, and runtime composition remain outside this lifecycle and cannot
+  repair, rewrite, or substitute for it.
 
 ## Publishing
 
@@ -53,15 +56,30 @@ Before publishing a plugin:
 - Verify package metadata and docs.
 
 Personal content publication is independent and consumes only published versioned
-interfaces or immutable artifacts. Follow `UPDATING.md` for interface updates.
+interfaces or immutable artifacts. Follow [[UPDATING]] for interface updates.
 
 ## Auto-Refresh On Main Updates
 
-Enable shipped hooks once per clone:
+`bun install` enables the shipped hooks through the root `prepare` script. To
+repair a clone that installed with lifecycle scripts disabled, run:
 
 ```bash
 git config core.hooksPath scripts/githooks
 ```
 
 Then `post-merge` and `post-checkout` may refresh repository dependencies. They do
-not build, activate, or relink the installed controller.
+not build, activate, or relink the installed controller. `pre-push` preserves
+the remote-identity guard and runs `bun run ratchet:required`. Root lint and
+typecheck dynamically cover every Nx project that declares the corresponding
+target; the Habitat check enforces the RAWR-owned positive lifecycle topology.
+
+Habitat evaluation uses a checksum-pinned standalone binary owned by a Civ7
+release and compiled with Bun 1.4. `scripts/habitat/release.json` binds its
+source provenance, platform asset, byte size, and SHA-256; this repository owns
+only the consumer and `.habitat` policy tree and does not vendor SDK sources.
+
+The ordinary repository-ratchet workflow runs the same command for pull
+requests, merge groups, and pushes to `main`. Local hooks are useful feedback
+but can be bypassed. Protected `main` must therefore require
+`Repository Ratchet / Required lint, typecheck, and topology`; remote branch
+protection is the enforcement authority for merging.
