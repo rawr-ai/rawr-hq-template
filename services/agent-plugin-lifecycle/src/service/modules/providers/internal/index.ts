@@ -197,6 +197,21 @@ export type {
   ProjectionRecordObservation,
   ProjectionRecordPublication,
 } from "./ports/projection-storage";
+export type {
+  PathlessTargetRecordCollection,
+  TargetRecordCapture,
+  TargetRecordCaptureHandle,
+  TargetRecordKey,
+  TargetRecordKind,
+  TargetRecordMutation,
+  TargetRecordObservation,
+  TargetRecordPlanDigest,
+  TargetRecordPlanInput,
+  TargetRecordReadToken,
+  TargetRecordRestoreObservation,
+  TargetRecordScanEntry,
+  TargetRecordWriteObservation,
+} from "./ports/target-record-storage";
 
 export {
   CODEX_ADAPTER_PROTOCOL,
@@ -221,6 +236,16 @@ export {
   createPathlessProjectionStorage,
   type PathlessProjectionStorage,
 } from "./adapters/projection-storage";
+export {
+  canonicalSerializeTargetIdentitySidecar,
+  decodeTargetIdentitySidecar,
+  sameTargetRecordObservation,
+  targetRecordPlanDigest,
+} from "./adapters/target-record-codec";
+export {
+  createPathlessTargetState,
+  type PathlessTargetState,
+} from "./adapters/target-records";
 export type {
   ClaudeNativeResourceSession,
   CodexNativeResourceSession,

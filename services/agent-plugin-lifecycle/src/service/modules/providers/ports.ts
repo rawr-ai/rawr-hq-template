@@ -85,6 +85,21 @@ export type {
   ProjectionRecordObservation,
   ProjectionRecordPublication,
 } from "./internal/ports/projection-storage";
+export type {
+  PathlessTargetRecordCollection,
+  TargetRecordCapture,
+  TargetRecordCaptureHandle,
+  TargetRecordKey,
+  TargetRecordKind,
+  TargetRecordMutation,
+  TargetRecordObservation,
+  TargetRecordPlanDigest,
+  TargetRecordPlanInput,
+  TargetRecordReadToken,
+  TargetRecordRestoreObservation,
+  TargetRecordScanEntry,
+  TargetRecordWriteObservation,
+} from "./internal/ports/target-record-storage";
 
 // The service owns native lifecycle interpretation. Runtime bindings provide
 // only the selected resource implementation and explicit acquisition inputs.
@@ -130,6 +145,7 @@ export {
   createResourceClaudeProviderAdapter,
   createResourceCodexProviderAdapter,
   createPathlessProjectionStorage,
+  createPathlessTargetState,
   type ClaudeNativeResourceSession,
   type ClaudeProviderAdapter,
   type CodexNativeResourceSession,
