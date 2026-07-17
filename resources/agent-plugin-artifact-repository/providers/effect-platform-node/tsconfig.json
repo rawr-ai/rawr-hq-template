@@ -1,0 +1,7 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "files": ["bun-ffi.d.ts", "index.ts"]
+}

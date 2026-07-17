@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "files": [
+    "contract.ts",
+    "providers/effect-platform-node/bun-ffi.d.ts",
+    "providers/effect-platform-node/index.ts"
+  ]
+}
