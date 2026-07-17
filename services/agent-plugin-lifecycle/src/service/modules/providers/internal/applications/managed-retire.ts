@@ -50,22 +50,13 @@ export function createManagedRetire(
         ? receipt.value.receipt.body.managedMembers.find((member) => member.pluginId === parsed.value.pluginId)
           ?.artifactAuthority.contentAuthority
         : undefined;
-      if (!receipt.ok || !identity.ok) {
-        plans.push(blocked(target, [
-          ...(receipt.ok ? [] : receipt.issues),
-          ...(identity.ok ? [] : identity.issues),
-        ]));
-        continue;
-      }
-      if (authority === undefined) {
-        plans.push(readOnly(target));
-        continue;
-      }
       const [capability, inventory] = await Promise.all([
         ports.provider.inspectCapabilities(target, authority),
         ports.provider.readInventory(target, authority),
       ]);
       const issues: ProviderDeploymentIssue[] = [
+        ...(receipt.ok ? [] : receipt.issues),
+        ...(identity.ok ? [] : identity.issues),
         ...(capability.ok ? [] : capability.issues),
         ...(inventory.ok ? [] : inventory.issues),
       ];
@@ -75,7 +66,7 @@ export function createManagedRetire(
       )) {
         issues.push(issue("CAPABILITY_MISMATCH", "target.capabilities", "Provider does not support managed retirement"));
       }
-      if (issues.length > 0 || !inventory.ok) {
+      if (issues.length > 0 || !receipt.ok || !identity.ok || !inventory.ok) {
         plans.push(blocked(target, issues));
       } else {
         plans.push(planManagedRetire(target, parsed.value.pluginId, inventory.value, receipt.value, identity.value));
@@ -99,15 +90,5 @@ function blocked(target: ProviderTarget, issues: readonly ProviderDeploymentIssu
     projection: null,
     steps: Object.freeze([]),
     issues: Object.freeze([...issues]),
-  });
-}
-
-function readOnly(target: ProviderTarget): ProviderTargetPlan {
-  return Object.freeze({
-    target,
-    state: "read-only",
-    projection: null,
-    steps: Object.freeze([]),
-    issues: Object.freeze([]),
   });
 }

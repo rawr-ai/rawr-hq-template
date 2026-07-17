@@ -971,7 +971,7 @@ describe("provider deployment state machine", () => {
       targets: [CODEX_A],
     });
     expect(repeated.ok && repeated.value.status).toBe("ReadOnlyConverged");
-    expect(harness.counters.inventoryReads).toBe(0);
+    expect(harness.counters.inventoryReads).toBe(1);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
     expect(harness.counters.capsuleBegins).toBe(0);
@@ -994,7 +994,7 @@ describe("provider deployment state machine", () => {
       targets: [CODEX_A],
     });
     expect(repeatedFinal.ok && repeatedFinal.value.status).toBe("ReadOnlyConverged");
-    expect(harness.counters.inventoryReads).toBe(0);
+    expect(harness.counters.inventoryReads).toBe(1);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
     expect(harness.counters.capsuleBegins).toBe(0);
@@ -1019,6 +1019,39 @@ describe("provider deployment state machine", () => {
     expect(ambiguous.counters.receiptWrites).toBe(0);
     expect(ambiguous.identities.has(CODEX_A.home)).toBe(true);
   });
+
+  it.each(["absent-receipt", "unclaimed-member"] as const)(
+    "observes and blocks unmanaged same-ID state during retire with %s",
+    async (variant) => {
+      const harness = new Harness();
+      expect((await canonicalSync(harness)).ok).toBe(true);
+      if (variant === "absent-receipt") {
+        harness.receipts.delete(CODEX_A.home);
+      } else {
+        const retired = await createManagedRetire(() => harness.retireDependencies())({
+          kind: "managed-retire",
+          pluginId: "alpha",
+          targets: [CODEX_A],
+        });
+        expect(retired.ok && retired.value.status).toBe("Mutated");
+        harness.addUnmanagedMember(CODEX_A, "alpha", "manual:alpha");
+      }
+
+      harness.resetCounters();
+      const result = await createManagedRetire(() => harness.retireDependencies())({
+        kind: "managed-retire",
+        pluginId: "alpha",
+        targets: [CODEX_A],
+      });
+
+      expect(result.ok && result.value.status).toBe("Blocked");
+      expect(harness.counters.inventoryReads).toBe(1);
+      expect(harness.counters.nativeMutations).toBe(0);
+      expect(harness.counters.receiptWrites).toBe(0);
+      expect(harness.counters.capsulePreflights).toBe(0);
+      expect(harness.counters.capsuleBegins).toBe(0);
+    },
+  );
 
   it("admits a missing target identity before the first managed native retirement", async () => {
     const harness = new Harness();
