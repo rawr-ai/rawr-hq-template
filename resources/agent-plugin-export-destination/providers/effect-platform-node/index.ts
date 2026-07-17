@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { rmdir } from "node:fs/promises";
+import { fstatSync } from "node:fs";
+import { lstat, rmdir } from "node:fs/promises";
 
 import { FileSystem, Path } from "@effect/platform";
 import type { PlatformError } from "@effect/platform/Error";
@@ -14,6 +15,7 @@ import type {
   ExportDestinationFailure,
   ExportDestinationFailureReason,
   ExportDestinationMutation,
+  ExportDestinationReleaseReceipt,
   ExportDestinationResource,
   ExportDestinationRestoreReceipt,
   ExportDestinationSettleReceipt,
@@ -31,6 +33,7 @@ type CaptureLifecycle = "Captured" | "Applying" | "Partial" | "Applied" | "Conve
 interface DestinationRoot {
   readonly path: string;
   readonly identity: ExportDestinationEntryIdentity;
+  readonly stat: Extract<ExportDestinationEntryObservation, { kind: "Directory" }>["stat"];
 }
 
 interface CaptureBudget {
@@ -38,6 +41,11 @@ interface CaptureBudget {
   bytes: number;
   readonly maxEntries: number;
   readonly maxBytes: number;
+}
+
+interface OwnedTemporaryIdentity {
+  readonly dev: bigint;
+  readonly ino: bigint;
 }
 
 interface CaptureAuthority {
@@ -50,6 +58,7 @@ interface CaptureAuthority {
   readonly maxBytes: number;
   readonly postimages: Map<string, ExportDestinationEntryObservation>;
   readonly mutatedPaths: string[];
+  plannedMutations?: readonly ExportDestinationMutation[];
   lifecycle: CaptureLifecycle;
   planDigest?: string;
 }
@@ -57,6 +66,7 @@ interface CaptureAuthority {
 export function makeExportDestinationResource(): ExportDestinationResource<ProviderRequirements> {
   const captures = new Map<string, CaptureAuthority>();
   const consumedHandles = new Set<string>();
+  const mutationGate = Effect.runSync(Effect.makeSemaphore(1));
 
   const inspect = Effect.fn("exportDestination.inspect")(function* (
     input: Readonly<{
@@ -74,6 +84,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
     const entries = yield* observePaths(fs, path, destination, input.paths, input, "inspect");
     return Object.freeze({
       canonicalDestination: destination.path,
+      destinationStat: destination.stat,
       readToken: input.readToken,
       entries,
     }) satisfies ExportDestinationSnapshot;
@@ -109,13 +120,53 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
     });
     return Object.freeze({
       canonicalDestination: destination.path,
+      destinationStat: destination.stat,
       readToken: input.readToken,
       handle,
       entries,
     }) satisfies ExportDestinationCapture;
   });
 
-  const apply = Effect.fn("exportDestination.apply")(function* (
+  const releaseUnsafe = Effect.fn("exportDestination.release")(function* (
+    input: Readonly<{
+      destination: string;
+      readToken: string;
+      captureHandle: string;
+    }>,
+  ) {
+    yield* validateOpaque(input.readToken, "readToken", "release");
+    yield* validateOpaque(input.captureHandle, "captureHandle", "release");
+    if (consumedHandles.has(input.captureHandle)) {
+      return yield* fail("release", "HandleConsumed", undefined, "Capture handle has already been consumed");
+    }
+    const authority = captures.get(input.captureHandle);
+    if (authority === undefined) return yield* fail("release", "InvalidHandle", undefined, "Capture handle is unknown");
+    if (authority.readToken !== input.readToken) {
+      return yield* fail("release", "WrongToken", undefined, "Capture handle belongs to another read token");
+    }
+    if (authority.destination.path !== input.destination) {
+      return yield* fail("release", "WrongDestination", input.destination, "Capture handle belongs to another destination");
+    }
+    if (authority.lifecycle !== "Captured") {
+      return yield* fail(
+        "release",
+        "HandleState",
+        undefined,
+        `Capture handle cannot release from ${authority.lifecycle}; restore mutated authority instead`,
+      );
+    }
+    captures.delete(input.captureHandle);
+    consumedHandles.add(input.captureHandle);
+    return Object.freeze({
+      readToken: input.readToken,
+      outcome: "Released",
+      handle: input.captureHandle,
+    }) satisfies ExportDestinationReleaseReceipt;
+  });
+
+  const release = (input: Parameters<typeof releaseUnsafe>[0]) => mutationGate.withPermits(1)(releaseUnsafe(input));
+
+  const applyUnsafe = Effect.fn("exportDestination.apply")(function* (
     input: Readonly<{
       destination: string;
       planDigest: string;
@@ -138,6 +189,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       "apply",
     );
     yield* validateMutationSet(path, authority, input.mutations);
+    authority.plannedMutations = Object.freeze([...input.mutations]);
 
     const current = yield* observeAuthority(fs, path, authority, "apply");
     if (authority.lifecycle === "Applied" || authority.lifecycle === "Converged") {
@@ -145,7 +197,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
         return yield* fail("apply", "IdentityChanged", undefined, "Applied destination no longer matches the exact plan");
       }
       authority.lifecycle = authority.lifecycle === "Applied" ? "Applied" : "Converged";
-      return applyReceipt(input, "Converged", []);
+      return applyReceipt(input, "Converged", [], current, authority.paths);
     }
     if (authority.lifecycle !== "Captured") {
       return yield* fail("apply", "HandleState", undefined, `Capture handle cannot apply from ${authority.lifecycle}`);
@@ -157,7 +209,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       authority.planDigest = input.planDigest;
       authority.lifecycle = "Converged";
       replaceMap(authority.postimages, current);
-      return applyReceipt(input, "Converged", []);
+      return applyReceipt(input, "Converged", [], current, authority.paths);
     }
 
     authority.planDigest = input.planDigest;
@@ -177,17 +229,24 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       changedPaths.push(mutation.path);
     }
 
-    const postimages = yield* observeAuthority(fs, path, authority, "apply");
+    const observedPostimages = yield* Effect.either(observeAuthority(fs, path, authority, "apply"));
+    if (observedPostimages._tag === "Left") {
+      authority.lifecycle = "Partial";
+      return yield* Effect.fail(observedPostimages.left);
+    }
+    const postimages = observedPostimages.right;
     if (!allMutationsConverged(postimages, input.mutations)) {
       authority.lifecycle = "Partial";
       return yield* fail("apply", "IdentityChanged", undefined, "Applied destination does not match the exact plan");
     }
     replaceMap(authority.postimages, postimages);
     authority.lifecycle = "Applied";
-    return applyReceipt(input, "Applied", changedPaths);
+    return applyReceipt(input, "Applied", changedPaths, postimages, authority.paths);
   });
 
-  const restore = Effect.fn("exportDestination.restore")(function* (
+  const apply = (input: Parameters<typeof applyUnsafe>[0]) => mutationGate.withPermits(1)(applyUnsafe(input));
+
+  const restoreUnsafe = Effect.fn("exportDestination.restore")(function* (
     input: Readonly<{
       destination: string;
       planDigest: string;
@@ -210,7 +269,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
     );
     if (authority.lifecycle === "Converged") {
       authority.lifecycle = "Restored";
-      return restoreReceipt(input, []);
+      return restoreReceipt(input, [], authority.preimages, authority.paths);
     }
     if (authority.lifecycle !== "Applied" && authority.lifecycle !== "Partial") {
       return yield* fail(
@@ -221,7 +280,11 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       );
     }
     const current = yield* observeAuthority(fs, path, authority, "restore");
-    if (!sameObservationMap(current, authority.postimages, true)) {
+    if (
+      authority.lifecycle === "Applied"
+        ? !sameObservationMap(current, authority.postimages, true)
+        : !recoverablePartial(current, authority)
+    ) {
       return yield* fail("restore", "IdentityChanged", undefined, "Destination changed after apply; restore refused");
     }
 
@@ -233,6 +296,8 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
         authority.lifecycle = "Partial";
         return yield* fail("restore", "HandleState", relative, "Captured preimage is unavailable");
       }
+      const observed = current.get(relative);
+      if (observed !== undefined && sameObservation(observed, preimage, true)) continue;
       const restored = yield* Effect.either(restoreObservation(fs, path, authority.destination, preimage, authority));
       if (restored._tag === "Left") {
         authority.lifecycle = "Partial";
@@ -247,10 +312,12 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
     }
     replaceMap(authority.postimages, verified);
     authority.lifecycle = "Restored";
-    return restoreReceipt(input, restoredPaths);
+    return restoreReceipt(input, restoredPaths, verified, authority.paths);
   });
 
-  const settle = Effect.fn("exportDestination.settle")(function* (
+  const restore = (input: Parameters<typeof restoreUnsafe>[0]) => mutationGate.withPermits(1)(restoreUnsafe(input));
+
+  const settleUnsafe = Effect.fn("exportDestination.settle")(function* (
     input: Readonly<{
       destination: string;
       planDigest: string;
@@ -270,18 +337,16 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       consumedHandles,
       input,
       "settle",
-      true,
     );
     if (
-      authority.lifecycle !== "Captured"
-      && authority.lifecycle !== "Applied"
+      authority.lifecycle !== "Applied"
       && authority.lifecycle !== "Converged"
       && authority.lifecycle !== "Restored"
     ) {
       return yield* fail("settle", "HandleState", undefined, `Capture handle cannot settle from ${authority.lifecycle}`);
     }
     const current = yield* observeAuthority(fs, path, authority, "settle");
-    const expected = authority.lifecycle === "Captured" ? authority.preimages : authority.postimages;
+    const expected = authority.postimages;
     const includeIdentity = authority.lifecycle !== "Restored";
     if (!sameObservationMap(current, expected, includeIdentity)) {
       return yield* fail("settle", "IdentityChanged", undefined, "Destination does not match its verified settlement image");
@@ -296,7 +361,9 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
     }) satisfies ExportDestinationSettleReceipt;
   });
 
-  return Object.freeze({ inspect, capture, apply, restore, settle });
+  const settle = (input: Parameters<typeof settleUnsafe>[0]) => mutationGate.withPermits(1)(settleUnsafe(input));
+
+  return Object.freeze({ inspect, capture, release, apply, restore, settle });
 }
 
 export type NodeExportDestinationResult<A> =
@@ -318,6 +385,7 @@ export function makeNodeExportDestinationPort(): ExportDestinationAsyncPort {
   return Object.freeze({
     inspect: (input: Parameters<typeof resource.inspect>[0]) => runNodeOrReject(resource.inspect(input)),
     capture: (input: Parameters<typeof resource.capture>[0]) => runNodeOrReject(resource.capture(input)),
+    release: (input: Parameters<typeof resource.release>[0]) => runNodeOrReject(resource.release(input)),
     apply: (input: Parameters<typeof resource.apply>[0]) => runNodeOrReject(resource.apply(input)),
     restore: (input: Parameters<typeof resource.restore>[0]) => runNodeOrReject(resource.restore(input)),
     settle: (input: Parameters<typeof resource.settle>[0]) => runNodeOrReject(resource.settle(input)),
@@ -336,25 +404,42 @@ function applyReceipt(
   input: Readonly<{ planDigest: string; readToken: string }>,
   outcome: ExportDestinationApplyReceipt["outcome"],
   changedPaths: readonly string[],
+  entries: ReadonlyMap<string, ExportDestinationEntryObservation>,
+  order: readonly string[],
 ): ExportDestinationApplyReceipt {
   return Object.freeze({
     planDigest: input.planDigest,
     readToken: input.readToken,
     outcome,
     changedPaths: Object.freeze([...changedPaths]),
+    entries: orderedEntries(entries, order),
   });
 }
 
 function restoreReceipt(
   input: Readonly<{ planDigest: string; readToken: string }>,
   changedPaths: readonly string[],
+  entries: ReadonlyMap<string, ExportDestinationEntryObservation>,
+  order: readonly string[],
 ): ExportDestinationRestoreReceipt {
   return Object.freeze({
     planDigest: input.planDigest,
     readToken: input.readToken,
     outcome: "Restored",
     changedPaths: Object.freeze([...changedPaths]),
+    entries: orderedEntries(entries, order),
   });
+}
+
+function orderedEntries(
+  entries: ReadonlyMap<string, ExportDestinationEntryObservation>,
+  order: readonly string[],
+): readonly ExportDestinationEntryObservation[] {
+  return Object.freeze(order.map((relative) => {
+    const entry = entries.get(relative);
+    if (entry === undefined) throw new Error(`Missing provider observation for ${relative}`);
+    return entry;
+  }));
 }
 
 function validateReadInput(
@@ -480,7 +565,11 @@ function requireCanonicalDestination(
     if (info.type !== "Directory") {
       return yield* fail(operation, "UnsupportedEntry", input, "Destination must be a directory");
     }
-    return Object.freeze({ path: input, identity: entryIdentity(info) });
+    const stat = yield* exactDirectoryStat(input, operation);
+    if (!sameExactIdentity(stat, info)) {
+      return yield* fail(operation, "IdentityChanged", input, "Destination identity changed while reading raw stat metadata");
+    }
+    return Object.freeze({ path: input, identity: entryIdentity(info), stat });
   });
 }
 
@@ -576,11 +665,19 @@ function observeOne(
       if (verified.type !== "File" || !sameFileInfo(info, verified)) {
         return yield* fail(operation, "IdentityChanged", relative, "Destination file changed while reading");
       }
+      const stat = yield* exactFileStat(candidate, operation);
+      if (stat.nlink !== "1") {
+        return yield* fail(operation, "UnsupportedEntry", relative, "Destination regular files must have one filesystem link");
+      }
+      if (!sameExactIdentity(stat, verified)) {
+        return yield* fail(operation, "IdentityChanged", relative, "Destination file identity changed while reading raw stat metadata");
+      }
       budget.bytes += bytes.byteLength;
       return Object.freeze({
         kind: "File",
         path: relative,
         identity: entryIdentity(verified),
+        stat,
         mode: visibleMode(verified.mode),
         bytes: Uint8Array.from(bytes),
       });
@@ -593,10 +690,15 @@ function observeOne(
     if (verified.type !== "Directory" || !sameIdentity(entryIdentity(info), entryIdentity(verified))) {
       return yield* fail(operation, "IdentityChanged", relative, "Destination directory changed while reading");
     }
+    const stat = yield* exactDirectoryStat(candidate, operation);
+    if (!sameExactIdentity(stat, verified)) {
+      return yield* fail(operation, "IdentityChanged", relative, "Destination directory identity changed while reading raw stat metadata");
+    }
     return Object.freeze({
       kind: "Directory",
       path: relative,
       identity: entryIdentity(verified),
+      stat,
       mode: visibleMode(verified.mode),
       children,
     });
@@ -722,6 +824,61 @@ function statIfPresent(
   );
 }
 
+function exactFileStat(
+  candidate: string,
+  operation: Operation,
+): Effect.Effect<Extract<ExportDestinationEntryObservation, { kind: "File" }>["stat"], ExportDestinationFailure> {
+  return exactStat(candidate, operation).pipe(Effect.flatMap((info) => info.isFile()
+    ? Effect.succeed(Object.freeze({
+      dev: info.dev.toString(10),
+      ino: info.ino.toString(10),
+      nlink: info.nlink.toString(10),
+      size: info.size.toString(10),
+      mtimeNs: info.mtimeNs.toString(10),
+      ctimeNs: info.ctimeNs.toString(10),
+    }))
+    : fail(operation, "IdentityChanged", candidate, "Raw stat no longer identifies a regular file")));
+}
+
+function exactDirectoryStat(
+  candidate: string,
+  operation: Operation,
+): Effect.Effect<Extract<ExportDestinationEntryObservation, { kind: "Directory" }>["stat"], ExportDestinationFailure> {
+  return exactStat(candidate, operation).pipe(Effect.flatMap((info) => info.isDirectory()
+    ? Effect.succeed(Object.freeze({
+      dev: info.dev.toString(10),
+      ino: info.ino.toString(10),
+      birthtimeNs: info.birthtimeNs.toString(10),
+      mtimeNs: info.mtimeNs.toString(10),
+      ctimeNs: info.ctimeNs.toString(10),
+    }))
+    : fail(operation, "IdentityChanged", candidate, "Raw stat no longer identifies a directory")));
+}
+
+function exactStat(
+  candidate: string,
+  operation: Operation,
+) {
+  return Effect.tryPromise({
+    try: () => lstat(candidate, { bigint: true }),
+    catch: (error): ExportDestinationFailure => Object.freeze({
+      _tag: "ExportDestinationFailure",
+      operation,
+      reason: nativeErrorCode(error) === "ENOENT" ? "Missing" : "FilesystemFailed",
+      path: candidate,
+      detail: error instanceof Error ? error.message : String(error),
+    }),
+  });
+}
+
+function sameExactIdentity(
+  exact: Readonly<{ dev: string; ino: string }>,
+  info: FileSystem.File.Info,
+): boolean {
+  return exact.dev === String(info.dev)
+    && exact.ino === String(Option.getOrNull(info.ino));
+}
+
 function consumeEntry(
   budget: CaptureBudget,
   entry: string,
@@ -781,11 +938,10 @@ function requireCaptureAuthority(
     planDigest: string;
   }>,
   operation: "apply" | "restore" | "settle",
-  admitPlan = false,
 ): Effect.Effect<CaptureAuthority, ExportDestinationFailure> {
   return Effect.gen(function* () {
     if (consumedHandles.has(input.captureHandle)) {
-      return yield* fail(operation, "HandleConsumed", undefined, "Capture handle has already settled");
+      return yield* fail(operation, "HandleConsumed", undefined, "Capture handle has already been consumed");
     }
     const authority = captures.get(input.captureHandle);
     if (authority === undefined) return yield* fail(operation, "InvalidHandle", undefined, "Capture handle is unknown");
@@ -799,7 +955,6 @@ function requireCaptureAuthority(
     if (authority.planDigest !== undefined && authority.planDigest !== input.planDigest) {
       return yield* fail(operation, "WrongPlan", undefined, "Capture handle belongs to another semantic plan");
     }
-    if (authority.planDigest === undefined && admitPlan) authority.planDigest = input.planDigest;
     return authority;
   });
 }
@@ -854,8 +1009,12 @@ function sameObservation(
   if (left.mode !== right.mode) return false;
   if (includeIdentity && !sameIdentity(left.identity, right.identity)) return false;
   if (left.kind === "File" || right.kind === "File") {
-    return left.kind === "File" && right.kind === "File" && equalBytes(left.bytes, right.bytes);
+    return left.kind === "File"
+      && right.kind === "File"
+      && (!includeIdentity || sameFileStat(left.stat, right.stat))
+      && equalBytes(left.bytes, right.bytes);
   }
+  if (includeIdentity && !sameDirectoryStat(left.stat, right.stat)) return false;
   if (left.children.length !== right.children.length) return false;
   return left.children.every((child, index) => {
     const peer = right.children[index];
@@ -865,6 +1024,45 @@ function sameObservation(
       && child.mode === peer.mode
       && (!includeIdentity || sameIdentity(child, peer));
   });
+}
+
+function recoverablePartial(
+  observed: ReadonlyMap<string, ExportDestinationEntryObservation>,
+  authority: CaptureAuthority,
+): boolean {
+  const mutations = new Map((authority.plannedMutations ?? []).map((mutation) => [mutation.path, mutation]));
+  if (observed.size !== authority.preimages.size) return false;
+  for (const [relative, preimage] of authority.preimages) {
+    const current = observed.get(relative);
+    if (current === undefined) return false;
+    if (sameObservation(current, preimage, true)) continue;
+    const mutation = mutations.get(relative);
+    if (mutation === undefined || !mutationConverged(current, mutation)) return false;
+  }
+  return true;
+}
+
+function sameFileStat(
+  left: Extract<ExportDestinationEntryObservation, { kind: "File" }>["stat"],
+  right: Extract<ExportDestinationEntryObservation, { kind: "File" }>["stat"],
+): boolean {
+  return left.dev === right.dev
+    && left.ino === right.ino
+    && left.nlink === right.nlink
+    && left.size === right.size
+    && left.mtimeNs === right.mtimeNs
+    && left.ctimeNs === right.ctimeNs;
+}
+
+function sameDirectoryStat(
+  left: Extract<ExportDestinationEntryObservation, { kind: "Directory" }>["stat"],
+  right: Extract<ExportDestinationEntryObservation, { kind: "Directory" }>["stat"],
+): boolean {
+  return left.dev === right.dev
+    && left.ino === right.ino
+    && left.birthtimeNs === right.birthtimeNs
+    && left.mtimeNs === right.mtimeNs
+    && left.ctimeNs === right.ctimeNs;
 }
 
 function replaceMap(
@@ -1020,8 +1218,12 @@ function writeAtomic(
       return yield* fail(operation, "InvalidInput", temporary, "Provider temporary path failed its direct-child containment guard");
     }
 
+    let temporaryOpened = false;
+    let temporaryIdentity: OwnedTemporaryIdentity | undefined;
     const attempted = yield* Effect.either(Effect.scoped(Effect.gen(function* () {
       const file = yield* fs.open(temporary, { flag: "wx", mode: 0o600 }).pipe(mapPlatform(operation, temporary));
+      temporaryOpened = true;
+      temporaryIdentity = yield* openedTemporaryIdentity(file.fd, temporary, operation);
       yield* file.writeAll(bytes).pipe(mapPlatform(operation, temporary));
       yield* file.sync.pipe(mapPlatform(operation, temporary));
     }).pipe(
@@ -1029,8 +1231,23 @@ function writeAtomic(
       Effect.andThen(fs.rename(temporary, target).pipe(mapPlatform(operation, target))),
     )));
     if (attempted._tag === "Right") return;
+    if (!temporaryOpened) return yield* Effect.fail(attempted.left);
+    if (temporaryIdentity === undefined) {
+      return yield* fail(
+        operation,
+        "CleanupFailed",
+        temporary,
+        `${attempted.left.detail}; temporary cleanup refused because exact ownership identity was unavailable`,
+      );
+    }
 
-    const cleanup = yield* Effect.either(cleanupOwnedTemporary(fs, path, destination, temporary));
+    const cleanup = yield* Effect.either(cleanupOwnedTemporary(
+      fs,
+      path,
+      destination,
+      temporary,
+      temporaryIdentity,
+    ));
     if (cleanup._tag === "Left") {
       return yield* fail(
         operation,
@@ -1048,6 +1265,7 @@ function cleanupOwnedTemporary(
   path: Path.Path,
   destination: DestinationRoot,
   temporary: string,
+  ownedIdentity: OwnedTemporaryIdentity,
 ): Effect.Effect<void, ExportDestinationFailure> {
   return Effect.gen(function* () {
     const parent = path.dirname(temporary);
@@ -1060,14 +1278,68 @@ function cleanupOwnedTemporary(
       return yield* fail("cleanup", "CleanupFailed", temporary, "Temporary cleanup authority failed containment and prefix guards");
     }
     yield* requireCanonicalExistingDirectory(fs, path, destination, parent, "cleanup");
-    yield* rejectSymbolicLink(fs, temporary, "cleanup");
-    const info = yield* statIfPresent(fs, temporary, "cleanup");
-    if (info === undefined) return;
-    if (info.type !== "File") {
-      return yield* fail("cleanup", "CleanupFailed", temporary, "Temporary cleanup is bounded to one provider-owned regular file");
+    const currentIdentity = yield* exactTemporaryIdentityIfPresent(temporary);
+    if (currentIdentity === undefined) return;
+    if (currentIdentity.dev !== ownedIdentity.dev || currentIdentity.ino !== ownedIdentity.ino) {
+      return yield* fail(
+        "cleanup",
+        "CleanupFailed",
+        temporary,
+        "Temporary cleanup refused a same-path entry with another exact filesystem identity",
+      );
     }
     yield* fs.remove(temporary, { recursive: false, force: false }).pipe(mapPlatform("cleanup", temporary));
   });
+}
+
+function openedTemporaryIdentity(
+  descriptor: FileSystem.File.Descriptor,
+  temporary: string,
+  operation: "apply" | "restore",
+): Effect.Effect<OwnedTemporaryIdentity, ExportDestinationFailure> {
+  // Effect's portable File.Info uses numeric identity; cleanup authority retains exact bigint fd identity.
+  return Effect.try({
+    try: () => {
+      const info = fstatSync(Number(descriptor), { bigint: true });
+      if (!info.isFile() || info.isSymbolicLink()) throw new TypeError("Opened temporary is not a regular file");
+      return Object.freeze({ dev: info.dev, ino: info.ino });
+    },
+    catch: (error): ExportDestinationFailure => Object.freeze({
+      _tag: "ExportDestinationFailure",
+      operation,
+      reason: "FilesystemFailed",
+      path: temporary,
+      detail: error instanceof Error ? error.message : String(error),
+    }),
+  });
+}
+
+function exactTemporaryIdentityIfPresent(
+  temporary: string,
+): Effect.Effect<OwnedTemporaryIdentity | undefined, ExportDestinationFailure> {
+  return Effect.tryPromise({
+    try: async () => {
+      try {
+        return await lstat(temporary, { bigint: true });
+      } catch (error) {
+        if (nativeErrorCode(error) === "ENOENT") return undefined;
+        throw error;
+      }
+    },
+    catch: (error): ExportDestinationFailure => Object.freeze({
+      _tag: "ExportDestinationFailure",
+      operation: "cleanup",
+      reason: "FilesystemFailed",
+      path: temporary,
+      detail: error instanceof Error ? error.message : String(error),
+    }),
+  }).pipe(Effect.flatMap((info) => {
+    if (info === undefined) return Effect.succeed(undefined);
+    if (!info.isFile() || info.isSymbolicLink()) {
+      return fail("cleanup", "CleanupFailed", temporary, "Temporary cleanup is bounded to one provider-owned regular file");
+    }
+    return Effect.succeed(Object.freeze({ dev: info.dev, ino: info.ino }));
+  }));
 }
 
 /** Effect Platform `remove` lowers to `rm`; this narrow gap preserves rmdir's nonrecursive refusal. */

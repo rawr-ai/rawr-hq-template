@@ -1,5 +1,7 @@
 import { isAbsolute, normalize, resolve } from "node:path";
 
+import type { ExportDestinationEntryObservation } from "@rawr/resource-agent-plugin-export-destination";
+
 import {
   compareCanonicalText,
   contentDigest,
@@ -227,6 +229,47 @@ export function directoryPriorFromCaptured(directory: CapturedDirectory): Export
     mode: visibleDirectoryMode(directory),
     ...identityValue(directory),
     birthtimeNs: directory.birthtimeNs.toString(10),
+  });
+}
+
+export function fileStateFromDestinationObservation(
+  file: Extract<ExportDestinationEntryObservation, { kind: "File" }>,
+): ExportFileStateV1 {
+  return fileStateFromBytes(file.bytes, file.mode, contentDigest(file.bytes));
+}
+
+export function directoryPriorFromDestinationObservation(
+  directory: Extract<ExportDestinationEntryObservation, { kind: "Directory" }>,
+): ExportDirectoryPriorStateV1 {
+  return Object.freeze({
+    kind: "Directory",
+    mode: directory.mode,
+    dev: directory.stat.dev,
+    ino: directory.stat.ino,
+    birthtimeNs: directory.stat.birthtimeNs,
+  });
+}
+
+export function observedDestinationEntry(
+  entry: ExportDestinationEntryObservation,
+): ExportObservedEntryStateV1 {
+  if (entry.kind === "Absent") return Object.freeze({ kind: "Absent" });
+  if (entry.kind === "Directory") return Object.freeze({
+    kind: "Directory",
+    mode: entry.mode,
+    dev: entry.stat.dev,
+    ino: entry.stat.ino,
+    birthtimeNs: entry.stat.birthtimeNs,
+  });
+  return Object.freeze({
+    kind: "File",
+    mode: entry.mode,
+    dev: entry.stat.dev,
+    ino: entry.stat.ino,
+    size: entry.stat.size,
+    mtimeNs: entry.stat.mtimeNs,
+    ctimeNs: entry.stat.ctimeNs,
+    contentDigest: contentDigest(entry.bytes),
   });
 }
 

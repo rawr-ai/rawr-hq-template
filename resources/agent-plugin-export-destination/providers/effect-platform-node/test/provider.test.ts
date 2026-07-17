@@ -1,4 +1,10 @@
 import {
+  mkdirSync,
+  renameSync,
+  watch as watchDirectory,
+  writeFileSync,
+} from "node:fs";
+import {
   chmod,
   lstat,
   mkdir,
@@ -65,14 +71,25 @@ describe("Effect Platform Node export destination provider", () => {
     expect(directory?.kind).toBe("Directory");
     if (directory?.kind === "Directory") {
       expect(directory.children.map((child) => [child.name, child.kind])).toEqual([["skill.md", "File"]]);
+      expect(directory.stat.dev).toMatch(/^[0-9]+$/u);
+      expect(directory.stat.ino).toMatch(/^[0-9]+$/u);
+      expect(directory.stat.birthtimeNs).toMatch(/^[0-9]+$/u);
     }
     const file = captured.entries[1];
     expect(file?.kind).toBe("File");
     if (file?.kind === "File") {
       expect(new TextDecoder().decode(file.bytes)).toBe("before\n");
       expect(file.mode).toBe(0o644);
+      expect(file.stat.size).toBe(String(file.bytes.byteLength));
+      expect(file.stat.mtimeNs).toMatch(/^[0-9]+$/u);
+      expect(file.stat.ctimeNs).toMatch(/^[0-9]+$/u);
     }
     expect(captured.handle).not.toBe("");
+    unwrap(await runNodeExportDestination(resource.release({
+      destination,
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+    })));
   });
 
   test("applies a service-authored plan, converges, restores preimages, and settles", async () => {
@@ -103,9 +120,18 @@ describe("Effect Platform Node export destination provider", () => {
     const applied = unwrap(await runNodeExportDestination(resource.apply(plan)));
     expect(applied.outcome).toBe("Applied");
     expect(applied.changedPaths).toEqual(["retired.txt", "empty", "current", "current/skill.md"]);
+    expect(applied.entries.map((entry) => entry.kind)).toEqual(["Absent", "Absent", "Directory", "File"]);
     expect(await pathExists(path.join(destination, "retired.txt"))).toBe(false);
     expect(await pathExists(path.join(destination, "empty"))).toBe(false);
     expect(await readFile(path.join(destination, "current", "skill.md"), "utf8")).toBe("current\n");
+
+    const appliedRelease = await runNodeExportDestination(resource.release({
+      destination,
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    }));
+    expect(appliedRelease.ok).toBe(false);
+    if (!appliedRelease.ok) expect(appliedRelease.failure.reason).toBe("HandleState");
 
     const converged = unwrap(await runNodeExportDestination(resource.apply(plan)));
     expect(converged.outcome).toBe("Converged");
@@ -118,6 +144,7 @@ describe("Effect Platform Node export destination provider", () => {
       captureHandle: capture.handle,
     })));
     expect(restored.outcome).toBe("Restored");
+    expect(restored.entries.map((entry) => entry.kind)).toEqual(["File", "Directory", "Absent", "Absent"]);
     expect(await readFile(path.join(destination, "retired.txt"), "utf8")).toBe("retired\n");
     expect((await lstat(path.join(destination, "empty"))).isDirectory()).toBe(true);
     expect(await pathExists(path.join(destination, "current"))).toBe(false);
@@ -138,6 +165,86 @@ describe("Effect Platform Node export destination provider", () => {
     }));
     expect(reused.ok).toBe(false);
     if (!reused.ok) expect(reused.failure.reason).toBe("HandleConsumed");
+  });
+
+  test("releases only an unmutated capture and consumes its authority", async () => {
+    const destination = await createDestination();
+    const resource = makeExportDestinationResource();
+    const capture = unwrap(await runNodeExportDestination(resource.capture({
+      destination,
+      readToken: "read-release",
+      paths: ["skill.md"],
+      maxEntries: 4,
+      maxBytes: 1024,
+    })));
+
+    const manufacturedSettlement = await runNodeExportDestination(resource.settle({
+      destination,
+      planDigest: "manufactured-plan",
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    }));
+    expect(manufacturedSettlement.ok).toBe(false);
+    if (!manufacturedSettlement.ok) expect(manufacturedSettlement.failure.reason).toBe("HandleState");
+
+    const legitimate = unwrap(await runNodeExportDestination(resource.apply({
+      destination,
+      planDigest: "legitimate-plan",
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+      mutations: [{ kind: "WriteFile", path: "skill.md", mode: 0o644, bytes: bytes("legitimate\n") }],
+    })));
+    expect(legitimate.outcome).toBe("Applied");
+    unwrap(await runNodeExportDestination(resource.restore({
+      destination,
+      planDigest: "legitimate-plan",
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    })));
+    unwrap(await runNodeExportDestination(resource.settle({
+      destination,
+      planDigest: "legitimate-plan",
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    })));
+
+    const releasable = unwrap(await runNodeExportDestination(resource.capture({
+      destination,
+      readToken: "read-release-only",
+      paths: ["skill.md"],
+      maxEntries: 4,
+      maxBytes: 1024,
+    })));
+
+    const released = unwrap(await runNodeExportDestination(resource.release({
+      destination,
+      readToken: releasable.readToken,
+      captureHandle: releasable.handle,
+    })));
+    expect(released).toEqual({
+      readToken: releasable.readToken,
+      outcome: "Released",
+      handle: releasable.handle,
+    });
+
+    const repeated = await runNodeExportDestination(resource.release({
+      destination,
+      readToken: releasable.readToken,
+      captureHandle: releasable.handle,
+    }));
+    expect(repeated.ok).toBe(false);
+    if (!repeated.ok) expect(repeated.failure.reason).toBe("HandleConsumed");
+
+    const applied = await runNodeExportDestination(resource.apply({
+      destination,
+      planDigest: "plan-released",
+      readToken: releasable.readToken,
+      captureHandle: releasable.handle,
+      mutations: [{ kind: "WriteFile", path: "skill.md", mode: 0o644, bytes: bytes("forbidden\n") }],
+    }));
+    expect(applied.ok).toBe(false);
+    if (!applied.ok) expect(applied.failure.reason).toBe("HandleConsumed");
+    expect(await pathExists(path.join(destination, "skill.md"))).toBe(false);
   });
 
   test("a fresh repeated exact plan is read-only converged", async () => {
@@ -167,9 +274,142 @@ describe("Effect Platform Node export destination provider", () => {
 
     expect(applied.outcome).toBe("Converged");
     expect(applied.changedPaths).toEqual([]);
+    expect(applied.entries.map((entry) => entry.path)).toEqual(["plugin", "plugin/skill.md"]);
     const after = await lstat(path.join(destination, "plugin", "skill.md"));
     expect(after.ino).toBe(before.ino);
     expect(after.mtimeMs).toBe(before.mtimeMs);
+    unwrap(await runNodeExportDestination(resource.settle({
+      destination,
+      planDigest: "plan-repeat",
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    })));
+  });
+
+  test("serializes competing captured plans so stale state cannot overwrite the winner", async () => {
+    const destination = await createDestination();
+    await writeFile(path.join(destination, "skill.md"), "before\n", { mode: 0o644 });
+    const resource = makeExportDestinationResource();
+    const left = unwrap(await runNodeExportDestination(resource.capture({
+      destination,
+      readToken: "read-left",
+      paths: ["skill.md"],
+      maxEntries: 4,
+      maxBytes: 1024,
+    })));
+    const right = unwrap(await runNodeExportDestination(resource.capture({
+      destination,
+      readToken: "read-right",
+      paths: ["skill.md"],
+      maxEntries: 4,
+      maxBytes: 1024,
+    })));
+
+    const [leftResult, rightResult] = await Promise.all([
+      runNodeExportDestination(resource.apply({
+        destination,
+        planDigest: "plan-left",
+        readToken: left.readToken,
+        captureHandle: left.handle,
+        mutations: [{ kind: "WriteFile", path: "skill.md", mode: 0o644, bytes: bytes("left\n") }],
+      })),
+      runNodeExportDestination(resource.apply({
+        destination,
+        planDigest: "plan-right",
+        readToken: right.readToken,
+        captureHandle: right.handle,
+        mutations: [{ kind: "WriteFile", path: "skill.md", mode: 0o644, bytes: bytes("right\n") }],
+      })),
+    ]);
+
+    expect(leftResult.ok).toBe(true);
+    expect(rightResult.ok).toBe(false);
+    if (!rightResult.ok) expect(rightResult.failure.reason).toBe("IdentityChanged");
+    expect(await readFile(path.join(destination, "skill.md"), "utf8")).toBe("left\n");
+
+    unwrap(await runNodeExportDestination(resource.restore({
+      destination,
+      planDigest: "plan-left",
+      readToken: left.readToken,
+      captureHandle: left.handle,
+    })));
+    unwrap(await runNodeExportDestination(resource.settle({
+      destination,
+      planDigest: "plan-left",
+      readToken: left.readToken,
+      captureHandle: left.handle,
+    })));
+    const staleRelease = await runNodeExportDestination(resource.release({
+      destination,
+      readToken: right.readToken,
+      captureHandle: right.handle,
+    }));
+    expect(staleRelease.ok).toBe(true);
+  });
+
+  test("restores a recoverable partial plan after an earlier mutation became visible", async () => {
+    const destination = await createDestination();
+    await writeFile(path.join(destination, "retired.txt"), "retired\n", { mode: 0o644 });
+    await mkdir(path.join(destination, "occupied"));
+    await writeFile(path.join(destination, "occupied", "keep.txt"), "keep\n");
+    const occupiedBefore = await lstat(path.join(destination, "occupied"), { bigint: true });
+    const resource = makeExportDestinationResource();
+    const capture = unwrap(await runNodeExportDestination(resource.capture({
+      destination,
+      readToken: "read-partial",
+      paths: ["retired.txt", "occupied"],
+      maxEntries: 8,
+      maxBytes: 1024,
+    })));
+    const applied = await runNodeExportDestination(resource.apply({
+      destination,
+      planDigest: "plan-partial",
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+      mutations: [
+        { kind: "RemoveFile", path: "retired.txt" },
+        { kind: "RemoveEmptyDirectory", path: "occupied" },
+      ],
+    }));
+
+    expect(applied.ok).toBe(false);
+    expect(await pathExists(path.join(destination, "retired.txt"))).toBe(false);
+    const partialRelease = await runNodeExportDestination(resource.release({
+      destination,
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    }));
+    expect(partialRelease.ok).toBe(false);
+    if (!partialRelease.ok) expect(partialRelease.failure.reason).toBe("HandleState");
+    const restored = unwrap(await runNodeExportDestination(resource.restore({
+      destination,
+      planDigest: "plan-partial",
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    })));
+    expect(restored.changedPaths).toContain("retired.txt");
+    expect(restored.changedPaths).not.toContain("occupied");
+    expect(await readFile(path.join(destination, "retired.txt"), "utf8")).toBe("retired\n");
+    const occupiedAfter = await lstat(path.join(destination, "occupied"), { bigint: true });
+    expect([
+      occupiedAfter.dev,
+      occupiedAfter.ino,
+      occupiedAfter.mode,
+      occupiedAfter.mtimeNs,
+      occupiedAfter.ctimeNs,
+    ]).toEqual([
+      occupiedBefore.dev,
+      occupiedBefore.ino,
+      occupiedBefore.mode,
+      occupiedBefore.mtimeNs,
+      occupiedBefore.ctimeNs,
+    ]);
+    unwrap(await runNodeExportDestination(resource.settle({
+      destination,
+      planDigest: "plan-partial",
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    })));
   });
 
   test("rejects traversal, aliases, and filesystem-root authority", async () => {
@@ -294,6 +534,66 @@ describe("Effect Platform Node export destination provider", () => {
       captureHandle: capture.handle,
     })));
     await chmod(blocked, 0o755);
+  });
+
+  test("same-path temporary substitution is preserved and reported as cleanup failure", async () => {
+    const destination = await createDestination();
+    const parent = path.join(destination, "publication");
+    const target = path.join(parent, "skill.md");
+    const replacement = path.join(parent, ".replacement-staging");
+    await mkdir(parent);
+    await writeFile(replacement, "replacement\n");
+    const resource = makeExportDestinationResource();
+    const capture = unwrap(await runNodeExportDestination(resource.capture({
+      destination,
+      readToken: "read-substitution",
+      paths: ["publication/skill.md"],
+      maxEntries: 4,
+      maxBytes: 16 * 1024 * 1024,
+    })));
+
+    const substituted = new Promise<string>((resolve, reject) => {
+      let claimed = false;
+      const watcher = watchDirectory(parent, (_event, filename) => {
+        const name = filename?.toString();
+        if (claimed || name === undefined || !name.startsWith(EXPORT_DESTINATION_TEMP_PREFIX)) return;
+        claimed = true;
+        watcher.close();
+        const temporary = path.join(parent, name);
+        try {
+          mkdirSync(target);
+          writeFileSync(path.join(target, "keep.txt"), "keep\n");
+          renameSync(replacement, temporary);
+          resolve(temporary);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+
+    const [applied, substitutedPath] = await Promise.all([
+      runNodeExportDestination(resource.apply({
+        destination,
+        planDigest: "plan-substitution",
+        readToken: capture.readToken,
+        captureHandle: capture.handle,
+        mutations: [{
+          kind: "WriteFile",
+          path: "publication/skill.md",
+          mode: 0o644,
+          bytes: new Uint8Array(8 * 1024 * 1024),
+        }],
+      })),
+      substituted,
+    ]);
+
+    expect(applied.ok).toBe(false);
+    if (!applied.ok) {
+      expect(applied.failure.reason).toBe("CleanupFailed");
+      expect(applied.failure.detail).toContain("another exact filesystem identity");
+    }
+    expect(await readFile(substitutedPath, "utf8")).toBe("replacement\n");
+    expect(await readFile(path.join(target, "keep.txt"), "utf8")).toBe("keep\n");
   });
 });
 

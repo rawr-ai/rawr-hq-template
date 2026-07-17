@@ -19,7 +19,7 @@ import {
   executeExportInverseAction,
   nodeExportOwnerStateReader,
   type ExecuteExportInverseOptions,
-} from "../service-runtime/exports/runtime";
+} from "../bindings/export-destination";
 
 import type {
   CapsuleActionHandle,

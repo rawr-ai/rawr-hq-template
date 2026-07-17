@@ -31,31 +31,25 @@ import type {
   UndoWriteResult,
   UndoWriter,
 } from "./internal/contract";
-import type { DestinationIdentity } from "./internal/filesystem-model";
-import type { RenderedExportSelection } from "./internal/layout";
 import type {
-  DestinationExportPlan,
-  DestinationPlanningResult,
-} from "./internal/plan";
-import type {
-  DestinationTransactionResult,
-  ExportMutationSession,
-} from "./internal/transaction";
+  ExportDestinationApplyReceipt,
+  ExportDestinationAsyncPort,
+  ExportDestinationCapture,
+  ExportDestinationDirectoryChild,
+  ExportDestinationDirectoryStat,
+  ExportDestinationEntryIdentity,
+  ExportDestinationEntryObservation,
+  ExportDestinationFailure as ExportDestinationResourceFailure,
+  ExportDestinationFailureReason,
+  ExportDestinationFileStat,
+  ExportDestinationMutation,
+  ExportDestinationReleaseReceipt,
+  ExportDestinationRestoreReceipt,
+  ExportDestinationSettleReceipt,
+  ExportDestinationSnapshot,
+} from "@rawr/resource-agent-plugin-export-destination";
 
-export interface ExportDestinationRuntime {
-  captureDestination(input: string): Promise<DestinationIdentity>;
-  buildDestinationExportPlan(
-    destination: DestinationIdentity,
-    layout: ExportLayoutV1,
-    selection: Exclude<RenderedExportSelection, { ok: false }>,
-    overwritePolicy: ExportOverwritePolicyV1,
-  ): Promise<DestinationPlanningResult>;
-  executeDestinationPlan(
-    plan: DestinationExportPlan,
-    session: ExportMutationSession,
-    expectedActionEndIndex?: number,
-  ): Promise<DestinationTransactionResult>;
-}
+export type ExportDestinationRuntime = ExportDestinationAsyncPort;
 
 /**
  * Construction-time capabilities used by the export state machine.
@@ -104,6 +98,21 @@ export type {
   UndoTerminalWriteResult,
   UndoWriteResult,
   UndoWriter,
+  ExportDestinationApplyReceipt,
+  ExportDestinationAsyncPort,
+  ExportDestinationCapture,
+  ExportDestinationDirectoryChild,
+  ExportDestinationDirectoryStat,
+  ExportDestinationEntryIdentity,
+  ExportDestinationEntryObservation,
+  ExportDestinationResourceFailure,
+  ExportDestinationFailureReason,
+  ExportDestinationFileStat,
+  ExportDestinationMutation,
+  ExportDestinationReleaseReceipt,
+  ExportDestinationRestoreReceipt,
+  ExportDestinationSettleReceipt,
+  ExportDestinationSnapshot,
 };
 
 export {
@@ -113,8 +122,10 @@ export {
   KNOWN_NATIVE_HOMES_PROTOCOL_VERSION,
 } from "./internal/contract";
 export * from "./internal/canonical";
+export * from "./internal/destination-owner";
 export * from "./internal/filesystem-model";
 export * from "./internal/inverse-action";
+export * from "./internal/inverse-executor";
 export * from "./internal/layout";
 export * from "./internal/ledger";
 export * from "./internal/native-homes";

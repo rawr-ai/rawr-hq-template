@@ -1,4 +1,5 @@
 import { isAbsolute, normalize, resolve } from "node:path";
+import { randomUUID } from "node:crypto";
 
 import {
   compareCanonicalText,
@@ -33,18 +34,23 @@ import {
 } from "./filesystem-model";
 import { renderExportSelection, type RenderedExportSelection } from "./layout";
 import { pathsOverlap, verifyKnownNativeHomesSnapshot } from "./native-homes";
-import type { DestinationExportPlan } from "./plan";
+import {
+  buildDestinationExportPlan,
+  type DestinationExportPlan,
+} from "./plan";
 import {
   exportInverseActionDigest,
   type ExportInverseActionV1,
 } from "./inverse-action";
 import {
   planDestinationInverseActions,
+  executeDestinationPlan,
   type DestinationTransactionResult,
   type ExportMutationSession,
 } from "./transaction";
 import type {
   ExportDestinationRuntime,
+  ExportDestinationResourceFailure,
   ExportLifecycleRuntime,
 } from "../ports";
 
@@ -163,13 +169,16 @@ async function prepareExportOperation(
     nativeVerification.snapshot.homes.map((home) => home.canonicalPath),
     dependencies.failpoints,
     dependencies.destinationRuntime,
+    dependencies.operationId,
   );
   const mutationPreparation = prepareMutations(destinations);
   if (!mutationPreparation.ok) {
+    const cleanup = await releasePreparedDestinations(destinations, dependencies.destinationRuntime);
     return completePreparation(aggregatePreflightRejected(
       destinations,
       request.layout,
       mutationPreparation.failure,
+      cleanup,
     ));
   }
   const firstMutation = mutationPreparation.mutations[0];
@@ -193,18 +202,21 @@ async function prepareExportOperation(
   try {
     const preflight = await dependencies.undoWriter.preflight(undoCandidate);
     if (preflight.kind === "Rejected") {
+      const cleanup = await releasePreparedDestinations(destinations, dependencies.destinationRuntime);
       return completePreparation(aggregatePreflightRejected(
         destinations,
         request.layout,
         exportUndoFailure("UndoAdmissionFailed", "undo-preflight", preflight.failure),
+        cleanup,
       ));
     }
   } catch (error) {
+    const cleanup = await releasePreparedDestinations(destinations, dependencies.destinationRuntime);
     return completePreparation(aggregatePreflightRejected(destinations, request.layout, failure(
       "UndoAdmissionFailed",
       "undo-preflight",
       errorMessage(error),
-    )));
+    ), cleanup));
   }
   return Object.freeze({
     kind: "Prepared",
@@ -218,6 +230,7 @@ async function prepareDestinations(
   nativeHomePaths: readonly string[],
   failpoints: ExportFailpoints | undefined,
   destinationRuntime: ExportDestinationRuntime,
+  operationId: (() => string) | undefined,
 ): Promise<PreparedDestination[]> {
   const prepared: PreparedDestination[] = [];
   const canonicalDestinations = new Set<string>();
@@ -236,26 +249,14 @@ async function prepareDestinations(
       continue;
     }
     try {
-      const destination = await destinationRuntime.captureDestination(requestPath);
-      if (canonicalDestinations.has(destination.path)) {
-        prepared.push(Object.freeze({
-          kind: "Resolved",
-          result: rejectedDestination(requestPath, request.layout, failure(
-            "DuplicateDestination",
-            "destination-identity",
-            "Destination resolves to an already selected canonical owner",
-            requestPath,
-          )),
-        }));
-        continue;
-      }
-      canonicalDestinations.add(destination.path);
-      const planning = await destinationRuntime.buildDestinationExportPlan(
-        destination,
-        request.layout,
+      const planning = await buildDestinationExportPlan({
+        destination: requestPath,
+        layout: request.layout,
         selection,
-        request.overwritePolicy,
-      );
+        overwritePolicy: request.overwritePolicy,
+        readToken: `export-read-${(operationId ?? randomUUID)()}`,
+        resource: destinationRuntime,
+      });
       if (!planning.ok) {
         prepared.push(Object.freeze({
           kind: "Resolved",
@@ -263,16 +264,56 @@ async function prepareDestinations(
         }));
         continue;
       }
+      const destination = planning.plan.destination;
+      if (nativeHomePaths.some((homePath) => pathsOverlap(destination.path, homePath))) {
+        const primary = failure(
+          "NativeHomeOverlap",
+          "native-home-overlap",
+          "Canonical export destination overlaps a canonical native provider home",
+          destination.path,
+        );
+        const cleanup = await releaseUnmutatedPlan(planning.plan, destinationRuntime);
+        prepared.push(Object.freeze({
+          kind: "Resolved",
+          result: rejectedDestination(requestPath, request.layout, primary, cleanup),
+        }));
+        continue;
+      }
+      if (canonicalDestinations.has(destination.path)) {
+        const primary = failure(
+          "DuplicateDestination",
+          "destination-identity",
+          "Destination resolves to an already selected canonical owner",
+          requestPath,
+        );
+        const cleanup = await releaseUnmutatedPlan(planning.plan, destinationRuntime);
+        prepared.push(Object.freeze({
+          kind: "Resolved",
+          result: rejectedDestination(requestPath, request.layout, primary, cleanup),
+        }));
+        continue;
+      }
+      canonicalDestinations.add(destination.path);
       try {
         await hitAfterPlan(failpoints, destination.path);
       } catch (error) {
+        const primary = toFilesystemError(error).failure;
+        const cleanup = await releaseUnmutatedPlan(planning.plan, destinationRuntime);
         prepared.push(Object.freeze({
           kind: "Resolved",
-          result: rejectedDestination(requestPath, request.layout, toFilesystemError(error).failure),
+          result: rejectedDestination(requestPath, request.layout, primary, cleanup),
         }));
         continue;
       }
       if (planning.plan.converged) {
+        const releaseFailure = await releaseUnmutatedPlan(planning.plan, destinationRuntime);
+        if (releaseFailure !== undefined) {
+          prepared.push(Object.freeze({
+            kind: "Resolved",
+            result: rejectedDestination(requestPath, request.layout, releaseFailure),
+          }));
+          continue;
+        }
         prepared.push(Object.freeze({
           kind: "Resolved",
           result: Object.freeze({
@@ -331,24 +372,27 @@ async function executePreparedExportOperation(
     admission = await dependencies.undoWriter.begin(operation.undoCandidate);
   } catch (error) {
     const beginFailure = failure("UndoAdmissionFailed", "undo-begin", errorMessage(error));
+    const cleanup = await releasePreparedDestinations(operation.destinations, dependencies.destinationRuntime);
     return rejected(
       beginFailure,
-      destinationsRejectedBy(operation, beginFailure),
+      destinationsRejectedBy(operation, beginFailure, cleanup),
       Object.freeze({ kind: "ReleaseFailed", failure: beginFailure }),
     );
   }
   if (admission.kind === "Rejected") {
     const beginFailure = exportUndoFailure("UndoAdmissionFailed", "undo-begin", admission.failure);
+    const cleanup = await releasePreparedDestinations(operation.destinations, dependencies.destinationRuntime);
     return rejected(
       beginFailure,
-      destinationsRejectedBy(operation, beginFailure),
+      destinationsRejectedBy(operation, beginFailure, cleanup),
       exportUndoSynchronization(admission.synchronization),
     );
   }
   if (admission.kind === "Unsettled") {
     const beginFailure = exportUndoFailure("UndoAdmissionFailed", "undo-begin", admission.failure);
+    const cleanup = await releasePreparedDestinations(operation.destinations, dependencies.destinationRuntime);
     return unsettledResult(
-      destinationsForAdmissionUnsettled(operation, beginFailure, admission.generation),
+      destinationsForAdmissionUnsettled(operation, beginFailure, admission.generation, cleanup),
       admission.generation,
       exportUndoRelease(admission.synchronization),
     );
@@ -365,7 +409,12 @@ async function runAdmittedExportOperation(
   return withUndoSessionFinalizationGuard(admission.session, async (undoSession) => {
     const admittedActionSequence = createAdmittedActionSequence(operation, admission);
     if (admittedActionSequence === undefined) {
-      return abortInvalidAdmission(operation, undoSession, admission.generation);
+      return abortInvalidAdmission(
+        operation,
+        undoSession,
+        admission.generation,
+        dependencies.destinationRuntime,
+      );
     }
     const session: ExportMutationSession = Object.freeze({
       capsule: { generation: admission.generation, synchronization: null },
@@ -435,22 +484,27 @@ async function abortInvalidAdmission(
   operation: PreparedExportOperation,
   session: UndoApplyingSession,
   generation: string,
+  destinationRuntime: ExportDestinationRuntime,
 ): Promise<ClosedAdmittedOperation> {
   const validationFailure = failure(
     "UndoAdmissionFailed",
     "undo-begin",
     "Undo admission did not return one ordered opaque handle for every planned action",
   );
+  const resourceCleanup = await releasePreparedDestinations(operation.destinations, destinationRuntime);
   const abort = await abortSession(session, generation);
   if (abort.kind === "Aborted") {
     return Object.freeze({
-      lifecycle: rejectedLifecycle(validationFailure, destinationsRejectedBy(operation, validationFailure)),
+      lifecycle: rejectedLifecycle(
+        validationFailure,
+        destinationsRejectedBy(operation, validationFailure, resourceCleanup),
+      ),
       synchronization: exportUndoRelease(abort.synchronization),
     });
   }
   const abortFailures = appendCleanup(
     Object.freeze({ kind: "PrimaryOnly", primary: validationFailure }),
-    abort.failure,
+    combineCleanupFailures(abort.failure, resourceCleanup),
   );
   const destinations = operation.destinations.map((destination) => {
     if (destination.kind === "Resolved") return destination.result;
@@ -475,18 +529,32 @@ async function executeAdmittedMutations(
   let stopped: Readonly<{
     mutation: PreparedMutation;
     transaction: Exclude<DestinationTransactionResult, { kind: "Applied" }>;
+    mutationIndex: number;
   }> | undefined;
-  for (const mutation of operation.mutations) {
+  for (let mutationIndex = 0; mutationIndex < operation.mutations.length; mutationIndex += 1) {
+    const mutation = operation.mutations[mutationIndex]!;
     actionEnd += mutation.actions.length;
-    const transaction = await destinationRuntime.executeDestinationPlan(
+    const transaction = await executeDestinationPlan(
       mutation.plan,
       session,
+      destinationRuntime,
       actionEnd,
     );
     transactions.set(mutation.plan, transaction);
     if (transaction.kind !== "Applied") {
-      stopped = Object.freeze({ mutation, transaction });
+      stopped = Object.freeze({ mutation, transaction, mutationIndex });
       break;
+    }
+  }
+  if (stopped !== undefined) {
+    const cleanup = await releasePreparedMutations(
+      operation.mutations.slice(stopped.mutationIndex + 1),
+      destinationRuntime,
+    );
+    if (cleanup !== undefined) {
+      const transaction = appendTransactionCleanup(stopped.transaction, cleanup);
+      transactions.set(stopped.mutation.plan, transaction);
+      stopped = Object.freeze({ ...stopped, transaction });
     }
   }
   if (stopped?.transaction.kind === "Unsettled") {
@@ -525,6 +593,16 @@ async function executeAdmittedMutations(
     });
   }
   return settleAdmittedMutations(operation, session, transactions);
+}
+
+function appendTransactionCleanup(
+  transaction: Exclude<DestinationTransactionResult, { kind: "Applied" }>,
+  cleanup: ExportFailure,
+): Exclude<DestinationTransactionResult, { kind: "Applied" }> {
+  const failures = appendCleanup(transaction.failures, cleanup);
+  return transaction.kind === "Rejected"
+    ? Object.freeze({ kind: "Rejected", failures })
+    : Object.freeze({ kind: "Unsettled", applied: transaction.applied, failures });
 }
 
 async function settleAdmittedMutations(
@@ -695,18 +773,22 @@ function unsettledLifecycle(
 function destinationsRejectedBy(
   operation: PreparedExportOperation,
   primary: ExportFailure,
+  cleanup?: ExportFailure,
 ): readonly ExportDestinationResult[] {
   return operation.destinations.map((destination) => destination.kind === "Resolved"
     ? destination.result
-    : rejectedDestination(destination.plan.destination.path, operation.request.layout, primary));
+    : rejectedDestination(destination.plan.destination.path, operation.request.layout, primary, cleanup));
 }
 
 function destinationsForAdmissionUnsettled(
   operation: PreparedExportOperation,
   primary: ExportFailure,
   generation: string,
+  cleanup?: ExportFailure,
 ): readonly ExportDestinationResult[] {
-  const failures = Object.freeze({ kind: "PrimaryOnly" as const, primary });
+  const failures: ExportFailureSet = cleanup === undefined
+    ? Object.freeze({ kind: "PrimaryOnly", primary })
+    : Object.freeze({ kind: "PrimaryAndCleanup", primary, cleanup });
   return operation.destinations.map((destination) => {
     if (destination.kind === "Resolved") return destination.result;
     if (destination.plan === operation.mutations[0].plan) {
@@ -874,12 +956,15 @@ function rejectedDestination(
   destination: string,
   layout: ExportAgentPluginsRequest["layout"],
   primary: ExportFailure,
+  cleanup?: ExportFailure,
 ): Extract<ExportDestinationResult, { kind: "RejectedBeforeMutation" }> {
   return Object.freeze({
     kind: "RejectedBeforeMutation",
     destination,
     layout,
-    failures: Object.freeze({ kind: "PrimaryOnly", primary }),
+    failures: cleanup === undefined
+      ? Object.freeze({ kind: "PrimaryOnly", primary })
+      : Object.freeze({ kind: "PrimaryAndCleanup", primary, cleanup }),
   });
 }
 
@@ -972,10 +1057,11 @@ function aggregatePreflightRejected(
   prepared: readonly PreparedDestination[],
   layout: ExportAgentPluginsRequest["layout"],
   preflightFailure: ExportFailure,
+  cleanup?: ExportFailure,
 ): ExportAgentPluginsResult {
   const destinations = prepared.map((item): ExportDestinationResult => item.kind === "Resolved"
     ? item.result
-    : rejectedDestination(item.plan.destination.path, layout, preflightFailure));
+    : rejectedDestination(item.plan.destination.path, layout, preflightFailure, cleanup));
   return rejected(preflightFailure, destinations);
 }
 
@@ -1042,6 +1128,20 @@ function appendCleanup(failures: ExportFailureSet, cleanup: ExportFailure | unde
   return Object.freeze({ kind: "PrimaryAndCleanup", primary: failures.primary, cleanup });
 }
 
+function combineCleanupFailures(
+  first: ExportFailure | undefined,
+  second: ExportFailure | undefined,
+): ExportFailure | undefined {
+  if (first === undefined) return second;
+  if (second === undefined) return first;
+  return failure(
+    "VerificationFailed",
+    "pre-mutation-cleanup",
+    `${first.phase}: ${first.message}; ${second.phase}: ${second.message}`,
+    first.path ?? second.path,
+  );
+}
+
 function exportUndoFailure(
   code: "UndoAdmissionFailed" | "UndoSettlementFailed",
   phase: string,
@@ -1075,6 +1175,63 @@ async function hitAfterPlan(failpoints: ExportFailpoints | undefined, destinatio
   } catch (error) {
     throw new ExportFilesystemError(failure("FailpointFailed", "AfterPlan", errorMessage(error), destination));
   }
+}
+
+async function releaseUnmutatedPlan(
+  plan: DestinationExportPlan,
+  destinationRuntime: ExportDestinationRuntime,
+): Promise<ExportFailure | undefined> {
+  try {
+    await destinationRuntime.release({
+      destination: plan.destination.path,
+      readToken: plan.capture.readToken,
+      captureHandle: plan.capture.handle,
+    });
+    return undefined;
+  } catch (error) {
+    if (isDestinationResourceFailure(error)) {
+      return failure(
+        error.reason === "IdentityChanged" ? "PathChanged" : "VerificationFailed",
+        `destination-release:${error.reason}`,
+        error.detail,
+        error.path,
+      );
+    }
+    return failure("VerificationFailed", "destination-release", errorMessage(error), plan.destination.path);
+  }
+}
+
+async function releasePreparedDestinations(
+  destinations: readonly PreparedDestination[],
+  destinationRuntime: ExportDestinationRuntime,
+): Promise<ExportFailure | undefined> {
+  const failures: ExportFailure[] = [];
+  for (const destination of destinations) {
+    if (destination.kind === "Resolved") continue;
+    const releaseFailure = await releaseUnmutatedPlan(destination.plan, destinationRuntime);
+    if (releaseFailure !== undefined) failures.push(releaseFailure);
+  }
+  if (failures.length === 0) return undefined;
+  if (failures.length === 1) return failures[0];
+  return failure(
+    "VerificationFailed",
+    "destination-release-aggregate",
+    failures.map((item) => `${item.phase}: ${item.message}`).join("; "),
+  );
+}
+
+async function releasePreparedMutations(
+  mutations: readonly PreparedMutation[],
+  destinationRuntime: ExportDestinationRuntime,
+): Promise<ExportFailure | undefined> {
+  return releasePreparedDestinations(
+    mutations.map((mutation) => Object.freeze({ kind: "MutationPlanned" as const, plan: mutation.plan })),
+    destinationRuntime,
+  );
+}
+
+function isDestinationResourceFailure(error: unknown): error is ExportDestinationResourceFailure {
+  return typeof error === "object" && error !== null && "_tag" in error && error._tag === "ExportDestinationFailure";
 }
 
 function errorMessage(error: unknown): string {

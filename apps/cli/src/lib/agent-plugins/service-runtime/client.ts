@@ -27,6 +27,7 @@ import {
 import {
   deriveAgentPluginControllerLayout,
 } from "../layout";
+import { createExportLifecycleRuntime } from "../bindings/export-destination";
 import {
   LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
@@ -36,7 +37,6 @@ import {
 import { createGithubHostedApprovalHistoryReader } from "../bindings/governance";
 import { createNodeAtomicPackageOutput } from "./packaging/node-atomic-output";
 import { nodeCoworkV1Runtime } from "./packaging/node-cowork-v1";
-import { createExportLifecycleRuntime } from "./exports/runtime";
 import { openNodeProviderState, type NodeProviderState } from "./providers/node-state";
 import {
   createFilesystemArtifactReader,
