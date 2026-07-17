@@ -1,4 +1,5 @@
 import { chmod, lstat, mkdir, readFile, writeFile } from "node:fs/promises";
+import type { BigIntStats } from "node:fs";
 import { dirname, join } from "node:path";
 
 import {
@@ -125,6 +126,54 @@ describe("production export owner protocol", () => {
     await expect(lstat(
       join(destination, "codex/plugins/alpha/skills/next/SKILL.md"),
     )).rejects.toMatchObject({ code: "ENOENT" });
+  }, 15_000);
+
+  it("replaces one planned unmanaged file, preserves its sibling, stutters, and restores exact prior state", async () => {
+    const harness = createHarness();
+    const fixture = exportArtifactFixture().alpha;
+    const destination = await destinationAt(root, "replace-planned");
+    const planned = join(destination, "codex/plugins/alpha/skills/alpha/SKILL.md");
+    const sibling = join(destination, "codex/plugins/alpha/notes.txt");
+    await mkdir(dirname(planned), { recursive: true });
+    await writeFile(planned, "operator-owned\n", { mode: 0o640 });
+    await writeFile(sibling, "preserve-me\n", { mode: 0o600 });
+    const prior = await lstat(planned);
+    const siblingPrior = await lstat(sibling, { bigint: true });
+    const client = clientFor(harness.writer, fixture);
+    const replacementRequest = request(
+      fixture.ref,
+      [destination],
+      "targeted-release",
+      "replace-planned",
+    );
+
+    expect(await client.exports.apply(replacementRequest)).toMatchObject({ kind: "MutatedSettled" });
+    expect(await readFile(planned, "utf8")).toBe("alpha-v1\n");
+    expect(await readFile(sibling, "utf8")).toBe("preserve-me\n");
+    const exportedBeforeRepeat = await lstat(planned, { bigint: true });
+    const ledger = join(destination, EXPORT_LEDGER_FILENAME);
+    const ledgerBeforeRepeat = await lstat(ledger, { bigint: true });
+    const capsuleBeforeRepeat = await stateBytes(harness.store);
+
+    expect(await client.exports.apply(replacementRequest)).toMatchObject({ kind: "ReadOnlyConverged" });
+    expect(await stateBytes(harness.store)).toEqual(capsuleBeforeRepeat);
+    expect(identityTuple(await lstat(planned, { bigint: true }))).toEqual(identityTuple(exportedBeforeRepeat));
+    expect(identityTuple(await lstat(ledger, { bigint: true }))).toEqual(identityTuple(ledgerBeforeRepeat));
+    expect(await readFile(sibling, "utf8")).toBe("preserve-me\n");
+
+    expect(await harness.undo.undo()).toEqual({
+      kind: "RestoredAndCleared",
+      synchronization: { kind: "Released" },
+    });
+    expect(await readFile(planned, "utf8")).toBe("operator-owned\n");
+    expect((await lstat(planned)).mode & 0o777).toBe(prior.mode & 0o777);
+    await expect(lstat(ledger)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(await readFile(sibling, "utf8")).toBe("preserve-me\n");
+    expect(identityTuple(await lstat(sibling, { bigint: true }))).toEqual(identityTuple(siblingPrior));
+    expect(await harness.undo.undo()).toEqual({
+      kind: "NoCommittedCapsule",
+      synchronization: { kind: "Released" },
+    });
   }, 15_000);
 
   it("settles and restores only the target subset represented by an applied aggregate prefix", async () => {
@@ -526,6 +575,7 @@ function request(
   artifactRef: ExportAgentPluginsRequest["artifactRef"],
   destinations: readonly string[],
   mode: ExportAgentPluginsRequest["mode"] = "complete-set",
+  overwritePolicy: ExportAgentPluginsRequest["overwritePolicy"] = "managed-only",
 ): ExportAgentPluginsRequest {
   return Object.freeze({
     protocolVersion: EXPORT_APPLICATION_PROTOCOL_VERSION,
@@ -533,8 +583,12 @@ function request(
     mode,
     layout: "codex-v1",
     destinations,
-    overwritePolicy: "managed-only",
+    overwritePolicy,
   });
+}
+
+function identityTuple(stat: BigIntStats): readonly [bigint, bigint, bigint] {
+  return [stat.dev, stat.ino, stat.mtimeNs];
 }
 
 async function destinationAt(fixtureRoot: OwnedFixtureRoot, name: string): Promise<string> {
