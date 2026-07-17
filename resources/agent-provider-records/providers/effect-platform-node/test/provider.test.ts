@@ -1,0 +1,365 @@
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rm,
+  stat,
+  symlink,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+import { afterEach, describe, expect, it } from "bun:test";
+
+import type {
+  ProviderProjectionRecordAddress,
+  ProviderTargetRecordAddress,
+} from "@rawr/resource-agent-provider-records";
+import {
+  makeAgentProviderRecordsResource,
+  runNodeAgentProviderRecords,
+  type AgentProviderRecordsEvent,
+} from "../index";
+
+const encoder = new TextEncoder();
+const MAX_BYTES = 1024 * 1024;
+
+describe("effect-platform-node agent provider records", () => {
+  let fixtureRoot: string | null = null;
+
+  afterEach(async () => {
+    if (fixtureRoot !== null) await removeOwnedFixture(fixtureRoot);
+    fixtureRoot = null;
+  });
+
+  it("publishes exact immutable projection bytes and leaves a converged repeat read-only", async () => {
+    fixtureRoot = await createFixture();
+    const layout = fixtureLayout(fixtureRoot);
+    const resource = makeAgentProviderRecordsResource(layout);
+    const address = projectionAddress("Manifest", "ap1_manifest");
+    const bytes = encoder.encode('{"projection":1}\n');
+
+    expect(await run(resource.readProjection({ address, maxBytes: MAX_BYTES }))).toEqual({
+      ok: true,
+      value: { kind: "Absent", address },
+    });
+    await expect(lstat(layout.projectionRoot)).rejects.toMatchObject({ code: "ENOENT" });
+
+    expect(await run(resource.publishProjection({ address, bytes, maxBytes: MAX_BYTES }))).toEqual({
+      ok: true,
+      value: { outcome: "Published", address },
+    });
+    const destination = path.join(layout.projectionRoot, "manifests", "ap1_manifest.json");
+    expect(new Uint8Array(await readFile(destination))).toEqual(bytes);
+    const before = await stat(destination);
+
+    expect(await run(resource.publishProjection({ address, bytes, maxBytes: MAX_BYTES }))).toEqual({
+      ok: true,
+      value: { outcome: "ReadOnlyConverged", address },
+    });
+    const after = await stat(destination);
+    expect({ ino: after.ino, mtimeMs: after.mtimeMs }).toEqual({
+      ino: before.ino,
+      mtimeMs: before.mtimeMs,
+    });
+
+    const occupied = await run(resource.publishProjection({
+      address,
+      bytes: encoder.encode('{"projection":2}\n'),
+      maxBytes: MAX_BYTES,
+    }));
+    expect(occupied.ok).toBe(false);
+    if (!occupied.ok) expect(occupied.failure.reason).toBe("Occupied");
+    expect(new Uint8Array(await readFile(destination))).toEqual(bytes);
+  });
+
+  it("captures, atomically writes, scans, converges, and settles one target record", async () => {
+    fixtureRoot = await createFixture();
+    const layout = fixtureLayout(fixtureRoot);
+    const resource = makeAgentProviderRecordsResource(layout);
+    const address = targetAddress("Identity", "pt1_target");
+    const bytes = encoder.encode('{"identity":1}\n');
+    const captured = await capture(resource, address, "read-identity-1");
+
+    expect(captured.observation).toEqual({ kind: "Absent", address });
+    const writeInput = {
+      address,
+      planDigest: "plan-identity-1",
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+      mutation: { kind: "Put" as const, bytes },
+    };
+    expect(await run(resource.writeTarget(writeInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Applied" },
+    });
+    const destination = path.join(layout.targetRecordsRoot, "identities", "pt1_target.json");
+    const before = await stat(destination);
+
+    expect(await run(resource.writeTarget(writeInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "ReadOnlyConverged" },
+    });
+    const after = await stat(destination);
+    expect({ ino: after.ino, mtimeMs: after.mtimeMs }).toEqual({
+      ino: before.ino,
+      mtimeMs: before.mtimeMs,
+    });
+
+    const scan = await run(resource.scanTargets({
+      kind: "Identity",
+      maxEntries: 10,
+      maxBytes: MAX_BYTES,
+    }));
+    expect(scan.ok).toBe(true);
+    if (scan.ok) {
+      expect(scan.value).toHaveLength(1);
+      expect(scan.value[0]).toMatchObject({ kind: "Present", address });
+      const observed = scan.value[0];
+      if (observed?.kind === "Present") expect(observed.bytes).toEqual(bytes);
+    }
+
+    const settled = await run(resource.settleTarget({
+      address,
+      planDigest: writeInput.planDigest,
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+    }));
+    expect(settled).toMatchObject({ ok: true, value: { outcome: "Settled" } });
+    const reused = await run(resource.settleTarget({
+      address,
+      planDigest: writeInput.planDigest,
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+    }));
+    expect(reused.ok).toBe(false);
+    if (!reused.ok) expect(reused.failure.reason).toBe("HandleConsumed");
+  });
+
+  it("restores exact prior bytes after replacement and removal before settlement", async () => {
+    fixtureRoot = await createFixture();
+    const resource = makeAgentProviderRecordsResource(fixtureLayout(fixtureRoot));
+    const address = targetAddress("Receipt", "pt1_target");
+    const firstBytes = encoder.encode('{"generation":1}\n');
+    const secondBytes = encoder.encode('{"generation":2}\n');
+    await seedTarget(resource, address, firstBytes, "seed-1");
+
+    const replaceCapture = await capture(resource, address, "read-replace");
+    const replaceInput = {
+      address,
+      planDigest: "plan-replace",
+      readToken: replaceCapture.readToken,
+      captureHandle: replaceCapture.handle,
+      mutation: { kind: "Put" as const, bytes: secondBytes },
+    };
+    expect(await run(resource.writeTarget(replaceInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Applied" },
+    });
+    expect(await run(resource.restoreTarget(replaceInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Restored", changed: true },
+    });
+    expect(await run(resource.restoreTarget(replaceInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Restored", changed: false },
+    });
+    const afterReplace = await readTarget(resource, address);
+    expect(afterReplace.kind).toBe("Present");
+    if (afterReplace.kind === "Present") expect(afterReplace.bytes).toEqual(firstBytes);
+    expect(await run(resource.settleTarget(replaceInput))).toMatchObject({ ok: true });
+
+    const removeCapture = await capture(resource, address, "read-remove");
+    const removeInput = {
+      address,
+      planDigest: "plan-remove",
+      readToken: removeCapture.readToken,
+      captureHandle: removeCapture.handle,
+      mutation: { kind: "Remove" as const },
+    };
+    expect(await run(resource.writeTarget(removeInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Applied" },
+    });
+    expect(await readTarget(resource, address)).toEqual({ kind: "Absent", address });
+    expect(await run(resource.restoreTarget(removeInput))).toMatchObject({
+      ok: true,
+      value: { outcome: "Restored", changed: true },
+    });
+    const afterRemove = await readTarget(resource, address);
+    expect(afterRemove.kind).toBe("Present");
+    if (afterRemove.kind === "Present") expect(afterRemove.bytes).toEqual(firstBytes);
+    expect(await run(resource.settleTarget(removeInput))).toMatchObject({ ok: true });
+  });
+
+  it("leaves prior bytes intact when a write stops before atomic commit and cleans its scoped temporary", async () => {
+    fixtureRoot = await createFixture();
+    const layout = fixtureLayout(fixtureRoot);
+    const base = makeAgentProviderRecordsResource(layout);
+    const address = targetAddress("Receipt", "pt1_atomic");
+    const priorBytes = encoder.encode('{"generation":1}\n');
+    await seedTarget(base, address, priorBytes, "seed-atomic");
+    let fail = true;
+    const resource = makeAgentProviderRecordsResource({
+      ...layout,
+      onEvent(event: AgentProviderRecordsEvent) {
+        if (fail && event.kind === "BeforeAtomicCommit" && event.address.scope === "Target") {
+          fail = false;
+          throw new Error("stop before commit");
+        }
+      },
+    });
+    const captured = await capture(resource, address, "read-atomic");
+    const input = {
+      address,
+      planDigest: "plan-atomic",
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+      mutation: { kind: "Put" as const, bytes: encoder.encode('{"generation":2}\n') },
+    };
+    const failed = await run(resource.writeTarget(input));
+    expect(failed.ok).toBe(false);
+    if (!failed.ok) expect(failed.failure.phase).toBe("event:BeforeAtomicCommit");
+    const current = await readTarget(resource, address);
+    expect(current.kind).toBe("Present");
+    if (current.kind === "Present") expect(current.bytes).toEqual(priorBytes);
+    expect(await readdir(path.join(layout.targetRecordsRoot, "receipts"))).toEqual([
+      "pt1_atomic.json",
+    ]);
+
+    expect(await run(resource.restoreTarget(input))).toMatchObject({
+      ok: true,
+      value: { outcome: "Restored", changed: false },
+    });
+    expect(await run(resource.settleTarget(input))).toMatchObject({ ok: true });
+  });
+
+  it("rejects path escape, outside roots, and aliased record roots without mutation", async () => {
+    fixtureRoot = await createFixture();
+    const layout = fixtureLayout(fixtureRoot);
+    const resource = makeAgentProviderRecordsResource(layout);
+    const escaped = await run(resource.readTarget({
+      address: targetAddress("Receipt", "../escape"),
+      maxBytes: MAX_BYTES,
+    }));
+    expect(escaped.ok).toBe(false);
+    if (!escaped.ok) expect(escaped.failure.reason).toBe("InvalidInput");
+    expect(await readdir(layout.controllerDataRoot)).toEqual([]);
+
+    const outside = makeAgentProviderRecordsResource({
+      ...layout,
+      projectionRoot: path.join(fixtureRoot, "outside"),
+    });
+    const outsideRead = await run(outside.readProjection({
+      address: projectionAddress("Member", "pm1_member"),
+      maxBytes: MAX_BYTES,
+    }));
+    expect(outsideRead.ok).toBe(false);
+    if (!outsideRead.ok) expect(outsideRead.failure.reason).toBe("InvalidInput");
+
+    const aliasedTarget = path.join(layout.controllerDataRoot, "target-alias");
+    const actualTarget = path.join(layout.controllerDataRoot, "target-actual");
+    await mkdir(actualTarget);
+    await symlink(actualTarget, aliasedTarget);
+    const aliased = makeAgentProviderRecordsResource({
+      ...layout,
+      targetRecordsRoot: aliasedTarget,
+    });
+    const aliasedRead = await run(aliased.readTarget({
+      address: targetAddress("Identity", "pt1_alias"),
+      maxBytes: MAX_BYTES,
+    }));
+    expect(aliasedRead.ok).toBe(false);
+    if (!aliasedRead.ok) expect(aliasedRead.failure.reason).toBe("Aliased");
+    expect(await readdir(actualTarget)).toEqual([]);
+  });
+});
+
+async function run<A>(
+  effect: Parameters<typeof runNodeAgentProviderRecords<A>>[0],
+) {
+  return runNodeAgentProviderRecords(effect);
+}
+
+async function capture(
+  resource: ReturnType<typeof makeAgentProviderRecordsResource>,
+  address: ProviderTargetRecordAddress,
+  readToken: string,
+) {
+  const result = await run(resource.captureTarget({ address, readToken, maxBytes: MAX_BYTES }));
+  if (!result.ok) throw new Error(result.failure.detail);
+  return result.value;
+}
+
+async function readTarget(
+  resource: ReturnType<typeof makeAgentProviderRecordsResource>,
+  address: ProviderTargetRecordAddress,
+) {
+  const result = await run(resource.readTarget({ address, maxBytes: MAX_BYTES }));
+  if (!result.ok) throw new Error(result.failure.detail);
+  return result.value;
+}
+
+async function seedTarget(
+  resource: ReturnType<typeof makeAgentProviderRecordsResource>,
+  address: ProviderTargetRecordAddress,
+  bytes: Uint8Array,
+  suffix: string,
+): Promise<void> {
+  const captured = await capture(resource, address, `read-${suffix}`);
+  const input = {
+    address,
+    planDigest: `plan-${suffix}`,
+    readToken: captured.readToken,
+    captureHandle: captured.handle,
+    mutation: { kind: "Put" as const, bytes },
+  };
+  const written = await run(resource.writeTarget(input));
+  if (!written.ok) throw new Error(written.failure.detail);
+  const settled = await run(resource.settleTarget(input));
+  if (!settled.ok) throw new Error(settled.failure.detail);
+}
+
+function projectionAddress(
+  kind: ProviderProjectionRecordAddress["kind"],
+  key: string,
+): ProviderProjectionRecordAddress {
+  return Object.freeze({ scope: "Projection", kind, key });
+}
+
+function targetAddress(
+  kind: ProviderTargetRecordAddress["kind"],
+  targetKey: string,
+): ProviderTargetRecordAddress {
+  return Object.freeze({ scope: "Target", kind, targetKey });
+}
+
+async function createFixture(): Promise<string> {
+  const root = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-agent-provider-records-")));
+  await mkdir(path.join(root, "controller-data"));
+  return root;
+}
+
+function fixtureLayout(root: string) {
+  const controllerDataRoot = path.join(root, "controller-data");
+  return Object.freeze({
+    controllerDataRoot,
+    projectionRoot: path.join(controllerDataRoot, "agent-plugins", "provider-projections-v1"),
+    targetRecordsRoot: path.join(controllerDataRoot, "agent-plugins", "provider-target-state-v1"),
+  });
+}
+
+async function removeOwnedFixture(root: string): Promise<void> {
+  const temporaryRoot = await realpath(tmpdir());
+  if (path.dirname(root) !== temporaryRoot || !path.basename(root).startsWith("rawr-agent-provider-records-")) {
+    throw new Error("Refusing fixture cleanup outside the owned temporary family");
+  }
+  const info = await lstat(root);
+  if (!info.isDirectory() || info.isSymbolicLink() || await realpath(root) !== root) {
+    throw new Error("Refusing fixture cleanup of a non-canonical owned directory");
+  }
+  await rm(root, { recursive: true });
+}
