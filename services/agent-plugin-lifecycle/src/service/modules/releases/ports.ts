@@ -155,3 +155,9 @@ export interface ReleaseLifecycleRuntime {
   readonly artifacts: ArtifactStore;
   readonly evidence?: MechanicalEvidenceReader;
 }
+
+export {
+  createResourceArtifactReader,
+  createResourceArtifactStore,
+  type ResourceArtifactRepositoryOptions,
+} from "./internal/resource-artifact-repository";

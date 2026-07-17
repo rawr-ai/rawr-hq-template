@@ -6,12 +6,15 @@ import type {
   ArtifactEvidenceObservation,
   ArtifactFileMode,
   ArtifactObjectAddress,
+  ArtifactPublicationControl,
   ArtifactPublicationResult,
   ArtifactReadLimits,
   ArtifactRepositoryAsyncPort,
   ArtifactRepositoryFailure,
   ArtifactRepositoryIssue,
+  ArtifactRepositoryPublicationEvent,
   ArtifactRepositoryResource,
+  ArtifactTreeDirectoryEntry,
   ArtifactTreeEntry,
   ArtifactTreeObservation,
   ArtifactTreeSnapshot,
@@ -26,11 +29,7 @@ const SEGMENT_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/u;
 
 type ProviderRequirements = FileSystem.FileSystem | Path.Path;
 
-export type NodeArtifactRepositoryEvent =
-  | Readonly<{ kind: "AfterStagingWrite"; address: ArtifactObjectAddress }>
-  | Readonly<{ kind: "AfterStagingVerification"; address: ArtifactObjectAddress }>
-  | Readonly<{ kind: "BeforeNoReplacePublication"; address: ArtifactObjectAddress }>
-  | Readonly<{ kind: "AfterNoReplacePublication"; address: ArtifactObjectAddress }>;
+export type NodeArtifactRepositoryEvent = ArtifactRepositoryPublicationEvent;
 
 export interface EffectPlatformNodeArtifactRepositoryOptions {
   readonly platform?: NodeJS.Platform;
@@ -51,8 +50,25 @@ interface ReadBudget {
 }
 
 interface TreeInspection {
+  readonly directories: readonly ArtifactTreeDirectoryEntry[];
   readonly entries: readonly ArtifactTreeEntry[];
   readonly issues: readonly ArtifactRepositoryIssue[];
+}
+
+interface CapturedDirectoryIdentity {
+  readonly path: string;
+  readonly dev: number;
+  readonly ino: number;
+}
+
+interface OwnedPrivateDirectory {
+  readonly parent: CapturedDirectoryIdentity;
+  readonly allocation: CapturedDirectoryIdentity;
+}
+
+interface CreatedPrivateDirectory {
+  readonly parent: CapturedDirectoryIdentity;
+  readonly allocationPath: string;
 }
 
 type NoReplaceResult =
@@ -88,7 +104,7 @@ export function makeArtifactRepositoryResource(
     const entries = yield* checked("publish-tree", () => normalizeEntries(input.entries, input.limits, "publish-tree"));
     const prior = yield* readTreeAtAddress(fs, paths, resolved, input.limits, "publish-tree");
     if (prior.kind === "Present") {
-      return equalTrees(prior.snapshot.entries, entries)
+      return equalTreeSnapshot(prior.snapshot, entries)
         ? publishedResult("ReadOnlyConverged", input.address)
         : occupied(input.address, "Present");
     }
@@ -136,7 +152,7 @@ export function makeArtifactRepositoryResource(
     ], limits, "publish-evidence"));
     const prior = yield* readTreeAtAddress(fs, paths, resolved, limits, "publish-evidence");
     if (prior.kind === "Present") {
-      return equalTrees(prior.snapshot.entries, entries)
+      return equalTreeSnapshot(prior.snapshot, entries)
         ? publishedResult("ReadOnlyConverged", input.address)
         : occupied(input.address, "Present");
     }
@@ -198,61 +214,91 @@ function publishStagedTree(
   resolved: ResolvedAddress,
   entries: readonly ArtifactTreeEntry[],
   limits: ArtifactReadLimits,
-  control: Readonly<{ beforeCommit?: () => Promise<ArtifactCommitDecision> }> | undefined,
+  control: ArtifactPublicationControl | undefined,
   options: EffectPlatformNodeArtifactRepositoryOptions,
   operation: "publish-tree" | "publish-evidence",
 ): Effect.Effect<ArtifactPublicationResult, ArtifactRepositoryFailure, never> {
-  return Effect.scoped(Effect.gen(function* () {
+  return Effect.gen(function* () {
     const stagingParent = paths.join(resolved.root, STAGING_DIRECTORY);
-    const allocation = yield* fs.makeTempDirectoryScoped({
-      directory: stagingParent,
-      prefix: STAGING_PREFIX,
-    }).pipe(mapPlatform(operation, stagingParent));
-    yield* requireDirectPrivateAllocation(fs, paths, stagingParent, allocation);
-    const staging = paths.join(allocation, STAGING_OBJECT);
-    yield* fs.makeDirectory(staging, { mode: 0o700 }).pipe(mapPlatform(operation, staging));
-    yield* writeTree(fs, paths, staging, entries, operation);
-    yield* hit(options, { kind: "AfterStagingWrite", address: resolved.address }, operation);
-    const staged = yield* inspectTree(fs, paths, staging, limits, operation);
-    if (staged.issues.length > 0 || !equalTrees(staged.entries, entries)) {
-      return rejected(resolved.address, "Private staging did not verify before publication");
+    const created = yield* createPrivateDirectory(fs, stagingParent, operation);
+    const admission = yield* Effect.either(admitPrivateDirectory(fs, paths, created, operation));
+    if (admission._tag === "Left") {
+      const cleanup = yield* Effect.either(releaseCreatedPrivateDirectory(fs, paths, created));
+      return yield* classifyFailedPublication(
+        fs,
+        paths,
+        resolved,
+        limits,
+        admission.left,
+        cleanup._tag === "Left" ? cleanup.left : undefined,
+        operation,
+      );
     }
-    yield* hit(options, { kind: "AfterStagingVerification", address: resolved.address }, operation);
-    const decision = yield* commitDecision(resolved.address, control);
-    if (decision.kind === "Reject") return rejected(resolved.address, decision.failure);
-    yield* hit(options, { kind: "BeforeNoReplacePublication", address: resolved.address }, operation);
+    const owned = admission.right;
+    const staging = paths.join(owned.allocation.path, STAGING_OBJECT);
+    const attempted = yield* Effect.either(Effect.gen(function* () {
+      yield* fs.makeDirectory(staging, { mode: 0o700 }).pipe(mapPlatform(operation, staging));
+      yield* writeTree(fs, paths, staging, entries, operation);
+      yield* hit(options, control, { kind: "AfterStagingWrite", address: resolved.address }, operation);
+      const staged = yield* inspectTree(fs, paths, staging, limits, operation);
+      if (staged.issues.length > 0 || !equalTreeInspection(staged, entries)) {
+        return rejected(resolved.address, "Private staging did not verify before publication");
+      }
+      const stagingIdentity = yield* captureDirectoryIdentity(fs, staging, operation);
+      yield* hit(options, control, { kind: "AfterStagingVerification", address: resolved.address }, operation);
+      const decision = yield* commitDecision(resolved.address, control);
+      if (decision.kind === "Reject") return rejected(resolved.address, decision.failure);
+      yield* hit(options, control, { kind: "BeforeNoReplacePublication", address: resolved.address }, operation);
+      yield* revalidatePrivateDirectory(fs, paths, owned, operation);
+      yield* revalidateDirectoryIdentity(fs, stagingIdentity, operation);
 
-    const moved = yield* noReplaceMove(fs, paths, staging, resolved.destination, options.platform, operation);
-    if (moved.kind === "Occupied") {
-      const winner = yield* readTreeAtAddress(fs, paths, resolved, limits, operation);
-      return winner.kind === "Present" && equalTrees(winner.snapshot.entries, entries)
-        ? publishedResult("ReadOnlyConverged", resolved.address)
-        : occupied(resolved.address, winner.kind);
-    }
-    if (moved.kind === "Unsupported") return rejected(resolved.address, moved.reason);
-    if (moved.kind === "Unknown") {
-      return yield* unsettledAfterObservation(fs, paths, resolved, limits, moved.reason, operation);
-    }
+      const moved = yield* noReplaceMove(fs, paths, staging, resolved.destination, options.platform, operation);
+      if (moved.kind === "Occupied") {
+        const winner = yield* readTreeAtAddress(fs, paths, resolved, limits, operation);
+        return winner.kind === "Present" && equalTreeSnapshot(winner.snapshot, entries)
+          ? publishedResult("ReadOnlyConverged", resolved.address)
+          : occupied(resolved.address, winner.kind);
+      }
+      if (moved.kind === "Unsupported") return rejected(resolved.address, moved.reason);
+      if (moved.kind === "Unknown") {
+        return yield* unsettledAfterObservation(fs, paths, resolved, limits, moved.reason, operation);
+      }
 
-    const postEvent = yield* Effect.either(hit(options, {
-      kind: "AfterNoReplacePublication",
-      address: resolved.address,
-    }, operation));
-    if (postEvent._tag === "Left") {
-      return yield* unsettledAfterObservation(fs, paths, resolved, limits, postEvent.left.detail, operation);
+      const postEvent = yield* Effect.either(hit(options, control, {
+        kind: "AfterNoReplacePublication",
+        address: resolved.address,
+      }, operation));
+      if (postEvent._tag === "Left") {
+        return yield* unsettledAfterObservation(fs, paths, resolved, limits, postEvent.left.detail, operation);
+      }
+      const synced = yield* Effect.either(Effect.all([
+        syncDirectory(fs, paths.dirname(resolved.destination), operation),
+        syncDirectory(fs, stagingParent, operation),
+      ]));
+      if (synced._tag === "Left") {
+        return yield* unsettledAfterObservation(fs, paths, resolved, limits, synced.left.detail, operation);
+      }
+      const final = yield* readTreeAtAddress(fs, paths, resolved, limits, operation);
+      return final.kind === "Present" && equalTreeSnapshot(final.snapshot, entries)
+        ? publishedResult("Published", resolved.address)
+        : unsettled(resolved.address, "Published tree did not verify", final.kind);
+    }));
+    const cleanup = yield* Effect.either(releasePrivateDirectory(fs, paths, owned));
+    if (attempted._tag === "Left") {
+      return yield* classifyFailedPublication(
+        fs,
+        paths,
+        resolved,
+        limits,
+        attempted.left,
+        cleanup._tag === "Left" ? cleanup.left : undefined,
+        operation,
+      );
     }
-    const synced = yield* Effect.either(Effect.all([
-      syncDirectory(fs, paths.dirname(resolved.destination), operation),
-      syncDirectory(fs, stagingParent, operation),
-    ]));
-    if (synced._tag === "Left") {
-      return yield* unsettledAfterObservation(fs, paths, resolved, limits, synced.left.detail, operation);
-    }
-    const final = yield* readTreeAtAddress(fs, paths, resolved, limits, operation);
-    return final.kind === "Present" && equalTrees(final.snapshot.entries, entries)
-      ? publishedResult("Published", resolved.address)
-      : unsettled(resolved.address, "Published tree did not verify", final.kind);
-  }));
+    return cleanup._tag === "Left"
+      ? withCleanupFailure(attempted.right, cleanup.left)
+      : attempted.right;
+  });
 }
 
 function readTreeAtAddress(
@@ -282,6 +328,7 @@ function readTreeAtAddress(
       kind: "Present",
       snapshot: Object.freeze({
         address: resolved.address,
+        directories: inspection.directories,
         entries: inspection.entries,
       }) satisfies ArtifactTreeSnapshot,
     });
@@ -300,16 +347,23 @@ function inspectTree(
     const rootInfo = yield* fs.stat(root).pipe(mapPlatform(operation, root));
     if (canonical !== root || rootInfo.type !== "Directory") {
       return Object.freeze({
+        directories: Object.freeze([]),
         entries: Object.freeze([]),
         issues: Object.freeze([issue("AliasedEntry", root, "Artifact object root is not a canonical directory")]),
       });
     }
+    const directories: ArtifactTreeDirectoryEntry[] = [];
     const entries: ArtifactTreeEntry[] = [];
     const issues: ArtifactRepositoryIssue[] = [];
     const budget: ReadBudget = { entries: 0, bytes: 0, limits };
-    yield* walkTree(fs, paths, root, root, entries, issues, budget, operation);
+    yield* walkTree(fs, paths, root, root, directories, entries, issues, budget, operation);
+    directories.sort((left, right) => compareDirectoryPath(left.path, right.path));
     entries.sort((left, right) => compareText(left.path, right.path));
-    return Object.freeze({ entries: Object.freeze(entries), issues: Object.freeze(issues) });
+    return Object.freeze({
+      directories: Object.freeze(directories),
+      entries: Object.freeze(entries),
+      issues: Object.freeze(issues),
+    });
   });
 }
 
@@ -318,6 +372,7 @@ function walkTree(
   paths: Path.Path,
   root: string,
   directory: string,
+  directories: ArtifactTreeDirectoryEntry[],
   entries: ArtifactTreeEntry[],
   issues: ArtifactRepositoryIssue[],
   budget: ReadBudget,
@@ -340,7 +395,8 @@ function walkTree(
       }
       const before = yield* fs.stat(child).pipe(mapPlatform(operation, child));
       if (before.type === "Directory") {
-        yield* walkTree(fs, paths, root, child, entries, issues, budget, operation);
+        directories.push(Object.freeze({ path: relative, mode: before.mode & 0o777 }));
+        yield* walkTree(fs, paths, root, child, directories, entries, issues, budget, operation);
         continue;
       }
       if (before.type !== "File") {
@@ -502,20 +558,128 @@ function requireDirectCanonicalDirectory(
   });
 }
 
-function requireDirectPrivateAllocation(
+function createPrivateDirectory(
+  fs: FileSystem.FileSystem,
+  parent: string,
+  operation: "publish-tree" | "publish-evidence",
+): Effect.Effect<CreatedPrivateDirectory, ArtifactRepositoryFailure> {
+  return Effect.gen(function* () {
+    const parentIdentity = yield* captureDirectoryIdentity(fs, parent, operation);
+    const allocationPath = yield* fs.makeTempDirectory({
+      directory: parentIdentity.path,
+      prefix: STAGING_PREFIX,
+    }).pipe(mapPlatform(operation, parentIdentity.path));
+    return Object.freeze({ parent: parentIdentity, allocationPath });
+  });
+}
+
+function admitPrivateDirectory(
   fs: FileSystem.FileSystem,
   paths: Path.Path,
-  parent: string,
-  allocation: string,
+  created: CreatedPrivateDirectory,
+  operation: ArtifactRepositoryFailure["operation"],
+): Effect.Effect<OwnedPrivateDirectory, ArtifactRepositoryFailure> {
+  return Effect.gen(function* () {
+    if (
+      paths.dirname(created.allocationPath) !== created.parent.path
+      || !paths.basename(created.allocationPath).startsWith(STAGING_PREFIX)
+    ) {
+      return yield* fail(
+        operation,
+        "InvalidInput",
+        created.allocationPath,
+        "Private staging allocation escaped its owner",
+      );
+    }
+    const allocation = yield* captureDirectoryIdentity(fs, created.allocationPath, operation);
+    if (allocation.dev !== created.parent.dev) {
+      return yield* fail(operation, "IdentityChanged", allocation.path, "Private staging crossed its owner device");
+    }
+    const owned = Object.freeze({ parent: created.parent, allocation });
+    yield* revalidatePrivateDirectory(fs, paths, owned, operation);
+    return owned;
+  });
+}
+
+function releaseCreatedPrivateDirectory(
+  fs: FileSystem.FileSystem,
+  paths: Path.Path,
+  created: CreatedPrivateDirectory,
+): Effect.Effect<void, ArtifactRepositoryFailure> {
+  return admitPrivateDirectory(fs, paths, created, "cleanup").pipe(
+    Effect.flatMap((owned) => releasePrivateDirectory(fs, paths, owned)),
+  );
+}
+
+function captureDirectoryIdentity(
+  fs: FileSystem.FileSystem,
+  candidate: string,
+  operation: ArtifactRepositoryFailure["operation"],
+): Effect.Effect<CapturedDirectoryIdentity, ArtifactRepositoryFailure> {
+  return Effect.gen(function* () {
+    const canonical = yield* fs.realPath(candidate).pipe(mapPlatform(operation, candidate));
+    const info = yield* fs.stat(candidate).pipe(mapPlatform(operation, candidate));
+    const ino = Option.getOrUndefined(info.ino);
+    if (canonical !== candidate || info.type !== "Directory" || ino === undefined) {
+      return yield* fail(
+        operation,
+        "IdentityChanged",
+        candidate,
+        "Owned directory must be canonical with a stable directory identity",
+      );
+    }
+    return Object.freeze({ path: candidate, dev: info.dev, ino });
+  });
+}
+
+function revalidateDirectoryIdentity(
+  fs: FileSystem.FileSystem,
+  captured: CapturedDirectoryIdentity,
+  operation: ArtifactRepositoryFailure["operation"],
+): Effect.Effect<void, ArtifactRepositoryFailure> {
+  return Effect.gen(function* () {
+    const current = yield* captureDirectoryIdentity(fs, captured.path, operation);
+    if (current.dev !== captured.dev || current.ino !== captured.ino) {
+      return yield* fail(operation, "IdentityChanged", captured.path, "Owned directory identity changed");
+    }
+  });
+}
+
+function revalidatePrivateDirectory(
+  fs: FileSystem.FileSystem,
+  paths: Path.Path,
+  owned: OwnedPrivateDirectory,
+  operation: ArtifactRepositoryFailure["operation"],
 ): Effect.Effect<void, ArtifactRepositoryFailure> {
   return Effect.gen(function* () {
     if (
-      paths.dirname(allocation) !== parent
-      || !paths.basename(allocation).startsWith(STAGING_PREFIX)
+      paths.dirname(owned.allocation.path) !== owned.parent.path
+      || !paths.basename(owned.allocation.path).startsWith(STAGING_PREFIX)
     ) {
-      return yield* fail("cleanup", "InvalidInput", allocation, "Private staging allocation escaped its owner");
+      return yield* fail(operation, "InvalidInput", owned.allocation.path, "Private staging escaped its owner");
     }
-    yield* requireDirectCanonicalDirectory(fs, paths, parent, allocation, "cleanup");
+    yield* revalidateDirectoryIdentity(fs, owned.parent, operation);
+    yield* revalidateDirectoryIdentity(fs, owned.allocation, operation);
+    if (owned.allocation.dev !== owned.parent.dev) {
+      return yield* fail(operation, "IdentityChanged", owned.allocation.path, "Private staging crossed its owner device");
+    }
+  });
+}
+
+function releasePrivateDirectory(
+  fs: FileSystem.FileSystem,
+  paths: Path.Path,
+  owned: OwnedPrivateDirectory,
+): Effect.Effect<void, ArtifactRepositoryFailure> {
+  return Effect.gen(function* () {
+    yield* revalidatePrivateDirectory(fs, paths, owned, "cleanup");
+    yield* fs.remove(owned.allocation.path, { recursive: true, force: false }).pipe(
+      mapPlatform("cleanup", owned.allocation.path),
+    );
+    if (yield* fs.exists(owned.allocation.path).pipe(mapPlatform("cleanup", owned.allocation.path))) {
+      return yield* fail("cleanup", "FilesystemFailed", owned.allocation.path, "Private staging cleanup did not settle");
+    }
+    yield* syncDirectory(fs, owned.parent.path, "cleanup");
   });
 }
 
@@ -746,10 +910,12 @@ function directoryPaths(entries: readonly ArtifactTreeEntry[]): readonly string[
       directories.add(parts.slice(0, index).join("/"));
     }
   }
-  return [...directories].sort((left, right) => {
-    const depth = left.split("/").length - right.split("/").length;
-    return depth !== 0 ? depth : compareText(left, right);
-  });
+  return [...directories].sort(compareDirectoryPath);
+}
+
+function compareDirectoryPath(left: string, right: string): number {
+  const depth = left.split("/").length - right.split("/").length;
+  return depth !== 0 ? depth : compareText(left, right);
 }
 
 function evidenceObservation(
@@ -759,7 +925,12 @@ function evidenceObservation(
   if (observation.kind === "Missing") return Object.freeze({ kind: "Missing", address });
   if (observation.kind === "Mismatch") return observation;
   const entries = observation.snapshot.entries;
-  if (entries.length !== 1 || entries[0]?.path !== EVIDENCE_FILE || entries[0].mode !== 0o444) {
+  if (
+    observation.snapshot.directories.length !== 0
+    || entries.length !== 1
+    || entries[0]?.path !== EVIDENCE_FILE
+    || entries[0].mode !== 0o444
+  ) {
     return mismatch(address, [issue(
       "UnexpectedEntry",
       undefined,
@@ -785,12 +956,16 @@ function commitDecision(
 
 function hit(
   options: EffectPlatformNodeArtifactRepositoryOptions,
+  control: ArtifactPublicationControl | undefined,
   event: NodeArtifactRepositoryEvent,
   operation: "publish-tree" | "publish-evidence",
 ): Effect.Effect<void, ArtifactRepositoryFailure> {
-  if (options.onEvent === undefined) return Effect.void;
+  if (control?.onEvent === undefined && options.onEvent === undefined) return Effect.void;
   return Effect.tryPromise({
-    try: async () => await options.onEvent?.(event),
+    try: async () => {
+      await control?.onEvent?.(event);
+      await options.onEvent?.(event);
+    },
     catch: (cause) => failure(operation, "FilesystemFailed", undefined, errorMessage(cause)),
   });
 }
@@ -807,6 +982,50 @@ function unsettledAfterObservation(
     Effect.map((observation) => unsettled(resolved.address, detail, observation.kind)),
     Effect.catchAll(() => Effect.succeed(unsettled(resolved.address, detail, "Unknown"))),
   );
+}
+
+function classifyFailedPublication(
+  fs: FileSystem.FileSystem,
+  paths: Path.Path,
+  resolved: ResolvedAddress,
+  limits: ArtifactReadLimits,
+  primaryFailure: ArtifactRepositoryFailure,
+  cleanupFailure: ArtifactRepositoryFailure | undefined,
+  operation: "publish-tree" | "publish-evidence",
+): Effect.Effect<ArtifactPublicationResult, never> {
+  return Effect.gen(function* () {
+    const observation = yield* Effect.either(readTreeAtAddress(fs, paths, resolved, limits, operation));
+    const cleanup = cleanupFailure === undefined ? undefined : describeFailure(cleanupFailure);
+    if (observation._tag === "Left") {
+      return unsettled(resolved.address, primaryFailure.detail, "Unknown", cleanup);
+    }
+    return observation.right.kind === "Missing"
+      ? rejected(resolved.address, primaryFailure.detail, cleanup)
+      : unsettled(resolved.address, primaryFailure.detail, observation.right.kind, cleanup);
+  });
+}
+
+function withCleanupFailure(
+  result: ArtifactPublicationResult,
+  cleanupFailure: ArtifactRepositoryFailure,
+): ArtifactPublicationResult {
+  const cleanup = describeFailure(cleanupFailure);
+  switch (result.kind) {
+    case "Published":
+    case "ReadOnlyConverged":
+      return unsettled(
+        result.address,
+        "Artifact publication committed but private staging cleanup failed",
+        "Present",
+        cleanup,
+      );
+    case "Occupied":
+      return occupied(result.address, result.observation, cleanup);
+    case "Rejected":
+      return rejected(result.address, result.failure, cleanup);
+    case "Unsettled":
+      return unsettled(result.address, result.failure, result.observation, cleanup);
+  }
 }
 
 function syncDirectory(
@@ -828,6 +1047,30 @@ function equalTrees(left: readonly ArtifactTreeEntry[], right: readonly Artifact
       && entry.mode === candidate.mode
       && equalBytes(entry.bytes, candidate.bytes);
   });
+}
+
+function equalTreeSnapshot(
+  snapshot: ArtifactTreeSnapshot,
+  entries: readonly ArtifactTreeEntry[],
+): boolean {
+  return equalDirectoryPaths(snapshot.directories, directoryPaths(entries))
+    && equalTrees(snapshot.entries, entries);
+}
+
+function equalTreeInspection(
+  inspection: TreeInspection,
+  entries: readonly ArtifactTreeEntry[],
+): boolean {
+  return equalDirectoryPaths(inspection.directories, directoryPaths(entries))
+    && equalTrees(inspection.entries, entries);
+}
+
+function equalDirectoryPaths(
+  observed: readonly ArtifactTreeDirectoryEntry[],
+  expected: readonly string[],
+): boolean {
+  return observed.length === expected.length
+    && observed.every((directory, index) => directory.path === expected[index]);
 }
 
 function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
@@ -886,20 +1129,47 @@ function publishedResult(
 function occupied(
   address: ArtifactObjectAddress,
   observation: "Present" | "Missing" | "Mismatch",
+  cleanupFailure?: string,
 ): ArtifactPublicationResult {
-  return Object.freeze({ kind: "Occupied", address, observation });
+  return Object.freeze({
+    kind: "Occupied",
+    address,
+    observation,
+    ...(cleanupFailure === undefined ? {} : { cleanupFailure }),
+  });
 }
 
-function rejected(address: ArtifactObjectAddress, detail: string): ArtifactPublicationResult {
-  return Object.freeze({ kind: "Rejected", address, failure: detail });
+function rejected(
+  address: ArtifactObjectAddress,
+  detail: string,
+  cleanupFailure?: string,
+): ArtifactPublicationResult {
+  return Object.freeze({
+    kind: "Rejected",
+    address,
+    failure: detail,
+    ...(cleanupFailure === undefined ? {} : { cleanupFailure }),
+  });
 }
 
 function unsettled(
   address: ArtifactObjectAddress,
   detail: string,
   observation: "Present" | "Missing" | "Mismatch" | "Unknown",
+  cleanupFailure?: string,
 ): ArtifactPublicationResult {
-  return Object.freeze({ kind: "Unsettled", address, failure: detail, observation });
+  return Object.freeze({
+    kind: "Unsettled",
+    address,
+    failure: detail,
+    observation,
+    ...(cleanupFailure === undefined ? {} : { cleanupFailure }),
+  });
+}
+
+function describeFailure(value: ArtifactRepositoryFailure): string {
+  const location = value.path === undefined ? "" : ` at ${value.path}`;
+  return `${value.reason}${location}: ${value.detail}`;
 }
 
 function mapPlatform(operation: ArtifactRepositoryFailure["operation"], candidate: string) {

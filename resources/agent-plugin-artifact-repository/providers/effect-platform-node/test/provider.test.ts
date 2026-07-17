@@ -1,12 +1,17 @@
-import { lstat, mkdtemp, readFile, readdir, realpath, rm } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, rmdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { afterEach, describe, expect, test } from "bun:test";
+import { FileSystem, Path } from "@effect/platform";
+import { SystemError } from "@effect/platform/Error";
+import { NodeContext } from "@effect/platform-node";
+import { Effect } from "effect";
 
 import type {
   ArtifactCommitDecision,
   ArtifactObjectAddress,
+  ArtifactRepositoryFailure,
   ArtifactTreeEntry,
 } from "../../../contract";
 import {
@@ -50,6 +55,9 @@ describe("Effect Platform Node artifact repository provider", () => {
       expect(observed.snapshot.entries.map((entry) => [entry.path, entry.mode])).toEqual([
         ["payload/tool.sh", 0o755],
         ["release.json", 0o444],
+      ]);
+      expect(observed.snapshot.directories).toEqual([
+        { path: "payload", mode: 0o700 },
       ]);
       expect(text(observed.snapshot.entries[0]?.bytes)).toBe("#!/bin/sh\necho first\n");
       expect(text(observed.snapshot.entries[1]?.bytes)).toBe('{"release":"first"}\n');
@@ -152,6 +160,30 @@ describe("Effect Platform Node artifact repository provider", () => {
     if (observed.kind === "Present") expect(text(observed.bytes)).toBe('{"evidence":1}\n');
   });
 
+  test("exposes empty directories so semantic owners can reject unexpected tree shape", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "artifact-directory-shape");
+    const resource = makeArtifactRepositoryResource();
+    unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries: releaseEntries("shape"),
+      limits: LIMITS,
+    })));
+    await mkdir(path.join(address.repositoryRoot, ...address.namespace, address.objectId, "unexpected"));
+
+    const observed = unwrap(await runNodeArtifactRepository(resource.readTree({ address, limits: LIMITS })));
+
+    expect(observed).toMatchObject({
+      kind: "Present",
+      snapshot: {
+        directories: [
+          { path: "payload" },
+          { path: "unexpected" },
+        ],
+      },
+    });
+  });
+
   test("rejects path escape input before creating repository state", async () => {
     const parent = await createFixture();
     const repositoryRoot = path.join(parent, "repository");
@@ -180,12 +212,15 @@ describe("Effect Platform Node artifact repository provider", () => {
         if (event.kind === "AfterStagingWrite") throw new Error("injected staging failure");
       },
     });
-    const failed = await runNodeArtifactRepository(failing.publishTree({
+    const failed = unwrap(await runNodeArtifactRepository(failing.publishTree({
       address,
       entries: releaseEntries("retry"),
       limits: LIMITS,
-    }));
-    expect(failed.ok).toBe(false);
+    })));
+    expect(failed).toMatchObject({
+      kind: "Rejected",
+      failure: expect.stringContaining("injected staging failure"),
+    });
 
     const staging = path.join(address.repositoryRoot, ".staging");
     expect(await readdir(staging)).toEqual([]);
@@ -197,6 +232,128 @@ describe("Effect Platform Node artifact repository provider", () => {
       }),
     ));
     expect(successful.kind).toBe("Published");
+  });
+
+  test("preserves a substituted private allocation and reports cleanup truth before a clean retry", async () => {
+    const parent = await createFixture();
+    const repositoryRoot = path.join(parent, "repository");
+    const address = artifactAddress(repositoryRoot, "artifact-substituted-cleanup");
+    let replacement: string | undefined;
+    let preserved: string | undefined;
+    let substituted = false;
+    const resource = makeArtifactRepositoryResource({
+      async onEvent(event) {
+        if (event.kind !== "AfterNoReplacePublication" || substituted) return;
+        substituted = true;
+        const staging = path.join(repositoryRoot, ".staging");
+        const [allocation] = await readdir(staging);
+        if (allocation === undefined) throw new Error("Expected one private staging allocation");
+        replacement = path.join(staging, allocation);
+        preserved = `${replacement}.preserved`;
+        await rename(replacement, preserved);
+        await mkdir(replacement, { mode: 0o700 });
+      },
+    });
+
+    const result = unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries: releaseEntries("substituted"),
+      limits: LIMITS,
+    })));
+
+    expect(result).toMatchObject({
+      kind: "Unsettled",
+      observation: "Present",
+      cleanupFailure: expect.stringContaining("identity changed"),
+    });
+    if (replacement === undefined || preserved === undefined) throw new Error("Expected substituted paths");
+    expect((await lstat(replacement)).isDirectory()).toBe(true);
+    expect((await lstat(preserved)).isDirectory()).toBe(true);
+
+    await rmdir(replacement);
+    await rmdir(preserved);
+    const retry = unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address: artifactAddress(repositoryRoot, "artifact-clean-retry"),
+      entries: releaseEntries("clean-retry"),
+      limits: LIMITS,
+    })));
+    expect(retry.kind).toBe("Published");
+  });
+
+  test("cleans an allocation whose admission fails and permits a clean retry", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "artifact-admission-retry");
+    const resource = makeArtifactRepositoryResource();
+    let allocationStats = 0;
+
+    const attempted = await runWithFileSystem(resource.publishTree({
+      address,
+      entries: releaseEntries("admission-retry"),
+      limits: LIMITS,
+    }), (base) => fileSystemProxy(base, {
+      stat(candidate) {
+        if (isPrivateAllocation(candidate) && ++allocationStats === 2) {
+          return Effect.fail(injectedFileSystemFailure("stat", candidate, "admission probe"));
+        }
+        return base.stat(candidate);
+      },
+    }));
+
+    expect(attempted._tag).toBe("Right");
+    if (attempted._tag === "Left") throw attempted.left;
+    expect(attempted.right).toMatchObject({
+      kind: "Rejected",
+      failure: expect.stringContaining("admission probe"),
+    });
+    const staging = path.join(address.repositoryRoot, ".staging");
+    expect(await readdir(staging)).toEqual([]);
+
+    const retry = unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries: releaseEntries("admission-retry"),
+      limits: LIMITS,
+    })));
+    expect(retry.kind).toBe("Published");
+  });
+
+  test("reports cleanup failure when a failed admission cannot re-admit its allocation", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "artifact-admission-cleanup-failure");
+    const resource = makeArtifactRepositoryResource();
+    let allocationStats = 0;
+
+    const attempted = await runWithFileSystem(resource.publishTree({
+      address,
+      entries: releaseEntries("admission-cleanup-failure"),
+      limits: LIMITS,
+    }), (base) => fileSystemProxy(base, {
+      stat(candidate) {
+        if (isPrivateAllocation(candidate) && ++allocationStats >= 2) {
+          return Effect.fail(injectedFileSystemFailure("stat", candidate, "persistent admission probe"));
+        }
+        return base.stat(candidate);
+      },
+    }));
+
+    expect(attempted._tag).toBe("Right");
+    if (attempted._tag === "Left") throw attempted.left;
+    expect(attempted.right).toMatchObject({
+      kind: "Rejected",
+      failure: expect.stringContaining("persistent admission probe"),
+      cleanupFailure: expect.stringContaining("persistent admission probe"),
+    });
+    const staging = path.join(address.repositoryRoot, ".staging");
+    const [orphan] = await readdir(staging);
+    expect(orphan?.startsWith("rawr-agent-plugin-artifact-")).toBe(true);
+    if (orphan === undefined) throw new Error("Expected an explicitly unsettled private allocation");
+    await rmdir(path.join(staging, orphan));
+
+    const retry = unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries: releaseEntries("admission-cleanup-failure"),
+      limits: LIMITS,
+    })));
+    expect(retry.kind).toBe("Published");
   });
 });
 
@@ -261,4 +418,44 @@ async function removeOwnedFixture(fixture: OwnedFixture): Promise<void> {
     throw new Error(`Refusing to remove unowned artifact repository fixture: ${fixture.root}`);
   }
   await rm(canonical, { recursive: true, force: false });
+}
+
+async function runWithFileSystem<A>(
+  operation: Effect.Effect<A, ArtifactRepositoryFailure, FileSystem.FileSystem | Path.Path>,
+  transform: (base: FileSystem.FileSystem) => FileSystem.FileSystem,
+) {
+  return Effect.runPromise(Effect.gen(function* () {
+    const base = yield* FileSystem.FileSystem;
+    return yield* operation.pipe(
+      Effect.provideService(FileSystem.FileSystem, transform(base)),
+      Effect.either,
+    );
+  }).pipe(Effect.provide(NodeContext.layer)));
+}
+
+function fileSystemProxy(
+  base: FileSystem.FileSystem,
+  overrides: Partial<FileSystem.FileSystem>,
+): FileSystem.FileSystem {
+  return new Proxy(base, {
+    get(target, property, receiver) {
+      return property in overrides
+        ? Reflect.get(overrides, property, receiver)
+        : Reflect.get(target, property, receiver);
+    },
+  });
+}
+
+function isPrivateAllocation(candidate: string): boolean {
+  return path.basename(candidate).startsWith("rawr-agent-plugin-artifact-");
+}
+
+function injectedFileSystemFailure(method: string, candidate: string, description: string): SystemError {
+  return new SystemError({
+    reason: "Unknown",
+    module: "FileSystem",
+    method,
+    pathOrDescriptor: candidate,
+    description,
+  });
 }

@@ -8,10 +8,12 @@ import type {
   AgentPluginPackageOutputResource,
   CoworkV1ArchiveEncodingRequest,
   PackageOutputFailure,
+  PackageOutputPublicationEvent,
+  PackageOutputPublicationPoint,
   PackageOutputPublicationRequest,
   PackageOutputPublicationResult,
 } from "@rawr/resource-agent-plugin-package-output";
-import { Effect, Option } from "effect";
+import { Effect, Option, Random } from "effect";
 import yazl from "yazl";
 
 const OUTPUT_MODE = 0o644;
@@ -19,11 +21,7 @@ const PRIVATE_TEMPORARY_PREFIX = ".rawr-agent-plugin-package-output-";
 
 type ProviderRequirements = FileSystem.FileSystem | Path.Path;
 
-export type PackageOutputProviderFailpoint =
-  | "AfterOutputObserved"
-  | "BeforeCommit"
-  | "AfterCommit"
-  | "BeforeFinalVerification";
+export type PackageOutputProviderFailpoint = PackageOutputPublicationPoint;
 
 export interface PackageOutputProviderFailpointContext {
   readonly outputPath: string;
@@ -57,6 +55,18 @@ interface CapturedFile {
   readonly bytes: Uint8Array;
 }
 
+interface OwnedTemporaryFile {
+  readonly parent: CapturedDirectory;
+  readonly path: string;
+  readonly dev: number;
+  readonly ino: number;
+}
+
+interface CreatedTemporaryFile {
+  readonly parent: CapturedDirectory;
+  readonly path: string;
+}
+
 type CapturedOutput =
   | Readonly<{ kind: "Absent" }>
   | Readonly<{ kind: "Present"; file: CapturedFile }>;
@@ -64,9 +74,10 @@ type CapturedOutput =
 export function makeAgentPluginPackageOutputResource(
   options: CoworkV1EffectPlatformNodeOptions = {},
 ): AgentPluginPackageOutputResource<ProviderRequirements> {
+  const publicationSemaphore = Effect.runSync(Effect.makeSemaphore(1));
   return {
     encodeCoworkV1: Effect.fn("agentPluginPackageOutput.encodeCoworkV1")(encodeCoworkV1),
-    publish: (input) => publishOutput(input, options),
+    publish: (input) => publicationSemaphore.withPermits(1)(publishOutput(input, options)),
   };
 }
 
@@ -150,80 +161,124 @@ function publishOutput(
   input: PackageOutputPublicationRequest,
   options: CoworkV1EffectPlatformNodeOptions,
 ): Effect.Effect<PackageOutputPublicationResult, never, ProviderRequirements> {
-  let committed = false;
-  let temporaryPath: string | undefined;
   const bytes = new Uint8Array(input.bytes);
-
-  const operation = Effect.gen(function* () {
-    yield* validatePublicationInput(input);
+  return Effect.gen(function* () {
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
-    const parent = yield* captureParent(fs, paths, input.outputPath);
-    const prior = yield* captureOutput(fs, input.outputPath, parent, input.maxPriorOutputBytes);
+    let committed = false;
+    let cleanupAttempted = false;
+    let createdTemporary: CreatedTemporaryFile | undefined;
+    let temporary: OwnedTemporaryFile | undefined;
+    let temporaryLinks: 1 | 2 = 1;
 
-    yield* hitFailpoint(options.failpoints, "AfterOutputObserved", input.outputPath);
-    if (prior.kind === "Present" && equalBytes(prior.file.bytes, bytes)) {
-      yield* verifyCapturedOutput(fs, prior.file, parent, input.maxPriorOutputBytes, "output-convergence");
-      return Object.freeze({ kind: "ReadOnlyConverged" }) satisfies PackageOutputPublicationResult;
+    const attempted = yield* Effect.either(Effect.gen(function* () {
+      yield* validatePublicationInput(input);
+      const parent = yield* captureParent(fs, paths, input.outputPath);
+      const prior = yield* captureOutput(fs, input.outputPath, parent, input.maxPriorOutputBytes);
+
+      yield* hitFailpoint(input, options.failpoints, "AfterOutputObserved");
+      if (
+        prior.kind === "Present"
+        && (prior.file.mode & 0o777) === OUTPUT_MODE
+        && equalBytes(prior.file.bytes, bytes)
+      ) {
+        yield* verifyCapturedOutput(fs, prior.file, parent, input.maxPriorOutputBytes, "output-convergence");
+        return Object.freeze({ kind: "ReadOnlyConverged" }) satisfies PackageOutputPublicationResult;
+      }
+
+      temporary = yield* allocateTemporaryFile(
+        fs,
+        paths,
+        parent,
+        bytes,
+        (created) => {
+          createdTemporary = created;
+        },
+        (owned) => {
+          temporary = owned;
+        },
+      );
+      yield* verifyTemporary(fs, paths, temporary, bytes);
+
+      yield* hitFailpoint(input, options.failpoints, "BeforeCommit", temporary.path);
+      yield* revalidateParent(fs, parent);
+      yield* revalidatePrior(fs, input.outputPath, parent, prior, input.maxPriorOutputBytes);
+      yield* revalidateOwnedTemporaryFile(fs, paths, temporary, 1, "publish-output");
+
+      if (prior.kind === "Absent") {
+        yield* fs.link(temporary.path, input.outputPath).pipe(
+          mapPlatform("publish-output", "OutputCommitFailed", "output-no-replace", input.outputPath),
+        );
+        committed = true;
+        temporaryLinks = 2;
+        cleanupAttempted = true;
+        const released = yield* Effect.either(releaseOwnedTemporaryFile(fs, paths, temporary, temporaryLinks));
+        if (released._tag === "Left") {
+          return Object.freeze({
+            kind: "OutputUnsettled",
+            primaryFailure: failure(
+              "publish-output",
+              "OutputVerifyFailed",
+              "temporary-link-release",
+              input.outputPath,
+              "Output committed but the owned temporary link did not settle",
+            ),
+            cleanupFailure: released.left,
+          }) satisfies PackageOutputPublicationResult;
+        }
+        temporary = undefined;
+        createdTemporary = undefined;
+      } else {
+        yield* fs.rename(temporary.path, input.outputPath).pipe(
+          mapPlatform("publish-output", "OutputCommitFailed", "output-atomic-replace", input.outputPath),
+        );
+        committed = true;
+        temporary = undefined;
+        createdTemporary = undefined;
+      }
+
+      yield* hitFailpoint(input, options.failpoints, "AfterCommit");
+      yield* syncFile(fs, parent.path, "output-parent-flush", "OutputVerifyFailed");
+      yield* hitFailpoint(input, options.failpoints, "BeforeFinalVerification");
+      yield* verifyPublishedOutput(fs, input.outputPath, parent, bytes);
+
+      return Object.freeze({
+        kind: "OutputReplacedVerified",
+        priorOutput: prior.kind === "Absent" ? "Absent" : "Replaced",
+      }) satisfies PackageOutputPublicationResult;
+    }));
+
+    const cleanup = (temporary === undefined && createdTemporary === undefined) || cleanupAttempted
+      ? undefined
+      : yield* Effect.either(releaseTemporaryAllocation(
+        fs,
+        paths,
+        createdTemporary,
+        temporary,
+        temporaryLinks,
+      ));
+    if (attempted._tag === "Left") {
+      return Object.freeze({
+        kind: committed ? "OutputUnsettled" : "RejectedBeforeOutputMutation",
+        primaryFailure: attempted.left,
+        ...(cleanup?._tag === "Left" ? { cleanupFailure: cleanup.left } : {}),
+      }) satisfies PackageOutputPublicationResult;
     }
-
-    temporaryPath = yield* fs.makeTempFileScoped({
-      directory: parent.path,
-      prefix: PRIVATE_TEMPORARY_PREFIX,
-    }).pipe(mapPlatform(
-      "publish-output",
-      "TemporaryFailed",
-      "temporary-create",
-      parent.path,
-    ));
-    yield* admitTemporary(fs, paths, parent, temporaryPath);
-    yield* fs.writeFile(temporaryPath, bytes, { flag: "w", mode: OUTPUT_MODE }).pipe(
-      mapPlatform("publish-output", "TemporaryFailed", "temporary-write", temporaryPath),
-    );
-    yield* fs.chmod(temporaryPath, OUTPUT_MODE).pipe(
-      mapPlatform("publish-output", "TemporaryFailed", "temporary-mode", temporaryPath),
-    );
-    yield* syncFile(fs, temporaryPath, "temporary-flush", "TemporaryFailed");
-    yield* verifyTemporary(fs, temporaryPath, parent, bytes);
-
-    yield* hitFailpoint(options.failpoints, "BeforeCommit", input.outputPath, temporaryPath);
-    yield* revalidateParent(fs, parent);
-    yield* revalidatePrior(fs, input.outputPath, parent, prior, input.maxPriorOutputBytes);
-
-    if (prior.kind === "Absent") {
-      yield* fs.link(temporaryPath, input.outputPath).pipe(
-        mapPlatform("publish-output", "OutputCommitFailed", "output-no-replace", input.outputPath),
-      );
-      committed = true;
-      yield* fs.remove(temporaryPath).pipe(
-        mapPlatform("cleanup", "OutputCommitFailed", "temporary-link-release", temporaryPath),
-      );
-    } else {
-      yield* fs.rename(temporaryPath, input.outputPath).pipe(
-        mapPlatform("publish-output", "OutputCommitFailed", "output-atomic-replace", input.outputPath),
-      );
-      committed = true;
+    if (cleanup?._tag === "Left") {
+      return Object.freeze({
+        kind: committed ? "OutputUnsettled" : "RejectedBeforeOutputMutation",
+        primaryFailure: failure(
+          "cleanup",
+          "TemporaryFailed",
+          "temporary-cleanup",
+          temporary?.path ?? createdTemporary?.path,
+          "Package output operation completed but its owned temporary did not settle",
+        ),
+        cleanupFailure: cleanup.left,
+      }) satisfies PackageOutputPublicationResult;
     }
-
-    yield* hitFailpoint(options.failpoints, "AfterCommit", input.outputPath);
-    yield* syncFile(fs, parent.path, "output-parent-flush", "OutputVerifyFailed");
-    yield* hitFailpoint(options.failpoints, "BeforeFinalVerification", input.outputPath);
-    yield* verifyPublishedOutput(fs, input.outputPath, parent, bytes);
-
-    return Object.freeze({
-      kind: "OutputReplacedVerified",
-      priorOutput: prior.kind === "Absent" ? "Absent" : "Replaced",
-    }) satisfies PackageOutputPublicationResult;
+    return attempted.right;
   });
-
-  return operation.pipe(
-    Effect.scoped,
-    Effect.catchAll((primaryFailure) => Effect.succeed<PackageOutputPublicationResult>(Object.freeze(
-      committed
-        ? { kind: "OutputUnsettled", primaryFailure }
-        : { kind: "RejectedBeforeOutputMutation", primaryFailure },
-    ))),
-  );
 }
 
 function validatePublicationInput(
@@ -315,12 +370,14 @@ const captureParent = Effect.fn("agentPluginPackageOutput.captureParent")(functi
 const revalidateParent = Effect.fn("agentPluginPackageOutput.revalidateParent")(function* (
   fs: FileSystem.FileSystem,
   parent: CapturedDirectory,
+  operation: "publish-output" | "cleanup" = "publish-output",
 ) {
+  const reason = operation === "cleanup" ? "TemporaryFailed" : "OutputParentUnsafe";
   const canonical = yield* fs.realPath(parent.path).pipe(
-    mapPlatform("publish-output", "OutputParentUnsafe", "output-parent-revalidation", parent.path),
+    mapPlatform(operation, reason, "output-parent-revalidation", parent.path),
   );
   const info = yield* fs.stat(parent.path).pipe(
-    mapPlatform("publish-output", "OutputParentUnsafe", "output-parent-revalidation", parent.path),
+    mapPlatform(operation, reason, "output-parent-revalidation", parent.path),
   );
   if (
     canonical !== parent.path
@@ -329,8 +386,8 @@ const revalidateParent = Effect.fn("agentPluginPackageOutput.revalidateParent")(
     || Option.getOrUndefined(info.ino) !== parent.ino
   ) {
     return yield* rejected(
-      "publish-output",
-      "OutputParentUnsafe",
+      operation,
+      reason,
       "output-parent-revalidation",
       parent.path,
       "Output parent identity changed",
@@ -439,82 +496,247 @@ const captureRegularFile = Effect.fn("agentPluginPackageOutput.captureRegularFil
   }) satisfies CapturedFile;
 });
 
-const admitTemporary = Effect.fn("agentPluginPackageOutput.admitTemporary")(function* (
+const allocateTemporaryFile = Effect.fn("agentPluginPackageOutput.allocateTemporaryFile")(function* (
   fs: FileSystem.FileSystem,
   paths: Path.Path,
   parent: CapturedDirectory,
-  temporaryPath: string,
+  bytes: Uint8Array,
+  onCreated: (created: CreatedTemporaryFile) => void,
+  onOwned: (owned: OwnedTemporaryFile) => void,
 ) {
-  const temporaryRoot = paths.dirname(temporaryPath);
-  if (
-    paths.dirname(temporaryRoot) !== parent.path
-    || !paths.basename(temporaryRoot).startsWith(PRIVATE_TEMPORARY_PREFIX)
-    || paths.join(temporaryRoot, paths.basename(temporaryPath)) !== temporaryPath
-  ) {
-    return yield* rejected(
-      "publish-output",
-      "TemporaryFailed",
-      "temporary-admission",
-      temporaryPath,
-      "Scoped temporary must be contained below the exact output parent",
-    );
-  }
-  const [canonicalRoot, canonicalFile, rootInfo, fileInfo] = yield* Effect.all([
-    fs.realPath(temporaryRoot).pipe(
-      mapPlatform("publish-output", "TemporaryFailed", "temporary-admission", temporaryRoot),
-    ),
-    fs.realPath(temporaryPath).pipe(
-      mapPlatform("publish-output", "TemporaryFailed", "temporary-admission", temporaryPath),
-    ),
-    fs.stat(temporaryRoot).pipe(
-      mapPlatform("publish-output", "TemporaryFailed", "temporary-admission", temporaryRoot),
-    ),
-    fs.stat(temporaryPath).pipe(
-      mapPlatform("publish-output", "TemporaryFailed", "temporary-admission", temporaryPath),
-    ),
+  yield* revalidateParent(fs, parent);
+  const random = yield* Effect.all([
+    Random.nextInt,
+    Random.nextInt,
+    Random.nextInt,
+    Random.nextInt,
   ]);
+  const token = random.map((value) => (value >>> 0).toString(16).padStart(8, "0")).join("");
+  const temporaryPath = paths.join(parent.path, `${PRIVATE_TEMPORARY_PREFIX}${token}`);
   if (
-    canonicalRoot !== temporaryRoot
-    || canonicalFile !== temporaryPath
-    || rootInfo.type !== "Directory"
-    || fileInfo.type !== "File"
-    || rootInfo.dev !== parent.dev
-    || fileInfo.dev !== parent.dev
-    || Option.getOrUndefined(fileInfo.nlink) !== 1
+    paths.dirname(temporaryPath) !== parent.path
+    || !paths.basename(temporaryPath).startsWith(PRIVATE_TEMPORARY_PREFIX)
   ) {
     return yield* rejected(
       "publish-output",
       "TemporaryFailed",
       "temporary-admission",
       temporaryPath,
-      "Scoped temporary identity is not a contained regular file",
+      "Owned temporary must be one direct child of the exact output parent",
     );
   }
+  const owned = yield* Effect.scoped(Effect.gen(function* () {
+    const file = yield* fs.open(temporaryPath, { flag: "wx", mode: OUTPUT_MODE }).pipe(
+      mapPlatform("publish-output", "TemporaryFailed", "temporary-create", temporaryPath),
+    );
+    const created = Object.freeze({ parent, path: temporaryPath });
+    onCreated(created);
+    const fileInfo = yield* file.stat.pipe(
+      mapPlatform("publish-output", "TemporaryFailed", "temporary-identity", temporaryPath),
+    );
+    const ino = Option.getOrUndefined(fileInfo.ino);
+    if (
+      fileInfo.type !== "File"
+      || fileInfo.dev !== parent.dev
+      || ino === undefined
+      || Option.getOrUndefined(fileInfo.nlink) !== 1
+    ) {
+      return yield* rejected(
+        "publish-output",
+        "TemporaryFailed",
+        "temporary-identity",
+        temporaryPath,
+        "Created temporary file descriptor did not provide one stable regular-file identity",
+      );
+    }
+    const captured = Object.freeze({ parent, path: temporaryPath, dev: fileInfo.dev, ino });
+    onOwned(captured);
+    yield* file.writeAll(bytes).pipe(
+      mapPlatform("publish-output", "TemporaryFailed", "temporary-write", temporaryPath),
+    );
+    yield* file.sync.pipe(
+      mapPlatform("publish-output", "TemporaryFailed", "temporary-flush", temporaryPath),
+    );
+    return captured;
+  }));
+  yield* fs.chmod(temporaryPath, OUTPUT_MODE).pipe(
+    mapPlatform("publish-output", "TemporaryFailed", "temporary-mode", temporaryPath),
+  );
+  yield* revalidateParent(fs, parent);
+  yield* revalidateOwnedTemporaryFile(fs, paths, owned, 1, "publish-output");
+  return owned;
 });
 
 const verifyTemporary = Effect.fn("agentPluginPackageOutput.verifyTemporary")(function* (
   fs: FileSystem.FileSystem,
-  temporaryPath: string,
-  parent: CapturedDirectory,
+  paths: Path.Path,
+  owned: OwnedTemporaryFile,
   expectedBytes: Uint8Array,
 ) {
+  yield* revalidateOwnedTemporaryFile(fs, paths, owned, 1, "publish-output");
   const captured = yield* captureRegularFile(
     fs,
-    temporaryPath,
-    parent,
+    owned.path,
+    owned.parent,
     expectedBytes.byteLength,
     "TemporaryFailed",
     "temporary-verification",
   );
-  if (!equalBytes(captured.bytes, expectedBytes) || (captured.mode & 0o777) !== OUTPUT_MODE) {
+  if (
+    captured.dev !== owned.dev
+    || captured.ino !== owned.ino
+    || !equalBytes(captured.bytes, expectedBytes)
+    || (captured.mode & 0o777) !== OUTPUT_MODE
+  ) {
     return yield* rejected(
       "publish-output",
       "TemporaryFailed",
       "temporary-verification",
-      temporaryPath,
-      "Scoped temporary bytes or mode differ from the publication request",
+      owned.path,
+      "Owned temporary identity, bytes, or mode differ from the publication request",
     );
   }
+});
+
+const revalidateOwnedTemporaryFile = Effect.fn(
+  "agentPluginPackageOutput.revalidateOwnedTemporaryFile",
+)(function* (
+  fs: FileSystem.FileSystem,
+  paths: Path.Path,
+  owned: OwnedTemporaryFile,
+  expectedLinks: 1 | 2,
+  operation: "publish-output" | "cleanup",
+) {
+  yield* revalidateParent(fs, owned.parent, operation);
+  if (
+    paths.dirname(owned.path) !== owned.parent.path
+    || !paths.basename(owned.path).startsWith(PRIVATE_TEMPORARY_PREFIX)
+  ) {
+    return yield* rejected(
+      operation,
+      "TemporaryFailed",
+      "temporary-revalidation",
+      owned.path,
+      "Owned temporary escaped its exact output parent",
+    );
+  }
+  const [canonical, info] = yield* Effect.all([
+    fs.realPath(owned.path).pipe(
+      mapPlatform(operation, "TemporaryFailed", "temporary-revalidation", owned.path),
+    ),
+    fs.stat(owned.path).pipe(
+      mapPlatform(operation, "TemporaryFailed", "temporary-revalidation", owned.path),
+    ),
+  ]);
+  if (
+    canonical !== owned.path
+    || info.type !== "File"
+    || info.dev !== owned.dev
+    || Option.getOrUndefined(info.ino) !== owned.ino
+    || Option.getOrUndefined(info.nlink) !== expectedLinks
+  ) {
+    return yield* rejected(
+      operation,
+      "TemporaryFailed",
+      "temporary-revalidation",
+      owned.path,
+      "Owned temporary identity changed",
+    );
+  }
+});
+
+const admitCreatedTemporaryFile = Effect.fn(
+  "agentPluginPackageOutput.admitCreatedTemporaryFile",
+)(function* (
+  fs: FileSystem.FileSystem,
+  paths: Path.Path,
+  created: CreatedTemporaryFile,
+) {
+  yield* revalidateParent(fs, created.parent, "cleanup");
+  if (
+    paths.dirname(created.path) !== created.parent.path
+    || !paths.basename(created.path).startsWith(PRIVATE_TEMPORARY_PREFIX)
+  ) {
+    return yield* rejected(
+      "cleanup",
+      "TemporaryFailed",
+      "temporary-admission",
+      created.path,
+      "Created temporary escaped its exact output parent",
+    );
+  }
+  const [canonical, info] = yield* Effect.all([
+    fs.realPath(created.path).pipe(
+      mapPlatform("cleanup", "TemporaryFailed", "temporary-admission", created.path),
+    ),
+    fs.stat(created.path).pipe(
+      mapPlatform("cleanup", "TemporaryFailed", "temporary-admission", created.path),
+    ),
+  ]);
+  const ino = Option.getOrUndefined(info.ino);
+  if (
+    canonical !== created.path
+    || info.type !== "File"
+    || info.dev !== created.parent.dev
+    || ino === undefined
+    || Option.getOrUndefined(info.nlink) !== 1
+  ) {
+    return yield* rejected(
+      "cleanup",
+      "TemporaryFailed",
+      "temporary-admission",
+      created.path,
+      "Created temporary could not be admitted as one owned regular file",
+    );
+  }
+  return Object.freeze({ parent: created.parent, path: created.path, dev: info.dev, ino });
+});
+
+function releaseTemporaryAllocation(
+  fs: FileSystem.FileSystem,
+  paths: Path.Path,
+  created: CreatedTemporaryFile | undefined,
+  owned: OwnedTemporaryFile | undefined,
+  expectedLinks: 1 | 2,
+): Effect.Effect<void, PackageOutputFailure> {
+  if (owned !== undefined) return releaseOwnedTemporaryFile(fs, paths, owned, expectedLinks);
+  if (created === undefined) return Effect.void;
+  return admitCreatedTemporaryFile(fs, paths, created).pipe(
+    Effect.flatMap((admitted) => releaseOwnedTemporaryFile(fs, paths, admitted, expectedLinks)),
+  );
+}
+
+const releaseOwnedTemporaryFile = Effect.fn(
+  "agentPluginPackageOutput.releaseOwnedTemporaryFile",
+)(function* (
+  fs: FileSystem.FileSystem,
+  paths: Path.Path,
+  owned: OwnedTemporaryFile,
+  expectedLinks: 1 | 2,
+) {
+  yield* revalidateOwnedTemporaryFile(fs, paths, owned, expectedLinks, "cleanup");
+  yield* fs.remove(owned.path, { recursive: false, force: false }).pipe(
+    mapPlatform("cleanup", "TemporaryFailed", "temporary-remove", owned.path),
+  );
+  if (yield* fs.exists(owned.path).pipe(
+    mapPlatform("cleanup", "TemporaryFailed", "temporary-remove-verification", owned.path),
+  )) {
+    return yield* rejected(
+      "cleanup",
+      "TemporaryFailed",
+      "temporary-remove-verification",
+      owned.path,
+      "Owned temporary cleanup did not settle",
+    );
+  }
+  yield* Effect.scoped(Effect.gen(function* () {
+    const directory = yield* fs.open(owned.parent.path, { flag: "r" }).pipe(
+      mapPlatform("cleanup", "TemporaryFailed", "temporary-parent-flush", owned.parent.path),
+    );
+    yield* directory.sync.pipe(
+      mapPlatform("cleanup", "TemporaryFailed", "temporary-parent-flush", owned.parent.path),
+    );
+  }));
 });
 
 const revalidatePrior = Effect.fn("agentPluginPackageOutput.revalidatePrior")(function* (
@@ -627,22 +849,27 @@ function syncFile(
 }
 
 function hitFailpoint(
+  input: PackageOutputPublicationRequest,
   failpoints: PackageOutputProviderFailpoints | undefined,
   point: PackageOutputProviderFailpoint,
-  outputPath: string,
   temporaryPath?: string,
 ): Effect.Effect<void, PackageOutputFailure> {
-  if (failpoints === undefined) return Effect.void;
+  if (input.control?.onEvent === undefined && failpoints === undefined) return Effect.void;
+  const event: PackageOutputPublicationEvent = Object.freeze({
+    point,
+    outputPath: input.outputPath,
+    ...(temporaryPath === undefined ? {} : { temporaryPath }),
+  });
   return Effect.tryPromise({
-    try: () => failpoints.hit(point, {
-      outputPath,
-      ...(temporaryPath === undefined ? {} : { temporaryPath }),
-    }),
+    try: async () => {
+      await input.control?.onEvent?.(event);
+      await failpoints?.hit(point, event);
+    },
     catch: (cause) => failure(
       "publish-output",
       "FilesystemFailed",
       point,
-      outputPath,
+      input.outputPath,
       `Provider failpoint failed: ${errorMessage(cause)}`,
     ),
   });

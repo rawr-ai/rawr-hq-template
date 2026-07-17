@@ -12,10 +12,10 @@ import type { ArtifactReader } from "@rawr/agent-plugin-lifecycle/ports/releases
 
 import { createReleaseLifecycleApplications } from "../../../../../../services/agent-plugin-lifecycle/src/service/modules/releases/internal/application";
 import {
-  createFilesystemArtifactReader,
-  type ArtifactStoreRoot,
-} from "../../../../src/lib/agent-plugins/service-runtime/releases/artifact-store/artifact-reader";
-import { createFilesystemArtifactStore } from "../../../../src/lib/agent-plugins/service-runtime/releases/artifact-store/filesystem-store";
+  createArtifactRepositoryReader,
+  createArtifactRepositoryStore,
+} from "../../../../src/lib/agent-plugins/bindings/output/artifact-repository";
+import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
 import {
   createGitContentWorkspaceSnapshotReader,
   createMechanicalEvidenceHandle,
@@ -169,7 +169,7 @@ describe("closed read-only retention planning", () => {
     });
     const applications = createReleaseLifecycleApplications({
       source,
-      artifacts: createFilesystemArtifactStore({ artifactStoreRoot: root }),
+      artifacts: createArtifactRepositoryStore(root),
     });
     const result = await applications.build({
       contentWorkspace: repository.policy,
@@ -179,7 +179,7 @@ describe("closed read-only retention planning", () => {
     if (result.kind !== "Published" || result.ref.kind !== "complete-set") {
       throw new Error("complete generated fixture did not publish");
     }
-    const reader = createFilesystemArtifactReader(root);
+    const reader = createArtifactRepositoryReader(root);
     const set = await reader.read(result.ref);
     if (set.kind !== "Verified" || set.snapshot.kind !== "complete-set") {
       throw new Error("complete generated fixture did not verify");

@@ -29,18 +29,19 @@ import {
 } from "../layout";
 import { createExportLifecycleRuntime } from "../bindings/export-destination";
 import {
+  createArtifactRepositoryReader,
+  createArtifactRepositoryStore,
+  createPackageOutputLifecycleRuntime,
+} from "../bindings/output";
+import {
   LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
   type LifecycleClientFactory,
   type LifecycleOperation,
 } from "../commands/binding";
 import { createGithubHostedApprovalHistoryReader } from "../bindings/governance";
-import { createNodeAtomicPackageOutput } from "./packaging/node-atomic-output";
-import { nodeCoworkV1Runtime } from "./packaging/node-cowork-v1";
 import { openNodeProviderState, type NodeProviderState } from "./providers/node-state";
 import {
-  createFilesystemArtifactReader,
-  createFilesystemArtifactStore,
   createFilesystemMechanicalEvidenceReader,
   createGitContentWorkspaceSnapshotReader,
 } from "./releases";
@@ -72,22 +73,20 @@ export const createProductionLifecycleClient: LifecycleClientFactory = async (
 ): Promise<Client> => {
   const authority = controllerAuthority();
   const layout = deriveAgentPluginControllerLayout({ dataRoot: authority.dataRoot });
-  const artifactReader = createFilesystemArtifactReader(layout.artifactStoreRoot);
+  const artifactReader = createArtifactRepositoryReader(layout.artifactStoreRoot);
   const deps = unavailableDeps();
 
   if (operation === "releases.check" || operation === "releases.build") {
     const gitExecutable = requiredGitExecutable(binding, operation);
     deps.releases = {
       source: await createGitContentWorkspaceSnapshotReader({ gitExecutable }),
-      artifacts: createFilesystemArtifactStore({ artifactStoreRoot: layout.artifactStoreRoot }),
+      artifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
       evidence: createFilesystemMechanicalEvidenceReader(layout.artifactStoreRoot),
     };
   } else if (operation === "packaging.package") {
-    deps.packaging = {
+    deps.packaging = createPackageOutputLifecycleRuntime({
       artifactReader,
-      output: createNodeAtomicPackageOutput(),
-      coworkV1: nodeCoworkV1Runtime,
-    };
+    });
   } else if (operation === "exports.apply") {
     const providerState = lazy(() => openNodeProviderState({
       providerProjectionRoot: layout.providerProjectionRoot,
@@ -145,7 +144,7 @@ export const createProductionLifecycleClient: LifecycleClientFactory = async (
 };
 
 function createExportArtifactReader(
-  reader: ReturnType<typeof createFilesystemArtifactReader>,
+  reader: ReturnType<typeof createArtifactRepositoryReader>,
 ): ExportArtifactReader {
   return Object.freeze({
     async read(ref: Parameters<ExportArtifactReader["read"]>[0]) {

@@ -34,7 +34,7 @@ import {
   removePrivateStagingRoot,
   type OwnedPrivateStagingRoot,
 } from "./private-staging";
-import type { ArtifactStoreRoot } from "./artifact-reader";
+import type { ArtifactStoreRoot } from "../../../layout";
 
 const EVIDENCE_DIRECTORY = "mechanical-evidence";
 const DIGEST_DIRECTORY = "sha256";

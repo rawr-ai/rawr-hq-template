@@ -1,16 +1,9 @@
 import type { PackageDigest, PackagingFailure } from "./contract";
 
 export type PackageOutputFailpoint =
-  | "AfterOutputCaptured"
-  | "AfterTemporaryCreated"
-  | "AfterTemporaryWritten"
-  | "AfterTemporaryVerified"
-  | "BeforeOutputCommit"
-  | "AfterTemporaryPrecommitRead"
-  | "AfterParentPrecommitRead"
-  | "AfterOutputPrecommitRead"
-  | "BeforePublicationLinkUnlink"
-  | "AfterOutputCommit"
+  | "AfterOutputObserved"
+  | "BeforeCommit"
+  | "AfterCommit"
   | "BeforeFinalVerification";
 
 export interface PackageOutputFailpointContext {

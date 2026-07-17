@@ -16,13 +16,24 @@ import type { ArtifactReader, ArtifactReadResult } from "../../../src/service/mo
 import type { AtomicPackageOutput } from "../../../src/service/modules/packaging/internal/atomic-output";
 import { COWORK_PACKAGE_FORMAT } from "../../../src/service/modules/packaging/internal/contract";
 import { COWORK_V1_MAX_PAYLOAD_BYTES } from "../../../src/service/modules/packaging/internal/cowork-v1";
-import { createNodeAtomicPackageOutput } from "../../../../../apps/cli/src/lib/agent-plugins/service-runtime/packaging/node-atomic-output";
-import { nodeCoworkV1Runtime } from "../../../../../apps/cli/src/lib/agent-plugins/service-runtime/packaging/node-cowork-v1";
+import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+
 import { createPackageAgentPluginApplication } from "../../../src/service/modules/packaging/internal/package-agent-plugin";
+import {
+  createResourcePackageOutputRuntime,
+  type ResourcePackageOutputOptions,
+} from "../../../src/service/modules/packaging/ports";
 import { packagingArtifactFixture } from "./artifact-fixture";
 import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "./owned-fixture-root";
 
 const roots: OwnedFixtureRoot[] = [];
+const coworkV1Runtime = createPackageOutputLifecycleRuntime({
+  artifactReader: {
+    async read() {
+      throw new Error("Cowork rendering does not read artifacts");
+    },
+  },
+}).coworkV1;
 
 afterEach(async () => {
   while (roots.length > 0) {
@@ -36,11 +47,9 @@ describe("package agent plugin application", () => {
     const root = await fixtureRoot();
     const fixture = packagingArtifactFixture();
     const reader = new ResultReader({ kind: "Verified", snapshot: fixture.alphaSnapshot });
-    const application = createPackageAgentPluginApplication({
-      artifactReader: reader,
-      coworkV1: nodeCoworkV1Runtime,
-      output: createNodeAtomicPackageOutput({ operationId: operationIds() }),
-    });
+    const application = createPackageAgentPluginApplication(
+      createPackageOutputLifecycleRuntime({ artifactReader: reader }),
+    );
     const outputPath = join(root.path, "alpha.zip");
 
     const first = await application.package({
@@ -113,11 +122,9 @@ describe("package agent plugin application", () => {
       kind: "Verified",
       snapshot: fixture.setSnapshot,
     });
-    const application = createPackageAgentPluginApplication({
-      artifactReader: reader,
-      coworkV1: nodeCoworkV1Runtime,
-      output: createNodeAtomicPackageOutput({ operationId: operationIds() }),
-    });
+    const application = createPackageAgentPluginApplication(
+      createPackageOutputLifecycleRuntime({ artifactReader: reader }),
+    );
     const packageAt = (outputPath: string) => application.package({
       artifactRef: fixture.setSnapshot.ref,
       format: COWORK_PACKAGE_FORMAT,
@@ -179,7 +186,7 @@ describe("package agent plugin application", () => {
     const output = new CountingOutput({ kind: "ReadOnlyConverged" });
     const application = createPackageAgentPluginApplication({
       artifactReader: reader,
-      coworkV1: nodeCoworkV1Runtime,
+      coworkV1: coworkV1Runtime,
       output,
     });
 
@@ -205,7 +212,7 @@ describe("package agent plugin application", () => {
     const output = new CountingOutput({ kind: "ReadOnlyConverged" });
     const missing = createPackageAgentPluginApplication({
       artifactReader: new ResultReader({ kind: "Missing", ref: fixture.alphaSnapshot.ref }),
-      coworkV1: nodeCoworkV1Runtime,
+      coworkV1: coworkV1Runtime,
       output,
     });
     const mismatch = createPackageAgentPluginApplication({
@@ -214,7 +221,7 @@ describe("package agent plugin application", () => {
         ref: fixture.alphaSnapshot.ref,
         issues: [{ code: "DigestMismatch", detail: "tampered" }],
       }),
-      coworkV1: nodeCoworkV1Runtime,
+      coworkV1: coworkV1Runtime,
       output,
     });
     const request = {
@@ -241,7 +248,7 @@ describe("package agent plugin application", () => {
     const output = new CountingOutput({ kind: "ReadOnlyConverged" });
     const application = createPackageAgentPluginApplication({
       artifactReader: new ResultReader({ kind: "Verified", snapshot: fixture.betaSnapshot }),
-      coworkV1: nodeCoworkV1Runtime,
+      coworkV1: coworkV1Runtime,
       output,
     });
 
@@ -263,7 +270,7 @@ describe("package agent plugin application", () => {
     const fixture = packagingArtifactFixture();
     const application = createPackageAgentPluginApplication({
       artifactReader: new ResultReader({ kind: "Verified", snapshot: fixture.alphaSnapshot }),
-      coworkV1: nodeCoworkV1Runtime,
+      coworkV1: coworkV1Runtime,
       output: {
         async publish() {
           throw new Error("unknown output boundary");
@@ -309,7 +316,7 @@ describe("package agent plugin application", () => {
     const output = new CountingOutput({ kind: "ReadOnlyConverged" });
     const application = createPackageAgentPluginApplication({
       artifactReader: new ResultReader({ kind: "Verified", snapshot: oversizedSnapshot }),
-      coworkV1: nodeCoworkV1Runtime,
+      coworkV1: coworkV1Runtime,
       output,
     });
 
@@ -381,9 +388,13 @@ async function fixtureRoot(): Promise<OwnedFixtureRoot> {
   return root;
 }
 
-function operationIds(): () => string {
-  let next = 0;
-  return () => `application-${String(++next).padStart(8, "0")}`;
+function createPackageOutputLifecycleRuntime(
+  options: Omit<ResourcePackageOutputOptions, "packageOutput">,
+) {
+  return createResourcePackageOutputRuntime({
+    ...options,
+    packageOutput: makeNodePackageOutputAsyncPort(),
+  });
 }
 
 async function assertMissing(path: string): Promise<void> {

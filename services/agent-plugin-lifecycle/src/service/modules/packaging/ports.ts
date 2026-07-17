@@ -50,3 +50,9 @@ export type {
   PackagingFailure,
   PackagingFailureCode,
 };
+
+export {
+  coworkV1PackageDigest,
+  createResourcePackageOutputRuntime,
+  type ResourcePackageOutputOptions,
+} from "./internal/resource-package-output";

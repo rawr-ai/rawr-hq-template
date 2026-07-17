@@ -22,6 +22,23 @@ export interface PackageOutputPublicationRequest {
   readonly bytes: Uint8Array;
   /** Bound selected by the semantic owner for observing a prior output. */
   readonly maxPriorOutputBytes: number;
+  readonly control?: PackageOutputPublicationControl;
+}
+
+export type PackageOutputPublicationPoint =
+  | "AfterOutputObserved"
+  | "BeforeCommit"
+  | "AfterCommit"
+  | "BeforeFinalVerification";
+
+export interface PackageOutputPublicationEvent {
+  readonly point: PackageOutputPublicationPoint;
+  readonly outputPath: string;
+  readonly temporaryPath?: string;
+}
+
+export interface PackageOutputPublicationControl {
+  readonly onEvent?: (event: PackageOutputPublicationEvent) => Promise<void>;
 }
 
 export type PackageOutputFailureReason =

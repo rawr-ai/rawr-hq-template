@@ -1,11 +1,30 @@
 import { Buffer } from "node:buffer";
-import { lstat, mkdir, mkdtemp, readFile, readdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rename,
+  rm,
+  symlink,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { afterEach, describe, expect, test } from "bun:test";
+import { FileSystem, Path } from "@effect/platform";
+import { SystemError } from "@effect/platform/Error";
+import { NodeContext } from "@effect/platform-node";
+import { Effect } from "effect";
 
-import type { CoworkV1ArchiveEncodingRequest } from "@rawr/resource-agent-plugin-package-output";
+import type {
+  CoworkV1ArchiveEncodingRequest,
+  PackageOutputFailure,
+} from "@rawr/resource-agent-plugin-package-output";
 import {
   makeAgentPluginPackageOutputResource,
   runNodePackageOutput,
@@ -101,6 +120,71 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     expect(await readFile(outputPath)).toEqual(Buffer.from(bytes));
     expect((await lstat(outputPath)).mode & 0o777).toBe(0o644);
     expect(privateEntries(await readdir(fixture.root))).toEqual([]);
+  });
+
+  test("repairs non-canonical mode instead of reporting byte-only convergence", async () => {
+    const fixture = await createFixture();
+    const outputPath = path.join(fixture.root, "mode-repair.zip");
+    const bytes = encoder.encode("same bytes\n");
+    await writeFile(outputPath, bytes, { mode: 0o600 });
+    const resource = makeAgentPluginPackageOutputResource();
+
+    const result = unwrap(await runNodePackageOutput(resource.publish({
+      outputPath,
+      bytes,
+      maxPriorOutputBytes: 1024,
+    })));
+
+    expect(result).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Replaced" });
+    expect((await lstat(outputPath)).mode & 0o777).toBe(0o644);
+  });
+
+  test("serializes owner-local publications before each operation captures prior output", async () => {
+    const fixture = await createFixture();
+    const outputPath = path.join(fixture.root, "serialized.zip");
+    await writeFile(outputPath, "prior\n", { mode: 0o644 });
+    let observed = 0;
+    let releaseFirst: (() => void) | undefined;
+    let admitFirst: (() => void) | undefined;
+    const firstAdmitted = new Promise<void>((resolve) => {
+      admitFirst = resolve;
+    });
+    const firstRelease = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    const resource = makeAgentPluginPackageOutputResource({
+      failpoints: {
+        async hit(point) {
+          if (point === "AfterOutputObserved") observed += 1;
+          if (point === "BeforeCommit" && observed === 1) {
+            admitFirst?.();
+            await firstRelease;
+          }
+        },
+      },
+    });
+
+    const first = runNodePackageOutput(resource.publish({
+      outputPath,
+      bytes: encoder.encode("first\n"),
+      maxPriorOutputBytes: 1024,
+    }));
+    await firstAdmitted;
+    const second = runNodePackageOutput(resource.publish({
+      outputPath,
+      bytes: encoder.encode("second\n"),
+      maxPriorOutputBytes: 1024,
+    }));
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(observed).toBe(1);
+    releaseFirst?.();
+
+    expect((await Promise.all([first, second])).map(unwrap)).toEqual([
+      { kind: "OutputReplacedVerified", priorOutput: "Replaced" },
+      { kind: "OutputReplacedVerified", priorOutput: "Replaced" },
+    ]);
+    expect(await readFile(outputPath, "utf8")).toBe("second\n");
+    expect(observed).toBe(2);
   });
 
   test("rejects an aliased output parent without writing outside the named boundary", async () => {
@@ -202,6 +286,139 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     });
     expect(await readFile(outputPath)).toEqual(Buffer.from(bytes));
   });
+
+  test("preserves a substituted temporary identity, reports cleanup failure, and retries cleanly", async () => {
+    const fixture = await createFixture();
+    const outputPath = path.join(fixture.root, "substituted.zip");
+    const bytes = encoder.encode("owned temporary bytes\n");
+    let replacement: string | undefined;
+    let preserved: string | undefined;
+    let substituted = false;
+    const resource = makeAgentPluginPackageOutputResource({
+      failpoints: {
+        async hit(point, context) {
+          if (point !== "BeforeCommit" || substituted) return;
+          if (context.temporaryPath === undefined) throw new Error("Expected an owned temporary path");
+          substituted = true;
+          replacement = context.temporaryPath;
+          preserved = `${replacement}.preserved`;
+          await rename(replacement, preserved);
+          await writeFile(replacement, "replacement identity\n", { mode: 0o600 });
+        },
+      },
+    });
+
+    const result = unwrap(await runNodePackageOutput(resource.publish({
+      outputPath,
+      bytes,
+      maxPriorOutputBytes: 1024,
+    })));
+
+    expect(result).toMatchObject({
+      kind: "RejectedBeforeOutputMutation",
+      primaryFailure: { reason: "TemporaryFailed", phase: "temporary-revalidation" },
+      cleanupFailure: { operation: "cleanup", reason: "TemporaryFailed" },
+    });
+    expect(await Bun.file(outputPath).exists()).toBe(false);
+    if (replacement === undefined || preserved === undefined) throw new Error("Expected substituted paths");
+    expect(await readFile(replacement, "utf8")).toBe("replacement identity\n");
+    expect(await readFile(preserved)).toEqual(Buffer.from(bytes));
+
+    await unlink(replacement);
+    await unlink(preserved);
+    const retry = unwrap(await runNodePackageOutput(resource.publish({
+      outputPath,
+      bytes,
+      maxPriorOutputBytes: 1024,
+    })));
+    expect(retry).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
+    const repeated = unwrap(await runNodePackageOutput(resource.publish({
+      outputPath,
+      bytes,
+      maxPriorOutputBytes: 1024,
+    })));
+    expect(repeated).toEqual({ kind: "ReadOnlyConverged" });
+  });
+
+  test("cleans an owned temporary when preparation fails and permits a clean retry", async () => {
+    const fixture = await createFixture();
+    const outputPath = path.join(fixture.root, "preparation-retry.zip");
+    const bytes = encoder.encode("preparation retry\n");
+    const resource = makeAgentPluginPackageOutputResource();
+    let injected = false;
+
+    const attempted = await runWithFileSystem(resource.publish({
+      outputPath,
+      bytes,
+      maxPriorOutputBytes: 1024,
+    }), (base) => fileSystemProxy(base, {
+      chmod(candidate, mode) {
+        if (isPrivateTemporary(candidate) && !injected) {
+          injected = true;
+          return Effect.fail(injectedFileSystemFailure("chmod", candidate, "preparation probe"));
+        }
+        return base.chmod(candidate, mode);
+      },
+    }));
+
+    expect(attempted._tag).toBe("Right");
+    if (attempted._tag === "Left") throw attempted.left;
+    expect(attempted.right).toMatchObject({
+      kind: "RejectedBeforeOutputMutation",
+      primaryFailure: { phase: "temporary-mode", detail: expect.stringContaining("preparation probe") },
+    });
+    expect(privateEntries(await readdir(fixture.root))).toEqual([]);
+
+    const retry = unwrap(await runNodePackageOutput(resource.publish({
+      outputPath,
+      bytes,
+      maxPriorOutputBytes: 1024,
+    })));
+    expect(retry).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
+  });
+
+  test("reports cleanup failure when a failed preparation cannot remove its owned temporary", async () => {
+    const fixture = await createFixture();
+    const outputPath = path.join(fixture.root, "preparation-cleanup-failure.zip");
+    const bytes = encoder.encode("cleanup failure truth\n");
+    const resource = makeAgentPluginPackageOutputResource();
+
+    const attempted = await runWithFileSystem(resource.publish({
+      outputPath,
+      bytes,
+      maxPriorOutputBytes: 1024,
+    }), (base) => fileSystemProxy(base, {
+      chmod(candidate, mode) {
+        return isPrivateTemporary(candidate)
+          ? Effect.fail(injectedFileSystemFailure("chmod", candidate, "persistent preparation probe"))
+          : base.chmod(candidate, mode);
+      },
+      remove(candidate, options) {
+        return isPrivateTemporary(candidate)
+          ? Effect.fail(injectedFileSystemFailure("remove", candidate, "cleanup removal probe"))
+          : base.remove(candidate, options);
+      },
+    }));
+
+    expect(attempted._tag).toBe("Right");
+    if (attempted._tag === "Left") throw attempted.left;
+    expect(attempted.right).toMatchObject({
+      kind: "RejectedBeforeOutputMutation",
+      primaryFailure: { detail: expect.stringContaining("persistent preparation probe") },
+      cleanupFailure: { operation: "cleanup", detail: expect.stringContaining("cleanup removal probe") },
+    });
+    const [orphan] = privateEntries(await readdir(fixture.root));
+    expect(orphan?.startsWith(PRIVATE_TEMPORARY_PREFIX)).toBe(true);
+    if (orphan === undefined) throw new Error("Expected an explicitly unsettled private temporary");
+    await unlink(path.join(fixture.root, orphan));
+
+    const retry = unwrap(await runNodePackageOutput(resource.publish({
+      outputPath,
+      bytes,
+      maxPriorOutputBytes: 1024,
+    })));
+    expect(retry).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
+  });
 });
 
 function archiveRequest(): CoworkV1ArchiveEncodingRequest {
@@ -302,6 +519,46 @@ function inspectZip(bytes: Uint8Array): {
     entries,
     comment: archive.subarray(offset + 22, offset + 22 + commentLength).toString("utf8"),
   };
+}
+
+async function runWithFileSystem<A>(
+  operation: Effect.Effect<A, PackageOutputFailure, FileSystem.FileSystem | Path.Path>,
+  transform: (base: FileSystem.FileSystem) => FileSystem.FileSystem,
+) {
+  return Effect.runPromise(Effect.gen(function* () {
+    const base = yield* FileSystem.FileSystem;
+    return yield* operation.pipe(
+      Effect.provideService(FileSystem.FileSystem, transform(base)),
+      Effect.either,
+    );
+  }).pipe(Effect.provide(NodeContext.layer)));
+}
+
+function fileSystemProxy(
+  base: FileSystem.FileSystem,
+  overrides: Partial<FileSystem.FileSystem>,
+): FileSystem.FileSystem {
+  return new Proxy(base, {
+    get(target, property, receiver) {
+      return property in overrides
+        ? Reflect.get(overrides, property, receiver)
+        : Reflect.get(target, property, receiver);
+    },
+  });
+}
+
+function isPrivateTemporary(candidate: string): boolean {
+  return path.basename(candidate).startsWith(PRIVATE_TEMPORARY_PREFIX);
+}
+
+function injectedFileSystemFailure(method: string, candidate: string, description: string): SystemError {
+  return new SystemError({
+    reason: "Unknown",
+    module: "FileSystem",
+    method,
+    pathOrDescriptor: candidate,
+    description,
+  });
 }
 
 const PRIVATE_TEMPORARY_PREFIX = ".rawr-agent-plugin-package-output-";

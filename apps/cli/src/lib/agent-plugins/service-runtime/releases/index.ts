@@ -20,13 +20,7 @@ export {
   type SourceEligibilityIssue,
   type SourceEligibilityIssueCode,
 } from "@rawr/agent-plugin-lifecycle/ports/releases";
-export {
-  createFilesystemArtifactReader,
-  type ArtifactStoreRoot,
-} from "./artifact-store/artifact-reader";
-export {
-  createFilesystemArtifactStore,
-} from "./artifact-store/filesystem-store";
+export type { ArtifactStoreRoot } from "../../layout";
 export {
   createBunFfiNoReplacePublisher,
   type NativeRename,

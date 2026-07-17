@@ -15,8 +15,15 @@ export interface ArtifactTreeEntry {
   readonly bytes: Uint8Array;
 }
 
+/** Mechanical directory entry observed inside one immutable artifact object. */
+export interface ArtifactTreeDirectoryEntry {
+  readonly path: string;
+  readonly mode: number;
+}
+
 export interface ArtifactTreeSnapshot {
   readonly address: ArtifactObjectAddress;
+  readonly directories: readonly ArtifactTreeDirectoryEntry[];
   readonly entries: readonly ArtifactTreeEntry[];
 }
 
@@ -61,18 +68,31 @@ export type ArtifactPublicationResult =
     kind: "Occupied";
     address: ArtifactObjectAddress;
     observation: Exclude<ArtifactPublicationObservation, "Unknown">;
+    cleanupFailure?: string;
   }>
-  | Readonly<{ kind: "Rejected"; address: ArtifactObjectAddress; failure: string }>
+  | Readonly<{
+    kind: "Rejected";
+    address: ArtifactObjectAddress;
+    failure: string;
+    cleanupFailure?: string;
+  }>
   | Readonly<{
     kind: "Unsettled";
     address: ArtifactObjectAddress;
     failure: string;
     observation: ArtifactPublicationObservation;
+    cleanupFailure?: string;
   }>;
 
 export type ArtifactCommitDecision =
   | Readonly<{ kind: "Proceed" }>
   | Readonly<{ kind: "Reject"; failure: string }>;
+
+export type ArtifactRepositoryPublicationEvent =
+  | Readonly<{ kind: "AfterStagingWrite"; address: ArtifactObjectAddress }>
+  | Readonly<{ kind: "AfterStagingVerification"; address: ArtifactObjectAddress }>
+  | Readonly<{ kind: "BeforeNoReplacePublication"; address: ArtifactObjectAddress }>
+  | Readonly<{ kind: "AfterNoReplacePublication"; address: ArtifactObjectAddress }>;
 
 export type ArtifactRepositoryFailureReason =
   | "InvalidInput"
@@ -99,6 +119,8 @@ export interface ArtifactReadLimits {
 export interface ArtifactPublicationControl {
   /** Runs after private staging verifies and immediately before no-replace publication. */
   readonly beforeCommit?: () => Promise<ArtifactCommitDecision>;
+  /** Mechanical publication events observed by the semantic owner for this operation. */
+  readonly onEvent?: (event: ArtifactRepositoryPublicationEvent) => Promise<void>;
 }
 
 export interface ArtifactRepositoryResource<R = never> {

@@ -20,7 +20,7 @@ import {
 } from "@rawr/agent-plugin-lifecycle/ports/providers";
 
 import { createFilesystemMechanicalEvidenceStore } from "../releases/artifact-store/evidence-store";
-import type { ArtifactStoreRoot } from "../releases/artifact-store/artifact-reader";
+import type { ArtifactStoreRoot } from "../../layout";
 
 export type NodeMechanicalEvidenceRuntime = Readonly<{
   provider: MechanicalEvidencePublisher;

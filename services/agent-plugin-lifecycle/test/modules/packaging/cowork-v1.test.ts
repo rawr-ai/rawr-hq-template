@@ -9,7 +9,9 @@ import {
   assertSnapshotMatchesRef,
   renderCoworkV1,
 } from "../../../src/service/modules/packaging/internal/cowork-v1";
-import { nodeCoworkV1Runtime } from "../../../../../apps/cli/src/lib/agent-plugins/service-runtime/packaging/node-cowork-v1";
+import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+
+import { createResourcePackageOutputRuntime } from "../../../src/service/modules/packaging/ports";
 import { packagingArtifactFixture } from "./artifact-fixture";
 import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "./owned-fixture-root";
 
@@ -21,6 +23,14 @@ interface ZipEntryView {
 }
 
 const roots: OwnedFixtureRoot[] = [];
+const nodeCoworkV1Runtime = createResourcePackageOutputRuntime({
+  artifactReader: {
+    async read() {
+      throw new Error("Cowork rendering does not read artifacts");
+    },
+  },
+  packageOutput: makeNodePackageOutputAsyncPort(),
+}).coworkV1;
 
 afterEach(async () => {
   while (roots.length > 0) {
