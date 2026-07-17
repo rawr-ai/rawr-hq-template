@@ -404,8 +404,16 @@ describe("qualified lifecycle command boundary", () => {
       await symlink(providerHome, providerAlias);
 
       const targetCases = [
-        { label: "aliased provider home", targets: [`codex=${providerAlias}`] },
-        { label: "duplicate canonical provider home", targets: [`codex=${providerHome}`, `codex=${providerAlias}`] },
+        {
+          label: "aliased provider home",
+          targets: [`codex=${providerAlias}`],
+          providerExecutables: { codex: "/bin/echo" },
+        },
+        {
+          label: "duplicate canonical provider home",
+          targets: [`claude=${providerHome}`, `codex=${providerHome}`],
+          providerExecutables: { claude: "/bin/echo", codex: "/bin/echo" },
+        },
       ] as const;
 
       for (const testCase of targetCases) {
@@ -420,7 +428,7 @@ describe("qualified lifecycle command boundary", () => {
         const binding: ControllerProjectionBinding = {
           gitExecutable: "/usr/bin/git",
           hostedGovernanceExecutable: "/usr/bin/true",
-          providerExecutables: { codex: "/bin/echo" },
+          providerExecutables: testCase.providerExecutables,
         };
         let clientConstructions = 0;
         const rejected = await captureRejection(projectLifecycleOperation(request, binding, () => {
@@ -436,6 +444,7 @@ describe("qualified lifecycle command boundary", () => {
             testCase.targets,
             "/usr/bin/true",
             "/bin/echo",
+            "claude" in testCase.providerExecutables ? "/bin/echo" : undefined,
           ),
           "--json",
         ]);
@@ -620,7 +629,8 @@ function canonicalStatusCommand(
   contentWorkspace: string,
   targets: readonly string[],
   hostedGovernanceExecutable: string,
-  providerExecutable: string,
+  codexExecutable: string,
+  claudeExecutable?: string,
 ): readonly string[] {
   return [
     "agent", "plugins", "status",
@@ -629,7 +639,8 @@ function canonicalStatusCommand(
     ...targets.flatMap((target) => ["--target", target]),
     "--git-executable", "/usr/bin/git",
     "--hosted-governance-executable", hostedGovernanceExecutable,
-    "--provider-executable", `codex=${providerExecutable}`,
+    "--provider-executable", `codex=${codexExecutable}`,
+    ...(claudeExecutable === undefined ? [] : ["--provider-executable", `claude=${claudeExecutable}`]),
   ];
 }
 
