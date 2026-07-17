@@ -19,7 +19,6 @@ import {
   type ControllerPlatform,
 } from "@rawr/controller-release";
 // Classification is controller product input; the build app does not own a duplicate copy.
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import {
   assertControllerClassification,
   controllerCommandPackages,

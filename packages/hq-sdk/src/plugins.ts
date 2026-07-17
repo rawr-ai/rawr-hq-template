@@ -1,5 +1,5 @@
 /**
- * @fileoverview Pre-Effect service binding seam for plugin and app projections.
+ * @fileoverview Pre-Effect service binding seam for controller projections.
  *
  * @remarks
  * Projections own concrete process resources today, but the service boundary
@@ -13,7 +13,7 @@ export type ProcessView = Readonly<{
   /**
    * Stable process-side identity for this binding context.
    *
-   * Examples: `plugin-session-tools`, `plugin-plugins`, `server`.
+   * Examples: `plugin-session-tools`, `rawr-cli`, `server`.
    */
   processId: string;
   workspaceRef?: string;
@@ -24,7 +24,7 @@ export type RoleView = Readonly<{
   /**
    * Stable role/capability identity inside the process.
    *
-   * Examples: `session-intelligence`, `agent-config-sync`, `hq-ops`.
+   * Examples: `session-intelligence`, `agent-plugin-lifecycle`, `hq-ops`.
    */
   roleId: string;
   capability?: string;

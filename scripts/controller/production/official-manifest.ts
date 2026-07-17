@@ -4,7 +4,6 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 
 // Classification is controller product input; the build app does not own a duplicate copy.
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import type {
   ControllerCommandPackageClassification,
 } from "../../../apps/cli/src/lib/controller/classification.ts";
