@@ -223,14 +223,19 @@ export {
 } from "./adapters/claude";
 export type {
   NativeProviderAdapter,
+  NativeProviderObserver,
 } from "./adapters/native";
 export {
   createResourceCodexProviderAdapter,
+  createResourceCodexProviderObserver,
   type ResourceCodexProviderAdapterOptions,
+  type ResourceCodexProviderObserverOptions,
 } from "./adapters/resource-codex";
 export {
   createResourceClaudeProviderAdapter,
+  createResourceClaudeProviderObserver,
   type ResourceClaudeProviderAdapterOptions,
+  type ResourceClaudeProviderObserverOptions,
 } from "./adapters/resource-claude";
 export {
   createPathlessProjectionStorage,
@@ -246,6 +251,15 @@ export {
   createPathlessTargetState,
   type PathlessTargetState,
 } from "./adapters/target-records";
+export {
+  createResourceProviderRecordState,
+  type ProviderRecordState,
+  type ResourceProviderRecordStateOptions,
+} from "./adapters/resource-record-storage";
+export {
+  createProviderOwnerRuntime,
+  type NativeMemberRestorationPorts,
+} from "./adapters/provider-owner-runtime";
 export type {
   ClaudeNativeResourceSession,
   CodexNativeResourceSession,

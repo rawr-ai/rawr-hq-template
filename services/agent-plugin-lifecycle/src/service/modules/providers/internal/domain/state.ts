@@ -478,7 +478,7 @@ export function planManagedRetire(
   targetIdentity: TargetIdentityObservation,
 ): ProviderTargetPlan {
   if (receipt.kind === "absent") {
-    return inventory.members.some((candidate) => candidate.pluginId === pluginId)
+    return hasRequestedPluginExposure(inventory, pluginId)
       ? blockedPlan(target, null, [issue("BLOCKED_COLLISION", "request.pluginId", "Live native state exists without same-target receipt ownership proof", "receipt-owned plugin", pluginId)])
       : readOnlyPlan(target);
   }
@@ -489,7 +489,7 @@ export function planManagedRetire(
   if (marketplaceIssue !== undefined) return blockedPlan(target, null, [marketplaceIssue]);
   const claim = receipt.receipt.body.managedMembers.find((candidate) => candidate.pluginId === pluginId);
   if (claim === undefined) {
-    return inventory.members.some((candidate) => candidate.pluginId === pluginId)
+    return hasRequestedPluginExposure(inventory, pluginId)
       ? blockedPlan(target, null, [issue("BLOCKED_COLLISION", "request.pluginId", "Receipt does not prove ownership of the live requested plugin", "receipt-owned plugin", pluginId)])
       : readOnlyPlan(target);
   }
@@ -605,6 +605,13 @@ export function planManagedRetire(
     steps.push(Object.freeze({ kind: "mutate", action: Object.freeze({ kind: "PublishReceipt", target, prior: receipt, receipt: next }) }));
   }
   return Object.freeze({ target, state: "mutating", projection: null, steps: Object.freeze(steps), issues: Object.freeze([]) });
+}
+
+function hasRequestedPluginExposure(inventory: ProviderInventory, pluginId: PluginId): boolean {
+  const nativeIdentity = `rawr:${pluginId}`;
+  return inventory.members.some((candidate) =>
+    candidate.pluginId === pluginId || candidate.nativeIdentity === nativeIdentity)
+    || inventory.standaloneExposures.some((candidate) => candidate.nativeIdentity === nativeIdentity);
 }
 
 export function nativeMemberValue(member: NativeMemberObservation): CanonicalValue {

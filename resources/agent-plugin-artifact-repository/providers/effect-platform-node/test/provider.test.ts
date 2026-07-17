@@ -276,6 +276,44 @@ describe("Effect Platform Node artifact repository provider", () => {
     expect(await readFile(storedEnvelope, "utf8")).toBe('{"release":"first"}\n');
   });
 
+  test("publishes canonical provider files under dot-prefixed directories", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "provider-projection");
+    const entries = Object.freeze([
+      Object.freeze({
+        path: ".claude-plugin/marketplace.json",
+        mode: 0o444 as const,
+        bytes: new TextEncoder().encode('{"name":"rawr-hq"}\n'),
+      }),
+      Object.freeze({
+        path: ".rawr/marketplace.json",
+        mode: 0o444 as const,
+        bytes: new TextEncoder().encode('{"schemaVersion":1}\n'),
+      }),
+    ]);
+    const resource = makeArtifactRepositoryResource();
+
+    const published = unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries,
+      limits: LIMITS,
+    })));
+    const observed = unwrap(await runNodeArtifactRepository(resource.readTree({ address, limits: LIMITS })));
+
+    expect(published.kind).toBe("Published");
+    expect(observed.kind).toBe("Present");
+    if (observed.kind === "Present") {
+      expect(observed.snapshot.entries.map((entry) => entry.path)).toEqual([
+        ".claude-plugin/marketplace.json",
+        ".rawr/marketplace.json",
+      ]);
+      expect(observed.snapshot.directories).toEqual([
+        { path: ".claude-plugin", mode: 0o700 },
+        { path: ".rawr", mode: 0o700 },
+      ]);
+    }
+  });
+
   test("returns a read-only converged result without rewriting the object", async () => {
     const parent = await createFixture();
     const address = artifactAddress(path.join(parent, "repository"), "artifact-converged");

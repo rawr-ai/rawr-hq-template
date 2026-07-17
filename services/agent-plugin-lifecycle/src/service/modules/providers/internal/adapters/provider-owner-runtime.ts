@@ -1,27 +1,26 @@
-import { failure, issue, success, type DeploymentResult } from "@rawr/agent-plugin-lifecycle/ports/providers";
+import type { ContentAuthority } from "../../../../shared/release";
 import {
   marketplaceState,
   sameMarketplaceState,
   type ProviderMarketplaceObservation,
   type ProviderMarketplaceRegistration,
-} from "@rawr/agent-plugin-lifecycle/ports/providers";
-import type { NativeMemberObservation } from "@rawr/agent-plugin-lifecycle/ports/providers";
-import type { ProviderId, ProviderTarget } from "@rawr/agent-plugin-lifecycle/ports/providers";
-import type { ContentAuthority } from "@rawr/agent-plugin-lifecycle/release";
-import type { ProviderMemberRestoreContext, ProviderOwnerRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
-import type { NativeMemberRestorationPort } from "@rawr/agent-plugin-lifecycle/ports/providers";
-import type { NodeProjectionStore } from "./projections";
-import type { NodeTargetStateStore } from "./target-state";
-
-export type { NativeMemberRestorationPort } from "@rawr/agent-plugin-lifecycle/ports/providers";
+} from "../domain/marketplace";
+import { failure, issue, success, type DeploymentResult } from "../domain/result";
+import type { NativeMemberObservation } from "../domain/state";
+import type { ProviderId, ProviderTarget } from "../domain/target";
+import type { ProviderMemberRestoreContext, ProviderOwnerRuntime } from "../ports/owner";
+import type { NativeMemberRestorationPort } from "../ports/provider";
+import type { PathlessProjectionStorage } from "./projection-storage";
+import type { PathlessTargetState } from "./target-records";
 
 export type NativeMemberRestorationPorts =
   | Readonly<Record<ProviderId, NativeMemberRestorationPort>>
   | ((provider: ProviderId, contentAuthority: ContentAuthority) => NativeMemberRestorationPort);
 
-export function createNodeProviderOwnerRuntime(input: Readonly<{
-  projections: NodeProjectionStore;
-  targets: NodeTargetStateStore;
+/** Owns provider inverse semantics while delegating state and native mutation mechanically. */
+export function createProviderOwnerRuntime(input: Readonly<{
+  projections: PathlessProjectionStorage;
+  targets: PathlessTargetState;
   members: NativeMemberRestorationPorts;
 }>): ProviderOwnerRuntime {
   const readMember = async (
@@ -46,9 +45,7 @@ export function createNodeProviderOwnerRuntime(input: Readonly<{
     if (!current.ok) return current;
     if (sameMarketplace(current.value, prior)) return success(null);
     if (!sameMarketplace(current.value, expected)) {
-      return marketplaceFailure(
-        "Live marketplace no longer matches the recorded provider post-state",
-      );
+      return marketplaceFailure("Live marketplace no longer matches the recorded provider post-state");
     }
     if (!registrationMatchesObservation(priorRegistration, prior)) {
       return marketplaceFailure("Prior marketplace registration does not bind its observation");
@@ -85,8 +82,11 @@ export function createNodeProviderOwnerRuntime(input: Readonly<{
       return marketplaceFailure("Install inverse cannot carry a prior native member");
     }
     const priorRegistration = context.priorMarketplace;
-    if (prior !== null && context.kind !== "InstallMember"
-      && !marketplaceContainsPrior(priorRegistration, prior, context)) {
+    if (
+      prior !== null
+      && context.kind !== "InstallMember"
+      && !marketplaceContainsPrior(priorRegistration, prior, context)
+    ) {
       return marketplaceFailure("Provider member inverse prior marketplace is incomplete");
     }
     const priorObservation = prior === null
@@ -95,8 +95,10 @@ export function createNodeProviderOwnerRuntime(input: Readonly<{
 
     const marketplace = await port.readMarketplace(target);
     if (!marketplace.ok) return marketplace;
-    if (!sameMarketplace(marketplace.value, activeObservation)
-      && !sameMarketplace(marketplace.value, priorObservation)) {
+    if (
+      !sameMarketplace(marketplace.value, activeObservation)
+      && !sameMarketplace(marketplace.value, priorObservation)
+    ) {
       return marketplaceFailure("Live marketplace changed during provider member replay");
     }
     const current = await port.readMember(target, memberIdentity(expected, prior));
@@ -123,11 +125,7 @@ export function createNodeProviderOwnerRuntime(input: Readonly<{
         });
         if (!changed.ok) return changed;
       }
-      const restored = await port.restoreExact({
-        target,
-        expected,
-        prior,
-      });
+      const restored = await port.restoreExact({ target, expected, prior });
       if (!restored.ok) return restored;
     }
 
@@ -165,9 +163,11 @@ export function createNodeProviderOwnerRuntime(input: Readonly<{
 
   const removeIdentityExact: ProviderOwnerRuntime["removeIdentityExact"] = async ({ target, expected }) =>
     await input.targets.removeAdmittedIdentityExact(target, expected);
-
-  const restoreReceiptExact: ProviderOwnerRuntime["restoreReceiptExact"] = async ({ target, expected, prior }) =>
-    await input.targets.restoreReceiptExact(target, expected, prior);
+  const restoreReceiptExact: ProviderOwnerRuntime["restoreReceiptExact"] = async ({
+    target,
+    expected,
+    prior,
+  }) => await input.targets.restoreReceiptExact(target, expected, prior);
 
   return Object.freeze({
     readIdentity: input.targets.identities.read,
@@ -205,16 +205,15 @@ function marketplaceContainsPrior(
 }
 
 async function materializeMarketplaceSource(
-  projections: NodeProjectionStore,
+  projections: PathlessProjectionStorage,
   registration: ProviderMarketplaceRegistration,
 ) {
-  const materialized = await projections.materializeMarketplace(
+  const materialized = await projections.marketplaceMaterializer.materialize(
     registration.provider,
     registration,
   );
   return materialized.ok
     ? success(Object.freeze({
-        path: materialized.value.path,
         projectionDigest: materialized.value.projectionDigest,
         sourceDigest: materialized.value.sourceDigest,
       }))
@@ -257,7 +256,10 @@ function memberIdentity(
   prior: NativeMemberObservation | null,
 ): string {
   const identity = expected?.nativeIdentity ?? prior?.nativeIdentity;
-  if (identity === undefined || (expected !== null && prior !== null && expected.nativeIdentity !== prior.nativeIdentity)) {
+  if (
+    identity === undefined
+    || (expected !== null && prior !== null && expected.nativeIdentity !== prior.nativeIdentity)
+  ) {
     throw new Error("Provider inverse must bind exactly one native identity");
   }
   return identity;
@@ -285,5 +287,7 @@ function sameStrings(left: readonly string[], right: readonly string[]): boolean
 }
 
 function memberLabel(member: NativeMemberObservation | null): string {
-  return member === null ? "absent" : `${member.nativeIdentity}:${member.memberFingerprint}:${member.enablement}`;
+  return member === null
+    ? "absent"
+    : `${member.nativeIdentity}:${member.memberFingerprint}:${member.enablement}`;
 }

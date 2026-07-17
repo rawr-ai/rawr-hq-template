@@ -19,6 +19,10 @@ import {
   type ClaudeProviderAdapter,
 } from "./claude";
 import {
+  createNativeProviderObserver,
+  type NativeProviderObserver,
+} from "./native";
+import {
   NATIVE_PACKAGE_READ_LIMITS,
   inspectNativePluginPackage,
   inspectNativePluginVisibility,
@@ -48,27 +52,38 @@ export interface ResourceClaudeProviderAdapterOptions {
   readonly marketplaceSources: ProviderMarketplaceSourceReader;
 }
 
+export type ResourceClaudeProviderObserverOptions = Pick<
+  ResourceClaudeProviderAdapterOptions,
+  "executablePath" | "resource"
+>;
+
+export function createResourceClaudeProviderObserver(
+  input: ResourceClaudeProviderObserverOptions,
+): NativeProviderObserver {
+  const { session, listPlugins } = createClaudeResourceAccess(input);
+  return createNativeProviderObserver({
+    provider: "claude",
+    adapterProtocol: CLAUDE_ADAPTER_PROTOCOL,
+    bridge: {
+      probe: async (home) => {
+        const observed = await (await session(home)).probe();
+        return Object.freeze({
+          adapterProtocol: CLAUDE_ADAPTER_PROTOCOL,
+          available: claudeCapabilitiesFromCommands(observed.pluginCommands, observed.marketplaceCommands),
+        });
+      },
+      inventoryExposures: async (home) => await inventoryClaudeExposures(
+        await session(home),
+        await listPlugins(home),
+      ),
+    },
+  });
+}
+
 export function createResourceClaudeProviderAdapter(
   input: ResourceClaudeProviderAdapterOptions,
 ): ClaudeProviderAdapter {
-  const acquire = createSessionCache(input.executablePath, input.resource.acquireClaude);
-  const session = async (home: string): Promise<ClaudeNativeResourceSession> => {
-    const acquired = await acquire(home);
-    if (
-      acquired.provider !== "claude"
-      || acquired.home !== home
-      || acquired.executablePath !== input.executablePath
-    ) {
-      throw new Error("Claude resource returned a session for different explicit authority");
-    }
-    return acquired;
-  };
-
-  const listPlugins = async (home: string): Promise<readonly ClaudeListPlugin[]> => {
-    const observation = await (await session(home)).listPlugins();
-    const record = requireRecord(observation.json, "Claude plugin list");
-    return Object.freeze(requireArray(record.installed, "Claude installed plugins").map(parseListPlugin));
-  };
+  const { session, listPlugins } = createClaudeResourceAccess(input);
 
   const inventoryMarketplaceRegistration: ClaudeProcessPort["inventoryMarketplaceRegistration"] = async ({ home }) => {
     const provider = await session(home);
@@ -222,6 +237,30 @@ export function createResourceClaudeProviderAdapter(
   });
 }
 
+function createClaudeResourceAccess(input: ResourceClaudeProviderObserverOptions): Readonly<{
+  session: (home: string) => Promise<ClaudeNativeResourceSession>;
+  listPlugins: (home: string) => Promise<readonly ClaudeListPlugin[]>;
+}> {
+  const acquire = createSessionCache(input.executablePath, input.resource.acquireClaude);
+  const session = async (home: string): Promise<ClaudeNativeResourceSession> => {
+    const acquired = await acquire(home);
+    if (
+      acquired.provider !== "claude"
+      || acquired.home !== home
+      || acquired.executablePath !== input.executablePath
+    ) {
+      throw new Error("Claude resource returned a session for different explicit authority");
+    }
+    return acquired;
+  };
+  const listPlugins = async (home: string): Promise<readonly ClaudeListPlugin[]> => {
+    const observation = await (await session(home)).listPlugins();
+    const record = requireRecord(observation.json, "Claude plugin list");
+    return Object.freeze(requireArray(record.installed, "Claude installed plugins").map(parseListPlugin));
+  };
+  return Object.freeze({ session, listPlugins });
+}
+
 export function claudeCapabilitiesFromCommands(
   pluginCommands: readonly string[],
   marketplaceCommands: readonly string[],
@@ -296,4 +335,40 @@ function parseConfiguredPluginExposures(
       visibleHooks: Object.freeze([]),
     });
   }));
+}
+
+async function inventoryClaudeExposures(
+  provider: ClaudeNativeResourceSession,
+  plugins: readonly ClaudeListPlugin[],
+): Promise<readonly NativeStandaloneExposureObservation[]> {
+  const exposures = new Map<string, NativeStandaloneExposureObservation>();
+  for (const plugin of plugins) {
+    const visible = inspectNativePluginVisibility(await provider.readPlugin({
+      selector: plugin.selector,
+      ...NATIVE_PACKAGE_READ_LIMITS,
+    }));
+    exposures.set(plugin.selector, Object.freeze({
+      exposureIdentity: plugin.selector,
+      nativeIdentity: `rawr:${plugin.name}`,
+      providerSourceIdentity: parseSourceIdentity(plugin.marketplaceName, "claude"),
+      enablement: plugin.enabled ? "enabled" : "disabled",
+      visibleSkills: visible.visibleSkills,
+      visibleHooks: visible.visibleHooks,
+    }));
+  }
+  for (const configured of parseConfiguredPluginExposures(await provider.readConfiguration())) {
+    const installed = exposures.get(configured.exposureIdentity);
+    if (installed !== undefined && (
+      installed.nativeIdentity !== configured.nativeIdentity
+      || installed.providerSourceIdentity !== configured.providerSourceIdentity
+    )) {
+      throw new Error(`Claude exposure identity changed across observations for ${configured.exposureIdentity}`);
+    }
+    exposures.set(configured.exposureIdentity, Object.freeze({
+      ...configured,
+      visibleSkills: installed?.visibleSkills ?? configured.visibleSkills,
+      visibleHooks: installed?.visibleHooks ?? configured.visibleHooks,
+    }));
+  }
+  return Object.freeze([...exposures.values()]);
 }

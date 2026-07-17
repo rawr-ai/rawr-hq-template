@@ -28,6 +28,7 @@ const STAGING_PREFIX = "rawr-agent-plugin-artifact-";
 const STAGING_OBJECT = "object";
 const EVIDENCE_FILE = "evidence.json";
 const SEGMENT_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/u;
+const TREE_PATH_SEGMENT_PATTERN = /^[A-Za-z0-9._-]+$/u;
 
 type ProviderRequirements = FileSystem.FileSystem | Path.Path;
 
@@ -933,7 +934,7 @@ function validateRelativeFilePath(
     candidate.length === 0
     || candidate.includes("\\")
     || candidate.includes("\0")
-    || parts.some((part) => !SEGMENT_PATTERN.test(part) || part === "." || part === "..")
+    || parts.some((part) => !TREE_PATH_SEGMENT_PATTERN.test(part) || part === "." || part === "..")
   ) {
     throw failure(operation, "InvalidInput", candidate, "Artifact path must be canonical and repository-relative");
   }

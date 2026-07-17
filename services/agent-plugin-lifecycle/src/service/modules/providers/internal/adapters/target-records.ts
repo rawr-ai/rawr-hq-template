@@ -47,6 +47,15 @@ export interface PathlessTargetState {
   readonly identities: TargetIdentityReader & TargetIdentityWriter;
   readonly completeIdentities: CompleteTargetIdentityReader;
   readonly receipts: TargetReceiptReader & TargetReceiptWriter;
+  removeAdmittedIdentityExact(
+    target: ProviderTarget,
+    expected: TargetIdentitySidecar,
+  ): Promise<DeploymentResult<null>>;
+  restoreReceiptExact(
+    target: ProviderTarget,
+    expected: ReceiptObservation,
+    prior: ReceiptObservation,
+  ): Promise<DeploymentResult<null>>;
 }
 
 interface OperationContext {
@@ -216,7 +225,59 @@ export function createPathlessTargetState(
     },
   });
 
-  return Object.freeze({ identities, completeIdentities, receipts });
+  const removeAdmittedIdentityExact: PathlessTargetState["removeAdmittedIdentityExact"] = async (
+    target,
+    expected,
+  ) => {
+    const canonical = canonicalTarget(target, IDENTITY_RESTORE);
+    if (!canonical.ok) return canonical;
+    const exact = createTargetIdentitySidecar(canonical.value);
+    if (!sameSidecar(exact, expected)) {
+      return operationFailure(
+        IDENTITY_RESTORE,
+        "Target identity inverse does not bind the selected canonical home",
+      );
+    }
+    return await transitionTargetRecord({
+      records,
+      key: recordKey("identity", canonical.value),
+      expected: presentRecord(canonicalSerializeTargetIdentitySidecar(exact)),
+      desired: ABSENT_RECORD,
+      result: null,
+      operation: IDENTITY_RESTORE,
+      validate: (observation) => validateIdentityRecord(observation, canonical.value, IDENTITY_RESTORE),
+    });
+  };
+
+  const restoreReceiptExact: PathlessTargetState["restoreReceiptExact"] = async (
+    target,
+    expected,
+    prior,
+  ) => {
+    const canonical = canonicalTarget(target, RECEIPT_RESTORE);
+    if (!canonical.ok) return canonical;
+    const normalizedExpected = normalizeReceiptObservation(expected, canonical.value, RECEIPT_RESTORE);
+    if (!normalizedExpected.ok) return normalizedExpected;
+    const normalizedPrior = normalizeReceiptObservation(prior, canonical.value, RECEIPT_RESTORE);
+    if (!normalizedPrior.ok) return normalizedPrior;
+    return await transitionTargetRecord({
+      records,
+      key: recordKey("receipt", canonical.value),
+      expected: receiptRecordObservation(normalizedExpected.value),
+      desired: receiptRecordObservation(normalizedPrior.value),
+      result: null,
+      operation: RECEIPT_RESTORE,
+      validate: (observation) => validateReceiptRecord(observation, canonical.value, RECEIPT_RESTORE),
+    });
+  };
+
+  return Object.freeze({
+    identities,
+    completeIdentities,
+    receipts,
+    removeAdmittedIdentityExact,
+    restoreReceiptExact,
+  });
 }
 
 async function transitionTargetRecord<T>(
@@ -560,6 +621,10 @@ const IDENTITY_ADMIT: OperationContext = Object.freeze({
   code: "MUTATION_FAILED",
   path: "target.identity.admit",
 });
+const IDENTITY_RESTORE: OperationContext = Object.freeze({
+  code: "MUTATION_FAILED",
+  path: "target.identity.restore",
+});
 const RECEIPT_READ: OperationContext = Object.freeze({
   code: "RECEIPT_FAILED",
   path: "target.receipt",
@@ -571,4 +636,8 @@ const RECEIPT_PUBLISH: OperationContext = Object.freeze({
 const RECEIPT_REMOVE: OperationContext = Object.freeze({
   code: "RECEIPT_FAILED",
   path: "target.receipt.remove",
+});
+const RECEIPT_RESTORE: OperationContext = Object.freeze({
+  code: "RECEIPT_FAILED",
+  path: "target.receipt.restore",
 });

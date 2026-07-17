@@ -2,7 +2,11 @@ import { constants } from "node:fs";
 import { lstat, open } from "node:fs/promises";
 import path from "node:path";
 
-import type { ProviderId, ProviderOwnerRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
+import {
+  createProviderOwnerRuntime,
+  type ProviderId,
+  type ProviderOwnerRuntime,
+} from "@rawr/agent-plugin-lifecycle/ports/providers";
 import { resolveControllerReentry } from "@rawr/core";
 
 import type { ControllerProjectionBinding } from "../commands/binding";
@@ -16,8 +20,10 @@ import {
   type CapsuleStateEnvelopeV1,
   type UndoResult,
 } from "../undo";
-import { createNodeProviderOwnerRuntime, openNodeProviderState } from "./providers/node-state";
-import { createNodeNativeProviderAdapterResolver } from "./providers/node-runtime";
+import {
+  createNodeNativeProviderAdapterResolver,
+  createNodeProviderRecordState,
+} from "./providers/node-runtime";
 import {
   createProviderOwnerProtocolRegistration,
   PROVIDER_OWNER,
@@ -49,7 +55,7 @@ export async function undoAgentPluginCapsuleAtDataRoot(
     requiredProviderExecutables(observed, codecRegistration),
   );
   const registry = capsuleUsesProviderOwner(observed)
-    ? await createProductionOwnerRegistry(layout, binding)
+    ? await createProductionOwnerRegistry(dataRoot, layout, binding)
     : createAgentPluginOwnerProtocolRegistryV1();
   const opened = await openNodeCapsuleStateStoreV1({ root: layout.capsuleRoot, registry });
   if (opened.kind === "Rejected") throw new LifecycleAuthorityBindingError(opened.failure.message);
@@ -59,10 +65,12 @@ export async function undoAgentPluginCapsuleAtDataRoot(
 }
 
 async function createProductionOwnerRegistry(
+  dataRoot: string,
   layout: ReturnType<typeof deriveAgentPluginControllerLayout>,
   binding: ControllerProjectionBinding,
 ) {
-  const state = await openNodeProviderState({
+  const state = createNodeProviderRecordState({
+    controllerDataRoot: dataRoot,
     providerProjectionRoot: layout.providerProjectionRoot,
     providerTargetStateRoot: layout.providerTargetStateRoot,
   });
@@ -70,7 +78,7 @@ async function createProductionOwnerRegistry(
     state,
     binding.providerExecutables as Readonly<Partial<Record<ProviderId, string>>>,
   );
-  const ownerRuntime = createNodeProviderOwnerRuntime({
+  const ownerRuntime = createProviderOwnerRuntime({
     projections: state.projections,
     targets: state.targets,
     members: (provider, contentAuthority) => adapter(provider, contentAuthority),

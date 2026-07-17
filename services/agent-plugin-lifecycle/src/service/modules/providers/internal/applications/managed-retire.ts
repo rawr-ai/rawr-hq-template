@@ -46,13 +46,14 @@ export function createManagedRetire(
         ports.receipts.read(target),
         ports.identities.read(target),
       ]);
-      const authority = receipt.ok && receipt.value.kind === "present"
+      const inspectionAuthority = receipt.ok && receipt.value.kind === "present"
         ? receipt.value.receipt.body.managedMembers.find((member) => member.pluginId === parsed.value.pluginId)
           ?.artifactAuthority.contentAuthority
+          ?? receipt.value.receipt.body.marketplace.marketplaceIdentity
         : undefined;
       const [capability, inventory] = await Promise.all([
-        ports.provider.inspectCapabilities(target, authority),
-        ports.provider.readInventory(target, authority),
+        ports.provider.inspectCapabilities(target, inspectionAuthority),
+        ports.provider.readInventory(target, inspectionAuthority),
       ]);
       const issues: ProviderDeploymentIssue[] = [
         ...(receipt.ok ? [] : receipt.issues),

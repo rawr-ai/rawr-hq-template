@@ -1,11 +1,14 @@
 import { NodeContext } from "@effect/platform-node";
 import {
   createResourceClaudeProviderAdapter,
+  createResourceClaudeProviderObserver,
   createResourceCodexProviderAdapter,
+  createResourceCodexProviderObserver,
   type ClaudeNativeResourceSession,
   type CodexNativeResourceSession,
   type NativeMemberRestorationPort,
   type NativeProviderAdapter,
+  type NativeProviderObserver,
   type NativeProviderResourcePort,
   type NativeResourceSessionInput,
   type ProviderId,
@@ -107,6 +110,20 @@ export function createNodeNativeProviderAdapter(
     : createResourceClaudeProviderAdapter(common);
 }
 
+/** Binds provider inspection without exposing content ownership or mutation. */
+export function createNodeNativeProviderObserver(options: Readonly<{
+  provider: ProviderId;
+  executablePath: string;
+}>): NativeProviderObserver {
+  const common = Object.freeze({
+    resource: createNodeNativeProviderResource(readOnlyMarketplaceLocations),
+    executablePath: options.executablePath,
+  });
+  return options.provider === "codex"
+    ? createResourceCodexProviderObserver(common)
+    : createResourceClaudeProviderObserver(common);
+}
+
 export function createNodeNativeProviderResource(
   marketplaceLocations: NodeMarketplaceLocationResolver,
 ): NativeProviderResourcePort {
@@ -187,6 +204,12 @@ const nodeMarketplaceTreeLocator: NodeMarketplaceTreeLocator = Object.freeze({
       );
     }
     return located.value;
+  },
+});
+
+const readOnlyMarketplaceLocations: NodeMarketplaceLocationResolver = Object.freeze({
+  async locate(): Promise<never> {
+    throw new LifecycleAuthorityBindingError("Read-only provider observation cannot locate mutation input");
   },
 });
 

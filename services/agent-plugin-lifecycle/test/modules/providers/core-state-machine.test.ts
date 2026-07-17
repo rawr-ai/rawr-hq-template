@@ -4,6 +4,7 @@ import {
   payloadEntryBytes,
   type AgentPluginRelease,
   type ArtifactRef,
+  type ContentAuthority,
   type VerifiedArtifactSnapshotV1,
   type VerifiedReleaseArtifactV1,
 } from "../../../src/service/shared/release";
@@ -1050,6 +1051,11 @@ describe("provider deployment state machine", () => {
       expect(harness.counters.receiptWrites).toBe(0);
       expect(harness.counters.capsulePreflights).toBe(0);
       expect(harness.counters.capsuleBegins).toBe(0);
+      expect(harness.inventoryInspectionAuthorities).toEqual([
+        variant === "absent-receipt"
+          ? undefined
+          : harness.fixture.releaseInput.body.contentAuthority,
+      ]);
     },
   );
 
@@ -1111,6 +1117,7 @@ class Harness {
   readonly receipts = new Map<string, TargetReceipt>();
   readonly identities = new Map<string, Exclude<TargetIdentityObservation, { kind: "absent" }>["sidecar"]>();
   readonly evidence = new Map<string, { readonly bytes: Uint8Array; readonly handle: MechanicalEvidenceHandle }>();
+  readonly inventoryInspectionAuthorities: Array<ContentAuthority | undefined> = [];
   lastEvidenceAttempt: Pick<MechanicalProviderEvidence, "bytes" | "evidenceDigest"> | null = null;
   readonly archivedFingerprints = new Set<string>();
   channelKind: CanonicalChannelResolution["kind"] = "current-eligible";
@@ -1189,6 +1196,7 @@ class Harness {
     this.identityAdmissions = [];
     this.capsuleStaged = [];
     this.capsuleApplied = [];
+    this.inventoryInspectionAuthorities.length = 0;
   }
 
   useAlphaOnlyCanonical(): void {
@@ -1538,8 +1546,9 @@ class Harness {
             available,
           });
         },
-        readInventory: async (target: ProviderTarget) => {
+        readInventory: async (target: ProviderTarget, contentAuthority?: ContentAuthority) => {
           this.counters.inventoryReads += 1;
+          this.inventoryInspectionAuthorities.push(contentAuthority);
           return success(createProviderInventory(
             target,
             this.native.get(target.home) ?? [],

@@ -69,6 +69,7 @@
     "@rawr/resource-agent-plugin-artifact-repository": "workspace:*",
     "@rawr/resource-agent-plugin-export-destination": "workspace:*",
     "@rawr/resource-agent-plugin-package-output": "workspace:*",
+    "@rawr/resource-agent-provider-records": "workspace:*",
     "@rawr/resource-content-workspace": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "@orpc/contract": "^1.13.5",

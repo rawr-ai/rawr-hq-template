@@ -1,12 +1,15 @@
 import { constants } from "node:fs";
 import {
+  chmod,
   lstat,
   mkdir,
   mkdtemp,
   open,
+  readFile,
   readdir,
   realpath,
   rm,
+  writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -51,6 +54,7 @@ import {
 import { createProviderUndoWriterV1 } from "../../../src/lib/agent-plugins/service-runtime/providers/provider-capsule";
 import { undoAgentPluginCapsuleAtDataRoot } from "../../../src/lib/agent-plugins/service-runtime/undo";
 import { createCanonicalStatus } from "../../../../../services/agent-plugin-lifecycle/src/service/modules/providers/internal/applications/canonical-status";
+import { createManagedRetire } from "../../../../../services/agent-plugin-lifecycle/src/service/modules/providers/internal/applications/managed-retire";
 import { productFixture } from "./providers/product-fixture";
 
 describe("production lifecycle read-only binding", () => {
@@ -70,6 +74,7 @@ describe("production lifecycle read-only binding", () => {
 
     const runtime = await createNodeProviderLifecycleRuntime({
       roots: {
+        controllerDataRoot: dataRoot,
         providerProjectionRoot: layout.providerProjectionRoot,
         providerTargetStateRoot: layout.providerTargetStateRoot,
       },
@@ -122,6 +127,65 @@ describe("production lifecycle read-only binding", () => {
     });
     expect(await exactTree(dataRoot)).toEqual(before);
   });
+
+  it.runIf("Bun" in globalThis)(
+    "inspects receipt-free native state before classifying managed retirement without writes",
+    async () => {
+      fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-c5-read-only-")));
+      for (const fixture of [
+        Object.freeze({ name: "absent", exposure: "absent", expectedStatus: "ReadOnlyConverged" }),
+        Object.freeze({ name: "native", exposure: "native", expectedStatus: "Blocked" }),
+        Object.freeze({ name: "active-thread", exposure: "active-thread", expectedStatus: "Blocked" }),
+        Object.freeze({ name: "config", exposure: "config", expectedStatus: "Blocked" }),
+      ] as const) {
+        const dataRoot = path.join(fixtureRoot, `${fixture.name}-controller-data`);
+        const home = path.join(fixtureRoot, `${fixture.name}-codex-home`);
+        const executablePath = path.join(fixtureRoot, `${fixture.name}-codex`);
+        const auditPath = path.join(fixtureRoot, `${fixture.name}-audit.log`);
+        await Promise.all([mkdir(dataRoot), mkdir(home)]);
+        await writeFile(executablePath, readOnlyCodexScript({
+          auditPath,
+          home,
+          exposure: fixture.exposure,
+        }), { mode: 0o755 });
+        await chmod(executablePath, 0o755);
+        const layout = deriveAgentPluginControllerLayout({ dataRoot });
+        const dataBefore = await exactTree(dataRoot);
+        const homeBefore = await exactTree(home);
+        const runtime = await createNodeProviderLifecycleRuntime({
+          roots: {
+            controllerDataRoot: dataRoot,
+            providerProjectionRoot: layout.providerProjectionRoot,
+            providerTargetStateRoot: layout.providerTargetStateRoot,
+          },
+          artifactReader: {
+            read: async () => {
+              throw new Error("Managed retirement must not read a release artifact");
+            },
+          },
+          artifactStoreRoot: layout.artifactStoreRoot,
+          capsuleRoot: layout.capsuleRoot,
+          providerExecutables: Object.freeze({ codex: executablePath }),
+        });
+
+        const result = await createManagedRetire(() => runtime)({
+          kind: "managed-retire",
+          pluginId: "alpha",
+          targets: [{ provider: "codex", home }],
+        });
+
+        expect(result.ok && result.value.status).toBe(fixture.expectedStatus);
+        expect(await exactTree(dataRoot)).toEqual(dataBefore);
+        expect(await exactTree(home)).toEqual(homeBefore);
+        const audit = (await readFile(auditPath, "utf8")).trim().split("\n");
+        expect(audit).toContain("plugin list --json");
+        expect(audit).toContain("rpc:plugin/list");
+        expect(audit).toContain("rpc:config/read");
+        expect(audit.some(isProviderMutationAudit)).toBe(false);
+      }
+    },
+    20_000,
+  );
 
   it.runIf("Bun" in globalThis)(
     "refuses omitted or mismatched provider executables before capsule or provider state changes",
@@ -308,6 +372,83 @@ function unavailableProviderOwnerRuntime(): ProviderOwnerRuntime {
     readReceipt: unavailable,
     restoreReceiptExact: unavailable,
   });
+}
+
+function readOnlyCodexScript(input: Readonly<{
+  auditPath: string;
+  home: string;
+  exposure: "absent" | "active-thread" | "config" | "native";
+}>): string {
+  const pluginRows = input.exposure === "native"
+    ? [{
+        pluginId: "alpha@manual",
+        name: "alpha",
+        marketplaceName: "manual",
+        version: "1.0.0",
+        installed: true,
+        enabled: true,
+      }]
+    : [];
+  const appMarketplaces = input.exposure === "active-thread"
+    ? [{
+        name: "manual",
+        plugins: [{
+          name: "alpha",
+          version: "1.0.0",
+          installed: true,
+          enabled: true,
+        }],
+      }]
+    : [];
+  const configured = input.exposure === "config"
+    ? { plugins: { "alpha@manual": { enabled: true } } }
+    : {};
+  const pluginList = JSON.stringify({ installed: pluginRows, available: [] });
+  const appPluginList = JSON.stringify({ id: 2, result: { marketplaces: appMarketplaces } });
+  const hookList = JSON.stringify({
+    id: 3,
+    result: { data: [{ cwd: input.home, hooks: [], errors: [] }] },
+  });
+  const configRead = JSON.stringify({ id: 2, result: { config: configured } });
+  return `#!/bin/sh
+set -eu
+AUDIT=${shellLiteral(input.auditPath)}
+printf '%s\n' "$*" >> "$AUDIT"
+if [ "$*" = "app-server --listen stdio://" ]; then
+  while IFS= read -r line; do
+    case "$line" in
+      *'"id":1,"method":"initialize"'*) printf '%s\n' '{"id":1,"result":{}}' ;;
+      '{"method":"initialized","params":{}}') ;;
+      *'"method":"plugin/list"'*) printf '%s\n' 'rpc:plugin/list' >> "$AUDIT"; printf '%s\n' ${shellLiteral(appPluginList)} ;;
+      *'"method":"hooks/list"'*) printf '%s\n' 'rpc:hooks/list' >> "$AUDIT"; printf '%s\n' ${shellLiteral(hookList)} ;;
+      *'"method":"config/read"'*) printf '%s\n' 'rpc:config/read' >> "$AUDIT"; printf '%s\n' ${shellLiteral(configRead)} ;;
+      *'"method":"config/value/write"'*) printf '%s\n' 'rpc:config/value/write' >> "$AUDIT"; exit 70 ;;
+      *) printf 'unexpected app-server input: %s\n' "$line" >&2; exit 65 ;;
+    esac
+  done
+elif [ "$*" = "plugin --help" ]; then
+  printf 'Commands:\n  list  list plugins\n  add  add plugin\n  remove  remove plugin\n'
+elif [ "$*" = "plugin marketplace --help" ]; then
+  printf 'Commands:\n  list  list markets\n  add  add market\n  remove  remove market\n'
+elif [ "$*" = "plugin list --json" ]; then
+  printf '%s\n' ${shellLiteral(pluginList)}
+else
+  printf 'unexpected command: %s\n' "$*" >&2
+  exit 64
+fi
+`;
+}
+
+function shellLiteral(value: string): string {
+  return `'${value.replaceAll("'", `'"'"'`)}'`;
+}
+
+function isProviderMutationAudit(entry: string): boolean {
+  return entry === "rpc:config/value/write"
+    || entry.startsWith("plugin add ")
+    || entry.startsWith("plugin remove ")
+    || entry.startsWith("plugin marketplace add ")
+    || entry.startsWith("plugin marketplace remove ");
 }
 
 interface TreeEntry {

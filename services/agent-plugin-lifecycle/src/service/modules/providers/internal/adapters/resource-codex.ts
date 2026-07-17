@@ -10,6 +10,7 @@ import {
 import type {
   ProviderCapability,
 } from "../domain/projection";
+import type { NativeStandaloneExposureObservation } from "../domain/state";
 import type { ProviderMarketplaceSourceReader } from "../ports/state";
 import {
   CODEX_ADAPTER_PROTOCOL,
@@ -22,6 +23,10 @@ import {
   type CodexSessionPort,
   type CodexVisiblePlugin,
 } from "./codex";
+import {
+  createNativeProviderObserver,
+  type NativeProviderObserver,
+} from "./native";
 import {
   NATIVE_PACKAGE_READ_LIMITS,
   inspectNativePluginPackage,
@@ -52,30 +57,39 @@ export interface ResourceCodexProviderAdapterOptions {
   readonly marketplaceSources: ProviderMarketplaceSourceReader;
 }
 
+export type ResourceCodexProviderObserverOptions = Pick<
+  ResourceCodexProviderAdapterOptions,
+  "executablePath" | "resource"
+>;
+
+export function createResourceCodexProviderObserver(
+  input: ResourceCodexProviderObserverOptions,
+): NativeProviderObserver {
+  const { session, listPlugins } = createCodexResourceAccess(input);
+  return createNativeProviderObserver({
+    provider: "codex",
+    adapterProtocol: CODEX_ADAPTER_PROTOCOL,
+    bridge: {
+      probe: async (home) => {
+        const observed = await (await session(home)).probe();
+        return Object.freeze({
+          adapterProtocol: CODEX_ADAPTER_PROTOCOL,
+          available: codexCapabilitiesFromCommands(observed.pluginCommands, observed.marketplaceCommands),
+        });
+      },
+      inventoryExposures: async (home) => await inventoryCodexExposures(
+        await session(home),
+        await listPlugins(home),
+        home,
+      ),
+    },
+  });
+}
+
 export function createResourceCodexProviderAdapter(
   input: ResourceCodexProviderAdapterOptions,
 ): CodexProviderAdapter {
-  const acquire = createSessionCache(input.executablePath, input.resource.acquireCodex);
-  const session = async (home: string): Promise<CodexNativeResourceSession> => {
-    const acquired = await acquire(home);
-    if (
-      acquired.provider !== "codex"
-      || acquired.home !== home
-      || acquired.executablePath !== input.executablePath
-    ) {
-      throw new Error("Codex resource returned a session for different explicit authority");
-    }
-    return acquired;
-  };
-
-  const listPlugins = async (home: string): Promise<readonly CodexListPlugin[]> => {
-    const observation = await (await session(home)).listPlugins();
-    const record = requireRecord(observation.json, "Codex plugin list");
-    return Object.freeze([
-      ...requireArray(record.installed, "Codex installed plugins"),
-      ...requireArray(record.available, "Codex available plugins"),
-    ].map(parseListPlugin));
-  };
+  const { session, listPlugins } = createCodexResourceAccess(input);
 
   const inventoryMarketplaceRegistration: CodexProcessPort["inventoryMarketplaceRegistration"] = async ({ home }) => {
     const provider = await session(home);
@@ -241,6 +255,33 @@ export function createResourceCodexProviderAdapter(
   });
 }
 
+function createCodexResourceAccess(input: ResourceCodexProviderObserverOptions): Readonly<{
+  session: (home: string) => Promise<CodexNativeResourceSession>;
+  listPlugins: (home: string) => Promise<readonly CodexListPlugin[]>;
+}> {
+  const acquire = createSessionCache(input.executablePath, input.resource.acquireCodex);
+  const session = async (home: string): Promise<CodexNativeResourceSession> => {
+    const acquired = await acquire(home);
+    if (
+      acquired.provider !== "codex"
+      || acquired.home !== home
+      || acquired.executablePath !== input.executablePath
+    ) {
+      throw new Error("Codex resource returned a session for different explicit authority");
+    }
+    return acquired;
+  };
+  const listPlugins = async (home: string): Promise<readonly CodexListPlugin[]> => {
+    const observation = await (await session(home)).listPlugins();
+    const record = requireRecord(observation.json, "Codex plugin list");
+    return Object.freeze([
+      ...requireArray(record.installed, "Codex installed plugins"),
+      ...requireArray(record.available, "Codex available plugins"),
+    ].map(parseListPlugin));
+  };
+  return Object.freeze({ session, listPlugins });
+}
+
 export function codexCapabilitiesFromCommands(
   pluginCommands: readonly string[],
   marketplaceCommands: readonly string[],
@@ -393,6 +434,82 @@ function parseAppServerPluginConfiguration(input: unknown): readonly CodexConfig
       enablement: entry.enabled ? "enabled" as const : "disabled" as const,
     });
   }));
+}
+
+async function inventoryCodexExposures(
+  provider: CodexNativeResourceSession,
+  listed: readonly CodexListPlugin[],
+  home: string,
+): Promise<readonly NativeStandaloneExposureObservation[]> {
+  const [appServer, configuredInput] = await Promise.all([
+    provider.inspectAppServer(),
+    provider.readConfiguration(),
+  ]);
+  const appPlugins = parseAppServerPlugins(appServer.plugins).filter((plugin) => plugin.installed);
+  const hooksBySelector = parseAppServerHooks(appServer.hooks, home, appPlugins);
+  const exposures = new Map<string, NativeStandaloneExposureObservation>();
+
+  for (const plugin of listed.filter((entry) => entry.installed)) {
+    recordCodexExposure(exposures, {
+      exposureIdentity: pluginSelectorFor(plugin),
+      nativeIdentity: `rawr:${plugin.name}`,
+      providerSourceIdentity: parseSourceIdentity(plugin.marketplaceName, "codex"),
+      enablement: plugin.enabled ? "enabled" : "disabled",
+      visibleSkills: Object.freeze([]),
+      visibleHooks: Object.freeze([]),
+    });
+  }
+  for (const plugin of appPlugins) {
+    const selector = pluginSelectorFor(plugin);
+    recordCodexExposure(exposures, {
+      exposureIdentity: selector,
+      nativeIdentity: `rawr:${plugin.name}`,
+      providerSourceIdentity: parseSourceIdentity(plugin.marketplaceName, "codex"),
+      enablement: plugin.enabled ? "enabled" : "disabled",
+      visibleSkills: Object.freeze([]),
+      visibleHooks: hooksBySelector.get(selector) ?? Object.freeze([]),
+    });
+  }
+  for (const configured of parseAppServerPluginConfiguration(configuredInput)) {
+    recordCodexExposure(exposures, {
+      exposureIdentity: selectorFromConfiguredPlugin(configured),
+      nativeIdentity: configured.nativeIdentity,
+      providerSourceIdentity: configured.providerSourceIdentity,
+      enablement: configured.enablement,
+      visibleSkills: Object.freeze([]),
+      visibleHooks: Object.freeze([]),
+    });
+  }
+  return Object.freeze([...exposures.values()]);
+}
+
+function recordCodexExposure(
+  exposures: Map<string, NativeStandaloneExposureObservation>,
+  candidate: NativeStandaloneExposureObservation,
+): void {
+  const prior = exposures.get(candidate.exposureIdentity);
+  if (prior !== undefined && (
+    prior.nativeIdentity !== candidate.nativeIdentity
+    || prior.providerSourceIdentity !== candidate.providerSourceIdentity
+  )) {
+    throw new Error(`Codex exposure identity changed across observations for ${candidate.exposureIdentity}`);
+  }
+  exposures.set(candidate.exposureIdentity, Object.freeze({
+    ...candidate,
+    visibleSkills: mergeNames(prior?.visibleSkills ?? Object.freeze([]), candidate.visibleSkills),
+    visibleHooks: mergeNames(prior?.visibleHooks ?? Object.freeze([]), candidate.visibleHooks),
+  }));
+}
+
+function selectorFromConfiguredPlugin(plugin: CodexConfiguredPlugin): string {
+  if (!plugin.nativeIdentity.startsWith("rawr:")) {
+    throw new Error("Codex configured plugin has no canonical native identity");
+  }
+  return `${plugin.nativeIdentity.slice("rawr:".length)}@${plugin.providerSourceIdentity}`;
+}
+
+function mergeNames(left: readonly string[], right: readonly string[]): readonly string[] {
+  return Object.freeze([...new Set([...left, ...right])].sort(compareText));
 }
 
 function pluginSelectorFor(plugin: CodexListPlugin): string {

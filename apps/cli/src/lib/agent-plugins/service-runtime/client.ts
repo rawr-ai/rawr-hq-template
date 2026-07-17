@@ -41,7 +41,6 @@ import {
   type LifecycleOperation,
 } from "../commands/binding";
 import { createGithubHostedApprovalHistoryReader } from "../bindings/governance";
-import { openNodeProviderState, type NodeProviderState } from "./providers/node-state";
 import {
   createFilesystemMechanicalEvidenceReader,
   createGitContentWorkspaceSnapshotReader,
@@ -50,7 +49,11 @@ import { createReadOnlyGitAdapter } from "./governance/adapters/git";
 import { createNodeReadOnlyGitBackend } from "./governance/adapters/node-git";
 import { createGovernanceLifecycleRuntime } from "./governance/runtime";
 import { createNodeMechanicalEvidenceRuntime } from "./evidence/node-mechanical";
-import { createNodeProviderLifecycleRuntime } from "./providers/node-runtime";
+import {
+  createNodeProviderLifecycleRuntime,
+  createNodeProviderRecordState,
+  type NodeProviderRecordState,
+} from "./providers/node-runtime";
 import {
   CapsuleControllerWriterV1,
   createAgentPluginOwnerProtocolRegistryV1,
@@ -138,6 +141,7 @@ export const createProductionLifecycleClient: LifecycleClientFactory = async (
     binding,
     layout,
     artifactReader,
+    controllerDataRoot: authority.dataRoot,
   });
   const deps = createSelectedLifecycleDeps(selected);
 
@@ -165,8 +169,9 @@ async function createSelectedLifecycleRuntime(input: Readonly<{
   binding: ControllerProjectionBinding;
   layout: ReturnType<typeof deriveAgentPluginControllerLayout>;
   artifactReader: ReturnType<typeof createArtifactRepositoryReader>;
+  controllerDataRoot: string;
 }>): Promise<SelectedLifecycleRuntime> {
-  const { operation, binding, layout, artifactReader } = input;
+  const { operation, binding, layout, artifactReader, controllerDataRoot } = input;
 
   if (operation === "releases.check" || operation === "releases.build") {
     const gitExecutable = requiredGitExecutable(binding, operation);
@@ -186,7 +191,8 @@ async function createSelectedLifecycleRuntime(input: Readonly<{
     });
   }
   if (operation === "exports.apply") {
-    const providerState = lazy(() => openNodeProviderState({
+    const providerState = lazy(async () => createNodeProviderRecordState({
+      controllerDataRoot,
       providerProjectionRoot: layout.providerProjectionRoot,
       providerTargetStateRoot: layout.providerTargetStateRoot,
     }));
@@ -225,6 +231,7 @@ async function createSelectedLifecycleRuntime(input: Readonly<{
       governance,
       runtime: await createNodeProviderLifecycleRuntime({
         roots: {
+          controllerDataRoot,
           providerProjectionRoot: layout.providerProjectionRoot,
           providerTargetStateRoot: layout.providerTargetStateRoot,
         },
@@ -279,7 +286,7 @@ async function productionGovernanceRuntime(
 }
 
 function createKnownNativeHomesReader(
-  providerState: () => Promise<NodeProviderState>,
+  providerState: () => Promise<NodeProviderRecordState>,
 ): KnownNativeHomesReader {
   return Object.freeze({
     async readCompleteSnapshot() {

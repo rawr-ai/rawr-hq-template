@@ -82,7 +82,69 @@ export interface NativeProviderBridge {
   }>): Promise<void>;
 }
 
+export interface NativeProviderObservationBridge {
+  probe(home: string): Promise<NativeCapabilityProbe>;
+  inventoryExposures(home: string): Promise<readonly NativeStandaloneExposureObservation[]>;
+}
+
+/**
+ * Provider-wide observation deliberately reports every native identity as an
+ * unowned exposure. It can block a collision, but cannot establish ownership
+ * or expose a mutation operation.
+ */
+export interface NativeProviderObserver {
+  inspectCapabilities(target: ProviderTarget): Promise<DeploymentResult<CapabilityObservation>>;
+  readInventory(target: ProviderTarget): Promise<DeploymentResult<ProviderInventory>>;
+}
+
 export interface NativeProviderAdapter extends ProviderTargetReader, ProviderTargetMutator {}
+
+export function createNativeProviderObserver(input: Readonly<{
+  provider: ProviderId;
+  adapterProtocol: AdapterProtocol;
+  bridge: NativeProviderObservationBridge;
+}>): NativeProviderObserver {
+  const inspectCapabilities: NativeProviderObserver["inspectCapabilities"] = async (target) => {
+    const providerIssue = targetProviderIssue(target, input.provider);
+    if (providerIssue !== undefined) return failure([providerIssue]);
+    try {
+      const observation = await input.bridge.probe(target.home);
+      if (observation.adapterProtocol !== input.adapterProtocol) {
+        return failure([issue(
+          "ADAPTER_PROTOCOL_MISMATCH",
+          "target.adapterProtocol",
+          "Native provider probe returned a different adapter protocol",
+          input.adapterProtocol,
+          observation.adapterProtocol,
+        )]);
+      }
+      return success(Object.freeze({
+        provider: input.provider,
+        adapterProtocol: input.adapterProtocol,
+        available: canonicalCapabilities(observation.available),
+      }));
+    } catch (error) {
+      return failure([portFailure("CAPABILITY_MISMATCH", "target.capabilities", error)]);
+    }
+  };
+
+  const readInventory: NativeProviderObserver["readInventory"] = async (target) => {
+    const providerIssue = targetProviderIssue(target, input.provider);
+    if (providerIssue !== undefined) return failure([providerIssue]);
+    try {
+      const exposures = (await input.bridge.inventoryExposures(target.home)).map((exposure) => Object.freeze({
+        ...exposure,
+        visibleSkills: canonicalNames(exposure.visibleSkills),
+        visibleHooks: canonicalNames(exposure.visibleHooks),
+      }));
+      return success(createProviderInventory(target, Object.freeze([]), Object.freeze(exposures)));
+    } catch (error) {
+      return failure([portFailure("VISIBILITY_FAILED", "target.inventory", error)]);
+    }
+  };
+
+  return Object.freeze({ inspectCapabilities, readInventory });
+}
 
 export function createNativeProviderAdapter(input: Readonly<{
   provider: ProviderId;
