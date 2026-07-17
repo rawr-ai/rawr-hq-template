@@ -23,31 +23,40 @@ export interface NodeCodexAppServerClient {
 
 export function createNodeCodexAppServerClient(executablePath: string): NodeCodexAppServerClient {
   const executable = resolveNodeProviderExecutable(executablePath);
+  let appServerTail: Promise<void> = Promise.resolve();
+  const runSerialized = <T>(operation: () => Promise<T>): Promise<T> => {
+    const result = appServerTail.then(operation, operation);
+    appServerTail = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  };
   return Object.freeze({
     async inspect(home: string) {
-      return await withAppServer(executable, home, async (connection) => {
+      return await runSerialized(async () => await withAppServer(executable, home, async (connection) => {
         const [plugins, hooks] = await Promise.all([
           connection.request("plugin/list", { cwds: [], marketplaceKinds: ["local"] }),
           connection.request("hooks/list", { cwds: [home] }),
         ]);
         return Object.freeze({ plugins, hooks });
-      });
+      }));
     },
     async inspectPluginConfiguration(home: string) {
-      return await withAppServer(executable, home, async (connection) =>
-        await connection.request("config/read", { cwd: home, includeLayers: true }));
+      return await runSerialized(async () => await withAppServer(executable, home, async (connection) =>
+        await connection.request("config/read", { cwd: home, includeLayers: true })));
     },
     async setPluginEnabled(home: string, pluginSelector: string, enabled: boolean) {
       if (!/^[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9_-]*$/u.test(pluginSelector)) {
         throw new Error("Codex plugin selector is not canonical");
       }
-      await withAppServer(executable, home, async (connection) => {
+      await runSerialized(async () => await withAppServer(executable, home, async (connection) => {
         await connection.request("config/value/write", {
           keyPath: `plugins.${pluginSelector}.enabled`,
           value: enabled,
           mergeStrategy: "upsert",
         });
-      });
+      }));
     },
     async setMarketplaceSource(home: string, marketplaceName: string, sourcePath: string) {
       if (!/^[a-z0-9][a-z0-9_-]*$/u.test(marketplaceName)) {
@@ -56,13 +65,13 @@ export function createNodeCodexAppServerClient(executablePath: string): NodeCode
       if (!path.isAbsolute(sourcePath) || path.normalize(sourcePath) !== sourcePath) {
         throw new Error("Codex marketplace source must be an absolute normalized path");
       }
-      await withAppServer(executable, home, async (connection) => {
+      await runSerialized(async () => await withAppServer(executable, home, async (connection) => {
         await connection.request("config/value/write", {
           keyPath: `marketplaces.${marketplaceName}.source`,
           value: sourcePath,
           mergeStrategy: "upsert",
         });
-      });
+      }));
     },
   });
 }
