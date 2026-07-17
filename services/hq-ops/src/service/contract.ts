@@ -10,19 +10,15 @@
  */
 import { contract as config } from "./modules/config/contract";
 import { contract as journal } from "./modules/journal/contract";
-import { contract as pluginCatalog } from "./modules/plugin-catalog/contract";
-import { contract as pluginLifecycle } from "./modules/plugin-lifecycle/contract";
 import { contract as security } from "./modules/security/contract";
 
 /**
- * Root HQ Ops contract, including plugin-management module contracts.
+ * Root HQ Ops contract.
  */
 export const contract = {
   config,
   journal,
   security,
-  pluginCatalog,
-  pluginLifecycle,
 };
 
 export type Contract = typeof contract;

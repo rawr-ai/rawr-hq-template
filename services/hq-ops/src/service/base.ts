@@ -64,7 +64,7 @@ type InvocationContext = {
  */
 type ProcedureMetadata = {
   audit?: "none" | "basic" | "full";
-  entity?: "service" | "config" | "journal" | "security" | "pluginCatalog" | "pluginLifecycle";
+  entity?: "service" | "config" | "journal" | "security";
 };
 
 /**

@@ -9,21 +9,16 @@
  */
 import { router as config } from "./modules/config/router";
 import { router as journal } from "./modules/journal/router";
-import { router as pluginCatalog } from "./modules/plugin-catalog/router";
-import { router as pluginLifecycle } from "./modules/plugin-lifecycle/router";
 import { router as security } from "./modules/security/router";
 import { impl } from "./impl";
 
 /**
- * Root HQ Ops router, including the plugin-management modules that own
- * catalog, install, and lifecycle semantics for headquarters.
+ * Root HQ Ops router.
  */
 export const router = impl.router({
   config,
   journal,
   security,
-  pluginCatalog,
-  pluginLifecycle,
 });
 
 export type Router = typeof router;

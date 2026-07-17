@@ -116,10 +116,7 @@ const suiteCommandsByProject = {
     default: ["bun scripts/phase-03/verify-coordination-structural.mjs"],
   },
   "@rawr/hq-ops": {
-    default: [
-      "bun scripts/phase-1/verify-hq-ops-service-shape.mjs",
-      "bun scripts/phase-03/verify-hq-ops-resource-binding.mjs",
-    ],
+    default: ["bun scripts/phase-03/verify-hq-ops-resource-binding.mjs"],
   },
   "@rawr/agent-config-sync": {
     default: ["bun scripts/phase-03/verify-agent-config-sync-service-shape.mjs"],
