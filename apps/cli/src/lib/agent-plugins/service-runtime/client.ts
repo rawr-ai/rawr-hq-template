@@ -37,6 +37,7 @@ import {
   LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
   type LifecycleClientFactory,
+  type LifecycleOperationClient,
   type LifecycleOperation,
 } from "../commands/binding";
 import { createGithubHostedApprovalHistoryReader } from "../bindings/governance";
@@ -67,63 +68,78 @@ type LifecycleRole = RoleView & Readonly<{
 }>;
 type LifecycleBindingContext = ServiceBindingContext<LifecycleProcess, LifecycleRole>;
 
+type LifecycleDeps = CreateClientOptions["deps"];
+type SelectedLifecycleRuntime =
+  | Readonly<{ owner: "releases"; runtime: LifecycleDeps["releases"] }>
+  | Readonly<{ owner: "vendors"; runtime: LifecycleDeps["vendors"] }>
+  | Readonly<{ owner: "packaging"; runtime: LifecycleDeps["packaging"] }>
+  | Readonly<{ owner: "exports"; runtime: LifecycleDeps["exports"] }>
+  | Readonly<{
+    owner: "providers";
+    runtime: LifecycleDeps["providers"];
+    governance: LifecycleDeps["governance"];
+  }>
+  | Readonly<{ owner: "governance"; runtime: LifecycleDeps["governance"] }>;
+
+type LifecycleClientSelectors = Readonly<{
+  [TOperation in LifecycleOperation]: (
+    client: Client,
+  ) => LifecycleOperationClient<TOperation>;
+}>;
+
+const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
+  "releases.check": (client) => Object.freeze({
+    releases: Object.freeze({ check: client.releases.check }),
+  }),
+  "releases.build": (client) => Object.freeze({
+    releases: Object.freeze({ build: client.releases.build }),
+  }),
+  "vendors.status": (client) => Object.freeze({
+    vendors: Object.freeze({ status: client.vendors.status }),
+  }),
+  "vendors.update": (client) => Object.freeze({
+    vendors: Object.freeze({ update: client.vendors.update }),
+  }),
+  "packaging.package": (client) => Object.freeze({
+    packaging: Object.freeze({ package: client.packaging.package }),
+  }),
+  "exports.apply": (client) => Object.freeze({
+    exports: Object.freeze({ apply: client.exports.apply }),
+  }),
+  "providers.targetedTest": (client) => Object.freeze({
+    providers: Object.freeze({ targetedTest: client.providers.targetedTest }),
+  }),
+  "providers.completeTest": (client) => Object.freeze({
+    providers: Object.freeze({ completeTest: client.providers.completeTest }),
+  }),
+  "providers.canonicalSync": (client) => Object.freeze({
+    providers: Object.freeze({ canonicalSync: client.providers.canonicalSync }),
+  }),
+  "providers.canonicalStatus": (client) => Object.freeze({
+    providers: Object.freeze({ canonicalStatus: client.providers.canonicalStatus }),
+  }),
+  "providers.managedRetire": (client) => Object.freeze({
+    providers: Object.freeze({ managedRetire: client.providers.managedRetire }),
+  }),
+  "governance.attestPromotion": (client) => Object.freeze({
+    governance: Object.freeze({ attestPromotion: client.governance.attestPromotion }),
+  }),
+});
+
 export const createProductionLifecycleClient: LifecycleClientFactory = async (
   operation,
   binding,
-): Promise<Client> => {
+): Promise<LifecycleOperationClient<typeof operation>> => {
   const authority = controllerAuthority();
   const layout = deriveAgentPluginControllerLayout({ dataRoot: authority.dataRoot });
   const artifactReader = createArtifactRepositoryReader(layout.artifactStoreRoot);
-  const deps = unavailableDeps();
-
-  if (operation === "releases.check" || operation === "releases.build") {
-    const gitExecutable = requiredGitExecutable(binding, operation);
-    deps.releases = {
-      source: await createGitContentWorkspaceSnapshotReader({ gitExecutable }),
-      artifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
-      evidence: createFilesystemMechanicalEvidenceReader(layout.artifactStoreRoot),
-    };
-  } else if (operation === "packaging.package") {
-    deps.packaging = createPackageOutputLifecycleRuntime({
-      artifactReader,
-    });
-  } else if (operation === "exports.apply") {
-    const providerState = lazy(() => openNodeProviderState({
-      providerProjectionRoot: layout.providerProjectionRoot,
-      providerTargetStateRoot: layout.providerTargetStateRoot,
-    }));
-    deps.exports = createExportLifecycleRuntime({
-      artifactReader: createExportArtifactReader(artifactReader),
-      knownNativeHomesReader: createKnownNativeHomesReader(providerState),
-      undoWriter: createLazyExportUndoWriter(layout.capsuleRoot),
-    });
-  } else if (operation === "vendors.status" || operation === "vendors.update") {
-    deps.vendors = {
-      contentWorkspace: makeNodeContentWorkspacePort({
-        gitExecutable: requiredGitExecutable(binding, operation),
-      }),
-      clock: { now: () => new Date() },
-    };
-  } else if (operation === "governance.attestPromotion") {
-    deps.governance = await productionGovernanceRuntime(binding, operation, layout.artifactStoreRoot);
-  } else if (operation.startsWith("providers.")) {
-    const governance = operation === "providers.canonicalSync" || operation === "providers.canonicalStatus"
-      ? await productionGovernanceRuntime(binding, operation, layout.artifactStoreRoot)
-      : null;
-    if (governance !== null) deps.governance = governance;
-    deps.providers = await createNodeProviderLifecycleRuntime({
-      roots: {
-        providerProjectionRoot: layout.providerProjectionRoot,
-        providerTargetStateRoot: layout.providerTargetStateRoot,
-      },
-      artifactReader,
-      artifactStoreRoot: layout.artifactStoreRoot,
-      capsuleRoot: layout.capsuleRoot,
-      providerExecutables: binding.providerExecutables,
-    });
-  } else {
-    throw missingRuntimeBinding(operation);
-  }
+  const selected = await createSelectedLifecycleRuntime({
+    operation,
+    binding,
+    layout,
+    artifactReader,
+  });
+  const deps = createSelectedLifecycleDeps(selected);
 
   const lifecycleService = bindService(createClient, {
     bindingId: `rawr-cli/agent-plugin-lifecycle/${operation}`,
@@ -134,14 +150,93 @@ export const createProductionLifecycleClient: LifecycleClientFactory = async (
     }),
     config: {},
   } satisfies ServiceBinding<LifecycleBoundary, LifecycleProcess, LifecycleRole>);
-  return lifecycleService.resolve({
+  const client = lifecycleService.resolve({
     process: { processId: "rawr-cli" },
     role: {
       roleId: "agent-plugin-lifecycle",
       capability: "agent-plugin-lifecycle",
     },
   } satisfies LifecycleBindingContext);
+  return selectLifecycleOperationClient(operation, client);
 };
+
+async function createSelectedLifecycleRuntime(input: Readonly<{
+  operation: LifecycleOperation;
+  binding: ControllerProjectionBinding;
+  layout: ReturnType<typeof deriveAgentPluginControllerLayout>;
+  artifactReader: ReturnType<typeof createArtifactRepositoryReader>;
+}>): Promise<SelectedLifecycleRuntime> {
+  const { operation, binding, layout, artifactReader } = input;
+
+  if (operation === "releases.check" || operation === "releases.build") {
+    const gitExecutable = requiredGitExecutable(binding, operation);
+    return Object.freeze({
+      owner: "releases",
+      runtime: Object.freeze({
+        source: await createGitContentWorkspaceSnapshotReader({ gitExecutable }),
+        artifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
+        evidence: createFilesystemMechanicalEvidenceReader(layout.artifactStoreRoot),
+      }),
+    });
+  }
+  if (operation === "packaging.package") {
+    return Object.freeze({
+      owner: "packaging",
+      runtime: createPackageOutputLifecycleRuntime({ artifactReader }),
+    });
+  }
+  if (operation === "exports.apply") {
+    const providerState = lazy(() => openNodeProviderState({
+      providerProjectionRoot: layout.providerProjectionRoot,
+      providerTargetStateRoot: layout.providerTargetStateRoot,
+    }));
+    return Object.freeze({
+      owner: "exports",
+      runtime: createExportLifecycleRuntime({
+        artifactReader: createExportArtifactReader(artifactReader),
+        knownNativeHomesReader: createKnownNativeHomesReader(providerState),
+        undoWriter: createLazyExportUndoWriter(layout.capsuleRoot),
+      }),
+    });
+  }
+  if (operation === "vendors.status" || operation === "vendors.update") {
+    return Object.freeze({
+      owner: "vendors",
+      runtime: Object.freeze({
+        contentWorkspace: makeNodeContentWorkspacePort({
+          gitExecutable: requiredGitExecutable(binding, operation),
+        }),
+        clock: Object.freeze({ now: () => new Date() }),
+      }),
+    });
+  }
+  if (operation === "governance.attestPromotion") {
+    return Object.freeze({
+      owner: "governance",
+      runtime: await productionGovernanceRuntime(binding, operation, layout.artifactStoreRoot),
+    });
+  }
+  if (operation.startsWith("providers.")) {
+    const governance = operation === "providers.canonicalSync" || operation === "providers.canonicalStatus"
+      ? await productionGovernanceRuntime(binding, operation, layout.artifactStoreRoot)
+      : createUnavailableGovernanceRuntime();
+    return Object.freeze({
+      owner: "providers",
+      governance,
+      runtime: await createNodeProviderLifecycleRuntime({
+        roots: {
+          providerProjectionRoot: layout.providerProjectionRoot,
+          providerTargetStateRoot: layout.providerTargetStateRoot,
+        },
+        artifactReader,
+        artifactStoreRoot: layout.artifactStoreRoot,
+        capsuleRoot: layout.capsuleRoot,
+        providerExecutables: binding.providerExecutables,
+      }),
+    });
+  }
+  throw missingRuntimeBinding(operation);
+}
 
 function createExportArtifactReader(
   reader: ReturnType<typeof createArtifactRepositoryReader>,
@@ -266,17 +361,92 @@ function controllerAuthority(): Readonly<{
   return Object.freeze({ dataRoot, controllerDigest });
 }
 
-function unavailableDeps(): CreateClientOptions["deps"] {
-  return {
+function selectLifecycleOperationClient<TOperation extends LifecycleOperation>(
+  operation: TOperation,
+  client: Client,
+): LifecycleOperationClient<TOperation> {
+  return lifecycleClientSelectors[operation](client);
+}
+
+function createSelectedLifecycleDeps(selected: SelectedLifecycleRuntime): LifecycleDeps {
+  const shared = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    releases: unavailablePort("releases"),
-    vendors: unavailablePort("vendors"),
-    packaging: unavailablePort("packaging"),
-    exports: unavailablePort("exports"),
-    providers: unavailablePort("providers"),
-    governance: unavailablePort("governance"),
   };
+  switch (selected.owner) {
+    case "releases":
+      return Object.freeze({
+        ...shared,
+        releases: selected.runtime,
+        get vendors(): never { return unavailableDependency("vendors"); },
+        get packaging(): never { return unavailableDependency("packaging"); },
+        get exports(): never { return unavailableDependency("exports"); },
+        get providers(): never { return unavailableDependency("providers"); },
+        get governance(): never { return unavailableDependency("governance"); },
+      });
+    case "vendors":
+      return Object.freeze({
+        ...shared,
+        get releases(): never { return unavailableDependency("releases"); },
+        vendors: selected.runtime,
+        get packaging(): never { return unavailableDependency("packaging"); },
+        get exports(): never { return unavailableDependency("exports"); },
+        get providers(): never { return unavailableDependency("providers"); },
+        get governance(): never { return unavailableDependency("governance"); },
+      });
+    case "packaging":
+      return Object.freeze({
+        ...shared,
+        get releases(): never { return unavailableDependency("releases"); },
+        get vendors(): never { return unavailableDependency("vendors"); },
+        packaging: selected.runtime,
+        get exports(): never { return unavailableDependency("exports"); },
+        get providers(): never { return unavailableDependency("providers"); },
+        get governance(): never { return unavailableDependency("governance"); },
+      });
+    case "exports":
+      return Object.freeze({
+        ...shared,
+        get releases(): never { return unavailableDependency("releases"); },
+        get vendors(): never { return unavailableDependency("vendors"); },
+        get packaging(): never { return unavailableDependency("packaging"); },
+        exports: selected.runtime,
+        get providers(): never { return unavailableDependency("providers"); },
+        get governance(): never { return unavailableDependency("governance"); },
+      });
+    case "providers":
+      return Object.freeze({
+        ...shared,
+        get releases(): never { return unavailableDependency("releases"); },
+        get vendors(): never { return unavailableDependency("vendors"); },
+        get packaging(): never { return unavailableDependency("packaging"); },
+        get exports(): never { return unavailableDependency("exports"); },
+        providers: selected.runtime,
+        governance: selected.governance,
+      });
+    case "governance":
+      return Object.freeze({
+        ...shared,
+        get releases(): never { return unavailableDependency("releases"); },
+        get vendors(): never { return unavailableDependency("vendors"); },
+        get packaging(): never { return unavailableDependency("packaging"); },
+        get exports(): never { return unavailableDependency("exports"); },
+        get providers(): never { return unavailableDependency("providers"); },
+        governance: selected.runtime,
+      });
+  }
+}
+
+function createUnavailableGovernanceRuntime(): LifecycleDeps["governance"] {
+  return Object.freeze({
+    get git(): never { return unavailableDependency("governance.git"); },
+    get evidence(): never { return unavailableDependency("governance.evidence"); },
+    get approvals(): never { return unavailableDependency("governance.approvals"); },
+  });
+}
+
+function unavailableDependency(label: string): never {
+  throw new Error(`Unexpected ${label} lifecycle dependency access`);
 }
 
 function requiredGitExecutable(
@@ -306,19 +476,4 @@ function missingRuntimeBinding(operation: LifecycleOperation): LifecycleAuthorit
   return new LifecycleAuthorityBindingError(
     `${owner} controller adapters are not yet assembled into the lifecycle client boundary`,
   );
-}
-
-function unavailablePort<T>(label: string): T {
-  const target = () => {
-    throw new Error(`Unexpected ${label} lifecycle port access`);
-  };
-  return new Proxy(target, {
-    apply() {
-      throw new Error(`Unexpected ${label} lifecycle port access`);
-    },
-    get(_value, property) {
-      if (property === "then") return undefined;
-      return unavailablePort(`${label}.${String(property)}`);
-    },
-  }) as T;
 }

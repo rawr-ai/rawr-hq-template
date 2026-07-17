@@ -14,6 +14,7 @@ import {
   LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
   type LifecycleClientFactory,
+  type LifecycleOperationClient,
   type LifecycleOperation,
 } from "./binding";
 
@@ -54,6 +55,7 @@ export {
   LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
   type LifecycleClientFactory,
+  type LifecycleOperationClient,
   type LifecycleOperation,
 } from "./binding";
 
@@ -109,40 +111,64 @@ export async function projectLifecycleOperation(
   factory: LifecycleClientFactory = createProductionLifecycleClient,
 ): Promise<unknown> {
   await preflightLifecycleAuthority(request, binding);
-  const client = await factory(request.operation, binding);
-  return invokeLifecycleProcedure(client, request);
+  return invokeLifecycleProcedure(request, binding, factory);
 }
 
 export async function invokeLifecycleProcedure(
-  client: Client,
   request: LifecycleOperationRequest,
+  binding: ControllerProjectionBinding,
+  factory: LifecycleClientFactory,
 ): Promise<unknown> {
   const callOptions = invocation(request.operation);
   switch (request.operation) {
-    case "releases.check":
+    case "releases.check": {
+      const client = await factory("releases.check", binding);
       return await client.releases.check(request.input, callOptions);
-    case "releases.build":
+    }
+    case "releases.build": {
+      const client = await factory("releases.build", binding);
       return await client.releases.build(request.input, callOptions);
-    case "vendors.status":
+    }
+    case "vendors.status": {
+      const client = await factory("vendors.status", binding);
       return await client.vendors.status(request.input, callOptions);
-    case "vendors.update":
+    }
+    case "vendors.update": {
+      const client = await factory("vendors.update", binding);
       return await client.vendors.update(request.input, callOptions);
-    case "packaging.package":
+    }
+    case "packaging.package": {
+      const client = await factory("packaging.package", binding);
       return await client.packaging.package(request.input, callOptions);
-    case "exports.apply":
+    }
+    case "exports.apply": {
+      const client = await factory("exports.apply", binding);
       return await client.exports.apply(request.input, callOptions);
-    case "providers.targetedTest":
+    }
+    case "providers.targetedTest": {
+      const client = await factory("providers.targetedTest", binding);
       return await client.providers.targetedTest(request.input, callOptions);
-    case "providers.completeTest":
+    }
+    case "providers.completeTest": {
+      const client = await factory("providers.completeTest", binding);
       return await client.providers.completeTest(request.input, callOptions);
-    case "providers.canonicalSync":
+    }
+    case "providers.canonicalSync": {
+      const client = await factory("providers.canonicalSync", binding);
       return await client.providers.canonicalSync(request.input, callOptions);
-    case "providers.canonicalStatus":
+    }
+    case "providers.canonicalStatus": {
+      const client = await factory("providers.canonicalStatus", binding);
       return await client.providers.canonicalStatus(request.input, callOptions);
-    case "providers.managedRetire":
+    }
+    case "providers.managedRetire": {
+      const client = await factory("providers.managedRetire", binding);
       return await client.providers.managedRetire(request.input, callOptions);
-    case "governance.attestPromotion":
+    }
+    case "governance.attestPromotion": {
+      const client = await factory("governance.attestPromotion", binding);
       return await client.governance.attestPromotion(request.input, callOptions);
+    }
   }
 }
 

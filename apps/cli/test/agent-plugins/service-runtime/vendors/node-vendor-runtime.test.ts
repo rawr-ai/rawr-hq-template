@@ -69,6 +69,9 @@ describe("node vendor lifecycle runtime", () => {
     const upstream = await createUpstreamRepository(fixture.path);
     const content = await createContentRepository(fixture.path, upstream.initialIdentity);
     const client = await createProductionLifecycleClient("vendors.status", lifecycleBinding());
+    expect(Object.keys(client.vendors)).toEqual(["status"]);
+    // @ts-expect-error A status binding cannot represent the update procedure.
+    void client.vendors.update;
     await isolatePrivateContentWorkspaceRoots(fixture.path);
     const recordPaths = [
       "vendor/sources/example.json",
@@ -104,6 +107,9 @@ describe("node vendor lifecycle runtime", () => {
     await git(upstream.root, ["add", "--all"]);
     await git(upstream.root, ["commit", "-m", "update"]);
     const client = await createProductionLifecycleClient("vendors.update", lifecycleBinding());
+    expect(Object.keys(client.vendors)).toEqual(["update"]);
+    // @ts-expect-error An update binding cannot represent the status procedure.
+    void client.vendors.status;
     const request = Object.freeze({
       contentWorkspace: content.workspace,
       sourceIds: Object.freeze(["example"]),

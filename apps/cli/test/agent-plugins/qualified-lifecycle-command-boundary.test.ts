@@ -198,7 +198,7 @@ describe("qualified lifecycle command boundary", () => {
     const requests = operationRequests();
     for (const request of requests) {
       calls.length = 0;
-      await invokeLifecycleProcedure(client, request);
+      await invokeLifecycleProcedure(request, { providerExecutables: {} }, () => client);
       expect(calls).toEqual([request.operation]);
     }
   });
@@ -229,18 +229,18 @@ describe("qualified lifecycle command boundary", () => {
       },
     } as unknown as Client;
 
-    await invokeLifecycleProcedure(client, {
+    await invokeLifecycleProcedure({
       operation: "vendors.status",
       input: parseVendorStatusRequest(vendorWorkspace()),
-    });
-    await invokeLifecycleProcedure(client, {
+    }, { providerExecutables: {} }, () => client);
+    await invokeLifecycleProcedure({
       operation: "vendors.update",
       input: parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] }),
-    });
-    await invokeLifecycleProcedure(client, {
+    }, { providerExecutables: {} }, () => client);
+    await invokeLifecycleProcedure({
       operation: "providers.canonicalStatus",
       input: parseStatusRequest(providerWorkspace()),
-    });
+    }, { providerExecutables: {} }, () => client);
     expect(writes).toBe(0);
   });
 
