@@ -45,7 +45,12 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
       const binding = parseControllerProjectionBinding(flags, requirements);
       const result = await projectLifecycleOperation(request, binding);
       exitCode = lifecycleResultExitCode(request.operation, result);
-      this.outputResult(this.ok({ operation: request.operation, result }), { flags: baseFlags });
+      this.outputResult(this.ok({ operation: request.operation, result }), {
+        flags: baseFlags,
+        human: () => {
+          for (const line of lifecycleHumanLines(request.operation, result)) this.log(line);
+        },
+      });
     } catch (error) {
       if (error instanceof LifecycleInputError || error instanceof LifecycleAuthorityBindingError) {
         this.rejectInput(error.message, baseFlags, error.code);
@@ -69,4 +74,30 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
     this.outputResult(this.fail(message, { code }), { flags });
     this.exit(2);
   }
+}
+
+function lifecycleHumanLines(operation: LifecycleOperationRequest["operation"], result: unknown): readonly string[] {
+  const record = asRecord(result);
+  if (operation === "providers.canonicalStatus" && record.ok === true && Array.isArray(record.value)) {
+    return [
+      `${operation}:`,
+      ...record.value.map((value) => {
+        const outcome = asRecord(value);
+        const target = asRecord(outcome.target);
+        return `${String(target.provider)} ${String(target.home)}: ${String(outcome.status)}`;
+      }),
+    ];
+  }
+  if (typeof record.kind === "string") return [`${operation}: ${record.kind}`];
+  if (record.ok === true) {
+    const value = asRecord(record.value);
+    if (typeof value.status === "string") return [`${operation}: ${value.status}`];
+  }
+  return [`${operation}: ${JSON.stringify(result)}`];
+}
+
+function asRecord(value: unknown): Readonly<Record<string, unknown>> {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? value as Readonly<Record<string, unknown>>
+    : {};
 }

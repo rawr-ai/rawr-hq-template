@@ -239,7 +239,7 @@ describe("qualified lifecycle command boundary", () => {
 
   it("emits one typed result when a lifecycle procedure exits nonzero", () => {
     const missingWorkspace = path.join(tmpdir(), `rawr-c5-missing-content-${randomUUID()}`);
-    const result = runRawr([
+    const args = [
       "agent", "plugins", "check",
       "--content-workspace", missingWorkspace,
       "--repository-identity", "github:rawr/hq",
@@ -253,8 +253,8 @@ describe("qualified lifecycle command boundary", () => {
       "--plugin-root", "plugins/agents",
       "--plugin", "alpha",
       "--git-executable", "/usr/bin/git",
-      "--json",
-    ]);
+    ] as const;
+    const result = runRawr([...args, "--json"]);
 
     expect(result.status, result.stderr).toBe(1);
     expect(JSON.parse(result.stdout)).toMatchObject({
@@ -265,6 +265,11 @@ describe("qualified lifecycle command boundary", () => {
       },
     });
     expect(result.stdout).not.toContain("LIFECYCLE_PROCEDURE_FAILED");
+
+    const human = runRawr(args);
+    expect(human.status, human.stderr).toBe(1);
+    expect(human.stdout).toBe("releases.check: IneligibleReport\n");
+    expect(human.stdout).not.toBe("ok\n");
   });
 });
 

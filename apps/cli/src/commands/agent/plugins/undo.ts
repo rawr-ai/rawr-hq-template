@@ -32,7 +32,10 @@ export default class AgentPluginsUndo extends RawrCommand {
         admittedProviders: ["claude", "codex"],
       });
       const result = await invokeAgentPluginUndo(binding);
-      this.outputResult(this.ok({ operation: "controller.undo", result }), { flags: baseFlags });
+      this.outputResult(this.ok({ operation: "controller.undo", result }), {
+        flags: baseFlags,
+        human: () => this.log(`controller.undo: ${result.kind}`),
+      });
       exitCode = undoResultExitCode(result);
     } catch (error) {
       const binding = error instanceof LifecycleAuthorityBindingError;
