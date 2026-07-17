@@ -199,6 +199,38 @@ describe("effect-platform-node agent provider records", () => {
     expect(await readTarget(resource, address)).toEqual({ kind: "Absent", address });
   });
 
+  it("serializes concurrent settlement so one capture is consumed exactly once", async () => {
+    fixtureRoot = await createFixture();
+    const resource = makeAgentProviderRecordsResource(fixtureLayout(fixtureRoot.path));
+    const address = targetAddress("Identity", "pt1_concurrent_settle");
+    const captured = await capture(resource, address, "read-concurrent-settle");
+    const input = {
+      address,
+      planDigest: "plan-concurrent-settle",
+      readToken: captured.readToken,
+      captureHandle: captured.handle,
+      mutation: { kind: "Put" as const, bytes: encoder.encode('{"identity":1}\n') },
+    };
+    expect(await run(resource.writeTarget(input))).toMatchObject({
+      ok: true,
+      value: { outcome: "Applied" },
+    });
+
+    const results = await Promise.all([
+      run(resource.settleTarget(input)),
+      run(resource.settleTarget(input)),
+    ]);
+    const settled = results.filter((result) => result.ok);
+    const refused = results.filter((result) => !result.ok);
+
+    expect(settled).toHaveLength(1);
+    expect(settled[0]).toMatchObject({ value: { outcome: "Settled" } });
+    expect(refused).toHaveLength(1);
+    if (refused[0] !== undefined && !refused[0].ok) {
+      expect(refused[0].failure.reason).toBe("HandleConsumed");
+    }
+  });
+
   it("refuses to settle a captured handle without binding the proposed plan", async () => {
     fixtureRoot = await createFixture();
     const resource = makeAgentProviderRecordsResource(fixtureLayout(fixtureRoot.path));

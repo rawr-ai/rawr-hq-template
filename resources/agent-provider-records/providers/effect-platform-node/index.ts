@@ -496,7 +496,7 @@ export function makeAgentProviderRecordsResource(
     return restoreReceipt(input, true);
   });
 
-  const settleTarget = Effect.fn("agentProviderRecords.settleTarget")(function* (
+  const settleTargetOperation = Effect.fn("agentProviderRecords.settleTarget")(function* (
     input: Readonly<{
       address: ProviderTargetRecordAddress;
       planDigest: string;
@@ -570,7 +570,8 @@ export function makeAgentProviderRecordsResource(
       targetMutationFence.withPermits(1)(writeTargetOperation(input)),
     restoreTarget: (input: Parameters<typeof restoreTargetOperation>[0]) =>
       targetMutationFence.withPermits(1)(restoreTargetOperation(input)),
-    settleTarget,
+    settleTarget: (input: Parameters<typeof settleTargetOperation>[0]) =>
+      targetMutationFence.withPermits(1)(settleTargetOperation(input)),
   });
 }
 
