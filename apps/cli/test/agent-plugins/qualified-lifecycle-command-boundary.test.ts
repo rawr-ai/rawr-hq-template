@@ -271,6 +271,26 @@ describe("qualified lifecycle command boundary", () => {
     expect(human.stdout).toBe("releases.check: IneligibleReport\n");
     expect(human.stdout).not.toBe("ok\n");
   });
+
+  it("classifies malformed undo executable bindings as invalid input", () => {
+    for (const bindings of [
+      ["codex=relative"],
+      ["codex=/tmp/codex", "codex=/tmp/other-codex"],
+    ]) {
+      const result = runRawr([
+        "agent", "plugins", "undo",
+        ...bindings.flatMap((binding) => ["--provider-executable", binding]),
+        "--json",
+      ]);
+
+      expect(result.status, result.stderr).toBe(2);
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        ok: false,
+        error: { code: "LIFECYCLE_INPUT_INVALID" },
+      });
+      expect(result.stdout).not.toContain("LIFECYCLE_UNDO_FAILED");
+    }
+  });
 });
 
 const EXACT_PLUGIN_COMMANDS = [

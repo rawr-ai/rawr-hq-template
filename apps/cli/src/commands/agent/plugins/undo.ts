@@ -7,6 +7,7 @@ import {
   undoResultExitCode,
 } from "../../../lib/agent-plugins/commands/projection";
 import { providerExecutableFlag } from "../../../lib/agent-plugins/commands/flags";
+import { LifecycleInputError } from "../../../lib/agent-plugins/commands/input";
 
 export default class AgentPluginsUndo extends RawrCommand {
   static description = "Replay the controller-owned last agent-plugin operation capsule";
@@ -38,15 +39,16 @@ export default class AgentPluginsUndo extends RawrCommand {
       });
       exitCode = undoResultExitCode(result);
     } catch (error) {
+      const input = error instanceof LifecycleInputError;
       const binding = error instanceof LifecycleAuthorityBindingError;
       this.outputResult(this.fail(
-        binding ? error.message : "Agent-plugin undo failed",
+        input || binding ? error.message : "Agent-plugin undo failed",
         {
-          code: binding ? error.code : "LIFECYCLE_UNDO_FAILED",
-          ...(binding ? {} : { details: { message: error instanceof Error ? error.message : String(error) } }),
+          code: input || binding ? error.code : "LIFECYCLE_UNDO_FAILED",
+          ...(input || binding ? {} : { details: { message: error instanceof Error ? error.message : String(error) } }),
         },
       ), { flags: baseFlags });
-      this.exit(binding ? 2 : 1);
+      this.exit(input || binding ? 2 : 1);
     }
     if (exitCode !== 0) this.exit(exitCode);
   }
