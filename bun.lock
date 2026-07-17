@@ -316,6 +316,17 @@
         "@rawr/runtime-context": "workspace:*",
       },
     },
+    "resources/content-workspace": {
+      "name": "@rawr/resource-content-workspace",
+      "dependencies": {
+        "@effect/platform": "0.96.1",
+        "@effect/platform-node": "0.107.0",
+        "effect": "3.21.3",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
     "resources/controller-authority": {
       "name": "@rawr/resource-controller-authority",
       "dependencies": {
@@ -1242,6 +1253,8 @@
     "@rawr/plugin-server-api-example-todo": ["@rawr/plugin-server-api-example-todo@workspace:plugins/server/api/example-todo"],
 
     "@rawr/plugin-session-tools": ["@rawr/plugin-session-tools@workspace:plugins/cli/session-tools"],
+
+    "@rawr/resource-content-workspace": ["@rawr/resource-content-workspace@workspace:resources/content-workspace"],
 
     "@rawr/resource-controller-authority": ["@rawr/resource-controller-authority@workspace:resources/controller-authority"],
 
