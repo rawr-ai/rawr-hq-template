@@ -1,6 +1,6 @@
 # C4 Legacy Membership Retirement And Qualified Authoring Execution Record
 
-**Status:** ARCHIVE_REVIEW
+**Status:** CLOSED
 
 **Change:** `normalize-app-composition-authoring`
 
@@ -44,10 +44,13 @@ The personal commit and project-tree OID are design-packet provenance only. C4 s
 | C4 reviewed source / landed `main` | `42d52acb4afb76872b287da335804c4038428011` / `2371d9b989c5d9ff92cc4fb799365634f2634e2e` (PR #341) |
 | C4 reviewed/landed source tree | `765bf9cbb028d3013b46c67733cdf1e542f8be28` |
 | C4 archive worktree / branch | `wt-template-c4-app-composition-authoring-archive` / `codex/c4-app-composition-authoring-archive` |
+| C4 reviewed archive / landed `main` | `cb4d01c52039af11eee13dcdfc45fb5909f0dce5` / `5350f81f2e4181105e8c60efd3d693e40fa6b348` (PR #342) |
+| C4 reviewed/landed archive tree | `e12b87508f2276af3d84af0506e432402a8f2f6d` |
+| C4 closeout worktree / branch | `wt-template-c4-app-composition-authoring-closeout` / `codex/c4-app-composition-authoring-closeout` |
 | Graphite parent | `main` |
 | OpenSpec CLI | `@fission-ai/openspec@1.3.1` |
 | Dependency shape | landed C1-C3; C4 removes only legacy membership/scaffold ownership and does not activate C3; C5 waits for C4 |
-| Current gate | Source is landed and drained; canonical specs are synchronized and the archived record is ready for Graphite landing |
+| Current gate | Source and archive are landed on canonical Template `main`; exact C4 proof is dispositioned, source/archive nodes are drained, and this record closes C4 |
 
 Record-only proof on 2026-07-16: `bunx @fission-ai/openspec@1.3.1 validate normalize-app-composition-authoring --strict` passed, and a no-index whitespace check passed for every untracked record file. These results validate the amendment shape only; implementation, behavior proof, standing review, landing, and closure remain open.
 
@@ -171,3 +174,5 @@ The complete corrected implementation was reviewed at clean Template commit `fb5
 ## Closure
 
 C4 settles only when the superseded mini-runtime work is absent, legacy web/state membership is unreachable, the three source-only creators and their failure/idempotence contracts pass, all four standing review roles have no unresolved invariant-threatening finding, source lands on canonical Template `main`, the OpenSpec record is archived truthfully, and the Graphite branch/worktree is drained. C4 closure makes no claim that the aggregate lifecycle cutover, app composition, or runtime realization is complete.
+
+C4 is closed. Legacy web/state membership, the state API/UI, workspace mounting, mixed scaffold ownership, and the superseded C4 mini-runtime are unreachable. Exactly three qualified source creators remain. The mixed agent lifecycle aggregate and its two shared-output tests are intentionally left only as C5 deletion evidence; app composition and runtime realization remain owned by the separate canonical architecture migration. After this record lands, the closeout branch/worktree is drained before C5 opens from clean Template `main`.
