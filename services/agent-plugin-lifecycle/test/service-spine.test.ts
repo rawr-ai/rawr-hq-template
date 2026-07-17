@@ -42,7 +42,7 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       kind: "Rejected",
       issues: [{ code: "RuntimeFailure" }],
     });
-    expect(calls.splice(0)).toEqual(["vendors.repository.observe"]);
+    expect(calls.splice(0)).toEqual(["vendors.contentWorkspace.inspectWorkspace"]);
 
     await expect(client.packaging.package(packagingRequest(), invocation)).resolves.toMatchObject({
       kind: "RejectedBeforeOutputMutation",
@@ -114,21 +114,23 @@ function spineClient(
       },
     },
     vendors: {
-      repository: {
-        observe: async () => {
-          calls.push("vendors.repository.observe");
-          return { kind: "Unavailable", detail: "fixture repository is unavailable" };
+      contentWorkspace: {
+        inspectWorkspace: async () => {
+          calls.push("vendors.contentWorkspace.inspectWorkspace");
+          return unavailableAsync("vendor content workspace inspection");
         },
-      },
-      upstream: {
-        observe: async () => unavailableAsync("vendor upstream observation"),
-        prepare: async () => unavailableAsync("vendor payload preparation"),
-      },
-      authoring: {
+        readFile: async () => unavailableAsync("vendor content workspace file read"),
+        readTree: async () => unavailableAsync("vendor content workspace tree read"),
+        observeRemote: async () => unavailableAsync("vendor remote observation"),
+        materializeRemote: async () => unavailableAsync("vendor remote materialization"),
+        isAncestor: async () => unavailableAsync("vendor remote ancestry"),
         capture: async () => unavailableAsync("vendor preimage capture"),
         apply: async () => unavailableAsync("vendor authoring"),
         restore: async () => unavailableAsync("vendor restoration"),
+        settle: async () => unavailableAsync("vendor settlement"),
+        release: async () => unavailableAsync("vendor capture release"),
       },
+      clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
     },
     packaging: {
       artifactReader: {
