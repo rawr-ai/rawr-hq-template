@@ -94,18 +94,35 @@ services/agent-plugin-lifecycle/
 
 Each module owns its schemas, contract, module middleware, repository interfaces, router, and private implementation. Code stays module-local unless at least two modules share the same semantic type or port. The package root exports only `createClient`, client boundary types, and the router. The contract and any deliberately public types, ports, or entities use exact named subpath exports. Internal repositories and adapters are not exported.
 
+### Isometric Structural Axes
+
+The latest Magic Migration `collect` topology is implementation evidence for the next tighter service shape, not a second product design. C5 adopts only the axes already earned by this lifecycle domain:
+
+- Magic Migration evidence was inspected at `c7fefd0ad2dbfb72d92b8b3874c9f3ca0681a132` under `collect-ingest/services/collect/src/service/**`; the active Civ7 positive-topology examples were inspected at `7c8b454e98fba224854a4bdfbf348ba7bfe8702e`. These snapshots inform enforcement mechanics only.
+- `RAWR_Service_Package_Effect_Spec.md` was unavailable as a dataless iCloud placeholder during C5, so no C5 behavior or structural claim depends on it.
+
+- module-local domain matter is positively closed under `modules/<module>/model/{dto,policy,...}` as categories become populated;
+- cross-module release matter remains under the existing `shared/release` owner rather than being copied into module peers;
+- concrete capability code lives under `resources/<capability>/providers/<provider>`, never in the service model or CLI projection;
+- only populated model categories are admitted, so the closed topology never claims authority before a capability exists;
+- no `db` sibling is created in C5. A database root is admitted only with real persistence and, in the same reviewed transition, a closed `db/{schema,migrations,repositories}` topology.
+
+The broader isometric service-package conversion remains a tracked next ratchet if it is not required to finish C5. It must preserve this service's public behavior and may not reopen app composition, the future runtime compiler, or a second lifecycle owner. The intended direction is consistent with [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec#4.1 Ownership law]] and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#13. Resource, provider, and profile model]].
+
 ## Context And Runtime Lanes
 
-- **Construction `deps`:** abstract runtime/resource ports for explicit Git-object reads, immutable artifacts, package output, export destinations, native providers, governed hosted evidence, and a write-only controller-supplied `UndoWriter`, plus required observability and analytics bindings. The service has no capsule store, read, clear, or replay capability.
+- **Construction `deps`:** abstract runtime/resource ports for explicit Git-object reads, immutable artifacts, package output, export destinations, native providers, governed hosted evidence, and a write-only controller-supplied `UndoWriter`, plus required observability and analytics bindings. The service declares and consumes these capabilities; it does not provision or release them. The service has no capsule store, read, clear, or replay capability.
 - **Construction `scope`:** verified installed-controller and controller-data identities only. Content workspaces, provider homes, destinations, and outputs are not ambient scope.
 - **Construction `config`:** stable protocol configuration only; never cwd, PATH, a personal checkout, or a provider home.
 - **Invocation:** trace and command invocation identity.
 - **Procedure input:** explicit absolute content workspace, provider home, destination/output, landed ref, or canonical artifact/channel handle whenever that value selects semantic authority.
 - **Controller projection binding:** explicit validated absolute Git/provider executable paths construct the concrete ports for the command; PATH, cwd, personal files, and content-workspace code never select them.
 
-Concrete Git, filesystem, archive, provider, hosted-governance, and capsule-writer adapters live in the CLI projection's service runtime binding. Service-backed commands call one typed local client procedure. They do not import module applications or repositories and do not sequence a second service. The controller-owned undo application remains outside the service and is projected only by `rawr agent plugins undo`; the lifecycle service can contribute inverse actions only through its injected closed `UndoWriter` protocol.
+Concrete Git, filesystem, archive, native-provider, and hosted-governance implementations live under capability-oriented `resources/<capability>/providers/<provider>` projects. The CLI projection owns only explicit provider selection, controller-authority preflight, binding those provisioned capabilities to the service's public ports, and one typed client invocation. It does not implement resource behavior, import module applications or repositories, or sequence a second service. The controller-owned undo application remains outside the service and is projected only by `rawr agent plugins undo`; the lifecycle service can contribute inverse actions only through its injected closed `UndoWriter` protocol.
 
-The repository currently has no admitted effect-oRPC provider and no Effect runtime substrate for this service. This consolidation therefore uses the existing `@rawr/hq-sdk` oRPC service primitive and does not introduce raw Effect or effect-oRPC code. Runtime realization remains owned by the dedicated final-architecture migration.
+Resource operations and provider acquisition use Effect and Effect Platform inside the resource/provider boundary. The lifecycle service itself remains on the existing `@rawr/hq-sdk` oRPC primitive for C5; it does not adopt raw effect-oRPC wiring or manufacture the future runtime compiler, bootgraph, app profile, or managed process runtime. The CLI's temporary direct binding is an attachment point for, not an implementation of, [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#13. Resource, provider, and profile model]].
+
+The stable ownership frame comes from [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec#4.1 Ownership law]]: services own semantic truth, resources declare provisionable capability contracts, providers implement them, and Oclif owns command execution only after the controller projection binds the selected capabilities.
 
 ## Manifest Delta
 
@@ -114,6 +131,7 @@ The repository currently has no admitted effect-oRPC provider and no Effect runt
 3. Collapse CLI and root task dependencies, Vitest projects, lock data, architecture inventories, and structural gates onto the one service.
 4. Absorb `@rawr/agent-plugin-release` schemas, canonicalization, and invariants into service-owned shared release types, then delete the support package and every bypass import.
 5. Replace direct CLI imports of peer-service applications with one typed service client and explicit runtime binding. Preserve qualified controller undo as a separate controller-owned application.
+6. Move concrete capability implementations out of the CLI tree into resource/provider projects. Keep CLI code to authority validation, provider selection, binding, rendering, and exit classification.
 
 ## Invariants And Falsifiers
 
@@ -122,8 +140,14 @@ The repository currently has no admitted effect-oRPC provider and no Effect runt
 - Provider and export state remain disjoint and explicit even though their procedures share a service boundary.
 - Valid read-only and converged results perform zero writes.
 - No personal executable source, repository ancestry, app composition, web mounting, runtime compiler, or compatibility aggregate enters the service.
-- Any surviving peer-service or release-support package/import, CLI direct module-application import, exported internal adapter, service-owned undo store/replay, ambient authority locator, or Effect/runtime realization work falsifies this correction.
+- Any surviving peer-service or release-support package/import, CLI direct module-application import, CLI-owned resource implementation, exported internal adapter, service-owned undo store/replay, ambient authority locator, or full runtime-realization expansion falsifies this correction.
 
 ## Proof
 
-Habitat is the structural authority. The top-level `orpc-service-package` blueprint enforces the canonical service shell, exact six-module inventory, module-root files, and typed runtime boundary. The RAWR lifecycle niche rejects retired peer projects and compatibility command roots. A Grit packet rejects concrete mutation authority inside the service, retired package imports, and CLI bypasses into service internals. No product test or hand-written script duplicates that structure policy. Module behavior tests retain the C2/C3 state-transition and failure oracles. Command tests add parser rejection, procedure dispatch, status exits, and mutation-port traps. The installed-controller acceptance uses an absolute binary and disposable content, provider, export, output, and controller-data homes.
+[[HABITAT_INTEGRATION]] is the structural execution record. Exactly three locked, positive rules narrow the admitted topology:
+
+1. `require_agent_plugin_lifecycle_service_topology` closes the lifecycle to one service shell, the exact six-module inventory, uniform module roots, and only the populated model categories the domain has earned.
+2. `require_agent_plugin_command_channel_topology` closes curated lifecycle commands under `rawr agent plugins` and external Oclif extension commands under `rawr plugins`.
+3. `preserve_agent_plugin_lifecycle_dependency_direction` enforces controller composition through public service ports to resource contracts, rejecting service imports of concrete providers and CLI imports of service internals.
+
+The rules assert the surviving topology rather than naming retired identities. No product test or hand-written script duplicates this structural policy. Module behavior tests retain the C2/C3 transition, failure, state-owner, same-ID replacement, and omission oracles. Command tests add parser rejection, one-procedure dispatch, status exits, and mutation-port traps. Installed-controller acceptance uses an absolute immutable binary and disposable content, provider, export, output, and controller-data homes. It proves the exact 13 curated and 7 external command IDs across 113 fresh processes while leaving native Codex operational database bytes and bootstrap removal outside its claim.
