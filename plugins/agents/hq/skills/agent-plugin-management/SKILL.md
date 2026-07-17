@@ -1,59 +1,65 @@
 ---
 name: agent-plugin-management
 description: |
-  This skill should be used when the user asks to manage RAWR agent plugins, run full plugin sync, resolve sync conflicts, handle plugin rename/delete orphans, verify Cowork .plugin artifacts, or explain safe daily plugin sync workflow in RAWR HQ.
+  Use when inspecting or operating the governed curated agent-plugin lifecycle: release checks and builds, deterministic packages or exports, provider tests and convergence, retirement, promotion attestation, vendor records, status, or controller-owned undo.
 
-  Key triggers: "rawr plugins sync all", "sync agent plugins", "orphan plugins", "partial sync", "cowork plugin zip", "plugin drift", "manage plugins in rawr".
+  Key triggers: "rawr agent plugins", "curated release set", "agent-plugin status", "provider convergence", "retire agent plugin", "promotion attestation", and "agent-plugin undo".
 ---
 
 <skill-usage-tracking>
 
-# Agent Plugin Management (RAWR HQ)
+# Agent Plugin Management
 
-Use this skill to operate agent-plugin sync in a deterministic, low-drift way.
+Use the Template-owned controller against explicit governed content records and
+explicit provider homes. A content checkout is a locator, never controller,
+artifact, channel, ledger, receipt, or provider identity.
 
-## Reference map
+## Reference Map
 
 | Reference | Path | Purpose |
-|-----------|------|---------|
-| Workflow loop | `references/workflow.md` | Canonical day-to-day loop, exception handling, and observability checks |
-| Lifecycle contract | `references/lifecycle-contract.md` | Source of truth for lifecycle completeness and done criteria |
-| Policy classification | `references/policy-classification.md` | No-policy vs policy semantics and judge outcomes |
-| Judge template A | `references/judge-template-pass-a.md` | First independent policy/pass judgment prompt |
-| Judge template B | `references/judge-template-pass-b.md` | Second independent policy/pass judgment prompt |
-| Merge workflow | `../../workflows/merge-no-policy-stack.md` | Two-pass no-policy merge automation and hold/escalation rules |
+|---|---|---|
+| Operation selector | [[references/workflow.md]] | Owner-specific inputs, convergence, and recovery |
+| Lifecycle contract | [[references/lifecycle-contract.md]] | Ownership and completion contract |
+| Qualified workflow | [[../../workflows/lifecycle-agent-plugin.md]] | Run exactly one selected lifecycle operation |
 
-## Canonical command contract
+## Qualified Command Contract
 
-- Full convergence command: `rawr plugins sync all`
-- Safety preview command: `rawr plugins sync all --dry-run --json`
-- Rollback command for last mutating sync: `rawr undo`
-- Partial mode is advanced-only and must include: `--allow-partial`
+- Source-only scaffold: `rawr agent plugins create`
+- Vendor records: `rawr agent plugins vendors status`, `rawr agent plugins vendors update`
+- Release: `rawr agent plugins check`, `rawr agent plugins build`
+- Artifact projection: `rawr agent plugins package`, `rawr agent plugins export`
+- Native providers: `rawr agent plugins test`, `rawr agent plugins sync`, `rawr agent plugins status`, `rawr agent plugins retire`
+- Governance: `rawr agent plugins attest-promotion`
+- Recovery: `rawr agent plugins undo`
 
-## Core invariants
+`rawr plugins ...` is a separate native Oclif extension manager. It is never an
+alias or compatibility path for curated agent plugins.
+
+## Core Invariants
 
 <invariants>
-<invariant name="single-canonical-entrypoint">Use `rawr plugins sync all` as the default command after plugin create/update/delete/rename.</invariant>
-<invariant name="dry-run-before-apply">Run `--dry-run --json` before apply when validating a change set or debugging.</invariant>
-<invariant name="partial-gated">Do not run partial sync flags unless `--allow-partial` is explicitly present.</invariant>
-<invariant name="orphan-retirement-on">Keep stale managed plugin retirement enabled for rename/delete safety.</invariant>
-<invariant name="scope-clarity">Keep agent-plugin convergence separate from app composition and runtime realization; the retired web-membership command family is not a fallback.</invariant>
+<invariant name="source-authoring-is-not-release">Authoring changes source only and never starts later operations automatically.</invariant>
+<invariant name="closed-release-set">A complete release set is explicit, immutable, and closed-world.</invariant>
+<invariant name="one-content-owner">Every skill, workflow, agent, hook, and script releases through exactly one parent agent plugin.</invariant>
+<invariant name="truthful-state-owner">Each provider home or export destination has one state owner and its own receipt or ledger.</invariant>
+<invariant name="explicit-transition">Inspect, build, package, export, test, sync, retire, promote, and undo remain separate explicit transitions.</invariant>
+<invariant name="idempotent-convergence">A repeated converged operation may inspect live state but changes nothing.</invariant>
 </invariants>
 
-## Anti-patterns to avoid
+## Anti-Patterns
 
-- **Silent partial mode**: disabling parts of sync without `--allow-partial`.
-- **Manual destination edits**: editing target homes directly instead of syncing from source plugins.
-- **Rename orphan buildup**: renaming/deleting source plugins without retirement pass.
-- **Runtime fallback**: using retired web-membership or app-composition paths for agent-office sync operations.
+- **Mixed channel**: using `rawr plugins ...` for curated content.
+- **Authoring side effect**: building or syncing because a source file changed.
+- **Destination authority**: treating a provider home, cache, or export as source.
+- **Aggregate fallback**: reviving a broad sync or composition path to bridge owners.
+- **Hidden continuation**: automatically chaining the next lifecycle operation.
 
-## Grounding in this repo
+## Grounding
 
-- Agent-office source plugins live in `plugins/agents/*`.
-- Canonical process docs:
-  - `plugins/agents/hq/workflows/manage.md`
-  - `docs/process/PLUGIN_E2E_WORKFLOW.md`
-  - `docs/system/PLUGINS.md`
+- Controller and generic lifecycle authority live in RAWR HQ-Template.
+- Curated content and its governed records live in an independent content repo.
+- Active operations guidance: [[docs/process/HQ_OPERATIONS.md]] and
+  [[docs/process/CROSS_REPO_WORKFLOWS.md]].
 
 </skill-usage-tracking>
 <!-- Skill usage disclosure: On completion, state "Skills used: [name], [name]" with optional rationale. Omit if no skills invoked. -->
