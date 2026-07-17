@@ -1,6 +1,6 @@
 # C3 Agent Plugin Native Convergence Execution Record
 
-**Status:** ARCHIVED_PENDING_LANDING
+**Status:** CLOSED
 
 **Change:** `establish-agent-plugin-native-convergence`
 
@@ -31,9 +31,11 @@ The personal commit and project-tree OID are accepted design-packet provenance, 
 | C3 worktree / branch | `wt-template-c3-agent-native-convergence` / `codex/c3-agent-native-convergence` |
 | C3 reviewed source / landed `main` | `4d435e83ff78677200d211a2c6ffdd62af48493d` / `3f09e6a4fa1614d218317b411b60719a2603f5e3` (PR #338) |
 | C3 reviewed/landed source tree | `05f8f7ee3676091411832409735db1aab1130c98` |
+| C3 reviewed archive / landed `main` | `1b989493eba43595189c84b7c0a31e9a1f5658f3` / `7e208f4b87aee24c35bc8dbf015d131c9d955a93` (PR #339) |
+| C3 reviewed/landed archive tree | `d37ef942724aee5113f22b9bccf3f9d568bfb329` |
 | Graphite parent | `main` |
 | OpenSpec CLI | `@fission-ai/openspec@1.3.1` |
-| Current gate | Reviewed source is landed on canonical Template `main`; exact post-main proof is green and the guarded archive is authorized |
+| Current gate | Source and archive are landed on canonical Template `main`; exact post-main proof is green and C3 is closed |
 
 ## Director Frame
 
@@ -196,6 +198,7 @@ Bounded workers receive disjoint promotion, projection/provider, adapter, build-
 | personal-main first-content dependency | C6 EXTERNAL PRECONDITION | Personal commit `c7375f52c79cf4c82a49cef51c7934fb7596a763`, tree `a1f279091c4f90e80da1dfad88d2e8c0f4427208`, contains `plugins/agents/cognition/skills/state-machine-design/**` but no tracked C2 `AgentPluginReleaseInput`: `.rawr` is absent and Git-object searches find no `release-input.json` or `releaseInputDigest`. The C2 production content-workspace reader would return `MissingReleaseInput`; synthesizing an untracked input or custom snapshot would bypass the accepted Git/data authority. C6 must first land the governed closed-world release input and acceptance records, then use `cognition:state-machine-design` as the first real-content C2 build -> C3 targeted-test oracle in explicit disposable Codex/Claude homes. C3 performed no content, artifact, provider, receipt, capsule, or canonical-home mutation for this blocked attempt. |
 | canonical Codex cache non-mutation | PASS | The exact inspected path was the marketplace cache subdirectory `/Users/mateicanavra/.codex/plugins/cache/personal-rawr-hq`, not the entire Codex home or config. Its canonical non-following path/type/mode/content manifest was 0 entries, 0 files, SHA-256 `4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945` both before and after the blocked real-content preflight. This is additive evidence and does not replace the separately recorded canonical `~/.codex/config.toml` baseline. |
 | source landing and post-main rerun | PASS | PR #338 landed reviewed tree `05f8f7ee3676091411832409735db1aab1130c98` at canonical `main` commit `3f09e6a4fa1614d218317b411b60719a2603f5e3`. From the recorded C3 base, uncached build/typecheck/lint/test passed for all 39 affected projects; strict OpenSpec, C2 release-product and C3 native-convergence gates, and `git diff --check` passed. Real disposable-home acceptance passed all 110 provider tests, including all 4 gated Codex/Claude initial-convergence and read-only-repeat cases. |
+| archive landing and local drain | PASS | PR #339 landed reviewed tree `d37ef942724aee5113f22b9bccf3f9d568bfb329` at canonical `main` commit `7e208f4b87aee24c35bc8dbf015d131c9d955a93`. The C3 source and archive worktrees were removed through clean `git worktree remove`; Graphite marks both branches merged. This closeout node is removed after its own landing, leaving no C3 worktree or active Graphite node. |
 
 ## Closure
 
