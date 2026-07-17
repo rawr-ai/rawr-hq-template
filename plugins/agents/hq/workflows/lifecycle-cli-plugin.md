@@ -1,31 +1,33 @@
 ---
-description: Run full lifecycle quality checks for CLI plugin changes
-argument-hint: "TARGET=<path|id>"
+description: Review and inspect an external Oclif extension without entering curated agent-plugin lifecycle
+argument-hint: "EXTENSION=<package-id|path>"
 ---
 
-# Lifecycle: CLI Plugin
+# Lifecycle: External CLI Extension
 
-Use `docs/process/runbooks/LIFECYCLE_CLI_PLUGIN.md` as canonical guidance.
+## Boundary
 
-## HQ Authoring Routing
-
-- For net-new or substantial content authoring, start with:
-  - `/hq:create-content`
-  - `/hq:create-plugin`
+- External Oclif extensions use only `rawr plugins ...` and native Oclif state.
+- Never route an external extension through `rawr agent plugins ...`.
+- This workflow does not build, export, or reconcile curated agent plugins.
 
 ## Steps
 
-1. Apply artifact updates in target CLI plugin.
-2. Update tests and docs.
-3. Audit/update dependents.
-4. Run:
+1. Apply the extension source change and update its tests and documentation.
+2. Build and test the owning extension project with its repository targets.
+3. Audit dependents and package identity changes.
+4. Inspect the exact extension without mutating native state:
+
 ```bash
-rawr plugins sync all --dry-run --json
-rawr plugins sync drift --json
-rawr plugins lifecycle check --target "$TARGET" --type cli --json
+rawr plugins inspect "$EXTENSION"
+rawr plugins list
 ```
-5. If lifecycle check fails, fix missing areas before publish.
+
+5. Only when the user explicitly requests native mutation, choose the exact
+   supported operation: `rawr plugins install`, `rawr plugins link`,
+   `rawr plugins update`, `rawr plugins uninstall`, or `rawr plugins reset`.
 
 ## Done
 
-- lifecycle check returns `ok: true` and `status: pass`.
+- Source checks pass and `rawr plugins inspect` reports the expected identity.
+- No curated agent-plugin lifecycle operation ran.
