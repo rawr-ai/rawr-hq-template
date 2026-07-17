@@ -8,7 +8,6 @@ const SCANNED_ROOTS = [
   "apps/cli/src",
   "apps/server/src",
   "plugins/cli/chatgpt-corpus/src",
-  "plugins/cli/plugins/src",
   "plugins/cli/session-tools/src",
 ];
 
@@ -58,24 +57,10 @@ const FORBIDDEN_PATTERNS = [
   },
 ];
 
-const FORBIDDEN_AGENT_CONFIG_SYNC_CASTS = [
-  "sourcePlugin: input.sourcePlugin as any",
-  "content: input.content as any",
-  "scope: input.scope as any",
-  "as Promise<SyncRunResult>",
-];
-
-const FORBIDDEN_PLUGIN_PROJECTION_IMPORTS = [
-  "agent-config-sync-resources/plugin-content",
-  "agent-config-sync-resources/scan-canonical-content",
-  "agent-config-sync-resources/effective-content",
-  "@rawr/plugin-workspace",
-];
-
 const SERVICE_IMPORT_PATTERN =
-  /import\s+\{[^}]*\bcreateClient\b[^}]*\}\s+from\s+["']@rawr\/(?:hq-ops|agent-config-sync|session-intelligence|chatgpt-corpus|example-todo)(?:\/client)?["']/u;
+  /import\s+\{[^}]*\bcreateClient\b[^}]*\}\s+from\s+["']@rawr\/(?:agent-plugin-lifecycle|hq-ops|session-intelligence|chatgpt-corpus|example-todo)(?:\/client)?["']/u;
 const SERVICE_IMPORTS_PATTERN =
-  /import\s+\{(?<specifiers>[^}]*)\}\s+from\s+["']@rawr\/(?:hq-ops|agent-config-sync|session-intelligence|chatgpt-corpus|example-todo)(?:\/client)?["']/gu;
+  /import\s+\{(?<specifiers>[^}]*)\}\s+from\s+["']@rawr\/(?:agent-plugin-lifecycle|hq-ops|session-intelligence|chatgpt-corpus|example-todo)(?:\/client)?["']/gu;
 
 async function pathExists(relPath) {
   try {
@@ -148,18 +133,6 @@ for (const relPath of files.sort()) {
 
   for (const { pattern, message } of FORBIDDEN_PATTERNS) {
     if (pattern.test(source)) findings.push(`${relPath}: ${message}`);
-  }
-
-  if (relPath === "plugins/cli/plugins/src/lib/agent-config-sync.ts") {
-    for (const forbidden of FORBIDDEN_AGENT_CONFIG_SYNC_CASTS) {
-      if (source.includes(forbidden)) findings.push(`${relPath}: forbidden weak service input cast remains: ${forbidden}`);
-    }
-  }
-
-  if (relPath.startsWith("plugins/cli/plugins/src/")) {
-    for (const forbidden of FORBIDDEN_PLUGIN_PROJECTION_IMPORTS) {
-      if (source.includes(forbidden)) findings.push(`${relPath}: plugin projection must not import ${forbidden}`);
-    }
   }
 
   if (SERVICE_IMPORT_PATTERN.test(source) && !source.includes("bindService(")) {

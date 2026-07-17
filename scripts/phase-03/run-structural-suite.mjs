@@ -110,11 +110,10 @@ const suiteCommandsByProject = {
   "@rawr/hq-ops": {
     default: ["bun scripts/phase-03/verify-hq-ops-resource-binding.mjs"],
   },
-  "@rawr/agent-config-sync": {
-    default: ["bun scripts/phase-03/verify-agent-config-sync-service-shape.mjs"],
-  },
-  "@rawr/agent-config-sync-node": {
-    default: ["bunx vitest run --project agent-config-sync-node packages/agent-config-sync-node/test/package-artifacts.test.ts"],
+  "@rawr/agent-plugin-lifecycle": {
+    default: [
+      "bun scripts/habitat/check.mjs --owner @rawr/agent-plugin-lifecycle",
+    ],
   },
   "@rawr/chatgpt-corpus": {
     default: ["bun scripts/phase-03/verify-chatgpt-corpus-service-shape.mjs"],
