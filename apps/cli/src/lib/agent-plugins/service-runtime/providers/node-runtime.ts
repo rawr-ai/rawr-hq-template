@@ -1,5 +1,7 @@
 import type { ContentAuthority } from "@rawr/agent-plugin-lifecycle/release";
 import {
+  CLAUDE_ADAPTER_PROTOCOL,
+  CODEX_ADAPTER_PROTOCOL,
   failure,
   issue,
   success,
@@ -13,6 +15,7 @@ import {
   type ProviderTargetMutator,
   type ProviderTargetReader,
   type ProviderUndoWriter,
+  type NativeProviderAdapter,
 } from "@rawr/agent-plugin-lifecycle/ports/providers";
 import type { ArtifactReader } from "@rawr/agent-plugin-lifecycle/ports/releases";
 
@@ -23,12 +26,8 @@ import {
   openNodeCapsuleStateStoreV1,
 } from "../../undo";
 import { createNodeMechanicalEvidenceRuntime } from "../evidence/node-mechanical";
+import { createNodeNativeProviderAdapter } from "../../bindings/providers";
 import { createProviderReleaseReader } from "./artifact-reader";
-import { CLAUDE_ADAPTER_PROTOCOL } from "./adapters/claude";
-import { CODEX_ADAPTER_PROTOCOL } from "./adapters/codex";
-import { createNodeClaudeProviderAdapter } from "./adapters/node-claude";
-import { createNodeCodexProviderAdapter } from "./adapters/node-codex";
-import type { NativeProviderAdapter } from "./adapters/native";
 import {
   createNodeProviderOwnerRuntime,
   openNodeProviderState,
@@ -76,9 +75,7 @@ export function createNodeNativeProviderAdapterResolver(
       marketplaceSources,
       projectionSources: state.projections,
     } as const;
-    const created = provider === "codex"
-      ? createNodeCodexProviderAdapter(common)
-      : createNodeClaudeProviderAdapter(common);
+    const created = createNodeNativeProviderAdapter({ ...common, provider });
     adapters.set(key, created);
     return created;
   };

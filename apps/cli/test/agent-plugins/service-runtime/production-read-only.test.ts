@@ -40,7 +40,7 @@ import {
   createAgentPluginOwnerProtocolRegistryV1,
   openNodeCapsuleStateStoreV1,
 } from "../../../src/lib/agent-plugins/undo";
-import { CODEX_ADAPTER_PROTOCOL } from "../../../src/lib/agent-plugins/service-runtime/providers/adapters/codex";
+import { CODEX_ADAPTER_PROTOCOL } from "@rawr/agent-plugin-lifecycle/ports/providers";
 import { createNodeProviderLifecycleRuntime } from "../../../src/lib/agent-plugins/service-runtime/providers/node-runtime";
 import {
   createExpectedProviderOwnerObservedPost,
