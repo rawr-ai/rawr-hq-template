@@ -10,7 +10,7 @@ The user has separately clarified that legacy web mounting and app composition a
 - Activate service-backed commands through one typed local client. Keep the C4 `create` source-authoring command and controller-owned `undo` application outside lifecycle-transition orchestration while projecting both only at their qualified command IDs.
 - Keep bare `rawr plugins install|link|uninstall|list|inspect|update|reset` exclusively for genuine external Oclif extensions.
 - Delete the old agent sync, mixed plugin lifecycle, root undo, aggregate service/package, HQ Ops catalog/install/lifecycle, automatic reconciliation, generic projection, toolkit composition, and compatibility surfaces.
-- Bind every service-backed lifecycle transition command to one typed service procedure with explicit absolute content-workspace, provider-home, output, destination, Git, and executable inputs where applicable.
+- Bind every service-backed lifecycle transition command to one typed service procedure with explicit absolute content-workspace, provider-home, output, destination, and Git-object inputs, plus validated absolute Git/provider executable paths at the controller projection binding where applicable.
 - Add semantic guards and behavior tests that prove deleted commands, flags, imports, packages, state keys, environment variables, and active guidance are absent.
 - Keep app composition, web mounting, runtime realization, protected-lane content, personal lifecycle records, and canonical live settlement outside C5.
 

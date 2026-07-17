@@ -78,7 +78,6 @@ services/agent-plugin-lifecycle/
         README.md
         errors.ts
         entities.ts
-        ports/
       modules/
         releases/
         vendors/
@@ -86,10 +85,11 @@ services/agent-plugin-lifecycle/
         exports/
         providers/
         governance/
+      shared/
+        release/
   test/
-    service-shape.test.ts
-    helpers.ts
     modules/
+    shared/
 ```
 
 Each module owns its schemas, contract, module middleware, repository interfaces, router, and private implementation. Code stays module-local unless at least two modules share the same semantic type or port. The package root exports only `createClient`, client boundary types, and the router. The contract and any deliberately public types, ports, or entities use exact named subpath exports. Internal repositories and adapters are not exported.
@@ -100,7 +100,8 @@ Each module owns its schemas, contract, module middleware, repository interfaces
 - **Construction `scope`:** verified installed-controller and controller-data identities only. Content workspaces, provider homes, destinations, and outputs are not ambient scope.
 - **Construction `config`:** stable protocol configuration only; never cwd, PATH, a personal checkout, or a provider home.
 - **Invocation:** trace and command invocation identity.
-- **Procedure input:** explicit absolute content workspace, provider home, destination/output, executable path, landed ref, or canonical artifact/channel handle whenever that value selects an authority.
+- **Procedure input:** explicit absolute content workspace, provider home, destination/output, landed ref, or canonical artifact/channel handle whenever that value selects semantic authority.
+- **Controller projection binding:** explicit validated absolute Git/provider executable paths construct the concrete ports for the command; PATH, cwd, personal files, and content-workspace code never select them.
 
 Concrete Git, filesystem, archive, provider, hosted-governance, and capsule-writer adapters live in the CLI projection's service runtime binding. Service-backed commands call one typed local client procedure. They do not import module applications or repositories and do not sequence a second service. The controller-owned undo application remains outside the service and is projected only by `rawr agent plugins undo`; the lifecycle service can contribute inverse actions only through its injected closed `UndoWriter` protocol.
 
@@ -125,4 +126,4 @@ The repository currently has no admitted effect-oRPC provider and no Effect runt
 
 ## Proof
 
-The structural gate inventories the exact modules and public exports, rejects the five old service identities and concrete runtime imports inside the service, and proves CLI dependency through the typed client only. Module behavior tests retain the C2/C3 state-transition and failure oracles. Command tests add parser rejection, procedure dispatch, status exits, and mutation-port traps. The installed-controller acceptance uses an absolute binary and disposable content, provider, export, output, and controller-data homes.
+Habitat is the structural authority. The top-level `orpc-service-package` blueprint enforces the canonical service shell, exact six-module inventory, module-root files, and typed runtime boundary. The RAWR lifecycle niche rejects retired peer projects and compatibility command roots. A Grit packet rejects concrete mutation authority inside the service, retired package imports, and CLI bypasses into service internals. No product test or hand-written script duplicates that structure policy. Module behavior tests retain the C2/C3 state-transition and failure oracles. Command tests add parser rejection, procedure dispatch, status exits, and mutation-port traps. The installed-controller acceptance uses an absolute binary and disposable content, provider, export, output, and controller-data homes.

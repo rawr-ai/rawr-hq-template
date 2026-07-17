@@ -17,11 +17,11 @@ The lifecycle service MUST expose a canonical service base, composed contract, i
 - **AND** adding any seventh module, peer router, or concrete runtime adapter fails the ratchet
 
 ### Requirement: Runtime authorities are explicit and transport-neutral
-Construction dependencies MUST be abstract resource ports, construction scope MUST contain only verified controller identities, configuration MUST contain only stable protocol values, and invocation context MUST contain trace/command identity. A content workspace, provider home, export destination, package output, executable path, or governed Git ref that selects an authority MUST remain an explicit validated procedure input. A controller-supplied `UndoWriter` MAY accept closed inverse actions but MUST expose no capsule store, read, clear, or replay capability. The service MUST NOT read ambient cwd, PATH, personal executable code, provider homes, app composition, or runtime mounting state.
+Construction dependencies MUST be abstract resource ports, construction scope MUST contain only verified controller identities, configuration MUST contain only stable protocol values, and invocation context MUST contain trace/command identity. A content workspace, provider home, export destination, package output, or governed Git ref that selects semantic authority MUST remain an explicit validated procedure input. Git/provider executable paths MUST be explicit validated absolute controller-projection binding inputs used to construct the matching ports and MUST NOT be discovered from PATH, cwd, a content workspace, or personal code. A controller-supplied `UndoWriter` MAY accept closed inverse actions but MUST expose no capsule store, read, clear, or replay capability. The service MUST NOT read ambient cwd, PATH, personal executable code, provider homes, app composition, or runtime mounting state.
 
 #### Scenario: Misleading ambient state has no authority
-- **WHEN** cwd, PATH, home variables, personal runtime-like files, and unrelated provider state disagree with explicit procedure inputs
-- **THEN** the typed procedure uses only its validated input and injected port
+- **WHEN** cwd, PATH, home variables, personal runtime-like files, and unrelated provider state disagree with explicit procedure and controller-binding inputs
+- **THEN** the typed procedure uses only its validated input and the ports built from the explicit controller binding
 - **AND** no ambient locator or executable implementation is consulted
 
 ### Requirement: CLI projects the typed service boundary only

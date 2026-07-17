@@ -1,0 +1,296 @@
+import { schema } from "@rawr/hq-sdk";
+import { describe, expect, it } from "vitest";
+import { Value } from "typebox/value";
+
+import { ProviderOperationResultSchema } from "../../../src/service/modules/providers/schemas";
+
+const digest = (prefix: string, seed: string) => `${prefix}${seed.repeat(64)}`;
+const target = Object.freeze({
+  provider: "codex",
+  home: "/tmp/codex-home",
+  targetDigest: digest("pt1_", "1"),
+});
+const authority = Object.freeze({
+  protocol: "agent-plugin-artifact-authority@v1",
+  contentAuthority: "personal-rawr-hq",
+  sourceCommit: "a".repeat(40),
+});
+const releaseRef = Object.freeze({
+  kind: "release",
+  releaseDigest: digest("rd1_", "2"),
+  artifactDigest: digest("ad1_", "3"),
+});
+const file = Object.freeze({
+  path: "skills/state-machine-design/SKILL.md",
+  mode: 0o644,
+  contentDigest: digest("sha256_", "4"),
+  bytes: new TextEncoder().encode("state machine\n"),
+});
+const visible = Object.freeze({
+  pluginIdentity: "cognition@rawr-hq",
+  skills: ["state-machine-design"],
+  hooks: [],
+});
+const member = Object.freeze({
+  pluginId: "cognition",
+  releaseRef,
+  artifactAuthority: authority,
+  providerSourceIdentity: "personal-rawr-hq",
+  nativeIdentity: "cognition@rawr-hq",
+  files: [file],
+  visible,
+  memberFingerprint: digest("pm1_", "5"),
+});
+const marketplaceState = Object.freeze({
+  provider: "codex",
+  adapterProtocol: "codex-native-adapter@v1",
+  marketplaceIdentity: "personal-rawr-hq",
+  projectionDigest: digest("mp1_", "6"),
+  sourceDigest: digest("ps1_", "7"),
+});
+const registration = Object.freeze({
+  ...marketplaceState,
+  members: [{
+    pluginId: member.pluginId,
+    nativeIdentity: member.nativeIdentity,
+    providerSourceIdentity: member.providerSourceIdentity,
+    sourceProjectionDigest: digest("ap1_", "8"),
+    memberFingerprint: member.memberFingerprint,
+  }],
+});
+const projection = Object.freeze({
+  schemaVersion: 1,
+  provider: "codex",
+  rendererProtocol: "rawr-provider-renderer/codex@v1",
+  adapterProtocol: "codex-native-adapter@v1",
+  artifactAuthority: authority,
+  source: { kind: "targeted", releases: [releaseRef] },
+  marketplace: {
+    identity: "personal-rawr-hq",
+    sourceDigest: marketplaceState.sourceDigest,
+    files: [file],
+  },
+  capabilityProfile: {
+    schemaVersion: 1,
+    provider: "codex",
+    adapterProtocol: "codex-native-adapter@v1",
+    required: ["native-plugin-install", "native-plugin-enable", "visible-skill-inventory"],
+    capabilityProfileDigest: digest("cp1_", "9"),
+  },
+  members: [member],
+  projectionDigest: digest("ap1_", "8"),
+});
+const verifiedMember = Object.freeze({
+  pluginId: member.pluginId,
+  nativeIdentity: member.nativeIdentity,
+  artifactAuthority: authority,
+  providerSourceIdentity: member.providerSourceIdentity,
+  memberFingerprint: member.memberFingerprint,
+});
+const nativeMember = Object.freeze({
+  ...verifiedMember,
+  enablement: "enabled",
+  visibleSkills: ["state-machine-design"],
+  visibleHooks: [],
+});
+const receipt = Object.freeze({
+  schemaVersion: 1,
+  receiptDigest: digest("tr1_", "a"),
+  body: {
+    schemaVersion: 1,
+    provider: "codex",
+    targetDigest: target.targetDigest,
+    generation: 1,
+    lineage: { kind: "initial" },
+    marketplace: marketplaceState,
+    scope: {
+      kind: "targeted-test",
+      requestDigest: digest("prq1_", "b"),
+      projectionDigest: projection.projectionDigest,
+      adapterProtocol: projection.adapterProtocol,
+      capabilityProfileDigest: projection.capabilityProfile.capabilityProfileDigest,
+      visibleFingerprint: digest("vf1_", "c"),
+      verifiedMembers: [verifiedMember],
+      releases: [releaseRef],
+      evaluationProfile: "fresh-agent-v1",
+    },
+    managedMembers: [{ ...verifiedMember, sourceProjectionDigest: projection.projectionDigest }],
+  },
+});
+const issue = Object.freeze({
+  code: "VISIBILITY_FAILED",
+  path: "targets[0]",
+  message: "visible skill was absent",
+  expected: "state-machine-design",
+  actual: "",
+});
+const actions = Object.freeze([
+  {
+    kind: "AdmitTargetIdentity",
+    target,
+    sidecar: {
+      schemaVersion: 1,
+      provider: "codex",
+      canonicalHome: target.home,
+      targetDigest: target.targetDigest,
+      identityDigest: digest("ti1_", "d"),
+    },
+  },
+  {
+    kind: "SetMarketplace",
+    role: "final",
+    target,
+    prior: { kind: "absent" },
+    priorRegistration: null,
+    registration,
+  },
+  {
+    kind: "InstallMember",
+    target,
+    priorMarketplace: null,
+    activeMarketplace: registration,
+    projectionDigest: projection.projectionDigest,
+    member,
+  },
+  {
+    kind: "EnableMember",
+    target,
+    priorMarketplace: registration,
+    activeMarketplace: registration,
+    priorProjectionDigest: projection.projectionDigest,
+    prior: nativeMember,
+    member,
+  },
+  {
+    kind: "RetireMember",
+    target,
+    priorMarketplace: registration,
+    activeMarketplace: registration,
+    priorProjectionDigest: projection.projectionDigest,
+    prior: nativeMember,
+    proof: "receipt",
+  },
+  {
+    kind: "PublishReceipt",
+    target,
+    prior: { kind: "absent" },
+    receipt,
+  },
+  {
+    kind: "NormalizeReceipt",
+    target,
+    prior: receipt,
+    receipt,
+  },
+  {
+    kind: "RemoveReceipt",
+    target,
+    prior: receipt,
+  },
+]);
+const plan = Object.freeze({
+  target,
+  state: "mutating",
+  projection,
+  steps: [
+    ...actions.map((action) => ({ kind: "mutate", action })),
+    { kind: "verify", target, projection },
+    {
+      kind: "verify-managed",
+      target,
+      claims: [{ ...verifiedMember, sourceProjectionDigest: projection.projectionDigest }],
+      marketplace: registration,
+    },
+    { kind: "verify-retired", target, nativeIdentity: "legacy@rawr-hq" },
+  ],
+  issues: [],
+});
+const events = Object.freeze([
+  { phase: "planned", target, plan },
+  { phase: "applied", target, action: actions[0] },
+  { phase: "verified", target, visibleFingerprint: digest("vf1_", "c") },
+  { phase: "retired", target, action: actions[4] },
+  { phase: "skipped", target, reason: "read-only-converged" },
+  { phase: "blocked", target, issues: [issue] },
+  { phase: "failed", target, issues: [issue] },
+]);
+const validResult = Object.freeze({
+  ok: true,
+  value: {
+    status: "Mutated",
+    targets: [{
+      target,
+      status: "mutated",
+      events,
+      issues: [],
+      visibleFingerprint: digest("vf1_", "c"),
+    }],
+    evidence: null,
+    issues: [],
+  },
+});
+
+describe("provider procedure result schema boundary", () => {
+  it("admits all seven provider events and every nested action/plan variant", () => {
+    expect(events.map((event) => event.phase)).toEqual([
+      "planned",
+      "applied",
+      "verified",
+      "retired",
+      "skipped",
+      "blocked",
+      "failed",
+    ]);
+    expect(Value.Check(ProviderOperationResultSchema, validResult)).toBe(true);
+  });
+
+  it("rejects unknown events, extra nested action state, malformed plans, and bogus issue codes", async () => {
+    const targetOutcome = validResult.value.targets[0];
+    const invalid = [
+      {
+        ...validResult,
+        value: {
+          ...validResult.value,
+          targets: [{ ...targetOutcome, events: [{ phase: "teleported", target }] }],
+        },
+      },
+      {
+        ...validResult,
+        value: {
+          ...validResult.value,
+          targets: [{
+            ...targetOutcome,
+            events: [{ phase: "applied", target, action: { ...actions[0], ambient: true } }],
+          }],
+        },
+      },
+      {
+        ...validResult,
+        value: {
+          ...validResult.value,
+          targets: [{
+            ...targetOutcome,
+            events: [{
+              phase: "planned",
+              target,
+              plan: {
+                ...plan,
+                steps: [{ kind: "mutate", action: { kind: "RetireMember", target } }],
+              },
+            }],
+          }],
+        },
+      },
+      {
+        ok: false,
+        issues: [{ ...issue, code: "TOTALLY_REAL_PROVIDER_FAILURE" }],
+      },
+    ];
+
+    for (const candidate of invalid) {
+      expect(Value.Check(ProviderOperationResultSchema, candidate)).toBe(false);
+      const validated = await schema(ProviderOperationResultSchema)["~standard"].validate(candidate);
+      expect("issues" in validated).toBe(true);
+    }
+  });
+});

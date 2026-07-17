@@ -63,7 +63,7 @@ The old plugin command package, sync services, Node adapter package, HQ Ops cata
 
 ### Runtime ports are explicit and C5 does not realize apps
 
-The service uses the repository-admitted `@rawr/hq-sdk` oRPC primitive. Construction context contains abstract resource ports plus verified controller identity; authority-selecting content workspaces, provider homes, destinations, outputs, executable paths, and Git refs remain explicit procedure inputs. Concrete Node and provider adapters live only in the CLI projection runtime binding. No admitted effect-oRPC provider exists in this repository, so C5 adds no raw Effect or effect-oRPC implementation.
+The service uses the repository-admitted `@rawr/hq-sdk` oRPC primitive. Construction context contains abstract resource ports plus verified controller identity; authority-selecting content workspaces, provider homes, destinations, outputs, and Git refs remain explicit procedure inputs. Absolute Git/provider executable paths are explicit validated controller-projection binding inputs used to construct those ports; they are never discovered from PATH, cwd, a content workspace, or personal code. Concrete Node and provider adapters live only in that CLI projection runtime binding. No admitted effect-oRPC provider exists in this repository, so C5 adds no raw Effect or effect-oRPC implementation.
 
 The future platform owns:
 
