@@ -1,3 +1,25 @@
+import {
+  VENDOR_LOCK_PROTOCOL,
+  VENDOR_PROVENANCE_PROTOCOL,
+  VENDOR_SOURCE_PROTOCOL,
+  type VendorLockRecord,
+  type VendorProvenanceRecord,
+  type VendorRecordBinding,
+  type VendorSourceDeclaration,
+  type VendorSourceIdentity,
+} from "./model/dto/vendor-records";
+
+export {
+  VENDOR_LOCK_PROTOCOL,
+  VENDOR_PROVENANCE_PROTOCOL,
+  VENDOR_SOURCE_PROTOCOL,
+  type VendorLockRecord,
+  type VendorProvenanceRecord,
+  type VendorRecordBinding,
+  type VendorSourceDeclaration,
+  type VendorSourceIdentity,
+} from "./model/dto/vendor-records";
+
 export interface VendorContentWorkspaceRef {
   readonly locator: string;
   readonly repositoryIdentity: string;
@@ -14,14 +36,6 @@ export interface VendorStatusRequest {
 
 export interface VendorUpdateRequest extends VendorStatusRequest {
   readonly sourceIds: readonly string[];
-}
-
-export interface VendorSourceIdentity {
-  readonly repositoryIdentity: string;
-  readonly refName: string;
-  readonly sourceCommit: string;
-  readonly sourceTree: string;
-  readonly payloadDigest: string;
 }
 
 export interface VendorSourceStatus {
@@ -93,52 +107,6 @@ export type VendorUpdateResult =
     unsettledPaths: readonly string[];
     issues: readonly [VendorUpdateIssue, ...VendorUpdateIssue[]];
   }>;
-
-export const VENDOR_SOURCE_PROTOCOL = "rawr-vendor-source@v1" as const;
-export const VENDOR_PROVENANCE_PROTOCOL = "rawr-vendor-provenance@v1" as const;
-export const VENDOR_LOCK_PROTOCOL = "rawr-vendor-lock@v1" as const;
-
-export interface VendorRecordBinding {
-  /** Canonical relative record path used as the release-input binding identity. */
-  readonly id: string;
-  readonly protocol:
-    | typeof VENDOR_SOURCE_PROTOCOL
-    | typeof VENDOR_PROVENANCE_PROTOCOL
-    | typeof VENDOR_LOCK_PROTOCOL;
-  readonly contentDigest: string;
-}
-
-export interface VendorSourceDeclaration {
-  readonly schemaVersion: 1;
-  readonly sourceId: string;
-  readonly policy: "tracked" | "held";
-  readonly repositoryIdentity: string;
-  readonly refName: string;
-  readonly sourcePath: string;
-  readonly destinationPath: string;
-  readonly provenancePath: string;
-  readonly lockPath: string;
-  readonly curationRevision: number;
-  readonly supportedBaseline: string;
-}
-
-export interface VendorLockRecord {
-  readonly schemaVersion: 1;
-  readonly sourceId: string;
-  readonly admitted: VendorSourceIdentity;
-}
-
-export interface VendorProvenanceRecord {
-  readonly schemaVersion: 1;
-  readonly sourceId: string;
-  readonly admitted: VendorSourceIdentity;
-  readonly importedPayloadDigest: string;
-  readonly curationRevision: number;
-  readonly supportedBaseline: string;
-  readonly observedLatest: VendorSourceIdentity;
-  readonly observedAt: string;
-  readonly disposition: "admitted" | "held" | "review-required";
-}
 
 export type VendorDestinationObservation =
   | Readonly<{ kind: "Present"; payloadDigest: string }>
