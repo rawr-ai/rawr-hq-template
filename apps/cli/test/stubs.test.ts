@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,44 +10,8 @@ const TEST_HOME = mkdtempSync(path.join(os.tmpdir(), "rawr-test-stubs-"));
 const CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const COMMAND_TEST_CLI = path.join(CLI_ROOT, "test", "command-fixture", "command-test-cli.ts");
 
-function writeJson(filePath: string, value: unknown) {
-  mkdirSync(path.dirname(filePath), { recursive: true });
-  writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-}
-
-function createPluginWorkspace() {
-  const workspaceRoot = mkdtempSync(path.join(os.tmpdir(), "rawr-test-plugin-workspace-"));
-  writeJson(path.join(workspaceRoot, "package.json"), { private: true, type: "module" });
-  writeJson(path.join(workspaceRoot, "plugins", "cli", "hello", "package.json"), {
-    name: "@rawr/plugin-hello",
-    private: true,
-    rawr: {
-      kind: "toolkit",
-      capability: "hello",
-    },
-  });
-  writeJson(path.join(workspaceRoot, "plugins", "web", "fixture-web", "package.json"), {
-    name: "@rawr/plugin-test-web",
-    private: true,
-    exports: {
-      "./web": "./dist/web.js",
-    },
-    rawr: {
-      kind: "web",
-      capability: "fixture-web",
-    },
-  });
-  mkdirSync(path.join(workspaceRoot, "plugins", "web", "fixture-web", "dist"), { recursive: true });
-  writeFileSync(
-    path.join(workspaceRoot, "plugins", "web", "fixture-web", "dist", "web.js"),
-    "export function mount() { return { unmount() {} }; }\n",
-    "utf8",
-  );
-  return workspaceRoot;
-}
-
-function runRawr(args: string[], options: { cwd?: string } = {}) {
-  const cwd = options.cwd ?? CLI_ROOT;
+function runRawr(args: string[]) {
+  const cwd = CLI_ROOT;
   return spawnSync("bun", [COMMAND_TEST_CLI, ...args], {
     cwd,
     encoding: "utf8",
@@ -79,64 +43,17 @@ describe("rawr command surfaces", () => {
     expect(proc.status).toBe(0);
     const parsed = parseJson(proc);
     expect(parsed.ok).toBe(true);
-    expect(parsed.data.tools.map((t: any) => t.command)).toContain("doctor");
-  });
+    const commands = parsed.data.tools.map((tool: { command: string }) => tool.command);
 
-  it("plugins web list finds workspace plugins", { timeout: 30000 }, () => {
-    const workspaceRoot = createPluginWorkspace();
-    const proc = runRawr(["plugins", "web", "list", "--json"], { cwd: workspaceRoot });
-    expect(proc.status).toBe(0);
-    const parsed = parseJson(proc);
-    expect(parsed.ok).toBe(true);
-    expect(Array.isArray(parsed.data.plugins)).toBe(true);
-    expect(parsed.data.plugins.map((plugin: any) => plugin.id)).toContain("@rawr/plugin-test-web");
-    expect(parsed.data.plugins.every((plugin: any) => plugin.kind === "web")).toBe(true);
-    expect(parsed.data.plugins.every((plugin: any) => typeof plugin.capability === "string" && plugin.capability.length > 0)).toBe(
-      true,
-    );
-    expect(parsed.data.plugins.map((plugin: any) => plugin.id)).not.toContain("@rawr/plugin-hello");
-    expect(parsed.data.excludedCount).toBeGreaterThanOrEqual(1);
-  });
-
-  it("plugins web enable enforces rawr.kind and enables web plugins", { timeout: 45000 }, () => {
-    const workspaceRoot = createPluginWorkspace();
-    const blocked = runRawr(["plugins", "web", "enable", "hello", "--json", "--risk", "off"], { cwd: workspaceRoot });
-    expectExit(blocked, [1, 2]);
-    const blockedParsed = parseJson(blocked);
-    expect(blockedParsed.ok).toBe(false);
-    expect(blockedParsed.error.code).toBe("PLUGIN_KIND_MISMATCH");
-    expect(blockedParsed.error.details.kind).toBe("toolkit");
-
-    const proc = runRawr(["plugins", "web", "enable", "fixture-web", "--json", "--risk", "off"], { cwd: workspaceRoot });
-    expect(proc.status).toBe(0);
-    const parsed = parseJson(proc);
-    expect(parsed.ok).toBe(true);
-    expect(parsed.data.pluginId).toBe("@rawr/plugin-test-web");
-    expect(parsed.data.evaluation.allowed).toBe(true);
-    expect(parsed.data.state).toBeTruthy();
-    expect(parsed.data.state.plugins.enabled).toContain("@rawr/plugin-test-web");
-  });
-
-  it("plugins web status reflects persisted enable/disable state", { timeout: 45000 }, () => {
-    const workspaceRoot = createPluginWorkspace();
-    runRawr(["plugins", "web", "enable", "fixture-web", "--json", "--risk", "off"], { cwd: workspaceRoot });
-    const enabledProc = runRawr(["plugins", "web", "status", "--json"], { cwd: workspaceRoot });
-    expect(enabledProc.status).toBe(0);
-    const enabled = parseJson(enabledProc);
-    expect(enabled.ok).toBe(true);
-    const plugin = enabled.data.plugins.find((p: any) => p.id === "@rawr/plugin-test-web");
-    expect(plugin).toBeTruthy();
-    expect(plugin.enabled).toBe(true);
-
-    const disableProc = runRawr(["plugins", "web", "disable", "fixture-web", "--json"], { cwd: workspaceRoot });
-    expect(disableProc.status).toBe(0);
-
-    const disabledProc = runRawr(["plugins", "web", "status", "--json"], { cwd: workspaceRoot });
-    expect(disabledProc.status).toBe(0);
-    const disabled = parseJson(disabledProc);
-    const plugin2 = disabled.data.plugins.find((p: any) => p.id === "@rawr/plugin-test-web");
-    expect(plugin2).toBeTruthy();
-    expect(plugin2.enabled).toBe(false);
+    expect(commands).toContain("doctor");
+    expect(commands.filter((command: string) => command.includes(" create"))).toEqual([
+      "cli command create <topic> <name>",
+      "cli extension create <id> --destination <path>",
+      "agent plugins create <id> --content-workspace <path>",
+    ]);
+    expect(commands.some((command: string) => command.startsWith("plugins web"))).toBe(false);
+    expect(commands.some((command: string) => command.startsWith("plugins scaffold"))).toBe(false);
+    expect(commands.some((command: string) => command.startsWith("workflow forge-command"))).toBe(false);
   });
 
   it("security check returns a machine-readable report", { timeout: 30000 }, () => {

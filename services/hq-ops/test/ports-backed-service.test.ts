@@ -60,22 +60,6 @@ describe("hq-ops service resource-backed behavior", () => {
     expect(removed.sources).not.toContain("/global/c");
   });
 
-  it("owns repo-state authority and mutation behavior over primitive resources", async () => {
-    const repoRoot = await tempRoot("hq-ops-state-");
-    const client = createClient(createClientOptions({ repoRoot }));
-
-    const initial = await client.repoState.getState({}, invocation("trace-state"));
-    expect(initial.authorityRepoRoot).toBe(await fs.realpath(repoRoot));
-    expect(initial.state.plugins.enabled).toEqual([]);
-
-    const enabled = await client.repoState.enablePlugin({ pluginId: "@rawr/plugin-next" }, invocation("trace-enable"));
-    expect(enabled.plugins.enabled).toEqual(["@rawr/plugin-next"]);
-
-    const disabled = await client.repoState.disablePlugin({ pluginId: "@rawr/plugin-next" }, invocation("trace-disable"));
-    expect(disabled.plugins.enabled).toEqual([]);
-    expect(disabled.plugins.disabled).toEqual(["@rawr/plugin-next"]);
-  });
-
   it("owns journal persistence, index, FTS, and semantic ranking over primitive resources", async () => {
     const repoRoot = await tempRoot("hq-ops-journal-");
     const client = createClient(createClientOptions({ repoRoot }));

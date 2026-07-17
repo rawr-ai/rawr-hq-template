@@ -2,7 +2,6 @@ import { AppShell } from "./layout/AppShell";
 import { SidebarNav } from "./layout/SidebarNav";
 import { Router } from "./routing/router";
 import { HomePage } from "./pages/HomePage";
-import { MountsPage } from "./pages/MountsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function HostRoutes() {
@@ -10,7 +9,6 @@ function HostRoutes() {
     <Router
       routes={[
         { path: "/", element: <HomePage /> },
-        { path: "/mounts", element: <MountsPage /> },
       ]}
       fallback={<NotFoundPage />}
     />
@@ -25,7 +23,6 @@ export function App() {
           title="RAWR HQ-Template"
           items={[
             { label: "Home", to: "/" },
-            { label: "Mounts", to: "/mounts" },
           ]}
           utilityLinks={[
             { label: "Inngest Runs", href: "http://localhost:8288/runs" },

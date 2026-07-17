@@ -4,9 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServerApp } from "./app";
 import { getServerConfig } from "./config";
-import { createRawrHostSatisfiers } from "./host-satisfiers";
-import { createHostLoggerAdapter } from "./logging";
-import { loadWorkspaceServerPlugins, mountServerPlugins } from "./plugins";
+import { resolveServerHqOpsClient } from "./hq-ops-binding";
 import { registerRawrRoutes } from "./rawr";
 
 function defaultRepoRoot() {
@@ -19,51 +17,27 @@ export type BootstrappedServer = {
     port: number;
     baseUrl: string;
   };
-  enabledPlugins: Set<string>;
   telemetry: InstalledTelemetry;
 };
 
 type LoadConfig = (repoRoot: string) => Promise<Awaited<ReturnType<typeof loadWorkspaceConfigFromHost>>>;
-type LoadState = (repoRoot: string) => Promise<Awaited<ReturnType<typeof loadRuntimeStateFromHost>>>;
-
 type BootstrapServerDependencies = {
   env: NodeJS.ProcessEnv;
   resolveRepoRoot(): string;
   installTelemetry: typeof installRawrOrpcTelemetry;
   createApp: typeof createServerApp;
   loadConfig: LoadConfig;
-  loadPlugins: typeof loadWorkspaceServerPlugins;
-  loadState: LoadState;
   registerRoutes: typeof registerRawrRoutes;
-  mountPlugins: typeof mountServerPlugins;
 };
 
-const bootstrapHostSatisfiers = createRawrHostSatisfiers({
-  hostLogger: createHostLoggerAdapter(),
-});
-
 type LoadWorkspaceConfigOptions = NonNullable<Parameters<HqOpsClient["config"]["getWorkspaceConfig"]>[1]>;
-type LoadRepoStateOptions = NonNullable<Parameters<HqOpsClient["repoState"]["getState"]>[1]>;
 
 async function loadWorkspaceConfigFromHost(repoRoot: string) {
+  const client = resolveServerHqOpsClient(repoRoot);
   const options = {
     context: { invocation: { traceId: "server.config.load" } },
   } satisfies LoadWorkspaceConfigOptions;
-  return await bootstrapHostSatisfiers.state.resolveClient(repoRoot).config.getWorkspaceConfig(
-    {},
-    options,
-  );
-}
-
-async function loadRuntimeStateFromHost(repoRoot: string) {
-  const options = {
-    context: { invocation: { traceId: "server.repo-state.get" } },
-  } satisfies LoadRepoStateOptions;
-  const response = await bootstrapHostSatisfiers.state.resolveClient(repoRoot).repoState.getState(
-    {},
-    options,
-  );
-  return response.state;
+  return await client.config.getWorkspaceConfig({}, options);
 }
 
 export async function bootstrapServer(
@@ -75,10 +49,7 @@ export async function bootstrapServer(
     installTelemetry: installRawrOrpcTelemetry,
     createApp: createServerApp,
     loadConfig: loadWorkspaceConfigFromHost,
-    loadPlugins: loadWorkspaceServerPlugins,
-    loadState: loadRuntimeStateFromHost,
     registerRoutes: registerRawrRoutes,
-    mountPlugins: mountServerPlugins,
     ...overrides,
   };
 
@@ -100,7 +71,6 @@ export async function bootstrapServer(
     : typeof cfgBaseUrl === "string" && cfgBaseUrl.trim() !== ""
       ? cfgBaseUrl
       : `http://localhost:${port}`;
-
   const config = { port, baseUrl };
   const telemetry = await deps.installTelemetry({
     serviceName: "@rawr/server",
@@ -109,25 +79,14 @@ export async function bootstrapServer(
   });
 
   let app = deps.createApp();
-  const [plugins, state] = await Promise.all([
-    deps.loadPlugins({ repoRoot }),
-    deps.loadState(repoRoot),
-  ]);
-  const enabledPlugins = new Set<string>(state.plugins.enabled);
-
   app = deps.registerRoutes(app, {
     repoRoot,
-    enabledPluginIds: enabledPlugins,
     baseUrl: config.baseUrl,
   });
-
-  const enabledPluginEntries = plugins.filter((plugin) => enabledPlugins.has(plugin.name));
-  app = await deps.mountPlugins(app, enabledPluginEntries, { baseUrl: config.baseUrl });
 
   return {
     app,
     config,
-    enabledPlugins,
     telemetry,
   };
 }

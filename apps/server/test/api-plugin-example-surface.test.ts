@@ -22,7 +22,6 @@ const EXTERNAL_API_HEADERS = {
 function createApp() {
   return registerRawrRoutes(createServerApp(), {
     repoRoot,
-    enabledPluginIds: new Set(),
     baseUrl: "http://localhost:3000",
   });
 }

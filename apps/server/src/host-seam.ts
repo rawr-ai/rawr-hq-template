@@ -4,12 +4,10 @@ import {
 } from "@rawr/hq-sdk/apis";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
 import type { ExampleTodoApiPluginRegistration } from "@rawr/plugin-server-api-example-todo/server";
-import type { StateApiPluginRegistration } from "@rawr/plugin-server-api-state/server";
 import type { RawrHostSatisfiers } from "./host-satisfiers";
 
 export type RawrHostDeclarations = Readonly<{
   api: Readonly<{
-    state: StateApiPluginRegistration;
     exampleTodo: ExampleTodoApiPluginRegistration;
   }>;
   workflows: Readonly<Record<string, never>>;
@@ -44,16 +42,9 @@ function bindRawrHqApiPlugins(input: {
   declarations: RawrHostDeclarations;
   satisfiers: RawrHostSatisfiers;
 }) {
-  const state = input.declarations.api.state;
   const exampleTodo = input.declarations.api.exampleTodo;
 
   return [
-    {
-      ...state,
-      ...state.contribute!({
-        resolveClient: input.satisfiers.state.resolveClient,
-      }),
-    } satisfies MaterializedApiPluginRegistration,
     {
       ...exampleTodo,
       ...exampleTodo.contribute!({

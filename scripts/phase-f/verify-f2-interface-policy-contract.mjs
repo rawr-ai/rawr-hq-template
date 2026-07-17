@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import fs from "node:fs/promises";
 import {
   assertCondition,
   assertScriptEquals,
@@ -8,35 +9,42 @@ import {
 } from "./_verify-utils.mjs";
 
 await Promise.all([
-  mustExist("services/hq-ops/src/service/modules/repo-state/contract.ts"),
-  mustExist("services/hq-ops/src/service/modules/repo-state/router.ts"),
   mustExist("apps/hq/rawr.hq.ts"),
   mustExist("apps/hq/src/manifest.ts"),
+  mustExist("apps/hq/legacy-cutover.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
   mustExist("apps/hq/test/runtime-router.test.ts"),
 ]);
 
+for (const relPath of [
+  "services/hq-ops/src/service/modules/repo-state/contract.ts",
+  "services/hq-ops/src/service/modules/repo-state/router.ts",
+  "plugins/server/api/state/package.json",
+]) {
+  const present = await fs.access(relPath).then(() => true, () => false);
+  assertCondition(!present, `${relPath} must remain retired`);
+}
+
 const [
-  repoStateContractSource,
-  repoStateRouterSource,
   shellSource,
   manifestCompatSource,
+  legacyCutoverSource,
   hqDriftTestSource,
   triggerDriftTestSource,
   runtimeRouterTestSource,
+  hqOpsContractSource,
   scripts,
-] =
-  await Promise.all([
-    readFile("services/hq-ops/src/service/modules/repo-state/contract.ts"),
-    readFile("services/hq-ops/src/service/modules/repo-state/router.ts"),
-    readFile("apps/hq/rawr.hq.ts"),
-    readFile("apps/hq/src/manifest.ts"),
-    readFile("apps/hq/test/orpc-contract-drift.test.ts"),
-    readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
-    readFile("apps/hq/test/runtime-router.test.ts"),
-    readPackageScripts(),
-  ]);
+] = await Promise.all([
+  readFile("apps/hq/rawr.hq.ts"),
+  readFile("apps/hq/src/manifest.ts"),
+  readFile("apps/hq/legacy-cutover.ts"),
+  readFile("apps/hq/test/orpc-contract-drift.test.ts"),
+  readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
+  readFile("apps/hq/test/runtime-router.test.ts"),
+  readFile("services/hq-ops/src/service/contract.ts"),
+  readPackageScripts(),
+]);
 
 assertScriptEquals(
   scripts,
@@ -55,53 +63,34 @@ assertScriptEquals(
 );
 assertScriptEquals(scripts, "phase-f:f2:full", "bun run phase-f:f2:quick && bun run typecheck");
 
-const checks = [
-  {
-    id: "repo-state-contract-authority-output",
-    message: "repo-state contract output must include additive authorityRepoRoot field",
-    pass:
-      /authorityRepoRoot: Type\.String\(\{ minLength: 1 \}\)/u.test(repoStateContractSource),
-  },
-  {
-    id: "repo-state-router-authority-output",
-    message: "repo-state router must surface authorityRepoRoot via the canonical authority-aware repo API",
-    pass:
-      /const \{ state, authorityRepoRoot \} = await context\.repo\.getStateWithAuthority\(\);/u.test(repoStateRouterSource) &&
-      /authorityRepoRoot,/u.test(repoStateRouterSource),
-  },
-  {
-    id: "hq-manifest-selection",
-    message: "hq app shell must publish state and exampleTodo while keeping workflows empty",
-    pass:
-      shellSource.includes("registerStateApiPlugin") &&
-      shellSource.includes("registerExampleTodoApiPlugin") &&
-      shellSource.includes("workflows: {} as const") &&
-      !shellSource.includes("registerCoordinationApiPlugin") &&
-      !shellSource.includes("createHqRuntimeRouter") &&
-      manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
-  },
-  {
-    id: "hq-manifest-runtime-coldness",
-    message: "hq app runtime proof must keep the shell cold and free of executable materialization",
-    pass:
-      runtimeRouterTestSource.includes("keeps the canonical app shell cold and explicit about role/surface membership") &&
-      !runtimeRouterTestSource.includes("finished-hook"),
-  },
-  {
-    id: "f2-drift-tests",
-    message: "hq app drift suites must assert state/exampleTodo publication and empty workflow publication",
-    pass:
-      /internal capability declarations selected for HQ composition/u.test(hqDriftTestSource) &&
-      /state/u.test(hqDriftTestSource) &&
-      /exampleTodo/u.test(hqDriftTestSource) &&
-      /workflow publication empty once the false-future lane is archived/u.test(triggerDriftTestSource),
-  },
-];
-
-const failedChecks = checks.filter((check) => !check.pass);
 assertCondition(
-  failedChecks.length === 0,
-  `phase-f f2 contract drift detected: ${failedChecks.map((check) => `${check.id}: ${check.message}`).join("; ")}`,
+  shellSource.includes("registerExampleTodoApiPlugin") &&
+    !shellSource.includes("registerStateApiPlugin") &&
+    shellSource.includes("workflows: {} as const") &&
+    manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
+  "HQ manifest must retain only the surviving exampleTodo declaration and empty async role",
+);
+assertCondition(
+  !hqOpsContractSource.includes("repoState") &&
+    !hqOpsContractSource.includes("./modules/repo-state/contract"),
+  "HQ Ops public contract must not retain repo-state membership authority",
+);
+assertCondition(
+  legacyCutoverSource.includes("../server/src/host-composition") &&
+    !legacyCutoverSource.includes("../server/src/host-seam") &&
+    !legacyCutoverSource.includes("../server/src/host-realization"),
+  "the existing bridge must remain localized until the canonical runtime migration replaces it",
+);
+assertCondition(
+  runtimeRouterTestSource.includes("keeps the canonical app shell cold and explicit about role/surface membership") &&
+    !runtimeRouterTestSource.includes("enabledPlugins"),
+  "HQ runtime proof must keep the shell cold without legacy membership state",
+);
+assertCondition(
+  hqDriftTestSource.includes('expect(Object.keys(manifest.roles.server.api)).toEqual(["exampleTodo"])') &&
+    !hqDriftTestSource.includes("manifest.roles.server.api.state") &&
+    triggerDriftTestSource.includes("workflow publication empty once the false-future lane is archived"),
+  "HQ drift tests must assert the surviving declaration and empty workflow publication",
 );
 
-console.log("phase-f f2 interface policy contract verified");
+console.log("phase-f f2 retired membership interface contract verified");

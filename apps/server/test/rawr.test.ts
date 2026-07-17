@@ -3,11 +3,11 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { minifyContractRouter } from "@orpc/contract";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { createServerApp } from "../src/app";
 import { registerOrpcRoutes } from "../src/orpc";
 import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
-import { createTestingHqOpsServiceClient, createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
 
 afterAll(() => resetTestingRawrHostSeam());
 
@@ -39,38 +39,69 @@ function collectProcedureRoutes(node: unknown, namespace: string[] = []): string
   return items;
 }
 
-async function createPluginFixture(input: { dirName: string; pluginId: string }) {
-  const fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-plugin-"));
-  const pluginRoot = path.join(fixtureRoot, "plugins", "web", input.dirName);
-
-  await fs.mkdir(path.join(pluginRoot, "dist"), { recursive: true });
-  await fs.writeFile(path.join(pluginRoot, "package.json"), JSON.stringify({ name: input.pluginId, private: true }, null, 2), "utf8");
-  await fs.writeFile(path.join(pluginRoot, "dist", "web.js"), "export function mount() { return { unmount() {} }; }", "utf8");
-
-  return fixtureRoot;
-}
-
 describe("rawr server routes", () => {
-  it("does not serve plugin web modules when disabled", async () => {
-    const fixtureRoot = await createPluginFixture({ dirName: "fixture-web", pluginId: "@rawr/plugin-test-web" });
-    const app = registerRawrRoutes(createServerApp(), { repoRoot: fixtureRoot, enabledPluginIds: new Set() });
-    const res = await app.handle(new Request("http://localhost/rawr/plugins/web/fixture-web"));
-    expect(res.status).toBe(404);
+  it("does not expose retired web modules or an interim composition endpoint", async () => {
+    const app = registerRawrRoutes(createServerApp(), { repoRoot });
+    const retiredWeb = await app.handle(new Request("http://localhost/rawr/plugins/web/fixture-web"));
+    const interimComposition = await app.handle(new Request("http://localhost/rawr/composition"));
+
+    expect(retiredWeb.status).toBe(404);
+    expect(interimComposition.status).toBe(404);
   });
 
-  it("serves plugin web modules when enabled", async () => {
-    const fixtureRoot = await createPluginFixture({ dirName: "fixture-web", pluginId: "@rawr/plugin-test-web" });
-    const app = registerRawrRoutes(createServerApp(), {
-      repoRoot: fixtureRoot,
-      enabledPluginIds: new Set(["@rawr/plugin-test-web"]),
-    });
-    const res = await app.handle(new Request("http://localhost/rawr/plugins/web/fixture-web"));
-    expect(res.status).toBe(200);
-    expect(res.headers.get("content-type")).toContain("text/javascript");
+  it("ignores stale persisted enablement without migrating or deleting it", async () => {
+    const tempRoot = await fs.realpath(
+      await fs.mkdtemp(path.join(os.tmpdir(), "rawr-stale-membership-")),
+    );
+    const stateDirectory = path.join(tempRoot, ".rawr", "state");
+    const statePath = path.join(stateDirectory, "state.json");
+    const pluginRoot = path.join(tempRoot, "plugins", "web", "foreign-web");
+    const pluginPackagePath = path.join(pluginRoot, "package.json");
+    const pluginModulePath = path.join(pluginRoot, "dist", "web.js");
+    const staleBytes = '{"plugins":{"enabled":["foreign-web"]}}\n';
+    await fs.mkdir(stateDirectory, { recursive: true });
+    await fs.mkdir(path.dirname(pluginModulePath), { recursive: true });
+    await fs.writeFile(statePath, staleBytes);
+    await fs.writeFile(pluginPackagePath, '{"name":"foreign-web","rawr":{"kind":"web"}}\n');
+    await fs.writeFile(pluginModulePath, 'export function mount() { throw new Error("must not mount"); }\n');
+    const before = await Promise.all([
+      fs.readFile(statePath),
+      fs.readFile(pluginPackagePath),
+      fs.readFile(pluginModulePath),
+    ]);
+    try {
+      const originalReadFile = fs.readFile;
+      let staleStateReadCount = 0;
+      const readFileSpy = vi.spyOn(fs, "readFile");
+      readFileSpy.mockImplementation(((...args: Parameters<typeof fs.readFile>) => {
+        if (canonicalPathLike(args[0]) === statePath) staleStateReadCount += 1;
+        return Reflect.apply(originalReadFile, fs, args);
+      }) as typeof fs.readFile);
+
+      const response = await (async () => {
+        try {
+          const app = registerRawrRoutes(createServerApp(), { repoRoot: tempRoot });
+          return await app.handle(new Request("http://localhost/rawr/plugins/web/foreign-web"));
+        } finally {
+          readFileSpy.mockRestore();
+        }
+      })();
+
+      expect(response.status).toBe(404);
+      expect(staleStateReadCount).toBe(0);
+      const after = await Promise.all([
+        fs.readFile(statePath),
+        fs.readFile(pluginPackagePath),
+        fs.readFile(pluginModulePath),
+      ]);
+      expect(after).toEqual(before);
+    } finally {
+      await removeOwnedStaleMembershipFixture(tempRoot);
+    }
   });
 
   it("no-legacy-composition-authority: rejects unsigned ingress before runtime dispatch", async () => {
-    const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
+    const app = registerRawrRoutes(createServerApp(), { repoRoot });
     const res = await app.handle(new Request("http://localhost/api/inngest", { method: "GET", headers: { host: "localhost" } }));
     expect(res.status).toBe(403);
   });
@@ -79,7 +110,7 @@ describe("rawr server routes", () => {
     const previousSigningKey = process.env.INNGEST_SIGNING_KEY;
     process.env.INNGEST_SIGNING_KEY = "signkey-test-rawr-ingress";
     try {
-      const app = registerRawrRoutes(createServerApp(), { repoRoot, enabledPluginIds: new Set() });
+      const app = registerRawrRoutes(createServerApp(), { repoRoot });
       const res = await app.handle(
         new Request("http://localhost/api/inngest", {
           method: "POST",
@@ -97,11 +128,11 @@ describe("rawr server routes", () => {
     }
   });
 
-  it("no-legacy-composition-authority: host seam scaffold binds every plugin family through HQ bridge-owned satisfiers", () => {
+  it("no-legacy-composition-authority: host seam binds every selected plugin through host-owned satisfiers", () => {
     const { boundRolePlan, realization } = createTestingRawrHostSeam();
-    expect(boundRolePlan.apiPlugins).toHaveLength(2);
+    expect(boundRolePlan.apiPlugins).toHaveLength(1);
     expect(boundRolePlan.workflowPlugins).toHaveLength(0);
-    expect(Object.keys(realization.orpc.router)).toEqual(expect.arrayContaining(["state", "exampleTodo"]));
+    expect(Object.keys(realization.orpc.router)).toEqual(["exampleTodo"]);
     expect(Object.keys(realization.orpc.published.router)).toEqual(["exampleTodo"]);
     expect(Object.keys(realization.workflows.published.router)).toEqual([]);
   });
@@ -111,34 +142,7 @@ describe("rawr server routes", () => {
     expect(routes).toEqual([
       "exampleTodo.tasks.create POST /exampleTodo/tasks/create",
       "exampleTodo.tasks.get GET /exampleTodo/tasks/{id}",
-      "state.getRuntimeState GET /state/runtime",
     ]);
-  });
-
-  it("no-legacy-composition-authority: keeps runtime authority stable when initialized from alias repo roots", async () => {
-    const canonicalRepoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-alias-root-"));
-    const aliasRepoRoot = `${canonicalRepoRoot}-alias`;
-    await fs.symlink(canonicalRepoRoot, aliasRepoRoot);
-
-    try {
-      await createTestingHqOpsServiceClient(canonicalRepoRoot).repoState.enablePlugin(
-        { pluginId: "@rawr/plugin-alias-root" },
-        { context: { invocation: { traceId: "server.test.rawr.enable-plugin" } } },
-      );
-      const app = registerRawrRoutes(createServerApp(), { repoRoot: aliasRepoRoot, enabledPluginIds: new Set() });
-      await fs.rm(aliasRepoRoot, { force: true });
-      const stateResponse = await app.handle(
-        new Request("http://localhost/rpc/state/getRuntimeState", {
-          method: "POST",
-          headers: FIRST_PARTY_RPC_HEADERS,
-          body: JSON.stringify({ json: {} }),
-        }),
-      );
-      expect(stateResponse.status).toBe(200);
-    } finally {
-      await fs.rm(aliasRepoRoot, { force: true });
-      await fs.rm(canonicalRepoRoot, { recursive: true, force: true });
-    }
   });
 
   it("no-legacy-composition-authority: request scoped context factory runs per ORPC request", async () => {
@@ -157,17 +161,17 @@ describe("rawr server routes", () => {
     });
 
     await app.handle(
-      new Request("http://localhost/rpc/state/getRuntimeState", {
+      new Request("http://localhost/rpc/exampleTodo/tasks/get", {
         method: "POST",
         headers: { ...FIRST_PARTY_RPC_HEADERS, "x-request-id": "req-a" },
-        body: JSON.stringify({ json: {} }),
+        body: JSON.stringify({ json: { id: "task-a" } }),
       }),
     );
     await app.handle(
-      new Request("http://localhost/rpc/state/getRuntimeState", {
+      new Request("http://localhost/rpc/exampleTodo/tasks/get", {
         method: "POST",
         headers: { ...FIRST_PARTY_RPC_HEADERS, "x-request-id": "req-b" },
-        body: JSON.stringify({ json: {} }),
+        body: JSON.stringify({ json: { id: "task-b" } }),
       }),
     );
 
@@ -178,3 +182,40 @@ describe("rawr server routes", () => {
     expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"]);
   });
 });
+
+function canonicalPathLike(value: Parameters<typeof fs.readFile>[0]): string | null {
+  if (typeof value === "string") return path.resolve(value);
+  if (Buffer.isBuffer(value)) return path.resolve(value.toString());
+  if (value instanceof URL && value.protocol === "file:") return path.resolve(fileURLToPath(value));
+  return null;
+}
+
+async function removeOwnedStaleMembershipFixture(root: string): Promise<void> {
+  const expectedParent = await fs.realpath(os.tmpdir());
+  const actualParent = await fs.realpath(path.dirname(root));
+  const stat = await fs.lstat(root);
+  const canonicalRoot = await fs.realpath(root);
+  if (
+    actualParent !== expectedParent
+    || canonicalRoot !== root
+    || !path.basename(root).startsWith("rawr-stale-membership-")
+    || !stat.isDirectory()
+    || stat.isSymbolicLink()
+  ) {
+    throw new Error("Refusing cleanup outside an owned stale-membership fixture root");
+  }
+  await removeDirectoryContents(root);
+  await fs.rmdir(root);
+}
+
+async function removeDirectoryContents(directory: string): Promise<void> {
+  for (const entry of await fs.readdir(directory, { withFileTypes: true })) {
+    const target = path.join(directory, entry.name);
+    if (entry.isDirectory() && !entry.isSymbolicLink()) {
+      await removeDirectoryContents(target);
+      await fs.rmdir(target);
+    } else {
+      await fs.unlink(target);
+    }
+  }
+}

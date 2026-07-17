@@ -1,5 +1,5 @@
 /**
- * One projection-owned journal step recorded during scaffold/workflow commands.
+ * One projection-owned journal step recorded during workflow commands.
  */
 export type JournalStep = {
   name: string;

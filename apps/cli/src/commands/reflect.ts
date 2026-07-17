@@ -77,7 +77,7 @@ function suggest(snippets: Array<{ id: string; kind: string; tags: string[]; tit
       rationale:
         "If this is a repeatable routine, consider wrapping it as a workflow command so it becomes a single, reliable entrypoint.",
       evidenceSnippetIds: info.ids,
-      exampleCommand: `rawr plugins scaffold workflow ${commandId}-loop --description "Automate my ${commandId} loop" --yes`,
+      exampleCommand: `rawr cli command create workflow ${commandId}-loop`,
     });
   }
 

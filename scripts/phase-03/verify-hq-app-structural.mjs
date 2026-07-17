@@ -86,8 +86,8 @@ if (
   process.exit(1);
 }
 
-if (!manifestSource.includes("registerStateApiPlugin") || !manifestSource.includes("registerExampleTodoApiPlugin")) {
-  console.error("hq-app structural failed: manifest must compose plugin-owned ORPC surfaces.");
+if (!manifestSource.includes("registerExampleTodoApiPlugin") || manifestSource.includes("registerStateApiPlugin")) {
+  console.error("hq-app structural failed: manifest must keep the surviving plugin-owned ORPC surface only.");
   process.exit(1);
 }
 

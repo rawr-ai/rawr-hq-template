@@ -1,5 +1,4 @@
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
-import type { Client as HqOpsClient } from "@rawr/hq-ops";
 import { createTestingRawrHqLegacyHostSeam } from "@rawr/hq-app/legacy-cutover";
 
 /**
@@ -42,8 +41,4 @@ export function resetTestingRawrHostSeam() {
  */
 export function createTestingExampleTodoServiceClient(repoRoot: string): ExampleTodoClient {
   return createTestingRawrHostSeam().satisfiers.exampleTodo.resolveClient(repoRoot);
-}
-
-export function createTestingHqOpsServiceClient(repoRoot: string): HqOpsClient {
-  return createTestingRawrHostSeam().satisfiers.state.resolveClient(repoRoot);
 }

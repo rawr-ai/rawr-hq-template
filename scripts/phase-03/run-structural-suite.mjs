@@ -78,16 +78,19 @@ const suiteCommandsByProject = {
     "m2-u00-current-findings": ["bun run phase-2:gate:u00:server-role-runtime-path -- --allow-findings"],
   },
   "@rawr/cli": {
-    default: ["bun run runtime:gate:hq-lifecycle"],
+    default: [
+      "bun run runtime:gate:hq-lifecycle",
+      "bun run architecture:gate:legacy-membership-authoring",
+    ],
     runtime: ["bun run runtime:gate:hq-lifecycle"],
   },
   "@rawr/plugin-plugins": {
     default: [
       "bun scripts/phase-03/verify-projection-boundary-invocation.mjs",
-      "bun run phase-a:gate:import-boundary",
+      "bun run architecture:gate:legacy-membership-authoring",
     ],
-    "phase-a-baseline": ["bun run phase-a:gate:import-boundary"],
-    "phase-a-completion": ["bun run phase-a:gate:import-boundary"],
+    "phase-a-baseline": ["bun run architecture:gate:legacy-membership-authoring"],
+    "phase-a-completion": ["bun run architecture:gate:legacy-membership-authoring"],
   },
   "@rawr/plugin-chatgpt-corpus": {
     default: ["bun scripts/phase-03/verify-projection-boundary-invocation.mjs"],
@@ -97,7 +100,10 @@ const suiteCommandsByProject = {
     "m2-u00-current-findings": ["bun run phase-2:gate:u00:no-legacy-cutover -- --allow-findings"],
   },
   "@rawr/hq-sdk": {
-    default: ["bun run architecture:gate:projection-boundaries"],
+    default: [
+      "bun run architecture:gate:projection-boundaries",
+      "bun run architecture:gate:legacy-membership-authoring",
+    ],
     "m2-u00-current-findings": ["bun run phase-2:gate:u00:runtime-public-seams -- --allow-findings"],
   },
   "@rawr/bootgraph": {

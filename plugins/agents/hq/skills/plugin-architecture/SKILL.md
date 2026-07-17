@@ -16,7 +16,7 @@ This skill is the "where does it go?" and "what owns what?" guide for the RAWR p
 
 - `rawr.kind=toolkit` (`plugins/cli/*`): reporter commands (stateless, mechanical)
 - `rawr.kind=agent` (`plugins/agents/*`): Claude Code runtime artifacts (skills, workflows, agents, hooks), plus optional actor commands
-- `rawr.kind=web` (`plugins/web/*`): runtime/web exports (separate concern)
+- `rawr.kind=web` (`plugins/web/*`): runtime/web source classified for the dedicated runtime architecture
 
 ### Reporter vs actor
 
@@ -37,7 +37,7 @@ This skill is the "where does it go?" and "what owns what?" guide for the RAWR p
 <invariants>
 <invariant name="capabilities-follow-deploy-target">Claude runtime artifacts live in agent plugins; oclif reporters live in toolkits.</invariant>
 <invariant name="logic-in-packages">Keep engines in `packages/`; keep plugin entry points thin.</invariant>
-<invariant name="do-not-mix-surfaces">Do not mix command surfaces in examples: `rawr plugins ...` vs `rawr plugins web ...`.</invariant>
+<invariant name="no-legacy-web-membership">Do not direct operators to the retired web-membership command family; app composition and runtime realization belong to the dedicated runtime architecture.</invariant>
 <invariant name="orpc-procedure-default">Procedure-style API calls in plugin/web/cli code should default to the HQ ORPC contract (`@rawr/core/orpc`) over ad-hoc fetch routes.</invariant>
 </invariants>
 
@@ -48,7 +48,6 @@ This skill is the "where does it go?" and "what owns what?" guide for the RAWR p
   - OpenAPI compatibility: `/api/orpc` and `/api/orpc/openapi.json`
 - Keep these framework-native routes outside ORPC procedure modeling:
   - `/api/inngest`
-  - `/rawr/plugins/web/:dirName`
   - `/health`
 
 </skill-usage-tracking>

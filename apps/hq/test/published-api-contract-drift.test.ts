@@ -6,6 +6,5 @@ describe("hq published api composition selection", () => {
 
   it("publishes only the example-todo API capability from HQ declarations", () => {
     expect(manifest.roles.server.api.exampleTodo.declaration?.published?.contract).toBeDefined();
-    expect(manifest.roles.server.api.state.declaration?.published).toBeUndefined();
   });
 });

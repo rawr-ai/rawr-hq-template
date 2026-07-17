@@ -65,20 +65,6 @@
         "structural"
       ]
     },
-    "plugin-server-api-state": {
-      "config": "plugins/server/api/state/project.json",
-      "tags": [
-        "type:plugin",
-        "migration-slice:structural-tranche",
-        "role:server",
-        "surface:api",
-        "capability:state"
-      ],
-      "targets": [
-        "sync",
-        "structural"
-      ]
-    },
     "eslint-fixtures": {
       "config": "tools/eslint-fixtures/project.json",
       "tags": [

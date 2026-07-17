@@ -1,42 +1,18 @@
 #!/usr/bin/env bun
-import { assertCondition, mustExist, readFile } from "./_verify-utils.mjs";
-
-function hasExportedFunction(source, fnName) {
-  return new RegExp(`export\\s+async\\s+function\\s+${fnName}\\s*\\(`, "m").test(source) ||
-    new RegExp(`export\\s+function\\s+${fnName}\\s*\\(`, "m").test(source);
-}
+import { assertCondition, mustExist } from "./_verify-utils.mjs";
+import fs from "node:fs/promises";
 
 await Promise.all([
-  mustExist("services/hq-ops/src/service/modules/repo-state/helpers/storage.ts"),
-  mustExist("apps/server/test/repo-state-store.concurrent.test.ts"),
-  mustExist("apps/server/test/storage-lock-route-guard.test.ts"),
+  mustExist("scripts/architecture/verify-app-composition-authoring.mjs"),
+  mustExist("apps/server/test/rawr.test.ts"),
 ]);
-
-const [repoStateStorageSource, repoStateEntitiesSource, repoStateTestSource] = await Promise.all([
-  readFile("services/hq-ops/src/service/modules/repo-state/helpers/storage.ts"),
-  readFile("services/hq-ops/src/service/modules/repo-state/entities.ts"),
-  readFile("apps/server/test/repo-state-store.concurrent.test.ts"),
-]);
-
-for (const fnName of [
-  "getRepoStateWithAuthority",
-  "mutateRepoStateAtomically",
-  "stateLockPath",
-  "statePath",
+for (const relPath of [
+  "services/hq-ops/src/service/modules/repo-state/helpers/storage.ts",
+  "apps/server/test/repo-state-store.concurrent.test.ts",
+  "apps/server/test/storage-lock-route-guard.test.ts",
 ]) {
-  assertCondition(hasExportedFunction(repoStateStorageSource, fnName), `repo-state storage helper must export ${fnName}`);
+  const absent = await fs.access(relPath).then(() => false, () => true);
+  assertCondition(absent, `${relPath} must remain retired`);
 }
 
-for (const typeName of ["RepoStateMutationOptions", "RepoStateMutationResult", "RepoStateMutator"]) {
-  assertCondition(
-    new RegExp(`type\\s+${typeName}\\s*=`, "m").test(repoStateEntitiesSource),
-    `repo-state store must declare ${typeName}`,
-  );
-}
-
-assertCondition(
-  /uses one authority root across canonical and alias repo paths/u.test(repoStateTestSource),
-  "repo-state runtime test must cover canonical and alias repo paths",
-);
-
-console.log("phase-c storage-lock contract verified");
+console.log("phase-c retired storage authority verified absent");

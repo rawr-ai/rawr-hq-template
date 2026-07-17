@@ -8,7 +8,6 @@ const requiredDirs = [
   "plugins/async/workflows",
   "plugins/async/schedules",
   "plugins/server/api/example-todo",
-  "plugins/server/api/state",
 ];
 
 for (const relPath of requiredDirs) {
@@ -19,14 +18,13 @@ for (const removedRoot of ["plugins/api", "plugins/workflows"]) {
   assertCondition(!(await pathExists(removedRoot)), `${removedRoot} must be absent from the live tree`);
 }
 
-const [rootPackageSource, tsconfigSource, pluginAgentsSource, shellSource, manifestCompatSource, hostSeamSource, webClientSource] = await Promise.all([
+const [rootPackageSource, tsconfigSource, pluginAgentsSource, shellSource, manifestCompatSource, hostSeamSource] = await Promise.all([
   readFile("package.json"),
   readFile("tsconfig.base.json"),
   readFile("plugins/AGENTS.md"),
   readFile("apps/hq/rawr.hq.ts"),
   readFile("apps/hq/src/manifest.ts"),
   readFile("apps/server/src/host-seam.ts"),
-  readFile("apps/web/src/ui/lib/orpc-client.ts"),
 ]);
 
 for (const requiredSnippet of [
@@ -44,8 +42,6 @@ for (const forbiddenSnippet of ["\"plugins/api/*\"", "\"plugins/workflows/*\""])
 for (const requiredAlias of [
   "@rawr/plugin-server-api-example-todo",
   "@rawr/plugin-server-api-example-todo/server",
-  "@rawr/plugin-server-api-state",
-  "@rawr/plugin-server-api-state/server",
 ]) {
   assertCondition(tsconfigSource.includes(requiredAlias), `tsconfig.base.json must include ${requiredAlias}`);
 }
@@ -55,6 +51,8 @@ for (const forbiddenAlias of [
   "@rawr/plugin-api-example-todo/server",
   "@rawr/plugin-api-state",
   "@rawr/plugin-api-state/server",
+  "@rawr/plugin-server-api-state",
+  "@rawr/plugin-server-api-state/server",
 ]) {
   assertCondition(!tsconfigSource.includes(`"${forbiddenAlias}"`), `tsconfig.base.json must not include ${forbiddenAlias}`);
 }
@@ -73,8 +71,9 @@ for (const forbiddenRoot of ["plugins/api/*", "plugins/workflows/*"]) {
 
 assertCondition(
   shellSource.includes("@rawr/plugin-server-api-example-todo/server") &&
-    shellSource.includes("@rawr/plugin-server-api-state/server"),
-  "apps/hq/rawr.hq.ts must import the canonical role-first server plugin packages",
+    !shellSource.includes("plugin-server-api-state") &&
+    shellSource.includes("registerExampleTodoApiPlugin"),
+  "apps/hq/rawr.hq.ts must declare only the surviving server API plugin",
 );
 
 assertCondition(
@@ -84,14 +83,11 @@ assertCondition(
 );
 
 assertCondition(
-  hostSeamSource.includes("@rawr/plugin-server-api-example-todo/server") &&
-    hostSeamSource.includes("@rawr/plugin-server-api-state/server"),
-  "apps/server/src/host-seam.ts must type against the canonical role-first server plugin packages",
-);
-
-assertCondition(
-  webClientSource.includes("@rawr/plugin-server-api-state"),
-  "apps/web/src/ui/lib/orpc-client.ts must consume the canonical role-first state plugin package",
+  hostSeamSource.includes("@rawr/hq-sdk/apis") &&
+    hostSeamSource.includes("exampleTodo.contribute") &&
+    hostSeamSource.includes("input.satisfiers.exampleTodo.resolveClient") &&
+    !hostSeamSource.includes("plugin-server-api-state"),
+  "apps/server/src/host-seam.ts must bind selected public API registrations through explicit host satisfiers",
 );
 
 console.log("canonical plugin topology verified");

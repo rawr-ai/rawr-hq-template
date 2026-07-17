@@ -8,7 +8,7 @@ import { RPCHandler } from "@orpc/server/fetch";
 import { createTestingRawrHostSeam } from "./testing-host";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
 import { createHostLoggingContext, withHostLoggingContext, withHostLoggingSpanContext } from "./logging";
-import type { AnyElysia } from "./plugins";
+import type { RawrServerApp } from "./app";
 import {
   assertHeavyMiddlewareDedupeMarkers,
   assertRequestScopedMiddlewareMarker,
@@ -319,7 +319,7 @@ export async function generateOrpcOpenApiSpec(
  * - alternate runtime/testing assembly paths outside the realized host seam
  */
 export function registerOrpcRoutes<
-  TApp extends AnyElysia,
+  TApp extends RawrServerApp,
   TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext,
   TRequestContext extends RawrBoundaryContext & TContext = RawrBoundaryContext & TContext,
 >(

@@ -23,7 +23,6 @@ async function createTestApp() {
   const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-logging-"));
   const app = registerRawrRoutes(createServerApp(), {
     repoRoot,
-    enabledPluginIds: new Set(),
     baseUrl: "http://localhost:3000",
   });
 

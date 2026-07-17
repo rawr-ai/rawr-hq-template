@@ -12,7 +12,6 @@ import { contract as config } from "./modules/config/contract";
 import { contract as journal } from "./modules/journal/contract";
 import { contract as pluginCatalog } from "./modules/plugin-catalog/contract";
 import { contract as pluginLifecycle } from "./modules/plugin-lifecycle/contract";
-import { contract as repoState } from "./modules/repo-state/contract";
 import { contract as security } from "./modules/security/contract";
 
 /**
@@ -20,7 +19,6 @@ import { contract as security } from "./modules/security/contract";
  */
 export const contract = {
   config,
-  repoState,
   journal,
   security,
   pluginCatalog,

@@ -2,10 +2,7 @@ import { createClient as createExampleTodoClient, type Client as ExampleTodoClie
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
 import { bindService, type ProcessView, type RoleView, type ServiceBinding, type ServiceBindingContext } from "@rawr/hq-sdk/plugins";
-import { createClient as createStateClient, type Client as StateClient } from "@rawr/hq-ops";
-import { createHqOpsResources } from "./hq-ops-resources";
 type ExampleTodoBoundary = Parameters<typeof createExampleTodoClient>[0];
-type StateBoundary = Parameters<typeof createStateClient>[0];
 type HostProcess = ProcessView & {
   processId: "server";
   repoRoot: string;
@@ -14,21 +11,13 @@ type ExampleTodoRole = RoleView & {
   roleId: "example-todo";
   capability: "example-todo";
 };
-type StateRole = RoleView & {
-  roleId: "hq-ops";
-  capability: "state";
-};
 type ExampleTodoBindingContext = ServiceBindingContext<HostProcess, ExampleTodoRole>;
-type StateBindingContext = ServiceBindingContext<HostProcess, StateRole>;
 
 export type HostServiceLogger = ExampleTodoBoundary["deps"]["logger"];
 
 export type RawrHostSatisfiers = Readonly<{
   exampleTodo: {
     resolveClient(repoRoot: string): ExampleTodoClient;
-  };
-  state: {
-    resolveClient(repoRoot: string): StateClient;
   };
 }>;
 
@@ -88,27 +77,10 @@ function createExampleTodoBinding(hostLogger: HostServiceLogger) {
   } satisfies ServiceBinding<ExampleTodoBoundary, HostProcess, ExampleTodoRole>);
 }
 
-function createStateBinding(hostLogger: HostServiceLogger) {
-  return bindService(createStateClient, {
-    bindingId: "server/hq-ops-state",
-    deps: () => ({
-      logger: hostLogger,
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-      resources: createHqOpsResources(),
-    }),
-    scope: (context: StateBindingContext) => ({
-      repoRoot: context.process.repoRoot,
-    }),
-    config: {},
-    cacheKey: (context: StateBindingContext) => `${context.process.processId}:${context.process.repoRoot}:${context.role.roleId}`,
-  } satisfies ServiceBinding<StateBoundary, HostProcess, StateRole>);
-}
-
 export function createRawrHostSatisfiers(input: {
   hostLogger: HostServiceLogger;
 }): RawrHostSatisfiers {
   const exampleTodo = createExampleTodoBinding(input.hostLogger);
-  const state = createStateBinding(input.hostLogger);
 
   function resolveExampleTodoClient(repoRoot: string): ExampleTodoClient {
     return exampleTodo.resolve({
@@ -123,25 +95,9 @@ export function createRawrHostSatisfiers(input: {
     });
   }
 
-  function resolveStateClient(repoRoot: string): StateClient {
-    return state.resolve({
-      process: {
-        processId: "server",
-        repoRoot,
-      },
-      role: {
-        roleId: "hq-ops",
-        capability: "state",
-      },
-    });
-  }
-
   return {
     exampleTodo: {
       resolveClient: resolveExampleTodoClient,
-    },
-    state: {
-      resolveClient: resolveStateClient,
     },
   } as const;
 }

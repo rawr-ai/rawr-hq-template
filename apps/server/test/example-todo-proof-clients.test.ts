@@ -18,7 +18,6 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 function createApp() {
   return registerRawrRoutes(createServerApp(), {
     repoRoot,
-    enabledPluginIds: new Set(),
     baseUrl: "http://localhost:3000",
   });
 }

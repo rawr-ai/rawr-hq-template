@@ -235,6 +235,18 @@ async function verifyImportBoundary() {
   await mustNotExist("packages/plugin-workspace/package.json");
   await mustNotExist("plugins/cli/plugins/src/lib/workspace-plugins.ts");
   await mustNotExist("plugins/cli/plugins/src/commands/plugins/cli/install/all.ts");
+  for (const retired of [
+    "plugins/cli/plugins/src/commands/plugins/web/list.ts",
+    "plugins/cli/plugins/src/commands/plugins/web/status.ts",
+    "plugins/cli/plugins/src/commands/plugins/web/enable.ts",
+    "plugins/cli/plugins/src/commands/plugins/web/enable/all.ts",
+    "plugins/cli/plugins/src/commands/plugins/web/disable.ts",
+    "plugins/cli/plugins/src/commands/plugins/scaffold/command.ts",
+    "plugins/cli/plugins/src/commands/plugins/scaffold/web-plugin.ts",
+    "plugins/cli/plugins/src/commands/plugins/scaffold/workflow.ts",
+  ]) {
+    await mustNotExist(retired);
+  }
 
   const projectionFiles = await listSourceFilesUnder("plugins/cli/plugins/src");
   const findings = [];
@@ -249,13 +261,7 @@ async function verifyImportBoundary() {
   }
   assertCondition(findings.length === 0, `plugin projection import boundary failed:\n${findings.map((finding) => `- ${finding}`).join("\n")}`);
 
-  const [webList, webEnableAll, sweep] = await Promise.all([
-    fs.readFile(path.join(root, "plugins/cli/plugins/src/commands/plugins/web/list.ts"), "utf8"),
-    fs.readFile(path.join(root, "plugins/cli/plugins/src/commands/plugins/web/enable/all.ts"), "utf8"),
-    fs.readFile(path.join(root, "plugins/cli/plugins/src/commands/plugins/sweep.ts"), "utf8"),
-  ]);
-  assertCondition(webList.includes(".pluginCatalog.listWorkspacePlugins"), "web list must call hq-ops pluginCatalog");
-  assertCondition(webEnableAll.includes(".pluginCatalog.listWorkspacePlugins"), "web enable all must call hq-ops pluginCatalog");
+  const sweep = await fs.readFile(path.join(root, "plugins/cli/plugins/src/commands/plugins/sweep.ts"), "utf8");
   assertCondition(sweep.includes("planSweepCandidates"), "sweep must get lifecycle candidates from hq-ops pluginLifecycle");
 }
 

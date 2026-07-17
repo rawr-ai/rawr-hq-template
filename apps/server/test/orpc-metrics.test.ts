@@ -95,10 +95,10 @@ describe("host oRPC route metrics", () => {
 
     try {
       const response = await app.handle(
-        new Request("http://localhost:3100/rpc/state/getRuntimeState", {
+        new Request("http://localhost:3100/rpc/exampleTodo/tasks/create", {
           method: "POST",
           headers: FIRST_PARTY_RPC_HEADERS,
-          body: JSON.stringify({ json: {} }),
+          body: JSON.stringify({ json: { title: "Metrics proof" } }),
         }),
       );
 
@@ -132,10 +132,10 @@ describe("host oRPC route metrics", () => {
 
     try {
       const response = await app.handle(
-        new Request("http://localhost:3100/rpc/state/getRuntimeState", {
+        new Request("http://localhost:3100/rpc/exampleTodo/tasks/get", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ json: {} }),
+          body: JSON.stringify({ json: { id: "forbidden" } }),
         }),
       );
 
@@ -156,7 +156,7 @@ describe("host oRPC route metrics", () => {
 
     try {
       const response = await app.handle(
-        new Request("http://localhost:3100/rpc/state/doesNotExist", {
+        new Request("http://localhost:3100/rpc/exampleTodo/tasks/doesNotExist", {
           method: "POST",
           headers: FIRST_PARTY_RPC_HEADERS,
           body: JSON.stringify({ json: {} }),
@@ -184,10 +184,10 @@ describe("host oRPC route metrics", () => {
 
     try {
       const response = await app.handle(
-        new Request("http://localhost:3100/rpc/state/getRuntimeState", {
+        new Request("http://localhost:3100/rpc/exampleTodo/tasks/get", {
           method: "POST",
           headers: FIRST_PARTY_RPC_HEADERS,
-          body: JSON.stringify({ json: {} }),
+          body: JSON.stringify({ json: { id: "context-error" } }),
         }),
       );
 

@@ -14,7 +14,7 @@
 ## Command surface invariant
 
 - External CLI plugin channel: `rawr plugins ...`
-- Workspace/runtime plugin channel: `rawr plugins web ...`
+- Curated agent-plugin lifecycle channel: `rawr agent plugins ...`
+- App composition and runtime realization own neither lifecycle channel.
 
-Do not mix these in the same example unless you are explicitly comparing surfaces.
-
+Do not route runtime membership through a plugin lifecycle command or use the retired web-membership command family as a fallback.

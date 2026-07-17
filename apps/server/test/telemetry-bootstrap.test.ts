@@ -35,20 +35,8 @@ describe("server telemetry bootstrap", () => {
         return app;
       },
       loadConfig: async () => ({ config: {} }) as never,
-      loadPlugins: async () => {
-        order.push("load-plugins");
-        return [];
-      },
-      loadState: async () => {
-        order.push("load-state");
-        return { plugins: { enabled: [] } } as never;
-      },
       registerRoutes: (currentApp) => {
         order.push("register-routes");
-        return currentApp;
-      },
-      mountPlugins: async (currentApp) => {
-        order.push("mount-plugins");
         return currentApp;
       },
     });
@@ -56,10 +44,7 @@ describe("server telemetry bootstrap", () => {
     expect(order).toEqual([
       "telemetry",
       "create-app",
-      "load-plugins",
-      "load-state",
       "register-routes",
-      "mount-plugins",
     ]);
     expect(bootstrapped.telemetry).toBe(telemetry);
   });

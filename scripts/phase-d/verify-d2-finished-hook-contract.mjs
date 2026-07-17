@@ -47,7 +47,7 @@ assertCondition(
   "runtime-router.test.ts must guard the canonical shell seam and compatibility forwarder",
 );
 assertCondition(
-  contractDriftTestSource.includes('expect(Object.keys(manifest.roles.server.api)).toEqual(["state", "exampleTodo"])') &&
+  contractDriftTestSource.includes('expect(Object.keys(manifest.roles.server.api)).toEqual(["exampleTodo"])') &&
     contractDriftTestSource.includes("expect(Object.keys(manifest.roles.async.workflows)).toEqual([])") &&
     contractDriftTestSource.includes("declaration?.published?.contract"),
   "orpc-contract-drift.test.ts must assert the post-U01 role-first API selection and empty workflow publication",
