@@ -40,12 +40,8 @@ describe("rawr config validate", () => {
       path.join(ws, "rawr.config.ts"),
       `export default {
   version: 1,
-  plugins: {
-    defaultRiskTolerance: "off",
-    channels: {
-      workspace: { enabled: true },
-      external: { enabled: false },
-    },
+  journal: {
+    semantic: { candidateLimit: 200 },
   },
 };`,
       "utf8",

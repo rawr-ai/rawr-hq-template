@@ -706,6 +706,28 @@ describe("controller-owned capsule state machine", () => {
     });
   });
 
+  it("rejects a capsule changed after binding preflight without a state write and allows a clean rebind", async () => {
+    const harness = createHarness();
+    const staleDigest = (await observedState(harness.store)).stateDigest;
+    const action = fixtureAction("plugins/a/one");
+    await commit(harness, [action]);
+    harness.world.states.set(action.relativePath, "post");
+    const committed = await observedState(harness.store);
+    const before = await observedBytes(harness.store);
+
+    const stale = await harness.undo.undo({ expectedStateDigest: staleDigest });
+    expect(stale).toMatchObject({
+      kind: "RejectedBeforeReplay",
+      failure: { code: "StateChanged", phase: "undo-preflight" },
+    });
+    expect(await observedBytes(harness.store)).toEqual(before);
+    expect(harness.world.replayOrder).toEqual([]);
+
+    const rebound = await harness.undo.undo({ expectedStateDigest: committed.stateDigest });
+    expect(rebound).toMatchObject({ kind: "RestoredAndCleared" });
+    expect(harness.world.replayOrder).toEqual(["plugins/a/one"]);
+  });
+
   it("durably retains replay failure and resumes the same generation after a cold reopen", async () => {
     const harness = createHarness();
     const actions = [fixtureAction("plugins/a/one"), fixtureAction("plugins/a/two")];

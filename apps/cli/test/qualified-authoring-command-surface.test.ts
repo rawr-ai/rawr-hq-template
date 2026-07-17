@@ -45,6 +45,18 @@ describe("qualified authoring command surface", () => {
       { args: ["plugins", "scaffold", "command"], id: "plugins:scaffold:command" },
       { args: ["plugins", "scaffold", "web-plugin"], id: "plugins:scaffold:web-plugin" },
       { args: ["plugins", "scaffold", "workflow"], id: "plugins:scaffold:workflow" },
+      { args: ["plugins", "export"], id: "plugins:export" },
+      { args: ["plugins", "export", "all"], id: "plugins:export:all" },
+      { args: ["plugins", "improve"], id: "plugins:improve" },
+      { args: ["plugins", "lifecycle", "check"], id: "plugins:lifecycle:check" },
+      { args: ["plugins", "status"], id: "plugins:status" },
+      { args: ["plugins", "sweep"], id: "plugins:sweep" },
+      { args: ["plugins", "sync"], id: "plugins:sync" },
+      { args: ["plugins", "sync", "all"], id: "plugins:sync:all" },
+      { args: ["plugins", "sync", "drift"], id: "plugins:sync:drift" },
+      { args: ["plugins", "sync", "sources", "add"], id: "plugins:sync:sources:add" },
+      { args: ["plugins", "sync", "sources", "list"], id: "plugins:sync:sources:list" },
+      { args: ["plugins", "sync", "sources", "remove"], id: "plugins:sync:sources:remove" },
       { args: ["workflow", "forge-command"], id: "workflow:forge-command" },
     ] as const;
 
@@ -213,8 +225,6 @@ async function adjacentAuthorityFixture(): Promise<AdjacentAuthorityFixture> {
       RAWR_DATA_DIR: roots.controller,
       CODEX_HOME: codexHome,
       CLAUDE_CONFIG_DIR: claudeHome,
-      RAWR_AGENT_SYNC_CODEX_HOMES: codexHome,
-      RAWR_AGENT_SYNC_CLAUDE_HOMES: claudeHome,
       RAWR_HYPERRESEARCH_CODEX_LEDGER: path.join(roots.process, "hyperresearch-ledger.json"),
     }),
   });

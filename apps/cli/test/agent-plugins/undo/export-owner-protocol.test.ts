@@ -4,13 +4,12 @@ import { dirname, join } from "node:path";
 import {
   EXPORT_APPLICATION_PROTOCOL_VERSION,
   EXPORT_LEDGER_FILENAME,
-  createExportAgentPluginsApplication,
   parseExportOwnerAction,
   type ExportAgentPluginsRequest,
   type ExportFailpoints,
   type UndoApplyingSession,
   type UndoWriter,
-} from "@rawr/agent-plugin-export";
+} from "@rawr/agent-plugin-lifecycle/ports/exports";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -22,12 +21,13 @@ import {
   createInitialCapsuleState,
   type OwnerProtocolRegistrationV1,
 } from "../../../src/lib/agent-plugins/undo";
-import { exportArtifactFixture } from "../../../../../services/agent-plugin-export/test/artifact-fixture";
+import { exportArtifactFixture } from "../../../../../services/agent-plugin-lifecycle/test/modules/exports/artifact-fixture";
 import {
   FakeArtifactReader,
   FakeKnownNativeHomesReader,
   knownHomes,
-} from "../../../../../services/agent-plugin-export/test/fakes";
+} from "../service-runtime/exports/fakes";
+import { createExportTestClient } from "../service-runtime/exports/lifecycle-client";
 import { InMemoryCapsuleStateStoreV1 } from "./memory-store";
 import { createOwnedFixtureRoot, type OwnedFixtureRoot } from "./owned-fixture-root";
 
@@ -49,9 +49,9 @@ describe("production export owner protocol", () => {
       destinationAt(root, "export-b"),
       destinationAt(root, "export-a"),
     ]);
-    const application = applicationFor(harness.writer, fixture.complete);
+    const client = clientFor(harness.writer, fixture.complete);
 
-    const result = await application.execute(request(fixture.complete.ref, destinations));
+    const result = await client.exports.apply(request(fixture.complete.ref, destinations));
 
     expect(result.kind).toBe("MutatedSettled");
     const committed = await committedCapsule(harness.store);
@@ -99,12 +99,12 @@ describe("production export owner protocol", () => {
       "skills/next/SKILL.md",
     ).alpha;
 
-    expect(await applicationFor(harness.writer, initial).execute(request(
+    expect(await clientFor(harness.writer, initial).exports.apply(request(
       initial.ref,
       [destination],
       "targeted-release",
     ))).toMatchObject({ kind: "MutatedSettled" });
-    expect(await applicationFor(harness.writer, replacement).execute(request(
+    expect(await clientFor(harness.writer, replacement).exports.apply(request(
       replacement.ref,
       [destination],
       "targeted-release",
@@ -144,14 +144,14 @@ describe("production export owner protocol", () => {
         }
       },
     };
-    const application = createExportAgentPluginsApplication({
+    const client = createExportTestClient({
       artifactReader: artifacts,
       knownNativeHomesReader: new FakeKnownNativeHomesReader(knownHomes()),
       undoWriter: createExportUndoWriterV1(harness.writer),
       failpoints,
     });
 
-    const result = await application.execute(request(
+    const result = await client.exports.apply(request(
       fixture.alpha.ref,
       [first, second, third],
       "targeted-release",
@@ -197,14 +197,14 @@ describe("production export owner protocol", () => {
         harness.store.injectNextReleaseFailure("injected mark release failure");
       },
     };
-    const application = createExportAgentPluginsApplication({
+    const client = createExportTestClient({
       artifactReader: artifacts,
       knownNativeHomesReader: new FakeKnownNativeHomesReader(knownHomes()),
       undoWriter: createExportUndoWriterV1(harness.writer),
       failpoints,
     });
 
-    const result = await application.execute(request(
+    const result = await client.exports.apply(request(
       fixture.alpha.ref,
       [destination],
       "targeted-release",
@@ -244,14 +244,14 @@ describe("production export owner protocol", () => {
         }
       },
     };
-    const application = createExportAgentPluginsApplication({
+    const client = createExportTestClient({
       artifactReader: artifacts,
       knownNativeHomesReader: new FakeKnownNativeHomesReader(knownHomes()),
       undoWriter: createExportUndoWriterV1(harness.writer),
       failpoints,
     });
 
-    expect(await application.execute(request(
+    expect(await client.exports.apply(request(
       fixture.alpha.ref,
       [destination],
       "targeted-release",
@@ -284,8 +284,8 @@ describe("production export owner protocol", () => {
     const harness = createHarness();
     const fixture = exportArtifactFixture();
     const destination = await destinationAt(root, "staged-recovery");
-    const application = applicationFor(harness.writer, fixture.alpha);
-    expect((await application.execute(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
+    const client = clientFor(harness.writer, fixture.alpha);
+    expect((await client.exports.apply(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
       .toBe("MutatedSettled");
     const priorCapsule = await committedCapsule(harness.store);
     expect(await harness.undo.undo()).toEqual({
@@ -350,9 +350,9 @@ describe("production export owner protocol", () => {
         });
       },
     };
-    const application = applicationForUndoWriter(interruptedWriter, fixture.alpha);
+    const client = clientForUndoWriter(interruptedWriter, fixture.alpha);
 
-    expect(await application.execute(request(fixture.alpha.ref, [destination], "targeted-release")))
+    expect(await client.exports.apply(request(fixture.alpha.ref, [destination], "targeted-release")))
       .toMatchObject({ kind: "MutatedUnsettled" });
     expect((await state(harness.store)).body.state.kind).toBe("applying");
 
@@ -371,8 +371,8 @@ describe("production export owner protocol", () => {
     const harness = createHarness();
     const fixture = exportArtifactFixture();
     const destination = await destinationAt(root, "foreign-same-bytes");
-    const application = applicationFor(harness.writer, fixture.alpha);
-    expect((await application.execute(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
+    const client = clientFor(harness.writer, fixture.alpha);
+    expect((await client.exports.apply(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
       .toBe("MutatedSettled");
     const priorCapsule = await committedCapsule(harness.store);
     expect(await harness.undo.undo()).toEqual({
@@ -406,8 +406,8 @@ describe("production export owner protocol", () => {
     const harness = createHarness();
     const fixture = exportArtifactFixture();
     const destination = await destinationAt(root, "ambiguous-recovery");
-    const application = applicationFor(harness.writer, fixture.alpha);
-    expect((await application.execute(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
+    const client = clientFor(harness.writer, fixture.alpha);
+    expect((await client.exports.apply(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
       .toBe("MutatedSettled");
     const priorCapsule = await committedCapsule(harness.store);
     expect(await harness.undo.undo()).toEqual({
@@ -472,8 +472,8 @@ describe("production export owner protocol", () => {
     const firstUndo = new CapsuleUndoControllerV1({ store, registry });
     const fixture = exportArtifactFixture();
     const destination = await destinationAt(root, "cold-replay");
-    const application = applicationFor(writer, fixture.alpha);
-    expect((await application.execute(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
+    const client = clientFor(writer, fixture.alpha);
+    expect((await client.exports.apply(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
       .toBe("MutatedSettled");
 
     expect(await firstUndo.undo()).toMatchObject({
@@ -502,20 +502,20 @@ function createHarness() {
   return { store, registry, writer, undo };
 }
 
-function applicationFor(
+function clientFor(
   writer: CapsuleControllerWriterV1,
   artifact: ReturnType<typeof exportArtifactFixture>["alpha" | "complete"],
 ) {
-  return applicationForUndoWriter(createExportUndoWriterV1(writer), artifact);
+  return clientForUndoWriter(createExportUndoWriterV1(writer), artifact);
 }
 
-function applicationForUndoWriter(
+function clientForUndoWriter(
   undoWriter: UndoWriter,
   artifact: ReturnType<typeof exportArtifactFixture>["alpha" | "complete"],
 ) {
   const artifacts = new FakeArtifactReader();
   artifacts.add(artifact);
-  return createExportAgentPluginsApplication({
+  return createExportTestClient({
     artifactReader: artifacts,
     knownNativeHomesReader: new FakeKnownNativeHomesReader(knownHomes()),
     undoWriter,

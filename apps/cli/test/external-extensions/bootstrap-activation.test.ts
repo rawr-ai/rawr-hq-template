@@ -1,10 +1,15 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { Config } from "@oclif/core";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createGuardedExternalConfiguration } from "../../src/lib/external-extensions/bootstrap";
 import { createReservedControllerSurface } from "../../src/lib/external-extensions/reserved-surface";
+import {
+  registerExternalExtensionRuntime,
+  resolveExternalExtensionRuntime,
+} from "../../src/lib/external-extensions/runtime";
 import type { ExternalExtensionCommandRuntime } from "../../src/lib/external-extensions/service";
 import {
   NodeStaticEvidencePort,
@@ -17,6 +22,25 @@ afterEach(() => {
 });
 
 describe("guarded external activation", () => {
+  it("keeps the command runtime bound across Oclif's dispatch reload", async () => {
+    const config = await Config.load({
+      root: writeCliFixture(),
+      userPlugins: false,
+      devPlugins: false,
+      jitPlugins: false,
+    });
+    const runtime = unavailableRuntime();
+    registerExternalExtensionRuntime(config, runtime);
+
+    const dispatchedConfig = await Config.load(config);
+
+    expect(dispatchedConfig).not.toBe(config);
+    expect(dispatchedConfig.plugins.get(dispatchedConfig.pjson.name)).toBe(
+      config.plugins.get(config.pjson.name),
+    );
+    expect(resolveExternalExtensionRuntime(dispatchedConfig)).toBe(runtime);
+  });
+
   it("quarantines a manifest swap without invoking Oclif dynamic fallback", async () => {
     const dataDir = tempRoot("bootstrap-native-data");
     const sentinel = path.join(tempRoot("bootstrap-sentinel"), "command-loaded");

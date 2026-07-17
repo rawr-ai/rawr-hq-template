@@ -46,7 +46,6 @@ describe("controller command-package classification", () => {
         "@rawr/plugin-hyperresearch",
         "@rawr/plugin-session-tools",
         "@rawr/plugin-chatgpt-corpus",
-        "@rawr/plugin-plugins",
       ]),
     );
   });
