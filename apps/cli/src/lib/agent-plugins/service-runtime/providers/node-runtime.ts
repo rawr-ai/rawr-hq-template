@@ -44,18 +44,17 @@ import {
 } from "./owner-protocol";
 import { createProviderUndoWriterV1 } from "./provider-capsule";
 
-export async function createNodeProviderLifecycleRuntime(options: Readonly<{
+export function createNodeProviderLifecycleRuntime(options: Readonly<{
   channel: ProviderLifecycleRuntime["channel"];
-  roots: NodeProviderRecordRoots;
+  state: NodeProviderRecordState;
   artifactReader: ArtifactReader;
   artifactStoreRoot: Parameters<typeof createNodeMechanicalEvidenceRuntime>[0];
   capsuleRoot: Parameters<typeof openNodeCapsuleStateStoreV1>[0]["root"];
   providerExecutables: Readonly<Partial<Record<ProviderId, string>>>;
-}>): Promise<ProviderLifecycleRuntime> {
-  const state = createNodeProviderRecordState(options.roots);
-  const adapter = createNodeNativeProviderAdapterResolver(state, options.providerExecutables);
+}>): ProviderLifecycleRuntime {
+  const adapter = createNodeNativeProviderAdapterResolver(options.state, options.providerExecutables);
   const observer = createNodeNativeProviderObserverResolver(options.providerExecutables);
-  return await assembleRuntime(options, state, adapter, observer);
+  return assembleRuntime(options, adapter, observer);
 }
 
 export interface NodeProviderRecordRoots {
@@ -232,12 +231,12 @@ async function openProviderUndoWriter(
   return createProviderUndoWriterV1(controller);
 }
 
-async function assembleRuntime(
+function assembleRuntime(
   options: Parameters<typeof createNodeProviderLifecycleRuntime>[0],
-  state: NodeProviderRecordState,
   adapter: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter & NativeMemberRestorationPort,
   observer: (provider: ProviderId) => NativeProviderObserver,
-): Promise<ProviderLifecycleRuntime> {
+): ProviderLifecycleRuntime {
+  const { state } = options;
   const reader = createProviderReader(adapter, observer);
   const mutator = createProviderMutator(adapter);
   const undoWriter = createLazyProviderUndoWriter(state, adapter, options.capsuleRoot);

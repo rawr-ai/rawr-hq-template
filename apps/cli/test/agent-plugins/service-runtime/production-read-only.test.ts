@@ -94,7 +94,7 @@ describe("production lifecycle read-only binding", () => {
     const governance = promotionFixture();
     governance.approvalReader.history = undefined;
 
-    const runtime = await createNodeProviderLifecycleRuntime({
+    const runtime = createNodeProviderLifecycleRuntime({
       channel: createGovernanceCanonicalChannelReader({
         governance: {
           git: governance.git,
@@ -102,11 +102,11 @@ describe("production lifecycle read-only binding", () => {
           approvals: governance.approvalReader,
         },
       }),
-      roots: {
+      state: createNodeProviderRecordState({
         controllerDataRoot: dataRoot,
         providerProjectionRoot: layout.providerProjectionRoot,
         providerTargetStateRoot: layout.providerTargetStateRoot,
-      },
+      }),
       artifactReader: {
         read: async () => {
           throw new Error("Blocked status must not read a release artifact");
@@ -295,13 +295,13 @@ describe("production lifecycle read-only binding", () => {
         const layout = deriveAgentPluginControllerLayout({ dataRoot });
         const dataBefore = await exactTree(dataRoot);
         const homeBefore = await exactTree(home);
-        const runtime = await createNodeProviderLifecycleRuntime({
+        const runtime = createNodeProviderLifecycleRuntime({
           channel: unavailableCanonicalChannel(),
-          roots: {
+          state: createNodeProviderRecordState({
             controllerDataRoot: dataRoot,
             providerProjectionRoot: layout.providerProjectionRoot,
             providerTargetStateRoot: layout.providerTargetStateRoot,
-          },
+          }),
           artifactReader: {
             read: async () => {
               throw new Error("Managed retirement must not read a release artifact");

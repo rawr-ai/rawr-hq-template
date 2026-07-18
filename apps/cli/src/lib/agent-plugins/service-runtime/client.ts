@@ -233,13 +233,13 @@ async function createSelectedLifecycleRuntime(input: Readonly<{
     });
     return Object.freeze({
       owner: "providers",
-      runtime: await createNodeProviderLifecycleRuntime({
+      runtime: createNodeProviderLifecycleRuntime({
         channel,
-        roots: {
+        state: createNodeProviderRecordState({
           controllerDataRoot,
           providerProjectionRoot: layout.providerProjectionRoot,
           providerTargetStateRoot: layout.providerTargetStateRoot,
-        },
+        }),
         artifactReader,
         artifactStoreRoot: layout.artifactStoreRoot,
         capsuleRoot: layout.capsuleRoot,
