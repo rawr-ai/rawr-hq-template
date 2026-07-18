@@ -15,7 +15,7 @@ import {
   decodeCurrentMainRecord,
   decodeLifecyclePolicy,
   decodePromotionAttestation,
-} from "../../../src/service/modules/governance/internal";
+} from "../../../src/service/modules/governance/model";
 import { digest, mustPromotion, promotionFixture } from "./fixtures";
 
 const encoder = new TextEncoder();

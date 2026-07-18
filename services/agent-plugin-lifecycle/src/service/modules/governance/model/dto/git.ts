@@ -1,6 +1,6 @@
-import type { CanonicalJsonValue } from "./canonical";
-import { failures, success, type PromotionIssue, type PromotionResult } from "./result";
-import { collect, exactRecord } from "./schema";
+import type { CanonicalJsonValue } from "../helpers/canonical";
+import { failures, success, type PromotionIssue, type PromotionResult } from "../errors/promotion-result";
+import { collect, exactRecord } from "../helpers/schema";
 import {
   parseCanonicalRef,
   parseCommit,

@@ -1,14 +1,14 @@
 import type {
   AcceptanceRequest,
   LifecyclePolicy,
-} from "../domain/acceptance";
-import type { ExactGitBlobPointer } from "../domain/git";
-import { parseCanonicalId } from "../domain/primitives";
+} from "../dto/acceptance";
+import type { ExactGitBlobPointer } from "../dto/git";
 import type {
   HostedApprovalHistory,
   HostedApprovalHistoryQuery,
   HostedApprovalObservation,
-} from "../ports/index";
+} from "../dto/hosted-approval";
+import { parseCanonicalId } from "../dto/primitives";
 
 export function createHostedApprovalHistoryQuery(
   request: AcceptanceRequest,

@@ -1,10 +1,10 @@
-import { type Static, Type } from "typebox";
+import { Type } from "typebox";
 
 import type {
   AttestPromotionResult,
   CurrentMainResolution,
   GovernedAcceptanceResult,
-} from "./internal";
+} from "./model/dto/operations";
 
 const GitObjectIdSchema = Type.String({ pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" });
 const CanonicalIdSchema = Type.String({
@@ -407,5 +407,7 @@ export const ResolveCurrentMainResultSchema = Type.Unsafe<ResolveCurrentMainProc
   ]),
 );
 
-export type GitLocatorInput = Static<typeof GitLocatorSchema>;
-export type ExactGitBlobPointerInput = Static<typeof ExactGitBlobPointerSchema>;
+export type {
+  ExactGitBlobPointerInput,
+  GitLocatorInput,
+} from "./model/dto/boundary";

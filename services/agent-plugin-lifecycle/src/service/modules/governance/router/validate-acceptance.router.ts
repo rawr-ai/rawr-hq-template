@@ -6,116 +6,94 @@ import {
   type AcceptanceEvidence,
   type AcceptanceRequest,
   type LifecyclePolicy,
-} from "../domain/acceptance";
+} from "../model/dto/acceptance";
 import {
   sameEvidenceHandle,
   sameProviderBinding,
   type MechanicalEvidenceObservation,
   type MechanicalTargetFact,
   type ProviderAcceptanceBinding,
-} from "../domain/evidence";
+} from "../model/dto/evidence";
 import {
   LIFECYCLE_POLICY_PATH,
   type CanonicalRef,
-} from "../domain/primitives";
-import type { ExactGitBlobPointer, GitLocator } from "../domain/git";
+} from "../model/dto/primitives";
+import { decodeAcceptancePointers } from "../model/dto/boundary";
+import type {
+  GovernedAcceptanceResult,
+  ValidateGovernedAcceptanceInput,
+} from "../model/dto/operations";
 import type {
   ExactGitReader,
-  HostedApprovalHistoryReader,
-  HostedApprovalObservation,
   MechanicalEvidenceReader,
   RepositoryInspection,
 } from "../ports/index";
-import { readExactBlob } from "./git-read";
+import { readExactBlob } from "../model/repositories/exact-git";
 import {
   createHostedApprovalHistoryQuery,
   selectHostedApproval,
-} from "./hosted-approval";
+} from "../model/policy/hosted-approval";
+import { module } from "../module";
+import type { GovernanceLifecycleRuntime } from "../ports";
 
-export interface ValidateGovernedAcceptanceInput {
-  readonly locator: GitLocator;
-  readonly policyObject: ExactGitBlobPointer;
-  readonly requestObject: ExactGitBlobPointer;
-  readonly acceptanceObject: ExactGitBlobPointer;
-}
-
-export interface GovernedAcceptanceObservation {
-  readonly policy: LifecyclePolicy;
-  readonly request: AcceptanceRequest;
-  readonly evidence: AcceptanceEvidence;
-  readonly policyObject: ExactGitBlobPointer;
-  readonly requestObject: ExactGitBlobPointer;
-  readonly acceptanceObject: ExactGitBlobPointer;
-  readonly approval: HostedApprovalObservation;
-}
-
-export type GovernedAcceptanceResult =
-  | { readonly kind: "GovernedAccepted"; readonly observation: GovernedAcceptanceObservation }
-  | { readonly kind: "RejectedAcceptance"; readonly evidence: AcceptanceEvidence }
-  | {
-    readonly kind: "InvalidAcceptance";
-    readonly code: "INVALID_ACCEPTANCE_RECORD" | "INVALID_MECHANICAL_EVIDENCE";
-    readonly reason: string;
-  }
-  | {
-    readonly kind: "BlockedAcceptanceAuthority";
-    readonly code: "BLOCKED_ACCEPTANCE_AUTHORITY";
-    readonly reason: string;
-  };
-
-export interface GovernedAcceptanceDependencies {
-  readonly git: ExactGitReader;
-  readonly evidence: MechanicalEvidenceReader;
-  readonly approvals: HostedApprovalHistoryReader;
-}
-
-export function createValidateGovernedAcceptance(
-  dependencies: GovernedAcceptanceDependencies,
-): (input: ValidateGovernedAcceptanceInput) => Promise<GovernedAcceptanceResult> {
-  return async (input) => {
-    const records = await readAcceptanceRecords(dependencies.git, input);
-    if (!records.ok) return records.result;
-    const { policy, request, evidence } = records;
-
-    const bindingFailure = validateRecordBindings(input, policy, request, evidence);
-    if (bindingFailure !== undefined) return bindingFailure;
-
-    const inspection = await dependencies.git.inspect(input.locator, policy.body.canonicalRef);
-    const authorityFailure = classifyRepositoryAuthority(inspection, policy.body.canonicalRef);
-    if (authorityFailure !== undefined) return authorityFailure;
-
-    if (evidence.body.outcome === "rejected") {
-      return { kind: "RejectedAcceptance", evidence };
-    }
-
-    const evidenceFailure = await validateMechanicalEvidence(dependencies.evidence, request);
-    if (evidenceFailure !== undefined) return evidenceFailure;
-
-    const approvalQuery = createHostedApprovalHistoryQuery(request, input.acceptanceObject);
-    const approvalHistory = await dependencies.approvals.read(approvalQuery);
-    if (!approvalHistory.ok) {
-      return blocked(`Hosted approval history is unavailable: ${approvalHistory.failure.message}`);
-    }
-    const approval = selectHostedApproval(
-      approvalHistory.history,
-      approvalQuery,
-      input.acceptanceObject,
-      policy.body.humanApproverIdentity,
-    );
-    if (!approval.ok) return blocked(approval.reason);
-
+export const validateAcceptance = module.validateAcceptance.handler(async ({ context, input }) => {
+  const decoded = decodeAcceptancePointers(input);
+  if (!decoded.ok) {
     return {
-      kind: "GovernedAccepted",
-      observation: Object.freeze({
-        policy,
-        request,
-        evidence,
-        policyObject: input.policyObject,
-        requestObject: input.requestObject,
-        acceptanceObject: input.acceptanceObject,
-        approval: approval.observation,
-      }),
+      kind: "InvalidAcceptance",
+      code: "INVALID_ACCEPTANCE_RECORD",
+      reason: decoded.reason,
     };
+  }
+  return validateGovernedAcceptance(context.governance, decoded.value);
+});
+
+export async function validateGovernedAcceptance(
+  dependencies: GovernanceLifecycleRuntime,
+  input: ValidateGovernedAcceptanceInput,
+): Promise<GovernedAcceptanceResult> {
+  const records = await readAcceptanceRecords(dependencies.git, input);
+  if (!records.ok) return records.result;
+  const { policy, request, evidence } = records;
+
+  const bindingFailure = validateRecordBindings(input, policy, request, evidence);
+  if (bindingFailure !== undefined) return bindingFailure;
+
+  const inspection = await dependencies.git.inspect(input.locator, policy.body.canonicalRef);
+  const authorityFailure = classifyRepositoryAuthority(inspection, policy.body.canonicalRef);
+  if (authorityFailure !== undefined) return authorityFailure;
+
+  if (evidence.body.outcome === "rejected") {
+    return { kind: "RejectedAcceptance", evidence };
+  }
+
+  const evidenceFailure = await validateMechanicalEvidence(dependencies.evidence, request);
+  if (evidenceFailure !== undefined) return evidenceFailure;
+
+  const approvalQuery = createHostedApprovalHistoryQuery(request, input.acceptanceObject);
+  const approvalHistory = await dependencies.approvals.read(approvalQuery);
+  if (!approvalHistory.ok) {
+    return blocked(`Hosted approval history is unavailable: ${approvalHistory.failure.message}`);
+  }
+  const approval = selectHostedApproval(
+    approvalHistory.history,
+    approvalQuery,
+    input.acceptanceObject,
+    policy.body.humanApproverIdentity,
+  );
+  if (!approval.ok) return blocked(approval.reason);
+
+  return {
+    kind: "GovernedAccepted",
+    observation: Object.freeze({
+      policy,
+      request,
+      evidence,
+      policyObject: input.policyObject,
+      requestObject: input.requestObject,
+      acceptanceObject: input.acceptanceObject,
+      approval: approval.observation,
+    }),
   };
 }
 

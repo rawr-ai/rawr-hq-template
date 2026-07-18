@@ -1,5 +1,5 @@
 import { isExactRecord } from "./canonical";
-import { issue, type PromotionIssue, type PromotionResult } from "./result";
+import { issue, type PromotionIssue, type PromotionResult } from "../errors/promotion-result";
 
 export function exactRecord(
   value: unknown,

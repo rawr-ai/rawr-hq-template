@@ -15,8 +15,8 @@ import {
   type RepositoryIdentity,
 } from "../../../../shared/release";
 
-import { compareCanonicalText } from "./canonical";
-import { failure, success, type PromotionResult } from "./result";
+import { compareCanonicalText } from "../helpers/canonical";
+import { failure, success, type PromotionResult } from "../errors/promotion-result";
 
 declare const canonicalIdBrand: unique symbol;
 declare const canonicalRefBrand: unique symbol;

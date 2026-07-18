@@ -4,7 +4,7 @@ import {
   decodeCanonicalJson,
   sha256Digest,
   type CanonicalJsonValue,
-} from "./canonical";
+} from "../helpers/canonical";
 import {
   ACCEPTANCE_ROOT,
   CURRENT_MAIN_PATH,
@@ -49,14 +49,14 @@ import {
   parseExactGitBlobPointer,
   type ExactGitBlobPointer,
 } from "./git";
-import { failures, issue, success, type PromotionIssue, type PromotionResult } from "./result";
+import { failures, issue, success, type PromotionIssue, type PromotionResult } from "../errors/promotion-result";
 import {
   boundedArray,
   collect,
   exactRecord,
   parseBoundedInteger,
   reportDuplicateOrOrder,
-} from "./schema";
+} from "../helpers/schema";
 
 export const ACCEPTANCE_REQUEST_SCHEMA_VERSION = 2 as const;
 export const ACCEPTANCE_EVIDENCE_SCHEMA_VERSION = 1 as const;

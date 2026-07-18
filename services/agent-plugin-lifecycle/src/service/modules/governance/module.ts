@@ -6,6 +6,6 @@ export const module = impl.governance
   .use(analytics)
   .use(async ({ context, next }) => next({
     context: {
-      runtime: context.deps.governance,
+      governance: context.deps.governance,
     },
   }));

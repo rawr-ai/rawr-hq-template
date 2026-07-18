@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 import {
   canonicalSerializeCurrentMainRecord,
   createCurrentMainRecord,
-  createResolveCurrentMain,
-} from "../../../src/service/modules/governance/internal";
+} from "../../../src/service/modules/governance/model";
+import { createLifecycleTestClient, testInvocation } from "../../support/client";
 import {
   MAIN_REF,
   MemoryApprovalReader,
@@ -120,9 +120,10 @@ describe("fixed current-main resolution (B14)", () => {
 });
 
 async function resolve(fixture: ReturnType<typeof promotionFixture>) {
-  return createResolveCurrentMain({
+  const client = createLifecycleTestClient({ governance: {
     git: fixture.git,
     evidence: fixture.evidenceReader,
     approvals: fixture.approvalReader,
-  })({ locator: fixture.locator });
+  } });
+  return client.governance.resolveCurrentMain({ locator: fixture.locator }, testInvocation);
 }

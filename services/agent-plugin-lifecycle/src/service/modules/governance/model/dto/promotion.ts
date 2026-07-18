@@ -4,7 +4,7 @@ import {
   decodeCanonicalJson,
   sha256Digest,
   type CanonicalJsonValue,
-} from "./canonical";
+} from "../helpers/canonical";
 import {
   CURRENT_MAIN_CHANNEL,
   parseAcceptanceEvidenceDigest,
@@ -38,8 +38,8 @@ import {
   parseExactGitBlobPointer,
   type ExactGitBlobPointer,
 } from "./git";
-import { failures, issue, success, type PromotionIssue, type PromotionResult } from "./result";
-import { collect, exactRecord } from "./schema";
+import { failures, issue, success, type PromotionIssue, type PromotionResult } from "../errors/promotion-result";
+import { collect, exactRecord } from "../helpers/schema";
 
 export const PROMOTION_ATTESTATION_SCHEMA_VERSION = 1 as const;
 export const CURRENT_MAIN_SCHEMA_VERSION = 1 as const;

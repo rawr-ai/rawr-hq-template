@@ -32,23 +32,25 @@ import {
   type CurrentMainRecord,
   type ExactGitBlobObservation,
   type ExactGitBlobPointer,
-  type ExactGitReader,
   type GitBlobSelection,
   type GitLocator,
   type GovernedAcceptanceObservation,
-  type HostedApprovalHistory,
-  type HostedApprovalHistoryQuery,
-  type HostedApprovalHistoryReader,
-  type HostedApprovalObservation,
   type LifecyclePolicy,
   type MechanicalEvidenceHandle,
   type MechanicalEvidenceObservation,
-  type MechanicalEvidenceReader,
   type PromotionAttestation,
   type PromotionResult,
   type ProviderAcceptanceBinding,
-  type RepositoryInspection,
-} from "../../../src/service/modules/governance/internal";
+} from "../../../src/service/modules/governance/model";
+import type {
+  ExactGitReader,
+  HostedApprovalHistory,
+  HostedApprovalHistoryQuery,
+  HostedApprovalHistoryReader,
+  HostedApprovalObservation,
+  MechanicalEvidenceReader,
+  RepositoryInspection,
+} from "../../../src/service/modules/governance/ports";
 
 const encoder = new TextEncoder();
 

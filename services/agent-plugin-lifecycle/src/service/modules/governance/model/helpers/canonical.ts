@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { failure, success, type PromotionResult } from "./result";
+import { failure, success, type PromotionResult } from "../errors/promotion-result";
 
 export type CanonicalJsonValue =
   | null

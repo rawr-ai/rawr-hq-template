@@ -3,11 +3,11 @@ export type * from "../service/modules/governance/ports";
 export {
   createExactGitBlobPointer,
   sameGitSelection,
-} from "../service/modules/governance/internal/domain/git";
+} from "../service/modules/governance/model/dto/git";
 export {
   createMechanicalEvidenceObservation,
   createProviderAcceptanceBinding,
-} from "../service/modules/governance/internal/domain/evidence";
+} from "../service/modules/governance/model/dto/evidence";
 export {
   parseCanonicalId,
   parseCanonicalRef,
@@ -16,4 +16,4 @@ export {
   parseRepository,
   parseTree,
   sortCanonical,
-} from "../service/modules/governance/internal/domain/primitives";
+} from "../service/modules/governance/model/dto/primitives";

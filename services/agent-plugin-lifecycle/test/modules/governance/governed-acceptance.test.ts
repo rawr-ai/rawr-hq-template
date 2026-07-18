@@ -5,9 +5,13 @@ import {
   canonicalSerializeAcceptanceEvidence,
   createAcceptanceEvidence,
   createMechanicalEvidenceObservation,
-  createValidateGovernedAcceptance,
-  type HostedApprovalHistory,
-} from "../../../src/service/modules/governance/internal";
+  type ValidateGovernedAcceptanceInput,
+} from "../../../src/service/modules/governance/model";
+import type {
+  GovernanceLifecycleRuntime,
+  HostedApprovalHistory,
+} from "../../../src/service/modules/governance/ports";
+import { createLifecycleTestClient, testInvocation } from "../../support/client";
 import {
   MemoryApprovalReader,
   MemoryEvidenceReader,
@@ -359,3 +363,9 @@ describe("governed acceptance (B12)", () => {
     expect(fixture.approvalReader.calls).toBe(0);
   });
 });
+
+function createValidateGovernedAcceptance(runtime: GovernanceLifecycleRuntime) {
+  const client = createLifecycleTestClient({ governance: runtime });
+  return (request: ValidateGovernedAcceptanceInput) =>
+    client.governance.validateAcceptance(request, testInvocation);
+}
