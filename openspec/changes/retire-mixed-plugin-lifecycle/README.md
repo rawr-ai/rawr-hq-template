@@ -19,6 +19,7 @@ C5 execution record for qualified agent-plugin lifecycle activation and mixed ag
 | Template source base | commit `0199b5c62ac9bfe9dd1062116e64c206ab39dec7`; tree `83c42ab75320b8612dc02252f81a9549e1fe9e15` |
 | reviewed source parent | commit `0ab68fedcfd04e1a1246b195febd35681584080a`; tree `5cc0fde8a64898c3b8c093fc7778d26bad460f3d` |
 | source review topology | the inclusive sequence `2018ab8aa0230fe2287e2372631142a20945a4e1` through `0ab68fedcfd04e1a1246b195febd35681584080a` contains 97 ordered semantic commits before this evidence record; submission retains them in order on one `codex/c5-agent-plugin-lifecycle-normalization` review branch and PR without squashing, accepted only after pre/post fold order, count, and tree proof |
+| review topology proof | pre/post fold tip `fda7e739277f30e17529b6a6b187cc899f6ecd9d`, tree `95019df6bd2a110940d8822e3279158b91e926da`, 98 commits, and ordered-commit SHA-256 `5788f1020e2d0efc205cb3a5062ec21e158b55a99af1ada51d1b3e2b81b955cf` are identical; Graphite now has one C5 branch, and this row is the following evidence-only commit |
 | execution record | OpenSpec `1.3.1`; this active changeset and [[SERVICE_TOPOLOGY]] / [[HABITAT_INTEGRATION]] |
 | source landing | pending task 7.2; no personal remote, history, or executable source participates |
 
@@ -151,6 +152,20 @@ git diff --exit-code cb88f3812c33b365c79bb93880e4113ce51f1ae5..0ab68fedcfd04e1a1
   -> pass; accepted controller/runtime payload paths are unchanged
 git diff --check
   -> pass
+gt fold --stack --keep --no-interactive
+  -> 98 Graphite checkpoint branches become one branch; no commit is squashed
+git rev-list --count main..HEAD
+  -> pre/post 98
+git rev-list --reverse main..HEAD | shasum -a 256
+  -> pre/post 5788f1020e2d0efc205cb3a5062ec21e158b55a99af1ada51d1b3e2b81b955cf
+git rev-parse HEAD HEAD^{tree}
+  -> pre/post fda7e739277f30e17529b6a6b187cc899f6ecd9d / 95019df6bd2a110940d8822e3279158b91e926da
+gt rename codex/c5-agent-plugin-lifecycle-normalization --no-interactive
+  -> one C5 review branch
+bun run ratchet:required
+  -> post-fold pass
+bun run architecture:gates:permanent
+  -> post-fold pass
 ```
 
 ### Review Dispositions
