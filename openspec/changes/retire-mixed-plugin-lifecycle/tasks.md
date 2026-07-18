@@ -40,12 +40,12 @@
 
 - [x] 6.1 Prove the exact positive and negative command ontology, strict parser rejection, one-procedure dispatch, status classifications/exits, and zero Oclif mutation from every agent lifecycle command.
 - [x] 6.2 Prove the exact service/module topology, boundary-only exports, abstract runtime ports, authority-local state deltas, failure truth, controller capsule replay, explicit destination/home isolation, and byte/mtime-stable converged repetition for lifecycle-owned state.
-- [x] 6.3 Run semantic inventory, OpenSpec strict validation, focused project build/typecheck/lint/test, the complete affected Template Nx graph, and the repository-wide required gate: 30 Nx lint projects, 44 typecheck projects, provisioning plus the 25-arm dependency-rule fixture, and three locked Habitat rules.
+- [x] 6.3 Run semantic inventory, OpenSpec strict validation, focused project build/typecheck/lint/test, the complete affected Template Nx graph, and the repository-wide required gate: 30 Nx lint projects, 44 typecheck projects, provisioning plus the 32-arm dependency-rule fixture, and three locked Habitat rules.
 - [x] 6.4 Run installed-controller acceptance with an absolute binary and disposable data/content/provider/export homes; prove 113 fresh processes, exact 13 curated and 7 external commands, converged build/package/export/provider transitions, managed and export undo, empty-capsule stutter, and retired refusal without using mutable global `rawr` or canonical live homes.
-- [ ] 6.5 Obtain and disposition standing TypeScript/refactor, architecture/authority, behavior/testing, and structural-quality reviews; unresolved P1/P2 blocks landing.
+- [x] 6.5 Obtain and disposition standing TypeScript/refactor, architecture/authority, behavior/testing, and structural-quality reviews; unresolved P1/P2 blocks landing. See [[README#Review Dispositions]].
 
 ## 7. Mainline Closure
 
-- [ ] 7.1 Record exact commands, project counts, digests, failure evidence, reviewer dispositions, and residual non-claims in README without claiming C6/C7 acceptance.
+- [x] 7.1 Record exact commands, project counts, digests, failure evidence, reviewer dispositions, and residual non-claims in README without claiming C6/C7 acceptance. See [[README#Progress And Proof]] and [[README#Failure Ledger]].
 - [ ] 7.2 Land the complete C5 source change through Graphite, verify canonical Template `main`, and record reviewed/landed commits, trees, and PR.
 - [ ] 7.3 Archive the completed changeset in a second reviewed landing, rerun post-main proof, and drain every C5 Graphite node and disposable worktree before C6 opens.

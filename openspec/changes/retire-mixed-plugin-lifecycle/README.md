@@ -1,5 +1,8 @@
 # retire-mixed-plugin-lifecycle
 
+**Status:** `SOURCE_REVIEWED`
+**Change:** `retire-mixed-plugin-lifecycle`
+
 C5 execution record for qualified agent-plugin lifecycle activation and mixed aggregate deletion.
 
 ## Authority
@@ -8,6 +11,16 @@ C5 execution record for qualified agent-plugin lifecycle activation and mixed ag
 2. The superseding repository-separation amendment is personal commit `43a49d48ab6c6a29b4877f20576b42b533fc82ba`, `AUTHORITY_AMENDMENT.md` blob `10bb040317d62834806b86b36a3a14f13c539fbc`.
 3. C5 starts from clean Template `main` commit `0199b5c62ac9bfe9dd1062116e64c206ab39dec7`, tree `83c42ab75320b8612dc02252f81a9549e1fe9e15`. It imports no personal executable source or history.
 4. The canonical future app/runtime architecture is defined by [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec]] and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec]].
+
+## Repository Record
+
+| Coordinate | Value |
+| --- | --- |
+| Template source base | commit `0199b5c62ac9bfe9dd1062116e64c206ab39dec7`; tree `83c42ab75320b8612dc02252f81a9549e1fe9e15` |
+| reviewed source parent | commit `0ab68fedcfd04e1a1246b195febd35681584080a`; tree `5cc0fde8a64898c3b8c093fc7778d26bad460f3d` |
+| source review topology | the inclusive sequence `2018ab8aa0230fe2287e2372631142a20945a4e1` through `0ab68fedcfd04e1a1246b195febd35681584080a` contains 97 ordered semantic commits before this evidence record; submission retains them in order on one `codex/c5-agent-plugin-lifecycle-normalization` review branch and PR without squashing, accepted only after pre/post fold order, count, and tree proof |
+| execution record | OpenSpec `1.3.1`; this active changeset and [[SERVICE_TOPOLOGY]] / [[HABITAT_INTEGRATION]] |
+| source landing | pending task 7.2; no personal remote, history, or executable source participates |
 
 ## Director Frame
 
@@ -49,7 +62,7 @@ The command boundary retains only distinctions that change authority or legal ef
 
 ## Protected Lanes
 
-The landed oRPC/effect-oRPC evidence remains read-only. Inngest remains `HF01_PENDING`; C5 does not materialize, build, package, export, synchronize, release, distribute, or rewrite its candidate bytes. C5 changes generic controller lifecycle only and does not inspect protected content.
+C5 consumes the landed oRPC/effect-oRPC evidence read-only and does not execute the later research-bound corrective release. That downstream release remains outside C5 and must use the normalized closed-world release, acceptance, channel, and native-provider path after the first cognition settlement. Inngest remains `HF01_PENDING`; C5 does not materialize, build, package, export, synchronize, release, distribute, or rewrite its candidate bytes. C5 changes generic controller lifecycle only and does not inspect protected content.
 
 ## Implemented Boundary
 
@@ -68,13 +81,95 @@ No C5 code mounts web plugins, composes apps, compiles runtime definitions, or r
 | --- | --- | --- |
 | OpenSpec behavior and boundary record | pass | proposal, design, [[SERVICE_TOPOLOGY]], delta specs, and task ledger validate strictly in this changeset |
 | Habitat structural authority | pass | exactly three locked positive rules: `require_agent_plugin_lifecycle_service_topology`, `require_agent_plugin_command_channel_topology`, and `preserve_agent_plugin_lifecycle_dependency_direction` |
-| repository quality gate | local pass; remote activation pending | `bun run lint` covers 30 Nx projects, `bun run typecheck` covers 44, the Habitat consumer proves provisioning plus all 25 dependency-rule arms, and the three locked rules pass live through `ratchet:required`; local pre-push runs the same required chain; ordinary CI and protected `main` become promotion authority after the workflow lands |
+| repository quality gate | local pass; remote activation pending | `bun run lint` covers 30 Nx projects, `bun run typecheck` covers 44, the Habitat consumer proves provisioning plus all 32 dependency-rule arms, and the three locked rules pass live through `ratchet:required`; local pre-push runs the same required chain; ordinary CI and protected `main` become promotion authority after the workflow lands |
 | one oRPC service consolidation | pass | exact six-module inventory, boundary-only exports, typed client, retained state-owner distinctions, and migrated C2-C3 behavior suites |
 | qualified command implementation | pass | exact 13 curated and 7 external command IDs, typed-procedure dispatch, parser refusal, status classification, and no curated/Oclif mutation crossover |
 | mixed aggregate retirement | pass | semantic inventory and repository scans find no reachable mixed owner, alias, fallback, or compatibility command path |
-| standing reviews | pending | TypeScript/refactor, architecture/authority, behavior/testing, structural quality |
-| installed-controller acceptance | pass | controller `eb7687759d83f9f03498dc5a8e2beb705d5e744b1580c8fa15f14585807dd87a`; 113 fresh processes; exact command sets; converged build, package, export, and provider operations; provider-managed and export undo; empty-capsule stutter; retired-command refusal |
+| standing reviews | pass | TypeScript/refactor, structural quality, architecture/authority, and behavior/testing returned CLEAR after the implementation and evidence-record corrections below; no unresolved P1/P2 remains |
+| installed-controller acceptance | pass | controller payload digest `a78ec59ef10564c321574d2a580b346047e6b5af936fc8a5bc43ec53f50de75c` was materialized from clean disposable acceptance-snapshot revision `5fb987c899a26a595c24f8c882e3114553cf7992`; 113 fresh processes; exact command sets; converged build, package, export, and provider operations; provider-managed and export undo; empty-capsule stutter; retired-command refusal |
 | Template main landing and drain | pending | Graphite PR, landed commit/tree, clean worktrees/stack |
+
+### Source Proof
+
+| Proof | Result |
+| --- | --- |
+| `bunx @fission-ai/openspec@1.3.1 validate --all --strict --no-interactive` | 14 changesets valid |
+| `bun run ratchet:required` | 30 lint projects, 44 typecheck projects, Habitat consumer `3/3` with 32 dependency arms, and all three locked live rules pass |
+| `bun run architecture:gates:permanent` | permanent architecture inventory, semantic retirement, 18-project sync check, and all three Habitat rules pass |
+| `bun run build` | 24 controller-closure projects pass |
+| lifecycle service owner test | 31 files, 282 tests pass |
+| focused lifecycle failure cohort | 4 files, 39 tests pass under the CLI-owned Bun runtime |
+| Effect resource/provider owners | 8 provider projects, 100 tests pass; the native-provider aggregate also passes 2 files / 10 tests |
+| native read-only provider probe | 1 file, 9 tests pass against an explicit executable and disposable home |
+| controller release owner test | 4 files, 34 tests pass |
+| immutable installed-controller acceptance | controller payload `a78ec59e...`, disposable snapshot revision `5fb987c8...`, 113 fresh processes, 60 manifest commands, and every lifecycle transition/refusal oracle passes |
+
+The root multi-project `bun run test` command remains a diagnostic, not a C5 promotion gate: it flattens projects with different runtime owners into one concurrent Vitest host, bypasses owner-local timeouts/configuration, and omits the `resources/**` Bun suites. A forced-Bun diagnostic produced 12 failures. After the canonical Node host was restored, the final broad diagnostic produced 17 failures (`816` passed, `18` skipped); only the reviewed cohorts below are classified. The C5-owned failures from the later CLI-parallel diagnostic all passed in exact isolated Bun reruns. The lifecycle service, resource/provider owners, required ratchet, build, and installed black-box acceptance passed, so C5 restores the shared runner instead of redesigning the repository test harness inside this lifecycle change.
+
+### Command Ledger
+
+```text
+bunx @fission-ai/openspec@1.3.1 validate --all --strict --no-interactive
+  -> 14 passed, 0 failed
+bun run ratchet:required
+  -> lint 30; typecheck 44; Habitat consumer 3/3 with 32 dependency arms; 3 locked rules
+bun run architecture:gates:permanent
+  -> permanent inventory, semantic retirement, 18-project sync check, and 3 Habitat rules pass
+bun run build
+  -> 24 projects pass
+bunx nx run @rawr/agent-plugin-lifecycle:test --skip-nx-cache
+  -> 31 files, 282 tests pass
+bun --bun node_modules/.bin/vitest run --project cli apps/cli/test/agent-plugins/service-runtime/releases/build-and-store.test.ts apps/cli/test/agent-plugins/service-runtime/releases/retention.test.ts apps/cli/test/agent-plugins/service-runtime/releases/git-eligibility.test.ts apps/cli/test/agent-plugins/service-runtime/vendors/node-vendor-runtime.test.ts
+  -> 4 files, 39 tests pass
+bun --bun node_modules/.bin/vitest run --project cli apps/cli/test/agent-plugins/undo/export-owner-protocol.test.ts
+  -> 1 file, 11 tests pass
+bun --bun node_modules/.bin/vitest run --project cli apps/cli/test/agent-plugins/qualified-lifecycle-command-boundary.test.ts
+  -> 1 file, 12 tests pass
+bun --bun node_modules/.bin/vitest run --project cli apps/cli/test/qualified-authoring-command-surface.test.ts
+  -> 1 file, 4 tests pass
+bunx nx run-many -t test --projects=provider-agent-plugin-package-output-cowork-v1-effect-platform-node,provider-agent-plugin-artifact-repository-effect-platform-node,provider-agent-plugin-export-destination-effect-platform-node,provider-hosted-governance-github-cli-effect-platform-node,provider-native-agent-provider-claude-effect-platform-node,provider-native-agent-provider-codex-effect-platform-node,provider-agent-provider-records-effect-platform-node,provider-content-workspace-git-effect-platform-node,@rawr/resource-native-agent-provider,@rawr/resource-hosted-governance,@rawr/controller-release --skip-nx-cache --parallel=1
+  -> 8 targets pass; 3 overlapping-load targets fail, then each passes in the exact reruns below
+bunx nx run provider-native-agent-provider-claude-effect-platform-node:test --skip-nx-cache
+  -> 1 file, 6 tests pass
+bunx nx run provider-content-workspace-git-effect-platform-node:test --skip-nx-cache
+  -> 1 file, 23 tests pass
+bunx nx run @rawr/resource-native-agent-provider:test --skip-nx-cache
+  -> 2 files, 10 tests pass
+bunx nx run @rawr/controller-release:test --skip-nx-cache
+  -> 4 files, 34 tests pass
+bun --bun node_modules/.bin/vitest run --project cli apps/cli/test/agent-plugins/service-runtime/production-read-only.test.ts
+  -> 1 file, 9 tests pass
+RAWR_CODEX_EXECUTABLE=/Applications/ChatGPT.app/Contents/Resources/codex bun scripts/controller/accept-installed-blackbox.ts
+  -> controller a78ec59e...; snapshot 5fb987c8...; 113 processes; all black-box oracles pass
+bun run test
+  -> diagnostic only: 816 passed, 18 skipped, 17 failed
+bunx nx run @rawr/cli:test --skip-nx-cache
+  -> diagnostic only under default file parallelism: 332 passed, 16 failed; every C5 failure passes in the exact isolated commands above
+git diff --name-only cb88f3812c33b365c79bb93880e4113ce51f1ae5..0ab68fedcfd04e1a1246b195febd35681584080a
+  -> package.json; packages/test-utils/test/rawr-cli.integration.test.ts (harness/test-only after controller acceptance)
+git diff --exit-code cb88f3812c33b365c79bb93880e4113ce51f1ae5..0ab68fedcfd04e1a1246b195febd35681584080a -- scripts/controller apps/cli/src services resources packages/controller-release plugins/cli
+  -> pass; accepted controller/runtime payload paths are unchanged
+git diff --check
+  -> pass
+```
+
+### Review Dispositions
+
+| Review role | Finding exercised | Disposition |
+| --- | --- | --- |
+| TypeScript/refactor | synchronous provider construction retained stale awaits and the production client factory remained needlessly asynchronous | repaired before `c79a66e2` / `3190252e`; re-review CLEAR |
+| architecture/authority | governance created a nested same-service client while operation-selected partial dependencies and throwing getters made context authority depend on the next command | replaced by one ordinary complete six-owner context and one root client in `ad4ee6c1` through `3190252e`; re-review CLEAR |
+| behavior/testing | the unbound-Git negative case was confounded by a non-repository fixture and did not isolate the injected context difference | replaced with a bound/unbound differential over the same repository plus cold packaging-first construction proof; re-review CLEAR |
+| structural quality | the singleton client-root rule omitted `.tsx`, `.mts`, and `.cts` value relays and did not prove the admitted client-specific type-only forms | repaired with 32 rejection/acceptance arms in `cb88f381`; re-review CLEAR |
+
+### Failure Ledger
+
+- The recursive-removal concern remained a bounded C5 test-fixture finding: owned disposable fixture helpers guard canonical parent, prefix, file type, device, and inode immediately before recursive cleanup. No generalized launcher or arbitrary-code hardening was added.
+- A stale installed-controller digest was caught after later client/resource commits; the accepted controller payload is `a78ec59...`, materialized from disposable snapshot revision `5fb987c8...`.
+- Permanent Effect research-checkout maintenance and vendored Habitat SDK source were removed from the stack. The surviving Habitat boundary is the Bun 1.4-built immutable binary, exact provenance, verified consumer, and Template-owned positive policy tree in [[HABITAT_INTEGRATION]].
+- Late review caught nested-client orchestration, partial context authority, a confounded Git differential, and alternate-TypeScript-extension ratchet gaps. Each was repaired and re-reviewed rather than waived.
+- C5 temporarily changed the shared multi-project Vitest diagnostic to a Bun host. That exposed engine-specific JSON error-text and `HOME`/`os.homedir` fixture assumptions in unrelated Hyperresearch and session-tools tests, while parallel process pressure exhausted two spawn-heavy command-test timeouts. `79405a18` restored the canonical Node host; CLI and lifecycle owner tests retain explicit Bun hosts. `0ab68fed` corrected the stale checkout-local `rawr` CLI integration oracle to require immutable-controller refusal with exit `78`.
+- Broad mixed-runtime diagnostics produced incomplete child-process output, wrong Git observations, and timeouts under load. The explicitly reviewed Git, native-provider, lifecycle command, authoring command, build/store, retention, vendor, export, and production-read-only cohorts passed their exact isolated commands. The remaining broad diagnostic failures are not claimed as classified, waived, or repaired.
 
 ### Proof Non-Claims
 

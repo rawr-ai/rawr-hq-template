@@ -35,7 +35,7 @@ The Template `.habitat` tree positively closes three monotonic structural axes. 
 
 1. `require_agent_plugin_lifecycle_service_topology` admits one `@rawr/agent-plugin-lifecycle` oRPC service, its exact six modules, their uniform roots, and only populated domain-model categories.
 2. `require_agent_plugin_command_channel_topology` admits curated lifecycle commands only under `rawr agent plugins` and external Oclif extension commands only under `rawr plugins`.
-3. `preserve_agent_plugin_lifecycle_dependency_direction` keeps root assembly on imported module routers through `impl.router`, keeps procedure handlers on their local module context, and admits controller composition through public service ports to resource contracts, never service-to-provider imports or CLI-to-module-local implementation imports.
+3. `preserve_agent_plugin_lifecycle_dependency_direction` keeps root assembly on imported module routers through `impl.router`, keeps procedure handlers on their local module context, and admits controller composition through public service ports to resource contracts. It locks `apps/cli/src/lib/agent-plugins/service-runtime/client.ts` as the sole production lifecycle-client value root, admits type-only boundary references elsewhere, and rejects service-to-provider imports, CLI-to-module-local implementation imports, nested client roots, and dynamic value relays.
 
 Each rule has a stable identity, explicit path coverage, and a locked baseline. The first two use `structure.toml`; the dependency-direction rule uses a named Grit pattern. The service topology packet is reusable blueprint authority. The command and dependency packets are RAWR-only niche authority. Extending one of these axes requires a reviewed strengthening of the positive constraint; new historical denylist entries are not the model.
 
@@ -51,7 +51,7 @@ bun run typecheck
 bun run habitat:grit:provision
   -> exact locked Grit provider native runner
 bunx nx run @rawr/habitat-consumer:test
-  -> 2 provisioning checks + 25-arm dependency-rule rejection/acceptance fixture
+  -> 2 provisioning checks + 32-arm dependency-rule rejection/acceptance fixture
 bun run architecture:gate:agent-plugin-lifecycle
   -> 3 locked Habitat rules
 ```
