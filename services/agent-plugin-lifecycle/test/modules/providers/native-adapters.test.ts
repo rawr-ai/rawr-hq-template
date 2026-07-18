@@ -10,20 +10,20 @@ import {
   type ProviderMarketplaceRegistration,
   type ProviderMemberFingerprint,
   type ProviderProjectionMember,
-} from "../../../src/service/modules/providers/internal";
+} from "../../../src/bindings/providers";
 import {
   success,
-} from "../../../src/service/modules/providers/internal/domain/result";
+} from "../../../src/service/modules/providers/model/errors/deployment-result";
 import {
   CODEX_ADAPTER_PROTOCOL,
   createCodexProviderAdapter,
   type CodexMarketplacePlugin,
-} from "../../../src/service/modules/providers/internal/adapters/codex";
+} from "../../../src/bindings/providers/codex";
 import {
   CLAUDE_ADAPTER_PROTOCOL,
   createClaudeProviderAdapter,
   type ClaudeNativePlugin,
-} from "../../../src/service/modules/providers/internal/adapters/claude";
+} from "../../../src/bindings/providers/claude";
 
 describe("native provider adapters", () => {
   it("sets one exact target-level marketplace registration before member mutation", async () => {

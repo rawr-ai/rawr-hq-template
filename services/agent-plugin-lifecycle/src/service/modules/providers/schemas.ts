@@ -1,11 +1,11 @@
 import { Refine, type TSchema, Type } from "typebox";
 
-import type { CompleteNativeHomesObservation } from "./internal/domain/native-homes";
+import type { CompleteNativeHomesObservation } from "./model/dto/native-homes";
 import type {
   CanonicalStatusOutcome,
   ProviderOperationOutcome,
-} from "./internal/domain/outcome";
-import type { DeploymentResult } from "./internal/domain/result";
+} from "./model/dto/outcome";
+import type { DeploymentResult } from "./model/errors/deployment-result";
 
 const ProviderIdSchema = Type.Union([Type.Literal("claude"), Type.Literal("codex")]);
 const NonEmptyStringSchema = Type.String({ minLength: 1 });

@@ -1,7 +1,8 @@
-import type { MechanicalEvidencePublisher } from "./internal/ports/evidence";
-import type { ProviderUndoWriter as ProviderUndoWriterPort } from "./internal/ports/undo-writer";
-import type { VerifiedReleaseReader } from "./internal/ports/artifact";
-import type { ProviderTargetMutator, ProviderTargetReader } from "./internal/ports/provider";
+import type { MechanicalEvidencePublisher } from "./ports/evidence";
+import type { ProviderUndoWriter as ProviderUndoWriterPort } from "./ports/undo-writer";
+import type { VerifiedReleaseReader } from "./ports/artifact";
+import type { CanonicalChannelReader } from "./ports/channel";
+import type { ProviderTargetMutator, ProviderTargetReader } from "./ports/provider";
 import type {
   CompleteTargetIdentityReader,
   ProviderMarketplaceMaterializer,
@@ -11,7 +12,7 @@ import type {
   TargetIdentityWriter,
   TargetReceiptReader,
   TargetReceiptWriter,
-} from "./internal/ports/state";
+} from "./ports/state";
 
 /**
  * Write-only admission into the controller-owned undo capsule.
@@ -23,9 +24,10 @@ export type {
   ProviderUndoCandidate,
   ProviderUndoSession,
   ProviderUndoWriter,
-} from "./internal/ports/undo-writer";
+} from "./ports/undo-writer";
 
 export interface ProviderLifecycleRuntime {
+  readonly channel: CanonicalChannelReader;
   readonly releases: VerifiedReleaseReader;
   readonly provider: ProviderTargetReader;
   readonly providerMutator: ProviderTargetMutator;
@@ -40,17 +42,17 @@ export interface ProviderLifecycleRuntime {
   readonly evidence: MechanicalEvidencePublisher;
 }
 
-export type { VerifiedReleaseReader } from "./internal/ports/artifact";
+export type { VerifiedReleaseReader } from "./ports/artifact";
 export type {
   AcceptedProviderProjectionBinding,
   CanonicalChannelReader,
   CanonicalChannelResolution,
-} from "./internal/ports/channel";
+} from "./ports/channel";
 export type {
   MechanicalEvidenceHandle,
   MechanicalEvidenceObservation,
   MechanicalEvidencePublisher,
-} from "./internal/ports/evidence";
+} from "./ports/evidence";
 export type {
   NativeMutationObservation,
   NativeMemberRestorationPort,
@@ -58,7 +60,7 @@ export type {
   ProviderTargetMutator,
   ProviderTargetReader,
   ProviderVisibilityObservation,
-} from "./internal/ports/provider";
+} from "./ports/provider";
 export type {
   CompleteTargetIdentityReader,
   MarketplaceMaterializationObservation,
@@ -73,7 +75,7 @@ export type {
   TargetIdentityWriter,
   TargetReceiptReader,
   TargetReceiptWriter,
-} from "./internal/ports/state";
+} from "./ports/state";
 export type {
   FlatProjectionRecordCollection,
   ImmutableProviderTreeCollection,
@@ -84,7 +86,7 @@ export type {
   ProjectionRecordKey,
   ProjectionRecordObservation,
   ProjectionRecordPublication,
-} from "./internal/ports/projection-storage";
+} from "./ports/projection-storage";
 export type {
   PathlessTargetRecordCollection,
   TargetRecordCapture,
@@ -99,9 +101,9 @@ export type {
   TargetRecordRestoreObservation,
   TargetRecordScanEntry,
   TargetRecordWriteObservation,
-} from "./internal/ports/target-record-storage";
+} from "./ports/target-record-storage";
 
-export type { CanonicalValue } from "./internal/domain/canonical";
+export type { CanonicalValue } from "./model/helpers/canonical";
 export type {
   MechanicalEvidenceDigest,
   MechanicalEvidenceSource,
@@ -109,14 +111,14 @@ export type {
   MechanicalProviderEvidenceBody,
   MechanicalTargetFactDigest,
   ProviderVerificationFact,
-} from "./internal/domain/evidence";
+} from "./model/dto/mechanical-evidence";
 export type {
   MarketplaceProjectionDigest,
   ProviderMarketplaceMemberSource,
   ProviderMarketplaceObservation,
   ProviderMarketplaceRegistration,
   ProviderMarketplaceState,
-} from "./internal/domain/marketplace";
+} from "./model/policy/marketplace";
 export type {
   CanonicalStatusRequest,
   CanonicalSync,
@@ -128,18 +130,18 @@ export type {
   ProviderDeploymentRequest,
   ProviderRequestDigest,
   TargetedTest,
-} from "./internal/domain/mode";
+} from "./model/dto/mode";
 export type {
   CompleteNativeHomesDigest,
   CompleteNativeHomesObservation,
-} from "./internal/domain/native-homes";
+} from "./model/dto/native-homes";
 export type {
   CanonicalStatusOutcome,
   CanonicalTargetStatus,
   ProviderEvent,
   ProviderOperationOutcome,
   TargetOperationOutcome,
-} from "./internal/domain/outcome";
+} from "./model/dto/outcome";
 export type {
   AdapterProtocol,
   AgentProviderProjection,
@@ -159,7 +161,7 @@ export type {
   ProviderSourceIdentity,
   ProviderVisibleClaimSet,
   RendererProtocol,
-} from "./internal/domain/projection";
+} from "./model/policy/projection";
 export type {
   CanonicalAcceptedScope,
   CompleteTestScope,
@@ -173,13 +175,13 @@ export type {
   TargetedTestScope,
   VerifiedMemberIdentity,
   VisibleFingerprint,
-} from "./internal/domain/receipt";
+} from "./model/policy/receipt";
 export type {
   DeploymentResult,
   NonEmptyReadonlyArray,
   ProviderDeploymentIssue,
   ProviderDeploymentIssueCode,
-} from "./internal/domain/result";
+} from "./model/errors/deployment-result";
 export type {
   DeploymentAuthority,
   InventoryFingerprint,
@@ -195,33 +197,14 @@ export type {
   TargetIdentityDigest,
   TargetIdentityObservation,
   TargetIdentitySidecar,
-} from "./internal/domain/state";
+} from "./model/policy/state-machine";
 export type {
   ProviderHome,
   ProviderId,
   ProviderTarget,
   ProviderTargetDigest,
-} from "./internal/domain/target";
+} from "./model/dto/provider-target";
 export type {
   ProviderMemberRestoreContext,
   ProviderOwnerRuntime,
-} from "./internal/ports/owner";
-export type {
-  ClaudeNativeResourceSession,
-  ClaudeProviderAdapter,
-  CodexNativeResourceSession,
-  CodexProviderAdapter,
-  NativeProviderAdapter,
-  NativeProviderResourcePort,
-  NativeResourceCapabilityProbe,
-  NativeResourceJsonObservation,
-  NativeResourcePackageEntry,
-  NativeResourcePackageObservation,
-  NativeResourceMarketplaceReadInput,
-  NativeResourcePackageReadLimits,
-  NativeResourcePluginReadInput,
-  NativeResourceSessionInput,
-  PathlessProjectionStorage,
-  ResourceClaudeProviderAdapterOptions,
-  ResourceCodexProviderAdapterOptions,
-} from "./internal";
+} from "./ports/owner";

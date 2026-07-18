@@ -35,8 +35,8 @@
       "default": "./src/bindings/packaging.ts"
     },
     "./bindings/providers": {
-      "types": "./src/bindings/providers.ts",
-      "default": "./src/bindings/providers.ts"
+      "types": "./src/bindings/providers/index.ts",
+      "default": "./src/bindings/providers/index.ts"
     },
     "./bindings/releases": {
       "types": "./src/bindings/releases.ts",

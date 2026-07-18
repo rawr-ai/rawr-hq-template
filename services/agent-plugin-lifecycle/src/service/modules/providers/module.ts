@@ -6,9 +6,6 @@ export const module = impl.providers
   .use(analytics)
   .use(async ({ context, next }) => next({
     context: {
-      runtime: Object.freeze({
-        providers: context.deps.providers,
-        governance: context.deps.governance,
-      }),
+      providers: context.deps.providers,
     },
   }));

@@ -45,6 +45,7 @@ import {
 import { createProviderUndoWriterV1 } from "./provider-capsule";
 
 export async function createNodeProviderLifecycleRuntime(options: Readonly<{
+  channel: ProviderLifecycleRuntime["channel"];
   roots: NodeProviderRecordRoots;
   artifactReader: ArtifactReader;
   artifactStoreRoot: Parameters<typeof createNodeMechanicalEvidenceRuntime>[0];
@@ -241,6 +242,7 @@ async function assembleRuntime(
   const mutator = createProviderMutator(adapter);
   const undoWriter = createLazyProviderUndoWriter(state, adapter, options.capsuleRoot);
   const runtime: ProviderLifecycleRuntime = {
+    channel: options.channel,
     releases: createProviderReleaseReader(options.artifactReader),
     provider: reader,
     providerMutator: mutator,

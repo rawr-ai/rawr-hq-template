@@ -141,6 +141,7 @@ export function createExportTestClient(
 
 function unavailableProviderRuntime(): ProviderLifecycleRuntime {
   return {
+    channel: { resolve: async () => unavailableAsync("provider canonical channel") },
     releases: { read: async () => unavailableAsync("provider release") },
     provider: {
       projectionAdapterProtocol: () => unavailable("provider adapter protocol"),

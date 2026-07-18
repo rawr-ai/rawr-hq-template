@@ -1,6 +1,5 @@
 import type {
   CanonicalChannelReader,
-  CanonicalStatusDependencies,
   MechanicalEvidencePublisher,
   ProviderUndoWriter,
   ProviderDeploymentRequest,
@@ -8,7 +7,8 @@ import type {
   ProviderTargetReader,
   TargetReceiptReader,
   VerifiedReleaseReader,
-} from "../../../src/service/modules/providers/internal";
+} from "../../../src/bindings/providers";
+import type { CanonicalStatusDependencies } from "../../../src/service/modules/providers/router/canonical-status.router";
 
 declare const channel: CanonicalChannelReader;
 declare const releases: VerifiedReleaseReader;

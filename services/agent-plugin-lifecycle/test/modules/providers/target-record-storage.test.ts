@@ -28,8 +28,8 @@ import {
   type TargetRecordPlanInput,
   type TargetRecordReadToken,
   type TargetRecordScanEntry,
-} from "../../../src/service/modules/providers/internal";
-import { failure, issue, success } from "../../../src/service/modules/providers/internal/domain/result";
+} from "../../../src/bindings/providers";
+import { failure, issue, success } from "../../../src/service/modules/providers/model/errors/deployment-result";
 import {
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,

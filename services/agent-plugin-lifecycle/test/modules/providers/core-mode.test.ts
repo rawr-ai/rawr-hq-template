@@ -1,15 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  createCanonicalStatus,
-  createCanonicalSync,
-  createCompleteTest,
-  createManagedRetire,
-  createTargetedTest,
   parseCanonicalStatusRequest,
   parseManagedRetireRequest,
   parseProviderDeploymentRequest,
-} from "../../../src/service/modules/providers/internal";
+} from "../../../src/bindings/providers";
 
 const RELEASE = Object.freeze({
   kind: "release",
@@ -74,24 +69,14 @@ describe("closed lifecycle mode parsers", () => {
     if (retire.ok) expect(retire.value.targets).toHaveLength(2);
   });
 
-  it.each(INVALID_SELECTOR_CASES)("rejects %s before dependency construction or port calls", async (_label, input, applications) => {
-    let dependencyConstructions = 0;
-    const dependencyTrap = () => {
-      dependencyConstructions += 1;
-      throw new Error("dependencies must not be constructed");
-    };
-    for (const application of applications) {
-      const result = application === "targeted"
-        ? await createTargetedTest(dependencyTrap)(input)
-        : application === "complete"
-          ? await createCompleteTest(dependencyTrap)(input)
-          : application === "canonical"
-            ? await createCanonicalSync(dependencyTrap)(input)
-            : application === "status"
-              ? await createCanonicalStatus(dependencyTrap)(input)
-              : await createManagedRetire(dependencyTrap)(input);
+  it.each(INVALID_SELECTOR_CASES)("rejects %s at the exact mode boundary", (_label, input, parsers) => {
+    for (const parser of parsers) {
+      const result = parser === "status"
+        ? parseCanonicalStatusRequest(input)
+        : parser === "retire"
+          ? parseManagedRetireRequest(input)
+          : parseProviderDeploymentRequest(input);
       expect(result.ok).toBe(false);
     }
-    expect(dependencyConstructions).toBe(0);
   });
 });

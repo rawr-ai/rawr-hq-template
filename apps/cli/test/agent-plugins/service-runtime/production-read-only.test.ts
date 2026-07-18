@@ -51,6 +51,7 @@ import {
 } from "../../../src/lib/agent-plugins/undo";
 import { CODEX_ADAPTER_PROTOCOL } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import { createNodeExportUndoWriter } from "../../../src/lib/agent-plugins/service-runtime/client";
+import { createGovernanceCanonicalChannelReader } from "../../../src/lib/agent-plugins/service-runtime/providers/governance-channel";
 import { createNodeProviderLifecycleRuntime } from "../../../src/lib/agent-plugins/service-runtime/providers/node-runtime";
 import { createNodeProviderRecordState } from "../../../src/lib/agent-plugins/service-runtime/providers/node-runtime";
 import {
@@ -62,8 +63,10 @@ import {
   PROVIDER_OWNER_PROTOCOL_VERSION,
 } from "../../../src/lib/agent-plugins/service-runtime/providers/owner-protocol";
 import { undoAgentPluginCapsuleAtDataRoot } from "../../../src/lib/agent-plugins/service-runtime/undo";
-import { createCanonicalStatus } from "../../../../../services/agent-plugin-lifecycle/src/service/modules/providers/internal/applications/canonical-status";
-import { createManagedRetire } from "../../../../../services/agent-plugin-lifecycle/src/service/modules/providers/internal/applications/managed-retire";
+import {
+  createLifecycleTestClient,
+  testInvocation,
+} from "../../../../../services/agent-plugin-lifecycle/test/support/client";
 import { exportArtifactFixture } from "../../../../../services/agent-plugin-lifecycle/test/modules/exports/artifact-fixture";
 import {
   createExportTestClient,
@@ -72,6 +75,7 @@ import {
   knownHomes,
 } from "../undo/export-runtime-fixture";
 import { productFixture } from "./providers/product-fixture";
+import { promotionFixture } from "../../../../../services/agent-plugin-lifecycle/test/modules/governance/fixtures";
 
 describe("production lifecycle read-only binding", () => {
   let fixtureRoot: string | null = null;
@@ -87,8 +91,22 @@ describe("production lifecycle read-only binding", () => {
     await mkdir(dataRoot);
     const layout = deriveAgentPluginControllerLayout({ dataRoot });
     const before = await exactTree(dataRoot);
+    const governance = promotionFixture();
+    governance.approvalReader.history = undefined;
 
     const runtime = await createNodeProviderLifecycleRuntime({
+      channel: createGovernanceCanonicalChannelReader({
+        governance: {
+          git: governance.git,
+          evidence: governance.evidenceReader,
+          approvals: governance.approvalReader,
+        },
+        operation: "providers.canonicalStatus",
+        scope: {
+          controllerIdentity: "controller:test",
+          controllerDataRootIdentity: "controller-data:test",
+        },
+      }),
       roots: {
         controllerDataRoot: dataRoot,
         providerProjectionRoot: layout.providerProjectionRoot,
@@ -103,16 +121,8 @@ describe("production lifecycle read-only binding", () => {
       capsuleRoot: layout.capsuleRoot,
       providerExecutables: Object.freeze({}),
     });
-    const result = await createCanonicalStatus(() => Object.freeze({
-      ...runtime,
-      channel: {
-        resolve: async () => failure([issue(
-          "CHANNEL_NOT_ELIGIBLE",
-          "channel",
-          "Fixture has no accepted channel",
-        )]),
-      },
-    }))({
+    const client = createLifecycleTestClient({ providers: runtime });
+    const result = await client.providers.canonicalStatus({
       kind: "canonical-status",
       channel: "current-main",
       locator: {
@@ -120,7 +130,7 @@ describe("production lifecycle read-only binding", () => {
         workspaceRoot: path.join(fixtureRoot, "content"),
       },
       targets: [{ provider: "codex", home: path.join(fixtureRoot, "codex-home") }],
-    });
+    }, testInvocation);
 
     expect(result.ok && result.value[0]?.status).toBe("CONTENT_AHEAD_OF_ACCEPTANCE");
     expect(await exactTree(dataRoot)).toEqual(before);
@@ -291,6 +301,7 @@ describe("production lifecycle read-only binding", () => {
         const dataBefore = await exactTree(dataRoot);
         const homeBefore = await exactTree(home);
         const runtime = await createNodeProviderLifecycleRuntime({
+          channel: unavailableCanonicalChannel(),
           roots: {
             controllerDataRoot: dataRoot,
             providerProjectionRoot: layout.providerProjectionRoot,
@@ -306,11 +317,12 @@ describe("production lifecycle read-only binding", () => {
           providerExecutables: Object.freeze({ codex: executablePath }),
         });
 
-        const result = await createManagedRetire(() => runtime)({
+        const client = createLifecycleTestClient({ providers: runtime });
+        const result = await client.providers.managedRetire({
           kind: "managed-retire",
           pluginId: "alpha",
           targets: [{ provider: "codex", home }],
-        });
+        }, testInvocation);
 
         expect(result.ok && result.value.status).toBe(fixture.expectedStatus);
         expect(await exactTree(dataRoot)).toEqual(dataBefore);
@@ -667,6 +679,14 @@ function releaseSnapshot(release: ReturnType<typeof productFixture>["alphaReleas
 function mustResult<T>(result: Readonly<{ ok: true; value: T } | { ok: false; issues: readonly { message: string }[] }>): T {
   if (!result.ok) throw new Error(result.issues[0]?.message ?? "fixture construction failed");
   return result.value;
+}
+
+function unavailableCanonicalChannel() {
+  return Object.freeze({
+    resolve: async (): Promise<never> => {
+      throw new Error("Unexpected canonical channel access in read-only fixture");
+    },
+  });
 }
 
 function unavailableProviderOwnerRuntime(): ProviderOwnerRuntime {

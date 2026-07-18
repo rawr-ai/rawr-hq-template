@@ -13,8 +13,8 @@ import {
   type NativeMemberObservation,
   type ProjectionRecordKey,
   type ProviderMarketplaceRegistration,
-} from "../../../src/service/modules/providers/internal";
-import { failure, issue, success } from "../../../src/service/modules/providers/internal/domain/result";
+} from "../../../src/bindings/providers";
+import { failure, issue, success } from "../../../src/service/modules/providers/model/errors/deployment-result";
 import {
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,

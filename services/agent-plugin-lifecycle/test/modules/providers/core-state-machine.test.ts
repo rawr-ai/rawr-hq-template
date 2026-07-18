@@ -12,28 +12,30 @@ import { describe, expect, it } from "vitest";
 
 import { productFixture } from "../../shared/release/fixtures";
 import {
-  createCompleteTest,
-  createCanonicalStatus,
-  createCanonicalSync,
-  createManagedRetire,
+  createLifecycleTestClient,
+  testInvocation,
+} from "../../support/client";
+import {
   createProviderMarketplaceRegistration,
   createProviderInventory,
   createTargetReceipt,
-  createTargetedTest,
   decodeMechanicalProviderEvidence,
   hasProjectionExposureCollision,
   mechanicalTargetFactDigest,
   marketplaceState,
   parseAdapterProtocol,
+  parseCanonicalStatusRequest,
+  parseManagedRetireRequest,
+  parseProviderDeploymentRequest,
   parseProviderTarget,
   renderCompleteProjection,
   visibleFingerprint,
   type CanonicalChannelResolution,
-  type CanonicalStatusDependencies,
-  type CanonicalSyncDependencies,
-  type CompleteTestDependencies,
+  type CanonicalStatusRequest,
+  type CanonicalSync,
+  type CompleteTest,
   type LifecycleRecordDigest,
-  type ManagedRetireDependencies,
+  type ManagedRetireRequest,
   type MechanicalEvidenceHandle,
   type MechanicalEvidenceObservation,
   type MechanicalProviderEvidence,
@@ -50,9 +52,152 @@ import {
   type ReceiptObservation,
   type TargetIdentityObservation,
   type TargetReceipt,
-  type TargetedTestDependencies,
-} from "../../../src/service/modules/providers/internal";
-import { failure, issue, success } from "../../../src/service/modules/providers/internal/domain/result";
+  type TargetedTest,
+} from "../../../src/bindings/providers";
+import { failure, issue, success } from "../../../src/service/modules/providers/model/errors/deployment-result";
+import type { ProviderLifecycleRuntime } from "../../../src/service/modules/providers/ports";
+import type { CanonicalStatusDependencies } from "../../../src/service/modules/providers/router/canonical-status.router";
+import type { CanonicalSyncDependencies } from "../../../src/service/modules/providers/router/canonical-sync.router";
+import type { CompleteTestDependencies } from "../../../src/service/modules/providers/router/complete-test.router";
+import type { ManagedRetireDependencies } from "../../../src/service/modules/providers/router/managed-retire.router";
+import type { TargetedTestDependencies } from "../../../src/service/modules/providers/router/targeted-test.router";
+
+function createCompleteTest(dependencies: () => CompleteTestDependencies) {
+  return async (input: unknown) => {
+    const parsed = parseProviderDeploymentRequest(input);
+    if (!parsed.ok) return parsed;
+    if (parsed.value.kind !== "complete-test") {
+      return failure([issue("INVALID_MODE", "request.kind", "Expected complete-test request")]);
+    }
+    return createProviderClient(dependencies()).completeTest(completeTestInput(parsed.value), testInvocation);
+  };
+}
+
+function createTargetedTest(dependencies: () => TargetedTestDependencies) {
+  return async (input: unknown) => {
+    const parsed = parseProviderDeploymentRequest(input);
+    if (!parsed.ok) return parsed;
+    if (parsed.value.kind !== "targeted-test") {
+      return failure([issue("INVALID_MODE", "request.kind", "Expected targeted-test request")]);
+    }
+    return createProviderClient(dependencies()).targetedTest(targetedTestInput(parsed.value), testInvocation);
+  };
+}
+
+function createCanonicalSync(dependencies: () => CanonicalSyncDependencies) {
+  return async (input: unknown) => {
+    const parsed = parseProviderDeploymentRequest(input);
+    if (!parsed.ok) return parsed;
+    if (parsed.value.kind !== "canonical-sync") {
+      return failure([issue("INVALID_MODE", "request.kind", "Expected canonical-sync request")]);
+    }
+    return createProviderClient(dependencies()).canonicalSync(canonicalSyncInput(parsed.value), testInvocation);
+  };
+}
+
+function createCanonicalStatus(dependencies: () => CanonicalStatusDependencies) {
+  return async (input: unknown) => {
+    const parsed = parseCanonicalStatusRequest(input);
+    if (!parsed.ok) return parsed;
+    return createProviderClient(dependencies()).canonicalStatus(canonicalStatusInput(parsed.value), testInvocation);
+  };
+}
+
+function createManagedRetire(dependencies: () => ManagedRetireDependencies) {
+  return async (input: unknown) => {
+    const parsed = parseManagedRetireRequest(input);
+    if (!parsed.ok) return parsed;
+    return createProviderClient(dependencies()).managedRetire(managedRetireInput(parsed.value), testInvocation);
+  };
+}
+
+function completeTestInput(input: CompleteTest) {
+  return {
+    kind: input.kind,
+    releaseSet: { ...input.releaseSet },
+    evaluationProfile: input.evaluationProfile,
+    targets: input.targets.map(({ provider, home }) => ({ provider, home })),
+  };
+}
+
+function targetedTestInput(input: TargetedTest) {
+  return {
+    kind: input.kind,
+    releases: input.releases.map((release) => ({ ...release })),
+    evaluationProfile: input.evaluationProfile,
+    targets: input.targets.map(({ provider, home }) => ({ provider, home })),
+  };
+}
+
+function canonicalSyncInput(input: CanonicalSync) {
+  return {
+    kind: input.kind,
+    channel: input.channel,
+    locator: { ...input.locator },
+    targets: input.targets.map(({ provider, home }) => ({ provider, home })),
+  };
+}
+
+function canonicalStatusInput(input: CanonicalStatusRequest) {
+  return {
+    kind: input.kind,
+    channel: input.channel,
+    locator: { ...input.locator },
+    targets: input.targets.map(({ provider, home }) => ({ provider, home })),
+  };
+}
+
+function managedRetireInput(input: ManagedRetireRequest) {
+  return {
+    kind: input.kind,
+    pluginId: input.pluginId,
+    targets: input.targets.map(({ provider, home }) => ({ provider, home })),
+  };
+}
+
+type ProviderRuntimeOverrides = Partial<Omit<ProviderLifecycleRuntime, "identities">> & Readonly<{
+  identities?: Partial<ProviderLifecycleRuntime["identities"]>;
+}>;
+
+function createProviderClient(overrides: ProviderRuntimeOverrides) {
+  const unavailable = unavailableProviderRuntime();
+  return createLifecycleTestClient({
+    providers: Object.freeze({
+      ...unavailable,
+      ...overrides,
+      identities: Object.freeze({
+        ...unavailable.identities,
+        ...overrides.identities,
+      }),
+    }),
+  }).providers;
+}
+
+function unavailableProviderRuntime(): ProviderLifecycleRuntime {
+  const unavailable = async (): Promise<never> => {
+    throw new Error("Unexpected provider dependency access in state-machine test");
+  };
+  return {
+    channel: { resolve: unavailable },
+    releases: { read: unavailable },
+    provider: {
+      projectionAdapterProtocol: () => { throw new Error("Unexpected provider protocol access"); },
+      inspectCapabilities: unavailable,
+      readInventory: unavailable,
+      verifyProjection: unavailable,
+    },
+    providerMutator: { apply: unavailable },
+    receipts: { read: unavailable },
+    receiptWriter: { publish: unavailable, remove: unavailable },
+    identities: { read: unavailable, readAll: unavailable },
+    identityWriter: { admit: unavailable },
+    projectionMaterializer: { materialize: unavailable },
+    marketplaceMaterializer: { materialize: unavailable },
+    priorProjections: { readArchivedMember: unavailable },
+    undoWriter: { preflight: unavailable, begin: unavailable },
+    evidence: { inspect: unavailable, publish: unavailable },
+  };
+}
 
 describe("provider deployment state machine", () => {
   it("reads live truth on repeat while every mutation, capsule, receipt, sidecar, and evidence write stays at zero", async () => {
@@ -372,8 +517,8 @@ describe("provider deployment state machine", () => {
     expect((await createCompleteTest(() => harness.completeDependencies())(
       harness.completeRequest([CODEX_A, CLAUDE_A]),
     )).ok).toBe(true);
-    const codexPriorProjection = `ap1_${"e".repeat(64)}` as import("../../../src/service/modules/providers/internal").ProjectionDigest;
-    const claudePriorProjection = `ap1_${"d".repeat(64)}` as import("../../../src/service/modules/providers/internal").ProjectionDigest;
+    const codexPriorProjection = `ap1_${"e".repeat(64)}` as import("../../../src/bindings/providers").ProjectionDigest;
+    const claudePriorProjection = `ap1_${"d".repeat(64)}` as import("../../../src/bindings/providers").ProjectionDigest;
     harness.seedPriorReleaseReceipt(CODEX_A, codexPriorProjection);
     harness.seedPriorReleaseReceipt(CLAUDE_A, claudePriorProjection);
     harness.failInverseProjectionDigest = codexPriorProjection;
@@ -1130,7 +1275,7 @@ class Harness {
   failCapabilityReadHome: string | null = null;
   failProjectionMaterializationProvider: ProviderTarget["provider"] | null = null;
   failMarketplaceMaterializationProvider: ProviderTarget["provider"] | null = null;
-  failInverseProjectionDigest: import("../../../src/service/modules/providers/internal").ProjectionDigest | null = null;
+  failInverseProjectionDigest: import("../../../src/bindings/providers").ProjectionDigest | null = null;
   failEvidencePublish = false;
   syntheticDesiredHook = false;
   marketplaceSideEffect: "drop-beta" | "change-beta" | null = null;
@@ -1232,7 +1377,7 @@ class Harness {
 
   seedPriorReleaseReceipt(
     target: { readonly home: string },
-    priorProjectionDigest = `ap1_${"e".repeat(64)}` as import("../../../src/service/modules/providers/internal").ProjectionDigest,
+    priorProjectionDigest = `ap1_${"e".repeat(64)}` as import("../../../src/bindings/providers").ProjectionDigest,
   ): void {
     const prior = this.receiptFor(target);
     if (prior === null) throw new Error("receipt fixture missing");
@@ -1556,7 +1701,7 @@ class Harness {
             this.marketplaces.get(target.home) ?? Object.freeze({ kind: "absent" }),
           ));
         },
-        verifyProjection: async (target: ProviderTarget, projection: import("../../../src/service/modules/providers/internal").AgentProviderProjection) => {
+        verifyProjection: async (target: ProviderTarget, projection: import("../../../src/bindings/providers").AgentProviderProjection) => {
           this.counters.visibilityReads += 1;
           if (target.home === this.failVisibilityHome) {
             return failure([issue("VISIBILITY_FAILED", "provider", "Injected visibility failure")]);
@@ -1701,14 +1846,14 @@ class Harness {
         },
       },
       evidence: {
-        inspect: async (digest: import("../../../src/service/modules/providers/internal").MechanicalEvidenceDigest) => {
+        inspect: async (digest: import("../../../src/bindings/providers").MechanicalEvidenceDigest) => {
           this.counters.evidenceReads += 1;
           const found = this.evidence.get(digest);
           return success<MechanicalEvidenceObservation>(found === undefined
             ? { kind: "missing" }
             : { kind: "present", handle: found.handle, bytes: new Uint8Array(found.bytes) });
         },
-        publish: async (value: import("../../../src/service/modules/providers/internal").MechanicalProviderEvidence) => {
+        publish: async (value: import("../../../src/bindings/providers").MechanicalProviderEvidence) => {
           this.counters.evidencePublishes += 1;
           this.lastEvidenceAttempt = Object.freeze({
             evidenceDigest: value.evidenceDigest,
@@ -1723,7 +1868,7 @@ class Harness {
         },
       },
       projectionMaterializer: {
-        materialize: async (projection: import("../../../src/service/modules/providers/internal").AgentProviderProjection) => {
+        materialize: async (projection: import("../../../src/bindings/providers").AgentProviderProjection) => {
           this.counters.projectionMaterializations += 1;
           if (projection.provider === this.failProjectionMaterializationProvider) {
             return failure([issue("PROJECTION_MISMATCH", "projection.materialization", "Injected provider projection materialization failure")]);
@@ -1753,7 +1898,7 @@ class Harness {
       },
       priorProjections: {
         readArchivedMember: async (
-          projectionDigest: import("../../../src/service/modules/providers/internal").ProjectionDigest,
+          projectionDigest: import("../../../src/bindings/providers").ProjectionDigest,
           prior: NativeMemberObservation,
         ) => {
           this.counters.inverseSourceReads += 1;
@@ -1848,7 +1993,7 @@ function mustProtocol(value: string) {
 }
 
 function nativeMember(
-  member: import("../../../src/service/modules/providers/internal").ProviderProjectionMember,
+  member: import("../../../src/bindings/providers").ProviderProjectionMember,
   enablement: "disabled" | "enabled",
 ): NativeMemberObservation {
   return {

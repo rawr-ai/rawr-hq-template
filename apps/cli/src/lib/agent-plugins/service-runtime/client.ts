@@ -55,6 +55,7 @@ import {
   createProviderOwnerCodecRegistration,
   type NodeProviderRecordState,
 } from "./providers/node-runtime";
+import { createGovernanceCanonicalChannelReader } from "./providers/governance-channel";
 import { PROVIDER_OWNER } from "./providers/owner-protocol";
 import {
   applyingRecoveryBlockingFailure,
@@ -80,11 +81,7 @@ type SelectedLifecycleRuntime =
   | Readonly<{ owner: "vendors"; runtime: LifecycleDeps["vendors"] }>
   | Readonly<{ owner: "packaging"; runtime: LifecycleDeps["packaging"] }>
   | Readonly<{ owner: "exports"; runtime: LifecycleDeps["exports"] }>
-  | Readonly<{
-    owner: "providers";
-    runtime: LifecycleDeps["providers"];
-    governance: LifecycleDeps["governance"];
-  }>
+  | Readonly<{ owner: "providers"; runtime: LifecycleDeps["providers"] }>
   | Readonly<{ owner: "governance"; runtime: LifecycleDeps["governance"] }>;
 
 type LifecycleClientSelectors = Readonly<{
@@ -145,6 +142,10 @@ export const createProductionLifecycleClient: LifecycleClientFactory = async (
     layout,
     artifactReader,
     controllerDataRoot: authority.dataRoot,
+    scope: {
+      controllerIdentity: `controller:${authority.controllerDigest}`,
+      controllerDataRootIdentity: `controller-data:${authority.controllerDigest}`,
+    },
   });
   const deps = createSelectedLifecycleDeps(selected);
 
@@ -173,6 +174,7 @@ async function createSelectedLifecycleRuntime(input: Readonly<{
   layout: ReturnType<typeof deriveAgentPluginControllerLayout>;
   artifactReader: ReturnType<typeof createArtifactRepositoryReader>;
   controllerDataRoot: string;
+  scope: LifecycleBoundary["scope"];
 }>): Promise<SelectedLifecycleRuntime> {
   const { operation, binding, layout, artifactReader, controllerDataRoot } = input;
 
@@ -229,10 +231,15 @@ async function createSelectedLifecycleRuntime(input: Readonly<{
     const governance = operation === "providers.canonicalSync" || operation === "providers.canonicalStatus"
       ? await productionGovernanceRuntime(binding, operation, layout.artifactStoreRoot)
       : createUnavailableGovernanceRuntime();
+    const channel = createGovernanceCanonicalChannelReader({
+      governance,
+      operation,
+      scope: input.scope,
+    });
     return Object.freeze({
       owner: "providers",
-      governance,
       runtime: await createNodeProviderLifecycleRuntime({
+        channel,
         roots: {
           controllerDataRoot,
           providerProjectionRoot: layout.providerProjectionRoot,
@@ -457,7 +464,7 @@ function createSelectedLifecycleDeps(selected: SelectedLifecycleRuntime): Lifecy
         get packaging(): never { return unavailableDependency("packaging"); },
         get exports(): never { return unavailableDependency("exports"); },
         providers: selected.runtime,
-        governance: selected.governance,
+        get governance(): never { return unavailableDependency("governance"); },
       });
     case "governance":
       return Object.freeze({

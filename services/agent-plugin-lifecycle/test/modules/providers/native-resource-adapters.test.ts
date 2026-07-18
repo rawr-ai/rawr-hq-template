@@ -6,8 +6,8 @@ import {
   renderCompleteProjection,
   type AgentProviderProjection,
   type ProviderMarketplaceRegistration,
-} from "../../../src/service/modules/providers/internal";
-import { canonicalBytes } from "../../../src/service/modules/providers/internal/domain/canonical";
+} from "../../../src/bindings/providers";
+import { canonicalBytes } from "../../../src/service/modules/providers/model/helpers/canonical";
 import {
   createAgentPluginPayload,
   createAgentPluginRelease,
@@ -27,33 +27,33 @@ import {
 } from "../../shared/release/fixtures";
 import {
   CODEX_ADAPTER_PROTOCOL,
-} from "../../../src/service/modules/providers/internal/adapters/codex";
+} from "../../../src/bindings/providers/codex";
 import {
   CLAUDE_ADAPTER_PROTOCOL,
-} from "../../../src/service/modules/providers/internal/adapters/claude";
+} from "../../../src/bindings/providers/claude";
 import {
   claudeCapabilitiesFromCommands,
-} from "../../../src/service/modules/providers/internal/adapters/resource-claude";
+} from "../../../src/bindings/providers/resource-claude";
 import {
   codexCapabilitiesFromCommands,
   createResourceCodexProviderAdapter,
-} from "../../../src/service/modules/providers/internal/adapters/resource-codex";
+} from "../../../src/bindings/providers/resource-codex";
 import type {
   CodexNativeResourceSession,
   NativeResourceMarketplaceReadInput,
   NativeResourcePackageEntry,
   NativeResourcePluginReadInput,
   NativeResourceSessionInput,
-} from "../../../src/service/modules/providers/internal/adapters/resource-port";
+} from "../../../src/bindings/providers/resource-port";
 import {
   inspectMarketplaceSource,
-} from "../../../src/service/modules/providers/internal/adapters/resource-marketplace";
+} from "../../../src/bindings/providers/resource-marketplace";
 import {
   inspectNativePluginPackage,
-} from "../../../src/service/modules/providers/internal/adapters/resource-package";
+} from "../../../src/bindings/providers/resource-package";
 import {
   createSessionCache,
-} from "../../../src/service/modules/providers/internal/adapters/resource-shared";
+} from "../../../src/bindings/providers/resource-shared";
 
 const EXPECTED_CAPABILITIES = Object.freeze([
   "managed-retire",
