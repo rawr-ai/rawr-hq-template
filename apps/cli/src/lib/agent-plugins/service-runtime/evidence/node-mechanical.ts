@@ -19,7 +19,7 @@ import {
   type MechanicalProviderEvidence,
 } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
-import { createFilesystemMechanicalEvidenceStore } from "../releases/artifact-store/evidence-store";
+import { createMechanicalEvidenceStore } from "../../bindings/output";
 import type { ArtifactStoreRoot } from "../../layout";
 
 export type NodeMechanicalEvidenceRuntime = Readonly<{
@@ -31,7 +31,7 @@ export function createNodeMechanicalEvidenceRuntime(
   artifactStoreRoot: ArtifactStoreRoot,
 ): NodeMechanicalEvidenceRuntime {
   return createNodeMechanicalEvidenceRuntimeFromStore(
-    createFilesystemMechanicalEvidenceStore({ artifactStoreRoot }),
+    createMechanicalEvidenceStore(artifactStoreRoot),
   );
 }
 

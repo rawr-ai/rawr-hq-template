@@ -31,6 +31,7 @@ import { createExportLifecycleRuntime } from "../bindings/export-destination";
 import {
   createArtifactRepositoryReader,
   createArtifactRepositoryStore,
+  createMechanicalEvidenceReader,
   createPackageOutputLifecycleRuntime,
 } from "../bindings/output";
 import {
@@ -41,10 +42,7 @@ import {
   type LifecycleOperation,
 } from "../commands/binding";
 import { createGithubHostedApprovalHistoryReader } from "../bindings/governance";
-import {
-  createFilesystemMechanicalEvidenceReader,
-  createGitContentWorkspaceSnapshotReader,
-} from "./releases";
+import { createGitContentWorkspaceSnapshotReader } from "./releases";
 import { createReadOnlyGitAdapter } from "./governance/adapters/git";
 import { createNodeReadOnlyGitBackend } from "./governance/adapters/node-git";
 import { createGovernanceLifecycleRuntime } from "./governance/runtime";
@@ -185,7 +183,7 @@ async function createSelectedLifecycleRuntime(input: Readonly<{
       runtime: Object.freeze({
         source: await createGitContentWorkspaceSnapshotReader({ gitExecutable }),
         artifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
-        evidence: createFilesystemMechanicalEvidenceReader(layout.artifactStoreRoot),
+        evidence: createMechanicalEvidenceReader(layout.artifactStoreRoot),
       }),
     });
   }
