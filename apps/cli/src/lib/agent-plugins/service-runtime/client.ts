@@ -8,6 +8,9 @@ import {
   type UndoWriter,
 } from "@rawr/agent-plugin-lifecycle/bindings/exports";
 import {
+  createResourceContentWorkspaceSnapshotReader,
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
+import {
   createEmbeddedPlaceholderAnalyticsAdapter,
 } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
@@ -42,7 +45,6 @@ import {
   type LifecycleOperation,
 } from "../commands/binding";
 import { createGithubHostedApprovalHistoryReader } from "../bindings/governance";
-import { createGitContentWorkspaceSnapshotReader } from "./releases";
 import { createReadOnlyGitAdapter } from "./governance/adapters/git";
 import { createNodeReadOnlyGitBackend } from "./governance/adapters/node-git";
 import { createGovernanceLifecycleRuntime } from "./governance/runtime";
@@ -178,10 +180,11 @@ async function createSelectedLifecycleRuntime(input: Readonly<{
 
   if (operation === "releases.check" || operation === "releases.build") {
     const gitExecutable = requiredGitExecutable(binding, operation);
+    const contentWorkspace = makeNodeContentWorkspacePort({ gitExecutable });
     return Object.freeze({
       owner: "releases",
       runtime: Object.freeze({
-        source: await createGitContentWorkspaceSnapshotReader({ gitExecutable }),
+        source: createResourceContentWorkspaceSnapshotReader({ contentWorkspace }),
         artifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
         evidence: createMechanicalEvidenceReader(layout.artifactStoreRoot),
       }),

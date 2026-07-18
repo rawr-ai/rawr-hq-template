@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  MAX_PAYLOAD_BYTES_PER_MEMBER,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   parseGitTreeId,
 } from "@rawr/agent-plugin-lifecycle/release";
 import {
@@ -55,6 +57,7 @@ describe("exact Git-object eligibility", () => {
     const repository = await generated();
     const delegate = await realPort();
     const observed: string[] = [];
+    const blobReadLimits: number[] = [];
     const contentWorkspace = overrideGitReadPort(delegate, {
       async inspectGitWorkspace(input) {
         observed.push("inspectGitWorkspace");
@@ -66,6 +69,7 @@ describe("exact Git-object eligibility", () => {
       },
       async readGitBlob(input) {
         observed.push("readGitBlob");
+        blobReadLimits.push(input.maxBytes);
         return await delegate.readGitBlob(input);
       },
       async captureGitWorkspaceEvidence(input) {
@@ -83,6 +87,38 @@ describe("exact Git-object eligibility", () => {
       "readGitBlob",
       "captureGitWorkspaceEvidence",
     ]));
+    expect(blobReadLimits).toEqual([
+      MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+      MAX_PAYLOAD_BYTES_PER_MEMBER,
+    ]);
+  });
+
+  it("rejects one resource capture whose opening and closing anchors disagree", async () => {
+    const repository = await generated();
+    const delegate = await realPort();
+    let injected = false;
+    const inconsistentPort = overrideGitReadPort(delegate, {
+      async captureGitWorkspaceEvidence(input) {
+        const evidence = await delegate.captureGitWorkspaceEvidence(input);
+        if (injected) return evidence;
+        injected = true;
+        return Object.freeze({
+          ...evidence,
+          closingAnchor: Object.freeze({
+            ...evidence.closingAnchor,
+            tree: mutateObjectId(evidence.closingAnchor.tree),
+          }),
+        });
+      },
+    });
+
+    await expect(createResourceContentWorkspaceSnapshotReader({
+      contentWorkspace: inconsistentPort,
+    }).inspect(repository.policy)).resolves.toMatchObject({
+      kind: "Ineligible",
+      issues: [{ code: "SourceChanged" }],
+    });
+    expect(injected).toBe(true);
   });
 
   it("rejects a payload mutation after the final repository anchor", async () => {

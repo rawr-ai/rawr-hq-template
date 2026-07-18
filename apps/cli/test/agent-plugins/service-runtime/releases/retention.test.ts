@@ -1,7 +1,12 @@
+import { realpath } from "node:fs/promises";
 import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import {
+  createMechanicalEvidenceHandle,
+  createResourceContentWorkspaceSnapshotReader,
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import {
   createReleaseArtifactRef,
   parseArtifactDigest,
@@ -15,6 +20,7 @@ import type {
   ArtifactStore,
   ReleaseLifecycleRuntime,
 } from "@rawr/agent-plugin-lifecycle/ports/releases";
+import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 
 import {
   createLifecycleTestClient,
@@ -25,10 +31,6 @@ import {
   createArtifactRepositoryStore,
 } from "../../../../src/lib/agent-plugins/bindings/output/artifact-repository";
 import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
-import {
-  createGitContentWorkspaceSnapshotReader,
-  createMechanicalEvidenceHandle,
-} from "../../../../src/lib/agent-plugins/service-runtime/releases";
 import {
   GIT_EXECUTABLE,
   createGeneratedGitRepository,
@@ -293,9 +295,10 @@ describe("closed read-only retention planning", () => {
     fixture = await createOwnedFixtureRoot();
     const repository = await createGeneratedGitRepository(fixture);
     const root = join(fixture.path, "artifacts-v1") as ArtifactStoreRoot;
-    const source = await createGitContentWorkspaceSnapshotReader({
-      gitExecutable: GIT_EXECUTABLE,
-      pathEnvironment: "/usr/bin:/bin",
+    const source = createResourceContentWorkspaceSnapshotReader({
+      contentWorkspace: makeNodeContentWorkspacePort({
+        gitExecutable: await realpath(GIT_EXECUTABLE),
+      }),
     });
     const client = createLifecycleTestClient({ releases: {
       source,

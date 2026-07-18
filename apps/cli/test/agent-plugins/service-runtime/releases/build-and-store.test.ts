@@ -18,11 +18,15 @@ import { join, posix } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createReleaseArtifactRef } from "@rawr/agent-plugin-lifecycle/release";
+import {
+  createResourceContentWorkspaceSnapshotReader,
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import type {
   ArtifactStore,
   ArtifactStoreFailpoint,
   ContentWorkspaceSnapshotReader,
 } from "@rawr/agent-plugin-lifecycle/ports/releases";
+import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 
 import type {
   BuildFailpoint,
@@ -31,7 +35,6 @@ import {
   createLifecycleTestClient,
   testInvocation,
 } from "../../../../../../services/agent-plugin-lifecycle/test/support/client";
-import { createGitContentWorkspaceSnapshotReader } from "../../../../src/lib/agent-plugins/service-runtime/releases";
 import {
   createArtifactRepositoryReader,
   createArtifactRepositoryStore,
@@ -975,9 +978,10 @@ describe("build application and append-only artifact store", () => {
   }
 
   async function realSource(): Promise<ContentWorkspaceSnapshotReader> {
-    return await createGitContentWorkspaceSnapshotReader({
-      gitExecutable: GIT_EXECUTABLE,
-      pathEnvironment: "/usr/bin:/bin",
+    return createResourceContentWorkspaceSnapshotReader({
+      contentWorkspace: makeNodeContentWorkspacePort({
+        gitExecutable: await realpath(GIT_EXECUTABLE),
+      }),
     });
   }
 });
