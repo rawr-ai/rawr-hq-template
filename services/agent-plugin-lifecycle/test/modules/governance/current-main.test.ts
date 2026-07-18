@@ -1,6 +1,7 @@
 import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/shared/release";
 import { describe, expect, it } from "vitest";
 
+import { createGovernanceCurrentMainResolver } from "../../../src/bindings/governance";
 import {
   canonicalSerializeCurrentMainRecord,
   createCurrentMainRecord,
@@ -114,6 +115,47 @@ describe("fixed current-main resolution (B14)", () => {
 
     expect(result.kind).toBe(expected);
     expect(fixture.git.calls.readBlob).toBe(0);
+    expect(fixture.evidenceReader.calls).toBe(0);
+    expect(fixture.approvalReader.calls).toBe(0);
+  });
+});
+
+describe("governance current-main binding", () => {
+  it("delegates a valid locator to the governance owner", async () => {
+    const fixture = promotionFixture();
+    fixture.git.inspection = { kind: "DirtyRepository" };
+    const resolver = createGovernanceCurrentMainResolver({
+      git: fixture.git,
+      evidence: fixture.evidenceReader,
+      approvals: fixture.approvalReader,
+    });
+
+    await expect(resolver.resolve(fixture.locator)).resolves.toEqual({
+      kind: "DIRTY_REPOSITORY",
+      reason: "Canonical content workspace is dirty",
+    });
+    expect(fixture.git.inspectedRefs).toEqual([MAIN_REF]);
+  });
+
+  it("rejects an invalid repository identity before governance resources are touched", async () => {
+    const fixture = promotionFixture();
+    const resolver = createGovernanceCurrentMainResolver({
+      git: fixture.git,
+      evidence: fixture.evidenceReader,
+      approvals: fixture.approvalReader,
+    });
+
+    await expect(resolver.resolve({
+      workspacePath: fixture.locator.workspacePath,
+      expectedRepositoryIdentity: "not-a-repository",
+    })).resolves.toMatchObject({ kind: "WRONG_REPOSITORY" });
+    expect(fixture.git.inspectedRefs).toEqual([]);
+    expect(fixture.git.calls).toEqual({
+      inspect: 0,
+      readBlob: 0,
+      isAncestor: 0,
+      listChangedPaths: 0,
+    });
     expect(fixture.evidenceReader.calls).toBe(0);
     expect(fixture.approvalReader.calls).toBe(0);
   });

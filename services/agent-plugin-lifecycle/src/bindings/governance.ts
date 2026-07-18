@@ -5,6 +5,10 @@ export {
   type ResourceExactGitReadPort,
 } from "./governance/content-workspace";
 export {
+  createGovernanceCurrentMainResolver,
+  type GovernanceCurrentMainResolver,
+} from "./governance/current-main";
+export {
   createExactGitBlobPointer,
   sameGitSelection,
 } from "../service/modules/governance/model/dto/git";
