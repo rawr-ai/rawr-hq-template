@@ -19,7 +19,7 @@ import {
   type VerifiedArtifactSnapshotV1,
   type VerifiedPayloadFileV1,
   type VerifiedReleaseArtifactV1,
-} from "../../../shared/release";
+} from "../../service/shared/release";
 import type {
   ArtifactPublicationOptions,
   ArtifactPublicationResult,
@@ -29,7 +29,7 @@ import type {
   ArtifactStore,
   ArtifactStoreFailpoint,
   ArtifactStoreFailpointEvent,
-} from "../ports";
+} from "../../service/modules/releases/ports";
 import type {
   ArtifactObjectAddress,
   ArtifactPublicationResult as ResourcePublicationResult,

@@ -4,7 +4,7 @@ import type {
   ReleaseArtifactRef,
 } from "../../../src/service/shared/release";
 
-import type { BuildResult } from "../../../src/service/modules/releases/internal/application";
+import type { BuildResult } from "../../../src/service/modules/releases/model/dto/release-lifecycle";
 
 declare const pluginId: PluginId;
 declare const artifactRef: ArtifactRef;

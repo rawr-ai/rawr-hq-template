@@ -6,6 +6,6 @@ export const module = impl.releases
   .use(analytics)
   .use(async ({ context, next }) => next({
     context: {
-      runtime: context.deps.releases,
+      releases: context.deps.releases,
     },
   }));

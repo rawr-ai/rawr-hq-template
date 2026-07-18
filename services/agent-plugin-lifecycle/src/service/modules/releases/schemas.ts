@@ -4,7 +4,11 @@ import type {
   AgentPluginCheckRequest,
   BuildResult,
   CheckResult,
-} from "./internal/application";
+} from "./model/dto/release-lifecycle";
+import type {
+  RetentionResult,
+  RetentionSpacePolicyV1,
+} from "./model/dto/retention";
 import {
   parseContentAuthority,
   parseGitCommitId,
@@ -17,6 +21,7 @@ import {
 const ReleaseDigestSchema = Type.String({ pattern: "^rd1_[0-9a-f]{64}$" });
 const ArtifactDigestSchema = Type.String({ pattern: "^ad1_[0-9a-f]{64}$" });
 const ReleaseSetDigestSchema = Type.String({ pattern: "^rs1_[0-9a-f]{64}$" });
+const MechanicalEvidenceDigestSchema = Type.String({ pattern: "^me1_[0-9a-f]{64}$" });
 
 const CanonicalAbsoluteLocatorSchema = Refine(
   Type.String({
@@ -151,6 +156,64 @@ const ReleaseArtifactRefSchema = Type.Object(
   },
   { additionalProperties: false },
 );
+
+const MechanicalEvidenceHandleSchema = Type.Object(
+  {
+    kind: Type.Literal("mechanical-evidence"),
+    protocolVersion: Type.Literal(1),
+    digest: MechanicalEvidenceDigestSchema,
+  },
+  { additionalProperties: false },
+);
+
+const RetentionRefSchema = Type.Union([
+  ArtifactRefSchema,
+  MechanicalEvidenceHandleSchema,
+]);
+
+const RetentionIssueSchema = Type.Object(
+  {
+    ref: Type.Optional(RetentionRefSchema),
+    detail: Type.String({ minLength: 1 }),
+  },
+  { additionalProperties: false },
+);
+
+const RetentionInventoryEntrySchema = Type.Object(
+  {
+    ref: RetentionRefSchema,
+    storedBytes: Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER }),
+  },
+  { additionalProperties: false },
+);
+
+export const PlanRetentionInputSchema = Type.Unsafe<RetentionSpacePolicyV1>(Type.Object(
+  {
+    kind: Type.Literal("space-v1"),
+    maximumUnpinnedBytes: Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER }),
+  },
+  { additionalProperties: false },
+));
+
+export const PlanRetentionResultSchema = Type.Unsafe<RetentionResult>(Type.Union([
+  Type.Object(
+    {
+      kind: Type.Literal("RetentionPlan"),
+      pinned: Type.Array(RetentionRefSchema),
+      retained: Type.Array(RetentionInventoryEntrySchema),
+      collectible: Type.Array(RetentionInventoryEntrySchema),
+      blockedEntries: Type.Array(RetentionIssueSchema),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      kind: Type.Literal("BlockedPinnedGraph"),
+      issues: Type.Array(RetentionIssueSchema, { minItems: 1 }),
+    },
+    { additionalProperties: false },
+  ),
+]));
 
 const SourceEligibilityIssueSchema = Type.Object(
   {

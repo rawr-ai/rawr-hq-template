@@ -4,7 +4,8 @@ export type * from "../service/shared/release";
 export {
   createResourceArtifactReader,
   createResourceArtifactStore,
-} from "../service/modules/releases/internal/resource-artifact-repository";
+  type ResourceArtifactRepositoryOptions,
+} from "./releases/artifact-repository";
 export {
   MAX_MECHANICAL_EVIDENCE_BYTES,
   MAX_PAYLOAD_BYTES_PER_MEMBER,

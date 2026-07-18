@@ -20,10 +20,17 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createReleaseArtifactRef } from "@rawr/agent-plugin-lifecycle/release";
 import type {
   ArtifactStore,
+  ArtifactStoreFailpoint,
   ContentWorkspaceSnapshotReader,
 } from "@rawr/agent-plugin-lifecycle/ports/releases";
 
-import { createReleaseLifecycleApplications } from "../../../../../../services/agent-plugin-lifecycle/src/service/modules/releases/internal/application";
+import type {
+  BuildFailpoint,
+} from "../../../../../../services/agent-plugin-lifecycle/src/service/modules/releases/model/dto/release-lifecycle";
+import {
+  createLifecycleTestClient,
+  testInvocation,
+} from "../../../../../../services/agent-plugin-lifecycle/test/support/client";
 import { createGitContentWorkspaceSnapshotReader } from "../../../../src/lib/agent-plugins/service-runtime/releases";
 import {
   createArtifactRepositoryReader,
@@ -974,6 +981,35 @@ describe("build application and append-only artifact store", () => {
     });
   }
 });
+
+function createReleaseLifecycleApplications(options: {
+  readonly source: ContentWorkspaceSnapshotReader;
+  readonly artifacts: ArtifactStore;
+}) {
+  const client = createLifecycleTestClient({ releases: options });
+  type BuildRequest = Parameters<typeof client.releases.build>[0] & Readonly<{
+    failpoint?: BuildFailpoint;
+    artifactFailpoint?: ArtifactStoreFailpoint;
+  }>;
+  return Object.freeze({
+    check: (request: Parameters<typeof client.releases.check>[0]) => (
+      client.releases.check(request, testInvocation)
+    ),
+    build: (request: BuildRequest) => {
+      const { failpoint, artifactFailpoint, ...input } = request;
+      const buildClient = createLifecycleTestClient({
+        releases: {
+          ...options,
+          controls: {
+            ...(failpoint === undefined ? {} : { buildFailpoint: failpoint }),
+            ...(artifactFailpoint === undefined ? {} : { artifactFailpoint }),
+          },
+        },
+      });
+      return buildClient.releases.build(input, testInvocation);
+    },
+  });
+}
 
 async function directoryNames(path: string): Promise<readonly string[]> {
   try {

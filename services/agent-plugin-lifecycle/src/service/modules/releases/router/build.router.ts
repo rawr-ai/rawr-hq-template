@@ -1,184 +1,95 @@
 import {
-  createAgentPluginRelease,
-  createAgentPluginReleaseSet,
   compareCanonicalText,
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
   verifyCompleteReleaseSetGraph,
   type AgentPluginRelease,
-  type AgentPluginReleaseSet,
-  type ArtifactRef,
   type CompleteSetArtifactRef,
-  type PluginId,
   type ReleaseArtifactRef,
 } from "../../../shared/release";
 
 import type {
   ArtifactPublicationOptions,
   ArtifactPublicationResult,
-  ArtifactStore,
   ArtifactStoreFailpoint,
   PublicationGuardResult,
-} from "../ports";
+} from "../model/dto/artifact-repository";
 import type {
   ContentWorkspacePolicy,
-  ContentWorkspaceSnapshot,
-  ContentWorkspaceSnapshotReader,
   SourceEligibilityIssue,
+} from "../model/dto/content-workspace";
+import type {
+  AgentPluginBuildRequest,
+  BuildFailpoint,
+  BuildFailpointEvent,
+  BuildIssue,
+  BuildMode,
+  BuildResult,
+} from "../model/dto/release-lifecycle";
+import { constructPlan, type ConstructedPlan } from "../model/policy/release-plan";
+import { module } from "../module";
+import type {
+  ArtifactStore,
+  ContentWorkspaceSnapshotReader,
 } from "../ports";
 
-export type BuildMode =
-  | Readonly<{ kind: "targeted"; pluginId: PluginId }>
-  | Readonly<{ kind: "complete-set" }>;
-
-export interface AgentPluginCheckRequest {
-  readonly contentWorkspace: ContentWorkspacePolicy;
-  readonly mode: BuildMode;
-}
-
-export interface AgentPluginBuildRequest extends AgentPluginCheckRequest {
+interface BuildExecutionRequest extends AgentPluginBuildRequest {
   readonly failpoint?: BuildFailpoint;
   readonly artifactFailpoint?: ArtifactStoreFailpoint;
 }
 
-export type BuildIssue =
-  | Readonly<{ kind: "SourceEligibility"; issue: SourceEligibilityIssue }>
-  | Readonly<{ kind: "ReleaseConstruction"; detail: string }>
-  | Readonly<{ kind: "ArtifactStore"; detail: string; cleanupFailure?: string }>;
+export const build = module.build.handler(async ({ context, input: request }) => {
+  const execution: BuildExecutionRequest = Object.freeze({
+    ...request,
+    ...(context.releases.controls?.buildFailpoint === undefined
+      ? {}
+      : { failpoint: context.releases.controls.buildFailpoint }),
+    ...(context.releases.controls?.artifactFailpoint === undefined
+      ? {}
+      : { artifactFailpoint: context.releases.controls.artifactFailpoint }),
+  });
+  const inspected = await context.releases.source.inspect(execution.contentWorkspace);
+  if (inspected.kind === "Ineligible") return rejected(execution.mode, sourceIssues(inspected.issues));
+  try {
+    await hit(execution.failpoint, { kind: "AfterInitialInspection" });
+  } catch (error) {
+    return rejected(execution.mode, [constructionIssue(errorMessage(error))]);
+  }
+  const plan = constructPlan(inspected.snapshot, execution.mode);
+  if (!plan.ok) return rejected(execution.mode, plan.issues);
 
-export type CheckResult =
-  | Readonly<{
-    kind: "EligibleReport";
-    mode: BuildMode;
-    candidate: ArtifactRef;
-    eligibilityBinding: string;
-  }>
-  | Readonly<{
-    kind: "IneligibleReport";
-    mode: BuildMode;
-    issues: readonly [BuildIssue, ...BuildIssue[]];
-  }>;
+  try {
+    await hit(execution.failpoint, { kind: "BeforeStagingRevalidation" });
+  } catch (error) {
+    return rejected(execution.mode, [constructionIssue(errorMessage(error))]);
+  }
+  const beforeStaging = await context.releases.source.revalidate(
+    execution.contentWorkspace,
+    inspected.snapshot.eligibilityBinding,
+  );
+  if (beforeStaging.kind === "Ineligible") return rejected(execution.mode, sourceIssues(beforeStaging.issues));
+  try {
+    await hit(execution.failpoint, { kind: "AfterStagingRevalidation" });
+  } catch (error) {
+    return rejected(execution.mode, [constructionIssue(errorMessage(error))]);
+  }
 
-export type BuildResult =
-  | Readonly<{
-    kind: "RejectedBeforePublication";
-    mode: BuildMode;
-    issues: readonly [BuildIssue, ...BuildIssue[]];
-  }>
-  | Readonly<{
-    kind: "PublicationIncomplete";
-    mode: Readonly<{ kind: "complete-set" }>;
-    newlyPublished: readonly ReleaseArtifactRef[];
-    preExisting: readonly ReleaseArtifactRef[];
-    requestedSetRefAbsent: true;
-    issues: readonly [BuildIssue, ...BuildIssue[]];
-  }>
-  | Readonly<{
-    kind: "PublicationUnsettled";
-    mode: BuildMode;
-    observedVerifiedReleases: readonly ReleaseArtifactRef[];
-    requestedFinalCommit: "Unknown";
-    issues: readonly [BuildIssue, ...BuildIssue[]];
-  }>
-  | Readonly<{
-    kind: "Published";
-    mode: BuildMode;
-    ref: ArtifactRef;
-    newlyPublished: readonly ReleaseArtifactRef[];
-    preExisting: readonly ReleaseArtifactRef[];
-  }>
-  | Readonly<{
-    kind: "ReadOnlyConverged";
-    mode: BuildMode;
-    ref: ArtifactRef;
-  }>;
-
-export type BuildFailpointEvent =
-  | Readonly<{ kind: "AfterInitialInspection" }>
-  | Readonly<{ kind: "BeforeStagingRevalidation" }>
-  | Readonly<{ kind: "AfterStagingRevalidation" }>
-  | Readonly<{ kind: "BeforeFinalRevalidation" }>
-  | Readonly<{ kind: "AfterFinalRevalidation" }>
-  | Readonly<{ kind: "AfterMemberPublication"; index: number; ref: ReleaseArtifactRef }>
-  | Readonly<{ kind: "BeforeSetPublication" }>
-  | Readonly<{ kind: "AfterSetPublication" }>;
-
-export type BuildFailpoint = (event: BuildFailpointEvent) => void | Promise<void>;
-
-export interface ReleaseLifecycleApplications {
-  check(request: AgentPluginCheckRequest): Promise<CheckResult>;
-  build(request: AgentPluginBuildRequest): Promise<BuildResult>;
-}
-
-interface ConstructedPlan {
-  readonly releases: readonly AgentPluginRelease[];
-  readonly releaseSet?: AgentPluginReleaseSet;
-  readonly finalRef: ArtifactRef;
-}
-
-export function createReleaseLifecycleApplications(options: {
-  readonly source: ContentWorkspaceSnapshotReader;
-  readonly artifacts: ArtifactStore;
-}): ReleaseLifecycleApplications {
-  const applications: ReleaseLifecycleApplications = {
-    async check(request) {
-      const inspected = await options.source.inspect(request.contentWorkspace);
-      if (inspected.kind === "Ineligible") return ineligibleReport(request.mode, inspected.issues);
-      const plan = constructPlan(inspected.snapshot, request.mode);
-      if (!plan.ok) return { kind: "IneligibleReport", mode: request.mode, issues: plan.issues };
-      return {
-        kind: "EligibleReport",
-        mode: request.mode,
-        candidate: plan.value.finalRef,
-        eligibilityBinding: inspected.snapshot.eligibilityBinding,
-      };
-    },
-    async build(request) {
-      const inspected = await options.source.inspect(request.contentWorkspace);
-      if (inspected.kind === "Ineligible") return rejected(request.mode, sourceIssues(inspected.issues));
-      try {
-        await hit(request.failpoint, { kind: "AfterInitialInspection" });
-      } catch (error) {
-        return rejected(request.mode, [constructionIssue(errorMessage(error))]);
-      }
-      const plan = constructPlan(inspected.snapshot, request.mode);
-      if (!plan.ok) return rejected(request.mode, plan.issues);
-
-      try {
-        await hit(request.failpoint, { kind: "BeforeStagingRevalidation" });
-      } catch (error) {
-        return rejected(request.mode, [constructionIssue(errorMessage(error))]);
-      }
-      const beforeStaging = await options.source.revalidate(
-        request.contentWorkspace,
-        inspected.snapshot.eligibilityBinding,
-      );
-      if (beforeStaging.kind === "Ineligible") return rejected(request.mode, sourceIssues(beforeStaging.issues));
-      try {
-        await hit(request.failpoint, { kind: "AfterStagingRevalidation" });
-      } catch (error) {
-        return rejected(request.mode, [constructionIssue(errorMessage(error))]);
-      }
-
-      const finalGate = createFinalEligibilityGate({
-        source: options.source,
-        policy: request.contentWorkspace,
-        eligibilityBinding: inspected.snapshot.eligibilityBinding,
-        failpoint: request.failpoint,
-      });
-      if (request.mode.kind === "targeted") {
-        return await publishTargeted(options.artifacts, plan.value.releases[0]!, request, finalGate);
-      }
-      return await publishComplete(options.artifacts, plan.value, request, finalGate);
-    },
-  };
-  return Object.freeze(applications);
-}
+  const finalGate = createFinalEligibilityGate({
+    source: context.releases.source,
+    policy: execution.contentWorkspace,
+    eligibilityBinding: inspected.snapshot.eligibilityBinding,
+    failpoint: execution.failpoint,
+  });
+  if (execution.mode.kind === "targeted") {
+    return await publishTargeted(context.releases.artifacts, plan.value.releases[0]!, execution, finalGate);
+  }
+  return await publishComplete(context.releases.artifacts, plan.value, execution, finalGate);
+});
 
 async function publishTargeted(
   artifacts: ArtifactStore,
   release: AgentPluginRelease,
-  request: AgentPluginBuildRequest,
+  request: BuildExecutionRequest,
   finalGate: FinalEligibilityGate,
 ): Promise<BuildResult> {
   const result = await artifacts.publishRelease(release, publicationOptions(request, finalGate));
@@ -200,7 +111,7 @@ async function publishTargeted(
 async function publishComplete(
   artifacts: ArtifactStore,
   plan: ConstructedPlan,
-  request: AgentPluginBuildRequest,
+  request: BuildExecutionRequest,
   finalGate: FinalEligibilityGate,
 ): Promise<BuildResult> {
   const releaseSet = plan.releaseSet!;
@@ -321,62 +232,6 @@ function successfulCompleteSetResult(
   };
 }
 
-function constructPlan(
-  snapshot: ContentWorkspaceSnapshot,
-  mode: BuildMode,
-): { readonly ok: true; readonly value: ConstructedPlan } | {
-  readonly ok: false;
-  readonly issues: readonly [BuildIssue, ...BuildIssue[]];
-} {
-  const members = mode.kind === "targeted"
-    ? snapshot.releaseInput.body.members.filter((member) => member.pluginId === mode.pluginId)
-    : snapshot.releaseInput.body.members;
-  if (members.length === 0) {
-    return { ok: false, issues: [constructionIssue("selected plugin is not declared by the release input")] };
-  }
-  const releases: AgentPluginRelease[] = [];
-  for (const member of members) {
-    const payload = snapshot.payloads.find((entry) => entry.pluginId === member.pluginId)?.payload;
-    if (payload === undefined) {
-      return { ok: false, issues: [constructionIssue(`verified payload is absent for ${member.pluginId}`)] };
-    }
-    const constructed = createAgentPluginRelease({
-      releaseInput: snapshot.releaseInput,
-      pluginId: member.pluginId,
-      source: {
-        sourceRepository: snapshot.repositoryIdentity,
-        sourceCommit: snapshot.sourceCommit,
-        sourceTree: snapshot.sourceTree,
-      },
-      payload,
-    });
-    if (!constructed.ok) {
-      return { ok: false, issues: [constructionIssue(constructed.issues.map((issue) => issue.code).join(","))] };
-    }
-    releases.push(constructed.value);
-  }
-  if (mode.kind === "targeted") {
-    const release = releases[0]!;
-    return {
-      ok: true,
-      value: Object.freeze({
-        releases: Object.freeze(releases),
-        finalRef: createReleaseArtifactRef(release.releaseDigest, release.artifactDigest),
-      }),
-    };
-  }
-  const set = createAgentPluginReleaseSet({ releaseInput: snapshot.releaseInput, releases });
-  if (!set.ok) return { ok: false, issues: [constructionIssue(set.issues.map((issue) => issue.code).join(","))] };
-  return {
-    ok: true,
-    value: Object.freeze({
-      releases: Object.freeze(releases),
-      releaseSet: set.value,
-      finalRef: createCompleteSetArtifactRef(set.value.releaseSetDigest),
-    }),
-  };
-}
-
 interface FinalEligibilityGate {
   readonly called: boolean;
   run(): Promise<PublicationGuardResult>;
@@ -415,7 +270,7 @@ function createFinalEligibilityGate(options: {
 }
 
 function publicationOptions(
-  request: AgentPluginBuildRequest,
+  request: BuildExecutionRequest,
   gate: FinalEligibilityGate,
 ): ArtifactPublicationOptions {
   return {
@@ -531,10 +386,6 @@ function verifiedRefs(...groups: readonly (readonly ReleaseArtifactRef[])[]): re
     left.artifactDigest,
     right.artifactDigest,
   )));
-}
-
-function ineligibleReport(mode: BuildMode, issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]]): CheckResult {
-  return { kind: "IneligibleReport", mode, issues: sourceIssues(issues) };
 }
 
 function rejected(mode: BuildMode, issues: readonly [BuildIssue, ...BuildIssue[]]): BuildResult {

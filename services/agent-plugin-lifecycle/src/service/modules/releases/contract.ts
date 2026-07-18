@@ -6,6 +6,8 @@ import {
   BuildResultSchema,
   CheckInputSchema,
   CheckResultSchema,
+  PlanRetentionInputSchema,
+  PlanRetentionResultSchema,
 } from "./schemas";
 
 export const contract = {
@@ -17,4 +19,8 @@ export const contract = {
     .meta({ idempotent: true, audit: "full", entity: "releases" })
     .input(schema(BuildInputSchema))
     .output(schema(BuildResultSchema)),
+  planRetention: ocBase
+    .meta({ idempotent: true, audit: "full", entity: "releases" })
+    .input(schema(PlanRetentionInputSchema))
+    .output(schema(PlanRetentionResultSchema)),
 };
