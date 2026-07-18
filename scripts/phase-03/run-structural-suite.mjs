@@ -84,14 +84,6 @@ const suiteCommandsByProject = {
     ],
     runtime: ["bun run runtime:gate:hq-lifecycle"],
   },
-  "@rawr/plugin-plugins": {
-    default: [
-      "bun scripts/phase-03/verify-projection-boundary-invocation.mjs",
-      "bun run architecture:gate:legacy-membership-authoring",
-    ],
-    "phase-a-baseline": ["bun run architecture:gate:legacy-membership-authoring"],
-    "phase-a-completion": ["bun run architecture:gate:legacy-membership-authoring"],
-  },
   "@rawr/plugin-chatgpt-corpus": {
     default: ["bun scripts/phase-03/verify-projection-boundary-invocation.mjs"],
   },
@@ -116,16 +108,12 @@ const suiteCommandsByProject = {
     default: ["bun scripts/phase-03/verify-coordination-structural.mjs"],
   },
   "@rawr/hq-ops": {
+    default: ["bun scripts/phase-03/verify-hq-ops-resource-binding.mjs"],
+  },
+  "@rawr/agent-plugin-lifecycle": {
     default: [
-      "bun scripts/phase-1/verify-hq-ops-service-shape.mjs",
-      "bun scripts/phase-03/verify-hq-ops-resource-binding.mjs",
+      "bun scripts/habitat/check.mjs --owner @rawr/agent-plugin-lifecycle",
     ],
-  },
-  "@rawr/agent-config-sync": {
-    default: ["bun scripts/phase-03/verify-agent-config-sync-service-shape.mjs"],
-  },
-  "@rawr/agent-config-sync-node": {
-    default: ["bunx vitest run --project agent-config-sync-node packages/agent-config-sync-node/test/package-artifacts.test.ts"],
   },
   "@rawr/chatgpt-corpus": {
     default: ["bun scripts/phase-03/verify-chatgpt-corpus-service-shape.mjs"],

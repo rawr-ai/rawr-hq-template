@@ -1,0 +1,31 @@
+{
+  "name": "provider-native-agent-provider-claude-effect-platform-node",
+  "projectType": "library",
+  "sourceRoot": "resources/native-agent-provider/providers/claude-effect-platform-node",
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:native-agent-provider",
+    "provider:claude-effect-platform-node"
+  ],
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"resources/native-agent-provider/{contract.ts,providers/effect-platform-node-shared.ts,providers/claude-effect-platform-node/**/*.ts}\""
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p {projectRoot}/tsconfig.json --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test {projectRoot}/test"
+      }
+    }
+  }
+}

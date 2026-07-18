@@ -5,7 +5,6 @@ import type { ControllerOfficialMember } from "@rawr/controller-release";
 import { CONTROLLER_PRODUCTION_APP_NAME } from "./constants.ts";
 // The semantic adapter extends the sole release byte verifier; it does not
 // create a second envelope or inventory read model.
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import {
   requireVerifiedControllerRelease,
   type VerifiedControllerRelease,

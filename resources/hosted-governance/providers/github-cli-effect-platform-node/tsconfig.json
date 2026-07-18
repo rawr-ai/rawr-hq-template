@@ -1,0 +1,11 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"]
+  },
+  "files": [
+    "index.ts",
+    "test/provider.test.ts",
+    "vitest.config.ts"
+  ]
+}

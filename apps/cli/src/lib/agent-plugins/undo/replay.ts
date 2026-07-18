@@ -46,7 +46,7 @@ export class CapsuleUndoControllerV1 {
     this.#limits = normalizeCapsuleLimits(options.limits ?? PRODUCTION_CAPSULE_LIMITS);
   }
 
-  async undo(): Promise<UndoResult> {
+  async undo(options: Readonly<{ expectedStateDigest?: string }> = {}): Promise<UndoResult> {
     const acquired = await this.#store.acquireExclusiveSession();
     if (acquired.kind === "Rejected") {
       return Object.freeze({
@@ -57,7 +57,7 @@ export class CapsuleUndoControllerV1 {
     }
     let result: UndoOperationResult;
     try {
-      result = await this.#undoWithAccess(acquired.session.access);
+      result = await this.#undoWithAccess(acquired.session.access, options.expectedStateDigest);
     } catch (error) {
       result = Object.freeze({
         kind: "RejectedBeforeReplay",
@@ -77,12 +77,25 @@ export class CapsuleUndoControllerV1 {
     return Object.freeze({ ...result, synchronization }) as UndoResult;
   }
 
-  async #undoWithAccess(access: CapsuleStateAccessV1): Promise<UndoOperationResult> {
+  async #undoWithAccess(
+    access: CapsuleStateAccessV1,
+    expectedStateDigest: string | undefined,
+  ): Promise<UndoOperationResult> {
     const read = await access.read();
     if (read.kind === "Rejected") {
       return Object.freeze({ kind: "RejectedBeforeReplay", failure: read.failure });
     }
     const observed = read.observation.state;
+    if (expectedStateDigest !== undefined && observed.stateDigest !== expectedStateDigest) {
+      return Object.freeze({
+        kind: "RejectedBeforeReplay",
+        failure: failure(
+          "StateChanged",
+          "undo-preflight",
+          "capsule changed after executable-binding preflight",
+        ),
+      });
+    }
     if (observed.body.state.kind === "applying") {
       return Object.freeze({
         kind: "RejectedBeforeReplay",

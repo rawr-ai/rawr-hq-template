@@ -24,9 +24,9 @@ const INVENTORY = {
       tags: ["type:app", "app:hq", "role:cli", "migration-slice:structural-tranche"],
       targets: ["sync", "structural"],
     },
-    "@rawr/plugin-plugins": {
-      config: "plugins/cli/plugins/package.json",
-      tags: ["type:plugin", "migration-slice:structural-tranche"],
+    "@rawr/agent-plugin-lifecycle": {
+      config: "services/agent-plugin-lifecycle/package.json",
+      tags: ["type:service", "role:servicepackage", "migration-slice:structural-tranche"],
       targets: ["sync", "structural"],
     },
     "plugin-server-api-example-todo": {

@@ -1,0 +1,35 @@
+{
+  "name": "@rawr/resource-content-workspace",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./contract.ts",
+      "default": "./contract.ts"
+    },
+    "./providers/git-effect-platform-node": {
+      "types": "./providers/git-effect-platform-node/index.ts",
+      "default": "./providers/git-effect-platform-node/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern contract.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@effect/platform": "0.96.1",
+    "@effect/platform-node": "0.107.0",
+    "effect": "3.21.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:resource",
+      "layer:resource-contract",
+      "resource:content-workspace"
+    ]
+  }
+}

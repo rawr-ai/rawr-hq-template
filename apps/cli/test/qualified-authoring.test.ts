@@ -193,10 +193,8 @@ describe("qualified authoring owners", () => {
     }));
     const result = await authorOfficialCommand(request, { verifyWorkspace: async () => root });
     expect(result.kind).toBe("AuthoringAuthored");
-    await expect(fs.access(path.join(root, "apps", "cli", "src", "commands", "sample", "inspect.ts")))
-      .resolves.toBeUndefined();
-    await expect(fs.access(path.join(root, "apps", "cli", "test", "generated", "sample", "inspect.test.ts")))
-      .resolves.toBeUndefined();
+    await fs.access(path.join(root, "apps", "cli", "src", "commands", "sample", "inspect.ts"));
+    await fs.access(path.join(root, "apps", "cli", "test", "generated", "sample", "inspect.test.ts"));
     const firstSnapshot = await treeSnapshot(root);
     expect((await authorOfficialCommand(request, { verifyWorkspace: async () => root })).kind)
       .toBe("AuthoringConverged");
@@ -240,10 +238,8 @@ describe("qualified authoring owners", () => {
       .toBe("AuthoringAuthored");
     expect((await authorOfficialCommand(second, { verifyWorkspace: async () => root })).kind)
       .toBe("AuthoringAuthored");
-    await expect(fs.access(path.join(root, "apps", "cli", "test", "generated", "foo-bar", "baz.test.ts")))
-      .resolves.toBeUndefined();
-    await expect(fs.access(path.join(root, "apps", "cli", "test", "generated", "foo", "bar-baz.test.ts")))
-      .resolves.toBeUndefined();
+    await fs.access(path.join(root, "apps", "cli", "test", "generated", "foo-bar", "baz.test.ts"));
+    await fs.access(path.join(root, "apps", "cli", "test", "generated", "foo", "bar-baz.test.ts"));
   });
 
   it("creates a portable external extension and blocks a divergent planned path", async () => {

@@ -3,20 +3,23 @@ import {
   EXPORT_OWNER_PROTOCOL_VERSION,
   classifyExportOwnerReplay,
   classifyExportOwnerStaged,
-  executeExportInverseAction,
   inspectExportOwnerAction,
   parseExportOwnerAction,
   parseExportOwnerObservedPost,
   selectExportOwnerTargetBindings,
   validateExportOwnerActionSequence,
   verifyExportOwnerPrior,
-  type ExecuteExportInverseOptions,
   type ExportFailure,
   type ExportFailureSet,
   type ExportInverseActionV1,
   type UndoApplyingSession,
   type UndoWriter,
-} from "@rawr/agent-plugin-export";
+} from "@rawr/agent-plugin-lifecycle/bindings/exports";
+import {
+  executeExportInverseAction,
+  nodeExportOwnerStateReader,
+  type ExecuteExportInverseOptions,
+} from "../bindings/export-destination";
 
 import type {
   CapsuleActionHandle,
@@ -50,7 +53,11 @@ export function createExportOwnerProtocolRegistrationV1(
       owner: EXPORT_OWNER,
       protocolVersion: EXPORT_OWNER_PROTOCOL_VERSION,
       async classifyStaged({ action, targets }) {
-        const classification = await classifyExportOwnerStaged({ action, targets });
+        const classification = await classifyExportOwnerStaged({
+          action,
+          targets,
+          state: nodeExportOwnerStateReader,
+        });
         return classification.kind === "Ambiguous"
           ? Object.freeze({ kind: "Ambiguous", failure: toCapsuleFailure(classification.failure) })
           : classification;
@@ -60,7 +67,12 @@ export function createExportOwnerProtocolRegistrationV1(
       owner: EXPORT_OWNER,
       protocolVersion: EXPORT_OWNER_PROTOCOL_VERSION,
       async classify({ action, observedPost, targets }) {
-        const classification = await classifyExportOwnerReplay({ action, observedPost, targets });
+        const classification = await classifyExportOwnerReplay({
+          action,
+          observedPost,
+          targets,
+          state: nodeExportOwnerStateReader,
+        });
         return classification.kind === "Ambiguous"
           ? Object.freeze({ kind: "Ambiguous", failure: toCapsuleFailure(classification.failure) })
           : classification;
@@ -97,6 +109,7 @@ export function createExportOwnerProtocolRegistrationV1(
         const verification = await verifyExportOwnerPrior({
           actions: actions.map(({ action, observedPost }) => Object.freeze({ action, observedPost })),
           targets,
+          state: nodeExportOwnerStateReader,
         });
         return verification.kind === "Verified"
           ? verification

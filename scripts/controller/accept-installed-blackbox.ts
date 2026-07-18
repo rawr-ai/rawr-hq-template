@@ -1,10 +1,15 @@
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
+import { constants } from "node:fs";
 import {
+  access,
   cp,
   lstat,
   mkdir,
   mkdtemp,
+  readdir,
   readFile,
+  readlink,
   realpath,
   rename,
   rm,
@@ -14,6 +19,13 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { inflateRawSync } from "node:zlib";
+
+import {
+  canonicalSerializeAgentPluginReleaseInput,
+  createAgentPluginPayload,
+  createAgentPluginReleaseInput,
+} from "@rawr/agent-plugin-lifecycle/release";
 
 import { controllerLauncherPath } from "./layout.ts";
 import { installProductionController } from "./production/builder.ts";
@@ -23,6 +35,52 @@ import { requireVerifiedOfficialControllerRelease } from "./production/verify-of
 
 const ACCEPTANCE_ROOT_PREFIX = "rawr-controller-installed-acceptance-";
 const HELLO_OUTPUT = "hello from guarded external extension";
+const FIXTURE_SKILL_BYTES = new TextEncoder().encode("# Fixture\n");
+const EXPECTED_AGENT_PLUGIN_COMMAND_IDS = Object.freeze([
+  "agent:plugins:attest-promotion",
+  "agent:plugins:build",
+  "agent:plugins:check",
+  "agent:plugins:create",
+  "agent:plugins:export",
+  "agent:plugins:package",
+  "agent:plugins:retire",
+  "agent:plugins:status",
+  "agent:plugins:sync",
+  "agent:plugins:test",
+  "agent:plugins:undo",
+  "agent:plugins:vendors:status",
+  "agent:plugins:vendors:update",
+] as const);
+const EXPECTED_EXTERNAL_PLUGIN_COMMAND_IDS = Object.freeze([
+  "plugins:inspect",
+  "plugins:install",
+  "plugins:link",
+  "plugins:list",
+  "plugins:reset",
+  "plugins:uninstall",
+  "plugins:update",
+] as const);
+const RETIRED_CURATED_COMMANDS = Object.freeze([
+  { argv: ["undo"], label: "retired root undo" },
+  { argv: ["agent", "sync"], label: "retired agent sync aggregate" },
+  { argv: ["plugins", "export"], label: "retired bare plugins export" },
+  { argv: ["plugins", "improve"], label: "retired bare plugins improve" },
+  { argv: ["plugins", "lifecycle", "check"], label: "retired bare plugins lifecycle" },
+  { argv: ["plugins", "status"], label: "retired bare plugins status" },
+  { argv: ["plugins", "sweep"], label: "retired bare plugins sweep" },
+  { argv: ["plugins", "sync"], label: "retired bare plugins sync" },
+] as const);
+const CODEX_MUTABLE_OPERATIONAL_FILES = new Set([
+  "goals_1.sqlite",
+  "logs_2.sqlite",
+  "memories_1.sqlite",
+  "state_5.sqlite",
+]);
+const CODEX_TRANSIENT_OPERATIONAL_FILES = new Set(
+  [...CODEX_MUTABLE_OPERATIONAL_FILES]
+    .flatMap((file) => [`${file}-shm`, `${file}-wal`]),
+);
+const CODEX_MUTABLE_OPERATIONAL_DIRECTORIES = new Set(["tmp/arg0"]);
 
 type ProcessResult = Readonly<{
   code: number | null;
@@ -34,6 +92,27 @@ type ProcessResult = Readonly<{
 type LauncherRun = Readonly<{
   argv: readonly string[];
   result: ProcessResult;
+}>;
+
+type FilesystemReceipt = Readonly<{
+  path: string;
+  kind: "directory" | "file" | "missing" | "symlink";
+  mode?: number;
+  size?: number;
+  mtimeMs?: number;
+  digest?: string;
+  link?: string;
+}>;
+
+type LifecycleContentFixture = Readonly<{
+  root: string;
+  repositoryIdentity: string;
+  contentAuthority: string;
+  refName: string;
+  sourceCommit: string;
+  sourceTree: string;
+  releaseInputPath: string;
+  gitExecutable: string;
 }>;
 
 async function runCaptured(input: Readonly<{
@@ -67,7 +146,7 @@ async function runCaptured(input: Readonly<{
 function requireSuccess(result: ProcessResult, label: string): void {
   if (result.code === 0 && result.signal === null) return;
   throw new Error(
-    `${label} failed (${result.signal ?? `exit ${String(result.code)}`}): ${result.stderr.trim()}`,
+    `${label} failed (${result.signal ?? `exit ${String(result.code)}`}): stdout=${result.stdout.trim()} stderr=${result.stderr.trim()}`,
   );
 }
 
@@ -79,6 +158,121 @@ function requireFailure(result: ProcessResult, label: string): void {
 function requireIncludes(text: string, expected: string, label: string): void {
   if (text.includes(expected)) return;
   throw new Error(`${label} did not include ${JSON.stringify(expected)}: ${text.trim()}`);
+}
+
+function requireExactStrings(
+  actual: readonly string[],
+  expected: readonly string[],
+  label: string,
+): void {
+  const actualSorted = [...actual].sort();
+  const expectedSorted = [...expected].sort();
+  if (JSON.stringify(actualSorted) === JSON.stringify(expectedSorted)) return;
+  throw new Error(
+    `${label} differs: expected ${expectedSorted.join(",")}; received ${actualSorted.join(",")}`,
+  );
+}
+
+function describeFilesystemDifference(
+  before: readonly FilesystemReceipt[],
+  after: readonly FilesystemReceipt[],
+): string {
+  const beforeByPath = new Map(before.map((receipt) => [receipt.path, receipt]));
+  const afterByPath = new Map(after.map((receipt) => [receipt.path, receipt]));
+  return [...new Set([...beforeByPath.keys(), ...afterByPath.keys()])]
+    .sort()
+    .flatMap((entryPath) => {
+      const prior = beforeByPath.get(entryPath);
+      const next = afterByPath.get(entryPath);
+      return JSON.stringify(prior) === JSON.stringify(next)
+        ? []
+        : [`${entryPath || "."}: ${JSON.stringify(prior)} -> ${JSON.stringify(next)}`];
+    })
+    .join("; ");
+}
+
+function requireOnlyCodexOperationalStateChanged(
+  before: readonly FilesystemReceipt[],
+  after: readonly FilesystemReceipt[],
+  label: string,
+): void {
+  const beforeByPath = new Map(before.map((receipt) => [receipt.path, receipt]));
+  const afterByPath = new Map(after.map((receipt) => [receipt.path, receipt]));
+  const changed = [...new Set([...beforeByPath.keys(), ...afterByPath.keys()])]
+    .sort()
+    .filter((entryPath) =>
+      JSON.stringify(beforeByPath.get(entryPath)) !== JSON.stringify(afterByPath.get(entryPath)));
+  const unexpected = changed.filter((entryPath) => {
+    const prior = beforeByPath.get(entryPath);
+    const next = afterByPath.get(entryPath);
+    if (entryPath === "") return prior?.kind !== "directory" || next?.kind !== "directory";
+    if (CODEX_MUTABLE_OPERATIONAL_FILES.has(entryPath)) {
+      return prior?.kind !== "file" || next?.kind !== "file";
+    }
+    if (CODEX_TRANSIENT_OPERATIONAL_FILES.has(entryPath)) {
+      return (prior !== undefined && prior.kind !== "file")
+        || (next !== undefined && next.kind !== "file");
+    }
+    if (CODEX_MUTABLE_OPERATIONAL_DIRECTORIES.has(entryPath)) {
+      return prior?.kind !== "directory" || next?.kind !== "directory";
+    }
+    return true;
+  });
+  if (unexpected.length === 0) return;
+  throw new Error(
+    `${label} changed non-operational provider state: ${describeFilesystemDifference(before, after)}`,
+  );
+}
+
+function readClassicZipEntry(archive: Uint8Array, expectedPath: string): Uint8Array {
+  const minimumEocd = 22;
+  if (archive.byteLength < minimumEocd) throw new Error("cowork package is too short to be a ZIP archive");
+  const view = new DataView(archive.buffer, archive.byteOffset, archive.byteLength);
+  const firstCandidate = Math.max(0, archive.byteLength - minimumEocd - 65_535);
+  let eocdOffset = -1;
+  for (let offset = archive.byteLength - minimumEocd; offset >= firstCandidate; offset -= 1) {
+    if (view.getUint32(offset, true) === 0x0605_4b50) {
+      eocdOffset = offset;
+      break;
+    }
+  }
+  if (eocdOffset < 0) throw new Error("cowork package has no classic ZIP directory");
+  const entryCount = view.getUint16(eocdOffset + 10, true);
+  let centralOffset = view.getUint32(eocdOffset + 16, true);
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  for (let index = 0; index < entryCount; index += 1) {
+    if (view.getUint32(centralOffset, true) !== 0x0201_4b50) {
+      throw new Error("cowork package central directory is invalid");
+    }
+    const compression = view.getUint16(centralOffset + 10, true);
+    const compressedSize = view.getUint32(centralOffset + 20, true);
+    const uncompressedSize = view.getUint32(centralOffset + 24, true);
+    const nameLength = view.getUint16(centralOffset + 28, true);
+    const extraLength = view.getUint16(centralOffset + 30, true);
+    const commentLength = view.getUint16(centralOffset + 32, true);
+    const localOffset = view.getUint32(centralOffset + 42, true);
+    const name = decoder.decode(archive.subarray(centralOffset + 46, centralOffset + 46 + nameLength));
+    if (name === expectedPath) {
+      if (view.getUint32(localOffset, true) !== 0x0403_4b50) {
+        throw new Error(`cowork package entry ${expectedPath} has no local header`);
+      }
+      const localNameLength = view.getUint16(localOffset + 26, true);
+      const localExtraLength = view.getUint16(localOffset + 28, true);
+      const dataOffset = localOffset + 30 + localNameLength + localExtraLength;
+      const compressed = archive.subarray(dataOffset, dataOffset + compressedSize);
+      const bytes = compression === 0
+        ? new Uint8Array(compressed)
+        : compression === 8
+          ? new Uint8Array(inflateRawSync(compressed))
+          : (() => { throw new Error(`cowork package entry ${expectedPath} uses unsupported compression`); })();
+      if (bytes.byteLength !== uncompressedSize) {
+        throw new Error(`cowork package entry ${expectedPath} has the wrong size`);
+      }
+      return bytes;
+    }
+    centralOffset += 46 + nameLength + extraLength + commentLength;
+  }
+  throw new Error(`cowork package is missing ${expectedPath}`);
 }
 
 function requireRecord(value: unknown, label: string): Record<string, unknown> {
@@ -107,6 +301,35 @@ function requireJsonErrorDetails(result: ProcessResult, label: string): Record<s
   if (parsed.ok !== false) throw new Error(`${label} did not report a structured failure`);
   const error = requireRecord(parsed.error, `${label} error`);
   return requireRecord(error.details, `${label} error details`);
+}
+
+function requireLifecycleResult(
+  result: ProcessResult,
+  operation: string,
+  admittedKinds: readonly string[],
+  label: string,
+): Record<string, unknown> {
+  const data = requireJsonData(result, label);
+  const value = requireRecord(data.result, `${label} result`);
+  if (data.operation !== operation || !admittedKinds.includes(String(value.kind))) {
+    throw new Error(`${label} returned an unexpected lifecycle result: ${result.stdout.trim()}`);
+  }
+  return value;
+}
+
+function requireProviderOutcome(
+  result: ProcessResult,
+  operation: string,
+  status: string,
+  label: string,
+): Record<string, unknown> {
+  const data = requireJsonData(result, label);
+  const providerResult = requireRecord(data.result, `${label} result`);
+  const value = requireRecord(providerResult.value, `${label} result value`);
+  if (data.operation !== operation || providerResult.ok !== true || value.status !== status) {
+    throw new Error(`${label} returned an unexpected provider outcome: ${result.stdout.trim()}`);
+  }
+  return value;
 }
 
 function requireOperationDisposition(
@@ -151,6 +374,192 @@ async function requireMissing(target: string, label: string): Promise<void> {
   throw new Error(`${label} unexpectedly exists: ${target}`);
 }
 
+async function requireCanonicalProviderExecutableFromEnvironment(): Promise<string> {
+  const executable = process.env.RAWR_CODEX_EXECUTABLE;
+  if (executable === undefined || !path.isAbsolute(executable)) {
+    throw new Error(
+      "installed lifecycle acceptance requires RAWR_CODEX_EXECUTABLE as an absolute canonical path",
+    );
+  }
+  const canonical = await realpath(executable);
+  if (canonical !== executable) {
+    throw new Error("installed lifecycle acceptance requires a canonical Codex executable path");
+  }
+  const status = await lstat(canonical);
+  if (!status.isFile()) {
+    throw new Error("installed lifecycle acceptance requires a regular Codex executable file");
+  }
+  await access(canonical, constants.X_OK);
+  return canonical;
+}
+
+async function snapshotExternalRegistry(dataRoot: string): Promise<readonly FilesystemReceipt[]> {
+  const receipts: FilesystemReceipt[] = [];
+  for (const name of ["package.json", "node_modules", "package-lock.json", "yarn.lock", "bun.lock"]) {
+    await snapshotFilesystemEntry(dataRoot, path.join(dataRoot, name), receipts);
+  }
+  return receipts.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+async function snapshotFilesystemTree(root: string): Promise<readonly FilesystemReceipt[]> {
+  const receipts: FilesystemReceipt[] = [];
+  await snapshotFilesystemEntry(root, root, receipts);
+  return receipts.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+async function snapshotFilesystemChildren(root: string): Promise<readonly FilesystemReceipt[]> {
+  const receipts: FilesystemReceipt[] = [];
+  for (const child of (await readdir(root)).sort()) {
+    await snapshotFilesystemEntry(root, path.join(root, child), receipts);
+  }
+  return receipts.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+async function requireCodexManagedIdentityAbsent(input: Readonly<{
+  executable: string;
+  home: string;
+  contentAuthority: string;
+  pluginId: string;
+}>): Promise<void> {
+  const environment: NodeJS.ProcessEnv = {
+    ...process.env,
+    HOME: input.home,
+    CODEX_HOME: input.home,
+  };
+  delete environment.CODEX_FORK_HOME;
+  delete environment.CODEX_SWITCHBOARD_HOME;
+  delete environment.CODEX_SWITCHBOARD_TARGET;
+  const inventory = await runCaptured({
+    executable: input.executable,
+    args: ["plugin", "list", "--json"],
+    cwd: input.home,
+    env: environment,
+  });
+  requireSuccess(inventory, "Codex inventory after installed lifecycle undo");
+  const inventoryText = inventory.stdout;
+  if (inventoryText.includes(input.contentAuthority) || inventoryText.includes(input.pluginId)) {
+    throw new Error(`Codex inventory retained the managed lifecycle identity: ${inventoryText.trim()}`);
+  }
+  try {
+    const config = await readFile(path.join(input.home, "config.toml"), "utf8");
+    if (config.includes(input.contentAuthority) || config.includes(input.pluginId)) {
+      throw new Error("Codex config retained the managed lifecycle identity after undo");
+    }
+  } catch (error) {
+    if (!isMissing(error)) throw error;
+  }
+  const authorityCache = path.join(input.home, "plugins", "cache", input.contentAuthority);
+  try {
+    if ((await readdir(authorityCache)).length !== 0) {
+      throw new Error("Codex cache retained managed lifecycle members after undo");
+    }
+  } catch (error) {
+    if (!isMissing(error)) throw error;
+  }
+  await requireMissing(path.join(input.home, "skills", "example"), "Codex managed skill after undo");
+}
+
+async function requireCodexManagedIdentityPresent(input: Readonly<{
+  executable: string;
+  home: string;
+  contentAuthority: string;
+  pluginId: string;
+}>): Promise<void> {
+  const environment: NodeJS.ProcessEnv = {
+    ...process.env,
+    HOME: input.home,
+    CODEX_HOME: input.home,
+  };
+  delete environment.CODEX_FORK_HOME;
+  delete environment.CODEX_SWITCHBOARD_HOME;
+  delete environment.CODEX_SWITCHBOARD_TARGET;
+  const inventory = await runCaptured({
+    executable: input.executable,
+    args: ["plugin", "list", "--json"],
+    cwd: input.home,
+    env: environment,
+  });
+  requireSuccess(inventory, "Codex inventory after installed lifecycle mutation");
+  if (
+    !inventory.stdout.includes(input.contentAuthority)
+    || !inventory.stdout.includes(input.pluginId)
+  ) {
+    throw new Error(`Codex inventory omitted the managed lifecycle identity: ${inventory.stdout.trim()}`);
+  }
+  const config = await readFile(path.join(input.home, "config.toml"), "utf8");
+  if (!config.includes(input.contentAuthority) || !config.includes(input.pluginId)) {
+    throw new Error("Codex config omitted the managed lifecycle identity after mutation");
+  }
+  const inventoryRecord = requireRecord(
+    JSON.parse(inventory.stdout) as unknown,
+    "Codex inventory after installed lifecycle mutation",
+  );
+  const installed = inventoryRecord.installed;
+  const managed = Array.isArray(installed)
+    ? installed.map((entry) => requireRecord(entry, "Codex installed plugin")).filter((entry) =>
+        entry.name === input.pluginId
+        && entry.marketplaceName === input.contentAuthority
+        && entry.installed === true
+        && entry.enabled === true)
+    : [];
+  if (managed.length !== 1 || typeof managed[0]!.version !== "string") {
+    throw new Error("Codex inventory did not contain one enabled managed lifecycle member");
+  }
+  const skillBytes = await readFile(path.join(
+    input.home,
+    "plugins",
+    "cache",
+    input.contentAuthority,
+    input.pluginId,
+    managed[0]!.version,
+    "skills",
+    "example",
+    "SKILL.md",
+  ));
+  if (!Buffer.from(skillBytes).equals(Buffer.from(FIXTURE_SKILL_BYTES))) {
+    throw new Error("Codex installed skill bytes do not match the managed release");
+  }
+}
+
+async function snapshotFilesystemEntry(
+  root: string,
+  target: string,
+  receipts: FilesystemReceipt[],
+): Promise<void> {
+  const relative = path.relative(root, target).split(path.sep).join("/");
+  let status;
+  try {
+    status = await lstat(target);
+  } catch (error) {
+    if (isMissing(error)) {
+      receipts.push({ path: relative, kind: "missing" });
+      return;
+    }
+    throw error;
+  }
+  const common = {
+    path: relative,
+    mode: status.mode,
+    size: status.size,
+    mtimeMs: status.mtimeMs,
+  } as const;
+  if (status.isSymbolicLink()) {
+    receipts.push({ ...common, kind: "symlink", link: await readlink(target) });
+    return;
+  }
+  if (status.isDirectory()) {
+    receipts.push({ ...common, kind: "directory" });
+    const children = await readdir(target);
+    for (const child of children.sort()) {
+      await snapshotFilesystemEntry(root, path.join(target, child), receipts);
+    }
+    return;
+  }
+  if (!status.isFile()) throw new Error(`unsupported external registry entry: ${target}`);
+  const digest = createHash("sha256").update(await readFile(target)).digest("hex");
+  receipts.push({ ...common, kind: "file", digest });
+}
+
 function snapshotFilter(workspaceRoot: string): (source: string) => boolean {
   return (source) => {
     const relative = path.relative(workspaceRoot, source).split(path.sep).join("/");
@@ -189,6 +598,159 @@ async function initializeSnapshotRepository(sourceRoot: string): Promise<void> {
     const result = await runCaptured({ executable: "git", args, cwd: sourceRoot });
     requireSuccess(result, label);
   }
+}
+
+function requireCreated<T>(
+  result: Readonly<{ ok: true; value: T }> | Readonly<{ ok: false; issues: readonly unknown[] }>,
+  label: string,
+): T {
+  if (result.ok) return result.value;
+  throw new Error(`${label} fixture construction failed: ${JSON.stringify(result.issues)}`);
+}
+
+async function writeLifecycleContentFixture(acceptanceRoot: string): Promise<LifecycleContentFixture> {
+  const root = path.join(acceptanceRoot, "lifecycle-content");
+  const releaseInputPath = ".rawr/release-input.json";
+  const skillRelativePath = "skills/example/SKILL.md";
+  const pluginId = "fixture-plugin";
+  const repositoryIdentity = "git:fixture-agent-plugins";
+  const contentAuthority = "fixture-authority";
+  const payloadBytes = FIXTURE_SKILL_BYTES;
+  const payload = requireCreated(createAgentPluginPayload([{
+    path: skillRelativePath,
+    mode: 0o644,
+    bytes: payloadBytes,
+  }]), "lifecycle payload");
+  const releaseInput = requireCreated(createAgentPluginReleaseInput({
+    schemaVersion: 1,
+    contentAuthority,
+    members: [{
+      kind: "agent-plugin",
+      pluginId,
+      skillInventory: [{ identity: "example", manifestPath: skillRelativePath }],
+      payload: {
+        protocolVersion: 1,
+        manifest: payload.manifest,
+        payloadDigest: payload.payloadDigest,
+      },
+      vendor: [],
+      curation: [],
+    }],
+    ownershipClaims: [{ kind: "skill", identity: "example", ownerPluginId: pluginId }],
+    locks: [],
+    qualityPolicies: [],
+  }), "lifecycle release input");
+  const skillPath = path.join(root, "plugins", "agent", pluginId, skillRelativePath);
+  await Promise.all([
+    mkdir(path.dirname(skillPath), { recursive: true }),
+    mkdir(path.join(root, ".rawr"), { recursive: true }),
+  ]);
+  await Promise.all([
+    writeFile(skillPath, payloadBytes),
+    writeFile(
+      path.join(root, releaseInputPath),
+      canonicalSerializeAgentPluginReleaseInput(releaseInput),
+    ),
+  ]);
+  const gitExecutable = await realpath("/usr/bin/git");
+  for (const [args, label] of [
+    [["init", "--quiet", "--initial-branch=main"], "lifecycle git init"],
+    [["remote", "add", "origin", repositoryIdentity], "lifecycle git remote"],
+    [["add", "--all"], "lifecycle git add"],
+    [[
+      "-c",
+      "user.name=RAWR Lifecycle Acceptance",
+      "-c",
+      "user.email=lifecycle-acceptance@invalid.local",
+      "commit",
+      "--quiet",
+      "-m",
+      "test(lifecycle): create installed controller fixture",
+    ], "lifecycle git commit"],
+  ] as const) {
+    requireSuccess(await runCaptured({ executable: gitExecutable, args, cwd: root }), label);
+  }
+  const readObject = async (revision: string, label: string): Promise<string> => {
+    const result = await runCaptured({
+      executable: gitExecutable,
+      args: ["rev-parse", "--verify", revision],
+      cwd: root,
+    });
+    requireSuccess(result, label);
+    return result.stdout.trim();
+  };
+  return Object.freeze({
+    root,
+    repositoryIdentity,
+    contentAuthority,
+    refName: "refs/heads/main",
+    sourceCommit: await readObject("HEAD^{commit}", "lifecycle commit identity"),
+    sourceTree: await readObject("HEAD^{tree}", "lifecycle tree identity"),
+    releaseInputPath,
+    gitExecutable,
+  });
+}
+
+async function requireInstalledLifecycleSchemaRealm(input: Readonly<{
+  releaseRoot: string;
+  environment: NodeJS.ProcessEnv;
+  fixture: LifecycleContentFixture;
+}>): Promise<void> {
+  const appRoot = path.join(input.releaseRoot, "app");
+  const typeboxManifest = requireRecord(
+    JSON.parse(await readFile(path.join(appRoot, "node_modules", "typebox", "package.json"), "utf8")) as unknown,
+    "installed TypeBox manifest",
+  );
+  if (typeboxManifest.version !== "1.3.6") {
+    throw new Error(`installed lifecycle schema realm resolved TypeBox ${String(typeboxManifest.version)}`);
+  }
+  const validInput = {
+    contentWorkspace: {
+      locator: input.fixture.root,
+      repositoryIdentity: input.fixture.repositoryIdentity,
+      contentAuthority: input.fixture.contentAuthority,
+      remoteName: "origin",
+      remoteUrl: input.fixture.repositoryIdentity,
+      refName: input.fixture.refName,
+      sourceCommit: input.fixture.sourceCommit,
+      sourceTree: input.fixture.sourceTree,
+      releaseInputPath: input.fixture.releaseInputPath,
+      pluginRoot: "plugins/agent",
+    },
+    mode: { kind: "complete-set" },
+  } as const;
+  const invalidInput = {
+    ...validInput,
+    contentWorkspace: {
+      ...validInput.contentWorkspace,
+      releaseInputPath: ".rawr/../release-input.json",
+    },
+  } as const;
+  const schemaProbe = await runCaptured({
+    executable: path.join(input.releaseRoot, "runtime", "bun"),
+    args: [
+      "--config=/dev/null",
+      "--no-env-file",
+      "--no-install",
+      "-e",
+      [
+        'import { Value } from "./node_modules/typebox/build/value/index.mjs";',
+        'import { CheckInputSchema } from "./node_modules/@rawr/agent-plugin-lifecycle/dist/service/modules/releases/schemas.js";',
+        `const valid = ${JSON.stringify(validInput)};`,
+        `const invalid = ${JSON.stringify(invalidInput)};`,
+        'if (!Value.Check(CheckInputSchema, valid)) throw new Error("installed schema rejected the valid fixture");',
+        'if (Value.Check(CheckInputSchema, invalid)) throw new Error("installed schema dropped Refine semantics");',
+        'process.stdout.write("installed-schema-refine-ok\\n");',
+      ].join("\n"),
+    ],
+    cwd: appRoot,
+    env: scrubbedBunEnvironment({
+      ...input.environment,
+      BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0",
+    }),
+  });
+  requireSuccess(schemaProbe, "installed lifecycle schema realm");
+  requireIncludes(schemaProbe.stdout, "installed-schema-refine-ok", "installed lifecycle schema realm");
 }
 
 async function removeAcceptanceRoot(root: string): Promise<void> {
@@ -233,6 +795,7 @@ async function removeSourceSnapshot(acceptanceRoot: string, sourceRoot: string):
 }
 
 async function runOuter(): Promise<void> {
+  await requireCanonicalProviderExecutableFromEnvironment();
   const workspaceRoot = await realpath(
     path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../.."),
   );
@@ -442,6 +1005,7 @@ async function writeHostileOperatorFixture(root: string): Promise<Readonly<{
 }
 
 async function runInner(acceptanceRootInput: string): Promise<void> {
+  const canonicalCodexExecutable = await requireCanonicalProviderExecutableFromEnvironment();
   const acceptanceRoot = await realpath(acceptanceRootInput);
   const sourceRoot = path.join(acceptanceRoot, "source");
   const dataRoot = path.join(acceptanceRoot, "controller-data");
@@ -454,6 +1018,7 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
   if (sourceStatus.stdout.length !== 0) {
     throw new Error(`controller acceptance snapshot is dirty:\n${sourceStatus.stdout}`);
   }
+  const lifecycleContent = await writeLifecycleContentFixture(acceptanceRoot);
   const installed = await installProductionController({
     workspaceRoot: sourceRoot,
     dataRoot,
@@ -485,6 +1050,11 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
   process.chdir(acceptanceRoot);
   await removeSourceSnapshot(acceptanceRoot, sourceRoot);
   await requireMissing(sourceRoot, "Template source snapshot");
+  await requireInstalledLifecycleSchemaRealm({
+    releaseRoot: installed.release.releaseRoot,
+    environment: hostile.env,
+    fixture: lifecycleContent,
+  });
 
   const runs: LauncherRun[] = [];
   const invoke = async (argv: readonly string[], label: string): Promise<ProcessResult> => {
@@ -623,6 +1193,490 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
   );
   requireSuccess(activeInspection, "installed rawr plugins inspect active extension");
   requireInspection(activeInspection, "active", "active plugin inspection");
+
+  const externalRegistryBeforeLifecycle = await snapshotExternalRegistry(dataRoot);
+  const lifecycleCommandIds = officialCommandIds.filter((id) => id.startsWith("agent:plugins:"));
+  requireExactStrings(
+    lifecycleCommandIds,
+    EXPECTED_AGENT_PLUGIN_COMMAND_IDS,
+    "installed qualified agent plugin command set",
+  );
+  requireExactStrings(
+    officialCommandIds.filter((id) => id.startsWith("plugins:")),
+    EXPECTED_EXTERNAL_PLUGIN_COMMAND_IDS,
+    "installed external plugin command set",
+  );
+  const vendorStatusArgs = [
+    "agent",
+    "plugins",
+    "vendors",
+    "status",
+    "--content-workspace",
+    lifecycleContent.root,
+    "--repository-identity",
+    lifecycleContent.repositoryIdentity,
+    "--content-authority",
+    lifecycleContent.contentAuthority,
+    "--ref",
+    lifecycleContent.refName,
+    "--source-commit",
+    lifecycleContent.sourceCommit,
+    "--source-tree",
+    lifecycleContent.sourceTree,
+    "--release-input",
+    lifecycleContent.releaseInputPath,
+    "--git-executable",
+    lifecycleContent.gitExecutable,
+    "--json",
+  ] as const;
+  const lifecycleContentBefore = await snapshotFilesystemTree(lifecycleContent.root);
+  const controllerBeforeVendorStatus = await snapshotFilesystemTree(dataRoot);
+  const vendorStatus = await invoke(vendorStatusArgs, "installed vendor status");
+  requireSuccess(vendorStatus, "installed rawr agent plugins vendors status");
+  const vendorStatusData = requireJsonData(vendorStatus, "installed vendor status");
+  const vendorStatusResult = requireRecord(vendorStatusData.result, "installed vendor status result");
+  if (
+    vendorStatusData.operation !== "vendors.status"
+    || vendorStatusResult.kind !== "VendorStatus"
+    || !Array.isArray(vendorStatusResult.sources)
+    || vendorStatusResult.sources.length !== 0
+  ) {
+    throw new Error(`installed vendor status returned the wrong result: ${vendorStatus.stdout.trim()}`);
+  }
+  const repeatedVendorStatus = await invoke(vendorStatusArgs, "repeated installed vendor status");
+  requireSuccess(repeatedVendorStatus, "repeated installed rawr agent plugins vendors status");
+  if (repeatedVendorStatus.stdout !== vendorStatus.stdout) {
+    throw new Error("repeated installed vendor status changed its observable result");
+  }
+  const lifecycleContentAfter = await snapshotFilesystemTree(lifecycleContent.root);
+  if (
+    JSON.stringify(lifecycleContentAfter) !== JSON.stringify(lifecycleContentBefore)
+    || JSON.stringify(await snapshotFilesystemTree(dataRoot))
+      !== JSON.stringify(controllerBeforeVendorStatus)
+  ) {
+    throw new Error("installed vendor status changed content or controller state");
+  }
+
+  const buildArgs = [
+    "agent",
+    "plugins",
+    "build",
+    "--content-workspace",
+    lifecycleContent.root,
+    "--repository-identity",
+    lifecycleContent.repositoryIdentity,
+    "--content-authority",
+    lifecycleContent.contentAuthority,
+    "--remote-name",
+    "origin",
+    "--remote-url",
+    lifecycleContent.repositoryIdentity,
+    "--ref",
+    lifecycleContent.refName,
+    "--source-commit",
+    lifecycleContent.sourceCommit,
+    "--source-tree",
+    lifecycleContent.sourceTree,
+    "--release-input",
+    lifecycleContent.releaseInputPath,
+    "--plugin-root",
+    "plugins/agent",
+    "--plugin",
+    "fixture-plugin",
+    "--git-executable",
+    lifecycleContent.gitExecutable,
+    "--json",
+  ] as const;
+  const built = await invoke(buildArgs, "installed lifecycle build");
+  requireSuccess(built, "installed rawr agent plugins build");
+  const builtResult = requireLifecycleResult(
+    built,
+    "releases.build",
+    ["Published"],
+    "installed lifecycle build",
+  );
+  const builtRef = requireRecord(builtResult.ref, "installed lifecycle build ref");
+  if (
+    builtRef.kind !== "release"
+    || typeof builtRef.releaseDigest !== "string"
+    || typeof builtRef.artifactDigest !== "string"
+  ) {
+    throw new Error(`installed lifecycle build returned an invalid artifact ref: ${built.stdout.trim()}`);
+  }
+  const releaseHandle = `release:${builtRef.releaseDigest}:${builtRef.artifactDigest}`;
+  if (JSON.stringify(await snapshotFilesystemTree(lifecycleContent.root)) !== JSON.stringify(lifecycleContentBefore)) {
+    throw new Error("installed lifecycle build changed the content workspace");
+  }
+  const controllerAfterBuild = await snapshotFilesystemTree(dataRoot);
+  const repeatedBuild = await invoke(buildArgs, "repeated installed lifecycle build");
+  requireSuccess(repeatedBuild, "repeated installed rawr agent plugins build");
+  requireLifecycleResult(
+    repeatedBuild,
+    "releases.build",
+    ["ReadOnlyConverged"],
+    "repeated installed lifecycle build",
+  );
+  if (
+    JSON.stringify(await snapshotFilesystemTree(dataRoot)) !== JSON.stringify(controllerAfterBuild)
+    || JSON.stringify(await snapshotFilesystemTree(lifecycleContent.root)) !== JSON.stringify(lifecycleContentBefore)
+  ) {
+    throw new Error("repeated installed lifecycle build changed controller data or content bytes");
+  }
+
+  const providerHome = path.join(acceptanceRoot, "codex-home");
+  await mkdir(providerHome);
+  await requireCodexManagedIdentityAbsent({
+    executable: canonicalCodexExecutable,
+    home: providerHome,
+    contentAuthority: lifecycleContent.contentAuthority,
+    pluginId: "fixture-plugin",
+  });
+  const providerTestArgs = [
+    "agent",
+    "plugins",
+    "test",
+    "--release",
+    releaseHandle,
+    "--evaluation-profile",
+    "provider-smoke@v1",
+    "--target",
+    `codex=${providerHome}`,
+    "--provider-executable",
+    `codex=${canonicalCodexExecutable}`,
+    "--json",
+  ] as const;
+  const testedProvider = await invoke(providerTestArgs, "installed lifecycle provider test");
+  requireSuccess(testedProvider, "installed rawr agent plugins test");
+  requireProviderOutcome(
+    testedProvider,
+    "providers.targetedTest",
+    "Mutated",
+    "installed lifecycle provider test",
+  );
+  await requireCodexManagedIdentityPresent({
+    executable: canonicalCodexExecutable,
+    home: providerHome,
+    contentAuthority: lifecycleContent.contentAuthority,
+    pluginId: "fixture-plugin",
+  });
+  const providerHomeAfterFirst = await snapshotFilesystemTree(providerHome);
+  const controllerAfterProvider = await snapshotFilesystemTree(dataRoot);
+  const repeatedProvider = await invoke(
+    providerTestArgs,
+    "repeated installed lifecycle provider test",
+  );
+  requireSuccess(repeatedProvider, "repeated installed rawr agent plugins test");
+  requireProviderOutcome(
+    repeatedProvider,
+    "providers.targetedTest",
+    "ReadOnlyConverged",
+    "repeated installed lifecycle provider test",
+  );
+  const providerHomeAfterRepeat = await snapshotFilesystemTree(providerHome);
+  const controllerAfterProviderRepeat = await snapshotFilesystemTree(dataRoot);
+  requireOnlyCodexOperationalStateChanged(
+    providerHomeAfterFirst,
+    providerHomeAfterRepeat,
+    "repeated installed provider test",
+  );
+  if (JSON.stringify(controllerAfterProviderRepeat) !== JSON.stringify(controllerAfterProvider)) {
+    throw new Error(
+      "repeated installed provider test changed controller state: "
+      + describeFilesystemDifference(controllerAfterProvider, controllerAfterProviderRepeat),
+    );
+  }
+
+  const providerUndo = await invoke(
+    [
+      "agent",
+      "plugins",
+      "undo",
+      "--provider-executable",
+      `codex=${canonicalCodexExecutable}`,
+      "--json",
+    ],
+    "installed provider undo",
+  );
+  requireSuccess(providerUndo, "installed rawr agent plugins undo after provider test");
+  const providerUndoData = requireJsonData(providerUndo, "installed provider undo");
+  const providerUndoResult = requireRecord(providerUndoData.result, "installed provider undo result");
+  if (
+    providerUndoData.operation !== "controller.undo"
+    || providerUndoResult.kind !== "RestoredAndCleared"
+  ) {
+    throw new Error(`installed provider undo returned the wrong result: ${providerUndo.stdout.trim()}`);
+  }
+  await requireCodexManagedIdentityAbsent({
+    executable: canonicalCodexExecutable,
+    home: providerHome,
+    contentAuthority: lifecycleContent.contentAuthority,
+    pluginId: "fixture-plugin",
+  });
+  const controllerAfterProviderUndo = await snapshotFilesystemTree(dataRoot);
+  const providerHomeAfterUndo = await snapshotFilesystemTree(providerHome);
+  const repeatedProviderUndo = await invoke(
+    [
+      "agent",
+      "plugins",
+      "undo",
+      "--json",
+    ],
+    "repeated installed provider undo",
+  );
+  requireSuccess(repeatedProviderUndo, "repeated installed rawr agent plugins undo");
+  const repeatedProviderUndoData = requireJsonData(
+    repeatedProviderUndo,
+    "repeated installed provider undo",
+  );
+  const repeatedProviderUndoResult = requireRecord(
+    repeatedProviderUndoData.result,
+    "repeated installed provider undo result",
+  );
+  if (
+    repeatedProviderUndoData.operation !== "controller.undo"
+    || repeatedProviderUndoResult.kind !== "NoCommittedCapsule"
+    || JSON.stringify(await snapshotFilesystemTree(dataRoot))
+      !== JSON.stringify(controllerAfterProviderUndo)
+    || JSON.stringify(await snapshotFilesystemTree(providerHome))
+      !== JSON.stringify(providerHomeAfterUndo)
+  ) {
+    throw new Error(`repeated installed provider undo did not stutter: ${repeatedProviderUndo.stdout.trim()}`);
+  }
+
+  const unavailableContentRoot = `${lifecycleContent.root}.unavailable`;
+  await rename(lifecycleContent.root, unavailableContentRoot);
+  await requireMissing(lifecycleContent.root, "artifact-only lifecycle source locator");
+  const unavailableContentBefore = await snapshotFilesystemTree(unavailableContentRoot);
+
+  const packageRoot = path.join(acceptanceRoot, "package-output");
+  const packageOutput = path.join(packageRoot, "fixture.cowork.zip");
+  await mkdir(packageRoot);
+  const packageArgs = [
+    "agent",
+    "plugins",
+    "package",
+    "--artifact",
+    releaseHandle,
+    "--format",
+    "cowork-v1",
+    "--output",
+    packageOutput,
+    "--json",
+  ] as const;
+  const packaged = await invoke(packageArgs, "installed lifecycle package");
+  requireSuccess(packaged, "installed rawr agent plugins package");
+  requireLifecycleResult(
+    packaged,
+    "packaging.package",
+    ["OutputReplacedVerified"],
+    "installed lifecycle package",
+  );
+  const packageStatus = await lstat(packageOutput);
+  const packagedFixtureBytes = readClassicZipEntry(
+    await readFile(packageOutput),
+    "skills/example/SKILL.md",
+  );
+  if (
+    !packageStatus.isFile()
+    || !Buffer.from(packagedFixtureBytes).equals(Buffer.from(FIXTURE_SKILL_BYTES))
+  ) {
+    throw new Error("installed lifecycle package does not contain the admitted fixture bytes");
+  }
+  const packageAfterFirst = await snapshotFilesystemTree(packageRoot);
+  const controllerAfterPackage = await snapshotFilesystemTree(dataRoot);
+  const repeatedPackage = await invoke(packageArgs, "repeated installed lifecycle package");
+  requireSuccess(repeatedPackage, "repeated installed rawr agent plugins package");
+  requireLifecycleResult(
+    repeatedPackage,
+    "packaging.package",
+    ["ReadOnlyConverged"],
+    "repeated installed lifecycle package",
+  );
+  if (
+    JSON.stringify(await snapshotFilesystemTree(packageRoot)) !== JSON.stringify(packageAfterFirst)
+    || JSON.stringify(await snapshotFilesystemTree(dataRoot))
+      !== JSON.stringify(controllerAfterPackage)
+    || JSON.stringify(await snapshotFilesystemTree(unavailableContentRoot))
+      !== JSON.stringify(unavailableContentBefore)
+  ) {
+    throw new Error("repeated installed lifecycle package changed owned or unavailable source state");
+  }
+
+  const exportRoot = path.join(acceptanceRoot, "export-destination");
+  await mkdir(exportRoot);
+  const exportBefore = await snapshotFilesystemChildren(exportRoot);
+  const exportArgs = [
+    "agent",
+    "plugins",
+    "export",
+    "--artifact",
+    releaseHandle,
+    "--mode",
+    "targeted-release",
+    "--layout",
+    "codex-v1",
+    "--destination",
+    exportRoot,
+    "--overwrite",
+    "managed-only",
+    "--json",
+  ] as const;
+  const exported = await invoke(exportArgs, "installed lifecycle export");
+  requireSuccess(exported, "installed rawr agent plugins export");
+  requireLifecycleResult(
+    exported,
+    "exports.apply",
+    ["MutatedSettled"],
+    "installed lifecycle export",
+  );
+  const exportedSkillRelativePath = "codex/plugins/fixture-plugin/skills/example/SKILL.md";
+  const exportedSkillBytes = await readFile(path.join(exportRoot, exportedSkillRelativePath));
+  const exportLedger = requireRecord(
+    JSON.parse(
+      await readFile(path.join(exportRoot, ".rawr-agent-plugin-export-ledger-v1.json"), "utf8"),
+    ) as unknown,
+    "installed lifecycle export ledger",
+  );
+  const exportLedgerBody = requireRecord(exportLedger.body, "installed lifecycle export ledger body");
+  const exportScopes = exportLedgerBody.scopes;
+  const exportScope = Array.isArray(exportScopes) && exportScopes.length === 1
+    ? requireRecord(exportScopes[0], "installed lifecycle export ledger scope")
+    : null;
+  const exportFileClaims = exportScope?.files;
+  if (
+    !Buffer.from(exportedSkillBytes).equals(Buffer.from(FIXTURE_SKILL_BYTES))
+    || exportLedgerBody.canonicalDestination !== await realpath(exportRoot)
+    || exportLedgerBody.layout !== "codex-v1"
+    || exportLedgerBody.generation !== 1
+    || exportScope?.pluginId !== "fixture-plugin"
+    || exportScope?.releaseDigest !== builtRef.releaseDigest
+    || !Array.isArray(exportFileClaims)
+    || exportFileClaims.length !== 1
+    || requireRecord(exportFileClaims[0], "installed lifecycle export ledger file claim").relativePath
+      !== exportedSkillRelativePath
+  ) {
+    throw new Error("installed lifecycle export bytes and ownership ledger do not match the artifact");
+  }
+  const exportAfterFirst = await snapshotFilesystemTree(exportRoot);
+  const controllerAfterExport = await snapshotFilesystemTree(dataRoot);
+  const repeatedExport = await invoke(exportArgs, "repeated installed lifecycle export");
+  requireSuccess(repeatedExport, "repeated installed rawr agent plugins export");
+  requireLifecycleResult(
+    repeatedExport,
+    "exports.apply",
+    ["ReadOnlyConverged"],
+    "repeated installed lifecycle export",
+  );
+  if (
+    JSON.stringify(await snapshotFilesystemTree(exportRoot)) !== JSON.stringify(exportAfterFirst)
+    || JSON.stringify(await snapshotFilesystemTree(dataRoot)) !== JSON.stringify(controllerAfterExport)
+    || JSON.stringify(await snapshotFilesystemTree(unavailableContentRoot))
+      !== JSON.stringify(unavailableContentBefore)
+  ) {
+    throw new Error("repeated installed lifecycle export changed managed state");
+  }
+  const exportUndo = await invoke(
+    ["agent", "plugins", "undo", "--json"],
+    "installed export undo",
+  );
+  requireSuccess(exportUndo, "installed rawr agent plugins undo after export");
+  const exportUndoData = requireJsonData(exportUndo, "installed export undo");
+  const exportUndoResult = requireRecord(exportUndoData.result, "installed export undo result");
+  const exportAfterUndo = await snapshotFilesystemChildren(exportRoot);
+  const providerAfterExportUndo = await snapshotFilesystemTree(providerHome);
+  const packageAfterExportUndo = await snapshotFilesystemTree(packageRoot);
+  const sourceAfterExportUndo = await snapshotFilesystemTree(unavailableContentRoot);
+  const registryAfterExportUndo = await snapshotExternalRegistry(dataRoot);
+  if (
+    exportUndoData.operation !== "controller.undo"
+    || exportUndoResult.kind !== "RestoredAndCleared"
+    || JSON.stringify(exportAfterUndo) !== JSON.stringify(exportBefore)
+    || JSON.stringify(providerAfterExportUndo) !== JSON.stringify(providerHomeAfterUndo)
+    || JSON.stringify(packageAfterExportUndo) !== JSON.stringify(packageAfterFirst)
+    || JSON.stringify(sourceAfterExportUndo) !== JSON.stringify(unavailableContentBefore)
+    || JSON.stringify(registryAfterExportUndo) !== JSON.stringify(externalRegistryBeforeLifecycle)
+  ) {
+    throw new Error(
+      "installed export undo did not restore only its destination: "
+      + `result=${exportUndo.stdout.trim()}; `
+      + `destination=${describeFilesystemDifference(exportBefore, exportAfterUndo)}; `
+      + `provider=${describeFilesystemDifference(providerHomeAfterUndo, providerAfterExportUndo)}; `
+      + `package=${describeFilesystemDifference(packageAfterFirst, packageAfterExportUndo)}; `
+      + `source=${describeFilesystemDifference(unavailableContentBefore, sourceAfterExportUndo)}; `
+      + `registry=${describeFilesystemDifference(externalRegistryBeforeLifecycle, registryAfterExportUndo)}`,
+    );
+  }
+  const controllerAfterExportUndo = await snapshotFilesystemTree(dataRoot);
+  const repeatedExportUndo = await invoke(
+    ["agent", "plugins", "undo", "--json"],
+    "empty-capsule undo after export",
+  );
+  requireSuccess(repeatedExportUndo, "empty-capsule rawr agent plugins undo after export");
+  const repeatedExportUndoData = requireJsonData(
+    repeatedExportUndo,
+    "empty-capsule undo after export",
+  );
+  const repeatedExportUndoResult = requireRecord(
+    repeatedExportUndoData.result,
+    "empty-capsule undo after export result",
+  );
+  if (
+    repeatedExportUndoData.operation !== "controller.undo"
+    || repeatedExportUndoResult.kind !== "NoCommittedCapsule"
+    || JSON.stringify(await snapshotFilesystemTree(dataRoot))
+      !== JSON.stringify(controllerAfterExportUndo)
+    || JSON.stringify(await snapshotFilesystemChildren(exportRoot)) !== JSON.stringify(exportBefore)
+    || JSON.stringify(await snapshotFilesystemTree(providerHome))
+      !== JSON.stringify(providerHomeAfterUndo)
+    || JSON.stringify(await snapshotFilesystemTree(packageRoot)) !== JSON.stringify(packageAfterFirst)
+    || JSON.stringify(await snapshotFilesystemTree(unavailableContentRoot))
+      !== JSON.stringify(unavailableContentBefore)
+  ) {
+    throw new Error(`empty-capsule undo after export did not stutter: ${repeatedExportUndo.stdout.trim()}`);
+  }
+  const captureRefusalOwners = async (): Promise<string> => JSON.stringify({
+    controller: await snapshotFilesystemTree(dataRoot),
+    externalRegistry: await snapshotExternalRegistry(dataRoot),
+    packageOutput: await snapshotFilesystemTree(packageRoot),
+    exportDestination: await snapshotFilesystemTree(exportRoot),
+    providerHome: await snapshotFilesystemTree(providerHome),
+    unavailableContent: await snapshotFilesystemTree(unavailableContentRoot),
+  });
+  const invalidOutput = path.join(hostile.cwd, "invalid.cowork.zip");
+  await requireMissing(invalidOutput, "invalid lifecycle package output");
+  const beforeInvalidLifecycle = await captureRefusalOwners();
+  const invalidLifecycle = await invoke(
+    [
+      "agent",
+      "plugins",
+      "package",
+      "--artifact",
+      "not-an-artifact",
+      "--format",
+      "cowork-v1",
+      "--output",
+      invalidOutput,
+      "--json",
+    ],
+    "invalid qualified lifecycle input",
+  );
+  requireFailure(invalidLifecycle, "invalid qualified lifecycle input");
+  await requireMissing(invalidOutput, "refused lifecycle package output");
+  if (await captureRefusalOwners() !== beforeInvalidLifecycle) {
+    throw new Error("invalid qualified lifecycle input changed an owned state boundary");
+  }
+  const ownersBeforeRetiredRefusals = await captureRefusalOwners();
+  for (const retired of RETIRED_CURATED_COMMANDS) {
+    const refusal = await invoke(retired.argv, retired.label);
+    requireFailure(refusal, retired.label);
+  }
+  if (await captureRefusalOwners() !== ownersBeforeRetiredRefusals) {
+    throw new Error("a retired curated command refusal changed an owned state boundary");
+  }
+  const externalRegistryAfterLifecycle = await snapshotExternalRegistry(dataRoot);
+  if (JSON.stringify(externalRegistryAfterLifecycle) !== JSON.stringify(externalRegistryBeforeLifecycle)) {
+    throw new Error("qualified agent plugin commands changed external Oclif registry state");
+  }
 
   const hello = await invoke(["hello"], "external hello");
   requireSuccess(hello, "installed rawr hello");
@@ -778,6 +1832,40 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
       startup: ["--version", "--help", "routine snapshot", "doctor global", "plugins list", "plugins reset"],
       manifestCommandCount: officialCommandIds.length,
       manifestCommandIds: officialCommandIds,
+      qualifiedLifecycleCommandCount: lifecycleCommandIds.length,
+      externalRegistryUnchanged: true,
+    },
+    installedLifecycle: {
+      schemaRealm: "typebox@1.3.6-refine-enforced",
+      vendorsStatus: "repeated-read-only-converged",
+      contentWorkspace: "unchanged-then-unavailable",
+      build: "published-then-read-only-converged",
+      provider: {
+        transition: "mutated-converged-restored-empty-capsule-stutter",
+        observedBoundary: "complete-disposable-provider-home",
+        nativeOperationalState: {
+          claim: "not-byte-idempotent-across-native-codex-inspection",
+          mutableFiles: [...CODEX_MUTABLE_OPERATIONAL_FILES],
+          transientFiles: [...CODEX_TRANSIENT_OPERATIONAL_FILES],
+          mutableDirectories: [...CODEX_MUTABLE_OPERATIONAL_DIRECTORIES],
+          exactOutsideThatSet: true,
+        },
+        nativeBootstrapAfterUndo: {
+          claim: "not-restored-to-pristine-empty-home",
+          oracle: "managed marketplace, member, enablement, config, cache, and skill identity are absent",
+        },
+        sameIdReplacementAndOmission: {
+          claim: "not-claimed-by-installed-black-box",
+          reason: "this proof carries one immutable fixture release",
+          delegatedProof: [
+            "services/agent-plugin-lifecycle/test/modules/providers/core-state-machine.test.ts",
+            "services/agent-plugin-lifecycle/test/modules/providers/native-adapters.test.ts",
+          ],
+        },
+      },
+      package: "published-then-read-only-converged",
+      export: "mutated-settled-converged-restored-empty-capsule-stutter",
+      retiredCuratedCommands: RETIRED_CURATED_COMMANDS.map(({ label }) => label),
     },
     externalLifecycle: [
       "empty-reset",

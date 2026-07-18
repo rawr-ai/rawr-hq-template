@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "id": "require_agent_plugin_command_channel_topology",
+  "title": "Require Agent Plugin Command Channel Topology",
+  "placement": {
+    "niche": "rawr/agent-plugin-lifecycle",
+    "blueprint": "_self",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/agent-plugin-lifecycle",
+  "lane": "enforced",
+  "forbids": "a second controller runtime projection, a second curated command namespace, nested command aliases, or external-extension commands under the curated channel",
+  "why": "Controller reachability and command authority are closed axes: one lifecycle projection binds the service, curated lifecycle is under rawr agent plugins, and external Oclif extension management is under rawr plugins.",
+  "remediate": "Keep controller projection code under the declared service-runtime roots, curated commands under agent/plugins, vendor commands under agent/plugins/vendors, and external extension commands under plugins.",
+  "message": "Agent-plugin controller projection and command channels must remain in their closed topology.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "apps/cli/src/lib/agent-plugins/service-runtime/**",
+        "apps/cli/src/commands/agent/**",
+        "apps/cli/src/commands/plugins/**"
+      ]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/rawr/agent-plugin-lifecycle/rules/require_agent_plugin_command_channel_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/rawr/agent-plugin-lifecycle/rules/require_agent_plugin_command_channel_topology/structure.toml"
+    }
+  }
+}

@@ -87,15 +87,6 @@ export const controllerCommandPackages = [
     discoverCommands: true,
   },
   {
-    disposition: "controller-member",
-    packageId: "@rawr/plugin-plugins",
-    source: "workspace",
-    sourceRoot: "plugins/cli/plugins",
-    commandManifestInput: "plugins/cli/plugins/package.json#oclif.commands",
-    role: "command-module",
-    discoverCommands: true,
-  },
-  {
     disposition: "external-fixture",
     packageId: "@rawr/plugin-hello",
     source: "workspace",

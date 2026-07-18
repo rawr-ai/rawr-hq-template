@@ -5,8 +5,6 @@ import {
   RawrConfigV1Schema,
   type RawrConfig,
   type RawrConfigV1,
-  type SyncDestination,
-  type SyncProvider,
 } from "../entities";
 
 const clampInt = (value: number, min: number, max: number) =>
@@ -23,55 +21,6 @@ function formatTypeBoxIssues(maybeConfig: unknown): ConfigValidationIssue[] {
   });
 }
 
-function normalizeDestinations(
-  dests: SyncDestination[] | undefined,
-): SyncDestination[] | undefined {
-  if (!dests) return undefined;
-  return dests.map((d) => {
-    const out: any = {
-      ...d,
-      enabled: d.enabled ?? true,
-      id: String(d.id).trim(),
-    };
-    if (typeof d.rootPath === "string") out.rootPath = d.rootPath.trim();
-    return out as SyncDestination;
-  });
-}
-
-function normalizeProvider(
-  _providerKey: "codex" | "claude",
-  provider: SyncProvider | undefined,
-): SyncProvider | undefined {
-  if (!provider) return undefined;
-  return {
-    ...provider,
-    includeAgents: provider.includeAgents ?? true,
-    destinations: normalizeDestinations(provider.destinations),
-  };
-}
-
-function validateNonEmptyTrimmed(pathKey: string, value: string | undefined, issues: ConfigValidationIssue[]) {
-  if (value === undefined) return;
-  if (value.trim().length === 0) issues.push({ path: pathKey, message: "must be non-empty" });
-}
-
-function validateSyncDestinations(cfg: RawrConfigV1, issues: ConfigValidationIssue[]) {
-  const providers = cfg.sync?.providers;
-  if (!providers) return;
-
-  const checkProvider = (providerKey: "codex" | "claude") => {
-    const dests = providers[providerKey]?.destinations ?? [];
-    for (let i = 0; i < dests.length; i += 1) {
-      const d = dests[i]!;
-      const base = `sync.providers.${providerKey}.destinations.${i}`;
-      validateNonEmptyTrimmed(`${base}.id`, d.id, issues);
-    }
-  };
-
-  checkProvider("codex");
-  checkProvider("claude");
-}
-
 export function formatIssues(issues: ConfigValidationIssue[]): string {
   return issues.map((i) => `${i.path}: ${i.message}`).join("\n");
 }
@@ -85,24 +34,8 @@ export function validateRawrConfig(
 
   const cfg = maybeConfig as RawrConfigV1;
 
-  const issues: ConfigValidationIssue[] = [];
-  validateSyncDestinations(cfg, issues);
-  if (issues.length) return { ok: false, issues };
-
   const normalized: RawrConfig = {
     ...cfg,
-    plugins: cfg.plugins
-      ? {
-          ...cfg.plugins,
-          channels: {
-            workspace: { enabled: cfg.plugins.channels?.workspace?.enabled ?? true },
-            external: { enabled: cfg.plugins.channels?.external?.enabled ?? false },
-          },
-          defaultRiskTolerance: cfg.plugins.defaultRiskTolerance,
-        }
-      : {
-          channels: { workspace: { enabled: true }, external: { enabled: false } },
-        },
     journal: cfg.journal?.semantic
       ? {
           ...cfg.journal,
@@ -120,30 +53,6 @@ export function validateRawrConfig(
           baseUrl: cfg.server.baseUrl,
         }
       : cfg.server,
-    sync: cfg.sync
-      ? {
-          ...cfg.sync,
-          sourceWorkspace: cfg.sync.sourceWorkspace
-            ? {
-                ...cfg.sync.sourceWorkspace,
-                rootPath: cfg.sync.sourceWorkspace.rootPath?.trim(),
-              }
-            : cfg.sync.sourceWorkspace,
-          sources: cfg.sync.sources
-            ? {
-                ...cfg.sync.sources,
-                paths: cfg.sync.sources.paths?.map((p) => String(p).trim()).filter((p) => p.length > 0),
-              }
-            : cfg.sync.sources,
-          providers: cfg.sync.providers
-            ? {
-                ...cfg.sync.providers,
-                codex: normalizeProvider("codex", cfg.sync.providers.codex),
-                claude: normalizeProvider("claude", cfg.sync.providers.claude),
-              }
-            : cfg.sync.providers,
-        }
-      : cfg.sync,
   };
 
   const model = normalized.journal?.semantic?.model;

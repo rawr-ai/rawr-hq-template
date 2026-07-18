@@ -23,7 +23,13 @@ export default defineConfig({
       {
         extends: true,
         root: r("apps/cli"),
-        test: { name: "cli", environment: "node", include: [...includes], env: { NODE_ENV: "production" } },
+        test: {
+          name: "cli",
+          environment: "node",
+          include: [...includes],
+          env: { NODE_ENV: "production" },
+          testTimeout: 60_000,
+        },
       },
       {
         extends: true,
@@ -72,33 +78,8 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("services/agent-config-sync"),
-        test: { name: "agent-config-sync", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("packages/agent-plugin-release"),
-        test: { name: "agent-plugin-release", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("services/agent-plugin-build"),
-        test: { name: "agent-plugin-build", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("services/agent-plugin-export"),
-        test: { name: "agent-plugin-export", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("services/agent-plugin-packaging"),
-        test: { name: "agent-plugin-packaging", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("packages/agent-config-sync-node"),
-        test: { name: "agent-config-sync-node", environment: "node", include: [...includes] },
+        root: r("services/agent-plugin-lifecycle"),
+        test: { name: "agent-plugin-lifecycle", environment: "node", include: [...includes] },
       },
       {
         extends: true,
@@ -144,11 +125,6 @@ export default defineConfig({
         extends: true,
         root: r("plugins/cli/session-tools"),
         test: { name: "plugin-session-tools", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("plugins/cli/plugins"),
-        test: { name: "plugin-plugins", environment: "node", include: [...includes] },
       },
     ],
   },

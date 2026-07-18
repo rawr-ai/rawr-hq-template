@@ -1,83 +1,77 @@
-# Plugin Lifecycle Contract
+# Curated Agent-Plugin Lifecycle Contract
 
-> **Canonical scope**: plugin-system changes only (`plugins/cli/*`, `plugins/web/*`, `plugins/agents/*`, `services/agent-config-sync/*`, `plugins/cli/plugins/*`, directly related docs/tests).
-> **Related**: `policy-classification.md`, `judge-template-pass-a.md`, `judge-template-pass-b.md`, `plugins/agents/hq/workflows/merge-no-policy-stack.md`
+> **Canonical scope**: governed content and release records in an independent
+> content repository, operated by the Template-owned controller through explicit
+> data, artifact, export, and provider interfaces.
+>
+> **Related**: [[workflow.md]] and
+> [[../../../workflows/lifecycle-agent-plugin.md]].
 
-## Purpose
+## Authority
 
-Define one strict, reusable lifecycle quality contract for plugin creation, update, rename, move, and deletion. This contract is the source of truth for:
+- The content repository owns curated source, vendor provenance, declarative
+  policy/evaluation inputs, and its governed release/channel records.
+- RAWR HQ-Template owns the controller, lifecycle service, provider adapters,
+  schemas, tooling, and generic validation.
+- Repository path locates content. It does not create code ancestry, controller
+  identity, artifact identity, or provider authority.
+- External Oclif extension state belongs only to `rawr plugins ...` and is
+  outside this contract.
 
-- runbooks,
-- executable workflows,
-- `rawr plugins lifecycle check`,
-- `rawr plugins improve`,
-- `rawr plugins sweep`.
+## Operation Contracts
 
-## Required Lifecycle Steps
+Select exactly one operation. Its listed authority inputs are sufficient; no
+branch silently runs `check`, cleans a checkout, or starts another operation.
 
-For each unit of change, all steps are mandatory unless explicitly marked `N/A` with rationale:
+- **Source authoring**: `rawr agent plugins create` takes an explicit content
+  workspace as its output location and changes source only. It is outside the
+  governed release transitions below.
+- **Vendor inspection or authoring**: `rawr agent plugins vendors status` and
+  `rawr agent plugins vendors update` take exact content-workspace repository
+  coordinates. Update also takes the explicitly selected vendor-source ids.
+- **Candidate check**: `rawr agent plugins check` takes exact content-workspace
+  repository, commit, tree, release-input, plugin-root, and target-or-complete-set
+  coordinates. It publishes nothing.
+- **Immutable build**: `rawr agent plugins build` takes those same exact
+  content-workspace coordinates and independently produces immutable artifact
+  handles. A separate check result is not an ambient prerequisite.
+- **Package**: `rawr agent plugins package` takes one immutable artifact handle,
+  an exact format, and an explicit output path. It does not read source.
+- **Export**: `rawr agent plugins export` takes one immutable artifact handle,
+  exact mode and layout, explicit destinations, and overwrite policy. Each
+  destination remains governed by its own ledger.
+- **Provider test**: `rawr agent plugins test` takes immutable targeted-release
+  handles or one immutable complete-set handle, an evaluation profile, and
+  explicit provider homes and executables.
+- **Provider convergence or inspection**: `rawr agent plugins sync` and
+  `rawr agent plugins status` take the governed channel locator and explicit
+  provider homes. They do not rediscover a release set from source.
+- **Provider retirement**: `rawr agent plugins retire` binds the governing
+  immutable complete set, one exact managed member proven absent from it, and
+  explicit provider homes. It does not scan a checkout to infer absence.
+- **Promotion attestation**: `rawr agent plugins attest-promotion` takes exact
+  repository identity and policy, request, acceptance, and landed release-input
+  Git object pointers. It does not substitute a workspace's current state.
+- **Undo**: `rawr agent plugins undo` uses the controller-owned last-operation
+  capsule as its only lifecycle input. Controller runtime bindings may transport
+  replay, but never supply undo truth. The controller never invents an inverse
+  from another owner's current state.
 
-1. **Artifact step**
-- create/update/delete the target artifact(s) only in canonical source paths.
-- keep agent-plugin convergence separate from app composition and runtime realization; retired web-membership and scaffold command families remain absent.
+Within governed lifecycle operations, content-workspace bytes are admissible
+only to vendor, check, and build branches. Package, export, test, provider-state,
+attestation, and undo branches must bind their own owner-specific authority.
 
-2. **Tests step**
-- update or add tests for behavior and failure modes affected by the change.
-- include regression coverage for renamed/deleted/moved lifecycle operations where relevant.
+## Acceptance
 
-3. **Docs step**
-- update artifact-local docs (for example `README.md`) and process docs affected by behavior/contract changes.
-- keep docs and command flags in sync.
-
-4. **Dependents step**
-- audit references to plugin ids/names/paths/contracts outside the edited target.
-- update dependents or explicitly state no dependent changes are required.
-
-5. **Sync/drift verification step**
-- run:
-  - `rawr plugins sync all --dry-run --json`
-  - `rawr plugins sync drift --json`
-- verify expected signals and no unresolved drift/conflicts.
-
-6. **Done checklist step**
-- record completion with explicit pass/fail for artifact/tests/docs/dependents/sync-drift.
-
-## Minimum Acceptance Criteria
-
-A change unit passes lifecycle quality only when all are true:
-
-- tests: `pass`
-- docs: `pass`
-- dependents: `pass`
-- sync/drift: `pass`
-- no unresolved lifecycle blockers
-
-## Output Contract (Machine-readable)
-
-Every lifecycle checkable unit produces this shape:
-
-```json
-{
-  "changeUnitId": "string",
-  "scope": "plugin-system",
-  "lifecycleCheck": {
-    "status": "pass|fail",
-    "missingTests": ["..."],
-    "missingDocs": ["..."],
-    "missingDependents": ["..."],
-    "syncVerified": true,
-    "driftVerified": true
-  }
-}
-```
+The selected branch settles only when its exact input and output identities,
+owner receipts or ledgers, state-transition proof, and any required repeated
+convergence proof pass. Unselected branches do not run and need no synthetic
+`N/A` execution.
 
 ## Guardrails
 
-- Do not classify behavior/policy changes as no-policy.
-- Do not auto-merge when lifecycle check fails.
-- Do not skip dependent audit on rename/move/delete.
-
-## Future Direction
-
-Current state uses LLM-based policy judging (see `policy-classification.md`).
-Target state is deterministic policy-block composition + deterministic policy diffing.
+- Do not edit provider homes, export destinations, registries, or caches as preparation.
+- Do not infer a release set by scanning ambient workspaces.
+- Do not use package/export as a fallback for native provider convergence.
+- Do not use app, web, or runtime composition to bridge lifecycle owners.
+- Do not add aliases or compatibility commands for retired mixed lifecycle paths.

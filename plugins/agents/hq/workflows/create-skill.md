@@ -12,8 +12,8 @@ Create a **new** skill directory that follows the Agent Skills spec and quality 
 
 <core_rules>
 - Never overwrite, rename, or delete existing content unless the user explicitly asks.
-- Author in the workspace plugin tree: `plugins/agents/<plugin>/...`
-- Sync via: `bun run rawr -- plugins sync <plugin-ref> --dry-run --json`, then apply.
+- Author only in the explicit content workspace under `plugins/agents/<plugin>/...`.
+- Authoring never builds, exports, syncs, retires, or edits provider homes.
 - Keep `SKILL.md` small; prefer one-hop references from `SKILL.md`.
 - Apply quality patterns from the `skill-authoring` skill and its references.
 </core_rules>
@@ -83,18 +83,20 @@ Notes: $ARGUMENTS
 
 <step name="review">
 1. Invoke `content-reviewer` on the new/modified files under `plugins/agents/$P/skills/$S/`.
-2. Fix critical issues before syncing.
+2. Fix critical issues before the source change is complete.
 </step>
 
-<step name="sync-to-codex">
-1. Dry-run sync: `bun run rawr -- plugins sync $P --dry-run --json`
-2. If the preview looks correct, apply sync: `bun run rawr -- plugins sync $P --json`
+<step name="lifecycle-handoff">
+1. Record `$P` as the skill's release and distribution owner.
+2. Stop after source verification. If the user explicitly asks to exercise the
+   lifecycle, route the parent plugin through `rawr agent plugins check` using
+   its governed release input; do not start build or provider convergence here.
 </step>
 
 <step name="report-back">
 1. List every file touched (clickable paths).
 2. One-line summary per file (what/why).
-3. Note any follow-ups or open questions (optional).
+3. Note source verification and any explicit lifecycle handoff (optional).
 </step>
 
 </workflow>

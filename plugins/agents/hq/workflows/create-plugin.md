@@ -12,7 +12,10 @@ This command is intentionally thin: it scaffolds the plugin container, then dele
 <core_rules>
 - Don’t overwrite/rename/delete existing content unless the user explicitly asks.
 - Keep scaffolds minimal; add only what the plugin needs now.
-- Use the external plugin sync surface: `bun run rawr -- plugins sync ...` (dry-run first).
+- Author only in the explicit content workspace. Source authoring never triggers
+  build, export, provider convergence, or retirement automatically.
+- Curated agent-plugin lifecycle uses `rawr agent plugins ...`; `rawr plugins ...`
+  is reserved for external Oclif extensions.
 </core_rules>
 
 <inputs>
@@ -52,25 +55,14 @@ Notes: `$ARGUMENTS`
 2. Prefer many small, focused skills over one monolith.
 </step>
 
-<step name="review-and-deploy">
+<step name="review-and-handoff">
 1. Run a plugin-level review using `content-reviewer` (critical issues first).
-2. Dry-run sync:
-   ```bash
-   bun run rawr -- plugins sync $P --dry-run --json
-   ```
-3. Run lifecycle gate before apply:
-   ```bash
-   rawr plugins sync all --dry-run --json
-   rawr plugins sync drift --json
-   rawr plugins lifecycle check --target "plugins/agents/$P" --type composed --json
-   ```
-4. If lifecycle check fails, fix tests/docs/dependents gaps before apply.
-5. Apply if preview + lifecycle gate are correct:
-   ```bash
-   bun run rawr -- plugins sync $P --json
-   ```
-6. If Claude agents aren’t discoverable after sync, verify marketplace registration:
-   - `~/.claude/plugins/local/.claude-plugin/marketplace.json` contains an entry for `$P`.
+2. Run source-level tests and audit references to the new plugin identity.
+3. Stop after source and review. Do not edit marketplace/provider state directly.
+4. If the user explicitly requests lifecycle verification, hand the complete
+   plugin to [[plugins/agents/hq/workflows/lifecycle-agent-plugin]]. The
+   controller begins with `rawr agent plugins check`; later mutating operations
+   remain separate, explicit decisions.
 </step>
 
 </workflow>

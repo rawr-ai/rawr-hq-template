@@ -1,0 +1,171 @@
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/shared/release";
+import { describe, expect, it } from "vitest";
+
+import { createGovernanceCurrentMainResolver } from "../../../src/bindings/governance";
+import {
+  canonicalSerializeCurrentMainRecord,
+  createCurrentMainRecord,
+} from "../../../src/service/modules/governance/model";
+import { createLifecycleTestClient, testInvocation } from "../../support/client";
+import {
+  MAIN_REF,
+  MemoryApprovalReader,
+  mustPromotion,
+  oid,
+  pointer,
+  promotionFixture,
+  releaseInputFixture,
+} from "./fixtures";
+
+describe("fixed current-main resolution (B14)", () => {
+  it("classifies a lifecycle-record-only landed commit as accepted pending convergence", async () => {
+    const fixture = promotionFixture();
+    const result = await resolve(fixture);
+
+    expect(result.kind).toBe("ACCEPTED_PENDING_CONVERGENCE");
+    expect(fixture.git.inspectedRefs).toEqual([MAIN_REF, MAIN_REF]);
+    expect(fixture.git.calls.isAncestor).toBe(1);
+    expect(fixture.git.calls.listChangedPaths).toBe(1);
+  });
+
+  it("classifies equivalent current input with ordinary later tree changes as current eligible", async () => {
+    const fixture = promotionFixture();
+    fixture.git.changedPaths = ["README.md"];
+    const result = await resolve(fixture);
+
+    expect(result.kind).toBe("CURRENT_ELIGIBLE");
+  });
+
+  it("distinguishes content ahead of acceptance without rebuilding", async () => {
+    const fixture = promotionFixture();
+    const changed = releaseInputFixture("content-ahead\n");
+    const changedObject = pointer({
+      ref: fixture.currentInputObject.ref,
+      commit: fixture.currentInputObject.commit,
+      tree: fixture.currentInputObject.tree,
+      path: fixture.currentInputObject.path,
+      blob: oid("1"),
+    });
+    fixture.git.add(changedObject, canonicalSerializeAgentPluginReleaseInput(changed));
+
+    const result = await resolve(fixture);
+
+    expect(result.kind).toBe("CONTENT_AHEAD_OF_ACCEPTANCE");
+    expect(fixture.git.calls.listChangedPaths).toBe(0);
+  });
+
+  it("classifies missing transitive promotion bytes as stale", async () => {
+    const fixture = promotionFixture();
+    const missingPromotion = pointer({
+      ref: MAIN_REF,
+      commit: oid("4"),
+      tree: oid("5"),
+      path: fixture.promotionObject.path,
+      blob: oid("2"),
+    });
+    const stale = mustPromotion(createCurrentMainRecord({
+      ...fixture.currentMain.body,
+      promotionObject: missingPromotion,
+    }));
+    fixture.git.add(fixture.currentMainObject, canonicalSerializeCurrentMainRecord(stale));
+
+    const result = await resolve(fixture);
+
+    expect(result.kind).toBe("STALE_RECORD");
+  });
+
+  it("classifies an unreachable external promotion attestation as forged", async () => {
+    const fixture = promotionFixture();
+    fixture.git.ancestor = false;
+    const result = await resolve(fixture);
+
+    expect(result.kind).toBe("FORGED_RECORD");
+  });
+
+  it("blocks a valid-looking channel when hosted acceptance authority is unavailable", async () => {
+    const fixture = promotionFixture();
+    fixture.approvalReader.history = undefined;
+    const result = await resolve(fixture);
+
+    expect(result.kind).toBe("BLOCKED_ACCEPTANCE_AUTHORITY");
+  });
+
+  it("classifies altered current-main bytes as forged", async () => {
+    const fixture = promotionFixture();
+    const bytes = canonicalSerializeCurrentMainRecord(fixture.currentMain);
+    const wire = JSON.parse(new TextDecoder().decode(bytes)) as {
+      body: { releaseSetDigest: string };
+    };
+    wire.body.releaseSetDigest = `rs1_${"0".repeat(64)}`;
+    fixture.git.add(fixture.currentMainObject, new TextEncoder().encode(`${JSON.stringify(wire)}\n`));
+
+    const result = await resolve(fixture);
+
+    expect(result.kind).toBe("FORGED_RECORD");
+  });
+
+  it.each([
+    ["DIRTY_REPOSITORY", { kind: "DirtyRepository" }],
+    ["WRONG_REPOSITORY", { kind: "WrongRepository", actualRepositoryIdentity: "git:github.com/example/other" }],
+    ["UNREACHABLE_REPOSITORY", { kind: "UnreachableRepository", reason: "offline" }],
+  ] as const)("returns %s before record reads", async (expected, inspection) => {
+    const fixture = promotionFixture();
+    fixture.git.inspection = inspection;
+    const result = await resolve(fixture);
+
+    expect(result.kind).toBe(expected);
+    expect(fixture.git.calls.readBlob).toBe(0);
+    expect(fixture.evidenceReader.calls).toBe(0);
+    expect(fixture.approvalReader.calls).toBe(0);
+  });
+});
+
+describe("governance current-main binding", () => {
+  it("delegates a valid locator to the governance owner", async () => {
+    const fixture = promotionFixture();
+    fixture.git.inspection = { kind: "DirtyRepository" };
+    const resolver = createGovernanceCurrentMainResolver({
+      git: fixture.git,
+      evidence: fixture.evidenceReader,
+      approvals: fixture.approvalReader,
+    });
+
+    await expect(resolver.resolve(fixture.locator)).resolves.toEqual({
+      kind: "DIRTY_REPOSITORY",
+      reason: "Canonical content workspace is dirty",
+    });
+    expect(fixture.git.inspectedRefs).toEqual([MAIN_REF]);
+  });
+
+  it("rejects an invalid repository identity before governance resources are touched", async () => {
+    const fixture = promotionFixture();
+    const resolver = createGovernanceCurrentMainResolver({
+      git: fixture.git,
+      evidence: fixture.evidenceReader,
+      approvals: fixture.approvalReader,
+    });
+
+    await expect(resolver.resolve({
+      workspacePath: fixture.locator.workspacePath,
+      expectedRepositoryIdentity: "not-a-repository",
+    })).resolves.toMatchObject({ kind: "WRONG_REPOSITORY" });
+    expect(fixture.git.inspectedRefs).toEqual([]);
+    expect(fixture.git.calls).toEqual({
+      inspect: 0,
+      readBlob: 0,
+      isAncestor: 0,
+      listChangedPaths: 0,
+    });
+    expect(fixture.evidenceReader.calls).toBe(0);
+    expect(fixture.approvalReader.calls).toBe(0);
+  });
+});
+
+async function resolve(fixture: ReturnType<typeof promotionFixture>) {
+  const client = createLifecycleTestClient({ governance: {
+    git: fixture.git,
+    evidence: fixture.evidenceReader,
+    approvals: fixture.approvalReader,
+  } });
+  return client.governance.resolveCurrentMain({ locator: fixture.locator }, testInvocation);
+}

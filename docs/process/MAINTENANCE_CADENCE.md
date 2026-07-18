@@ -11,7 +11,7 @@ git status --short
 gt trunk
 ./scripts/dev/check-remotes.sh
 rawr doctor global --json
-rg -n "upstream sync|merge-first|template-managed paths|rawr plugins converge|rawr plugins doctor links" README.md AGENTS.md AGENTS_SPLIT.md CONTRIBUTING.md UPDATING.md docs scripts --glob '!docs/_archive/**' --glob '!**/quarantine/**' --glob '!openspec/changes/**' --glob '!docs/process/MAINTENANCE_CADENCE.md'
+bun run ratchet:required
 rg -n "\]\(([^)#]+)\)" docs --glob '*.md'
 ```
 
@@ -21,9 +21,14 @@ Interpretation:
 - `check-remotes.sh` must pass.
 - `doctor global` should report one verified installed controller release and no
   checkout owner.
-- The first `rg` command should return no active repository-sync, tree-preservation,
-  or removed lifecycle-command guidance outside archive/quarantine/provenance.
-- The second `rg` command is a quick markdown-link surface scan used before deeper audits.
+- Root lint and typecheck must cover every Nx project that declares those
+  targets; no hand-maintained project inventory should narrow the population.
+- The Habitat gate must positively close the lifecycle service/module,
+  command-channel, and dependency-direction axes.
+- The `rg` command is a quick markdown-link surface scan used before deeper audits.
+- Protected `main` must require
+  `Repository Ratchet / Required lint, typecheck, and topology`. A local
+  pre-push pass is useful feedback but is not merge authority.
 
 ## Monthly Interface Rehearsal
 
@@ -34,12 +39,25 @@ Use disposable homes and an immutable content fixture to verify:
 3. no personal executable mirror or cross-repository workspace link exists;
 4. repeated convergence performs no writes.
 
+When advancing the Habitat binary, accept only a Civ7-owned standalone release
+compiled with Bun 1.4. Update `scripts/habitat/release.json` with its immutable
+source provenance, platform byte size, and SHA-256, then run:
+
+```bash
+bun run habitat:provision
+bun run architecture:gate:agent-plugin-lifecycle
+```
+
+Do not copy the Habitat SDK source tree into this repository. RAWR HQ-Template
+owns only its positive `.habitat` policy tree and checksum-pinned consumer.
+
 ## Routing Change Contract
 
 If a docs cleanup changes router topology (`AGENTS.md` placement, additions, removals, replacements):
 
-1. Update `docs/projects/_archive/agent-readiness/AGENTS_COVERAGE_MATRIX.md`.
-2. Add a dated addendum entry in `docs/projects/_archive/agent-readiness/FINAL_REPORT.md`.
+1. Update [[docs/projects/_archive/agent-readiness/AGENTS_COVERAGE_MATRIX]].
+2. Add a dated addendum entry in
+   [[docs/projects/_archive/agent-readiness/FINAL_REPORT]].
 3. Update any affected pointers in root/scoped `AGENTS.md` files.
 
 Do not land router changes without all three updates.

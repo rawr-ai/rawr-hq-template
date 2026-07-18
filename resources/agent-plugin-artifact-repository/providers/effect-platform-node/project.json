@@ -1,0 +1,38 @@
+{
+  "name": "provider-agent-plugin-artifact-repository-effect-platform-node",
+  "projectType": "library",
+  "sourceRoot": "resources/agent-plugin-artifact-repository/providers/effect-platform-node",
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:agent-plugin-artifact-repository",
+    "provider:effect-platform-node"
+  ],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/resources/agent-plugin-artifact-repository/dist"],
+      "options": {
+        "command": "tsc -p resources/agent-plugin-artifact-repository/tsconfig.build.json"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"{projectRoot}/**/*.ts\""
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p {projectRoot}/tsconfig.json --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test {projectRoot}/test"
+      }
+    }
+  }
+}

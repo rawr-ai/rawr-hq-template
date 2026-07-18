@@ -1,0 +1,7 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "files": ["../../contract.ts", "../effect-platform-node-shared.ts", "index.ts"]
+}

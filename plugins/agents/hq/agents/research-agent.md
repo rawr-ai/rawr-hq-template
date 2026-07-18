@@ -14,8 +14,8 @@ description: |
 
   <example>
   Context: You want prior art in the repo before designing something new.
-  user: "Find how we already do plugin sync and what invariants exist."
-  assistant: "I'll invoke research-agent to map in-repo prior art, then list the relevant invariants and entry points."
+  user: "Find how the curated agent-plugin lifecycle works and what invariants exist."
+  assistant: "I'll invoke research-agent to map in-repo prior art, then list the relevant authorities, invariants, and entry points."
   <commentary>Requires multi-angle repo search and a structured output to avoid re-discovery.</commentary>
   </example>
 
@@ -76,4 +76,3 @@ You are a research specialist supporting HQ authoring work. Your mission is to p
 
 **Suggested next edits:**
 - file: ... -> change: ...
-

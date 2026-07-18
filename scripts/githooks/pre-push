@@ -10,3 +10,5 @@ if [ "${REMOTE_NAME}" != "origin" ]; then
   echo "[rawr-pre-push] blocked: template repo pushes must target origin only (got ${REMOTE_NAME})" >&2
   exit 1
 fi
+
+bun run --cwd "${ROOT_DIR}" ratchet:required

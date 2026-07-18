@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 2,
+  "id": "preserve_agent_plugin_lifecycle_dependency_direction",
+  "title": "Preserve Agent Plugin Lifecycle Dependency Direction",
+  "placement": {
+    "niche": "rawr/agent-plugin-lifecycle",
+    "blueprint": "_self",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/agent-plugin-lifecycle",
+  "lane": "enforced",
+  "forbids": "module router bypass of module context, root router bypass of impl.router and module routers, service imports of concrete providers or controller implementation, module-port re-exports from the retired internal bucket, controller release/evidence mechanics outside resource bindings, a second production value consumer of the lifecycle service client, and any peer service client reachable from the lifecycle projection",
+  "why": "The service owns lifecycle semantics behind module-local router handlers and type-only resource protocols. The root composes module routers through impl.router. Runtime construction narrows through one exact CLI composition root, then through declared provider projections and exact binding facades.",
+  "remediate": "Implement procedure handlers from the local module surface, compose module routers through impl.router, keep ports protocol/type-only, construct the lifecycle client only in apps/cli/src/lib/agent-plugins/service-runtime/client.ts, use type-only client dependencies elsewhere, keep concrete providers in declared CLI binding or provider-projection roots, and keep release/evidence mechanics in resource providers.",
+  "message": "Lifecycle dependencies flow from impl.router through module routers and local module context, then from one qualified CLI client composition root through exact operation and binding projections to type-only resource contracts.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "services/agent-plugin-lifecycle/src/**/*.ts",
+        "apps/cli/src/**/*.ts",
+        "apps/cli/src/**/*.tsx",
+        "apps/cli/src/**/*.mts",
+        "apps/cli/src/**/*.cts"
+      ]
+    }
+  ],
+  "scanRoots": [
+    "services/agent-plugin-lifecycle/src",
+    "apps/cli/src"
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/rawr/agent-plugin-lifecycle/rules/preserve_agent_plugin_lifecycle_dependency_direction/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/rawr/agent-plugin-lifecycle/rules/preserve_agent_plugin_lifecycle_dependency_direction/pattern.md"
+    },
+    "patternName": "preserve_agent_plugin_lifecycle_dependency_direction"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@rawr/resource-native-agent-provider",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#native-agent-provider-effect-platform-node": "./providers/effect-platform-node-shared.ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./contract.ts",
+      "default": "./contract.ts"
+    },
+    "./providers/codex-effect-platform-node": {
+      "types": "./providers/codex-effect-platform-node/index.ts",
+      "default": "./providers/codex-effect-platform-node/index.ts"
+    },
+    "./providers/claude-effect-platform-node": {
+      "types": "./providers/claude-effect-platform-node/index.ts",
+      "default": "./providers/claude-effect-platform-node/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern contract.ts 'providers/**/*.ts'",
+    "test": "bun test providers",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit"
+  },
+  "dependencies": {
+    "@effect/platform": "0.96.1",
+    "@effect/platform-node": "0.107.0",
+    "@rawr/resource-agent-plugin-artifact-repository": "workspace:*",
+    "effect": "3.21.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:resource",
+      "layer:resource-contract",
+      "resource:native-agent-provider"
+    ]
+  }
+}

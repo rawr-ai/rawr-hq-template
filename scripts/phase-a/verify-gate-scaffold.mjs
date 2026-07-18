@@ -10,7 +10,6 @@ import {
   hasRouteRegistration,
   importModuleSet,
   matchesPropertyAccessChain,
-  namedImportInfo,
   parseTypeScript,
   propertyNameText,
   unwrapExpression,
@@ -36,16 +35,6 @@ async function mustExist(relPath) {
   }
 }
 
-async function mustNotExist(relPath) {
-  const abs = path.join(root, relPath);
-  try {
-    await fs.stat(abs);
-  } catch {
-    return;
-  }
-  throw new Error(`obsolete file must not exist: ${relPath}`);
-}
-
 function assertCondition(condition, message) {
   if (!condition) {
     throw new Error(message);
@@ -59,29 +48,6 @@ async function readTypeScriptFile(relPath) {
     source,
     ast: parseTypeScript(abs, source),
   };
-}
-
-async function listSourceFilesUnder(relPath) {
-  const files = [];
-  const absRoot = path.join(root, relPath);
-
-  async function walk(absPath) {
-    const entries = await fs.readdir(absPath, { withFileTypes: true });
-    for (const entry of entries) {
-      const childAbs = path.join(absPath, entry.name);
-      if (entry.isDirectory()) {
-        if (entry.name === "dist" || entry.name === "node_modules" || entry.name === "coverage") continue;
-        await walk(childAbs);
-        continue;
-      }
-      if (!entry.isFile()) continue;
-      if (!/\.(?:ts|tsx|js|jsx|mjs|cjs)$/u.test(entry.name)) continue;
-      files.push(path.relative(root, childAbs).split(path.sep).join("/"));
-    }
-  }
-
-  await walk(absRoot);
-  return files.sort();
 }
 
 function findExportedFunction(sourceFile, functionName) {
@@ -100,37 +66,6 @@ function hasExportedFunction(sourceFile, functionName) {
   return Boolean(findExportedFunction(sourceFile, functionName));
 }
 
-function findExportedTypeNames(sourceFile) {
-  const names = new Set();
-  for (const statement of sourceFile.statements) {
-    if (!ts.isExportDeclaration(statement) || !statement.exportClause || !ts.isNamedExports(statement.exportClause)) continue;
-    for (const element of statement.exportClause.elements) {
-      names.add(element.name.text);
-    }
-  }
-  return names;
-}
-
-function functionReturnsCallTo(functionDecl, calleeIdentifier) {
-  if (!functionDecl.body) return false;
-  let matched = false;
-
-  visit(functionDecl.body, (node) => {
-    if (matched || !ts.isReturnStatement(node) || !node.expression) return;
-    let expression = unwrapExpression(node.expression);
-    if (!expression) return;
-    if (ts.isAwaitExpression(expression)) {
-      expression = unwrapExpression(expression.expression);
-    }
-    if (!expression || !ts.isCallExpression(expression)) return;
-    if (ts.isIdentifier(expression.expression) && expression.expression.text === calleeIdentifier) {
-      matched = true;
-    }
-  });
-
-  return matched;
-}
-
 function hasRegisterOrpcRoutesManifestRouter(sourceFile) {
   let matched = false;
   visit(sourceFile, (node) => {
@@ -147,122 +82,6 @@ function hasRegisterOrpcRoutesManifestRouter(sourceFile) {
     }
   });
   return matched;
-}
-
-function hasFunctionDeclaration(sourceFile, functionName) {
-  for (const statement of sourceFile.statements) {
-    if (ts.isFunctionDeclaration(statement) && statement.name?.text === functionName) {
-      return true;
-    }
-  }
-  return false;
-}
-
-async function verifyMetadataContract() {
-  const requiredPaths = [
-    "services/hq-ops/src/service/modules/plugin-catalog/contract.ts",
-    "services/hq-ops/src/service/modules/plugin-catalog/entities.ts",
-    "services/hq-ops/src/service/modules/plugin-catalog/helpers/discovery.ts",
-    "services/hq-ops/src/service/modules/plugin-catalog/helpers/manifest.ts",
-    "services/hq-ops/src/service/modules/plugin-catalog/router.ts",
-    "services/hq-ops/src/service/contract.ts",
-    "services/hq-ops/src/service/router.ts",
-    "services/hq-ops/test/plugin-catalog.test.ts",
-  ];
-  await Promise.all(requiredPaths.map(mustExist));
-  await mustNotExist("packages/plugin-workspace/src/plugins.ts");
-  await mustNotExist("plugins/cli/plugins/src/lib/workspace-plugins.ts");
-
-  const [
-    { source: contractSource },
-    { source: entitiesSource },
-    { source: discoverySource },
-    { source: manifestSource },
-    { source: routerSource },
-    { source: rootContractSource },
-    { source: rootRouterSource },
-    pluginPluginsPackageJson,
-  ] = await Promise.all([
-    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/contract.ts"),
-    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/entities.ts"),
-    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/helpers/discovery.ts"),
-    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/helpers/manifest.ts"),
-    readTypeScriptFile("services/hq-ops/src/service/modules/plugin-catalog/router.ts"),
-    readTypeScriptFile("services/hq-ops/src/service/contract.ts"),
-    readTypeScriptFile("services/hq-ops/src/service/router.ts"),
-    fs.readFile(path.join(root, "plugins/cli/plugins/package.json"), "utf8"),
-  ]);
-
-  assertCondition(
-    rootContractSource.includes('from "./modules/plugin-catalog/contract"') &&
-      rootContractSource.includes("pluginCatalog,"),
-    "hq-ops root contract must own pluginCatalog",
-  );
-  assertCondition(
-    rootRouterSource.includes('from "./modules/plugin-catalog/router"') &&
-      rootRouterSource.includes("pluginCatalog,"),
-    "hq-ops root router must own pluginCatalog",
-  );
-  for (const procedureName of ["listWorkspacePlugins", "resolveWorkspacePlugin"]) {
-    assertCondition(contractSource.includes(`${procedureName}:`), `plugin-catalog contract must define ${procedureName}`);
-    assertCondition(
-      routerSource.includes(`const ${procedureName} = module.${procedureName}.handler`),
-      `plugin-catalog router must implement ${procedureName} directly`,
-    );
-  }
-  for (const catalogFragment of [
-    "WORKSPACE_PLUGIN_DISCOVERY_ROOTS",
-    "FORBIDDEN_LEGACY_RAWR_KEYS",
-    "WorkspacePluginCatalogEntrySchema",
-    "WorkspacePluginKindSchema",
-  ]) {
-    assertCondition(entitiesSource.includes(catalogFragment), `plugin-catalog entities must include ${catalogFragment}`);
-  }
-  for (const manifestFragment of [
-    "parseWorkspacePluginManifest",
-    "commandPluginEligibility",
-    "runtimeWebEligibility",
-    "forbidden rawr.",
-    "rawr.kind must be",
-  ]) {
-    assertCondition(manifestSource.includes(manifestFragment), `plugin-catalog manifest helper must include ${manifestFragment}`);
-  }
-  assertCondition(discoverySource.includes("discoverWorkspacePluginCatalog"), "plugin-catalog discovery helper must expose catalog discovery");
-  assertCondition(!pluginPluginsPackageJson.includes("@rawr/plugin-workspace"), "plugin-plugins must not depend on @rawr/plugin-workspace");
-}
-
-async function verifyImportBoundary() {
-  await mustNotExist("packages/plugin-workspace/package.json");
-  await mustNotExist("plugins/cli/plugins/src/lib/workspace-plugins.ts");
-  await mustNotExist("plugins/cli/plugins/src/commands/plugins/cli/install/all.ts");
-  for (const retired of [
-    "plugins/cli/plugins/src/commands/plugins/web/list.ts",
-    "plugins/cli/plugins/src/commands/plugins/web/status.ts",
-    "plugins/cli/plugins/src/commands/plugins/web/enable.ts",
-    "plugins/cli/plugins/src/commands/plugins/web/enable/all.ts",
-    "plugins/cli/plugins/src/commands/plugins/web/disable.ts",
-    "plugins/cli/plugins/src/commands/plugins/scaffold/command.ts",
-    "plugins/cli/plugins/src/commands/plugins/scaffold/web-plugin.ts",
-    "plugins/cli/plugins/src/commands/plugins/scaffold/workflow.ts",
-  ]) {
-    await mustNotExist(retired);
-  }
-
-  const projectionFiles = await listSourceFilesUnder("plugins/cli/plugins/src");
-  const findings = [];
-  for (const relPath of projectionFiles) {
-    const source = await fs.readFile(path.join(root, relPath), "utf8");
-    if (source.includes("@rawr/plugin-workspace")) findings.push(`${relPath} imports @rawr/plugin-workspace`);
-    if (source.includes("workspace-plugins")) findings.push(`${relPath} references obsolete workspace-plugins adapter`);
-    if (source.includes("services/hq-ops/src/service/modules/plugin-catalog")) {
-      findings.push(`${relPath} imports hq-ops plugin-catalog internals`);
-    }
-    if (source.includes("plugin-catalog/helpers/")) findings.push(`${relPath} imports hq-ops plugin-catalog helper internals`);
-  }
-  assertCondition(findings.length === 0, `plugin projection import boundary failed:\n${findings.map((finding) => `- ${finding}`).join("\n")}`);
-
-  const sweep = await fs.readFile(path.join(root, "plugins/cli/plugins/src/commands/plugins/sweep.ts"), "utf8");
-  assertCondition(sweep.includes("planSweepCandidates"), "sweep must get lifecycle candidates from hq-ops pluginLifecycle");
 }
 
 async function verifyHostCompositionGuard() {
@@ -408,8 +227,6 @@ async function verifyTelemetryContract() {
 }
 
 const gateChecksById = {
-  "metadata-contract": verifyMetadataContract,
-  "import-boundary": verifyImportBoundary,
   "host-composition-guard": verifyHostCompositionGuard,
   "route-negative-assertions": verifyRouteNegativeAssertions,
   "observability-contract": verifyObservabilityContract,

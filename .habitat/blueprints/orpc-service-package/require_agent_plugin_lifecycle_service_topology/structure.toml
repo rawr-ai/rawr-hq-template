@@ -1,0 +1,244 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "agent-plugin-lifecycle-source-shell"
+root = "services/agent-plugin-lifecycle/src"
+kind = "directory"
+mode = "closed"
+required = [
+  "bindings",
+  "client.ts",
+  "index.ts",
+  "router.ts",
+  "service",
+  "types.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-binding-facades"
+root = "services/agent-plugin-lifecycle/src/bindings"
+kind = "directory"
+mode = "closed"
+required = [
+  "exports",
+  "exports.ts",
+  "governance",
+  "governance.ts",
+  "packaging",
+  "packaging.ts",
+  "providers",
+  "releases",
+  "releases.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-binding-module-files"
+root = "services/agent-plugin-lifecycle/src/bindings/!(*.*)"
+kind = "directory"
+mode = "closed"
+required = []
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "agent-plugin-lifecycle-service-shell"
+root = "services/agent-plugin-lifecycle/src/service"
+kind = "directory"
+mode = "closed"
+required = [
+  "base.ts",
+  "common",
+  "contract.ts",
+  "impl.ts",
+  "middleware",
+  "modules",
+  "router.ts",
+  "shared",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-common-files"
+root = "services/agent-plugin-lifecycle/src/service/common"
+kind = "directory"
+mode = "closed"
+required = [
+  "README.md",
+  "entities.ts",
+  "errors.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-middleware-files"
+root = "services/agent-plugin-lifecycle/src/service/middleware"
+kind = "directory"
+mode = "closed"
+required = [
+  "analytics.ts",
+  "observability.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-shared-roots"
+root = "services/agent-plugin-lifecycle/src/service/shared"
+kind = "directory"
+mode = "closed"
+required = [
+  "release",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-shared-release-files"
+root = "services/agent-plugin-lifecycle/src/service/shared/release"
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "agent-plugin-lifecycle-capability-modules"
+root = "services/agent-plugin-lifecycle/src/service/modules"
+kind = "directory"
+mode = "closed"
+required = [
+  "exports",
+  "governance",
+  "packaging",
+  "providers",
+  "releases",
+  "vendors",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-uniform-module-shells"
+root = "services/agent-plugin-lifecycle/src/service/modules/*"
+kind = "directory"
+mode = "closed"
+required = [
+  "contract.ts",
+  "middleware.ts",
+  "model",
+  "module.ts",
+  "ports.ts",
+  "router",
+  "schemas.ts",
+]
+allowed = [
+  "ports",
+]
+
+[[scopes]]
+name = "agent-plugin-lifecycle-module-router-files"
+root = "services/agent-plugin-lifecycle/src/service/modules/*/router"
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "agent-plugin-lifecycle-module-port-files"
+root = "services/agent-plugin-lifecycle/src/service/modules/*/ports"
+kind = "directory"
+mode = "closed"
+required = []
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "agent-plugin-lifecycle-exports-model"
+root = "services/agent-plugin-lifecycle/src/service/modules/exports/model"
+kind = "directory"
+mode = "closed"
+required = [
+  "dto",
+  "helpers",
+  "policy",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-governance-model"
+root = "services/agent-plugin-lifecycle/src/service/modules/governance/model"
+kind = "directory"
+mode = "closed"
+required = [
+  "dto",
+  "errors",
+  "helpers",
+  "index.ts",
+  "policy",
+  "repositories",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-packaging-model"
+root = "services/agent-plugin-lifecycle/src/service/modules/packaging/model"
+kind = "directory"
+mode = "closed"
+required = [
+  "dto",
+  "helpers",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-providers-model"
+root = "services/agent-plugin-lifecycle/src/service/modules/providers/model"
+kind = "directory"
+mode = "closed"
+required = [
+  "dto",
+  "errors",
+  "helpers",
+  "policy",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-releases-model"
+root = "services/agent-plugin-lifecycle/src/service/modules/releases/model"
+kind = "directory"
+mode = "closed"
+required = [
+  "dto",
+  "policy",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-vendors-model"
+root = "services/agent-plugin-lifecycle/src/service/modules/vendors/model"
+kind = "directory"
+mode = "closed"
+required = [
+  "dto",
+  "policy",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-module-model-category-files"
+root = "services/agent-plugin-lifecycle/src/service/modules/*/model/!(*.*)"
+kind = "directory"
+mode = "closed"
+required = []
+allowed = [
+  "*.ts",
+]

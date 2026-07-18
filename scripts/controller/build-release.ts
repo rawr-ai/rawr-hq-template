@@ -16,7 +16,6 @@ import {
 } from "@rawr/controller-release";
 
 // The shipped inspector is the sole filesystem-to-product verification adapter.
-// eslint-disable-next-line @nx/enforce-module-boundaries
 import {
   requireVerifiedControllerRelease,
 } from "../../apps/cli/src/lib/controller/release-inspector.ts";

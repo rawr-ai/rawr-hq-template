@@ -10,6 +10,7 @@ import type {
   CapsuleGeneration,
   CapsulePreflightResult,
   CapsuleReleaseResultV1,
+  CapsuleStateDigest,
   CapsuleSynchronizationResultV1,
   CapsuleSuspendResult,
   CapsuleTerminalWriteResult,
@@ -471,7 +472,9 @@ export class CapsuleControllerWriterV1 implements CapsuleUndoWriterV1 {
     }
   }
 
-  async recoverApplying(): Promise<ApplyingRecoveryResult> {
+  async recoverApplying(options: Readonly<{
+    expectedStateDigest?: CapsuleStateDigest;
+  }> = {}): Promise<ApplyingRecoveryResult> {
     const acquired = await this.#store.acquireExclusiveSession();
     if (acquired.kind === "Rejected") {
       return Object.freeze({
@@ -482,7 +485,10 @@ export class CapsuleControllerWriterV1 implements CapsuleUndoWriterV1 {
     }
     let result: ApplyingRecoveryOperationResult;
     try {
-      result = await this.#recoverApplyingWithAccess(acquired.session.access);
+      result = await this.#recoverApplyingWithAccess(
+        acquired.session.access,
+        options.expectedStateDigest,
+      );
     } catch (error) {
       result = {
         kind: "RecoveryRejected",
@@ -502,7 +508,10 @@ export class CapsuleControllerWriterV1 implements CapsuleUndoWriterV1 {
     return Object.freeze({ ...result, synchronization }) as ApplyingRecoveryResult;
   }
 
-  async #recoverApplyingWithAccess(access: CapsuleStateAccessV1): Promise<ApplyingRecoveryOperationResult> {
+  async #recoverApplyingWithAccess(
+    access: CapsuleStateAccessV1,
+    expectedStateDigest: CapsuleStateDigest | undefined,
+  ): Promise<ApplyingRecoveryOperationResult> {
     let lastGeneration: CapsuleGeneration | null = null;
     for (let attempt = 0; attempt <= this.#limits.actions + 2; attempt += 1) {
       const read = await access.read();
@@ -512,6 +521,18 @@ export class CapsuleControllerWriterV1 implements CapsuleUndoWriterV1 {
           : { kind: "ApplyingUnsettled", generation: lastGeneration, failure: read.failure };
       }
       const current = read.observation.state;
+      if (attempt === 0
+        && expectedStateDigest !== undefined
+        && current.stateDigest !== expectedStateDigest) {
+        return {
+          kind: "RecoveryRejected",
+          failure: failure(
+            "StateChanged",
+            "recover-applying-preflight",
+            "capsule changed after executable-binding preflight",
+          ),
+        };
+      }
       lastGeneration = current.body.generation;
       if (current.body.state.kind !== "applying") return { kind: "NoApplyingState" };
       const applying = current.body.state;

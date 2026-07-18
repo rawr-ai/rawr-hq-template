@@ -1,31 +1,57 @@
 ---
-description: Run full lifecycle quality checks for agent plugin changes
-argument-hint: "TARGET=<path|id>"
+description: Run one explicitly selected curated agent-plugin lifecycle operation
+argument-hint: "OPERATION=<qualified operation> plus its owner-specific inputs"
 ---
 
-# Lifecycle: Agent Plugin
+# Lifecycle: Curated Agent Plugin
 
-Use `docs/process/runbooks/LIFECYCLE_AGENT_PLUGIN.md` as canonical guidance.
+Use the Template-owned immutable controller and run exactly one selected
+operation. Follow [[../skills/agent-plugin-management/references/lifecycle-contract.md]]
+for authority and [[../skills/agent-plugin-management/references/workflow.md]]
+for the complete operation selector.
 
-## HQ Authoring Routing
+## Boundary
 
-- For net-new or substantial content authoring, start with:
-  - `/hq:create-content`
-  - `/hq:create-plugin`
+- `rawr agent plugins ...` is the only curated agent-plugin lifecycle channel.
+- `rawr plugins ...` is only for external Oclif extensions.
+- Skill, workflow, agent, hook, and script changes release through their parent
+  agent plugin. They do not get independent lifecycle identities.
+- The content repository owns curated content and governed records; RAWR
+  HQ-Template owns the controller and generic lifecycle tooling.
+- Source authoring is separate, source-only work. It never starts this workflow.
+- App, web, and runtime composition are outside this workflow.
+- No operation automatically starts check, build, package, export, test, sync,
+  retirement, promotion, or undo.
 
-## Steps
+## Select One Branch
 
-1. Apply agent plugin artifact updates.
-2. Update tests/docs.
-3. Audit/update dependents.
-4. Run:
-```bash
-rawr plugins sync all --dry-run --json
-rawr plugins sync drift --json
-rawr plugins lifecycle check --target "$TARGET" --type agent --json
-```
-5. Resolve lifecycle blockers before publish.
+- **Vendors, check, or build**: bind the explicit content workspace and its exact
+  governed Git coordinates. Vendor update also binds selected source ids;
+  check/build bind one plugin or the complete-set selection. Run source tests or
+  dependent-reference audits only when they are proof for this source branch.
+- **Package or export**: bind the immutable artifact handle and explicit output
+  contract. Package takes format and output path; export takes mode, layout,
+  managed destinations, and overwrite policy. Do not reopen a content checkout.
+- **Test**: bind immutable targeted-release handles or one immutable complete-set
+  handle, an evaluation profile, and explicit provider homes and executables.
+- **Sync or status**: bind the governed current-main channel locator and explicit
+  provider homes and executables. Do not infer a set by scanning source.
+- **Retire**: bind the governing immutable complete set, the exact managed member
+  proven absent from it, and explicit provider homes and executables.
+- **Attest promotion**: bind the exact repository identity plus policy, request,
+  acceptance, and landed release-input Git object pointers.
+- **Undo**: use the controller-owned last-operation capsule as the only lifecycle
+  input. Controller runtime bindings may transport replay but cannot supply
+  undo truth.
+
+Invoke the exact literal qualified command selected by `OPERATION`. Keep
+`rawr agent plugins vendors status` and `rawr agent plugins vendors update` as
+two-word subcommand paths rather than treating `vendors` as an aggregate
+operation or shell-expanding a compound operation string.
 
 ## Done
 
-- lifecycle check returns `ok: true` and `status: pass`.
+- The selected command accepted its exact owner-specific inputs.
+- Its output identity, receipt, ledger, or state proof matches that branch.
+- A repeated mutating convergence changes nothing when that branch requires it.
+- No unselected operation ran and no unrelated owner state changed.

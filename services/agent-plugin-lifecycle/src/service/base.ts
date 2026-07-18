@@ -1,0 +1,65 @@
+import { defineService, type ServiceOf } from "@rawr/hq-sdk";
+import type { ExportLifecycleRuntime } from "./modules/exports/ports";
+import type { GovernanceLifecycleRuntime } from "./modules/governance/ports";
+import type { PackagingLifecycleRuntime } from "./modules/packaging/ports";
+import type { ProviderLifecycleRuntime } from "./modules/providers/ports";
+import type { ReleaseLifecycleRuntime } from "./modules/releases/ports";
+import type { VendorLifecycleRuntime } from "./modules/vendors/ports";
+
+type InitialContext = {
+  deps: {
+    releases: ReleaseLifecycleRuntime;
+    vendors: VendorLifecycleRuntime;
+    packaging: PackagingLifecycleRuntime;
+    exports: ExportLifecycleRuntime;
+    providers: ProviderLifecycleRuntime;
+    governance: GovernanceLifecycleRuntime;
+  };
+  scope: {
+    controllerIdentity: string;
+    controllerDataRootIdentity: string;
+  };
+  config: {};
+};
+
+type InvocationContext = {
+  traceId: string;
+  commandId: string;
+};
+
+type ProcedureMetadata = {
+  audit?: "none" | "basic" | "full";
+  entity?: "service" | "releases" | "vendors" | "packaging" | "exports" | "providers" | "governance";
+};
+
+export const policy = {
+  events: {},
+} as const;
+
+const service = defineService<{
+  initialContext: InitialContext;
+  invocationContext: InvocationContext;
+  metadata: ProcedureMetadata;
+}>({
+  metadataDefaults: {
+    idempotent: true,
+    domain: "agent-plugin-lifecycle",
+    audience: "internal",
+    audit: "basic",
+    entity: "service",
+  },
+  baseline: {
+    policy,
+  },
+});
+
+export type Service = ServiceOf<typeof service>;
+
+export const ocBase = service.oc;
+export const createServiceMiddleware = service.createMiddleware;
+export const createServiceObservabilityMiddleware = service.createObservabilityMiddleware;
+export const createRequiredServiceObservabilityMiddleware = service.createRequiredObservabilityMiddleware;
+export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddleware;
+export const createRequiredServiceAnalyticsMiddleware = service.createRequiredAnalyticsMiddleware;
+export const createServiceProvider = service.createProvider;
+export const createServiceImplementer = service.createImplementer;

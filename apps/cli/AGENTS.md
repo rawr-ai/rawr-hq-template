@@ -15,8 +15,7 @@
 - General commands: `src/commands/{doctor,reflect,...}.ts`
 - Topic commands: `src/commands/<topic>/*.ts`
 - External extension projections: `src/commands/plugins/**`
-- Interim mixed lifecycle commands under `plugins/cli/plugins/**` are migration
-  evidence only and must not gain new authority.
+- Curated agent-plugin lifecycle projections: `src/commands/agent/plugins/**`
 
 ## Command Surface Invariant
 

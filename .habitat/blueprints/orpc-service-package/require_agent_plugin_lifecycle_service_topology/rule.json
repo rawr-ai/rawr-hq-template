@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_agent_plugin_lifecycle_service_topology",
+  "title": "Require Agent Plugin Lifecycle Service Topology",
+  "placement": {
+    "niche": "rawr/services",
+    "blueprint": "orpc-service-package",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/agent-plugin-lifecycle",
+  "lane": "enforced",
+  "forbids": "a second lifecycle service shell, a different module inventory, nonuniform module roots, or an internal implementation bucket",
+  "why": "Curated agent-plugin lifecycle is one oRPC service whose six capability modules share one package topology. Procedures own sequencing under router directories, while module models narrow into declared domain categories without becoming peer services.",
+  "remediate": "Keep lifecycle behavior in the canonical service, preserve the six-module inventory, place domain matter under model categories, and implement procedure sequencing in module router handlers.",
+  "message": "Agent-plugin lifecycle must retain its closed one-service, six-module oRPC topology.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "services/agent-plugin-lifecycle/src/**"
+      ]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/orpc-service-package/require_agent_plugin_lifecycle_service_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/blueprints/orpc-service-package/require_agent_plugin_lifecycle_service_topology/structure.toml"
+    }
+  }
+}

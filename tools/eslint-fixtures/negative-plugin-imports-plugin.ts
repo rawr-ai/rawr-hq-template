@@ -1,1 +1,1 @@
-import "../../services/hq-ops/src/service/modules/plugin-catalog/router.ts";
+import "../../services/hq-ops/src/service/modules/config/router.ts";

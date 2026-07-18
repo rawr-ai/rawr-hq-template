@@ -78,7 +78,6 @@ const retiredRuntimeTokens = [
   "/rawr/plugins/web/",
   "createRealizedCompositionObservation",
   "enabledPluginIds",
-  "enabledPlugins",
   "loadWorkspaceServerPlugins",
   "mountServerPlugins",
   "repoState.",

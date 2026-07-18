@@ -93,7 +93,7 @@ describe("native manager entry", () => {
     expect(run).not.toHaveBeenCalled();
   });
 
-  it("gives a real child Config.load the sole operator native data directory", { timeout: 15_000 }, () => {
+  it("gives a real child Config.load the sole operator native data directory", () => {
     const workspaceRoot = realpathSync(path.resolve(import.meta.dirname, "../../../.."));
     const cliRoot = path.join(workspaceRoot, "apps", "cli");
     const temporaryRoot = realpathSync(tempRoot("manager-real-child"));

@@ -21,21 +21,18 @@ async function tempRoot(prefix: string): Promise<string> {
 }
 
 describe("hq-ops service resource-backed behavior", () => {
-  it("owns config load, merge, validation, and global source mutation over primitive resources", async () => {
+  it("owns repository-neutral config load, merge, and validation over primitive resources", async () => {
     const repoRoot = await tempRoot("hq-ops-config-");
     const homeDir = await tempRoot("hq-ops-home-");
 
     await writeGlobalRawrConfig(homeDir, {
       version: 1,
-      sync: {
-        sources: { paths: ["/global/a"] },
-      },
+      journal: { semantic: { candidateLimit: 25 } },
+      server: { port: 4100 },
     });
     await writeRawrConfig(repoRoot, {
       version: 1,
-      sync: {
-        sources: { paths: ["/workspace/b"] },
-      },
+      server: { baseUrl: "http://127.0.0.1:4100" },
     });
 
     const client = createClient(
@@ -48,16 +45,9 @@ describe("hq-ops service resource-backed behavior", () => {
     const layered = await client.config.getLayeredConfig({}, invocation("trace-config"));
     expect(layered.global.path).toBe(path.join(homeDir, ".rawr", "config.json"));
     expect(layered.workspace.path).toBe(path.join(repoRoot, "rawr.config.ts"));
-    expect(layered.merged?.sync?.sources?.paths).toEqual(["/global/a", "/workspace/b"]);
-
-    const added = await client.config.addGlobalSyncSource({ path: "/global/c" }, invocation("trace-config-add"));
-    expect(added.sources).toContain("/global/c");
-
-    const removed = await client.config.removeGlobalSyncSource(
-      { path: "/global/c" },
-      invocation("trace-config-remove"),
-    );
-    expect(removed.sources).not.toContain("/global/c");
+    expect(layered.merged).not.toHaveProperty("plugins");
+    expect(layered.merged?.journal?.semantic?.candidateLimit).toBe(25);
+    expect(layered.merged?.server).toEqual({ port: 4100, baseUrl: "http://127.0.0.1:4100" });
   });
 
   it("owns journal persistence, index, FTS, and semantic ranking over primitive resources", async () => {

@@ -5,6 +5,7 @@ dist/
 .nx/
 .tmp/
 .rawr/
+.habitat/cache/
 .semantica/
 __pycache__/
 *.py[cod]

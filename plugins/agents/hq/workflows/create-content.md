@@ -16,9 +16,11 @@ It composes HQ canonical authoring skills and delegates work to HQ authoring age
 
 <core_rules>
 - Don’t overwrite/rename/delete existing content unless the user explicitly asks.
-- Author in the workspace plugin tree: `plugins/agents/<plugin>/...`
-- Use the external plugin sync surface: `bun run rawr -- plugins sync ...` (dry-run first).
-- Do not mix plugin command surfaces in examples.
+- Author only in the explicit content workspace under `plugins/agents/<plugin>/...`.
+- Authoring stops at source, review, and repository verification. It never builds,
+  exports, syncs, retires, or edits provider homes automatically.
+- External Oclif extensions use `rawr plugins ...`; curated agent-plugin lifecycle
+  uses `rawr agent plugins ...`. Do not mix the channels.
 </core_rules>
 
 <inputs>
@@ -78,35 +80,21 @@ Notes: `$ARGUMENTS`
 </step>
 
 <step name="lifecycle-gate">
-1. Route the authored unit to a lifecycle type:
-   - `skill` -> `skill`
-   - `workflow` -> `workflow`
-   - `agent` -> `agent`
-   - `hook` -> `composed`
-   - `plugin` -> `composed`
-2. Run lifecycle checks before sync apply:
-   ```bash
-   rawr plugins sync all --dry-run --json
-   rawr plugins sync drift --json
-   rawr plugins lifecycle check --target "plugins/agents/$P" --type <mapped-type> --json
-   ```
-3. If lifecycle check fails, fix tests/docs/dependents gaps before deploy.
-4. For large changes spanning multiple artifact types, switch to composed mode:
-   - `plugins/agents/hq/workflows/lifecycle-composed.md`
+1. Treat `$P` as the release and distribution owner for every authored skill,
+   workflow, agent, hook, or script beneath it.
+2. Complete source-level tests, documentation, and dependent-reference checks.
+3. Do not start a release operation automatically. If the user explicitly asks
+   for lifecycle verification, hand off to
+   [[plugins/agents/hq/workflows/lifecycle-agent-plugin]], whose first controller
+   operation is `rawr agent plugins check`.
 </step>
 
-<step name="deploy">
-1. Dry-run sync the plugin you edited:
-   ```bash
-   bun run rawr -- plugins sync $P --dry-run --json
-   ```
-2. If preview + lifecycle gate are green, apply:
-   ```bash
-   bun run rawr -- plugins sync $P --json
-   ```
-3. Report:
+<step name="report">
+1. Report:
    - files created/modified
-   - sync status summary
+   - source verification performed
+   - parent agent-plugin identity
+   - whether an explicit lifecycle handoff remains
 </step>
 
 </workflow>

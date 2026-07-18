@@ -1,130 +1,102 @@
-# Workflow: Deterministic Agent-Plugin Sync Loop
+# Workflow: Explicit Curated Agent-Plugin Lifecycle
 
-Use this workflow when changing agent-plugin content in RAWR HQ and you need one explicit, safe sync loop.
+> **Canonical channel**: `rawr agent plugins ...`
+>
+> **Related**: [[lifecycle-contract.md]],
+> [[plugins/agents/hq/workflows/lifecycle-agent-plugin.md]], and
+> [[docs/process/HQ_OPERATIONS.md]].
 
-> **Canonical command:** `rawr plugins sync all`
-> **Related:** `plugins/agents/hq/workflows/manage.md`, `docs/process/PLUGIN_E2E_WORKFLOW.md`
+## Before Operations
 
-## Plugin loop as a workflow
+1. Use an installed immutable controller release.
+2. Select exactly one requested operation.
+3. Bind only that operation's authority inputs from the selector below.
+4. Use explicit disposable provider homes until canonical settlement is authorized.
 
-The "plugin loop" means a fixed, repeatable sequence:
+There is no universal checkout, clean-worktree, or preflight-check requirement.
+A branch that consumes an immutable artifact, governed channel, governance
+objects, or controller capsule does not reopen source as preparation.
 
-1. Make plugin changes in source (`plugins/agents/*`, and any toolkit `agent-pack/` exports).
-2. Plan full convergence.
-3. Apply full convergence.
-4. If needed, immediately roll back with `rawr undo`.
-5. Confirm outputs and zero drift signals.
+## Operation Selector
 
-No ad-hoc destination edits. No hidden side effects.
-Destination-path projection is a separate export/output lane. Use it only when
-you intentionally need modeled content written to an explicit filesystem target,
-such as a fixture, repair destination, migration target, ad-hoc package, repo
-dump, or non-CLI system. Do not use it as a fallback for Codex or Claude harness
-sync.
+<operation-selector>
+<branch operation="vendors status|vendors update">
+Bind exact content-workspace repository coordinates. For update, also bind only
+the selected vendor-source ids. Status inspects; update authors reviewable
+source bytes. Neither continues into check or build.
+</branch>
 
-## Steps
+<branch operation="check|build">
+Bind the exact content workspace, repository identity, content authority,
+remote, ref, source commit and tree, release-input path, plugin root, and either
+one plugin or the complete-set selection. Check is nonpublishing. Build performs
+its own validation and returns immutable handles; it does not require a prior
+check invocation.
+</branch>
 
-<workflow-loop>
-<step n="1" name="plan">
-Run dry-run first:
+<branch operation="package">
+Bind one immutable artifact handle, exact package format, and explicit output
+path. Verify deterministic package bytes. Do not bind or inspect content source.
+</branch>
 
-```bash
-rawr plugins sync all --dry-run --json
-```
+<branch operation="export">
+Bind one immutable artifact handle, exact mode and layout, explicit managed
+destinations, and overwrite policy. Verify each destination-owned ledger and
+repeat convergence. Export is not a provider-convergence fallback.
+</branch>
 
-Check for:
-- `ok: true`
-- no unexpected conflicts
-- expected plugin set in results
-</step>
+<branch operation="test">
+Bind immutable targeted-release handles or one immutable complete-set handle,
+an exact evaluation profile, and explicit provider homes and executables.
+Targeted testing does not create a canonical channel claim.
+</branch>
 
-<step n="2" name="apply">
-Run canonical apply:
+<branch operation="sync|status">
+Bind the governed current-main channel locator and explicit provider homes and
+executables. Status inspects without mutation. Sync converges only the accepted
+immutable complete set; repeat it and prove managed state and receipt bytes do
+not change.
+</branch>
 
-```bash
-rawr plugins sync all --json
-```
+<branch operation="retire">
+Bind the governing immutable complete set, one exact managed member proven
+absent from it, and explicit provider homes and executables. Do not infer
+retirement from ambient source or provider scans.
+</branch>
 
-Default deterministic behavior includes force overwrite, managed GC, Cowork packaging, Claude install/enable refresh, and stale managed plugin retirement.
-</step>
+<branch operation="attest-promotion">
+Bind the exact repository identity and exact policy, request, acceptance, and
+landed release-input Git object pointers. Verify object equivalence without
+starting provider convergence.
+</branch>
 
-<step n="3" name="rollback-if-needed">
-If apply had unintended effects, run:
+<branch operation="undo">
+Use the controller-owned last-operation capsule as the only lifecycle input.
+Controller runtime bindings may transport replay but cannot supply undo truth.
+Do not derive recovery from a checkout, artifact destination, or provider scan.
+</branch>
+</operation-selector>
 
-```bash
-rawr undo --json
-```
-</step>
+After the selected branch records its result and owner proof, stop. A later
+operation requires a new explicit selection and its own authority inputs.
 
-<step n="4" name="verify">
-Verify outcome artifacts/signals:
-
-```bash
-ls dist/cowork/plugins/*.plugin
-```
-
-From JSON/human output, confirm:
-- total conflicts are zero
-- stale managed plugin retirement did not fail
-- Cowork packaging actions are successful/planned as expected
-</step>
-</workflow-loop>
-
-## Lifecycle/Improve integration
-
-Use lifecycle and no-policy improvement commands as a layered gate on top of the sync loop:
-
-1. Run lifecycle completeness for the change unit:
-
-```bash
-rawr plugins lifecycle check --target <path|id> --type <cli|web|agent|skill|workflow|composed> --json
-```
-
-2. For no-policy quality improvements with merge automation:
-
-```bash
-rawr plugins improve --target <path|id> --type <...> --publish --json
-```
-
-3. For scheduled/manual plugin-system sweeps:
-
-```bash
-rawr plugins sweep --scope plugin-system --scheduled --json
-# or
-rawr plugins sweep --scope plugin-system --manual --json
-```
-
-4. If judges return `fix_first`, create/continue fix slice and re-run lifecycle checks before merge.
-5. If judges return `policy_escalation` or disagreement/low confidence, hold for human or human+agent review.
-
-## Exception path (advanced only)
-
-Use partial mode only when there is a concrete reason and never silently:
-
-```bash
-rawr plugins sync all --allow-partial <partial-flags...>
-```
-
-Typical temporary exceptions:
-- scoped run: `--scope agents`
-- target-limited run: `--agent codex`
-- disabling Cowork/Claude steps in a controlled maintenance window
-- destination-path output: `--destination-projection` for explicit filesystem
-  export/repair/migration output alongside native sync
-
-## Failure modes
+## Failure Modes
 
 <failure-modes>
-<failure name="partial-blocked">
-**Symptom**: command exits with partial-mode guard error.
-**Fix**: either remove partial flags or add `--allow-partial` deliberately.
+<failure name="mixed-channel">
+**Symptom**: curated content is being routed through `rawr plugins ...`.
+**Fix**: stop and select the exact `rawr agent plugins ...` operation.
 </failure>
-<failure name="orphan-surprise">
-**Symptom**: stale plugin directory/marketplace entry remains after rename.
-**Fix**: run full `rawr plugins sync all` with stale retirement enabled (default).
+<failure name="authoring-chain">
+**Symptom**: source creation or review automatically starts build or convergence.
+**Fix**: stop after source proof and require an explicit request for the next transition.
 </failure>
-<failure name="surface-confusion">
-**Symptom**: trying to solve agent-plugin drift through retired web-membership or app-composition paths.
-**Fix**: use the agent-plugin convergence workflow and keep runtime realization separate.
+<failure name="ambient-authority">
+**Symptom**: a worktree, cache, alias, or provider home decides release identity.
+**Fix**: bind only the selected branch's exact authority object and target identity.
+</failure>
+<failure name="false-idempotence">
+**Symptom**: repeated sync preserves visible content but rewrites configuration or receipts.
+**Fix**: compare owner state and receipt bytes, not only fresh-process visibility.
 </failure>
 </failure-modes>
