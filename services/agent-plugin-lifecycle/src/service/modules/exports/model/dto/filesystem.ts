@@ -1,6 +1,6 @@
-import type { ContentDigest } from "../../../shared/release/index";
+import type { ContentDigest } from "../../../../shared/release/index";
 
-import type { ExportFailure, ExportFailureCode } from "./contract";
+import type { ExportFailure, ExportFailureCode } from "./export-lifecycle";
 
 export interface EntryIdentity {
   readonly dev: bigint;

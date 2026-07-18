@@ -7,7 +7,7 @@ import type {
   ExportDestinationFailure as ExportDestinationResourceFailure,
 } from "@rawr/resource-agent-plugin-export-destination";
 
-import { contentDigest } from "../../../shared/release/index";
+import { contentDigest } from "../../service/shared/release/index";
 import {
   ExportFilesystemError,
   failure,
@@ -15,9 +15,9 @@ import {
   type CapturedPath,
   type CapturedRegularFile,
   type DestinationIdentity,
-} from "./filesystem-model";
-import { EXPORT_LEDGER_FILENAME } from "./ledger";
-import type { ExportOwnerStateReader } from "./owner-protocol";
+} from "../../service/modules/exports/model/dto/filesystem";
+import { EXPORT_LEDGER_FILENAME } from "../../service/modules/exports/model/policy/ledger";
+import type { ExportOwnerStateReader } from "../../service/modules/exports/model/policy/owner-protocol";
 
 const OWNER_INSPECTION_MAX_ENTRIES = 256;
 const OWNER_INSPECTION_MAX_BYTES = 96 * 1024 * 1024;

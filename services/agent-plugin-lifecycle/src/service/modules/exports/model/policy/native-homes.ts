@@ -1,6 +1,6 @@
 import { isAbsolute, normalize, resolve } from "node:path";
 
-import { compareCanonicalText } from "../../../shared/release/index";
+import { compareCanonicalText } from "../../../../shared/release/index";
 
 import {
   KNOWN_NATIVE_HOMES_PROTOCOL_VERSION,
@@ -8,8 +8,8 @@ import {
   type KnownNativeHomeV1,
   type KnownNativeHomesSnapshotDigest,
   type KnownNativeHomesSnapshotV1,
-} from "./contract";
-import { jsonLine, sha256, type JsonValue } from "./canonical";
+} from "../dto/export-lifecycle";
+import { jsonLine, sha256, type JsonValue } from "../helpers/canonical";
 
 const DIGEST_PATTERN = /^nh1_[0-9a-f]{64}$/u;
 

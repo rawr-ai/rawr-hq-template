@@ -7,22 +7,24 @@ import {
   canonicalSerializeExportInverseAction,
   createExportAppliedObservation,
   createExportInverseAction,
-  createKnownNativeHomesSnapshot,
   decodeExportAppliedObservation,
   decodeExportInverseAction,
   exportInverseActionDigest,
-  EXPORT_LEDGER_FILENAME,
-  validateExportOwnerActionSequence,
   verifyExportAppliedObservation,
   verifyExportInverseAction,
-  verifyKnownNativeHomesSnapshot,
   type ExportInverseActionV1,
-} from "../../../src/service/modules/exports/internal/index";
+} from "../../../src/service/modules/exports/model/policy/inverse-action";
 import {
+  EXPORT_LEDGER_FILENAME,
   canonicalSerializeExportLedger,
   createExportLedger,
   initialExportLedger,
-} from "../../../src/service/modules/exports/internal/ledger";
+} from "../../../src/service/modules/exports/model/policy/ledger";
+import {
+  createKnownNativeHomesSnapshot,
+  verifyKnownNativeHomesSnapshot,
+} from "../../../src/service/modules/exports/model/policy/native-homes";
+import { validateExportOwnerActionSequence } from "../../../src/service/modules/exports/model/policy/owner-sequence";
 import { exportArtifactFixture } from "./artifact-fixture";
 
 describe("export owner protocols", () => {

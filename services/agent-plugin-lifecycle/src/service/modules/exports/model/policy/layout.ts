@@ -18,7 +18,7 @@ import {
   type ReleaseRelativePath,
   type VerifiedArtifactSnapshotV1,
   type VerifiedReleaseArtifactV1,
-} from "../../../shared/release/index";
+} from "../../../../shared/release/index";
 
 import {
   CLAUDE_EXPORT_LAYOUT_V1,
@@ -26,8 +26,8 @@ import {
   type ExportFailure,
   type ExportLayoutV1,
   type ExportModeV1,
-} from "./contract";
-import { bytesEqual } from "./canonical";
+} from "../dto/export-lifecycle";
+import { bytesEqual } from "../helpers/canonical";
 
 export interface PlannedExportFile {
   readonly pluginId: PluginId;

@@ -5,11 +5,11 @@ import type {
   ExportDestinationMutation,
 } from "@rawr/resource-agent-plugin-export-destination";
 
-import { contentDigest } from "../../../shared/release/index";
-import { bytesEqual } from "./canonical";
-import type { ExportFailure, ExportFailureSet } from "./contract";
+import { contentDigest } from "../../service/shared/release/index";
+import { bytesEqual } from "../../service/modules/exports/model/helpers/canonical";
+import type { ExportFailure, ExportFailureSet } from "../../service/modules/exports/model/dto/export-lifecycle";
 import { createExportOwnerStateReader } from "./destination-owner";
-import { failure } from "./filesystem-model";
+import { failure } from "../../service/modules/exports/model/dto/filesystem";
 import {
   createExportAppliedObservation,
   decodeExportAppliedObservation,
@@ -24,12 +24,12 @@ import {
   type ExportInverseActionDigest,
   type ExportInverseActionV1,
   type ExportObservedEntryStateV1,
-} from "./inverse-action";
+} from "../../service/modules/exports/model/policy/inverse-action";
 import {
   classifyExportOwnerReplay,
   classifyExportOwnerStaged,
   type ExportOwnerTargetBindingV1,
-} from "./owner-protocol";
+} from "../../service/modules/exports/model/policy/owner-protocol";
 
 const MAX_INVERSE_CAPTURE_ENTRIES = 256;
 const MAX_INVERSE_CAPTURE_BYTES = 96 * 1024 * 1024;

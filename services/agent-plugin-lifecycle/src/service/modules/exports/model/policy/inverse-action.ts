@@ -13,17 +13,17 @@ import {
   type PluginId,
   type ReleaseDigest,
   type ReleaseRelativePath,
-} from "../../../shared/release/index";
+} from "../../../../shared/release/index";
 
-import type { ExportLayoutV1 } from "./contract";
-import { bytesEqual, decodeBase64, decodeJson, encodeBase64, jsonLine, sha256, type JsonValue } from "./canonical";
+import type { ExportLayoutV1 } from "../dto/export-lifecycle";
+import { bytesEqual, decodeBase64, decodeJson, encodeBase64, jsonLine, sha256, type JsonValue } from "../helpers/canonical";
 import {
   visibleDirectoryMode,
   visibleFileMode,
   type CapturedDirectory,
   type CapturedRegularFile,
   type EntryIdentity,
-} from "./filesystem-model";
+} from "../dto/filesystem";
 import type { ExportLedgerDigest } from "./ledger";
 
 export const EXPORT_INVERSE_ACTION_PROTOCOL_VERSION = 1 as const;

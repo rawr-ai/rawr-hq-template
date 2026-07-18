@@ -30,7 +30,7 @@ import type {
   UndoTerminalWriteResult,
   UndoWriteResult,
   UndoWriter,
-} from "./internal/contract";
+} from "./model/dto/export-lifecycle";
 import type {
   ExportDestinationApplyReceipt,
   ExportDestinationAsyncPort,
@@ -115,15 +115,12 @@ export type {
   ExportDestinationSnapshot,
 };
 
-export type * from "./internal/canonical";
-export type * from "./internal/destination-owner";
-export type * from "./internal/filesystem-model";
-export type * from "./internal/inverse-action";
-export type * from "./internal/inverse-executor";
-export type * from "./internal/layout";
-export type * from "./internal/ledger";
-export type * from "./internal/native-homes";
-export type * from "./internal/owner-protocol";
-export type * from "./internal/owner-sequence";
-export type * from "./internal/plan";
-export type * from "./internal/transaction";
+export type * from "./model/helpers/canonical";
+export type * from "./model/dto/filesystem";
+export type * from "./model/policy/inverse-action";
+export type * from "./model/policy/layout";
+export type * from "./model/policy/ledger";
+export type * from "./model/policy/native-homes";
+export type * from "./model/policy/owner-protocol";
+export type * from "./model/policy/owner-sequence";
+export type * from "./model/policy/plan";

@@ -4,7 +4,7 @@ import type { ArtifactRef } from "../../shared/release/index";
 import type {
   ExportAgentPluginsRequest,
   ExportAgentPluginsResult,
-} from "./internal/contract";
+} from "./model/dto/export-lifecycle";
 
 const ReleaseDigestSchema = Type.String({ pattern: "^rd1_[0-9a-f]{64}$" });
 const ArtifactDigestSchema = Type.String({ pattern: "^ad1_[0-9a-f]{64}$" });

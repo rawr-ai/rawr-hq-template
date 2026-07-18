@@ -1,14 +1,14 @@
 import type {
   ArtifactRef,
   VerifiedArtifactSnapshotV1,
-} from "../../../shared/release/index";
+} from "../../../../shared/release/index";
 
 import type {
   ExportAppliedObservationV1,
   ExportInverseActionDigest,
   ExportInverseActionV1,
-} from "./inverse-action";
-import type { ExportLedgerDigest } from "./ledger";
+} from "../policy/inverse-action";
+import type { ExportLedgerDigest } from "../policy/ledger";
 
 export const CODEX_EXPORT_LAYOUT_V1 = "codex-v1" as const;
 export const CLAUDE_EXPORT_LAYOUT_V1 = "claude-v1" as const;

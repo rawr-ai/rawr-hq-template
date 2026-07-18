@@ -23,9 +23,9 @@ import type {
   UndoApplyingSession,
   UndoFailure,
   UndoReleaseResult,
-} from "./contract";
-import { bytesEqual } from "./canonical";
-import { failure } from "./filesystem-model";
+} from "../model/dto/export-lifecycle";
+import { bytesEqual } from "../model/helpers/canonical";
+import { failure } from "../model/dto/filesystem";
 import {
   createExportAppliedObservation,
   createExportInverseAction,
@@ -37,9 +37,9 @@ import {
   observedDestinationEntry,
   type ExportActionAuthorityV1,
   type ExportInverseActionV1,
-} from "./inverse-action";
-import { EXPORT_LEDGER_FILENAME } from "./ledger";
-import type { DestinationExportPlan } from "./plan";
+} from "../model/policy/inverse-action";
+import { EXPORT_LEDGER_FILENAME } from "../model/policy/ledger";
+import type { DestinationExportPlan } from "../model/policy/plan";
 
 const MAX_ACTION_CAPTURE_ENTRIES = 1_000_000;
 const MAX_ACTION_CAPTURE_BYTES = 1024 * 1024 * 1024;

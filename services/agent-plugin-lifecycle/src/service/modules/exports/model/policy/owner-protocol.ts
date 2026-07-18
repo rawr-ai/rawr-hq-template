@@ -1,7 +1,7 @@
-import { compareCanonicalText } from "../../../shared/release/index";
+import { compareCanonicalText } from "../../../../shared/release/index";
 
-import { bytesEqual } from "./canonical";
-import type { ExportFailure } from "./contract";
+import { bytesEqual } from "../helpers/canonical";
+import type { ExportFailure } from "../dto/export-lifecycle";
 import {
   ExportFilesystemError,
   failure,
@@ -11,7 +11,7 @@ import {
   type CapturedPath,
   type CapturedRegularFile,
   type DestinationIdentity,
-} from "./filesystem-model";
+} from "../dto/filesystem";
 import {
   EXPORT_APPLIED_OBSERVATION_PROTOCOL_VERSION,
   exportInverseActionDigest,

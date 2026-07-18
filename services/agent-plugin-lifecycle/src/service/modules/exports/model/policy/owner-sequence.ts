@@ -1,6 +1,6 @@
 import { posix } from "node:path";
 
-import { compareCanonicalText } from "../../../shared/release/index";
+import { compareCanonicalText } from "../../../../shared/release/index";
 
 import {
   EXPORT_LEDGER_FILENAME,

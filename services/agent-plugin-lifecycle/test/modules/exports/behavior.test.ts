@@ -20,6 +20,7 @@ import {
   type ExportDestinationAsyncPort,
   type ExportDestinationCapture,
   type ExportFailpoints,
+  type ExportLifecycleRuntime,
   type UndoApplyingSession,
   type UndoBeginResult,
   type UndoCandidateInput,
@@ -27,8 +28,8 @@ import {
   type UndoWriteResult,
   type UndoWriter,
 } from "../../../src/bindings/exports";
-import { executeExportAgentPlugins } from "../../../src/service/modules/exports/internal/export-agent-plugins";
 import { alphaOnlyArtifactFixture, exportArtifactFixture } from "./artifact-fixture";
+import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
 const FIXTURE_PREFIX = "rawr-export-service-test-";
 
@@ -276,6 +277,14 @@ function lifecycleRuntime(
     destinationRuntime,
     operationId: () => "service-behavior",
   });
+}
+
+async function executeExportAgentPlugins(
+  request: ExportAgentPluginsRequest,
+  runtime: ExportLifecycleRuntime,
+) {
+  const client = createLifecycleTestClient({ exports: runtime });
+  return client.exports.apply(request, testInvocation);
 }
 
 function artifactReader(

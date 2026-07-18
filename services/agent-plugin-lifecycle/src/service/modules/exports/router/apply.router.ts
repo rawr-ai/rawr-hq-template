@@ -3,13 +3,10 @@ import { randomUUID } from "node:crypto";
 
 import {
   compareCanonicalText,
-  parseArtifactRef,
   type ArtifactRef,
 } from "../../../shared/release/index";
 
 import {
-  CLAUDE_EXPORT_LAYOUT_V1,
-  CODEX_EXPORT_LAYOUT_V1,
   EXPORT_APPLICATION_PROTOCOL_VERSION,
   type ExportAppliedEvent,
   type ExportAgentPluginsRequest,
@@ -26,22 +23,22 @@ import {
   type UndoFailure,
   type UndoReleaseResult,
   type UndoSynchronizationResult,
-} from "./contract";
+} from "../model/dto/export-lifecycle";
 import {
   ExportFilesystemError,
   failure,
   toFilesystemError,
-} from "./filesystem-model";
-import { renderExportSelection, type RenderedExportSelection } from "./layout";
-import { pathsOverlap, verifyKnownNativeHomesSnapshot } from "./native-homes";
+} from "../model/dto/filesystem";
+import { renderExportSelection, type RenderedExportSelection } from "../model/policy/layout";
+import { pathsOverlap, verifyKnownNativeHomesSnapshot } from "../model/policy/native-homes";
 import {
   buildDestinationExportPlan,
   type DestinationExportPlan,
-} from "./plan";
+} from "../model/policy/plan";
 import {
   exportInverseActionDigest,
   type ExportInverseActionV1,
-} from "./inverse-action";
+} from "../model/policy/inverse-action";
 import {
   planDestinationInverseActions,
   executeDestinationPlan,
@@ -53,8 +50,11 @@ import type {
   ExportDestinationResourceFailure,
   ExportLifecycleRuntime,
 } from "../ports";
+import { module } from "../module";
 
-const MAX_EXPORT_DESTINATIONS = 32;
+export const apply = module.apply.handler(async ({ context, input }) => {
+  return executeExportAgentPlugins(input, context.exports);
+});
 
 type PreparedDestinationResult =
   | Extract<ExportDestinationResult, { kind: "ReadOnlyConverged" }>
@@ -111,20 +111,20 @@ interface ClosedAdmittedOperation {
 
 type AcceptedUndoAdmission = Extract<UndoBeginResult, { kind: "Accepted" }>;
 
-export async function executeExportAgentPlugins(
-  requestInput: unknown,
+async function executeExportAgentPlugins(
+  request: ExportAgentPluginsRequest,
   dependencies: ExportLifecycleRuntime,
 ): Promise<ExportAgentPluginsResult> {
-  const preparation = await prepareExportOperation(requestInput, dependencies);
+  const preparation = await prepareExportOperation(request, dependencies);
   if (preparation.kind === "Complete") return preparation.result;
   return executePreparedExportOperation(preparation.operation, dependencies);
 }
 
 async function prepareExportOperation(
-  requestInput: unknown,
+  requestInput: ExportAgentPluginsRequest,
   dependencies: ExportLifecycleRuntime,
 ): Promise<ExportPreparation> {
-  const parsed = parseRequest(requestInput);
+  const parsed = admitRequest(requestInput);
   if (!parsed.ok) return completePreparation(rejected(parsed.failure, []));
   const request = parsed.request;
 
@@ -878,25 +878,14 @@ async function suspendSession(session: UndoApplyingSession): Promise<ExportRelea
   }
 }
 
-function parseRequest(input: unknown):
+function admitRequest(input: ExportAgentPluginsRequest):
   | Readonly<{ ok: true; request: ExportAgentPluginsRequest }>
   | Readonly<{ ok: false; failure: ExportFailure }> {
-  if (!exactRequest(input)) return invalidRequest("Export request is not a closed protocol-v1 object");
-  if (input["protocolVersion"] !== EXPORT_APPLICATION_PROTOCOL_VERSION) return invalidRequest("Export request protocol is unsupported");
-  const mode = input["mode"];
-  const layout = input["layout"];
-  if (mode !== "targeted-release" && mode !== "complete-set") return invalidRequest("Export mode is required and must be closed");
-  if (layout !== CODEX_EXPORT_LAYOUT_V1 && layout !== CLAUDE_EXPORT_LAYOUT_V1) return invalidRequest("Export layout is unsupported");
-  const parsedRef = parseArtifactRef(input["artifactRef"]);
-  if (!parsedRef.ok || !refMatchesMode(parsedRef.value, mode)) return invalidRequest("Artifact reference does not match the explicit export mode");
-  const overwritePolicy = input["overwritePolicy"] ?? "managed-only";
-  if (overwritePolicy !== "managed-only" && overwritePolicy !== "replace-planned") return invalidRequest("Export overwrite policy is unsupported");
-  const destinationsInput = input["destinations"];
-  if (!Array.isArray(destinationsInput) || destinationsInput.length === 0 || destinationsInput.length > MAX_EXPORT_DESTINATIONS) {
-    return invalidRequest("Export destinations must be one bounded nonempty list");
+  if (!refMatchesMode(input.artifactRef, input.mode)) {
+    return invalidRequest("Artifact reference does not match the explicit export mode");
   }
   const destinations: string[] = [];
-  for (const destination of destinationsInput) {
+  for (const destination of input.destinations) {
     if (!isCanonicalAbsolutePath(destination)) return invalidRequest("Every export destination must be an absolute lexical canonical path");
     destinations.push(destination);
   }
@@ -911,28 +900,14 @@ function parseRequest(input: unknown):
   return {
     ok: true,
     request: Object.freeze({
-      protocolVersion: EXPORT_APPLICATION_PROTOCOL_VERSION,
-      artifactRef: parsedRef.value,
-      mode,
-      layout,
+      protocolVersion: input.protocolVersion,
+      artifactRef: input.artifactRef,
+      mode: input.mode,
+      layout: input.layout,
       destinations: Object.freeze(destinations),
-      overwritePolicy,
+      overwritePolicy: input.overwritePolicy,
     }),
   };
-}
-
-function exactRequest(input: unknown): input is Record<string, unknown> {
-  if (typeof input !== "object" || input === null || Array.isArray(input)) return false;
-  const prototype = Object.getPrototypeOf(input);
-  if (prototype !== Object.prototype && prototype !== null) return false;
-  const keys = Object.keys(input).sort(compareCanonicalText);
-  const withoutPolicy = ["artifactRef", "destinations", "layout", "mode", "protocolVersion"].sort(compareCanonicalText);
-  const withPolicy = [...withoutPolicy, "overwritePolicy"].sort(compareCanonicalText);
-  return sameKeys(keys, withoutPolicy) || sameKeys(keys, withPolicy);
-}
-
-function sameKeys(left: readonly string[], right: readonly string[]): boolean {
-  return left.length === right.length && left.every((key, index) => key === right[index]);
 }
 
 function refMatchesMode(ref: ArtifactRef, mode: ExportAgentPluginsRequest["mode"]): boolean {
@@ -940,9 +915,8 @@ function refMatchesMode(ref: ArtifactRef, mode: ExportAgentPluginsRequest["mode"
     || (mode === "complete-set" && ref.kind === "complete-set");
 }
 
-function isCanonicalAbsolutePath(value: unknown): value is string {
-  return typeof value === "string"
-    && isAbsolute(value)
+function isCanonicalAbsolutePath(value: string): boolean {
+  return isAbsolute(value)
     && value === normalize(value)
     && value === resolve(value)
     && value !== "/";

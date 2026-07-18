@@ -12,14 +12,14 @@ import {
   compareCanonicalText,
   contentDigest,
   type PluginId,
-} from "../../../shared/release/index";
-import { bytesEqual, jsonLine, sha256 } from "./canonical";
+} from "../../../../shared/release/index";
+import { bytesEqual, jsonLine, sha256 } from "../helpers/canonical";
 import type {
   ExportFailure,
   ExportLayoutV1,
   ExportOverwritePolicyV1,
-} from "./contract";
-import { failure } from "./filesystem-model";
+} from "../dto/export-lifecycle";
+import { failure } from "../dto/filesystem";
 import type { PlannedExportFile, RenderedExportSelection } from "./layout";
 import {
   EXPORT_LEDGER_FILENAME,

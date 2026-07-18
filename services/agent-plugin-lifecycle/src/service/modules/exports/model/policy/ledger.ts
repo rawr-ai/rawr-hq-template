@@ -17,10 +17,10 @@ import {
   type ReleaseDigest,
   type ReleaseRelativePath,
   type ReleaseSetDigest,
-} from "../../../shared/release/index";
+} from "../../../../shared/release/index";
 
-import type { ExportLayoutV1 } from "./contract";
-import { bytesEqual, decodeJson, jsonLine, sha256, type JsonValue } from "./canonical";
+import type { ExportLayoutV1 } from "../dto/export-lifecycle";
+import { bytesEqual, decodeJson, jsonLine, sha256, type JsonValue } from "../helpers/canonical";
 
 export const EXPORT_LEDGER_SCHEMA_VERSION = 1 as const;
 export const EXPORT_LEDGER_FILENAME = ".rawr-agent-plugin-export-ledger-v1.json";
