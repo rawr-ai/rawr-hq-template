@@ -5,10 +5,15 @@ import path from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
 import { FileSystem } from "@effect/platform";
 import { SystemError } from "@effect/platform/Error";
+import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
 import { Effect } from "effect";
 
 import type { NodeContentWorkspaceResult } from "../index";
-import { makeContentWorkspaceResource, runNodeContentWorkspace } from "../index";
+import {
+  makeContentWorkspaceResource,
+  makeDeferredNodeContentWorkspacePort,
+  runNodeContentWorkspace,
+} from "../index";
 
 const gitExecutable = requireExecutable("git");
 const FIXTURE_PREFIX = "rawr-content-workspace-test-";
@@ -17,6 +22,10 @@ interface FixtureOwner {
   readonly root: string;
   readonly dev: number;
   readonly ino: number;
+}
+interface DeferredOperationProbe {
+  readonly operation: ContentWorkspaceFailure["operation"];
+  readonly invoke: () => Promise<unknown>;
 }
 const roots: FixtureOwner[] = [];
 
@@ -739,7 +748,300 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(records.some((record) => record.startsWith(`${inheritedConfig}|0|init`))).toBe(true);
     expect(records.some((record) => record.startsWith(`${inheritedConfig}|0|fetch`))).toBe(true);
   });
+
+  test("defers Git binding acquisition, retries failure, and shares the successful provider", async () => {
+    const root = await createRepository();
+    const canonicalGit = await realpath(gitExecutable);
+    let acquisitions = 0;
+    const port = makeDeferredNodeContentWorkspacePort({
+      acquireGitExecutable: () => {
+        acquisitions += 1;
+        if (acquisitions === 1) throw new Error("transient binding failure");
+        return canonicalGit;
+      },
+    });
+
+    expect(acquisitions).toBe(0);
+    await expect(port.inspectWorkspace({ locator: root })).rejects.toMatchObject({
+      _tag: "ContentWorkspaceFailure",
+      operation: "inspect",
+      reason: "GitFailed",
+      path: root,
+      detail: "Git executable binding acquisition failed: transient binding failure",
+    });
+    const [first, second] = await Promise.all([
+      port.inspectWorkspace({ locator: root }),
+      port.inspectWorkspace({ locator: root }),
+    ]);
+    expect(first).toEqual(second);
+    expect(acquisitions).toBe(2);
+
+    expect(await port.readFile({ root, path: ".gitkeep", maxBytes: 16 })).toEqual(new Uint8Array());
+    expect(acquisitions).toBe(2);
+  });
+
+  test("single-flights failed acquisition without sharing operation metadata, then retries", async () => {
+    const root = await createRepository();
+    let acquisitions = 0;
+    let available = false;
+    const port = makeDeferredNodeContentWorkspacePort({
+      acquireGitExecutable: () => {
+        acquisitions += 1;
+        if (!available) throw new Error("binding unavailable");
+        return gitExecutable;
+      },
+    });
+
+    const [inspection, read] = await Promise.allSettled([
+      port.inspectWorkspace({ locator: "/workspace/inspection" }),
+      port.readFile({ root: "/workspace/read", path: "value.txt", maxBytes: 1 }),
+    ]);
+    expect(inspection).toMatchObject({
+      status: "rejected",
+      reason: {
+        _tag: "ContentWorkspaceFailure",
+        operation: "inspect",
+        reason: "GitFailed",
+        path: "/workspace/inspection",
+      },
+    });
+    expect(read).toMatchObject({
+      status: "rejected",
+      reason: {
+        _tag: "ContentWorkspaceFailure",
+        operation: "read-file",
+        reason: "GitFailed",
+        path: "/workspace/read",
+      },
+    });
+    expect(acquisitions).toBe(1);
+
+    available = true;
+    await expect(port.inspectWorkspace({ locator: root })).resolves.toMatchObject({
+      root,
+    });
+    expect(acquisitions).toBe(2);
+  });
+
+  test("retains a successful provider after an ordinary resource operation fails", async () => {
+    const root = await createRepository();
+    let acquisitions = 0;
+    const port = makeDeferredNodeContentWorkspacePort({
+      acquireGitExecutable: () => {
+        acquisitions += 1;
+        return gitExecutable;
+      },
+    });
+
+    await expect(port.readFile({
+      root,
+      path: "missing.txt",
+      maxBytes: 16,
+    })).rejects.toMatchObject({
+      _tag: "ContentWorkspaceFailure",
+      operation: "read-file",
+      reason: "Missing",
+      path: path.join(root, "missing.txt"),
+    });
+    await expect(port.inspectWorkspace({ locator: root })).resolves.toMatchObject({
+      root,
+    });
+    expect(acquisitions).toBe(1);
+  });
+
+  test("maps deferred acquisition failure for every port operation and permits retry", async () => {
+    const object = "0000000000000000000000000000000000000000";
+    let acquisitions = 0;
+    const port = makeDeferredNodeContentWorkspacePort({
+      acquireGitExecutable: () => {
+        acquisitions += 1;
+        throw new Error("binding unavailable");
+      },
+    });
+    const probes: readonly DeferredOperationProbe[] = [
+      {
+        operation: "inspect",
+        invoke: () => port.inspectWorkspace({ locator: deferredCandidate("inspect") }),
+      },
+      {
+        operation: "inspect-git-workspace",
+        invoke: () => port.inspectGitWorkspace({
+          locator: deferredCandidate("inspect-git-workspace"),
+          remoteSelection: { kind: "All" },
+          refName: "refs/heads/main",
+        }),
+      },
+      {
+        operation: "read-git-tree",
+        invoke: () => port.readGitTree({
+          root: deferredCandidate("read-git-tree"),
+          tree: object,
+          objectFormat: "sha1",
+          maxBytes: 1,
+        }),
+      },
+      {
+        operation: "read-git-blob",
+        invoke: () => port.readGitBlob({
+          root: deferredCandidate("read-git-blob"),
+          blob: object,
+          objectFormat: "sha1",
+          maxBytes: 1,
+        }),
+      },
+      {
+        operation: "capture-git-evidence",
+        invoke: () => port.captureGitWorkspaceEvidence({
+          root: deferredCandidate("capture-git-evidence"),
+          remoteSelection: { kind: "All" },
+          refName: "refs/heads/main",
+          admittedPaths: [],
+          consumedRoots: [],
+          objectFormat: "sha1",
+          maxPaths: 1,
+          maxBytes: 1,
+        }),
+      },
+      {
+        operation: "read-git-blob-at-path",
+        invoke: () => port.readGitBlobAtPath({
+          root: deferredCandidate("read-git-blob-at-path"),
+          refName: "refs/heads/main",
+          commit: object,
+          tree: object,
+          path: "value.txt",
+          maxBytes: 1,
+        }),
+      },
+      {
+        operation: "local-git-ancestry",
+        invoke: () => port.isLocalGitAncestor({
+          root: deferredCandidate("local-git-ancestry"),
+          ancestorCommit: object,
+          descendantCommit: object,
+        }),
+      },
+      {
+        operation: "list-git-changed-paths",
+        invoke: () => port.listGitChangedPaths({
+          root: deferredCandidate("list-git-changed-paths"),
+          fromCommit: object,
+          toCommit: object,
+          maxBytes: 1,
+        }),
+      },
+      {
+        operation: "read-file",
+        invoke: () => port.readFile({
+          root: deferredCandidate("read-file"),
+          path: "value.txt",
+          maxBytes: 1,
+        }),
+      },
+      {
+        operation: "read-tree",
+        invoke: () => port.readTree({
+          root: deferredCandidate("read-tree"),
+          path: "payload",
+          objectFormat: "sha1",
+          maxEntries: 1,
+          maxBytes: 1,
+        }),
+      },
+      {
+        operation: "observe-remote",
+        invoke: () => port.observeRemote({
+          repositoryIdentity: deferredCandidate("observe-remote"),
+          refName: "refs/heads/main",
+          sourcePath: "",
+          maxEntries: 1,
+        }),
+      },
+      {
+        operation: "materialize-remote",
+        invoke: () => port.materializeRemote({
+          repositoryIdentity: deferredCandidate("materialize-remote"),
+          refName: "refs/heads/main",
+          sourcePath: "",
+          maxEntries: 1,
+          maxBytes: 1,
+        }),
+      },
+      {
+        operation: "ancestry",
+        invoke: () => port.isAncestor({
+          repositoryIdentity: deferredCandidate("ancestry"),
+          refName: "refs/heads/main",
+          ancestorCommit: object,
+          descendantCommit: object,
+        }),
+      },
+      {
+        operation: "capture",
+        invoke: () => port.capture({
+          root: deferredCandidate("capture"),
+          readToken: "read",
+          paths: [],
+          maxEntries: 1,
+          maxBytes: 1,
+        }),
+      },
+      {
+        operation: "apply",
+        invoke: () => port.apply({
+          root: deferredCandidate("apply"),
+          planDigest: "plan",
+          readToken: "read",
+          captureHandle: "capture",
+          writes: [],
+        }),
+      },
+      {
+        operation: "restore",
+        invoke: () => port.restore({
+          root: deferredCandidate("restore"),
+          planDigest: "plan",
+          readToken: "read",
+          captureHandle: "capture",
+        }),
+      },
+      {
+        operation: "settle",
+        invoke: () => port.settle({
+          root: deferredCandidate("settle"),
+          planDigest: "plan",
+          readToken: "read",
+          captureHandle: "capture",
+        }),
+      },
+      {
+        operation: "release",
+        invoke: () => port.release({
+          root: deferredCandidate("release"),
+          readToken: "read",
+          captureHandle: "capture",
+          disposition: "NoMutation",
+        }),
+      },
+    ];
+
+    expect(acquisitions).toBe(0);
+    for (const probe of probes) {
+      await expect(probe.invoke()).rejects.toMatchObject({
+        _tag: "ContentWorkspaceFailure",
+        operation: probe.operation,
+        reason: "GitFailed",
+        path: deferredCandidate(probe.operation),
+        detail: "Git executable binding acquisition failed: binding unavailable",
+      });
+    }
+    expect(acquisitions).toBe(probes.length);
+  });
 });
+
+function deferredCandidate(operation: ContentWorkspaceFailure["operation"]): string {
+  return "/workspace/" + operation;
+}
 
 async function createRepository(): Promise<string> {
   const root = await createFixtureDirectory();

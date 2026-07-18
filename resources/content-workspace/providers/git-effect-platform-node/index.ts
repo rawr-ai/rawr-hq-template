@@ -40,6 +40,10 @@ export interface GitEffectPlatformNodeOptions {
   readonly gitExecutable: string;
 }
 
+export interface DeferredGitEffectPlatformNodeOptions {
+  readonly acquireGitExecutable: () => string;
+}
+
 interface ContentFileImage {
   readonly kind: "File";
   readonly path: string;
@@ -860,6 +864,183 @@ export function makeNodeContentWorkspacePort(options: GitEffectPlatformNodeOptio
     settle: (input: Parameters<typeof resource.settle>[0]) => runNodeOrReject(resource.settle(input)),
     release: (input: Parameters<typeof resource.release>[0]) => runNodeOrReject(resource.release(input)),
   });
+}
+
+/**
+ * Defers the executable binding until the first content-workspace operation.
+ * A successful provider is shared for the lifetime of this port; failed
+ * acquisition remains retryable so a later operation attempt can bind cleanly.
+ */
+export function makeDeferredNodeContentWorkspacePort(
+  options: DeferredGitEffectPlatformNodeOptions,
+): ContentWorkspaceNodeAsyncPort {
+  const acquire = makeDeferredNodeContentWorkspacePortAcquirer(options);
+  return Object.freeze({
+    inspectWorkspace: (input: Parameters<ContentWorkspaceNodeAsyncPort["inspectWorkspace"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "inspect",
+      input.locator,
+      (port) => port.inspectWorkspace(input),
+    ),
+    inspectGitWorkspace: (input: Parameters<ContentWorkspaceNodeAsyncPort["inspectGitWorkspace"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "inspect-git-workspace",
+      input.locator,
+      (port) => port.inspectGitWorkspace(input),
+    ),
+    readGitTree: (input: Parameters<ContentWorkspaceNodeAsyncPort["readGitTree"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "read-git-tree",
+      input.root,
+      (port) => port.readGitTree(input),
+    ),
+    readGitBlob: (input: Parameters<ContentWorkspaceNodeAsyncPort["readGitBlob"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "read-git-blob",
+      input.root,
+      (port) => port.readGitBlob(input),
+    ),
+    captureGitWorkspaceEvidence: (input: Parameters<ContentWorkspaceNodeAsyncPort["captureGitWorkspaceEvidence"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "capture-git-evidence",
+      input.root,
+      (port) => port.captureGitWorkspaceEvidence(input),
+    ),
+    readGitBlobAtPath: (input: Parameters<ContentWorkspaceNodeAsyncPort["readGitBlobAtPath"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "read-git-blob-at-path",
+      input.root,
+      (port) => port.readGitBlobAtPath(input),
+    ),
+    isLocalGitAncestor: (input: Parameters<ContentWorkspaceNodeAsyncPort["isLocalGitAncestor"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "local-git-ancestry",
+      input.root,
+      (port) => port.isLocalGitAncestor(input),
+    ),
+    listGitChangedPaths: (input: Parameters<ContentWorkspaceNodeAsyncPort["listGitChangedPaths"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "list-git-changed-paths",
+      input.root,
+      (port) => port.listGitChangedPaths(input),
+    ),
+    readFile: (input: Parameters<ContentWorkspaceNodeAsyncPort["readFile"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "read-file",
+      input.root,
+      (port) => port.readFile(input),
+    ),
+    readTree: (input: Parameters<ContentWorkspaceNodeAsyncPort["readTree"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "read-tree",
+      input.root,
+      (port) => port.readTree(input),
+    ),
+    observeRemote: (input: Parameters<ContentWorkspaceNodeAsyncPort["observeRemote"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "observe-remote",
+      input.repositoryIdentity,
+      (port) => port.observeRemote(input),
+    ),
+    materializeRemote: (input: Parameters<ContentWorkspaceNodeAsyncPort["materializeRemote"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "materialize-remote",
+      input.repositoryIdentity,
+      (port) => port.materializeRemote(input),
+    ),
+    isAncestor: (input: Parameters<ContentWorkspaceNodeAsyncPort["isAncestor"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "ancestry",
+      input.repositoryIdentity,
+      (port) => port.isAncestor(input),
+    ),
+    capture: (input: Parameters<ContentWorkspaceNodeAsyncPort["capture"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "capture",
+      input.root,
+      (port) => port.capture(input),
+    ),
+    apply: (input: Parameters<ContentWorkspaceNodeAsyncPort["apply"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "apply",
+      input.root,
+      (port) => port.apply(input),
+    ),
+    restore: (input: Parameters<ContentWorkspaceNodeAsyncPort["restore"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "restore",
+      input.root,
+      (port) => port.restore(input),
+    ),
+    settle: (input: Parameters<ContentWorkspaceNodeAsyncPort["settle"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "settle",
+      input.root,
+      (port) => port.settle(input),
+    ),
+    release: (input: Parameters<ContentWorkspaceNodeAsyncPort["release"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "release",
+      input.root,
+      (port) => port.release(input),
+    ),
+  });
+}
+
+type DeferredNodeContentWorkspacePortAcquisition =
+  | Readonly<{ ok: true; port: ContentWorkspaceNodeAsyncPort }>
+  | Readonly<{ ok: false; detail: string }>;
+
+function makeDeferredNodeContentWorkspacePortAcquirer(
+  options: DeferredGitEffectPlatformNodeOptions,
+): () => Promise<DeferredNodeContentWorkspacePortAcquisition> {
+  let acquired: ContentWorkspaceNodeAsyncPort | undefined;
+  let pending: Promise<DeferredNodeContentWorkspacePortAcquisition> | undefined;
+
+  return () => {
+    if (acquired !== undefined) return Promise.resolve(successfulPortAcquisition(acquired));
+    if (pending !== undefined) return pending;
+
+    const attempt = Effect.runPromise(Effect.try({
+      try: () => makeNodeContentWorkspacePort({ gitExecutable: options.acquireGitExecutable() }),
+      catch: errorMessage,
+    }).pipe(Effect.match({
+      onFailure: failedPortAcquisition,
+      onSuccess: successfulPortAcquisition,
+    })));
+    pending = attempt;
+    return attempt.then((result) => {
+      pending = undefined;
+      if (result.ok) acquired = result.port;
+      return result;
+    });
+  };
+}
+
+function runDeferredNodeOperation<A>(
+  acquire: () => Promise<DeferredNodeContentWorkspacePortAcquisition>,
+  operation: ContentWorkspaceFailure["operation"],
+  candidate: string,
+  use: (port: ContentWorkspaceNodeAsyncPort) => Promise<A>,
+): Promise<A> {
+  return acquire().then((result) => result.ok
+    ? use(result.port)
+    : Promise.reject(failure(
+      operation,
+      "GitFailed",
+      candidate,
+      `Git executable binding acquisition failed: ${result.detail}`,
+    )));
+}
+
+function successfulPortAcquisition(
+  port: ContentWorkspaceNodeAsyncPort,
+): DeferredNodeContentWorkspacePortAcquisition {
+  return Object.freeze({ ok: true, port });
+}
+
+function failedPortAcquisition(detail: string): DeferredNodeContentWorkspacePortAcquisition {
+  return Object.freeze({ ok: false, detail });
 }
 
 function runNodeOrReject<A>(
