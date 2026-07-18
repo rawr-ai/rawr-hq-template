@@ -142,14 +142,6 @@ Retention MUST receive a closed `RetentionPinsV1` containing only `ReleaseArtifa
 - **THEN** guarded cleanup is rejected before any unlink or `rmdir`
 - **AND** the candidate target and every unrelated source, artifact, provider, destination, and repository path remain unchanged
 
-### Requirement: Build owner remains isolated and inactive
-The build and artifact service MUST own only explicit Git verification, release construction, content-addressed publication, lookup, verification, and retention. It MUST NOT import provider adapters, export ledgers, packaging output ownership, Oclif state, app composition, or acceptance authorization. In C2 its applications MUST remain absent from command discovery and the controller manifest.
-
-#### Scenario: Build cannot cross a state authority
-- **WHEN** every non-build mutation port is instrumented during check, build, lookup, verification, and retention
-- **THEN** only the explicitly selected artifact-store publication may mutate state during a successful build and C2 retention remains read-only
-- **AND** no command registration, provider, export, package, Oclif, app, acceptance, or personal repository mutation occurs
-
 ### Requirement: Build results are closed and truthful
 Check MUST return exactly `EligibleReport` or `IneligibleReport`. Build MUST return exactly `RejectedBeforePublication`, `PublicationIncomplete`, `PublicationUnsettled`, `Published`, or `ReadOnlyConverged`, with targeted-release or complete-set mode represented as a discriminant rather than optional flags. `PublicationIncomplete` MUST carry the exact newly published and pre-existing verified refs while proving the requested final ref absent; `PublicationUnsettled` MUST carry only observed verified refs and an unknown final-commit classification when store observation itself failed. Neither may carry a usable requested complete-set ref. Artifact reads MUST return exactly `Verified`, `Missing`, or `Mismatch`, and retention MUST return `RetentionPlan` or `BlockedPinnedGraph`. Failure variants MUST preserve primary and cleanup failures without overclaiming output. Contradictory optional boolean bags MUST be unrepresentable.
 
@@ -189,4 +181,12 @@ Evidence handles referenced by an acceptance request, accepted outcome, promotio
 #### Scenario: Active accepted evidence is retained
 - **WHEN** the fixed channel transitively references an accepted mechanical-evidence handle
 - **THEN** artifact retention preserves the evidence bytes together with the referenced release and set artifacts
+
+### Requirement: Release and vendor modules preserve artifact authority
+The lifecycle service's `releases` module MUST own explicit Git verification, release construction, content-addressed publication, lookup, verification, and retention. Its `vendors` module MUST own repository-vendor observation and reviewable authoring. Neither module may import provider adapters, export ledgers, packaging output ownership, Oclif state, app composition, acceptance authorization, or personal executable code. Their operator reachability MUST be limited to the exact qualified `rawr agent plugins check|build|vendors status|vendors update` typed procedures.
+
+#### Scenario: Build cannot cross a state authority
+- **WHEN** every non-build mutation port is instrumented during check, build, lookup, verification, retention, and vendor operations
+- **THEN** only the explicitly selected artifact publication or reviewable vendor repository authoring may mutate its declared state
+- **AND** no provider, export, package, Oclif, app, acceptance, controller-selection, or unrelated personal repository mutation occurs
 

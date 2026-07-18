@@ -176,14 +176,6 @@ Undo MUST return exactly `NoCommittedCapsule`, `RejectedBeforeReplay`, `Restored
 - **THEN** the parsed `CapsuleState` variant and generation match the result's declared transition exactly
 - **AND** no boolean or optional event combination can overclaim clearing or restoration, and synchronization diagnostics cannot rewrite that transition
 
-### Requirement: Undo contract remains inactive in C2
-C2 MUST add only the internal typed capsule schema, reader, writer, and replay contracts plus export integration. It MUST NOT add or reroute root `rawr undo`, add `rawr agent plugins undo`, add controller-manifest entries, bootstrap persistence, universal pre-dispatch expiry, runtime discovery, aliases, or compatibility routing. Operator reachability waits for the qualified later command cutover.
-
-#### Scenario: Bootstrap and command discovery remain mutation-free
-- **WHEN** ordinary controller startup and command discovery run after C2
-- **THEN** the pre-C2 command inventory is unchanged, no new qualified undo command or alias is discoverable, and no new capsule read, expiry, write, replay, or clear occurs
-- **AND** the internal contract remains testable through explicit injected ports only
-
 ### Requirement: Provider inverse actions use the existing controller capsule
 Provider deployment MUST integrate one closed provider owner protocol with the existing controller-owned bounded last-operation capsule. Provider services and adapters MUST NOT persist a second capsule, command-scoped undo file, operation history, or replay authority.
 
@@ -238,4 +230,17 @@ Failures before mutation MUST preserve the prior capsule. Failures after externa
 #### Scenario: Crash boundaries recover from stable state
 - **WHEN** a fresh process resumes at each sidecar-admission, provider apply, verify, receipt, and replay boundary after source worktrees are absent
 - **THEN** owner classification either completes exact recovery or blocks truthfully using only the capsule, stable artifacts, target state, and receipt store
+
+### Requirement: Operator undo is qualified and controller-owned
+The controller-owned bounded last-operation capsule MUST be operator-reachable only as `rawr agent plugins undo`. Root `rawr undo`, mixed lifecycle undo, workspace-local capsules, aliases, forwarding routes, universal pre-dispatch expiry, and service-local undo stores MUST be absent. The qualified command MUST invoke only the controller-owned undo application, which dispatches replay through the capsule's registered owner protocol and MUST NOT scan source workspaces, app composition, provider homes, destinations, or Oclif state for recovery authority.
+
+#### Scenario: Empty qualified undo is read-only
+- **WHEN** no valid last-operation capsule exists
+- **THEN** `rawr agent plugins undo` reports the exact empty classification without creating, replacing, expiring, or clearing capsule state
+- **AND** root `rawr undo` is undiscoverable
+
+#### Scenario: Qualified replay uses the registered owner only
+- **WHEN** a valid export or provider capsule is replayed
+- **THEN** the controller dispatches only the action's registered owner codec and verifies exact prior state before clearing the capsule
+- **AND** no generic filesystem cleanup, aggregate service, or foreign state owner is invoked
 

@@ -1,3 +1,8 @@
+## RENAMED Requirements
+
+- FROM: `### Requirement: Build owner remains isolated and inactive`
+- TO: `### Requirement: Release and vendor modules preserve artifact authority`
+
 ## MODIFIED Requirements
 
 ### Requirement: Release and vendor modules preserve artifact authority

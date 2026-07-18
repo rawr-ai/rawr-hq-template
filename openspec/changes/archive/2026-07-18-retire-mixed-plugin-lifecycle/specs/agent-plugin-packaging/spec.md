@@ -1,3 +1,8 @@
+## RENAMED Requirements
+
+- FROM: `### Requirement: Packaging remains isolated and inactive in C2`
+- TO: `### Requirement: Packaging module remains isolated behind one qualified procedure`
+
 ## MODIFIED Requirements
 
 ### Requirement: Packaging module remains isolated behind one qualified procedure

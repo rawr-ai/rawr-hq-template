@@ -102,11 +102,11 @@ Release schemas, canonicalizers, ownership validation, and digest functions MUST
 - **THEN** their schemas, manifests, digests, and ownership index remain fully verifiable from immutable artifact data
 - **AND** no repository ancestry or tree-equivalence mechanism is consulted
 
-### Requirement: C2 release applications remain inert
-C2 release, check, build, export, package, and undo application contracts MUST remain internal typed Template interfaces. C2 MUST NOT add a discoverable command file, controller-manifest entry, runtime scan, alias, aggregate projection, or compatibility fallback for those applications. They become operator-reachable only through the later qualified `rawr agent plugins` command cutover.
+### Requirement: Release lifecycle activates only through qualified procedures
+Release construction MUST remain encapsulated by the lifecycle `releases` module and become operator-reachable only through qualified `check` and `build`. The typed `check|build|export|package` procedures MUST be composed by `@rawr/agent-plugin-lifecycle` and projected only at their exact qualified `rawr agent plugins` commands. Controller undo remains a separate typed controller application. None may be exposed through a `release` command, direct module-router imports, runtime scans, bare plugins, root undo, aliases, aggregate projections, compatibility fallbacks, or personal executable code.
 
-#### Scenario: Controller command inventory is unchanged by C2
-- **WHEN** the controller manifest and command discovery are inspected after C2 release-product installation
-- **THEN** no new agent-plugin lifecycle command or alias is discoverable
-- **AND** the internal applications can be tested without altering controller, Oclif, provider, destination, or personal repository authority
+#### Scenario: Qualified activation does not add another owner
+- **WHEN** controller command discovery and dispatch are inspected after C5
+- **THEN** the qualified command invokes the corresponding consolidated module behavior already tested in C2
+- **AND** no aggregate, Oclif, app-composition, or personal repository implementation becomes an alternate path
 

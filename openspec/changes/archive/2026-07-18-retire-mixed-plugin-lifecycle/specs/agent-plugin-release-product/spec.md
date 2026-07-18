@@ -1,3 +1,8 @@
+## RENAMED Requirements
+
+- FROM: `### Requirement: C2 release applications remain inert`
+- TO: `### Requirement: Release lifecycle activates only through qualified procedures`
+
 ## MODIFIED Requirements
 
 ### Requirement: Release lifecycle activates only through qualified procedures
