@@ -101,11 +101,6 @@ describe("production lifecycle read-only binding", () => {
           evidence: governance.evidenceReader,
           approvals: governance.approvalReader,
         },
-        operation: "providers.canonicalStatus",
-        scope: {
-          controllerIdentity: "controller:test",
-          controllerDataRootIdentity: "controller-data:test",
-        },
       }),
       roots: {
         controllerDataRoot: dataRoot,

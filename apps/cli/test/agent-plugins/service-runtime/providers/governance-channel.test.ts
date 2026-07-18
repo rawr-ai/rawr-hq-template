@@ -1,18 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import { parseCanonicalStatusRequest } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import { createGovernanceCanonicalChannelReader } from "../../../../src/lib/agent-plugins/service-runtime/providers/governance-channel";
 import {
   MAIN_REF,
   promotionFixture,
 } from "../../../../../../services/agent-plugin-lifecycle/test/modules/governance/fixtures";
 
-const SCOPE = Object.freeze({
-  controllerIdentity: "controller:test",
-  controllerDataRootIdentity: "controller-data:test",
-});
-
 describe("governance-backed canonical provider channel", () => {
-  it("traverses the governance oRPC procedure before translating accepted authority", async () => {
+  it("translates accepted authority through the governance-owned resolver", async () => {
     const fixture = promotionFixture();
     const channel = createGovernanceCanonicalChannelReader({
       governance: {
@@ -20,14 +16,9 @@ describe("governance-backed canonical provider channel", () => {
         evidence: fixture.evidenceReader,
         approvals: fixture.approvalReader,
       },
-      operation: "providers.canonicalStatus",
-      scope: SCOPE,
     });
 
-    const result = await channel.resolve({
-      repositoryIdentity: fixture.locator.expectedRepositoryIdentity,
-      workspaceRoot: fixture.locator.workspacePath,
-    } as Parameters<typeof channel.resolve>[0]);
+    const result = await channel.resolve(currentMainLocator(fixture));
 
     expect(result).toMatchObject({
       ok: true,
@@ -53,16 +44,26 @@ describe("governance-backed canonical provider channel", () => {
         evidence: fixture.evidenceReader,
         approvals: fixture.approvalReader,
       },
-      operation: "providers.canonicalStatus",
-      scope: SCOPE,
     });
 
-    await expect(channel.resolve({
-      repositoryIdentity: fixture.locator.expectedRepositoryIdentity,
-      workspaceRoot: fixture.locator.workspacePath,
-    } as Parameters<typeof channel.resolve>[0])).resolves.toEqual({
+    await expect(channel.resolve(currentMainLocator(fixture))).resolves.toEqual({
       ok: true,
       value: { kind: "blocked-acceptance-authority" },
     });
   });
 });
+
+function currentMainLocator(fixture: ReturnType<typeof promotionFixture>) {
+  const parsed = parseCanonicalStatusRequest({
+    kind: "canonical-status",
+    channel: "current-main",
+    locator: {
+      repositoryIdentity: fixture.locator.expectedRepositoryIdentity,
+      workspaceRoot: fixture.locator.workspacePath,
+    },
+    targets: [{ provider: "codex", home: "/tmp/codex-home" }],
+  });
+  expect(parsed.ok).toBe(true);
+  if (!parsed.ok) throw new Error("Expected a valid canonical-status locator fixture");
+  return parsed.value.locator;
+}

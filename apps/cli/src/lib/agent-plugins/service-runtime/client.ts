@@ -143,10 +143,6 @@ export const createProductionLifecycleClient: LifecycleClientFactory = async (
     layout,
     artifactReader,
     controllerDataRoot: authority.dataRoot,
-    scope: {
-      controllerIdentity: `controller:${authority.controllerDigest}`,
-      controllerDataRootIdentity: `controller-data:${authority.controllerDigest}`,
-    },
   });
   const deps = createSelectedLifecycleDeps(selected);
 
@@ -175,7 +171,6 @@ async function createSelectedLifecycleRuntime(input: Readonly<{
   layout: ReturnType<typeof deriveAgentPluginControllerLayout>;
   artifactReader: ReturnType<typeof createArtifactRepositoryReader>;
   controllerDataRoot: string;
-  scope: LifecycleBoundary["scope"];
 }>): Promise<SelectedLifecycleRuntime> {
   const { operation, binding, layout, artifactReader, controllerDataRoot } = input;
 
@@ -235,8 +230,6 @@ async function createSelectedLifecycleRuntime(input: Readonly<{
       : createUnavailableGovernanceRuntime();
     const channel = createGovernanceCanonicalChannelReader({
       governance,
-      operation,
-      scope: input.scope,
     });
     return Object.freeze({
       owner: "providers",
