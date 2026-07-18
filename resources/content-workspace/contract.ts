@@ -3,6 +3,10 @@ import type { Effect } from "effect";
 export type GitObjectFormat = "sha1" | "sha256";
 export type ContentFileMode = "100644" | "100755";
 
+export type GitRemoteSelection =
+  | Readonly<{ kind: "All" }>
+  | Readonly<{ kind: "Named"; remoteName: string }>;
+
 export interface ContentWorkspaceIdentity {
   readonly root: string;
   readonly refName: string;
@@ -10,6 +14,41 @@ export interface ContentWorkspaceIdentity {
   readonly tree: string;
   readonly objectFormat: GitObjectFormat;
   readonly remoteUrls: readonly string[];
+}
+
+/** Exact read-only Git observation. No field grants mutation authority. */
+export interface GitWorkspaceAnchor extends ContentWorkspaceIdentity {
+  readonly rootDevice: string;
+  readonly rootInode: string;
+  readonly refCommit: string;
+}
+
+export interface GitWorktreeObjectId {
+  readonly path: string;
+  readonly objectId: string;
+}
+
+/**
+ * Raw mechanics for one bounded workspace observation. Semantic owners decide
+ * whether the evidence is eligible and construct any derived binding digest.
+ */
+export interface GitWorkspaceEvidence {
+  readonly openingAnchor: GitWorkspaceAnchor;
+  readonly openingStatus: Uint8Array;
+  readonly openingTrackedFlags: Uint8Array;
+  readonly worktreeObjectIds: readonly GitWorktreeObjectId[];
+  readonly indexEntries: Uint8Array;
+  readonly closingAnchor: GitWorkspaceAnchor;
+  readonly closingStatus: Uint8Array;
+  readonly closingTrackedFlags: Uint8Array;
+}
+
+export interface GitBlobAtPathObservation {
+  readonly refCommit: string;
+  readonly commit: string;
+  readonly tree: string;
+  readonly blob: string;
+  readonly bytes: Uint8Array;
 }
 
 export interface ContentTreeEntry {
@@ -101,6 +140,13 @@ export interface ContentWorkspaceFailure {
   readonly _tag: "ContentWorkspaceFailure";
   readonly operation:
     | "inspect"
+    | "inspect-git-workspace"
+    | "read-git-tree"
+    | "read-git-blob"
+    | "capture-git-evidence"
+    | "read-git-blob-at-path"
+    | "local-git-ancestry"
+    | "list-git-changed-paths"
     | "read-file"
     | "read-tree"
     | "observe-remote"
@@ -121,6 +167,59 @@ export interface ContentWorkspaceResource<R = never> {
   readonly inspectWorkspace: (input: Readonly<{
     locator: string;
   }>) => Effect.Effect<ContentWorkspaceIdentity, ContentWorkspaceFailure, R>;
+
+  readonly inspectGitWorkspace: (input: Readonly<{
+    locator: string;
+    remoteSelection: GitRemoteSelection;
+    refName: string;
+  }>) => Effect.Effect<GitWorkspaceAnchor, ContentWorkspaceFailure, R>;
+
+  readonly readGitTree: (input: Readonly<{
+    root: string;
+    tree: string;
+    objectFormat: GitObjectFormat;
+    maxBytes: number;
+  }>) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
+
+  readonly readGitBlob: (input: Readonly<{
+    root: string;
+    blob: string;
+    objectFormat: GitObjectFormat;
+    maxBytes: number;
+  }>) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
+
+  readonly captureGitWorkspaceEvidence: (input: Readonly<{
+    root: string;
+    remoteSelection: GitRemoteSelection;
+    refName: string;
+    admittedPaths: readonly string[];
+    consumedRoots: readonly string[];
+    objectFormat: GitObjectFormat;
+    maxPaths: number;
+    maxBytes: number;
+  }>) => Effect.Effect<GitWorkspaceEvidence, ContentWorkspaceFailure, R>;
+
+  readonly readGitBlobAtPath: (input: Readonly<{
+    root: string;
+    refName: string;
+    commit: string;
+    tree: string;
+    path: string;
+    maxBytes: number;
+  }>) => Effect.Effect<GitBlobAtPathObservation, ContentWorkspaceFailure, R>;
+
+  readonly isLocalGitAncestor: (input: Readonly<{
+    root: string;
+    ancestorCommit: string;
+    descendantCommit: string;
+  }>) => Effect.Effect<boolean, ContentWorkspaceFailure, R>;
+
+  readonly listGitChangedPaths: (input: Readonly<{
+    root: string;
+    fromCommit: string;
+    toCommit: string;
+    maxBytes: number;
+  }>) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
 
   readonly readFile: (input: Readonly<{
     root: string;
@@ -210,3 +309,16 @@ export interface ContentWorkspaceAsyncPort {
   readonly settle: (input: Parameters<ContentWorkspaceResource["settle"]>[0]) => Promise<ContentWorkspaceSettleReceipt>;
   readonly release: (input: Parameters<ContentWorkspaceResource["release"]>[0]) => Promise<ContentWorkspaceReleaseReceipt>;
 }
+
+/** Promise projection of the exact read-only local Git capability set. */
+export interface ContentWorkspaceGitReadAsyncPort {
+  readonly inspectGitWorkspace: (input: Parameters<ContentWorkspaceResource["inspectGitWorkspace"]>[0]) => Promise<GitWorkspaceAnchor>;
+  readonly readGitTree: (input: Parameters<ContentWorkspaceResource["readGitTree"]>[0]) => Promise<Uint8Array>;
+  readonly readGitBlob: (input: Parameters<ContentWorkspaceResource["readGitBlob"]>[0]) => Promise<Uint8Array>;
+  readonly captureGitWorkspaceEvidence: (input: Parameters<ContentWorkspaceResource["captureGitWorkspaceEvidence"]>[0]) => Promise<GitWorkspaceEvidence>;
+  readonly readGitBlobAtPath: (input: Parameters<ContentWorkspaceResource["readGitBlobAtPath"]>[0]) => Promise<GitBlobAtPathObservation>;
+  readonly isLocalGitAncestor: (input: Parameters<ContentWorkspaceResource["isLocalGitAncestor"]>[0]) => Promise<boolean>;
+  readonly listGitChangedPaths: (input: Parameters<ContentWorkspaceResource["listGitChangedPaths"]>[0]) => Promise<Uint8Array>;
+}
+
+export type ContentWorkspaceNodeAsyncPort = ContentWorkspaceAsyncPort & ContentWorkspaceGitReadAsyncPort;

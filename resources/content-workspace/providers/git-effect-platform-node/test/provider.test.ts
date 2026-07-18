@@ -1,4 +1,4 @@
-import { chmod, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, writeFile } from "node:fs/promises";
+import { chmod, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -33,7 +33,7 @@ describe("Git Effect Platform content workspace provider", () => {
     await git(root, "add", ".");
     await git(root, "commit", "-m", "add payload");
 
-    const resource = makeContentWorkspaceResource({ gitExecutable });
+    const resource = makeContentWorkspaceResource({ gitExecutable: await realpath(gitExecutable) });
     const identity = unwrap(await runNodeContentWorkspace(resource.inspectWorkspace({ locator: root })));
     const entries = unwrap(await runNodeContentWorkspace(resource.readTree({
       root,
@@ -54,7 +54,7 @@ describe("Git Effect Platform content workspace provider", () => {
   test("applies an exact ordered write plan and restores captured preimages", async () => {
     const root = await createRepository();
     await writeFile(path.join(root, "record.txt"), "before\n");
-    const resource = makeContentWorkspaceResource({ gitExecutable });
+    const resource = makeContentWorkspaceResource({ gitExecutable: await realpath(gitExecutable) });
     const capture = unwrap(await runNodeContentWorkspace(resource.capture({
       root,
       readToken: "read-1",
@@ -565,6 +565,180 @@ describe("Git Effect Platform content workspace provider", () => {
     const after = (await readdir(temp)).filter((name) => name.startsWith("rawr-content-workspace-git-")).sort();
     expect(after).toEqual(before);
   });
+
+  test("exposes only bounded exact local Git observations for semantic adapters", async () => {
+    const root = await createRepository();
+    await git(root, "remote", "add", "origin", root);
+    await writeFile(path.join(root, "payload.txt"), "payload\n");
+    await git(root, "add", "payload.txt");
+    await git(root, "commit", "-m", "add payload");
+    const resource = makeContentWorkspaceResource({ gitExecutable: await realpath(gitExecutable) });
+
+    const anchor = unwrap(await runNodeContentWorkspace(resource.inspectGitWorkspace({
+      locator: root,
+      remoteSelection: { kind: "Named", remoteName: "origin" },
+      refName: "refs/heads/main",
+    })));
+    expect(anchor).toMatchObject({
+      root,
+      refName: "refs/heads/main",
+      refCommit: anchor.commit,
+      remoteUrls: [root],
+    });
+
+    const treeBytes = unwrap(await runNodeContentWorkspace(resource.readGitTree({
+      root,
+      tree: anchor.tree,
+      objectFormat: anchor.objectFormat,
+      maxBytes: 1024 * 1024,
+    })));
+    expect(new TextDecoder().decode(treeBytes)).toContain("payload.txt");
+
+    const observed = unwrap(await runNodeContentWorkspace(resource.readGitBlobAtPath({
+      root,
+      refName: "refs/heads/main",
+      commit: anchor.commit,
+      tree: anchor.tree,
+      path: "payload.txt",
+      maxBytes: 1024,
+    })));
+    expect(new TextDecoder().decode(observed.bytes)).toBe("payload\n");
+    expect(unwrap(await runNodeContentWorkspace(resource.readGitBlob({
+      root,
+      blob: observed.blob,
+      objectFormat: anchor.objectFormat,
+      maxBytes: 1024,
+    })))).toEqual(observed.bytes);
+
+    const evidence = unwrap(await runNodeContentWorkspace(resource.captureGitWorkspaceEvidence({
+      root,
+      remoteSelection: { kind: "Named", remoteName: "origin" },
+      refName: "refs/heads/main",
+      admittedPaths: ["payload.txt"],
+      consumedRoots: ["payload.txt"],
+      objectFormat: anchor.objectFormat,
+      maxPaths: 10,
+      maxBytes: 1024 * 1024,
+    })));
+    expect(evidence.openingAnchor).toEqual(evidence.closingAnchor);
+    expect(evidence.worktreeObjectIds).toEqual([{ path: "payload.txt", objectId: observed.blob }]);
+    expect(new TextDecoder().decode(evidence.closingTrackedFlags)).toContain("H payload.txt");
+  });
+
+  test("binds local ancestry and changed paths to exact commits", async () => {
+    const root = await createRepository();
+    const resource = makeContentWorkspaceResource({ gitExecutable: await realpath(gitExecutable) });
+    const before = unwrap(await runNodeContentWorkspace(resource.inspectGitWorkspace({
+      locator: root,
+      remoteSelection: { kind: "All" },
+      refName: "refs/heads/main",
+    })));
+    await writeFile(path.join(root, "changed.txt"), "changed\n");
+    await git(root, "add", "changed.txt");
+    await git(root, "commit", "-m", "change");
+    const after = unwrap(await runNodeContentWorkspace(resource.inspectGitWorkspace({
+      locator: root,
+      remoteSelection: { kind: "All" },
+      refName: "refs/heads/main",
+    })));
+
+    expect(unwrap(await runNodeContentWorkspace(resource.isLocalGitAncestor({
+      root,
+      ancestorCommit: before.commit,
+      descendantCommit: after.commit,
+    })))).toBe(true);
+    const changed = unwrap(await runNodeContentWorkspace(resource.listGitChangedPaths({
+      root,
+      fromCommit: before.commit,
+      toCommit: after.commit,
+      maxBytes: 1024,
+    })));
+    expect(new TextDecoder().decode(changed)).toBe("changed.txt\0");
+  });
+
+  test("rejects noncanonical Git executable selections before command execution", async () => {
+    const root = await createRepository();
+    const relative = makeContentWorkspaceResource({ gitExecutable: "git" });
+    const relativeResult = await runNodeContentWorkspace(relative.inspectGitWorkspace({
+      locator: root,
+      remoteSelection: { kind: "All" },
+      refName: "refs/heads/main",
+    }));
+    expect(relativeResult).toMatchObject({ ok: false, failure: { reason: "InvalidInput" } });
+
+    const alias = path.join(root, "git-alias");
+    await symlink(gitExecutable, alias);
+    const aliased = makeContentWorkspaceResource({ gitExecutable: alias });
+    const aliasResult = await runNodeContentWorkspace(aliased.inspectGitWorkspace({
+      locator: root,
+      remoteSelection: { kind: "All" },
+      refName: "refs/heads/main",
+    }));
+    expect(aliasResult).toMatchObject({ ok: false, failure: { reason: "Aliased" } });
+  });
+
+  test("attributes capture anchor failures to the evidence operation", async () => {
+    const root = await createRepository();
+    const resource = makeContentWorkspaceResource({ gitExecutable: await realpath(gitExecutable) });
+
+    const result = await runNodeContentWorkspace(resource.captureGitWorkspaceEvidence({
+      root: path.join(root, "missing-root"),
+      remoteSelection: { kind: "All" },
+      refName: "refs/heads/main",
+      admittedPaths: [],
+      consumedRoots: [],
+      objectFormat: "sha1",
+      maxPaths: 1,
+      maxBytes: 1024,
+    }));
+
+    expect(result).toMatchObject({
+      ok: false,
+      failure: { operation: "capture-git-evidence", reason: "Missing" },
+    });
+  });
+
+  test("isolates exact local Git reads without replacing remote Git configuration", async () => {
+    const root = await createRepository();
+    const wrapper = path.join(root, "git-wrapper");
+    const log = path.join(root, "git-wrapper.log");
+    const inheritedConfig = path.join(root, "operator.gitconfig");
+    await writeFile(inheritedConfig, "");
+    await writeFile(wrapper, [
+      "#!/bin/sh",
+      `printf '%s|%s|%s\\n' \"\${GIT_CONFIG_GLOBAL-UNSET}\" \"\${GIT_CONFIG_NOSYSTEM-UNSET}\" \"$*\" >> ${JSON.stringify(log)}`,
+      `exec ${JSON.stringify(await realpath(gitExecutable))} \"$@\"`,
+      "",
+    ].join("\n"));
+    await chmod(wrapper, 0o755);
+
+    const previousGlobal = process.env.GIT_CONFIG_GLOBAL;
+    const previousNoSystem = process.env.GIT_CONFIG_NOSYSTEM;
+    process.env.GIT_CONFIG_GLOBAL = inheritedConfig;
+    process.env.GIT_CONFIG_NOSYSTEM = "0";
+    try {
+      const resource = makeContentWorkspaceResource({ gitExecutable: wrapper });
+      unwrap(await runNodeContentWorkspace(resource.inspectGitWorkspace({
+        locator: root,
+        remoteSelection: { kind: "All" },
+        refName: "refs/heads/main",
+      })));
+      unwrap(await runNodeContentWorkspace(resource.observeRemote({
+        repositoryIdentity: root,
+        refName: "refs/heads/main",
+        sourcePath: "",
+        maxEntries: 10,
+      })));
+    } finally {
+      restoreEnvironment("GIT_CONFIG_GLOBAL", previousGlobal);
+      restoreEnvironment("GIT_CONFIG_NOSYSTEM", previousNoSystem);
+    }
+
+    const records = (await readFile(log, "utf8")).trim().split("\n");
+    expect(records.some((record) => record.startsWith("/dev/null|1|--no-optional-locks"))).toBe(true);
+    expect(records.some((record) => record.startsWith(`${inheritedConfig}|0|init`))).toBe(true);
+    expect(records.some((record) => record.startsWith(`${inheritedConfig}|0|fetch`))).toBe(true);
+  });
 });
 
 async function createRepository(): Promise<string> {
@@ -621,6 +795,11 @@ function unwrap<A>(result: NodeContentWorkspaceResult<A>): A {
 
 function bytes(value: string): Uint8Array {
   return new TextEncoder().encode(value);
+}
+
+function restoreEnvironment(name: string, value: string | undefined): void {
+  if (value === undefined) delete process.env[name];
+  else process.env[name] = value;
 }
 
 function requireExecutable(name: string): string {
