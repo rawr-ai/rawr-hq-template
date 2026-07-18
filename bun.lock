@@ -20,6 +20,7 @@
         "@effect/platform-node": "0.107.0",
         "@getgrit/cli": "0.1.0-alpha.1743007075",
         "@nx/eslint-plugin": "^22.5.4",
+        "@rawr/agent-plugin-lifecycle": "workspace:*",
         "@rawr/controller-release": "workspace:*",
         "@types/node": "^22.14.0",
         "@typescript-eslint/parser": "^8.57.1",

@@ -5,7 +5,7 @@
   "sourceRoot": "scripts/controller",
   "projectType": "application",
   "tags": ["type:app", "role:controller-build"],
-  "implicitDependencies": ["@rawr/controller-release", "@rawr/cli"],
+  "implicitDependencies": ["@rawr/agent-plugin-lifecycle", "@rawr/controller-release", "@rawr/cli"],
   "targets": {
     "typecheck": {
       "executor": "nx:run-commands",
