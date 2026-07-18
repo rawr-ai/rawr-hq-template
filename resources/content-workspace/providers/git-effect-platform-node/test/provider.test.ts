@@ -634,6 +634,55 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(new TextDecoder().decode(evidence.closingTrackedFlags)).toContain("H payload.txt");
   });
 
+  test("observes only selected staged blobs without authoring Git objects", async () => {
+    const root = await createRepository();
+    await git(root, "remote", "add", "origin", root);
+    await mkdir(path.join(root, "plugins", "one"), { recursive: true });
+    await writeFile(path.join(root, "release.json"), "release\n");
+    await writeFile(path.join(root, "plugins", "one", "payload.txt"), "payload\n");
+    await writeFile(path.join(root, "unrelated.bin"), "x".repeat(8 * 1024));
+    await git(root, "add", ".");
+    await writeFile(path.join(root, "plugins", "one", "payload.txt"), "worktree-after-add\n");
+
+    const wrapper = path.join(root, "git-staged-wrapper");
+    const log = path.join(root, "git-staged-wrapper.log");
+    await writeFile(wrapper, [
+      "#!/bin/sh",
+      `printf '%s\\t%s\\n' \"\${GIT_NO_LAZY_FETCH:-unset}\" \"$*\" >> ${JSON.stringify(log)}`,
+      `exec ${JSON.stringify(await realpath(gitExecutable))} \"$@\"`,
+      "",
+    ].join("\n"));
+    await chmod(wrapper, 0o755);
+    const resource = makeContentWorkspaceResource({ gitExecutable: wrapper });
+
+    const observation = unwrap(await runNodeContentWorkspace(resource.observeGitStagedIndex({
+      locator: root,
+      remoteSelection: { kind: "Named", remoteName: "origin" },
+      refName: "refs/heads/main",
+      materializedPaths: ["release.json"],
+      materializedRoots: ["plugins/one"],
+      maxEntries: 20,
+      maxIndexBytes: 1024 * 1024,
+      maxBlobBytes: 64,
+    })));
+
+    expect(observation.opening).toEqual(observation.closing);
+    expect(observation.blobs.map((blob) => new TextDecoder().decode(blob.bytes)).sort()).toEqual([
+      "payload\n",
+      "release\n",
+    ]);
+    expect(await readFile(path.join(root, "plugins", "one", "payload.txt"), "utf8")).toBe("worktree-after-add\n");
+    const invocations = (await readFile(log, "utf8")).trim().split("\n").map((line) => {
+      const [noLazyFetch, ...command] = line.split("\t");
+      return { noLazyFetch, command: command.join("\t") };
+    });
+    expect(invocations.every((invocation) => invocation.noLazyFetch === "1")).toBe(true);
+    const commands = invocations.map((invocation) => invocation.command);
+    expect(commands.filter((command) => command.includes("cat-file blob"))).toHaveLength(2);
+    expect(commands.every((command) => !/(?:^|\s)(?:write-tree|checkout|stash|commit|reset)(?:\s|$)/u.test(command))).toBe(true);
+    expect(commands.every((command) => !/hash-object(?:\s+[^\s]+)*\s+-w(?:\s|$)/u.test(command))).toBe(true);
+  });
+
   test("binds local ancestry and changed paths to exact commits", async () => {
     const root = await createRepository();
     const resource = makeContentWorkspaceResource({ gitExecutable: await realpath(gitExecutable) });
@@ -900,6 +949,19 @@ describe("Git Effect Platform content workspace provider", () => {
           objectFormat: "sha1",
           maxPaths: 1,
           maxBytes: 1,
+        }),
+      },
+      {
+        operation: "observe-git-staged-index",
+        invoke: () => port.observeGitStagedIndex({
+          locator: deferredCandidate("observe-git-staged-index"),
+          remoteSelection: { kind: "All" },
+          refName: "refs/heads/main",
+          materializedPaths: [],
+          materializedRoots: [],
+          maxEntries: 1,
+          maxIndexBytes: 1,
+          maxBlobBytes: 1,
         }),
       },
       {

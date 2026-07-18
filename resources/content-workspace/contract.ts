@@ -43,6 +43,28 @@ export interface GitWorkspaceEvidence {
   readonly closingTrackedFlags: Uint8Array;
 }
 
+/** One exact raw Git index binding. Semantic owners classify its contents. */
+export interface GitStagedIndexBinding {
+  readonly anchor: GitWorkspaceAnchor;
+  readonly indexEntries: Uint8Array;
+}
+
+/** Bytes for one regular blob named by the opening Git index binding. */
+export interface GitStagedBlobObservation {
+  readonly objectId: string;
+  readonly bytes: Uint8Array;
+}
+
+/**
+ * Read-only staged-index mechanics. Opening and closing bindings surround all
+ * blob reads so the semantic owner can reject a mixed observation.
+ */
+export interface GitStagedIndexObservation {
+  readonly opening: GitStagedIndexBinding;
+  readonly blobs: readonly GitStagedBlobObservation[];
+  readonly closing: GitStagedIndexBinding;
+}
+
 export interface GitBlobAtPathObservation {
   readonly refCommit: string;
   readonly commit: string;
@@ -144,6 +166,7 @@ export interface ContentWorkspaceFailure {
     | "read-git-tree"
     | "read-git-blob"
     | "capture-git-evidence"
+    | "observe-git-staged-index"
     | "read-git-blob-at-path"
     | "local-git-ancestry"
     | "list-git-changed-paths"
@@ -198,6 +221,17 @@ export interface ContentWorkspaceResource<R = never> {
     maxPaths: number;
     maxBytes: number;
   }>) => Effect.Effect<GitWorkspaceEvidence, ContentWorkspaceFailure, R>;
+
+  readonly observeGitStagedIndex: (input: Readonly<{
+    locator: string;
+    remoteSelection: GitRemoteSelection;
+    refName: string;
+    materializedPaths: readonly string[];
+    materializedRoots: readonly string[];
+    maxEntries: number;
+    maxIndexBytes: number;
+    maxBlobBytes: number;
+  }>) => Effect.Effect<GitStagedIndexObservation, ContentWorkspaceFailure, R>;
 
   readonly readGitBlobAtPath: (input: Readonly<{
     root: string;
@@ -316,6 +350,7 @@ export interface ContentWorkspaceGitReadAsyncPort {
   readonly readGitTree: (input: Parameters<ContentWorkspaceResource["readGitTree"]>[0]) => Promise<Uint8Array>;
   readonly readGitBlob: (input: Parameters<ContentWorkspaceResource["readGitBlob"]>[0]) => Promise<Uint8Array>;
   readonly captureGitWorkspaceEvidence: (input: Parameters<ContentWorkspaceResource["captureGitWorkspaceEvidence"]>[0]) => Promise<GitWorkspaceEvidence>;
+  readonly observeGitStagedIndex: (input: Parameters<ContentWorkspaceResource["observeGitStagedIndex"]>[0]) => Promise<GitStagedIndexObservation>;
   readonly readGitBlobAtPath: (input: Parameters<ContentWorkspaceResource["readGitBlobAtPath"]>[0]) => Promise<GitBlobAtPathObservation>;
   readonly isLocalGitAncestor: (input: Parameters<ContentWorkspaceResource["isLocalGitAncestor"]>[0]) => Promise<boolean>;
   readonly listGitChangedPaths: (input: Parameters<ContentWorkspaceResource["listGitChangedPaths"]>[0]) => Promise<Uint8Array>;
