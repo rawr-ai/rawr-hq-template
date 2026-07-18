@@ -1,0 +1,200 @@
+## 1. T6A: Thin Authority Record
+
+- [x] 1.1 Record packet provenance, repository separation, the corrected
+  objective/hard core/exterior/falsifiers/authority ledger, proof boundary, and
+  closure in [[authority-amendment]], [[design]], and [[README]].
+- [x] 1.2 Delete transfer, evidence-handle, second-launcher, caller-binding, and
+  installed refusal-matrix requirements from the active C6 design.
+- [x] 1.3 Replace issuer/promotion framing with one reviewed current-main v2
+  record and direct native convergence requirements.
+- [x] 1.4 Run strict OpenSpec validation and all four standing reviews; amend
+  this Graphite node and resolve every P1/P2 before implementation continues.
+
+## 2. T6B: Repository Checks
+
+- [ ] 2.1 Retain only release eligibility plus staged/clean repository
+  validation beneath the existing `check` command; delete the protected-lane
+  mode, flags, DTOs, schemas, service contract, router/index, handler, bindings,
+  public exports, client operation, projection, and tests without an alias or fallback.
+- [x] 2.2 Observe staged Git state without object-authoring or worktree-changing
+  commands; revalidate once and return `SourceChanged` without retry or writes.
+- [x] 2.3 Bind clean mode to exact repository/ref/commit/tree and declared
+  inputs; authorize no build from staged state.
+- [ ] 2.4 Record and prove the exact settlement invocation selects canonical
+  personal main and its landed release input, supplies no external Inngest
+  candidate locator or destination, and never requests candidate bytes while
+  `HF01_PENDING`. Do not add generic candidate-path recognition to Template.
+- [ ] 2.5 Rerun focused service/CLI/content-workspace behavior, lint,
+  typecheck, build, structural/Habitat, and one-procedure proof; close four
+  standing reviews on the narrowed interface.
+
+## 3. T6C1: One Current-Main Record
+
+- [ ] 3.1 Define one governance-owned TypeBox model at
+  `model/dto/current-main.ts`: exact `{schemaVersion,currentMainDigest,body}`
+  envelope, closed body fields, fixed `[claude,codex]` tuple, 2 MiB bound, and
+  `cm2_` over newline-terminated canonical body bytes.
+- [ ] 3.2 Add closed `current-main-record` encode-body/validate-envelope and
+  separate `current-main-selection` locator requests. Return canonical
+  bytes/protocol/digest/byte length without Git/provider/output ports for the
+  pure codec.
+- [ ] 3.3 Resolve the fixed record from observed canonical Git, verify stable
+  repository identity, source reachability/tree/fixed release-input digest, and
+  return one `CanonicalChannelSelection`. Later unselected content must leave
+  the reviewed selector valid; compiled `refs/heads/main` and observed Git stay
+  authoritative.
+- [ ] 3.4 Delete v1 current-main, acceptance, hosted approval, promotion, and
+  `attest-promotion` from service contracts/routers/public exports/client/CLI
+  and positive Habitat inventory without aliases or compatibility decoders.
+  Keep qualified `undo` for managed-export capsule state only. Remove the
+  otherwise-unused hosted-governance resource.
+- [ ] 3.5 Prove canonical round trips; malformed, surplus, oversized,
+  noncanonical, digest, and provider-tuple rejection; wrong/stale Git identity;
+  changed release input; later unselected content retaining selection; pure
+  codec cold ports; one-procedure CLI dispatch; and old-path unreachability.
+- [ ] 3.6 Run focused tests, lint, typecheck, build, structural/Habitat, strict
+  OpenSpec, and four standing reviews; commit this semantic Graphite node alone.
+
+## 4. T6C2: Thin Canonical Provider Path
+
+- [ ] 4.1 Change only canonical sync/status to consume the resolved selection
+  through a narrow required dependency view. Provider code must not parse raw v2
+  bytes or call receipt, sidecar, evidence, hosted, promotion, or undo ports.
+- [ ] 4.2 Plan from exact native `rawr-hq` marketplace identity plus embedded
+  artifact provenance, preserve unmanaged/ambiguous collisions, verify artifact
+  and projection bindings before native mutation, and report
+  `BLOCKED_SELECTION` for invalid desired state.
+- [ ] 4.3 Prove no-record adoption, stale same-ID native remove/add refresh,
+  omitted-member residue cleanup, unmanaged preservation, artifact/projection
+  mismatch before mutation, exact applied-prefix failure, multi-home isolation,
+  and a live-read repeat with every lifecycle/native mutation counter zero.
+- [ ] 4.4 Prove both halves of canonical ownership: matching `rawr-hq`
+  marketplace with missing/invalid embedded provenance blocks, and valid-looking
+  embedded provenance under a foreign marketplace blocks, each with zero native
+  mutation. Inject one failure during omitted-member retirement after selected
+  visibility; report the exact prefix, then prove retry re-reads and converges
+  without rollback.
+- [ ] 4.5 Delete the receipt-owned managed-retire procedure from contract,
+  router, public client, CLI, manifest, and positive Habitat inventory without
+  an alias. Preserve targeted/complete mode scope and receipt/evidence behavior.
+- [ ] 4.6 Remove `ProviderUndoWriter`, provider capsule owner protocols,
+  production bindings, replay registration, and provider inverse-action tests
+  from every provider mode. Targeted/complete and canonical failures must report
+  exact applied prefixes and retry from live native inspection; qualified undo
+  must dispatch export actions only. Retain one closed migration-only decoder
+  for an exact landed v1 `idle` committed provider capsule: provider operations
+  remain capsule-cold, export atomically retires it under the controller lock
+  before its first transaction with zero provider/native calls, and malformed or
+  unsettled legacy state blocks only export/undo capsule activation without
+  mutation or override.
+- [ ] 4.7 Run focused tests, lint, typecheck, build, structural/Habitat, strict
+  OpenSpec, and four standing reviews. Consume a frozen exact landed-v1
+  committed-provider-capsule byte fixture through a decoder-only migration
+  module; retain no encoder, provider action constructor, classifier, executor,
+  public export, or production/test construction API. Prove sync/status ignore
+  the fixture, qualified undo cannot replay it, first export retires it atomically
+  and remains usable, and repeat performs no migration;
+  prove malformed/`applying`/`undoing` legacy state blocks export/undo unchanged
+  while targeted, complete-test, canonical sync, and status remain capsule-cold.
+  Prove precommit rejection/conflict preserves exact legacy bytes and admits no
+  export; unknown-commit or session-release failure returns non-success and
+  admits no export; cold retry re-reads and either retries the same retirement
+  CAS or observes export-only `idle`, always with zero provider/native calls.
+  Commit this semantic Graphite node alone.
+
+## 5. T6C3: Export Destination Independence
+
+- [ ] 5.1 Remove `KnownNativeHomesReader`, its sidecar-derived production
+  binding, and ambient overlap planning. Add one fixed versioned root-owner
+  marker at `.rawr-agent-plugin-owner.json`. The single source owner for its
+  pure 4 KiB canonical codec is
+  `services/agent-plugin-lifecycle/src/service/shared/root-owner`; exports and
+  providers consume that shared protocol without a sideways module dependency.
+  The protocol carries owner, canonical root, and
+  `rootDigest = "rt1_" + hex(SHA-256(UTF8(canonicalRoot)))`: export may claim only
+  an absent destination and atomically no-replace publishes one complete
+  owner-created marked directory as its first capsule-covered action; any
+  existing unmarked, malformed, or foreign-marked root blocks even under
+  `replace-planned`. Derive the absent root's prospective identity from a
+  verified real parent plus one validated basename, revalidate the parent
+  immediately before publication, and verify the published real path afterward.
+- [ ] 5.2 Make every provider mode read only that fixed marker at its explicit
+  pre-existing home, revalidate root identity/marker absence immediately before
+  native commands, and block when export owns the root. Provider lifecycle must
+  not create target roots. No provider
+  inventory enters export and no export ledger enters provider truth.
+- [ ] 5.3 Prove export-first/provider-second and provider-first/export-second
+  each leave one owner; aliases cannot split ownership; missing/stale sidecars
+  are irrelevant; symlinked-parent substitution cannot change prospective root
+  identity; unmanaged collisions still block; marked-destination
+  `replace-planned` remains exact/reversible; repeat is read-only. Prove one
+  winner under competing no-replace publication, publication failure with no
+  owner claim, interruption immediately after marked-root publication with an
+  exact applied prefix and settled capsule, exact undo of that unchanged empty
+  marked root, and retryable blocking after marker/root substitution.
+- [ ] 5.4 Run focused export/provider/service/CLI tests, lint, typecheck, build,
+  structural/Habitat, strict OpenSpec, and four standing reviews. Extend the
+  closed positive Habitat topology to require the exact `shared/root-owner`
+  subtree while retaining `shared/release`; commit this semantic Graphite node
+  alone.
+
+## 6. T6D: Truthful Test Owners
+
+- [x] 6.1 Move DevOps Oclif command proof from the false parent-source fixture
+  into an owner-local `@rawr/plugin-devops` fixture with guarded cleanup.
+- [x] 6.2 Make the named CLI Vitest project own filesystem-file serialization
+  and keep `TMPDIR` bootstrap in the owning Nx target.
+- [ ] 6.3 Rewrite their OpenSpec proof hunks against the thin stack, rerun the
+  owner-local tests and ordinary CLI target, and close standing reviews.
+
+## 7. T6E: Deterministic Official Manifest
+
+- [x] 7.1 Canonicalize generated Oclif object keys by code-unit order while
+  preserving array order and input immutability.
+- [x] 7.2 Prove insertion-order independence in the focused controller test.
+- [ ] 7.3 Build the same clean Template commit into two fresh controller roots;
+  require equal controller digests and byte/mode-identical normalized release
+  trees without provider execution.
+- [ ] 7.4 Run controller lint/typecheck/tests and all four standing reviews;
+  commit the deterministic packaging fix separately.
+
+## 8. T6F: Landing And Settlement
+
+- [ ] 8.1 Submit every retained Template Graphite node with `--ai`, land on
+  canonical Template `main`, sync/prune the stack, and install/select that exact
+  controller through the existing stable installer.
+- [ ] 8.2 Replace the obsolete personal hook through the installed Template
+  interface; land the personal content/release-input slice without bypass.
+- [ ] 8.3 Build/test the complete current personal-main set, including
+  `cognition:state-machine-design`, in one durable non-repository controller
+  data root. Keep Inngest excluded while `HF01_PENDING`.
+- [ ] 8.4 Run complete-test with real Codex and Claude binaries in explicit
+  disposable homes seeded through supported native commands with one omitted
+  RAWR-managed member and a stale same-ID cognition release. Verify cognition's
+  selected native refresh and provider-visible bytes while the omitted member is
+  preserved. This is owner-scoped lifecycle/provider acceptance (a small shared
+  scenario driver is allowed), never `@rawr/controller-build:acceptance`.
+- [ ] 8.5 Review and land one personal `current-main` record binding both Codex
+  and Claude, then canonically converge the same disposable homes. Verify
+  omitted-member native/config/cache residue removal and repeat with identical
+  managed inventory plus every lifecycle/native mutation counter zero. Cleanup
+  may recursively remove only an owner-created disposable root after proving the
+  canonical temp parent, exact private prefix, directory/non-symlink type, and
+  realpath containment; it must never recursively remove a caller-supplied or
+  approved provider home.
+- [ ] 8.6 Converge only the approved native homes, repeat read-only, and record
+  persistent Codex Desktop-task visibility as a bounded operational observation
+  because adapter app-server inspection is a fresh process. Fresh-process list
+  alone does not prove the persistent task, and no app/runtime harness is added.
+- [ ] 8.7 Queue the sealed corrective oRPC skill/proof-fixture release after the
+  cognition settlement through the same closed-world path; do not widen C6 or
+  use legacy sync.
+- [ ] 8.8 Archive the change records, land record-only closure nodes, drain local
+  and remote Graphite branches/worktrees in both repositories, and prove clean
+  canonical `main`, required ratchets, and healthy installed operations.
+
+## Related
+
+- Corrected authority: [[authority-amendment]].
+- Decisions: [[design]].
+- Live proof: [[README]].
