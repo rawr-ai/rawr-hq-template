@@ -20,7 +20,7 @@ import {
   createEmbeddedPlaceholderLoggerAdapter,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import {
-  makeNodeContentWorkspacePort,
+  makeDeferredNodeContentWorkspacePort,
 } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import {
   bindService,
@@ -77,13 +77,6 @@ type LifecycleRole = RoleView & Readonly<{
 type LifecycleBindingContext = ServiceBindingContext<LifecycleProcess, LifecycleRole>;
 
 type LifecycleDeps = CreateClientOptions["deps"];
-type SelectedLifecycleRuntime =
-  | Readonly<{ owner: "releases"; runtime: LifecycleDeps["releases"] }>
-  | Readonly<{ owner: "vendors"; runtime: LifecycleDeps["vendors"] }>
-  | Readonly<{ owner: "packaging"; runtime: LifecycleDeps["packaging"] }>
-  | Readonly<{ owner: "exports"; runtime: LifecycleDeps["exports"] }>
-  | Readonly<{ owner: "providers"; runtime: LifecycleDeps["providers"] }>
-  | Readonly<{ owner: "governance"; runtime: LifecycleDeps["governance"] }>;
 
 type LifecycleClientSelectors = Readonly<{
   [TOperation in LifecycleOperation]: (
@@ -130,21 +123,15 @@ const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
   }),
 });
 
-export const createProductionLifecycleClient: LifecycleClientFactory = async (
+export const createProductionLifecycleClient: LifecycleClientFactory = (
   operation,
   binding,
-): Promise<LifecycleOperationClient<typeof operation>> => {
+): LifecycleOperationClient<typeof operation> => {
   const authority = controllerAuthority();
-  const layout = deriveAgentPluginControllerLayout({ dataRoot: authority.dataRoot });
-  const artifactReader = createArtifactRepositoryReader(layout.artifactStoreRoot);
-  const selected = await createSelectedLifecycleRuntime({
-    operation,
+  const deps = createProductionLifecycleDeps({
     binding,
-    layout,
-    artifactReader,
     controllerDataRoot: authority.dataRoot,
   });
-  const deps = createSelectedLifecycleDeps(selected);
 
   const lifecycleService = bindService(createClient, {
     bindingId: `rawr-cli/agent-plugin-lifecycle/${operation}`,
@@ -165,89 +152,58 @@ export const createProductionLifecycleClient: LifecycleClientFactory = async (
   return selectLifecycleOperationClient(operation, client);
 };
 
-async function createSelectedLifecycleRuntime(input: Readonly<{
-  operation: LifecycleOperation;
+export function createProductionLifecycleDeps(input: Readonly<{
   binding: ControllerProjectionBinding;
-  layout: ReturnType<typeof deriveAgentPluginControllerLayout>;
-  artifactReader: ReturnType<typeof createArtifactRepositoryReader>;
   controllerDataRoot: string;
-}>): Promise<SelectedLifecycleRuntime> {
-  const { operation, binding, layout, artifactReader, controllerDataRoot } = input;
+}>): LifecycleDeps {
+  const { binding, controllerDataRoot } = input;
+  const layout = deriveAgentPluginControllerLayout({ dataRoot: controllerDataRoot });
+  const artifactReader = createArtifactRepositoryReader(layout.artifactStoreRoot);
+  const contentWorkspace = makeDeferredNodeContentWorkspacePort({
+    acquireGitExecutable: () => requiredGitExecutable(binding),
+  });
+  const providerState = createNodeProviderRecordState({
+    controllerDataRoot,
+    providerProjectionRoot: layout.providerProjectionRoot,
+    providerTargetStateRoot: layout.providerTargetStateRoot,
+  });
+  const governance = createGovernanceLifecycleRuntime({
+    git: createResourceExactGitReader({ contentWorkspace }),
+    evidence: createNodeMechanicalEvidenceRuntime(layout.artifactStoreRoot).governance,
+    approvals: createGithubHostedApprovalHistoryReader({
+      acquireGithubExecutable: () => requiredHostedGovernanceExecutable(binding),
+    }),
+  });
+  const providers = createNodeProviderLifecycleRuntime({
+    channel: createGovernanceCanonicalChannelReader({ governance }),
+    state: providerState,
+    artifactReader,
+    artifactStoreRoot: layout.artifactStoreRoot,
+    capsuleRoot: layout.capsuleRoot,
+    providerExecutables: binding.providerExecutables,
+  });
 
-  if (operation === "releases.check" || operation === "releases.build") {
-    const gitExecutable = requiredGitExecutable(binding, operation);
-    const contentWorkspace = makeNodeContentWorkspacePort({ gitExecutable });
-    return Object.freeze({
-      owner: "releases",
-      runtime: Object.freeze({
-        source: createResourceContentWorkspaceSnapshotReader({ contentWorkspace }),
-        artifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
-        evidence: createMechanicalEvidenceReader(layout.artifactStoreRoot),
-      }),
-    });
-  }
-  if (operation === "packaging.package") {
-    return Object.freeze({
-      owner: "packaging",
-      runtime: createPackageOutputLifecycleRuntime({ artifactReader }),
-    });
-  }
-  if (operation === "exports.apply") {
-    const providerState = lazy(async () => createNodeProviderRecordState({
-      controllerDataRoot,
-      providerProjectionRoot: layout.providerProjectionRoot,
-      providerTargetStateRoot: layout.providerTargetStateRoot,
-    }));
-    return Object.freeze({
-      owner: "exports",
-      runtime: createExportLifecycleRuntime({
-        artifactReader: createExportArtifactReader(artifactReader),
-        knownNativeHomesReader: createKnownNativeHomesReader(providerState),
-        undoWriter: createNodeExportUndoWriter(layout.capsuleRoot),
-      }),
-    });
-  }
-  if (operation === "vendors.status" || operation === "vendors.update") {
-    return Object.freeze({
-      owner: "vendors",
-      runtime: Object.freeze({
-        contentWorkspace: makeNodeContentWorkspacePort({
-          gitExecutable: requiredGitExecutable(binding, operation),
-        }),
-        clock: Object.freeze({ now: () => new Date() }),
-      }),
-    });
-  }
-  if (operation === "governance.attestPromotion") {
-    return Object.freeze({
-      owner: "governance",
-      runtime: await productionGovernanceRuntime(binding, operation, layout.artifactStoreRoot),
-    });
-  }
-  if (operation.startsWith("providers.")) {
-    const governance = operation === "providers.canonicalSync" || operation === "providers.canonicalStatus"
-      ? await productionGovernanceRuntime(binding, operation, layout.artifactStoreRoot)
-      : createUnavailableGovernanceRuntime();
-    const channel = createGovernanceCanonicalChannelReader({
-      governance,
-    });
-    return Object.freeze({
-      owner: "providers",
-      runtime: createNodeProviderLifecycleRuntime({
-        channel,
-        state: createNodeProviderRecordState({
-          controllerDataRoot,
-          providerProjectionRoot: layout.providerProjectionRoot,
-          providerTargetStateRoot: layout.providerTargetStateRoot,
-        }),
-        artifactReader,
-        artifactStoreRoot: layout.artifactStoreRoot,
-        capsuleRoot: layout.capsuleRoot,
-        providerExecutables: binding.providerExecutables,
-      }),
-    });
-  }
-  throw missingRuntimeBinding(operation);
+  return Object.freeze({
+    logger: createEmbeddedPlaceholderLoggerAdapter(),
+    analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+    releases: Object.freeze({
+      source: createResourceContentWorkspaceSnapshotReader({ contentWorkspace }),
+      artifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
+      evidence: createMechanicalEvidenceReader(layout.artifactStoreRoot),
+    }),
+    vendors: Object.freeze({
+      contentWorkspace,
+      clock: Object.freeze({ now: () => new Date() }),
+    }),
+    packaging: createPackageOutputLifecycleRuntime({ artifactReader }),
+    exports: createExportLifecycleRuntime({
+      artifactReader: createExportArtifactReader(artifactReader),
+      knownNativeHomesReader: createKnownNativeHomesReader(providerState),
+      undoWriter: createNodeExportUndoWriter(layout.capsuleRoot),
+    }),
+    providers,
+    governance,
+  } satisfies LifecycleDeps);
 }
 
 function createExportArtifactReader(
@@ -273,31 +229,13 @@ function createExportArtifactReader(
   });
 }
 
-async function productionGovernanceRuntime(
-  binding: ControllerProjectionBinding,
-  operation: LifecycleOperation,
-  artifactStoreRoot: Parameters<typeof createNodeMechanicalEvidenceRuntime>[0],
-) {
-  const contentWorkspace = makeNodeContentWorkspacePort({
-    gitExecutable: requiredGitExecutable(binding, operation),
-  });
-  return createGovernanceLifecycleRuntime({
-    git: createResourceExactGitReader({ contentWorkspace }),
-    evidence: createNodeMechanicalEvidenceRuntime(artifactStoreRoot).governance,
-    approvals: createGithubHostedApprovalHistoryReader({
-      acquireGithubExecutable: () => requiredHostedGovernanceExecutable(binding, operation),
-    }),
-  });
-}
-
 function createKnownNativeHomesReader(
-  providerState: () => Promise<NodeProviderRecordState>,
+  providerState: NodeProviderRecordState,
 ): KnownNativeHomesReader {
   return Object.freeze({
     async readCompleteSnapshot() {
       try {
-        const state = await providerState();
-        const observed = await state.targets.completeIdentities.readAll();
+        const observed = await providerState.targets.completeIdentities.readAll();
         if (!observed.ok) {
           return Object.freeze({
             kind: "Unavailable" as const,
@@ -405,112 +343,24 @@ function selectLifecycleOperationClient<TOperation extends LifecycleOperation>(
   return lifecycleClientSelectors[operation](client);
 }
 
-function createSelectedLifecycleDeps(selected: SelectedLifecycleRuntime): LifecycleDeps {
-  const shared = {
-    logger: createEmbeddedPlaceholderLoggerAdapter(),
-    analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-  };
-  switch (selected.owner) {
-    case "releases":
-      return Object.freeze({
-        ...shared,
-        releases: selected.runtime,
-        get vendors(): never { return unavailableDependency("vendors"); },
-        get packaging(): never { return unavailableDependency("packaging"); },
-        get exports(): never { return unavailableDependency("exports"); },
-        get providers(): never { return unavailableDependency("providers"); },
-        get governance(): never { return unavailableDependency("governance"); },
-      });
-    case "vendors":
-      return Object.freeze({
-        ...shared,
-        get releases(): never { return unavailableDependency("releases"); },
-        vendors: selected.runtime,
-        get packaging(): never { return unavailableDependency("packaging"); },
-        get exports(): never { return unavailableDependency("exports"); },
-        get providers(): never { return unavailableDependency("providers"); },
-        get governance(): never { return unavailableDependency("governance"); },
-      });
-    case "packaging":
-      return Object.freeze({
-        ...shared,
-        get releases(): never { return unavailableDependency("releases"); },
-        get vendors(): never { return unavailableDependency("vendors"); },
-        packaging: selected.runtime,
-        get exports(): never { return unavailableDependency("exports"); },
-        get providers(): never { return unavailableDependency("providers"); },
-        get governance(): never { return unavailableDependency("governance"); },
-      });
-    case "exports":
-      return Object.freeze({
-        ...shared,
-        get releases(): never { return unavailableDependency("releases"); },
-        get vendors(): never { return unavailableDependency("vendors"); },
-        get packaging(): never { return unavailableDependency("packaging"); },
-        exports: selected.runtime,
-        get providers(): never { return unavailableDependency("providers"); },
-        get governance(): never { return unavailableDependency("governance"); },
-      });
-    case "providers":
-      return Object.freeze({
-        ...shared,
-        get releases(): never { return unavailableDependency("releases"); },
-        get vendors(): never { return unavailableDependency("vendors"); },
-        get packaging(): never { return unavailableDependency("packaging"); },
-        get exports(): never { return unavailableDependency("exports"); },
-        providers: selected.runtime,
-        get governance(): never { return unavailableDependency("governance"); },
-      });
-    case "governance":
-      return Object.freeze({
-        ...shared,
-        get releases(): never { return unavailableDependency("releases"); },
-        get vendors(): never { return unavailableDependency("vendors"); },
-        get packaging(): never { return unavailableDependency("packaging"); },
-        get exports(): never { return unavailableDependency("exports"); },
-        get providers(): never { return unavailableDependency("providers"); },
-        governance: selected.runtime,
-      });
-  }
-}
-
-function createUnavailableGovernanceRuntime(): LifecycleDeps["governance"] {
-  return Object.freeze({
-    get git(): never { return unavailableDependency("governance.git"); },
-    get evidence(): never { return unavailableDependency("governance.evidence"); },
-    get approvals(): never { return unavailableDependency("governance.approvals"); },
-  });
-}
-
-function unavailableDependency(label: string): never {
-  throw new Error(`Unexpected ${label} lifecycle dependency access`);
-}
-
 function requiredGitExecutable(
   binding: ControllerProjectionBinding,
-  operation: LifecycleOperation,
 ): string {
   if (binding.gitExecutable === undefined) {
-    throw new LifecycleAuthorityBindingError(`${operation} requires an explicit Git executable binding`);
+    throw new LifecycleAuthorityBindingError(
+      "Agent-plugin lifecycle requires an explicit Git executable binding",
+    );
   }
   return binding.gitExecutable;
 }
 
 function requiredHostedGovernanceExecutable(
   binding: ControllerProjectionBinding,
-  operation: LifecycleOperation,
 ): string {
   if (binding.hostedGovernanceExecutable === undefined) {
     throw new LifecycleAuthorityBindingError(
-      `${operation} requires an explicit hosted-governance executable binding`,
+      "Agent-plugin lifecycle requires an explicit hosted-governance executable binding",
     );
   }
   return binding.hostedGovernanceExecutable;
-}
-
-function missingRuntimeBinding(operation: LifecycleOperation): LifecycleAuthorityBindingError {
-  const owner = operation.split(".", 1)[0];
-  return new LifecycleAuthorityBindingError(
-    `${owner} controller adapters are not yet assembled into the lifecycle client boundary`,
-  );
 }
