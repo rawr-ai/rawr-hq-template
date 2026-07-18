@@ -6,6 +6,6 @@ export const module = impl.vendors
   .use(analytics)
   .use(async ({ context, next }) => next({
     context: {
-      runtime: context.deps.vendors,
+      vendors: context.deps.vendors,
     },
   }));

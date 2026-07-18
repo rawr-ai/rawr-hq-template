@@ -14,10 +14,6 @@ import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 
 import {
-  createVendorStatus,
-  createVendorUpdate,
-} from "../../../src/service/modules/vendors/internal/application";
-import {
   VENDOR_LOCK_PROTOCOL,
   VENDOR_PROVENANCE_PROTOCOL,
   VENDOR_SOURCE_PROTOCOL,
@@ -29,6 +25,8 @@ import type {
   VendorProvenanceRecord,
   VendorSourceDeclaration,
   VendorSourceIdentity,
+  VendorStatusRequest,
+  VendorUpdateRequest,
 } from "../../../src/service/modules/vendors/ports";
 import {
   encodeVendorLockRecord,
@@ -48,6 +46,7 @@ import {
   decodeAgentPluginReleaseInput,
   type ReleaseResult,
 } from "../../../src/service/shared/release";
+import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -800,6 +799,16 @@ function resourceFailure(
 function must<T, E>(result: ReleaseResult<T, E>): T {
   if (!result.ok) throw new Error(`Expected release fixture success: ${JSON.stringify(result.issues)}`);
   return result.value;
+}
+
+function createVendorStatus(runtime: VendorLifecycleRuntime) {
+  const client = createLifecycleTestClient({ vendors: runtime });
+  return (request: VendorStatusRequest) => client.vendors.status(request, testInvocation);
+}
+
+function createVendorUpdate(runtime: VendorLifecycleRuntime) {
+  const client = createLifecycleTestClient({ vendors: runtime });
+  return (request: VendorUpdateRequest) => client.vendors.update(request, testInvocation);
 }
 
 function compareText(left: string, right: string): number {

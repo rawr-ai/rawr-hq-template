@@ -10,6 +10,13 @@ const DEFAULT_PUBLIC_ISSUE_DETAIL = "Vendor lifecycle operation failed.";
 
 const operationLabels: Readonly<Record<ContentWorkspaceFailure["operation"], string>> = Object.freeze({
   inspect: "Content workspace inspection",
+  "inspect-git-workspace": "Read-only Git workspace inspection",
+  "read-git-tree": "Read-only Git tree observation",
+  "read-git-blob": "Read-only Git blob observation",
+  "capture-git-evidence": "Read-only Git workspace evidence capture",
+  "read-git-blob-at-path": "Read-only exact Git object observation",
+  "local-git-ancestry": "Read-only local Git ancestry verification",
+  "list-git-changed-paths": "Read-only Git changed-path observation",
   "read-file": "Content file observation",
   "read-tree": "Content tree observation",
   "observe-remote": "Remote content observation",

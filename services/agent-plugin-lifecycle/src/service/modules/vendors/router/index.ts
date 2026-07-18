@@ -3,7 +3,6 @@ import type {
   VendorSourceIdentity,
   VendorSourceStatus,
   VendorStatusRequest,
-  VendorStatusResult,
   VendorUpdateIssue,
   VendorUpdateRequest,
   VendorUpdateResult,
@@ -30,7 +29,8 @@ import {
 } from "../model/policy/vendor-upstream";
 import { observeVendorWorkspace } from "../model/policy/vendor-workspace-observation";
 import { vendorIssue } from "../model/policy/vendor-policy-result";
-import { executeVendorAuthoringPlan } from "./transaction";
+import { module } from "../module";
+import { executeVendorAuthoringPlan } from "./update-transaction";
 
 interface ObservedWorkspace {
   readonly observation: VendorWorkspaceObservation;
@@ -51,77 +51,77 @@ interface PreparedCandidate {
   readonly upstream: VendorUpstreamObservation;
 }
 
-export function createVendorStatus(runtime: VendorLifecycleRuntime) {
-  return async (request: VendorStatusRequest): Promise<VendorStatusResult> => {
-    const workspace = await observeWorkspace(runtime, request);
-    if ("issues" in workspace) return { kind: "Rejected", issues: workspace.issues };
+const status = module.status.handler(async ({ context, input: request }) => {
+  const runtime = context.vendors;
+  const workspace = await observeWorkspace(runtime, request);
+  if ("issues" in workspace) return { kind: "Rejected" as const, issues: workspace.issues };
 
-    const statuses: VendorSourceStatus[] = [];
-    for (const source of workspace.observation.sources) {
-      const localIssue = localVendorSourceIssue(source);
-      if (localIssue !== undefined) {
-        statuses.push(statusFromIssue(source, localIssue));
-        continue;
-      }
-      if (source.declaration.policy === "held") {
-        statuses.push({
-          sourceId: source.declaration.sourceId,
-          classification: "Held",
-          admitted: admittedIdentity(source),
-          observed: null,
-          detail: "The versioned source declaration is held.",
-        });
-        continue;
-      }
-      statuses.push((await assessSource(runtime, source)).status);
+  const statuses: VendorSourceStatus[] = [];
+  for (const source of workspace.observation.sources) {
+    const localIssue = localVendorSourceIssue(source);
+    if (localIssue !== undefined) {
+      statuses.push(statusFromIssue(source, localIssue));
+      continue;
     }
-    return { kind: "VendorStatus", sources: statuses };
-  };
-}
-
-export function createVendorUpdate(runtime: VendorLifecycleRuntime) {
-  return async (request: VendorUpdateRequest): Promise<VendorUpdateResult> => {
-    const workspace = await observeWorkspace(runtime, request);
-    if ("issues" in workspace) return rejected(request.sourceIds, workspace.issues);
-    const selected = selectSources(request, workspace.observation);
-    if ("issues" in selected) return rejected(request.sourceIds, selected.issues);
-
-    const candidates: PreparedCandidate[] = [];
-    const assessmentIssues: VendorUpdateIssue[] = [];
-    for (const source of selected.sources) {
-      const assessment = await assessSource(runtime, source);
-      if (assessment.issue !== undefined) assessmentIssues.push(assessment.issue);
-      if (assessment.candidate !== undefined) candidates.push({ source, upstream: assessment.candidate });
+    if (source.declaration.policy === "held") {
+      statuses.push({
+        sourceId: source.declaration.sourceId,
+        classification: "Held",
+        admitted: admittedIdentity(source),
+        observed: null,
+        detail: "The versioned source declaration is held.",
+      });
+      continue;
     }
-    const assessmentFailure = nonEmpty(assessmentIssues);
-    if (assessmentFailure !== null) return rejected(request.sourceIds, assessmentFailure);
-    if (candidates.length === 0) return { kind: "ReadOnlyConverged", sourceIds: request.sourceIds };
+    statuses.push((await assessSource(runtime, source)).status);
+  }
+  return { kind: "VendorStatus" as const, sources: statuses };
+});
 
-    const changes: VendorSourceChange[] = [];
-    const preparationIssues: VendorUpdateIssue[] = [];
-    for (const candidate of candidates) {
-      const materialized = await materializeVendorUpstream(
-        runtime.contentWorkspace,
-        runtime.clock,
-        candidate.source,
-        candidate.upstream,
-      );
-      if (!materialized.ok) {
-        preparationIssues.push(...materialized.issues);
-        continue;
-      }
-      const change = createVendorSourceChange(candidate.source, materialized.value);
-      if (!change.ok) preparationIssues.push(...change.issues);
-      else changes.push(change.value);
+const update = module.update.handler(async ({ context, input: request }) => {
+  const runtime = context.vendors;
+  const workspace = await observeWorkspace(runtime, request);
+  if ("issues" in workspace) return rejected(request.sourceIds, workspace.issues);
+  const selected = selectSources(request, workspace.observation);
+  if ("issues" in selected) return rejected(request.sourceIds, selected.issues);
+
+  const candidates: PreparedCandidate[] = [];
+  const assessmentIssues: VendorUpdateIssue[] = [];
+  for (const source of selected.sources) {
+    const assessment = await assessSource(runtime, source);
+    if (assessment.issue !== undefined) assessmentIssues.push(assessment.issue);
+    if (assessment.candidate !== undefined) candidates.push({ source, upstream: assessment.candidate });
+  }
+  const assessmentFailure = nonEmpty(assessmentIssues);
+  if (assessmentFailure !== null) return rejected(request.sourceIds, assessmentFailure);
+  if (candidates.length === 0) return { kind: "ReadOnlyConverged" as const, sourceIds: request.sourceIds };
+
+  const changes: VendorSourceChange[] = [];
+  const preparationIssues: VendorUpdateIssue[] = [];
+  for (const candidate of candidates) {
+    const materialized = await materializeVendorUpstream(
+      runtime.contentWorkspace,
+      runtime.clock,
+      candidate.source,
+      candidate.upstream,
+    );
+    if (!materialized.ok) {
+      preparationIssues.push(...materialized.issues);
+      continue;
     }
-    const preparationFailure = nonEmpty(preparationIssues);
-    if (preparationFailure !== null) return rejected(request.sourceIds, preparationFailure);
+    const change = createVendorSourceChange(candidate.source, materialized.value);
+    if (!change.ok) preparationIssues.push(...change.issues);
+    else changes.push(change.value);
+  }
+  const preparationFailure = nonEmpty(preparationIssues);
+  if (preparationFailure !== null) return rejected(request.sourceIds, preparationFailure);
 
-    const planned = createVendorAuthoringPlan(request.contentWorkspace, workspace.observation, changes);
-    if (!planned.ok) return rejected(request.sourceIds, planned.issues);
-    return executeVendorAuthoringPlan(runtime, request, planned.value);
-  };
-}
+  const planned = createVendorAuthoringPlan(request.contentWorkspace, workspace.observation, changes);
+  if (!planned.ok) return rejected(request.sourceIds, planned.issues);
+  return executeVendorAuthoringPlan(runtime, request, planned.value);
+});
+
+export const router = Object.freeze({ status, update });
 
 async function observeWorkspace(
   runtime: VendorLifecycleRuntime,
