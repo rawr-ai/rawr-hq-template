@@ -12,7 +12,7 @@ const provider = vi.hoisted(() => ({
 }));
 
 vi.mock("@rawr/resource-hosted-governance/providers/github-cli-effect-platform-node", () => ({
-  makeGithubCliHostedGovernanceResource: provider.make,
+  makeDeferredGithubCliHostedGovernanceResource: provider.make,
   runNodeHostedGovernance: provider.run,
 }));
 
@@ -57,13 +57,16 @@ describe("hosted-governance resource binding", () => {
 
   it("passes the explicit selector to the resource and returns raw history without policy", async () => {
     const resourceOperation = Symbol("hosted-history-operation");
+    const acquireGithubExecutable = vi.fn(() => EXECUTABLE);
     provider.observe.mockReturnValue(resourceOperation);
     provider.run.mockResolvedValue({ ok: true, value: HISTORY });
-    const reader = createGithubHostedApprovalHistoryReader({ githubExecutable: EXECUTABLE });
+    const reader = createGithubHostedApprovalHistoryReader({ acquireGithubExecutable });
+
+    expect(acquireGithubExecutable).not.toHaveBeenCalled();
 
     const result = await reader.read(QUERY);
 
-    expect(provider.make).toHaveBeenCalledWith({ githubExecutable: EXECUTABLE });
+    expect(provider.make).toHaveBeenCalledWith({ acquireGithubExecutable });
     expect(provider.observe).toHaveBeenCalledWith(QUERY);
     expect(provider.run).toHaveBeenCalledWith(resourceOperation);
     expect(result).toEqual({ ok: true, history: HISTORY });
@@ -81,7 +84,9 @@ describe("hosted-governance resource binding", () => {
         detail: "authentication failed",
       },
     });
-    const reader = createGithubHostedApprovalHistoryReader({ githubExecutable: EXECUTABLE });
+    const reader = createGithubHostedApprovalHistoryReader({
+      acquireGithubExecutable: () => EXECUTABLE,
+    });
 
     const result = await reader.read(QUERY);
 

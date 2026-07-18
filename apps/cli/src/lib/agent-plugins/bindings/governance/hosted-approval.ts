@@ -4,20 +4,20 @@ import type {
 } from "@rawr/agent-plugin-lifecycle/ports/governance";
 import type { HostedApprovalSelector } from "@rawr/resource-hosted-governance";
 import {
-  makeGithubCliHostedGovernanceResource,
+  makeDeferredGithubCliHostedGovernanceResource,
   runNodeHostedGovernance,
 } from "@rawr/resource-hosted-governance/providers/github-cli-effect-platform-node";
 
 export interface GithubHostedApprovalBindingOptions {
-  readonly githubExecutable: string;
+  readonly acquireGithubExecutable: () => string;
 }
 
 /** Binds explicit GitHub CLI acquisition without interpreting approval policy. */
 export function createGithubHostedApprovalHistoryReader(
   options: GithubHostedApprovalBindingOptions,
 ): HostedApprovalHistoryReader {
-  const resource = makeGithubCliHostedGovernanceResource({
-    githubExecutable: options.githubExecutable,
+  const resource = makeDeferredGithubCliHostedGovernanceResource({
+    acquireGithubExecutable: options.acquireGithubExecutable,
   });
   return Object.freeze({
     async read(query: HostedApprovalHistoryQuery) {

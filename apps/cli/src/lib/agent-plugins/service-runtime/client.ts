@@ -285,7 +285,6 @@ async function productionGovernanceRuntime(
   operation: LifecycleOperation,
   artifactStoreRoot: Parameters<typeof createNodeMechanicalEvidenceRuntime>[0],
 ) {
-  const githubExecutable = requiredHostedGovernanceExecutable(binding, operation);
   const contentWorkspace = makeNodeContentWorkspacePort({
     gitExecutable: requiredGitExecutable(binding, operation),
   });
@@ -293,7 +292,7 @@ async function productionGovernanceRuntime(
     git: createResourceExactGitReader({ contentWorkspace }),
     evidence: createNodeMechanicalEvidenceRuntime(artifactStoreRoot).governance,
     approvals: createGithubHostedApprovalHistoryReader({
-      githubExecutable,
+      acquireGithubExecutable: () => requiredHostedGovernanceExecutable(binding, operation),
     }),
   });
 }
