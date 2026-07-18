@@ -46,7 +46,7 @@
     "typecheck": "bunx nx run-many -t typecheck --all --exclude=rawr-hq-template",
     "typecheck:affected": "bunx nx affected -t typecheck",
     "pretest:vitest": "bunx nx run-many -t build --projects=@rawr/agent-plugin-lifecycle,@rawr/bootgraph,@rawr/chatgpt-corpus,@rawr/cli,@rawr/core,@rawr/dev,@rawr/dev-node,@rawr/example-todo,@rawr/hq-app,@rawr/hq-ops,@rawr/hq-sdk,@rawr/hyperresearch-codex,@rawr/orpc-client,@rawr/plugin-chatgpt-corpus,@rawr/plugin-devops,@rawr/plugin-hello,@rawr/plugin-hyperresearch,@rawr/plugin-session-tools,@rawr/runtime-context,@rawr/server,@rawr/session-intelligence,@rawr/ui-sdk,@rawr/web",
-    "test:vitest": "bun --bun node_modules/.bin/vitest run --config vitest.config.ts",
+    "test:vitest": "vitest run --config vitest.config.ts",
     "test:quick": "bunx vitest run --config vitest.config.ts",
     "test:web": "bunx vitest run --project web",
     "test": "bun run test:vitest",
