@@ -3,9 +3,7 @@
 ## Purpose
 
 Define the guarded native Oclif state boundary for genuine external CLI extensions without sharing authority with the official RAWR controller.
-
 ## Requirements
-
 ### Requirement: External-only native Oclif state (B03, I08)
 Template-owned bare `rawr plugins install|link|uninstall|list|inspect|update|reset` projections MUST be the sole user-facing command owner. Mutating projections MUST delegate only through the public `@oclif/plugin-plugins#commands` export, whose package-internal native manager remains the sole native-registry writer and owns only genuine external CLI extensions. The controller MUST add no copied/deep-imported manager or direct registry writer, MUST disable automatic raw user-plugin loading, and MUST NOT create a second registry or use external state for official modules.
 
@@ -123,3 +121,11 @@ Agent, provider, export, app, status, doctor, sync, and interim mixed-lifecycle 
 - **WHEN** an additional compatible CLI package or worktree appears under a scanned workspace path
 - **THEN** controller and external command discovery remain unchanged
 - **AND** no build, link, registry write, or next-invocation authority change occurs
+
+### Requirement: Bare plugins is exactly the external extension surface
+The installed controller MUST expose exactly `rawr plugins install|link|uninstall|list|inspect|update|reset` below the bare plugins topic. Curated agent lifecycle, provider deployment, export, app composition, scaffolding, aggregate status/doctor, official-module install/link, and compatibility aliases MUST NOT appear below that topic.
+
+#### Scenario: Bare plugins discovery is closed
+- **WHEN** command discovery, help, aliases, hidden aliases, topics, and controller manifest entries below `plugins` are enumerated
+- **THEN** exactly the seven external extension operations are present
+- **AND** every curated or legacy operation is absent before Oclif registry access

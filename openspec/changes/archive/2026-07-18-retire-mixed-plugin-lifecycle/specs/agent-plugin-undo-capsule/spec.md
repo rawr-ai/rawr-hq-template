@@ -1,3 +1,8 @@
+## RENAMED Requirements
+
+- FROM: `### Requirement: Undo contract remains inactive in C2`
+- TO: `### Requirement: Operator undo is qualified and controller-owned`
+
 ## MODIFIED Requirements
 
 ### Requirement: Operator undo is qualified and controller-owned

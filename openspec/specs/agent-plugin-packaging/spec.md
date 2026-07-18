@@ -44,14 +44,6 @@ The `cowork` format MUST produce a deterministic ZIP package and MUST NOT model 
 - **THEN** packaging reports only the explicit ZIP path, format protocol, package digest, and artifact provenance
 - **AND** every provider, receipt, destination-ledger, Oclif, controller, channel, and undo mutation counter remains zero
 
-### Requirement: Packaging remains isolated and inactive in C2
-The packaging service MUST own deterministic package rendering and explicit output only. It MUST NOT read source workspaces to rebuild bytes, import provider adapters, project generic filesystem layouts, mutate Oclif or controller state, issue acceptance, or write personal lifecycle records. C2 MUST keep the packaging application behind an internal typed interface with no discoverable command file, controller-manifest entry, alias, runtime scan, or compatibility route.
-
-#### Scenario: Package application cannot become another lifecycle path
-- **WHEN** command discovery and all non-output mutation ports are inspected during C2 packaging tests
-- **THEN** no package command or alias is reachable and no adjacent authority is mutated
-- **AND** only the explicit package output may change after all input and output guards pass
-
 ### Requirement: Packaging results are closed and truthful
 Packaging MUST return exactly `RejectedBeforeOutputMutation`, `ReadOnlyConverged`, `OutputReplacedVerified`, or `OutputUnsettled`. Only `OutputUnsettled` may report that atomic replacement occurred without successful final verification, and it MUST preserve primary and temporary-cleanup failures separately. Rejection MUST not claim output mutation, convergence MUST report zero writes, and verified replacement MUST bind the final package digest. Optional flags that can claim multiple states at once MUST be unrepresentable.
 
@@ -59,4 +51,12 @@ Packaging MUST return exactly `RejectedBeforeOutputMutation`, `ReadOnlyConverged
 - **WHEN** atomic output replacement succeeds but final output verification fails
 - **THEN** packaging returns `OutputUnsettled` with the expected package digest and exact verification failure
 - **AND** it does not claim convergence, provider state, ledger state, or undo coverage
+
+### Requirement: Packaging module remains isolated behind one qualified procedure
+The lifecycle service's `packaging` module MUST own deterministic package rendering and explicit output only. It MUST NOT read source workspaces to rebuild bytes, import provider adapters, project generic filesystem layouts, mutate Oclif or controller state, issue acceptance, write personal lifecycle records, or participate in app composition. Its only operator reachability MUST be `rawr agent plugins package`, which parses one canonical release or release-set handle and invokes the typed packaging procedure once without a compatibility route.
+
+#### Scenario: Package command cannot become another lifecycle path
+- **WHEN** command dispatch and all non-output mutation ports are inspected during qualified packaging
+- **THEN** exactly one typed packaging procedure is invoked and no adjacent authority is mutated
+- **AND** only the explicit package output may change after every input and output guard passes
 
