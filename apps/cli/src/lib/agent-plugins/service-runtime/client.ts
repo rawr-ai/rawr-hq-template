@@ -8,6 +8,9 @@ import {
   type UndoWriter,
 } from "@rawr/agent-plugin-lifecycle/bindings/exports";
 import {
+  createResourceExactGitReader,
+} from "@rawr/agent-plugin-lifecycle/bindings/governance";
+import {
   createResourceContentWorkspaceSnapshotReader,
 } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import {
@@ -45,8 +48,6 @@ import {
   type LifecycleOperation,
 } from "../commands/binding";
 import { createGithubHostedApprovalHistoryReader } from "../bindings/governance";
-import { createReadOnlyGitAdapter } from "./governance/adapters/git";
-import { createNodeReadOnlyGitBackend } from "./governance/adapters/node-git";
 import { createGovernanceLifecycleRuntime } from "./governance/runtime";
 import { createNodeMechanicalEvidenceRuntime } from "./evidence/node-mechanical";
 import {
@@ -285,10 +286,11 @@ async function productionGovernanceRuntime(
   artifactStoreRoot: Parameters<typeof createNodeMechanicalEvidenceRuntime>[0],
 ) {
   const githubExecutable = requiredHostedGovernanceExecutable(binding, operation);
+  const contentWorkspace = makeNodeContentWorkspacePort({
+    gitExecutable: requiredGitExecutable(binding, operation),
+  });
   return createGovernanceLifecycleRuntime({
-    git: createReadOnlyGitAdapter(await createNodeReadOnlyGitBackend({
-      gitExecutable: requiredGitExecutable(binding, operation),
-    })),
+    git: createResourceExactGitReader({ contentWorkspace }),
     evidence: createNodeMechanicalEvidenceRuntime(artifactStoreRoot).governance,
     approvals: createGithubHostedApprovalHistoryReader({
       githubExecutable,

@@ -15,6 +15,7 @@ import {
 
 const encoder = new TextEncoder();
 const repositoryIdentity = "git:github.com/example/personal-rawr-hq";
+const remoteUrl = "https://github.com/example/personal-rawr-hq.git";
 const ref = "refs/heads/main";
 const commit = "a".repeat(40);
 const tree = "b".repeat(40);
@@ -52,7 +53,7 @@ const anchor: GitWorkspaceAnchor = Object.freeze({
   refCommit: commit,
   tree,
   objectFormat: "sha1",
-  remoteUrls: Object.freeze([repositoryIdentity]),
+  remoteUrls: Object.freeze([remoteUrl]),
 });
 
 describe("resource-backed exact Git governance reader", () => {

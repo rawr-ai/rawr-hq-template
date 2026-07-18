@@ -1,4 +1,5 @@
 import { isAbsolute } from "node:path";
+import { URL } from "node:url";
 
 import type {
   ContentWorkspaceFailure,
@@ -14,6 +15,7 @@ import {
 import {
   parseCommit,
   parseRelativePath,
+  parseRepository,
   parseTree,
   sortCanonical,
   type CanonicalRef,
@@ -137,7 +139,7 @@ async function readBlob(
     if (anchor.refName !== selection.ref) {
       return readFailure("UnreachableObject", "Workspace HEAD does not select the requested Git ref");
     }
-    if (!anchor.remoteUrls.includes(selection.repositoryIdentity)) {
+    if (exactRepositoryIdentity(anchor.remoteUrls, selection.repositoryIdentity) !== selection.repositoryIdentity) {
       return readFailure("WrongObject", "Git object selection belongs to another repository identity");
     }
     const observed = await port.readGitBlobAtPath({
@@ -232,9 +234,45 @@ async function listChangedPaths(
 }
 
 function exactRepositoryIdentity(remoteUrls: readonly string[], expected: string): string {
-  if (remoteUrls.includes(expected)) return expected;
-  const unique = [...new Set(remoteUrls)].sort(compareText);
+  const observed = remoteUrls.map((remoteUrl) => repositoryIdentityFromRemote(remoteUrl) ?? remoteUrl);
+  if (observed.includes(expected)) return expected;
+  const unique = [...new Set(observed)].sort(compareText);
   return unique.length === 1 ? unique[0]! : "unresolved:multiple-or-missing-remotes";
+}
+
+function repositoryIdentityFromRemote(remoteUrl: string): string | undefined {
+  if (remoteUrl.startsWith("git:") && !remoteUrl.startsWith("git://")) {
+    const parsed = parseRepository(remoteUrl, "remoteUrl");
+    return parsed.ok ? parsed.value : undefined;
+  }
+
+  const scp = /^(?:[^@/:]+@)?([a-z0-9.-]+):([a-z0-9][a-z0-9._~/-]*)$/iu.exec(remoteUrl);
+  if (scp !== null) return canonicalGitRepositoryIdentity(scp[1]!, scp[2]!);
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(remoteUrl);
+  } catch {
+    return undefined;
+  }
+  if (
+    !["git:", "http:", "https:", "ssh:"].includes(parsedUrl.protocol)
+    || parsedUrl.hostname.length === 0
+    || parsedUrl.password.length > 0
+    || parsedUrl.port.length > 0
+    || parsedUrl.search.length > 0
+    || parsedUrl.hash.length > 0
+  ) {
+    return undefined;
+  }
+  return canonicalGitRepositoryIdentity(parsedUrl.hostname, parsedUrl.pathname);
+}
+
+function canonicalGitRepositoryIdentity(host: string, rawPath: string): string | undefined {
+  const path = rawPath.replace(/^\/+|\/+$/gu, "").replace(/\.git$/u, "");
+  if (path.length === 0) return undefined;
+  const parsed = parseRepository(`git:${host.toLowerCase()}/${path}`, "remoteUrl");
+  return parsed.ok ? parsed.value : undefined;
 }
 
 function hasDirtyStatus(bytes: Uint8Array): boolean {
