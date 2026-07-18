@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { HostedApprovalSelector } from "@rawr/resource-hosted-governance";
 
 import {
+  makeDeferredGithubCliHostedGovernanceResource,
   makeGithubCliHostedGovernanceResource,
   runNodeHostedGovernance,
 } from "../index";
@@ -26,6 +27,64 @@ afterEach(async () => {
 });
 
 describe("GitHub CLI Effect Platform hosted-governance provider", () => {
+  it("defers and single-flights executable acquisition without invalidation after operation failure", async () => {
+    const fixture = await createFixtureExecutable();
+    let acquisitions = 0;
+    const resource = makeDeferredGithubCliHostedGovernanceResource({
+      acquireGithubExecutable: () => {
+        acquisitions += 1;
+        return fixture.executable;
+      },
+    });
+
+    expect(acquisitions).toBe(0);
+    const initial = await Promise.all([
+      runNodeHostedGovernance(resource.observeApprovalHistory(selector(42))),
+      runNodeHostedGovernance(resource.observeApprovalHistory(selector(42))),
+    ]);
+    expect(initial).toMatchObject([{ ok: true }, { ok: true }]);
+    expect(acquisitions).toBe(1);
+
+    expectFailure(
+      await runNodeHostedGovernance(resource.observeApprovalHistory(selector(44))),
+      "CommandFailed",
+    );
+    expect(
+      await runNodeHostedGovernance(resource.observeApprovalHistory(selector(42))),
+    ).toMatchObject({ ok: true });
+    expect(acquisitions).toBe(1);
+  });
+
+  it("memoizes immutable acquisition failure across concurrent and repeated observations", async () => {
+    let acquisitions = 0;
+    const resource = makeDeferredGithubCliHostedGovernanceResource({
+      acquireGithubExecutable: () => {
+        acquisitions += 1;
+        throw new Error("binding unavailable");
+      },
+    });
+
+    expect(acquisitions).toBe(0);
+    const expected = {
+      ok: false,
+      failure: {
+        _tag: "HostedGovernanceFailure",
+        operation: "observe-approval-history",
+        reason: "Unavailable",
+        detail: "GitHub CLI binding acquisition failed: binding unavailable",
+      },
+    };
+    const concurrent = await Promise.all([
+      runNodeHostedGovernance(resource.observeApprovalHistory(selector(42))),
+      runNodeHostedGovernance(resource.observeApprovalHistory(selector(42))),
+    ]);
+    expect(concurrent).toEqual([expected, expected]);
+    expect(
+      await runNodeHostedGovernance(resource.observeApprovalHistory(selector(42))),
+    ).toEqual(expected);
+    expect(acquisitions).toBe(1);
+  });
+
   it("is cold and reports an unavailable explicit executable only when observed", async () => {
     const executable = path.join(tmpdir(), "rawr-hosted-governance-missing", "gh");
     const resource = makeGithubCliHostedGovernanceResource({ githubExecutable: executable });

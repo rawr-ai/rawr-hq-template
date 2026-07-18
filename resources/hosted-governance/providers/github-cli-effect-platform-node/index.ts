@@ -47,6 +47,39 @@ export interface GithubCliEffectPlatformNodeOptions {
   readonly githubExecutable: string;
 }
 
+export interface DeferredGithubCliEffectPlatformNodeOptions {
+  readonly acquireGithubExecutable: () => string;
+}
+
+/**
+ * Constructs a complete cold provider while deferring its executable binding
+ * until the first observation. The first immutable binding result, including a
+ * failure, is single-flight and memoized for this resource lifetime. A fresh
+ * resource is required to select different authority. Hosted operation failures
+ * do not replace a successfully acquired provider.
+ */
+export function makeDeferredGithubCliHostedGovernanceResource(
+  options: DeferredGithubCliEffectPlatformNodeOptions,
+): HostedGovernanceResource<ProviderRequirements> {
+  const acquireResource = Effect.runSync(Effect.cached(Effect.try({
+    try: () => makeGithubCliHostedGovernanceResource({
+      githubExecutable: options.acquireGithubExecutable(),
+    }),
+    catch: (cause) => failure(
+      "Unavailable",
+      `GitHub CLI binding acquisition failed: ${errorMessage(cause)}`,
+    ),
+  })));
+  const observeApprovalHistory = Effect.fn("hostedGovernance.github.observeApprovalHistory.deferred")(
+    function* (selector: HostedApprovalSelector) {
+      const resource = yield* acquireResource;
+      return yield* resource.observeApprovalHistory(selector);
+    },
+  );
+
+  return Object.freeze({ observeApprovalHistory });
+}
+
 /**
  * Constructs a cold provider. Executable and selector authority are checked
  * only when an observation Effect is executed.
@@ -309,4 +342,8 @@ function failure(
     reason,
     detail,
   });
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
