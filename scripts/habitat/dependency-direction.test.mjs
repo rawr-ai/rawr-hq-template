@@ -97,6 +97,38 @@ import { createClient } from "@rawr/alternate-lifecycle/client";
   "apps/cli/src/lib/agent-plugins/alternate-client-dynamic-import.ts": `
 export const client = import("@rawr/alternate-lifecycle/client");
 `,
+  "apps/cli/src/lib/agent-plugins/shadow-lifecycle-client.ts": `
+import { createClient, type Client } from "@rawr/agent-plugin-lifecycle/client";
+
+export const client = createClient;
+export type LifecycleClient = Client;
+`,
+  "apps/cli/src/lib/agent-plugins/shadow-lifecycle-client.tsx": `
+import { createClient } from "@rawr/agent-plugin-lifecycle/client";
+
+export const client = createClient;
+`,
+  "apps/cli/src/lib/agent-plugins/shadow-lifecycle-client-dynamic.ts": `
+export const client = import("@rawr/agent-plugin-lifecycle/client");
+`,
+  "apps/cli/src/lib/agent-plugins/shadow-lifecycle-client-reexport.ts": `
+export { createClient } from "@rawr/agent-plugin-lifecycle/client";
+`,
+  "apps/cli/src/lib/agent-plugins/shadow-lifecycle-client-mixed-reexport.ts": `
+export { type Client, createClient } from "@rawr/agent-plugin-lifecycle/client";
+`,
+  "apps/cli/src/lib/agent-plugins/shadow-lifecycle-client-star.ts": `
+export * from "@rawr/agent-plugin-lifecycle/client";
+`,
+  "apps/cli/src/lib/agent-plugins/mixed-release-import.ts": `
+import {
+  type ContentAuthority,
+  contentDigest,
+} from "@rawr/agent-plugin-lifecycle/release";
+
+export type Authority = ContentAuthority;
+export const digest = contentDigest;
+`,
 };
 
 const acceptedSources = {
@@ -131,13 +163,46 @@ export type { ContentAuthority } from "@rawr/agent-plugin-lifecycle/release";
   "apps/cli/src/lib/agent-plugins/release-protocol-star.ts": `
 export type * from "@rawr/agent-plugin-lifecycle/release";
 `,
-  "apps/cli/src/lib/agent-plugins/client.ts": `
-import { createClient } from "@rawr/agent-plugin-lifecycle/client";
+  "apps/cli/src/lib/agent-plugins/service-runtime/client.ts": `
+import { createClient, type Client } from "@rawr/agent-plugin-lifecycle/client";
 
 export const client = createClient;
+export type LifecycleClient = Client;
 `,
-  "apps/cli/src/lib/agent-plugins/dynamic-client.ts": `
-export const client = import("@rawr/agent-plugin-lifecycle/client");
+  "apps/cli/src/lib/agent-plugins/commands/binding.ts": `
+import type { Client } from "@rawr/agent-plugin-lifecycle/client";
+
+export type LifecycleClient = Client;
+`,
+  "apps/cli/src/lib/agent-plugins/commands/inline-client-protocol.ts": `
+import {
+  type Client,
+  type CreateClientOptions,
+} from "@rawr/agent-plugin-lifecycle/client";
+
+export type LifecycleClient = Client;
+export type LifecycleClientOptions = CreateClientOptions;
+`,
+  "apps/cli/src/lib/agent-plugins/commands/client-protocol-export.ts": `
+export type { Client } from "@rawr/agent-plugin-lifecycle/client";
+`,
+  "apps/cli/src/lib/agent-plugins/commands/client-protocol-inline-export.ts": `
+export {
+  type Client,
+  type CreateClientOptions,
+} from "@rawr/agent-plugin-lifecycle/client";
+`,
+  "apps/cli/src/lib/agent-plugins/commands/client-protocol-star.ts": `
+export type * from "@rawr/agent-plugin-lifecycle/client";
+`,
+  "apps/cli/src/lib/agent-plugins/inline-release-protocol.ts": `
+import {
+  type ContentAuthority,
+  type ReleaseSetDigest,
+} from "@rawr/agent-plugin-lifecycle/release";
+
+export type Authority = ContentAuthority;
+export type SetDigest = ReleaseSetDigest;
 `,
   "apps/cli/src/lib/agent-plugins/bindings/providers.ts": `
 import { createProvider } from "@rawr/agent-plugin-lifecycle/bindings/providers";
@@ -247,7 +312,7 @@ describe("agent plugin lifecycle dependency-direction Habitat rule", () => {
     expect(
       rejected.report.rules[0].diagnostics,
       JSON.stringify(rejected.report.rules[0].diagnostics, null, 2),
-    ).toHaveLength(25);
+    ).toHaveLength(32);
 
     const rootRouter = "services/agent-plugin-lifecycle/src/service/router.ts";
     const expectedLocations = [
@@ -264,7 +329,10 @@ describe("agent plugin lifecycle dependency-direction Habitat rule", () => {
     expect(observedLocations).toEqual(expectedLocations);
 
     const accepted = check(binary, acceptedRoot);
-    expect(accepted.status, accepted.stderr).toBe(0);
+    expect(
+      accepted.status,
+      `${accepted.stderr}\n${JSON.stringify(accepted.report, null, 2)}`,
+    ).toBe(0);
     expect(accepted.report.ok).toBeTrue();
     expect(accepted.report.rules).toHaveLength(1);
     expect(accepted.report.rules[0].status).toBe("pass");

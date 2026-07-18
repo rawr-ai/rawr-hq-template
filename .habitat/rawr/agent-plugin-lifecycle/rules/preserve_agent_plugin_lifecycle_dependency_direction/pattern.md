@@ -6,8 +6,10 @@ level: error
 The lifecycle service consumes resource contracts, never concrete providers or
 controller implementation. Module ports cannot reintroduce the retired
 `internal` bucket; their current public surfaces remain protocols and types. The
-qualified CLI projection reaches one service client. Concrete provider
-construction stays outside the semantic service and release/evidence
+qualified CLI projection admits one production value consumer for the service
+client: its exact `service-runtime/client.ts` composition root. Other CLI
+modules may retain type-only client dependencies, but cannot construct, load,
+or relay another service client. Concrete provider construction stays outside the semantic service and release/evidence
 projections, in declared CLI binding and provider-projection roots. Release and
 evidence projections remain free of filesystem, process, FFI, and provider mechanics.
 Module router handlers consume only their local `module` context, and the
@@ -61,68 +63,91 @@ or {
     $source <: r"^[\"']?\./internal(?:/[^\"']+)?[\"']?$"
   },
   import_statement(source=$source) as $import where {
-    $filename <: r".*apps/cli/src/.*\.ts$",
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
     not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$" },
-    not { $import <: includes "import type" }
+    not { $import <: includes "import type" },
+    not { $import <: r"(?s)^import\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
   },
   `import($source)` where {
-    $filename <: r".*apps/cli/src/.*\.ts$",
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
     not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$" }
   },
+  import_statement(source=$source) as $import where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/client[\"']?$",
+    not { $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/client\.ts$" },
+    not { $import <: includes "import type" },
+    not { $import <: r"(?s)^import\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
+  },
+  `import($source)` where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/client[\"']?$"
+  },
   `export { $exports } from $source` as $export where {
-    $filename <: r".*apps/cli/src/.*\.ts$",
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/client[\"']?$",
+    not { $export <: includes "export type" },
+    not { $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
+  },
+  `export * from $source` as $export where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/client[\"']?$",
+    not { $export <: includes "export type *" }
+  },
+  `export { $exports } from $source` as $export where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
     not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$" },
     not { $export <: includes "export type" },
-    not { $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from" }
+    not { $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
   },
   `export * from $source` as $export where {
-    $filename <: r".*apps/cli/src/.*\.ts$",
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
     not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$" },
     not { $export <: includes "export type *" }
   },
   import_statement(source=$source) where {
-    $filename <: r".*apps/cli/src/.*\.ts$",
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?(?:@rawr/agent-plugin-lifecycle/(?:src|service)(?:/|[\"'])|(?:\.\./)+.*services/agent-plugin-lifecycle/src/).*"
   },
   `export { $exports } from $source` where {
-    $filename <: r".*apps/cli/src/.*\.ts$",
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?(?:@rawr/agent-plugin-lifecycle/(?:src|service)(?:/|[\"'])|(?:\.\./)+.*services/agent-plugin-lifecycle/src/).*"
   },
   `export * from $source` where {
-    $filename <: r".*apps/cli/src/.*\.ts$",
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?(?:@rawr/agent-plugin-lifecycle/(?:src|service)(?:/|[\"'])|(?:\.\./)+.*services/agent-plugin-lifecycle/src/).*"
   },
   `import($source)` where {
-    $filename <: r".*apps/cli/src/.*\.ts$",
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?(?:@rawr/agent-plugin-lifecycle/(?:src|service)(?:/|[\"'])|(?:\.\./)+.*services/agent-plugin-lifecycle/src/).*"
   },
   import_statement(source=$source) where {
-    $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/(?:releases|evidence)/.*\.ts$",
+    $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/(?:releases|evidence)/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?(?:node:(?:fs(?:/promises)?|path|child_process)|bun:ffi|@rawr/resource-[^/]+/providers/).*"
   },
   `export { $exports } from $source` where {
-    $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/(?:releases|evidence)/.*\.ts$",
+    $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/(?:releases|evidence)/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?(?:node:(?:fs(?:/promises)?|path|child_process)|bun:ffi|@rawr/resource-[^/]+/providers/).*"
   },
   `export * from $source` where {
-    $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/(?:releases|evidence)/.*\.ts$",
+    $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/(?:releases|evidence)/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?(?:node:(?:fs(?:/promises)?|path|child_process)|bun:ffi|@rawr/resource-[^/]+/providers/).*"
   },
   `import($source)` where {
-    $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/(?:releases|evidence)/.*\.ts$",
+    $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/(?:releases|evidence)/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?(?:node:(?:fs(?:/promises)?|path|child_process)|bun:ffi|@rawr/resource-[^/]+/providers/).*"
   },
   import_statement(source=$source) where {
-    $filename <: r".*apps/cli/src/lib/agent-plugins/.*\.ts$",
+    $filename <: r".*apps/cli/src/lib/agent-plugins/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/[^\"']+/client[\"']?$",
     not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/client[\"']?$" }
   },
   `import($source)` where {
-    $filename <: r".*apps/cli/src/lib/agent-plugins/.*\.ts$",
+    $filename <: r".*apps/cli/src/lib/agent-plugins/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/[^\"']+/client[\"']?$",
     not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/client[\"']?$" }
   }
@@ -240,6 +265,38 @@ export const client = createClient;
 
 // @filename: apps/cli/src/lib/agent-plugins/service-runtime/shadow-client-dynamic.ts
 export const client = import("@rawr/alternate-lifecycle/client");
+
+// @filename: apps/cli/src/lib/agent-plugins/shadow-lifecycle-client.ts
+import { createClient, type Client } from "@rawr/agent-plugin-lifecycle/client";
+
+export const client: typeof createClient | undefined = undefined;
+export type LifecycleClient = Client;
+
+// @filename: apps/cli/src/lib/agent-plugins/shadow-lifecycle-client.tsx
+import { createClient } from "@rawr/agent-plugin-lifecycle/client";
+
+export const client = createClient;
+
+// @filename: apps/cli/src/lib/agent-plugins/shadow-lifecycle-client-dynamic.ts
+export const client = import("@rawr/agent-plugin-lifecycle/client");
+
+// @filename: apps/cli/src/lib/agent-plugins/shadow-lifecycle-client-reexport.ts
+export { createClient } from "@rawr/agent-plugin-lifecycle/client";
+
+// @filename: apps/cli/src/lib/agent-plugins/shadow-lifecycle-client-mixed-reexport.ts
+export { type Client, createClient } from "@rawr/agent-plugin-lifecycle/client";
+
+// @filename: apps/cli/src/lib/agent-plugins/shadow-lifecycle-client-star.ts
+export * from "@rawr/agent-plugin-lifecycle/client";
+
+// @filename: apps/cli/src/lib/agent-plugins/mixed-release-import.ts
+import {
+  type ContentAuthority,
+  contentDigest,
+} from "@rawr/agent-plugin-lifecycle/release";
+
+export type Authority = ContentAuthority;
+export const digest = contentDigest;
 ```
 
 ## Ignores Fixture
@@ -279,13 +336,46 @@ export type {
 // @filename: apps/cli/src/lib/agent-plugins/release-protocol-star.ts
 export type * from "@rawr/agent-plugin-lifecycle/release";
 
-// @filename: apps/cli/src/lib/agent-plugins/client.ts
-import { createClient } from "@rawr/agent-plugin-lifecycle/client";
+// @filename: apps/cli/src/lib/agent-plugins/service-runtime/client.ts
+import { createClient, type Client } from "@rawr/agent-plugin-lifecycle/client";
 
 export const client = createClient;
+export type LifecycleClient = Client;
 
-// @filename: apps/cli/src/lib/agent-plugins/client-dynamic.ts
-export const client = import("@rawr/agent-plugin-lifecycle/client");
+// @filename: apps/cli/src/lib/agent-plugins/commands/binding.ts
+import type { Client } from "@rawr/agent-plugin-lifecycle/client";
+
+export type LifecycleClient = Client;
+
+// @filename: apps/cli/src/lib/agent-plugins/commands/inline-client-protocol.ts
+import {
+  type Client,
+  type CreateClientOptions,
+} from "@rawr/agent-plugin-lifecycle/client";
+
+export type LifecycleClient = Client;
+export type LifecycleClientOptions = CreateClientOptions;
+
+// @filename: apps/cli/src/lib/agent-plugins/commands/client-protocol-export.ts
+export type { Client } from "@rawr/agent-plugin-lifecycle/client";
+
+// @filename: apps/cli/src/lib/agent-plugins/commands/client-protocol-inline-export.ts
+export {
+  type Client,
+  type CreateClientOptions,
+} from "@rawr/agent-plugin-lifecycle/client";
+
+// @filename: apps/cli/src/lib/agent-plugins/commands/client-protocol-star.ts
+export type * from "@rawr/agent-plugin-lifecycle/client";
+
+// @filename: apps/cli/src/lib/agent-plugins/inline-release-protocol.ts
+import {
+  type ContentAuthority,
+  type ReleaseSetDigest,
+} from "@rawr/agent-plugin-lifecycle/release";
+
+export type Authority = ContentAuthority;
+export type SetDigest = ReleaseSetDigest;
 
 // @filename: apps/cli/src/lib/agent-plugins/bindings/providers.ts
 import { createResourceCodexProviderAdapter } from "@rawr/agent-plugin-lifecycle/bindings/providers";
