@@ -25,6 +25,7 @@ import type {
   CompleteTestRequest,
   ExportRequest,
   PackageRequest,
+  RepositoryCheckRequest,
   RetireRequest,
   StatusRequest,
   SyncRequest,
@@ -36,6 +37,7 @@ import { LifecycleInputError } from "./input";
 
 export type LifecycleOperationRequest =
   | Readonly<{ operation: "releases.check"; input: CheckRequest }>
+  | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>
   | Readonly<{ operation: "releases.build"; input: BuildRequest }>
   | Readonly<{ operation: "vendors.status"; input: VendorStatusRequest }>
   | Readonly<{ operation: "vendors.update"; input: VendorUpdateRequest }>
@@ -125,6 +127,10 @@ export async function invokeLifecycleProcedure(
       const client = await factory("releases.check", binding);
       return await client.releases.check(request.input, callOptions);
     }
+    case "releases.checkRepository": {
+      const client = await factory("releases.checkRepository", binding);
+      return await client.releases.checkRepository(request.input, callOptions);
+    }
     case "releases.build": {
       const client = await factory("releases.build", binding);
       return await client.releases.build(request.input, callOptions);
@@ -169,6 +175,8 @@ export async function invokeLifecycleProcedure(
       const client = await factory("governance.attestPromotion", binding);
       return await client.governance.attestPromotion(request.input, callOptions);
     }
+    default:
+      return assertNever(request);
   }
 }
 
@@ -196,6 +204,7 @@ export function lifecycleResultExitCode(
   }
   const successfulKinds: Readonly<Record<LifecycleOperation, readonly string[]>> = {
     "releases.check": ["EligibleReport"],
+    "releases.checkRepository": ["StagedRepositoryEligible", "CleanRepositoryEligible"],
     "releases.build": ["Published", "ReadOnlyConverged"],
     "vendors.status": ["VendorStatus"],
     "vendors.update": ["ReadOnlyConverged", "AuthoredReviewableChanges"],
@@ -322,4 +331,8 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
     : {};
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unreachable lifecycle operation: ${String(value)}`);
 }

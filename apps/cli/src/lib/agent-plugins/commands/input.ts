@@ -16,9 +16,12 @@ import {
 } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 
+import { CHECK_MODES, type CheckMode } from "./flags";
+
 type InputOf<T> = T extends (...args: infer TArgs) => unknown ? TArgs[0] : never;
 
 export type CheckRequest = InputOf<Client["releases"]["check"]>;
+export type RepositoryCheckRequest = InputOf<Client["releases"]["checkRepository"]>;
 export type BuildRequest = InputOf<Client["releases"]["build"]>;
 export type VendorStatusRequest = InputOf<Client["vendors"]["status"]>;
 export type VendorUpdateRequest = InputOf<Client["vendors"]["update"]>;
@@ -31,6 +34,10 @@ export type StatusRequest = InputOf<Client["providers"]["canonicalStatus"]>;
 export type RetireRequest = InputOf<Client["providers"]["managedRetire"]>;
 export type AttestPromotionRequest = InputOf<Client["governance"]["attestPromotion"]>;
 
+export type CheckOperationRequest =
+  | Readonly<{ operation: "releases.check"; input: CheckRequest }>
+  | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>;
+
 export class LifecycleInputError extends Error {
   readonly code = "LIFECYCLE_INPUT_INVALID";
 
@@ -42,8 +49,94 @@ export class LifecycleInputError extends Error {
 
 type RawFlags = Readonly<Record<string, unknown>>;
 
-export function parseCheckRequest(flags: RawFlags): CheckRequest {
-  return parseReleaseWorkspaceRequest(flags);
+type CheckDomainFlag =
+  | "content-workspace"
+  | "repository-identity"
+  | "content-authority"
+  | "remote-name"
+  | "remote-url"
+  | "ref"
+  | "source-commit"
+  | "source-tree"
+  | "release-input"
+  | "plugin-root"
+  | "plugin"
+  | "complete-set";
+
+const CHECK_MODE_ADMITTED_FLAGS = {
+  release: [
+    "content-workspace",
+    "repository-identity",
+    "content-authority",
+    "remote-name",
+    "remote-url",
+    "ref",
+    "source-commit",
+    "source-tree",
+    "release-input",
+    "plugin-root",
+    "plugin",
+    "complete-set",
+  ],
+  "repository-staged": [
+    "content-workspace",
+    "repository-identity",
+    "content-authority",
+    "remote-name",
+    "remote-url",
+    "ref",
+    "release-input",
+    "plugin-root",
+  ],
+  "repository-clean": [
+    "content-workspace",
+    "repository-identity",
+    "content-authority",
+    "remote-name",
+    "remote-url",
+    "ref",
+    "source-commit",
+    "source-tree",
+    "release-input",
+    "plugin-root",
+  ],
+} as const satisfies Readonly<Record<CheckMode, readonly CheckDomainFlag[]>>;
+
+const CHECK_DOMAIN_FLAGS = Object.freeze(
+  [...new Set(Object.values(CHECK_MODE_ADMITTED_FLAGS).flat())],
+) satisfies readonly CheckDomainFlag[];
+
+export function parseCheckOperationRequest(flags: RawFlags): CheckOperationRequest {
+  const mode = flags.mode === undefined
+    ? "release"
+    : requireLiteral(
+      flags.mode,
+      "--mode",
+      CHECK_MODES,
+    );
+  switch (mode) {
+    case "release":
+      assertCheckDomain(flags, CHECK_MODE_ADMITTED_FLAGS.release);
+      return Object.freeze({ operation: "releases.check", input: parseReleaseWorkspaceRequest(flags) });
+    case "repository-staged":
+      assertCheckDomain(flags, CHECK_MODE_ADMITTED_FLAGS["repository-staged"]);
+      return Object.freeze({
+        operation: "releases.checkRepository",
+        input: Object.freeze({
+          kind: "staged",
+          contentWorkspace: stagedContentWorkspacePolicy(flags),
+        }),
+      });
+    case "repository-clean":
+      assertCheckDomain(flags, CHECK_MODE_ADMITTED_FLAGS["repository-clean"]);
+      return Object.freeze({
+        operation: "releases.checkRepository",
+        input: Object.freeze({
+          kind: "clean",
+          contentWorkspace: releaseContentWorkspacePolicy(flags),
+        }),
+      });
+  }
 }
 
 export function parseBuildRequest(flags: RawFlags): BuildRequest {
@@ -200,26 +293,50 @@ function parseReleaseWorkspaceRequest(flags: RawFlags): CheckRequest {
     ? Object.freeze({ kind: "complete-set" as const })
     : targetMode(plugin);
   return Object.freeze({
-    contentWorkspace: Object.freeze({
-      locator: requireCanonicalAbsolute(flags["content-workspace"], "--content-workspace"),
-      repositoryIdentity: requireReleaseValue(
-        parseRepositoryIdentity(flags["repository-identity"], "--repository-identity"),
-      ),
-      contentAuthority: requireReleaseValue(
-        parseContentAuthority(flags["content-authority"], "--content-authority"),
-      ),
-      remoteName: requireString(flags["remote-name"], "--remote-name"),
-      remoteUrl: requireString(flags["remote-url"], "--remote-url"),
-      refName: requireString(flags.ref, "--ref"),
-      sourceCommit: requireReleaseValue(parseGitCommitId(flags["source-commit"], "--source-commit")),
-      sourceTree: requireReleaseValue(parseGitTreeId(flags["source-tree"], "--source-tree")),
-      releaseInputPath: requireReleaseValue(
-        parseReleaseRelativePath(flags["release-input"], "--release-input"),
-      ),
-      pluginRoot: requireReleaseValue(parseReleaseRelativePath(flags["plugin-root"], "--plugin-root")),
-    }),
+    contentWorkspace: releaseContentWorkspacePolicy(flags),
     mode,
   });
+}
+
+function releaseContentWorkspacePolicy(flags: RawFlags): CheckRequest["contentWorkspace"] {
+  return Object.freeze({
+    ...stagedContentWorkspacePolicy(flags),
+    sourceCommit: requireReleaseValue(parseGitCommitId(flags["source-commit"], "--source-commit")),
+    sourceTree: requireReleaseValue(parseGitTreeId(flags["source-tree"], "--source-tree")),
+  });
+}
+
+function stagedContentWorkspacePolicy(
+  flags: RawFlags,
+): Extract<RepositoryCheckRequest, Readonly<{ kind: "staged" }>>["contentWorkspace"] {
+  return Object.freeze({
+    locator: requireCanonicalAbsolute(flags["content-workspace"], "--content-workspace"),
+    repositoryIdentity: requireReleaseValue(
+      parseRepositoryIdentity(flags["repository-identity"], "--repository-identity"),
+    ),
+    contentAuthority: requireReleaseValue(
+      parseContentAuthority(flags["content-authority"], "--content-authority"),
+    ),
+    remoteName: requireString(flags["remote-name"], "--remote-name"),
+    remoteUrl: requireString(flags["remote-url"], "--remote-url"),
+    refName: requireString(flags.ref, "--ref"),
+    releaseInputPath: requireReleaseValue(
+      parseReleaseRelativePath(flags["release-input"], "--release-input"),
+    ),
+    pluginRoot: requireReleaseValue(parseReleaseRelativePath(flags["plugin-root"], "--plugin-root")),
+  });
+}
+
+function assertCheckDomain(
+  flags: RawFlags,
+  admitted: readonly CheckDomainFlag[],
+): void {
+  const admittedSet = new Set<string>(admitted);
+  for (const flag of CHECK_DOMAIN_FLAGS) {
+    const value = flags[flag];
+    if (value === undefined || value === false || admittedSet.has(flag)) continue;
+    throw new LifecycleInputError(`--${flag} is not admitted by the selected --mode`);
+  }
 }
 
 function targetMode(plugin: string): CheckRequest["mode"] {

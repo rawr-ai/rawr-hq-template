@@ -12,7 +12,7 @@
 
 ## 2. T6B: Repository Checks
 
-- [ ] 2.1 Retain only release eligibility plus staged/clean repository
+- [x] 2.1 Retain only release eligibility plus staged/clean repository
   validation beneath the existing `check` command; delete the protected-lane
   mode, flags, DTOs, schemas, service contract, router/index, handler, bindings,
   public exports, client operation, projection, and tests without an alias or fallback.
@@ -20,11 +20,13 @@
   commands; revalidate once and return `SourceChanged` without retry or writes.
 - [x] 2.3 Bind clean mode to exact repository/ref/commit/tree and declared
   inputs; authorize no build from staged state.
-- [ ] 2.4 Record and prove the exact settlement invocation selects canonical
+- [x] 2.4 Record that the exact settlement invocation selects canonical
   personal main and its landed release input, supplies no external Inngest
   candidate locator or destination, and never requests candidate bytes while
-  `HF01_PENDING`. Do not add generic candidate-path recognition to Template.
-- [ ] 2.5 Rerun focused service/CLI/content-workspace behavior, lint,
+  `HF01_PENDING`; prove the public interface has no candidate field or inferred
+  candidate status. Do not add generic candidate-path recognition to Template.
+  The operational invocation and proof remain T6F tasks 8.2-8.5.
+- [x] 2.5 Rerun focused service/CLI/content-workspace behavior, lint,
   typecheck, build, structural/Habitat, and one-procedure proof; close four
   standing reviews on the narrowed interface.
 

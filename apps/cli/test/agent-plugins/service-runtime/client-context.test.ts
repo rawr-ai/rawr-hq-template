@@ -34,6 +34,7 @@ const OWNER_KEYS = Object.freeze([
 ]);
 const OPERATION_CASES = Object.freeze([
   { operation: "releases.check", owner: "releases", procedure: "check" },
+  { operation: "releases.checkRepository", owner: "releases", procedure: "checkRepository" },
   { operation: "releases.build", owner: "releases", procedure: "build" },
   { operation: "vendors.status", owner: "vendors", procedure: "status" },
   { operation: "vendors.update", owner: "vendors", procedure: "update" },
