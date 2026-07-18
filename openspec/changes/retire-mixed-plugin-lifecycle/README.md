@@ -12,7 +12,7 @@ C5 execution record for qualified agent-plugin lifecycle activation and mixed ag
 ## Director Frame
 
 - **Objective:** correct the C2-C3 domain model to one oRPC lifecycle service, make curated agent lifecycle reachable only through `rawr agent plugins`, leave genuine external extensions under bare `rawr plugins`, and delete every active mixed owner and compatibility path.
-- **Hard core:** one installed Template controller; one `@rawr/agent-plugin-lifecycle` semantic service with internal modules; one closed command ontology; immutable release inputs; explicit content-workspace and provider-home locators; one state owner per artifact repository, provider home, export destination, Oclif registry, lifecycle record, and undo capsule; converged repetition may inspect but does not write.
+- **Hard core:** one installed Template controller; one `@rawr/agent-plugin-lifecycle` semantic service with six domain modules; one closed command ontology; immutable release inputs; explicit content-workspace and provider-home locators; one state owner per artifact repository, provider home, export destination, Oclif registry, lifecycle record, and undo capsule; converged repetition may inspect but does not write.
 - **Exterior:** app composition, web mounting, runtime realization, personal content normalization, acceptance issuance, channel authoring, canonical provider settlement, operation history, PKI, and hostile installed-state tampering.
 - **Falsifiers:** any deleted command or flag remains discoverable; any of the five peer service identities survives; CLI code imports a module application directly; an agent lifecycle command calls Oclif mutation; a command loads personal executable code; a read-only operation writes; a repeated converged operation changes bytes or metadata; a mixed package/service remains reachable; C5 creates an app/runtime composition path.
 - **Authority ledger:** Template owns the one service contract, commands, schemas, validators, runtime adapters, and generic lifecycle behavior. Qualified repositories preserve distinct artifact, provider-home, export-destination, and governance-record authority; the controller separately owns the capsule. Personal is only explicit versioned content/record data.
@@ -23,13 +23,13 @@ C5 execution record for qualified agent-plugin lifecycle activation and mixed ag
 
 C4 already retired the legacy web-membership and mounting path without building a replacement. C5 preserves that absence. It MUST NOT add app-composition commands, `AppDefinition` editing, plugin mounting, runtime compilation, service/plugin execution descriptors, process runtime, adapters, harnesses, or `RuntimeCatalog` work. Those belong exclusively to the dedicated final-architecture migration.
 
-Within CLI source, one runtime binding may provide concrete ports to the typed lifecycle service client. Such binding is controller projection wiring, not product app composition. Commands may not import internal module applications or sequence lifecycle transactions.
+Within CLI source, one runtime binding may provide concrete ports to the typed lifecycle service client. Such binding is controller projection wiring, not product app composition. Commands may not import module-local router handlers or sequence lifecycle transactions.
 
 ## Structural Correction
 
 The five C2-C3 packages were proto-modules, not five service domains. [[SERVICE_TOPOLOGY]] records the manifest delta, domain capability set, logical flow, exact module inventory, context lanes, resource/provider boundary, runtime binding placement, and structural proof for their consolidation into one oRPC service before public activation.
 
-The service follows `services/session-intelligence` and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract]]. C5 keeps the existing `@rawr/hq-sdk` oRPC primitive for service semantics while concrete resource/provider operations use Effect Platform. It deliberately does not implement the future app/runtime compiler, bootgraph, process runtime, or effect-oRPC service terminal.
+The service keeps the established RAWR service shell, adopts the latest Magic Migration `collect` router/model topology for its module interiors, and remains consistent with [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract]]. C5 keeps the existing `@rawr/hq-sdk` oRPC primitive for service semantics while concrete resource/provider operations use Effect Platform. It deliberately does not implement the future app/runtime compiler, bootgraph, process runtime, or effect-oRPC service terminal.
 
 [[HABITAT_INTEGRATION]] records the immutable Habitat executable release, the Template-owned positive policy tree, and the local/remote check edges that replace the hand-written lifecycle shape checker. Template does not vendor the Habitat SDK or own its source, build, or publication implementation.
 
@@ -68,7 +68,7 @@ No C5 code mounts web plugins, composes apps, compiles runtime definitions, or r
 | --- | --- | --- |
 | OpenSpec behavior and boundary record | pass | proposal, design, [[SERVICE_TOPOLOGY]], delta specs, and task ledger validate strictly in this changeset |
 | Habitat structural authority | pass | exactly three locked positive rules: `require_agent_plugin_lifecycle_service_topology`, `require_agent_plugin_command_channel_topology`, and `preserve_agent_plugin_lifecycle_dependency_direction` |
-| repository quality gate | local pass; remote activation pending | `bun run lint` covers 30 Nx projects, `bun run typecheck` covers 44, and the three Habitat rules pass through `ratchet:required`; local pre-push runs the same required chain; ordinary CI and protected `main` become promotion authority after the workflow lands |
+| repository quality gate | local pass; remote activation pending | `bun run lint` covers 30 Nx projects, `bun run typecheck` covers 44, the Habitat consumer proves provisioning plus all 25 dependency-rule arms, and the three locked rules pass live through `ratchet:required`; local pre-push runs the same required chain; ordinary CI and protected `main` become promotion authority after the workflow lands |
 | one oRPC service consolidation | pass | exact six-module inventory, boundary-only exports, typed client, retained state-owner distinctions, and migrated C2-C3 behavior suites |
 | qualified command implementation | pass | exact 13 curated and 7 external command IDs, typed-procedure dispatch, parser refusal, status classification, and no curated/Oclif mutation crossover |
 | mixed aggregate retirement | pass | semantic inventory and repository scans find no reachable mixed owner, alias, fallback, or compatibility command path |
@@ -82,4 +82,4 @@ The installed acceptance deliberately does not claim byte stability for Codex-ow
 
 ## Closure
 
-C5 closes only when one oRPC lifecycle service owns the exact internal module set, its service-backed command members are reachable through one typed client, `create` and controller-owned `undo` remain only at their qualified command IDs, bare `rawr plugins` is external-only, all peer and mixed owners and semantic residue are absent, no app/runtime composition replacement exists, all proof and standing reviews pass, and the change is landed and drained on canonical Template `main`.
+C5 closes only when one oRPC lifecycle service owns the exact domain module set, its service-backed command members are reachable through one typed client, `create` and controller-owned `undo` remain only at their qualified command IDs, bare `rawr plugins` is external-only, all peer and mixed owners and semantic residue are absent, no app/runtime composition replacement exists, all proof and standing reviews pass, and the change is landed and drained on canonical Template `main`.

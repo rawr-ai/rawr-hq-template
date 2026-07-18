@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: The mixed executable owners are absent
-`@rawr/plugin-plugins`, `@rawr/agent-plugin-release`, `services/agent-config-sync`, `packages/agent-config-sync-node`, the five peer services `@rawr/agent-plugin-build|export|packaging|promotion` and `@rawr/agent-provider-deployment`, HQ Ops plugin-catalog/plugin-install/plugin-lifecycle and workspace-plugin-catalog modules, and every active import, package dependency, project, command, router, contract, entity, repository, test, hook, or guard that requires their existence MUST be deleted. Retained C2-C3 behavior MUST live only as internal modules of `@rawr/agent-plugin-lifecycle`, except controller-owned undo. No renamed aggregate, wrapper, dormant copy, forwarding package, or compatibility facade may replace them.
+`@rawr/plugin-plugins`, `@rawr/agent-plugin-release`, `services/agent-config-sync`, `packages/agent-config-sync-node`, the five peer services `@rawr/agent-plugin-build|export|packaging|promotion` and `@rawr/agent-provider-deployment`, HQ Ops plugin-catalog/plugin-install/plugin-lifecycle and workspace-plugin-catalog modules, and every active import, package dependency, project, command, router, contract, entity, repository, test, hook, or guard that requires their existence MUST be deleted. Retained C2-C3 behavior MUST live only in the domain modules of `@rawr/agent-plugin-lifecycle`, except controller-owned undo. No renamed aggregate, wrapper, dormant copy, forwarding package, or compatibility facade may replace them.
 
 #### Scenario: Repository inventory has no mixed owner
 - **WHEN** source, package manifests, lock data, Nx projects, generated command inventory, tests, hooks, docs, and active guards are scanned semantically

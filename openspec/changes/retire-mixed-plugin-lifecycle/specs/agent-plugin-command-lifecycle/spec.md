@@ -16,12 +16,12 @@ Every lifecycle command MUST reject unknown, legacy, cross-mode, relative, nonca
 - **THEN** parsing exits as invalid input before every observable port call
 
 ### Requirement: Each service-backed command invokes one typed service procedure
-Each service-backed lifecycle transition command MUST perform command-local value adaptation and invoke exactly one `@rawr/agent-plugin-lifecycle` client procedure. CLI code MUST NOT import an internal module application or repository, resolve lifecycle prerequisites, sequence plan/apply/verify/retire across modules, aggregate procedure results, persist another ledger/receipt/capsule, or introduce another lifecycle service. The C4 `create` command remains source authoring. Qualified `undo` invokes only the controller-owned capsule application. Neither exception may invoke a retired peer service.
+Each service-backed lifecycle transition command MUST perform command-local value adaptation and invoke exactly one `@rawr/agent-plugin-lifecycle` client procedure. CLI code MUST NOT import a module-local router handler or repository, resolve lifecycle prerequisites, sequence plan/apply/verify/retire across modules, aggregate procedure results, persist another ledger/receipt/capsule, or introduce another lifecycle service. The C4 `create` command remains source authoring. Qualified `undo` invokes only the controller-owned capsule application. Neither exception may invoke a retired peer service.
 
 #### Scenario: Dispatch cannot become an aggregate
-- **WHEN** every command runs with all lifecycle procedures and internal applications instrumented
+- **WHEN** every command runs with all lifecycle procedures and module-local router handlers instrumented
 - **THEN** exactly its declared typed procedure is called at most once
-- **AND** every direct internal application, foreign service, app-composition, web-mounting, Oclif-mutation, and compatibility port records zero calls
+- **AND** every direct module-local router handler, foreign service, app-composition, web-mounting, Oclif-mutation, and compatibility port records zero calls
 
 ### Requirement: Status and convergence results remain truthful
 Qualified status MUST preserve every canonical repository/provider classification and exit `0` only when every selected target is `CONVERGED`, `1` for a valid observed non-converged state, and `2` for invalid input or authority binding. A converged mutating operation MAY inspect live state but MUST NOT publish artifacts/projections, write receipts/ledgers/capsules/outputs, invoke native mutation, or change bytes or metadata.

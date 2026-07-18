@@ -8,7 +8,7 @@
 
 - [x] 2.1 Add `@rawr/agent-plugin-lifecycle` with the canonical base/contract/implementation/router/client shell and exact `releases|vendors|packaging|exports|providers|governance` module inventory.
 - [x] 2.2 Move retained C2-C3 contracts, state machines, ports, implementations, and behavior tests into module-local topology without changing their qualified state owners.
-- [x] 2.3 Bind abstract runtime ports at the CLI projection, expose only typed service boundaries, and forbid direct CLI imports of module applications or internal repositories.
+- [x] 2.3 Bind abstract runtime ports at the CLI projection, expose only typed service boundaries, and forbid direct CLI imports of module routers or module-local repositories.
 - [x] 2.4 Absorb the release support package, delete it and the five peer service packages, and repair manifests, Nx targets, root tasks, Vitest projects, lock data, architecture inventories, and structural gates.
 - [x] 2.5 Positively ratchet the populated module-model and resource/provider axes inherited from the latest isometric service topology; keep an unearned `db` root absent and record the broader service-package tightening as the next structural ratchet if C5 does not require it.
 
@@ -40,7 +40,7 @@
 
 - [x] 6.1 Prove the exact positive and negative command ontology, strict parser rejection, one-procedure dispatch, status classifications/exits, and zero Oclif mutation from every agent lifecycle command.
 - [x] 6.2 Prove the exact service/module topology, boundary-only exports, abstract runtime ports, authority-local state deltas, failure truth, controller capsule replay, explicit destination/home isolation, and byte/mtime-stable converged repetition for lifecycle-owned state.
-- [x] 6.3 Run semantic inventory, OpenSpec strict validation, focused project build/typecheck/lint/test, the complete affected Template Nx graph, and the repository-wide required gate: 30 Nx lint projects, 44 typecheck projects, and three locked Habitat rules.
+- [x] 6.3 Run semantic inventory, OpenSpec strict validation, focused project build/typecheck/lint/test, the complete affected Template Nx graph, and the repository-wide required gate: 30 Nx lint projects, 44 typecheck projects, provisioning plus the 25-arm dependency-rule fixture, and three locked Habitat rules.
 - [x] 6.4 Run installed-controller acceptance with an absolute binary and disposable data/content/provider/export homes; prove 113 fresh processes, exact 13 curated and 7 external commands, converged build/package/export/provider transitions, managed and export undo, empty-capsule stutter, and retired refusal without using mutable global `rawr` or canonical live homes.
 - [ ] 6.5 Obtain and disposition standing TypeScript/refactor, architecture/authority, behavior/testing, and structural-quality reviews; unresolved P1/P2 blocks landing.
 

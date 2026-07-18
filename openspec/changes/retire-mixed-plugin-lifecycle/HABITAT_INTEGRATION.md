@@ -25,7 +25,9 @@ The pinned release is `habitat-sdk-v0.1.1`:
 
 `scripts/habitat/release.json` records these immutable coordinates. `scripts/habitat/provision.mjs` selects only the declared host asset, verifies its exact byte count and digest, and stores it in the ignored digest-addressed cache. `scripts/habitat/check.mjs` invokes that verified binary against the exact Template repository root in read-only check mode. An absolute `HABITAT_SDK_BINARY` override is accepted only when it is executable and matches the selected manifest digest.
 
-Template contains no vendored Habitat SDK, source checkout, Effect patch, custom release publisher, or exemption ledger. Source inspection and release construction remain owner-local and disposable; the release manifest plus digest verification is the durable interface.
+The SDK executable delegates admitted Grit rules to Template's exact lockfile dependency, `@getgrit/cli@0.1.0-alpha.1743007075`. The required chain performs the frozen install with dependency scripts disabled, then explicitly runs only that package's versioned native-runner installer through `habitat:grit:provision`. The executable fixture fails closed when the runner is absent.
+
+Template contains no vendored Habitat SDK, source checkout, Effect patch, custom release publisher, or exemption ledger. Source inspection and release construction remain owner-local and disposable; the release manifest plus digest verification is the durable SDK interface, while the lockfile is the Grit provider interface.
 
 ## Positive Authority Tree
 
@@ -33,7 +35,7 @@ The Template `.habitat` tree positively closes three monotonic structural axes. 
 
 1. `require_agent_plugin_lifecycle_service_topology` admits one `@rawr/agent-plugin-lifecycle` oRPC service, its exact six modules, their uniform roots, and only populated domain-model categories.
 2. `require_agent_plugin_command_channel_topology` admits curated lifecycle commands only under `rawr agent plugins` and external Oclif extension commands only under `rawr plugins`.
-3. `preserve_agent_plugin_lifecycle_dependency_direction` admits controller composition through public service ports to resource contracts, never service-to-provider imports or CLI-to-service-internal imports.
+3. `preserve_agent_plugin_lifecycle_dependency_direction` keeps root assembly on imported module routers through `impl.router`, keeps procedure handlers on their local module context, and admits controller composition through public service ports to resource contracts, never service-to-provider imports or CLI-to-module-local implementation imports.
 
 Each rule has a stable identity, explicit path coverage, and a locked baseline. The first two use `structure.toml`; the dependency-direction rule uses a named Grit pattern. The service topology packet is reusable blueprint authority. The command and dependency packets are RAWR-only niche authority. Extending one of these axes requires a reviewed strengthening of the positive constraint; new historical denylist entries are not the model.
 
@@ -46,16 +48,20 @@ bun run lint
   -> 30 Nx lint projects
 bun run typecheck
   -> 44 Nx typecheck projects
+bun run habitat:grit:provision
+  -> exact locked Grit provider native runner
+bunx nx run @rawr/habitat-consumer:test
+  -> 2 provisioning checks + 25-arm dependency-rule rejection/acceptance fixture
 bun run architecture:gate:agent-plugin-lifecycle
   -> 3 locked Habitat rules
 ```
 
-`bun run ratchet:required` composes that exact chain. The local pre-push hook runs it as early feedback. `.github/workflows/repository-ratchet.yml` runs the same repository-owned command in ordinary `pull_request`, `merge_group`, and `push`-to-`main` CI. After the workflow lands and its context exists, protected `main` requires `Repository Ratchet / Required lint, typecheck, and topology`; branch protection, not the local hook, owns merge admission.
+`bun run ratchet:required` composes that exact chain. The local pre-push hook runs it as early feedback. `.github/workflows/repository-ratchet.yml` performs a frozen script-disabled dependency install and runs the same repository-owned command, including the one explicit Grit provisioning step, in ordinary `pull_request`, `merge_group`, and `push`-to-`main` CI. After the workflow lands and its context exists, protected `main` requires `Repository Ratchet / Required lint, typecheck, and topology`; branch protection, not the local hook, owns merge admission.
 
 The workflow checks out and evaluates the candidate normally. It does not use `pull_request_target`, a custom status publisher, a default-branch evaluator kernel, or an exemption-growth protocol. Lint and typecheck are required by the root task graph, while Habitat owns only the three structural axes above.
 
 ## Proof Boundary
 
-Provisioning tests reject unsupported hosts and corrupt assets. The real pinned Darwin artifact provisions and executes the three rules successfully, and the Linux release asset was built and proven in its owner release workflow. Repeating the structural check changes no governed repository bytes.
+Provisioning tests reject unsupported hosts and corrupt assets. An executable disposable-repository fixture proves every dependency-direction Grit arm rejects its owned syntax and that the accepted module, type-only, binding, and canonical-client forms remain admitted. The real pinned Darwin artifact provisions and executes the three rules successfully, and the Linux release asset was built and proven in its owner release workflow. Repeating the structural check changes no governed repository bytes.
 
 Habitat proves source shape only. Lifecycle transition, failure, state-owner, idempotence, undo, and command behavior remain owned by service, command, and installed-controller tests recorded in [[README#Progress And Proof|Progress And Proof]]. It makes no claim about app composition, provider-native operational database bytes, personal content acceptance, or canonical provider settlement.

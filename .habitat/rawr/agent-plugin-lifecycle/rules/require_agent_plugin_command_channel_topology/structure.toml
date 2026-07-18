@@ -1,6 +1,62 @@
 schemaVersion = 1
 
 [[scopes]]
+name = "curated-agent-plugin-controller-projection"
+root = "apps/cli/src/lib/agent-plugins/service-runtime"
+kind = "directory"
+mode = "closed"
+required = [
+  "client.ts",
+  "evidence",
+  "governance",
+  "providers",
+  "undo.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "curated-agent-plugin-evidence-projection"
+root = "apps/cli/src/lib/agent-plugins/service-runtime/evidence"
+kind = "directory"
+mode = "closed"
+required = [
+  "node-mechanical.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "curated-agent-plugin-governance-projection"
+root = "apps/cli/src/lib/agent-plugins/service-runtime/governance"
+kind = "directory"
+mode = "closed"
+required = [
+  "runtime.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "curated-agent-plugin-provider-projection"
+root = "apps/cli/src/lib/agent-plugins/service-runtime/providers"
+kind = "directory"
+mode = "closed"
+required = [
+  "owner-protocol",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "curated-agent-plugin-owner-protocol-projection"
+root = "apps/cli/src/lib/agent-plugins/service-runtime/providers/owner-protocol"
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+]
+allowed = []
+
+[[scopes]]
 name = "curated-agent-command-namespace"
 root = "apps/cli/src/commands/agent"
 kind = "directory"

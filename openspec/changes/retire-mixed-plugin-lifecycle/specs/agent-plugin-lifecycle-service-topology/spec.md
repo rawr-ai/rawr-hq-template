@@ -1,19 +1,19 @@
 ## ADDED Requirements
 
 ### Requirement: Curated lifecycle is one oRPC service
-Template MUST implement service-backed curated agent-plugin lifecycle as one `@rawr/agent-plugin-lifecycle` oRPC service with exactly the internal `releases`, `vendors`, `packaging`, `exports`, `providers`, and `governance` modules. Distinct artifact repositories, provider homes, export ledgers, governed records, and outputs MUST remain qualified state owners without becoming peer service identities. The five C2-C3 peer packages and the release support package MUST be absent. Controller-owned undo remains outside the service.
+Template MUST implement service-backed curated agent-plugin lifecycle as one `@rawr/agent-plugin-lifecycle` oRPC service with exactly the `releases`, `vendors`, `packaging`, `exports`, `providers`, and `governance` domain modules. Distinct artifact repositories, provider homes, export ledgers, governed records, and outputs MUST remain qualified state owners without becoming peer service identities. The five C2-C3 peer packages and the release support package MUST be absent. Controller-owned undo remains outside the service.
 
 #### Scenario: State boundaries do not multiply service identity
 - **WHEN** package, Nx, contract, router, import, and runtime inventories are inspected
-- **THEN** exactly one curated lifecycle service and the exact six internal modules are present
+- **THEN** exactly one curated lifecycle service and the exact six domain modules are present
 - **AND** no build, export, packaging, promotion, or provider-deployment peer service remains reachable
 
 ### Requirement: Service topology follows the canonical shell
-The lifecycle service MUST expose a canonical service base, composed contract, implementer, router, typed local client, required observability and analytics middleware, module-local schemas/contracts/routers/repositories, and deliberately public boundary types or ports. Code MUST remain module-local unless it is semantically shared by multiple modules. The package root MUST expose only client construction, client boundary types, and the router; exact named subpaths MAY expose the contract and deliberately public types or ports. No export may expose internal applications, repositories, adapters, or concrete Node/provider implementations.
+The lifecycle service MUST expose a canonical service base, composed contract, implementer, router, typed local client, required observability and analytics middleware, module-local schemas/contracts/routers/repositories, and deliberately public boundary types or ports. Code MUST remain module-local unless it is semantically shared by multiple modules. The package root MUST expose only client construction, client boundary types, and the router; exact named subpaths MAY expose the contract and deliberately public types or ports. No export may expose module-local router handlers, repositories, adapters, or concrete Node/provider implementations.
 
 #### Scenario: Structural inventory is exact
 - **WHEN** the service structural suite and export inventory run
-- **THEN** every required shell file and module is present and every forbidden internal export is absent
+- **THEN** every required shell file and module is present and every module-local implementation export is absent
 - **AND** adding any seventh module, peer router, or concrete runtime adapter fails the ratchet
 
 ### Requirement: Runtime authorities are explicit and transport-neutral
@@ -30,7 +30,7 @@ Every service-backed lifecycle transition command MUST create or receive one typ
 #### Scenario: Command dispatch cannot bypass the service
 - **WHEN** command imports and instrumented dispatch are inspected
 - **THEN** each service-backed lifecycle transition command reaches at most one typed service procedure
-- **AND** every internal application, repository, foreign service, Oclif mutation, app-composition, and compatibility port records zero direct calls
+- **AND** every module-local router handler, repository, foreign service, Oclif mutation, app-composition, and compatibility port records zero direct calls
 
 ### Requirement: Consolidation does not realize a new runtime platform
 The service MUST use the repository-admitted `@rawr/hq-sdk` oRPC primitive. C5 MUST NOT add raw Effect, an effect-oRPC provider, application definitions, runtime compilation, process runtime, adapters/harnesses for app composition, or runtime-catalog behavior. Those concerns remain owned by the dedicated final-architecture migration.

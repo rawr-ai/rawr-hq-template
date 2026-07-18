@@ -30,7 +30,7 @@ Command files parse into discriminated typed procedure requests or the closed co
 
 ### One oRPC service owns the lifecycle domain
 
-C2-C3 incorrectly treated distinct state repositories as distinct service domains. C5 replaces the five peer packages with one `@rawr/agent-plugin-lifecycle` service following the `services/session-intelligence` shell. Its internal `releases`, `vendors`, `packaging`, `exports`, `providers`, and `governance` modules preserve qualified state authorities without creating peer service identities. The release support package is absorbed into service-owned shared domain types and deleted.
+C2-C3 incorrectly treated distinct state repositories as distinct service domains. C5 replaces the five peer packages with one `@rawr/agent-plugin-lifecycle` service using the established RAWR service shell and the latest Magic Migration `collect` router/model topology inside each module. Its `releases`, `vendors`, `packaging`, `exports`, `providers`, and `governance` domain modules preserve qualified state authorities without creating peer service identities. The release support package is absorbed into service-owned shared domain types and deleted.
 
 The CLI binds concrete controller runtime ports once and invokes one typed local service procedure per service-backed lifecycle transition. Command code may adapt values but may not import module applications, resolve lifecycle prerequisites, or sequence cross-module transactions. `rawr agent plugins create` remains the settled C4 source-authoring command. `rawr agent plugins undo` invokes the existing controller-owned capsule application; undo storage and replay do not move into the service.
 
@@ -85,7 +85,7 @@ C5 neither implements nor calls that chain. It retains no web enablement registr
 ## Migration Plan
 
 1. Land this behavior record in the C5 source change before runtime implementation.
-2. Consolidate the five peer packages into the one oRPC service and preserve their behavior tests under internal modules.
+2. Consolidate the five peer packages into the one oRPC service and preserve their behavior tests under module-local routers and models.
 3. Add strict handle/content/home/Git parsing and typed command projections with behavior tests.
 4. Add the smallest vendor and promotion production bindings required by the public ontology.
 5. Delete all mixed owners and semantic residue, then repair package graph, hooks, docs, tests, and guards.

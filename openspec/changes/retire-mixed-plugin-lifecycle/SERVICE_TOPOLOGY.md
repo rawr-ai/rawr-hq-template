@@ -4,7 +4,7 @@
 
 C2 and C3 split one domain capability across five peer service packages. That was a categorical modeling error: state authority was mistaken for service authority. Artifact storage, export ledgers, provider homes, package outputs, and governance records require distinct state owners, but they participate in one curated agent-plugin lifecycle and do not warrant five semantic service boundaries.
 
-C5 corrects the structure before adding public command reachability. Template owns one transport-neutral oRPC service, `@rawr/agent-plugin-lifecycle`, with internal modules. The CLI is a projection and runtime binding for that service. Personal remains an explicit versioned content and record workspace, never an executable dependency.
+C5 corrects the structure before adding public command reachability. Template owns one transport-neutral oRPC service, `@rawr/agent-plugin-lifecycle`, with six domain modules. The CLI is a projection and runtime binding for that service. Personal remains an explicit versioned content and record workspace, never an executable dependency.
 
 ## Domain Capability Set
 
@@ -40,7 +40,7 @@ provider/export inverse action
   -> qualified controller undo application
 ```
 
-Internal modules preserve these roles without becoming separate service identities:
+Domain modules preserve these roles without becoming separate service identities:
 
 | Module | Semantic responsibility | State boundary |
 | --- | --- | --- |
@@ -53,7 +53,9 @@ Internal modules preserve these roles without becoming separate service identiti
 
 ## Service Shape
 
-The implementation follows the enforced `services/session-intelligence` topology:
+The outer package follows the established RAWR service shell; the module
+interior follows the latest Magic Migration `collect` router/model topology and
+the repository-admitted oRPC construction spine:
 
 ```text
 services/agent-plugin-lifecycle/
@@ -92,7 +94,7 @@ services/agent-plugin-lifecycle/
     shared/
 ```
 
-Each module owns its schemas, contract, module middleware, repository interfaces, router, and private implementation. Code stays module-local unless at least two modules share the same semantic type or port. The package root exports only `createClient`, client boundary types, and the router. The contract and any deliberately public types, ports, or entities use exact named subpath exports. Internal repositories and adapters are not exported.
+Each module owns its schemas, contract, module middleware, repository interfaces, model categories, and router procedure handlers. Code stays module-local unless at least two modules share the same semantic type or port. No generic `internal/` bucket is admitted. The package root exports only `createClient`, client boundary types, and the router. The contract and any deliberately public types, ports, or entities use exact named subpath exports. Module-local repositories and adapters are not exported.
 
 ### Isometric Structural Axes
 
@@ -126,7 +128,7 @@ The stable ownership frame comes from [[docs/projects/rawr-final-architecture-mi
 
 ## Manifest Delta
 
-1. Add one private `@rawr/agent-plugin-lifecycle` service manifest with `@rawr/hq-sdk`, the repository-admitted oRPC/typebox lane, and only support dependencies required by its internal modules.
+1. Add one private `@rawr/agent-plugin-lifecycle` service manifest with `@rawr/hq-sdk`, the repository-admitted oRPC/typebox lane, and only support dependencies required by its domain modules.
 2. Delete the five peer service manifests and Nx identities: `@rawr/agent-plugin-build`, `@rawr/agent-plugin-export`, `@rawr/agent-plugin-packaging`, `@rawr/agent-plugin-promotion`, and `@rawr/agent-provider-deployment`.
 3. Collapse CLI and root task dependencies, Vitest projects, lock data, architecture inventories, and structural gates onto the one service.
 4. Absorb `@rawr/agent-plugin-release` schemas, canonicalization, and invariants into service-owned shared release types, then delete the support package and every bypass import.
@@ -135,12 +137,12 @@ The stable ownership frame comes from [[docs/projects/rawr-final-architecture-mi
 
 ## Invariants And Falsifiers
 
-- One service identity owns the curated lifecycle semantic contract; internal state repositories do not become peer services.
+- One service identity owns the curated lifecycle semantic contract; module-local state repositories do not become peer services.
 - Every service-backed lifecycle transition calls one typed procedure. `create` remains C4 source authoring and `undo` remains the controller-owned capsule application.
 - Provider and export state remain disjoint and explicit even though their procedures share a service boundary.
 - Valid read-only and converged results perform zero writes.
 - No personal executable source, repository ancestry, app composition, web mounting, runtime compiler, or compatibility aggregate enters the service.
-- Any surviving peer-service or release-support package/import, CLI direct module-application import, CLI-owned resource implementation, exported internal adapter, service-owned undo store/replay, ambient authority locator, or full runtime-realization expansion falsifies this correction.
+- Any surviving peer-service or release-support package/import, CLI direct module-router import, CLI-owned resource implementation, exported module-local adapter, service-owned undo store/replay, ambient authority locator, or full runtime-realization expansion falsifies this correction.
 
 ## Proof
 
@@ -148,6 +150,6 @@ The stable ownership frame comes from [[docs/projects/rawr-final-architecture-mi
 
 1. `require_agent_plugin_lifecycle_service_topology` closes the lifecycle to one service shell, the exact six-module inventory, uniform module roots, and only the populated model categories the domain has earned.
 2. `require_agent_plugin_command_channel_topology` closes curated lifecycle commands under `rawr agent plugins` and external Oclif extension commands under `rawr plugins`.
-3. `preserve_agent_plugin_lifecycle_dependency_direction` enforces controller composition through public service ports to resource contracts, rejecting service imports of concrete providers and CLI imports of service internals.
+3. `preserve_agent_plugin_lifecycle_dependency_direction` keeps root assembly on imported module routers through `impl.router`, keeps procedure handlers on their local module context, and enforces controller composition through public service ports to resource contracts while rejecting service imports of concrete providers and CLI imports of module-local implementations.
 
 The rules assert the surviving topology rather than naming retired identities. No product test or hand-written script duplicates this structural policy. Module behavior tests retain the C2/C3 transition, failure, state-owner, same-ID replacement, and omission oracles. Command tests add parser rejection, one-procedure dispatch, status exits, and mutation-port traps. Installed-controller acceptance uses an absolute immutable binary and disposable content, provider, export, output, and controller-data homes. It proves the exact 13 curated and 7 external command IDs across 113 fresh processes while leaving native Codex operational database bytes and bootstrap removal outside its claim.

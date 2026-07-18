@@ -11,12 +11,12 @@ amend their constraints.
 
 - `blueprints/` contains reusable package-shape constraints.
 - `rawr/` contains Template-specific command-channel and dependency-direction
-  constraints.
+  constraints, including the closed controller projection that reaches them.
 - Every rule is read-only, has a stable `rule.json`, and carries a locked
   `baseline.json` beside its `structure.toml` or `pattern.md`.
 
 The active set is intentionally small: one service topology, one command
-channel topology, and one dependency-direction boundary.
+channel/controller-projection topology, and one dependency-direction boundary.
 
 See [[AUTHORITY|the authority boundary]] and
 [[openspec/changes/retire-mixed-plugin-lifecycle/SERVICE_TOPOLOGY|the lifecycle service topology]].

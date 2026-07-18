@@ -12,10 +12,10 @@
   },
   "ownerProject": "@rawr/agent-plugin-lifecycle",
   "lane": "enforced",
-  "forbids": "service imports of concrete providers or controller implementation, runtime exports from module ports, and CLI runtime imports outside the client or exact binding facades",
-  "why": "The service owns lifecycle semantics behind type-only resource protocols. Runtime construction crosses one named binding facade, so a port or deep service path cannot become a second executable owner.",
-  "remediate": "Keep ports protocol/type-only, bind concrete resources through src/bindings, and consume runtime values only through the service client or an exact bindings/* package export.",
-  "message": "Lifecycle dependencies must point from controller composition through exact binding facades and type-only service ports to resource contracts.",
+  "forbids": "module router bypass of module context, root router bypass of impl.router and module routers, service imports of concrete providers or controller implementation, module-port re-exports from the retired internal bucket, controller release/evidence mechanics outside resource bindings, and any peer service client reachable from the lifecycle projection",
+  "why": "The service owns lifecycle semantics behind module-local router handlers and type-only resource protocols. The root composes module routers through impl.router, runtime construction crosses declared CLI binding and provider-projection roots, and the qualified projection reaches one service client.",
+  "remediate": "Implement procedure handlers from the local module surface, compose module routers through impl.router, keep ports protocol/type-only, construct concrete providers only in declared CLI binding or provider-projection roots, keep release/evidence mechanics in resource providers, and consume runtime values only through the canonical service client or an exact bindings/* package export.",
+  "message": "Lifecycle dependencies must flow from impl.router through module routers and local module context, then from the qualified controller projection through one service client and exact binding facades to type-only resource contracts.",
   "pathCoverage": [
     {
       "kind": "exact-path",
