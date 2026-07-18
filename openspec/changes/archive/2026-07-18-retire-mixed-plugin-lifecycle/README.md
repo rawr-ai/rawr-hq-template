@@ -1,6 +1,6 @@
 # retire-mixed-plugin-lifecycle
 
-**Status:** `SOURCE_LANDED`
+**Status:** `CLOSED`
 **Change:** `retire-mixed-plugin-lifecycle`
 
 C5 execution record for qualified agent-plugin lifecycle activation and mixed aggregate deletion.
@@ -18,10 +18,13 @@ C5 execution record for qualified agent-plugin lifecycle activation and mixed ag
 | --- | --- |
 | Template source base | commit `0199b5c62ac9bfe9dd1062116e64c206ab39dec7`; tree `83c42ab75320b8612dc02252f81a9549e1fe9e15` |
 | reviewed source parent | commit `0ab68fedcfd04e1a1246b195febd35681584080a`; tree `5cc0fde8a64898c3b8c093fc7778d26bad460f3d` |
-| source review topology | the inclusive sequence `2018ab8aa0230fe2287e2372631142a20945a4e1` through `0ab68fedcfd04e1a1246b195febd35681584080a` contains 97 ordered semantic commits before this evidence record; submission retains them in order on one `codex/c5-agent-plugin-lifecycle-normalization` review branch and PR without squashing, accepted only after pre/post fold order, count, and tree proof |
-| review topology proof | pre/post fold tip `fda7e739277f30e17529b6a6b187cc899f6ecd9d`, tree `95019df6bd2a110940d8822e3279158b91e926da`, 98 commits, and ordered-commit SHA-256 `5788f1020e2d0efc205cb3a5062ec21e158b55a99af1ada51d1b3e2b81b955cf` are identical; Graphite now has one C5 branch, and this row is the following evidence-only commit |
+| source review topology | the inclusive sequence `2018ab8aa0230fe2287e2372631142a20945a4e1` through `0ab68fedcfd04e1a1246b195febd35681584080a` contains 97 ordered semantic commits before its evidence record; submission retained them in order on one `codex/c5-agent-plugin-lifecycle-normalization` review branch and PR without squashing, accepted only after pre/post fold order, count, and tree proof |
+| review topology proof | pre/post fold tip `fda7e739277f30e17529b6a6b187cc899f6ecd9d`, tree `95019df6bd2a110940d8822e3279158b91e926da`, 98 commits, and ordered-commit SHA-256 `5788f1020e2d0efc205cb3a5062ec21e158b55a99af1ada51d1b3e2b81b955cf` are identical; the single folded source branch was submitted, landed, and later removed during the recorded drain |
 | execution record | OpenSpec `1.3.1`; this archived changeset and [[SERVICE_TOPOLOGY]] / [[HABITAT_INTEGRATION]] |
 | source landing | Graphite PR [#344](https://github.com/rawr-ai/rawr-hq-template/pull/344); reviewed tip `ed311b19d5688f0935ec7fa4b964be8e77a2e784`; canonical Template `main` merge `ec2fe0163e809dacf0128ff7bc685a5ed41a3bb0`; landed tree `2d89e7755472a3eb58638e5ecdb5d4f5a92852cc`; no personal remote, history, or executable source participates |
+| archive landing | Graphite PR [#345](https://github.com/rawr-ai/rawr-hq-template/pull/345); reviewed tip `f1ebacf93ab8570b80488f4ecf6030b5c3957605`; canonical Template `main` merge `0293c6c6de60644b792ee0e98b22d99ee052845b`; landed tree `19952d01608b6392ac18d8c628b6213dfd57b317` |
+| archive proof | PR workflow [29637824053](https://github.com/rawr-ai/rawr-hq-template/actions/runs/29637824053) passed in 2m19s; canonical-main workflow [29637899483](https://github.com/rawr-ai/rawr-hq-template/actions/runs/29637899483) passed in 2m21s |
+| drain | the C5 disposable worktree was removed with `git worktree remove`; both C5 branches and Graphite metadata were deleted locally; both remote refs were deleted and verified absent after `git fetch --prune`; Template primary was clean on canonical `main` before authoring this closeout record |
 
 ## Director Frame
 
@@ -82,13 +85,13 @@ No C5 code mounts web plugins, composes apps, compiles runtime definitions, or r
 | --- | --- | --- |
 | OpenSpec behavior and boundary record | pass | proposal, design, [[SERVICE_TOPOLOGY]], delta specs, and task ledger validate strictly in this changeset |
 | Habitat structural authority | pass | exactly three locked positive rules: `require_agent_plugin_lifecycle_service_topology`, `require_agent_plugin_command_channel_topology`, and `preserve_agent_plugin_lifecycle_dependency_direction` |
-| repository quality gate | local and canonical-main pass | `bun run lint` covers 30 Nx projects, `bun run typecheck` covers 44, the Habitat consumer proves provisioning plus all 32 dependency-rule arms, and the three locked rules pass live through `ratchet:required`; local pre-push ran the same required chain; canonical `main` workflow run [29637494951](https://github.com/rawr-ai/rawr-hq-template/actions/runs/29637494951) passed the required lint/typecheck/topology job in 2m44s |
+| repository quality gate | local and both canonical-main landings pass | `bun run lint` covers 30 Nx projects, `bun run typecheck` covers 44, the Habitat consumer proves provisioning plus all 32 dependency-rule arms, and the three locked rules pass live through `ratchet:required`; local pre-push ran the same required chain; canonical `main` workflow runs [29637494951](https://github.com/rawr-ai/rawr-hq-template/actions/runs/29637494951) and [29637899483](https://github.com/rawr-ai/rawr-hq-template/actions/runs/29637899483) passed after the source and archive landings |
 | one oRPC service consolidation | pass | exact six-module inventory, boundary-only exports, typed client, retained state-owner distinctions, and migrated C2-C3 behavior suites |
 | qualified command implementation | pass | exact 13 curated and 7 external command IDs, typed-procedure dispatch, parser refusal, status classification, and no curated/Oclif mutation crossover |
 | mixed aggregate retirement | pass | semantic inventory and repository scans find no reachable mixed owner, alias, fallback, or compatibility command path |
 | standing reviews | pass | TypeScript/refactor, structural quality, architecture/authority, and behavior/testing returned CLEAR after the implementation and evidence-record corrections below; no unresolved P1/P2 remains |
 | installed-controller acceptance | pass | controller payload digest `a78ec59ef10564c321574d2a580b346047e6b5af936fc8a5bc43ec53f50de75c` was materialized from clean disposable acceptance-snapshot revision `5fb987c899a26a595c24f8c882e3114553cf7992`; 113 fresh processes; exact command sets; converged build, package, export, and provider operations; provider-managed and export undo; empty-capsule stutter; retired-command refusal |
-| Template main landing and drain | source landed; archive and drain pending | PR #344 landed as `ec2fe0163e809dacf0128ff7bc685a5ed41a3bb0`, tree `2d89e7755472a3eb58638e5ecdb5d4f5a92852cc`; canonical-main required workflow passed; task 7.3 owns the separate archive landing and complete Graphite/worktree drain |
+| Template main landing and drain | pass | source PR #344 and archive PR #345 are landed on canonical `main`; both canonical-main required workflows pass; the source/archive Graphite nodes, local/remote branch refs, and disposable C5 worktree are absent |
 
 ### Source Proof
 
@@ -105,6 +108,7 @@ No C5 code mounts web plugins, composes apps, compiles runtime definitions, or r
 | controller release owner test | 4 files, 34 tests pass |
 | immutable installed-controller acceptance | controller payload `a78ec59e...`, disposable snapshot revision `5fb987c8...`, 113 fresh processes, 60 manifest commands, and every lifecycle transition/refusal oracle passes |
 | canonical Template `main` required workflow | run [29637494951](https://github.com/rawr-ai/rawr-hq-template/actions/runs/29637494951) passes the required lint/typecheck/topology job after PR #344 lands |
+| archive and post-main proof | strict OpenSpec validation passes 17/17; PR run [29637824053](https://github.com/rawr-ai/rawr-hq-template/actions/runs/29637824053) and canonical-main run [29637899483](https://github.com/rawr-ai/rawr-hq-template/actions/runs/29637899483) both pass the required lint/typecheck/topology job |
 
 The root multi-project `bun run test` command remains a diagnostic, not a C5 promotion gate: it flattens projects with different runtime owners into one concurrent Vitest host, bypasses owner-local timeouts/configuration, and omits the `resources/**` Bun suites. A forced-Bun diagnostic produced 12 failures. After the canonical Node host was restored, the final broad diagnostic produced 17 failures (`816` passed, `18` skipped); only the reviewed cohorts below are classified. The C5-owned failures from the later CLI-parallel diagnostic all passed in exact isolated Bun reruns. The lifecycle service, resource/provider owners, required ratchet, build, and installed black-box acceptance passed, so C5 restores the shared runner instead of redesigning the repository test harness inside this lifecycle change.
 
@@ -169,6 +173,19 @@ bun run architecture:gates:permanent
   -> post-fold pass
 gh run watch 29637494951 --exit-status
   -> canonical Template main required lint/typecheck/topology job passes in 2m44s
+gh run watch 29637824053 --exit-status
+  -> archive PR required lint/typecheck/topology job passes in 2m19s
+gh run watch 29637899483 --exit-status
+  -> archive canonical-main required lint/typecheck/topology job passes in 2m21s
+git worktree remove /Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-c5-retire-mixed-plugin-lifecycle
+  -> exact clean registered C5 worktree removed without a recursive shell deletion
+gt delete codex/c5-archive-agent-plugin-lifecycle --no-interactive
+gt delete codex/c5-agent-plugin-lifecycle-normalization --no-interactive
+  -> both merged C5 Graphite nodes and local branches removed
+gh api --method DELETE repos/rawr-ai/rawr-hq-template/git/refs/heads/codex/c5-agent-plugin-lifecycle-normalization
+gh api --method DELETE repos/rawr-ai/rawr-hq-template/git/refs/heads/codex/c5-archive-agent-plugin-lifecycle
+git fetch --prune origin
+  -> both C5 remote refs absent; Template primary clean on canonical main
 ```
 
 ### Review Dispositions
@@ -197,3 +214,5 @@ The installed acceptance deliberately does not claim byte stability for Codex-ow
 ## Closure
 
 C5 closes only when one oRPC lifecycle service owns the exact domain module set, its service-backed command members are reachable through one typed client, `create` and controller-owned `undo` remain only at their qualified command IDs, bare `rawr plugins` is external-only, all peer and mixed owners and semantic residue are absent, no app/runtime composition replacement exists, all proof and standing reviews pass, and the change is landed and drained on canonical Template `main`.
+
+Those conditions are met. This closeout record is the final administrative C5 node; after its reviewed landing it is pruned from local Graphite metadata and local/remote branch refs so canonical `main` remains the only C5 authority.

@@ -48,4 +48,4 @@
 
 - [x] 7.1 Record exact commands, project counts, digests, failure evidence, reviewer dispositions, and residual non-claims in README without claiming C6/C7 acceptance. See [[README#Progress And Proof]] and [[README#Failure Ledger]].
 - [x] 7.2 Land the complete C5 source change through Graphite, verify canonical Template `main`, and record reviewed/landed commits, trees, and PR. See [[README#Repository Record]] and [[README#Progress And Proof]].
-- [ ] 7.3 Archive the completed changeset in a second reviewed landing, rerun post-main proof, and drain every C5 Graphite node and disposable worktree before C6 opens.
+- [x] 7.3 Archive the completed changeset in a second reviewed landing, rerun post-main proof, and drain every C5 Graphite node and disposable worktree before C6 opens. See [[README#Repository Record]], [[README#Progress And Proof]], and [[README#Closure]].
