@@ -7,6 +7,10 @@ export {
   type ResourceArtifactRepositoryOptions,
 } from "./releases/artifact-repository";
 export {
+  createResourceContentWorkspaceSnapshotReader,
+  type ResourceContentWorkspaceSnapshotReadPort,
+} from "./releases/content-workspace";
+export {
   MAX_MECHANICAL_EVIDENCE_BYTES,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,

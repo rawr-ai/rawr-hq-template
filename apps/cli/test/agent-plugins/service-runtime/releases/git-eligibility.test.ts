@@ -1,4 +1,4 @@
-import { chmod, lstat, mkdir, realpath, symlink, writeFile } from "node:fs/promises";
+import { chmod, realpath, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
@@ -6,16 +6,13 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   parseGitTreeId,
 } from "@rawr/agent-plugin-lifecycle/release";
+import {
+  createResourceContentWorkspaceSnapshotReader,
+  type ResourceContentWorkspaceSnapshotReadPort,
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import type { ContentWorkspaceSnapshotReader } from "@rawr/agent-plugin-lifecycle/ports/releases";
+import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 
-import {
-  createGitObjectSnapshotReader,
-  type GitWorkspaceMetadataReader,
-} from "../../../../src/lib/agent-plugins/service-runtime/releases/git/object-snapshot";
-import {
-  createGitCommandRunner,
-  type GitCommandRunner,
-} from "../../../../src/lib/agent-plugins/service-runtime/releases/git/process";
 import {
   GIT_EXECUTABLE,
   createGeneratedGitRepository,
@@ -54,56 +51,60 @@ describe("exact Git-object eligibility", () => {
     });
   });
 
-  it("uses a metadata-only filesystem port and never asks it to open payload bytes", async () => {
+  it("uses only the exact Git resource port and never requests worktree file reads", async () => {
     const repository = await generated();
-    const observed: Array<Readonly<{ operation: "lstat" | "realpath"; path: string }>> = [];
-    const metadata: GitWorkspaceMetadataReader = {
-      async lstat(candidate) {
-        observed.push({ operation: "lstat", path: candidate });
-        return await lstat(candidate, { bigint: true });
+    const delegate = await realPort();
+    const observed: string[] = [];
+    const contentWorkspace = overrideGitReadPort(delegate, {
+      async inspectGitWorkspace(input) {
+        observed.push("inspectGitWorkspace");
+        return await delegate.inspectGitWorkspace(input);
       },
-      async realpath(candidate) {
-        observed.push({ operation: "realpath", path: candidate });
-        return await realpath(candidate);
+      async readGitTree(input) {
+        observed.push("readGitTree");
+        return await delegate.readGitTree(input);
       },
-    };
-    const runner = await createGitCommandRunner({
-      gitExecutable: GIT_EXECUTABLE,
-      pathEnvironment: "/usr/bin:/bin",
+      async readGitBlob(input) {
+        observed.push("readGitBlob");
+        return await delegate.readGitBlob(input);
+      },
+      async captureGitWorkspaceEvidence(input) {
+        observed.push("captureGitWorkspaceEvidence");
+        return await delegate.captureGitWorkspaceEvidence(input);
+      },
     });
 
-    const inspected = await createGitObjectSnapshotReader(runner, metadata).inspect(repository.policy);
+    const inspected = await createResourceContentWorkspaceSnapshotReader({ contentWorkspace }).inspect(repository.policy);
 
     expect(inspected.kind).toBe("Eligible");
-    expect(observed.length).toBeGreaterThan(0);
-    expect(new Set(observed.map((entry) => entry.path))).toEqual(new Set([repository.root]));
-    expect(observed.some((entry) => entry.operation === "lstat")).toBe(true);
-    expect(observed.some((entry) => entry.operation === "realpath")).toBe(true);
+    expect(new Set(observed)).toEqual(new Set([
+      "inspectGitWorkspace",
+      "readGitTree",
+      "readGitBlob",
+      "captureGitWorkspaceEvidence",
+    ]));
   });
 
   it("rejects a payload mutation after the final repository anchor", async () => {
     const repository = await generated();
-    const delegate = await createGitCommandRunner({
-      gitExecutable: GIT_EXECUTABLE,
-      pathEnvironment: "/usr/bin:/bin",
-    });
-    let treeObservations = 0;
+    const delegate = await realPort();
+    let evidenceCaptures = 0;
     let mutated = false;
-    const racingRunner: GitCommandRunner = {
-      async run(cwd, args, limits) {
-        const result = await delegate.run(cwd, args, limits);
-        if (args[0] === "rev-parse" && args.at(-1) === "HEAD^{tree}") {
-          treeObservations += 1;
-          if (treeObservations === 5) {
-            mutated = true;
-            await writeFile(repository.payloadFile, "mutated after final repository anchor\n");
-          }
+    const racingPort = overrideGitReadPort(delegate, {
+      async captureGitWorkspaceEvidence(input) {
+        const result = await delegate.captureGitWorkspaceEvidence(input);
+        evidenceCaptures += 1;
+        if (evidenceCaptures === 1) {
+          mutated = true;
+          await writeFile(repository.payloadFile, "mutated after final repository anchor\n");
         }
         return result;
       },
-    };
+    });
 
-    const inspected = await createGitObjectSnapshotReader(racingRunner).inspect(repository.policy);
+    const inspected = await createResourceContentWorkspaceSnapshotReader({
+      contentWorkspace: racingPort,
+    }).inspect(repository.policy);
 
     expect(mutated).toBe(true);
     expect(inspected).toMatchObject({
@@ -114,27 +115,24 @@ describe("exact Git-object eligibility", () => {
 
   it("rejects a branch switch after the final repository anchor", async () => {
     const repository = await generated();
-    const delegate = await createGitCommandRunner({
-      gitExecutable: GIT_EXECUTABLE,
-      pathEnvironment: "/usr/bin:/bin",
-    });
-    let treeObservations = 0;
+    const delegate = await realPort();
+    let evidenceCaptures = 0;
     let switched = false;
-    const racingRunner: GitCommandRunner = {
-      async run(cwd, args, limits) {
-        const result = await delegate.run(cwd, args, limits);
-        if (args[0] === "rev-parse" && args.at(-1) === "HEAD^{tree}") {
-          treeObservations += 1;
-          if (treeObservations === 5) {
-            switched = true;
-            await git(repository.root, ["checkout", "-b", "raced-branch"]);
-          }
+    const racingPort = overrideGitReadPort(delegate, {
+      async captureGitWorkspaceEvidence(input) {
+        const result = await delegate.captureGitWorkspaceEvidence(input);
+        evidenceCaptures += 1;
+        if (evidenceCaptures === 1) {
+          switched = true;
+          await git(repository.root, ["checkout", "-b", "raced-branch"]);
         }
         return result;
       },
-    };
+    });
 
-    const inspected = await createGitObjectSnapshotReader(racingRunner).inspect(repository.policy);
+    const inspected = await createResourceContentWorkspaceSnapshotReader({
+      contentWorkspace: racingPort,
+    }).inspect(repository.policy);
 
     expect(switched).toBe(true);
     expect(inspected).toMatchObject({
@@ -147,28 +145,25 @@ describe("exact Git-object eligibility", () => {
     "rejects a late %s transition after the final repository anchor",
     async (flag) => {
       const repository = await generated();
-      const delegate = await createGitCommandRunner({
-        gitExecutable: GIT_EXECUTABLE,
-        pathEnvironment: "/usr/bin:/bin",
-      });
+      const delegate = await realPort();
       const relativePayload = `plugins/agent/${repository.pluginId}/skills/example/SKILL.md`;
-      let treeObservations = 0;
+      let evidenceCaptures = 0;
       let changed = false;
-      const racingRunner: GitCommandRunner = {
-        async run(cwd, args, limits) {
-          const result = await delegate.run(cwd, args, limits);
-          if (args[0] === "rev-parse" && args.at(-1) === "HEAD^{tree}") {
-            treeObservations += 1;
-            if (treeObservations === 5) {
-              changed = true;
-              await git(repository.root, ["update-index", `--${flag}`, relativePayload]);
-            }
+      const racingPort = overrideGitReadPort(delegate, {
+        async captureGitWorkspaceEvidence(input) {
+          const result = await delegate.captureGitWorkspaceEvidence(input);
+          evidenceCaptures += 1;
+          if (evidenceCaptures === 1) {
+            changed = true;
+            await git(repository.root, ["update-index", `--${flag}`, relativePayload]);
           }
           return result;
         },
-      };
+      });
 
-      const inspected = await createGitObjectSnapshotReader(racingRunner).inspect(repository.policy);
+      const inspected = await createResourceContentWorkspaceSnapshotReader({
+        contentWorkspace: racingPort,
+      }).inspect(repository.policy);
 
       expect(changed).toBe(true);
       expect(inspected).toMatchObject({
@@ -278,13 +273,9 @@ describe("exact Git-object eligibility", () => {
 
   it("rejects option-like/cast policy values before invoking Git", async () => {
     let calls = 0;
-    const runner: GitCommandRunner = {
-      async run() {
-        calls += 1;
-        return { exitCode: 0, stdout: new Uint8Array(), stderr: new Uint8Array() };
-      },
-    };
-    const reader = createGitObjectSnapshotReader(runner);
+    const reader = createResourceContentWorkspaceSnapshotReader({
+      contentWorkspace: unreachableGitReadPort(() => { calls += 1; }),
+    });
     await expect(reader.inspect(unsafeFixturePolicy({ remoteName: "--origin" }))).resolves.toMatchObject({ kind: "Ineligible" });
     await expect(reader.inspect(unsafeFixturePolicy({ refName: "--help" }))).resolves.toMatchObject({ kind: "Ineligible" });
     await expect(reader.inspect(unsafeFixturePolicy({ releaseInputPath: "../release.json" }))).resolves.toMatchObject({
@@ -295,14 +286,22 @@ describe("exact Git-object eligibility", () => {
 
   it("requires an absolute canonical non-symlink Git executable", async () => {
     fixture = await createOwnedFixtureRoot();
-    await expect(createGitCommandRunner({ gitExecutable: "git" })).rejects.toThrow("absolute normalized");
+    const request = {
+      locator: fixture.path,
+      remoteSelection: { kind: "All" },
+      refName: "refs/heads/main",
+    } as const;
+    await expect(makeNodeContentWorkspacePort({ gitExecutable: "git" }).inspectGitWorkspace(request))
+      .rejects.toMatchObject({ reason: "InvalidInput" });
     const alias = join(fixture.path, "git-alias");
-    await symlink(GIT_EXECUTABLE, alias);
-    await expect(createGitCommandRunner({ gitExecutable: alias })).rejects.toThrow("non-symlink");
+    await symlink(await realpath(GIT_EXECUTABLE), alias);
+    await expect(makeNodeContentWorkspacePort({ gitExecutable: alias }).inspectGitWorkspace(request))
+      .rejects.toMatchObject({ reason: "Aliased" });
     const inert = join(fixture.path, "not-executable");
     await writeFile(inert, "not executable\n");
     await chmod(inert, 0o600);
-    await expect(createGitCommandRunner({ gitExecutable: inert })).rejects.toThrow("executable");
+    await expect(makeNodeContentWorkspacePort({ gitExecutable: inert }).inspectGitWorkspace(request))
+      .rejects.toMatchObject({ reason: "UnsupportedEntry" });
   });
 
   async function generated() {
@@ -311,13 +310,35 @@ describe("exact Git-object eligibility", () => {
   }
 
   async function realReader(): Promise<ContentWorkspaceSnapshotReader> {
-    const runner = await createGitCommandRunner({
-      gitExecutable: GIT_EXECUTABLE,
-      pathEnvironment: "/usr/bin:/bin",
+    return createResourceContentWorkspaceSnapshotReader({
+      contentWorkspace: await realPort(),
     });
-    return createGitObjectSnapshotReader(runner);
+  }
+
+  async function realPort(): Promise<ResourceContentWorkspaceSnapshotReadPort> {
+    return makeNodeContentWorkspacePort({ gitExecutable: await realpath(GIT_EXECUTABLE) });
   }
 });
+
+function overrideGitReadPort(
+  delegate: ResourceContentWorkspaceSnapshotReadPort,
+  overrides: Partial<ResourceContentWorkspaceSnapshotReadPort>,
+): ResourceContentWorkspaceSnapshotReadPort {
+  return Object.freeze({ ...delegate, ...overrides });
+}
+
+function unreachableGitReadPort(onCall: () => void): ResourceContentWorkspaceSnapshotReadPort {
+  const unreachable = async (): Promise<never> => {
+    onCall();
+    throw new Error("Git resource must remain unreachable");
+  };
+  return Object.freeze({
+    inspectGitWorkspace: unreachable,
+    readGitTree: unreachable,
+    readGitBlob: unreachable,
+    captureGitWorkspaceEvidence: unreachable,
+  });
+}
 
 function mutateObjectId(value: string): string {
   const final = value.at(-1) === "0" ? "1" : "0";
