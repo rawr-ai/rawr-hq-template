@@ -6,9 +6,9 @@ import {
   type VerifiedArtifactSnapshotV1,
   type VerifiedPayloadFileV1,
   type VerifiedReleaseArtifactV1,
-} from "../../../shared/release/index";
+} from "../../../../shared/release/index";
 
-import type { PackageDigest } from "./contract";
+import type { PackageDigest } from "../dto/packaging-lifecycle";
 
 export const COWORK_V1_ARCHIVE_COMMENT = "rawr-agent-plugin-cowork-v1";
 export const COWORK_V1_FIXED_TIMESTAMP = "2000-01-01T00:00:00.000";

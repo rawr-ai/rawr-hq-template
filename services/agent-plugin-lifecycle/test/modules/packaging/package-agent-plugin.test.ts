@@ -12,19 +12,20 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { ArtifactReader, ArtifactReadResult } from "../../../src/service/modules/packaging/internal/artifact-reader";
-import type { AtomicPackageOutput } from "../../../src/service/modules/packaging/internal/atomic-output";
-import { COWORK_PACKAGE_FORMAT } from "../../../src/service/modules/packaging/internal/contract";
-import { COWORK_V1_MAX_PAYLOAD_BYTES } from "../../../src/service/modules/packaging/internal/cowork-v1";
+import type { ArtifactReader, ArtifactReadResult } from "../../../src/service/modules/packaging/model/dto/artifact-reader";
+import type { AtomicPackageOutput } from "../../../src/service/modules/packaging/model/dto/atomic-output";
+import { COWORK_PACKAGE_FORMAT } from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
+import { COWORK_V1_MAX_PAYLOAD_BYTES } from "../../../src/service/modules/packaging/model/helpers/cowork-v1";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 
-import { createPackageAgentPluginApplication } from "../../../src/service/modules/packaging/internal/package-agent-plugin";
+import type { PackagingLifecycleRuntime } from "../../../src/service/modules/packaging/ports";
 import {
   createResourcePackageOutputRuntime,
   type ResourcePackageOutputOptions,
 } from "../../../src/bindings/packaging";
 import { packagingArtifactFixture } from "./artifact-fixture";
 import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "./owned-fixture-root";
+import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
 const roots: OwnedFixtureRoot[] = [];
 const coworkV1Runtime = createPackageOutputLifecycleRuntime({
@@ -190,17 +191,12 @@ describe("package agent plugin application", () => {
       output,
     });
 
-    const result = await application.package({
+    await expect(application.package({
       artifactRef: fixture.alphaSnapshot.ref,
       format: COWORK_PACKAGE_FORMAT,
       outputPath: join(root.path, "invalid.zip"),
       sourceWorkspace: root.path,
-    });
-
-    expect(result).toMatchObject({
-      kind: "RejectedBeforeOutputMutation",
-      primaryFailure: { code: "InvalidRequest" },
-    });
+    })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(reader.calls).toBe(0);
     expect(output.calls).toBe(0);
     expect(await readdir(root.path)).toEqual([]);
@@ -394,6 +390,15 @@ function createPackageOutputLifecycleRuntime(
   return createResourcePackageOutputRuntime({
     ...options,
     packageOutput: makeNodePackageOutputAsyncPort(),
+  });
+}
+
+function createPackageAgentPluginApplication(runtime: PackagingLifecycleRuntime) {
+  const client = createLifecycleTestClient({ packaging: runtime });
+  return Object.freeze({
+    package: (request: unknown) => (
+      client.packaging.package(request as never, testInvocation)
+    ),
   });
 }
 

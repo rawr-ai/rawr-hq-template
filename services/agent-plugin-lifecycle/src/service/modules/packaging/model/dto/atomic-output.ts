@@ -1,4 +1,4 @@
-import type { PackageDigest, PackagingFailure } from "./contract";
+import type { PackageDigest, PackagingFailure } from "./packaging-lifecycle";
 
 export type PackageOutputFailpoint =
   | "AfterOutputObserved"

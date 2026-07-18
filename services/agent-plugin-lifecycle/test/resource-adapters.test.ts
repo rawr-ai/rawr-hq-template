@@ -13,7 +13,7 @@ import type {
 } from "@rawr/resource-agent-plugin-artifact-repository";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 
-import { createPackageAgentPluginApplication } from "../src/service/modules/packaging/internal/package-agent-plugin";
+import type { PackagingLifecycleRuntime } from "../src/service/modules/packaging/ports";
 import {
   coworkV1PackageDigest,
   createResourcePackageOutputRuntime,
@@ -29,6 +29,7 @@ import {
   disposeOwnedFixtureRoot,
   type OwnedFixtureRoot,
 } from "./modules/packaging/owned-fixture-root";
+import { createLifecycleTestClient, testInvocation } from "./support/client";
 
 describe("agent-plugin lifecycle resource adapters", () => {
   let fixtureRoot: OwnedFixtureRoot | undefined;
@@ -239,6 +240,15 @@ function createPackageOutputLifecycleRuntime(
   return createResourcePackageOutputRuntime({
     ...options,
     packageOutput: makeNodePackageOutputAsyncPort(),
+  });
+}
+
+function createPackageAgentPluginApplication(runtime: PackagingLifecycleRuntime) {
+  const client = createLifecycleTestClient({ packaging: runtime });
+  return Object.freeze({
+    package: (request: unknown) => (
+      client.packaging.package(request as never, testInvocation)
+    ),
   });
 }
 

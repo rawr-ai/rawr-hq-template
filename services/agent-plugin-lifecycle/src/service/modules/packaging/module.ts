@@ -6,6 +6,6 @@ export const module = impl.packaging
   .use(analytics)
   .use(async ({ context, next }) => next({
     context: {
-      runtime: context.deps.packaging,
+      packaging: context.deps.packaging,
     },
   }));

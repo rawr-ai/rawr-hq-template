@@ -2,7 +2,7 @@ import type {
   ArtifactReadIssue,
   ArtifactReader,
   ArtifactReadResult,
-} from "./internal/artifact-reader";
+} from "./model/dto/artifact-reader";
 import type {
   AtomicPackageOutput,
   AtomicPackageOutputRequest,
@@ -10,19 +10,19 @@ import type {
   PackageOutputFailpoint,
   PackageOutputFailpointContext,
   PackageOutputFailpoints,
-} from "./internal/atomic-output";
+} from "./model/dto/atomic-output";
 import type {
   PackageAgentPluginRequest,
   PackageAgentPluginResult,
   PackageDigest,
   PackagingFailure,
   PackagingFailureCode,
-} from "./internal/contract";
+} from "./model/dto/packaging-lifecycle";
 import type {
   CoworkV1ArchiveEntry,
   CoworkV1ArchiveRequest,
   CoworkV1Runtime,
-} from "./internal/cowork-v1";
+} from "./model/helpers/cowork-v1";
 
 /** Construction-time capabilities used by the packaging module. */
 export interface PackagingLifecycleRuntime {
@@ -50,5 +50,3 @@ export type {
   PackagingFailure,
   PackagingFailureCode,
 };
-
-export type { ResourcePackageOutputOptions } from "./internal/resource-package-output";

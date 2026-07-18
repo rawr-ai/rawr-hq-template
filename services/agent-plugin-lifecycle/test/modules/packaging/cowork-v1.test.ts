@@ -8,7 +8,7 @@ import {
   assertCoworkV1ProtocolBounds,
   assertSnapshotMatchesRef,
   renderCoworkV1,
-} from "../../../src/service/modules/packaging/internal/cowork-v1";
+} from "../../../src/service/modules/packaging/model/helpers/cowork-v1";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 
 import { createResourcePackageOutputRuntime } from "../../../src/bindings/packaging";

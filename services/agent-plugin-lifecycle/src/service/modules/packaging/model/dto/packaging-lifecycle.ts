@@ -1,4 +1,4 @@
-import type { ArtifactRef } from "../../../shared/release/index";
+import type { ArtifactRef } from "../../../../shared/release/index";
 
 export const COWORK_PACKAGE_FORMAT = "cowork-v1" as const;
 

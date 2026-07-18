@@ -1,7 +1,7 @@
 import {
   MAX_RELEASE_SET_PAYLOAD_BYTES,
   contentDigest,
-} from "../../../shared/release";
+} from "../../service/shared/release";
 import type {
   AtomicPackageOutput,
   AtomicPackageOutputResult,
@@ -12,7 +12,7 @@ import type {
   PackagingFailure,
   PackagingFailureCode,
   PackagingLifecycleRuntime,
-} from "../ports";
+} from "../../service/modules/packaging/ports";
 import type {
   AgentPluginPackageOutputAsyncPort,
   PackageOutputFailure,
