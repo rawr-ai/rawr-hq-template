@@ -3,7 +3,11 @@ import type {
   PluginId,
   ReleaseArtifactRef,
 } from "../../../../shared/release";
-import type { ContentWorkspacePolicy, SourceEligibilityIssue } from "./content-workspace";
+import type {
+  ContentWorkspacePolicy,
+  SourceEligibilityIssue,
+  StagedContentWorkspacePolicy,
+} from "./content-workspace";
 
 export type BuildMode =
   | Readonly<{ kind: "targeted"; pluginId: PluginId }>
@@ -15,6 +19,44 @@ export interface AgentPluginCheckRequest {
 }
 
 export type AgentPluginBuildRequest = AgentPluginCheckRequest;
+
+export type RepositoryCheckRequest =
+  | Readonly<{
+    kind: "staged";
+    contentWorkspace: StagedContentWorkspacePolicy;
+  }>
+  | Readonly<{
+    kind: "clean";
+    contentWorkspace: ContentWorkspacePolicy;
+  }>;
+
+export type RepositoryCheckResult =
+  | Readonly<{
+    kind: "StagedRepositoryEligible";
+    repositoryIdentity: StagedContentWorkspacePolicy["repositoryIdentity"];
+    refName: string;
+    headCommit: ContentWorkspacePolicy["sourceCommit"];
+    headTree: ContentWorkspacePolicy["sourceTree"];
+    stagedBinding: string;
+  }>
+  | Readonly<{
+    kind: "CleanRepositoryEligible";
+    repositoryIdentity: ContentWorkspacePolicy["repositoryIdentity"];
+    refName: string;
+    sourceCommit: ContentWorkspacePolicy["sourceCommit"];
+    sourceTree: ContentWorkspacePolicy["sourceTree"];
+    eligibilityBinding: string;
+  }>
+  | Readonly<{
+    kind: "RepositoryIneligible";
+    mode: "staged" | "clean";
+    issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]];
+  }>
+  | Readonly<{
+    kind: "SourceChanged";
+    mode: "staged";
+    detail: string;
+  }>;
 
 export type BuildIssue =
   | Readonly<{ kind: "SourceEligibility"; issue: SourceEligibilityIssue }>

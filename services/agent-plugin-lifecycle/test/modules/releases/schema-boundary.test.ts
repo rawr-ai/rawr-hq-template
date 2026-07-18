@@ -7,6 +7,8 @@ import {
   BuildResultSchema,
   CheckInputSchema,
   CheckResultSchema,
+  RepositoryCheckInputSchema,
+  RepositoryCheckResultSchema,
 } from "../../../src/service/modules/releases/schemas";
 
 const contentWorkspace = Object.freeze({
@@ -130,6 +132,67 @@ describe("release procedure schema boundary", () => {
       kind: "ReadOnlyConverged",
       mode: { kind: "complete-set" },
       ref: { kind: "complete-set", releaseSetDigest: "rs1_deadbeef" },
+    })).toBe(false);
+  });
+
+  it("keeps staged and clean repository checks in closed nonoptional variants", () => {
+    const stagedWorkspace = {
+      locator: contentWorkspace.locator,
+      repositoryIdentity: contentWorkspace.repositoryIdentity,
+      contentAuthority: contentWorkspace.contentAuthority,
+      remoteName: contentWorkspace.remoteName,
+      remoteUrl: contentWorkspace.remoteUrl,
+      refName: contentWorkspace.refName,
+      releaseInputPath: contentWorkspace.releaseInputPath,
+      pluginRoot: contentWorkspace.pluginRoot,
+    };
+    expect(Value.Check(RepositoryCheckInputSchema, {
+      kind: "staged",
+      contentWorkspace: stagedWorkspace,
+    })).toBe(true);
+    expect(Value.Check(RepositoryCheckInputSchema, {
+      kind: "clean",
+      contentWorkspace,
+    })).toBe(true);
+    expect(Value.Check(RepositoryCheckInputSchema, {
+      kind: "staged",
+      contentWorkspace: { ...stagedWorkspace, sourceCommit: "a".repeat(40) },
+    })).toBe(false);
+    expect(Value.Check(RepositoryCheckInputSchema, {
+      kind: "clean",
+      contentWorkspace: stagedWorkspace,
+    })).toBe(false);
+
+    expect(Value.Check(RepositoryCheckResultSchema, {
+      kind: "StagedRepositoryEligible",
+      repositoryIdentity: contentWorkspace.repositoryIdentity,
+      refName: contentWorkspace.refName,
+      headCommit: contentWorkspace.sourceCommit,
+      headTree: contentWorkspace.sourceTree,
+      stagedBinding: "staged-binding-v1",
+    })).toBe(true);
+    expect(Value.Check(RepositoryCheckResultSchema, {
+      kind: "StagedRepositoryEligible",
+      repositoryIdentity: contentWorkspace.repositoryIdentity,
+      refName: contentWorkspace.refName,
+      headCommit: contentWorkspace.sourceCommit,
+      headTree: contentWorkspace.sourceTree,
+      stagedBinding: "staged-binding-v1",
+      candidate: { kind: "complete-set", releaseSetDigest },
+    })).toBe(false);
+    expect(Value.Check(RepositoryCheckResultSchema, {
+      kind: "CleanRepositoryEligible",
+      repositoryIdentity: contentWorkspace.repositoryIdentity,
+      refName: contentWorkspace.refName,
+      sourceCommit: contentWorkspace.sourceCommit,
+      sourceTree: contentWorkspace.sourceTree,
+      eligibilityBinding: "clean-binding-v1",
+      stagedBinding: "forbidden",
+    })).toBe(false);
+    expect(Value.Check(RepositoryCheckResultSchema, {
+      kind: "SourceChanged",
+      mode: "clean",
+      detail: "forbidden clean source-changed variant",
     })).toBe(false);
   });
 });

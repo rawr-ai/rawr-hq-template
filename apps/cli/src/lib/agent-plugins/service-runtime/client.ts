@@ -12,6 +12,7 @@ import {
 } from "@rawr/agent-plugin-lifecycle/bindings/governance";
 import {
   createResourceContentWorkspaceSnapshotReader,
+  createResourceStagedContentWorkspaceObservationReader,
 } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
@@ -188,6 +189,7 @@ export function createProductionLifecycleDeps(input: Readonly<{
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     releases: Object.freeze({
       source: createResourceContentWorkspaceSnapshotReader({ contentWorkspace }),
+      stagedSource: createResourceStagedContentWorkspaceObservationReader({ contentWorkspace }),
       artifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
       evidence: createMechanicalEvidenceReader(layout.artifactStoreRoot),
     }),

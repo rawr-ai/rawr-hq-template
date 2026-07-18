@@ -107,6 +107,9 @@ function spineClient(
         },
         revalidate: async () => unavailableAsync("release source revalidation"),
       },
+      stagedSource: {
+        observe: async () => unavailableAsync("staged release source observation"),
+      },
       artifacts: {
         read: async () => unavailableAsync("release artifact read"),
         publishRelease: async () => unavailableAsync("release publication"),

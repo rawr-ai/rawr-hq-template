@@ -4,6 +4,8 @@ import type {
   AgentPluginCheckRequest,
   BuildResult,
   CheckResult,
+  RepositoryCheckRequest,
+  RepositoryCheckResult,
 } from "./model/dto/release-lifecycle";
 import type {
   RetentionResult,
@@ -112,6 +114,20 @@ const ContentWorkspacePolicySchema = Type.Object(
   { additionalProperties: false },
 );
 
+const StagedContentWorkspacePolicySchema = Type.Object(
+  {
+    locator: CanonicalAbsoluteLocatorSchema,
+    repositoryIdentity: RepositoryIdentitySchema,
+    contentAuthority: ContentAuthoritySchema,
+    remoteName: RemoteNameSchema,
+    remoteUrl: RemoteUrlSchema,
+    refName: QualifiedHeadRefSchema,
+    releaseInputPath: ReleaseRelativePathSchema,
+    pluginRoot: ReleaseRelativePathSchema,
+  },
+  { additionalProperties: false },
+);
+
 export const BuildModeSchema = Type.Unsafe<AgentPluginCheckRequest["mode"]>(Type.Union([
   Type.Object(
     { kind: Type.Literal("targeted"), pluginId: PluginIdSchema },
@@ -129,6 +145,23 @@ export const CheckInputSchema = Type.Unsafe<AgentPluginCheckRequest>(Type.Object
 ));
 
 export const BuildInputSchema = CheckInputSchema;
+
+export const RepositoryCheckInputSchema = Type.Unsafe<RepositoryCheckRequest>(Type.Union([
+  Type.Object(
+    {
+      kind: Type.Literal("staged"),
+      contentWorkspace: StagedContentWorkspacePolicySchema,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      kind: Type.Literal("clean"),
+      contentWorkspace: ContentWorkspacePolicySchema,
+    },
+    { additionalProperties: false },
+  ),
+]));
 
 const ArtifactRefSchema = Type.Union([
   Type.Object(
@@ -238,6 +271,52 @@ const SourceEligibilityIssueSchema = Type.Object(
   },
   { additionalProperties: false },
 );
+
+const SourceEligibilityIssueListSchema = Type.Array(SourceEligibilityIssueSchema, {
+  minItems: 1,
+  maxItems: 200_000,
+});
+
+export const RepositoryCheckResultSchema = Type.Unsafe<RepositoryCheckResult>(Type.Union([
+  Type.Object(
+    {
+      kind: Type.Literal("StagedRepositoryEligible"),
+      repositoryIdentity: RepositoryIdentitySchema,
+      refName: QualifiedHeadRefSchema,
+      headCommit: GitCommitIdSchema,
+      headTree: GitTreeIdSchema,
+      stagedBinding: Type.String({ minLength: 1 }),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      kind: Type.Literal("CleanRepositoryEligible"),
+      repositoryIdentity: RepositoryIdentitySchema,
+      refName: QualifiedHeadRefSchema,
+      sourceCommit: GitCommitIdSchema,
+      sourceTree: GitTreeIdSchema,
+      eligibilityBinding: Type.String({ minLength: 1 }),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      kind: Type.Literal("RepositoryIneligible"),
+      mode: Type.Union([Type.Literal("staged"), Type.Literal("clean")]),
+      issues: SourceEligibilityIssueListSchema,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      kind: Type.Literal("SourceChanged"),
+      mode: Type.Literal("staged"),
+      detail: Type.String({ minLength: 1 }),
+    },
+    { additionalProperties: false },
+  ),
+]));
 
 const BuildIssueSchema = Type.Union([
   Type.Object(
