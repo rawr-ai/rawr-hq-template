@@ -206,7 +206,7 @@
   into an owner-local `@rawr/plugin-devops` fixture with guarded cleanup.
 - [x] 6.2 Make the named CLI Vitest project own filesystem-file serialization
   and keep `TMPDIR` bootstrap in the owning Nx target.
-- [ ] 6.3 Rewrite their OpenSpec proof hunks against the thin stack, rerun the
+- [x] 6.3 Rewrite their OpenSpec proof hunks against the thin stack, rerun the
   owner-local tests and ordinary CLI target, and close standing reviews.
 
 ## 7. T6E: Deterministic Official Manifest
