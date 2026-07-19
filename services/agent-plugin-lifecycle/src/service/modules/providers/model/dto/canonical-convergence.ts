@@ -49,6 +49,11 @@ export type CanonicalConvergenceStep =
     projection: AgentProviderProjection;
   }>;
 
+export type CanonicalVerificationStep = Exclude<
+  CanonicalConvergenceStep,
+  { readonly kind: "mutate" }
+>;
+
 export type CanonicalNativeObservation =
   | Readonly<{ kind: "observed"; inventory: ProviderInventory }>
   | Readonly<{
@@ -83,3 +88,25 @@ export interface PlanCanonicalConvergenceInput {
   readonly observation: CanonicalNativeObservation;
   readonly capabilities: CapabilityObservation;
 }
+
+interface CanonicalExecutionResultBase {
+  readonly target: ProviderTarget;
+  readonly appliedPrefix: readonly CanonicalNativeMutationAction[];
+  readonly verifiedSteps: readonly CanonicalVerificationStep[];
+}
+
+export type CanonicalExecutionResult =
+  | Readonly<CanonicalExecutionResultBase & {
+    kind: "completed";
+    finalInventory: ProviderInventory;
+  }>
+  | Readonly<CanonicalExecutionResultBase & {
+    kind: "failed";
+    issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>;
+  }>
+  | Readonly<CanonicalExecutionResultBase & {
+    kind: "uncertain";
+    attempted: CanonicalNativeMutationAction;
+    lastKnown: "bridge-invoked" | "bridge-returned";
+    issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>;
+  }>;

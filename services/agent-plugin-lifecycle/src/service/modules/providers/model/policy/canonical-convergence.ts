@@ -1,6 +1,9 @@
 import { compareCanonical } from "../helpers/canonical";
 import {
+  failure,
   issue,
+  success,
+  type DeploymentResult,
   type NonEmptyReadonlyArray,
   type ProviderDeploymentIssue,
 } from "../errors/deployment-result";
@@ -207,6 +210,122 @@ export function planCanonicalConvergence(
     steps: Object.freeze(steps),
     issues: EMPTY_ISSUES,
   });
+}
+
+export function verifyCanonicalSelectedInventory(
+  projection: AgentProviderProjection,
+  inventory: ProviderInventory,
+): DeploymentResult<ProviderInventory> {
+  const issues: ProviderDeploymentIssue[] = [];
+  if (inventory.target.provider !== projection.provider) {
+    issues.push(issue(
+      "PROJECTION_MISMATCH",
+      "target.inventory.provider",
+      "Native inventory belongs to another provider",
+      projection.provider,
+      inventory.target.provider,
+    ));
+  }
+  const expectedMarketplace = marketplaceState(registrationFor(projection));
+  if (
+    inventory.marketplace.kind !== "present"
+    || !sameMarketplaceState(inventory.marketplace.state, expectedMarketplace)
+  ) {
+    issues.push(issue(
+      "VISIBILITY_FAILED",
+      "target.marketplace",
+      "Native marketplace does not match the selected complete projection",
+      projection.marketplace.identity,
+      inventory.marketplace.kind === "present"
+        ? inventory.marketplace.state.marketplaceIdentity
+        : "absent",
+    ));
+  }
+  for (const desired of projection.members) {
+    const related = inventory.members.filter((live) =>
+      live.pluginId === desired.pluginId
+      || live.nativeIdentity === desired.nativeIdentity);
+    const live = related[0];
+    if (
+      related.length !== 1
+      || live === undefined
+      || !sameProjectedMember(live, desired)
+      || live.enablement !== "enabled"
+      || !sameVisibility(live, desired)
+    ) {
+      issues.push(issue(
+        "VISIBILITY_FAILED",
+        `target.members.${desired.pluginId}`,
+        "Selected native member is not exact, enabled, and provider-visible",
+        desired.memberFingerprint,
+        live?.memberFingerprint ?? "absent",
+      ));
+    }
+    if (inventory.standaloneExposures.some((exposure) =>
+      standaloneConflictsWithProjection(exposure, desired))) {
+      issues.push(issue(
+        "BLOCKED_COLLISION",
+        `target.standalone.${desired.pluginId}`,
+        "Standalone provider state conflicts with the selected native member",
+      ));
+    }
+  }
+  const first = issues[0];
+  return first === undefined
+    ? success(inventory)
+    : failure([first, ...issues.slice(1)]);
+}
+
+export function verifyCanonicalFinalInventory(
+  projection: AgentProviderProjection,
+  inventory: ProviderInventory,
+): DeploymentResult<ProviderInventory> {
+  const selected = verifyCanonicalSelectedInventory(projection, inventory);
+  if (!selected.ok) return selected;
+  const selectedIdentities = new Set(projection.members.map((member) =>
+    `${member.pluginId}\0${member.nativeIdentity}`));
+  const extraManaged = inventory.members.find((member) =>
+    !selectedIdentities.has(`${member.pluginId}\0${member.nativeIdentity}`));
+  if (extraManaged !== undefined) {
+    return failure([issue(
+      "VISIBILITY_FAILED",
+      "target.inventory.managedMembers",
+      "Final native state retains a member omitted from the selected complete set",
+      "exact selected member set",
+      extraManaged.nativeIdentity,
+    )]);
+  }
+  const configuredResidue = inventory.standaloneExposures.find((exposure) =>
+    exposure.providerSourceIdentity === projection.marketplace.identity);
+  if (configuredResidue !== undefined) {
+    return failure([issue(
+      "VISIBILITY_FAILED",
+      "target.inventory.configuredResidue",
+      "Final native state retains selected-owner configuration outside the selected complete set",
+      "no selected-owner residue",
+      configuredResidue.exposureIdentity,
+    )]);
+  }
+  return success(inventory);
+}
+
+export function verifyCanonicalRetiredInventory(
+  inventory: ProviderInventory,
+  nativeIdentity: string,
+): DeploymentResult<ProviderInventory> {
+  const remains = inventory.members.some((member) =>
+    member.nativeIdentity === nativeIdentity)
+    || inventory.standaloneExposures.some((exposure) =>
+      exposure.nativeIdentity === nativeIdentity);
+  return remains
+    ? failure([issue(
+        "VISIBILITY_FAILED",
+        "target.inventory",
+        "Retired native member or configured exposure remains visible",
+        "absent",
+        nativeIdentity,
+      )])
+    : success(inventory);
 }
 
 function capabilityObservationIssue(
