@@ -12,6 +12,7 @@ import type {
   ProviderCapability,
 } from "../model/policy/projection";
 import type { NativeStandaloneExposureObservation } from "../model/policy/state-machine";
+import type { ProviderMarketplaceLocationResolver } from "../model/repositories/marketplace-location";
 import type { ProviderMarketplaceSourceReader } from "../model/repositories/state";
 import {
   CODEX_ADAPTER_PROTOCOL,
@@ -41,7 +42,7 @@ import {
 import type {
   CodexNativeResourceSession,
   NativeProviderResourcePort,
-} from "../../../../bindings/providers/resource-port";
+} from "../../../model/dependencies/providers";
 import { NativeProvenanceAmbiguity } from "./resource-provenance";
 import {
   capabilitiesFromCommands,
@@ -62,6 +63,7 @@ export interface ResourceCodexProviderAdapterOptions {
   readonly executablePath: string;
   readonly contentAuthority: ContentAuthority;
   readonly marketplaceSources: ProviderMarketplaceSourceReader;
+  readonly marketplaceLocations: ProviderMarketplaceLocationResolver;
 }
 
 export type ResourceCodexProviderObserverOptions = Pick<
@@ -119,7 +121,9 @@ export function createResourceCodexCanonicalObserver(
 }
 
 function createResourceCodexProviderPorts(
-  input: ResourceCodexCanonicalObserverOptions,
+  input: ResourceCodexCanonicalObserverOptions & Readonly<{
+    marketplaceLocations?: ProviderMarketplaceLocationResolver;
+  }>,
   canonicalProvenance: boolean,
 ) {
   const { session, listPlugins } = createCodexResourceAccess(input);
@@ -190,10 +194,14 @@ function createResourceCodexProviderPorts(
         || source.sourceDigest !== registration.sourceDigest) {
         throw new Error("Codex marketplace registration has no exact semantic source");
       }
+      if (input.marketplaceLocations === undefined) {
+        throw new Error("Codex marketplace mutation has no location resolver");
+      }
+      const location = await input.marketplaceLocations.locate(source);
       if (current.kind === "present") {
-        await provider.setMarketplaceSource({ identity: input.contentAuthority, source });
+        await provider.setMarketplaceSource({ identity: input.contentAuthority, source: location });
       } else {
-        await provider.addMarketplace(source);
+        await provider.addMarketplace(location);
       }
     }
     const post = await inventoryMarketplaceRegistration({ home });

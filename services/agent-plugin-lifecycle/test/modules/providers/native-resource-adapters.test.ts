@@ -49,7 +49,7 @@ import type {
   NativeResourcePackageEntry,
   NativeResourcePluginReadInput,
   NativeResourceSessionInput,
-} from "../../../src/bindings/providers/resource-port";
+} from "../../../src/service/model/dependencies/providers";
 import {
   NativeProviderResourceFailure,
 } from "../../../src/service/modules/providers/model/errors/native-resource";
@@ -71,6 +71,9 @@ const EXPECTED_CAPABILITIES = Object.freeze([
   "visible-plugin-inventory",
   "visible-skill-inventory",
 ]);
+const UNUSED_MARKETPLACE_LOCATIONS = Object.freeze({
+  locate: async () => { throw new Error("unused marketplace location resolver"); },
+});
 
 describe("native provider resource interpretation", () => {
   it("derives service capabilities from raw provider command observations", () => {
@@ -203,6 +206,7 @@ describe("native provider resource interpretation", () => {
       executablePath: "/opt/rawr/bin/codex",
       contentAuthority: projection.artifactAuthority.contentAuthority,
       marketplaceSources: { read: async () => { throw new Error("unused"); } },
+      marketplaceLocations: UNUSED_MARKETPLACE_LOCATIONS,
     });
 
     const result = await adapter.inspectCapabilities(targetResult.value);
@@ -430,6 +434,7 @@ function configuredRetirementFixture(
     executablePath,
     contentAuthority: owner,
     marketplaceSources: { read: async () => { throw new Error("unused"); } },
+    marketplaceLocations: UNUSED_MARKETPLACE_LOCATIONS,
   } as const;
 
   if (provider === "codex") {
@@ -697,6 +702,7 @@ function codexResourceFixture(
         throw new Error("unused");
       },
     },
+    marketplaceLocations: UNUSED_MARKETPLACE_LOCATIONS,
   });
   const canonicalObserver = createResourceCodexCanonicalObserver({
     resource,

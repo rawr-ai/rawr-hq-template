@@ -14,7 +14,7 @@ import {
   type ProviderSourceIdentity,
 } from "../model/policy/projection";
 import type { ProviderId } from "../model/dto/provider-target";
-import type { NativeResourcePackageObservation } from "../../../../bindings/providers/resource-port";
+import type { NativeResourcePackageObservation } from "../../../model/dependencies/providers";
 
 const MARKETPLACE_METADATA_PATH = ".rawr/marketplace.json";
 

@@ -20,7 +20,7 @@ import { inspectMarketplaceSource } from "./resource-marketplace";
 import type {
   NativeResourceSessionInput,
   NativeResourcePackageObservation,
-} from "../../../../bindings/providers/resource-port";
+} from "../../../model/dependencies/providers";
 
 export function createSessionCache<Session>(
   executablePath: string,

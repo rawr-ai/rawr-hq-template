@@ -11,6 +11,7 @@ import type {
   ProviderCapability,
 } from "../model/policy/projection";
 import type { NativeStandaloneExposureObservation } from "../model/policy/state-machine";
+import type { ProviderMarketplaceLocationResolver } from "../model/repositories/marketplace-location";
 import type { ProviderMarketplaceSourceReader } from "../model/repositories/state";
 import {
   CLAUDE_ADAPTER_PROTOCOL,
@@ -36,7 +37,7 @@ import {
 import type {
   ClaudeNativeResourceSession,
   NativeProviderResourcePort,
-} from "../../../../bindings/providers/resource-port";
+} from "../../../model/dependencies/providers";
 import { NativeProvenanceAmbiguity } from "./resource-provenance";
 import {
   capabilitiesFromCommands,
@@ -57,6 +58,7 @@ export interface ResourceClaudeProviderAdapterOptions {
   readonly executablePath: string;
   readonly contentAuthority: ContentAuthority;
   readonly marketplaceSources: ProviderMarketplaceSourceReader;
+  readonly marketplaceLocations: ProviderMarketplaceLocationResolver;
 }
 
 export type ResourceClaudeProviderObserverOptions = Pick<
@@ -113,7 +115,9 @@ export function createResourceClaudeCanonicalObserver(
 }
 
 function createResourceClaudeProviderPorts(
-  input: ResourceClaudeCanonicalObserverOptions,
+  input: ResourceClaudeCanonicalObserverOptions & Readonly<{
+    marketplaceLocations?: ProviderMarketplaceLocationResolver;
+  }>,
   canonicalProvenance: boolean,
 ) {
   const { session, listPlugins } = createClaudeResourceAccess(input);
@@ -174,16 +178,23 @@ function createResourceClaudeProviderPorts(
     }
     const desired = desiredMarketplace(registration);
     if (sameMarketplaceObservation(current, desired)) return;
-    if (current.kind === "present") {
-      await provider.removeMarketplace({ identity: input.contentAuthority });
-    }
+    let location: Awaited<ReturnType<ProviderMarketplaceLocationResolver["locate"]>> | undefined;
     if (registration !== null) {
       if (source === null
         || source.projectionDigest !== registration.projectionDigest
         || source.sourceDigest !== registration.sourceDigest) {
         throw new Error("Claude marketplace registration has no exact semantic source");
       }
-      await provider.addMarketplace(source);
+      if (input.marketplaceLocations === undefined) {
+        throw new Error("Claude marketplace mutation has no location resolver");
+      }
+      location = await input.marketplaceLocations.locate(source);
+    }
+    if (current.kind === "present") {
+      await provider.removeMarketplace({ identity: input.contentAuthority });
+    }
+    if (location !== undefined) {
+      await provider.addMarketplace(location);
     }
     const post = await inventoryMarketplaceRegistration({ home });
     if (!sameMarketplaceObservation(post, desired)) {

@@ -45,6 +45,13 @@ export {
   createCanonicalNativeObserver,
   type CanonicalNativeObserver,
 } from "../../service/modules/providers/repository/canonical-native-observer";
+export {
+  createResourceMarketplaceLocationResolver,
+  type ResourceMarketplaceLocationResolverOptions,
+} from "../../service/modules/providers/repository/resource-marketplace-location";
+export type {
+  ProviderMarketplaceLocationResolver,
+} from "../../service/modules/providers/model/repositories/marketplace-location";
 export type {
   ClaudeNativeResourceSession,
   CodexNativeResourceSession,
@@ -57,7 +64,7 @@ export type {
   NativeResourcePackageReadLimits,
   NativeResourcePluginReadInput,
   NativeResourceSessionInput,
-} from "./resource-port";
+} from "../../service/model/dependencies/providers";
 export {
   NativeProviderResourceFailure,
   type NativeProviderResourceFailureKind,

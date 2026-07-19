@@ -1,5 +1,4 @@
 import type {
-  ArtifactObjectAddress,
   ArtifactRepositoryAsyncPort,
   ArtifactTreeEntry,
 } from "@rawr/resource-agent-plugin-artifact-repository";
@@ -49,6 +48,10 @@ import {
   createPathlessTargetState,
   type PathlessTargetState,
 } from "./target-records";
+import {
+  providerTreeAddress,
+  sameProviderTreeAddress,
+} from "./resource-tree-address";
 
 const MAX_RECORD_BYTES = MAX_RELEASE_SET_PAYLOAD_BYTES;
 const MAX_TARGET_RECORDS = 1_000_000;
@@ -56,8 +59,6 @@ const PROVIDER_TREE_LIMITS = Object.freeze({
   maxEntries: 200_000,
   maxBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
 });
-const MEMBER_TREE_NAMESPACE = Object.freeze(["members"] satisfies [string]);
-const MARKETPLACE_TREE_NAMESPACE = Object.freeze(["marketplaces"] satisfies [string]);
 
 export interface ResourceProviderRecordStateOptions {
   readonly records: AgentProviderRecordsAsyncPort;
@@ -289,7 +290,7 @@ function createProviderTreeCollection(
     async read(
       key: ImmutableProviderTreeKey,
     ): Promise<DeploymentResult<ImmutableProviderTreeObservation>> {
-      const address = treeAddress(repositoryRoot, key);
+      const address = providerTreeAddress(repositoryRoot, key);
       try {
         const observed = await port.readTree({ address, limits: PROVIDER_TREE_LIMITS });
         if (observed.kind === "Missing") return success(Object.freeze({ kind: "absent" as const }));
@@ -299,7 +300,7 @@ function createProviderTreeCollection(
             observed.issues.map((entry) => entry.detail).join("; "),
           );
         }
-        if (!sameArtifactAddress(observed.snapshot.address, address)) {
+        if (!sameProviderTreeAddress(observed.snapshot.address, address)) {
           return recordFailure("projection.tree", "Artifact repository returned a foreign tree address");
         }
         return success(Object.freeze({
@@ -314,7 +315,7 @@ function createProviderTreeCollection(
       key: ImmutableProviderTreeKey,
       files: readonly ImmutableProviderTreeFile[],
     ): Promise<DeploymentResult<ImmutableProviderTreePublication>> {
-      const address = treeAddress(repositoryRoot, key);
+      const address = providerTreeAddress(repositoryRoot, key);
       try {
         const published = await port.publishTree({
           address,
@@ -366,23 +367,6 @@ function observationFromResource(
     : Object.freeze({ kind: "present", bytes: new Uint8Array(observation.bytes) });
 }
 
-function treeAddress(
-  repositoryRoot: string,
-  key: ImmutableProviderTreeKey,
-): ArtifactObjectAddress {
-  return key.kind === "member"
-    ? Object.freeze({
-        repositoryRoot,
-        namespace: MEMBER_TREE_NAMESPACE,
-        objectId: key.memberFingerprint,
-      })
-    : Object.freeze({
-        repositoryRoot,
-        namespace: MARKETPLACE_TREE_NAMESPACE,
-        objectId: key.projectionDigest,
-      });
-}
-
 function treeEntryForResource(file: ImmutableProviderTreeFile): ArtifactTreeEntry {
   return Object.freeze({ path: file.path, mode: file.mode, bytes: new Uint8Array(file.bytes) });
 }
@@ -407,13 +391,6 @@ function sameAddress(left: ProviderRecordAddress, right: ProviderRecordAddress):
   return left.scope === "Projection" && right.scope === "Projection"
     ? left.key === right.key
     : left.scope === "Target" && right.scope === "Target" && left.targetKey === right.targetKey;
-}
-
-function sameArtifactAddress(left: ArtifactObjectAddress, right: ArtifactObjectAddress): boolean {
-  return left.repositoryRoot === right.repositoryRoot
-    && left.objectId === right.objectId
-    && left.namespace.length === right.namespace.length
-    && left.namespace.every((segment, index) => segment === right.namespace[index]);
 }
 
 function recordFailure<T>(path: string, message: string): DeploymentResult<T> {

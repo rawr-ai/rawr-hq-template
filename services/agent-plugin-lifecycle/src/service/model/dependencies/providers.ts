@@ -1,4 +1,4 @@
-import type { ProviderMarketplaceSource } from "../../service/modules/providers/model/repositories/state";
+import type { ArtifactTreeLocation } from "@rawr/resource-agent-plugin-artifact-repository";
 
 export interface NativeResourceSessionInput {
   readonly executablePath: string;
@@ -49,7 +49,7 @@ interface NativeResourceSessionBase {
   probe(): Promise<NativeResourceCapabilityProbe>;
   listMarketplaces(): Promise<NativeResourceJsonObservation>;
   readMarketplace(input: NativeResourceMarketplaceReadInput): Promise<NativeResourcePackageObservation>;
-  addMarketplace(input: ProviderMarketplaceSource): Promise<unknown>;
+  addMarketplace(input: ArtifactTreeLocation): Promise<unknown>;
   removeMarketplace(input: Readonly<{ identity: string }>): Promise<unknown>;
   listPlugins(): Promise<NativeResourceJsonObservation>;
   readPlugin(input: NativeResourcePluginReadInput): Promise<NativeResourcePackageObservation>;
@@ -63,7 +63,7 @@ export interface CodexNativeResourceSession extends NativeResourceSessionBase {
   readConfiguration(): Promise<unknown>;
   setMarketplaceSource(input: Readonly<{
     identity: string;
-    source: ProviderMarketplaceSource;
+    source: ArtifactTreeLocation;
   }>): Promise<unknown>;
 }
 
@@ -75,7 +75,7 @@ export interface ClaudeNativeResourceSession extends NativeResourceSessionBase {
   readConfiguration(): Promise<unknown | null>;
 }
 
-/** Mechanical acquisition only; provider semantics remain in this service module. */
+/** Mechanical acquisition only; provider semantics remain in the provider module. */
 export interface NativeProviderResourcePort {
   acquireCodex(input: NativeResourceSessionInput): Promise<CodexNativeResourceSession>;
   acquireClaude(input: NativeResourceSessionInput): Promise<ClaudeNativeResourceSession>;

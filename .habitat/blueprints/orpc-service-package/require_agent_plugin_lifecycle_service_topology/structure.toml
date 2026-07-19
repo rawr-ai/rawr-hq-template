@@ -70,7 +70,6 @@ kind = "directory"
 mode = "closed"
 required = [
   "index.ts",
-  "resource-port.ts",
 ]
 allowed = []
 
@@ -110,6 +109,7 @@ kind = "directory"
 mode = "closed"
 required = [
   "current-main.ts",
+  "providers.ts",
   "releases.ts",
 ]
 allowed = []
@@ -406,6 +406,7 @@ required = [
   "artifact.ts",
   "canonical-native.ts",
   "evidence.ts",
+  "marketplace-location.ts",
   "projection-storage.ts",
   "provider.ts",
   "state.ts",
@@ -439,10 +440,12 @@ required = [
   "resource-claude.ts",
   "resource-codex.ts",
   "resource-marketplace.ts",
+  "resource-marketplace-location.ts",
   "resource-package.ts",
   "resource-provenance.ts",
   "resource-record-storage.ts",
   "resource-shared.ts",
+  "resource-tree-address.ts",
   "target-record-codec.ts",
   "target-records.ts",
 ]

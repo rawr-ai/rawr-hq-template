@@ -1,5 +1,6 @@
 export type NativeProviderResourceFailureKind =
   | "ownership-conflict"
+  | "pre-mutation-refusal"
   | "provider-failure";
 
 /** Classifies native resource failures at the provider-domain boundary. */

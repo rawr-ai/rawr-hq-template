@@ -48,6 +48,7 @@ every provider mode is capsule-free.
 | C5 provider repository ownership | `codex/c6-route-provider-service-context` / this record node |
 | C5 artifact-tree location port | `codex/c6-expose-artifact-tree-location` / this record node |
 | C5 neutral current-main boundary | `codex/c6-neutral-current-main-boundary` / this record node |
+| C5 native provider resource location | `codex/c6-bind-native-provider-resource-location` / this record node |
 
 Personal records remain unlanded until the installed Template interface can
 enforce their first semantic checkpoint. No hook bypass, legacy mixed sync, or
@@ -432,6 +433,24 @@ selection, artifact, native-provider, export, or app/runtime behavior.
 | Behavior proof | The focused governance/provider suite passed 5 files / 70 tests, including exact provider-locator adaptation. The complete lifecycle suite passed 37 files / 342 tests; the complete CLI target passed. Lifecycle and CLI lint, typecheck, and build passed without cache, and the transitional CLI selector fixture passed 1/1 on the neutral locator contract. The guarded three-rule Habitat gate, strict OpenSpec, and `git diff --check` passed. |
 | Reviews | Architecture/authority review caught and closed a repository-to-router inversion plus schema-union drift. Behavior/testing added strict discriminator/branch/schema parity and found the stale CLI locator fixture. Structural/Habitat closed the public governance-binding bypass and aligned rule metadata. TypeScript/refactor/oRPC and all three final rereviews report no remaining P1/P2/P3. |
 | Scope | [[tasks#5. T6C3: Export Destination Independence|Export task 5.2]] remains blocked and untouched. The task-5.3 known-home bridge, native commands, provider homes, personal repository, protected lanes, and operational state are unchanged. |
+
+## C5 Native Provider Resource Location Proof
+
+This checkpoint replaces the caller-supplied provider session aggregate with
+one raw native resource plus service-owned semantic location resolution under
+[[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]]. It does not yet
+change `service/base.ts`, provider module context, or the remaining public
+facades, so the cross-module tasks stay open.
+
+| Boundary | Result |
+| --- | --- |
+| Root dependency | The service root owns the raw Codex/Claude session contract. Native marketplace installation accepts only the dependency-owned opaque `ArtifactTreeLocation`; a raw session cannot receive a repository path, projection digest, or provider marketplace source and therefore cannot select or reconstruct an artifact. |
+| Service ownership | The provider module maps its semantic `ProviderMarketplaceSource` to the exact artifact-tree address, asks the existing artifact repository port for the provider-issued opaque location, and resolves it immediately before native add/remove sequencing. Publication and lookup share one provider-owned address law rather than parallel string construction. |
+| CLI composition | The CLI selects one Effect Platform native-provider resource and one artifact-repository port, then supplies raw sessions plus the service-owned location resolver. Its binding only lowers Effect sessions to the raw Promise contract; it contains no lifecycle location policy, path synthesis, native-state planner, or installer replacement. |
+| Failure and ordering | Missing, mismatched, foreign, and failed location observations are typed pre-mutation refusals and report `not-applied`; no native call runs. Codex resolves before add. Claude resolves before remove as well as add, so a stale same-ID release is never retired unless its replacement tree is already admitted. Other failures after a native bridge remains invoked retain truthful `uncertain` disposition. |
+| Behavior proof | The real Effect Platform artifact provider supplies the opaque location in the service-owned address-law test. Nine focused service cases prove literal address selection, location/result failures, Codex and Claude ordering, and zero mutation on refusal; four focused CLI cases prove provider selection, typed resource failure, and exact opaque-location forwarding. The complete lifecycle suite passed 38 files / 351 tests, and the complete CLI suite passed 50 files / 328 tests. |
+| Static and structural | Lifecycle and CLI lint, typecheck, and build passed without cache. Both project sync/structural suites, all three enforced positive Habitat/dependency rules, strict OpenSpec, and `git diff --check` passed. The user-owned untracked note was held outside the closed topology only during structural proof, restored byte-identically, and never staged. |
+| Scope | [[tasks#5. T6C3: Export Destination Independence|Export task 5.2]] remains blocked and untouched. No publication capability, destination claim, app/runtime composition, personal-repository path, protected-lane release, or global provider mutation entered this node. |
 
 ## Standing Reviews
 

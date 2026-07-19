@@ -25,7 +25,7 @@ import type {
   NativeResourcePackageEntry,
   NativeResourcePackageObservation,
   NativeResourcePackageReadLimits,
-} from "../../../../bindings/providers/resource-port";
+} from "../../../model/dependencies/providers";
 
 export const NATIVE_PACKAGE_READ_LIMITS: NativeResourcePackageReadLimits = Object.freeze({
   maxEntries: 200_000,
