@@ -29,6 +29,7 @@ import {
 } from "./projection";
 import type {
   NativeMemberObservation,
+  NativeConfiguredExposureObservation,
   NativeStandaloneExposureObservation,
   ProviderInventory,
 } from "./state-machine";
@@ -80,7 +81,7 @@ export function planCanonicalConvergence(
     )]);
   }
 
-  const registration = registrationFor(projection);
+  const registration = canonicalMarketplaceRegistration(projection);
 
   const collisionIssues = liveCollisionIssues(inventory, projection);
   const firstCollision = collisionIssues[0];
@@ -109,6 +110,8 @@ export function planCanonicalConvergence(
   const managed = [...inventory.members].sort(compareNativeMembers);
   const refreshRetire: NativeMemberObservation[] = [];
   const omittedRetire: NativeMemberObservation[] = [];
+  const selectedConfiguredRetire: NativeConfiguredExposureObservation[] = [];
+  const omittedConfiguredRetire: NativeConfiguredExposureObservation[] = [];
   const install: ProviderProjectionMember[] = [];
   const enable: ProviderProjectionMember[] = [];
   const retained = new Set<NativeMemberObservation>();
@@ -143,13 +146,30 @@ export function planCanonicalConvergence(
     if (!retained.has(live)) omittedRetire.push(live);
   }
 
+  for (const exposure of inventory.standaloneExposures) {
+    if (
+      exposure.exposureKind !== "configured-only"
+      || exposure.providerSourceIdentity !== projection.marketplace.identity
+    ) continue;
+    const desired = projection.members.find((member) =>
+      member.nativeIdentity === exposure.nativeIdentity
+      && member.providerSourceIdentity === exposure.providerSourceIdentity);
+    (desired === undefined ? omittedConfiguredRetire : selectedConfiguredRetire).push(exposure);
+  }
+
   refreshRetire.sort(compareNativeMembers);
   omittedRetire.sort(compareNativeMembers);
+  selectedConfiguredRetire.sort(compareConfiguredExposures);
+  omittedConfiguredRetire.sort(compareConfiguredExposures);
   install.sort(compareProjectedMembers);
   enable.sort(compareProjectedMembers);
   const steps: CanonicalConvergenceStep[] = marketplaceActions.map(
     (action): CanonicalConvergenceStep => Object.freeze({ kind: "mutate", action }),
   );
+  for (const exposure of selectedConfiguredRetire) {
+    steps.push(configuredExposureRetirement(target, registration, exposure));
+    steps.push(configuredExposureRetirementVerification(target, exposure));
+  }
   for (const member of refreshRetire) {
     steps.push(Object.freeze({
       kind: "mutate",
@@ -160,7 +180,12 @@ export function planCanonicalConvergence(
       member,
       }),
     }));
-    steps.push(Object.freeze({ kind: "verify-retired", target, nativeIdentity: member.nativeIdentity }));
+    steps.push(Object.freeze({
+      kind: "verify-retired",
+      target,
+      nativeIdentity: member.nativeIdentity,
+      providerSourceIdentity: member.providerSourceIdentity,
+    }));
   }
   for (const member of install) {
     steps.push(Object.freeze({
@@ -195,9 +220,18 @@ export function planCanonicalConvergence(
         member,
       }),
     }));
-    steps.push(Object.freeze({ kind: "verify-retired", target, nativeIdentity: member.nativeIdentity }));
+    steps.push(Object.freeze({
+      kind: "verify-retired",
+      target,
+      nativeIdentity: member.nativeIdentity,
+      providerSourceIdentity: member.providerSourceIdentity,
+    }));
   }
-  if (omittedRetire.length > 0) {
+  for (const exposure of omittedConfiguredRetire) {
+    steps.push(configuredExposureRetirement(target, registration, exposure));
+    steps.push(configuredExposureRetirementVerification(target, exposure));
+  }
+  if (omittedRetire.length > 0 || omittedConfiguredRetire.length > 0) {
     steps.push(Object.freeze({ kind: "verify-final", target, projection }));
   }
 
@@ -226,7 +260,7 @@ export function verifyCanonicalSelectedInventory(
       inventory.target.provider,
     ));
   }
-  const expectedMarketplace = marketplaceState(registrationFor(projection));
+  const expectedMarketplace = marketplaceState(canonicalMarketplaceRegistration(projection));
   if (
     inventory.marketplace.kind !== "present"
     || !sameMarketplaceState(inventory.marketplace.state, expectedMarketplace)
@@ -312,18 +346,40 @@ export function verifyCanonicalFinalInventory(
 export function verifyCanonicalRetiredInventory(
   inventory: ProviderInventory,
   nativeIdentity: string,
+  providerSourceIdentity: string,
 ): DeploymentResult<ProviderInventory> {
   const remains = inventory.members.some((member) =>
-    member.nativeIdentity === nativeIdentity)
+    member.nativeIdentity === nativeIdentity
+    && member.providerSourceIdentity === providerSourceIdentity)
     || inventory.standaloneExposures.some((exposure) =>
-      exposure.nativeIdentity === nativeIdentity);
+      exposure.nativeIdentity === nativeIdentity
+      && exposure.providerSourceIdentity === providerSourceIdentity);
   return remains
     ? failure([issue(
         "VISIBILITY_FAILED",
         "target.inventory",
         "Retired native member or configured exposure remains visible",
         "absent",
-        nativeIdentity,
+        `${nativeIdentity}/${providerSourceIdentity}`,
+      )])
+    : success(inventory);
+}
+
+export function verifyCanonicalConfiguredExposureRetired(
+  inventory: ProviderInventory,
+  exposureIdentity: string,
+  providerSourceIdentity: string,
+): DeploymentResult<ProviderInventory> {
+  const remains = inventory.standaloneExposures.some((exposure) =>
+    exposure.exposureIdentity === exposureIdentity
+    && exposure.providerSourceIdentity === providerSourceIdentity);
+  return remains
+    ? failure([issue(
+        "VISIBILITY_FAILED",
+        "target.inventory.configuredExposure",
+        "Retired native configuration exposure remains visible",
+        "absent",
+        `${exposureIdentity}/${providerSourceIdentity}`,
       )])
     : success(inventory);
 }
@@ -421,6 +477,7 @@ function liveCollisionIssues(
   }
   for (const exposure of inventory.standaloneExposures) {
     if (exposure.providerSourceIdentity === owner) {
+      if (exposure.exposureKind === "configured-only") continue;
       issues.push(issue(
         "BLOCKED_COLLISION",
         "target.standaloneExposures",
@@ -445,7 +502,38 @@ function liveCollisionIssues(
   return Object.freeze(issues);
 }
 
-function registrationFor(projection: AgentProviderProjection): ProviderMarketplaceRegistration {
+function configuredExposureRetirement(
+  target: ProviderTarget,
+  activeMarketplace: ProviderMarketplaceRegistration,
+  exposure: NativeConfiguredExposureObservation,
+): CanonicalConvergenceStep {
+  return Object.freeze({
+    kind: "mutate",
+    action: Object.freeze({
+      kind: "RetireConfiguredExposure",
+      target,
+      activeMarketplace,
+      exposure,
+    }),
+  });
+}
+
+function configuredExposureRetirementVerification(
+  target: ProviderTarget,
+  exposure: NativeConfiguredExposureObservation,
+): CanonicalConvergenceStep {
+  return Object.freeze({
+    kind: "verify-configured-retired",
+    target,
+    exposureIdentity: exposure.exposureIdentity,
+    providerSourceIdentity: exposure.providerSourceIdentity,
+  });
+}
+
+/** Builds the one native marketplace registration for a rendered projection. */
+export function canonicalMarketplaceRegistration(
+  projection: AgentProviderProjection,
+): ProviderMarketplaceRegistration {
   return createProviderMarketplaceRegistration({
     provider: projection.provider,
     adapterProtocol: projection.adapterProtocol,
@@ -550,5 +638,14 @@ function compareProjectedMembers(
   right: ProviderProjectionMember,
 ): number {
   return compareCanonical(left.pluginId, right.pluginId)
+    || compareCanonical(left.nativeIdentity, right.nativeIdentity);
+}
+
+function compareConfiguredExposures(
+  left: NativeConfiguredExposureObservation,
+  right: NativeConfiguredExposureObservation,
+): number {
+  return compareCanonical(left.providerSourceIdentity, right.providerSourceIdentity)
+    || compareCanonical(left.exposureIdentity, right.exposureIdentity)
     || compareCanonical(left.nativeIdentity, right.nativeIdentity);
 }

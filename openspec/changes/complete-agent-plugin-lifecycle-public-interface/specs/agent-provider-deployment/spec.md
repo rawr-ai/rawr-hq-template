@@ -32,21 +32,22 @@ sidecar to observe, adopt, preserve, replace, or retire managed native state.
 ### Requirement: Receipt scope is closed by lifecycle mode
 Every target receipt MUST retain exactly one of the landed closed scope variants
 with no optional or combined fields. `TargetedTestScope` and
-`CompleteTestScope` keep their existing mode-local authority.
-`CanonicalAcceptedScope` remains decodable only as legacy non-authorizing state;
-canonical sync and status MUST NOT read, create, normalize, or write any target
-receipt, and no receipt variant may authorize canonical selection, ownership,
-convergence, or omitted-member retirement.
+`CompleteTestScope` are the complete receipt union and keep their existing
+mode-local authority. The retired canonical-accepted variant and its
+acceptance/promotion digests MUST fail closed at receipt decoding. Canonical
+sync and status MUST NOT read, create, normalize, or write any target receipt,
+and no receipt may authorize canonical selection, ownership, convergence, or
+omitted-member retirement.
 
 #### Scenario: Test receipts cannot claim canonical authority
 - **WHEN** a targeted or complete-test receipt contains channel, canonical
   retirement, or canonical convergence fields
 - **THEN** receipt validation rejects before planning or mutation
 
-#### Scenario: Legacy canonical receipt is present
-- **WHEN** canonical sync/status encounters legacy canonical receipt bytes
-- **THEN** the operation ignores them as authority and neither normalizes nor
-  rewrites them
+#### Scenario: Retired canonical receipt is decoded
+- **WHEN** receipt decoding encounters the retired canonical-accepted scope or
+  its acceptance/promotion fields
+- **THEN** decoding rejects it as invalid and exposes no compatibility value
 
 ### Requirement: Planning is target-scoped and read-only
 The deployment service MUST canonicalize selected homes and create a
@@ -120,10 +121,28 @@ another home's receipt, an export ledger, a channel record alone, or legacy
 receipt/sidecar bytes MUST NOT prove canonical ownership. Unmanaged and
 ambiguous collisions MUST be preserved and block.
 
+Canonical convergence MAY retire one exact selected-owner provider
+configuration slot without artifact provenance only when live native inventory
+proves that the owner-qualified selector is configured but has no installed
+package. This exception authorizes only the provider's native configuration
+remove/uninstall command; it MUST NOT classify, delete, or claim package bytes,
+receipts, sidecars, or other provider state. Residue for a selected member MUST
+retire before that member is installed or enabled. Residue for an omitted
+member MUST retire only after selected visibility. An installed exposure or an
+exposure owned by another provider source remains preserved and blocks when it
+collides.
+
 #### Scenario: Proven canonical member retires
 - **WHEN** the reviewed complete set omits a native member whose marketplace and
   embedded provenance prove RAWR management in that same home
 - **THEN** only that exact member retires after the selected set is visible
+
+#### Scenario: Exact selected-owner configuration residue retires
+- **WHEN** an owner-qualified native selector remains configured but exact live
+  inventory proves that no package is installed for that selector
+- **THEN** canonical convergence removes only that configuration exposure,
+  verifies the exact selector absent, and preserves replacement-before-omission
+  ordering
 
 #### Scenario: Unmanaged collision is preserved
 - **WHEN** an unmanaged marketplace, standalone skill, or native plugin occupies
@@ -181,13 +200,15 @@ and legacy receipt bytes MUST NOT alter canonical planning or status.
 
 ### Requirement: Multi-home results preserve partial truth and isolation
 Multiple explicit targets MUST be processed in canonical order under one
-operation result while retaining target-local plans, events, inventory, and
-status. Modes that own receipts retain target-local receipt results; canonical
-results MUST NOT contain or infer receipts. One target's success, failure,
-capability/provenance observation, or cleanup proof MUST NOT authorize or
-falsify another. A partial run MUST be non-success and MUST preserve verified
-successful targets without claiming failed targets advanced or were rolled
-back.
+operation result. Targeted and complete-test modes retain their target-local
+plans, phase events, inventory, status, and receipt results. Canonical status
+returns only terminal classification and issues; canonical sync adds only its
+exact native applied prefix and terminal verification result. Canonical results
+MUST NOT contain or infer receipts, persisted inventory, or a replacement event
+graph. One target's success, failure, capability/provenance observation, or
+cleanup proof MUST NOT authorize or falsify another. A partial run MUST be
+non-success and MUST preserve verified successful targets without claiming
+failed targets advanced or were rolled back.
 
 #### Scenario: Home A verifies and home B fails
 - **WHEN** A completes and B fails capability, native install, visibility, or
@@ -208,11 +229,13 @@ mechanical evidence.
   ownership, or canonical-cleanup claim
 
 ### Requirement: Outcomes report every observable phase truthfully
-Mutating operations MUST report target-scoped planned, applied, verified,
-retired, skipped, blocked, and failed events that agree with actual adapter
-calls and mode-owned persisted state. They MUST NOT return success after a
-provider-visible, cleanup, receipt (when applicable), or selected-target
-failure, and MUST NOT claim rollback that was not observed.
+Targeted and complete-test mutations MUST retain target-scoped planned,
+applied, verified, retired, skipped, blocked, and failed events that agree with
+actual adapter calls and mode-owned persisted state. Canonical sync MUST report
+its target status, exact applied native prefix, terminal verification, and
+issues without recreating that event envelope. No mode may return success after
+a provider-visible, cleanup, receipt (when applicable), or selected-target
+failure, or claim rollback that was not observed.
 
 #### Scenario: Failure after partial application is visible
 - **WHEN** a failpoint fires after one or more native actions

@@ -83,10 +83,7 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
         inspect: async () => unavailableAsync("governance Git inspection"),
         readBlob: async () => unavailableAsync("governance blob read"),
         isAncestor: async () => unavailableAsync("governance ancestry"),
-        listChangedPaths: async () => unavailableAsync("governance changed paths"),
       },
-      evidence: { read: async () => unavailableAsync("governance evidence") },
-      approvals: { read: async () => unavailableAsync("governance approval") },
     },
     ...overrides,
   };
@@ -103,7 +100,12 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
 
 function unavailableProviderRuntime(): ProviderLifecycleRuntime {
   return {
-    channel: { resolve: async () => unavailableAsync("provider canonical channel") },
+    currentMain: { resolve: async () => unavailableAsync("provider current-main selection") },
+    canonicalNative: {
+      inspectCapabilities: async () => unavailableAsync("canonical provider capabilities"),
+      observe: async () => unavailableAsync("canonical provider inventory"),
+      apply: async () => unavailableAsync("canonical provider mutation"),
+    },
     releases: { read: async () => unavailableAsync("provider release") },
     provider: {
       projectionAdapterProtocol: () => unavailable("provider adapter protocol"),

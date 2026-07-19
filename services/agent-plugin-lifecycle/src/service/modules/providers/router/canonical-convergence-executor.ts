@@ -13,11 +13,12 @@ import {
   type ProviderDeploymentIssue,
 } from "../model/errors/deployment-result";
 import {
+  verifyCanonicalConfiguredExposureRetired,
   verifyCanonicalFinalInventory,
   verifyCanonicalRetiredInventory,
   verifyCanonicalSelectedInventory,
 } from "../model/policy/canonical-convergence";
-import type { ProviderTargetMutator } from "../ports/provider";
+import type { NativeMutationAttempt } from "../ports/provider";
 
 export interface CanonicalExecutionDependencies {
   readonly observer: Readonly<{
@@ -25,7 +26,9 @@ export interface CanonicalExecutionDependencies {
       target: CanonicalConvergencePlan["target"],
     ): Promise<DeploymentResult<CanonicalNativeObservation>>;
   }>;
-  readonly mutator: Pick<ProviderTargetMutator, "apply">;
+  readonly mutator: Readonly<{
+    apply(action: CanonicalNativeMutationAction): Promise<NativeMutationAttempt>;
+  }>;
 }
 
 export async function executeCanonicalConvergence(
@@ -86,7 +89,17 @@ export async function executeCanonicalConvergence(
       )]);
     }
     const verified = step.kind === "verify-retired"
-      ? verifyCanonicalRetiredInventory(inventory, step.nativeIdentity)
+      ? verifyCanonicalRetiredInventory(
+          inventory,
+          step.nativeIdentity,
+          step.providerSourceIdentity,
+        )
+      : step.kind === "verify-configured-retired"
+        ? verifyCanonicalConfiguredExposureRetired(
+            inventory,
+            step.exposureIdentity,
+            step.providerSourceIdentity,
+          )
       : step.kind === "verify-final"
         ? verifyCanonicalFinalInventory(step.projection, inventory)
         : verifyCanonicalSelectedInventory(step.projection, inventory);
@@ -149,12 +162,19 @@ function planShapeIssue(
         step.projection.projectionDigest,
       );
     }
-    if (step.kind === "mutate" && step.action.kind === "RetireMember") {
+    if (
+      step.kind === "mutate"
+      && (step.action.kind === "RetireMember" || step.action.kind === "RetireConfiguredExposure")
+    ) {
       const next = plan.steps[index + 1];
-      if (
-        next?.kind !== "verify-retired"
-        || next.nativeIdentity !== step.action.member.nativeIdentity
-      ) {
+      const matches = step.action.kind === "RetireMember"
+        ? next?.kind === "verify-retired"
+          && next.nativeIdentity === step.action.member.nativeIdentity
+          && next.providerSourceIdentity === step.action.member.providerSourceIdentity
+        : next?.kind === "verify-configured-retired"
+          && next.exposureIdentity === step.action.exposure.exposureIdentity
+          && next.providerSourceIdentity === step.action.exposure.providerSourceIdentity;
+      if (!matches) {
         return issue(
           "MUTATION_FAILED",
           `target.plan.steps[${index}]`,
@@ -162,13 +182,18 @@ function planShapeIssue(
         );
       }
     }
-    if (step.kind === "verify-retired") {
+    if (step.kind === "verify-retired" || step.kind === "verify-configured-retired") {
       const previous = plan.steps[index - 1];
-      if (
-        previous?.kind !== "mutate"
-        || previous.action.kind !== "RetireMember"
-        || previous.action.member.nativeIdentity !== step.nativeIdentity
-      ) {
+      const matches = step.kind === "verify-retired"
+        ? previous?.kind === "mutate"
+          && previous.action.kind === "RetireMember"
+          && previous.action.member.nativeIdentity === step.nativeIdentity
+          && previous.action.member.providerSourceIdentity === step.providerSourceIdentity
+        : previous?.kind === "mutate"
+          && previous.action.kind === "RetireConfiguredExposure"
+          && previous.action.exposure.exposureIdentity === step.exposureIdentity
+          && previous.action.exposure.providerSourceIdentity === step.providerSourceIdentity;
+      if (!matches) {
         return issue(
           "MUTATION_FAILED",
           `target.plan.steps[${index}]`,

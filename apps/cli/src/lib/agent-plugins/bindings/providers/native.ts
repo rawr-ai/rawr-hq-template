@@ -1,9 +1,13 @@
 import { NodeContext } from "@effect/platform-node";
+import type { ContentAuthority } from "@rawr/agent-plugin-lifecycle/release";
 import {
   createResourceClaudeProviderAdapter,
+  createResourceClaudeCanonicalObserver,
   createResourceClaudeProviderObserver,
   createResourceCodexProviderAdapter,
+  createResourceCodexCanonicalObserver,
   createResourceCodexProviderObserver,
+  type CanonicalNativeObserver,
   type ClaudeNativeResourceSession,
   type CodexNativeResourceSession,
   type NativeProviderAdapter,
@@ -121,6 +125,22 @@ export function createNodeNativeProviderObserver(options: Readonly<{
   return options.provider === "codex"
     ? createResourceCodexProviderObserver(common)
     : createResourceClaudeProviderObserver(common);
+}
+
+/** Binds exact RAWR provenance observation for one selected content authority. */
+export function createNodeCanonicalNativeObserver(options: Readonly<{
+  provider: ProviderId;
+  executablePath: string;
+  contentAuthority: ContentAuthority;
+}>): CanonicalNativeObserver {
+  const common = Object.freeze({
+    resource: createNodeNativeProviderResource(readOnlyMarketplaceLocations),
+    executablePath: options.executablePath,
+    contentAuthority: options.contentAuthority,
+  });
+  return options.provider === "codex"
+    ? createResourceCodexCanonicalObserver(common)
+    : createResourceClaudeCanonicalObserver(common);
 }
 
 export function createNodeNativeProviderResource(

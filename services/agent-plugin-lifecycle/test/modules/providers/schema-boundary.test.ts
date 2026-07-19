@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Value } from "typebox/value";
 
 import { ProviderOperationResultSchema } from "../../../src/service/modules/providers/schemas";
+import { verifyTargetReceipt } from "../../../src/service/modules/providers/model/policy/receipt";
 
 const digest = (prefix: string, seed: string) => `${prefix}${seed.repeat(64)}`;
 const target = Object.freeze({
@@ -167,12 +168,6 @@ const actions = Object.freeze([
     prior: { kind: "absent" },
     receipt,
   },
-  {
-    kind: "NormalizeReceipt",
-    target,
-    prior: receipt,
-    receipt,
-  },
 ]);
 const plan = Object.freeze({
   target,
@@ -236,6 +231,38 @@ describe("provider procedure result schema boundary", () => {
       "failed",
     ]);
     expect(Value.Check(ProviderOperationResultSchema, validResult)).toBe(true);
+  });
+
+  it("rejects the retired canonical-accepted receipt scope without a compatibility value", () => {
+    const common = receipt.body.scope;
+    const legacy = {
+      ...receipt,
+      body: {
+        ...receipt.body,
+        scope: {
+          kind: "canonical-accepted",
+          requestDigest: common.requestDigest,
+          projectionDigest: common.projectionDigest,
+          adapterProtocol: common.adapterProtocol,
+          capabilityProfileDigest: common.capabilityProfileDigest,
+          visibleFingerprint: common.visibleFingerprint,
+          verifiedMembers: common.verifiedMembers,
+          releaseSet: { kind: "complete-set", releaseSetDigest: digest("rs1_", "e") },
+          acceptanceDigest: digest("ac1_", "f"),
+          promotionDigest: digest("pm1_", "0"),
+          channel: "current-main",
+        },
+      },
+    };
+
+    const decoded = verifyTargetReceipt(legacy);
+    expect(decoded.ok).toBe(false);
+    if (!decoded.ok) {
+      expect(decoded.issues[0]).toMatchObject({
+        code: "INVALID_RECEIPT",
+        path: "receipt.body.scope.kind",
+      });
+    }
   });
 
   it("rejects unknown events, extra nested action state, malformed plans, and bogus issue codes", async () => {

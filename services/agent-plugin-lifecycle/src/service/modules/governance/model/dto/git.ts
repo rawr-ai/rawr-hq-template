@@ -1,6 +1,5 @@
-import type { CanonicalJsonValue } from "../helpers/canonical";
-import { failures, success, type PromotionIssue, type PromotionResult } from "../errors/promotion-result";
-import { collect, exactRecord } from "../helpers/schema";
+import type { ReleaseIssue, ReleaseResult } from "../../../../shared/release";
+
 import {
   parseCanonicalRef,
   parseCommit,
@@ -38,66 +37,71 @@ export interface ExactGitBlobObservation {
   readonly bytes: Uint8Array;
 }
 
-export function createGitBlobSelection(input: unknown): PromotionResult<GitBlobSelection> {
+export function createGitBlobSelection(
+  input: unknown,
+): ReleaseResult<GitBlobSelection, ReleaseIssue> {
   return parseGitBlobSelection(input, "gitObject");
 }
 
-export function createExactGitBlobPointer(input: unknown): PromotionResult<ExactGitBlobPointer> {
+export function createExactGitBlobPointer(
+  input: unknown,
+): ReleaseResult<ExactGitBlobPointer, ReleaseIssue> {
   return parseExactGitBlobPointer(input, "gitObject");
 }
 
 export function parseGitBlobSelection(
   input: unknown,
   path: string,
-): PromotionResult<GitBlobSelection> {
-  const issues: PromotionIssue[] = [];
-  const record = exactRecord(input, ["commit", "path", "ref", "repositoryIdentity", "tree"], path, issues);
-  if (record === undefined) return failures(issues);
-  const repositoryIdentity = collect(parseRepository(record.repositoryIdentity, `${path}.repositoryIdentity`), issues);
-  const ref = collect(parseCanonicalRef(record.ref, `${path}.ref`), issues);
-  const commit = collect(parseCommit(record.commit, `${path}.commit`), issues);
-  const tree = collect(parseTree(record.tree, `${path}.tree`), issues);
-  const relativePath = collect(parseRelativePath(record.path, `${path}.path`), issues);
-  if (issues.length > 0 || repositoryIdentity === undefined || ref === undefined || commit === undefined || tree === undefined || relativePath === undefined) {
-    return failures(issues);
+): ReleaseResult<GitBlobSelection, ReleaseIssue> {
+  const record = exactRecord(input, ["commit", "path", "ref", "repositoryIdentity", "tree"], path);
+  if (!record.ok) return record;
+
+  const fields = [
+    parseRepository(record.value.repositoryIdentity, `${path}.repositoryIdentity`),
+    parseCanonicalRef(record.value.ref, `${path}.ref`),
+    parseCommit(record.value.commit, `${path}.commit`),
+    parseTree(record.value.tree, `${path}.tree`),
+    parseRelativePath(record.value.path, `${path}.path`),
+  ] as const;
+  const issues = fields.flatMap((result) => result.ok ? [] : result.issues);
+  if (issues.length > 0) return failed(issues);
+  if (!fields[0].ok || !fields[1].ok || !fields[2].ok || !fields[3].ok || !fields[4].ok) {
+    return invalid(path, "Git selection fields did not produce a value");
   }
-  return success(Object.freeze({ repositoryIdentity, ref, commit, tree, path: relativePath }));
+  return {
+    ok: true,
+    value: Object.freeze({
+      repositoryIdentity: fields[0].value,
+      ref: fields[1].value,
+      commit: fields[2].value,
+      tree: fields[3].value,
+      path: fields[4].value,
+    }),
+  };
 }
 
 export function parseExactGitBlobPointer(
   input: unknown,
   path: string,
-): PromotionResult<ExactGitBlobPointer> {
-  const issues: PromotionIssue[] = [];
-  const record = exactRecord(input, ["blob", "commit", "path", "ref", "repositoryIdentity", "tree"], path, issues);
-  if (record === undefined) return failures(issues);
-  const selection = collect(parseGitBlobSelection({
-    repositoryIdentity: record.repositoryIdentity,
-    ref: record.ref,
-    commit: record.commit,
-    tree: record.tree,
-    path: record.path,
-  }, path), issues);
-  const blob = collect(parseGitBlobId(record.blob, `${path}.blob`), issues);
-  if (issues.length > 0 || selection === undefined || blob === undefined) return failures(issues);
-  return success(Object.freeze({ ...selection, blob }));
-}
-
-export function gitSelectionValue(value: GitBlobSelection): CanonicalJsonValue {
-  return {
-    repositoryIdentity: value.repositoryIdentity,
-    ref: value.ref,
-    commit: value.commit,
-    tree: value.tree,
-    path: value.path,
-  };
-}
-
-export function gitPointerValue(value: ExactGitBlobPointer): CanonicalJsonValue {
-  return {
-    ...gitSelectionValue(value) as { readonly [key: string]: CanonicalJsonValue },
-    blob: value.blob,
-  };
+): ReleaseResult<ExactGitBlobPointer, ReleaseIssue> {
+  const record = exactRecord(
+    input,
+    ["blob", "commit", "path", "ref", "repositoryIdentity", "tree"],
+    path,
+  );
+  if (!record.ok) return record;
+  const selection = parseGitBlobSelection({
+    repositoryIdentity: record.value.repositoryIdentity,
+    ref: record.value.ref,
+    commit: record.value.commit,
+    tree: record.value.tree,
+    path: record.value.path,
+  }, path);
+  const blob = parseGitBlobId(record.value.blob, `${path}.blob`);
+  const issues = [selection, blob].flatMap((result) => result.ok ? [] : result.issues);
+  if (issues.length > 0) return failed(issues);
+  if (!selection.ok || !blob.ok) return invalid(path, "Exact Git pointer fields did not produce a value");
+  return { ok: true, value: Object.freeze({ ...selection.value, blob: blob.value }) };
 }
 
 export function sameGitSelection(left: GitBlobSelection, right: GitBlobSelection): boolean {
@@ -108,6 +112,30 @@ export function sameGitSelection(left: GitBlobSelection, right: GitBlobSelection
     && left.path === right.path;
 }
 
-export function sameGitPointer(left: ExactGitBlobPointer, right: ExactGitBlobPointer): boolean {
-  return sameGitSelection(left, right) && left.blob === right.blob;
+function exactRecord(
+  input: unknown,
+  keys: readonly string[],
+  path: string,
+): ReleaseResult<Record<string, unknown>, ReleaseIssue> {
+  if (input === null || typeof input !== "object" || Array.isArray(input)) {
+    return invalid(path, `Expected exactly: ${keys.join(", ")}`);
+  }
+  const actual = Object.keys(input).sort();
+  const expected = [...keys].sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index])
+    ? { ok: true, value: input as Record<string, unknown> }
+    : invalid(path, `Expected exactly: ${keys.join(", ")}`);
+}
+
+function invalid(path: string, message: string): ReleaseResult<never, ReleaseIssue> {
+  return failed([Object.freeze({ code: "UNKNOWN_FIELD", path, message })]);
+}
+
+function failed(issues: readonly ReleaseIssue[]): ReleaseResult<never, ReleaseIssue> {
+  const first = issues[0] ?? Object.freeze({
+    code: "UNKNOWN_FIELD" as const,
+    path: "gitObject",
+    message: "Git pointer validation did not produce a value",
+  });
+  return { ok: false, issues: [first, ...issues.slice(1)] };
 }

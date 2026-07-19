@@ -45,7 +45,11 @@ const OPERATION_CASES = Object.freeze([
   { operation: "providers.canonicalSync", owner: "providers", procedure: "canonicalSync" },
   { operation: "providers.canonicalStatus", owner: "providers", procedure: "canonicalStatus" },
   { operation: "governance.currentMainRecord", owner: "governance", procedure: "currentMainRecord" },
-  { operation: "governance.attestPromotion", owner: "governance", procedure: "attestPromotion" },
+  {
+    operation: "governance.currentMainSelection",
+    owner: "governance",
+    procedure: "currentMainSelection",
+  },
 ] satisfies readonly Readonly<{
   operation: LifecycleOperation;
   owner: string;

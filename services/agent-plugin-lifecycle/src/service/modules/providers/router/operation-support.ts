@@ -498,7 +498,6 @@ function isNativeMutationAction(
       return true;
     case "AdmitTargetIdentity":
     case "PublishReceipt":
-    case "NormalizeReceipt":
       return false;
   }
 }
@@ -661,12 +660,6 @@ export function createDeploymentActionAppliers(
       }
       case "PublishReceipt": {
         const applied = await ports.receiptWriter.publish(action.target, action.prior, action.receipt);
-        return applied.ok
-          ? mutationApplied()
-          : mutationNotApplied(applied.issues);
-      }
-      case "NormalizeReceipt": {
-        const applied = await ports.receiptWriter.publish(action.target, { kind: "present", receipt: action.prior }, action.receipt);
         return applied.ok
           ? mutationApplied()
           : mutationNotApplied(applied.issues);

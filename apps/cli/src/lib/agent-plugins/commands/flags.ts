@@ -37,6 +37,7 @@ export const CHECK_MODES = [
   "repository-staged",
   "repository-clean",
   "current-main-record",
+  "current-main-selection",
 ] as const;
 
 export type CheckMode = (typeof CHECK_MODES)[number];
@@ -55,19 +56,7 @@ export const currentMainEnvelopeJsonFlag = Flags.string({
   description: "Exact inline current-main v2 envelope JSON",
 });
 
-export const hostedGovernanceExecutableFlag = Flags.string({
-  description: "Absolute controller-bound GitHub CLI executable for hosted approval reads",
-});
-
 export const providerExecutableFlag = Flags.string({
   description: "Explicit provider=absolute-executable binding",
   multiple: true,
-});
-
-export const gitPointerFlags = (prefix: "policy" | "request" | "acceptance" | "landed") => ({
-  [`${prefix}-ref`]: Flags.string({ description: `${prefix} object Git ref` }),
-  [`${prefix}-commit`]: Flags.string({ description: `${prefix} object commit` }),
-  [`${prefix}-tree`]: Flags.string({ description: `${prefix} object tree` }),
-  [`${prefix}-path`]: Flags.string({ description: `${prefix} object repository path` }),
-  [`${prefix}-blob`]: Flags.string({ description: `${prefix} object blob` }),
 });

@@ -5,6 +5,7 @@ import {
   parseProviderTarget,
   renderCompleteProjection,
   type AgentProviderProjection,
+  type NativeStandaloneExposureObservation,
   type ProviderMarketplaceRegistration,
 } from "../../../src/bindings/providers";
 import { canonicalBytes } from "../../../src/service/modules/providers/model/helpers/canonical";
@@ -34,6 +35,7 @@ import {
 import {
   claudeCapabilitiesFromCommands,
   createResourceClaudeCanonicalObserver,
+  createResourceClaudeProviderAdapter,
 } from "../../../src/bindings/providers/resource-claude";
 import {
   codexCapabilitiesFromCommands,
@@ -213,7 +215,10 @@ describe("native provider resource interpretation", () => {
 
   it("observes exact selected-owner native state without mutation", async () => {
     const fixture = codexResourceFixture(Object.freeze([]), "valid");
-    const observed = await fixture.canonicalObserver.observe(fixture.target);
+    const observed = await fixture.canonicalObserver.observe(
+      fixture.target,
+      fixture.projection.artifactAuthority.contentAuthority,
+    );
 
     expect(observed).toEqual({
       ok: true,
@@ -294,7 +299,187 @@ describe("native provider resource interpretation", () => {
       path: "target.inventory",
     });
   });
+
+  it.each(["codex", "claude"] as const)(
+    "retires %s selected-owner config-only residue through the native selector command",
+    async (provider) => {
+      const fixture = configuredRetirementFixture(provider, "stable");
+
+      const result = await fixture.adapter.applyCanonical(fixture.action);
+
+      expect(result).toEqual({ kind: "applied" });
+      expect(fixture.nativeCalls).toEqual([fixture.action.exposure.exposureIdentity]);
+      const inventory = await fixture.adapter.readInventory(fixture.action.target);
+      expect(inventory.ok && inventory.value.standaloneExposures).toEqual([]);
+    },
+  );
+
+  it.each(["codex", "claude"] as const)(
+    "refuses %s configured retirement when the exact selector changes before native mutation",
+    async (provider) => {
+      const fixture = configuredRetirementFixture(provider, "changed-before-native-call");
+
+      const result = await fixture.adapter.applyCanonical(fixture.action);
+
+      expect(result).toMatchObject({ kind: "uncertain", lastKnown: "bridge-invoked" });
+      expect(fixture.nativeCalls).toEqual([]);
+    },
+  );
 });
+
+function configuredRetirementFixture(
+  provider: "claude" | "codex",
+  mode: "changed-before-native-call" | "stable",
+) {
+  const protocol = provider === "codex" ? CODEX_ADAPTER_PROTOCOL : CLAUDE_ADAPTER_PROTOCOL;
+  const projection = providerProjection(provider, protocol);
+  const registration = marketplaceRegistration(projection);
+  const owner = projection.marketplace.identity;
+  const home = `/tmp/rawr-native-${provider}-configured-retirement`;
+  const targetResult = parseProviderTarget({ provider, home });
+  if (!targetResult.ok) throw new Error(targetResult.issues[0].message);
+  const exposure: NativeStandaloneExposureObservation & { exposureKind: "configured-only" } = Object.freeze({
+    exposureKind: "configured-only",
+    exposureIdentity: `plugins@${owner}`,
+    nativeIdentity: "rawr:plugins",
+    providerSourceIdentity: owner,
+    enablement: "enabled",
+    visibleSkills: Object.freeze([]),
+    visibleHooks: Object.freeze([]),
+  });
+  let configurationReads = 0;
+  let configured = true;
+  const nativeCalls: string[] = [];
+  const nextEnabled = () => {
+    configurationReads += 1;
+    return mode === "changed-before-native-call" && configurationReads >= 2
+      ? false
+      : true;
+  };
+  const marketplaceEntries = Object.freeze([Object.freeze({
+    path: ".rawr/marketplace.json",
+    mode: 0o644,
+    bytes: marketplaceMetadata(registration),
+  })]);
+  const executablePath = `/opt/rawr/bin/${provider}`;
+  const base = {
+    executablePath,
+    contentAuthority: owner,
+    marketplaceSources: { read: async () => { throw new Error("unused"); } },
+  } as const;
+
+  if (provider === "codex") {
+    const session = (input: NativeResourceSessionInput): CodexNativeResourceSession => Object.freeze({
+      provider: "codex",
+      executablePath: input.executablePath,
+      home: input.home,
+      probe: async () => Object.freeze({
+        provider: "codex",
+        executablePath: input.executablePath,
+        home: input.home,
+        pluginCommands: Object.freeze(["add", "list", "remove"]),
+        marketplaceCommands: Object.freeze(["add", "list", "remove"]),
+        appServerMethods: Object.freeze(["config/read", "hooks/list", "plugin/list"]),
+      }),
+      listMarketplaces: async () => Object.freeze({
+        stdout: "",
+        stderr: "",
+        json: { marketplaces: [{ name: owner }] },
+      }),
+      readMarketplace: async () => Object.freeze({ entries: marketplaceEntries }),
+      addMarketplace: async () => { throw new Error("unused"); },
+      removeMarketplace: async () => { throw new Error("unused"); },
+      listPlugins: async () => Object.freeze({
+        stdout: "",
+        stderr: "",
+        json: { installed: [], available: [] },
+      }),
+      readPlugin: async () => { throw new Error("config-only residue has no package"); },
+      addPlugin: async () => { throw new Error("unused"); },
+      removePlugin: async ({ selector }: Parameters<CodexNativeResourceSession["removePlugin"]>[0]) => {
+        nativeCalls.push(selector);
+        configured = false;
+      },
+      inspectAppServer: async () => Object.freeze({
+        plugins: { marketplaces: [] },
+        hooks: { data: [{ cwd: home, hooks: [], warnings: [], errors: [] }] },
+      }),
+      readConfiguration: async () => Object.freeze({
+        config: {
+          plugins: configured
+            ? { [exposure.exposureIdentity]: { enabled: nextEnabled() } }
+            : {},
+        },
+      }),
+      setMarketplaceSource: async () => { throw new Error("unused"); },
+    });
+    const adapter = createResourceCodexProviderAdapter({
+      ...base,
+      resource: Object.freeze({
+        acquireCodex: async (input: NativeResourceSessionInput) => session(input),
+        acquireClaude: async () => { throw new Error("unused"); },
+      }),
+    });
+    return Object.freeze({
+      adapter,
+      action: Object.freeze({
+        kind: "RetireConfiguredExposure" as const,
+        target: targetResult.value,
+        activeMarketplace: registration,
+        exposure,
+      }),
+      nativeCalls,
+    });
+  }
+
+  const session = (input: NativeResourceSessionInput): ClaudeNativeResourceSession => Object.freeze({
+    provider: "claude",
+    executablePath: input.executablePath,
+    home: input.home,
+    probe: async () => Object.freeze({
+      provider: "claude",
+      executablePath: input.executablePath,
+      home: input.home,
+      pluginCommands: Object.freeze(["enable", "install", "list", "uninstall"]),
+      marketplaceCommands: Object.freeze(["add", "list", "remove"]),
+      appServerMethods: Object.freeze([]),
+    }),
+    listMarketplaces: async () => Object.freeze({ stdout: "", stderr: "", json: [{ name: owner }] }),
+    readMarketplace: async () => Object.freeze({ entries: marketplaceEntries }),
+    addMarketplace: async () => { throw new Error("unused"); },
+    removeMarketplace: async () => { throw new Error("unused"); },
+    listPlugins: async () => Object.freeze({ stdout: "", stderr: "", json: { installed: [] } }),
+    readPlugin: async () => { throw new Error("config-only residue has no package"); },
+    installPlugin: async () => { throw new Error("unused"); },
+    enablePlugin: async () => { throw new Error("unused"); },
+    uninstallPlugin: async ({ selector }: Parameters<ClaudeNativeResourceSession["uninstallPlugin"]>[0]) => {
+      nativeCalls.push(selector);
+      configured = false;
+    },
+    readConfiguration: async () => Object.freeze({
+      enabledPlugins: configured
+        ? { [exposure.exposureIdentity]: nextEnabled() }
+        : {},
+    }),
+  });
+  const adapter = createResourceClaudeProviderAdapter({
+    ...base,
+    resource: Object.freeze({
+      acquireCodex: async () => { throw new Error("unused"); },
+      acquireClaude: async (input: NativeResourceSessionInput) => session(input),
+    }),
+  });
+  return Object.freeze({
+    adapter,
+    action: Object.freeze({
+      kind: "RetireConfiguredExposure" as const,
+      target: targetResult.value,
+      activeMarketplace: registration,
+      exposure,
+    }),
+    nativeCalls,
+  });
+}
 
 type CodexObservationMode =
   | "invalid-marketplace"
@@ -314,7 +499,10 @@ async function observeCodexProvenance(
   mode: Exclude<CodexObservationMode, "valid">,
 ) {
   const fixture = codexResourceFixture(Object.freeze([]), mode);
-  return await fixture.canonicalObserver.observe(fixture.target);
+  return await fixture.canonicalObserver.observe(
+    fixture.target,
+    fixture.projection.artifactAuthority.contentAuthority,
+  );
 }
 
 function codexResourceFixture(
@@ -528,7 +716,10 @@ async function observeClaudeProvenance(mode: ClaudeObservationMode) {
   });
   const target = parseProviderTarget({ provider: "claude", home });
   if (!target.ok) throw new Error(target.issues[0].message);
-  return await observer.observe(target.value);
+  return await observer.observe(
+    target.value,
+    projection.artifactAuthority.contentAuthority,
+  );
 }
 
 function hookedCodexProjection(): AgentProviderProjection {

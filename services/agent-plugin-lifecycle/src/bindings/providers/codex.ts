@@ -10,7 +10,10 @@ import type {
   ProviderMarketplaceObservation,
   ProviderMarketplaceRegistration,
 } from "../../service/modules/providers/model/policy/marketplace";
-import type { NativeStandaloneExposureObservation } from "../../service/modules/providers/model/policy/state-machine";
+import type {
+  NativeConfiguredExposureObservation,
+  NativeStandaloneExposureObservation,
+} from "../../service/modules/providers/model/policy/state-machine";
 import type { ProviderTargetDigest } from "../../service/modules/providers/model/dto/provider-target";
 import type {
   ProviderMarketplaceSource,
@@ -86,6 +89,10 @@ export interface CodexProcessPort {
     memberFingerprint: ProviderMemberFingerprint;
     targetDigest: ProviderTargetDigest;
   }>): Promise<void>;
+  retireConfiguredPlugin(input: Readonly<{
+    home: string;
+    expected: NativeConfiguredExposureObservation;
+  }>): Promise<void>;
 }
 
 export interface CodexAppServerPort {
@@ -111,18 +118,15 @@ export function createCodexNativeInventoryBridge(input: Readonly<{
         input.appServer.inspectVisiblePlugins({ home }),
       ]);
       const configured = await input.session.inspectConfiguredPlugins({ home });
-      const visibleByIdentity = uniqueByIdentity(visible, "Codex app-server visibility");
-      const configuredByIdentity = uniqueByIdentity(configured, "Codex plugin configuration");
+      const visibleBySelector = uniqueBySelector(visible, "Codex app-server visibility");
+      const configuredBySelector = uniqueBySelector(configured, "Codex plugin configuration");
       const members = plugins.map((plugin): NativePluginProcessObservation => {
-        const observation = visibleByIdentity.get(plugin.nativeIdentity);
+        const selector = selectorKey(plugin);
+        const observation = visibleBySelector.get(selector);
         if (observation === undefined) {
-          throw new Error(`Codex app server omitted native plugin ${plugin.nativeIdentity}`);
+          throw new Error(`Codex app server omitted native plugin ${providerSelector(plugin)}`);
         }
-        const configuredObservation = configuredByIdentity.get(plugin.nativeIdentity);
-        if (observation.providerSourceIdentity !== plugin.providerSourceIdentity
-          || (configuredObservation !== undefined && configuredObservation.providerSourceIdentity !== plugin.providerSourceIdentity)) {
-          throw new Error(`Codex source identity changed across native observations for ${plugin.nativeIdentity}`);
-        }
+        const configuredObservation = configuredBySelector.get(selector);
         return Object.freeze({
           ...plugin,
           enablement: configuredObservation?.enablement ?? "disabled",
@@ -130,30 +134,29 @@ export function createCodexNativeInventoryBridge(input: Readonly<{
           visibleHooks: Object.freeze([...observation.visibleHooks]),
         });
       });
-      const pluginIdentities = new Set(plugins.map((plugin) => plugin.nativeIdentity));
+      const managedSelectors = new Set(plugins.map(selectorKey));
       const standalone = new Map<string, NativeStandaloneExposureObservation>();
       for (const observation of visible) {
-        if (pluginIdentities.has(observation.nativeIdentity)) continue;
-        standalone.set(observation.nativeIdentity, Object.freeze({
-          exposureIdentity: observation.nativeIdentity,
+        const selector = selectorKey(observation);
+        if (managedSelectors.has(selector)) continue;
+        standalone.set(selector, Object.freeze({
+          exposureKind: "installed",
+          exposureIdentity: providerSelector(observation),
           nativeIdentity: observation.nativeIdentity,
           providerSourceIdentity: observation.providerSourceIdentity,
-          enablement: configuredByIdentity.get(observation.nativeIdentity)?.enablement ?? "disabled",
+          enablement: configuredBySelector.get(selector)?.enablement ?? "disabled",
           visibleSkills: Object.freeze([...observation.visibleSkills]),
           visibleHooks: Object.freeze([...observation.visibleHooks]),
         }));
       }
       for (const observation of configured) {
-        if (pluginIdentities.has(observation.nativeIdentity)) continue;
-        const existing = standalone.get(observation.nativeIdentity);
-        if (existing !== undefined) {
-          if (existing.providerSourceIdentity !== observation.providerSourceIdentity) {
-            throw new Error(`Codex standalone source identity changed across observations for ${observation.nativeIdentity}`);
-          }
-          continue;
-        }
-        standalone.set(observation.nativeIdentity, Object.freeze({
-          exposureIdentity: observation.nativeIdentity,
+        const selector = selectorKey(observation);
+        if (managedSelectors.has(selector)) continue;
+        const existing = standalone.get(selector);
+        if (existing !== undefined) continue;
+        standalone.set(selector, Object.freeze({
+          exposureKind: "configured-only",
+          exposureIdentity: providerSelector(observation),
           nativeIdentity: observation.nativeIdentity,
           providerSourceIdentity: observation.providerSourceIdentity,
           enablement: observation.enablement,
@@ -209,6 +212,8 @@ export function createCodexProviderAdapter(input: Readonly<{
       memberFingerprint: expected.memberFingerprint,
       targetDigest: target.targetDigest,
     }),
+    retireConfiguredExposure: async ({ target, expected }) =>
+      await input.process.retireConfiguredPlugin({ home: target.home, expected }),
   };
   return createNativeProviderAdapter({
     provider: "codex",
@@ -236,16 +241,37 @@ function verifiedMarketplaceSource(
   return source;
 }
 
-function uniqueByIdentity<T extends Readonly<{ nativeIdentity: string }>>(
+function uniqueBySelector<T extends Readonly<{
+  nativeIdentity: string;
+  providerSourceIdentity: ProviderSourceIdentity;
+}>>(
   entries: readonly T[],
   label: string,
 ): ReadonlyMap<string, T> {
   const result = new Map<string, T>();
   for (const entry of entries) {
-    if (result.has(entry.nativeIdentity)) throw new Error(`${label} contains a duplicate native identity`);
-    result.set(entry.nativeIdentity, entry);
+    const selector = selectorKey(entry);
+    if (result.has(selector)) throw new Error(`${label} contains a duplicate provider selector`);
+    result.set(selector, entry);
   }
   return result;
+}
+
+function selectorKey(input: Readonly<{
+  nativeIdentity: string;
+  providerSourceIdentity: ProviderSourceIdentity;
+}>): string {
+  return `${input.nativeIdentity}\0${input.providerSourceIdentity}`;
+}
+
+function providerSelector(input: Readonly<{
+  nativeIdentity: string;
+  providerSourceIdentity: ProviderSourceIdentity;
+}>): string {
+  const pluginIdentity = input.nativeIdentity.startsWith("rawr:")
+    ? input.nativeIdentity.slice("rawr:".length)
+    : input.nativeIdentity;
+  return `${pluginIdentity}@${input.providerSourceIdentity}`;
 }
 
 function requireProtocol(value: string): AdapterProtocol {

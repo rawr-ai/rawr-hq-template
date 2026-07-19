@@ -61,7 +61,6 @@
         "@rawr/resource-agent-provider-records": "workspace:*",
         "@rawr/resource-content-workspace": "workspace:*",
         "@rawr/resource-controller-authority": "workspace:*",
-        "@rawr/resource-hosted-governance": "workspace:*",
         "@rawr/resource-native-agent-provider": "workspace:*",
         "effect": "3.21.3",
         "tar": "7.5.7",
@@ -365,18 +364,6 @@
       },
       "devDependencies": {
         "typescript": "^5.9.3",
-      },
-    },
-    "resources/hosted-governance": {
-      "name": "@rawr/resource-hosted-governance",
-      "dependencies": {
-        "@effect/platform": "0.96.1",
-        "@effect/platform-node": "0.107.0",
-        "effect": "3.21.3",
-      },
-      "devDependencies": {
-        "typescript": "^5.9.3",
-        "vitest": "^4.0.18",
       },
     },
     "resources/native-agent-provider": {
@@ -1297,8 +1284,6 @@
     "@rawr/resource-content-workspace": ["@rawr/resource-content-workspace@workspace:resources/content-workspace"],
 
     "@rawr/resource-controller-authority": ["@rawr/resource-controller-authority@workspace:resources/controller-authority"],
-
-    "@rawr/resource-hosted-governance": ["@rawr/resource-hosted-governance@workspace:resources/hosted-governance"],
 
     "@rawr/resource-native-agent-provider": ["@rawr/resource-native-agent-provider@workspace:resources/native-agent-provider"],
 

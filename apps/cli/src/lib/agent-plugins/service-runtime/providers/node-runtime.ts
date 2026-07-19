@@ -7,6 +7,7 @@ import {
   issue,
   success,
   type NativeProviderMutationAction,
+  type CanonicalNativeMutationAction,
   type ProviderId,
   type ProviderLifecycleRuntime,
   type AgentProviderProjection,
@@ -15,6 +16,7 @@ import {
   type ProviderTargetReader,
   type NativeProviderAdapter,
   type NativeProviderObserver,
+  type CanonicalNativeObserver,
   type ProviderRecordState,
 } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type { ArtifactReader } from "@rawr/agent-plugin-lifecycle/ports/releases";
@@ -25,13 +27,14 @@ import { LifecycleAuthorityBindingError } from "../../commands/binding";
 import { createNodeMechanicalEvidenceRuntime } from "../evidence/node-mechanical";
 import {
   createNodeMarketplaceLocationResolver,
+  createNodeCanonicalNativeObserver,
   createNodeNativeProviderAdapter,
   createNodeNativeProviderObserver,
 } from "../../bindings/providers";
 import { createProviderReleaseReader } from "./artifact-reader";
 
 export function createNodeProviderLifecycleRuntime(options: Readonly<{
-  channel: ProviderLifecycleRuntime["channel"];
+  currentMain: ProviderLifecycleRuntime["currentMain"];
   state: NodeProviderRecordState;
   artifactReader: ArtifactReader;
   artifactStoreRoot: Parameters<typeof createNodeMechanicalEvidenceRuntime>[0];
@@ -39,7 +42,10 @@ export function createNodeProviderLifecycleRuntime(options: Readonly<{
 }>): ProviderLifecycleRuntime {
   const adapter = createNodeNativeProviderAdapterResolver(options.state, options.providerExecutables);
   const observer = createNodeNativeProviderObserverResolver(options.providerExecutables);
-  return assembleRuntime(options, adapter, observer);
+  const canonicalObserver = createNodeCanonicalNativeObserverResolver(
+    options.providerExecutables,
+  );
+  return assembleRuntime(options, adapter, observer, canonicalObserver);
 }
 
 export interface NodeProviderRecordRoots {
@@ -115,6 +121,30 @@ function createNodeNativeProviderObserverResolver(
   };
 }
 
+function createNodeCanonicalNativeObserverResolver(
+  providerExecutables: Readonly<Partial<Record<ProviderId, string>>>,
+): (provider: ProviderId, contentAuthority: ContentAuthority) => CanonicalNativeObserver {
+  const observers = new Map<string, CanonicalNativeObserver>();
+  return (provider, contentAuthority) => {
+    const key = `${provider}\0${contentAuthority}`;
+    const existing = observers.get(key);
+    if (existing !== undefined) return existing;
+    const executablePath = providerExecutables[provider];
+    if (executablePath === undefined) {
+      throw new LifecycleAuthorityBindingError(
+        `${provider} requires an explicit provider executable binding`,
+      );
+    }
+    const created = createNodeCanonicalNativeObserver({
+      provider,
+      executablePath,
+      contentAuthority,
+    });
+    observers.set(key, created);
+    return created;
+  };
+}
+
 function createProviderReader(
   adapter: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter,
   observer: (provider: ProviderId) => NativeProviderObserver,
@@ -157,12 +187,32 @@ function assembleRuntime(
   options: Parameters<typeof createNodeProviderLifecycleRuntime>[0],
   adapter: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter,
   observer: (provider: ProviderId) => NativeProviderObserver,
+  canonicalObserver: (
+    provider: ProviderId,
+    contentAuthority: ContentAuthority,
+  ) => CanonicalNativeObserver,
 ): ProviderLifecycleRuntime {
   const { state } = options;
   const reader = createProviderReader(adapter, observer);
   const mutator = createProviderMutator(adapter);
+  const canonicalNative: ProviderLifecycleRuntime["canonicalNative"] = Object.freeze({
+    async inspectCapabilities(target: ProviderTarget, contentAuthority: ContentAuthority) {
+      return await adapter(target.provider, contentAuthority).inspectCapabilities(target);
+    },
+    async observe(target: ProviderTarget, contentAuthority: ContentAuthority) {
+      return await canonicalObserver(target.provider, contentAuthority).observe(
+        target,
+        contentAuthority,
+      );
+    },
+    async apply(action: CanonicalNativeMutationAction) {
+      const authority = canonicalMutationAuthority(action);
+      return await adapter(action.target.provider, authority).applyCanonical(action);
+    },
+  });
   const runtime: ProviderLifecycleRuntime = {
-    channel: options.channel,
+    currentMain: options.currentMain,
+    canonicalNative,
     releases: createProviderReleaseReader(options.artifactReader),
     provider: reader,
     providerMutator: mutator,
@@ -201,4 +251,11 @@ function mutationAuthority(action: NativeProviderMutationAction): ContentAuthori
     return authority;
   }
   return action.member.artifactAuthority.contentAuthority;
+}
+
+function canonicalMutationAuthority(action: CanonicalNativeMutationAction): ContentAuthority {
+  if (action.kind === "RetireConfiguredExposure") {
+    return action.exposure.providerSourceIdentity;
+  }
+  return mutationAuthority(action);
 }

@@ -57,7 +57,7 @@ const anchor: GitWorkspaceAnchor = Object.freeze({
 });
 
 describe("resource-backed exact Git governance reader", () => {
-  it("projects clean exact inspection, object, ancestry, and changed-path observations", async () => {
+  it("projects clean exact inspection, object, and ancestry observations", async () => {
     const bytes = encoder.encode("release input\n");
     const reader = createResourceExactGitReader({
       contentWorkspace: stubPort({
@@ -69,10 +69,6 @@ describe("resource-backed exact Git governance reader", () => {
           bytes,
         }),
         isLocalGitAncestor: async () => true,
-        listGitChangedPaths: async () => nulTerminated(
-          "plugins/agents/zeta/SKILL.md",
-          "plugins/agents/alpha/SKILL.md",
-        ),
       }),
     });
 
@@ -90,10 +86,6 @@ describe("resource-backed exact Git governance reader", () => {
     await expect(reader.isAncestor(locator, pointer.commit, pointer.commit)).resolves.toEqual({
       ok: true,
       value: true,
-    });
-    await expect(reader.listChangedPaths(locator, pointer.commit, pointer.commit)).resolves.toEqual({
-      ok: true,
-      paths: ["plugins/agents/alpha/SKILL.md", "plugins/agents/zeta/SKILL.md"],
     });
   });
 
@@ -198,20 +190,12 @@ describe("resource-backed exact Git governance reader", () => {
     });
   });
 
-  it("refuses relative locators and duplicate changed-path identities", async () => {
-    const reader = createResourceExactGitReader({
-      contentWorkspace: stubPort({
-        listGitChangedPaths: async () => nulTerminated("same.json", "same.json"),
-      }),
-    });
+  it("refuses relative locators", async () => {
+    const reader = createResourceExactGitReader({ contentWorkspace: stubPort() });
     const relative = { ...locator, workspacePath: "relative/repository" };
 
     await expect(reader.inspect(relative, pointer.ref)).resolves.toMatchObject({
       kind: "UnreachableRepository",
-    });
-    await expect(reader.listChangedPaths(locator, pointer.commit, pointer.commit)).resolves.toMatchObject({
-      ok: false,
-      failure: { code: "ReadFailed" },
     });
   });
 });
@@ -230,7 +214,6 @@ function stubPort(
       bytes: new Uint8Array(),
     }),
     isLocalGitAncestor: async () => false,
-    listGitChangedPaths: async () => new Uint8Array(),
     ...overrides,
   });
 }
@@ -246,10 +229,6 @@ function evidence(closingAnchor: GitWorkspaceAnchor): GitWorkspaceEvidence {
     closingStatus: new Uint8Array(),
     closingTrackedFlags: new Uint8Array(),
   });
-}
-
-function nulTerminated(...values: readonly string[]): Uint8Array {
-  return encoder.encode(`${values.join("\0")}\0`);
 }
 
 function failure(

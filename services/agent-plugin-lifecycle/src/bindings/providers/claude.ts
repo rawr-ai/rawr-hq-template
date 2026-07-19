@@ -10,7 +10,10 @@ import type {
   ProviderMarketplaceObservation,
   ProviderMarketplaceRegistration,
 } from "../../service/modules/providers/model/policy/marketplace";
-import type { NativeStandaloneExposureObservation } from "../../service/modules/providers/model/policy/state-machine";
+import type {
+  NativeConfiguredExposureObservation,
+  NativeStandaloneExposureObservation,
+} from "../../service/modules/providers/model/policy/state-machine";
 import type { ProviderTargetDigest } from "../../service/modules/providers/model/dto/provider-target";
 import type {
   ProviderMarketplaceSource,
@@ -74,6 +77,10 @@ export interface ClaudeProcessPort {
     providerSourceIdentity: ProviderSourceIdentity;
     memberFingerprint: ProviderMemberFingerprint;
     targetDigest: ProviderTargetDigest;
+  }>): Promise<void>;
+  retireConfiguredPlugin(input: Readonly<{
+    home: string;
+    expected: NativeConfiguredExposureObservation;
   }>): Promise<void>;
 }
 
@@ -158,6 +165,8 @@ export function createClaudeProviderAdapter(input: Readonly<{
         targetDigest: target.targetDigest,
       });
     },
+    retireConfiguredExposure: async ({ target, expected }) =>
+      await input.process.retireConfiguredPlugin({ home: target.home, expected }),
   };
   return createNativeProviderAdapter({
     provider: "claude",

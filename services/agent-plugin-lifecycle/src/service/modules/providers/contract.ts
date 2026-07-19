@@ -4,6 +4,7 @@ import {
   CanonicalStatusInputSchema,
   CanonicalStatusResultSchema,
   CanonicalSyncInputSchema,
+  CanonicalSyncResultSchema,
   CompleteNativeHomesResultSchema,
   CompleteTestInputSchema,
   EmptyInputSchema,
@@ -23,7 +24,7 @@ export const contract = {
   canonicalSync: ocBase
     .meta({ idempotent: true, entity: "providers", audit: "full" })
     .input(schema(CanonicalSyncInputSchema))
-    .output(schema(ProviderOperationResultSchema)),
+    .output(schema(CanonicalSyncResultSchema)),
   canonicalStatus: ocBase
     .meta({ idempotent: true, entity: "providers", audit: "full" })
     .input(schema(CanonicalStatusInputSchema))

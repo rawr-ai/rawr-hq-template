@@ -48,7 +48,6 @@ import {
   type LifecycleOperationClient,
   type LifecycleOperation,
 } from "../commands/binding";
-import { createGithubHostedApprovalHistoryReader } from "../bindings/governance";
 import { createGovernanceLifecycleRuntime } from "./governance/runtime";
 import { createNodeMechanicalEvidenceRuntime } from "./evidence/node-mechanical";
 import {
@@ -56,7 +55,7 @@ import {
   createNodeProviderRecordState,
   type NodeProviderRecordState,
 } from "./providers/node-runtime";
-import { createGovernanceCanonicalChannelReader } from "./providers/governance-channel";
+import { createGovernanceCurrentMainSelectionReader } from "./providers/current-main-selection";
 import {
   applyingRecoveryBlockingFailure,
   CapsuleControllerWriterV1,
@@ -121,8 +120,8 @@ const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
   "governance.currentMainRecord": (client) => Object.freeze({
     governance: Object.freeze({ currentMainRecord: client.governance.currentMainRecord }),
   }),
-  "governance.attestPromotion": (client) => Object.freeze({
-    governance: Object.freeze({ attestPromotion: client.governance.attestPromotion }),
+  "governance.currentMainSelection": (client) => Object.freeze({
+    governance: Object.freeze({ currentMainSelection: client.governance.currentMainSelection }),
   }),
 });
 
@@ -172,13 +171,9 @@ export function createProductionLifecycleDeps(input: Readonly<{
   });
   const governance = createGovernanceLifecycleRuntime({
     git: createResourceExactGitReader({ contentWorkspace }),
-    evidence: createNodeMechanicalEvidenceRuntime(layout.artifactStoreRoot).governance,
-    approvals: createGithubHostedApprovalHistoryReader({
-      acquireGithubExecutable: () => requiredHostedGovernanceExecutable(binding),
-    }),
   });
   const providers = createNodeProviderLifecycleRuntime({
-    channel: createGovernanceCanonicalChannelReader({ governance }),
+    currentMain: createGovernanceCurrentMainSelectionReader({ governance }),
     state: providerState,
     artifactReader,
     artifactStoreRoot: layout.artifactStoreRoot,
@@ -345,15 +340,4 @@ function requiredGitExecutable(
     );
   }
   return binding.gitExecutable;
-}
-
-function requiredHostedGovernanceExecutable(
-  binding: ControllerProjectionBinding,
-): string {
-  if (binding.hostedGovernanceExecutable === undefined) {
-    throw new LifecycleAuthorityBindingError(
-      "Agent-plugin lifecycle requires an explicit hosted-governance executable binding",
-    );
-  }
-  return binding.hostedGovernanceExecutable;
 }

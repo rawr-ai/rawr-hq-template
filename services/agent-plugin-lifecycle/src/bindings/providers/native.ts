@@ -34,6 +34,7 @@ import {
   type ProviderInventory,
 } from "../../service/modules/providers/model/policy/state-machine";
 import type { ProviderId, ProviderTarget } from "../../service/modules/providers/model/dto/provider-target";
+import type { CanonicalNativeMutationAction } from "../../service/modules/providers/model/dto/canonical-convergence";
 import type {
   NativeMutationAttempt,
   NativeProviderMutationAction,
@@ -48,6 +49,10 @@ import {
 } from "./resource-provenance";
 
 type NativeMemberMutationAction = Exclude<NativeProviderMutationAction, { readonly kind: "SetMarketplace" }>;
+type RetireConfiguredExposureAction = Extract<CanonicalNativeMutationAction, {
+  readonly kind: "RetireConfiguredExposure";
+}>;
+type NativeAdapterMutationAction = NativeProviderMutationAction | RetireConfiguredExposureAction;
 
 export interface NativePluginProcessObservation {
   readonly pluginId: PluginId;
@@ -91,6 +96,10 @@ export interface NativeProviderBridge {
     target: ProviderTarget;
     expected: NativeMemberObservation;
   }>): Promise<void>;
+  retireConfiguredExposure(input: Readonly<{
+    target: ProviderTarget;
+    expected: RetireConfiguredExposureAction["exposure"];
+  }>): Promise<void>;
 }
 
 export type NativeProviderInventoryBridge = Pick<NativeProviderBridge, "inventory">;
@@ -119,7 +128,9 @@ export interface NativeProviderObserver {
   readInventory(target: ProviderTarget): Promise<DeploymentResult<ProviderInventory>>;
 }
 
-export interface NativeProviderAdapter extends ProviderTargetReader, ProviderTargetMutator {}
+export interface NativeProviderAdapter extends ProviderTargetReader, ProviderTargetMutator {
+  applyCanonical(action: CanonicalNativeMutationAction): Promise<NativeMutationAttempt>;
+}
 
 export function createNativeProviderObserver(input: Readonly<{
   provider: ProviderId;
@@ -280,8 +291,8 @@ export function createNativeProviderAdapter(input: Readonly<{
     }));
   };
 
-  const apply = async (
-    action: NativeProviderMutationAction,
+  const applyMutation = async (
+    action: NativeAdapterMutationAction,
   ): Promise<NativeMutationAttempt> => {
     const providerIssue = targetProviderIssue(action.target, input.provider);
     if (providerIssue !== undefined) return notApplied([providerIssue]);
@@ -347,6 +358,51 @@ export function createNativeProviderAdapter(input: Readonly<{
         "Member mutation requires the exact active marketplace registration from its plan",
       )]);
     }
+    if (action.kind === "RetireConfiguredExposure") {
+      const matching = beforeResult.value.standaloneExposures.filter((candidate) =>
+        candidate.exposureIdentity === action.exposure.exposureIdentity
+        && candidate.providerSourceIdentity === action.exposure.providerSourceIdentity);
+      const live = matching[0];
+      if (
+        matching.length !== 1
+        || live === undefined
+        || !sameStandaloneExposure(live, action.exposure)
+        || live.exposureKind !== "configured-only"
+      ) {
+        return notApplied([issue(
+          "MUTATION_FAILED",
+          "target.mutation.RetireConfiguredExposure",
+          "Only the exact configured-only native selector can be retired",
+          `${action.exposure.exposureIdentity}/${action.exposure.providerSourceIdentity}`,
+          live === undefined
+            ? "absent"
+            : `${live.exposureIdentity}/${live.providerSourceIdentity}/${live.exposureKind}`,
+        )]);
+      }
+      try {
+        await input.bridge.retireConfiguredExposure({ target: action.target, expected: action.exposure });
+      } catch (error) {
+        return uncertain("bridge-invoked", [portFailure(
+          "MUTATION_FAILED",
+          "target.mutation.RetireConfiguredExposure",
+          error,
+        )]);
+      }
+      const afterResult = await readInventory(action.target);
+      if (!afterResult.ok) return uncertain("bridge-returned", afterResult.issues);
+      if (afterResult.value.standaloneExposures.some((candidate) =>
+        candidate.exposureIdentity === action.exposure.exposureIdentity
+        && candidate.providerSourceIdentity === action.exposure.providerSourceIdentity)) {
+        return uncertain("bridge-returned", [issue(
+          "MUTATION_FAILED",
+          "target.mutation.RetireConfiguredExposure",
+          "Native configuration retirement did not remove the exact selector exposure",
+          "absent",
+          `${action.exposure.exposureIdentity}/${action.exposure.providerSourceIdentity}`,
+        )]);
+      }
+      return applied();
+    }
     const before = beforeResult.value.members.find((candidate) =>
       candidate.nativeIdentity === actionMemberIdentity(action));
     const precondition = mutationPrecondition(action, before);
@@ -385,7 +441,19 @@ export function createNativeProviderAdapter(input: Readonly<{
     return applied();
   };
 
-  return Object.freeze({ projectionAdapterProtocol, inspectCapabilities, readInventory, verifyProjection, apply });
+  const apply = async (action: NativeProviderMutationAction): Promise<NativeMutationAttempt> =>
+    await applyMutation(action);
+  const applyCanonical = async (action: CanonicalNativeMutationAction): Promise<NativeMutationAttempt> =>
+    await applyMutation(action);
+
+  return Object.freeze({
+    projectionAdapterProtocol,
+    inspectCapabilities,
+    readInventory,
+    verifyProjection,
+    apply,
+    applyCanonical,
+  });
 }
 
 export async function inspectNativeInventory(input: Readonly<{
@@ -475,7 +543,8 @@ function mutationPostcondition(
 ): boolean {
   if (action.kind === "RetireMember") {
     return live === null && !inventory.standaloneExposures.some((exposure) =>
-      exposure.nativeIdentity === action.member.nativeIdentity);
+      exposure.nativeIdentity === action.member.nativeIdentity
+      && exposure.providerSourceIdentity === action.member.providerSourceIdentity);
   }
   if (live === null) return false;
   if (action.kind === "EnableMember") {
@@ -523,6 +592,19 @@ function sameNativeMember(left: NativeMemberObservation, right: NativeMemberObse
     && sameArtifactAuthority(left.artifactAuthority, right.artifactAuthority)
     && left.providerSourceIdentity === right.providerSourceIdentity
     && left.memberFingerprint === right.memberFingerprint
+    && left.enablement === right.enablement
+    && sameNames(left.visibleSkills, right.visibleSkills)
+    && sameNames(left.visibleHooks, right.visibleHooks);
+}
+
+function sameStandaloneExposure(
+  left: NativeStandaloneExposureObservation,
+  right: NativeStandaloneExposureObservation,
+): boolean {
+  return left.exposureKind === right.exposureKind
+    && left.exposureIdentity === right.exposureIdentity
+    && left.nativeIdentity === right.nativeIdentity
+    && left.providerSourceIdentity === right.providerSourceIdentity
     && left.enablement === right.enablement
     && sameNames(left.visibleSkills, right.visibleSkills)
     && sameNames(left.visibleHooks, right.visibleHooks);

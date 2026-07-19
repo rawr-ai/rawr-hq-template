@@ -3,20 +3,26 @@ import { describe, expect, it } from "vitest";
 import { Value } from "typebox/value";
 
 import {
-  AttestPromotionResultSchema,
   CurrentMainRecordInputSchema,
   CurrentMainRecordResultSchema,
-  ResolveCurrentMainResultSchema,
-  ValidateAcceptanceResultSchema,
+  CurrentMainSelectionInputSchema,
+  CurrentMainSelectionResultSchema,
 } from "../../../src/service/modules/governance/schemas";
 import {
   encodeCurrentMainBodyV2,
   type CurrentMainBodyV2,
 } from "../../../src/service/modules/governance/model";
-import { governedObservation, promotionFixture } from "./fixtures";
+import { contract } from "../../../src/service/modules/governance/contract";
 
-describe("governance procedure result schema boundary", () => {
-  it("closes both current-main codec actions at the TypeBox input boundary", () => {
+describe("governance procedure schema boundary", () => {
+  it("exposes only the v2 record codec and current-main selector", () => {
+    expect(Object.keys(contract).sort()).toEqual([
+      "currentMainRecord",
+      "currentMainSelection",
+    ]);
+  });
+
+  it("closes both current-main codec actions", () => {
     const body = currentMainBodyFixture();
     const encoded = encodeCurrentMainBodyV2(body);
     expect(encoded.ok).toBe(true);
@@ -40,123 +46,77 @@ describe("governance procedure result schema boundary", () => {
     ]) {
       expect(Value.Check(CurrentMainRecordInputSchema, invalid)).toBe(false);
     }
-  });
-
-  it("closes current-main codec success and failure results field by field", () => {
-    const encoded = encodeCurrentMainBodyV2(currentMainBodyFixture());
-    expect(encoded.ok).toBe(true);
-    if (!encoded.ok) throw new Error(encoded.failure.message);
 
     expect(Value.Check(CurrentMainRecordResultSchema, encoded)).toBe(true);
-    expect(Value.Check(CurrentMainRecordResultSchema, {
-      ok: false,
-      failure: {
-        code: "InvalidSchema",
-        path: "currentMain.body",
-        message: "Current-main body does not match its closed schema",
-      },
-    })).toBe(true);
     expect(Value.Check(CurrentMainRecordResultSchema, {
       ...encoded,
       value: { ...encoded.value, receipt: "state" },
     })).toBe(false);
-    expect(Value.Check(CurrentMainRecordResultSchema, {
-      ok: false,
-      failure: {
-        code: "InvalidSchema",
-        path: "currentMain.body",
-        message: "invalid",
-        authority: "ambient",
-      },
-    })).toBe(false);
   });
 
-  it("closes accepted, rejected, attestation, and current-main observations field by field", () => {
-    const fixture = promotionFixture();
-    const acceptance = governedObservation(fixture);
+  it("accepts only the v2 locator request for current-main selection", async () => {
+    const locator = {
+      workspacePath: "/tmp/personal-rawr-hq",
+      expectedRepositoryIdentity: "git:github.com/example/personal-rawr-hq",
+    };
+    expect(Value.Check(CurrentMainSelectionInputSchema, { locator })).toBe(true);
 
-    expect(Value.Check(ValidateAcceptanceResultSchema, {
-      kind: "GovernedAccepted",
-      observation: acceptance,
-    })).toBe(true);
-    expect(Value.Check(ValidateAcceptanceResultSchema, {
-      kind: "RejectedAcceptance",
-      evidence: fixture.acceptance,
-    })).toBe(true);
-    expect(Value.Check(AttestPromotionResultSchema, {
-      kind: "PromotionAttested",
-      attestation: fixture.promotion,
-    })).toBe(true);
-    expect(Value.Check(ResolveCurrentMainResultSchema, {
-      kind: "CURRENT_ELIGIBLE",
-      observation: {
-        record: fixture.currentMain,
-        policy: fixture.policy,
-        acceptance,
-        promotion: fixture.promotion,
-      },
-    })).toBe(true);
-  });
-
-  it("rejects unknown variants, extra nested authority, and malformed attestations at the output validator", async () => {
-    const fixture = promotionFixture();
-    const acceptance = governedObservation(fixture);
+    const v1Pointer = {
+      repositoryIdentity: locator.expectedRepositoryIdentity,
+      ref: "refs/heads/main",
+      commit: "a".repeat(40),
+      tree: "b".repeat(40),
+      path: "plugins/agents/.lifecycle/policy.json",
+      blob: "c".repeat(40),
+    };
     const invalid = [
+      { locator, policyObject: v1Pointer },
       {
-        schema: ValidateAcceptanceResultSchema,
-        value: { kind: "Accepted", observation: acceptance },
+        locator,
+        policyObject: v1Pointer,
+        requestObject: v1Pointer,
+        acceptanceObject: v1Pointer,
       },
-      {
-        schema: ValidateAcceptanceResultSchema,
-        value: {
-          kind: "GovernedAccepted",
-          observation: {
-            ...acceptance,
-            approval: { ...acceptance.approval, ambientAuthority: true },
-          },
-        },
-      },
-      {
-        schema: AttestPromotionResultSchema,
-        value: {
-          kind: "PromotionAttested",
-          attestation: {
-            ...fixture.promotion,
-            body: {
-              ...fixture.promotion.body,
-              landedInput: {
-                ...fixture.promotion.body.landedInput,
-                object: {
-                  repositoryIdentity: fixture.landedInputObject.repositoryIdentity,
-                  ref: fixture.landedInputObject.ref,
-                  commit: fixture.landedInputObject.commit,
-                  tree: fixture.landedInputObject.tree,
-                  path: fixture.landedInputObject.path,
-                },
-              },
-            },
-          },
-        },
-      },
-      {
-        schema: ResolveCurrentMainResultSchema,
-        value: {
-          kind: "CURRENT_ELIGIBLE",
-          observation: {
-            record: fixture.currentMain,
-            policy: fixture.policy,
-            acceptance,
-            promotion: { ...fixture.promotion, extra: true },
-          },
-        },
-      },
+      { locator: { ...locator, canonicalRef: "refs/heads/main" } },
+      { workspacePath: locator.workspacePath, expectedRepositoryIdentity: locator.expectedRepositoryIdentity },
     ];
 
     for (const candidate of invalid) {
-      expect(Value.Check(candidate.schema, candidate.value)).toBe(false);
-      const validated = await schema(candidate.schema)["~standard"].validate(candidate.value);
+      expect(Value.Check(CurrentMainSelectionInputSchema, candidate)).toBe(false);
+      const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(candidate);
       expect("issues" in validated).toBe(true);
     }
+  });
+
+  it("closes eligible and refused current-main selection results", () => {
+    const eligible = {
+      kind: "CURRENT_ELIGIBLE",
+      selection: {
+        currentMainDigest: `cm2_${"0".repeat(64)}`,
+        contentAuthority: "personal-rawr-hq",
+        sourceRepositoryIdentity: "git:github.com/example/personal-rawr-hq",
+        sourceCommit: "a".repeat(40),
+        sourceTree: "b".repeat(40),
+        releaseInputDigest: `ri1_${"c".repeat(64)}`,
+        releaseSetDigest: `rs1_${"d".repeat(64)}`,
+        evaluationProfile: "provider-smoke@v1",
+        projections: currentMainBodyFixture().projections,
+      },
+    };
+
+    expect(Value.Check(CurrentMainSelectionResultSchema, eligible)).toBe(true);
+    expect(Value.Check(CurrentMainSelectionResultSchema, {
+      kind: "STALE_RECORD",
+      reason: "selected source is unavailable",
+    })).toBe(true);
+    expect(Value.Check(CurrentMainSelectionResultSchema, {
+      ...eligible,
+      observation: { legacy: true },
+    })).toBe(false);
+    expect(Value.Check(CurrentMainSelectionResultSchema, {
+      kind: "ACCEPTED_PENDING_CONVERGENCE",
+      reason: "legacy state",
+    })).toBe(false);
   });
 });
 

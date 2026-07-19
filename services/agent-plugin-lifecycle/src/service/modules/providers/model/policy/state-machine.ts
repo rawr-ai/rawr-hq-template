@@ -9,7 +9,7 @@ import {
   type ProviderMarketplaceObservation,
   type ProviderMarketplaceRegistration,
 } from "./marketplace";
-import { targetRequestDigest, type ProviderRequestDigest, type TargetedTest, type CompleteTest, type CanonicalSync } from "../dto/mode";
+import { targetRequestDigest, type ProviderRequestDigest, type TargetedTest, type CompleteTest } from "../dto/mode";
 import type {
   AgentProviderProjection,
   CapabilityEvaluation,
@@ -23,9 +23,7 @@ import {
   createTargetReceipt,
   receiptScopeValue,
   visibleFingerprint,
-  type CanonicalAcceptedScope,
   type CompleteTestScope,
-  type LifecycleRecordDigest,
   type ManagedMemberClaim,
   type TargetReceipt,
   type TargetReceiptScope,
@@ -52,7 +50,7 @@ export interface NativeMemberObservation {
   readonly visibleHooks: readonly string[];
 }
 
-export interface NativeStandaloneExposureObservation {
+interface NativeStandaloneExposureObservationBase {
   readonly exposureIdentity: string;
   readonly nativeIdentity: string;
   readonly providerSourceIdentity: ProviderSourceIdentity;
@@ -60,6 +58,18 @@ export interface NativeStandaloneExposureObservation {
   readonly visibleSkills: readonly string[];
   readonly visibleHooks: readonly string[];
 }
+
+export interface NativeConfiguredExposureObservation extends NativeStandaloneExposureObservationBase {
+  readonly exposureKind: "configured-only";
+}
+
+export interface NativeInstalledExposureObservation extends NativeStandaloneExposureObservationBase {
+  readonly exposureKind: "installed";
+}
+
+export type NativeStandaloneExposureObservation =
+  | NativeConfiguredExposureObservation
+  | NativeInstalledExposureObservation;
 
 export interface ProviderInventory {
   readonly target: ProviderTarget;
@@ -91,8 +101,7 @@ export type ProviderMutationAction =
   | Readonly<{ kind: "InstallMember"; target: ProviderTarget; activeMarketplace: ProviderMarketplaceRegistration | null; member: ProviderProjectionMember }>
   | Readonly<{ kind: "EnableMember"; target: ProviderTarget; activeMarketplace: ProviderMarketplaceRegistration | null; member: ProviderProjectionMember }>
   | Readonly<{ kind: "RetireMember"; target: ProviderTarget; activeMarketplace: ProviderMarketplaceRegistration | null; member: NativeMemberObservation }>
-  | Readonly<{ kind: "PublishReceipt"; target: ProviderTarget; prior: ReceiptObservation; receipt: TargetReceipt }>
-  | Readonly<{ kind: "NormalizeReceipt"; target: ProviderTarget; prior: TargetReceipt; receipt: TargetReceipt }>;
+  | Readonly<{ kind: "PublishReceipt"; target: ProviderTarget; prior: ReceiptObservation; receipt: TargetReceipt }>;
 
 export type NativeProviderMutationAction = Extract<
   ProviderMutationAction,
@@ -115,14 +124,7 @@ export interface ProviderTargetPlan {
 
 export type DeploymentAuthority =
   | Readonly<{ kind: "targeted-test"; request: TargetedTest; projection: AgentProviderProjection }>
-  | Readonly<{ kind: "complete-test"; request: CompleteTest; projection: AgentProviderProjection }>
-  | Readonly<{
-    kind: "canonical-sync";
-    request: CanonicalSync;
-    projection: AgentProviderProjection;
-    acceptanceDigest: LifecycleRecordDigest;
-    promotionDigest: LifecycleRecordDigest;
-  }>;
+  | Readonly<{ kind: "complete-test"; request: CompleteTest; projection: AgentProviderProjection }>;
 
 export interface PlanTargetInput {
   readonly authority: DeploymentAuthority;
@@ -206,26 +208,6 @@ export function hasProjectionCollision(
   });
 }
 
-export function hasCanonicalProjectionCollision(
-  target: ProviderTarget,
-  inventory: ProviderInventory,
-  projection: AgentProviderProjection,
-  receipt: ReceiptObservation,
-): boolean {
-  const receiptClaims = receipt.kind === "present"
-    && receipt.receipt.body.provider === target.provider
-    && receipt.receipt.body.targetDigest === target.targetDigest
-    ? receipt.receipt.body.managedMembers
-    : [];
-  const ownerClaims = [
-    ...projection.members.map((member) => toManagedMember(member, projection.projectionDigest)),
-    ...receiptClaims,
-  ];
-  return hasProjectionCollision(target, inventory, projection, receipt)
-    || hasReceiptRetirementCollision(target, inventory, projection, receipt)
-    || forwardNativeStateIssue(inventory, projection, ownerClaims) !== undefined;
-}
-
 export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
   const { authority, inventory, receipt, targetIdentity } = input;
   const target = inventory.target;
@@ -238,13 +220,6 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
     || receipt.receipt.body.targetDigest !== target.targetDigest
   )) {
     issues.push(issue("RECEIPT_TARGET_MISMATCH", "target.receipt", "Receipt belongs to another provider home", target.targetDigest, receipt.receipt.body.targetDigest));
-  }
-  if (
-    receipt.kind === "present"
-    && receipt.receipt.body.scope.kind === "canonical-accepted"
-    && authority.kind !== "canonical-sync"
-  ) {
-    issues.push(issue("BLOCKED_CANONICAL_TEST_TARGET", "target.receipt.scope", "Test requests cannot reclassify a canonical accepted home", "non-canonical test home", "canonical-accepted"));
   }
   if (authority.projection.provider !== target.provider) {
     issues.push(issue("PROJECTION_MISMATCH", "target.projection.provider", "Projection provider does not match target", target.provider, authority.projection.provider));
@@ -260,9 +235,7 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
     : receiptWitnessIssue(target, authority.projection, currentReceipt);
   if (receiptIssue !== undefined) issues.push(receiptIssue);
 
-  const hasCollision = authority.kind === "canonical-sync"
-    ? hasCanonicalProjectionCollision(target, inventory, authority.projection, receipt)
-    : hasProjectionCollision(target, inventory, authority.projection, receipt);
+  const hasCollision = hasProjectionCollision(target, inventory, authority.projection, receipt);
   if (hasCollision) {
     issues.push(issue(
       "BLOCKED_COLLISION",
@@ -273,7 +246,6 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
   if (issues.length > 0) return blockedPlan(target, authority.projection, issues);
 
   const reconciledClaims = nextManagedClaims(
-    authority.kind,
     desired,
     authority.projection.projectionDigest,
     currentReceipt,
@@ -283,22 +255,8 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
     return blockedPlan(target, authority.projection, reconciledClaims.issues);
   }
   const expectedClaims = reconciledClaims.claims;
-  const retirementCandidates = authority.kind === "canonical-sync"
-    ? canonicalRetirementCandidates(desired, inventory, currentReceipt)
-    : [];
-  const desiredIds = new Set(desired.map((member) => member.pluginId));
-  const transitionClaims = authority.kind !== "canonical-sync" || currentReceipt === undefined
-    ? expectedClaims
-    : Object.freeze([
-        ...expectedClaims,
-        ...currentReceipt.body.managedMembers.filter((claim) => !desiredIds.has(claim.pluginId)),
-      ].sort(compareClaims));
-  const transitionVerificationClaims = Object.freeze([
-    ...expectedClaims,
-    ...retirementCandidates
-      .map((candidate) => candidate.claim)
-      .filter((claim) => !expectedClaims.some((expected) => expected.pluginId === claim.pluginId)),
-  ].sort(compareClaims));
+  const transitionClaims = expectedClaims;
+  const transitionVerificationClaims = expectedClaims;
   let nextMarketplace: ProviderMarketplaceRegistration;
   let transitionMarketplace: ProviderMarketplaceRegistration;
   let currentMarketplace: ProviderMarketplaceRegistration | null;
@@ -400,9 +358,7 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
 
   if (issues.length > 0) return blockedPlan(target, authority.projection, issues);
 
-  const retireActions = marketplacePhase.phase === "final"
-    ? Object.freeze([])
-    : canonicalRetireActions(target, retirementCandidates, transitionMarketplace);
+  const retireActions: readonly ProviderMutationAction[] = Object.freeze([]);
   const hasNativeMutation = beforeMarketplaceActions.length > 0
     || afterMarketplaceActions.length > 0
     || retireActions.length > 0;
@@ -452,17 +408,9 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
     hasTargetMutation,
   );
   const receiptMatches = currentReceipt?.receiptDigest === nextReceipt.receiptDigest;
-  const staleClaims = currentReceipt === undefined ? false : currentReceipt.body.managedMembers.some((claim) => !inventory.members.some((live) =>
-    live.pluginId === claim.pluginId
-    && live.nativeIdentity === claim.nativeIdentity
-    && live.providerSourceIdentity === claim.providerSourceIdentity
-    && sameArtifactAuthority(live.artifactAuthority, claim.artifactAuthority)
-    && live.memberFingerprint === claim.memberFingerprint,
-  ));
-  const shouldNormalize = authority.kind === "canonical-sync" && !hasNativeMutation && staleClaims;
   const shouldPublish = hasTargetMutation || currentReceipt === undefined || !receiptMatches;
 
-  if (!hasTargetMutation && !shouldNormalize && !shouldPublish && targetIdentity.kind === "present") {
+  if (!hasTargetMutation && !shouldPublish && targetIdentity.kind === "present") {
     return Object.freeze({
       target,
       state: "read-only",
@@ -514,9 +462,7 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
     steps.push(Object.freeze({ kind: "verify", target, projection: authority.projection }));
   }
   steps.push(Object.freeze({ kind: "verify-managed", target, claims: expectedClaims, marketplace: nextMarketplace }));
-  if (shouldNormalize && currentReceipt !== undefined) {
-    steps.push(Object.freeze({ kind: "mutate", action: Object.freeze({ kind: "NormalizeReceipt", target, prior: currentReceipt, receipt: nextReceipt }) }));
-  } else if (shouldPublish) {
+  if (shouldPublish) {
     steps.push(Object.freeze({ kind: "mutate", action: Object.freeze({ kind: "PublishReceipt", target, prior: receipt, receipt: nextReceipt }) }));
   }
   return Object.freeze({ target, state: "mutating", projection: authority.projection, steps: Object.freeze(steps), issues: Object.freeze([]) });
@@ -537,6 +483,7 @@ export function nativeMemberValue(member: NativeMemberObservation): CanonicalVal
 
 export function standaloneExposureValue(exposure: NativeStandaloneExposureObservation): CanonicalValue {
   return {
+    exposureKind: exposure.exposureKind,
     exposureIdentity: exposure.exposureIdentity,
     nativeIdentity: exposure.nativeIdentity,
     providerSourceIdentity: exposure.providerSourceIdentity,
@@ -586,58 +533,7 @@ function createScope(
       return Object.freeze({ kind: authority.kind, ...common, releases: authority.request.releases, evaluationProfile: authority.request.evaluationProfile } satisfies TargetedTestScope);
     case "complete-test":
       return Object.freeze({ kind: authority.kind, ...common, releaseSet: authority.request.releaseSet, evaluationProfile: authority.request.evaluationProfile } satisfies CompleteTestScope);
-    case "canonical-sync":
-      if (authority.projection.source.kind !== "complete-set") {
-        throw new Error("Canonical sync requires a complete-set projection");
-      }
-      return Object.freeze({
-        kind: "canonical-accepted",
-        ...common,
-        releaseSet: authority.projection.source.releaseSet,
-        acceptanceDigest: authority.acceptanceDigest,
-        promotionDigest: authority.promotionDigest,
-        channel: "current-main",
-      } satisfies CanonicalAcceptedScope);
   }
-}
-
-type CanonicalRetirementCandidate = Readonly<{
-  member: NativeMemberObservation;
-  claim: ManagedMemberClaim;
-}>;
-
-function canonicalRetirementCandidates(
-  desired: readonly ProviderProjectionMember[],
-  inventory: ProviderInventory,
-  receipt: TargetReceipt | undefined,
-): readonly CanonicalRetirementCandidate[] {
-  if (receipt === undefined) return [];
-  const desiredIds = new Set(desired.map((member) => member.pluginId));
-  const claims = new Map(receipt.body.managedMembers.map((claim) => [claim.pluginId, claim]));
-  const candidates: CanonicalRetirementCandidate[] = [];
-  for (const live of inventory.members) {
-    if (desiredIds.has(live.pluginId)) continue;
-    const claim = claims.get(live.pluginId);
-    if (claim === undefined || !receiptOwnsLiveMember(live, claim)) continue;
-    candidates.push(Object.freeze({ member: live, claim }));
-  }
-  return Object.freeze(candidates.sort((left, right) => compareCanonical(
-    left.member.pluginId,
-    right.member.pluginId,
-  )));
-}
-
-function canonicalRetireActions(
-  target: ProviderTarget,
-  candidates: readonly CanonicalRetirementCandidate[],
-  activeMarketplace: ProviderMarketplaceRegistration,
-): readonly ProviderMutationAction[] {
-  return Object.freeze(candidates.map(({ member }) => Object.freeze({
-      kind: "RetireMember",
-      target,
-      activeMarketplace,
-      member,
-    } satisfies Extract<ProviderMutationAction, { kind: "RetireMember" }>)));
 }
 
 function registrationForClaims(
@@ -831,7 +727,6 @@ function forwardNativeStateIssue(
 }
 
 function nextManagedClaims(
-  mode: DeploymentAuthority["kind"],
   desired: readonly ProviderProjectionMember[],
   desiredProjectionDigest: ProjectionDigest,
   receipt: TargetReceipt | undefined,
@@ -841,9 +736,6 @@ function nextManagedClaims(
   issues: readonly ProviderDeploymentIssue[];
 }> {
   const desiredClaims = desired.map((member) => toManagedMember(member, desiredProjectionDigest));
-  if (mode === "canonical-sync") {
-    return Object.freeze({ claims: Object.freeze(desiredClaims), issues: Object.freeze([]) });
-  }
   const preserved: ManagedMemberClaim[] = [];
   const issues: ProviderDeploymentIssue[] = [];
   for (const claim of receipt?.body.managedMembers ?? []) {
@@ -904,38 +796,6 @@ function receiptClaimsLiveIdentity(
     && claim.pluginId === live.pluginId
     && claim.providerSourceIdentity === live.providerSourceIdentity
     && sameArtifactAuthority(claim.artifactAuthority, live.artifactAuthority);
-}
-
-function hasReceiptRetirementCollision(
-  target: ProviderTarget,
-  inventory: ProviderInventory,
-  projection: AgentProviderProjection,
-  receipt: ReceiptObservation,
-): boolean {
-  if (
-    receipt.kind !== "present"
-    || receipt.receipt.body.provider !== target.provider
-    || receipt.receipt.body.targetDigest !== target.targetDigest
-  ) {
-    return false;
-  }
-  const desiredIds = new Set(projection.members.map((member) => member.pluginId));
-  for (const claim of receipt.receipt.body.managedMembers) {
-    if (desiredIds.has(claim.pluginId)) continue;
-    const relatedMembers = inventory.members.filter((live) =>
-      live.pluginId === claim.pluginId || live.nativeIdentity === claim.nativeIdentity);
-    const hasRelatedStandalone = inventory.standaloneExposures.some((exposure) =>
-      exposure.nativeIdentity === claim.nativeIdentity);
-    if (relatedMembers.length === 0 && !hasRelatedStandalone) continue;
-    if (
-      hasRelatedStandalone
-      || relatedMembers.length !== 1
-      || !receiptOwnsLiveMember(relatedMembers[0]!, claim)
-    ) {
-      return true;
-    }
-  }
-  return false;
 }
 
 function toVerifiedMember(member: ProviderProjectionMember): VerifiedMemberIdentity {

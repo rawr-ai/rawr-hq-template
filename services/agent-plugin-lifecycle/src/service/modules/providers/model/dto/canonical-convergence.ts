@@ -2,6 +2,8 @@ import type { ProviderMarketplaceRegistration } from "../policy/marketplace";
 import type { AgentProviderProjection, CapabilityObservation } from "../policy/projection";
 import type {
   NativeProviderMutationAction,
+  NativeConfiguredExposureObservation,
+  NativeStandaloneExposureObservation,
   ProviderInventory,
 } from "../policy/state-machine";
 import type {
@@ -32,7 +34,13 @@ export type CanonicalNativeMutationAction =
   }>
   | RequireActiveMarketplace<Extract<NativeProviderMutationAction, {
     kind: "EnableMember" | "InstallMember" | "RetireMember";
-  }>>;
+  }>>
+  | Readonly<{
+    kind: "RetireConfiguredExposure";
+    target: ProviderTarget;
+    activeMarketplace: ProviderMarketplaceRegistration;
+    exposure: NativeConfiguredExposureObservation;
+  }>;
 
 type RequireActiveMarketplace<TAction> = TAction extends { activeMarketplace: unknown }
   ? Readonly<Omit<TAction, "activeMarketplace"> & {
@@ -42,7 +50,18 @@ type RequireActiveMarketplace<TAction> = TAction extends { activeMarketplace: un
 
 export type CanonicalConvergenceStep =
   | Readonly<{ kind: "mutate"; action: CanonicalNativeMutationAction }>
-  | Readonly<{ kind: "verify-retired"; target: ProviderTarget; nativeIdentity: string }>
+  | Readonly<{
+    kind: "verify-retired";
+    target: ProviderTarget;
+    nativeIdentity: string;
+    providerSourceIdentity: string;
+  }>
+  | Readonly<{
+    kind: "verify-configured-retired";
+    target: ProviderTarget;
+    exposureIdentity: string;
+    providerSourceIdentity: string;
+  }>
   | Readonly<{
     kind: "verify-selected" | "verify-final";
     target: ProviderTarget;

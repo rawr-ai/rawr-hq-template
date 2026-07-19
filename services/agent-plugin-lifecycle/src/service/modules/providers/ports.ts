@@ -1,6 +1,7 @@
 import type { MechanicalEvidencePublisher } from "./ports/evidence";
 import type { VerifiedReleaseReader } from "./ports/artifact";
-import type { CanonicalChannelReader } from "./ports/channel";
+import type { CanonicalNativeRuntime } from "./ports/canonical-native";
+import type { CurrentMainSelectionReader } from "./ports/current-main";
 import type { ProviderTargetMutator, ProviderTargetReader } from "./ports/provider";
 import type {
   CompleteTargetIdentityReader,
@@ -13,7 +14,8 @@ import type {
 } from "./ports/state";
 
 export interface ProviderLifecycleRuntime {
-  readonly channel: CanonicalChannelReader;
+  readonly currentMain: CurrentMainSelectionReader;
+  readonly canonicalNative: CanonicalNativeRuntime;
   readonly releases: VerifiedReleaseReader;
   readonly provider: ProviderTargetReader;
   readonly providerMutator: ProviderTargetMutator;
@@ -27,11 +29,8 @@ export interface ProviderLifecycleRuntime {
 }
 
 export type { VerifiedReleaseReader } from "./ports/artifact";
-export type {
-  AcceptedProviderProjectionBinding,
-  CanonicalChannelReader,
-  CanonicalChannelResolution,
-} from "./ports/channel";
+export type { CanonicalNativeRuntime } from "./ports/canonical-native";
+export type { CurrentMainSelectionReader } from "./ports/current-main";
 export type {
   MechanicalEvidenceHandle,
   MechanicalEvidenceObservation,
@@ -116,12 +115,22 @@ export type {
   CompleteNativeHomesObservation,
 } from "./model/dto/native-homes";
 export type {
+  CanonicalMutationRecord,
   CanonicalStatusOutcome,
+  CanonicalSyncOutcome,
+  CanonicalSyncTargetOutcome,
   CanonicalTargetStatus,
   ProviderEvent,
   ProviderOperationOutcome,
   TargetOperationOutcome,
 } from "./model/dto/outcome";
+export type {
+  CanonicalConvergencePlan,
+  CanonicalExecutionResult,
+  CanonicalNativeMutationAction,
+  CanonicalNativeObservation,
+  CanonicalObservedConvergencePlan,
+} from "./model/dto/canonical-convergence";
 export type {
   AdapterProtocol,
   AgentProviderProjection,
@@ -143,9 +152,7 @@ export type {
   RendererProtocol,
 } from "./model/policy/projection";
 export type {
-  CanonicalAcceptedScope,
   CompleteTestScope,
-  LifecycleRecordDigest,
   ManagedMemberClaim,
   ReceiptLineage,
   TargetReceipt,

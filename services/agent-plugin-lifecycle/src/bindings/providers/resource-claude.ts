@@ -107,6 +107,7 @@ export function createResourceClaudeCanonicalObserver(
   const ports = createResourceClaudeProviderPorts(input, true);
   return createCanonicalNativeObserver({
     provider: "claude",
+    contentAuthority: input.contentAuthority,
     bridge: createClaudeNativeInventoryBridge(ports),
   });
 }
@@ -242,6 +243,7 @@ function createResourceClaudeProviderPorts(
         ...NATIVE_PACKAGE_READ_LIMITS,
       }));
       exposures.push(Object.freeze({
+        exposureKind: "installed",
         exposureIdentity: plugin.selector,
         nativeIdentity: `rawr:${plugin.name}`,
         providerSourceIdentity: parseSourceIdentity(plugin.marketplaceName, "claude"),
@@ -293,6 +295,35 @@ function createResourceClaudeProviderPorts(
       await (await session(home)).uninstallPlugin({
         selector: pluginSelector(nativeIdentity, input.contentAuthority, "claude"),
       });
+    },
+    retireConfiguredPlugin: async ({ home, expected }) => {
+      const provider = await session(home);
+      const selector = pluginSelector(expected.nativeIdentity, expected.providerSourceIdentity, "claude");
+      if (selector !== expected.exposureIdentity || expected.providerSourceIdentity !== input.contentAuthority) {
+        throw new Error("Claude configured retirement does not bind the selected owner selector");
+      }
+      const [configuration, plugins] = await Promise.all([
+        provider.readConfiguration(),
+        listPlugins(home),
+      ]);
+      const configured = parseConfiguredPluginExposures(configuration).filter((entry) =>
+        entry.exposureIdentity === selector);
+      const exact = configured[0];
+      if (
+        configured.length !== 1
+        || exact === undefined
+        || exact.nativeIdentity !== expected.nativeIdentity
+        || exact.providerSourceIdentity !== expected.providerSourceIdentity
+        || exact.enablement !== expected.enablement
+        || plugins.some((entry) => entry.selector === selector)
+      ) {
+        throw new Error("Claude configured retirement precondition changed before native uninstall");
+      }
+      await provider.uninstallPlugin({ selector });
+      const after = parseConfiguredPluginExposures(await provider.readConfiguration());
+      if (after.some((entry) => entry.exposureIdentity === selector)) {
+        throw new Error("Claude native uninstall retained the configured selector");
+      }
     },
   };
 
@@ -391,6 +422,7 @@ function parseConfiguredPluginExposures(
       throw new Error("Claude configured plugin entry is invalid");
     }
     return Object.freeze({
+      exposureKind: "configured-only" as const,
       exposureIdentity: configuredSelector,
       nativeIdentity: `rawr:${pluginId.value}`,
       providerSourceIdentity: parseSourceIdentity(configuredSelector.slice(separator + 1), "claude"),
@@ -412,6 +444,7 @@ async function inventoryClaudeExposures(
       ...NATIVE_PACKAGE_READ_LIMITS,
     }));
     exposures.set(plugin.selector, Object.freeze({
+      exposureKind: "installed",
       exposureIdentity: plugin.selector,
       nativeIdentity: `rawr:${plugin.name}`,
       providerSourceIdentity: parseSourceIdentity(plugin.marketplaceName, "claude"),
@@ -430,6 +463,7 @@ async function inventoryClaudeExposures(
     }
     exposures.set(configured.exposureIdentity, Object.freeze({
       ...configured,
+      exposureKind: installed === undefined ? "configured-only" : "installed",
       visibleSkills: installed?.visibleSkills ?? configured.visibleSkills,
       visibleHooks: installed?.visibleHooks ?? configured.visibleHooks,
     }));
