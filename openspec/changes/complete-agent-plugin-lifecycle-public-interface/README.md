@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6C3_PROVIDER_REFUSAL_REVIEWED`
+`C5_CONTEXT_DIRECTION_CORRECTION_ACTIVE`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
@@ -93,6 +93,11 @@ follow-up work.
 
 ## Current Gate
 
+- Correct the landed C5 service-context direction before sealing export root
+  admission: initial dependencies enter at the service root, module middleware
+  derives execution context, routers own behavior, and the inverted public
+  `bindings/*` / `ports/*` surfaces disappear without an alias. This is a
+  placement correction, not a new lifecycle design or app/runtime expansion.
 - Implement the framed T6C3 boundary as separate provider-refusal and
   export-admission checkpoints while the landed aggregate still guards the
   opposite owner, then remove the aggregate/scan relationship only after both
