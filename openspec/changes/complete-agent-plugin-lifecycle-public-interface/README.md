@@ -51,6 +51,7 @@ every provider mode is capsule-free.
 | C5 native provider resource location | `codex/c6-bind-native-provider-resource-location` / this record node |
 | C5 provider raw context | `codex/c6-route-provider-runtime-context` / this record node |
 | C5 current-main service composition | `codex/c6-own-current-main-context` / `a40af23f8124900f68a519cf737c9d88516374f8` |
+| C5 artifact/evidence service composition | `codex/c6-own-artifact-resource-context` / `07825bd307b2aefe4fa45a2c0154e80c90bbfab6` |
 
 Personal records remain unlanded until the installed Template interface can
 enforce their first semantic checkpoint. No hook bypass, legacy mixed sync, or
@@ -522,6 +523,27 @@ in [[design#Service context flows from root dependencies into module handlers|th
 | Behavior and static proof | The complete lifecycle suite passed 40 files / 356 tests and the complete serialized CLI suite passed 47 files / 321 tests. Lifecycle and CLI lint, typecheck, build, sync, and guarded structural suites passed without cache. Strict OpenSpec validation and `git diff --check` passed. The protected note was restored byte-identically at SHA-256 `d06966389dac095f8a7f620aa4b27a50935a75762300000f987a848e45c2aadb`, remained unstaged, and left no holding root. |
 | Reviews | Architecture/authority and structural/Habitat reviews were clean. Behavior/testing and TypeScript/refactor found the initial single-symbol value canary and missing type-barrel proof; the final exact value-key assertion, positive option-type probes, and negative shared/domain type probes closed both P2 findings. Final rereviews report no remaining P1/P2. |
 | Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]], task 5.3's known-home bridge, native provider behavior, personal repository state, app/runtime composition, and every protected-lane candidate remain untouched. The release facade remains explicitly transitional and is not promoted into a permanent owner. |
+
+## C5 Artifact And Evidence Service Composition Proof
+
+Code checkpoint `0dbd68a44ce02a059991f71ae55edaba80847c68`
+supersedes the caller-context portion of
+[[#C5 Release Host-Binding Narrowing Proof|the release host-binding checkpoint]]
+without claiming the remaining facade deletion in
+[[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]]. It follows
+[[design#Service context flows from root dependencies into module handlers|the
+accepted context direction]] and the thin native boundary in
+[[authority-amendment#Corrected Frame]].
+
+| Boundary | Result |
+| --- | --- |
+| Root authority | Initial context receives one raw `ArtifactRepositoryAsyncPort` and one explicit `artifactRepositoryRoot`. The four caller semantic keys `releaseArtifacts`, `releaseEvidence`, `providerArtifactRepository`, and `providerEvidenceStore` are absent by compile-time and runtime proof. The controller composition root selects the existing Effect Platform Node resource once; provider-record state no longer selects or carries generic artifact authority. |
+| Service composition | One root oRPC provider derives `artifactStore` and `mechanicalEvidenceStore` under `context.provided` from the same raw pair. Their implementations live in the closed private `service/repository` root. Releases receive publication plus read authority, packaging receives only `read`, and provider middleware derives its verified-release and evidence-publisher projections while using the raw repository only for its separate projection-record address space. The now-mandatory evidence capability removes the old unreachable optional branch. |
+| Transitional surface | `./bindings/releases` remains explicit deletion debt for the next slice. Its sole admitted CLI value consumer is now the exact reader-only export composition root; CLI-local artifact/evidence writers are absent and a same-path mutation fixture is rejected. Export still receives that caller-built reader, so this checkpoint does not claim universal unique construction or enter [[tasks#5. T6C3: Export Destination Independence|export task 5.2]]. |
+| Behavior proof | The complete lifecycle suite passed 40 files / 354 tests and the complete serialized CLI suite passed 47 files / 321 tests. Final focused reruns passed the four-case service spine and 11 CLI artifact-context cases. The new full-client provider vertical reads one complete set and its two releases through the shared raw root, publishes mechanical evidence at that same root, repeats with identical output, and performs no second evidence publication. Repository-check and malformed-input paths keep every raw method cold. |
+| Static and structural proof | Lifecycle and CLI lint, typecheck, build, and sync passed without cache. The final guarded lifecycle structural suite passed all three enforced rules: closed positive service topology, dependency direction, and qualified command topology. The dependency rule now rejects service-to-binding imports and admits only the exact reader-shaped CLI transition. Strict OpenSpec validation and `git diff --check` passed. The protected note remained unstaged and byte-identical at SHA-256 `d06966389dac095f8a7f620aa4b27a50935a75762300000f987a848e45c2aadb`; no holding root remains. |
+| Reviews | Architecture/authority and TypeScript/refactor/oRPC reviews were clean. Behavior/testing found the missing full-client evidence path; structural/Habitat found the mutation-capable CLI exception. Both P2 findings were fixed and independently rereviewed. Final reviews report no remaining P1/P2. |
+| Scope | No native provider command, personal-repository relationship, app/runtime composition, export publication mechanism, live home, or protected-lane candidate was opened. HF01 remains excluded. Tasks 2A.1-2A.4 stay open until the remaining public binding/port surface is actually absent. |
 
 ## CLI Harness Owner Correction
 
