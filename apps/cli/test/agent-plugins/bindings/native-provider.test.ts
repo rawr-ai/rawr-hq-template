@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   CODEX_ADAPTER_PROTOCOL,
+  NativeProviderResourceFailure,
   createProviderMarketplaceRegistration,
   parseProviderTarget,
   renderCompleteProjection,
@@ -149,6 +150,33 @@ describe("native provider resource binding", () => {
       expect(selected).toHaveBeenCalledWith({ executablePath: EXECUTABLES[providerId], home });
     },
   );
+
+  it("preserves a typed provider ownership conflict across the Effect runtime edge", async () => {
+    const conflict = Object.freeze({
+      _tag: "NativeAgentProviderFailure" as const,
+      provider: "codex" as const,
+      operation: "acquire" as const,
+      reason: "OwnershipConflict" as const,
+      path: "/tmp/codex/.rawr-agent-plugin-owner.json",
+      detail: "Provider ownership slot is occupied",
+    });
+    provider.codexAcquire.mockReturnValue(Effect.fail(conflict));
+    const resource = createNodeNativeProviderResource({
+      locate: async () => { throw new Error("unused"); },
+    });
+
+    const acquired = resource.acquireCodex({
+      executablePath: EXECUTABLES.codex,
+      home: "/tmp/codex",
+    });
+    await expect(acquired).rejects.toBeInstanceOf(NativeProviderResourceFailure);
+    await expect(acquired).rejects.toMatchObject({
+      _tag: "NativeProviderResourceFailure",
+      kind: "ownership-conflict",
+      message: conflict.detail,
+      path: conflict.path,
+    });
+  });
 
   it("locates each semantic marketplace source immediately before forwarding its admitted tree", async () => {
     fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), FIXTURE_PREFIX)));

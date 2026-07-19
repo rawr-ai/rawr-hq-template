@@ -356,8 +356,10 @@ aggregate native homes, or infer ownership from path shape.
 #### Scenario: Marker slot becomes occupied at the native edge
 - **WHEN** planning observes an absent marker slot but the native resource
   recheck observes any entry or unreadable result before command execution
-- **THEN** the target is `BLOCKED_COLLISION` with zero native calls and no
-  provider-owned state mutation
+- **THEN** that native invocation does not start and reports a
+  `BLOCKED_COLLISION` issue; capability or observation remains blocked, while a
+  mutation bridge that may already have invoked an earlier native command
+  remains uncertain rather than falsely reporting a zero-mutation target
 
 #### Scenario: Export publication never exposes an admissible provider home
 - **WHEN** export admission overlaps a provider request for one absent path

@@ -90,7 +90,11 @@ export async function executeCanonicalSync(
       desired.projection.artifactAuthority.contentAuthority,
     );
     if (!capabilities.ok) {
-      outcomes.push(blocked(target, "INCOMPATIBLE_PROVIDER", capabilities.issues));
+      outcomes.push(blocked(
+        target,
+        hasOwnershipCollision(capabilities.issues) ? "BLOCKED_COLLISION" : "INCOMPATIBLE_PROVIDER",
+        capabilities.issues,
+      ));
       continue;
     }
     const observation = await dependencies.native.observe(
@@ -98,7 +102,9 @@ export async function executeCanonicalSync(
       desired.projection.artifactAuthority.contentAuthority,
     );
     if (!observation.ok) {
-      outcomes.push(failed(target, [], observation.issues));
+      outcomes.push(hasOwnershipCollision(observation.issues)
+        ? blocked(target, "BLOCKED_COLLISION", observation.issues)
+        : failed(target, [], observation.issues));
       continue;
     }
 
@@ -134,7 +140,9 @@ export async function executeCanonicalSync(
     });
     const prefix = execution.appliedPrefix.map(canonicalMutationRecord);
     if (execution.kind === "failed") {
-      outcomes.push(failed(target, prefix, execution.issues));
+      outcomes.push(prefix.length === 0 && hasOwnershipCollision(execution.issues)
+        ? blocked(target, "BLOCKED_COLLISION", execution.issues)
+        : failed(target, prefix, execution.issues));
       continue;
     }
     if (execution.kind === "uncertain") {
@@ -175,6 +183,10 @@ export async function executeCanonicalSync(
     outcomes.push(mutated);
   }
   return success(aggregate(outcomes));
+}
+
+function hasOwnershipCollision(issues: readonly ProviderDeploymentIssue[]): boolean {
+  return issues.some((entry) => entry.code === "BLOCKED_COLLISION");
 }
 
 async function materializePlan(

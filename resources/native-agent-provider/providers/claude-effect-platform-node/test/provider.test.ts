@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { FileSystem } from "@effect/platform";
+import { SystemError } from "@effect/platform/Error";
 import { NodeContext } from "@effect/platform-node";
 import { Effect, Exit } from "effect";
 
@@ -246,6 +247,44 @@ describe("claude-effect-platform-node", () => {
       maxBytes: 1024,
     }));
     expect(failureReason(ambiguous)).toBe("ProtocolFailed");
+  });
+
+  it("rechecks the ownership slot before starting a Claude command", async () => {
+    const fixture = await makeFixture();
+    const session = await Effect.runPromise(
+      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+    );
+    await writeFile(path.join(fixture.home, ".rawr-agent-plugin-owner.json"), "occupied\n");
+
+    const exit = await Effect.runPromiseExit(session.probe());
+
+    expect(failureReason(exit)).toBe("OwnershipConflict");
+    expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
+  });
+
+  it("maps an unreadable ownership slot to a collision before native execution", async () => {
+    const fixture = await makeFixture();
+    const ownerSlot = path.join(fixture.home, ".rawr-agent-plugin-owner.json");
+    const exit = await Effect.runPromiseExit(Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem;
+      const injected: FileSystem.FileSystem = {
+        ...fs,
+        readLink: (candidate) => candidate === ownerSlot
+          ? Effect.fail(new SystemError({
+              reason: "PermissionDenied",
+              module: "FileSystem",
+              method: "readLink",
+              pathOrDescriptor: candidate,
+            }))
+          : fs.readLink(candidate),
+      };
+      return yield* claudeEffectPlatformNodeProvider.acquire(fixture).pipe(
+        Effect.provideService(FileSystem.FileSystem, injected),
+      );
+    }).pipe(Effect.provide(NodeContext.layer)));
+
+    expect(failureReason(exit)).toBe("OwnershipConflict");
+    expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
   });
 });
 

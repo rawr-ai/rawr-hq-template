@@ -117,14 +117,16 @@
 
 ## 5. T6C3: Export Destination Independence
 
-- [ ] 5.1 Require every provider mode to use an explicit pre-existing home and
+- [x] 5.1 Require every provider mode to use an explicit pre-existing home and
   treat any entry or unreadable result at the fixed marker slot as
   `BLOCKED_COLLISION` before native commands. Recheck the slot at the native
   resource boundary; never create the home or parse/import the export marker
   codec. Prove missing/marked provider home refusal with zero native calls; a
   transition from absent at planning to occupied or unreadable at the resource
-  edge returning `BLOCKED_COLLISION` with zero native calls; and existing
-  unmarked provider convergence followed by a read-only repeat.
+  edge returning a `BLOCKED_COLLISION` issue with zero calls for that native
+  invocation; truthful uncertainty when the same issue follows an already
+  invoked composite mutation bridge; and existing unmarked provider convergence
+  followed by a read-only repeat.
 - [ ] 5.2 Give exports one private exact marker at
   `.rawr-agent-plugin-owner.json` with canonical bytes
   `{"owner":"export","schemaVersion":1}\n`. Extend the existing private export

@@ -59,6 +59,10 @@ export type {
   NativeResourceSessionInput,
 } from "./resource-port";
 export {
+  NativeProviderResourceFailure,
+  type NativeProviderResourceFailureKind,
+} from "./resource-port";
+export {
   createCurrentMainSelectionReader,
   type GovernanceCurrentMainResolver,
 } from "./current-main-selection";

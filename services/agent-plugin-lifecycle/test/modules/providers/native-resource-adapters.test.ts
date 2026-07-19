@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createProviderMarketplaceRegistration,
+  NativeProviderResourceFailure,
   parseProviderTarget,
   renderCompleteProjection,
   type AgentProviderProjection,
@@ -179,6 +180,37 @@ describe("native provider resource interpretation", () => {
     expect(attempts).toBe(2);
   });
 
+  it("maps the resource-port ownership conflict to the lifecycle collision issue", async () => {
+    const projection = hookedCodexProjection();
+    const targetResult = parseProviderTarget({
+      provider: "codex",
+      home: "/tmp/rawr-native-owner-conflict",
+    });
+    if (!targetResult.ok) throw new Error(targetResult.issues[0].message);
+    const adapter = createResourceCodexProviderAdapter({
+      resource: Object.freeze({
+        acquireCodex: async () => {
+          throw new NativeProviderResourceFailure({
+            kind: "ownership-conflict",
+            path: "/tmp/rawr-native-owner-conflict/.rawr-agent-plugin-owner.json",
+            detail: "Provider ownership slot is occupied",
+          });
+        },
+        acquireClaude: async () => { throw new Error("unused"); },
+      }),
+      executablePath: "/opt/rawr/bin/codex",
+      contentAuthority: projection.artifactAuthority.contentAuthority,
+      marketplaceSources: { read: async () => { throw new Error("unused"); } },
+    });
+
+    const result = await adapter.inspectCapabilities(targetResult.value);
+
+    expect(result).toMatchObject({
+      ok: false,
+      issues: [{ code: "BLOCKED_COLLISION", path: "target.home" }],
+    });
+  });
+
   it("does not claim a packaged hook when Codex hooks/list omits it", async () => {
     const verified = await verifyCodexHookVisibility(Object.freeze([]));
 
@@ -325,11 +357,41 @@ describe("native provider resource interpretation", () => {
       expect(fixture.nativeCalls).toEqual([]);
     },
   );
+
+  it("preserves uncertainty when the first bridge command reports provider-home ownership collision", async () => {
+    const fixture = configuredRetirementFixture("codex", "ownership-conflict-before-native-call");
+
+    const result = await fixture.adapter.applyCanonical(fixture.action);
+
+    expect(result).toMatchObject({
+      kind: "uncertain",
+      lastKnown: "bridge-invoked",
+      issues: [{ code: "BLOCKED_COLLISION", path: "target.home" }],
+    });
+    expect(fixture.nativeCalls).toEqual([]);
+  });
+
+  it("does not erase uncertainty when ownership changes after native mutation", async () => {
+    const fixture = configuredRetirementFixture("codex", "ownership-conflict-after-native-call");
+
+    const result = await fixture.adapter.applyCanonical(fixture.action);
+
+    expect(result).toMatchObject({
+      kind: "uncertain",
+      lastKnown: "bridge-invoked",
+      issues: [{ code: "BLOCKED_COLLISION", path: "target.home" }],
+    });
+    expect(fixture.nativeCalls).toEqual([fixture.action.exposure.exposureIdentity]);
+  });
 });
 
 function configuredRetirementFixture(
   provider: "claude" | "codex",
-  mode: "changed-before-native-call" | "stable",
+  mode:
+    | "changed-before-native-call"
+    | "ownership-conflict-after-native-call"
+    | "ownership-conflict-before-native-call"
+    | "stable",
 ) {
   const protocol = provider === "codex" ? CODEX_ADAPTER_PROTOCOL : CLAUDE_ADAPTER_PROTOCOL;
   const projection = providerProjection(provider, protocol);
@@ -397,6 +459,7 @@ function configuredRetirementFixture(
       readPlugin: async () => { throw new Error("config-only residue has no package"); },
       addPlugin: async () => { throw new Error("unused"); },
       removePlugin: async ({ selector }: Parameters<CodexNativeResourceSession["removePlugin"]>[0]) => {
+        if (mode === "ownership-conflict-before-native-call") throw nativeOwnershipConflict(home);
         nativeCalls.push(selector);
         configured = false;
       },
@@ -404,13 +467,18 @@ function configuredRetirementFixture(
         plugins: { marketplaces: [] },
         hooks: { data: [{ cwd: home, hooks: [], warnings: [], errors: [] }] },
       }),
-      readConfiguration: async () => Object.freeze({
-        config: {
-          plugins: configured
-            ? { [exposure.exposureIdentity]: { enabled: nextEnabled() } }
-            : {},
-        },
-      }),
+      readConfiguration: async () => {
+        if (mode === "ownership-conflict-after-native-call" && !configured) {
+          throw nativeOwnershipConflict(home);
+        }
+        return Object.freeze({
+          config: {
+            plugins: configured
+              ? { [exposure.exposureIdentity]: { enabled: nextEnabled() } }
+              : {},
+          },
+        });
+      },
       setMarketplaceSource: async () => { throw new Error("unused"); },
     });
     const adapter = createResourceCodexProviderAdapter({
@@ -453,14 +521,20 @@ function configuredRetirementFixture(
     installPlugin: async () => { throw new Error("unused"); },
     enablePlugin: async () => { throw new Error("unused"); },
     uninstallPlugin: async ({ selector }: Parameters<ClaudeNativeResourceSession["uninstallPlugin"]>[0]) => {
+      if (mode === "ownership-conflict-before-native-call") throw nativeOwnershipConflict(home);
       nativeCalls.push(selector);
       configured = false;
     },
-    readConfiguration: async () => Object.freeze({
-      enabledPlugins: configured
-        ? { [exposure.exposureIdentity]: nextEnabled() }
-        : {},
-    }),
+    readConfiguration: async () => {
+      if (mode === "ownership-conflict-after-native-call" && !configured) {
+        throw nativeOwnershipConflict(home);
+      }
+      return Object.freeze({
+        enabledPlugins: configured
+          ? { [exposure.exposureIdentity]: nextEnabled() }
+          : {},
+      });
+    },
   });
   const adapter = createResourceClaudeProviderAdapter({
     ...base,
@@ -478,6 +552,14 @@ function configuredRetirementFixture(
       exposure,
     }),
     nativeCalls,
+  });
+}
+
+function nativeOwnershipConflict(home: string): NativeProviderResourceFailure {
+  return new NativeProviderResourceFailure({
+    kind: "ownership-conflict",
+    path: `${home}/.rawr-agent-plugin-owner.json`,
+    detail: "Provider ownership slot is occupied",
   });
 }
 

@@ -57,7 +57,11 @@ export async function executeCanonicalStatus(
       desired.projection.artifactAuthority.contentAuthority,
     );
     if (!capabilities.ok) {
-      outcomes.push(statusOutcome(target, "INCOMPATIBLE_PROVIDER", capabilities.issues));
+      outcomes.push(statusOutcome(
+        target,
+        hasOwnershipCollision(capabilities.issues) ? "BLOCKED_COLLISION" : "INCOMPATIBLE_PROVIDER",
+        capabilities.issues,
+      ));
       continue;
     }
     const observation = await dependencies.native.observe(
@@ -65,7 +69,11 @@ export async function executeCanonicalStatus(
       desired.projection.artifactAuthority.contentAuthority,
     );
     if (!observation.ok) {
-      outcomes.push(statusOutcome(target, "DRIFTED", observation.issues));
+      outcomes.push(statusOutcome(
+        target,
+        hasOwnershipCollision(observation.issues) ? "BLOCKED_COLLISION" : "DRIFTED",
+        observation.issues,
+      ));
       continue;
     }
     const plan = planCanonicalConvergence({
@@ -76,6 +84,10 @@ export async function executeCanonicalStatus(
     outcomes.push(statusOutcome(target, plan.status, plan.issues));
   }
   return success(Object.freeze(outcomes));
+}
+
+function hasOwnershipCollision(issues: readonly ProviderDeploymentIssue[]): boolean {
+  return issues.some((entry) => entry.code === "BLOCKED_COLLISION");
 }
 
 function statusOutcome(

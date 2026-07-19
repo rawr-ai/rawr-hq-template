@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6C3_MINIMAL_BOUNDARY_FRAMED`
+`T6C3_PROVIDER_REFUSAL_REVIEWED`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
@@ -41,6 +41,7 @@ every provider mode is capsule-free.
 | Controller acceptance-harness retirement | `codex/c6-retire-controller-acceptance-harness` / this record node |
 | T6C1b/T6C2 public cutover | `codex/c6-atomic-canonical-cutover` / this record node |
 | T6C3 minimal boundary frame | `codex/c6-minimal-export-provider-boundary` / this record node |
+| T6C3 provider slot refusal | `codex/c6-provider-root-slot-refusal` / this record node |
 | Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
 | Retained CLI target node | `codex/c6-serialize-cli-test-target` |
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
@@ -74,7 +75,7 @@ global undo redesign, and Inngest candidate bytes.
 | T6C2a provider capsule retirement | complete, reviewed | capsule-cold provider modes, forward-only retry, export-only legacy retirement |
 | T6C2b managed-retire deletion | complete, reviewed | receipt-owned provider retire unreachable without alias; omission cleanup remains sync-owned |
 | T6C2c canonical native path | complete, reviewed | sole governance selection, selected-owner native truth, exact-selector cleanup, verification barriers, and no canonical hidden state |
-| T6C3 export independence | minimal boundary framed | export-private exact marker, provider slot refusal, no native-home aggregate/scan |
+| T6C3 export independence | provider refusal reviewed | fixed-slot refusal at acquire/native edge; export admission and aggregate retirement remain |
 | T6D truthful test owners | retained, record realignment pending | owner-local DevOps fixture and ordinary serialized CLI target |
 | T6E deterministic manifest | implemented, restack/gate pending | focused canonicalization plus full build-twice equality |
 | T6F landing/settlement | closed | independently landed repos, disposable/live native convergence, read-only repeat |
@@ -266,6 +267,21 @@ explicit pre-existing home. That removes the reason for cross-owner discovery.
 | Removed relationship | `KnownNativeHomesReader`, `completeNativeHomes`, target-identity scans, pathless aggregation, and app-runtime plumbing that existed only to bridge those owners are deleted without replacement. |
 | Resource law | Export extends its private resource/action unions with an owner-local root-observation discriminator and one matched publish/inverse variant, then freezes absent-root publication and inverse in the existing action set before undo admission. The admitted action revalidates absence, prepares an already-marked private same-parent directory, and atomically publishes it no-replace. Provider resources never create homes and recheck marker-slot absence before native execution. |
 | Proof boundary | Bounded absent/exact/wrong marker cases, publication-failure containment, provider missing/marked/unmarked and recheck-transition cases, export-local destination overlap, one no-unmarked-final-state interleaving, no cross-owner reads, read-only repeat, types, lint, positive topology, and focused behavior. Alias, tamper, generalized publication, and undo matrices are outside C6. |
+
+## T6C3 Provider Slot Refusal Proof
+
+This first implementation checkpoint activates only the provider-local half of
+[[tasks#5. T6C3 Export Destination Independence]]. The landed aggregate remains
+in place until export admission is active, so this node cannot expose an
+unguarded intermediate topology.
+
+| Boundary | Result |
+| --- | --- |
+| Resource | Effect Platform checks only the fixed owner slot at explicit existing home acquisition and again inside the command mutex immediately before each command or Codex app-server spawn. Only `NotFound` admits; any entry, dangling symlink, or unreadable result returns typed `OwnershipConflict` with zero native calls. |
+| Service | The CLI composition edge projects the typed Effect failure into one service-owned resource error. Capability and observation collisions become `BLOCKED_COLLISION`. A collision after a mutation bridge is invoked remains `uncertain` because a composite bridge may already have changed native state; the issue retains `BLOCKED_COLLISION` and the confirmed prefix stays exact. No marker codec, export ledger, registry, receipt, or provider installer entered the provider module. |
+| Behavior | The native resource suite passes 16/16, the complete lifecycle suite passes 35 files / 325 tests, and the focused CLI Effect binding passes 7/7. Missing, removed-home, occupied, dangling-slot, injected unreadable, and command/app-server refusal cases stay cold at the native process edge. Pre-mutation collision blocks; bridge-invoked collision remains truthful uncertainty, including the post-mutation regression oracle. |
+| Static | Resource, lifecycle, and CLI lint, typecheck, and build passed. Lifecycle and CLI sync plus enforced positive structural/Habitat suites passed; strict OpenSpec and `git diff --check` passed. |
+| Reviews | Architecture/authority, behavior/testing, TypeScript/refactor/Effect, and structural quality approved with no remaining P1/P2 findings. |
 
 ## Standing Reviews
 

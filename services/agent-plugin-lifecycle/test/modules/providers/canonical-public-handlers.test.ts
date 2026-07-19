@@ -129,10 +129,24 @@ describe("canonical provider public handlers", () => {
       },
     },
     {
+      label: "provider-home ownership collision",
+      expected: "BLOCKED_COLLISION",
+      configure: (harness: CanonicalHarness) => {
+        harness.ownershipConflicts.add(harness.codexTarget.targetDigest);
+      },
+    },
+    {
       label: "ordinary native observation failure",
       expected: "DRIFTED",
       configure: (harness: CanonicalHarness) => {
         harness.observationFailures.add(harness.codexTarget.targetDigest);
+      },
+    },
+    {
+      label: "provider-home collision discovered during observation",
+      expected: "BLOCKED_COLLISION",
+      configure: (harness: CanonicalHarness) => {
+        harness.observationOwnershipConflicts.add(harness.codexTarget.targetDigest);
       },
     },
   ] satisfies readonly StatusScenario[])(
@@ -482,6 +496,47 @@ describe("canonical provider public handlers", () => {
     });
     expect(harness.apply).not.toHaveBeenCalled();
   });
+
+  it("reports a provider-home ownership conflict as a blocked sync target", async () => {
+    const harness = new CanonicalHarness();
+    harness.ownershipConflicts.add(harness.codexTarget.targetDigest);
+
+    const result = await harness.sync();
+
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        status: "Blocked",
+        targets: [{ kind: "blocked", status: "BLOCKED_COLLISION", appliedPrefix: [] }],
+      },
+    });
+    expect(harness.observe).not.toHaveBeenCalled();
+    expect(harness.apply).not.toHaveBeenCalled();
+  });
+
+  it("keeps an apply-edge ownership collision uncertain with an empty confirmed prefix", async () => {
+    const harness = new CanonicalHarness();
+    harness.setMarketplaceOnlyDrift();
+    harness.failMarketplaceWithOwnershipCollision = true;
+
+    const result = await harness.sync();
+
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        status: "Failed",
+        targets: [{
+          kind: "uncertain",
+          status: "DRIFTED",
+          appliedPrefix: [],
+          attempted: { kind: "SetMarketplace" },
+          lastKnown: "bridge-invoked",
+          issues: [{ code: "BLOCKED_COLLISION", path: "target.home" }],
+        }],
+      },
+    });
+    expect(harness.apply).toHaveBeenCalledOnce();
+  });
 });
 
 interface StatusScenario {
@@ -495,8 +550,10 @@ class CanonicalHarness {
   readonly codexTarget = mustTarget("codex", "/tmp/rawr-canonical-public-codex");
   readonly timeline: string[] = [];
   readonly incompatible = new Set<string>();
+  readonly ownershipConflicts = new Set<string>();
   readonly ambiguousProvenance = new Set<string>();
   readonly observationFailures = new Set<string>();
+  readonly observationOwnershipConflicts = new Set<string>();
   readonly materializedProjectionDigests = new Set<string>();
   readonly inventories = new Map<string, ProviderInventory>();
 
@@ -507,6 +564,7 @@ class CanonicalHarness {
   artifact: VerifiedArtifactSnapshotV1 = this.fixture.snapshot;
   failProjectionMaterialization = false;
   failMarketplaceMaterialization = false;
+  failMarketplaceWithOwnershipCollision = false;
   failRetireNativeIdentity: string | null = null;
   failRetireExposureIdentity: string | null = null;
 
@@ -517,6 +575,13 @@ class CanonicalHarness {
     contentAuthority: ContentAuthority,
   ) => {
     this.requireAuthority(contentAuthority);
+    if (this.ownershipConflicts.has(target.targetDigest)) {
+      return failure([issue(
+        "BLOCKED_COLLISION",
+        "target.home",
+        "injected provider-home ownership collision",
+      )]);
+    }
     if (this.incompatible.has(target.targetDigest)) {
       return Object.freeze({
         ok: false as const,
@@ -541,6 +606,13 @@ class CanonicalHarness {
     contentAuthority: ContentAuthority,
   ) => {
     this.requireAuthority(contentAuthority);
+    if (this.observationOwnershipConflicts.has(target.targetDigest)) {
+      return failure([issue(
+        "BLOCKED_COLLISION",
+        "target.home",
+        "injected provider-home ownership collision",
+      )]);
+    }
     if (this.observationFailures.has(target.targetDigest)) {
       return failure([issue(
         "VISIBILITY_FAILED",
@@ -563,6 +635,17 @@ class CanonicalHarness {
   readonly apply = vi.fn(async (action: CanonicalNativeMutationAction): Promise<NativeMutationAttempt> => {
     this.timeline.push(`apply:${action.kind}`);
     const before = this.inventory(action.target);
+    if (action.kind === "SetMarketplace" && this.failMarketplaceWithOwnershipCollision) {
+      return Object.freeze({
+        kind: "uncertain",
+        lastKnown: "bridge-invoked",
+        issues: [issue(
+          "BLOCKED_COLLISION",
+          "target.home",
+          "injected apply-edge provider-home ownership collision",
+        )] as const,
+      });
+    }
     if (
       action.kind === "RetireMember"
       && action.member.nativeIdentity === this.failRetireNativeIdentity

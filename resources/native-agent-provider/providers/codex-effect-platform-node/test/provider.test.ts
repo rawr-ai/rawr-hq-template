@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { chmod, lstat, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, lstat, mkdir, mkdtemp, readFile, realpath, rm, rmdir, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -218,6 +218,67 @@ describe("codex-effect-platform-node", () => {
     }
     const invalidIdentity = await Effect.runPromiseExit(session.removeMarketplace({ identity: "../../wrong" }));
     expect(failureReason(invalidIdentity)).toBe("InvalidInput");
+    expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
+  });
+
+  it("refuses missing or occupied homes before starting a native command", async () => {
+    const fixture = await makeFixture();
+    const missing = await Effect.runPromiseExit(
+      codexEffectPlatformNodeProvider.acquire({
+        ...fixture,
+        home: path.join(fixture.root, "missing-home"),
+      }).pipe(Effect.provide(NodeContext.layer)),
+    );
+    expect(failureReason(missing)).toBe("Missing");
+
+    await mkdir(path.join(fixture.home, ".rawr-agent-plugin-owner.json"));
+    const occupied = await Effect.runPromiseExit(
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+    );
+    expect(failureReason(occupied)).toBe("OwnershipConflict");
+    expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
+  });
+
+  it("rechecks the ownership slot before starting the Codex app server", async () => {
+    const fixture = await makeFixture();
+    const session = await Effect.runPromise(
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+    );
+    await writeFile(path.join(fixture.home, ".rawr-agent-plugin-owner.json"), "occupied\n");
+
+    const exit = await Effect.runPromiseExit(session.inspectAppServer());
+
+    expect(failureReason(exit)).toBe("OwnershipConflict");
+    expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
+  });
+
+  it("treats a dangling ownership-slot symlink as occupied", async () => {
+    const fixture = await makeFixture();
+    await symlink(
+      path.join(fixture.root, "missing-owner-marker-target"),
+      path.join(fixture.home, ".rawr-agent-plugin-owner.json"),
+    );
+
+    const exit = await Effect.runPromiseExit(
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+    );
+
+    expect(failureReason(exit)).toBe("OwnershipConflict");
+    expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
+  });
+
+  it("revalidates the explicit home before command and app-server processes", async () => {
+    const fixture = await makeFixture();
+    const session = await Effect.runPromise(
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+    );
+    await rmdir(fixture.home);
+
+    const command = await Effect.runPromiseExit(session.listPlugins());
+    const appServer = await Effect.runPromiseExit(session.inspectAppServer());
+
+    expect(failureReason(command)).toBe("Missing");
+    expect(failureReason(appServer)).toBe("Missing");
     expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
   });
 });
