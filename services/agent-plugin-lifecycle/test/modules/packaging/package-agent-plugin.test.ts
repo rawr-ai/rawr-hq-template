@@ -24,7 +24,7 @@ import {
   type ResourcePackageOutputOptions,
 } from "../../../src/bindings/packaging";
 import { packagingArtifactFixture } from "./artifact-fixture";
-import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "./owned-fixture-root";
+import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "../../support/owned-fixture-root";
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
 const roots: OwnedFixtureRoot[] = [];

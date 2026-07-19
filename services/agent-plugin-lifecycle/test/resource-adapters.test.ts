@@ -33,7 +33,7 @@ import {
   createOwnedFixtureRoot,
   disposeOwnedFixtureRoot,
   type OwnedFixtureRoot,
-} from "./modules/packaging/owned-fixture-root";
+} from "./support/owned-fixture-root";
 import { createLifecycleTestClient, testInvocation } from "./support/client";
 
 describe("agent-plugin lifecycle resource adapters", () => {

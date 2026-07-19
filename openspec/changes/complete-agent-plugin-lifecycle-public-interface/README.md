@@ -324,6 +324,26 @@ decision and is unchanged by this node.
 | Static and structural | Lifecycle and CLI lint, typecheck, build, and sync passed without cache. The dependency-direction regression and staged Grit gate passed. Lifecycle and CLI structural suites passed against an exact staged-tree worktree snapshot that excluded the user-owned untracked note. `git diff --check` passed. |
 | Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural quality approved the corrected slice with no remaining P1/P2. The review loop caught and closed partial-retention representability plus staged-domain DTO ownership before checkpointing. |
 
+## C5 Release Source Repository Ownership Correction
+
+The first host-materialization proposal would have moved the release source
+repositories wholesale into the CLI. Standing architecture review rejected
+that as a domain-authority inversion: the CLI selects the content-workspace
+provider, while lifecycle eligibility and staged-observation translation remain
+owned by the release module. This checkpoint corrects both placement and
+construction authority without claiming that
+[[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]] are complete.
+
+| Boundary | Result |
+| --- | --- |
+| Service ownership | Clean Git eligibility, payload materialization, and staged observation live under `modules/releases/repository`. Release provider middleware derives both repository views from the one ready root `contentWorkspace` capability, then procedure context narrows those module-owned views for the handlers. |
+| Transition boundary | Root context and CLI composition expose no preadapted clean or staged source. The CLI selects only the raw content-workspace provider. The temporary `./bindings/releases` facade retains artifact and mechanical-evidence projections only; compile-time negative imports keep both release-source factories absent. No release-source implementation or factory is copied into the CLI. |
+| Test ownership | The exact Git-eligibility integration suite and its generated repository fixture are lifecycle-service test assets. CLI tests consume only the generated content input and the public service client; no CLI test imports a module-private repository implementation. |
+| Positive topology | Closed Habitat scopes require exactly the two release-source repository files and narrow the transitional release-binding directory to artifact and mechanical-evidence projections. No `internal` directory, compatibility alias, second client, or provider implementation entered the service. |
+| Proof | The lifecycle suite passed 36 files / 337 tests, including the owner-local exact Git suite at 13/13. The full CLI suite passed 51 files / 333 tests; focused build/store and retention passed 17/17 and 7/7, and production context passed 3/3. Lifecycle and CLI lint, typecheck, and build passed without cache; CLI structural, strict OpenSpec, and `git diff --check` passed. Lifecycle structural passed twice against the staged implementation tree while excluding the user-owned untracked note; both temporary worktrees and their bounded Nx residue were removed through guarded, nonrecursive cleanup. |
+| Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural quality report no remaining P1/P2. The loop caught and closed the temporary CLI-to-private-repository test dependency by moving exact Git eligibility and its generated content fixture to lifecycle-service test ownership. |
+| Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]] remains blocked at its recorded publication-capability choice and is untouched. |
+
 ## Standing Reviews
 
 | Role | Pivot focus |

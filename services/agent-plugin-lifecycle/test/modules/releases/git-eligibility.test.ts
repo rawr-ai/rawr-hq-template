@@ -7,34 +7,33 @@ import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   parseGitTreeId,
-} from "@rawr/agent-plugin-lifecycle/release";
+} from "../../../src/service/shared/release";
+import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+
 import {
   createResourceContentWorkspaceSnapshotReader,
   type ResourceContentWorkspaceSnapshotReadPort,
-} from "@rawr/agent-plugin-lifecycle/bindings/releases";
-import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
-import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
-
+} from "../../../src/service/modules/releases/repository/content-workspace";
 import {
   GIT_EXECUTABLE,
   createGeneratedGitRepository,
   git,
   installCaseCollisionCommit,
   unsafeFixturePolicy,
-} from "./fixtures/git-repository";
+} from "../../support/git-repository";
 import {
   createOwnedFixtureRoot,
-  removeOwnedFixtureRoot,
+  disposeOwnedFixtureRoot,
   type OwnedFixtureRoot,
-} from "./owned-fixture-root";
+} from "../../support/owned-fixture-root";
 
-type ContentWorkspaceSnapshotReader = Deps["releaseSource"];
+type ContentWorkspaceSnapshotReader = ReturnType<typeof createResourceContentWorkspaceSnapshotReader>;
 
 describe("exact Git-object eligibility", () => {
   let fixture: OwnedFixtureRoot | undefined;
 
   afterEach(async () => {
-    if (fixture !== undefined) await removeOwnedFixtureRoot(fixture);
+    if (fixture !== undefined) await disposeOwnedFixtureRoot(fixture);
     fixture = undefined;
   });
 
@@ -221,7 +220,7 @@ describe("exact Git-object eligibility", () => {
       issues: [{ code: "DirtyTrackedWorktree" }],
     });
 
-    await removeOwnedFixtureRoot(fixture!);
+    await disposeOwnedFixtureRoot(fixture!);
     fixture = undefined;
     const staged = await generated();
     await writeFile(staged.payloadFile, "changed\n");
@@ -231,7 +230,7 @@ describe("exact Git-object eligibility", () => {
       issues: [{ code: "DirtyIndex" }],
     });
 
-    await removeOwnedFixtureRoot(fixture!);
+    await disposeOwnedFixtureRoot(fixture!);
     fixture = undefined;
     const untracked = await generated();
     await writeFile(join(untracked.root, "plugins", "agent", untracked.pluginId, "extra.txt"), "extra\n");
@@ -240,7 +239,7 @@ describe("exact Git-object eligibility", () => {
       issues: [{ code: "UntrackedConsumedPath" }],
     });
 
-    await removeOwnedFixtureRoot(fixture!);
+    await disposeOwnedFixtureRoot(fixture!);
     fixture = undefined;
     const ignored = await generated();
     await writeFile(ignored.ignoredFile, "ignored\n");
@@ -261,7 +260,7 @@ describe("exact Git-object eligibility", () => {
       kind: "Ineligible",
     });
 
-    await removeOwnedFixtureRoot(fixture!);
+    await disposeOwnedFixtureRoot(fixture!);
     fixture = undefined;
     const collision = await generated();
     const collisionPolicy = await installCaseCollisionCommit(collision);

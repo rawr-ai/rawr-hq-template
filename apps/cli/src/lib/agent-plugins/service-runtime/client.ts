@@ -11,10 +11,6 @@ import {
   createResourceExactGitReader,
 } from "@rawr/agent-plugin-lifecycle/bindings/governance";
 import {
-  createResourceContentWorkspaceSnapshotReader,
-  createResourceStagedContentWorkspaceObservationReader,
-} from "@rawr/agent-plugin-lifecycle/bindings/releases";
-import {
   createEmbeddedPlaceholderAnalyticsAdapter,
 } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
@@ -183,8 +179,6 @@ export function createProductionLifecycleDeps(input: Readonly<{
   return Object.freeze({
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    releaseSource: createResourceContentWorkspaceSnapshotReader({ contentWorkspace }),
-    stagedReleaseSource: createResourceStagedContentWorkspaceObservationReader({ contentWorkspace }),
     releaseArtifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
     releaseEvidence: createMechanicalEvidenceReader(layout.artifactStoreRoot),
     contentWorkspace,

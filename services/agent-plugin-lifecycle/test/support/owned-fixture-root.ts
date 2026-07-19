@@ -2,7 +2,7 @@ import { lstat, mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 
-const FIXTURE_PREFIX = "rawr-agent-plugin-packaging-test-";
+const FIXTURE_PREFIX = "rawr-agent-plugin-lifecycle-service-test-";
 
 export interface OwnedFixtureRoot {
   readonly path: string;

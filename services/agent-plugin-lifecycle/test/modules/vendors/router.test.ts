@@ -41,7 +41,11 @@ import {
   decodeAgentPluginReleaseInput,
   type ReleaseResult,
 } from "../../../src/service/shared/release";
-import { createLifecycleTestClient, testInvocation } from "../../support/client";
+import {
+  createLifecycleTestClient,
+  testInvocation,
+  withUnavailableGitReads,
+} from "../../support/client";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -801,7 +805,7 @@ function must<T, E>(result: ReleaseResult<T, E>): T {
 
 function createVendorStatus(runtime: VendorHarness) {
   const client = createLifecycleTestClient({
-    contentWorkspace: runtime.contentWorkspace,
+    contentWorkspace: withUnavailableGitReads(runtime.contentWorkspace),
     clock: runtime.clock,
   });
   return (request: VendorStatusRequest) => client.vendors.status(request, testInvocation);
@@ -809,7 +813,7 @@ function createVendorStatus(runtime: VendorHarness) {
 
 function createVendorUpdate(runtime: VendorHarness) {
   const client = createLifecycleTestClient({
-    contentWorkspace: runtime.contentWorkspace,
+    contentWorkspace: withUnavailableGitReads(runtime.contentWorkspace),
     clock: runtime.clock,
   });
   return (request: VendorUpdateRequest) => client.vendors.update(request, testInvocation);

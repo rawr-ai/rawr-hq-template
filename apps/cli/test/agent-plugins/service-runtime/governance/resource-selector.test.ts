@@ -25,7 +25,7 @@ import {
   GIT_EXECUTABLE,
   createGeneratedGitRepository,
   git,
-} from "../releases/fixtures/git-repository";
+} from "../../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
 import {
   createOwnedFixtureRoot,
   removeOwnedFixtureRoot,

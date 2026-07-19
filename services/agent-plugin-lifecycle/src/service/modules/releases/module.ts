@@ -1,13 +1,14 @@
 import { impl } from "../../impl";
-import { analytics, observability } from "./middleware";
+import { analytics, observability, repositories } from "./middleware";
 
 export const module = impl.releases
   .use(observability)
   .use(analytics)
+  .use(repositories)
   .use(async ({ context, next }) => next({
     context: {
-      source: context.deps.releaseSource,
-      stagedSource: context.deps.stagedReleaseSource,
+      source: context.provided.releaseSource,
+      stagedSource: context.provided.stagedReleaseSource,
       artifacts: context.deps.releaseArtifacts,
       evidence: context.deps.releaseEvidence,
       retention: context.deps.releaseRetention,

@@ -23,14 +23,14 @@ import {
   type AgentPluginReleaseInput,
   type PluginId,
   type ReleaseRelativePath,
-} from "../../service/shared/release";
+} from "../../../shared/release";
 import type {
   ContentWorkspaceInspection,
   ContentWorkspacePolicy,
   ContentWorkspaceSnapshotReader,
   SourceEligibilityIssue,
   SourceEligibilityIssueCode,
-} from "../../service/model/dependencies/releases";
+} from "../../../model/dependencies/releases";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const encoder = new TextEncoder();
