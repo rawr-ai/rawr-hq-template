@@ -24,9 +24,10 @@ import {
   type OwnedFixtureRoot,
 } from "./releases/owned-fixture-root";
 
-const OWNER_KEYS = Object.freeze([
+const LIFECYCLE_DEP_KEYS = Object.freeze([
   "releases",
-  "vendors",
+  "contentWorkspace",
+  "clock",
   "packaging",
   "exports",
   "providers",
@@ -88,7 +89,7 @@ afterAll(async () => {
 });
 
 describe("production lifecycle service context", () => {
-  it("assembles all six owners as cold ordinary data properties", async () => {
+  it("assembles module resources as cold ordinary data properties", async () => {
     const root = requireFixture();
     const before = await directoryNames(root.path);
     const deps = createProductionLifecycleDeps({
@@ -97,14 +98,14 @@ describe("production lifecycle service context", () => {
     });
 
     expect(Object.isFrozen(deps)).toBe(true);
-    for (const owner of OWNER_KEYS) {
-      const descriptor = Object.getOwnPropertyDescriptor(deps, owner);
-      expect(descriptor?.get, owner).toBeUndefined();
-      expect(descriptor?.set, owner).toBeUndefined();
-      expect(descriptor?.value, owner).toBeTypeOf("object");
-      expect(descriptor?.value, owner).not.toBeNull();
+    for (const dependency of LIFECYCLE_DEP_KEYS) {
+      const descriptor = Object.getOwnPropertyDescriptor(deps, dependency);
+      expect(descriptor?.get, dependency).toBeUndefined();
+      expect(descriptor?.set, dependency).toBeUndefined();
+      expect(descriptor?.value, dependency).toBeTypeOf("object");
+      expect(descriptor?.value, dependency).not.toBeNull();
     }
-    expect(Object.values(deps)).toHaveLength(8);
+    expect(Object.values(deps)).toHaveLength(9);
     expect(await directoryNames(root.path)).toEqual(before);
   });
 

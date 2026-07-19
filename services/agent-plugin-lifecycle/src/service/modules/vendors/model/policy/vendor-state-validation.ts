@@ -2,10 +2,10 @@ import { Value } from "typebox/value";
 
 import { equalBytes } from "../../../../shared/release/canonical";
 import type {
-  VendorSourceIdentity,
   VendorStatusRequest,
   VendorUpdateIssue,
-} from "../../ports";
+} from "../dto/vendor-operations";
+import type { VendorSourceIdentity } from "../dto/vendor-records";
 import {
   CANONICAL_ABSOLUTE_PATH_PATTERN,
   CONTENT_AUTHORITY_PATTERN,

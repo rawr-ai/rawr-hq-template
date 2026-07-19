@@ -7,7 +7,7 @@ import type {
 } from "@rawr/resource-content-workspace";
 
 import type { AgentPluginReleaseInput } from "../../../../shared/release";
-import type { VendorContentWorkspaceRef } from "../../ports";
+import type { VendorContentWorkspaceRef } from "./vendor-operations";
 import type {
   VendorLockRecord,
   VendorProvenanceRecord,

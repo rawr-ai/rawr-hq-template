@@ -14,8 +14,8 @@ import {
 } from "../../../../shared/release";
 import type {
   VendorContentWorkspaceRef,
-  VendorRecordBinding,
-} from "../../ports";
+} from "../dto/vendor-operations";
+import type { VendorRecordBinding } from "../dto/vendor-records";
 import {
   GIT_OBJECT_ID_PATTERN,
   NORMALIZED_RELATIVE_PATH_PATTERN,

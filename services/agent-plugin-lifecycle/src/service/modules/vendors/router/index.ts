@@ -1,12 +1,13 @@
+import type { ContentWorkspaceAsyncPort } from "@rawr/resource-content-workspace";
+
+import type { VendorSourceIdentity } from "../model/dto/vendor-records";
 import type {
-  VendorLifecycleRuntime,
-  VendorSourceIdentity,
   VendorSourceStatus,
   VendorStatusRequest,
   VendorUpdateIssue,
   VendorUpdateRequest,
   VendorUpdateResult,
-} from "../ports";
+} from "../model/dto/vendor-operations";
 import type {
   VendorDeclaredSourceObservation,
   VendorSourceChange,
@@ -52,8 +53,7 @@ interface PreparedCandidate {
 }
 
 const status = module.status.handler(async ({ context, input: request }) => {
-  const runtime = context.vendors;
-  const workspace = await observeWorkspace(runtime, request);
+  const workspace = await observeWorkspace(context.contentWorkspace, request);
   if ("issues" in workspace) return { kind: "Rejected" as const, issues: workspace.issues };
 
   const statuses: VendorSourceStatus[] = [];
@@ -73,14 +73,13 @@ const status = module.status.handler(async ({ context, input: request }) => {
       });
       continue;
     }
-    statuses.push((await assessSource(runtime, source)).status);
+    statuses.push((await assessSource(context.contentWorkspace, source)).status);
   }
   return { kind: "VendorStatus" as const, sources: statuses };
 });
 
 const update = module.update.handler(async ({ context, input: request }) => {
-  const runtime = context.vendors;
-  const workspace = await observeWorkspace(runtime, request);
+  const workspace = await observeWorkspace(context.contentWorkspace, request);
   if ("issues" in workspace) return rejected(request.sourceIds, workspace.issues);
   const selected = selectSources(request, workspace.observation);
   if ("issues" in selected) return rejected(request.sourceIds, selected.issues);
@@ -88,7 +87,7 @@ const update = module.update.handler(async ({ context, input: request }) => {
   const candidates: PreparedCandidate[] = [];
   const assessmentIssues: VendorUpdateIssue[] = [];
   for (const source of selected.sources) {
-    const assessment = await assessSource(runtime, source);
+    const assessment = await assessSource(context.contentWorkspace, source);
     if (assessment.issue !== undefined) assessmentIssues.push(assessment.issue);
     if (assessment.candidate !== undefined) candidates.push({ source, upstream: assessment.candidate });
   }
@@ -100,8 +99,8 @@ const update = module.update.handler(async ({ context, input: request }) => {
   const preparationIssues: VendorUpdateIssue[] = [];
   for (const candidate of candidates) {
     const materialized = await materializeVendorUpstream(
-      runtime.contentWorkspace,
-      runtime.clock,
+      context.contentWorkspace,
+      context.clock,
       candidate.source,
       candidate.upstream,
     );
@@ -118,16 +117,16 @@ const update = module.update.handler(async ({ context, input: request }) => {
 
   const planned = createVendorAuthoringPlan(request.contentWorkspace, workspace.observation, changes);
   if (!planned.ok) return rejected(request.sourceIds, planned.issues);
-  return executeVendorAuthoringPlan(runtime, request, planned.value);
+  return executeVendorAuthoringPlan(context.contentWorkspace, request, planned.value);
 });
 
 export const router = Object.freeze({ status, update });
 
 async function observeWorkspace(
-  runtime: VendorLifecycleRuntime,
+  contentWorkspace: ContentWorkspaceAsyncPort,
   request: VendorStatusRequest,
 ): Promise<ObservedWorkspace | WorkspaceFailure> {
-  const observed = await observeVendorWorkspace(runtime.contentWorkspace, request.contentWorkspace);
+  const observed = await observeVendorWorkspace(contentWorkspace, request.contentWorkspace);
   if (!observed.ok) return { issues: observed.issues };
   const issue = vendorWorkspaceIssue(request, observed.value);
   return issue === undefined ? { observation: observed.value } : { issues: [issue] };
@@ -162,10 +161,10 @@ function selectSources(
 }
 
 async function assessSource(
-  runtime: VendorLifecycleRuntime,
+  contentWorkspace: ContentWorkspaceAsyncPort,
   source: VendorDeclaredSourceObservation,
 ): Promise<SourceAssessment> {
-  const observed = await observeVendorUpstream(runtime.contentWorkspace, source);
+  const observed = await observeVendorUpstream(contentWorkspace, source);
   if (!observed.ok) {
     const failure = observed.issues[0];
     return { status: statusFromIssue(source, failure, statusClassification(failure)), issue: failure };

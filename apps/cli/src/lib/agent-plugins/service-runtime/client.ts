@@ -189,10 +189,8 @@ export function createProductionLifecycleDeps(input: Readonly<{
       artifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
       evidence: createMechanicalEvidenceReader(layout.artifactStoreRoot),
     }),
-    vendors: Object.freeze({
-      contentWorkspace,
-      clock: Object.freeze({ now: () => new Date() }),
-    }),
+    contentWorkspace,
+    clock: Object.freeze({ now: () => new Date() }),
     packaging: createPackageOutputLifecycleRuntime({ artifactReader }),
     exports: createExportLifecycleRuntime({
       artifactReader: createExportArtifactReader(artifactReader),

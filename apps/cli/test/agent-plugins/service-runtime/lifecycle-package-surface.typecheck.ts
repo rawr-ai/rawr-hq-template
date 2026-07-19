@@ -1,6 +1,8 @@
 import { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import type { ArtifactStore } from "@rawr/agent-plugin-lifecycle/ports/releases";
 
+// @ts-expect-error The vendor module no longer exposes a public port subpath.
+import * as retiredVendorPort from "@rawr/agent-plugin-lifecycle/ports/vendors";
 // @ts-expect-error Runtime factories are available only through an exact binding facade.
 import { createResourceArtifactStore as portFactory } from "@rawr/agent-plugin-lifecycle/ports/releases";
 // @ts-expect-error Service-private module internals are not package exports.
@@ -11,6 +13,7 @@ import type { ReleaseLifecycleRuntime } from "@rawr/agent-plugin-lifecycle/src/s
 declare const store: ArtifactStore;
 void store;
 void createResourceArtifactStore;
+void retiredVendorPort;
 void portFactory;
 declare const buildResult: BuildResult;
 void buildResult;

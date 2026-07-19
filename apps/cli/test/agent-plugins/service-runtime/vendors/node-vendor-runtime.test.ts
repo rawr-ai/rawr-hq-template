@@ -5,6 +5,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
+import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 import {
   canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
@@ -15,10 +16,6 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
 } from "@rawr/agent-plugin-lifecycle/release";
-import type {
-  VendorContentWorkspaceRef,
-  VendorSourceIdentity,
-} from "@rawr/agent-plugin-lifecycle/ports/vendors";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createProductionLifecycleClient } from "../../../../src/lib/agent-plugins/service-runtime/client";
@@ -34,6 +31,12 @@ const TEMP_PREFIX = "rawr-content-workspace-git-";
 const VENDOR_SOURCE_PROTOCOL = "rawr-vendor-source@v1";
 const VENDOR_PROVENANCE_PROTOCOL = "rawr-vendor-provenance@v1";
 const VENDOR_LOCK_PROTOCOL = "rawr-vendor-lock@v1";
+type VendorStatusRequest = Parameters<Client["vendors"]["status"]>[0];
+type VendorContentWorkspaceRef = VendorStatusRequest["contentWorkspace"];
+type VendorStatusResult = Awaited<ReturnType<Client["vendors"]["status"]>>;
+type VendorSourceIdentity = NonNullable<
+  Extract<VendorStatusResult, { kind: "VendorStatus" }>["sources"][number]["admitted"]
+>;
 
 bindVerifiedControllerReentryAuthority({
   runtimePath: "/usr/bin/false",

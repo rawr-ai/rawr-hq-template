@@ -17,17 +17,12 @@ import {
   VENDOR_LOCK_PROTOCOL,
   VENDOR_PROVENANCE_PROTOCOL,
   VENDOR_SOURCE_PROTOCOL,
+  type VendorLockRecord,
+  type VendorProvenanceRecord,
+  type VendorSourceDeclaration,
+  type VendorSourceIdentity,
 } from "../../../src/service/modules/vendors/model/dto/vendor-records";
-import type {
-  VendorContentWorkspaceRef,
-  VendorLifecycleRuntime,
-  VendorLockRecord,
-  VendorProvenanceRecord,
-  VendorSourceDeclaration,
-  VendorSourceIdentity,
-  VendorStatusRequest,
-  VendorUpdateRequest,
-} from "../../../src/service/modules/vendors/ports";
+import type { Client } from "../../../src/client";
 import {
   encodeVendorLockRecord,
   encodeVendorProvenanceRecord,
@@ -57,6 +52,9 @@ const provenancePath = `vendor/provenance/${sourceId}.json`;
 const lockPath = `vendor/locks/${sourceId}.json`;
 const destinationPath = `plugins/cognition/skills/${sourceId}`;
 const releaseInputPath = ".rawr/release-input.json";
+type VendorStatusRequest = Parameters<Client["vendors"]["status"]>[0];
+type VendorUpdateRequest = Parameters<Client["vendors"]["update"]>[0];
+type VendorContentWorkspaceRef = VendorStatusRequest["contentWorkspace"];
 const contentWorkspace: VendorContentWorkspaceRef = Object.freeze({
   locator: "/tmp/content-workspace",
   repositoryIdentity: "git:personal-rawr-hq",
@@ -375,7 +373,7 @@ type PathImage =
 type CaptureLifecycle = "Captured" | "Partial" | "Applied" | "Converged" | "Restored";
 type UpstreamFailureStage = "observe" | "materialize" | "ancestry";
 
-class VendorHarness implements VendorLifecycleRuntime {
+class VendorHarness {
   readonly clock = Object.freeze({ now: () => new Date(observedAt) });
   readonly counters = {
     inspectWorkspace: 0,
@@ -801,13 +799,19 @@ function must<T, E>(result: ReleaseResult<T, E>): T {
   return result.value;
 }
 
-function createVendorStatus(runtime: VendorLifecycleRuntime) {
-  const client = createLifecycleTestClient({ vendors: runtime });
+function createVendorStatus(runtime: VendorHarness) {
+  const client = createLifecycleTestClient({
+    contentWorkspace: runtime.contentWorkspace,
+    clock: runtime.clock,
+  });
   return (request: VendorStatusRequest) => client.vendors.status(request, testInvocation);
 }
 
-function createVendorUpdate(runtime: VendorLifecycleRuntime) {
-  const client = createLifecycleTestClient({ vendors: runtime });
+function createVendorUpdate(runtime: VendorHarness) {
+  const client = createLifecycleTestClient({
+    contentWorkspace: runtime.contentWorkspace,
+    clock: runtime.clock,
+  });
   return (request: VendorUpdateRequest) => client.vendors.update(request, testInvocation);
 }
 

@@ -1,15 +1,20 @@
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
+import type { ContentWorkspaceAsyncPort } from "@rawr/resource-content-workspace";
 import type { ExportLifecycleRuntime } from "./modules/exports/ports";
 import type { GovernanceLifecycleRuntime } from "./modules/governance/ports";
 import type { PackagingLifecycleRuntime } from "./modules/packaging/ports";
 import type { ProviderLifecycleRuntime } from "./modules/providers/ports";
 import type { ReleaseLifecycleRuntime } from "./modules/releases/ports";
-import type { VendorLifecycleRuntime } from "./modules/vendors/ports";
+
+export interface LifecycleClock {
+  readonly now: () => Date;
+}
 
 type InitialContext = {
   deps: {
     releases: ReleaseLifecycleRuntime;
-    vendors: VendorLifecycleRuntime;
+    contentWorkspace: ContentWorkspaceAsyncPort;
+    clock: LifecycleClock;
     packaging: PackagingLifecycleRuntime;
     exports: ExportLifecycleRuntime;
     providers: ProviderLifecycleRuntime;

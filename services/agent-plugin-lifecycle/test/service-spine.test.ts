@@ -125,25 +125,23 @@ function spineClient(
         publishReleaseSet: async () => unavailableAsync("release-set publication"),
       },
     },
-    vendors: {
-      contentWorkspace: {
-        inspectWorkspace: async () => {
-          calls.push("vendors.contentWorkspace.inspectWorkspace");
-          return unavailableAsync("vendor content workspace inspection");
-        },
-        readFile: async () => unavailableAsync("vendor content workspace file read"),
-        readTree: async () => unavailableAsync("vendor content workspace tree read"),
-        observeRemote: async () => unavailableAsync("vendor remote observation"),
-        materializeRemote: async () => unavailableAsync("vendor remote materialization"),
-        isAncestor: async () => unavailableAsync("vendor remote ancestry"),
-        capture: async () => unavailableAsync("vendor preimage capture"),
-        apply: async () => unavailableAsync("vendor authoring"),
-        restore: async () => unavailableAsync("vendor restoration"),
-        settle: async () => unavailableAsync("vendor settlement"),
-        release: async () => unavailableAsync("vendor capture release"),
+    contentWorkspace: {
+      inspectWorkspace: async () => {
+        calls.push("vendors.contentWorkspace.inspectWorkspace");
+        return unavailableAsync("vendor content workspace inspection");
       },
-      clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
+      readFile: async () => unavailableAsync("vendor content workspace file read"),
+      readTree: async () => unavailableAsync("vendor content workspace tree read"),
+      observeRemote: async () => unavailableAsync("vendor remote observation"),
+      materializeRemote: async () => unavailableAsync("vendor remote materialization"),
+      isAncestor: async () => unavailableAsync("vendor remote ancestry"),
+      capture: async () => unavailableAsync("vendor preimage capture"),
+      apply: async () => unavailableAsync("vendor authoring"),
+      restore: async () => unavailableAsync("vendor restoration"),
+      settle: async () => unavailableAsync("vendor settlement"),
+      release: async () => unavailableAsync("vendor capture release"),
     },
+    clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
     packaging: {
       artifactReader: {
         read: async (ref) => {
