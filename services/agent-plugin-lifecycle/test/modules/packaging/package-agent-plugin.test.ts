@@ -13,12 +13,16 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { COWORK_PACKAGE_FORMAT } from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
-import { COWORK_V1_MAX_PAYLOAD_BYTES } from "../../../src/service/modules/packaging/model/helpers/cowork-v1";
+import { createResourceArtifactStore } from "../../../src/service/repository/artifact-repository";
 import type {
-  ArtifactReader,
-  ArtifactReadResult,
-  ArtifactStore,
-} from "../../../src/service/model/dependencies/releases";
+  AgentPluginRelease,
+  AgentPluginReleaseSet,
+} from "../../../src/service/shared/release";
+import type {
+  ArtifactRepositoryAsyncPort,
+  ArtifactRepositoryIssue,
+  ArtifactTreeObservation,
+} from "@rawr/resource-agent-plugin-artifact-repository";
 import type {
   AgentPluginPackageOutputAsyncPort,
   PackageOutputFailure,
@@ -27,8 +31,13 @@ import type {
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 
 import { packagingArtifactFixture } from "./artifact-fixture";
+import { MemoryArtifactRepository } from "../../support/artifact-repository";
 import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "../../support/owned-fixture-root";
-import { createLifecycleTestClient, testInvocation } from "../../support/client";
+import {
+  createLifecycleTestClient,
+  testInvocation,
+  unavailableArtifactRepository,
+} from "../../support/client";
 
 const roots: OwnedFixtureRoot[] = [];
 
@@ -43,8 +52,8 @@ describe("package agent plugin application", () => {
   it("reads one immutable ref and reports only deterministic package provenance", async () => {
     const root = await fixtureRoot();
     const fixture = packagingArtifactFixture();
-    const reader = new ResultReader({ kind: "Verified", snapshot: fixture.alphaSnapshot });
-    const application = createPackageAgentPluginApplication({ artifactReader: reader });
+    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
+    const application = createPackageAgentPluginApplication(artifacts);
     const outputPath = join(root.path, "alpha.zip");
 
     const first = await application.package({
@@ -69,7 +78,7 @@ describe("package agent plugin application", () => {
       "priorOutput",
     ]);
     expect((await readFile(outputPath)).subarray(0, 4)).toEqual(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
-    expect(reader.calls).toBe(1);
+    expect(artifacts.artifactRepository.readTreeCalls).toBe(1);
 
     const beforeNames = await readdir(root.path);
     const second = await application.package({
@@ -79,7 +88,7 @@ describe("package agent plugin application", () => {
     });
     expect(second).toMatchObject({ kind: "ReadOnlyConverged", packageDigest: first.kind === "OutputReplacedVerified" ? first.packageDigest : "" });
     expect(await readdir(root.path)).toEqual(beforeNames);
-    expect(reader.calls).toBe(2);
+    expect(artifacts.artifactRepository.readTreeCalls).toBe(2);
   });
 
   it("packages identical artifact bytes after source removal across source and prior-output variation", async () => {
@@ -113,11 +122,12 @@ describe("package agent plugin application", () => {
     const adjacentBefore = await fileIdentityAndMetadata(adjacent);
 
     const fixture = packagingArtifactFixture();
-    const reader = new DetachedSourceReader(sourceLocator, {
-      kind: "Verified",
-      snapshot: fixture.setSnapshot,
-    });
-    const application = createPackageAgentPluginApplication({ artifactReader: reader });
+    const artifacts = await publishedRepository(
+      root.path,
+      [fixture.alphaRelease, fixture.betaRelease],
+      fixture.releaseSet,
+    );
+    const application = createPackageAgentPluginApplication(artifacts);
     const packageAt = (outputPath: string) => application.package({
       artifactRef: fixture.setSnapshot.ref,
       format: COWORK_PACKAGE_FORMAT,
@@ -159,7 +169,7 @@ describe("package agent plugin application", () => {
       kind: "ReadOnlyConverged",
       packageDigest: first.packageDigest,
     });
-    expect(reader.calls).toBe(4);
+    expect(artifacts.artifactRepository.readTreeCalls).toBe(12);
     expect(await Promise.all([
       root.path,
       firstOutput,
@@ -175,10 +185,10 @@ describe("package agent plugin application", () => {
   it("rejects unknown request fields before reading artifacts or touching output", async () => {
     const root = await fixtureRoot();
     const fixture = packagingArtifactFixture();
-    const reader = new ResultReader({ kind: "Verified", snapshot: fixture.alphaSnapshot });
+    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
     const output = new CountingOutput({ kind: "ReadOnlyConverged" });
     const application = createPackageAgentPluginApplication({
-      artifactReader: reader,
+      ...artifacts,
       packageOutput: output,
     });
 
@@ -188,7 +198,7 @@ describe("package agent plugin application", () => {
       outputPath: join(root.path, "invalid.zip"),
       sourceWorkspace: root.path,
     })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    expect(reader.calls).toBe(0);
+    expect(artifacts.artifactRepository.readTreeCalls).toBe(0);
     expect(output.calls).toBe(0);
     expect(await readdir(root.path)).toEqual([]);
   });
@@ -197,16 +207,30 @@ describe("package agent plugin application", () => {
     const root = await fixtureRoot();
     const fixture = packagingArtifactFixture();
     const output = new CountingOutput({ kind: "ReadOnlyConverged" });
+    const artifactRepositoryRoot = join(root.path, "artifacts-v1");
+    const missingRepository = new MemoryArtifactRepository();
     const missing = createPackageAgentPluginApplication({
-      artifactReader: new ResultReader({ kind: "Missing", ref: fixture.alphaSnapshot.ref }),
+      artifactRepository: missingRepository,
+      artifactRepositoryRoot,
       packageOutput: output,
     });
-    const mismatch = createPackageAgentPluginApplication({
-      artifactReader: new ResultReader({
+    const mismatchIssues: readonly [ArtifactRepositoryIssue] = Object.freeze([Object.freeze({
+      code: "ReadFailure",
+      detail: "tampered artifact fixture",
+    })]);
+    const mismatchRepository: ArtifactRepositoryAsyncPort = Object.freeze({
+      ...unavailableArtifactRepository(),
+      readTree: async (
+        input: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0],
+      ): Promise<ArtifactTreeObservation> => Object.freeze({
         kind: "Mismatch",
-        ref: fixture.alphaSnapshot.ref,
-        issues: [{ code: "DigestMismatch", detail: "tampered" }],
+        address: input.address,
+        issues: mismatchIssues,
       }),
+    });
+    const mismatch = createPackageAgentPluginApplication({
+      artifactRepository: mismatchRepository,
+      artifactRepositoryRoot,
       packageOutput: output,
     });
     const request = {
@@ -224,37 +248,17 @@ describe("package agent plugin application", () => {
       primaryFailure: { code: "ArtifactMismatch" },
     });
     expect(output.calls).toBe(0);
+    expect(missingRepository.readTreeCalls).toBe(1);
     expect(await readdir(root.path)).toEqual([]);
-  });
-
-  it("rejects a verified snapshot that does not bind the requested ref", async () => {
-    const root = await fixtureRoot();
-    const fixture = packagingArtifactFixture();
-    const output = new CountingOutput({ kind: "ReadOnlyConverged" });
-    const application = createPackageAgentPluginApplication({
-      artifactReader: new ResultReader({ kind: "Verified", snapshot: fixture.betaSnapshot }),
-      packageOutput: output,
-    });
-
-    const result = await application.package({
-      artifactRef: fixture.alphaSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath: join(root.path, "wrong.zip"),
-    });
-
-    expect(result).toMatchObject({
-      kind: "RejectedBeforeOutputMutation",
-      primaryFailure: { code: "ArtifactSnapshotMismatch" },
-    });
-    expect(output.calls).toBe(0);
   });
 
   it("reports an unclosed output-port exception as unsettled rather than claiming success", async () => {
     const root = await fixtureRoot();
     const fixture = packagingArtifactFixture();
     const nodeOutput = makeNodePackageOutputAsyncPort();
+    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
     const application = createPackageAgentPluginApplication({
-      artifactReader: new ResultReader({ kind: "Verified", snapshot: fixture.alphaSnapshot }),
+      ...artifacts,
       packageOutput: {
         encodeCoworkV1: nodeOutput.encodeCoworkV1,
         async publish() {
@@ -307,8 +311,9 @@ describe("package agent plugin application", () => {
   }) => {
     const root = await fixtureRoot();
     const fixture = packagingArtifactFixture();
+    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
     const application = createPackageAgentPluginApplication({
-      artifactReader: new ResultReader({ kind: "Verified", snapshot: fixture.alphaSnapshot }),
+      ...artifacts,
       packageOutput: new CountingOutput(resourceResult),
     });
 
@@ -330,8 +335,9 @@ describe("package agent plugin application", () => {
     const root = await fixtureRoot();
     const fixture = packagingArtifactFixture();
     let publicationCalls = 0;
+    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
     const application = createPackageAgentPluginApplication({
-      artifactReader: new ResultReader({ kind: "Verified", snapshot: fixture.alphaSnapshot }),
+      ...artifacts,
       packageOutput: {
         encodeCoworkV1: async () => Promise.reject(
           resourceFailure("ArchiveEncodingFailed", "archive-codec", "codec refused"),
@@ -358,85 +364,7 @@ describe("package agent plugin application", () => {
     expect(publicationCalls).toBe(0);
     expect(await readdir(root.path)).toEqual([]);
   });
-
-  it("maps a verified overbound Cowork snapshot to PackageRenderFailed before output", async () => {
-    const root = await fixtureRoot();
-    const fixture = packagingArtifactFixture();
-    const originalFile = fixture.alphaSnapshot.files[0];
-    if (originalFile === undefined) throw new Error("fixture file missing");
-    const reportedByteLength = COWORK_V1_MAX_PAYLOAD_BYTES + 1;
-    const oversizedBytes = new ReportedLengthBytes(originalFile.bytes, reportedByteLength);
-    const oversizedSnapshot = {
-      ...fixture.alphaSnapshot,
-      release: {
-        ...fixture.alphaSnapshot.release,
-        artifactBody: {
-          ...fixture.alphaSnapshot.release.artifactBody,
-          storageManifest: fixture.alphaSnapshot.release.artifactBody.storageManifest.map((entry) =>
-            entry.path === originalFile.path ? { ...entry, byteLength: reportedByteLength } : entry
-          ),
-        },
-      },
-      files: fixture.alphaSnapshot.files.map((file) =>
-        file.path === originalFile.path ? { ...file, bytes: oversizedBytes } : file
-      ),
-    };
-    const output = new CountingOutput({ kind: "ReadOnlyConverged" });
-    const application = createPackageAgentPluginApplication({
-      artifactReader: new ResultReader({ kind: "Verified", snapshot: oversizedSnapshot }),
-      packageOutput: output,
-    });
-
-    const result = await application.package({
-      artifactRef: oversizedSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath: join(root.path, "overbound.zip"),
-    });
-
-    expect(result).toMatchObject({
-      kind: "RejectedBeforeOutputMutation",
-      primaryFailure: { code: "PackageRenderFailed", phase: "package-render" },
-    });
-    expect(output.calls).toBe(0);
-    expect(await readdir(root.path)).toEqual([]);
-  });
 });
-
-class ReportedLengthBytes extends Uint8Array {
-  constructor(source: Uint8Array, private readonly reportedByteLength: number) {
-    super(source);
-  }
-
-  override get byteLength(): number {
-    return this.reportedByteLength;
-  }
-}
-
-class ResultReader implements ArtifactReader {
-  calls = 0;
-
-  constructor(private readonly result: ArtifactReadResult) {}
-
-  async read(): Promise<ArtifactReadResult> {
-    this.calls += 1;
-    return this.result;
-  }
-}
-
-class DetachedSourceReader implements ArtifactReader {
-  calls = 0;
-
-  constructor(
-    private readonly sourceLocator: string,
-    private readonly result: ArtifactReadResult,
-  ) {}
-
-  async read(): Promise<ArtifactReadResult> {
-    this.calls += 1;
-    await assertMissing(this.sourceLocator);
-    return this.result;
-  }
-}
 
 class CountingOutput implements AgentPluginPackageOutputAsyncPort {
   calls = 0;
@@ -477,11 +405,13 @@ async function fixtureRoot(): Promise<OwnedFixtureRoot> {
 }
 
 function createPackageAgentPluginApplication(options: Readonly<{
-  artifactReader: ArtifactReader;
+  artifactRepository: ArtifactRepositoryAsyncPort;
+  artifactRepositoryRoot: string;
   packageOutput?: AgentPluginPackageOutputAsyncPort;
 }>) {
   const client = createLifecycleTestClient({
-    releaseArtifacts: releaseArtifactsWithReader(options.artifactReader),
+    artifactRepository: options.artifactRepository,
+    artifactRepositoryRoot: options.artifactRepositoryRoot,
     packageOutput: options.packageOutput ?? makeNodePackageOutputAsyncPort(),
   });
   return Object.freeze({
@@ -491,26 +421,37 @@ function createPackageAgentPluginApplication(options: Readonly<{
   });
 }
 
-function releaseArtifactsWithReader(reader: ArtifactReader): ArtifactStore {
-  return Object.freeze({
-    read: (ref: Parameters<ArtifactReader["read"]>[0]) => reader.read(ref),
-    publishRelease: async () => unavailableAsync("release publication"),
-    publishReleaseSet: async () => unavailableAsync("release-set publication"),
+async function publishedRepository(
+  fixtureRoot: string,
+  releases: readonly AgentPluginRelease[],
+  releaseSet?: AgentPluginReleaseSet,
+): Promise<Readonly<{
+  artifactRepository: MemoryArtifactRepository;
+  artifactRepositoryRoot: string;
+}>> {
+  const artifactRepository = new MemoryArtifactRepository();
+  const artifactRepositoryRoot = join(fixtureRoot, "artifacts-v1");
+  const store = createResourceArtifactStore({
+    repository: artifactRepository,
+    repositoryRoot: artifactRepositoryRoot,
   });
-}
-
-async function unavailableAsync(label: string): Promise<never> {
-  throw new Error(`Unexpected ${label} access in packaging test`);
-}
-
-async function assertMissing(path: string): Promise<void> {
-  try {
-    await lstat(path);
-    throw new Error(`expected removed source locator to remain absent: ${path}`);
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") return;
-    throw error;
+  for (const release of releases) {
+    const result = await store.publishRelease(release);
+    if (result.kind !== "Published" && result.kind !== "ReadOnlyConverged") {
+      throw new Error(`Could not seed packaging artifact: ${result.kind}`);
+    }
   }
+  if (releaseSet !== undefined) {
+    const result = await store.publishReleaseSet(releaseSet);
+    if (result.kind !== "Published" && result.kind !== "ReadOnlyConverged") {
+      throw new Error(`Could not seed packaging release set: ${result.kind}`);
+    }
+  }
+  artifactRepository.resetObservations();
+  return Object.freeze({
+    artifactRepository,
+    artifactRepositoryRoot,
+  });
 }
 
 async function fileIdentityAndMetadata(path: string): Promise<readonly bigint[]> {

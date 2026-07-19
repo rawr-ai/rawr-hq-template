@@ -5,6 +5,8 @@ import {
 } from "../../base";
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
 import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
+import type { ArtifactStore } from "../../model/dependencies/releases";
+import type { MechanicalEvidenceStore } from "../../shared/release";
 import {
   createResourceContentWorkspaceSnapshotReader,
 } from "./repository/content-workspace";
@@ -17,7 +19,9 @@ export const repositories = createServiceProvider<{
     contentWorkspace: ContentWorkspaceNodeAsyncPort;
   };
   provided: {
+    artifactStore: ArtifactStore;
     currentMain: CurrentMainSelectionReader;
+    mechanicalEvidenceStore: MechanicalEvidenceStore;
   };
 }>().middleware<{
   releaseSource: ReturnType<typeof createResourceContentWorkspaceSnapshotReader>;

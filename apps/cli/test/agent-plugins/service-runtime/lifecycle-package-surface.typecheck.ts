@@ -8,6 +8,7 @@ import {
   type ArtifactRef,
 } from "@rawr/agent-plugin-lifecycle/release";
 import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
+import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 
 // @ts-expect-error Governance current-main selection is composed inside the service.
 import * as retiredGovernanceBinding from "@rawr/agent-plugin-lifecycle/bindings/governance";
@@ -85,6 +86,32 @@ void buildResult;
 type ProviderCurrentMainIsAbsent = "providerCurrentMain" extends keyof Deps ? never : true;
 const providerCurrentMainIsAbsent: ProviderCurrentMainIsAbsent = true;
 void providerCurrentMainIsAbsent;
+
+type CallerSemanticArtifactDepsAreAbsent = Extract<
+  keyof Deps,
+  | "releaseArtifacts"
+  | "releaseEvidence"
+  | "providerArtifactRepository"
+  | "providerEvidenceStore"
+> extends never ? true : never;
+const callerSemanticArtifactDepsAreAbsent: CallerSemanticArtifactDepsAreAbsent = true;
+void callerSemanticArtifactDepsAreAbsent;
+
+type RawArtifactRepositoryIsRequired = Deps["artifactRepository"] extends ArtifactRepositoryAsyncPort
+  ? ArtifactRepositoryAsyncPort extends Deps["artifactRepository"]
+    ? true
+    : never
+  : never;
+const rawArtifactRepositoryIsRequired: RawArtifactRepositoryIsRequired = true;
+void rawArtifactRepositoryIsRequired;
+
+type ArtifactRepositoryRootIsRequired = Deps["artifactRepositoryRoot"] extends string
+  ? string extends Deps["artifactRepositoryRoot"]
+    ? true
+    : never
+  : never;
+const artifactRepositoryRootIsRequired: ArtifactRepositoryRootIsRequired = true;
+void artifactRepositoryRootIsRequired;
 
 type ReleaseBindingValueKey = keyof typeof import("@rawr/agent-plugin-lifecycle/bindings/releases");
 type ExpectedReleaseBindingValueKey =

@@ -9,6 +9,7 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { LifecycleOperation } from "../../../src/lib/agent-plugins/commands/binding";
+import { deriveAgentPluginControllerLayout } from "../../../src/lib/agent-plugins/layout";
 import {
   createProductionLifecycleClient,
   createProductionLifecycleDeps,
@@ -25,17 +26,14 @@ import {
 } from "./releases/owned-fixture-root";
 
 const LIFECYCLE_OBJECT_DEP_KEYS = Object.freeze([
-  "releaseArtifacts",
-  "releaseEvidence",
+  "artifactRepository",
   "contentWorkspace",
   "clock",
   "packageOutput",
   "exports",
   "providerRecords",
-  "providerArtifactRepository",
   "providerNativeResource",
   "providerExecutables",
-  "providerEvidenceStore",
 ]);
 const OPERATION_CASES = Object.freeze([
   { operation: "releases.check", owner: "releases", procedure: "check" },
@@ -93,7 +91,7 @@ afterAll(async () => {
 });
 
 describe("production lifecycle service context", () => {
-  it("assembles module resources as cold ordinary data properties", async () => {
+  it("assembles root-owned raw resources as cold ordinary data properties", async () => {
     const root = requireFixture();
     const before = await directoryNames(root.path);
     const deps = createProductionLifecycleDeps({
@@ -115,9 +113,22 @@ describe("production lifecycle service context", () => {
     expect(deps).not.toHaveProperty("governance");
     expect(deps).not.toHaveProperty("providers");
     expect(deps).not.toHaveProperty("providerCurrentMain");
-    expect(deps.providerProjectionRepositoryRoot).toBeTypeOf("string");
-    expect(deps.providerArtifactRepository).not.toBe(deps.releaseArtifacts);
-    expect(Object.values(deps)).toHaveLength(14);
+    expect(deps).not.toHaveProperty("releaseArtifacts");
+    expect(deps).not.toHaveProperty("releaseEvidence");
+    expect(deps).not.toHaveProperty("providerArtifactRepository");
+    expect(deps).not.toHaveProperty("providerEvidenceStore");
+    expect(deps.artifactRepository).toMatchObject({
+      locateTree: expect.any(Function),
+      readTree: expect.any(Function),
+      publishTree: expect.any(Function),
+      readEvidence: expect.any(Function),
+      publishEvidence: expect.any(Function),
+    });
+    const layout = deriveAgentPluginControllerLayout({ dataRoot: controllerDataRoot });
+    expect(deps.artifactRepositoryRoot).toBe(layout.artifactStoreRoot);
+    expect(deps.providerProjectionRepositoryRoot).toBe(layout.providerProjectionRoot);
+    expect(deps.artifactRepositoryRoot).not.toBe(deps.providerProjectionRepositoryRoot);
+    expect(Object.values(deps)).toHaveLength(12);
     expect(await directoryNames(root.path)).toEqual(before);
   });
 

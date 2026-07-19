@@ -74,6 +74,7 @@ required = [
   "middleware",
   "model",
   "modules",
+  "repository",
   "router.ts",
   "shared",
 ]
@@ -143,8 +144,20 @@ kind = "directory"
 mode = "closed"
 required = [
   "analytics.ts",
+  "artifacts.ts",
   "current-main.ts",
   "observability.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-service-repositories"
+root = "services/agent-plugin-lifecycle/src/service/repository"
+kind = "directory"
+mode = "closed"
+required = [
+  "artifact-repository.ts",
+  "mechanical-evidence.ts",
 ]
 allowed = []
 

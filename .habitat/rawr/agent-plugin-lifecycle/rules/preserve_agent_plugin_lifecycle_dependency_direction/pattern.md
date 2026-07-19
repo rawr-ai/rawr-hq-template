@@ -4,10 +4,11 @@ level: error
 # Preserve Agent Plugin Lifecycle Dependency Direction
 
 The lifecycle service consumes resource contracts, never concrete resource
-providers or controller implementation. Module ports cannot reintroduce the
-retired `internal` bucket; their remaining public surfaces stay protocols and
-types. The qualified CLI projection admits one production value consumer for
-the service client: its exact `service-runtime/client.ts` composition root.
+providers, controller implementation, or its own outward host bindings. Module
+ports cannot reintroduce the retired `internal` bucket; their remaining public
+surfaces stay protocols and types. The qualified CLI projection admits one
+production value consumer for the service client: its exact
+`service-runtime/client.ts` composition root.
 Other CLI modules may retain type-only client dependencies, but cannot
 construct, load, or relay another service client. The CLI selects concrete
 resource providers; service middleware derives current-main and provider-domain
@@ -17,8 +18,14 @@ composition root; the CLI-local provider index can flow only into that
 composition root. The transitional release binding admits value imports only
 from the artifact/evidence composition root, while pure release algebra reaches
 command parsing through `release`. All other CLI consumers remain type-only.
-Release and evidence projections remain free of filesystem, process, FFI, and
-concrete resource-provider mechanics.
+The CLI selects one raw artifact repository provider for the lifecycle service
+context. Service middleware owns the releases, packaging, and providers
+artifact/evidence projections in a private service repository. The transitional
+public release binding still re-exports those projection factories for its next
+retirement slice, but its sole admitted CLI value import is the reader-only
+export composition root and cannot flow back into service context. Release and
+evidence projections remain free of filesystem, process, FFI, and concrete
+resource-provider mechanics.
 Module router handlers consume only their local `module` context, and the
 service root composes module routers through `impl.router`. Type-only protocol
 imports remain available through `ports/*`. Root service capabilities and
@@ -35,19 +42,35 @@ language js(typescript)
 or {
   import_statement(source=$source) where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+(?:modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:(?:src/)?service/modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
   },
   `export { $exports } from $source` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+(?:modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:(?:src/)?service/modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
   },
   `export * from $source` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+(?:modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:(?:src/)?service/modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
   },
   `import($source)` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+(?:modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:(?:src/)?service/modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
+  },
+  import_statement(source=$source) where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/(?:service/.*|(?:client|index|router|types)\.ts)$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+.*bindings(?:/|[\"'])|@rawr/agent-plugin-lifecycle/bindings(?:/|[\"'])).*"
+  },
+  `export { $exports } from $source` where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/(?:service/.*|(?:client|index|router|types)\.ts)$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+.*bindings(?:/|[\"'])|@rawr/agent-plugin-lifecycle/bindings(?:/|[\"'])).*"
+  },
+  `export * from $source` where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/(?:service/.*|(?:client|index|router|types)\.ts)$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+.*bindings(?:/|[\"'])|@rawr/agent-plugin-lifecycle/bindings(?:/|[\"'])).*"
+  },
+  `import($source)` where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/(?:service/.*|(?:client|index|router|types)\.ts)$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+.*bindings(?:/|[\"'])|@rawr/agent-plugin-lifecycle/bindings(?:/|[\"'])).*"
   },
   import_statement(source=$source) where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/providers/.*\.ts$",
@@ -117,7 +140,8 @@ or {
     },
     not {
       $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/releases[\"']?$",
-      $filename <: r".*apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository\.ts$"
+      $filename <: r".*apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository\.ts$",
+      $import <: r"(?s)^import\s*\{\s*createResourceArtifactReader\s*,?\s*\}\s*from.*"
     },
     not {
       $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$",
@@ -275,6 +299,18 @@ export const provider = import("../../../bindings/providers");
 
 // @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-package-dynamic.ts
 export const provider = import("@rawr/agent-plugin-lifecycle/bindings/providers");
+
+// @filename: services/agent-plugin-lifecycle/src/service/middleware/release-binding-import.ts
+import { createResourceArtifactStore } from "../../bindings/releases";
+
+// @filename: services/agent-plugin-lifecycle/src/service/modules/packaging/release-binding-export.ts
+export { createResourceArtifactReader } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+
+// @filename: services/agent-plugin-lifecycle/src/service/modules/releases/release-binding-star.ts
+export * from "../../../bindings/releases";
+
+// @filename: services/agent-plugin-lifecycle/src/service/modules/providers/release-binding-dynamic.ts
+export const releases = import("@rawr/agent-plugin-lifecycle/bindings/releases");
 
 // @filename: services/agent-plugin-lifecycle/src/service/modules/providers/model/policy/current-main-bypass.ts
 import type { CurrentMainSelectionResult } from "../../../governance/model/dto/current-main";
@@ -479,6 +515,9 @@ export const digest = contentDigest;
 // @filename: apps/cli/src/lib/agent-plugins/release-binding-bypass.ts
 import { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 
+// @filename: apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository.ts
+import { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+
 // @filename: apps/cli/src/lib/agent-plugins/release-binding-dynamic-bypass.ts
 export const releaseBindings = import("@rawr/agent-plugin-lifecycle/bindings/releases");
 
@@ -512,6 +551,16 @@ export type RawProviderInputs = Readonly<{
   artifacts: ArtifactRepositoryAsyncPort;
   native: NativeProviderResourcePort;
 }>;
+
+// @filename: services/agent-plugin-lifecycle/src/service/middleware/artifacts.ts
+import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
+import { createResourceArtifactStore } from "../repository/artifact-repository";
+import { createResourceMechanicalEvidenceStore } from "../repository/mechanical-evidence";
+
+export const project = (repository: ArtifactRepositoryAsyncPort, repositoryRoot: string) => ({
+  artifacts: createResourceArtifactStore({ repository, repositoryRoot }),
+  evidence: createResourceMechanicalEvidenceStore({ repository, repositoryRoot }),
+});
 
 // @filename: apps/cli/src/lib/agent-plugins/protocol.ts
 import type { NativeProviderResourcePort } from "@rawr/agent-plugin-lifecycle/bindings/providers";
@@ -594,17 +643,11 @@ export const completeIdentities = createResourceCompleteTargetIdentityReader;
 // @filename: apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository.ts
 import {
   createResourceArtifactReader,
-  createResourceArtifactStore,
-  createResourceMechanicalEvidenceReader,
-  createResourceMechanicalEvidenceStore,
 } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 
 export const bindings = {
   createResourceArtifactReader,
-  createResourceArtifactStore,
-  createResourceMechanicalEvidenceReader,
-  createResourceMechanicalEvidenceStore,
   makeNodeArtifactRepositoryAsyncPort,
 };
 ```

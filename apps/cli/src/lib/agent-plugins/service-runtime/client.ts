@@ -17,6 +17,9 @@ import {
   makeDeferredNodeContentWorkspacePort,
 } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import {
+  makeNodeArtifactRepositoryAsyncPort,
+} from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+import {
   makeNodePackageOutputAsyncPort,
 } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import {
@@ -33,9 +36,6 @@ import {
 import { createExportLifecycleRuntime } from "../bindings/export-destination";
 import {
   createArtifactRepositoryReader,
-  createArtifactRepositoryStore,
-  createMechanicalEvidenceReader,
-  createMechanicalEvidenceStore,
 } from "../bindings/output";
 import {
   LifecycleAuthorityBindingError,
@@ -154,6 +154,7 @@ export function createProductionLifecycleDeps(input: Readonly<{
   const { binding, controllerDataRoot } = input;
   const layout = deriveAgentPluginControllerLayout({ dataRoot: controllerDataRoot });
   const artifactReader = createArtifactRepositoryReader(layout.artifactStoreRoot);
+  const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
   const contentWorkspace = makeDeferredNodeContentWorkspacePort({
     acquireGitExecutable: () => requiredGitExecutable(binding),
   });
@@ -165,14 +166,13 @@ export function createProductionLifecycleDeps(input: Readonly<{
   const providerDeps = createNodeProviderLifecycleDeps({
     state: providerState,
     providerExecutables: binding.providerExecutables,
-    providerEvidenceStore: createMechanicalEvidenceStore(layout.artifactStoreRoot),
   });
 
   return Object.freeze({
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    releaseArtifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
-    releaseEvidence: createMechanicalEvidenceReader(layout.artifactStoreRoot),
+    artifactRepository,
+    artifactRepositoryRoot: layout.artifactStoreRoot,
     contentWorkspace,
     clock: Object.freeze({ now: () => new Date() }),
     packageOutput: makeNodePackageOutputAsyncPort(),

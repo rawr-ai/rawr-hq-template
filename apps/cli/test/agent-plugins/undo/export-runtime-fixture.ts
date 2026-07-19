@@ -72,11 +72,7 @@ export function createExportTestClient(
     deps: {
       logger: createEmbeddedPlaceholderLoggerAdapter(),
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-      releaseArtifacts: {
-        read: async () => unavailableAsync("release artifact read"),
-        publishRelease: async () => unavailableAsync("release publication"),
-        publishReleaseSet: async () => unavailableAsync("release-set publication"),
-      },
+      ...unavailableArtifactRepository(options.onProviderAccess),
       contentWorkspace: unavailableContentWorkspace(),
       clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
       packageOutput: {
@@ -113,12 +109,35 @@ export function createExportTestClient(
 type ProviderLifecycleDeps = Pick<
   Deps,
   | "providerRecords"
-  | "providerArtifactRepository"
   | "providerNativeResource"
   | "providerExecutables"
   | "providerProjectionRepositoryRoot"
-  | "providerEvidenceStore"
 >;
+
+type ArtifactRepositoryDeps = Pick<
+  Deps,
+  | "artifactRepository"
+  | "artifactRepositoryRoot"
+>;
+
+function unavailableArtifactRepository(
+  onAccess: (label: string) => void = () => undefined,
+): ArtifactRepositoryDeps {
+  const unavailableArtifact = async (label: string): Promise<never> => {
+    onAccess(label);
+    return unavailableAsync(label);
+  };
+  return Object.freeze({
+    artifactRepository: Object.freeze({
+      locateTree: async () => unavailableArtifact("artifact tree location"),
+      readTree: async () => unavailableArtifact("artifact tree read"),
+      publishTree: async () => unavailableArtifact("artifact tree publication"),
+      readEvidence: async () => unavailableArtifact("artifact evidence read"),
+      publishEvidence: async () => unavailableArtifact("artifact evidence publication"),
+    }),
+    artifactRepositoryRoot: "/unavailable/artifacts",
+  });
+}
 
 function unavailableProviderDeps(
   onAccess: (label: string) => void = () => undefined,
@@ -140,23 +159,12 @@ function unavailableProviderDeps(
       restoreTarget: async () => unavailableProviderAsync("provider target restore"),
       settleTarget: async () => unavailableProviderAsync("provider target settlement"),
     },
-    providerArtifactRepository: {
-      locateTree: async () => unavailableProviderAsync("provider artifact location"),
-      readTree: async () => unavailableProviderAsync("provider artifact read"),
-      publishTree: async () => unavailableProviderAsync("provider artifact publication"),
-      readEvidence: async () => unavailableProviderAsync("provider artifact evidence read"),
-      publishEvidence: async () => unavailableProviderAsync("provider artifact evidence publication"),
-    },
     providerNativeResource: {
       acquireCodex: async () => unavailableProviderAsync("Codex provider acquisition"),
       acquireClaude: async () => unavailableProviderAsync("Claude provider acquisition"),
     },
     providerExecutables: Object.freeze({}),
     providerProjectionRepositoryRoot: "/unavailable/provider-projections",
-    providerEvidenceStore: {
-      read: async () => unavailableProviderAsync("provider evidence read"),
-      publish: async () => unavailableProviderAsync("provider evidence publication"),
-    },
   });
 }
 

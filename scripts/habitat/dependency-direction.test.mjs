@@ -316,18 +316,12 @@ export const completeIdentities = createResourceCompleteTargetIdentityReader;
   "apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository.ts": `
 import {
   createResourceArtifactReader,
-  createResourceArtifactStore,
-  createResourceMechanicalEvidenceReader,
-  createResourceMechanicalEvidenceStore,
 } from "@rawr/agent-plugin-lifecycle/bindings/releases";
-import { makeRepository } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 
 export const bindings = {
   createResourceArtifactReader,
-  createResourceArtifactStore,
-  createResourceMechanicalEvidenceReader,
-  createResourceMechanicalEvidenceStore,
-  makeRepository,
+  makeNodeArtifactRepositoryAsyncPort,
 };
 `,
 };

@@ -9,15 +9,10 @@ import type {
   NativeProviderResourcePort,
 } from "./model/dependencies/providers";
 import type {
-  ArtifactStore,
   ArtifactStoreFailpoint,
   BuildFailpoint,
   ReleaseRetentionReaders,
 } from "./model/dependencies/releases";
-import type {
-  MechanicalEvidenceReader,
-  MechanicalEvidenceStore,
-} from "./shared/release";
 
 export interface LifecycleClock {
   readonly now: () => Date;
@@ -25,8 +20,8 @@ export interface LifecycleClock {
 
 type InitialContext = {
   deps: {
-    releaseArtifacts: ArtifactStore;
-    releaseEvidence?: MechanicalEvidenceReader;
+    artifactRepository: ArtifactRepositoryAsyncPort;
+    artifactRepositoryRoot: string;
     releaseRetention?: ReleaseRetentionReaders;
     releaseBuildFailpoint?: BuildFailpoint;
     releaseArtifactFailpoint?: ArtifactStoreFailpoint;
@@ -35,11 +30,9 @@ type InitialContext = {
     packageOutput: AgentPluginPackageOutputAsyncPort;
     exports: ExportLifecycleRuntime;
     providerRecords: AgentProviderRecordsAsyncPort;
-    providerArtifactRepository: ArtifactRepositoryAsyncPort;
     providerNativeResource: NativeProviderResourcePort;
     providerExecutables: NativeProviderExecutablePaths;
     providerProjectionRepositoryRoot: string;
-    providerEvidenceStore: MechanicalEvidenceStore;
   };
   scope: {
     controllerIdentity: string;
