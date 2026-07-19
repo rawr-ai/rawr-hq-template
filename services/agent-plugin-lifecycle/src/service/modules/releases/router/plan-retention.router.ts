@@ -13,22 +13,21 @@ import {
 import { module } from "../module";
 
 export const planRetention = module.planRetention.handler(async ({ context, input: policy }) => {
-  const readers = context.releases.retention;
-  if (readers === undefined) {
+  if (context.retention === undefined) {
     return blockedRetention([{ detail: "retention readers are unavailable" }]);
   }
 
   try {
-    const pins = parseRetentionPinsV1(await readers.pins.read());
+    const pins = parseRetentionPinsV1(await context.retention.pins.read());
     if (!pins.ok) return blockedRetention(pins.issues);
 
     const pinned = new Map<string, RetentionRef>();
     const pinIssues: RetentionIssue[] = [];
     for (const ref of pins.value.refs) {
       if (ref.kind === "mechanical-evidence") {
-        const evidence = context.releases.evidence === undefined
+        const evidence = context.evidence === undefined
           ? { kind: "Missing" as const }
-          : await context.releases.evidence.read(ref);
+          : await context.evidence.read(ref);
         if (evidence.kind !== "Verified") {
           pinIssues.push(Object.freeze({ ref, detail: `pinned artifact is ${evidence.kind.toLowerCase()}` }));
           continue;
@@ -37,7 +36,7 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
         continue;
       }
 
-      const result = await context.releases.artifacts.read(ref);
+      const result = await context.artifacts.read(ref);
       if (result.kind !== "Verified") {
         pinIssues.push(Object.freeze({ ref, detail: `pinned artifact is ${result.kind.toLowerCase()}` }));
         continue;
@@ -51,16 +50,16 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
     }
     if (pinIssues.length > 0) return blockedRetention(pinIssues);
 
-    const inventory = parseRetentionInventory(await readers.inventory.read());
+    const inventory = parseRetentionInventory(await context.retention.inventory.read());
     const blockedEntries: RetentionIssue[] = [...inventory.issues];
     const unpinned: RetentionInventoryEntry[] = [];
     for (const entry of inventory.entries) {
       if (pinned.has(retentionRefKey(entry.ref))) continue;
       const verified = entry.ref.kind === "mechanical-evidence"
-        ? context.releases.evidence === undefined
+        ? context.evidence === undefined
           ? { kind: "Missing" as const }
-          : await context.releases.evidence.read(entry.ref)
-        : await context.releases.artifacts.read(entry.ref);
+          : await context.evidence.read(entry.ref)
+        : await context.artifacts.read(entry.ref);
       if (verified.kind !== "Verified") {
         blockedEntries.push(Object.freeze({
           ref: entry.ref,

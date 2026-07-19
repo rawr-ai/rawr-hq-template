@@ -7,7 +7,7 @@ import {
   type AgentPluginReleaseSet,
   type ArtifactRef,
 } from "../../../../shared/release";
-import type { ContentWorkspaceSnapshot } from "../dto/content-workspace";
+import type { ContentWorkspaceSnapshot } from "../../../../model/dto/releases/content-workspace";
 import type { BuildIssue, BuildMode } from "../dto/release-lifecycle";
 
 export interface ConstructedPlan {

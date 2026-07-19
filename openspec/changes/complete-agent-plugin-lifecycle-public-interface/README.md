@@ -306,6 +306,24 @@ close the cross-module tasks or activate the blocked export-root transition.
 | Static and structural | Lifecycle and CLI lint/typecheck passed without cache; lifecycle build and sync passed. The dependency-direction fixture, full lifecycle structural suite, and CLI structural suite passed. Lifecycle structure ran against an exact staged-tree worktree snapshot; the user-owned untracked note was neither staged nor altered. Strict OpenSpec and `git diff --check` passed. |
 | Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural quality approved the vendors slice with no remaining P1/P2. The optional receiver-dependent clock fixture remains non-blocking P3 hardening. |
 
+## C5 Releases Context-Direction Proof
+
+This checkpoint advances only the releases portion of
+[[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]]. The remaining
+modules and the temporary releases binding facade keep the cross-module tasks
+open. Export task 5.2 remains blocked at its recorded publication-capability
+decision and is unchanged by this node.
+
+| Boundary | Result |
+| --- | --- |
+| Root context | The service root declares ready content snapshots, staged observation, artifact storage, optional evidence, one atomic optional retention capability, and failpoints directly. `ReleaseLifecycleRuntime` and its nested retention/control bags are absent. |
+| Domain ownership | Artifact-repository and raw content-workspace observation types sit with their root dependency contracts. Release requests, results, issues, staged policy/snapshot/classification, and other domain policy remain under `modules/releases/model`; only the build failpoint capability/event crosses into the root dependency contract. |
+| Module and behavior | `releases/module.ts` narrows ready capabilities into local context. Build, check, repository-check, and retention procedure handlers preserve their existing sequencing and result unions. Partial retention wiring is unrepresentable and has a compile-time negative proof. |
+| Public transition | `modules/releases/ports.ts` and `./ports/releases` are absent, with a negative package-surface import. The existing `./bindings/releases` facade remains only as an optional transition allowance for the immediately following host-materialization node; positive topology no longer requires it. No 2A task is marked complete here. |
+| Behavior proof | The full lifecycle service passed 35 files / 325 tests. The production-context proof passed 3/3. The three Git-backed release files passed serialized 37/37; a full parallel CLI run passed 340/346, and all six load-sensitive Git observation failures from that run passed in the serialized rerun without a product-code change. |
+| Static and structural | Lifecycle and CLI lint, typecheck, build, and sync passed without cache. The dependency-direction regression and staged Grit gate passed. Lifecycle and CLI structural suites passed against an exact staged-tree worktree snapshot that excluded the user-owned untracked note. `git diff --check` passed. |
+| Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural quality approved the corrected slice with no remaining P1/P2. The review loop caught and closed partial-retention representability plus staged-domain DTO ownership before checkpointing. |
+
 ## Standing Reviews
 
 | Role | Pivot focus |

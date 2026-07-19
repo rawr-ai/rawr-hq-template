@@ -6,8 +6,8 @@ import type {
 import type {
   ContentWorkspacePolicy,
   SourceEligibilityIssue,
-  StagedContentWorkspacePolicy,
-} from "./content-workspace";
+} from "../../../../model/dto/releases/content-workspace";
+import type { StagedContentWorkspacePolicy } from "./staged-content-workspace";
 
 export type BuildMode =
   | Readonly<{ kind: "targeted"; pluginId: PluginId }>
@@ -109,15 +109,3 @@ export type BuildResult =
     mode: BuildMode;
     ref: ArtifactRef;
   }>;
-
-export type BuildFailpointEvent =
-  | Readonly<{ kind: "AfterInitialInspection" }>
-  | Readonly<{ kind: "BeforeStagingRevalidation" }>
-  | Readonly<{ kind: "AfterStagingRevalidation" }>
-  | Readonly<{ kind: "BeforeFinalRevalidation" }>
-  | Readonly<{ kind: "AfterFinalRevalidation" }>
-  | Readonly<{ kind: "AfterMemberPublication"; index: number; ref: ReleaseArtifactRef }>
-  | Readonly<{ kind: "BeforeSetPublication" }>
-  | Readonly<{ kind: "AfterSetPublication" }>;
-
-export type BuildFailpoint = (event: BuildFailpointEvent) => void | Promise<void>;

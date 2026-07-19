@@ -3,12 +3,27 @@ import type {
   PluginId,
   ReleaseArtifactRef,
 } from "../../../src/service/shared/release";
+import type { Deps } from "../../../src/client";
 
 import type { BuildResult } from "../../../src/service/modules/releases/model/dto/release-lifecycle";
 
 declare const pluginId: PluginId;
 declare const artifactRef: ArtifactRef;
 declare const releaseRef: ReleaseArtifactRef;
+
+type ReleaseRetention = NonNullable<Deps["releaseRetention"]>;
+
+const retentionReaders: ReleaseRetention = {
+  pins: { read: async () => undefined },
+  inventory: { read: async () => undefined },
+};
+void retentionReaders;
+
+// @ts-expect-error Retention is one atomic capability; pins cannot be supplied alone.
+const partialRetention: ReleaseRetention = {
+  pins: { read: async () => undefined },
+};
+void partialRetention;
 
 const targeted = { kind: "targeted", pluginId } as const;
 const completeSet = { kind: "complete-set" } as const;

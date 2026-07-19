@@ -1,7 +1,7 @@
 import type {
   ArtifactRef,
   VerifiedArtifactSnapshotV1,
-} from "../../../../shared/release";
+} from "../../../shared/release";
 
 export interface ArtifactReadIssue {
   readonly code:

@@ -18,19 +18,12 @@ import { join, posix } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createReleaseArtifactRef } from "@rawr/agent-plugin-lifecycle/release";
+import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 import {
   createResourceContentWorkspaceSnapshotReader,
 } from "@rawr/agent-plugin-lifecycle/bindings/releases";
-import type {
-  ArtifactStore,
-  ArtifactStoreFailpoint,
-  ContentWorkspaceSnapshotReader,
-} from "@rawr/agent-plugin-lifecycle/ports/releases";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 
-import type {
-  BuildFailpoint,
-} from "../../../../../../services/agent-plugin-lifecycle/src/service/modules/releases/model/dto/release-lifecycle";
 import {
   createLifecycleTestClient,
   testInvocation,
@@ -51,6 +44,11 @@ import {
   removeOwnedFixtureRoot,
   type OwnedFixtureRoot,
 } from "./owned-fixture-root";
+
+type ArtifactStore = Deps["releaseArtifacts"];
+type ArtifactStoreFailpoint = NonNullable<Deps["releaseArtifactFailpoint"]>;
+type BuildFailpoint = NonNullable<Deps["releaseBuildFailpoint"]>;
+type ContentWorkspaceSnapshotReader = Deps["releaseSource"];
 
 describe("build application and append-only artifact store", () => {
   let fixture: OwnedFixtureRoot | undefined;
@@ -648,8 +646,12 @@ function createReleaseLifecycleApplications(options: {
   readonly source: ContentWorkspaceSnapshotReader;
   readonly artifacts: ArtifactStore;
 }) {
-  const runtime = Object.freeze({ ...options, stagedSource: unavailableStagedSource() });
-  const client = createLifecycleTestClient({ releases: runtime });
+  const releaseDeps = Object.freeze({
+    releaseSource: options.source,
+    stagedReleaseSource: unavailableStagedSource(),
+    releaseArtifacts: options.artifacts,
+  });
+  const client = createLifecycleTestClient(releaseDeps);
   type BuildRequest = Parameters<typeof client.releases.build>[0] & Readonly<{
     failpoint?: BuildFailpoint;
     artifactFailpoint?: ArtifactStoreFailpoint;
@@ -661,13 +663,9 @@ function createReleaseLifecycleApplications(options: {
     build: (request: BuildRequest) => {
       const { failpoint, artifactFailpoint, ...input } = request;
       const buildClient = createLifecycleTestClient({
-        releases: {
-          ...runtime,
-          controls: {
-            ...(failpoint === undefined ? {} : { buildFailpoint: failpoint }),
-            ...(artifactFailpoint === undefined ? {} : { artifactFailpoint }),
-          },
-        },
+        ...releaseDeps,
+        ...(failpoint === undefined ? {} : { releaseBuildFailpoint: failpoint }),
+        ...(artifactFailpoint === undefined ? {} : { releaseArtifactFailpoint: artifactFailpoint }),
       });
       return buildClient.releases.build(input, testInvocation);
     },

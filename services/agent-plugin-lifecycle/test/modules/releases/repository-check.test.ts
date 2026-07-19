@@ -10,7 +10,7 @@ import type { ResourceContentWorkspaceStagedReadPort } from "../../../src/bindin
 import type {
   ContentWorkspaceInspection,
   StagedIndexObservationResult,
-} from "../../../src/service/modules/releases/ports";
+} from "../../../src/service/model/dependencies/releases";
 import {
   addStagedObservationByteLimits,
   classifyStagedObservationFailure,
@@ -73,13 +73,11 @@ describe("releases.checkRepository", () => {
     };
     const stagedSource = createResourceStagedContentWorkspaceObservationReader({ contentWorkspace: rawPort });
     const client = createLifecycleTestClient({
-      releases: {
-        source: unavailableCleanSource(),
-        stagedSource,
-        artifacts: writeTraps(() => {
-          throw new Error("staged repository check acquired artifact authority");
-        }),
-      },
+      releaseSource: unavailableCleanSource(),
+      stagedReleaseSource: stagedSource,
+      releaseArtifacts: writeTraps(() => {
+        throw new Error("staged repository check acquired artifact authority");
+      }),
     });
 
     await expect(client.releases.checkRepository({
@@ -145,13 +143,11 @@ describe("releases.checkRepository", () => {
     };
     const stagedSource = createResourceStagedContentWorkspaceObservationReader({ contentWorkspace: rawPort });
     const client = createLifecycleTestClient({
-      releases: {
-        source: unavailableCleanSource(),
-        stagedSource,
-        artifacts: writeTraps(() => {
-          writes += 1;
-        }),
-      },
+      releaseSource: unavailableCleanSource(),
+      stagedReleaseSource: stagedSource,
+      releaseArtifacts: writeTraps(() => {
+        writes += 1;
+      }),
     });
 
     await expect(client.releases.checkRepository({
@@ -176,13 +172,11 @@ describe("releases.checkRepository", () => {
       },
     });
     const client = createLifecycleTestClient({
-      releases: {
-        source: unavailableCleanSource(),
-        stagedSource,
-        artifacts: writeTraps(() => {
-          throw new Error("staged repository check acquired artifact authority");
-        }),
-      },
+      releaseSource: unavailableCleanSource(),
+      stagedReleaseSource: stagedSource,
+      releaseArtifacts: writeTraps(() => {
+        throw new Error("staged repository check acquired artifact authority");
+      }),
     });
 
     await expect(client.releases.checkRepository({
@@ -211,13 +205,11 @@ describe("releases.checkRepository", () => {
         },
       });
       const client = createLifecycleTestClient({
-        releases: {
-          source: unavailableCleanSource(),
-          stagedSource,
-          artifacts: writeTraps(() => {
-            throw new Error("staged repository check acquired artifact authority");
-          }),
-        },
+        releaseSource: unavailableCleanSource(),
+        stagedReleaseSource: stagedSource,
+        releaseArtifacts: writeTraps(() => {
+          throw new Error("staged repository check acquired artifact authority");
+        }),
       });
 
       await expect(client.releases.checkRepository({
@@ -265,24 +257,22 @@ describe("releases.checkRepository", () => {
       },
     };
     const client = createLifecycleTestClient({
-      releases: {
-        source: {
-          inspect: async () => eligible,
-          revalidate: async () => ({
-            kind: "Ineligible",
-            issues: [{ code: "WrongTree", detail: "declared tree no longer matches" }],
-          }),
-        },
-        stagedSource: {
-          observe: async () => {
-            stagedReads += 1;
-            return unavailableAsync("staged observation");
-          },
-        },
-        artifacts: writeTraps(() => {
-          artifactWrites += 1;
+      releaseSource: {
+        inspect: async () => eligible,
+        revalidate: async () => ({
+          kind: "Ineligible",
+          issues: [{ code: "WrongTree", detail: "declared tree no longer matches" }],
         }),
       },
+      stagedReleaseSource: {
+        observe: async () => {
+          stagedReads += 1;
+          return unavailableAsync("staged observation");
+        },
+      },
+      releaseArtifacts: writeTraps(() => {
+        artifactWrites += 1;
+      }),
     });
 
     await expect(client.releases.checkRepository({
@@ -316,36 +306,34 @@ describe("releases.checkRepository", () => {
       },
     };
     const client = createLifecycleTestClient({
-      releases: {
-        source: {
-          inspect: async () => {
-            inspections += 1;
-            return eligible;
-          },
-          revalidate: async () => {
-            revalidations += 1;
-            return eligible;
-          },
+      releaseSource: {
+        inspect: async () => {
+          inspections += 1;
+          return eligible;
         },
-        stagedSource: {
-          observe: async () => {
-            stagedReads += 1;
-            return unavailableAsync("staged observation");
-          },
+        revalidate: async () => {
+          revalidations += 1;
+          return eligible;
         },
-        artifacts: {
-          read: async () => {
-            artifactAccesses += 1;
-            return unavailableAsync("artifact read");
-          },
-          publishRelease: async () => {
-            artifactAccesses += 1;
-            return unavailableAsync("release publication");
-          },
-          publishReleaseSet: async () => {
-            artifactAccesses += 1;
-            return unavailableAsync("release-set publication");
-          },
+      },
+      stagedReleaseSource: {
+        observe: async () => {
+          stagedReads += 1;
+          return unavailableAsync("staged observation");
+        },
+      },
+      releaseArtifacts: {
+        read: async () => {
+          artifactAccesses += 1;
+          return unavailableAsync("artifact read");
+        },
+        publishRelease: async () => {
+          artifactAccesses += 1;
+          return unavailableAsync("release publication");
+        },
+        publishReleaseSet: async () => {
+          artifactAccesses += 1;
+          return unavailableAsync("release-set publication");
         },
       },
     });
@@ -373,20 +361,18 @@ describe("releases.checkRepository", () => {
     const [releaseInputObservation, materializationObservation] = validStagedObservationResults();
     const changedObservation = sourceChangedObservation(releaseInputObservation);
     const client = createLifecycleTestClient({
-      releases: {
-        source: unavailableCleanSource(),
-        stagedSource: {
-          observe: async () => {
-            observations += 1;
-            if (observations === 1) return releaseInputObservation;
-            if (observations === 2) return materializationObservation;
-            return changedObservation;
-          },
+      releaseSource: unavailableCleanSource(),
+      stagedReleaseSource: {
+        observe: async () => {
+          observations += 1;
+          if (observations === 1) return releaseInputObservation;
+          if (observations === 2) return materializationObservation;
+          return changedObservation;
         },
-        artifacts: writeTraps(() => {
-          writes += 1;
-        }),
       },
+      releaseArtifacts: writeTraps(() => {
+        writes += 1;
+      }),
     });
 
     await expect(client.releases.checkRepository({
@@ -406,20 +392,18 @@ describe("releases.checkRepository", () => {
     let observations = 0;
     const observationResults = validStagedObservationResults();
     const client = createLifecycleTestClient({
-      releases: {
-        source: unavailableCleanSource(),
-        stagedSource: {
-          observe: async () => {
-            const observation = observationResults[observations % observationResults.length];
-            observations += 1;
-            if (observation === undefined) throw new Error("Missing staged observation fixture");
-            return observation;
-          },
+      releaseSource: unavailableCleanSource(),
+      stagedReleaseSource: {
+        observe: async () => {
+          const observation = observationResults[observations % observationResults.length];
+          observations += 1;
+          if (observation === undefined) throw new Error("Missing staged observation fixture");
+          return observation;
         },
-        artifacts: writeTraps(() => {
-          writes += 1;
-        }),
       },
+      releaseArtifacts: writeTraps(() => {
+        writes += 1;
+      }),
     });
 
     await expect(client.releases.checkRepository({

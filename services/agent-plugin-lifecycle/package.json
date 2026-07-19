@@ -42,10 +42,6 @@
       "types": "./src/bindings/releases.ts",
       "default": "./src/bindings/releases.ts"
     },
-    "./ports/releases": {
-      "types": "./src/service/modules/releases/ports.ts",
-      "default": "./src/service/modules/releases/ports.ts"
-    },
     "./ports/packaging": {
       "types": "./src/service/modules/packaging/ports.ts",
       "default": "./src/service/modules/packaging/ports.ts"

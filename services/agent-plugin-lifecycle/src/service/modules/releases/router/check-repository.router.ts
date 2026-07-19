@@ -1,9 +1,12 @@
 import type {
   SourceEligibilityIssue,
+} from "../../../model/dto/releases/content-workspace";
+import type { RepositoryCheckResult } from "../model/dto/release-lifecycle";
+import type {
   StagedContentWorkspaceInspection,
   StagedContentWorkspacePolicy,
-} from "../model/dto/content-workspace";
-import type { RepositoryCheckResult } from "../model/dto/release-lifecycle";
+} from "../model/dto/staged-content-workspace";
+import type { StagedContentWorkspaceObservationReader } from "../../../model/dependencies/releases";
 import {
   classifyStagedMaterializationObservation,
   classifyStagedReleaseInputObservation,
@@ -12,13 +15,12 @@ import {
   validateStagedContentWorkspacePolicy,
 } from "../model/policy/staged-content-workspace";
 import { module } from "../module";
-import type { StagedContentWorkspaceObservationReader } from "../ports";
 
 export const checkRepository = module.checkRepository.handler(async ({ context, input: request }) => {
   switch (request.kind) {
     case "staged": {
       const inspected = await inspectStagedRepository(
-        context.releases.stagedSource,
+        context.stagedSource,
         request.contentWorkspace,
       );
       if (inspected.kind === "SourceChanged") return stagedSourceChanged(inspected.detail);
@@ -26,7 +28,7 @@ export const checkRepository = module.checkRepository.handler(async ({ context, 
         return { kind: "RepositoryIneligible" as const, mode: "staged" as const, issues: inspected.issues };
       }
       const revalidated = await inspectStagedRepository(
-        context.releases.stagedSource,
+        context.stagedSource,
         request.contentWorkspace,
       );
       if (
@@ -49,11 +51,11 @@ export const checkRepository = module.checkRepository.handler(async ({ context, 
       };
     }
     case "clean": {
-      const inspected = await context.releases.source.inspect(request.contentWorkspace);
+      const inspected = await context.source.inspect(request.contentWorkspace);
       if (inspected.kind === "Ineligible") {
         return { kind: "RepositoryIneligible" as const, mode: "clean" as const, issues: inspected.issues };
       }
-      const revalidated = await context.releases.source.revalidate(
+      const revalidated = await context.source.revalidate(
         request.contentWorkspace,
         inspected.snapshot.eligibilityBinding,
       );

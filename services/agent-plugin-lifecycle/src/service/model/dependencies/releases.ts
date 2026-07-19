@@ -2,7 +2,7 @@ import type {
   AgentPluginRelease,
   AgentPluginReleaseSet,
   ArtifactRef,
-  MechanicalEvidenceReader,
+  ReleaseArtifactRef,
 } from "../../shared/release";
 import type {
   ArtifactPublicationOptions,
@@ -12,7 +12,7 @@ import type {
   ArtifactStoreFailpoint,
   ArtifactStoreFailpointEvent,
   PublicationGuardResult,
-} from "./model/dto/artifact-repository";
+} from "../dto/releases/artifact-repository";
 import type {
   ContentWorkspaceInspection,
   ContentWorkspacePolicy,
@@ -25,22 +25,20 @@ import type {
   StagedIndexObservationRequest,
   StagedIndexObservationResult,
   StagedObservationFailureReason,
-  StagedContentWorkspaceInspection,
-  StagedContentWorkspacePolicy,
-  StagedContentWorkspaceSnapshot,
   StagedWorkspaceAnchorObservation,
-} from "./model/dto/content-workspace";
-import type { BuildFailpoint } from "./model/dto/release-lifecycle";
-import type {
-  BlockedPinnedGraph,
-  RetentionInventoryEntry,
-  RetentionIssue,
-  RetentionPinsV1,
-  RetentionPlan,
-  RetentionRef,
-  RetentionResult,
-  RetentionSpacePolicyV1,
-} from "./model/dto/retention";
+} from "../dto/releases/content-workspace";
+
+export type BuildFailpointEvent =
+  | Readonly<{ kind: "AfterInitialInspection" }>
+  | Readonly<{ kind: "BeforeStagingRevalidation" }>
+  | Readonly<{ kind: "AfterStagingRevalidation" }>
+  | Readonly<{ kind: "BeforeFinalRevalidation" }>
+  | Readonly<{ kind: "AfterFinalRevalidation" }>
+  | Readonly<{ kind: "AfterMemberPublication"; index: number; ref: ReleaseArtifactRef }>
+  | Readonly<{ kind: "BeforeSetPublication" }>
+  | Readonly<{ kind: "AfterSetPublication" }>;
+
+export type BuildFailpoint = (event: BuildFailpointEvent) => void | Promise<void>;
 
 export interface ContentWorkspaceSnapshotReader {
   inspect(policy: ContentWorkspacePolicy): Promise<ContentWorkspaceInspection>;
@@ -74,19 +72,9 @@ export interface RetentionInventoryReader {
   read(): Promise<unknown>;
 }
 
-export interface ReleaseLifecycleRuntime {
-  readonly source: ContentWorkspaceSnapshotReader;
-  readonly stagedSource: StagedContentWorkspaceObservationReader;
-  readonly artifacts: ArtifactStore;
-  readonly evidence?: MechanicalEvidenceReader;
-  readonly retention?: Readonly<{
-    readonly pins: RetentionPinsReader;
-    readonly inventory: RetentionInventoryReader;
-  }>;
-  readonly controls?: Readonly<{
-    buildFailpoint?: BuildFailpoint;
-    artifactFailpoint?: ArtifactStoreFailpoint;
-  }>;
+export interface ReleaseRetentionReaders {
+  readonly pins: RetentionPinsReader;
+  readonly inventory: RetentionInventoryReader;
 }
 
 export type {
@@ -100,14 +88,6 @@ export type {
   ContentWorkspacePolicy,
   ContentWorkspaceSnapshot,
   PublicationGuardResult,
-  BlockedPinnedGraph,
-  RetentionInventoryEntry,
-  RetentionIssue,
-  RetentionPinsV1,
-  RetentionPlan,
-  RetentionRef,
-  RetentionResult,
-  RetentionSpacePolicyV1,
   SourceEligibilityIssue,
   SourceEligibilityIssueCode,
   StagedBlobObservation,
@@ -116,8 +96,5 @@ export type {
   StagedIndexObservationRequest,
   StagedIndexObservationResult,
   StagedObservationFailureReason,
-  StagedContentWorkspaceInspection,
-  StagedContentWorkspacePolicy,
-  StagedContentWorkspaceSnapshot,
   StagedWorkspaceAnchorObservation,
 };

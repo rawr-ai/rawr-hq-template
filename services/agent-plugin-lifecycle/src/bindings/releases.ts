@@ -1,4 +1,8 @@
-export type * from "../service/modules/releases/ports";
+export type * from "../service/model/dto/releases/artifact-repository";
+export type * from "../service/model/dto/releases/content-workspace";
+export type * from "../service/modules/releases/model/dto/release-lifecycle";
+export type * from "../service/modules/releases/model/dto/staged-content-workspace";
+export type * from "../service/modules/releases/model/dto/retention";
 export type * from "../service/shared/release";
 
 export {

@@ -12,7 +12,7 @@ import {
   createResourceContentWorkspaceSnapshotReader,
   type ResourceContentWorkspaceSnapshotReadPort,
 } from "@rawr/agent-plugin-lifecycle/bindings/releases";
-import type { ContentWorkspaceSnapshotReader } from "@rawr/agent-plugin-lifecycle/ports/releases";
+import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 
 import {
@@ -27,6 +27,8 @@ import {
   removeOwnedFixtureRoot,
   type OwnedFixtureRoot,
 } from "./owned-fixture-root";
+
+type ContentWorkspaceSnapshotReader = Deps["releaseSource"];
 
 describe("exact Git-object eligibility", () => {
   let fixture: OwnedFixtureRoot | undefined;

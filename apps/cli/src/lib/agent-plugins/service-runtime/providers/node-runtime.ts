@@ -1,4 +1,5 @@
 import type { ContentAuthority } from "@rawr/agent-plugin-lifecycle/release";
+import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 import {
   CLAUDE_ADAPTER_PROTOCOL,
   CODEX_ADAPTER_PROTOCOL,
@@ -19,7 +20,6 @@ import {
   type CanonicalNativeObserver,
   type ProviderRecordState,
 } from "@rawr/agent-plugin-lifecycle/bindings/providers";
-import type { ArtifactReader } from "@rawr/agent-plugin-lifecycle/ports/releases";
 import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import { makeNodeAgentProviderRecordsAsyncPort } from "@rawr/resource-agent-provider-records/providers/effect-platform-node";
 
@@ -32,6 +32,8 @@ import {
   createNodeNativeProviderObserver,
 } from "../../bindings/providers";
 import { createProviderReleaseReader } from "./artifact-reader";
+
+type ArtifactReader = Pick<Deps["releaseArtifacts"], "read">;
 
 export function createNodeProviderLifecycleRuntime(options: Readonly<{
   currentMain: ProviderLifecycleRuntime["currentMain"];

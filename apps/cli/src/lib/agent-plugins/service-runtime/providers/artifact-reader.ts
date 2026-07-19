@@ -1,10 +1,12 @@
-import type { ArtifactReader } from "@rawr/agent-plugin-lifecycle/ports/releases";
+import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 import {
   failure,
   issue,
   success,
   type VerifiedReleaseReader,
 } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+
+type ArtifactReader = Pick<Deps["releaseArtifacts"], "read">;
 
 /** Adapts the immutable release store without adding another artifact owner. */
 export function createProviderReleaseReader(reader: ArtifactReader): VerifiedReleaseReader {

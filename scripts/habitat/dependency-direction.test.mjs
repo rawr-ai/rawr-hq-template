@@ -24,11 +24,23 @@ const WORKSPACE_NODE_MODULES = fileURLToPath(new URL("../../node_modules", impor
 const roots = [];
 
 const rejectingSources = {
+  "services/agent-plugin-lifecycle/src/service/base.ts": `
+import type { ReleaseRuntime } from "./modules/releases/ports";
+`,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/release-export.ts": `
+export { type ReleaseRuntime } from "../../modules/releases/ports";
+`,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/release-star.ts": `
+export * from "../../modules/releases/ports";
+`,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/release-dynamic.ts": `
+export const release = import("../../modules/releases/ports");
+`,
   "services/agent-plugin-lifecycle/src/service/modules/releases/router/impl-import.router.ts": `
 import { impl } from "../../../impl";
 `,
   "services/agent-plugin-lifecycle/src/service/modules/releases/router/context-deps.router.ts": `
-export const bypass = context.deps;
+export const bypass = context.deps.releaseSource;
 `,
   "services/agent-plugin-lifecycle/src/service/router.ts": `
 import { forbidden } from "./not-allowed";
@@ -49,7 +61,7 @@ export * from "@rawr/resource-native-agent-provider/providers/codex-effect-platf
   "services/agent-plugin-lifecycle/src/provider-dynamic-import.ts": `
 export const provider = import("@rawr/resource-native-agent-provider/providers/codex-effect-platform-node");
 `,
-  "services/agent-plugin-lifecycle/src/service/modules/releases/ports.ts": `
+  "services/agent-plugin-lifecycle/src/service/modules/providers/ports.ts": `
 export * from "./internal/resource-artifact-repository";
 `,
   "apps/cli/src/lib/agent-plugins/value-surface-import.ts": `
@@ -133,7 +145,7 @@ const acceptedSources = {
 import { module } from "../module";
 
 export const check = module.check.handler(async ({ context }) =>
-  context.releases.source.inspect());
+  context.source.inspect());
 `,
   "services/agent-plugin-lifecycle/src/service/router.ts": `
 import { impl } from "./impl";
@@ -309,7 +321,7 @@ describe("agent plugin lifecycle dependency-direction Habitat rule", () => {
     expect(
       rejected.report.rules[0].diagnostics,
       JSON.stringify(rejected.report.rules[0].diagnostics, null, 2),
-    ).toHaveLength(31);
+    ).toHaveLength(35);
 
     const rootRouter = "services/agent-plugin-lifecycle/src/service/router.ts";
     const expectedLocations = [
