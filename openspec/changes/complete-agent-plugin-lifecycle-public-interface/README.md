@@ -344,6 +344,24 @@ construction authority without claiming that
 | Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural quality report no remaining P1/P2. The loop caught and closed the temporary CLI-to-private-repository test dependency by moving exact Git eligibility and its generated content fixture to lifecycle-service test ownership. |
 | Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]] remains blocked at its recorded publication-capability choice and is untouched. |
 
+## C5 Packaging Context-Direction Proof
+
+This checkpoint advances only the packaging portion of
+[[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]]. It removes the
+preadapted packaging aggregate without changing package behavior or entering
+the blocked export publication decision.
+
+| Boundary | Result |
+| --- | --- |
+| Root context | The service root declares the ready raw package-output resource and the existing artifact store. The packaging module projects only the artifact read capability, so release publication is structurally unavailable in packaging context. No `PackagingLifecycleRuntime` bag or replacement alias exists. |
+| Module and behavior | The packaging procedure handler owns artifact verification, deterministic Cowork request construction, native resource invocation, and translation into the closed packaging result union. Pure archive ordering, bounds, and digest helpers remain under the packaging model. |
+| Provider selection | The qualified CLI composition root selects the existing Effect Platform Node package-output provider and passes its raw async port. The service imports no concrete provider, and the CLI contains no lifecycle packaging adapter or factory. |
+| Public surface | `bindings/packaging`, `modules/packaging/ports.ts`, and the `./bindings/packaging` and `./ports/packaging` package subpaths are absent without aliases. Compile-time negative imports preserve both removals. |
+| Behavior proof | The full lifecycle suite passed 36 files / 340 tests and the full CLI suite passed. Focused packaging, resource-adapter, and service-spine proof passed 32/32; focused CLI production-context proof passed 4/4. Missing, mismatched, wrong-ref, bounded-render, pre-mutation refusal, post-commit uncertainty, cleanup failure, unsettled output, native failpoint, deterministic output, and mutation-free repeat behavior remain covered. |
+| Structural proof | The closed Habitat topology removes packaging from the binding inventory, seals its exact module/model shape, and grows the root-no-upward-import set monotonically to packaging, releases, and vendors. Lifecycle and CLI lint, typecheck, build, sync, and structural suites passed without cache; the dependency-direction regression, strict OpenSpec, and `git diff --check` passed. The user-owned untracked note was held outside the closed topology only for the lifecycle structural run, restored byte-identically, and never staged. |
+| Reviews | Architecture/authority, TypeScript/refactor/oRPC/Effect, behavior/testing/state-machine, and structural/Habitat standing reviews report no remaining P1/P2. The review loop added explicit resource-to-domain failure translation, cleanup-disposition, encoder-refusal, and identity-presence proof before landing. |
+| Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]] remains blocked at the no-unmarked-publication-window capability choice. This checkpoint changes no destination claim, marker, publication substrate, provider home, native command, or app/runtime composition. |
+
 ## Standing Reviews
 
 | Role | Pivot focus |

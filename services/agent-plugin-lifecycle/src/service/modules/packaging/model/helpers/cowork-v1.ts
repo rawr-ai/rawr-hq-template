@@ -7,6 +7,10 @@ import {
   type VerifiedPayloadFileV1,
   type VerifiedReleaseArtifactV1,
 } from "../../../../shared/release/index";
+import type {
+  CoworkV1ArchiveEncodingRequest,
+  PackageArchiveEntry,
+} from "@rawr/resource-agent-plugin-package-output";
 
 import type { PackageDigest } from "../dto/packaging-lifecycle";
 
@@ -24,31 +28,6 @@ export const COWORK_V1_MAX_PROJECTED_ARCHIVE_BYTES = 128 * 1024 * 1024;
 export interface CoworkV1ProtocolEntrySize {
   readonly path: string;
   readonly byteLength: number;
-}
-
-export interface CoworkV1ArchiveEntry {
-  readonly path: string;
-  readonly mode: 0o644 | 0o755;
-  readonly bytes: Uint8Array;
-}
-
-export interface CoworkV1ArchiveRequest {
-  readonly entries: readonly CoworkV1ArchiveEntry[];
-  readonly comment: typeof COWORK_V1_ARCHIVE_COMMENT;
-  readonly fixedTimestamp: typeof COWORK_V1_FIXED_TIMESTAMP;
-  readonly compression: "store";
-  readonly zip64: false;
-}
-
-/** Mechanism-only archive and digest capability supplied by the controller. */
-export interface CoworkV1Runtime {
-  encode(request: CoworkV1ArchiveRequest): Promise<Uint8Array>;
-  packageDigest(bytes: Uint8Array): PackageDigest;
-}
-
-export interface RenderedCoworkV1 {
-  readonly bytes: Uint8Array;
-  readonly packageDigest: PackageDigest;
 }
 
 export function assertSnapshotMatchesRef(
@@ -76,22 +55,24 @@ export function assertSnapshotMatchesRef(
   for (const member of snapshot.members) assertReleaseSnapshot(member);
 }
 
-export async function renderCoworkV1(
+export function createCoworkV1ArchiveRequest(
   snapshot: VerifiedArtifactSnapshotV1,
-  runtime: CoworkV1Runtime,
-): Promise<RenderedCoworkV1> {
-  const entries = collectCoworkEntries(snapshot);
-  const bytes = await runtime.encode(Object.freeze({
-    entries,
+): CoworkV1ArchiveEncodingRequest {
+  return Object.freeze({
+    entries: collectCoworkEntries(snapshot),
     comment: COWORK_V1_ARCHIVE_COMMENT,
     fixedTimestamp: COWORK_V1_FIXED_TIMESTAMP,
     compression: "store",
     zip64: false,
-  }));
-  return Object.freeze({ bytes, packageDigest: runtime.packageDigest(bytes) });
+  });
 }
 
-function collectCoworkEntries(snapshot: VerifiedArtifactSnapshotV1): readonly CoworkV1ArchiveEntry[] {
+export function coworkV1PackageDigest(bytes: Uint8Array): PackageDigest {
+  const digest = contentDigest(bytes);
+  return `pkg1_${digest.slice("sha256_".length)}`;
+}
+
+function collectCoworkEntries(snapshot: VerifiedArtifactSnapshotV1): readonly PackageArchiveEntry[] {
   assertCoworkV1ProtocolBounds(protocolEntrySizes(snapshot));
   const entries = snapshot.kind === "release"
     ? collectReleaseEntries(snapshot, "")
@@ -171,7 +152,7 @@ function* releaseProtocolEntrySizes(
 function collectReleaseEntries(
   snapshot: VerifiedReleaseArtifactV1,
   prefix: string,
-): CoworkV1ArchiveEntry[] {
+): PackageArchiveEntry[] {
   assertReleaseSnapshot(snapshot);
   return snapshot.files.map((file) => ({
     path: `${prefix}${file.path}`,

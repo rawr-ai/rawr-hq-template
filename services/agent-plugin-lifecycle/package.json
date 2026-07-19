@@ -30,10 +30,6 @@
       "types": "./src/bindings/governance.ts",
       "default": "./src/bindings/governance.ts"
     },
-    "./bindings/packaging": {
-      "types": "./src/bindings/packaging.ts",
-      "default": "./src/bindings/packaging.ts"
-    },
     "./bindings/providers": {
       "types": "./src/bindings/providers/index.ts",
       "default": "./src/bindings/providers/index.ts"
@@ -41,10 +37,6 @@
     "./bindings/releases": {
       "types": "./src/bindings/releases.ts",
       "default": "./src/bindings/releases.ts"
-    },
-    "./ports/packaging": {
-      "types": "./src/service/modules/packaging/ports.ts",
-      "default": "./src/service/modules/packaging/ports.ts"
     },
     "./ports/exports": {
       "types": "./src/service/modules/exports/ports.ts",

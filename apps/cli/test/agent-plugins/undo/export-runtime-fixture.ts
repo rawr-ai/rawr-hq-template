@@ -80,13 +80,9 @@ export function createExportTestClient(
       },
       contentWorkspace: unavailableContentWorkspace(),
       clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
-      packaging: {
-        artifactReader: { read: async () => unavailableAsync("package artifact read") },
-        output: { publish: async () => unavailableAsync("package output") },
-        coworkV1: {
-          encode: async () => unavailableAsync("cowork archive encode"),
-          packageDigest: () => unavailable("cowork package digest"),
-        },
+      packageOutput: {
+        encodeCoworkV1: async () => unavailableAsync("cowork archive encode"),
+        publish: async () => unavailableAsync("package output"),
       },
       exports: createExportLifecycleRuntime(exportsRuntime),
       providers: unavailableProviderRuntime(options.onProviderAccess),

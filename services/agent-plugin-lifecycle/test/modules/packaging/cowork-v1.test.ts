@@ -7,11 +7,11 @@ import {
   COWORK_V1_MAX_PAYLOAD_BYTES,
   assertCoworkV1ProtocolBounds,
   assertSnapshotMatchesRef,
-  renderCoworkV1,
+  coworkV1PackageDigest,
+  createCoworkV1ArchiveRequest,
 } from "../../../src/service/modules/packaging/model/helpers/cowork-v1";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 
-import { createResourcePackageOutputRuntime } from "../../../src/bindings/packaging";
 import { packagingArtifactFixture } from "./artifact-fixture";
 import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "../../support/owned-fixture-root";
 
@@ -23,14 +23,7 @@ interface ZipEntryView {
 }
 
 const roots: OwnedFixtureRoot[] = [];
-const nodeCoworkV1Runtime = createResourcePackageOutputRuntime({
-  artifactReader: {
-    async read() {
-      throw new Error("Cowork rendering does not read artifacts");
-    },
-  },
-  packageOutput: makeNodePackageOutputAsyncPort(),
-}).coworkV1;
+const nodePackageOutput = makeNodePackageOutputAsyncPort();
 
 afterEach(async () => {
   while (roots.length > 0) {
@@ -50,7 +43,7 @@ describe("cowork-v1", () => {
     try {
       process.chdir(firstRoot.path);
       process.env.TZ = "Pacific/Honolulu";
-      const first = await renderCoworkV1(fixture.setSnapshot, nodeCoworkV1Runtime);
+      const first = await renderCoworkV1(fixture.setSnapshot);
 
       process.chdir(secondRoot.path);
       process.env.TZ = "Asia/Tokyo";
@@ -60,7 +53,7 @@ describe("cowork-v1", () => {
           ...member,
           files: [...member.files].reverse(),
         })),
-      }, nodeCoworkV1Runtime);
+      });
 
       expect(second.packageDigest).toBe(first.packageDigest);
       expect(second.bytes).toEqual(first.bytes);
@@ -77,7 +70,7 @@ describe("cowork-v1", () => {
 
   it("writes canonical paths, modes, timestamps, and the versioned protocol marker", async () => {
     const fixture = packagingArtifactFixture();
-    const rendered = await renderCoworkV1(fixture.alphaSnapshot, nodeCoworkV1Runtime);
+    const rendered = await renderCoworkV1(fixture.alphaSnapshot);
     const archive = inspectZip(rendered.bytes);
 
     expect(archive.entries).toEqual([
@@ -99,8 +92,8 @@ describe("cowork-v1", () => {
   });
 
   it("changes package identity when admitted artifact bytes change", async () => {
-    const first = await renderCoworkV1(packagingArtifactFixture("alpha one\n").alphaSnapshot, nodeCoworkV1Runtime);
-    const second = await renderCoworkV1(packagingArtifactFixture("alpha two\n").alphaSnapshot, nodeCoworkV1Runtime);
+    const first = await renderCoworkV1(packagingArtifactFixture("alpha one\n").alphaSnapshot);
+    const second = await renderCoworkV1(packagingArtifactFixture("alpha two\n").alphaSnapshot);
     expect(second.packageDigest).not.toBe(first.packageDigest);
     expect(second.bytes).not.toEqual(first.bytes);
   });
@@ -117,7 +110,7 @@ describe("cowork-v1", () => {
       ],
     };
 
-    await expect(renderCoworkV1(tampered, nodeCoworkV1Runtime)).rejects.toThrow("mismatched bytes");
+    await expect(renderCoworkV1(tampered)).rejects.toThrow("mismatched bytes");
     expect(() => assertSnapshotMatchesRef(fixture.alphaSnapshot, fixture.betaSnapshot.ref))
       .toThrow("different reference");
   });
@@ -125,7 +118,7 @@ describe("cowork-v1", () => {
   it("renders complete-set members below deterministic plugin roots", async () => {
     const fixture = packagingArtifactFixture();
     assertSnapshotMatchesRef(fixture.setSnapshot, fixture.setSnapshot.ref);
-    const rendered = await renderCoworkV1(fixture.setSnapshot, nodeCoworkV1Runtime);
+    const rendered = await renderCoworkV1(fixture.setSnapshot);
     expect(inspectZip(rendered.bytes).entries.map((entry) => entry.path)).toEqual([
       "plugins/alpha/scripts/alpha.sh",
       "plugins/alpha/skills/alpha/SKILL.md",
@@ -156,6 +149,13 @@ describe("cowork-v1", () => {
     )).toThrow("projected archive-byte limit");
   });
 });
+
+async function renderCoworkV1(
+  snapshot: Parameters<typeof createCoworkV1ArchiveRequest>[0],
+): Promise<Readonly<{ bytes: Uint8Array; packageDigest: string }>> {
+  const bytes = await nodePackageOutput.encodeCoworkV1(createCoworkV1ArchiveRequest(snapshot));
+  return Object.freeze({ bytes, packageDigest: coworkV1PackageDigest(bytes) });
+}
 
 function* repeatedEntrySizes(
   count: number,

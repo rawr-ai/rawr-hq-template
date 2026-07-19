@@ -20,6 +20,9 @@ import {
   makeDeferredNodeContentWorkspacePort,
 } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import {
+  makeNodePackageOutputAsyncPort,
+} from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+import {
   bindService,
   type ProcessView,
   type RoleView,
@@ -35,7 +38,6 @@ import {
   createArtifactRepositoryReader,
   createArtifactRepositoryStore,
   createMechanicalEvidenceReader,
-  createPackageOutputLifecycleRuntime,
 } from "../bindings/output";
 import {
   LifecycleAuthorityBindingError,
@@ -183,7 +185,7 @@ export function createProductionLifecycleDeps(input: Readonly<{
     releaseEvidence: createMechanicalEvidenceReader(layout.artifactStoreRoot),
     contentWorkspace,
     clock: Object.freeze({ now: () => new Date() }),
-    packaging: createPackageOutputLifecycleRuntime({ artifactReader }),
+    packageOutput: makeNodePackageOutputAsyncPort(),
     exports: createExportLifecycleRuntime({
       artifactReader: createExportArtifactReader(artifactReader),
       knownNativeHomesReader: createKnownNativeHomesReader(providerState),

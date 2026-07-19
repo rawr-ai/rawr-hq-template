@@ -29,7 +29,7 @@ const LIFECYCLE_DEP_KEYS = Object.freeze([
   "releaseEvidence",
   "contentWorkspace",
   "clock",
-  "packaging",
+  "packageOutput",
   "exports",
   "providers",
   "governance",
@@ -108,6 +108,7 @@ describe("production lifecycle service context", () => {
     }
     expect(deps).not.toHaveProperty("releaseSource");
     expect(deps).not.toHaveProperty("stagedReleaseSource");
+    expect(deps).not.toHaveProperty("packaging");
     expect(Object.values(deps)).toHaveLength(10);
     expect(await directoryNames(root.path)).toEqual(before);
   });
