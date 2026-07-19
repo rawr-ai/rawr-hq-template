@@ -101,6 +101,18 @@ import { contentDigest } from "@rawr/agent-plugin-lifecycle/release";
   "apps/cli/src/lib/agent-plugins/retired-packaging-binding.ts": `
 import { createResourcePackageOutputRuntime } from "@rawr/agent-plugin-lifecycle/bindings/packaging";
 `,
+  "apps/cli/src/lib/agent-plugins/retired-governance-binding-import.ts": `
+import { createGovernanceCurrentMainSelectionReader } from "@rawr/agent-plugin-lifecycle/bindings/governance";
+`,
+  "apps/cli/src/lib/agent-plugins/retired-governance-binding-dynamic.ts": `
+export const governance = import("@rawr/agent-plugin-lifecycle/bindings/governance");
+`,
+  "apps/cli/src/lib/agent-plugins/retired-governance-binding-reexport.ts": `
+export { createGovernanceCurrentMainSelectionReader } from "@rawr/agent-plugin-lifecycle/bindings/governance";
+`,
+  "apps/cli/src/lib/agent-plugins/retired-governance-binding-star.ts": `
+export * from "@rawr/agent-plugin-lifecycle/bindings/governance";
+`,
   "apps/cli/src/lib/agent-plugins/provider-binding-bypass.ts": `
 import { NativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 `,
@@ -381,7 +393,7 @@ describe("agent plugin lifecycle dependency-direction Habitat rule", () => {
     expect(
       rejected.report.rules[0].diagnostics,
       JSON.stringify(rejected.report.rules[0].diagnostics, null, 2),
-    ).toHaveLength(53);
+    ).toHaveLength(57);
 
     const rootRouter = "services/agent-plugin-lifecycle/src/service/router.ts";
     const serviceBase = "services/agent-plugin-lifecycle/src/service/base.ts";

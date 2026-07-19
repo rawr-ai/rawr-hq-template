@@ -32,12 +32,6 @@ describe("provider resource context", () => {
     const providerExecutables = Object.freeze({ codex: "/opt/rawr/bin/codex" });
     const providerEvidenceStore = createMechanicalEvidenceStore(layout.artifactStoreRoot);
     const deps = createNodeProviderLifecycleDeps({
-      providerCurrentMain: Object.freeze({
-        resolve: async () => Object.freeze({
-          kind: "DIRTY_REPOSITORY" as const,
-          reason: "fixture does not select current main",
-        }),
-      }),
       state,
       providerExecutables,
       providerEvidenceStore,

@@ -6,6 +6,7 @@ import {
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
+import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
 import type {
   NativeProviderExecutablePaths,
   NativeProviderResourcePort,
@@ -50,6 +51,9 @@ export const resources = createServiceProvider<{
     providerExecutables: NativeProviderExecutablePaths;
     providerProjectionRepositoryRoot: string;
     providerEvidenceStore: MechanicalEvidenceStore;
+  };
+  provided: {
+    currentMain: CurrentMainSelectionReader;
   };
 }>().middleware<{
   native: CanonicalNativeRuntime;

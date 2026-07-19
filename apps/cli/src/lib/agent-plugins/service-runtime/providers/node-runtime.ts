@@ -12,7 +12,6 @@ import { createNodeNativeProviderResource } from "../../bindings/providers";
 
 type ProviderLifecycleDeps = Pick<
   Deps,
-  | "providerCurrentMain"
   | "providerRecords"
   | "providerArtifactRepository"
   | "providerNativeResource"
@@ -22,13 +21,11 @@ type ProviderLifecycleDeps = Pick<
 >;
 
 export function createNodeProviderLifecycleDeps(options: Readonly<{
-  providerCurrentMain: ProviderLifecycleDeps["providerCurrentMain"];
   state: NodeProviderRecordState;
   providerExecutables: ProviderLifecycleDeps["providerExecutables"];
   providerEvidenceStore: ProviderLifecycleDeps["providerEvidenceStore"];
 }>): ProviderLifecycleDeps {
   return Object.freeze({
-    providerCurrentMain: options.providerCurrentMain,
     providerRecords: options.state.records,
     providerArtifactRepository: options.state.artifactRepository,
     providerNativeResource: createNodeNativeProviderResource(),

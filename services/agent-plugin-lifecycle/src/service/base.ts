@@ -4,7 +4,6 @@ import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plu
 import type { AgentProviderRecordsAsyncPort } from "@rawr/resource-agent-provider-records";
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
 import type { ExportLifecycleRuntime } from "./modules/exports/ports";
-import type { CurrentMainSelectionReader } from "./model/dependencies/current-main";
 import type {
   NativeProviderExecutablePaths,
   NativeProviderResourcePort,
@@ -35,7 +34,6 @@ type InitialContext = {
     clock: LifecycleClock;
     packageOutput: AgentPluginPackageOutputAsyncPort;
     exports: ExportLifecycleRuntime;
-    providerCurrentMain: CurrentMainSelectionReader;
     providerRecords: AgentProviderRecordsAsyncPort;
     providerArtifactRepository: ArtifactRepositoryAsyncPort;
     providerNativeResource: NativeProviderResourcePort;

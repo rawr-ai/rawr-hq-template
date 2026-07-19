@@ -5,11 +5,15 @@ import {
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
+import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
 import { createResourceExactGitReader } from "./repository/content-workspace";
 
 export const repositories = createServiceProvider<{
   deps: {
     contentWorkspace: ContentWorkspaceNodeAsyncPort;
+  };
+  provided: {
+    currentMain: CurrentMainSelectionReader;
   };
 }>().middleware<{
   git: ReturnType<typeof createResourceExactGitReader>;

@@ -112,7 +112,6 @@ export function createExportTestClient(
 
 type ProviderLifecycleDeps = Pick<
   Deps,
-  | "providerCurrentMain"
   | "providerRecords"
   | "providerArtifactRepository"
   | "providerNativeResource"
@@ -130,9 +129,6 @@ function unavailableProviderDeps(
   };
   const unavailableProviderAsync = async (label: string): Promise<never> => unavailableProvider(label);
   return Object.freeze({
-    providerCurrentMain: {
-      resolve: async () => unavailableProviderAsync("provider current-main selection"),
-    },
     providerRecords: {
       readProjection: async () => unavailableProviderAsync("provider projection read"),
       publishProjection: async () => unavailableProviderAsync("provider projection publication"),

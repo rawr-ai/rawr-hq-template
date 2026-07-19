@@ -31,7 +31,6 @@ const LIFECYCLE_OBJECT_DEP_KEYS = Object.freeze([
   "clock",
   "packageOutput",
   "exports",
-  "providerCurrentMain",
   "providerRecords",
   "providerArtifactRepository",
   "providerNativeResource",
@@ -115,9 +114,10 @@ describe("production lifecycle service context", () => {
     expect(deps).not.toHaveProperty("packaging");
     expect(deps).not.toHaveProperty("governance");
     expect(deps).not.toHaveProperty("providers");
+    expect(deps).not.toHaveProperty("providerCurrentMain");
     expect(deps.providerProjectionRepositoryRoot).toBeTypeOf("string");
     expect(deps.providerArtifactRepository).not.toBe(deps.releaseArtifacts);
-    expect(Object.values(deps)).toHaveLength(15);
+    expect(Object.values(deps)).toHaveLength(14);
     expect(await directoryNames(root.path)).toEqual(before);
   });
 

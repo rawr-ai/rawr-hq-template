@@ -38,6 +38,7 @@ import { undoAgentPluginCapsuleAtDataRoot } from "../../../src/lib/agent-plugins
 import {
   createLifecycleTestClient,
   testInvocation,
+  unavailableContentWorkspace,
 } from "../../../../../services/agent-plugin-lifecycle/test/support/client";
 import { exportArtifactFixture } from "../../../../../services/agent-plugin-lifecycle/test/modules/exports/artifact-fixture";
 import {
@@ -77,19 +78,12 @@ describe("production lifecycle capsule boundary", () => {
     const providerExecutables = Object.freeze({});
     const providerEvidenceStore = createMechanicalEvidenceStore(layout.artifactStoreRoot);
     const providerDeps = createNodeProviderLifecycleDeps({
-      providerCurrentMain: Object.freeze({
-        resolve: async () => Object.freeze({
-          kind: "DIRTY_REPOSITORY" as const,
-          reason: "fixture content workspace is dirty",
-        }),
-      }),
       state: providerState,
       providerExecutables,
       providerEvidenceStore,
     });
     expect(Object.isFrozen(providerDeps)).toBe(true);
     expect(Reflect.ownKeys(providerDeps)).toEqual([
-      "providerCurrentMain",
       "providerRecords",
       "providerArtifactRepository",
       "providerNativeResource",
@@ -101,7 +95,35 @@ describe("production lifecycle capsule boundary", () => {
     expect(providerDeps.providerArtifactRepository).toBe(providerState.artifactRepository);
     expect(providerDeps.providerExecutables).toBe(providerExecutables);
     expect(providerDeps.providerEvidenceStore).toBe(providerEvidenceStore);
-    const client = createLifecycleTestClient(providerDeps);
+    const anchor = Object.freeze({
+      root: path.join(fixture.path, "content"),
+      rootDevice: "16777234",
+      rootInode: "101",
+      refName: "refs/heads/main",
+      commit: "a".repeat(40),
+      refCommit: "a".repeat(40),
+      tree: "b".repeat(40),
+      objectFormat: "sha1" as const,
+      remoteUrls: Object.freeze(["git:github.com/example/personal-rawr-hq"]),
+    });
+    const dirtyStatus = new TextEncoder().encode("? fixture-dirty\0");
+    const client = createLifecycleTestClient({
+      ...providerDeps,
+      contentWorkspace: {
+        ...unavailableContentWorkspace(),
+        inspectGitWorkspace: async () => anchor,
+        captureGitWorkspaceEvidence: async () => ({
+          openingAnchor: anchor,
+          openingStatus: dirtyStatus,
+          openingTrackedFlags: new Uint8Array(),
+          worktreeObjectIds: [],
+          indexEntries: new Uint8Array(),
+          closingAnchor: anchor,
+          closingStatus: dirtyStatus,
+          closingTrackedFlags: new Uint8Array(),
+        }),
+      },
+    });
 
     const result = await client.providers.canonicalStatus({
       kind: "canonical-status",

@@ -29,7 +29,7 @@ import type {
   GitReadFailure,
   RepositoryInspection,
 } from "../../../src/service/modules/governance/model/repositories/exact-git";
-import { resolveCurrentMainSelection } from "../../../src/service/modules/governance/router/current-main-selection.router";
+import { resolveCurrentMainSelection } from "../../../src/service/modules/governance/router/current-main-selection";
 import {
   createLifecycleTestClient,
   testInvocation,
