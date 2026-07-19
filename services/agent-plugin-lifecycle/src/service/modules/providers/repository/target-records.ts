@@ -1,10 +1,10 @@
-import { compareCanonical } from "../../service/modules/providers/model/helpers/canonical";
+import { compareCanonical } from "../model/helpers/canonical";
 import {
   canonicalSerializeTargetReceipt,
   decodeTargetReceipt,
   verifyTargetReceipt,
   type TargetReceipt,
-} from "../../service/modules/providers/model/policy/receipt";
+} from "../model/policy/receipt";
 import {
   failure,
   firstIssue,
@@ -13,14 +13,14 @@ import {
   type DeploymentResult,
   type ProviderDeploymentIssue,
   type ProviderDeploymentIssueCode,
-} from "../../service/modules/providers/model/errors/deployment-result";
+} from "../model/errors/deployment-result";
 import {
   createTargetIdentitySidecar,
   type ReceiptObservation,
   type TargetIdentityObservation,
   type TargetIdentitySidecar,
-} from "../../service/modules/providers/model/policy/state-machine";
-import { parseProviderTarget, type ProviderTarget } from "../../service/modules/providers/model/dto/provider-target";
+} from "../model/policy/state-machine";
+import { parseProviderTarget, type ProviderTarget } from "../model/dto/provider-target";
 import type {
   PathlessTargetRecordCollection,
   TargetRecordCapture,
@@ -28,14 +28,14 @@ import type {
   TargetRecordMutation,
   TargetRecordObservation,
   TargetRecordPlanInput,
-} from "../../service/modules/providers/ports/target-record-storage";
+} from "../model/repositories/target-record-storage";
 import type {
   CompleteTargetIdentityReader,
   TargetIdentityReader,
   TargetIdentityWriter,
   TargetReceiptReader,
   TargetReceiptWriter,
-} from "../../service/modules/providers/ports/state";
+} from "../model/repositories/state";
 import {
   canonicalSerializeTargetIdentitySidecar,
   decodeTargetIdentitySidecar,

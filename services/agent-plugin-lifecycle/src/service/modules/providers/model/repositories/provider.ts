@@ -2,21 +2,21 @@ import type {
   AdapterProtocol,
   AgentProviderProjection,
   CapabilityObservation,
-} from "../model/policy/projection";
-import type { ContentAuthority } from "../../../shared/release";
-import type { VerifiedMemberIdentity, VisibleFingerprint } from "../model/policy/receipt";
+} from "../policy/projection";
+import type { ContentAuthority } from "../../../../shared/release";
+import type { VerifiedMemberIdentity, VisibleFingerprint } from "../policy/receipt";
 import type {
   DeploymentResult,
   NonEmptyReadonlyArray,
   ProviderDeploymentIssue,
-} from "../model/errors/deployment-result";
+} from "../errors/deployment-result";
 import type {
   NativeProviderMutationAction,
   ProviderInventory,
-} from "../model/policy/state-machine";
-import type { ProviderTarget } from "../model/dto/provider-target";
+} from "../policy/state-machine";
+import type { ProviderTarget } from "../dto/provider-target";
 
-export type { NativeProviderMutationAction } from "../model/policy/state-machine";
+export type { NativeProviderMutationAction } from "../policy/state-machine";
 
 export interface ProviderVisibilityObservation {
   readonly visibleFingerprint: VisibleFingerprint;

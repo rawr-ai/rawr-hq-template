@@ -2,16 +2,16 @@ import {
   parsePluginId,
   type ContentAuthority,
   type PluginId,
-} from "../../service/shared/release";
+} from "../../../shared/release";
 import {
   marketplaceState,
   type ProviderMarketplaceRegistration,
-} from "../../service/modules/providers/model/policy/marketplace";
+} from "../model/policy/marketplace";
 import type {
   ProviderCapability,
-} from "../../service/modules/providers/model/policy/projection";
-import type { NativeStandaloneExposureObservation } from "../../service/modules/providers/model/policy/state-machine";
-import type { ProviderMarketplaceSourceReader } from "../../service/modules/providers/ports/state";
+} from "../model/policy/projection";
+import type { NativeStandaloneExposureObservation } from "../model/policy/state-machine";
+import type { ProviderMarketplaceSourceReader } from "../model/repositories/state";
 import {
   CLAUDE_ADAPTER_PROTOCOL,
   createClaudeNativeInventoryBridge,
@@ -36,7 +36,7 @@ import {
 import type {
   ClaudeNativeResourceSession,
   NativeProviderResourcePort,
-} from "./resource-port";
+} from "../../../../bindings/providers/resource-port";
 import { NativeProvenanceAmbiguity } from "./resource-provenance";
 import {
   capabilitiesFromCommands,

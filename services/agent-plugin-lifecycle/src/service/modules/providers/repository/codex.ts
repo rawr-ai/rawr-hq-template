@@ -5,20 +5,20 @@ import {
   type ProviderCapability,
   type ProviderMemberFingerprint,
   type ProviderSourceIdentity,
-} from "../../service/modules/providers/model/policy/projection";
+} from "../model/policy/projection";
 import type {
   ProviderMarketplaceObservation,
   ProviderMarketplaceRegistration,
-} from "../../service/modules/providers/model/policy/marketplace";
+} from "../model/policy/marketplace";
 import type {
   NativeConfiguredExposureObservation,
   NativeStandaloneExposureObservation,
-} from "../../service/modules/providers/model/policy/state-machine";
-import type { ProviderTargetDigest } from "../../service/modules/providers/model/dto/provider-target";
+} from "../model/policy/state-machine";
+import type { ProviderTargetDigest } from "../model/dto/provider-target";
 import type {
   ProviderMarketplaceSource,
   ProviderMarketplaceSourceReader,
-} from "../../service/modules/providers/ports/state";
+} from "../model/repositories/state";
 import {
   createNativeProviderAdapter,
   type NativeCapabilityProbe,

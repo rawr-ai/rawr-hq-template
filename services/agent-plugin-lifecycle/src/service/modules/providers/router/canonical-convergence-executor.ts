@@ -18,7 +18,7 @@ import {
   verifyCanonicalRetiredInventory,
   verifyCanonicalSelectedInventory,
 } from "../model/policy/canonical-convergence";
-import type { NativeMutationAttempt } from "../ports/provider";
+import type { NativeMutationAttempt } from "../model/repositories/provider";
 
 export interface CanonicalExecutionDependencies {
   readonly observer: Readonly<{

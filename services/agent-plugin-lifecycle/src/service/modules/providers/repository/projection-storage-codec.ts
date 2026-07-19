@@ -4,10 +4,10 @@ import {
   type ContentDigest,
   type NormalizedFileMode,
   type ReleaseRelativePath,
-} from "../../service/shared/release";
+} from "../../../shared/release";
 
-import { canonicalBytes, canonicalDigest, compareCanonical, equalBytes, type CanonicalValue } from "../../service/modules/providers/model/helpers/canonical";
-import type { ProviderMarketplaceRegistration } from "../../service/modules/providers/model/policy/marketplace";
+import { canonicalBytes, canonicalDigest, compareCanonical, equalBytes, type CanonicalValue } from "../model/helpers/canonical";
+import type { ProviderMarketplaceRegistration } from "../model/policy/marketplace";
 import {
   memberValue,
   projectionValue,
@@ -16,8 +16,8 @@ import {
   type AgentProviderProjection,
   type ProviderMemberFingerprint,
   type ProviderProjectionMember,
-} from "../../service/modules/providers/model/policy/projection";
-import type { ImmutableProviderTreeFile } from "../../service/modules/providers/ports/projection-storage";
+} from "../model/policy/projection";
+import type { ImmutableProviderTreeFile } from "../model/repositories/projection-storage";
 
 const MEMBER_RECORD_PROTOCOL = "agent-provider-projection-member@v1";
 const MANIFEST_RECORD_PROTOCOL = "agent-provider-projection-manifest@v1";

@@ -33,12 +33,12 @@ import {
 } from "../model/policy/state-machine";
 import { visibleFingerprint, type ManagedMemberClaim } from "../model/policy/receipt";
 import type { ProviderTarget } from "../model/dto/provider-target";
-import type { MechanicalEvidencePublisher } from "../ports/evidence";
+import type { MechanicalEvidencePublisher } from "../model/repositories/evidence";
 import type {
   NativeMutationAttempt,
   ProviderTargetMutator,
   ProviderTargetReader,
-} from "../ports/provider";
+} from "../model/repositories/provider";
 import type {
   ProviderMarketplaceMaterializer,
   ProviderProjectionMaterializer,
@@ -46,7 +46,7 @@ import type {
   TargetIdentityWriter,
   TargetReceiptReader,
   TargetReceiptWriter,
-} from "../ports/state";
+} from "../model/repositories/state";
 
 export interface PlanReadDependencies {
   readonly provider: ProviderTargetReader;

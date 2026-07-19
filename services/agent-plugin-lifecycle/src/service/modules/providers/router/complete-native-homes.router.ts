@@ -1,7 +1,7 @@
 import { createCompleteNativeHomesObservation, type CompleteNativeHomesObservation } from "../model/dto/native-homes";
 import type { DeploymentResult } from "../model/errors/deployment-result";
 import { module } from "../module";
-import type { CompleteTargetIdentityReader } from "../ports/state";
+import type { CompleteTargetIdentityReader } from "../model/repositories/state";
 import { completeNativeHomesResult } from "./procedure-result";
 
 export interface CompleteNativeHomesDependencies {

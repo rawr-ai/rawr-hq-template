@@ -1,12 +1,12 @@
+import type { ProviderDeploymentRequest } from "../../../src/service/modules/providers/model/dto/mode";
+import type { VerifiedReleaseReader } from "../../../src/service/modules/providers/model/repositories/artifact";
+import type { CanonicalNativeRuntime } from "../../../src/service/modules/providers/model/repositories/canonical-native";
+import type { CurrentMainSelectionReader } from "../../../src/service/modules/providers/model/repositories/current-main";
 import type {
-  CanonicalNativeRuntime,
-  CurrentMainSelectionReader,
   ProviderMarketplaceMaterializer,
-  ProviderDeploymentRequest,
   ProviderProjectionMaterializer,
   TargetReceiptReader,
-  VerifiedReleaseReader,
-} from "../../../src/bindings/providers";
+} from "../../../src/service/modules/providers/model/repositories/state";
 import type { CanonicalStatusDependencies } from "../../../src/service/modules/providers/router/canonical-status.router";
 import type { CanonicalSyncDependencies } from "../../../src/service/modules/providers/router/canonical-sync.router";
 

@@ -45,6 +45,7 @@ every provider mode is capsule-free.
 | Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
 | Retained CLI target node | `codex/c6-serialize-cli-test-target` |
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
+| C5 provider repository ownership | `codex/c6-route-provider-service-context` / this record node |
 
 Personal records remain unlanded until the installed Template interface can
 enforce their first semantic checkpoint. No hook bypass, legacy mixed sync, or
@@ -378,6 +379,23 @@ provider convergence or entering the blocked export publication decision.
 | Static and structural | Lifecycle and CLI lint, typecheck, and build passed without cache. Lifecycle and CLI sync/structural checks, the positive closed Habitat topology, the dependency-direction rejection fixture, strict OpenSpec, and `git diff --check` passed. The sealed root-no-upward-import axis now includes governance, packaging, releases, and vendors. The user-owned untracked note was held outside the closed topology only during lifecycle structural proof, restored byte-identically, and never staged. |
 | Reviews | Architecture/authority review caught and closed a caller-forgeable generic provider resolver plus an underconstrained transitional binding directory. TypeScript/refactor/oRPC review closed one test-only assertion. Behavior/testing/state-machine review added one public real-Git `CURRENT_ELIGIBLE` trace through the new context path. Structural/Habitat review changed the exact transitional governance facade from required to optionally admitted, so the next deletion only narrows the topology. Final rereviews report no remaining P1/P2. |
 | Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]] remains blocked and untouched. Provider execution, native commands, destination claims, app/runtime composition, and repository relationships do not change in this node. |
+
+## C5 Provider Repository Ownership Proof
+
+This checkpoint advances only provider implementation and protocol placement
+under [[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]]. It does
+not change service context, procedure behavior, CLI composition, native
+commands, or the blocked export publication decision.
+
+| Boundary | Result |
+| --- | --- |
+| Domain ownership | Fifteen provider repository implementations now live under `modules/providers/repository`; eight provider-facing protocols live under `modules/providers/model/repositories`, and native resource failure classification lives under `modules/providers/model/errors`. Provider requests, policy, projections, storage semantics, and native-result translation therefore have one module owner rather than an implementation home under the public binding directory. |
+| Transitional surface | `bindings/providers/index.ts`, its existing type-only `resource-port.ts` host contract, and `modules/providers/ports.ts` remain exact forwarding surfaces for current callers. They contain no second implementation and preserve the existing package surface until the provider resource/context and public-surface nodes can replace the native session source with a dependency-owned artifact-tree location and delete them atomically. The temporary governance bridge now imports the provider protocol from its module owner without copying selection behavior. |
+| Behavior boundary | `base.ts`, provider module construction, router sequencing, CLI composition, resource packages, package exports, and every native-provider transition are unchanged. Provider service tests now import concrete repositories and protocols from their owner paths while public-facade callers remain on the transition surface. |
+| Positive topology | Closed Habitat scopes positively require the provider repository/protocol directories, their exact file inventories, and exactly the two transitional provider binding files. The provider shell remains closed around the desired module shape plus the explicit temporary `ports.ts` facade, while the retired leaf `ports/` directory cannot reappear; no `internal` directory, open blacklist, compatibility copy, or app/runtime composition entered the tree. Release requests/results/issues remain under `modules/releases/model/dto`; only `BuildFailpoint` and its event contract remain at the root dependency boundary. |
+| Proof | The full lifecycle service passed 37 files / 341 tests and the full CLI suite passed 50 files / 331 tests. Lifecycle and CLI lint, typecheck, build, sync, and structural suites passed without cache; the dependency-direction rule, positive Habitat topology, CLI command-channel topology, and `git diff --check` passed. The user-owned untracked note was held outside the closed topology only during structural proof, restored byte-identically, and never staged. |
+| Reviews | Architecture/authority review removed a root-to-module dependency inversion by retaining the existing native resource contract as an exact type-only transition and moving its runtime failure identity under provider model errors. TypeScript/refactor/oRPC/Effect rereview verified no runtime cycle, duplicate protocol, or public signature drift. Structural/Habitat review made both transition surfaces optional-but-exact, removed the obsolete leaf-port scope, and confirmed the next deletion narrows the admitted tree. Behavior/testing/state-machine rereview found no new transition case warranted for this placement-only node. All four final reviews report no P1/P2/P3. |
+| Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]] remains blocked and untouched. The narrow `providerState -> exports.knownNativeHomesReader` bridge remains explicitly owned by task 5.3 and is not duplicated or removed early. |
 
 ## Standing Reviews
 

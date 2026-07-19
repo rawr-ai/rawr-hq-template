@@ -22,13 +22,13 @@ import {
   planCanonicalConvergence,
 } from "../model/policy/canonical-convergence";
 import { module } from "../module";
-import type { VerifiedReleaseReader } from "../ports/artifact";
-import type { CanonicalNativeRuntime } from "../ports/canonical-native";
-import type { CurrentMainSelectionReader } from "../ports/current-main";
+import type { VerifiedReleaseReader } from "../model/repositories/artifact";
+import type { CanonicalNativeRuntime } from "../model/repositories/canonical-native";
+import type { CurrentMainSelectionReader } from "../model/repositories/current-main";
 import type {
   ProviderMarketplaceMaterializer,
   ProviderProjectionMaterializer,
-} from "../ports/state";
+} from "../model/repositories/state";
 import {
   desiredForTarget,
   resolveCanonicalOperationSelection,

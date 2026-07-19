@@ -3,19 +3,19 @@ export type * from "../../service/modules/providers/ports";
 export {
   CLAUDE_ADAPTER_PROTOCOL,
   type ClaudeProviderAdapter,
-} from "./claude";
+} from "../../service/modules/providers/repository/claude";
 export {
   CODEX_ADAPTER_PROTOCOL,
   type CodexProviderAdapter,
-} from "./codex";
+} from "../../service/modules/providers/repository/codex";
 export {
   createPathlessProjectionStorage,
   type PathlessProjectionStorage,
-} from "./projection-storage";
+} from "../../service/modules/providers/repository/projection-storage";
 export {
   createPathlessTargetState,
   type PathlessTargetState,
-} from "./target-records";
+} from "../../service/modules/providers/repository/target-records";
 export {
   createResourceClaudeProviderAdapter,
   createResourceClaudeCanonicalObserver,
@@ -23,7 +23,7 @@ export {
   type ResourceClaudeProviderAdapterOptions,
   type ResourceClaudeCanonicalObserverOptions,
   type ResourceClaudeProviderObserverOptions,
-} from "./resource-claude";
+} from "../../service/modules/providers/repository/resource-claude";
 export {
   createResourceCodexProviderAdapter,
   createResourceCodexCanonicalObserver,
@@ -31,20 +31,20 @@ export {
   type ResourceCodexProviderAdapterOptions,
   type ResourceCodexCanonicalObserverOptions,
   type ResourceCodexProviderObserverOptions,
-} from "./resource-codex";
+} from "../../service/modules/providers/repository/resource-codex";
 export {
   createResourceProviderRecordState,
   type ProviderRecordState,
   type ResourceProviderRecordStateOptions,
-} from "./resource-record-storage";
+} from "../../service/modules/providers/repository/resource-record-storage";
 export type {
   NativeProviderAdapter,
   NativeProviderObserver,
-} from "./native";
+} from "../../service/modules/providers/repository/native";
 export {
   createCanonicalNativeObserver,
   type CanonicalNativeObserver,
-} from "./canonical-native-observer";
+} from "../../service/modules/providers/repository/canonical-native-observer";
 export type {
   ClaudeNativeResourceSession,
   CodexNativeResourceSession,
@@ -61,7 +61,7 @@ export type {
 export {
   NativeProviderResourceFailure,
   type NativeProviderResourceFailureKind,
-} from "./resource-port";
+} from "../../service/modules/providers/model/errors/native-resource";
 export {
   canonicalBytes,
   canonicalDigest,
@@ -120,4 +120,4 @@ export {
 export {
   canonicalSerializeTargetIdentitySidecar,
   decodeTargetIdentitySidecar,
-} from "./target-record-codec";
+} from "../../service/modules/providers/repository/target-record-codec";

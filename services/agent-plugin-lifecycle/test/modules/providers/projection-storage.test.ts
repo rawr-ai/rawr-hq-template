@@ -1,18 +1,20 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  CODEX_ADAPTER_PROTOCOL,
-  createPathlessProjectionStorage,
   createProviderMarketplaceRegistration,
   renderCompleteProjection,
   type AgentProviderProjection,
-  type FlatProjectionRecordCollection,
-  type ImmutableProviderTreeCollection,
-  type ImmutableProviderTreeFile,
-  type ImmutableProviderTreeKey,
-  type ProjectionRecordKey,
   type ProviderMarketplaceRegistration,
 } from "../../../src/bindings/providers";
+import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
+import { createPathlessProjectionStorage } from "../../../src/service/modules/providers/repository/projection-storage";
+import type {
+  FlatProjectionRecordCollection,
+  ImmutableProviderTreeCollection,
+  ImmutableProviderTreeFile,
+  ImmutableProviderTreeKey,
+  ProjectionRecordKey,
+} from "../../../src/service/modules/providers/model/repositories/projection-storage";
 import { failure, issue, success } from "../../../src/service/modules/providers/model/errors/deployment-result";
 import {
   createCompleteSetArtifactRef,

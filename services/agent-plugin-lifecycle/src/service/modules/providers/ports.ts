@@ -1,8 +1,8 @@
-import type { MechanicalEvidencePublisher } from "./ports/evidence";
-import type { VerifiedReleaseReader } from "./ports/artifact";
-import type { CanonicalNativeRuntime } from "./ports/canonical-native";
-import type { CurrentMainSelectionReader } from "./ports/current-main";
-import type { ProviderTargetMutator, ProviderTargetReader } from "./ports/provider";
+import type { MechanicalEvidencePublisher } from "./model/repositories/evidence";
+import type { VerifiedReleaseReader } from "./model/repositories/artifact";
+import type { CanonicalNativeRuntime } from "./model/repositories/canonical-native";
+import type { CurrentMainSelectionReader } from "./model/repositories/current-main";
+import type { ProviderTargetMutator, ProviderTargetReader } from "./model/repositories/provider";
 import type {
   CompleteTargetIdentityReader,
   ProviderMarketplaceMaterializer,
@@ -11,7 +11,7 @@ import type {
   TargetIdentityWriter,
   TargetReceiptReader,
   TargetReceiptWriter,
-} from "./ports/state";
+} from "./model/repositories/state";
 
 export interface ProviderLifecycleRuntime {
   readonly currentMain: CurrentMainSelectionReader;
@@ -28,21 +28,21 @@ export interface ProviderLifecycleRuntime {
   readonly evidence: MechanicalEvidencePublisher;
 }
 
-export type { VerifiedReleaseReader } from "./ports/artifact";
-export type { CanonicalNativeRuntime } from "./ports/canonical-native";
-export type { CurrentMainSelectionReader } from "./ports/current-main";
+export type { VerifiedReleaseReader } from "./model/repositories/artifact";
+export type { CanonicalNativeRuntime } from "./model/repositories/canonical-native";
+export type { CurrentMainSelectionReader } from "./model/repositories/current-main";
 export type {
   MechanicalEvidenceHandle,
   MechanicalEvidenceObservation,
   MechanicalEvidencePublisher,
-} from "./ports/evidence";
+} from "./model/repositories/evidence";
 export type {
   NativeMutationAttempt,
   NativeProviderMutationAction,
   ProviderTargetMutator,
   ProviderTargetReader,
   ProviderVisibilityObservation,
-} from "./ports/provider";
+} from "./model/repositories/provider";
 export type {
   CompleteTargetIdentityReader,
   MarketplaceMaterializationObservation,
@@ -55,7 +55,7 @@ export type {
   TargetIdentityWriter,
   TargetReceiptReader,
   TargetReceiptWriter,
-} from "./ports/state";
+} from "./model/repositories/state";
 export type {
   FlatProjectionRecordCollection,
   ImmutableProviderTreeCollection,
@@ -66,7 +66,7 @@ export type {
   ProjectionRecordKey,
   ProjectionRecordObservation,
   ProjectionRecordPublication,
-} from "./ports/projection-storage";
+} from "./model/repositories/projection-storage";
 export type {
   PathlessTargetRecordCollection,
   TargetRecordCapture,
@@ -81,7 +81,7 @@ export type {
   TargetRecordRestoreObservation,
   TargetRecordScanEntry,
   TargetRecordWriteObservation,
-} from "./ports/target-record-storage";
+} from "./model/repositories/target-record-storage";
 
 export type { CanonicalValue } from "./model/helpers/canonical";
 export type {

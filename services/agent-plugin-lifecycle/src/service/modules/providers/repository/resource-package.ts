@@ -11,21 +11,21 @@ import {
   type PluginId,
   type ReleaseArtifactRef,
   type ReleaseRelativePath,
-} from "../../service/shared/release";
-import { canonicalBytes, canonicalDigest, equalBytes, type CanonicalValue } from "../../service/modules/providers/model/helpers/canonical";
+} from "../../../shared/release";
+import { canonicalBytes, canonicalDigest, equalBytes, type CanonicalValue } from "../model/helpers/canonical";
 import {
   PROVIDER_ARTIFACT_AUTHORITY_PROTOCOL,
   artifactAuthorityValue,
   type ProviderArtifactAuthority,
   type ProviderMemberFingerprint,
   type ProviderSourceIdentity,
-} from "../../service/modules/providers/model/policy/projection";
-import type { ProviderId } from "../../service/modules/providers/model/dto/provider-target";
+} from "../model/policy/projection";
+import type { ProviderId } from "../model/dto/provider-target";
 import type {
   NativeResourcePackageEntry,
   NativeResourcePackageObservation,
   NativeResourcePackageReadLimits,
-} from "./resource-port";
+} from "../../../../bindings/providers/resource-port";
 
 export const NATIVE_PACKAGE_READ_LIMITS: NativeResourcePackageReadLimits = Object.freeze({
   maxEntries: 200_000,
