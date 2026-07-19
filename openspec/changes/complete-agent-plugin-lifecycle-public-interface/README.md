@@ -46,6 +46,7 @@ every provider mode is capsule-free.
 | Retained CLI target node | `codex/c6-serialize-cli-test-target` |
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
 | C5 provider repository ownership | `codex/c6-route-provider-service-context` / this record node |
+| C5 artifact-tree location port | `codex/c6-expose-artifact-tree-location` / this record node |
 
 Personal records remain unlanded until the installed Template interface can
 enforce their first semantic checkpoint. No hook bypass, legacy mixed sync, or
@@ -396,6 +397,23 @@ commands, or the blocked export publication decision.
 | Proof | The full lifecycle service passed 37 files / 341 tests and the full CLI suite passed 50 files / 331 tests. Lifecycle and CLI lint, typecheck, build, sync, and structural suites passed without cache; the dependency-direction rule, positive Habitat topology, CLI command-channel topology, and `git diff --check` passed. The user-owned untracked note was held outside the closed topology only during structural proof, restored byte-identically, and never staged. |
 | Reviews | Architecture/authority review removed a root-to-module dependency inversion by retaining the existing native resource contract as an exact type-only transition and moving its runtime failure identity under provider model errors. TypeScript/refactor/oRPC/Effect rereview verified no runtime cycle, duplicate protocol, or public signature drift. Structural/Habitat review made both transition surfaces optional-but-exact, removed the obsolete leaf-port scope, and confirmed the next deletion narrows the admitted tree. Behavior/testing/state-machine rereview found no new transition case warranted for this placement-only node. All four final reviews report no P1/P2/P3. |
 | Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]] remains blocked and untouched. The narrow `providerState -> exports.knownNativeHomesReader` bridge remains explicitly owned by task 5.3 and is not duplicated or removed early. |
+
+## C5 Artifact-Tree Location Port Proof
+
+This checkpoint adds only the mechanical async-port projection needed by the
+next provider resource-binding node under
+[[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]]. The Effect
+resource already owned bounded tree admission and opaque location; this node
+does not add filesystem logic, provider semantics, or a publication mechanism.
+
+| Boundary | Result |
+| --- | --- |
+| Resource contract | `ArtifactRepositoryAsyncPort.locateTree` projects the existing `ArtifactRepositoryResource.locateTree` request and `ArtifactTreeLocationObservation` without changing the opaque location type, read bounds, failure channel, or artifact repository ownership. |
+| Provider adapter | `makeNodeArtifactRepositoryAsyncPort` forwards to the existing Effect resource through the same `runOrThrow` boundary used by the other async methods. It neither resolves provider identities nor maps lifecycle projection semantics. |
+| Behavior proof | The Effect Platform Node provider passed 20/20 tests, including admitted-location parity, stable tree/payload metadata across repeat inspection, and missing-tree observation without repository creation. The lifecycle resource-adapter suite passed 13/13 with its deliberately unavailable test-double location capability. |
+| Static proof | Resource contract, Effect provider, and lifecycle service lint, typecheck, and build passed. `git diff --check` passed. No CLI, lifecycle context, native command, export destination, or app/runtime file changed. |
+| Reviews | Architecture/authority confirmed the existing resource remains the sole bounded-admission owner and the port adds no provider or publication semantics. TypeScript/refactor/Effect confirmed exact request/result forwarding, the established `runOrThrow` boundary, and the intentional required-method compile-time ratchet. Behavior/testing accepted present/missing, opaque-location parity, metadata preservation, and fail-fast unsupported-double coverage as proportionate proof. Structural quality found no generated output, topology addition, filesystem duplication, or extra abstraction. All four reviews report no P1/P2/P3. |
+| Scope | This is a required method on one existing generic resource port, not a generalized publication framework, new state owner, or provider installer. [[tasks#5. T6C3: Export Destination Independence|Export task 5.2]] remains blocked and untouched. |
 
 ## Standing Reviews
 

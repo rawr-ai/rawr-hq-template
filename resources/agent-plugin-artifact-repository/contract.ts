@@ -185,6 +185,9 @@ export interface ArtifactRepositoryResource<R = never> {
 }
 
 export interface ArtifactRepositoryAsyncPort {
+  readonly locateTree: (
+    input: Parameters<ArtifactRepositoryResource["locateTree"]>[0],
+  ) => Promise<ArtifactTreeLocationObservation>;
   readonly readTree: (
     input: Parameters<ArtifactRepositoryResource["readTree"]>[0],
   ) => Promise<ArtifactTreeObservation>;

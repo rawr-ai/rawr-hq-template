@@ -211,6 +211,8 @@ export function makeNodeArtifactRepositoryAsyncPort(
   resource: ArtifactRepositoryResource<ProviderRequirements> = artifactRepositoryResource,
 ): ArtifactRepositoryAsyncPort {
   return Object.freeze({
+    locateTree: (input: Parameters<ArtifactRepositoryResource["locateTree"]>[0]) =>
+      runOrThrow(resource.locateTree(input)),
     readTree: (input: Parameters<ArtifactRepositoryResource["readTree"]>[0]) =>
       runOrThrow(resource.readTree(input)),
     publishTree: (input: Parameters<ArtifactRepositoryResource["publishTree"]>[0]) =>

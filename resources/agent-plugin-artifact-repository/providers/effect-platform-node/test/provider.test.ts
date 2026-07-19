@@ -16,6 +16,7 @@ import type {
 } from "../../../contract";
 import {
   makeArtifactRepositoryResource,
+  makeNodeArtifactRepositoryAsyncPort,
   runNodeArtifactRepository,
   type NodeArtifactRepositoryResult,
 } from "../index";
@@ -36,6 +37,43 @@ afterEach(async () => {
 });
 
 describe("Effect Platform Node artifact repository provider", () => {
+  test("async port returns the admitted opaque location without mutating the tree", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "artifact-async-location");
+    const resource = makeArtifactRepositoryResource();
+    unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries: releaseEntries("async-location"),
+      limits: LIMITS,
+    })));
+    const destination = path.join(address.repositoryRoot, ...address.namespace, address.objectId);
+    const payload = path.join(destination, "payload", "tool.sh");
+    const beforeTree = await lstat(destination, { bigint: true });
+    const beforePayload = await lstat(payload, { bigint: true });
+    const expected = unwrap(await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS })));
+
+    const observed = await makeNodeArtifactRepositoryAsyncPort(resource).locateTree({
+      address,
+      limits: LIMITS,
+    });
+
+    expect(observed).toEqual(expected);
+    expect(observed.kind).toBe("Present");
+    expect(stableMetadata(await lstat(destination, { bigint: true }))).toEqual(stableMetadata(beforeTree));
+    expect(stableMetadata(await lstat(payload, { bigint: true }))).toEqual(stableMetadata(beforePayload));
+  });
+
+  test("async port reports a missing location without creating repository state", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "missing-repository"), "artifact-async-missing");
+    const port = makeNodeArtifactRepositoryAsyncPort();
+
+    const observed = await port.locateTree({ address, limits: LIMITS });
+
+    expect(observed).toEqual({ kind: "Missing", address });
+    expect(await Bun.file(address.repositoryRoot).exists()).toBe(false);
+  });
+
   test("locates one fully admitted tree at its exact canonical destination", async () => {
     const parent = await createFixture();
     const address = artifactAddress(path.join(parent, "repository"), "artifact-location");
