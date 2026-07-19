@@ -1,26 +1,25 @@
-import type {
-  ContentAuthority,
-  GitCommitId,
-  GitTreeId,
-  ReleaseInputDigest,
-  ReleaseSetDigest,
-  RepositoryIdentity,
-} from "../../../../shared/release";
-
-import type { EvaluationProfile } from "./mode";
 import type { AgentProviderProjection } from "../policy/projection";
+import type { ProviderId } from "./provider-target";
+import type { CanonicalChannelSelection } from "../../../governance/model/dto/current-main";
+import type {
+  NonEmptyReadonlyArray,
+  ProviderDeploymentIssue,
+} from "../errors/deployment-result";
 
-declare const canonicalDesiredStateBrand: unique symbol;
-
-/** A provider projection already verified against one selected complete set. */
-export interface CanonicalDesiredState {
-  readonly contentAuthority: ContentAuthority;
-  readonly sourceRepositoryIdentity: RepositoryIdentity;
-  readonly sourceCommit: GitCommitId;
-  readonly sourceTree: GitTreeId;
-  readonly releaseInputDigest: ReleaseInputDigest;
-  readonly releaseSetDigest: ReleaseSetDigest;
-  readonly evaluationProfile: EvaluationProfile;
-  readonly projection: AgentProviderProjection;
-  readonly [canonicalDesiredStateBrand]: "CanonicalDesiredState";
+/** One governance selection paired with its artifact-verified provider projection. */
+export interface CanonicalDesiredState<TProvider extends ProviderId = ProviderId> {
+  readonly selection: CanonicalChannelSelection;
+  readonly projection: Readonly<
+    Omit<AgentProviderProjection, "provider"> & { readonly provider: TProvider }
+  >;
 }
+
+export type CanonicalDesiredStateResolution =
+  | Readonly<{
+    status: "RESOLVED";
+    desired: readonly [CanonicalDesiredState<"claude">, CanonicalDesiredState<"codex">];
+  }>
+  | Readonly<{
+    status: "BLOCKED_SELECTION";
+    issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>;
+  }>;
