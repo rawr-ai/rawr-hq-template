@@ -3,6 +3,8 @@ import { RawrCommand } from "@rawr/core";
 import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands/command";
 import {
   checkModeFlag,
+  currentMainBodyJsonFlag,
+  currentMainEnvelopeJsonFlag,
   gitExecutableFlag,
   releaseWorkspaceFlags,
 } from "../../../lib/agent-plugins/commands/flags";
@@ -14,6 +16,8 @@ export default class AgentPluginsCheck extends AgentPluginLifecycleCommand {
   static flags = {
     json: RawrCommand.baseFlags.json,
     mode: checkModeFlag,
+    "current-main-body-json": currentMainBodyJsonFlag,
+    "current-main-envelope-json": currentMainEnvelopeJsonFlag,
     ...releaseWorkspaceFlags,
     "git-executable": gitExecutableFlag,
   } as const;

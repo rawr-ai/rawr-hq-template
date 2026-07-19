@@ -164,6 +164,7 @@ describe("qualified lifecycle command boundary", () => {
       clientConstructions += 1;
     };
     const staged = stagedReleaseWorkspace();
+    const currentMainBody = JSON.stringify(currentMainBodyFixture());
 
     for (const invalid of [
       { mode: "protected-lanes" },
@@ -175,6 +176,18 @@ describe("qualified lifecycle command boundary", () => {
       { ...staged, mode: "repository-clean", "source-commit": hex40 },
       { ...releaseWorkspace(), mode: "repository-clean", plugin: "alpha" },
       { ...releaseWorkspace(), mode: "repository-clean", "complete-set": true },
+      { mode: "current-main-record" },
+      {
+        mode: "current-main-record",
+        "current-main-body-json": currentMainBody,
+        "current-main-envelope-json": "{}\n",
+      },
+      {
+        mode: "current-main-record",
+        "current-main-body-json": currentMainBody,
+        "content-workspace": "/tmp/content",
+      },
+      { mode: "current-main-record", "current-main-body-json": "{" },
     ]) {
       expect(() => {
         parseCheckOperationRequest(invalid);
@@ -208,6 +221,21 @@ describe("qualified lifecycle command boundary", () => {
         operation: "releases.checkRepository",
         input: { kind: "clean", contentWorkspace: { sourceCommit: hex40, sourceTree: hex64 } },
       });
+    expect(parseCheckOperationRequest({
+      mode: "current-main-record",
+      "current-main-body-json": JSON.stringify(currentMainBodyFixture()),
+    })).toEqual({
+      operation: "governance.currentMainRecord",
+      input: { kind: "encode-body", body: currentMainBodyFixture() },
+    });
+    const envelopeJson = "{\"schemaVersion\":2}\n";
+    expect(parseCheckOperationRequest({
+      mode: "current-main-record",
+      "current-main-envelope-json": envelopeJson,
+    })).toEqual({
+      operation: "governance.currentMainRecord",
+      input: { kind: "validate-envelope", bytes: new TextEncoder().encode(envelopeJson) },
+    });
     expect(parseBuildRequest({ ...releaseWorkspace(), "complete-set": true })).toMatchObject({
       mode: { kind: "complete-set" },
       contentWorkspace: { locator: "/tmp/content", sourceCommit: hex40, sourceTree: hex64 },
@@ -243,6 +271,55 @@ describe("qualified lifecycle command boundary", () => {
     });
   });
 
+  it("executes the pure current-main record operation without executable authority", () => {
+    const result = runRawr([
+      "agent", "plugins", "check",
+      "--mode", "current-main-record",
+      "--current-main-body-json", JSON.stringify(currentMainBodyFixture()),
+      "--json",
+    ]);
+
+    expect(result.status, result.stderr).toBe(0);
+    const output = parseSingleJson(result.stdout);
+    expect(output).toMatchObject({
+      ok: true,
+      data: {
+        operation: "governance.currentMainRecord",
+        result: { ok: true, value: { protocol: "agent-plugin-current-main@v2" } },
+      },
+    });
+    const data = jsonRecord(jsonRecord(output).data);
+    const resultRecord = jsonRecord(data.result);
+    const projected = jsonRecord(resultRecord.value);
+    expect(projected.bytes).toBeUndefined();
+    expect(typeof projected.envelopeText).toBe("string");
+    if (typeof projected.envelopeText !== "string") throw new Error("Missing envelope text");
+    expect(new TextEncoder().encode(projected.envelopeText).byteLength).toBe(projected.byteLength);
+
+    const human = runRawr([
+      "agent", "plugins", "check",
+      "--mode", "current-main-record",
+      "--current-main-body-json", JSON.stringify(currentMainBodyFixture()),
+    ]);
+    expect(human.status, human.stderr).toBe(0);
+    expect(human.stdout).toBe(projected.envelopeText);
+
+    const validated = runRawr([
+      "agent", "plugins", "check",
+      "--mode", "current-main-record",
+      "--current-main-envelope-json", projected.envelopeText,
+      "--json",
+    ]);
+    expect(validated.status, validated.stderr).toBe(0);
+    expect(parseSingleJson(validated.stdout)).toMatchObject({
+      ok: true,
+      data: {
+        operation: "governance.currentMainRecord",
+        result: { ok: true, value: { envelopeText: projected.envelopeText } },
+      },
+    });
+  });
+
   it("dispatches each projection to exactly one typed client procedure", async () => {
     const calls: string[] = [];
     const client = recordingClient(calls);
@@ -264,6 +341,11 @@ describe("qualified lifecycle command boundary", () => {
       value: [{ status: "CONVERGED" }, { status: "DRIFTED" }],
     })).toBe(1);
     expect(lifecycleResultExitCode("providers.canonicalStatus", { ok: false, issues: [] })).toBe(1);
+    expect(lifecycleResultExitCode("governance.currentMainRecord", { ok: true, value: {} })).toBe(0);
+    expect(lifecycleResultExitCode("governance.currentMainRecord", {
+      ok: false,
+      failure: { code: "InvalidSchema", path: "currentMain", message: "invalid" },
+    })).toBe(1);
 
     let writes = 0;
     const client = {
@@ -575,6 +657,7 @@ function recordingClient(calls: string[]): Client {
       completeNativeHomes: call("providers.completeNativeHomes"),
     },
     governance: {
+      currentMainRecord: call("governance.currentMainRecord"),
       validateAcceptance: call("governance.validateAcceptance"),
       attestPromotion: call("governance.attestPromotion"),
       resolveCurrentMain: call("governance.resolveCurrentMain"),
@@ -591,9 +674,14 @@ function operationRequests(): LifecycleOperationRequest[] {
     ...stagedReleaseWorkspace(),
     mode: "repository-staged",
   });
+  const currentMainRecord = parseCheckOperationRequest({
+    mode: "current-main-record",
+    "current-main-body-json": JSON.stringify(currentMainBodyFixture()),
+  });
   return [
     { operation: "releases.check", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
     stagedCheck,
+    currentMainRecord,
     { operation: "releases.build", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
     { operation: "vendors.status", input: parseVendorStatusRequest(vendorWorkspace()) },
     { operation: "vendors.update", input: parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] }) },
@@ -655,6 +743,36 @@ function providerWorkspace() {
     "content-workspace": "/tmp/content",
     "repository-identity": "repo",
     target: ["codex=/tmp/codex-home"],
+  };
+}
+
+function currentMainBodyFixture() {
+  return {
+    schemaVersion: 2,
+    channel: "current-main",
+    contentAuthority: "rawr-hq",
+    sourceRepositoryIdentity: "git:github.com/rawr-ai/rawr-hq",
+    sourceCommit: "a".repeat(40),
+    sourceTree: "b".repeat(40),
+    releaseInputDigest: `ri1_${"c".repeat(64)}`,
+    releaseSetDigest: `rs1_${"d".repeat(64)}`,
+    evaluationProfile: "provider-smoke@v1",
+    projections: [
+      {
+        provider: "claude",
+        projectionDigest: `ap1_${"e".repeat(64)}`,
+        rendererProtocol: "claude-projection@v1",
+        adapterProtocol: "claude-native-adapter@v1",
+        capabilityProfileDigest: `cp1_${"f".repeat(64)}`,
+      },
+      {
+        provider: "codex",
+        projectionDigest: `ap1_${"1".repeat(64)}`,
+        rendererProtocol: "codex-projection@v1",
+        adapterProtocol: "codex-native-adapter@v1",
+        capabilityProfileDigest: `cp1_${"2".repeat(64)}`,
+      },
+    ],
   };
 }
 
@@ -729,6 +847,13 @@ async function captureRejection(operation: Promise<unknown>): Promise<unknown> {
 
 function parseSingleJson(output: string): unknown {
   return JSON.parse(output) as unknown;
+}
+
+function jsonRecord(value: unknown): Readonly<Record<string, unknown>> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Expected JSON object");
+  }
+  return value as Readonly<Record<string, unknown>>;
 }
 
 function relativeImportClosure(roots: readonly string[]): readonly string[] {

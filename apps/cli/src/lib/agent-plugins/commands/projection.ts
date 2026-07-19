@@ -23,6 +23,7 @@ import type {
   BuildRequest,
   CheckRequest,
   CompleteTestRequest,
+  CurrentMainRecordRequest,
   ExportRequest,
   PackageRequest,
   RepositoryCheckRequest,
@@ -48,6 +49,7 @@ export type LifecycleOperationRequest =
   | Readonly<{ operation: "providers.canonicalSync"; input: SyncRequest }>
   | Readonly<{ operation: "providers.canonicalStatus"; input: StatusRequest }>
   | Readonly<{ operation: "providers.managedRetire"; input: RetireRequest }>
+  | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>
   | Readonly<{ operation: "governance.attestPromotion"; input: AttestPromotionRequest }>;
 
 export type UndoApplication = (binding: ControllerProjectionBinding) => Promise<UndoResult>;
@@ -171,6 +173,10 @@ export async function invokeLifecycleProcedure(
       const client = await factory("providers.managedRetire", binding);
       return await client.providers.managedRetire(request.input, callOptions);
     }
+    case "governance.currentMainRecord": {
+      const client = await factory("governance.currentMainRecord", binding);
+      return await client.governance.currentMainRecord(request.input, callOptions);
+    }
     case "governance.attestPromotion": {
       const client = await factory("governance.attestPromotion", binding);
       return await client.governance.attestPromotion(request.input, callOptions);
@@ -202,6 +208,7 @@ export function lifecycleResultExitCode(
     const value = asRecord(record.value);
     return value.status === "Blocked" || value.status === "Failed" || value.status === "PartialFailure" ? 1 : 0;
   }
+  if (operation === "governance.currentMainRecord") return record.ok === true ? 0 : 1;
   const successfulKinds: Readonly<Record<LifecycleOperation, readonly string[]>> = {
     "releases.check": ["EligibleReport"],
     "releases.checkRepository": ["StagedRepositoryEligible", "CleanRepositoryEligible"],
@@ -215,9 +222,29 @@ export function lifecycleResultExitCode(
     "providers.canonicalSync": [],
     "providers.canonicalStatus": [],
     "providers.managedRetire": [],
+    "governance.currentMainRecord": [],
     "governance.attestPromotion": ["PromotionAttested"],
   };
   return successfulKinds[operation].includes(String(record.kind)) ? 0 : 1;
+}
+
+export function projectLifecycleResultForOutput(
+  operation: LifecycleOperation,
+  result: unknown,
+): unknown {
+  if (operation !== "governance.currentMainRecord") return result;
+  const record = asRecord(result);
+  if (record.ok !== true) return result;
+  const value = asRecord(record.value);
+  if (!(value.bytes instanceof Uint8Array)) return result;
+  const { bytes, ...projectedValue } = value;
+  return Object.freeze({
+    ...record,
+    value: Object.freeze({
+      ...projectedValue,
+      envelopeText: new TextDecoder("utf-8", { fatal: true }).decode(bytes),
+    }),
+  });
 }
 
 export function undoResultExitCode(result: UndoResult): 0 | 1 {

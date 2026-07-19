@@ -2,17 +2,18 @@
 
 ## Status
 
-`T6B_REPOSITORY_CHECKS_REVIEWED`
+`T6C1A_CODEC_PUBLIC_INTERFACE_REVIEWED`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
 A/B branches are retired from the Graphite stack rather than compensated at its
 tip. T6B is narrowed to staged/clean repository checks; the protected-lane mode
 is removed in favor of closed release-input exclusion. The two truthful
-test-owner repairs are retained. T6C is split into one current-main v2
-codec/resolver node and one canonical-only native-convergence node, with no
-issuer/promotion ceremony. Qualified undo remains scoped to managed-export
-capsules; every provider mode is capsule-free.
+test-owner repairs are retained. T6C1 uses two semantic checkpoints under one
+authority: the pure current-main v2 codec/public interface, then observed-Git
+selection plus v1 ceremony cutover. T6C2 remains the canonical-only native
+convergence node. Qualified undo remains scoped to managed-export capsules;
+every provider mode is capsule-free.
 
 ## Repository Record
 
@@ -28,7 +29,8 @@ capsules; every provider mode is capsule-free.
 | T6A branch | `codex/c6-agent-lifecycle-public-interface` |
 | T6B Git observation | `codex/c6-staged-git-observation` / `478cc8e4` |
 | T6B service validation | `codex/c6-repository-check-service` / `dd7f0fd5` |
-| T6B CLI projection | `codex/c6-repository-check-cli` / this record node |
+| T6B CLI projection | `codex/c6-repository-check-cli` / `825a304e` |
+| T6C1a codec interface | `codex/c6-current-main-v2-codec` / this record node |
 | Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
 | Retained CLI target node | `codex/c6-serialize-cli-test-target` |
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
@@ -57,7 +59,8 @@ global undo redesign, and Inngest candidate bytes.
 | --- | --- | --- |
 | T6A thin record | complete | strict OpenSpec plus four standing reviews |
 | T6B repository checks | complete | staged/clean exactness, index race, declared-input boundary, one procedure |
-| T6C1 current-main v2 | unopened | canonical codec, direct Git resolution, old ceremony/commands unreachable |
+| T6C1a v2 codec/public interface | complete, reviewed | closed TypeBox model, canonical `cm2_` codec, one cold-port procedure and CLI dispatch |
+| T6C1b observed-Git selector/cutover | unopened | direct Git resolution and old ceremony/commands unreachable |
 | T6C2 canonical native path | unopened | resolved selector, live native provenance, no canonical hidden state or receipt-retire route |
 | T6C3 export independence | unopened | destination-local ledger/collisions, no native-home registry |
 | T6D truthful test owners | retained, record realignment pending | owner-local DevOps fixture and ordinary serialized CLI target |
@@ -77,8 +80,8 @@ follow-up work.
 
 ## Current Gate
 
-- Implement T6C1 as the sole current-main v2 interface, then T6C2 as the thin
-  canonical consumer without reopening test modes.
+- Finish T6C1b as the sole observed-Git current-main selector and v1 cutover,
+  then T6C2 as the thin canonical consumer without reopening test modes.
 - Implement T6C3 as the owner-local export boundary with no provider-home
   registry dependency.
 - Realign/rerun the retained T6D proof and T6E controller determinism proof.
@@ -100,6 +103,22 @@ policy/router behavior, and CLI projection.
 | Static/structural | Lint and typecheck passed in all four affected projects, builds passed in all three build-owning projects, and lifecycle check/structural plus CLI structural passed without cache. |
 | Reviews | TypeScript/refactor, architecture/authority, behavior/testing, and structural quality approved the narrowed implementation with no remaining P1/P2. |
 
+## T6C1a Proof
+
+This checkpoint implements only the pure public half of
+[[design#One current-main record is the selection authority]], under
+[[authority-amendment#Corrected Frame]] and
+[[tasks#3A. Pure Codec And Public Interface]]. It does not resolve Git
+authority, select provider state, or make the retired v1 path unreachable.
+
+| Boundary | Result |
+| --- | --- |
+| Codec/model | Closed TypeBox body/envelope, fixed `[claude,codex]` tuple, `cm2_` canonical-body digest, 2 MiB envelope bound, unique newline-terminated bytes, and stable `agent-plugin-current-main@v2` protocol passed malformed/surplus/provider-order/digest/canonicality tests. |
+| Service | One governance `currentMainRecord` procedure exposes encode/validate; 34 files / 305 tests passed and the procedure's default throwing lifecycle ports remained cold. |
+| CLI | Existing `check --mode current-main-record` admits exactly one inline body/envelope input, constructs no executable/resource authority, and invokes exactly one typed procedure. JSON projects codec-owned bytes as exact newline-preserving `envelopeText`; human output and encode-to-validate round trips preserve those bytes. Two focused files / 17 tests passed. |
+| Static/structural | Lifecycle and CLI lint, typecheck, and build passed without cache. Both positive structural suites passed; no new Habitat rule was required because the admitted module/router topology was already closed. |
+| Reviews | TypeScript/refactor, architecture/authority, behavior/testing, and structural quality approved the bounded checkpoint with no remaining P1/P2. |
+
 ## Standing Reviews
 
 | Role | Pivot focus |
@@ -109,10 +128,11 @@ policy/router behavior, and CLI projection.
 | Behavior/testing | risk-proportional oracles, real native convergence, mutation-free repeat |
 | Structural quality | deleted concepts stay deleted; no transfer/issuer/launcher residue |
 
-T6A closed all four gates with no remaining P1/P2. The final record includes
-the decoder-only landed-v1 capsule retirement and asymmetric export/provider
-root admission needed to remove the old hidden relationship without adding a
-registry, replay route, or provider installer.
+T6A closed all four gates with no remaining P1/P2. Its reviewers accepted the
+planned decoder-only landed-v1 capsule retirement and asymmetric
+export/provider root admission needed to remove the old hidden relationship
+without adding a registry, replay route, or provider installer; those later
+checkpoints remain unimplemented until their own proof closes.
 
 ## Closure Oracle
 

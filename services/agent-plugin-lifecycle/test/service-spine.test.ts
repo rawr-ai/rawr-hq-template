@@ -50,6 +50,15 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     });
     expect(calls.splice(0)).toEqual(["packaging.artifactReader.read"]);
 
+    await expect(client.governance.currentMainRecord({
+      kind: "encode-body",
+      body: currentMainBody(),
+    }, invocation)).resolves.toMatchObject({
+      ok: true,
+      value: { protocol: "agent-plugin-current-main@v2" },
+    });
+    expect(calls.splice(0)).toEqual([]);
+
     await expect(client.governance.resolveCurrentMain({
       locator: {
         workspacePath: "/tmp/content-workspace",
@@ -233,6 +242,39 @@ function packagingRequest(): Parameters<Client["packaging"]["package"]>[0] {
     })),
     format: "cowork-v1",
     outputPath: "/tmp/cognition.cowork.zip",
+  };
+}
+
+function currentMainBody(): Extract<
+  Parameters<Client["governance"]["currentMainRecord"]>[0],
+  { kind: "encode-body" }
+>["body"] {
+  return {
+    schemaVersion: 2,
+    channel: "current-main",
+    contentAuthority: "rawr-hq",
+    sourceRepositoryIdentity: "git:github.com/rawr-ai/rawr-hq",
+    sourceCommit: "a".repeat(40),
+    sourceTree: "b".repeat(40),
+    releaseInputDigest: `ri1_${"c".repeat(64)}`,
+    releaseSetDigest: `rs1_${"d".repeat(64)}`,
+    evaluationProfile: "provider-smoke@v1",
+    projections: [
+      {
+        provider: "claude",
+        projectionDigest: `ap1_${"e".repeat(64)}`,
+        rendererProtocol: "claude-projection@v1",
+        adapterProtocol: "claude-native-adapter@v1",
+        capabilityProfileDigest: `cp1_${"f".repeat(64)}`,
+      },
+      {
+        provider: "codex",
+        projectionDigest: `ap1_${"1".repeat(64)}`,
+        rendererProtocol: "codex-projection@v1",
+        adapterProtocol: "codex-native-adapter@v1",
+        capabilityProfileDigest: `cp1_${"2".repeat(64)}`,
+      },
+    ],
   };
 }
 
