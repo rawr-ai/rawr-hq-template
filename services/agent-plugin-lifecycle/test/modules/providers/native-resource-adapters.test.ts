@@ -56,9 +56,9 @@ import {
 } from "../../../src/bindings/providers/resource-shared";
 
 const EXPECTED_CAPABILITIES = Object.freeze([
-  "managed-retire",
   "native-plugin-enable",
   "native-plugin-install",
+  "native-plugin-retire",
   "visible-hook-inventory",
   "visible-plugin-inventory",
   "visible-skill-inventory",
@@ -77,7 +77,7 @@ describe("native provider resource interpretation", () => {
     expect(codexCapabilitiesFromCommands(
       ["add", "list"],
       ["add", "list"],
-    )).not.toContain("managed-retire");
+    )).not.toContain("native-plugin-retire");
   });
 
   it.each([

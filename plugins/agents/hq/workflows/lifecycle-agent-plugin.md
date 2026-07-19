@@ -21,7 +21,7 @@ for the complete operation selector.
 - Source authoring is separate, source-only work. It never starts this workflow.
 - App, web, and runtime composition are outside this workflow.
 - No operation automatically starts check, build, package, export, test, sync,
-  retirement, promotion, or undo.
+  promotion, or undo.
 
 ## Select One Branch
 
@@ -35,14 +35,12 @@ for the complete operation selector.
 - **Test**: bind immutable targeted-release handles or one immutable complete-set
   handle, an evaluation profile, and explicit provider homes and executables.
 - **Sync or status**: bind the governed current-main channel locator and explicit
-  provider homes and executables. Do not infer a set by scanning source.
-- **Retire**: bind the governing immutable complete set, the exact managed member
-  proven absent from it, and explicit provider homes and executables.
+  provider homes and executables. Sync removes omitted lifecycle-owned members;
+  do not infer a set by scanning source.
 - **Attest promotion**: bind the exact repository identity plus policy, request,
   acceptance, and landed release-input Git object pointers.
-- **Undo**: use the controller-owned last-operation capsule as the only lifecycle
-  input. Controller runtime bindings may transport replay but cannot supply
-  undo truth.
+- **Undo**: use only the controller-owned managed-export capsule. Replay is
+  limited to export-destination actions and accepts no provider authority.
 
 Invoke the exact literal qualified command selected by `OPERATION`. Keep
 `rawr agent plugins vendors status` and `rawr agent plugins vendors update` as

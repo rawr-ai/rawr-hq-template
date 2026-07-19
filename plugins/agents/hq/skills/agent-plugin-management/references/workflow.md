@@ -54,14 +54,8 @@ Targeted testing does not create a canonical channel claim.
 <branch operation="sync|status">
 Bind the governed current-main channel locator and explicit provider homes and
 executables. Status inspects without mutation. Sync converges only the accepted
-immutable complete set; repeat it and prove managed state and receipt bytes do
-not change.
-</branch>
-
-<branch operation="retire">
-Bind the governing immutable complete set, one exact managed member proven
-absent from it, and explicit provider homes and executables. Do not infer
-retirement from ambient source or provider scans.
+immutable complete set, including removal of omitted lifecycle-owned members;
+repeat it and prove managed state and receipt bytes do not change.
 </branch>
 
 <branch operation="attest-promotion">
@@ -71,9 +65,9 @@ starting provider convergence.
 </branch>
 
 <branch operation="undo">
-Use the controller-owned last-operation capsule as the only lifecycle input.
-Controller runtime bindings may transport replay but cannot supply undo truth.
-Do not derive recovery from a checkout, artifact destination, or provider scan.
+Use only the controller-owned managed-export capsule. Replay is limited to its
+export-destination actions; provider executables, homes, and native state are
+not undo inputs or replay targets.
 </branch>
 </operation-selector>
 

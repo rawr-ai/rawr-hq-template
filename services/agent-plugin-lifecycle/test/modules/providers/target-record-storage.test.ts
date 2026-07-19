@@ -138,7 +138,7 @@ describe("pathless target-record storage", () => {
     expect((await state.completeIdentities.readAll()).ok).toBe(false);
   });
 
-  it("captures, writes, and settles identity admission and receipt publication/removal", async () => {
+  it("captures, writes, and settles identity admission and receipt publication", async () => {
     const target = mustTarget("/provider/a");
     const records = new FakeTargetRecords();
     const state = createPathlessTargetState(records);
@@ -156,11 +156,6 @@ describe("pathless target-record storage", () => {
     });
     expect(records.operations()).toEqual(["capture", "write", "settle"]);
     expect(records.observe(receiptKey(target))).toEqual(canonicalSerializeTargetReceipt(receipt));
-    records.clearEvents();
-
-    expect(await state.receipts.remove(target, receipt)).toEqual({ ok: true, value: null });
-    expect(records.operations()).toEqual(["capture", "write", "settle"]);
-    expect(records.observe(receiptKey(target))).toBeNull();
   });
 
   it("releases an exact converged capture without writing or settling", async () => {
@@ -249,7 +244,11 @@ describe("pathless target-record storage", () => {
     mismatchedRecords.seed(receiptKey(target), canonicalSerializeTargetReceipt(successor));
     mismatchedRecords.failNextRelease = true;
 
-    expect((await mismatchedState.receipts.remove(target, prior)).ok).toBe(false);
+    expect((await mismatchedState.receipts.publish(
+      target,
+      { kind: "absent" },
+      prior,
+    )).ok).toBe(false);
     expect(mismatchedRecords.operations()).toEqual(["capture", "release", "retain-unreleased"]);
     expectRetainedUnreleased(mismatchedRecords, receiptKey(target));
   });

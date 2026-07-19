@@ -31,7 +31,6 @@ export type TargetedTestRequest = InputOf<Client["providers"]["targetedTest"]>;
 export type CompleteTestRequest = InputOf<Client["providers"]["completeTest"]>;
 export type SyncRequest = InputOf<Client["providers"]["canonicalSync"]>;
 export type StatusRequest = InputOf<Client["providers"]["canonicalStatus"]>;
-export type RetireRequest = InputOf<Client["providers"]["managedRetire"]>;
 export type AttestPromotionRequest = InputOf<Client["governance"]["attestPromotion"]>;
 export type CurrentMainRecordRequest = InputOf<Client["governance"]["currentMainRecord"]>;
 
@@ -277,16 +276,6 @@ export function parseStatusRequest(flags: RawFlags): StatusRequest {
     kind: "canonical-status",
     channel: "current-main",
     locator: contentRecordLocator(flags),
-    targets: parseProviderTargets(flags.target),
-  });
-}
-
-export function parseRetireRequest(flags: RawFlags): RetireRequest {
-  const parsedPlugin = parsePluginId(requireString(flags.plugin, "--plugin"));
-  if (!parsedPlugin.ok) throw new LifecycleInputError(parsedPlugin.issues[0].message);
-  return Object.freeze({
-    kind: "managed-retire",
-    pluginId: parsedPlugin.value,
     targets: parseProviderTargets(flags.target),
   });
 }

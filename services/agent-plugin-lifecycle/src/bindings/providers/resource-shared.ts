@@ -72,7 +72,7 @@ export function capabilitiesFromCommands(
   }
   if (enable && plugin.has("list")) available.add("native-plugin-enable");
   if (retire && marketplace.has("remove") && marketplace.has("list")) {
-    available.add("managed-retire");
+    available.add("native-plugin-retire");
   }
   return Object.freeze([...available].sort(compareText));
 }

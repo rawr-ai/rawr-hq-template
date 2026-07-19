@@ -108,15 +108,6 @@ export const CanonicalStatusInputSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const ManagedRetireInputSchema = Type.Object(
-  {
-    kind: Type.Literal("managed-retire"),
-    pluginId: NonEmptyStringSchema,
-    targets: ProviderTargetsInputSchema,
-  },
-  { additionalProperties: false },
-);
-
 export const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 
 export const ProviderDeploymentIssueCodeSchema = Type.Union([
@@ -184,9 +175,9 @@ const ProviderArtifactAuthoritySchema = Type.Object(
 );
 
 const ProviderCapabilitySchema = Type.Union([
-  Type.Literal("managed-retire"),
   Type.Literal("native-plugin-enable"),
   Type.Literal("native-plugin-install"),
+  Type.Literal("native-plugin-retire"),
   Type.Literal("visible-hook-inventory"),
   Type.Literal("visible-plugin-inventory"),
   Type.Literal("visible-skill-inventory"),
@@ -522,15 +513,6 @@ const NormalizeReceiptActionSchema = Type.Object(
   { additionalProperties: false },
 );
 
-const RemoveReceiptActionSchema = Type.Object(
-  {
-    kind: Type.Literal("RemoveReceipt"),
-    target: ProviderTargetSchema,
-    prior: TargetReceiptSchema,
-  },
-  { additionalProperties: false },
-);
-
 const NativeProviderMutationActionSchema = Type.Union([
   SetMarketplaceActionSchema,
   InstallMemberActionSchema,
@@ -543,7 +525,6 @@ const ProviderMutationActionSchema = Type.Union([
   NativeProviderMutationActionSchema,
   PublishReceiptActionSchema,
   NormalizeReceiptActionSchema,
-  RemoveReceiptActionSchema,
 ]);
 
 const ProviderPlanStepSchema = Type.Union([

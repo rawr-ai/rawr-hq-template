@@ -45,17 +45,15 @@ branch silently runs `check`, cleans a checkout, or starts another operation.
   explicit provider homes and executables.
 - **Provider convergence or inspection**: `rawr agent plugins sync` and
   `rawr agent plugins status` take the governed channel locator and explicit
-  provider homes. They do not rediscover a release set from source.
-- **Provider retirement**: `rawr agent plugins retire` binds the governing
-  immutable complete set, one exact managed member proven absent from it, and
-  explicit provider homes. It does not scan a checkout to infer absence.
+  provider homes. They do not rediscover a release set from source. Closed-set
+  sync retires omitted lifecycle-owned members; there is no separate
+  receipt-owned retirement command.
 - **Promotion attestation**: `rawr agent plugins attest-promotion` takes exact
   repository identity and policy, request, acceptance, and landed release-input
   Git object pointers. It does not substitute a workspace's current state.
-- **Undo**: `rawr agent plugins undo` uses the controller-owned last-operation
-  capsule as its only lifecycle input. Controller runtime bindings may transport
-  replay, but never supply undo truth. The controller never invents an inverse
-  from another owner's current state.
+- **Undo**: `rawr agent plugins undo` uses only the controller-owned managed-export
+  capsule and replays only export-destination actions. It accepts no provider
+  executable or provider-home authority and never replays native provider state.
 
 Within governed lifecycle operations, content-workspace bytes are admissible
 only to vendor, check, and build branches. Package, export, test, provider-state,

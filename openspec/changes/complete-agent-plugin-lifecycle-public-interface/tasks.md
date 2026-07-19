@@ -87,7 +87,7 @@
   mutation. Inject one failure during omitted-member retirement after selected
   visibility; report the exact prefix, then prove retry re-reads and converges
   without rollback.
-- [ ] 4.5 Delete the receipt-owned managed-retire procedure from contract,
+- [x] 4.5 Delete the receipt-owned managed-retire procedure from contract,
   router, public client, CLI, manifest, and positive Habitat inventory without
   an alias. Preserve targeted/complete mode scope and receipt/evidence behavior.
 - [x] 4.6 Remove `ProviderUndoWriter`, provider capsule owner protocols,

@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   parseCanonicalStatusRequest,
-  parseManagedRetireRequest,
   parseProviderDeploymentRequest,
 } from "../../../src/bindings/providers";
+import { contract } from "../../../src/service/modules/providers/contract";
 
 const RELEASE = Object.freeze({
   kind: "release",
@@ -17,7 +17,7 @@ const LOCATOR = Object.freeze({
   repositoryIdentity: "git:github.com/example/personal-rawr-hq",
   workspaceRoot: "/tmp/personal-rawr-hq",
 });
-const DEPLOYMENT_APPS = ["targeted", "complete", "canonical"] as const;
+const DEPLOYMENT_APPS = ["deployment"] as const;
 const INVALID_SELECTOR_CASES = [
   ["release+set", { kind: "targeted-test", releases: [RELEASE], releaseSet: SET, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }, DEPLOYMENT_APPS],
   ["release+channel", { kind: "targeted-test", releases: [RELEASE], channel: "current-main", locator: LOCATOR, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }, DEPLOYMENT_APPS],
@@ -37,11 +37,20 @@ const INVALID_SELECTOR_CASES = [
   ["unsupported home", { kind: "targeted-test", releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [{ provider: "cowork", home: "/tmp/cowork" }] }, DEPLOYMENT_APPS],
   ["relative home", { kind: "targeted-test", releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [{ provider: "codex", home: "relative/home" }] }, DEPLOYMENT_APPS],
   ["status set override", { kind: "canonical-status", channel: "current-main", locator: LOCATOR, targets: [TARGET], releaseSet: SET }, ["status"]],
-  ["retire receipt override", { kind: "managed-retire", pluginId: "alpha", targets: [TARGET], receipt: {} }, ["retire"]],
-  ["retire path override", { kind: "managed-retire", pluginId: "alpha", targets: [TARGET], workspaceRoot: "/tmp/personal-rawr-hq" }, ["retire"]],
+  ["retired managed-retire mode", { kind: "managed-retire", pluginId: "alpha", targets: [TARGET] }, ["deployment", "status"]],
 ] as const;
 
 describe("closed lifecycle mode parsers", () => {
+  it("exposes the closed provider procedure set", () => {
+    expect(Object.keys(contract).sort()).toEqual([
+      "canonicalStatus",
+      "canonicalSync",
+      "completeNativeHomes",
+      "completeTest",
+      "targetedTest",
+    ]);
+  });
+
   it.each([
     [{ kind: "targeted-test", releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [TARGET] }, "targeted-test"],
     [{ kind: "complete-test", releaseSet: SET, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }, "complete-test"],
@@ -52,30 +61,21 @@ describe("closed lifecycle mode parsers", () => {
     if (parsed.ok) expect(parsed.value.kind).toBe(expectedKind);
   });
 
-  it("accepts status and multi-target retirement only through their separate exact parsers", () => {
+  it("accepts status only through its separate exact parser", () => {
     const status = parseCanonicalStatusRequest({
       kind: "canonical-status",
       channel: "current-main",
       locator: LOCATOR,
       targets: [TARGET],
     });
-    const retire = parseManagedRetireRequest({
-      kind: "managed-retire",
-      pluginId: "alpha",
-      targets: [TARGET, { provider: "claude", home: "/tmp/rawr-c3-claude" }],
-    });
     expect(status.ok).toBe(true);
-    expect(retire.ok).toBe(true);
-    if (retire.ok) expect(retire.value.targets).toHaveLength(2);
   });
 
   it.each(INVALID_SELECTOR_CASES)("rejects %s at the exact mode boundary", (_label, input, parsers) => {
     for (const parser of parsers) {
       const result = parser === "status"
         ? parseCanonicalStatusRequest(input)
-        : parser === "retire"
-          ? parseManagedRetireRequest(input)
-          : parseProviderDeploymentRequest(input);
+        : parseProviderDeploymentRequest(input);
       expect(result.ok).toBe(false);
     }
   });

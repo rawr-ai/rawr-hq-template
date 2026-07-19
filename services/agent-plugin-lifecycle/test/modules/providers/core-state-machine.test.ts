@@ -25,7 +25,6 @@ import {
   marketplaceState,
   parseAdapterProtocol,
   parseCanonicalStatusRequest,
-  parseManagedRetireRequest,
   parseProviderDeploymentRequest,
   parseProviderTarget,
   renderCompleteProjection,
@@ -35,7 +34,6 @@ import {
   type CanonicalSync,
   type CompleteTest,
   type LifecycleRecordDigest,
-  type ManagedRetireRequest,
   type MechanicalEvidenceHandle,
   type MechanicalEvidenceObservation,
   type MechanicalProviderEvidence,
@@ -59,7 +57,6 @@ import type { ProviderLifecycleRuntime } from "../../../src/service/modules/prov
 import type { CanonicalStatusDependencies } from "../../../src/service/modules/providers/router/canonical-status.router";
 import type { CanonicalSyncDependencies } from "../../../src/service/modules/providers/router/canonical-sync.router";
 import type { CompleteTestDependencies } from "../../../src/service/modules/providers/router/complete-test.router";
-import type { ManagedRetireDependencies } from "../../../src/service/modules/providers/router/managed-retire.router";
 import type { TargetedTestDependencies } from "../../../src/service/modules/providers/router/targeted-test.router";
 
 function createCompleteTest(dependencies: () => CompleteTestDependencies) {
@@ -103,14 +100,6 @@ function createCanonicalStatus(dependencies: () => CanonicalStatusDependencies) 
   };
 }
 
-function createManagedRetire(dependencies: () => ManagedRetireDependencies) {
-  return async (input: unknown) => {
-    const parsed = parseManagedRetireRequest(input);
-    if (!parsed.ok) return parsed;
-    return createProviderClient(dependencies()).managedRetire(managedRetireInput(parsed.value), testInvocation);
-  };
-}
-
 function completeTestInput(input: CompleteTest) {
   return {
     kind: input.kind,
@@ -143,14 +132,6 @@ function canonicalStatusInput(input: CanonicalStatusRequest) {
     kind: input.kind,
     channel: input.channel,
     locator: { ...input.locator },
-    targets: input.targets.map(({ provider, home }) => ({ provider, home })),
-  };
-}
-
-function managedRetireInput(input: ManagedRetireRequest) {
-  return {
-    kind: input.kind,
-    pluginId: input.pluginId,
     targets: input.targets.map(({ provider, home }) => ({ provider, home })),
   };
 }
@@ -188,7 +169,7 @@ function unavailableProviderRuntime(): ProviderLifecycleRuntime {
     },
     providerMutator: { apply: unavailable },
     receipts: { read: unavailable },
-    receiptWriter: { publish: unavailable, remove: unavailable },
+    receiptWriter: { publish: unavailable },
     identities: { read: unavailable, readAll: unavailable },
     identityWriter: { admit: unavailable },
     projectionMaterializer: { materialize: unavailable },
@@ -383,31 +364,6 @@ describe("provider deployment state machine", () => {
     expect(harness.counters.marketplaceWrites).toBe(0);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-
-    harness.resetCounters();
-    const retired = await createManagedRetire(() => harness.retireDependencies())({
-      kind: "managed-retire",
-      pluginId: "beta",
-      targets: [CODEX_A],
-    });
-    expect(retired.ok && retired.value.status).toBe("Mutated");
-    const retireAction = retired.ok
-      ? retired.value.targets[0]?.events.flatMap((event) =>
-        event.phase === "applied" && event.action.kind === "RetireMember" ? [event.action] : [])[0]
-      : undefined;
-    expect(retireAction?.kind).toBe("RetireMember");
-    if (retireAction?.kind === "RetireMember") {
-      expect(retireAction.member.pluginId).toBe("beta");
-      expect(retireAction.activeMarketplace?.members.map((member) => member.pluginId)).toEqual(["alpha", "beta"]);
-    }
-    expect(retired.ok ? retired.value.targets[0]?.events.flatMap((event) =>
-      event.phase === "applied" ? [event.action.kind] : []) : []).toEqual([
-      "RetireMember",
-      "SetMarketplace",
-      "PublishReceipt",
-    ]);
-    expect(harness.counters.marketplaceWrites).toBe(1);
-    expect(harness.marketplaceDigestFor(CODEX_A)).toBe(harness.receiptFor(CODEX_A)?.body.marketplace.projectionDigest);
   });
 
   it.each(["drop-beta", "change-beta"] as const)(
@@ -1018,12 +974,6 @@ describe("provider deployment state machine", () => {
     expect(await canonicalStatus(harness)).toBe("BLOCKED_COLLISION");
     const synced = await canonicalSync(harness);
     expect(synced.ok && synced.value.status).toBe("Blocked");
-    const retired = await createManagedRetire(() => harness.retireDependencies())({
-      kind: "managed-retire",
-      pluginId: "alpha",
-      targets: [CODEX_A],
-    });
-    expect(retired.ok && retired.value.status).toBe("Blocked");
     expect(harness.memberIds(CODEX_A)).toContain("alpha");
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
@@ -1042,162 +992,6 @@ describe("provider deployment state machine", () => {
     expect(harness.counters.marketplaceWrites).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
     expect(harness.counters.identityWrites).toBe(0);
-  });
-
-  it("blocks explicit retire when standalone state replaces the claimed native identity", async () => {
-    const harness = new Harness();
-    expect((await canonicalSync(harness)).ok).toBe(true);
-    harness.removeLiveMember(CODEX_A, "alpha");
-    harness.addDesiredStandaloneCollision(CODEX_A, "native");
-    const prior = harness.receiptFor(CODEX_A);
-
-    harness.resetCounters();
-    const result = await createManagedRetire(() => harness.retireDependencies())({
-      kind: "managed-retire",
-      pluginId: "alpha",
-      targets: [CODEX_A],
-    });
-    expect(result.ok && result.value.status).toBe("Blocked");
-    expect(harness.receiptFor(CODEX_A)?.receiptDigest).toBe(prior?.receiptDigest);
-    expect(harness.counters.nativeMutations).toBe(0);
-    expect(harness.counters.receiptWrites).toBe(0);
-  });
-
-  it("retires only exact receipt-owned state, retains target identity, and repeats read-only", async () => {
-    const harness = new Harness();
-    expect((await canonicalSync(harness)).ok).toBe(true);
-    harness.resetCounters();
-    const retiredAlpha = await createManagedRetire(() => harness.retireDependencies())({
-      kind: "managed-retire",
-      pluginId: "alpha",
-      targets: [CODEX_A],
-    });
-    expect(retiredAlpha.ok && retiredAlpha.value.status).toBe("Mutated");
-    const retireAction = retiredAlpha.ok
-      ? retiredAlpha.value.targets[0]?.events.flatMap((event) =>
-        event.phase === "applied" && event.action.kind === "RetireMember" ? [event.action] : [])[0]
-      : undefined;
-    expect(retireAction?.kind).toBe("RetireMember");
-    if (retireAction?.kind === "RetireMember") {
-      expect(retireAction.member.pluginId).toBe("alpha");
-    }
-    expect(harness.memberIds(CODEX_A)).toEqual(["beta"]);
-    expect(harness.receiptFor(CODEX_A)?.body.managedMembers.map((member) => member.pluginId)).toEqual(["beta"]);
-    expect(harness.identities.has(CODEX_A.home)).toBe(true);
-
-    harness.resetCounters();
-    const repeated = await createManagedRetire(() => harness.retireDependencies())({
-      kind: "managed-retire",
-      pluginId: "alpha",
-      targets: [CODEX_A],
-    });
-    expect(repeated.ok && repeated.value.status).toBe("ReadOnlyConverged");
-    expect(harness.counters.inventoryReads).toBe(1);
-    expect(harness.counters.nativeMutations).toBe(0);
-    expect(harness.counters.receiptWrites).toBe(0);
-
-    harness.resetCounters();
-    const retiredBeta = await createManagedRetire(() => harness.retireDependencies())({
-      kind: "managed-retire",
-      pluginId: "beta",
-      targets: [CODEX_A],
-    });
-    expect(retiredBeta.ok && retiredBeta.value.status).toBe("Mutated");
-    expect(harness.memberIds(CODEX_A)).toEqual([]);
-    expect(harness.receiptFor(CODEX_A)).toBeNull();
-    expect(harness.identities.has(CODEX_A.home)).toBe(true);
-
-    harness.resetCounters();
-    const repeatedFinal = await createManagedRetire(() => harness.retireDependencies())({
-      kind: "managed-retire",
-      pluginId: "beta",
-      targets: [CODEX_A],
-    });
-    expect(repeatedFinal.ok && repeatedFinal.value.status).toBe("ReadOnlyConverged");
-    expect(harness.counters.inventoryReads).toBe(1);
-    expect(harness.counters.nativeMutations).toBe(0);
-    expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.identities.has(CODEX_A.home)).toBe(true);
-
-    const ambiguous = new Harness();
-    expect((await canonicalSync(ambiguous)).ok).toBe(true);
-    const beta = ambiguous.native.get(CODEX_A.home)?.find((member) => member.pluginId === "beta");
-    if (beta === undefined) throw new Error("beta fixture missing");
-    ambiguous.native.set(CODEX_A.home, [{
-      ...beta,
-      memberFingerprint: `pm1_${"f".repeat(64)}` as NativeMemberObservation["memberFingerprint"],
-    }]);
-    ambiguous.resetCounters();
-    const blocked = await createManagedRetire(() => ambiguous.retireDependencies())({
-      kind: "managed-retire",
-      pluginId: "beta",
-      targets: [CODEX_A],
-    });
-    expect(blocked.ok && blocked.value.status).toBe("Blocked");
-    expect(ambiguous.counters.nativeMutations).toBe(0);
-    expect(ambiguous.counters.receiptWrites).toBe(0);
-    expect(ambiguous.identities.has(CODEX_A.home)).toBe(true);
-  });
-
-  it.each(["absent-receipt", "unclaimed-member"] as const)(
-    "observes and blocks unmanaged same-ID state during retire with %s",
-    async (variant) => {
-      const harness = new Harness();
-      expect((await canonicalSync(harness)).ok).toBe(true);
-      if (variant === "absent-receipt") {
-        harness.receipts.delete(CODEX_A.home);
-      } else {
-        const retired = await createManagedRetire(() => harness.retireDependencies())({
-          kind: "managed-retire",
-          pluginId: "alpha",
-          targets: [CODEX_A],
-        });
-        expect(retired.ok && retired.value.status).toBe("Mutated");
-        harness.addUnmanagedMember(CODEX_A, "alpha", "manual:alpha");
-      }
-
-      harness.resetCounters();
-      const result = await createManagedRetire(() => harness.retireDependencies())({
-        kind: "managed-retire",
-        pluginId: "alpha",
-        targets: [CODEX_A],
-      });
-
-      expect(result.ok && result.value.status).toBe("Blocked");
-      expect(harness.counters.inventoryReads).toBe(1);
-      expect(harness.counters.nativeMutations).toBe(0);
-      expect(harness.counters.receiptWrites).toBe(0);
-      expect(harness.inventoryInspectionAuthorities).toEqual([
-        variant === "absent-receipt"
-          ? undefined
-          : harness.fixture.releaseInput.body.contentAuthority,
-      ]);
-    },
-  );
-
-  it("admits a missing target identity before the first managed native retirement", async () => {
-    const harness = new Harness();
-    expect((await canonicalSync(harness)).ok).toBe(true);
-    harness.identities.delete(CODEX_A.home);
-    harness.resetCounters();
-
-    const retired = await createManagedRetire(() => harness.retireDependencies())({
-      kind: "managed-retire",
-      pluginId: "alpha",
-      targets: [CODEX_A],
-    });
-    expect(retired.ok && retired.value.status).toBe("Mutated");
-    if (!retired.ok) return;
-    expect(retired.value.targets[0]?.events.flatMap((event) =>
-      event.phase === "applied" ? [event.action.kind] : [])).toEqual([
-      "AdmitTargetIdentity",
-      "RetireMember",
-      "SetMarketplace",
-      "PublishReceipt",
-    ]);
-    expect(harness.counters.identityWrites).toBe(1);
-    expect(harness.counters.nativeMutations).toBe(1);
-    expect(harness.identities.has(CODEX_A.home)).toBe(true);
   });
 
 });
@@ -1286,20 +1080,6 @@ class Harness {
   statusDependencies(): CanonicalStatusDependencies {
     const reads = this.readPorts();
     return { channel: this.channelPort(), releases: reads.releases, provider: reads.provider, receipts: reads.receipts };
-  }
-
-  retireDependencies(): ManagedRetireDependencies {
-    const reads = this.readPorts();
-    const writes = this.writePorts();
-    return {
-      provider: reads.provider,
-      providerMutator: writes.providerMutator,
-      receipts: reads.receipts,
-      receiptWriter: writes.receiptWriter,
-      identities: reads.identities,
-      identityWriter: writes.identityWriter,
-      marketplaceMaterializer: writes.marketplaceMaterializer,
-    };
   }
 
   resetCounters(): void {
@@ -1664,7 +1444,7 @@ class Harness {
             return failure([issue("CAPABILITY_MISMATCH", "target.capabilities", "Injected capability read failure")]);
           }
           const available = this.missingCapabilitiesHome === target.home
-            ? ALL_CAPABILITIES.filter((entry) => entry !== "managed-retire")
+            ? ALL_CAPABILITIES.filter((entry) => entry !== "native-plugin-retire")
             : ALL_CAPABILITIES;
           return success({
             provider: target.provider,
@@ -1801,11 +1581,6 @@ class Harness {
           }
           this.receipts.set(target.home, receipt);
           return success(receipt);
-        },
-        remove: async (target: ProviderTarget) => {
-          this.counters.receiptWrites += 1;
-          this.receipts.delete(target.home);
-          return success(null);
         },
       },
       identityWriter: {
@@ -2048,12 +1823,12 @@ function freshCounters() {
 }
 
 const ALL_CAPABILITIES = Object.freeze([
-  "managed-retire",
   "native-plugin-enable",
   "native-plugin-install",
+  "native-plugin-retire",
+  "visible-hook-inventory",
   "visible-plugin-inventory",
   "visible-skill-inventory",
-  "visible-hook-inventory",
 ] satisfies readonly ProviderCapability[]);
 
 const LOCATOR = Object.freeze({

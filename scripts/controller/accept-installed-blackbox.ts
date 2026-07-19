@@ -43,7 +43,6 @@ const EXPECTED_AGENT_PLUGIN_COMMAND_IDS = Object.freeze([
   "agent:plugins:create",
   "agent:plugins:export",
   "agent:plugins:package",
-  "agent:plugins:retire",
   "agent:plugins:status",
   "agent:plugins:sync",
   "agent:plugins:test",
@@ -63,6 +62,7 @@ const EXPECTED_EXTERNAL_PLUGIN_COMMAND_IDS = Object.freeze([
 const RETIRED_CURATED_COMMANDS = Object.freeze([
   { argv: ["undo"], label: "retired root undo" },
   { argv: ["agent", "sync"], label: "retired agent sync aggregate" },
+  { argv: ["agent", "plugins", "retire"], label: "retired receipt-owned provider command" },
   { argv: ["plugins", "export"], label: "retired bare plugins export" },
   { argv: ["plugins", "improve"], label: "retired bare plugins improve" },
   { argv: ["plugins", "lifecycle", "check"], label: "retired bare plugins lifecycle" },
@@ -435,7 +435,7 @@ async function requireCodexManagedIdentityAbsent(input: Readonly<{
     cwd: input.home,
     env: environment,
   });
-  requireSuccess(inventory, "Codex inventory after installed lifecycle undo");
+  requireSuccess(inventory, "Codex inventory while checking managed identity absence");
   const inventoryText = inventory.stdout;
   if (inventoryText.includes(input.contentAuthority) || inventoryText.includes(input.pluginId)) {
     throw new Error(`Codex inventory retained the managed lifecycle identity: ${inventoryText.trim()}`);
@@ -443,7 +443,7 @@ async function requireCodexManagedIdentityAbsent(input: Readonly<{
   try {
     const config = await readFile(path.join(input.home, "config.toml"), "utf8");
     if (config.includes(input.contentAuthority) || config.includes(input.pluginId)) {
-      throw new Error("Codex config retained the managed lifecycle identity after undo");
+      throw new Error("Codex config retained the managed lifecycle identity");
     }
   } catch (error) {
     if (!isMissing(error)) throw error;
@@ -456,7 +456,7 @@ async function requireCodexManagedIdentityAbsent(input: Readonly<{
   } catch (error) {
     if (!isMissing(error)) throw error;
   }
-  await requireMissing(path.join(input.home, "skills", "example"), "Codex managed skill after undo");
+  await requireMissing(path.join(input.home, "skills", "example"), "Codex managed skill");
 }
 
 async function requireCodexManagedIdentityPresent(input: Readonly<{
@@ -1386,63 +1386,6 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
     );
   }
 
-  const providerUndo = await invoke(
-    [
-      "agent",
-      "plugins",
-      "undo",
-      "--provider-executable",
-      `codex=${canonicalCodexExecutable}`,
-      "--json",
-    ],
-    "installed provider undo",
-  );
-  requireSuccess(providerUndo, "installed rawr agent plugins undo after provider test");
-  const providerUndoData = requireJsonData(providerUndo, "installed provider undo");
-  const providerUndoResult = requireRecord(providerUndoData.result, "installed provider undo result");
-  if (
-    providerUndoData.operation !== "controller.undo"
-    || providerUndoResult.kind !== "RestoredAndCleared"
-  ) {
-    throw new Error(`installed provider undo returned the wrong result: ${providerUndo.stdout.trim()}`);
-  }
-  await requireCodexManagedIdentityAbsent({
-    executable: canonicalCodexExecutable,
-    home: providerHome,
-    contentAuthority: lifecycleContent.contentAuthority,
-    pluginId: "fixture-plugin",
-  });
-  const controllerAfterProviderUndo = await snapshotFilesystemTree(dataRoot);
-  const providerHomeAfterUndo = await snapshotFilesystemTree(providerHome);
-  const repeatedProviderUndo = await invoke(
-    [
-      "agent",
-      "plugins",
-      "undo",
-      "--json",
-    ],
-    "repeated installed provider undo",
-  );
-  requireSuccess(repeatedProviderUndo, "repeated installed rawr agent plugins undo");
-  const repeatedProviderUndoData = requireJsonData(
-    repeatedProviderUndo,
-    "repeated installed provider undo",
-  );
-  const repeatedProviderUndoResult = requireRecord(
-    repeatedProviderUndoData.result,
-    "repeated installed provider undo result",
-  );
-  if (
-    repeatedProviderUndoData.operation !== "controller.undo"
-    || repeatedProviderUndoResult.kind !== "NoCommittedCapsule"
-    || JSON.stringify(await snapshotFilesystemTree(dataRoot))
-      !== JSON.stringify(controllerAfterProviderUndo)
-    || JSON.stringify(await snapshotFilesystemTree(providerHome))
-      !== JSON.stringify(providerHomeAfterUndo)
-  ) {
-    throw new Error(`repeated installed provider undo did not stutter: ${repeatedProviderUndo.stdout.trim()}`);
-  }
-
   const unavailableContentRoot = `${lifecycleContent.root}.unavailable`;
   await rename(lifecycleContent.root, unavailableContentRoot);
   await requireMissing(lifecycleContent.root, "artifact-only lifecycle source locator");
@@ -1591,7 +1534,7 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
     exportUndoData.operation !== "controller.undo"
     || exportUndoResult.kind !== "RestoredAndCleared"
     || JSON.stringify(exportAfterUndo) !== JSON.stringify(exportBefore)
-    || JSON.stringify(providerAfterExportUndo) !== JSON.stringify(providerHomeAfterUndo)
+    || JSON.stringify(providerAfterExportUndo) !== JSON.stringify(providerHomeAfterRepeat)
     || JSON.stringify(packageAfterExportUndo) !== JSON.stringify(packageAfterFirst)
     || JSON.stringify(sourceAfterExportUndo) !== JSON.stringify(unavailableContentBefore)
     || JSON.stringify(registryAfterExportUndo) !== JSON.stringify(externalRegistryBeforeLifecycle)
@@ -1600,7 +1543,7 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
       "installed export undo did not restore only its destination: "
       + `result=${exportUndo.stdout.trim()}; `
       + `destination=${describeFilesystemDifference(exportBefore, exportAfterUndo)}; `
-      + `provider=${describeFilesystemDifference(providerHomeAfterUndo, providerAfterExportUndo)}; `
+      + `provider=${describeFilesystemDifference(providerHomeAfterRepeat, providerAfterExportUndo)}; `
       + `package=${describeFilesystemDifference(packageAfterFirst, packageAfterExportUndo)}; `
       + `source=${describeFilesystemDifference(unavailableContentBefore, sourceAfterExportUndo)}; `
       + `registry=${describeFilesystemDifference(externalRegistryBeforeLifecycle, registryAfterExportUndo)}`,
@@ -1627,7 +1570,7 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
       !== JSON.stringify(controllerAfterExportUndo)
     || JSON.stringify(await snapshotFilesystemChildren(exportRoot)) !== JSON.stringify(exportBefore)
     || JSON.stringify(await snapshotFilesystemTree(providerHome))
-      !== JSON.stringify(providerHomeAfterUndo)
+      !== JSON.stringify(providerHomeAfterRepeat)
     || JSON.stringify(await snapshotFilesystemTree(packageRoot)) !== JSON.stringify(packageAfterFirst)
     || JSON.stringify(await snapshotFilesystemTree(unavailableContentRoot))
       !== JSON.stringify(unavailableContentBefore)
@@ -1841,7 +1784,7 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
       contentWorkspace: "unchanged-then-unavailable",
       build: "published-then-read-only-converged",
       provider: {
-        transition: "mutated-converged-restored-empty-capsule-stutter",
+        transition: "mutated-then-read-only-converged",
         observedBoundary: "complete-disposable-provider-home",
         nativeOperationalState: {
           claim: "not-byte-idempotent-across-native-codex-inspection",
@@ -1849,10 +1792,6 @@ async function runInner(acceptanceRootInput: string): Promise<void> {
           transientFiles: [...CODEX_TRANSIENT_OPERATIONAL_FILES],
           mutableDirectories: [...CODEX_MUTABLE_OPERATIONAL_DIRECTORIES],
           exactOutsideThatSet: true,
-        },
-        nativeBootstrapAfterUndo: {
-          claim: "not-restored-to-pristine-empty-home",
-          oracle: "managed marketplace, member, enablement, config, cache, and skill identity are absent",
         },
         sameIdReplacementAndOmission: {
           claim: "not-claimed-by-installed-black-box",

@@ -7,7 +7,6 @@ import {
   CompleteNativeHomesResultSchema,
   CompleteTestInputSchema,
   EmptyInputSchema,
-  ManagedRetireInputSchema,
   ProviderOperationResultSchema,
   TargetedTestInputSchema,
 } from "./schemas";
@@ -29,10 +28,6 @@ export const contract = {
     .meta({ idempotent: true, entity: "providers", audit: "full" })
     .input(schema(CanonicalStatusInputSchema))
     .output(schema(CanonicalStatusResultSchema)),
-  managedRetire: ocBase
-    .meta({ idempotent: true, entity: "providers", audit: "full" })
-    .input(schema(ManagedRetireInputSchema))
-    .output(schema(ProviderOperationResultSchema)),
   completeNativeHomes: ocBase
     .meta({ idempotent: true, entity: "providers", audit: "basic" })
     .input(schema(EmptyInputSchema))

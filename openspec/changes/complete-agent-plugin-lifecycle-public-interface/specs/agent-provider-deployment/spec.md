@@ -11,7 +11,7 @@
 
 ### Requirement: Live provider truth is read for every operation
 Each selected provider home MUST be inventoried through its native adapter on
-every plan, status, test, sync, and retire operation. Inventory MUST include
+every plan, status, test, and sync operation. Inventory MUST include
 native plugin identity, enablement and configuration, visible skills and hooks
 required by the projection, relevant marketplace/source identity, and embedded
 RAWR artifact provenance. Targeted and complete-test modes also observe their

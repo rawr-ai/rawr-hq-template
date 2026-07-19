@@ -12,7 +12,6 @@ export type LifecycleOperation =
   | "providers.completeTest"
   | "providers.canonicalSync"
   | "providers.canonicalStatus"
-  | "providers.managedRetire"
   | "governance.currentMainRecord"
   | "governance.attestPromotion";
 
@@ -30,7 +29,6 @@ export type LifecycleClientByOperation = Readonly<{
   "providers.completeTest": Readonly<{ providers: Pick<Client["providers"], "completeTest"> }>;
   "providers.canonicalSync": Readonly<{ providers: Pick<Client["providers"], "canonicalSync"> }>;
   "providers.canonicalStatus": Readonly<{ providers: Pick<Client["providers"], "canonicalStatus"> }>;
-  "providers.managedRetire": Readonly<{ providers: Pick<Client["providers"], "managedRetire"> }>;
   "governance.currentMainRecord": Readonly<{
     governance: Pick<Client["governance"], "currentMainRecord">;
   }>;

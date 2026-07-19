@@ -1,9 +1,9 @@
 ---
 name: agent-plugin-management
 description: |
-  Use when inspecting or operating the governed curated agent-plugin lifecycle: release checks and builds, deterministic packages or exports, provider tests and convergence, retirement, promotion attestation, vendor records, status, or controller-owned undo.
+  Use when inspecting or operating the governed curated agent-plugin lifecycle: release checks and builds, deterministic packages or exports, provider tests and convergence, promotion attestation, vendor records, status, or controller-owned undo.
 
-  Key triggers: "rawr agent plugins", "curated release set", "agent-plugin status", "provider convergence", "retire agent plugin", "promotion attestation", and "agent-plugin undo".
+  Key triggers: "rawr agent plugins", "curated release set", "agent-plugin status", "provider convergence", "promotion attestation", and "agent-plugin undo".
 ---
 
 <skill-usage-tracking>
@@ -28,7 +28,7 @@ artifact, channel, ledger, receipt, or provider identity.
 - Vendor records: `rawr agent plugins vendors status`, `rawr agent plugins vendors update`
 - Release: `rawr agent plugins check`, `rawr agent plugins build`
 - Artifact projection: `rawr agent plugins package`, `rawr agent plugins export`
-- Native providers: `rawr agent plugins test`, `rawr agent plugins sync`, `rawr agent plugins status`, `rawr agent plugins retire`
+- Native providers: `rawr agent plugins test`, `rawr agent plugins sync`, `rawr agent plugins status`
 - Governance: `rawr agent plugins attest-promotion`
 - Recovery: `rawr agent plugins undo`
 
@@ -42,7 +42,7 @@ alias or compatibility path for curated agent plugins.
 <invariant name="closed-release-set">A complete release set is explicit, immutable, and closed-world.</invariant>
 <invariant name="one-content-owner">Every skill, workflow, agent, hook, and script releases through exactly one parent agent plugin.</invariant>
 <invariant name="truthful-state-owner">Each provider home or export destination has one state owner and its own receipt or ledger.</invariant>
-<invariant name="explicit-transition">Inspect, build, package, export, test, sync, retire, promote, and undo remain separate explicit transitions.</invariant>
+<invariant name="explicit-transition">Inspect, build, package, export, test, sync, promote, and undo remain separate explicit transitions.</invariant>
 <invariant name="idempotent-convergence">A repeated converged operation may inspect live state but changes nothing.</invariant>
 </invariants>
 
