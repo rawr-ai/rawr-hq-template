@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6C2C_PRIVATE_DESIRED_STATE_REVIEWED`
+`T6C2C_PRIVATE_PROVENANCE_OBSERVATION_REVIEWED`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
@@ -36,6 +36,7 @@ every provider mode is capsule-free.
 | T6C1b private selector engine | `codex/c6-current-main-v2-selection` / this record node |
 | T6C2c private native policy | `codex/c6-canonical-convergence-policy` / this record node |
 | T6C2c private desired state | `codex/c6-canonical-desired-state` / this record node |
+| T6C2c private provenance observation | `codex/c6-native-provenance-observation` / this record node |
 | Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
 | Retained CLI target node | `codex/c6-serialize-cli-test-target` |
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
@@ -68,7 +69,7 @@ global undo redesign, and Inngest candidate bytes.
 | T6C1b observed-Git selector/cutover | private engine complete, atomic activation/cutover open | direct Git resolution is sealed but has no contract/router/CLI reachability; activation must retire the old ceremony in the same node |
 | T6C2a provider capsule retirement | complete, reviewed | capsule-cold provider modes, forward-only retry, export-only legacy retirement |
 | T6C2b managed-retire deletion | complete, reviewed | receipt-owned provider retire unreachable without alias; omission cleanup remains sync-owned |
-| T6C2c canonical native path | private convergence policy and desired-state verifier complete; resource ambiguity, executor, and atomic activation open | sole governance selection, selected-owner native truth, verification barriers, no canonical hidden state |
+| T6C2c canonical native path | private convergence policy, desired-state verifier, and typed native provenance observation complete; executor and atomic activation open | sole governance selection, selected-owner native truth, verification barriers, no canonical hidden state |
 | T6C3 export independence | unopened | destination-local ledger/collisions, no native-home registry |
 | T6D truthful test owners | retained, record realignment pending | owner-local DevOps fixture and ordinary serialized CLI target |
 | T6E deterministic manifest | implemented, restack/gate pending | focused canonicalization plus full build-twice equality |
@@ -87,8 +88,7 @@ follow-up work.
 
 ## Current Gate
 
-- Expose invalid native provenance as ambiguity and add the private exact-prefix
-  executor. Then activate selector plus convergence while
+- Add the private exact-prefix executor. Then activate selector plus convergence while
   deleting the v1 current-main/promotion ceremony in one public node.
 - Implement T6C3 as the owner-local export boundary with no provider-home
   registry dependency.
@@ -192,7 +192,25 @@ The current-main selector remains separately governance-owned.
 | Unreachability | Production references stop at the private DTO/policy files. The service contract, router composition, client, CLI, bindings, and runtime remain byte-identical to the parent. The legacy canonical path therefore remains the sole reachable path until atomic activation. |
 | Behavior proof | Fourteen desired-state cases cover artifact kind, all selected source identities, exact artifact ref, both provider bindings, and renderer/adapter/capability/projection mismatch. Fourteen convergence-policy cases cover receipt-free adoption, missing/disabled state, same-ID refresh, omitted cleanup ordering, both ownership halves, ambiguity, unmanaged preservation, capability/adapter/target mismatch, and zero-step refusals. The full lifecycle suite passed 37 files / 338 tests. |
 | Static/structural | Lifecycle lint, typecheck, and build passed without cache. Sync plus all three enforced positive Habitat/dependency rules passed, strict OpenSpec passed, and `git diff --check` is clean. |
-| Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural proportionality approved with no remaining P1/P2. Ambiguous resource observation, exact-prefix execution, and `verify-final` closed-set semantics remain named next-node gates. |
+| Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural proportionality approved with no remaining P1/P2. Exact-prefix execution and `verify-final` closed-set semantics remain named next-node gates. |
+
+## T6C2c Private Native Provenance Observation Proof
+
+This direct-only checkpoint advances [[tasks#4. T6C2: Thin Canonical Provider
+Path|tasks 4.2 and 4.4]] without completing either public task. The canonical
+resource factories, typed observer, and shared native inventory inspection are
+absent from package exports, service contract/router, client, CLI, and runtime
+composition. Atomic selector/convergence activation remains a later node.
+
+| Boundary | Result |
+| --- | --- |
+| One native read | One `NativeInventoryInspection` union retains observed state, closed provenance ambiguity, or ordinary resource failure through a single native inventory pass. The canonical observer consumes that union directly; it does not reconstruct authority from generic issue text or paths. |
+| Legacy reachability | Existing targeted, complete, and v1 canonical adapters project ambiguity back to their unchanged `VISIBILITY_FAILED` surface. The new Codex/Claude canonical resource factories are direct-import-only, use the shared inventory interpretation, and expose no mutator. |
+| Ownership law | Missing/invalid marketplace metadata, duplicate managed marketplace identity, mismatched marketplace owner, invalid selected-member metadata, and mismatched selected-member owner become explicit ambiguity. Absent selected marketplace remains ordinary absence; mechanical marketplace/plugin read failures remain failures. |
+| Resource boundary | Provider bytes still come from the existing Effect Platform resource edge. No Node filesystem/process wrapper, receipt, sidecar, evidence, capsule, marketplace-source state, fallback scan, or new provider installer entered the observer. |
+| Behavior proof | Both Codex and Claude resource paths cover observed, ambiguous, and failed outcomes. Throwing mutator stubs prove observation remains read-only, and a regression case preserves the existing public adapter failure surface. The full lifecycle suite passed 38 files / 351 tests. |
+| Static/structural | Lifecycle lint, typecheck, build, sync, positive Habitat/dependency structure, strict OpenSpec, and `git diff --check` passed without cache. No new rule was needed because the canonical factories remain outside public topology. |
+| Reviews | Architecture/authority, TypeScript/refactor/Effect, behavior/testing, and structural proportionality approved after closing generic issue rehydration, legacy-surface reachability, marketplace-owner validation, and provider-parity findings. No P1/P2 remains. |
 
 ## Standing Reviews
 

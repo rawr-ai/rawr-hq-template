@@ -21,6 +21,7 @@ import {
   type NativePluginProcessObservation,
   type NativeProviderAdapter,
   type NativeProviderBridge,
+  type NativeProviderInventoryBridge,
 } from "./native";
 
 export const CLAUDE_ADAPTER_PROTOCOL = requireProtocol("rawr-provider-adapter/claude@v1");
@@ -78,12 +79,11 @@ export interface ClaudeProcessPort {
 
 export interface ClaudeProviderAdapter extends NativeProviderAdapter {}
 
-export function createClaudeProviderAdapter(input: Readonly<{
-  process: ClaudeProcessPort;
-  marketplaceSources: ProviderMarketplaceSourceReader;
-}>): ClaudeProviderAdapter {
-  const bridge: NativeProviderBridge = {
-    probe: async (home) => await input.process.probe({ home }),
+export function createClaudeNativeInventoryBridge(input: Readonly<{
+  process: Pick<ClaudeProcessPort,
+    "inventoryMarketplaceRegistration" | "inventoryNativePlugins" | "inventoryStandaloneExposures">;
+}>): NativeProviderInventoryBridge {
+  return Object.freeze({
     async inventory(home) {
       const [plugins, standaloneExposures] = await Promise.all([
         input.process.inventoryNativePlugins({ home }),
@@ -108,6 +108,17 @@ export function createClaudeProviderAdapter(input: Readonly<{
         standaloneExposures: Object.freeze([...standaloneExposures]),
       });
     },
+  });
+}
+
+export function createClaudeProviderAdapter(input: Readonly<{
+  process: ClaudeProcessPort;
+  marketplaceSources: ProviderMarketplaceSourceReader;
+}>): ClaudeProviderAdapter {
+  const inventoryBridge = createClaudeNativeInventoryBridge(input);
+  const bridge: NativeProviderBridge = {
+    probe: async (home) => await input.process.probe({ home }),
+    inventory: inventoryBridge.inventory,
     setMarketplace: async ({ target, expected, registration, source }) =>
       await input.process.setMarketplaceRegistration({
         home: target.home,

@@ -5,6 +5,7 @@ import {
 } from "../../service/shared/release";
 import {
   marketplaceState,
+  type ProviderMarketplaceRegistration,
 } from "../../service/modules/providers/model/policy/marketplace";
 import type {
   ProviderCapability,
@@ -13,11 +14,16 @@ import type { NativeStandaloneExposureObservation } from "../../service/modules/
 import type { ProviderMarketplaceSourceReader } from "../../service/modules/providers/ports/state";
 import {
   CLAUDE_ADAPTER_PROTOCOL,
+  createClaudeNativeInventoryBridge,
   createClaudeProviderAdapter,
   type ClaudeNativePlugin,
   type ClaudeProcessPort,
   type ClaudeProviderAdapter,
 } from "./claude";
+import {
+  createCanonicalNativeObserver,
+  type CanonicalNativeObserver,
+} from "./canonical-native-observer";
 import {
   createNativeProviderObserver,
   type NativeProviderObserver,
@@ -31,6 +37,7 @@ import type {
   ClaudeNativeResourceSession,
   NativeProviderResourcePort,
 } from "./resource-port";
+import { NativeProvenanceAmbiguity } from "./resource-provenance";
 import {
   capabilitiesFromCommands,
   createSessionCache,
@@ -55,6 +62,11 @@ export interface ResourceClaudeProviderAdapterOptions {
 export type ResourceClaudeProviderObserverOptions = Pick<
   ResourceClaudeProviderAdapterOptions,
   "executablePath" | "resource"
+>;
+
+export type ResourceClaudeCanonicalObserverOptions = Pick<
+  ResourceClaudeProviderAdapterOptions,
+  "contentAuthority" | "executablePath" | "resource"
 >;
 
 export function createResourceClaudeProviderObserver(
@@ -83,6 +95,26 @@ export function createResourceClaudeProviderObserver(
 export function createResourceClaudeProviderAdapter(
   input: ResourceClaudeProviderAdapterOptions,
 ): ClaudeProviderAdapter {
+  return createClaudeProviderAdapter({
+    ...createResourceClaudeProviderPorts(input, false),
+    marketplaceSources: input.marketplaceSources,
+  });
+}
+
+export function createResourceClaudeCanonicalObserver(
+  input: ResourceClaudeCanonicalObserverOptions,
+): CanonicalNativeObserver {
+  const ports = createResourceClaudeProviderPorts(input, true);
+  return createCanonicalNativeObserver({
+    provider: "claude",
+    bridge: createClaudeNativeInventoryBridge(ports),
+  });
+}
+
+function createResourceClaudeProviderPorts(
+  input: ResourceClaudeCanonicalObserverOptions,
+  canonicalProvenance: boolean,
+) {
   const { session, listPlugins } = createClaudeResourceAccess(input);
 
   const inventoryMarketplaceRegistration: ClaudeProcessPort["inventoryMarketplaceRegistration"] = async ({ home }) => {
@@ -92,13 +124,39 @@ export function createResourceClaudeProviderAdapter(
       .map(parseMarketplaceEntry)
       .filter((entry) => entry.name === input.contentAuthority);
     if (matches.length === 0) return Object.freeze({ kind: "absent" });
-    if (matches.length !== 1) throw new Error("Claude managed marketplace identity is ambiguous");
+    if (matches.length !== 1) {
+      throw new NativeProvenanceAmbiguity(
+        "duplicate-managed-marketplace",
+        "Claude managed marketplace identity is ambiguous",
+      );
+    }
     if (matches[0] === undefined) throw new Error("Claude managed marketplace disappeared during observation");
-    const registration = await readMarketplaceSource(
-      await provider.readMarketplace({ identity: input.contentAuthority, ...NATIVE_PACKAGE_READ_LIMITS }),
-      "claude",
-      CLAUDE_ADAPTER_PROTOCOL,
-    );
+    const marketplace = await provider.readMarketplace({
+      identity: input.contentAuthority,
+      ...NATIVE_PACKAGE_READ_LIMITS,
+    });
+    let registration: ProviderMarketplaceRegistration;
+    try {
+      registration = await readMarketplaceSource(
+        marketplace,
+        "claude",
+        CLAUDE_ADAPTER_PROTOCOL,
+      );
+    } catch (error) {
+      throw new NativeProvenanceAmbiguity(
+        "managed-marketplace-metadata-invalid",
+        error,
+      );
+    }
+    if (
+      canonicalProvenance
+      && registration.marketplaceIdentity !== input.contentAuthority
+    ) {
+      throw new NativeProvenanceAmbiguity(
+        "managed-marketplace-owner-mismatch",
+        "Claude marketplace metadata does not match its managed marketplace identity",
+      );
+    }
     return Object.freeze({ kind: "present", state: marketplaceState(registration) });
   };
 
@@ -137,15 +195,27 @@ export function createResourceClaudeProviderAdapter(
     const observations: ClaudeNativePlugin[] = [];
     for (const plugin of (await listPlugins(home)).filter((entry) =>
       entry.marketplaceName === input.contentAuthority)) {
-      const inspected = inspectNativePluginPackage(await provider.readPlugin({
+      const pluginPackage = await provider.readPlugin({
         selector: plugin.selector,
         ...NATIVE_PACKAGE_READ_LIMITS,
-      }), "claude");
+      });
+      let inspected: ReturnType<typeof inspectNativePluginPackage>;
+      try {
+        inspected = inspectNativePluginPackage(pluginPackage, "claude");
+      } catch (error) {
+        throw new NativeProvenanceAmbiguity(
+          "managed-plugin-provenance-invalid",
+          error,
+        );
+      }
       if (
         inspected.pluginId !== plugin.name
         || inspected.artifactAuthority.contentAuthority !== input.contentAuthority
       ) {
-        throw new Error("Claude installed plugin does not match its managed marketplace identity");
+        throw new NativeProvenanceAmbiguity(
+          "managed-member-owner-mismatch",
+          "Claude installed plugin does not match its managed marketplace identity",
+        );
       }
       observations.push(Object.freeze({
         pluginId: inspected.pluginId,
@@ -226,9 +296,8 @@ export function createResourceClaudeProviderAdapter(
     },
   };
 
-  return createClaudeProviderAdapter({
+  return Object.freeze({
     process,
-    marketplaceSources: input.marketplaceSources,
   });
 }
 

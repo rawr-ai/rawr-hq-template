@@ -42,6 +42,10 @@ import type {
   ProviderVisibilityObservation,
 } from "../../service/modules/providers/ports/provider";
 import type { ProviderMarketplaceSource, ProviderMarketplaceSourceReader } from "../../service/modules/providers/ports/state";
+import {
+  isNativeProvenanceAmbiguity,
+  type NativeProvenanceAmbiguityReason,
+} from "./resource-provenance";
 
 type NativeMemberMutationAction = Exclude<NativeProviderMutationAction, { readonly kind: "SetMarketplace" }>;
 
@@ -88,6 +92,17 @@ export interface NativeProviderBridge {
     expected: NativeMemberObservation;
   }>): Promise<void>;
 }
+
+export type NativeProviderInventoryBridge = Pick<NativeProviderBridge, "inventory">;
+
+export type NativeInventoryInspection =
+  | Readonly<{ kind: "observed"; inventory: ProviderInventory }>
+  | Readonly<{
+    kind: "ambiguous-provenance";
+    reason: NativeProvenanceAmbiguityReason;
+    issue: ProviderDeploymentIssue;
+  }>
+  | Readonly<{ kind: "failed"; issue: ProviderDeploymentIssue }>;
 
 export interface NativeProviderObservationBridge {
   probe(home: string): Promise<NativeCapabilityProbe>;
@@ -197,37 +212,14 @@ export function createNativeProviderAdapter(input: Readonly<{
   const readInventory = async (
     target: ProviderTarget,
   ): Promise<DeploymentResult<ProviderInventory>> => {
-    const providerIssue = targetProviderIssue(target, input.provider);
-    if (providerIssue !== undefined) return failure([providerIssue]);
-    try {
-      const observations = await input.bridge.inventory(target.home);
-      const members: NativeMemberObservation[] = [];
-      for (const [index, observation] of observations.members.entries()) {
-        if (observation.marketplaceIdentity !== observation.providerSourceIdentity
-          || observation.providerSourceIdentity !== observation.artifactAuthority.contentAuthority) {
-          return failure([issue(
-            "VISIBILITY_FAILED",
-            `target.inventory[${index}].marketplaceIdentity`,
-            "Native marketplace/source identity must match the verified content authority",
-            observation.artifactAuthority.contentAuthority,
-            observation.marketplaceIdentity,
-          )]);
-        }
-        members.push(Object.freeze({
-          pluginId: observation.pluginId,
-          nativeIdentity: observation.nativeIdentity,
-          artifactAuthority: Object.freeze({ ...observation.artifactAuthority }),
-          providerSourceIdentity: observation.providerSourceIdentity,
-          memberFingerprint: observation.memberFingerprint,
-          enablement: observation.enablement,
-          visibleSkills: canonicalNames(observation.visibleSkills),
-          visibleHooks: canonicalNames(observation.visibleHooks),
-        }));
-      }
-      return success(createProviderInventory(target, members, observations.standaloneExposures, observations.marketplace));
-    } catch (error) {
-      return failure([portFailure("VISIBILITY_FAILED", "target.inventory", error)]);
-    }
+    const inspection = await inspectNativeInventory({
+      provider: input.provider,
+      bridge: input.bridge,
+      target,
+    });
+    return inspection.kind === "observed"
+      ? success(inspection.inventory)
+      : failure([inspection.issue]);
   };
 
   const verifyProjection = async (
@@ -394,6 +386,65 @@ export function createNativeProviderAdapter(input: Readonly<{
   };
 
   return Object.freeze({ projectionAdapterProtocol, inspectCapabilities, readInventory, verifyProjection, apply });
+}
+
+export async function inspectNativeInventory(input: Readonly<{
+  provider: ProviderId;
+  bridge: NativeProviderInventoryBridge;
+  target: ProviderTarget;
+}>): Promise<NativeInventoryInspection> {
+  const providerIssue = targetProviderIssue(input.target, input.provider);
+  if (providerIssue !== undefined) {
+    return Object.freeze({ kind: "failed", issue: providerIssue });
+  }
+  try {
+    const observations = await input.bridge.inventory(input.target.home);
+    const members: NativeMemberObservation[] = [];
+    for (const [index, observation] of observations.members.entries()) {
+      if (observation.marketplaceIdentity !== observation.providerSourceIdentity
+        || observation.providerSourceIdentity !== observation.artifactAuthority.contentAuthority) {
+        return Object.freeze({
+          kind: "ambiguous-provenance",
+          reason: "managed-member-owner-mismatch",
+          issue: issue(
+            "VISIBILITY_FAILED",
+            `target.inventory[${index}].marketplaceIdentity`,
+            "Native marketplace/source identity must match the verified content authority",
+            observation.artifactAuthority.contentAuthority,
+            observation.marketplaceIdentity,
+          ),
+        });
+      }
+      members.push(Object.freeze({
+        pluginId: observation.pluginId,
+        nativeIdentity: observation.nativeIdentity,
+        artifactAuthority: Object.freeze({ ...observation.artifactAuthority }),
+        providerSourceIdentity: observation.providerSourceIdentity,
+        memberFingerprint: observation.memberFingerprint,
+        enablement: observation.enablement,
+        visibleSkills: canonicalNames(observation.visibleSkills),
+        visibleHooks: canonicalNames(observation.visibleHooks),
+      }));
+    }
+    return Object.freeze({
+      kind: "observed",
+      inventory: createProviderInventory(
+        input.target,
+        members,
+        observations.standaloneExposures,
+        observations.marketplace,
+      ),
+    });
+  } catch (error) {
+    const visibilityIssue = portFailure("VISIBILITY_FAILED", "target.inventory", error);
+    return isNativeProvenanceAmbiguity(error)
+      ? Object.freeze({
+          kind: "ambiguous-provenance",
+          reason: error.reason,
+          issue: visibilityIssue,
+        })
+      : Object.freeze({ kind: "failed", issue: visibilityIssue });
+  }
 }
 
 function mutationPrecondition(
