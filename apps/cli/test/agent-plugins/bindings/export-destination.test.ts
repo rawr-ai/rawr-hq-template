@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { ExportLifecycleRuntime } from "@rawr/agent-plugin-lifecycle/ports/exports";
+import type { ExportLifecycleHostRuntime } from "@rawr/agent-plugin-lifecycle/ports/exports";
 
 import {
   createExportLifecycleRuntime,
@@ -29,8 +29,9 @@ afterEach(async () => {
 
 describe("export destination CLI binding", () => {
   it("adds exactly the selected node resource without changing service dependencies", () => {
-    const dependencies: Omit<ExportLifecycleRuntime, "destinationRuntime"> = {
-      artifactReader: { read: async (ref) => Object.freeze({ kind: "Missing", ref }) },
+    const dependencies: Omit<ExportLifecycleHostRuntime, "destinationRuntime"> & Readonly<{
+      artifactReader: Readonly<{ read: () => Promise<never> }>;
+    }> = {
       knownNativeHomesReader: {
         readCompleteSnapshot: async () => Promise.reject(new Error("unused native-home reader")),
       },
@@ -38,13 +39,16 @@ describe("export destination CLI binding", () => {
         preflight: async () => Promise.reject(new Error("unused undo preflight")),
         begin: async () => Promise.reject(new Error("unused undo begin")),
       },
+      artifactReader: {
+        read: async () => Promise.reject(new Error("retired caller artifact reader")),
+      },
     };
 
     const runtime = createExportLifecycleRuntime(dependencies);
     expect(runtime.destinationRuntime).toBe(nodeExportDestinationRuntime);
-    expect(runtime.artifactReader).toBe(dependencies.artifactReader);
     expect(runtime.knownNativeHomesReader).toBe(dependencies.knownNativeHomesReader);
     expect(runtime.undoWriter).toBe(dependencies.undoWriter);
+    expect(runtime).not.toHaveProperty("artifactReader");
   });
 
   it("projects the resource receipts without planning or filesystem logic in the binding", async () => {

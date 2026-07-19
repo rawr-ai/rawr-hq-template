@@ -3,7 +3,7 @@ import {
   executeExportInverseActionWithResource,
   type ExecuteExportInverseOptions,
   type ExportInverseReplayResult,
-  type ExportLifecycleRuntime,
+  type ExportLifecycleHostRuntime,
 } from "@rawr/agent-plugin-lifecycle/bindings/exports";
 import { makeNodeExportDestinationPort } from "@rawr/resource-agent-plugin-export-destination/providers/effect-platform-node";
 
@@ -11,11 +11,14 @@ export const nodeExportDestinationRuntime = makeNodeExportDestinationPort();
 export const nodeExportOwnerStateReader = createExportOwnerStateReader(nodeExportDestinationRuntime);
 
 export function createExportLifecycleRuntime(
-  dependencies: Omit<ExportLifecycleRuntime, "destinationRuntime">,
-): ExportLifecycleRuntime {
+  dependencies: Omit<ExportLifecycleHostRuntime, "destinationRuntime">,
+): ExportLifecycleHostRuntime {
   return Object.freeze({
-    ...dependencies,
+    knownNativeHomesReader: dependencies.knownNativeHomesReader,
+    undoWriter: dependencies.undoWriter,
     destinationRuntime: nodeExportDestinationRuntime,
+    ...(dependencies.failpoints === undefined ? {} : { failpoints: dependencies.failpoints }),
+    ...(dependencies.operationId === undefined ? {} : { operationId: dependencies.operationId }),
   });
 }
 

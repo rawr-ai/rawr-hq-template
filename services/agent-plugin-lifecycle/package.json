@@ -30,10 +30,6 @@
       "types": "./src/bindings/providers/index.ts",
       "default": "./src/bindings/providers/index.ts"
     },
-    "./bindings/releases": {
-      "types": "./src/bindings/releases.ts",
-      "default": "./src/bindings/releases.ts"
-    },
     "./ports/exports": {
       "types": "./src/service/modules/exports/ports.ts",
       "default": "./src/service/modules/exports/ports.ts"

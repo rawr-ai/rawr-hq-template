@@ -25,7 +25,6 @@ import {
 import { exportArtifactFixture } from "../../../../../services/agent-plugin-lifecycle/test/modules/exports/artifact-fixture";
 import {
   createExportTestClient,
-  FakeArtifactReader,
   FakeKnownNativeHomesReader,
   knownHomes,
 } from "./export-runtime-fixture";
@@ -50,7 +49,7 @@ describe("production export owner protocol", () => {
       destinationAt(root, "export-b"),
       destinationAt(root, "export-a"),
     ]);
-    const client = clientFor(harness.writer, fixture.complete);
+    const client = await clientFor(harness.writer, fixture.complete);
 
     const result = await client.exports.apply(request(fixture.complete.ref, destinations));
 
@@ -100,12 +99,12 @@ describe("production export owner protocol", () => {
       "skills/next/SKILL.md",
     ).alpha;
 
-    expect(await clientFor(harness.writer, initial).exports.apply(request(
+    expect(await (await clientFor(harness.writer, initial)).exports.apply(request(
       initial.ref,
       [destination],
       "targeted-release",
     ))).toMatchObject({ kind: "MutatedSettled" });
-    expect(await clientFor(harness.writer, replacement).exports.apply(request(
+    expect(await (await clientFor(harness.writer, replacement)).exports.apply(request(
       replacement.ref,
       [destination],
       "targeted-release",
@@ -139,7 +138,7 @@ describe("production export owner protocol", () => {
     await writeFile(sibling, "preserve-me\n", { mode: 0o600 });
     const prior = await lstat(planned);
     const siblingPrior = await lstat(sibling, { bigint: true });
-    const client = clientFor(harness.writer, fixture);
+    const client = await clientFor(harness.writer, fixture);
     const replacementRequest = request(
       fixture.ref,
       [destination],
@@ -179,8 +178,6 @@ describe("production export owner protocol", () => {
   it("settles and restores only the target subset represented by an applied aggregate prefix", async () => {
     const harness = createHarness();
     const fixture = exportArtifactFixture();
-    const artifacts = new FakeArtifactReader();
-    artifacts.add(fixture.alpha);
     const first = await destinationAt(root, "partial-a");
     const second = await destinationAt(root, "partial-b");
     const third = await destinationAt(root, "partial-c");
@@ -193,8 +190,7 @@ describe("production export owner protocol", () => {
         }
       },
     };
-    const client = createExportTestClient({
-      artifactReader: artifacts,
+    const client = await createExportTestClient([fixture.alpha], {
       knownNativeHomesReader: new FakeKnownNativeHomesReader(knownHomes()),
       undoWriter: createExportUndoWriterV1(harness.writer),
       failpoints,
@@ -230,8 +226,6 @@ describe("production export owner protocol", () => {
   it("exports nonterminal release failure without replacing its unsettled lifecycle failure", async () => {
     const harness = createHarness();
     const fixture = exportArtifactFixture();
-    const artifacts = new FakeArtifactReader();
-    artifacts.add(fixture.alpha);
     const destination = await destinationAt(root, "mark-unsettled-release");
     let injected = false;
     const failpoints: ExportFailpoints = {
@@ -246,8 +240,7 @@ describe("production export owner protocol", () => {
         harness.store.injectNextReleaseFailure("injected mark release failure");
       },
     };
-    const client = createExportTestClient({
-      artifactReader: artifacts,
+    const client = await createExportTestClient([fixture.alpha], {
       knownNativeHomesReader: new FakeKnownNativeHomesReader(knownHomes()),
       undoWriter: createExportUndoWriterV1(harness.writer),
       failpoints,
@@ -282,8 +275,6 @@ describe("production export owner protocol", () => {
   it("cold-settles an exact intra-destination prefix but rejects it as a complete admission", async () => {
     const harness = createHarness();
     const fixture = exportArtifactFixture();
-    const artifacts = new FakeArtifactReader();
-    artifacts.add(fixture.alpha);
     const destination = await destinationAt(root, "intra-destination-prefix");
     let stagedActions = 0;
     const failpoints: ExportFailpoints = {
@@ -293,8 +284,7 @@ describe("production export owner protocol", () => {
         }
       },
     };
-    const client = createExportTestClient({
-      artifactReader: artifacts,
+    const client = await createExportTestClient([fixture.alpha], {
       knownNativeHomesReader: new FakeKnownNativeHomesReader(knownHomes()),
       undoWriter: createExportUndoWriterV1(harness.writer),
       failpoints,
@@ -333,7 +323,7 @@ describe("production export owner protocol", () => {
     const harness = createHarness();
     const fixture = exportArtifactFixture();
     const destination = await destinationAt(root, "staged-recovery");
-    const client = clientFor(harness.writer, fixture.alpha);
+    const client = await clientFor(harness.writer, fixture.alpha);
     expect((await client.exports.apply(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
       .toBe("MutatedSettled");
     const priorCapsule = await committedCapsule(harness.store);
@@ -399,7 +389,7 @@ describe("production export owner protocol", () => {
         });
       },
     };
-    const client = clientForUndoWriter(interruptedWriter, fixture.alpha);
+    const client = await clientForUndoWriter(interruptedWriter, fixture.alpha);
 
     expect(await client.exports.apply(request(fixture.alpha.ref, [destination], "targeted-release")))
       .toMatchObject({ kind: "MutatedUnsettled" });
@@ -420,7 +410,7 @@ describe("production export owner protocol", () => {
     const harness = createHarness();
     const fixture = exportArtifactFixture();
     const destination = await destinationAt(root, "foreign-same-bytes");
-    const client = clientFor(harness.writer, fixture.alpha);
+    const client = await clientFor(harness.writer, fixture.alpha);
     expect((await client.exports.apply(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
       .toBe("MutatedSettled");
     const priorCapsule = await committedCapsule(harness.store);
@@ -455,7 +445,7 @@ describe("production export owner protocol", () => {
     const harness = createHarness();
     const fixture = exportArtifactFixture();
     const destination = await destinationAt(root, "ambiguous-recovery");
-    const client = clientFor(harness.writer, fixture.alpha);
+    const client = await clientFor(harness.writer, fixture.alpha);
     expect((await client.exports.apply(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
       .toBe("MutatedSettled");
     const priorCapsule = await committedCapsule(harness.store);
@@ -521,7 +511,7 @@ describe("production export owner protocol", () => {
     const firstUndo = new CapsuleUndoControllerV1({ store, registry });
     const fixture = exportArtifactFixture();
     const destination = await destinationAt(root, "cold-replay");
-    const client = clientFor(writer, fixture.alpha);
+    const client = await clientFor(writer, fixture.alpha);
     expect((await client.exports.apply(request(fixture.alpha.ref, [destination], "targeted-release"))).kind)
       .toBe("MutatedSettled");
 
@@ -562,10 +552,7 @@ function clientForUndoWriter(
   undoWriter: UndoWriter,
   artifact: ReturnType<typeof exportArtifactFixture>["alpha" | "complete"],
 ) {
-  const artifacts = new FakeArtifactReader();
-  artifacts.add(artifact);
-  return createExportTestClient({
-    artifactReader: artifacts,
+  return createExportTestClient([artifact], {
     knownNativeHomesReader: new FakeKnownNativeHomesReader(knownHomes()),
     undoWriter,
   });

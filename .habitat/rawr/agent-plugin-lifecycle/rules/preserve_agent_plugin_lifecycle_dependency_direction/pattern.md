@@ -15,17 +15,15 @@ resource providers; service middleware derives current-main and provider-domain
 repositories and adapters under `provided`. The provider transition binding admits
 value imports only from the native-resource binding and provider-resource
 composition root; the CLI-local provider index can flow only into that
-composition root. The transitional release binding admits value imports only
-from the artifact/evidence composition root, while pure release algebra reaches
-command parsing through `release`. All other CLI consumers remain type-only.
-The CLI selects one raw artifact repository provider for the lifecycle service
-context. Service middleware owns the releases, packaging, and providers
-artifact/evidence projections in a private service repository. The transitional
-public release binding still re-exports those projection factories for its next
-retirement slice, but its sole admitted CLI value import is the reader-only
-export composition root and cannot flow back into service context. Release and
-evidence projections remain free of filesystem, process, FFI, and concrete
-resource-provider mechanics.
+composition root. Pure release algebra reaches command parsing through
+`release`; all other CLI consumers remain type-only. The CLI selects exactly one
+raw artifact repository provider and root at the lifecycle client composition
+root. Service middleware derives the lifecycle-owned artifact and evidence
+semantics under `provided`, and each consuming module projects only its required
+artifact capability from that same service-provided context. No release or
+output binding can construct, expose, or relay another artifact projection.
+Release and evidence projections remain free of filesystem, process, FFI, and
+concrete resource-provider mechanics.
 Module router handlers consume only their local `module` context, and the
 service root composes module routers through `impl.router`. Type-only protocol
 imports remain available through `ports/*`. Root service capabilities and
@@ -95,6 +93,9 @@ or {
   `context.deps` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/[^/]+/router(?:/.*)?\.ts$"
   },
+  `context.provided` where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/[^/]+/router(?:/.*)?\.ts$"
+  },
   import_statement(source=$source) where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/router\.ts$",
     not { $source <: r"^[\"']?(?:\./impl|\./modules/[^/]+/router)(?:\.[jt]s)?[\"']?$" }
@@ -137,11 +138,6 @@ or {
     not {
       $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/release[\"']?$",
       $filename <: r".*apps/cli/src/lib/agent-plugins/commands/input\.ts$"
-    },
-    not {
-      $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/releases[\"']?$",
-      $filename <: r".*apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository\.ts$",
-      $import <: r"(?s)^import\s*\{\s*createResourceArtifactReader\s*,?\s*\}\s*from.*"
     },
     not {
       $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$",
@@ -245,6 +241,26 @@ or {
     $source <: r"^[\"']?(?:node:(?:fs(?:/promises)?|path|child_process)|bun:ffi|@rawr/resource-[^/]+/providers/).*"
   },
   import_statement(source=$source) where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/resource-agent-plugin-artifact-repository/providers(?:/|[\"']).*",
+    not { $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/client\.ts$" }
+  },
+  `export { $exports } from $source` where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/resource-agent-plugin-artifact-repository/providers(?:/|[\"']).*",
+    not { $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/client\.ts$" }
+  },
+  `export * from $source` where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/resource-agent-plugin-artifact-repository/providers(?:/|[\"']).*",
+    not { $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/client\.ts$" }
+  },
+  `import($source)` where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/resource-agent-plugin-artifact-repository/providers(?:/|[\"']).*",
+    not { $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/client\.ts$" }
+  },
+  import_statement(source=$source) where {
     $filename <: r".*apps/cli/src/lib/agent-plugins/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/[^\"']+/client[\"']?$",
     not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/client[\"']?$" }
@@ -336,6 +352,9 @@ import { impl } from "../../../impl";
 
 export const check = impl.releases.check.handler(async ({ context }) =>
   context.deps.releaseSource.inspect());
+
+// @filename: services/agent-plugin-lifecycle/src/service/modules/exports/router/context-provided.router.ts
+export const bypass = context.provided.artifactStore;
 
 // @filename: services/agent-plugin-lifecycle/src/service/router.ts
 import { check } from "./modules/releases/router/check.router";
@@ -516,7 +535,22 @@ export const digest = contentDigest;
 import { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 
 // @filename: apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository.ts
-import { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+import { createResourceArtifactReader } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+
+// @filename: apps/cli/src/lib/agent-plugins/second-artifact-provider.ts
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+
+// @filename: apps/cli/src/lib/agent-plugins/second-artifact-provider-dynamic.ts
+export const artifactProvider = import("@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node");
+
+// @filename: apps/cli/src/lib/agent-plugins/second-artifact-provider-export.ts
+export { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+
+// @filename: apps/cli/src/lib/agent-plugins/second-artifact-provider-star.ts
+export * from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+
+// @filename: apps/cli/src/commands/agent/plugins/second-artifact-provider.ts
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 
 // @filename: apps/cli/src/lib/agent-plugins/release-binding-dynamic-bypass.ts
 export const releaseBindings = import("@rawr/agent-plugin-lifecycle/bindings/releases");
@@ -578,8 +612,10 @@ export type * from "@rawr/agent-plugin-lifecycle/release";
 
 // @filename: apps/cli/src/lib/agent-plugins/service-runtime/client.ts
 import { createClient, type Client } from "@rawr/agent-plugin-lifecycle/client";
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 
 export const client = createClient;
+export const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
 export type LifecycleClient = Client;
 
 // @filename: apps/cli/src/lib/agent-plugins/commands/binding.ts
@@ -640,14 +676,4 @@ import { createResourceCompleteTargetIdentityReader } from "@rawr/agent-plugin-l
 export const native = createNodeNativeProviderResource;
 export const completeIdentities = createResourceCompleteTargetIdentityReader;
 
-// @filename: apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository.ts
-import {
-  createResourceArtifactReader,
-} from "@rawr/agent-plugin-lifecycle/bindings/releases";
-import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
-
-export const bindings = {
-  createResourceArtifactReader,
-  makeNodeArtifactRepositoryAsyncPort,
-};
 ```

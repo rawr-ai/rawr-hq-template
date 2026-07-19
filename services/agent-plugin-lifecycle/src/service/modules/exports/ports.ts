@@ -1,7 +1,4 @@
 import type {
-  ArtifactReadIssue,
-  ArtifactReadResult,
-  ArtifactReader,
   ExportAgentPluginsRequest,
   ExportAgentPluginsResult,
   ExportAppliedEvent,
@@ -57,8 +54,7 @@ export type ExportDestinationRuntime = ExportDestinationAsyncPort;
  * Undo is intentionally write-only: this port cannot inspect, clear, replay,
  * or otherwise own the controller capsule.
  */
-export interface ExportLifecycleRuntime {
-  readonly artifactReader: ArtifactReader;
+export interface ExportLifecycleHostRuntime {
   readonly knownNativeHomesReader: KnownNativeHomesReader;
   readonly undoWriter: UndoWriter;
   readonly destinationRuntime: ExportDestinationRuntime;
@@ -67,9 +63,6 @@ export interface ExportLifecycleRuntime {
 }
 
 export type {
-  ArtifactReadIssue,
-  ArtifactReadResult,
-  ArtifactReader,
   ExportAgentPluginsRequest,
   ExportAgentPluginsResult,
   ExportAppliedEvent,

@@ -28,8 +28,8 @@ import {
   testInvocation,
 } from "../../../../../../services/agent-plugin-lifecycle/test/support/client";
 import {
-  createArtifactRepositoryReader,
-} from "../../../../src/lib/agent-plugins/bindings/output/artifact-repository";
+  createResourceArtifactReader,
+} from "../../../../../../services/agent-plugin-lifecycle/src/service/repository/artifact-repository";
 import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
 import {
   GIT_EXECUTABLE,
@@ -64,7 +64,7 @@ describe("build application and append-only artifact store", () => {
     expect(first.kind).toBe("Published");
     if (first.kind !== "Published" || first.ref.kind !== "release") return;
 
-    const artifactReader = createArtifactRepositoryReader(setup.artifactRoot);
+    const artifactReader = createArtifactReader(setup.artifactRepository, setup.artifactRoot);
     const read = await artifactReader.read(first.ref);
     expect(read.kind).toBe("Verified");
     if (read.kind !== "Verified" || read.snapshot.kind !== "release") return;
@@ -124,7 +124,7 @@ describe("build application and append-only artifact store", () => {
     if (retried.kind !== "Published" || retried.ref.kind !== "complete-set") return;
     expect(retried.newlyPublished).toEqual([]);
     expect(retried.preExisting).toHaveLength(1);
-    const verified = await createArtifactRepositoryReader(setup.artifactRoot).read(retried.ref);
+    const verified = await createArtifactReader(setup.artifactRepository, setup.artifactRoot).read(retried.ref);
     expect(verified).toMatchObject({ kind: "Verified", snapshot: { kind: "complete-set" } });
   });
 
@@ -165,7 +165,7 @@ describe("build application and append-only artifact store", () => {
     });
     if (partial.kind !== "PublicationIncomplete") return;
     expect("ref" in partial).toBe(false);
-    await expect(createArtifactRepositoryReader(artifactRoot).read(checked.candidate)).resolves.toMatchObject({
+    await expect(createArtifactReader(artifactRepository, artifactRoot).read(checked.candidate)).resolves.toMatchObject({
       kind: "Missing",
     });
     expect(await directoryNames(join(artifactRoot, "sets", "sha256"))).toEqual([]);
@@ -174,7 +174,7 @@ describe("build application and append-only artifact store", () => {
     const firstRef = partial.newlyPublished[0]!;
     const firstReleaseRoot = join(artifactRoot, "releases", "sha256", firstRef.artifactDigest);
     const firstReleaseBeforeRetry = await snapshotTree(firstReleaseRoot);
-    await expect(createArtifactRepositoryReader(artifactRoot).read(firstRef)).resolves.toMatchObject({
+    await expect(createArtifactReader(artifactRepository, artifactRoot).read(firstRef)).resolves.toMatchObject({
       kind: "Verified",
       snapshot: { kind: "release" },
     });
@@ -187,7 +187,7 @@ describe("build application and append-only artifact store", () => {
       preExisting: [firstRef],
     });
     expect(await snapshotTree(firstReleaseRoot)).toEqual(firstReleaseBeforeRetry);
-    const complete = await createArtifactRepositoryReader(artifactRoot).read(checked.candidate);
+    const complete = await createArtifactReader(artifactRepository, artifactRoot).read(checked.candidate);
     expect(complete).toMatchObject({
       kind: "Verified",
       snapshot: { kind: "complete-set", members: [{}, {}] },
@@ -339,9 +339,10 @@ describe("build application and append-only artifact store", () => {
     extraFixture = await createOwnedFixtureRoot();
     const repository = await createGeneratedGitRepository(fixture);
     const artifactRoot = join(extraFixture.path, "controller", "artifacts-v1") as ArtifactStoreRoot;
+    const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
     const applications = createReleaseLifecycleApplications({
       contentWorkspace: await realContentWorkspace(),
-      artifactRepository: makeNodeArtifactRepositoryAsyncPort(),
+      artifactRepository,
       artifactRepositoryRoot: artifactRoot,
     });
     const mode = { kind: "targeted", pluginId: repository.pluginId } as const;
@@ -352,7 +353,7 @@ describe("build application and append-only artifact store", () => {
     await removeOwnedFixtureRoot(fixture);
     fixture = undefined;
     const before = await snapshotTree(artifactRoot);
-    await expect(createArtifactRepositoryReader(artifactRoot).read(built.ref)).resolves.toMatchObject({ kind: "Verified" });
+    await expect(createArtifactReader(artifactRepository, artifactRoot).read(built.ref)).resolves.toMatchObject({ kind: "Verified" });
     await expect(applications.build({ contentWorkspace: repository.policy, mode })).resolves.toMatchObject({
       kind: "RejectedBeforePublication",
     });
@@ -376,7 +377,7 @@ describe("build application and append-only artifact store", () => {
       "SKILL.md",
     );
     await chmod(payload, 0o600);
-    const read = await createArtifactRepositoryReader(setup.artifactRoot).read(built.ref);
+    const read = await createArtifactReader(setup.artifactRepository, setup.artifactRoot).read(built.ref);
     expect(read).toMatchObject({ kind: "Mismatch", issues: [{ code: "ModeMismatch" }] });
   });
 
@@ -388,7 +389,7 @@ describe("build application and append-only artifact store", () => {
     });
     expect(built.kind).toBe("Published");
     if (built.kind !== "Published" || built.ref.kind !== "release") return;
-    const reader = createArtifactRepositoryReader(setup.artifactRoot);
+    const reader = createArtifactReader(setup.artifactRepository, setup.artifactRoot);
     const releaseRoot = join(setup.artifactRoot, "releases", "sha256", built.ref.artifactDigest);
     const payload = join(releaseRoot, "payload", "skills", "example", "SKILL.md");
 
@@ -425,7 +426,7 @@ describe("build application and append-only artifact store", () => {
     });
     expect(built.kind).toBe("Published");
     if (built.kind !== "Published" || built.ref.kind !== "complete-set") return;
-    const reader = createArtifactRepositoryReader(setup.artifactRoot);
+    const reader = createArtifactReader(setup.artifactRepository, setup.artifactRoot);
     const initial = await reader.read(built.ref);
     expect(initial.kind).toBe("Verified");
     if (initial.kind !== "Verified" || initial.snapshot.kind !== "complete-set") return;
@@ -698,6 +699,13 @@ function createReleaseLifecycleApplications(options: {
       return buildClient.releases.build(input, testInvocation);
     },
   });
+}
+
+function createArtifactReader(
+  repository: ArtifactRepositoryAsyncPort,
+  repositoryRoot: string,
+) {
+  return createResourceArtifactReader({ repository, repositoryRoot });
 }
 
 function isReleaseAddress(address: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0]["address"]): boolean {

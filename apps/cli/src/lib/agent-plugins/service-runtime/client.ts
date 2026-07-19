@@ -2,7 +2,6 @@ import { resolveControllerReentry } from "@rawr/core";
 import { createClient, type Client, type CreateClientOptions } from "@rawr/agent-plugin-lifecycle/client";
 import {
   createKnownNativeHomesSnapshot,
-  type ArtifactReader as ExportArtifactReader,
   type KnownNativeHomesReader,
   type UndoCandidateInput,
   type UndoWriter,
@@ -34,9 +33,6 @@ import {
   deriveAgentPluginControllerLayout,
 } from "../layout";
 import { createExportLifecycleRuntime } from "../bindings/export-destination";
-import {
-  createArtifactRepositoryReader,
-} from "../bindings/output";
 import {
   LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
@@ -153,7 +149,6 @@ export function createProductionLifecycleDeps(input: Readonly<{
 }>): LifecycleDeps {
   const { binding, controllerDataRoot } = input;
   const layout = deriveAgentPluginControllerLayout({ dataRoot: controllerDataRoot });
-  const artifactReader = createArtifactRepositoryReader(layout.artifactStoreRoot);
   const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
   const contentWorkspace = makeDeferredNodeContentWorkspacePort({
     acquireGitExecutable: () => requiredGitExecutable(binding),
@@ -177,35 +172,11 @@ export function createProductionLifecycleDeps(input: Readonly<{
     clock: Object.freeze({ now: () => new Date() }),
     packageOutput: makeNodePackageOutputAsyncPort(),
     exports: createExportLifecycleRuntime({
-      artifactReader: createExportArtifactReader(artifactReader),
       knownNativeHomesReader: createKnownNativeHomesReader(providerState.exportKnownHomesReader),
       undoWriter: createNodeExportUndoWriter(layout.capsuleRoot),
     }),
     ...providerDeps,
   } satisfies LifecycleDeps);
-}
-
-function createExportArtifactReader(
-  reader: ReturnType<typeof createArtifactRepositoryReader>,
-): ExportArtifactReader {
-  return Object.freeze({
-    async read(ref: Parameters<ExportArtifactReader["read"]>[0]) {
-      const result = await reader.read(ref);
-      if (result.kind !== "Mismatch") return result;
-      return Object.freeze({
-        kind: "Mismatch" as const,
-        ref,
-        issues: Object.freeze(result.issues.map((issue) => Object.freeze({
-          code: issue.code,
-          path: "artifact",
-          message: issue.detail,
-        }))) as [
-          Readonly<{ code: string; path: string; message: string }>,
-          ...Readonly<{ code: string; path: string; message: string }>[],
-        ],
-      });
-    },
-  });
 }
 
 function createKnownNativeHomesReader(

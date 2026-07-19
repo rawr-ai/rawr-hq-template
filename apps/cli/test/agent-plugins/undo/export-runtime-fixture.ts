@@ -1,18 +1,12 @@
-import { Buffer } from "node:buffer";
-
 import { createClient, type Deps } from "@rawr/agent-plugin-lifecycle";
 import {
-  canonicalSerializeArtifactRef,
-  type ArtifactRef,
   type VerifiedArtifactSnapshotV1,
 } from "@rawr/agent-plugin-lifecycle/release";
 import {
   createKnownNativeHomesSnapshot,
-  type ArtifactReadResult,
-  type ArtifactReader,
   type ExportAgentPluginsRequest,
   type ExportAgentPluginsResult,
-  type ExportLifecycleRuntime,
+  type ExportLifecycleHostRuntime,
   type KnownNativeHomeV1,
   type KnownNativeHomesReader,
   type KnownNativeHomesSnapshotV1,
@@ -26,21 +20,11 @@ import {
 import {
   unavailableContentWorkspace,
 } from "../../../../../services/agent-plugin-lifecycle/test/support/client";
+import {
+  createSeededArtifactRepository,
+} from "../../../../../services/agent-plugin-lifecycle/test/support/artifact-repository";
 
 import { createExportLifecycleRuntime } from "../../../src/lib/agent-plugins/bindings/export-destination";
-
-export class FakeArtifactReader implements ArtifactReader {
-  readonly #snapshots = new Map<string, VerifiedArtifactSnapshotV1>();
-
-  add(snapshot: VerifiedArtifactSnapshotV1): void {
-    this.#snapshots.set(artifactKey(snapshot.ref), snapshot);
-  }
-
-  async read(ref: ArtifactRef): Promise<ArtifactReadResult> {
-    const snapshot = this.#snapshots.get(artifactKey(ref));
-    return snapshot === undefined ? { kind: "Missing", ref } : { kind: "Verified", snapshot };
-  }
-}
 
 export class FakeKnownNativeHomesReader implements KnownNativeHomesReader {
   constructor(readonly snapshot: KnownNativeHomesSnapshotV1) {}
@@ -62,17 +46,19 @@ export interface ExportTestClient {
   }>;
 }
 
-export function createExportTestClient(
-  exportsRuntime: Omit<ExportLifecycleRuntime, "destinationRuntime">,
+export async function createExportTestClient(
+  artifacts: readonly VerifiedArtifactSnapshotV1[],
+  exportsRuntime: Omit<ExportLifecycleHostRuntime, "destinationRuntime">,
   options: Readonly<{
     onProviderAccess?: (label: string) => void;
   }> = {},
-): ExportTestClient {
+): Promise<ExportTestClient> {
+  const artifactRepository = await createSeededArtifactRepository(artifacts);
   const client = createClient({
     deps: {
       logger: createEmbeddedPlaceholderLoggerAdapter(),
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-      ...unavailableArtifactRepository(options.onProviderAccess),
+      ...artifactRepository,
       contentWorkspace: unavailableContentWorkspace(),
       clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
       packageOutput: {
@@ -114,31 +100,6 @@ type ProviderLifecycleDeps = Pick<
   | "providerProjectionRepositoryRoot"
 >;
 
-type ArtifactRepositoryDeps = Pick<
-  Deps,
-  | "artifactRepository"
-  | "artifactRepositoryRoot"
->;
-
-function unavailableArtifactRepository(
-  onAccess: (label: string) => void = () => undefined,
-): ArtifactRepositoryDeps {
-  const unavailableArtifact = async (label: string): Promise<never> => {
-    onAccess(label);
-    return unavailableAsync(label);
-  };
-  return Object.freeze({
-    artifactRepository: Object.freeze({
-      locateTree: async () => unavailableArtifact("artifact tree location"),
-      readTree: async () => unavailableArtifact("artifact tree read"),
-      publishTree: async () => unavailableArtifact("artifact tree publication"),
-      readEvidence: async () => unavailableArtifact("artifact evidence read"),
-      publishEvidence: async () => unavailableArtifact("artifact evidence publication"),
-    }),
-    artifactRepositoryRoot: "/unavailable/artifacts",
-  });
-}
-
 function unavailableProviderDeps(
   onAccess: (label: string) => void = () => undefined,
 ): ProviderLifecycleDeps {
@@ -166,10 +127,6 @@ function unavailableProviderDeps(
     providerExecutables: Object.freeze({}),
     providerProjectionRepositoryRoot: "/unavailable/provider-projections",
   });
-}
-
-function artifactKey(ref: ArtifactRef): string {
-  return Buffer.from(canonicalSerializeArtifactRef(ref)).toString("base64");
 }
 
 function unavailable(label: string): never {

@@ -8,9 +8,59 @@ import type {
   ArtifactTreeSnapshot,
 } from "@rawr/resource-agent-plugin-artifact-repository";
 
+import { createResourceArtifactStore } from "../../src/service/repository/artifact-repository";
+import type { VerifiedArtifactSnapshotV1 } from "../../src/service/shared/release";
+
+export const MEMORY_ARTIFACT_REPOSITORY_ROOT = "/tmp/rawr-memory-artifact-repository";
+
+export interface SeededArtifactRepository {
+  readonly artifactRepository: MemoryArtifactRepository;
+  readonly artifactRepositoryRoot: string;
+}
+
+export async function createSeededArtifactRepository(
+  snapshots: readonly VerifiedArtifactSnapshotV1[],
+  repositoryRoot = MEMORY_ARTIFACT_REPOSITORY_ROOT,
+): Promise<SeededArtifactRepository> {
+  const artifactRepository = new MemoryArtifactRepository();
+  await seedArtifactRepository(artifactRepository, repositoryRoot, snapshots);
+  artifactRepository.resetObservations();
+  return Object.freeze({ artifactRepository, artifactRepositoryRoot: repositoryRoot });
+}
+
+export async function seedArtifactRepository(
+  artifactRepository: ArtifactRepositoryAsyncPort,
+  repositoryRoot: string,
+  snapshots: readonly VerifiedArtifactSnapshotV1[],
+): Promise<void> {
+  const store = createResourceArtifactStore({ repository: artifactRepository, repositoryRoot });
+  const releases = new Map<string, Extract<VerifiedArtifactSnapshotV1, { kind: "release" }>["release"]>();
+  const releaseSets = new Map<
+    string,
+    Extract<VerifiedArtifactSnapshotV1, { kind: "complete-set" }>["releaseSet"]
+  >();
+  for (const snapshot of snapshots) {
+    if (snapshot.kind === "release") {
+      releases.set(snapshot.release.artifactDigest, snapshot.release);
+      continue;
+    }
+    for (const member of snapshot.members) {
+      releases.set(member.release.artifactDigest, member.release);
+    }
+    releaseSets.set(snapshot.releaseSet.releaseSetDigest, snapshot.releaseSet);
+  }
+  for (const release of releases.values()) {
+    requirePublication(await store.publishRelease(release));
+  }
+  for (const releaseSet of releaseSets.values()) {
+    requirePublication(await store.publishReleaseSet(releaseSet));
+  }
+}
+
 /** In-memory raw repository used only to exercise lifecycle service composition. */
 export class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
   private readonly trees = new Map<string, ArtifactTreeSnapshot>();
+  private nextTreeReadFailure: string | undefined;
   private nextEvidencePublicationFailure: string | undefined;
   readTreeCalls = 0;
   readEvidenceCalls = 0;
@@ -29,6 +79,11 @@ export class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
   ): Promise<ArtifactTreeObservation> {
     this.readTreeCalls += 1;
     this.lastTreeAddress = input.address;
+    if (this.nextTreeReadFailure !== undefined) {
+      const failure = this.nextTreeReadFailure;
+      this.nextTreeReadFailure = undefined;
+      throw new Error(failure);
+    }
     const snapshot = this.trees.get(addressKey(input.address));
     return snapshot === undefined
       ? Object.freeze({ kind: "Missing", address: input.address })
@@ -124,6 +179,10 @@ export class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
     this.nextEvidencePublicationFailure = failure;
   }
 
+  rejectNextTreeRead(failure: string): void {
+    this.nextTreeReadFailure = failure;
+  }
+
   addDirectory(objectId: string, path: string): void {
     const [key, snapshot] = this.findByObjectId(objectId);
     this.trees.set(key, Object.freeze({
@@ -206,4 +265,9 @@ function addressKey(address: ArtifactObjectAddress): string {
 
 async function unavailable(label: string): Promise<never> {
   throw new Error(`Unexpected ${label} access in memory artifact repository`);
+}
+
+function requirePublication(result: Awaited<ReturnType<ReturnType<typeof createResourceArtifactStore>["publishRelease"]>>): void {
+  if (result.kind === "Published" || result.kind === "ReadOnlyConverged") return;
+  throw new Error(`Artifact fixture publication failed: ${result.failure}`);
 }

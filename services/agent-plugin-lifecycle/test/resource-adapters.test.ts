@@ -17,9 +17,11 @@ import {
 import {
   createResourceArtifactReader,
   createResourceArtifactStore,
+} from "../src/service/repository/artifact-repository";
+import {
   createResourceMechanicalEvidenceReader,
   createResourceMechanicalEvidenceStore,
-} from "../src/bindings/releases";
+} from "../src/service/repository/mechanical-evidence";
 import { packagingArtifactFixture } from "./modules/packaging/artifact-fixture";
 import {
   createOwnedFixtureRoot,
