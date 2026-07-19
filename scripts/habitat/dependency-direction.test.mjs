@@ -113,6 +113,18 @@ export { createGovernanceCurrentMainSelectionReader } from "@rawr/agent-plugin-l
   "apps/cli/src/lib/agent-plugins/retired-governance-binding-star.ts": `
 export * from "@rawr/agent-plugin-lifecycle/bindings/governance";
 `,
+  "apps/cli/src/lib/agent-plugins/release-binding-bypass.ts": `
+import { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+`,
+  "apps/cli/src/lib/agent-plugins/release-binding-dynamic-bypass.ts": `
+export const releaseBindings = import("@rawr/agent-plugin-lifecycle/bindings/releases");
+`,
+  "apps/cli/src/lib/agent-plugins/release-binding-export-bypass.ts": `
+export { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+`,
+  "apps/cli/src/lib/agent-plugins/release-binding-star-bypass.ts": `
+export * from "@rawr/agent-plugin-lifecycle/bindings/releases";
+`,
   "apps/cli/src/lib/agent-plugins/provider-binding-bypass.ts": `
 import { NativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 `,
@@ -278,6 +290,17 @@ import {
 export type Authority = ContentAuthority;
 export type SetDigest = ReleaseSetDigest;
 `,
+  "apps/cli/src/lib/agent-plugins/commands/input.ts": `
+import {
+  createReleaseArtifactRef,
+  parseArtifactDigest,
+  type ArtifactRef,
+} from "@rawr/agent-plugin-lifecycle/release";
+
+export const createRef = createReleaseArtifactRef;
+export const parseDigest = parseArtifactDigest;
+export type ParsedArtifact = ArtifactRef;
+`,
   "apps/cli/src/lib/agent-plugins/bindings/providers/native.ts": `
 import { NativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
@@ -291,9 +314,21 @@ export const native = createNodeNativeProviderResource;
 export const completeIdentities = createResourceCompleteTargetIdentityReader;
 `,
   "apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository.ts": `
+import {
+  createResourceArtifactReader,
+  createResourceArtifactStore,
+  createResourceMechanicalEvidenceReader,
+  createResourceMechanicalEvidenceStore,
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import { makeRepository } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 
-export const repository = makeRepository;
+export const bindings = {
+  createResourceArtifactReader,
+  createResourceArtifactStore,
+  createResourceMechanicalEvidenceReader,
+  createResourceMechanicalEvidenceStore,
+  makeRepository,
+};
 `,
 };
 
@@ -393,7 +428,7 @@ describe("agent plugin lifecycle dependency-direction Habitat rule", () => {
     expect(
       rejected.report.rules[0].diagnostics,
       JSON.stringify(rejected.report.rules[0].diagnostics, null, 2),
-    ).toHaveLength(57);
+    ).toHaveLength(61);
 
     const rootRouter = "services/agent-plugin-lifecycle/src/service/router.ts";
     const serviceBase = "services/agent-plugin-lifecycle/src/service/base.ts";

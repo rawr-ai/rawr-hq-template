@@ -1,4 +1,12 @@
-import { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+import {
+  createResourceArtifactStore,
+  type ResourceArtifactRepositoryOptions,
+  type ResourceMechanicalEvidenceRepositoryOptions,
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
+import {
+  createMechanicalEvidenceHandle,
+  type ArtifactRef,
+} from "@rawr/agent-plugin-lifecycle/release";
 import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 
 // @ts-expect-error Governance current-main selection is composed inside the service.
@@ -8,6 +16,12 @@ import * as retiredGovernanceBinding from "@rawr/agent-plugin-lifecycle/bindings
 import { createResourceContentWorkspaceSnapshotReader as retiredReleaseSourceFactory } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 // @ts-expect-error Staged source repositories are service-module implementations, not host bindings.
 import { createResourceStagedContentWorkspaceObservationReader as retiredStagedReleaseSourceFactory } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+// @ts-expect-error Pure release algebra is exported only from the release surface.
+import { createMechanicalEvidenceHandle as retiredBindingEvidenceHandle } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+// @ts-expect-error Shared release types are exported only from the release surface.
+import type { ArtifactRef as RetiredBindingArtifactRef } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+// @ts-expect-error Module domain types are inferred from the client, not exported from host bindings.
+import type { BuildResult as RetiredBindingBuildResult } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 // @ts-expect-error The vendor module no longer exposes a public port subpath.
 import * as retiredVendorPort from "@rawr/agent-plugin-lifecycle/ports/vendors";
 // @ts-expect-error The releases module no longer exposes a public port subpath.
@@ -36,9 +50,21 @@ import { createResourceCodexProviderAdapter as retiredCodexAdapterFactory } from
 import type { BuildResult } from "@rawr/agent-plugin-lifecycle/service/modules/releases/model/dto/release-lifecycle";
 
 void createResourceArtifactStore;
+void createMechanicalEvidenceHandle;
+declare const artifactRef: ArtifactRef;
+declare const artifactOptions: ResourceArtifactRepositoryOptions;
+declare const evidenceOptions: ResourceMechanicalEvidenceRepositoryOptions;
+void artifactRef;
+void artifactOptions;
+void evidenceOptions;
 void retiredGovernanceBinding;
 void retiredReleaseSourceFactory;
 void retiredStagedReleaseSourceFactory;
+void retiredBindingEvidenceHandle;
+declare const retiredBindingArtifactRef: RetiredBindingArtifactRef;
+declare const retiredBindingBuildResult: RetiredBindingBuildResult;
+void retiredBindingArtifactRef;
+void retiredBindingBuildResult;
 void retiredVendorPort;
 void retiredReleasePort;
 void retiredPackagingBinding;
@@ -59,3 +85,18 @@ void buildResult;
 type ProviderCurrentMainIsAbsent = "providerCurrentMain" extends keyof Deps ? never : true;
 const providerCurrentMainIsAbsent: ProviderCurrentMainIsAbsent = true;
 void providerCurrentMainIsAbsent;
+
+type ReleaseBindingValueKey = keyof typeof import("@rawr/agent-plugin-lifecycle/bindings/releases");
+type ExpectedReleaseBindingValueKey =
+  | "createResourceArtifactReader"
+  | "createResourceArtifactStore"
+  | "createResourceMechanicalEvidenceReader"
+  | "createResourceMechanicalEvidenceStore";
+type ReleaseBindingValuesAreExact =
+  Exclude<ReleaseBindingValueKey, ExpectedReleaseBindingValueKey> extends never
+    ? Exclude<ExpectedReleaseBindingValueKey, ReleaseBindingValueKey> extends never
+      ? true
+      : never
+    : never;
+const releaseBindingValuesAreExact: ReleaseBindingValuesAreExact = true;
+void releaseBindingValuesAreExact;

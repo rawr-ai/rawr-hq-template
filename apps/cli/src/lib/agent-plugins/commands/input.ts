@@ -13,7 +13,7 @@ import {
   parseReleaseSetDigest,
   parseRepositoryIdentity,
   type ArtifactRef,
-} from "@rawr/agent-plugin-lifecycle/bindings/releases";
+} from "@rawr/agent-plugin-lifecycle/release";
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 
 import { CHECK_MODES, type CheckMode } from "./flags";

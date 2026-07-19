@@ -24,11 +24,13 @@ import type {
 } from "../src/service/model/dependencies/releases";
 import {
   createMechanicalEvidenceHandle,
+  parseMechanicalEvidenceHandle,
+} from "../src/service/shared/release";
+import {
   createResourceArtifactReader,
   createResourceArtifactStore,
   createResourceMechanicalEvidenceReader,
   createResourceMechanicalEvidenceStore,
-  parseMechanicalEvidenceHandle,
 } from "../src/bindings/releases";
 import { packagingArtifactFixture } from "./modules/packaging/artifact-fixture";
 import {
