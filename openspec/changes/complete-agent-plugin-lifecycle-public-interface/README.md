@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6C2_ATOMIC_PUBLIC_CUTOVER_REVIEWED`
+`T6C3_MINIMAL_BOUNDARY_FRAMED`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
@@ -40,6 +40,7 @@ every provider mode is capsule-free.
 | T6C2c private convergence executor | `codex/c6-canonical-convergence-executor` / this record node |
 | Controller acceptance-harness retirement | `codex/c6-retire-controller-acceptance-harness` / this record node |
 | T6C1b/T6C2 public cutover | `codex/c6-atomic-canonical-cutover` / this record node |
+| T6C3 minimal boundary frame | `codex/c6-minimal-export-provider-boundary` / this record node |
 | Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
 | Retained CLI target node | `codex/c6-serialize-cli-test-target` |
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
@@ -73,7 +74,7 @@ global undo redesign, and Inngest candidate bytes.
 | T6C2a provider capsule retirement | complete, reviewed | capsule-cold provider modes, forward-only retry, export-only legacy retirement |
 | T6C2b managed-retire deletion | complete, reviewed | receipt-owned provider retire unreachable without alias; omission cleanup remains sync-owned |
 | T6C2c canonical native path | complete, reviewed | sole governance selection, selected-owner native truth, exact-selector cleanup, verification barriers, and no canonical hidden state |
-| T6C3 export independence | unopened | destination-local ledger/collisions, no native-home registry |
+| T6C3 export independence | minimal boundary framed | export-private exact marker, provider slot refusal, no native-home aggregate/scan |
 | T6D truthful test owners | retained, record realignment pending | owner-local DevOps fixture and ordinary serialized CLI target |
 | T6E deterministic manifest | implemented, restack/gate pending | focused canonicalization plus full build-twice equality |
 | T6F landing/settlement | closed | independently landed repos, disposable/live native convergence, read-only repeat |
@@ -91,8 +92,10 @@ follow-up work.
 
 ## Current Gate
 
-- Implement T6C3 as the owner-local export boundary with no provider-home
-  registry dependency.
+- Implement the framed T6C3 boundary as separate provider-refusal and
+  export-admission checkpoints while the landed aggregate still guards the
+  opposite owner, then remove the aggregate/scan relationship only after both
+  owner-local boundaries are active.
 - Realign/rerun the retained T6D proof and T6E controller determinism proof.
 - Land/install Template before the first personal semantic checkpoint.
 - Keep Inngest `HF01_PENDING`; exact landed release input excludes its external
@@ -248,6 +251,21 @@ no invocation can choose between the old and new models.
 | Behavior proof | The lifecycle suite passed 35 files / 318 tests, including public selection, no-record adoption, same-ID refresh, config-only residue, omitted-member failure/retry, foreign same-ID preservation, multi-home isolation, and a live-read zero-mutation repeat. Focused CLI command/runtime proof passed with the `0/1/2` exit contract. |
 | Static and structural | Lifecycle lint, typecheck, build, sync, and positive structural checks passed. CLI lint, typecheck, build, sync, and positive structural checks passed. Strict OpenSpec and `git diff --check` passed. |
 | Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural/proportionality approved the public cutover with no remaining P1/P2. Optional P3 cleanup remains outside this authority checkpoint. |
+
+## T6C3 Minimal Boundary Frame
+
+The proportionality audit rederived this boundary from the two owner-local
+operations rather than from the landed aggregate. Export needs one visible claim
+for an explicit destination; providers need only refuse that claim at an
+explicit pre-existing home. That removes the reason for cross-owner discovery.
+
+| Axis | Closed decision |
+| --- | --- |
+| Export ownership | One exports-owned exact two-field marker and the existing destination ledger; no root digest, registry, provider field, or second receipt. |
+| Provider ownership | Native live state at an explicit existing home; any occupied/unreadable export-marker slot is a collision, and the provider does not parse the export codec. |
+| Removed relationship | `KnownNativeHomesReader`, `completeNativeHomes`, target-identity scans, pathless aggregation, and app-runtime plumbing that existed only to bridge those owners are deleted without replacement. |
+| Resource law | Export extends its private resource/action unions with an owner-local root-observation discriminator and one matched publish/inverse variant, then freezes absent-root publication and inverse in the existing action set before undo admission. The admitted action revalidates absence, prepares an already-marked private same-parent directory, and atomically publishes it no-replace. Provider resources never create homes and recheck marker-slot absence before native execution. |
+| Proof boundary | Bounded absent/exact/wrong marker cases, publication-failure containment, provider missing/marked/unmarked and recheck-transition cases, export-local destination overlap, one no-unmarked-final-state interleaving, no cross-owner reads, read-only repeat, types, lint, positive topology, and focused behavior. Alias, tamper, generalized publication, and undo matrices are outside C6. |
 
 ## Standing Reviews
 

@@ -117,39 +117,53 @@
 
 ## 5. T6C3: Export Destination Independence
 
-- [ ] 5.1 Remove `KnownNativeHomesReader`, its sidecar-derived production
-  binding, and ambient overlap planning. Add one fixed versioned root-owner
-  marker at `.rawr-agent-plugin-owner.json`. The single source owner for its
-  pure 4 KiB canonical codec is
-  `services/agent-plugin-lifecycle/src/service/shared/root-owner`; exports and
-  providers consume that shared protocol without a sideways module dependency.
-  The protocol carries owner, canonical root, and
-  `rootDigest = "rt1_" + hex(SHA-256(UTF8(canonicalRoot)))`: export may claim only
-  an absent destination and atomically no-replace publishes one complete
-  owner-created marked directory as its first capsule-covered action; any
-  existing unmarked, malformed, or foreign-marked root blocks even under
-  `replace-planned`. Derive the absent root's prospective identity from a
-  verified real parent plus one validated basename, revalidate the parent
-  immediately before publication, and verify the published real path afterward.
-- [ ] 5.2 Make every provider mode read only that fixed marker at its explicit
-  pre-existing home, revalidate root identity/marker absence immediately before
-  native commands, and block when export owns the root. Provider lifecycle must
-  not create target roots. No provider
-  inventory enters export and no export ledger enters provider truth.
-- [ ] 5.3 Prove export-first/provider-second and provider-first/export-second
-  each leave one owner; aliases cannot split ownership; missing/stale sidecars
-  are irrelevant; symlinked-parent substitution cannot change prospective root
-  identity; unmanaged collisions still block; marked-destination
-  `replace-planned` remains exact/reversible; repeat is read-only. Prove one
-  winner under competing no-replace publication, publication failure with no
-  owner claim, interruption immediately after marked-root publication with an
-  exact applied prefix and settled capsule, exact undo of that unchanged empty
-  marked root, and retryable blocking after marker/root substitution.
+- [ ] 5.1 Require every provider mode to use an explicit pre-existing home and
+  treat any entry or unreadable result at the fixed marker slot as
+  `BLOCKED_COLLISION` before native commands. Recheck the slot at the native
+  resource boundary; never create the home or parse/import the export marker
+  codec. Prove missing/marked provider home refusal with zero native calls; a
+  transition from absent at planning to occupied or unreadable at the resource
+  edge returning `BLOCKED_COLLISION` with zero native calls; and existing
+  unmarked provider convergence followed by a read-only repeat.
+- [ ] 5.2 Give exports one private exact marker at
+  `.rawr-agent-plugin-owner.json` with canonical bytes
+  `{"owner":"export","schemaVersion":1}\n`. Extend the existing private export
+  resource/action unions with an owner-local discriminated root observation and
+  one forward root-publication variant plus its matching inverse-action variant.
+  Extend the existing capture/plan/apply sequence so capture records absent-root
+  or exact-marked-root observation, and absent-root publication plus its exact
+  inverse are included in the same frozen action set before undo preflight and
+  begin. The admitted
+  action revalidates destination absence, prepares one exact-marked private
+  same-parent directory, and atomically publishes it no-replace, so the final
+  path is never visible unmarked. Its inverse removes only the exact unchanged
+  marker and then-empty owner-created root after payload undo. An existing
+  directory is admitted only when marker bytes match exactly; every other
+  existing or unreadable root blocks even under `replace-planned`. Inject
+  preparation/publication failure and prove non-success, no final root, payload,
+  ledger, applied prefix, or committed-capsule advancement, with cleanup limited
+  to the owner-created private directory through exact bounded guards. Prove
+  absent-root admission and read-only repeat, exact marked-root reuse,
+  unmarked/wrong-marker refusal, export refusal at an existing provider root
+  without provider reads, retained export-local multi-destination overlap, and
+  one bounded interleaving where the final root is never visible unmarked. Add no
+  second transaction, service, root digest, registry, provider field, receipt,
+  ledger, shared protocol, or generalized publication protocol; this is only an
+  extension of the existing export-private action codec and undo sequence.
+- [ ] 5.3 After both owner-local boundaries are active, delete
+  `KnownNativeHomesReader`, `completeNativeHomes`,
+  `CompleteTargetIdentityReader`, `scanTargets`, their sidecar-derived bindings,
+  and ambient overlap planning without aliases. Retain only explicit
+  point-addressed target identity state for targeted/complete-test modes and
+  export-local overlap checks between destinations in the same request. Prove
+  no cross-owner scan, aggregate, or ledger read.
 - [ ] 5.4 Run focused export/provider/service/CLI tests, lint, typecheck, build,
-  structural/Habitat, strict OpenSpec, and four standing reviews. Extend the
-  closed positive Habitat topology to require the exact `shared/root-owner`
-  subtree while retaining `shared/release`; commit this semantic Graphite node
-  alone.
+  structural/Habitat, strict OpenSpec, and four standing reviews. Extend closed
+  positive Habitat inventories for owner-local exports/provider ports, routers,
+  bindings, and resources so their admitted topology contains no aggregate or
+  scan surface; retain `shared/release` and add no shared root-owner subtree.
+  Commit provider refusal, export admission, aggregate removal, and structural
+  closure as coherent semantic Graphite nodes rather than one aggregate change.
 
 ## 6. T6D: Truthful Test Owners
 
