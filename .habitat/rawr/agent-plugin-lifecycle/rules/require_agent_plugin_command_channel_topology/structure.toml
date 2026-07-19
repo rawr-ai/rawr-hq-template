@@ -8,7 +8,6 @@ mode = "closed"
 required = [
   "client.ts",
   "evidence",
-  "governance",
   "providers",
   "undo.ts",
 ]
@@ -25,23 +24,12 @@ required = [
 allowed = []
 
 [[scopes]]
-name = "curated-agent-plugin-governance-projection"
-root = "apps/cli/src/lib/agent-plugins/service-runtime/governance"
-kind = "directory"
-mode = "closed"
-required = [
-  "runtime.ts",
-]
-allowed = []
-
-[[scopes]]
 name = "curated-agent-plugin-provider-projection"
 root = "apps/cli/src/lib/agent-plugins/service-runtime/providers"
 kind = "directory"
 mode = "closed"
 required = [
   "artifact-reader.ts",
-  "current-main-selection.ts",
   "node-runtime.ts",
   "runtime.ts",
 ]

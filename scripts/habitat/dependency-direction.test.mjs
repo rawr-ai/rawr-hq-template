@@ -39,6 +39,9 @@ export * from "../../modules/releases/ports";
   "services/agent-plugin-lifecycle/src/service/model/dependencies/release-dynamic.ts": `
 export const release = import("../../modules/releases/ports");
 `,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/governance.ts": `
+import type { ExactGitReader } from "../../modules/governance/model/repositories/exact-git";
+`,
   "services/agent-plugin-lifecycle/src/service/modules/releases/router/impl-import.router.ts": `
 import { impl } from "../../../impl";
 `,
@@ -327,7 +330,7 @@ describe("agent plugin lifecycle dependency-direction Habitat rule", () => {
     expect(
       rejected.report.rules[0].diagnostics,
       JSON.stringify(rejected.report.rules[0].diagnostics, null, 2),
-    ).toHaveLength(37);
+    ).toHaveLength(38);
 
     const rootRouter = "services/agent-plugin-lifecycle/src/service/router.ts";
     const expectedLocations = [

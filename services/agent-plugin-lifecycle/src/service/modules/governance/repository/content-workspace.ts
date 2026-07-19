@@ -11,21 +11,21 @@ import {
   createExactGitBlobPointer,
   type GitBlobSelection,
   type GitLocator,
-} from "../../service/modules/governance/model/dto/git";
+} from "../model/dto/git";
 import {
   parseCommit,
   parseRepository,
   parseTree,
   type CanonicalRef,
   type GitCommitId,
-} from "../../service/modules/governance/model/dto/primitives";
+} from "../model/dto/primitives";
 import type {
   ExactGitReader,
   GitBlobReadResult,
   GitBooleanReadResult,
   GitReadFailureCode,
   RepositoryInspection,
-} from "../../service/modules/governance/ports";
+} from "../model/repositories/exact-git";
 
 const MAX_GIT_BLOB_BYTES = 128 * 1024 * 1024;
 const MAX_GIT_EVIDENCE_BYTES = 64 * 1024 * 1024;

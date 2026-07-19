@@ -24,19 +24,19 @@ language js(typescript)
 or {
   import_statement(source=$source) where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:packaging|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])).*"
   },
   `export { $exports } from $source` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:packaging|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])).*"
   },
   `export * from $source` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:packaging|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])).*"
   },
   `import($source)` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:packaging|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])).*"
   },
   import_statement(source=$source) where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/[^/]+/router(?:/.*)?\.ts$",

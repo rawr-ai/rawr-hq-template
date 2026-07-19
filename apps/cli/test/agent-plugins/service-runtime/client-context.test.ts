@@ -32,7 +32,6 @@ const LIFECYCLE_DEP_KEYS = Object.freeze([
   "packageOutput",
   "exports",
   "providers",
-  "governance",
 ]);
 const OPERATION_CASES = Object.freeze([
   { operation: "releases.check", owner: "releases", procedure: "check" },
@@ -109,7 +108,8 @@ describe("production lifecycle service context", () => {
     expect(deps).not.toHaveProperty("releaseSource");
     expect(deps).not.toHaveProperty("stagedReleaseSource");
     expect(deps).not.toHaveProperty("packaging");
-    expect(Object.values(deps)).toHaveLength(10);
+    expect(deps).not.toHaveProperty("governance");
+    expect(Object.values(deps)).toHaveLength(9);
     expect(await directoryNames(root.path)).toEqual(before);
   });
 

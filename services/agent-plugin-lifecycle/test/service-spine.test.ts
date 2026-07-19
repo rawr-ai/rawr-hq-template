@@ -4,6 +4,7 @@ import {
 import {
   createEmbeddedPlaceholderLoggerAdapter,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import type { GitWorkspaceAnchor } from "@rawr/resource-content-workspace";
 import { describe, expect, it } from "vitest";
 
 import { createClient, type Client, type Deps } from "../src/client";
@@ -69,7 +70,10 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       kind: "DIRTY_REPOSITORY",
       reason: "Canonical content workspace is dirty",
     });
-    expect(calls.splice(0)).toEqual(["governance.git.inspect"]);
+    expect(calls.splice(0)).toEqual([
+      "governance.contentWorkspace.inspectGitWorkspace",
+      "governance.contentWorkspace.captureGitWorkspaceEvidence",
+    ]);
   });
 
   it("rejects malformed release input before the owner port is invoked", async () => {
@@ -101,9 +105,27 @@ function spineClient(
     },
     contentWorkspace: {
       ...unavailableContentWorkspace(),
-      inspectGitWorkspace: async () => {
-        calls.push("releases.source.inspect");
-        throw new Error("fixture repository is unavailable");
+      inspectGitWorkspace: async (input) => {
+        if (input.remoteSelection.kind === "Named") {
+          calls.push("releases.source.inspect");
+          throw new Error("fixture repository is unavailable");
+        }
+        calls.push("governance.contentWorkspace.inspectGitWorkspace");
+        return governanceAnchor();
+      },
+      captureGitWorkspaceEvidence: async () => {
+        calls.push("governance.contentWorkspace.captureGitWorkspaceEvidence");
+        const dirtyStatus = new TextEncoder().encode("? fixture-dirty\0");
+        return {
+          openingAnchor: governanceAnchor(),
+          openingStatus: dirtyStatus,
+          openingTrackedFlags: new Uint8Array(),
+          worktreeObjectIds: [],
+          indexEntries: new Uint8Array(),
+          closingAnchor: governanceAnchor(),
+          closingStatus: dirtyStatus,
+          closingTrackedFlags: new Uint8Array(),
+        };
       },
       inspectWorkspace: async () => {
         calls.push("vendors.contentWorkspace.inspectWorkspace");
@@ -134,16 +156,6 @@ function spineClient(
       },
     },
     providers: unavailableProviderRuntime(),
-    governance: {
-      git: {
-        inspect: async () => {
-          calls.push("governance.git.inspect");
-          return { kind: "DirtyRepository" };
-        },
-        readBlob: async () => unavailableAsync("governance blob read"),
-        isAncestor: async () => unavailableAsync("governance ancestry"),
-      },
-    },
   };
   return createClient({
     deps,
@@ -152,6 +164,20 @@ function spineClient(
       controllerDataRootIdentity: "controller-data://service-spine-test",
     },
     config: {},
+  });
+}
+
+function governanceAnchor(): GitWorkspaceAnchor {
+  return Object.freeze({
+    root: "/tmp/content-workspace",
+    rootDevice: "16777234",
+    rootInode: "101",
+    refName: "refs/heads/main",
+    commit: "a".repeat(40),
+    refCommit: "a".repeat(40),
+    tree: "b".repeat(40),
+    objectFormat: "sha1",
+    remoteUrls: Object.freeze(["git:personal-rawr-hq"]),
   });
 }
 

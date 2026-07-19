@@ -7,11 +7,13 @@ import type {
 } from "@rawr/resource-content-workspace";
 import {
   createExactGitBlobPointer,
-  createResourceExactGitReader,
   type GitBlobSelection,
   type GitLocator,
+} from "../../../src/service/modules/governance/model";
+import {
+  createResourceExactGitReader,
   type ResourceExactGitReadPort,
-} from "../../../src/bindings/governance";
+} from "../../../src/service/modules/governance/repository/content-workspace";
 
 const encoder = new TextEncoder();
 const repositoryIdentity = "git:github.com/example/personal-rawr-hq";

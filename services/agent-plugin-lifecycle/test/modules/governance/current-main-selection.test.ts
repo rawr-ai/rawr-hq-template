@@ -28,9 +28,13 @@ import type {
   GitBooleanReadResult,
   GitReadFailure,
   RepositoryInspection,
-} from "../../../src/service/modules/governance/ports";
+} from "../../../src/service/modules/governance/model/repositories/exact-git";
 import { resolveCurrentMainSelection } from "../../../src/service/modules/governance/router/current-main-selection.router";
-import { createLifecycleTestClient, testInvocation } from "../../support/client";
+import {
+  createLifecycleTestClient,
+  testInvocation,
+  unavailableContentWorkspace,
+} from "../../support/client";
 
 const encoder = new TextEncoder();
 const REPOSITORY = "git:github.com/example/personal-rawr-hq";
@@ -53,23 +57,18 @@ const GIT_READ_FAILURE_PARTITION: ReadonlyArray<readonly [
 const GIT_READ_TARGETS: readonly ("record" | "selected-input")[] = ["record", "selected-input"];
 
 describe("observed-Git current-main v2 selection", () => {
-  it("exposes selection as one public oRPC procedure backed only by the governance Git port", async () => {
+  it("rejects mixed v1 selection fields before consulting the content-workspace resource", async () => {
     const fixture = selectionFixture();
-    const client = createLifecycleTestClient({ governance: { git: fixture.git } });
-
-    await expect(client.governance.currentMainSelection({
-      locator: {
-        workspacePath: fixture.locator.workspacePath,
-        expectedRepositoryIdentity: fixture.locator.expectedRepositoryIdentity,
-      },
-    }, testInvocation)).resolves.toMatchObject({ kind: "CURRENT_ELIGIBLE" });
-
-    expect(fixture.git.calls).toEqual({ inspect: 2, readBlob: 2, isAncestor: 1 });
-  });
-
-  it("rejects mixed v1 selection fields before consulting Git", async () => {
-    const fixture = selectionFixture();
-    const client = createLifecycleTestClient({ governance: { git: fixture.git } });
+    let inspections = 0;
+    const client = createLifecycleTestClient({
+      contentWorkspace: Object.freeze({
+        ...unavailableContentWorkspace(),
+        inspectGitWorkspace: async () => {
+          inspections += 1;
+          throw new Error("unexpected governance Git inspection");
+        },
+      }),
+    });
 
     await expect(client.governance.currentMainSelection({
       locator: {
@@ -79,7 +78,7 @@ describe("observed-Git current-main v2 selection", () => {
       policyObject: { legacy: true },
     } as never, testInvocation)).rejects.toThrow();
 
-    expect(fixture.git.calls).toEqual({ inspect: 0, readBlob: 0, isAncestor: 0 });
+    expect(inspections).toBe(0);
   });
 
   it("returns one exact selection from the reviewed record and selected release input", async () => {

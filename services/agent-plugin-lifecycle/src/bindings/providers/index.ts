@@ -63,10 +63,6 @@ export {
   type NativeProviderResourceFailureKind,
 } from "./resource-port";
 export {
-  createCurrentMainSelectionReader,
-  type GovernanceCurrentMainResolver,
-} from "./current-main-selection";
-export {
   canonicalBytes,
   canonicalDigest,
   compareCanonical,

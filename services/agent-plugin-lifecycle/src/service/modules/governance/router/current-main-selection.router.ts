@@ -17,7 +17,11 @@ import {
 import { decodeGitLocator } from "../model/dto/boundary";
 import { parseCanonicalRef } from "../model/dto/primitives";
 import { validateCurrentMainEnvelopeV2 } from "../model/policy/current-main-record";
-import type { ExactGitReader, GitReadFailureCode, RepositoryInspection } from "../ports";
+import type {
+  ExactGitReader,
+  GitReadFailureCode,
+  RepositoryInspection,
+} from "../model/repositories/exact-git";
 import { module } from "../module";
 
 const COMPILED_CANONICAL_REF = requireCanonicalRef();
@@ -33,7 +37,7 @@ const COMPILED_RELEASE_INPUT_PATH = requireRelativePath(
 export const currentMainSelection = module.currentMainSelection.handler(async ({ context, input }) => {
   const locator = decodeGitLocator(input.locator);
   return locator.ok
-    ? resolveCurrentMainSelection(context.governance.git, locator.value)
+    ? resolveCurrentMainSelection(context.git, locator.value)
     : refused("WRONG_REPOSITORY", locator.reason);
 });
 
