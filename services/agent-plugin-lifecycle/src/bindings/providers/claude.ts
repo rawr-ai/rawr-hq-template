@@ -6,16 +6,12 @@ import {
   type ProviderMemberFingerprint,
   type ProviderSourceIdentity,
 } from "../../service/modules/providers/model/policy/projection";
-import {
-  marketplaceState,
-  sameMarketplaceState,
-  type ProviderMarketplaceObservation,
-  type ProviderMarketplaceRegistration,
+import type {
+  ProviderMarketplaceObservation,
+  ProviderMarketplaceRegistration,
 } from "../../service/modules/providers/model/policy/marketplace";
-import { failure, issue, success, type DeploymentResult } from "../../service/modules/providers/model/errors/deployment-result";
-import type { NativeMemberObservation, NativeStandaloneExposureObservation } from "../../service/modules/providers/model/policy/state-machine";
-import type { ProviderTarget, ProviderTargetDigest } from "../../service/modules/providers/model/dto/provider-target";
-import type { NativeMemberRestorationPort } from "../../service/modules/providers/ports/provider";
+import type { NativeStandaloneExposureObservation } from "../../service/modules/providers/model/policy/state-machine";
+import type { ProviderTargetDigest } from "../../service/modules/providers/model/dto/provider-target";
 import type {
   ProviderMarketplaceSource,
   ProviderMarketplaceSourceReader,
@@ -51,7 +47,7 @@ export interface ClaudeProcessPort {
   }>): Promise<ProviderMarketplaceObservation>;
   setMarketplaceRegistration(input: Readonly<{
     home: string;
-    prior: ProviderMarketplaceObservation;
+    expected: ProviderMarketplaceObservation;
     registration: ProviderMarketplaceRegistration | null;
     source: ProviderMarketplaceSource | null;
     targetDigest: ProviderTargetDigest;
@@ -71,10 +67,6 @@ export interface ClaudeProcessPort {
     home: string;
     nativeIdentity: string;
   }>): Promise<void>;
-  disableNativePlugin(input: Readonly<{
-    home: string;
-    nativeIdentity: string;
-  }>): Promise<void>;
   uninstallNativePlugin(input: Readonly<{
     home: string;
     nativeIdentity: string;
@@ -84,7 +76,7 @@ export interface ClaudeProcessPort {
   }>): Promise<void>;
 }
 
-export interface ClaudeProviderAdapter extends NativeProviderAdapter, NativeMemberRestorationPort {}
+export interface ClaudeProviderAdapter extends NativeProviderAdapter {}
 
 export function createClaudeProviderAdapter(input: Readonly<{
   process: ClaudeProcessPort;
@@ -116,10 +108,10 @@ export function createClaudeProviderAdapter(input: Readonly<{
         standaloneExposures: Object.freeze([...standaloneExposures]),
       });
     },
-    setMarketplace: async ({ target, prior, registration, source }) =>
+    setMarketplace: async ({ target, expected, registration, source }) =>
       await input.process.setMarketplaceRegistration({
         home: target.home,
-        prior,
+        expected,
         registration,
         source: verifiedMarketplaceSource(source, registration),
         targetDigest: target.targetDigest,
@@ -137,34 +129,30 @@ export function createClaudeProviderAdapter(input: Readonly<{
       home: target.home,
       nativeIdentity: member.nativeIdentity,
     }),
-    uninstall: async ({ target, prior }) => {
+    uninstall: async ({ target, expected }) => {
       const plugins = await input.process.inventoryNativePlugins({ home: target.home });
-      const exact = plugins.find((candidate) => candidate.nativeIdentity === prior.nativeIdentity);
+      const exact = plugins.find((candidate) => candidate.nativeIdentity === expected.nativeIdentity);
       if (exact === undefined
-        || exact.pluginId !== prior.pluginId
-        || exact.providerSourceIdentity !== prior.providerSourceIdentity
-        || exact.marketplaceIdentity !== prior.providerSourceIdentity
-        || exact.memberFingerprint !== prior.memberFingerprint) {
+        || exact.pluginId !== expected.pluginId
+        || exact.providerSourceIdentity !== expected.providerSourceIdentity
+        || exact.marketplaceIdentity !== expected.providerSourceIdentity
+        || exact.memberFingerprint !== expected.memberFingerprint) {
         throw new Error("Claude uninstall target changed after the adapter precondition read");
       }
       await input.process.uninstallNativePlugin({
         home: target.home,
-        nativeIdentity: prior.nativeIdentity,
-        providerSourceIdentity: prior.providerSourceIdentity,
-        memberFingerprint: prior.memberFingerprint,
+        nativeIdentity: expected.nativeIdentity,
+        providerSourceIdentity: expected.providerSourceIdentity,
+        memberFingerprint: expected.memberFingerprint,
         targetDigest: target.targetDigest,
       });
     },
   };
-  const adapter = createNativeProviderAdapter({
+  return createNativeProviderAdapter({
     provider: "claude",
     adapterProtocol: CLAUDE_ADAPTER_PROTOCOL,
     bridge,
     marketplaceSources: input.marketplaceSources,
-  });
-  return Object.freeze({
-    ...adapter,
-    ...createClaudeRestorationPort(input.process, adapter),
   });
 }
 
@@ -184,160 +172,6 @@ function verifiedMarketplaceSource(
     throw new Error("Claude marketplace source does not bind the requested registration");
   }
   return source;
-}
-
-function createClaudeRestorationPort(
-  process: ClaudeProcessPort,
-  adapter: NativeProviderAdapter,
-): NativeMemberRestorationPort {
-  const readMarketplace: NativeMemberRestorationPort["readMarketplace"] = async (target) => {
-    const inventory = await adapter.readInventory(target);
-    return inventory.ok ? success(inventory.value.marketplace) : inventory;
-  };
-
-  const setMarketplaceExact: NativeMemberRestorationPort["setMarketplaceExact"] = async ({
-    target,
-    expected,
-    registration,
-    source,
-  }) => {
-    try {
-      const current = await readMarketplace(target);
-      if (!current.ok) return current;
-      if (!sameMarketplaceObservation(current.value, expected)) {
-        throw new Error("Claude marketplace inverse precondition changed");
-      }
-      await process.setMarketplaceRegistration({
-        home: target.home,
-        prior: expected,
-        registration,
-        source: verifiedMarketplaceSource(source, registration),
-        targetDigest: target.targetDigest,
-      });
-      const verified = await readMarketplace(target);
-      if (!verified.ok) return verified;
-      const desired: ProviderMarketplaceObservation = registration === null
-        ? Object.freeze({ kind: "absent" })
-        : Object.freeze({ kind: "present", state: marketplaceState(registration) });
-      if (!sameMarketplaceObservation(verified.value, desired)) {
-        throw new Error("Claude marketplace inverse did not reach the exact registration");
-      }
-      return success(null);
-    } catch (error) {
-      return failure([issue(
-        "MUTATION_FAILED",
-        "owner.restore.claude.marketplace",
-        error instanceof Error ? error.message : String(error),
-      )]);
-    }
-  };
-
-  const readMember = async (
-    target: ProviderTarget,
-    nativeIdentity: string,
-  ): Promise<DeploymentResult<NativeMemberObservation | null>> => {
-    const inventory = await adapter.readInventory(target);
-    if (!inventory.ok) return inventory;
-    const matches = inventory.value.members.filter((member) => member.nativeIdentity === nativeIdentity);
-    return matches.length <= 1
-      ? success(matches[0] ?? null)
-      : failure([issue("VISIBILITY_FAILED", "target.inventory", "Claude native identity is ambiguous")]);
-  };
-
-  const restoreExact: NativeMemberRestorationPort["restoreExact"] = async ({
-    target,
-    expected,
-    prior,
-  }) => {
-    try {
-      const nativeIdentity = inverseIdentity(expected, prior);
-      const plugins = await process.inventoryNativePlugins({ home: target.home });
-      const matches = plugins.filter((plugin) => plugin.nativeIdentity === nativeIdentity);
-      const exact = matches[0];
-      if (expected === null
-        ? matches.length !== 0
-        : matches.length !== 1 || exact === undefined || !sameClaudePlugin(exact, expected)) {
-        throw new Error("Claude inverse precondition no longer matches the exact expected native member");
-      }
-      if (prior === null) {
-        if (expected === null || exact === undefined) throw new Error("Claude inverse uninstall identity is unavailable");
-        await process.uninstallNativePlugin({
-          home: target.home,
-          nativeIdentity,
-          providerSourceIdentity: expected.providerSourceIdentity,
-          memberFingerprint: expected.memberFingerprint,
-          targetDigest: target.targetDigest,
-        });
-        return success(null);
-      }
-
-      if (expected === null) {
-        await process.installNativePlugin({
-          home: target.home,
-          nativeIdentity,
-          artifactAuthority: prior.artifactAuthority,
-          providerSourceIdentity: prior.providerSourceIdentity,
-          marketplaceIdentity: prior.providerSourceIdentity,
-          memberFingerprint: prior.memberFingerprint,
-          targetDigest: target.targetDigest,
-        });
-      }
-      if (prior.enablement === "enabled") {
-        await process.enableNativePlugin({ home: target.home, nativeIdentity });
-      } else {
-        await process.disableNativePlugin({ home: target.home, nativeIdentity });
-      }
-      return success(null);
-    } catch (error) {
-      return failure([issue(
-        "MUTATION_FAILED",
-        "owner.restore.claude",
-        error instanceof Error ? error.message : String(error),
-      )]);
-    }
-  };
-  return Object.freeze({ readMarketplace, setMarketplaceExact, readMember, restoreExact });
-}
-
-function sameMarketplaceObservation(
-  left: ProviderMarketplaceObservation,
-  right: ProviderMarketplaceObservation,
-): boolean {
-  return left.kind === "absent"
-    ? right.kind === "absent"
-    : right.kind === "present" && sameMarketplaceState(left.state, right.state);
-}
-
-function sameClaudePlugin(plugin: ClaudeNativePlugin, expected: NativeMemberObservation): boolean {
-  return plugin.pluginId === expected.pluginId
-    && plugin.nativeIdentity === expected.nativeIdentity
-    && plugin.marketplaceIdentity === expected.providerSourceIdentity
-    && plugin.providerSourceIdentity === expected.providerSourceIdentity
-    && sameAuthority(plugin.artifactAuthority, expected.artifactAuthority)
-    && plugin.memberFingerprint === expected.memberFingerprint;
-}
-
-function sameArtifactVersion(left: NativeMemberObservation, right: NativeMemberObservation): boolean {
-  return left.memberFingerprint === right.memberFingerprint
-    && left.providerSourceIdentity === right.providerSourceIdentity
-    && sameAuthority(left.artifactAuthority, right.artifactAuthority);
-}
-
-function sameAuthority(left: ProviderArtifactAuthority, right: ProviderArtifactAuthority): boolean {
-  return left.protocol === right.protocol
-    && left.contentAuthority === right.contentAuthority
-    && left.sourceCommit === right.sourceCommit;
-}
-
-function inverseIdentity(
-  expected: NativeMemberObservation | null,
-  prior: NativeMemberObservation | null,
-): string {
-  const identity = expected?.nativeIdentity ?? prior?.nativeIdentity;
-  if (identity === undefined || (expected !== null && prior !== null && expected.nativeIdentity !== prior.nativeIdentity)) {
-    throw new Error("Claude inverse must bind exactly one native identity");
-  }
-  return identity;
 }
 
 function requireProtocol(value: string): AdapterProtocol {

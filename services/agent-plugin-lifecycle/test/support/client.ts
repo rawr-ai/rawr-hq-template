@@ -128,13 +128,6 @@ function unavailableProviderRuntime(): ProviderLifecycleRuntime {
     marketplaceMaterializer: {
       materialize: async () => unavailableAsync("provider marketplace materialization"),
     },
-    priorProjections: {
-      readArchivedMember: async () => unavailableAsync("provider prior projection"),
-    },
-    undoWriter: {
-      preflight: async () => unavailableAsync("provider undo preflight"),
-      begin: async () => unavailableAsync("provider undo begin"),
-    },
     evidence: {
       inspect: async () => unavailableAsync("provider evidence inspection"),
       publish: async () => unavailableAsync("provider evidence publication"),

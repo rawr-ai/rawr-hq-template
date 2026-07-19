@@ -104,13 +104,13 @@ export function createResourceClaudeProviderAdapter(
 
   const setMarketplaceRegistration: ClaudeProcessPort["setMarketplaceRegistration"] = async ({
     home,
-    prior,
+    expected,
     registration,
     source,
   }) => {
     const provider = await session(home);
     const current = await inventoryMarketplaceRegistration({ home });
-    if (!sameMarketplaceObservation(current, prior)) {
+    if (!sameMarketplaceObservation(current, expected)) {
       throw new Error("Claude marketplace changed before exact registration mutation");
     }
     const desired = desiredMarketplace(registration);
@@ -213,11 +213,6 @@ export function createResourceClaudeProviderAdapter(
     },
     enableNativePlugin: async ({ home, nativeIdentity }) => {
       await (await session(home)).enablePlugin({
-        selector: pluginSelector(nativeIdentity, input.contentAuthority, "claude"),
-      });
-    },
-    disableNativePlugin: async ({ home, nativeIdentity }) => {
-      await (await session(home)).disablePlugin({
         selector: pluginSelector(nativeIdentity, input.contentAuthority, "claude"),
       });
     },

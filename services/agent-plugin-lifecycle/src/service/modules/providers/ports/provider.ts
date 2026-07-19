@@ -4,34 +4,35 @@ import type {
   CapabilityObservation,
 } from "../model/policy/projection";
 import type { ContentAuthority } from "../../../shared/release";
-import type {
-  ProviderMarketplaceObservation,
-  ProviderMarketplaceRegistration,
-} from "../model/policy/marketplace";
 import type { VerifiedMemberIdentity, VisibleFingerprint } from "../model/policy/receipt";
-import type { DeploymentResult } from "../model/errors/deployment-result";
-import type { NativeMemberObservation, ProviderInventory, ProviderMutationAction } from "../model/policy/state-machine";
+import type {
+  DeploymentResult,
+  NonEmptyReadonlyArray,
+  ProviderDeploymentIssue,
+} from "../model/errors/deployment-result";
+import type {
+  NativeProviderMutationAction,
+  ProviderInventory,
+} from "../model/policy/state-machine";
 import type { ProviderTarget } from "../model/dto/provider-target";
-import type { ProviderMarketplaceSource } from "./state";
 
-export type NativeProviderMutationAction = Extract<
-  ProviderMutationAction,
-  { kind: "EnableMember" | "InstallMember" | "RetireMember" | "SetMarketplace" }
->;
+export type { NativeProviderMutationAction } from "../model/policy/state-machine";
 
 export interface ProviderVisibilityObservation {
   readonly visibleFingerprint: VisibleFingerprint;
   readonly members: readonly VerifiedMemberIdentity[];
 }
 
-export type NativeMutationObservation =
+export type NativeMutationAttempt =
+  | Readonly<{ kind: "applied" }>
   | Readonly<{
-    actionKind: "SetMarketplace";
-    postMarketplace: ProviderMarketplaceObservation;
+    kind: "not-applied";
+    issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>;
   }>
   | Readonly<{
-    actionKind: Exclude<NativeProviderMutationAction["kind"], "SetMarketplace">;
-    postMember: NativeMemberObservation | null;
+    kind: "uncertain";
+    lastKnown: "bridge-invoked" | "bridge-returned";
+    issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>;
   }>;
 
 export interface ProviderTargetReader {
@@ -48,26 +49,5 @@ export interface ProviderTargetReader {
 }
 
 export interface ProviderTargetMutator {
-  apply(action: NativeProviderMutationAction): Promise<DeploymentResult<NativeMutationObservation>>;
-}
-
-export interface NativeMemberRestorationPort {
-  readMarketplace(
-    target: ProviderTarget,
-  ): Promise<DeploymentResult<ProviderMarketplaceObservation>>;
-  setMarketplaceExact(input: Readonly<{
-    target: ProviderTarget;
-    expected: ProviderMarketplaceObservation;
-    registration: ProviderMarketplaceRegistration | null;
-    source: ProviderMarketplaceSource | null;
-  }>): Promise<DeploymentResult<null>>;
-  readMember(
-    target: ProviderTarget,
-    nativeIdentity: string,
-  ): Promise<DeploymentResult<NativeMemberObservation | null>>;
-  restoreExact(input: Readonly<{
-    target: ProviderTarget;
-    expected: NativeMemberObservation | null;
-    prior: NativeMemberObservation | null;
-  }>): Promise<DeploymentResult<null>>;
+  apply(action: NativeProviderMutationAction): Promise<NativeMutationAttempt>;
 }

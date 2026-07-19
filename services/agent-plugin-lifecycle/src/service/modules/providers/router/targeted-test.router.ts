@@ -8,18 +8,16 @@ import type { MechanicalEvidencePublisher } from "../ports/evidence";
 import type { ProviderTargetMutator, ProviderTargetReader } from "../ports/provider";
 import type {
   ProviderMarketplaceMaterializer,
-  ProviderPriorProjectionReader,
   ProviderProjectionMaterializer,
   TargetIdentityReader,
   TargetIdentityWriter,
   TargetReceiptReader,
   TargetReceiptWriter,
 } from "../ports/state";
-import type { ProviderUndoWriter } from "../ports/undo-writer";
 import {
   aggregateOutcome,
   attachMechanicalEvidence,
-  createDeploymentActionApplier,
+  createDeploymentActionAppliers,
   createProjectionPlans,
   executeProjectionPlans,
   resultFailure,
@@ -36,8 +34,6 @@ export interface TargetedTestDependencies {
   readonly identityWriter: TargetIdentityWriter;
   readonly projectionMaterializer: ProviderProjectionMaterializer;
   readonly marketplaceMaterializer: ProviderMarketplaceMaterializer;
-  readonly priorProjections: ProviderPriorProjectionReader;
-  readonly undoWriter: ProviderUndoWriter;
   readonly evidence: MechanicalEvidencePublisher;
 }
 
@@ -77,11 +73,9 @@ async function executeTargetedTest(
     });
     const targetOutcomes = await executeProjectionPlans(plans, {
       provider: ports.provider,
-      undoWriter: ports.undoWriter,
-      applyAction: createDeploymentActionApplier(ports),
+      ...createDeploymentActionAppliers(ports),
       projectionMaterializer: ports.projectionMaterializer,
       marketplaceMaterializer: ports.marketplaceMaterializer,
-      priorProjections: ports.priorProjections,
     });
     const aggregate = aggregateOutcome(targetOutcomes);
     return success(await attachMechanicalEvidence(

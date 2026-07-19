@@ -24,6 +24,10 @@ import {
   createClaudeProviderAdapter,
   type ClaudeNativePlugin,
 } from "../../../src/bindings/providers/claude";
+import {
+  createNativeProviderAdapter,
+  type NativeProviderBridge,
+} from "../../../src/bindings/providers/native";
 
 describe("native provider adapters", () => {
   it("sets one exact target-level marketplace registration before member mutation", async () => {
@@ -47,34 +51,46 @@ describe("native provider adapters", () => {
         inventoryMarketplace: async () => [],
         installMarketplacePlugin: async () => {},
         enableMarketplacePlugin: async () => {},
-        disableMarketplacePlugin: async () => {},
         uninstallMarketplacePlugin: async () => {},
       },
       appServer: { inspectVisiblePlugins: async () => [] },
       session: { inspectConfiguredPlugins: async () => [] },
       marketplaceSources: marketplaceSourceReader(),
     });
-    const prior = absentMarketplace();
+    const expected = absentMarketplace();
     const applied = await adapter.apply({
       kind: "SetMarketplace",
       role: "final",
       target,
-      prior,
-      priorRegistration: null,
+      expected,
       registration,
     });
-    expect(applied.ok).toBe(true);
+    expect(applied).toEqual({ kind: "applied" });
     expect(writes).toBe(1);
     const staleRetry = await adapter.apply({
       kind: "SetMarketplace",
       role: "final",
       target,
-      prior,
-      priorRegistration: null,
+      expected,
       registration,
     });
-    expect(staleRetry.ok).toBe(false);
+    expect(staleRetry.kind).toBe("not-applied");
     expect(writes).toBe(1);
+  });
+
+  it.each([
+    ["bridge mutates then throws", "mutate-then-throw", "bridge-invoked", "MUTATION_FAILED"],
+    ["bridge returns before the post-read fails", "post-read-fails", "bridge-returned", "VISIBILITY_FAILED"],
+    ["bridge returns an invalid post-state", "postcondition-mismatch", "bridge-returned", "MUTATION_FAILED"],
+  ] as const)("reports an uncertain attempt when the %s", async (_label, mode, lastKnown, code) => {
+    const attempt = await exerciseInstallUncertainty(mode);
+
+    expect(attempt.bridgeCalls).toBe(1);
+    expect(attempt.result).toMatchObject({
+      kind: "uncertain",
+      lastKnown,
+      issues: [{ code }],
+    });
   });
 
   it("orders Codex install, enable, and visible verification while preserving unmanaged inventory", async () => {
@@ -116,10 +132,6 @@ describe("native provider adapters", () => {
           calls.push("enable");
           enabled.add(nativeIdentity);
         },
-        disableMarketplacePlugin: async ({ nativeIdentity }) => {
-          calls.push("disable");
-          enabled.delete(nativeIdentity);
-        },
         uninstallMarketplacePlugin: async ({ nativeIdentity }) => {
           calls.push("uninstall");
           const index = plugins.findIndex((plugin) => plugin.nativeIdentity === nativeIdentity);
@@ -139,8 +151,8 @@ describe("native provider adapters", () => {
       marketplaceSources: marketplaceSourceReader(),
     });
 
-    const installed = await adapter.apply({ kind: "InstallMember", target, priorMarketplace: null, activeMarketplace, projectionDigest: PROJECTION_DIGEST, member });
-    expect(installed.ok).toBe(true);
+    const installed = await adapter.apply({ kind: "InstallMember", target, activeMarketplace, member });
+    expect(installed).toEqual({ kind: "applied" });
     expect(mustInventoryMember(await adapter.readInventory(target), member.nativeIdentity).enablement).toBe("enabled");
     const verified = await adapter.verifyProjection(target, projection("codex", CODEX_ADAPTER_PROTOCOL, member));
     expect(verified.ok).toBe(true);
@@ -166,7 +178,6 @@ describe("native provider adapters", () => {
           enableCalls += 1;
           enabled.add(nativeIdentity);
         },
-        disableMarketplacePlugin: async () => {},
         uninstallMarketplacePlugin: async () => {},
       },
       appServer: {
@@ -181,17 +192,13 @@ describe("native provider adapters", () => {
       marketplaceSources: marketplaceSourceReader(),
     });
 
-    const prior = mustInventoryMember(await adapter.readInventory(target), member.nativeIdentity);
     const result = await adapter.apply({
       kind: "EnableMember",
       target,
-      priorMarketplace: activeMarketplace,
       activeMarketplace,
-      priorProjectionDigest: PROJECTION_DIGEST,
-      prior,
       member,
     });
-    expect(result.ok).toBe(true);
+    expect(result).toEqual({ kind: "applied" });
     expect(enableCalls).toBe(1);
   });
 
@@ -206,7 +213,6 @@ describe("native provider adapters", () => {
         inventoryMarketplace: async () => [],
         installMarketplacePlugin: async () => { mutations += 1; },
         enableMarketplacePlugin: async () => { mutations += 1; },
-        disableMarketplacePlugin: async () => { mutations += 1; },
         uninstallMarketplacePlugin: async () => { mutations += 1; },
       },
       appServer: { inspectVisiblePlugins: async () => { throw new Error("app server unavailable"); } },
@@ -237,7 +243,6 @@ describe("native provider adapters", () => {
         inventoryStandaloneExposures: async () => [],
         installNativePlugin: async () => {},
         enableNativePlugin: async () => {},
-        disableNativePlugin: async () => {},
         uninstallNativePlugin: async ({ nativeIdentity }) => {
           removedIdentity = nativeIdentity;
           plugins.splice(0, 1);
@@ -249,132 +254,11 @@ describe("native provider adapters", () => {
     const result = await adapter.apply({
       kind: "RetireMember",
       target,
-      priorMarketplace: null,
       activeMarketplace: null,
-      priorProjectionDigest: PROJECTION_DIGEST,
-      prior,
-      proof: "receipt",
+      member: prior,
     });
-    expect(result.ok).toBe(true);
+    expect(result).toEqual({ kind: "applied" });
     expect(removedIdentity).toBe("rawr:alpha");
-  });
-
-  it("restores Codex retired bytes and enablement through its exact native selector", async () => {
-    const target = mustTarget("codex", "/tmp/rawr-c3-adapter-codex-inverse");
-    const member = projectedMember("alpha", "d");
-    const prior = observedMember(member, "enabled");
-    const plugins: CodexMarketplacePlugin[] = [];
-    const enabled = new Set<string>();
-    const calls: string[] = [];
-    const adapter = createCodexProviderAdapter({
-      process: {
-        probe: async () => ({ adapterProtocol: CODEX_ADAPTER_PROTOCOL, available: ALL_CAPABILITIES }),
-        inventoryMarketplaceRegistration: async () => absentMarketplace(),
-        setMarketplaceRegistration: async () => {},
-        inventoryMarketplace: async () => plugins,
-        installMarketplacePlugin: async (request) => {
-          calls.push("install");
-          plugins.push({
-            pluginId: member.pluginId,
-            nativeIdentity: request.nativeIdentity,
-            artifactAuthority: request.artifactAuthority,
-            providerSourceIdentity: request.providerSourceIdentity,
-            marketplaceIdentity: request.marketplaceIdentity,
-            memberFingerprint: request.memberFingerprint,
-          });
-        },
-        enableMarketplacePlugin: async ({ nativeIdentity }) => { calls.push("enable"); enabled.add(nativeIdentity); },
-        disableMarketplacePlugin: async ({ nativeIdentity }) => { calls.push("disable"); enabled.delete(nativeIdentity); },
-        uninstallMarketplacePlugin: async () => { calls.push("uninstall"); plugins.splice(0); },
-      },
-      marketplaceSources: marketplaceSourceReader(),
-      appServer: {
-        inspectVisiblePlugins: async () => plugins.map((plugin) => ({
-          nativeIdentity: plugin.nativeIdentity,
-          providerSourceIdentity: plugin.providerSourceIdentity,
-          visibleSkills: member.visible.skills,
-          visibleHooks: member.visible.hooks,
-        })),
-      },
-      session: {
-        inspectConfiguredPlugins: async () => [...enabled].map((nativeIdentity) => ({
-          nativeIdentity,
-          providerSourceIdentity: member.providerSourceIdentity,
-          enablement: "enabled" as const,
-        })),
-      },
-    });
-
-    expect((await adapter.restoreExact({
-      target,
-      expected: null,
-      prior,
-    })).ok).toBe(true);
-    expect(await adapter.readMember(target, prior.nativeIdentity)).toEqual({ ok: true, value: prior });
-    const disabledPrior = Object.freeze({ ...prior, enablement: "disabled" as const });
-    expect((await adapter.restoreExact({
-      target,
-      expected: prior,
-      prior: disabledPrior,
-    })).ok).toBe(true);
-    expect(calls).toEqual(["install", "enable", "disable"]);
-  });
-
-  it("restores Claude retired bytes but blocks a substituted marketplace source before uninstall", async () => {
-    const target = mustTarget("claude", "/tmp/rawr-c3-adapter-claude-inverse");
-    const member = projectedMember("alpha", "e");
-    const prior = observedMember(member, "enabled");
-    const plugins: ClaudeNativePlugin[] = [];
-    const calls: string[] = [];
-    const adapter = createClaudeProviderAdapter({
-      process: {
-        probe: async () => ({ adapterProtocol: CLAUDE_ADAPTER_PROTOCOL, available: ALL_CAPABILITIES }),
-        inventoryMarketplaceRegistration: async () => absentMarketplace(),
-        setMarketplaceRegistration: async () => {},
-        inventoryNativePlugins: async () => plugins,
-        inventoryStandaloneExposures: async () => [],
-        installNativePlugin: async (request) => {
-          calls.push("install");
-          plugins.push({
-            pluginId: member.pluginId,
-            nativeIdentity: request.nativeIdentity,
-            artifactAuthority: request.artifactAuthority,
-            providerSourceIdentity: request.providerSourceIdentity,
-            marketplaceIdentity: request.marketplaceIdentity,
-            memberFingerprint: request.memberFingerprint,
-            enablement: "disabled",
-            visibleSkills: member.visible.skills,
-            visibleHooks: member.visible.hooks,
-          });
-        },
-        enableNativePlugin: async () => {
-          calls.push("enable");
-          const plugin = plugins[0];
-          if (plugin !== undefined) plugins[0] = Object.freeze({ ...plugin, enablement: "enabled" });
-        },
-        disableNativePlugin: async () => { calls.push("disable"); },
-        uninstallNativePlugin: async ({ nativeIdentity }) => { calls.push(`uninstall:${nativeIdentity}`); plugins.splice(0); },
-      },
-      marketplaceSources: marketplaceSourceReader(),
-    });
-
-    expect((await adapter.restoreExact({
-      target,
-      expected: null,
-      prior,
-    })).ok).toBe(true);
-    const installed = plugins[0];
-    if (installed === undefined) throw new Error("Claude inverse fixture did not install");
-    plugins[0] = Object.freeze({ ...installed, marketplaceIdentity: "substituted" });
-    expect((await adapter.restoreExact({ target, expected: prior, prior: null })).ok).toBe(false);
-    expect(calls.some((call) => call.startsWith("uninstall:"))).toBe(false);
-    plugins[0] = installed;
-    expect((await adapter.restoreExact({ target, expected: prior, prior: null })).ok).toBe(true);
-    expect(calls).toEqual([
-      "install",
-      "enable",
-      "uninstall:rawr:alpha",
-    ]);
   });
 
   it("refreshes a same-ID Codex release through native remove then add", async () => {
@@ -404,7 +288,6 @@ describe("native provider adapters", () => {
           enabled.add(request.nativeIdentity);
         },
         enableMarketplacePlugin: async ({ nativeIdentity }) => { enabled.add(nativeIdentity); },
-        disableMarketplacePlugin: async ({ nativeIdentity }) => { enabled.delete(nativeIdentity); },
         uninstallMarketplacePlugin: async ({ nativeIdentity }) => {
           calls.push(`remove:${nativeIdentity}`);
           plugins.splice(0);
@@ -430,23 +313,18 @@ describe("native provider adapters", () => {
     });
     const prior = observedMember(priorMember, "enabled");
 
-    expect((await adapter.apply({
+    expect(await adapter.apply({
       kind: "RetireMember",
       target,
-      priorMarketplace: null,
       activeMarketplace,
-      priorProjectionDigest: PROJECTION_DIGEST,
-      prior,
-      proof: "receipt",
-    })).ok).toBe(true);
-    expect((await adapter.apply({
+      member: prior,
+    })).toEqual({ kind: "applied" });
+    expect(await adapter.apply({
       kind: "InstallMember",
       target,
-      priorMarketplace: null,
       activeMarketplace,
-      projectionDigest: PROJECTION_DIGEST,
       member: nextMember,
-    })).ok).toBe(true);
+    })).toEqual({ kind: "applied" });
     expect(calls).toEqual(["remove:rawr:alpha", "add:rawr:alpha"]);
     expect((await adapter.verifyProjection(
       target,
@@ -468,7 +346,6 @@ describe("native provider adapters", () => {
         inventoryMarketplace: async () => plugins,
         installMarketplacePlugin: async () => {},
         enableMarketplacePlugin: async () => {},
-        disableMarketplacePlugin: async () => {},
         uninstallMarketplacePlugin: async () => { plugins.splice(0); },
       },
       appServer: {
@@ -492,15 +369,15 @@ describe("native provider adapters", () => {
     const result = await adapter.apply({
       kind: "RetireMember",
       target,
-      priorMarketplace: activeMarketplace,
       activeMarketplace,
-      priorProjectionDigest: PROJECTION_DIGEST,
-      prior: observedMember(member, "enabled"),
-      proof: "receipt",
+      member: observedMember(member, "enabled"),
     });
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.issues[0].code).toBe("MUTATION_FAILED");
+    expect(result.kind).toBe("uncertain");
+    if (result.kind === "uncertain") {
+      expect(result.lastKnown).toBe("bridge-returned");
+      expect(result.issues[0].code).toBe("MUTATION_FAILED");
+    }
     const inventory = await adapter.readInventory(target);
     expect(inventory.ok && inventory.value.standaloneExposures).toMatchObject([
       { nativeIdentity: "rawr:alpha", enablement: "enabled" },
@@ -553,6 +430,61 @@ function marketplaceSourceReader() {
       sourceDigest: registration.sourceDigest,
     }),
   };
+}
+
+async function exerciseInstallUncertainty(
+  mode: "mutate-then-throw" | "post-read-fails" | "postcondition-mismatch",
+) {
+  const target = mustTarget("codex", `/tmp/rawr-c3-adapter-${mode}`);
+  const member = projectedMember("alpha", "7");
+  const activeMarketplace = marketplaceRegistration("codex", CODEX_ADAPTER_PROTOCOL, [member]);
+  let bridgeCalls = 0;
+  let inventoryReads = 0;
+  let installed = false;
+  const bridge: NativeProviderBridge = {
+    probe: async () => ({ adapterProtocol: CODEX_ADAPTER_PROTOCOL, available: ALL_CAPABILITIES }),
+    inventory: async () => {
+      inventoryReads += 1;
+      if (mode === "post-read-fails" && inventoryReads === 2) {
+        throw new Error("injected post-read failure");
+      }
+      return {
+        marketplace: presentMarketplace(activeMarketplace),
+        members: installed ? [nativeProcessMember(member)] : [],
+        standaloneExposures: [],
+      };
+    },
+    setMarketplace: async () => {},
+    install: async () => {
+      bridgeCalls += 1;
+      if (mode !== "postcondition-mismatch") installed = true;
+      if (mode === "mutate-then-throw") throw new Error("injected bridge rejection");
+    },
+    enable: async () => {},
+    uninstall: async () => {},
+  };
+  const adapter = createNativeProviderAdapter({
+    provider: "codex",
+    adapterProtocol: CODEX_ADAPTER_PROTOCOL,
+    bridge,
+    marketplaceSources: marketplaceSourceReader(),
+  });
+  const result = await adapter.apply({ kind: "InstallMember", target, activeMarketplace, member });
+  return { result, bridgeCalls };
+}
+
+function nativeProcessMember(member: ProviderProjectionMember) {
+  return Object.freeze({
+    pluginId: member.pluginId,
+    nativeIdentity: member.nativeIdentity,
+    artifactAuthority: member.artifactAuthority,
+    providerSourceIdentity: member.providerSourceIdentity,
+    marketplaceIdentity: member.providerSourceIdentity,
+    memberFingerprint: member.memberFingerprint,
+    enablement: "enabled" as const,
+    visibleSkills: member.visible.skills,
+    visibleHooks: member.visible.hooks,
+  });
 }
 
 function mustTarget(provider: "claude" | "codex", home: string) {

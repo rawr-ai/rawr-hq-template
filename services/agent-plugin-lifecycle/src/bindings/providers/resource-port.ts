@@ -63,14 +63,12 @@ export interface CodexNativeResourceSession extends NativeResourceSessionBase {
     identity: string;
     source: ProviderMarketplaceSource;
   }>): Promise<unknown>;
-  setPluginEnabled(input: Readonly<{ selector: string; enabled: boolean }>): Promise<unknown>;
 }
 
 export interface ClaudeNativeResourceSession extends NativeResourceSessionBase {
   readonly provider: "claude";
   installPlugin(input: Readonly<{ selector: string }>): Promise<unknown>;
   enablePlugin(input: Readonly<{ selector: string }>): Promise<unknown>;
-  disablePlugin(input: Readonly<{ selector: string }>): Promise<unknown>;
   uninstallPlugin(input: Readonly<{ selector: string }>): Promise<unknown>;
   readConfiguration(): Promise<unknown | null>;
 }

@@ -6,19 +6,12 @@ import {
   type ProviderMemberFingerprint,
   type ProviderSourceIdentity,
 } from "../../service/modules/providers/model/policy/projection";
-import {
-  marketplaceState,
-  sameMarketplaceState,
-  type ProviderMarketplaceObservation,
-  type ProviderMarketplaceRegistration,
-} from "../../service/modules/providers/model/policy/marketplace";
-import { failure, issue, success, type DeploymentResult } from "../../service/modules/providers/model/errors/deployment-result";
 import type {
-  NativeMemberObservation,
-  NativeStandaloneExposureObservation,
-} from "../../service/modules/providers/model/policy/state-machine";
-import type { ProviderTarget, ProviderTargetDigest } from "../../service/modules/providers/model/dto/provider-target";
-import type { NativeMemberRestorationPort } from "../../service/modules/providers/ports/provider";
+  ProviderMarketplaceObservation,
+  ProviderMarketplaceRegistration,
+} from "../../service/modules/providers/model/policy/marketplace";
+import type { NativeStandaloneExposureObservation } from "../../service/modules/providers/model/policy/state-machine";
+import type { ProviderTargetDigest } from "../../service/modules/providers/model/dto/provider-target";
 import type {
   ProviderMarketplaceSource,
   ProviderMarketplaceSourceReader,
@@ -65,7 +58,7 @@ export interface CodexProcessPort {
   }>): Promise<ProviderMarketplaceObservation>;
   setMarketplaceRegistration(input: Readonly<{
     home: string;
-    prior: ProviderMarketplaceObservation;
+    expected: ProviderMarketplaceObservation;
     registration: ProviderMarketplaceRegistration | null;
     source: ProviderMarketplaceSource | null;
     targetDigest: ProviderTargetDigest;
@@ -81,10 +74,6 @@ export interface CodexProcessPort {
     targetDigest: ProviderTargetDigest;
   }>): Promise<void>;
   enableMarketplacePlugin(input: Readonly<{
-    home: string;
-    nativeIdentity: string;
-  }>): Promise<void>;
-  disableMarketplacePlugin(input: Readonly<{
     home: string;
     nativeIdentity: string;
   }>): Promise<void>;
@@ -106,7 +95,7 @@ export interface CodexSessionPort {
   inspectConfiguredPlugins(input: Readonly<{ home: string }>): Promise<readonly CodexConfiguredPlugin[]>;
 }
 
-export interface CodexProviderAdapter extends NativeProviderAdapter, NativeMemberRestorationPort {}
+export interface CodexProviderAdapter extends NativeProviderAdapter {}
 
 export function createCodexProviderAdapter(input: Readonly<{
   process: CodexProcessPort;
@@ -178,10 +167,10 @@ export function createCodexProviderAdapter(input: Readonly<{
         standaloneExposures: Object.freeze([...standalone.values()]),
       });
     },
-    setMarketplace: async ({ target, prior, registration, source }) =>
+    setMarketplace: async ({ target, expected, registration, source }) =>
       await input.process.setMarketplaceRegistration({
         home: target.home,
-        prior,
+        expected,
         registration,
         source: verifiedMarketplaceSource(source, registration),
         targetDigest: target.targetDigest,
@@ -199,24 +188,20 @@ export function createCodexProviderAdapter(input: Readonly<{
       home: target.home,
       nativeIdentity: member.nativeIdentity,
     }),
-    uninstall: async ({ target, prior }) => await input.process.uninstallMarketplacePlugin({
+    uninstall: async ({ target, expected }) => await input.process.uninstallMarketplacePlugin({
       home: target.home,
-      nativeIdentity: prior.nativeIdentity,
-      providerSourceIdentity: prior.providerSourceIdentity,
-      marketplaceIdentity: prior.providerSourceIdentity,
-      memberFingerprint: prior.memberFingerprint,
+      nativeIdentity: expected.nativeIdentity,
+      providerSourceIdentity: expected.providerSourceIdentity,
+      marketplaceIdentity: expected.providerSourceIdentity,
+      memberFingerprint: expected.memberFingerprint,
       targetDigest: target.targetDigest,
     }),
   };
-  const adapter = createNativeProviderAdapter({
+  return createNativeProviderAdapter({
     provider: "codex",
     adapterProtocol: CODEX_ADAPTER_PROTOCOL,
     bridge,
     marketplaceSources: input.marketplaceSources,
-  });
-  return Object.freeze({
-    ...adapter,
-    ...createCodexRestorationPort(input.process, adapter),
   });
 }
 
@@ -236,161 +221,6 @@ function verifiedMarketplaceSource(
     throw new Error("Codex marketplace source does not bind the requested registration");
   }
   return source;
-}
-
-function createCodexRestorationPort(
-  process: CodexProcessPort,
-  adapter: NativeProviderAdapter,
-): NativeMemberRestorationPort {
-  const readMarketplace: NativeMemberRestorationPort["readMarketplace"] = async (target) => {
-    const inventory = await adapter.readInventory(target);
-    return inventory.ok ? success(inventory.value.marketplace) : inventory;
-  };
-
-  const setMarketplaceExact: NativeMemberRestorationPort["setMarketplaceExact"] = async ({
-    target,
-    expected,
-    registration,
-    source,
-  }) => {
-    try {
-      const current = await readMarketplace(target);
-      if (!current.ok) return current;
-      if (!sameMarketplaceObservation(current.value, expected)) {
-        throw new Error("Codex marketplace inverse precondition changed");
-      }
-      await process.setMarketplaceRegistration({
-        home: target.home,
-        prior: expected,
-        registration,
-        source: verifiedMarketplaceSource(source, registration),
-        targetDigest: target.targetDigest,
-      });
-      const verified = await readMarketplace(target);
-      if (!verified.ok) return verified;
-      const desired: ProviderMarketplaceObservation = registration === null
-        ? Object.freeze({ kind: "absent" })
-        : Object.freeze({ kind: "present", state: marketplaceState(registration) });
-      if (!sameMarketplaceObservation(verified.value, desired)) {
-        throw new Error("Codex marketplace inverse did not reach the exact registration");
-      }
-      return success(null);
-    } catch (error) {
-      return failure([issue(
-        "MUTATION_FAILED",
-        "owner.restore.codex.marketplace",
-        error instanceof Error ? error.message : String(error),
-      )]);
-    }
-  };
-
-  const readMember = async (
-    target: ProviderTarget,
-    nativeIdentity: string,
-  ): Promise<DeploymentResult<NativeMemberObservation | null>> => {
-    const inventory = await adapter.readInventory(target);
-    if (!inventory.ok) return inventory;
-    const matches = inventory.value.members.filter((member) => member.nativeIdentity === nativeIdentity);
-    return matches.length <= 1
-      ? success(matches[0] ?? null)
-      : failure([issue("VISIBILITY_FAILED", "target.inventory", "Codex native identity is ambiguous")]);
-  };
-
-  const restoreExact: NativeMemberRestorationPort["restoreExact"] = async ({
-    target,
-    expected,
-    prior,
-  }) => {
-    try {
-      const nativeIdentity = inverseIdentity(expected, prior);
-      const plugins = await process.inventoryMarketplace({ home: target.home });
-      const matches = plugins.filter((plugin) => plugin.nativeIdentity === nativeIdentity);
-      const exact = matches[0];
-      if (expected === null
-        ? matches.length !== 0
-        : matches.length !== 1 || exact === undefined || !sameCodexPlugin(exact, expected)) {
-        throw new Error("Codex inverse precondition no longer matches the exact expected native member");
-      }
-      if (prior === null) {
-        if (expected === null) throw new Error("Codex inverse cannot restore absence from absence");
-        await process.uninstallMarketplacePlugin({
-          home: target.home,
-          nativeIdentity,
-          providerSourceIdentity: expected.providerSourceIdentity,
-          marketplaceIdentity: expected.providerSourceIdentity,
-          memberFingerprint: expected.memberFingerprint,
-          targetDigest: target.targetDigest,
-        });
-        return success(null);
-      }
-
-      if (expected === null) {
-        await process.installMarketplacePlugin({
-          home: target.home,
-          nativeIdentity,
-          artifactAuthority: prior.artifactAuthority,
-          providerSourceIdentity: prior.providerSourceIdentity,
-          marketplaceIdentity: prior.providerSourceIdentity,
-          memberFingerprint: prior.memberFingerprint,
-          targetDigest: target.targetDigest,
-        });
-      }
-      if (prior.enablement === "enabled") {
-        await process.enableMarketplacePlugin({ home: target.home, nativeIdentity });
-      } else {
-        await process.disableMarketplacePlugin({ home: target.home, nativeIdentity });
-      }
-      return success(null);
-    } catch (error) {
-      return failure([issue(
-        "MUTATION_FAILED",
-        "owner.restore.codex",
-        error instanceof Error ? error.message : String(error),
-      )]);
-    }
-  };
-  return Object.freeze({ readMarketplace, setMarketplaceExact, readMember, restoreExact });
-}
-
-function sameMarketplaceObservation(
-  left: ProviderMarketplaceObservation,
-  right: ProviderMarketplaceObservation,
-): boolean {
-  return left.kind === "absent"
-    ? right.kind === "absent"
-    : right.kind === "present" && sameMarketplaceState(left.state, right.state);
-}
-
-function sameCodexPlugin(plugin: CodexMarketplacePlugin, expected: NativeMemberObservation): boolean {
-  return plugin.pluginId === expected.pluginId
-    && plugin.nativeIdentity === expected.nativeIdentity
-    && plugin.marketplaceIdentity === expected.providerSourceIdentity
-    && plugin.providerSourceIdentity === expected.providerSourceIdentity
-    && sameAuthority(plugin.artifactAuthority, expected.artifactAuthority)
-    && plugin.memberFingerprint === expected.memberFingerprint;
-}
-
-function sameArtifactVersion(left: NativeMemberObservation, right: NativeMemberObservation): boolean {
-  return left.memberFingerprint === right.memberFingerprint
-    && left.providerSourceIdentity === right.providerSourceIdentity
-    && sameAuthority(left.artifactAuthority, right.artifactAuthority);
-}
-
-function sameAuthority(left: ProviderArtifactAuthority, right: ProviderArtifactAuthority): boolean {
-  return left.protocol === right.protocol
-    && left.contentAuthority === right.contentAuthority
-    && left.sourceCommit === right.sourceCommit;
-}
-
-function inverseIdentity(
-  expected: NativeMemberObservation | null,
-  prior: NativeMemberObservation | null,
-): string {
-  const identity = expected?.nativeIdentity ?? prior?.nativeIdentity;
-  if (identity === undefined || (expected !== null && prior !== null && expected.nativeIdentity !== prior.nativeIdentity)) {
-    throw new Error("Codex inverse must bind exactly one native identity");
-  }
-  return identity;
 }
 
 function uniqueByIdentity<T extends Readonly<{ nativeIdentity: string }>>(

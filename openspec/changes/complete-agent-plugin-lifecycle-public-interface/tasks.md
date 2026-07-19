@@ -90,7 +90,7 @@
 - [ ] 4.5 Delete the receipt-owned managed-retire procedure from contract,
   router, public client, CLI, manifest, and positive Habitat inventory without
   an alias. Preserve targeted/complete mode scope and receipt/evidence behavior.
-- [ ] 4.6 Remove `ProviderUndoWriter`, provider capsule owner protocols,
+- [x] 4.6 Remove `ProviderUndoWriter`, provider capsule owner protocols,
   production bindings, replay registration, and provider inverse-action tests
   from every provider mode. Targeted/complete and canonical failures must report
   exact applied prefixes and retry from live native inspection; qualified undo
@@ -100,7 +100,7 @@
   before its first transaction with zero provider/native calls, and malformed or
   unsettled legacy state blocks only export/undo capsule activation without
   mutation or override.
-- [ ] 4.7 Run focused tests, lint, typecheck, build, structural/Habitat, strict
+- [x] 4.7 Run focused tests, lint, typecheck, build, structural/Habitat, strict
   OpenSpec, and four standing reviews. Consume a frozen exact landed-v1
   committed-provider-capsule byte fixture through a decoder-only migration
   module; retain no encoder, provider action constructor, classifier, executor,

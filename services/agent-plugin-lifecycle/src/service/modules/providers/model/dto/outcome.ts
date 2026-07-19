@@ -1,11 +1,19 @@
 import type { MechanicalEvidenceDigest } from "./mechanical-evidence";
-import type { ProviderMutationAction, ProviderTargetPlan } from "../policy/state-machine";
-import type { ProviderDeploymentIssue } from "../errors/deployment-result";
+import type {
+  NativeProviderMutationAction,
+  ProviderMutationAction,
+  ProviderTargetPlan,
+} from "../policy/state-machine";
+import type {
+  NonEmptyReadonlyArray,
+  ProviderDeploymentIssue,
+} from "../errors/deployment-result";
 import type { ProviderTarget } from "./provider-target";
 
 export type ProviderEvent =
   | Readonly<{ phase: "planned"; target: ProviderTarget; plan: ProviderTargetPlan }>
   | Readonly<{ phase: "applied"; target: ProviderTarget; action: ProviderMutationAction }>
+  | Readonly<{ phase: "uncertain"; target: ProviderTarget; action: NativeProviderMutationAction; lastKnown: "bridge-invoked" | "bridge-returned"; issues: NonEmptyReadonlyArray<ProviderDeploymentIssue> }>
   | Readonly<{ phase: "verified"; target: ProviderTarget; visibleFingerprint: string }>
   | Readonly<{ phase: "retired"; target: ProviderTarget; action: Extract<ProviderMutationAction, { kind: "RetireMember" }> }>
   | Readonly<{ phase: "skipped"; target: ProviderTarget; reason: "read-only-converged" }>

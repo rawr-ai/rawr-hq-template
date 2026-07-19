@@ -2,7 +2,6 @@ import type { ContentAuthority } from "@rawr/agent-plugin-lifecycle/release";
 import {
   CLAUDE_ADAPTER_PROTOCOL,
   CODEX_ADAPTER_PROTOCOL,
-  createProviderOwnerRuntime,
   createResourceProviderRecordState,
   failure,
   issue,
@@ -10,14 +9,11 @@ import {
   type NativeProviderMutationAction,
   type ProviderId,
   type ProviderLifecycleRuntime,
-  type ProviderOwnerRuntime,
   type AgentProviderProjection,
   type ProviderTarget,
   type ProviderTargetMutator,
   type ProviderTargetReader,
-  type ProviderUndoWriter,
   type NativeProviderAdapter,
-  type NativeMemberRestorationPort,
   type NativeProviderObserver,
   type ProviderRecordState,
 } from "@rawr/agent-plugin-lifecycle/bindings/providers";
@@ -26,12 +22,6 @@ import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin
 import { makeNodeAgentProviderRecordsAsyncPort } from "@rawr/resource-agent-provider-records/providers/effect-platform-node";
 
 import { LifecycleAuthorityBindingError } from "../../commands/binding";
-import {
-  applyingRecoveryBlockingFailure,
-  CapsuleControllerWriterV1,
-  createAgentPluginOwnerProtocolRegistryV1,
-  openNodeCapsuleStateStoreV1,
-} from "../../undo";
 import { createNodeMechanicalEvidenceRuntime } from "../evidence/node-mechanical";
 import {
   createNodeMarketplaceLocationResolver,
@@ -39,17 +29,12 @@ import {
   createNodeNativeProviderObserver,
 } from "../../bindings/providers";
 import { createProviderReleaseReader } from "./artifact-reader";
-import {
-  createProviderOwnerProtocolRegistration,
-} from "./owner-protocol";
-import { createProviderUndoWriterV1 } from "./provider-capsule";
 
 export function createNodeProviderLifecycleRuntime(options: Readonly<{
   channel: ProviderLifecycleRuntime["channel"];
   state: NodeProviderRecordState;
   artifactReader: ArtifactReader;
   artifactStoreRoot: Parameters<typeof createNodeMechanicalEvidenceRuntime>[0];
-  capsuleRoot: Parameters<typeof openNodeCapsuleStateStoreV1>[0]["root"];
   providerExecutables: Readonly<Partial<Record<ProviderId, string>>>;
 }>): ProviderLifecycleRuntime {
   const adapter = createNodeNativeProviderAdapterResolver(options.state, options.providerExecutables);
@@ -67,27 +52,7 @@ export type NodeProviderRecordState = ProviderRecordState & Readonly<{
   projectionRepositoryRoot: string;
 }>;
 
-/** Parses provider-owned capsule state without granting provider inspection or mutation authority. */
-export function createProviderOwnerCodecRegistration() {
-  const unavailable = async (): Promise<never> => {
-    throw new LifecycleAuthorityBindingError(
-      "Codec-only provider owner runtime cannot inspect or mutate state",
-    );
-  };
-  const runtime: ProviderOwnerRuntime = Object.freeze({
-    readIdentity: unavailable,
-    removeIdentityExact: unavailable,
-    readMarketplace: unavailable,
-    restoreMarketplaceExact: unavailable,
-    readMember: unavailable,
-    restoreMemberExact: unavailable,
-    readReceipt: unavailable,
-    restoreReceiptExact: unavailable,
-  });
-  return createProviderOwnerProtocolRegistration(runtime);
-}
-
-/** One production resource owner shared by forward lifecycle and controller undo. */
+/** One production resource owner for forward provider lifecycle. */
 export function createNodeProviderRecordState(
   roots: NodeProviderRecordRoots,
 ): NodeProviderRecordState {
@@ -109,8 +74,8 @@ export function createNodeProviderRecordState(
 export function createNodeNativeProviderAdapterResolver(
   state: NodeProviderRecordState,
   providerExecutables: Readonly<Partial<Record<ProviderId, string>>>,
-): (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter & NativeMemberRestorationPort {
-  const adapters = new Map<string, NativeProviderAdapter & NativeMemberRestorationPort>();
+): (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter {
+  const adapters = new Map<string, NativeProviderAdapter>();
   const marketplaceLocations = createNodeMarketplaceLocationResolver(state.projectionRepositoryRoot);
   const adapter = (provider: ProviderId, contentAuthority: ContentAuthority) => {
     const key = `${provider}\0${contentAuthority}`;
@@ -188,58 +153,14 @@ function createProviderMutator(
   return Object.freeze(providerMutator);
 }
 
-function createLazyProviderUndoWriter(
-  state: NodeProviderRecordState,
-  adapter: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter & NativeMemberRestorationPort,
-  capsuleRoot: Parameters<typeof openNodeCapsuleStateStoreV1>[0]["root"],
-): ProviderUndoWriter {
-  let resolved: Promise<ProviderUndoWriter> | undefined;
-  const resolve = () => resolved ??= openProviderUndoWriter(state, adapter, capsuleRoot);
-  return Object.freeze({
-    async preflight(candidate: Parameters<ProviderUndoWriter["preflight"]>[0]) {
-      return (await resolve()).preflight(candidate);
-    },
-    async begin(candidate: Parameters<ProviderUndoWriter["begin"]>[0]) {
-      return (await resolve()).begin(candidate);
-    },
-  });
-}
-
-async function openProviderUndoWriter(
-  state: NodeProviderRecordState,
-  adapter: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter & NativeMemberRestorationPort,
-  capsuleRoot: Parameters<typeof openNodeCapsuleStateStoreV1>[0]["root"],
-): Promise<ProviderUndoWriter> {
-  const ownerRuntime = createProviderOwnerRuntime({
-    projections: state.projections,
-    targets: state.targets,
-    members: (provider, contentAuthority) => adapter(provider, contentAuthority),
-  });
-  const providerRegistration = createProviderOwnerProtocolRegistration(ownerRuntime);
-  const registry = createAgentPluginOwnerProtocolRegistryV1({}, providerRegistration);
-  const opened = await openNodeCapsuleStateStoreV1({ root: capsuleRoot, registry });
-  if (opened.kind === "Rejected") throw new LifecycleAuthorityBindingError(opened.failure.message);
-  const controller = new CapsuleControllerWriterV1({
-    store: opened.store,
-    registry,
-  });
-  const recovery = await controller.recoverApplying();
-  const recoveryFailure = applyingRecoveryBlockingFailure(recovery);
-  if (recoveryFailure !== null) {
-    throw new LifecycleAuthorityBindingError(recoveryFailure.message);
-  }
-  return createProviderUndoWriterV1(controller);
-}
-
 function assembleRuntime(
   options: Parameters<typeof createNodeProviderLifecycleRuntime>[0],
-  adapter: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter & NativeMemberRestorationPort,
+  adapter: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter,
   observer: (provider: ProviderId) => NativeProviderObserver,
 ): ProviderLifecycleRuntime {
   const { state } = options;
   const reader = createProviderReader(adapter, observer);
   const mutator = createProviderMutator(adapter);
-  const undoWriter = createLazyProviderUndoWriter(state, adapter, options.capsuleRoot);
   const runtime: ProviderLifecycleRuntime = {
     channel: options.channel,
     releases: createProviderReleaseReader(options.artifactReader),
@@ -254,8 +175,6 @@ function assembleRuntime(
     identityWriter: state.targets.identities,
     projectionMaterializer: state.projections.projectionMaterializer,
     marketplaceMaterializer: state.projections.marketplaceMaterializer,
-    priorProjections: state.projections.priorProjections,
-    undoWriter,
     evidence: createNodeMechanicalEvidenceRuntime(options.artifactStoreRoot).provider,
   };
   return Object.freeze(runtime);
@@ -275,13 +194,11 @@ function inspectionAdapter(
 function mutationAuthority(action: NativeProviderMutationAction): ContentAuthority {
   if (action.kind === "SetMarketplace") {
     const authority = action.registration?.marketplaceIdentity
-      ?? action.priorRegistration?.marketplaceIdentity;
+      ?? (action.expected.kind === "present" ? action.expected.state.marketplaceIdentity : undefined);
     if (authority === undefined) {
       throw new LifecycleAuthorityBindingError("Marketplace mutation has no admitted content authority");
     }
     return authority;
   }
-  return action.kind === "RetireMember"
-    ? action.prior.artifactAuthority.contentAuthority
-    : action.member.artifactAuthority.contentAuthority;
+  return action.member.artifactAuthority.contentAuthority;
 }

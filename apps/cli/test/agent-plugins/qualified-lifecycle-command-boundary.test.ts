@@ -412,24 +412,16 @@ describe("qualified lifecycle command boundary", () => {
     expect(human.stdout).not.toBe("ok\n");
   });
 
-  it("classifies malformed undo executable bindings as invalid input", () => {
-    for (const bindings of [
-      ["codex=relative"],
-      ["codex=/tmp/codex", "codex=/tmp/other-codex"],
-    ]) {
-      const result = runRawr([
-        "agent", "plugins", "undo",
-        ...bindings.flatMap((binding) => ["--provider-executable", binding]),
-        "--json",
-      ]);
+  it("rejects provider executable authority on export-only undo", () => {
+    const result = runRawr([
+      "agent", "plugins", "undo",
+      "--provider-executable", "codex=/tmp/codex",
+      "--json",
+    ]);
 
-      expect(result.status, result.stderr).toBe(2);
-      expect(JSON.parse(result.stdout)).toMatchObject({
-        ok: false,
-        error: { code: "LIFECYCLE_INPUT_INVALID" },
-      });
-      expect(result.stdout).not.toContain("LIFECYCLE_UNDO_FAILED");
-    }
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Nonexistent flag: --provider-executable");
+    expect(result.stdout).not.toContain("LIFECYCLE_UNDO_FAILED");
   });
 
   it("rejects selected executable authorities before constructing lifecycle ports", async () => {

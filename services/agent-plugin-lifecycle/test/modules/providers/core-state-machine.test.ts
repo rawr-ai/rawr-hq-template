@@ -193,14 +193,12 @@ function unavailableProviderRuntime(): ProviderLifecycleRuntime {
     identityWriter: { admit: unavailable },
     projectionMaterializer: { materialize: unavailable },
     marketplaceMaterializer: { materialize: unavailable },
-    priorProjections: { readArchivedMember: unavailable },
-    undoWriter: { preflight: unavailable, begin: unavailable },
     evidence: { inspect: unavailable, publish: unavailable },
   };
 }
 
 describe("provider deployment state machine", () => {
-  it("reads live truth on repeat while every mutation, capsule, receipt, sidecar, and evidence write stays at zero", async () => {
+  it("reads live truth on repeat while every mutation, receipt, sidecar, and evidence write stays at zero", async () => {
     const harness = new Harness();
     const app = createCompleteTest(() => harness.completeDependencies());
     const first = await app(harness.completeRequest([CODEX_A]));
@@ -221,8 +219,6 @@ describe("provider deployment state machine", () => {
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
     expect(harness.counters.identityWrites).toBe(0);
-    expect(harness.counters.capsulePreflights).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
     expect(harness.counters.evidencePublishes).toBe(0);
     expect(harness.counters.projectionMaterializations).toBe(0);
     expect(harness.counters.marketplaceMaterializations).toBe(0);
@@ -243,7 +239,6 @@ describe("provider deployment state machine", () => {
     expect(harness.receiptFor(CODEX_A)?.receiptDigest).toBe(prior.receiptDigest);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
   });
 
   it("keeps a canonical receipt stable across equivalent clean checkout locators", async () => {
@@ -266,7 +261,6 @@ describe("provider deployment state machine", () => {
     expect(harness.receiptFor(CODEX_A)?.receiptDigest).toBe(prior.receiptDigest);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
   });
 
   it("mints a receipt successor after repairing missing native state and then converges read-only", async () => {
@@ -312,46 +306,16 @@ describe("provider deployment state machine", () => {
     ]);
     const retire = actions[0];
     const install = actions[2];
-    expect(retire).toMatchObject({ kind: "RetireMember", prior: { pluginId: "alpha", enablement: "enabled" } });
+    expect(retire).toMatchObject({ kind: "RetireMember", member: { pluginId: "alpha", enablement: "enabled" } });
     expect(install).toMatchObject({ kind: "InstallMember", member: { pluginId: "alpha" } });
     if (retire?.kind !== "RetireMember" || install?.kind !== "InstallMember") return;
-    expect(retire.prior.memberFingerprint).not.toBe(install.member.memberFingerprint);
+    expect(retire.member.memberFingerprint).not.toBe(install.member.memberFingerprint);
     expect(repaired.value.targets[0]?.events.findIndex((event) => event.phase === "retired"))
       .toBeLessThan(repaired.value.targets[0]?.events.findIndex((event) =>
         event.phase === "applied" && event.action.kind === "InstallMember") ?? -1);
   });
 
-  it("rejects enable and retire before capsule or provider mutation when exact prior bytes are unavailable", async () => {
-    const enableHarness = new Harness();
-    expect((await canonicalSync(enableHarness)).ok).toBe(true);
-    enableHarness.driftDisabledMember(CODEX_A, "alpha");
-    enableHarness.dropArchivedSource(CODEX_A, "alpha");
-    enableHarness.resetCounters();
-
-    const enabled = await canonicalSync(enableHarness);
-    expect(enabled.ok && enabled.value.status).toBe("Failed");
-    expect(enableHarness.counters.inverseSourceReads).toBeGreaterThan(0);
-    expect(enableHarness.counters.nativeMutations).toBe(0);
-    expect(enableHarness.counters.capsulePreflights).toBe(0);
-    expect(enableHarness.counters.capsuleBegins).toBe(0);
-
-    const retireHarness = new Harness();
-    expect((await canonicalSync(retireHarness)).ok).toBe(true);
-    retireHarness.dropArchivedSource(CODEX_A, "alpha");
-    retireHarness.resetCounters();
-    const retired = await createManagedRetire(() => retireHarness.retireDependencies())({
-      kind: "managed-retire",
-      pluginId: "alpha",
-      targets: [CODEX_A],
-    });
-    expect(retired.ok && retired.value.status).toBe("Failed");
-    expect(retireHarness.counters.inverseSourceReads).toBe(1);
-    expect(retireHarness.counters.nativeMutations).toBe(0);
-    expect(retireHarness.counters.capsulePreflights).toBe(0);
-    expect(retireHarness.counters.capsuleBegins).toBe(0);
-  });
-
-  it("does not recreate a receipt or target identity from unclaimed live state", async () => {
+  it("re-admits exact selected projection state when its receipt and target identity are missing", async () => {
     const harness = new Harness();
     expect((await canonicalSync(harness)).ok).toBe(true);
     harness.receipts.delete(CODEX_A.home);
@@ -359,11 +323,19 @@ describe("provider deployment state machine", () => {
 
     harness.resetCounters();
     const published = await canonicalSync(harness);
-    expect(published.ok && published.value.status).toBe("Blocked");
+    expect(published.ok && published.value.status).toBe("Mutated");
     expect(harness.counters.nativeMutations).toBe(0);
+    expect(harness.counters.marketplaceWrites).toBe(0);
+    expect(harness.counters.identityWrites).toBe(1);
+    expect(harness.counters.receiptWrites).toBe(1);
+
+    harness.resetCounters();
+    const repeated = await canonicalSync(harness);
+    expect(repeated.ok && repeated.value.status).toBe("ReadOnlyConverged");
+    expect(harness.counters.nativeMutations).toBe(0);
+    expect(harness.counters.marketplaceWrites).toBe(0);
     expect(harness.counters.identityWrites).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
   });
 
   it("preserves omitted managed members in targeted tests", async () => {
@@ -395,7 +367,10 @@ describe("provider deployment state machine", () => {
       : undefined;
     expect(registrationAction?.kind).toBe("SetMarketplace");
     if (registrationAction?.kind === "SetMarketplace") {
-      expect(registrationAction.priorRegistration?.projectionDigest).toBe(completeMarketplaceDigest);
+      expect(registrationAction.expected).toMatchObject({
+        kind: "present",
+        state: { projectionDigest: completeMarketplaceDigest },
+      });
       expect(registrationAction.registration?.members.map((member) => member.pluginId)).toEqual(["alpha", "beta"]);
       expect(registrationAction.registration?.members.find((member) => member.pluginId === "alpha")?.sourceProjectionDigest).not.toBe(completeProjectionDigest);
       expect(registrationAction.registration?.members.find((member) => member.pluginId === "beta")?.sourceProjectionDigest).toBe(completeProjectionDigest);
@@ -422,7 +397,7 @@ describe("provider deployment state machine", () => {
       : undefined;
     expect(retireAction?.kind).toBe("RetireMember");
     if (retireAction?.kind === "RetireMember") {
-      expect(retireAction.priorProjectionDigest).toBe(completeProjectionDigest);
+      expect(retireAction.member.pluginId).toBe("beta");
       expect(retireAction.activeMarketplace?.members.map((member) => member.pluginId)).toEqual(["alpha", "beta"]);
     }
     expect(retired.ok ? retired.value.targets[0]?.events.flatMap((event) =>
@@ -460,7 +435,7 @@ describe("provider deployment state machine", () => {
     },
   );
 
-  it("blocks effective marketplace materialization before capsule when a preserved member archive is missing", async () => {
+  it("blocks effective marketplace materialization before provider mutation when a preserved member archive is missing", async () => {
     const harness = new Harness();
     expect((await createCompleteTest(() => harness.completeDependencies())(harness.completeRequest([CODEX_A]))).ok).toBe(true);
     const priorReceipt = harness.receiptFor(CODEX_A)?.receiptDigest;
@@ -476,8 +451,6 @@ describe("provider deployment state machine", () => {
     });
     expect(result.ok && result.value.status).toBe("Failed");
     expect(harness.counters.marketplaceMaterializations).toBe(1);
-    expect(harness.counters.capsulePreflights).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
     expect(harness.counters.marketplaceWrites).toBe(0);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
@@ -506,42 +479,9 @@ describe("provider deployment state machine", () => {
       expect(harness.receiptFor(CODEX_A)).toBeNull();
       expect(harness.receiptFor(CLAUDE_A)).not.toBeNull();
       expect(harness.providerMutationAttemptsFor(CODEX_A)).toEqual([]);
-      expect(harness.capsuleStagesFor(CODEX_A)).toEqual([]);
-      expect(harness.capsuleAppliedFor(CODEX_A)).toEqual([]);
       expect(harness.identityAdmissionsFor(CODEX_A)).toEqual([]);
     },
   );
-
-  it("isolates one target inverse-source failure from an eligible target", async () => {
-    const harness = new Harness();
-    expect((await createCompleteTest(() => harness.completeDependencies())(
-      harness.completeRequest([CODEX_A, CLAUDE_A]),
-    )).ok).toBe(true);
-    const codexPriorProjection = `ap1_${"e".repeat(64)}` as import("../../../src/bindings/providers").ProjectionDigest;
-    const claudePriorProjection = `ap1_${"d".repeat(64)}` as import("../../../src/bindings/providers").ProjectionDigest;
-    harness.seedPriorReleaseReceipt(CODEX_A, codexPriorProjection);
-    harness.seedPriorReleaseReceipt(CLAUDE_A, claudePriorProjection);
-    harness.failInverseProjectionDigest = codexPriorProjection;
-    harness.resetCounters();
-    const codexBefore = harness.liveStateFor(CODEX_A);
-    const codexReceiptBefore = harness.receiptFor(CODEX_A);
-
-    const result = await createCompleteTest(() => harness.completeDependencies())(
-      harness.completeRequest([CODEX_A, CLAUDE_A]),
-    );
-
-    expect(result.ok && result.value.status).toBe("PartialFailure");
-    if (!result.ok) return;
-    expect(result.value.targets.find((target) => target.target.provider === "codex")?.status).toBe("failed");
-    expect(result.value.targets.find((target) => target.target.provider === "claude")?.status).toBe("mutated");
-    expect(harness.liveStateFor(CODEX_A)).toEqual(codexBefore);
-    expect(harness.receiptFor(CODEX_A)).toEqual(codexReceiptBefore);
-    expect(harness.receiptFor(CLAUDE_A)?.body.scope.projectionDigest).not.toBe(claudePriorProjection);
-    expect(harness.providerMutationAttemptsFor(CODEX_A)).toEqual([]);
-    expect(harness.capsuleStagesFor(CODEX_A)).toEqual([]);
-    expect(harness.capsuleAppliedFor(CODEX_A)).toEqual([]);
-    expect(harness.identityAdmissionsFor(CODEX_A)).toEqual([]);
-  });
 
   it("preserves an omitted prior claim in complete-test mode without cleanup or authority escalation", async () => {
     const harness = new Harness();
@@ -558,7 +498,6 @@ describe("provider deployment state machine", () => {
     expect(harness.receiptFor(CODEX_A)?.body.scope.kind).toBe("complete-test");
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
   });
 
   it.each(["targeted", "complete"] as const)(
@@ -582,7 +521,6 @@ describe("provider deployment state machine", () => {
       expect(harness.counters.nativeMutations).toBe(0);
       expect(harness.counters.receiptWrites).toBe(0);
       expect(harness.counters.identityWrites).toBe(0);
-      expect(harness.counters.capsuleBegins).toBe(0);
     },
   );
 
@@ -601,11 +539,10 @@ describe("provider deployment state machine", () => {
     expect(harness.standaloneExposures.get(CODEX_A.home)).toHaveLength(1);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
   });
 
   it.each(["native", "skill"] as const)(
-    "blocks a standalone %s collision before capsule or provider mutation",
+    "blocks a standalone %s collision before provider mutation",
     async (claim) => {
       const harness = new Harness();
       harness.addDesiredStandaloneCollision(CODEX_A, claim);
@@ -616,8 +553,6 @@ describe("provider deployment state machine", () => {
       expect(harness.counters.nativeMutations).toBe(0);
       expect(harness.counters.receiptWrites).toBe(0);
       expect(harness.counters.identityWrites).toBe(0);
-      expect(harness.counters.capsulePreflights).toBe(0);
-      expect(harness.counters.capsuleBegins).toBe(0);
       expect(harness.counters.projectionMaterializations).toBe(0);
     },
   );
@@ -637,7 +572,6 @@ describe("provider deployment state machine", () => {
     expect(harness.counters.inventoryReads).toBe(0);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
   });
 
   it("blocks a desired plugin ID under another native identity before every write", async () => {
@@ -650,8 +584,6 @@ describe("provider deployment state machine", () => {
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
     expect(harness.counters.identityWrites).toBe(0);
-    expect(harness.counters.capsulePreflights).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
   });
 
   it("keeps home A truthful when home B fails after all plans are read", async () => {
@@ -735,7 +667,6 @@ describe("provider deployment state machine", () => {
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
     expect(harness.counters.identityWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
     expect(harness.counters.evidencePublishes).toBe(1);
   });
 
@@ -785,9 +716,9 @@ describe("provider deployment state machine", () => {
     drifted.resetCounters();
     expect(await canonicalStatus(drifted)).toBe("DRIFTED");
 
-    const collision = new Harness();
-    collision.seedDesiredCollision(CODEX_A);
-    expect(await canonicalStatus(collision)).toBe("BLOCKED_COLLISION");
+    const unrecordedProjection = new Harness();
+    unrecordedProjection.seedDesiredCollision(CODEX_A);
+    expect(await canonicalStatus(unrecordedProjection)).toBe("ACCEPTED_PENDING_CONVERGENCE");
 
     const incompatible = new Harness();
     incompatible.missingCapabilitiesHome = CODEX_A.home;
@@ -802,13 +733,12 @@ describe("provider deployment state machine", () => {
       changedMarketplace,
       competingMarketplace,
       drifted,
-      collision,
+      unrecordedProjection,
       incompatible,
     ]) {
       expect(harness.counters.nativeMutations).toBe(0);
       expect(harness.counters.receiptWrites).toBe(0);
       expect(harness.counters.identityWrites).toBe(0);
-      expect(harness.counters.capsuleBegins).toBe(0);
     }
   });
 
@@ -816,7 +746,7 @@ describe("provider deployment state machine", () => {
     const harness = new Harness();
     expect((await canonicalSync(harness)).ok).toBe(true);
     harness.addStaleReceiptClaim(CODEX_A, "ghost");
-    harness.addUnmanagedMember(CODEX_A, "manual", "manual:plugin");
+    harness.addExternalMember(CODEX_A, "manual", "manual:plugin");
 
     harness.resetCounters();
     expect(await canonicalStatus(harness)).toBe("DRIFTED");
@@ -833,13 +763,6 @@ describe("provider deployment state machine", () => {
 
     harness.failReceiptHome = null;
     harness.resetCounters();
-    const blockedRetry = await canonicalSync(harness);
-    expect(blockedRetry.ok && blockedRetry.value.status).toBe("Blocked");
-    expect(harness.counters.marketplaceWrites).toBe(0);
-    expect(harness.counters.receiptWrites).toBe(0);
-
-    harness.restoreMarketplaceFromReceipt(CODEX_A);
-    harness.resetCounters();
     const normalized = await canonicalSync(harness);
     expect(normalized.ok && normalized.value.status).toBe("Mutated");
     if (!normalized.ok) return;
@@ -854,7 +777,6 @@ describe("provider deployment state machine", () => {
     expect(repeated.ok && repeated.value.status).toBe("ReadOnlyConverged");
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
   });
 
   it("keeps visibility, cleanup, and receipt failpoints truthful and receipt-final", async () => {
@@ -886,10 +808,17 @@ describe("provider deployment state machine", () => {
     receipt.failReceiptHome = null;
     receipt.resetCounters();
     const receiptRetry = await canonicalSync(receipt);
-    expect(receiptRetry.ok && receiptRetry.value.status).toBe("Blocked");
+    expect(receiptRetry.ok && receiptRetry.value.status).toBe("Mutated");
     expect(receipt.counters.nativeMutations).toBe(0);
+    expect(receipt.counters.marketplaceWrites).toBe(0);
+    expect(receipt.counters.receiptWrites).toBe(1);
+
+    receipt.resetCounters();
+    const receiptRepeated = await canonicalSync(receipt);
+    expect(receiptRepeated.ok && receiptRepeated.value.status).toBe("ReadOnlyConverged");
+    expect(receipt.counters.nativeMutations).toBe(0);
+    expect(receipt.counters.marketplaceWrites).toBe(0);
     expect(receipt.counters.receiptWrites).toBe(0);
-    expect(receipt.counters.capsuleBegins).toBe(0);
   });
 
   it("keeps receipt-owned retirees visible through transition registration before final convergence", async () => {
@@ -948,7 +877,6 @@ describe("provider deployment state machine", () => {
       event.phase === "applied" ? [event.action] : []) ?? [];
     expect(actions.map((action) => action.kind)).toEqual(["SetMarketplace"]);
     expect(actions[0]).toMatchObject({ kind: "SetMarketplace", role: "transition" });
-    expect(harness.capsuleApplied.map((action) => action.kind)).toEqual(["SetMarketplace"]);
     expect(harness.receiptFor(CODEX_A)?.receiptDigest).toBe(prior?.receiptDigest);
   });
 
@@ -967,13 +895,53 @@ describe("provider deployment state machine", () => {
       event.phase === "applied" ? [event.action] : []) ?? [];
     expect(actions.map((action) => action.kind)).toEqual(["SetMarketplace", "RetireMember"]);
     expect(actions[0]).toMatchObject({ kind: "SetMarketplace", role: "transition" });
-    expect(harness.capsuleApplied.map((action) => action.kind)).toEqual(["SetMarketplace", "RetireMember"]);
     expect(harness.receiptFor(CODEX_A)?.receiptDigest).toBe(prior?.receiptDigest);
     expect(harness.memberIds(CODEX_A)).toEqual(["alpha"]);
     expect(harness.marketplaceFor(CODEX_A)).toMatchObject({
       kind: "present",
       state: { projectionDigest: actions[0]?.kind === "SetMarketplace" ? actions[0].registration?.projectionDigest : undefined },
     });
+  });
+
+  it("stops after an uncertain native attempt and replans a fresh retry from live inventory", async () => {
+    const harness = new Harness();
+    expect((await canonicalSync(harness)).ok).toBe(true);
+    const prior = harness.receiptFor(CODEX_A);
+    harness.useAlphaOnlyCanonical();
+    harness.uncertainMarketplaceRole = "final";
+    harness.resetCounters();
+
+    const failed = await canonicalSync(harness);
+    expect(failed.ok && failed.value.status).toBe("Failed");
+    if (!failed.ok) return;
+    const target = failed.value.targets[0];
+    const applied = target?.events.flatMap((event) =>
+      event.phase === "applied" ? [event.action.kind] : []) ?? [];
+    expect(applied).toEqual(["SetMarketplace", "RetireMember"]);
+    expect(target?.events.find((event) => event.phase === "uncertain")).toMatchObject({
+      phase: "uncertain",
+      action: { kind: "SetMarketplace", role: "final" },
+      lastKnown: "bridge-returned",
+      issues: [{ code: "MUTATION_FAILED" }],
+    });
+    expect(target?.events.at(-1)).toMatchObject({ phase: "failed" });
+    expect(target?.events.some((event) =>
+      event.phase === "applied" && event.action.kind === "PublishReceipt")).toBe(false);
+    expect(harness.receiptFor(CODEX_A)?.receiptDigest).toBe(prior?.receiptDigest);
+
+    harness.uncertainMarketplaceRole = null;
+    harness.resetCounters();
+    const retried = await canonicalSync(harness);
+    expect(harness.counters.inventoryReads).toBeGreaterThan(0);
+    expect(retried.ok && retried.value.status).toBe("Mutated");
+    expect(harness.providerMutationAttemptsFor(CODEX_A)).toEqual([]);
+    expect(harness.counters.receiptWrites).toBe(1);
+
+    harness.resetCounters();
+    const repeated = await canonicalSync(harness);
+    expect(repeated.ok && repeated.value.status).toBe("ReadOnlyConverged");
+    expect(harness.providerMutationAttemptsFor(CODEX_A)).toEqual([]);
+    expect(harness.counters.receiptWrites).toBe(0);
   });
 
   it("does not narrow the marketplace or advance the receipt while retired native config residue remains", async () => {
@@ -990,36 +958,33 @@ describe("provider deployment state machine", () => {
     const actions = failed.value.targets[0]?.events.flatMap((event) =>
       event.phase === "applied" ? [event.action] : []) ?? [];
     expect(actions.map((action) => action.kind)).toEqual(["SetMarketplace", "RetireMember"]);
-    expect(harness.capsuleApplied.map((action) => action.kind)).toEqual(["SetMarketplace", "RetireMember"]);
     expect(harness.receiptFor(CODEX_A)?.receiptDigest).toBe(prior?.receiptDigest);
   });
 
-  it("preserves unclaimed native state when no receipt proves retirement ownership", async () => {
+  it("blocks selected-owner native state outside the requested projection", async () => {
     const harness = new Harness();
     harness.addUnclaimedNativeMember(CODEX_A, "ghost");
 
     const result = await canonicalSync(harness);
-    expect(result.ok && result.value.status).toBe("Mutated");
-    expect(harness.memberIds(CODEX_A)).toEqual(["alpha", "beta", "ghost"]);
-    if (!result.ok) return;
-    expect(result.value.targets[0]?.events.some((event) =>
-      event.phase === "applied"
-      && event.action.kind === "RetireMember"
-      && event.action.prior.pluginId === "ghost")).toBe(false);
+    expect(result.ok && result.value.status).toBe("Blocked");
+    expect(harness.memberIds(CODEX_A)).toEqual(["ghost"]);
+    expect(harness.counters.nativeMutations).toBe(0);
+    expect(harness.counters.marketplaceWrites).toBe(0);
+    expect(harness.counters.receiptWrites).toBe(0);
   });
 
-  it("preserves an omitted native member not claimed by the current receipt", async () => {
+  it("blocks an omitted selected-owner member not claimed by the current receipt", async () => {
     const harness = new Harness();
     expect((await canonicalSync(harness)).ok).toBe(true);
     harness.addUnclaimedNativeMember(CODEX_A, "ghost");
 
     harness.resetCounters();
     const repeated = await canonicalSync(harness);
-    expect(repeated.ok && repeated.value.status).toBe("ReadOnlyConverged");
+    expect(repeated.ok && repeated.value.status).toBe("Blocked");
     expect(harness.memberIds(CODEX_A)).toEqual(["alpha", "beta", "ghost"]);
     expect(harness.counters.nativeMutations).toBe(0);
+    expect(harness.counters.marketplaceWrites).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
   });
 
   it.each(["fingerprint", "source", "duplicate-plugin", "duplicate-native"] as const)(
@@ -1041,8 +1006,6 @@ describe("provider deployment state machine", () => {
       expect(harness.memberIds(CODEX_A)).toContain("ghost");
       expect(harness.counters.nativeMutations).toBe(0);
       expect(harness.counters.receiptWrites).toBe(0);
-      expect(harness.counters.capsulePreflights).toBe(0);
-      expect(harness.counters.capsuleBegins).toBe(0);
     },
   );
 
@@ -1064,7 +1027,21 @@ describe("provider deployment state machine", () => {
     expect(harness.memberIds(CODEX_A)).toContain("alpha");
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
+  });
+
+  it("blocks a receipt whose marketplace provenance no longer binds the selected content owner", async () => {
+    const harness = new Harness();
+    expect((await canonicalSync(harness)).ok).toBe(true);
+    harness.assignCompetingReceiptAuthority(CODEX_A);
+
+    harness.resetCounters();
+    const synced = await canonicalSync(harness);
+    expect(synced.ok && synced.value.status).toBe("Blocked");
+    expect(synced.ok && synced.value.issues.some((candidate) => candidate.code === "INVALID_RECEIPT")).toBe(true);
+    expect(harness.counters.nativeMutations).toBe(0);
+    expect(harness.counters.marketplaceWrites).toBe(0);
+    expect(harness.counters.receiptWrites).toBe(0);
+    expect(harness.counters.identityWrites).toBe(0);
   });
 
   it("blocks explicit retire when standalone state replaces the claimed native identity", async () => {
@@ -1084,13 +1061,11 @@ describe("provider deployment state machine", () => {
     expect(harness.receiptFor(CODEX_A)?.receiptDigest).toBe(prior?.receiptDigest);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
   });
 
   it("retires only exact receipt-owned state, retains target identity, and repeats read-only", async () => {
     const harness = new Harness();
     expect((await canonicalSync(harness)).ok).toBe(true);
-    const priorProjectionDigest = harness.receiptFor(CODEX_A)?.body.scope.projectionDigest;
     harness.resetCounters();
     const retiredAlpha = await createManagedRetire(() => harness.retireDependencies())({
       kind: "managed-retire",
@@ -1104,7 +1079,7 @@ describe("provider deployment state machine", () => {
       : undefined;
     expect(retireAction?.kind).toBe("RetireMember");
     if (retireAction?.kind === "RetireMember") {
-      expect(retireAction.priorProjectionDigest).toBe(priorProjectionDigest);
+      expect(retireAction.member.pluginId).toBe("alpha");
     }
     expect(harness.memberIds(CODEX_A)).toEqual(["beta"]);
     expect(harness.receiptFor(CODEX_A)?.body.managedMembers.map((member) => member.pluginId)).toEqual(["beta"]);
@@ -1120,7 +1095,6 @@ describe("provider deployment state machine", () => {
     expect(harness.counters.inventoryReads).toBe(1);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
 
     harness.resetCounters();
     const retiredBeta = await createManagedRetire(() => harness.retireDependencies())({
@@ -1143,7 +1117,6 @@ describe("provider deployment state machine", () => {
     expect(harness.counters.inventoryReads).toBe(1);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
-    expect(harness.counters.capsuleBegins).toBe(0);
     expect(harness.identities.has(CODEX_A.home)).toBe(true);
 
     const ambiguous = new Harness();
@@ -1194,8 +1167,6 @@ describe("provider deployment state machine", () => {
       expect(harness.counters.inventoryReads).toBe(1);
       expect(harness.counters.nativeMutations).toBe(0);
       expect(harness.counters.receiptWrites).toBe(0);
-      expect(harness.counters.capsulePreflights).toBe(0);
-      expect(harness.counters.capsuleBegins).toBe(0);
       expect(harness.inventoryInspectionAuthorities).toEqual([
         variant === "absent-receipt"
           ? undefined
@@ -1275,15 +1246,13 @@ class Harness {
   failCapabilityReadHome: string | null = null;
   failProjectionMaterializationProvider: ProviderTarget["provider"] | null = null;
   failMarketplaceMaterializationProvider: ProviderTarget["provider"] | null = null;
-  failInverseProjectionDigest: import("../../../src/bindings/providers").ProjectionDigest | null = null;
   failEvidencePublish = false;
   syntheticDesiredHook = false;
   marketplaceSideEffect: "drop-beta" | "change-beta" | null = null;
   failMarketplaceRole: Extract<ProviderMutationAction, { kind: "SetMarketplace" }>["role"] | null = null;
+  uncertainMarketplaceRole: Extract<ProviderMutationAction, { kind: "SetMarketplace" }>["role"] | null = null;
   providerMutationAttempts: NativeProviderMutationAction[] = [];
   identityAdmissions: ProviderTarget[] = [];
-  capsuleStaged: ProviderMutationAction[] = [];
-  capsuleApplied: ProviderMutationAction[] = [];
   counters = freshCounters();
 
   completeRequest(targets: readonly { readonly provider: ProviderTarget["provider"]; readonly home: string }[]) {
@@ -1329,8 +1298,6 @@ class Harness {
       receiptWriter: writes.receiptWriter,
       identities: reads.identities,
       identityWriter: writes.identityWriter,
-      undoWriter: writes.undoWriter,
-      priorProjections: writes.priorProjections,
       marketplaceMaterializer: writes.marketplaceMaterializer,
     };
   }
@@ -1339,8 +1306,6 @@ class Harness {
     this.counters = freshCounters();
     this.providerMutationAttempts = [];
     this.identityAdmissions = [];
-    this.capsuleStaged = [];
-    this.capsuleApplied = [];
     this.inventoryInspectionAuthorities.length = 0;
   }
 
@@ -1437,6 +1402,21 @@ class Harness {
     this.native.set(target.home, members);
   }
 
+  addExternalMember(target: { readonly home: string }, pluginId: string, nativeIdentity: string): void {
+    const members = [...(this.native.get(target.home) ?? [])];
+    const projection = this.projection();
+    const external = "competing-content-authority" as ProviderSourceIdentity;
+    members.push(observedMember(
+      mustTarget(target),
+      pluginId,
+      nativeIdentity,
+      "d",
+      Object.freeze({ ...projection.artifactAuthority, contentAuthority: external }),
+      external,
+    ));
+    this.native.set(target.home, members);
+  }
+
   addUnclaimedNativeMember(target: { readonly home: string }, pluginId: string): void {
     const parsedTarget = mustTarget(target);
     const projection = this.projection();
@@ -1453,11 +1433,10 @@ class Harness {
   }
 
   addUnrelatedStandaloneExposure(target: { readonly home: string }): void {
-    const projection = this.projection();
     this.standaloneExposures.set(target.home, [Object.freeze({
       exposureIdentity: "manual:standalone:unrelated",
       nativeIdentity: "manual:unrelated",
-      providerSourceIdentity: projection.members[0]!.providerSourceIdentity,
+      providerSourceIdentity: "competing-content-authority" as ProviderSourceIdentity,
       enablement: "enabled",
       visibleSkills: Object.freeze(["unrelated-skill"]),
       visibleHooks: Object.freeze(["unrelated-hook"]),
@@ -1587,14 +1566,6 @@ class Harness {
     return this.identityAdmissions.filter((candidate) => candidate.home === target.home);
   }
 
-  capsuleStagesFor(target: { readonly home: string }): readonly ProviderMutationAction[] {
-    return this.capsuleStaged.filter((action) => action.target.home === target.home);
-  }
-
-  capsuleAppliedFor(target: { readonly home: string }): readonly ProviderMutationAction[] {
-    return this.capsuleApplied.filter((action) => action.target.home === target.home);
-  }
-
   receiptFor(target: { readonly home: string }): TargetReceipt | null {
     return this.receipts.get(target.home) ?? null;
   }
@@ -1631,6 +1602,18 @@ class Harness {
       kind: "present",
       state: Object.freeze({
         ...marketplace.state,
+        marketplaceIdentity: "competing-content-authority" as ProviderSourceIdentity,
+      }),
+    }));
+  }
+
+  assignCompetingReceiptAuthority(target: { readonly home: string }): void {
+    const receipt = this.receiptFor(target);
+    if (receipt === null) throw new Error("receipt fixture missing");
+    this.receipts.set(target.home, createTargetReceipt({
+      ...receipt.body,
+      marketplace: Object.freeze({
+        ...receipt.body.marketplace,
         marketplaceIdentity: "competing-content-authority" as ProviderSourceIdentity,
       }),
     }));
@@ -1750,7 +1733,10 @@ class Harness {
           if (action.kind === "SetMarketplace") {
             this.counters.marketplaceWrites += 1;
             if (action.role === this.failMarketplaceRole) {
-              return failure([issue("MUTATION_FAILED", "provider.marketplace", "Injected marketplace mutation failure")]);
+              return Object.freeze({
+                kind: "not-applied" as const,
+                issues: [issue("MUTATION_FAILED", "provider.marketplace", "Injected marketplace mutation failure")] as const,
+              });
             }
             const observation: ProviderMarketplaceObservation = action.registration === null
               ? Object.freeze({ kind: "absent" })
@@ -1771,22 +1757,32 @@ class Harness {
               }
               this.native.set(action.target.home, members);
             }
-            return success({ actionKind: action.kind, postMarketplace: observation });
+            if (action.role === this.uncertainMarketplaceRole) {
+              return Object.freeze({
+                kind: "uncertain" as const,
+                lastKnown: "bridge-returned" as const,
+                issues: [issue("MUTATION_FAILED", "provider.marketplace", "Injected uncertain marketplace result")] as const,
+              });
+            }
+            return Object.freeze({ kind: "applied" as const });
           }
           this.counters.nativeMutations += 1;
           if (action.kind === "InstallMember" && action.target.home === this.failInstallHome) {
-            return failure([issue("MUTATION_FAILED", "provider", "Injected install failure")]);
+            return Object.freeze({
+              kind: "not-applied" as const,
+              issues: [issue("MUTATION_FAILED", "provider", "Injected install failure")] as const,
+            });
           }
           const members = [...(this.native.get(action.target.home) ?? [])];
           if (action.kind === "InstallMember") members.push(nativeMember(action.member, "enabled"));
           if (action.kind === "EnableMember") replaceMember(members, action.member.pluginId, nativeMember(action.member, "enabled"));
           if (action.kind === "RetireMember" && action.target.home !== this.leaveRetiredVisibleHome) {
-            removeMember(members, action.prior.pluginId);
+            removeMember(members, action.member.pluginId);
             if (action.target.home === this.leaveRetiredResidueHome) {
               this.standaloneExposures.set(action.target.home, [Object.freeze({
-                exposureIdentity: `${action.prior.pluginId}@${action.prior.providerSourceIdentity}`,
-                nativeIdentity: action.prior.nativeIdentity,
-                providerSourceIdentity: action.prior.providerSourceIdentity,
+                exposureIdentity: `${action.member.pluginId}@${action.member.providerSourceIdentity}`,
+                nativeIdentity: action.member.nativeIdentity,
+                providerSourceIdentity: action.member.providerSourceIdentity,
                 enablement: "enabled",
                 visibleSkills: Object.freeze([]),
                 visibleHooks: Object.freeze([]),
@@ -1794,11 +1790,7 @@ class Harness {
             }
           }
           this.native.set(action.target.home, members);
-          const nativeIdentity = action.kind === "RetireMember"
-            ? action.prior.nativeIdentity
-            : action.member.nativeIdentity;
-          const postMember = members.find((member) => member.nativeIdentity === nativeIdentity) ?? null;
-          return success({ actionKind: action.kind, postMember });
+          return Object.freeze({ kind: "applied" as const });
         },
       },
       receiptWriter: {
@@ -1822,27 +1814,6 @@ class Harness {
           this.identityAdmissions.push(target);
           this.identities.set(target.home, sidecar);
           return success(sidecar);
-        },
-      },
-      undoWriter: {
-        preflight: async () => {
-          this.counters.capsulePreflights += 1;
-          return success(null);
-        },
-        begin: async () => {
-          this.counters.capsuleBegins += 1;
-          return success({
-            stage: async (action: ProviderMutationAction) => {
-              this.capsuleStaged.push(action);
-              return success(null);
-            },
-            applied: async (observation: { readonly action: ProviderMutationAction }) => {
-              this.capsuleApplied.push(observation.action);
-              return success(null);
-            },
-            fail: async () => success(null),
-            settle: async () => success(null),
-          });
         },
       },
       evidence: {
@@ -1894,20 +1865,6 @@ class Harness {
             projectionDigest: registration.projectionDigest,
             sourceDigest: registration.sourceDigest,
           });
-        },
-      },
-      priorProjections: {
-        readArchivedMember: async (
-          projectionDigest: import("../../../src/bindings/providers").ProjectionDigest,
-          prior: NativeMemberObservation,
-        ) => {
-          this.counters.inverseSourceReads += 1;
-          if (projectionDigest === this.failInverseProjectionDigest) {
-            return failure([issue("PROJECTION_MISMATCH", "projection.archive", "Injected target inverse source failure")]);
-          }
-          return this.archivedFingerprints.has(prior.memberFingerprint)
-            ? success({ projectionDigest, memberFingerprint: prior.memberFingerprint })
-            : failure([issue("PROJECTION_MISMATCH", "projection.archive", "prior projection source missing")]);
         },
       },
     };
@@ -2083,13 +2040,10 @@ function freshCounters() {
     nativeMutations: 0,
     receiptWrites: 0,
     identityWrites: 0,
-    capsulePreflights: 0,
-    capsuleBegins: 0,
     evidencePublishes: 0,
     projectionMaterializations: 0,
     marketplaceMaterializations: 0,
     marketplaceWrites: 0,
-    inverseSourceReads: 0,
   };
 }
 

@@ -1,30 +1,16 @@
 import type { MechanicalEvidencePublisher } from "./ports/evidence";
-import type { ProviderUndoWriter as ProviderUndoWriterPort } from "./ports/undo-writer";
 import type { VerifiedReleaseReader } from "./ports/artifact";
 import type { CanonicalChannelReader } from "./ports/channel";
 import type { ProviderTargetMutator, ProviderTargetReader } from "./ports/provider";
 import type {
   CompleteTargetIdentityReader,
   ProviderMarketplaceMaterializer,
-  ProviderPriorProjectionReader,
   ProviderProjectionMaterializer,
   TargetIdentityReader,
   TargetIdentityWriter,
   TargetReceiptReader,
   TargetReceiptWriter,
 } from "./ports/state";
-
-/**
- * Write-only admission into the controller-owned undo capsule.
- *
- * The lifecycle service cannot read, replay, clear, or select a capsule.
- */
-export type {
-  ProviderAppliedObservation,
-  ProviderUndoCandidate,
-  ProviderUndoSession,
-  ProviderUndoWriter,
-} from "./ports/undo-writer";
 
 export interface ProviderLifecycleRuntime {
   readonly channel: CanonicalChannelReader;
@@ -37,8 +23,6 @@ export interface ProviderLifecycleRuntime {
   readonly identityWriter: TargetIdentityWriter;
   readonly projectionMaterializer: ProviderProjectionMaterializer;
   readonly marketplaceMaterializer: ProviderMarketplaceMaterializer;
-  readonly priorProjections: ProviderPriorProjectionReader;
-  readonly undoWriter: ProviderUndoWriterPort;
   readonly evidence: MechanicalEvidencePublisher;
 }
 
@@ -54,8 +38,7 @@ export type {
   MechanicalEvidencePublisher,
 } from "./ports/evidence";
 export type {
-  NativeMutationObservation,
-  NativeMemberRestorationPort,
+  NativeMutationAttempt,
   NativeProviderMutationAction,
   ProviderTargetMutator,
   ProviderTargetReader,
@@ -64,12 +47,10 @@ export type {
 export type {
   CompleteTargetIdentityReader,
   MarketplaceMaterializationObservation,
-  PriorProjectionSourceObservation,
   ProjectionMaterializationObservation,
   ProviderMarketplaceMaterializer,
   ProviderMarketplaceSource,
   ProviderMarketplaceSourceReader,
-  ProviderPriorProjectionReader,
   ProviderProjectionMaterializer,
   TargetIdentityReader,
   TargetIdentityWriter,
@@ -190,7 +171,6 @@ export type {
   PlanTargetInput,
   ProviderInventory,
   ProviderMutationAction,
-  ProviderMutationPostState,
   ProviderPlanStep,
   ProviderTargetPlan,
   ReceiptObservation,
@@ -204,7 +184,3 @@ export type {
   ProviderTarget,
   ProviderTargetDigest,
 } from "./model/dto/provider-target";
-export type {
-  ProviderMemberRestoreContext,
-  ProviderOwnerRuntime,
-} from "./ports/owner";

@@ -54,11 +54,9 @@ import { createNodeMechanicalEvidenceRuntime } from "./evidence/node-mechanical"
 import {
   createNodeProviderLifecycleRuntime,
   createNodeProviderRecordState,
-  createProviderOwnerCodecRegistration,
   type NodeProviderRecordState,
 } from "./providers/node-runtime";
 import { createGovernanceCanonicalChannelReader } from "./providers/governance-channel";
-import { PROVIDER_OWNER } from "./providers/owner-protocol";
 import {
   applyingRecoveryBlockingFailure,
   CapsuleControllerWriterV1,
@@ -66,6 +64,7 @@ import {
   createExportUndoWriterV1,
   openNodeCapsuleStateStoreV1,
 } from "../undo";
+import { prepareExportOnlyCapsuleSlotV1 } from "../undo/legacy-provider-retirement";
 
 type LifecycleBoundary = CreateClientOptions;
 type LifecycleProcess = ProcessView & Readonly<{
@@ -186,7 +185,6 @@ export function createProductionLifecycleDeps(input: Readonly<{
     state: providerState,
     artifactReader,
     artifactStoreRoot: layout.artifactStoreRoot,
-    capsuleRoot: layout.capsuleRoot,
     providerExecutables: binding.providerExecutables,
   });
 
@@ -279,10 +277,8 @@ export function createNodeExportUndoWriter(
   capsuleRoot: Parameters<typeof openNodeCapsuleStateStoreV1>[0]["root"],
 ): UndoWriter {
   const writer = lazy(async () => {
-    const registry = createAgentPluginOwnerProtocolRegistryV1(
-      {},
-      createProviderOwnerCodecRegistration(),
-    );
+    await prepareExportOnlyCapsuleSlotV1({ capsuleRoot, mode: "export-activation" });
+    const registry = createAgentPluginOwnerProtocolRegistryV1();
     const opened = await openNodeCapsuleStateStoreV1({ root: capsuleRoot, registry });
     if (opened.kind === "Rejected") {
       throw new LifecycleAuthorityBindingError(opened.failure.message);
@@ -290,14 +286,6 @@ export function createNodeExportUndoWriter(
     const observed = await opened.store.read();
     if (observed.kind === "Rejected") {
       throw new LifecycleAuthorityBindingError(observed.failure.message);
-    }
-    if (
-      observed.observation.state.body.state.kind === "applying"
-      && observed.observation.state.body.state.candidate.owner === PROVIDER_OWNER
-    ) {
-      throw new LifecycleAuthorityBindingError(
-        "Applying provider lifecycle state requires qualified recovery before export mutation",
-      );
     }
     const controller = new CapsuleControllerWriterV1({
       store: opened.store,

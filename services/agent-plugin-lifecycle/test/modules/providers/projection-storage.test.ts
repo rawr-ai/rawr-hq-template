@@ -10,7 +10,6 @@ import {
   type ImmutableProviderTreeCollection,
   type ImmutableProviderTreeFile,
   type ImmutableProviderTreeKey,
-  type NativeMemberObservation,
   type ProjectionRecordKey,
   type ProviderMarketplaceRegistration,
 } from "../../../src/bindings/providers";
@@ -72,11 +71,6 @@ describe("pathless projection storage", () => {
     expect(projection.members.every((member) =>
       records.has(memberRecordKey(member.memberFingerprint))
       && trees.has(memberTreeKey(member.memberFingerprint)))).toBe(true);
-    expect((await storage.priorProjections.readArchivedMember(
-      projection.projectionDigest,
-      observedMember(projection.members[0]!),
-    )).ok).toBe(false);
-
     const memberPublications = records.events.length + trees.events.length;
     const retried = await storage.projectionMaterializer.materialize(projection);
     expect(retried).toEqual({
@@ -123,49 +117,6 @@ describe("pathless projection storage", () => {
     expect(result.issues[0]).toMatchObject({
       code: "PROJECTION_MISMATCH",
       path: "projection.member.tree",
-    });
-  });
-
-  it("fails exact prior recovery when the immutable member tree is absent", async () => {
-    const projection = completeProjection();
-    const records = new FakeRecords();
-    const trees = new FakeTrees();
-    const storage = createPathlessProjectionStorage({ records, trees });
-    expect((await storage.projectionMaterializer.materialize(projection)).ok).toBe(true);
-    const member = projection.members[0]!;
-    trees.remove(memberTreeKey(member.memberFingerprint));
-
-    const result = await storage.priorProjections.readArchivedMember(
-      projection.projectionDigest,
-      observedMember(member),
-    );
-    expect(result.ok).toBe(false);
-    if (result.ok) throw new Error("Expected missing prior tree failure");
-    expect(result.issues[0]).toMatchObject({
-      code: "PROJECTION_MISMATCH",
-      path: "projection.member.tree",
-    });
-  });
-
-  it("returns only semantic identity for a successfully admitted prior member", async () => {
-    const projection = completeProjection();
-    const records = new FakeRecords();
-    const trees = new FakeTrees();
-    const storage = createPathlessProjectionStorage({ records, trees });
-    expect((await storage.projectionMaterializer.materialize(projection)).ok).toBe(true);
-    const member = projection.members[0]!;
-
-    const result = await storage.priorProjections.readArchivedMember(
-      projection.projectionDigest,
-      observedMember(member),
-    );
-
-    expect(result).toEqual({
-      ok: true,
-      value: {
-        projectionDigest: projection.projectionDigest,
-        memberFingerprint: member.memberFingerprint,
-      },
     });
   });
 
@@ -344,19 +295,6 @@ function marketplaceRegistration(projection: AgentProviderProjection): ProviderM
       sourceProjectionDigest: projection.projectionDigest,
       memberFingerprint: member.memberFingerprint,
     })),
-  });
-}
-
-function observedMember(member: AgentProviderProjection["members"][number]): NativeMemberObservation {
-  return Object.freeze({
-    pluginId: member.pluginId,
-    nativeIdentity: member.nativeIdentity,
-    artifactAuthority: member.artifactAuthority,
-    providerSourceIdentity: member.providerSourceIdentity,
-    memberFingerprint: member.memberFingerprint,
-    enablement: "enabled",
-    visibleSkills: member.visible.skills,
-    visibleHooks: member.visible.hooks,
   });
 }
 

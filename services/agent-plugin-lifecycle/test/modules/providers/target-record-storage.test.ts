@@ -163,35 +163,6 @@ describe("pathless target-record storage", () => {
     expect(records.observe(receiptKey(target))).toBeNull();
   });
 
-  it("restores exact identity and receipt preimages through the same pathless state owner", async () => {
-    const target = mustTarget("/provider/a");
-    const records = new FakeTargetRecords();
-    const state = createPathlessTargetState(records);
-    const sidecar = createTargetIdentitySidecar(target);
-    const priorReceipt = receiptFixture(target);
-    const activeReceipt = receiptFixture(target, priorReceipt);
-    records.seed(identityKey(target), canonicalSerializeTargetIdentitySidecar(sidecar));
-    records.seed(receiptKey(target), canonicalSerializeTargetReceipt(activeReceipt));
-
-    expect(await state.removeAdmittedIdentityExact(target, sidecar)).toEqual({ ok: true, value: null });
-    expect(records.observe(identityKey(target))).toBeNull();
-    expect(await state.restoreReceiptExact(
-      target,
-      presentReceipt(activeReceipt),
-      presentReceipt(priorReceipt),
-    )).toEqual({ ok: true, value: null });
-    expect(records.observe(receiptKey(target))).toEqual(canonicalSerializeTargetReceipt(priorReceipt));
-
-    records.clearEvents();
-    expect(await state.removeAdmittedIdentityExact(target, sidecar)).toEqual({ ok: true, value: null });
-    expect(await state.restoreReceiptExact(
-      target,
-      presentReceipt(activeReceipt),
-      presentReceipt(priorReceipt),
-    )).toEqual({ ok: true, value: null });
-    expect(records.operations()).toEqual(["capture", "release", "capture", "release"]);
-  });
-
   it("releases an exact converged capture without writing or settling", async () => {
     const target = mustTarget("/provider/a");
     const records = new FakeTargetRecords();

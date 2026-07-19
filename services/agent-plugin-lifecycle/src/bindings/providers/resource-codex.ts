@@ -111,13 +111,13 @@ export function createResourceCodexProviderAdapter(
 
   const setMarketplaceRegistration: CodexProcessPort["setMarketplaceRegistration"] = async ({
     home,
-    prior,
+    expected,
     registration,
     source,
   }) => {
     const provider = await session(home);
     const current = await inventoryMarketplaceRegistration({ home });
-    if (!sameMarketplaceObservation(current, prior)) {
+    if (!sameMarketplaceObservation(current, expected)) {
       throw new Error("Codex marketplace changed before exact registration mutation");
     }
     const desired = desiredMarketplace(registration);
@@ -196,12 +196,6 @@ export function createResourceCodexProviderAdapter(
     enableMarketplacePlugin: async ({ home, nativeIdentity }) => {
       await (await session(home)).addPlugin({
         selector: pluginSelector(nativeIdentity, input.contentAuthority, "codex"),
-      });
-    },
-    disableMarketplacePlugin: async ({ home, nativeIdentity }) => {
-      await (await session(home)).setPluginEnabled({
-        selector: pluginSelector(nativeIdentity, input.contentAuthority, "codex"),
-        enabled: false,
       });
     },
     uninstallMarketplacePlugin: async ({ home, nativeIdentity, providerSourceIdentity, marketplaceIdentity }) => {

@@ -8,7 +8,6 @@ import type {
   ProviderProjectionMember,
 } from "../../service/modules/providers/model/policy/projection";
 import { failure, issue, success, type DeploymentResult } from "../../service/modules/providers/model/errors/deployment-result";
-import type { NativeMemberObservation } from "../../service/modules/providers/model/policy/state-machine";
 import type { ProviderId, ProviderTarget } from "../../service/modules/providers/model/dto/provider-target";
 import type {
   ImmutableProviderTreeCollection,
@@ -21,10 +20,8 @@ import type {
   ProviderMarketplaceMaterializer,
   ProviderMarketplaceSource,
   ProviderMarketplaceSourceReader,
-  ProviderPriorProjectionReader,
   ProviderProjectionMaterializer,
   MarketplaceMaterializationObservation,
-  PriorProjectionSourceObservation,
   ProjectionMaterializationObservation,
 } from "../../service/modules/providers/ports/state";
 import {
@@ -36,7 +33,6 @@ import {
   projectionMemberRecordBytes,
   sameTree,
   validateMemberTree,
-  validatePriorMemberRecord,
   validateProjectionPayload,
 } from "./projection-storage-codec";
 
@@ -44,13 +40,12 @@ export interface PathlessProjectionStorage {
   readonly projectionMaterializer: ProviderProjectionMaterializer;
   readonly marketplaceMaterializer: ProviderMarketplaceMaterializer;
   readonly marketplaceSources: ProviderMarketplaceSourceReader;
-  readonly priorProjections: ProviderPriorProjectionReader;
 }
 
 /**
  * Interprets generic immutable collections as lifecycle projection storage.
- * The collections never learn projection codecs, publication order, or inverse
- * semantics, and the service never learns a filesystem or artifact address.
+ * The collections never learn projection codecs or publication order, and the
+ * service never learns a filesystem or artifact address.
  */
 export function createPathlessProjectionStorage(input: Readonly<{
   records: FlatProjectionRecordCollection;
@@ -240,37 +235,10 @@ export function createPathlessProjectionStorage(input: Readonly<{
     },
   });
 
-  const priorProjections: ProviderPriorProjectionReader = Object.freeze({
-    async readArchivedMember(
-      projectionDigest: AgentProviderProjection["projectionDigest"],
-      prior: NativeMemberObservation,
-    ): Promise<DeploymentResult<PriorProjectionSourceObservation>> {
-      const source = await inspectMember(projectionDigest, prior);
-      if (!source.ok) return source;
-      const record = await input.records.read(memberKey(prior.memberFingerprint));
-      if (!record.ok) return record;
-      if (record.value.kind === "absent") {
-        return projectionFailure("projection.archive.record", "Prior projection member record is absent");
-      }
-      try {
-        const decoded = decodeProjectionMemberRecord(record.value.bytes, prior.memberFingerprint);
-        validatePriorMemberRecord(decoded, prior);
-        validateMemberTree(decoded, source.value);
-        return success(Object.freeze({
-          projectionDigest,
-          memberFingerprint: prior.memberFingerprint,
-        }));
-      } catch (error) {
-        return projectionError("projection.archive", error);
-      }
-    },
-  });
-
   return Object.freeze({
     projectionMaterializer,
     marketplaceMaterializer,
     marketplaceSources,
-    priorProjections,
   });
 }
 

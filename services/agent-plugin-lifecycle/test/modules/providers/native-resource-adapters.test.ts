@@ -293,7 +293,6 @@ async function verifyCodexHookVisibility(hooks: readonly Record<string, unknown>
       },
     }),
     setMarketplaceSource: async () => undefined,
-    setPluginEnabled: async () => undefined,
   });
   const adapter = createResourceCodexProviderAdapter({
     resource: Object.freeze({

@@ -75,6 +75,79 @@ export type OpenNodeCapsuleStoreResultV1 =
   | Readonly<{ kind: "Opened"; store: NodeCapsuleStateStoreV1 }>
   | Readonly<{ kind: "Rejected"; failure: CapsuleFailure }>;
 
+export interface RawCapsuleSlotObservationV1 {
+  readonly bytes: Uint8Array;
+}
+
+export type RawCapsuleSlotCasResultV1 =
+  | Readonly<{ kind: "Committed"; observation: CapsuleStateObservationV1 }>
+  | Readonly<{
+    kind: "Unsettled";
+    intendedState: CapsuleStateEnvelopeV1;
+    observation?: CapsuleStateObservationV1;
+    failure: CapsuleFailure;
+  }>
+  | Readonly<{ kind: "Rejected"; failure: CapsuleFailure }>;
+
+export interface RawCapsuleSlotSessionV1 {
+  read(): Promise<
+    | Readonly<{ kind: "Observed"; observation: RawCapsuleSlotObservationV1 }>
+    | Readonly<{ kind: "Rejected"; failure: CapsuleFailure }>
+  >;
+  compareAndSet(input: Readonly<{
+    expectedBytes: Uint8Array;
+    nextState: CapsuleStateEnvelopeV1;
+  }>): Promise<RawCapsuleSlotCasResultV1>;
+  release(): Promise<void>;
+}
+
+export type OpenExistingRawCapsuleSlotResultV1 =
+  | Readonly<{ kind: "Absent" }>
+  | Readonly<{ kind: "Acquired"; session: RawCapsuleSlotSessionV1 }>
+  | Readonly<{ kind: "Rejected"; failure: CapsuleFailure }>;
+
+/**
+ * Opens the existing controller capsule slot without decoding an owner protocol.
+ * This capability exists only for the bounded provider-v1-to-export retirement.
+ */
+export async function openExistingRawCapsuleSlotV1(options: Readonly<{
+  root: CapsuleRoot;
+  registry: ClosedOwnerProtocolRegistryV1;
+  advisoryLock?: CapsuleAdvisoryLockV1;
+  limits?: CapsuleStateLimitsV1;
+  failpoints?: CapsuleStoreFailpointsV1;
+}>): Promise<OpenExistingRawCapsuleSlotResultV1> {
+  const advisoryLock = options.advisoryLock ?? createBunFfiCapsuleAdvisoryLock();
+  if (advisoryLock.platform !== "darwin" && advisoryLock.platform !== "linux") {
+    return Object.freeze({
+      kind: "Rejected",
+      failure: failure(
+        "AdmissionUnsupported",
+        "open-raw-slot",
+        `capsule advisory lock is unsupported on ${advisoryLock.platform}`,
+      ),
+    });
+  }
+  const rootPath = requireCanonicalAbsolutePath(options.root, "capsule root");
+  try {
+    await lstat(rootPath, { bigint: true });
+  } catch (error) {
+    if (isCode(error, "ENOENT")) return Object.freeze({ kind: "Absent" });
+    return Object.freeze({
+      kind: "Rejected",
+      failure: failure("RootUnsafe", "open-raw-slot", errorMessage(error), rootPath),
+    });
+  }
+  const preflight = await preflightAdvisoryLock(dirname(rootPath), advisoryLock);
+  if (preflight !== null) return Object.freeze({ kind: "Rejected", failure: preflight });
+  const store = new NodeCapsuleStateStoreV1({
+    ...options,
+    root: rootPath as CapsuleRoot,
+    advisoryLock,
+  });
+  return store.acquireRawMigrationSession();
+}
+
 export async function openNodeCapsuleStateStoreV1(options: Readonly<{
   root: CapsuleRoot;
   registry: ClosedOwnerProtocolRegistryV1;
@@ -363,6 +436,111 @@ export class NodeCapsuleStateStoreV1 implements CapsuleStateStoreV1 {
     }
   }
 
+  async acquireRawMigrationSession(): Promise<OpenExistingRawCapsuleSlotResultV1> {
+    let admission: AdmissionHandleV1 | undefined;
+    let acquired = false;
+    try {
+      const root = await verifyRoot(this.#rootPath);
+      admission = await this.#openAdmission(root, false);
+      await this.#failpoints.afterAdmissionOpened?.();
+      const acquisition = await this.#advisoryLock.acquire(admission.handle.fd);
+      if (acquisition.kind !== "Acquired") {
+        const code = acquisition.kind === "Busy"
+          ? "AdmissionBusy"
+          : acquisition.kind === "Unsupported"
+            ? "AdmissionUnsupported"
+            : "AdmissionUnsafe";
+        await releaseAdmissionHandle(this.#advisoryLock, admission.handle, false);
+        admission = undefined;
+        return Object.freeze({
+          kind: "Rejected",
+          failure: failure(
+            code,
+            "raw-slot-admission",
+            "reason" in acquisition ? acquisition.reason : "capsule admission is busy",
+            path.join(root.path, ADMISSION_FILE),
+          ),
+        });
+      }
+      acquired = true;
+      await this.#failpoints.afterAdmissionAcquired?.();
+      await revalidateRoot(root);
+      await revalidateAdmission(root, admission);
+
+      let released = false;
+      let inFlight = false;
+      const heldAdmission = admission;
+      const session: RawCapsuleSlotSessionV1 = Object.freeze({
+        read: async () => {
+          if (released) return rejectedRawSlot("read", this.#rootPath);
+          if (inFlight) return rejectedRawSlotBusy("read", this.#rootPath);
+          inFlight = true;
+          try {
+            const observation = await this.#readRawState(root, heldAdmission, false);
+            return observation === null
+              ? Object.freeze({
+                kind: "Rejected" as const,
+                failure: failure("StateInvalid", "raw-slot-read", "capsule state file is missing", this.#statePath()),
+              })
+              : Object.freeze({ kind: "Observed" as const, observation });
+          } catch (error) {
+            return Object.freeze({
+              kind: "Rejected" as const,
+              failure: failure("RootUnsafe", "raw-slot-read", errorMessage(error), this.#rootPath),
+            });
+          } finally {
+            inFlight = false;
+          }
+        },
+        compareAndSet: async (
+          input: Parameters<RawCapsuleSlotSessionV1["compareAndSet"]>[0],
+        ) => {
+          if (released) return rejectedRawSlot("compare-and-set", this.#rootPath);
+          if (inFlight) return rejectedRawSlotBusy("compare-and-set", this.#rootPath);
+          inFlight = true;
+          try {
+            const result = await this.#publish(
+              root,
+              heldAdmission,
+              Object.freeze({ bytes: input.expectedBytes.slice() }),
+              input.nextState,
+            );
+            return result.kind === "Conflict"
+              ? Object.freeze({
+                kind: "Rejected" as const,
+                failure: failure(
+                  "StateChanged",
+                  "raw-slot-compare-and-set",
+                  "capsule state changed during legacy retirement",
+                  this.#statePath(),
+                ),
+              })
+              : result;
+          } finally {
+            inFlight = false;
+          }
+        },
+        release: async () => {
+          if (released) return;
+          if (inFlight) throw new Error("capsule raw-slot session has an access call in flight");
+          released = true;
+          await releaseAdmissionHandle(this.#advisoryLock, heldAdmission.handle, true);
+        },
+      });
+      admission = undefined;
+      acquired = false;
+      return Object.freeze({ kind: "Acquired", session });
+    } catch (error) {
+      if (admission !== undefined) {
+        await releaseAdmissionHandle(this.#advisoryLock, admission.handle, acquired).catch(() => undefined);
+      }
+      return Object.freeze({
+        kind: "Rejected",
+        failure: failure("AdmissionUnsafe", "raw-slot-admission", errorMessage(error), this.#rootPath),
+      });
+    }
+  }
+
   async #withAdmission<T extends CapsuleStoreReadResultV1 | CapsuleStoreCasResultV1>(
     root: RootIdentityV1,
     operation: (admission: AdmissionHandleV1) => Promise<T>,
@@ -437,6 +615,17 @@ export class NodeCapsuleStateStoreV1 implements CapsuleStateStoreV1 {
     admission: AdmissionHandleV1,
     allowMissing: boolean,
   ): Promise<CapsuleStateObservationV1 | null> {
+    const raw = await this.#readRawState(root, admission, allowMissing);
+    if (raw === null) return null;
+    const state = parseCapsuleStateBytes(raw.bytes, this.#registry, this.#limits);
+    return Object.freeze({ state, bytes: raw.bytes.slice() });
+  }
+
+  async #readRawState(
+    root: RootIdentityV1,
+    admission: AdmissionHandleV1,
+    allowMissing: boolean,
+  ): Promise<RawCapsuleSlotObservationV1 | null> {
     await revalidateRoot(root);
     await revalidateAdmission(root, admission);
     const statePath = this.#statePath();
@@ -477,8 +666,7 @@ export class NodeCapsuleStateStoreV1 implements CapsuleStateStoreV1 {
         throw new Error("capsule state changed while reading");
       }
       if (await realpath(statePath) !== statePath) throw new Error("capsule state is aliased");
-      const state = parseCapsuleStateBytes(bytes, this.#registry, this.#limits);
-      return Object.freeze({ state, bytes: bytes.slice() });
+      return Object.freeze({ bytes: bytes.slice() });
     } finally {
       await handle.close();
     }
@@ -487,7 +675,7 @@ export class NodeCapsuleStateStoreV1 implements CapsuleStateStoreV1 {
   async #publish(
     root: RootIdentityV1,
     admission: AdmissionHandleV1,
-    expected: CapsuleStateObservationV1 | null,
+    expected: CapsuleStateObservationV1 | RawCapsuleSlotObservationV1 | null,
     nextState: CapsuleStateEnvelopeV1,
   ): Promise<CapsuleStoreCasResultV1> {
     const bytes = encodeCapsuleState(nextState, this.#limits);
@@ -521,12 +709,44 @@ export class NodeCapsuleStateStoreV1 implements CapsuleStateStoreV1 {
       await this.#failpoints.beforeStatePublication?.(tempPath);
       await revalidateRoot(root);
       await revalidateAdmission(root, admission);
-      const current = await this.#readState(root, admission, expected === null);
+      const currentRaw = await this.#readRawState(root, admission, expected === null);
       if (
-        (expected === null && current !== null)
-        || (expected !== null && (current === null || current.state.stateDigest !== expected.state.stateDigest))
+        (expected === null && currentRaw !== null)
+        || (expected !== null && (currentRaw === null || !bytesEqual(currentRaw.bytes, expected.bytes)))
       ) {
-        if (current === null) throw new Error("capsule state disappeared before publication");
+        if (currentRaw === null) throw new Error("capsule state disappeared before publication");
+        if (tempIdentity === undefined) throw new Error("capsule temporary identity is unavailable during conflict");
+        const cleanup = await this.#cleanupTemporary(root, tempPath, tempIdentity);
+        if (expected !== null && !("state" in expected)) {
+          const changed = failure(
+            "StateChanged",
+            "raw-slot-compare-and-set",
+            "capsule state changed during legacy retirement",
+            this.#statePath(),
+          );
+          return {
+            kind: "Rejected",
+            failure: cleanup === null ? changed : Object.freeze({ ...changed, cleanup }),
+          };
+        }
+        if (cleanup !== null) {
+          return {
+            kind: "Rejected",
+            failure: Object.freeze({
+              ...failure(
+                "StatePublicationFailed",
+                "compare-and-set-conflict",
+                "capsule state conflict temporary cleanup failed",
+                tempPath,
+              ),
+              cleanup,
+            }),
+          };
+        }
+        const current = Object.freeze({
+          state: parseCapsuleStateBytes(currentRaw.bytes, this.#registry, this.#limits),
+          bytes: currentRaw.bytes.slice(),
+        });
         return { kind: "Conflict", observation: current };
       }
       await this.#failpoints.beforeFinalStatePublication?.(this.#statePath());
@@ -871,4 +1091,24 @@ function rejectedBusySession(
     kind: "Rejected",
     failure: failure("AdmissionBusy", phase, "capsule exclusive session already has a call in flight", path),
   };
+}
+
+function rejectedRawSlot(
+  phase: string,
+  path: string,
+): Readonly<{ kind: "Rejected"; failure: CapsuleFailure }> {
+  return Object.freeze({
+    kind: "Rejected",
+    failure: failure("AdmissionUnsafe", `raw-slot-${phase}`, "capsule raw-slot session is released", path),
+  });
+}
+
+function rejectedRawSlotBusy(
+  phase: string,
+  path: string,
+): Readonly<{ kind: "Rejected"; failure: CapsuleFailure }> {
+  return Object.freeze({
+    kind: "Rejected",
+    failure: failure("AdmissionBusy", `raw-slot-${phase}`, "capsule raw-slot session already has a call in flight", path),
+  });
 }

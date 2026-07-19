@@ -6,16 +6,14 @@ import { module } from "../module";
 import type { ProviderTargetMutator, ProviderTargetReader } from "../ports/provider";
 import type {
   ProviderMarketplaceMaterializer,
-  ProviderPriorProjectionReader,
   TargetIdentityReader,
   TargetIdentityWriter,
   TargetReceiptReader,
   TargetReceiptWriter,
 } from "../ports/state";
-import type { ProviderUndoWriter } from "../ports/undo-writer";
 import {
   aggregateOutcome,
-  createRetireActionApplier,
+  createRetireActionAppliers,
   executePlans,
 } from "./operation-support";
 import { providerOperationResult } from "./procedure-result";
@@ -27,8 +25,6 @@ export interface ManagedRetireDependencies {
   readonly receiptWriter: TargetReceiptWriter;
   readonly identities: TargetIdentityReader;
   readonly identityWriter: TargetIdentityWriter;
-  readonly undoWriter: ProviderUndoWriter;
-  readonly priorProjections: ProviderPriorProjectionReader;
   readonly marketplaceMaterializer: ProviderMarketplaceMaterializer;
 }
 
@@ -79,9 +75,7 @@ async function executeManagedRetire(
     }
     const outcomes = await executePlans(Object.freeze(plans), {
       provider: ports.provider,
-      undoWriter: ports.undoWriter,
-      applyAction: createRetireActionApplier(ports),
-      priorProjections: ports.priorProjections,
+      ...createRetireActionAppliers(ports),
       marketplaceMaterializer: ports.marketplaceMaterializer,
     });
     return success(aggregateOutcome(outcomes));

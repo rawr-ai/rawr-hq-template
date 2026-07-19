@@ -6,7 +6,6 @@ import {
   createResourceCodexProviderObserver,
   type ClaudeNativeResourceSession,
   type CodexNativeResourceSession,
-  type NativeMemberRestorationPort,
   type NativeProviderAdapter,
   type NativeProviderObserver,
   type NativeProviderResourcePort,
@@ -43,7 +42,7 @@ const MARKETPLACE_TREE_LIMITS: ArtifactReadLimits = Object.freeze({
 });
 const MARKETPLACE_NAMESPACE: ArtifactObjectAddress["namespace"] = Object.freeze(["marketplaces"]);
 
-export type NodeNativeProviderAdapter = NativeProviderAdapter & NativeMemberRestorationPort;
+export type NodeNativeProviderAdapter = NativeProviderAdapter;
 
 export type NodeNativeProviderBindingOptions = Omit<
   ResourceCodexProviderAdapterOptions & ResourceClaudeProviderAdapterOptions,
@@ -164,7 +163,6 @@ function adaptCodexSession(
       identity: input.identity,
       source: await marketplaceLocations.locate(input.source),
     })),
-    setPluginEnabled: (input) => runNodeProvider(session.setPluginEnabled(input)),
   };
   return Object.freeze(adapted);
 }
@@ -188,7 +186,6 @@ function adaptClaudeSession(
     readPlugin: (input) => runNodeProvider(session.readPlugin(input)),
     installPlugin: (input) => runNodeProvider(session.installPlugin(input)),
     enablePlugin: (input) => runNodeProvider(session.enablePlugin(input)),
-    disablePlugin: (input) => runNodeProvider(session.disablePlugin(input)),
     uninstallPlugin: (input) => runNodeProvider(session.uninstallPlugin(input)),
     readConfiguration: () => runNodeProvider(session.readConfiguration()),
   };

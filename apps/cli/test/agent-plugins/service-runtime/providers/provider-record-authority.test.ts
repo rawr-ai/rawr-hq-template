@@ -12,7 +12,6 @@ import {
 import {
   CODEX_ADAPTER_PROTOCOL,
   createProviderMarketplaceRegistration,
-  createProviderOwnerRuntime,
   createTargetIdentitySidecar,
   createTargetReceipt,
   marketplaceState,
@@ -21,7 +20,6 @@ import {
   renderCompleteProjection,
   visibleFingerprint,
   type AgentProviderProjection,
-  type NativeMemberRestorationPort,
   type ProviderTarget,
 } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import { afterEach, describe, expect, it } from "vitest";
@@ -38,7 +36,7 @@ describe("provider record authority", () => {
     fixtureRoot = null;
   });
 
-  it("uses one resource state owner for forward lifecycle and reopened controller undo", async () => {
+  it("uses one resource state owner for forward lifecycle and reopened reads", async () => {
     fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-c5-provider-records-")));
     const dataRoot = path.join(fixtureRoot, "controller-data");
     const providerHome = path.join(fixtureRoot, "codex-home");
@@ -96,37 +94,13 @@ describe("provider record authority", () => {
         sourceDigest: registration.sourceDigest,
       },
     });
-    const undoOwner = createProviderOwnerRuntime({
-      projections: reopened.projections,
-      targets: reopened.targets,
-      members: { codex: unavailableNative(), claude: unavailableNative() },
-    });
-    expect(await undoOwner.readIdentity(target)).toEqual({
+    expect(await reopened.targets.identities.read(target)).toEqual({
       ok: true,
       value: { kind: "present", sidecar },
     });
-    expect(await undoOwner.readReceipt(target)).toEqual({
+    expect(await reopened.targets.receipts.read(target)).toEqual({
       ok: true,
       value: { kind: "present", receipt },
-    });
-    expect(await undoOwner.restoreReceiptExact({
-      target,
-      expected: { kind: "present", receipt },
-      prior: { kind: "absent" },
-    })).toEqual({ ok: true, value: null });
-    expect(await undoOwner.removeIdentityExact({ target, expected: sidecar })).toEqual({
-      ok: true,
-      value: null,
-    });
-
-    const verified = createNodeProviderRecordState(roots);
-    expect(await verified.targets.receipts.read(target)).toEqual({
-      ok: true,
-      value: { kind: "absent" },
-    });
-    expect(await verified.targets.identities.read(target)).toEqual({
-      ok: true,
-      value: { kind: "absent" },
     });
   });
 });
@@ -203,18 +177,6 @@ function receiptFor(
       ...member,
       sourceProjectionDigest: projection.projectionDigest,
     }))),
-  });
-}
-
-function unavailableNative(): NativeMemberRestorationPort {
-  const unavailable = async (): Promise<never> => {
-    throw new Error("Target-state inverse must not enter the native provider");
-  };
-  return Object.freeze({
-    readMarketplace: unavailable,
-    setMarketplaceExact: unavailable,
-    readMember: unavailable,
-    restoreExact: unavailable,
   });
 }
 
