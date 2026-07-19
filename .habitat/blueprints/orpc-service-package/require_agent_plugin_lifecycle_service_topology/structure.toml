@@ -109,6 +109,7 @@ root = "services/agent-plugin-lifecycle/src/service/model/dependencies"
 kind = "directory"
 mode = "closed"
 required = [
+  "current-main.ts",
   "releases.ts",
 ]
 allowed = []
@@ -119,6 +120,7 @@ root = "services/agent-plugin-lifecycle/src/service/model/dto"
 kind = "directory"
 mode = "closed"
 required = [
+  "current-main-selection.ts",
   "releases",
 ]
 allowed = []
@@ -403,7 +405,6 @@ mode = "closed"
 required = [
   "artifact.ts",
   "canonical-native.ts",
-  "current-main.ts",
   "evidence.ts",
   "projection-storage.ts",
   "provider.ts",

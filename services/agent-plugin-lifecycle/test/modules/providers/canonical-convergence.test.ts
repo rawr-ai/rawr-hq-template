@@ -4,7 +4,7 @@ import type {
   CanonicalConvergencePlan,
   CanonicalNativeObservation,
 } from "../../../src/service/modules/providers/model/dto/canonical-convergence";
-import type { CanonicalChannelSelection } from "../../../src/service/modules/governance/model/dto/current-main";
+import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
 import type { CanonicalDesiredState } from "../../../src/service/modules/providers/model/dto/canonical-desired-state";
 import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
 import {

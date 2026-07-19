@@ -1,5 +1,6 @@
 import { schema } from "@rawr/hq-sdk";
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import type { Static } from "typebox";
 import { Value } from "typebox/value";
 
 import {
@@ -12,9 +13,63 @@ import {
   encodeCurrentMainBodyV2,
   type CurrentMainBodyV2,
 } from "../../../src/service/modules/governance/model";
+import {
+  CanonicalChannelSelectionSchema,
+} from "../../../src/service/modules/governance/model/dto/current-main";
+import type {
+  CanonicalChannelSelection,
+  CurrentMainSelectionResult,
+} from "../../../src/service/model/dto/current-main-selection";
 import { contract } from "../../../src/service/modules/governance/contract";
 
 describe("governance procedure schema boundary", () => {
+  it("keeps neutral selection observations exact with governance schemas", () => {
+    type SelectionSchema = Readonly<Static<typeof CanonicalChannelSelectionSchema>>;
+    type ResultSchema = Readonly<Static<typeof CurrentMainSelectionResultSchema>>;
+    type Equal<TLeft, TRight> =
+      (<T>() => T extends TLeft ? 1 : 2) extends
+      (<T>() => T extends TRight ? 1 : 2)
+        ? (<T>() => T extends TRight ? 1 : 2) extends
+          (<T>() => T extends TLeft ? 1 : 2)
+          ? true
+          : false
+        : false;
+    type Assert<TValue extends true> = TValue;
+    type ExactObject<TLeft, TRight> = Equal<keyof TLeft, keyof TRight> extends true
+      ? {
+        [TKey in keyof TLeft]: TKey extends keyof TRight
+          ? Equal<TLeft[TKey], TRight[TKey]>
+          : false;
+      }[keyof TLeft] extends true
+        ? true
+        : false
+      : false;
+    type SelectionParity = Assert<Equal<CanonicalChannelSelection, SelectionSchema>>;
+    type ResultKindParity = Assert<Equal<
+      CurrentMainSelectionResult["kind"],
+      ResultSchema["kind"]
+    >>;
+    type ResultBranchParity<TKind extends CurrentMainSelectionResult["kind"]> = ExactObject<
+      Extract<CurrentMainSelectionResult, { kind: TKind }>,
+      Extract<ResultSchema, { kind: TKind }>
+    >;
+    type EligibleParity = Assert<ResultBranchParity<"CURRENT_ELIGIBLE">>;
+    type DirtyParity = Assert<ResultBranchParity<"DIRTY_REPOSITORY">>;
+    type WrongParity = Assert<ResultBranchParity<"WRONG_REPOSITORY">>;
+    type UnreachableParity = Assert<ResultBranchParity<"UNREACHABLE_REPOSITORY">>;
+    type StaleParity = Assert<ResultBranchParity<"STALE_RECORD">>;
+    type ForgedParity = Assert<ResultBranchParity<"FORGED_RECORD">>;
+
+    expectTypeOf<SelectionParity>().toEqualTypeOf<true>();
+    expectTypeOf<ResultKindParity>().toEqualTypeOf<true>();
+    expectTypeOf<EligibleParity>().toEqualTypeOf<true>();
+    expectTypeOf<DirtyParity>().toEqualTypeOf<true>();
+    expectTypeOf<WrongParity>().toEqualTypeOf<true>();
+    expectTypeOf<UnreachableParity>().toEqualTypeOf<true>();
+    expectTypeOf<StaleParity>().toEqualTypeOf<true>();
+    expectTypeOf<ForgedParity>().toEqualTypeOf<true>();
+  });
+
   it("exposes only the v2 record codec and current-main selector", () => {
     expect(Object.keys(contract).sort()).toEqual([
       "currentMainRecord",
