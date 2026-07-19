@@ -52,6 +52,7 @@ every provider mode is capsule-free.
 | C5 provider raw context | `codex/c6-route-provider-runtime-context` / this record node |
 | C5 current-main service composition | `codex/c6-own-current-main-context` / `a40af23f8124900f68a519cf737c9d88516374f8` |
 | C5 artifact/evidence service composition | `codex/c6-own-artifact-resource-context` / `07825bd307b2aefe4fa45a2c0154e80c90bbfab6` |
+| C5 export artifact service composition | `codex/c6-own-export-artifact-context` / `e3aecf0258fb80ef244fa16e035d00946f129a03` |
 
 Personal records remain unlanded until the installed Template interface can
 enforce their first semantic checkpoint. No hook bypass, legacy mixed sync, or
@@ -544,6 +545,25 @@ accepted context direction]] and the thin native boundary in
 | Static and structural proof | Lifecycle and CLI lint, typecheck, build, and sync passed without cache. The final guarded lifecycle structural suite passed all three enforced rules: closed positive service topology, dependency direction, and qualified command topology. The dependency rule now rejects service-to-binding imports and admits only the exact reader-shaped CLI transition. Strict OpenSpec validation and `git diff --check` passed. The protected note remained unstaged and byte-identical at SHA-256 `d06966389dac095f8a7f620aa4b27a50935a75762300000f987a848e45c2aadb`; no holding root remains. |
 | Reviews | Architecture/authority and TypeScript/refactor/oRPC reviews were clean. Behavior/testing found the missing full-client evidence path; structural/Habitat found the mutation-capable CLI exception. Both P2 findings were fixed and independently rereviewed. Final reviews report no remaining P1/P2. |
 | Scope | No native provider command, personal-repository relationship, app/runtime composition, export publication mechanism, live home, or protected-lane candidate was opened. HF01 remains excluded. Tasks 2A.1-2A.4 stay open until the remaining public binding/port surface is actually absent. |
+
+## C5 Export Artifact Service Composition Proof
+
+Code checkpoint `b902a668386879bc6ed8c4d95395ffd81074a1cb`
+removes the transitional caller-owned artifact projection described in
+[[#C5 Artifact And Evidence Service Composition Proof]] without claiming
+completion of [[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]].
+It follows the root-to-module flow in
+[[design#Service context flows from root dependencies into module handlers]]
+and the proportional boundary in [[authority-amendment#Corrected Frame]].
+
+| Boundary | Result |
+| --- | --- |
+| Service authority | The CLI selects one raw artifact repository and root at the sole lifecycle-client composition root. Root oRPC middleware derives one `artifactStore`; export `module.ts` selects a fresh frozen `{read}` view and passes only that view plus named export host dependencies to its router handler. No export provider middleware, mutation-capable store, caller artifact reader, or second semantic vocabulary reaches the handler. |
+| Retired surface | `./bindings/releases`, its implementation files, and the CLI `bindings/output` projection are absent without an alias, dynamic route, or re-export. The full export runtime is handler-private; public export ports expose only the still-transitional host contract. CLI host construction selects named fields and discards a structurally assignable legacy `artifactReader` at runtime. |
+| Behavior proof | The complete lifecycle suite passed 41 files / 361 tests and the complete CLI suite passed 46 files / 320 tests. The final focused export suite passed 2 files / 17 tests, and the affected CLI context/binding slice passed 2 files / 5 tests. Missing, malformed, and throwing artifact reads refuse before destination capture and before undo preflight or admission. A settled repeat re-reads live artifacts; after immutable-member corruption it refuses with destination bytes, inode/time identities, and every undo authority counter unchanged. |
+| Structural proof | Positive Habitat topology removes the retired binding/output roots and keeps export model matter closed to its declared `dto`, `helpers`, and `policy` axes. The dependency rule rejects router access to root `deps` or `provided` context and rejects artifact-provider imports anywhere under `apps/cli/src` except the exact client composition root; its fixture passed all 68 expected diagnostics. Lifecycle and CLI lint, typecheck, build, sync, and guarded structural suites passed without cache. |
+| Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing/state-machine, and structural code quality each closed their findings and report no remaining P0-P3. The loop removed a provider re-bag, closed runtime/type capability leakage, preserved method receiver binding, widened provider uniqueness to the whole CLI source root, and added live-result plus undo-preflight refusal proof. |
+| Scope | [[tasks#5. T6C3: Export Destination Independence|Export task 5.2]] remains blocked and untouched: no destination publication, marker, preclaim, no-replace mechanism, or native-provider behavior changed. `./bindings/exports`, `./ports/exports`, and `service/base.ts -> modules/exports/ports.ts` remain explicit later 2A transition debt; this node does not mark any 2A task complete. Personal content, app/runtime composition, live homes, and all protected-lane inputs remain outside the slice. |
 
 ## CLI Harness Owner Correction
 
