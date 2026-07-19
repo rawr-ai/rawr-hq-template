@@ -200,16 +200,46 @@ provider home on the next invocation. Any existing unmarked directory,
 different marker bytes, file, symlink, or unreadable destination blocks even
 under `replace-planned`.
 
-An absent claim prepares one exact-marked same-parent directory and publishes it
-without replacing an occupant. The resource retains no publication receipt,
-recovery state, marker-repair protocol, or inverse root action. A pre-publication
-failure may clean only that exact private staging directory through bounded,
-nonrecursive deletion. A post-publication uncertain result is resolved by one
-point observation: exact marker means the absorbing claim committed; every
-other result blocks without mutation. The ordinary export transaction then owns
-only payload, ledger, managed GC, and their inverse actions. This creates no
-second service, transaction history, root digest, registry, provider field, or
-shared ownership protocol.
+The required authority transition is always `Absent -> ExactExportOwned`. A
+native no-replace publication capability lets ordinary export perform it as one
+externally visible transition. Competing root state is preserved and blocks,
+and a provider cannot enter an export-created unmarked window. Once visible, the
+marker is the absorbing claim. The ordinary export transaction then owns only
+payload, ledger, managed GC, and their inverse actions. It never owns a root
+inverse action, publication receipt, recovery state, marker-repair protocol,
+transaction history, root digest, registry, or provider field.
+
+The substrate for that transition is an explicit authority gate, not an
+implementation detail C6 may weaken. Two mechanisms remain admissible pending
+selection: one narrowly scoped shared/native directory no-replace capability
+with no lifecycle semantics, or a separate point-addressed export-authorized
+protected preclaim operation. The native capability is the minimal
+frame-compatible recommendation and must not grow into a generalized publication
+framework. A stateless preclaim is not admissible: after interruption, providers
+cannot distinguish its unmarked residue from a legitimate provider home.
+Selecting preclaim therefore requires a separate authority amendment naming a
+persistent fence carrier and owner, provider observation, and exit/re-entry law,
+and proving that the fence is neither a second destination truth nor a hidden
+multi-home coordinator. Only then could ordinary export refuse `Absent` and
+accept an exact preclaimed root. Duplicating the native syscall subsystem inside
+the export resource is not admissible. Task 5.2 remains blocked until this choice
+is authorized; unprotected `mkdir` followed by a marker write is not an
+implementation of the required transition.
+
+The existing `RejectedBeforeMutation` result remains scoped to managed payload,
+ledger, and capsule mutation. A completed owner claim is durable admission state
+and may therefore remain visible when later planning or undo preflight rejects;
+tests and diagnostics must report that marker truth rather than imply that the
+destination path stayed absent.
+
+A losing native no-replace claimant never adopts the winner in the same
+invocation. It preserves the competing entry and refuses. A cold retry
+re-observes the root; an exact export marker is then admitted read-only with zero
+claim writes, while every other occupant remains preserved and blocked. A failed
+native publication with no winner leaves `Absent` unchanged. These distinctions
+prevent a failed result from erasing either a competing occupant or a committed
+authority transition. No preclaim failure/re-entry law is certified before its
+required fence amendment exists.
 
 Every provider operation requires an already-existing explicit home and treats
 any entry or unreadable result at that fixed marker slot as an ownership

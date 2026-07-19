@@ -361,7 +361,14 @@ aggregate native homes, or infer ownership from path shape.
   mutation bridge that may already have invoked an earlier native command
   remains uncertain rather than falsely reporting a zero-mutation target
 
-#### Scenario: Export publication never exposes an admissible provider home
-- **WHEN** export admission overlaps a provider request for one absent path
-- **THEN** the provider observes either a missing home or an occupied marker
-  slot and cannot enter native mutation between export creation and ownership
+#### Scenario: Provider cannot enter an unmarked publication window
+- **WHEN** an authorized export claim transitions an absent destination while a
+  provider observes the same path
+- **THEN** the provider can observe only a missing home or the occupied marker
+  and cannot enter native mutation through an export-created unmarked root
+
+#### Scenario: Later provider operations honor a completed export claim
+- **WHEN** an export claim has published its exact marker and a provider request
+  later selects that root
+- **THEN** the provider observes the occupied marker slot and cannot enter
+  native mutation
