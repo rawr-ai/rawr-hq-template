@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6C2B_MANAGED_RETIRE_DELETION_REVIEWED`
+`T6C1B_PRIVATE_SELECTION_ENGINE_REVIEWED`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
@@ -33,6 +33,7 @@ every provider mode is capsule-free.
 | T6C1a codec interface | `codex/c6-current-main-v2-codec` / this record node |
 | T6C2a provider capsule retirement | `codex/c6-provider-capsule-retirement` / `a7c9f120` |
 | T6C2b managed-retire deletion | `codex/c6-managed-retire-deletion` / this record node |
+| T6C1b private selector engine | `codex/c6-current-main-v2-selection` / this record node |
 | Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
 | Retained CLI target node | `codex/c6-serialize-cli-test-target` |
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
@@ -62,7 +63,7 @@ global undo redesign, and Inngest candidate bytes.
 | T6A thin record | complete | strict OpenSpec plus four standing reviews |
 | T6B repository checks | complete | staged/clean exactness, index race, declared-input boundary, one procedure |
 | T6C1a v2 codec/public interface | complete, reviewed | closed TypeBox model, canonical `cm2_` codec, one cold-port procedure and CLI dispatch |
-| T6C1b observed-Git selector/cutover | unopened | direct Git resolution and old ceremony/commands unreachable |
+| T6C1b observed-Git selector/cutover | private engine complete, atomic activation/cutover open | direct Git resolution is sealed but has no contract/router/CLI reachability; activation must retire the old ceremony in the same node |
 | T6C2a provider capsule retirement | complete, reviewed | capsule-cold provider modes, forward-only retry, export-only legacy retirement |
 | T6C2b managed-retire deletion | complete, reviewed | receipt-owned provider retire unreachable without alias; omission cleanup remains sync-owned |
 | T6C2c canonical native path | unopened | resolved selector, live native provenance, no canonical hidden state |
@@ -84,8 +85,8 @@ follow-up work.
 
 ## Current Gate
 
-- Finish T6C1b as the sole observed-Git current-main selector and v1 cutover,
-  then finish the thin canonical consumer without reopening test modes.
+- Point canonical provider convergence at the sealed selector, then delete the
+  v1 current-main/promotion ceremony without reopening test modes.
 - Implement T6C3 as the owner-local export boundary with no provider-home
   registry dependency.
 - Realign/rerun the retained T6D proof and T6E controller determinism proof.
@@ -122,6 +123,23 @@ authority, select provider state, or make the retired v1 path unreachable.
 | CLI | Existing `check --mode current-main-record` admits exactly one inline body/envelope input, constructs no executable/resource authority, and invokes exactly one typed procedure. JSON projects codec-owned bytes as exact newline-preserving `envelopeText`; human output and encode-to-validate round trips preserve those bytes. Two focused files / 17 tests passed. |
 | Static/structural | Lifecycle and CLI lint, typecheck, and build passed without cache. Both positive structural suites passed; no new Habitat rule was required because the admitted module/router topology was already closed. |
 | Reviews | TypeScript/refactor, architecture/authority, behavior/testing, and structural quality approved the bounded checkpoint with no remaining P1/P2. |
+
+## T6C1b Private Selector Proof
+
+This is a private implementation checkpoint inside
+[[tasks#3B. Observed-Git Selection And Cutover]]. It completes no public task:
+the new selector has no service contract, router member, client operation, or
+CLI mode. Canonical-provider activation and v1 ceremony deletion remain one
+atomic authority checkpoint, so no Graphite node exposes two selectors.
+
+| Boundary | Result |
+| --- | --- |
+| Private engine | One TypeBox-owned result union returns `CURRENT_ELIGIBLE` or exactly dirty, wrong, unreachable, stale, or forged refusal. The resolver accepts the existing branded Git locator and has no oRPC handler, module/router composition, public package export, or command projection in this node. The full service passed 35 files / 310 tests. |
+| Observed Git | The selector reads the fixed v2 record at observed `refs/heads/main`, reads the fixed release input at the selected reachable commit/tree, verifies digest and content authority, then re-observes the identical repository/ref/commit/tree once without retry. Later unselected content remains irrelevant. |
+| Real resource | An Effect Platform content-workspace fixture created a present orphan commit with otherwise valid selected bytes. Native Git reachability rejected it as `STALE_RECORD`; no map-backed test substituted for that boundary. The full five-code stale/forged partition is exercised against both record and selected-input reads, and the real-resource file passed 2/2. |
+| Unreachability | The governance contract/router/service spine and CLI operation union, flags, parser, dispatcher, and client selector remain byte-identical to the parent. Only the test fixture imports the private resolver directly. The installed controller therefore retains exactly the old selector until the later atomic cutover. |
+| Static/structural | Lifecycle and CLI lint, typecheck, build, sync, and positive structural suites passed without cache. Strict OpenSpec and `git diff --check` passed. No Habitat rule changed because this node adds no reachable service/router member. |
+| Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural proportionality approved the private engine after closing schema-drift, duplicate-classification, redundant-freeze, failure-partition, real-reachability, and premature-public-activation findings. No P1/P2 remains. |
 
 ## T6C2a Proof
 
