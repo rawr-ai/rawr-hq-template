@@ -36,6 +36,7 @@ import {
   createArtifactRepositoryReader,
   createArtifactRepositoryStore,
   createMechanicalEvidenceReader,
+  createMechanicalEvidenceStore,
 } from "../bindings/output";
 import {
   LifecycleAuthorityBindingError,
@@ -44,9 +45,8 @@ import {
   type LifecycleOperationClient,
   type LifecycleOperation,
 } from "../commands/binding";
-import { createNodeMechanicalEvidenceRuntime } from "./evidence/node-mechanical";
 import {
-  createNodeProviderLifecycleRuntime,
+  createNodeProviderLifecycleDeps,
   createNodeProviderRecordState,
   type NodeProviderRecordState,
 } from "./providers/node-runtime";
@@ -163,12 +163,11 @@ export function createProductionLifecycleDeps(input: Readonly<{
     providerProjectionRoot: layout.providerProjectionRoot,
     providerTargetStateRoot: layout.providerTargetStateRoot,
   });
-  const providers = createNodeProviderLifecycleRuntime({
-    currentMain: createGovernanceCurrentMainSelectionReader(contentWorkspace),
+  const providerDeps = createNodeProviderLifecycleDeps({
+    providerCurrentMain: createGovernanceCurrentMainSelectionReader(contentWorkspace),
     state: providerState,
-    artifactReader,
-    artifactStoreRoot: layout.artifactStoreRoot,
     providerExecutables: binding.providerExecutables,
+    providerEvidenceStore: createMechanicalEvidenceStore(layout.artifactStoreRoot),
   });
 
   return Object.freeze({
@@ -181,10 +180,10 @@ export function createProductionLifecycleDeps(input: Readonly<{
     packageOutput: makeNodePackageOutputAsyncPort(),
     exports: createExportLifecycleRuntime({
       artifactReader: createExportArtifactReader(artifactReader),
-      knownNativeHomesReader: createKnownNativeHomesReader(providerState),
+      knownNativeHomesReader: createKnownNativeHomesReader(providerState.exportKnownHomesReader),
       undoWriter: createNodeExportUndoWriter(layout.capsuleRoot),
     }),
-    providers,
+    ...providerDeps,
   } satisfies LifecycleDeps);
 }
 
@@ -212,12 +211,12 @@ function createExportArtifactReader(
 }
 
 function createKnownNativeHomesReader(
-  providerState: NodeProviderRecordState,
+  completeIdentities: NodeProviderRecordState["exportKnownHomesReader"],
 ): KnownNativeHomesReader {
   return Object.freeze({
     async readCompleteSnapshot() {
       try {
-        const observed = await providerState.targets.completeIdentities.readAll();
+        const observed = await completeIdentities.readAll();
         if (!observed.ok) {
           return Object.freeze({
             kind: "Unavailable" as const,

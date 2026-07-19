@@ -12,45 +12,68 @@ import { describe, expect, it } from "vitest";
 
 import { productFixture } from "../../shared/release/fixtures";
 import {
-  createLifecycleTestClient,
-  testInvocation,
-} from "../../support/client";
-import {
   createProviderMarketplaceRegistration,
-  createProviderInventory,
-  createTargetReceipt,
-  decodeMechanicalProviderEvidence,
-  hasProjectionExposureCollision,
-  mechanicalTargetFactDigest,
   marketplaceState,
-  parseAdapterProtocol,
-  parseProviderDeploymentRequest,
-  parseProviderTarget,
-  renderCompleteProjection,
-  visibleFingerprint,
-  type CompleteTest,
-  type MechanicalEvidenceHandle,
-  type MechanicalEvidenceObservation,
-  type MechanicalProviderEvidence,
-  type NativeMemberObservation,
-  type NativeProviderMutationAction,
-  type NativeStandaloneExposureObservation,
-  type ProviderArtifactAuthority,
-  type ProviderCapability,
   type ProviderMarketplaceObservation,
   type ProviderMarketplaceRegistration,
-  type ProviderMutationAction,
+} from "../../../src/service/modules/providers/model/policy/marketplace";
+import {
+  parseAdapterProtocol,
+  renderCompleteProjection,
+  type AgentProviderProjection,
+  type ProjectionDigest,
+  type ProviderArtifactAuthority,
+  type ProviderCapability,
+  type ProviderProjectionMember,
   type ProviderSourceIdentity,
-  type ProviderTarget,
+} from "../../../src/service/modules/providers/model/policy/projection";
+import {
+  createProviderInventory,
+  hasProjectionExposureCollision,
+  type NativeMemberObservation,
+  type NativeStandaloneExposureObservation,
+  type ProviderMutationAction,
   type ReceiptObservation,
   type TargetIdentityObservation,
+} from "../../../src/service/modules/providers/model/policy/state-machine";
+import {
+  createTargetReceipt,
+  visibleFingerprint,
   type TargetReceipt,
+} from "../../../src/service/modules/providers/model/policy/receipt";
+import {
+  mechanicalTargetFactDigest,
+  type MechanicalEvidenceDigest,
+  type MechanicalProviderEvidence,
+} from "../../../src/service/modules/providers/model/dto/mechanical-evidence";
+import {
+  parseProviderDeploymentRequest,
+  type CompleteTest,
   type TargetedTest,
-} from "../../../src/bindings/providers";
+} from "../../../src/service/modules/providers/model/dto/mode";
+import {
+  parseProviderTarget,
+  type ProviderTarget,
+} from "../../../src/service/modules/providers/model/dto/provider-target";
+import {
+  decodeMechanicalProviderEvidence,
+} from "../../../src/service/modules/providers/model/helpers/evidence-codec";
+import type {
+  MechanicalEvidenceHandle,
+  MechanicalEvidenceObservation,
+} from "../../../src/service/modules/providers/model/repositories/evidence";
+import type {
+  NativeProviderMutationAction,
+} from "../../../src/service/modules/providers/model/repositories/provider";
 import { failure, issue, success } from "../../../src/service/modules/providers/model/errors/deployment-result";
-import type { ProviderLifecycleRuntime } from "../../../src/service/modules/providers/ports";
-import type { CompleteTestDependencies } from "../../../src/service/modules/providers/router/complete-test.router";
-import type { TargetedTestDependencies } from "../../../src/service/modules/providers/router/targeted-test.router";
+import {
+  executeCompleteTest,
+  type CompleteTestDependencies,
+} from "../../../src/service/modules/providers/router/complete-test.router";
+import {
+  executeTargetedTest,
+  type TargetedTestDependencies,
+} from "../../../src/service/modules/providers/router/targeted-test.router";
 
 function createCompleteTest(dependencies: () => CompleteTestDependencies) {
   return async (input: unknown) => {
@@ -59,7 +82,7 @@ function createCompleteTest(dependencies: () => CompleteTestDependencies) {
     if (parsed.value.kind !== "complete-test") {
       return failure([issue("INVALID_MODE", "request.kind", "Expected complete-test request")]);
     }
-    return createProviderClient(dependencies()).completeTest(completeTestInput(parsed.value), testInvocation);
+    return executeCompleteTest(completeTestInput(parsed.value), dependencies());
   };
 }
 
@@ -70,7 +93,7 @@ function createTargetedTest(dependencies: () => TargetedTestDependencies) {
     if (parsed.value.kind !== "targeted-test") {
       return failure([issue("INVALID_MODE", "request.kind", "Expected targeted-test request")]);
     }
-    return createProviderClient(dependencies()).targetedTest(targetedTestInput(parsed.value), testInvocation);
+    return executeTargetedTest(targetedTestInput(parsed.value), dependencies());
   };
 }
 
@@ -89,53 +112,6 @@ function targetedTestInput(input: TargetedTest) {
     releases: input.releases.map((release) => ({ ...release })),
     evaluationProfile: input.evaluationProfile,
     targets: input.targets.map(({ provider, home }) => ({ provider, home })),
-  };
-}
-
-type ProviderRuntimeOverrides = Partial<Omit<ProviderLifecycleRuntime, "identities">> & Readonly<{
-  identities?: Partial<ProviderLifecycleRuntime["identities"]>;
-}>;
-
-function createProviderClient(overrides: ProviderRuntimeOverrides) {
-  const unavailable = unavailableProviderRuntime();
-  return createLifecycleTestClient({
-    providers: Object.freeze({
-      ...unavailable,
-      ...overrides,
-      identities: Object.freeze({
-        ...unavailable.identities,
-        ...overrides.identities,
-      }),
-    }),
-  }).providers;
-}
-
-function unavailableProviderRuntime(): ProviderLifecycleRuntime {
-  const unavailable = async (): Promise<never> => {
-    throw new Error("Unexpected provider dependency access in state-machine test");
-  };
-  return {
-    currentMain: { resolve: unavailable },
-    canonicalNative: {
-      inspectCapabilities: unavailable,
-      observe: unavailable,
-      apply: unavailable,
-    },
-    releases: { read: unavailable },
-    provider: {
-      projectionAdapterProtocol: () => { throw new Error("Unexpected provider protocol access"); },
-      inspectCapabilities: unavailable,
-      readInventory: unavailable,
-      verifyProjection: unavailable,
-    },
-    providerMutator: { apply: unavailable },
-    receipts: { read: unavailable },
-    receiptWriter: { publish: unavailable },
-    identities: { read: unavailable, readAll: unavailable },
-    identityWriter: { admit: unavailable },
-    projectionMaterializer: { materialize: unavailable },
-    marketplaceMaterializer: { materialize: unavailable },
-    evidence: { inspect: unavailable, publish: unavailable },
   };
 }
 
@@ -530,7 +506,7 @@ class Harness {
 
   seedPriorReleaseReceipt(
     target: { readonly home: string },
-    priorProjectionDigest = `ap1_${"e".repeat(64)}` as import("../../../src/bindings/providers").ProjectionDigest,
+    priorProjectionDigest = `ap1_${"e".repeat(64)}` as ProjectionDigest,
   ): void {
     const prior = this.receiptFor(target);
     if (prior === null) throw new Error("receipt fixture missing");
@@ -874,7 +850,7 @@ class Harness {
             this.marketplaces.get(target.home) ?? Object.freeze({ kind: "absent" }),
           ));
         },
-        verifyProjection: async (target: ProviderTarget, projection: import("../../../src/bindings/providers").AgentProviderProjection) => {
+        verifyProjection: async (target: ProviderTarget, projection: AgentProviderProjection) => {
           this.counters.visibilityReads += 1;
           if (target.home === this.failVisibilityHome) {
             return failure([issue("VISIBILITY_FAILED", "provider", "Injected visibility failure")]);
@@ -1003,14 +979,14 @@ class Harness {
         },
       },
       evidence: {
-        inspect: async (digest: import("../../../src/bindings/providers").MechanicalEvidenceDigest) => {
+        inspect: async (digest: MechanicalEvidenceDigest) => {
           this.counters.evidenceReads += 1;
           const found = this.evidence.get(digest);
           return success<MechanicalEvidenceObservation>(found === undefined
             ? { kind: "missing" }
             : { kind: "present", handle: found.handle, bytes: new Uint8Array(found.bytes) });
         },
-        publish: async (value: import("../../../src/bindings/providers").MechanicalProviderEvidence) => {
+        publish: async (value: MechanicalProviderEvidence) => {
           this.counters.evidencePublishes += 1;
           this.lastEvidenceAttempt = Object.freeze({
             evidenceDigest: value.evidenceDigest,
@@ -1025,7 +1001,7 @@ class Harness {
         },
       },
       projectionMaterializer: {
-        materialize: async (projection: import("../../../src/bindings/providers").AgentProviderProjection) => {
+        materialize: async (projection: AgentProviderProjection) => {
           this.counters.projectionMaterializations += 1;
           if (projection.provider === this.failProjectionMaterializationProvider) {
             return failure([issue("PROJECTION_MISMATCH", "projection.materialization", "Injected provider projection materialization failure")]);
@@ -1107,7 +1083,7 @@ function mustProtocol(value: string) {
 }
 
 function nativeMember(
-  member: import("../../../src/bindings/providers").ProviderProjectionMember,
+  member: ProviderProjectionMember,
   enablement: "disabled" | "enabled",
 ): NativeMemberObservation {
   return {

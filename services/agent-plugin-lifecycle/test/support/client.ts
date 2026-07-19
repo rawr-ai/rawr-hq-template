@@ -10,7 +10,6 @@ import type {
 } from "@rawr/resource-content-workspace";
 
 import { createClient, type Client, type Deps } from "../../src/client";
-import type { ProviderLifecycleRuntime } from "../../src/service/modules/providers/ports";
 
 export const testInvocation = Object.freeze({
   context: {
@@ -54,7 +53,7 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
         settle: async () => unavailableAsync("export destination settle"),
       },
     },
-    providers: unavailableProviderRuntime(),
+    ...unavailableProviderResources(),
     ...overrides,
   };
 
@@ -100,40 +99,36 @@ export function unavailableContentWorkspace(): ContentWorkspaceNodeAsyncPort {
   });
 }
 
-function unavailableProviderRuntime(): ProviderLifecycleRuntime {
+export function unavailableProviderResources() {
   return {
-    currentMain: { resolve: async () => unavailableAsync("provider current-main selection") },
-    canonicalNative: {
-      inspectCapabilities: async () => unavailableAsync("canonical provider capabilities"),
-      observe: async () => unavailableAsync("canonical provider inventory"),
-      apply: async () => unavailableAsync("canonical provider mutation"),
+    providerCurrentMain: { resolve: async () => unavailableAsync("provider current-main selection") },
+    providerRecords: {
+      readProjection: async () => unavailableAsync("provider projection record read"),
+      publishProjection: async () => unavailableAsync("provider projection record publication"),
+      readTarget: async () => unavailableAsync("provider target record read"),
+      scanTargets: async () => unavailableAsync("provider target record scan"),
+      captureTarget: async () => unavailableAsync("provider target record capture"),
+      releaseTarget: async () => unavailableAsync("provider target record release"),
+      writeTarget: async () => unavailableAsync("provider target record write"),
+      restoreTarget: async () => unavailableAsync("provider target record restore"),
+      settleTarget: async () => unavailableAsync("provider target record settlement"),
     },
-    releases: { read: async () => unavailableAsync("provider release") },
-    provider: {
-      projectionAdapterProtocol: () => unavailable("provider adapter protocol"),
-      inspectCapabilities: async () => unavailableAsync("provider capabilities"),
-      readInventory: async () => unavailableAsync("provider inventory"),
-      verifyProjection: async () => unavailableAsync("provider visibility"),
+    providerArtifactRepository: {
+      locateTree: async () => unavailableAsync("provider artifact tree location"),
+      readTree: async () => unavailableAsync("provider artifact tree read"),
+      publishTree: async () => unavailableAsync("provider artifact tree publication"),
+      readEvidence: async () => unavailableAsync("provider artifact evidence read"),
+      publishEvidence: async () => unavailableAsync("provider artifact evidence publication"),
     },
-    providerMutator: { apply: async () => unavailableAsync("provider mutation") },
-    receipts: { read: async () => unavailableAsync("provider receipt") },
-    receiptWriter: {
-      publish: async () => unavailableAsync("provider receipt publication"),
+    providerNativeResource: {
+      acquireCodex: async () => unavailableAsync("Codex native provider acquisition"),
+      acquireClaude: async () => unavailableAsync("Claude native provider acquisition"),
     },
-    identities: {
-      read: async () => unavailableAsync("provider identity"),
-      readAll: async () => unavailableAsync("complete provider identities"),
-    },
-    identityWriter: { admit: async () => unavailableAsync("provider identity admission") },
-    projectionMaterializer: {
-      materialize: async () => unavailableAsync("provider projection materialization"),
-    },
-    marketplaceMaterializer: {
-      materialize: async () => unavailableAsync("provider marketplace materialization"),
-    },
-    evidence: {
-      inspect: async () => unavailableAsync("provider evidence inspection"),
-      publish: async () => unavailableAsync("provider evidence publication"),
+    providerExecutables: Object.freeze({}),
+    providerProjectionRepositoryRoot: "/tmp/rawr-agent-plugin-lifecycle-test-provider-projections",
+    providerEvidenceStore: {
+      read: async () => unavailableAsync("provider evidence store read"),
+      publish: async () => unavailableAsync("provider evidence store publication"),
     },
   };
 }

@@ -49,6 +49,7 @@ every provider mode is capsule-free.
 | C5 artifact-tree location port | `codex/c6-expose-artifact-tree-location` / this record node |
 | C5 neutral current-main boundary | `codex/c6-neutral-current-main-boundary` / this record node |
 | C5 native provider resource location | `codex/c6-bind-native-provider-resource-location` / this record node |
+| C5 provider raw context | `codex/c6-route-provider-runtime-context` / this record node |
 
 Personal records remain unlanded until the installed Template interface can
 enforce their first semantic checkpoint. No hook bypass, legacy mixed sync, or
@@ -451,6 +452,23 @@ facades, so the cross-module tasks stay open.
 | Behavior proof | The real Effect Platform artifact provider supplies the opaque location in the service-owned address-law test. Nine focused service cases prove literal address selection, location/result failures, Codex and Claude ordering, and zero mutation on refusal; four focused CLI cases prove provider selection, typed resource failure, and exact opaque-location forwarding. The complete lifecycle suite passed 38 files / 351 tests, and the complete CLI suite passed 50 files / 328 tests. |
 | Static and structural | Lifecycle and CLI lint, typecheck, and build passed without cache. Both project sync/structural suites, all three enforced positive Habitat/dependency rules, strict OpenSpec, and `git diff --check` passed. The user-owned untracked note was held outside the closed topology only during structural proof, restored byte-identically, and never staged. |
 | Scope | [[tasks#5. T6C3: Export Destination Independence|Export task 5.2]] remains blocked and untouched. No publication capability, destination claim, app/runtime composition, personal-repository path, protected-lane release, or global provider mutation entered this node. |
+
+## C5 Provider Raw Context Proof
+
+This checkpoint completes the provider-only raw-context portion of
+[[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]]. The service
+still retains other transitional binding surfaces, and task 5.3 still owns the
+temporary complete-identity read, so no cross-module task is marked complete.
+
+| Boundary | Result |
+| --- | --- |
+| Root and service ownership | The root receives only the neutral current-main reader, raw provider-record and artifact ports, raw native resource, executable selection, projection root, and generic evidence store. Provider middleware derives release, native, projection, target-record, and evidence semantics under `provided`, then `module.ts` narrows those capabilities for procedure handlers. The exact raw-resource tuple memoizes one service-owned record state so process-local retained transaction authority survives separate oRPC invocations. |
+| CLI composition | The CLI selects the existing Effect Platform Node resource providers once and passes their raw ports. It no longer constructs provider adapters, target readers/mutators, projection materializers, evidence publishers, or the semantic provider runtime. The artifact repository instance is shared by the provider record state and service dependency. |
+| Public transition | `ProviderLifecycleRuntime`, `modules/providers/ports.ts`, `./ports/providers`, and the CLI provider-runtime/artifact/evidence adapters are absent. `./bindings/providers` now exposes only raw native session/resource contracts, the typed native resource failure, and the exact task-5.3 complete-identity reader. The export bridge receives only that reader; it cannot publish, mutate, materialize, or enumerate receipts. `completeNativeHomes` remains temporary until task 5.3 removes the old cross-owner aggregate after export admission is active. |
+| Behavior proof | Public oRPC probes cover complete and targeted test artifact refusal, canonical dirty-main refusal, and complete-home observation with exact envelopes and unrelated raw ports cold. The real provider-record resource publishes projection, marketplace, identity, and receipt state across reopen. A real failure-path probe proves retained capture authority survives middleware reconstruction and a later invocation succeeds. The serialized final lifecycle suite passed 40 files / 356 tests and the serialized final CLI suite passed 49 files / 325 tests; the final provider-context subset also passed 3 files / 12 tests. Earlier parallel attempts produced only generated-fixture contention, and each affected file passed immediately in isolation before the complete serialized proofs. |
+| Structural proof | Closed topology removes the retired provider port and CLI adapter files, positively closes both provider binding and projection roots, and admits provider-binding values only at the native binding and provider composition root. The dependency-direction fixture exercises 53 rejection diagnostics, including root-to-binding aliases and local index/native bypasses. Lifecycle and CLI lint, typecheck, build, sync, and guarded structural suites passed; strict OpenSpec and `git diff --check` passed. The protected untracked note was restored byte-identically and never staged. |
+| Reviews | Behavior/testing restored public procedure and real resource-reopen proof. Architecture narrowed the export bridge and provider binding. TypeScript/oRPC/Effect caught and closed per-invocation loss of retained transaction authority. Structural/Habitat closed sealed-module and local-binding alias bypasses and repaired the positive fixture. Final rereviews report no remaining P1/P2/P3. |
+| Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]] remains blocked and untouched. This node adds no destination publication capability, app/runtime composition, provider installer, personal-repository relationship, protected-lane release, or live provider mutation. |
 
 ## Standing Reviews
 

@@ -28,6 +28,9 @@ import type {
   ProjectionRecordPublication,
 } from "../model/repositories/projection-storage";
 import type {
+  CompleteTargetIdentityReader,
+} from "../model/repositories/state";
+import type {
   PathlessTargetRecordCollection,
   TargetRecordCapture,
   TargetRecordCaptureHandle,
@@ -71,6 +74,13 @@ export interface ProviderRecordState {
   readonly targets: PathlessTargetState;
 }
 
+// oRPC provider middleware runs per procedure; key the semantic state to its
+// stable raw resources so retained transaction authority survives that call.
+const statesByRecords = new WeakMap<
+  AgentProviderRecordsAsyncPort,
+  WeakMap<ArtifactRepositoryAsyncPort, Map<string, ProviderRecordState>>
+>();
+
 /**
  * Binds mechanical resource ports once, then exposes only service-owned
  * projection and target-state semantics to lifecycle applications.
@@ -78,12 +88,38 @@ export interface ProviderRecordState {
 export function createResourceProviderRecordState(
   options: ResourceProviderRecordStateOptions,
 ): ProviderRecordState {
+  let statesByTrees = statesByRecords.get(options.records);
+  if (statesByTrees === undefined) {
+    statesByTrees = new WeakMap();
+    statesByRecords.set(options.records, statesByTrees);
+  }
+  let statesByRoot = statesByTrees.get(options.trees);
+  if (statesByRoot === undefined) {
+    statesByRoot = new Map();
+    statesByTrees.set(options.trees, statesByRoot);
+  }
+  const existing = statesByRoot.get(options.projectionRepositoryRoot);
+  if (existing !== undefined) return existing;
+
   const projections = createPathlessProjectionStorage({
     records: createProjectionRecordCollection(options.records),
     trees: createProviderTreeCollection(options.trees, options.projectionRepositoryRoot),
   });
   const targets = createPathlessTargetState(createTargetRecordCollection(options.records));
-  return Object.freeze({ projections, targets });
+  const state = Object.freeze({ projections, targets });
+  statesByRoot.set(options.projectionRepositoryRoot, state);
+  return state;
+}
+
+/**
+ * Projects only the complete identity read needed by export settlement from the
+ * provider record resource. Provider lifecycle retains every broader target
+ * state capability behind its module middleware.
+ */
+export function createResourceCompleteTargetIdentityReader(
+  records: AgentProviderRecordsAsyncPort,
+): CompleteTargetIdentityReader {
+  return createPathlessTargetState(createTargetRecordCollection(records)).completeIdentities;
 }
 
 function createProjectionRecordCollection(

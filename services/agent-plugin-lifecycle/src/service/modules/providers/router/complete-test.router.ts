@@ -37,11 +37,22 @@ export interface CompleteTestDependencies {
 
 export const completeTest = module.completeTest.handler(
   async ({ context, input }) => providerOperationResult(
-    executeCompleteTest(input, context.providers),
+    executeCompleteTest(input, {
+      releases: context.releases,
+      provider: context.provider,
+      providerMutator: context.providerMutator,
+      receipts: context.receipts,
+      receiptWriter: context.receiptWriter,
+      identities: context.identities,
+      identityWriter: context.identityWriter,
+      projectionMaterializer: context.projectionMaterializer,
+      marketplaceMaterializer: context.marketplaceMaterializer,
+      evidence: context.evidence,
+    }),
   ),
 );
 
-async function executeCompleteTest(
+export async function executeCompleteTest(
   input: unknown,
   ports: CompleteTestDependencies,
 ): Promise<DeploymentResult<import("../model/dto/outcome").ProviderOperationOutcome>> {

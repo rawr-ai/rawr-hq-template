@@ -1,21 +1,31 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  canonicalSerializeTargetReceipt,
   createProviderMarketplaceRegistration,
-  createTargetIdentitySidecar,
-  createTargetReceipt,
   marketplaceState,
-  parseProviderTarget,
+} from "../../../src/service/modules/providers/model/policy/marketplace";
+import {
   renderCompleteProjection,
-  visibleFingerprint,
   type AgentProviderProjection,
-  type EvaluationProfile,
-  type ProviderRequestDigest,
-  type ProviderTarget,
-  type TargetIdentitySidecar,
+} from "../../../src/service/modules/providers/model/policy/projection";
+import {
+  canonicalSerializeTargetReceipt,
+  createTargetReceipt,
+  visibleFingerprint,
   type TargetReceipt,
-} from "../../../src/bindings/providers";
+} from "../../../src/service/modules/providers/model/policy/receipt";
+import {
+  createTargetIdentitySidecar,
+  type TargetIdentitySidecar,
+} from "../../../src/service/modules/providers/model/policy/state-machine";
+import type {
+  EvaluationProfile,
+  ProviderRequestDigest,
+} from "../../../src/service/modules/providers/model/dto/mode";
+import {
+  parseProviderTarget,
+  type ProviderTarget,
+} from "../../../src/service/modules/providers/model/dto/provider-target";
 import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
 import {
   canonicalSerializeTargetIdentitySidecar,

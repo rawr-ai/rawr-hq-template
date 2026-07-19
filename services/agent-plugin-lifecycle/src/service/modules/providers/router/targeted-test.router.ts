@@ -39,11 +39,22 @@ export interface TargetedTestDependencies {
 
 export const targetedTest = module.targetedTest.handler(
   async ({ context, input }) => providerOperationResult(
-    executeTargetedTest(input, context.providers),
+    executeTargetedTest(input, {
+      releases: context.releases,
+      provider: context.provider,
+      providerMutator: context.providerMutator,
+      receipts: context.receipts,
+      receiptWriter: context.receiptWriter,
+      identities: context.identities,
+      identityWriter: context.identityWriter,
+      projectionMaterializer: context.projectionMaterializer,
+      marketplaceMaterializer: context.marketplaceMaterializer,
+      evidence: context.evidence,
+    }),
   ),
 );
 
-async function executeTargetedTest(
+export async function executeTargetedTest(
   input: unknown,
   ports: TargetedTestDependencies,
 ): Promise<DeploymentResult<import("../model/dto/outcome").ProviderOperationOutcome>> {

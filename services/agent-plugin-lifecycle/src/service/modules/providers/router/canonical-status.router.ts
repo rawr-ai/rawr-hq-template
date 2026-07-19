@@ -25,9 +25,9 @@ export interface CanonicalStatusDependencies {
 
 export const canonicalStatus = module.canonicalStatus.handler(
   async ({ context, input }) => canonicalStatusResult(executeCanonicalStatus(input, {
-    currentMain: context.providers.currentMain,
-    releases: context.providers.releases,
-    native: context.providers.canonicalNative,
+    currentMain: context.currentMain,
+    releases: context.releases,
+    native: context.native,
   })),
 );
 

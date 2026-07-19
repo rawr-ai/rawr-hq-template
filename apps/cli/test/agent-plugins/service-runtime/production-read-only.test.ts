@@ -28,9 +28,10 @@ import {
   type RawCapsuleSlotSessionV1,
 } from "../../../src/lib/agent-plugins/undo/node-store";
 import { prepareExportOnlyCapsuleSlotV1 } from "../../../src/lib/agent-plugins/undo/legacy-provider-retirement";
+import { createMechanicalEvidenceStore } from "../../../src/lib/agent-plugins/bindings/output";
 import { createNodeExportUndoWriter } from "../../../src/lib/agent-plugins/service-runtime/client";
 import {
-  createNodeProviderLifecycleRuntime,
+  createNodeProviderLifecycleDeps,
   createNodeProviderRecordState,
 } from "../../../src/lib/agent-plugins/service-runtime/providers/node-runtime";
 import { undoAgentPluginCapsuleAtDataRoot } from "../../../src/lib/agent-plugins/service-runtime/undo";
@@ -68,27 +69,39 @@ describe("production lifecycle capsule boundary", () => {
     const layout = deriveAgentPluginControllerLayout({ dataRoot });
     const malformed = nonCanonicalLegacyFixture(await legacyFixtureBytes());
     await seedCapsule(layout.capsuleRoot, malformed);
-    const runtime = createNodeProviderLifecycleRuntime({
-      currentMain: Object.freeze({
+    const providerState = createNodeProviderRecordState({
+      controllerDataRoot: dataRoot,
+      providerProjectionRoot: layout.providerProjectionRoot,
+      providerTargetStateRoot: layout.providerTargetStateRoot,
+    });
+    const providerExecutables = Object.freeze({});
+    const providerEvidenceStore = createMechanicalEvidenceStore(layout.artifactStoreRoot);
+    const providerDeps = createNodeProviderLifecycleDeps({
+      providerCurrentMain: Object.freeze({
         resolve: async () => Object.freeze({
           kind: "DIRTY_REPOSITORY" as const,
           reason: "fixture content workspace is dirty",
         }),
       }),
-      state: createNodeProviderRecordState({
-        controllerDataRoot: dataRoot,
-        providerProjectionRoot: layout.providerProjectionRoot,
-        providerTargetStateRoot: layout.providerTargetStateRoot,
-      }),
-      artifactReader: {
-        read: async () => {
-          throw new Error("Blocked status must not read a release artifact");
-        },
-      },
-      artifactStoreRoot: layout.artifactStoreRoot,
-      providerExecutables: Object.freeze({}),
+      state: providerState,
+      providerExecutables,
+      providerEvidenceStore,
     });
-    const client = createLifecycleTestClient({ providers: runtime });
+    expect(Object.isFrozen(providerDeps)).toBe(true);
+    expect(Reflect.ownKeys(providerDeps)).toEqual([
+      "providerCurrentMain",
+      "providerRecords",
+      "providerArtifactRepository",
+      "providerNativeResource",
+      "providerExecutables",
+      "providerProjectionRepositoryRoot",
+      "providerEvidenceStore",
+    ]);
+    expect(providerDeps.providerRecords).toBe(providerState.records);
+    expect(providerDeps.providerArtifactRepository).toBe(providerState.artifactRepository);
+    expect(providerDeps.providerExecutables).toBe(providerExecutables);
+    expect(providerDeps.providerEvidenceStore).toBe(providerEvidenceStore);
+    const client = createLifecycleTestClient(providerDeps);
 
     const result = await client.providers.canonicalStatus({
       kind: "canonical-status",

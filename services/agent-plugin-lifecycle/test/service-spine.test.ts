@@ -8,8 +8,13 @@ import type { GitWorkspaceAnchor } from "@rawr/resource-content-workspace";
 import { describe, expect, it } from "vitest";
 
 import { createClient, type Client, type Deps } from "../src/client";
-import type { ProviderLifecycleRuntime } from "../src/service/modules/providers/ports";
-import { unavailableContentWorkspace } from "./support/client";
+import {
+  unavailableContentWorkspace,
+  unavailableProviderResources,
+} from "./support/client";
+import {
+  parseProviderTarget,
+} from "../src/service/modules/providers/model/dto/provider-target";
 import {
   parseArtifactRef,
   parseContentAuthority,
@@ -18,6 +23,7 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
 } from "../src/service/shared/release";
 
 const invocation = {
@@ -32,7 +38,8 @@ const invocation = {
 describe("agent plugin lifecycle oRPC service spine", () => {
   it("routes release, vendor, packaging, and governance refusals only through their owner ports", async () => {
     const calls: string[] = [];
-    const client = spineClient(calls);
+    const providerScans: Parameters<Deps["providerRecords"]["scanTargets"]>[0][] = [];
+    const client = spineClient(calls, { providerScans });
 
     await expect(client.releases.check(releaseRequest(), invocation)).resolves.toMatchObject({
       kind: "IneligibleReport",
@@ -50,7 +57,7 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       kind: "RejectedBeforeOutputMutation",
       primaryFailure: { code: "ArtifactMissing" },
     });
-    expect(calls.splice(0)).toEqual(["packaging.releaseArtifacts.read"]);
+    expect(calls.splice(0)).toEqual(["releaseArtifacts.read"]);
 
     await expect(client.governance.currentMainRecord({
       kind: "encode-body",
@@ -74,6 +81,80 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       "governance.contentWorkspace.inspectGitWorkspace",
       "governance.contentWorkspace.captureGitWorkspaceEvidence",
     ]);
+
+    await expect(client.providers.completeNativeHomes({}, invocation)).resolves.toMatchObject({
+      ok: true,
+      value: {
+        protocol: "agent-provider-native-homes@v1",
+        homes: [],
+      },
+    });
+    expect(calls.splice(0)).toEqual(["providers.records.scanTargets"]);
+    expect(providerScans).toEqual([{
+      kind: "Identity",
+      maxEntries: 1_000_000,
+      maxBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
+    }]);
+  });
+
+  it("returns exact provider refusal envelopes through raw owner resources", async () => {
+    const calls: string[] = [];
+    const artifactReads: Parameters<Deps["releaseArtifacts"]["read"]>[0][] = [];
+    const providerSelections: Parameters<Deps["providerCurrentMain"]["resolve"]>[0][] = [];
+    const client = spineClient(calls, { artifactReads, providerSelections });
+    const artifactIssue = {
+      code: "ARTIFACT_READ_FAILED",
+      path: "artifact",
+      message: "The selected immutable release artifact is missing",
+      expected: "",
+      actual: "",
+    } as const;
+
+    const completeRequest = completeTestRequest();
+    await expect(client.providers.completeTest(completeRequest, invocation)).resolves.toEqual({
+      ok: false,
+      issues: [artifactIssue],
+    });
+    expect(calls.splice(0)).toEqual(["releaseArtifacts.read"]);
+    expect(artifactReads.splice(0)).toEqual([completeRequest.releaseSet]);
+
+    const targetedRequest = targetedTestRequest();
+    await expect(client.providers.targetedTest(targetedRequest, invocation)).resolves.toEqual({
+      ok: false,
+      issues: [artifactIssue],
+    });
+    expect(calls.splice(0)).toEqual(["releaseArtifacts.read"]);
+    expect(artifactReads.splice(0)).toEqual(targetedRequest.releases);
+
+    const canonicalRequest = canonicalSyncRequest();
+    const target = parsed(parseProviderTarget(canonicalRequest.targets[0]));
+    const selectionIssue = {
+      code: "CHANNEL_NOT_ELIGIBLE",
+      path: "selection.currentMain",
+      message: "Canonical content workspace is dirty",
+      expected: "CURRENT_ELIGIBLE",
+      actual: "DIRTY_REPOSITORY",
+    } as const;
+    await expect(client.providers.canonicalSync(canonicalRequest, invocation)).resolves.toEqual({
+      ok: true,
+      value: {
+        status: "Blocked",
+        targets: [{
+          kind: "blocked",
+          status: "BLOCKED_SELECTION",
+          target,
+          appliedPrefix: [],
+          issues: [selectionIssue],
+        }],
+        issues: [selectionIssue],
+      },
+    });
+    expect(calls.splice(0)).toEqual(["providers.currentMain.resolve"]);
+    expect(providerSelections).toEqual([{
+      workspacePath: canonicalRequest.locator.workspaceRoot,
+      expectedRepositoryIdentity: canonicalRequest.locator.repositoryIdentity,
+    }]);
+    expect(artifactReads).toEqual([]);
   });
 
   it("rejects malformed release input before the owner port is invoked", async () => {
@@ -89,15 +170,21 @@ describe("agent plugin lifecycle oRPC service spine", () => {
   });
 });
 
-function spineClient(
-  calls: string[],
-): Client {
+interface SpineObservations {
+  readonly artifactReads?: Parameters<Deps["releaseArtifacts"]["read"]>[0][];
+  readonly providerScans?: Parameters<Deps["providerRecords"]["scanTargets"]>[0][];
+  readonly providerSelections?: Parameters<Deps["providerCurrentMain"]["resolve"]>[0][];
+}
+
+function spineClient(calls: string[], observations: SpineObservations = {}): Client {
+  const providerResources = unavailableProviderResources();
   const deps: Deps = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     releaseArtifacts: {
       read: async (ref) => {
-        calls.push("packaging.releaseArtifacts.read");
+        calls.push("releaseArtifacts.read");
+        observations.artifactReads?.push(ref);
         return { kind: "Missing", ref };
       },
       publishRelease: async () => unavailableAsync("release publication"),
@@ -155,7 +242,25 @@ function spineClient(
         settle: async () => unavailableAsync("export destination settle"),
       },
     },
-    providers: unavailableProviderRuntime(),
+    ...providerResources,
+    providerCurrentMain: {
+      resolve: async (input) => {
+        calls.push("providers.currentMain.resolve");
+        observations.providerSelections?.push(input);
+        return {
+          kind: "DIRTY_REPOSITORY",
+          reason: "Canonical content workspace is dirty",
+        };
+      },
+    },
+    providerRecords: {
+      ...providerResources.providerRecords,
+      scanTargets: async (input) => {
+        calls.push("providers.records.scanTargets");
+        observations.providerScans?.push(input);
+        return Object.freeze([]);
+      },
+    },
   };
   return createClient({
     deps,
@@ -226,6 +331,47 @@ function packagingRequest(): Parameters<Client["packaging"]["package"]>[0] {
   };
 }
 
+function completeTestRequest(): Parameters<Client["providers"]["completeTest"]>[0] {
+  return {
+    kind: "complete-test",
+    releaseSet: {
+      kind: "complete-set",
+      releaseSetDigest: `rs1_${"a".repeat(64)}`,
+    },
+    evaluationProfile: "provider-smoke@v1",
+    targets: [providerTargetInput()],
+  };
+}
+
+function targetedTestRequest(): Parameters<Client["providers"]["targetedTest"]>[0] {
+  return {
+    kind: "targeted-test",
+    releases: [{
+      kind: "release",
+      releaseDigest: `rd1_${"b".repeat(64)}`,
+      artifactDigest: `ad1_${"c".repeat(64)}`,
+    }],
+    evaluationProfile: "provider-smoke@v1",
+    targets: [providerTargetInput()],
+  };
+}
+
+function canonicalSyncRequest(): Parameters<Client["providers"]["canonicalSync"]>[0] {
+  return {
+    kind: "canonical-sync",
+    channel: "current-main",
+    locator: {
+      repositoryIdentity: "git:personal-rawr-hq",
+      workspaceRoot: "/tmp/content-workspace",
+    },
+    targets: [providerTargetInput()],
+  };
+}
+
+function providerTargetInput(): Readonly<{ provider: "codex"; home: string }> {
+  return Object.freeze({ provider: "codex", home: "/tmp/codex-home" });
+}
+
 function currentMainBody(): Extract<
   Parameters<Client["governance"]["currentMainRecord"]>[0],
   { kind: "encode-body" }
@@ -256,44 +402,6 @@ function currentMainBody(): Extract<
         capabilityProfileDigest: `cp1_${"2".repeat(64)}`,
       },
     ],
-  };
-}
-
-function unavailableProviderRuntime(): ProviderLifecycleRuntime {
-  return {
-    currentMain: { resolve: async () => unavailableAsync("provider current-main selection") },
-    canonicalNative: {
-      inspectCapabilities: async () => unavailableAsync("canonical provider capabilities"),
-      observe: async () => unavailableAsync("canonical provider inventory"),
-      apply: async () => unavailableAsync("canonical provider mutation"),
-    },
-    releases: { read: async () => unavailableAsync("provider release") },
-    provider: {
-      projectionAdapterProtocol: () => unavailable("provider adapter protocol"),
-      inspectCapabilities: async () => unavailableAsync("provider capabilities"),
-      readInventory: async () => unavailableAsync("provider inventory"),
-      verifyProjection: async () => unavailableAsync("provider visibility"),
-    },
-    providerMutator: { apply: async () => unavailableAsync("provider mutation") },
-    receipts: { read: async () => unavailableAsync("provider receipt") },
-    receiptWriter: {
-      publish: async () => unavailableAsync("provider receipt publication"),
-    },
-    identities: {
-      read: async () => unavailableAsync("provider identity"),
-      readAll: async () => unavailableAsync("complete provider identities"),
-    },
-    identityWriter: { admit: async () => unavailableAsync("provider identity admission") },
-    projectionMaterializer: {
-      materialize: async () => unavailableAsync("provider projection materialization"),
-    },
-    marketplaceMaterializer: {
-      materialize: async () => unavailableAsync("provider marketplace materialization"),
-    },
-    evidence: {
-      inspect: async () => unavailableAsync("provider evidence inspection"),
-      publish: async () => unavailableAsync("provider evidence publication"),
-    },
   };
 }
 

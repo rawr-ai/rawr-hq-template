@@ -1,4 +1,109 @@
-import { createServiceAnalyticsMiddleware, createServiceObservabilityMiddleware } from "../../base";
+import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
+import type { AgentProviderRecordsAsyncPort } from "@rawr/resource-agent-provider-records";
+
+import {
+  createServiceAnalyticsMiddleware,
+  createServiceObservabilityMiddleware,
+  createServiceProvider,
+} from "../../base";
+import type {
+  NativeProviderExecutablePaths,
+  NativeProviderResourcePort,
+} from "../../model/dependencies/providers";
+import type { ArtifactStore } from "../../model/dependencies/releases";
+import type { MechanicalEvidenceStore } from "../../shared/release";
+import type { VerifiedReleaseReader } from "./model/repositories/artifact";
+import type { CanonicalNativeRuntime } from "./model/repositories/canonical-native";
+import type { MechanicalEvidencePublisher } from "./model/repositories/evidence";
+import type {
+  ProviderTargetMutator,
+  ProviderTargetReader,
+} from "./model/repositories/provider";
+import type {
+  CompleteTargetIdentityReader,
+  ProviderMarketplaceMaterializer,
+  ProviderProjectionMaterializer,
+  TargetIdentityReader,
+  TargetIdentityWriter,
+  TargetReceiptReader,
+  TargetReceiptWriter,
+} from "./model/repositories/state";
+import { createResourceProviderReleaseReader } from "./repository/resource-artifact";
+import {
+  createResourceCanonicalNativeObserverResolver,
+  createResourceCanonicalNativeRuntime,
+  createResourceNativeProviderAdapterResolver,
+  createResourceNativeProviderObserverResolver,
+  createResourceProviderTargetMutator,
+  createResourceProviderTargetReader,
+} from "./repository/resource-context";
+import { createResourceMechanicalEvidencePublisher } from "./repository/resource-evidence";
+import { createResourceMarketplaceLocationResolver } from "./repository/resource-marketplace-location";
+import { createResourceProviderRecordState } from "./repository/resource-record-storage";
+
+export const resources = createServiceProvider<{
+  deps: {
+    releaseArtifacts: ArtifactStore;
+    providerRecords: AgentProviderRecordsAsyncPort;
+    providerArtifactRepository: ArtifactRepositoryAsyncPort;
+    providerNativeResource: NativeProviderResourcePort;
+    providerExecutables: NativeProviderExecutablePaths;
+    providerProjectionRepositoryRoot: string;
+    providerEvidenceStore: MechanicalEvidenceStore;
+  };
+}>().middleware<{
+  native: CanonicalNativeRuntime;
+  releases: VerifiedReleaseReader;
+  provider: ProviderTargetReader;
+  providerMutator: ProviderTargetMutator;
+  receipts: TargetReceiptReader;
+  receiptWriter: TargetReceiptWriter;
+  identities: TargetIdentityReader & CompleteTargetIdentityReader;
+  identityWriter: TargetIdentityWriter;
+  projectionMaterializer: ProviderProjectionMaterializer;
+  marketplaceMaterializer: ProviderMarketplaceMaterializer;
+  evidence: MechanicalEvidencePublisher;
+}>(async ({ context, next }) => {
+  const state = createResourceProviderRecordState({
+    records: context.deps.providerRecords,
+    trees: context.deps.providerArtifactRepository,
+    projectionRepositoryRoot: context.deps.providerProjectionRepositoryRoot,
+  });
+  const marketplaceLocations = createResourceMarketplaceLocationResolver({
+    repository: context.deps.providerArtifactRepository,
+    projectionRepositoryRoot: context.deps.providerProjectionRepositoryRoot,
+  });
+  const adapter = createResourceNativeProviderAdapterResolver(
+    context.deps.providerExecutables,
+    context.deps.providerNativeResource,
+    state.projections.marketplaceSources,
+    marketplaceLocations,
+  );
+  const observer = createResourceNativeProviderObserverResolver(
+    context.deps.providerExecutables,
+    context.deps.providerNativeResource,
+  );
+  const canonicalObserver = createResourceCanonicalNativeObserverResolver(
+    context.deps.providerExecutables,
+    context.deps.providerNativeResource,
+  );
+  return next({
+    native: createResourceCanonicalNativeRuntime(adapter, canonicalObserver),
+    releases: createResourceProviderReleaseReader(context.deps.releaseArtifacts),
+    provider: createResourceProviderTargetReader(adapter, observer),
+    providerMutator: createResourceProviderTargetMutator(adapter),
+    receipts: state.targets.receipts,
+    receiptWriter: state.targets.receipts,
+    identities: Object.freeze({
+      read: state.targets.identities.read,
+      readAll: state.targets.completeIdentities.readAll,
+    }),
+    identityWriter: state.targets.identities,
+    projectionMaterializer: state.projections.projectionMaterializer,
+    marketplaceMaterializer: state.projections.marketplaceMaterializer,
+    evidence: createResourceMechanicalEvidencePublisher(context.deps.providerEvidenceStore),
+  });
+});
 
 export const observability = createServiceObservabilityMiddleware({
   spanAttributes: ({ context }) => ({

@@ -1,37 +1,22 @@
 import {
-  createMechanicalEvidenceHandle as createStoreHandle,
+  MECHANICAL_EVIDENCE_PROTOCOL_VERSION,
+  createMechanicalEvidenceHandle,
+  parseMechanicalEvidenceHandle,
+  type MechanicalEvidenceHandleV1,
   type MechanicalEvidenceStore,
-} from "@rawr/agent-plugin-lifecycle/bindings/releases";
-import {
-  decodeMechanicalProviderEvidence,
-  failure,
-  issue,
-  success,
-  type MechanicalEvidenceDigest,
-  type MechanicalEvidencePublisher,
-  type MechanicalProviderEvidence,
-} from "@rawr/agent-plugin-lifecycle/bindings/providers";
+} from "../../../shared/release";
 
-import { createMechanicalEvidenceStore } from "../../bindings/output";
-import type { ArtifactStoreRoot } from "../../layout";
+import type { MechanicalEvidenceDigest } from "../model/dto/mechanical-evidence";
+import { failure, issue, success } from "../model/errors/deployment-result";
+import { decodeMechanicalProviderEvidence } from "../model/helpers/evidence-codec";
+import type { MechanicalEvidencePublisher } from "../model/repositories/evidence";
 
-export type NodeMechanicalEvidenceRuntime = Readonly<{
-  provider: MechanicalEvidencePublisher;
-}>;
-
-export function createNodeMechanicalEvidenceRuntime(
-  artifactStoreRoot: ArtifactStoreRoot,
-): NodeMechanicalEvidenceRuntime {
-  return createNodeMechanicalEvidenceRuntimeFromStore(
-    createMechanicalEvidenceStore(artifactStoreRoot),
-  );
-}
-
-export function createNodeMechanicalEvidenceRuntimeFromStore(
+/** Projects the generic immutable evidence store into provider evidence semantics. */
+export function createResourceMechanicalEvidencePublisher(
   store: MechanicalEvidenceStore,
-): NodeMechanicalEvidenceRuntime {
-  const provider: MechanicalEvidencePublisher = Object.freeze({
-    async inspect(evidenceDigest: MechanicalEvidenceDigest) {
+): MechanicalEvidencePublisher {
+  const publisher: MechanicalEvidencePublisher = {
+    async inspect(evidenceDigest) {
       const read = await store.read(storeHandle(evidenceDigest));
       if (read.kind === "Missing") return success(Object.freeze({ kind: "missing" }));
       if (read.kind === "Mismatch") {
@@ -49,10 +34,13 @@ export function createNodeMechanicalEvidenceRuntimeFromStore(
         bytes: new Uint8Array(read.bytes),
       }));
     },
-    async publish(evidence: MechanicalProviderEvidence) {
+    async publish(evidence) {
       const verified = decodeMechanicalProviderEvidence(evidence.bytes, evidence.evidenceDigest);
       if (!verified.ok) return verified;
-      const publication = await store.publish(createStoreHandle(evidence.bytes), evidence.bytes);
+      const publication = await store.publish(
+        createMechanicalEvidenceHandle(evidence.bytes),
+        evidence.bytes,
+      );
       if (publication.kind === "Published" || publication.kind === "ReadOnlyConverged") {
         return success(providerHandle(evidence.evidenceDigest));
       }
@@ -62,17 +50,18 @@ export function createNodeMechanicalEvidenceRuntimeFromStore(
         `${publication.failure}${publication.cleanupFailure === undefined ? "" : `; ${publication.cleanupFailure}`}`,
       )]);
     },
-  });
-
-  return Object.freeze({ provider });
+  };
+  return Object.freeze(publisher);
 }
 
-function storeHandle(evidenceDigest: string): ReturnType<typeof createStoreHandle> {
-  return Object.freeze({
+function storeHandle(evidenceDigest: MechanicalEvidenceDigest): MechanicalEvidenceHandleV1 {
+  const parsed = parseMechanicalEvidenceHandle({
     kind: "mechanical-evidence",
-    protocolVersion: 1,
+    protocolVersion: MECHANICAL_EVIDENCE_PROTOCOL_VERSION,
     digest: evidenceDigest,
-  }) as ReturnType<typeof createStoreHandle>;
+  });
+  if (!parsed.ok) throw new Error(parsed.issue.detail);
+  return parsed.value;
 }
 
 function providerHandle(evidenceDigest: MechanicalEvidenceDigest) {

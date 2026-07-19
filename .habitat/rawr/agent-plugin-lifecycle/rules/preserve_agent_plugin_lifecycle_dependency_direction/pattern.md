@@ -3,15 +3,19 @@ level: error
 ---
 # Preserve Agent Plugin Lifecycle Dependency Direction
 
-The lifecycle service consumes resource contracts, never concrete providers or
-controller implementation. Module ports cannot reintroduce the retired
-`internal` bucket; their current public surfaces remain protocols and types. The
-qualified CLI projection admits one production value consumer for the service
-client: its exact `service-runtime/client.ts` composition root. Other CLI
-modules may retain type-only client dependencies, but cannot construct, load,
-or relay another service client. Concrete provider construction stays outside the semantic service and release/evidence
-projections, in declared CLI binding and provider-projection roots. Release and
-evidence projections remain free of filesystem, process, FFI, and provider mechanics.
+The lifecycle service consumes resource contracts, never concrete resource
+providers or controller implementation. Module ports cannot reintroduce the
+retired `internal` bucket; their remaining public surfaces stay protocols and
+types. The qualified CLI projection admits one production value consumer for
+the service client: its exact `service-runtime/client.ts` composition root.
+Other CLI modules may retain type-only client dependencies, but cannot
+construct, load, or relay another service client. The CLI selects concrete
+resource providers; service middleware derives provider-domain repositories
+and adapters under `provided`. The provider transition binding admits value
+imports only from the native-resource binding and provider-resource composition
+root; the CLI-local provider index can flow only into that composition root.
+All other CLI consumers remain type-only. Release and evidence projections remain
+free of filesystem, process, FFI, and concrete resource-provider mechanics.
 Module router handlers consume only their local `module` context, and the
 service root composes module routers through `impl.router`. Type-only protocol
 imports remain available through `ports/*`. Root service capabilities and
@@ -27,19 +31,19 @@ language js(typescript)
 or {
   import_statement(source=$source) where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+(?:modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:(?:src/)?service/modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
   },
   `export { $exports } from $source` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+(?:modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:(?:src/)?service/modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
   },
   `export * from $source` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+(?:modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:(?:src/)?service/modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
   },
   `import($source)` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+(?:modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:(?:src/)?service/modules|bindings)/(?:governance|packaging|providers|releases|vendors)(?:/|[\"'])).*"
   },
   import_statement(source=$source) where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/providers/.*\.ts$",
@@ -102,14 +106,18 @@ or {
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|providers|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|releases))[\"']?$" },
+    not {
+      $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$",
+      $filename <: r".*apps/cli/src/lib/agent-plugins/(?:bindings/providers/native|service-runtime/providers/node-runtime)\.ts$"
+    },
     not { $import <: includes "import type" },
     not { $import <: r"(?s)^import\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
   },
   `import($source)` where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|providers|releases))[\"']?$" }
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|releases))[\"']?$" }
   },
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
@@ -136,14 +144,36 @@ or {
   `export { $exports } from $source` as $export where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|providers|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|releases))[\"']?$" },
     not { $export <: includes "export type" },
     not { $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
   },
   `export * from $source` as $export where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|providers|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|releases))[\"']?$" },
+    not { $export <: includes "export type *" }
+  },
+  import_statement(source=$source) as $import where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?(?:\./|\.\./)+(?:[^\"']+/)*bindings/providers(?:/(?:index|native))?(?:\.[jt]s)?[\"']?$",
+    not { $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/providers/node-runtime\.ts$" },
+    not { $import <: includes "import type" },
+    not { $import <: r"(?s)^import\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
+  },
+  `import($source)` where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?(?:\./|\.\./)+(?:[^\"']+/)*bindings/providers(?:/(?:index|native))?(?:\.[jt]s)?[\"']?$"
+  },
+  `export { $exports } from $source` as $export where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?(?:\./|\.\./)+(?:[^\"']+/)*bindings/providers(?:/(?:index|native))?(?:\.[jt]s)?[\"']?$",
+    not { $export <: includes "export type" },
+    not { $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
+  },
+  `export * from $source` as $export where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?(?:\./|\.\./)+(?:[^\"']+/)*bindings/providers(?:/(?:index|native))?(?:\.[jt]s)?[\"']?$",
     not { $export <: includes "export type *" }
   },
   import_statement(source=$source) where {
@@ -196,6 +226,7 @@ or {
 ```typescript
 // @filename: services/agent-plugin-lifecycle/src/service/base.ts
 import type { ReleaseRuntime } from "./modules/releases/ports";
+import type { ProviderTargetReader } from "./modules/providers/model/repositories/provider";
 
 // @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/packaging.ts
 import type { PackagingRuntime } from "../../modules/packaging/ports";
@@ -208,6 +239,30 @@ export * from "../../modules/releases/ports";
 
 // @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/release-dynamic.ts
 export const release = import("../../modules/releases/ports");
+
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-relative-import.ts
+import type { NativeProviderResourcePort } from "../../../bindings/providers";
+
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-package-import.ts
+import type { NativeProviderResourcePort } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-relative-export.ts
+export { type NativeProviderResourcePort } from "../../../bindings/providers";
+
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-package-export.ts
+export { type NativeProviderResourcePort } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-relative-star.ts
+export * from "../../../bindings/providers";
+
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-package-star.ts
+export * from "@rawr/agent-plugin-lifecycle/bindings/providers";
+
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-relative-dynamic.ts
+export const provider = import("../../../bindings/providers");
+
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-package-dynamic.ts
+export const provider = import("@rawr/agent-plugin-lifecycle/bindings/providers");
 
 // @filename: services/agent-plugin-lifecycle/src/service/modules/providers/model/policy/current-main-bypass.ts
 import type { CurrentMainSelectionResult } from "../../../governance/model/dto/current-main";
@@ -275,6 +330,30 @@ export const adapter = createResourceCodexProviderAdapter;
 import { createResourcePackageOutputRuntime } from "@rawr/agent-plugin-lifecycle/bindings/packaging";
 
 export const packaging = createResourcePackageOutputRuntime;
+
+// @filename: apps/cli/src/lib/agent-plugins/provider-binding-bypass.ts
+import { NativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+
+export const failure = NativeProviderResourceFailure;
+
+// @filename: apps/cli/src/lib/agent-plugins/provider-local-binding-bypass.ts
+import { createNodeNativeProviderResource } from "./bindings/providers";
+
+export const native = createNodeNativeProviderResource;
+
+// @filename: apps/cli/src/lib/agent-plugins/provider-local-native-bypass.ts
+import { createNodeNativeProviderResource } from "./bindings/providers/native";
+
+export const native = createNodeNativeProviderResource;
+
+// @filename: apps/cli/src/lib/agent-plugins/provider-local-binding-dynamic-bypass.ts
+export const native = import("./bindings/providers");
+
+// @filename: apps/cli/src/lib/agent-plugins/provider-local-binding-export-bypass.ts
+export { createNodeNativeProviderResource } from "./bindings/providers";
+
+// @filename: apps/cli/src/lib/agent-plugins/provider-local-binding-star-bypass.ts
+export * from "./bindings/providers";
 
 // @filename: apps/cli/src/lib/agent-plugins/value-surface-bypass.ts
 import { contentDigest } from "@rawr/agent-plugin-lifecycle/release";
@@ -387,21 +466,19 @@ import { impl } from "./impl";
 
 export const router = impl.router({ releases });
 
-// @filename: services/agent-plugin-lifecycle/src/service/modules/providers/ports.ts
-import type { NativeAgentProvider } from "@rawr/resource-native-agent-provider";
+// @filename: services/agent-plugin-lifecycle/src/service/modules/providers/repository/resource-context.ts
+import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
+import type { NativeProviderResourcePort } from "../../../model/dependencies/providers";
 
-import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
-
-export type * from "./ports/domain-projection";
-export type { NativeProviderAdapter } from "./ports/native-provider-adapter";
-export { type ProviderTarget, type ProviderInventory } from "./ports/provider-state";
-export type ProviderPort = NativeAgentProvider;
-export type CurrentMain = CurrentMainSelectionReader;
+export type RawProviderInputs = Readonly<{
+  artifacts: ArtifactRepositoryAsyncPort;
+  native: NativeProviderResourcePort;
+}>;
 
 // @filename: apps/cli/src/lib/agent-plugins/protocol.ts
-import type { ProviderLifecycleRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
+import type { NativeProviderResourcePort } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
-export type Runtime = ProviderLifecycleRuntime;
+export type NativeProvider = NativeProviderResourcePort;
 
 // @filename: apps/cli/src/lib/agent-plugins/release-protocol.ts
 export type {
@@ -453,10 +530,17 @@ import {
 export type Authority = ContentAuthority;
 export type SetDigest = ReleaseSetDigest;
 
-// @filename: apps/cli/src/lib/agent-plugins/bindings/providers.ts
-import { createResourceCodexProviderAdapter } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @filename: apps/cli/src/lib/agent-plugins/bindings/providers/native.ts
+import { NativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
-export const adapter = createResourceCodexProviderAdapter;
+export const failure = NativeProviderResourceFailure;
+
+// @filename: apps/cli/src/lib/agent-plugins/service-runtime/providers/node-runtime.ts
+import { createNodeNativeProviderResource } from "../../bindings/providers";
+import { createResourceCompleteTargetIdentityReader } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+
+export const native = createNodeNativeProviderResource;
+export const completeIdentities = createResourceCompleteTargetIdentityReader;
 
 // @filename: apps/cli/src/lib/agent-plugins/bindings/releases.ts
 export {

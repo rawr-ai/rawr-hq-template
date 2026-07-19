@@ -1,25 +1,25 @@
 schemaVersion = 1
 
 [[scopes]]
+name = "curated-agent-plugin-provider-bindings"
+root = "apps/cli/src/lib/agent-plugins/bindings/providers"
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+  "native.ts",
+]
+allowed = []
+
+[[scopes]]
 name = "curated-agent-plugin-controller-projection"
 root = "apps/cli/src/lib/agent-plugins/service-runtime"
 kind = "directory"
 mode = "closed"
 required = [
   "client.ts",
-  "evidence",
   "providers",
   "undo.ts",
-]
-allowed = []
-
-[[scopes]]
-name = "curated-agent-plugin-evidence-projection"
-root = "apps/cli/src/lib/agent-plugins/service-runtime/evidence"
-kind = "directory"
-mode = "closed"
-required = [
-  "node-mechanical.ts",
 ]
 allowed = []
 
@@ -29,9 +29,7 @@ root = "apps/cli/src/lib/agent-plugins/service-runtime/providers"
 kind = "directory"
 mode = "closed"
 required = [
-  "artifact-reader.ts",
   "node-runtime.ts",
-  "runtime.ts",
 ]
 allowed = []
 

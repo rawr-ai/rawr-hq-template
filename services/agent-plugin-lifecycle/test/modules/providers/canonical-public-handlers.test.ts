@@ -1,7 +1,8 @@
 import { Value } from "typebox/value";
 import { describe, expect, it, vi } from "vitest";
 
-import { createLifecycleTestClient, testInvocation } from "../../support/client";
+import { executeCanonicalStatus } from "../../../src/service/modules/providers/router/canonical-status.router";
+import { executeCanonicalSync } from "../../../src/service/modules/providers/router/canonical-sync.router";
 import {
   createCompleteSetArtifactRef,
   parsePluginId,
@@ -10,9 +11,6 @@ import {
   type VerifiedArtifactSnapshotV1,
 } from "../../../src/service/shared/release";
 import type { CurrentMainSelectionResult } from "../../../src/service/model/dto/current-main-selection";
-import type {
-  ProviderLifecycleRuntime,
-} from "../../../src/service/modules/providers/ports";
 import type {
   CanonicalNativeMutationAction,
   CanonicalNativeObservation,
@@ -779,7 +777,7 @@ class CanonicalHarness {
   }
 
   async sync(targets: readonly ProviderTarget[] = [this.codexTarget]) {
-    return await createLifecycleTestClient({ providers: this.runtime() }).providers.canonicalSync({
+    return await executeCanonicalSync({
       kind: "canonical-sync",
       channel: "current-main",
       locator: {
@@ -787,11 +785,11 @@ class CanonicalHarness {
         workspaceRoot: "/tmp/rawr-content",
       },
       targets: targets.map((target) => ({ provider: target.provider, home: target.home })),
-    }, testInvocation);
+    }, this.dependencies());
   }
 
   async status(targets: readonly ProviderTarget[] = [this.codexTarget]) {
-    return await createLifecycleTestClient({ providers: this.runtime() }).providers.canonicalStatus({
+    return await executeCanonicalStatus({
       kind: "canonical-status",
       channel: "current-main",
       locator: {
@@ -799,32 +797,20 @@ class CanonicalHarness {
         workspaceRoot: "/tmp/rawr-content",
       },
       targets: targets.map((target) => ({ provider: target.provider, home: target.home })),
-    }, testInvocation);
+    }, this.dependencies());
   }
 
-  runtime(): ProviderLifecycleRuntime {
+  dependencies() {
     return {
       currentMain: { resolve: this.selectionResolve },
       releases: { read: this.releaseRead },
-      canonicalNative: {
+      native: {
         inspectCapabilities: this.capabilities,
         observe: this.observe,
         apply: this.apply,
       },
-      provider: {
-        projectionAdapterProtocol: () => unexpected("legacy adapter protocol"),
-        inspectCapabilities: async () => unexpected("legacy capability read"),
-        readInventory: async () => unexpected("legacy inventory read"),
-        verifyProjection: async () => unexpected("legacy visibility read"),
-      },
-      providerMutator: { apply: async () => unexpected("legacy native mutation") },
-      receipts: { read: this.receiptRead },
-      receiptWriter: { publish: this.receiptWrite },
-      identities: { read: this.identityRead, readAll: this.identityReadAll },
-      identityWriter: { admit: this.identityWrite },
       projectionMaterializer: { materialize: this.projectionMaterialize },
       marketplaceMaterializer: { materialize: this.marketplaceMaterialize },
-      evidence: { inspect: this.evidenceInspect, publish: this.evidencePublish },
     };
   }
 

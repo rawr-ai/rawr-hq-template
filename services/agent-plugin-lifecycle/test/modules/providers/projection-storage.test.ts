@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   createProviderMarketplaceRegistration,
+  type ProviderMarketplaceRegistration,
+} from "../../../src/service/modules/providers/model/policy/marketplace";
+import {
   renderCompleteProjection,
   type AgentProviderProjection,
-  type ProviderMarketplaceRegistration,
-} from "../../../src/bindings/providers";
+} from "../../../src/service/modules/providers/model/policy/projection";
 import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
 import { createPathlessProjectionStorage } from "../../../src/service/modules/providers/repository/projection-storage";
 import type {

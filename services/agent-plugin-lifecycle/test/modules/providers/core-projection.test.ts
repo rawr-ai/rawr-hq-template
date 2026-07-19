@@ -21,7 +21,7 @@ import {
   parseAdapterProtocol,
   renderCompleteProjection,
   renderTargetedProjection,
-} from "../../../src/bindings/providers";
+} from "../../../src/service/modules/providers/model/policy/projection";
 
 describe("artifact-only provider projections", () => {
   it("is deterministic across member order, byte ownership, and same-protocol refactors", () => {

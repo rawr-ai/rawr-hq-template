@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseCanonicalStatusRequest,
   parseProviderDeploymentRequest,
-} from "../../../src/bindings/providers";
+} from "../../../src/service/modules/providers/model/dto/mode";
 import { contract } from "../../../src/service/modules/providers/contract";
 
 const RELEASE = Object.freeze({
