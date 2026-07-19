@@ -267,11 +267,11 @@ explicit pre-existing home. That removes the reason for cross-owner discovery.
 
 | Axis | Closed decision |
 | --- | --- |
-| Export ownership | One exports-owned exact two-field marker and the existing destination ledger; no root digest, registry, provider field, or second receipt. |
+| Export ownership | One exports-owned exact two-field marker is a monotonic destination claim; payload/ledger undo preserves it. The existing destination ledger owns managed content; there is no root digest, registry, provider field, or second receipt. |
 | Provider ownership | Native live state at an explicit existing home; any occupied/unreadable export-marker slot is a collision, and the provider does not parse the export codec. |
 | Removed relationship | `KnownNativeHomesReader`, `completeNativeHomes`, target-identity scans, pathless aggregation, and app-runtime plumbing that existed only to bridge those owners are deleted without replacement. |
-| Resource law | Export extends its private resource/action unions with an owner-local root-observation discriminator and one matched publish/inverse variant, then freezes absent-root publication and inverse in the existing action set before undo admission. The admitted action revalidates absence, prepares an already-marked private same-parent directory, and atomically publishes it no-replace. Provider resources never create homes and recheck marker-slot absence before native execution. |
-| Proof boundary | Bounded absent/exact/wrong marker cases, publication-failure containment, provider missing/marked/unmarked and recheck-transition cases, export-local destination overlap, one no-unmarked-final-state interleaving, no cross-owner reads, read-only repeat, types, lint, positive topology, and focused behavior. Alias, tamper, generalized publication, and undo matrices are outside C6. |
+| Resource law | Export performs one point-addressed `Absent -> ExactExportOwned` claim before payload/capsule work. It may publish an exact-marked private same-parent directory without replacement, then retains no publication state. The marker is absorbing and is never an inverse action. Provider resources never create homes and recheck marker-slot absence before native execution. |
+| Proof boundary | Bounded absent/exact/wrong marker cases, competing-root preservation, bounded pre-publication cleanup, marker persistence through payload undo, provider missing/marked/unmarked and recheck-transition cases, export-local destination overlap, no cross-owner reads, and read-only repeats. Alias, tamper, generalized publication, and adversarial recovery matrices are outside C6. |
 
 ## T6C3 Provider Slot Refusal Proof
 

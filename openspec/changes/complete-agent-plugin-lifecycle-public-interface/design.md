@@ -193,20 +193,23 @@ The hidden complete native-home registry and its filesystem scan are removed.
 Export owns one private exact marker at `.rawr-agent-plugin-owner.json` with
 canonical bytes `{"owner":"export","schemaVersion":1}\n`. Its resource edge
 admits only an absent explicit destination or an existing destination carrying
-those exact bytes. Export extends its private resource/action unions with an
-owner-local discriminated root observation and one forward root-publication
-variant with its matching inverse-action variant. That private codec/sequence
-extension creates no service, receipt, ledger, registry, or shared protocol.
-Capture records the root observation before admission. For an absent destination,
-root publication and its exact inverse are frozen in the existing action set
-before undo preflight and begin. The admitted action then revalidates absence,
-prepares one private same-parent directory with the exact marker, and atomically
-publishes it no-replace, so the final path is never visible unmarked. Its inverse
-may remove only the unchanged marker and empty owner-created root after payload
-undo. Any existing unmarked directory,
-different marker bytes, file, or unreadable destination blocks even under
-`replace-planned`. Root admission uses the existing export capsule/result
-accounting; it creates no second transaction, receipt, or root identity protocol.
+those exact bytes. The claim is a monotonic authority transition:
+`Absent -> ExactExportOwned`; an exact owned root remains owned. Payload and
+ledger undo never removes the marker or makes that path eligible to become a
+provider home on the next invocation. Any existing unmarked directory,
+different marker bytes, file, symlink, or unreadable destination blocks even
+under `replace-planned`.
+
+An absent claim prepares one exact-marked same-parent directory and publishes it
+without replacing an occupant. The resource retains no publication receipt,
+recovery state, marker-repair protocol, or inverse root action. A pre-publication
+failure may clean only that exact private staging directory through bounded,
+nonrecursive deletion. A post-publication uncertain result is resolved by one
+point observation: exact marker means the absorbing claim committed; every
+other result blocks without mutation. The ordinary export transaction then owns
+only payload, ledger, managed GC, and their inverse actions. This creates no
+second service, transaction history, root digest, registry, provider field, or
+shared ownership protocol.
 
 Every provider operation requires an already-existing explicit home and treats
 any entry or unreadable result at that fixed marker slot as an ownership
