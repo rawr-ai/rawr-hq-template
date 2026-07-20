@@ -1,6 +1,6 @@
 import type { AgentProviderProjection } from "../policy/projection";
 import type { ProviderId } from "./provider-target";
-import type { CanonicalChannelSelection } from "../../../governance/model/dto/current-main";
+import type { CanonicalChannelSelection } from "../../../../model/dto/current-main-selection";
 import type {
   NonEmptyReadonlyArray,
   ProviderDeploymentIssue,

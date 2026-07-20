@@ -47,6 +47,7 @@ every provider mode is capsule-free.
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
 | C5 provider repository ownership | `codex/c6-route-provider-service-context` / this record node |
 | C5 artifact-tree location port | `codex/c6-expose-artifact-tree-location` / this record node |
+| C5 neutral current-main boundary | `codex/c6-neutral-current-main-boundary` / this record node |
 
 Personal records remain unlanded until the installed Template interface can
 enforce their first semantic checkpoint. No hook bypass, legacy mixed sync, or
@@ -414,6 +415,23 @@ does not add filesystem logic, provider semantics, or a publication mechanism.
 | Static proof | Resource contract, Effect provider, and lifecycle service lint, typecheck, and build passed. `git diff --check` passed. No CLI, lifecycle context, native command, export destination, or app/runtime file changed. |
 | Reviews | Architecture/authority confirmed the existing resource remains the sole bounded-admission owner and the port adds no provider or publication semantics. TypeScript/refactor/Effect confirmed exact request/result forwarding, the established `runOrThrow` boundary, and the intentional required-method compile-time ratchet. Behavior/testing accepted present/missing, opaque-location parity, metadata preservation, and fail-fast unsupported-double coverage as proportionate proof. Structural quality found no generated output, topology addition, filesystem duplication, or extra abstraction. All four reviews report no P1/P2/P3. |
 | Scope | This is a required method on one existing generic resource port, not a generalized publication framework, new state owner, or provider installer. [[tasks#5. T6C3: Export Destination Independence|Export task 5.2]] remains blocked and untouched. |
+
+## C5 Neutral Current-Main Dependency Boundary Proof
+
+This checkpoint removes the provider module's type dependency on governance as
+a prerequisite to the raw provider-resource node under
+[[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]]. It changes no
+selection, artifact, native-provider, export, or app/runtime behavior.
+
+| Boundary | Result |
+| --- | --- |
+| Neutral contract | The service root owns only an unbranded explicit selector locator, the post-validation current-main observation/result types, and `CurrentMainSelectionReader`. Current-main body/envelope DTOs, TypeBox schemas, codec constants, Git translation, and selection policy remain governance-owned. Provider requests adapt their provider-domain locator to the neutral selector locator at the procedure boundary. |
+| Schema authority | Bidirectional compile-time assertions keep both neutral observation types assignable exactly with the governance TypeBox schema statics. The failure result remains a fully distributed discriminated union. The provider module imports no governance DTO, repository, router, or facade. |
+| Transitional composition | The existing qualified `bindings/governance` factory still composes the raw content-workspace resource with governance's sole selector and remains carried by the temporary `ProviderLifecycleRuntime` aggregate. This node therefore completes no 2A task; the next provider raw-resource/context node removes that caller-supplied semantic aggregate before the public-surface deletion. |
+| Positive topology | Closed Habitat scopes require the two exact neutral root files and remove the retired provider-local current-main protocol. The enforced dependency-direction rule rejects provider-to-governance imports, re-exports, star exports, and dynamic imports while leaving the still-explicit `base.ts -> ProviderLifecycleRuntime` transition for its own atomic node. |
+| Behavior proof | The focused governance/provider suite passed 5 files / 70 tests, including exact provider-locator adaptation. The complete lifecycle suite passed 37 files / 342 tests; the complete CLI target passed. Lifecycle and CLI lint, typecheck, and build passed without cache, and the transitional CLI selector fixture passed 1/1 on the neutral locator contract. The guarded three-rule Habitat gate, strict OpenSpec, and `git diff --check` passed. |
+| Reviews | Architecture/authority review caught and closed a repository-to-router inversion plus schema-union drift. Behavior/testing added strict discriminator/branch/schema parity and found the stale CLI locator fixture. Structural/Habitat closed the public governance-binding bypass and aligned rule metadata. TypeScript/refactor/oRPC and all three final rereviews report no remaining P1/P2/P3. |
+| Scope | [[tasks#5. T6C3: Export Destination Independence|Export task 5.2]] remains blocked and untouched. The task-5.3 known-home bridge, native commands, provider homes, personal repository, protected lanes, and operational state are unchanged. |
 
 ## Standing Reviews
 

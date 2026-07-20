@@ -1,5 +1,5 @@
 import type { VerifiedArtifactSnapshotV1 } from "../../../../shared/release";
-import type { CanonicalChannelSelection } from "../../../governance/model/dto/current-main";
+import type { CanonicalChannelSelection } from "../../../../model/dto/current-main-selection";
 
 import {
   type CanonicalDesiredState,

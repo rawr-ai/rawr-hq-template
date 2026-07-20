@@ -17,6 +17,9 @@ service root composes module routers through `impl.router`. Type-only protocol
 imports remain available through `ports/*`. Root service capabilities and
 service-level models cannot depend upward on a sealed capability module. The
 sealed set grows monotonically as module context-direction slices land.
+Provider convergence consumes current-main only through the neutral root
+dependency contract; it cannot import governance module DTOs, repositories, or
+routers.
 
 ```grit
 language js(typescript)
@@ -37,6 +40,22 @@ or {
   `import($source)` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
     $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:governance|packaging|releases|vendors)(?:/|[\"'])).*"
+  },
+  import_statement(source=$source) where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/providers/.*\.ts$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+.*governance(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:bindings/governance|(?:src/)?service/modules/governance)(?:/|[\"'])).*"
+  },
+  `export { $exports } from $source` where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/providers/.*\.ts$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+.*governance(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:bindings/governance|(?:src/)?service/modules/governance)(?:/|[\"'])).*"
+  },
+  `export * from $source` where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/providers/.*\.ts$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+.*governance(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:bindings/governance|(?:src/)?service/modules/governance)(?:/|[\"'])).*"
+  },
+  `import($source)` where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/providers/.*\.ts$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+.*governance(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:bindings/governance|(?:src/)?service/modules/governance)(?:/|[\"'])).*"
   },
   import_statement(source=$source) where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/[^/]+/router(?:/.*)?\.ts$",
@@ -189,6 +208,25 @@ export * from "../../modules/releases/ports";
 
 // @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/release-dynamic.ts
 export const release = import("../../modules/releases/ports");
+
+// @filename: services/agent-plugin-lifecycle/src/service/modules/providers/model/policy/current-main-bypass.ts
+import type { CurrentMainSelectionResult } from "../../../governance/model/dto/current-main";
+
+export type Selection = CurrentMainSelectionResult;
+
+// @filename: services/agent-plugin-lifecycle/src/service/modules/providers/model/current-main-bypass-export.ts
+export { type CurrentMainSelectionResult } from "../../governance/model/dto/current-main";
+
+// @filename: services/agent-plugin-lifecycle/src/service/modules/providers/model/current-main-bypass-star.ts
+export * from "../../governance/model/dto/current-main";
+
+// @filename: services/agent-plugin-lifecycle/src/service/modules/providers/model/current-main-bypass-dynamic.ts
+export const currentMain = import("../../governance/model/dto/current-main");
+
+// @filename: services/agent-plugin-lifecycle/src/service/modules/providers/model/current-main-binding-bypass.ts
+import { createGovernanceCurrentMainSelectionReader } from "@rawr/agent-plugin-lifecycle/bindings/governance";
+
+export const currentMain = createGovernanceCurrentMainSelectionReader;
 
 // @filename: services/agent-plugin-lifecycle/src/service/modules/releases/router/check.router.ts
 import { impl } from "../../../impl";
@@ -352,10 +390,13 @@ export const router = impl.router({ releases });
 // @filename: services/agent-plugin-lifecycle/src/service/modules/providers/ports.ts
 import type { NativeAgentProvider } from "@rawr/resource-native-agent-provider";
 
+import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
+
 export type * from "./ports/domain-projection";
 export type { NativeProviderAdapter } from "./ports/native-provider-adapter";
 export { type ProviderTarget, type ProviderInventory } from "./ports/provider-state";
 export type ProviderPort = NativeAgentProvider;
+export type CurrentMain = CurrentMainSelectionReader;
 
 // @filename: apps/cli/src/lib/agent-plugins/protocol.ts
 import type { ProviderLifecycleRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";

@@ -6,7 +6,7 @@ import {
   type VerifiedArtifactSnapshotV1,
   type VerifiedReleaseArtifactV1,
 } from "../../../src/service/shared/release";
-import type { CanonicalChannelSelection } from "../../../src/service/modules/governance/model/dto/current-main";
+import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
 import {
   parseAdapterProtocol,
   renderCompleteProjection,

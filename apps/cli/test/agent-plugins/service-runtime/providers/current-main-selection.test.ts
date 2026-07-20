@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { createGovernanceCurrentMainSelectionReader } from "@rawr/agent-plugin-lifecycle/bindings/governance";
-import { parseCanonicalStatusRequest } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type {
   ContentWorkspaceGitReadAsyncPort,
   GitWorkspaceAnchor,
 } from "@rawr/resource-content-workspace";
 
 describe("governance-backed current-main selection", () => {
-  it("adapts one canonical provider locator into the governance Git selector", async () => {
+  it("uses one explicit locator for the governance Git selector", async () => {
     const inspections: unknown[] = [];
     const anchor = governanceAnchor();
     const dirtyStatus = new TextEncoder().encode("? fixture-dirty\0");
@@ -67,17 +66,10 @@ function governanceAnchor(): GitWorkspaceAnchor {
 }
 
 function currentMainLocator() {
-  const parsed = parseCanonicalStatusRequest({
-    kind: "canonical-status",
-    channel: "current-main",
-    locator: {
-      repositoryIdentity: "git:github.com/rawr-ai/rawr-hq",
-      workspaceRoot: "/tmp/content",
-    },
-    targets: [{ provider: "codex", home: "/tmp/codex-home" }],
+  return Object.freeze({
+    workspacePath: "/tmp/content",
+    expectedRepositoryIdentity: "git:github.com/rawr-ai/rawr-hq",
   });
-  if (!parsed.ok) throw new Error("Expected a valid canonical-status locator fixture");
-  return parsed.value.locator;
 }
 
 function unexpected(label: string): never {

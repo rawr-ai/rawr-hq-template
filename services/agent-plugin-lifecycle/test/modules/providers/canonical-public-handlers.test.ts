@@ -9,7 +9,7 @@ import {
   type ContentAuthority,
   type VerifiedArtifactSnapshotV1,
 } from "../../../src/service/shared/release";
-import type { CurrentMainSelectionResult } from "../../../src/service/modules/governance/model/dto/current-main";
+import type { CurrentMainSelectionResult } from "../../../src/service/model/dto/current-main-selection";
 import type {
   ProviderLifecycleRuntime,
 } from "../../../src/service/modules/providers/ports";
@@ -59,6 +59,10 @@ describe("canonical provider public handlers", () => {
         status: "Blocked",
         targets: [{ kind: "blocked", status: "BLOCKED_SELECTION", appliedPrefix: [] }],
       },
+    });
+    expect(harness.selectionResolve).toHaveBeenCalledWith({
+      workspacePath: "/tmp/rawr-content",
+      expectedRepositoryIdentity: harness.fixture.selection.sourceRepositoryIdentity,
     });
     expect(harness.releaseRead).not.toHaveBeenCalled();
     harness.expectCanonicalNativeCold();

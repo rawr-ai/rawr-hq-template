@@ -1,12 +1,12 @@
 import type { ContentWorkspaceGitReadAsyncPort } from "@rawr/resource-content-workspace";
 
-import type { CurrentMainSelectionResult } from "../../service/modules/governance/model/dto/current-main";
-import type { CurrentMainSelectionReader } from "../../service/modules/providers/model/repositories/current-main";
+import type { CurrentMainSelectionReader } from "../../service/model/dependencies/current-main";
+import type { CurrentMainSelectionResult } from "../../service/model/dto/current-main-selection";
 import { decodeGitLocator } from "../../service/modules/governance/model/dto/boundary";
 import { createResourceExactGitReader } from "../../service/modules/governance/repository/content-workspace";
 import { resolveCurrentMainSelection } from "../../service/modules/governance/router/current-main-selection.router";
 
-/** Temporarily projects governance's sole selector into provider convergence. */
+/** Temporarily composes governance's sole selector for provider convergence. */
 export function createGovernanceCurrentMainSelectionReader(
   contentWorkspace: ContentWorkspaceGitReadAsyncPort,
 ): CurrentMainSelectionReader {
@@ -15,10 +15,7 @@ export function createGovernanceCurrentMainSelectionReader(
     async resolve(
       input: Parameters<CurrentMainSelectionReader["resolve"]>[0],
     ): Promise<CurrentMainSelectionResult> {
-      const locator = decodeGitLocator({
-        workspacePath: input.workspaceRoot,
-        expectedRepositoryIdentity: input.repositoryIdentity,
-      });
+      const locator = decodeGitLocator(input);
       return locator.ok
         ? resolveCurrentMainSelection(git, locator.value)
         : { kind: "WRONG_REPOSITORY", reason: locator.reason };

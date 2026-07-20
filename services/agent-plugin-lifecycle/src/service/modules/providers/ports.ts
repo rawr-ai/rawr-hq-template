@@ -1,7 +1,7 @@
 import type { MechanicalEvidencePublisher } from "./model/repositories/evidence";
 import type { VerifiedReleaseReader } from "./model/repositories/artifact";
 import type { CanonicalNativeRuntime } from "./model/repositories/canonical-native";
-import type { CurrentMainSelectionReader } from "./model/repositories/current-main";
+import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
 import type { ProviderTargetMutator, ProviderTargetReader } from "./model/repositories/provider";
 import type {
   CompleteTargetIdentityReader,
@@ -30,7 +30,7 @@ export interface ProviderLifecycleRuntime {
 
 export type { VerifiedReleaseReader } from "./model/repositories/artifact";
 export type { CanonicalNativeRuntime } from "./model/repositories/canonical-native";
-export type { CurrentMainSelectionReader } from "./model/repositories/current-main";
+export type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
 export type {
   MechanicalEvidenceHandle,
   MechanicalEvidenceObservation,

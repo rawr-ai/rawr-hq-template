@@ -6,7 +6,7 @@ import {
 } from "../../../src/service/shared/release";
 import type {
   CanonicalChannelSelection,
-} from "../../../src/service/modules/governance/model/dto/current-main";
+} from "../../../src/service/model/dto/current-main-selection";
 import {
   resolveCanonicalDesiredStates,
 } from "../../../src/service/modules/providers/model/policy/canonical-desired-state";

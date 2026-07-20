@@ -1,5 +1,11 @@
 import { ReadonlyObject, Type, type Static } from "typebox";
 
+export type {
+  CanonicalChannelSelection,
+  CurrentMainSelectionFailureKind,
+  CurrentMainSelectionResult,
+} from "../../../../model/dto/current-main-selection";
+
 export const CURRENT_MAIN_V2_SCHEMA_VERSION = 2 as const;
 export const CURRENT_MAIN_V2_CHANNEL = "current-main" as const;
 export const CURRENT_MAIN_V2_PROTOCOL = "agent-plugin-current-main@v2" as const;
@@ -167,14 +173,3 @@ export const CurrentMainSelectionResultSchema = Type.Union([
   selectionFailure("STALE_RECORD"),
   selectionFailure("FORGED_RECORD"),
 ]);
-
-export type CanonicalChannelSelection = Readonly<
-  Static<typeof CanonicalChannelSelectionSchema>
->;
-export type CurrentMainSelectionResult = Readonly<
-  Static<typeof CurrentMainSelectionResultSchema>
->;
-export type CurrentMainSelectionFailureKind = Exclude<
-  CurrentMainSelectionResult["kind"],
-  "CURRENT_ELIGIBLE"
->;
