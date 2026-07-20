@@ -329,35 +329,37 @@ that proof.
 ### Requirement: Export-owned roots block every provider mode
 Every provider plan/status operation MUST require its explicit canonical home to
 already exist as a directory, then read only the fixed
-`.rawr-agent-plugin-owner.json` slot at its explicit canonical home and validate
-protocol `rawr-agent-plugin-root-owner/v1`, canonical root, and `rt1_` digest
-before native mutation. It MUST revalidate the same home identity and marker
-absence immediately before each native command. A missing home MUST block; the
-provider lifecycle MUST NOT create a target root.
-A valid marker with owner `export`, a malformed/aliased/foreign marker, or an
-unreadable marker slot MUST block provider mutation. Absence permits ordinary
-provider planning. Provider code MUST NOT read an export ledger, scan export
-destinations, or infer ownership from path shape.
+`.rawr-agent-plugin-owner.json` slot at that home before native execution. Any
+entry or unreadable result at the slot MUST be `BLOCKED_COLLISION`; absence
+permits ordinary provider planning. The native resource MUST recheck slot
+absence immediately before each native command. A missing home MUST block and
+the provider lifecycle MUST NOT create it. Provider code MUST NOT parse or
+import the export marker codec, read an export ledger, scan export destinations,
+aggregate native homes, or infer ownership from path shape.
 
-#### Scenario: Export publishes an absent root first
-- **WHEN** export atomically publishes an absent path as one complete marked
-  destination and a later provider request selects that root as a home
+#### Scenario: Export owns a provider home candidate
+- **WHEN** a provider request selects a home whose fixed marker slot is occupied
 - **THEN** the target is `BLOCKED_COLLISION` before native mutation and no
   provider receipt, sidecar, or capsule changes
 
 #### Scenario: Provider state exists first
 - **WHEN** an explicit existing unmarked root is selected as a provider home
-- **THEN** later export admission blocks at its own boundary and provider state
-  remains the sole root owner
+- **THEN** provider convergence and a repeated read-only invocation succeed,
+  later export admission blocks at its own boundary, and provider state remains
+  the sole root owner
 
-#### Scenario: Admission has one winner without a shared registry
-- **WHEN** provider and export requests race for the same canonical path
-- **THEN** an absent path makes provider block before export's atomic
-  no-replace publish, while an existing path makes export block before provider
-  mutation; neither operation observes an admissible shared intermediate state
+#### Scenario: Missing home is not prepared
+- **WHEN** a provider request selects an absent explicit home
+- **THEN** the operation blocks without creating the home or invoking a native
+  command
 
-#### Scenario: Aliases cannot split root ownership
-- **WHEN** provider and export locators canonicalize to the same root through
-  different lexical paths
-- **THEN** the same marker/root identity law applies and at most one owner is
-  admitted
+#### Scenario: Marker slot becomes occupied at the native edge
+- **WHEN** planning observes an absent marker slot but the native resource
+  recheck observes any entry or unreadable result before command execution
+- **THEN** the target is `BLOCKED_COLLISION` with zero native calls and no
+  provider-owned state mutation
+
+#### Scenario: Export publication never exposes an admissible provider home
+- **WHEN** export admission overlaps a provider request for one absent path
+- **THEN** the provider observes either a missing home or an occupied marker
+  slot and cannot enter native mutation between export creation and ownership

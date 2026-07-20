@@ -11,26 +11,31 @@ destination and destination ledger. It MUST NOT acquire a provider-home registry
 provider receipt, target sidecar, ambient home scan, or caller-authored native
 home list.
 
-The fixed `.rawr-agent-plugin-owner.json` slot MUST contain canonical
-newline-terminated JSON no larger than 4,096 bytes with exactly
-`{schemaVersion:1, protocol:"rawr-agent-plugin-root-owner/v1", owner:"export", canonicalRoot, rootDigest}`.
-For an absent destination, `canonicalRoot` MUST equal the verified stable
-parent's absolute real path joined with one validated nonempty basename. The
-basename MUST be one ordinary path component and MUST NOT be `.`, `..`, contain
-a separator, or contain NUL. `rootDigest` MUST equal
-`"rt1_" + hex(SHA-256(UTF8(canonicalRoot)))`. This one versioned marker establishes
-mutually exclusive export ownership. Export may admit only an absent canonical
-destination path. It MUST prepare and verify one private same-parent directory
-containing the marker, then atomically publish that complete marked root with
-no-replace semantics as its first controller-capsule-covered mutation before
-payload publication. It MUST revalidate the opened parent identity immediately
-before publication and verify the published root's real path equals
-`canonicalRoot` immediately afterward. An existing marker MUST be a non-aliased regular file with
-link count one whose closed canonical bytes bind owner `export`, marker protocol,
-and canonical root identity. The marker persists while the root is an export
-destination. An unmarked nonempty root, malformed/aliased/foreign marker, or
-changed marker blocks before payload, ledger, or cleanup mutation, including
-under `replace-planned`.
+The fixed `.rawr-agent-plugin-owner.json` slot MUST contain exactly the canonical
+newline-terminated bytes `{"owner":"export","schemaVersion":1}\n`. Export owns
+this private marker policy; providers recognize only occupancy of the fixed
+slot and MUST NOT import or parse its codec. The export resource MUST admit an
+explicit destination only when it is absent or is an existing directory with
+those exact marker bytes. For an absent destination, the resource MUST prepare
+one private same-parent directory containing the exact marker and atomically
+publish it no-replace through an admitted root-publication action. Capture MUST
+represent root state with an owner-local discriminated observation, and the
+existing private export resource/action unions MUST gain one forward
+root-publication variant and its matching inverse-action variant. The private
+export action codec and undo sequence own those variants; they create no service,
+receipt, ledger, registry, or shared protocol. Capture MUST record the absent-root
+observation before admission; publication and its exact inverse MUST be in the
+same frozen action set before undo preflight and begin; and apply MUST revalidate
+final-path absence before publication. The final
+destination MUST NOT be observable as an unmarked directory. Its inverse MAY
+remove only the exact unchanged marker and then-empty owner-created root after
+payload undo. Root admission and its applied prefix MUST use the existing export
+capsule/result accounting; no second transaction, root receipt, digest, registry,
+or provider field is added. Preparation or publication failure MAY remove only
+that owner-created private directory after exact path, parent, directory,
+non-symlink, and containment guards. An existing unmarked directory, different
+marker bytes, file, or unreadable root MUST block without payload, ledger, or
+cleanup mutation, including under `replace-planned`.
 
 After root admission, export MUST preflight live destination paths and apply
 `managed-only` by default, making only same-ledger-owned paths eligible for
@@ -42,26 +47,30 @@ provider operations honor the visible marker at their own boundary.
 
 #### Scenario: Absent root becomes export-owned once
 - **WHEN** export targets an absent canonical destination
-- **THEN** its first mutation atomically publishes one complete owner-created
-  marked root under the export capsule before any payload or ledger mutation
+- **THEN** its first transaction action atomically publishes one already-marked
+  private directory before payload or ledger mutation
+
+#### Scenario: Exact marked root is reused
+- **WHEN** export targets an existing directory with the exact marker bytes
+- **THEN** root admission is read-only and destination-ledger rules decide the
+  requested payload transition
+
+#### Scenario: Private publication failure advances no committed state
+- **WHEN** exact-marker preparation or no-replace publication fails for an
+  absent destination
+- **THEN** export returns non-success with no final root, payload, ledger,
+  applied prefix, or committed capsule advancement and cleanup is limited to
+  the exactly guarded owner-created private directory
 
 #### Scenario: Existing unowned root cannot be adopted
 - **WHEN** export targets any existing root with no valid export marker
 - **THEN** it blocks without payload, marker, ledger, cleanup, or capsule
   mutation even under `replace-planned`
 
-#### Scenario: Provider and export admission cannot both win
-- **WHEN** a provider request and export request select the same canonical path
-- **THEN** provider requires that path to exist while export requires it to be
-  absent through atomic no-replace publication, so exactly one side can reach
-  its first external mutation without a registry or cross-owner lock
-
-#### Scenario: Symlinked parent aliases cannot change prospective identity
-- **WHEN** a lexical destination reaches an absent child through a symlinked or
-  substituted parent
-- **THEN** export derives identity from the verified real parent, revalidates
-  that parent before no-replace publication, and blocks if the published root
-  cannot verify as the exact prospective `canonicalRoot`
+#### Scenario: Provider cannot enter an unmarked publication window
+- **WHEN** export and provider admission overlap on one absent final path
+- **THEN** the final path is either absent or already marked, so provider cannot
+  begin native mutation in an export-created unmarked directory
 
 #### Scenario: Provider side state cannot authorize export
 - **WHEN** provider receipts, target sidecars, native inventory, or an old

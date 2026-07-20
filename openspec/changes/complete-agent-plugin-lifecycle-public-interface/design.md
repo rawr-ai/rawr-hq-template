@@ -155,23 +155,33 @@ test mode.
 
 ### Provider homes and export destinations have one visible owner
 
-The hidden complete native-home registry is removed. One fixed versioned
-root-owner marker instead makes export ownership visible at the root itself.
-Export may admit only an absent destination and atomically no-replace publishes
-a complete owner-created marked directory as its first capsule-covered mutation.
-Its prospective identity is the verified real parent joined to one validated
-basename; export revalidates that parent before publication and the published
-real path afterward. An existing export marker must bind the canonical root and
-owner protocol. Any existing unmarked root, malformed marker, or foreign marker
-blocks export even under `replace-planned`.
+The hidden complete native-home registry and its filesystem scan are removed.
+Export owns one private exact marker at `.rawr-agent-plugin-owner.json` with
+canonical bytes `{"owner":"export","schemaVersion":1}\n`. Its resource edge
+admits only an absent explicit destination or an existing destination carrying
+those exact bytes. Export extends its private resource/action unions with an
+owner-local discriminated root observation and one forward root-publication
+variant with its matching inverse-action variant. That private codec/sequence
+extension creates no service, receipt, ledger, registry, or shared protocol.
+Capture records the root observation before admission. For an absent destination,
+root publication and its exact inverse are frozen in the existing action set
+before undo preflight and begin. The admitted action then revalidates absence,
+prepares one private same-parent directory with the exact marker, and atomically
+publishes it no-replace, so the final path is never visible unmarked. Its inverse
+may remove only the unchanged marker and empty owner-created root after payload
+undo. Any existing unmarked directory,
+different marker bytes, file, or unreadable destination blocks even under
+`replace-planned`. Root admission uses the existing export capsule/result
+accounting; it creates no second transaction, receipt, or root identity protocol.
 
-Every provider operation requires an already-existing explicit home, checks the
-same fixed marker, and revalidates home identity/marker absence before native
-commands. It blocks when export owns the root and never creates the home. Export does
-not inspect provider state, providers do not inspect export ledgers, and neither
-scans a registry or infers ownership from path shape. The marker chooses only
-the mutually exclusive root species; native inventory and the destination
-ledger remain their respective state truths.
+Every provider operation requires an already-existing explicit home and treats
+any entry or unreadable result at that fixed marker slot as an ownership
+collision before native execution. Providers neither parse nor own the export
+marker protocol, never create the home, and recheck the slot at their native
+resource boundary. Export does not inspect provider state, providers do not
+inspect export ledgers, and neither scans or aggregates the other owner's roots.
+Native inventory and the destination ledger remain their respective state
+truths.
 
 ### One durable controller root replaces transfer
 
@@ -200,7 +210,10 @@ required local/remote ratchet remain. C6 does not add semantic GritQL rules for
 runtime behavior. Test-only scheduling belongs to the owning Vitest project;
 DevOps command discovery belongs to `@rawr/plugin-devops`. T6C1/C2 update the
 closed positive command/projection inventory to remove only `attest-promotion`
-and receipt-owned `retire`; qualified `undo` remains required.
+and receipt-owned `retire`; qualified `undo` remains required. T6C3 keeps closed
+owner-local port, router, binding, and resource inventories whose admitted
+topology has no aggregate native-home or target-scan relationship; it does not
+encode their absence as a blacklist.
 
 ## Reachable Lifecycle
 
