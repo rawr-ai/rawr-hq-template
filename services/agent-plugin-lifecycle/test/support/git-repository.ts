@@ -19,12 +19,11 @@ import {
   type PluginId,
   type ReleaseRelativePath,
   type RepositoryIdentity,
-} from "@rawr/agent-plugin-lifecycle/release";
-import type { Client } from "@rawr/agent-plugin-lifecycle/client";
-
-import type { OwnedFixtureRoot } from "../owned-fixture-root";
+} from "../../src/service/shared/release";
+import type { Client } from "../../src/client";
 
 type ContentWorkspacePolicy = Parameters<Client["releases"]["check"]>[0]["contentWorkspace"];
+type GitRepositoryFixtureRoot = Readonly<{ path: string }>;
 
 const execFileAsync = promisify(execFile);
 
@@ -53,7 +52,7 @@ export interface GeneratedMisleadingExecutableRepository extends GeneratedGitRep
 }
 
 export async function createGeneratedGitRepository(
-  fixture: OwnedFixtureRoot,
+  fixture: GitRepositoryFixtureRoot,
   pluginName = "fixture-plugin",
 ): Promise<GeneratedGitRepository> {
   const root = join(fixture.path, "repository");
@@ -141,7 +140,7 @@ export async function createGeneratedGitRepository(
 }
 
 export async function createGeneratedMultiMemberGitRepository(
-  fixture: OwnedFixtureRoot,
+  fixture: GitRepositoryFixtureRoot,
 ): Promise<GeneratedMultiMemberGitRepository> {
   const repository = await createGeneratedGitRepository(fixture, "fixture-alpha");
   const secondPluginId = must(parsePluginId("fixture-beta"));

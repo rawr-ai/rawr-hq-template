@@ -45,6 +45,17 @@ allowed = [
 ]
 
 [[scopes]]
+name = "transitional-agent-plugin-release-binding-files"
+root = "services/agent-plugin-lifecycle/src/bindings/releases"
+kind = "directory"
+mode = "closed"
+required = [
+  "artifact-repository.ts",
+  "mechanical-evidence.ts",
+]
+allowed = []
+
+[[scopes]]
 name = "agent-plugin-lifecycle-service-shell"
 root = "services/agent-plugin-lifecycle/src/service"
 kind = "directory"
@@ -207,8 +218,20 @@ required = [
   "middleware.ts",
   "model",
   "module.ts",
+  "repository",
   "router",
   "schemas.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-release-source-repositories"
+root = "services/agent-plugin-lifecycle/src/service/modules/releases/repository"
+kind = "directory"
+mode = "closed"
+required = [
+  "content-workspace.ts",
+  "staged-content-workspace.ts",
 ]
 allowed = []
 

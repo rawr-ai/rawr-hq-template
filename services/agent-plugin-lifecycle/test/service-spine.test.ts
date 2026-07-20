@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 
 import { createClient, type Client, type Deps } from "../src/client";
 import type { ProviderLifecycleRuntime } from "../src/service/modules/providers/ports";
+import { unavailableContentWorkspace } from "./support/client";
 import {
   parseArtifactRef,
   parseContentAuthority,
@@ -71,14 +72,6 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     expect(calls.splice(0)).toEqual(["governance.git.inspect"]);
   });
 
-  it("rejects malformed owner output at the oRPC response boundary", async () => {
-    const calls: string[] = [];
-    const client = spineClient(calls, { malformedReleaseIssue: true });
-
-    await expect(client.releases.check(releaseRequest(), invocation)).rejects.toThrow();
-    expect(calls).toEqual(["releases.source.inspect"]);
-  });
-
   it("rejects malformed release input before the owner port is invoked", async () => {
     const calls: string[] = [];
     const client = spineClient(calls);
@@ -94,50 +87,25 @@ describe("agent plugin lifecycle oRPC service spine", () => {
 
 function spineClient(
   calls: string[],
-  options: { readonly malformedReleaseIssue?: boolean } = {},
 ): Client {
   const deps: Deps = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    releaseSource: {
-      inspect: async () => {
-        calls.push("releases.source.inspect");
-        if (options.malformedReleaseIssue === true) {
-          return {
-            kind: "Ineligible",
-            issues: [{ code: "GitFailure", detail: 42 }],
-          } as never;
-        }
-        return {
-          kind: "Ineligible",
-          issues: [{ code: "GitFailure", detail: "fixture repository is unavailable" }],
-        };
-      },
-      revalidate: async () => unavailableAsync("release source revalidation"),
-    },
-    stagedReleaseSource: {
-      observe: async () => unavailableAsync("staged release source observation"),
-    },
     releaseArtifacts: {
       read: async () => unavailableAsync("release artifact read"),
       publishRelease: async () => unavailableAsync("release publication"),
       publishReleaseSet: async () => unavailableAsync("release-set publication"),
     },
     contentWorkspace: {
+      ...unavailableContentWorkspace(),
+      inspectGitWorkspace: async () => {
+        calls.push("releases.source.inspect");
+        throw new Error("fixture repository is unavailable");
+      },
       inspectWorkspace: async () => {
         calls.push("vendors.contentWorkspace.inspectWorkspace");
         return unavailableAsync("vendor content workspace inspection");
       },
-      readFile: async () => unavailableAsync("vendor content workspace file read"),
-      readTree: async () => unavailableAsync("vendor content workspace tree read"),
-      observeRemote: async () => unavailableAsync("vendor remote observation"),
-      materializeRemote: async () => unavailableAsync("vendor remote materialization"),
-      isAncestor: async () => unavailableAsync("vendor remote ancestry"),
-      capture: async () => unavailableAsync("vendor preimage capture"),
-      apply: async () => unavailableAsync("vendor authoring"),
-      restore: async () => unavailableAsync("vendor restoration"),
-      settle: async () => unavailableAsync("vendor settlement"),
-      release: async () => unavailableAsync("vendor capture release"),
     },
     clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
     packaging: {

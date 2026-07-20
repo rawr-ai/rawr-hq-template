@@ -17,7 +17,7 @@ import {
   commitGeneratedGitRepository,
   createGeneratedGitRepository,
   GIT_EXECUTABLE,
-} from "./releases/fixtures/git-repository";
+} from "../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
 import {
   createOwnedFixtureRoot,
   removeOwnedFixtureRoot,
@@ -25,8 +25,6 @@ import {
 } from "./releases/owned-fixture-root";
 
 const LIFECYCLE_DEP_KEYS = Object.freeze([
-  "releaseSource",
-  "stagedReleaseSource",
   "releaseArtifacts",
   "releaseEvidence",
   "contentWorkspace",
@@ -108,7 +106,9 @@ describe("production lifecycle service context", () => {
       expect(descriptor?.value, dependency).toBeTypeOf("object");
       expect(descriptor?.value, dependency).not.toBeNull();
     }
-    expect(Object.values(deps)).toHaveLength(12);
+    expect(deps).not.toHaveProperty("releaseSource");
+    expect(deps).not.toHaveProperty("stagedReleaseSource");
+    expect(Object.values(deps)).toHaveLength(10);
     expect(await directoryNames(root.path)).toEqual(before);
   });
 

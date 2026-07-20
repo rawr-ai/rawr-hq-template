@@ -19,9 +19,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { createReleaseArtifactRef } from "@rawr/agent-plugin-lifecycle/release";
 import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
-import {
-  createResourceContentWorkspaceSnapshotReader,
-} from "@rawr/agent-plugin-lifecycle/bindings/releases";
+import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 
 import {
@@ -38,7 +36,7 @@ import {
   commitGeneratedGitRepository,
   createGeneratedGitRepository,
   createGeneratedMultiMemberGitRepository,
-} from "./fixtures/git-repository";
+} from "../../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
 import {
   createOwnedFixtureRoot,
   removeOwnedFixtureRoot,
@@ -48,7 +46,6 @@ import {
 type ArtifactStore = Deps["releaseArtifacts"];
 type ArtifactStoreFailpoint = NonNullable<Deps["releaseArtifactFailpoint"]>;
 type BuildFailpoint = NonNullable<Deps["releaseBuildFailpoint"]>;
-type ContentWorkspaceSnapshotReader = Deps["releaseSource"];
 
 describe("build application and append-only artifact store", () => {
   let fixture: OwnedFixtureRoot | undefined;
@@ -136,9 +133,9 @@ describe("build application and append-only artifact store", () => {
     fixture = await createOwnedFixtureRoot();
     const repository = await createGeneratedMultiMemberGitRepository(fixture);
     const artifactRoot = join(fixture.path, "state", "artifacts-v1") as ArtifactStoreRoot;
-    const source = await realSource();
+    const contentWorkspace = await realContentWorkspace();
     const artifacts = createArtifactRepositoryStore(artifactRoot);
-    const applications = createReleaseLifecycleApplications({ source, artifacts });
+    const applications = createReleaseLifecycleApplications({ contentWorkspace, artifacts });
     const mode = { kind: "complete-set" } as const;
     const checked = await applications.check({ contentWorkspace: repository.policy, mode });
     expect(checked).toMatchObject({ kind: "EligibleReport", candidate: { kind: "complete-set" } });
@@ -225,7 +222,10 @@ describe("build application and append-only artifact store", () => {
         throw new Error("set publication must stay closed");
       },
     };
-    const result = await createReleaseLifecycleApplications({ source: await realSource(), artifacts }).build({
+    const result = await createReleaseLifecycleApplications({
+      contentWorkspace: await realContentWorkspace(),
+      artifacts,
+    }).build({
       contentWorkspace: policy,
       mode: { kind: "complete-set" },
     });
@@ -266,7 +266,10 @@ describe("build application and append-only artifact store", () => {
         throw new Error("set publication must stay closed");
       },
     };
-    const result = await createReleaseLifecycleApplications({ source: await realSource(), artifacts }).build({
+    const result = await createReleaseLifecycleApplications({
+      contentWorkspace: await realContentWorkspace(),
+      artifacts,
+    }).build({
       contentWorkspace: policy,
       mode: { kind: "complete-set" },
     });
@@ -316,7 +319,7 @@ describe("build application and append-only artifact store", () => {
     const repository = await createGeneratedGitRepository(fixture);
     const artifactRoot = join(extraFixture.path, "controller", "artifacts-v1") as ArtifactStoreRoot;
     const applications = createReleaseLifecycleApplications({
-      source: await realSource(),
+      contentWorkspace: await realContentWorkspace(),
       artifacts: createArtifactRepositoryStore(artifactRoot),
     });
     const mode = { kind: "targeted", pluginId: repository.pluginId } as const;
@@ -475,7 +478,7 @@ describe("build application and append-only artifact store", () => {
       },
     };
     const applications = createReleaseLifecycleApplications({
-      source: setup.source,
+      contentWorkspace: setup.contentWorkspace,
       artifacts: unreadableAfterPublication,
     });
 
@@ -554,7 +557,7 @@ describe("build application and append-only artifact store", () => {
       },
     };
     const racingApplication = createReleaseLifecycleApplications({
-      source: setup.source,
+      contentWorkspace: setup.contentWorkspace,
       artifacts: rejectingArtifacts,
     });
     const result = await racingApplication.build({ contentWorkspace: setup.repository.policy, mode });
@@ -568,16 +571,7 @@ describe("build application and append-only artifact store", () => {
     async (outcome) => {
       fixture = await createOwnedFixtureRoot();
       const repository = await createGeneratedGitRepository(fixture);
-      const inspected = await (await realSource()).inspect(repository.policy);
-      if (inspected.kind !== "Eligible") throw new Error("generated source fixture was not eligible");
-      const source: ContentWorkspaceSnapshotReader = {
-        async inspect() {
-          return inspected;
-        },
-        async revalidate() {
-          return inspected;
-        },
-      };
+      const contentWorkspace = await realContentWorkspace();
       let setReads = 0;
       const artifacts: ArtifactStore = {
         async read(ref) {
@@ -602,7 +596,7 @@ describe("build application and append-only artifact store", () => {
           throw new Error("set publication must remain closed");
         },
       };
-      const result = await createReleaseLifecycleApplications({ source, artifacts }).build({
+      const result = await createReleaseLifecycleApplications({ contentWorkspace, artifacts }).build({
         contentWorkspace: repository.policy,
         mode: { kind: "complete-set" },
       });
@@ -622,33 +616,30 @@ describe("build application and append-only artifact store", () => {
     fixture = await createOwnedFixtureRoot();
     const repository = await createGeneratedGitRepository(fixture);
     const artifactRoot = join(fixture.path, "fresh", "controller", "artifacts-v1") as ArtifactStoreRoot;
-    const source = await realSource();
+    const contentWorkspace = await realContentWorkspace();
     const artifacts = createArtifactRepositoryStore(artifactRoot);
     return {
       repository,
       artifactRoot,
-      source,
+      contentWorkspace,
       artifacts,
-      applications: createReleaseLifecycleApplications({ source, artifacts }),
+      applications: createReleaseLifecycleApplications({ contentWorkspace, artifacts }),
     };
   }
 
-  async function realSource(): Promise<ContentWorkspaceSnapshotReader> {
-    return createResourceContentWorkspaceSnapshotReader({
-      contentWorkspace: makeNodeContentWorkspacePort({
-        gitExecutable: await realpath(GIT_EXECUTABLE),
-      }),
+  async function realContentWorkspace(): Promise<ContentWorkspaceNodeAsyncPort> {
+    return makeNodeContentWorkspacePort({
+      gitExecutable: await realpath(GIT_EXECUTABLE),
     });
   }
 });
 
 function createReleaseLifecycleApplications(options: {
-  readonly source: ContentWorkspaceSnapshotReader;
+  readonly contentWorkspace: ContentWorkspaceNodeAsyncPort;
   readonly artifacts: ArtifactStore;
 }) {
   const releaseDeps = Object.freeze({
-    releaseSource: options.source,
-    stagedReleaseSource: unavailableStagedSource(),
+    contentWorkspace: options.contentWorkspace,
     releaseArtifacts: options.artifacts,
   });
   const client = createLifecycleTestClient(releaseDeps);
@@ -670,13 +661,6 @@ function createReleaseLifecycleApplications(options: {
       return buildClient.releases.build(input, testInvocation);
     },
   });
-}
-
-function unavailableStagedSource() {
-  const reject = async (): Promise<never> => {
-    throw new Error("Unexpected staged source access in committed build test");
-  };
-  return { observe: reject };
 }
 
 async function directoryNames(path: string): Promise<readonly string[]> {

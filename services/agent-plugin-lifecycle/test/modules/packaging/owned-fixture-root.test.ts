@@ -12,7 +12,7 @@ import { dirname, join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { createOwnedFixtureRoot, disposeOwnedFixtureRoot } from "./owned-fixture-root";
+import { createOwnedFixtureRoot, disposeOwnedFixtureRoot } from "../../support/owned-fixture-root";
 
 describe("packaging owned fixture cleanup", () => {
   it("rejects a symlink substitution and preserves its target", async () => {

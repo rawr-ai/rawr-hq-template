@@ -4,6 +4,10 @@ import {
 import {
   createEmbeddedPlaceholderLoggerAdapter,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import type {
+  ContentWorkspaceAsyncPort,
+  ContentWorkspaceNodeAsyncPort,
+} from "@rawr/resource-content-workspace";
 
 import { createClient, type Client, type Deps } from "../../src/client";
 import type { ProviderLifecycleRuntime } from "../../src/service/modules/providers/ports";
@@ -21,31 +25,12 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
   const deps: Deps = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    releaseSource: {
-      inspect: async () => unavailableAsync("release source inspection"),
-      revalidate: async () => unavailableAsync("release source revalidation"),
-    },
-    stagedReleaseSource: {
-      observe: async () => unavailableAsync("staged release source observation"),
-    },
     releaseArtifacts: {
       read: async () => unavailableAsync("release artifact read"),
       publishRelease: async () => unavailableAsync("release publication"),
       publishReleaseSet: async () => unavailableAsync("release-set publication"),
     },
-    contentWorkspace: {
-      inspectWorkspace: async () => unavailableAsync("vendor workspace inspection"),
-      readFile: async () => unavailableAsync("vendor workspace file read"),
-      readTree: async () => unavailableAsync("vendor workspace tree read"),
-      observeRemote: async () => unavailableAsync("vendor remote observation"),
-      materializeRemote: async () => unavailableAsync("vendor remote materialization"),
-      isAncestor: async () => unavailableAsync("vendor remote ancestry"),
-      capture: async () => unavailableAsync("vendor preimage capture"),
-      apply: async () => unavailableAsync("vendor authoring"),
-      restore: async () => unavailableAsync("vendor restoration"),
-      settle: async () => unavailableAsync("vendor settlement"),
-      release: async () => unavailableAsync("vendor capture release"),
-    },
+    contentWorkspace: unavailableContentWorkspace(),
     clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
     packaging: {
       artifactReader: { read: async () => unavailableAsync("package artifact read") },
@@ -91,6 +76,38 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
       controllerDataRootIdentity: "controller-data://agent-plugin-lifecycle-test",
     },
     config: {},
+  });
+}
+
+export function withUnavailableGitReads(
+  contentWorkspace: ContentWorkspaceAsyncPort,
+): ContentWorkspaceNodeAsyncPort {
+  return Object.freeze({
+    ...contentWorkspace,
+    inspectGitWorkspace: async () => unavailableAsync("release Git workspace inspection"),
+    readGitTree: async () => unavailableAsync("release Git tree read"),
+    readGitBlob: async () => unavailableAsync("release Git blob read"),
+    captureGitWorkspaceEvidence: async () => unavailableAsync("release Git workspace evidence capture"),
+    observeGitStagedIndex: async () => unavailableAsync("staged release index observation"),
+    readGitBlobAtPath: async () => unavailableAsync("release Git path read"),
+    isLocalGitAncestor: async () => unavailableAsync("release Git ancestry"),
+    listGitChangedPaths: async () => unavailableAsync("release Git changed paths"),
+  });
+}
+
+export function unavailableContentWorkspace(): ContentWorkspaceNodeAsyncPort {
+  return withUnavailableGitReads({
+    inspectWorkspace: async () => unavailableAsync("vendor workspace inspection"),
+    readFile: async () => unavailableAsync("vendor workspace file read"),
+    readTree: async () => unavailableAsync("vendor workspace tree read"),
+    observeRemote: async () => unavailableAsync("vendor remote observation"),
+    materializeRemote: async () => unavailableAsync("vendor remote materialization"),
+    isAncestor: async () => unavailableAsync("vendor remote ancestry"),
+    capture: async () => unavailableAsync("vendor preimage capture"),
+    apply: async () => unavailableAsync("vendor authoring"),
+    restore: async () => unavailableAsync("vendor restoration"),
+    settle: async () => unavailableAsync("vendor settlement"),
+    release: async () => unavailableAsync("vendor capture release"),
   });
 }
 

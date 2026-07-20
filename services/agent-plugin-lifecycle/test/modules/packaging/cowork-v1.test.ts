@@ -13,7 +13,7 @@ import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-pack
 
 import { createResourcePackageOutputRuntime } from "../../../src/bindings/packaging";
 import { packagingArtifactFixture } from "./artifact-fixture";
-import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "./owned-fixture-root";
+import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "../../support/owned-fixture-root";
 
 interface ZipEntryView {
   readonly path: string;

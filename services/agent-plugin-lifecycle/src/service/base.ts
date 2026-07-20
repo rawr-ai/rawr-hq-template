@@ -1,5 +1,5 @@
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
-import type { ContentWorkspaceAsyncPort } from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
 import type { ExportLifecycleRuntime } from "./modules/exports/ports";
 import type { GovernanceLifecycleRuntime } from "./modules/governance/ports";
 import type { PackagingLifecycleRuntime } from "./modules/packaging/ports";
@@ -8,9 +8,7 @@ import type {
   ArtifactStore,
   ArtifactStoreFailpoint,
   BuildFailpoint,
-  ContentWorkspaceSnapshotReader,
   ReleaseRetentionReaders,
-  StagedContentWorkspaceObservationReader,
 } from "./model/dependencies/releases";
 import type { MechanicalEvidenceReader } from "./shared/release";
 
@@ -20,14 +18,12 @@ export interface LifecycleClock {
 
 type InitialContext = {
   deps: {
-    releaseSource: ContentWorkspaceSnapshotReader;
-    stagedReleaseSource: StagedContentWorkspaceObservationReader;
     releaseArtifacts: ArtifactStore;
     releaseEvidence?: MechanicalEvidenceReader;
     releaseRetention?: ReleaseRetentionReaders;
     releaseBuildFailpoint?: BuildFailpoint;
     releaseArtifactFailpoint?: ArtifactStoreFailpoint;
-    contentWorkspace: ContentWorkspaceAsyncPort;
+    contentWorkspace: ContentWorkspaceNodeAsyncPort;
     clock: LifecycleClock;
     packaging: PackagingLifecycleRuntime;
     exports: ExportLifecycleRuntime;

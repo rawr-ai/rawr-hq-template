@@ -3,10 +3,7 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import {
-  createMechanicalEvidenceHandle,
-  createResourceContentWorkspaceSnapshotReader,
-} from "@rawr/agent-plugin-lifecycle/bindings/releases";
+import { createMechanicalEvidenceHandle } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import {
   createReleaseArtifactRef,
   parseArtifactDigest,
@@ -30,7 +27,7 @@ import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout
 import {
   GIT_EXECUTABLE,
   createGeneratedGitRepository,
-} from "./fixtures/git-repository";
+} from "../../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
 import {
   createOwnedFixtureRoot,
   removeOwnedFixtureRoot,
@@ -39,8 +36,6 @@ import {
 
 type ArtifactReader = Pick<Deps["releaseArtifacts"], "read">;
 type ArtifactStore = Deps["releaseArtifacts"];
-type ReleaseSource = Deps["releaseSource"];
-type StagedReleaseSource = Deps["stagedReleaseSource"];
 
 const zeroBudget = Object.freeze({
   kind: "space-v1",
@@ -241,8 +236,6 @@ describe("closed read-only retention planning", () => {
       },
     };
     const absent = createLifecycleTestClient({
-      releaseSource: unavailableSource(),
-      stagedReleaseSource: unavailableStagedSource(),
       releaseArtifacts: readOnlyArtifactStore(artifacts),
     });
     await expect(absent.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
@@ -295,14 +288,11 @@ describe("closed read-only retention planning", () => {
     fixture = await createOwnedFixtureRoot();
     const repository = await createGeneratedGitRepository(fixture);
     const root = join(fixture.path, "artifacts-v1") as ArtifactStoreRoot;
-    const source = createResourceContentWorkspaceSnapshotReader({
-      contentWorkspace: makeNodeContentWorkspacePort({
-        gitExecutable: await realpath(GIT_EXECUTABLE),
-      }),
+    const contentWorkspace = makeNodeContentWorkspacePort({
+      gitExecutable: await realpath(GIT_EXECUTABLE),
     });
     const client = createLifecycleTestClient({
-      releaseSource: source,
-      stagedReleaseSource: unavailableStagedSource(),
+      contentWorkspace,
       releaseArtifacts: createArtifactRepositoryStore(root),
     });
     const result = await client.releases.build({
@@ -342,34 +332,17 @@ function retentionDeps(options: {
   readonly evidence?: MechanicalEvidenceReader;
 }): Pick<
   Deps,
-  | "releaseSource"
-  | "stagedReleaseSource"
   | "releaseArtifacts"
   | "releaseEvidence"
   | "releaseRetention"
 > {
   return {
-    releaseSource: unavailableSource(),
-    stagedReleaseSource: unavailableStagedSource(),
     releaseArtifacts: readOnlyArtifactStore(options.artifacts),
     ...(options.evidence === undefined ? {} : { releaseEvidence: options.evidence }),
     releaseRetention: {
       pins: { read: options.pins },
       inventory: { read: options.inventory },
     },
-  };
-}
-
-function unavailableSource(): ReleaseSource {
-  return {
-    inspect: async () => unavailableAsync("retention source inspection"),
-    revalidate: async () => unavailableAsync("retention source revalidation"),
-  };
-}
-
-function unavailableStagedSource(): StagedReleaseSource {
-  return {
-    observe: async () => unavailableAsync("retention staged source observation"),
   };
 }
 

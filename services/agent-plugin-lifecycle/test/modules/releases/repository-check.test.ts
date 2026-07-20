@@ -1,12 +1,14 @@
+import { createHash } from "node:crypto";
 import type {
+  ContentWorkspaceNodeAsyncPort,
   ContentWorkspaceFailure,
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
+  GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
 import { describe, expect, it } from "vitest";
 
-import { createResourceStagedContentWorkspaceObservationReader } from "../../../src/bindings/releases";
-import type { ResourceContentWorkspaceStagedReadPort } from "../../../src/bindings/releases";
+import type { ResourceContentWorkspaceStagedReadPort } from "../../../src/service/modules/releases/repository/staged-content-workspace";
 import type {
   ContentWorkspaceInspection,
   StagedIndexObservationResult,
@@ -23,11 +25,16 @@ import {
   MAX_RELEASE_SET_PAYLOAD_BYTES,
   parseGitCommitId,
   parseGitTreeId,
+  payloadEntryBytes,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
 } from "../../../src/service/shared/release";
 import { productFixture } from "../../shared/release/fixtures";
-import { createLifecycleTestClient, testInvocation } from "../../support/client";
+import {
+  createLifecycleTestClient,
+  testInvocation,
+  unavailableContentWorkspace,
+} from "../../support/client";
 
 const repositoryIdentity = parsed(parseRepositoryIdentity("git:personal-rawr-hq"));
 const contentAuthority = parsed(parseContentAuthority("personal-rawr-hq"));
@@ -71,10 +78,8 @@ describe("releases.checkRepository", () => {
         };
       },
     };
-    const stagedSource = createResourceStagedContentWorkspaceObservationReader({ contentWorkspace: rawPort });
     const client = createLifecycleTestClient({
-      releaseSource: unavailableCleanSource(),
-      stagedReleaseSource: stagedSource,
+      contentWorkspace: { ...unavailableContentWorkspace(), ...rawPort },
       releaseArtifacts: writeTraps(() => {
         throw new Error("staged repository check acquired artifact authority");
       }),
@@ -141,10 +146,8 @@ describe("releases.checkRepository", () => {
         throw new Error("staged validation acquired release authority");
       },
     };
-    const stagedSource = createResourceStagedContentWorkspaceObservationReader({ contentWorkspace: rawPort });
     const client = createLifecycleTestClient({
-      releaseSource: unavailableCleanSource(),
-      stagedReleaseSource: stagedSource,
+      contentWorkspace: { ...unavailableContentWorkspace(), ...rawPort },
       releaseArtifacts: writeTraps(() => {
         writes += 1;
       }),
@@ -164,16 +167,13 @@ describe("releases.checkRepository", () => {
 
   it("maps dependency errors with ambient codes to the closed GitFailure result", async () => {
     const dependencyFailure = Object.assign(new Error("staged index read failed"), { code: "EIO" });
-    const stagedSource = createResourceStagedContentWorkspaceObservationReader({
+    const client = createLifecycleTestClient({
       contentWorkspace: {
+        ...unavailableContentWorkspace(),
         observeGitStagedIndex: async () => {
           throw dependencyFailure;
         },
       },
-    });
-    const client = createLifecycleTestClient({
-      releaseSource: unavailableCleanSource(),
-      stagedReleaseSource: stagedSource,
       releaseArtifacts: writeTraps(() => {
         throw new Error("staged repository check acquired artifact authority");
       }),
@@ -197,16 +197,13 @@ describe("releases.checkRepository", () => {
     ] as const;
 
     for (const fixture of cases) {
-      const stagedSource = createResourceStagedContentWorkspaceObservationReader({
+      const client = createLifecycleTestClient({
         contentWorkspace: {
+          ...unavailableContentWorkspace(),
           observeGitStagedIndex: async () => {
             throw contentWorkspaceFailure(fixture.reason, `${fixture.reason} fixture`);
           },
         },
-      });
-      const client = createLifecycleTestClient({
-        releaseSource: unavailableCleanSource(),
-        stagedReleaseSource: stagedSource,
         releaseArtifacts: writeTraps(() => {
           throw new Error("staged repository check acquired artifact authority");
         }),
@@ -241,35 +238,31 @@ describe("releases.checkRepository", () => {
   });
 
   it("returns only the clean mismatch after final exact revalidation", async () => {
-    let stagedReads = 0;
     let artifactWrites = 0;
     const fixture = productFixture();
-    const eligible: ContentWorkspaceInspection = {
+    const eligible: Extract<ContentWorkspaceInspection, { kind: "Eligible" }> = {
       kind: "Eligible",
       snapshot: {
         repositoryIdentity,
         sourceCommit: headCommit,
         sourceTree: headTree,
         releaseInput: fixture.releaseInput,
-        payloads: [],
+        payloads: [
+          { pluginId: fixture.alphaRelease.artifactBody.releaseBody.pluginId, payload: fixture.alphaPayload },
+          { pluginId: fixture.betaRelease.artifactBody.releaseBody.pluginId, payload: fixture.betaPayload },
+        ],
         objectBindings: [],
         eligibilityBinding: "clean-binding-v1",
       },
     };
+    let cleanReads = 0;
     const client = createLifecycleTestClient({
-      releaseSource: {
-        inspect: async () => eligible,
-        revalidate: async () => ({
-          kind: "Ineligible",
-          issues: [{ code: "WrongTree", detail: "declared tree no longer matches" }],
-        }),
-      },
-      stagedReleaseSource: {
-        observe: async () => {
-          stagedReads += 1;
-          return unavailableAsync("staged observation");
+      contentWorkspace: cleanContentWorkspace(eligible, {
+        onInspect: () => {
+          cleanReads += 1;
         },
-      },
+        treeAfterFirstInspect: "c".repeat(40),
+      }),
       releaseArtifacts: writeTraps(() => {
         artifactWrites += 1;
       }),
@@ -281,47 +274,41 @@ describe("releases.checkRepository", () => {
     }, testInvocation)).resolves.toEqual({
       kind: "RepositoryIneligible",
       mode: "clean",
-      issues: [{ code: "WrongTree", detail: "declared tree no longer matches" }],
+      issues: [{ code: "WrongTree", detail: expect.stringContaining("observed") }],
     });
-    expect(stagedReads).toBe(0);
+    expect(cleanReads).toBe(2);
     expect(artifactWrites).toBe(0);
   });
 
   it("returns the clean result while staged and artifact ports remain cold", async () => {
-    let inspections = 0;
-    let revalidations = 0;
+    let cleanReads = 0;
     let stagedReads = 0;
     let artifactAccesses = 0;
     const fixture = productFixture();
-    const eligible: ContentWorkspaceInspection = {
+    const eligible: Extract<ContentWorkspaceInspection, { kind: "Eligible" }> = {
       kind: "Eligible",
       snapshot: {
         repositoryIdentity,
         sourceCommit: headCommit,
         sourceTree: headTree,
         releaseInput: fixture.releaseInput,
-        payloads: [],
+        payloads: [
+          { pluginId: fixture.alphaRelease.artifactBody.releaseBody.pluginId, payload: fixture.alphaPayload },
+          { pluginId: fixture.betaRelease.artifactBody.releaseBody.pluginId, payload: fixture.betaPayload },
+        ],
         objectBindings: [],
         eligibilityBinding: "clean-binding-v1",
       },
     };
     const client = createLifecycleTestClient({
-      releaseSource: {
-        inspect: async () => {
-          inspections += 1;
-          return eligible;
+      contentWorkspace: cleanContentWorkspace(eligible, {
+        onInspect: () => {
+          cleanReads += 1;
         },
-        revalidate: async () => {
-          revalidations += 1;
-          return eligible;
-        },
-      },
-      stagedReleaseSource: {
-        observe: async () => {
+        onStagedObserve: () => {
           stagedReads += 1;
-          return unavailableAsync("staged observation");
         },
-      },
+      }),
       releaseArtifacts: {
         read: async () => {
           artifactAccesses += 1;
@@ -347,10 +334,9 @@ describe("releases.checkRepository", () => {
       refName: "refs/heads/main",
       sourceCommit: headCommit,
       sourceTree: headTree,
-      eligibilityBinding: "clean-binding-v1",
+      eligibilityBinding: expect.any(String),
     });
-    expect(inspections).toBe(1);
-    expect(revalidations).toBe(1);
+    expect(cleanReads).toBe(2);
     expect(stagedReads).toBe(0);
     expect(artifactAccesses).toBe(0);
   });
@@ -361,13 +347,13 @@ describe("releases.checkRepository", () => {
     const [releaseInputObservation, materializationObservation] = validStagedObservationResults();
     const changedObservation = sourceChangedObservation(releaseInputObservation);
     const client = createLifecycleTestClient({
-      releaseSource: unavailableCleanSource(),
-      stagedReleaseSource: {
-        observe: async () => {
+      contentWorkspace: {
+        ...unavailableContentWorkspace(),
+        observeGitStagedIndex: async () => {
           observations += 1;
-          if (observations === 1) return releaseInputObservation;
-          if (observations === 2) return materializationObservation;
-          return changedObservation;
+          if (observations === 1) return rawStagedObservation(releaseInputObservation);
+          if (observations === 2) return rawStagedObservation(materializationObservation);
+          return rawStagedObservation(changedObservation);
         },
       },
       releaseArtifacts: writeTraps(() => {
@@ -392,13 +378,13 @@ describe("releases.checkRepository", () => {
     let observations = 0;
     const observationResults = validStagedObservationResults();
     const client = createLifecycleTestClient({
-      releaseSource: unavailableCleanSource(),
-      stagedReleaseSource: {
-        observe: async () => {
+      contentWorkspace: {
+        ...unavailableContentWorkspace(),
+        observeGitStagedIndex: async () => {
           const observation = observationResults[observations % observationResults.length];
           observations += 1;
           if (observation === undefined) throw new Error("Missing staged observation fixture");
-          return observation;
+          return rawStagedObservation(observation);
         },
       },
       releaseArtifacts: writeTraps(() => {
@@ -528,11 +514,100 @@ function stagedEntry(
   return Object.freeze({ path, objectId, mode, bytes: entryBytes });
 }
 
-function unavailableCleanSource() {
-  return {
-    inspect: async () => unavailableAsync("clean inspection"),
-    revalidate: async () => unavailableAsync("clean revalidation"),
+function cleanContentWorkspace(
+  eligible: Extract<ContentWorkspaceInspection, { kind: "Eligible" }>,
+  options: Readonly<{
+    onInspect?: () => void;
+    onStagedObserve?: () => void;
+    treeAfterFirstInspect?: string;
+  }> = {},
+): ContentWorkspaceNodeAsyncPort {
+  const blobs = new Map<string, Uint8Array>();
+  const entries: Array<Readonly<{
+    path: string;
+    mode: 0o644 | 0o755;
+    objectId: string;
+  }>> = [];
+  const addBlob = (path: string, mode: 0o644 | 0o755, value: Uint8Array) => {
+    const objectId = gitBlobId(value);
+    blobs.set(objectId, value);
+    entries.push(Object.freeze({ path, mode, objectId }));
   };
+
+  addBlob(releaseInputPath, 0o644, canonicalSerializeAgentPluginReleaseInput(eligible.snapshot.releaseInput));
+  for (const member of eligible.snapshot.payloads) {
+    for (const entry of member.payload.entries) {
+      addBlob(
+        `${pluginRoot}/${member.pluginId}/${entry.path}`,
+        entry.mode,
+        payloadEntryBytes(entry),
+      );
+    }
+  }
+  entries.sort((left, right) => left.path.localeCompare(right.path));
+  const byPath = new Map(entries.map((entry) => [entry.path, entry]));
+  const treeBytes = bytes(entries.map((entry) => (
+    `${entry.mode === 0o755 ? "100755" : "100644"} blob ${entry.objectId}\t${entry.path}\0`
+  )).join(""));
+  let inspections = 0;
+
+  const contentWorkspace: ContentWorkspaceNodeAsyncPort = {
+    ...unavailableContentWorkspace(),
+    async inspectGitWorkspace() {
+      inspections += 1;
+      options.onInspect?.();
+      return inspections > 1 && options.treeAfterFirstInspect !== undefined
+        ? Object.freeze({ ...stagedAnchor(), tree: options.treeAfterFirstInspect })
+        : stagedAnchor();
+    },
+    async readGitTree() {
+      return treeBytes;
+    },
+    async readGitBlob(input) {
+      const value = blobs.get(input.blob);
+      if (value === undefined) throw new Error(`Missing clean Git blob ${input.blob}`);
+      return new Uint8Array(value);
+    },
+    async captureGitWorkspaceEvidence(input): Promise<GitWorkspaceEvidence> {
+      const trackedFlags = bytes(input.admittedPaths.map((path) => `H ${path}\0`).join(""));
+      const worktreeObjectIds = input.admittedPaths.map((path) => {
+        const entry = byPath.get(path);
+        if (entry === undefined) throw new Error(`Missing admitted clean path ${path}`);
+        return Object.freeze({ path, objectId: entry.objectId });
+      });
+      return Object.freeze({
+        openingAnchor: stagedAnchor(),
+        openingStatus: new Uint8Array(),
+        openingTrackedFlags: trackedFlags,
+        worktreeObjectIds: Object.freeze(worktreeObjectIds),
+        indexEntries: treeBytes,
+        closingAnchor: stagedAnchor(),
+        closingStatus: new Uint8Array(),
+        closingTrackedFlags: trackedFlags,
+      });
+    },
+    async observeGitStagedIndex() {
+      options.onStagedObserve?.();
+      return unavailableAsync("staged observation");
+    },
+  };
+  return Object.freeze(contentWorkspace);
+}
+
+function rawStagedObservation(result: StagedIndexObservationResult): GitStagedIndexObservation {
+  if (result.kind !== "Observed") throw new Error(`Expected observed staged result, received ${result.kind}`);
+  return Object.freeze({
+    opening: result.observation.opening,
+    blobs: result.observation.blobs,
+    closing: result.observation.closing,
+  });
+}
+
+function gitBlobId(value: Uint8Array): string {
+  const hash = createHash("sha1");
+  hash.update(bytes(`blob ${value.byteLength}\0`));
+  hash.update(value);
+  return hash.digest("hex");
 }
 
 function writeTraps(onWrite: () => void) {

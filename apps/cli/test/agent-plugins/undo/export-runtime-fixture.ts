@@ -24,6 +24,9 @@ import {
 import {
   createEmbeddedPlaceholderLoggerAdapter,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import {
+  unavailableContentWorkspace,
+} from "../../../../../services/agent-plugin-lifecycle/test/support/client";
 
 import { createExportLifecycleRuntime } from "../../../src/lib/agent-plugins/bindings/export-destination";
 
@@ -70,31 +73,12 @@ export function createExportTestClient(
     deps: {
       logger: createEmbeddedPlaceholderLoggerAdapter(),
       analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-      releaseSource: {
-        inspect: async () => unavailableAsync("release source inspection"),
-        revalidate: async () => unavailableAsync("release source revalidation"),
-      },
-      stagedReleaseSource: {
-        observe: async () => unavailableAsync("staged release source observation"),
-      },
       releaseArtifacts: {
         read: async () => unavailableAsync("release artifact read"),
         publishRelease: async () => unavailableAsync("release publication"),
         publishReleaseSet: async () => unavailableAsync("release-set publication"),
       },
-      contentWorkspace: {
-        inspectWorkspace: async () => unavailableAsync("vendor content workspace inspection"),
-        readFile: async () => unavailableAsync("vendor content workspace file read"),
-        readTree: async () => unavailableAsync("vendor content workspace tree read"),
-        observeRemote: async () => unavailableAsync("vendor remote observation"),
-        materializeRemote: async () => unavailableAsync("vendor remote materialization"),
-        isAncestor: async () => unavailableAsync("vendor remote ancestry"),
-        capture: async () => unavailableAsync("vendor preimage capture"),
-        apply: async () => unavailableAsync("vendor authoring"),
-        restore: async () => unavailableAsync("vendor restoration"),
-        settle: async () => unavailableAsync("vendor settlement"),
-        release: async () => unavailableAsync("vendor capture release"),
-      },
+      contentWorkspace: unavailableContentWorkspace(),
       clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
       packaging: {
         artifactReader: { read: async () => unavailableAsync("package artifact read") },
