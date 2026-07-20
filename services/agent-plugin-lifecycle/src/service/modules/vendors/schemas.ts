@@ -5,7 +5,7 @@ import type {
   VendorStatusResult,
   VendorUpdateRequest,
   VendorUpdateResult,
-} from "./ports";
+} from "./model/dto/vendor-operations";
 import {
   CANONICAL_ABSOLUTE_PATH_PATTERN,
   CONTENT_AUTHORITY_PATTERN,

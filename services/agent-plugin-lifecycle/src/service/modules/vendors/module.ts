@@ -6,6 +6,7 @@ export const module = impl.vendors
   .use(analytics)
   .use(async ({ context, next }) => next({
     context: {
-      vendors: context.deps.vendors,
+      contentWorkspace: context.deps.contentWorkspace,
+      clock: context.deps.clock,
     },
   }));

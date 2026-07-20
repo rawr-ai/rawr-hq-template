@@ -3,7 +3,7 @@ import type {
   ContentWorkspaceFailureReason,
 } from "@rawr/resource-content-workspace";
 
-import type { VendorUpdateIssue } from "../../ports";
+import type { VendorUpdateIssue } from "../dto/vendor-operations";
 
 const MAX_PUBLIC_ISSUE_DETAIL_LENGTH = 4_096;
 const DEFAULT_PUBLIC_ISSUE_DETAIL = "Vendor lifecycle operation failed.";

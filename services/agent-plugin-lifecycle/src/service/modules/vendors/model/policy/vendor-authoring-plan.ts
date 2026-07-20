@@ -29,7 +29,7 @@ import type {
   VendorSourceChange,
   VendorWorkspaceObservation,
 } from "../dto/vendor-workspace";
-import type { VendorContentWorkspaceRef } from "../../ports";
+import type { VendorContentWorkspaceRef } from "../dto/vendor-operations";
 import {
   policyFailure,
   policySuccess,

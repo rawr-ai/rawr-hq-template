@@ -291,6 +291,21 @@ unguarded intermediate topology.
 | Static | Resource, lifecycle, and CLI lint, typecheck, and build passed. Lifecycle and CLI sync plus enforced positive structural/Habitat suites passed; strict OpenSpec and `git diff --check` passed. |
 | Reviews | Architecture/authority, behavior/testing, TypeScript/refactor/Effect, and structural quality approved with no remaining P1/P2 findings. |
 
+## C5 Vendors Context-Direction Proof
+
+This checkpoint advances the vendors-only portion of
+[[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]]. It does not
+close the cross-module tasks or activate the blocked export-root transition.
+
+| Boundary | Result |
+| --- | --- |
+| Root context | The service declares the ready `contentWorkspace` and `clock` capabilities directly. The CLI constructs one content-workspace resource and passes that same capability into the lifecycle client; the service does not construct or select a provider. |
+| Module and behavior | `vendors/module.ts` narrows those two root capabilities. Vendor procedure handlers own sequencing, while DTOs and pure policy remain under `model`; no `internal` bucket or module-to-service-base dependency was introduced. |
+| Public surface | `VendorLifecycleRuntime`, `vendors/ports.ts`, and the `./ports/vendors` export are absent. A compile-time negative import keeps the retired package subpath unavailable. |
+| Behavior proof | Vendor router and service-spine proof passed 21/21. CLI context and real content-workspace resource proof passed 5/5, including refusal, exact authoring, restoration, cleanup, and mutation-free repeat behavior. |
+| Static and structural | Lifecycle and CLI lint/typecheck passed without cache; lifecycle build and sync passed. The dependency-direction fixture, full lifecycle structural suite, and CLI structural suite passed. Lifecycle structure ran against an exact staged-tree worktree snapshot; the user-owned untracked note was neither staged nor altered. Strict OpenSpec and `git diff --check` passed. |
+| Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural quality approved the vendors slice with no remaining P1/P2. The optional receiver-dependent clock fixture remains non-blocking P3 hardening. |
+
 ## Standing Reviews
 
 | Role | Pivot focus |

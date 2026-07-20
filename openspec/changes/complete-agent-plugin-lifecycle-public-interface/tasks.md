@@ -36,9 +36,11 @@
   aggregation with minimal typed initial dependencies owned at the service
   root. App/CLI runtime may construct concrete resource providers, but the
   service package must not import provider implementations or controller code.
-- [ ] 2A.2 Use module provider middleware only to derive service-owned execution
-  context from those ready dependencies, then narrow it in each `module.ts`.
-  Keep product decisions in procedure handlers and module model/policy files.
+- [ ] 2A.2 Narrow ready host dependencies from the service root in each
+  `module.ts`. Use module provider middleware only when the module actually
+  materializes a derived execution resource under `context.provided`; do not use
+  it to rename or re-bag an existing dependency. Keep product decisions in
+  procedure handlers and module model/policy files.
 - [ ] 2A.3 Delete service `bindings/*` and public `ports/*` package subpaths.
   Move host materialization to the CLI composition edge, route stateful
   export-owner classification/replay through export procedures, and expose no

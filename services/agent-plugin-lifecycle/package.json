@@ -46,10 +46,6 @@
       "types": "./src/service/modules/releases/ports.ts",
       "default": "./src/service/modules/releases/ports.ts"
     },
-    "./ports/vendors": {
-      "types": "./src/service/modules/vendors/ports.ts",
-      "default": "./src/service/modules/vendors/ports.ts"
-    },
     "./ports/packaging": {
       "types": "./src/service/modules/packaging/ports.ts",
       "default": "./src/service/modules/packaging/ports.ts"

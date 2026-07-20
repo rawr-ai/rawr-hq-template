@@ -122,7 +122,7 @@ allowed = []
 
 [[scopes]]
 name = "agent-plugin-lifecycle-uniform-module-shells"
-root = "services/agent-plugin-lifecycle/src/service/modules/*"
+root = "services/agent-plugin-lifecycle/src/service/modules/!(vendors)"
 kind = "directory"
 mode = "closed"
 required = [
@@ -137,6 +137,21 @@ required = [
 allowed = [
   "ports",
 ]
+
+[[scopes]]
+name = "agent-plugin-lifecycle-vendors-shell"
+root = "services/agent-plugin-lifecycle/src/service/modules/vendors"
+kind = "directory"
+mode = "closed"
+required = [
+  "contract.ts",
+  "middleware.ts",
+  "model",
+  "module.ts",
+  "router",
+  "schemas.ts",
+]
+allowed = []
 
 [[scopes]]
 name = "agent-plugin-lifecycle-module-router-files"

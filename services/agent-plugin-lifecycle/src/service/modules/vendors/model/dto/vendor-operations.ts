@@ -1,19 +1,4 @@
-import type {
-  VendorLockRecord,
-  VendorProvenanceRecord,
-  VendorRecordBinding,
-  VendorSourceDeclaration,
-  VendorSourceIdentity,
-} from "./model/dto/vendor-records";
-import type { ContentWorkspaceAsyncPort } from "@rawr/resource-content-workspace";
-
-export type {
-  VendorLockRecord,
-  VendorProvenanceRecord,
-  VendorRecordBinding,
-  VendorSourceDeclaration,
-  VendorSourceIdentity,
-} from "./model/dto/vendor-records";
+import type { VendorSourceIdentity } from "./vendor-records";
 
 export interface VendorContentWorkspaceRef {
   readonly locator: string;
@@ -102,12 +87,3 @@ export type VendorUpdateResult =
     unsettledPaths: readonly string[];
     issues: readonly [VendorUpdateIssue, ...VendorUpdateIssue[]];
   }>;
-
-export interface VendorClock {
-  readonly now: () => Date;
-}
-
-export interface VendorLifecycleRuntime {
-  readonly contentWorkspace: ContentWorkspaceAsyncPort;
-  readonly clock: VendorClock;
-}

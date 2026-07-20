@@ -8,7 +8,6 @@ import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
 } from "../../../../shared/release";
-import type { VendorClock } from "../../ports";
 import type {
   VendorDeclaredSourceObservation,
   VendorPreparedPayload,
@@ -30,6 +29,10 @@ import {
   vendorIssue,
 } from "./vendor-policy-result";
 import { vendorPayloadDigest } from "./vendor-record-codec";
+
+type VendorObservationClock = Readonly<{
+  now: () => Date;
+}>;
 
 export async function observeVendorUpstream(
   port: ContentWorkspaceAsyncPort,
@@ -77,7 +80,7 @@ export async function observeVendorUpstream(
 
 export async function materializeVendorUpstream(
   port: ContentWorkspaceAsyncPort,
-  clock: VendorClock,
+  clock: VendorObservationClock,
   source: VendorDeclaredSourceObservation,
   observed: VendorUpstreamObservation,
 ): Promise<VendorPolicyResult<VendorPreparedPayload>> {

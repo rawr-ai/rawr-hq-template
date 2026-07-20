@@ -52,9 +52,6 @@ export const provider = import("@rawr/resource-native-agent-provider/providers/c
   "services/agent-plugin-lifecycle/src/service/modules/releases/ports.ts": `
 export * from "./internal/resource-artifact-repository";
 `,
-  "services/agent-plugin-lifecycle/src/service/modules/vendors/ports.ts": `
-export { createVendorOwner } from "./internal/owner-protocol";
-`,
   "apps/cli/src/lib/agent-plugins/value-surface-import.ts": `
 import { contentDigest } from "@rawr/agent-plugin-lifecycle/release";
 `,
@@ -312,7 +309,7 @@ describe("agent plugin lifecycle dependency-direction Habitat rule", () => {
     expect(
       rejected.report.rules[0].diagnostics,
       JSON.stringify(rejected.report.rules[0].diagnostics, null, 2),
-    ).toHaveLength(32);
+    ).toHaveLength(31);
 
     const rootRouter = "services/agent-plugin-lifecycle/src/service/router.ts";
     const expectedLocations = [
