@@ -2,12 +2,28 @@ import {
   createMechanicalEvidenceHandle,
   type ArtifactRef,
 } from "@rawr/agent-plugin-lifecycle/release";
-import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
+import type {
+  Config,
+  CreateClientOptions,
+  Deps,
+  Scope,
+} from "@rawr/agent-plugin-lifecycle/client";
+import {
+  router,
+  type Router,
+} from "@rawr/agent-plugin-lifecycle/router";
+import {
+  contract,
+  type Contract,
+} from "@rawr/agent-plugin-lifecycle/service/contract";
 import {
   createResourceCompleteTargetIdentityReader,
   type CompleteTargetIdentityReader,
 } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
+
+// @ts-expect-error Contract types are exposed only through the owner-qualified contract subpath.
+import * as retiredTypesSurface from "@rawr/agent-plugin-lifecycle/types";
 
 // @ts-expect-error Artifact and evidence projections are composed inside the service.
 import * as retiredReleaseBinding from "@rawr/agent-plugin-lifecycle/bindings/releases";
@@ -71,6 +87,17 @@ import type { BuildResult } from "@rawr/agent-plugin-lifecycle/service/modules/r
 void createMechanicalEvidenceHandle;
 declare const artifactRef: ArtifactRef;
 void artifactRef;
+const lifecycleContract: Contract = contract;
+void lifecycleContract;
+void retiredTypesSurface;
+const lifecycleRouter: Router = router;
+void lifecycleRouter;
+declare const lifecycleConfig: Config;
+declare const lifecycleBoundary: CreateClientOptions;
+declare const lifecycleScope: Scope;
+void lifecycleConfig;
+void lifecycleBoundary;
+void lifecycleScope;
 type CompleteIdentityReaderReturnIsExact = ReturnType<
   typeof createResourceCompleteTargetIdentityReader
 > extends CompleteTargetIdentityReader

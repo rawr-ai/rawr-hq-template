@@ -11,7 +11,6 @@ required = [
   "index.ts",
   "router.ts",
   "service",
-  "types.ts",
 ]
 allowed = []
 

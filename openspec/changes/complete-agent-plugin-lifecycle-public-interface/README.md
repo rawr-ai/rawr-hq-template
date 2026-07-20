@@ -734,6 +734,21 @@ claiming deletion of task 5.3's temporary complete-identity bridge.
 | Reviews | Final architecture/oRPC, behavior/testing/state-machine, TypeScript/refactor, and structural/Habitat rereviews report no remaining finding. The loop collapsed the dead failure taxonomy, linked decoding to the resource owner, replaced caller inference with the named `Deps` boundary, and removed an exact-symbol Grit allowlist. |
 | Scope | [[tasks#5. T6C3: Export Destination Independence|Export task 5.2]] remains blocked and untouched. No destination publication, app/runtime composition, Personal coupling, live provider mutation, or protected-lane release enters this checkpoint. |
 
+## C5 Canonical Service Boundary Proof
+
+This prepared checkpoint advances
+[[tasks#2A. C5 Context-Direction Correction|task 2A.4]] without marking it
+complete while the explicit export/provider transition surfaces remain.
+
+| Boundary | Result |
+| --- | --- |
+| Canonical construction | The root `router.ts` remains the thin executable alias required by the canonical service shell. `createClient` passes that router to `defineServicePackage` and exposes named `Deps`, `Scope`, `Config`, and `CreateClientOptions` construction-boundary types; callers do not infer public imports through `Parameters<typeof createClient>`. |
+| Public contract | `./service/contract` exposes the declarative `contract` and `Contract`; `./router` exposes only the composed router boundary. The redundant `./types` alias and service-module DTO paths are unreachable through package exports. Repositories, module internals, private schemas, middleware, and provider internals remain private. |
+| Structural axis | The existing positive source-shell topology requires `client.ts`, `index.ts`, `router.ts`, and `service/`; this checkpoint removes only the redundant root `types.ts`. It adds no literal package-export map or new exception to the multi-axis dependency rule. Public-surface ratcheting proceeds by architectural class rather than duplicating each current manifest key. |
+| Proof | The immediately preceding integrated behavior gate passed 42 lifecycle files / 381 tests and 47 CLI files / 325 tests. This package-only slice then passed lifecycle and CLI lint, typecheck, build, sync/structural, the three-test Habitat consumer fixture, strict OpenSpec, and `git diff --check`. CLI typecheck proves the named construction types and root router/qualified contract imports while rejecting the retired `./types` subpath. The complete required repository ratchet also passed all 29 admitted lint targets, all 42 admitted typecheck targets, Habitat provisioning/consumer proof, and all three locked lifecycle topology rules. |
+| Reviews | Architecture/oRPC, behavior/testing, TypeScript/TypeBox, and structural/Habitat rereviews report no remaining finding. The correction restored the thin root router and named construction types, retained the qualified contract, and rejected a literal export-key ratchet. |
+| Scope | The remaining export/provider transition subpaths are explicit later deletion debt, not permanent owners. This checkpoint changes no procedure behavior, native provider command, destination publication, app/runtime composition, Personal relationship, or protected-lane input. |
+
 ## CLI Harness Owner Correction
 
 | Boundary | Result |
