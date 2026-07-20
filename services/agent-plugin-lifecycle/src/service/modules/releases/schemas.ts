@@ -146,6 +146,11 @@ export const CheckInputSchema = Type.Unsafe<AgentPluginCheckRequest>(Type.Object
 
 export const BuildInputSchema = CheckInputSchema;
 
+export {
+  ReleaseInputRecordInputSchema,
+  ReleaseInputRecordResultSchema,
+} from "./model/dto/release-lifecycle";
+
 export const RepositoryCheckInputSchema = Type.Unsafe<RepositoryCheckRequest>(Type.Union([
   Type.Object(
     {

@@ -8,6 +8,8 @@ import {
   CheckResultSchema,
   PlanRetentionInputSchema,
   PlanRetentionResultSchema,
+  ReleaseInputRecordInputSchema,
+  ReleaseInputRecordResultSchema,
   RepositoryCheckInputSchema,
   RepositoryCheckResultSchema,
 } from "./schemas";
@@ -17,6 +19,10 @@ export const contract = {
     .meta({ idempotent: true, audit: "full", entity: "releases" })
     .input(schema(CheckInputSchema))
     .output(schema(CheckResultSchema)),
+  releaseInputRecord: ocBase
+    .meta({ idempotent: true, audit: "full", entity: "releases" })
+    .input(schema(ReleaseInputRecordInputSchema))
+    .output(schema(ReleaseInputRecordResultSchema)),
   checkRepository: ocBase
     .meta({ idempotent: true, audit: "full", entity: "releases" })
     .input(schema(RepositoryCheckInputSchema))

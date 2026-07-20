@@ -80,11 +80,11 @@ native mutation, or change bytes or metadata.
 ### Requirement: Existing check command exposes closed repository and channel modes
 
 `rawr agent plugins check` MUST parse exactly one of release eligibility,
-staged/clean repository validation, current-main v2 encode/validate, or
-current-main selection validation before acquiring any Git, filesystem,
-artifact, provider, destination, capsule, Oclif, app, or runtime port. Each
-selected mode MUST invoke exactly one typed `@rawr/agent-plugin-lifecycle`
-procedure once.
+staged/clean repository validation, release-input body/envelope
+canonicalization, current-main v2 encode/validate, or current-main selection
+validation before acquiring any Git, filesystem, artifact, provider,
+destination, capsule, Oclif, app, or runtime port. Each selected mode MUST
+invoke exactly one typed `@rawr/agent-plugin-lifecycle` procedure once.
 
 The prior protected-lane runtime mode MUST be absent. C6 settlement MUST select
 the exact canonical personal-main workspace/release input and MUST NOT supply or
@@ -102,6 +102,30 @@ infer candidate status from an explicit content-workspace path.
   instrumented
 - **THEN** exactly its declared procedure is called once and every other
   procedure records zero calls
+
+### Requirement: Release-input authoring is pure and canonical
+
+The release-input-record mode MUST consume one nonempty bounded stdin byte
+stream. A body request MUST produce one newline-terminated canonical envelope;
+an envelope request MUST preserve the exact validated canonical bytes. Invalid
+UTF-8, malformed JSON, noncanonical envelopes, digest mismatch, or invalid body
+shape MUST return releases-owned typed issues. The CLI MUST NOT write a record,
+select a repository path, or acquire Git, filesystem, artifact, provider,
+destination, package, governance, capsule, Oclif, app, or runtime authority.
+
+#### Scenario: Body and envelope reach one pure procedure
+- **WHEN** an operator supplies either a valid body or the resulting canonical
+  envelope through stdin
+- **THEN** exactly one releases-owned procedure returns identical canonical
+  envelope bytes and digest
+- **AND** human output reproduces those bytes without reserialization or an
+  additional newline
+
+#### Scenario: Stdin refusal precedes service construction
+- **WHEN** stdin is a terminal, empty, or exceeds the release-input protocol
+  ceiling, or fields from another check mode are supplied
+- **THEN** the CLI rejects the request before client construction and every
+  lifecycle resource and procedure records zero calls
 
 ### Requirement: Repository validation has exact staged and clean modes
 

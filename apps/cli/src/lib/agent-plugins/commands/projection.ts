@@ -26,6 +26,7 @@ import type {
   CurrentMainSelectionRequest,
   ExportRequest,
   PackageRequest,
+  ReleaseInputRecordRequest,
   RepositoryCheckRequest,
   StatusRequest,
   SyncRequest,
@@ -38,6 +39,7 @@ import { LifecycleInputError } from "./input";
 export type LifecycleOperationRequest =
   | Readonly<{ operation: "releases.check"; input: CheckRequest }>
   | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>
+  | Readonly<{ operation: "releases.releaseInputRecord"; input: ReleaseInputRecordRequest }>
   | Readonly<{ operation: "releases.build"; input: BuildRequest }>
   | Readonly<{ operation: "vendors.status"; input: VendorStatusRequest }>
   | Readonly<{ operation: "vendors.update"; input: VendorUpdateRequest }>
@@ -122,6 +124,10 @@ export async function invokeLifecycleProcedure(
       const client = await factory("releases.checkRepository", binding);
       return await client.releases.checkRepository(request.input, callOptions);
     }
+    case "releases.releaseInputRecord": {
+      const client = await factory("releases.releaseInputRecord", binding);
+      return await client.releases.releaseInputRecord(request.input, callOptions);
+    }
     case "releases.build": {
       const client = await factory("releases.build", binding);
       return await client.releases.build(request.input, callOptions);
@@ -199,13 +205,17 @@ export function lifecycleResultExitCode(
     const value = asRecord(record.value);
     return value.status === "Blocked" || value.status === "Failed" || value.status === "PartialFailure" ? 1 : 0;
   }
-  if (operation === "governance.currentMainRecord") return record.ok === true ? 0 : 1;
+  if (
+    operation === "releases.releaseInputRecord"
+    || operation === "governance.currentMainRecord"
+  ) return record.ok === true ? 0 : 1;
   if (operation === "governance.currentMainSelection") {
     return record.kind === "CURRENT_ELIGIBLE" ? 0 : 2;
   }
   const successfulKinds: Readonly<Record<LifecycleOperation, readonly string[]>> = {
     "releases.check": ["EligibleReport"],
     "releases.checkRepository": ["StagedRepositoryEligible", "CleanRepositoryEligible"],
+    "releases.releaseInputRecord": [],
     "releases.build": ["Published", "ReadOnlyConverged"],
     "vendors.status": ["VendorStatus"],
     "vendors.update": ["ReadOnlyConverged", "AuthoredReviewableChanges"],
@@ -225,7 +235,10 @@ export function projectLifecycleResultForOutput(
   operation: LifecycleOperation,
   result: unknown,
 ): unknown {
-  if (operation !== "governance.currentMainRecord") return result;
+  if (
+    operation !== "releases.releaseInputRecord"
+    && operation !== "governance.currentMainRecord"
+  ) return result;
   const record = asRecord(result);
   if (record.ok !== true) return result;
   const value = asRecord(record.value);

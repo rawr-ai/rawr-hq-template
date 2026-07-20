@@ -1,15 +1,31 @@
 import { schema } from "@rawr/hq-sdk";
-import { describe, expect, it } from "vitest";
+import type {
+  InferContractRouterInputs,
+  InferContractRouterOutputs,
+} from "@orpc/contract";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import type { Static } from "typebox";
 import { Value } from "typebox/value";
 
+import type {
+  ReleaseInputRecordRequest,
+  ReleaseInputRecordResult,
+} from "../../../src/service/modules/releases/model/dto/release-lifecycle";
 import {
   BuildInputSchema,
   BuildResultSchema,
   CheckInputSchema,
   CheckResultSchema,
+  ReleaseInputRecordInputSchema,
+  ReleaseInputRecordResultSchema,
   RepositoryCheckInputSchema,
   RepositoryCheckResultSchema,
 } from "../../../src/service/modules/releases/schemas";
+import {
+  ReleaseIssueSchema,
+  type ReleaseIssue,
+} from "../../../src/service/shared/release";
+import { contract } from "../../../src/service/modules/releases/contract";
 
 const contentWorkspace = Object.freeze({
   locator: "/tmp/content-workspace",
@@ -28,6 +44,25 @@ const artifactDigest = `ad1_${"d".repeat(64)}`;
 const releaseSetDigest = `rs1_${"e".repeat(64)}`;
 
 describe("release procedure schema boundary", () => {
+  it("derives release-input request and result types from their TypeBox schemas", () => {
+    type ContractInputs = InferContractRouterInputs<typeof contract>;
+    type ContractOutputs = InferContractRouterOutputs<typeof contract>;
+
+    expectTypeOf<ReleaseInputRecordRequest>().toEqualTypeOf<
+      Static<typeof ReleaseInputRecordInputSchema>
+    >();
+    expectTypeOf<ReleaseInputRecordResult>().toEqualTypeOf<
+      Static<typeof ReleaseInputRecordResultSchema>
+    >();
+    expectTypeOf<ReleaseIssue>().toEqualTypeOf<Static<typeof ReleaseIssueSchema>>();
+    expectTypeOf<ContractInputs["releaseInputRecord"]>().toEqualTypeOf<
+      Static<typeof ReleaseInputRecordInputSchema>
+    >();
+    expectTypeOf<ContractOutputs["releaseInputRecord"]>().toEqualTypeOf<
+      Static<typeof ReleaseInputRecordResultSchema>
+    >();
+  });
+
   it("admits only the two closed check/build mode envelopes", () => {
     expect(Value.Check(CheckInputSchema, {
       contentWorkspace,
@@ -133,6 +168,85 @@ describe("release procedure schema boundary", () => {
       mode: { kind: "complete-set" },
       ref: { kind: "complete-set", releaseSetDigest: "rs1_deadbeef" },
     })).toBe(false);
+  });
+
+  it("keeps release-input record authoring pure and schema closed", async () => {
+    expect(Value.Check(ReleaseInputRecordInputSchema, {
+      kind: "encode-body",
+      body: { invalidUntilHandledByReleasePolicy: true },
+    })).toBe(true);
+    expect(Value.Check(ReleaseInputRecordInputSchema, {
+      kind: "validate-envelope",
+      bytes: new Uint8Array([123, 125, 10]),
+    })).toBe(true);
+    expect(Value.Check(ReleaseInputRecordInputSchema, {
+      kind: "validate-envelope",
+      bytes: "{}\n",
+    })).toBe(false);
+    expect(Value.Check(ReleaseInputRecordInputSchema, {
+      kind: "encode-body",
+      body: {},
+      path: ".rawr/release-input.json",
+    })).toBe(false);
+
+    expect(Value.Check(ReleaseInputRecordResultSchema, {
+      ok: true,
+      value: {
+        releaseInputDigest: `ri1_${"a".repeat(64)}`,
+        byteLength: 3,
+        bytes: new Uint8Array([123, 125, 10]),
+      },
+    })).toBe(true);
+    expect(Value.Check(ReleaseInputRecordResultSchema, {
+      ok: false,
+      issues: [{
+        code: "UNKNOWN_FIELD",
+        path: "releaseInput.body.extra",
+        message: "Unknown field",
+      }],
+    })).toBe(true);
+    expect(Value.Check(ReleaseInputRecordResultSchema, {
+      ok: false,
+      issues: [{
+        code: "NOT_A_RELEASE_ISSUE",
+        path: "releaseInput",
+        message: "Not admitted",
+      }],
+    })).toBe(false);
+
+    const invalidInputs = [
+      { kind: "encode-body", body: {}, path: ".rawr/release-input.json" },
+      { kind: "validate-envelope", bytes: "{}\n" },
+    ];
+    for (const candidate of invalidInputs) {
+      const validated = await schema(ReleaseInputRecordInputSchema)["~standard"].validate(candidate);
+      expect("issues" in validated).toBe(true);
+    }
+
+    const invalidResults = [
+      {
+        ok: true,
+        value: {
+          releaseInputDigest: `ri1_${"a".repeat(64)}`,
+          byteLength: 3,
+          bytes: new Uint8Array([123, 125, 10]),
+          receipt: "not-public",
+        },
+      },
+      {
+        ok: false,
+        issues: [{
+          code: "UNKNOWN_FIELD",
+          path: "releaseInput.body.extra",
+          message: "Unknown field",
+          source: "not-public",
+        }],
+      },
+    ];
+    for (const candidate of invalidResults) {
+      const validated = await schema(ReleaseInputRecordResultSchema)["~standard"].validate(candidate);
+      expect("issues" in validated).toBe(true);
+    }
   });
 
   it("keeps staged and clean repository checks in closed nonoptional variants", () => {
