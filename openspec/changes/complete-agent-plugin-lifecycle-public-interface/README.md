@@ -479,6 +479,20 @@ temporary complete-identity read, so no cross-module task is marked complete.
 | Cleanup boundary | Recursive test cleanup admits only an immediate child of the canonical system temp root with the fixture-owned prefix. |
 | Proof | `@rawr/plugin-devops` passes its owner-local tests with ignored build output absent, then passes lint, typecheck, build, and sync. Its declared lint and typecheck targets join the required pre-push/CI ratchet through Nx discovery. |
 
+## CLI Target Determinism
+
+Together with the owner correction above, this checkpoint closes
+[[tasks#6. T6D: Truthful Test Owners|T6D task 6.3]] against the current thin
+stack. It changes test ownership and scheduling only.
+
+| Boundary | Result |
+| --- | --- |
+| Positive owners | The named `cli` Vitest project owns `fileParallelism: false`; the `@rawr/cli` test script owns only process bootstrap through `TMPDIR=/tmp`. No ad hoc scheduling flag, wrapper, retry, or fallback remains. |
+| Product boundary | The change affects only test scheduling and scratch-parent selection. It changes no lifecycle procedure, resource/provider, command, controller payload, repository identity, or app/runtime surface. |
+| Ordinary proof | The owner-local DevOps suite passed 1 file / 4 tests with ignored build output absent. The ordinary `@rawr/cli:test` Nx target passed 48 files / 322 tests with filesystem-backed files serialized by project configuration. |
+| Static proof | DevOps lint, typecheck, build, and sync passed. CLI lint, test-inclusive typecheck, and build passed. Strict OpenSpec validation, `git diff --check`, and the complete required repository ratchet passed with the protected untracked note held outside the closed structural scan and restored byte-identically. |
+| Reviews | Architecture/authority, behavior/testing, TypeScript/refactor, and structural/Habitat reviewers report no remaining P1/P2/P3. The loop added the missing DevOps lint target to the dynamic required ratchet and removed an unneeded `rootDirs` overlay before closure. |
+
 ## Standing Reviews
 
 | Role | Pivot focus |

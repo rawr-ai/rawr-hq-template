@@ -26,6 +26,7 @@ export default defineConfig({
         test: {
           name: "cli",
           environment: "node",
+          fileParallelism: false,
           include: [...includes],
           env: { NODE_ENV: "production" },
           testTimeout: 60_000,
