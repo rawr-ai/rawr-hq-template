@@ -1,11 +1,5 @@
 import { NodeContext } from "@effect/platform-node";
-import {
-  NativeProviderResourceFailure,
-  type ClaudeNativeResourceSession,
-  type CodexNativeResourceSession,
-  type NativeProviderResourcePort,
-  type NativeResourceSessionInput,
-} from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 import type {
   ClaudeNativeAgentProviderSession,
   CodexNativeAgentProviderSession,
@@ -14,6 +8,11 @@ import type {
 import { claudeEffectPlatformNodeProvider } from "@rawr/resource-native-agent-provider/providers/claude-effect-platform-node";
 import { codexEffectPlatformNodeProvider } from "@rawr/resource-native-agent-provider/providers/codex-effect-platform-node";
 import { Effect } from "effect";
+
+type NativeProviderResourcePort = Deps["providerNativeResource"];
+type NativeResourceSessionInput = Parameters<NativeProviderResourcePort["acquireCodex"]>[0];
+type CodexNativeResourceSession = Awaited<ReturnType<NativeProviderResourcePort["acquireCodex"]>>;
+type ClaudeNativeResourceSession = Awaited<ReturnType<NativeProviderResourcePort["acquireClaude"]>>;
 
 /** Lowers the two native Effect Platform resources into the service's raw Promise port. */
 export function createNodeNativeProviderResource(): NativeProviderResourcePort {
@@ -80,13 +79,7 @@ async function runNodeProvider<A>(
     Effect.provide(NodeContext.layer),
   ));
   if (result._tag === "Left") {
-    throw new NativeProviderResourceFailure({
-      kind: result.left.reason === "OwnershipConflict"
-        ? "ownership-conflict"
-        : "provider-failure",
-      detail: result.left.detail,
-      path: result.left.path,
-    });
+    throw result.left;
   }
   return result.right;
 }

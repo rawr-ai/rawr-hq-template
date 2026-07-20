@@ -3,7 +3,7 @@ import type {
   ArtifactTreeLocationObservation,
 } from "@rawr/resource-agent-plugin-artifact-repository";
 
-import { NativeProviderResourceFailure } from "../model/errors/native-resource";
+import { NativeProviderPreMutationRefusal } from "../model/errors/native-resource";
 import type { ProviderMarketplaceLocationResolver } from "../model/repositories/marketplace-location";
 import type { ProviderMarketplaceSource } from "../model/repositories/state";
 import { NATIVE_PACKAGE_READ_LIMITS } from "./resource-package";
@@ -56,12 +56,8 @@ export function createResourceMarketplaceLocationResolver(
   });
 }
 
-function locationFailure(detail: string): NativeProviderResourceFailure {
-  return new NativeProviderResourceFailure({
-    kind: "pre-mutation-refusal",
-    detail,
-    path: undefined,
-  });
+function locationFailure(detail: string): NativeProviderPreMutationRefusal {
+  return new NativeProviderPreMutationRefusal(detail);
 }
 
 function failureDetail(error: unknown): string {

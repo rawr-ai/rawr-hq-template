@@ -18,7 +18,7 @@ import type {
   CodexNativeResourceSession,
   NativeResourceSessionInput,
 } from "../../../src/service/model/dependencies/providers";
-import { NativeProviderResourceFailure } from "../../../src/service/modules/providers/model/errors/native-resource";
+import { NativeProviderPreMutationRefusal } from "../../../src/service/modules/providers/model/errors/native-resource";
 import type { ProviderMarketplaceSource } from "../../../src/service/modules/providers/model/repositories/state";
 import {
   createProviderMarketplaceRegistration,
@@ -143,10 +143,9 @@ describe("provider marketplace location admission", () => {
 
     const located = resolver.locate(source);
 
-    await expect(located).rejects.toBeInstanceOf(NativeProviderResourceFailure);
+    await expect(located).rejects.toBeInstanceOf(NativeProviderPreMutationRefusal);
     await expect(located).rejects.toMatchObject({
-      _tag: "NativeProviderResourceFailure",
-      kind: "pre-mutation-refusal",
+      _tag: "NativeProviderPreMutationRefusal",
     });
     await expect(located).rejects.toThrow(expectedMessage);
     expect(locateTree).toHaveBeenCalledWith({
@@ -170,10 +169,9 @@ describe("provider marketplace location admission", () => {
 
     const located = resolver.locate(marketplaceSource());
 
-    await expect(located).rejects.toBeInstanceOf(NativeProviderResourceFailure);
+    await expect(located).rejects.toBeInstanceOf(NativeProviderPreMutationRefusal);
     await expect(located).rejects.toMatchObject({
-      _tag: "NativeProviderResourceFailure",
-      kind: "pre-mutation-refusal",
+      _tag: "NativeProviderPreMutationRefusal",
     });
     await expect(located).rejects.toThrow("fixture locator failed");
   });
@@ -250,11 +248,9 @@ describe("provider marketplace location admission", () => {
       marketplaceSources: { read: async () => success(source) },
       marketplaceLocations: {
         locate: async () => {
-          throw new NativeProviderResourceFailure({
-            kind: "pre-mutation-refusal",
-            detail: "Marketplace projection is not materialized",
-            path: undefined,
-          });
+          throw new NativeProviderPreMutationRefusal(
+            "Marketplace projection is not materialized",
+          );
         },
       },
     });
@@ -306,11 +302,9 @@ describe("provider marketplace location admission", () => {
       marketplaceSources: { read: async () => success(source) },
       marketplaceLocations: {
         locate: async () => {
-          throw new NativeProviderResourceFailure({
-            kind: "pre-mutation-refusal",
-            detail: "Marketplace projection is not materialized",
-            path: undefined,
-          });
+          throw new NativeProviderPreMutationRefusal(
+            "Marketplace projection is not materialized",
+          );
         },
       },
     });

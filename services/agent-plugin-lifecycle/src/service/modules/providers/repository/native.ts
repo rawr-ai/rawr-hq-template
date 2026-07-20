@@ -1,4 +1,8 @@
 import type { PluginId } from "../../../shared/release";
+import {
+  isNativeAgentProviderFailure,
+  type NativeAgentProviderFailure,
+} from "@rawr/resource-native-agent-provider";
 
 import { compareCanonical } from "../model/helpers/canonical";
 import {
@@ -47,7 +51,7 @@ import {
   isNativeProvenanceAmbiguity,
   type NativeProvenanceAmbiguityReason,
 } from "./resource-provenance";
-import { NativeProviderResourceFailure } from "../model/errors/native-resource";
+import { NativeProviderPreMutationRefusal } from "../model/errors/native-resource";
 
 type NativeMemberMutationAction = Exclude<NativeProviderMutationAction, { readonly kind: "SetMarketplace" }>;
 type RetireConfiguredExposureAction = Extract<CanonicalNativeMutationAction, {
@@ -158,7 +162,7 @@ export function createNativeProviderObserver(input: Readonly<{
         available: canonicalCapabilities(observation.available),
       }));
     } catch (error) {
-      return failure([portFailure("CAPABILITY_MISMATCH", "target.capabilities", error)]);
+      return failure([portFailure(input.provider, "CAPABILITY_MISMATCH", "target.capabilities", error)]);
     }
   };
 
@@ -173,7 +177,7 @@ export function createNativeProviderObserver(input: Readonly<{
       }));
       return success(createProviderInventory(target, Object.freeze([]), Object.freeze(exposures)));
     } catch (error) {
-      return failure([portFailure("VISIBILITY_FAILED", "target.inventory", error)]);
+      return failure([portFailure(input.provider, "VISIBILITY_FAILED", "target.inventory", error)]);
     }
   };
 
@@ -217,7 +221,7 @@ export function createNativeProviderAdapter(input: Readonly<{
         available: canonicalCapabilities(observation.available),
       }));
     } catch (error) {
-      return failure([portFailure("CAPABILITY_MISMATCH", "target.capabilities", error)]);
+      return failure([portFailure(input.provider, "CAPABILITY_MISMATCH", "target.capabilities", error)]);
     }
   };
 
@@ -334,14 +338,18 @@ export function createNativeProviderAdapter(input: Readonly<{
         });
       } catch (error) {
         if (
-          error instanceof NativeProviderResourceFailure
-          && error.kind === "pre-mutation-refusal"
+          error instanceof NativeProviderPreMutationRefusal
         ) {
           return notApplied([
-            portFailure("MUTATION_FAILED", "target.mutation.SetMarketplace", error),
+            portFailure(input.provider, "MUTATION_FAILED", "target.mutation.SetMarketplace", error),
           ]);
         }
-        return uncertain("bridge-invoked", [portFailure("MUTATION_FAILED", "target.mutation.SetMarketplace", error)]);
+        return uncertain("bridge-invoked", [portFailure(
+          input.provider,
+          "MUTATION_FAILED",
+          "target.mutation.SetMarketplace",
+          error,
+        )]);
       }
       const afterResult = await readInventory(action.target);
       if (!afterResult.ok) return uncertain("bridge-returned", afterResult.issues);
@@ -392,6 +400,7 @@ export function createNativeProviderAdapter(input: Readonly<{
         await input.bridge.retireConfiguredExposure({ target: action.target, expected: action.exposure });
       } catch (error) {
         return uncertain("bridge-invoked", [portFailure(
+          input.provider,
           "MUTATION_FAILED",
           "target.mutation.RetireConfiguredExposure",
           error,
@@ -431,7 +440,12 @@ export function createNativeProviderAdapter(input: Readonly<{
           break;
       }
     } catch (error) {
-      return uncertain("bridge-invoked", [portFailure("MUTATION_FAILED", `target.mutation.${action.kind}`, error)]);
+      return uncertain("bridge-invoked", [portFailure(
+        input.provider,
+        "MUTATION_FAILED",
+        `target.mutation.${action.kind}`,
+        error,
+      )]);
     }
 
     const afterResult = await readInventory(action.target);
@@ -513,7 +527,7 @@ export async function inspectNativeInventory(input: Readonly<{
       ),
     });
   } catch (error) {
-    const visibilityIssue = portFailure("VISIBILITY_FAILED", "target.inventory", error);
+    const visibilityIssue = portFailure(input.provider, "VISIBILITY_FAILED", "target.inventory", error);
     return isNativeProvenanceAmbiguity(error)
       ? Object.freeze({
           kind: "ambiguous-provenance",
@@ -669,20 +683,35 @@ function targetProviderIssue(target: ProviderTarget, provider: ProviderId) {
 }
 
 function portFailure(
+  expectedProvider: ProviderId,
   code: "CAPABILITY_MISMATCH" | "MUTATION_FAILED" | "VISIBILITY_FAILED",
   path: string,
   error: unknown,
 ): ProviderDeploymentIssue {
-  if (error instanceof NativeProviderResourceFailure && error.kind === "ownership-conflict") {
+  const providerFailure = nativeAgentProviderFailure(error, expectedProvider);
+  if (providerFailure?.reason === "OwnershipConflict") {
     return issue(
       "BLOCKED_COLLISION",
       "target.home",
-      error.message,
+      providerFailure.detail,
       "absent provider ownership slot",
-      error.path ?? "occupied or unreadable provider ownership slot",
+      providerFailure.path ?? "occupied or unreadable provider ownership slot",
     );
   }
-  return issue(code, path, error instanceof Error ? error.message : String(error));
+  return issue(
+    code,
+    path,
+    providerFailure?.detail ?? (error instanceof Error ? error.message : String(error)),
+  );
+}
+
+function nativeAgentProviderFailure(
+  error: unknown,
+  expectedProvider: ProviderId,
+): NativeAgentProviderFailure | undefined {
+  return isNativeAgentProviderFailure(error) && error.provider === expectedProvider
+    ? error
+    : undefined;
 }
 
 function applied(): NativeMutationAttempt {

@@ -3,10 +3,6 @@ import path from "node:path";
 import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  NativeProviderResourceFailure,
-  type NativeResourceCapabilityProbe,
-} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type {
   ArtifactObjectAddress,
   ArtifactTreeLocation,
@@ -19,8 +15,10 @@ import type {
   ClaudeNativeAgentProviderSession,
   CodexNativeAgentProviderSession,
   NativeAgentProviderFailure,
+  NativeProviderCapabilityProbe,
   NativeProviderSessionInput,
 } from "@rawr/resource-native-agent-provider";
+import * as lifecycleProviderBinding from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
 const provider = vi.hoisted(() => ({
   codexAcquire: vi.fn(),
@@ -45,11 +43,11 @@ const EXECUTABLES = Object.freeze({
   codex: "/opt/rawr/bin/codex",
   claude: "/opt/rawr/bin/claude",
 });
-type ProviderId = NativeResourceCapabilityProbe["provider"];
+type ProviderId = NativeProviderCapabilityProbe["provider"];
 const PROVIDER_IDS = Object.freeze([
   "codex",
   "claude",
-] satisfies readonly NativeResourceCapabilityProbe["provider"][]);
+] satisfies readonly NativeProviderCapabilityProbe["provider"][]);
 const MARKETPLACE_TREE_LIMITS = Object.freeze({ maxEntries: 4, maxBytes: 1024 });
 
 describe("native provider resource binding", () => {
@@ -62,6 +60,12 @@ describe("native provider resource binding", () => {
       Effect.succeed(codexSession(input)));
     provider.claudeAcquire.mockImplementation((input: NativeProviderSessionInput) =>
       Effect.succeed(claudeSession(input)));
+  });
+
+  it("publishes only the temporary task-5.3 complete-identity reader", () => {
+    expect(Object.keys(lifecycleProviderBinding)).toEqual([
+      "createResourceCompleteTargetIdentityReader",
+    ]);
   });
 
   afterEach(async () => {
@@ -88,7 +92,7 @@ describe("native provider resource binding", () => {
     },
   );
 
-  it("preserves a typed provider ownership conflict across the Effect runtime edge", async () => {
+  it("preserves the resource-owned provider failure across the Effect runtime edge", async () => {
     const conflict: NativeAgentProviderFailure = Object.freeze({
       _tag: "NativeAgentProviderFailure",
       provider: "codex",
@@ -104,13 +108,7 @@ describe("native provider resource binding", () => {
       executablePath: EXECUTABLES.codex,
       home: "/tmp/codex",
     });
-    await expect(acquired).rejects.toBeInstanceOf(NativeProviderResourceFailure);
-    await expect(acquired).rejects.toMatchObject({
-      _tag: "NativeProviderResourceFailure",
-      kind: "ownership-conflict",
-      message: conflict.detail,
-      path: conflict.path,
-    });
+    await expect(acquired).rejects.toBe(conflict);
   });
 
   it("passes provider-issued marketplace locations through unchanged", async () => {
