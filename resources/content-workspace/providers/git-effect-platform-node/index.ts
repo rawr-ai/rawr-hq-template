@@ -19,6 +19,9 @@ import type {
   GitBlobAtPathObservation,
   GitObjectFormat,
   GitRemoteSelection,
+  GitStagedBlobObservation,
+  GitStagedIndexBinding,
+  GitStagedIndexObservation,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
   GitWorktreeObjectId,
@@ -280,6 +283,62 @@ export function makeContentWorkspaceResource(
       closingStatus,
       closingTrackedFlags,
     }) satisfies GitWorkspaceEvidence;
+  });
+
+  const observeGitStagedIndex = Effect.fn("contentWorkspace.observeGitStagedIndex")(function* (
+    input: Readonly<{
+      locator: string;
+      remoteSelection: GitRemoteSelection;
+      refName: string;
+      materializedPaths: readonly string[];
+      materializedRoots: readonly string[];
+      maxEntries: number;
+      maxIndexBytes: number;
+      maxBlobBytes: number;
+    }>,
+  ) {
+    const operation = "observe-git-staged-index" as const;
+    const fs = yield* FileSystem.FileSystem;
+    const executable = yield* requireCanonicalGitExecutable(fs, options.gitExecutable, operation);
+    yield* checked(operation, () => {
+      validateRefName(input.refName, operation);
+      validateRemoteSelection(input.remoteSelection, operation);
+      validateLimit(input.maxEntries, "maxEntries", operation);
+      validateLimit(input.maxIndexBytes, "maxIndexBytes", operation);
+      validateLimit(input.maxBlobBytes, "maxBlobBytes", operation);
+      if (input.materializedPaths.length > input.maxEntries || input.materializedRoots.length > input.maxEntries) {
+        throw invalidInput(operation, undefined, "Staged materialization selectors exceed maxEntries");
+      }
+      validateCanonicalPathSet(input.materializedPaths, operation);
+      validateCanonicalPathSet(input.materializedRoots, operation);
+    });
+    const opening = yield* observeGitStagedIndexBinding(fs, executable, input, operation);
+    const objectIds = yield* checked(operation, () => stagedRegularBlobObjectIds(
+      opening.indexEntries,
+      opening.anchor.objectFormat,
+      input.maxEntries,
+      input.materializedPaths,
+      input.materializedRoots,
+    ));
+    let remainingBytes = input.maxBlobBytes;
+    const blobs: GitStagedBlobObservation[] = [];
+    for (const objectId of objectIds) {
+      const bytes = yield* gitBytes(
+        executable,
+        opening.anchor.root,
+        ["cat-file", "blob", objectId],
+        operation,
+        remainingBytes,
+      );
+      remainingBytes -= bytes.byteLength;
+      blobs.push(Object.freeze({ objectId, bytes }));
+    }
+    const closing = yield* observeClosingGitStagedIndexBinding(fs, executable, input, operation);
+    return Object.freeze({
+      opening,
+      blobs: Object.freeze(blobs),
+      closing,
+    }) satisfies GitStagedIndexObservation;
   });
 
   const readGitBlobAtPath = Effect.fn("contentWorkspace.readGitBlobAtPath")(function* (
@@ -812,6 +871,7 @@ export function makeContentWorkspaceResource(
     readGitTree,
     readGitBlob,
     captureGitWorkspaceEvidence,
+    observeGitStagedIndex,
     readGitBlobAtPath,
     isLocalGitAncestor,
     listGitChangedPaths,
@@ -850,6 +910,7 @@ export function makeNodeContentWorkspacePort(options: GitEffectPlatformNodeOptio
     readGitTree: (input: Parameters<typeof resource.readGitTree>[0]) => runNodeOrReject(resource.readGitTree(input)),
     readGitBlob: (input: Parameters<typeof resource.readGitBlob>[0]) => runNodeOrReject(resource.readGitBlob(input)),
     captureGitWorkspaceEvidence: (input: Parameters<typeof resource.captureGitWorkspaceEvidence>[0]) => runNodeOrReject(resource.captureGitWorkspaceEvidence(input)),
+    observeGitStagedIndex: (input: Parameters<typeof resource.observeGitStagedIndex>[0]) => runNodeOrReject(resource.observeGitStagedIndex(input)),
     readGitBlobAtPath: (input: Parameters<typeof resource.readGitBlobAtPath>[0]) => runNodeOrReject(resource.readGitBlobAtPath(input)),
     isLocalGitAncestor: (input: Parameters<typeof resource.isLocalGitAncestor>[0]) => runNodeOrReject(resource.isLocalGitAncestor(input)),
     listGitChangedPaths: (input: Parameters<typeof resource.listGitChangedPaths>[0]) => runNodeOrReject(resource.listGitChangedPaths(input)),
@@ -905,6 +966,12 @@ export function makeDeferredNodeContentWorkspacePort(
       "capture-git-evidence",
       input.root,
       (port) => port.captureGitWorkspaceEvidence(input),
+    ),
+    observeGitStagedIndex: (input: Parameters<ContentWorkspaceNodeAsyncPort["observeGitStagedIndex"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "observe-git-staged-index",
+      input.locator,
+      (port) => port.observeGitStagedIndex(input),
     ),
     readGitBlobAtPath: (input: Parameters<ContentWorkspaceNodeAsyncPort["readGitBlobAtPath"]>[0]) => runDeferredNodeOperation(
       acquire,
@@ -1621,7 +1688,7 @@ function observeGitWorkspaceAnchor(
   executable: string,
   locator: string,
   input: Readonly<{ remoteSelection: GitRemoteSelection; refName: string }>,
-  operation: "inspect-git-workspace" | "capture-git-evidence",
+  operation: "inspect-git-workspace" | "capture-git-evidence" | "observe-git-staged-index",
 ) {
   return Effect.gen(function* () {
     const root = yield* requireExactGitRoot(fs, executable, locator, operation);
@@ -1650,6 +1717,81 @@ function observeGitWorkspaceAnchor(
       remoteUrls,
     }) satisfies GitWorkspaceAnchor;
   });
+}
+
+function observeGitStagedIndexBinding(
+  fs: FileSystem.FileSystem,
+  executable: string,
+  input: Readonly<{
+    locator: string;
+    remoteSelection: GitRemoteSelection;
+    refName: string;
+    maxIndexBytes: number;
+  }>,
+  operation: "observe-git-staged-index",
+) {
+  return Effect.gen(function* () {
+    const anchor = yield* observeGitWorkspaceAnchor(fs, executable, input.locator, input, operation);
+    const indexEntries = yield* gitBytes(
+      executable,
+      anchor.root,
+      ["ls-files", "--stage", "-z"],
+      operation,
+      input.maxIndexBytes,
+    );
+    return Object.freeze({ anchor, indexEntries }) satisfies GitStagedIndexBinding;
+  });
+}
+
+function observeClosingGitStagedIndexBinding(
+  fs: FileSystem.FileSystem,
+  executable: string,
+  input: Readonly<{
+    locator: string;
+    remoteSelection: GitRemoteSelection;
+    refName: string;
+    maxIndexBytes: number;
+  }>,
+  operation: "observe-git-staged-index",
+) {
+  return Effect.gen(function* () {
+    const root = yield* requireExactGitRoot(fs, executable, input.locator, operation);
+    const indexEntries = yield* gitBytes(
+      executable,
+      root,
+      ["ls-files", "--stage", "-z"],
+      operation,
+      input.maxIndexBytes,
+    );
+    const anchor = yield* observeGitWorkspaceAnchor(fs, executable, root, input, operation);
+    return Object.freeze({ anchor, indexEntries }) satisfies GitStagedIndexBinding;
+  });
+}
+
+function stagedRegularBlobObjectIds(
+  bytes: Uint8Array,
+  objectFormat: GitObjectFormat,
+  maxEntries: number,
+  materializedPaths: readonly string[],
+  materializedRoots: readonly string[],
+): readonly string[] {
+  const objectIds = new Set<string>();
+  let entries = 0;
+  for (const raw of decoder.decode(bytes).split("\0")) {
+    if (raw.length === 0) continue;
+    entries += 1;
+    if (entries > maxEntries) throw invalidInput("observe-git-staged-index", undefined, "Git index exceeds maxEntries");
+    const match = /^([0-7]{6}) ([0-9a-f]+) ([0-3])\t([^\0]+)$/u.exec(raw);
+    if (match === null || match[1] === undefined || match[2] === undefined || match[4] === undefined) {
+      throw invalidInput("observe-git-staged-index", undefined, "Git index contains a malformed entry");
+    }
+    validateObjectForFormat(match[2], objectFormat, "index blob", "observe-git-staged-index");
+    const stagedPath = match[4];
+    const selected = materializedPaths.includes(stagedPath)
+      || materializedRoots.some((root) => stagedPath === root || stagedPath.startsWith(`${root}/`));
+    if (selected && (match[1] === "100644" || match[1] === "100755")) objectIds.add(match[2]);
+  }
+  return Object.freeze([...objectIds].sort(compareText));
 }
 
 function readSelectedRemoteUrls(
@@ -2110,6 +2252,7 @@ function makeGitCommand(
     GIT_CONFIG_GLOBAL: "/dev/null",
     GIT_CONFIG_NOSYSTEM: "1",
     GIT_CONFIG_SYSTEM: "/dev/null",
+    GIT_NO_LAZY_FETCH: "1",
     GIT_NO_REPLACE_OBJECTS: "1",
     GIT_OPTIONAL_LOCKS: "0",
     GIT_TERMINAL_PROMPT: "0",
@@ -2123,6 +2266,7 @@ function isExactLocalGitOperation(operation: ContentWorkspaceFailure["operation"
     || operation === "read-git-tree"
     || operation === "read-git-blob"
     || operation === "capture-git-evidence"
+    || operation === "observe-git-staged-index"
     || operation === "read-git-blob-at-path"
     || operation === "local-git-ancestry"
     || operation === "list-git-changed-paths";

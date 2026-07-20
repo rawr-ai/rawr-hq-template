@@ -14,6 +14,7 @@ const operationLabels: Readonly<Record<ContentWorkspaceFailure["operation"], str
   "read-git-tree": "Read-only Git tree observation",
   "read-git-blob": "Read-only Git blob observation",
   "capture-git-evidence": "Read-only Git workspace evidence capture",
+  "observe-git-staged-index": "Read-only staged Git index observation",
   "read-git-blob-at-path": "Read-only exact Git object observation",
   "local-git-ancestry": "Read-only local Git ancestry verification",
   "list-git-changed-paths": "Read-only Git changed-path observation",
