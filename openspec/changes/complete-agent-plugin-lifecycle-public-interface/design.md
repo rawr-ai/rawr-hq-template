@@ -80,6 +80,29 @@ port acquisition.
   retry or writes.
 - `clean` binds repository/ref/commit/tree and declared inputs, rejects dirty or
   mismatched consumed paths, and authorizes no build by itself.
+- `release-input-refresh` requires the complete explicit member identity list,
+  observes one staged index while materializing only those exact roots and the
+  optional existing `.rawr/release-input.json`, and emits the unique canonical
+  candidate bytes. It never infers members from arbitrary directories. Every
+  regular file below a selected root enters that member payload; only exact
+  `skills/<identity>/SKILL.md` paths create skill inventory and claims. A valid
+  prior record contributes surviving member vendor/curation bindings,
+  surviving alias/provider/destination claims, locks, and quality policies;
+  absent prior state contributes empty ancillary arrays. Invalid or
+  wrong-authority prior bytes and an undeclared immediate plugin child refuse
+  instead of being repaired.
+
+The refresh observation encloses all selected blob reads between one opening
+and closing Git binding. Changed source returns `SourceChanged`; unchanged
+existing canonical bytes return `ReleaseInputReadOnlyConverged`; otherwise the
+operation returns `ReleaseInputCandidateReady`. Both success variants carry the
+same canonical bytes. Adoption remains a Personal review/commit action, so the
+operation adds no writer, store, receipt, ledger, cache, or second state owner.
+The handler owns one frozen flat request snapshot before its first await, so a
+local caller alias cannot rewrite authority or membership during observation.
+Before payload construction, logical bounds count every selected path even when
+multiple paths share one Git object; entry, member-byte, and complete-set-byte
+overflow returns typed refusal without copying or base64-encoding the payload.
 The complete six-module service context remains inert; validation does not
 invent an operation-specific service bag. The content-workspace resource owns
 Git mechanics, while lifecycle handlers own semantic classification.

@@ -43,6 +43,11 @@ const OPERATION_CASES = Object.freeze([
     owner: "releases",
     procedure: "releaseInputRecord",
   },
+  {
+    operation: "releases.refreshReleaseInput",
+    owner: "releases",
+    procedure: "refreshReleaseInput",
+  },
   { operation: "releases.build", owner: "releases", procedure: "build" },
   { operation: "vendors.status", owner: "vendors", procedure: "status" },
   { operation: "vendors.update", owner: "vendors", procedure: "update" },

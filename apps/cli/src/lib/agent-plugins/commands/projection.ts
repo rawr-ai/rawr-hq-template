@@ -26,6 +26,7 @@ import type {
   CurrentMainSelectionRequest,
   ExportRequest,
   PackageRequest,
+  ReleaseInputRefreshRequest,
   ReleaseInputRecordRequest,
   RepositoryCheckRequest,
   StatusRequest,
@@ -40,6 +41,10 @@ export type LifecycleOperationRequest =
   | Readonly<{ operation: "releases.check"; input: CheckRequest }>
   | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>
   | Readonly<{ operation: "releases.releaseInputRecord"; input: ReleaseInputRecordRequest }>
+  | Readonly<{
+    operation: "releases.refreshReleaseInput";
+    input: ReleaseInputRefreshRequest;
+  }>
   | Readonly<{ operation: "releases.build"; input: BuildRequest }>
   | Readonly<{ operation: "vendors.status"; input: VendorStatusRequest }>
   | Readonly<{ operation: "vendors.update"; input: VendorUpdateRequest }>
@@ -128,6 +133,10 @@ export async function invokeLifecycleProcedure(
       const client = await factory("releases.releaseInputRecord", binding);
       return await client.releases.releaseInputRecord(request.input, callOptions);
     }
+    case "releases.refreshReleaseInput": {
+      const client = await factory("releases.refreshReleaseInput", binding);
+      return await client.releases.refreshReleaseInput(request.input, callOptions);
+    }
     case "releases.build": {
       const client = await factory("releases.build", binding);
       return await client.releases.build(request.input, callOptions);
@@ -209,6 +218,12 @@ export function lifecycleResultExitCode(
     operation === "releases.releaseInputRecord"
     || operation === "governance.currentMainRecord"
   ) return record.ok === true ? 0 : 1;
+  if (operation === "releases.refreshReleaseInput") {
+    return record.kind === "ReleaseInputCandidateReady"
+      || record.kind === "ReleaseInputReadOnlyConverged"
+      ? 0
+      : 1;
+  }
   if (operation === "governance.currentMainSelection") {
     return record.kind === "CURRENT_ELIGIBLE" ? 0 : 2;
   }
@@ -216,6 +231,7 @@ export function lifecycleResultExitCode(
     "releases.check": ["EligibleReport"],
     "releases.checkRepository": ["StagedRepositoryEligible", "CleanRepositoryEligible"],
     "releases.releaseInputRecord": [],
+    "releases.refreshReleaseInput": [],
     "releases.build": ["Published", "ReadOnlyConverged"],
     "vendors.status": ["VendorStatus"],
     "vendors.update": ["ReadOnlyConverged", "AuthoredReviewableChanges"],
@@ -237,20 +253,25 @@ export function projectLifecycleResultForOutput(
 ): unknown {
   if (
     operation !== "releases.releaseInputRecord"
+    && operation !== "releases.refreshReleaseInput"
     && operation !== "governance.currentMainRecord"
   ) return result;
   const record = asRecord(result);
-  if (record.ok !== true) return result;
-  const value = asRecord(record.value);
+  const value = operation === "releases.refreshReleaseInput"
+    ? record
+    : record.ok === true
+      ? asRecord(record.value)
+      : undefined;
+  if (value === undefined) return result;
   if (!(value.bytes instanceof Uint8Array)) return result;
   const { bytes, ...projectedValue } = value;
-  return Object.freeze({
-    ...record,
-    value: Object.freeze({
-      ...projectedValue,
-      envelopeText: new TextDecoder("utf-8", { fatal: true }).decode(bytes),
-    }),
+  const projected = Object.freeze({
+    ...projectedValue,
+    envelopeText: new TextDecoder("utf-8", { fatal: true }).decode(bytes),
   });
+  return operation === "releases.refreshReleaseInput"
+    ? projected
+    : Object.freeze({ ...record, value: projected });
 }
 
 export function undoResultExitCode(result: UndoResult): 0 | 1 {

@@ -206,6 +206,23 @@ cold.
 | Reviews | Architecture/authority, TypeScript/refactor, behavior/testing, and structural/Habitat reviewers report no remaining P1/P2. The structural loop moved the sole runtime release-value import back through the admitted CLI input module without relaxing the ratchet. The TypeScript loop removed two redundant whole-envelope copies. |
 | Proof ceiling | This proves pure canonical authoring and transport only. It does not write a Personal record, inspect Git, build a release, mutate a provider, or satisfy [[tasks#3C. Personal Checkpoint Prerequisites|tasks 3C.2-3C.5]]. The repository resolves oRPC 1.13.5, so this is a local direct-client claim rather than the later 1.14.8 wire fixture. |
 
+### T6F Release-Input Refresh Prerequisite
+
+This bounded checkpoint advances [[tasks#3C. Personal Checkpoint Prerequisites|task 3C.1a]]
+inside the existing releases module and qualified check command. It projects one
+review candidate from staged Git; Personal remains the authority that adopts the
+bytes through review and commit.
+
+| 3C.1a boundary | Proof |
+| --- | --- |
+| Closed input | The closed TypeBox request requires one duplicate-free explicit member list. The CLI accepts it only as repeatable `--member` values in `release-input-refresh` mode; it does not overload targeted `--plugin` or infer membership from directories, package metadata, frontmatter, installed providers, or legacy tooling. |
+| Schema authority | One dependency-contract DTO owns the closed TypeBox workspace leaves, clean policy, and source-issue schema with `Static<>` types. The staged policy and refresh request compose those exact schemas; the CLI enforces the same `MAX_RELEASE_MEMBERS` ceiling before client construction. |
+| Observation and derivation | One existing Effect content-workspace observation returns the complete staged index while materializing only the exact selected roots and optional release-input path. The handler freezes a flat request snapshot before the observation await. Releases-owned policy rejects source races, noncanonical or undeclared children, and missing declared roots; every selected regular file enters its member payload, while only exact `skills/<identity>/SKILL.md` paths create inventory and skill claims. Logical entry/member/set bounds count each selected path even when paths share one Git object and refuse before payload copying/base64 construction. |
+| Existing record | A valid existing canonical record contributes only surviving explicit member vendor/curation bindings, alias/provider-identity/destination claims, locks, and quality policies. Missing state contributes empty arrays. Invalid or wrong-authority bytes refuse; no ancillary state is inferred or repaired. |
+| State law | `ReleaseInputCandidateReady` and `ReleaseInputReadOnlyConverged` both carry the unique canonical bytes. Every refusal stutters. The handler lexically invokes only `stagedSource.observe`; focused proof keeps writer and unrelated artifact, package, export, provider, governance, and channel ports cold. It creates no store, receipt, cache, ledger, or second state owner. |
+| Proof | Before the final review fixes, the complete lifecycle suite passed 43 files / 390 tests and the complete CLI suite passed 47 files / 326 tests; both owners' lint, typecheck, build, sync, structural, locked Habitat/dependency, strict OpenSpec, and diff gates were green. The final request-snapshot and logical-byte fixes then passed the affected refresh file 9/9 plus lifecycle lint and typecheck without cache; no duplicate full suite was launched. The synthetic Personal-shaped case covers 11 exact owners, 1,610 staged files, 100 skills, and 111 derived ownership-index claims; exact repeat is byte-identical, malformed and wrong-authority prior records refuse, a noncanonical derived root refuses before Git observation, caller mutation across a deferred observation cannot rewrite authority, and 65 logical MiB sharing one 1 MiB object refuses before payload construction. |
+| Proof ceiling | This proves local direct-client semantics for repository oRPC 1.13.5 plus the selected CLI projection. It does not adopt Personal bytes, prove a landed controller asset, build a complete release set, or mutate repository/channel/provider state. |
+
 The Personal repository is currently private on a host plan whose ruleset and
 branch-protection APIs reject required-check configuration. Repository code can
 still supply an unconditional workflow and non-skippable-by-default local

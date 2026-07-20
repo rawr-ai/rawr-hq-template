@@ -82,6 +82,9 @@ const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
   "releases.releaseInputRecord": (client) => Object.freeze({
     releases: Object.freeze({ releaseInputRecord: client.releases.releaseInputRecord }),
   }),
+  "releases.refreshReleaseInput": (client) => Object.freeze({
+    releases: Object.freeze({ refreshReleaseInput: client.releases.refreshReleaseInput }),
+  }),
   "releases.build": (client) => Object.freeze({
     releases: Object.freeze({ build: client.releases.build }),
   }),

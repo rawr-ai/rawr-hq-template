@@ -81,8 +81,8 @@ native mutation, or change bytes or metadata.
 
 `rawr agent plugins check` MUST parse exactly one of release eligibility,
 staged/clean repository validation, release-input body/envelope
-canonicalization, current-main v2 encode/validate, or current-main selection
-validation before acquiring any Git, filesystem, artifact, provider,
+canonicalization, release-input staged refresh, current-main v2 encode/validate,
+or current-main selection validation before acquiring any Git, filesystem, artifact, provider,
 destination, capsule, Oclif, app, or runtime port. Each selected mode MUST
 invoke exactly one typed `@rawr/agent-plugin-lifecycle` procedure once.
 
@@ -126,6 +126,53 @@ destination, package, governance, capsule, Oclif, app, or runtime authority.
   ceiling, or fields from another check mode are supplied
 - **THEN** the CLI rejects the request before client construction and every
   lifecycle resource and procedure records zero calls
+
+### Requirement: Release-input refresh derives one closed review candidate
+
+Release-input-refresh mode MUST require one nonempty duplicate-free explicit
+member list. It MUST observe the complete staged index while materializing only
+the exact selected member roots and optional canonical release-input path. It
+MUST reject noncanonical, missing, or undeclared immediate plugin children,
+mixed opening/closing Git bindings, and invalid existing release-input bytes.
+An existing record for another content authority MUST refuse rather than seed a
+new record.
+It MUST derive each selected member's payload from every regular staged file
+under that root and derive inventory plus skill ownership only from exact
+`skills/<identity>/SKILL.md` paths.
+The handler MUST own one flat frozen copy of the validated workspace policy and
+member list before its first await. Before payload construction it MUST enforce
+the protocol entry count, per-member logical byte total, and complete-set
+logical byte total. Each selected path counts its full logical bytes even when
+multiple paths reference the same Git object.
+
+A valid existing record MUST contribute surviving explicit vendor, curation,
+alias, provider-identity, destination, lock, and quality-policy declarations.
+Absent existing state MUST contribute empty ancillary declarations; the
+controller MUST NOT infer them from package metadata, frontmatter, legacy
+tooling, installed providers, or repository paths. The operation MUST emit the
+unique canonical release-input bytes and MUST NOT write, stage, build, publish,
+package, export, mutate providers, or create a store, receipt, or ledger.
+
+#### Scenario: Fresh closed member set produces a review candidate
+- **WHEN** an explicit member list exactly equals the canonical immediate
+  children and no release-input record is staged
+- **THEN** one releases-owned procedure emits `ReleaseInputCandidateReady` with
+  canonical bytes derived from the selected roots
+- **AND** every ancillary array is empty unless supplied by valid existing
+  repository-owned state
+
+#### Scenario: Exact refresh repeat is read-only
+- **WHEN** the emitted canonical bytes are staged with unchanged selected roots
+- **THEN** the same operation emits byte-identical
+  `ReleaseInputReadOnlyConverged`
+- **AND** every Git, artifact, package, export, provider, governance, capsule,
+  and filesystem mutation counter remains zero
+
+#### Scenario: Membership or source is not closed
+- **WHEN** a canonical immediate child is absent from the explicit list, a
+  declared member root is absent, or the staged binding changes during reads
+- **THEN** the operation refuses with typed repository or `SourceChanged`
+  diagnostics and emits no candidate
 
 ### Requirement: Repository validation has exact staged and clean modes
 
