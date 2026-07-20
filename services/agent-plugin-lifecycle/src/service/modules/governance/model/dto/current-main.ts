@@ -11,7 +11,7 @@ export const CURRENT_MAIN_V2_CHANNEL = "current-main" as const;
 export const CURRENT_MAIN_V2_PROTOCOL = "agent-plugin-current-main@v2" as const;
 export const CURRENT_MAIN_V2_CANONICAL_REF = "refs/heads/main" as const;
 export const CURRENT_MAIN_V2_RECORD_PATH =
-  "plugins/agents/.lifecycle/channels/current-main.json" as const;
+  ".rawr/agent-plugin-lifecycle/channels/current-main.json" as const;
 export const CURRENT_MAIN_V2_RELEASE_INPUT_PATH = ".rawr/release-input.json" as const;
 export const MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES = 2 * 1024 * 1024;
 

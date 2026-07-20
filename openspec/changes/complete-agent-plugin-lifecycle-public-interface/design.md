@@ -118,9 +118,10 @@ candidate path from its locator.
 
 ### One current-main record is the selection authority
 
-The fixed path remains
-`plugins/agents/.lifecycle/channels/current-main.json`. Its canonical v2 envelope
-contains one digest over this closed body:
+The sole fixed path is
+`.rawr/agent-plugin-lifecycle/channels/current-main.json`. No path under the
+curated `plugins/agents` root is a governance record or fallback. Its canonical
+v2 envelope contains one digest over this closed body:
 
 ```json
 {
