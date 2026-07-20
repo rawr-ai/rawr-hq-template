@@ -103,7 +103,7 @@ keep tasks 2A.1-2A.4 open.
   body/envelope round trips, typed malformed-input refusal, one-procedure
   dispatch, and human output byte identity; land this as one semantic Graphite
   node. Record proof in [[README#T6F Personal Checkpoint Prerequisites]].
-- [ ] 3C.2 Close the declared plugin-root axis during staged and clean repository
+- [x] 3C.2 Close the declared plugin-root axis during staged and clean repository
   checks: a canonical immediate plugin child absent from the release input must
   refuse before undeclared payload materialization. Preserve declared-member
   file closure, ignore unrelated repository paths, add no global scanner or

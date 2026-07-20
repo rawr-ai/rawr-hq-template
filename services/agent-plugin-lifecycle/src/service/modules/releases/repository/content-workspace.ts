@@ -31,6 +31,7 @@ import type {
   SourceEligibilityIssue,
   SourceEligibilityIssueCode,
 } from "../../../model/dependencies/releases";
+import { validateDeclaredPluginTree } from "../model/policy/declared-plugin-tree";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const encoder = new TextEncoder();
@@ -142,6 +143,14 @@ async function inspectWorkspace(
     const releaseInput = releaseInputResult.value;
     if (releaseInput.body.contentAuthority !== policy.contentAuthority) {
       return ineligible("ReleaseInputMismatch", "release input declares a different content authority");
+    }
+    const declaredPluginIssue = validateDeclaredPluginTree({
+      pluginRoot: policy.pluginRoot,
+      paths: treeEntries.map((entry) => entry.path),
+      declaredPluginIds: releaseInput.body.members.map((member) => member.pluginId),
+    });
+    if (declaredPluginIssue !== undefined) {
+      return { kind: "Ineligible", issues: [declaredPluginIssue] };
     }
     const aggregatePayloadIssue = preflightAggregatePayloadBytes(releaseInput);
     if (aggregatePayloadIssue !== undefined) return ineligible("PayloadMismatch", aggregatePayloadIssue);

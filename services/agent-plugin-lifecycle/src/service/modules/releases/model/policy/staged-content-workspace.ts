@@ -30,6 +30,7 @@ import type {
   StagedContentWorkspaceInspection,
   StagedContentWorkspacePolicy,
 } from "../dto/staged-content-workspace";
+import { validateDeclaredPluginTree } from "./declared-plugin-tree";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 
@@ -177,15 +178,23 @@ export function classifyStagedReleaseInputObservation(
     if (releaseInput.body.contentAuthority !== policy.contentAuthority) {
       return stagedIneligible("ReleaseInputMismatch", "release input declares a different content authority");
     }
-    const aggregateIssue = preflightAggregatePayloadBytes(releaseInput);
-    if (aggregateIssue !== undefined) return stagedIneligible("PayloadMismatch", aggregateIssue);
-
     const memberRoots: StagedMemberRoot[] = [];
     for (const member of releaseInput.body.members) {
       const memberRootResult = parseReleaseRelativePath(`${policy.pluginRoot}/${member.pluginId}`, "memberRoot");
       if (!memberRootResult.ok) return stagedIneligible("ReleaseInputMismatch", "member root is not canonical");
       memberRoots.push(Object.freeze({ pluginId: member.pluginId, root: memberRootResult.value }));
     }
+    const declaredPluginIssue = validateDeclaredPluginTree({
+      pluginRoot: policy.pluginRoot,
+      paths: openingEntries.map((entry) => entry.path),
+      declaredPluginIds: memberRoots.map((entry) => entry.pluginId),
+    });
+    if (declaredPluginIssue !== undefined) {
+      return stagedIneligible(declaredPluginIssue.code, declaredPluginIssue.detail);
+    }
+    const aggregateIssue = preflightAggregatePayloadBytes(releaseInput);
+    if (aggregateIssue !== undefined) return stagedIneligible("PayloadMismatch", aggregateIssue);
+
     return Object.freeze({
       kind: "ReadyForMaterialization",
       opening: observation.opening,

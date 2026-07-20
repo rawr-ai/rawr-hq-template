@@ -112,6 +112,48 @@ describe("releases.checkRepository", () => {
     ]);
   });
 
+  it("rejects the first canonical undeclared staged plugin after one read and zero writes", async () => {
+    await expectStagedTreeClosureRefusal([
+      stagedEntry("plugins/agent/zulu/skills/zulu/SKILL.md", "2".repeat(40), 0o644, bytes("zulu\n")),
+      stagedEntry("plugins/agent/zulu/agents/zulu.md", "3".repeat(40), 0o644, bytes("zulu agent\n")),
+      stagedEntry("a-unrelated/skills/example/SKILL.md", "4".repeat(40), 0o644, bytes("unrelated\n")),
+      stagedEntry("plugins/agent/aardvark/skills/aardvark/SKILL.md", "5".repeat(40), 0o644, bytes("aardvark\n")),
+    ], "plugin tree contains undeclared member aardvark");
+  });
+
+  it.each([
+    {
+      name: "the first code-unit-sorted noncanonical plugin directory",
+      entries: [
+        stagedEntry("plugins/agent/Zulu/skills/zulu/SKILL.md", "2".repeat(40), 0o644, bytes("zulu\n")),
+        stagedEntry("plugins/agent/Cognition/skills/cognition/SKILL.md", "3".repeat(40), 0o644, bytes("cognition\n")),
+        stagedEntry("a-unrelated/skills/example/SKILL.md", "4".repeat(40), 0o644, bytes("unrelated\n")),
+      ],
+      child: "Cognition",
+    },
+    {
+      name: "a root-level file",
+      entries: [
+        stagedEntry("plugins/agent/README.md", "2".repeat(40), 0o644, bytes("readme\n")),
+        stagedEntry("a-unrelated/README.md", "3".repeat(40), 0o644, bytes("unrelated\n")),
+      ],
+      child: "README.md",
+    },
+    {
+      name: "a root-level file named for a declared plugin",
+      entries: [
+        stagedEntry("plugins/agent/alpha", "2".repeat(40), 0o644, bytes("not a plugin directory\n")),
+        stagedEntry("a-unrelated/README.md", "3".repeat(40), 0o644, bytes("unrelated\n")),
+      ],
+      child: "alpha",
+    },
+  ])("rejects $name after one read and zero writes", async ({ entries, child }) => {
+    await expectStagedTreeClosureRefusal(
+      entries,
+      `plugin tree contains noncanonical child ${child}`,
+    );
+  });
+
   it("returns SourceChanged once for a mixed staged observation and performs zero writes", async () => {
     let observations = 0;
     let writes = 0;
@@ -397,6 +439,73 @@ describe("releases.checkRepository", () => {
     expect(writes).toBe(0);
   });
 });
+
+async function expectStagedTreeClosureRefusal(
+  treeEntries: readonly ReturnType<typeof stagedEntry>[],
+  expectedDetail: string,
+): Promise<void> {
+  const fixture = productFixture();
+  const releaseInput = stagedEntry(
+    releaseInputPath,
+    "1".repeat(40),
+    0o644,
+    canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput),
+  );
+  const stagedEntries = [...treeEntries, releaseInput];
+  const indexEntries = bytes(stagedEntries.map((entry) => (
+    `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
+  )).join(""));
+  const binding = Object.freeze({ anchor: stagedAnchor(), indexEntries });
+  let observations = 0;
+  let writes = 0;
+  const rawPort = {
+    observeGitStagedIndex: async (): Promise<GitStagedIndexObservation> => {
+      observations += 1;
+      return Object.freeze({
+        opening: binding,
+        blobs: Object.freeze([{ objectId: releaseInput.objectId, bytes: releaseInput.bytes }]),
+        closing: binding,
+      });
+    },
+    capture: async () => {
+      writes += 1;
+      throw new Error("staged tree closure acquired capture authority");
+    },
+    apply: async () => {
+      writes += 1;
+      throw new Error("staged tree closure acquired write authority");
+    },
+    restore: async () => {
+      writes += 1;
+      throw new Error("staged tree closure acquired restore authority");
+    },
+    settle: async () => {
+      writes += 1;
+      throw new Error("staged tree closure acquired settlement authority");
+    },
+    release: async () => {
+      writes += 1;
+      throw new Error("staged tree closure acquired release authority");
+    },
+  };
+  const client = createLifecycleTestClient({
+    contentWorkspace: { ...unavailableContentWorkspace(), ...rawPort },
+    artifactRepository: unavailableArtifactRepository(() => {
+      writes += 1;
+    }),
+  });
+
+  await expect(client.releases.checkRepository({
+    kind: "staged",
+    contentWorkspace: stagedPolicy(),
+  }, testInvocation)).resolves.toEqual({
+    kind: "RepositoryIneligible",
+    mode: "staged",
+    issues: [{ code: "PayloadMismatch", detail: expectedDetail }],
+  });
+  expect(observations).toBe(1);
+  expect(writes).toBe(0);
+}
 
 function validStagedObservationResults(): readonly [
   StagedIndexObservationResult,

@@ -96,7 +96,7 @@ Inngest candidate bytes.
 | T6C3 export independence | 5.1 complete/reviewed; 5.2-5.4 open | fixed-slot refusal at acquire/native edge; export admission and aggregate retirement remain |
 | T6D truthful test owners | complete, reviewed | owner-local DevOps fixture and ordinary serialized lifecycle/CLI targets |
 | T6E deterministic manifest | complete, reviewed | native JSON projection, code-unit canonicalization, and full build-twice equality |
-| T6F Personal checkpoint prerequisites | active; 3C.1 complete/reviewed and queued for landing | pure release-input authoring, positive declared-tree closure, tested provider bindings, and immutable controller distribution without repository coupling |
+| T6F Personal checkpoint prerequisites | active; 3C.1-3C.2 complete/reviewed and queued for landing | pure release-input authoring, positive declared-tree closure, tested provider bindings, and immutable controller distribution without repository coupling |
 | T6F landing/settlement | open; 8.1 next | independently landed repos, disposable/live native convergence, read-only repeat |
 
 ## Retired Unlanded Nodes
@@ -165,6 +165,20 @@ still supply an unconditional workflow and non-skippable-by-default local
 feedback, but it cannot honestly prove that a direct push is impossible. That
 server-side enforcement is an external operational precondition, not a reason
 to add a local bypass, auto-repair path, or second lifecycle authority.
+
+## T6F Declared Plugin Tree Prerequisite
+
+This prepared checkpoint advances [[tasks#3C. Personal Checkpoint Prerequisites|task 3C.2]]
+as one releases-owned repository-eligibility rule. It does not scan a provider,
+global home, or unrelated repository path.
+
+| Boundary | Result |
+| --- | --- |
+| Closed-world rule | Staged-index and clean Git-object checks derive and code-unit-sort every immediate child beneath the declared plugin root. They first refuse a noncanonical child name or root-level blob shape, including a blob named for a declared plugin, and otherwise refuse the first undeclared canonical plugin before reading its payload. Declared-member file closure remains owned by the existing release codec and payload checks. |
+| Observation | The staged path consumes the one captured index observation; the clean path consumes the one anchored Git tree. Paths outside the configured plugin root are ignored, and the rule acquires no capture, apply, restore, settle, release, artifact, provider, or filesystem write authority. |
+| Proof | On the integrated continuation stack, the complete lifecycle suite passed 42 files / 372 tests. Focused staged and clean cases passed 29/29 and prove deterministic first-child refusal for canonical undeclared plugins, invalid-case directories, root-level files, and a root-level blob named for a declared plugin. They also preserve unrelated-path exclusion, one release-input blob read, zero undeclared payload reads, and zero writes/evidence captures. Lifecycle lint, typecheck, build, sync, all three locked structural rules, strict OpenSpec, and `git diff --check` passed without cache. |
+| Structural boundary | The policy is an owner-local pure release module. No global scanner, semantic Grit rule, package export, CLI mode, provider dependency, or Personal repository relationship is added. |
+| Reviews | Final architecture/oRPC, behavior/testing/state-machine, TypeScript/refactor, and structural/Habitat reviews report no remaining P1/P2. |
 
 ## Template Required Ratchet Settlement Gate
 
