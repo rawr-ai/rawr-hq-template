@@ -12,7 +12,9 @@ import { createSessionSourceRuntime } from "./session-source-runtime";
 export { defaultSessionIndexPathSync };
 
 export type SessionIntelligenceClient = Client;
-export type SessionIntelligenceClientFactory = () => Promise<SessionIntelligenceClient>;
+export type SessionIntelligenceClientFactory = (
+  options: Readonly<{ indexPath?: string }>,
+) => Promise<SessionIntelligenceClient>;
 
 type SessionToolsProcess = {
   processId: "plugin-session-tools";
@@ -58,7 +60,7 @@ export function setSessionIntelligenceClientFactoryForTest(factory: SessionIntel
 }
 
 export async function createSessionIntelligenceClient(options: { indexPath?: string } = {}): Promise<SessionIntelligenceClient> {
-  if (clientFactoryOverride) return clientFactoryOverride();
+  if (clientFactoryOverride) return clientFactoryOverride(options);
   return sessionIntelligenceService.resolve({
     ...bindingContext,
     process: {

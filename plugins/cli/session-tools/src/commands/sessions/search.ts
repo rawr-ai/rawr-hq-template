@@ -69,7 +69,7 @@ export default class SessionsSearch extends RawrCommand {
     }),
     snippet: Flags.integer({ description: "Snippet length for content search", default: 300, min: 50, max: 5_000 }),
     "use-index": Flags.boolean({ description: "Use sqlite cache for transcript text", default: false }),
-    "index-path": Flags.string({ description: "Sqlite index file path", default: defaultSessionIndexPathSync() }),
+    "index-path": Flags.string({ description: "Sqlite index file path" }),
     reindex: Flags.boolean({ description: "Rebuild sqlite cache for matching sessions (runs before search)", default: false }),
     "reindex-limit": Flags.integer({
       description: "Limit sessions to reindex (0 = all matches)",
@@ -176,7 +176,9 @@ export default class SessionsSearch extends RawrCommand {
       return limit;
     })();
 
-    const indexPath = contentQuery || flags.reindex ? String(flags["index-path"]) : undefined;
+    const indexPath = contentQuery || flags.reindex
+      ? String(flags["index-path"] ?? defaultSessionIndexPathSync())
+      : undefined;
     const client = await createSessionIntelligenceClient(indexPath ? { indexPath } : {});
 
     let hits: Array<SearchHit | MetadataSearchHit | FacetSearchHit> = [];

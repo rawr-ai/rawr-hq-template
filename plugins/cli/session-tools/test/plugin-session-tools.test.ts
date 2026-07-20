@@ -194,6 +194,46 @@ function firstOutputError(spy: ReturnType<typeof spyOutput>): { code?: string; m
 }
 
 describe("@rawr/plugin-session-tools", () => {
+  it("keeps the static search manifest independent of HOME", () => {
+    expect(SessionsSearch.flags["index-path"]).not.toHaveProperty("default");
+  });
+
+  it("resolves session index precedence at each invocation", async () => {
+    const root = await makeTempDir("rawr-plugin-session-index-home-");
+    const homes = [path.join(root, "home-a"), path.join(root, "home-b")];
+    const environmentPath = path.join(root, "environment.sqlite");
+    const explicitPath = path.join(root, "explicit.sqlite");
+    const observedIndexPaths: Array<string | undefined> = [];
+    const client = createFakeClient();
+    setSessionIntelligenceClientFactoryForTest(async (options) => {
+      observedIndexPaths.push(options.indexPath);
+      return client;
+    });
+    const outputSpy = spyOutput(SessionsSearch);
+    delete process.env.RAWR_SESSION_INDEX_PATH;
+
+    for (const home of homes) {
+      process.env.HOME = home;
+      await SessionsSearch.run(["--query", "rawr-fixture", "--json"]);
+    }
+    process.env.RAWR_SESSION_INDEX_PATH = environmentPath;
+    await SessionsSearch.run(["--query", "rawr-fixture", "--json"]);
+    await SessionsSearch.run([
+      "--query",
+      "rawr-fixture",
+      "--index-path",
+      explicitPath,
+      "--json",
+    ]);
+
+    expect(outputSpy).toHaveBeenCalledTimes(4);
+    expect(observedIndexPaths).toEqual([
+      ...homes.map((home) => path.join(home, ".cache", "rawr-session-index.sqlite")),
+      environmentPath,
+      explicitPath,
+    ]);
+  });
+
   it("lists sessions through the session-intelligence client", async () => {
     const client = installFakeClient();
     const outputSpy = spyOutput(SessionsList);
