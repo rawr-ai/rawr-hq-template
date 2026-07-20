@@ -16,7 +16,7 @@ type CachedCommand = Readonly<{
   relativePath?: unknown;
 }>;
 
-type GeneratedManifest = Readonly<{
+export type GeneratedManifest = Readonly<{
   version: string;
   commands: Record<string, CachedCommand>;
 }>;
@@ -37,6 +37,37 @@ export type NativeManagerIdentity = Readonly<{
   version: string;
   hooks: readonly string[];
 }>;
+
+function compareCodeUnits(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function collectJsonPropertyNames(value: unknown, names: Set<string>): void {
+  if (Array.isArray(value)) {
+    for (const entry of value) collectJsonPropertyNames(entry, names);
+    return;
+  }
+  if (value === null || typeof value !== "object") return;
+  for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+    names.add(key);
+    collectJsonPropertyNames(entry, names);
+  }
+}
+
+export function serializeGeneratedManifest(manifest: GeneratedManifest): Readonly<{
+  value: GeneratedManifest;
+  text: string;
+}> {
+  const nativeText = JSON.stringify(manifest);
+  if (nativeText === undefined) throw new Error("generated manifest is not JSON serializable");
+  const value = JSON.parse(nativeText) as GeneratedManifest;
+  const propertyNames = new Set<string>();
+  collectJsonPropertyNames(value, propertyNames);
+  return Object.freeze({
+    value,
+    text: JSON.stringify(value, [...propertyNames].sort(compareCodeUnits), 2),
+  });
+}
 
 function stringArray(value: unknown, label: string): readonly string[] {
   if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
@@ -143,21 +174,23 @@ async function generatePackageManifest(options: {
   if (packageManifest.name !== options.expectedPackageId) {
     throw new Error(`generated command package identity mismatch: ${options.expectedPackageId}`);
   }
-  await assertCommandModules(options.packageRoot, plugin.manifest);
-  const commandIds = Object.keys(plugin.manifest.commands).sort();
+  const serializedManifest = serializeGeneratedManifest(plugin.manifest);
+  const manifest = serializedManifest.value;
+  await assertCommandModules(options.packageRoot, manifest);
+  const commandIds = Object.keys(manifest.commands).sort();
   const aliases = new Set<string>();
   const hiddenAliases = new Set<string>();
   const topics = new Set(
     plugin.topics.map((topic) => commandIdentity(topic.name, "generated topic")),
   );
-  for (const [id, command] of Object.entries(plugin.manifest.commands)) {
+  for (const [id, command] of Object.entries(manifest.commands)) {
     for (const topic of commandTopics(id)) topics.add(topic);
     for (const alias of commandStringArray(command.aliases ?? [], `${id}.aliases`)) aliases.add(alias);
     for (const alias of commandStringArray(command.hiddenAliases ?? [], `${id}.hiddenAliases`)) hiddenAliases.add(alias);
   }
   await writeFile(
     join(options.packageRoot, "oclif.manifest.json"),
-    `${JSON.stringify(plugin.manifest, null, 2)}\n`,
+    `${serializedManifest.text}\n`,
     { mode: 0o644 },
   );
   return Object.freeze({

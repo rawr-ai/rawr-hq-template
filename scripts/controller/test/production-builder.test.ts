@@ -44,6 +44,7 @@ import {
   probeControllerCleanStart,
 } from "../production/activation.ts";
 import { finalizeWithStableSourceRevision } from "../production/builder.ts";
+import { serializeGeneratedManifest } from "../production/official-manifest.ts";
 import {
   assertProductionDependencyClosure,
   loadProductionDependencies,
@@ -151,6 +152,75 @@ describe("production controller dependency boundary", () => {
         projects: [{ name: "@fixture/protected", root: "plugins/agents/fixture" }],
       }),
     ).rejects.toThrow("protected project entered production controller closure");
+  });
+});
+
+describe("production controller official manifest", () => {
+  it("canonicalizes object discovery order without changing semantic array order", () => {
+    const left = {
+      version: "1.0.0",
+      commands: {
+        "agent:plugins:sync": {
+          id: "agent:plugins:sync",
+          relativePath: ["commands", "agent", "plugins", "sync.js"],
+          flags: { workspace: { type: "option" }, json: { type: "boolean" } },
+        },
+        "agent:plugins:check": {
+          id: "agent:plugins:check",
+          relativePath: ["commands", "agent", "plugins", "check.js"],
+          flags: {},
+        },
+      },
+    };
+    const right = {
+      commands: {
+        "agent:plugins:check": {
+          flags: {},
+          relativePath: ["commands", "agent", "plugins", "check.js"],
+          id: "agent:plugins:check",
+        },
+        "agent:plugins:sync": {
+          flags: { json: { type: "boolean" }, workspace: { type: "option" } },
+          relativePath: ["commands", "agent", "plugins", "sync.js"],
+          id: "agent:plugins:sync",
+        },
+      },
+      version: "1.0.0",
+    };
+
+    const canonicalLeft = serializeGeneratedManifest(left);
+    const canonicalRight = serializeGeneratedManifest(right);
+
+    expect(canonicalLeft.text).toBe(canonicalRight.text);
+    expect(Object.keys(JSON.parse(canonicalLeft.text))).toEqual(["commands", "version"]);
+    expect(canonicalLeft.value.commands["agent:plugins:sync"].relativePath).toEqual(
+      left.commands["agent:plugins:sync"].relativePath,
+    );
+    expect(Object.keys(left)).toEqual(["version", "commands"]);
+    expect(Object.keys(left.commands)).toEqual([
+      "agent:plugins:sync",
+      "agent:plugins:check",
+    ]);
+  });
+
+  it("preserves native JSON projection and code-unit order for index-like keys", () => {
+    const manifest = {
+      version: "1.0.0",
+      commands: {
+        "2": { id: "2", relativePath: ["commands", "2.js"] },
+        "10": { id: "10", relativePath: ["commands", "10.js"] },
+      },
+      generatedAt: new Date("2026-07-19T00:00:00.000Z"),
+    };
+
+    const serialized = serializeGeneratedManifest(manifest);
+
+    expect(serialized.text.indexOf('"10"')).toBeLessThan(serialized.text.indexOf('"2"'));
+    expect((JSON.parse(serialized.text) as { generatedAt: string }).generatedAt).toBe(
+      "2026-07-19T00:00:00.000Z",
+    );
+    expect(manifest.generatedAt).toBeInstanceOf(Date);
+    expect(Object.keys(manifest.commands)).toEqual(["2", "10"]);
   });
 });
 
