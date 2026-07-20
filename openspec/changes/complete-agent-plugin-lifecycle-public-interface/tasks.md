@@ -148,29 +148,24 @@
   followed by a read-only repeat.
 - [ ] 5.2 Give exports one private exact marker at
   `.rawr-agent-plugin-owner.json` with canonical bytes
-  `{"owner":"export","schemaVersion":1}\n`. Extend the existing private export
-  resource/action unions with an owner-local discriminated root observation and
-  one forward root-publication variant plus its matching inverse-action variant.
-  Extend the existing capture/plan/apply sequence so capture records absent-root
-  or exact-marked-root observation, and absent-root publication plus its exact
-  inverse are included in the same frozen action set before undo preflight and
-  begin. The admitted
-  action revalidates destination absence, prepares one exact-marked private
-  same-parent directory, and atomically publishes it no-replace, so the final
-  path is never visible unmarked. Its inverse removes only the exact unchanged
-  marker and then-empty owner-created root after payload undo. An existing
-  directory is admitted only when marker bytes match exactly; every other
-  existing or unreadable root blocks even under `replace-planned`. Inject
-  preparation/publication failure and prove non-success, no final root, payload,
-  ledger, applied prefix, or committed-capsule advancement, with cleanup limited
-  to the owner-created private directory through exact bounded guards. Prove
-  absent-root admission and read-only repeat, exact marked-root reuse,
-  unmarked/wrong-marker refusal, export refusal at an existing provider root
-  without provider reads, retained export-local multi-destination overlap, and
-  one bounded interleaving where the final root is never visible unmarked. Add no
-  second transaction, service, root digest, registry, provider field, receipt,
-  ledger, shared protocol, or generalized publication protocol; this is only an
-  extension of the existing export-private action codec and undo sequence.
+  `{"owner":"export","schemaVersion":1}\n`. Add one resource-owned claim
+  operation before payload/capsule work. It admits an exact already-marked root
+  or publishes one exact-marked private same-parent directory into an absent
+  explicit destination without replacing an occupant. The transition is
+  monotonic: once claimed, the root and marker survive payload/ledger undo and
+  an empty export set. Do not add a root inverse action, marker repair/replay,
+  publication receipt, or lifecycle recovery store.
+
+  Reinspect one uncertain publication result: exact marker is the committed
+  absorbing claim; every other result blocks unchanged. Pre-publication cleanup
+  is limited to the exact private staging directory through bounded,
+  nonrecursive guards. Prove absent claim plus zero-write repeat, exact-marked
+  admission, unmarked/wrong/file/symlink refusal, competing-root preservation,
+  root/marker identity persistence through export undo, provider refusal after
+  undo, and export-local multi-destination overlap. Add no second service,
+  transaction history, root digest, registry, provider field, receipt, shared
+  protocol, generalized publication framework, or duplicated native syscall
+  subsystem.
 - [ ] 5.3 After both owner-local boundaries are active, delete
   `KnownNativeHomesReader`, `completeNativeHomes`,
   `CompleteTargetIdentityReader`, `scanTargets`, their sidecar-derived bindings,

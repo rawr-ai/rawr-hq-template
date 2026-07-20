@@ -80,7 +80,7 @@ This ratchet governs [[tasks#3B. Observed-Git Selection And Cutover]],
 | Native provider adapters and closed-set projection | Keep |
 | Canonical receipts, target sidecars, and undo capsule | Retire from canonical sync/status |
 | Qualified capsule application | Keep for managed export state only; provider capsules retire |
-| Export/provider root exclusivity | One visible owner marker; no registry or ambient scan |
+| Export/provider root exclusivity | One visible monotonic owner marker; no registry, ambient scan, or undo of destination authority |
 | Receipt-owned explicit provider retire | Retire; canonical closed-set sync owns omission cleanup |
 | Deterministic official manifest | Keep |
 | Owner-local CLI test corrections | Keep |
