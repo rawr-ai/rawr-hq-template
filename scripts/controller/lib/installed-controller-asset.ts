@@ -154,7 +154,22 @@ async function writeExclusiveArchive(
         follow: false,
         noDirRecurse: true,
         noMtime: true,
-        portable: true,
+        onWriteEntry: (entry) => {
+          if (!entry.stat) {
+            throw new Error("CONTROLLER_ASSET_ENTRY_STAT_MISSING: archive entry has no filesystem identity");
+          }
+          // tar's portable mode rewrites permission bits. Omit only host-local
+          // metadata so the verified payload's exact modes survive extraction.
+          const stat: Partial<typeof entry.stat> = entry.stat;
+          stat.uid = undefined;
+          stat.gid = undefined;
+          stat.atime = undefined;
+          stat.ctime = undefined;
+          stat.dev = undefined;
+          stat.ino = undefined;
+          stat.nlink = undefined;
+        },
+        portable: false,
         strict: true,
       },
       [...entries],

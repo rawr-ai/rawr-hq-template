@@ -118,7 +118,7 @@ jobs:
           extraction_root="$(cd "$extraction_root" && pwd -P)"
           foreign_cwd="$(cd "$foreign_cwd" && pwd -P)"
           export EXTRACTION_ROOT="$extraction_root"
-          tar -xf "$archive" -C "$extraction_root"
+          tar -xpf "$archive" -C "$extraction_root"
 
           checkout="$GITHUB_WORKSPACE"
           hidden_checkout="$RUNNER_TEMP/source-checkout-hidden"
