@@ -1,8 +1,12 @@
-import { Type, type Static } from "typebox";
+import { ReadonlyObject, Type, type Static } from "typebox";
 
 export const CURRENT_MAIN_V2_SCHEMA_VERSION = 2 as const;
 export const CURRENT_MAIN_V2_CHANNEL = "current-main" as const;
 export const CURRENT_MAIN_V2_PROTOCOL = "agent-plugin-current-main@v2" as const;
+export const CURRENT_MAIN_V2_CANONICAL_REF = "refs/heads/main" as const;
+export const CURRENT_MAIN_V2_RECORD_PATH =
+  "plugins/agents/.lifecycle/channels/current-main.json" as const;
+export const CURRENT_MAIN_V2_RELEASE_INPUT_PATH = ".rawr/release-input.json" as const;
 export const MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES = 2 * 1024 * 1024;
 
 const CANONICAL_ID_PATTERN = "^[a-z0-9][a-z0-9._:@/+\\-]*$";
@@ -46,10 +50,10 @@ export const CodexCurrentMainProjectionV2Schema = Type.Object(
   { additionalProperties: false },
 );
 
-export const CurrentMainProjectionTupleV2Schema = Type.Tuple([
+export const CurrentMainProjectionTupleV2Schema = ReadonlyObject(Type.Tuple([
   ClaudeCurrentMainProjectionV2Schema,
   CodexCurrentMainProjectionV2Schema,
-]);
+]));
 
 export const CurrentMainBodyV2Schema = Type.Object(
   {
@@ -128,3 +132,49 @@ export interface CanonicalCurrentMainV2 {
   readonly bytes: Uint8Array;
   readonly record: CurrentMainEnvelopeV2;
 }
+
+export const CanonicalChannelSelectionSchema = Type.Object(
+  {
+    currentMainDigest: Type.String({ pattern: CURRENT_MAIN_DIGEST_PATTERN }),
+    contentAuthority: CurrentMainBodyV2Schema.properties.contentAuthority,
+    sourceRepositoryIdentity: CurrentMainBodyV2Schema.properties.sourceRepositoryIdentity,
+    sourceCommit: CurrentMainBodyV2Schema.properties.sourceCommit,
+    sourceTree: CurrentMainBodyV2Schema.properties.sourceTree,
+    releaseInputDigest: CurrentMainBodyV2Schema.properties.releaseInputDigest,
+    releaseSetDigest: CurrentMainBodyV2Schema.properties.releaseSetDigest,
+    evaluationProfile: CurrentMainBodyV2Schema.properties.evaluationProfile,
+    projections: CurrentMainProjectionTupleV2Schema,
+  },
+  { additionalProperties: false },
+);
+
+const selectionFailure = <const TKind extends string>(kind: TKind) => Type.Object(
+  { kind: Type.Literal(kind), reason: Type.String({ minLength: 1 }) },
+  { additionalProperties: false },
+);
+
+export const CurrentMainSelectionResultSchema = Type.Union([
+  Type.Object(
+    {
+      kind: Type.Literal("CURRENT_ELIGIBLE"),
+      selection: CanonicalChannelSelectionSchema,
+    },
+    { additionalProperties: false },
+  ),
+  selectionFailure("DIRTY_REPOSITORY"),
+  selectionFailure("WRONG_REPOSITORY"),
+  selectionFailure("UNREACHABLE_REPOSITORY"),
+  selectionFailure("STALE_RECORD"),
+  selectionFailure("FORGED_RECORD"),
+]);
+
+export type CanonicalChannelSelection = Readonly<
+  Static<typeof CanonicalChannelSelectionSchema>
+>;
+export type CurrentMainSelectionResult = Readonly<
+  Static<typeof CurrentMainSelectionResultSchema>
+>;
+export type CurrentMainSelectionFailureKind = Exclude<
+  CurrentMainSelectionResult["kind"],
+  "CURRENT_ELIGIBLE"
+>;

@@ -411,13 +411,16 @@ export function governedObservation(fixture: PromotionFixture): GovernedAcceptan
   };
 }
 
-export function releaseInputFixture(payloadText: string): AgentPluginReleaseInput {
+export function releaseInputFixture(
+  payloadText: string,
+  contentAuthority = CONTENT_AUTHORITY,
+): AgentPluginReleaseInput {
   const payload = mustRelease(createAgentPluginPayload([
     { path: "skills/alpha/SKILL.md", mode: 0o644, bytes: encoder.encode(payloadText) },
   ]));
   return mustRelease(createAgentPluginReleaseInput({
     schemaVersion: 1,
-    contentAuthority: CONTENT_AUTHORITY,
+    contentAuthority,
     members: [{
       kind: "agent-plugin",
       pluginId: "alpha",
