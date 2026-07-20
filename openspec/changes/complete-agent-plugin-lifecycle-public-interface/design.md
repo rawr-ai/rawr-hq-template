@@ -115,6 +115,11 @@ input: later unselected content may land without silently changing the channel.
 Git review and history own human approval; no approver, task, issuer, hosted
 replay, or promotion lineage is encoded.
 
+Implementation uses two semantic checkpoints without creating two authorities.
+The first exposes only the pure codec through governance and the existing
+`check` command; it cannot read Git or select provider state. The second adds
+observed-Git resolution and removes the v1 ceremony.
+
 The old v1 current-main resolver, acceptance-request/evidence dependency,
 promotion attestation, `attest-promotion`, and receipt-owned explicit
 `retire` are deleted from service contracts, routers, public exports, client,
@@ -219,7 +224,8 @@ or rollback state owner.
 | --- | --- | --- |
 | T6A | Thin authority record | strict OpenSpec and four standing reviews |
 | T6B | Staged/clean repository checks | exact Git binding, declared-input reads, one procedure |
-| T6C1 | One current-main v2 record | canonical codec, direct resolution, old ceremony/commands unreachable |
+| T6C1a | Current-main v2 codec/public interface | canonical bytes, cold-port procedure, exact CLI projection |
+| T6C1b | Observed-Git selection and cutover | direct resolution, old ceremony/commands unreachable |
 | T6C2 | Thin canonical provider path | resolved selection consumption, native truth, no canonical hidden state |
 | T6C3 | Export destination independence | owner-local ledger/collision law, no provider-home registry |
 | T6D | Owner-correct CLI test boundaries | owner-local DevOps fixture and ordinary serialized CLI target |

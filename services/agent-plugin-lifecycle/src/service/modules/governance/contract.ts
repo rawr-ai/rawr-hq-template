@@ -3,6 +3,8 @@ import { ocBase } from "../../base";
 import {
   AttestPromotionInputSchema,
   AttestPromotionResultSchema,
+  CurrentMainRecordInputSchema,
+  CurrentMainRecordResultSchema,
   ResolveCurrentMainResultSchema,
   ResolveCurrentMainInputSchema,
   ValidateAcceptanceInputSchema,
@@ -10,6 +12,10 @@ import {
 } from "./schemas";
 
 export const contract = {
+  currentMainRecord: ocBase
+    .meta({ idempotent: true, entity: "governance", audit: "full" })
+    .input(schema(CurrentMainRecordInputSchema))
+    .output(schema(CurrentMainRecordResultSchema)),
   validateAcceptance: ocBase
     .meta({ idempotent: true, entity: "governance", audit: "full" })
     .input(schema(ValidateAcceptanceInputSchema))

@@ -36,6 +36,7 @@ export const CHECK_MODES = [
   "release",
   "repository-staged",
   "repository-clean",
+  "current-main-record",
 ] as const;
 
 export type CheckMode = (typeof CHECK_MODES)[number];
@@ -44,6 +45,14 @@ export const checkModeFlag = Flags.string({
   description: "Closed curated lifecycle check mode",
   options: [...CHECK_MODES],
   default: "release",
+});
+
+export const currentMainBodyJsonFlag = Flags.string({
+  description: "Inline current-main v2 body JSON",
+});
+
+export const currentMainEnvelopeJsonFlag = Flags.string({
+  description: "Exact inline current-main v2 envelope JSON",
 });
 
 export const hostedGovernanceExecutableFlag = Flags.string({

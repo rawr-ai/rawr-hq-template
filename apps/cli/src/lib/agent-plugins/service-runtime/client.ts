@@ -122,6 +122,9 @@ const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
   "providers.managedRetire": (client) => Object.freeze({
     providers: Object.freeze({ managedRetire: client.providers.managedRetire }),
   }),
+  "governance.currentMainRecord": (client) => Object.freeze({
+    governance: Object.freeze({ currentMainRecord: client.governance.currentMainRecord }),
+  }),
   "governance.attestPromotion": (client) => Object.freeze({
     governance: Object.freeze({ attestPromotion: client.governance.attestPromotion }),
   }),

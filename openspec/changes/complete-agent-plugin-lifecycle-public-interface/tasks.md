@@ -30,31 +30,42 @@
   typecheck, build, structural/Habitat, and one-procedure proof; close four
   standing reviews on the narrowed interface.
 
-## 3. T6C1: One Current-Main Record
+## 3A. Pure Codec And Public Interface
 
-- [ ] 3.1 Define one governance-owned TypeBox model at
+- [x] 3A.1 Define one governance-owned TypeBox model at
   `model/dto/current-main.ts`: exact `{schemaVersion,currentMainDigest,body}`
   envelope, closed body fields, fixed `[claude,codex]` tuple, 2 MiB bound, and
   `cm2_` over newline-terminated canonical body bytes.
-- [ ] 3.2 Add closed `current-main-record` encode-body/validate-envelope and
-  separate `current-main-selection` locator requests. Return canonical
-  bytes/protocol/digest/byte length without Git/provider/output ports for the
-  pure codec.
-- [ ] 3.3 Resolve the fixed record from observed canonical Git, verify stable
+- [x] 3A.2 Add closed `current-main-record` encode-body/validate-envelope through
+  one governance procedure and the existing qualified `check` command. Return
+  canonical bytes/protocol/digest/byte length without Git, provider, artifact,
+  export, or other lifecycle ports; project exact newline-preserving envelope
+  text at the CLI transport boundary without reserializing the record.
+- [x] 3A.3 Prove canonical round trips; malformed, surplus, oversized,
+  noncanonical, digest, v1, and provider-tuple rejection; pure codec cold ports;
+  one-procedure CLI dispatch; no executable authority; and exact JSON/human CLI
+  envelope transport.
+- [x] 3A.4 Run focused tests, full lifecycle tests, lint, typecheck, build,
+  structural/Habitat, strict OpenSpec, and four standing reviews; commit this
+  semantic Graphite node alone. Proof: [[README#T6C1a Proof]].
+
+## 3B. Observed-Git Selection And Cutover
+
+- [ ] 3B.1 Add the separate closed `current-main-selection` locator request.
+- [ ] 3B.2 Resolve the fixed record from observed canonical Git, verify stable
   repository identity, source reachability/tree/fixed release-input digest, and
   return one `CanonicalChannelSelection`. Later unselected content must leave
   the reviewed selector valid; compiled `refs/heads/main` and observed Git stay
   authoritative.
-- [ ] 3.4 Delete v1 current-main, acceptance, hosted approval, promotion, and
+- [ ] 3B.3 Delete v1 current-main, acceptance, hosted approval, promotion, and
   `attest-promotion` from service contracts/routers/public exports/client/CLI
   and positive Habitat inventory without aliases or compatibility decoders.
   Keep qualified `undo` for managed-export capsule state only. Remove the
   otherwise-unused hosted-governance resource.
-- [ ] 3.5 Prove canonical round trips; malformed, surplus, oversized,
-  noncanonical, digest, and provider-tuple rejection; wrong/stale Git identity;
-  changed release input; later unselected content retaining selection; pure
-  codec cold ports; one-procedure CLI dispatch; and old-path unreachability.
-- [ ] 3.6 Run focused tests, lint, typecheck, build, structural/Habitat, strict
+- [ ] 3B.4 Prove wrong/stale Git identity, changed release input, later
+  unselected content retaining selection, one-procedure CLI dispatch, and
+  old-path unreachability.
+- [ ] 3B.5 Run focused tests, lint, typecheck, build, structural/Habitat, strict
   OpenSpec, and four standing reviews; commit this semantic Graphite node alone.
 
 ## 4. T6C2: Thin Canonical Provider Path

@@ -6,6 +6,7 @@ import {
   LifecycleAuthorityBindingError,
   lifecycleResultExitCode,
   parseControllerProjectionBinding,
+  projectLifecycleResultForOutput,
   projectLifecycleOperation,
   type LifecycleOperationRequest,
 } from "./projection";
@@ -45,10 +46,11 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
       const binding = parseControllerProjectionBinding(flags, requirements);
       const result = await projectLifecycleOperation(request, binding);
       exitCode = lifecycleResultExitCode(request.operation, result);
-      this.outputResult(this.ok({ operation: request.operation, result }), {
+      const projectedResult = projectLifecycleResultForOutput(request.operation, result);
+      this.outputResult(this.ok({ operation: request.operation, result: projectedResult }), {
         flags: baseFlags,
         human: () => {
-          for (const line of lifecycleHumanLines(request.operation, result)) this.log(line);
+          for (const line of lifecycleHumanLines(request.operation, projectedResult)) this.log(line);
         },
       });
     } catch (error) {
@@ -78,6 +80,12 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
 
 function lifecycleHumanLines(operation: LifecycleOperationRequest["operation"], result: unknown): readonly string[] {
   const record = asRecord(result);
+  if (operation === "governance.currentMainRecord" && record.ok === true) {
+    const envelopeText = asRecord(record.value).envelopeText;
+    if (typeof envelopeText === "string" && envelopeText.endsWith("\n")) {
+      return [envelopeText.slice(0, -1)];
+    }
+  }
   if (operation === "providers.canonicalStatus" && record.ok === true && Array.isArray(record.value)) {
     return [
       `${operation}:`,

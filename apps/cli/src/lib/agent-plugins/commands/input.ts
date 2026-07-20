@@ -33,10 +33,12 @@ export type SyncRequest = InputOf<Client["providers"]["canonicalSync"]>;
 export type StatusRequest = InputOf<Client["providers"]["canonicalStatus"]>;
 export type RetireRequest = InputOf<Client["providers"]["managedRetire"]>;
 export type AttestPromotionRequest = InputOf<Client["governance"]["attestPromotion"]>;
+export type CurrentMainRecordRequest = InputOf<Client["governance"]["currentMainRecord"]>;
 
 export type CheckOperationRequest =
   | Readonly<{ operation: "releases.check"; input: CheckRequest }>
-  | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>;
+  | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>
+  | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>;
 
 export class LifecycleInputError extends Error {
   readonly code = "LIFECYCLE_INPUT_INVALID";
@@ -61,7 +63,9 @@ type CheckDomainFlag =
   | "release-input"
   | "plugin-root"
   | "plugin"
-  | "complete-set";
+  | "complete-set"
+  | "current-main-body-json"
+  | "current-main-envelope-json";
 
 const CHECK_MODE_ADMITTED_FLAGS = {
   release: [
@@ -100,6 +104,10 @@ const CHECK_MODE_ADMITTED_FLAGS = {
     "release-input",
     "plugin-root",
   ],
+  "current-main-record": [
+    "current-main-body-json",
+    "current-main-envelope-json",
+  ],
 } as const satisfies Readonly<Record<CheckMode, readonly CheckDomainFlag[]>>;
 
 const CHECK_DOMAIN_FLAGS = Object.freeze(
@@ -136,7 +144,42 @@ export function parseCheckOperationRequest(flags: RawFlags): CheckOperationReque
           contentWorkspace: releaseContentWorkspacePolicy(flags),
         }),
       });
+    case "current-main-record":
+      assertCheckDomain(flags, CHECK_MODE_ADMITTED_FLAGS["current-main-record"]);
+      return Object.freeze({
+        operation: "governance.currentMainRecord",
+        input: parseCurrentMainRecordRequest(flags),
+      });
   }
+}
+
+function parseCurrentMainRecordRequest(flags: RawFlags): CurrentMainRecordRequest {
+  const bodyJson = optionalBoundedJsonText(
+    flags["current-main-body-json"],
+    "--current-main-body-json",
+  );
+  const envelopeJson = optionalBoundedJsonText(
+    flags["current-main-envelope-json"],
+    "--current-main-envelope-json",
+  );
+  if ((bodyJson === undefined) === (envelopeJson === undefined)) {
+    throw new LifecycleInputError(
+      "Select exactly one of --current-main-body-json or --current-main-envelope-json",
+    );
+  }
+  if (bodyJson !== undefined) {
+    let body: unknown;
+    try {
+      body = JSON.parse(bodyJson) as unknown;
+    } catch {
+      throw new LifecycleInputError("--current-main-body-json must contain valid JSON");
+    }
+    return Object.freeze({ kind: "encode-body", body }) as CurrentMainRecordRequest;
+  }
+  return Object.freeze({
+    kind: "validate-envelope",
+    bytes: new TextEncoder().encode(envelopeJson),
+  });
 }
 
 export function parseBuildRequest(flags: RawFlags): BuildRequest {
@@ -470,6 +513,19 @@ function requireString(
 
 function optionalString(input: unknown, label: string): string | undefined {
   return input === undefined ? undefined : requireString(input, label);
+}
+
+function optionalBoundedJsonText(input: unknown, label: string): string | undefined {
+  if (input === undefined) return undefined;
+  if (
+    typeof input !== "string"
+    || input.length === 0
+    || new TextEncoder().encode(input).byteLength > 2 * 1024 * 1024
+    || input.includes("\0")
+  ) {
+    throw new LifecycleInputError(`${label} must be bounded nonempty UTF-8 JSON text`);
+  }
+  return input;
 }
 
 function requireStringList(
