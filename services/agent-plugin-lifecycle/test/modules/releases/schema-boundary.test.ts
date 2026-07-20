@@ -8,6 +8,8 @@ import type { Static } from "typebox";
 import { Value } from "typebox/value";
 
 import type {
+  ReleaseInputRefreshRequest,
+  ReleaseInputRefreshResult,
   ReleaseInputRecordRequest,
   ReleaseInputRecordResult,
 } from "../../../src/service/modules/releases/model/dto/release-lifecycle";
@@ -16,6 +18,8 @@ import {
   BuildResultSchema,
   CheckInputSchema,
   CheckResultSchema,
+  ReleaseInputRefreshInputSchema,
+  ReleaseInputRefreshResultSchema,
   ReleaseInputRecordInputSchema,
   ReleaseInputRecordResultSchema,
   RepositoryCheckInputSchema,
@@ -58,6 +62,12 @@ describe("release procedure schema boundary", () => {
     expectTypeOf<ReleaseInputRecordResult>().toEqualTypeOf<
       Static<typeof ReleaseInputRecordResultSchema>
     >();
+    expectTypeOf<ReleaseInputRefreshRequest>().toEqualTypeOf<
+      Static<typeof ReleaseInputRefreshInputSchema>
+    >();
+    expectTypeOf<ReleaseInputRefreshResult>().toEqualTypeOf<
+      Static<typeof ReleaseInputRefreshResultSchema>
+    >();
     expectTypeOf<ReleaseIssue>().toEqualTypeOf<Static<typeof ReleaseIssueSchema>>();
     expectTypeOf<ReleaseInputBody>().toEqualTypeOf<Static<typeof ReleaseInputBodySchema>>();
     expectTypeOf<ReleaseInputEnvelope>().toEqualTypeOf<Static<typeof ReleaseInputEnvelopeSchema>>();
@@ -66,6 +76,12 @@ describe("release procedure schema boundary", () => {
     >();
     expectTypeOf<ContractOutputs["releaseInputRecord"]>().toEqualTypeOf<
       Static<typeof ReleaseInputRecordResultSchema>
+    >();
+    expectTypeOf<ContractInputs["refreshReleaseInput"]>().toEqualTypeOf<
+      Static<typeof ReleaseInputRefreshInputSchema>
+    >();
+    expectTypeOf<ContractOutputs["refreshReleaseInput"]>().toEqualTypeOf<
+      Static<typeof ReleaseInputRefreshResultSchema>
     >();
   });
 
@@ -251,6 +267,63 @@ describe("release procedure schema boundary", () => {
     ];
     for (const candidate of invalidResults) {
       const validated = await schema(ReleaseInputRecordResultSchema)["~standard"].validate(candidate);
+      expect("issues" in validated).toBe(true);
+    }
+  });
+
+  it("keeps release-input refresh membership and outcomes closed", async () => {
+    const stagedWorkspace = {
+      locator: contentWorkspace.locator,
+      repositoryIdentity: contentWorkspace.repositoryIdentity,
+      contentAuthority: contentWorkspace.contentAuthority,
+      remoteName: contentWorkspace.remoteName,
+      remoteUrl: contentWorkspace.remoteUrl,
+      refName: contentWorkspace.refName,
+      releaseInputPath: contentWorkspace.releaseInputPath,
+      pluginRoot: contentWorkspace.pluginRoot,
+    };
+    const request = { contentWorkspace: stagedWorkspace, memberIds: ["cognition", "dev"] };
+    expect(Value.Check(ReleaseInputRefreshInputSchema, request)).toBe(true);
+    expect(Value.Check(ReleaseInputRefreshInputSchema, {
+      ...request,
+      memberIds: ["cognition", "cognition"],
+    })).toBe(false);
+    expect(Value.Check(ReleaseInputRefreshInputSchema, {
+      ...request,
+      memberIds: [],
+    })).toBe(false);
+    expect(Value.Check(ReleaseInputRefreshInputSchema, {
+      ...request,
+      memberIds: ["Cognition"],
+    })).toBe(false);
+    expect(Value.Check(ReleaseInputRefreshInputSchema, {
+      ...request,
+      outputPath: ".rawr/release-input.json",
+    })).toBe(false);
+
+    const success = {
+      kind: "ReleaseInputCandidateReady",
+      releaseInputDigest: `ri1_${"a".repeat(64)}`,
+      byteLength: 3,
+      bytes: new Uint8Array([123, 125, 10]),
+    };
+    expect(Value.Check(ReleaseInputRefreshResultSchema, success)).toBe(true);
+    expect(Value.Check(ReleaseInputRefreshResultSchema, { ...success, receipt: "not-public" })).toBe(false);
+    expect(Value.Check(ReleaseInputRefreshResultSchema, {
+      kind: "RepositoryIneligible",
+      mode: "staged",
+      issues: [{ code: "PayloadMismatch", detail: "undeclared member" }],
+    })).toBe(true);
+    expect(Value.Check(ReleaseInputRefreshResultSchema, {
+      kind: "ReleaseInputRejected",
+      issues: [],
+    })).toBe(false);
+
+    for (const candidate of [
+      { ...request, memberIds: ["cognition"], write: true },
+      { ...request, memberIds: ["cognition", "cognition"] },
+    ]) {
+      const validated = await schema(ReleaseInputRefreshInputSchema)["~standard"].validate(candidate);
       expect("issues" in validated).toBe(true);
     }
   });
