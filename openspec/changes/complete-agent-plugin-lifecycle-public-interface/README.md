@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6C2C_PRIVATE_PROVENANCE_OBSERVATION_REVIEWED`
+`T6C2C_PRIVATE_CONVERGENCE_EXECUTOR_REVIEWED`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
@@ -37,6 +37,7 @@ every provider mode is capsule-free.
 | T6C2c private native policy | `codex/c6-canonical-convergence-policy` / this record node |
 | T6C2c private desired state | `codex/c6-canonical-desired-state` / this record node |
 | T6C2c private provenance observation | `codex/c6-native-provenance-observation` / this record node |
+| T6C2c private convergence executor | `codex/c6-canonical-convergence-executor` / this record node |
 | Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
 | Retained CLI target node | `codex/c6-serialize-cli-test-target` |
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
@@ -69,7 +70,7 @@ global undo redesign, and Inngest candidate bytes.
 | T6C1b observed-Git selector/cutover | private engine complete, atomic activation/cutover open | direct Git resolution is sealed but has no contract/router/CLI reachability; activation must retire the old ceremony in the same node |
 | T6C2a provider capsule retirement | complete, reviewed | capsule-cold provider modes, forward-only retry, export-only legacy retirement |
 | T6C2b managed-retire deletion | complete, reviewed | receipt-owned provider retire unreachable without alias; omission cleanup remains sync-owned |
-| T6C2c canonical native path | private convergence policy, desired-state verifier, and typed native provenance observation complete; executor and atomic activation open | sole governance selection, selected-owner native truth, verification barriers, no canonical hidden state |
+| T6C2c canonical native path | private convergence policy, desired-state verifier, native provenance observation, and exact-prefix executor complete; atomic activation open | sole governance selection, selected-owner native truth, verification barriers, no canonical hidden state |
 | T6C3 export independence | unopened | destination-local ledger/collisions, no native-home registry |
 | T6D truthful test owners | retained, record realignment pending | owner-local DevOps fixture and ordinary serialized CLI target |
 | T6E deterministic manifest | implemented, restack/gate pending | focused canonicalization plus full build-twice equality |
@@ -88,8 +89,8 @@ follow-up work.
 
 ## Current Gate
 
-- Add the private exact-prefix executor. Then activate selector plus convergence while
-  deleting the v1 current-main/promotion ceremony in one public node.
+- Activate selector plus convergence while deleting the v1 current-main and
+  promotion ceremony in one public node.
 - Implement T6C3 as the owner-local export boundary with no provider-home
   registry dependency.
 - Realign/rerun the retained T6D proof and T6E controller determinism proof.
@@ -211,6 +212,24 @@ composition. Atomic selector/convergence activation remains a later node.
 | Behavior proof | Both Codex and Claude resource paths cover observed, ambiguous, and failed outcomes. Throwing mutator stubs prove observation remains read-only, and a regression case preserves the existing public adapter failure surface. The full lifecycle suite passed 38 files / 351 tests. |
 | Static/structural | Lifecycle lint, typecheck, build, sync, positive Habitat/dependency structure, strict OpenSpec, and `git diff --check` passed without cache. No new rule was needed because the canonical factories remain outside public topology. |
 | Reviews | Architecture/authority, TypeScript/refactor/Effect, behavior/testing, and structural proportionality approved after closing generic issue rehydration, legacy-surface reachability, marketplace-owner validation, and provider-parity findings. No P1/P2 remains. |
+
+## T6C2c Private Convergence Executor Proof
+
+This direct-only checkpoint completes the private implementation prerequisite
+for [[tasks#4. T6C2: Thin Canonical Provider Path|tasks 4.2 and 4.4]]. It does
+not complete their public activation: refused plans remain planner/router
+outcomes, while the executor accepts only an already-observed `CONVERGED` or
+`DRIFTED` plan.
+
+| Boundary | Result |
+| --- | --- |
+| Exact prefix | Only a native `applied` result enters the definite prefix. `not-applied` and both uncertainty boundaries stop immediately; the attempted uncertain action remains separate and no rollback, receipt, resume cursor, or compensation exists. |
+| Verification | Every barrier performs exactly one fresh canonical observation and then pure policy verification. Selected visibility may precede omission cleanup; each retirement proves exact native-identity absence; final verification rejects omitted managed members and selected-owner configuration residue while preserving unrelated native state. |
+| Preflight | Target, projection, retirement adjacency, and final-step shape reject before either port runs. Ordinary observation failure and provenance ambiguity preserve the already-confirmed prefix and keep the remaining tail cold. |
+| Unreachability | The executor and canonical resource factories remain absent from package exports, service contract/router, client, CLI, and runtime composition. Activation and v1 ceremony deletion remain one later atomic checkpoint. |
+| Behavior proof | Twelve executor cases and fourteen convergence-policy cases passed. The full lifecycle service passed 39 files / 363 tests. |
+| Static/structural | Lifecycle lint, typecheck, build, sync, positive Habitat/dependency structure, strict OpenSpec, and `git diff --check` passed without cache. No structural rule changed because this node adds no reachable topology. |
+| Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural proportionality approved after closing plan-shape access, empty-tuple typing, fail-closed proof, and refused-classification findings. No P1/P2 remains. |
 
 ## Standing Reviews
 
