@@ -29,7 +29,7 @@ import type {
   ArtifactStore,
   ArtifactStoreFailpoint,
   ArtifactStoreFailpointEvent,
-} from "../../service/modules/releases/ports";
+} from "../../service/model/dependencies/releases";
 import type {
   ArtifactObjectAddress,
   ArtifactPublicationResult as ResourcePublicationResult,

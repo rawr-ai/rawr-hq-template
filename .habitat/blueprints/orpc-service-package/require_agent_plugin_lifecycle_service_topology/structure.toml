@@ -28,10 +28,11 @@ required = [
   "packaging",
   "packaging.ts",
   "providers",
+]
+allowed = [
   "releases",
   "releases.ts",
 ]
-allowed = []
 
 [[scopes]]
 name = "agent-plugin-lifecycle-binding-module-files"
@@ -54,9 +55,52 @@ required = [
   "contract.ts",
   "impl.ts",
   "middleware",
+  "model",
   "modules",
   "router.ts",
   "shared",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-service-model"
+root = "services/agent-plugin-lifecycle/src/service/model"
+kind = "directory"
+mode = "closed"
+required = [
+  "dependencies",
+  "dto",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-service-dependencies"
+root = "services/agent-plugin-lifecycle/src/service/model/dependencies"
+kind = "directory"
+mode = "closed"
+required = [
+  "releases.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-service-dto-roots"
+root = "services/agent-plugin-lifecycle/src/service/model/dto"
+kind = "directory"
+mode = "closed"
+required = [
+  "releases",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-release-root-dtos"
+root = "services/agent-plugin-lifecycle/src/service/model/dto/releases"
+kind = "directory"
+mode = "closed"
+required = [
+  "artifact-repository.ts",
+  "content-workspace.ts",
 ]
 allowed = []
 
@@ -122,7 +166,7 @@ allowed = []
 
 [[scopes]]
 name = "agent-plugin-lifecycle-uniform-module-shells"
-root = "services/agent-plugin-lifecycle/src/service/modules/!(vendors)"
+root = "services/agent-plugin-lifecycle/src/service/modules/!(vendors|releases)"
 kind = "directory"
 mode = "closed"
 required = [
@@ -141,6 +185,21 @@ allowed = [
 [[scopes]]
 name = "agent-plugin-lifecycle-vendors-shell"
 root = "services/agent-plugin-lifecycle/src/service/modules/vendors"
+kind = "directory"
+mode = "closed"
+required = [
+  "contract.ts",
+  "middleware.ts",
+  "model",
+  "module.ts",
+  "router",
+  "schemas.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-releases-shell"
+root = "services/agent-plugin-lifecycle/src/service/modules/releases"
 kind = "directory"
 mode = "closed"
 required = [
@@ -243,6 +302,18 @@ mode = "closed"
 required = [
   "dto",
   "policy",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-releases-dto"
+root = "services/agent-plugin-lifecycle/src/service/modules/releases/model/dto"
+kind = "directory"
+mode = "closed"
+required = [
+  "release-lifecycle.ts",
+  "retention.ts",
+  "staged-content-workspace.ts",
 ]
 allowed = []
 

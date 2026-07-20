@@ -4,7 +4,15 @@ import type { ExportLifecycleRuntime } from "./modules/exports/ports";
 import type { GovernanceLifecycleRuntime } from "./modules/governance/ports";
 import type { PackagingLifecycleRuntime } from "./modules/packaging/ports";
 import type { ProviderLifecycleRuntime } from "./modules/providers/ports";
-import type { ReleaseLifecycleRuntime } from "./modules/releases/ports";
+import type {
+  ArtifactStore,
+  ArtifactStoreFailpoint,
+  BuildFailpoint,
+  ContentWorkspaceSnapshotReader,
+  ReleaseRetentionReaders,
+  StagedContentWorkspaceObservationReader,
+} from "./model/dependencies/releases";
+import type { MechanicalEvidenceReader } from "./shared/release";
 
 export interface LifecycleClock {
   readonly now: () => Date;
@@ -12,7 +20,13 @@ export interface LifecycleClock {
 
 type InitialContext = {
   deps: {
-    releases: ReleaseLifecycleRuntime;
+    releaseSource: ContentWorkspaceSnapshotReader;
+    stagedReleaseSource: StagedContentWorkspaceObservationReader;
+    releaseArtifacts: ArtifactStore;
+    releaseEvidence?: MechanicalEvidenceReader;
+    releaseRetention?: ReleaseRetentionReaders;
+    releaseBuildFailpoint?: BuildFailpoint;
+    releaseArtifactFailpoint?: ArtifactStoreFailpoint;
     contentWorkspace: ContentWorkspaceAsyncPort;
     clock: LifecycleClock;
     packaging: PackagingLifecycleRuntime;

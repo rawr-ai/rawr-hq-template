@@ -25,7 +25,10 @@ import {
 } from "./releases/owned-fixture-root";
 
 const LIFECYCLE_DEP_KEYS = Object.freeze([
-  "releases",
+  "releaseSource",
+  "stagedReleaseSource",
+  "releaseArtifacts",
+  "releaseEvidence",
   "contentWorkspace",
   "clock",
   "packaging",
@@ -105,7 +108,7 @@ describe("production lifecycle service context", () => {
       expect(descriptor?.value, dependency).toBeTypeOf("object");
       expect(descriptor?.value, dependency).not.toBeNull();
     }
-    expect(Object.values(deps)).toHaveLength(9);
+    expect(Object.values(deps)).toHaveLength(12);
     expect(await directoryNames(root.path)).toEqual(before);
   });
 

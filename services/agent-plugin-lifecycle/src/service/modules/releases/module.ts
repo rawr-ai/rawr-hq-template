@@ -6,6 +6,12 @@ export const module = impl.releases
   .use(analytics)
   .use(async ({ context, next }) => next({
     context: {
-      releases: context.deps.releases,
+      source: context.deps.releaseSource,
+      stagedSource: context.deps.stagedReleaseSource,
+      artifacts: context.deps.releaseArtifacts,
+      evidence: context.deps.releaseEvidence,
+      retention: context.deps.releaseRetention,
+      buildFailpoint: context.deps.releaseBuildFailpoint,
+      artifactFailpoint: context.deps.releaseArtifactFailpoint,
     },
   }));

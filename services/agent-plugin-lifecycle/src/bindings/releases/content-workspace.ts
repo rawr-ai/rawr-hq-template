@@ -30,7 +30,7 @@ import type {
   ContentWorkspaceSnapshotReader,
   SourceEligibilityIssue,
   SourceEligibilityIssueCode,
-} from "../../service/modules/releases/ports";
+} from "../../service/model/dependencies/releases";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const encoder = new TextEncoder();

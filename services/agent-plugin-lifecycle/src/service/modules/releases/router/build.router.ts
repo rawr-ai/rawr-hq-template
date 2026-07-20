@@ -13,15 +13,13 @@ import type {
   ArtifactPublicationResult,
   ArtifactStoreFailpoint,
   PublicationGuardResult,
-} from "../model/dto/artifact-repository";
+} from "../../../model/dto/releases/artifact-repository";
 import type {
   ContentWorkspacePolicy,
   SourceEligibilityIssue,
-} from "../model/dto/content-workspace";
+} from "../../../model/dto/releases/content-workspace";
 import type {
   AgentPluginBuildRequest,
-  BuildFailpoint,
-  BuildFailpointEvent,
   BuildIssue,
   BuildMode,
   BuildResult,
@@ -30,8 +28,10 @@ import { constructPlan, type ConstructedPlan } from "../model/policy/release-pla
 import { module } from "../module";
 import type {
   ArtifactStore,
+  BuildFailpoint,
+  BuildFailpointEvent,
   ContentWorkspaceSnapshotReader,
-} from "../ports";
+} from "../../../model/dependencies/releases";
 
 interface BuildExecutionRequest extends AgentPluginBuildRequest {
   readonly failpoint?: BuildFailpoint;
@@ -41,14 +41,14 @@ interface BuildExecutionRequest extends AgentPluginBuildRequest {
 export const build = module.build.handler(async ({ context, input: request }) => {
   const execution: BuildExecutionRequest = Object.freeze({
     ...request,
-    ...(context.releases.controls?.buildFailpoint === undefined
+    ...(context.buildFailpoint === undefined
       ? {}
-      : { failpoint: context.releases.controls.buildFailpoint }),
-    ...(context.releases.controls?.artifactFailpoint === undefined
+      : { failpoint: context.buildFailpoint }),
+    ...(context.artifactFailpoint === undefined
       ? {}
-      : { artifactFailpoint: context.releases.controls.artifactFailpoint }),
+      : { artifactFailpoint: context.artifactFailpoint }),
   });
-  const inspected = await context.releases.source.inspect(execution.contentWorkspace);
+  const inspected = await context.source.inspect(execution.contentWorkspace);
   if (inspected.kind === "Ineligible") return rejected(execution.mode, sourceIssues(inspected.issues));
   try {
     await hit(execution.failpoint, { kind: "AfterInitialInspection" });
@@ -63,7 +63,7 @@ export const build = module.build.handler(async ({ context, input: request }) =>
   } catch (error) {
     return rejected(execution.mode, [constructionIssue(errorMessage(error))]);
   }
-  const beforeStaging = await context.releases.source.revalidate(
+  const beforeStaging = await context.source.revalidate(
     execution.contentWorkspace,
     inspected.snapshot.eligibilityBinding,
   );
@@ -75,15 +75,15 @@ export const build = module.build.handler(async ({ context, input: request }) =>
   }
 
   const finalGate = createFinalEligibilityGate({
-    source: context.releases.source,
+    source: context.source,
     policy: execution.contentWorkspace,
     eligibilityBinding: inspected.snapshot.eligibilityBinding,
     failpoint: execution.failpoint,
   });
   if (execution.mode.kind === "targeted") {
-    return await publishTargeted(context.releases.artifacts, plan.value.releases[0]!, execution, finalGate);
+    return await publishTargeted(context.artifacts, plan.value.releases[0]!, execution, finalGate);
   }
-  return await publishComplete(context.releases.artifacts, plan.value, execution, finalGate);
+  return await publishComplete(context.artifacts, plan.value, execution, finalGate);
 });
 
 async function publishTargeted(

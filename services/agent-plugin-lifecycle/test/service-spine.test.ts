@@ -99,31 +99,29 @@ function spineClient(
   const deps: Deps = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    releases: {
-      source: {
-        inspect: async () => {
-          calls.push("releases.source.inspect");
-          if (options.malformedReleaseIssue === true) {
-            return {
-              kind: "Ineligible",
-              issues: [{ code: "GitFailure", detail: 42 }],
-            } as never;
-          }
+    releaseSource: {
+      inspect: async () => {
+        calls.push("releases.source.inspect");
+        if (options.malformedReleaseIssue === true) {
           return {
             kind: "Ineligible",
-            issues: [{ code: "GitFailure", detail: "fixture repository is unavailable" }],
-          };
-        },
-        revalidate: async () => unavailableAsync("release source revalidation"),
+            issues: [{ code: "GitFailure", detail: 42 }],
+          } as never;
+        }
+        return {
+          kind: "Ineligible",
+          issues: [{ code: "GitFailure", detail: "fixture repository is unavailable" }],
+        };
       },
-      stagedSource: {
-        observe: async () => unavailableAsync("staged release source observation"),
-      },
-      artifacts: {
-        read: async () => unavailableAsync("release artifact read"),
-        publishRelease: async () => unavailableAsync("release publication"),
-        publishReleaseSet: async () => unavailableAsync("release-set publication"),
-      },
+      revalidate: async () => unavailableAsync("release source revalidation"),
+    },
+    stagedReleaseSource: {
+      observe: async () => unavailableAsync("staged release source observation"),
+    },
+    releaseArtifacts: {
+      read: async () => unavailableAsync("release artifact read"),
+      publishRelease: async () => unavailableAsync("release publication"),
+      publishReleaseSet: async () => unavailableAsync("release-set publication"),
     },
     contentWorkspace: {
       inspectWorkspace: async () => {

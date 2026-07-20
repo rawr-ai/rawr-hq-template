@@ -20,14 +20,16 @@ import {
 import type {
   SourceEligibilityIssue,
   SourceEligibilityIssueCode,
-  StagedContentWorkspaceInspection,
-  StagedContentWorkspacePolicy,
   StagedIndexBindingObservation,
   StagedIndexObservation,
   StagedIndexObservationRequest,
   StagedIndexObservationResult,
   StagedObservationFailureReason,
-} from "../dto/content-workspace";
+} from "../../../../model/dto/releases/content-workspace";
+import type {
+  StagedContentWorkspaceInspection,
+  StagedContentWorkspacePolicy,
+} from "../dto/staged-content-workspace";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 

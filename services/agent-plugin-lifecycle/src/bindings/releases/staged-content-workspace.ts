@@ -13,7 +13,7 @@ import type {
   StagedIndexObservationRequest,
   StagedIndexObservationResult,
   StagedWorkspaceAnchorObservation,
-} from "../../service/modules/releases/ports";
+} from "../../service/model/dependencies/releases";
 
 export type ResourceContentWorkspaceStagedReadPort = Pick<
   ContentWorkspaceGitReadAsyncPort,

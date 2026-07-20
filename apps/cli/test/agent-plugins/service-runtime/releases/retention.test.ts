@@ -15,11 +15,7 @@ import {
   type ReleaseArtifactRef,
   type VerifiedArtifactSnapshotV1,
 } from "@rawr/agent-plugin-lifecycle/release";
-import type {
-  ArtifactReader,
-  ArtifactStore,
-  ReleaseLifecycleRuntime,
-} from "@rawr/agent-plugin-lifecycle/ports/releases";
+import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 
 import {
@@ -40,6 +36,11 @@ import {
   removeOwnedFixtureRoot,
   type OwnedFixtureRoot,
 } from "./owned-fixture-root";
+
+type ArtifactReader = Pick<Deps["releaseArtifacts"], "read">;
+type ArtifactStore = Deps["releaseArtifacts"];
+type ReleaseSource = Deps["releaseSource"];
+type StagedReleaseSource = Deps["stagedReleaseSource"];
 
 const zeroBudget = Object.freeze({
   kind: "space-v1",
@@ -240,11 +241,9 @@ describe("closed read-only retention planning", () => {
       },
     };
     const absent = createLifecycleTestClient({
-      releases: {
-        source: unavailableSource(),
-        stagedSource: unavailableStagedSource(),
-        artifacts: readOnlyArtifactStore(artifacts),
-      },
+      releaseSource: unavailableSource(),
+      stagedReleaseSource: unavailableStagedSource(),
+      releaseArtifacts: readOnlyArtifactStore(artifacts),
     });
     await expect(absent.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
       kind: "BlockedPinnedGraph",
@@ -301,11 +300,11 @@ describe("closed read-only retention planning", () => {
         gitExecutable: await realpath(GIT_EXECUTABLE),
       }),
     });
-    const client = createLifecycleTestClient({ releases: {
-      source,
-      stagedSource: unavailableStagedSource(),
-      artifacts: createArtifactRepositoryStore(root),
-    } });
+    const client = createLifecycleTestClient({
+      releaseSource: source,
+      stagedReleaseSource: unavailableStagedSource(),
+      releaseArtifacts: createArtifactRepositoryStore(root),
+    });
     const result = await client.releases.build({
       contentWorkspace: repository.policy,
       mode: { kind: "complete-set" },
@@ -333,37 +332,42 @@ function retentionClient(options: {
   readonly artifacts: ArtifactReader;
   readonly evidence?: MechanicalEvidenceReader;
 }) {
-  return createLifecycleTestClient({
-    releases: retentionRuntime(options),
-  });
+  return createLifecycleTestClient(retentionDeps(options));
 }
 
-function retentionRuntime(options: {
+function retentionDeps(options: {
   readonly pins: () => Promise<unknown>;
   readonly inventory: () => Promise<unknown>;
   readonly artifacts: ArtifactReader;
   readonly evidence?: MechanicalEvidenceReader;
-}): ReleaseLifecycleRuntime {
+}): Pick<
+  Deps,
+  | "releaseSource"
+  | "stagedReleaseSource"
+  | "releaseArtifacts"
+  | "releaseEvidence"
+  | "releaseRetention"
+> {
   return {
-    source: unavailableSource(),
-    stagedSource: unavailableStagedSource(),
-    artifacts: readOnlyArtifactStore(options.artifacts),
-    ...(options.evidence === undefined ? {} : { evidence: options.evidence }),
-    retention: {
+    releaseSource: unavailableSource(),
+    stagedReleaseSource: unavailableStagedSource(),
+    releaseArtifacts: readOnlyArtifactStore(options.artifacts),
+    ...(options.evidence === undefined ? {} : { releaseEvidence: options.evidence }),
+    releaseRetention: {
       pins: { read: options.pins },
       inventory: { read: options.inventory },
     },
   };
 }
 
-function unavailableSource(): ReleaseLifecycleRuntime["source"] {
+function unavailableSource(): ReleaseSource {
   return {
     inspect: async () => unavailableAsync("retention source inspection"),
     revalidate: async () => unavailableAsync("retention source revalidation"),
   };
 }
 
-function unavailableStagedSource(): ReleaseLifecycleRuntime["stagedSource"] {
+function unavailableStagedSource(): StagedReleaseSource {
   return {
     observe: async () => unavailableAsync("retention staged source observation"),
   };

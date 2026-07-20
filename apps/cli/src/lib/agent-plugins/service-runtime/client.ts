@@ -183,12 +183,10 @@ export function createProductionLifecycleDeps(input: Readonly<{
   return Object.freeze({
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    releases: Object.freeze({
-      source: createResourceContentWorkspaceSnapshotReader({ contentWorkspace }),
-      stagedSource: createResourceStagedContentWorkspaceObservationReader({ contentWorkspace }),
-      artifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
-      evidence: createMechanicalEvidenceReader(layout.artifactStoreRoot),
-    }),
+    releaseSource: createResourceContentWorkspaceSnapshotReader({ contentWorkspace }),
+    stagedReleaseSource: createResourceStagedContentWorkspaceObservationReader({ contentWorkspace }),
+    releaseArtifacts: createArtifactRepositoryStore(layout.artifactStoreRoot),
+    releaseEvidence: createMechanicalEvidenceReader(layout.artifactStoreRoot),
     contentWorkspace,
     clock: Object.freeze({ now: () => new Date() }),
     packaging: createPackageOutputLifecycleRuntime({ artifactReader }),

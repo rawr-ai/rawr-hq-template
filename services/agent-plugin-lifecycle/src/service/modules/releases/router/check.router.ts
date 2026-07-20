@@ -1,4 +1,4 @@
-import type { SourceEligibilityIssue } from "../model/dto/content-workspace";
+import type { SourceEligibilityIssue } from "../../../model/dto/releases/content-workspace";
 import type {
   BuildIssue,
   BuildMode,
@@ -8,7 +8,7 @@ import { constructPlan } from "../model/policy/release-plan";
 import { module } from "../module";
 
 export const check = module.check.handler(async ({ context, input: request }) => {
-  const inspected = await context.releases.source.inspect(request.contentWorkspace);
+  const inspected = await context.source.inspect(request.contentWorkspace);
   if (inspected.kind === "Ineligible") return ineligibleReport(request.mode, inspected.issues);
   const plan = constructPlan(inspected.snapshot, request.mode);
   if (!plan.ok) return { kind: "IneligibleReport" as const, mode: request.mode, issues: plan.issues };

@@ -14,12 +14,30 @@ projections, in declared CLI binding and provider-projection roots. Release and
 evidence projections remain free of filesystem, process, FFI, and provider mechanics.
 Module router handlers consume only their local `module` context, and the
 service root composes module routers through `impl.router`. Type-only protocol
-imports remain available through `ports/*`.
+imports remain available through `ports/*`. Root service capabilities and
+service-level models cannot depend upward on a sealed capability module. The
+sealed set grows monotonically as module context-direction slices land.
 
 ```grit
 language js(typescript)
 
 or {
+  import_statement(source=$source) where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:releases|vendors)(?:/|[\"'])).*"
+  },
+  `export { $exports } from $source` where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:releases|vendors)(?:/|[\"'])).*"
+  },
+  `export * from $source` where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:releases|vendors)(?:/|[\"'])).*"
+  },
+  `import($source)` where {
+    $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:releases|vendors)(?:/|[\"'])).*"
+  },
   import_statement(source=$source) where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/[^/]+/router(?:/.*)?\.ts$",
     $source <: r"^[\"']?(?:\.\./)+impl(?:\.[jt]s)?[\"']?$"
@@ -157,11 +175,23 @@ or {
 ## Matches Fixture
 
 ```typescript
+// @filename: services/agent-plugin-lifecycle/src/service/base.ts
+import type { ReleaseRuntime } from "./modules/releases/ports";
+
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/release-export.ts
+export { type ReleaseRuntime } from "../../modules/releases/ports";
+
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/release-star.ts
+export * from "../../modules/releases/ports";
+
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/release-dynamic.ts
+export const release = import("../../modules/releases/ports");
+
 // @filename: services/agent-plugin-lifecycle/src/service/modules/releases/router/check.router.ts
 import { impl } from "../../../impl";
 
 export const check = impl.releases.check.handler(async ({ context }) =>
-  context.deps.releases.source.inspect());
+  context.deps.releaseSource.inspect());
 
 // @filename: services/agent-plugin-lifecycle/src/service/router.ts
 import { check } from "./modules/releases/router/check.router";
@@ -191,9 +221,6 @@ export const provider = import("@rawr/resource-native-agent-provider/providers/c
 
 // @filename: services/agent-plugin-lifecycle/src/service/modules/providers/ports.ts
 export { createResourceCodexProviderAdapter } from "./internal";
-
-// @filename: services/agent-plugin-lifecycle/src/service/modules/releases/ports.ts
-export * from "./internal/resource-artifact-repository";
 
 // @filename: services/agent-plugin-lifecycle/src/service/modules/exports/ports.ts
 export { type ExportPlan, createExportOwner } from "./internal/owner-protocol";
@@ -306,7 +333,7 @@ export const digest = contentDigest;
 import { module } from "../module";
 
 export const check = module.check.handler(async ({ context }) =>
-  context.releases.source.inspect());
+  context.source.inspect());
 
 // @filename: services/agent-plugin-lifecycle/src/service/router.ts
 import { router as releases } from "./modules/releases/router";

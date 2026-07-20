@@ -20,9 +20,11 @@ import {
   type ReleaseRelativePath,
   type RepositoryIdentity,
 } from "@rawr/agent-plugin-lifecycle/release";
+import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 
-import type { ContentWorkspacePolicy } from "@rawr/agent-plugin-lifecycle/ports/releases";
 import type { OwnedFixtureRoot } from "../owned-fixture-root";
+
+type ContentWorkspacePolicy = Parameters<Client["releases"]["check"]>[0]["contentWorkspace"];
 
 const execFileAsync = promisify(execFile);
 

@@ -21,19 +21,17 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
   const deps: Deps = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    releases: {
-      source: {
-        inspect: async () => unavailableAsync("release source inspection"),
-        revalidate: async () => unavailableAsync("release source revalidation"),
-      },
-      stagedSource: {
-        observe: async () => unavailableAsync("staged release source observation"),
-      },
-      artifacts: {
-        read: async () => unavailableAsync("release artifact read"),
-        publishRelease: async () => unavailableAsync("release publication"),
-        publishReleaseSet: async () => unavailableAsync("release-set publication"),
-      },
+    releaseSource: {
+      inspect: async () => unavailableAsync("release source inspection"),
+      revalidate: async () => unavailableAsync("release source revalidation"),
+    },
+    stagedReleaseSource: {
+      observe: async () => unavailableAsync("staged release source observation"),
+    },
+    releaseArtifacts: {
+      read: async () => unavailableAsync("release artifact read"),
+      publishRelease: async () => unavailableAsync("release publication"),
+      publishReleaseSet: async () => unavailableAsync("release-set publication"),
     },
     contentWorkspace: {
       inspectWorkspace: async () => unavailableAsync("vendor workspace inspection"),
