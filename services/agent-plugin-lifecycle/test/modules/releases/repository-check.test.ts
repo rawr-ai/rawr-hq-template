@@ -33,6 +33,7 @@ import { productFixture } from "../../shared/release/fixtures";
 import {
   createLifecycleTestClient,
   testInvocation,
+  unavailableArtifactRepository,
   unavailableContentWorkspace,
 } from "../../support/client";
 
@@ -80,7 +81,7 @@ describe("releases.checkRepository", () => {
     };
     const client = createLifecycleTestClient({
       contentWorkspace: { ...unavailableContentWorkspace(), ...rawPort },
-      releaseArtifacts: writeTraps(() => {
+      artifactRepository: unavailableArtifactRepository(() => {
         throw new Error("staged repository check acquired artifact authority");
       }),
     });
@@ -148,7 +149,7 @@ describe("releases.checkRepository", () => {
     };
     const client = createLifecycleTestClient({
       contentWorkspace: { ...unavailableContentWorkspace(), ...rawPort },
-      releaseArtifacts: writeTraps(() => {
+      artifactRepository: unavailableArtifactRepository(() => {
         writes += 1;
       }),
     });
@@ -174,7 +175,7 @@ describe("releases.checkRepository", () => {
           throw dependencyFailure;
         },
       },
-      releaseArtifacts: writeTraps(() => {
+      artifactRepository: unavailableArtifactRepository(() => {
         throw new Error("staged repository check acquired artifact authority");
       }),
     });
@@ -204,7 +205,7 @@ describe("releases.checkRepository", () => {
             throw contentWorkspaceFailure(fixture.reason, `${fixture.reason} fixture`);
           },
         },
-        releaseArtifacts: writeTraps(() => {
+        artifactRepository: unavailableArtifactRepository(() => {
           throw new Error("staged repository check acquired artifact authority");
         }),
       });
@@ -263,7 +264,7 @@ describe("releases.checkRepository", () => {
         },
         treeAfterFirstInspect: "c".repeat(40),
       }),
-      releaseArtifacts: writeTraps(() => {
+      artifactRepository: unavailableArtifactRepository(() => {
         artifactWrites += 1;
       }),
     });
@@ -309,20 +310,9 @@ describe("releases.checkRepository", () => {
           stagedReads += 1;
         },
       }),
-      releaseArtifacts: {
-        read: async () => {
-          artifactAccesses += 1;
-          return unavailableAsync("artifact read");
-        },
-        publishRelease: async () => {
-          artifactAccesses += 1;
-          return unavailableAsync("release publication");
-        },
-        publishReleaseSet: async () => {
-          artifactAccesses += 1;
-          return unavailableAsync("release-set publication");
-        },
-      },
+      artifactRepository: unavailableArtifactRepository(() => {
+        artifactAccesses += 1;
+      }),
     });
 
     await expect(client.releases.checkRepository({
@@ -356,7 +346,7 @@ describe("releases.checkRepository", () => {
           return rawStagedObservation(changedObservation);
         },
       },
-      releaseArtifacts: writeTraps(() => {
+      artifactRepository: unavailableArtifactRepository(() => {
         writes += 1;
       }),
     });
@@ -387,7 +377,7 @@ describe("releases.checkRepository", () => {
           return rawStagedObservation(observation);
         },
       },
-      releaseArtifacts: writeTraps(() => {
+      artifactRepository: unavailableArtifactRepository(() => {
         writes += 1;
       }),
     });
@@ -608,20 +598,6 @@ function gitBlobId(value: Uint8Array): string {
   hash.update(bytes(`blob ${value.byteLength}\0`));
   hash.update(value);
   return hash.digest("hex");
-}
-
-function writeTraps(onWrite: () => void) {
-  return {
-    read: async () => unavailableAsync("artifact read"),
-    publishRelease: async () => {
-      onWrite();
-      return unavailableAsync("release publication");
-    },
-    publishReleaseSet: async () => {
-      onWrite();
-      return unavailableAsync("release-set publication");
-    },
-  };
 }
 
 function parsed<T>(result: { readonly ok: true; readonly value: T } | { readonly ok: false }): T {

@@ -9,7 +9,7 @@ export const module = impl.packaging
     context: {
       artifacts: Object.freeze({
         read: (ref: Parameters<ArtifactReader["read"]>[0]) =>
-          context.deps.releaseArtifacts.read(ref),
+          context.provided.artifactStore.read(ref),
       }) satisfies ArtifactReader,
       packageOutput: context.deps.packageOutput,
     },

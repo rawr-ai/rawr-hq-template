@@ -4,7 +4,6 @@ import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createMechanicalEvidenceStore } from "../../../../src/lib/agent-plugins/bindings/output";
 import { deriveAgentPluginControllerLayout } from "../../../../src/lib/agent-plugins/layout";
 import {
   createNodeProviderLifecycleDeps,
@@ -19,7 +18,7 @@ describe("provider resource context", () => {
     fixtureRoot = null;
   });
 
-  it("shares raw resources with the read-only export bridge", async () => {
+  it("keeps provider record state free of lifecycle artifact authority", async () => {
     fixtureRoot = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-c5-provider-records-")));
     const dataRoot = path.join(fixtureRoot, "controller-data");
     await mkdir(dataRoot);
@@ -30,20 +29,30 @@ describe("provider resource context", () => {
       providerTargetStateRoot: layout.providerTargetStateRoot,
     });
     const providerExecutables = Object.freeze({ codex: "/opt/rawr/bin/codex" });
-    const providerEvidenceStore = createMechanicalEvidenceStore(layout.artifactStoreRoot);
     const deps = createNodeProviderLifecycleDeps({
       state,
       providerExecutables,
-      providerEvidenceStore,
     });
 
     expect(Object.isFrozen(state)).toBe(true);
     expect(Object.isFrozen(deps)).toBe(true);
+    expect(Reflect.ownKeys(state)).toEqual([
+      "records",
+      "projectionRepositoryRoot",
+      "exportKnownHomesReader",
+    ]);
+    expect(state).not.toHaveProperty("artifactRepository");
     expect(deps.providerRecords).toBe(state.records);
-    expect(deps.providerArtifactRepository).toBe(state.artifactRepository);
     expect(deps.providerExecutables).toBe(providerExecutables);
     expect(deps.providerProjectionRepositoryRoot).toBe(state.projectionRepositoryRoot);
-    expect(deps.providerEvidenceStore).toBe(providerEvidenceStore);
+    expect(Reflect.ownKeys(deps)).toEqual([
+      "providerRecords",
+      "providerNativeResource",
+      "providerExecutables",
+      "providerProjectionRepositoryRoot",
+    ]);
+    expect(deps).not.toHaveProperty("providerArtifactRepository");
+    expect(deps).not.toHaveProperty("providerEvidenceStore");
     expect(await state.exportKnownHomesReader.readAll()).toEqual({
       ok: true,
       value: [],

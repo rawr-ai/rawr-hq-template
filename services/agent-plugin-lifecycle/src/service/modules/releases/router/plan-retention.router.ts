@@ -25,9 +25,7 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
     const pinIssues: RetentionIssue[] = [];
     for (const ref of pins.value.refs) {
       if (ref.kind === "mechanical-evidence") {
-        const evidence = context.evidence === undefined
-          ? { kind: "Missing" as const }
-          : await context.evidence.read(ref);
+        const evidence = await context.evidence.read(ref);
         if (evidence.kind !== "Verified") {
           pinIssues.push(Object.freeze({ ref, detail: `pinned artifact is ${evidence.kind.toLowerCase()}` }));
           continue;
@@ -56,9 +54,7 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
     for (const entry of inventory.entries) {
       if (pinned.has(retentionRefKey(entry.ref))) continue;
       const verified = entry.ref.kind === "mechanical-evidence"
-        ? context.evidence === undefined
-          ? { kind: "Missing" as const }
-          : await context.evidence.read(entry.ref)
+        ? await context.evidence.read(entry.ref)
         : await context.artifacts.read(entry.ref);
       if (verified.kind !== "Verified") {
         blockedEntries.push(Object.freeze({

@@ -44,16 +44,16 @@ import { createResourceProviderRecordState } from "./repository/resource-record-
 
 export const resources = createServiceProvider<{
   deps: {
-    releaseArtifacts: ArtifactStore;
+    artifactRepository: ArtifactRepositoryAsyncPort;
     providerRecords: AgentProviderRecordsAsyncPort;
-    providerArtifactRepository: ArtifactRepositoryAsyncPort;
     providerNativeResource: NativeProviderResourcePort;
     providerExecutables: NativeProviderExecutablePaths;
     providerProjectionRepositoryRoot: string;
-    providerEvidenceStore: MechanicalEvidenceStore;
   };
   provided: {
+    artifactStore: ArtifactStore;
     currentMain: CurrentMainSelectionReader;
+    mechanicalEvidenceStore: MechanicalEvidenceStore;
   };
 }>().middleware<{
   native: CanonicalNativeRuntime;
@@ -70,11 +70,11 @@ export const resources = createServiceProvider<{
 }>(async ({ context, next }) => {
   const state = createResourceProviderRecordState({
     records: context.deps.providerRecords,
-    trees: context.deps.providerArtifactRepository,
+    trees: context.deps.artifactRepository,
     projectionRepositoryRoot: context.deps.providerProjectionRepositoryRoot,
   });
   const marketplaceLocations = createResourceMarketplaceLocationResolver({
-    repository: context.deps.providerArtifactRepository,
+    repository: context.deps.artifactRepository,
     projectionRepositoryRoot: context.deps.providerProjectionRepositoryRoot,
   });
   const adapter = createResourceNativeProviderAdapterResolver(
@@ -93,7 +93,7 @@ export const resources = createServiceProvider<{
   );
   return next({
     native: createResourceCanonicalNativeRuntime(adapter, canonicalObserver),
-    releases: createResourceProviderReleaseReader(context.deps.releaseArtifacts),
+    releases: createResourceProviderReleaseReader(context.provided.artifactStore),
     provider: createResourceProviderTargetReader(adapter, observer),
     providerMutator: createResourceProviderTargetMutator(adapter),
     receipts: state.targets.receipts,
@@ -105,7 +105,7 @@ export const resources = createServiceProvider<{
     identityWriter: state.targets.identities,
     projectionMaterializer: state.projections.projectionMaterializer,
     marketplaceMaterializer: state.projections.marketplaceMaterializer,
-    evidence: createResourceMechanicalEvidencePublisher(context.deps.providerEvidenceStore),
+    evidence: createResourceMechanicalEvidencePublisher(context.provided.mechanicalEvidenceStore),
   });
 });
 

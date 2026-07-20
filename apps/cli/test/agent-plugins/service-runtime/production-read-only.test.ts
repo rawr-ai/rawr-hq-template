@@ -9,6 +9,7 @@ import {
   type UndoCandidateInput,
   type UndoWriter,
 } from "@rawr/agent-plugin-lifecycle/bindings/exports";
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { deriveAgentPluginControllerLayout } from "../../../src/lib/agent-plugins/layout";
@@ -28,7 +29,6 @@ import {
   type RawCapsuleSlotSessionV1,
 } from "../../../src/lib/agent-plugins/undo/node-store";
 import { prepareExportOnlyCapsuleSlotV1 } from "../../../src/lib/agent-plugins/undo/legacy-provider-retirement";
-import { createMechanicalEvidenceStore } from "../../../src/lib/agent-plugins/bindings/output";
 import { createNodeExportUndoWriter } from "../../../src/lib/agent-plugins/service-runtime/client";
 import {
   createNodeProviderLifecycleDeps,
@@ -76,25 +76,20 @@ describe("production lifecycle capsule boundary", () => {
       providerTargetStateRoot: layout.providerTargetStateRoot,
     });
     const providerExecutables = Object.freeze({});
-    const providerEvidenceStore = createMechanicalEvidenceStore(layout.artifactStoreRoot);
     const providerDeps = createNodeProviderLifecycleDeps({
       state: providerState,
       providerExecutables,
-      providerEvidenceStore,
     });
     expect(Object.isFrozen(providerDeps)).toBe(true);
     expect(Reflect.ownKeys(providerDeps)).toEqual([
       "providerRecords",
-      "providerArtifactRepository",
       "providerNativeResource",
       "providerExecutables",
       "providerProjectionRepositoryRoot",
-      "providerEvidenceStore",
     ]);
     expect(providerDeps.providerRecords).toBe(providerState.records);
-    expect(providerDeps.providerArtifactRepository).toBe(providerState.artifactRepository);
     expect(providerDeps.providerExecutables).toBe(providerExecutables);
-    expect(providerDeps.providerEvidenceStore).toBe(providerEvidenceStore);
+    expect(providerState).not.toHaveProperty("artifactRepository");
     const anchor = Object.freeze({
       root: path.join(fixture.path, "content"),
       rootDevice: "16777234",
@@ -109,6 +104,8 @@ describe("production lifecycle capsule boundary", () => {
     const dirtyStatus = new TextEncoder().encode("? fixture-dirty\0");
     const client = createLifecycleTestClient({
       ...providerDeps,
+      artifactRepository: makeNodeArtifactRepositoryAsyncPort(),
+      artifactRepositoryRoot: layout.artifactStoreRoot,
       contentWorkspace: {
         ...unavailableContentWorkspace(),
         inspectGitWorkspace: async () => anchor,

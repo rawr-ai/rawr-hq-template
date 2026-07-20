@@ -4,6 +4,7 @@ import {
 import {
   createEmbeddedPlaceholderLoggerAdapter,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 import type {
   ContentWorkspaceAsyncPort,
   ContentWorkspaceNodeAsyncPort,
@@ -24,11 +25,8 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
   const deps: Deps = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    releaseArtifacts: {
-      read: async () => unavailableAsync("release artifact read"),
-      publishRelease: async () => unavailableAsync("release publication"),
-      publishReleaseSet: async () => unavailableAsync("release-set publication"),
-    },
+    artifactRepository: unavailableArtifactRepository(),
+    artifactRepositoryRoot: "/tmp/rawr-agent-plugin-lifecycle-test-artifacts",
     contentWorkspace: unavailableContentWorkspace(),
     clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
     packageOutput: {
@@ -112,24 +110,29 @@ export function unavailableProviderResources() {
       restoreTarget: async () => unavailableAsync("provider target record restore"),
       settleTarget: async () => unavailableAsync("provider target record settlement"),
     },
-    providerArtifactRepository: {
-      locateTree: async () => unavailableAsync("provider artifact tree location"),
-      readTree: async () => unavailableAsync("provider artifact tree read"),
-      publishTree: async () => unavailableAsync("provider artifact tree publication"),
-      readEvidence: async () => unavailableAsync("provider artifact evidence read"),
-      publishEvidence: async () => unavailableAsync("provider artifact evidence publication"),
-    },
     providerNativeResource: {
       acquireCodex: async () => unavailableAsync("Codex native provider acquisition"),
       acquireClaude: async () => unavailableAsync("Claude native provider acquisition"),
     },
     providerExecutables: Object.freeze({}),
     providerProjectionRepositoryRoot: "/tmp/rawr-agent-plugin-lifecycle-test-provider-projections",
-    providerEvidenceStore: {
-      read: async () => unavailableAsync("provider evidence store read"),
-      publish: async () => unavailableAsync("provider evidence store publication"),
-    },
   };
+}
+
+export function unavailableArtifactRepository(
+  onAccess: (operation: keyof ArtifactRepositoryAsyncPort) => void = () => {},
+): ArtifactRepositoryAsyncPort {
+  const refuse = async (operation: keyof ArtifactRepositoryAsyncPort): Promise<never> => {
+    onAccess(operation);
+    return unavailableAsync(`artifact repository ${operation}`);
+  };
+  return Object.freeze({
+    locateTree: async () => refuse("locateTree"),
+    readTree: async () => refuse("readTree"),
+    publishTree: async () => refuse("publishTree"),
+    readEvidence: async () => refuse("readEvidence"),
+    publishEvidence: async () => refuse("publishEvidence"),
+  });
 }
 
 function unavailable(label: string): never {

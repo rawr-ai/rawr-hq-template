@@ -4,14 +4,23 @@ import {
 import {
   createEmbeddedPlaceholderLoggerAdapter,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import type {
+  ArtifactObjectAddress,
+  ArtifactRepositoryAsyncPort,
+} from "@rawr/resource-agent-plugin-artifact-repository";
 import type { GitWorkspaceAnchor } from "@rawr/resource-content-workspace";
 import { describe, expect, it } from "vitest";
 
 import { createClient, type Client, type Deps } from "../src/client";
 import {
+  createLifecycleTestClient,
   unavailableContentWorkspace,
+  unavailableArtifactRepository,
   unavailableProviderResources,
 } from "./support/client";
+import { MemoryArtifactRepository } from "./support/artifact-repository";
+import { productFixture } from "./shared/release/fixtures";
+import { createResourceArtifactStore } from "../src/service/repository/artifact-repository";
 import {
   parseProviderTarget,
 } from "../src/service/modules/providers/model/dto/provider-target";
@@ -34,6 +43,7 @@ const invocation = {
     },
   },
 } as const;
+const artifactRepositoryRoot = "/tmp/rawr-service-spine-artifacts";
 
 describe("agent plugin lifecycle oRPC service spine", () => {
   it("routes release, vendor, packaging, and governance refusals only through their owner ports", async () => {
@@ -57,7 +67,7 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       kind: "RejectedBeforeOutputMutation",
       primaryFailure: { code: "ArtifactMissing" },
     });
-    expect(calls.splice(0)).toEqual(["releaseArtifacts.read"]);
+    expect(calls.splice(0)).toEqual(["artifactRepository.readTree"]);
 
     await expect(client.governance.currentMainRecord({
       kind: "encode-body",
@@ -99,7 +109,7 @@ describe("agent plugin lifecycle oRPC service spine", () => {
 
   it("derives canonical provider selection from the raw content-workspace dependency", async () => {
     const calls: string[] = [];
-    const artifactReads: Parameters<Deps["releaseArtifacts"]["read"]>[0][] = [];
+    const artifactReads: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0][] = [];
     const contentWorkspaceInspections: Parameters<
       Deps["contentWorkspace"]["inspectGitWorkspace"]
     >[0][] = [];
@@ -117,16 +127,20 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       ok: false,
       issues: [artifactIssue],
     });
-    expect(calls.splice(0)).toEqual(["releaseArtifacts.read"]);
-    expect(artifactReads.splice(0)).toEqual([completeRequest.releaseSet]);
+    expect(calls.splice(0)).toEqual(["artifactRepository.readTree"]);
+    expect(artifactReads.splice(0).map((input) => input.address)).toEqual([
+      artifactAddress(completeRequest.releaseSet),
+    ]);
 
     const targetedRequest = targetedTestRequest();
     await expect(client.providers.targetedTest(targetedRequest, invocation)).resolves.toEqual({
       ok: false,
       issues: [artifactIssue],
     });
-    expect(calls.splice(0)).toEqual(["releaseArtifacts.read"]);
-    expect(artifactReads.splice(0)).toEqual(targetedRequest.releases);
+    expect(calls.splice(0)).toEqual(["artifactRepository.readTree"]);
+    expect(artifactReads.splice(0).map((input) => input.address)).toEqual(
+      targetedRequest.releases.map(artifactAddress),
+    );
 
     const canonicalRequest = canonicalSyncRequest();
     const target = parsed(parseProviderTarget(canonicalRequest.targets[0]));
@@ -183,6 +197,67 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     expect(artifactReads).toEqual([]);
   });
 
+  it("uses one raw repository and root for provider release reads and converged evidence", async () => {
+    const repository = new MemoryArtifactRepository();
+    const fixture = productFixture();
+    const artifactStore = createResourceArtifactStore({
+      repository,
+      repositoryRoot: artifactRepositoryRoot,
+    });
+    for (const release of [fixture.alphaRelease, fixture.betaRelease]) {
+      await expect(artifactStore.publishRelease(release)).resolves.toMatchObject({ kind: "Published" });
+    }
+    const setPublication = await artifactStore.publishReleaseSet(fixture.releaseSet);
+    expect(setPublication).toMatchObject({ kind: "Published", ref: { kind: "complete-set" } });
+    if (setPublication.kind !== "Published" || setPublication.ref.kind !== "complete-set") {
+      throw new Error("Service-spine release-set fixture did not publish");
+    }
+    repository.resetObservations();
+
+    const client = createLifecycleTestClient({
+      artifactRepository: repository,
+      artifactRepositoryRoot,
+      providerExecutables: Object.freeze({ codex: "/opt/rawr/bin/codex" }),
+    });
+    const request: Parameters<Client["providers"]["completeTest"]>[0] = {
+      kind: "complete-test",
+      releaseSet: setPublication.ref,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [providerTargetInput()],
+    };
+
+    const first = await client.providers.completeTest(request, invocation);
+    expect(first).toMatchObject({
+      ok: true,
+      value: {
+        status: "Blocked",
+        evidence: expect.stringMatching(/^me1_[0-9a-f]{64}$/u),
+      },
+    });
+    if (!first.ok || first.value.evidence === null) {
+      throw new Error("Provider complete-test fixture did not publish mechanical evidence");
+    }
+    expect(repository.readTreeCalls).toBe(3);
+    expect(repository.publishedEvidenceCalls).toBe(1);
+    expect(repository.lastTreeAddress).toMatchObject({ repositoryRoot: artifactRepositoryRoot });
+    expect(repository.lastEvidenceAddress).toMatchObject({
+      repositoryRoot: artifactRepositoryRoot,
+      namespace: ["mechanical-evidence", "sha256"],
+      objectId: first.value.evidence,
+    });
+
+    const firstTreeReads = repository.readTreeCalls;
+    const firstEvidenceReads = repository.readEvidenceCalls;
+    const repeated = await client.providers.completeTest(request, invocation);
+    expect(repeated).toEqual(first);
+    expect(repository.readTreeCalls).toBe(firstTreeReads + 3);
+    expect(repository.readEvidenceCalls).toBeGreaterThan(firstEvidenceReads);
+    expect(repository.publishedEvidenceCalls).toBe(1);
+    expect(repository.lastTreeAddress?.repositoryRoot).toBe(
+      repository.lastEvidenceAddress?.repositoryRoot,
+    );
+  });
+
   it("rejects malformed release input before the owner port is invoked", async () => {
     const calls: string[] = [];
     const client = spineClient(calls);
@@ -197,7 +272,7 @@ describe("agent plugin lifecycle oRPC service spine", () => {
 });
 
 interface SpineObservations {
-  readonly artifactReads?: Parameters<Deps["releaseArtifacts"]["read"]>[0][];
+  readonly artifactReads?: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0][];
   readonly contentWorkspaceInspections?: Parameters<
     Deps["contentWorkspace"]["inspectGitWorkspace"]
   >[0][];
@@ -209,15 +284,15 @@ function spineClient(calls: string[], observations: SpineObservations = {}): Cli
   const deps: Deps = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    releaseArtifacts: {
-      read: async (ref) => {
-        calls.push("releaseArtifacts.read");
-        observations.artifactReads?.push(ref);
-        return { kind: "Missing", ref };
+    artifactRepository: {
+      ...unavailableArtifactRepository(),
+      readTree: async (input) => {
+        calls.push("artifactRepository.readTree");
+        observations.artifactReads?.push(input);
+        return { kind: "Missing", address: input.address };
       },
-      publishRelease: async () => unavailableAsync("release publication"),
-      publishReleaseSet: async () => unavailableAsync("release-set publication"),
     },
+    artifactRepositoryRoot,
     contentWorkspace: {
       ...unavailableContentWorkspace(),
       inspectGitWorkspace: async (input) => {
@@ -289,6 +364,23 @@ function spineClient(calls: string[], observations: SpineObservations = {}): Cli
     },
     config: {},
   });
+}
+
+function artifactAddress(
+  ref: Parameters<Client["providers"]["completeTest"]>[0]["releaseSet"]
+    | Parameters<Client["providers"]["targetedTest"]>[0]["releases"][number],
+): ArtifactObjectAddress {
+  return ref.kind === "release"
+    ? Object.freeze({
+      repositoryRoot: artifactRepositoryRoot,
+      namespace: Object.freeze(["releases", "sha256"] as const),
+      objectId: ref.artifactDigest,
+    })
+    : Object.freeze({
+      repositoryRoot: artifactRepositoryRoot,
+      namespace: Object.freeze(["sets", "sha256"] as const),
+      objectId: ref.releaseSetDigest,
+    });
 }
 
 function governanceAnchor(): GitWorkspaceAnchor {

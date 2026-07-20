@@ -7,12 +7,10 @@ import {
   createMechanicalEvidenceHandle,
   createReleaseArtifactRef,
   parseArtifactDigest,
-  type ArtifactRef,
-  type MechanicalEvidenceReader,
-  type ReleaseArtifactRef,
-  type VerifiedArtifactSnapshotV1,
 } from "@rawr/agent-plugin-lifecycle/release";
 import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
+import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 
 import {
@@ -21,7 +19,6 @@ import {
 } from "../../../../../../services/agent-plugin-lifecycle/test/support/client";
 import {
   createArtifactRepositoryReader,
-  createArtifactRepositoryStore,
 } from "../../../../src/lib/agent-plugins/bindings/output/artifact-repository";
 import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
 import {
@@ -33,9 +30,6 @@ import {
   removeOwnedFixtureRoot,
   type OwnedFixtureRoot,
 } from "./owned-fixture-root";
-
-type ArtifactReader = Pick<Deps["releaseArtifacts"], "read">;
-type ArtifactStore = Deps["releaseArtifacts"];
 
 const zeroBudget = Object.freeze({
   kind: "space-v1",
@@ -57,7 +51,8 @@ describe("closed read-only retention planning", () => {
       const client = retentionClient({
         pins: async () => ({ schemaVersion: 1, refs: [built.setRef] }),
         inventory: async () => [{ ref: built.memberRef, storedBytes: 20 }],
-        artifacts: built.reader,
+        artifactRepository: built.artifactRepository,
+        artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
 
       await expect(client.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
@@ -76,7 +71,8 @@ describe("closed read-only retention planning", () => {
       const bare = retentionClient({
         pins: async () => ({ schemaVersion: 1, refs: [built.memberRef.artifactDigest] }),
         inventory: async () => [],
-        artifacts: built.reader,
+        artifactRepository: built.artifactRepository,
+        artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
       await expect(bare.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
         kind: "BlockedPinnedGraph",
@@ -89,7 +85,8 @@ describe("closed read-only retention planning", () => {
           refs: Array.from({ length: 16_385 }, () => built.memberRef),
         }),
         inventory: async () => [],
-        artifacts: built.reader,
+        artifactRepository: built.artifactRepository,
+        artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
       await expect(overCount.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
         kind: "BlockedPinnedGraph",
@@ -101,7 +98,8 @@ describe("closed read-only retention planning", () => {
       const missing = retentionClient({
         pins: async () => ({ schemaVersion: 1, refs: [missingRef] }),
         inventory: async () => [],
-        artifacts: built.reader,
+        artifactRepository: built.artifactRepository,
+        artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
       await expect(missing.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
         kind: "BlockedPinnedGraph",
@@ -117,21 +115,20 @@ describe("closed read-only retention planning", () => {
       const verified = await built.reader.read(built.memberRef);
       expect(verified.kind).toBe("Verified");
       if (verified.kind !== "Verified") return;
-      const secondDigest = must(parseArtifactDigest(mutateDigest(built.memberRef.artifactDigest)));
-      const secondRef = createReleaseArtifactRef(built.memberRef.releaseDigest, secondDigest);
-      const acceptingReader: ArtifactReader = {
-        async read(ref) {
-          return { kind: "Verified", snapshot: snapshotFor(ref, verified.snapshot) };
-        },
-      };
+      const overflowHandle = await seedEvidence(
+        built.artifactRepository,
+        built.artifactRepositoryRoot,
+        new TextEncoder().encode("overflow fixture\n"),
+      );
       const client = retentionClient({
         pins: async () => ({ schemaVersion: 1, refs: [] }),
         inventory: async () => [
           { ref: built.memberRef, storedBytes: 0 },
-          { ref: secondRef, storedBytes: Number.MAX_SAFE_INTEGER },
+          { ref: overflowHandle, storedBytes: Number.MAX_SAFE_INTEGER },
           { ref: built.setRef, storedBytes: 1 },
         ],
-        artifacts: acceptingReader,
+        artifactRepository: built.artifactRepository,
+        artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
 
       await expect(client.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
@@ -143,23 +140,29 @@ describe("closed read-only retention planning", () => {
   );
 
   it("pins governed mechanical evidence only through its opaque reader", async () => {
+    fixture = await createOwnedFixtureRoot();
+    const artifactRepositoryRoot = join(fixture.path, "artifacts-v1") as ArtifactStoreRoot;
+    const rawRepository = makeNodeArtifactRepositoryAsyncPort();
     const bytes = new TextEncoder().encode("governed evidence bytes\n");
-    const handle = createMechanicalEvidenceHandle(bytes);
-    const artifacts: ArtifactReader = {
-      async read() {
-        throw new Error("release artifact reader must not receive an evidence handle");
+    const handle = await seedEvidence(rawRepository, artifactRepositoryRoot, bytes);
+    let artifactReads = 0;
+    let evidenceReads = 0;
+    const observedRepository: ArtifactRepositoryAsyncPort = {
+      ...rawRepository,
+      async readTree(input) {
+        artifactReads += 1;
+        return await rawRepository.readTree(input);
       },
-    };
-    const evidence: MechanicalEvidenceReader = {
-      async read(requested) {
-        return { kind: "Verified", handle: requested, bytes };
+      async readEvidence(input) {
+        evidenceReads += 1;
+        return await rawRepository.readEvidence(input);
       },
     };
     const client = retentionClient({
       pins: async () => ({ schemaVersion: 1, refs: [handle] }),
       inventory: async () => [{ ref: handle, storedBytes: bytes.byteLength }],
-      artifacts,
-      evidence,
+      artifactRepository: observedRepository,
+      artifactRepositoryRoot,
     });
 
     await expect(client.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
@@ -168,11 +171,14 @@ describe("closed read-only retention planning", () => {
       retained: [],
       collectible: [],
     });
+    expect(artifactReads).toBe(0);
+    expect(evidenceReads).toBeGreaterThan(0);
 
     const unavailable = retentionClient({
       pins: async () => ({ schemaVersion: 1, refs: [handle] }),
       inventory: async () => [],
-      artifacts,
+      artifactRepository: observedRepository,
+      artifactRepositoryRoot: join(fixture.path, "missing-artifacts-v1"),
     });
     await expect(unavailable.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
       kind: "BlockedPinnedGraph",
@@ -184,18 +190,14 @@ describe("closed read-only retention planning", () => {
     "selects an ordinary multi-ref budget deterministically with canonical equal-size ties",
     async () => {
       const built = await buildCompleteSet();
-      const verified = await built.reader.read(built.memberRef);
-      expect(verified.kind).toBe("Verified");
-      if (verified.kind !== "Verified") return;
-      const largest = fixedReleaseRef(built.memberRef, "3");
-      const tieFirst = fixedReleaseRef(built.memberRef, "1");
-      const tieSecond = fixedReleaseRef(built.memberRef, "2");
-      const smallest = fixedReleaseRef(built.memberRef, "4");
-      const acceptingReader: ArtifactReader = {
-        async read(ref) {
-          return { kind: "Verified", snapshot: snapshotFor(ref, verified.snapshot) };
-        },
-      };
+      const [largest, firstTieCandidate, secondTieCandidate, smallest] = await Promise.all([
+        seedEvidence(built.artifactRepository, built.artifactRepositoryRoot, new TextEncoder().encode("largest\n")),
+        seedEvidence(built.artifactRepository, built.artifactRepositoryRoot, new TextEncoder().encode("tie-first\n")),
+        seedEvidence(built.artifactRepository, built.artifactRepositoryRoot, new TextEncoder().encode("tie-second\n")),
+        seedEvidence(built.artifactRepository, built.artifactRepositoryRoot, new TextEncoder().encode("smallest\n")),
+      ]);
+      const [tieFirst, tieSecond] = [firstTieCandidate, secondTieCandidate]
+        .sort((left, right) => left.digest.localeCompare(right.digest));
       const client = retentionClient({
         pins: async () => ({ schemaVersion: 1, refs: [] }),
         inventory: async () => [
@@ -204,7 +206,8 @@ describe("closed read-only retention planning", () => {
           { ref: largest, storedBytes: 50 },
           { ref: tieFirst, storedBytes: 30 },
         ],
-        artifacts: acceptingReader,
+        artifactRepository: built.artifactRepository,
+        artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
       const policy = { kind: "space-v1", maximumUnpinnedBytes: 50 } as const;
 
@@ -228,15 +231,19 @@ describe("closed read-only retention planning", () => {
   );
 
   it("fails closed when retention capability is absent or a reader throws", async () => {
+    fixture = await createOwnedFixtureRoot();
     let artifactReads = 0;
-    const artifacts: ArtifactReader = {
-      async read() {
+    const rawRepository = makeNodeArtifactRepositoryAsyncPort();
+    const observedRepository: ArtifactRepositoryAsyncPort = {
+      ...rawRepository,
+      async readTree(input) {
         artifactReads += 1;
-        throw new Error("artifact reader must remain unused");
+        return await rawRepository.readTree(input);
       },
     };
     const absent = createLifecycleTestClient({
-      releaseArtifacts: readOnlyArtifactStore(artifacts),
+      artifactRepository: observedRepository,
+      artifactRepositoryRoot: join(fixture.path, "artifacts-v1"),
     });
     await expect(absent.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
       kind: "BlockedPinnedGraph",
@@ -249,7 +256,8 @@ describe("closed read-only retention planning", () => {
         throw new Error("pin reader exploded");
       },
       inventory: async () => [],
-      artifacts,
+      artifactRepository: observedRepository,
+      artifactRepositoryRoot: join(fixture.path, "artifacts-v1"),
     });
     await expect(throwing.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
       kind: "BlockedPinnedGraph",
@@ -259,7 +267,20 @@ describe("closed read-only retention planning", () => {
   });
 
   it("rejects injected retention authority before any runtime reader call", async () => {
+    fixture = await createOwnedFixtureRoot();
     let reads = 0;
+    const rawRepository = makeNodeArtifactRepositoryAsyncPort();
+    const observedRepository: ArtifactRepositoryAsyncPort = {
+      ...rawRepository,
+      async readTree(input) {
+        reads += 1;
+        return await rawRepository.readTree(input);
+      },
+      async readEvidence(input) {
+        reads += 1;
+        return await rawRepository.readEvidence(input);
+      },
+    };
     const client = retentionClient({
       pins: async () => {
         reads += 1;
@@ -269,12 +290,8 @@ describe("closed read-only retention planning", () => {
         reads += 1;
         return [];
       },
-      artifacts: {
-        async read() {
-          reads += 1;
-          throw new Error("artifact reader must remain unused");
-        },
-      },
+      artifactRepository: observedRepository,
+      artifactRepositoryRoot: join(fixture.path, "artifacts-v1"),
     });
 
     for (const field of ["pins", "inventory", "artifacts", "evidence", "delete"] as const) {
@@ -291,9 +308,11 @@ describe("closed read-only retention planning", () => {
     const contentWorkspace = makeNodeContentWorkspacePort({
       gitExecutable: await realpath(GIT_EXECUTABLE),
     });
+    const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
     const client = createLifecycleTestClient({
       contentWorkspace,
-      releaseArtifacts: createArtifactRepositoryStore(root),
+      artifactRepository,
+      artifactRepositoryRoot: root,
     });
     const result = await client.releases.build({
       contentWorkspace: repository.policy,
@@ -310,6 +329,8 @@ describe("closed read-only retention planning", () => {
     }
     return {
       reader,
+      artifactRepository,
+      artifactRepositoryRoot: root,
       setRef: result.ref,
       memberRef: set.snapshot.members[0]!.ref,
     };
@@ -319,8 +340,8 @@ describe("closed read-only retention planning", () => {
 function retentionClient(options: {
   readonly pins: () => Promise<unknown>;
   readonly inventory: () => Promise<unknown>;
-  readonly artifacts: ArtifactReader;
-  readonly evidence?: MechanicalEvidenceReader;
+  readonly artifactRepository: ArtifactRepositoryAsyncPort;
+  readonly artifactRepositoryRoot: string;
 }) {
   return createLifecycleTestClient(retentionDeps(options));
 }
@@ -328,17 +349,17 @@ function retentionClient(options: {
 function retentionDeps(options: {
   readonly pins: () => Promise<unknown>;
   readonly inventory: () => Promise<unknown>;
-  readonly artifacts: ArtifactReader;
-  readonly evidence?: MechanicalEvidenceReader;
+  readonly artifactRepository: ArtifactRepositoryAsyncPort;
+  readonly artifactRepositoryRoot: string;
 }): Pick<
   Deps,
-  | "releaseArtifacts"
-  | "releaseEvidence"
+  | "artifactRepository"
+  | "artifactRepositoryRoot"
   | "releaseRetention"
 > {
   return {
-    releaseArtifacts: readOnlyArtifactStore(options.artifacts),
-    ...(options.evidence === undefined ? {} : { releaseEvidence: options.evidence }),
+    artifactRepository: options.artifactRepository,
+    artifactRepositoryRoot: options.artifactRepositoryRoot,
     releaseRetention: {
       pins: { read: options.pins },
       inventory: { read: options.inventory },
@@ -346,27 +367,9 @@ function retentionDeps(options: {
   };
 }
 
-function readOnlyArtifactStore(reader: ArtifactReader): ArtifactStore {
-  return {
-    read: async (ref) => await reader.read(ref),
-    publishRelease: async () => unavailableAsync("retention release publication"),
-    publishReleaseSet: async () => unavailableAsync("retention release-set publication"),
-  };
-}
-
-function fixedReleaseRef(source: ReleaseArtifactRef, fill: string): ReleaseArtifactRef {
-  const digest = must(parseArtifactDigest(`ad1_${fill.repeat(64)}`));
-  return createReleaseArtifactRef(source.releaseDigest, digest);
-}
-
 function mutateDigest(digest: string): string {
   const final = digest.at(-1) === "0" ? "1" : "0";
   return `${digest.slice(0, -1)}${final}`;
-}
-
-function snapshotFor(ref: ArtifactRef, source: VerifiedArtifactSnapshotV1): VerifiedArtifactSnapshotV1 {
-  if (ref.kind === "release" && source.kind === "release") return { ...source, ref };
-  return source;
 }
 
 function must<T, E>(result: { readonly ok: true; readonly value: T } | { readonly ok: false; readonly issues: readonly E[] }): T {
@@ -374,6 +377,23 @@ function must<T, E>(result: { readonly ok: true; readonly value: T } | { readonl
   return result.value;
 }
 
-async function unavailableAsync(label: string): Promise<never> {
-  throw new Error(`Unexpected ${label} access`);
+async function seedEvidence(
+  artifactRepository: ArtifactRepositoryAsyncPort,
+  artifactRepositoryRoot: string,
+  bytes: Uint8Array,
+) {
+  const handle = createMechanicalEvidenceHandle(bytes);
+  const result = await artifactRepository.publishEvidence({
+    address: {
+      repositoryRoot: artifactRepositoryRoot,
+      namespace: ["mechanical-evidence", "sha256"],
+      objectId: handle.digest,
+    },
+    bytes,
+    maxBytes: Math.max(bytes.byteLength, 1),
+  });
+  if (result.kind !== "Published" && result.kind !== "ReadOnlyConverged") {
+    throw new Error(`Failed to seed retention evidence: ${result.kind}`);
+  }
+  return handle;
 }

@@ -17,8 +17,9 @@ import { join, posix } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createReleaseArtifactRef } from "@rawr/agent-plugin-lifecycle/release";
 import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
+import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 
@@ -28,7 +29,6 @@ import {
 } from "../../../../../../services/agent-plugin-lifecycle/test/support/client";
 import {
   createArtifactRepositoryReader,
-  createArtifactRepositoryStore,
 } from "../../../../src/lib/agent-plugins/bindings/output/artifact-repository";
 import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
 import {
@@ -43,7 +43,6 @@ import {
   type OwnedFixtureRoot,
 } from "./owned-fixture-root";
 
-type ArtifactStore = Deps["releaseArtifacts"];
 type ArtifactStoreFailpoint = NonNullable<Deps["releaseArtifactFailpoint"]>;
 type BuildFailpoint = NonNullable<Deps["releaseBuildFailpoint"]>;
 
@@ -134,8 +133,12 @@ describe("build application and append-only artifact store", () => {
     const repository = await createGeneratedMultiMemberGitRepository(fixture);
     const artifactRoot = join(fixture.path, "state", "artifacts-v1") as ArtifactStoreRoot;
     const contentWorkspace = await realContentWorkspace();
-    const artifacts = createArtifactRepositoryStore(artifactRoot);
-    const applications = createReleaseLifecycleApplications({ contentWorkspace, artifacts });
+    const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
+    const applications = createReleaseLifecycleApplications({
+      contentWorkspace,
+      artifactRepository,
+      artifactRepositoryRoot: artifactRoot,
+    });
     const mode = { kind: "complete-set" } as const;
     const checked = await applications.check({ contentWorkspace: repository.policy, mode });
     expect(checked).toMatchObject({ kind: "EligibleReport", candidate: { kind: "complete-set" } });
@@ -208,23 +211,32 @@ describe("build application and append-only artifact store", () => {
     const policy = await commitGeneratedGitRepository(repository, "remove skill ownership claim");
 
     let artifactOperations = 0;
-    const artifacts: ArtifactStore = {
-      async read(ref) {
+    const artifactRepository: ArtifactRepositoryAsyncPort = {
+      async locateTree({ address }) {
         artifactOperations += 1;
-        return { kind: "Missing", ref };
+        return { kind: "Missing", address };
       },
-      async publishRelease() {
+      async readTree({ address }) {
         artifactOperations += 1;
-        throw new Error("release publication must stay closed");
+        return { kind: "Missing", address };
       },
-      async publishReleaseSet() {
+      async publishTree({ address }) {
         artifactOperations += 1;
-        throw new Error("set publication must stay closed");
+        return { kind: "Rejected", address, failure: "publication must stay closed" };
+      },
+      async readEvidence({ address }) {
+        artifactOperations += 1;
+        return { kind: "Missing", address };
+      },
+      async publishEvidence({ address }) {
+        artifactOperations += 1;
+        return { kind: "Rejected", address, failure: "evidence publication must stay closed" };
       },
     };
     const result = await createReleaseLifecycleApplications({
       contentWorkspace: await realContentWorkspace(),
-      artifacts,
+      artifactRepository,
+      artifactRepositoryRoot: join(fixture.path, "unused-artifacts"),
     }).build({
       contentWorkspace: policy,
       mode: { kind: "complete-set" },
@@ -252,23 +264,32 @@ describe("build application and append-only artifact store", () => {
     const policy = await commitGeneratedGitRepository(repository, "relabel toolkit agent pack as agent plugin");
 
     let artifactOperations = 0;
-    const artifacts: ArtifactStore = {
-      async read(ref) {
+    const artifactRepository: ArtifactRepositoryAsyncPort = {
+      async locateTree({ address }) {
         artifactOperations += 1;
-        return { kind: "Missing", ref };
+        return { kind: "Missing", address };
       },
-      async publishRelease() {
+      async readTree({ address }) {
         artifactOperations += 1;
-        throw new Error("release publication must stay closed");
+        return { kind: "Missing", address };
       },
-      async publishReleaseSet() {
+      async publishTree({ address }) {
         artifactOperations += 1;
-        throw new Error("set publication must stay closed");
+        return { kind: "Rejected", address, failure: "publication must stay closed" };
+      },
+      async readEvidence({ address }) {
+        artifactOperations += 1;
+        return { kind: "Missing", address };
+      },
+      async publishEvidence({ address }) {
+        artifactOperations += 1;
+        return { kind: "Rejected", address, failure: "evidence publication must stay closed" };
       },
     };
     const result = await createReleaseLifecycleApplications({
       contentWorkspace: await realContentWorkspace(),
-      artifacts,
+      artifactRepository,
+      artifactRepositoryRoot: join(fixture.path, "unused-artifacts"),
     }).build({
       contentWorkspace: policy,
       mode: { kind: "complete-set" },
@@ -320,7 +341,8 @@ describe("build application and append-only artifact store", () => {
     const artifactRoot = join(extraFixture.path, "controller", "artifacts-v1") as ArtifactStoreRoot;
     const applications = createReleaseLifecycleApplications({
       contentWorkspace: await realContentWorkspace(),
-      artifacts: createArtifactRepositoryStore(artifactRoot),
+      artifactRepository: makeNodeArtifactRepositoryAsyncPort(),
+      artifactRepositoryRoot: artifactRoot,
     });
     const mode = { kind: "targeted", pluginId: repository.pluginId } as const;
     const built = await applications.build({ contentWorkspace: repository.policy, mode });
@@ -461,25 +483,24 @@ describe("build application and append-only artifact store", () => {
   it("reports an after-set interruption as unsettled only when the committed set cannot be observed", async () => {
     const setup = await buildSetup();
     let setPublished = false;
-    const unreadableAfterPublication: ArtifactStore = {
-      async read(ref) {
-        if (setPublished && ref.kind === "complete-set") {
+    const unreadableAfterPublication: ArtifactRepositoryAsyncPort = {
+      ...setup.artifactRepository,
+      async readTree(input) {
+        if (setPublished && isSetAddress(input.address)) {
           throw new Error("injected post-publication set read failure");
         }
-        return await setup.artifacts.read(ref);
+        return await setup.artifactRepository.readTree(input);
       },
-      async publishRelease(release, options) {
-        return await setup.artifacts.publishRelease(release, options);
-      },
-      async publishReleaseSet(releaseSet, options) {
-        const result = await setup.artifacts.publishReleaseSet(releaseSet, options);
-        setPublished = true;
+      async publishTree(input) {
+        const result = await setup.artifactRepository.publishTree(input);
+        if (isSetAddress(input.address)) setPublished = true;
         return result;
       },
     };
     const applications = createReleaseLifecycleApplications({
       contentWorkspace: setup.contentWorkspace,
-      artifacts: unreadableAfterPublication,
+      artifactRepository: unreadableAfterPublication,
+      artifactRepositoryRoot: setup.artifactRoot,
     });
 
     const result = await applications.build({
@@ -497,7 +518,7 @@ describe("build application and append-only artifact store", () => {
       observedVerifiedReleases: [{ kind: "release" }],
       issues: [
         { kind: "ReleaseConstruction", detail: "stop after marker" },
-        { kind: "ArtifactStore", detail: expect.stringContaining("set-marker read failed") },
+        { kind: "ArtifactStore", detail: expect.stringContaining("set-marker read mismatched") },
       ],
     });
   });
@@ -540,25 +561,24 @@ describe("build application and append-only artifact store", () => {
     expect(seeded).toMatchObject({ kind: "PublicationIncomplete", requestedSetRefAbsent: true });
 
     let concurrentResult: Awaited<ReturnType<typeof setup.applications.build>> | undefined;
-    const rejectingArtifacts: ArtifactStore = {
-      async read(ref) {
-        return await setup.artifacts.read(ref);
-      },
-      async publishRelease(release) {
+    const rejectingRepository: ArtifactRepositoryAsyncPort = {
+      ...setup.artifactRepository,
+      async publishTree(input) {
+        if (!isReleaseAddress(input.address)) {
+          return await setup.artifactRepository.publishTree(input);
+        }
         concurrentResult = await setup.applications.build({ contentWorkspace: setup.repository.policy, mode });
         return {
           kind: "Rejected",
-          ref: createReleaseArtifactRef(release.releaseDigest, release.artifactDigest),
+          address: input.address,
           failure: "injected stale rejection",
         };
-      },
-      async publishReleaseSet(releaseSet, options) {
-        return await setup.artifacts.publishReleaseSet(releaseSet, options);
       },
     };
     const racingApplication = createReleaseLifecycleApplications({
       contentWorkspace: setup.contentWorkspace,
-      artifacts: rejectingArtifacts,
+      artifactRepository: rejectingRepository,
+      artifactRepositoryRoot: setup.artifactRoot,
     });
     const result = await racingApplication.build({ contentWorkspace: setup.repository.policy, mode });
     expect(concurrentResult).toMatchObject({ kind: "Published", ref: { kind: "complete-set" } });
@@ -573,30 +593,41 @@ describe("build application and append-only artifact store", () => {
       const repository = await createGeneratedGitRepository(fixture);
       const contentWorkspace = await realContentWorkspace();
       let setReads = 0;
-      const artifacts: ArtifactStore = {
-        async read(ref) {
-          if (ref.kind === "release") return { kind: "Missing", ref };
+      const artifactRepository: ArtifactRepositoryAsyncPort = {
+        async locateTree({ address }) {
+          return { kind: "Missing", address };
+        },
+        async readTree({ address }) {
+          if (isReleaseAddress(address)) return { kind: "Missing", address };
           setReads += 1;
-          if (setReads === 1) return { kind: "Missing", ref };
+          if (setReads === 1) return { kind: "Missing", address };
           if (outcome === "read-failure") throw new Error("injected set-marker read failure");
           return {
             kind: "Mismatch",
-            ref,
+            address,
             issues: [{ code: "ReadFailure", detail: "injected set-marker mismatch" }],
           };
         },
-        async publishRelease(release) {
+        async publishTree({ address }) {
+          if (!isReleaseAddress(address)) throw new Error("set publication must remain closed");
           return {
             kind: "Rejected",
-            ref: createReleaseArtifactRef(release.releaseDigest, release.artifactDigest),
+            address,
             failure: "injected member rejection",
           };
         },
-        async publishReleaseSet() {
-          throw new Error("set publication must remain closed");
+        async readEvidence({ address }) {
+          return { kind: "Missing", address };
+        },
+        async publishEvidence({ address }) {
+          return { kind: "Rejected", address, failure: "evidence publication must remain closed" };
         },
       };
-      const result = await createReleaseLifecycleApplications({ contentWorkspace, artifacts }).build({
+      const result = await createReleaseLifecycleApplications({
+        contentWorkspace,
+        artifactRepository,
+        artifactRepositoryRoot: join(fixture.path, "artifacts-v1"),
+      }).build({
         contentWorkspace: repository.policy,
         mode: { kind: "complete-set" },
       });
@@ -617,13 +648,17 @@ describe("build application and append-only artifact store", () => {
     const repository = await createGeneratedGitRepository(fixture);
     const artifactRoot = join(fixture.path, "fresh", "controller", "artifacts-v1") as ArtifactStoreRoot;
     const contentWorkspace = await realContentWorkspace();
-    const artifacts = createArtifactRepositoryStore(artifactRoot);
+    const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
     return {
       repository,
       artifactRoot,
       contentWorkspace,
-      artifacts,
-      applications: createReleaseLifecycleApplications({ contentWorkspace, artifacts }),
+      artifactRepository,
+      applications: createReleaseLifecycleApplications({
+        contentWorkspace,
+        artifactRepository,
+        artifactRepositoryRoot: artifactRoot,
+      }),
     };
   }
 
@@ -636,11 +671,13 @@ describe("build application and append-only artifact store", () => {
 
 function createReleaseLifecycleApplications(options: {
   readonly contentWorkspace: ContentWorkspaceNodeAsyncPort;
-  readonly artifacts: ArtifactStore;
+  readonly artifactRepository: ArtifactRepositoryAsyncPort;
+  readonly artifactRepositoryRoot: string;
 }) {
   const releaseDeps = Object.freeze({
     contentWorkspace: options.contentWorkspace,
-    releaseArtifacts: options.artifacts,
+    artifactRepository: options.artifactRepository,
+    artifactRepositoryRoot: options.artifactRepositoryRoot,
   });
   const client = createLifecycleTestClient(releaseDeps);
   type BuildRequest = Parameters<typeof client.releases.build>[0] & Readonly<{
@@ -661,6 +698,14 @@ function createReleaseLifecycleApplications(options: {
       return buildClient.releases.build(input, testInvocation);
     },
   });
+}
+
+function isReleaseAddress(address: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0]["address"]): boolean {
+  return address.namespace[0] === "releases";
+}
+
+function isSetAddress(address: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0]["address"]): boolean {
+  return address.namespace[0] === "sets";
 }
 
 async function directoryNames(path: string): Promise<readonly string[]> {
