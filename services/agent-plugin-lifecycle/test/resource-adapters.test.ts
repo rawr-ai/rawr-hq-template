@@ -415,6 +415,12 @@ class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
   publishedEvidenceCalls = 0;
   lastEvidenceAddress: ArtifactObjectAddress | undefined;
 
+  locateTree(
+    _input: Parameters<ArtifactRepositoryAsyncPort["locateTree"]>[0],
+  ): Promise<never> {
+    return unavailableAsync("artifact tree location");
+  }
+
   async readTree(
     input: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0],
   ): Promise<ArtifactTreeObservation> {
