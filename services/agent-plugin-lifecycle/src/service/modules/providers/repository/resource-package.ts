@@ -13,6 +13,7 @@ import {
   type ReleaseRelativePath,
 } from "../../../shared/release";
 import { canonicalBytes, canonicalDigest, equalBytes, type CanonicalValue } from "../model/helpers/canonical";
+import { hookEventSlugsFromManifests } from "../model/helpers/hook-manifest";
 import {
   PROVIDER_ARTIFACT_AUTHORITY_PROTOCOL,
   artifactAuthorityValue,
@@ -53,7 +54,7 @@ export function inspectNativePluginVisibility(
   const files = validatePackageFiles(observation);
   return Object.freeze({
     visibleSkills: visibleNames(files, /^skills\/([^/]+)\/SKILL\.md$/u),
-    visibleHooks: visibleNames(files, /^(?:hooks|\.claude-plugin\/hooks|\.codex-plugin\/hooks)\/([^/]+)/u),
+    visibleHooks: hookEventSlugsFromManifests(files),
   });
 }
 
@@ -69,7 +70,7 @@ export function inspectNativePluginPackage(
   if (manifestFile === undefined) throw new Error("Native plugin package has no provider manifest");
   const manifest = parseManifest(manifestFile.bytes);
   const skills = visibleNames(files, /^skills\/([^/]+)\/SKILL\.md$/u);
-  const hooks = visibleNames(files, /^(?:hooks|\.claude-plugin\/hooks|\.codex-plugin\/hooks)\/([^/]+)/u);
+  const hooks = hookEventSlugsFromManifests(files);
   const memberFingerprint = canonicalDigest("pm1_", {
     pluginId: manifest.pluginId,
     releaseRef: {

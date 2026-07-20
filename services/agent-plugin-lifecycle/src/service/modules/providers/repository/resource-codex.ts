@@ -3,6 +3,7 @@ import {
   type ContentAuthority,
   type PluginId,
 } from "../../../shared/release";
+import { normalizeHookEventSlug } from "../model/helpers/hook-manifest";
 import {
   marketplaceState,
   type ProviderMarketplaceObservation,
@@ -493,7 +494,7 @@ function parseAppServerHooks(
       throw new Error("Codex app-server hook enablement is invalid");
     }
     if (hook.enabled) {
-      attributed.add(hookClaimFromEventName(requireString(
+      attributed.add(normalizeHookEventSlug(requireString(
         hook.eventName,
         "Codex app-server hook event name",
       )));
@@ -503,13 +504,6 @@ function parseAppServerHooks(
     selector,
     Object.freeze([...names].sort(compareText)),
   ]));
-}
-
-function hookClaimFromEventName(value: string): string {
-  if (!/^[a-z][A-Za-z0-9]*$/u.test(value)) {
-    throw new Error("Codex app-server hook event name is not canonical camel case");
-  }
-  return value.replace(/([a-z0-9])([A-Z])/gu, "$1-$2").toLowerCase();
 }
 
 function parseAppServerPluginConfiguration(input: unknown): readonly CodexConfiguredPlugin[] {

@@ -58,6 +58,42 @@ describe("canonical native convergence policy", () => {
     expect(plan.steps.map((step) => step.kind)).toEqual(["verify-selected"]);
   });
 
+  it("keeps exact plugin-scoped same-event hooks converged across repeated planning", () => {
+    const sharedHooks = Object.freeze(["stop"]);
+    const desired = projection([
+      Object.freeze({
+        ...member("cognition", "a"),
+        visible: Object.freeze({ ...member("cognition", "a").visible, hooks: sharedHooks }),
+      }),
+      Object.freeze({
+        ...member("docs", "b"),
+        visible: Object.freeze({ ...member("docs", "b").visible, hooks: sharedHooks }),
+      }),
+    ]);
+    const observation = observed(desired, desired.members.map((entry) => native(entry)));
+
+    const first = makePlan(desired, observation);
+    const repeated = makePlan(desired, observation);
+
+    expect(first.status).toBe("CONVERGED");
+    expect(first.steps.map((step) => step.kind)).toEqual(["verify-selected"]);
+    expect(repeated).toEqual(first);
+  });
+
+  it("does not block an unrelated standalone exposure that shares only a hook event", () => {
+    const desired = projection([member("cognition", "c")]);
+    const sameEvent = Object.freeze({
+      ...standalone("other@foreign", "rawr:other", "foreign"),
+      visibleSkills: Object.freeze([]),
+      visibleHooks: desired.members[0]!.visible.hooks,
+    });
+
+    const plan = makePlan(desired, observed(desired, [], [sameEvent]));
+
+    expect(plan.status).toBe("DRIFTED");
+    expect(mutations(plan).map((action) => action.kind)).toEqual(["InstallMember"]);
+  });
+
   it.each([
     ["missing", Object.freeze([]), "InstallMember"],
     ["disabled", undefined, "EnableMember"],

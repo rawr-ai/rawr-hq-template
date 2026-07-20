@@ -66,6 +66,7 @@ import {
 } from "../../../src/service/modules/providers/repository/resource-marketplace";
 import {
   inspectNativePluginPackage,
+  inspectNativePluginVisibility,
 } from "../../../src/service/modules/providers/repository/resource-package";
 import {
   createSessionCache,
@@ -178,6 +179,40 @@ describe("native provider resource interpretation", () => {
       .memberFingerprint).not.toBe(alpha.memberFingerprint);
   });
 
+  it("reads normalized hook events from the native package manifest", () => {
+    expect(inspectNativePluginVisibility({
+      entries: [{
+        path: "hooks/hooks.json",
+        mode: 0o644,
+        bytes: hookManifestBytes("Stop", "PreToolUse"),
+      }],
+    }).visibleHooks).toEqual(["pre-tool-use", "stop"]);
+  });
+
+  it("treats an empty native hook manifest as no visible events", () => {
+    expect(inspectNativePluginVisibility({
+      entries: [{
+        path: "hooks/hooks.json",
+        mode: 0o644,
+        bytes: new TextEncoder().encode(JSON.stringify({ hooks: {} })),
+      }],
+    }).visibleHooks).toEqual([]);
+  });
+
+  it.each([
+    { hooks: { Stop: "not-an-array" } },
+    { hooks: { Stop: [] } },
+    { hooks: { Stop: [{ hooks: [] }] } },
+  ])("rejects hook manifests without a complete visible handler declaration", (manifest) => {
+    expect(() => inspectNativePluginVisibility({
+      entries: [{
+        path: "hooks/hooks.json",
+        mode: 0o644,
+        bytes: new TextEncoder().encode(JSON.stringify(manifest)),
+      }],
+    })).toThrow("supported TypeBox schema");
+  });
+
   it("retries resource acquisition after a failed session instead of caching the failure", async () => {
     let attempts = 0;
     const acquire = createSessionCache("/opt/rawr/bin/codex", async ({ home }) => {
@@ -281,7 +316,7 @@ describe("native provider resource interpretation", () => {
   it("maps an enabled Codex plugin hook to its exact managed native identity", async () => {
     const verified = await verifyCodexHookVisibility(Object.freeze([
       Object.freeze({
-        key: "alpha-session-start",
+        key: "opaque-upstream-key",
         eventName: "sessionStart",
         handlerType: "command",
         matcher: null,
@@ -899,7 +934,7 @@ function hookedCodexProjection(): AgentProviderProjection {
   const alphaPayload = must(createAgentPluginPayload([
     { path: "skills/alpha/SKILL.md", mode: 0o644, bytes: new TextEncoder().encode("alpha\n") },
     { path: "agents/alpha.md", mode: 0o644, bytes: new TextEncoder().encode("agent alpha\n") },
-    { path: "hooks/session-start/handler.ts", mode: 0o644, bytes: new TextEncoder().encode("export {};\n") },
+    { path: "hooks/hooks.json", mode: 0o644, bytes: hookManifestBytes("SessionStart") },
   ]));
   const releaseInput = must(createAgentPluginReleaseInput(releaseInputBody(alphaPayload, fixture.betaPayload)));
   const alphaRelease = must(createAgentPluginRelease({
@@ -926,6 +961,15 @@ function hookedCodexProjection(): AgentProviderProjection {
   });
   if (!rendered.ok) throw new Error(rendered.issues[0].message);
   return rendered.value;
+}
+
+function hookManifestBytes(...eventNames: readonly string[]): Uint8Array {
+  return new TextEncoder().encode(JSON.stringify({
+    description: "Fixture hooks",
+    hooks: Object.fromEntries(eventNames.map((eventName) => [eventName, [{
+      hooks: [{ type: "command", command: "printf hook" }],
+    }]])),
+  }));
 }
 
 function providerProjection(

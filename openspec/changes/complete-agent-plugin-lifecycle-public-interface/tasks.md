@@ -302,8 +302,10 @@ keep tasks 2A.1-2A.4 open.
   disposable homes seeded through supported native commands with one omitted
   RAWR-managed member and a stale same-ID cognition release. Verify cognition's
   selected native refresh and provider-visible bytes while the omitted member is
-  preserved. This is owner-scoped lifecycle/provider acceptance (a small shared
-  scenario driver is allowed), never `@rawr/controller-build:acceptance`.
+  preserved; prove two selected plugins may expose the same plugin-scoped hook
+  event without a global collision. This is owner-scoped lifecycle/provider
+  acceptance (a small shared scenario driver is allowed), never
+  `@rawr/controller-build:acceptance`.
 - [ ] 8.5 Review and land one personal `current-main` record binding both Codex
   and Claude, then canonically converge the same disposable homes. Verify
   omitted-member native/config/cache residue removal and repeat with identical

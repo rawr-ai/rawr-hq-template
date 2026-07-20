@@ -14,6 +14,7 @@ import {
 } from "../../../../shared/release";
 
 import { canonicalBytes, canonicalDigest, compareCanonical, type CanonicalValue } from "../helpers/canonical";
+import { hookEventSlugsFromManifests } from "../helpers/hook-manifest";
 import { canonicalString } from "../helpers/parse";
 import { failure, firstIssue, issue, success, type DeploymentResult, type ProviderDeploymentIssue } from "../errors/deployment-result";
 import type { ProviderId } from "../dto/provider-target";
@@ -420,7 +421,18 @@ function renderMember(
   }
   files.sort((left, right) => compareCanonical(left.path, right.path));
   const skills = visibleNames(files, /^skills\/([^/]+)\/SKILL\.md$/u);
-  const hooks = visibleNames(files, /^(?:hooks|\.claude-plugin\/hooks|\.codex-plugin\/hooks)\/([^/]+)/u);
+  let hooks: readonly string[];
+  try {
+    hooks = hookEventSlugsFromManifests(files);
+  } catch (error) {
+    return failure([issue(
+      "PROJECTION_MISMATCH",
+      "snapshot.files",
+      "Release payload contains an invalid provider hook manifest",
+      "supported TypeBox hook manifest",
+      error instanceof Error ? error.message : String(error),
+    )]);
+  }
   const visible = Object.freeze({ pluginIdentity: nativeIdentity, skills, hooks });
   const body = {
     pluginId,
@@ -549,15 +561,11 @@ function detectDuplicateClaims(
   const nativeIdentities = new Map<string, PluginId>();
   const pluginIdentities = new Map<string, PluginId>();
   const skills = new Map<string, PluginId>();
-  const hooks = new Map<string, PluginId>();
   for (const [index, member] of members.entries()) {
     detectDuplicateClaim(nativeIdentities, member.nativeIdentity, member.pluginId, `members[${index}].nativeIdentity`, "native plugin identity", issues);
     detectDuplicateClaim(pluginIdentities, member.visible.pluginIdentity, member.pluginId, `members[${index}].visible.pluginIdentity`, "visible plugin identity", issues);
     for (const [skillIndex, skill] of member.visible.skills.entries()) {
       detectDuplicateClaim(skills, skill, member.pluginId, `members[${index}].visible.skills[${skillIndex}]`, "visible skill", issues);
-    }
-    for (const [hookIndex, hook] of member.visible.hooks.entries()) {
-      detectDuplicateClaim(hooks, hook, member.pluginId, `members[${index}].visible.hooks[${hookIndex}]`, "visible hook", issues);
     }
   }
 }

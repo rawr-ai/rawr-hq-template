@@ -97,6 +97,32 @@ describe("artifact-only provider projections", () => {
     }
   });
 
+  it("keeps same-event hook claims plugin-scoped and renders event slugs instead of filenames", () => {
+    const alphaPayload = must(createAgentPluginPayload([
+      { path: "hooks/hooks.json", mode: 0o644, bytes: hookManifestBytes("Stop") },
+    ]));
+    const betaPayload = must(createAgentPluginPayload([
+      { path: "hooks/hooks.json", mode: 0o644, bytes: hookManifestBytes("Stop") },
+    ]));
+    const releaseInput = must(createAgentPluginReleaseInput(releaseInputBody(alphaPayload, betaPayload)));
+    const alpha = must(createAgentPluginRelease({ releaseInput, pluginId: "alpha", source: SOURCE, payload: alphaPayload }));
+    const beta = must(createAgentPluginRelease({ releaseInput, pluginId: "beta", source: SOURCE, payload: betaPayload }));
+
+    const result = renderTargetedProjection("codex", mustProtocol("codex-native-adapter@v1"), [
+      snapshot(alpha),
+      snapshot(beta),
+    ]);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.members.map((member) => member.visible.hooks)).toEqual([
+        ["stop"],
+        ["stop"],
+      ]);
+      expect(result.value.members.flatMap((member) => member.visible.hooks)).not.toContain("hooks.json");
+    }
+  });
+
   it("binds provider, renderer protocol, adapter protocol, capabilities, and provider-visible bytes", () => {
     const fixture = productFixture();
     const snapshotValue = snapshot(fixture.alphaRelease);
@@ -171,4 +197,13 @@ function mustProtocol(value: string) {
   const parsed = parseAdapterProtocol(value);
   if (!parsed.ok) throw new Error("fixture protocol must parse");
   return parsed.value;
+}
+
+function hookManifestBytes(...eventNames: readonly string[]): Uint8Array {
+  return new TextEncoder().encode(JSON.stringify({
+    description: "Fixture hooks",
+    hooks: Object.fromEntries(eventNames.map((eventName) => [eventName, [{
+      hooks: [{ type: "command", command: "printf hook" }],
+    }]])),
+  }));
 }

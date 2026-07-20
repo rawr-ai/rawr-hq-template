@@ -1,4 +1,5 @@
 import {
+  createAgentPluginPayload,
   createAgentPluginRelease,
   createAgentPluginReleaseInput,
   createAgentPluginReleaseSet,
@@ -13,7 +14,7 @@ import {
 } from "../../../src/service/shared/release";
 import { describe, expect, it } from "vitest";
 
-import { must, productFixture, SOURCE } from "../../shared/release/fixtures";
+import { must, productFixture, releaseInputBody, SOURCE } from "../../shared/release/fixtures";
 import {
   createProviderMarketplaceRegistration,
   marketplaceState,
@@ -159,6 +160,33 @@ describe("provider deployment state machine", () => {
     expect(harness.counters.projectionMaterializations).toBe(0);
     expect(harness.counters.marketplaceMaterializations).toBe(0);
     expect(harness.counters.marketplaceWrites).toBe(0);
+  });
+
+  it("mutates then read-only converges two members with the same plugin-scoped hook event", async () => {
+    const harness = new Harness();
+    harness.useCompleteSnapshot(sharedHookCompleteSnapshot());
+    const app = createCompleteTest(() => harness.completeDependencies());
+
+    const first = await app(harness.completeRequest([CODEX_A]));
+
+    expect(first.ok && first.value.status).toBe("Mutated");
+    expect(harness.liveStateFor(CODEX_A).inventory.members.map((member) => ({
+      pluginId: member.pluginId,
+      visibleHooks: member.visibleHooks,
+    }))).toEqual([
+      { pluginId: "alpha", visibleHooks: ["stop"] },
+      { pluginId: "beta", visibleHooks: ["stop"] },
+    ]);
+
+    harness.resetCounters();
+    const repeated = await app(harness.completeRequest([CODEX_A]));
+
+    expect(repeated.ok && repeated.value.status).toBe("ReadOnlyConverged");
+    expect(harness.counters.nativeMutations).toBe(0);
+    expect(harness.counters.marketplaceWrites).toBe(0);
+    expect(harness.counters.receiptWrites).toBe(0);
+    expect(harness.counters.identityWrites).toBe(0);
+    expect(harness.counters.evidencePublishes).toBe(0);
   });
 
   it("keeps a target receipt stable when peer targets leave the next invocation", async () => {
@@ -393,7 +421,7 @@ describe("provider deployment state machine", () => {
     expect(harness.counters.marketplaceWrites).toBe(0);
   });
 
-  it("detects a standalone hook collision in pure preflight", () => {
+  it("does not treat an unrelated standalone same-event hook as a global collision", () => {
     const harness = new Harness();
     harness.syntheticDesiredHook = true;
     harness.addDesiredStandaloneCollision(CODEX_A, "hook");
@@ -404,10 +432,41 @@ describe("provider deployment state machine", () => {
       harness.standaloneExposures.get(CODEX_A.home) ?? [],
     );
 
-    expect(hasProjectionExposureCollision(inventory, harness.projectionForTest())).toBe(true);
+    expect(hasProjectionExposureCollision(inventory, harness.projectionForTest())).toBe(false);
     expect(harness.counters.inventoryReads).toBe(0);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
+  });
+
+  it("does not cross-collide exact members that expose the same plugin-scoped hook event", () => {
+    const harness = new Harness();
+    harness.syntheticDesiredHook = true;
+    const projection = harness.projectionForTest();
+    const target = mustTarget(CODEX_A);
+    const inventory = createProviderInventory(
+      target,
+      projection.members.map((member) => nativeMember(member, "enabled")),
+      [],
+    );
+
+    expect(projection.members.map((member) => member.visible.hooks)).toEqual([
+      ["session-start"],
+      ["session-start"],
+    ]);
+    expect(hasProjectionExposureCollision(inventory, projection)).toBe(false);
+  });
+
+  it.each(["native", "skill"] as const)("preserves exact standalone %s collision detection", (claim) => {
+    const harness = new Harness();
+    harness.addDesiredStandaloneCollision(CODEX_A, claim);
+    const target = mustTarget(CODEX_A);
+    const inventory = createProviderInventory(
+      target,
+      [],
+      harness.standaloneExposures.get(CODEX_A.home) ?? [],
+    );
+
+    expect(hasProjectionExposureCollision(inventory, harness.projectionForTest())).toBe(true);
   });
 
   it("keeps home A truthful when home B fails after all plans are read", async () => {
@@ -535,6 +594,7 @@ class Harness {
     members: [releaseSnapshot(this.alphaOnlyRelease)],
   };
   readonly protocol = mustProtocol("codex-native-adapter@v1");
+  private activeCompleteSnapshot = this.completeSnapshot;
   readonly native = new Map<string, NativeMemberObservation[]>();
   readonly marketplaces = new Map<string, ProviderMarketplaceObservation>();
   readonly standaloneExposures = new Map<string, NativeStandaloneExposureObservation[]>();
@@ -563,7 +623,13 @@ class Harness {
   counters = freshCounters();
 
   completeRequest(targets: readonly { readonly provider: ProviderTarget["provider"]; readonly home: string }[]) {
-    return this.completeRequestFor(this.completeSnapshot, targets);
+    return this.completeRequestFor(this.activeCompleteSnapshot, targets);
+  }
+
+  useCompleteSnapshot(
+    snapshot: Extract<VerifiedArtifactSnapshotV1, { readonly kind: "complete-set" }>,
+  ): void {
+    this.activeCompleteSnapshot = snapshot;
   }
 
   completeRequestFor(
@@ -1147,33 +1213,62 @@ class Harness {
   }
 
   private projection() {
-    const result = renderCompleteProjection("codex", this.protocol, this.completeSnapshot);
+    const result = renderCompleteProjection("codex", this.protocol, this.activeCompleteSnapshot);
     if (!result.ok) throw new Error(result.issues[0].message);
     if (!this.syntheticDesiredHook) return result.value;
-    const first = result.value.members[0];
-    if (first === undefined) throw new Error("projection fixture member missing");
     return Object.freeze({
       ...result.value,
-      members: Object.freeze([
-        Object.freeze({
-          ...first,
-          visible: Object.freeze({ ...first.visible, hooks: Object.freeze(["session-start"]) }),
-        }),
-        ...result.value.members.slice(1),
-      ]),
+      members: Object.freeze(result.value.members.map((member) => Object.freeze({
+        ...member,
+        visible: Object.freeze({ ...member.visible, hooks: Object.freeze(["session-start"]) }),
+      }))),
     });
   }
 
   private readArtifact(ref: ArtifactRef): VerifiedArtifactSnapshotV1 {
     if (ref.kind === "complete-set") {
-      return ref.releaseSetDigest === this.alphaOnlyCompleteSnapshot.ref.releaseSetDigest
-        ? this.alphaOnlyCompleteSnapshot
-        : this.completeSnapshot;
+      if (ref.releaseSetDigest === this.alphaOnlyCompleteSnapshot.ref.releaseSetDigest) {
+        return this.alphaOnlyCompleteSnapshot;
+      }
+      if (ref.releaseSetDigest === this.activeCompleteSnapshot.ref.releaseSetDigest) {
+        return this.activeCompleteSnapshot;
+      }
+      return this.completeSnapshot;
     }
     if (ref.releaseDigest === this.alpha.ref.releaseDigest) return this.alpha;
     if (ref.releaseDigest === this.beta.ref.releaseDigest) return this.beta;
     throw new Error("unknown artifact fixture");
   }
+}
+
+function sharedHookCompleteSnapshot(): Extract<VerifiedArtifactSnapshotV1, { readonly kind: "complete-set" }> {
+  const alphaPayload = must(createAgentPluginPayload([
+    { path: "skills/alpha/SKILL.md", mode: 0o644, bytes: new TextEncoder().encode("alpha\n") },
+    { path: "hooks/hooks.json", mode: 0o644, bytes: hookManifestBytes("Stop") },
+  ]));
+  const betaPayload = must(createAgentPluginPayload([
+    { path: "skills/beta/SKILL.md", mode: 0o644, bytes: new TextEncoder().encode("beta\n") },
+    { path: "hooks/hooks.json", mode: 0o644, bytes: hookManifestBytes("Stop") },
+  ]));
+  const releaseInput = must(createAgentPluginReleaseInput(releaseInputBody(alphaPayload, betaPayload)));
+  const alpha = must(createAgentPluginRelease({ releaseInput, pluginId: "alpha", source: SOURCE, payload: alphaPayload }));
+  const beta = must(createAgentPluginRelease({ releaseInput, pluginId: "beta", source: SOURCE, payload: betaPayload }));
+  const releaseSet = must(createAgentPluginReleaseSet({ releaseInput, releases: [alpha, beta] }));
+  return Object.freeze({
+    kind: "complete-set",
+    ref: createCompleteSetArtifactRef(releaseSet.releaseSetDigest),
+    releaseSet,
+    members: Object.freeze([releaseSnapshot(alpha), releaseSnapshot(beta)]),
+  });
+}
+
+function hookManifestBytes(...eventNames: readonly string[]): Uint8Array {
+  return new TextEncoder().encode(JSON.stringify({
+    description: "Fixture hooks",
+    hooks: Object.fromEntries(eventNames.map((eventName) => [eventName, [{
+      hooks: [{ type: "command", command: "printf hook" }],
+    }]])),
+  }));
 }
 
 function releaseSnapshot(release: AgentPluginRelease): VerifiedReleaseArtifactV1 {
