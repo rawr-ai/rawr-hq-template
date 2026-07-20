@@ -1224,7 +1224,9 @@ function writeAtomic(
       const file = yield* fs.open(temporary, { flag: "wx", mode: 0o600 }).pipe(mapPlatform(operation, temporary));
       temporaryOpened = true;
       temporaryIdentity = yield* openedTemporaryIdentity(file.fd, temporary, operation);
-      yield* file.writeAll(bytes).pipe(mapPlatform(operation, temporary));
+      if (bytes.byteLength > 0) {
+        yield* file.writeAll(bytes).pipe(mapPlatform(operation, temporary));
+      }
       yield* file.sync.pipe(mapPlatform(operation, temporary));
     }).pipe(
       Effect.andThen(fs.chmod(temporary, mode).pipe(mapPlatform(operation, temporary))),

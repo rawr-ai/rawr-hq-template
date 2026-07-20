@@ -167,6 +167,105 @@ describe("Effect Platform Node export destination provider", () => {
     if (!reused.ok) expect(reused.failure.reason).toBe("HandleConsumed");
   });
 
+  test("publishes and converges an empty file", async () => {
+    const destination = await createDestination();
+    const resource = makeExportDestinationResource();
+    const capture = unwrap(await runNodeExportDestination(resource.capture({
+      destination,
+      readToken: "read-empty-file",
+      paths: ["empty.md"],
+      maxEntries: 4,
+      maxBytes: 1024,
+    })));
+    const plan = {
+      destination,
+      planDigest: "plan-empty-file",
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+      mutations: [{ kind: "WriteFile", path: "empty.md", mode: 0o640, bytes: new Uint8Array() }],
+    } satisfies Parameters<typeof resource.apply>[0];
+
+    const applied = unwrap(await runNodeExportDestination(resource.apply(plan)));
+    expect(applied.outcome).toBe("Applied");
+    expect(applied.changedPaths).toEqual(["empty.md"]);
+    expect(applied.entries).toHaveLength(1);
+    const published = applied.entries[0];
+    expect(published?.kind).toBe("File");
+    if (published?.kind === "File") {
+      expect(published.bytes).toEqual(new Uint8Array());
+      expect(published.mode).toBe(0o640);
+      expect(published.stat.size).toBe("0");
+    }
+    expect(await readFile(path.join(destination, "empty.md"))).toEqual(Buffer.alloc(0));
+
+    const converged = unwrap(await runNodeExportDestination(resource.apply(plan)));
+    expect(converged.outcome).toBe("Converged");
+    expect(converged.changedPaths).toEqual([]);
+
+    unwrap(await runNodeExportDestination(resource.restore({
+      destination,
+      planDigest: plan.planDigest,
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    })));
+    unwrap(await runNodeExportDestination(resource.settle({
+      destination,
+      planDigest: plan.planDigest,
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    })));
+  });
+
+  test("restores an empty file preimage and its mode", async () => {
+    const destination = await createDestination();
+    const target = path.join(destination, "empty.md");
+    await writeFile(target, new Uint8Array(), { mode: 0o600 });
+    await chmod(target, 0o600);
+    const resource = makeExportDestinationResource();
+    const capture = unwrap(await runNodeExportDestination(resource.capture({
+      destination,
+      readToken: "read-empty-preimage",
+      paths: ["empty.md"],
+      maxEntries: 4,
+      maxBytes: 1024,
+    })));
+    const plan = {
+      destination,
+      planDigest: "plan-empty-preimage",
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+      mutations: [{ kind: "WriteFile", path: "empty.md", mode: 0o644, bytes: bytes("replacement\n") }],
+    } satisfies Parameters<typeof resource.apply>[0];
+
+    const applied = unwrap(await runNodeExportDestination(resource.apply(plan)));
+    expect(applied.outcome).toBe("Applied");
+    expect(await readFile(target, "utf8")).toBe("replacement\n");
+
+    const restored = unwrap(await runNodeExportDestination(resource.restore({
+      destination,
+      planDigest: plan.planDigest,
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    })));
+    expect(restored.outcome).toBe("Restored");
+    const preimage = restored.entries[0];
+    expect(preimage?.kind).toBe("File");
+    if (preimage?.kind === "File") {
+      expect(preimage.bytes).toEqual(new Uint8Array());
+      expect(preimage.mode).toBe(0o600);
+      expect(preimage.stat.size).toBe("0");
+    }
+    expect(await readFile(target)).toEqual(Buffer.alloc(0));
+
+    const settled = unwrap(await runNodeExportDestination(resource.settle({
+      destination,
+      planDigest: plan.planDigest,
+      readToken: capture.readToken,
+      captureHandle: capture.handle,
+    })));
+    expect(settled.outcome).toBe("Settled");
+  });
+
   test("releases only an unmutated capture and consumes its authority", async () => {
     const destination = await createDestination();
     const resource = makeExportDestinationResource();
