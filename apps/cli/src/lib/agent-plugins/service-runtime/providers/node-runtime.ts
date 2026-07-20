@@ -3,6 +3,13 @@ import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 import {
   CLAUDE_ADAPTER_PROTOCOL,
   CODEX_ADAPTER_PROTOCOL,
+  createResourceClaudeCanonicalObserver,
+  createResourceClaudeProviderAdapter,
+  createResourceClaudeProviderObserver,
+  createResourceCodexCanonicalObserver,
+  createResourceCodexProviderAdapter,
+  createResourceCodexProviderObserver,
+  createResourceMarketplaceLocationResolver,
   createResourceProviderRecordState,
   failure,
   issue,
@@ -17,20 +24,18 @@ import {
   type ProviderTargetReader,
   type NativeProviderAdapter,
   type NativeProviderObserver,
+  type NativeProviderResourcePort,
+  type ProviderMarketplaceLocationResolver,
   type CanonicalNativeObserver,
   type ProviderRecordState,
 } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import { makeNodeAgentProviderRecordsAsyncPort } from "@rawr/resource-agent-provider-records/providers/effect-platform-node";
 
 import { LifecycleAuthorityBindingError } from "../../commands/binding";
 import { createNodeMechanicalEvidenceRuntime } from "../evidence/node-mechanical";
-import {
-  createNodeMarketplaceLocationResolver,
-  createNodeCanonicalNativeObserver,
-  createNodeNativeProviderAdapter,
-  createNodeNativeProviderObserver,
-} from "../../bindings/providers";
+import { createNodeNativeProviderResource } from "../../bindings/providers";
 import { createProviderReleaseReader } from "./artifact-reader";
 
 type ArtifactReader = Pick<Deps["releaseArtifacts"], "read">;
@@ -42,10 +47,21 @@ export function createNodeProviderLifecycleRuntime(options: Readonly<{
   artifactStoreRoot: Parameters<typeof createNodeMechanicalEvidenceRuntime>[0];
   providerExecutables: Readonly<Partial<Record<ProviderId, string>>>;
 }>): ProviderLifecycleRuntime {
-  const adapter = createNodeNativeProviderAdapterResolver(options.state, options.providerExecutables);
-  const observer = createNodeNativeProviderObserverResolver(options.providerExecutables);
+  const resource = createNodeNativeProviderResource();
+  const marketplaceLocations = createResourceMarketplaceLocationResolver({
+    repository: options.state.artifactRepository,
+    projectionRepositoryRoot: options.state.projectionRepositoryRoot,
+  });
+  const adapter = createNodeNativeProviderAdapterResolver(
+    options.state,
+    options.providerExecutables,
+    resource,
+    marketplaceLocations,
+  );
+  const observer = createNodeNativeProviderObserverResolver(options.providerExecutables, resource);
   const canonicalObserver = createNodeCanonicalNativeObserverResolver(
     options.providerExecutables,
+    resource,
   );
   return assembleRuntime(options, adapter, observer, canonicalObserver);
 }
@@ -57,6 +73,7 @@ export interface NodeProviderRecordRoots {
 }
 
 export type NodeProviderRecordState = ProviderRecordState & Readonly<{
+  artifactRepository: ArtifactRepositoryAsyncPort;
   projectionRepositoryRoot: string;
 }>;
 
@@ -64,17 +81,19 @@ export type NodeProviderRecordState = ProviderRecordState & Readonly<{
 export function createNodeProviderRecordState(
   roots: NodeProviderRecordRoots,
 ): NodeProviderRecordState {
+  const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
   const state = createResourceProviderRecordState({
     records: makeNodeAgentProviderRecordsAsyncPort({
       controllerDataRoot: roots.controllerDataRoot,
       projectionRoot: roots.providerProjectionRoot,
       targetRecordsRoot: roots.providerTargetStateRoot,
     }),
-    trees: makeNodeArtifactRepositoryAsyncPort(),
+    trees: artifactRepository,
     projectionRepositoryRoot: roots.providerProjectionRoot,
   });
   return Object.freeze({
     ...state,
+    artifactRepository,
     projectionRepositoryRoot: roots.providerProjectionRoot,
   });
 }
@@ -82,9 +101,10 @@ export function createNodeProviderRecordState(
 export function createNodeNativeProviderAdapterResolver(
   state: NodeProviderRecordState,
   providerExecutables: Readonly<Partial<Record<ProviderId, string>>>,
+  resource: NativeProviderResourcePort,
+  marketplaceLocations: ProviderMarketplaceLocationResolver,
 ): (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter {
   const adapters = new Map<string, NativeProviderAdapter>();
-  const marketplaceLocations = createNodeMarketplaceLocationResolver(state.projectionRepositoryRoot);
   const adapter = (provider: ProviderId, contentAuthority: ContentAuthority) => {
     const key = `${provider}\0${contentAuthority}`;
     const existing = adapters.get(key);
@@ -93,13 +113,16 @@ export function createNodeNativeProviderAdapterResolver(
     if (executablePath === undefined) {
       throw new LifecycleAuthorityBindingError(`${provider} requires an explicit provider executable binding`);
     }
-    const common = {
+    const common = Object.freeze({
       executablePath,
       contentAuthority,
       marketplaceSources: state.projections.marketplaceSources,
       marketplaceLocations,
-    } as const;
-    const created = createNodeNativeProviderAdapter({ ...common, provider });
+      resource,
+    });
+    const created = provider === "codex"
+      ? createResourceCodexProviderAdapter(common)
+      : createResourceClaudeProviderAdapter(common);
     adapters.set(key, created);
     return created;
   };
@@ -108,6 +131,7 @@ export function createNodeNativeProviderAdapterResolver(
 
 function createNodeNativeProviderObserverResolver(
   providerExecutables: Readonly<Partial<Record<ProviderId, string>>>,
+  resource: NativeProviderResourcePort,
 ): (provider: ProviderId) => NativeProviderObserver {
   const observers = new Map<ProviderId, NativeProviderObserver>();
   return (provider) => {
@@ -117,7 +141,10 @@ function createNodeNativeProviderObserverResolver(
     if (executablePath === undefined) {
       throw new LifecycleAuthorityBindingError(`${provider} requires an explicit provider executable binding`);
     }
-    const created = createNodeNativeProviderObserver({ provider, executablePath });
+    const common = Object.freeze({ resource, executablePath });
+    const created = provider === "codex"
+      ? createResourceCodexProviderObserver(common)
+      : createResourceClaudeProviderObserver(common);
     observers.set(provider, created);
     return created;
   };
@@ -125,6 +152,7 @@ function createNodeNativeProviderObserverResolver(
 
 function createNodeCanonicalNativeObserverResolver(
   providerExecutables: Readonly<Partial<Record<ProviderId, string>>>,
+  resource: NativeProviderResourcePort,
 ): (provider: ProviderId, contentAuthority: ContentAuthority) => CanonicalNativeObserver {
   const observers = new Map<string, CanonicalNativeObserver>();
   return (provider, contentAuthority) => {
@@ -137,11 +165,10 @@ function createNodeCanonicalNativeObserverResolver(
         `${provider} requires an explicit provider executable binding`,
       );
     }
-    const created = createNodeCanonicalNativeObserver({
-      provider,
-      executablePath,
-      contentAuthority,
-    });
+    const common = Object.freeze({ resource, executablePath, contentAuthority });
+    const created = provider === "codex"
+      ? createResourceCodexCanonicalObserver(common)
+      : createResourceClaudeCanonicalObserver(common);
     observers.set(key, created);
     return created;
   };

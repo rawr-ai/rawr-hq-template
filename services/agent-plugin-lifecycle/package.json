@@ -79,6 +79,7 @@
   "devDependencies": {
     "@opentelemetry/context-async-hooks": "^2.6.0",
     "@opentelemetry/sdk-trace-base": "^2.6.0",
+    "@types/bun": "^1.2.10",
     "@types/node": "^22.14.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"

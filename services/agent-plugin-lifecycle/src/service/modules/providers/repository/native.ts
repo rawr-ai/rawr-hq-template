@@ -333,6 +333,14 @@ export function createNativeProviderAdapter(input: Readonly<{
           source,
         });
       } catch (error) {
+        if (
+          error instanceof NativeProviderResourceFailure
+          && error.kind === "pre-mutation-refusal"
+        ) {
+          return notApplied([
+            portFailure("MUTATION_FAILED", "target.mutation.SetMarketplace", error),
+          ]);
+        }
         return uncertain("bridge-invoked", [portFailure("MUTATION_FAILED", "target.mutation.SetMarketplace", error)]);
       }
       const afterResult = await readInventory(action.target);
