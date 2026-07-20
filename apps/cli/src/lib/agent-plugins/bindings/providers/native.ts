@@ -7,6 +7,7 @@ import {
   createResourceCodexProviderAdapter,
   createResourceCodexCanonicalObserver,
   createResourceCodexProviderObserver,
+  NativeProviderResourceFailure,
   type CanonicalNativeObserver,
   type ClaudeNativeResourceSession,
   type CodexNativeResourceSession,
@@ -33,6 +34,7 @@ import {
 import type {
   ClaudeNativeAgentProviderSession,
   CodexNativeAgentProviderSession,
+  NativeAgentProviderFailure,
 } from "@rawr/resource-native-agent-provider";
 import { claudeEffectPlatformNodeProvider } from "@rawr/resource-native-agent-provider/providers/claude-effect-platform-node";
 import { codexEffectPlatformNodeProvider } from "@rawr/resource-native-agent-provider/providers/codex-effect-platform-node";
@@ -230,8 +232,21 @@ const readOnlyMarketplaceLocations: NodeMarketplaceLocationResolver = Object.fre
   },
 });
 
-function runNodeProvider<A, E>(
-  operation: Effect.Effect<A, E, NodeContext.NodeContext>,
+async function runNodeProvider<A>(
+  operation: Effect.Effect<A, NativeAgentProviderFailure, NodeContext.NodeContext>,
 ): Promise<A> {
-  return Effect.runPromise(operation.pipe(Effect.provide(NodeContext.layer)));
+  const result = await Effect.runPromise(operation.pipe(
+    Effect.either,
+    Effect.provide(NodeContext.layer),
+  ));
+  if (result._tag === "Left") {
+    throw new NativeProviderResourceFailure({
+      kind: result.left.reason === "OwnershipConflict"
+        ? "ownership-conflict"
+        : "provider-failure",
+      detail: result.left.detail,
+      path: result.left.path,
+    });
+  }
+  return result.right;
 }

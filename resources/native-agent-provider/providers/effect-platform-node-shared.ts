@@ -17,6 +17,7 @@ import type {
 const MAX_PROCESS_OUTPUT_BYTES = 4 * 1024 * 1024;
 const PROCESS_TIMEOUT = "30 seconds";
 const APP_SERVER_TIMEOUT = "20 seconds";
+const OWNER_SLOT = ".rawr-agent-plugin-owner.json";
 
 export type EffectPlatformNodeRequirements =
   | CommandExecutor.CommandExecutor
@@ -74,27 +75,36 @@ export function acquireEffectPlatformNodeProvider(
     const executor = yield* CommandExecutor.CommandExecutor;
     const executablePath = yield* requireCanonicalExecutable(fs, paths, provider, input.executablePath);
     const home = yield* requireCanonicalDirectory(fs, paths, provider, "acquire", input.home, false);
+    yield* requireVacantOwnerSlot(fs, paths, provider, "acquire", home);
     const commandMutex = yield* Effect.makeSemaphore(1);
 
     const run: EffectPlatformNodeProviderKernel["run"] = (operation, args, stdin = "") =>
-      commandMutex.withPermits(1)(runCommand({
-        provider,
-        operation,
-        executablePath,
-        home,
-        args,
-        stdin,
-        executor,
+      commandMutex.withPermits(1)(Effect.gen(function* () {
+        yield* requireCanonicalDirectory(fs, paths, provider, operation, home, false);
+        yield* requireVacantOwnerSlot(fs, paths, provider, operation, home);
+        return yield* runCommand({
+          provider,
+          operation,
+          executablePath,
+          home,
+          args,
+          stdin,
+          executor,
+        });
       }));
 
     const runCodexAppServer: EffectPlatformNodeProviderKernel["runCodexAppServer"] = (operation, requests) =>
-      commandMutex.withPermits(1)(runCodexAppServerProcess({
-        provider,
-        operation,
-        executablePath,
-        home,
-        requests,
-        executor,
+      commandMutex.withPermits(1)(Effect.gen(function* () {
+        yield* requireCanonicalDirectory(fs, paths, provider, operation, home, false);
+        yield* requireVacantOwnerSlot(fs, paths, provider, operation, home);
+        return yield* runCodexAppServerProcess({
+          provider,
+          operation,
+          executablePath,
+          home,
+          requests,
+          executor,
+        });
       }));
 
     const readMarketplacePackage: EffectPlatformNodeProviderKernel["readMarketplacePackage"] = (root, limits) =>
@@ -527,6 +537,34 @@ function requireCanonicalDirectory(
       return yield* fail(provider, operation, "UnsupportedEntry", candidate, "Path must be one existing directory");
     }
     return candidate;
+  });
+}
+
+function requireVacantOwnerSlot(
+  fs: FileSystem.FileSystem,
+  paths: Path.Path,
+  provider: NativeAgentProviderId,
+  operation: NativeAgentProviderOperation,
+  home: string,
+): Effect.Effect<void, NativeAgentProviderFailure> {
+  const candidate = paths.join(home, OWNER_SLOT);
+  return Effect.matchEffect(fs.readLink(candidate), {
+    onFailure: (cause) => cause._tag === "SystemError" && cause.reason === "NotFound"
+      ? Effect.void
+      : fail(
+          provider,
+          operation,
+          "OwnershipConflict",
+          candidate,
+          "Provider ownership slot could not be proven absent",
+        ),
+    onSuccess: () => fail(
+      provider,
+      operation,
+      "OwnershipConflict",
+      candidate,
+      "Provider ownership slot is occupied",
+    ),
   });
 }
 

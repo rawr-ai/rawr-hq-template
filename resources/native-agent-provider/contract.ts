@@ -31,6 +31,7 @@ export type NativeAgentProviderFailureReason =
   | "CommandTimedOut"
   | "InvalidJson"
   | "ProtocolFailed"
+  | "OwnershipConflict"
   | "FilesystemFailed";
 
 export interface NativeAgentProviderFailure {

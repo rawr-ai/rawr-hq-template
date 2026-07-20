@@ -47,6 +47,7 @@ import {
   isNativeProvenanceAmbiguity,
   type NativeProvenanceAmbiguityReason,
 } from "./resource-provenance";
+import { NativeProviderResourceFailure } from "./resource-port";
 
 type NativeMemberMutationAction = Exclude<NativeProviderMutationAction, { readonly kind: "SetMarketplace" }>;
 type RetireConfiguredExposureAction = Extract<CanonicalNativeMutationAction, {
@@ -663,7 +664,16 @@ function portFailure(
   code: "CAPABILITY_MISMATCH" | "MUTATION_FAILED" | "VISIBILITY_FAILED",
   path: string,
   error: unknown,
-) {
+): ProviderDeploymentIssue {
+  if (error instanceof NativeProviderResourceFailure && error.kind === "ownership-conflict") {
+    return issue(
+      "BLOCKED_COLLISION",
+      "target.home",
+      error.message,
+      "absent provider ownership slot",
+      error.path ?? "occupied or unreadable provider ownership slot",
+    );
+  }
   return issue(code, path, error instanceof Error ? error.message : String(error));
 }
 
