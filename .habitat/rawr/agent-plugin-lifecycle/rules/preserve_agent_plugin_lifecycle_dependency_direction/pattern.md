@@ -10,8 +10,8 @@ types. The qualified CLI projection admits one production value consumer for
 the service client: its exact `service-runtime/client.ts` composition root.
 Other CLI modules may retain type-only client dependencies, but cannot
 construct, load, or relay another service client. The CLI selects concrete
-resource providers; service middleware derives provider-domain repositories
-and adapters under `provided`. The provider transition binding admits value
+resource providers; service middleware derives current-main and provider-domain
+repositories and adapters under `provided`. The provider transition binding admits value
 imports only from the native-resource binding and provider-resource composition
 root; the CLI-local provider index can flow only into that composition root.
 All other CLI consumers remain type-only. Release and evidence projections remain
@@ -23,7 +23,8 @@ service-level models cannot depend upward on a sealed capability module. The
 sealed set grows monotonically as module context-direction slices land.
 Provider convergence consumes current-main only through the neutral root
 dependency contract; it cannot import governance module DTOs, repositories, or
-routers.
+routers. The CLI has no governance binding: the service composition root derives
+that observation directly from the raw content-workspace capability.
 
 ```grit
 language js(typescript)
@@ -106,7 +107,7 @@ or {
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|releases))[\"']?$" },
     not {
       $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$",
       $filename <: r".*apps/cli/src/lib/agent-plugins/(?:bindings/providers/native|service-runtime/providers/node-runtime)\.ts$"
@@ -117,7 +118,7 @@ or {
   `import($source)` where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|releases))[\"']?$" }
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|releases))[\"']?$" }
   },
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
@@ -144,14 +145,14 @@ or {
   `export { $exports } from $source` as $export where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|releases))[\"']?$" },
     not { $export <: includes "export type" },
     not { $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
   },
   `export * from $source` as $export where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|releases))[\"']?$" },
     not { $export <: includes "export type *" }
   },
   import_statement(source=$source) as $import where {
@@ -330,6 +331,20 @@ export const adapter = createResourceCodexProviderAdapter;
 import { createResourcePackageOutputRuntime } from "@rawr/agent-plugin-lifecycle/bindings/packaging";
 
 export const packaging = createResourcePackageOutputRuntime;
+
+// @filename: apps/cli/src/lib/agent-plugins/retired-governance-binding-import.ts
+import { createGovernanceCurrentMainSelectionReader } from "@rawr/agent-plugin-lifecycle/bindings/governance";
+
+export const currentMain = createGovernanceCurrentMainSelectionReader;
+
+// @filename: apps/cli/src/lib/agent-plugins/retired-governance-binding-dynamic.ts
+export const governance = import("@rawr/agent-plugin-lifecycle/bindings/governance");
+
+// @filename: apps/cli/src/lib/agent-plugins/retired-governance-binding-reexport.ts
+export { createGovernanceCurrentMainSelectionReader } from "@rawr/agent-plugin-lifecycle/bindings/governance";
+
+// @filename: apps/cli/src/lib/agent-plugins/retired-governance-binding-star.ts
+export * from "@rawr/agent-plugin-lifecycle/bindings/governance";
 
 // @filename: apps/cli/src/lib/agent-plugins/provider-binding-bypass.ts
 import { NativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bindings/providers";

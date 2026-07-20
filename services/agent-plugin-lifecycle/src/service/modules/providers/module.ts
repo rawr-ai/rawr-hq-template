@@ -7,7 +7,7 @@ export const module = impl.providers
   .use(resources)
   .use(async ({ context, next }) => next({
     context: {
-      currentMain: context.deps.providerCurrentMain,
+      currentMain: context.provided.currentMain,
       native: context.provided.native,
       releases: context.provided.releases,
       provider: context.provided.provider,

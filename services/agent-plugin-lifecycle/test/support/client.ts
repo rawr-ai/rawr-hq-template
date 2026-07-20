@@ -101,7 +101,6 @@ export function unavailableContentWorkspace(): ContentWorkspaceNodeAsyncPort {
 
 export function unavailableProviderResources() {
   return {
-    providerCurrentMain: { resolve: async () => unavailableAsync("provider current-main selection") },
     providerRecords: {
       readProjection: async () => unavailableAsync("provider projection record read"),
       publishProjection: async () => unavailableAsync("provider projection record publication"),

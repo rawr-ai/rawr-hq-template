@@ -97,11 +97,13 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     }]);
   });
 
-  it("returns exact provider refusal envelopes through raw owner resources", async () => {
+  it("derives canonical provider selection from the raw content-workspace dependency", async () => {
     const calls: string[] = [];
     const artifactReads: Parameters<Deps["releaseArtifacts"]["read"]>[0][] = [];
-    const providerSelections: Parameters<Deps["providerCurrentMain"]["resolve"]>[0][] = [];
-    const client = spineClient(calls, { artifactReads, providerSelections });
+    const contentWorkspaceInspections: Parameters<
+      Deps["contentWorkspace"]["inspectGitWorkspace"]
+    >[0][] = [];
+    const client = spineClient(calls, { artifactReads, contentWorkspaceInspections });
     const artifactIssue = {
       code: "ARTIFACT_READ_FAILED",
       path: "artifact",
@@ -149,10 +151,34 @@ describe("agent plugin lifecycle oRPC service spine", () => {
         issues: [selectionIssue],
       },
     });
-    expect(calls.splice(0)).toEqual(["providers.currentMain.resolve"]);
-    expect(providerSelections).toEqual([{
-      workspacePath: canonicalRequest.locator.workspaceRoot,
-      expectedRepositoryIdentity: canonicalRequest.locator.repositoryIdentity,
+    expect(calls.splice(0)).toEqual([
+      "governance.contentWorkspace.inspectGitWorkspace",
+      "governance.contentWorkspace.captureGitWorkspaceEvidence",
+    ]);
+    expect(contentWorkspaceInspections.splice(0)).toEqual([{
+      locator: canonicalRequest.locator.workspaceRoot,
+      remoteSelection: { kind: "All" },
+      refName: "refs/heads/main",
+    }]);
+    expect(artifactReads).toEqual([]);
+
+    const statusRequest = canonicalStatusRequest();
+    await expect(client.providers.canonicalStatus(statusRequest, invocation)).resolves.toEqual({
+      ok: true,
+      value: [{
+        status: "BLOCKED_SELECTION",
+        target,
+        issues: [selectionIssue],
+      }],
+    });
+    expect(calls.splice(0)).toEqual([
+      "governance.contentWorkspace.inspectGitWorkspace",
+      "governance.contentWorkspace.captureGitWorkspaceEvidence",
+    ]);
+    expect(contentWorkspaceInspections).toEqual([{
+      locator: statusRequest.locator.workspaceRoot,
+      remoteSelection: { kind: "All" },
+      refName: "refs/heads/main",
     }]);
     expect(artifactReads).toEqual([]);
   });
@@ -172,8 +198,10 @@ describe("agent plugin lifecycle oRPC service spine", () => {
 
 interface SpineObservations {
   readonly artifactReads?: Parameters<Deps["releaseArtifacts"]["read"]>[0][];
+  readonly contentWorkspaceInspections?: Parameters<
+    Deps["contentWorkspace"]["inspectGitWorkspace"]
+  >[0][];
   readonly providerScans?: Parameters<Deps["providerRecords"]["scanTargets"]>[0][];
-  readonly providerSelections?: Parameters<Deps["providerCurrentMain"]["resolve"]>[0][];
 }
 
 function spineClient(calls: string[], observations: SpineObservations = {}): Client {
@@ -198,6 +226,7 @@ function spineClient(calls: string[], observations: SpineObservations = {}): Cli
           throw new Error("fixture repository is unavailable");
         }
         calls.push("governance.contentWorkspace.inspectGitWorkspace");
+        observations.contentWorkspaceInspections?.push(input);
         return governanceAnchor();
       },
       captureGitWorkspaceEvidence: async () => {
@@ -243,16 +272,6 @@ function spineClient(calls: string[], observations: SpineObservations = {}): Cli
       },
     },
     ...providerResources,
-    providerCurrentMain: {
-      resolve: async (input) => {
-        calls.push("providers.currentMain.resolve");
-        observations.providerSelections?.push(input);
-        return {
-          kind: "DIRTY_REPOSITORY",
-          reason: "Canonical content workspace is dirty",
-        };
-      },
-    },
     providerRecords: {
       ...providerResources.providerRecords,
       scanTargets: async (input) => {
@@ -359,6 +378,18 @@ function targetedTestRequest(): Parameters<Client["providers"]["targetedTest"]>[
 function canonicalSyncRequest(): Parameters<Client["providers"]["canonicalSync"]>[0] {
   return {
     kind: "canonical-sync",
+    channel: "current-main",
+    locator: {
+      repositoryIdentity: "git:personal-rawr-hq",
+      workspaceRoot: "/tmp/content-workspace",
+    },
+    targets: [providerTargetInput()],
+  };
+}
+
+function canonicalStatusRequest(): Parameters<Client["providers"]["canonicalStatus"]>[0] {
+  return {
+    kind: "canonical-status",
     channel: "current-main",
     locator: {
       repositoryIdentity: "git:personal-rawr-hq",

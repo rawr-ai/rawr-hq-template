@@ -1,5 +1,8 @@
 import { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
-import { createGovernanceCurrentMainSelectionReader } from "@rawr/agent-plugin-lifecycle/bindings/governance";
+import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
+
+// @ts-expect-error Governance current-main selection is composed inside the service.
+import * as retiredGovernanceBinding from "@rawr/agent-plugin-lifecycle/bindings/governance";
 
 // @ts-expect-error Release source repositories are service-module implementations, not host bindings.
 import { createResourceContentWorkspaceSnapshotReader as retiredReleaseSourceFactory } from "@rawr/agent-plugin-lifecycle/bindings/releases";
@@ -13,8 +16,6 @@ import * as retiredReleasePort from "@rawr/agent-plugin-lifecycle/ports/releases
 import * as retiredPackagingBinding from "@rawr/agent-plugin-lifecycle/bindings/packaging";
 // @ts-expect-error The packaging module no longer exposes a public port subpath.
 import * as retiredPackagingPort from "@rawr/agent-plugin-lifecycle/ports/packaging";
-// @ts-expect-error Governance's exact-Git repository is module-owned, not a host binding.
-import { createResourceExactGitReader as retiredGovernanceFactory } from "@rawr/agent-plugin-lifecycle/bindings/governance";
 // @ts-expect-error The governance module no longer exposes a public port subpath.
 import * as retiredGovernancePort from "@rawr/agent-plugin-lifecycle/ports/governance";
 // @ts-expect-error The providers module no longer exposes a public port subpath.
@@ -35,14 +36,13 @@ import { createResourceCodexProviderAdapter as retiredCodexAdapterFactory } from
 import type { BuildResult } from "@rawr/agent-plugin-lifecycle/service/modules/releases/model/dto/release-lifecycle";
 
 void createResourceArtifactStore;
-void createGovernanceCurrentMainSelectionReader;
+void retiredGovernanceBinding;
 void retiredReleaseSourceFactory;
 void retiredStagedReleaseSourceFactory;
 void retiredVendorPort;
 void retiredReleasePort;
 void retiredPackagingBinding;
 void retiredPackagingPort;
-void retiredGovernanceFactory;
 void retiredGovernancePort;
 void retiredProviderPort;
 declare const retiredProviderLifecycleRuntime: RetiredProviderLifecycleRuntime;
@@ -55,3 +55,7 @@ void retiredProviderRecordFactory;
 void retiredCodexAdapterFactory;
 declare const buildResult: BuildResult;
 void buildResult;
+
+type ProviderCurrentMainIsAbsent = "providerCurrentMain" extends keyof Deps ? never : true;
+const providerCurrentMainIsAbsent: ProviderCurrentMainIsAbsent = true;
+void providerCurrentMainIsAbsent;

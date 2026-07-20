@@ -7,7 +7,6 @@ import {
   type UndoCandidateInput,
   type UndoWriter,
 } from "@rawr/agent-plugin-lifecycle/bindings/exports";
-import { createGovernanceCurrentMainSelectionReader } from "@rawr/agent-plugin-lifecycle/bindings/governance";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
 } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
@@ -164,7 +163,6 @@ export function createProductionLifecycleDeps(input: Readonly<{
     providerTargetStateRoot: layout.providerTargetStateRoot,
   });
   const providerDeps = createNodeProviderLifecycleDeps({
-    providerCurrentMain: createGovernanceCurrentMainSelectionReader(contentWorkspace),
     state: providerState,
     providerExecutables: binding.providerExecutables,
     providerEvidenceStore: createMechanicalEvidenceStore(layout.artifactStoreRoot),

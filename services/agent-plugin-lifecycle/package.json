@@ -26,10 +26,6 @@
       "types": "./src/bindings/exports.ts",
       "default": "./src/bindings/exports.ts"
     },
-    "./bindings/governance": {
-      "types": "./src/bindings/governance.ts",
-      "default": "./src/bindings/governance.ts"
-    },
     "./bindings/providers": {
       "types": "./src/bindings/providers/index.ts",
       "default": "./src/bindings/providers/index.ts"
