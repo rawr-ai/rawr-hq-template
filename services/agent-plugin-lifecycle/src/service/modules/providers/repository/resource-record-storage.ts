@@ -15,8 +15,8 @@ import type {
 import {
   MAX_RELEASE_SET_PAYLOAD_BYTES,
   parseReleaseRelativePath,
-} from "../../service/shared/release";
-import { failure, issue, success, type DeploymentResult } from "../../service/modules/providers/model/errors/deployment-result";
+} from "../../../shared/release";
+import { failure, issue, success, type DeploymentResult } from "../model/errors/deployment-result";
 import type {
   FlatProjectionRecordCollection,
   ImmutableProviderTreeCollection,
@@ -27,7 +27,7 @@ import type {
   ProjectionRecordKey,
   ProjectionRecordObservation,
   ProjectionRecordPublication,
-} from "../../service/modules/providers/ports/projection-storage";
+} from "../model/repositories/projection-storage";
 import type {
   PathlessTargetRecordCollection,
   TargetRecordCapture,
@@ -40,7 +40,7 @@ import type {
   TargetRecordRestoreObservation,
   TargetRecordScanEntry,
   TargetRecordWriteObservation,
-} from "../../service/modules/providers/ports/target-record-storage";
+} from "../model/repositories/target-record-storage";
 import {
   createPathlessProjectionStorage,
   type PathlessProjectionStorage,

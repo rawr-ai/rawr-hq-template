@@ -1,15 +1,15 @@
-import type { CanonicalNativeObservation } from "../../service/modules/providers/model/dto/canonical-convergence";
-import type { ContentAuthority } from "../../service/shared/release";
+import type { CanonicalNativeObservation } from "../model/dto/canonical-convergence";
+import type { ContentAuthority } from "../../../shared/release";
 import {
   failure,
   issue,
   success,
   type DeploymentResult,
-} from "../../service/modules/providers/model/errors/deployment-result";
+} from "../model/errors/deployment-result";
 import type {
   ProviderId,
   ProviderTarget,
-} from "../../service/modules/providers/model/dto/provider-target";
+} from "../model/dto/provider-target";
 import {
   inspectNativeInventory,
   type NativeProviderInventoryBridge,

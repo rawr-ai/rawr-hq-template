@@ -1,16 +1,16 @@
-import type { DeploymentResult } from "../model/errors/deployment-result";
+import type { DeploymentResult } from "../errors/deployment-result";
 import type {
   MarketplaceProjectionDigest,
   ProviderMarketplaceRegistration,
-} from "../model/policy/marketplace";
-import type { AgentProviderProjection } from "../model/policy/projection";
+} from "../policy/marketplace";
+import type { AgentProviderProjection } from "../policy/projection";
 import type {
   ReceiptObservation,
   TargetIdentityObservation,
   TargetIdentitySidecar,
-} from "../model/policy/state-machine";
-import type { TargetReceipt } from "../model/policy/receipt";
-import type { ProviderId, ProviderTarget } from "../model/dto/provider-target";
+} from "../policy/state-machine";
+import type { TargetReceipt } from "../policy/receipt";
+import type { ProviderId, ProviderTarget } from "../dto/provider-target";
 
 export interface TargetReceiptReader {
   read(target: ProviderTarget): Promise<DeploymentResult<ReceiptObservation>>;

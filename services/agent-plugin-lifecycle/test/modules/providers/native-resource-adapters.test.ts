@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   createProviderMarketplaceRegistration,
-  NativeProviderResourceFailure,
   parseProviderTarget,
   renderCompleteProjection,
   type AgentProviderProjection,
@@ -29,20 +28,20 @@ import {
 } from "../../shared/release/fixtures";
 import {
   CODEX_ADAPTER_PROTOCOL,
-} from "../../../src/bindings/providers/codex";
+} from "../../../src/service/modules/providers/repository/codex";
 import {
   CLAUDE_ADAPTER_PROTOCOL,
-} from "../../../src/bindings/providers/claude";
+} from "../../../src/service/modules/providers/repository/claude";
 import {
   claudeCapabilitiesFromCommands,
   createResourceClaudeCanonicalObserver,
   createResourceClaudeProviderAdapter,
-} from "../../../src/bindings/providers/resource-claude";
+} from "../../../src/service/modules/providers/repository/resource-claude";
 import {
   codexCapabilitiesFromCommands,
   createResourceCodexCanonicalObserver,
   createResourceCodexProviderAdapter,
-} from "../../../src/bindings/providers/resource-codex";
+} from "../../../src/service/modules/providers/repository/resource-codex";
 import type {
   ClaudeNativeResourceSession,
   CodexNativeResourceSession,
@@ -52,14 +51,17 @@ import type {
   NativeResourceSessionInput,
 } from "../../../src/bindings/providers/resource-port";
 import {
+  NativeProviderResourceFailure,
+} from "../../../src/service/modules/providers/model/errors/native-resource";
+import {
   inspectMarketplaceSource,
-} from "../../../src/bindings/providers/resource-marketplace";
+} from "../../../src/service/modules/providers/repository/resource-marketplace";
 import {
   inspectNativePluginPackage,
-} from "../../../src/bindings/providers/resource-package";
+} from "../../../src/service/modules/providers/repository/resource-package";
 import {
   createSessionCache,
-} from "../../../src/bindings/providers/resource-shared";
+} from "../../../src/service/modules/providers/repository/resource-shared";
 
 const EXPECTED_CAPABILITIES = Object.freeze([
   "native-plugin-enable",

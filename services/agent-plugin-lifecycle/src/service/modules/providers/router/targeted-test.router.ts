@@ -3,9 +3,9 @@ import type { VerifiedArtifactSnapshotV1 } from "../../../shared/release";
 import { parseProviderDeploymentRequest } from "../model/dto/mode";
 import { issue, success, type DeploymentResult } from "../model/errors/deployment-result";
 import { module } from "../module";
-import type { VerifiedReleaseReader } from "../ports/artifact";
-import type { MechanicalEvidencePublisher } from "../ports/evidence";
-import type { ProviderTargetMutator, ProviderTargetReader } from "../ports/provider";
+import type { VerifiedReleaseReader } from "../model/repositories/artifact";
+import type { MechanicalEvidencePublisher } from "../model/repositories/evidence";
+import type { ProviderTargetMutator, ProviderTargetReader } from "../model/repositories/provider";
 import type {
   ProviderMarketplaceMaterializer,
   ProviderProjectionMaterializer,
@@ -13,7 +13,7 @@ import type {
   TargetIdentityWriter,
   TargetReceiptReader,
   TargetReceiptWriter,
-} from "../ports/state";
+} from "../model/repositories/state";
 import {
   aggregateOutcome,
   attachMechanicalEvidence,

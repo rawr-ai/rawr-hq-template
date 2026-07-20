@@ -1,5 +1,5 @@
-import type { DeploymentResult } from "../model/errors/deployment-result";
-import type { ProviderTargetDigest } from "../model/dto/provider-target";
+import type { DeploymentResult } from "../errors/deployment-result";
+import type { ProviderTargetDigest } from "../dto/provider-target";
 
 declare const targetRecordCaptureHandleBrand: unique symbol;
 declare const targetRecordReadTokenBrand: unique symbol;

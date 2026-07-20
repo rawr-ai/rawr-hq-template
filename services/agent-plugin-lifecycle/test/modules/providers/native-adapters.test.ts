@@ -19,16 +19,16 @@ import {
   CODEX_ADAPTER_PROTOCOL,
   createCodexProviderAdapter,
   type CodexMarketplacePlugin,
-} from "../../../src/bindings/providers/codex";
+} from "../../../src/service/modules/providers/repository/codex";
 import {
   CLAUDE_ADAPTER_PROTOCOL,
   createClaudeProviderAdapter,
   type ClaudeNativePlugin,
-} from "../../../src/bindings/providers/claude";
+} from "../../../src/service/modules/providers/repository/claude";
 import {
   createNativeProviderAdapter,
   type NativeProviderBridge,
-} from "../../../src/bindings/providers/native";
+} from "../../../src/service/modules/providers/repository/native";
 
 describe("native provider adapters", () => {
   it("sets one exact target-level marketplace registration before member mutation", async () => {

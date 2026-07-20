@@ -1,12 +1,12 @@
-import type { ContentAuthority } from "../../../shared/release";
+import type { ContentAuthority } from "../../../../shared/release";
 
 import type {
   CanonicalNativeMutationAction,
   CanonicalNativeObservation,
-} from "../model/dto/canonical-convergence";
-import type { CapabilityObservation } from "../model/policy/projection";
-import type { DeploymentResult } from "../model/errors/deployment-result";
-import type { ProviderTarget } from "../model/dto/provider-target";
+} from "../dto/canonical-convergence";
+import type { CapabilityObservation } from "../policy/projection";
+import type { DeploymentResult } from "../errors/deployment-result";
+import type { ProviderTarget } from "../dto/provider-target";
 import type { NativeMutationAttempt } from "./provider";
 
 /** The complete native boundary available to canonical sync and status. */

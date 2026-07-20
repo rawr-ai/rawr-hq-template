@@ -1,7 +1,7 @@
 import type { ContentWorkspaceGitReadAsyncPort } from "@rawr/resource-content-workspace";
 
 import type { CurrentMainSelectionResult } from "../../service/modules/governance/model/dto/current-main";
-import type { CurrentMainSelectionReader } from "../../service/modules/providers/ports/current-main";
+import type { CurrentMainSelectionReader } from "../../service/modules/providers/model/repositories/current-main";
 import { decodeGitLocator } from "../../service/modules/governance/model/dto/boundary";
 import { createResourceExactGitReader } from "../../service/modules/governance/repository/content-workspace";
 import { resolveCurrentMainSelection } from "../../service/modules/governance/router/current-main-selection.router";

@@ -1,12 +1,12 @@
-import type { PluginId } from "../../service/shared/release";
+import type { PluginId } from "../../../shared/release";
 
-import { compareCanonical } from "../../service/modules/providers/model/helpers/canonical";
+import { compareCanonical } from "../model/helpers/canonical";
 import {
   marketplaceState,
   sameMarketplaceState,
   type ProviderMarketplaceObservation,
   type ProviderMarketplaceRegistration,
-} from "../../service/modules/providers/model/policy/marketplace";
+} from "../model/policy/marketplace";
 import type {
   AdapterProtocol,
   AgentProviderProjection,
@@ -16,8 +16,8 @@ import type {
   ProviderMemberFingerprint,
   ProviderProjectionMember,
   ProviderSourceIdentity,
-} from "../../service/modules/providers/model/policy/projection";
-import { visibleFingerprint, type VerifiedMemberIdentity } from "../../service/modules/providers/model/policy/receipt";
+} from "../model/policy/projection";
+import { visibleFingerprint, type VerifiedMemberIdentity } from "../model/policy/receipt";
 import {
   failure,
   issue,
@@ -25,29 +25,29 @@ import {
   type DeploymentResult,
   type NonEmptyReadonlyArray,
   type ProviderDeploymentIssue,
-} from "../../service/modules/providers/model/errors/deployment-result";
+} from "../model/errors/deployment-result";
 import {
   createProviderInventory,
   hasProjectionExposureCollision,
   type NativeMemberObservation,
   type NativeStandaloneExposureObservation,
   type ProviderInventory,
-} from "../../service/modules/providers/model/policy/state-machine";
-import type { ProviderId, ProviderTarget } from "../../service/modules/providers/model/dto/provider-target";
-import type { CanonicalNativeMutationAction } from "../../service/modules/providers/model/dto/canonical-convergence";
+} from "../model/policy/state-machine";
+import type { ProviderId, ProviderTarget } from "../model/dto/provider-target";
+import type { CanonicalNativeMutationAction } from "../model/dto/canonical-convergence";
 import type {
   NativeMutationAttempt,
   NativeProviderMutationAction,
   ProviderTargetMutator,
   ProviderTargetReader,
   ProviderVisibilityObservation,
-} from "../../service/modules/providers/ports/provider";
-import type { ProviderMarketplaceSource, ProviderMarketplaceSourceReader } from "../../service/modules/providers/ports/state";
+} from "../model/repositories/provider";
+import type { ProviderMarketplaceSource, ProviderMarketplaceSourceReader } from "../model/repositories/state";
 import {
   isNativeProvenanceAmbiguity,
   type NativeProvenanceAmbiguityReason,
 } from "./resource-provenance";
-import { NativeProviderResourceFailure } from "./resource-port";
+import { NativeProviderResourceFailure } from "../model/errors/native-resource";
 
 type NativeMemberMutationAction = Exclude<NativeProviderMutationAction, { readonly kind: "SetMarketplace" }>;
 type RetireConfiguredExposureAction = Extract<CanonicalNativeMutationAction, {

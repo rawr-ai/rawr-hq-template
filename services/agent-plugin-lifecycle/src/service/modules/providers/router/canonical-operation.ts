@@ -14,8 +14,8 @@ import {
   type ProviderDeploymentIssue,
 } from "../model/errors/deployment-result";
 import { resolveCanonicalDesiredStates } from "../model/policy/canonical-desired-state";
-import type { VerifiedReleaseReader } from "../ports/artifact";
-import type { CurrentMainSelectionReader } from "../ports/current-main";
+import type { VerifiedReleaseReader } from "../model/repositories/artifact";
+import type { CurrentMainSelectionReader } from "../model/repositories/current-main";
 
 export interface CanonicalSelectionDependencies {
   readonly currentMain: CurrentMainSelectionReader;

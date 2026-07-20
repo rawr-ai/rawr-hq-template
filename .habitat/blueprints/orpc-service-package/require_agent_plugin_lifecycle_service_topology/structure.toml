@@ -23,11 +23,11 @@ mode = "closed"
 required = [
   "exports",
   "exports.ts",
-  "providers",
 ]
 allowed = [
   "governance",
   "governance.ts",
+  "providers",
   "releases",
   "releases.ts",
 ]
@@ -60,6 +60,17 @@ mode = "closed"
 required = [
   "artifact-repository.ts",
   "mechanical-evidence.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "transitional-agent-plugin-provider-binding-files"
+root = "services/agent-plugin-lifecycle/src/bindings/providers"
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+  "resource-port.ts",
 ]
 allowed = []
 
@@ -185,7 +196,7 @@ allowed = []
 
 [[scopes]]
 name = "agent-plugin-lifecycle-uniform-module-shells"
-root = "services/agent-plugin-lifecycle/src/service/modules/!(governance|packaging|releases|vendors)"
+root = "services/agent-plugin-lifecycle/src/service/modules/!(governance|packaging|providers|releases|vendors)"
 kind = "directory"
 mode = "closed"
 required = [
@@ -199,6 +210,24 @@ required = [
 ]
 allowed = [
   "ports",
+]
+
+[[scopes]]
+name = "agent-plugin-lifecycle-providers-shell"
+root = "services/agent-plugin-lifecycle/src/service/modules/providers"
+kind = "directory"
+mode = "closed"
+required = [
+  "contract.ts",
+  "middleware.ts",
+  "model",
+  "module.ts",
+  "repository",
+  "router",
+  "schemas.ts",
+]
+allowed = [
+  "ports.ts",
 ]
 
 [[scopes]]
@@ -297,16 +326,6 @@ allowed = [
 ]
 
 [[scopes]]
-name = "agent-plugin-lifecycle-module-port-files"
-root = "services/agent-plugin-lifecycle/src/service/modules/*/ports"
-kind = "directory"
-mode = "closed"
-required = []
-allowed = [
-  "*.ts",
-]
-
-[[scopes]]
 name = "agent-plugin-lifecycle-exports-model"
 root = "services/agent-plugin-lifecycle/src/service/modules/exports/model"
 kind = "directory"
@@ -372,6 +391,59 @@ required = [
   "errors",
   "helpers",
   "policy",
+  "repositories",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-provider-model-repositories"
+root = "services/agent-plugin-lifecycle/src/service/modules/providers/model/repositories"
+kind = "directory"
+mode = "closed"
+required = [
+  "artifact.ts",
+  "canonical-native.ts",
+  "current-main.ts",
+  "evidence.ts",
+  "projection-storage.ts",
+  "provider.ts",
+  "state.ts",
+  "target-record-storage.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-provider-model-errors"
+root = "services/agent-plugin-lifecycle/src/service/modules/providers/model/errors"
+kind = "directory"
+mode = "closed"
+required = [
+  "deployment-result.ts",
+  "native-resource.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-provider-repositories"
+root = "services/agent-plugin-lifecycle/src/service/modules/providers/repository"
+kind = "directory"
+mode = "closed"
+required = [
+  "canonical-native-observer.ts",
+  "claude.ts",
+  "codex.ts",
+  "native.ts",
+  "projection-storage-codec.ts",
+  "projection-storage.ts",
+  "resource-claude.ts",
+  "resource-codex.ts",
+  "resource-marketplace.ts",
+  "resource-package.ts",
+  "resource-provenance.ts",
+  "resource-record-storage.ts",
+  "resource-shared.ts",
+  "target-record-codec.ts",
+  "target-records.ts",
 ]
 allowed = []
 

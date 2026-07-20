@@ -10,7 +10,7 @@ import { createProviderMarketplaceRegistration, marketplaceState,
 import type { AgentProviderProjection, ProviderProjectionMember } from "../../../src/service/modules/providers/model/policy/projection";
 import { createProviderInventory, type NativeMemberObservation,
   type NativeStandaloneExposureObservation, type ProviderInventory } from "../../../src/service/modules/providers/model/policy/state-machine";
-import type { NativeMutationAttempt } from "../../../src/service/modules/providers/ports/provider";
+import type { NativeMutationAttempt } from "../../../src/service/modules/providers/model/repositories/provider";
 
 const TARGET = mustTarget();
 const OWNER = "rawr-hq" as ProviderProjectionMember["providerSourceIdentity"];

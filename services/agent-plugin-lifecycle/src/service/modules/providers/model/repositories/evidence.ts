@@ -1,5 +1,5 @@
-import type { MechanicalEvidenceDigest, MechanicalProviderEvidence } from "../model/dto/mechanical-evidence";
-import type { DeploymentResult } from "../model/errors/deployment-result";
+import type { MechanicalEvidenceDigest, MechanicalProviderEvidence } from "../dto/mechanical-evidence";
+import type { DeploymentResult } from "../errors/deployment-result";
 
 export interface MechanicalEvidenceHandle {
   readonly evidenceDigest: MechanicalEvidenceDigest;

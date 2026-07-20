@@ -11,12 +11,14 @@ import {
 } from "../../../src/service/shared/release";
 import type { CurrentMainSelectionResult } from "../../../src/service/modules/governance/model/dto/current-main";
 import type {
-  CanonicalNativeObservation,
-  CanonicalNativeMutationAction,
-  CanonicalTargetStatus,
-  NativeMutationAttempt,
   ProviderLifecycleRuntime,
 } from "../../../src/service/modules/providers/ports";
+import type {
+  CanonicalNativeMutationAction,
+  CanonicalNativeObservation,
+} from "../../../src/service/modules/providers/model/dto/canonical-convergence";
+import type { CanonicalTargetStatus } from "../../../src/service/modules/providers/model/dto/outcome";
+import type { NativeMutationAttempt } from "../../../src/service/modules/providers/model/repositories/provider";
 import { parseProviderTarget, type ProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
 import {
   createProviderMarketplaceRegistration,

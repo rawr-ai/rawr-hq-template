@@ -4,12 +4,12 @@ import {
   canonicalDigest,
   equalBytes,
   type CanonicalValue,
-} from "../../service/modules/providers/model/helpers/canonical";
-import { exactRecord } from "../../service/modules/providers/model/helpers/parse";
+} from "../model/helpers/canonical";
+import { exactRecord } from "../model/helpers/parse";
 import {
   createTargetIdentitySidecar,
   type TargetIdentitySidecar,
-} from "../../service/modules/providers/model/policy/state-machine";
+} from "../model/policy/state-machine";
 import {
   failure,
   firstIssue,
@@ -17,14 +17,14 @@ import {
   success,
   type DeploymentResult,
   type ProviderDeploymentIssue,
-} from "../../service/modules/providers/model/errors/deployment-result";
-import { parseProviderTarget } from "../../service/modules/providers/model/dto/provider-target";
+} from "../model/errors/deployment-result";
+import { parseProviderTarget } from "../model/dto/provider-target";
 import type {
   TargetRecordKey,
   TargetRecordMutation,
   TargetRecordObservation,
   TargetRecordPlanDigest,
-} from "../../service/modules/providers/ports/target-record-storage";
+} from "../model/repositories/target-record-storage";
 
 const MAX_IDENTITY_BYTES = 64 * 1024;
 

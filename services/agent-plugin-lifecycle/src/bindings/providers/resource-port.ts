@@ -1,26 +1,4 @@
-import type { ProviderMarketplaceSource } from "../../service/modules/providers/ports/state";
-
-export type NativeProviderResourceFailureKind =
-  | "ownership-conflict"
-  | "provider-failure";
-
-/** Service-owned projection of a typed native-resource failure. */
-export class NativeProviderResourceFailure extends Error {
-  readonly _tag = "NativeProviderResourceFailure" as const;
-  readonly kind: NativeProviderResourceFailureKind;
-  readonly path: string | undefined;
-
-  constructor(input: Readonly<{
-    kind: NativeProviderResourceFailureKind;
-    detail: string;
-    path: string | undefined;
-  }>) {
-    super(input.detail);
-    this.name = "NativeProviderResourceFailure";
-    this.kind = input.kind;
-    this.path = input.path;
-  }
-}
+import type { ProviderMarketplaceSource } from "../../service/modules/providers/model/repositories/state";
 
 export interface NativeResourceSessionInput {
   readonly executablePath: string;
