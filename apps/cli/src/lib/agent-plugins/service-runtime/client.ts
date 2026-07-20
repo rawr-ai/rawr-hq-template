@@ -89,6 +89,9 @@ const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
   "releases.check": (client) => Object.freeze({
     releases: Object.freeze({ check: client.releases.check }),
   }),
+  "releases.checkRepository": (client) => Object.freeze({
+    releases: Object.freeze({ checkRepository: client.releases.checkRepository }),
+  }),
   "releases.build": (client) => Object.freeze({
     releases: Object.freeze({ build: client.releases.build }),
   }),

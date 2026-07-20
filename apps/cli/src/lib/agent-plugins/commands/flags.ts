@@ -32,6 +32,20 @@ export const gitExecutableFlag = Flags.string({
   description: "Absolute controller-bound Git executable",
 });
 
+export const CHECK_MODES = [
+  "release",
+  "repository-staged",
+  "repository-clean",
+] as const;
+
+export type CheckMode = (typeof CHECK_MODES)[number];
+
+export const checkModeFlag = Flags.string({
+  description: "Closed curated lifecycle check mode",
+  options: [...CHECK_MODES],
+  default: "release",
+});
+
 export const hostedGovernanceExecutableFlag = Flags.string({
   description: "Absolute controller-bound GitHub CLI executable for hosted approval reads",
 });

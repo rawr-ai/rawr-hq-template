@@ -13,6 +13,7 @@ import {
   parseArtifactHandle,
   parseAttestPromotionRequest,
   parseBuildRequest,
+  parseCheckOperationRequest,
   parseExportRequest,
   parsePackageRequest,
   parseRetireRequest,
@@ -112,6 +113,7 @@ describe("qualified lifecycle command boundary", () => {
     for (const invalid of [
       () => parseArtifactHandle(hex64),
       () => parseArtifactHandle(`release:rd1_${"A".repeat(64)}:ad1_${"2".repeat(64)}`),
+      () => parseCheckOperationRequest({ mode: "codec" }),
       () => parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha", "complete-set": true }),
       () => parsePackageRequest({ artifact: releaseHandle, format: "cowork-v1", output: "relative.zip" }),
       () => parseExportRequest({
@@ -156,7 +158,56 @@ describe("qualified lifecycle command boundary", () => {
     });
   });
 
+  it("rejects retired and cross-mode check inputs before a client can be constructed", () => {
+    let clientConstructions = 0;
+    const construct = () => {
+      clientConstructions += 1;
+    };
+    const staged = stagedReleaseWorkspace();
+
+    for (const invalid of [
+      { mode: "protected-lanes" },
+      { ...staged, mode: "repository-staged", "source-commit": hex40 },
+      { ...staged, mode: "repository-staged", "source-tree": hex64 },
+      { ...staged, mode: "repository-staged", plugin: "alpha" },
+      { ...staged, mode: "repository-staged", "complete-set": true },
+      { ...staged, mode: "repository-clean", "source-tree": hex64 },
+      { ...staged, mode: "repository-clean", "source-commit": hex40 },
+      { ...releaseWorkspace(), mode: "repository-clean", plugin: "alpha" },
+      { ...releaseWorkspace(), mode: "repository-clean", "complete-set": true },
+    ]) {
+      expect(() => {
+        parseCheckOperationRequest(invalid);
+        construct();
+      }).toThrow();
+    }
+
+    expect(clientConstructions).toBe(0);
+
+    for (const retired of [
+      ["--mode", "protected-lanes"],
+      ["--protected-lanes-json", "{}"],
+      ["--protected-lanes-schema-sha256", hex64],
+    ]) {
+      const result = runRawr(["agent", "plugins", "check", ...retired, "--json"]);
+      expect(result.status, `${retired.join(" ")}\n${result.stderr}`).toBe(2);
+      expect(result.stdout).not.toContain('"operation"');
+    }
+  });
+
   it("parses every command into its closed procedure request", () => {
+    expect(parseCheckOperationRequest({ ...releaseWorkspace(), mode: "release", plugin: "alpha" }))
+      .toMatchObject({ operation: "releases.check", input: { mode: { kind: "targeted", pluginId: "alpha" } } });
+    expect(parseCheckOperationRequest({ ...stagedReleaseWorkspace(), mode: "repository-staged" }))
+      .toMatchObject({
+        operation: "releases.checkRepository",
+        input: { kind: "staged", contentWorkspace: { locator: "/tmp/content" } },
+      });
+    expect(parseCheckOperationRequest({ ...releaseWorkspace(), mode: "repository-clean" }))
+      .toMatchObject({
+        operation: "releases.checkRepository",
+        input: { kind: "clean", contentWorkspace: { sourceCommit: hex40, sourceTree: hex64 } },
+      });
     expect(parseBuildRequest({ ...releaseWorkspace(), "complete-set": true })).toMatchObject({
       mode: { kind: "complete-set" },
       contentWorkspace: { locator: "/tmp/content", sourceCommit: hex40, sourceTree: hex64 },
@@ -507,7 +558,11 @@ function recordingClient(calls: string[]): Client {
     return { kind: "Recorded" };
   };
   return {
-    releases: { check: call("releases.check"), build: call("releases.build") },
+    releases: {
+      check: call("releases.check"),
+      checkRepository: call("releases.checkRepository"),
+      build: call("releases.build"),
+    },
     vendors: { status: call("vendors.status"), update: call("vendors.update") },
     packaging: { package: call("packaging.package") },
     exports: { apply: call("exports.apply") },
@@ -532,8 +587,13 @@ function operationRequests(): LifecycleOperationRequest[] {
   const releaseSet = parseArtifactHandle(setHandle);
   if (release.kind !== "release" || releaseSet.kind !== "complete-set") throw new Error("fixture handle mismatch");
   const target = [{ provider: "codex" as const, home: "/tmp/codex-home" }];
+  const stagedCheck = parseCheckOperationRequest({
+    ...stagedReleaseWorkspace(),
+    mode: "repository-staged",
+  });
   return [
     { operation: "releases.check", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
+    stagedCheck,
     { operation: "releases.build", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
     { operation: "vendors.status", input: parseVendorStatusRequest(vendorWorkspace()) },
     { operation: "vendors.update", input: parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] }) },
@@ -560,6 +620,20 @@ function releaseWorkspace() {
     "source-tree": hex64,
     "release-input": "records/release-input.json",
     "plugin-root": "plugins/agents",
+  };
+}
+
+function stagedReleaseWorkspace() {
+  const input = releaseWorkspace();
+  return {
+    "content-workspace": input["content-workspace"],
+    "repository-identity": input["repository-identity"],
+    "content-authority": input["content-authority"],
+    "remote-name": input["remote-name"],
+    "remote-url": input["remote-url"],
+    ref: input.ref,
+    "release-input": input["release-input"],
+    "plugin-root": input["plugin-root"],
   };
 }
 

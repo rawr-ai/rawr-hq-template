@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6A_THIN_AUTHORITY_REVIEWED`
+`T6B_REPOSITORY_CHECKS_REVIEWED`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
@@ -26,10 +26,12 @@ capsules; every provider mode is capsule-free.
 | Proportionality amendment | [[authority-amendment]] |
 | Opening controller | `0823cfe6...`; diagnostic only, never an active input |
 | T6A branch | `codex/c6-agent-lifecycle-public-interface` |
-| T6B retained commit | `7ce9d2ca`; restacked identity pending T6A amendment |
-| Retained DevOps test node | `e75290c3`; restacked identity pending |
-| Retained CLI target node | `00f08eaa`; restacked identity pending |
-| Deterministic manifest node | `94734a1e`; restacked identity pending |
+| T6B Git observation | `codex/c6-staged-git-observation` / `478cc8e4` |
+| T6B service validation | `codex/c6-repository-check-service` / `dd7f0fd5` |
+| T6B CLI projection | `codex/c6-repository-check-cli` / this record node |
+| Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
+| Retained CLI target node | `codex/c6-serialize-cli-test-target` |
+| Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
 
 Personal records remain unlanded until the installed Template interface can
 enforce their first semantic checkpoint. No hook bypass, legacy mixed sync, or
@@ -54,7 +56,7 @@ global undo redesign, and Inngest candidate bytes.
 | Slice | State | Proof gate |
 | --- | --- | --- |
 | T6A thin record | complete | strict OpenSpec plus four standing reviews |
-| T6B repository checks | retained, narrowing pending | staged/clean exactness, index race, declared-input boundary, one procedure |
+| T6B repository checks | complete | staged/clean exactness, index race, declared-input boundary, one procedure |
 | T6C1 current-main v2 | unopened | canonical codec, direct Git resolution, old ceremony/commands unreachable |
 | T6C2 canonical native path | unopened | resolved selector, live native provenance, no canonical hidden state or receipt-retire route |
 | T6C3 export independence | unopened | destination-local ledger/collisions, no native-home registry |
@@ -75,8 +77,6 @@ follow-up work.
 
 ## Current Gate
 
-- Recut the retained stack and amend T6A to this record.
-- Validate and review the thin OpenSpec.
 - Implement T6C1 as the sole current-main v2 interface, then T6C2 as the thin
   canonical consumer without reopening test modes.
 - Implement T6C3 as the owner-local export boundary with no provider-home
@@ -86,16 +86,19 @@ follow-up work.
 - Keep Inngest `HF01_PENDING`; exact landed release input excludes its external
   candidate root without blocking unrelated landed content.
 
-## Existing T6B Proof
+## T6B Proof
+
+The three nodes deliberately separate resource observation, service-owned
+policy/router behavior, and CLI projection.
 
 | Boundary | Result |
 | --- | --- |
-| Service | The retained staged/clean behavior previously passed inside 33 files / 294 tests; the obsolete protected rows are now removed and must be regated. |
-| CLI | Four focused files / 41 tests passed; every invocation selected one typed procedure. |
-| Content Git provider | 24 tests passed; staged reads used declared blobs, `GIT_NO_LAZY_FETCH=1`, and no authoring/worktree-changing command. |
-| Closed input | The exact settlement invocation selects landed canonical personal main and supplies no external Inngest candidate locator, member, or destination. |
-| Static/structural | Service, CLI, resource/provider lint/typecheck/build and positive Habitat rules previously passed; narrowed proof is pending. |
-| Reviews | TypeScript/refactor, architecture/authority, behavior/testing, and structural quality closed every P1/P2. |
+| Service | 32 files / 292 tests passed. Repository validation owns semantic classification, closes the staged-index race, enforces checked payload bounds, and acquires no unrelated module port. |
+| CLI | Two focused files / 16 tests passed, including 13 qualified-command cases; each accepted mode selected exactly one typed procedure, while mixed, retired, or surplus inputs rejected before client construction. |
+| Content Git provider | 24 tests passed; staged reads used declared blobs, `GIT_NO_LAZY_FETCH=1`, and no object-authoring or worktree-changing command. |
+| Closed input | The settlement contract selects landed canonical personal main and supplies no external Inngest candidate locator, member, or destination. Protected runtime mode/flags are unreachable. Operational execution remains a T6F proof. |
+| Static/structural | Lint and typecheck passed in all four affected projects, builds passed in all three build-owning projects, and lifecycle check/structural plus CLI structural passed without cache. |
+| Reviews | TypeScript/refactor, architecture/authority, behavior/testing, and structural quality approved the narrowed implementation with no remaining P1/P2. |
 
 ## Standing Reviews
 
