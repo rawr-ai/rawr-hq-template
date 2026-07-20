@@ -45,8 +45,9 @@
   Move host materialization to the CLI composition edge, route stateful
   export-owner classification/replay through export procedures, and expose no
   compatibility alias or second client.
-- [ ] 2A.4 Close the service package surface around its client factory/type and
-  specifically required contract only. Update positive Habitat topology and
+- [ ] 2A.4 Close the service package surface around its client factory, named
+  construction-boundary types, thin composed router, and specifically required
+  contract. Update positive Habitat topology and
   dependency-direction enforcement, then pass focused behavior, full service
   and CLI tests, lint, typecheck, build, strict OpenSpec, and all four standing
   reviews in semantic module-sized Graphite nodes.

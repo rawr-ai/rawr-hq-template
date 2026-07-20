@@ -52,11 +52,13 @@ domain behavior. Contract trees compose upward into the root implementer;
 implementation and context flow downward into module routers. No service-root
 binding facade imports module implementation upward.
 
-At task 2A closure, the packaged service exposes its client factory/type and
-only a specifically required contract surface. It does not export dependency
-bags, module ports, materializers, resource adapters, routers, or broad DTO
-barrels. Consumers infer the client-construction input from the client factory
-rather than importing `bindings/*` or `ports/*`. Controller-owned undo remains
+At task 2A closure, the packaged service exposes its client factory, named
+construction-boundary types, thin composed router boundary, and only a
+specifically required contract surface. It does not export module ports,
+materializers, resource adapters, repositories, module routers, or broad DTO
+barrels. Consumers import the named client-construction boundary rather than
+reaching through `bindings/*`, `ports/*`, or implementation paths.
+Controller-owned undo remains
 the generic capsule/state coordinator, while export-owned classification and
 replay will run through export procedures over the service's resource context.
 Native Codex/Claude mutation remains in external providers and is not
