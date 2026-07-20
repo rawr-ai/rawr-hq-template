@@ -1,6 +1,13 @@
 import { parseProviderDeploymentRequest } from "../model/dto/mode";
 import { issue, success, type DeploymentResult } from "../model/errors/deployment-result";
 import { module } from "../module";
+import type {
+  CompleteTestProviderOperationOutcome,
+  CompleteTestTargetOperationOutcome,
+  ProviderProjectionBinding,
+  UnboundTargetOperationOutcome,
+} from "../model/dto/outcome";
+import type { ProviderTargetPlan } from "../model/policy/state-machine";
 import type { VerifiedReleaseReader } from "../model/repositories/artifact";
 import type { MechanicalEvidencePublisher } from "../model/repositories/evidence";
 import type { ProviderTargetMutator, ProviderTargetReader } from "../model/repositories/provider";
@@ -20,7 +27,7 @@ import {
   executeProjectionPlans,
   resultFailure,
 } from "./operation-support";
-import { providerOperationResult } from "./procedure-result";
+import { completeTestOperationResult } from "./procedure-result";
 
 export interface CompleteTestDependencies {
   readonly releases: VerifiedReleaseReader;
@@ -36,7 +43,7 @@ export interface CompleteTestDependencies {
 }
 
 export const completeTest = module.completeTest.handler(
-  async ({ context, input }) => providerOperationResult(
+  async ({ context, input }) => completeTestOperationResult(
     executeCompleteTest(input, {
       releases: context.releases,
       provider: context.provider,
@@ -55,7 +62,7 @@ export const completeTest = module.completeTest.handler(
 export async function executeCompleteTest(
   input: unknown,
   ports: CompleteTestDependencies,
-): Promise<DeploymentResult<import("../model/dto/outcome").ProviderOperationOutcome>> {
+): Promise<DeploymentResult<CompleteTestProviderOperationOutcome>> {
     const parsed = parseProviderDeploymentRequest(input);
     if (!parsed.ok) return parsed;
     if (parsed.value.kind !== "complete-test") {
@@ -80,7 +87,8 @@ export async function executeCompleteTest(
       projectionMaterializer: ports.projectionMaterializer,
       marketplaceMaterializer: ports.marketplaceMaterializer,
     });
-    const aggregate = aggregateOutcome(targetOutcomes);
+    const boundOutcomes = bindCompleteProjectionOutcomes(plans, targetOutcomes);
+    const aggregate = aggregateOutcome(boundOutcomes);
     return success(await attachMechanicalEvidence(
       aggregate,
       plans,
@@ -88,4 +96,55 @@ export async function executeCompleteTest(
       request.evaluationProfile,
       ports.evidence,
     ));
+}
+
+export function bindCompleteProjectionOutcomes(
+  plans: readonly ProviderTargetPlan[],
+  outcomes: readonly UnboundTargetOperationOutcome[],
+): readonly CompleteTestTargetOperationOutcome[] {
+  const plansByTarget = new Map(plans.map((plan) => [plan.target.targetDigest, plan]));
+  const bound: CompleteTestTargetOperationOutcome[] = [];
+
+  for (const [index, outcome] of outcomes.entries()) {
+    if (outcome.status === "blocked" || outcome.status === "failed") {
+      bound.push(outcome);
+      continue;
+    }
+    const projection = plansByTarget.get(outcome.target.targetDigest)?.projection;
+    if (projection === null || projection === undefined || projection.provider !== outcome.target.provider) {
+      const bindingIssue = issue(
+        "PROJECTION_MISMATCH",
+        `targets[${index}].projectionBinding`,
+        "Successful complete-test outcome requires its exact rendered projection binding",
+        outcome.target.provider,
+        projection?.provider ?? "missing",
+      );
+      bound.push(Object.freeze({
+        target: outcome.target,
+        status: "failed",
+        events: Object.freeze([
+          ...outcome.events,
+          Object.freeze({
+            phase: "failed" as const,
+            target: outcome.target,
+            issues: Object.freeze([bindingIssue]),
+          }),
+        ]),
+        issues: Object.freeze([...outcome.issues, bindingIssue]),
+        visibleFingerprint: outcome.visibleFingerprint,
+        projectionBinding: null,
+      }));
+      continue;
+    }
+    const projectionBinding: ProviderProjectionBinding = Object.freeze({
+      provider: projection.provider,
+      projectionDigest: projection.projectionDigest,
+      rendererProtocol: projection.rendererProtocol,
+      adapterProtocol: projection.adapterProtocol,
+      capabilityProfileDigest: projection.capabilityProfile.capabilityProfileDigest,
+    });
+    bound.push(Object.freeze({ ...outcome, projectionBinding }));
+  }
+
+  return Object.freeze(bound);
 }

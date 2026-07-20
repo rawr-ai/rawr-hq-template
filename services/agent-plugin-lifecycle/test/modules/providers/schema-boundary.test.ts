@@ -1,9 +1,25 @@
 import { schema } from "@rawr/hq-sdk";
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import type { Static } from "typebox";
 import { Value } from "typebox/value";
 
-import { ProviderOperationResultSchema } from "../../../src/service/modules/providers/schemas";
+import {
+  CanonicalStatusResultSchema,
+  CompleteTestResultSchema,
+  TargetedTestResultSchema,
+} from "../../../src/service/modules/providers/schemas";
+import {
+  type CanonicalStatusOutcome,
+  type ProviderProjectionBinding,
+  ProviderProjectionBindingSchema,
+} from "../../../src/service/modules/providers/model/dto/outcome";
+import { parseProviderTargets } from "../../../src/service/modules/providers/model/dto/provider-target";
+import {
+  issue as providerIssue,
+  success,
+} from "../../../src/service/modules/providers/model/errors/deployment-result";
 import { verifyTargetReceipt } from "../../../src/service/modules/providers/model/policy/receipt";
+import { canonicalStatusResult } from "../../../src/service/modules/providers/router/procedure-result";
 
 const digest = (prefix: string, seed: string) => `${prefix}${seed.repeat(64)}`;
 const target = Object.freeze({
@@ -202,6 +218,13 @@ const events = Object.freeze([
   { phase: "blocked", target, issues: [issue] },
   { phase: "failed", target, issues: [issue] },
 ]);
+const projectionBinding = Object.freeze({
+  provider: projection.provider,
+  projectionDigest: projection.projectionDigest,
+  rendererProtocol: projection.rendererProtocol,
+  adapterProtocol: projection.adapterProtocol,
+  capabilityProfileDigest: projection.capabilityProfile.capabilityProfileDigest,
+}) satisfies ProviderProjectionBinding;
 const validResult = Object.freeze({
   ok: true,
   value: {
@@ -212,6 +235,7 @@ const validResult = Object.freeze({
       events,
       issues: [],
       visibleFingerprint: digest("vf1_", "c"),
+      projectionBinding,
     }],
     evidence: null,
     issues: [],
@@ -219,6 +243,62 @@ const validResult = Object.freeze({
 });
 
 describe("provider procedure result schema boundary", () => {
+  it("owns the projection binding schema, static type, and closed runtime shape together", () => {
+    type Equal<TLeft, TRight> =
+      (<T>() => T extends TLeft ? 1 : 2) extends
+      (<T>() => T extends TRight ? 1 : 2)
+        ? (<T>() => T extends TRight ? 1 : 2) extends
+          (<T>() => T extends TLeft ? 1 : 2)
+          ? true
+          : false
+        : false;
+    type Assert<TValue extends true> = TValue;
+    type ProjectionBindingParity = Assert<Equal<
+      ProviderProjectionBinding,
+      Static<typeof ProviderProjectionBindingSchema>
+    >>;
+    expectTypeOf<ProjectionBindingParity>().toEqualTypeOf<true>();
+    expect(Value.Check(ProviderProjectionBindingSchema, projectionBinding)).toBe(true);
+
+    for (const invalid of [
+      { ...projectionBinding, ambientAuthority: true },
+      { ...projectionBinding, provider: "unknown" },
+      { ...projectionBinding, projectionDigest: digest("rd1_", "a") },
+      { ...projectionBinding, rendererProtocol: "renderer-without-version" },
+      { ...projectionBinding, adapterProtocol: "adapter@v0" },
+      { ...projectionBinding, capabilityProfileDigest: digest("ap1_", "b") },
+    ]) {
+      expect(Value.Check(ProviderProjectionBindingSchema, invalid)).toBe(false);
+    }
+  });
+
+  it("projects readonly domain values into detached schema-owned boundary data", async () => {
+    const parsedTargets = parseProviderTargets([{ provider: "codex", home: "/tmp/codex-home" }]);
+    expect(parsedTargets.ok).toBe(true);
+    if (!parsedTargets.ok) throw new Error(parsedTargets.issues[0].message);
+    const parsedTarget = parsedTargets.value[0];
+    if (parsedTarget === undefined) throw new Error("expected one parsed provider target");
+
+    const domainIssues = Object.freeze([
+      providerIssue("VISIBILITY_FAILED", "targets[0]", "visible skill was absent"),
+    ]);
+    const domainValue: readonly CanonicalStatusOutcome[] = Object.freeze([Object.freeze({
+      target: parsedTarget,
+      status: "DRIFTED",
+      issues: domainIssues,
+    })]);
+
+    const projected = await canonicalStatusResult(Promise.resolve(success(domainValue)));
+    expect(Value.Check(CanonicalStatusResultSchema, projected)).toBe(true);
+    expect(projected.ok).toBe(true);
+    if (!projected.ok) throw new Error(projected.issues[0]?.message ?? "projection failed");
+
+    expect(projected.value).not.toBe(domainValue);
+    expect(projected.value[0]).not.toBe(domainValue[0]);
+    expect(projected.value[0]?.target).not.toBe(domainValue[0]?.target);
+    expect(projected.value[0]?.issues).not.toBe(domainValue[0]?.issues);
+  });
+
   it("admits every provider event and nested action/plan variant", () => {
     expect(events.map((event) => event.phase)).toEqual([
       "planned",
@@ -230,7 +310,14 @@ describe("provider procedure result schema boundary", () => {
       "blocked",
       "failed",
     ]);
-    expect(Value.Check(ProviderOperationResultSchema, validResult)).toBe(true);
+    expect(Value.Check(CompleteTestResultSchema, validResult)).toBe(true);
+    expect(Value.Check(TargetedTestResultSchema, {
+      ...validResult,
+      value: {
+        ...validResult.value,
+        targets: [{ ...validResult.value.targets[0], projectionBinding: null }],
+      },
+    })).toBe(true);
   });
 
   it("rejects the retired canonical-accepted receipt scope without a compatibility value", () => {
@@ -335,15 +422,44 @@ describe("provider procedure result schema boundary", () => {
         },
       },
       {
+        ...validResult,
+        value: {
+          ...validResult.value,
+          targets: [{
+            ...targetOutcome,
+            projectionBinding: { ...targetOutcome.projectionBinding, extraAuthority: true },
+          }],
+        },
+      },
+      {
+        ...validResult,
+        value: {
+          ...validResult.value,
+          targets: [{
+            ...targetOutcome,
+            status: "failed",
+          }],
+        },
+      },
+      {
+        ...validResult,
+        value: {
+          ...validResult.value,
+          targets: [{ ...targetOutcome, projectionBinding: null }],
+        },
+      },
+      {
         ok: false,
         issues: [{ ...issue, code: "TOTALLY_REAL_PROVIDER_FAILURE" }],
       },
     ];
 
     for (const candidate of invalid) {
-      expect(Value.Check(ProviderOperationResultSchema, candidate)).toBe(false);
-      const validated = await schema(ProviderOperationResultSchema)["~standard"].validate(candidate);
+      expect(Value.Check(CompleteTestResultSchema, candidate)).toBe(false);
+      const validated = await schema(CompleteTestResultSchema)["~standard"].validate(candidate);
       expect("issues" in validated).toBe(true);
     }
+
+    expect(Value.Check(TargetedTestResultSchema, validResult)).toBe(false);
   });
 });

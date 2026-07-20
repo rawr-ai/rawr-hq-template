@@ -108,7 +108,7 @@ keep tasks 2A.1-2A.4 open.
   refuse before undeclared payload materialization. Preserve declared-member
   file closure, ignore unrelated repository paths, add no global scanner or
   semantic Grit rule, and land the behavior as a separate semantic node.
-- [ ] 3C.3 Project the exact verified provider binding on each successful
+- [x] 3C.3 Project the exact verified provider binding on each successful
   complete-test target outcome so the current-main record can be authored from
   the same projection that was tested. Failures expose no binding; evidence
   codecs and stores remain unchanged. In the same provider-owned node, prove a

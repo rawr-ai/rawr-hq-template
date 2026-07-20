@@ -96,7 +96,7 @@ Inngest candidate bytes.
 | T6C3 export independence | 5.1 complete/reviewed; 5.2-5.4 open | fixed-slot refusal at acquire/native edge; export admission and aggregate retirement remain |
 | T6D truthful test owners | complete, reviewed | owner-local DevOps fixture and ordinary serialized lifecycle/CLI targets |
 | T6E deterministic manifest | complete, reviewed | native JSON projection, code-unit canonicalization, and full build-twice equality |
-| T6F Personal checkpoint prerequisites | active; 3C.1-3C.2 complete/reviewed and queued for landing | pure release-input authoring, positive declared-tree closure, tested provider bindings, and immutable controller distribution without repository coupling |
+| T6F Personal checkpoint prerequisites | active; 3C.1-3C.3 complete/reviewed and queued for landing | pure release-input authoring, positive declared-tree closure, tested provider bindings, and immutable controller distribution without repository coupling |
 | T6F landing/settlement | open; 8.1 next | independently landed repos, disposable/live native convergence, read-only repeat |
 
 ## Retired Unlanded Nodes
@@ -179,6 +179,22 @@ global home, or unrelated repository path.
 | Proof | On the integrated continuation stack, the complete lifecycle suite passed 42 files / 372 tests. Focused staged and clean cases passed 29/29 and prove deterministic first-child refusal for canonical undeclared plugins, invalid-case directories, root-level files, and a root-level blob named for a declared plugin. They also preserve unrelated-path exclusion, one release-input blob read, zero undeclared payload reads, and zero writes/evidence captures. Lifecycle lint, typecheck, build, sync, all three locked structural rules, strict OpenSpec, and `git diff --check` passed without cache. |
 | Structural boundary | The policy is an owner-local pure release module. No global scanner, semantic Grit rule, package export, CLI mode, provider dependency, or Personal repository relationship is added. |
 | Reviews | Final architecture/oRPC, behavior/testing/state-machine, TypeScript/refactor, and structural/Habitat reviews report no remaining P1/P2. |
+
+## T6F Verified Provider Binding Prerequisite
+
+This prepared checkpoint advances [[tasks#3C. Personal Checkpoint Prerequisites|task 3C.3]]
+inside the existing provider module. It projects identity already established by
+complete-test; it creates no receipt, evidence store, channel, or second provider
+state owner.
+
+| Boundary | Result |
+| --- | --- |
+| Binding authority | A successful complete-test target returns its exact provider, projection digest, renderer protocol, adapter protocol, and capability-profile digest. Blocked and failed targets expose `null`; targeted-test outcomes remain unbound. A successful complete-test without the matching tested projection fails internally rather than fabricating an identity. |
+| Schema authority | `ProviderProjectionBindingSchema` is a closed, readonly TypeBox artifact and its TypeScript type is exactly `Static<typeof Schema>`. All five provider procedure result types derive from their concrete schemas; the one module-local `Parse(schema, Clone(result))` projection validates output and severs aliases. Only the pre-existing refined `Uint8Array` leaf uses `Type.Unsafe`. |
+| Native behavior | Complete-test refreshes a selected stale member while preserving an omitted installed member, returns the binding for every successful target, and then repeats through live inspection with zero mutation, receipt, sidecar, or evidence writes. Existing targeted-test preservation remains unchanged. |
+| Proof | Focused provider behavior/schema proof passed 43 tests; on the integrated continuation stack, the complete lifecycle suite passed 42 files / 375 tests. Lifecycle lint, typecheck, build, sync, structural/Habitat, strict OpenSpec, and `git diff --check` passed after the TypeBox correction. |
+| Reviews | Architecture/oRPC, TypeScript/TypeBox, behavior/state-machine, and structural/Habitat reviews report no remaining finding. |
+| Scope | No provider home, Personal repository, controller selector, release/channel record, export destination, or protected-lane input was mutated. [[tasks#5. T6C3: Export Destination Independence|Export task 5.2]] remains blocked and untouched. |
 
 ## Template Required Ratchet Settlement Gate
 

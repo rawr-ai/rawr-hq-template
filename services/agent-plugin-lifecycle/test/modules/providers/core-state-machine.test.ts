@@ -1,4 +1,7 @@
 import {
+  createAgentPluginRelease,
+  createAgentPluginReleaseInput,
+  createAgentPluginReleaseSet,
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
   payloadEntryBytes,
@@ -10,7 +13,7 @@ import {
 } from "../../../src/service/shared/release";
 import { describe, expect, it } from "vitest";
 
-import { productFixture } from "../../shared/release/fixtures";
+import { must, productFixture, SOURCE } from "../../shared/release/fixtures";
 import {
   createProviderMarketplaceRegistration,
   marketplaceState,
@@ -55,6 +58,7 @@ import {
   parseProviderTarget,
   type ProviderTarget,
 } from "../../../src/service/modules/providers/model/dto/provider-target";
+import type { UnboundTargetOperationOutcome } from "../../../src/service/modules/providers/model/dto/outcome";
 import {
   decodeMechanicalProviderEvidence,
 } from "../../../src/service/modules/providers/model/helpers/evidence-codec";
@@ -67,6 +71,7 @@ import type {
 } from "../../../src/service/modules/providers/model/repositories/provider";
 import { failure, issue, success } from "../../../src/service/modules/providers/model/errors/deployment-result";
 import {
+  bindCompleteProjectionOutcomes,
   executeCompleteTest,
   type CompleteTestDependencies,
 } from "../../../src/service/modules/providers/router/complete-test.router";
@@ -121,6 +126,17 @@ describe("provider deployment state machine", () => {
     const app = createCompleteTest(() => harness.completeDependencies());
     const first = await app(harness.completeRequest([CODEX_A]));
     expect(first.ok && first.value.status).toBe("Mutated");
+    if (!first.ok) return;
+    const firstBinding = first.value.targets[0]?.projectionBinding;
+    const firstReceipt = harness.receiptFor(CODEX_A);
+    if (firstReceipt === null) throw new Error("target receipt fixture missing");
+    expect(firstBinding).toEqual({
+      provider: "codex",
+      projectionDigest: firstReceipt.body.scope.projectionDigest,
+      rendererProtocol: "rawr-provider-renderer/codex@v1",
+      adapterProtocol: firstReceipt.body.scope.adapterProtocol,
+      capabilityProfileDigest: firstReceipt.body.scope.capabilityProfileDigest,
+    });
     expect(harness.receiptFor(CODEX_A)).not.toBeNull();
     expect(harness.memberIds(CODEX_A)).toEqual(["alpha", "beta"]);
     expect(harness.counters.projectionMaterializations).toBe(1);
@@ -130,6 +146,8 @@ describe("provider deployment state machine", () => {
     harness.resetCounters();
     const second = await app(harness.completeRequest([CODEX_A]));
     expect(second.ok && second.value.status).toBe("ReadOnlyConverged");
+    if (!second.ok) return;
+    expect(second.value.targets[0]?.projectionBinding).toEqual(firstBinding);
     expect(harness.counters.capabilityReads).toBeGreaterThan(0);
     expect(harness.counters.inventoryReads).toBeGreaterThan(0);
     expect(harness.counters.visibilityReads).toBeGreaterThan(0);
@@ -174,6 +192,8 @@ describe("provider deployment state machine", () => {
     harness.resetCounters();
     const targeted = await createTargetedTest(() => harness.targetedDependencies())(targetedRequest);
     expect(targeted.ok).toBe(true);
+    if (!targeted.ok) return;
+    expect(targeted.value.targets[0]?.projectionBinding).toBeNull();
     expect(harness.memberIds(CODEX_A)).toEqual(["alpha", "beta"]);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.marketplaceWrites).toBe(1);
@@ -268,8 +288,16 @@ describe("provider deployment state machine", () => {
 
       expect(result.ok && result.value.status).toBe("PartialFailure");
       if (!result.ok) return;
-      expect(result.value.targets.find((target) => target.target.provider === "codex")?.status).toBe("failed");
-      expect(result.value.targets.find((target) => target.target.provider === "claude")?.status).toBe("mutated");
+      const failed = result.value.targets.find((target) => target.target.provider === "codex");
+      const successful = result.value.targets.find((target) => target.target.provider === "claude");
+      expect(failed?.status).toBe("failed");
+      expect(failed?.projectionBinding).toBeNull();
+      expect(successful?.status).toBe("mutated");
+      expect(successful?.projectionBinding).toMatchObject({
+        provider: "claude",
+        rendererProtocol: "rawr-provider-renderer/claude@v1",
+        adapterProtocol: "claude-native-adapter@v1",
+      });
       expect(harness.liveStateFor(CODEX_A)).toEqual(failedTargetBefore);
       expect(harness.memberIds(CLAUDE_A)).toEqual(["alpha", "beta"]);
       expect(harness.receiptFor(CODEX_A)).toBeNull();
@@ -279,21 +307,90 @@ describe("provider deployment state machine", () => {
     },
   );
 
-  it("preserves an omitted prior claim in complete-test mode without cleanup or authority escalation", async () => {
+  it("fails internally when a successful complete-test outcome has no matching plan projection", async () => {
+    const harness = new Harness();
+    const result = await createCompleteTest(() => harness.completeDependencies())(
+      harness.completeRequest([CODEX_A]),
+    );
+    if (!result.ok) throw new Error(result.issues[0].message);
+    const successful = result.value.targets[0];
+    if (successful === undefined || successful.status === "blocked" || successful.status === "failed") {
+      throw new Error("successful target fixture missing");
+    }
+    const unbound: UnboundTargetOperationOutcome = Object.freeze({
+      ...successful,
+      projectionBinding: null,
+    });
+
+    const rebound = bindCompleteProjectionOutcomes([], [unbound]);
+    expect(rebound[0]).toMatchObject({
+      status: "failed",
+      projectionBinding: null,
+      issues: [{
+        code: "PROJECTION_MISMATCH",
+        path: "targets[0].projectionBinding",
+      }],
+    });
+    expect(rebound[0]?.events).toEqual([
+      ...unbound.events,
+      expect.objectContaining({
+        phase: "failed",
+        issues: [expect.objectContaining({ code: "PROJECTION_MISMATCH" })],
+      }),
+    ]);
+  });
+
+  it("refreshes a selected stale member while preserving an omitted prior claim in complete-test mode", async () => {
     const harness = new Harness();
     const app = createCompleteTest(() => harness.completeDependencies());
     const request = harness.completeRequestFor(harness.alphaOnlyCompleteSnapshot, [CODEX_A]);
     expect((await app(request)).ok).toBe(true);
     harness.addStaleReceiptClaim(CODEX_A, "beta", true);
+    harness.seedPriorReleaseReceipt(CODEX_A);
+    const betaBefore = harness.liveStateFor(CODEX_A).inventory.members.find(
+      (member) => member.pluginId === "beta",
+    );
+    if (betaBefore === undefined) throw new Error("omitted beta fixture missing");
 
     harness.resetCounters();
     const repeated = await app(request);
-    expect(repeated.ok && repeated.value.status).toBe("ReadOnlyConverged");
+    expect(repeated.ok && repeated.value.status).toBe("Mutated");
+    if (!repeated.ok) return;
+    expect(repeated.value.targets[0]?.projectionBinding).toMatchObject({
+      provider: "codex",
+      rendererProtocol: "rawr-provider-renderer/codex@v1",
+      adapterProtocol: harness.protocol,
+    });
     expect(harness.memberIds(CODEX_A)).toEqual(["alpha", "beta"]);
+    expect(harness.liveStateFor(CODEX_A).inventory.members.find(
+      (member) => member.pluginId === "beta",
+    )).toEqual(betaBefore);
     expect(harness.receiptFor(CODEX_A)?.body.managedMembers.map((member) => member.pluginId)).toEqual(["alpha", "beta"]);
     expect(harness.receiptFor(CODEX_A)?.body.scope.kind).toBe("complete-test");
+    expect(harness.providerMutationAttemptsFor(CODEX_A).filter(
+      (action) => "member" in action && action.member.pluginId === "beta",
+    )).toEqual([]);
+    expect(harness.counters.nativeMutations).toBeGreaterThan(0);
+
+    const testedBinding = repeated.value.targets[0]?.projectionBinding;
+    harness.resetCounters();
+    const converged = await app(request);
+    expect(converged.ok && converged.value.status).toBe("ReadOnlyConverged");
+    if (!converged.ok) return;
+    expect(converged.value.targets[0]?.projectionBinding).toEqual(testedBinding);
+    expect(harness.liveStateFor(CODEX_A).inventory.members.find(
+      (member) => member.pluginId === "beta",
+    )).toEqual(betaBefore);
+    expect(harness.counters.capabilityReads).toBeGreaterThan(0);
+    expect(harness.counters.inventoryReads).toBeGreaterThan(0);
+    expect(harness.counters.visibilityReads).toBeGreaterThan(0);
     expect(harness.counters.nativeMutations).toBe(0);
     expect(harness.counters.receiptWrites).toBe(0);
+    expect(harness.counters.identityWrites).toBe(0);
+    expect(harness.counters.evidencePublishes).toBe(0);
+    expect(harness.counters.projectionMaterializations).toBe(0);
+    expect(harness.counters.marketplaceMaterializations).toBe(0);
+    expect(harness.counters.marketplaceWrites).toBe(0);
   });
 
   it("detects a standalone hook collision in pure preflight", () => {
@@ -414,11 +511,28 @@ class Harness {
     releaseSet: this.fixture.releaseSet,
     members: [this.alpha, this.beta],
   };
+  readonly alphaOnlyReleaseInput = must(createAgentPluginReleaseInput({
+    ...this.fixture.releaseInput.body,
+    members: this.fixture.releaseInput.body.members.filter((member) => member.pluginId === "alpha"),
+    ownershipClaims: this.fixture.releaseInput.body.ownershipClaims.filter(
+      (claim) => claim.ownerPluginId === "alpha",
+    ),
+  }));
+  readonly alphaOnlyRelease = must(createAgentPluginRelease({
+    releaseInput: this.alphaOnlyReleaseInput,
+    pluginId: "alpha",
+    source: SOURCE,
+    payload: this.fixture.alphaPayload,
+  }));
+  readonly alphaOnlyReleaseSet = must(createAgentPluginReleaseSet({
+    releaseInput: this.alphaOnlyReleaseInput,
+    releases: [this.alphaOnlyRelease],
+  }));
   readonly alphaOnlyCompleteSnapshot: Extract<VerifiedArtifactSnapshotV1, { readonly kind: "complete-set" }> = {
     kind: "complete-set",
-    ref: createCompleteSetArtifactRef(`rs1_${"d".repeat(64)}` as typeof this.fixture.releaseSet.releaseSetDigest),
-    releaseSet: this.fixture.releaseSet,
-    members: [this.alpha],
+    ref: createCompleteSetArtifactRef(this.alphaOnlyReleaseSet.releaseSetDigest),
+    releaseSet: this.alphaOnlyReleaseSet,
+    members: [releaseSnapshot(this.alphaOnlyRelease)],
   };
   readonly protocol = mustProtocol("codex-native-adapter@v1");
   readonly native = new Map<string, NativeMemberObservation[]>();

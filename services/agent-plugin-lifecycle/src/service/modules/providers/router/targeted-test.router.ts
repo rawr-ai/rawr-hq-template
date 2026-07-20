@@ -1,6 +1,7 @@
 import type { VerifiedArtifactSnapshotV1 } from "../../../shared/release";
 
 import { parseProviderDeploymentRequest } from "../model/dto/mode";
+import type { TargetedTestProviderOperationOutcome } from "../model/dto/outcome";
 import { issue, success, type DeploymentResult } from "../model/errors/deployment-result";
 import { module } from "../module";
 import type { VerifiedReleaseReader } from "../model/repositories/artifact";
@@ -22,7 +23,7 @@ import {
   executeProjectionPlans,
   resultFailure,
 } from "./operation-support";
-import { providerOperationResult } from "./procedure-result";
+import { targetedTestOperationResult } from "./procedure-result";
 
 export interface TargetedTestDependencies {
   readonly releases: VerifiedReleaseReader;
@@ -38,7 +39,7 @@ export interface TargetedTestDependencies {
 }
 
 export const targetedTest = module.targetedTest.handler(
-  async ({ context, input }) => providerOperationResult(
+  async ({ context, input }) => targetedTestOperationResult(
     executeTargetedTest(input, {
       releases: context.releases,
       provider: context.provider,
@@ -57,7 +58,7 @@ export const targetedTest = module.targetedTest.handler(
 export async function executeTargetedTest(
   input: unknown,
   ports: TargetedTestDependencies,
-): Promise<DeploymentResult<import("../model/dto/outcome").ProviderOperationOutcome>> {
+): Promise<DeploymentResult<TargetedTestProviderOperationOutcome>> {
     const parsed = parseProviderDeploymentRequest(input);
     if (!parsed.ok) return parsed;
     if (parsed.value.kind !== "targeted-test") {

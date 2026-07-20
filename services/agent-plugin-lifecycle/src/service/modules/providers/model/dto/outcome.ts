@@ -1,3 +1,5 @@
+import { Type, type Static } from "typebox";
+
 import type { MechanicalEvidenceDigest } from "./mechanical-evidence";
 import type {
   CanonicalNativeMutationAction,
@@ -13,6 +15,31 @@ import type {
 } from "../errors/deployment-result";
 import type { ProviderTarget } from "./provider-target";
 
+const PROVIDER_PROTOCOL_PATTERN = "^[a-z0-9][a-z0-9._/-]*@v[1-9][0-9]*$";
+
+export const ProviderProjectionBindingSchema = Type.Readonly(
+  Type.Object(
+    {
+      provider: Type.Union([Type.Literal("claude"), Type.Literal("codex")]),
+      projectionDigest: Type.String({ pattern: "^ap1_[0-9a-f]{64}$" }),
+      rendererProtocol: Type.String({
+        minLength: 1,
+        maxLength: 256,
+        pattern: PROVIDER_PROTOCOL_PATTERN,
+      }),
+      adapterProtocol: Type.String({
+        minLength: 1,
+        maxLength: 256,
+        pattern: PROVIDER_PROTOCOL_PATTERN,
+      }),
+      capabilityProfileDigest: Type.String({ pattern: "^cp1_[0-9a-f]{64}$" }),
+    },
+    { additionalProperties: false },
+  ),
+);
+
+export type ProviderProjectionBinding = Static<typeof ProviderProjectionBindingSchema>;
+
 export type ProviderEvent =
   | Readonly<{ phase: "planned"; target: ProviderTarget; plan: ProviderTargetPlan }>
   | Readonly<{ phase: "applied"; target: ProviderTarget; action: ProviderMutationAction }>
@@ -23,20 +50,65 @@ export type ProviderEvent =
   | Readonly<{ phase: "blocked"; target: ProviderTarget; issues: readonly ProviderDeploymentIssue[] }>
   | Readonly<{ phase: "failed"; target: ProviderTarget; issues: readonly ProviderDeploymentIssue[] }>;
 
-export interface TargetOperationOutcome {
+interface TargetOperationOutcomeBase {
   readonly target: ProviderTarget;
-  readonly status: "blocked" | "failed" | "mutated" | "read-only-converged";
   readonly events: readonly ProviderEvent[];
   readonly issues: readonly ProviderDeploymentIssue[];
   readonly visibleFingerprint: string | null;
 }
 
-export interface ProviderOperationOutcome {
+type BlockedTargetOperationOutcome = Readonly<TargetOperationOutcomeBase & {
+  readonly status: "blocked";
+  readonly projectionBinding: null;
+}>;
+
+type FailedTargetOperationOutcome = Readonly<TargetOperationOutcomeBase & {
+  readonly status: "failed";
+  readonly projectionBinding: null;
+}>;
+
+type MutatedTargetOperationOutcome<TBinding extends ProviderProjectionBinding | null> =
+  Readonly<TargetOperationOutcomeBase & {
+    readonly status: "mutated";
+    readonly projectionBinding: TBinding;
+  }>;
+
+type ReadOnlyTargetOperationOutcome<TBinding extends ProviderProjectionBinding | null> =
+  Readonly<TargetOperationOutcomeBase & {
+    readonly status: "read-only-converged";
+    readonly projectionBinding: TBinding;
+  }>;
+
+export type UnboundTargetOperationOutcome =
+  | BlockedTargetOperationOutcome
+  | FailedTargetOperationOutcome
+  | MutatedTargetOperationOutcome<null>
+  | ReadOnlyTargetOperationOutcome<null>;
+
+export type CompleteTestTargetOperationOutcome =
+  | BlockedTargetOperationOutcome
+  | FailedTargetOperationOutcome
+  | MutatedTargetOperationOutcome<ProviderProjectionBinding>
+  | ReadOnlyTargetOperationOutcome<ProviderProjectionBinding>;
+
+export type TargetOperationOutcome =
+  | UnboundTargetOperationOutcome
+  | CompleteTestTargetOperationOutcome;
+
+export interface ProviderOperationOutcome<
+  TTarget extends TargetOperationOutcome = TargetOperationOutcome,
+> {
   readonly status: "Blocked" | "Failed" | "Mutated" | "PartialFailure" | "ReadOnlyConverged";
-  readonly targets: readonly TargetOperationOutcome[];
+  readonly targets: readonly TTarget[];
   readonly evidence: MechanicalEvidenceDigest | null;
   readonly issues: readonly ProviderDeploymentIssue[];
 }
+
+export type CompleteTestProviderOperationOutcome =
+  ProviderOperationOutcome<CompleteTestTargetOperationOutcome>;
+
+export type TargetedTestProviderOperationOutcome =
+  ProviderOperationOutcome<UnboundTargetOperationOutcome>;
 
 export type CanonicalTargetStatus =
   | "BLOCKED_SELECTION"

@@ -5,10 +5,11 @@ import {
   CanonicalStatusResultSchema,
   CanonicalSyncInputSchema,
   CanonicalSyncResultSchema,
+  CompleteTestResultSchema,
   CompleteNativeHomesResultSchema,
   CompleteTestInputSchema,
   EmptyInputSchema,
-  ProviderOperationResultSchema,
+  TargetedTestResultSchema,
   TargetedTestInputSchema,
 } from "./schemas";
 
@@ -16,11 +17,11 @@ export const contract = {
   targetedTest: ocBase
     .meta({ idempotent: true, entity: "providers", audit: "full" })
     .input(schema(TargetedTestInputSchema))
-    .output(schema(ProviderOperationResultSchema)),
+    .output(schema(TargetedTestResultSchema)),
   completeTest: ocBase
     .meta({ idempotent: true, entity: "providers", audit: "full" })
     .input(schema(CompleteTestInputSchema))
-    .output(schema(ProviderOperationResultSchema)),
+    .output(schema(CompleteTestResultSchema)),
   canonicalSync: ocBase
     .meta({ idempotent: true, entity: "providers", audit: "full" })
     .input(schema(CanonicalSyncInputSchema))
