@@ -16,7 +16,6 @@ import {
   parseCheckOperationRequest,
   parseExportRequest,
   parsePackageRequest,
-  parseRetireRequest,
   parseStatusRequest,
   parseSyncRequest,
   parseTestRequest,
@@ -91,6 +90,7 @@ describe("qualified lifecycle command boundary", () => {
 
     for (const retired of [
       ["agent", "sync"],
+      ["agent", "plugins", "retire"],
       ["undo"],
       ["plugins", "sync"],
       ["plugins", "status"],
@@ -592,7 +592,6 @@ const EXACT_PLUGIN_COMMANDS = [
   "agent:plugins:create",
   "agent:plugins:export",
   "agent:plugins:package",
-  "agent:plugins:retire",
   "agent:plugins:status",
   "agent:plugins:sync",
   "agent:plugins:test",
@@ -645,7 +644,6 @@ function recordingClient(calls: string[]): Client {
       completeTest: call("providers.completeTest"),
       canonicalSync: call("providers.canonicalSync"),
       canonicalStatus: call("providers.canonicalStatus"),
-      managedRetire: call("providers.managedRetire"),
       completeNativeHomes: call("providers.completeNativeHomes"),
     },
     governance: {
@@ -683,7 +681,6 @@ function operationRequests(): LifecycleOperationRequest[] {
     { operation: "providers.completeTest", input: { kind: "complete-test", releaseSet, evaluationProfile: "native@v1", targets: target } },
     { operation: "providers.canonicalSync", input: parseSyncRequest(providerWorkspace()) },
     { operation: "providers.canonicalStatus", input: parseStatusRequest(providerWorkspace()) },
-    { operation: "providers.managedRetire", input: parseRetireRequest({ plugin: "alpha", target: ["codex=/tmp/codex-home"] }) },
     { operation: "governance.attestPromotion", input: parseAttestPromotionRequest(attestationFlags()) },
   ];
 }

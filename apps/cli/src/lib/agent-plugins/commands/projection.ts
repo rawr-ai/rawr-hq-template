@@ -27,7 +27,6 @@ import type {
   ExportRequest,
   PackageRequest,
   RepositoryCheckRequest,
-  RetireRequest,
   StatusRequest,
   SyncRequest,
   TargetedTestRequest,
@@ -48,7 +47,6 @@ export type LifecycleOperationRequest =
   | Readonly<{ operation: "providers.completeTest"; input: CompleteTestRequest }>
   | Readonly<{ operation: "providers.canonicalSync"; input: SyncRequest }>
   | Readonly<{ operation: "providers.canonicalStatus"; input: StatusRequest }>
-  | Readonly<{ operation: "providers.managedRetire"; input: RetireRequest }>
   | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>
   | Readonly<{ operation: "governance.attestPromotion"; input: AttestPromotionRequest }>;
 
@@ -169,10 +167,6 @@ export async function invokeLifecycleProcedure(
       const client = await factory("providers.canonicalStatus", binding);
       return await client.providers.canonicalStatus(request.input, callOptions);
     }
-    case "providers.managedRetire": {
-      const client = await factory("providers.managedRetire", binding);
-      return await client.providers.managedRetire(request.input, callOptions);
-    }
     case "governance.currentMainRecord": {
       const client = await factory("governance.currentMainRecord", binding);
       return await client.governance.currentMainRecord(request.input, callOptions);
@@ -219,7 +213,6 @@ export function lifecycleResultExitCode(
     "providers.completeTest": [],
     "providers.canonicalSync": [],
     "providers.canonicalStatus": [],
-    "providers.managedRetire": [],
     "governance.currentMainRecord": [],
     "governance.attestPromotion": ["PromotionAttested"],
   };
@@ -304,7 +297,6 @@ function providerHomes(request: LifecycleOperationRequest): readonly ControllerP
     case "providers.completeTest":
     case "providers.canonicalSync":
     case "providers.canonicalStatus":
-    case "providers.managedRetire":
       return request.input.targets.map((target) => ({
         provider: target.provider,
         path: target.home,

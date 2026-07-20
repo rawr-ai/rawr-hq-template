@@ -18,7 +18,6 @@ export interface TargetReceiptReader {
 
 export interface TargetReceiptWriter {
   publish(target: ProviderTarget, prior: ReceiptObservation, receipt: TargetReceipt): Promise<DeploymentResult<TargetReceipt>>;
-  remove(target: ProviderTarget, prior: TargetReceipt): Promise<DeploymentResult<null>>;
 }
 
 export interface TargetIdentityReader {

@@ -92,8 +92,7 @@ export type ProviderMutationAction =
   | Readonly<{ kind: "EnableMember"; target: ProviderTarget; activeMarketplace: ProviderMarketplaceRegistration | null; member: ProviderProjectionMember }>
   | Readonly<{ kind: "RetireMember"; target: ProviderTarget; activeMarketplace: ProviderMarketplaceRegistration | null; member: NativeMemberObservation }>
   | Readonly<{ kind: "PublishReceipt"; target: ProviderTarget; prior: ReceiptObservation; receipt: TargetReceipt }>
-  | Readonly<{ kind: "NormalizeReceipt"; target: ProviderTarget; prior: TargetReceipt; receipt: TargetReceipt }>
-  | Readonly<{ kind: "RemoveReceipt"; target: ProviderTarget; prior: TargetReceipt }>;
+  | Readonly<{ kind: "NormalizeReceipt"; target: ProviderTarget; prior: TargetReceipt; receipt: TargetReceipt }>;
 
 export type NativeProviderMutationAction = Extract<
   ProviderMutationAction,
@@ -523,146 +522,6 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
   return Object.freeze({ target, state: "mutating", projection: authority.projection, steps: Object.freeze(steps), issues: Object.freeze([]) });
 }
 
-export function planManagedRetire(
-  target: ProviderTarget,
-  pluginId: PluginId,
-  inventory: ProviderInventory,
-  receipt: ReceiptObservation,
-  targetIdentity: TargetIdentityObservation,
-): ProviderTargetPlan {
-  if (receipt.kind === "absent") {
-    return hasRequestedPluginExposure(inventory, pluginId)
-      ? blockedPlan(target, null, [issue("BLOCKED_COLLISION", "request.pluginId", "Live native state exists without same-target receipt ownership proof", "receipt-owned plugin", pluginId)])
-      : readOnlyPlan(target);
-  }
-  if (receipt.receipt.body.targetDigest !== target.targetDigest || receipt.receipt.body.provider !== target.provider) {
-    return blockedPlan(target, null, [issue("RECEIPT_TARGET_MISMATCH", "target.receipt", "Receipt belongs to another provider home")]);
-  }
-  const marketplaceIssue = strictMarketplaceReceiptIssue(inventory.marketplace, receipt);
-  if (marketplaceIssue !== undefined) return blockedPlan(target, null, [marketplaceIssue]);
-  const claim = receipt.receipt.body.managedMembers.find((candidate) => candidate.pluginId === pluginId);
-  if (claim === undefined) {
-    return hasRequestedPluginExposure(inventory, pluginId)
-      ? blockedPlan(target, null, [issue("BLOCKED_COLLISION", "request.pluginId", "Receipt does not prove ownership of the live requested plugin", "receipt-owned plugin", pluginId)])
-      : readOnlyPlan(target);
-  }
-  const live = inventory.members.find((candidate) => candidate.pluginId === pluginId && candidate.nativeIdentity === claim.nativeIdentity);
-  const conflictingLive = inventory.members.find((candidate) =>
-    candidate !== live
-    && (candidate.pluginId === pluginId || candidate.nativeIdentity === claim.nativeIdentity),
-  );
-  const conflictingStandalone = inventory.standaloneExposures.find((exposure) =>
-    exposure.nativeIdentity === claim.nativeIdentity);
-  if (conflictingLive !== undefined || conflictingStandalone !== undefined) {
-    return blockedPlan(target, null, [issue(
-      "BLOCKED_COLLISION",
-      "request.pluginId",
-      "Ambiguous native or standalone state blocks managed retirement",
-      claim.nativeIdentity,
-      conflictingLive?.nativeIdentity ?? conflictingStandalone?.exposureIdentity,
-    )]);
-  }
-  if (live !== undefined && !receiptOwnsLiveMember(live, claim)) {
-    return blockedPlan(target, null, [issue("BLOCKED_COLLISION", "request.pluginId", "Live native state no longer matches same-target ownership proof", claim.memberFingerprint, live.memberFingerprint)]);
-  }
-  const remaining = receipt.receipt.body.managedMembers.filter((candidate) => candidate.pluginId !== pluginId);
-  let nextMarketplace: ProviderMarketplaceRegistration | null;
-  try {
-    nextMarketplace = remaining.length === 0
-      ? null
-      : createProviderMarketplaceRegistration({
-        provider: target.provider,
-        adapterProtocol: receipt.receipt.body.scope.adapterProtocol,
-        marketplaceIdentity: receipt.receipt.body.marketplace.marketplaceIdentity,
-        members: remaining.map((member) => ({
-          pluginId: member.pluginId,
-          nativeIdentity: member.nativeIdentity,
-          providerSourceIdentity: member.providerSourceIdentity,
-          sourceProjectionDigest: member.sourceProjectionDigest,
-          memberFingerprint: member.memberFingerprint,
-        })),
-      });
-  } catch (error) {
-    return blockedPlan(target, null, [issue(
-      "INVALID_RECEIPT",
-      "target.receipt.marketplace",
-      error instanceof Error ? error.message : String(error),
-    )]);
-  }
-  let finalMarketplaceAction: Extract<ProviderMutationAction, { kind: "SetMarketplace" }> | null;
-  let currentMarketplace: ProviderMarketplaceRegistration;
-  try {
-    currentMarketplace = receiptMarketplaceRegistration(receipt.receipt);
-    finalMarketplaceAction = marketplaceMutation(
-      target,
-      "final",
-      inventory.marketplace,
-      nextMarketplace,
-    );
-  } catch (error) {
-    return blockedPlan(target, null, [issue(
-      "INVALID_RECEIPT",
-      "target.receipt.marketplace",
-      error instanceof Error ? error.message : String(error),
-    )]);
-  }
-  const steps: ProviderPlanStep[] = [];
-  if ((live !== undefined || finalMarketplaceAction !== null) && targetIdentity.kind === "absent") {
-    steps.push(Object.freeze({
-      kind: "mutate",
-      action: Object.freeze({ kind: "AdmitTargetIdentity", target, sidecar: createTargetIdentitySidecar(target) }),
-    }));
-  }
-  if (live !== undefined) {
-    steps.push(Object.freeze({
-      kind: "verify-managed",
-      target,
-      claims: receipt.receipt.body.managedMembers,
-      marketplace: currentMarketplace,
-    }));
-    steps.push(Object.freeze({
-      kind: "mutate",
-      action: Object.freeze({
-        kind: "RetireMember",
-        target,
-        activeMarketplace: currentMarketplace,
-        member: live,
-      }),
-    }));
-    steps.push(Object.freeze({ kind: "verify-retired", target, nativeIdentity: live.nativeIdentity }));
-  }
-  if (finalMarketplaceAction !== null) {
-    steps.push(Object.freeze({ kind: "mutate", action: finalMarketplaceAction }));
-  }
-  steps.push(Object.freeze({
-    kind: "verify-managed",
-    target,
-    claims: Object.freeze([...remaining]),
-    marketplace: nextMarketplace,
-  }));
-  if (remaining.length === 0) {
-    steps.push(Object.freeze({ kind: "mutate", action: Object.freeze({ kind: "RemoveReceipt", target, prior: receipt.receipt }) }));
-  } else {
-    const next = createTargetReceipt({
-      ...receipt.receipt.body,
-      generation: receipt.receipt.body.generation + 1,
-      lineage: { kind: "successor", priorReceiptDigest: receipt.receipt.receiptDigest },
-      marketplace: marketplaceState(nextMarketplace!),
-      managedMembers: remaining,
-      scope: updateScopeMembers(receipt.receipt.body.scope, remaining),
-    });
-    steps.push(Object.freeze({ kind: "mutate", action: Object.freeze({ kind: "PublishReceipt", target, prior: receipt, receipt: next }) }));
-  }
-  return Object.freeze({ target, state: "mutating", projection: null, steps: Object.freeze(steps), issues: Object.freeze([]) });
-}
-
-function hasRequestedPluginExposure(inventory: ProviderInventory, pluginId: PluginId): boolean {
-  const nativeIdentity = `rawr:${pluginId}`;
-  return inventory.members.some((candidate) =>
-    candidate.pluginId === pluginId || candidate.nativeIdentity === nativeIdentity)
-    || inventory.standaloneExposures.some((candidate) => candidate.nativeIdentity === nativeIdentity);
-}
-
 export function nativeMemberValue(member: NativeMemberObservation): CanonicalValue {
   return {
     pluginId: member.pluginId,
@@ -971,29 +830,6 @@ function forwardNativeStateIssue(
   return undefined;
 }
 
-function strictMarketplaceReceiptIssue(
-  live: ProviderMarketplaceObservation,
-  receipt: ReceiptObservation,
-): ProviderDeploymentIssue | undefined {
-  if (live.kind === "absent") return undefined;
-  if (receipt.kind === "absent") {
-    return issue(
-      "BLOCKED_COLLISION",
-      "target.marketplace",
-      "A live marketplace registration exists without same-target receipt ownership proof",
-    );
-  }
-  return sameMarketplaceState(live.state, receipt.receipt.body.marketplace)
-    ? undefined
-    : issue(
-      "BLOCKED_COLLISION",
-      "target.marketplace",
-      "Live marketplace registration no longer matches the same-target receipt claim",
-      receipt.receipt.body.marketplace.projectionDigest,
-      live.state.projectionDigest,
-    );
-}
-
 function nextManagedClaims(
   mode: DeploymentAuthority["kind"],
   desired: readonly ProviderProjectionMember[],
@@ -1102,11 +938,6 @@ function hasReceiptRetirementCollision(
   return false;
 }
 
-function updateScopeMembers(scope: TargetReceiptScope, members: readonly ManagedMemberClaim[]): TargetReceiptScope {
-  const verifiedMembers = scope.verifiedMembers.filter((member) => members.some((candidate) => candidate.pluginId === member.pluginId));
-  return Object.freeze({ ...scope, verifiedMembers, visibleFingerprint: visibleFingerprint(verifiedMembers) });
-}
-
 function toVerifiedMember(member: ProviderProjectionMember): VerifiedMemberIdentity {
   return Object.freeze({
     pluginId: member.pluginId,
@@ -1126,10 +957,6 @@ function toManagedMember(
 
 function blockedPlan(target: ProviderTarget, projection: AgentProviderProjection | null, issues: readonly ProviderDeploymentIssue[]): ProviderTargetPlan {
   return Object.freeze({ target, state: "blocked", projection, steps: Object.freeze([]), issues: Object.freeze([...issues]) });
-}
-
-function readOnlyPlan(target: ProviderTarget): ProviderTargetPlan {
-  return Object.freeze({ target, state: "read-only", projection: null, steps: Object.freeze([]), issues: Object.freeze([]) });
 }
 
 function compareNativeMembers(left: NativeMemberObservation, right: NativeMemberObservation): number {

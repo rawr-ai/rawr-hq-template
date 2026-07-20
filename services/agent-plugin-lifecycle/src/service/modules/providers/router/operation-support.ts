@@ -74,12 +74,6 @@ export interface DeploymentMutationPorts {
   readonly identityWriter: TargetIdentityWriter;
 }
 
-export interface RetireMutationPorts {
-  readonly providerMutator: ProviderTargetMutator;
-  readonly receiptWriter: TargetReceiptWriter;
-  readonly identityWriter: TargetIdentityWriter;
-}
-
 interface ProjectionPlanInputBase {
   readonly targets: readonly ProviderTarget[];
   readonly dependencies: PlanReadDependencies;
@@ -505,7 +499,6 @@ function isNativeMutationAction(
     case "AdmitTargetIdentity":
     case "PublishReceipt":
     case "NormalizeReceipt":
-    case "RemoveReceipt":
       return false;
   }
 }
@@ -678,64 +671,10 @@ export function createDeploymentActionAppliers(
           ? mutationApplied()
           : mutationNotApplied(applied.issues);
       }
-      case "RemoveReceipt": {
-        const applied = await ports.receiptWriter.remove(action.target, action.prior);
-        return applied.ok
-          ? mutationApplied()
-          : mutationNotApplied(applied.issues);
-      }
     }
   };
   return Object.freeze({
     applyNativeAction: async (action) => await ports.providerMutator.apply(action),
-    applyRecordAction,
-  });
-}
-
-export function createRetireActionAppliers(
-  ports: RetireMutationPorts,
-): Pick<ApplyDependencies, "applyNativeAction" | "applyRecordAction"> {
-  const applyRecordAction = async (action: RecordMutationAction): Promise<DefiniteMutationAttempt> => {
-    switch (action.kind) {
-      case "AdmitTargetIdentity": {
-        const applied = await ports.identityWriter.admit(action.target, action.sidecar);
-        return applied.ok
-          ? mutationApplied()
-          : mutationNotApplied(applied.issues);
-      }
-      case "PublishReceipt": {
-        const applied = await ports.receiptWriter.publish(action.target, action.prior, action.receipt);
-        return applied.ok
-          ? mutationApplied()
-          : mutationNotApplied(applied.issues);
-      }
-      case "NormalizeReceipt": {
-        const applied = await ports.receiptWriter.publish(action.target, { kind: "present", receipt: action.prior }, action.receipt);
-        return applied.ok
-          ? mutationApplied()
-          : mutationNotApplied(applied.issues);
-      }
-      case "RemoveReceipt": {
-        const applied = await ports.receiptWriter.remove(action.target, action.prior);
-        return applied.ok
-          ? mutationApplied()
-          : mutationNotApplied(applied.issues);
-      }
-    }
-  };
-  return Object.freeze({
-    applyNativeAction: async (action) => {
-      if (action.kind === "EnableMember" || action.kind === "InstallMember") {
-        return mutationNotApplied([issue(
-          "MUTATION_FAILED",
-          "action.kind",
-          "Managed-retire application received an impossible action",
-          "SetMarketplace|RetireMember",
-          action.kind,
-        )]);
-      }
-      return await ports.providerMutator.apply(action);
-    },
     applyRecordAction,
   });
 }

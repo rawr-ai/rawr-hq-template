@@ -33,7 +33,6 @@ const TOOLS: ToolExport[] = [
   { command: "agent plugins export", description: "Converge a managed explicit export destination" },
   { command: "agent plugins sync", description: "Converge an accepted channel at explicit provider homes" },
   { command: "agent plugins status", description: "Inspect accepted channel and provider state" },
-  { command: "agent plugins retire", description: "Retire receipt-owned state from explicit provider homes" },
   { command: "agent plugins undo", description: "Replay the current controller-owned export capsule" },
   { command: "agent plugins attest-promotion", description: "Validate and attest governed promotion authority" },
   { command: "plugins install <pkg>", description: "Install an external oclif plugin (Channel A)" },

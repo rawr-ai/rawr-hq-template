@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6C2A_PROVIDER_CAPSULE_RETIREMENT_REVIEWED`
+`T6C2B_MANAGED_RETIRE_DELETION_REVIEWED`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
@@ -31,6 +31,8 @@ every provider mode is capsule-free.
 | T6B service validation | `codex/c6-repository-check-service` / `dd7f0fd5` |
 | T6B CLI projection | `codex/c6-repository-check-cli` / `825a304e` |
 | T6C1a codec interface | `codex/c6-current-main-v2-codec` / this record node |
+| T6C2a provider capsule retirement | `codex/c6-provider-capsule-retirement` / `a7c9f120` |
+| T6C2b managed-retire deletion | `codex/c6-managed-retire-deletion` / this record node |
 | Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
 | Retained CLI target node | `codex/c6-serialize-cli-test-target` |
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
@@ -62,7 +64,7 @@ global undo redesign, and Inngest candidate bytes.
 | T6C1a v2 codec/public interface | complete, reviewed | closed TypeBox model, canonical `cm2_` codec, one cold-port procedure and CLI dispatch |
 | T6C1b observed-Git selector/cutover | unopened | direct Git resolution and old ceremony/commands unreachable |
 | T6C2a provider capsule retirement | complete, reviewed | capsule-cold provider modes, forward-only retry, export-only legacy retirement |
-| T6C2b managed-retire deletion | unopened | receipt-owned provider retire unreachable without alias |
+| T6C2b managed-retire deletion | complete, reviewed | receipt-owned provider retire unreachable without alias; omission cleanup remains sync-owned |
 | T6C2c canonical native path | unopened | resolved selector, live native provenance, no canonical hidden state |
 | T6C3 export independence | unopened | destination-local ledger/collisions, no native-home registry |
 | T6D truthful test owners | retained, record realignment pending | owner-local DevOps fixture and ordinary serialized CLI target |
@@ -82,7 +84,6 @@ follow-up work.
 
 ## Current Gate
 
-- Delete receipt-owned `managedRetire` as its own semantic Graphite node.
 - Finish T6C1b as the sole observed-Git current-main selector and v1 cutover,
   then finish the thin canonical consumer without reopening test modes.
 - Implement T6C3 as the owner-local export boundary with no provider-home
@@ -124,11 +125,10 @@ authority, select provider state, or make the retired v1 path unreachable.
 
 ## T6C2a Proof
 
-This checkpoint implements
-[[tasks#4. T6C2 Thin Canonical Provider Path|tasks 4.6-4.7]] without deleting
-`managedRetire` or changing canonical selection. It
-removes provider rollback authority before the remaining command and selector
-cutovers.
+This earlier checkpoint implements
+[[tasks#4. T6C2 Thin Canonical Provider Path|tasks 4.6-4.7]] before the
+separately landed managed-retire deletion. It removes provider rollback
+authority before the remaining command and selector cutovers.
 
 | Boundary | Result |
 | --- | --- |
@@ -137,6 +137,21 @@ cutovers.
 | Failure law | CAS drift, post-publication uncertainty, release failure, malformed/noncanonical/undoing/wrong-owner/wrong-version and independently corrupt action/capsule/state digests block export and undo without changing legacy bytes, admitting export, or invoking provider/native ports. Cold retry re-reads the slot. Native uncertainty stops the target after its exact applied prefix; retry converges and a third pass is read-only. |
 | Static/structural | Lifecycle and CLI lint, typecheck, and build passed without cache. Both project structural suites, sync checks, and all three positive Habitat rules passed. A full CLI run passed 346/347; its unrelated high-load Git eligibility case returned `GitFailure` once and passed immediately in isolation. The retained serialized CLI test-owner node remains separately upstack. |
 | Reviews | Architecture/authority, TypeScript/refactor, behavior/testing, and structural quality closed stale-receipt retry, uncertainty-schema, migration-failure, inner-digest, and provenance findings. Final rereviews report no remaining P1/P2. |
+
+## T6C2b Proof
+
+This checkpoint completes [[tasks#4. T6C2 Thin Canonical Provider Path|task
+4.5]] without reopening the retired provider capsule or adding another
+retirement authority.
+
+| Boundary | Result |
+| --- | --- |
+| Public surface | `rawr agent plugins retire`, `providers.managedRetire`, its request/schema/router/client projection, and the positive Habitat command member are absent. CLI refusal and tools-export tests prove there is no alias or forwarding path. |
+| Provider service | `RetireMember` remains only as a canonical-sync plan step. The provider capability is named `native-plugin-retire`; it is a narrow native operation, not a request mode or lifecycle authority. Exact contract/router and capability-set tests passed. |
+| State ownership | Receipt deletion and the public receipt-writer removal port are absent. Canonical sync still removes an omitted RAWR-managed member and stale same-ID native state through live inspection; qualified undo remains export-only and does not change provider state. |
+| Behavior proof | The complete lifecycle suite passed 34 files / 298 tests. Focused provider mode, schema, state-machine, native adapter, target-record, service-spine, and CLI command/runtime suites passed; the controller black-box passed 80 tests after its provider-undo expectation was removed. |
+| Static/structural | Lifecycle, CLI, controller-build, and HQ-plugin lint/typecheck/build gates passed as applicable. Lifecycle and CLI structural/sync checks plus all three positive Habitat rules passed. No recursive deletion was added; generated-file cleanup used guarded exact nonrecursive unlink. |
+| Reviews | Architecture/authority, TypeScript/refactor, behavior/testing, and structural quality approved the deletion with no remaining P1/P2. |
 
 ## Standing Reviews
 

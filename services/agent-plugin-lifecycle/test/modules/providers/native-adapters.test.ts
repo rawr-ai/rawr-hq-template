@@ -386,9 +386,9 @@ describe("native provider adapters", () => {
 });
 
 const ALL_CAPABILITIES = [
-  "managed-retire",
   "native-plugin-enable",
   "native-plugin-install",
+  "native-plugin-retire",
   "visible-hook-inventory",
   "visible-plugin-inventory",
   "visible-skill-inventory",

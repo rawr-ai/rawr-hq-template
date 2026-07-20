@@ -166,7 +166,6 @@ function unavailableProviderRuntime(
     receipts: { read: async () => unavailableProviderAsync("provider receipt") },
     receiptWriter: {
       publish: async () => unavailableProviderAsync("provider receipt publication"),
-      remove: async () => unavailableProviderAsync("provider receipt removal"),
     },
     identities: {
       read: async () => unavailableProviderAsync("provider identity"),

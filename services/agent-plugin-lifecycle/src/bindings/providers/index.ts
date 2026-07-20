@@ -76,7 +76,6 @@ export {
 } from "../../service/modules/providers/model/policy/marketplace";
 export {
   parseCanonicalStatusRequest,
-  parseManagedRetireRequest,
   parseProviderDeploymentRequest,
 } from "../../service/modules/providers/model/dto/mode";
 export {

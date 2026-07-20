@@ -107,7 +107,6 @@ export type {
   ContentRecordLocator,
   ContentWorkspaceRoot,
   EvaluationProfile,
-  ManagedRetireRequest,
   ProviderDeploymentRequest,
   ProviderRequestDigest,
   TargetedTest,

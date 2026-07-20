@@ -14,8 +14,8 @@ outputs or separate authorities, never authoring locations.
 
 - Every content unit has one parent agent-plugin distribution owner.
 - Make and validate source changes before considering lifecycle operations.
-- Authoring never triggers build, package, export, sync, retirement, promotion,
-  or undo automatically.
+- Authoring never triggers build, package, export, sync, promotion, or undo
+  automatically.
 - Curated agent-plugin lifecycle uses `rawr agent plugins ...` only.
 - External Oclif extensions use `rawr plugins ...` only.
 
@@ -35,8 +35,8 @@ When the user also requests lifecycle work, start with the read-only
 operations are separate choices: `rawr agent plugins build`,
 `rawr agent plugins package`, `rawr agent plugins export`,
 `rawr agent plugins test`, `rawr agent plugins sync`,
-`rawr agent plugins status`, `rawr agent plugins retire`,
-`rawr agent plugins attest-promotion`, and `rawr agent plugins undo`.
+`rawr agent plugins status`, `rawr agent plugins attest-promotion`, and
+`rawr agent plugins undo`.
 
 Do not substitute provider-home edits, an external extension command, or an app
 composition path for the qualified lifecycle.

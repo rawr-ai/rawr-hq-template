@@ -1,9 +1,7 @@
 import {
   parseArtifactRef,
-  parsePluginId,
   parseRepositoryIdentity,
   type CompleteSetArtifactRef,
-  type PluginId,
   type ReleaseArtifactRef,
   type RepositoryIdentity,
 } from "../../../../shared/release";
@@ -60,13 +58,6 @@ export interface CanonicalStatusRequest {
   readonly requestDigest: ProviderRequestDigest;
 }
 
-export interface ManagedRetireRequest {
-  readonly kind: "managed-retire";
-  readonly pluginId: PluginId;
-  readonly targets: readonly ProviderTarget[];
-  readonly requestDigest: ProviderRequestDigest;
-}
-
 const MAX_RELEASES = 1_024;
 const EVALUATION_PROFILE_PATTERN = /^[a-z0-9][a-z0-9._:@/-]*$/u;
 const REPOSITORY_PATH_PATTERN = /^\/(?:[^/\u0000-\u001f\u007f]+\/)*[^/\u0000-\u001f\u007f]+$/u;
@@ -101,22 +92,6 @@ export function parseCanonicalStatusRequest(input: unknown): DeploymentResult<Ca
     return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Status request is invalid")));
   }
   const body = { kind: "canonical-status", channel, locator, targets } as const;
-  return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
-}
-
-export function parseManagedRetireRequest(input: unknown): DeploymentResult<ManagedRetireRequest> {
-  const issues: ProviderDeploymentIssue[] = [];
-  if (!exactRecord(input, ["kind", "pluginId", "targets"], "request", issues)) {
-    return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Retirement request is invalid")));
-  }
-  if (input.kind !== "managed-retire") issues.push(issue("INVALID_MODE", "request.kind", "Retirement request kind must be managed-retire", "managed-retire", String(input.kind)));
-  const parsedPluginId = parsePluginId(input.pluginId, "request.pluginId");
-  if (!parsedPluginId.ok) issues.push(...parsedPluginId.issues.map((entry) => issue("INVALID_PLUGIN_ID", entry.path, entry.message)));
-  const targets = parseTargets(input.targets, issues);
-  if (issues.length > 0 || !parsedPluginId.ok || targets === undefined) {
-    return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Retirement request is invalid")));
-  }
-  const body = { kind: "managed-retire", pluginId: parsedPluginId.value, targets } as const;
   return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
 }
 
@@ -230,11 +205,11 @@ function parseLocator(input: unknown, issues: ProviderDeploymentIssue[]): Conten
     : undefined;
 }
 
-function digestRequest(input: Omit<TargetedTest, "requestDigest"> | Omit<CompleteTest, "requestDigest"> | Omit<CanonicalSync, "requestDigest"> | Omit<CanonicalStatusRequest, "requestDigest"> | Omit<ManagedRetireRequest, "requestDigest">): ProviderRequestDigest {
+function digestRequest(input: Omit<TargetedTest, "requestDigest"> | Omit<CompleteTest, "requestDigest"> | Omit<CanonicalSync, "requestDigest"> | Omit<CanonicalStatusRequest, "requestDigest">): ProviderRequestDigest {
   return canonicalDigest("prq1_", requestValue(input)) as ProviderRequestDigest;
 }
 
-function requestValue(input: Omit<TargetedTest, "requestDigest"> | Omit<CompleteTest, "requestDigest"> | Omit<CanonicalSync, "requestDigest"> | Omit<CanonicalStatusRequest, "requestDigest"> | Omit<ManagedRetireRequest, "requestDigest">): CanonicalValue {
+function requestValue(input: Omit<TargetedTest, "requestDigest"> | Omit<CompleteTest, "requestDigest"> | Omit<CanonicalSync, "requestDigest"> | Omit<CanonicalStatusRequest, "requestDigest">): CanonicalValue {
   switch (input.kind) {
     case "targeted-test":
       return { kind: input.kind, releases: input.releases.map(releaseRefValue), evaluationProfile: input.evaluationProfile, targets: input.targets.map(targetValue) };
@@ -243,8 +218,6 @@ function requestValue(input: Omit<TargetedTest, "requestDigest"> | Omit<Complete
     case "canonical-sync":
     case "canonical-status":
       return { kind: input.kind, channel: input.channel, locator: locatorValue(input.locator), targets: input.targets.map(targetValue) };
-    case "managed-retire":
-      return { kind: input.kind, pluginId: input.pluginId, targets: input.targets.map(targetValue) };
   }
 }
 

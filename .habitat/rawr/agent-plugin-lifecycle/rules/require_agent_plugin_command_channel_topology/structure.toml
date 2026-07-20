@@ -69,7 +69,6 @@ required = [
   "create.ts",
   "export.ts",
   "package.ts",
-  "retire.ts",
   "status.ts",
   "sync.ts",
   "test.ts",

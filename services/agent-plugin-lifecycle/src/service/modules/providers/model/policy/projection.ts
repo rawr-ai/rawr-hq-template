@@ -46,9 +46,9 @@ export interface ProviderArtifactAuthority {
 }
 
 export type ProviderCapability =
-  | "managed-retire"
   | "native-plugin-enable"
   | "native-plugin-install"
+  | "native-plugin-retire"
   | "visible-hook-inventory"
   | "visible-plugin-inventory"
   | "visible-skill-inventory";
@@ -339,9 +339,9 @@ function renderProjection(
   });
 
   const required = new Set<ProviderCapability>([
-    "managed-retire",
     "native-plugin-enable",
     "native-plugin-install",
+    "native-plugin-retire",
     "visible-plugin-inventory",
   ]);
   if (members.some((member) => member.visible.skills.length > 0)) required.add("visible-skill-inventory");

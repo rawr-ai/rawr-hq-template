@@ -292,7 +292,6 @@ function unavailableProviderRuntime(): ProviderLifecycleRuntime {
     receipts: { read: async () => unavailableAsync("provider receipt") },
     receiptWriter: {
       publish: async () => unavailableAsync("provider receipt publication"),
-      remove: async () => unavailableAsync("provider receipt removal"),
     },
     identities: {
       read: async () => unavailableAsync("provider identity"),

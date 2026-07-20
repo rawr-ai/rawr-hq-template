@@ -173,11 +173,6 @@ const actions = Object.freeze([
     prior: receipt,
     receipt,
   },
-  {
-    kind: "RemoveReceipt",
-    target,
-    prior: receipt,
-  },
 ]);
 const plan = Object.freeze({
   target,

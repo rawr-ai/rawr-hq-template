@@ -194,26 +194,6 @@ export function createPathlessTargetState(
         validate: (observation) => validateReceiptRecord(observation, canonical.value, RECEIPT_PUBLISH),
       });
     },
-
-    async remove(
-      target: ProviderTarget,
-      prior: TargetReceipt,
-    ): Promise<DeploymentResult<null>> {
-      const canonical = canonicalTarget(target, RECEIPT_REMOVE);
-      if (!canonical.ok) return canonical;
-      const normalizedPrior = normalizeReceipt(prior, canonical.value, RECEIPT_REMOVE);
-      if (!normalizedPrior.ok) return normalizedPrior;
-      const key = recordKey("receipt", canonical.value);
-      return await transitionTargetRecord({
-        records,
-        key,
-        expected: presentRecord(canonicalSerializeTargetReceipt(normalizedPrior.value)),
-        desired: ABSENT_RECORD,
-        result: null,
-        operation: RECEIPT_REMOVE,
-        validate: (observation) => validateReceiptRecord(observation, canonical.value, RECEIPT_REMOVE),
-      });
-    },
   });
 
   return Object.freeze({
@@ -571,8 +551,4 @@ const RECEIPT_READ: OperationContext = Object.freeze({
 const RECEIPT_PUBLISH: OperationContext = Object.freeze({
   code: "RECEIPT_FAILED",
   path: "target.receipt.publish",
-});
-const RECEIPT_REMOVE: OperationContext = Object.freeze({
-  code: "RECEIPT_FAILED",
-  path: "target.receipt.remove",
 });
