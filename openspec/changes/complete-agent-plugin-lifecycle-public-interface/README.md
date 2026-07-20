@@ -362,6 +362,23 @@ the blocked export publication decision.
 | Reviews | Architecture/authority, TypeScript/refactor/oRPC/Effect, behavior/testing/state-machine, and structural/Habitat standing reviews report no remaining P1/P2. The review loop added explicit resource-to-domain failure translation, cleanup-disposition, encoder-refusal, and identity-presence proof before landing. |
 | Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]] remains blocked at the no-unmarked-publication-window capability choice. This checkpoint changes no destination claim, marker, publication substrate, provider home, native command, or app/runtime composition. |
 
+## C5 Governance Context-Direction Proof
+
+This checkpoint advances only the governance portion of
+[[tasks#2A. C5 Context-Direction Correction|tasks 2A.1-2A.4]]. It seals the
+current-main selector behind module-owned Git observation without changing
+provider convergence or entering the blocked export publication decision.
+
+| Boundary | Result |
+| --- | --- |
+| Root and module context | The service root exposes the existing raw `contentWorkspace` capability. Governance provider middleware derives the exact Git repository view, and `governance/module.ts` narrows it to direct `context.git` for the procedure handler. No `GovernanceLifecycleRuntime` bag or root-owned release-domain DTO exists. |
+| Domain ownership | Exact Git identity, race, size, blob, and ancestry translation lives under `modules/governance/repository`; governance requests, results, issues, policy, and repository protocols remain under the module model. The selector still has one implementation in `resolveCurrentMainSelection`. |
+| Public transition | `modules/governance/ports.ts`, `./ports/governance`, the public exact-Git factory, the CLI governance runtime, and the redundant CLI current-main wrapper are absent. The generic provider resolver interface/factory is also absent, so no caller can synthesize current-main selection. One exact transitional `./bindings/governance` factory remains for the immediately following provider-context node; it accepts only the raw content-workspace Git port, internally constructs the module repository and sole selector, and returns the provider-facing reader. Closed topology permits only its `current-main.ts` implementation. |
+| Behavior proof | The full lifecycle service passed 37 files / 341 tests and the full CLI suite passed. Focused governance and CLI projection proof passed 26/26 and 4/4. The owner-local real-Git integration preserves remote identity and forged-unreachable selection behavior. One first cross-project saturated run produced a generated-Git fixture failure; the exact file and the complete lifecycle suite passed unchanged when rerun without competing CLI load. |
+| Static and structural | Lifecycle and CLI lint, typecheck, and build passed without cache. Lifecycle and CLI sync/structural checks, the positive closed Habitat topology, the dependency-direction rejection fixture, strict OpenSpec, and `git diff --check` passed. The sealed root-no-upward-import axis now includes governance, packaging, releases, and vendors. The user-owned untracked note was held outside the closed topology only during lifecycle structural proof, restored byte-identically, and never staged. |
+| Reviews | Architecture/authority review caught and closed a caller-forgeable generic provider resolver plus an underconstrained transitional binding directory. TypeScript/refactor/oRPC review closed one test-only assertion. Behavior/testing/state-machine review added one public real-Git `CURRENT_ELIGIBLE` trace through the new context path. Structural/Habitat review changed the exact transitional governance facade from required to optionally admitted, so the next deletion only narrows the topology. Final rereviews report no remaining P1/P2. |
+| Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]] remains blocked and untouched. Provider execution, native commands, destination claims, app/runtime composition, and repository relationships do not change in this node. |
+
 ## Standing Reviews
 
 | Role | Pivot focus |

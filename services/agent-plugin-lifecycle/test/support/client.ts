@@ -55,13 +55,6 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
       },
     },
     providers: unavailableProviderRuntime(),
-    governance: {
-      git: {
-        inspect: async () => unavailableAsync("governance Git inspection"),
-        readBlob: async () => unavailableAsync("governance blob read"),
-        isAncestor: async () => unavailableAsync("governance ancestry"),
-      },
-    },
     ...overrides,
   };
 

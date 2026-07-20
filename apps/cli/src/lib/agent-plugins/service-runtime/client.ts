@@ -7,9 +7,7 @@ import {
   type UndoCandidateInput,
   type UndoWriter,
 } from "@rawr/agent-plugin-lifecycle/bindings/exports";
-import {
-  createResourceExactGitReader,
-} from "@rawr/agent-plugin-lifecycle/bindings/governance";
+import { createGovernanceCurrentMainSelectionReader } from "@rawr/agent-plugin-lifecycle/bindings/governance";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
 } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
@@ -46,14 +44,12 @@ import {
   type LifecycleOperationClient,
   type LifecycleOperation,
 } from "../commands/binding";
-import { createGovernanceLifecycleRuntime } from "./governance/runtime";
 import { createNodeMechanicalEvidenceRuntime } from "./evidence/node-mechanical";
 import {
   createNodeProviderLifecycleRuntime,
   createNodeProviderRecordState,
   type NodeProviderRecordState,
 } from "./providers/node-runtime";
-import { createGovernanceCurrentMainSelectionReader } from "./providers/current-main-selection";
 import {
   applyingRecoveryBlockingFailure,
   CapsuleControllerWriterV1,
@@ -167,11 +163,8 @@ export function createProductionLifecycleDeps(input: Readonly<{
     providerProjectionRoot: layout.providerProjectionRoot,
     providerTargetStateRoot: layout.providerTargetStateRoot,
   });
-  const governance = createGovernanceLifecycleRuntime({
-    git: createResourceExactGitReader({ contentWorkspace }),
-  });
   const providers = createNodeProviderLifecycleRuntime({
-    currentMain: createGovernanceCurrentMainSelectionReader({ governance }),
+    currentMain: createGovernanceCurrentMainSelectionReader(contentWorkspace),
     state: providerState,
     artifactReader,
     artifactStoreRoot: layout.artifactStoreRoot,
@@ -192,7 +185,6 @@ export function createProductionLifecycleDeps(input: Readonly<{
       undoWriter: createNodeExportUndoWriter(layout.capsuleRoot),
     }),
     providers,
-    governance,
   } satisfies LifecycleDeps);
 }
 

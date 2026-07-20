@@ -23,11 +23,11 @@ mode = "closed"
 required = [
   "exports",
   "exports.ts",
-  "governance",
-  "governance.ts",
   "providers",
 ]
 allowed = [
+  "governance",
+  "governance.ts",
   "releases",
   "releases.ts",
 ]
@@ -41,6 +41,16 @@ required = []
 allowed = [
   "*.ts",
 ]
+
+[[scopes]]
+name = "transitional-agent-plugin-governance-binding-files"
+root = "services/agent-plugin-lifecycle/src/bindings/governance"
+kind = "directory"
+mode = "closed"
+required = [
+  "current-main.ts",
+]
+allowed = []
 
 [[scopes]]
 name = "transitional-agent-plugin-release-binding-files"
@@ -175,7 +185,7 @@ allowed = []
 
 [[scopes]]
 name = "agent-plugin-lifecycle-uniform-module-shells"
-root = "services/agent-plugin-lifecycle/src/service/modules/!(packaging|vendors|releases)"
+root = "services/agent-plugin-lifecycle/src/service/modules/!(governance|packaging|releases|vendors)"
 kind = "directory"
 mode = "closed"
 required = [
@@ -190,6 +200,32 @@ required = [
 allowed = [
   "ports",
 ]
+
+[[scopes]]
+name = "agent-plugin-lifecycle-governance-shell"
+root = "services/agent-plugin-lifecycle/src/service/modules/governance"
+kind = "directory"
+mode = "closed"
+required = [
+  "contract.ts",
+  "middleware.ts",
+  "model",
+  "module.ts",
+  "repository",
+  "router",
+  "schemas.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-governance-repositories"
+root = "services/agent-plugin-lifecycle/src/service/modules/governance/repository"
+kind = "directory"
+mode = "closed"
+required = [
+  "content-workspace.ts",
+]
+allowed = []
 
 [[scopes]]
 name = "agent-plugin-lifecycle-packaging-shell"

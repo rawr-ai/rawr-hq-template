@@ -86,13 +86,6 @@ export function createExportTestClient(
       },
       exports: createExportLifecycleRuntime(exportsRuntime),
       providers: unavailableProviderRuntime(options.onProviderAccess),
-      governance: {
-        git: {
-          inspect: async () => unavailableAsync("governance inspect"),
-          readBlob: async () => unavailableAsync("governance blob read"),
-          isAncestor: async () => unavailableAsync("governance ancestry"),
-        },
-      },
     },
     scope: {
       controllerIdentity: "controller://export-runtime-test",
