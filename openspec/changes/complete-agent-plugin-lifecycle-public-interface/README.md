@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6C2C_PRIVATE_CONVERGENCE_POLICY_REVIEWED`
+`T6C2C_PRIVATE_DESIRED_STATE_REVIEWED`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
@@ -35,6 +35,7 @@ every provider mode is capsule-free.
 | T6C2b managed-retire deletion | `codex/c6-managed-retire-deletion` / this record node |
 | T6C1b private selector engine | `codex/c6-current-main-v2-selection` / this record node |
 | T6C2c private native policy | `codex/c6-canonical-convergence-policy` / this record node |
+| T6C2c private desired state | `codex/c6-canonical-desired-state` / this record node |
 | Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
 | Retained CLI target node | `codex/c6-serialize-cli-test-target` |
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
@@ -67,7 +68,7 @@ global undo redesign, and Inngest candidate bytes.
 | T6C1b observed-Git selector/cutover | private engine complete, atomic activation/cutover open | direct Git resolution is sealed but has no contract/router/CLI reachability; activation must retire the old ceremony in the same node |
 | T6C2a provider capsule retirement | complete, reviewed | capsule-cold provider modes, forward-only retry, export-only legacy retirement |
 | T6C2b managed-retire deletion | complete, reviewed | receipt-owned provider retire unreachable without alias; omission cleanup remains sync-owned |
-| T6C2c canonical native path | private convergence policy complete; desired-state resolver, resource ambiguity, executor, and atomic activation open | selected-owner native truth, verification barriers, no canonical hidden state |
+| T6C2c canonical native path | private convergence policy and desired-state verifier complete; resource ambiguity, executor, and atomic activation open | sole governance selection, selected-owner native truth, verification barriers, no canonical hidden state |
 | T6C3 export independence | unopened | destination-local ledger/collisions, no native-home registry |
 | T6D truthful test owners | retained, record realignment pending | owner-local DevOps fixture and ordinary serialized CLI target |
 | T6E deterministic manifest | implemented, restack/gate pending | focused canonicalization plus full build-twice equality |
@@ -86,9 +87,8 @@ follow-up work.
 
 ## Current Gate
 
-- Verify one selected complete-set artifact into the private provider-facing
-  desired state, expose invalid native provenance as ambiguity, and add the
-  private exact-prefix executor. Then activate selector plus convergence while
+- Expose invalid native provenance as ambiguity and add the private exact-prefix
+  executor. Then activate selector plus convergence while
   deleting the v1 current-main/promotion ceremony in one public node.
 - Implement T6C3 as the owner-local export boundary with no provider-home
   registry dependency.
@@ -174,23 +174,25 @@ retirement authority.
 | Static/structural | Lifecycle, CLI, controller-build, and HQ-plugin lint/typecheck/build gates passed as applicable. Lifecycle and CLI structural/sync checks plus all three positive Habitat rules passed. No recursive deletion was added; generated-file cleanup used guarded exact nonrecursive unlink. |
 | Reviews | Architecture/authority, TypeScript/refactor, behavior/testing, and structural quality approved the deletion with no remaining P1/P2. |
 
-## T6C2c Private Convergence Policy Proof
+## T6C2c Private Desired-State And Convergence Proof
 
 This is a private implementation checkpoint inside
 [[tasks#4. T6C2 Thin Canonical Provider Path]]. It adds no contract member,
 router composition, client operation, CLI dispatch, binding, or package export.
-Only a later provider-side desired-state verifier can construct its branded
-input; the current-main selector remains separately governance-owned.
+The provider verifier consumes governance's sole `CanonicalChannelSelection`
+through a type-only dependency; it defines no channel DTO, parser, or bridge.
+The current-main selector remains separately governance-owned.
 
 | Boundary | Result |
 | --- | --- |
+| Selection authority | One exact governance selection, including its `currentMainDigest`, survives unchanged into both provider desired states. The verifier checks the selected complete-set artifact identity and exact Claude/Codex projection bindings before returning a fixed provider-specific tuple. No provider-local selector DTO or forgeable proof brand remains. |
 | Native authority | The pure planner accepts one already-verified desired state, one provider/adapter-bearing capability observation, and either observable native inventory or explicit ambiguous provenance. It reads no receipt, sidecar, evidence, capsule, filesystem, process, Effect, or port. |
 | State law | Native state classifies as `INCOMPATIBLE_PROVIDER`, `BLOCKED_COLLISION`, `DRIFTED`, or `CONVERGED`; `BLOCKED_SELECTION` remains reserved for the next artifact/selection verifier. Marketplace identity plus embedded artifact provenance are jointly required. Unmanaged nonconflicting exposure is preserved. |
 | Ordering | Same-ID refresh is retire, absence verification, reinstall, then selected visibility. Omitted selected-owner members retire only after selected visibility, each retirement verifies residue absence, and final verification remains an explicit executor obligation. |
 | Unreachability | Production references stop at the private DTO/policy files. The service contract, router composition, client, CLI, bindings, and runtime remain byte-identical to the parent. The legacy canonical path therefore remains the sole reachable path until atomic activation. |
-| Behavior proof | Fourteen focused policy cases cover receipt-free adoption, missing/disabled state, same-ID refresh against both stale and already-current marketplaces, omitted cleanup ordering, both ownership halves, explicit provenance ambiguity, unmanaged collision/preservation, capability/adapter/target mismatch, and zero-step refusals. The full lifecycle suite passed 36 files / 324 tests. |
+| Behavior proof | Fourteen desired-state cases cover artifact kind, all selected source identities, exact artifact ref, both provider bindings, and renderer/adapter/capability/projection mismatch. Fourteen convergence-policy cases cover receipt-free adoption, missing/disabled state, same-ID refresh, omitted cleanup ordering, both ownership halves, ambiguity, unmanaged preservation, capability/adapter/target mismatch, and zero-step refusals. The full lifecycle suite passed 37 files / 338 tests. |
 | Static/structural | Lifecycle lint, typecheck, and build passed without cache. Sync plus all three enforced positive Habitat/dependency rules passed, strict OpenSpec passed, and `git diff --check` is clean. |
-| Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural proportionality approved with no remaining P1/P2. Exact desired-state binding, ambiguous resource observation, exact-prefix execution, and `verify-final` closed-set semantics remain named next-node gates. |
+| Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural proportionality approved with no remaining P1/P2. Ambiguous resource observation, exact-prefix execution, and `verify-final` closed-set semantics remain named next-node gates. |
 
 ## Standing Reviews
 

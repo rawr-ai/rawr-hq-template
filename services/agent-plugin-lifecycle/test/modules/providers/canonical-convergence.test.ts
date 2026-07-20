@@ -4,6 +4,7 @@ import type {
   CanonicalConvergencePlan,
   CanonicalNativeObservation,
 } from "../../../src/service/modules/providers/model/dto/canonical-convergence";
+import type { CanonicalChannelSelection } from "../../../src/service/modules/governance/model/dto/current-main";
 import type { CanonicalDesiredState } from "../../../src/service/modules/providers/model/dto/canonical-desired-state";
 import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
 import {
@@ -250,8 +251,28 @@ function makePlan(
   });
 }
 
-function desiredState(projection: AgentProviderProjection): CanonicalDesiredState {
-  return Object.freeze({
+function desiredState(projection: AgentProviderProjection): CanonicalDesiredState<"codex"> {
+  if (projection.provider !== "codex") {
+    throw new Error("canonical convergence fixture requires a Codex projection");
+  }
+  const projections: CanonicalChannelSelection["projections"] = [
+    Object.freeze({
+      provider: "claude",
+      rendererProtocol: "rawr-provider-renderer/claude@v1",
+      adapterProtocol: "claude-native-adapter@v1",
+      capabilityProfileDigest: `cp1_${"c".repeat(64)}`,
+      projectionDigest: `ap1_${"c".repeat(64)}`,
+    }),
+    Object.freeze({
+      provider: "codex",
+      rendererProtocol: projection.rendererProtocol,
+      adapterProtocol: projection.adapterProtocol,
+      capabilityProfileDigest: projection.capabilityProfile.capabilityProfileDigest,
+      projectionDigest: projection.projectionDigest,
+    }),
+  ];
+  const selection: CanonicalChannelSelection = Object.freeze({
+    currentMainDigest: `cm2_${"c".repeat(64)}`,
     contentAuthority: projection.artifactAuthority.contentAuthority,
     sourceRepositoryIdentity: "git:github.com/rawr-ai/rawr-hq",
     sourceCommit: projection.artifactAuthority.sourceCommit,
@@ -261,8 +282,12 @@ function desiredState(projection: AgentProviderProjection): CanonicalDesiredStat
       ? projection.source.releaseSet.releaseSetDigest
       : `rs1_${"d".repeat(64)}`,
     evaluationProfile: "provider-smoke@v1",
-    projection,
-  }) as CanonicalDesiredState;
+    projections: Object.freeze(projections),
+  });
+  return Object.freeze({
+    selection,
+    projection: Object.freeze({ ...projection, provider: "codex" }),
+  });
 }
 
 function observed(
