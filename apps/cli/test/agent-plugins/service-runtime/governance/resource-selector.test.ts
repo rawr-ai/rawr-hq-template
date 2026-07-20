@@ -154,8 +154,8 @@ describe("governance exact-Git resource selection", () => {
       workspacePath: repository.root,
       expectedRepositoryIdentity: repositoryIdentity.value,
     })).resolves.toMatchObject({
-      kind: "STALE_RECORD",
-      reason: expect.stringContaining("not reachable from the selected ref"),
+      kind: "FORGED_RECORD",
+      reason: expect.stringContaining("not reachable from opening canonical main"),
     });
   });
 });

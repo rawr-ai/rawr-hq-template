@@ -49,11 +49,11 @@ describe("canonical convergence executor", () => {
     const steps: readonly CanonicalConvergenceStep[] = [
       { kind: "mutate", action: actions[0] },
       { kind: "mutate", action: actions[1] },
-      { kind: "verify-retired", target: TARGET, nativeIdentity: stale.nativeIdentity },
+      { kind: "verify-retired", target: TARGET, nativeIdentity: stale.nativeIdentity, providerSourceIdentity: stale.providerSourceIdentity },
       { kind: "mutate", action: actions[2] },
       { kind: "verify-selected", target: TARGET, projection: selected },
       { kind: "mutate", action: actions[3] },
-      { kind: "verify-retired", target: TARGET, nativeIdentity: omitted.nativeIdentity },
+      { kind: "verify-retired", target: TARGET, nativeIdentity: omitted.nativeIdentity, providerSourceIdentity: omitted.providerSourceIdentity },
       { kind: "verify-final", target: TARGET, projection: selected },
     ];
     const unrelated = exposure("local@personal", "rawr:local", "personal");
@@ -76,6 +76,71 @@ describe("canonical convergence executor", () => {
     expect(result.finalInventory).toBe(finalInventory);
     expect(ports.mutator.apply.mock.calls.map(([action]) => action.kind))
       .toEqual(result.appliedPrefix.map(actionKind));
+  });
+
+  it("tracks configured-selector retirement in the exact prefix before same-ID install", async () => {
+    const selected = projection([member("cognition", "k")], "k");
+    const registration = registrationFor(selected);
+    const configured = configuredExposure("cognition@rawr-hq", "rawr:cognition", OWNER);
+    const cleanup = retireConfigured(configured, registration);
+    const installAction = install(selected.members[0]!, registration);
+    const finalInventory = inventory(selected, [native(selected.members[0]!)], []);
+    const ports = queuedPorts([
+      observed(inventory(selected, [], [])),
+      observed(finalInventory),
+    ], [applied(), applied()]);
+
+    const result = await executeCanonicalConvergence(plan(selected, [
+      { kind: "mutate", action: cleanup },
+      {
+        kind: "verify-configured-retired",
+        target: TARGET,
+        exposureIdentity: configured.exposureIdentity,
+        providerSourceIdentity: configured.providerSourceIdentity,
+      },
+      { kind: "mutate", action: installAction },
+      { kind: "verify-selected", target: TARGET, projection: selected },
+    ]), ports);
+
+    expect(result.kind).toBe("completed");
+    expect(result.appliedPrefix.map(actionKind)).toEqual([
+      "RetireConfiguredExposure",
+      "InstallMember",
+    ]);
+    expect(result.verifiedSteps.map(stepKind)).toEqual([
+      "verify-configured-retired",
+      "verify-selected",
+    ]);
+  });
+
+  it("verifies managed retirement by exact owner while preserving a foreign same-ID selector", async () => {
+    const selected = projection([member("cognition", "m")], "m");
+    const omitted = native(member("docs", "n"));
+    const foreign = exposure("docs@foreign", omitted.nativeIdentity, "foreign");
+    const cleanup = retire(omitted, registrationFor(selected));
+    const selectedLive = native(selected.members[0]!);
+    const finalInventory = inventory(selected, [selectedLive], [foreign]);
+    const ports = queuedPorts([
+      observed(inventory(selected, [selectedLive, omitted], [foreign])),
+      observed(finalInventory),
+      observed(finalInventory),
+    ], [applied()]);
+
+    const result = await executeCanonicalConvergence(plan(selected, [
+      { kind: "verify-selected", target: TARGET, projection: selected },
+      { kind: "mutate", action: cleanup },
+      {
+        kind: "verify-retired",
+        target: TARGET,
+        nativeIdentity: omitted.nativeIdentity,
+        providerSourceIdentity: omitted.providerSourceIdentity,
+      },
+      { kind: "verify-final", target: TARGET, projection: selected },
+    ]), ports);
+
+    expect(result.kind).toBe("completed");
+    if (result.kind !== "completed") throw new Error("Expected exact retirement convergence");
+    expect(result.finalInventory.standaloneExposures).toEqual([foreign]);
   });
 
   it.each([
@@ -119,7 +184,7 @@ describe("canonical convergence executor", () => {
         { kind: "verify-selected", target: TARGET, projection: selected },
       ],
       [
-        { kind: "verify-retired", target: TARGET, nativeIdentity: "rawr:orphan" },
+        { kind: "verify-retired", target: TARGET, nativeIdentity: "rawr:orphan", providerSourceIdentity: OWNER },
         { kind: "verify-selected", target: TARGET, projection: selected },
       ],
     ];
@@ -178,12 +243,12 @@ describe("canonical convergence executor", () => {
           { kind: "mutate", action: transition },
           { kind: "verify-selected", target: TARGET, projection: selected },
           { kind: "mutate", action: cleanup },
-          { kind: "verify-retired", target: TARGET, nativeIdentity: omitted.nativeIdentity },
+          { kind: "verify-retired", target: TARGET, nativeIdentity: omitted.nativeIdentity, providerSourceIdentity: omitted.providerSourceIdentity },
           { kind: "verify-final", target: TARGET, projection: selected },
         ]
       : [
           { kind: "mutate", action: cleanup },
-          { kind: "verify-retired", target: TARGET, nativeIdentity: omitted.nativeIdentity },
+          { kind: "verify-retired", target: TARGET, nativeIdentity: omitted.nativeIdentity, providerSourceIdentity: omitted.providerSourceIdentity },
           { kind: "mutate", action: install(selected.members[0]!, registration) },
           { kind: "verify-selected", target: TARGET, projection: selected },
         ];
@@ -213,7 +278,7 @@ describe("canonical convergence executor", () => {
     const result = await executeCanonicalConvergence(plan(selected, [
       { kind: "verify-selected", target: TARGET, projection: selected },
       { kind: "mutate", action: cleanup },
-      { kind: "verify-retired", target: TARGET, nativeIdentity: omitted.nativeIdentity },
+      { kind: "verify-retired", target: TARGET, nativeIdentity: omitted.nativeIdentity, providerSourceIdentity: omitted.providerSourceIdentity },
       { kind: "verify-final", target: TARGET, projection: selected },
     ]), ports);
     expect(result.kind).toBe("failed");
@@ -328,12 +393,25 @@ function setMarketplace(registration: ProviderMarketplaceRegistration, expected:
 function retire(member: NativeMemberObservation, activeMarketplace: ProviderMarketplaceRegistration): CanonicalNativeMutationAction {
   return { kind: "RetireMember", target: TARGET, activeMarketplace, member };
 }
+function retireConfigured(
+  configured: NativeStandaloneExposureObservation & { exposureKind: "configured-only" },
+  activeMarketplace: ProviderMarketplaceRegistration,
+): CanonicalNativeMutationAction {
+  return { kind: "RetireConfiguredExposure", target: TARGET, activeMarketplace, exposure: configured };
+}
 function install(member: ProviderProjectionMember, activeMarketplace: ProviderMarketplaceRegistration): CanonicalNativeMutationAction {
   return { kind: "InstallMember", target: TARGET, activeMarketplace, member };
 }
 
 function exposure(id: string, nativeIdentity: string, owner: string): NativeStandaloneExposureObservation {
-  return { exposureIdentity: id, nativeIdentity, providerSourceIdentity: owner as typeof OWNER, enablement: "enabled", visibleSkills: [], visibleHooks: [] };
+  return { exposureKind: "installed", exposureIdentity: id, nativeIdentity, providerSourceIdentity: owner as typeof OWNER, enablement: "enabled", visibleSkills: [], visibleHooks: [] };
+}
+function configuredExposure(
+  id: string,
+  nativeIdentity: string,
+  owner: string,
+): NativeStandaloneExposureObservation & { exposureKind: "configured-only" } {
+  return { exposureKind: "configured-only", exposureIdentity: id, nativeIdentity, providerSourceIdentity: owner as typeof OWNER, enablement: "enabled", visibleSkills: [], visibleHooks: [] };
 }
 function actionKind(action: CanonicalNativeMutationAction): string { return action.kind; }
 function stepKind(step: { readonly kind: string }): string { return step.kind; }

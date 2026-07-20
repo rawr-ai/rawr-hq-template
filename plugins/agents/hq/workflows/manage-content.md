@@ -72,8 +72,8 @@ rename, or delete existing content without explicit user authorization.
 2. For an explicit lifecycle request, identify the governed release input and
    hand the parent plugin to [[lifecycle-agent-plugin]]. Its first operation is
    the read-only `rawr agent plugins check`.
-3. Never chain `build`, `package`, `export`, `test`, `sync`, `retire`,
-   `attest-promotion`, or `undo` from authoring.
+3. Never chain `build`, `package`, `export`, `test`, `sync`, current-main
+   selection, or `undo` from authoring.
 </step>
 
 <step name="report">

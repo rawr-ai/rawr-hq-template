@@ -51,37 +51,37 @@
 
 ## 3B. Observed-Git Selection And Cutover
 
-- [ ] 3B.1 Add the separate closed `current-main-selection` locator request.
-- [ ] 3B.2 Resolve the fixed record from observed canonical Git, verify stable
+- [x] 3B.1 Add the separate closed `current-main-selection` locator request.
+- [x] 3B.2 Resolve the fixed record from observed canonical Git, verify stable
   repository identity, source reachability/tree/fixed release-input digest, and
   return one `CanonicalChannelSelection`. Later unselected content must leave
   the reviewed selector valid; compiled `refs/heads/main` and observed Git stay
   authoritative.
-- [ ] 3B.3 Delete v1 current-main, acceptance, hosted approval, promotion, and
+- [x] 3B.3 Delete v1 current-main, acceptance, hosted approval, promotion, and
   `attest-promotion` from service contracts/routers/public exports/client/CLI
   and positive Habitat inventory without aliases or compatibility decoders.
   Keep qualified `undo` for managed-export capsule state only. Remove the
   otherwise-unused hosted-governance resource.
-- [ ] 3B.4 Prove wrong/stale Git identity, changed release input, later
+- [x] 3B.4 Prove wrong/stale Git identity, changed release input, later
   unselected content retaining selection, one-procedure CLI dispatch, and
   old-path unreachability.
-- [ ] 3B.5 Run focused tests, lint, typecheck, build, structural/Habitat, strict
+- [x] 3B.5 Run focused tests, lint, typecheck, build, structural/Habitat, strict
   OpenSpec, and four standing reviews; commit this semantic Graphite node alone.
 
 ## 4. T6C2: Thin Canonical Provider Path
 
-- [ ] 4.1 Change only canonical sync/status to consume the resolved selection
+- [x] 4.1 Change only canonical sync/status to consume the resolved selection
   through a narrow required dependency view. Provider code must not parse raw v2
   bytes or call receipt, sidecar, evidence, hosted, promotion, or undo ports.
-- [ ] 4.2 Plan from exact native `rawr-hq` marketplace identity plus embedded
+- [x] 4.2 Plan from exact native `rawr-hq` marketplace identity plus embedded
   artifact provenance, preserve unmanaged/ambiguous collisions, verify artifact
   and projection bindings before native mutation, and report
   `BLOCKED_SELECTION` for invalid desired state.
-- [ ] 4.3 Prove no-record adoption, stale same-ID native remove/add refresh,
+- [x] 4.3 Prove no-record adoption, stale same-ID native remove/add refresh,
   omitted-member residue cleanup, unmanaged preservation, artifact/projection
   mismatch before mutation, exact applied-prefix failure, multi-home isolation,
   and a live-read repeat with every lifecycle/native mutation counter zero.
-- [ ] 4.4 Prove both halves of canonical ownership: matching `rawr-hq`
+- [x] 4.4 Prove both halves of canonical ownership: matching `rawr-hq`
   marketplace with missing/invalid embedded provenance blocks, and valid-looking
   embedded provenance under a foreign marketplace blocks, each with zero native
   mutation. Inject one failure during omitted-member retirement after selected

@@ -1,6 +1,6 @@
 import type { Effect } from "effect";
 
-export type ControllerExecutableKind = "git" | "hosted-governance" | "provider";
+export type ControllerExecutableKind = "git" | "provider";
 
 export interface ControllerExecutableAuthority {
   readonly kind: ControllerExecutableKind;

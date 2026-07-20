@@ -27,7 +27,9 @@ export default class AgentPluginsCheck extends AgentPluginLifecycleCommand {
     const request = this.parseInput(flags, parseCheckOperationRequest);
     if (request === undefined) return;
     await this.project(request, flags, {
-      git: request.operation === "releases.check" || request.operation === "releases.checkRepository",
+      git: request.operation === "releases.check"
+        || request.operation === "releases.checkRepository"
+        || request.operation === "governance.currentMainSelection",
     });
   }
 }

@@ -32,7 +32,6 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
     flags: Readonly<Record<string, unknown>>,
     requirements: Readonly<{
       git?: boolean;
-      hostedGovernance?: boolean;
       providers?: readonly ("claude" | "codex")[];
     }> = {},
   ): Promise<void> {
@@ -41,7 +40,7 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
       this.rejectInput("--dry-run and --yes are not part of the closed lifecycle procedure contract", baseFlags);
       return;
     }
-    let exitCode: 0 | 1;
+    let exitCode: 0 | 1 | 2;
     try {
       const binding = parseControllerProjectionBinding(flags, requirements);
       const result = await projectLifecycleOperation(request, binding);

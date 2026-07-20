@@ -18,14 +18,18 @@ export {
 } from "./target-records";
 export {
   createResourceClaudeProviderAdapter,
+  createResourceClaudeCanonicalObserver,
   createResourceClaudeProviderObserver,
   type ResourceClaudeProviderAdapterOptions,
+  type ResourceClaudeCanonicalObserverOptions,
   type ResourceClaudeProviderObserverOptions,
 } from "./resource-claude";
 export {
   createResourceCodexProviderAdapter,
+  createResourceCodexCanonicalObserver,
   createResourceCodexProviderObserver,
   type ResourceCodexProviderAdapterOptions,
+  type ResourceCodexCanonicalObserverOptions,
   type ResourceCodexProviderObserverOptions,
 } from "./resource-codex";
 export {
@@ -37,6 +41,10 @@ export type {
   NativeProviderAdapter,
   NativeProviderObserver,
 } from "./native";
+export {
+  createCanonicalNativeObserver,
+  type CanonicalNativeObserver,
+} from "./canonical-native-observer";
 export type {
   ClaudeNativeResourceSession,
   CodexNativeResourceSession,
@@ -51,11 +59,9 @@ export type {
   NativeResourceSessionInput,
 } from "./resource-port";
 export {
-  createCanonicalChannelReader,
-  type CurrentMainChannelObservation,
-  type CurrentMainChannelResolution,
-  type CurrentMainChannelResolver,
-} from "./canonical-channel";
+  createCurrentMainSelectionReader,
+  type GovernanceCurrentMainResolver,
+} from "./current-main-selection";
 export {
   canonicalBytes,
   canonicalDigest,

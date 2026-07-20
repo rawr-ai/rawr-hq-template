@@ -29,7 +29,6 @@ import {
 } from "../../../src/lib/agent-plugins/undo/node-store";
 import { prepareExportOnlyCapsuleSlotV1 } from "../../../src/lib/agent-plugins/undo/legacy-provider-retirement";
 import { createNodeExportUndoWriter } from "../../../src/lib/agent-plugins/service-runtime/client";
-import { createGovernanceCanonicalChannelReader } from "../../../src/lib/agent-plugins/service-runtime/providers/governance-channel";
 import {
   createNodeProviderLifecycleRuntime,
   createNodeProviderRecordState,
@@ -39,7 +38,6 @@ import {
   createLifecycleTestClient,
   testInvocation,
 } from "../../../../../services/agent-plugin-lifecycle/test/support/client";
-import { promotionFixture } from "../../../../../services/agent-plugin-lifecycle/test/modules/governance/fixtures";
 import { exportArtifactFixture } from "../../../../../services/agent-plugin-lifecycle/test/modules/exports/artifact-fixture";
 import {
   createExportTestClient,
@@ -70,15 +68,12 @@ describe("production lifecycle capsule boundary", () => {
     const layout = deriveAgentPluginControllerLayout({ dataRoot });
     const malformed = nonCanonicalLegacyFixture(await legacyFixtureBytes());
     await seedCapsule(layout.capsuleRoot, malformed);
-    const governance = promotionFixture();
-    governance.approvalReader.history = undefined;
     const runtime = createNodeProviderLifecycleRuntime({
-      channel: createGovernanceCanonicalChannelReader({
-        governance: {
-          git: governance.git,
-          evidence: governance.evidenceReader,
-          approvals: governance.approvalReader,
-        },
+      currentMain: Object.freeze({
+        resolve: async () => Object.freeze({
+          kind: "DIRTY_REPOSITORY" as const,
+          reason: "fixture content workspace is dirty",
+        }),
       }),
       state: createNodeProviderRecordState({
         controllerDataRoot: dataRoot,
@@ -105,7 +100,7 @@ describe("production lifecycle capsule boundary", () => {
       targets: [{ provider: "codex", home: path.join(fixture.path, "codex-home") }],
     }, testInvocation);
 
-    expect(result.ok && result.value[0]?.status).toBe("CONTENT_AHEAD_OF_ACCEPTANCE");
+    expect(result.ok && result.value[0]?.status).toBe("BLOCKED_SELECTION");
     expect(await capsuleBytes(layout.capsuleRoot)).toEqual(malformed);
   });
 

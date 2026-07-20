@@ -108,6 +108,60 @@ describe("canonical native convergence policy", () => {
     ]);
   });
 
+  it("retires selected-owner config-only residue before reinstalling the same native selector", () => {
+    const desired = projection([member("cognition", "6")], "6");
+    const configured = standalone(
+      "cognition@rawr-hq",
+      desired.members[0]!.nativeIdentity,
+      OWNER,
+      "configured-only",
+    );
+
+    const plan = makePlan(desired, observed(desired, [], [configured]));
+
+    expect(plan.status).toBe("DRIFTED");
+    expect(plan.steps.map(stepLabel)).toEqual([
+      "mutate:RetireConfiguredExposure",
+      "verify-configured-retired",
+      "mutate:InstallMember",
+      "verify-selected",
+    ]);
+  });
+
+  it("retires omitted selected-owner config only after selected visibility", () => {
+    const desired = projection([member("cognition", "7")], "7");
+    const configured = standalone(
+      "plugins@rawr-hq",
+      "rawr:plugins",
+      OWNER,
+      "configured-only",
+    );
+
+    const plan = makePlan(desired, observed(
+      desired,
+      desired.members.map((entry) => native(entry)),
+      [configured],
+    ));
+
+    expect(plan.status).toBe("DRIFTED");
+    expect(plan.steps.map(stepLabel)).toEqual([
+      "verify-selected",
+      "mutate:RetireConfiguredExposure",
+      "verify-configured-retired",
+      "verify-final",
+    ]);
+  });
+
+  it("blocks installed selected-owner standalone state instead of treating it as config residue", () => {
+    const desired = projection([member("cognition", "8")], "8");
+    const installed = standalone("cognition@rawr-hq", "rawr:cognition", OWNER, "installed");
+
+    const plan = makePlan(desired, observed(desired, [], [installed]));
+
+    expect(plan.status).toBe("BLOCKED_COLLISION");
+    expect(plan.steps).toEqual([]);
+  });
+
   it("verifies selected visibility before retiring a proven omitted member", () => {
     const prior = projection([
       member("cognition", "e"),
@@ -131,6 +185,27 @@ describe("canonical native convergence policy", () => {
     ]);
     expect(mutations(plan).some((action) =>
       action.kind === "RetireMember" && action.member.nativeIdentity === "rawr:local")).toBe(false);
+  });
+
+  it("preserves a foreign same-ID exposure while retiring the exact selected-owner omission", () => {
+    const prior = projection([member("docs", "9")], "9");
+    const desired = projection([member("cognition", "a")], "a");
+    const omitted = native(prior.members[0]!);
+    const foreign = standalone("docs@foreign", omitted.nativeIdentity, "foreign", "installed");
+
+    const plan = makePlan(desired, observed(
+      desired,
+      [native(desired.members[0]!), omitted],
+      [foreign],
+      marketplace(prior),
+    ));
+
+    expect(plan.status).toBe("DRIFTED");
+    const verification = plan.steps.find((step) => step.kind === "verify-retired");
+    expect(verification).toMatchObject({
+      nativeIdentity: omitted.nativeIdentity,
+      providerSourceIdentity: OWNER,
+    });
   });
 
   it.each([
@@ -407,8 +482,10 @@ function standalone(
   exposureIdentity: string,
   nativeIdentity: string,
   providerSourceIdentity: string,
+  exposureKind: NativeStandaloneExposureObservation["exposureKind"] = "installed",
 ): NativeStandaloneExposureObservation {
   return Object.freeze({
+    exposureKind,
     exposureIdentity,
     nativeIdentity,
     providerSourceIdentity: providerSourceIdentity as NativeStandaloneExposureObservation["providerSourceIdentity"],

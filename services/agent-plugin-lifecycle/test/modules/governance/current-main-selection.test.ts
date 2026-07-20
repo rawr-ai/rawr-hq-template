@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import {
   canonicalSerializeAgentPluginReleaseInput,
+  contentDigest,
+  createAgentPluginPayload,
+  createAgentPluginReleaseInput,
   parseGitCommitId,
   parseGitTreeId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
+  type AgentPluginReleaseInput,
+  type ReleaseResult,
 } from "../../../src/service/shared/release";
 import {
   CURRENT_MAIN_V2_RECORD_PATH,
@@ -20,12 +25,16 @@ import {
 } from "../../../src/service/modules/governance/model";
 import type {
   ExactGitReader,
+  GitBooleanReadResult,
   GitReadFailure,
   RepositoryInspection,
 } from "../../../src/service/modules/governance/ports";
 import { resolveCurrentMainSelection } from "../../../src/service/modules/governance/router/current-main-selection.router";
-import { CONTENT_AUTHORITY, REPOSITORY, releaseInputFixture } from "./fixtures";
+import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
+const encoder = new TextEncoder();
+const REPOSITORY = "git:github.com/example/personal-rawr-hq";
+const CONTENT_AUTHORITY = "personal-rawr-hq";
 const MAIN_REF = "refs/heads/main";
 const HEAD_COMMIT = oid("a");
 const HEAD_TREE = oid("b");
@@ -44,6 +53,35 @@ const GIT_READ_FAILURE_PARTITION: ReadonlyArray<readonly [
 const GIT_READ_TARGETS: readonly ("record" | "selected-input")[] = ["record", "selected-input"];
 
 describe("observed-Git current-main v2 selection", () => {
+  it("exposes selection as one public oRPC procedure backed only by the governance Git port", async () => {
+    const fixture = selectionFixture();
+    const client = createLifecycleTestClient({ governance: { git: fixture.git } });
+
+    await expect(client.governance.currentMainSelection({
+      locator: {
+        workspacePath: fixture.locator.workspacePath,
+        expectedRepositoryIdentity: fixture.locator.expectedRepositoryIdentity,
+      },
+    }, testInvocation)).resolves.toMatchObject({ kind: "CURRENT_ELIGIBLE" });
+
+    expect(fixture.git.calls).toEqual({ inspect: 2, readBlob: 2, isAncestor: 1 });
+  });
+
+  it("rejects mixed v1 selection fields before consulting Git", async () => {
+    const fixture = selectionFixture();
+    const client = createLifecycleTestClient({ governance: { git: fixture.git } });
+
+    await expect(client.governance.currentMainSelection({
+      locator: {
+        workspacePath: fixture.locator.workspacePath,
+        expectedRepositoryIdentity: fixture.locator.expectedRepositoryIdentity,
+      },
+      policyObject: { legacy: true },
+    } as never, testInvocation)).rejects.toThrow();
+
+    expect(fixture.git.calls).toEqual({ inspect: 0, readBlob: 0, isAncestor: 0 });
+  });
+
   it("returns one exact selection from the reviewed record and selected release input", async () => {
     const fixture = selectionFixture();
 
@@ -63,7 +101,7 @@ describe("observed-Git current-main v2 selection", () => {
         projections: fixture.body.projections,
       },
     });
-    expect(fixture.git.calls).toEqual({ inspect: 2, readBlob: 2, isAncestor: 0, listChangedPaths: 0 });
+    expect(fixture.git.calls).toEqual({ inspect: 2, readBlob: 2, isAncestor: 1 });
   });
 
   it("keeps an older reviewed source selected when later unselected content is on main", async () => {
@@ -93,7 +131,6 @@ describe("observed-Git current-main v2 selection", () => {
         path: CURRENT_MAIN_V2_RELEASE_INPUT_PATH,
       },
     ]);
-    expect(fixture.git.calls.listChangedPaths).toBe(0);
   });
 
   it("refuses once when canonical main changes before the selection closes", async () => {
@@ -125,6 +162,31 @@ describe("observed-Git current-main v2 selection", () => {
       kind: "FORGED_RECORD",
       reason: "Selected release input declares another content authority",
     });
+  });
+
+  it("rejects a selected commit that is not an ancestor of opening canonical main", async () => {
+    const fixture = selectionFixture();
+    fixture.git.ancestry = { ok: true, value: false };
+
+    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toEqual({
+      kind: "FORGED_RECORD",
+      reason: "Selected source commit is not reachable from opening canonical main",
+    });
+    expect(fixture.git.calls.readBlob).toBe(1);
+  });
+
+  it("treats an unreadable selected-commit ancestry as a stale record", async () => {
+    const fixture = selectionFixture();
+    fixture.git.ancestry = {
+      ok: false,
+      failure: { code: "ReadFailed", message: "ancestry unavailable" },
+    };
+
+    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toEqual({
+      kind: "STALE_RECORD",
+      reason: "Selected source ancestry cannot be established: ancestry unavailable",
+    });
+    expect(fixture.git.calls.readBlob).toBe(1);
   });
 
   it.each(GIT_READ_FAILURE_PARTITION)(
@@ -240,9 +302,10 @@ function selectionFixture(options: SelectionFixtureOptions = {}) {
 }
 
 class SelectionGitReader implements ExactGitReader {
-  readonly calls = { inspect: 0, readBlob: 0, isAncestor: 0, listChangedPaths: 0 };
+  readonly calls = { inspect: 0, readBlob: 0, isAncestor: 0 };
   readonly reads: GitBlobSelection[] = [];
   inspections: RepositoryInspection[];
+  ancestry: GitBooleanReadResult = { ok: true, value: true };
   private readonly objects = new Map<string, ExactGitBlobObservation>();
   private readonly failures = new Map<string, GitReadFailure>();
 
@@ -279,13 +342,61 @@ class SelectionGitReader implements ExactGitReader {
 
   isAncestor: ExactGitReader["isAncestor"] = async () => {
     this.calls.isAncestor += 1;
-    return unavailable("separate ancestry read");
+    return this.ancestry;
   };
 
-  listChangedPaths: ExactGitReader["listChangedPaths"] = async () => {
-    this.calls.listChangedPaths += 1;
-    return unavailable("changed-path read");
-  };
+}
+
+function releaseInputFixture(
+  payloadText: string,
+  contentAuthority = CONTENT_AUTHORITY,
+): AgentPluginReleaseInput {
+  const payload = mustRelease(createAgentPluginPayload([
+    { path: "skills/alpha/SKILL.md", mode: 0o644, bytes: encoder.encode(payloadText) },
+  ]));
+  return mustRelease(createAgentPluginReleaseInput({
+    schemaVersion: 1,
+    contentAuthority,
+    members: [{
+      kind: "agent-plugin",
+      pluginId: "alpha",
+      skillInventory: [{ identity: "alpha-skill", manifestPath: "skills/alpha/SKILL.md" }],
+      payload: {
+        protocolVersion: payload.protocolVersion,
+        manifest: payload.manifest,
+        payloadDigest: payload.payloadDigest,
+      },
+      vendor: [{
+        id: "vendor-alpha",
+        protocol: "vendor-v1",
+        contentDigest: contentDigest(encoder.encode("vendor\n")),
+      }],
+      curation: [{
+        id: "curation-alpha",
+        protocol: "curation-v1",
+        contentDigest: contentDigest(encoder.encode("curation\n")),
+      }],
+    }],
+    ownershipClaims: [
+      { kind: "skill", identity: "alpha-skill", ownerPluginId: "alpha" },
+      { kind: "provider-identity", identity: "codex:alpha", ownerPluginId: "alpha" },
+    ],
+    locks: [{
+      id: "vendor-lock",
+      protocol: "vendor-lock-v1",
+      contentDigest: contentDigest(encoder.encode("lock\n")),
+    }],
+    qualityPolicies: [{
+      id: "quality-policy",
+      protocol: "quality-v1",
+      contentDigest: contentDigest(encoder.encode("quality\n")),
+    }],
+  }));
+}
+
+function mustRelease<T, E>(result: ReleaseResult<T, E>): T {
+  if (!result.ok) throw new Error(`Expected release fixture success: ${JSON.stringify(result.issues)}`);
+  return result.value;
 }
 
 function ready(sourceCommit: string, sourceTree: string): RepositoryInspection {
@@ -340,8 +451,4 @@ function selectionKey(selection: GitBlobSelection): string {
 
 function oid(character: string): string {
   return character.repeat(40);
-}
-
-function unavailable(label: string): never {
-  throw new Error(`Unexpected ${label} access`);
 }

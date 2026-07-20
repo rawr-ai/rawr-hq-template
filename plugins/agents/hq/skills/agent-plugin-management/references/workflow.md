@@ -53,15 +53,21 @@ Targeted testing does not create a canonical channel claim.
 
 <branch operation="sync|status">
 Bind the governed current-main channel locator and explicit provider homes and
-executables. Status inspects without mutation. Sync converges only the accepted
+executables. Status inspects without mutation. Sync converges only the selected
 immutable complete set, including removal of omitted lifecycle-owned members;
-repeat it and prove managed state and receipt bytes do not change.
+repeat it and prove live managed state does not change.
 </branch>
 
-<branch operation="attest-promotion">
-Bind the exact repository identity and exact policy, request, acceptance, and
-landed release-input Git object pointers. Verify object equivalence without
-starting provider convergence.
+<branch operation="check --mode current-main-selection">
+Bind one explicit content workspace, expected repository identity, and Git
+executable. Resolve the fixed reviewed current-main v2 record without starting
+provider convergence.
+</branch>
+
+<branch operation="check --mode current-main-record">
+Encode or validate the one reviewed current-main v2 record. Return its exact
+canonical bytes without writing a content repository or acquiring Git/provider
+authority.
 </branch>
 
 <branch operation="undo">
@@ -90,7 +96,7 @@ operation requires a new explicit selection and its own authority inputs.
 **Fix**: bind only the selected branch's exact authority object and target identity.
 </failure>
 <failure name="false-idempotence">
-**Symptom**: repeated sync preserves visible content but rewrites configuration or receipts.
-**Fix**: compare owner state and receipt bytes, not only fresh-process visibility.
+**Symptom**: repeated sync preserves visible content but rewrites native configuration.
+**Fix**: compare live native owner state, not only fresh-process visibility.
 </failure>
 </failure-modes>

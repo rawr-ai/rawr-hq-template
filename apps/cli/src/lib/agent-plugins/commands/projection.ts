@@ -19,11 +19,11 @@ import {
 } from "./binding";
 
 import type {
-  AttestPromotionRequest,
   BuildRequest,
   CheckRequest,
   CompleteTestRequest,
   CurrentMainRecordRequest,
+  CurrentMainSelectionRequest,
   ExportRequest,
   PackageRequest,
   RepositoryCheckRequest,
@@ -48,7 +48,10 @@ export type LifecycleOperationRequest =
   | Readonly<{ operation: "providers.canonicalSync"; input: SyncRequest }>
   | Readonly<{ operation: "providers.canonicalStatus"; input: StatusRequest }>
   | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>
-  | Readonly<{ operation: "governance.attestPromotion"; input: AttestPromotionRequest }>;
+  | Readonly<{
+    operation: "governance.currentMainSelection";
+    input: CurrentMainSelectionRequest;
+  }>;
 
 export type UndoApplication = () => Promise<UndoResult>;
 type LifecycleCallOptions = NonNullable<Parameters<Client["releases"]["check"]>[1]>;
@@ -65,7 +68,6 @@ export function parseControllerProjectionBinding(
   flags: Readonly<Record<string, unknown>>,
   requirements: Readonly<{
     git?: boolean;
-    hostedGovernance?: boolean;
     providers?: readonly ("claude" | "codex")[];
     admittedProviders?: readonly ("claude" | "codex")[];
   }> = {},
@@ -76,16 +78,6 @@ export function parseControllerProjectionBinding(
   }
   if (!requirements.git && gitExecutable !== undefined) {
     throw new LifecycleInputError("--git-executable is not admitted by this command");
-  }
-  const hostedGovernanceExecutable = optionalAbsoluteExecutable(
-    flags["hosted-governance-executable"],
-    "--hosted-governance-executable",
-  );
-  if (requirements.hostedGovernance && hostedGovernanceExecutable === undefined) {
-    throw new LifecycleInputError("--hosted-governance-executable is required for this command");
-  }
-  if (!requirements.hostedGovernance && hostedGovernanceExecutable !== undefined) {
-    throw new LifecycleInputError("--hosted-governance-executable is not admitted by this command");
   }
   const providerExecutables = parseProviderExecutables(flags["provider-executable"]);
   const requiredProviders = requirements.providers ?? [];
@@ -102,7 +94,6 @@ export function parseControllerProjectionBinding(
   }
   return Object.freeze({
     ...(gitExecutable === undefined ? {} : { gitExecutable }),
-    ...(hostedGovernanceExecutable === undefined ? {} : { hostedGovernanceExecutable }),
     providerExecutables: Object.freeze(providerExecutables),
   });
 }
@@ -171,9 +162,9 @@ export async function invokeLifecycleProcedure(
       const client = await factory("governance.currentMainRecord", binding);
       return await client.governance.currentMainRecord(request.input, callOptions);
     }
-    case "governance.attestPromotion": {
-      const client = await factory("governance.attestPromotion", binding);
-      return await client.governance.attestPromotion(request.input, callOptions);
+    case "governance.currentMainSelection": {
+      const client = await factory("governance.currentMainSelection", binding);
+      return await client.governance.currentMainSelection(request.input, callOptions);
     }
     default:
       return assertNever(request);
@@ -189,11 +180,19 @@ export async function invokeAgentPluginUndo(
 export function lifecycleResultExitCode(
   operation: LifecycleOperation,
   result: unknown,
-): 0 | 1 {
+): 0 | 1 | 2 {
   const record = asRecord(result);
   if (operation === "providers.canonicalStatus") {
     if (record.ok !== true || !Array.isArray(record.value)) return 1;
+    if (record.value.some((entry) => asRecord(entry).status === "BLOCKED_SELECTION")) return 2;
     return record.value.every((entry) => asRecord(entry).status === "CONVERGED") ? 0 : 1;
+  }
+  if (operation === "providers.canonicalSync") {
+    if (record.ok !== true) return 1;
+    const value = asRecord(record.value);
+    if (Array.isArray(value.targets)
+      && value.targets.some((entry) => asRecord(entry).status === "BLOCKED_SELECTION")) return 2;
+    return value.status === "Blocked" || value.status === "Failed" || value.status === "PartialFailure" ? 1 : 0;
   }
   if (operation.startsWith("providers.")) {
     if (record.ok !== true) return 1;
@@ -201,6 +200,9 @@ export function lifecycleResultExitCode(
     return value.status === "Blocked" || value.status === "Failed" || value.status === "PartialFailure" ? 1 : 0;
   }
   if (operation === "governance.currentMainRecord") return record.ok === true ? 0 : 1;
+  if (operation === "governance.currentMainSelection") {
+    return record.kind === "CURRENT_ELIGIBLE" ? 0 : 2;
+  }
   const successfulKinds: Readonly<Record<LifecycleOperation, readonly string[]>> = {
     "releases.check": ["EligibleReport"],
     "releases.checkRepository": ["StagedRepositoryEligible", "CleanRepositoryEligible"],
@@ -214,7 +216,7 @@ export function lifecycleResultExitCode(
     "providers.canonicalSync": [],
     "providers.canonicalStatus": [],
     "governance.currentMainRecord": [],
-    "governance.attestPromotion": ["PromotionAttested"],
+    "governance.currentMainSelection": [],
   };
   return successfulKinds[operation].includes(String(record.kind)) ? 0 : 1;
 }
@@ -268,13 +270,6 @@ async function preflightBindingAuthority(
   const executables: ControllerExecutableAuthority[] = [];
   if (binding.gitExecutable !== undefined) {
     executables.push({ kind: "git", name: "git", path: binding.gitExecutable });
-  }
-  if (binding.hostedGovernanceExecutable !== undefined) {
-    executables.push({
-      kind: "hosted-governance",
-      name: "hosted-governance",
-      path: binding.hostedGovernanceExecutable,
-    });
   }
   const providerNames: readonly ("claude" | "codex")[] = ["claude", "codex"];
   for (const provider of providerNames) {

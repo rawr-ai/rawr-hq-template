@@ -21,7 +21,7 @@ for the complete operation selector.
 - Source authoring is separate, source-only work. It never starts this workflow.
 - App, web, and runtime composition are outside this workflow.
 - No operation automatically starts check, build, package, export, test, sync,
-  promotion, or undo.
+  or undo.
 
 ## Select One Branch
 
@@ -29,6 +29,10 @@ for the complete operation selector.
   governed Git coordinates. Vendor update also binds selected source ids;
   check/build bind one plugin or the complete-set selection. Run source tests or
   dependent-reference audits only when they are proof for this source branch.
+- **Current-main record**: use `check --mode current-main-record` to encode or
+  validate the single reviewed v2 record before it lands in the content
+  repository. Use `check --mode current-main-selection` to inspect the landed
+  record through observed Git without provider mutation.
 - **Package or export**: bind the immutable artifact handle and explicit output
   contract. Package takes format and output path; export takes mode, layout,
   managed destinations, and overwrite policy. Do not reopen a content checkout.
@@ -37,8 +41,6 @@ for the complete operation selector.
 - **Sync or status**: bind the governed current-main channel locator and explicit
   provider homes and executables. Sync removes omitted lifecycle-owned members;
   do not infer a set by scanning source.
-- **Attest promotion**: bind the exact repository identity plus policy, request,
-  acceptance, and landed release-input Git object pointers.
 - **Undo**: use only the controller-owned managed-export capsule. Replay is
   limited to export-destination actions and accepts no provider authority.
 

@@ -16,14 +16,9 @@ import {
 } from "@rawr/agent-plugin-lifecycle/release";
 import {
   createMechanicalProviderEvidence,
-  mechanicalTargetFactDigest,
   parseProviderTarget,
   renderCompleteProjection,
 } from "@rawr/agent-plugin-lifecycle/bindings/providers";
-import {
-  createMechanicalEvidenceObservation,
-  createProviderAcceptanceBinding,
-} from "@rawr/agent-plugin-lifecycle/bindings/governance";
 
 import {
   createNodeMechanicalEvidenceRuntime,
@@ -39,7 +34,7 @@ import {
 } from "../releases/owned-fixture-root";
 
 describe("node mechanical evidence runtime", () => {
-  it("shares one immutable evidence object across provider publication and governance reads", async () => {
+  it("publishes one immutable provider evidence object idempotently", async () => {
     const store = new MemoryEvidenceStore();
     const runtime = createNodeMechanicalEvidenceRuntimeFromStore(store);
     const evidence = completeEvidence();
@@ -50,28 +45,18 @@ describe("node mechanical evidence runtime", () => {
 
     const inspected = await runtime.provider.inspect(evidence.evidenceDigest);
     expect(inspected.ok && inspected.value.kind).toBe("present");
-    const governed = await runtime.governance.read({
-      protocol: "agent-plugin-mechanical-evidence/v1",
-      digest: evidence.evidenceDigest as never,
-      byteLength: evidence.bytes.byteLength,
-    });
-    expect(governed.ok && governed.observation.targets).toHaveLength(1);
   });
 
-  it("reports changed bytes as tampered rather than translating them into acceptance", async () => {
+  it("reports changed provider evidence bytes as a mechanical failure", async () => {
     const store = new MemoryEvidenceStore();
     const runtime = createNodeMechanicalEvidenceRuntimeFromStore(store);
     const evidence = completeEvidence();
     await runtime.provider.publish(evidence);
     store.replace(evidence.evidenceDigest, new TextEncoder().encode("changed\n"));
 
-    const result = await runtime.governance.read({
-      protocol: "agent-plugin-mechanical-evidence/v1",
-      digest: evidence.evidenceDigest as never,
-      byteLength: evidence.bytes.byteLength,
-    });
+    const result = await runtime.provider.inspect(evidence.evidenceDigest);
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.failure.code).toBe("TamperedEvidence");
+    expect(!result.ok && result.issues[0]?.code).toBe("EVIDENCE_FAILED");
   });
 
   it("converges through the selected filesystem provider without changing repository state", async () => {
@@ -101,42 +86,6 @@ describe("node mechanical evidence runtime", () => {
       expect(standalone.kind).toBe("Verified");
       if (standalone.kind !== "Verified") throw new Error("published evidence did not verify");
       expect(standalone.bytes).toEqual(evidence.bytes);
-
-      if (evidence.body.source.kind !== "complete-test") {
-        throw new Error("fixture must describe complete-set evidence");
-      }
-      const target = evidence.body.targets[0];
-      if (target === undefined) throw new Error("fixture must describe one provider target");
-      const binding = createProviderAcceptanceBinding({
-        provider: target.provider,
-        projectionDigest: target.projectionDigest,
-        adapterProtocol: target.adapterProtocol,
-        capabilityProfileDigest: target.capabilityProfileDigest,
-      });
-      if (!binding.ok) throw new Error(binding.issues.map((entry) => entry.message).join("; "));
-      const observation = createMechanicalEvidenceObservation({
-        handle: {
-          protocol: "agent-plugin-mechanical-evidence/v1",
-          digest: evidence.evidenceDigest,
-          byteLength: evidence.bytes.byteLength,
-        },
-        releaseSetDigest: evidence.body.source.releaseSet.releaseSetDigest,
-        projections: [binding.value],
-        evaluationProfile: evidence.body.evaluationProfile,
-        targets: [{
-          targetIdentity: target.targetDigest,
-          provider: target.provider,
-          projectionDigest: target.projectionDigest,
-          outcome: target.kind === "verified" ? "passed" : "failed",
-          factDigest: mechanicalTargetFactDigest(target),
-        }],
-      });
-      if (!observation.ok) throw new Error(observation.issues.map((entry) => entry.message).join("; "));
-      expect(observation).toMatchObject({ ok: true });
-      const governed = await runtime.governance.read(observation.value.handle);
-      expect(governed.ok).toBe(true);
-      if (!governed.ok) throw new Error(governed.failure.message);
-      expect(governed.observation.targets).toHaveLength(1);
 
       expect((await runtime.provider.publish(evidence)).ok).toBe(true);
       const after = await lstat(evidencePath, { bigint: true });

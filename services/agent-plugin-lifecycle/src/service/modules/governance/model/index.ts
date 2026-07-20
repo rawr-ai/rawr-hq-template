@@ -1,10 +1,4 @@
-export * from "./dto/acceptance";
 export * from "./dto/current-main";
-export * from "./dto/evidence";
 export * from "./dto/git";
-export type * from "./dto/hosted-approval";
-export type * from "./dto/operations";
 export * from "./dto/primitives";
-export * from "./dto/promotion";
-export type * from "./errors/promotion-result";
 export * from "./policy/current-main-record";

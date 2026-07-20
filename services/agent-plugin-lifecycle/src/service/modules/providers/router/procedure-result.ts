@@ -1,6 +1,7 @@
 import type { CompleteNativeHomesObservation } from "../model/dto/native-homes";
 import type {
   CanonicalStatusOutcome,
+  CanonicalSyncOutcome,
   ProviderOperationOutcome,
 } from "../model/dto/outcome";
 import type {
@@ -9,6 +10,7 @@ import type {
 } from "../model/errors/deployment-result";
 import type {
   CanonicalStatusProcedureResult,
+  CanonicalSyncProcedureResult,
   CompleteNativeHomesProcedureResult,
   ProviderOperationProcedureResult,
 } from "../schemas";
@@ -49,6 +51,12 @@ export async function canonicalStatusResult(
         })),
       }
     : result;
+}
+
+export async function canonicalSyncResult(
+  operation: Promise<DeploymentResult<CanonicalSyncOutcome>>,
+): Promise<CanonicalSyncProcedureResult> {
+  return await operation;
 }
 
 export async function completeNativeHomesResult(

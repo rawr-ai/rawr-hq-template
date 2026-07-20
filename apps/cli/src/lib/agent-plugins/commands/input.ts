@@ -31,13 +31,17 @@ export type TargetedTestRequest = InputOf<Client["providers"]["targetedTest"]>;
 export type CompleteTestRequest = InputOf<Client["providers"]["completeTest"]>;
 export type SyncRequest = InputOf<Client["providers"]["canonicalSync"]>;
 export type StatusRequest = InputOf<Client["providers"]["canonicalStatus"]>;
-export type AttestPromotionRequest = InputOf<Client["governance"]["attestPromotion"]>;
 export type CurrentMainRecordRequest = InputOf<Client["governance"]["currentMainRecord"]>;
+export type CurrentMainSelectionRequest = InputOf<Client["governance"]["currentMainSelection"]>;
 
 export type CheckOperationRequest =
   | Readonly<{ operation: "releases.check"; input: CheckRequest }>
   | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>
-  | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>;
+  | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>
+  | Readonly<{
+    operation: "governance.currentMainSelection";
+    input: CurrentMainSelectionRequest;
+  }>;
 
 export class LifecycleInputError extends Error {
   readonly code = "LIFECYCLE_INPUT_INVALID";
@@ -107,6 +111,10 @@ const CHECK_MODE_ADMITTED_FLAGS = {
     "current-main-body-json",
     "current-main-envelope-json",
   ],
+  "current-main-selection": [
+    "content-workspace",
+    "repository-identity",
+  ],
 } as const satisfies Readonly<Record<CheckMode, readonly CheckDomainFlag[]>>;
 
 const CHECK_DOMAIN_FLAGS = Object.freeze(
@@ -148,6 +156,23 @@ export function parseCheckOperationRequest(flags: RawFlags): CheckOperationReque
       return Object.freeze({
         operation: "governance.currentMainRecord",
         input: parseCurrentMainRecordRequest(flags),
+      });
+    case "current-main-selection":
+      assertCheckDomain(flags, CHECK_MODE_ADMITTED_FLAGS["current-main-selection"]);
+      return Object.freeze({
+        operation: "governance.currentMainSelection",
+        input: Object.freeze({
+          locator: Object.freeze({
+            workspacePath: requireCanonicalAbsolute(
+              flags["content-workspace"],
+              "--content-workspace",
+            ),
+            expectedRepositoryIdentity: requireString(
+              flags["repository-identity"],
+              "--repository-identity",
+            ),
+          }),
+        }),
       });
   }
 }
@@ -277,21 +302,6 @@ export function parseStatusRequest(flags: RawFlags): StatusRequest {
     channel: "current-main",
     locator: contentRecordLocator(flags),
     targets: parseProviderTargets(flags.target),
-  });
-}
-
-export function parseAttestPromotionRequest(flags: RawFlags): AttestPromotionRequest {
-  const repositoryIdentity = requireString(flags["repository-identity"], "--repository-identity");
-  const locator = Object.freeze({
-    workspacePath: requireCanonicalAbsolute(flags["content-workspace"], "--content-workspace"),
-    expectedRepositoryIdentity: repositoryIdentity,
-  });
-  return Object.freeze({
-    locator,
-    policyObject: gitPointer(flags, "policy", repositoryIdentity),
-    requestObject: gitPointer(flags, "request", repositoryIdentity),
-    acceptanceObject: gitPointer(flags, "acceptance", repositoryIdentity),
-    landedReleaseInputObject: gitPointer(flags, "landed", repositoryIdentity),
   });
 }
 
@@ -428,21 +438,6 @@ function requireReleaseValue<T>(
     throw new LifecycleInputError(result.issues[0]?.message ?? "Invalid release identity");
   }
   return result.value;
-}
-
-function gitPointer(
-  flags: RawFlags,
-  prefix: "policy" | "request" | "acceptance" | "landed",
-  repositoryIdentity: string,
-): AttestPromotionRequest["policyObject"] {
-  return Object.freeze({
-    repositoryIdentity,
-    ref: requireString(flags[`${prefix}-ref`], `--${prefix}-ref`),
-    commit: requireGitObject(flags[`${prefix}-commit`], `--${prefix}-commit`),
-    tree: requireGitObject(flags[`${prefix}-tree`], `--${prefix}-tree`),
-    path: requireRelativePath(flags[`${prefix}-path`], `--${prefix}-path`),
-    blob: requireGitObject(flags[`${prefix}-blob`], `--${prefix}-blob`),
-  });
 }
 
 function requireCanonicalAbsolute(

@@ -34,11 +34,9 @@ import type { ProviderId, ProviderTargetDigest } from "../dto/provider-target";
 
 declare const receiptDigestBrand: unique symbol;
 declare const visibleFingerprintBrand: unique symbol;
-declare const lifecycleRecordDigestBrand: unique symbol;
 
 export type TargetReceiptDigest = string & { readonly [receiptDigestBrand]: "TargetReceiptDigest" };
 export type VisibleFingerprint = string & { readonly [visibleFingerprintBrand]: "VisibleFingerprint" };
-export type LifecycleRecordDigest = string & { readonly [lifecycleRecordDigestBrand]: "LifecycleRecordDigest" };
 
 export interface VerifiedMemberIdentity {
   readonly pluginId: PluginId;
@@ -73,15 +71,7 @@ export interface CompleteTestScope extends ReceiptScopeCommon {
   readonly evaluationProfile: EvaluationProfile;
 }
 
-export interface CanonicalAcceptedScope extends ReceiptScopeCommon {
-  readonly kind: "canonical-accepted";
-  readonly releaseSet: CompleteSetArtifactRef;
-  readonly acceptanceDigest: LifecycleRecordDigest;
-  readonly promotionDigest: LifecycleRecordDigest;
-  readonly channel: "current-main";
-}
-
-export type TargetReceiptScope = TargetedTestScope | CompleteTestScope | CanonicalAcceptedScope;
+export type TargetReceiptScope = TargetedTestScope | CompleteTestScope;
 
 export type ReceiptLineage =
   | Readonly<{ kind: "initial" }>
@@ -107,7 +97,6 @@ export interface TargetReceipt {
 const MAX_RECEIPT_BYTES = 4 * 1024 * 1024;
 const MAX_MEMBERS = 1_024;
 const DIGEST_PATTERN = /^(?:tr1_|vf1_|prq1_|ap1_|cp1_|pm1_|[a-z][a-z0-9]*1_)[0-9a-f]{64}$/u;
-const RECORD_DIGEST_PATTERN = /^[a-z][a-z0-9._-]{0,31}_[0-9a-f]{64}$/u;
 const IDENTITY_PATTERN = /^[a-z0-9][a-z0-9@._:/-]*$/u;
 const PROTOCOL_PATTERN = /^[a-z0-9][a-z0-9._/-]*@v[1-9][0-9]*$/u;
 const EVALUATION_PATTERN = /^[a-z0-9][a-z0-9._:@/-]*$/u;
@@ -168,17 +157,6 @@ export function visibleFingerprint(members: readonly VerifiedMemberIdentity[]): 
   return canonicalDigest("vf1_", [...members].sort(compareMembers).map(memberValue)) as VisibleFingerprint;
 }
 
-export function parseLifecycleRecordDigest(
-  input: unknown,
-  path = "lifecycleRecordDigest",
-): DeploymentResult<LifecycleRecordDigest> {
-  const issues: ProviderDeploymentIssue[] = [];
-  const digest = parseRecordDigest(input, path, issues);
-  return digest === undefined
-    ? failure(firstIssue(issues, issue("INVALID_DIGEST", path, "Lifecycle record digest is invalid")))
-    : success(digest);
-}
-
 export function receiptBodyValue(body: TargetReceiptBody): CanonicalValue {
   return {
     schemaVersion: body.schemaVersion,
@@ -237,15 +215,6 @@ export function receiptScopeValue(scope: TargetReceiptScope): CanonicalValue {
       return { kind: scope.kind, ...common, releases: scope.releases.map(releaseRefValue), evaluationProfile: scope.evaluationProfile };
     case "complete-test":
       return { kind: scope.kind, ...common, releaseSet: setRefValue(scope.releaseSet), evaluationProfile: scope.evaluationProfile };
-    case "canonical-accepted":
-      return {
-        kind: scope.kind,
-        ...common,
-        releaseSet: setRefValue(scope.releaseSet),
-        acceptanceDigest: scope.acceptanceDigest,
-        promotionDigest: scope.promotionDigest,
-        channel: scope.channel,
-      };
   }
 }
 
@@ -359,11 +328,9 @@ function parseScope(input: unknown, issues: ProviderDeploymentIssue[]): TargetRe
     ? ["evaluationProfile", "releases"]
     : kind === "complete-test"
       ? ["evaluationProfile", "releaseSet"]
-      : kind === "canonical-accepted"
-        ? ["acceptanceDigest", "channel", "promotionDigest", "releaseSet"]
-        : [];
+      : [];
   if (modeKeys.length === 0 || !exactRecord(input, [...commonKeys, ...modeKeys].sort(compareCanonical), "receipt.body.scope", issues)) {
-    if (modeKeys.length === 0) issues.push(issue("INVALID_RECEIPT", "receipt.body.scope.kind", "Receipt scope kind is unsupported", "targeted-test|complete-test|canonical-accepted", String(kind)));
+    if (modeKeys.length === 0) issues.push(issue("INVALID_RECEIPT", "receipt.body.scope.kind", "Receipt scope kind is unsupported", "targeted-test|complete-test", String(kind)));
     return undefined;
   }
   const common = parseScopeCommon(input, issues);
@@ -379,12 +346,7 @@ function parseScope(input: unknown, issues: ProviderDeploymentIssue[]): TargetRe
     const profile = parseEvaluation(input.evaluationProfile, issues);
     return profile === undefined ? undefined : Object.freeze({ kind, ...common, releaseSet: ref, evaluationProfile: profile });
   }
-  if (input.channel !== "current-main") issues.push(issue("INVALID_RECEIPT", "receipt.body.scope.channel", "Canonical receipt channel must be current-main", "current-main", String(input.channel)));
-  const acceptance = parseRecordDigest(input.acceptanceDigest, "receipt.body.scope.acceptanceDigest", issues);
-  const promotion = parseRecordDigest(input.promotionDigest, "receipt.body.scope.promotionDigest", issues);
-  return input.channel === "current-main" && acceptance !== undefined && promotion !== undefined
-    ? Object.freeze({ kind: "canonical-accepted", ...common, releaseSet: ref, acceptanceDigest: acceptance, promotionDigest: promotion, channel: input.channel })
-    : undefined;
+  return undefined;
 }
 
 function parseScopeCommon(input: Record<string, unknown>, issues: ProviderDeploymentIssue[]): ReceiptScopeCommon | undefined {
@@ -523,10 +485,6 @@ function parseProtocol(
   path = "receipt.body.scope.adapterProtocol",
 ): AdapterProtocol | undefined {
   return canonicalString(input, path, issues, { maxBytes: 256, pattern: PROTOCOL_PATTERN, code: "INVALID_PROTOCOL" }) as AdapterProtocol | undefined;
-}
-
-function parseRecordDigest(input: unknown, path: string, issues: ProviderDeploymentIssue[]): LifecycleRecordDigest | undefined {
-  return canonicalString(input, path, issues, { maxBytes: 128, pattern: RECORD_DIGEST_PATTERN, code: "INVALID_DIGEST" }) as LifecycleRecordDigest | undefined;
 }
 
 function parseDigest(input: unknown, path: string, prefix: string, issues: ProviderDeploymentIssue[]): string | undefined {

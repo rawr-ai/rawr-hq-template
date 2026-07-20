@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { chmod, mkdir, symlink, writeFile } from "node:fs/promises";
+import { mkdir, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,7 +11,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   parseArtifactHandle,
-  parseAttestPromotionRequest,
   parseBuildRequest,
   parseCheckOperationRequest,
   parseExportRequest,
@@ -90,6 +89,7 @@ describe("qualified lifecycle command boundary", () => {
 
     for (const retired of [
       ["agent", "sync"],
+      ["agent", "plugins", "attest-promotion"],
       ["agent", "plugins", "retire"],
       ["undo"],
       ["plugins", "sync"],
@@ -188,6 +188,16 @@ describe("qualified lifecycle command boundary", () => {
         "content-workspace": "/tmp/content",
       },
       { mode: "current-main-record", "current-main-body-json": "{" },
+      {
+        mode: "current-main-selection",
+        "content-workspace": "/tmp/content",
+        "repository-identity": "git:github.com/rawr-ai/rawr-hq",
+        "current-main-body-json": currentMainBody,
+      },
+      {
+        mode: "current-main-selection",
+        "content-workspace": "/tmp/content",
+      },
     ]) {
       expect(() => {
         parseCheckOperationRequest(invalid);
@@ -265,9 +275,18 @@ describe("qualified lifecycle command boundary", () => {
     })).toMatchObject({ kind: "complete-test" });
     expect(parseSyncRequest(providerWorkspace())).toMatchObject({ kind: "canonical-sync", channel: "current-main" });
     expect(parseStatusRequest(providerWorkspace())).toMatchObject({ kind: "canonical-status", channel: "current-main" });
-    expect(parseAttestPromotionRequest(attestationFlags())).toMatchObject({
-      locator: { workspacePath: "/tmp/content", expectedRepositoryIdentity: "repo" },
-      landedReleaseInputObject: { path: "records/landed.json" },
+    expect(parseCheckOperationRequest({
+      mode: "current-main-selection",
+      "content-workspace": "/tmp/content",
+      "repository-identity": "git:github.com/rawr-ai/rawr-hq",
+    })).toMatchObject({
+      operation: "governance.currentMainSelection",
+      input: {
+        locator: {
+          workspacePath: "/tmp/content",
+          expectedRepositoryIdentity: "git:github.com/rawr-ai/rawr-hq",
+        },
+      },
     });
   });
 
@@ -340,12 +359,31 @@ describe("qualified lifecycle command boundary", () => {
       ok: true,
       value: [{ status: "CONVERGED" }, { status: "DRIFTED" }],
     })).toBe(1);
+    expect(lifecycleResultExitCode("providers.canonicalStatus", {
+      ok: true,
+      value: [{ status: "CONVERGED" }, { status: "BLOCKED_SELECTION" }],
+    })).toBe(2);
     expect(lifecycleResultExitCode("providers.canonicalStatus", { ok: false, issues: [] })).toBe(1);
+    expect(lifecycleResultExitCode("providers.canonicalSync", {
+      ok: true,
+      value: {
+        status: "Blocked",
+        targets: [{ status: "BLOCKED_SELECTION" }],
+      },
+    })).toBe(2);
     expect(lifecycleResultExitCode("governance.currentMainRecord", { ok: true, value: {} })).toBe(0);
     expect(lifecycleResultExitCode("governance.currentMainRecord", {
       ok: false,
       failure: { code: "InvalidSchema", path: "currentMain", message: "invalid" },
     })).toBe(1);
+    expect(lifecycleResultExitCode("governance.currentMainSelection", {
+      kind: "CURRENT_ELIGIBLE",
+      selection: {},
+    })).toBe(0);
+    expect(lifecycleResultExitCode("governance.currentMainSelection", {
+      kind: "STALE_RECORD",
+      reason: "stale",
+    })).toBe(2);
 
     let writes = 0;
     const client = {
@@ -375,6 +413,33 @@ describe("qualified lifecycle command boundary", () => {
       input: parseStatusRequest(providerWorkspace()),
     }, { providerExecutables: {} }, () => client);
     expect(writes).toBe(0);
+
+    const fixture = await createOwnedFixtureRoot();
+    try {
+      const providerHome = path.join(fixture.path, "provider-home");
+      await mkdir(providerHome, { mode: 0o700 });
+      const blocked = runRawr([
+        ...canonicalStatusCommand(
+          path.join(fixture.path, "missing-content-workspace"),
+          [`codex=${providerHome}`],
+          "/usr/bin/false",
+        ),
+        "--json",
+      ]);
+      expect(blocked.status, `${blocked.stderr}\n${blocked.stdout}`).toBe(2);
+      expect(parseSingleJson(blocked.stdout)).toMatchObject({
+        ok: true,
+        data: {
+          operation: "providers.canonicalStatus",
+          result: {
+            ok: true,
+            value: [{ status: "BLOCKED_SELECTION" }],
+          },
+        },
+      });
+    } finally {
+      await removeOwnedFixtureRoot(fixture);
+    }
   });
 
   it("emits one typed result when a lifecycle procedure exits nonzero", () => {
@@ -429,11 +494,8 @@ describe("qualified lifecycle command boundary", () => {
     try {
       const providerHome = path.join(fixture.path, "provider-home");
       const missingGit = path.join(fixture.path, "missing-git");
-      const nonExecutableGovernance = path.join(fixture.path, "non-executable-gh");
       const providerAlias = path.join(fixture.path, "provider-alias");
       await mkdir(providerHome, { mode: 0o700 });
-      await writeFile(nonExecutableGovernance, "not executable\n", { mode: 0o600 });
-      await chmod(nonExecutableGovernance, 0o600);
       await symlink("/bin/echo", providerAlias);
       const targetedTest = parseTestRequest({
         release: [releaseHandle],
@@ -453,28 +515,6 @@ describe("qualified lifecycle command boundary", () => {
           request: { operation: "releases.check", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
           binding: { gitExecutable: missingGit, providerExecutables: {} },
           command: releaseCheckCommand(fixture.path, missingGit),
-        },
-        {
-          label: "non-executable hosted-governance binary",
-          request: {
-            operation: "providers.canonicalStatus",
-            input: parseStatusRequest({
-              "content-workspace": fixture.path,
-              "repository-identity": "repo",
-              target: [`codex=${providerHome}`],
-            }),
-          },
-          binding: {
-            gitExecutable: "/usr/bin/git",
-            hostedGovernanceExecutable: nonExecutableGovernance,
-            providerExecutables: { codex: "/bin/echo" },
-          },
-          command: canonicalStatusCommand(
-            fixture.path,
-            [`codex=${providerHome}`],
-            nonExecutableGovernance,
-            "/bin/echo",
-          ),
         },
         {
           label: "provider executable alias",
@@ -552,7 +592,6 @@ describe("qualified lifecycle command boundary", () => {
         };
         const binding: ControllerProjectionBinding = {
           gitExecutable: "/usr/bin/git",
-          hostedGovernanceExecutable: "/usr/bin/true",
           providerExecutables: testCase.providerExecutables,
         };
         let clientConstructions = 0;
@@ -567,7 +606,6 @@ describe("qualified lifecycle command boundary", () => {
           ...canonicalStatusCommand(
             fixture.path,
             testCase.targets,
-            "/usr/bin/true",
             "/bin/echo",
             "claude" in testCase.providerExecutables ? "/bin/echo" : undefined,
           ),
@@ -586,7 +624,6 @@ describe("qualified lifecycle command boundary", () => {
 });
 
 const EXACT_PLUGIN_COMMANDS = [
-  "agent:plugins:attest-promotion",
   "agent:plugins:build",
   "agent:plugins:check",
   "agent:plugins:create",
@@ -648,9 +685,7 @@ function recordingClient(calls: string[]): Client {
     },
     governance: {
       currentMainRecord: call("governance.currentMainRecord"),
-      validateAcceptance: call("governance.validateAcceptance"),
-      attestPromotion: call("governance.attestPromotion"),
-      resolveCurrentMain: call("governance.resolveCurrentMain"),
+      currentMainSelection: call("governance.currentMainSelection"),
     },
   } as unknown as Client;
 }
@@ -668,10 +703,16 @@ function operationRequests(): LifecycleOperationRequest[] {
     mode: "current-main-record",
     "current-main-body-json": JSON.stringify(currentMainBodyFixture()),
   });
+  const currentMainSelection = parseCheckOperationRequest({
+    mode: "current-main-selection",
+    "content-workspace": "/tmp/content",
+    "repository-identity": "git:github.com/rawr-ai/rawr-hq",
+  });
   return [
     { operation: "releases.check", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
     stagedCheck,
     currentMainRecord,
+    currentMainSelection,
     { operation: "releases.build", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
     { operation: "vendors.status", input: parseVendorStatusRequest(vendorWorkspace()) },
     { operation: "vendors.update", input: parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] }) },
@@ -681,7 +722,6 @@ function operationRequests(): LifecycleOperationRequest[] {
     { operation: "providers.completeTest", input: { kind: "complete-test", releaseSet, evaluationProfile: "native@v1", targets: target } },
     { operation: "providers.canonicalSync", input: parseSyncRequest(providerWorkspace()) },
     { operation: "providers.canonicalStatus", input: parseStatusRequest(providerWorkspace()) },
-    { operation: "governance.attestPromotion", input: parseAttestPromotionRequest(attestationFlags()) },
   ];
 }
 
@@ -730,7 +770,7 @@ function vendorWorkspace() {
 function providerWorkspace() {
   return {
     "content-workspace": "/tmp/content",
-    "repository-identity": "repo",
+    "repository-identity": "git:fixture-agent-plugins",
     target: ["codex=/tmp/codex-home"],
   };
 }
@@ -765,21 +805,6 @@ function currentMainBodyFixture() {
   };
 }
 
-function attestationFlags() {
-  const flags: Record<string, unknown> = {
-    "content-workspace": "/tmp/content",
-    "repository-identity": "repo",
-  };
-  for (const prefix of ["policy", "request", "acceptance", "landed"] as const) {
-    flags[`${prefix}-ref`] = "refs/heads/main";
-    flags[`${prefix}-commit`] = hex40;
-    flags[`${prefix}-tree`] = hex64;
-    flags[`${prefix}-path`] = `records/${prefix}.json`;
-    flags[`${prefix}-blob`] = hex40;
-  }
-  return flags;
-}
-
 function runRawr(args: readonly string[]) {
   return spawnSync("bun", [path.join(cliRoot, "test", "command-fixture", "command-test-cli.ts"), ...args], {
     cwd: cliRoot,
@@ -809,17 +834,15 @@ function releaseCheckCommand(contentWorkspace: string, gitExecutable: string): r
 function canonicalStatusCommand(
   contentWorkspace: string,
   targets: readonly string[],
-  hostedGovernanceExecutable: string,
   codexExecutable: string,
   claudeExecutable?: string,
 ): readonly string[] {
   return [
     "agent", "plugins", "status",
     "--content-workspace", contentWorkspace,
-    "--repository-identity", "repo",
+    "--repository-identity", "git:fixture-agent-plugins",
     ...targets.flatMap((target) => ["--target", target]),
     "--git-executable", "/usr/bin/git",
-    "--hosted-governance-executable", hostedGovernanceExecutable,
     "--provider-executable", `codex=${codexExecutable}`,
     ...(claudeExecutable === undefined ? [] : ["--provider-executable", `claude=${claudeExecutable}`]),
   ];

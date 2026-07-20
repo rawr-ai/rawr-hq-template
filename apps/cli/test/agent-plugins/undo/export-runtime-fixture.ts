@@ -115,10 +115,7 @@ export function createExportTestClient(
           inspect: async () => unavailableAsync("governance inspect"),
           readBlob: async () => unavailableAsync("governance blob read"),
           isAncestor: async () => unavailableAsync("governance ancestry"),
-          listChangedPaths: async () => unavailableAsync("governance changed paths"),
         },
-        evidence: { read: async () => unavailableAsync("governance evidence") },
-        approvals: { read: async () => unavailableAsync("governance approval") },
       },
     },
     scope: {
@@ -154,7 +151,12 @@ function unavailableProviderRuntime(
   };
   const unavailableProviderAsync = async (label: string): Promise<never> => unavailableProvider(label);
   return {
-    channel: { resolve: async () => unavailableProviderAsync("provider canonical channel") },
+    currentMain: { resolve: async () => unavailableProviderAsync("provider current-main selection") },
+    canonicalNative: {
+      inspectCapabilities: async () => unavailableProviderAsync("canonical provider capabilities"),
+      observe: async () => unavailableProviderAsync("canonical provider inventory"),
+      apply: async () => unavailableProviderAsync("canonical provider mutation"),
+    },
     releases: { read: async () => unavailableProviderAsync("provider release") },
     provider: {
       projectionAdapterProtocol: () => unavailableProvider("provider adapter protocol"),

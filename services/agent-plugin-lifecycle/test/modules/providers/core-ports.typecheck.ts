@@ -1,48 +1,48 @@
 import type {
-  CanonicalChannelReader,
-  MechanicalEvidencePublisher,
+  CanonicalNativeRuntime,
+  CurrentMainSelectionReader,
+  ProviderMarketplaceMaterializer,
   ProviderDeploymentRequest,
-  ProviderTargetMutator,
-  ProviderTargetReader,
+  ProviderProjectionMaterializer,
   TargetReceiptReader,
   VerifiedReleaseReader,
 } from "../../../src/bindings/providers";
 import type { CanonicalStatusDependencies } from "../../../src/service/modules/providers/router/canonical-status.router";
+import type { CanonicalSyncDependencies } from "../../../src/service/modules/providers/router/canonical-sync.router";
 
-declare const channel: CanonicalChannelReader;
+declare const currentMain: CurrentMainSelectionReader;
 declare const releases: VerifiedReleaseReader;
-declare const provider: ProviderTargetReader;
+declare const canonicalNative: CanonicalNativeRuntime;
 declare const receipts: TargetReceiptReader;
-declare const providerMutator: ProviderTargetMutator;
-declare const evidence: MechanicalEvidencePublisher;
+declare const projectionMaterializer: ProviderProjectionMaterializer;
+declare const marketplaceMaterializer: ProviderMarketplaceMaterializer;
 
 const statusDependencies: CanonicalStatusDependencies = {
-  channel,
+  currentMain,
   releases,
-  provider,
-  receipts,
+  native: canonicalNative,
 };
 void statusDependencies;
 
-const statusCannotReceiveMutation = {
-  channel,
+const statusCannotReceiveReceipt = {
+  currentMain,
   releases,
-  provider,
+  native: canonicalNative,
+  // @ts-expect-error canonical status has no receipt port
   receipts,
-  // @ts-expect-error status has no native mutation port
-  providerMutator,
 } satisfies CanonicalStatusDependencies;
-void statusCannotReceiveMutation;
+void statusCannotReceiveReceipt;
 
-const statusCannotReceiveEvidencePublisher = {
-  channel,
+const syncCannotReceiveReceipt = {
+  currentMain,
   releases,
-  provider,
+  native: canonicalNative,
+  projectionMaterializer,
+  marketplaceMaterializer,
+  // @ts-expect-error canonical sync has no receipt port
   receipts,
-  // @ts-expect-error status has no mechanical evidence publication port
-  evidence,
-} satisfies CanonicalStatusDependencies;
-void statusCannotReceiveEvidencePublisher;
+} satisfies CanonicalSyncDependencies;
+void syncCannotReceiveReceipt;
 
 export function exactModeNarrowing(request: ProviderDeploymentRequest): string {
   switch (request.kind) {

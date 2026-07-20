@@ -113,6 +113,7 @@ export function createResourceCodexCanonicalObserver(
   const ports = createResourceCodexProviderPorts(input, true);
   return createCanonicalNativeObserver({
     provider: "codex",
+    contentAuthority: input.contentAuthority,
     bridge: createCodexNativeInventoryBridge(ports),
   });
 }
@@ -279,6 +280,35 @@ function createResourceCodexProviderPorts(
       await (await session(home)).removePlugin({
         selector: pluginSelector(nativeIdentity, input.contentAuthority, "codex"),
       });
+    },
+    retireConfiguredPlugin: async ({ home, expected }) => {
+      const provider = await session(home);
+      const selector = pluginSelector(expected.nativeIdentity, expected.providerSourceIdentity, "codex");
+      if (selector !== expected.exposureIdentity || expected.providerSourceIdentity !== input.contentAuthority) {
+        throw new Error("Codex configured retirement does not bind the selected owner selector");
+      }
+      const [configuration, listed] = await Promise.all([
+        provider.readConfiguration(),
+        listPlugins(home),
+      ]);
+      const configured = parseAppServerPluginConfiguration(configuration).filter((entry) =>
+        selectorFromConfiguredPlugin(entry) === selector);
+      const exact = configured[0];
+      if (
+        configured.length !== 1
+        || exact === undefined
+        || exact.nativeIdentity !== expected.nativeIdentity
+        || exact.providerSourceIdentity !== expected.providerSourceIdentity
+        || exact.enablement !== expected.enablement
+        || listed.some((entry) => entry.installed && pluginSelectorFor(entry) === selector)
+      ) {
+        throw new Error("Codex configured retirement precondition changed before native remove");
+      }
+      await provider.removePlugin({ selector });
+      const after = parseAppServerPluginConfiguration(await provider.readConfiguration());
+      if (after.some((entry) => selectorFromConfiguredPlugin(entry) === selector)) {
+        throw new Error("Codex native remove retained the configured selector");
+      }
     },
   };
 
@@ -514,6 +544,7 @@ async function inventoryCodexExposures(
 
   for (const plugin of listed.filter((entry) => entry.installed)) {
     recordCodexExposure(exposures, {
+      exposureKind: "installed",
       exposureIdentity: pluginSelectorFor(plugin),
       nativeIdentity: `rawr:${plugin.name}`,
       providerSourceIdentity: parseSourceIdentity(plugin.marketplaceName, "codex"),
@@ -525,6 +556,7 @@ async function inventoryCodexExposures(
   for (const plugin of appPlugins) {
     const selector = pluginSelectorFor(plugin);
     recordCodexExposure(exposures, {
+      exposureKind: "installed",
       exposureIdentity: selector,
       nativeIdentity: `rawr:${plugin.name}`,
       providerSourceIdentity: parseSourceIdentity(plugin.marketplaceName, "codex"),
@@ -535,6 +567,7 @@ async function inventoryCodexExposures(
   }
   for (const configured of parseAppServerPluginConfiguration(configuredInput)) {
     recordCodexExposure(exposures, {
+      exposureKind: "configured-only",
       exposureIdentity: selectorFromConfiguredPlugin(configured),
       nativeIdentity: configured.nativeIdentity,
       providerSourceIdentity: configured.providerSourceIdentity,
@@ -559,6 +592,9 @@ function recordCodexExposure(
   }
   exposures.set(candidate.exposureIdentity, Object.freeze({
     ...candidate,
+    exposureKind: prior?.exposureKind === "installed" || candidate.exposureKind === "installed"
+      ? "installed"
+      : "configured-only",
     visibleSkills: mergeNames(prior?.visibleSkills ?? Object.freeze([]), candidate.visibleSkills),
     visibleHooks: mergeNames(prior?.visibleHooks ?? Object.freeze([]), candidate.visibleHooks),
   }));

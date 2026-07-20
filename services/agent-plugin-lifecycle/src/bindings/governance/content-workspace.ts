@@ -14,34 +14,27 @@ import {
 } from "../../service/modules/governance/model/dto/git";
 import {
   parseCommit,
-  parseRelativePath,
   parseRepository,
   parseTree,
-  sortCanonical,
   type CanonicalRef,
   type GitCommitId,
-  type ReleaseRelativePath,
 } from "../../service/modules/governance/model/dto/primitives";
 import type {
   ExactGitReader,
   GitBlobReadResult,
   GitBooleanReadResult,
-  GitChangedPathsResult,
   GitReadFailureCode,
   RepositoryInspection,
 } from "../../service/modules/governance/ports";
 
 const MAX_GIT_BLOB_BYTES = 128 * 1024 * 1024;
 const MAX_GIT_EVIDENCE_BYTES = 64 * 1024 * 1024;
-const MAX_CHANGED_PATHS = 65_536;
-
 export type ResourceExactGitReadPort = Pick<
   ContentWorkspaceGitReadAsyncPort,
   | "inspectGitWorkspace"
   | "captureGitWorkspaceEvidence"
   | "readGitBlobAtPath"
   | "isLocalGitAncestor"
-  | "listGitChangedPaths"
 >;
 
 /** Projects exact local Git mechanics into the governance module's semantic reader. */
@@ -53,8 +46,6 @@ export function createResourceExactGitReader(binding: Readonly<{
     readBlob: (locator, selection) => readBlob(binding.contentWorkspace, locator, selection),
     isAncestor: (locator, ancestor, descendant) =>
       isAncestor(binding.contentWorkspace, locator, ancestor, descendant),
-    listChangedPaths: (locator, from, to) =>
-      listChangedPaths(binding.contentWorkspace, locator, from, to),
   };
   return Object.freeze(reader);
 }
@@ -159,7 +150,7 @@ async function readBlob(
     const pointer = createExactGitBlobPointer({ ...selection, blob: observed.blob });
     if (!pointer.ok) return readFailure("WrongObject", "Git provider returned a noncanonical blob identity");
     if (observed.bytes.byteLength > MAX_GIT_BLOB_BYTES) {
-      return readFailure("ObjectTooLarge", "Git blob exceeds the promotion verifier bound");
+      return readFailure("ObjectTooLarge", "Git blob exceeds the governance read bound");
     }
     return {
       ok: true,
@@ -193,43 +184,6 @@ async function isAncestor(
     };
   } catch (error) {
     return booleanFailure(resourceFailureMessage(error));
-  }
-}
-
-async function listChangedPaths(
-  port: ResourceExactGitReadPort,
-  locator: GitLocator,
-  from: GitCommitId,
-  to: GitCommitId,
-): Promise<GitChangedPathsResult> {
-  if (!isAbsolute(locator.workspacePath)) {
-    return changedPathsFailure("Git locator must be an explicit absolute workspace path");
-  }
-  try {
-    const bytes = await port.listGitChangedPaths({
-      root: locator.workspacePath,
-      fromCommit: from,
-      toCommit: to,
-      maxBytes: MAX_GIT_EVIDENCE_BYTES,
-    });
-    const values = decodeNul(bytes);
-    if (values.length > MAX_CHANGED_PATHS) {
-      return changedPathsFailure("Changed-path result exceeds its protocol bound");
-    }
-    const parsed = values.map((value, index) => parseRelativePath(value, `changedPaths[${index}]`));
-    if (parsed.some((result) => !result.ok)) {
-      return changedPathsFailure("Changed-path result contains a noncanonical path");
-    }
-    const paths = sortCanonical(
-      parsed.flatMap((result): readonly ReleaseRelativePath[] => result.ok ? [result.value] : []),
-      (value) => value,
-    );
-    if (paths.some((value, index) => index > 0 && value === paths[index - 1])) {
-      return changedPathsFailure("Changed-path result contains duplicate identities");
-    }
-    return { ok: true, paths };
-  } catch (error) {
-    return changedPathsFailure(resourceFailureMessage(error));
   }
 }
 
@@ -339,10 +293,6 @@ function readFailure(code: GitReadFailureCode, message: string): GitBlobReadResu
 }
 
 function booleanFailure(message: string): GitBooleanReadResult {
-  return { ok: false, failure: { code: "ReadFailed", message } };
-}
-
-function changedPathsFailure(message: string): GitChangedPathsResult {
   return { ok: false, failure: { code: "ReadFailed", message } };
 }
 

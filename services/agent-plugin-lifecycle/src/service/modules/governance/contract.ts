@@ -1,14 +1,10 @@
 import { schema } from "@rawr/hq-sdk";
 import { ocBase } from "../../base";
 import {
-  AttestPromotionInputSchema,
-  AttestPromotionResultSchema,
   CurrentMainRecordInputSchema,
   CurrentMainRecordResultSchema,
-  ResolveCurrentMainResultSchema,
-  ResolveCurrentMainInputSchema,
-  ValidateAcceptanceInputSchema,
-  ValidateAcceptanceResultSchema,
+  CurrentMainSelectionInputSchema,
+  CurrentMainSelectionResultSchema,
 } from "./schemas";
 
 export const contract = {
@@ -16,16 +12,8 @@ export const contract = {
     .meta({ idempotent: true, entity: "governance", audit: "full" })
     .input(schema(CurrentMainRecordInputSchema))
     .output(schema(CurrentMainRecordResultSchema)),
-  validateAcceptance: ocBase
+  currentMainSelection: ocBase
     .meta({ idempotent: true, entity: "governance", audit: "full" })
-    .input(schema(ValidateAcceptanceInputSchema))
-    .output(schema(ValidateAcceptanceResultSchema)),
-  attestPromotion: ocBase
-    .meta({ idempotent: true, entity: "governance", audit: "full" })
-    .input(schema(AttestPromotionInputSchema))
-    .output(schema(AttestPromotionResultSchema)),
-  resolveCurrentMain: ocBase
-    .meta({ idempotent: true, entity: "governance", audit: "full" })
-    .input(schema(ResolveCurrentMainInputSchema))
-    .output(schema(ResolveCurrentMainResultSchema)),
+    .input(schema(CurrentMainSelectionInputSchema))
+    .output(schema(CurrentMainSelectionResultSchema)),
 };

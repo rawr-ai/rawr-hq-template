@@ -13,7 +13,7 @@ export type LifecycleOperation =
   | "providers.canonicalSync"
   | "providers.canonicalStatus"
   | "governance.currentMainRecord"
-  | "governance.attestPromotion";
+  | "governance.currentMainSelection";
 
 export type LifecycleClientByOperation = Readonly<{
   "releases.check": Readonly<{ releases: Pick<Client["releases"], "check"> }>;
@@ -32,8 +32,8 @@ export type LifecycleClientByOperation = Readonly<{
   "governance.currentMainRecord": Readonly<{
     governance: Pick<Client["governance"], "currentMainRecord">;
   }>;
-  "governance.attestPromotion": Readonly<{
-    governance: Pick<Client["governance"], "attestPromotion">;
+  "governance.currentMainSelection": Readonly<{
+    governance: Pick<Client["governance"], "currentMainSelection">;
   }>;
 }>;
 
@@ -42,7 +42,6 @@ export type LifecycleOperationClient<TOperation extends LifecycleOperation> =
 
 export type ControllerProjectionBinding = Readonly<{
   gitExecutable?: string;
-  hostedGovernanceExecutable?: string;
   providerExecutables: Readonly<Partial<Record<"claude" | "codex", string>>>;
 }>;
 

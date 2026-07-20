@@ -48,16 +48,21 @@ branch silently runs `check`, cleans a checkout, or starts another operation.
   provider homes. They do not rediscover a release set from source. Closed-set
   sync retires omitted lifecycle-owned members; there is no separate
   receipt-owned retirement command.
-- **Promotion attestation**: `rawr agent plugins attest-promotion` takes exact
-  repository identity and policy, request, acceptance, and landed release-input
-  Git object pointers. It does not substitute a workspace's current state.
+- **Current-main record**: `rawr agent plugins check --mode
+  current-main-record` encodes or validates the one reviewed v2 record. It
+  returns canonical bytes but does not write the content repository.
+- **Current-main selection**: `rawr agent plugins check --mode
+  current-main-selection` takes one explicit content-workspace locator and
+  expected repository identity. It resolves the reviewed v2 record from stable
+  canonical Git without hosted approval or promotion replay.
 - **Undo**: `rawr agent plugins undo` uses only the controller-owned managed-export
   capsule and replays only export-destination actions. It accepts no provider
   executable or provider-home authority and never replays native provider state.
 
 Within governed lifecycle operations, content-workspace bytes are admissible
-only to vendor, check, and build branches. Package, export, test, provider-state,
-attestation, and undo branches must bind their own owner-specific authority.
+only to vendor, check, build, and current-main selection branches. Record
+encode/validate is pure and takes no workspace port. Package, export, test,
+provider-state, and undo branches must bind their own owner-specific authority.
 
 ## Acceptance
 

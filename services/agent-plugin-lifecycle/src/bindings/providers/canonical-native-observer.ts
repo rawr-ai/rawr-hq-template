@@ -1,6 +1,8 @@
 import type { CanonicalNativeObservation } from "../../service/modules/providers/model/dto/canonical-convergence";
+import type { ContentAuthority } from "../../service/shared/release";
 import {
   failure,
+  issue,
   success,
   type DeploymentResult,
 } from "../../service/modules/providers/model/errors/deployment-result";
@@ -14,15 +16,28 @@ import {
 } from "./native";
 
 export interface CanonicalNativeObserver {
-  observe(target: ProviderTarget): Promise<DeploymentResult<CanonicalNativeObservation>>;
+  observe(
+    target: ProviderTarget,
+    contentAuthority: ContentAuthority,
+  ): Promise<DeploymentResult<CanonicalNativeObservation>>;
 }
 
 export function createCanonicalNativeObserver(input: Readonly<{
   provider: ProviderId;
+  contentAuthority: ContentAuthority;
   bridge: NativeProviderInventoryBridge;
 }>): CanonicalNativeObserver {
   return Object.freeze({
-    observe: async (target: ProviderTarget) => {
+    observe: async (target: ProviderTarget, contentAuthority: ContentAuthority) => {
+      if (contentAuthority !== input.contentAuthority) {
+        return failure([issue(
+          "BLOCKED_COLLISION",
+          "target.inventory.contentAuthority",
+          "Canonical observer is bound to another content authority",
+          input.contentAuthority,
+          contentAuthority,
+        )]);
+      }
       const inspection = await inspectNativeInventory({
         provider: input.provider,
         bridge: input.bridge,

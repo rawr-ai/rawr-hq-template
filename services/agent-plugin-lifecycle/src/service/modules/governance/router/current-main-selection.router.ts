@@ -14,9 +14,11 @@ import {
   type CurrentMainSelectionFailureKind,
   type CurrentMainSelectionResult,
 } from "../model/dto/current-main";
+import { decodeGitLocator } from "../model/dto/boundary";
 import { parseCanonicalRef } from "../model/dto/primitives";
 import { validateCurrentMainEnvelopeV2 } from "../model/policy/current-main-record";
 import type { ExactGitReader, GitReadFailureCode, RepositoryInspection } from "../ports";
+import { module } from "../module";
 
 const COMPILED_CANONICAL_REF = requireCanonicalRef();
 const COMPILED_CURRENT_MAIN_PATH = requireRelativePath(
@@ -27,6 +29,13 @@ const COMPILED_RELEASE_INPUT_PATH = requireRelativePath(
   CURRENT_MAIN_V2_RELEASE_INPUT_PATH,
   "currentMain.releaseInputPath",
 );
+
+export const currentMainSelection = module.currentMainSelection.handler(async ({ context, input }) => {
+  const locator = decodeGitLocator(input.locator);
+  return locator.ok
+    ? resolveCurrentMainSelection(context.governance.git, locator.value)
+    : refused("WRONG_REPOSITORY", locator.reason);
+});
 
 export async function resolveCurrentMainSelection(
   git: ExactGitReader,
@@ -63,6 +72,20 @@ export async function resolveCurrentMainSelection(
   const sourceTree = parseGitTreeId(body.sourceTree, "currentMain.body.sourceTree");
   if (!sourceCommit.ok || !sourceTree.ok) {
     return refused("FORGED_RECORD", "Current-main contains an invalid selected Git identity");
+  }
+
+  const reachable = await git.isAncestor(locator, sourceCommit.value, opening.headCommit);
+  if (!reachable.ok) {
+    return refused(
+      "STALE_RECORD",
+      `Selected source ancestry cannot be established: ${reachable.failure.message}`,
+    );
+  }
+  if (!reachable.value) {
+    return refused(
+      "FORGED_RECORD",
+      "Selected source commit is not reachable from opening canonical main",
+    );
   }
 
   const releaseInputRead = await git.readBlob(locator, {

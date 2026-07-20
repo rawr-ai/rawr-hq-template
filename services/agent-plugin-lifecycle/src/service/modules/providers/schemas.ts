@@ -3,6 +3,7 @@ import { Refine, type TSchema, Type } from "typebox";
 import type { CompleteNativeHomesObservation } from "./model/dto/native-homes";
 import type {
   CanonicalStatusOutcome,
+  CanonicalSyncOutcome,
   ProviderOperationOutcome,
 } from "./model/dto/outcome";
 import type { DeploymentResult } from "./model/errors/deployment-result";
@@ -26,9 +27,6 @@ const TargetReceiptDigestSchema = Type.String({ pattern: "^tr1_[0-9a-f]{64}$" })
 const VisibleFingerprintSchema = Type.String({ pattern: "^vf1_[0-9a-f]{64}$" });
 const MechanicalEvidenceDigestSchema = Type.String({ pattern: "^me1_[0-9a-f]{64}$" });
 const CompleteNativeHomesDigestSchema = Type.String({ pattern: "^nh1_[0-9a-f]{64}$" });
-const LifecycleRecordDigestSchema = Type.String({
-  pattern: "^[a-z][a-z0-9._-]{0,31}_[0-9a-f]{64}$",
-});
 
 const ProviderTargetInputSchema = Type.Object(
   {
@@ -114,7 +112,6 @@ export const ProviderDeploymentIssueCodeSchema = Type.Union([
   Type.Literal("ADAPTER_PROTOCOL_MISMATCH"),
   Type.Literal("ARTIFACT_KIND_MISMATCH"),
   Type.Literal("ARTIFACT_READ_FAILED"),
-  Type.Literal("BLOCKED_CANONICAL_TEST_TARGET"),
   Type.Literal("BLOCKED_COLLISION"),
   Type.Literal("CAPABILITY_MISMATCH"),
   Type.Literal("CHANNEL_NOT_ELIGIBLE"),
@@ -393,17 +390,6 @@ const TargetReceiptScopeSchema = Type.Union([
     },
     { additionalProperties: false },
   ),
-  Type.Object(
-    {
-      ...ReceiptScopeCommonFields,
-      kind: Type.Literal("canonical-accepted"),
-      releaseSet: CompleteSetArtifactRefSchema,
-      acceptanceDigest: LifecycleRecordDigestSchema,
-      promotionDigest: LifecycleRecordDigestSchema,
-      channel: Type.Literal("current-main"),
-    },
-    { additionalProperties: false },
-  ),
 ]);
 
 const ReceiptLineageSchema = Type.Union([
@@ -503,16 +489,6 @@ const PublishReceiptActionSchema = Type.Object(
   { additionalProperties: false },
 );
 
-const NormalizeReceiptActionSchema = Type.Object(
-  {
-    kind: Type.Literal("NormalizeReceipt"),
-    target: ProviderTargetSchema,
-    prior: TargetReceiptSchema,
-    receipt: TargetReceiptSchema,
-  },
-  { additionalProperties: false },
-);
-
 const NativeProviderMutationActionSchema = Type.Union([
   SetMarketplaceActionSchema,
   InstallMemberActionSchema,
@@ -524,7 +500,6 @@ const ProviderMutationActionSchema = Type.Union([
   AdmitTargetIdentityActionSchema,
   NativeProviderMutationActionSchema,
   PublishReceiptActionSchema,
-  NormalizeReceiptActionSchema,
 ]);
 
 const ProviderPlanStepSchema = Type.Union([
@@ -682,13 +657,134 @@ const CanonicalStatusOutcomeSchema = Type.Object(
   {
     target: ProviderTargetSchema,
     status: Type.Union([
-      Type.Literal("CONTENT_AHEAD_OF_ACCEPTANCE"),
-      Type.Literal("ACCEPTED_PENDING_CONVERGENCE"),
+      Type.Literal("BLOCKED_SELECTION"),
       Type.Literal("CONVERGED"),
       Type.Literal("DRIFTED"),
       Type.Literal("BLOCKED_COLLISION"),
       Type.Literal("INCOMPATIBLE_PROVIDER"),
     ]),
+    issues: Type.Array(ProviderIssueSchema),
+  },
+  { additionalProperties: false },
+);
+
+const CanonicalSetMarketplaceRecordSchema = Type.Object(
+  {
+    kind: Type.Literal("SetMarketplace"),
+    target: ProviderTargetSchema,
+    marketplaceIdentity: NonEmptyStringSchema,
+    projectionDigest: MarketplaceProjectionDigestSchema,
+    sourceDigest: ProviderSourceDigestSchema,
+  },
+  { additionalProperties: false },
+);
+
+const CanonicalMemberMutationRecordSchema = Type.Object(
+  {
+    kind: Type.Union([
+      Type.Literal("InstallMember"),
+      Type.Literal("EnableMember"),
+      Type.Literal("RetireMember"),
+    ]),
+    target: ProviderTargetSchema,
+    marketplaceIdentity: NonEmptyStringSchema,
+    pluginId: NonEmptyStringSchema,
+    nativeIdentity: NonEmptyStringSchema,
+    memberFingerprint: ProviderMemberFingerprintSchema,
+  },
+  { additionalProperties: false },
+);
+
+const CanonicalConfiguredExposureRetirementRecordSchema = Type.Object(
+  {
+    kind: Type.Literal("RetireConfiguredExposure"),
+    target: ProviderTargetSchema,
+    marketplaceIdentity: NonEmptyStringSchema,
+    exposureIdentity: NonEmptyStringSchema,
+    nativeIdentity: NonEmptyStringSchema,
+    providerSourceIdentity: NonEmptyStringSchema,
+  },
+  { additionalProperties: false },
+);
+
+const CanonicalMutationRecordSchema = Type.Union([
+  CanonicalSetMarketplaceRecordSchema,
+  CanonicalMemberMutationRecordSchema,
+  CanonicalConfiguredExposureRetirementRecordSchema,
+]);
+
+const CanonicalSyncTargetOutcomeSchema = Type.Union([
+  Type.Object(
+    {
+      kind: Type.Literal("blocked"),
+      status: Type.Union([
+        Type.Literal("BLOCKED_SELECTION"),
+        Type.Literal("BLOCKED_COLLISION"),
+        Type.Literal("INCOMPATIBLE_PROVIDER"),
+      ]),
+      target: ProviderTargetSchema,
+      appliedPrefix: Type.Array(CanonicalMutationRecordSchema, { maxItems: 0 }),
+      issues: Type.Array(ProviderIssueSchema, { minItems: 1 }),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      kind: Type.Literal("read-only-converged"),
+      status: Type.Literal("CONVERGED"),
+      target: ProviderTargetSchema,
+      appliedPrefix: Type.Array(CanonicalMutationRecordSchema, { maxItems: 0 }),
+      issues: Type.Array(ProviderIssueSchema, { maxItems: 0 }),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      kind: Type.Literal("mutated"),
+      status: Type.Literal("CONVERGED"),
+      target: ProviderTargetSchema,
+      appliedPrefix: Type.Array(CanonicalMutationRecordSchema, { minItems: 1 }),
+      issues: Type.Array(ProviderIssueSchema, { maxItems: 0 }),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      kind: Type.Literal("failed"),
+      status: Type.Literal("DRIFTED"),
+      target: ProviderTargetSchema,
+      appliedPrefix: Type.Array(CanonicalMutationRecordSchema),
+      issues: Type.Array(ProviderIssueSchema, { minItems: 1 }),
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      kind: Type.Literal("uncertain"),
+      status: Type.Literal("DRIFTED"),
+      target: ProviderTargetSchema,
+      appliedPrefix: Type.Array(CanonicalMutationRecordSchema),
+      attempted: CanonicalMutationRecordSchema,
+      lastKnown: Type.Union([
+        Type.Literal("bridge-invoked"),
+        Type.Literal("bridge-returned"),
+      ]),
+      issues: Type.Array(ProviderIssueSchema, { minItems: 1 }),
+    },
+    { additionalProperties: false },
+  ),
+]);
+
+const CanonicalSyncOutcomeSchema = Type.Object(
+  {
+    status: Type.Union([
+      Type.Literal("Blocked"),
+      Type.Literal("Failed"),
+      Type.Literal("Mutated"),
+      Type.Literal("PartialFailure"),
+      Type.Literal("ReadOnlyConverged"),
+    ]),
+    targets: Type.Array(CanonicalSyncTargetOutcomeSchema),
     issues: Type.Array(ProviderIssueSchema),
   },
   { additionalProperties: false },
@@ -717,11 +813,15 @@ function providerResultSchema<T extends TSchema>(value: T) {
 }
 
 export type ProviderOperationProcedureResult = DeploymentResult<ProviderOperationOutcome>;
+export type CanonicalSyncProcedureResult = DeploymentResult<CanonicalSyncOutcome>;
 export type CanonicalStatusProcedureResult = DeploymentResult<readonly CanonicalStatusOutcome[]>;
 export type CompleteNativeHomesProcedureResult = DeploymentResult<CompleteNativeHomesObservation>;
 
 export const ProviderOperationResultSchema = Type.Unsafe<ProviderOperationProcedureResult>(
   providerResultSchema(ProviderOperationOutcomeSchema),
+);
+export const CanonicalSyncResultSchema = Type.Unsafe<CanonicalSyncProcedureResult>(
+  providerResultSchema(CanonicalSyncOutcomeSchema),
 );
 export const CanonicalStatusResultSchema = Type.Unsafe<CanonicalStatusProcedureResult>(
   providerResultSchema(Type.Array(CanonicalStatusOutcomeSchema)),

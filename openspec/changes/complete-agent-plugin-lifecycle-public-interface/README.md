@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6C2C_PRIVATE_CONVERGENCE_EXECUTOR_REVIEWED`
+`T6C2_ATOMIC_PUBLIC_CUTOVER_REVIEWED`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
@@ -38,6 +38,8 @@ every provider mode is capsule-free.
 | T6C2c private desired state | `codex/c6-canonical-desired-state` / this record node |
 | T6C2c private provenance observation | `codex/c6-native-provenance-observation` / this record node |
 | T6C2c private convergence executor | `codex/c6-canonical-convergence-executor` / this record node |
+| Controller acceptance-harness retirement | `codex/c6-retire-controller-acceptance-harness` / this record node |
+| T6C1b/T6C2 public cutover | `codex/c6-atomic-canonical-cutover` / this record node |
 | Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
 | Retained CLI target node | `codex/c6-serialize-cli-test-target` |
 | Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
@@ -67,10 +69,10 @@ global undo redesign, and Inngest candidate bytes.
 | T6A thin record | complete | strict OpenSpec plus four standing reviews |
 | T6B repository checks | complete | staged/clean exactness, index race, declared-input boundary, one procedure |
 | T6C1a v2 codec/public interface | complete, reviewed | closed TypeBox model, canonical `cm2_` codec, one cold-port procedure and CLI dispatch |
-| T6C1b observed-Git selector/cutover | private engine complete, atomic activation/cutover open | direct Git resolution is sealed but has no contract/router/CLI reachability; activation must retire the old ceremony in the same node |
+| T6C1b observed-Git selector/cutover | complete, reviewed | one public observed-Git selector; v1 acceptance, hosted approval, promotion, and attest command deleted atomically |
 | T6C2a provider capsule retirement | complete, reviewed | capsule-cold provider modes, forward-only retry, export-only legacy retirement |
 | T6C2b managed-retire deletion | complete, reviewed | receipt-owned provider retire unreachable without alias; omission cleanup remains sync-owned |
-| T6C2c canonical native path | private convergence policy, desired-state verifier, native provenance observation, and exact-prefix executor complete; atomic activation open | sole governance selection, selected-owner native truth, verification barriers, no canonical hidden state |
+| T6C2c canonical native path | complete, reviewed | sole governance selection, selected-owner native truth, exact-selector cleanup, verification barriers, and no canonical hidden state |
 | T6C3 export independence | unopened | destination-local ledger/collisions, no native-home registry |
 | T6D truthful test owners | retained, record realignment pending | owner-local DevOps fixture and ordinary serialized CLI target |
 | T6E deterministic manifest | implemented, restack/gate pending | focused canonicalization plus full build-twice equality |
@@ -89,8 +91,6 @@ follow-up work.
 
 ## Current Gate
 
-- Activate selector plus convergence while deleting the v1 current-main and
-  promotion ceremony in one public node.
 - Implement T6C3 as the owner-local export boundary with no provider-home
   registry dependency.
 - Realign/rerun the retained T6D proof and T6E controller determinism proof.
@@ -140,7 +140,7 @@ atomic authority checkpoint, so no Graphite node exposes two selectors.
 | --- | --- |
 | Private engine | One TypeBox-owned result union returns `CURRENT_ELIGIBLE` or exactly dirty, wrong, unreachable, stale, or forged refusal. The resolver accepts the existing branded Git locator and has no oRPC handler, module/router composition, public package export, or command projection in this node. The full service passed 35 files / 310 tests. |
 | Observed Git | The selector reads the fixed v2 record at observed `refs/heads/main`, reads the fixed release input at the selected reachable commit/tree, verifies digest and content authority, then re-observes the identical repository/ref/commit/tree once without retry. Later unselected content remains irrelevant. |
-| Real resource | An Effect Platform content-workspace fixture created a present orphan commit with otherwise valid selected bytes. Native Git reachability rejected it as `STALE_RECORD`; no map-backed test substituted for that boundary. The full five-code stale/forged partition is exercised against both record and selected-input reads, and the real-resource file passed 2/2. |
+| Real resource | An Effect Platform content-workspace fixture created a present orphan commit with otherwise valid selected bytes. Native Git reachability rejected it as `FORGED_RECORD`; no map-backed test substituted for that boundary. The full five-code stale/forged partition is exercised against both record and selected-input reads, and the real-resource file passed 2/2. |
 | Unreachability | The governance contract/router/service spine and CLI operation union, flags, parser, dispatcher, and client selector remain byte-identical to the parent. Only the test fixture imports the private resolver directly. The installed controller therefore retains exactly the old selector until the later atomic cutover. |
 | Static/structural | Lifecycle and CLI lint, typecheck, build, sync, and positive structural suites passed without cache. Strict OpenSpec and `git diff --check` passed. No Habitat rule changed because this node adds no reachable service/router member. |
 | Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural proportionality approved the private engine after closing schema-drift, duplicate-classification, redundant-freeze, failure-partition, real-reachability, and premature-public-activation findings. No P1/P2 remains. |
@@ -224,12 +224,30 @@ outcomes, while the executor accepts only an already-observed `CONVERGED` or
 | Boundary | Result |
 | --- | --- |
 | Exact prefix | Only a native `applied` result enters the definite prefix. `not-applied` and both uncertainty boundaries stop immediately; the attempted uncertain action remains separate and no rollback, receipt, resume cursor, or compensation exists. |
-| Verification | Every barrier performs exactly one fresh canonical observation and then pure policy verification. Selected visibility may precede omission cleanup; each retirement proves exact native-identity absence; final verification rejects omitted managed members and selected-owner configuration residue while preserving unrelated native state. |
+| Verification | Every barrier performs exactly one fresh canonical observation and then pure policy verification. Selected visibility may precede omission cleanup; each retirement proves exact owner-qualified selector absence; final verification rejects omitted managed members and selected-owner configuration residue while preserving unrelated native state. |
 | Preflight | Target, projection, retirement adjacency, and final-step shape reject before either port runs. Ordinary observation failure and provenance ambiguity preserve the already-confirmed prefix and keep the remaining tail cold. |
 | Unreachability | The executor and canonical resource factories remain absent from package exports, service contract/router, client, CLI, and runtime composition. Activation and v1 ceremony deletion remain one later atomic checkpoint. |
 | Behavior proof | Twelve executor cases and fourteen convergence-policy cases passed. The full lifecycle service passed 39 files / 363 tests. |
 | Static/structural | Lifecycle lint, typecheck, build, sync, positive Habitat/dependency structure, strict OpenSpec, and `git diff --check` passed without cache. No structural rule changed because this node adds no reachable topology. |
 | Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural proportionality approved after closing plan-shape access, empty-tuple typing, fail-closed proof, and refused-classification findings. No P1/P2 remains. |
+
+## T6C1b And T6C2 Atomic Public Cutover Proof
+
+This checkpoint activates the already reviewed private selector and native
+convergence pieces as one public authority change. It simultaneously deletes
+the v1 acceptance, hosted-approval, promotion, and canonical receipt path, so
+no invocation can choose between the old and new models.
+
+| Boundary | Result |
+| --- | --- |
+| Public authority | Governance exposes only the pure current-main v2 record codec and the observed-Git current-main selection. Provider canonical status/sync consume that one selection and one immutable artifact read; they receive no receipt, sidecar, evidence, hosted, promotion, channel, or undo port. |
+| Native ownership | Codex and Claude are observed and mutated through their native marketplace/plugin commands. Marketplace identity plus embedded artifact provenance owns installed members. One exact selected-owner configuration slot with no installed package may be removed through its native selector; installed and foreign exposures remain preserved collisions. |
+| Ordering and retry | Same-ID replacement retires and verifies the exact owner-qualified selector before install. Omitted managed members and configuration residue retire only after selected visibility. Failures report the exact applied prefix; retry re-reads live state, and a converged repeat performs no native mutation. |
+| Public outcomes | Canonical status returns terminal classification and issues. Canonical sync adds only the exact applied prefix and terminal verification; neither recreates receipts, persisted inventory, or the retired event graph. Selection refusal exits `2`, drift exits `1`, and convergence exits `0`. |
+| Retired machinery | V1 current-main resolution, acceptance, hosted approval, promotion attestation, `attest-promotion`, canonical receipt decoding, hosted-governance resources, and provider canonical channel bindings are absent without aliases. The disproportionate installed-controller acceptance harness is retired in the preceding Graphite node; stable install/reentry tests and owner-scoped settlement remain. |
+| Behavior proof | The lifecycle suite passed 35 files / 318 tests, including public selection, no-record adoption, same-ID refresh, config-only residue, omitted-member failure/retry, foreign same-ID preservation, multi-home isolation, and a live-read zero-mutation repeat. Focused CLI command/runtime proof passed with the `0/1/2` exit contract. |
+| Static and structural | Lifecycle lint, typecheck, build, sync, and positive structural checks passed. CLI lint, typecheck, build, sync, and positive structural checks passed. Strict OpenSpec and `git diff --check` passed. |
+| Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing, and structural/proportionality approved the public cutover with no remaining P1/P2. Optional P3 cleanup remains outside this authority checkpoint. |
 
 ## Standing Reviews
 

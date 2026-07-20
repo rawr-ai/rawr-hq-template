@@ -41,7 +41,7 @@ kind = "directory"
 mode = "closed"
 required = [
   "artifact-reader.ts",
-  "governance-channel.ts",
+  "current-main-selection.ts",
   "node-runtime.ts",
   "runtime.ts",
 ]
@@ -63,7 +63,6 @@ root = "apps/cli/src/commands/agent/plugins"
 kind = "directory"
 mode = "closed"
 required = [
-  "attest-promotion.ts",
   "build.ts",
   "check.ts",
   "create.ts",

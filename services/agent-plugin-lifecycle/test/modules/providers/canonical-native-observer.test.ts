@@ -3,14 +3,17 @@ import { describe, expect, it, vi } from "vitest";
 import { createCanonicalNativeObserver } from "../../../src/bindings/providers/canonical-native-observer";
 import type { NativeProviderInventoryBridge } from "../../../src/bindings/providers/native";
 import { NativeProvenanceAmbiguity } from "../../../src/bindings/providers/resource-provenance";
+import { parseContentAuthority } from "../../../src/service/shared/release";
 import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
 import type { ProviderSourceIdentity } from "../../../src/service/modules/providers/model/policy/projection";
 
 const TARGET = mustTarget();
+const OWNER = mustContentAuthority("rawr-hq");
 
 describe("canonical native observation", () => {
   it("reads native state once and preserves standalone exposure", async () => {
     const standalone = Object.freeze({
+      exposureKind: "installed" as const,
       exposureIdentity: "local@personal",
       nativeIdentity: "rawr:local",
       providerSourceIdentity: "personal" as ProviderSourceIdentity,
@@ -26,8 +29,9 @@ describe("canonical native observation", () => {
 
     const observed = await createCanonicalNativeObserver({
       provider: "codex",
+      contentAuthority: OWNER,
       bridge: bridge(inventory),
-    }).observe(TARGET);
+    }).observe(TARGET, OWNER);
 
     expect(observed).toEqual({
       ok: true,
@@ -52,8 +56,9 @@ describe("canonical native observation", () => {
 
     const observed = await createCanonicalNativeObserver({
       provider: "codex",
+      contentAuthority: OWNER,
       bridge: bridge(inventory),
-    }).observe(TARGET);
+    }).observe(TARGET, OWNER);
 
     expect(observed).toEqual({
       ok: true,
@@ -73,8 +78,9 @@ describe("canonical native observation", () => {
 
     const observed = await createCanonicalNativeObserver({
       provider: "codex",
+      contentAuthority: OWNER,
       bridge: bridge(inventory),
-    }).observe(TARGET);
+    }).observe(TARGET, OWNER);
 
     expect(observed).toEqual({
       ok: false,
@@ -100,4 +106,10 @@ function mustTarget() {
   });
   if (!target.ok) throw new Error(target.issues[0].message);
   return target.value;
+}
+
+function mustContentAuthority(value: string) {
+  const authority = parseContentAuthority(value, "test.contentAuthority");
+  if (!authority.ok) throw new Error(authority.issues[0].message);
+  return authority.value;
 }
