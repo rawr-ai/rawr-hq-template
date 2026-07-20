@@ -1,12 +1,6 @@
-import { Refine, type TSchema, Type } from "typebox";
+import { Refine, type Static, type TSchema, Type } from "typebox";
 
-import type { CompleteNativeHomesObservation } from "./model/dto/native-homes";
-import type {
-  CanonicalStatusOutcome,
-  CanonicalSyncOutcome,
-  ProviderOperationOutcome,
-} from "./model/dto/outcome";
-import type { DeploymentResult } from "./model/errors/deployment-result";
+import { ProviderProjectionBindingSchema } from "./model/dto/outcome";
 
 const ProviderIdSchema = Type.Union([Type.Literal("claude"), Type.Literal("codex")]);
 const NonEmptyStringSchema = Type.String({ minLength: 1 });
@@ -621,36 +615,69 @@ const ProviderEventSchema = Type.Union([
   ),
 ]);
 
-const ProviderTargetOutcomeSchema = Type.Object(
+const ProviderTargetOutcomeFields = {
+  target: ProviderTargetSchema,
+  events: Type.Array(ProviderEventSchema),
+  issues: Type.Array(ProviderIssueSchema),
+  visibleFingerprint: Type.Union([Type.String(), Type.Null()]),
+} as const;
+
+const FailedProviderTargetOutcomeSchema = Type.Object(
   {
-    target: ProviderTargetSchema,
-    status: Type.Union([
-      Type.Literal("blocked"),
-      Type.Literal("failed"),
-      Type.Literal("mutated"),
-      Type.Literal("read-only-converged"),
-    ]),
-    events: Type.Array(ProviderEventSchema),
-    issues: Type.Array(ProviderIssueSchema),
-    visibleFingerprint: Type.Union([Type.String(), Type.Null()]),
+    ...ProviderTargetOutcomeFields,
+    status: Type.Union([Type.Literal("blocked"), Type.Literal("failed")]),
+    projectionBinding: Type.Null(),
   },
   { additionalProperties: false },
 );
 
-const ProviderOperationOutcomeSchema = Type.Object(
-  {
-    status: Type.Union([
-      Type.Literal("Blocked"),
-      Type.Literal("Failed"),
-      Type.Literal("Mutated"),
-      Type.Literal("PartialFailure"),
-      Type.Literal("ReadOnlyConverged"),
-    ]),
-    targets: Type.Array(ProviderTargetOutcomeSchema),
-    evidence: Type.Union([MechanicalEvidenceDigestSchema, Type.Null()]),
-    issues: Type.Array(ProviderIssueSchema),
-  },
-  { additionalProperties: false },
+const CompleteTestProviderTargetOutcomeSchema = Type.Union([
+  FailedProviderTargetOutcomeSchema,
+  Type.Object(
+    {
+      ...ProviderTargetOutcomeFields,
+      status: Type.Union([Type.Literal("mutated"), Type.Literal("read-only-converged")]),
+      projectionBinding: ProviderProjectionBindingSchema,
+    },
+    { additionalProperties: false },
+  ),
+]);
+
+const TargetedTestProviderTargetOutcomeSchema = Type.Union([
+  FailedProviderTargetOutcomeSchema,
+  Type.Object(
+    {
+      ...ProviderTargetOutcomeFields,
+      status: Type.Union([Type.Literal("mutated"), Type.Literal("read-only-converged")]),
+      projectionBinding: Type.Null(),
+    },
+    { additionalProperties: false },
+  ),
+]);
+
+function providerOperationOutcomeSchema<TTarget extends TSchema>(target: TTarget) {
+  return Type.Object(
+    {
+      status: Type.Union([
+        Type.Literal("Blocked"),
+        Type.Literal("Failed"),
+        Type.Literal("Mutated"),
+        Type.Literal("PartialFailure"),
+        Type.Literal("ReadOnlyConverged"),
+      ]),
+      targets: Type.Array(target),
+      evidence: Type.Union([MechanicalEvidenceDigestSchema, Type.Null()]),
+      issues: Type.Array(ProviderIssueSchema),
+    },
+    { additionalProperties: false },
+  );
+}
+
+const CompleteTestProviderOperationOutcomeSchema = providerOperationOutcomeSchema(
+  CompleteTestProviderTargetOutcomeSchema,
+);
+const TargetedTestProviderOperationOutcomeSchema = providerOperationOutcomeSchema(
+  TargetedTestProviderTargetOutcomeSchema,
 );
 
 const CanonicalStatusOutcomeSchema = Type.Object(
@@ -812,20 +839,17 @@ function providerResultSchema<T extends TSchema>(value: T) {
   ]);
 }
 
-export type ProviderOperationProcedureResult = DeploymentResult<ProviderOperationOutcome>;
-export type CanonicalSyncProcedureResult = DeploymentResult<CanonicalSyncOutcome>;
-export type CanonicalStatusProcedureResult = DeploymentResult<readonly CanonicalStatusOutcome[]>;
-export type CompleteNativeHomesProcedureResult = DeploymentResult<CompleteNativeHomesObservation>;
-
-export const ProviderOperationResultSchema = Type.Unsafe<ProviderOperationProcedureResult>(
-  providerResultSchema(ProviderOperationOutcomeSchema),
+export const CompleteTestResultSchema = providerResultSchema(
+  CompleteTestProviderOperationOutcomeSchema,
 );
-export const CanonicalSyncResultSchema = Type.Unsafe<CanonicalSyncProcedureResult>(
-  providerResultSchema(CanonicalSyncOutcomeSchema),
+export const TargetedTestResultSchema = providerResultSchema(
+  TargetedTestProviderOperationOutcomeSchema,
 );
-export const CanonicalStatusResultSchema = Type.Unsafe<CanonicalStatusProcedureResult>(
-  providerResultSchema(Type.Array(CanonicalStatusOutcomeSchema)),
-);
-export const CompleteNativeHomesResultSchema = Type.Unsafe<CompleteNativeHomesProcedureResult>(
-  providerResultSchema(CompleteNativeHomesObservationSchema),
-);
+export type CompleteTestProcedureResult = Static<typeof CompleteTestResultSchema>;
+export type TargetedTestProcedureResult = Static<typeof TargetedTestResultSchema>;
+export const CanonicalSyncResultSchema = providerResultSchema(CanonicalSyncOutcomeSchema);
+export const CanonicalStatusResultSchema = providerResultSchema(Type.Array(CanonicalStatusOutcomeSchema));
+export const CompleteNativeHomesResultSchema = providerResultSchema(CompleteNativeHomesObservationSchema);
+export type CanonicalSyncProcedureResult = Static<typeof CanonicalSyncResultSchema>;
+export type CanonicalStatusProcedureResult = Static<typeof CanonicalStatusResultSchema>;
+export type CompleteNativeHomesProcedureResult = Static<typeof CompleteNativeHomesResultSchema>;

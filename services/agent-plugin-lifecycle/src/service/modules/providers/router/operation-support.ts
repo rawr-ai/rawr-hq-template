@@ -8,7 +8,12 @@ import {
   type ProviderVerificationFact,
 } from "../model/dto/mechanical-evidence";
 import type { EvaluationProfile } from "../model/dto/mode";
-import type { ProviderEvent, ProviderOperationOutcome, TargetOperationOutcome } from "../model/dto/outcome";
+import type {
+  ProviderEvent,
+  ProviderOperationOutcome,
+  TargetOperationOutcome,
+  UnboundTargetOperationOutcome,
+} from "../model/dto/outcome";
 import {
   evaluateCapabilities,
   renderCompleteProjection,
@@ -149,14 +154,14 @@ export async function inspectTargetsAsBlocked(
 export async function executePlans(
   plans: readonly ProviderTargetPlan[],
   dependencies: ApplyDependencies,
-): Promise<readonly TargetOperationOutcome[]> {
+): Promise<readonly UnboundTargetOperationOutcome[]> {
   return await executePlansInternal(plans, dependencies, null);
 }
 
 export async function executeProjectionPlans(
   plans: readonly ProviderTargetPlan[],
   dependencies: ProjectionApplyDependencies,
-): Promise<readonly TargetOperationOutcome[]> {
+): Promise<readonly UnboundTargetOperationOutcome[]> {
   return await executePlansInternal(
     plans,
     dependencies,
@@ -168,8 +173,8 @@ async function executePlansInternal(
   plans: readonly ProviderTargetPlan[],
   dependencies: ApplyDependencies,
   projectionMaterializer: ProviderProjectionMaterializer | null,
-): Promise<readonly TargetOperationOutcome[]> {
-  const outcomes = new Map<string, TargetOperationOutcome>();
+): Promise<readonly UnboundTargetOperationOutcome[]> {
+  const outcomes = new Map<string, UnboundTargetOperationOutcome>();
   const readOnly = plans.filter((plan) => plan.state === "read-only");
   const mutating = plans.filter((plan) => plan.state === "mutating");
   for (const plan of plans.filter((entry) => entry.state === "blocked")) {
@@ -259,13 +264,13 @@ async function materializeRequiredMarketplaces(
   return Object.freeze(issues);
 }
 
-export async function attachMechanicalEvidence(
-  outcome: ProviderOperationOutcome,
+export async function attachMechanicalEvidence<TTarget extends TargetOperationOutcome>(
+  outcome: ProviderOperationOutcome<TTarget>,
   plans: readonly ProviderTargetPlan[],
   source: MechanicalEvidenceSource,
   evaluationProfile: EvaluationProfile,
   publisher: MechanicalEvidencePublisher,
-): Promise<ProviderOperationOutcome> {
+): Promise<ProviderOperationOutcome<TTarget>> {
   const facts: ProviderVerificationFact[] = [];
   for (const plan of plans) {
     if (plan.projection === null) continue;
@@ -304,7 +309,9 @@ export async function attachMechanicalEvidence(
     : evidenceFailure(outcome, published.issues);
 }
 
-export function aggregateOutcome(targets: readonly TargetOperationOutcome[]): ProviderOperationOutcome {
+export function aggregateOutcome<TTarget extends TargetOperationOutcome>(
+  targets: readonly TTarget[],
+): ProviderOperationOutcome<TTarget> {
   const issues = targets.flatMap((target) => target.issues);
   const failures = targets.filter((target) => target.status === "blocked" || target.status === "failed");
   const successes = targets.filter((target) => target.status === "mutated" || target.status === "read-only-converged");
@@ -326,7 +333,7 @@ export function capabilityReadIssue(observation: CapabilityObservation, projecti
 async function executeReadOnlyPlan(
   plan: ProviderTargetPlan,
   provider: ProviderTargetReader,
-): Promise<TargetOperationOutcome> {
+): Promise<UnboundTargetOperationOutcome> {
   if (plan.projection === null) {
     return Object.freeze({
       target: plan.target,
@@ -337,6 +344,7 @@ async function executeReadOnlyPlan(
       ]),
       issues: Object.freeze([]),
       visibleFingerprint: null,
+      projectionBinding: null,
     });
   }
   const verified = await provider.verifyProjection(plan.target, plan.projection);
@@ -350,6 +358,7 @@ async function executeReadOnlyPlan(
       ]),
       issues: verified.issues,
       visibleFingerprint: null,
+      projectionBinding: null,
     });
   }
   const managedStep = plan.steps.find((step) => step.kind === "verify-managed");
@@ -371,6 +380,7 @@ async function executeReadOnlyPlan(
         ]),
         issues: managed.issues,
         visibleFingerprint: null,
+        projectionBinding: null,
       });
     }
   }
@@ -384,13 +394,14 @@ async function executeReadOnlyPlan(
     ]),
     issues: Object.freeze([]),
     visibleFingerprint: verified.value.visibleFingerprint,
+    projectionBinding: null,
   });
 }
 
 async function executeMutatingPlan(
   plan: ProviderTargetPlan,
   dependencies: ApplyDependencies,
-): Promise<TargetOperationOutcome> {
+): Promise<UnboundTargetOperationOutcome> {
   const events: ProviderEvent[] = [Object.freeze({ phase: "planned", target: plan.target, plan })];
   let fingerprint: string | null = null;
   let pendingRetirement: Extract<ProviderMutationAction, { kind: "RetireMember" }> | null = null;
@@ -484,6 +495,7 @@ async function executeMutatingPlan(
     events: Object.freeze(events),
     issues: Object.freeze([]),
     visibleFingerprint: fingerprint,
+    projectionBinding: null,
   });
 }
 
@@ -581,7 +593,7 @@ function blocked(target: ProviderTarget, projection: AgentProviderProjection | n
   return Object.freeze({ target, state: "blocked", projection, steps: Object.freeze([]), issues: Object.freeze([...issues]) });
 }
 
-function blockedOutcome(plan: ProviderTargetPlan): TargetOperationOutcome {
+function blockedOutcome(plan: ProviderTargetPlan): UnboundTargetOperationOutcome {
   return Object.freeze({
     target: plan.target,
     status: "blocked",
@@ -591,10 +603,11 @@ function blockedOutcome(plan: ProviderTargetPlan): TargetOperationOutcome {
     ]),
     issues: plan.issues,
     visibleFingerprint: null,
+    projectionBinding: null,
   });
 }
 
-function failedBeforeApply(plan: ProviderTargetPlan, issues: readonly ProviderDeploymentIssue[]): TargetOperationOutcome {
+function failedBeforeApply(plan: ProviderTargetPlan, issues: readonly ProviderDeploymentIssue[]): UnboundTargetOperationOutcome {
   return Object.freeze({
     target: plan.target,
     status: "failed",
@@ -604,6 +617,7 @@ function failedBeforeApply(plan: ProviderTargetPlan, issues: readonly ProviderDe
     ]),
     issues: Object.freeze([...issues]),
     visibleFingerprint: null,
+    projectionBinding: null,
   });
 }
 
@@ -612,20 +626,21 @@ function failedOutcome(
   events: readonly ProviderEvent[],
   issues: readonly ProviderDeploymentIssue[],
   visibleFingerprint: string | null,
-): TargetOperationOutcome {
+): UnboundTargetOperationOutcome {
   return Object.freeze({
     target,
     status: "failed",
     events: Object.freeze([...events, Object.freeze({ phase: "failed", target, issues })]),
     issues: Object.freeze([...issues]),
     visibleFingerprint,
+    projectionBinding: null,
   });
 }
 
-function evidenceFailure(
-  outcome: ProviderOperationOutcome,
+function evidenceFailure<TTarget extends TargetOperationOutcome>(
+  outcome: ProviderOperationOutcome<TTarget>,
   issues: readonly ProviderDeploymentIssue[],
-): ProviderOperationOutcome {
+): ProviderOperationOutcome<TTarget> {
   return Object.freeze({
     ...outcome,
     status: outcome.targets.some((target) => target.status === "mutated" || target.status === "read-only-converged") ? "PartialFailure" : "Failed",
@@ -639,8 +654,8 @@ function collectReadIssues(results: readonly DeploymentResult<unknown>[]): reado
 
 function orderOutcomes(
   plans: readonly ProviderTargetPlan[],
-  outcomes: ReadonlyMap<string, TargetOperationOutcome>,
-): readonly TargetOperationOutcome[] {
+  outcomes: ReadonlyMap<string, UnboundTargetOperationOutcome>,
+): readonly UnboundTargetOperationOutcome[] {
   return Object.freeze(plans.flatMap((plan) => {
     const outcome = outcomes.get(plan.target.targetDigest);
     return outcome === undefined ? [] : [outcome];

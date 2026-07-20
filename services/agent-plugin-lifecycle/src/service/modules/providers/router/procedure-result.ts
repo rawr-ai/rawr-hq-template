@@ -1,82 +1,61 @@
+import { type Static, type TSchema } from "typebox";
+import { Clone, Parse } from "typebox/value";
+
 import type { CompleteNativeHomesObservation } from "../model/dto/native-homes";
 import type {
   CanonicalStatusOutcome,
   CanonicalSyncOutcome,
-  ProviderOperationOutcome,
+  CompleteTestProviderOperationOutcome,
+  TargetedTestProviderOperationOutcome,
 } from "../model/dto/outcome";
-import type {
-  DeploymentResult,
-  ProviderDeploymentIssue,
-} from "../model/errors/deployment-result";
-import type {
-  CanonicalStatusProcedureResult,
-  CanonicalSyncProcedureResult,
-  CompleteNativeHomesProcedureResult,
-  ProviderOperationProcedureResult,
+import type { DeploymentResult } from "../model/errors/deployment-result";
+import {
+  type CanonicalStatusProcedureResult,
+  CanonicalStatusResultSchema,
+  type CanonicalSyncProcedureResult,
+  CanonicalSyncResultSchema,
+  type CompleteNativeHomesProcedureResult,
+  CompleteNativeHomesResultSchema,
+  type CompleteTestProcedureResult,
+  CompleteTestResultSchema,
+  type TargetedTestProcedureResult,
+  TargetedTestResultSchema,
 } from "../schemas";
 
-export async function providerOperationResult(
-  operation: Promise<DeploymentResult<ProviderOperationOutcome>>,
-): Promise<ProviderOperationProcedureResult> {
-  const result = await operation;
-  if (!result.ok) return result;
-  return {
-    ok: true,
-    value: {
-      status: result.value.status,
-      targets: result.value.targets.map((outcome) => ({
-        target: { ...outcome.target },
-        status: outcome.status,
-        events: outcome.events.map((event) => event),
-        issues: issueDtos(outcome.issues),
-        visibleFingerprint: outcome.visibleFingerprint,
-      })),
-      evidence: result.value.evidence,
-      issues: issueDtos(result.value.issues),
-    },
-  };
+export async function completeTestOperationResult(
+  operation: Promise<DeploymentResult<CompleteTestProviderOperationOutcome>>,
+): Promise<CompleteTestProcedureResult> {
+  return projectProcedureResult(CompleteTestResultSchema, await operation);
+}
+
+export async function targetedTestOperationResult(
+  operation: Promise<DeploymentResult<TargetedTestProviderOperationOutcome>>,
+): Promise<TargetedTestProcedureResult> {
+  return projectProcedureResult(TargetedTestResultSchema, await operation);
 }
 
 export async function canonicalStatusResult(
   operation: Promise<DeploymentResult<readonly CanonicalStatusOutcome[]>>,
 ): Promise<CanonicalStatusProcedureResult> {
-  const result = await operation;
-  return result.ok
-    ? {
-        ok: true,
-        value: result.value.map((outcome) => ({
-          target: { ...outcome.target },
-          status: outcome.status,
-          issues: issueDtos(outcome.issues),
-        })),
-      }
-    : result;
+  return projectProcedureResult(CanonicalStatusResultSchema, await operation);
 }
 
 export async function canonicalSyncResult(
   operation: Promise<DeploymentResult<CanonicalSyncOutcome>>,
 ): Promise<CanonicalSyncProcedureResult> {
-  return await operation;
+  return projectProcedureResult(CanonicalSyncResultSchema, await operation);
 }
 
 export async function completeNativeHomesResult(
   operation: Promise<DeploymentResult<CompleteNativeHomesObservation>>,
 ): Promise<CompleteNativeHomesProcedureResult> {
-  const result = await operation;
-  return result.ok
-    ? {
-        ok: true,
-        value: {
-          protocol: result.value.protocol,
-          homes: result.value.homes.map((home) => ({ ...home })),
-          observationDigest: result.value.observationDigest,
-        },
-      }
-    : result;
+  return projectProcedureResult(CompleteNativeHomesResultSchema, await operation);
 }
 
-function issueDtos(
-  issues: readonly ProviderDeploymentIssue[],
-): ProviderDeploymentIssue[] {
-  return issues.map((entry) => ({ ...entry }));
+function projectProcedureResult<const TBoundary extends TSchema>(
+  boundary: TBoundary,
+  result: unknown,
+): Static<TBoundary> {
+  // Parse returns an already-valid input unchanged, so clone first to sever domain aliases.
+  return Parse(boundary, Clone(result));
 }
