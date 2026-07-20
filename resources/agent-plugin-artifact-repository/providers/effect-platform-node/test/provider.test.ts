@@ -314,6 +314,39 @@ describe("Effect Platform Node artifact repository provider", () => {
     expect(await readFile(storedEnvelope, "utf8")).toBe('{"release":"first"}\n');
   });
 
+  test("publishes an empty immutable file without issuing a zero-length write", async () => {
+    const parent = await createFixture();
+    const address = artifactAddress(path.join(parent, "repository"), "artifact-empty-file");
+    const entries = Object.freeze([
+      Object.freeze({
+        path: "payload/empty.log",
+        mode: 0o444 as const,
+        bytes: new Uint8Array(),
+      }),
+    ]);
+    const resource = makeArtifactRepositoryResource();
+
+    const published = unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries,
+      limits: LIMITS,
+    })));
+    const repeated = unwrap(await runNodeArtifactRepository(resource.publishTree({
+      address,
+      entries,
+      limits: LIMITS,
+    })));
+    const observed = unwrap(await runNodeArtifactRepository(resource.readTree({ address, limits: LIMITS })));
+
+    expect(published.kind).toBe("Published");
+    expect(repeated.kind).toBe("ReadOnlyConverged");
+    expect(observed.kind).toBe("Present");
+    if (observed.kind === "Present") {
+      expect(observed.snapshot.entries).toHaveLength(1);
+      expect(observed.snapshot.entries[0]?.bytes.byteLength).toBe(0);
+    }
+  });
+
   test("publishes canonical provider files under dot-prefixed directories", async () => {
     const parent = await createFixture();
     const address = artifactAddress(path.join(parent, "repository"), "provider-projection");
