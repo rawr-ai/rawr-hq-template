@@ -51,6 +51,11 @@
   and CLI tests, lint, typecheck, build, strict OpenSpec, and all four standing
   reviews in semantic module-sized Graphite nodes.
 
+Current-main composition progress is recorded in
+[[README#C5 Current-Main Service Composition Proof]]. The caller-built reader
+and public governance binding are retired; the remaining transition surfaces
+keep tasks 2A.1-2A.4 open.
+
 ## 3A. Pure Codec And Public Interface
 
 - [x] 3A.1 Define one governance-owned TypeBox model at
