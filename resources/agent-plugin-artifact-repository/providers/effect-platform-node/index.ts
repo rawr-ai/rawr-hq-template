@@ -494,7 +494,9 @@ function writeTree(
         const file = yield* fs.open(destination, { flag: "wx", mode: entry.mode }).pipe(
           mapPlatform(operation, destination),
         );
-        yield* file.writeAll(new Uint8Array(entry.bytes)).pipe(mapPlatform(operation, destination));
+        if (entry.bytes.byteLength > 0) {
+          yield* file.writeAll(new Uint8Array(entry.bytes)).pipe(mapPlatform(operation, destination));
+        }
         yield* file.sync.pipe(mapPlatform(operation, destination));
       }));
       yield* fs.chmod(destination, entry.mode).pipe(mapPlatform(operation, destination));
