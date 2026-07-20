@@ -242,6 +242,7 @@ describe("closed read-only retention planning", () => {
     const absent = createLifecycleTestClient({
       releases: {
         source: unavailableSource(),
+        stagedSource: unavailableStagedSource(),
         artifacts: readOnlyArtifactStore(artifacts),
       },
     });
@@ -302,6 +303,7 @@ describe("closed read-only retention planning", () => {
     });
     const client = createLifecycleTestClient({ releases: {
       source,
+      stagedSource: unavailableStagedSource(),
       artifacts: createArtifactRepositoryStore(root),
     } });
     const result = await client.releases.build({
@@ -344,6 +346,7 @@ function retentionRuntime(options: {
 }): ReleaseLifecycleRuntime {
   return {
     source: unavailableSource(),
+    stagedSource: unavailableStagedSource(),
     artifacts: readOnlyArtifactStore(options.artifacts),
     ...(options.evidence === undefined ? {} : { evidence: options.evidence }),
     retention: {
@@ -357,6 +360,12 @@ function unavailableSource(): ReleaseLifecycleRuntime["source"] {
   return {
     inspect: async () => unavailableAsync("retention source inspection"),
     revalidate: async () => unavailableAsync("retention source revalidation"),
+  };
+}
+
+function unavailableStagedSource(): ReleaseLifecycleRuntime["stagedSource"] {
+  return {
+    observe: async () => unavailableAsync("retention staged source observation"),
   };
 }
 

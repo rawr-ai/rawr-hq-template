@@ -11,6 +11,10 @@ export {
   type ResourceContentWorkspaceSnapshotReadPort,
 } from "./releases/content-workspace";
 export {
+  createResourceStagedContentWorkspaceObservationReader,
+  type ResourceContentWorkspaceStagedReadPort,
+} from "./releases/staged-content-workspace";
+export {
   createResourceMechanicalEvidenceReader,
   createResourceMechanicalEvidenceStore,
   type ResourceMechanicalEvidenceRepositoryOptions,

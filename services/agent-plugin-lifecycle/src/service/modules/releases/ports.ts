@@ -19,6 +19,16 @@ import type {
   ContentWorkspaceSnapshot,
   SourceEligibilityIssue,
   SourceEligibilityIssueCode,
+  StagedBlobObservation,
+  StagedIndexBindingObservation,
+  StagedIndexObservation,
+  StagedIndexObservationRequest,
+  StagedIndexObservationResult,
+  StagedObservationFailureReason,
+  StagedContentWorkspaceInspection,
+  StagedContentWorkspacePolicy,
+  StagedContentWorkspaceSnapshot,
+  StagedWorkspaceAnchorObservation,
 } from "./model/dto/content-workspace";
 import type { BuildFailpoint } from "./model/dto/release-lifecycle";
 import type {
@@ -35,6 +45,10 @@ import type {
 export interface ContentWorkspaceSnapshotReader {
   inspect(policy: ContentWorkspacePolicy): Promise<ContentWorkspaceInspection>;
   revalidate(policy: ContentWorkspacePolicy, eligibilityBinding: string): Promise<ContentWorkspaceInspection>;
+}
+
+export interface StagedContentWorkspaceObservationReader {
+  observe(request: StagedIndexObservationRequest): Promise<StagedIndexObservationResult>;
 }
 
 export interface ArtifactReader {
@@ -62,6 +76,7 @@ export interface RetentionInventoryReader {
 
 export interface ReleaseLifecycleRuntime {
   readonly source: ContentWorkspaceSnapshotReader;
+  readonly stagedSource: StagedContentWorkspaceObservationReader;
   readonly artifacts: ArtifactStore;
   readonly evidence?: MechanicalEvidenceReader;
   readonly retention?: Readonly<{
@@ -95,4 +110,14 @@ export type {
   RetentionSpacePolicyV1,
   SourceEligibilityIssue,
   SourceEligibilityIssueCode,
+  StagedBlobObservation,
+  StagedIndexBindingObservation,
+  StagedIndexObservation,
+  StagedIndexObservationRequest,
+  StagedIndexObservationResult,
+  StagedObservationFailureReason,
+  StagedContentWorkspaceInspection,
+  StagedContentWorkspacePolicy,
+  StagedContentWorkspaceSnapshot,
+  StagedWorkspaceAnchorObservation,
 };

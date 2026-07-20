@@ -648,7 +648,8 @@ function createReleaseLifecycleApplications(options: {
   readonly source: ContentWorkspaceSnapshotReader;
   readonly artifacts: ArtifactStore;
 }) {
-  const client = createLifecycleTestClient({ releases: options });
+  const runtime = Object.freeze({ ...options, stagedSource: unavailableStagedSource() });
+  const client = createLifecycleTestClient({ releases: runtime });
   type BuildRequest = Parameters<typeof client.releases.build>[0] & Readonly<{
     failpoint?: BuildFailpoint;
     artifactFailpoint?: ArtifactStoreFailpoint;
@@ -661,7 +662,7 @@ function createReleaseLifecycleApplications(options: {
       const { failpoint, artifactFailpoint, ...input } = request;
       const buildClient = createLifecycleTestClient({
         releases: {
-          ...options,
+          ...runtime,
           controls: {
             ...(failpoint === undefined ? {} : { buildFailpoint: failpoint }),
             ...(artifactFailpoint === undefined ? {} : { artifactFailpoint }),
@@ -671,6 +672,13 @@ function createReleaseLifecycleApplications(options: {
       return buildClient.releases.build(input, testInvocation);
     },
   });
+}
+
+function unavailableStagedSource() {
+  const reject = async (): Promise<never> => {
+    throw new Error("Unexpected staged source access in committed build test");
+  };
+  return { observe: reject };
 }
 
 async function directoryNames(path: string): Promise<readonly string[]> {
