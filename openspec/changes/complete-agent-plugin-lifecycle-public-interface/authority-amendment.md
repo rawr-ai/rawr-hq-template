@@ -42,6 +42,34 @@ The original packet and repository-separation identities remain recorded in
 | Export destination | Its owner-local ledger, when explicitly exercised |
 | Inngest candidate | `HF01_PENDING`; outside the exact landed release input and therefore not an admitted source/destination |
 
+## Proportionality Ratchet
+
+The categorical error that produced the retired C6 branches was turning proof
+of an operation into durable authority for the next operation. Git identity
+became issuer evidence and hosted replay; provider verification became receipts
+and transfer state; installed-controller proof became another launcher. That
+also widened ordinary accidental-failure protection into an adversarial local
+tampering problem excluded by the initiative.
+
+The correction is monotonic:
+
+- Native Codex and Claude commands are trusted as the provider mutation
+  mechanism. RAWR selects one reviewed complete set and asks those commands for
+  the exact delta; it does not sandbox or reproduce their installers.
+- A test fixture, disposable home, acceptance transcript, or controller build
+  root never becomes runtime identity or next-invocation authority.
+- No persistent record is added unless product behavior must consume it on a
+  later invocation and no existing owner already exposes the required truth.
+- Safety guards cover the concrete supported destructive operation. Recursive
+  cleanup is limited to an owner-created disposable root after exact temp-parent,
+  prefix, directory, non-symlink, and containment checks; it is not a general
+  anti-obfuscation subsystem.
+- A slice closes when its behavior, types, lint, positive topology, and bounded
+  real-resource oracle pass. More ceremony is not stronger proof.
+
+This ratchet governs [[tasks#3B. Observed-Git Selection And Cutover]],
+[[tasks#4. T6C2: Thin Canonical Provider Path]], and the remaining settlement.
+
 ## Keep / Retire
 
 | Slice | Disposition |
@@ -56,6 +84,7 @@ The original packet and repository-separation identities remain recorded in
 | Receipt-owned explicit provider retire | Retire; canonical closed-set sync owns omission cleanup |
 | Deterministic official manifest | Keep |
 | Owner-local CLI test corrections | Keep |
+| Controller-build hostile/native acceptance harness | Retire; stable install/reentry tests and owner-scoped native settlement replace it |
 | Transfer graph and cross-store A/B | Retire |
 | Public evidence handle as channel authority | Retire |
 | Second launcher/caller bindings/refusal matrix | Retire |
