@@ -1,3 +1,6 @@
+import { ReadonlyObject, Refine, Type, type Static } from "typebox";
+import { Value } from "typebox/value";
+
 import {
   canonicalJsonLine,
   decodeCanonicalJson,
@@ -15,9 +18,9 @@ import {
 } from "./ownership";
 import { collect, isExactRecord, parseBoundedArray, parseCanonicalString } from "./parse";
 import {
+  PayloadManifestEntrySchema,
   parsePayloadManifest,
   payloadManifestValue,
-  type PayloadManifestEntry,
 } from "./payload";
 import {
   BUILDER_PROTOCOL_VERSION,
@@ -28,6 +31,7 @@ import {
   MAX_PROVENANCE_BINDINGS,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
+  MAX_RELEASE_RELATIVE_PATH_BYTES,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
   PAYLOAD_PROTOCOL_VERSION,
   RELEASE_INPUT_SCHEMA_VERSION,
@@ -45,10 +49,8 @@ import {
   type ContentDigest,
   type OwnershipIdentity,
   type PayloadDigest,
-  type PayloadProtocolVersion,
   type PluginId,
   type ReleaseInputDigest,
-  type ReleaseInputSchemaVersion,
   type ReleaseRelativePath,
 } from "./primitives";
 import { asNonEmpty, failure, success, type ReleaseResult } from "./result";
@@ -56,40 +58,151 @@ import { asNonEmpty, failure, success, type ReleaseResult } from "./result";
 declare const agentPluginReleaseInputBrand: unique symbol;
 declare const completenessWitnessBrand: unique symbol;
 
-export interface ProvenanceBinding {
-  readonly id: OwnershipIdentity;
-  readonly protocol: string;
-  readonly contentDigest: ContentDigest;
-}
+const ContentAuthoritySchema = Type.Unsafe<ContentAuthority>(Refine(
+  Type.String({
+    minLength: 1,
+    maxLength: MAX_CANONICAL_ID_BYTES,
+    pattern: "^[a-z0-9][a-z0-9._:-]*$",
+  }),
+  (value) => parseContentAuthority(value).ok,
+  () => "Expected a canonical content authority",
+));
 
-export interface DeclaredPayload {
-  readonly protocolVersion: PayloadProtocolVersion;
-  readonly manifest: readonly PayloadManifestEntry[];
-  readonly payloadDigest: PayloadDigest;
-}
+const PluginIdSchema = Type.Unsafe<PluginId>(Refine(
+  Type.String({
+    minLength: 1,
+    maxLength: MAX_CANONICAL_ID_BYTES,
+    pattern: "^[a-z0-9][a-z0-9._-]*$",
+  }),
+  (value) => parsePluginId(value).ok,
+  () => "Expected a canonical plugin identity",
+));
 
-export interface SkillInventoryEntry {
-  readonly identity: OwnershipIdentity;
-  readonly manifestPath: ReleaseRelativePath;
-}
+const OwnershipIdentitySchema = Type.Unsafe<OwnershipIdentity>(Refine(
+  Type.String({
+    minLength: 1,
+    maxLength: MAX_CANONICAL_ID_BYTES,
+    pattern: "^[a-z0-9@][a-z0-9@._:/-]*$",
+  }),
+  (value) => parseOwnershipIdentity(value).ok,
+  () => "Expected a canonical ownership identity",
+));
 
-export interface ReleaseMemberDeclaration {
-  readonly kind: "agent-plugin";
-  readonly pluginId: PluginId;
-  readonly skillInventory: readonly SkillInventoryEntry[];
-  readonly payload: DeclaredPayload;
-  readonly vendor: readonly ProvenanceBinding[];
-  readonly curation: readonly ProvenanceBinding[];
-}
+const ReleaseRelativePathSchema = Type.Unsafe<ReleaseRelativePath>(Refine(
+  Type.String({ minLength: 1, maxLength: MAX_RELEASE_RELATIVE_PATH_BYTES }),
+  (value) => parseReleaseRelativePath(value).ok,
+  () => "Expected a canonical POSIX release-relative path",
+));
 
-export interface ReleaseInputBody {
-  readonly schemaVersion: ReleaseInputSchemaVersion;
-  readonly contentAuthority: ContentAuthority;
-  readonly members: readonly ReleaseMemberDeclaration[];
-  readonly ownershipClaims: readonly OwnershipClaim[];
-  readonly locks: readonly ProvenanceBinding[];
-  readonly qualityPolicies: readonly ProvenanceBinding[];
-}
+const ContentDigestSchema = Type.Unsafe<ContentDigest>(
+  Type.String({ pattern: "^sha256_[0-9a-f]{64}$" }),
+);
+const PayloadDigestSchema = Type.Unsafe<PayloadDigest>(
+  Type.String({ pattern: "^pd1_[0-9a-f]{64}$" }),
+);
+const ReleaseInputDigestSchema = Type.Unsafe<ReleaseInputDigest>(
+  Type.String({ pattern: "^ri1_[0-9a-f]{64}$" }),
+);
+
+const ProvenanceProtocolSchema = Refine(
+  Type.String({
+    minLength: 1,
+    maxLength: MAX_CANONICAL_ID_BYTES,
+    pattern: "^[a-z0-9][a-z0-9._:@/-]*$",
+  }),
+  isCanonicalProvenanceProtocol,
+  () => "Expected a canonical provenance protocol",
+);
+
+export const ProvenanceBindingSchema = ReadonlyObject(Type.Object(
+  {
+    id: OwnershipIdentitySchema,
+    protocol: ProvenanceProtocolSchema,
+    contentDigest: ContentDigestSchema,
+  },
+), { additionalProperties: false });
+
+export const DeclaredPayloadSchema = ReadonlyObject(Type.Object(
+  {
+    protocolVersion: Type.Literal(PAYLOAD_PROTOCOL_VERSION),
+    manifest: ReadonlyObject(Type.Array(PayloadManifestEntrySchema), {
+      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+    }),
+    payloadDigest: PayloadDigestSchema,
+  },
+), { additionalProperties: false });
+
+export const SkillInventoryEntrySchema = ReadonlyObject(Type.Object(
+  {
+    identity: OwnershipIdentitySchema,
+    manifestPath: ReleaseRelativePathSchema,
+  },
+), { additionalProperties: false });
+
+const DeclaredOwnershipClaimSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Union([
+      Type.Literal("skill"),
+      Type.Literal("alias"),
+      Type.Literal("provider-identity"),
+      Type.Literal("destination"),
+    ]),
+    identity: OwnershipIdentitySchema,
+    ownerPluginId: PluginIdSchema,
+  },
+), { additionalProperties: false });
+
+export const ReleaseMemberDeclarationSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Literal("agent-plugin"),
+    pluginId: PluginIdSchema,
+    skillInventory: ReadonlyObject(Type.Array(SkillInventoryEntrySchema), {
+      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+    }),
+    payload: DeclaredPayloadSchema,
+    vendor: ReadonlyObject(Type.Array(ProvenanceBindingSchema), {
+      maxItems: MAX_PROVENANCE_BINDINGS,
+    }),
+    curation: ReadonlyObject(Type.Array(ProvenanceBindingSchema), {
+      maxItems: MAX_PROVENANCE_BINDINGS,
+    }),
+  },
+), { additionalProperties: false });
+
+export const ReleaseInputBodySchema = ReadonlyObject(Type.Object(
+  {
+    schemaVersion: Type.Literal(RELEASE_INPUT_SCHEMA_VERSION),
+    contentAuthority: ContentAuthoritySchema,
+    members: ReadonlyObject(Type.Array(ReleaseMemberDeclarationSchema), {
+      minItems: 1,
+      maxItems: MAX_RELEASE_MEMBERS,
+    }),
+    ownershipClaims: ReadonlyObject(Type.Array(DeclaredOwnershipClaimSchema), {
+      maxItems: MAX_OWNERSHIP_CLAIMS,
+    }),
+    locks: ReadonlyObject(Type.Array(ProvenanceBindingSchema), {
+      maxItems: MAX_PROVENANCE_BINDINGS,
+    }),
+    qualityPolicies: ReadonlyObject(Type.Array(ProvenanceBindingSchema), {
+      maxItems: MAX_PROVENANCE_BINDINGS,
+    }),
+  },
+), { additionalProperties: false });
+
+export const ReleaseInputEnvelopeSchema = ReadonlyObject(Type.Object(
+  {
+    schemaVersion: Type.Literal(RELEASE_INPUT_SCHEMA_VERSION),
+    releaseInputDigest: ReleaseInputDigestSchema,
+    body: ReleaseInputBodySchema,
+  },
+), { additionalProperties: false });
+
+export type ProvenanceBinding = Static<typeof ProvenanceBindingSchema>;
+export type DeclaredPayload = Static<typeof DeclaredPayloadSchema>;
+export type SkillInventoryEntry = Static<typeof SkillInventoryEntrySchema>;
+export type ReleaseMemberDeclaration = Static<typeof ReleaseMemberDeclarationSchema>;
+export type ReleaseInputBody = Static<typeof ReleaseInputBodySchema>;
+export type ReleaseInputEnvelope = Static<typeof ReleaseInputEnvelopeSchema>;
 
 export interface ExpectedReleaseMember {
   readonly pluginId: PluginId;
@@ -103,10 +216,7 @@ export type CompletenessWitness = Readonly<{
   [completenessWitnessBrand]: "CompletenessWitness";
 }>;
 
-export type AgentPluginReleaseInput = Readonly<{
-  schemaVersion: ReleaseInputSchemaVersion;
-  releaseInputDigest: ReleaseInputDigest;
-  body: ReleaseInputBody;
+export type AgentPluginReleaseInput = Readonly<ReleaseInputEnvelope & {
   ownershipIndex: DistributionOwnershipIndex;
   completenessWitness: CompletenessWitness;
   [agentPluginReleaseInputBrand]: "AgentPluginReleaseInput";
@@ -143,7 +253,7 @@ export function verifyAgentPluginReleaseInput(
     }));
   }
   const claimedDigest = collect(parseReleaseInputDigest(input.releaseInputDigest, "releaseInput.releaseInputDigest"), issues);
-  const parsedBody = parseReleaseInputBody(input.body, "releaseInput.body");
+  const parsedBody = parseReleaseInputBody(input.body, "releaseInput.body", false);
   if (!parsedBody.ok) issues.push(...parsedBody.issues);
   if (claimedDigest !== undefined && parsedBody.ok) {
     const computed = releaseInputDigest(canonicalSerializeReleaseInputBody(parsedBody.value.body));
@@ -158,6 +268,14 @@ export function verifyAgentPluginReleaseInput(
   if (nonEmpty !== undefined) return failure(nonEmpty);
   if (claimedDigest === undefined || !parsedBody.ok) {
     return failure([issue("EXPECTED_OBJECT", "releaseInput", "Release-input validation did not produce a complete value")]);
+  }
+  const envelope: ReleaseInputEnvelope = Object.freeze({
+    schemaVersion: RELEASE_INPUT_SCHEMA_VERSION,
+    releaseInputDigest: claimedDigest,
+    body: parsedBody.value.body,
+  });
+  if (!Value.Check(ReleaseInputEnvelopeSchema, envelope)) {
+    return failure([issue("EXPECTED_OBJECT", "releaseInput", "Release-input validation did not produce a TypeBox-valid envelope")]);
   }
   const releaseInput = freezeReleaseInput(parsedBody.value.body, claimedDigest, parsedBody.value.ownershipIndex);
   const byteLength = canonicalSerializeAgentPluginReleaseInput(releaseInput).byteLength;
@@ -260,6 +378,7 @@ export function parseCompletenessWitness(
 function parseReleaseInputBody(
   input: unknown,
   path: string,
+  validateSchema = true,
 ): ReleaseResult<{ readonly body: ReleaseInputBody; readonly ownershipIndex: DistributionOwnershipIndex }, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
   if (!isExactRecord(
@@ -278,7 +397,14 @@ function parseReleaseInputBody(
   }
   const contentAuthority = collect(parseContentAuthority(input.contentAuthority, `${path}.contentAuthority`), issues);
   const members = parseMembers(input.members, `${path}.members`, issues);
-  const ownershipClaims = parseDeclaredOwnershipClaims(input.ownershipClaims, `${path}.ownershipClaims`, issues);
+  const parsedOwnershipClaims = parseDeclaredOwnershipClaims(
+    input.ownershipClaims,
+    `${path}.ownershipClaims`,
+    issues,
+  );
+  const ownershipClaims = parsedOwnershipClaims?.every(isDeclaredOwnershipClaim)
+    ? parsedOwnershipClaims
+    : undefined;
   const locks = parseProvenanceBindings(input.locks, `${path}.locks`, issues);
   const qualityPolicies = parseProvenanceBindings(input.qualityPolicies, `${path}.qualityPolicies`, issues);
   let ownershipIndex: DistributionOwnershipIndex | undefined;
@@ -305,15 +431,19 @@ function parseReleaseInputBody(
   ) {
     return failure([issue("EXPECTED_OBJECT", path, "Release-input body validation did not produce a complete value")]);
   }
+  const body: ReleaseInputBody = Object.freeze({
+    schemaVersion: RELEASE_INPUT_SCHEMA_VERSION,
+    contentAuthority,
+    members,
+    ownershipClaims,
+    locks,
+    qualityPolicies,
+  });
+  if (validateSchema && !Value.Check(ReleaseInputBodySchema, body)) {
+    return failure([issue("EXPECTED_OBJECT", path, "Release-input body validation did not produce a TypeBox-valid value")]);
+  }
   return success({
-    body: Object.freeze({
-      schemaVersion: RELEASE_INPUT_SCHEMA_VERSION,
-      contentAuthority,
-      members,
-      ownershipClaims,
-      locks,
-      qualityPolicies,
-    }),
+    body,
     ownershipIndex,
   });
 }
@@ -646,6 +776,14 @@ function releaseInputEnvelopeValue(input: AgentPluginReleaseInput): CanonicalJso
   };
 }
 
+function isCanonicalProvenanceProtocol(value: string): boolean {
+  const issues: ReleaseIssue[] = [];
+  return parseCanonicalString(value, "provenance.protocol", issues, {
+    maxBytes: MAX_CANONICAL_ID_BYTES,
+    pattern: /^[a-z0-9][a-z0-9._:@/-]*$/u,
+  }) !== undefined;
+}
+
 function releaseMemberValue(member: ReleaseMemberDeclaration): CanonicalJsonValue {
   return {
     kind: member.kind,
@@ -678,6 +816,12 @@ function ownershipClaimValue(claim: OwnershipClaim): CanonicalJsonValue {
     identity: claim.identity,
     ownerPluginId: claim.ownerPluginId,
   };
+}
+
+function isDeclaredOwnershipClaim(
+  claim: OwnershipClaim,
+): claim is ReleaseInputBody["ownershipClaims"][number] {
+  return claim.kind !== "plugin";
 }
 
 function compareBindings(left: ProvenanceBinding, right: ProvenanceBinding): number {
