@@ -1,25 +1,39 @@
+import { ReadonlyObject, Type, type Static } from "typebox";
+
 import type {
   AgentPluginPayload,
   AgentPluginReleaseInput,
-  ContentAuthority,
   GitCommitId,
   GitTreeId,
   PluginId,
   ReleaseRelativePath,
   RepositoryIdentity,
 } from "../../../../shared/release";
-import type { SourceEligibilityIssue } from "../../../../model/dto/releases/content-workspace";
+import {
+  CanonicalAbsoluteLocatorSchema,
+  ContentAuthoritySchema,
+  QualifiedHeadRefSchema,
+  ReleaseRelativePathSchema,
+  RemoteNameSchema,
+  RemoteUrlSchema,
+  RepositoryIdentitySchema,
+  type SourceEligibilityIssue,
+} from "../../../../model/dto/releases/content-workspace";
 
-export interface StagedContentWorkspacePolicy {
-  readonly locator: string;
-  readonly repositoryIdentity: RepositoryIdentity;
-  readonly contentAuthority: ContentAuthority;
-  readonly remoteName: string;
-  readonly remoteUrl: string;
-  readonly refName: string;
-  readonly releaseInputPath: ReleaseRelativePath;
-  readonly pluginRoot: ReleaseRelativePath;
-}
+export const StagedContentWorkspacePolicySchema = ReadonlyObject(Type.Object(
+  {
+    locator: CanonicalAbsoluteLocatorSchema,
+    repositoryIdentity: RepositoryIdentitySchema,
+    contentAuthority: ContentAuthoritySchema,
+    remoteName: RemoteNameSchema,
+    remoteUrl: RemoteUrlSchema,
+    refName: QualifiedHeadRefSchema,
+    releaseInputPath: ReleaseRelativePathSchema,
+    pluginRoot: ReleaseRelativePathSchema,
+  },
+), { additionalProperties: false });
+
+export type StagedContentWorkspacePolicy = Static<typeof StagedContentWorkspacePolicySchema>;
 
 export interface StagedContentWorkspaceSnapshot {
   readonly kind: "StagedContentWorkspaceSnapshot";

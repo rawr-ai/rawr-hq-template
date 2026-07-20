@@ -10,6 +10,7 @@ import {
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
+  parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
   type AgentPluginPayload,
@@ -27,10 +28,18 @@ import type {
   StagedObservationFailureReason,
 } from "../../../../model/dto/releases/content-workspace";
 import type {
+  ReleaseInputRefreshRequest,
+  ReleaseInputRefreshResult,
+} from "../dto/release-lifecycle";
+import type {
   StagedContentWorkspaceInspection,
   StagedContentWorkspacePolicy,
 } from "../dto/staged-content-workspace";
 import { validateDeclaredPluginTree } from "./declared-plugin-tree";
+import {
+  authorReleaseInputRefresh,
+  releaseInputRefreshIneligible,
+} from "./release-input-refresh";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 
@@ -134,6 +143,138 @@ export function materializationObservationRequest(
     maxIndexBytes: MAX_STAGED_INDEX_BYTES,
     maxBlobBytes: MAX_STAGED_MATERIALIZED_BLOB_BYTES,
   });
+}
+
+export type ReleaseInputRefreshObservationPlan =
+  | Readonly<{
+    kind: "Ready";
+    observationRequest: StagedIndexObservationRequest;
+    memberRoots: readonly StagedMemberRoot[];
+  }>
+  | Extract<ReleaseInputRefreshResult, { kind: "RepositoryIneligible" }>;
+
+export function planReleaseInputRefreshObservation(
+  request: ReleaseInputRefreshRequest,
+): ReleaseInputRefreshObservationPlan {
+  const memberRoots = refreshMemberRoots(request);
+  if (!memberRoots.ok) {
+    return releaseInputRefreshIneligible("ReleaseInputMismatch", memberRoots.detail);
+  }
+  return Object.freeze({
+    kind: "Ready",
+    observationRequest: Object.freeze({
+      locator: request.contentWorkspace.locator,
+      remoteName: request.contentWorkspace.remoteName,
+      refName: request.contentWorkspace.refName,
+      materializedPaths: Object.freeze([request.contentWorkspace.releaseInputPath]),
+      materializedRoots: Object.freeze(
+        memberRoots.value.map((entry) => entry.root).sort(compareCanonicalText),
+      ),
+      maxEntries: MAX_STAGED_INDEX_ENTRIES,
+      maxIndexBytes: MAX_STAGED_INDEX_BYTES,
+      maxBlobBytes: MAX_STAGED_MATERIALIZED_BLOB_BYTES,
+    }),
+    memberRoots: memberRoots.value,
+  });
+}
+
+export function classifyReleaseInputRefreshObservation(
+  request: ReleaseInputRefreshRequest,
+  memberRoots: readonly StagedMemberRoot[],
+  result: StagedIndexObservationResult,
+): ReleaseInputRefreshResult {
+  if (result.kind === "Failed") {
+    return refreshInspectionFailure(
+      classifyStagedObservationFailure(result.reason, result.detail, "payloads"),
+    );
+  }
+  const observation = result.observation;
+  if (!sameStagedIndexBinding(observation.opening, observation.closing)) {
+    return refreshSourceChanged("Git HEAD, ref, repository, or index changed during staged observation");
+  }
+
+  try {
+    const policy = request.contentWorkspace;
+    const policyIssue = validateStagedContentWorkspacePolicy(policy);
+    if (policyIssue !== undefined) {
+      return releaseInputRefreshIneligible(policyIssue.code, policyIssue.detail);
+    }
+    if (
+      policy.releaseInputPath === policy.pluginRoot
+      || policy.releaseInputPath.startsWith(`${policy.pluginRoot}/`)
+    ) {
+      return releaseInputRefreshIneligible(
+        "ReleaseInputMismatch",
+        "release input must be outside the plugin root",
+      );
+    }
+    const anchorIssue = validateAnchor(observation.opening.anchor, policy);
+    if (anchorIssue !== undefined) {
+      return releaseInputRefreshIneligible(anchorIssue.code, anchorIssue.detail);
+    }
+
+    const entries = parseStagedIndex(
+      observation.opening.indexEntries,
+      observation.opening.anchor.objectFormat,
+    );
+    const pluginTreeIssue = validateDeclaredPluginTree({
+      pluginRoot: policy.pluginRoot,
+      paths: entries.map((entry) => entry.path),
+      declaredPluginIds: memberRoots.map((entry) => entry.pluginId),
+    });
+    if (pluginTreeIssue !== undefined) {
+      return releaseInputRefreshIneligible(pluginTreeIssue.code, pluginTreeIssue.detail);
+    }
+
+    const missingMember = memberRoots.find((member) => !entries.some(
+      (entry) => entry.path.startsWith(`${member.root}/`),
+    ));
+    if (missingMember !== undefined) {
+      return releaseInputRefreshIneligible(
+        "PayloadMismatch",
+        `plugin tree is missing declared member ${missingMember.pluginId}`,
+      );
+    }
+
+    const materializedRoots = memberRoots.map((entry) => entry.root);
+    const blobByObjectId = stagedBlobMap(
+      observation,
+      entries,
+      [policy.releaseInputPath],
+      materializedRoots,
+    );
+    const existingEntry = entries.find((entry) => entry.path === policy.releaseInputPath);
+    const existingBytes = existingEntry === undefined
+      ? undefined
+      : requireStagedBlob(blobByObjectId, existingEntry);
+    const members = memberRoots.map((member) => Object.freeze({
+      pluginId: member.pluginId,
+      payloadEntries: Object.freeze(entries
+        .filter((entry) => entry.path.startsWith(`${member.root}/`))
+        .map((entry) => {
+          const relativePath = parseReleaseRelativePath(
+            entry.path.slice(member.root.length + 1),
+            `releaseInputRefresh.${member.pluginId}.payloadPath`,
+          );
+          if (!relativePath.ok) {
+            throw stagedError("PayloadMismatch", `payload path is not canonical for ${member.pluginId}`);
+          }
+          return Object.freeze({
+            path: relativePath.value,
+            mode: entry.mode,
+            bytes: requireStagedBlob(blobByObjectId, entry),
+          });
+        }),
+      ),
+    }));
+    return authorReleaseInputRefresh({
+      contentAuthority: policy.contentAuthority,
+      existingBytes,
+      members,
+    });
+  } catch (error) {
+    return refreshInspectionFailure(classificationFailure(error));
+  }
 }
 
 export function classifyStagedReleaseInputObservation(
@@ -492,6 +633,32 @@ function parsedGitTree(value: string) {
   return parsed.value;
 }
 
+function refreshMemberRoots(
+  request: ReleaseInputRefreshRequest,
+): Readonly<{ ok: true; value: readonly StagedMemberRoot[] }>
+  | Readonly<{ ok: false; detail: string }> {
+  const roots: StagedMemberRoot[] = [];
+  for (const memberId of request.memberIds) {
+    const parsedMember = parsePluginId(memberId, "releaseInputRefresh.memberIds");
+    if (!parsedMember.ok) {
+      return Object.freeze({ ok: false, detail: "member identity is not canonical" });
+    }
+    const parsedRoot = parseReleaseRelativePath(
+      `${request.contentWorkspace.pluginRoot}/${parsedMember.value}`,
+      "releaseInputRefresh.memberRoot",
+    );
+    if (!parsedRoot.ok) {
+      return Object.freeze({
+        ok: false,
+        detail: `derived plugin root is not canonical for ${parsedMember.value}`,
+      });
+    }
+    roots.push(Object.freeze({ pluginId: parsedMember.value, root: parsedRoot.value }));
+  }
+  roots.sort((left, right) => compareCanonicalText(left.pluginId, right.pluginId));
+  return Object.freeze({ ok: true, value: Object.freeze(roots) });
+}
+
 function digestBinding(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
@@ -508,6 +675,20 @@ function classificationFailure(error: unknown): Exclude<
     return stagedIneligible(error.classificationCode, error.message);
   }
   return stagedIneligible("GitFailure", error instanceof Error ? error.message : String(error));
+}
+
+function refreshInspectionFailure(
+  failure: Exclude<StagedContentWorkspaceInspection, { kind: "StagedContentWorkspaceEligible" }>,
+): ReleaseInputRefreshResult {
+  return failure.kind === "SourceChanged"
+    ? refreshSourceChanged(failure.detail)
+    : releaseInputRefreshIneligible(failure.issues[0].code, failure.issues[0].detail);
+}
+
+function refreshSourceChanged(
+  detail: string,
+): Extract<ReleaseInputRefreshResult, { kind: "SourceChanged" }> {
+  return Object.freeze({ kind: "SourceChanged", mode: "staged", detail });
 }
 
 function stagedIneligible(

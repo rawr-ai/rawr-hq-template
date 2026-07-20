@@ -1,17 +1,23 @@
 import { ReadonlyObject, Refine, Type, type Static } from "typebox";
 
 import {
+  MAX_RELEASE_MEMBERS,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   ReleaseIssueSchema,
   type ArtifactRef,
   type PluginId,
   type ReleaseArtifactRef,
 } from "../../../../shared/release";
-import type {
-  ContentWorkspacePolicy,
-  SourceEligibilityIssue,
+import {
+  PluginIdSchema,
+  SourceEligibilityIssueSchema,
+  type ContentWorkspacePolicy,
+  type SourceEligibilityIssue,
 } from "../../../../model/dto/releases/content-workspace";
-import type { StagedContentWorkspacePolicy } from "./staged-content-workspace";
+import {
+  StagedContentWorkspacePolicySchema,
+  type StagedContentWorkspacePolicy,
+} from "./staged-content-workspace";
 
 export type BuildMode =
   | Readonly<{ kind: "targeted"; pluginId: PluginId }>
@@ -70,6 +76,65 @@ export const ReleaseInputRecordResultSchema = Type.Union([
 
 export type ReleaseInputRecordRequest = Static<typeof ReleaseInputRecordInputSchema>;
 export type ReleaseInputRecordResult = Static<typeof ReleaseInputRecordResultSchema>;
+
+export const ReleaseInputRefreshInputSchema = ReadonlyObject(Type.Object(
+  {
+    contentWorkspace: StagedContentWorkspacePolicySchema,
+    memberIds: ReadonlyObject(Type.Array(PluginIdSchema), {
+      minItems: 1,
+      maxItems: MAX_RELEASE_MEMBERS,
+      uniqueItems: true,
+    }),
+  },
+), { additionalProperties: false });
+
+const ReleaseInputRefreshSuccessSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Union([
+      Type.Literal("ReleaseInputCandidateReady"),
+      Type.Literal("ReleaseInputReadOnlyConverged"),
+    ]),
+    releaseInputDigest: ReleaseInputDigestSchema,
+    byteLength: Type.Integer({
+      minimum: 1,
+      maximum: MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+    }),
+    bytes: Uint8ArraySchema,
+  },
+), { additionalProperties: false });
+
+export const ReleaseInputRefreshResultSchema = Type.Union([
+  ReleaseInputRefreshSuccessSchema,
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("RepositoryIneligible"),
+      mode: Type.Literal("staged"),
+      issues: ReadonlyObject(Type.Array(SourceEligibilityIssueSchema), {
+        minItems: 1,
+        maxItems: 200_000,
+      }),
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("ReleaseInputRejected"),
+      issues: ReadonlyObject(Type.Array(ReleaseIssueSchema), {
+        minItems: 1,
+        maxItems: 200_000,
+      }),
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("SourceChanged"),
+      mode: Type.Literal("staged"),
+      detail: Type.String({ minLength: 1 }),
+    },
+  ), { additionalProperties: false }),
+]);
+
+export type ReleaseInputRefreshRequest = Static<typeof ReleaseInputRefreshInputSchema>;
+export type ReleaseInputRefreshResult = Static<typeof ReleaseInputRefreshResultSchema>;
 
 export type RepositoryCheckRequest =
   | Readonly<{
