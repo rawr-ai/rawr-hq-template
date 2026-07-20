@@ -493,7 +493,7 @@ function liveCollisionIssues(
       issues.push(issue(
         "BLOCKED_COLLISION",
         `target.standaloneExposures.${desired.pluginId}`,
-        "Unmanaged native state conflicts with a selected plugin, skill, or hook",
+        "Unmanaged native state conflicts with a selected plugin or skill",
         desired.nativeIdentity,
         exposure.exposureIdentity,
       ));
@@ -595,8 +595,7 @@ function standaloneConflictsWithProjection(
 ): boolean {
   return exposure.nativeIdentity === desired.nativeIdentity
     || exposure.nativeIdentity === desired.visible.pluginIdentity
-    || namesOverlap(exposure.visibleSkills, desired.visible.skills)
-    || namesOverlap(exposure.visibleHooks, desired.visible.hooks);
+    || namesOverlap(exposure.visibleSkills, desired.visible.skills);
 }
 
 function namesOverlap(left: readonly string[], right: readonly string[]): boolean {

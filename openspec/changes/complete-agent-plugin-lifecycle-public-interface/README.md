@@ -44,6 +44,7 @@ Personal, channel, provider, and protected-lane state remain untouched.
 | Publication repair | `codex/c6-preserve-installed-asset-modes`; parent is the landed continuation above |
 | Landed publication repair | PR #397; canonical Template `main` `04e37f596d03a352a9b6cdb37ee7cdff54b67c28`; tree `c41e851580aa80e32fb20c1e3616423c1b6268ff`; ratchet run `29737814922` |
 | Release-input schema prerequisite | `codex/c6-typebox-release-input`; parent is the landed publication repair |
+| Native hook-claim correction | `codex/c6-scope-native-hook-claims`; parent is canonical Template `main` `b7b6524db818d7119340f2afc572a1159c708785` |
 | Opening controller | `0823cfe6...`; diagnostic only, never an active input |
 | T6A branch | `codex/c6-agent-lifecycle-public-interface` / `3f3a3be2dda70dae2682f88feeb23e5e9d349575` |
 | T6B Git observation | `codex/c6-staged-git-observation` / `67a0d25437d087e78dd15f67f65a1ae0a2ecb42f` |
@@ -274,6 +275,21 @@ state owner.
 | Proof | Focused provider behavior/schema proof passed 43 tests; on the integrated continuation stack, the complete lifecycle suite passed 42 files / 375 tests. Lifecycle lint, typecheck, build, sync, structural/Habitat, strict OpenSpec, and `git diff --check` passed after the TypeBox correction. |
 | Reviews | Architecture/oRPC, TypeScript/TypeBox, behavior/state-machine, and structural/Habitat reviews report no remaining finding. |
 | Scope | No provider home, Personal repository, controller selector, release/channel record, export destination, or protected-lane input was mutated. [[tasks#5. T6C3: Export Destination Independence|Export task 5.2]] remains blocked and untouched. |
+
+## T6F Native Hook-Claim Correction
+
+The first stale-set disposable complete-test stopped before any provider-home
+mutation because projection construction treated the declaration filename
+`hooks.json` as a globally unique hook identity. Native providers scope hook
+events to their plugin selector, so Habitat and Hyperresearch may both declare
+`Stop` without sharing plugin, skill, or filesystem identity.
+
+| Boundary | Result |
+| --- | --- |
+| Schema authority | One provider-model TypeBox schema and its `Static<>` type decode the canonical native `hooks/hooks.json` manifest path. Projection construction and native package readback derive the same normalized event slugs from nonempty typed handler declarations in that schema; provider-specific handler semantics remain native-owned. |
+| Collision boundary | Hook events are compared only inside their owning plugin member. Global plugin, native identity, and skill collision refusal remains unchanged, and exact per-member hook visibility remains part of convergence verification. Codex observation retains selector attribution and does not bind RAWR to the provider's temporary positional hook key. |
+| Proof | Provider proof passed 16 files / 200 tests under the owner-declared Bun host, and the complete lifecycle service passed 43 files / 406 tests. Coverage includes two members that both expose `Stop`, canonical/no-op/invalid manifest behavior, same-event mutation and read-only repeat convergence, unrelated standalone same-event coexistence, and retained native/skill conflicts. Lifecycle lint, typecheck, all three locked Habitat rules, strict OpenSpec, and `git diff --check` passed. |
+| Mutation ceiling | The failed disposable attempt and this correction performed no Claude, Codex, Personal, channel, export, or protected-lane mutation. Native acceptance resumes only from the landed immutable replacement controller. |
 
 ## Pre-Landing Immutable-Release Setting Mutation
 

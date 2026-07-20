@@ -240,7 +240,7 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
     issues.push(issue(
       "BLOCKED_COLLISION",
       "target.inventory",
-      "A native plugin, provider source, standalone skill, or hook conflicts with the desired projection",
+      "A native plugin, provider source, or standalone skill conflicts with the desired projection",
     ));
   }
   if (issues.length > 0) return blockedPlan(target, authority.projection, issues);
@@ -845,8 +845,7 @@ function memberConflictsWithProjection(
   return live.pluginId === desired.pluginId
     || live.nativeIdentity === desired.nativeIdentity
     || live.nativeIdentity === desired.visible.pluginIdentity
-    || namesOverlap(live.visibleSkills, desired.visible.skills)
-    || namesOverlap(live.visibleHooks, desired.visible.hooks);
+    || namesOverlap(live.visibleSkills, desired.visible.skills);
 }
 
 function memberHasProjectedIdentity(
@@ -864,8 +863,7 @@ function standaloneConflictsWithProjection(
 ): boolean {
   return exposure.nativeIdentity === desired.nativeIdentity
     || exposure.nativeIdentity === desired.visible.pluginIdentity
-    || namesOverlap(exposure.visibleSkills, desired.visible.skills)
-    || namesOverlap(exposure.visibleHooks, desired.visible.hooks);
+    || namesOverlap(exposure.visibleSkills, desired.visible.skills);
 }
 
 function namesOverlap(left: readonly string[], right: readonly string[]): boolean {
