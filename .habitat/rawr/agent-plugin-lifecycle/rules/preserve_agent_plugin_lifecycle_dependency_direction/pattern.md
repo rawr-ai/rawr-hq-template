@@ -11,11 +11,14 @@ the service client: its exact `service-runtime/client.ts` composition root.
 Other CLI modules may retain type-only client dependencies, but cannot
 construct, load, or relay another service client. The CLI selects concrete
 resource providers; service middleware derives current-main and provider-domain
-repositories and adapters under `provided`. The provider transition binding admits value
-imports only from the native-resource binding and provider-resource composition
-root; the CLI-local provider index can flow only into that composition root.
-All other CLI consumers remain type-only. Release and evidence projections remain
-free of filesystem, process, FFI, and concrete resource-provider mechanics.
+repositories and adapters under `provided`. The provider transition binding admits
+value imports only from the native-resource binding and provider-resource
+composition root; the CLI-local provider index can flow only into that
+composition root. The transitional release binding admits value imports only
+from the artifact/evidence composition root, while pure release algebra reaches
+command parsing through `release`. All other CLI consumers remain type-only.
+Release and evidence projections remain free of filesystem, process, FFI, and
+concrete resource-provider mechanics.
 Module router handlers consume only their local `module` context, and the
 service root composes module routers through `impl.router`. Type-only protocol
 imports remain available through `ports/*`. Root service capabilities and
@@ -107,7 +110,15 @@ or {
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/exports)[\"']?$" },
+    not {
+      $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/release[\"']?$",
+      $filename <: r".*apps/cli/src/lib/agent-plugins/commands/input\.ts$"
+    },
+    not {
+      $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/releases[\"']?$",
+      $filename <: r".*apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository\.ts$"
+    },
     not {
       $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$",
       $filename <: r".*apps/cli/src/lib/agent-plugins/(?:bindings/providers/native|service-runtime/providers/node-runtime)\.ts$"
@@ -118,7 +129,7 @@ or {
   `import($source)` where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|releases))[\"']?$" }
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/exports)[\"']?$" }
   },
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
@@ -145,14 +156,14 @@ or {
   `export { $exports } from $source` as $export where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/exports)[\"']?$" },
     not { $export <: includes "export type" },
     not { $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
   },
   `export * from $source` as $export where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/exports)[\"']?$" },
     not { $export <: includes "export type *" }
   },
   import_statement(source=$source) as $import where {
@@ -464,6 +475,18 @@ import {
 
 export type Authority = ContentAuthority;
 export const digest = contentDigest;
+
+// @filename: apps/cli/src/lib/agent-plugins/release-binding-bypass.ts
+import { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+
+// @filename: apps/cli/src/lib/agent-plugins/release-binding-dynamic-bypass.ts
+export const releaseBindings = import("@rawr/agent-plugin-lifecycle/bindings/releases");
+
+// @filename: apps/cli/src/lib/agent-plugins/release-binding-export-bypass.ts
+export { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+
+// @filename: apps/cli/src/lib/agent-plugins/release-binding-star-bypass.ts
+export * from "@rawr/agent-plugin-lifecycle/bindings/releases";
 ```
 
 ## Ignores Fixture
@@ -545,6 +568,17 @@ import {
 export type Authority = ContentAuthority;
 export type SetDigest = ReleaseSetDigest;
 
+// @filename: apps/cli/src/lib/agent-plugins/commands/input.ts
+import {
+  createReleaseArtifactRef,
+  parseArtifactDigest,
+  type ArtifactRef,
+} from "@rawr/agent-plugin-lifecycle/release";
+
+export const createRef = createReleaseArtifactRef;
+export const parseDigest = parseArtifactDigest;
+export type ParsedArtifact = ArtifactRef;
+
 // @filename: apps/cli/src/lib/agent-plugins/bindings/providers/native.ts
 import { NativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
@@ -557,13 +591,20 @@ import { createResourceCompleteTargetIdentityReader } from "@rawr/agent-plugin-l
 export const native = createNodeNativeProviderResource;
 export const completeIdentities = createResourceCompleteTargetIdentityReader;
 
-// @filename: apps/cli/src/lib/agent-plugins/bindings/releases.ts
-export {
-  createMechanicalEvidenceHandle,
-} from "@rawr/agent-plugin-lifecycle/bindings/releases";
-
 // @filename: apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository.ts
+import {
+  createResourceArtifactReader,
+  createResourceArtifactStore,
+  createResourceMechanicalEvidenceReader,
+  createResourceMechanicalEvidenceStore,
+} from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 
-export const repository = makeNodeArtifactRepositoryAsyncPort();
+export const bindings = {
+  createResourceArtifactReader,
+  createResourceArtifactStore,
+  createResourceMechanicalEvidenceReader,
+  createResourceMechanicalEvidenceStore,
+  makeNodeArtifactRepositoryAsyncPort,
+};
 ```

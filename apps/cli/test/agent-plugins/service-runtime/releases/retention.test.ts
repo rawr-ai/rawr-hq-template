@@ -3,8 +3,8 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createMechanicalEvidenceHandle } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 import {
+  createMechanicalEvidenceHandle,
   createReleaseArtifactRef,
   parseArtifactDigest,
   type ArtifactRef,
