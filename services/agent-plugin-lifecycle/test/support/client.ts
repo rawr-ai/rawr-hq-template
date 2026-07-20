@@ -34,7 +34,6 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
       publish: async () => unavailableAsync("package output"),
     },
     exports: {
-      artifactReader: { read: async () => unavailableAsync("export artifact read") },
       knownNativeHomesReader: {
         readCompleteSnapshot: async () => unavailableAsync("native homes"),
       },

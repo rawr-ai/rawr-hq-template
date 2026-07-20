@@ -26,8 +26,6 @@ required = [
 ]
 allowed = [
   "providers",
-  "releases",
-  "releases.ts",
 ]
 
 [[scopes]]
@@ -41,23 +39,23 @@ allowed = [
 ]
 
 [[scopes]]
-name = "transitional-agent-plugin-release-binding-files"
-root = "services/agent-plugin-lifecycle/src/bindings/releases"
-kind = "directory"
-mode = "closed"
-required = [
-  "artifact-repository.ts",
-  "mechanical-evidence.ts",
-]
-allowed = []
-
-[[scopes]]
 name = "transitional-agent-plugin-provider-binding-files"
 root = "services/agent-plugin-lifecycle/src/bindings/providers"
 kind = "directory"
 mode = "closed"
 required = [
   "index.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-cli-bindings"
+root = "apps/cli/src/lib/agent-plugins/bindings"
+kind = "directory"
+mode = "closed"
+required = [
+  "export-destination.ts",
+  "providers",
 ]
 allowed = []
 

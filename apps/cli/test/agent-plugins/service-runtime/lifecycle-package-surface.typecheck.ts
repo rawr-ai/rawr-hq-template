@@ -1,28 +1,14 @@
 import {
-  createResourceArtifactStore,
-  type ResourceArtifactRepositoryOptions,
-  type ResourceMechanicalEvidenceRepositoryOptions,
-} from "@rawr/agent-plugin-lifecycle/bindings/releases";
-import {
   createMechanicalEvidenceHandle,
   type ArtifactRef,
 } from "@rawr/agent-plugin-lifecycle/release";
 import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 
+// @ts-expect-error Artifact and evidence projections are composed inside the service.
+import * as retiredReleaseBinding from "@rawr/agent-plugin-lifecycle/bindings/releases";
 // @ts-expect-error Governance current-main selection is composed inside the service.
 import * as retiredGovernanceBinding from "@rawr/agent-plugin-lifecycle/bindings/governance";
-
-// @ts-expect-error Release source repositories are service-module implementations, not host bindings.
-import { createResourceContentWorkspaceSnapshotReader as retiredReleaseSourceFactory } from "@rawr/agent-plugin-lifecycle/bindings/releases";
-// @ts-expect-error Staged source repositories are service-module implementations, not host bindings.
-import { createResourceStagedContentWorkspaceObservationReader as retiredStagedReleaseSourceFactory } from "@rawr/agent-plugin-lifecycle/bindings/releases";
-// @ts-expect-error Pure release algebra is exported only from the release surface.
-import { createMechanicalEvidenceHandle as retiredBindingEvidenceHandle } from "@rawr/agent-plugin-lifecycle/bindings/releases";
-// @ts-expect-error Shared release types are exported only from the release surface.
-import type { ArtifactRef as RetiredBindingArtifactRef } from "@rawr/agent-plugin-lifecycle/bindings/releases";
-// @ts-expect-error Module domain types are inferred from the client, not exported from host bindings.
-import type { BuildResult as RetiredBindingBuildResult } from "@rawr/agent-plugin-lifecycle/bindings/releases";
 // @ts-expect-error The vendor module no longer exposes a public port subpath.
 import * as retiredVendorPort from "@rawr/agent-plugin-lifecycle/ports/vendors";
 // @ts-expect-error The releases module no longer exposes a public port subpath.
@@ -50,22 +36,11 @@ import { createResourceCodexProviderAdapter as retiredCodexAdapterFactory } from
 // @ts-expect-error Service-private module internals are not package exports.
 import type { BuildResult } from "@rawr/agent-plugin-lifecycle/service/modules/releases/model/dto/release-lifecycle";
 
-void createResourceArtifactStore;
 void createMechanicalEvidenceHandle;
 declare const artifactRef: ArtifactRef;
-declare const artifactOptions: ResourceArtifactRepositoryOptions;
-declare const evidenceOptions: ResourceMechanicalEvidenceRepositoryOptions;
 void artifactRef;
-void artifactOptions;
-void evidenceOptions;
+void retiredReleaseBinding;
 void retiredGovernanceBinding;
-void retiredReleaseSourceFactory;
-void retiredStagedReleaseSourceFactory;
-void retiredBindingEvidenceHandle;
-declare const retiredBindingArtifactRef: RetiredBindingArtifactRef;
-declare const retiredBindingBuildResult: RetiredBindingBuildResult;
-void retiredBindingArtifactRef;
-void retiredBindingBuildResult;
 void retiredVendorPort;
 void retiredReleasePort;
 void retiredPackagingBinding;
@@ -113,17 +88,8 @@ type ArtifactRepositoryRootIsRequired = Deps["artifactRepositoryRoot"] extends s
 const artifactRepositoryRootIsRequired: ArtifactRepositoryRootIsRequired = true;
 void artifactRepositoryRootIsRequired;
 
-type ReleaseBindingValueKey = keyof typeof import("@rawr/agent-plugin-lifecycle/bindings/releases");
-type ExpectedReleaseBindingValueKey =
-  | "createResourceArtifactReader"
-  | "createResourceArtifactStore"
-  | "createResourceMechanicalEvidenceReader"
-  | "createResourceMechanicalEvidenceStore";
-type ReleaseBindingValuesAreExact =
-  Exclude<ReleaseBindingValueKey, ExpectedReleaseBindingValueKey> extends never
-    ? Exclude<ExpectedReleaseBindingValueKey, ReleaseBindingValueKey> extends never
-      ? true
-      : never
-    : never;
-const releaseBindingValuesAreExact: ReleaseBindingValuesAreExact = true;
-void releaseBindingValuesAreExact;
+type CallerExportArtifactReaderIsAbsent = "artifactReader" extends keyof Deps["exports"]
+  ? never
+  : true;
+const callerExportArtifactReaderIsAbsent: CallerExportArtifactReaderIsAbsent = true;
+void callerExportArtifactReaderIsAbsent;

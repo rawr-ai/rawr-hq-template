@@ -5,6 +5,7 @@ import {
   compareCanonicalText,
   type ArtifactRef,
 } from "../../../shared/release/index";
+import type { ArtifactReader } from "../../../model/dependencies/releases";
 
 import {
   EXPORT_APPLICATION_PROTOCOL_VERSION,
@@ -48,7 +49,7 @@ import {
 import type {
   ExportDestinationRuntime,
   ExportDestinationResourceFailure,
-  ExportLifecycleRuntime,
+  ExportLifecycleHostRuntime,
 } from "../ports";
 import { module } from "../module";
 
@@ -111,6 +112,10 @@ interface ClosedAdmittedOperation {
 
 type AcceptedUndoAdmission = Extract<UndoBeginResult, { kind: "Accepted" }>;
 
+type ExportLifecycleRuntime = ExportLifecycleHostRuntime & Readonly<{
+  artifactReader: ArtifactReader;
+}>;
+
 async function executeExportAgentPlugins(
   request: ExportAgentPluginsRequest,
   dependencies: ExportLifecycleRuntime,
@@ -157,7 +162,7 @@ async function prepareExportOperation(
     return completePreparation(rejected(failure(
       "ArtifactMismatch",
       "artifact-read",
-      artifactRead.issues.map((issue) => `${issue.code}:${issue.path}`).join(","),
+      artifactRead.issues.map((issue) => `${issue.code}:artifact`).join(","),
     ), []));
   }
   const selection = renderExportSelection(request.artifactRef, request.mode, request.layout, artifactRead.snapshot);

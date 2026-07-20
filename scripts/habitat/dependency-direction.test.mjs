@@ -73,6 +73,9 @@ import { impl } from "../../../impl";
   "services/agent-plugin-lifecycle/src/service/modules/releases/router/context-deps.router.ts": `
 export const bypass = context.deps.releaseSource;
 `,
+  "services/agent-plugin-lifecycle/src/service/modules/exports/router/context-provided.router.ts": `
+export const bypass = context.provided.artifactStore;
+`,
   "services/agent-plugin-lifecycle/src/service/router.ts": `
 import { forbidden } from "./not-allowed";
 import { impl } from "./impl";
@@ -115,6 +118,24 @@ export * from "@rawr/agent-plugin-lifecycle/bindings/governance";
 `,
   "apps/cli/src/lib/agent-plugins/release-binding-bypass.ts": `
 import { createResourceArtifactStore } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+`,
+  "apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository.ts": `
+import { createResourceArtifactReader } from "@rawr/agent-plugin-lifecycle/bindings/releases";
+`,
+  "apps/cli/src/lib/agent-plugins/second-artifact-provider.ts": `
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+`,
+  "apps/cli/src/lib/agent-plugins/second-artifact-provider-dynamic.ts": `
+export const artifactProvider = import("@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node");
+`,
+  "apps/cli/src/lib/agent-plugins/second-artifact-provider-export.ts": `
+export { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+`,
+  "apps/cli/src/lib/agent-plugins/second-artifact-provider-star.ts": `
+export * from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+`,
+  "apps/cli/src/commands/agent/plugins/second-artifact-provider.ts": `
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 `,
   "apps/cli/src/lib/agent-plugins/release-binding-dynamic-bypass.ts": `
 export const releaseBindings = import("@rawr/agent-plugin-lifecycle/bindings/releases");
@@ -251,8 +272,10 @@ export type * from "@rawr/agent-plugin-lifecycle/release";
 `,
   "apps/cli/src/lib/agent-plugins/service-runtime/client.ts": `
 import { createClient, type Client } from "@rawr/agent-plugin-lifecycle/client";
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 
 export const client = createClient;
+export const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
 export type LifecycleClient = Client;
 `,
   "apps/cli/src/lib/agent-plugins/commands/binding.ts": `
@@ -312,17 +335,6 @@ import { createResourceCompleteTargetIdentityReader } from "@rawr/agent-plugin-l
 
 export const native = createNodeNativeProviderResource;
 export const completeIdentities = createResourceCompleteTargetIdentityReader;
-`,
-  "apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository.ts": `
-import {
-  createResourceArtifactReader,
-} from "@rawr/agent-plugin-lifecycle/bindings/releases";
-import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
-
-export const bindings = {
-  createResourceArtifactReader,
-  makeNodeArtifactRepositoryAsyncPort,
-};
 `,
 };
 
@@ -422,7 +434,7 @@ describe("agent plugin lifecycle dependency-direction Habitat rule", () => {
     expect(
       rejected.report.rules[0].diagnostics,
       JSON.stringify(rejected.report.rules[0].diagnostics, null, 2),
-    ).toHaveLength(61);
+    ).toHaveLength(68);
 
     const rootRouter = "services/agent-plugin-lifecycle/src/service/router.ts";
     const serviceBase = "services/agent-plugin-lifecycle/src/service/base.ts";

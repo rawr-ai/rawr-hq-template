@@ -117,12 +117,17 @@ describe("production lifecycle service context", () => {
     expect(deps).not.toHaveProperty("releaseEvidence");
     expect(deps).not.toHaveProperty("providerArtifactRepository");
     expect(deps).not.toHaveProperty("providerEvidenceStore");
+    expect(deps.exports).not.toHaveProperty("artifactReader");
     expect(deps.artifactRepository).toMatchObject({
       locateTree: expect.any(Function),
       readTree: expect.any(Function),
       publishTree: expect.any(Function),
       readEvidence: expect.any(Function),
       publishEvidence: expect.any(Function),
+    });
+    expect(deps.packageOutput).toMatchObject({
+      encodeCoworkV1: expect.any(Function),
+      publish: expect.any(Function),
     });
     const layout = deriveAgentPluginControllerLayout({ dataRoot: controllerDataRoot });
     expect(deps.artifactRepositoryRoot).toBe(layout.artifactStoreRoot);

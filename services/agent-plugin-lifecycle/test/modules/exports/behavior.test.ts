@@ -14,13 +14,12 @@ import {
   executeExportInverseActionWithResource,
   verifyExportLedgerBytes,
   EXPORT_LEDGER_FILENAME,
-  type ArtifactReader,
   type ExportAgentPluginsRequest,
   type ExportAppliedObservationV1,
   type ExportDestinationAsyncPort,
   type ExportDestinationCapture,
   type ExportFailpoints,
-  type ExportLifecycleRuntime,
+  type ExportLifecycleHostRuntime,
   type UndoApplyingSession,
   type UndoBeginResult,
   type UndoCandidateInput,
@@ -30,6 +29,10 @@ import {
 } from "../../../src/bindings/exports";
 import { alphaOnlyArtifactFixture, exportArtifactFixture } from "./artifact-fixture";
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
+import {
+  createSeededArtifactRepository,
+  type SeededArtifactRepository,
+} from "../../support/artifact-repository";
 
 const FIXTURE_PREFIX = "rawr-export-service-test-";
 
@@ -50,10 +53,9 @@ describe("export service destination authority", () => {
   it("settles a complete set and repeats without changing destination bytes or identities", async () => {
     const root = await createRoot();
     const fixture = exportArtifactFixture();
-    const artifacts = artifactReader([fixture.complete]);
     const undo = new RecordingUndoWriter();
     const resource = makeNodeExportDestinationPort();
-    const runtime = lifecycleRuntime(artifacts, undo, resource);
+    const runtime = await lifecycleRuntime([fixture.complete], undo, resource);
 
     const first = await executeExportAgentPlugins(request(fixture.complete.ref, "complete-set", root.path), runtime);
     expect(first.kind, JSON.stringify(first)).toBe("MutatedSettled");
@@ -63,13 +65,143 @@ describe("export service destination authority", () => {
     expect(await readFile(alpha, "utf8")).toBe("alpha-v1\n");
     expect(await readFile(beta, "utf8")).toBe("beta-v1\n");
     const before = await Promise.all([alpha, beta, ledger].map((path) => lstat(path, { bigint: true })));
-    const writesBefore = [undo.beginCalls, undo.stageCalls, undo.markCalls, undo.settleCalls];
+    const writesBefore = undoAuthorityCalls(undo);
+    const readsBeforeRepeat = runtime.artifactRepository.readTreeCalls;
 
     const second = await executeExportAgentPlugins(request(fixture.complete.ref, "complete-set", root.path), runtime);
     const after = await Promise.all([alpha, beta, ledger].map((path) => lstat(path, { bigint: true })));
     expect(second.kind).toBe("ReadOnlyConverged");
-    expect([undo.beginCalls, undo.stageCalls, undo.markCalls, undo.settleCalls]).toEqual(writesBefore);
+    expect(undoAuthorityCalls(undo)).toEqual(writesBefore);
     expect(after.map(identityTuple)).toEqual(before.map(identityTuple));
+    expect(runtime.artifactRepository.readTreeCalls).toBe(readsBeforeRepeat + 3);
+  });
+
+  it("uses the live artifact observation on repeat without changing settled destination state", async () => {
+    const root = await createRoot();
+    const fixture = exportArtifactFixture();
+    const undo = new RecordingUndoWriter();
+    const runtime = await lifecycleRuntime(
+      [fixture.complete],
+      undo,
+      makeNodeExportDestinationPort(),
+    );
+
+    const first = await executeExportAgentPlugins(
+      request(fixture.complete.ref, "complete-set", root.path),
+      runtime,
+    );
+    expect(first.kind).toBe("MutatedSettled");
+    const paths = [
+      join(root.path, "codex/plugins/alpha/skills/alpha/SKILL.md"),
+      join(root.path, "codex/plugins/beta/agents/beta.md"),
+      join(root.path, EXPORT_LEDGER_FILENAME),
+    ];
+    const identitiesBefore = await Promise.all(paths.map((path) => lstat(path, { bigint: true })));
+    const bytesBefore = await Promise.all(paths.map((path) => readFile(path)));
+    const writesBefore = undoAuthorityCalls(undo);
+    runtime.artifactRepository.replaceEntry(
+      fixture.alpha.release.artifactDigest,
+      "release.json",
+      new TextEncoder().encode("{}\n"),
+    );
+
+    const repeated = await executeExportAgentPlugins(
+      request(fixture.complete.ref, "complete-set", root.path),
+      runtime,
+    );
+
+    expect(repeated).toMatchObject({
+      kind: "RejectedBeforeMutation",
+      failure: {
+        code: "ArtifactMismatch",
+        phase: "artifact-read",
+        message: expect.stringContaining("ReferenceMismatch:artifact"),
+      },
+    });
+    expect(undoAuthorityCalls(undo)).toEqual(writesBefore);
+    expect((await Promise.all(paths.map((path) => lstat(path, { bigint: true }))))
+      .map(identityTuple)).toEqual(identitiesBefore.map(identityTuple));
+    expect(await Promise.all(paths.map((path) => readFile(path)))).toEqual(bytesBefore);
+  });
+
+  it("rejects a missing artifact before destination capture or undo admission", async () => {
+    const root = await createRoot();
+    const fixture = alphaOnlyArtifactFixture();
+    const undo = new RecordingUndoWriter();
+    const probe = captureProbe();
+    const runtime = await lifecycleRuntime([], undo, probe.port);
+
+    const result = await executeExportAgentPlugins(
+      request(fixture.alpha.ref, "targeted-release", root.path),
+      runtime,
+    );
+
+    expect(result).toMatchObject({
+      kind: "RejectedBeforeMutation",
+      failure: { code: "ArtifactMissing", phase: "artifact-read" },
+    });
+    expect(runtime.artifactRepository.readTreeCalls).toBe(1);
+    expect(probe.captures).toEqual([]);
+    expect(undo.preflightCalls).toBe(0);
+    expect(undo.beginCalls).toBe(0);
+  });
+
+  it("closes a repository read exception before destination capture or undo admission", async () => {
+    const root = await createRoot();
+    const fixture = alphaOnlyArtifactFixture();
+    const undo = new RecordingUndoWriter();
+    const probe = captureProbe();
+    const runtime = await lifecycleRuntime([fixture.alpha], undo, probe.port);
+    runtime.artifactRepository.rejectNextTreeRead("repository read failed");
+
+    const result = await executeExportAgentPlugins(
+      request(fixture.alpha.ref, "targeted-release", root.path),
+      runtime,
+    );
+
+    expect(result).toMatchObject({
+      kind: "RejectedBeforeMutation",
+      failure: {
+        code: "ArtifactMismatch",
+        phase: "artifact-read",
+        message: expect.stringContaining("InvalidStoreRoot:artifact"),
+      },
+    });
+    expect(runtime.artifactRepository.readTreeCalls).toBe(1);
+    expect(probe.captures).toEqual([]);
+    expect(undo.preflightCalls).toBe(0);
+    expect(undo.beginCalls).toBe(0);
+  });
+
+  it("maps a mismatched service artifact before destination capture or undo admission", async () => {
+    const root = await createRoot();
+    const fixture = alphaOnlyArtifactFixture();
+    const undo = new RecordingUndoWriter();
+    const probe = captureProbe();
+    const runtime = await lifecycleRuntime([fixture.alpha], undo, probe.port);
+    runtime.artifactRepository.replaceEntry(
+      fixture.alpha.release.artifactDigest,
+      "release.json",
+      new TextEncoder().encode("{}\n"),
+    );
+
+    const result = await executeExportAgentPlugins(
+      request(fixture.alpha.ref, "targeted-release", root.path),
+      runtime,
+    );
+
+    expect(result).toMatchObject({
+      kind: "RejectedBeforeMutation",
+      failure: {
+        code: "ArtifactMismatch",
+        phase: "artifact-read",
+        message: expect.stringContaining("MalformedEnvelope:artifact"),
+      },
+    });
+    expect(runtime.artifactRepository.readTreeCalls).toBe(1);
+    expect(probe.captures).toEqual([]);
+    expect(undo.preflightCalls).toBe(0);
+    expect(undo.beginCalls).toBe(0);
   });
 
   it("updates one targeted scope while preserving the independent peer scope", async () => {
@@ -77,7 +209,11 @@ describe("export service destination authority", () => {
     const initial = exportArtifactFixture();
     const updated = exportArtifactFixture("alpha-v2\n", "beta-v1\n", "skills/alpha-v2/SKILL.md");
     const resource = makeNodeExportDestinationPort();
-    const runtime = lifecycleRuntime(artifactReader([initial.complete, updated.alpha]), new RecordingUndoWriter(), resource);
+    const runtime = await lifecycleRuntime(
+      [initial.complete, updated.alpha],
+      new RecordingUndoWriter(),
+      resource,
+    );
     expect((await executeExportAgentPlugins(request(initial.complete.ref, "complete-set", root.path), runtime)).kind)
       .toBe("MutatedSettled");
     const beta = join(root.path, "codex/plugins/beta/agents/beta.md");
@@ -103,7 +239,7 @@ describe("export service destination authority", () => {
     const resource = makeNodeExportDestinationPort();
     const result = await executeExportAgentPlugins(
       request(fixture.complete.ref, "complete-set", root.path),
-      lifecycleRuntime(artifactReader([fixture.complete]), undo, resource),
+      await lifecycleRuntime([fixture.complete], undo, resource),
     );
     expect(result.kind).toBe("MutatedSettled");
 
@@ -126,7 +262,7 @@ describe("export service destination authority", () => {
     await mkdir(dirname(collision), { recursive: true });
     await writeFile(collision, "unmanaged\n");
     const probe = captureProbe();
-    const runtime = lifecycleRuntime(artifactReader([fixture.complete]), new RecordingUndoWriter(), probe.port);
+    const runtime = await lifecycleRuntime([fixture.complete], new RecordingUndoWriter(), probe.port);
 
     const first = await executeExportAgentPlugins(request(fixture.complete.ref, "complete-set", root.path), runtime);
     const second = await executeExportAgentPlugins(request(fixture.complete.ref, "complete-set", root.path), runtime);
@@ -146,7 +282,7 @@ describe("export service destination authority", () => {
       preflight: async () => Object.freeze({ kind: "Rejected" as const, failure: undoFailure("preflight rejected") }),
       begin: async () => { throw new Error("begin must not run"); },
     });
-    const runtime = lifecycleRuntime(artifactReader([fixture.complete]), undo, probe.port);
+    const runtime = await lifecycleRuntime([fixture.complete], undo, probe.port);
 
     const result = await executeExportAgentPlugins(
       requestForDestinations(fixture.complete.ref, "complete-set", [left.path, right.path]),
@@ -164,8 +300,8 @@ describe("export service destination authority", () => {
     const fixture = alphaOnlyArtifactFixture();
     const undo = new RecordingUndoWriter();
     const canonicalDestinations = [left.path, right.path].sort();
-    const runtime = lifecycleRuntime(
-      artifactReader([fixture.complete]),
+    const runtime = await lifecycleRuntime(
+      [fixture.complete],
       undo,
       makeNodeExportDestinationPort(),
     );
@@ -210,10 +346,12 @@ describe("export service destination authority", () => {
         if (point === "AfterPlan") throw new Error("post-plan stop");
       },
     });
-    const runtime = Object.freeze({
-      ...lifecycleRuntime(artifactReader([fixture.complete]), new RecordingUndoWriter(), probe.port),
-      failpoints,
-    });
+    const runtime = await lifecycleRuntime(
+      [fixture.complete],
+      new RecordingUndoWriter(),
+      probe.port,
+      { failpoints },
+    );
 
     const result = await executeExportAgentPlugins(request(fixture.complete.ref, "complete-set", root.path), runtime);
 
@@ -231,7 +369,7 @@ describe("export service destination authority", () => {
 
       const result = await executeExportAgentPlugins(
         request(fixture.complete.ref, "complete-set", root.path),
-        lifecycleRuntime(artifactReader([fixture.complete]), undo, probe.port),
+        await lifecycleRuntime([fixture.complete], undo, probe.port),
       );
 
       expect(result.kind).toBe(exit === "unsettled" ? "MutatedUnsettled" : "RejectedBeforeMutation");
@@ -248,10 +386,12 @@ describe("export service destination authority", () => {
         if (point === "AfterInverseStaged") throw new Error("staging stop");
       },
     });
-    const runtime = Object.freeze({
-      ...lifecycleRuntime(artifactReader([fixture.complete]), new RecordingUndoWriter(), probe.port),
-      failpoints,
-    });
+    const runtime = await lifecycleRuntime(
+      [fixture.complete],
+      new RecordingUndoWriter(),
+      probe.port,
+      { failpoints },
+    );
 
     const result = await executeExportAgentPlugins(request(fixture.complete.ref, "complete-set", root.path), runtime);
 
@@ -261,42 +401,43 @@ describe("export service destination authority", () => {
   });
 });
 
-function lifecycleRuntime(
-  artifactReader: ArtifactReader,
+interface ExportTestRuntime extends SeededArtifactRepository {
+  readonly exports: ExportLifecycleHostRuntime;
+}
+
+async function lifecycleRuntime(
+  snapshots: readonly VerifiedArtifactSnapshotV1[],
   undoWriter: UndoWriter,
   destinationRuntime: ReturnType<typeof makeNodeExportDestinationPort>,
-) {
+  options: Partial<Pick<ExportLifecycleHostRuntime, "failpoints">> = {},
+): Promise<ExportTestRuntime> {
   const homes = createKnownNativeHomesSnapshot([]);
   if (!homes.ok) throw new Error(homes.failure.message);
+  const artifacts = await createSeededArtifactRepository(snapshots);
   return Object.freeze({
-    artifactReader,
-    knownNativeHomesReader: Object.freeze({
-      readCompleteSnapshot: async () => Object.freeze({ kind: "Verified" as const, snapshot: homes.snapshot }),
+    ...artifacts,
+    exports: Object.freeze({
+      knownNativeHomesReader: Object.freeze({
+        readCompleteSnapshot: async () => Object.freeze({ kind: "Verified" as const, snapshot: homes.snapshot }),
+      }),
+      undoWriter,
+      destinationRuntime,
+      operationId: () => "service-behavior",
+      ...options,
     }),
-    undoWriter,
-    destinationRuntime,
-    operationId: () => "service-behavior",
   });
 }
 
 async function executeExportAgentPlugins(
   request: ExportAgentPluginsRequest,
-  runtime: ExportLifecycleRuntime,
+  runtime: ExportTestRuntime,
 ) {
-  const client = createLifecycleTestClient({ exports: runtime });
-  return client.exports.apply(request, testInvocation);
-}
-
-function artifactReader(
-  snapshots: readonly VerifiedArtifactSnapshotV1[],
-): ArtifactReader {
-  const byRef = new Map(snapshots.map((snapshot) => [JSON.stringify(snapshot.ref), snapshot]));
-  return Object.freeze({
-    async read(ref: Parameters<ArtifactReader["read"]>[0]) {
-      const snapshot = byRef.get(JSON.stringify(ref));
-      return snapshot === undefined ? Object.freeze({ kind: "Missing" as const, ref }) : Object.freeze({ kind: "Verified" as const, snapshot });
-    },
+  const client = createLifecycleTestClient({
+    artifactRepository: runtime.artifactRepository,
+    artifactRepositoryRoot: runtime.artifactRepositoryRoot,
+    exports: runtime.exports,
   });
+  return client.exports.apply(request, testInvocation);
 }
 
 function request(
@@ -397,6 +538,7 @@ interface RecordedAction {
 }
 
 class RecordingUndoWriter implements UndoWriter {
+  preflightCalls = 0;
   beginCalls = 0;
   stageCalls = 0;
   markCalls = 0;
@@ -408,6 +550,7 @@ class RecordingUndoWriter implements UndoWriter {
   #generation = 0;
 
   async preflight() {
+    this.preflightCalls += 1;
     return Object.freeze({ kind: "Accepted" as const });
   }
 
@@ -475,6 +618,16 @@ class RecordingUndoWriter implements UndoWriter {
     this.#generation += 1;
     return `generation-${this.#generation}`;
   }
+}
+
+function undoAuthorityCalls(undo: RecordingUndoWriter): readonly number[] {
+  return [
+    undo.preflightCalls,
+    undo.beginCalls,
+    undo.stageCalls,
+    undo.markCalls,
+    undo.settleCalls,
+  ];
 }
 
 function acceptedWrite(generation: string): UndoWriteResult {

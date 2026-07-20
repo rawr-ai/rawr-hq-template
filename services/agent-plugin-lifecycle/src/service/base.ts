@@ -3,7 +3,7 @@ import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-ar
 import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
 import type { AgentProviderRecordsAsyncPort } from "@rawr/resource-agent-provider-records";
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
-import type { ExportLifecycleRuntime } from "./modules/exports/ports";
+import type { ExportLifecycleHostRuntime } from "./modules/exports/ports";
 import type {
   NativeProviderExecutablePaths,
   NativeProviderResourcePort,
@@ -28,7 +28,7 @@ type InitialContext = {
     contentWorkspace: ContentWorkspaceNodeAsyncPort;
     clock: LifecycleClock;
     packageOutput: AgentPluginPackageOutputAsyncPort;
-    exports: ExportLifecycleRuntime;
+    exports: ExportLifecycleHostRuntime;
     providerRecords: AgentProviderRecordsAsyncPort;
     providerNativeResource: NativeProviderResourcePort;
     providerExecutables: NativeProviderExecutablePaths;

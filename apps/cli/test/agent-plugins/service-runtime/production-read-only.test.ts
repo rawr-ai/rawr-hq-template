@@ -43,7 +43,6 @@ import {
 import { exportArtifactFixture } from "../../../../../services/agent-plugin-lifecycle/test/modules/exports/artifact-fixture";
 import {
   createExportTestClient,
-  FakeArtifactReader,
   FakeKnownNativeHomesReader,
   knownHomes,
 } from "../undo/export-runtime-fixture";
@@ -442,10 +441,7 @@ async function applyExport(
   onProviderAccess: (label: string) => void,
 ): Promise<ExportAgentPluginsResult> {
   const artifact = exportArtifactFixture().alpha;
-  const artifacts = new FakeArtifactReader();
-  artifacts.add(artifact);
-  const client = createExportTestClient({
-    artifactReader: artifacts,
+  const client = await createExportTestClient([artifact], {
     knownNativeHomesReader: new FakeKnownNativeHomesReader(knownHomes()),
     undoWriter,
   }, { onProviderAccess });
@@ -482,8 +478,6 @@ function observeUndoAdmission(
 
 async function captureExportCandidate(destination: string): Promise<UndoCandidateInput> {
   const artifact = exportArtifactFixture().alpha;
-  const artifacts = new FakeArtifactReader();
-  artifacts.add(artifact);
   let candidate: UndoCandidateInput | undefined;
   const captureWriter: UndoWriter = Object.freeze({
     async preflight(input: UndoCandidateInput) {
@@ -501,8 +495,7 @@ async function captureExportCandidate(destination: string): Promise<UndoCandidat
       throw new Error("capture writer must reject before export admission");
     },
   });
-  const client = createExportTestClient({
-    artifactReader: artifacts,
+  const client = await createExportTestClient([artifact], {
     knownNativeHomesReader: new FakeKnownNativeHomesReader(knownHomes()),
     undoWriter: captureWriter,
   });

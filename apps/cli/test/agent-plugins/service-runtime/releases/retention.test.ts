@@ -18,8 +18,8 @@ import {
   testInvocation,
 } from "../../../../../../services/agent-plugin-lifecycle/test/support/client";
 import {
-  createArtifactRepositoryReader,
-} from "../../../../src/lib/agent-plugins/bindings/output/artifact-repository";
+  createResourceArtifactReader,
+} from "../../../../../../services/agent-plugin-lifecycle/src/service/repository/artifact-repository";
 import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
 import {
   GIT_EXECUTABLE,
@@ -322,7 +322,10 @@ describe("closed read-only retention planning", () => {
     if (result.kind !== "Published" || result.ref.kind !== "complete-set") {
       throw new Error("complete generated fixture did not publish");
     }
-    const reader = createArtifactRepositoryReader(root);
+    const reader = createResourceArtifactReader({
+      repository: artifactRepository,
+      repositoryRoot: root,
+    });
     const set = await reader.read(result.ref);
     if (set.kind !== "Verified" || set.snapshot.kind !== "complete-set") {
       throw new Error("complete generated fixture did not verify");

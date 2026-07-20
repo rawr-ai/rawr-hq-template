@@ -1,6 +1,5 @@
 import type {
   ArtifactRef,
-  VerifiedArtifactSnapshotV1,
 } from "../../../../shared/release/index";
 
 import type {
@@ -47,25 +46,6 @@ export type KnownNativeHomesReadResult =
 
 export interface KnownNativeHomesReader {
   readCompleteSnapshot(): Promise<KnownNativeHomesReadResult>;
-}
-
-export interface ArtifactReadIssue {
-  readonly code: string;
-  readonly path: string;
-  readonly message: string;
-}
-
-export type ArtifactReadResult =
-  | Readonly<{ kind: "Verified"; snapshot: VerifiedArtifactSnapshotV1 }>
-  | Readonly<{ kind: "Missing"; ref: ArtifactRef }>
-  | Readonly<{
-    kind: "Mismatch";
-    ref: ArtifactRef;
-    issues: readonly [ArtifactReadIssue, ...ArtifactReadIssue[]];
-  }>;
-
-export interface ArtifactReader {
-  read(ref: ArtifactRef): Promise<ArtifactReadResult>;
 }
 
 export interface UndoFailure {
