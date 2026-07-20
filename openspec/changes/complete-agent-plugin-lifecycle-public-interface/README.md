@@ -96,7 +96,7 @@ Inngest candidate bytes.
 | T6C3 export independence | 5.1 complete/reviewed; 5.2-5.4 open | fixed-slot refusal at acquire/native edge; export admission and aggregate retirement remain |
 | T6D truthful test owners | complete, reviewed | owner-local DevOps fixture and ordinary serialized lifecycle/CLI targets |
 | T6E deterministic manifest | complete, reviewed | native JSON projection, code-unit canonicalization, and full build-twice equality |
-| T6F Personal checkpoint prerequisites | active; 3C.1-3C.3 complete/reviewed and queued for landing | pure release-input authoring, positive declared-tree closure, tested provider bindings, and immutable controller distribution without repository coupling |
+| T6F Personal checkpoint prerequisites | active; 3C.1-3C.3 complete/reviewed; 3C.4 implementation reviewed and awaiting landed-main publication | pure release-input authoring, positive declared-tree closure, tested provider bindings, and immutable controller distribution without repository coupling |
 | T6F landing/settlement | open; 8.1 next | independently landed repos, disposable/live native convergence, read-only repeat |
 
 ## Retired Unlanded Nodes
@@ -195,6 +195,39 @@ state owner.
 | Proof | Focused provider behavior/schema proof passed 43 tests; on the integrated continuation stack, the complete lifecycle suite passed 42 files / 375 tests. Lifecycle lint, typecheck, build, sync, structural/Habitat, strict OpenSpec, and `git diff --check` passed after the TypeBox correction. |
 | Reviews | Architecture/oRPC, TypeScript/TypeBox, behavior/state-machine, and structural/Habitat reviews report no remaining finding. |
 | Scope | No provider home, Personal repository, controller selector, release/channel record, export destination, or protected-lane input was mutated. [[tasks#5. T6C3: Export Destination Independence|Export task 5.2]] remains blocked and untouched. |
+
+## Pre-Landing Immutable-Release Setting Mutation
+
+The installed-controller distribution work crossed its operational gate once.
+This record preserves the exact repository preimage and outcome rather than
+rewriting the setting or treating it as settlement:
+
+| Observation | Exact evidence |
+| --- | --- |
+| Preimage | At `2026-07-20T04:02:24.522Z`, a read-only `GET repos/rawr-ai/rawr-hq-template/immutable-releases` returned `{"enabled":false,"enforced_by_owner":false}`. |
+| Premature mutation | At `2026-07-20T04:03:51.270Z`, the active task invoked `PUT repos/rawr-ai/rawr-hq-template/immutable-releases`; it completed at `04:03:55.552Z` with an empty response body, and the postimage below confirms success. This occurred before the distribution slice was landed or [[tasks#8. T6F: Landing And Settlement|the landing and settlement gate]] opened. |
+| Outcome | A read-only verification begun at `2026-07-20T04:04:02.812Z` returned `{"enabled":true,"enforced_by_owner":false}` at `04:04:06.565Z`. The enabled setting is retained; no compensating disable mutation is authorized. |
+| No dispatch | Read-only follow-up at `2026-07-20T05:04:57Z` found `release_count=0`, no `workflow_dispatch` run since `04:00Z`, and only the existing `Repository Ratchet` workflow. The installed-controller workflow is not present on canonical `main`, so the setting change created no release, tag, asset, controller selection, workflow dispatch, channel transition, or provider mutation. |
+| Remaining gate | No further repository, channel, or provider mutation occurs before task 8. The unlanded workflow still requires a nonempty `CONTROLLER_RELEASE_ADMIN_READ_TOKEN` solely for its Administration-read setting check and exits before release creation when that secret is absent; release mutation remains on GitHub's native workflow token. |
+
+This is operational evidence, not controller installation or release proof. It
+does not advance any T6F checkbox.
+
+## T6F Installed Controller Distribution Prerequisite
+
+This prepared checkpoint supplies [[tasks#3C. Personal Checkpoint Prerequisites|task 3C.4]]
+without making a Template checkout, Personal repository, provider home, or
+ambient `rawr` executable part of controller identity. Task 3C.4 remains open
+until the landed workflow publishes and the exact immutable asset is verified.
+
+| Boundary | Result |
+| --- | --- |
+| Asset construction | One selected, verified controller release becomes a deterministic tar containing only its stable launcher, selector, envelope, and manifest-owned payload. A closed TypeBox provenance schema is the runtime and static authority for source revision, platform, architecture, controller digest, runtime, archive identity, and versioned recipe; only the branded digest leaf uses `Type.Unsafe`. |
+| Repository independence | The matrix proof extracts each asset, hides the source checkout, changes to a foreign working directory, and requires the installed controller to report the exact selected verified digest through an absolute launcher. No Personal bytes, content checkout, repository ancestry, provider state, or second controller store enters the artifact. |
+| Publication | A main-only manual workflow builds the four declared Darwin/Linux and arm64/x64 tuples, checks the closed eight-file asset set, fails closed when the Administration-read secret cannot prove immutable releases are enabled, and refuses an existing release or tag before native GitHub release creation. Publication is keyed by the exact Template revision and verifies the immutable release, target commit, and asset inventory. |
+| Proof | The complete controller suite passed 93/93 tests with 1,240 assertions; uncached lint and typecheck passed. After the TypeBox authority correction, the focused asset suite passed 11/11 tests and lint, typecheck, inline schema import, and `git diff --check` passed again. |
+| Reviews | Architecture/oRPC, TypeScript/TypeBox, behavior/state-machine, and structural/Habitat reviews report no remaining finding. |
+| Scope | No workflow was dispatched and no release, tag, asset, controller selector, channel, or provider state was created by this checkpoint. The earlier setting mutation remains bounded by [[#Pre-Landing Immutable-Release Setting Mutation]] and authorizes no further operation before task 8. |
 
 ## Template Required Ratchet Settlement Gate
 
