@@ -1,8 +1,8 @@
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
+import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
 import type { ExportLifecycleRuntime } from "./modules/exports/ports";
 import type { GovernanceLifecycleRuntime } from "./modules/governance/ports";
-import type { PackagingLifecycleRuntime } from "./modules/packaging/ports";
 import type { ProviderLifecycleRuntime } from "./modules/providers/ports";
 import type {
   ArtifactStore,
@@ -25,7 +25,7 @@ type InitialContext = {
     releaseArtifactFailpoint?: ArtifactStoreFailpoint;
     contentWorkspace: ContentWorkspaceNodeAsyncPort;
     clock: LifecycleClock;
-    packaging: PackagingLifecycleRuntime;
+    packageOutput: AgentPluginPackageOutputAsyncPort;
     exports: ExportLifecycleRuntime;
     providers: ProviderLifecycleRuntime;
     governance: GovernanceLifecycleRuntime;

@@ -4,6 +4,9 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type {
+  AgentPluginPackageOutputAsyncPort,
+} from "@rawr/resource-agent-plugin-package-output";
+import type {
   ArtifactEvidenceObservation,
   ArtifactObjectAddress,
   ArtifactPublicationResult,
@@ -14,12 +17,11 @@ import type {
 } from "@rawr/resource-agent-plugin-artifact-repository";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 
-import type { PackagingLifecycleRuntime } from "../src/service/modules/packaging/ports";
-import {
-  coworkV1PackageDigest,
-  createResourcePackageOutputRuntime,
-  type ResourcePackageOutputOptions,
-} from "../src/bindings/packaging";
+import { coworkV1PackageDigest } from "../src/service/modules/packaging/model/helpers/cowork-v1";
+import type {
+  ArtifactReader,
+  ArtifactStore,
+} from "../src/service/model/dependencies/releases";
 import {
   createMechanicalEvidenceHandle,
   createResourceArtifactReader,
@@ -265,8 +267,7 @@ describe("agent-plugin lifecycle resource adapters", () => {
     async () => {
       const setup = await outputSetup();
       await setup.store.publishRelease(setup.fixture.alphaRelease);
-      const runtime = createPackageOutputLifecycleRuntime({ artifactReader: setup.reader });
-      const application = createPackageAgentPluginApplication(runtime);
+      const application = createPackageAgentPluginApplication({ artifactReader: setup.reader });
       const outputPath = join(setup.root, "alpha.cowork.zip");
       const request = {
         artifactRef: setup.fixture.alphaSnapshot.ref,
@@ -291,19 +292,21 @@ describe("agent-plugin lifecycle resource adapters", () => {
   );
 
   it.runIf("Bun" in globalThis)(
-    "maps a service failpoint to a closed pre-mutation package refusal",
+    "maps a provider failpoint to a closed pre-mutation package refusal",
     async () => {
       const setup = await outputSetup();
       await setup.store.publishRelease(setup.fixture.alphaRelease);
-      const runtime = createPackageOutputLifecycleRuntime({
-        artifactReader: setup.reader,
+      const packageOutput = makeNodePackageOutputAsyncPort({
         failpoints: {
           async hit(point) {
             if (point === "BeforeCommit") throw new Error("package commit refused");
           },
         },
       });
-      const result = await createPackageAgentPluginApplication(runtime).package({
+      const result = await createPackageAgentPluginApplication({
+        artifactReader: setup.reader,
+        packageOutput,
+      }).package({
         artifactRef: setup.fixture.alphaSnapshot.ref,
         format: "cowork-v1",
         outputPath: join(setup.root, "refused.cowork.zip"),
@@ -325,8 +328,7 @@ describe("agent-plugin lifecycle resource adapters", () => {
       const setup = await outputSetup();
       await setup.store.publishRelease(setup.fixture.alphaRelease);
       const points: string[] = [];
-      const runtime = createPackageOutputLifecycleRuntime({
-        artifactReader: setup.reader,
+      const packageOutput = makeNodePackageOutputAsyncPort({
         failpoints: {
           async hit(point) {
             points.push(point);
@@ -334,7 +336,10 @@ describe("agent-plugin lifecycle resource adapters", () => {
         },
       });
 
-      await expect(createPackageAgentPluginApplication(runtime).package({
+      await expect(createPackageAgentPluginApplication({
+        artifactReader: setup.reader,
+        packageOutput,
+      }).package({
         artifactRef: setup.fixture.alphaSnapshot.ref,
         format: "cowork-v1",
         outputPath: join(setup.root, "four-transitions.cowork.zip"),
@@ -376,22 +381,31 @@ describe("agent-plugin lifecycle resource adapters", () => {
   }
 });
 
-function createPackageOutputLifecycleRuntime(
-  options: Omit<ResourcePackageOutputOptions, "packageOutput">,
-) {
-  return createResourcePackageOutputRuntime({
-    ...options,
-    packageOutput: makeNodePackageOutputAsyncPort(),
+function createPackageAgentPluginApplication(options: Readonly<{
+  artifactReader: ArtifactReader;
+  packageOutput?: AgentPluginPackageOutputAsyncPort;
+}>) {
+  const client = createLifecycleTestClient({
+    releaseArtifacts: releaseArtifactsWithReader(options.artifactReader),
+    packageOutput: options.packageOutput ?? makeNodePackageOutputAsyncPort(),
   });
-}
-
-function createPackageAgentPluginApplication(runtime: PackagingLifecycleRuntime) {
-  const client = createLifecycleTestClient({ packaging: runtime });
   return Object.freeze({
     package: (request: unknown) => (
       client.packaging.package(request as never, testInvocation)
     ),
   });
+}
+
+function releaseArtifactsWithReader(reader: ArtifactReader): ArtifactStore {
+  return Object.freeze({
+    read: (ref: Parameters<ArtifactReader["read"]>[0]) => reader.read(ref),
+    publishRelease: async () => unavailableAsync("release publication"),
+    publishReleaseSet: async () => unavailableAsync("release-set publication"),
+  });
+}
+
+async function unavailableAsync(label: string): Promise<never> {
+  throw new Error(`Unexpected ${label} access in package-output adapter test`);
 }
 
 class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {

@@ -49,7 +49,7 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       kind: "RejectedBeforeOutputMutation",
       primaryFailure: { code: "ArtifactMissing" },
     });
-    expect(calls.splice(0)).toEqual(["packaging.artifactReader.read"]);
+    expect(calls.splice(0)).toEqual(["packaging.releaseArtifacts.read"]);
 
     await expect(client.governance.currentMainRecord({
       kind: "encode-body",
@@ -92,7 +92,10 @@ function spineClient(
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     releaseArtifacts: {
-      read: async () => unavailableAsync("release artifact read"),
+      read: async (ref) => {
+        calls.push("packaging.releaseArtifacts.read");
+        return { kind: "Missing", ref };
+      },
       publishRelease: async () => unavailableAsync("release publication"),
       publishReleaseSet: async () => unavailableAsync("release-set publication"),
     },
@@ -108,18 +111,9 @@ function spineClient(
       },
     },
     clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
-    packaging: {
-      artifactReader: {
-        read: async (ref) => {
-          calls.push("packaging.artifactReader.read");
-          return { kind: "Missing", ref };
-        },
-      },
-      output: { publish: async () => unavailableAsync("package output") },
-      coworkV1: {
-        encode: async () => unavailableAsync("cowork archive encode"),
-        packageDigest: () => unavailable("cowork package digest"),
-      },
+    packageOutput: {
+      encodeCoworkV1: async () => unavailableAsync("cowork archive encode"),
+      publish: async () => unavailableAsync("package output"),
     },
     exports: {
       artifactReader: { read: async () => unavailableAsync("export artifact read") },

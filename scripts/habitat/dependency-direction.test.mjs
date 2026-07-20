@@ -27,6 +27,9 @@ const rejectingSources = {
   "services/agent-plugin-lifecycle/src/service/base.ts": `
 import type { ReleaseRuntime } from "./modules/releases/ports";
 `,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/packaging.ts": `
+import type { PackagingRuntime } from "../../modules/packaging/ports";
+`,
   "services/agent-plugin-lifecycle/src/service/model/dependencies/release-export.ts": `
 export { type ReleaseRuntime } from "../../modules/releases/ports";
 `,
@@ -66,6 +69,9 @@ export * from "./internal/resource-artifact-repository";
 `,
   "apps/cli/src/lib/agent-plugins/value-surface-import.ts": `
 import { contentDigest } from "@rawr/agent-plugin-lifecycle/release";
+`,
+  "apps/cli/src/lib/agent-plugins/retired-packaging-binding.ts": `
+import { createResourcePackageOutputRuntime } from "@rawr/agent-plugin-lifecycle/bindings/packaging";
 `,
   "apps/cli/src/lib/agent-plugins/value-surface-dynamic-import.ts": `
 export const release = import("@rawr/agent-plugin-lifecycle/release");
@@ -321,7 +327,7 @@ describe("agent plugin lifecycle dependency-direction Habitat rule", () => {
     expect(
       rejected.report.rules[0].diagnostics,
       JSON.stringify(rejected.report.rules[0].diagnostics, null, 2),
-    ).toHaveLength(35);
+    ).toHaveLength(37);
 
     const rootRouter = "services/agent-plugin-lifecycle/src/service/router.ts";
     const expectedLocations = [

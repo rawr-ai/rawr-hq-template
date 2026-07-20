@@ -25,8 +25,6 @@ required = [
   "exports.ts",
   "governance",
   "governance.ts",
-  "packaging",
-  "packaging.ts",
   "providers",
 ]
 allowed = [
@@ -177,7 +175,7 @@ allowed = []
 
 [[scopes]]
 name = "agent-plugin-lifecycle-uniform-module-shells"
-root = "services/agent-plugin-lifecycle/src/service/modules/!(vendors|releases)"
+root = "services/agent-plugin-lifecycle/src/service/modules/!(packaging|vendors|releases)"
 kind = "directory"
 mode = "closed"
 required = [
@@ -192,6 +190,21 @@ required = [
 allowed = [
   "ports",
 ]
+
+[[scopes]]
+name = "agent-plugin-lifecycle-packaging-shell"
+root = "services/agent-plugin-lifecycle/src/service/modules/packaging"
+kind = "directory"
+mode = "closed"
+required = [
+  "contract.ts",
+  "middleware.ts",
+  "model",
+  "module.ts",
+  "router",
+  "schemas.ts",
+]
+allowed = []
 
 [[scopes]]
 name = "agent-plugin-lifecycle-vendors-shell"
@@ -290,6 +303,26 @@ mode = "closed"
 required = [
   "dto",
   "helpers",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-packaging-dto"
+root = "services/agent-plugin-lifecycle/src/service/modules/packaging/model/dto"
+kind = "directory"
+mode = "closed"
+required = [
+  "packaging-lifecycle.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-packaging-helpers"
+root = "services/agent-plugin-lifecycle/src/service/modules/packaging/model/helpers"
+kind = "directory"
+mode = "closed"
+required = [
+  "cowork-v1.ts",
 ]
 allowed = []
 

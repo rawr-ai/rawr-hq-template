@@ -24,19 +24,19 @@ language js(typescript)
 or {
   import_statement(source=$source) where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:packaging|releases|vendors)(?:/|[\"'])).*"
   },
   `export { $exports } from $source` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:packaging|releases|vendors)(?:/|[\"'])).*"
   },
   `export * from $source` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:packaging|releases|vendors)(?:/|[\"'])).*"
   },
   `import($source)` where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/(?:base\.ts|model/.*\.ts)$",
-    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:releases|vendors)(?:/|[\"'])).*"
+    $source <: r"^[\"']?(?:(?:\./|\.\./)+modules/(?:packaging|releases|vendors)(?:/|[\"'])|@rawr/agent-plugin-lifecycle/(?:src/)?service/modules/(?:packaging|releases|vendors)(?:/|[\"'])).*"
   },
   import_statement(source=$source) where {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/[^/]+/router(?:/.*)?\.ts$",
@@ -83,14 +83,14 @@ or {
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|providers|releases))[\"']?$" },
     not { $import <: includes "import type" },
     not { $import <: r"(?s)^import\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
   },
   `import($source)` where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$" }
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|providers|releases))[\"']?$" }
   },
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
@@ -117,14 +117,14 @@ or {
   `export { $exports } from $source` as $export where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|providers|releases))[\"']?$" },
     not { $export <: includes "export type" },
     not { $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
   },
   `export * from $source` as $export where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|packaging|providers|releases))[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/(?:exports|governance|providers|releases))[\"']?$" },
     not { $export <: includes "export type *" }
   },
   import_statement(source=$source) where {
@@ -178,6 +178,9 @@ or {
 // @filename: services/agent-plugin-lifecycle/src/service/base.ts
 import type { ReleaseRuntime } from "./modules/releases/ports";
 
+// @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/packaging.ts
+import type { PackagingRuntime } from "../../modules/packaging/ports";
+
 // @filename: services/agent-plugin-lifecycle/src/service/model/dependencies/release-export.ts
 export { type ReleaseRuntime } from "../../modules/releases/ports";
 
@@ -229,6 +232,11 @@ export { type ExportPlan, createExportOwner } from "./internal/owner-protocol";
 import { createResourceCodexProviderAdapter } from "@rawr/agent-plugin-lifecycle/ports/providers";
 
 export const adapter = createResourceCodexProviderAdapter;
+
+// @filename: apps/cli/src/lib/agent-plugins/retired-packaging-binding.ts
+import { createResourcePackageOutputRuntime } from "@rawr/agent-plugin-lifecycle/bindings/packaging";
+
+export const packaging = createResourcePackageOutputRuntime;
 
 // @filename: apps/cli/src/lib/agent-plugins/value-surface-bypass.ts
 import { contentDigest } from "@rawr/agent-plugin-lifecycle/release";
