@@ -30,6 +30,25 @@
   typecheck, build, structural/Habitat, and one-procedure proof; close four
   standing reviews on the narrowed interface.
 
+## 2A. C5 Context-Direction Correction
+
+- [ ] 2A.1 Replace the upward `service/base.ts -> modules/*/ports.ts` dependency
+  aggregation with minimal typed initial dependencies owned at the service
+  root. App/CLI runtime may construct concrete resource providers, but the
+  service package must not import provider implementations or controller code.
+- [ ] 2A.2 Use module provider middleware only to derive service-owned execution
+  context from those ready dependencies, then narrow it in each `module.ts`.
+  Keep product decisions in procedure handlers and module model/policy files.
+- [ ] 2A.3 Delete service `bindings/*` and public `ports/*` package subpaths.
+  Move host materialization to the CLI composition edge, route stateful
+  export-owner classification/replay through export procedures, and expose no
+  compatibility alias or second client.
+- [ ] 2A.4 Close the service package surface around its client factory/type and
+  specifically required contract only. Update positive Habitat topology and
+  dependency-direction enforcement, then pass focused behavior, full service
+  and CLI tests, lint, typecheck, build, strict OpenSpec, and all four standing
+  reviews in semantic module-sized Graphite nodes.
+
 ## 3A. Pure Codec And Public Interface
 
 - [x] 3A.1 Define one governance-owned TypeBox model at

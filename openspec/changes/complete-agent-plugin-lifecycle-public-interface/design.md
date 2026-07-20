@@ -34,6 +34,40 @@ correction is recorded in [[authority-amendment]].
 
 ## Decisions
 
+### Service context flows from root dependencies into module handlers
+
+The landed C5 service shell is retained, but its `bindings/*` and public
+`ports/*` surfaces are a structural error. They let host composition reach back
+into module models and let controller code execute export/provider behavior
+outside the service router. This correction changes placement and dependency
+flow only; it does not add a service, capability, state owner, or transport.
+
+The service root declares the minimal typed initial dependencies that an
+external runtime must supply. App/CLI runtime selects and constructs concrete
+resource providers, then binds those ready capabilities when it creates the
+packaged service client. Module middleware may derive service-owned execution
+context from those dependencies under `provided`; each module's `module.ts`
+narrows that context, and procedure handlers remain the only callable owner of
+domain behavior. Contract trees compose upward into the root implementer;
+implementation and context flow downward into module routers. No service-root
+binding facade imports module implementation upward.
+
+The packaged service exposes its client factory/type and only a specifically
+required contract surface. It does not export dependency bags, module ports,
+materializers, resource adapters, routers, or broad DTO barrels. Consumers
+infer the client-construction input from the client factory rather than
+importing `bindings/*` or `ports/*`. Controller-owned undo remains the generic
+capsule/state coordinator, while export-owned classification and replay run
+through export procedures over the service's resource context. Native
+Codex/Claude mutation remains in external providers and is not reimplemented
+inside service middleware.
+
+This follows the service boundary described by
+[[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the runtime realization spec]]
+and the current Magic Migration Collect service topology. It does not redesign
+`@rawr/hq-sdk`, make the lifecycle service Effectful, or reopen app/runtime
+composition.
+
 ### Repository validation remains an external Template interface
 
 `rawr agent plugins check` selects exactly one closed TypeBox request before any
