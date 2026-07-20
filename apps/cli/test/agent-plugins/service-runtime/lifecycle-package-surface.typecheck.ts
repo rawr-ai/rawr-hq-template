@@ -3,6 +3,10 @@ import {
   type ArtifactRef,
 } from "@rawr/agent-plugin-lifecycle/release";
 import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
+import {
+  createResourceCompleteTargetIdentityReader,
+  type CompleteTargetIdentityReader,
+} from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 
 // @ts-expect-error Artifact and evidence projections are composed inside the service.
@@ -33,12 +37,49 @@ import { parseProviderDeploymentRequest as retiredProviderParser } from "@rawr/a
 import { createResourceProviderRecordState as retiredProviderRecordFactory } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 // @ts-expect-error Native provider adapters remain owned by the provider module.
 import { createResourceCodexProviderAdapter as retiredCodexAdapterFactory } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native provider host ports are inferred from the private client boundary.
+import type { NativeProviderResourcePort as RetiredNativeProviderResourcePort } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Codex resource sessions are private host-context dependencies.
+import type { CodexNativeResourceSession as RetiredCodexNativeResourceSession } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Claude resource sessions are private host-context dependencies.
+import type { ClaudeNativeResourceSession as RetiredClaudeNativeResourceSession } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native resource session inputs are private host-context dependencies.
+import type { NativeResourceSessionInput as RetiredNativeResourceSessionInput } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native executable paths are private host-context dependencies.
+import type { NativeProviderExecutablePaths as RetiredNativeProviderExecutablePaths } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native capability probes are private host-context dependencies.
+import type { NativeResourceCapabilityProbe as RetiredNativeResourceCapabilityProbe } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native JSON observations are private host-context dependencies.
+import type { NativeResourceJsonObservation as RetiredNativeResourceJsonObservation } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native marketplace reads are private host-context dependencies.
+import type { NativeResourceMarketplaceReadInput as RetiredNativeResourceMarketplaceReadInput } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native package entries are private host-context dependencies.
+import type { NativeResourcePackageEntry as RetiredNativeResourcePackageEntry } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native package observations are private host-context dependencies.
+import type { NativeResourcePackageObservation as RetiredNativeResourcePackageObservation } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native package read limits are private host-context dependencies.
+import type { NativeResourcePackageReadLimits as RetiredNativeResourcePackageReadLimits } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native plugin reads are private host-context dependencies.
+import type { NativeResourcePluginReadInput as RetiredNativeResourcePluginReadInput } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native provider failures belong to the resource contract, not the lifecycle service facade.
+import type { NativeProviderResourceFailure as RetiredNativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+// @ts-expect-error Native provider failure taxonomy belongs to the resource contract.
+import type { NativeProviderResourceFailureKind as RetiredNativeProviderResourceFailureKind } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 // @ts-expect-error Service-private module internals are not package exports.
 import type { BuildResult } from "@rawr/agent-plugin-lifecycle/service/modules/releases/model/dto/release-lifecycle";
 
 void createMechanicalEvidenceHandle;
 declare const artifactRef: ArtifactRef;
 void artifactRef;
+type CompleteIdentityReaderReturnIsExact = ReturnType<
+  typeof createResourceCompleteTargetIdentityReader
+> extends CompleteTargetIdentityReader
+  ? CompleteTargetIdentityReader extends ReturnType<typeof createResourceCompleteTargetIdentityReader>
+    ? true
+    : never
+  : never;
+const completeIdentityReaderReturnIsExact: CompleteIdentityReaderReturnIsExact = true;
+void completeIdentityReaderReturnIsExact;
 void retiredReleaseBinding;
 void retiredGovernanceBinding;
 void retiredVendorPort;
@@ -55,6 +96,24 @@ void retiredGovernanceResolver;
 void retiredProviderParser;
 void retiredProviderRecordFactory;
 void retiredCodexAdapterFactory;
+type RetiredNativeProviderHostSurface = readonly [
+  RetiredNativeProviderResourcePort,
+  RetiredCodexNativeResourceSession,
+  RetiredClaudeNativeResourceSession,
+  RetiredNativeResourceSessionInput,
+  RetiredNativeProviderExecutablePaths,
+  RetiredNativeResourceCapabilityProbe,
+  RetiredNativeResourceJsonObservation,
+  RetiredNativeResourceMarketplaceReadInput,
+  RetiredNativeResourcePackageEntry,
+  RetiredNativeResourcePackageObservation,
+  RetiredNativeResourcePackageReadLimits,
+  RetiredNativeResourcePluginReadInput,
+  RetiredNativeProviderResourceFailure,
+  RetiredNativeProviderResourceFailureKind,
+];
+declare const retiredNativeProviderHostSurface: RetiredNativeProviderHostSurface;
+void retiredNativeProviderHostSurface;
 declare const buildResult: BuildResult;
 void buildResult;
 

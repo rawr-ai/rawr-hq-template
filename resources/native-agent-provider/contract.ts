@@ -1,46 +1,66 @@
 import type { Effect } from "effect";
+import { Type, type Static } from "typebox";
+import { Value } from "typebox/value";
 
 import type { ArtifactTreeLocation } from "@rawr/resource-agent-plugin-artifact-repository";
 
-export type NativeAgentProviderId = "claude" | "codex";
+export const NativeAgentProviderIdSchema = Type.Union([
+  Type.Literal("claude"),
+  Type.Literal("codex"),
+]);
 
-export type NativeAgentProviderOperation =
-  | "acquire"
-  | "probe"
-  | "marketplace-list"
-  | "marketplace-read"
-  | "marketplace-add"
-  | "marketplace-remove"
-  | "plugin-list"
-  | "plugin-read"
-  | "plugin-install"
-  | "plugin-enable"
-  | "plugin-disable"
-  | "plugin-remove"
-  | "app-server-inspect"
-  | "config-read"
-  | "config-write";
+export const NativeAgentProviderOperationSchema = Type.Union([
+  Type.Literal("acquire"),
+  Type.Literal("probe"),
+  Type.Literal("marketplace-list"),
+  Type.Literal("marketplace-read"),
+  Type.Literal("marketplace-add"),
+  Type.Literal("marketplace-remove"),
+  Type.Literal("plugin-list"),
+  Type.Literal("plugin-read"),
+  Type.Literal("plugin-install"),
+  Type.Literal("plugin-enable"),
+  Type.Literal("plugin-disable"),
+  Type.Literal("plugin-remove"),
+  Type.Literal("app-server-inspect"),
+  Type.Literal("config-read"),
+  Type.Literal("config-write"),
+]);
 
-export type NativeAgentProviderFailureReason =
-  | "InvalidInput"
-  | "Missing"
-  | "Aliased"
-  | "UnsupportedEntry"
-  | "LimitExceeded"
-  | "CommandFailed"
-  | "CommandTimedOut"
-  | "InvalidJson"
-  | "ProtocolFailed"
-  | "OwnershipConflict"
-  | "FilesystemFailed";
+export const NativeAgentProviderFailureReasonSchema = Type.Union([
+  Type.Literal("InvalidInput"),
+  Type.Literal("Missing"),
+  Type.Literal("Aliased"),
+  Type.Literal("UnsupportedEntry"),
+  Type.Literal("LimitExceeded"),
+  Type.Literal("CommandFailed"),
+  Type.Literal("CommandTimedOut"),
+  Type.Literal("InvalidJson"),
+  Type.Literal("ProtocolFailed"),
+  Type.Literal("OwnershipConflict"),
+  Type.Literal("FilesystemFailed"),
+]);
 
-export interface NativeAgentProviderFailure {
-  readonly _tag: "NativeAgentProviderFailure";
-  readonly provider: NativeAgentProviderId;
-  readonly operation: NativeAgentProviderOperation;
-  readonly reason: NativeAgentProviderFailureReason;
-  readonly path?: string;
-  readonly detail: string;
+export const NativeAgentProviderFailureSchema = Type.Readonly(Type.Object(
+  {
+    _tag: Type.Literal("NativeAgentProviderFailure"),
+    provider: NativeAgentProviderIdSchema,
+    operation: NativeAgentProviderOperationSchema,
+    reason: NativeAgentProviderFailureReasonSchema,
+    path: Type.Optional(Type.String()),
+    detail: Type.String(),
+  },
+  { additionalProperties: false },
+));
+
+export type NativeAgentProviderId = Static<typeof NativeAgentProviderIdSchema>;
+export type NativeAgentProviderOperation = Static<typeof NativeAgentProviderOperationSchema>;
+export type NativeAgentProviderFailureReason = Static<typeof NativeAgentProviderFailureReasonSchema>;
+export type NativeAgentProviderFailure = Static<typeof NativeAgentProviderFailureSchema>;
+
+/** Recognizes the complete resource-owned failure contract at host boundaries. */
+export function isNativeAgentProviderFailure(input: unknown): input is NativeAgentProviderFailure {
+  return Value.Check(NativeAgentProviderFailureSchema, input);
 }
 
 export type NativeProviderJsonPrimitive = boolean | number | string | null;

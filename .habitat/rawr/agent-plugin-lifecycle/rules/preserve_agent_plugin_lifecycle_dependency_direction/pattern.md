@@ -12,10 +12,11 @@ production value consumer for the service client: its exact
 Other CLI modules may retain type-only client dependencies, but cannot
 construct, load, or relay another service client. The CLI selects concrete
 resource providers; service middleware derives current-main and provider-domain
-repositories and adapters under `provided`. The provider transition binding admits
-value imports only from the native-resource binding and provider-resource
-composition root; the CLI-local provider index can flow only into that
-composition root. Pure release algebra reaches command parsing through
+repositories and adapters under `provided`. Qualified provider bindings enter
+the CLI only at the provider composition root; native resource contracts flow
+directly from their resource owner into the CLI-native binding. The CLI-local
+provider index can flow only into that composition root. Pure release algebra
+reaches command parsing through
 `release`; all other CLI consumers remain type-only. The CLI selects exactly one
 raw artifact repository provider and root at the lifecycle client composition
 root. Service middleware derives the lifecycle-owned artifact and evidence
@@ -131,17 +132,19 @@ or {
     $filename <: r".*services/agent-plugin-lifecycle/src/service/modules/[^/]+/ports\.ts$",
     $source <: r"^[\"']?\./internal(?:/[^\"']+)?[\"']?$"
   },
+  import_statement(source=$source) where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$",
+    not { $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/providers/node-runtime\.ts$" }
+  },
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
     not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/exports)[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$" },
     not {
       $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/release[\"']?$",
       $filename <: r".*apps/cli/src/lib/agent-plugins/commands/input\.ts$"
-    },
-    not {
-      $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$",
-      $filename <: r".*apps/cli/src/lib/agent-plugins/(?:bindings/providers/native|service-runtime/providers/node-runtime)\.ts$"
     },
     not { $import <: includes "import type" },
     not { $import <: r"(?s)^import\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
@@ -175,8 +178,17 @@ or {
   },
   `export { $exports } from $source` as $export where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$"
+  },
+  `export * from $source` where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$"
+  },
+  `export { $exports } from $source` as $export where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
     not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/exports)[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$" },
     not { $export <: includes "export type" },
     not { $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
   },
@@ -184,29 +196,25 @@ or {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
     not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/exports)[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$" },
     not { $export <: includes "export type *" }
   },
-  import_statement(source=$source) as $import where {
+  import_statement(source=$source) where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?(?:\./|\.\./)+(?:[^\"']+/)*bindings/providers(?:/(?:index|native))?(?:\.[jt]s)?[\"']?$",
-    not { $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/providers/node-runtime\.ts$" },
-    not { $import <: includes "import type" },
-    not { $import <: r"(?s)^import\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
+    not { $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/providers/node-runtime\.ts$" }
   },
   `import($source)` where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?(?:\./|\.\./)+(?:[^\"']+/)*bindings/providers(?:/(?:index|native))?(?:\.[jt]s)?[\"']?$"
   },
-  `export { $exports } from $source` as $export where {
+  `export { $exports } from $source` where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
-    $source <: r"^[\"']?(?:\./|\.\./)+(?:[^\"']+/)*bindings/providers(?:/(?:index|native))?(?:\.[jt]s)?[\"']?$",
-    not { $export <: includes "export type" },
-    not { $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
+    $source <: r"^[\"']?(?:\./|\.\./)+(?:[^\"']+/)*bindings/providers(?:/(?:index|native))?(?:\.[jt]s)?[\"']?$"
   },
-  `export * from $source` as $export where {
+  `export * from $source` where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
-    $source <: r"^[\"']?(?:\./|\.\./)+(?:[^\"']+/)*bindings/providers(?:/(?:index|native))?(?:\.[jt]s)?[\"']?$",
-    not { $export <: includes "export type *" }
+    $source <: r"^[\"']?(?:\./|\.\./)+(?:[^\"']+/)*bindings/providers(?:/(?:index|native))?(?:\.[jt]s)?[\"']?$"
   },
   import_statement(source=$source) where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
@@ -417,6 +425,11 @@ import { NativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bind
 
 export const failure = NativeProviderResourceFailure;
 
+// @filename: apps/cli/src/lib/agent-plugins/bindings/providers/native.ts
+import type { CompleteTargetIdentityReader } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+
+export type WrongOwnerBridge = CompleteTargetIdentityReader;
+
 // @filename: apps/cli/src/lib/agent-plugins/provider-local-binding-bypass.ts
 import { createNodeNativeProviderResource } from "./bindings/providers";
 
@@ -597,9 +610,9 @@ export const project = (repository: ArtifactRepositoryAsyncPort, repositoryRoot:
 });
 
 // @filename: apps/cli/src/lib/agent-plugins/protocol.ts
-import type { NativeProviderResourcePort } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 
-export type NativeProvider = NativeProviderResourcePort;
+export type NativeProvider = Deps["providerNativeResource"];
 
 // @filename: apps/cli/src/lib/agent-plugins/release-protocol.ts
 export type {
@@ -665,9 +678,9 @@ export const parseDigest = parseArtifactDigest;
 export type ParsedArtifact = ArtifactRef;
 
 // @filename: apps/cli/src/lib/agent-plugins/bindings/providers/native.ts
-import { NativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 
-export const failure = NativeProviderResourceFailure;
+export type NativeProvider = Deps["providerNativeResource"];
 
 // @filename: apps/cli/src/lib/agent-plugins/service-runtime/providers/node-runtime.ts
 import { createNodeNativeProviderResource } from "../../bindings/providers";

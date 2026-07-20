@@ -374,6 +374,7 @@
         "@effect/platform-node": "0.107.0",
         "@rawr/resource-agent-plugin-artifact-repository": "workspace:*",
         "effect": "3.21.3",
+        "typebox": "1.3.6",
       },
       "devDependencies": {
         "typescript": "^5.9.3",
@@ -391,6 +392,7 @@
         "@rawr/resource-agent-plugin-package-output": "workspace:*",
         "@rawr/resource-agent-provider-records": "workspace:*",
         "@rawr/resource-content-workspace": "workspace:*",
+        "@rawr/resource-native-agent-provider": "workspace:*",
         "typebox": "1.3.6",
       },
       "devDependencies": {

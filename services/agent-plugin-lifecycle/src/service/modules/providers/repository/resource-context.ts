@@ -9,7 +9,7 @@ import {
   issue,
   success,
 } from "../model/errors/deployment-result";
-import { NativeProviderResourceFailure } from "../model/errors/native-resource";
+import { NativeProviderPreMutationRefusal } from "../model/errors/native-resource";
 import type { CanonicalNativeMutationAction } from "../model/dto/canonical-convergence";
 import type { ProviderId, ProviderTarget } from "../model/dto/provider-target";
 import type { AgentProviderProjection } from "../model/policy/projection";
@@ -196,11 +196,9 @@ function mutationAuthority(action: NativeProviderMutationAction): ContentAuthori
     const authority = action.registration?.marketplaceIdentity
       ?? (action.expected.kind === "present" ? action.expected.state.marketplaceIdentity : undefined);
     if (authority === undefined) {
-      throw new NativeProviderResourceFailure({
-        kind: "pre-mutation-refusal",
-        detail: "Marketplace mutation has no admitted content authority",
-        path: undefined,
-      });
+      throw new NativeProviderPreMutationRefusal(
+        "Marketplace mutation has no admitted content authority",
+      );
     }
     return authority;
   }
@@ -219,9 +217,7 @@ function requireExecutable(
 ): string {
   const executablePath = executables[provider];
   if (executablePath !== undefined) return executablePath;
-  throw new NativeProviderResourceFailure({
-    kind: "pre-mutation-refusal",
-    detail: `${provider} requires an explicit provider executable binding`,
-    path: undefined,
-  });
+  throw new NativeProviderPreMutationRefusal(
+    `${provider} requires an explicit provider executable binding`,
+  );
 }

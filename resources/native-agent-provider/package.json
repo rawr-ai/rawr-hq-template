@@ -29,7 +29,8 @@
     "@effect/platform": "0.96.1",
     "@effect/platform-node": "0.107.0",
     "@rawr/resource-agent-plugin-artifact-repository": "workspace:*",
-    "effect": "3.21.3"
+    "effect": "3.21.3",
+    "typebox": "1.3.6"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
