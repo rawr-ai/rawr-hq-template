@@ -470,6 +470,15 @@ temporary complete-identity read, so no cross-module task is marked complete.
 | Reviews | Behavior/testing restored public procedure and real resource-reopen proof. Architecture narrowed the export bridge and provider binding. TypeScript/oRPC/Effect caught and closed per-invocation loss of retained transaction authority. Structural/Habitat closed sealed-module and local-binding alias bypasses and repaired the positive fixture. Final rereviews report no remaining P1/P2/P3. |
 | Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]] remains blocked and untouched. This node adds no destination publication capability, app/runtime composition, provider installer, personal-repository relationship, protected-lane release, or live provider mutation. |
 
+## CLI Harness Owner Correction
+
+| Boundary | Result |
+| --- | --- |
+| Truthful owner | The parent-source `devops-command-surface` test is deleted. Its fixture rooted command discovery in `apps/cli` while asserting commands owned and emitted by the separately built `@rawr/plugin-devops` controller member. |
+| Preserved behavior | A source-backed owner-local Oclif fixture retains projection metadata, topic discovery, strict JSON, default-plan/no-mutation behavior, and nonzero failure-stop sequencing. |
+| Cleanup boundary | Recursive test cleanup admits only an immediate child of the canonical system temp root with the fixture-owned prefix. |
+| Proof | `@rawr/plugin-devops` passes its owner-local tests with ignored build output absent, then passes lint, typecheck, build, and sync. Its declared lint and typecheck targets join the required pre-push/CI ratchet through Nx discovery. |
+
 ## Standing Reviews
 
 | Role | Pivot focus |
