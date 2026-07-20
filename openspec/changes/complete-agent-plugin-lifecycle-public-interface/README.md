@@ -82,7 +82,7 @@ global undo redesign, and Inngest candidate bytes.
 | T6C2c canonical native path | complete, reviewed | sole governance selection, selected-owner native truth, exact-selector cleanup, verification barriers, and no canonical hidden state |
 | T6C3 export independence | provider refusal reviewed | fixed-slot refusal at acquire/native edge; export admission and aggregate retirement remain |
 | T6D truthful test owners | retained, record realignment pending | owner-local DevOps fixture and ordinary serialized CLI target |
-| T6E deterministic manifest | implemented, restack/gate pending | focused canonicalization plus full build-twice equality |
+| T6E deterministic manifest | complete, reviewed | native JSON projection, code-unit canonicalization, and full build-twice equality |
 | T6F landing/settlement | closed | independently landed repos, disposable/live native convergence, read-only repeat |
 
 ## Retired Unlanded Nodes
@@ -109,10 +109,28 @@ follow-up work.
   provider refusal remains active.
 - Remove the aggregate/scan relationship only after both owner-local T6C3
   boundaries are active.
-- Realign/rerun the retained T6D proof and T6E controller determinism proof.
 - Land/install Template before the first personal semantic checkpoint.
 - Keep Inngest `HF01_PENDING`; exact landed release input excludes its external
   candidate root without blocking unrelated landed content.
+
+## T6E Deterministic Official Manifest Proof
+
+The separately committed controller fix closes
+[[tasks#7. T6E: Deterministic Official Manifest]] without adding a provider,
+personal-repository, app/runtime, transfer, launcher, or selector authority.
+Generated Oclif manifests first pass through native JSON projection, then emit
+object keys in code-unit order while retaining semantic array order and leaving
+the discovered input untouched.
+
+| Boundary | Result |
+| --- | --- |
+| Focused behavior | The production-builder file passed 34/34 tests, including insertion-order independence, native `toJSON` projection, index-like key ordering, array preservation, and input immutability. |
+| Controller gate | The full `@rawr/controller-build` suite passed 82/82 tests; its uncached lint and typecheck targets passed. |
+| Clean build equality | Two fresh controller data roots built restacked source revision `75d737d03c10fb6c203d97ebd026cbcd26f02b34` to controller digest `87765c81d8c8bbe8738282ec2347359049b4b3d94c2904713cd683fd686e81a8`. |
+| Normalized release tree | Both digest-qualified releases contained 21,117 entries with byte-, type-, mode-, and link-target-identical normalized manifests; manifest SHA-256 `3e7949acda7661ae825c1f0c8de674a92bd92818cac4b8ef7123a4e0e135b1dd`. |
+| State boundary | The proof executed no provider and touched no live or global controller state. Its exact guarded `/private/tmp` roots were removed, and the protected user note was restored byte-identically at SHA-256 `d06966389dac095f8a7f620aa4b27a50935a75762300000f987a848e45c2aadb`. |
+| Reviews | Testing/state-machine, architecture/authority, TypeScript/refactor, and structural/Habitat reviewers approved the final two-file implementation with no remaining finding. |
+| Record gate | Strict OpenSpec validation and `git diff --check` passed. |
 
 ## T6B Proof
 

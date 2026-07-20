@@ -214,10 +214,10 @@
 - [x] 7.1 Canonicalize generated Oclif object keys by code-unit order while
   preserving array order and input immutability.
 - [x] 7.2 Prove insertion-order independence in the focused controller test.
-- [ ] 7.3 Build the same clean Template commit into two fresh controller roots;
+- [x] 7.3 Build the same clean Template commit into two fresh controller roots;
   require equal controller digests and byte/mode-identical normalized release
   trees without provider execution.
-- [ ] 7.4 Run controller lint/typecheck/tests and all four standing reviews;
+- [x] 7.4 Run controller lint/typecheck/tests and all four standing reviews;
   commit the deterministic packaging fix separately.
 
 ## 8. T6F: Landing And Settlement
