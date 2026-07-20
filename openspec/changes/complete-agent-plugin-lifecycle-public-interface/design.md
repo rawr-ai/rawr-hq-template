@@ -52,15 +52,15 @@ domain behavior. Contract trees compose upward into the root implementer;
 implementation and context flow downward into module routers. No service-root
 binding facade imports module implementation upward.
 
-The packaged service exposes its client factory/type and only a specifically
-required contract surface. It does not export dependency bags, module ports,
-materializers, resource adapters, routers, or broad DTO barrels. Consumers
-infer the client-construction input from the client factory rather than
-importing `bindings/*` or `ports/*`. Controller-owned undo remains the generic
-capsule/state coordinator, while export-owned classification and replay run
-through export procedures over the service's resource context. Native
-Codex/Claude mutation remains in external providers and is not reimplemented
-inside service middleware.
+At task 2A closure, the packaged service exposes its client factory/type and
+only a specifically required contract surface. It does not export dependency
+bags, module ports, materializers, resource adapters, routers, or broad DTO
+barrels. Consumers infer the client-construction input from the client factory
+rather than importing `bindings/*` or `ports/*`. Controller-owned undo remains
+the generic capsule/state coordinator, while export-owned classification and
+replay will run through export procedures over the service's resource context.
+Native Codex/Claude mutation remains in external providers and is not
+reimplemented inside service middleware.
 
 This follows the service boundary described by
 [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the runtime realization spec]]
@@ -189,8 +189,10 @@ test mode.
 
 ### Provider homes and export destinations have one visible owner
 
-The hidden complete native-home registry and its filesystem scan are removed.
-Export owns one private exact marker at `.rawr-agent-plugin-owner.json` with
+Task 5.3 removes the hidden complete native-home registry and its filesystem
+scan after both owner-local boundaries are active; the current candidate still
+retains that exact transitional bridge. Task 5.2 gives export one private exact
+marker at `.rawr-agent-plugin-owner.json` with
 canonical bytes `{"owner":"export","schemaVersion":1}\n`. Its resource edge
 admits only an absent explicit destination or an existing destination carrying
 those exact bytes. The claim is a monotonic authority transition:
@@ -209,9 +211,10 @@ payload, ledger, managed GC, and their inverse actions. It never owns a root
 inverse action, publication receipt, recovery state, marker-repair protocol,
 transaction history, root digest, registry, or provider field.
 
-The substrate for that transition is an explicit authority gate, not an
-implementation detail C6 may weaken. Two mechanisms remain admissible pending
-selection: one narrowly scoped shared/native directory no-replace capability
+The substrate for that transition is an explicit user product-authority gate,
+not an implementation detail C6 may weaken. Two mechanisms remain admissible
+pending selection by the user, or an explicitly user-delegated product
+authority: one narrowly scoped shared/native directory no-replace capability
 with no lifecycle semantics, or a separate point-addressed export-authorized
 protected preclaim operation. The native capability is the minimal
 frame-compatible recommendation and must not grow into a generalized publication
@@ -222,8 +225,8 @@ persistent fence carrier and owner, provider observation, and exit/re-entry law,
 and proving that the fence is neither a second destination truth nor a hidden
 multi-home coordinator. Only then could ordinary export refuse `Absent` and
 accept an exact preclaimed root. Duplicating the native syscall subsystem inside
-the export resource is not admissible. Task 5.2 remains blocked until this choice
-is authorized; unprotected `mkdir` followed by a marker write is not an
+the export resource is not admissible. Task 5.2 remains blocked until that
+product authority authorizes the choice; unprotected `mkdir` followed by a marker write is not an
 implementation of the required transition.
 
 The existing `RejectedBeforeMutation` result remains scoped to managed payload,
@@ -277,10 +280,10 @@ required local/remote ratchet remain. C6 does not add semantic GritQL rules for
 runtime behavior. Test-only scheduling belongs to the owning Vitest project;
 DevOps command discovery belongs to `@rawr/plugin-devops`. T6C1/C2 update the
 closed positive command/projection inventory to remove only `attest-promotion`
-and receipt-owned `retire`; qualified `undo` remains required. T6C3 keeps closed
-owner-local port, router, binding, and resource inventories whose admitted
-topology has no aggregate native-home or target-scan relationship; it does not
-encode their absence as a blacklist.
+and receipt-owned `retire`; qualified `undo` remains required. At task 5.4
+closure, T6C3 keeps closed owner-local port, router, binding, and resource
+inventories whose admitted topology has no aggregate native-home or target-scan
+relationship; it does not encode their absence as a blacklist.
 
 ## Reachable Lifecycle
 

@@ -2,18 +2,23 @@
 
 ## Status
 
-`C5_CONTEXT_DIRECTION_CORRECTION_ACTIVE`
+`T6F_TEMPLATE_SUBMISSION_READINESS`
 
 The user accepted the proportionality correction in [[authority-amendment]].
-The unlanded transfer, public-evidence, second-launcher, binding, and installed
-A/B branches are retired from the Graphite stack rather than compensated at its
-tip. T6B is narrowed to staged/clean repository checks; the protected-lane mode
-is removed in favor of closed release-input exclusion. The two truthful
-test-owner repairs are retained. T6C1 uses two semantic checkpoints under one
-authority: the pure current-main v2 codec/public interface, then observed-Git
-selection plus v1 ceremony cutover. T6C2 remains the canonical-only native
-convergence node. Qualified undo remains scoped to managed-export capsules;
-every provider mode is capsule-free.
+Each retained Template slice through
+`8b70a87fada52018f00c5fbaa267f24933d0c84e` is locally reviewed and green at
+its recorded boundary. The first submitted revision exposed four independent-
+node ordering failures in the remote ratchet; those lower-node ownership
+repairs are now restacked and resubmitted. All 43 retained PR nodes passed the
+required remote ratchet independently, and the final Graphite merge dry-run
+accepted the complete stack. The combined candidate is not yet landed,
+installed, or settled; its aggregate proof is recorded below. The
+unlanded transfer, public-evidence, second-launcher, caller-binding runtime, and
+installed A/B branches are absent from the Graphite stack. T6B remains the thin
+staged/clean repository interface, T6C1 owns one current-main selector, T6C2
+delegates to native providers, and qualified undo remains export-only. The
+next gate is repaired-stack resubmission followed by
+[[tasks#8. T6F: Landing And Settlement|task 8.1]].
 
 ## Repository Record
 
@@ -26,33 +31,34 @@ every provider mode is capsule-free.
 | Repository-separation amendment | personal commit `43a49d48ab6c6a29b4877f20576b42b533fc82ba`; blob `10bb040317d62834806b86b36a3a14f13c539fbc` |
 | Proportionality amendment | [[authority-amendment]] |
 | Opening controller | `0823cfe6...`; diagnostic only, never an active input |
-| T6A branch | `codex/c6-agent-lifecycle-public-interface` |
-| T6B Git observation | `codex/c6-staged-git-observation` / `478cc8e4` |
-| T6B service validation | `codex/c6-repository-check-service` / `dd7f0fd5` |
-| T6B CLI projection | `codex/c6-repository-check-cli` / `825a304e` |
-| T6C1a codec interface | `codex/c6-current-main-v2-codec` / this record node |
-| T6C2a provider capsule retirement | `codex/c6-provider-capsule-retirement` / `a7c9f120` |
-| T6C2b managed-retire deletion | `codex/c6-managed-retire-deletion` / this record node |
-| T6C1b private selector engine | `codex/c6-current-main-v2-selection` / this record node |
-| T6C2c private native policy | `codex/c6-canonical-convergence-policy` / this record node |
-| T6C2c private desired state | `codex/c6-canonical-desired-state` / this record node |
-| T6C2c private provenance observation | `codex/c6-native-provenance-observation` / this record node |
-| T6C2c private convergence executor | `codex/c6-canonical-convergence-executor` / this record node |
-| Controller acceptance-harness retirement | `codex/c6-retire-controller-acceptance-harness` / this record node |
-| T6C1b/T6C2 public cutover | `codex/c6-atomic-canonical-cutover` / this record node |
-| T6C3 minimal boundary frame | `codex/c6-minimal-export-provider-boundary` / this record node |
-| T6C3 provider slot refusal | `codex/c6-provider-root-slot-refusal` / this record node |
-| Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` |
-| Retained CLI target node | `codex/c6-serialize-cli-test-target` |
-| Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` |
-| C5 provider repository ownership | `codex/c6-route-provider-service-context` / this record node |
-| C5 artifact-tree location port | `codex/c6-expose-artifact-tree-location` / this record node |
-| C5 neutral current-main boundary | `codex/c6-neutral-current-main-boundary` / this record node |
-| C5 native provider resource location | `codex/c6-bind-native-provider-resource-location` / this record node |
-| C5 provider raw context | `codex/c6-route-provider-runtime-context` / this record node |
-| C5 current-main service composition | `codex/c6-own-current-main-context` / `a40af23f8124900f68a519cf737c9d88516374f8` |
-| C5 artifact/evidence service composition | `codex/c6-own-artifact-resource-context` / `07825bd307b2aefe4fa45a2c0154e80c90bbfab6` |
-| C5 export artifact service composition | `codex/c6-own-export-artifact-context` / `e3aecf0258fb80ef244fa16e035d00946f129a03` |
+| T6A branch | `codex/c6-agent-lifecycle-public-interface` / `3f3a3be2dda70dae2682f88feeb23e5e9d349575` |
+| T6B Git observation | `codex/c6-staged-git-observation` / `67a0d25437d087e78dd15f67f65a1ae0a2ecb42f` |
+| T6B service validation | `codex/c6-repository-check-service` / `fb123645144a04be48acaa21d282dde4a3420eb7` |
+| T6B CLI projection | `codex/c6-repository-check-cli` / `c7f2ff81802512eec89e3dc33a05d8f532ce27b9` |
+| T6C1a codec interface | `codex/c6-current-main-v2-codec` / `658763eec2079062c12d124eb025fed17b622c2b` |
+| T6C2a provider capsule retirement | `codex/c6-provider-capsule-retirement` / `876b9187e2f0ae479e48f4f97d16ad65b5909cfb` |
+| T6C2b managed-retire deletion | `codex/c6-managed-retire-deletion` / `c3d2c94b0994dff1b71b4ef6f7c7a2cb458ffc6f` |
+| T6C1b private selector engine | `codex/c6-current-main-v2-selection` / `85a21fbe30df55043875b470a1bb1c14d848dc1a` |
+| T6C2c private native policy | `codex/c6-canonical-convergence-policy` / `6b29837b0f0c1ac2e1b781eb6942288b230748f8` |
+| T6C2c private desired state | `codex/c6-canonical-desired-state` / `9a890c6e9767289b3c507817e960023e952cecb1` |
+| T6C2c private provenance observation | `codex/c6-native-provenance-observation` / `dd07596b7456db7fa4d91612c47c9b44fe44e871` |
+| T6C2c private convergence executor | `codex/c6-canonical-convergence-executor` / `4f74af14c9963542cd8582c9a0b44f425fe3ee59` |
+| Controller acceptance-harness retirement | `codex/c6-retire-controller-acceptance-harness` / `54359c387dcf78316477b748aef02ed7f42f7cd4` |
+| T6C1b/T6C2 public cutover | `codex/c6-atomic-canonical-cutover` / `a5d34f12d3eb5e4efd1afdef9ca81f4816d0a925` |
+| T6C3 minimal boundary frame | `codex/c6-minimal-export-provider-boundary` / `d2e3c144d7ffeede587d4d8718a8e8c864b48186` |
+| T6C3 provider slot refusal | `codex/c6-provider-root-slot-refusal` / `379ba2ffd4cb77420849b81cda8a5d82f83a0942` |
+| Retained DevOps test node | `codex/c6-retire-stale-devops-command-test` / `c9d850dcbe38552b935aa27b25322c8d07f72b60` |
+| Retained CLI target node | `codex/c6-serialize-cli-test-target` / `e40068cdf4fa4a978d896a1a887bea6e0fbb41dc` |
+| Deterministic manifest node | `codex/c6-deterministic-oclif-manifest` / `75d737d03c10fb6c203d97ebd026cbcd26f02b34` |
+| C5 provider repository ownership | `codex/c6-route-provider-service-context` / `0e5b9d107a684a0ef32137d34bf4e750b5023f81` |
+| C5 artifact-tree location port | `codex/c6-expose-artifact-tree-location` / `53f8e9ab9cf79bebfd42bde0443fa5f4497c9733` |
+| C5 neutral current-main boundary | `codex/c6-neutral-current-main-boundary` / `0be6d84986db106b571e91b8388372b22282eac7` |
+| C5 native provider resource location | `codex/c6-bind-native-provider-resource-location` / `8e970d010fed53c49a1c54f2ee2d0a0e077e2f76` |
+| C5 provider raw context | `codex/c6-route-provider-runtime-context` / `844eec51dd8bb94b176917fa280da9d00d45ca66` |
+| C5 current-main service composition | `codex/c6-own-current-main-context` / `d5e85692d864a34ecfa260b16d60946212ba84eb` |
+| C5 artifact/evidence service composition | `codex/c6-own-artifact-resource-context` / `0dbd68a44ce02a059991f71ae55edaba80847c68` |
+| C5 export artifact service composition | `codex/c6-own-export-artifact-context` / `b902a668386879bc6ed8c4d95395ffd81074a1cb` |
+| Lifecycle test owner | `codex/c6-serialize-lifecycle-test-target` / `8b70a87fada52018f00c5fbaa267f24933d0c84e` |
 
 Personal records remain unlanded until the installed Template interface can
 enforce their first semantic checkpoint. No hook bypass, legacy mixed sync, or
@@ -65,17 +71,21 @@ native provider adapters. Personal owns curated content, provenance,
 policy/evaluation inputs, and its reviewed channel record. The repositories
 share no implementation or history.
 
-C6 writes only the lifecycle repository/channel interface, its CLI projection,
-the deterministic controller manifest fix, owner-local test configuration,
-this OpenSpec, and the exact positive Habitat inventory changes required by
-retired commands/projections. It excludes app/web
-composition, provider installer reimplementation, controller-store transport,
-global undo redesign, and Inngest candidate bytes.
+The retained candidate changes Template-owned lifecycle controller, service,
+provider/resource, test, record, and structural surfaces required for thin
+convergence: Git-backed repository checks; one current-main selector with the
+hosted ceremony retired; native provider convergence and collision refusal;
+artifact, package, export, and C5 context ownership; the deterministic
+controller manifest; owner-local test configuration; and positive Habitat
+inventories. It excludes app/web composition, provider installer
+reimplementation, controller-store transport, global undo redesign, and
+Inngest candidate bytes.
 
 ## Semantic Stack
 
 | Slice | State | Proof gate |
 | --- | --- | --- |
+| C5 context direction | partial; 2A.1-2A.4 open | five module paths corrected; export facade/port/root import plus provider binding and public router remain |
 | T6A thin record | complete | strict OpenSpec plus four standing reviews |
 | T6B repository checks | complete | staged/clean exactness, index race, declared-input boundary, one procedure |
 | T6C1a v2 codec/public interface | complete, reviewed | closed TypeBox model, canonical `cm2_` codec, one cold-port procedure and CLI dispatch |
@@ -83,10 +93,10 @@ global undo redesign, and Inngest candidate bytes.
 | T6C2a provider capsule retirement | complete, reviewed | capsule-cold provider modes, forward-only retry, export-only legacy retirement |
 | T6C2b managed-retire deletion | complete, reviewed | receipt-owned provider retire unreachable without alias; omission cleanup remains sync-owned |
 | T6C2c canonical native path | complete, reviewed | sole governance selection, selected-owner native truth, exact-selector cleanup, verification barriers, and no canonical hidden state |
-| T6C3 export independence | provider refusal reviewed | fixed-slot refusal at acquire/native edge; export admission and aggregate retirement remain |
-| T6D truthful test owners | retained, record realignment pending | owner-local DevOps fixture and ordinary serialized CLI target |
+| T6C3 export independence | 5.1 complete/reviewed; 5.2-5.4 open | fixed-slot refusal at acquire/native edge; export admission and aggregate retirement remain |
+| T6D truthful test owners | complete, reviewed | owner-local DevOps fixture and ordinary serialized lifecycle/CLI targets |
 | T6E deterministic manifest | complete, reviewed | native JSON projection, code-unit canonicalization, and full build-twice equality |
-| T6F landing/settlement | closed | independently landed repos, disposable/live native convergence, read-only repeat |
+| T6F landing/settlement | open; 8.1 next | independently landed repos, disposable/live native convergence, read-only repeat |
 
 ## Retired Unlanded Nodes
 
@@ -101,20 +111,48 @@ follow-up work.
 
 ## Current Gate
 
-- Continue the independent C5 service-context correction: initial dependencies
-  enter at the service root, module middleware derives execution context,
-  routers own behavior, and the inverted public `bindings/*` / `ports/*`
-  surfaces disappear without an alias. This is a placement correction, not a
-  new lifecycle design or app/runtime expansion.
-- T6C3 task 5.2 is blocked on the explicit export-root publication capability
-  choice recorded below. Do not implement export admission or weaken the
-  no-unmarked-window invariant while that choice is unresolved. The landed
-  provider refusal remains active.
-- Remove the aggregate/scan relationship only after both owner-local T6C3
+- Land the all-green Graphite stack and install the immutable controller from
+  canonical Template `main` before the first personal semantic checkpoint.
+- [[tasks#2A. C5 Context-Direction Correction|Tasks 2A.1-2A.4]] remain open.
+  Their residual export facade/port/root-import, provider-binding, and public-
+  router debt authorizes no coordinator, compatibility path, second client, or
+  service redesign before landing.
+- [[tasks#5. T6C3: Export Destination Independence|Task 5.2]] remains blocked
+  on the explicit export-root publication capability choice recorded below.
+  Do not implement export admission or weaken the no-unmarked-window invariant.
+  Task 5.3 depends on 5.2, and 5.4 cannot close until both owner-local
   boundaries are active.
-- Land/install Template before the first personal semantic checkpoint.
+- Those open boundaries block T6C3 and initiative closure. They do not block
+  Template landing or the native-provider settlement in tasks 8.1-8.6.
 - Keep Inngest `HF01_PENDING`; exact landed release input excludes its external
   candidate root without blocking unrelated landed content.
+
+## Template Submission Readiness Proof
+
+The aggregate gate found one owner-local harness issue and no product-behavior
+failure. Two ordinary parallel lifecycle runs each refused a different real-Git
+fixture; both cases passed immediately in isolation, and one serialized full
+run passed. Commit `8b70a87fada52018f00c5fbaa267f24933d0c84e`
+makes the owning lifecycle Vitest project serialize files without a wrapper,
+retry, or product change.
+
+The first remote submission also exposed three checkpoint-ordering defects,
+not three product defects: the staged Git operation entered its exhaustive
+vendor label map one node late, the staged-source capability entered production
+and test context one node late, and the artifact-context Habitat test retained
+a write-capable accepted fixture after production narrowed to reader-only.
+Those exact dependencies now land with their owners at `67a0d254`,
+`fb123645`, and `0dbd68a4`; the later CLI and export nodes retain only their own
+activation and retirement changes.
+
+| Boundary | Result |
+| --- | --- |
+| Lifecycle behavior | The final restacked ordinary `@rawr/agent-plugin-lifecycle:test` Nx run passed 41 files / 361 tests in 46.22 seconds. |
+| CLI behavior | The final restacked ordinary `@rawr/cli:test` Nx target passed 46 files / 320 tests in 279.13 seconds. |
+| Required ratchet | Repository lint passed across 29 projects, typecheck passed across 42 projects, and the locked positive Habitat topology, dependency-direction, and qualified-command rules passed 3/3. Lifecycle lint and typecheck also passed uncached after the owner correction. |
+| Record and protected path | Strict OpenSpec and `git diff --check` passed before final review. The protected note remained unstaged and was restored byte-identically at SHA-256 `d06966389dac095f8a7f620aa4b27a50935a75762300000f987a848e45c2aadb`; no holding root remained. |
+| Remote submission | All 43 retained PR nodes passed `Required lint, typecheck, and topology` independently after resubmission. `gt merge --no-interactive --dry-run` accepted the complete stack. |
+| Proof ceiling | No provider or personal repository was mutated. Landing, installation, personal checkpointing, native acceptance, and settlement remain T6F work. The remote ratchet is a completed submission gate, not native or product-settlement proof. |
 
 ## T6E Deterministic Official Manifest Proof
 
@@ -185,7 +223,7 @@ atomic authority checkpoint, so no Graphite node exposes two selectors.
 ## T6C2a Proof
 
 This earlier checkpoint implements
-[[tasks#4. T6C2 Thin Canonical Provider Path|tasks 4.6-4.7]] before the
+[[tasks#4. T6C2: Thin Canonical Provider Path|tasks 4.6-4.7]] before the
 separately landed managed-retire deletion. It removes provider rollback
 authority before the remaining command and selector cutovers.
 
@@ -199,7 +237,7 @@ authority before the remaining command and selector cutovers.
 
 ## T6C2b Proof
 
-This checkpoint completes [[tasks#4. T6C2 Thin Canonical Provider Path|task
+This checkpoint completes [[tasks#4. T6C2: Thin Canonical Provider Path|task
 4.5]] without reopening the retired provider capsule or adding another
 retirement authority.
 
@@ -215,7 +253,7 @@ retirement authority.
 ## T6C2c Private Desired-State And Convergence Proof
 
 This is a private implementation checkpoint inside
-[[tasks#4. T6C2 Thin Canonical Provider Path]]. It adds no contract member,
+[[tasks#4. T6C2: Thin Canonical Provider Path]]. It adds no contract member,
 router composition, client operation, CLI dispatch, binding, or package export.
 The provider verifier consumes governance's sole `CanonicalChannelSelection`
 through a type-only dependency; it defines no channel DTO, parser, or bridge.
@@ -297,15 +335,15 @@ explicit pre-existing home. That removes the reason for cross-owner discovery.
 | --- | --- |
 | Export ownership | One exports-owned exact two-field marker is a monotonic destination claim; payload/ledger undo preserves it. The existing destination ledger owns managed content; there is no root digest, registry, provider field, or second receipt. |
 | Provider ownership | Native live state at an explicit existing home; any occupied/unreadable export-marker slot is a collision, and the provider does not parse the export codec. |
-| Removed relationship | `KnownNativeHomesReader`, `completeNativeHomes`, target-identity scans, pathless aggregation, and app-runtime plumbing that existed only to bridge those owners are deleted without replacement. |
+| Removed relationship | After both owner-local boundaries are active, task 5.3 deletes `KnownNativeHomesReader`, `completeNativeHomes`, target-identity scans, pathless aggregation, and app-runtime plumbing that existed only to bridge those owners. The current candidate retains the exact transitional bridge. |
 | Resource law | Export performs one point-addressed `Absent -> ExactExportOwned` claim before payload/capsule work. An absent destination becomes visible only as an exact already-marked root through one no-replace authority transition. The marker is absorbing and is never an inverse action. Provider resources never create homes and recheck marker-slot absence before native execution. |
-| Decision gate | Task 5.2 is blocked pending explicit authority selection between one narrowly scoped shared/native directory no-replace capability and a separate protected preclaim operation. The native capability is the minimal frame-compatible recommendation. A stateless preclaim is not admissible: interruption can leave an unmarked root indistinguishable from a provider home. Selecting preclaim therefore requires a separate authority amendment naming its persistent fence carrier, owner, provider observation, and exit/re-entry law, and proving that it does not create a second destination truth or hidden coordinator. `mkdir` followed by marker creation is not admissible under ordinary export. |
+| Decision gate | Task 5.2 is blocked pending selection by the user, or an explicitly user-delegated product authority, between one narrowly scoped shared/native directory no-replace capability and a separate protected preclaim operation. The native capability is the minimal frame-compatible recommendation. A stateless preclaim is not admissible: interruption can leave an unmarked root indistinguishable from a provider home. Selecting preclaim therefore requires a separate authority amendment naming its persistent fence carrier, owner, provider observation, and exit/re-entry law, and proving that it does not create a second destination truth or hidden coordinator. `mkdir` followed by marker creation is not admissible under ordinary export. |
 | Proof boundary | Bounded absent/exact/wrong marker cases, competing-root preservation, marker persistence through payload undo, provider missing/marked/unmarked and recheck-transition cases, export-local destination overlap, no cross-owner reads, and read-only repeats. A selected native capability adds substrate conformance plus a bounded provider race trace; it does not claim scheduler-universal proof beyond that substrate. A preclaim proof boundary cannot be named until its fence is authorized. Alias/tamper matrices and adversarial recovery remain outside C6. |
 
 ## T6C3 Provider Slot Refusal Proof
 
 This first implementation checkpoint activates only the provider-local half of
-[[tasks#5. T6C3 Export Destination Independence]]. The landed aggregate remains
+[[tasks#5. T6C3: Export Destination Independence]]. The landed aggregate remains
 in place until export admission is active, so this node cannot expose an
 unguarded intermediate topology.
 
@@ -559,7 +597,7 @@ and the proportional boundary in [[authority-amendment#Corrected Frame]].
 | Boundary | Result |
 | --- | --- |
 | Service authority | The CLI selects one raw artifact repository and root at the sole lifecycle-client composition root. Root oRPC middleware derives one `artifactStore`; export `module.ts` selects a fresh frozen `{read}` view and passes only that view plus named export host dependencies to its router handler. No export provider middleware, mutation-capable store, caller artifact reader, or second semantic vocabulary reaches the handler. |
-| Retired surface | `./bindings/releases`, its implementation files, and the CLI `bindings/output` projection are absent without an alias, dynamic route, or re-export. The full export runtime is handler-private; public export ports expose only the still-transitional host contract. CLI host construction selects named fields and discards a structurally assignable legacy `artifactReader` at runtime. |
+| Retired surface | `./bindings/releases`, its implementation files, and the CLI `bindings/output` projection are absent without an alias, dynamic route, or re-export. The full export runtime is handler-private. The public `./ports/exports` and `./bindings/exports` surfaces still expose broad export DTO, policy, resource, undo, and behavior-factory contracts as explicit 2A debt. CLI host construction selects named fields and discards a structurally assignable legacy `artifactReader` at runtime. |
 | Behavior proof | The complete lifecycle suite passed 41 files / 361 tests and the complete CLI suite passed 46 files / 320 tests. The final focused export suite passed 2 files / 17 tests, and the affected CLI context/binding slice passed 2 files / 5 tests. Missing, malformed, and throwing artifact reads refuse before destination capture and before undo preflight or admission. A settled repeat re-reads live artifacts; after immutable-member corruption it refuses with destination bytes, inode/time identities, and every undo authority counter unchanged. |
 | Structural proof | Positive Habitat topology removes the retired binding/output roots and keeps export model matter closed to its declared `dto`, `helpers`, and `policy` axes. The dependency rule rejects router access to root `deps` or `provided` context and rejects artifact-provider imports anywhere under `apps/cli/src` except the exact client composition root; its fixture passed all 68 expected diagnostics. Lifecycle and CLI lint, typecheck, build, sync, and guarded structural suites passed without cache. |
 | Reviews | Architecture/authority, TypeScript/refactor/oRPC, behavior/testing/state-machine, and structural code quality each closed their findings and report no remaining P0-P3. The loop removed a provider re-bag, closed runtime/type capability leakage, preserved method receiver binding, widened provider uniqueness to the whole CLI source root, and added live-result plus undo-preflight refusal proof. |
@@ -574,18 +612,18 @@ and the proportional boundary in [[authority-amendment#Corrected Frame]].
 | Cleanup boundary | Recursive test cleanup admits only an immediate child of the canonical system temp root with the fixture-owned prefix. |
 | Proof | `@rawr/plugin-devops` passes its owner-local tests with ignored build output absent, then passes lint, typecheck, build, and sync. Its declared lint and typecheck targets join the required pre-push/CI ratchet through Nx discovery. |
 
-## CLI Target Determinism
+## Test Target Determinism
 
 Together with the owner correction above, this checkpoint closes
-[[tasks#6. T6D: Truthful Test Owners|T6D task 6.3]] against the current thin
-stack. It changes test ownership and scheduling only.
+[[tasks#6. T6D: Truthful Test Owners|T6D tasks 6.3-6.4]] against the current
+thin stack. It changes test ownership and scheduling only.
 
 | Boundary | Result |
 | --- | --- |
-| Positive owners | The named `cli` Vitest project owns `fileParallelism: false`; the `@rawr/cli` test script owns only process bootstrap through `TMPDIR=/tmp`. No ad hoc scheduling flag, wrapper, retry, or fallback remains. |
+| Positive owners | The named `cli` and lifecycle Vitest projects own `fileParallelism: false`; the `@rawr/cli` test script owns only process bootstrap through `TMPDIR=/tmp`. No ad hoc scheduling flag, wrapper, retry, or fallback remains. |
 | Product boundary | The change affects only test scheduling and scratch-parent selection. It changes no lifecycle procedure, resource/provider, command, controller payload, repository identity, or app/runtime surface. |
-| Ordinary proof | The owner-local DevOps suite passed 1 file / 4 tests with ignored build output absent. The ordinary `@rawr/cli:test` Nx target passed 48 files / 322 tests with filesystem-backed files serialized by project configuration. |
-| Static proof | DevOps lint, typecheck, build, and sync passed. CLI lint, test-inclusive typecheck, and build passed. Strict OpenSpec validation, `git diff --check`, and the complete required repository ratchet passed with the protected untracked note held outside the closed structural scan and restored byte-identically. |
+| Ordinary proof | The owner-local DevOps suite passed 1 file / 4 tests with ignored build output absent. The ordinary `@rawr/cli:test` Nx target passed 48 files / 322 tests at its checkpoint. After two distinct real-Git fixtures flaked under lifecycle file concurrency and passed in isolation, two consecutive ordinary lifecycle Nx runs passed 41 files / 361 tests under owner serialization. |
+| Static proof | DevOps lint, typecheck, build, and sync passed. CLI lint, test-inclusive typecheck, and build passed. Lifecycle lint and typecheck passed after its owner correction. Strict OpenSpec validation, `git diff --check`, and the complete required repository ratchet passed with the protected untracked note held outside the closed structural scan and restored byte-identically. |
 | Reviews | Architecture/authority, behavior/testing, TypeScript/refactor, and structural/Habitat reviewers report no remaining P1/P2/P3. The loop added the missing DevOps lint target to the dynamic required ratchet and removed an unneeded `rootDirs` overlay before closure. |
 
 ## Standing Reviews
@@ -597,11 +635,11 @@ stack. It changes test ownership and scheduling only.
 | Behavior/testing | risk-proportional oracles, real native convergence, mutation-free repeat |
 | Structural quality | deleted concepts stay deleted; no transfer/issuer/launcher residue |
 
-T6A closed all four gates with no remaining P1/P2. Its reviewers accepted the
-planned decoder-only landed-v1 capsule retirement and asymmetric
-export/provider root admission needed to remove the old hidden relationship
-without adding a registry, replay route, or provider installer; those later
-checkpoints remain unimplemented until their own proof closes.
+T6A closed its record reviews with no remaining P1/P2. Later standing reviews
+independently closed provider capsule retirement, native convergence, task
+5.1's provider refusal, the deterministic manifest, and each retained C5
+context checkpoint. Those reviews do not pre-approve the open 2A work or tasks
+5.2-5.4. Landing and settlement still require their own proof.
 
 ## Closure Oracle
 

@@ -166,10 +166,11 @@ keep tasks 2A.1-2A.4 open.
   marker repair/replay, publication receipt, or lifecycle recovery store.
 
   **BLOCKED -- publication capability decision.** Implementation cannot proceed
-  until authority selects either (a) one narrowly scoped shared/native directory
-  no-replace capability with no lifecycle semantics or generalized publication
-  framework, or (b) a separate point-addressed export-authorized protected
-  preclaim operation. Option (a) is the minimal frame-compatible recommendation.
+  until the user, or an explicitly user-delegated product authority, selects
+  either (a) one narrowly scoped shared/native directory no-replace capability
+  with no lifecycle semantics or generalized publication framework, or (b) a
+  separate point-addressed export-authorized protected preclaim operation.
+  Option (a) is the minimal frame-compatible recommendation.
   A stateless option (b) is not admissible because an interrupted unmarked root
   is indistinguishable from a legitimate provider home. Selecting (b) requires
   a separate authority amendment naming its persistent fence carrier and owner,
@@ -213,6 +214,10 @@ keep tasks 2A.1-2A.4 open.
   and keep `TMPDIR` bootstrap in the owning Nx target.
 - [x] 6.3 Rewrite their OpenSpec proof hunks against the thin stack, rerun the
   owner-local tests and ordinary CLI target, and close standing reviews.
+- [x] 6.4 Make the lifecycle Vitest project own file serialization after two
+  distinct real-Git fixtures proved file-level concurrency was not a truthful
+  admission oracle; prove two consecutive ordinary Nx passes without a wrapper
+  or retry.
 
 ## 7. T6E: Deterministic Official Manifest
 
