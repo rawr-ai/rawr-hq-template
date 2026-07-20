@@ -22,7 +22,11 @@ import {
   RepositoryCheckResultSchema,
 } from "../../../src/service/modules/releases/schemas";
 import {
+  ReleaseInputBodySchema,
+  ReleaseInputEnvelopeSchema,
   ReleaseIssueSchema,
+  type ReleaseInputBody,
+  type ReleaseInputEnvelope,
   type ReleaseIssue,
 } from "../../../src/service/shared/release";
 import { contract } from "../../../src/service/modules/releases/contract";
@@ -55,6 +59,8 @@ describe("release procedure schema boundary", () => {
       Static<typeof ReleaseInputRecordResultSchema>
     >();
     expectTypeOf<ReleaseIssue>().toEqualTypeOf<Static<typeof ReleaseIssueSchema>>();
+    expectTypeOf<ReleaseInputBody>().toEqualTypeOf<Static<typeof ReleaseInputBodySchema>>();
+    expectTypeOf<ReleaseInputEnvelope>().toEqualTypeOf<Static<typeof ReleaseInputEnvelopeSchema>>();
     expectTypeOf<ContractInputs["releaseInputRecord"]>().toEqualTypeOf<
       Static<typeof ReleaseInputRecordInputSchema>
     >();

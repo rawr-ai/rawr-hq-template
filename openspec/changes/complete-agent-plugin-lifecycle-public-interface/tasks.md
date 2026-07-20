@@ -97,6 +97,12 @@ keep tasks 2A.1-2A.4 open.
 
 ## 3C. Personal Checkpoint Prerequisites
 
+- [x] 3C.0 Make the canonical release-input body and envelope closed TypeBox
+  schemas and derive their public wire types with `Static<>`. Retain the
+  existing semantic parser for canonical ordering, digest, ownership, and
+  aggregate limits. Keep the `encode-body` procedure input as an explicitly raw
+  candidate so malformed bodies continue to return releases-owned typed issues;
+  do not move that failure into oRPC adapter validation.
 - [x] 3C.1 Add one releases-owned `release-input-record` procedure beneath the
   existing qualified `check` command. Accept a bounded body or exact envelope
   from stdin, return the canonical envelope bytes, and acquire no Git,
@@ -104,6 +110,13 @@ keep tasks 2A.1-2A.4 open.
   body/envelope round trips, typed malformed-input refusal, one-procedure
   dispatch, and human output byte identity; land this as one semantic Graphite
   node. Record proof in [[README#T6F Personal Checkpoint Prerequisites]].
+- [ ] 3C.1a Add one releases-owned read-only staged-index refresh mode beneath
+  the existing qualified `check` command. Require an explicit closed member
+  list, derive payload manifests and `skills/<identity>/SKILL.md` claims from
+  those selected roots, preserve explicit repository-owned ancillary bindings
+  from a valid existing record, and emit canonical envelope bytes without
+  writing, staging, building, publishing, or provider mutation. An unchanged
+  repeat must emit identical bytes.
 - [x] 3C.2 Close the declared plugin-root axis during staged and clean repository
   checks: a canonical immediate plugin child absent from the release input must
   refuse before undeclared payload materialization. Preserve declared-member
@@ -115,6 +128,10 @@ keep tasks 2A.1-2A.4 open.
   codecs and stores remain unchanged. In the same provider-owned node, prove a
   stale selected member is natively refreshed while an omitted installed member
   is preserved by complete-test, then prove the repeat is read-only.
+- [ ] 3C.3a Move the fixed current-main record policy path out of the curated
+  plugin root to `.rawr/agent-plugin-lifecycle/channels/current-main.json`.
+  Accept no old-path alias, scan, fallback, or migration reader; old-path-only
+  state is inert and rejected as undeclared plugin content.
 - [ ] 3C.4 Publish an immutable installed-controller artifact from landed
   Template `main` for repository-independent consumption. Personal CI may
   verify and invoke that artifact by absolute path; it may not checkout,

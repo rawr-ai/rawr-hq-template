@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import type { Static } from "typebox";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import { Value } from "typebox/value";
 
 import {
   MAX_OWNERSHIP_CLAIMS,
@@ -9,6 +11,9 @@ import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
+  PayloadManifestEntrySchema,
+  ReleaseInputBodySchema,
+  ReleaseInputEnvelopeSchema,
   canonicalSerializeAgentPluginPayload,
   canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
@@ -19,6 +24,7 @@ import {
   decodeAgentPluginReleaseSet,
   payloadEntryBytes,
   verifyAgentPluginPayload,
+  type PayloadManifestEntry,
 } from "../../../src/service/shared/release";
 import { binding, member, must, productFixture, releaseInputBody, wire } from "./fixtures";
 
@@ -141,6 +147,44 @@ describe("canonical payload and release input", () => {
       const changed = must(createAgentPluginReleaseInput(candidate));
       expect(changed.releaseInputDigest, name).not.toBe(canonical.releaseInputDigest);
     }
+  });
+
+  it("owns the complete release-input record shape with closed TypeBox schemas", () => {
+    expectTypeOf<PayloadManifestEntry>().toEqualTypeOf<Static<typeof PayloadManifestEntrySchema>>();
+    const fixture = productFixture();
+    const body = releaseInputBody(fixture.alphaPayload, fixture.betaPayload);
+    const envelope = wire(canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput));
+
+    expect(Value.Check(ReleaseInputBodySchema, body)).toBe(true);
+    expect(Value.Check(ReleaseInputEnvelopeSchema, envelope)).toBe(true);
+
+    const invalidBodies: Array<readonly [string, Record<string, unknown>]> = [
+      ["body field", withMutation(body, (candidate) => { candidate.unexpected = true; })],
+      ["member field", withMutation(body, (candidate) => { candidate.members[0].unexpected = true; })],
+      ["payload field", withMutation(body, (candidate) => { candidate.members[0].payload.unexpected = true; })],
+      ["manifest field", withMutation(body, (candidate) => {
+        candidate.members[0].payload.manifest[0].unexpected = true;
+      })],
+      ["inventory field", withMutation(body, (candidate) => {
+        candidate.members[0].skillInventory[0].unexpected = true;
+      })],
+      ["claim field", withMutation(body, (candidate) => { candidate.ownershipClaims[0].unexpected = true; })],
+      ["provenance field", withMutation(body, (candidate) => { candidate.locks[0].unexpected = true; })],
+      ["member kind", withMutation(body, (candidate) => { candidate.members[0].kind = "toolkit"; })],
+      ["claim kind", withMutation(body, (candidate) => { candidate.ownershipClaims[0].kind = "plugin"; })],
+    ];
+    for (const [name, candidate] of invalidBodies) {
+      expect(Value.Check(ReleaseInputBodySchema, candidate), name).toBe(false);
+    }
+
+    expect(Value.Check(ReleaseInputEnvelopeSchema, {
+      ...envelope,
+      ownershipIndex: fixture.releaseInput.ownershipIndex,
+    })).toBe(false);
+    expect(Value.Check(ReleaseInputEnvelopeSchema, {
+      ...envelope,
+      completenessWitness: fixture.releaseInput.completenessWitness,
+    })).toBe(false);
   });
 
   it("closes every skill manifest over one inventory row and one same-member ownership claim", () => {
@@ -376,6 +420,12 @@ describe("canonical payload and release input", () => {
       locks: [],
       qualityPolicies: [],
     };
+    Object.defineProperty(tooManyMembers.members, MAX_RELEASE_MEMBERS, {
+      configurable: true,
+      get: () => {
+        throw new Error("bounded parsing must reject before traversing members");
+      },
+    });
     const memberResult = createAgentPluginReleaseInput(tooManyMembers);
     expect(memberResult.ok).toBe(false);
     if (!memberResult.ok) expect(memberResult.issues.map((entry) => entry.code)).toContain("COUNT_LIMIT_EXCEEDED");
@@ -536,3 +586,12 @@ describe("canonical payload and release input", () => {
     );
   });
 });
+
+function withMutation(
+  source: Record<string, unknown>,
+  mutate: (candidate: any) => void,
+): Record<string, unknown> {
+  const candidate = structuredClone(source);
+  mutate(candidate);
+  return candidate;
+}

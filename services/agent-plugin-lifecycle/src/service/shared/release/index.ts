@@ -81,6 +81,7 @@ export {
   canonicalSerializeAgentPluginPayload,
   canonicalSerializePayloadEntries,
   createAgentPluginPayload,
+  PayloadManifestEntrySchema,
   payloadEntryBytes,
   verifyAgentPluginPayload,
   type AgentPluginPayload,
@@ -100,6 +101,8 @@ export {
 
 export {
   AGENT_PLUGIN_BUILDER_PROTOCOL_VERSION,
+  ReleaseInputBodySchema,
+  ReleaseInputEnvelopeSchema,
   canonicalSerializeAgentPluginReleaseInput,
   canonicalSerializeReleaseInputBody,
   createAgentPluginReleaseInput,
@@ -111,6 +114,7 @@ export {
   type ExpectedReleaseMember,
   type ProvenanceBinding,
   type ReleaseInputBody,
+  type ReleaseInputEnvelope,
   type ReleaseMemberDeclaration,
   type SkillInventoryEntry,
 } from "./release-input";

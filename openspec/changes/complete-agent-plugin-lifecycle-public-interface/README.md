@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6F_CONTROLLER_PUBLICATION_REPAIR`
+`T6F_PERSONAL_CHECKPOINT_PREREQUISITES`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The retained 43-node predecessor stack landed through PR #389. The seven-node
@@ -13,21 +13,23 @@ is green in run `29735592428`.
 
 The first installed-controller publication attempt, run `29736289655`, failed
 closed on all four platform tuples before asset upload or release creation. The
-release manifest correctly retained exact payload modes, while `tar` portable
-mode rewrote those modes in the extracted archive. This active node removes
-that destructive normalization while continuing to omit host-local archive
-metadata, and adds an exact read-only-file mode round-trip regression. Task
-3C.4 remains open until the repaired landed-main workflow publishes and the
-exact immutable asset is verified and installed. Personal, channel, provider,
-and protected-lane state remain untouched by this repair.
+exact-mode repair landed through PR #397 on canonical Template `main` at
+`04e37f596d03a352a9b6cdb37ee7cdff54b67c28`, tree
+`c41e851580aa80e32fb20c1e3616423c1b6268ff`; its repository ratchet is green in
+run `29737814922`. Before publishing that immutable interface, this bounded
+prerequisite makes the canonical release-input body and envelope structurally
+TypeBox-owned while retaining releases-owned semantic diagnostics. The public
+`encode-body` candidate remains `Type.Unknown()` deliberately so malformed
+input reaches the procedure instead of becoming an adapter-owned failure.
+Personal, channel, provider, and protected-lane state remain untouched.
 
 ## Repository Record
 
 | Identity | Bound value |
 | --- | --- |
 | Repository | RAWR HQ-Template |
-| Worktree | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-c6-preserve-installed-asset-modes` |
-| Parent commit / tree | canonical Template `main` `2f9e303a13860e92d0011d228277c4c2149f6b78` / `70f9f5332252c67926d8fc5d48c0109eb32fff50` |
+| Worktree | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-c6-typebox-release-input` |
+| Parent commit / tree | canonical Template `main` `04e37f596d03a352a9b6cdb37ee7cdff54b67c28` / `c41e851580aa80e32fb20c1e3616423c1b6268ff` |
 | Packet provenance | personal commit `cc631f60c9254802be647d66662823ae47d5e7db`; project tree `97f0a634fcd8d1d24d4a95fcb57d277e9bf75ae3` |
 | Repository-separation amendment | personal commit `43a49d48ab6c6a29b4877f20576b42b533fc82ba`; blob `10bb040317d62834806b86b36a3a14f13c539fbc` |
 | Proportionality amendment | [[authority-amendment]] |
@@ -40,6 +42,8 @@ and protected-lane state remain untouched by this repair.
 | Service-boundary continuation | `codex/c6-canonical-service-boundary` / `abc62679023102dd8fee712fe86ba116a5b6c9e5`; tree `c2da5b8bd8110fa1df5b5ea77c245972b76b444d` |
 | Landed continuation | PRs #390-#396; canonical Template `main` `2f9e303a13860e92d0011d228277c4c2149f6b78`; tree `70f9f5332252c67926d8fc5d48c0109eb32fff50` |
 | Publication repair | `codex/c6-preserve-installed-asset-modes`; parent is the landed continuation above |
+| Landed publication repair | PR #397; canonical Template `main` `04e37f596d03a352a9b6cdb37ee7cdff54b67c28`; tree `c41e851580aa80e32fb20c1e3616423c1b6268ff`; ratchet run `29737814922` |
+| Release-input schema prerequisite | `codex/c6-typebox-release-input`; parent is the landed publication repair |
 | Opening controller | `0823cfe6...`; diagnostic only, never an active input |
 | T6A branch | `codex/c6-agent-lifecycle-public-interface` / `3f3a3be2dda70dae2682f88feeb23e5e9d349575` |
 | T6B Git observation | `codex/c6-staged-git-observation` / `67a0d25437d087e78dd15f67f65a1ae0a2ecb42f` |
@@ -106,7 +110,7 @@ Inngest candidate bytes.
 | T6C3 export independence | 5.1 complete/reviewed; 5.2-5.4 open | fixed-slot refusal at acquire/native edge; export admission and aggregate retirement remain |
 | T6D truthful test owners | complete, reviewed | owner-local DevOps fixture and ordinary serialized lifecycle/CLI targets |
 | T6E deterministic manifest | complete, reviewed | native JSON projection, code-unit canonicalization, and full build-twice equality |
-| T6F Personal checkpoint prerequisites | active; 3C.1-3C.3 landed; 3C.4 publication repair active after a fail-closed live attempt | pure release-input authoring, positive declared-tree closure, tested provider bindings, and immutable controller distribution without repository coupling |
+| T6F Personal checkpoint prerequisites | active; 3C.0 schema correction prepared, 3C.1-3C.3 landed, 3C.4 publication pending | TypeBox-owned release-input wire records, controller-owned refresh, positive declared-tree closure, tested provider bindings, corrected channel path, and immutable controller distribution without repository coupling |
 | T6F landing/settlement | active; Template continuation landed, controller publication/install pending | independently landed repos, disposable/live native convergence, read-only repeat |
 
 ## Retired Unlanded Nodes
@@ -122,14 +126,18 @@ follow-up work.
 
 ## Current Gate
 
-- The seven-node Template continuation is landed on canonical `main`. Repair
-  only the installed-asset mode preservation exposed by live run `29736289655`,
-  land that bounded node, then publish, verify, and install the exact immutable
-  controller through [[tasks#8. T6F: Landing And Settlement|task 8.1]] before
-  the first Personal semantic checkpoint.
-- [[tasks#3C. Personal Checkpoint Prerequisites|Tasks 3C.1-3C.3]] are landed.
-  Task 3C.4 remains open until the repaired landed workflow publishes and the
-  exact immutable asset is verified. These are
+- The exact-mode repair is landed on canonical Template `main` through PR #397.
+  Finish the three bounded fresh-operator prerequisites in order: land the
+  TypeBox-owned release-input wire record, add one releases-owned read-only
+  staged-index refresh operation, and move the compiled current-main path to
+  `.rawr/agent-plugin-lifecycle/channels/current-main.json` without an alias.
+  Then publish, verify, and install the exact immutable controller through
+  [[tasks#8. T6F: Landing And Settlement|task 8.1]] before the first Personal
+  semantic checkpoint. Do not add another prerequisite after those three.
+- [[tasks#3C. Personal Checkpoint Prerequisites|Tasks 3C.1-3C.3]] are landed;
+  tasks 3C.0, 3C.1a, and 3C.3a complete the bounded public interface. Task 3C.4
+  remains open until that final landed workflow publishes and the exact
+  immutable asset is verified. These are
   public data/artifact projections, not a new controller, provider installer,
   transfer graph, or repository relationship.
 - [[tasks#2A. C5 Context-Direction Correction|Tasks 2A.1-2A.4]] remain open.
@@ -180,9 +188,18 @@ a body, and the CLI transports those bytes without reserialization. Git,
 artifact, package, export, provider, governance, and filesystem resources remain
 cold.
 
+| 3C.0 boundary | Proof |
+| --- | --- |
+| Schema authority | Closed readonly TypeBox schemas own the complete canonical body, envelope, and payload-manifest entry; their public wire types are `Static<>` projections. `Type.Unsafe` is confined to nominal branded string leaves whose runtime schemas still carry concrete constraints. Derived ownership indexes and completeness witnesses are absent from the wire envelope. |
+| Failure ownership | The oRPC `encode-body` carrier remains `Type.Unknown()` intentionally. Bounded releases-owned parsing preserves exact typed issues for malformed candidates, then TypeBox checks the normalized postcondition; an over-limit getter regression proves validation does not traverse beyond the protocol member bound. Envelope validation performs one bounded body-schema pass. |
+| Behavior | Focused body/envelope/schema proof passed 22/22. The complete lifecycle suite passed 42 files / 382 tests with canonical bytes, digest, ownership closure, aggregate ceilings, noncanonical refusal, and raw malformed-body diagnostics unchanged. |
+| Static and structural | Lifecycle lint and typecheck passed. The lifecycle `check` target passed all three locked Habitat rules, including Grit dependency direction. Strict OpenSpec validation and `git diff --check` passed. |
+| Reviews | Architecture/oRPC, TypeScript/TypeBox, and behavior/state-machine reviewers report no remaining P0-P3. Review findings moved deep TypeBox checks behind bounded parsing, moved the manifest schema to its payload owner, removed unnecessary component-schema package exports, reused the canonical path limit, and corrected this active record before closure. |
+| Proof ceiling | This changes only structural/type authority for the existing release-input wire record. It adds no command, repository observation, writer, provider operation, compatibility path, or new lifecycle state. |
+
 | 3C.1 boundary | Proof |
 | --- | --- |
-| Service ownership | One releases-owned TypeBox contract and oRPC handler accept body or envelope bytes and return the codec-owned canonical envelope. Request, result, and shared release-issue types are `Static` projections of their owner-local schemas; the oRPC contract consumes those exact schemas through the HQ SDK adapter, with `Type.Unsafe` limited to the refined `Uint8Array` runtime boundary. The handler has no repository, filesystem, artifact, package, export, provider, governance, capsule, Oclif, app, or runtime capability. |
+| Service ownership | One releases-owned TypeBox contract and oRPC handler accept body or envelope bytes and return the codec-owned canonical envelope. Request, result, and shared release-issue types are `Static` projections of their owner-local schemas; the oRPC contract consumes those exact schemas through the HQ SDK adapter. The request/result transport uses a refined `Uint8Array` `Type.Unsafe` leaf, while the canonical record's nominal branded string leaves are documented in 3C.0 above. The handler has no repository, filesystem, artifact, package, export, provider, governance, capsule, Oclif, app, or runtime capability. |
 | CLI transport | Existing `check --mode release-input-record` accepts only nonterminal, nonempty stdin through the protocol ceiling, rejects cross-mode flags before client construction, invokes exactly one procedure, and preserves validated canonical bytes in JSON and human output without reserialization. |
 | Behavior | The complete lifecycle suite passed 42 files / 365 tests and the complete CLI suite passed 47 files / 324 tests. Current-byte focused proof passed 2 lifecycle files / 8 tests and 3 CLI files / 21 tests, including exact body/envelope round trips, compile-time schema/type equality, malformed and surplus adapter rejection, malformed UTF-8/JSON and digest refusal, terminal/empty/exact-limit/over-limit stdin, cold executable bindings, one-procedure dispatch, and human byte identity. |
 | Static and structural | Lifecycle and CLI lint, typecheck, and build passed without cache. All three locked Habitat rules passed: positive service topology, dependency direction, and command-channel topology. Strict OpenSpec validation and `git diff --check` passed. |
