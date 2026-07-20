@@ -1,17 +1,14 @@
-import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
-import {
-  failure,
-  issue,
-  success,
-  type VerifiedReleaseReader,
-} from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import type { ArtifactStore } from "../../../model/dependencies/releases";
 
-type ArtifactReader = Pick<Deps["releaseArtifacts"], "read">;
+import { failure, issue, success } from "../model/errors/deployment-result";
+import type { VerifiedReleaseReader } from "../model/repositories/artifact";
 
 /** Adapts the immutable release store without adding another artifact owner. */
-export function createProviderReleaseReader(reader: ArtifactReader): VerifiedReleaseReader {
+export function createResourceProviderReleaseReader(
+  reader: Pick<ArtifactStore, "read">,
+): VerifiedReleaseReader {
   const providerReader: VerifiedReleaseReader = {
-    async read(ref: Parameters<VerifiedReleaseReader["read"]>[0]) {
+    async read(ref) {
       const observed = await reader.read(ref);
       if (observed.kind === "Verified") return success(observed.snapshot);
       if (observed.kind === "Missing") {

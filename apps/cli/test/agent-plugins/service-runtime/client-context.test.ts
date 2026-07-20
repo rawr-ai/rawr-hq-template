@@ -24,14 +24,19 @@ import {
   type OwnedFixtureRoot,
 } from "./releases/owned-fixture-root";
 
-const LIFECYCLE_DEP_KEYS = Object.freeze([
+const LIFECYCLE_OBJECT_DEP_KEYS = Object.freeze([
   "releaseArtifacts",
   "releaseEvidence",
   "contentWorkspace",
   "clock",
   "packageOutput",
   "exports",
-  "providers",
+  "providerCurrentMain",
+  "providerRecords",
+  "providerArtifactRepository",
+  "providerNativeResource",
+  "providerExecutables",
+  "providerEvidenceStore",
 ]);
 const OPERATION_CASES = Object.freeze([
   { operation: "releases.check", owner: "releases", procedure: "check" },
@@ -98,7 +103,7 @@ describe("production lifecycle service context", () => {
     });
 
     expect(Object.isFrozen(deps)).toBe(true);
-    for (const dependency of LIFECYCLE_DEP_KEYS) {
+    for (const dependency of LIFECYCLE_OBJECT_DEP_KEYS) {
       const descriptor = Object.getOwnPropertyDescriptor(deps, dependency);
       expect(descriptor?.get, dependency).toBeUndefined();
       expect(descriptor?.set, dependency).toBeUndefined();
@@ -109,7 +114,10 @@ describe("production lifecycle service context", () => {
     expect(deps).not.toHaveProperty("stagedReleaseSource");
     expect(deps).not.toHaveProperty("packaging");
     expect(deps).not.toHaveProperty("governance");
-    expect(Object.values(deps)).toHaveLength(9);
+    expect(deps).not.toHaveProperty("providers");
+    expect(deps.providerProjectionRepositoryRoot).toBeTypeOf("string");
+    expect(deps.providerArtifactRepository).not.toBe(deps.releaseArtifacts);
+    expect(Object.values(deps)).toHaveLength(15);
     expect(await directoryNames(root.path)).toEqual(before);
   });
 

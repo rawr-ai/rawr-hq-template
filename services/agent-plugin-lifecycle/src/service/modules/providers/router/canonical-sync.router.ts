@@ -46,11 +46,11 @@ export interface CanonicalSyncDependencies {
 
 export const canonicalSync = module.canonicalSync.handler(
   async ({ context, input }) => canonicalSyncResult(executeCanonicalSync(input, {
-    currentMain: context.providers.currentMain,
-    releases: context.providers.releases,
-    native: context.providers.canonicalNative,
-    projectionMaterializer: context.providers.projectionMaterializer,
-    marketplaceMaterializer: context.providers.marketplaceMaterializer,
+    currentMain: context.currentMain,
+    releases: context.releases,
+    native: context.native,
+    projectionMaterializer: context.projectionMaterializer,
+    marketplaceMaterializer: context.marketplaceMaterializer,
   })),
 );
 

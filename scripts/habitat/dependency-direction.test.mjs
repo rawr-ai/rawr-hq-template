@@ -26,6 +26,7 @@ const roots = [];
 const rejectingSources = {
   "services/agent-plugin-lifecycle/src/service/base.ts": `
 import type { ReleaseRuntime } from "./modules/releases/ports";
+import type { ProviderTargetReader } from "./modules/providers/model/repositories/provider";
 `,
   "services/agent-plugin-lifecycle/src/service/model/dependencies/packaging.ts": `
 import type { PackagingRuntime } from "../../modules/packaging/ports";
@@ -38,6 +39,30 @@ export * from "../../modules/releases/ports";
 `,
   "services/agent-plugin-lifecycle/src/service/model/dependencies/release-dynamic.ts": `
 export const release = import("../../modules/releases/ports");
+`,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-relative-import.ts": `
+import type { NativeProviderResourcePort } from "../../../bindings/providers";
+`,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-package-import.ts": `
+import type { NativeProviderResourcePort } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+`,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-relative-export.ts": `
+export { type NativeProviderResourcePort } from "../../../bindings/providers";
+`,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-package-export.ts": `
+export { type NativeProviderResourcePort } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+`,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-relative-star.ts": `
+export * from "../../../bindings/providers";
+`,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-package-star.ts": `
+export * from "@rawr/agent-plugin-lifecycle/bindings/providers";
+`,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-relative-dynamic.ts": `
+export const provider = import("../../../bindings/providers");
+`,
+  "services/agent-plugin-lifecycle/src/service/model/dependencies/provider-binding-package-dynamic.ts": `
+export const provider = import("@rawr/agent-plugin-lifecycle/bindings/providers");
 `,
   "services/agent-plugin-lifecycle/src/service/model/dependencies/governance.ts": `
 import type { ExactGitReader } from "../../modules/governance/model/repositories/exact-git";
@@ -75,6 +100,24 @@ import { contentDigest } from "@rawr/agent-plugin-lifecycle/release";
 `,
   "apps/cli/src/lib/agent-plugins/retired-packaging-binding.ts": `
 import { createResourcePackageOutputRuntime } from "@rawr/agent-plugin-lifecycle/bindings/packaging";
+`,
+  "apps/cli/src/lib/agent-plugins/provider-binding-bypass.ts": `
+import { NativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+`,
+  "apps/cli/src/lib/agent-plugins/provider-local-binding-bypass.ts": `
+import { createNodeNativeProviderResource } from "./bindings/providers";
+`,
+  "apps/cli/src/lib/agent-plugins/provider-local-native-bypass.ts": `
+import { createNodeNativeProviderResource } from "./bindings/providers/native";
+`,
+  "apps/cli/src/lib/agent-plugins/provider-local-binding-dynamic-bypass.ts": `
+export const native = import("./bindings/providers");
+`,
+  "apps/cli/src/lib/agent-plugins/provider-local-binding-export-bypass.ts": `
+export { createNodeNativeProviderResource } from "./bindings/providers";
+`,
+  "apps/cli/src/lib/agent-plugins/provider-local-binding-star-bypass.ts": `
+export * from "./bindings/providers";
 `,
   "apps/cli/src/lib/agent-plugins/value-surface-dynamic-import.ts": `
 export const release = import("@rawr/agent-plugin-lifecycle/release");
@@ -162,18 +205,19 @@ import { router as releases } from "./modules/releases/router";
 
 export const router = impl.router({ releases });
 `,
-  "services/agent-plugin-lifecycle/src/service/modules/providers/ports.ts": `
-import type { NativeAgentProvider } from "@rawr/resource-native-agent-provider";
+  "services/agent-plugin-lifecycle/src/service/modules/providers/repository/resource-context.ts": `
+import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
+import type { NativeProviderResourcePort } from "../../../model/dependencies/providers";
 
-export type * from "./ports/projection";
-export type { NativeProviderAdapter } from "./ports";
-export { type ProviderTarget, type ProviderInventory } from "./ports/state";
-export type ProviderPort = NativeAgentProvider;
+export type RawProviderInputs = Readonly<{
+  artifacts: ArtifactRepositoryAsyncPort;
+  native: NativeProviderResourcePort;
+}>;
 `,
   "apps/cli/src/lib/agent-plugins/protocol.ts": `
-import type { ProviderLifecycleRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
+import type { NativeProviderResourcePort } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
-export type Runtime = ProviderLifecycleRuntime;
+export type NativeProvider = NativeProviderResourcePort;
 `,
   "apps/cli/src/lib/agent-plugins/release-protocol.ts": `
 export type { ContentAuthority } from "@rawr/agent-plugin-lifecycle/release";
@@ -222,10 +266,17 @@ import {
 export type Authority = ContentAuthority;
 export type SetDigest = ReleaseSetDigest;
 `,
-  "apps/cli/src/lib/agent-plugins/bindings/providers.ts": `
-import { createProvider } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+  "apps/cli/src/lib/agent-plugins/bindings/providers/native.ts": `
+import { NativeProviderResourceFailure } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
-export const provider = createProvider;
+export const failure = NativeProviderResourceFailure;
+`,
+  "apps/cli/src/lib/agent-plugins/service-runtime/providers/node-runtime.ts": `
+import { createNodeNativeProviderResource } from "../../bindings/providers";
+import { createResourceCompleteTargetIdentityReader } from "@rawr/agent-plugin-lifecycle/bindings/providers";
+
+export const native = createNodeNativeProviderResource;
+export const completeIdentities = createResourceCompleteTargetIdentityReader;
 `,
   "apps/cli/src/lib/agent-plugins/bindings/output/artifact-repository.ts": `
 import { makeRepository } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
@@ -330,13 +381,15 @@ describe("agent plugin lifecycle dependency-direction Habitat rule", () => {
     expect(
       rejected.report.rules[0].diagnostics,
       JSON.stringify(rejected.report.rules[0].diagnostics, null, 2),
-    ).toHaveLength(38);
+    ).toHaveLength(53);
 
     const rootRouter = "services/agent-plugin-lifecycle/src/service/router.ts";
+    const serviceBase = "services/agent-plugin-lifecycle/src/service/base.ts";
     const expectedLocations = [
       ...Object.keys(rejectingSources)
         .filter((filename) => filename !== rootRouter)
         .map((filename) => `${filename}:1`),
+      `${serviceBase}:2`,
       `${rootRouter}:1`,
       `${rootRouter}:4`,
       `${rootRouter}:5`,

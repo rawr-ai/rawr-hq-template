@@ -3,15 +3,21 @@ import { describe, expect, it } from "vitest";
 import {
   createProviderMarketplaceRegistration,
   marketplaceState,
-  parseProviderTarget,
-  type AgentProviderProjection,
-  type NativeMemberObservation,
-  type NativeStandaloneExposureObservation,
   type ProviderMarketplaceObservation,
   type ProviderMarketplaceRegistration,
-  type ProviderMemberFingerprint,
-  type ProviderProjectionMember,
-} from "../../../src/bindings/providers";
+} from "../../../src/service/modules/providers/model/policy/marketplace";
+import type {
+  AgentProviderProjection,
+  ProviderMemberFingerprint,
+  ProviderProjectionMember,
+} from "../../../src/service/modules/providers/model/policy/projection";
+import type {
+  NativeMemberObservation,
+  NativeStandaloneExposureObservation,
+} from "../../../src/service/modules/providers/model/policy/state-machine";
+import {
+  parseProviderTarget,
+} from "../../../src/service/modules/providers/model/dto/provider-target";
 import {
   success,
 } from "../../../src/service/modules/providers/model/errors/deployment-result";

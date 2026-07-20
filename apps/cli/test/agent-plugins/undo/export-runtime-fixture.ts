@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 
-import { createClient } from "@rawr/agent-plugin-lifecycle";
+import { createClient, type Deps } from "@rawr/agent-plugin-lifecycle";
 import {
   canonicalSerializeArtifactRef,
   type ArtifactRef,
@@ -17,7 +17,6 @@ import {
   type KnownNativeHomesReader,
   type KnownNativeHomesSnapshotV1,
 } from "@rawr/agent-plugin-lifecycle/bindings/exports";
-import type { ProviderLifecycleRuntime } from "@rawr/agent-plugin-lifecycle/ports/providers";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
 } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
@@ -85,7 +84,7 @@ export function createExportTestClient(
         publish: async () => unavailableAsync("package output"),
       },
       exports: createExportLifecycleRuntime(exportsRuntime),
-      providers: unavailableProviderRuntime(options.onProviderAccess),
+      ...unavailableProviderDeps(options.onProviderAccess),
     },
     scope: {
       controllerIdentity: "controller://export-runtime-test",
@@ -111,49 +110,58 @@ export function createExportTestClient(
   });
 }
 
-function unavailableProviderRuntime(
+type ProviderLifecycleDeps = Pick<
+  Deps,
+  | "providerCurrentMain"
+  | "providerRecords"
+  | "providerArtifactRepository"
+  | "providerNativeResource"
+  | "providerExecutables"
+  | "providerProjectionRepositoryRoot"
+  | "providerEvidenceStore"
+>;
+
+function unavailableProviderDeps(
   onAccess: (label: string) => void = () => undefined,
-): ProviderLifecycleRuntime {
+): ProviderLifecycleDeps {
   const unavailableProvider = (label: string): never => {
     onAccess(label);
     return unavailable(label);
   };
   const unavailableProviderAsync = async (label: string): Promise<never> => unavailableProvider(label);
-  return {
-    currentMain: { resolve: async () => unavailableProviderAsync("provider current-main selection") },
-    canonicalNative: {
-      inspectCapabilities: async () => unavailableProviderAsync("canonical provider capabilities"),
-      observe: async () => unavailableProviderAsync("canonical provider inventory"),
-      apply: async () => unavailableProviderAsync("canonical provider mutation"),
+  return Object.freeze({
+    providerCurrentMain: {
+      resolve: async () => unavailableProviderAsync("provider current-main selection"),
     },
-    releases: { read: async () => unavailableProviderAsync("provider release") },
-    provider: {
-      projectionAdapterProtocol: () => unavailableProvider("provider adapter protocol"),
-      inspectCapabilities: async () => unavailableProviderAsync("provider capabilities"),
-      readInventory: async () => unavailableProviderAsync("provider inventory"),
-      verifyProjection: async () => unavailableProviderAsync("provider visibility"),
+    providerRecords: {
+      readProjection: async () => unavailableProviderAsync("provider projection read"),
+      publishProjection: async () => unavailableProviderAsync("provider projection publication"),
+      readTarget: async () => unavailableProviderAsync("provider target read"),
+      scanTargets: async () => unavailableProviderAsync("provider target scan"),
+      captureTarget: async () => unavailableProviderAsync("provider target capture"),
+      releaseTarget: async () => unavailableProviderAsync("provider target release"),
+      writeTarget: async () => unavailableProviderAsync("provider target write"),
+      restoreTarget: async () => unavailableProviderAsync("provider target restore"),
+      settleTarget: async () => unavailableProviderAsync("provider target settlement"),
     },
-    providerMutator: { apply: async () => unavailableProviderAsync("provider mutation") },
-    receipts: { read: async () => unavailableProviderAsync("provider receipt") },
-    receiptWriter: {
-      publish: async () => unavailableProviderAsync("provider receipt publication"),
+    providerArtifactRepository: {
+      locateTree: async () => unavailableProviderAsync("provider artifact location"),
+      readTree: async () => unavailableProviderAsync("provider artifact read"),
+      publishTree: async () => unavailableProviderAsync("provider artifact publication"),
+      readEvidence: async () => unavailableProviderAsync("provider artifact evidence read"),
+      publishEvidence: async () => unavailableProviderAsync("provider artifact evidence publication"),
     },
-    identities: {
-      read: async () => unavailableProviderAsync("provider identity"),
-      readAll: async () => unavailableProviderAsync("complete provider identities"),
+    providerNativeResource: {
+      acquireCodex: async () => unavailableProviderAsync("Codex provider acquisition"),
+      acquireClaude: async () => unavailableProviderAsync("Claude provider acquisition"),
     },
-    identityWriter: { admit: async () => unavailableProviderAsync("provider identity admission") },
-    projectionMaterializer: {
-      materialize: async () => unavailableProviderAsync("provider projection materialization"),
-    },
-    marketplaceMaterializer: {
-      materialize: async () => unavailableProviderAsync("provider marketplace materialization"),
-    },
-    evidence: {
-      inspect: async () => unavailableProviderAsync("provider evidence inspection"),
+    providerExecutables: Object.freeze({}),
+    providerProjectionRepositoryRoot: "/unavailable/provider-projections",
+    providerEvidenceStore: {
+      read: async () => unavailableProviderAsync("provider evidence read"),
       publish: async () => unavailableProviderAsync("provider evidence publication"),
     },
-  };
+  });
 }
 
 function artifactKey(ref: ArtifactRef): string {

@@ -1,5 +1,11 @@
 import type { ArtifactTreeLocation } from "@rawr/resource-agent-plugin-artifact-repository";
 
+/** Closed host binding for the native provider executables admitted to this service. */
+export interface NativeProviderExecutablePaths {
+  readonly claude?: string;
+  readonly codex?: string;
+}
+
 export interface NativeResourceSessionInput {
   readonly executablePath: string;
   readonly home: string;

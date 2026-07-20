@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   NativeProviderResourceFailure,
-  type ProviderId,
+  type NativeResourceCapabilityProbe,
 } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type {
   ArtifactObjectAddress,
@@ -45,7 +45,11 @@ const EXECUTABLES = Object.freeze({
   codex: "/opt/rawr/bin/codex",
   claude: "/opt/rawr/bin/claude",
 });
-const PROVIDER_IDS = Object.freeze(["codex", "claude"] satisfies readonly ProviderId[]);
+type ProviderId = NativeResourceCapabilityProbe["provider"];
+const PROVIDER_IDS = Object.freeze([
+  "codex",
+  "claude",
+] satisfies readonly NativeResourceCapabilityProbe["provider"][]);
 const MARKETPLACE_TREE_LIMITS = Object.freeze({ maxEntries: 4, maxBytes: 1024 });
 
 describe("native provider resource binding", () => {

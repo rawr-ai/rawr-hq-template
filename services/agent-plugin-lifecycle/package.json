@@ -42,10 +42,6 @@
       "types": "./src/service/modules/exports/ports.ts",
       "default": "./src/service/modules/exports/ports.ts"
     },
-    "./ports/providers": {
-      "types": "./src/service/modules/providers/ports.ts",
-      "default": "./src/service/modules/providers/ports.ts"
-    },
     "./service/contract": {
       "types": "./src/service/contract.ts",
       "default": "./src/service/contract.ts"

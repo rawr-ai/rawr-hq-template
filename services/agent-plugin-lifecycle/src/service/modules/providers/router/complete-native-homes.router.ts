@@ -10,7 +10,7 @@ export interface CompleteNativeHomesDependencies {
 
 export const completeNativeHomes = module.completeNativeHomes.handler(
   async ({ context }) => completeNativeHomesResult(
-    readCompleteNativeHomes(context.providers),
+    readCompleteNativeHomes({ identities: context.identities }),
   ),
 );
 

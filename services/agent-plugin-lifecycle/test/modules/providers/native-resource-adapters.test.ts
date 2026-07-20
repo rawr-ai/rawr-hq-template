@@ -2,12 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import {
   createProviderMarketplaceRegistration,
-  parseProviderTarget,
+  type ProviderMarketplaceRegistration,
+} from "../../../src/service/modules/providers/model/policy/marketplace";
+import {
   renderCompleteProjection,
   type AgentProviderProjection,
-  type NativeStandaloneExposureObservation,
-  type ProviderMarketplaceRegistration,
-} from "../../../src/bindings/providers";
+} from "../../../src/service/modules/providers/model/policy/projection";
+import type {
+  NativeStandaloneExposureObservation,
+} from "../../../src/service/modules/providers/model/policy/state-machine";
+import {
+  parseProviderTarget,
+} from "../../../src/service/modules/providers/model/dto/provider-target";
 import { canonicalBytes } from "../../../src/service/modules/providers/model/helpers/canonical";
 import {
   createAgentPluginPayload,

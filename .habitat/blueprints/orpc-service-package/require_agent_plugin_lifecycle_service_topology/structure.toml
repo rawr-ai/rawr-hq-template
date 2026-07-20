@@ -228,9 +228,7 @@ required = [
   "router",
   "schemas.ts",
 ]
-allowed = [
-  "ports.ts",
-]
+allowed = []
 
 [[scopes]]
 name = "agent-plugin-lifecycle-governance-shell"
@@ -437,8 +435,11 @@ required = [
   "native.ts",
   "projection-storage-codec.ts",
   "projection-storage.ts",
+  "resource-artifact.ts",
   "resource-claude.ts",
   "resource-codex.ts",
+  "resource-context.ts",
+  "resource-evidence.ts",
   "resource-marketplace.ts",
   "resource-marketplace-location.ts",
   "resource-package.ts",
