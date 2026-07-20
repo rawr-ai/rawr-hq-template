@@ -17,7 +17,6 @@ import {
   type ProviderMemberFingerprint,
   type ProviderProjectionMember,
 } from "../../service/modules/providers/model/policy/projection";
-import type { NativeMemberObservation } from "../../service/modules/providers/model/policy/state-machine";
 import type { ImmutableProviderTreeFile } from "../../service/modules/providers/ports/projection-storage";
 
 const MEMBER_RECORD_PROTOCOL = "agent-provider-projection-member@v1";
@@ -185,27 +184,6 @@ export function validateMemberTree(
   }
 }
 
-export function validatePriorMemberRecord(
-  record: DecodedProjectionMemberRecord,
-  prior: NativeMemberObservation,
-): void {
-  const authority = requireRecord(record.member.artifactAuthority, "Projection member artifact authority");
-  const visible = requireRecord(record.member.visible, "Projection member visibility");
-  if (
-    record.member.pluginId !== prior.pluginId
-    || record.member.nativeIdentity !== prior.nativeIdentity
-    || record.member.providerSourceIdentity !== prior.providerSourceIdentity
-    || authority.protocol !== prior.artifactAuthority.protocol
-    || authority.contentAuthority !== prior.artifactAuthority.contentAuthority
-    || authority.sourceCommit !== prior.artifactAuthority.sourceCommit
-    || visible.pluginIdentity !== prior.nativeIdentity
-    || !sameStrings(requireStringArray(visible.skills), prior.visibleSkills)
-    || !sameStrings(requireStringArray(visible.hooks), prior.visibleHooks)
-  ) {
-    throw new Error("Projection member record does not bind the exact prior native member");
-  }
-}
-
 export function marketplaceTreeFiles(
   registration: ProviderMarketplaceRegistration,
   memberTrees: ReadonlyMap<ProviderMemberFingerprint, readonly ImmutableProviderTreeFile[]>,
@@ -322,13 +300,6 @@ function requireFingerprint(value: unknown, label: string): ProviderMemberFinger
     throw new Error(`${label} is invalid`);
   }
   return value as ProviderMemberFingerprint;
-}
-
-function requireStringArray(value: unknown): readonly string[] {
-  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
-    throw new Error("Projection member visibility is invalid");
-  }
-  return Object.freeze([...value] as string[]);
 }
 
 function requireArray(value: unknown, label: string): readonly unknown[] {

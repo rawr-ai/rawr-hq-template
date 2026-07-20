@@ -3,18 +3,15 @@ import { RawrCommand } from "@rawr/core";
 import {
   invokeAgentPluginUndo,
   LifecycleAuthorityBindingError,
-  parseControllerProjectionBinding,
   undoResultExitCode,
 } from "../../../lib/agent-plugins/commands/projection";
-import { providerExecutableFlag } from "../../../lib/agent-plugins/commands/flags";
 import { LifecycleInputError } from "../../../lib/agent-plugins/commands/input";
 
 export default class AgentPluginsUndo extends RawrCommand {
-  static description = "Replay the controller-owned last agent-plugin operation capsule";
+  static description = "Replay the controller-owned last agent-plugin export capsule";
 
   static flags = {
     json: RawrCommand.baseFlags.json,
-    "provider-executable": providerExecutableFlag,
   } as const;
 
   async run(): Promise<void> {
@@ -29,10 +26,7 @@ export default class AgentPluginsUndo extends RawrCommand {
     }
     let exitCode: 0 | 1;
     try {
-      const binding = parseControllerProjectionBinding(flags, {
-        admittedProviders: ["claude", "codex"],
-      });
-      const result = await invokeAgentPluginUndo(binding);
+      const result = await invokeAgentPluginUndo();
       this.outputResult(this.ok({ operation: "controller.undo", result }), {
         flags: baseFlags,
         human: () => this.log(`controller.undo: ${result.kind}`),

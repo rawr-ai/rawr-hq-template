@@ -2,7 +2,7 @@
 
 ## Status
 
-`T6C1A_CODEC_PUBLIC_INTERFACE_REVIEWED`
+`T6C2A_PROVIDER_CAPSULE_RETIREMENT_REVIEWED`
 
 The user accepted the proportionality correction in [[authority-amendment]].
 The unlanded transfer, public-evidence, second-launcher, binding, and installed
@@ -61,7 +61,9 @@ global undo redesign, and Inngest candidate bytes.
 | T6B repository checks | complete | staged/clean exactness, index race, declared-input boundary, one procedure |
 | T6C1a v2 codec/public interface | complete, reviewed | closed TypeBox model, canonical `cm2_` codec, one cold-port procedure and CLI dispatch |
 | T6C1b observed-Git selector/cutover | unopened | direct Git resolution and old ceremony/commands unreachable |
-| T6C2 canonical native path | unopened | resolved selector, live native provenance, no canonical hidden state or receipt-retire route |
+| T6C2a provider capsule retirement | complete, reviewed | capsule-cold provider modes, forward-only retry, export-only legacy retirement |
+| T6C2b managed-retire deletion | unopened | receipt-owned provider retire unreachable without alias |
+| T6C2c canonical native path | unopened | resolved selector, live native provenance, no canonical hidden state |
 | T6C3 export independence | unopened | destination-local ledger/collisions, no native-home registry |
 | T6D truthful test owners | retained, record realignment pending | owner-local DevOps fixture and ordinary serialized CLI target |
 | T6E deterministic manifest | implemented, restack/gate pending | focused canonicalization plus full build-twice equality |
@@ -80,8 +82,9 @@ follow-up work.
 
 ## Current Gate
 
+- Delete receipt-owned `managedRetire` as its own semantic Graphite node.
 - Finish T6C1b as the sole observed-Git current-main selector and v1 cutover,
-  then T6C2 as the thin canonical consumer without reopening test modes.
+  then finish the thin canonical consumer without reopening test modes.
 - Implement T6C3 as the owner-local export boundary with no provider-home
   registry dependency.
 - Realign/rerun the retained T6D proof and T6E controller determinism proof.
@@ -118,6 +121,22 @@ authority, select provider state, or make the retired v1 path unreachable.
 | CLI | Existing `check --mode current-main-record` admits exactly one inline body/envelope input, constructs no executable/resource authority, and invokes exactly one typed procedure. JSON projects codec-owned bytes as exact newline-preserving `envelopeText`; human output and encode-to-validate round trips preserve those bytes. Two focused files / 17 tests passed. |
 | Static/structural | Lifecycle and CLI lint, typecheck, and build passed without cache. Both positive structural suites passed; no new Habitat rule was required because the admitted module/router topology was already closed. |
 | Reviews | TypeScript/refactor, architecture/authority, behavior/testing, and structural quality approved the bounded checkpoint with no remaining P1/P2. |
+
+## T6C2a Proof
+
+This checkpoint implements
+[[tasks#4. T6C2 Thin Canonical Provider Path|tasks 4.6-4.7]] without deleting
+`managedRetire` or changing canonical selection. It
+removes provider rollback authority before the remaining command and selector
+cutovers.
+
+| Boundary | Result |
+| --- | --- |
+| Provider service | All provider modes are capsule-cold. Provider undo, owner/replay, restoration, and prior-projection ports are deleted. Native attempts are `not-applied`, `uncertain` with an exact bridge boundary, or `applied`; a cold retry accepts only exact same-owner prior/transition/final native states and replans the forward suffix. Full service proof passed 34 files / 303 tests. |
+| CLI/runtime | Qualified undo has export-only executable authority. The exact landed idle provider-v1 capsule is decoded privately as opaque bytes: undo classifies it as non-replayable, while first export retires it under the existing lock and raw-byte CAS before export admission. The raw fixture is SHA-pinned with landed-source provenance and no retained encoder. Sixty-five focused CLI tests passed. |
+| Failure law | CAS drift, post-publication uncertainty, release failure, malformed/noncanonical/undoing/wrong-owner/wrong-version and independently corrupt action/capsule/state digests block export and undo without changing legacy bytes, admitting export, or invoking provider/native ports. Cold retry re-reads the slot. Native uncertainty stops the target after its exact applied prefix; retry converges and a third pass is read-only. |
+| Static/structural | Lifecycle and CLI lint, typecheck, and build passed without cache. Both project structural suites, sync checks, and all three positive Habitat rules passed. A full CLI run passed 346/347; its unrelated high-load Git eligibility case returned `GitFailure` once and passed immediately in isolation. The retained serialized CLI test-owner node remains separately upstack. |
+| Reviews | Architecture/authority, TypeScript/refactor, behavior/testing, and structural quality closed stale-receipt retry, uncertainty-schema, migration-failure, inner-digest, and provenance findings. Final rereviews report no remaining P1/P2. |
 
 ## Standing Reviews
 

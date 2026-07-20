@@ -16,22 +16,31 @@ import {
   type AgentProviderProjection,
   type CapabilityObservation,
 } from "../model/policy/projection";
-import { failure, issue, success, type DeploymentResult, type ProviderDeploymentIssue } from "../model/errors/deployment-result";
+import {
+  failure,
+  issue,
+  success,
+  type DeploymentResult,
+  type NonEmptyReadonlyArray,
+  type ProviderDeploymentIssue,
+} from "../model/errors/deployment-result";
 import {
   planTarget,
   type DeploymentAuthority,
+  type NativeProviderMutationAction,
   type ProviderMutationAction,
-  type ProviderMutationPostState,
   type ProviderTargetPlan,
 } from "../model/policy/state-machine";
 import { visibleFingerprint, type ManagedMemberClaim } from "../model/policy/receipt";
 import type { ProviderTarget } from "../model/dto/provider-target";
-import type { ProviderUndoSession, ProviderUndoWriter } from "../ports/undo-writer";
 import type { MechanicalEvidencePublisher } from "../ports/evidence";
-import type { ProviderTargetMutator, ProviderTargetReader } from "../ports/provider";
+import type {
+  NativeMutationAttempt,
+  ProviderTargetMutator,
+  ProviderTargetReader,
+} from "../ports/provider";
 import type {
   ProviderMarketplaceMaterializer,
-  ProviderPriorProjectionReader,
   ProviderProjectionMaterializer,
   TargetIdentityReader,
   TargetIdentityWriter,
@@ -47,18 +56,16 @@ export interface PlanReadDependencies {
 
 export interface ApplyDependencies {
   readonly provider: ProviderTargetReader;
-  readonly undoWriter: ProviderUndoWriter;
   readonly marketplaceMaterializer: ProviderMarketplaceMaterializer;
-  readonly applyAction: (action: ProviderMutationAction) => Promise<DeploymentResult<ProviderMutationPostState>>;
+  readonly applyNativeAction: (action: NativeProviderMutationAction) => Promise<NativeMutationAttempt>;
+  readonly applyRecordAction: (action: RecordMutationAction) => Promise<DefiniteMutationAttempt>;
 }
+
+type RecordMutationAction = Exclude<ProviderMutationAction, NativeProviderMutationAction>;
+type DefiniteMutationAttempt = Exclude<NativeMutationAttempt, { kind: "uncertain" }>;
 
 export interface ProjectionApplyDependencies extends ApplyDependencies {
   readonly projectionMaterializer: ProviderProjectionMaterializer;
-  readonly priorProjections: ProviderPriorProjectionReader;
-}
-
-export interface InverseApplyDependencies extends ApplyDependencies {
-  readonly priorProjections: ProviderPriorProjectionReader;
 }
 
 export interface DeploymentMutationPorts {
@@ -147,9 +154,9 @@ export async function inspectTargetsAsBlocked(
 
 export async function executePlans(
   plans: readonly ProviderTargetPlan[],
-  dependencies: InverseApplyDependencies,
+  dependencies: ApplyDependencies,
 ): Promise<readonly TargetOperationOutcome[]> {
-  return await executePlansInternal(plans, dependencies, null, dependencies.priorProjections);
+  return await executePlansInternal(plans, dependencies, null);
 }
 
 export async function executeProjectionPlans(
@@ -160,7 +167,6 @@ export async function executeProjectionPlans(
     plans,
     dependencies,
     dependencies.projectionMaterializer,
-    dependencies.priorProjections,
   );
 }
 
@@ -168,7 +174,6 @@ async function executePlansInternal(
   plans: readonly ProviderTargetPlan[],
   dependencies: ApplyDependencies,
   projectionMaterializer: ProviderProjectionMaterializer | null,
-  priorProjections: ProviderPriorProjectionReader,
 ): Promise<readonly TargetOperationOutcome[]> {
   const outcomes = new Map<string, TargetOperationOutcome>();
   const readOnly = plans.filter((plan) => plan.state === "read-only");
@@ -195,84 +200,14 @@ async function executePlansInternal(
       outcomes.set(plan.target.targetDigest, failedBeforeApply(plan, marketplaceIssues));
       continue;
     }
-    const inverseIssues = await verifyInverseSources([plan], priorProjections);
-    if (inverseIssues.length > 0) {
-      outcomes.set(plan.target.targetDigest, failedBeforeApply(plan, inverseIssues));
-      continue;
-    }
     eligible.push(plan);
   }
   if (eligible.length === 0) return orderOutcomes(plans, outcomes);
 
-  const candidate = Object.freeze({ protocol: "agent-plugin-lifecycle/provider-undo@v1" as const, plans: Object.freeze(eligible) });
-  const preflight = await dependencies.undoWriter.preflight(candidate);
-  if (!preflight.ok) {
-    for (const plan of eligible) outcomes.set(plan.target.targetDigest, failedBeforeApply(plan, preflight.issues));
-    return orderOutcomes(plans, outcomes);
-  }
-  const begun = await dependencies.undoWriter.begin(candidate);
-  if (!begun.ok) {
-    for (const plan of eligible) outcomes.set(plan.target.targetDigest, failedBeforeApply(plan, begun.issues));
-    return orderOutcomes(plans, outcomes);
-  }
-
-  let capsuleUsable = true;
-  const aggregateIssues: ProviderDeploymentIssue[] = [];
   for (const plan of eligible) {
-    if (!capsuleUsable) {
-      const unavailable = [issue("CAPSULE_FAILED", "capsule", "Capsule session became unavailable before this target")];
-      aggregateIssues.push(...unavailable);
-      outcomes.set(plan.target.targetDigest, failedBeforeApply(plan, unavailable));
-      continue;
-    }
-    const result = await executeMutatingPlan(plan, dependencies, begun.value);
-    outcomes.set(plan.target.targetDigest, result.outcome);
-    aggregateIssues.push(...result.outcome.issues);
-    if (result.capsuleFailed) capsuleUsable = false;
-  }
-  const terminal = aggregateIssues.length > 0
-    ? await begun.value.fail(aggregateIssues)
-    : await begun.value.settle();
-  if (!terminal.ok) {
-    const terminalIssues = terminal.issues;
-    for (const plan of eligible) {
-      const prior = outcomes.get(plan.target.targetDigest);
-      if (prior !== undefined) outcomes.set(plan.target.targetDigest, appendFailure(prior, terminalIssues));
-    }
+    outcomes.set(plan.target.targetDigest, await executeMutatingPlan(plan, dependencies));
   }
   return orderOutcomes(plans, outcomes);
-}
-
-async function verifyInverseSources(
-  plans: readonly ProviderTargetPlan[],
-  priorProjections: ProviderPriorProjectionReader,
-): Promise<readonly ProviderDeploymentIssue[]> {
-  const priorMembers = new Map<
-    string,
-    Readonly<{
-      projectionDigest: Extract<ProviderMutationAction, { kind: "EnableMember" | "RetireMember" }>["priorProjectionDigest"];
-      prior: Extract<ProviderMutationAction, { kind: "EnableMember" | "RetireMember" }>["prior"];
-    }>
-  >();
-  for (const plan of plans) {
-    for (const step of plan.steps) {
-      if (
-        step.kind === "mutate"
-        && (step.action.kind === "EnableMember" || step.action.kind === "RetireMember")
-      ) {
-        priorMembers.set(
-          `${step.action.priorProjectionDigest}/${step.action.prior.memberFingerprint}`,
-          Object.freeze({ projectionDigest: step.action.priorProjectionDigest, prior: step.action.prior }),
-        );
-      }
-    }
-  }
-  const issues: ProviderDeploymentIssue[] = [];
-  for (const { projectionDigest, prior } of priorMembers.values()) {
-    const source = await priorProjections.readArchivedMember(projectionDigest, prior);
-    if (!source.ok) issues.push(...source.issues);
-  }
-  return Object.freeze(issues);
 }
 
 async function materializeRequiredProjections(
@@ -461,15 +396,14 @@ async function executeReadOnlyPlan(
 async function executeMutatingPlan(
   plan: ProviderTargetPlan,
   dependencies: ApplyDependencies,
-  session: ProviderUndoSession,
-): Promise<{ readonly outcome: TargetOperationOutcome; readonly capsuleFailed: boolean }> {
+): Promise<TargetOperationOutcome> {
   const events: ProviderEvent[] = [Object.freeze({ phase: "planned", target: plan.target, plan })];
   let fingerprint: string | null = null;
   let pendingRetirement: Extract<ProviderMutationAction, { kind: "RetireMember" }> | null = null;
   for (const step of plan.steps) {
     if (step.kind === "verify") {
       const verified = await dependencies.provider.verifyProjection(plan.target, step.projection);
-      if (!verified.ok) return { outcome: failedOutcome(plan.target, events, verified.issues, fingerprint), capsuleFailed: false };
+      if (!verified.ok) return failedOutcome(plan.target, events, verified.issues, fingerprint);
       fingerprint = verified.value.visibleFingerprint;
       events.push(Object.freeze({ phase: "verified", target: plan.target, visibleFingerprint: fingerprint }));
       continue;
@@ -483,32 +417,36 @@ async function executeMutatingPlan(
         planContentAuthority(plan),
       );
       if (!verified.ok) {
-        return { outcome: failedOutcome(plan.target, events, verified.issues, fingerprint), capsuleFailed: false };
+        return failedOutcome(plan.target, events, verified.issues, fingerprint);
       }
       fingerprint = verified.value;
       events.push(Object.freeze({ phase: "verified", target: plan.target, visibleFingerprint: fingerprint }));
       continue;
     }
     if (step.kind === "verify-retired") {
-      if (pendingRetirement === null || pendingRetirement.prior.nativeIdentity !== step.nativeIdentity) {
-        return {
-          outcome: failedOutcome(plan.target, events, [issue("MUTATION_FAILED", "target.plan", "Retirement verification does not follow its exact applied action")], fingerprint),
-          capsuleFailed: false,
-        };
+      if (pendingRetirement === null || pendingRetirement.member.nativeIdentity !== step.nativeIdentity) {
+        return failedOutcome(
+          plan.target,
+          events,
+          [issue("MUTATION_FAILED", "target.plan", "Retirement verification does not follow its exact applied action")],
+          fingerprint,
+        );
       }
       const inventory = await dependencies.provider.readInventory(
         plan.target,
-        pendingRetirement.prior.artifactAuthority.contentAuthority,
+        pendingRetirement.member.artifactAuthority.contentAuthority,
       );
-      if (!inventory.ok) return { outcome: failedOutcome(plan.target, events, inventory.issues, fingerprint), capsuleFailed: false };
+      if (!inventory.ok) return failedOutcome(plan.target, events, inventory.issues, fingerprint);
       if (
         inventory.value.members.some((member) => member.nativeIdentity === step.nativeIdentity)
         || inventory.value.standaloneExposures.some((exposure) => exposure.nativeIdentity === step.nativeIdentity)
       ) {
-        return {
-          outcome: failedOutcome(plan.target, events, [issue("VISIBILITY_FAILED", "target.inventory", "Retired native member or configured exposure remains visible", "absent", step.nativeIdentity)], fingerprint),
-          capsuleFailed: false,
-        };
+        return failedOutcome(
+          plan.target,
+          events,
+          [issue("VISIBILITY_FAILED", "target.inventory", "Retired native member or configured exposure remains visible", "absent", step.nativeIdentity)],
+          fingerprint,
+        );
       }
       fingerprint = inventory.value.inventoryFingerprint;
       events.push(Object.freeze({ phase: "retired", target: plan.target, action: pendingRetirement }));
@@ -516,31 +454,60 @@ async function executeMutatingPlan(
       pendingRetirement = null;
       continue;
     }
-    const staged = await session.stage(step.action);
-    if (!staged.ok) return { outcome: failedOutcome(plan.target, events, staged.issues, fingerprint), capsuleFailed: true };
-    const applied = await dependencies.applyAction(step.action);
-    if (!applied.ok) return { outcome: failedOutcome(plan.target, events, applied.issues, fingerprint), capsuleFailed: false };
+    let attempt: NativeMutationAttempt;
+    if (isNativeMutationAction(step.action)) {
+      attempt = await dependencies.applyNativeAction(step.action);
+      if (attempt.kind === "uncertain") {
+        events.push(Object.freeze({
+          phase: "uncertain",
+          target: plan.target,
+          action: step.action,
+          lastKnown: attempt.lastKnown,
+          issues: attempt.issues,
+        }));
+        return failedOutcome(plan.target, events, attempt.issues, fingerprint);
+      }
+    } else {
+      attempt = await dependencies.applyRecordAction(step.action);
+    }
+    if (attempt.kind === "not-applied") {
+      return failedOutcome(plan.target, events, attempt.issues, fingerprint);
+    }
     events.push(Object.freeze({ phase: "applied", target: plan.target, action: step.action }));
     if (step.action.kind === "RetireMember") pendingRetirement = step.action;
-    const recorded = await session.applied(Object.freeze({ action: step.action, post: applied.value }));
-    if (!recorded.ok) return { outcome: failedOutcome(plan.target, events, recorded.issues, fingerprint), capsuleFailed: true };
   }
   if (pendingRetirement !== null) {
-    return {
-      outcome: failedOutcome(plan.target, events, [issue("MUTATION_FAILED", "target.plan", "Applied retirement was not verified before target settlement")], fingerprint),
-      capsuleFailed: false,
-    };
+    return failedOutcome(
+      plan.target,
+      events,
+      [issue("MUTATION_FAILED", "target.plan", "Applied retirement was not verified before target settlement")],
+      fingerprint,
+    );
   }
-  return {
-    capsuleFailed: false,
-    outcome: Object.freeze({
-      target: plan.target,
-      status: "mutated",
-      events: Object.freeze(events),
-      issues: Object.freeze([]),
-      visibleFingerprint: fingerprint,
-    }),
-  };
+  return Object.freeze({
+    target: plan.target,
+    status: "mutated",
+    events: Object.freeze(events),
+    issues: Object.freeze([]),
+    visibleFingerprint: fingerprint,
+  });
+}
+
+function isNativeMutationAction(
+  action: ProviderMutationAction,
+): action is NativeProviderMutationAction {
+  switch (action.kind) {
+    case "SetMarketplace":
+    case "InstallMember":
+    case "EnableMember":
+    case "RetireMember":
+      return true;
+    case "AdmitTargetIdentity":
+    case "PublishReceipt":
+    case "NormalizeReceipt":
+    case "RemoveReceipt":
+      return false;
+  }
 }
 
 async function verifyManagedTarget(
@@ -606,13 +573,12 @@ function planContentAuthority(plan: ProviderTargetPlan): ContentAuthority | unde
   for (const step of plan.steps) {
     if (step.kind !== "mutate") continue;
     const action = step.action;
-    if (action.kind === "RetireMember") return action.prior.artifactAuthority.contentAuthority;
+    if (action.kind === "RetireMember") return action.member.artifactAuthority.contentAuthority;
     if (action.kind === "InstallMember" || action.kind === "EnableMember") {
       return action.member.artifactAuthority.contentAuthority;
     }
     if (action.kind === "SetMarketplace") {
-      const authority = action.registration?.marketplaceIdentity
-        ?? action.priorRegistration?.marketplaceIdentity;
+      const authority = action.registration?.marketplaceIdentity;
       if (authority !== undefined) return authority;
     }
   }
@@ -664,15 +630,6 @@ function failedOutcome(
   });
 }
 
-function appendFailure(outcome: TargetOperationOutcome, issues: readonly ProviderDeploymentIssue[]): TargetOperationOutcome {
-  return Object.freeze({
-    ...outcome,
-    status: "failed",
-    events: Object.freeze([...outcome.events, Object.freeze({ phase: "failed", target: outcome.target, issues })]),
-    issues: Object.freeze([...outcome.issues, ...issues]),
-  });
-}
-
 function evidenceFailure(
   outcome: ProviderOperationOutcome,
   issues: readonly ProviderDeploymentIssue[],
@@ -698,109 +655,99 @@ function orderOutcomes(
   }));
 }
 
-export function createDeploymentActionApplier(
+export function createDeploymentActionAppliers(
   ports: DeploymentMutationPorts,
-): (action: ProviderMutationAction) => Promise<DeploymentResult<ProviderMutationPostState>> {
-  return async (action) => {
+): Pick<ApplyDependencies, "applyNativeAction" | "applyRecordAction"> {
+  const applyRecordAction = async (action: RecordMutationAction): Promise<DefiniteMutationAttempt> => {
     switch (action.kind) {
       case "AdmitTargetIdentity": {
         const applied = await ports.identityWriter.admit(action.target, action.sidecar);
         return applied.ok
-          ? success(Object.freeze({ kind: "identity", observation: Object.freeze({ kind: "present", sidecar: applied.value }) }))
-          : applied;
-      }
-      case "SetMarketplace": {
-        const applied = await ports.providerMutator.apply(action);
-        if (!applied.ok) return applied;
-        return applied.value.actionKind === "SetMarketplace"
-          ? success(Object.freeze({ kind: "marketplace", observation: applied.value.postMarketplace }))
-          : failure([issue("MUTATION_FAILED", "provider.mutation", "Provider returned a member observation for a marketplace action")]);
-      }
-      case "InstallMember":
-      case "EnableMember":
-      case "RetireMember": {
-        const applied = await ports.providerMutator.apply(action);
-        if (!applied.ok) return applied;
-        return applied.value.actionKind !== "SetMarketplace"
-          ? success(Object.freeze({ kind: "member", member: applied.value.postMember }))
-          : failure([issue("MUTATION_FAILED", "provider.mutation", "Provider returned a marketplace observation for a member action")]);
+          ? mutationApplied()
+          : mutationNotApplied(applied.issues);
       }
       case "PublishReceipt": {
         const applied = await ports.receiptWriter.publish(action.target, action.prior, action.receipt);
         return applied.ok
-          ? success(Object.freeze({ kind: "receipt", observation: Object.freeze({ kind: "present", receipt: applied.value }) }))
-          : applied;
+          ? mutationApplied()
+          : mutationNotApplied(applied.issues);
       }
       case "NormalizeReceipt": {
         const applied = await ports.receiptWriter.publish(action.target, { kind: "present", receipt: action.prior }, action.receipt);
         return applied.ok
-          ? success(Object.freeze({ kind: "receipt", observation: Object.freeze({ kind: "present", receipt: applied.value }) }))
-          : applied;
+          ? mutationApplied()
+          : mutationNotApplied(applied.issues);
       }
       case "RemoveReceipt": {
         const applied = await ports.receiptWriter.remove(action.target, action.prior);
         return applied.ok
-          ? success(Object.freeze({ kind: "receipt", observation: Object.freeze({ kind: "absent" }) }))
-          : applied;
+          ? mutationApplied()
+          : mutationNotApplied(applied.issues);
       }
     }
   };
+  return Object.freeze({
+    applyNativeAction: async (action) => await ports.providerMutator.apply(action),
+    applyRecordAction,
+  });
 }
 
-export function createRetireActionApplier(
+export function createRetireActionAppliers(
   ports: RetireMutationPorts,
-): (action: ProviderMutationAction) => Promise<DeploymentResult<ProviderMutationPostState>> {
-  return async (action) => {
+): Pick<ApplyDependencies, "applyNativeAction" | "applyRecordAction"> {
+  const applyRecordAction = async (action: RecordMutationAction): Promise<DefiniteMutationAttempt> => {
     switch (action.kind) {
       case "AdmitTargetIdentity": {
         const applied = await ports.identityWriter.admit(action.target, action.sidecar);
         return applied.ok
-          ? success(Object.freeze({ kind: "identity", observation: Object.freeze({ kind: "present", sidecar: applied.value }) }))
-          : applied;
-      }
-      case "SetMarketplace": {
-        const applied = await ports.providerMutator.apply(action);
-        if (!applied.ok) return applied;
-        return applied.value.actionKind === "SetMarketplace"
-          ? success(Object.freeze({ kind: "marketplace", observation: applied.value.postMarketplace }))
-          : failure([issue("MUTATION_FAILED", "provider.mutation", "Provider returned a member observation for a marketplace action")]);
-      }
-      case "RetireMember": {
-        const applied = await ports.providerMutator.apply(action);
-        if (!applied.ok) return applied;
-        return applied.value.actionKind !== "SetMarketplace"
-          ? success(Object.freeze({ kind: "member", member: applied.value.postMember }))
-          : failure([issue("MUTATION_FAILED", "provider.mutation", "Provider returned a marketplace observation for a member action")]);
+          ? mutationApplied()
+          : mutationNotApplied(applied.issues);
       }
       case "PublishReceipt": {
         const applied = await ports.receiptWriter.publish(action.target, action.prior, action.receipt);
         return applied.ok
-          ? success(Object.freeze({ kind: "receipt", observation: Object.freeze({ kind: "present", receipt: applied.value }) }))
-          : applied;
+          ? mutationApplied()
+          : mutationNotApplied(applied.issues);
       }
       case "NormalizeReceipt": {
         const applied = await ports.receiptWriter.publish(action.target, { kind: "present", receipt: action.prior }, action.receipt);
         return applied.ok
-          ? success(Object.freeze({ kind: "receipt", observation: Object.freeze({ kind: "present", receipt: applied.value }) }))
-          : applied;
+          ? mutationApplied()
+          : mutationNotApplied(applied.issues);
       }
       case "RemoveReceipt": {
         const applied = await ports.receiptWriter.remove(action.target, action.prior);
         return applied.ok
-          ? success(Object.freeze({ kind: "receipt", observation: Object.freeze({ kind: "absent" }) }))
-          : applied;
+          ? mutationApplied()
+          : mutationNotApplied(applied.issues);
       }
-      case "EnableMember":
-      case "InstallMember":
-        return failure([issue(
+    }
+  };
+  return Object.freeze({
+    applyNativeAction: async (action) => {
+      if (action.kind === "EnableMember" || action.kind === "InstallMember") {
+        return mutationNotApplied([issue(
           "MUTATION_FAILED",
           "action.kind",
           "Managed-retire application received an impossible action",
-          "AdmitTargetIdentity|SetMarketplace|RetireMember|PublishReceipt|NormalizeReceipt|RemoveReceipt",
+          "SetMarketplace|RetireMember",
           action.kind,
         )]);
-    }
-  };
+      }
+      return await ports.providerMutator.apply(action);
+    },
+    applyRecordAction,
+  });
+}
+
+function mutationApplied(): DefiniteMutationAttempt {
+  return Object.freeze({ kind: "applied" });
+}
+
+function mutationNotApplied(
+  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>,
+): DefiniteMutationAttempt {
+  return Object.freeze({ kind: "not-applied", issues });
 }
 
 export function resultFailure<T>(issues: readonly ProviderDeploymentIssue[]): DeploymentResult<T> {

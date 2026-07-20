@@ -17,10 +17,6 @@ export {
   type PathlessTargetState,
 } from "./target-records";
 export {
-  createProviderOwnerRuntime,
-  type NativeMemberRestorationPorts,
-} from "./provider-owner-runtime";
-export {
   createResourceClaudeProviderAdapter,
   createResourceClaudeProviderObserver,
   type ResourceClaudeProviderAdapterOptions,

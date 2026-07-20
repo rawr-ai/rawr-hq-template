@@ -1,7 +1,6 @@
 import type {
   CanonicalChannelReader,
   MechanicalEvidencePublisher,
-  ProviderUndoWriter,
   ProviderDeploymentRequest,
   ProviderTargetMutator,
   ProviderTargetReader,
@@ -15,7 +14,6 @@ declare const releases: VerifiedReleaseReader;
 declare const provider: ProviderTargetReader;
 declare const receipts: TargetReceiptReader;
 declare const providerMutator: ProviderTargetMutator;
-declare const capsule: ProviderUndoWriter;
 declare const evidence: MechanicalEvidencePublisher;
 
 const statusDependencies: CanonicalStatusDependencies = {
@@ -35,16 +33,6 @@ const statusCannotReceiveMutation = {
   providerMutator,
 } satisfies CanonicalStatusDependencies;
 void statusCannotReceiveMutation;
-
-const statusCannotReceiveCapsule = {
-  channel,
-  releases,
-  provider,
-  receipts,
-  // @ts-expect-error status has no controller capsule port
-  capsule,
-} satisfies CanonicalStatusDependencies;
-void statusCannotReceiveCapsule;
 
 const statusCannotReceiveEvidencePublisher = {
   channel,

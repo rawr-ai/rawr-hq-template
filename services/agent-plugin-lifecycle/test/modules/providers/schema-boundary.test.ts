@@ -140,35 +140,26 @@ const actions = Object.freeze([
     kind: "SetMarketplace",
     role: "final",
     target,
-    prior: { kind: "absent" },
-    priorRegistration: null,
+    expected: { kind: "absent" },
     registration,
   },
   {
     kind: "InstallMember",
     target,
-    priorMarketplace: null,
     activeMarketplace: registration,
-    projectionDigest: projection.projectionDigest,
     member,
   },
   {
     kind: "EnableMember",
     target,
-    priorMarketplace: registration,
     activeMarketplace: registration,
-    priorProjectionDigest: projection.projectionDigest,
-    prior: nativeMember,
     member,
   },
   {
     kind: "RetireMember",
     target,
-    priorMarketplace: registration,
     activeMarketplace: registration,
-    priorProjectionDigest: projection.projectionDigest,
-    prior: nativeMember,
-    proof: "receipt",
+    member: nativeMember,
   },
   {
     kind: "PublishReceipt",
@@ -208,6 +199,13 @@ const plan = Object.freeze({
 const events = Object.freeze([
   { phase: "planned", target, plan },
   { phase: "applied", target, action: actions[0] },
+  {
+    phase: "uncertain",
+    target,
+    action: actions[1],
+    lastKnown: "bridge-returned",
+    issues: [issue],
+  },
   { phase: "verified", target, visibleFingerprint: digest("vf1_", "c") },
   { phase: "retired", target, action: actions[4] },
   { phase: "skipped", target, reason: "read-only-converged" },
@@ -231,10 +229,11 @@ const validResult = Object.freeze({
 });
 
 describe("provider procedure result schema boundary", () => {
-  it("admits all seven provider events and every nested action/plan variant", () => {
+  it("admits every provider event and nested action/plan variant", () => {
     expect(events.map((event) => event.phase)).toEqual([
       "planned",
       "applied",
+      "uncertain",
       "verified",
       "retired",
       "skipped",
@@ -277,6 +276,38 @@ describe("provider procedure result schema boundary", () => {
                 ...plan,
                 steps: [{ kind: "mutate", action: { kind: "RetireMember", target } }],
               },
+            }],
+          }],
+        },
+      },
+      {
+        ...validResult,
+        value: {
+          ...validResult.value,
+          targets: [{
+            ...targetOutcome,
+            events: [{
+              phase: "uncertain",
+              target,
+              action: actions[5],
+              lastKnown: "bridge-returned",
+              issues: [issue],
+            }],
+          }],
+        },
+      },
+      {
+        ...validResult,
+        value: {
+          ...validResult.value,
+          targets: [{
+            ...targetOutcome,
+            events: [{
+              phase: "uncertain",
+              target,
+              action: actions[1],
+              lastKnown: "bridge-returned",
+              issues: [],
             }],
           }],
         },

@@ -18,7 +18,14 @@ import type {
   ProviderSourceIdentity,
 } from "../../service/modules/providers/model/policy/projection";
 import { visibleFingerprint, type VerifiedMemberIdentity } from "../../service/modules/providers/model/policy/receipt";
-import { failure, issue, success, type DeploymentResult } from "../../service/modules/providers/model/errors/deployment-result";
+import {
+  failure,
+  issue,
+  success,
+  type DeploymentResult,
+  type NonEmptyReadonlyArray,
+  type ProviderDeploymentIssue,
+} from "../../service/modules/providers/model/errors/deployment-result";
 import {
   createProviderInventory,
   hasProjectionExposureCollision,
@@ -28,7 +35,7 @@ import {
 } from "../../service/modules/providers/model/policy/state-machine";
 import type { ProviderId, ProviderTarget } from "../../service/modules/providers/model/dto/provider-target";
 import type {
-  NativeMutationObservation,
+  NativeMutationAttempt,
   NativeProviderMutationAction,
   ProviderTargetMutator,
   ProviderTargetReader,
@@ -64,7 +71,7 @@ export interface NativeProviderBridge {
   }>>;
   setMarketplace(input: Readonly<{
     target: ProviderTarget;
-    prior: ProviderMarketplaceObservation;
+    expected: ProviderMarketplaceObservation;
     registration: ProviderMarketplaceRegistration | null;
     source: ProviderMarketplaceSource | null;
   }>): Promise<void>;
@@ -78,7 +85,7 @@ export interface NativeProviderBridge {
   }>): Promise<void>;
   uninstall(input: Readonly<{
     target: ProviderTarget;
-    prior: NativeMemberObservation;
+    expected: NativeMemberObservation;
   }>): Promise<void>;
 }
 
@@ -283,31 +290,28 @@ export function createNativeProviderAdapter(input: Readonly<{
 
   const apply = async (
     action: NativeProviderMutationAction,
-  ): Promise<DeploymentResult<NativeMutationObservation>> => {
+  ): Promise<NativeMutationAttempt> => {
     const providerIssue = targetProviderIssue(action.target, input.provider);
-    if (providerIssue !== undefined) return failure([providerIssue]);
+    if (providerIssue !== undefined) return notApplied([providerIssue]);
     const beforeResult = await readInventory(action.target);
-    if (!beforeResult.ok) return beforeResult;
+    if (!beforeResult.ok) return notApplied(beforeResult.issues);
     if (action.kind === "SetMarketplace") {
-      const priorRegistrationMatches = action.prior.kind === "absent"
-        ? action.priorRegistration === null
-        : action.priorRegistration !== null && sameMarketplaceState(action.prior.state, action.priorRegistration);
-      if (!priorRegistrationMatches || !sameMarketplaceObservation(beforeResult.value.marketplace, action.prior)) {
-        return failure([issue(
+      if (!sameMarketplaceObservation(beforeResult.value.marketplace, action.expected)) {
+        return notApplied([issue(
           "MUTATION_FAILED",
           "target.mutation.SetMarketplace",
-          "Live marketplace registration or its self-contained prior member table changed after planning",
+          "Live marketplace registration changed after planning",
         )]);
       }
       let source: ProviderMarketplaceSource | null = null;
       if (action.registration !== null) {
         const read = await input.marketplaceSources.read(action.target, action.registration);
-        if (!read.ok) return read;
+        if (!read.ok) return notApplied(read.issues);
         if (
           read.value.projectionDigest !== action.registration.projectionDigest
           || read.value.sourceDigest !== action.registration.sourceDigest
         ) {
-          return failure([issue(
+          return notApplied([issue(
             "MUTATION_FAILED",
             "marketplaceSource",
             "Stable marketplace source does not bind the requested registration",
@@ -320,32 +324,32 @@ export function createNativeProviderAdapter(input: Readonly<{
       try {
         await input.bridge.setMarketplace({
           target: action.target,
-          prior: action.prior,
+          expected: action.expected,
           registration: action.registration,
           source,
         });
       } catch (error) {
-        return failure([portFailure("MUTATION_FAILED", "target.mutation.SetMarketplace", error)]);
+        return uncertain("bridge-invoked", [portFailure("MUTATION_FAILED", "target.mutation.SetMarketplace", error)]);
       }
       const afterResult = await readInventory(action.target);
-      if (!afterResult.ok) return afterResult;
+      if (!afterResult.ok) return uncertain("bridge-returned", afterResult.issues);
       const expected: ProviderMarketplaceObservation = action.registration === null
         ? Object.freeze({ kind: "absent" })
         : Object.freeze({ kind: "present", state: marketplaceState(action.registration) });
       if (!sameMarketplaceObservation(afterResult.value.marketplace, expected)) {
-        return failure([issue(
+        return uncertain("bridge-returned", [issue(
           "MUTATION_FAILED",
           "target.mutation.SetMarketplace",
           "Native marketplace mutation did not produce its required visible post-state",
         )]);
       }
-      return success(Object.freeze({ actionKind: action.kind, postMarketplace: afterResult.value.marketplace }));
+      return applied();
     }
     const expectedActiveMarketplace: ProviderMarketplaceObservation = action.activeMarketplace === null
       ? Object.freeze({ kind: "absent" })
       : Object.freeze({ kind: "present", state: marketplaceState(action.activeMarketplace) });
     if (!sameMarketplaceObservation(beforeResult.value.marketplace, expectedActiveMarketplace)) {
-      return failure([issue(
+      return notApplied([issue(
         "MUTATION_FAILED",
         `target.mutation.${action.kind}.activeMarketplace`,
         "Member mutation requires the exact active marketplace registration from its plan",
@@ -354,7 +358,7 @@ export function createNativeProviderAdapter(input: Readonly<{
     const before = beforeResult.value.members.find((candidate) =>
       candidate.nativeIdentity === actionMemberIdentity(action));
     const precondition = mutationPrecondition(action, before);
-    if (!precondition.ok) return precondition;
+    if (!precondition.ok) return notApplied(precondition.issues);
 
     try {
       switch (action.kind) {
@@ -366,19 +370,19 @@ export function createNativeProviderAdapter(input: Readonly<{
           await input.bridge.enable({ target: action.target, member: action.member });
           break;
         case "RetireMember":
-          await input.bridge.uninstall({ target: action.target, prior: action.prior });
+          await input.bridge.uninstall({ target: action.target, expected: action.member });
           break;
       }
     } catch (error) {
-      return failure([portFailure("MUTATION_FAILED", `target.mutation.${action.kind}`, error)]);
+      return uncertain("bridge-invoked", [portFailure("MUTATION_FAILED", `target.mutation.${action.kind}`, error)]);
     }
 
     const afterResult = await readInventory(action.target);
-    if (!afterResult.ok) return afterResult;
+    if (!afterResult.ok) return uncertain("bridge-returned", afterResult.issues);
     const postMember = afterResult.value.members.find((candidate) =>
       candidate.nativeIdentity === actionMemberIdentity(action)) ?? null;
     if (!mutationPostcondition(action, postMember, afterResult.value)) {
-      return failure([issue(
+      return uncertain("bridge-returned", [issue(
         "MUTATION_FAILED",
         `target.mutation.${action.kind}`,
         "Native mutation did not produce its required visible post-state",
@@ -386,7 +390,7 @@ export function createNativeProviderAdapter(input: Readonly<{
         postMember?.memberFingerprint ?? "absent",
       )]);
     }
-    return success(Object.freeze({ actionKind: action.kind, postMember }));
+    return applied();
   };
 
   return Object.freeze({ projectionAdapterProtocol, inspectCapabilities, readInventory, verifyProjection, apply });
@@ -402,15 +406,12 @@ function mutationPrecondition(
         ? success(null)
         : failure([issue("BLOCKED_COLLISION", "target.mutation.InstallMember", "Native identity is already occupied", "absent", live.nativeIdentity)]);
     case "RetireMember":
-      return live !== undefined && sameNativeMember(live, action.prior)
+      return live !== undefined && sameNativeMember(live, action.member)
         ? success(null)
-        : failure([issue("MUTATION_FAILED", `target.mutation.${action.kind}`, "Live native member changed after planning", action.prior.memberFingerprint, live?.memberFingerprint ?? "absent")]);
+        : failure([issue("MUTATION_FAILED", `target.mutation.${action.kind}`, "Live native member changed after planning", action.member.memberFingerprint, live?.memberFingerprint ?? "absent")]);
     case "EnableMember":
       return live !== undefined
-        && sameNativeMember(live, action.prior)
-        && action.prior.pluginId === action.member.pluginId
-        && action.prior.memberFingerprint === action.member.memberFingerprint
-        && action.prior.enablement === "disabled"
+        && matchesProjectedMember(live, action.member, "disabled")
         ? success(null)
         : failure([issue("MUTATION_FAILED", "target.mutation.EnableMember", "Only the exact disabled projected member can be enabled", action.member.memberFingerprint, live?.memberFingerprint ?? "absent")]);
   }
@@ -423,11 +424,11 @@ function mutationPostcondition(
 ): boolean {
   if (action.kind === "RetireMember") {
     return live === null && !inventory.standaloneExposures.some((exposure) =>
-      exposure.nativeIdentity === action.prior.nativeIdentity);
+      exposure.nativeIdentity === action.member.nativeIdentity);
   }
   if (live === null) return false;
   if (action.kind === "EnableMember") {
-    return sameNativeMember(live, Object.freeze({ ...action.prior, enablement: "enabled" }));
+    return matchesProjectedMember(live, action.member, "enabled");
   }
   return matchesProjectedMember(
     live,
@@ -506,7 +507,7 @@ function canonicalCapabilities(values: readonly ProviderCapability[]): readonly 
 }
 
 function actionMemberIdentity(action: NativeMemberMutationAction): string {
-  return action.kind === "RetireMember" ? action.prior.nativeIdentity : action.member.nativeIdentity;
+  return action.member.nativeIdentity;
 }
 
 function expectedPost(action: NativeMemberMutationAction): string {
@@ -531,4 +532,21 @@ function portFailure(
   error: unknown,
 ) {
   return issue(code, path, error instanceof Error ? error.message : String(error));
+}
+
+function applied(): NativeMutationAttempt {
+  return Object.freeze({ kind: "applied" });
+}
+
+function notApplied(
+  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>,
+): NativeMutationAttempt {
+  return Object.freeze({ kind: "not-applied", issues });
+}
+
+function uncertain(
+  lastKnown: Extract<NativeMutationAttempt, { kind: "uncertain" }>["lastKnown"],
+  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>,
+): NativeMutationAttempt {
+  return Object.freeze({ kind: "uncertain", lastKnown, issues });
 }

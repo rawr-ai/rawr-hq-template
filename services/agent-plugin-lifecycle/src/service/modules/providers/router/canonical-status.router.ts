@@ -213,19 +213,28 @@ function classifyMarketplace(
   if (live.kind === "absent") {
     return receipt.kind === "present" ? "DRIFTED" : null;
   }
-  if (receipt.kind === "absent") return "BLOCKED_COLLISION";
-  const claimed = receipt.receipt.body.marketplace;
   if (
-    live.state.provider !== claimed.provider
-    || live.state.adapterProtocol !== claimed.adapterProtocol
-    || live.state.marketplaceIdentity !== claimed.marketplaceIdentity
+    live.state.provider !== expected.provider
+    || live.state.adapterProtocol !== expected.adapterProtocol
+    || live.state.marketplaceIdentity !== expected.marketplaceIdentity
   ) {
     return "BLOCKED_COLLISION";
   }
-  return !sameMarketplaceState(live.state, claimed)
-    || !sameMarketplaceState(live.state, marketplaceState(expected))
-    ? "DRIFTED"
-    : null;
+  if (receipt.kind === "absent") {
+    return sameMarketplaceState(live.state, marketplaceState(expected)) ? null : "DRIFTED";
+  }
+  const claimed = receipt.receipt.body.marketplace;
+  if (
+    claimed.provider !== expected.provider
+    || claimed.adapterProtocol !== expected.adapterProtocol
+    || claimed.marketplaceIdentity !== expected.marketplaceIdentity
+  ) {
+    return "BLOCKED_COLLISION";
+  }
+  return sameMarketplaceState(live.state, marketplaceState(expected))
+    && sameMarketplaceState(claimed, marketplaceState(expected))
+    ? null
+    : "DRIFTED";
 }
 
 function sameMembers(

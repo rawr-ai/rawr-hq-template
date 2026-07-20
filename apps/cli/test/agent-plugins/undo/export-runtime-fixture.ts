@@ -62,6 +62,9 @@ export interface ExportTestClient {
 
 export function createExportTestClient(
   exportsRuntime: Omit<ExportLifecycleRuntime, "destinationRuntime">,
+  options: Readonly<{
+    onProviderAccess?: (label: string) => void;
+  }> = {},
 ): ExportTestClient {
   const client = createClient({
     deps: {
@@ -106,7 +109,7 @@ export function createExportTestClient(
         },
       },
       exports: createExportLifecycleRuntime(exportsRuntime),
-      providers: unavailableProviderRuntime(),
+      providers: unavailableProviderRuntime(options.onProviderAccess),
       governance: {
         git: {
           inspect: async () => unavailableAsync("governance inspect"),
@@ -142,43 +145,43 @@ export function createExportTestClient(
   });
 }
 
-function unavailableProviderRuntime(): ProviderLifecycleRuntime {
+function unavailableProviderRuntime(
+  onAccess: (label: string) => void = () => undefined,
+): ProviderLifecycleRuntime {
+  const unavailableProvider = (label: string): never => {
+    onAccess(label);
+    return unavailable(label);
+  };
+  const unavailableProviderAsync = async (label: string): Promise<never> => unavailableProvider(label);
   return {
-    channel: { resolve: async () => unavailableAsync("provider canonical channel") },
-    releases: { read: async () => unavailableAsync("provider release") },
+    channel: { resolve: async () => unavailableProviderAsync("provider canonical channel") },
+    releases: { read: async () => unavailableProviderAsync("provider release") },
     provider: {
-      projectionAdapterProtocol: () => unavailable("provider adapter protocol"),
-      inspectCapabilities: async () => unavailableAsync("provider capabilities"),
-      readInventory: async () => unavailableAsync("provider inventory"),
-      verifyProjection: async () => unavailableAsync("provider visibility"),
+      projectionAdapterProtocol: () => unavailableProvider("provider adapter protocol"),
+      inspectCapabilities: async () => unavailableProviderAsync("provider capabilities"),
+      readInventory: async () => unavailableProviderAsync("provider inventory"),
+      verifyProjection: async () => unavailableProviderAsync("provider visibility"),
     },
-    providerMutator: { apply: async () => unavailableAsync("provider mutation") },
-    receipts: { read: async () => unavailableAsync("provider receipt") },
+    providerMutator: { apply: async () => unavailableProviderAsync("provider mutation") },
+    receipts: { read: async () => unavailableProviderAsync("provider receipt") },
     receiptWriter: {
-      publish: async () => unavailableAsync("provider receipt publication"),
-      remove: async () => unavailableAsync("provider receipt removal"),
+      publish: async () => unavailableProviderAsync("provider receipt publication"),
+      remove: async () => unavailableProviderAsync("provider receipt removal"),
     },
     identities: {
-      read: async () => unavailableAsync("provider identity"),
-      readAll: async () => unavailableAsync("complete provider identities"),
+      read: async () => unavailableProviderAsync("provider identity"),
+      readAll: async () => unavailableProviderAsync("complete provider identities"),
     },
-    identityWriter: { admit: async () => unavailableAsync("provider identity admission") },
+    identityWriter: { admit: async () => unavailableProviderAsync("provider identity admission") },
     projectionMaterializer: {
-      materialize: async () => unavailableAsync("provider projection materialization"),
+      materialize: async () => unavailableProviderAsync("provider projection materialization"),
     },
     marketplaceMaterializer: {
-      materialize: async () => unavailableAsync("provider marketplace materialization"),
-    },
-    priorProjections: {
-      readArchivedMember: async () => unavailableAsync("provider prior projection"),
-    },
-    undoWriter: {
-      preflight: async () => unavailableAsync("provider undo preflight"),
-      begin: async () => unavailableAsync("provider undo begin"),
+      materialize: async () => unavailableProviderAsync("provider marketplace materialization"),
     },
     evidence: {
-      inspect: async () => unavailableAsync("provider evidence inspection"),
-      publish: async () => unavailableAsync("provider evidence publication"),
+      inspect: async () => unavailableProviderAsync("provider evidence inspection"),
+      publish: async () => unavailableProviderAsync("provider evidence publication"),
     },
   };
 }

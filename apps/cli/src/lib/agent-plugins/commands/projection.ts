@@ -52,7 +52,7 @@ export type LifecycleOperationRequest =
   | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>
   | Readonly<{ operation: "governance.attestPromotion"; input: AttestPromotionRequest }>;
 
-export type UndoApplication = (binding: ControllerProjectionBinding) => Promise<UndoResult>;
+export type UndoApplication = () => Promise<UndoResult>;
 type LifecycleCallOptions = NonNullable<Parameters<Client["releases"]["check"]>[1]>;
 
 export {
@@ -187,11 +187,9 @@ export async function invokeLifecycleProcedure(
 }
 
 export async function invokeAgentPluginUndo(
-  binding: ControllerProjectionBinding,
   application: UndoApplication = createProductionAgentPluginUndo,
 ): Promise<UndoResult> {
-  await preflightBindingAuthority(binding, []);
-  return application(binding);
+  return application();
 }
 
 export function lifecycleResultExitCode(

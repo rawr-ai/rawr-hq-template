@@ -8,17 +8,15 @@ import type { CanonicalChannelReader } from "../ports/channel";
 import type { ProviderTargetMutator, ProviderTargetReader } from "../ports/provider";
 import type {
   ProviderMarketplaceMaterializer,
-  ProviderPriorProjectionReader,
   ProviderProjectionMaterializer,
   TargetIdentityReader,
   TargetIdentityWriter,
   TargetReceiptReader,
   TargetReceiptWriter,
 } from "../ports/state";
-import type { ProviderUndoWriter } from "../ports/undo-writer";
 import {
   aggregateOutcome,
-  createDeploymentActionApplier,
+  createDeploymentActionAppliers,
   createProjectionPlans,
   executeProjectionPlans,
   inspectTargetsAsBlocked,
@@ -37,8 +35,6 @@ export interface CanonicalSyncDependencies {
   readonly identityWriter: TargetIdentityWriter;
   readonly projectionMaterializer: ProviderProjectionMaterializer;
   readonly marketplaceMaterializer: ProviderMarketplaceMaterializer;
-  readonly priorProjections: ProviderPriorProjectionReader;
-  readonly undoWriter: ProviderUndoWriter;
 }
 
 export const canonicalSync = module.canonicalSync.handler(
@@ -129,10 +125,8 @@ function bindingIssues(
 function runtime(ports: CanonicalSyncDependencies) {
   return {
     provider: ports.provider,
-    undoWriter: ports.undoWriter,
-    applyAction: createDeploymentActionApplier(ports),
+    ...createDeploymentActionAppliers(ports),
     projectionMaterializer: ports.projectionMaterializer,
     marketplaceMaterializer: ports.marketplaceMaterializer,
-    priorProjections: ports.priorProjections,
   };
 }

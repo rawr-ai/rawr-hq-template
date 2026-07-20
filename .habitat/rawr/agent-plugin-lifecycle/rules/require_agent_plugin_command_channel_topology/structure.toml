@@ -40,19 +40,10 @@ root = "apps/cli/src/lib/agent-plugins/service-runtime/providers"
 kind = "directory"
 mode = "closed"
 required = [
-  "owner-protocol",
-]
-allowed = [
-  "*.ts",
-]
-
-[[scopes]]
-name = "curated-agent-plugin-owner-protocol-projection"
-root = "apps/cli/src/lib/agent-plugins/service-runtime/providers/owner-protocol"
-kind = "directory"
-mode = "closed"
-required = [
-  "index.ts",
+  "artifact-reader.ts",
+  "governance-channel.ts",
+  "node-runtime.ts",
+  "runtime.ts",
 ]
 allowed = []
 

@@ -126,7 +126,6 @@ export const ProviderDeploymentIssueCodeSchema = Type.Union([
   Type.Literal("BLOCKED_CANONICAL_TEST_TARGET"),
   Type.Literal("BLOCKED_COLLISION"),
   Type.Literal("CAPABILITY_MISMATCH"),
-  Type.Literal("CAPSULE_FAILED"),
   Type.Literal("CHANNEL_NOT_ELIGIBLE"),
   Type.Literal("DUPLICATE_MEMBER"),
   Type.Literal("DUPLICATE_TARGET"),
@@ -467,8 +466,7 @@ const SetMarketplaceActionSchema = Type.Object(
     kind: Type.Literal("SetMarketplace"),
     role: Type.Union([Type.Literal("transition"), Type.Literal("final")]),
     target: ProviderTargetSchema,
-    prior: ProviderMarketplaceObservationSchema,
-    priorRegistration: Type.Union([ProviderMarketplaceRegistrationSchema, Type.Null()]),
+    expected: ProviderMarketplaceObservationSchema,
     registration: Type.Union([ProviderMarketplaceRegistrationSchema, Type.Null()]),
   },
   { additionalProperties: false },
@@ -478,9 +476,7 @@ const InstallMemberActionSchema = Type.Object(
   {
     kind: Type.Literal("InstallMember"),
     target: ProviderTargetSchema,
-    priorMarketplace: Type.Null(),
     activeMarketplace: Type.Union([ProviderMarketplaceRegistrationSchema, Type.Null()]),
-    projectionDigest: ProjectionDigestSchema,
     member: ProviderProjectionMemberSchema,
   },
   { additionalProperties: false },
@@ -490,10 +486,7 @@ const EnableMemberActionSchema = Type.Object(
   {
     kind: Type.Literal("EnableMember"),
     target: ProviderTargetSchema,
-    priorMarketplace: Type.Union([ProviderMarketplaceRegistrationSchema, Type.Null()]),
     activeMarketplace: Type.Union([ProviderMarketplaceRegistrationSchema, Type.Null()]),
-    priorProjectionDigest: ProjectionDigestSchema,
-    prior: NativeMemberObservationSchema,
     member: ProviderProjectionMemberSchema,
   },
   { additionalProperties: false },
@@ -503,11 +496,8 @@ const RetireMemberActionSchema = Type.Object(
   {
     kind: Type.Literal("RetireMember"),
     target: ProviderTargetSchema,
-    priorMarketplace: Type.Union([ProviderMarketplaceRegistrationSchema, Type.Null()]),
     activeMarketplace: Type.Union([ProviderMarketplaceRegistrationSchema, Type.Null()]),
-    priorProjectionDigest: ProjectionDigestSchema,
-    prior: NativeMemberObservationSchema,
-    proof: Type.Literal("receipt"),
+    member: NativeMemberObservationSchema,
   },
   { additionalProperties: false },
 );
@@ -541,12 +531,16 @@ const RemoveReceiptActionSchema = Type.Object(
   { additionalProperties: false },
 );
 
-const ProviderMutationActionSchema = Type.Union([
-  AdmitTargetIdentityActionSchema,
+const NativeProviderMutationActionSchema = Type.Union([
   SetMarketplaceActionSchema,
   InstallMemberActionSchema,
   EnableMemberActionSchema,
   RetireMemberActionSchema,
+]);
+
+const ProviderMutationActionSchema = Type.Union([
+  AdmitTargetIdentityActionSchema,
+  NativeProviderMutationActionSchema,
   PublishReceiptActionSchema,
   NormalizeReceiptActionSchema,
   RemoveReceiptActionSchema,
@@ -613,6 +607,19 @@ const ProviderEventSchema = Type.Union([
       phase: Type.Literal("applied"),
       target: ProviderTargetSchema,
       action: ProviderMutationActionSchema,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      phase: Type.Literal("uncertain"),
+      target: ProviderTargetSchema,
+      action: NativeProviderMutationActionSchema,
+      lastKnown: Type.Union([
+        Type.Literal("bridge-invoked"),
+        Type.Literal("bridge-returned"),
+      ]),
+      issues: Type.Array(ProviderIssueSchema, { minItems: 1 }),
     },
     { additionalProperties: false },
   ),

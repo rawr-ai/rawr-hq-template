@@ -3,9 +3,8 @@ import type {
   MarketplaceProjectionDigest,
   ProviderMarketplaceRegistration,
 } from "../model/policy/marketplace";
-import type { AgentProviderProjection, ProjectionDigest } from "../model/policy/projection";
+import type { AgentProviderProjection } from "../model/policy/projection";
 import type {
-  NativeMemberObservation,
   ReceiptObservation,
   TargetIdentityObservation,
   TargetIdentitySidecar,
@@ -68,16 +67,4 @@ export interface ProviderMarketplaceSourceReader {
     target: ProviderTarget,
     registration: ProviderMarketplaceRegistration,
   ): Promise<DeploymentResult<ProviderMarketplaceSource>>;
-}
-
-export interface PriorProjectionSourceObservation {
-  readonly projectionDigest: ProjectionDigest;
-  readonly memberFingerprint: NativeMemberObservation["memberFingerprint"];
-}
-
-export interface ProviderPriorProjectionReader {
-  readArchivedMember(
-    projectionDigest: ProjectionDigest,
-    prior: NativeMemberObservation,
-  ): Promise<DeploymentResult<PriorProjectionSourceObservation>>;
 }
