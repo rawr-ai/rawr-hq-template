@@ -120,6 +120,10 @@ keep tasks 2A.1-2A.4 open.
   verify and invoke that artifact by absolute path; it may not checkout,
   rebuild, import, or vendor Template implementation. Record the exact digest,
   source revision, platform, byte length, and update recipe.
+  The first landed-main attempt, run `29736289655` at `2f9e303a...`, failed
+  closed before upload because portable archive construction changed verified
+  payload modes. Land and rerun the bounded exact-mode repair before closing
+  this task; do not weaken manifest verification.
 - [ ] 3C.5 Replace the obsolete Personal hook only after 3C.1-3C.4 are landed
   and installed. The first Personal checkpoint must include its canonical
   release input, positive content topology, honest lint/typecheck units, and
@@ -266,9 +270,12 @@ keep tasks 2A.1-2A.4 open.
 
 ## 8. T6F: Landing And Settlement
 
-- [ ] 8.1 Submit every retained Template Graphite node with `--ai`, land on
-  canonical Template `main`, sync/prune the stack, and install/select that exact
-  controller through the existing stable installer.
+- [x] 8.1a Submit every retained Template continuation node with `--ai`, land
+  through PRs #390-#396 on canonical Template `main` `2f9e303a...`, and drain
+  the local continuation stack/worktrees without disturbing unrelated work.
+- [ ] 8.1b Land the bounded installed-asset mode repair, publish and verify the
+  immutable controller from exact canonical Template `main`, then install/select
+  that exact controller through the existing stable installer.
 - [ ] 8.2 Replace the obsolete personal hook through the installed Template
   interface; land the personal content/release-input slice without bypass.
 - [ ] 8.3 Build/test the complete current personal-main set, including

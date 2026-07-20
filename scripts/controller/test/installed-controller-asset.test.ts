@@ -7,6 +7,7 @@ import {
   readFile,
   readdir,
   readlink,
+  rename,
   rm,
   realpath,
   symlink,
@@ -17,7 +18,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { parseControllerDigest } from "@rawr/controller-release";
-import { extract as extractTar, list as listTar } from "tar";
+import { list as listTar } from "tar";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
 
@@ -136,8 +137,12 @@ describe("installed controller archive", () => {
     const extractRoot = path.join(root, "extract");
     const digest = "a".repeat(64);
     const releaseRoot = path.join(dataRoot, "controller", "releases", digest);
+    const longDirectory = `pax-${"a".repeat(120)}`;
+    const longPayloadEntry = `controller/releases/${digest}/app/${longDirectory}/${longDirectory}/payload.mjs`;
+    const longPayloadPath = path.join(dataRoot, ...longPayloadEntry.split("/"));
     await mkdir(path.join(dataRoot, "controller", "bin"), { recursive: true });
     await mkdir(path.join(releaseRoot, "app"), { recursive: true });
+    await mkdir(path.dirname(longPayloadPath), { recursive: true });
     await mkdir(outputRoot);
     await mkdir(extractRoot);
     await writeFile(path.join(dataRoot, "controller", "bin", "rawr"), "#!/bin/sh\nexit 0\n");
@@ -145,12 +150,16 @@ describe("installed controller archive", () => {
     await writeFile(path.join(dataRoot, "controller", "current"), `${digest}\n`);
     await writeFile(path.join(releaseRoot, "controller-envelope.json"), "{}\n");
     await writeFile(path.join(releaseRoot, "app", "rawr.mjs"), "export {};\n");
+    await chmod(path.join(releaseRoot, "app", "rawr.mjs"), 0o444);
+    await writeFile(longPayloadPath, "export const pax = true;\n");
+    await chmod(longPayloadPath, 0o664);
     await symlink("rawr.mjs", path.join(releaseRoot, "app", "entry.mjs"));
     await writeFile(path.join(dataRoot, "not-distributed.txt"), "outside\n");
     await writeFile(path.join(releaseRoot, "not-in-manifest.txt"), "outside\n");
 
     const entries = [
       `controller/releases/${digest}/app/rawr.mjs`,
+      longPayloadEntry,
       "controller/bin/rawr",
       `controller/releases/${digest}/app/entry.mjs`,
       "controller/current",
@@ -163,23 +172,69 @@ describe("installed controller archive", () => {
     const later = new Date("2040-01-01T00:00:00.000Z");
     await utimes(path.join(dataRoot, "controller", "bin", "rawr"), later, later);
     await utimes(path.join(releaseRoot, "app", "rawr.mjs"), later, later);
+    const originalLongPayloadInode = (await lstat(longPayloadPath)).ino;
+    const replacementLongPayloadPath = `${longPayloadPath}.replacement`;
+    await writeFile(replacementLongPayloadPath, "export const pax = true;\n");
+    await chmod(replacementLongPayloadPath, 0o664);
+    await rename(replacementLongPayloadPath, longPayloadPath);
+    expect((await lstat(longPayloadPath)).ino).not.toBe(originalLongPayloadInode);
     await writeInstalledControllerArchive({ dataRoot, archivePath: secondArchive, entries });
 
     expect(await sha256File(secondArchive)).toBe(await sha256File(firstArchive));
     expect(await readFile(secondArchive)).toEqual(await readFile(firstArchive));
 
-    const archivedPaths: string[] = [];
+    const archivedEntries: Array<Readonly<{
+      path: string;
+      mode: number | undefined;
+      uid: number | undefined;
+      gid: number | undefined;
+      uname: string | undefined;
+      gname: string | undefined;
+      atime: Date | undefined;
+      ctime: Date | undefined;
+      dev: number | undefined;
+      ino: number | undefined;
+      nlink: number | undefined;
+    }>> = [];
     await listTar({
       file: firstArchive,
-      onentry: (entry) => archivedPaths.push(entry.path),
+      onentry: (entry) => archivedEntries.push({
+        path: entry.path,
+        mode: entry.mode,
+        uid: entry.uid,
+        gid: entry.gid,
+        uname: entry.uname,
+        gname: entry.gname,
+        atime: entry.atime,
+        ctime: entry.ctime,
+        dev: entry.dev,
+        ino: entry.ino,
+        nlink: entry.nlink,
+      }),
     });
-    expect(archivedPaths).toEqual([...entries].sort());
+    expect(archivedEntries.map((entry) => entry.path)).toEqual([...entries].sort());
+    expect(archivedEntries.find((entry) => entry.path === longPayloadEntry)?.mode).toBe(0o664);
+    expect(archivedEntries.every((entry) => (
+      entry.uid === undefined
+      && entry.gid === undefined
+      && !entry.uname
+      && !entry.gname
+      && entry.atime === undefined
+      && entry.ctime === undefined
+      && entry.dev === undefined
+      && entry.ino === undefined
+      && entry.nlink === undefined
+    ))).toBe(true);
 
-    await extractTar({ cwd: extractRoot, file: firstArchive });
+    const extraction = Bun.spawnSync(["tar", "-xpf", firstArchive, "-C", extractRoot]);
+    expect(extraction.exitCode, extraction.stderr.toString()).toBe(0);
     expect(await readFile(path.join(extractRoot, "controller", "current"), "utf8")).toBe(`${digest}\n`);
     expect(await readlink(path.join(extractRoot, "controller", "releases", digest, "app", "entry.mjs")))
       .toBe("rawr.mjs");
-    expect((await lstat(path.join(extractRoot, "controller", "bin", "rawr"))).mode & 0o111).not.toBe(0);
+    expect((await lstat(path.join(extractRoot, "controller", "bin", "rawr"))).mode & 0o7777).toBe(0o755);
+    expect((await lstat(path.join(extractRoot, "controller", "releases", digest, "app", "rawr.mjs"))).mode & 0o7777)
+      .toBe(0o444);
+    expect((await lstat(path.join(extractRoot, ...longPayloadEntry.split("/")))).mode & 0o7777).toBe(0o664);
     await expect(readFile(path.join(extractRoot, "not-distributed.txt"))).rejects.toMatchObject({ code: "ENOENT" });
     await expect(readFile(path.join(
       extractRoot,
