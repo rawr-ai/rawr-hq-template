@@ -1,4 +1,4 @@
-import { chmod, realpath, symlink, writeFile } from "node:fs/promises";
+import { chmod, mkdir, realpath, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
@@ -16,6 +16,7 @@ import {
 } from "../../../src/service/modules/releases/repository/content-workspace";
 import {
   GIT_EXECUTABLE,
+  commitGeneratedGitRepository,
   createGeneratedGitRepository,
   git,
   installCaseCollisionCommit,
@@ -92,6 +93,97 @@ describe("exact Git-object eligibility", () => {
       MAX_RELEASE_INPUT_ENVELOPE_BYTES,
       MAX_PAYLOAD_BYTES_PER_MEMBER,
     ]);
+  });
+
+  it("rejects the first canonical undeclared plugin before reading member blobs", async () => {
+    const repository = await generated();
+    const zuluRoot = join(repository.root, "plugins", "agent", "zulu", "skills", "zulu");
+    const aardvarkRoot = join(repository.root, "plugins", "agent", "aardvark", "skills", "aardvark");
+    const unrelatedRoot = join(repository.root, "a-unrelated", "skills", "example");
+    await mkdir(zuluRoot, { recursive: true, mode: 0o700 });
+    await writeFile(join(zuluRoot, "SKILL.md"), "zulu\n");
+    await writeFile(join(zuluRoot, "README.md"), "duplicate zulu root witness\n");
+    await mkdir(unrelatedRoot, { recursive: true, mode: 0o700 });
+    await writeFile(join(unrelatedRoot, "SKILL.md"), "unrelated\n");
+    await mkdir(aardvarkRoot, { recursive: true, mode: 0o700 });
+    await writeFile(join(aardvarkRoot, "SKILL.md"), "aardvark\n");
+    const policy = await commitGeneratedGitRepository(repository, "add undeclared plugin roots");
+    const delegate = await realPort();
+    let blobReads = 0;
+    let evidenceCaptures = 0;
+    const contentWorkspace = overrideGitReadPort(delegate, {
+      async readGitBlob(input) {
+        blobReads += 1;
+        return await delegate.readGitBlob(input);
+      },
+      async captureGitWorkspaceEvidence(input) {
+        evidenceCaptures += 1;
+        return await delegate.captureGitWorkspaceEvidence(input);
+      },
+    });
+
+    await expect(createResourceContentWorkspaceSnapshotReader({ contentWorkspace }).inspect(policy))
+      .resolves.toEqual({
+        kind: "Ineligible",
+        issues: [{
+          code: "PayloadMismatch",
+          detail: "plugin tree contains undeclared member aardvark",
+        }],
+      });
+    expect(blobReads).toBe(1);
+    expect(evidenceCaptures).toBe(0);
+  });
+
+  it.each([
+    {
+      name: "the first code-unit-sorted noncanonical plugin directory",
+      paths: [
+        "plugins/agent/Zulu/skills/zulu/SKILL.md",
+        "plugins/agent/Cognition/skills/cognition/SKILL.md",
+      ],
+      child: "Cognition",
+    },
+    {
+      name: "a root-level file",
+      paths: ["plugins/agent/README.md"],
+      child: "README.md",
+    },
+  ])("rejects $name before reading member blobs", async ({ paths, child }) => {
+    const repository = await generated();
+    for (const relativePath of paths) {
+      const segments = relativePath.split("/");
+      const file = join(repository.root, ...segments);
+      await mkdir(join(repository.root, ...segments.slice(0, -1)), { recursive: true, mode: 0o700 });
+      await writeFile(file, `${child}\n`);
+    }
+    const unrelatedRoot = join(repository.root, "a-unrelated", "skills", "example");
+    await mkdir(unrelatedRoot, { recursive: true, mode: 0o700 });
+    await writeFile(join(unrelatedRoot, "SKILL.md"), "unrelated\n");
+    const policy = await commitGeneratedGitRepository(repository, "add noncanonical plugin root child");
+    const delegate = await realPort();
+    let blobReads = 0;
+    let evidenceCaptures = 0;
+    const contentWorkspace = overrideGitReadPort(delegate, {
+      async readGitBlob(input) {
+        blobReads += 1;
+        return await delegate.readGitBlob(input);
+      },
+      async captureGitWorkspaceEvidence(input) {
+        evidenceCaptures += 1;
+        return await delegate.captureGitWorkspaceEvidence(input);
+      },
+    });
+
+    await expect(createResourceContentWorkspaceSnapshotReader({ contentWorkspace }).inspect(policy))
+      .resolves.toEqual({
+        kind: "Ineligible",
+        issues: [{
+          code: "PayloadMismatch",
+          detail: `plugin tree contains noncanonical child ${child}`,
+        }],
+      });
+    expect(blobReads).toBe(1);
+    expect(evidenceCaptures).toBe(0);
   });
 
   it("rejects one resource capture whose opening and closing anchors disagree", async () => {
