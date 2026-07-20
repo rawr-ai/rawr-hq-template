@@ -506,6 +506,23 @@ selection implementation and the existing canonical provider behavior.
 | Reviews | Architecture/authority, behavior/testing/state-machine, TypeScript/refactor/oRPC, and structural/Habitat final reviews report no P0-P3 findings. The review loop confirmed one selector owner, a cycle-free composition edge, repeat live observation, exact retired-subpath unreachability, and no repository/native/export scope expansion. |
 | Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]] remains blocked at the explicit publication-capability choice and untouched. No provider command, destination claim, native mutation, app/runtime composition, personal-repository relationship, or protected-lane release enters this node. |
 
+## C5 Release Host-Binding Narrowing Proof
+
+Code checkpoint `4f53586522d21405a6eaf92b532c2843a9626f84` advances
+[[tasks#2A. C5 Context-Direction Correction|task 2A.3]] without claiming the
+remaining facade deletion. It makes the transitional release binding an exact
+host-materialization surface while preserving the pure release owner described
+in [[design#Service context flows from root dependencies into module handlers|the service-context decision]].
+
+| Boundary | Result |
+| --- | --- |
+| Release authority | `./release` is the only public owner of provider-neutral release values and types. Command parsing and retention proof import that algebra directly; `./bindings/releases` exposes exactly the four artifact/evidence materializers plus their two option types, with no DTO, policy, codec, parser, ref constructor, or domain barrel. |
+| Host composition | The sole production value consumer of the transitional binding is the artifact/evidence composition root. No adapter moved into the CLI, no new wrapper or resource was added, and the existing service-owned artifact/evidence semantics remain unchanged pending the later raw-context checkpoint. |
+| Monotonic ratchet | Compile proof closes the binding's runtime key set exactly to the four materializers, positively retains both option types, and negatively rejects representative shared-release and module-domain types. The enforced dependency rule admits only `commands/input.ts -> ./release` and the exact composition root `-> ./bindings/releases`; direct, dynamic, named re-export, and star re-export bypass fixtures produce the exact 61-diagnostic set. Positive topology remains closed with an empty baseline. |
+| Behavior and static proof | The complete lifecycle suite passed 40 files / 356 tests and the complete serialized CLI suite passed 47 files / 321 tests. Lifecycle and CLI lint, typecheck, build, sync, and guarded structural suites passed without cache. Strict OpenSpec validation and `git diff --check` passed. The protected note was restored byte-identically at SHA-256 `d06966389dac095f8a7f620aa4b27a50935a75762300000f987a848e45c2aadb`, remained unstaged, and left no holding root. |
+| Reviews | Architecture/authority and structural/Habitat reviews were clean. Behavior/testing and TypeScript/refactor found the initial single-symbol value canary and missing type-barrel proof; the final exact value-key assertion, positive option-type probes, and negative shared/domain type probes closed both P2 findings. Final rereviews report no remaining P1/P2. |
+| Scope | [[tasks#5. T6C3: Export Destination Independence|export task 5.2]], task 5.3's known-home bridge, native provider behavior, personal repository state, app/runtime composition, and every protected-lane candidate remain untouched. The release facade remains explicitly transitional and is not promoted into a permanent owner. |
+
 ## CLI Harness Owner Correction
 
 | Boundary | Result |
