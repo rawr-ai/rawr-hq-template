@@ -88,6 +88,14 @@ function lifecycleHumanLines(operation: LifecycleOperationRequest["operation"], 
       return [envelopeText.slice(0, -1)];
     }
   }
+  if (
+    operation === "releases.refreshReleaseInput"
+    && (record.kind === "ReleaseInputCandidateReady" || record.kind === "ReleaseInputReadOnlyConverged")
+    && typeof record.envelopeText === "string"
+    && record.envelopeText.endsWith("\n")
+  ) {
+    return [record.envelopeText.slice(0, -1)];
+  }
   if (operation === "providers.canonicalStatus" && record.ok === true && Array.isArray(record.value)) {
     return [
       `${operation}:`,

@@ -4,6 +4,7 @@ export type LifecycleOperation =
   | "releases.check"
   | "releases.checkRepository"
   | "releases.releaseInputRecord"
+  | "releases.refreshReleaseInput"
   | "releases.build"
   | "vendors.status"
   | "vendors.update"
@@ -23,6 +24,9 @@ export type LifecycleClientByOperation = Readonly<{
   }>;
   "releases.releaseInputRecord": Readonly<{
     releases: Pick<Client["releases"], "releaseInputRecord">;
+  }>;
+  "releases.refreshReleaseInput": Readonly<{
+    releases: Pick<Client["releases"], "refreshReleaseInput">;
   }>;
   "releases.build": Readonly<{ releases: Pick<Client["releases"], "build"> }>;
   "vendors.status": Readonly<{ vendors: Pick<Client["vendors"], "status"> }>;

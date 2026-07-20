@@ -1,13 +1,16 @@
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { mkdir, symlink } from "node:fs/promises";
+import { mkdir, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
-import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "@rawr/agent-plugin-lifecycle/release";
+import {
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
+} from "@rawr/agent-plugin-lifecycle/release";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -180,6 +183,15 @@ describe("qualified lifecycle command boundary", () => {
       { ...releaseWorkspace(), mode: "repository-clean", "complete-set": true },
       { mode: "current-main-record" },
       { mode: "release-input-record" },
+      { ...staged, mode: "release-input-refresh" },
+      { ...staged, mode: "release-input-refresh", plugin: "alpha", member: ["alpha"] },
+      { ...staged, mode: "release-input-refresh", member: ["alpha", "alpha"] },
+      {
+        ...staged,
+        mode: "release-input-refresh",
+        member: Array.from({ length: MAX_RELEASE_MEMBERS + 1 }, (_, index) => `member-${index}`),
+      },
+      { ...staged, mode: "repository-staged", member: ["alpha"] },
       {
         mode: "release-input-record",
         "content-workspace": "/tmp/content",
@@ -242,6 +254,26 @@ describe("qualified lifecycle command boundary", () => {
         operation: "releases.checkRepository",
         input: { kind: "clean", contentWorkspace: { sourceCommit: hex40, sourceTree: hex64 } },
       });
+    expect(parseCheckOperationRequest({
+      ...stagedReleaseWorkspace(),
+      mode: "release-input-refresh",
+      member: ["dev", "cognition"],
+    })).toEqual({
+      operation: "releases.refreshReleaseInput",
+      input: {
+        contentWorkspace: {
+          locator: "/tmp/content",
+          repositoryIdentity: "github:rawr/hq",
+          contentAuthority: "rawr-hq",
+          remoteName: "origin",
+          remoteUrl: "https://example.invalid/rawr-hq.git",
+          refName: "refs/heads/main",
+          releaseInputPath: "records/release-input.json",
+          pluginRoot: "plugins/agents",
+        },
+        memberIds: ["dev", "cognition"],
+      },
+    });
     expect(parseCheckOperationRequest({
       mode: "current-main-record",
       "current-main-body-json": JSON.stringify(currentMainBodyFixture()),
@@ -452,6 +484,53 @@ describe("qualified lifecycle command boundary", () => {
     });
   });
 
+  it("projects release-input refresh bytes exactly and requires only Git authority", async () => {
+    const fixture = await createOwnedFixtureRoot();
+    try {
+      const skillRoot = path.join(fixture.path, "plugins", "agents", "alpha", "skills", "alpha");
+      await mkdir(skillRoot, { recursive: true });
+      await writeFile(path.join(skillRoot, "SKILL.md"), "---\nname: alpha\n---\n", "utf8");
+      git(fixture.path, ["init", "-b", "main"]);
+      git(fixture.path, ["config", "user.email", "fixture@example.invalid"]);
+      git(fixture.path, ["config", "user.name", "Fixture"]);
+      git(fixture.path, ["remote", "add", "origin", "https://example.invalid/rawr-hq.git"]);
+      git(fixture.path, ["add", "."]);
+      git(fixture.path, ["commit", "-m", "fixture"]);
+
+      const args = [
+        "agent", "plugins", "check",
+        "--mode", "release-input-refresh",
+        "--content-workspace", fixture.path,
+        "--repository-identity", "git:personal-rawr-hq",
+        "--content-authority", "personal-rawr-hq",
+        "--remote-name", "origin",
+        "--remote-url", "https://example.invalid/rawr-hq.git",
+        "--ref", "refs/heads/main",
+        "--release-input", ".rawr/release-input.json",
+        "--plugin-root", "plugins/agents",
+        "--member", "alpha",
+        "--git-executable", "/usr/bin/git",
+      ] as const;
+      const json = runRawr([...args, "--json"]);
+      expect(json.status, `${json.stderr}\n${json.stdout}`).toBe(0);
+      const output = jsonRecord(jsonRecord(parseSingleJson(json.stdout)).data);
+      const result = jsonRecord(output.result);
+      expect(result).toMatchObject({
+        kind: "ReleaseInputCandidateReady",
+        releaseInputDigest: expect.stringMatching(/^ri1_[0-9a-f]{64}$/u),
+      });
+      expect(result.bytes).toBeUndefined();
+      expect(typeof result.envelopeText).toBe("string");
+      if (typeof result.envelopeText !== "string") throw new Error("Missing refresh envelope text");
+
+      const human = runRawr(args);
+      expect(human.status, human.stderr).toBe(0);
+      expect(human.stdout).toBe(result.envelopeText);
+    } finally {
+      await removeOwnedFixtureRoot(fixture);
+    }
+  });
+
   it("dispatches each projection to exactly one typed client procedure", async () => {
     const calls: string[] = [];
     const client = recordingClient(calls);
@@ -485,6 +564,12 @@ describe("qualified lifecycle command boundary", () => {
       },
     })).toBe(2);
     expect(lifecycleResultExitCode("governance.currentMainRecord", { ok: true, value: {} })).toBe(0);
+    expect(lifecycleResultExitCode("releases.refreshReleaseInput", {
+      kind: "ReleaseInputCandidateReady",
+    })).toBe(0);
+    expect(lifecycleResultExitCode("releases.refreshReleaseInput", {
+      kind: "RepositoryIneligible",
+    })).toBe(1);
     expect(lifecycleResultExitCode("governance.currentMainRecord", {
       ok: false,
       failure: { code: "InvalidSchema", path: "currentMain", message: "invalid" },
@@ -785,6 +870,7 @@ function recordingClient(calls: string[]): Client {
       check: call("releases.check"),
       checkRepository: call("releases.checkRepository"),
       releaseInputRecord: call("releases.releaseInputRecord"),
+      refreshReleaseInput: call("releases.refreshReleaseInput"),
       build: call("releases.build"),
     },
     vendors: { status: call("vendors.status"), update: call("vendors.update") },
@@ -826,10 +912,16 @@ function operationRequests(): LifecycleOperationRequest[] {
     { mode: "release-input-record" },
     new TextEncoder().encode(JSON.stringify({ schemaVersion: 1 })),
   );
+  const releaseInputRefresh = parseCheckOperationRequest({
+    ...stagedReleaseWorkspace(),
+    mode: "release-input-refresh",
+    member: ["alpha"],
+  });
   return [
     { operation: "releases.check", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
     stagedCheck,
     releaseInputRecord,
+    releaseInputRefresh,
     currentMainRecord,
     currentMainSelection,
     { operation: "releases.build", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
@@ -931,6 +1023,13 @@ function runRawr(args: readonly string[], input?: string | Uint8Array) {
     env: { ...process.env, BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" },
     input,
   });
+}
+
+function git(cwd: string, args: readonly string[]): void {
+  const result = spawnSync("/usr/bin/git", args, { cwd, encoding: "utf8" });
+  if (result.status !== 0) {
+    throw new Error(`git ${args.join(" ")} failed: ${result.stderr}`);
+  }
 }
 
 function releaseCheckCommand(contentWorkspace: string, gitExecutable: string): readonly string[] {

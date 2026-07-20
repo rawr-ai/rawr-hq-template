@@ -18,6 +18,10 @@ behavior.
   command. It canonicalizes a bounded stdin body or validates exact envelope
   bytes through one pure procedure; it does not write Personal records or
   acquire repository, filesystem, artifact, or provider authority.
+- Add one releases-owned `release-input-refresh` mode beneath the same command.
+  An explicit closed member list selects staged Git roots; the procedure derives
+  payload manifests and exact skill ownership, preserves surviving explicit
+  ancillary declarations, and emits canonical bytes without writing or building.
 - Replace the acceptance-request/evidence/promotion chain with one canonical
   `current-main` record that binds landed personal Git identity, release input,
   complete release-set identity, provider projections, and evaluation profile.
@@ -47,9 +51,9 @@ behavior.
 ## Modified Capabilities
 
 - `agent-plugin-command-lifecycle`: exposes repository checks, one pure
-  release-input record codec, and one closed current-main record codec without
-  adding a command ID, and retires the receipt-owned explicit provider-retire
-  command.
+  release-input record codec, one read-only staged-index refresh, and one closed
+  current-main record codec without adding a command ID, and retires the
+  receipt-owned explicit provider-retire command.
 - `agent-plugin-lifecycle-mode-selection`: canonical sync/status consume one
   resolved selector and the managed-retire request is removed.
 - `agent-plugin-promotion`: the issuer/acceptance/promotion capability is

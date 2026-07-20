@@ -4,6 +4,7 @@ import {
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
   parseArtifactDigest,
   parseContentAuthority,
   parseGitCommitId,
@@ -26,6 +27,7 @@ type InputOf<T> = T extends (...args: infer TArgs) => unknown ? TArgs[0] : never
 export type CheckRequest = InputOf<Client["releases"]["check"]>;
 export type RepositoryCheckRequest = InputOf<Client["releases"]["checkRepository"]>;
 export type ReleaseInputRecordRequest = InputOf<Client["releases"]["releaseInputRecord"]>;
+export type ReleaseInputRefreshRequest = InputOf<Client["releases"]["refreshReleaseInput"]>;
 export type BuildRequest = InputOf<Client["releases"]["build"]>;
 export type VendorStatusRequest = InputOf<Client["vendors"]["status"]>;
 export type VendorUpdateRequest = InputOf<Client["vendors"]["update"]>;
@@ -42,6 +44,10 @@ export type CheckOperationRequest =
   | Readonly<{ operation: "releases.check"; input: CheckRequest }>
   | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>
   | Readonly<{ operation: "releases.releaseInputRecord"; input: ReleaseInputRecordRequest }>
+  | Readonly<{
+    operation: "releases.refreshReleaseInput";
+    input: ReleaseInputRefreshRequest;
+  }>
   | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>
   | Readonly<{
     operation: "governance.currentMainSelection";
@@ -72,6 +78,7 @@ type CheckDomainFlag =
   | "plugin-root"
   | "plugin"
   | "complete-set"
+  | "member"
   | "current-main-body-json"
   | "current-main-envelope-json";
 
@@ -113,6 +120,17 @@ const CHECK_MODE_ADMITTED_FLAGS = {
     "plugin-root",
   ],
   "release-input-record": [],
+  "release-input-refresh": [
+    "content-workspace",
+    "repository-identity",
+    "content-authority",
+    "remote-name",
+    "remote-url",
+    "ref",
+    "release-input",
+    "plugin-root",
+    "member",
+  ],
   "current-main-record": [
     "current-main-body-json",
     "current-main-envelope-json",
@@ -165,6 +183,21 @@ export function parseCheckOperationRequest(
       return Object.freeze({
         operation: "releases.releaseInputRecord",
         input: parseReleaseInputRecordRequest(releaseInputRecordBytes),
+      });
+    case "release-input-refresh":
+      assertCheckDomain(flags, CHECK_MODE_ADMITTED_FLAGS["release-input-refresh"]);
+      return Object.freeze({
+        operation: "releases.refreshReleaseInput",
+        input: Object.freeze({
+          contentWorkspace: stagedContentWorkspacePolicy(flags),
+          memberIds: Object.freeze(
+            requireStringList(flags.member, "--member", {
+              maxItems: MAX_RELEASE_MEMBERS,
+              unique: true,
+            }).map((memberId) =>
+              requireReleaseValue(parsePluginId(memberId, "--member"))),
+          ),
+        }),
       });
     case "current-main-record":
       assertCheckDomain(flags, CHECK_MODE_ADMITTED_FLAGS["current-main-record"]);
@@ -561,10 +594,13 @@ function optionalBoundedJsonText(input: unknown, label: string): string | undefi
 function requireStringList(
   input: unknown,
   label: string,
-  options: Readonly<{ unique?: boolean }> = {},
+  options: Readonly<{ maxItems?: number; unique?: boolean }> = {},
 ): string[] {
   const values = optionalStringList(input, label);
   if (values.length === 0) throw new LifecycleInputError(`${label} must be provided at least once`);
+  if (options.maxItems !== undefined && values.length > options.maxItems) {
+    throw new LifecycleInputError(`${label} may be provided at most ${options.maxItems} times`);
+  }
   if (options.unique && new Set(values).size !== values.length) {
     throw new LifecycleInputError(`${label} contains a duplicate value`);
   }

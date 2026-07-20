@@ -110,7 +110,7 @@ keep tasks 2A.1-2A.4 open.
   body/envelope round trips, typed malformed-input refusal, one-procedure
   dispatch, and human output byte identity; land this as one semantic Graphite
   node. Record proof in [[README#T6F Personal Checkpoint Prerequisites]].
-- [ ] 3C.1a Add one releases-owned read-only staged-index refresh mode beneath
+- [x] 3C.1a Add one releases-owned read-only staged-index refresh mode beneath
   the existing qualified `check` command. Require an explicit closed member
   list, derive payload manifests and `skills/<identity>/SKILL.md` claims from
   those selected roots, preserve explicit repository-owned ancillary bindings

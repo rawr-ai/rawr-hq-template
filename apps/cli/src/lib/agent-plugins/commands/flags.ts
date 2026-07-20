@@ -32,11 +32,17 @@ export const gitExecutableFlag = Flags.string({
   description: "Absolute controller-bound Git executable",
 });
 
+export const releaseMemberFlag = Flags.string({
+  description: "Explicit curated release member identity",
+  multiple: true,
+});
+
 export const CHECK_MODES = [
   "release",
   "repository-staged",
   "repository-clean",
   "release-input-record",
+  "release-input-refresh",
   "current-main-record",
   "current-main-selection",
 ] as const;
