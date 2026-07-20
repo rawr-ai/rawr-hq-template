@@ -2,7 +2,7 @@
 
 ### Requirement: Current-main is one reviewed canonical selector
 
-The fixed `plugins/agents/.lifecycle/channels/current-main.json` path MUST
+The fixed `.rawr/agent-plugin-lifecycle/channels/current-main.json` path MUST
 contain exactly one canonical envelope with these fields and no others:
 `schemaVersion: 2`, `currentMainDigest: cm2_<sha256>`, and `body`. The body MUST
 contain exactly:
@@ -30,6 +30,10 @@ contain or require an approver, issuer task, acceptance request/evidence, hosted
 approval replay, promotion attestation, receipt, sidecar, controller root,
 artifact path, canonical ref, or machine-local repository path.
 
+No path under `plugins/agents/.lifecycle/**` is a record alias, migration
+source, or fallback. Such paths remain ordinary undeclared children of the
+closed curated plugin root.
+
 #### Scenario: Semantically identical bodies encode once
 - **WHEN** two valid bodies differ only in object insertion order
 - **THEN** encode returns identical canonical body/envelope bytes, byte length,
@@ -39,6 +43,13 @@ artifact path, canonical ref, or machine-local repository path.
 - **WHEN** a record omits Claude or Codex, duplicates either, reorders them, or
   names another provider
 - **THEN** canonical decoding rejects before channel resolution
+
+#### Scenario: Only a legacy plugin-root record exists
+- **WHEN** canonical main contains a valid-looking current-main envelope only
+  under `plugins/agents/.lifecycle/**`
+- **THEN** resolution returns `STALE_RECORD` without reading it as an alias or
+  falling back from the fixed `.rawr` path, and repository closure continues to
+  reject the undeclared plugin-root child
 
 ### Requirement: Current-main resolution binds observed Git authority
 

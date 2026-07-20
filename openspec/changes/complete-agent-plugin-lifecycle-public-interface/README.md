@@ -110,7 +110,7 @@ Inngest candidate bytes.
 | T6C3 export independence | 5.1 complete/reviewed; 5.2-5.4 open | fixed-slot refusal at acquire/native edge; export admission and aggregate retirement remain |
 | T6D truthful test owners | complete, reviewed | owner-local DevOps fixture and ordinary serialized lifecycle/CLI targets |
 | T6E deterministic manifest | complete, reviewed | native JSON projection, code-unit canonicalization, and full build-twice equality |
-| T6F Personal checkpoint prerequisites | active; 3C.0 schema correction prepared, 3C.1-3C.3 landed, 3C.4 publication pending | TypeBox-owned release-input wire records, controller-owned refresh, positive declared-tree closure, tested provider bindings, corrected channel path, and immutable controller distribution without repository coupling |
+| T6F Personal checkpoint prerequisites | active; 3C.0, 3C.1a, and 3C.3a prepared, 3C.1-3C.3 landed, 3C.4 publication pending | TypeBox-owned release-input wire records, controller-owned refresh, positive declared-tree closure, tested provider bindings, corrected channel path, and immutable controller distribution without repository coupling |
 | T6F landing/settlement | active; Template continuation landed, controller publication/install pending | independently landed repos, disposable/live native convergence, read-only repeat |
 
 ## Retired Unlanded Nodes
@@ -127,9 +127,9 @@ follow-up work.
 ## Current Gate
 
 - The exact-mode repair is landed on canonical Template `main` through PR #397.
-  Finish the three bounded fresh-operator prerequisites in order: land the
-  TypeBox-owned release-input wire record, add one releases-owned read-only
-  staged-index refresh operation, and move the compiled current-main path to
+  Land the three prepared bounded fresh-operator prerequisites in order: the
+  TypeBox-owned release-input wire record, the releases-owned read-only
+  staged-index refresh operation, and the compiled current-main path at
   `.rawr/agent-plugin-lifecycle/channels/current-main.json` without an alias.
   Then publish, verify, and install the exact immutable controller through
   [[tasks#8. T6F: Landing And Settlement|task 8.1]] before the first Personal
@@ -222,6 +222,21 @@ bytes through review and commit.
 | State law | `ReleaseInputCandidateReady` and `ReleaseInputReadOnlyConverged` both carry the unique canonical bytes. Every refusal stutters. The handler lexically invokes only `stagedSource.observe`; focused proof keeps writer and unrelated artifact, package, export, provider, governance, and channel ports cold. It creates no store, receipt, cache, ledger, or second state owner. |
 | Proof | Before the final review fixes, the complete lifecycle suite passed 43 files / 390 tests and the complete CLI suite passed 47 files / 326 tests; both owners' lint, typecheck, build, sync, structural, locked Habitat/dependency, strict OpenSpec, and diff gates were green. The final request-snapshot and logical-byte fixes then passed the affected refresh file 9/9 plus lifecycle lint and typecheck without cache; no duplicate full suite was launched. The synthetic Personal-shaped case covers 11 exact owners, 1,610 staged files, 100 skills, and 111 derived ownership-index claims; exact repeat is byte-identical, malformed and wrong-authority prior records refuse, a noncanonical derived root refuses before Git observation, caller mutation across a deferred observation cannot rewrite authority, and 65 logical MiB sharing one 1 MiB object refuses before payload construction. |
 | Proof ceiling | This proves local direct-client semantics for repository oRPC 1.13.5 plus the selected CLI projection. It does not adopt Personal bytes, prove a landed controller asset, build a complete release set, or mutate repository/channel/provider state. |
+
+### T6F Current-Main Path Correction
+
+This bounded checkpoint completes
+[[tasks#3C. Personal Checkpoint Prerequisites|task 3C.3a]]. Governance reads the
+reviewed selector only from
+`.rawr/agent-plugin-lifecycle/channels/current-main.json`; it does not scan or
+fall back into curated plugin content.
+
+| 3C.3a boundary | Proof |
+| --- | --- |
+| Sole path | The compiled governance path is outside `plugins/agents`. Neither historical `plugins/agents/.lifecycle/current-main.json` nor `plugins/agents/.lifecycle/channels/current-main.json` is an alias. The existing closed plugin-root policy receives no exception for `.lifecycle` children. |
+| Behavior | Real-Git selection accepts the canonical `.rawr` record. Each old-path-only fixture contains a valid envelope, yet returns `STALE_RECORD`; a fallback would make either fixture eligible and fail the test. |
+| Static and record proof | Focused governance proof passed 2 files / 19 tests. Lifecycle lint and typecheck passed without cache; strict OpenSpec validation and `git diff --check` passed. |
+| Proof ceiling | This changes only fixed repository path policy. It adds no schema, migration reader, writer, state store, repository coupling, provider access, or runtime composition. |
 
 The Personal repository is currently private on a host plan whose ruleset and
 branch-protection APIs reject required-check configuration. Repository code can

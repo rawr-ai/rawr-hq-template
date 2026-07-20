@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 
 import {
+  CURRENT_MAIN_V2_RECORD_PATH,
   createExactGitBlobPointer,
   parseRepository,
 } from "../../../src/service/modules/governance/model";
@@ -32,7 +33,10 @@ import {
 
 const REPOSITORY_IDENTITY = "git:github.com/example/personal-rawr-hq";
 const REMOTE_URL = "https://github.com/example/personal-rawr-hq.git";
-const CURRENT_MAIN_RECORD_PATH = "plugins/agents/.lifecycle/channels/current-main.json";
+const LEGACY_CURRENT_MAIN_RECORD_PATHS = [
+  "plugins/agents/.lifecycle/current-main.json",
+  "plugins/agents/.lifecycle/channels/current-main.json",
+] as const;
 
 describe("governance exact-Git resource selection", () => {
   let fixture: OwnedFixtureRoot | undefined;
@@ -152,6 +156,39 @@ describe("governance exact-Git resource selection", () => {
       reason: expect.stringContaining("not reachable from opening canonical main"),
     });
   });
+
+  it.each(LEGACY_CURRENT_MAIN_RECORD_PATHS)(
+    "treats an old-path-only record at %s as stale without fallback",
+    async (recordPath) => {
+      fixture = await createOwnedFixtureRoot();
+      const repository = await createGeneratedGitRepository(fixture);
+      await git(repository.root, ["remote", "set-url", "origin", REMOTE_URL]);
+      const repositoryIdentity = parseRepository(REPOSITORY_IDENTITY, "fixture.repositoryIdentity");
+      if (!repositoryIdentity.ok) throw new Error(repositoryIdentity.issues[0].message);
+      await commitCurrentMainRecord({
+        repositoryRoot: repository.root,
+        releaseInputFile: repository.releaseInputFile,
+        sourceCommit: repository.policy.sourceCommit,
+        sourceTree: repository.policy.sourceTree,
+        recordPath,
+        commitMessage: "record old-path-only source selection",
+      });
+      const client = createLifecycleTestClient({
+        contentWorkspace: makeNodeContentWorkspacePort({
+          gitExecutable: await realpath(GIT_EXECUTABLE),
+        }),
+      });
+
+      await expect(client.governance.currentMainSelection({
+        locator: {
+          workspacePath: repository.root,
+          expectedRepositoryIdentity: repositoryIdentity.value,
+        },
+      }, testInvocation)).resolves.toMatchObject({
+        kind: "STALE_RECORD",
+      });
+    },
+  );
 });
 
 async function commitCurrentMainRecord(input: Readonly<{
@@ -159,6 +196,7 @@ async function commitCurrentMainRecord(input: Readonly<{
   releaseInputFile: string;
   sourceCommit: string;
   sourceTree: string;
+  recordPath?: string;
   commitMessage: string;
 }>): Promise<void> {
   const releaseInput = decodeAgentPluginReleaseInput(
@@ -196,9 +234,10 @@ async function commitCurrentMainRecord(input: Readonly<{
     },
   }, testInvocation);
   if (!encoded.ok) throw new Error(encoded.failure.message);
-  const recordFile = join(input.repositoryRoot, ...CURRENT_MAIN_RECORD_PATH.split("/"));
+  const recordPath = input.recordPath ?? CURRENT_MAIN_V2_RECORD_PATH;
+  const recordFile = join(input.repositoryRoot, ...recordPath.split("/"));
   await mkdir(dirname(recordFile), { recursive: true });
   await writeFile(recordFile, encoded.value.bytes);
-  await git(input.repositoryRoot, ["add", CURRENT_MAIN_RECORD_PATH]);
+  await git(input.repositoryRoot, ["add", recordPath]);
   await git(input.repositoryRoot, ["commit", "-m", input.commitMessage]);
 }

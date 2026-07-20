@@ -128,7 +128,7 @@ keep tasks 2A.1-2A.4 open.
   codecs and stores remain unchanged. In the same provider-owned node, prove a
   stale selected member is natively refreshed while an omitted installed member
   is preserved by complete-test, then prove the repeat is read-only.
-- [ ] 3C.3a Move the fixed current-main record policy path out of the curated
+- [x] 3C.3a Move the fixed current-main record policy path out of the curated
   plugin root to `.rawr/agent-plugin-lifecycle/channels/current-main.json`.
   Accept no old-path alias, scan, fallback, or migration reader; old-path-only
   state is inert and rejected as undeclared plugin content.
