@@ -3,6 +3,7 @@ import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 export type LifecycleOperation =
   | "releases.check"
   | "releases.checkRepository"
+  | "releases.releaseInputRecord"
   | "releases.build"
   | "vendors.status"
   | "vendors.update"
@@ -19,6 +20,9 @@ export type LifecycleClientByOperation = Readonly<{
   "releases.check": Readonly<{ releases: Pick<Client["releases"], "check"> }>;
   "releases.checkRepository": Readonly<{
     releases: Pick<Client["releases"], "checkRepository">;
+  }>;
+  "releases.releaseInputRecord": Readonly<{
+    releases: Pick<Client["releases"], "releaseInputRecord">;
   }>;
   "releases.build": Readonly<{ releases: Pick<Client["releases"], "build"> }>;
   "vendors.status": Readonly<{ vendors: Pick<Client["vendors"], "status"> }>;

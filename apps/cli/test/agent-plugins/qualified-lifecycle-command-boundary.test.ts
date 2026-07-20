@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
+import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "@rawr/agent-plugin-lifecycle/release";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -34,6 +35,7 @@ import {
   createOwnedFixtureRoot,
   removeOwnedFixtureRoot,
 } from "./service-runtime/releases/owned-fixture-root";
+import { productFixture } from "./service-runtime/providers/product-fixture";
 
 const cliRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const hex40 = "a".repeat(40);
@@ -177,6 +179,11 @@ describe("qualified lifecycle command boundary", () => {
       { ...releaseWorkspace(), mode: "repository-clean", plugin: "alpha" },
       { ...releaseWorkspace(), mode: "repository-clean", "complete-set": true },
       { mode: "current-main-record" },
+      { mode: "release-input-record" },
+      {
+        mode: "release-input-record",
+        "content-workspace": "/tmp/content",
+      },
       {
         mode: "current-main-record",
         "current-main-body-json": currentMainBody,
@@ -206,6 +213,10 @@ describe("qualified lifecycle command boundary", () => {
     }
 
     expect(clientConstructions).toBe(0);
+    expect(() => parseCheckOperationRequest(
+      { mode: "release-input-record" },
+      new Uint8Array(MAX_RELEASE_INPUT_ENVELOPE_BYTES + 1),
+    )).toThrow("stdin exceeds");
 
     for (const retired of [
       ["--mode", "protected-lanes"],
@@ -245,6 +256,32 @@ describe("qualified lifecycle command boundary", () => {
     })).toEqual({
       operation: "governance.currentMainRecord",
       input: { kind: "validate-envelope", bytes: new TextEncoder().encode(envelopeJson) },
+    });
+    const releaseInputBody = { schemaVersion: 1, contentAuthority: "rawr-hq" };
+    expect(parseCheckOperationRequest(
+      { mode: "release-input-record" },
+      new TextEncoder().encode(JSON.stringify(releaseInputBody)),
+    )).toEqual({
+      operation: "releases.releaseInputRecord",
+      input: { kind: "encode-body", body: releaseInputBody },
+    });
+    const releaseInputEnvelope = new TextEncoder().encode(
+      `{\"releaseInputDigest\":\"ri1_${"0".repeat(64)}\",\"body\":{}}\n`,
+    );
+    expect(parseCheckOperationRequest(
+      { mode: "release-input-record" },
+      releaseInputEnvelope,
+    )).toEqual({
+      operation: "releases.releaseInputRecord",
+      input: { kind: "validate-envelope", bytes: releaseInputEnvelope },
+    });
+    const invalidUtf8 = new Uint8Array([0xff]);
+    expect(parseCheckOperationRequest(
+      { mode: "release-input-record" },
+      invalidUtf8,
+    )).toEqual({
+      operation: "releases.releaseInputRecord",
+      input: { kind: "validate-envelope", bytes: invalidUtf8 },
     });
     expect(parseBuildRequest({ ...releaseWorkspace(), "complete-set": true })).toMatchObject({
       mode: { kind: "complete-set" },
@@ -335,6 +372,82 @@ describe("qualified lifecycle command boundary", () => {
       data: {
         operation: "governance.currentMainRecord",
         result: { ok: true, value: { envelopeText: projected.envelopeText } },
+      },
+    });
+  });
+
+  it("authors and validates release-input records from bounded stdin without executable authority", () => {
+    const bodyText = JSON.stringify(productFixture().releaseInput.body);
+    const args = [
+      "agent", "plugins", "check",
+      "--mode", "release-input-record",
+    ] as const;
+    const result = runRawr([...args, "--json"], bodyText);
+
+    expect(result.status, result.stderr).toBe(0);
+    const output = parseSingleJson(result.stdout);
+    expect(output).toMatchObject({
+      ok: true,
+      data: {
+        operation: "releases.releaseInputRecord",
+        result: { ok: true, value: { releaseInputDigest: expect.stringMatching(/^ri1_[0-9a-f]{64}$/u) } },
+      },
+    });
+    const data = jsonRecord(jsonRecord(output).data);
+    const projectedResult = jsonRecord(data.result);
+    const projectedValue = jsonRecord(projectedResult.value);
+    expect(projectedValue.bytes).toBeUndefined();
+    expect(typeof projectedValue.envelopeText).toBe("string");
+    if (typeof projectedValue.envelopeText !== "string") throw new Error("Missing release-input envelope text");
+    expect(new TextEncoder().encode(projectedValue.envelopeText).byteLength).toBe(projectedValue.byteLength);
+
+    const human = runRawr(args, bodyText);
+    expect(human.status, human.stderr).toBe(0);
+    expect(human.stdout).toBe(projectedValue.envelopeText);
+
+    const validated = runRawr([...args, "--json"], projectedValue.envelopeText);
+    expect(validated.status, validated.stderr).toBe(0);
+    expect(parseSingleJson(validated.stdout)).toMatchObject({
+      ok: true,
+      data: {
+        operation: "releases.releaseInputRecord",
+        result: { ok: true, value: { envelopeText: projectedValue.envelopeText } },
+      },
+    });
+
+    for (const rejected of [
+      runRawr([...args, "--json"]),
+      runRawr([...args, "--git-executable", "/usr/bin/git", "--json"], bodyText),
+    ]) {
+      expect(rejected.status, `${rejected.stderr}\n${rejected.stdout}`).not.toBe(0);
+      expect(parseSingleJson(rejected.stdout)).toMatchObject({ ok: false });
+    }
+    const providerBinding = runRawr([
+      ...args,
+      "--provider-executable", "codex=/usr/bin/false",
+      "--json",
+    ], bodyText);
+    expect(providerBinding.status).toBe(2);
+    expect(providerBinding.stderr).toContain("Nonexistent flag: --provider-executable");
+
+    const invalidJsonResult = runRawr([...args, "--json"], "{");
+    expect(invalidJsonResult.status, invalidJsonResult.stderr).toBe(1);
+    const invalidJson = parseSingleJson(invalidJsonResult.stdout);
+    expect(invalidJson).toMatchObject({
+      ok: true,
+      data: {
+        operation: "releases.releaseInputRecord",
+        result: { ok: false, issues: [{ code: "INVALID_JSON" }] },
+      },
+    });
+    const invalidUtf8Result = runRawr([...args, "--json"], new Uint8Array([0xff]));
+    expect(invalidUtf8Result.status, invalidUtf8Result.stderr).toBe(1);
+    const invalidUtf8 = parseSingleJson(invalidUtf8Result.stdout);
+    expect(invalidUtf8).toMatchObject({
+      ok: true,
+      data: {
+        operation: "releases.releaseInputRecord",
+        result: { ok: false, issues: [{ code: "INVALID_UTF8" }] },
       },
     });
   });
@@ -671,6 +784,7 @@ function recordingClient(calls: string[]): Client {
     releases: {
       check: call("releases.check"),
       checkRepository: call("releases.checkRepository"),
+      releaseInputRecord: call("releases.releaseInputRecord"),
       build: call("releases.build"),
     },
     vendors: { status: call("vendors.status"), update: call("vendors.update") },
@@ -708,9 +822,14 @@ function operationRequests(): LifecycleOperationRequest[] {
     "content-workspace": "/tmp/content",
     "repository-identity": "git:github.com/rawr-ai/rawr-hq",
   });
+  const releaseInputRecord = parseCheckOperationRequest(
+    { mode: "release-input-record" },
+    new TextEncoder().encode(JSON.stringify({ schemaVersion: 1 })),
+  );
   return [
     { operation: "releases.check", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
     stagedCheck,
+    releaseInputRecord,
     currentMainRecord,
     currentMainSelection,
     { operation: "releases.build", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
@@ -805,11 +924,12 @@ function currentMainBodyFixture() {
   };
 }
 
-function runRawr(args: readonly string[]) {
+function runRawr(args: readonly string[], input?: string | Uint8Array) {
   return spawnSync("bun", [path.join(cliRoot, "test", "command-fixture", "command-test-cli.ts"), ...args], {
     cwd: cliRoot,
     encoding: "utf8",
     env: { ...process.env, BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" },
+    input,
   });
 }
 

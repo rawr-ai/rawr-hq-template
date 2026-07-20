@@ -96,6 +96,7 @@ Inngest candidate bytes.
 | T6C3 export independence | 5.1 complete/reviewed; 5.2-5.4 open | fixed-slot refusal at acquire/native edge; export admission and aggregate retirement remain |
 | T6D truthful test owners | complete, reviewed | owner-local DevOps fixture and ordinary serialized lifecycle/CLI targets |
 | T6E deterministic manifest | complete, reviewed | native JSON projection, code-unit canonicalization, and full build-twice equality |
+| T6F Personal checkpoint prerequisites | active; 3C.1 complete/reviewed and queued for landing | pure release-input authoring, positive declared-tree closure, tested provider bindings, and immutable controller distribution without repository coupling |
 | T6F landing/settlement | open; 8.1 next | independently landed repos, disposable/live native convergence, read-only repeat |
 
 ## Retired Unlanded Nodes
@@ -113,6 +114,10 @@ follow-up work.
 
 - Land the all-green Graphite stack and install the immutable controller from
   canonical Template `main` before the first personal semantic checkpoint.
+- Complete [[tasks#3C. Personal Checkpoint Prerequisites|tasks 3C.1-3C.4]] as
+  separately green Template nodes before replacing the obsolete Personal gate.
+  These are missing public data/artifact projections, not a new controller,
+  provider installer, transfer graph, or repository relationship.
 - [[tasks#2A. C5 Context-Direction Correction|Tasks 2A.1-2A.4]] remain open.
   Their residual export facade/port/root-import, provider-binding, and public-
   router debt authorizes no coordinator, compatibility path, second client, or
@@ -126,6 +131,53 @@ follow-up work.
   Template landing or the native-provider settlement in tasks 8.1-8.6.
 - Keep Inngest `HF01_PENDING`; exact landed release input excludes its external
   candidate root without blocking unrelated landed content.
+
+## T6F Personal Checkpoint Prerequisites
+
+The first Personal lifecycle record cannot be handwritten around an absent
+Template interface. The narrow prerequisite sequence is monotonic: Template
+first canonicalizes one release-input record without ports; repository checks
+then reject an undeclared canonical plugin child; complete-test returns the
+exact successful provider binding it already verified; finally, landed
+Template `main` publishes an immutable installed-controller artifact for
+repository-independent CI use. None of those steps creates another state owner.
+
+The `release-input-record` slice stays inside the existing releases
+module and qualified `check` command. JSON arrives through bounded stdin because
+a complete closed-world input may exceed safe argument limits. The procedure
+either validates exact envelope bytes or constructs the canonical envelope from
+a body, and the CLI transports those bytes without reserialization. Git,
+artifact, package, export, provider, governance, and filesystem resources remain
+cold.
+
+| 3C.1 boundary | Proof |
+| --- | --- |
+| Service ownership | One releases-owned TypeBox contract and oRPC handler accept body or envelope bytes and return the codec-owned canonical envelope. Request, result, and shared release-issue types are `Static` projections of their owner-local schemas; the oRPC contract consumes those exact schemas through the HQ SDK adapter, with `Type.Unsafe` limited to the refined `Uint8Array` runtime boundary. The handler has no repository, filesystem, artifact, package, export, provider, governance, capsule, Oclif, app, or runtime capability. |
+| CLI transport | Existing `check --mode release-input-record` accepts only nonterminal, nonempty stdin through the protocol ceiling, rejects cross-mode flags before client construction, invokes exactly one procedure, and preserves validated canonical bytes in JSON and human output without reserialization. |
+| Behavior | The complete lifecycle suite passed 42 files / 365 tests and the complete CLI suite passed 47 files / 324 tests. Current-byte focused proof passed 2 lifecycle files / 8 tests and 3 CLI files / 21 tests, including exact body/envelope round trips, compile-time schema/type equality, malformed and surplus adapter rejection, malformed UTF-8/JSON and digest refusal, terminal/empty/exact-limit/over-limit stdin, cold executable bindings, one-procedure dispatch, and human byte identity. |
+| Static and structural | Lifecycle and CLI lint, typecheck, and build passed without cache. All three locked Habitat rules passed: positive service topology, dependency direction, and command-channel topology. Strict OpenSpec validation and `git diff --check` passed. |
+| Reviews | Architecture/authority, TypeScript/refactor, behavior/testing, and structural/Habitat reviewers report no remaining P1/P2. The structural loop moved the sole runtime release-value import back through the admitted CLI input module without relaxing the ratchet. The TypeScript loop removed two redundant whole-envelope copies. |
+| Proof ceiling | This proves pure canonical authoring and transport only. It does not write a Personal record, inspect Git, build a release, mutate a provider, or satisfy [[tasks#3C. Personal Checkpoint Prerequisites|tasks 3C.2-3C.5]]. The repository resolves oRPC 1.13.5, so this is a local direct-client claim rather than the later 1.14.8 wire fixture. |
+
+The Personal repository is currently private on a host plan whose ruleset and
+branch-protection APIs reject required-check configuration. Repository code can
+still supply an unconditional workflow and non-skippable-by-default local
+feedback, but it cannot honestly prove that a direct push is impossible. That
+server-side enforcement is an external operational precondition, not a reason
+to add a local bypass, auto-repair path, or second lifecycle authority.
+
+## Template Required Ratchet Settlement Gate
+
+The Template repository has the required workflow but does not yet have the
+server-side rule that makes it non-optional. This is a settlement precondition,
+not another source-code mechanism:
+
+| Observation | Exact evidence |
+| --- | --- |
+| Preimage | At `2026-07-20T09:03:01Z`, read-only GitHub API inspection returned HTTP 404 `Branch not protected` for `rawr-ai/rawr-hq-template` `main` and `[]` for repository rulesets. |
+| Consequence | `.github/workflows/repository-ratchet.yml` runs `ratchet:required`, and the local pre-push hook provides ordinary feedback, but neither currently prevents an authorized direct push or `--no-verify`. The initiative cannot call lint, typecheck, and Habitat non-skippable yet. |
+| Settlement order | Perform no repository-policy mutation before [[tasks#8. T6F: Landing And Settlement|task 8]]. After the continuation stack lands, configure one server-owned rule for canonical `main` requiring `Repository Ratchet / Required lint, typecheck, and topology`, then read back the exact rule and prove a failing candidate cannot merge before closure. |
+| Boundary | The repository rule owns merge admission only. It does not become lifecycle state, run provider convergence, modify Personal, or create a fallback controller path. |
 
 ## Template Submission Readiness Proof
 

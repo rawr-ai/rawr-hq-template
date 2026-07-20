@@ -79,7 +79,10 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
 
 function lifecycleHumanLines(operation: LifecycleOperationRequest["operation"], result: unknown): readonly string[] {
   const record = asRecord(result);
-  if (operation === "governance.currentMainRecord" && record.ok === true) {
+  if (
+    (operation === "releases.releaseInputRecord" || operation === "governance.currentMainRecord")
+    && record.ok === true
+  ) {
     const envelopeText = asRecord(record.value).envelopeText;
     if (typeof envelopeText === "string" && envelopeText.endsWith("\n")) {
       return [envelopeText.slice(0, -1)];

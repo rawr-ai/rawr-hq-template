@@ -14,6 +14,10 @@ behavior.
 
 - Keep the closed staged/clean repository checks under
   `rawr agent plugins check`.
+- Add one releases-owned `release-input-record` mode beneath that existing
+  command. It canonicalizes a bounded stdin body or validates exact envelope
+  bytes through one pure procedure; it does not write Personal records or
+  acquire repository, filesystem, artifact, or provider authority.
 - Replace the acceptance-request/evidence/promotion chain with one canonical
   `current-main` record that binds landed personal Git identity, release input,
   complete release-set identity, provider projections, and evaluation profile.
@@ -42,9 +46,10 @@ behavior.
 
 ## Modified Capabilities
 
-- `agent-plugin-command-lifecycle`: exposes repository checks plus one
-  closed current-main record codec without adding a command ID, and retires the
-  receipt-owned explicit provider-retire command.
+- `agent-plugin-command-lifecycle`: exposes repository checks, one pure
+  release-input record codec, and one closed current-main record codec without
+  adding a command ID, and retires the receipt-owned explicit provider-retire
+  command.
 - `agent-plugin-lifecycle-mode-selection`: canonical sync/status consume one
   resolved selector and the managed-retire request is removed.
 - `agent-plugin-promotion`: the issuer/acceptance/promotion capability is

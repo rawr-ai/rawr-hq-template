@@ -36,6 +36,7 @@ export const CHECK_MODES = [
   "release",
   "repository-staged",
   "repository-clean",
+  "release-input-record",
   "current-main-record",
   "current-main-selection",
 ] as const;

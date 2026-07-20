@@ -1,7 +1,11 @@
-import type {
-  ArtifactRef,
-  PluginId,
-  ReleaseArtifactRef,
+import { ReadonlyObject, Refine, Type, type Static } from "typebox";
+
+import {
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  ReleaseIssueSchema,
+  type ArtifactRef,
+  type PluginId,
+  type ReleaseArtifactRef,
 } from "../../../../shared/release";
 import type {
   ContentWorkspacePolicy,
@@ -19,6 +23,53 @@ export interface AgentPluginCheckRequest {
 }
 
 export type AgentPluginBuildRequest = AgentPluginCheckRequest;
+
+const Uint8ArraySchema = Refine(
+  Type.Unsafe<Uint8Array>(Type.Unknown()),
+  (value) => value instanceof Uint8Array,
+  () => "Expected Uint8Array",
+);
+
+const ReleaseInputDigestSchema = Type.String({ pattern: "^ri1_[0-9a-f]{64}$" });
+
+export const ReleaseInputRecordInputSchema = Type.Union([
+  ReadonlyObject(Type.Object(
+    { kind: Type.Literal("encode-body"), body: Type.Unknown() },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    { kind: Type.Literal("validate-envelope"), bytes: Uint8ArraySchema },
+  ), { additionalProperties: false }),
+]);
+
+export const ReleaseInputRecordResultSchema = Type.Union([
+  ReadonlyObject(Type.Object(
+    {
+      ok: Type.Literal(true),
+      value: ReadonlyObject(Type.Object(
+        {
+          releaseInputDigest: ReleaseInputDigestSchema,
+          byteLength: Type.Integer({
+            minimum: 1,
+            maximum: MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+          }),
+          bytes: Uint8ArraySchema,
+        },
+      ), { additionalProperties: false }),
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      ok: Type.Literal(false),
+      issues: ReadonlyObject(Type.Array(ReleaseIssueSchema), {
+        minItems: 1,
+        maxItems: 200_000,
+      }),
+    },
+  ), { additionalProperties: false }),
+]);
+
+export type ReleaseInputRecordRequest = Static<typeof ReleaseInputRecordInputSchema>;
+export type ReleaseInputRecordResult = Static<typeof ReleaseInputRecordResultSchema>;
 
 export type RepositoryCheckRequest =
   | Readonly<{

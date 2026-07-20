@@ -38,6 +38,11 @@ const LIFECYCLE_OBJECT_DEP_KEYS = Object.freeze([
 const OPERATION_CASES = Object.freeze([
   { operation: "releases.check", owner: "releases", procedure: "check" },
   { operation: "releases.checkRepository", owner: "releases", procedure: "checkRepository" },
+  {
+    operation: "releases.releaseInputRecord",
+    owner: "releases",
+    procedure: "releaseInputRecord",
+  },
   { operation: "releases.build", owner: "releases", procedure: "build" },
   { operation: "vendors.status", owner: "vendors", procedure: "status" },
   { operation: "vendors.update", owner: "vendors", procedure: "update" },

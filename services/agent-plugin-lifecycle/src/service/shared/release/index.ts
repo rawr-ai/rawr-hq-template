@@ -51,7 +51,13 @@ export {
   type ReleaseSetDigest,
   type RepositoryIdentity,
 } from "./primitives";
-export type { ReleaseIssue, ReleaseIssueCode } from "./issues";
+export {
+  RELEASE_ISSUE_CODES,
+  ReleaseIssueCodeSchema,
+  ReleaseIssueSchema,
+  type ReleaseIssue,
+  type ReleaseIssueCode,
+} from "./issues";
 export type { NonEmptyReadonlyArray, ReleaseResult } from "./result";
 export { addReleaseSetPayloadBytes, type PayloadByteTotal } from "./payload-bounds";
 

@@ -94,6 +94,39 @@ keep tasks 2A.1-2A.4 open.
 - [x] 3B.5 Run focused tests, lint, typecheck, build, structural/Habitat, strict
   OpenSpec, and four standing reviews; commit this semantic Graphite node alone.
 
+## 3C. Personal Checkpoint Prerequisites
+
+- [x] 3C.1 Add one releases-owned `release-input-record` procedure beneath the
+  existing qualified `check` command. Accept a bounded body or exact envelope
+  from stdin, return the canonical envelope bytes, and acquire no Git,
+  artifact, provider, export, governance, or filesystem authority. Prove exact
+  body/envelope round trips, typed malformed-input refusal, one-procedure
+  dispatch, and human output byte identity; land this as one semantic Graphite
+  node. Record proof in [[README#T6F Personal Checkpoint Prerequisites]].
+- [ ] 3C.2 Close the declared plugin-root axis during staged and clean repository
+  checks: a canonical immediate plugin child absent from the release input must
+  refuse before undeclared payload materialization. Preserve declared-member
+  file closure, ignore unrelated repository paths, add no global scanner or
+  semantic Grit rule, and land the behavior as a separate semantic node.
+- [ ] 3C.3 Project the exact verified provider binding on each successful
+  complete-test target outcome so the current-main record can be authored from
+  the same projection that was tested. Failures expose no binding; evidence
+  codecs and stores remain unchanged. In the same provider-owned node, prove a
+  stale selected member is natively refreshed while an omitted installed member
+  is preserved by complete-test, then prove the repeat is read-only.
+- [ ] 3C.4 Publish an immutable installed-controller artifact from landed
+  Template `main` for repository-independent consumption. Personal CI may
+  verify and invoke that artifact by absolute path; it may not checkout,
+  rebuild, import, or vendor Template implementation. Record the exact digest,
+  source revision, platform, byte length, and update recipe.
+- [ ] 3C.5 Replace the obsolete Personal hook only after 3C.1-3C.4 are landed
+  and installed. The first Personal checkpoint must include its canonical
+  release input, positive content topology, honest lint/typecheck units, and
+  unconditional CI invocation of the pinned external controller. Do not use
+  `--no-verify`, legacy mixed sync, ambient global repair, or a source checkout
+  fallback. Server-side required-check enforcement remains an explicit external
+  precondition wherever the repository host plan cannot enforce it.
+
 ## 4. T6C2: Thin Canonical Provider Path
 
 - [x] 4.1 Change only canonical sync/status to consume the resolved selection
@@ -263,7 +296,10 @@ keep tasks 2A.1-2A.4 open.
   use legacy sync.
 - [ ] 8.8 Archive the change records, land record-only closure nodes, drain local
   and remote Graphite branches/worktrees in both repositories, and prove clean
-  canonical `main`, required ratchets, and healthy installed operations.
+  canonical `main`, healthy installed operations, and a read-back server-side
+  Template rule that requires `Repository Ratchet / Required lint, typecheck,
+  and topology` on `main`; local hooks and a merely present workflow are not
+  sufficient proof.
 
 ## Related
 

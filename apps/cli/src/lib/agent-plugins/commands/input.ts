@@ -3,6 +3,7 @@ import path from "node:path";
 import {
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   parseArtifactDigest,
   parseContentAuthority,
   parseGitCommitId,
@@ -18,10 +19,13 @@ import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 
 import { CHECK_MODES, type CheckMode } from "./flags";
 
+export { MAX_RELEASE_INPUT_ENVELOPE_BYTES };
+
 type InputOf<T> = T extends (...args: infer TArgs) => unknown ? TArgs[0] : never;
 
 export type CheckRequest = InputOf<Client["releases"]["check"]>;
 export type RepositoryCheckRequest = InputOf<Client["releases"]["checkRepository"]>;
+export type ReleaseInputRecordRequest = InputOf<Client["releases"]["releaseInputRecord"]>;
 export type BuildRequest = InputOf<Client["releases"]["build"]>;
 export type VendorStatusRequest = InputOf<Client["vendors"]["status"]>;
 export type VendorUpdateRequest = InputOf<Client["vendors"]["update"]>;
@@ -37,6 +41,7 @@ export type CurrentMainSelectionRequest = InputOf<Client["governance"]["currentM
 export type CheckOperationRequest =
   | Readonly<{ operation: "releases.check"; input: CheckRequest }>
   | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>
+  | Readonly<{ operation: "releases.releaseInputRecord"; input: ReleaseInputRecordRequest }>
   | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>
   | Readonly<{
     operation: "governance.currentMainSelection";
@@ -107,6 +112,7 @@ const CHECK_MODE_ADMITTED_FLAGS = {
     "release-input",
     "plugin-root",
   ],
+  "release-input-record": [],
   "current-main-record": [
     "current-main-body-json",
     "current-main-envelope-json",
@@ -121,7 +127,10 @@ const CHECK_DOMAIN_FLAGS = Object.freeze(
   [...new Set(Object.values(CHECK_MODE_ADMITTED_FLAGS).flat())],
 ) satisfies readonly CheckDomainFlag[];
 
-export function parseCheckOperationRequest(flags: RawFlags): CheckOperationRequest {
+export function parseCheckOperationRequest(
+  flags: RawFlags,
+  releaseInputRecordBytes?: Uint8Array,
+): CheckOperationRequest {
   const mode = flags.mode === undefined
     ? "release"
     : requireLiteral(
@@ -151,6 +160,12 @@ export function parseCheckOperationRequest(flags: RawFlags): CheckOperationReque
           contentWorkspace: releaseContentWorkspacePolicy(flags),
         }),
       });
+    case "release-input-record":
+      assertCheckDomain(flags, CHECK_MODE_ADMITTED_FLAGS["release-input-record"]);
+      return Object.freeze({
+        operation: "releases.releaseInputRecord",
+        input: parseReleaseInputRecordRequest(releaseInputRecordBytes),
+      });
     case "current-main-record":
       assertCheckDomain(flags, CHECK_MODE_ADMITTED_FLAGS["current-main-record"]);
       return Object.freeze({
@@ -175,6 +190,37 @@ export function parseCheckOperationRequest(flags: RawFlags): CheckOperationReque
         }),
       });
   }
+}
+
+function parseReleaseInputRecordRequest(
+  bytes: Uint8Array | undefined,
+): ReleaseInputRecordRequest {
+  if (bytes === undefined || bytes.byteLength === 0) {
+    throw new LifecycleInputError("--mode release-input-record requires nonempty stdin");
+  }
+  if (bytes.byteLength > MAX_RELEASE_INPUT_ENVELOPE_BYTES) {
+    throw new LifecycleInputError(
+      `--mode release-input-record stdin exceeds ${MAX_RELEASE_INPUT_ENVELOPE_BYTES} bytes`,
+    );
+  }
+
+  let body: unknown;
+  try {
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    body = JSON.parse(text) as unknown;
+  } catch {
+    return Object.freeze({ kind: "validate-envelope", bytes });
+  }
+
+  if (
+    body !== null
+    && typeof body === "object"
+    && !Array.isArray(body)
+    && (Object.hasOwn(body, "releaseInputDigest") || Object.hasOwn(body, "body"))
+  ) {
+    return Object.freeze({ kind: "validate-envelope", bytes });
+  }
+  return Object.freeze({ kind: "encode-body", body });
 }
 
 function parseCurrentMainRecordRequest(flags: RawFlags): CurrentMainRecordRequest {
