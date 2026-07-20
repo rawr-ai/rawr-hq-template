@@ -6,6 +6,7 @@ import {
 import {
   marketplaceState,
   type ProviderMarketplaceObservation,
+  type ProviderMarketplaceRegistration,
 } from "../../service/modules/providers/model/policy/marketplace";
 import type {
   ProviderCapability,
@@ -14,6 +15,7 @@ import type { NativeStandaloneExposureObservation } from "../../service/modules/
 import type { ProviderMarketplaceSourceReader } from "../../service/modules/providers/ports/state";
 import {
   CODEX_ADAPTER_PROTOCOL,
+  createCodexNativeInventoryBridge,
   createCodexProviderAdapter,
   type CodexAppServerPort,
   type CodexConfiguredPlugin,
@@ -23,6 +25,10 @@ import {
   type CodexSessionPort,
   type CodexVisiblePlugin,
 } from "./codex";
+import {
+  createCanonicalNativeObserver,
+  type CanonicalNativeObserver,
+} from "./canonical-native-observer";
 import {
   createNativeProviderObserver,
   type NativeProviderObserver,
@@ -36,6 +42,7 @@ import type {
   CodexNativeResourceSession,
   NativeProviderResourcePort,
 } from "./resource-port";
+import { NativeProvenanceAmbiguity } from "./resource-provenance";
 import {
   capabilitiesFromCommands,
   createSessionCache,
@@ -60,6 +67,11 @@ export interface ResourceCodexProviderAdapterOptions {
 export type ResourceCodexProviderObserverOptions = Pick<
   ResourceCodexProviderAdapterOptions,
   "executablePath" | "resource"
+>;
+
+export type ResourceCodexCanonicalObserverOptions = Pick<
+  ResourceCodexProviderAdapterOptions,
+  "contentAuthority" | "executablePath" | "resource"
 >;
 
 export function createResourceCodexProviderObserver(
@@ -89,6 +101,26 @@ export function createResourceCodexProviderObserver(
 export function createResourceCodexProviderAdapter(
   input: ResourceCodexProviderAdapterOptions,
 ): CodexProviderAdapter {
+  return createCodexProviderAdapter({
+    ...createResourceCodexProviderPorts(input, false),
+    marketplaceSources: input.marketplaceSources,
+  });
+}
+
+export function createResourceCodexCanonicalObserver(
+  input: ResourceCodexCanonicalObserverOptions,
+): CanonicalNativeObserver {
+  const ports = createResourceCodexProviderPorts(input, true);
+  return createCanonicalNativeObserver({
+    provider: "codex",
+    bridge: createCodexNativeInventoryBridge(ports),
+  });
+}
+
+function createResourceCodexProviderPorts(
+  input: ResourceCodexCanonicalObserverOptions,
+  canonicalProvenance: boolean,
+) {
   const { session, listPlugins } = createCodexResourceAccess(input);
 
   const inventoryMarketplaceRegistration: CodexProcessPort["inventoryMarketplaceRegistration"] = async ({ home }) => {
@@ -99,13 +131,39 @@ export function createResourceCodexProviderAdapter(
       .map(parseMarketplaceEntry)
       .filter((entry) => entry.name === input.contentAuthority);
     if (matches.length === 0) return Object.freeze({ kind: "absent" });
-    if (matches.length !== 1) throw new Error("Codex managed marketplace identity is ambiguous");
+    if (matches.length !== 1) {
+      throw new NativeProvenanceAmbiguity(
+        "duplicate-managed-marketplace",
+        "Codex managed marketplace identity is ambiguous",
+      );
+    }
     if (matches[0] === undefined) throw new Error("Codex managed marketplace disappeared during observation");
-    const registration = await readMarketplaceSource(
-      await provider.readMarketplace({ identity: input.contentAuthority, ...NATIVE_PACKAGE_READ_LIMITS }),
-      "codex",
-      CODEX_ADAPTER_PROTOCOL,
-    );
+    const marketplace = await provider.readMarketplace({
+      identity: input.contentAuthority,
+      ...NATIVE_PACKAGE_READ_LIMITS,
+    });
+    let registration: ProviderMarketplaceRegistration;
+    try {
+      registration = await readMarketplaceSource(
+        marketplace,
+        "codex",
+        CODEX_ADAPTER_PROTOCOL,
+      );
+    } catch (error) {
+      throw new NativeProvenanceAmbiguity(
+        "managed-marketplace-metadata-invalid",
+        error,
+      );
+    }
+    if (
+      canonicalProvenance
+      && registration.marketplaceIdentity !== input.contentAuthority
+    ) {
+      throw new NativeProvenanceAmbiguity(
+        "managed-marketplace-owner-mismatch",
+        "Codex marketplace metadata does not match its managed marketplace identity",
+      );
+    }
     return Object.freeze({ kind: "present", state: marketplaceState(registration) });
   };
 
@@ -148,15 +206,27 @@ export function createResourceCodexProviderAdapter(
     const observations: CodexMarketplacePlugin[] = [];
     for (const plugin of (await listPlugins(home)).filter((entry) =>
       entry.installed && entry.marketplaceName === input.contentAuthority)) {
-      const inspected = inspectNativePluginPackage(await provider.readPlugin({
+      const pluginPackage = await provider.readPlugin({
         selector: pluginSelectorFor(plugin),
         ...NATIVE_PACKAGE_READ_LIMITS,
-      }), "codex");
+      });
+      let inspected: ReturnType<typeof inspectNativePluginPackage>;
+      try {
+        inspected = inspectNativePluginPackage(pluginPackage, "codex");
+      } catch (error) {
+        throw new NativeProvenanceAmbiguity(
+          "managed-plugin-provenance-invalid",
+          error,
+        );
+      }
       if (
         inspected.pluginId !== plugin.name
         || inspected.artifactAuthority.contentAuthority !== input.contentAuthority
       ) {
-        throw new Error("Codex installed plugin does not match its managed marketplace identity");
+        throw new NativeProvenanceAmbiguity(
+          "managed-member-owner-mismatch",
+          "Codex installed plugin does not match its managed marketplace identity",
+        );
       }
       observations.push(Object.freeze({
         pluginId: inspected.pluginId,
@@ -241,11 +311,10 @@ export function createResourceCodexProviderAdapter(
     ),
   };
 
-  return createCodexProviderAdapter({
+  return Object.freeze({
     process,
     appServer,
     session: configured,
-    marketplaceSources: input.marketplaceSources,
   });
 }
 

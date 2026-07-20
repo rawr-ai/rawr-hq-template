@@ -22,6 +22,7 @@ import {
   type NativePluginProcessObservation,
   type NativeProviderAdapter,
   type NativeProviderBridge,
+  type NativeProviderInventoryBridge,
 } from "./native";
 
 export const CODEX_ADAPTER_PROTOCOL = requireProtocol("rawr-provider-adapter/codex@v1");
@@ -97,14 +98,13 @@ export interface CodexSessionPort {
 
 export interface CodexProviderAdapter extends NativeProviderAdapter {}
 
-export function createCodexProviderAdapter(input: Readonly<{
-  process: CodexProcessPort;
+export function createCodexNativeInventoryBridge(input: Readonly<{
+  process: Pick<CodexProcessPort,
+    "inventoryMarketplace" | "inventoryMarketplaceRegistration">;
   appServer: CodexAppServerPort;
   session: CodexSessionPort;
-  marketplaceSources: ProviderMarketplaceSourceReader;
-}>): CodexProviderAdapter {
-  const bridge: NativeProviderBridge = {
-    probe: async (home): Promise<NativeCapabilityProbe> => await input.process.probe({ home }),
+}>): NativeProviderInventoryBridge {
+  return Object.freeze({
     async inventory(home) {
       const [plugins, visible] = await Promise.all([
         input.process.inventoryMarketplace({ home }),
@@ -167,6 +167,19 @@ export function createCodexProviderAdapter(input: Readonly<{
         standaloneExposures: Object.freeze([...standalone.values()]),
       });
     },
+  });
+}
+
+export function createCodexProviderAdapter(input: Readonly<{
+  process: CodexProcessPort;
+  appServer: CodexAppServerPort;
+  session: CodexSessionPort;
+  marketplaceSources: ProviderMarketplaceSourceReader;
+}>): CodexProviderAdapter {
+  const inventoryBridge = createCodexNativeInventoryBridge(input);
+  const bridge: NativeProviderBridge = {
+    probe: async (home): Promise<NativeCapabilityProbe> => await input.process.probe({ home }),
+    inventory: inventoryBridge.inventory,
     setMarketplace: async ({ target, expected, registration, source }) =>
       await input.process.setMarketplaceRegistration({
         home: target.home,
