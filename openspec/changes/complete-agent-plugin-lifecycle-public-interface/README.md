@@ -93,15 +93,17 @@ follow-up work.
 
 ## Current Gate
 
-- Correct the landed C5 service-context direction before sealing export root
-  admission: initial dependencies enter at the service root, module middleware
-  derives execution context, routers own behavior, and the inverted public
-  `bindings/*` / `ports/*` surfaces disappear without an alias. This is a
-  placement correction, not a new lifecycle design or app/runtime expansion.
-- Implement the framed T6C3 boundary as separate provider-refusal and
-  export-admission checkpoints while the landed aggregate still guards the
-  opposite owner, then remove the aggregate/scan relationship only after both
-  owner-local boundaries are active.
+- Continue the independent C5 service-context correction: initial dependencies
+  enter at the service root, module middleware derives execution context,
+  routers own behavior, and the inverted public `bindings/*` / `ports/*`
+  surfaces disappear without an alias. This is a placement correction, not a
+  new lifecycle design or app/runtime expansion.
+- T6C3 task 5.2 is blocked on the explicit export-root publication capability
+  choice recorded below. Do not implement export admission or weaken the
+  no-unmarked-window invariant while that choice is unresolved. The landed
+  provider refusal remains active.
+- Remove the aggregate/scan relationship only after both owner-local T6C3
+  boundaries are active.
 - Realign/rerun the retained T6D proof and T6E controller determinism proof.
 - Land/install Template before the first personal semantic checkpoint.
 - Keep Inngest `HF01_PENDING`; exact landed release input excludes its external
@@ -270,8 +272,9 @@ explicit pre-existing home. That removes the reason for cross-owner discovery.
 | Export ownership | One exports-owned exact two-field marker is a monotonic destination claim; payload/ledger undo preserves it. The existing destination ledger owns managed content; there is no root digest, registry, provider field, or second receipt. |
 | Provider ownership | Native live state at an explicit existing home; any occupied/unreadable export-marker slot is a collision, and the provider does not parse the export codec. |
 | Removed relationship | `KnownNativeHomesReader`, `completeNativeHomes`, target-identity scans, pathless aggregation, and app-runtime plumbing that existed only to bridge those owners are deleted without replacement. |
-| Resource law | Export performs one point-addressed `Absent -> ExactExportOwned` claim before payload/capsule work. It may publish an exact-marked private same-parent directory without replacement, then retains no publication state. The marker is absorbing and is never an inverse action. Provider resources never create homes and recheck marker-slot absence before native execution. |
-| Proof boundary | Bounded absent/exact/wrong marker cases, competing-root preservation, bounded pre-publication cleanup, marker persistence through payload undo, provider missing/marked/unmarked and recheck-transition cases, export-local destination overlap, no cross-owner reads, and read-only repeats. Alias, tamper, generalized publication, and adversarial recovery matrices are outside C6. |
+| Resource law | Export performs one point-addressed `Absent -> ExactExportOwned` claim before payload/capsule work. An absent destination becomes visible only as an exact already-marked root through one no-replace authority transition. The marker is absorbing and is never an inverse action. Provider resources never create homes and recheck marker-slot absence before native execution. |
+| Decision gate | Task 5.2 is blocked pending explicit authority selection between one narrowly scoped shared/native directory no-replace capability and a separate protected preclaim operation. The native capability is the minimal frame-compatible recommendation. A stateless preclaim is not admissible: interruption can leave an unmarked root indistinguishable from a provider home. Selecting preclaim therefore requires a separate authority amendment naming its persistent fence carrier, owner, provider observation, and exit/re-entry law, and proving that it does not create a second destination truth or hidden coordinator. `mkdir` followed by marker creation is not admissible under ordinary export. |
+| Proof boundary | Bounded absent/exact/wrong marker cases, competing-root preservation, marker persistence through payload undo, provider missing/marked/unmarked and recheck-transition cases, export-local destination overlap, no cross-owner reads, and read-only repeats. A selected native capability adds substrate conformance plus a bounded provider race trace; it does not claim scheduler-universal proof beyond that substrate. A preclaim proof boundary cannot be named until its fence is authorized. Alias/tamper matrices and adversarial recovery remain outside C6. |
 
 ## T6C3 Provider Slot Refusal Proof
 

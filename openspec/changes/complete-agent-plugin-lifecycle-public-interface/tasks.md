@@ -148,24 +148,41 @@
   followed by a read-only repeat.
 - [ ] 5.2 Give exports one private exact marker at
   `.rawr-agent-plugin-owner.json` with canonical bytes
-  `{"owner":"export","schemaVersion":1}\n`. Add one resource-owned claim
-  operation before payload/capsule work. It admits an exact already-marked root
-  or publishes one exact-marked private same-parent directory into an absent
-  explicit destination without replacing an occupant. The transition is
-  monotonic: once claimed, the root and marker survive payload/ledger undo and
-  an empty export set. Do not add a root inverse action, marker repair/replay,
-  publication receipt, or lifecycle recovery store.
+  `{"owner":"export","schemaVersion":1}\n`. Make that exact claim a prerequisite
+  before payload/capsule work. The selected mechanism either lets ordinary
+  export perform `Absent -> ExactExportOwned` as one no-replace visibility
+  transition, or makes ordinary export refuse `Absent` while an export-authorized
+  protected preclaim performs that transition. If another entry wins the root
+  slot, preserve it and block. No provider may enter an export-created unmarked
+  directory under either mechanism. Once claimed, the root and marker survive
+  payload/ledger undo and an empty export set. Do not add a root inverse action,
+  marker repair/replay, publication receipt, or lifecycle recovery store.
 
-  Reinspect one uncertain publication result: exact marker is the committed
-  absorbing claim; every other result blocks unchanged. Pre-publication cleanup
-  is limited to the exact private staging directory through bounded,
-  nonrecursive guards. Prove absent claim plus zero-write repeat, exact-marked
-  admission, unmarked/wrong/file/symlink refusal, competing-root preservation,
-  root/marker identity persistence through export undo, provider refusal after
-  undo, and export-local multi-destination overlap. Add no second service,
-  transaction history, root digest, registry, provider field, receipt, shared
-  protocol, generalized publication framework, or duplicated native syscall
-  subsystem.
+  **BLOCKED -- publication capability decision.** Implementation cannot proceed
+  until authority selects either (a) one narrowly scoped shared/native directory
+  no-replace capability with no lifecycle semantics or generalized publication
+  framework, or (b) a separate point-addressed export-authorized protected
+  preclaim operation. Option (a) is the minimal frame-compatible recommendation.
+  A stateless option (b) is not admissible because an interrupted unmarked root
+  is indistinguishable from a legitimate provider home. Selecting (b) requires
+  a separate authority amendment naming its persistent fence carrier and owner,
+  provider observation, and exit/re-entry law, then proving that the fence does
+  not become a second destination truth, shared ownership protocol, or hidden
+  multi-home coordinator. Under an authorized (b), ordinary export refuses
+  `Absent` and admits only an exact preclaimed root. Do not weaken the no-
+  unmarked-window invariant to avoid that choice, and do not duplicate a native
+  syscall subsystem inside the export resource.
+
+  After selection, prove absent claim, a cold zero-write exact-marker retry,
+  exact-marked admission, unmarked/wrong/file/symlink refusal, competing-root
+  preservation, committed claim followed by later planning refusal with truthful
+  durable-marker reporting, root and marker identity persistence through export
+  undo, provider refusal after undo, and export-local multi-destination overlap.
+  For (a), require substrate-level atomic-publication conformance plus a bounded
+  provider race trace. Name the substrate and scheduler ceiling; one overlap
+  test is not a universal linearizability proof. Option (b)'s proof cannot be
+  specified until its fence amendment is accepted. Add no second lifecycle
+  service, transaction history, root digest, registry, provider field, or receipt.
 - [ ] 5.3 After both owner-local boundaries are active, delete
   `KnownNativeHomesReader`, `completeNativeHomes`,
   `CompleteTargetIdentityReader`, `scanTargets`, their sidecar-derived bindings,

@@ -16,26 +16,18 @@ newline-terminated bytes `{"owner":"export","schemaVersion":1}\n`. Export owns
 this private marker policy; providers recognize only occupancy of the fixed
 slot and MUST NOT import or parse its codec. The export resource MUST admit an
 explicit destination only when it is absent or is an existing directory with
-those exact marker bytes. For an absent destination, the resource MUST prepare
-one private same-parent directory containing the exact marker and atomically
-publish it no-replace through an admitted root-publication action. Capture MUST
-represent root state with an owner-local discriminated observation, and the
-existing private export resource/action unions MUST gain one forward
-root-publication variant and its matching inverse-action variant. The private
-export action codec and undo sequence own those variants; they create no service,
-receipt, ledger, registry, or shared protocol. Capture MUST record the absent-root
-observation before admission; publication and its exact inverse MUST be in the
-same frozen action set before undo preflight and begin; and apply MUST revalidate
-final-path absence before publication. The final
-destination MUST NOT be observable as an unmarked directory. Its inverse MAY
-remove only the exact unchanged marker and then-empty owner-created root after
-payload undo. Root admission and its applied prefix MUST use the existing export
-capsule/result accounting; no second transaction, root receipt, digest, registry,
-or provider field is added. Preparation or publication failure MAY remove only
-that owner-created private directory after exact path, parent, directory,
-non-symlink, and containment guards. An existing unmarked directory, different
-marker bytes, file, or unreadable root MUST block without payload, ledger, or
-cleanup mutation, including under `replace-planned`.
+those exact marker bytes. Ordinary export MUST NOT admit `Absent` until an
+authorized claim mechanism can make the root visible only as an exact
+already-marked directory through one no-replace authority transition. A
+competing root MUST be preserved and block. A provider observing concurrently
+MUST NOT be able to enter an export-created unmarked publication window. The
+claim MUST finish before payload, ledger, or undo-capsule work. Once visible,
+the exact root and marker are monotonic: payload and ledger undo MUST NOT remove
+either, and no root inverse action exists. No root receipt, digest, registry,
+provider field, repair protocol, or second transaction is added. An existing
+unmarked directory, different marker bytes, file, symlink, or unreadable root
+MUST block without payload, ledger, or cleanup mutation, including under
+`replace-planned`.
 
 After root admission, export MUST preflight live destination paths and apply
 `managed-only` by default, making only same-ledger-owned paths eligible for
@@ -45,32 +37,57 @@ unmanaged or ambiguous collision outside that policy MUST be preserved and
 block. Export MUST NOT infer provider ownership from path shape or native files;
 provider operations honor the visible marker at their own boundary.
 
-#### Scenario: Absent root becomes export-owned once
-- **WHEN** export targets an absent canonical destination
-- **THEN** its first transaction action atomically publishes one already-marked
-  private directory before payload or ledger mutation
+#### Scenario: Authorized publication claims an absent root once
+- **WHEN** an authorized no-replace claim mechanism is selected and ordinary
+  export targets an absent canonical destination
+- **THEN** its resource boundary publishes the root already carrying the exact
+  marker without replacing any existing entry and completes before payload,
+  ledger, or capsule mutation
+
+#### Scenario: Absent root is blocked before mechanism authorization
+- **WHEN** ordinary export targets an absent destination before a claim
+  mechanism is authorized
+- **THEN** it refuses without creating a root or advancing payload, ledger, or
+  capsule state
 
 #### Scenario: Exact marked root is reused
 - **WHEN** export targets an existing directory with the exact marker bytes
 - **THEN** root admission is read-only and destination-ledger rules decide the
   requested payload transition
 
-#### Scenario: Private publication failure advances no committed state
-- **WHEN** exact-marker preparation or no-replace publication fails for an
-  absent destination
-- **THEN** export returns non-success with no final root, payload, ledger,
-  applied prefix, or committed capsule advancement and cleanup is limited to
-  the exactly guarded owner-created private directory
+#### Scenario: Provider cannot enter an unmarked publication window
+- **WHEN** the authorized claim mechanism transitions an absent destination
+  while a provider observes the same path
+- **THEN** the provider can observe only a missing home or the occupied marker,
+  never an export-created unmarked directory eligible for provider mutation
+
+#### Scenario: Failed native claim advances no export state
+- **WHEN** the native no-replace root claim fails and no competing entry exists
+- **THEN** export returns non-success with no export-created root, marker,
+  payload, ledger, cleanup, or capsule advancement and the destination remains
+  absent
+
+#### Scenario: Competing native claimant wins the root
+- **WHEN** another claimant publishes any entry before a native publication
+  invocation commits
+- **THEN** this invocation preserves the winner and refuses without payload,
+  ledger, cleanup, or capsule mutation; it does not adopt even an exact export
+  marker until a cold retry re-observes it
+
+#### Scenario: Cold retry admits an exact winner without rewriting authority
+- **WHEN** a later invocation re-observes the exact export marker left by a
+  completed claim
+- **THEN** it admits the root read-only with zero root or marker writes
+
+#### Scenario: Claim survives later planning refusal truthfully
+- **WHEN** a claim commits and later payload or undo preflight rejects
+- **THEN** the non-success result reports the durable exact export claim and
+  neither removes nor implies absence of the root or marker
 
 #### Scenario: Existing unowned root cannot be adopted
 - **WHEN** export targets any existing root with no valid export marker
 - **THEN** it blocks without payload, marker, ledger, cleanup, or capsule
   mutation even under `replace-planned`
-
-#### Scenario: Provider cannot enter an unmarked publication window
-- **WHEN** export and provider admission overlap on one absent final path
-- **THEN** the final path is either absent or already marked, so provider cannot
-  begin native mutation in an export-created unmarked directory
 
 #### Scenario: Provider side state cannot authorize export
 - **WHEN** provider receipts, target sidecars, native inventory, or an old
