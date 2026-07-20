@@ -277,9 +277,11 @@ normalized release trees; paths, inode identity, and mtimes are not compared.
 
 ### Structural enforcement is positive and bounded
 
-Existing positive Habitat topology, complete Nx lint/typecheck population, and
-required local/remote ratchet remain. C6 does not add semantic GritQL rules for
-runtime behavior. Test-only scheduling belongs to the owning Vitest project;
+Existing positive Habitat topology and complete Nx lint/typecheck population
+remain. The local hook and remote workflow provide feedback now; task 8.8 must
+make that workflow a required server-side merge rule before closure. C6 does
+not add semantic GritQL rules for runtime behavior. Test-only scheduling belongs
+to the owning Vitest project;
 DevOps command discovery belongs to `@rawr/plugin-devops`. T6C1/C2 update the
 closed positive command/projection inventory to remove only `attest-promotion`
 and receipt-owned `retire`; qualified `undo` remains required. At task 5.4

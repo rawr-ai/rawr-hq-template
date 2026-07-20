@@ -2,34 +2,42 @@
 
 ## Status
 
-`T6F_TEMPLATE_SUBMISSION_READINESS`
+`T6F_TEMPLATE_CONTINUATION_READY_TO_SUBMIT`
 
 The user accepted the proportionality correction in [[authority-amendment]].
-Each retained Template slice through
-`8b70a87fada52018f00c5fbaa267f24933d0c84e` is locally reviewed and green at
-its recorded boundary. The first submitted revision exposed four independent-
-node ordering failures in the remote ratchet; those lower-node ownership
-repairs are now restacked and resubmitted. All 43 retained PR nodes passed the
-required remote ratchet independently, and the final Graphite merge dry-run
-accepted the complete stack. The combined candidate is not yet landed,
-installed, or settled; its aggregate proof is recorded below. The
-unlanded transfer, public-evidence, second-launcher, caller-binding runtime, and
-installed A/B branches are absent from the Graphite stack. T6B remains the thin
-staged/clean repository interface, T6C1 owns one current-main selector, T6C2
-delegates to native providers, and qualified undo remains export-only. The
-next gate is repaired-stack resubmission followed by
-[[tasks#8. T6F: Landing And Settlement|task 8.1]].
+The retained 43-node predecessor stack described below landed through PR #389
+on canonical Template `main` at
+`5b588ae624d9e7f13c7db7beddeb4996aa50cae8`, tree
+`eb759faf709d262d6550361952ee675fd6b04cc6`. Six semantic continuation nodes
+are stacked from that clean main: canonical release-input authoring, declared
+plugin-tree closure, verified provider-binding projection, immutable installed-
+controller distribution, native-provider host-contract closure, and the
+canonical service package boundary. Their behavior, static, structural,
+TypeBox, and repository-ratchet gates are green at their recorded boundaries;
+the composed reviews found no blocking issue and retain the live publication
+transition as the explicit [[tasks#3C. Personal Checkpoint Prerequisites|task
+3C.4]] proof ceiling. The continuation is not yet submitted, landed, installed,
+or settled. [[tasks#8. T6F: Landing And Settlement|Task 8.1]] is the next gate:
+submit and land this six-node stack, then publish and install its immutable
+controller without any intervening repository, channel, or provider mutation.
 
 ## Repository Record
 
 | Identity | Bound value |
 | --- | --- |
 | Repository | RAWR HQ-Template |
-| Worktree | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-c6-public-lifecycle-interfaces` |
-| Parent commit / tree | `4dcf206b4c043e2028545e1cf777c72019373572` / `0e9ddc0fd267c5d5c68037f51084f2281dff31d7` |
+| Worktree | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-lifecycle-prerequisites-integration` |
+| Parent commit / tree | canonical Template `main` `5b588ae624d9e7f13c7db7beddeb4996aa50cae8` / `eb759faf709d262d6550361952ee675fd6b04cc6` |
 | Packet provenance | personal commit `cc631f60c9254802be647d66662823ae47d5e7db`; project tree `97f0a634fcd8d1d24d4a95fcb57d277e9bf75ae3` |
 | Repository-separation amendment | personal commit `43a49d48ab6c6a29b4877f20576b42b533fc82ba`; blob `10bb040317d62834806b86b36a3a14f13c539fbc` |
 | Proportionality amendment | [[authority-amendment]] |
+| Landed predecessor | PR #389 closes the retained 43-node stack at canonical Template `main` `5b588ae624d9e7f13c7db7beddeb4996aa50cae8` |
+| Release-input continuation | `codex/c6-release-input-record` / `dd6ad50f20ff9b218c645e85bfd5b98e95d0beb8` |
+| Declared-tree continuation | `codex/c6-declared-plugin-tree` / `c60b0748060532b701f1f87d756eee0732714cc1` |
+| Provider-binding continuation | `codex/c6-verified-provider-binding` / `500897189ed2b3c846a98e5565e42ae605556727` |
+| Installed-controller continuation | `codex/c6-installed-controller-distribution` / `94190680005520bd68b981c49dc6bbc75de8ad3a` |
+| Native-host continuation | `codex/c6-native-provider-host-contract` / `402049183468e7ff16eab3ce5fd14dbd7f6d73dd` |
+| Service-boundary continuation | `codex/c6-canonical-service-boundary` / `abc62679023102dd8fee712fe86ba116a5b6c9e5`; tree `c2da5b8bd8110fa1df5b5ea77c245972b76b444d` |
 | Opening controller | `0823cfe6...`; diagnostic only, never an active input |
 | T6A branch | `codex/c6-agent-lifecycle-public-interface` / `3f3a3be2dda70dae2682f88feeb23e5e9d349575` |
 | T6B Git observation | `codex/c6-staged-git-observation` / `67a0d25437d087e78dd15f67f65a1ae0a2ecb42f` |
@@ -85,7 +93,7 @@ Inngest candidate bytes.
 
 | Slice | State | Proof gate |
 | --- | --- | --- |
-| C5 context direction | partial; 2A.1-2A.4 open | five module paths corrected; export facade/port/root import plus provider binding and public router remain |
+| C5 context direction | partial; 2A.1-2A.4 open | module paths, provider host boundary, and package shell corrected; export facade/port/root import plus the task-5.3 complete-identity bridge remain |
 | T6A thin record | complete | strict OpenSpec plus four standing reviews |
 | T6B repository checks | complete | staged/clean exactness, index race, declared-input boundary, one procedure |
 | T6C1a v2 codec/public interface | complete, reviewed | closed TypeBox model, canonical `cm2_` codec, one cold-port procedure and CLI dispatch |
@@ -112,15 +120,18 @@ follow-up work.
 
 ## Current Gate
 
-- Land the all-green Graphite stack and install the immutable controller from
-  canonical Template `main` before the first personal semantic checkpoint.
-- Complete [[tasks#3C. Personal Checkpoint Prerequisites|tasks 3C.1-3C.4]] as
-  separately green Template nodes before replacing the obsolete Personal gate.
-  These are missing public data/artifact projections, not a new controller,
-  provider installer, transfer graph, or repository relationship.
+- Submit and land only the six-node continuation rooted at canonical Template
+  `main`. Then publish, verify, and install its immutable controller through
+  [[tasks#8. T6F: Landing And Settlement|task 8.1]] before the first Personal
+  semantic checkpoint.
+- [[tasks#3C. Personal Checkpoint Prerequisites|Tasks 3C.1-3C.3]] are complete
+  and reviewed in the continuation. Task 3C.4 remains open until the landed
+  workflow publishes and the exact immutable asset is verified. These are
+  public data/artifact projections, not a new controller, provider installer,
+  transfer graph, or repository relationship.
 - [[tasks#2A. C5 Context-Direction Correction|Tasks 2A.1-2A.4]] remain open.
-  Their residual export facade/port/root-import, provider-binding, and public-
-  router debt authorizes no coordinator, compatibility path, second client, or
+  Their residual export facade/port/root-import and task-5.3 complete-identity
+  bridge authorize no coordinator, compatibility path, second client, or
   service redesign before landing.
 - [[tasks#5. T6C3: Export Destination Independence|Task 5.2]] remains blocked
   on the explicit export-root publication capability choice recorded below.
@@ -131,6 +142,21 @@ follow-up work.
   Template landing or the native-provider settlement in tasks 8.1-8.6.
 - Keep Inngest `HF01_PENDING`; exact landed release input excludes its external
   candidate root without blocking unrelated landed content.
+
+## Template Continuation Submission Readiness
+
+The continuation is deliberately one simple Graphite stack above the landed
+predecessor. Each node is an independently reviewable behavior or boundary
+change; no partial merge, compatibility implementation, or cross-repository
+ancestry is part of the landing plan.
+
+| Boundary | Result |
+| --- | --- |
+| Stack identity | `dd6ad50f` -> `c60b0748` -> `50089718` -> `94190680` -> `40204918` -> `abc62679`, rooted directly at canonical Template `main` `5b588ae6`; the composed tree is `c2da5b8bd8110fa1df5b5ea77c245972b76b444d`. |
+| Behavior | The latest integrated behavior gate passed 42 lifecycle files / 381 tests and 47 CLI files / 325 tests. The native-provider resource passed 23 tests, and the controller distribution suite passed 93 tests / 1,240 assertions. The final package-only node changed no runtime behavior. |
+| Static and structural | Resource, lifecycle, CLI, and controller lint/typecheck/build gates passed at their owning nodes. The composed required ratchet passed all 29 admitted lint targets, all 42 admitted typecheck targets, Habitat provisioning/consumer proof, and all three locked positive topology rules. Strict OpenSpec and `git diff --check` pass on the recorded tip. |
+| Standing reviews | Architecture/oRPC, TypeScript/TypeBox, and structural/Habitat composed-tip reviews report no P0-P3. Behavior/testing reports no P0-P2 and retains one nonblocking P3: the workflow-only immutable-release transitions are not product proof until the landed-main publication runs. That ceiling is exactly task 3C.4. |
+| Proof ceiling | No continuation branch is submitted or landed yet. No workflow was dispatched, no controller asset was published or installed, and no Personal, provider, channel, or protected-lane state was mutated. |
 
 ## T6F Personal Checkpoint Prerequisites
 
