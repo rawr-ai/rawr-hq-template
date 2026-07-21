@@ -38,6 +38,10 @@ const encoder = new TextEncoder();
 const MAX_TREE_ENTRIES = 200_000;
 const MAX_TREE_BYTES = 100 * 1024 * 1024;
 const MAX_INDEX_BYTES = 64 * 1024 * 1024;
+const MAX_ADMITTED_WORKTREE_FILE_BYTES = Math.max(
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_PAYLOAD_BYTES_PER_MEMBER,
+);
 
 export type ResourceContentWorkspaceSnapshotReadPort = Pick<
   ContentWorkspaceGitReadAsyncPort,
@@ -294,49 +298,82 @@ async function captureWorkspaceEvidence(
     consumedRoots: consumedPathspecs,
     objectFormat: policy.sourceCommit.length === 40 ? "sha1" : "sha256",
     maxPaths: MAX_TREE_ENTRIES,
+    maxWorktreeFileBytes: MAX_ADMITTED_WORKTREE_FILE_BYTES,
     maxBytes: MAX_INDEX_BYTES,
   });
-  if (
-    !equalBytes(evidence.openingStatus, evidence.closingStatus)
-    || !equalBytes(evidence.openingTrackedFlags, evidence.closingTrackedFlags)
-    || !sameRepositoryAnchor(evidence.openingAnchor, evidence.closingAnchor)
-  ) {
-    throw eligibilityError("SourceChanged", "repository evidence changed during its closing capture");
+  const openingStatus = classifyWorkspaceStatus(evidence.openingStatus, consumedPathspecs);
+  const closingStatus = classifyWorkspaceStatus(evidence.closingStatus, consumedPathspecs);
+  if (!sameRepositoryAnchor(evidence.openingAnchor, evidence.closingAnchor)) {
+    throw eligibilityError("SourceChanged", "repository anchor changed during its closing capture");
   }
-  const workspaceStatus = classifyConsumedStatus(evidence.closingStatus, consumedPathspecs);
+  if (!equalBytes(evidence.openingTrackedFlags, evidence.closingTrackedFlags)) {
+    throw eligibilityError("SourceChanged", "admitted path flags changed during the repository evidence capture");
+  }
+  if (!sameWorkspaceStatus(openingStatus, closingStatus)) {
+    throw eligibilityError("SourceChanged", "tracked or consumed-path status changed during the repository evidence capture");
+  }
   return Object.freeze({
     anchor: evidence.closingAnchor,
-    trackedStatus: evidence.closingStatus,
+    trackedStatus: closingStatus.tracked,
     trackedFlags: evidence.closingTrackedFlags,
     worktreeObjectIds: evidence.worktreeObjectIds.map((entry) => Object.freeze({
       path: requireReleasePath(entry.path),
       objectId: entry.objectId,
     })),
-    untracked: workspaceStatus.untracked,
-    ignored: workspaceStatus.ignored,
+    untracked: closingStatus.untracked,
+    ignored: closingStatus.ignored,
     index: evidence.indexEntries,
   });
 }
 
-function classifyConsumedStatus(
+function classifyWorkspaceStatus(
   status: Uint8Array,
   consumedRoots: readonly ReleaseRelativePath[],
-): Readonly<{ untracked: Uint8Array; ignored: Uint8Array }> {
+): Readonly<{ tracked: Uint8Array; untracked: Uint8Array; ignored: Uint8Array }> {
+  const tracked: string[] = [];
   const untracked: string[] = [];
   const ignored: string[] = [];
-  for (const recordBytes of splitNul(status)) {
-    const record = decoder.decode(recordBytes);
-    const target = record.startsWith("? ") ? untracked : record.startsWith("! ") ? ignored : undefined;
-    if (target === undefined) continue;
-    const path = record.slice(2);
-    if (consumedRoots.some((candidate) => path === candidate || path.startsWith(`${candidate}/`))) {
-      target.push(path);
+  const records = splitNul(status).map((record) => decoder.decode(record));
+  for (let index = 0; index < records.length; index += 1) {
+    const record = records[index]!;
+    if (record.startsWith("2 ")) {
+      tracked.push(record);
+      const originalPath = records[index + 1];
+      if (originalPath === undefined) {
+        throw eligibilityError("SourceChanged", "Git status rename evidence is incomplete");
+      }
+      tracked.push(originalPath);
+      index += 1;
+      continue;
     }
+    if (record.startsWith("1 ") || record.startsWith("u ")) {
+      tracked.push(record);
+      continue;
+    }
+    const target = record.startsWith("? ") ? untracked : record.startsWith("! ") ? ignored : undefined;
+    if (target !== undefined) {
+      const path = record.slice(2);
+      if (consumedRoots.some((candidate) => path === candidate || path.startsWith(`${candidate}/`))) {
+        target.push(path);
+      }
+      continue;
+    }
+    if (!record.startsWith("# ")) tracked.push(record);
   }
   return Object.freeze({
+    tracked: encodeNulList(tracked),
     untracked: encodeNulList(untracked),
     ignored: encodeNulList(ignored),
   });
+}
+
+function sameWorkspaceStatus(
+  left: ReturnType<typeof classifyWorkspaceStatus>,
+  right: ReturnType<typeof classifyWorkspaceStatus>,
+): boolean {
+  return equalBytes(left.tracked, right.tracked)
+    && equalBytes(left.untracked, right.untracked)
+    && equalBytes(left.ignored, right.ignored);
 }
 
 function requireReleasePath(candidate: string): ReleaseRelativePath {

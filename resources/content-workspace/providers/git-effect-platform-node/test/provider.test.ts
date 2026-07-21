@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { chmod, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -627,11 +628,57 @@ describe("Git Effect Platform content workspace provider", () => {
       consumedRoots: ["payload.txt"],
       objectFormat: anchor.objectFormat,
       maxPaths: 10,
+      maxWorktreeFileBytes: 1024,
       maxBytes: 1024 * 1024,
     })));
     expect(evidence.openingAnchor).toEqual(evidence.closingAnchor);
     expect(evidence.worktreeObjectIds).toEqual([{ path: "payload.txt", objectId: observed.blob }]);
     expect(new TextDecoder().decode(evidence.closingTrackedFlags)).toContain("H payload.txt");
+  });
+
+  test("hashes bounded admitted worktree bytes without spawning Git per file", async () => {
+    const root = await createRepository();
+    await git(root, "remote", "add", "origin", root);
+    await writeFile(path.join(root, "payload.txt"), "committed\n");
+    await git(root, "add", "payload.txt");
+    await git(root, "commit", "-m", "add payload");
+
+    const wrapper = path.join(root, "git-evidence-wrapper");
+    const log = path.join(root, "git-evidence-wrapper.log");
+    await writeFile(wrapper, [
+      "#!/bin/sh",
+      `printf '%s\\n' "$*" >> ${JSON.stringify(log)}`,
+      `exec ${JSON.stringify(await realpath(gitExecutable))} "$@"`,
+      "",
+    ].join("\n"));
+    await chmod(wrapper, 0o755);
+    const worktreeBytes = bytes("w".repeat(2 * 1024));
+    await writeFile(path.join(root, "payload.txt"), worktreeBytes);
+
+    const resource = makeContentWorkspaceResource({ gitExecutable: wrapper });
+    const anchor = unwrap(await runNodeContentWorkspace(resource.inspectGitWorkspace({
+      locator: root,
+      remoteSelection: { kind: "Named", remoteName: "origin" },
+      refName: "refs/heads/main",
+    })));
+    const evidence = unwrap(await runNodeContentWorkspace(resource.captureGitWorkspaceEvidence({
+      root,
+      remoteSelection: { kind: "Named", remoteName: "origin" },
+      refName: "refs/heads/main",
+      admittedPaths: ["payload.txt"],
+      consumedRoots: ["payload.txt"],
+      objectFormat: anchor.objectFormat,
+      maxPaths: 10,
+      maxWorktreeFileBytes: 4 * 1024,
+      maxBytes: 1024,
+    })));
+
+    expect(evidence.worktreeObjectIds).toEqual([{
+      path: "payload.txt",
+      objectId: testGitBlobId(worktreeBytes, anchor.objectFormat),
+    }]);
+    const commands = (await readFile(log, "utf8")).trim().split("\n");
+    expect(commands.some((command) => /(?:^|\s)hash-object(?:\s|$)/u.test(command))).toBe(false);
   });
 
   test("observes only selected staged blobs without authoring Git objects", async () => {
@@ -747,6 +794,7 @@ describe("Git Effect Platform content workspace provider", () => {
       consumedRoots: [],
       objectFormat: "sha1",
       maxPaths: 1,
+      maxWorktreeFileBytes: 1024,
       maxBytes: 1024,
     }));
 
@@ -948,6 +996,7 @@ describe("Git Effect Platform content workspace provider", () => {
           consumedRoots: [],
           objectFormat: "sha1",
           maxPaths: 1,
+          maxWorktreeFileBytes: 1,
           maxBytes: 1,
         }),
       },
@@ -1159,6 +1208,13 @@ function unwrap<A>(result: NodeContentWorkspaceResult<A>): A {
 
 function bytes(value: string): Uint8Array {
   return new TextEncoder().encode(value);
+}
+
+function testGitBlobId(value: Uint8Array, objectFormat: "sha1" | "sha256"): string {
+  const digest = createHash(objectFormat);
+  digest.update(bytes(`blob ${value.byteLength}\0`));
+  digest.update(value);
+  return digest.digest("hex");
 }
 
 function restoreEnvironment(name: string, value: string | undefined): void {

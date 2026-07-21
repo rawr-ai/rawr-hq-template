@@ -55,11 +55,60 @@ describe("exact Git-object eligibility", () => {
     });
   });
 
+  it("ignores unrelated status churn while retaining consumed-root change evidence", async () => {
+    const repository = await generated();
+    const delegate = await realPort();
+    let evidenceCaptures = 0;
+    const unrelatedChurn = overrideGitReadPort(delegate, {
+      async captureGitWorkspaceEvidence(input) {
+        const evidence = await delegate.captureGitWorkspaceEvidence(input);
+        evidenceCaptures += 1;
+        return Object.freeze({
+          ...evidence,
+          openingStatus: appendStatusRecords(
+            evidence.openingStatus,
+            `? scratch/open-${evidenceCaptures}.txt`,
+          ),
+          closingStatus: appendStatusRecords(
+            evidence.closingStatus,
+            `! .cache/close-${evidenceCaptures}.json`,
+          ),
+        });
+      },
+    });
+
+    await expect(createResourceContentWorkspaceSnapshotReader({
+      contentWorkspace: unrelatedChurn,
+    }).inspect(repository.policy)).resolves.toMatchObject({ kind: "Eligible" });
+    expect(evidenceCaptures).toBe(2);
+
+    const consumedPath = `plugins/agent/${repository.pluginId}/extra.txt`;
+    const consumedChurn = overrideGitReadPort(delegate, {
+      async captureGitWorkspaceEvidence(input) {
+        const evidence = await delegate.captureGitWorkspaceEvidence(input);
+        return Object.freeze({
+          ...evidence,
+          closingStatus: appendStatusRecords(evidence.closingStatus, `? ${consumedPath}`),
+        });
+      },
+    });
+    await expect(createResourceContentWorkspaceSnapshotReader({
+      contentWorkspace: consumedChurn,
+    }).inspect(repository.policy)).resolves.toEqual({
+      kind: "Ineligible",
+      issues: [{
+        code: "SourceChanged",
+        detail: "tracked or consumed-path status changed during the repository evidence capture",
+      }],
+    });
+  });
+
   it("uses only the exact Git resource port and never requests worktree file reads", async () => {
     const repository = await generated();
     const delegate = await realPort();
     const observed: string[] = [];
     const blobReadLimits: number[] = [];
+    const worktreeFileLimits: number[] = [];
     const contentWorkspace = overrideGitReadPort(delegate, {
       async inspectGitWorkspace(input) {
         observed.push("inspectGitWorkspace");
@@ -76,6 +125,7 @@ describe("exact Git-object eligibility", () => {
       },
       async captureGitWorkspaceEvidence(input) {
         observed.push("captureGitWorkspaceEvidence");
+        worktreeFileLimits.push(input.maxWorktreeFileBytes);
         return await delegate.captureGitWorkspaceEvidence(input);
       },
     });
@@ -92,6 +142,10 @@ describe("exact Git-object eligibility", () => {
     expect(blobReadLimits).toEqual([
       MAX_RELEASE_INPUT_ENVELOPE_BYTES,
       MAX_PAYLOAD_BYTES_PER_MEMBER,
+    ]);
+    expect(worktreeFileLimits).toEqual([
+      MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+      MAX_RELEASE_INPUT_ENVELOPE_BYTES,
     ]);
   });
 
@@ -472,6 +526,14 @@ function unreachableGitReadPort(onCall: () => void): ResourceContentWorkspaceSna
 function mutateObjectId(value: string): string {
   const final = value.at(-1) === "0" ? "1" : "0";
   return `${value.slice(0, -1)}${final}`;
+}
+
+function appendStatusRecords(status: Uint8Array, ...records: readonly string[]): Uint8Array {
+  const appended = new TextEncoder().encode(records.map((record) => `${record}\0`).join(""));
+  const result = new Uint8Array(status.byteLength + appended.byteLength);
+  result.set(status);
+  result.set(appended, status.byteLength);
+  return result;
 }
 
 function must<T, E>(result: { readonly ok: true; readonly value: T } | { readonly ok: false; readonly issues: readonly E[] }): T {

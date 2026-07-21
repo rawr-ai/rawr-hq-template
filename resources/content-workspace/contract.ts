@@ -219,6 +219,9 @@ export interface ContentWorkspaceResource<R = never> {
     consumedRoots: readonly string[];
     objectFormat: GitObjectFormat;
     maxPaths: number;
+    /** Per-file bound for each admitted worktree path. */
+    maxWorktreeFileBytes: number;
+    /** Independent bound for each Git status, tracked-flag, or index output. */
     maxBytes: number;
   }>) => Effect.Effect<GitWorkspaceEvidence, ContentWorkspaceFailure, R>;
 

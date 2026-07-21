@@ -82,6 +82,7 @@ async function inspect(
       consumedRoots: [],
       objectFormat: anchor.objectFormat,
       maxPaths: 1,
+      maxWorktreeFileBytes: MAX_GIT_EVIDENCE_BYTES,
       maxBytes: MAX_GIT_EVIDENCE_BYTES,
     });
     if (
