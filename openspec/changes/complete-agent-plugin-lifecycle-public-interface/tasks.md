@@ -265,11 +265,10 @@ standing-review gate is complete.
   immutable controller from exact canonical Template `main`, then install/select
   that exact controller through the existing stable installer.
 - [ ] 8.1c Land the final TypeBox boundary-ownership, deterministic Nx-check,
-  and standard operational-terminology continuation. Provider, governance,
-  packaging, and vendor boundaries are checkpointed; convert the remaining
-  releases build/check/retention boundary, then publish and select the resulting
-  immutable controller before canonical settlement. Add no lifecycle state or
-  provider mutation mechanism.
+  and standard operational-terminology continuation. All five module boundaries
+  are sealed and the no-cache integrated lifecycle check passes; land the stack,
+  then publish and select the resulting immutable controller before canonical
+  settlement. Add no lifecycle state or provider mutation mechanism.
 - [ ] 8.2 Keep the obsolete personal hook replacement on its landed Template
   interface and land the reviewed personal current-main record through its
   required remote check without bypass.
