@@ -58,11 +58,9 @@ specifically required contract surface. It does not export module ports,
 materializers, resource adapters, repositories, module routers, or broad DTO
 barrels. Consumers import the named client-construction boundary rather than
 reaching through `bindings/*`, `ports/*`, or implementation paths.
-Controller-owned undo remains
-the generic capsule/state coordinator, while export-owned classification and
-replay will run through export procedures over the service's resource context.
-Native Codex/Claude mutation remains in external providers and is not
-reimplemented inside service middleware.
+The inherited managed-export and capsule surfaces are retired rather than
+re-exposed through the service. Native Codex/Claude mutation remains in
+external providers and is not reimplemented inside service middleware.
 
 This follows the service boundary described by
 [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the runtime realization spec]]
@@ -103,7 +101,7 @@ local caller alias cannot rewrite authority or membership during observation.
 Before payload construction, logical bounds count every selected path even when
 multiple paths share one Git object; entry, member-byte, and complete-set-byte
 overflow returns typed refusal without copying or base64-encoding the payload.
-The complete six-module service context remains inert; validation does not
+The complete five-module service context remains inert; validation does not
 invent an operation-specific service bag. The content-workspace resource owns
 Git mechanics, while lifecycle handlers own semantic classification.
 
@@ -181,12 +179,12 @@ The first exposes only the pure codec through governance and the existing
 observed-Git resolution and removes the v1 ceremony.
 
 The old v1 current-main resolver, acceptance-request/evidence dependency,
-promotion attestation, `attest-promotion`, and receipt-owned explicit
-`retire` are deleted from service contracts, routers, public exports, client,
-command discovery, and the reachable graph. Canonical closed-set sync owns
-omitted-member cleanup. Provider operations emit no capsule and recover through
-live reinspection plus exact-prefix convergence. Qualified `undo` remains only
-for managed-export capsules. There is no promotion alias or fallback.
+promotion attestation, `attest-promotion`, receipt-owned explicit `retire`,
+managed `export`, and capsule `undo` are deleted from service contracts,
+routers, public exports, client, command discovery, and the reachable graph.
+Canonical closed-set sync owns omitted-member cleanup. Provider operations emit
+no capsule and recover through live reinspection plus exact-prefix convergence.
+There is no stub, alias, forwarding route, or fallback.
 Personal policy and evaluation inputs remain content-repository data, but they
 do not become another runtime selection chain.
 
@@ -213,71 +211,29 @@ state. It does not build a generic rollback transaction. This is the bounded
 canonical path needed for settlement, not a rewrite of every landed provider
 test mode.
 
-### Provider homes and export destinations have one visible owner
+### Provider lifecycle remains point-addressed; destination export transfers
 
-Task 5.3 removes the hidden complete native-home registry and its filesystem
-scan after both owner-local boundaries are active; the current candidate still
-retains that exact transitional bridge. Task 5.2 gives export one private exact
-marker at `.rawr-agent-plugin-owner.json` with
-canonical bytes `{"owner":"export","schemaVersion":1}\n`. Its resource edge
-admits only an absent explicit destination or an existing destination carrying
-those exact bytes. The claim is a monotonic authority transition:
-`Absent -> ExactExportOwned`; an exact owned root remains owned. Payload and
-ledger undo never removes the marker or makes that path eligible to become a
-provider home on the next invocation. Any existing unmarked directory,
-different marker bytes, file, symlink, or unreadable destination blocks even
-under `replace-planned`.
+Managed destination export and its capsule were inherited capabilities outside
+the corrected product outcome. Repairing their publication substrate would
+create the exact generalized mechanism C6 now rejects. The controller therefore
+retires the export module, `rawr agent plugins export`,
+`rawr agent plugins undo`, their public bindings/ports, and their CLI
+composition. Useful destination, publication, ledger, and rollback requirements
+transfer to the dedicated full architecture migration; C6 adds no replacement
+implementation.
 
-The required authority transition is always `Absent -> ExactExportOwned`. A
-native no-replace publication capability lets ordinary export perform it as one
-externally visible transition. Competing root state is preserved and blocks,
-and a provider cannot enter an export-created unmarked window. Once visible, the
-marker is the absorbing claim. The ordinary export transaction then owns only
-payload, ledger, managed GC, and their inverse actions. It never owns a root
-inverse action, publication receipt, recovery state, marker-repair protocol,
-transaction history, root digest, registry, or provider field.
+Every provider operation remains explicit and point-addressed. The
+`completeNativeHomes` procedure, complete target-identity reader, filesystem
+scan, and caller bridge are deleted rather than preserved for a second owner.
+Targeted and complete-test modes retain only their requested target identities;
+canonical sync/status use only their explicit provider-home inputs and live
+native truth. No provider scans homes, export destinations, or ledgers.
 
-The substrate for that transition is an explicit user product-authority gate,
-not an implementation detail C6 may weaken. Two mechanisms remain admissible
-pending selection by the user, or an explicitly user-delegated product
-authority: one narrowly scoped shared/native directory no-replace capability
-with no lifecycle semantics, or a separate point-addressed export-authorized
-protected preclaim operation. The native capability is the minimal
-frame-compatible recommendation and must not grow into a generalized publication
-framework. A stateless preclaim is not admissible: after interruption, providers
-cannot distinguish its unmarked residue from a legitimate provider home.
-Selecting preclaim therefore requires a separate authority amendment naming a
-persistent fence carrier and owner, provider observation, and exit/re-entry law,
-and proving that the fence is neither a second destination truth nor a hidden
-multi-home coordinator. Only then could ordinary export refuse `Absent` and
-accept an exact preclaimed root. Duplicating the native syscall subsystem inside
-the export resource is not admissible. Task 5.2 remains blocked until that
-product authority authorizes the choice; unprotected `mkdir` followed by a marker write is not an
-implementation of the required transition.
-
-The existing `RejectedBeforeMutation` result remains scoped to managed payload,
-ledger, and capsule mutation. A completed owner claim is durable admission state
-and may therefore remain visible when later planning or undo preflight rejects;
-tests and diagnostics must report that marker truth rather than imply that the
-destination path stayed absent.
-
-A losing native no-replace claimant never adopts the winner in the same
-invocation. It preserves the competing entry and refuses. A cold retry
-re-observes the root; an exact export marker is then admitted read-only with zero
-claim writes, while every other occupant remains preserved and blocked. A failed
-native publication with no winner leaves `Absent` unchanged. These distinctions
-prevent a failed result from erasing either a competing occupant or a committed
-authority transition. No preclaim failure/re-entry law is certified before its
-required fence amendment exists.
-
-Every provider operation requires an already-existing explicit home and treats
-any entry or unreadable result at that fixed marker slot as an ownership
-collision before native execution. Providers neither parse nor own the export
-marker protocol, never create the home, and recheck the slot at their native
-resource boundary. Export does not inspect provider state, providers do not
-inspect export ledgers, and neither scans or aggregates the other owner's roots.
-Native inventory and the destination ledger remain their respective state
-truths.
+The installed controller data root was inspected read-only before undo
+retirement. Its canonical capsule path
+`agent-plugins/last-operation-v1` was absent, so no applying, undoing, committed,
+or otherwise non-idle export capsule can be stranded by this cut. The inspection
+did not create, repair, clear, or otherwise mutate capsule state.
 
 ### One durable controller root replaces transfer
 
@@ -306,12 +262,14 @@ remain. The local hook and remote workflow provide feedback now; task 8.8 must
 make that workflow a required server-side merge rule before closure. C6 does
 not add semantic GritQL rules for runtime behavior. Test-only scheduling belongs
 to the owning Vitest project;
-DevOps command discovery belongs to `@rawr/plugin-devops`. T6C1/C2 update the
-closed positive command/projection inventory to remove only `attest-promotion`
-and receipt-owned `retire`; qualified `undo` remains required. At task 5.4
-closure, T6C3 keeps closed owner-local port, router, binding, and resource
-inventories whose admitted topology has no aggregate native-home or target-scan
-relationship; it does not encode their absence as a blacklist.
+DevOps command discovery belongs to `@rawr/plugin-devops`. T6C1/C2 remove
+`attest-promotion` and receipt-owned `retire`. T6C3 positively narrows the
+lifecycle service to releases, vendors, packaging, providers, and governance;
+the command channel to build, check, create, package, status, sync, test, and
+`vendors status`/`vendors update`; and provider state access to point-addressed
+contracts.
+No export, undo, aggregate-home, scan, binding, or port is retained as a
+compatibility surface.
 
 ## Reachable Lifecycle
 
@@ -338,7 +296,7 @@ or rollback state owner.
 | T6C1a | Current-main v2 codec/public interface | canonical bytes, cold-port procedure, exact CLI projection |
 | T6C1b | Observed-Git selection and cutover | direct resolution, old ceremony/commands unreachable |
 | T6C2 | Thin canonical provider path | resolved selection consumption, native truth, no canonical hidden state |
-| T6C3 | Export destination independence | owner-local ledger/collision law, no provider-home registry |
+| T6C3 | Legacy export/undo retirement | no destination/capsule command or service surface; no provider-home aggregate |
 | T6D | Owner-correct CLI test boundaries | owner-local DevOps fixture and ordinary serialized CLI target |
 | T6E | Deterministic official manifest | focused regression and independent build-twice equality |
 | T6F | Landing and settlement | installed controller, personal channel, disposable/live native convergence, read-only repeat |

@@ -17,7 +17,6 @@ import {
   parseArtifactHandle,
   parseBuildRequest,
   parseCheckOperationRequest,
-  parseExportRequest,
   parsePackageRequest,
   parseStatusRequest,
   parseSyncRequest,
@@ -95,7 +94,9 @@ describe("qualified lifecycle command boundary", () => {
     for (const retired of [
       ["agent", "sync"],
       ["agent", "plugins", "attest-promotion"],
+      ["agent", "plugins", "export"],
       ["agent", "plugins", "retire"],
+      ["agent", "plugins", "undo"],
       ["undo"],
       ["plugins", "sync"],
       ["plugins", "status"],
@@ -121,12 +122,6 @@ describe("qualified lifecycle command boundary", () => {
       () => parseCheckOperationRequest({ mode: "codec" }),
       () => parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha", "complete-set": true }),
       () => parsePackageRequest({ artifact: releaseHandle, format: "cowork-v1", output: "relative.zip" }),
-      () => parseExportRequest({
-        artifact: releaseHandle,
-        mode: "complete-set",
-        layout: "codex-v1",
-        destination: ["/tmp/rawr-export"],
-      }),
       () => parseTestRequest({
         release: [releaseHandle],
         "release-set": setHandle,
@@ -327,16 +322,6 @@ describe("qualified lifecycle command boundary", () => {
     });
     expect(parsePackageRequest({ artifact: releaseHandle, format: "cowork-v1", output: "/tmp/alpha.zip" }))
       .toMatchObject({ artifactRef: { kind: "release" }, outputPath: "/tmp/alpha.zip" });
-    expect(parseExportRequest({
-      artifact: setHandle,
-      mode: "complete-set",
-      layout: "claude-v1",
-      destination: ["/tmp/export"],
-    })).toMatchObject({
-      protocolVersion: 1,
-      artifactRef: { kind: "complete-set" },
-      overwritePolicy: "managed-only",
-    });
     expect(parseTestRequest({
       "release-set": setHandle,
       "evaluation-profile": "native@v1",
@@ -675,18 +660,6 @@ describe("qualified lifecycle command boundary", () => {
     expect(human.stdout).not.toBe("ok\n");
   });
 
-  it("rejects provider executable authority on export-only undo", () => {
-    const result = runRawr([
-      "agent", "plugins", "undo",
-      "--provider-executable", "codex=/tmp/codex",
-      "--json",
-    ]);
-
-    expect(result.status).toBe(2);
-    expect(result.stderr).toContain("Nonexistent flag: --provider-executable");
-    expect(result.stdout).not.toContain("LIFECYCLE_UNDO_FAILED");
-  });
-
   it("rejects selected executable authorities before constructing lifecycle ports", async () => {
     const fixture = await createOwnedFixtureRoot();
     try {
@@ -825,12 +798,10 @@ const EXACT_PLUGIN_COMMANDS = [
   "agent:plugins:build",
   "agent:plugins:check",
   "agent:plugins:create",
-  "agent:plugins:export",
   "agent:plugins:package",
   "agent:plugins:status",
   "agent:plugins:sync",
   "agent:plugins:test",
-  "agent:plugins:undo",
   "agent:plugins:vendors:status",
   "agent:plugins:vendors:update",
   "plugins:inspect",
@@ -875,13 +846,11 @@ function recordingClient(calls: string[]): Client {
     },
     vendors: { status: call("vendors.status"), update: call("vendors.update") },
     packaging: { package: call("packaging.package") },
-    exports: { apply: call("exports.apply") },
     providers: {
       targetedTest: call("providers.targetedTest"),
       completeTest: call("providers.completeTest"),
       canonicalSync: call("providers.canonicalSync"),
       canonicalStatus: call("providers.canonicalStatus"),
-      completeNativeHomes: call("providers.completeNativeHomes"),
     },
     governance: {
       currentMainRecord: call("governance.currentMainRecord"),
@@ -928,7 +897,6 @@ function operationRequests(): LifecycleOperationRequest[] {
     { operation: "vendors.status", input: parseVendorStatusRequest(vendorWorkspace()) },
     { operation: "vendors.update", input: parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] }) },
     { operation: "packaging.package", input: parsePackageRequest({ artifact: releaseHandle, format: "cowork-v1", output: "/tmp/a.zip" }) },
-    { operation: "exports.apply", input: parseExportRequest({ artifact: releaseHandle, mode: "targeted-release", layout: "codex-v1", destination: ["/tmp/export"] }) },
     { operation: "providers.targetedTest", input: { kind: "targeted-test", releases: [release], evaluationProfile: "native@v1", targets: target } },
     { operation: "providers.completeTest", input: { kind: "complete-test", releaseSet, evaluationProfile: "native@v1", targets: target } },
     { operation: "providers.canonicalSync", input: parseSyncRequest(providerWorkspace()) },

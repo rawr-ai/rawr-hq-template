@@ -28,11 +28,6 @@ export type TargetRecordObservation =
   | Readonly<{ kind: "absent" }>
   | Readonly<{ kind: "present"; bytes: Uint8Array }>;
 
-export interface TargetRecordScanEntry {
-  readonly key: TargetRecordKey;
-  readonly observation: TargetRecordObservation;
-}
-
 export interface TargetRecordCapture {
   readonly captureHandle: TargetRecordCaptureHandle;
   readonly readToken: TargetRecordReadToken;
@@ -70,7 +65,6 @@ export interface TargetRecordPlanInput {
  */
 export interface PathlessTargetRecordCollection {
   read(key: TargetRecordKey): Promise<DeploymentResult<TargetRecordObservation>>;
-  scan(kind: TargetRecordKind): Promise<DeploymentResult<readonly TargetRecordScanEntry[]>>;
   capture(key: TargetRecordKey): Promise<DeploymentResult<TargetRecordCapture>>;
   release(capture: TargetRecordCapture): Promise<DeploymentResult<null>>;
   write(input: TargetRecordPlanInput & Readonly<{

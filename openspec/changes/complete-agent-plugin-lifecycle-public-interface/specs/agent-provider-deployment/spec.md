@@ -340,27 +340,27 @@ that proof.
 - **THEN** settlement remains unproven until the native refresh boundary is
   observed in that task; no fresh-process result is relabeled as active proof
 
-### Requirement: Export-owned roots block every provider mode
+### Requirement: Reserved owner-marker occupancy blocks every provider mode
 Every provider plan/status operation MUST require its explicit canonical home to
 already exist as a directory, then read only the fixed
 `.rawr-agent-plugin-owner.json` slot at that home before native execution. Any
 entry or unreadable result at the slot MUST be `BLOCKED_COLLISION`; absence
 permits ordinary provider planning. The native resource MUST recheck slot
 absence immediately before each native command. A missing home MUST block and
-the provider lifecycle MUST NOT create it. Provider code MUST NOT parse or
-import the export marker codec, read an export ledger, scan export destinations,
-aggregate native homes, or infer ownership from path shape.
+the provider lifecycle MUST NOT create it. Provider code MUST NOT parse the
+marker, read a destination ledger, scan destinations, aggregate native homes, or
+infer ownership from path shape. This reservation is only a bounded collision
+guard; it does not authorize or implement destination export.
 
-#### Scenario: Export owns a provider home candidate
+#### Scenario: A reserved owner marker occupies a provider home candidate
 - **WHEN** a provider request selects a home whose fixed marker slot is occupied
 - **THEN** the target is `BLOCKED_COLLISION` before native mutation and no
   provider receipt, sidecar, or capsule changes
 
 #### Scenario: Provider state exists first
 - **WHEN** an explicit existing unmarked root is selected as a provider home
-- **THEN** provider convergence and a repeated read-only invocation succeed,
-  later export admission blocks at its own boundary, and provider state remains
-  the sole root owner
+- **THEN** provider convergence and a repeated read-only invocation succeed and
+  provider state remains the sole root owner
 
 #### Scenario: Missing home is not prepared
 - **WHEN** a provider request selects an absent explicit home
@@ -374,15 +374,3 @@ aggregate native homes, or infer ownership from path shape.
   `BLOCKED_COLLISION` issue; capability or observation remains blocked, while a
   mutation bridge that may already have invoked an earlier native command
   remains uncertain rather than falsely reporting a zero-mutation target
-
-#### Scenario: Provider cannot enter an unmarked publication window
-- **WHEN** an authorized export claim transitions an absent destination while a
-  provider observes the same path
-- **THEN** the provider can observe only a missing home or the occupied marker
-  and cannot enter native mutation through an export-created unmarked root
-
-#### Scenario: Later provider operations honor a completed export claim
-- **WHEN** an export claim has published its exact marker and a provider request
-  later selects that root
-- **THEN** the provider observes the occupied marker slot and cannot enter
-  native mutation

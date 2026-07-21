@@ -33,23 +33,6 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
       encodeCoworkV1: async () => unavailableAsync("cowork archive encode"),
       publish: async () => unavailableAsync("package output"),
     },
-    exports: {
-      knownNativeHomesReader: {
-        readCompleteSnapshot: async () => unavailableAsync("native homes"),
-      },
-      undoWriter: {
-        preflight: async () => unavailableAsync("export undo preflight"),
-        begin: async () => unavailableAsync("export undo begin"),
-      },
-      destinationRuntime: {
-        inspect: async () => unavailableAsync("export destination inspection"),
-        capture: async () => unavailableAsync("export destination capture"),
-        release: async () => unavailableAsync("export destination release"),
-        apply: async () => unavailableAsync("export destination apply"),
-        restore: async () => unavailableAsync("export destination restore"),
-        settle: async () => unavailableAsync("export destination settle"),
-      },
-    },
     ...unavailableProviderResources(),
     ...overrides,
   };
@@ -102,7 +85,6 @@ export function unavailableProviderResources() {
       readProjection: async () => unavailableAsync("provider projection record read"),
       publishProjection: async () => unavailableAsync("provider projection record publication"),
       readTarget: async () => unavailableAsync("provider target record read"),
-      scanTargets: async () => unavailableAsync("provider target record scan"),
       captureTarget: async () => unavailableAsync("provider target record capture"),
       releaseTarget: async () => unavailableAsync("provider target record release"),
       writeTarget: async () => unavailableAsync("provider target record write"),

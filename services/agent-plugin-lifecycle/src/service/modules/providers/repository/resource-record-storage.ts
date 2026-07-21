@@ -28,9 +28,6 @@ import type {
   ProjectionRecordPublication,
 } from "../model/repositories/projection-storage";
 import type {
-  CompleteTargetIdentityReader,
-} from "../model/repositories/state";
-import type {
   PathlessTargetRecordCollection,
   TargetRecordCapture,
   TargetRecordCaptureHandle,
@@ -40,7 +37,6 @@ import type {
   TargetRecordPlanInput,
   TargetRecordReadToken,
   TargetRecordRestoreObservation,
-  TargetRecordScanEntry,
   TargetRecordWriteObservation,
 } from "../model/repositories/target-record-storage";
 import {
@@ -57,7 +53,6 @@ import {
 } from "./resource-tree-address";
 
 const MAX_RECORD_BYTES = MAX_RELEASE_SET_PAYLOAD_BYTES;
-const MAX_TARGET_RECORDS = 1_000_000;
 const PROVIDER_TREE_LIMITS = Object.freeze({
   maxEntries: 200_000,
   maxBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
@@ -109,17 +104,6 @@ export function createResourceProviderRecordState(
   const state = Object.freeze({ projections, targets });
   statesByRoot.set(options.projectionRepositoryRoot, state);
   return state;
-}
-
-/**
- * Projects only the complete identity read needed by export settlement from the
- * provider record resource. Provider lifecycle retains every broader target
- * state capability behind its module middleware.
- */
-export function createResourceCompleteTargetIdentityReader(
-  records: AgentProviderRecordsAsyncPort,
-): CompleteTargetIdentityReader {
-  return createPathlessTargetState(createTargetRecordCollection(records)).completeIdentities;
 }
 
 function createProjectionRecordCollection(
@@ -180,29 +164,6 @@ function createTargetRecordCollection(
         return success(observationFromResource(observed));
       } catch (error) {
         return recordFailure("target.read", resourceFailureDetail(error));
-      }
-    },
-    async scan(kind: TargetRecordKey["kind"]): Promise<DeploymentResult<readonly TargetRecordScanEntry[]>> {
-      try {
-        const observed = await port.scanTargets({
-          kind: kind === "identity" ? "Identity" : "Receipt",
-          maxEntries: MAX_TARGET_RECORDS,
-          maxBytes: MAX_RECORD_BYTES,
-        });
-        const entries: TargetRecordScanEntry[] = [];
-        for (const entry of observed) {
-          const key = targetKey(entry.address);
-          if (key.kind !== kind) {
-            return recordFailure("target.scan", "Provider record scan returned another record kind");
-          }
-          entries.push(Object.freeze({
-            key,
-            observation: observationFromResource(entry),
-          }));
-        }
-        return success(Object.freeze(entries));
-      } catch (error) {
-        return recordFailure("target.scan", resourceFailureDetail(error));
       }
     },
     async capture(key: TargetRecordKey): Promise<DeploymentResult<TargetRecordCapture>> {
@@ -385,13 +346,6 @@ function targetAddress(key: TargetRecordKey): ProviderTargetRecordAddress {
     scope: "Target",
     kind: key.kind === "identity" ? "Identity" : "Receipt",
     targetKey: key.targetDigest,
-  });
-}
-
-function targetKey(address: ProviderTargetRecordAddress): TargetRecordKey {
-  return Object.freeze({
-    kind: address.kind === "Identity" ? "identity" : "receipt",
-    targetDigest: address.targetKey as TargetRecordKey["targetDigest"],
   });
 }
 

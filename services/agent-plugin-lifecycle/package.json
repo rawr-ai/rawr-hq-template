@@ -18,18 +18,6 @@
       "types": "./src/service/shared/release/index.ts",
       "default": "./src/service/shared/release/index.ts"
     },
-    "./bindings/exports": {
-      "types": "./src/bindings/exports.ts",
-      "default": "./src/bindings/exports.ts"
-    },
-    "./bindings/providers": {
-      "types": "./src/bindings/providers/index.ts",
-      "default": "./src/bindings/providers/index.ts"
-    },
-    "./ports/exports": {
-      "types": "./src/service/modules/exports/ports.ts",
-      "default": "./src/service/modules/exports/ports.ts"
-    },
     "./service/contract": {
       "types": "./src/service/contract.ts",
       "default": "./src/service/contract.ts"
@@ -51,7 +39,6 @@
   "dependencies": {
     "@rawr/hq-sdk": "workspace:*",
     "@rawr/resource-agent-plugin-artifact-repository": "workspace:*",
-    "@rawr/resource-agent-plugin-export-destination": "workspace:*",
     "@rawr/resource-agent-plugin-package-output": "workspace:*",
     "@rawr/resource-agent-provider-records": "workspace:*",
     "@rawr/resource-content-workspace": "workspace:*",

@@ -6,10 +6,6 @@ export type ArtifactStoreRoot = string & {
   readonly __artifactStoreRoot: "ArtifactStoreRootV1";
 };
 
-export type CapsuleRoot = string & {
-  readonly __capsuleRoot: "CapsuleRootV1";
-};
-
 export type ProviderProjectionRoot = string & {
   readonly __providerProjectionRoot: "ProviderProjectionRootV1";
 };
@@ -20,14 +16,12 @@ export type ProviderTargetStateRoot = string & {
 
 export type AgentPluginControllerLayout = Readonly<{
   artifactStoreRoot: ArtifactStoreRoot;
-  capsuleRoot: CapsuleRoot;
   providerProjectionRoot: ProviderProjectionRoot;
   providerTargetStateRoot: ProviderTargetStateRoot;
 }>;
 
 const AGENT_PLUGIN_STATE_DIRECTORY = "agent-plugins";
 const ARTIFACT_STORE_DIRECTORY = "artifacts-v1";
-const CAPSULE_DIRECTORY = "last-operation-v1";
 const PROVIDER_PROJECTION_DIRECTORY = "provider-projections-v1";
 const PROVIDER_TARGET_STATE_DIRECTORY = "provider-target-state-v1";
 
@@ -37,13 +31,11 @@ export function deriveAgentPluginControllerLayout(
   const dataRoot = requireCanonicalAbsoluteRoot(context.dataRoot);
   const ownerRoot = path.join(dataRoot, AGENT_PLUGIN_STATE_DIRECTORY);
   const artifactStoreRoot = path.join(ownerRoot, ARTIFACT_STORE_DIRECTORY);
-  const capsuleRoot = path.join(ownerRoot, CAPSULE_DIRECTORY);
   const providerProjectionRoot = path.join(ownerRoot, PROVIDER_PROJECTION_DIRECTORY);
   const providerTargetStateRoot = path.join(ownerRoot, PROVIDER_TARGET_STATE_DIRECTORY);
 
   if (
     !isContained(dataRoot, artifactStoreRoot)
-    || !isContained(dataRoot, capsuleRoot)
     || !isContained(dataRoot, providerProjectionRoot)
     || !isContained(dataRoot, providerTargetStateRoot)
   ) {
@@ -52,7 +44,6 @@ export function deriveAgentPluginControllerLayout(
 
   return Object.freeze({
     artifactStoreRoot: artifactStoreRoot as ArtifactStoreRoot,
-    capsuleRoot: capsuleRoot as CapsuleRoot,
     providerProjectionRoot: providerProjectionRoot as ProviderProjectionRoot,
     providerTargetStateRoot: providerTargetStateRoot as ProviderTargetStateRoot,
   });

@@ -2,7 +2,7 @@
 
 > **Canonical scope**: governed content and release records in an independent
 > content repository, operated by the Template-owned controller through explicit
-> data, artifact, export, and provider interfaces.
+> data, artifact, package-output, and provider interfaces.
 >
 > **Related**: [[workflow.md]] and
 > [[../../../workflows/lifecycle-agent-plugin.md]].
@@ -37,9 +37,6 @@ branch silently runs `check`, cleans a checkout, or starts another operation.
   handles. A separate check result is not an ambient prerequisite.
 - **Package**: `rawr agent plugins package` takes one immutable artifact handle,
   an exact format, and an explicit output path. It does not read source.
-- **Export**: `rawr agent plugins export` takes one immutable artifact handle,
-  exact mode and layout, explicit destinations, and overwrite policy. Each
-  destination remains governed by its own ledger.
 - **Provider test**: `rawr agent plugins test` takes immutable targeted-release
   handles or one immutable complete-set handle, an evaluation profile, and
   explicit provider homes and executables.
@@ -55,26 +52,22 @@ branch silently runs `check`, cleans a checkout, or starts another operation.
   current-main-selection` takes one explicit content-workspace locator and
   expected repository identity. It resolves the reviewed v2 record from stable
   canonical Git without hosted approval or promotion replay.
-- **Undo**: `rawr agent plugins undo` uses only the controller-owned managed-export
-  capsule and replays only export-destination actions. It accepts no provider
-  executable or provider-home authority and never replays native provider state.
-
 Within governed lifecycle operations, content-workspace bytes are admissible
 only to vendor, check, build, and current-main selection branches. Record
-encode/validate is pure and takes no workspace port. Package, export, test,
-provider-state, and undo branches must bind their own owner-specific authority.
+encode/validate is pure and takes no workspace port. Package, test, and
+provider-state branches must bind their own owner-specific authority.
 
 ## Acceptance
 
 The selected branch settles only when its exact input and output identities,
-owner receipts or ledgers, state-transition proof, and any required repeated
+owner state, state-transition proof, and any required repeated
 convergence proof pass. Unselected branches do not run and need no synthetic
 `N/A` execution.
 
 ## Guardrails
 
-- Do not edit provider homes, export destinations, registries, or caches as preparation.
+- Do not edit provider homes, registries, or caches as preparation.
 - Do not infer a release set by scanning ambient workspaces.
-- Do not use package/export as a fallback for native provider convergence.
+- Do not use package output as a fallback for native provider convergence.
 - Do not use app, web, or runtime composition to bridge lifecycle owners.
 - Do not add aliases or compatibility commands for retired mixed lifecycle paths.

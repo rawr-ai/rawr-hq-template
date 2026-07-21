@@ -21,7 +21,6 @@ import {
 import { MemoryArtifactRepository } from "./support/artifact-repository";
 import { productFixture } from "./shared/release/fixtures";
 import { createResourceArtifactStore } from "../src/service/repository/artifact-repository";
-import { createKnownNativeHomesSnapshot } from "../src/bindings/exports";
 import {
   parseProviderTarget,
 } from "../src/service/modules/providers/model/dto/provider-target";
@@ -33,7 +32,6 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
 } from "../src/service/shared/release";
 
 const invocation = {
@@ -49,8 +47,7 @@ const artifactRepositoryRoot = "/tmp/rawr-service-spine-artifacts";
 describe("agent plugin lifecycle oRPC service spine", () => {
   it("routes release, vendor, packaging, and governance refusals only through their owner ports", async () => {
     const calls: string[] = [];
-    const providerScans: Parameters<Deps["providerRecords"]["scanTargets"]>[0][] = [];
-    const client = spineClient(calls, { providerScans });
+    const client = spineClient(calls);
 
     await expect(client.releases.check(releaseRequest(), invocation)).resolves.toMatchObject({
       kind: "IneligibleReport",
@@ -93,19 +90,6 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       "governance.contentWorkspace.captureGitWorkspaceEvidence",
     ]);
 
-    await expect(client.providers.completeNativeHomes({}, invocation)).resolves.toMatchObject({
-      ok: true,
-      value: {
-        protocol: "agent-provider-native-homes@v1",
-        homes: [],
-      },
-    });
-    expect(calls.splice(0)).toEqual(["providers.records.scanTargets"]);
-    expect(providerScans).toEqual([{
-      kind: "Identity",
-      maxEntries: 1_000_000,
-      maxBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
-    }]);
   });
 
   it("derives canonical provider selection from the raw content-workspace dependency", async () => {
@@ -259,36 +243,6 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     );
   });
 
-  it("derives the export artifact reader from the raw repository before mutation", async () => {
-    const calls: string[] = [];
-    const artifactReads: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0][] = [];
-    const nativeHomeReads: string[] = [];
-    const fixture = productFixture();
-    const client = spineClient(calls, { artifactReads, nativeHomeReads });
-    const artifactRef = parsed(parseArtifactRef({
-      kind: "release",
-      releaseDigest: fixture.alphaRelease.releaseDigest,
-      artifactDigest: fixture.alphaRelease.artifactDigest,
-    }));
-
-    await expect(client.exports.apply({
-      protocolVersion: 1,
-      artifactRef,
-      mode: "targeted-release",
-      layout: "codex-v1",
-      destinations: ["/tmp/rawr-service-spine-export"],
-      overwritePolicy: "managed-only",
-    }, invocation)).resolves.toMatchObject({
-      kind: "RejectedBeforeMutation",
-      failure: { code: "ArtifactMissing", phase: "artifact-read" },
-    });
-
-    expect(nativeHomeReads).toEqual(["readCompleteSnapshot"]);
-    expect(calls).toEqual(["artifactRepository.readTree"]);
-    expect(artifactReads).toHaveLength(1);
-    expect(artifactReads[0]?.address).toEqual(artifactAddress(artifactRef));
-  });
-
   it("rejects malformed release input before the owner port is invoked", async () => {
     const calls: string[] = [];
     const client = spineClient(calls);
@@ -307,8 +261,6 @@ interface SpineObservations {
   readonly contentWorkspaceInspections?: Parameters<
     Deps["contentWorkspace"]["inspectGitWorkspace"]
   >[0][];
-  readonly providerScans?: Parameters<Deps["providerRecords"]["scanTargets"]>[0][];
-  readonly nativeHomeReads?: string[];
 }
 
 function spineClient(calls: string[], observations: SpineObservations = {}): Client {
@@ -360,37 +312,7 @@ function spineClient(calls: string[], observations: SpineObservations = {}): Cli
       encodeCoworkV1: async () => unavailableAsync("cowork archive encode"),
       publish: async () => unavailableAsync("package output"),
     },
-    exports: {
-      knownNativeHomesReader: {
-        readCompleteSnapshot: async () => {
-          observations.nativeHomeReads?.push("readCompleteSnapshot");
-          const snapshot = createKnownNativeHomesSnapshot([]);
-          if (!snapshot.ok) throw new Error(snapshot.failure.message);
-          return Object.freeze({ kind: "Verified" as const, snapshot: snapshot.snapshot });
-        },
-      },
-      undoWriter: {
-        preflight: async () => unavailableAsync("export undo preflight"),
-        begin: async () => unavailableAsync("export undo begin"),
-      },
-      destinationRuntime: {
-        inspect: async () => unavailableAsync("export destination inspection"),
-        capture: async () => unavailableAsync("export destination capture"),
-        release: async () => unavailableAsync("export destination release"),
-        apply: async () => unavailableAsync("export destination apply"),
-        restore: async () => unavailableAsync("export destination restore"),
-        settle: async () => unavailableAsync("export destination settle"),
-      },
-    },
     ...providerResources,
-    providerRecords: {
-      ...providerResources.providerRecords,
-      scanTargets: async (input) => {
-        calls.push("providers.records.scanTargets");
-        observations.providerScans?.push(input);
-        return Object.freeze([]);
-      },
-    },
   };
   return createClient({
     deps,

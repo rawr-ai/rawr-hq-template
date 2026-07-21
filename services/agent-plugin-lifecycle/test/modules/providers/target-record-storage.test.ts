@@ -16,7 +16,6 @@ import {
 } from "../../../src/service/modules/providers/model/policy/receipt";
 import {
   createTargetIdentitySidecar,
-  type TargetIdentitySidecar,
 } from "../../../src/service/modules/providers/model/policy/state-machine";
 import type {
   EvaluationProfile,
@@ -41,7 +40,6 @@ import type {
   TargetRecordObservation,
   TargetRecordPlanInput,
   TargetRecordReadToken,
-  TargetRecordScanEntry,
 } from "../../../src/service/modules/providers/model/repositories/target-record-storage";
 import { failure, issue, success } from "../../../src/service/modules/providers/model/errors/deployment-result";
 import {
@@ -108,48 +106,6 @@ describe("pathless target-record storage", () => {
         path: "target.receipt",
       });
     }
-  });
-
-  it("sorts complete identities and rejects duplicate or foreign scan entries", async () => {
-    const targetA = mustTarget("/provider/a");
-    const targetB = mustTarget("/provider/b");
-    const records = new FakeTargetRecords();
-    const state = createPathlessTargetState(records);
-    records.seed(
-      identityKey(targetB),
-      canonicalSerializeTargetIdentitySidecar(createTargetIdentitySidecar(targetB)),
-    );
-    records.seed(
-      identityKey(targetA),
-      canonicalSerializeTargetIdentitySidecar(createTargetIdentitySidecar(targetA)),
-    );
-
-    const complete = await state.completeIdentities.readAll();
-    expect(complete.ok && complete.value.map((sidecar) => sidecar.targetDigest)).toEqual(
-      [targetA.targetDigest, targetB.targetDigest].sort(),
-    );
-
-    records.scanOverride = [
-      presentScan(targetA, createTargetIdentitySidecar(targetA)),
-      presentScan(targetA, createTargetIdentitySidecar(targetA)),
-    ];
-    expect((await state.completeIdentities.readAll()).ok).toBe(false);
-
-    records.scanOverride = [Object.freeze({
-      key: receiptKey(targetA),
-      observation: presentRecord(canonicalSerializeTargetIdentitySidecar(
-        createTargetIdentitySidecar(targetA),
-      )),
-    })];
-    expect((await state.completeIdentities.readAll()).ok).toBe(false);
-
-    records.scanOverride = [Object.freeze({
-      key: identityKey(targetB),
-      observation: presentRecord(canonicalSerializeTargetIdentitySidecar(
-        createTargetIdentitySidecar(targetA),
-      )),
-    })];
-    expect((await state.completeIdentities.readAll()).ok).toBe(false);
   });
 
   it("captures, writes, and settles identity admission and receipt publication", async () => {
@@ -389,7 +345,6 @@ class FakeTargetRecords implements PathlessTargetRecordCollection {
   readonly events: FakeEvent[] = [];
   readonly retainedUnreleased: TargetRecordCapture[] = [];
   readonly retained: TargetRecordPlanInput[] = [];
-  scanOverride: readonly TargetRecordScanEntry[] | null = null;
   failNextWriteAfterMutation = false;
   failNextRestore = false;
   failNextRelease = false;
@@ -400,17 +355,6 @@ class FakeTargetRecords implements PathlessTargetRecordCollection {
 
   async read(key: TargetRecordKey) {
     return success(this.observation(key));
-  }
-
-  async scan(kind: TargetRecordKey["kind"]) {
-    if (this.scanOverride !== null) return success(this.scanOverride);
-    const entries = [...this.records.entries()]
-      .filter(([key]) => key.startsWith(`${kind}:`))
-      .map(([key, bytes]) => Object.freeze({
-        key: parseRecordKey(key),
-        observation: presentRecord(bytes),
-      }));
-    return success(Object.freeze(entries));
   }
 
   async capture(key: TargetRecordKey) {
@@ -640,16 +584,6 @@ function receiptKey(target: ProviderTarget): TargetRecordKey {
   return Object.freeze({ kind: "receipt", targetDigest: target.targetDigest });
 }
 
-function presentScan(
-  target: ProviderTarget,
-  sidecar: TargetIdentitySidecar,
-): TargetRecordScanEntry {
-  return Object.freeze({
-    key: identityKey(target),
-    observation: presentRecord(canonicalSerializeTargetIdentitySidecar(sidecar)),
-  });
-}
-
 function presentRecord(bytes: Uint8Array): TargetRecordObservation {
   return Object.freeze({ kind: "present", bytes: cloneBytes(bytes) });
 }
@@ -660,14 +594,6 @@ function presentReceipt(receipt: TargetReceipt) {
 
 function recordKeyText(key: TargetRecordKey): string {
   return `${key.kind}:${key.targetDigest}`;
-}
-
-function parseRecordKey(value: string): TargetRecordKey {
-  const separator = value.indexOf(":");
-  return Object.freeze({
-    kind: value.slice(0, separator) as TargetRecordKey["kind"],
-    targetDigest: value.slice(separator + 1) as TargetRecordKey["targetDigest"],
-  });
 }
 
 function captureAuthority(capture: TargetRecordCapture) {

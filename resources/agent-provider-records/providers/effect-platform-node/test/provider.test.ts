@@ -95,7 +95,7 @@ describe("effect-platform-node agent provider records", () => {
     expect(new Uint8Array(await readFile(destination))).toEqual(bytes);
   });
 
-  it("captures, atomically writes, scans, converges, and settles one target record", async () => {
+  it("captures, atomically writes, converges, and settles one target record", async () => {
     fixtureRoot = await createFixture();
     const layout = fixtureLayout(fixtureRoot.path);
     const resource = makeAgentProviderRecordsResource(layout);
@@ -128,19 +128,6 @@ describe("effect-platform-node agent provider records", () => {
       ino: before.ino,
       mtimeMs: before.mtimeMs,
     });
-
-    const scan = await run(resource.scanTargets({
-      kind: "Identity",
-      maxEntries: 10,
-      maxBytes: MAX_BYTES,
-    }));
-    expect(scan.ok).toBe(true);
-    if (scan.ok) {
-      expect(scan.value).toHaveLength(1);
-      expect(scan.value[0]).toMatchObject({ kind: "Present", address });
-      const observed = scan.value[0];
-      if (observed?.kind === "Present") expect(observed.bytes).toEqual(bytes);
-    }
 
     const settled = await run(resource.settleTarget({
       address,

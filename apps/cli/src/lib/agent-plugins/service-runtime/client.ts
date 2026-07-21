@@ -1,12 +1,6 @@
 import { resolveControllerReentry } from "@rawr/core";
 import { createClient, type Client, type CreateClientOptions } from "@rawr/agent-plugin-lifecycle/client";
 import {
-  createKnownNativeHomesSnapshot,
-  type KnownNativeHomesReader,
-  type UndoCandidateInput,
-  type UndoWriter,
-} from "@rawr/agent-plugin-lifecycle/bindings/exports";
-import {
   createEmbeddedPlaceholderAnalyticsAdapter,
 } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
@@ -32,7 +26,6 @@ import {
 import {
   deriveAgentPluginControllerLayout,
 } from "../layout";
-import { createExportLifecycleRuntime } from "../bindings/export-destination";
 import {
   LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
@@ -45,14 +38,6 @@ import {
   createNodeProviderRecordState,
   type NodeProviderRecordState,
 } from "./providers/node-runtime";
-import {
-  applyingRecoveryBlockingFailure,
-  CapsuleControllerWriterV1,
-  createAgentPluginOwnerProtocolRegistryV1,
-  createExportUndoWriterV1,
-  openNodeCapsuleStateStoreV1,
-} from "../undo";
-import { prepareExportOnlyCapsuleSlotV1 } from "../undo/legacy-provider-retirement";
 
 type LifecycleBoundary = CreateClientOptions;
 type LifecycleProcess = ProcessView & Readonly<{
@@ -96,9 +81,6 @@ const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
   }),
   "packaging.package": (client) => Object.freeze({
     packaging: Object.freeze({ package: client.packaging.package }),
-  }),
-  "exports.apply": (client) => Object.freeze({
-    exports: Object.freeze({ apply: client.exports.apply }),
   }),
   "providers.targetedTest": (client) => Object.freeze({
     providers: Object.freeze({ targetedTest: client.providers.targetedTest }),
@@ -177,96 +159,8 @@ export function createProductionLifecycleDeps(input: Readonly<{
     contentWorkspace,
     clock: Object.freeze({ now: () => new Date() }),
     packageOutput: makeNodePackageOutputAsyncPort(),
-    exports: createExportLifecycleRuntime({
-      knownNativeHomesReader: createKnownNativeHomesReader(providerState.exportKnownHomesReader),
-      undoWriter: createNodeExportUndoWriter(layout.capsuleRoot),
-    }),
     ...providerDeps,
   } satisfies LifecycleDeps);
-}
-
-function createKnownNativeHomesReader(
-  completeIdentities: NodeProviderRecordState["exportKnownHomesReader"],
-): KnownNativeHomesReader {
-  return Object.freeze({
-    async readCompleteSnapshot() {
-      try {
-        const observed = await completeIdentities.readAll();
-        if (!observed.ok) {
-          return Object.freeze({
-            kind: "Unavailable" as const,
-            failure: Object.freeze({
-              code: "NativeHomesUnavailable" as const,
-              phase: "native-homes-read",
-              message: observed.issues.map((issue) => issue.message).join("; "),
-            }),
-          });
-        }
-        const verified = createKnownNativeHomesSnapshot(observed.value.map((home) => ({
-          provider: home.provider,
-          canonicalPath: home.canonicalHome,
-        })));
-        return verified.ok
-          ? Object.freeze({ kind: "Verified" as const, snapshot: verified.snapshot })
-          : Object.freeze({ kind: "Unavailable" as const, failure: verified.failure });
-      } catch (error) {
-        return Object.freeze({
-          kind: "Unavailable" as const,
-          failure: Object.freeze({
-            code: "NativeHomesUnavailable" as const,
-            phase: "native-homes-read",
-            message: errorMessage(error),
-          }),
-        });
-      }
-    },
-  });
-}
-
-export function createNodeExportUndoWriter(
-  capsuleRoot: Parameters<typeof openNodeCapsuleStateStoreV1>[0]["root"],
-): UndoWriter {
-  const writer = lazy(async () => {
-    await prepareExportOnlyCapsuleSlotV1({ capsuleRoot, mode: "export-activation" });
-    const registry = createAgentPluginOwnerProtocolRegistryV1();
-    const opened = await openNodeCapsuleStateStoreV1({ root: capsuleRoot, registry });
-    if (opened.kind === "Rejected") {
-      throw new LifecycleAuthorityBindingError(opened.failure.message);
-    }
-    const observed = await opened.store.read();
-    if (observed.kind === "Rejected") {
-      throw new LifecycleAuthorityBindingError(observed.failure.message);
-    }
-    const controller = new CapsuleControllerWriterV1({
-      store: opened.store,
-      registry,
-    });
-    const recovery = await controller.recoverApplying({
-      expectedStateDigest: observed.observation.state.stateDigest,
-    });
-    const recoveryFailure = applyingRecoveryBlockingFailure(recovery);
-    if (recoveryFailure !== null) {
-      throw new LifecycleAuthorityBindingError(recoveryFailure.message);
-    }
-    return createExportUndoWriterV1(controller);
-  });
-  return Object.freeze({
-    async preflight(input: UndoCandidateInput) {
-      return (await writer()).preflight(input);
-    },
-    async begin(input: UndoCandidateInput) {
-      return (await writer()).begin(input);
-    },
-  });
-}
-
-function lazy<T>(factory: () => Promise<T>): () => Promise<T> {
-  let value: Promise<T> | undefined;
-  return () => value ??= factory();
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 function controllerAuthority(): Readonly<{

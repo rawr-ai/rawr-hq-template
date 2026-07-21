@@ -20,7 +20,6 @@ const ProviderRequestDigestSchema = Type.String({ pattern: "^prq1_[0-9a-f]{64}$"
 const TargetReceiptDigestSchema = Type.String({ pattern: "^tr1_[0-9a-f]{64}$" });
 const VisibleFingerprintSchema = Type.String({ pattern: "^vf1_[0-9a-f]{64}$" });
 const MechanicalEvidenceDigestSchema = Type.String({ pattern: "^me1_[0-9a-f]{64}$" });
-const CompleteNativeHomesDigestSchema = Type.String({ pattern: "^nh1_[0-9a-f]{64}$" });
 
 const ProviderTargetInputSchema = Type.Object(
   {
@@ -100,7 +99,6 @@ export const CanonicalStatusInputSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 
 export const ProviderDeploymentIssueCodeSchema = Type.Union([
   Type.Literal("ADAPTER_PROTOCOL_MISMATCH"),
@@ -810,15 +808,6 @@ const CanonicalSyncOutcomeSchema = Type.Object(
   { additionalProperties: false },
 );
 
-const CompleteNativeHomesObservationSchema = Type.Object(
-  {
-    protocol: Type.Literal("agent-provider-native-homes@v1"),
-    homes: Type.Array(TargetIdentitySidecarSchema),
-    observationDigest: CompleteNativeHomesDigestSchema,
-  },
-  { additionalProperties: false },
-);
-
 function providerResultSchema<T extends TSchema>(value: T) {
   return Type.Union([
     Type.Object(
@@ -842,7 +831,5 @@ export type CompleteTestProcedureResult = Static<typeof CompleteTestResultSchema
 export type TargetedTestProcedureResult = Static<typeof TargetedTestResultSchema>;
 export const CanonicalSyncResultSchema = providerResultSchema(CanonicalSyncOutcomeSchema);
 export const CanonicalStatusResultSchema = providerResultSchema(Type.Array(CanonicalStatusOutcomeSchema));
-export const CompleteNativeHomesResultSchema = providerResultSchema(CompleteNativeHomesObservationSchema);
 export type CanonicalSyncProcedureResult = Static<typeof CanonicalSyncResultSchema>;
 export type CanonicalStatusProcedureResult = Static<typeof CanonicalStatusResultSchema>;
-export type CompleteNativeHomesProcedureResult = Static<typeof CompleteNativeHomesResultSchema>;

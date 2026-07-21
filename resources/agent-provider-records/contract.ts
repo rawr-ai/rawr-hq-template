@@ -107,7 +107,6 @@ export interface AgentProviderRecordsFailure {
     | "read-projection"
     | "publish-projection"
     | "read-target"
-    | "scan-targets"
     | "capture-target"
     | "release-target"
     | "write-target"
@@ -122,7 +121,7 @@ export interface AgentProviderRecordsFailure {
 
 /**
  * Mechanical record storage only. Callers own record codecs, semantic validity,
- * evidence, transition policy, provider-owner protocol, and controller undo.
+ * evidence, transition policy, and provider ownership.
  */
 export interface AgentProviderRecordsResource<R = never> {
   readonly readProjection: (input: Readonly<{
@@ -145,16 +144,6 @@ export interface AgentProviderRecordsResource<R = never> {
     maxBytes: number;
   }>) => Effect.Effect<
     ProviderRecordObservation<ProviderTargetRecordAddress>,
-    AgentProviderRecordsFailure,
-    R
-  >;
-
-  readonly scanTargets: (input: Readonly<{
-    kind: ProviderTargetRecordKind;
-    maxEntries: number;
-    maxBytes: number;
-  }>) => Effect.Effect<
-    readonly ProviderRecordObservation<ProviderTargetRecordAddress>[],
     AgentProviderRecordsFailure,
     R
   >;
@@ -206,9 +195,6 @@ export interface AgentProviderRecordsAsyncPort {
   readonly readTarget: (
     input: Parameters<AgentProviderRecordsResource["readTarget"]>[0],
   ) => Promise<ProviderRecordObservation<ProviderTargetRecordAddress>>;
-  readonly scanTargets: (
-    input: Parameters<AgentProviderRecordsResource["scanTargets"]>[0],
-  ) => Promise<readonly ProviderRecordObservation<ProviderTargetRecordAddress>[]>;
   readonly captureTarget: (
     input: Parameters<AgentProviderRecordsResource["captureTarget"]>[0],
   ) => Promise<ProviderTargetRecordCapture>;

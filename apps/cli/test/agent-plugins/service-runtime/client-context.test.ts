@@ -30,7 +30,6 @@ const LIFECYCLE_OBJECT_DEP_KEYS = Object.freeze([
   "contentWorkspace",
   "clock",
   "packageOutput",
-  "exports",
   "providerRecords",
   "providerNativeResource",
   "providerExecutables",
@@ -52,7 +51,6 @@ const OPERATION_CASES = Object.freeze([
   { operation: "vendors.status", owner: "vendors", procedure: "status" },
   { operation: "vendors.update", owner: "vendors", procedure: "update" },
   { operation: "packaging.package", owner: "packaging", procedure: "package" },
-  { operation: "exports.apply", owner: "exports", procedure: "apply" },
   { operation: "providers.targetedTest", owner: "providers", procedure: "targetedTest" },
   { operation: "providers.completeTest", owner: "providers", procedure: "completeTest" },
   { operation: "providers.canonicalSync", owner: "providers", procedure: "canonicalSync" },
@@ -127,7 +125,6 @@ describe("production lifecycle service context", () => {
     expect(deps).not.toHaveProperty("releaseEvidence");
     expect(deps).not.toHaveProperty("providerArtifactRepository");
     expect(deps).not.toHaveProperty("providerEvidenceStore");
-    expect(deps.exports).not.toHaveProperty("artifactReader");
     expect(deps.artifactRepository).toMatchObject({
       locateTree: expect.any(Function),
       readTree: expect.any(Function),
@@ -143,7 +140,7 @@ describe("production lifecycle service context", () => {
     expect(deps.artifactRepositoryRoot).toBe(layout.artifactStoreRoot);
     expect(deps.providerProjectionRepositoryRoot).toBe(layout.providerProjectionRoot);
     expect(deps.artifactRepositoryRoot).not.toBe(deps.providerProjectionRepositoryRoot);
-    expect(Object.values(deps)).toHaveLength(12);
+    expect(Object.values(deps)).toHaveLength(11);
     expect(await directoryNames(root.path)).toEqual(before);
   });
 

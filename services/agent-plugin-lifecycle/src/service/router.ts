@@ -1,4 +1,3 @@
-import { router as exports } from "./modules/exports/router";
 import { router as governance } from "./modules/governance/router";
 import { router as packaging } from "./modules/packaging/router";
 import { router as providers } from "./modules/providers/router";
@@ -10,7 +9,6 @@ export const router = impl.router({
   releases,
   vendors,
   packaging,
-  exports,
   providers,
   governance,
 });

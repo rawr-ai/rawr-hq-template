@@ -336,10 +336,8 @@ export type NativeProvider = Deps["providerNativeResource"];
 `,
   "apps/cli/src/lib/agent-plugins/service-runtime/providers/node-runtime.ts": `
 import { createNodeNativeProviderResource } from "../../bindings/providers";
-import { createResourceCompleteTargetIdentityReader } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
 export const native = createNodeNativeProviderResource;
-export const completeIdentities = createResourceCompleteTargetIdentityReader;
 `,
 };
 

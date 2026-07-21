@@ -28,10 +28,6 @@ export interface TargetIdentityWriter {
   admit(target: ProviderTarget, sidecar: TargetIdentitySidecar): Promise<DeploymentResult<TargetIdentitySidecar>>;
 }
 
-export interface CompleteTargetIdentityReader {
-  readAll(): Promise<DeploymentResult<readonly TargetIdentitySidecar[]>>;
-}
-
 export interface ProjectionMaterializationObservation {
   readonly kind: "existing" | "published";
   readonly projectionDigest: AgentProviderProjection["projectionDigest"];

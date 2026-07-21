@@ -1,7 +1,6 @@
 import { type Static, type TSchema } from "typebox";
 import { Clone, Parse } from "typebox/value";
 
-import type { CompleteNativeHomesObservation } from "../model/dto/native-homes";
 import type {
   CanonicalStatusOutcome,
   CanonicalSyncOutcome,
@@ -25,8 +24,6 @@ import {
   CanonicalStatusResultSchema,
   type CanonicalSyncProcedureResult,
   CanonicalSyncResultSchema,
-  type CompleteNativeHomesProcedureResult,
-  CompleteNativeHomesResultSchema,
   type CompleteTestProcedureResult,
   CompleteTestResultSchema,
   type TargetedTestProcedureResult,
@@ -67,12 +64,6 @@ export async function canonicalSyncResult(
   operation: Promise<DeploymentResult<CanonicalSyncOutcome>>,
 ): Promise<CanonicalSyncProcedureResult> {
   return projectProcedureResult(CanonicalSyncResultSchema, await operation);
-}
-
-export async function completeNativeHomesResult(
-  operation: Promise<DeploymentResult<CompleteNativeHomesObservation>>,
-): Promise<CompleteNativeHomesProcedureResult> {
-  return projectProcedureResult(CompleteNativeHomesResultSchema, await operation);
 }
 
 function projectProcedureResult<const TBoundary extends TSchema>(
