@@ -1,4 +1,7 @@
-import { parseCanonicalStatusRequest } from "../model/dto/mode";
+import {
+  normalizeCanonicalStatusRequest,
+  type CanonicalStatusInput,
+} from "../model/dto/mode";
 import type { CanonicalStatusOutcome, CanonicalTargetStatus } from "../model/dto/outcome";
 import {
   success,
@@ -32,10 +35,10 @@ export const canonicalStatus = module.canonicalStatus.handler(
 );
 
 export async function executeCanonicalStatus(
-  input: unknown,
+  input: CanonicalStatusInput,
   dependencies: CanonicalStatusDependencies,
 ): Promise<DeploymentResult<readonly CanonicalStatusOutcome[]>> {
-  const parsed = parseCanonicalStatusRequest(input);
+  const parsed = normalizeCanonicalStatusRequest(input);
   if (!parsed.ok) return parsed;
   const selection = await resolveCanonicalOperationSelection(
     parsed.value.locator,
