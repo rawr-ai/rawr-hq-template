@@ -10,8 +10,10 @@ import {
 } from "../../../src/service/modules/providers/schemas";
 import {
   type CanonicalStatusOutcome,
+  type CompleteTestProviderOperationOutcome,
   type ProviderProjectionBinding,
   ProviderProjectionBindingSchema,
+  type TargetedTestProviderOperationOutcome,
 } from "../../../src/service/modules/providers/model/dto/outcome";
 import { parseProviderTargets } from "../../../src/service/modules/providers/model/dto/provider-target";
 import {
@@ -19,7 +21,11 @@ import {
   success,
 } from "../../../src/service/modules/providers/model/errors/deployment-result";
 import { verifyTargetReceipt } from "../../../src/service/modules/providers/model/policy/receipt";
-import { canonicalStatusResult } from "../../../src/service/modules/providers/router/procedure-result";
+import {
+  canonicalStatusResult,
+  completeTestOperationResult,
+  targetedTestOperationResult,
+} from "../../../src/service/modules/providers/router/procedure-result";
 
 const digest = (prefix: string, seed: string) => `${prefix}${seed.repeat(64)}`;
 const target = Object.freeze({
@@ -225,7 +231,7 @@ const projectionBinding = Object.freeze({
   adapterProtocol: projection.adapterProtocol,
   capabilityProfileDigest: projection.capabilityProfile.capabilityProfileDigest,
 }) satisfies ProviderProjectionBinding;
-const validResult = Object.freeze({
+const byteBearingResult = Object.freeze({
   ok: true,
   value: {
     status: "Mutated",
@@ -299,25 +305,90 @@ describe("provider procedure result schema boundary", () => {
     expect(projected.value[0]?.issues).not.toBe(domainValue[0]?.issues);
   });
 
-  it("admits every provider event and nested action/plan variant", () => {
-    expect(events.map((event) => event.phase)).toEqual([
-      "planned",
-      "applied",
-      "uncertain",
-      "verified",
-      "retired",
-      "skipped",
-      "blocked",
-      "failed",
+  it("projects complete and targeted outcomes without exposing provider package bytes", async () => {
+    const targetedValue = {
+      ...byteBearingResult.value,
+      targets: [{ ...byteBearingResult.value.targets[0], projectionBinding: null }],
+    };
+    const [complete, targeted] = await Promise.all([
+      completeTestOperationResult(Promise.resolve(success(
+        byteBearingResult.value as unknown as CompleteTestProviderOperationOutcome,
+      ))),
+      targetedTestOperationResult(Promise.resolve(success(
+        targetedValue as unknown as TargetedTestProviderOperationOutcome,
+      ))),
     ]);
-    expect(Value.Check(CompleteTestResultSchema, validResult)).toBe(true);
+
+    expect(Value.Check(CompleteTestResultSchema, complete)).toBe(true);
+    expect(Value.Check(TargetedTestResultSchema, targeted)).toBe(true);
+    const expectedEventOrder = events.map((event) => (
+      event.action === undefined ? event.phase : `${event.phase}:${event.action.kind}`
+    ));
+    const expectedStepOrder = plan.steps.map((step) => (
+      "action" in step && step.action !== undefined
+        ? `${step.kind}:${step.action.kind}`
+        : step.kind
+    ));
+    for (const [result, binding] of [
+      [complete, projectionBinding],
+      [targeted, null],
+    ] as const) {
+      expect(result.ok).toBe(true);
+      if (!result.ok) throw new Error("provider fixture projection failed");
+      const projectedTarget = result.value.targets[0];
+      if (projectedTarget === undefined) throw new Error("expected projected provider target");
+      expect(projectedTarget.events.map((event) => (
+        "action" in event ? `${event.phase}:${event.action.kind}` : event.phase
+      ))).toEqual(expectedEventOrder);
+      const planned = projectedTarget.events.find((event) => event.phase === "planned");
+      if (planned?.phase !== "planned") throw new Error("expected projected provider plan");
+      expect(planned.plan.steps.map((step) => (
+        step.kind === "mutate" ? `${step.kind}:${step.action.kind}` : step.kind
+      ))).toEqual(expectedStepOrder);
+      expect(projectedTarget.projectionBinding).toEqual(binding);
+      expect(containsUint8Array(result)).toBe(false);
+    }
+
+    expect(Value.Check(CompleteTestResultSchema, byteBearingResult)).toBe(false);
     expect(Value.Check(TargetedTestResultSchema, {
-      ...validResult,
+      ...byteBearingResult,
       value: {
-        ...validResult.value,
-        targets: [{ ...validResult.value.targets[0], projectionBinding: null }],
+        ...byteBearingResult.value,
+        targets: [{ ...byteBearingResult.value.targets[0], projectionBinding: null }],
       },
-    })).toBe(true);
+    })).toBe(false);
+  });
+
+  it("serializes identically regardless of internal provider payload byte length", async () => {
+    const tinyComplete = replaceFixtureBytes(byteBearingResult.value, Uint8Array.of(1));
+    const largeComplete = replaceFixtureBytes(
+      byteBearingResult.value,
+      new Uint8Array(2 * 1024 * 1024),
+    );
+    const targeted = {
+      ...byteBearingResult.value,
+      targets: [{ ...byteBearingResult.value.targets[0], projectionBinding: null }],
+    };
+    const tinyTargeted = replaceFixtureBytes(targeted, Uint8Array.of(1));
+    const largeTargeted = replaceFixtureBytes(targeted, new Uint8Array(2 * 1024 * 1024));
+
+    const [tinyCompleteResult, largeCompleteResult, tinyTargetedResult, largeTargetedResult] = await Promise.all([
+      completeTestOperationResult(Promise.resolve(success(
+        tinyComplete as CompleteTestProviderOperationOutcome,
+      ))),
+      completeTestOperationResult(Promise.resolve(success(
+        largeComplete as CompleteTestProviderOperationOutcome,
+      ))),
+      targetedTestOperationResult(Promise.resolve(success(
+        tinyTargeted as TargetedTestProviderOperationOutcome,
+      ))),
+      targetedTestOperationResult(Promise.resolve(success(
+        largeTargeted as TargetedTestProviderOperationOutcome,
+      ))),
+    ]);
+
+    expect(JSON.stringify(largeCompleteResult)).toBe(JSON.stringify(tinyCompleteResult));
+    expect(JSON.stringify(largeTargetedResult)).toBe(JSON.stringify(tinyTargetedResult));
   });
 
   it("rejects the retired canonical-accepted receipt scope without a compatibility value", () => {
@@ -353,7 +424,16 @@ describe("provider procedure result schema boundary", () => {
   });
 
   it("rejects unknown events, extra nested action state, malformed plans, and bogus issue codes", async () => {
+    const validResult = await completeTestOperationResult(
+      Promise.resolve(success(
+        byteBearingResult.value as unknown as CompleteTestProviderOperationOutcome,
+      )),
+    );
+    if (!validResult.ok) throw new Error("provider fixture projection failed");
     const targetOutcome = validResult.value.targets[0];
+    if (targetOutcome === undefined) throw new Error("expected projected provider target");
+    const planned = targetOutcome.events.find((event) => event.phase === "planned");
+    if (planned?.phase !== "planned") throw new Error("expected projected plan event");
     const invalid = [
       {
         ...validResult,
@@ -382,7 +462,7 @@ describe("provider procedure result schema boundary", () => {
               phase: "planned",
               target,
               plan: {
-                ...plan,
+                ...planned.plan,
                 steps: [{ kind: "mutate", action: { kind: "RetireMember", target } }],
               },
             }],
@@ -463,3 +543,20 @@ describe("provider procedure result schema boundary", () => {
     expect(Value.Check(TargetedTestResultSchema, validResult)).toBe(false);
   });
 });
+
+function replaceFixtureBytes(value: unknown, bytes: Uint8Array): unknown {
+  if (value instanceof Uint8Array) return bytes;
+  if (Array.isArray(value)) return value.map((entry) => replaceFixtureBytes(entry, bytes));
+  if (value === null || typeof value !== "object") return value;
+  return Object.fromEntries(Object.entries(value).map(([key, entry]) => [
+    key,
+    replaceFixtureBytes(entry, bytes),
+  ]));
+}
+
+function containsUint8Array(value: unknown): boolean {
+  if (value instanceof Uint8Array) return true;
+  if (Array.isArray(value)) return value.some(containsUint8Array);
+  if (value === null || typeof value !== "object") return false;
+  return Object.values(value).some(containsUint8Array);
+}

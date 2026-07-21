@@ -270,7 +270,7 @@ state owner.
 | Boundary | Result |
 | --- | --- |
 | Binding authority | A successful complete-test target returns its exact provider, projection digest, renderer protocol, adapter protocol, and capability-profile digest. Blocked and failed targets expose `null`; targeted-test outcomes remain unbound. A successful complete-test without the matching tested projection fails internally rather than fabricating an identity. |
-| Schema authority | `ProviderProjectionBindingSchema` is a closed, readonly TypeBox artifact and its TypeScript type is exactly `Static<typeof Schema>`. All five provider procedure result types derive from their concrete schemas; the one module-local `Parse(schema, Clone(result))` projection validates output and severs aliases. Only the pre-existing refined `Uint8Array` leaf uses `Type.Unsafe`. |
+| Schema authority | `ProviderProjectionBindingSchema` is a closed, readonly TypeBox artifact and its TypeScript type is exactly `Static<typeof Schema>`. All five provider procedure result types derive from their concrete schemas; the one module-local `Parse(schema, Clone(result))` projection validates output and severs aliases. The later [[README#T6F Bounded Provider Procedure Results|bounded-result correction]] removes execution-byte leaves from the two public test results without changing that binding. |
 | Native behavior | Complete-test refreshes a selected stale member while preserving an omitted installed member, returns the binding for every successful target, and then repeats through live inspection with zero mutation, receipt, sidecar, or evidence writes. Existing targeted-test preservation remains unchanged. |
 | Proof | Focused provider behavior/schema proof passed 43 tests; on the integrated continuation stack, the complete lifecycle suite passed 42 files / 375 tests. Lifecycle lint, typecheck, build, sync, structural/Habitat, strict OpenSpec, and `git diff --check` passed after the TypeBox correction. |
 | Reviews | Architecture/oRPC, TypeScript/TypeBox, behavior/state-machine, and structural/Habitat reviews report no remaining finding. |
@@ -290,6 +290,22 @@ events to their plugin selector, so Habitat and Hyperresearch may both declare
 | Collision boundary | Hook events are compared only inside their owning plugin member. Global plugin, native identity, and skill collision refusal remains unchanged, and exact per-member hook visibility remains part of convergence verification. Codex observation retains selector attribution and does not bind RAWR to the provider's temporary positional hook key. |
 | Proof | Provider proof passed 16 files / 200 tests under the owner-declared Bun host, and the complete lifecycle service passed 43 files / 406 tests. Coverage includes two members that both expose `Stop`, canonical/no-op/invalid manifest behavior, same-event mutation and read-only repeat convergence, unrelated standalone same-event coexistence, and retained native/skill conflicts. Lifecycle lint, typecheck, all three locked Habitat rules, strict OpenSpec, and `git diff --check` passed. |
 | Mutation ceiling | The failed disposable attempt and this correction performed no Claude, Codex, Personal, channel, export, or protected-lane mutation. Native acceptance resumes only from the landed immutable replacement controller. |
+
+## T6F Bounded Provider Procedure Results
+
+The first cold retry after the stale disposable homes had converged returned the
+correct `ReadOnlyConverged` outcome, but CLI JSON projection expanded repeated
+provider payload `Uint8Array` values into a 1,826,550,408-byte document. The
+provider operation was correct; its public result boundary was not bounded.
+This correction follows [[specs/agent-provider-deployment/spec#Requirement: Provider procedure results keep execution bytes private]].
+
+| Boundary | Result |
+| --- | --- |
+| TypeBox authority | The complete-test and targeted-test result schemas now close each public package-file observation over `path`, `mode`, and `contentDigest`. Internal projections, plans, and native mutation actions retain their required bytes. One provider-owned projector removes only those leaf bytes before the existing `Clone` plus `Parse`, so the TypeBox schema remains the sole public static/runtime authority. |
+| Behavioral truth | Target-local plan steps, planned/applied/uncertain/verified/retired/skipped/blocked/failed events, issues, visible fingerprints, exact complete-test bindings, and aggregate evidence remain ordered and observable. No event-dropping CLI redactor or generic serializer is introduced. |
+| Incident evidence | The abandoned cold-retry output reported mechanical evidence `me1_91e5c904c1aba73115fb361fe7cb2d08ca8e783c73a03a8c94d502af81db2f55` and file SHA-256 `7898052e9998d448268aaf7757e8a849b18fd8e4787c648eb7881004183591a4`. It was removed only as an exact file; no provider home or recursive caller path was cleaned. |
+| Proof | Focused TypeBox procedure proof passed 6/6 and covers both test modes, the complete event/action and plan-step order, exact binding preservation, rejection of byte-bearing public values, absence of `Uint8Array`, and byte-length-independent serialization across one-byte and two-megabyte internal payloads. The full lifecycle suite passed 43 files / 407 tests and the serialized CLI suite passed 47 files / 326 tests. Both projects passed lint, typecheck, build, sync, and structural checks. The complete repository ratchet passed 29 lint targets, 42 typecheck targets, the three-test Habitat consumer, and all three locked topology rules; strict OpenSpec and `git diff --check` passed. Architecture/oRPC, TypeScript/TypeBox, and behavior/testing/structural reviews report no P0-P3. |
+| Scope | This changes no provider state machine, native command, receipt, evidence identity, channel, Personal repository, controller selector, app/runtime surface, or protected-lane input. The already-converged stale disposable homes remain the next acceptance preimage. |
 
 ## Pre-Landing Immutable-Release Setting Mutation
 
