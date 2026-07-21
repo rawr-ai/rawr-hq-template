@@ -269,6 +269,18 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     });
     expect(calls).toEqual([]);
   });
+
+  it("rejects malformed targeted-test input before artifact or provider ports are invoked", async () => {
+    const calls: string[] = [];
+    const client = spineClient(calls);
+    const request = targetedTestRequest();
+
+    await expect(client.providers.targetedTest({
+      ...request,
+      evaluationProfile: "Provider Smoke",
+    } as never, invocation)).rejects.toThrow();
+    expect(calls).toEqual([]);
+  });
 });
 
 interface SpineObservations {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   normalizeCompleteTestRequest,
+  normalizeTargetedTestRequest,
   parseCanonicalStatusRequest,
   parseProviderDeploymentRequest,
 } from "../../../src/service/modules/providers/model/dto/mode";
@@ -115,6 +116,44 @@ describe("closed lifecycle mode parsers", () => {
     expect(parsed).toMatchObject({
       ok: false,
       issues: [{ code: "INVALID_HOME" }],
+    });
+  });
+
+  it("normalizes targeted releases once with stable ordering and request identity", () => {
+    const secondRelease = {
+      kind: "release" as const,
+      releaseDigest: `rd1_${"d".repeat(64)}`,
+      artifactDigest: `ad1_${"e".repeat(64)}`,
+    };
+    const left = normalizeTargetedTestRequest({
+      kind: "targeted-test",
+      releases: [RELEASE, secondRelease],
+      evaluationProfile: "provider-smoke@v1",
+      targets: [TARGET],
+    });
+    const right = normalizeTargetedTestRequest({
+      kind: "targeted-test",
+      releases: [secondRelease, RELEASE],
+      evaluationProfile: "provider-smoke@v1",
+      targets: [TARGET],
+    });
+    expect(left.ok).toBe(true);
+    expect(right.ok).toBe(true);
+    if (!left.ok || !right.ok) return;
+    expect(right.value).toEqual(left.value);
+    expect(right.value.requestDigest).toBe(left.value.requestDigest);
+  });
+
+  it("retains duplicate-release refusal as domain policy", () => {
+    const parsed = normalizeTargetedTestRequest({
+      kind: "targeted-test",
+      releases: [RELEASE, RELEASE],
+      evaluationProfile: "provider-smoke@v1",
+      targets: [TARGET],
+    });
+    expect(parsed).toMatchObject({
+      ok: false,
+      issues: [{ code: "DUPLICATE_MEMBER" }],
     });
   });
 

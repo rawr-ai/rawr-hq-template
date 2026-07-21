@@ -1,6 +1,9 @@
 import type { VerifiedArtifactSnapshotV1 } from "../../../shared/release";
 
-import { parseProviderDeploymentRequest } from "../model/dto/mode";
+import {
+  normalizeTargetedTestRequest,
+  type TargetedTestInput,
+} from "../model/dto/mode";
 import type { TargetedTestProviderOperationOutcome } from "../model/dto/outcome";
 import { issue, success, type DeploymentResult } from "../model/errors/deployment-result";
 import { module } from "../module";
@@ -56,14 +59,11 @@ export const targetedTest = module.targetedTest.handler(
 );
 
 export async function executeTargetedTest(
-  input: unknown,
+  input: TargetedTestInput,
   ports: TargetedTestDependencies,
 ): Promise<DeploymentResult<TargetedTestProviderOperationOutcome>> {
-    const parsed = parseProviderDeploymentRequest(input);
+    const parsed = normalizeTargetedTestRequest(input);
     if (!parsed.ok) return parsed;
-    if (parsed.value.kind !== "targeted-test") {
-      return resultFailure([issue("INVALID_MODE", "request.kind", "Targeted-test application accepts only targeted-test requests", "targeted-test", parsed.value.kind)]);
-    }
     const snapshots: VerifiedArtifactSnapshotV1[] = [];
     const artifactIssues = [];
     for (const ref of parsed.value.releases) {
