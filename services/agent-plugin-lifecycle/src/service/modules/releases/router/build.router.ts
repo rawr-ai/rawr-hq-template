@@ -2,7 +2,7 @@ import {
   compareCanonicalText,
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
-  verifyCompleteReleaseSetGraph,
+  verifyCompleteReleaseSet,
   type AgentPluginRelease,
   type CompleteSetArtifactRef,
   type ReleaseArtifactRef,
@@ -165,14 +165,14 @@ async function publishComplete(
     }
   }
 
-  const graph = verifyCompleteReleaseSetGraph(releaseSet, plan.releases);
-  if (!graph.ok) {
+  const verification = verifyCompleteReleaseSet(releaseSet, plan.releases);
+  if (!verification.ok) {
     return await classifyWouldBeIncomplete(
       artifacts,
       setRef,
       newlyPublished,
       preExisting,
-      [constructionIssue(graph.issues.map((issue) => issue.code).join(","))],
+      [constructionIssue(verification.issues.map((issue) => issue.code).join(","))],
     );
   }
   try {

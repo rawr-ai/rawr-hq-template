@@ -203,26 +203,26 @@ export function verifyAgentPluginReleaseSet(
   return success(releaseSet);
 }
 
-export function verifyCompleteReleaseSetGraph(
+export function verifyCompleteReleaseSet(
   releaseSetInput: unknown,
   releaseInputs: unknown,
 ): ReleaseResult<AgentPluginReleaseSet, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
   const verifiedSet = verifyAgentPluginReleaseSet(releaseSetInput);
   if (!verifiedSet.ok) issues.push(...verifiedSet.issues);
-  const rawReleases = parseBoundedArray(releaseInputs, "releaseGraph.releases", MAX_RELEASE_MEMBERS, issues);
+  const rawReleases = parseBoundedArray(releaseInputs, "releases", MAX_RELEASE_MEMBERS, issues);
   const releases: AgentPluginRelease[] = [];
   rawReleases?.forEach((candidate, index) => {
     const verified = verifyReleaseCandidate(candidate);
     if (verified.ok) releases.push(verified.value);
     else issues.push(...verified.issues.map((entry) => Object.freeze({
       ...entry,
-      path: `releaseGraph.releases[${index}].${entry.path}`,
+      path: `releases[${index}].${entry.path}`,
     })));
   });
   reportDuplicateReleaseMembers(releases, issues);
 
-  if (verifiedSet.ok) validateSetGraph(verifiedSet.value, releases, issues);
+  if (verifiedSet.ok) validateReleaseSetMembers(verifiedSet.value, releases, issues);
   const nonEmpty = asNonEmpty(sortReleaseIssues(issues));
   if (nonEmpty !== undefined) return failure(nonEmpty);
   if (!verifiedSet.ok) return verifiedSet;
@@ -522,7 +522,7 @@ function validateWitnessMemberIds(
   }
 }
 
-function validateSetGraph(
+function validateReleaseSetMembers(
   releaseSet: AgentPluginReleaseSet,
   releases: readonly AgentPluginRelease[],
   issues: ReleaseIssue[],
@@ -533,7 +533,7 @@ function validateSetGraph(
     const actualRelease = releases[index];
     const actualPluginId = actualRelease?.artifactBody.releaseBody.pluginId;
     if (expectedMember?.pluginId !== actualPluginId) {
-      issues.push(issue("RELEASE_SET_DIGEST_MISMATCH", `releaseGraph.members[${index}]`, "Release graph order differs from the canonical set order", {
+      issues.push(issue("RELEASE_SET_DIGEST_MISMATCH", `releases[${index}]`, "Release order differs from the canonical set order", {
         expected: expectedMember?.pluginId ?? "<none>",
         actual: actualPluginId ?? "<none>",
       }));
@@ -544,17 +544,17 @@ function validateSetGraph(
   for (const [pluginId, member] of body.members.map((entry) => [entry.pluginId, entry] as const)) {
     const release = actual.get(pluginId);
     if (release === undefined) {
-      issues.push(issue("MISSING_EXPECTED_MEMBER", `releaseGraph.members.${pluginId}`, "Set member artifact is absent", { actual: pluginId }));
+      issues.push(issue("MISSING_EXPECTED_MEMBER", `releases.${pluginId}`, "Set member artifact is absent", { actual: pluginId }));
       continue;
     }
     if (release.releaseDigest !== member.releaseDigest) {
-      issues.push(issue("RELEASE_DIGEST_MISMATCH", `releaseGraph.members.${pluginId}.releaseDigest`, "Member release digest differs from the set", {
+      issues.push(issue("RELEASE_DIGEST_MISMATCH", `releases.${pluginId}.releaseDigest`, "Member release digest differs from the set", {
         expected: member.releaseDigest,
         actual: release.releaseDigest,
       }));
     }
     if (release.artifactDigest !== member.artifactDigest) {
-      issues.push(issue("ARTIFACT_DIGEST_MISMATCH", `releaseGraph.members.${pluginId}.artifactDigest`, "Member artifact digest differs from the set", {
+      issues.push(issue("ARTIFACT_DIGEST_MISMATCH", `releases.${pluginId}.artifactDigest`, "Member artifact digest differs from the set", {
         expected: member.artifactDigest,
         actual: release.artifactDigest,
       }));
@@ -565,7 +565,7 @@ function validateSetGraph(
       if (releaseBody[field] !== body[field]) {
         issues.push(issue(
           field === "releaseInputDigest" ? "RELEASE_INPUT_IDENTITY_MISMATCH" : "SOURCE_IDENTITY_MISMATCH",
-          `releaseGraph.members.${pluginId}.${field}`,
+          `releases.${pluginId}.${field}`,
           "Member identity differs from the complete set",
           { expected: body[field], actual: releaseBody[field] },
         ));
@@ -578,11 +578,11 @@ function validateSetGraph(
       expectedAliases.length !== releaseBody.aliases.length
       || expectedAliases.some((alias, index) => alias !== releaseBody.aliases[index])
     ) {
-      issues.push(issue("OWNERSHIP_INDEX_MISMATCH", `releaseGraph.members.${pluginId}.aliases`, "Member aliases differ from the complete ownership index"));
+      issues.push(issue("OWNERSHIP_INDEX_MISMATCH", `releases.${pluginId}.aliases`, "Member aliases differ from the complete ownership index"));
     }
     const witness = body.completenessWitness.expectedMembers.find((entry) => entry.pluginId === pluginId);
     if (witness !== undefined && witness.payloadDigest !== releaseBody.payloadDigest) {
-      issues.push(issue("PAYLOAD_DIGEST_MISMATCH", `releaseGraph.members.${pluginId}.payloadDigest`, "Member payload differs from the completeness witness", {
+      issues.push(issue("PAYLOAD_DIGEST_MISMATCH", `releases.${pluginId}.payloadDigest`, "Member payload differs from the completeness witness", {
         expected: witness.payloadDigest,
         actual: releaseBody.payloadDigest,
       }));
@@ -590,7 +590,7 @@ function validateSetGraph(
   }
   for (const pluginId of [...actual.keys()].sort(compareCanonicalText)) {
     if (!expected.has(pluginId)) {
-      issues.push(issue("EXTRA_MEMBER", `releaseGraph.members.${pluginId}`, "Graph contains an extra release", { actual: pluginId }));
+      issues.push(issue("EXTRA_MEMBER", `releases.${pluginId}`, "Release list contains an extra member", { actual: pluginId }));
     }
   }
 }

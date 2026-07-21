@@ -139,7 +139,7 @@ export {
   createAgentPluginReleaseSet,
   decodeAgentPluginReleaseSet,
   verifyAgentPluginReleaseSet,
-  verifyCompleteReleaseSetGraph,
+  verifyCompleteReleaseSet,
   type AgentPluginReleaseSet,
   type AgentPluginReleaseSetBody,
   type AgentPluginReleaseSetMember,

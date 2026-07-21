@@ -160,6 +160,6 @@ export function blockedRetention(
 }
 
 function nonEmptyIssues(issues: readonly RetentionIssue[]): readonly [RetentionIssue, ...RetentionIssue[]] {
-  const first = issues[0] ?? Object.freeze({ detail: "retention graph is blocked" });
+  const first = issues[0] ?? Object.freeze({ detail: "retention plan is blocked" });
   return Object.freeze([first, ...issues.slice(1)]);
 }

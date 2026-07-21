@@ -11,7 +11,7 @@ import {
   decodeAgentPluginRelease,
   decodeAgentPluginReleaseSet,
   payloadEntryBytes,
-  verifyCompleteReleaseSetGraph,
+  verifyCompleteReleaseSet,
   type AgentPluginRelease,
   type AgentPluginReleaseSet,
   type ArtifactRef,
@@ -215,12 +215,12 @@ async function verifyCompleteSetSnapshot(
     }
     members.push(copyReleaseSnapshot(result.snapshot));
   }
-  const graph = verifyCompleteReleaseSetGraph(
+  const verification = verifyCompleteReleaseSet(
     releaseSet,
     members.map((member) => member.release),
   );
-  if (!graph.ok) {
-    return mismatch(ref, "ReferenceMismatch", graph.issues.map((issue) => issue.code).join(","));
+  if (!verification.ok) {
+    return mismatch(ref, "ReferenceMismatch", verification.issues.map((issue) => issue.code).join(","));
   }
   return Object.freeze({
     kind: "Verified",
