@@ -1,11 +1,30 @@
 import { schema } from "@rawr/hq-sdk";
-import { describe, expect, it } from "vitest";
+import type {
+  InferContractRouterInputs,
+  InferContractRouterOutputs,
+} from "@orpc/contract";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import type { Static } from "typebox";
 import { Value } from "typebox/value";
 
+import { contract } from "../../../src/service/modules/packaging/contract";
+import type {
+  PackageAgentPluginRequest,
+  PackageAgentPluginResult,
+} from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
 import {
+  ArtifactRefSchema,
   PackageAgentPluginRequestSchema,
   PackageAgentPluginResultSchema,
 } from "../../../src/service/modules/packaging/schemas";
+import {
+  ArtifactRefInputSchema,
+  CompleteSetArtifactRefInputSchema,
+  ReleaseArtifactRefInputSchema,
+  type ArtifactRefInput,
+  type CompleteSetArtifactRefInput,
+  type ReleaseArtifactRefInput,
+} from "../../../src/service/shared/release";
 
 const artifactRef = Object.freeze({
   kind: "release",
@@ -25,6 +44,29 @@ const failure = Object.freeze({
 });
 
 describe("packaging procedure result schema boundary", () => {
+  it("derives shared refs and public procedure types from their owning schemas", () => {
+    type ContractInputs = InferContractRouterInputs<typeof contract>;
+    type ContractOutputs = InferContractRouterOutputs<typeof contract>;
+
+    expect(ArtifactRefSchema).toBe(ArtifactRefInputSchema);
+    expectTypeOf<ReleaseArtifactRefInput>().toEqualTypeOf<
+      Static<typeof ReleaseArtifactRefInputSchema>
+    >();
+    expectTypeOf<CompleteSetArtifactRefInput>().toEqualTypeOf<
+      Static<typeof CompleteSetArtifactRefInputSchema>
+    >();
+    expectTypeOf<ArtifactRefInput>().toEqualTypeOf<Static<typeof ArtifactRefInputSchema>>();
+    expectTypeOf<PackageAgentPluginRequest>().toEqualTypeOf<
+      Static<typeof PackageAgentPluginRequestSchema>
+    >();
+    expectTypeOf<PackageAgentPluginResult>().toEqualTypeOf<
+      Static<typeof PackageAgentPluginResultSchema>
+    >();
+    expectTypeOf<PackageAgentPluginRequest["artifactRef"]>().toEqualTypeOf<ArtifactRefInput>();
+    expectTypeOf<ContractInputs["package"]>().toEqualTypeOf<PackageAgentPluginRequest>();
+    expectTypeOf<ContractOutputs["package"]>().toEqualTypeOf<PackageAgentPluginResult>();
+  });
+
   it("rejects swapped or foreign artifact digest domains at the callable boundary", async () => {
     const request = {
       artifactRef,
@@ -46,6 +88,11 @@ describe("packaging procedure result schema boundary", () => {
         ...request,
         artifactRef: { kind: "complete-set", releaseSetDigest: `foreign_${"c".repeat(64)}` },
       },
+      { ...request, format: "cowork-v2" },
+      { ...request, outputPath: "" },
+      { ...request, ambientAuthority: true },
+      { ...request, artifactRef: { ...artifactRef, releaseSetDigest: `rs1_${"c".repeat(64)}` } },
+      { ...request, artifactRef: { kind: "release", releaseDigest: artifactRef.releaseDigest } },
     ];
     for (const candidate of invalid) {
       expect(Value.Check(PackageAgentPluginRequestSchema, candidate)).toBe(false);
@@ -82,6 +129,18 @@ describe("packaging procedure result schema boundary", () => {
       {
         kind: "RejectedBeforeOutputMutation",
         primaryFailure: { ...failure, code: "MadeUpFailure" },
+      },
+      {
+        kind: "RejectedBeforeOutputMutation",
+        primaryFailure: { ...failure, detail: failure.message },
+      },
+      { kind: "ReadOnlyConverged", ...identity, cleanupFailure: failure },
+      { kind: "OutputReplacedVerified", ...identity, priorOutput: "Unknown" },
+      {
+        kind: "OutputUnsettled",
+        ...identity,
+        artifactRef: { ...artifactRef, ambientAuthority: true },
+        primaryFailure: failure,
       },
     ];
 

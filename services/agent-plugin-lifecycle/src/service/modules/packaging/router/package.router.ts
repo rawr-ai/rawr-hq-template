@@ -16,7 +16,10 @@ import type {
   PackageOutputFailure,
   PackageOutputPublicationResult,
 } from "@rawr/resource-agent-plugin-package-output";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../shared/release";
+import {
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+  normalizeArtifactRef,
+} from "../../../shared/release";
 import type { ArtifactReader } from "../../../model/dependencies/releases";
 
 interface PackagingDependencies {
@@ -35,9 +38,10 @@ async function packageAgentPlugin(
   request: PackageAgentPluginRequest,
   dependencies: PackagingDependencies,
 ): Promise<PackageAgentPluginResult> {
+  const artifactRef = normalizeArtifactRef(request.artifactRef);
   let readResult: Awaited<ReturnType<ArtifactReader["read"]>>;
   try {
-    readResult = await dependencies.artifacts.read(request.artifactRef);
+    readResult = await dependencies.artifacts.read(artifactRef);
   } catch (error) {
     return rejected(createFailure(
       "ArtifactMismatch",
@@ -66,7 +70,7 @@ async function packageAgentPlugin(
   }
 
   try {
-    assertSnapshotMatchesRef(readResult.snapshot, request.artifactRef);
+    assertSnapshotMatchesRef(readResult.snapshot, artifactRef);
   } catch (error) {
     return rejected(createFailure(
       "ArtifactSnapshotMismatch",
@@ -90,7 +94,7 @@ async function packageAgentPlugin(
 
   const packageDigest = coworkV1PackageDigest(bytes);
   const identity = {
-    artifactRef: request.artifactRef,
+    artifactRef,
     format: COWORK_PACKAGE_FORMAT,
     outputPath: request.outputPath,
     packageDigest,
