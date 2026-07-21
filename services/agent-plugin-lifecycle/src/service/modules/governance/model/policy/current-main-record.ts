@@ -32,7 +32,7 @@ import {
 
 export function encodeCurrentMainBodyV2(
   input: unknown,
-): CurrentMainV2CodecResult<CanonicalCurrentMainV2> {
+): CurrentMainV2CodecResult {
   const body = normalizeBody(input);
   if (body === undefined) {
     return failed("InvalidSchema", "currentMain.body", "Current-main body does not match its closed schema");
@@ -42,7 +42,7 @@ export function encodeCurrentMainBodyV2(
 
 export function validateCurrentMainEnvelopeV2(
   bytes: unknown,
-): CurrentMainV2CodecResult<CanonicalCurrentMainV2> {
+): CurrentMainV2CodecResult {
   const decoded = decodeCanonicalJson(bytes, "currentMain", MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES);
   if (!decoded.ok) {
     const tooLarge = decoded.issues.some((entry) => entry.code === "ENVELOPE_TOO_LARGE");
@@ -92,7 +92,7 @@ export function canonicalSerializeCurrentMainEnvelopeV2(envelope: CurrentMainEnv
   });
 }
 
-function encodeBody(body: CurrentMainBodyV2): CurrentMainV2CodecResult<CanonicalCurrentMainV2> {
+function encodeBody(body: CurrentMainBodyV2): CurrentMainV2CodecResult {
   const currentMainDigest = digestBody(canonicalSerializeCurrentMainBodyV2(body));
   const record = Object.freeze({
     schemaVersion: CURRENT_MAIN_V2_SCHEMA_VERSION,
@@ -192,7 +192,7 @@ function failed(
   code: CurrentMainV2CodecFailureCode,
   path: string,
   message: string,
-): CurrentMainV2CodecResult<never> {
+): Extract<CurrentMainV2CodecResult, { readonly ok: false }> {
   return Object.freeze({
     ok: false,
     failure: Object.freeze({ code, path, message }),
