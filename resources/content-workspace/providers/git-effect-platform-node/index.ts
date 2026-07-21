@@ -222,6 +222,7 @@ export function makeContentWorkspaceResource(
       consumedRoots: readonly string[];
       objectFormat: GitObjectFormat;
       maxPaths: number;
+      maxWorktreeFileBytes: number;
       maxBytes: number;
     }>,
   ) {
@@ -243,14 +244,14 @@ export function makeContentWorkspaceResource(
       input.maxBytes,
     );
     const worktreeObjectIds = yield* Effect.forEach(input.admittedPaths, (candidate) =>
-      gitText(
-        executable,
-        input.root,
-        ["--literal-pathspecs", "hash-object", "--no-filters", "--", candidate],
+      readBoundedRegularFile(
+        fs,
+        path.join(input.root, candidate),
+        input.maxWorktreeFileBytes,
         "capture-git-evidence",
-      ).pipe(Effect.map((objectId) => Object.freeze({
+      ).pipe(Effect.map((bytes) => Object.freeze({
         path: candidate,
-        objectId,
+        objectId: gitBlobId(bytes, input.objectFormat),
       }) satisfies GitWorktreeObjectId)));
     const indexEntries = yield* gitBytes(
       executable,
@@ -1590,7 +1591,7 @@ function readBoundedRegularFile(
   fs: FileSystem.FileSystem,
   candidate: string,
   maxBytes: number,
-  operation: "read-file" | "read-tree" | "capture" | "apply" | "restore",
+  operation: "capture-git-evidence" | "read-file" | "read-tree" | "capture" | "apply" | "restore",
 ) {
   return Effect.gen(function* () {
     const canonical = yield* fs.realPath(candidate).pipe(mapPlatform(operation, candidate));
@@ -2034,11 +2035,13 @@ function validateGitEvidenceInput(input: Readonly<{
   consumedRoots: readonly string[];
   objectFormat: GitObjectFormat;
   maxPaths: number;
+  maxWorktreeFileBytes: number;
   maxBytes: number;
 }>): void {
   validateRefName(input.refName, "capture-git-evidence");
   validateRemoteSelection(input.remoteSelection, "capture-git-evidence");
   validateLimit(input.maxPaths, "maxPaths", "capture-git-evidence");
+  validateLimit(input.maxWorktreeFileBytes, "maxWorktreeFileBytes", "capture-git-evidence");
   validateLimit(input.maxBytes, "maxBytes", "capture-git-evidence");
   if (input.objectFormat !== "sha1" && input.objectFormat !== "sha256") {
     throw invalidInput("capture-git-evidence", input.objectFormat, "Unsupported Git object format");
