@@ -30,7 +30,6 @@ kind = "directory"
 mode = "closed"
 required = [
   "base.ts",
-  "common",
   "contract.ts",
   "impl.ts",
   "middleware",
@@ -85,18 +84,6 @@ mode = "closed"
 required = [
   "artifact-repository.ts",
   "content-workspace.ts",
-]
-allowed = []
-
-[[scopes]]
-name = "agent-plugin-lifecycle-common-files"
-root = "services/agent-plugin-lifecycle/src/service/common"
-kind = "directory"
-mode = "closed"
-required = [
-  "README.md",
-  "entities.ts",
-  "errors.ts",
 ]
 allowed = []
 
