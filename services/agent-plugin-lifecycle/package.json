@@ -29,7 +29,6 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "check": "bun run lint && bun run typecheck && bun ../../scripts/habitat/check.mjs --owner @rawr/agent-plugin-lifecycle",
     "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\"",
     "sync": "bun run --cwd ../.. sync:check --project @rawr/agent-plugin-lifecycle",
     "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/agent-plugin-lifecycle",
