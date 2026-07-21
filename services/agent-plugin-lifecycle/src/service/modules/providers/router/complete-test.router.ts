@@ -1,4 +1,7 @@
-import { parseProviderDeploymentRequest } from "../model/dto/mode";
+import {
+  normalizeCompleteTestRequest,
+  type CompleteTestInput,
+} from "../model/dto/mode";
 import { issue, success, type DeploymentResult } from "../model/errors/deployment-result";
 import { module } from "../module";
 import type {
@@ -60,14 +63,11 @@ export const completeTest = module.completeTest.handler(
 );
 
 export async function executeCompleteTest(
-  input: unknown,
+  input: CompleteTestInput,
   ports: CompleteTestDependencies,
 ): Promise<DeploymentResult<CompleteTestProviderOperationOutcome>> {
-    const parsed = parseProviderDeploymentRequest(input);
+    const parsed = normalizeCompleteTestRequest(input);
     if (!parsed.ok) return parsed;
-    if (parsed.value.kind !== "complete-test") {
-      return resultFailure([issue("INVALID_MODE", "request.kind", "Complete-test application accepts only complete-test requests", "complete-test", parsed.value.kind)]);
-    }
     const read = await ports.releases.read(parsed.value.releaseSet);
     if (!read.ok) return read;
     if (read.value.kind !== "complete-set" || read.value.ref.releaseSetDigest !== parsed.value.releaseSet.releaseSetDigest) {

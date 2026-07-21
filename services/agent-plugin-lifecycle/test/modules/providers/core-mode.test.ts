@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  normalizeCompleteTestRequest,
   parseCanonicalStatusRequest,
   parseProviderDeploymentRequest,
 } from "../../../src/service/modules/providers/model/dto/mode";
@@ -68,6 +69,53 @@ describe("closed lifecycle mode parsers", () => {
       targets: [TARGET],
     });
     expect(status.ok).toBe(true);
+  });
+
+  it("normalizes complete-test targets once with stable ordering and request identity", () => {
+    const claude = { provider: "claude" as const, home: "/tmp/rawr-c3-claude" };
+    const left = normalizeCompleteTestRequest({
+      kind: "complete-test",
+      releaseSet: SET,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [TARGET, claude],
+    });
+    const right = normalizeCompleteTestRequest({
+      kind: "complete-test",
+      releaseSet: SET,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [claude, TARGET],
+    });
+    expect(left.ok).toBe(true);
+    expect(right.ok).toBe(true);
+    if (!left.ok || !right.ok) return;
+    expect(right.value).toEqual(left.value);
+    expect(right.value.requestDigest).toBe(left.value.requestDigest);
+  });
+
+  it("retains duplicate-target refusal as domain policy", () => {
+    const parsed = normalizeCompleteTestRequest({
+      kind: "complete-test",
+      releaseSet: SET,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [TARGET, TARGET],
+    });
+    expect(parsed).toMatchObject({
+      ok: false,
+      issues: [{ code: "DUPLICATE_TARGET" }],
+    });
+  });
+
+  it("retains invalid-home refusal as domain policy", () => {
+    const parsed = normalizeCompleteTestRequest({
+      kind: "complete-test",
+      releaseSet: SET,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [{ provider: "codex", home: "relative/provider-home" }],
+    });
+    expect(parsed).toMatchObject({
+      ok: false,
+      issues: [{ code: "INVALID_HOME" }],
+    });
   });
 
   it.each(INVALID_SELECTOR_CASES)("rejects %s at the exact mode boundary", (_label, input, parsers) => {

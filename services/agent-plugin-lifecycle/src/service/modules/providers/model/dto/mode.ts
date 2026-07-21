@@ -3,6 +3,7 @@ import { ReadonlyObject, Type, type Static } from "typebox";
 
 import {
   CompleteSetArtifactRefInputSchema,
+  normalizeArtifactRef,
   parseArtifactRef,
   parseRepositoryIdentity,
   ReleaseArtifactRefInputSchema,
@@ -16,6 +17,7 @@ import { boundedArray, canonicalString, exactRecord } from "../helpers/parse";
 import { failure, firstIssue, issue, success, type DeploymentResult, type ProviderDeploymentIssue } from "../errors/deployment-result";
 import {
   ProviderTargetsInputSchema,
+  normalizeProviderTargets,
   parseProviderTargets,
   targetValue,
   type ProviderTarget,
@@ -155,6 +157,20 @@ export function parseCanonicalStatusRequest(input: unknown): DeploymentResult<Ca
     return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Status request is invalid")));
   }
   const body = { kind: "canonical-status", channel, locator, targets } as const;
+  return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
+}
+
+export function normalizeCompleteTestRequest(
+  input: CompleteTestInput,
+): DeploymentResult<CompleteTest> {
+  const targets = normalizeProviderTargets(input.targets, "request.targets");
+  if (!targets.ok) return targets;
+  const body = {
+    kind: input.kind,
+    releaseSet: normalizeArtifactRef(input.releaseSet),
+    evaluationProfile: input.evaluationProfile as EvaluationProfile,
+    targets: targets.value,
+  } as const;
   return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
 }
 
