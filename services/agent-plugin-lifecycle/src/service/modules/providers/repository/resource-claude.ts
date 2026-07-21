@@ -190,7 +190,7 @@ function createResourceClaudeProviderPorts(
       }
       location = await input.marketplaceLocations.locate(source);
     }
-    if (current.kind === "present") {
+    if (current.kind === "present" && registration === null) {
       await provider.removeMarketplace({ identity: input.contentAuthority });
     }
     if (location !== undefined) {
