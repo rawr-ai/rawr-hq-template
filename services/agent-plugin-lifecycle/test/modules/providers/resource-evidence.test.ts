@@ -11,11 +11,13 @@ import {
   type VerifiedReleaseArtifactV1,
 } from "../../../src/service/shared/release";
 import {
+  AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
   createMechanicalProviderEvidence,
 } from "../../../src/service/modules/providers/model/dto/mechanical-evidence";
 import {
   normalizeCompleteTestRequest,
 } from "../../../src/service/modules/providers/model/dto/mode";
+import { decodeMechanicalProviderEvidence } from "../../../src/service/modules/providers/model/helpers/evidence-codec";
 import {
   renderCompleteProjection,
 } from "../../../src/service/modules/providers/model/policy/projection";
@@ -35,6 +37,32 @@ describe("provider mechanical evidence resource projection", () => {
 
     const inspected = await publisher.inspect(evidence.evidenceDigest);
     expect(inspected.ok && inspected.value.kind).toBe("present");
+  });
+
+  it("binds evidence to the lifecycle controller protocol", () => {
+    const evidence = completeEvidence();
+
+    expect(evidence.body.controllerProtocol).toBe(
+      AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
+    );
+    expect(new TextDecoder().decode(evidence.bytes)).toContain(
+      '"controllerProtocol":"agent-plugin-lifecycle-controller@v1"',
+    );
+  });
+
+  it("rejects canonical evidence from the retired controller protocol", () => {
+    const evidence = completeEvidence();
+    const legacyBytes = new TextEncoder().encode(
+      new TextDecoder().decode(evidence.bytes).replace(
+        AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
+        "rawr-controller-capsule@v1",
+      ),
+    );
+
+    const decoded = decodeMechanicalProviderEvidence(legacyBytes);
+
+    expect(decoded.ok).toBe(false);
+    expect(!decoded.ok && decoded.issues[0]?.code).toBe("INVALID_PROTOCOL");
   });
 
   it("maps stored-byte mismatch to EVIDENCE_FAILED", async () => {
