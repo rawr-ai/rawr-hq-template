@@ -32,30 +32,30 @@
 
 ## 2A. C5 Context-Direction Correction
 
-- [ ] 2A.1 Replace the upward `service/base.ts -> modules/*/ports.ts` dependency
+- [x] 2A.1 Replace the upward `service/base.ts -> modules/*/ports.ts` dependency
   aggregation with minimal typed initial dependencies owned at the service
   root. App/CLI runtime may construct concrete resource providers, but the
   service package must not import provider implementations or controller code.
-- [ ] 2A.2 Narrow ready host dependencies from the service root in each
+- [x] 2A.2 Narrow ready host dependencies from the service root in each
   `module.ts`. Use module provider middleware only when the module actually
   materializes a derived execution resource under `context.provided`; do not use
   it to rename or re-bag an existing dependency. Keep product decisions in
   procedure handlers and module model/policy files.
-- [ ] 2A.3 Delete service `bindings/*` and public `ports/*` package subpaths.
-  Move host materialization to the CLI composition edge, route stateful
-  export-owner classification/replay through export procedures, and expose no
+- [x] 2A.3 Delete service `bindings/*` and public `ports/*` package subpaths.
+  Keep admitted host materialization at the CLI composition edge, retire
+  export-owner classification/replay with the export capability, and expose no
   compatibility alias or second client.
-- [ ] 2A.4 Close the service package surface around its client factory, named
+- [x] 2A.4 Close the service package surface around its client factory, named
   construction-boundary types, thin composed router, and specifically required
   contract. Update positive Habitat topology and
   dependency-direction enforcement, then pass focused behavior, full service
   and CLI tests, lint, typecheck, build, strict OpenSpec, and all four standing
-  reviews in semantic module-sized Graphite nodes.
+  reviews in coherent semantic Graphite nodes.
 
 Current-main composition progress is recorded in
-[[README#C5 Current-Main Service Composition Proof]]. The caller-built reader
-and public governance binding are retired; the remaining transition surfaces
-keep tasks 2A.1-2A.4 open.
+[[README#C5 Current-Main Service Composition Proof]]. The caller-built reader,
+public bindings/ports, and export transition are retired. The composed
+standing-review gate is complete.
 
 ## 3A. Pure Codec And Public Interface
 
@@ -196,7 +196,7 @@ keep tasks 2A.1-2A.4 open.
   CAS or observes export-only `idle`, always with zero provider/native calls.
   Commit this semantic Graphite node alone.
 
-## 5. T6C3: Export Destination Independence
+## 5. T6C3: Legacy Export And Aggregate Retirement
 
 - [x] 5.1 Require every provider mode to use an explicit pre-existing home and
   treat any entry or unreadable result at the fixed marker slot as
@@ -208,58 +208,28 @@ keep tasks 2A.1-2A.4 open.
   invocation; truthful uncertainty when the same issue follows an already
   invoked composite mutation bridge; and existing unmarked provider convergence
   followed by a read-only repeat.
-- [ ] 5.2 Give exports one private exact marker at
-  `.rawr-agent-plugin-owner.json` with canonical bytes
-  `{"owner":"export","schemaVersion":1}\n`. Make that exact claim a prerequisite
-  before payload/capsule work. The selected mechanism either lets ordinary
-  export perform `Absent -> ExactExportOwned` as one no-replace visibility
-  transition, or makes ordinary export refuse `Absent` while an export-authorized
-  protected preclaim performs that transition. If another entry wins the root
-  slot, preserve it and block. No provider may enter an export-created unmarked
-  directory under either mechanism. Once claimed, the root and marker survive
-  payload/ledger undo and an empty export set. Do not add a root inverse action,
-  marker repair/replay, publication receipt, or lifecycle recovery store.
-
-  **BLOCKED -- publication capability decision.** Implementation cannot proceed
-  until the user, or an explicitly user-delegated product authority, selects
-  either (a) one narrowly scoped shared/native directory no-replace capability
-  with no lifecycle semantics or generalized publication framework, or (b) a
-  separate point-addressed export-authorized protected preclaim operation.
-  Option (a) is the minimal frame-compatible recommendation.
-  A stateless option (b) is not admissible because an interrupted unmarked root
-  is indistinguishable from a legitimate provider home. Selecting (b) requires
-  a separate authority amendment naming its persistent fence carrier and owner,
-  provider observation, and exit/re-entry law, then proving that the fence does
-  not become a second destination truth, shared ownership protocol, or hidden
-  multi-home coordinator. Under an authorized (b), ordinary export refuses
-  `Absent` and admits only an exact preclaimed root. Do not weaken the no-
-  unmarked-window invariant to avoid that choice, and do not duplicate a native
-  syscall subsystem inside the export resource.
-
-  After selection, prove absent claim, a cold zero-write exact-marker retry,
-  exact-marked admission, unmarked/wrong/file/symlink refusal, competing-root
-  preservation, committed claim followed by later planning refusal with truthful
-  durable-marker reporting, root and marker identity persistence through export
-  undo, provider refusal after undo, and export-local multi-destination overlap.
-  For (a), require substrate-level atomic-publication conformance plus a bounded
-  provider race trace. Name the substrate and scheduler ceiling; one overlap
-  test is not a universal linearizability proof. Option (b)'s proof cannot be
-  specified until its fence amendment is accepted. Add no second lifecycle
-  service, transaction history, root digest, registry, provider field, or receipt.
-- [ ] 5.3 After both owner-local boundaries are active, delete
-  `KnownNativeHomesReader`, `completeNativeHomes`,
-  `CompleteTargetIdentityReader`, `scanTargets`, their sidecar-derived bindings,
-  and ambient overlap planning without aliases. Retain only explicit
-  point-addressed target identity state for targeted/complete-test modes and
-  export-local overlap checks between destinations in the same request. Prove
-  no cross-owner scan, aggregate, or ledger read.
-- [ ] 5.4 Run focused export/provider/service/CLI tests, lint, typecheck, build,
-  structural/Habitat, strict OpenSpec, and four standing reviews. Extend closed
-  positive Habitat inventories for owner-local exports/provider ports, routers,
-  bindings, and resources so their admitted topology contains no aggregate or
-  scan surface; retain `shared/release` and add no shared root-owner subtree.
-  Commit provider refusal, export admission, aggregate removal, and structural
-  closure as coherent semantic Graphite nodes rather than one aggregate change.
+- [x] 5.2 Inspect the installed controller capsule root read-only and prove no
+  applying, undoing, committed, or otherwise non-idle export capsule is stranded.
+  Record the exact path/type/result without creating, repairing, clearing, or
+  replaying capsule state.
+- [x] 5.3 Retire `rawr agent plugins export` and
+  `rawr agent plugins undo` from command discovery, parsing/projection, the oRPC
+  contract/router/client graph, service context, controller composition, public
+  package exports, and active behavioral oracles. Delete export/capsule runtime
+  machinery without a stub, alias, forwarder, fallback, or replacement
+  publication framework. Preserve `rawr agent plugins package` and unrelated
+  `rawr tools export`.
+- [x] 5.4 Delete `KnownNativeHomesReader`, `completeNativeHomes`,
+  `CompleteTargetIdentityReader`, `scanTargets`, and their sidecar-derived caller
+  bridge. Retain only explicit point-addressed target identity state for
+  targeted/complete-test modes. Prove no provider-home scan, aggregate,
+  destination ledger read, or cross-owner inference remains.
+- [x] 5.5 Positively narrow Habitat service and command topology around the five
+  remaining modules and exact remaining commands; close the public export and
+  provider binding/port package surfaces. Run focused provider/service/CLI
+  behavior, lint, typecheck, build, structural/Habitat, strict OpenSpec, and four
+  standing reviews. Transfer useful destination/export work to the dedicated
+  full architecture migration; do not implement it here.
 
 ## 6. T6D: Truthful Test Owners
 

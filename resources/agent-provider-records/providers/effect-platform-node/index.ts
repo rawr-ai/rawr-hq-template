@@ -30,7 +30,6 @@ const RECORD_KEY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,191}$/u;
 const PRIVATE_FILE_PREFIX = ".rawr-agent-provider-record-";
 const PRIVATE_REMOVAL_PREFIX = ".rawr-agent-provider-record-remove-";
 const MAX_RECORD_BYTES = 64 * 1024 * 1024;
-const MAX_SCAN_ENTRIES = 1_000_000;
 
 type ProviderRequirements = FileSystem.FileSystem | Path.Path;
 type Operation = AgentProviderRecordsFailure["operation"];
@@ -138,82 +137,6 @@ export function makeAgentProviderRecordsResource(
     yield* validateLimit(input.maxBytes, "read-target");
     const resolved = yield* resolveTargetRecord(paths, roots, input.address, "read-target");
     return yield* readRecord(fs, paths, roots, resolved, input.maxBytes, "read-target");
-  });
-
-  const scanTargets = Effect.fn("agentProviderRecords.scanTargets")(function* (
-    input: Readonly<{ kind: ProviderTargetRecordKind; maxEntries: number; maxBytes: number }>,
-  ) {
-    const fs = yield* FileSystem.FileSystem;
-    const paths = yield* Path.Path;
-    const roots = yield* resolveRoots(paths, options, "scan-targets");
-    yield* validateScanLimits(input.maxEntries, input.maxBytes);
-    yield* checked("scan-targets", "target-kind", undefined, () => {
-      if (input.kind !== "Identity" && input.kind !== "Receipt") {
-        throw new Error("Target scan must select one admitted target record kind");
-      }
-    });
-    const directory = targetDirectory(paths, roots, input.kind);
-    const present = yield* requireExistingDirectoryChain(
-      fs,
-      paths,
-      roots.controller,
-      directory,
-      "scan-targets",
-    );
-    if (!present) return Object.freeze([]);
-    const names = (yield* fs.readDirectory(directory).pipe(
-      mapPlatform("scan-targets", "target-directory-read", directory),
-    )).sort(compareText);
-    if (names.length > input.maxEntries) {
-      return yield* rejected(
-        "scan-targets",
-        "LimitExceeded",
-        "target-entry-count",
-        directory,
-        "Provider target record count exceeds maxEntries",
-      );
-    }
-    const observations: ProviderRecordObservation<ProviderTargetRecordAddress>[] = [];
-    let totalBytes = 0;
-    for (const name of names) {
-      if (!name.endsWith(RECORD_SUFFIX)) {
-        return yield* rejected(
-          "scan-targets",
-          "UnsupportedEntry",
-          "target-entry-name",
-          paths.join(directory, name),
-          "Target record directory contains a non-record entry",
-        );
-      }
-      const targetKey = name.slice(0, -RECORD_SUFFIX.length);
-      yield* validateRecordKey(targetKey, "scan-targets");
-      const address = Object.freeze({
-        scope: "Target" as const,
-        kind: input.kind,
-        targetKey,
-      });
-      const resolved = yield* resolveTargetRecord(paths, roots, address, "scan-targets");
-      const observation = yield* readRecord(
-        fs,
-        paths,
-        roots,
-        resolved,
-        input.maxBytes - totalBytes,
-        "scan-targets",
-      );
-      if (observation.kind === "Absent") {
-        return yield* rejected(
-          "scan-targets",
-          "IdentityChanged",
-          "target-entry-read",
-          resolved.path,
-          "Target record disappeared during the scan",
-        );
-      }
-      totalBytes += observation.bytes.byteLength;
-      observations.push(observation);
-    }
-    return Object.freeze(observations);
   });
 
   const captureTarget = Effect.fn("agentProviderRecords.captureTarget")(function* (
@@ -562,7 +485,6 @@ export function makeAgentProviderRecordsResource(
     readProjection,
     publishProjection,
     readTarget,
-    scanTargets,
     captureTarget,
     releaseTarget: (input: Parameters<typeof releaseTargetOperation>[0]) =>
       targetMutationFence.withPermits(1)(releaseTargetOperation(input)),
@@ -602,8 +524,6 @@ export function makeNodeAgentProviderRecordsAsyncPort(
       runOrReject(resource.publishProjection(input)),
     readTarget: (input: Parameters<typeof resource.readTarget>[0]) =>
       runOrReject(resource.readTarget(input)),
-    scanTargets: (input: Parameters<typeof resource.scanTargets>[0]) =>
-      runOrReject(resource.scanTargets(input)),
     captureTarget: (input: Parameters<typeof resource.captureTarget>[0]) =>
       runOrReject(resource.captureTarget(input)),
     releaseTarget: (input: Parameters<typeof resource.releaseTarget>[0]) =>
@@ -1235,20 +1155,6 @@ function validateLimit(maxBytes: number, operation: Operation): Effect.Effect<vo
   });
 }
 
-function validateScanLimits(
-  maxEntries: number,
-  maxBytes: number,
-): Effect.Effect<void, AgentProviderRecordsFailure> {
-  return checked("scan-targets", "scan-limits", undefined, () => {
-    if (!Number.isSafeInteger(maxEntries) || maxEntries < 1 || maxEntries > MAX_SCAN_ENTRIES) {
-      throw new Error(`maxEntries must be a safe integer between one and ${MAX_SCAN_ENTRIES}`);
-    }
-    if (!Number.isSafeInteger(maxBytes) || maxBytes < 0 || maxBytes > MAX_RECORD_BYTES) {
-      throw new Error(`maxBytes must be a safe integer between zero and ${MAX_RECORD_BYTES}`);
-    }
-  });
-}
-
 function validateBytes(
   bytes: Uint8Array,
   maxBytes: number,
@@ -1532,10 +1438,6 @@ function failure(
 function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
   return left.byteLength === right.byteLength
     && left.every((value, index) => value === right[index]);
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 function errorMessage(error: unknown): string {

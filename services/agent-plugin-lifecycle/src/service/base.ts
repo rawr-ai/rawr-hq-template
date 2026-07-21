@@ -3,7 +3,6 @@ import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-ar
 import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
 import type { AgentProviderRecordsAsyncPort } from "@rawr/resource-agent-provider-records";
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
-import type { ExportLifecycleHostRuntime } from "./modules/exports/ports";
 import type {
   NativeProviderExecutablePaths,
   NativeProviderResourcePort,
@@ -28,7 +27,6 @@ type InitialContext = {
     contentWorkspace: ContentWorkspaceNodeAsyncPort;
     clock: LifecycleClock;
     packageOutput: AgentPluginPackageOutputAsyncPort;
-    exports: ExportLifecycleHostRuntime;
     providerRecords: AgentProviderRecordsAsyncPort;
     providerNativeResource: NativeProviderResourcePort;
     providerExecutables: NativeProviderExecutablePaths;
@@ -48,7 +46,7 @@ type InvocationContext = {
 
 type ProcedureMetadata = {
   audit?: "none" | "basic" | "full";
-  entity?: "service" | "releases" | "vendors" | "packaging" | "exports" | "providers" | "governance";
+  entity?: "service" | "releases" | "vendors" | "packaging" | "providers" | "governance";
 };
 
 export const policy = {

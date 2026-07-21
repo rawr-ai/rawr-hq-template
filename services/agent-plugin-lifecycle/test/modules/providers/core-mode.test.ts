@@ -45,7 +45,6 @@ describe("closed lifecycle mode parsers", () => {
     expect(Object.keys(contract).sort()).toEqual([
       "canonicalStatus",
       "canonicalSync",
-      "completeNativeHomes",
       "completeTest",
       "targetedTest",
     ]);

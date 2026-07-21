@@ -39,7 +39,6 @@ describe("provider resource context", () => {
     expect(Reflect.ownKeys(state)).toEqual([
       "records",
       "projectionRepositoryRoot",
-      "exportKnownHomesReader",
     ]);
     expect(state).not.toHaveProperty("artifactRepository");
     expect(deps.providerRecords).toBe(state.records);
@@ -53,20 +52,12 @@ describe("provider resource context", () => {
     ]);
     expect(deps).not.toHaveProperty("providerArtifactRepository");
     expect(deps).not.toHaveProperty("providerEvidenceStore");
-    expect(await state.exportKnownHomesReader.readAll()).toEqual({
-      ok: true,
-      value: [],
-    });
-
     const reopened = createNodeProviderRecordState({
       controllerDataRoot: dataRoot,
       providerProjectionRoot: layout.providerProjectionRoot,
       providerTargetStateRoot: layout.providerTargetStateRoot,
     });
-    expect(await reopened.exportKnownHomesReader.readAll()).toEqual({
-      ok: true,
-      value: [],
-    });
+    expect(Reflect.ownKeys(reopened)).toEqual(["records", "projectionRepositoryRoot"]);
   });
 });
 

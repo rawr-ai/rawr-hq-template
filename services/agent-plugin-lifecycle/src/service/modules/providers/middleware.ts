@@ -21,7 +21,6 @@ import type {
   ProviderTargetReader,
 } from "./model/repositories/provider";
 import type {
-  CompleteTargetIdentityReader,
   ProviderMarketplaceMaterializer,
   ProviderProjectionMaterializer,
   TargetIdentityReader,
@@ -62,7 +61,7 @@ export const resources = createServiceProvider<{
   providerMutator: ProviderTargetMutator;
   receipts: TargetReceiptReader;
   receiptWriter: TargetReceiptWriter;
-  identities: TargetIdentityReader & CompleteTargetIdentityReader;
+  identities: TargetIdentityReader;
   identityWriter: TargetIdentityWriter;
   projectionMaterializer: ProviderProjectionMaterializer;
   marketplaceMaterializer: ProviderMarketplaceMaterializer;
@@ -98,10 +97,7 @@ export const resources = createServiceProvider<{
     providerMutator: createResourceProviderTargetMutator(adapter),
     receipts: state.targets.receipts,
     receiptWriter: state.targets.receipts,
-    identities: Object.freeze({
-      read: state.targets.identities.read,
-      readAll: state.targets.completeIdentities.readAll,
-    }),
+    identities: state.targets.identities,
     identityWriter: state.targets.identities,
     projectionMaterializer: state.projections.projectionMaterializer,
     marketplaceMaterializer: state.projections.marketplaceMaterializer,

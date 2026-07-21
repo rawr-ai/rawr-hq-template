@@ -12,10 +12,9 @@ production value consumer for the service client: its exact
 Other CLI modules may retain type-only client dependencies, but cannot
 construct, load, or relay another service client. The CLI selects concrete
 resource providers; service middleware derives current-main and provider-domain
-repositories and adapters under `provided`. Qualified provider bindings enter
-the CLI only at the provider composition root; native resource contracts flow
+repositories and adapters under `provided`. Native resource contracts flow
 directly from their resource owner into the CLI-native binding. The CLI-local
-provider index can flow only into that composition root. Pure release algebra
+provider index can flow only into the provider composition root. Pure release algebra
 reaches command parsing through
 `release`; all other CLI consumers remain type-only. The CLI selects exactly one
 raw artifact repository provider and root at the lifecycle client composition
@@ -134,14 +133,24 @@ or {
   },
   import_statement(source=$source) where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
-    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$",
-    not { $filename <: r".*apps/cli/src/lib/agent-plugins/service-runtime/providers/node-runtime\.ts$" }
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings(?:/|[\"']).*"
+  },
+  `export { $exports } from $source` where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings(?:/|[\"']).*"
+  },
+  `export * from $source` where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings(?:/|[\"']).*"
+  },
+  `import($source)` where {
+    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
+    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings(?:/|[\"']).*"
   },
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/exports)[\"']?$" },
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/client[\"']?$" },
     not {
       $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/release[\"']?$",
       $filename <: r".*apps/cli/src/lib/agent-plugins/commands/input\.ts$"
@@ -152,7 +161,7 @@ or {
   `import($source)` where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/exports)[\"']?$" }
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/client[\"']?$" }
   },
   import_statement(source=$source) as $import where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
@@ -178,25 +187,15 @@ or {
   },
   `export { $exports } from $source` as $export where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
-    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$"
-  },
-  `export * from $source` where {
-    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
-    $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$"
-  },
-  `export { $exports } from $source` as $export where {
-    $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/exports)[\"']?$" },
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/client[\"']?$" },
     not { $export <: includes "export type" },
     not { $export <: r"(?s)^export\s*\{\s*type\s+[^,}]+(?:,\s*type\s+[^,}]+)*,?\s*\}\s*from.*" }
   },
   `export * from $source` as $export where {
     $filename <: r".*apps/cli/src/.*\.(?:ts|tsx|mts|cts)$",
     $source <: r"^[\"']?@rawr/agent-plugin-lifecycle(?:/[^\"']+)?[\"']?$",
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/(?:client|bindings/exports)[\"']?$" },
-    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/bindings/providers[\"']?$" },
+    not { $source <: r"^[\"']?@rawr/agent-plugin-lifecycle/client[\"']?$" },
     not { $export <: includes "export type *" }
   },
   import_statement(source=$source) where {
@@ -361,7 +360,7 @@ import { impl } from "../../../impl";
 export const check = impl.releases.check.handler(async ({ context }) =>
   context.deps.releaseSource.inspect());
 
-// @filename: services/agent-plugin-lifecycle/src/service/modules/exports/router/context-provided.router.ts
+// @filename: services/agent-plugin-lifecycle/src/service/modules/packaging/router/context-provided.router.ts
 export const bypass = context.provided.artifactStore;
 
 // @filename: services/agent-plugin-lifecycle/src/service/router.ts
@@ -392,9 +391,6 @@ export const provider = import("@rawr/resource-native-agent-provider/providers/c
 
 // @filename: services/agent-plugin-lifecycle/src/service/modules/providers/ports.ts
 export { createResourceCodexProviderAdapter } from "./internal";
-
-// @filename: services/agent-plugin-lifecycle/src/service/modules/exports/ports.ts
-export { type ExportPlan, createExportOwner } from "./internal/owner-protocol";
 
 // @filename: apps/cli/src/lib/agent-plugins/value-port-bypass.ts
 import { createResourceCodexProviderAdapter } from "@rawr/agent-plugin-lifecycle/ports/providers";
@@ -684,9 +680,7 @@ export type NativeProvider = Deps["providerNativeResource"];
 
 // @filename: apps/cli/src/lib/agent-plugins/service-runtime/providers/node-runtime.ts
 import { createNodeNativeProviderResource } from "../../bindings/providers";
-import { createResourceCompleteTargetIdentityReader } from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
 export const native = createNodeNativeProviderResource;
-export const completeIdentities = createResourceCompleteTargetIdentityReader;
 
 ```

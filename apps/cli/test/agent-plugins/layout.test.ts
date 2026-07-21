@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { deriveAgentPluginControllerLayout } from "../../src/lib/agent-plugins/layout";
 
 describe("agent-plugin controller layout", () => {
-  it("derives both stable owners only from the verified controller data root", () => {
+  it("derives stable roots only from the verified controller data root", () => {
     const originalHome = process.env.HOME;
     const originalData = process.env.RAWR_DATA_DIR;
     process.env.HOME = "/hostile/home";
@@ -12,7 +12,6 @@ describe("agent-plugin controller layout", () => {
     try {
       expect(deriveAgentPluginControllerLayout({ dataRoot: "/verified/controller-data" })).toEqual({
         artifactStoreRoot: "/verified/controller-data/agent-plugins/artifacts-v1",
-        capsuleRoot: "/verified/controller-data/agent-plugins/last-operation-v1",
         providerProjectionRoot: "/verified/controller-data/agent-plugins/provider-projections-v1",
         providerTargetStateRoot: "/verified/controller-data/agent-plugins/provider-target-state-v1",
       });

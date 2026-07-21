@@ -1,4 +1,3 @@
-import { compareCanonical } from "../model/helpers/canonical";
 import {
   canonicalSerializeTargetReceipt,
   decodeTargetReceipt,
@@ -30,7 +29,6 @@ import type {
   TargetRecordPlanInput,
 } from "../model/repositories/target-record-storage";
 import type {
-  CompleteTargetIdentityReader,
   TargetIdentityReader,
   TargetIdentityWriter,
   TargetReceiptReader,
@@ -45,7 +43,6 @@ import {
 
 export interface PathlessTargetState {
   readonly identities: TargetIdentityReader & TargetIdentityWriter;
-  readonly completeIdentities: CompleteTargetIdentityReader;
   readonly receipts: TargetReceiptReader & TargetReceiptWriter;
 }
 
@@ -111,55 +108,6 @@ export function createPathlessTargetState(
     },
   });
 
-  const completeIdentities: CompleteTargetIdentityReader = Object.freeze({
-    async readAll(): Promise<DeploymentResult<readonly TargetIdentitySidecar[]>> {
-      const scanned = await records.scan("identity");
-      if (!scanned.ok) return remapFailure(scanned, IDENTITY_SCAN);
-      const seen = new Set<string>();
-      const sidecars: TargetIdentitySidecar[] = [];
-      for (const entry of scanned.value) {
-        if (entry.key.kind !== "identity") {
-          return operationFailure(
-            IDENTITY_SCAN,
-            "Target identity scan returned a foreign record kind",
-            "identity",
-            entry.key.kind,
-          );
-        }
-        if (seen.has(entry.key.targetDigest)) {
-          return operationFailure(
-            IDENTITY_SCAN,
-            "Target identity scan returned a duplicate semantic key",
-            "distinct target digests",
-            entry.key.targetDigest,
-          );
-        }
-        seen.add(entry.key.targetDigest);
-        if (entry.observation.kind === "absent") {
-          return operationFailure(
-            IDENTITY_SCAN,
-            "Target identity scan returned an absent entry",
-            "present identity record",
-            "absent",
-          );
-        }
-        const decoded = decodeTargetIdentitySidecar(entry.observation.bytes);
-        if (!decoded.ok) return remapFailure(decoded, IDENTITY_SCAN);
-        if (decoded.value.targetDigest !== entry.key.targetDigest) {
-          return operationFailure(
-            IDENTITY_SCAN,
-            "Target identity scan key does not bind its sidecar",
-            entry.key.targetDigest,
-            decoded.value.targetDigest,
-          );
-        }
-        sidecars.push(decoded.value);
-      }
-      sidecars.sort((left, right) => compareCanonical(left.targetDigest, right.targetDigest));
-      return success(Object.freeze(sidecars));
-    },
-  });
-
   const receipts: TargetReceiptReader & TargetReceiptWriter = Object.freeze({
     async read(target: ProviderTarget): Promise<DeploymentResult<ReceiptObservation>> {
       const canonical = canonicalTarget(target, RECEIPT_READ);
@@ -198,7 +146,6 @@ export function createPathlessTargetState(
 
   return Object.freeze({
     identities,
-    completeIdentities,
     receipts,
   });
 }
@@ -535,10 +482,6 @@ const ABSENT_RECEIPT = Object.freeze({ kind: "absent" } as const);
 const IDENTITY_READ: OperationContext = Object.freeze({
   code: "INVALID_TARGET",
   path: "target.identity",
-});
-const IDENTITY_SCAN: OperationContext = Object.freeze({
-  code: "INVALID_TARGET",
-  path: "targetIdentities",
 });
 const IDENTITY_ADMIT: OperationContext = Object.freeze({
   code: "MUTATION_FAILED",

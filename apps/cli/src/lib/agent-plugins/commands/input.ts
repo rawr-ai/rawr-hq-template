@@ -32,7 +32,6 @@ export type BuildRequest = InputOf<Client["releases"]["build"]>;
 export type VendorStatusRequest = InputOf<Client["vendors"]["status"]>;
 export type VendorUpdateRequest = InputOf<Client["vendors"]["update"]>;
 export type PackageRequest = InputOf<Client["packaging"]["package"]>;
-export type ExportRequest = InputOf<Client["exports"]["apply"]>;
 export type TargetedTestRequest = InputOf<Client["providers"]["targetedTest"]>;
 export type CompleteTestRequest = InputOf<Client["providers"]["completeTest"]>;
 export type SyncRequest = InputOf<Client["providers"]["canonicalSync"]>;
@@ -307,29 +306,6 @@ export function parsePackageRequest(flags: RawFlags): PackageRequest {
     artifactRef: parseArtifactHandle(flags.artifact),
     format: requireLiteral(flags.format, "--format", ["cowork-v1"] as const),
     outputPath,
-  });
-}
-
-export function parseExportRequest(flags: RawFlags): ExportRequest {
-  const artifactRef = parseArtifactHandle(flags.artifact);
-  const mode = requireLiteral(flags.mode, "--mode", ["targeted-release", "complete-set"] as const);
-  if (
-    (artifactRef.kind === "release" && mode !== "targeted-release")
-    || (artifactRef.kind === "complete-set" && mode !== "complete-set")
-  ) {
-    throw new LifecycleInputError("--mode must match the artifact handle domain");
-  }
-  const destinations = requireStringList(flags.destination, "--destination", { unique: true })
-    .map((value) => requireCanonicalAbsolute(value, "--destination"));
-  return Object.freeze({
-    protocolVersion: 1,
-    artifactRef,
-    mode,
-    layout: requireLiteral(flags.layout, "--layout", ["codex-v1", "claude-v1"] as const),
-    destinations: Object.freeze(destinations),
-    overwritePolicy: flags.overwrite === undefined
-      ? "managed-only"
-      : requireLiteral(flags.overwrite, "--overwrite", ["managed-only", "replace-planned"] as const),
   });
 }
 

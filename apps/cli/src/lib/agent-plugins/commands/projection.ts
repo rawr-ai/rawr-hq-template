@@ -7,9 +7,7 @@ import type {
   ControllerProviderHomeAuthority,
 } from "@rawr/resource-controller-authority";
 import { preflightNodeControllerAuthority } from "@rawr/resource-controller-authority/providers/effect-platform-node";
-import type { UndoResult } from "../undo";
 import { createProductionLifecycleClient } from "../service-runtime/client";
-import { createProductionAgentPluginUndo } from "../service-runtime/undo";
 import {
   LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
@@ -24,7 +22,6 @@ import type {
   CompleteTestRequest,
   CurrentMainRecordRequest,
   CurrentMainSelectionRequest,
-  ExportRequest,
   PackageRequest,
   ReleaseInputRefreshRequest,
   ReleaseInputRecordRequest,
@@ -49,7 +46,6 @@ export type LifecycleOperationRequest =
   | Readonly<{ operation: "vendors.status"; input: VendorStatusRequest }>
   | Readonly<{ operation: "vendors.update"; input: VendorUpdateRequest }>
   | Readonly<{ operation: "packaging.package"; input: PackageRequest }>
-  | Readonly<{ operation: "exports.apply"; input: ExportRequest }>
   | Readonly<{ operation: "providers.targetedTest"; input: TargetedTestRequest }>
   | Readonly<{ operation: "providers.completeTest"; input: CompleteTestRequest }>
   | Readonly<{ operation: "providers.canonicalSync"; input: SyncRequest }>
@@ -60,7 +56,6 @@ export type LifecycleOperationRequest =
     input: CurrentMainSelectionRequest;
   }>;
 
-export type UndoApplication = () => Promise<UndoResult>;
 type LifecycleCallOptions = NonNullable<Parameters<Client["releases"]["check"]>[1]>;
 
 export {
@@ -153,10 +148,6 @@ export async function invokeLifecycleProcedure(
       const client = await factory("packaging.package", binding);
       return await client.packaging.package(request.input, callOptions);
     }
-    case "exports.apply": {
-      const client = await factory("exports.apply", binding);
-      return await client.exports.apply(request.input, callOptions);
-    }
     case "providers.targetedTest": {
       const client = await factory("providers.targetedTest", binding);
       return await client.providers.targetedTest(request.input, callOptions);
@@ -184,12 +175,6 @@ export async function invokeLifecycleProcedure(
     default:
       return assertNever(request);
   }
-}
-
-export async function invokeAgentPluginUndo(
-  application: UndoApplication = createProductionAgentPluginUndo,
-): Promise<UndoResult> {
-  return application();
 }
 
 export function lifecycleResultExitCode(
@@ -236,7 +221,6 @@ export function lifecycleResultExitCode(
     "vendors.status": ["VendorStatus"],
     "vendors.update": ["ReadOnlyConverged", "AuthoredReviewableChanges"],
     "packaging.package": ["ReadOnlyConverged", "OutputReplacedVerified"],
-    "exports.apply": ["ReadOnlyConverged", "MutatedSettled"],
     "providers.targetedTest": [],
     "providers.completeTest": [],
     "providers.canonicalSync": [],
@@ -272,10 +256,6 @@ export function projectLifecycleResultForOutput(
   return operation === "releases.refreshReleaseInput"
     ? projected
     : Object.freeze({ ...record, value: projected });
-}
-
-export function undoResultExitCode(result: UndoResult): 0 | 1 {
-  return result.kind === "NoCommittedCapsule" || result.kind === "RestoredAndCleared" ? 0 : 1;
 }
 
 function invocation(operation: LifecycleOperation) {

@@ -9,7 +9,6 @@ export type LifecycleOperation =
   | "vendors.status"
   | "vendors.update"
   | "packaging.package"
-  | "exports.apply"
   | "providers.targetedTest"
   | "providers.completeTest"
   | "providers.canonicalSync"
@@ -32,7 +31,6 @@ export type LifecycleClientByOperation = Readonly<{
   "vendors.status": Readonly<{ vendors: Pick<Client["vendors"], "status"> }>;
   "vendors.update": Readonly<{ vendors: Pick<Client["vendors"], "update"> }>;
   "packaging.package": Readonly<{ packaging: Pick<Client["packaging"], "package"> }>;
-  "exports.apply": Readonly<{ exports: Pick<Client["exports"], "apply"> }>;
   "providers.targetedTest": Readonly<{ providers: Pick<Client["providers"], "targetedTest"> }>;
   "providers.completeTest": Readonly<{ providers: Pick<Client["providers"], "completeTest"> }>;
   "providers.canonicalSync": Readonly<{ providers: Pick<Client["providers"], "canonicalSync"> }>;

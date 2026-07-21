@@ -14,8 +14,8 @@
 4. Use explicit disposable provider homes until canonical settlement is authorized.
 
 There is no universal checkout, clean-worktree, or preflight-check requirement.
-A branch that consumes an immutable artifact, governed channel, governance
-objects, or controller capsule does not reopen source as preparation.
+A branch that consumes an immutable artifact, governed channel, or governance
+object does not reopen source as preparation.
 
 ## Operation Selector
 
@@ -37,12 +37,6 @@ check invocation.
 <branch operation="package">
 Bind one immutable artifact handle, exact package format, and explicit output
 path. Verify deterministic package bytes. Do not bind or inspect content source.
-</branch>
-
-<branch operation="export">
-Bind one immutable artifact handle, exact mode and layout, explicit managed
-destinations, and overwrite policy. Verify each destination-owned ledger and
-repeat convergence. Export is not a provider-convergence fallback.
 </branch>
 
 <branch operation="test">
@@ -70,11 +64,6 @@ canonical bytes without writing a content repository or acquiring Git/provider
 authority.
 </branch>
 
-<branch operation="undo">
-Use only the controller-owned managed-export capsule. Replay is limited to its
-export-destination actions; provider executables, homes, and native state are
-not undo inputs or replay targets.
-</branch>
 </operation-selector>
 
 After the selected branch records its result and owner proof, stop. A later

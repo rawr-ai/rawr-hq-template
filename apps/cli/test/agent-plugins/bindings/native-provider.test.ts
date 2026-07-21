@@ -18,7 +18,6 @@ import type {
   NativeProviderCapabilityProbe,
   NativeProviderSessionInput,
 } from "@rawr/resource-native-agent-provider";
-import * as lifecycleProviderBinding from "@rawr/agent-plugin-lifecycle/bindings/providers";
 
 const provider = vi.hoisted(() => ({
   codexAcquire: vi.fn(),
@@ -60,12 +59,6 @@ describe("native provider resource binding", () => {
       Effect.succeed(codexSession(input)));
     provider.claudeAcquire.mockImplementation((input: NativeProviderSessionInput) =>
       Effect.succeed(claudeSession(input)));
-  });
-
-  it("publishes only the temporary task-5.3 complete-identity reader", () => {
-    expect(Object.keys(lifecycleProviderBinding)).toEqual([
-      "createResourceCompleteTargetIdentityReader",
-    ]);
   });
 
   afterEach(async () => {

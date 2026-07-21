@@ -12,10 +12,10 @@
   },
   "ownerProject": "@rawr/agent-plugin-lifecycle",
   "lane": "enforced",
-  "forbids": "a second lifecycle service shell, a different module inventory, undeclared module-root divergence, or an internal implementation bucket",
-  "why": "Curated agent-plugin lifecycle is one oRPC service whose six capability modules converge on one package topology through closed transition shells. Procedures own sequencing under router directories, while module models narrow into declared domain categories without becoming peer services.",
-  "remediate": "Keep lifecycle behavior in the canonical service, preserve the six-module inventory, place domain matter under model categories, and implement procedure sequencing in module router handlers.",
-  "message": "Agent-plugin lifecycle must retain its closed one-service, six-module oRPC topology.",
+  "forbids": "a second lifecycle service shell, a different module inventory, an outward lifecycle binding facade, undeclared module-root divergence, or an internal implementation bucket",
+  "why": "Curated agent-plugin lifecycle is one oRPC service whose five capability modules converge on one package topology through closed transition shells. Procedures own sequencing under router directories, while module models narrow into declared domain categories without becoming peer services or public host bindings.",
+  "remediate": "Keep lifecycle behavior in the canonical service, preserve the five-module inventory, place domain matter under model categories, and implement procedure sequencing in module router handlers.",
+  "message": "Agent-plugin lifecycle must retain its closed one-service, five-module oRPC topology.",
   "pathCoverage": [
     {
       "kind": "exact-path",

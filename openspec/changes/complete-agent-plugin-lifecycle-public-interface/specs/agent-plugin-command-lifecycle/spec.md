@@ -3,11 +3,12 @@
 ### Requirement: Curated lifecycle has one exact qualified command ontology
 
 The installed Template controller MUST expose curated lifecycle only as
-`rawr agent plugins check|create|vendors status|vendors update|build|test|package|export|sync|status|undo`.
+`rawr agent plugins check|create|vendors status|vendors update|build|test|package|sync|status`.
 Every command and nested topic MUST be an immutable controller member. Bare
 `rawr plugins`, root `rawr undo`, `rawr agent sync`, retired
-`rawr agent plugins retire`, retired `rawr agent plugins attest-promotion`, and
-any alias or forwarding route MUST NOT expose curated lifecycle behavior.
+`rawr agent plugins retire`, retired `rawr agent plugins attest-promotion`,
+retired `rawr agent plugins export`, retired `rawr agent plugins undo`, and any
+alias or forwarding route MUST NOT expose curated lifecycle behavior.
 
 #### Scenario: Discovery separates external and curated plugins
 - **WHEN** command, topic, alias, hidden-alias, help, and manifest discovery are
@@ -15,7 +16,7 @@ any alias or forwarding route MUST NOT expose curated lifecycle behavior.
 - **THEN** the exact qualified curated family appears only below
   `rawr agent plugins`
 - **AND** bare `rawr plugins` contains only the seven external-extension
-  operations and both retired commands are absent everywhere
+  operations and every retired lifecycle command is absent everywhere
 
 ### Requirement: CLI parsing preserves closed procedure requests
 
@@ -42,9 +43,8 @@ procedure. CLI code MUST NOT import a module-local router handler or repository,
 resolve lifecycle prerequisites, sequence plan/apply/verify/retire across
 modules, aggregate procedure results, persist another ledger/receipt/capsule, or
 introduce another lifecycle service. The C4 `create` command remains source
-authoring. Qualified `undo` remains available only to replay capsule state
-emitted by managed export. Provider operations emit no capsule. Neither exception may
-invoke a retired peer service.
+authoring. No lifecycle export or undo exception remains, and provider
+operations emit no capsule.
 
 #### Scenario: Dispatch cannot become an aggregate
 - **WHEN** every command runs with all lifecycle procedures and module-local

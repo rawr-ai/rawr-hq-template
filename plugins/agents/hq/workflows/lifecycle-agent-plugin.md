@@ -20,8 +20,7 @@ for the complete operation selector.
   HQ-Template owns the controller and generic lifecycle tooling.
 - Source authoring is separate, source-only work. It never starts this workflow.
 - App, web, and runtime composition are outside this workflow.
-- No operation automatically starts check, build, package, export, test, sync,
-  or undo.
+- No operation automatically starts check, build, package, test, or sync.
 
 ## Select One Branch
 
@@ -33,16 +32,13 @@ for the complete operation selector.
   validate the single reviewed v2 record before it lands in the content
   repository. Use `check --mode current-main-selection` to inspect the landed
   record through observed Git without provider mutation.
-- **Package or export**: bind the immutable artifact handle and explicit output
-  contract. Package takes format and output path; export takes mode, layout,
-  managed destinations, and overwrite policy. Do not reopen a content checkout.
+- **Package**: bind the immutable artifact handle, exact format, and explicit
+  output path. Do not reopen a content checkout.
 - **Test**: bind immutable targeted-release handles or one immutable complete-set
   handle, an evaluation profile, and explicit provider homes and executables.
 - **Sync or status**: bind the governed current-main channel locator and explicit
   provider homes and executables. Sync removes omitted lifecycle-owned members;
   do not infer a set by scanning source.
-- **Undo**: use only the controller-owned managed-export capsule. Replay is
-  limited to export-destination actions and accepts no provider authority.
 
 Invoke the exact literal qualified command selected by `OPERATION`. Keep
 `rawr agent plugins vendors status` and `rawr agent plugins vendors update` as
@@ -52,6 +48,6 @@ operation or shell-expanding a compound operation string.
 ## Done
 
 - The selected command accepted its exact owner-specific inputs.
-- Its output identity, receipt, ledger, or state proof matches that branch.
+- Its output identity or owner-state proof matches that branch.
 - A repeated mutating convergence changes nothing when that branch requires it.
 - No unselected operation ran and no unrelated owner state changed.

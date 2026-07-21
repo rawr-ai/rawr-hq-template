@@ -32,6 +32,12 @@ behavior.
 - Retire receipt-owned `rawr agent plugins retire`; canonical closed-set sync is
   the only provider cleanup path and bounds omission cleanup by native
   provenance.
+- Retire `rawr agent plugins export` and `rawr agent plugins undo` from command
+  discovery, the oRPC contract/router/client graph, controller composition, and
+  public package surfaces. Add no stub, alias, forwarding route, or fallback.
+- Remove `completeNativeHomes`, its target-record scan, and the caller bridge.
+  Provider lifecycle remains explicit and point-addressed; it does not aggregate
+  homes for another owner.
 - Canonicalize generated Oclif manifest objects so equivalent controller builds
   produce the same bytes and digest.
 - Keep the owner-local DevOps CLI fixture and the serialized owning CLI test
@@ -45,8 +51,8 @@ behavior.
 - Public mechanical-evidence handles as channel authority.
 - Protected-lane runtime machinery beyond closed release-input exclusion.
 - New issuer lineage, hosted approval replay, promotion attestations,
-  app/runtime composition, or provider installation logic. Existing qualified
-  undo remains only for managed-export capsule state.
+  app/runtime composition, destination/export realization, undo capsules, or
+  provider installation logic.
 
 ## Modified Capabilities
 
@@ -65,11 +71,15 @@ behavior.
   target-identity sidecars, or undo capsules.
 - `agent-plugin-build-artifact-store`: mechanical evidence remains optional
   complete-test proof and is not channel/deployment/retention authority.
-- `agent-plugin-managed-export`: export collision authority is destination-local
-  and uses one visible root-owner marker instead of a hidden provider-home
-  registry.
-- `agent-plugin-undo-capsule`: every provider capsule/replay requirement is
-  removed; qualified undo remains export-only.
+- `agent-plugin-managed-export`: removed from the curated lifecycle controller.
+  Useful destination/publication requirements transfer to the dedicated full
+  architecture migration rather than being repaired here.
+- `agent-plugin-undo-capsule`: removed from the reachable controller and service
+  graph after a read-only installed-state check proves no live capsule is
+  stranded.
+- `agent-provider-deployment`: removes the complete-home aggregate and scan;
+  targeted, complete-test, canonical sync, and status remain explicitly
+  point-addressed.
 - `rawr-controller-authority`: generated official manifests are canonical, so
   equivalent controller builds have one digest.
 

@@ -19,11 +19,13 @@ The original packet and repository-separation identities remain recorded in
 - **Hard core:** one installed controller; one complete release set; one owner
   per skill; one reviewed `current-main` record; native Codex/Claude truth;
   separate Template and personal repositories.
-- **Exterior:** app/runtime composition, controller-store transport, alternate
-  launchers, issuer lineage, hosted replay, promotion attestations, generalized
-  undo, global coordination, and protected candidate materialization.
+- **Exterior:** app/runtime composition, destination/export realization,
+  controller-store transport, alternate launchers, issuer lineage, hosted
+  replay, promotion attestations, undo capsules, global coordination, and
+  protected candidate materialization.
 - **Falsifiers:** a second selector, transfer graph, personal controller code,
-  non-native provider mutation, stale omitted member, or mutating repeat.
+  non-native provider mutation, stale omitted member, mutating repeat, reachable
+  lifecycle export/undo, or a native-home aggregate/scan.
 - **Closure:** retained Template interface landed/installed; personal content
   and channel landed independently; cognition-containing set converged in
   disposable and approved native homes; repeat with every lifecycle-owned write
@@ -39,7 +41,7 @@ The original packet and repository-separation identities remain recorded in
 | Complete set and skill ownership | Immutable release set built from exact landed personal Git identity |
 | Codex installation/state | Native Codex marketplace/plugin commands and live inventory |
 | Claude installation/state | Native Claude marketplace/plugin commands and live inventory |
-| Export destination | Its owner-local ledger, when explicitly exercised |
+| Destination/export realization | Dedicated full architecture migration; not the curated lifecycle controller |
 | Inngest candidate | `HF01_PENDING`; outside the exact landed release input and therefore not an admitted source/destination |
 
 ## Proportionality Ratchet
@@ -79,8 +81,9 @@ This ratchet governs [[tasks#3B. Observed-Git Selection And Cutover]],
 | One canonical current-main v2 record | Build |
 | Native provider adapters and closed-set projection | Keep |
 | Canonical receipts, target sidecars, and undo capsule | Retire from canonical sync/status |
-| Qualified capsule application | Keep for managed export state only; provider capsules retire |
-| Export/provider root exclusivity | One visible monotonic owner marker; no registry, ambient scan, or undo of destination authority |
+| Qualified capsule application | Retire; no lifecycle command owns rollback state |
+| Managed export and destination realization | Retire from this lifecycle; transfer useful requirements to the dedicated full architecture migration |
+| Provider/export overlap aggregate | Retire; provider operations remain explicit and point-addressed |
 | Receipt-owned explicit provider retire | Retire; canonical closed-set sync owns omission cleanup |
 | Deterministic official manifest | Keep |
 | Owner-local CLI test corrections | Keep |
@@ -89,7 +92,7 @@ This ratchet governs [[tasks#3B. Observed-Git Selection And Cutover]],
 | Public evidence handle as channel authority | Retire |
 | Second launcher/caller bindings/refusal matrix | Retire |
 | Issuer/hosted/promotion selection chain | Retire from reachable lifecycle |
-| App/runtime composition | Closed; separate migration owns it |
+| App/runtime and destination/export composition | Closed; separate migration owns them |
 
 ## State Law
 

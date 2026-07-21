@@ -19,7 +19,6 @@ mode = "closed"
 required = [
   "client.ts",
   "providers",
-  "undo.ts",
 ]
 allowed = []
 
@@ -52,12 +51,10 @@ required = [
   "build.ts",
   "check.ts",
   "create.ts",
-  "export.ts",
   "package.ts",
   "status.ts",
   "sync.ts",
   "test.ts",
-  "undo.ts",
   "vendors",
 ]
 allowed = []
