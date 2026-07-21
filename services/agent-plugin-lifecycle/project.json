@@ -19,12 +19,9 @@
         "{projectRoot}/src/**/*",
         "{workspaceRoot}/apps/cli/src/**/*",
         "{workspaceRoot}/.habitat/index.json",
-        "{workspaceRoot}/.habitat/blueprints/orpc-service-package/require_agent_plugin_lifecycle_service_topology/**/*",
-        "{workspaceRoot}/.habitat/rawr/agent-plugin-lifecycle/rules/preserve_agent_plugin_lifecycle_dependency_direction/**/*",
-        "{workspaceRoot}/.habitat/rawr/agent-plugin-lifecycle/rules/require_agent_plugin_command_channel_topology/**/*",
-        "{workspaceRoot}/scripts/habitat/check.mjs",
-        "{workspaceRoot}/scripts/habitat/provision.mjs",
-        "{workspaceRoot}/scripts/habitat/release.json",
+        "{workspaceRoot}/.habitat/blueprints/**/*",
+        "{workspaceRoot}/.habitat/rawr/agent-plugin-lifecycle/**/*",
+        "{workspaceRoot}/scripts/habitat/**/*",
         "bunToolchain"
       ],
       "outputs": []
