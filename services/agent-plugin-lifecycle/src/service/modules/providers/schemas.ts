@@ -1,4 +1,4 @@
-import { Refine, type Static, type TSchema, Type } from "typebox";
+import { type Static, type TSchema, Type } from "typebox";
 
 import { ProviderProjectionBindingSchema } from "./model/dto/outcome";
 
@@ -185,18 +185,11 @@ const CapabilityProfileSchema = Type.Object(
   { additionalProperties: false },
 );
 
-const Uint8ArraySchema = Refine(
-  Type.Unsafe<Uint8Array>(Type.Unknown()),
-  (value) => value instanceof Uint8Array,
-  () => "Expected Uint8Array",
-);
-
 const ProviderPackageFileSchema = Type.Object(
   {
     path: NonEmptyStringSchema,
     mode: Type.Union([Type.Literal(0o644), Type.Literal(0o755)]),
     contentDigest: ContentDigestSchema,
-    bytes: Uint8ArraySchema,
   },
   { additionalProperties: false },
 );

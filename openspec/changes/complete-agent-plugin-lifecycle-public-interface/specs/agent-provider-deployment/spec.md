@@ -248,6 +248,20 @@ failure, or claim rollback that was not observed.
 - **THEN** the outcome reports that exact applied prefix without rollback, and a
   retry re-reads native state and converges from what actually happened
 
+### Requirement: Provider procedure results keep execution bytes private
+Targeted and complete-test plans and events MUST preserve their ordered phase,
+action, visible-claim, path, mode, and content-digest observations, but their
+public TypeBox result schemas MUST NOT expose package payload bytes. Byte-bearing
+files remain private inputs to provider planning and native mutation. Output size
+therefore scales with declared file observations rather than payload byte length.
+
+#### Scenario: Large provider payload is projected to bounded observations
+- **WHEN** targeted-test or complete-test executes a projection containing large
+  package files
+- **THEN** the public result retains the exact plan and event order with each
+  file's path, mode, and content digest, contains no payload byte field, and
+  serializes identically for equal file observations regardless of payload size
+
 ### Requirement: Status is disjoint, target-scoped, and non-mutating
 Canonical status MUST join the reviewed current-main selector, artifact and
 projection availability, capability compatibility, live native inventory, and
