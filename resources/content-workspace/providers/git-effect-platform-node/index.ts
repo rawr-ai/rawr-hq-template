@@ -17,6 +17,7 @@ import type {
   ContentWorkspaceWrite,
   ContentWorkspaceWriteReceipt,
   GitBlobAtPathObservation,
+  GitBlobObservation,
   GitObjectFormat,
   GitRemoteSelection,
   GitStagedBlobObservation,
@@ -65,6 +66,25 @@ type ContentPathImageEntry = ContentFileImage | ContentDirectoryImage;
 interface ContentPathImage {
   readonly path: string;
   readonly entries: readonly ContentPathImageEntry[] | null;
+}
+
+interface GitBlobBatchRequest {
+  readonly blobs: readonly string[];
+  readonly objectFormat: GitObjectFormat;
+  readonly maxBlobs: number;
+  readonly maxBlobBytes: number;
+  readonly maxTotalBytes: number;
+}
+
+interface GitBlobBatchInput extends GitBlobBatchRequest {
+  readonly root: string;
+}
+
+interface GitWorktreeFileIdentity {
+  readonly candidate: string;
+  readonly device: FileSystem.File.Info["dev"];
+  readonly inode: FileSystem.File.Info["ino"];
+  readonly size: FileSystem.File.Info["size"];
 }
 
 type CaptureLifecycle = "Captured" | "Applying" | "Partial" | "Applied" | "Converged" | "Restoring" | "Restored";
@@ -213,6 +233,16 @@ export function makeContentWorkspaceResource(
     );
   });
 
+  const readGitBlobs = Effect.fn("contentWorkspace.readGitBlobs")(function* (
+    input: GitBlobBatchInput,
+  ) {
+    const fs = yield* FileSystem.FileSystem;
+    const operation = "read-git-blob" as const;
+    const executable = yield* requireCanonicalGitExecutable(fs, options.gitExecutable, operation);
+    const root = yield* requireExactGitRoot(fs, executable, input.root, operation);
+    return yield* readGitBlobBatch(executable, root, input, operation);
+  });
+
   const captureGitWorkspaceEvidence = Effect.fn("contentWorkspace.captureGitWorkspaceEvidence")(function* (
     input: Readonly<{
       root: string;
@@ -223,6 +253,7 @@ export function makeContentWorkspaceResource(
       objectFormat: GitObjectFormat;
       maxPaths: number;
       maxWorktreeFileBytes: number;
+      maxWorktreeBytes: number;
       maxBytes: number;
     }>,
   ) {
@@ -243,16 +274,15 @@ export function makeContentWorkspaceResource(
       input.admittedPaths,
       input.maxBytes,
     );
-    const worktreeObjectIds = yield* Effect.forEach(input.admittedPaths, (candidate) =>
-      readBoundedRegularFile(
-        fs,
-        path.join(input.root, candidate),
-        input.maxWorktreeFileBytes,
-        "capture-git-evidence",
-      ).pipe(Effect.map((bytes) => Object.freeze({
-        path: candidate,
-        objectId: gitBlobId(bytes, input.objectFormat),
-      }) satisfies GitWorktreeObjectId)));
+    const worktreeObjectIds = yield* observeGitWorktreeObjectIds(
+      fs,
+      executable,
+      openingAnchor.root,
+      input.admittedPaths,
+      input.objectFormat,
+      input.maxWorktreeFileBytes,
+      input.maxWorktreeBytes,
+    );
     const indexEntries = yield* gitBytes(
       executable,
       input.root,
@@ -321,19 +351,14 @@ export function makeContentWorkspaceResource(
       input.materializedPaths,
       input.materializedRoots,
     ));
-    let remainingBytes = input.maxBlobBytes;
-    const blobs: GitStagedBlobObservation[] = [];
-    for (const objectId of objectIds) {
-      const bytes = yield* gitBytes(
-        executable,
-        opening.anchor.root,
-        ["cat-file", "blob", objectId],
-        operation,
-        remainingBytes,
-      );
-      remainingBytes -= bytes.byteLength;
-      blobs.push(Object.freeze({ objectId, bytes }));
-    }
+    const materialized = yield* readGitBlobBatch(executable, opening.anchor.root, {
+      blobs: objectIds,
+      objectFormat: opening.anchor.objectFormat,
+      maxBlobs: input.maxEntries,
+      maxBlobBytes: input.maxBlobBytes,
+      maxTotalBytes: input.maxBlobBytes,
+    }, operation);
+    const blobs = materialized.map(({ blob: objectId, bytes }) => Object.freeze({ objectId, bytes }));
     const closing = yield* observeClosingGitStagedIndexBinding(fs, executable, input, operation);
     return Object.freeze({
       opening,
@@ -871,6 +896,7 @@ export function makeContentWorkspaceResource(
     inspectGitWorkspace,
     readGitTree,
     readGitBlob,
+    readGitBlobs,
     captureGitWorkspaceEvidence,
     observeGitStagedIndex,
     readGitBlobAtPath,
@@ -910,6 +936,7 @@ export function makeNodeContentWorkspacePort(options: GitEffectPlatformNodeOptio
     inspectGitWorkspace: (input: Parameters<typeof resource.inspectGitWorkspace>[0]) => runNodeOrReject(resource.inspectGitWorkspace(input)),
     readGitTree: (input: Parameters<typeof resource.readGitTree>[0]) => runNodeOrReject(resource.readGitTree(input)),
     readGitBlob: (input: Parameters<typeof resource.readGitBlob>[0]) => runNodeOrReject(resource.readGitBlob(input)),
+    readGitBlobs: (input: Parameters<typeof resource.readGitBlobs>[0]) => runNodeOrReject(resource.readGitBlobs(input)),
     captureGitWorkspaceEvidence: (input: Parameters<typeof resource.captureGitWorkspaceEvidence>[0]) => runNodeOrReject(resource.captureGitWorkspaceEvidence(input)),
     observeGitStagedIndex: (input: Parameters<typeof resource.observeGitStagedIndex>[0]) => runNodeOrReject(resource.observeGitStagedIndex(input)),
     readGitBlobAtPath: (input: Parameters<typeof resource.readGitBlobAtPath>[0]) => runNodeOrReject(resource.readGitBlobAtPath(input)),
@@ -961,6 +988,12 @@ export function makeDeferredNodeContentWorkspacePort(
       "read-git-blob",
       input.root,
       (port) => port.readGitBlob(input),
+    ),
+    readGitBlobs: (input: Parameters<ContentWorkspaceNodeAsyncPort["readGitBlobs"]>[0]) => runDeferredNodeOperation(
+      acquire,
+      "read-git-blob",
+      input.root,
+      (port) => port.readGitBlobs(input),
     ),
     captureGitWorkspaceEvidence: (input: Parameters<ContentWorkspaceNodeAsyncPort["captureGitWorkspaceEvidence"]>[0]) => runDeferredNodeOperation(
       acquire,
@@ -1795,6 +1828,150 @@ function stagedRegularBlobObjectIds(
   return Object.freeze([...objectIds].sort(compareText));
 }
 
+function observeGitWorktreeObjectIds(
+  fs: FileSystem.FileSystem,
+  executable: string,
+  root: string,
+  admittedPaths: readonly string[],
+  objectFormat: GitObjectFormat,
+  maxFileBytes: number,
+  maxTotalBytes: number,
+) {
+  const operation = "capture-git-evidence" as const;
+  return Effect.gen(function* () {
+    if (admittedPaths.length === 0) return Object.freeze([]) satisfies readonly GitWorktreeObjectId[];
+    const identities = yield* Effect.forEach(admittedPaths, (relativePath) =>
+      inspectGitWorktreeFileIdentity(
+        fs,
+        root,
+        relativePath,
+        maxFileBytes,
+        operation,
+      ), { concurrency: 32 });
+    yield* checked(operation, () => requireAggregateWorktreeBound(identities, maxTotalBytes, operation));
+    const outputLimit = yield* checked(operation, () => gitObjectIdLinesOutputLimit(
+      admittedPaths.length,
+      objectFormat,
+      operation,
+    ));
+    const output = yield* runGitCommand(
+      executable,
+      root,
+      ["hash-object", "--no-filters", "--stdin-paths"],
+      operation,
+      outputLimit,
+      `${admittedPaths.join("\n")}\n`,
+    ).pipe(Effect.flatMap((result) => result.exitCode === 0
+      ? Effect.succeed(result.stdout)
+      : fail(operation, "GitFailed", root, gitFailureDetail(["hash-object", "--stdin-paths"], result.stderr))));
+    const objectIds = yield* checked(operation, () => parseGitObjectIdLines(
+      output,
+      admittedPaths.length,
+      objectFormat,
+      operation,
+    ));
+    yield* Effect.forEach(identities, (identity) =>
+      revalidateGitWorktreeFileIdentity(fs, identity, operation), { concurrency: 32, discard: true });
+    return Object.freeze(admittedPaths.map((relativePath, index) => Object.freeze({
+      path: relativePath,
+      objectId: objectIds[index]!,
+    }) satisfies GitWorktreeObjectId));
+  });
+}
+
+function inspectGitWorktreeFileIdentity(
+  fs: FileSystem.FileSystem,
+  root: string,
+  relativePath: string,
+  maxBytes: number,
+  operation: "capture-git-evidence",
+) {
+  const candidate = path.join(root, relativePath);
+  return Effect.gen(function* () {
+    const canonical = yield* fs.realPath(candidate).pipe(mapPlatform(operation, candidate));
+    if (canonical !== candidate) return yield* fail(operation, "Aliased", candidate, "File path is not canonical");
+    const observed = yield* fs.stat(candidate).pipe(mapPlatform(operation, candidate));
+    if (observed.type !== "File") return yield* fail(operation, "UnsupportedEntry", candidate, "Expected a regular file");
+    if (observed.size > BigInt(maxBytes)) return yield* fail(operation, "LimitExceeded", candidate, "File exceeds maxBytes");
+    return Object.freeze({
+      candidate,
+      device: observed.dev,
+      inode: observed.ino,
+      size: observed.size,
+    }) satisfies GitWorktreeFileIdentity;
+  });
+}
+
+function revalidateGitWorktreeFileIdentity(
+  fs: FileSystem.FileSystem,
+  identity: GitWorktreeFileIdentity,
+  operation: "capture-git-evidence",
+) {
+  return Effect.gen(function* () {
+    const canonical = yield* fs.realPath(identity.candidate).pipe(mapPlatform(operation, identity.candidate));
+    const observed = yield* fs.stat(identity.candidate).pipe(mapPlatform(operation, identity.candidate));
+    if (
+      canonical !== identity.candidate
+      || observed.type !== "File"
+      || !Equal.equals(identity.device, observed.dev)
+      || !Equal.equals(identity.inode, observed.ino)
+      || identity.size !== observed.size
+    ) {
+      return yield* fail(operation, "IdentityChanged", identity.candidate, "File identity changed while hashing");
+    }
+  });
+}
+
+function requireAggregateWorktreeBound(
+  identities: readonly GitWorktreeFileIdentity[],
+  maxBytes: number,
+  operation: "capture-git-evidence",
+): void {
+  let total = 0n;
+  for (const identity of identities) {
+    total += identity.size;
+    if (total > BigInt(maxBytes)) {
+      throw failure(operation, "LimitExceeded", identity.candidate, "Admitted worktree files exceed maxBytes");
+    }
+  }
+}
+
+function gitObjectIdLinesOutputLimit(
+  count: number,
+  objectFormat: GitObjectFormat,
+  operation: "capture-git-evidence",
+): number {
+  const objectIdBytes = objectFormat === "sha1" ? 40 : 64;
+  const outputBytes = count * (objectIdBytes + 1);
+  if (!Number.isSafeInteger(outputBytes)) {
+    throw invalidInput(operation, undefined, "Git worktree object output bound exceeds a safe integer");
+  }
+  return outputBytes;
+}
+
+function parseGitObjectIdLines(
+  output: Uint8Array,
+  expectedCount: number,
+  objectFormat: GitObjectFormat,
+  operation: "capture-git-evidence",
+): readonly string[] {
+  let encoded: string;
+  try {
+    encoded = decoder.decode(output);
+  } catch {
+    throw failure(operation, "GitFailed", undefined, "Git worktree object output is not UTF-8");
+  }
+  if (!encoded.endsWith("\n")) {
+    throw failure(operation, "GitFailed", undefined, "Git worktree object output is truncated");
+  }
+  const objectIds = encoded.slice(0, -1).split("\n");
+  const pattern = objectFormat === "sha1" ? /^[0-9a-f]{40}$/u : /^[0-9a-f]{64}$/u;
+  if (objectIds.length !== expectedCount || objectIds.some((objectId) => !pattern.test(objectId))) {
+    throw failure(operation, "GitFailed", undefined, "Git worktree object output is malformed");
+  }
+  return Object.freeze(objectIds);
+}
+
 function readSelectedRemoteUrls(
   executable: string,
   root: string,
@@ -2001,7 +2178,7 @@ function validateRelativePath(
     && !relative.startsWith("/")
     && !relative.endsWith("/")
     && !relative.includes("\\")
-    && !relative.includes("\0")
+    && !/[\u0000-\u001f\u007f]/u.test(relative)
     && relative.split("/").every((segment) => segment !== "" && segment !== "." && segment !== "..")
   )) return;
   throw invalidInput(operation, relative, "Path must be a canonical repository-relative path");
@@ -2036,12 +2213,14 @@ function validateGitEvidenceInput(input: Readonly<{
   objectFormat: GitObjectFormat;
   maxPaths: number;
   maxWorktreeFileBytes: number;
+  maxWorktreeBytes: number;
   maxBytes: number;
 }>): void {
   validateRefName(input.refName, "capture-git-evidence");
   validateRemoteSelection(input.remoteSelection, "capture-git-evidence");
   validateLimit(input.maxPaths, "maxPaths", "capture-git-evidence");
   validateLimit(input.maxWorktreeFileBytes, "maxWorktreeFileBytes", "capture-git-evidence");
+  validateLimit(input.maxWorktreeBytes, "maxWorktreeBytes", "capture-git-evidence");
   validateLimit(input.maxBytes, "maxBytes", "capture-git-evidence");
   if (input.objectFormat !== "sha1" && input.objectFormat !== "sha256") {
     throw invalidInput("capture-git-evidence", input.objectFormat, "Unsupported Git object format");
@@ -2051,6 +2230,127 @@ function validateGitEvidenceInput(input: Readonly<{
   }
   validateCanonicalPathSet(input.admittedPaths, "capture-git-evidence");
   validateCanonicalPathSet(input.consumedRoots, "capture-git-evidence");
+}
+
+function readGitBlobBatch(
+  executable: string,
+  root: string,
+  input: GitBlobBatchRequest,
+  operation: "read-git-blob" | "observe-git-staged-index",
+) {
+  return Effect.gen(function* () {
+    const outputLimit = yield* checked(operation, () => {
+      validateGitBlobBatchInput(input, operation);
+      return gitBlobBatchOutputLimit(input, operation);
+    });
+    if (input.blobs.length === 0) return Object.freeze([]) satisfies readonly GitBlobObservation[];
+    const output = yield* runGitCommand(
+      executable,
+      root,
+      ["cat-file", "--batch"],
+      operation,
+      outputLimit,
+      `${input.blobs.join("\n")}\n`,
+    ).pipe(Effect.flatMap((result) => result.exitCode === 0
+      ? Effect.succeed(result.stdout)
+      : fail(operation, "GitFailed", root, gitFailureDetail(["cat-file", "--batch"], result.stderr))));
+    return yield* checked(operation, () => parseGitBlobBatch(output, input, operation));
+  });
+}
+
+function validateGitBlobBatchInput(
+  input: GitBlobBatchRequest,
+  operation: "read-git-blob" | "observe-git-staged-index",
+): void {
+  validateLimit(input.maxBlobs, "maxBlobs", operation);
+  validateLimit(input.maxBlobBytes, "maxBlobBytes", operation);
+  validateLimit(input.maxTotalBytes, "maxTotalBytes", operation);
+  if (input.blobs.length > input.maxBlobs) {
+    throw invalidInput(operation, undefined, "Git blob batch exceeds maxBlobs");
+  }
+  const unique = new Set<string>();
+  for (const blob of input.blobs) {
+    validateObjectForFormat(blob, input.objectFormat, "blob", operation);
+    if (unique.has(blob)) throw invalidInput(operation, blob, "Git blob batch must be distinct");
+    unique.add(blob);
+  }
+}
+
+function gitBlobBatchOutputLimit(
+  input: GitBlobBatchRequest,
+  operation: "read-git-blob" | "observe-git-staged-index",
+): number {
+  const objectIdBytes = input.objectFormat === "sha1" ? 40 : 64;
+  const headerBytes = input.blobs.length * (objectIdBytes + 64);
+  const outputBytes = input.maxTotalBytes + headerBytes;
+  if (!Number.isSafeInteger(headerBytes) || !Number.isSafeInteger(outputBytes)) {
+    throw invalidInput(operation, undefined, "Git blob batch output bound exceeds a safe integer");
+  }
+  return outputBytes;
+}
+
+function parseGitBlobBatch(
+  output: Uint8Array,
+  input: GitBlobBatchRequest,
+  operation: "read-git-blob" | "observe-git-staged-index",
+): readonly GitBlobObservation[] {
+  const observations: GitBlobObservation[] = [];
+  let offset = 0;
+  let totalBytes = 0;
+  for (const expectedBlob of input.blobs) {
+    const headerEnd = output.indexOf(0x0a, offset);
+    if (headerEnd < 0) {
+      throw failure(operation, "GitFailed", expectedBlob, "Git blob batch omitted an object header");
+    }
+    const header = decodeGitBlobBatchHeader(output.subarray(offset, headerEnd), expectedBlob, operation);
+    if (header === `${expectedBlob} missing`) {
+      throw failure(operation, "GitFailed", expectedBlob, "Git blob batch returned a missing object");
+    }
+    const match = /^([0-9a-f]+) ([a-z][a-z0-9-]*) ([0-9]+)$/u.exec(header);
+    if (match === null) {
+      throw failure(operation, "GitFailed", expectedBlob, "Git blob batch returned a malformed object header");
+    }
+    if (match[1] !== expectedBlob) {
+      throw failure(operation, "GitFailed", expectedBlob, "Git blob batch returned a reordered object");
+    }
+    if (match[2] !== "blob") {
+      throw failure(operation, "UnsupportedEntry", expectedBlob, "Git object is not a blob");
+    }
+    const size = Number(match[3]);
+    if (!Number.isSafeInteger(size) || size < 0 || size > input.maxBlobBytes) {
+      throw failure(operation, "LimitExceeded", expectedBlob, "Git blob batch member exceeds maxBlobBytes");
+    }
+    totalBytes += size;
+    if (!Number.isSafeInteger(totalBytes) || totalBytes > input.maxTotalBytes) {
+      throw failure(operation, "LimitExceeded", expectedBlob, "Git blob batch exceeds maxTotalBytes");
+    }
+    const contentStart = headerEnd + 1;
+    const contentEnd = contentStart + size;
+    if (contentEnd >= output.byteLength || output[contentEnd] !== 0x0a) {
+      throw failure(operation, "GitFailed", expectedBlob, "Git blob batch returned truncated content");
+    }
+    observations.push(Object.freeze({
+      blob: expectedBlob,
+      bytes: output.slice(contentStart, contentEnd),
+    }));
+    offset = contentEnd + 1;
+  }
+  if (offset !== output.byteLength) {
+    throw failure(operation, "GitFailed", undefined, "Git blob batch returned trailing output");
+  }
+  return Object.freeze(observations);
+}
+
+function decodeGitBlobBatchHeader(
+  header: Uint8Array,
+  expectedBlob: string,
+  operation: "read-git-blob" | "observe-git-staged-index",
+): string {
+  try {
+    return decoder.decode(header);
+  } catch {
+    throw failure(operation, "GitFailed", expectedBlob, "Git blob batch returned a non-UTF-8 object header");
+  }
 }
 
 function validateRemoteSelection(
@@ -2219,8 +2519,10 @@ function runGitCommand(
   args: readonly string[],
   operation: ContentWorkspaceFailure["operation"],
   maxStdoutBytes: number,
+  stdin?: string,
 ) {
-  const command = makeGitCommand(executable, args, operation).pipe(Command.workingDirectory(root));
+  const baseCommand = makeGitCommand(executable, args, operation).pipe(Command.workingDirectory(root));
+  const command = stdin === undefined ? baseCommand : baseCommand.pipe(Command.feed(stdin));
   return Effect.scoped(Effect.gen(function* () {
     const process = yield* Command.start(command).pipe(
       Effect.mapError((cause) => platformFailure(operation, root, cause, "GitFailed")),

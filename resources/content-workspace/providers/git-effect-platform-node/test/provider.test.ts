@@ -163,6 +163,16 @@ describe("Git Effect Platform content workspace provider", () => {
       expect(result.failure.reason).toBe("InvalidInput");
       expect(result.failure.operation).toBe("read-file");
     }
+
+    const lineDelimited = await runNodeContentWorkspace(resource.readFile({
+      root,
+      path: "payload\nother",
+      maxBytes: 1024,
+    }));
+    expect(lineDelimited).toMatchObject({
+      ok: false,
+      failure: { operation: "read-file", reason: "InvalidInput" },
+    });
   });
 
   test("rejects stale captures before any write", async () => {
@@ -629,6 +639,7 @@ describe("Git Effect Platform content workspace provider", () => {
       objectFormat: anchor.objectFormat,
       maxPaths: 10,
       maxWorktreeFileBytes: 1024,
+      maxWorktreeBytes: 1024,
       maxBytes: 1024 * 1024,
     })));
     expect(evidence.openingAnchor).toEqual(evidence.closingAnchor);
@@ -636,12 +647,13 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(new TextDecoder().decode(evidence.closingTrackedFlags)).toContain("H payload.txt");
   });
 
-  test("hashes bounded admitted worktree bytes without spawning Git per file", async () => {
+  test("hashes bounded admitted worktree bytes through one ordered native Git batch", async () => {
     const root = await createRepository();
     await git(root, "remote", "add", "origin", root);
     await writeFile(path.join(root, "payload.txt"), "committed\n");
-    await git(root, "add", "payload.txt");
-    await git(root, "commit", "-m", "add payload");
+    await writeFile(path.join(root, "second.txt"), "committed second\n");
+    await git(root, "add", "payload.txt", "second.txt");
+    await git(root, "commit", "-m", "add payloads");
 
     const wrapper = path.join(root, "git-evidence-wrapper");
     const log = path.join(root, "git-evidence-wrapper.log");
@@ -652,8 +664,10 @@ describe("Git Effect Platform content workspace provider", () => {
       "",
     ].join("\n"));
     await chmod(wrapper, 0o755);
-    const worktreeBytes = bytes("w".repeat(2 * 1024));
-    await writeFile(path.join(root, "payload.txt"), worktreeBytes);
+    const firstBytes = bytes("w".repeat(2 * 1024));
+    const secondBytes = bytes("x".repeat(1024));
+    await writeFile(path.join(root, "payload.txt"), firstBytes);
+    await writeFile(path.join(root, "second.txt"), secondBytes);
 
     const resource = makeContentWorkspaceResource({ gitExecutable: wrapper });
     const anchor = unwrap(await runNodeContentWorkspace(resource.inspectGitWorkspace({
@@ -665,20 +679,215 @@ describe("Git Effect Platform content workspace provider", () => {
       root,
       remoteSelection: { kind: "Named", remoteName: "origin" },
       refName: "refs/heads/main",
-      admittedPaths: ["payload.txt"],
-      consumedRoots: ["payload.txt"],
+      admittedPaths: ["second.txt", "payload.txt"],
+      consumedRoots: ["payload.txt", "second.txt"],
       objectFormat: anchor.objectFormat,
       maxPaths: 10,
       maxWorktreeFileBytes: 4 * 1024,
+      maxWorktreeBytes: 4 * 1024,
       maxBytes: 1024,
     })));
 
-    expect(evidence.worktreeObjectIds).toEqual([{
-      path: "payload.txt",
-      objectId: testGitBlobId(worktreeBytes, anchor.objectFormat),
-    }]);
+    expect(evidence.worktreeObjectIds).toEqual([
+      { path: "second.txt", objectId: testGitBlobId(secondBytes, anchor.objectFormat) },
+      { path: "payload.txt", objectId: testGitBlobId(firstBytes, anchor.objectFormat) },
+    ]);
+    const aggregateBounded = await runNodeContentWorkspace(resource.captureGitWorkspaceEvidence({
+      root,
+      remoteSelection: { kind: "Named", remoteName: "origin" },
+      refName: "refs/heads/main",
+      admittedPaths: ["second.txt", "payload.txt"],
+      consumedRoots: ["payload.txt", "second.txt"],
+      objectFormat: anchor.objectFormat,
+      maxPaths: 10,
+      maxWorktreeFileBytes: 4 * 1024,
+      maxWorktreeBytes: firstBytes.byteLength + secondBytes.byteLength - 1,
+      maxBytes: 1024,
+    }));
+    expect(aggregateBounded).toMatchObject({
+      ok: false,
+      failure: { operation: "capture-git-evidence", reason: "LimitExceeded" },
+    });
     const commands = (await readFile(log, "utf8")).trim().split("\n");
-    expect(commands.some((command) => /(?:^|\s)hash-object(?:\s|$)/u.test(command))).toBe(false);
+    expect(commands.filter((command) => /hash-object --no-filters --stdin-paths$/u.test(command))).toHaveLength(1);
+  });
+
+  test("reads a bounded ordered blob set through one native Git batch", async () => {
+    const root = await createRepository();
+    const alpha = bytes("alpha\n");
+    const beta = bytes("beta\n");
+    await writeFile(path.join(root, "alpha.txt"), alpha);
+    await writeFile(path.join(root, "beta.txt"), beta);
+    await git(root, "add", "alpha.txt", "beta.txt");
+    await git(root, "commit", "-m", "add batch payloads");
+
+    const wrapper = path.join(root, "git-batch-wrapper");
+    const log = path.join(root, "git-batch-wrapper.log");
+    await writeFile(wrapper, [
+      "#!/bin/sh",
+      `printf '%s\\n' "$*" >> ${JSON.stringify(log)}`,
+      `exec ${JSON.stringify(await realpath(gitExecutable))} "$@"`,
+      "",
+    ].join("\n"));
+    await chmod(wrapper, 0o755);
+    const resource = makeContentWorkspaceResource({ gitExecutable: wrapper });
+    const anchor = unwrap(await runNodeContentWorkspace(resource.inspectGitWorkspace({
+      locator: root,
+      remoteSelection: { kind: "All" },
+      refName: "refs/heads/main",
+    })));
+    await writeFile(log, "");
+    const alphaBlob = testGitBlobId(alpha, anchor.objectFormat);
+    const betaBlob = testGitBlobId(beta, anchor.objectFormat);
+
+    const observations = unwrap(await runNodeContentWorkspace(resource.readGitBlobs({
+      root,
+      blobs: [betaBlob, alphaBlob],
+      objectFormat: anchor.objectFormat,
+      maxBlobs: 2,
+      maxBlobBytes: 16,
+      maxTotalBytes: 32,
+    })));
+
+    expect(observations).toEqual([
+      { blob: betaBlob, bytes: beta },
+      { blob: alphaBlob, bytes: alpha },
+    ]);
+    const commands = (await readFile(log, "utf8")).trim().split("\n");
+    expect(commands.filter((command) => /cat-file --batch$/u.test(command))).toHaveLength(1);
+    expect(commands.some((command) => /cat-file (?:-t|blob)/u.test(command))).toBe(false);
+
+    const tree = gitOutput(root, "rev-parse", "HEAD^{tree}");
+    const wrongType = await runNodeContentWorkspace(resource.readGitBlobs({
+      root,
+      blobs: [tree],
+      objectFormat: anchor.objectFormat,
+      maxBlobs: 1,
+      maxBlobBytes: 4 * 1024,
+      maxTotalBytes: 4 * 1024,
+    }));
+    expect(wrongType).toMatchObject({
+      ok: false,
+      failure: { operation: "read-git-blob", reason: "UnsupportedEntry", detail: "Git object is not a blob" },
+    });
+
+    for (const invalid of [
+      { blobs: [alphaBlob, alphaBlob], maxBlobs: 2, detail: "Git blob batch must be distinct" },
+      { blobs: [alphaBlob, betaBlob], maxBlobs: 1, detail: "Git blob batch exceeds maxBlobs" },
+    ] as const) {
+      const result = await runNodeContentWorkspace(resource.readGitBlobs({
+        root,
+        blobs: invalid.blobs,
+        objectFormat: anchor.objectFormat,
+        maxBlobs: invalid.maxBlobs,
+        maxBlobBytes: 16,
+        maxTotalBytes: 32,
+      }));
+      expect(result).toMatchObject({
+        ok: false,
+        failure: { operation: "read-git-blob", reason: "InvalidInput", detail: invalid.detail },
+      });
+    }
+
+    const memberBounded = await runNodeContentWorkspace(resource.readGitBlobs({
+      root,
+      blobs: [alphaBlob],
+      objectFormat: anchor.objectFormat,
+      maxBlobs: 1,
+      maxBlobBytes: alpha.byteLength - 1,
+      maxTotalBytes: alpha.byteLength,
+    }));
+    expect(memberBounded).toMatchObject({
+      ok: false,
+      failure: { operation: "read-git-blob", reason: "LimitExceeded" },
+    });
+
+    const bounded = await runNodeContentWorkspace(resource.readGitBlobs({
+      root,
+      blobs: [alphaBlob, betaBlob],
+      objectFormat: anchor.objectFormat,
+      maxBlobs: 2,
+      maxBlobBytes: 16,
+      maxTotalBytes: alpha.byteLength + beta.byteLength - 1,
+    }));
+    expect(bounded).toMatchObject({
+      ok: false,
+      failure: { operation: "read-git-blob", reason: "LimitExceeded" },
+    });
+
+    const missing = await runNodeContentWorkspace(resource.readGitBlobs({
+      root,
+      blobs: ["0".repeat(anchor.objectFormat === "sha1" ? 40 : 64)],
+      objectFormat: anchor.objectFormat,
+      maxBlobs: 1,
+      maxBlobBytes: 16,
+      maxTotalBytes: 16,
+    }));
+    expect(missing).toMatchObject({
+      ok: false,
+      failure: { operation: "read-git-blob", reason: "GitFailed" },
+    });
+  });
+
+  test("rejects truncated native Git batch framing", async () => {
+    const root = await createRepository();
+    const payload = bytes("payload\n");
+    await writeFile(path.join(root, "payload.txt"), payload);
+    await git(root, "add", "payload.txt");
+    await git(root, "commit", "-m", "add truncated batch fixture");
+    const blob = testGitBlobId(payload, "sha1");
+    const wrapper = path.join(root, "git-truncated-batch-wrapper");
+    await writeFile(wrapper, [
+      "#!/bin/sh",
+      "case \"$*\" in",
+      "  *\"cat-file --batch\") IFS= read -r oid; printf '%s blob 8\\npayload' \"$oid\"; exit 0 ;;",
+      "esac",
+      `exec ${JSON.stringify(await realpath(gitExecutable))} "$@"`,
+      "",
+    ].join("\n"));
+    await chmod(wrapper, 0o755);
+    const resource = makeContentWorkspaceResource({ gitExecutable: wrapper });
+
+    const result = await runNodeContentWorkspace(resource.readGitBlobs({
+      root,
+      blobs: [blob],
+      objectFormat: "sha1",
+      maxBlobs: 1,
+      maxBlobBytes: 16,
+      maxTotalBytes: 16,
+    }));
+    expect(result).toMatchObject({
+      ok: false,
+      failure: { operation: "read-git-blob", reason: "GitFailed", detail: "Git blob batch returned truncated content" },
+    });
+
+    const invalidHeaderWrapper = path.join(root, "git-invalid-header-wrapper");
+    await writeFile(invalidHeaderWrapper, [
+      "#!/bin/sh",
+      "case \"$*\" in",
+      "  *\"cat-file --batch\") printf '\\377\\n'; exit 0 ;;",
+      "esac",
+      `exec ${JSON.stringify(await realpath(gitExecutable))} "$@"`,
+      "",
+    ].join("\n"));
+    await chmod(invalidHeaderWrapper, 0o755);
+    const invalidHeader = makeContentWorkspaceResource({ gitExecutable: invalidHeaderWrapper });
+    const invalidHeaderResult = await runNodeContentWorkspace(invalidHeader.readGitBlobs({
+      root,
+      blobs: [blob],
+      objectFormat: "sha1",
+      maxBlobs: 1,
+      maxBlobBytes: 16,
+      maxTotalBytes: 16,
+    }));
+    expect(invalidHeaderResult).toMatchObject({
+      ok: false,
+      failure: {
+        operation: "read-git-blob",
+        reason: "GitFailed",
+        detail: "Git blob batch returned a non-UTF-8 object header",
+      },
+    });
   });
 
   test("observes only selected staged blobs without authoring Git objects", async () => {
@@ -725,7 +934,8 @@ describe("Git Effect Platform content workspace provider", () => {
     });
     expect(invocations.every((invocation) => invocation.noLazyFetch === "1")).toBe(true);
     const commands = invocations.map((invocation) => invocation.command);
-    expect(commands.filter((command) => command.includes("cat-file blob"))).toHaveLength(2);
+    expect(commands.filter((command) => /cat-file --batch$/u.test(command))).toHaveLength(1);
+    expect(commands.some((command) => command.includes("cat-file blob"))).toBe(false);
     expect(commands.every((command) => !/(?:^|\s)(?:write-tree|checkout|stash|commit|reset)(?:\s|$)/u.test(command))).toBe(true);
     expect(commands.every((command) => !/hash-object(?:\s+[^\s]+)*\s+-w(?:\s|$)/u.test(command))).toBe(true);
   });
@@ -795,6 +1005,7 @@ describe("Git Effect Platform content workspace provider", () => {
       objectFormat: "sha1",
       maxPaths: 1,
       maxWorktreeFileBytes: 1024,
+      maxWorktreeBytes: 1024,
       maxBytes: 1024,
     }));
 
@@ -987,6 +1198,17 @@ describe("Git Effect Platform content workspace provider", () => {
         }),
       },
       {
+        operation: "read-git-blob",
+        invoke: () => port.readGitBlobs({
+          root: deferredCandidate("read-git-blob"),
+          blobs: [object],
+          objectFormat: "sha1",
+          maxBlobs: 1,
+          maxBlobBytes: 1,
+          maxTotalBytes: 1,
+        }),
+      },
+      {
         operation: "capture-git-evidence",
         invoke: () => port.captureGitWorkspaceEvidence({
           root: deferredCandidate("capture-git-evidence"),
@@ -997,6 +1219,7 @@ describe("Git Effect Platform content workspace provider", () => {
           objectFormat: "sha1",
           maxPaths: 1,
           maxWorktreeFileBytes: 1,
+          maxWorktreeBytes: 1,
           maxBytes: 1,
         }),
       },
@@ -1199,6 +1422,12 @@ async function removeOwnedFixture(owner: FixtureOwner): Promise<void> {
 async function git(root: string, ...args: readonly string[]): Promise<void> {
   const result = Bun.spawnSync([gitExecutable, ...args], { cwd: root, stdout: "pipe", stderr: "pipe" });
   if (result.exitCode !== 0) throw new Error(new TextDecoder().decode(result.stderr));
+}
+
+function gitOutput(root: string, ...args: readonly string[]): string {
+  const result = Bun.spawnSync([gitExecutable, ...args], { cwd: root, stdout: "pipe", stderr: "pipe" });
+  if (result.exitCode !== 0) throw new Error(new TextDecoder().decode(result.stderr));
+  return new TextDecoder().decode(result.stdout).trim();
 }
 
 function unwrap<A>(result: NodeContentWorkspaceResult<A>): A {

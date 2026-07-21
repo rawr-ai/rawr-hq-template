@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
   parseGitTreeId,
 } from "../../../src/service/shared/release";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
@@ -108,7 +109,13 @@ describe("exact Git-object eligibility", () => {
     const delegate = await realPort();
     const observed: string[] = [];
     const blobReadLimits: number[] = [];
+    const blobBatchLimits: Array<Readonly<{
+      maxBlobs: number;
+      maxBlobBytes: number;
+      maxTotalBytes: number;
+    }>> = [];
     const worktreeFileLimits: number[] = [];
+    const worktreeTotalLimits: number[] = [];
     const contentWorkspace = overrideGitReadPort(delegate, {
       async inspectGitWorkspace(input) {
         observed.push("inspectGitWorkspace");
@@ -123,9 +130,19 @@ describe("exact Git-object eligibility", () => {
         blobReadLimits.push(input.maxBytes);
         return await delegate.readGitBlob(input);
       },
+      async readGitBlobs(input) {
+        observed.push("readGitBlobs");
+        blobBatchLimits.push({
+          maxBlobs: input.maxBlobs,
+          maxBlobBytes: input.maxBlobBytes,
+          maxTotalBytes: input.maxTotalBytes,
+        });
+        return await delegate.readGitBlobs(input);
+      },
       async captureGitWorkspaceEvidence(input) {
         observed.push("captureGitWorkspaceEvidence");
         worktreeFileLimits.push(input.maxWorktreeFileBytes);
+        worktreeTotalLimits.push(input.maxWorktreeBytes);
         return await delegate.captureGitWorkspaceEvidence(input);
       },
     });
@@ -137,15 +154,22 @@ describe("exact Git-object eligibility", () => {
       "inspectGitWorkspace",
       "readGitTree",
       "readGitBlob",
+      "readGitBlobs",
       "captureGitWorkspaceEvidence",
     ]));
-    expect(blobReadLimits).toEqual([
-      MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-      MAX_PAYLOAD_BYTES_PER_MEMBER,
-    ]);
+    expect(blobReadLimits).toEqual([MAX_RELEASE_INPUT_ENVELOPE_BYTES]);
+    expect(blobBatchLimits).toEqual([{
+      maxBlobs: 200_000,
+      maxBlobBytes: MAX_PAYLOAD_BYTES_PER_MEMBER,
+      maxTotalBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
+    }]);
     expect(worktreeFileLimits).toEqual([
       MAX_RELEASE_INPUT_ENVELOPE_BYTES,
       MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+    ]);
+    expect(worktreeTotalLimits).toEqual([
+      MAX_RELEASE_INPUT_ENVELOPE_BYTES + MAX_RELEASE_SET_PAYLOAD_BYTES,
+      MAX_RELEASE_INPUT_ENVELOPE_BYTES + MAX_RELEASE_SET_PAYLOAD_BYTES,
     ]);
   });
 
@@ -164,11 +188,16 @@ describe("exact Git-object eligibility", () => {
     const policy = await commitGeneratedGitRepository(repository, "add undeclared plugin roots");
     const delegate = await realPort();
     let blobReads = 0;
+    let blobBatchReads = 0;
     let evidenceCaptures = 0;
     const contentWorkspace = overrideGitReadPort(delegate, {
       async readGitBlob(input) {
         blobReads += 1;
         return await delegate.readGitBlob(input);
+      },
+      async readGitBlobs(input) {
+        blobBatchReads += 1;
+        return await delegate.readGitBlobs(input);
       },
       async captureGitWorkspaceEvidence(input) {
         evidenceCaptures += 1;
@@ -183,8 +212,9 @@ describe("exact Git-object eligibility", () => {
           code: "PayloadMismatch",
           detail: "plugin tree contains undeclared member aardvark",
         }],
-      });
+    });
     expect(blobReads).toBe(1);
+    expect(blobBatchReads).toBe(0);
     expect(evidenceCaptures).toBe(0);
   });
 
@@ -216,11 +246,16 @@ describe("exact Git-object eligibility", () => {
     const policy = await commitGeneratedGitRepository(repository, "add noncanonical plugin root child");
     const delegate = await realPort();
     let blobReads = 0;
+    let blobBatchReads = 0;
     let evidenceCaptures = 0;
     const contentWorkspace = overrideGitReadPort(delegate, {
       async readGitBlob(input) {
         blobReads += 1;
         return await delegate.readGitBlob(input);
+      },
+      async readGitBlobs(input) {
+        blobBatchReads += 1;
+        return await delegate.readGitBlobs(input);
       },
       async captureGitWorkspaceEvidence(input) {
         evidenceCaptures += 1;
@@ -235,8 +270,9 @@ describe("exact Git-object eligibility", () => {
           code: "PayloadMismatch",
           detail: `plugin tree contains noncanonical child ${child}`,
         }],
-      });
+    });
     expect(blobReads).toBe(1);
+    expect(blobBatchReads).toBe(0);
     expect(evidenceCaptures).toBe(0);
   });
 
@@ -519,6 +555,7 @@ function unreachableGitReadPort(onCall: () => void): ResourceContentWorkspaceSna
     inspectGitWorkspace: unreachable,
     readGitTree: unreachable,
     readGitBlob: unreachable,
+    readGitBlobs: unreachable,
     captureGitWorkspaceEvidence: unreachable,
   });
 }

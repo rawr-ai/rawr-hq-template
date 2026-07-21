@@ -667,6 +667,13 @@ function cleanContentWorkspace(
       if (value === undefined) throw new Error(`Missing clean Git blob ${input.blob}`);
       return new Uint8Array(value);
     },
+    async readGitBlobs(input) {
+      return input.blobs.map((blob) => {
+        const value = blobs.get(blob);
+        if (value === undefined) throw new Error(`Missing clean Git blob ${blob}`);
+        return Object.freeze({ blob, bytes: new Uint8Array(value) });
+      });
+    },
     async captureGitWorkspaceEvidence(input): Promise<GitWorkspaceEvidence> {
       const trackedFlags = bytes(input.admittedPaths.map((path) => `H ${path}\0`).join(""));
       const worktreeObjectIds = input.admittedPaths.map((path) => {

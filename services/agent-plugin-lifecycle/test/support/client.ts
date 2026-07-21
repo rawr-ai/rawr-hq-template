@@ -55,6 +55,7 @@ export function withUnavailableGitReads(
     inspectGitWorkspace: async () => unavailableAsync("release Git workspace inspection"),
     readGitTree: async () => unavailableAsync("release Git tree read"),
     readGitBlob: async () => unavailableAsync("release Git blob read"),
+    readGitBlobs: async () => unavailableAsync("release Git blob batch read"),
     captureGitWorkspaceEvidence: async () => unavailableAsync("release Git workspace evidence capture"),
     observeGitStagedIndex: async () => unavailableAsync("staged release index observation"),
     readGitBlobAtPath: async () => unavailableAsync("release Git path read"),
