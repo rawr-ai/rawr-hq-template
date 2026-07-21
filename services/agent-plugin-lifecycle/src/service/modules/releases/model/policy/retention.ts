@@ -25,7 +25,7 @@ export function constructRetentionPlan(options: {
     || !Number.isSafeInteger(options.policy.maximumUnpinnedBytes)
     || options.policy.maximumUnpinnedBytes < 0
   ) {
-    return blockedRetention([{ detail: "retention space bound is invalid" }]);
+    return blockedRetentionPlan([{ detail: "retention space bound is invalid" }]);
   }
   const ordered = [...options.unpinned].sort((left, right) => {
     const bySize = right.storedBytes - left.storedBytes;
@@ -153,10 +153,10 @@ export function retentionRefKey(ref: RetentionRef): string {
       : `mechanical-evidence:${ref.digest}`;
 }
 
-export function blockedRetention(
+export function blockedRetentionPlan(
   issues: readonly RetentionIssue[],
-): Extract<RetentionResult, { kind: "BlockedPinnedGraph" }> {
-  return { kind: "BlockedPinnedGraph", issues: nonEmptyIssues(issues) };
+): Extract<RetentionResult, { kind: "RetentionPlanBlocked" }> {
+  return { kind: "RetentionPlanBlocked", issues: nonEmptyIssues(issues) };
 }
 
 function nonEmptyIssues(issues: readonly RetentionIssue[]): readonly [RetentionIssue, ...RetentionIssue[]] {

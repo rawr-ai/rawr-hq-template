@@ -4,7 +4,7 @@ import type {
   RetentionRef,
 } from "../model/dto/retention";
 import {
-  blockedRetention,
+  blockedRetentionPlan,
   constructRetentionPlan,
   parseRetentionInventory,
   parseRetentionPinsV1,
@@ -14,12 +14,12 @@ import { module } from "../module";
 
 export const planRetention = module.planRetention.handler(async ({ context, input: policy }) => {
   if (context.retention === undefined) {
-    return blockedRetention([{ detail: "retention readers are unavailable" }]);
+    return blockedRetentionPlan([{ detail: "retention readers are unavailable" }]);
   }
 
   try {
     const pins = parseRetentionPinsV1(await context.retention.pins.read());
-    if (!pins.ok) return blockedRetention(pins.issues);
+    if (!pins.ok) return blockedRetentionPlan(pins.issues);
 
     const pinned = new Map<string, RetentionRef>();
     const pinIssues: RetentionIssue[] = [];
@@ -46,7 +46,7 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
         }
       }
     }
-    if (pinIssues.length > 0) return blockedRetention(pinIssues);
+    if (pinIssues.length > 0) return blockedRetentionPlan(pinIssues);
 
     const inventory = parseRetentionInventory(await context.retention.inventory.read());
     const blockedEntries: RetentionIssue[] = [...inventory.issues];
@@ -73,7 +73,7 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
       blockedEntries,
     });
   } catch (error) {
-    return blockedRetention([{
+    return blockedRetentionPlan([{
       detail: `retention planning failed closed: ${errorMessage(error)}`,
     }]);
   }
