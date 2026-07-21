@@ -1,7 +1,10 @@
-import path from "node:path";
 import { ReadonlyObject, Type, type Static } from "typebox";
 import { Value } from "typebox/value";
 
+import {
+  isCanonicalAbsolutePath,
+  MAX_CANONICAL_ABSOLUTE_PATH_BYTES,
+} from "../../../../model/dto/structural";
 import { canonicalDigest, compareCanonical, type CanonicalValue } from "../helpers/canonical";
 import {
   failure,
@@ -17,7 +20,7 @@ declare const providerTargetDigestBrand: unique symbol;
 
 export const ProviderIdSchema = Type.Union([Type.Literal("claude"), Type.Literal("codex")]);
 export const MAX_PROVIDER_TARGETS = 64;
-export const MAX_PROVIDER_HOME_LENGTH = 4_096;
+export const MAX_PROVIDER_HOME_LENGTH = MAX_CANONICAL_ABSOLUTE_PATH_BYTES;
 export const ProviderHomeSchema = Type.String({
   minLength: 1,
   maxLength: MAX_PROVIDER_HOME_LENGTH,
@@ -43,10 +46,6 @@ export interface ProviderTarget {
   readonly home: ProviderHome;
   readonly targetDigest: ProviderTargetDigest;
 }
-
-const MAX_HOME_BYTES = 4_096;
-const encoder = new TextEncoder();
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/u;
 
 export function parseProviderTarget(input: unknown, pathPrefix = "target"): DeploymentResult<ProviderTarget> {
   if (!Value.Check(ProviderTargetInputSchema, input)) {
@@ -91,7 +90,7 @@ function normalizeProviderTarget(
   input: ProviderTargetInput,
   pathPrefix: string,
 ): DeploymentResult<ProviderTarget> {
-  if (!isCanonicalProviderHome(input.home)) {
+  if (!isCanonicalAbsolutePath(input.home)) {
     return failure([issue(
       "INVALID_HOME",
       `${pathPrefix}.home`,
@@ -137,16 +136,4 @@ function createProviderTarget(provider: ProviderId, home: ProviderHome): Provide
     home,
     targetDigest: canonicalDigest("pt1_", targetValue({ provider, home })) as ProviderTargetDigest,
   });
-}
-
-function isCanonicalProviderHome(value: string): boolean {
-  const normalized = path.posix.normalize(value);
-  return value !== "/"
-    && path.posix.isAbsolute(value)
-    && normalized === value
-    && !value.endsWith("/")
-    && !value.includes("\\")
-    && value.normalize("NFC") === value
-    && !CONTROL_CHARACTER_PATTERN.test(value)
-    && encoder.encode(value).byteLength <= MAX_HOME_BYTES;
 }
