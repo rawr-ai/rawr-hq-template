@@ -23,8 +23,9 @@ import {
   ProviderHomeSchema,
   ProviderIdSchema,
 } from "./model/dto/provider-target";
+import { MAX_PROVIDER_ISSUE_TEXT_LENGTH } from "./model/errors/deployment-result";
 
-const MAX_PROVIDER_RESULT_TEXT_LENGTH = 4_096;
+const MAX_PROVIDER_RESULT_TEXT_LENGTH = MAX_PROVIDER_ISSUE_TEXT_LENGTH;
 const MAX_PROVIDER_IDENTITY_LENGTH = 512;
 const MAX_PROVIDER_PROTOCOL_LENGTH = 256;
 const MAX_PROVIDER_PATH_LENGTH = 1_024;
