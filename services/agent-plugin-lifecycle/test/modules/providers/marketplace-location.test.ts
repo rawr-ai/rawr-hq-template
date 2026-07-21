@@ -325,7 +325,55 @@ describe("provider marketplace location admission", () => {
     expect(nativeAdd).not.toHaveBeenCalled();
   });
 
-  it("resolves Claude replacement input before removing the existing marketplace", async () => {
+  it("adds a Claude marketplace when the managed identity is absent", async () => {
+    await withOwnedLocation(async (location) => {
+      const projection = providerProjection("claude");
+      const registration = marketplaceRegistration(projection);
+      const source = marketplaceSourceFromRegistration(registration);
+      const target = providerTarget("claude", "/tmp/rawr-claude-new-marketplace-location");
+      const events: string[] = [];
+      let current: ProviderMarketplaceRegistration | null = null;
+      const resource = Object.freeze({
+        acquireCodex: async (): Promise<CodexNativeResourceSession> => {
+          throw new Error("unused Codex resource");
+        },
+        acquireClaude: async (input: NativeResourceSessionInput): Promise<ClaudeNativeResourceSession> => Object.freeze({
+          ...claudeObservationSession(input, () => current),
+          removeMarketplace: async () => { throw new Error("unexpected Claude remove"); },
+          addMarketplace: async (observedLocation: ArtifactTreeLocation) => {
+            events.push("native-add");
+            expect(observedLocation).toBe(location);
+            current = registration;
+          },
+        }),
+      });
+      const adapter = createResourceClaudeProviderAdapter({
+        resource,
+        executablePath: "/opt/rawr/bin/claude",
+        contentAuthority: projection.artifactAuthority.contentAuthority,
+        marketplaceSources: { read: async () => success(source) },
+        marketplaceLocations: {
+          locate: async () => {
+            events.push("locate");
+            return location;
+          },
+        },
+      });
+
+      const result = await adapter.apply(Object.freeze({
+        kind: "SetMarketplace",
+        role: "final",
+        target,
+        expected: Object.freeze({ kind: "absent" }),
+        registration,
+      }));
+
+      expect(result).toEqual({ kind: "applied" });
+      expect(events).toEqual(["locate", "native-add"]);
+    });
+  });
+
+  it("replaces a present Claude marketplace through native add without uninstalling an omitted member", async () => {
     await withOwnedLocation(async (location) => {
       const projection = providerProjection("claude");
       const registration = marketplaceRegistration(projection);
@@ -341,6 +389,7 @@ describe("provider marketplace location admission", () => {
       const target = providerTarget("claude", "/tmp/rawr-claude-marketplace-location");
       const events: string[] = [];
       let current: ProviderMarketplaceRegistration | null = previous;
+      const installedMembers = new Set(["discovery@rawr-hq"]);
       const resource = Object.freeze({
         acquireCodex: async (): Promise<CodexNativeResourceSession> => {
           throw new Error("unused Codex resource");
@@ -350,6 +399,7 @@ describe("provider marketplace location admission", () => {
           removeMarketplace: async () => {
             events.push("native-remove");
             current = null;
+            installedMembers.clear();
           },
           addMarketplace: async (observedLocation: ArtifactTreeLocation) => {
             events.push("native-add");
@@ -380,8 +430,49 @@ describe("provider marketplace location admission", () => {
       }));
 
       expect(result).toEqual({ kind: "applied" });
-      expect(events).toEqual(["locate", "native-remove", "native-add"]);
+      expect(events).toEqual(["locate", "native-add"]);
+      expect(installedMembers).toContain("discovery@rawr-hq");
     });
+  });
+
+  it("removes a present Claude marketplace only when the desired registration is absent", async () => {
+    const projection = providerProjection("claude");
+    const registration = marketplaceRegistration(projection);
+    const target = providerTarget("claude", "/tmp/rawr-claude-retired-marketplace");
+    const events: string[] = [];
+    let current: ProviderMarketplaceRegistration | null = registration;
+    const resource = Object.freeze({
+      acquireCodex: async (): Promise<CodexNativeResourceSession> => {
+        throw new Error("unused Codex resource");
+      },
+      acquireClaude: async (input: NativeResourceSessionInput): Promise<ClaudeNativeResourceSession> => Object.freeze({
+        ...claudeObservationSession(input, () => current),
+        removeMarketplace: async ({ identity }: Parameters<ClaudeNativeResourceSession["removeMarketplace"]>[0]) => {
+          events.push("native-remove");
+          expect(identity).toBe(projection.artifactAuthority.contentAuthority);
+          current = null;
+        },
+        addMarketplace: async () => { throw new Error("unexpected Claude add"); },
+      }),
+    });
+    const adapter = createResourceClaudeProviderAdapter({
+      resource,
+      executablePath: "/opt/rawr/bin/claude",
+      contentAuthority: projection.artifactAuthority.contentAuthority,
+      marketplaceSources: { read: async () => { throw new Error("unexpected marketplace source read"); } },
+      marketplaceLocations: { locate: async () => { throw new Error("unexpected marketplace location lookup"); } },
+    });
+
+    const result = await adapter.apply(Object.freeze({
+      kind: "SetMarketplace",
+      role: "final",
+      target,
+      expected: Object.freeze({ kind: "present", state: marketplaceState(registration) }),
+      registration: null,
+    }));
+
+    expect(result).toEqual({ kind: "applied" });
+    expect(events).toEqual(["native-remove"]);
   });
 });
 
