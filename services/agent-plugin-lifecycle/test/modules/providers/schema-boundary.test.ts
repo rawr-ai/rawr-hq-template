@@ -1,13 +1,31 @@
 import { schema } from "@rawr/hq-sdk";
 import { describe, expect, expectTypeOf, it } from "vitest";
-import type { Static } from "typebox";
+import { Type, type Static } from "typebox";
 import { Value } from "typebox/value";
 
 import {
+  CanonicalStatusInputSchema,
   CanonicalStatusResultSchema,
+  type CanonicalStatusProcedureResult,
+  CanonicalSyncInputSchema,
+  CanonicalSyncResultSchema,
+  type CanonicalSyncProcedureResult,
+  CompleteTestInputSchema,
   CompleteTestResultSchema,
+  type CompleteTestProcedureResult,
+  TargetedTestInputSchema,
   TargetedTestResultSchema,
 } from "../../../src/service/modules/providers/schemas";
+import type {
+  CanonicalStatusInput,
+  CanonicalSyncInput,
+  CompleteTestInput,
+  TargetedTestInput,
+} from "../../../src/service/modules/providers/model/dto/mode";
+import {
+  parseCanonicalStatusRequest,
+  parseProviderDeploymentRequest,
+} from "../../../src/service/modules/providers/model/dto/mode";
 import {
   type CanonicalStatusOutcome,
   type CompleteTestProviderOperationOutcome,
@@ -26,6 +44,74 @@ import {
   completeTestOperationResult,
   targetedTestOperationResult,
 } from "../../../src/service/modules/providers/router/procedure-result";
+import {
+  BoundedReadonlyArray,
+  EmptyReadonlyArray,
+  NonEmptyReadonlyArray,
+} from "../../../src/service/model/dto/structural";
+import {
+  CompleteSetArtifactRefInputSchema,
+  ReleaseArtifactRefInputSchema,
+} from "../../../src/service/shared/release";
+import {
+  CompleteSetArtifactRefSchema,
+  ReleaseArtifactRefSchema,
+} from "../../../src/service/modules/providers/model/dto/mode";
+
+type ProviderFailureIssues = Extract<CompleteTestProcedureResult, { ok: false }>["issues"];
+type SuccessfulCanonicalSync = Extract<CanonicalSyncProcedureResult, { ok: true }>["value"];
+type MutatedAppliedPrefix = Extract<
+  SuccessfulCanonicalSync["targets"][number],
+  { kind: "mutated" }
+>["appliedPrefix"];
+type ReadOnlyCanonicalTarget = Extract<
+  SuccessfulCanonicalSync["targets"][number],
+  { kind: "read-only-converged" }
+>;
+type SuccessfulCanonicalStatus = Extract<
+  CanonicalStatusProcedureResult,
+  { ok: true }
+>["value"];
+type SuccessfulCompleteTest = Extract<
+  CompleteTestProcedureResult,
+  { ok: true }
+>["value"];
+
+// @ts-expect-error Procedure failure always reports at least one issue.
+const emptyProviderFailureIssues: ProviderFailureIssues = [];
+// @ts-expect-error A mutated canonical target always reports an applied mutation.
+const emptyAppliedPrefix: MutatedAppliedPrefix = [];
+void emptyProviderFailureIssues;
+void emptyAppliedPrefix;
+
+function findUnboundedPublicResultLeaves(value: unknown): string[] {
+  const findings: string[] = [];
+  const seen = new Set<object>();
+
+  const visit = (candidate: unknown, path: string): void => {
+    if (candidate === null || typeof candidate !== "object" || seen.has(candidate)) return;
+    seen.add(candidate);
+    const node = candidate as Record<string, unknown>;
+
+    if (node.type === "array") {
+      if (!Number.isSafeInteger(node.maxItems)) findings.push(`${path}: missing maxItems`);
+      if (node["~immutable"] !== true) findings.push(`${path}: mutable array`);
+    }
+    if (
+      node.type === "string"
+      && node.const === undefined
+      && node.pattern === undefined
+      && !Number.isSafeInteger(node.maxLength)
+    ) {
+      findings.push(`${path}: unbounded text`);
+    }
+
+    for (const [key, nested] of Object.entries(node)) visit(nested, `${path}.${key}`);
+  };
+
+  visit(value, "$result");
+  return findings;
+}
 
 const digest = (prefix: string, seed: string) => `${prefix}${seed.repeat(64)}`;
 const target = Object.freeze({
@@ -248,7 +334,204 @@ const byteBearingResult = Object.freeze({
   },
 });
 
+describe("provider procedure input schema boundary", () => {
+  const release = Object.freeze({
+    kind: "release" as const,
+    releaseDigest: digest("rd1_", "1"),
+    artifactDigest: digest("ad1_", "2"),
+  });
+  const releaseSet = Object.freeze({
+    kind: "complete-set" as const,
+    releaseSetDigest: digest("rs1_", "3"),
+  });
+  const providerTarget = Object.freeze({ provider: "codex" as const, home: "/tmp/codex-home" });
+  const locator = Object.freeze({
+    repositoryIdentity: "git:github.com/rawr-ai/rawr-hq",
+    workspaceRoot: "/tmp/rawr-hq",
+  });
+
+  it("derives each public input type from its closed TypeBox schema", () => {
+    expectTypeOf<TargetedTestInput>().toEqualTypeOf<Static<typeof TargetedTestInputSchema>>();
+    expectTypeOf<CompleteTestInput>().toEqualTypeOf<Static<typeof CompleteTestInputSchema>>();
+    expectTypeOf<CanonicalSyncInput>().toEqualTypeOf<Static<typeof CanonicalSyncInputSchema>>();
+    expectTypeOf<CanonicalStatusInput>().toEqualTypeOf<Static<typeof CanonicalStatusInputSchema>>();
+  });
+
+  it("reuses the shared artifact-reference input schemas", () => {
+    expect(ReleaseArtifactRefSchema).toBe(ReleaseArtifactRefInputSchema);
+    expect(CompleteSetArtifactRefSchema).toBe(CompleteSetArtifactRefInputSchema);
+  });
+
+  it("accepts the four canonical request shapes", () => {
+    expect(Value.Check(TargetedTestInputSchema, {
+      kind: "targeted-test",
+      releases: [release],
+      evaluationProfile: "provider-smoke@v1",
+      targets: [providerTarget],
+    })).toBe(true);
+    expect(Value.Check(CompleteTestInputSchema, {
+      kind: "complete-test",
+      releaseSet,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [providerTarget],
+    })).toBe(true);
+    expect(Value.Check(CanonicalSyncInputSchema, {
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator,
+      targets: [providerTarget],
+    })).toBe(true);
+    expect(Value.Check(CanonicalStatusInputSchema, {
+      kind: "canonical-status",
+      channel: "current-main",
+      locator,
+      targets: [providerTarget],
+    })).toBe(true);
+  });
+
+  it.each([
+    ["relative provider home", TargetedTestInputSchema, {
+      kind: "targeted-test",
+      releases: [release],
+      evaluationProfile: "provider-smoke@v1",
+      targets: [{ ...providerTarget, home: "relative/home" }],
+    }],
+    ["root provider home", CompleteTestInputSchema, {
+      kind: "complete-test",
+      releaseSet,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [{ ...providerTarget, home: "/" }],
+    }],
+    ["path repository identity", CanonicalSyncInputSchema, {
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator: { ...locator, repositoryIdentity: "/tmp/rawr-hq" },
+      targets: [providerTarget],
+    }],
+    ["relative workspace root", CanonicalStatusInputSchema, {
+      kind: "canonical-status",
+      channel: "current-main",
+      locator: { ...locator, workspaceRoot: "relative/rawr-hq" },
+      targets: [providerTarget],
+    }],
+  ] as const)("accepts structurally bounded %s for domain classification", async (_label, inputSchema, candidate) => {
+    expect(Value.Check(inputSchema, candidate)).toBe(true);
+    const adapted = await schema(inputSchema)["~standard"].validate(candidate);
+    expect("value" in adapted).toBe(true);
+  });
+
+  it.each([
+    ["invalid evaluation profile", CompleteTestInputSchema, {
+      kind: "complete-test",
+      releaseSet,
+      evaluationProfile: "Provider Smoke",
+      targets: [providerTarget],
+    }],
+    ["extra selector", CanonicalSyncInputSchema, {
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator,
+      targets: [providerTarget],
+      releaseSet,
+    }],
+  ] as const)("rejects %s before handler execution", (_label, inputSchema, candidate) => {
+    expect(Value.Check(inputSchema, candidate)).toBe(false);
+  });
+
+  it.each([
+    ["relative provider home", {
+      kind: "targeted-test",
+      releases: [release],
+      evaluationProfile: "provider-smoke@v1",
+      targets: [{ ...providerTarget, home: "relative/home" }],
+    }, "INVALID_HOME", "deployment"],
+    ["root provider home", {
+      kind: "complete-test",
+      releaseSet,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [{ ...providerTarget, home: "/" }],
+    }, "INVALID_HOME", "deployment"],
+    ["path repository identity", {
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator: { ...locator, repositoryIdentity: "/tmp/rawr-hq" },
+      targets: [providerTarget],
+    }, "INVALID_LOCATOR", "deployment"],
+    ["relative workspace root", {
+      kind: "canonical-status",
+      channel: "current-main",
+      locator: { ...locator, workspaceRoot: "relative/rawr-hq" },
+      targets: [providerTarget],
+    }, "INVALID_LOCATOR", "status"],
+  ] as const)("returns typed $expectedCode for $label", (_label, candidate, expectedCode, parser) => {
+    const result = parser === "status"
+      ? parseCanonicalStatusRequest(candidate)
+      : parseProviderDeploymentRequest(candidate);
+    expect(result).toMatchObject({
+      ok: false,
+      issues: [{ code: expectedCode }],
+    });
+  });
+});
+
 describe("provider procedure result schema boundary", () => {
+  it.each([
+    ["complete test", CompleteTestResultSchema],
+    ["targeted test", TargetedTestResultSchema],
+    ["canonical sync", CanonicalSyncResultSchema],
+    ["canonical status", CanonicalStatusResultSchema],
+  ])("keeps every %s public collection and plain text leaf bounded", (_label, resultSchema) => {
+    expect(findUnboundedPublicResultLeaves(resultSchema)).toEqual([]);
+  });
+
+  it("keeps non-empty runtime bounds and static tuples aligned", () => {
+    const boundedReadonly = BoundedReadonlyArray(Type.String(), { maxItems: 2 });
+    const emptyReadonly = EmptyReadonlyArray(Type.String());
+    const bounded = NonEmptyReadonlyArray(Type.String(), { maxItems: 2 });
+    expect(Value.Check(boundedReadonly, [])).toBe(true);
+    expect(Value.Check(boundedReadonly, ["first", "second", "third"])).toBe(false);
+    expect(Value.Check(emptyReadonly, [])).toBe(true);
+    expect(Value.Check(emptyReadonly, ["first"])).toBe(false);
+    expect(Value.Check(bounded, [])).toBe(false);
+    expect(Value.Check(bounded, ["first"])).toBe(true);
+    expect(Value.Check(bounded, ["first", "second", "third"])).toBe(false);
+    expect(() => NonEmptyReadonlyArray(Type.String(), { maxItems: 0 })).toThrow(
+      "Non-empty array schemas require maxItems >= 1",
+    );
+    expect(() => BoundedReadonlyArray(Type.String(), { maxItems: -1 })).toThrow(
+      "Bounded array schemas require maxItems >= 0",
+    );
+    expect(() => BoundedReadonlyArray(Type.String(), { minItems: 2, maxItems: 1 })).toThrow(
+      "Bounded array schemas require 0 <= minItems <= maxItems",
+    );
+    expectTypeOf<Static<typeof emptyReadonly>>().toEqualTypeOf<readonly []>();
+    expectTypeOf<ReadOnlyCanonicalTarget["appliedPrefix"]>().toEqualTypeOf<readonly []>();
+    expectTypeOf<ReadOnlyCanonicalTarget["issues"]>().toEqualTypeOf<readonly []>();
+    expectTypeOf<SuccessfulCanonicalStatus>().toEqualTypeOf<
+      readonly SuccessfulCanonicalStatus[number][]
+    >();
+    expectTypeOf<SuccessfulCompleteTest["targets"]>().toEqualTypeOf<
+      readonly SuccessfulCompleteTest["targets"][number][]
+    >();
+  });
+
+  it("enforces public result text and target collection bounds", () => {
+    expect(Value.Check(CompleteTestResultSchema, {
+      ok: false,
+      issues: [{ ...issue, message: "x".repeat(4_097) }],
+    })).toBe(false);
+    expect(Value.Check(CompleteTestResultSchema, {
+      ...byteBearingResult,
+      value: {
+        ...byteBearingResult.value,
+        targets: Array.from(
+          { length: 65 },
+          () => byteBearingResult.value.targets[0],
+        ),
+      },
+    })).toBe(false);
+  });
+
   it("owns the projection binding schema, static type, and closed runtime shape together", () => {
     type Equal<TLeft, TRight> =
       (<T>() => T extends TLeft ? 1 : 2) extends

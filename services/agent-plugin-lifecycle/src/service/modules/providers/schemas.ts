@@ -1,104 +1,88 @@
 import { type Static, type TSchema, Type } from "typebox";
 
+import {
+  BoundedReadonlyArray,
+  EmptyReadonlyArray,
+  NonEmptyReadonlyArray,
+} from "../../model/dto/structural";
+import {
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+  MAX_RELEASE_MEMBERS,
+} from "../../shared/release";
+import {
+  CanonicalStatusInputSchema,
+  CanonicalSyncInputSchema,
+  CompleteSetArtifactRefSchema,
+  CompleteTestInputSchema,
+  ReleaseArtifactRefSchema,
+  TargetedTestInputSchema,
+} from "./model/dto/mode";
 import { ProviderProjectionBindingSchema } from "./model/dto/outcome";
+import {
+  MAX_PROVIDER_TARGETS,
+  ProviderHomeSchema,
+  ProviderIdSchema,
+} from "./model/dto/provider-target";
 
-const ProviderIdSchema = Type.Union([Type.Literal("claude"), Type.Literal("codex")]);
-const NonEmptyStringSchema = Type.String({ minLength: 1 });
-const GitObjectIdSchema = Type.String({ pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" });
-const ReleaseDigestSchema = Type.String({ pattern: "^rd1_[0-9a-f]{64}$" });
-const ArtifactDigestSchema = Type.String({ pattern: "^ad1_[0-9a-f]{64}$" });
-const ReleaseSetDigestSchema = Type.String({ pattern: "^rs1_[0-9a-f]{64}$" });
-const ContentDigestSchema = Type.String({ pattern: "^sha256_[0-9a-f]{64}$" });
-const ProjectionDigestSchema = Type.String({ pattern: "^ap1_[0-9a-f]{64}$" });
-const CapabilityProfileDigestSchema = Type.String({ pattern: "^cp1_[0-9a-f]{64}$" });
-const ProviderTargetDigestSchema = Type.String({ pattern: "^pt1_[0-9a-f]{64}$" });
-const TargetIdentityDigestSchema = Type.String({ pattern: "^ti1_[0-9a-f]{64}$" });
-const ProviderMemberFingerprintSchema = Type.String({ pattern: "^pm1_[0-9a-f]{64}$" });
-const ProviderSourceDigestSchema = Type.String({ pattern: "^ps1_[0-9a-f]{64}$" });
-const MarketplaceProjectionDigestSchema = Type.String({ pattern: "^mp1_[0-9a-f]{64}$" });
-const ProviderRequestDigestSchema = Type.String({ pattern: "^prq1_[0-9a-f]{64}$" });
-const TargetReceiptDigestSchema = Type.String({ pattern: "^tr1_[0-9a-f]{64}$" });
-const VisibleFingerprintSchema = Type.String({ pattern: "^vf1_[0-9a-f]{64}$" });
-const MechanicalEvidenceDigestSchema = Type.String({ pattern: "^me1_[0-9a-f]{64}$" });
+const MAX_PROVIDER_RESULT_TEXT_LENGTH = 4_096;
+const MAX_PROVIDER_IDENTITY_LENGTH = 512;
+const MAX_PROVIDER_PROTOCOL_LENGTH = 256;
+const MAX_PROVIDER_PATH_LENGTH = 1_024;
+const MAX_PROVIDER_CAPABILITIES = 6;
+const MAX_PROVIDER_RESULT_ITEMS = 200_000;
 
-const ProviderTargetInputSchema = Type.Object(
-  {
-    provider: ProviderIdSchema,
-    home: NonEmptyStringSchema,
-  },
-  { additionalProperties: false },
-);
-
-const ReleaseArtifactRefSchema = Type.Object(
-  {
-    kind: Type.Literal("release"),
-    releaseDigest: ReleaseDigestSchema,
-    artifactDigest: ArtifactDigestSchema,
-  },
-  { additionalProperties: false },
-);
-
-const CompleteSetArtifactRefSchema = Type.Object(
-  {
-    kind: Type.Literal("complete-set"),
-    releaseSetDigest: ReleaseSetDigestSchema,
-  },
-  { additionalProperties: false },
-);
-
-const ContentRecordLocatorInputSchema = Type.Object(
-  {
-    repositoryIdentity: NonEmptyStringSchema,
-    workspaceRoot: NonEmptyStringSchema,
-  },
-  { additionalProperties: false },
-);
-
-const ProviderTargetsInputSchema = Type.Array(ProviderTargetInputSchema, {
-  minItems: 1,
-  maxItems: 64,
+const ProviderResultTextSchema = Type.String({
+  maxLength: MAX_PROVIDER_RESULT_TEXT_LENGTH,
+});
+const ProviderIdentityTextSchema = Type.String({
+  maxLength: MAX_PROVIDER_IDENTITY_LENGTH,
+});
+const NonEmptyProviderIdentitySchema = Type.String({
+  minLength: 1,
+  maxLength: MAX_PROVIDER_IDENTITY_LENGTH,
+});
+const NonEmptyProviderProtocolSchema = Type.String({
+  minLength: 1,
+  maxLength: MAX_PROVIDER_PROTOCOL_LENGTH,
+});
+const ProviderPathSchema = Type.String({
+  minLength: 1,
+  maxLength: MAX_PROVIDER_PATH_LENGTH,
+});
+const GitObjectIdSchema = Type.String({
+  minLength: 40,
+  maxLength: 64,
+  pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
 });
 
-export const TargetedTestInputSchema = Type.Object(
-  {
-    kind: Type.Literal("targeted-test"),
-    releases: Type.Array(ReleaseArtifactRefSchema, { minItems: 1, maxItems: 1_024 }),
-    evaluationProfile: NonEmptyStringSchema,
-    targets: ProviderTargetsInputSchema,
-  },
-  { additionalProperties: false },
-);
+function fixedDigestSchema(prefix: string) {
+  const length = prefix.length + 64;
+  return Type.String({
+    minLength: length,
+    maxLength: length,
+    pattern: `^${prefix}[0-9a-f]{64}$`,
+  });
+}
 
-export const CompleteTestInputSchema = Type.Object(
-  {
-    kind: Type.Literal("complete-test"),
-    releaseSet: CompleteSetArtifactRefSchema,
-    evaluationProfile: NonEmptyStringSchema,
-    targets: ProviderTargetsInputSchema,
-  },
-  { additionalProperties: false },
-);
+const ContentDigestSchema = fixedDigestSchema("sha256_");
+const ProjectionDigestSchema = fixedDigestSchema("ap1_");
+const CapabilityProfileDigestSchema = fixedDigestSchema("cp1_");
+const ProviderTargetDigestSchema = fixedDigestSchema("pt1_");
+const TargetIdentityDigestSchema = fixedDigestSchema("ti1_");
+const ProviderMemberFingerprintSchema = fixedDigestSchema("pm1_");
+const ProviderSourceDigestSchema = fixedDigestSchema("ps1_");
+const MarketplaceProjectionDigestSchema = fixedDigestSchema("mp1_");
+const ProviderRequestDigestSchema = fixedDigestSchema("prq1_");
+const TargetReceiptDigestSchema = fixedDigestSchema("tr1_");
+const VisibleFingerprintSchema = fixedDigestSchema("vf1_");
+const MechanicalEvidenceDigestSchema = fixedDigestSchema("me1_");
 
-export const CanonicalSyncInputSchema = Type.Object(
-  {
-    kind: Type.Literal("canonical-sync"),
-    channel: Type.Literal("current-main"),
-    locator: ContentRecordLocatorInputSchema,
-    targets: ProviderTargetsInputSchema,
-  },
-  { additionalProperties: false },
-);
-
-export const CanonicalStatusInputSchema = Type.Object(
-  {
-    kind: Type.Literal("canonical-status"),
-    channel: Type.Literal("current-main"),
-    locator: ContentRecordLocatorInputSchema,
-    targets: ProviderTargetsInputSchema,
-  },
-  { additionalProperties: false },
-);
-
+export {
+  CanonicalStatusInputSchema,
+  CanonicalSyncInputSchema,
+  CompleteTestInputSchema,
+  TargetedTestInputSchema,
+};
 
 export const ProviderDeploymentIssueCodeSchema = Type.Union([
   Type.Literal("ADAPTER_PROTOCOL_MISMATCH"),
@@ -137,10 +121,10 @@ export const ProviderDeploymentIssueCodeSchema = Type.Union([
 const ProviderIssueSchema = Type.Object(
   {
     code: ProviderDeploymentIssueCodeSchema,
-    path: Type.String(),
-    message: Type.String(),
-    expected: Type.String(),
-    actual: Type.String(),
+    path: ProviderResultTextSchema,
+    message: ProviderResultTextSchema,
+    expected: ProviderResultTextSchema,
+    actual: ProviderResultTextSchema,
   },
   { additionalProperties: false },
 );
@@ -148,7 +132,7 @@ const ProviderIssueSchema = Type.Object(
 const ProviderTargetSchema = Type.Object(
   {
     provider: ProviderIdSchema,
-    home: Type.String(),
+    home: ProviderHomeSchema,
     targetDigest: ProviderTargetDigestSchema,
   },
   { additionalProperties: false },
@@ -157,7 +141,7 @@ const ProviderTargetSchema = Type.Object(
 const ProviderArtifactAuthoritySchema = Type.Object(
   {
     protocol: Type.Literal("agent-plugin-artifact-authority@v1"),
-    contentAuthority: NonEmptyStringSchema,
+    contentAuthority: NonEmptyProviderIdentitySchema,
     sourceCommit: GitObjectIdSchema,
   },
   { additionalProperties: false },
@@ -176,8 +160,10 @@ const CapabilityProfileSchema = Type.Object(
   {
     schemaVersion: Type.Literal(1),
     provider: ProviderIdSchema,
-    adapterProtocol: NonEmptyStringSchema,
-    required: Type.Array(ProviderCapabilitySchema),
+    adapterProtocol: NonEmptyProviderProtocolSchema,
+    required: BoundedReadonlyArray(ProviderCapabilitySchema, {
+      maxItems: MAX_PROVIDER_CAPABILITIES,
+    }),
     capabilityProfileDigest: CapabilityProfileDigestSchema,
   },
   { additionalProperties: false },
@@ -185,7 +171,7 @@ const CapabilityProfileSchema = Type.Object(
 
 const ProviderPackageFileSchema = Type.Object(
   {
-    path: NonEmptyStringSchema,
+    path: ProviderPathSchema,
     mode: Type.Union([Type.Literal(0o644), Type.Literal(0o755)]),
     contentDigest: ContentDigestSchema,
   },
@@ -194,21 +180,27 @@ const ProviderPackageFileSchema = Type.Object(
 
 const ProviderVisibleClaimSetSchema = Type.Object(
   {
-    pluginIdentity: Type.String(),
-    skills: Type.Array(Type.String()),
-    hooks: Type.Array(Type.String()),
+    pluginIdentity: ProviderIdentityTextSchema,
+    skills: BoundedReadonlyArray(ProviderIdentityTextSchema, {
+      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+    }),
+    hooks: BoundedReadonlyArray(ProviderIdentityTextSchema, {
+      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+    }),
   },
   { additionalProperties: false },
 );
 
 const ProviderProjectionMemberSchema = Type.Object(
   {
-    pluginId: NonEmptyStringSchema,
+    pluginId: NonEmptyProviderIdentitySchema,
     releaseRef: ReleaseArtifactRefSchema,
     artifactAuthority: ProviderArtifactAuthoritySchema,
-    providerSourceIdentity: NonEmptyStringSchema,
-    nativeIdentity: Type.String(),
-    files: Type.Array(ProviderPackageFileSchema),
+    providerSourceIdentity: NonEmptyProviderIdentitySchema,
+    nativeIdentity: ProviderIdentityTextSchema,
+    files: BoundedReadonlyArray(ProviderPackageFileSchema, {
+      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+    }),
     visible: ProviderVisibleClaimSetSchema,
     memberFingerprint: ProviderMemberFingerprintSchema,
   },
@@ -217,9 +209,11 @@ const ProviderProjectionMemberSchema = Type.Object(
 
 const ProviderMarketplaceProjectionSchema = Type.Object(
   {
-    identity: NonEmptyStringSchema,
+    identity: NonEmptyProviderIdentitySchema,
     sourceDigest: ProviderSourceDigestSchema,
-    files: Type.Array(ProviderPackageFileSchema),
+    files: BoundedReadonlyArray(ProviderPackageFileSchema, {
+      maxItems: MAX_PROVIDER_RESULT_ITEMS,
+    }),
   },
   { additionalProperties: false },
 );
@@ -228,7 +222,9 @@ const ProjectionSourceSchema = Type.Union([
   Type.Object(
     {
       kind: Type.Literal("targeted"),
-      releases: Type.Array(ReleaseArtifactRefSchema),
+      releases: BoundedReadonlyArray(ReleaseArtifactRefSchema, {
+        maxItems: MAX_RELEASE_MEMBERS,
+      }),
     },
     { additionalProperties: false },
   ),
@@ -245,13 +241,15 @@ const AgentProviderProjectionSchema = Type.Object(
   {
     schemaVersion: Type.Literal(1),
     provider: ProviderIdSchema,
-    rendererProtocol: NonEmptyStringSchema,
-    adapterProtocol: NonEmptyStringSchema,
+    rendererProtocol: NonEmptyProviderProtocolSchema,
+    adapterProtocol: NonEmptyProviderProtocolSchema,
     artifactAuthority: ProviderArtifactAuthoritySchema,
     source: ProjectionSourceSchema,
     marketplace: ProviderMarketplaceProjectionSchema,
     capabilityProfile: CapabilityProfileSchema,
-    members: Type.Array(ProviderProjectionMemberSchema),
+    members: BoundedReadonlyArray(ProviderProjectionMemberSchema, {
+      maxItems: MAX_RELEASE_MEMBERS,
+    }),
     projectionDigest: ProjectionDigestSchema,
   },
   { additionalProperties: false },
@@ -259,9 +257,9 @@ const AgentProviderProjectionSchema = Type.Object(
 
 const ProviderMarketplaceMemberSourceSchema = Type.Object(
   {
-    pluginId: NonEmptyStringSchema,
-    nativeIdentity: Type.String(),
-    providerSourceIdentity: NonEmptyStringSchema,
+    pluginId: NonEmptyProviderIdentitySchema,
+    nativeIdentity: ProviderIdentityTextSchema,
+    providerSourceIdentity: NonEmptyProviderIdentitySchema,
     sourceProjectionDigest: ProjectionDigestSchema,
     memberFingerprint: ProviderMemberFingerprintSchema,
   },
@@ -270,8 +268,8 @@ const ProviderMarketplaceMemberSourceSchema = Type.Object(
 
 const ProviderMarketplaceStateFields = {
   provider: ProviderIdSchema,
-  adapterProtocol: NonEmptyStringSchema,
-  marketplaceIdentity: NonEmptyStringSchema,
+  adapterProtocol: NonEmptyProviderProtocolSchema,
+  marketplaceIdentity: NonEmptyProviderIdentitySchema,
   projectionDigest: MarketplaceProjectionDigestSchema,
   sourceDigest: ProviderSourceDigestSchema,
 } as const;
@@ -284,7 +282,9 @@ const ProviderMarketplaceStateSchema = Type.Object(
 const ProviderMarketplaceRegistrationSchema = Type.Object(
   {
     ...ProviderMarketplaceStateFields,
-    members: Type.Array(ProviderMarketplaceMemberSourceSchema),
+    members: BoundedReadonlyArray(ProviderMarketplaceMemberSourceSchema, {
+      maxItems: MAX_RELEASE_MEMBERS,
+    }),
   },
   { additionalProperties: false },
 );
@@ -298,10 +298,10 @@ const ProviderMarketplaceObservationSchema = Type.Union([
 ]);
 
 const VerifiedMemberIdentityFields = {
-  pluginId: NonEmptyStringSchema,
-  nativeIdentity: Type.String(),
+  pluginId: NonEmptyProviderIdentitySchema,
+  nativeIdentity: ProviderIdentityTextSchema,
   artifactAuthority: ProviderArtifactAuthoritySchema,
-  providerSourceIdentity: NonEmptyStringSchema,
+  providerSourceIdentity: NonEmptyProviderIdentitySchema,
   memberFingerprint: ProviderMemberFingerprintSchema,
 } as const;
 
@@ -322,8 +322,12 @@ const NativeMemberObservationSchema = Type.Object(
   {
     ...VerifiedMemberIdentityFields,
     enablement: Type.Union([Type.Literal("disabled"), Type.Literal("enabled")]),
-    visibleSkills: Type.Array(Type.String()),
-    visibleHooks: Type.Array(Type.String()),
+    visibleSkills: BoundedReadonlyArray(ProviderIdentityTextSchema, {
+      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+    }),
+    visibleHooks: BoundedReadonlyArray(ProviderIdentityTextSchema, {
+      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+    }),
   },
   { additionalProperties: false },
 );
@@ -332,7 +336,7 @@ const TargetIdentitySidecarSchema = Type.Object(
   {
     schemaVersion: Type.Literal(1),
     provider: ProviderIdSchema,
-    canonicalHome: Type.String(),
+    canonicalHome: ProviderHomeSchema,
     targetDigest: ProviderTargetDigestSchema,
     identityDigest: TargetIdentityDigestSchema,
   },
@@ -350,10 +354,12 @@ const TargetIdentityObservationSchema = Type.Union([
 const ReceiptScopeCommonFields = {
   requestDigest: ProviderRequestDigestSchema,
   projectionDigest: ProjectionDigestSchema,
-  adapterProtocol: NonEmptyStringSchema,
+  adapterProtocol: NonEmptyProviderProtocolSchema,
   capabilityProfileDigest: CapabilityProfileDigestSchema,
   visibleFingerprint: VisibleFingerprintSchema,
-  verifiedMembers: Type.Array(VerifiedMemberIdentitySchema),
+  verifiedMembers: BoundedReadonlyArray(VerifiedMemberIdentitySchema, {
+    maxItems: MAX_RELEASE_MEMBERS,
+  }),
 } as const;
 
 const TargetReceiptScopeSchema = Type.Union([
@@ -361,8 +367,10 @@ const TargetReceiptScopeSchema = Type.Union([
     {
       ...ReceiptScopeCommonFields,
       kind: Type.Literal("targeted-test"),
-      releases: Type.Array(ReleaseArtifactRefSchema),
-      evaluationProfile: NonEmptyStringSchema,
+      releases: BoundedReadonlyArray(ReleaseArtifactRefSchema, {
+        maxItems: MAX_RELEASE_MEMBERS,
+      }),
+      evaluationProfile: Type.String({ minLength: 1, maxLength: 256 }),
     },
     { additionalProperties: false },
   ),
@@ -371,7 +379,7 @@ const TargetReceiptScopeSchema = Type.Union([
       ...ReceiptScopeCommonFields,
       kind: Type.Literal("complete-test"),
       releaseSet: CompleteSetArtifactRefSchema,
-      evaluationProfile: NonEmptyStringSchema,
+      evaluationProfile: Type.String({ minLength: 1, maxLength: 256 }),
     },
     { additionalProperties: false },
   ),
@@ -398,7 +406,9 @@ const TargetReceiptSchema = Type.Object(
         lineage: ReceiptLineageSchema,
         marketplace: ProviderMarketplaceStateSchema,
         scope: TargetReceiptScopeSchema,
-        managedMembers: Type.Array(ManagedMemberClaimSchema),
+        managedMembers: BoundedReadonlyArray(ManagedMemberClaimSchema, {
+          maxItems: MAX_RELEASE_MEMBERS,
+        }),
       },
       { additionalProperties: false },
     ),
@@ -504,7 +514,9 @@ const ProviderPlanStepSchema = Type.Union([
     {
       kind: Type.Literal("verify-managed"),
       target: ProviderTargetSchema,
-      claims: Type.Array(ManagedMemberClaimSchema),
+      claims: BoundedReadonlyArray(ManagedMemberClaimSchema, {
+        maxItems: MAX_RELEASE_MEMBERS,
+      }),
       marketplace: Type.Union([ProviderMarketplaceRegistrationSchema, Type.Null()]),
     },
     { additionalProperties: false },
@@ -513,7 +525,7 @@ const ProviderPlanStepSchema = Type.Union([
     {
       kind: Type.Literal("verify-retired"),
       target: ProviderTargetSchema,
-      nativeIdentity: Type.String(),
+      nativeIdentity: ProviderIdentityTextSchema,
     },
     { additionalProperties: false },
   ),
@@ -528,8 +540,12 @@ const ProviderTargetPlanSchema = Type.Object(
       Type.Literal("read-only"),
     ]),
     projection: Type.Union([AgentProviderProjectionSchema, Type.Null()]),
-    steps: Type.Array(ProviderPlanStepSchema),
-    issues: Type.Array(ProviderIssueSchema),
+    steps: BoundedReadonlyArray(ProviderPlanStepSchema, {
+      maxItems: MAX_PROVIDER_RESULT_ITEMS,
+    }),
+    issues: BoundedReadonlyArray(ProviderIssueSchema, {
+      maxItems: MAX_PROVIDER_RESULT_ITEMS,
+    }),
   },
   { additionalProperties: false },
 );
@@ -560,7 +576,9 @@ const ProviderEventSchema = Type.Union([
         Type.Literal("bridge-invoked"),
         Type.Literal("bridge-returned"),
       ]),
-      issues: Type.Array(ProviderIssueSchema, { minItems: 1 }),
+      issues: NonEmptyReadonlyArray(ProviderIssueSchema, {
+        maxItems: MAX_PROVIDER_RESULT_ITEMS,
+      }),
     },
     { additionalProperties: false },
   ),
@@ -568,7 +586,7 @@ const ProviderEventSchema = Type.Union([
     {
       phase: Type.Literal("verified"),
       target: ProviderTargetSchema,
-      visibleFingerprint: Type.String(),
+      visibleFingerprint: VisibleFingerprintSchema,
     },
     { additionalProperties: false },
   ),
@@ -592,7 +610,9 @@ const ProviderEventSchema = Type.Union([
     {
       phase: Type.Literal("blocked"),
       target: ProviderTargetSchema,
-      issues: Type.Array(ProviderIssueSchema),
+      issues: BoundedReadonlyArray(ProviderIssueSchema, {
+        maxItems: MAX_PROVIDER_RESULT_ITEMS,
+      }),
     },
     { additionalProperties: false },
   ),
@@ -600,7 +620,9 @@ const ProviderEventSchema = Type.Union([
     {
       phase: Type.Literal("failed"),
       target: ProviderTargetSchema,
-      issues: Type.Array(ProviderIssueSchema),
+      issues: BoundedReadonlyArray(ProviderIssueSchema, {
+        maxItems: MAX_PROVIDER_RESULT_ITEMS,
+      }),
     },
     { additionalProperties: false },
   ),
@@ -608,9 +630,13 @@ const ProviderEventSchema = Type.Union([
 
 const ProviderTargetOutcomeFields = {
   target: ProviderTargetSchema,
-  events: Type.Array(ProviderEventSchema),
-  issues: Type.Array(ProviderIssueSchema),
-  visibleFingerprint: Type.Union([Type.String(), Type.Null()]),
+  events: BoundedReadonlyArray(ProviderEventSchema, {
+    maxItems: MAX_PROVIDER_RESULT_ITEMS,
+  }),
+  issues: BoundedReadonlyArray(ProviderIssueSchema, {
+    maxItems: MAX_PROVIDER_RESULT_ITEMS,
+  }),
+  visibleFingerprint: Type.Union([VisibleFingerprintSchema, Type.Null()]),
 } as const;
 
 const FailedProviderTargetOutcomeSchema = Type.Object(
@@ -656,9 +682,13 @@ function providerOperationOutcomeSchema<TTarget extends TSchema>(target: TTarget
         Type.Literal("PartialFailure"),
         Type.Literal("ReadOnlyConverged"),
       ]),
-      targets: Type.Array(target),
+      targets: BoundedReadonlyArray(target, {
+        maxItems: MAX_PROVIDER_TARGETS,
+      }),
       evidence: Type.Union([MechanicalEvidenceDigestSchema, Type.Null()]),
-      issues: Type.Array(ProviderIssueSchema),
+      issues: BoundedReadonlyArray(ProviderIssueSchema, {
+        maxItems: MAX_PROVIDER_RESULT_ITEMS,
+      }),
     },
     { additionalProperties: false },
   );
@@ -681,7 +711,9 @@ const CanonicalStatusOutcomeSchema = Type.Object(
       Type.Literal("BLOCKED_COLLISION"),
       Type.Literal("INCOMPATIBLE_PROVIDER"),
     ]),
-    issues: Type.Array(ProviderIssueSchema),
+    issues: BoundedReadonlyArray(ProviderIssueSchema, {
+      maxItems: MAX_PROVIDER_RESULT_ITEMS,
+    }),
   },
   { additionalProperties: false },
 );
@@ -690,7 +722,7 @@ const CanonicalSetMarketplaceRecordSchema = Type.Object(
   {
     kind: Type.Literal("SetMarketplace"),
     target: ProviderTargetSchema,
-    marketplaceIdentity: NonEmptyStringSchema,
+    marketplaceIdentity: NonEmptyProviderIdentitySchema,
     projectionDigest: MarketplaceProjectionDigestSchema,
     sourceDigest: ProviderSourceDigestSchema,
   },
@@ -705,9 +737,9 @@ const CanonicalMemberMutationRecordSchema = Type.Object(
       Type.Literal("RetireMember"),
     ]),
     target: ProviderTargetSchema,
-    marketplaceIdentity: NonEmptyStringSchema,
-    pluginId: NonEmptyStringSchema,
-    nativeIdentity: NonEmptyStringSchema,
+    marketplaceIdentity: NonEmptyProviderIdentitySchema,
+    pluginId: NonEmptyProviderIdentitySchema,
+    nativeIdentity: NonEmptyProviderIdentitySchema,
     memberFingerprint: ProviderMemberFingerprintSchema,
   },
   { additionalProperties: false },
@@ -717,10 +749,10 @@ const CanonicalConfiguredExposureRetirementRecordSchema = Type.Object(
   {
     kind: Type.Literal("RetireConfiguredExposure"),
     target: ProviderTargetSchema,
-    marketplaceIdentity: NonEmptyStringSchema,
-    exposureIdentity: NonEmptyStringSchema,
-    nativeIdentity: NonEmptyStringSchema,
-    providerSourceIdentity: NonEmptyStringSchema,
+    marketplaceIdentity: NonEmptyProviderIdentitySchema,
+    exposureIdentity: NonEmptyProviderIdentitySchema,
+    nativeIdentity: NonEmptyProviderIdentitySchema,
+    providerSourceIdentity: NonEmptyProviderIdentitySchema,
   },
   { additionalProperties: false },
 );
@@ -741,8 +773,10 @@ const CanonicalSyncTargetOutcomeSchema = Type.Union([
         Type.Literal("INCOMPATIBLE_PROVIDER"),
       ]),
       target: ProviderTargetSchema,
-      appliedPrefix: Type.Array(CanonicalMutationRecordSchema, { maxItems: 0 }),
-      issues: Type.Array(ProviderIssueSchema, { minItems: 1 }),
+      appliedPrefix: EmptyReadonlyArray(CanonicalMutationRecordSchema),
+      issues: NonEmptyReadonlyArray(ProviderIssueSchema, {
+        maxItems: MAX_PROVIDER_RESULT_ITEMS,
+      }),
     },
     { additionalProperties: false },
   ),
@@ -751,8 +785,8 @@ const CanonicalSyncTargetOutcomeSchema = Type.Union([
       kind: Type.Literal("read-only-converged"),
       status: Type.Literal("CONVERGED"),
       target: ProviderTargetSchema,
-      appliedPrefix: Type.Array(CanonicalMutationRecordSchema, { maxItems: 0 }),
-      issues: Type.Array(ProviderIssueSchema, { maxItems: 0 }),
+      appliedPrefix: EmptyReadonlyArray(CanonicalMutationRecordSchema),
+      issues: EmptyReadonlyArray(ProviderIssueSchema),
     },
     { additionalProperties: false },
   ),
@@ -761,8 +795,10 @@ const CanonicalSyncTargetOutcomeSchema = Type.Union([
       kind: Type.Literal("mutated"),
       status: Type.Literal("CONVERGED"),
       target: ProviderTargetSchema,
-      appliedPrefix: Type.Array(CanonicalMutationRecordSchema, { minItems: 1 }),
-      issues: Type.Array(ProviderIssueSchema, { maxItems: 0 }),
+      appliedPrefix: NonEmptyReadonlyArray(CanonicalMutationRecordSchema, {
+        maxItems: MAX_PROVIDER_RESULT_ITEMS,
+      }),
+      issues: EmptyReadonlyArray(ProviderIssueSchema),
     },
     { additionalProperties: false },
   ),
@@ -771,8 +807,12 @@ const CanonicalSyncTargetOutcomeSchema = Type.Union([
       kind: Type.Literal("failed"),
       status: Type.Literal("DRIFTED"),
       target: ProviderTargetSchema,
-      appliedPrefix: Type.Array(CanonicalMutationRecordSchema),
-      issues: Type.Array(ProviderIssueSchema, { minItems: 1 }),
+      appliedPrefix: BoundedReadonlyArray(CanonicalMutationRecordSchema, {
+        maxItems: MAX_PROVIDER_RESULT_ITEMS,
+      }),
+      issues: NonEmptyReadonlyArray(ProviderIssueSchema, {
+        maxItems: MAX_PROVIDER_RESULT_ITEMS,
+      }),
     },
     { additionalProperties: false },
   ),
@@ -781,13 +821,17 @@ const CanonicalSyncTargetOutcomeSchema = Type.Union([
       kind: Type.Literal("uncertain"),
       status: Type.Literal("DRIFTED"),
       target: ProviderTargetSchema,
-      appliedPrefix: Type.Array(CanonicalMutationRecordSchema),
+      appliedPrefix: BoundedReadonlyArray(CanonicalMutationRecordSchema, {
+        maxItems: MAX_PROVIDER_RESULT_ITEMS,
+      }),
       attempted: CanonicalMutationRecordSchema,
       lastKnown: Type.Union([
         Type.Literal("bridge-invoked"),
         Type.Literal("bridge-returned"),
       ]),
-      issues: Type.Array(ProviderIssueSchema, { minItems: 1 }),
+      issues: NonEmptyReadonlyArray(ProviderIssueSchema, {
+        maxItems: MAX_PROVIDER_RESULT_ITEMS,
+      }),
     },
     { additionalProperties: false },
   ),
@@ -802,8 +846,12 @@ const CanonicalSyncOutcomeSchema = Type.Object(
       Type.Literal("PartialFailure"),
       Type.Literal("ReadOnlyConverged"),
     ]),
-    targets: Type.Array(CanonicalSyncTargetOutcomeSchema),
-    issues: Type.Array(ProviderIssueSchema),
+    targets: BoundedReadonlyArray(CanonicalSyncTargetOutcomeSchema, {
+      maxItems: MAX_PROVIDER_TARGETS,
+    }),
+    issues: BoundedReadonlyArray(ProviderIssueSchema, {
+      maxItems: MAX_PROVIDER_RESULT_ITEMS,
+    }),
   },
   { additionalProperties: false },
 );
@@ -815,7 +863,12 @@ function providerResultSchema<T extends TSchema>(value: T) {
       { additionalProperties: false },
     ),
     Type.Object(
-      { ok: Type.Literal(false), issues: Type.Array(ProviderIssueSchema, { minItems: 1 }) },
+      {
+        ok: Type.Literal(false),
+        issues: NonEmptyReadonlyArray(ProviderIssueSchema, {
+          maxItems: MAX_PROVIDER_RESULT_ITEMS,
+        }),
+      },
       { additionalProperties: false },
     ),
   ]);
@@ -830,6 +883,9 @@ export const TargetedTestResultSchema = providerResultSchema(
 export type CompleteTestProcedureResult = Static<typeof CompleteTestResultSchema>;
 export type TargetedTestProcedureResult = Static<typeof TargetedTestResultSchema>;
 export const CanonicalSyncResultSchema = providerResultSchema(CanonicalSyncOutcomeSchema);
-export const CanonicalStatusResultSchema = providerResultSchema(Type.Array(CanonicalStatusOutcomeSchema));
+export const CanonicalStatusResultSchema = providerResultSchema(BoundedReadonlyArray(
+  CanonicalStatusOutcomeSchema,
+  { maxItems: MAX_PROVIDER_TARGETS },
+));
 export type CanonicalSyncProcedureResult = Static<typeof CanonicalSyncResultSchema>;
 export type CanonicalStatusProcedureResult = Static<typeof CanonicalStatusResultSchema>;
