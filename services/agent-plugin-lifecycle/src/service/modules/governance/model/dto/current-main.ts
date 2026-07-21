@@ -12,6 +12,7 @@ export type {
   CurrentMainSelectionFailureKind,
   CurrentMainSelectionResult,
 } from "../../../../model/dto/current-main-selection";
+export { MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH } from "../../../../model/dto/current-main-selection";
 
 export const CURRENT_MAIN_V2_SCHEMA_VERSION = 2 as const;
 export const CURRENT_MAIN_V2_CHANNEL = "current-main" as const;
@@ -21,6 +22,8 @@ export const CURRENT_MAIN_V2_RECORD_PATH =
   ".rawr/agent-plugin-lifecycle/channels/current-main.json" as const;
 export const CURRENT_MAIN_V2_RELEASE_INPUT_PATH = ".rawr/release-input.json" as const;
 export const MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES = 2 * 1024 * 1024;
+export const MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH = 512;
+export const MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH = 4_096;
 
 export const CurrentMainBodyV2Schema = ReadonlyObject(Type.Object(
   {
@@ -63,8 +66,14 @@ export const CurrentMainV2CodecFailureSchema = ReadonlyObject(Type.Object(
       Type.Literal("DigestMismatch"),
       Type.Literal("NonCanonical"),
     ]),
-    path: Type.String({ minLength: 1 }),
-    message: Type.String({ minLength: 1 }),
+    path: Type.String({
+      minLength: 1,
+      maxLength: MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH,
+    }),
+    message: Type.String({
+      minLength: 1,
+      maxLength: MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH,
+    }),
   },
 ), { additionalProperties: false });
 

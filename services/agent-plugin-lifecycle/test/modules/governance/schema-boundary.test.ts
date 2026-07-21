@@ -11,6 +11,9 @@ import {
 } from "../../../src/service/modules/governance/schemas";
 import {
   CurrentMainBodyV2Schema,
+  MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
+  MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH,
+  MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH,
   encodeCurrentMainBodyV2,
   type CurrentMainBodyV2,
 } from "../../../src/service/modules/governance/model";
@@ -249,6 +252,58 @@ describe("governance procedure schema boundary", () => {
     expect(Value.Check(CurrentMainSelectionResultSchema, {
       kind: "ACCEPTED_PENDING_CONVERGENCE",
       reason: "legacy state",
+    })).toBe(false);
+  });
+
+  it("bounds public selection and codec diagnostics", () => {
+    expect(Value.Check(CurrentMainSelectionResultSchema, {
+      kind: "UNREACHABLE_REPOSITORY",
+      reason: "r".repeat(MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH),
+    })).toBe(true);
+    expect(Value.Check(CurrentMainSelectionResultSchema, {
+      kind: "UNREACHABLE_REPOSITORY",
+      reason: "r".repeat(MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH + 1),
+    })).toBe(false);
+
+    const boundedCodecFailure = {
+      ok: false,
+      failure: {
+        code: "InvalidSchema",
+        path: "p".repeat(MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH),
+        message: "m".repeat(MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH),
+      },
+    };
+    expect(Value.Check(CurrentMainRecordResultSchema, boundedCodecFailure)).toBe(true);
+    expect(Value.Check(CurrentMainRecordResultSchema, {
+      ...boundedCodecFailure,
+      failure: {
+        ...boundedCodecFailure.failure,
+        path: "p".repeat(MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH + 1),
+      },
+    })).toBe(false);
+    expect(Value.Check(CurrentMainRecordResultSchema, {
+      ...boundedCodecFailure,
+      failure: {
+        ...boundedCodecFailure.failure,
+        message: "m".repeat(MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH + 1),
+      },
+    })).toBe(false);
+  });
+
+  it("keeps current-main projections as the fixed Claude-then-Codex tuple", () => {
+    const body = currentMainBodyFixture();
+    expect(Value.Check(CurrentMainBodyV2Schema, body)).toBe(true);
+    expect(Value.Check(CurrentMainBodyV2Schema, {
+      ...body,
+      projections: [body.projections[0]],
+    })).toBe(false);
+    expect(Value.Check(CurrentMainBodyV2Schema, {
+      ...body,
+      projections: [...body.projections, body.projections[0]],
+    })).toBe(false);
+    expect(Value.Check(CurrentMainBodyV2Schema, {
+      ...body,
+      projections: [body.projections[1], body.projections[0]],
     })).toBe(false);
   });
 });
