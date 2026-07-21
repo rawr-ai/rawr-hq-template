@@ -3,6 +3,7 @@ export {
   PackageAgentPluginRequestSchema,
   PackageAgentPluginResultSchema,
   PackageDigestSchema,
+  PackageOutputPathSchema,
   PackagingFailureCodeSchema,
   PackagingFailureSchema,
 } from "./model/dto/packaging-lifecycle";

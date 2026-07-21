@@ -3,6 +3,9 @@ import { ReadonlyObject, Type, type Static } from "typebox";
 import { ArtifactRefInputSchema } from "../../../../shared/release/index";
 
 export const COWORK_PACKAGE_FORMAT = "cowork-v1" as const;
+export const MAX_PACKAGING_OUTPUT_PATH_LENGTH = 4_096;
+export const MAX_PACKAGING_FAILURE_PHASE_LENGTH = 256;
+export const MAX_PACKAGING_FAILURE_MESSAGE_LENGTH = 4_096;
 
 export const PackageDigestSchema = Type.TemplateLiteral("pkg1_${string}", {
   pattern: "^pkg1_[0-9a-f]{64}$",
@@ -30,23 +33,28 @@ export const PackagingFailureCodeSchema = Type.Union([
 export const PackagingFailureSchema = ReadonlyObject(Type.Object(
   {
     code: PackagingFailureCodeSchema,
-    phase: Type.String(),
-    message: Type.String(),
+    phase: Type.String({ maxLength: MAX_PACKAGING_FAILURE_PHASE_LENGTH }),
+    message: Type.String({ maxLength: MAX_PACKAGING_FAILURE_MESSAGE_LENGTH }),
   },
 ), { additionalProperties: false });
+
+export const PackageOutputPathSchema = Type.String({
+  minLength: 1,
+  maxLength: MAX_PACKAGING_OUTPUT_PATH_LENGTH,
+});
 
 export const PackageAgentPluginRequestSchema = ReadonlyObject(Type.Object(
   {
     artifactRef: ArtifactRefInputSchema,
     format: Type.Literal(COWORK_PACKAGE_FORMAT),
-    outputPath: Type.String({ minLength: 1 }),
+    outputPath: PackageOutputPathSchema,
   },
 ), { additionalProperties: false });
 
 const packageResultIdentityProperties = {
   artifactRef: ArtifactRefInputSchema,
   format: Type.Literal(COWORK_PACKAGE_FORMAT),
-  outputPath: Type.String({ minLength: 1 }),
+  outputPath: PackageOutputPathSchema,
   packageDigest: PackageDigestSchema,
 } as const;
 
