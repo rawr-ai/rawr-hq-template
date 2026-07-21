@@ -35,7 +35,10 @@ import {
   ProviderProjectionBindingSchema,
   type TargetedTestProviderOperationOutcome,
 } from "../../../src/service/modules/providers/model/dto/outcome";
-import { parseProviderTargets } from "../../../src/service/modules/providers/model/dto/provider-target";
+import {
+  parseProviderTarget,
+  parseProviderTargets,
+} from "../../../src/service/modules/providers/model/dto/provider-target";
 import {
   issue as providerIssue,
   success,
@@ -391,6 +394,12 @@ describe("provider procedure input schema boundary", () => {
     })).toBe(true);
   });
 
+  it("uses the owning TypeBox schemas when decoding persisted provider targets", () => {
+    expect(parseProviderTarget({ ...providerTarget, extra: true }).ok).toBe(false);
+    expect(parseProviderTarget({ ...providerTarget, home: "/tmp/codex\nhome" }).ok).toBe(false);
+    expect(parseProviderTargets([]).ok).toBe(false);
+  });
+
   it.each([
     ["relative provider home", TargetedTestInputSchema, {
       kind: "targeted-test",
@@ -429,6 +438,18 @@ describe("provider procedure input schema boundary", () => {
   });
 
   it.each([
+    ["empty provider target set", CompleteTestInputSchema, {
+      kind: "complete-test",
+      releaseSet,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [],
+    }],
+    ["empty targeted release set", TargetedTestInputSchema, {
+      kind: "targeted-test",
+      releases: [],
+      evaluationProfile: "provider-smoke@v1",
+      targets: [providerTarget],
+    }],
     ["invalid evaluation profile", CompleteTestInputSchema, {
       kind: "complete-test",
       releaseSet,

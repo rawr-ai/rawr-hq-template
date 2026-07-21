@@ -48,7 +48,7 @@ export const ContentRecordLocatorInputSchema = ReadonlyObject(Type.Object(
 export const TargetedTestInputSchema = ReadonlyObject(Type.Object(
   {
     kind: Type.Literal("targeted-test"),
-    releases: ReadonlyObject(Type.Array(ReleaseArtifactRefSchema, { minItems: 1, maxItems: 1_024 })),
+    releases: ReadonlyObject(Type.Array(ReleaseArtifactRefSchema), { minItems: 1, maxItems: 1_024 }),
     evaluationProfile: EvaluationProfileSchema,
     targets: ProviderTargetsInputSchema,
   },
