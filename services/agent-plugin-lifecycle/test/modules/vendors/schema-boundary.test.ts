@@ -1,16 +1,45 @@
-import { describe, expect, it } from "vitest";
+import { schema } from "@rawr/hq-sdk";
+import type {
+  InferContractRouterInputs,
+  InferContractRouterOutputs,
+} from "@orpc/contract";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import type { Static } from "typebox";
 import { Value } from "typebox/value";
 
+import { contract } from "../../../src/service/modules/vendors/contract";
+import type {
+  VendorContentWorkspaceRef,
+  VendorSourceStatus,
+  VendorStatusRequest,
+  VendorStatusResult,
+  VendorUpdateIssue,
+  VendorUpdateRequest,
+  VendorUpdateResult,
+} from "../../../src/service/modules/vendors/model/dto/vendor-operations";
 import {
+  VendorContentWorkspaceRefSchema,
   VendorLockRecordSchema,
   VendorProvenanceRecordSchema,
   VendorRecordBindingSchema,
   VendorSourceDeclarationSchema,
+  VendorSourceStatusSchema,
   VendorStatusInputSchema,
   VendorStatusResultSchema,
   VendorUpdateInputSchema,
+  VendorUpdateIssueSchema,
   VendorUpdateResultSchema,
 } from "../../../src/service/modules/vendors/schemas";
+
+type VendorStatusIssues = Extract<VendorStatusResult, { kind: "Rejected" }>["issues"];
+type VendorUpdateIssues = Extract<VendorUpdateResult, { kind: "Rejected" }>["issues"];
+
+// @ts-expect-error Rejected status always reports at least one issue.
+const emptyStatusIssues: VendorStatusIssues = [];
+// @ts-expect-error Rejected update always reports at least one issue.
+const emptyUpdateIssues: VendorUpdateIssues = [];
+void emptyStatusIssues;
+void emptyUpdateIssues;
 
 const contentWorkspace = Object.freeze({
   locator: "/tmp/content-workspace",
@@ -61,6 +90,33 @@ const provenance = Object.freeze({
 });
 
 describe("vendor procedure schema boundary", () => {
+  it("derives public vendor request and result types from the contract schemas", () => {
+    type ContractInputs = InferContractRouterInputs<typeof contract>;
+    type ContractOutputs = InferContractRouterOutputs<typeof contract>;
+
+    expectTypeOf<VendorContentWorkspaceRef>().toEqualTypeOf<
+      Static<typeof VendorContentWorkspaceRefSchema>
+    >();
+    expectTypeOf<VendorStatusRequest>().toEqualTypeOf<Static<typeof VendorStatusInputSchema>>();
+    expectTypeOf<VendorUpdateRequest>().toEqualTypeOf<Static<typeof VendorUpdateInputSchema>>();
+    expectTypeOf<VendorSourceStatus>().toEqualTypeOf<Static<typeof VendorSourceStatusSchema>>();
+    expectTypeOf<VendorUpdateIssue>().toEqualTypeOf<Static<typeof VendorUpdateIssueSchema>>();
+    expectTypeOf<VendorStatusResult>().toEqualTypeOf<Static<typeof VendorStatusResultSchema>>();
+    expectTypeOf<VendorUpdateResult>().toEqualTypeOf<Static<typeof VendorUpdateResultSchema>>();
+    expectTypeOf<ContractInputs["status"]>().toEqualTypeOf<
+      Static<typeof VendorStatusInputSchema>
+    >();
+    expectTypeOf<ContractOutputs["status"]>().toEqualTypeOf<
+      Static<typeof VendorStatusResultSchema>
+    >();
+    expectTypeOf<ContractInputs["update"]>().toEqualTypeOf<
+      Static<typeof VendorUpdateInputSchema>
+    >();
+    expectTypeOf<ContractOutputs["update"]>().toEqualTypeOf<
+      Static<typeof VendorUpdateResultSchema>
+    >();
+  });
+
   it("keeps status read-only and update selection explicit", () => {
     expect(Value.Check(VendorStatusInputSchema, { contentWorkspace })).toBe(true);
     expect(Value.Check(VendorStatusInputSchema, {
@@ -83,6 +139,31 @@ describe("vendor procedure schema boundary", () => {
       contentWorkspace,
       sourceIds: ["upstream-"],
     })).toBe(false);
+  });
+
+  it("rejects malformed and surplus request authority at the callable boundary", async () => {
+    const invalidStatusRequests = [
+      { contentWorkspace, sourceIds: ["upstream"] },
+      { contentWorkspace: { ...contentWorkspace, extra: true } },
+      { contentWorkspace: { ...contentWorkspace, locator: "relative/workspace" } },
+    ];
+    const invalidUpdateRequests = [
+      { contentWorkspace, sourceIds: ["upstream"], extra: true },
+      { contentWorkspace: { ...contentWorkspace, extra: true }, sourceIds: ["upstream"] },
+      { contentWorkspace, sourceIds: ["upstream", "upstream"] },
+      { contentWorkspace, sourceIds: "upstream" },
+    ];
+
+    for (const request of invalidStatusRequests) {
+      expect(Value.Check(VendorStatusInputSchema, request)).toBe(false);
+      const validated = await schema(VendorStatusInputSchema)["~standard"].validate(request);
+      expect("issues" in validated).toBe(true);
+    }
+    for (const request of invalidUpdateRequests) {
+      expect(Value.Check(VendorUpdateInputSchema, request)).toBe(false);
+      const validated = await schema(VendorUpdateInputSchema)["~standard"].validate(request);
+      expect("issues" in validated).toBe(true);
+    }
   });
 
   it("rejects ambiguous workspace locators, refs, object ids, and release-input paths", () => {
@@ -166,6 +247,76 @@ describe("vendor procedure schema boundary", () => {
       unsettledPaths: [],
       issues: [{ code: "RestorationFailed", sourceId: "upstream", detail: "restore failed" }],
     })).toBe(false);
+  });
+
+  it("rejects malformed and surplus fields throughout public result branches", () => {
+    const invalidStatusResults = [
+      {
+        kind: "VendorStatus",
+        sources: [{
+          sourceId: "upstream",
+          classification: "Current",
+          admitted,
+          observed,
+          extra: true,
+        }],
+      },
+      {
+        kind: "VendorStatus",
+        sources: [{
+          sourceId: "upstream",
+          classification: "Current",
+          admitted: { ...admitted, extra: true },
+          observed,
+        }],
+      },
+      {
+        kind: "Rejected",
+        issues: [{ code: "WrongRepository", detail: "wrong repository", extra: true }],
+      },
+      {
+        kind: "Rejected",
+        issues: [{ code: "WrongRepository", detail: "" }],
+      },
+      {
+        kind: "Rejected",
+        issues: [{ code: "WrongRepository", detail: "wrong repository" }],
+        sourceIds: ["upstream"],
+      },
+    ];
+    const invalidUpdateResults = [
+      { kind: "ReadOnlyConverged", sourceIds: ["upstream"], changedPaths: [] },
+      {
+        kind: "AuthoredReviewableChanges",
+        sourceIds: ["upstream"],
+        changedPaths: ["plugins/upstream", "plugins/upstream"],
+      },
+      {
+        kind: "Rejected",
+        sourceIds: ["upstream"],
+        issues: [{ code: "UnknownFailure", detail: "unknown" }],
+      },
+      {
+        kind: "FailedRestored",
+        sourceIds: ["upstream"],
+        restoredPaths: ["plugins/upstream"],
+        issues: [{ code: "AuthoringFailed", detail: "write failed", sourceId: "UPSTREAM" }],
+      },
+      {
+        kind: "RestorationFailed",
+        sourceIds: ["upstream"],
+        unsettledPaths: ["plugins/upstream"],
+        issues: [{ code: "RestorationFailed", detail: "restore failed" }],
+        extra: true,
+      },
+    ];
+
+    for (const result of invalidStatusResults) {
+      expect(Value.Check(VendorStatusResultSchema, result)).toBe(false);
+    }
+    for (const result of invalidUpdateResults) {
+      expect(Value.Check(VendorUpdateResultSchema, result)).toBe(false);
+    }
   });
 
   it("closes declaration, lock, provenance, and binding records field by field", () => {
