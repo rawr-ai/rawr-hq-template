@@ -24,7 +24,7 @@ correction is recorded in [[authority-amendment]].
 - **Exterior:** controller-store transport, alternate launchers, issuer lineage,
   hosted approval replay, promotion attestations, generalized undo, app/runtime
   composition, and protected candidate materialization.
-- **Falsifiers:** a second executable selector; a transfer graph; personal
+- **Falsifiers:** a second executable selector; cross-store artifact transfer; personal
   Template code; provider mutation outside native commands; omitted members left
   enabled; or a converged repeat that mutates.
 - **Proof boundary:** focused repository/channel behavior, TypeScript, lint,
@@ -181,7 +181,8 @@ observed-Git resolution and removes the v1 ceremony.
 The old v1 current-main resolver, acceptance-request/evidence dependency,
 promotion attestation, `attest-promotion`, receipt-owned explicit `retire`,
 managed `export`, and capsule `undo` are deleted from service contracts,
-routers, public exports, client, command discovery, and the reachable graph.
+routers, public exports, client, command discovery, and every reachable command
+or service surface.
 Canonical closed-set sync owns omitted-member cleanup. Provider operations emit
 no capsule and recover through live reinspection plus exact-prefix convergence.
 There is no stub, alias, forwarding route, or fallback.

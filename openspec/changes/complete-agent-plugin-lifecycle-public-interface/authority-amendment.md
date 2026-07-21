@@ -23,7 +23,7 @@ The original packet and repository-separation identities remain recorded in
   controller-store transport, alternate launchers, issuer lineage, hosted
   replay, promotion attestations, undo capsules, global coordination, and
   protected candidate materialization.
-- **Falsifiers:** a second selector, transfer graph, personal controller code,
+- **Falsifiers:** a second selector, cross-store artifact transfer, personal controller code,
   non-native provider mutation, stale omitted member, mutating repeat, reachable
   lifecycle export/undo, or a native-home aggregate/scan.
 - **Closure:** retained Template interface landed/installed; personal content
@@ -32,7 +32,7 @@ The original packet and repository-separation identities remain recorded in
   counter and native mutating-call counter at zero; repositories,
   stacks, and worktrees clean and drained.
 
-## Authority Ledger
+## State And Capability Owners
 
 | Concern | Truth owner |
 | --- | --- |
@@ -88,7 +88,7 @@ This ratchet governs [[tasks#3B. Observed-Git Selection And Cutover]],
 | Deterministic official manifest | Keep |
 | Owner-local CLI test corrections | Keep |
 | Controller-build hostile/native acceptance harness | Retire; stable install/reentry tests and owner-scoped native settlement replace it |
-| Transfer graph and cross-store A/B | Retire |
+| Cross-store artifact transfer and A/B harness | Retire |
 | Public evidence handle as channel authority | Retire |
 | Second launcher/caller bindings/refusal matrix | Retire |
 | Issuer/hosted/promotion selection chain | Retire from reachable lifecycle |

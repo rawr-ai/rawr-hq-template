@@ -205,7 +205,7 @@ plans, phase events, inventory, status, and receipt results. Canonical status
 returns only terminal classification and issues; canonical sync adds only its
 exact native applied prefix and terminal verification result. Canonical results
 MUST NOT contain or infer receipts, persisted inventory, or a replacement event
-graph. One target's success, failure, capability/provenance observation, or
+history. One target's success, failure, capability/provenance observation, or
 cleanup proof MUST NOT authorize or falsify another. A partial run MUST be
 non-success and MUST preserve verified successful targets without claiming
 failed targets advanced or were rolled back.

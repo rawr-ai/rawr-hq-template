@@ -1,7 +1,8 @@
 ## 1. T6A: Thin Authority Record
 
 - [x] 1.1 Record packet provenance, repository separation, the corrected
-  objective/hard core/exterior/falsifiers/authority ledger, proof boundary, and
+  objective, hard core, exterior, falsifiers, state and capability owners,
+  acceptance boundary, and
   closure in [[authority-amendment]], [[design]], and [[README]].
 - [x] 1.2 Delete transfer, evidence-handle, second-launcher, caller-binding, and
   installed refusal-matrix requirements from the active C6 design.
@@ -214,7 +215,7 @@ standing-review gate is complete.
   replaying capsule state.
 - [x] 5.3 Retire `rawr agent plugins export` and
   `rawr agent plugins undo` from command discovery, parsing/projection, the oRPC
-  contract/router/client graph, service context, controller composition, public
+  contract, router, client, service context, controller composition, public
   package exports, and active behavioral oracles. Delete export/capsule runtime
   machinery without a stub, alias, forwarder, fallback, or replacement
   publication framework. Preserve `rawr agent plugins package` and unrelated
@@ -260,15 +261,22 @@ standing-review gate is complete.
 - [x] 8.1a Submit every retained Template continuation node with `--ai`, land
   through PRs #390-#396 on canonical Template `main` `2f9e303a...`, and drain
   the local continuation stack/worktrees without disturbing unrelated work.
-- [ ] 8.1b Land the bounded installed-asset mode repair, publish and verify the
+- [x] 8.1b Land the bounded installed-asset mode repair, publish and verify the
   immutable controller from exact canonical Template `main`, then install/select
   that exact controller through the existing stable installer.
-- [ ] 8.2 Replace the obsolete personal hook through the installed Template
-  interface; land the personal content/release-input slice without bypass.
-- [ ] 8.3 Build/test the complete current personal-main set, including
+- [ ] 8.1c Land the final TypeBox boundary-ownership, deterministic Nx-check,
+  and standard operational-terminology continuation. Provider, governance,
+  packaging, and vendor boundaries are checkpointed; convert the remaining
+  releases build/check/retention boundary, then publish and select the resulting
+  immutable controller before canonical settlement. Add no lifecycle state or
+  provider mutation mechanism.
+- [ ] 8.2 Keep the obsolete personal hook replacement on its landed Template
+  interface and land the reviewed personal current-main record through its
+  required remote check without bypass.
+- [x] 8.3 Build/test the complete current personal-main set, including
   `cognition:state-machine-design`, in one durable non-repository controller
   data root. Keep Inngest excluded while `HF01_PENDING`.
-- [ ] 8.4 Run complete-test with real Codex and Claude binaries in explicit
+- [x] 8.4 Run complete-test with real Codex and Claude binaries in explicit
   disposable homes seeded through supported native commands with one omitted
   RAWR-managed member and a stale same-ID cognition release. Verify cognition's
   selected native refresh and provider-visible bytes while the omitted member is

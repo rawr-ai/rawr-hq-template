@@ -17,7 +17,7 @@
 **Migration**: Build/test exact landed content, then land a record selecting its immutable set.
 
 ### Requirement: Current-main resolution is fixed, transitive, and read-only
-**Reason**: The v1 transitive policy/request/evidence/promotion graph is replaced by one direct selector.
+**Reason**: The v1 transitive policy, request, evidence, and promotion chain is replaced by one direct selector.
 **Migration**: Use the `agent-plugin-channel-selection` v2 resolution requirement.
 
 ### Requirement: Promotion and status never mutate
