@@ -1,34 +1,45 @@
 import { ReadonlyObject, Refine, Type, type Static } from "typebox";
 
+import { NonEmptyReadonlyArray } from "../../../../model/dto/structural";
 import {
+  ArtifactRefSchema,
   MAX_RELEASE_MEMBERS,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  ReleaseArtifactRefSchema,
   ReleaseIssueSchema,
-  type ArtifactRef,
-  type PluginId,
-  type ReleaseArtifactRef,
 } from "../../../../shared/release";
 import {
+  ContentWorkspacePolicySchema,
+  GitCommitIdSchema,
+  GitTreeIdSchema,
   PluginIdSchema,
+  QualifiedHeadRefSchema,
+  RepositoryIdentitySchema,
   SourceEligibilityIssueSchema,
-  type ContentWorkspacePolicy,
-  type SourceEligibilityIssue,
 } from "../../../../model/dto/releases/content-workspace";
-import {
-  StagedContentWorkspacePolicySchema,
-  type StagedContentWorkspacePolicy,
-} from "./staged-content-workspace";
+import { StagedContentWorkspacePolicySchema } from "./staged-content-workspace";
 
-export type BuildMode =
-  | Readonly<{ kind: "targeted"; pluginId: PluginId }>
-  | Readonly<{ kind: "complete-set" }>;
+export const BuildModeSchema = Type.Union([
+  ReadonlyObject(Type.Object(
+    { kind: Type.Literal("targeted"), pluginId: PluginIdSchema },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    { kind: Type.Literal("complete-set") },
+  ), { additionalProperties: false }),
+]);
 
-export interface AgentPluginCheckRequest {
-  readonly contentWorkspace: ContentWorkspacePolicy;
-  readonly mode: BuildMode;
-}
+export const CheckInputSchema = ReadonlyObject(Type.Object(
+  {
+    contentWorkspace: ContentWorkspacePolicySchema,
+    mode: BuildModeSchema,
+  },
+), { additionalProperties: false });
 
-export type AgentPluginBuildRequest = AgentPluginCheckRequest;
+export const BuildInputSchema = CheckInputSchema;
+
+export type BuildMode = Static<typeof BuildModeSchema>;
+export type AgentPluginCheckRequest = Static<typeof CheckInputSchema>;
+export type AgentPluginBuildRequest = Static<typeof BuildInputSchema>;
 
 const Uint8ArraySchema = Refine(
   Type.Unsafe<Uint8Array>(Type.Unknown()),
@@ -66,8 +77,7 @@ export const ReleaseInputRecordResultSchema = Type.Union([
   ReadonlyObject(Type.Object(
     {
       ok: Type.Literal(false),
-      issues: ReadonlyObject(Type.Array(ReleaseIssueSchema), {
-        minItems: 1,
+      issues: NonEmptyReadonlyArray(ReleaseIssueSchema, {
         maxItems: 200_000,
       }),
     },
@@ -109,8 +119,7 @@ export const ReleaseInputRefreshResultSchema = Type.Union([
     {
       kind: Type.Literal("RepositoryIneligible"),
       mode: Type.Literal("staged"),
-      issues: ReadonlyObject(Type.Array(SourceEligibilityIssueSchema), {
-        minItems: 1,
+      issues: NonEmptyReadonlyArray(SourceEligibilityIssueSchema, {
         maxItems: 200_000,
       }),
     },
@@ -118,8 +127,7 @@ export const ReleaseInputRefreshResultSchema = Type.Union([
   ReadonlyObject(Type.Object(
     {
       kind: Type.Literal("ReleaseInputRejected"),
-      issues: ReadonlyObject(Type.Array(ReleaseIssueSchema), {
-        minItems: 1,
+      issues: NonEmptyReadonlyArray(ReleaseIssueSchema, {
         maxItems: 200_000,
       }),
     },
@@ -136,92 +144,152 @@ export const ReleaseInputRefreshResultSchema = Type.Union([
 export type ReleaseInputRefreshRequest = Static<typeof ReleaseInputRefreshInputSchema>;
 export type ReleaseInputRefreshResult = Static<typeof ReleaseInputRefreshResultSchema>;
 
-export type RepositoryCheckRequest =
-  | Readonly<{
-    kind: "staged";
-    contentWorkspace: StagedContentWorkspacePolicy;
-  }>
-  | Readonly<{
-    kind: "clean";
-    contentWorkspace: ContentWorkspacePolicy;
-  }>;
+export const RepositoryCheckInputSchema = Type.Union([
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("staged"),
+      contentWorkspace: StagedContentWorkspacePolicySchema,
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("clean"),
+      contentWorkspace: ContentWorkspacePolicySchema,
+    },
+  ), { additionalProperties: false }),
+]);
 
-export type RepositoryCheckResult =
-  | Readonly<{
-    kind: "StagedRepositoryEligible";
-    repositoryIdentity: StagedContentWorkspacePolicy["repositoryIdentity"];
-    refName: string;
-    headCommit: ContentWorkspacePolicy["sourceCommit"];
-    headTree: ContentWorkspacePolicy["sourceTree"];
-    stagedBinding: string;
-  }>
-  | Readonly<{
-    kind: "CleanRepositoryEligible";
-    repositoryIdentity: ContentWorkspacePolicy["repositoryIdentity"];
-    refName: string;
-    sourceCommit: ContentWorkspacePolicy["sourceCommit"];
-    sourceTree: ContentWorkspacePolicy["sourceTree"];
-    eligibilityBinding: string;
-  }>
-  | Readonly<{
-    kind: "RepositoryIneligible";
-    mode: "staged" | "clean";
-    issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]];
-  }>
-  | Readonly<{
-    kind: "SourceChanged";
-    mode: "staged";
-    detail: string;
-  }>;
+const SourceEligibilityIssueListSchema = NonEmptyReadonlyArray(SourceEligibilityIssueSchema, {
+  maxItems: 200_000,
+});
 
-export type BuildIssue =
-  | Readonly<{ kind: "SourceEligibility"; issue: SourceEligibilityIssue }>
-  | Readonly<{ kind: "ReleaseConstruction"; detail: string }>
-  | Readonly<{ kind: "ArtifactStore"; detail: string; cleanupFailure?: string }>;
+export const RepositoryCheckResultSchema = Type.Union([
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("StagedRepositoryEligible"),
+      repositoryIdentity: RepositoryIdentitySchema,
+      refName: QualifiedHeadRefSchema,
+      headCommit: GitCommitIdSchema,
+      headTree: GitTreeIdSchema,
+      stagedBinding: Type.String({ minLength: 1 }),
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("CleanRepositoryEligible"),
+      repositoryIdentity: RepositoryIdentitySchema,
+      refName: QualifiedHeadRefSchema,
+      sourceCommit: GitCommitIdSchema,
+      sourceTree: GitTreeIdSchema,
+      eligibilityBinding: Type.String({ minLength: 1 }),
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("RepositoryIneligible"),
+      mode: Type.Union([Type.Literal("staged"), Type.Literal("clean")]),
+      issues: SourceEligibilityIssueListSchema,
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("SourceChanged"),
+      mode: Type.Literal("staged"),
+      detail: Type.String({ minLength: 1 }),
+    },
+  ), { additionalProperties: false }),
+]);
 
-export type CheckResult =
-  | Readonly<{
-    kind: "EligibleReport";
-    mode: BuildMode;
-    candidate: ArtifactRef;
-    eligibilityBinding: string;
-  }>
-  | Readonly<{
-    kind: "IneligibleReport";
-    mode: BuildMode;
-    issues: readonly [BuildIssue, ...BuildIssue[]];
-  }>;
+export const BuildIssueSchema = Type.Union([
+  ReadonlyObject(Type.Object(
+    { kind: Type.Literal("SourceEligibility"), issue: SourceEligibilityIssueSchema },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    { kind: Type.Literal("ReleaseConstruction"), detail: Type.String({ minLength: 1 }) },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("ArtifactStore"),
+      detail: Type.String({ minLength: 1 }),
+      cleanupFailure: Type.Optional(Type.String({ minLength: 1 })),
+    },
+  ), { additionalProperties: false }),
+]);
 
-export type BuildResult =
-  | Readonly<{
-    kind: "RejectedBeforePublication";
-    mode: BuildMode;
-    issues: readonly [BuildIssue, ...BuildIssue[]];
-  }>
-  | Readonly<{
-    kind: "PublicationIncomplete";
-    mode: Readonly<{ kind: "complete-set" }>;
-    newlyPublished: readonly ReleaseArtifactRef[];
-    preExisting: readonly ReleaseArtifactRef[];
-    requestedSetRefAbsent: true;
-    issues: readonly [BuildIssue, ...BuildIssue[]];
-  }>
-  | Readonly<{
-    kind: "PublicationUnsettled";
-    mode: BuildMode;
-    observedVerifiedReleases: readonly ReleaseArtifactRef[];
-    requestedFinalCommit: "Unknown";
-    issues: readonly [BuildIssue, ...BuildIssue[]];
-  }>
-  | Readonly<{
-    kind: "Published";
-    mode: BuildMode;
-    ref: ArtifactRef;
-    newlyPublished: readonly ReleaseArtifactRef[];
-    preExisting: readonly ReleaseArtifactRef[];
-  }>
-  | Readonly<{
-    kind: "ReadOnlyConverged";
-    mode: BuildMode;
-    ref: ArtifactRef;
-  }>;
+const IssueListSchema = NonEmptyReadonlyArray(BuildIssueSchema, {
+  maxItems: 200_000,
+});
+const ReleaseRefListSchema = ReadonlyObject(Type.Array(
+  ReleaseArtifactRefSchema,
+), { maxItems: 1_024 });
+
+export const CheckResultSchema = Type.Union([
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("EligibleReport"),
+      mode: BuildModeSchema,
+      candidate: ArtifactRefSchema,
+      eligibilityBinding: Type.String({ minLength: 1 }),
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("IneligibleReport"),
+      mode: BuildModeSchema,
+      issues: IssueListSchema,
+    },
+  ), { additionalProperties: false }),
+]);
+
+export const BuildResultSchema = Type.Union([
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("RejectedBeforePublication"),
+      mode: BuildModeSchema,
+      issues: IssueListSchema,
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("PublicationIncomplete"),
+      mode: ReadonlyObject(Type.Object(
+        { kind: Type.Literal("complete-set") },
+      ), { additionalProperties: false }),
+      newlyPublished: ReleaseRefListSchema,
+      preExisting: ReleaseRefListSchema,
+      requestedSetRefAbsent: Type.Literal(true),
+      issues: IssueListSchema,
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("PublicationUnsettled"),
+      mode: BuildModeSchema,
+      observedVerifiedReleases: ReleaseRefListSchema,
+      requestedFinalCommit: Type.Literal("Unknown"),
+      issues: IssueListSchema,
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("Published"),
+      mode: BuildModeSchema,
+      ref: ArtifactRefSchema,
+      newlyPublished: ReleaseRefListSchema,
+      preExisting: ReleaseRefListSchema,
+    },
+  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object(
+    {
+      kind: Type.Literal("ReadOnlyConverged"),
+      mode: BuildModeSchema,
+      ref: ArtifactRefSchema,
+    },
+  ), { additionalProperties: false }),
+]);
+
+export type RepositoryCheckRequest = Static<typeof RepositoryCheckInputSchema>;
+export type RepositoryCheckResult = Static<typeof RepositoryCheckResultSchema>;
+export type BuildIssue = Static<typeof BuildIssueSchema>;
+export type CheckResult = Static<typeof CheckResultSchema>;
+export type BuildResult = Static<typeof BuildResultSchema>;
