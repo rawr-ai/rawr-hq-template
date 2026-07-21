@@ -50,14 +50,20 @@ conversion is sealed; landing and controller publication remain open.
 | Publication repair | `codex/c6-preserve-installed-asset-modes`; parent is the landed continuation above |
 | Landed publication repair | PR #397; canonical Template `main` `04e37f596d03a352a9b6cdb37ee7cdff54b67c28`; tree `c41e851580aa80e32fb20c1e3616423c1b6268ff`; ratchet run `29737814922` |
 | Release-input schema prerequisite | `codex/c6-typebox-release-input`; parent is the landed publication repair |
-| Current TypeBox continuation | `d6d7f7fe` through `01a6e41f`, then `47eb0ee5`, `fc73604a`, `51bc8811`, and `507a686b`; all five lifecycle modules now keep public structure/types schema-owned while domain normalization remains owner-local |
-| Lifecycle Nx check ratchet | `codex/c6-nx-lifecycle-check-ratchet` / `5fa55824` |
-| Standard release-verification terminology | `codex/c6-standard-release-verification-terms` / `40380a99` |
-| Required-ratchet correction | `codex/c6-strengthen-lifecycle-ratchet` / `73c5816e` |
-| Evidence protocol correction | `codex/c6-rename-controller-evidence-protocol` / `48f5dee7` |
-| Standard retention result | `codex/c6-standard-retention-result` / `389b1fb2` |
-| Positive topology cleanup | `codex/c6-remove-placeholder-common-layer` / `1c88cba4` |
-| Release TypeBox boundary | `codex/c6-typebox-release-contracts` / `507a686b` |
+| Current TypeBox continuation | `f1156354` through `c928b233`, then `31dde416`, `940041af`, `5aeeed79`, and `ec1e72cf`; all five lifecycle modules now keep public structure/types schema-owned while domain normalization remains owner-local |
+| Lifecycle Nx check ratchet | `codex/c6-nx-lifecycle-check-ratchet` / `c1bf97f5` |
+| Standard release-verification terminology | `codex/c6-standard-release-verification-terms` / `80ec5100` |
+| Required-ratchet correction | `codex/c6-strengthen-lifecycle-ratchet` / `41cc3d6a` |
+| Evidence protocol correction | `codex/c6-rename-controller-evidence-protocol` / `d494810f` |
+| Standard retention result | `codex/c6-standard-retention-result` / `65d3006c` |
+| Positive topology cleanup | `codex/c6-remove-placeholder-common-layer` / `ded4b04f` |
+| Release TypeBox boundary | `codex/c6-typebox-release-contracts` / `ec1e72cf` |
+| Provider diagnostic boundary | `codex/c6-bound-provider-diagnostics` / `c3a171cc` |
+| Lifecycle policy cache inputs | `codex/c6-hash-lifecycle-policy-roots` / `8176ce5e` |
+| Habitat authority correction | `codex/c6-correct-habitat-authority` / `280ac34b` |
+| Packaging diagnostic boundary | `codex/c6-bound-packaging-contracts` / `0e92b1cf` |
+| Governance diagnostic boundary | `codex/c6-bound-governance-contracts` / `69358753` |
+| Release diagnostic boundary | `codex/c6-bound-release-contracts` / `c199e5c1` |
 | Installed controller | `dc14ccd20df37da774749908b5660494d60ce2dadb3c3cef2c5b76bca52f69de` from landed Template `ec58d06c` |
 | Personal checkpoint | independent personal `main` `a4201247`; PR #182 commit `9378d33b`, remote job blocked before execution without bypass |
 | Native hook-claim correction | `codex/c6-scope-native-hook-claims`; parent is canonical Template `main` `b7b6524db818d7119340f2afc572a1159c708785` |
@@ -164,8 +170,10 @@ follow-up work.
 | --- | --- |
 | TypeBox boundary ownership | Releases, providers, governance, vendors, and packaging use closed schemas as their public structural/type authority. Handlers receive schema-derived inputs; canonical brands, target sorting, duplicate refusal, canonicalization, request digests, retention ordering, and aggregate-byte limits remain domain policy. |
 | Provider target decoding | Stored target decoding uses the owning TypeBox schemas and then constructs the branded target digest. The prior second closed-object/provider/path validator is removed without a compatibility reader. |
-| Behavior | The no-cache integrated lifecycle check passes: three locked Habitat rules, source and test type programs, lint, and 39 files / 426 tests. The release-only behavioral gate passes 6 files / 53 tests; the existing CLI retention procedure suite passes all 7 transition cases, including unavailable and throwing readers, malformed or missing pins, deterministic collection, and successful pin expansion. |
-| Required Nx check | Production and test type programs remain independently required. Cache keys include TypeScript and Habitat toolchains; the Habitat structure target additionally hashes the lifecycle and CLI source roots it scans, its three exact policy trees, and its check/provision/release mechanics. Repository separation is part of the required root ratchet, while the live exact-Git target remains noncacheable because `/usr/bin/git` and observed repository state are external inputs. The final warm required ratchet completed in 86.84 seconds: Nx restored 27/29 lint results, 41/43 type results, the Habitat consumer, and the lifecycle structure/unit results, then reran the live Git cases. No retry, timeout increase, or test weakening was used. |
+| Behavior | The integrated lifecycle check passes all three locked Habitat rules, source and test type programs, lint, and 40 files / 439 tests: 38 owner-local unit files / 418 tests plus 2 live-Git files / 21 tests. The final diagnostic-boundary gate passes 6 owner-local files / 57 tests. The existing CLI retention procedure suite still passes all 7 transition cases, including unavailable and throwing readers, malformed or missing pins, deterministic collection, and successful pin expansion. |
+| Required Nx check | Production and test type programs remain independently required. Cache keys include TypeScript and Habitat toolchains; the Habitat structure target hashes the lifecycle and CLI source roots it scans, the complete blueprint and RAWR lifecycle policy roots, its check/provision/release mechanics, and the Bun toolchain. Repository separation is part of the required root ratchet, while the live exact-Git target remains noncacheable because `/usr/bin/git` and observed repository state are external inputs. A warm required ratchet at source-equivalent tip `c199e5c1` restored 27/29 lint results, 41/43 type results, the Habitat consumer, and 5/8 lifecycle tasks, then passed all 21 live-Git cases in 51.51 seconds. No retry, timeout increase, or test weakening was used. |
+| Habitat consumer | A remote audit on 2026-07-21 confirms `habitat-sdk-v0.1.1` is still the only immutable release. Template already pins its source `177d08eafcaf270daec31d76524065de99aeaff8`, Habitat tree `ee8c5d1b236c3de46684e06f089d859ab9a8f90e`, and Bun 1.4.0 build. Civ7's newer committed `tools/habitat` implementation is at `5cf415e5b951eea9112e07a69520cd1c40d054d7`, subtree `153688c31d0d6b819ddb7ad0b00b4bc7e7386287`, but has no immutable release. Magic Migration's uncommitted blueprint policy is peer reference material and was not copied. No source vendoring or branch pin entered this stack; see [[.habitat/AUTHORITY|the Habitat authority boundary]]. |
+| Standing reviews | Architecture/authority, TypeScript/TypeBox/oRPC, behavior/testing/state-machine, and structural/Habitat reviewers report no P0-P3 for the source-equivalent continuation now ending at `c199e5c1`. The reviews confirm bounded public diagnostics, owner-local TypeBox and behavior checks, positive five-module topology, monotonic Nx inputs, and no new state owner, aggregate command surface, compatibility path, repository coupling, or app/runtime work. |
 | Scope | No Personal repository, provider home, current-main channel, controller selector, app/runtime surface, destination, or protected-lane input was mutated by this continuation. |
 
 ## Legacy Export Retirement Admission
@@ -971,9 +979,11 @@ owner.
 
 T6A closed its record reviews with no remaining P1/P2. Later standing reviews
 independently closed provider capsule retirement, native convergence, task
-5.1's provider refusal, the deterministic manifest, and each retained C5
-context checkpoint. Those reviews do not pre-approve the open 2A work or tasks
-5.2-5.4. Landing and settlement still require their own proof.
+5.1's provider refusal, the deterministic manifest, each retained C5 context
+checkpoint, and the final five-module TypeBox/diagnostic continuation at exact
+tip `c199e5c1`. The source continuation is sealed with no remaining P0-P3.
+Landing, immutable controller publication, Personal checkpointing, and native
+settlement still require their own operational verification.
 
 ## Closure Oracle
 
