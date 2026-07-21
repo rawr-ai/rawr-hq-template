@@ -4,7 +4,6 @@ import { ReadonlyObject, Type, type Static } from "typebox";
 import {
   CompleteSetArtifactRefInputSchema,
   normalizeArtifactRef,
-  parseArtifactRef,
   parseRepositoryIdentity,
   ReleaseArtifactRefInputSchema,
   type CompleteSetArtifactRef,
@@ -13,12 +12,10 @@ import {
 } from "../../../../shared/release";
 
 import { canonicalDigest, compareCanonical, type CanonicalValue } from "../helpers/canonical";
-import { boundedArray, canonicalString, exactRecord } from "../helpers/parse";
-import { failure, firstIssue, issue, success, type DeploymentResult, type ProviderDeploymentIssue } from "../errors/deployment-result";
+import { failure, issue, success, type DeploymentResult } from "../errors/deployment-result";
 import {
   ProviderTargetsInputSchema,
   normalizeProviderTargets,
-  parseProviderTargets,
   targetValue,
   type ProviderTarget,
 } from "./provider-target";
@@ -123,43 +120,7 @@ export type CanonicalStatusRequest = Readonly<Omit<CanonicalStatusInput, "locato
   readonly requestDigest: ProviderRequestDigest;
 }>;
 
-const MAX_RELEASES = 1_024;
-const EVALUATION_PROFILE_PATTERN = /^[a-z0-9][a-z0-9._:@/-]*$/u;
-const REPOSITORY_PATH_PATTERN = /^\/(?:[^/\u0000-\u001f\u007f]+\/)*[^/\u0000-\u001f\u007f]+$/u;
 const pathEncoder = new TextEncoder();
-
-export function parseProviderDeploymentRequest(input: unknown): DeploymentResult<ProviderDeploymentRequest> {
-  if (input === null || typeof input !== "object" || Array.isArray(input)) {
-    return failure([issue("EXPECTED_OBJECT", "request", "Deployment request must be a closed object")]);
-  }
-  const kind = Object.hasOwn(input, "kind") ? (input as { readonly kind?: unknown }).kind : undefined;
-  switch (kind) {
-    case "targeted-test":
-      return parseTargetedTest(input);
-    case "complete-test":
-      return parseCompleteTest(input);
-    case "canonical-sync":
-      return parseCanonicalSync(input);
-    default:
-      return failure([issue("INVALID_MODE", "request.kind", "Deployment mode must be targeted-test, complete-test, or canonical-sync", "targeted-test|complete-test|canonical-sync", String(kind))]);
-  }
-}
-
-export function parseCanonicalStatusRequest(input: unknown): DeploymentResult<CanonicalStatusRequest> {
-  const issues: ProviderDeploymentIssue[] = [];
-  if (!exactRecord(input, ["channel", "kind", "locator", "targets"], "request", issues)) {
-    return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Status request is invalid")));
-  }
-  if (input.kind !== "canonical-status") issues.push(issue("INVALID_MODE", "request.kind", "Status request kind must be canonical-status", "canonical-status", String(input.kind)));
-  const channel = parseChannel(input.channel, issues);
-  const locator = parseLocator(input.locator, issues);
-  const targets = parseTargets(input.targets, issues);
-  if (issues.length > 0 || channel === undefined || locator === undefined || targets === undefined) {
-    return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Status request is invalid")));
-  }
-  const body = { kind: "canonical-status", channel, locator, targets } as const;
-  return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
-}
 
 export function normalizeCompleteTestRequest(
   input: CompleteTestInput,
@@ -218,114 +179,20 @@ export function normalizeCanonicalStatusRequest(
   return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
 }
 
-function parseTargetedTest(input: unknown): DeploymentResult<TargetedTest> {
-  const issues: ProviderDeploymentIssue[] = [];
-  if (!exactRecord(input, ["evaluationProfile", "kind", "releases", "targets"], "request", issues)) {
-    return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Targeted-test request is invalid")));
-  }
-  const rawRefs = boundedArray(input.releases, "request.releases", MAX_RELEASES, issues);
-  const releases: ReleaseArtifactRef[] = [];
-  for (const [index, candidate] of (rawRefs ?? []).entries()) {
-    const parsed = parseArtifactRef(candidate);
-    if (!parsed.ok) {
-      issues.push(...parsed.issues.map((entry) => issue("INVALID_ARTIFACT_REF", `request.releases[${index}].${entry.path}`, entry.message)));
-    } else if (parsed.value.kind !== "release") {
-      issues.push(issue("ARTIFACT_KIND_MISMATCH", `request.releases[${index}]`, "Targeted test requires release artifact refs", "release", parsed.value.kind));
-    } else {
-      releases.push(parsed.value);
-    }
-  }
-  releases.sort((left, right) => compareCanonical(left.releaseDigest, right.releaseDigest));
-  for (let index = 1; index < releases.length; index += 1) {
-    if (releases[index - 1]?.releaseDigest === releases[index]?.releaseDigest) {
-      issues.push(issue("DUPLICATE_MEMBER", "request.releases", "Targeted release refs must be distinct", "distinct release digests", releases[index]!.releaseDigest));
-    }
-  }
-  const evaluationProfile = parseEvaluationProfile(input.evaluationProfile, issues);
-  const targets = parseTargets(input.targets, issues);
-  if (issues.length > 0 || releases.length === 0 || evaluationProfile === undefined || targets === undefined) {
-    return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Targeted-test request is invalid")));
-  }
-  const body = { kind: "targeted-test", releases: Object.freeze(releases), evaluationProfile, targets } as const;
+export function normalizeCanonicalSyncRequest(
+  input: CanonicalSyncInput,
+): DeploymentResult<CanonicalSync> {
+  const targets = normalizeProviderTargets(input.targets, "request.targets");
+  if (!targets.ok) return targets;
+  const locator = normalizeContentRecordLocator(input.locator);
+  if (!locator.ok) return locator;
+  const body = {
+    kind: input.kind,
+    channel: input.channel,
+    locator: locator.value,
+    targets: targets.value,
+  } as const;
   return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
-}
-
-function parseCompleteTest(input: unknown): DeploymentResult<CompleteTest> {
-  const issues: ProviderDeploymentIssue[] = [];
-  if (!exactRecord(input, ["evaluationProfile", "kind", "releaseSet", "targets"], "request", issues)) {
-    return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Complete-test request is invalid")));
-  }
-  const parsedRef = parseArtifactRef(input.releaseSet);
-  if (!parsedRef.ok) issues.push(...parsedRef.issues.map((entry) => issue("INVALID_ARTIFACT_REF", `request.releaseSet.${entry.path}`, entry.message)));
-  if (parsedRef.ok && parsedRef.value.kind !== "complete-set") issues.push(issue("ARTIFACT_KIND_MISMATCH", "request.releaseSet", "Complete test requires one complete-set artifact ref", "complete-set", parsedRef.value.kind));
-  const evaluationProfile = parseEvaluationProfile(input.evaluationProfile, issues);
-  const targets = parseTargets(input.targets, issues);
-  if (issues.length > 0 || !parsedRef.ok || parsedRef.value.kind !== "complete-set" || evaluationProfile === undefined || targets === undefined) {
-    return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Complete-test request is invalid")));
-  }
-  const body = { kind: "complete-test", releaseSet: parsedRef.value, evaluationProfile, targets } as const;
-  return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
-}
-
-function parseCanonicalSync(input: unknown): DeploymentResult<CanonicalSync> {
-  const issues: ProviderDeploymentIssue[] = [];
-  if (!exactRecord(input, ["channel", "kind", "locator", "targets"], "request", issues)) {
-    return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Canonical-sync request is invalid")));
-  }
-  const channel = parseChannel(input.channel, issues);
-  const locator = parseLocator(input.locator, issues);
-  const targets = parseTargets(input.targets, issues);
-  if (issues.length > 0 || channel === undefined || locator === undefined || targets === undefined) {
-    return failure(firstIssue(issues, issue("INVALID_MODE", "request", "Canonical-sync request is invalid")));
-  }
-  const body = { kind: "canonical-sync", channel, locator, targets } as const;
-  return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
-}
-
-function parseTargets(input: unknown, issues: ProviderDeploymentIssue[]): readonly ProviderTarget[] | undefined {
-  const result = parseProviderTargets(input, "request.targets");
-  if (!result.ok) {
-    issues.push(...result.issues);
-    return undefined;
-  }
-  return result.value;
-}
-
-function parseEvaluationProfile(input: unknown, issues: ProviderDeploymentIssue[]): EvaluationProfile | undefined {
-  const parsed = canonicalString(input, "request.evaluationProfile", issues, {
-    maxBytes: 256,
-    pattern: EVALUATION_PROFILE_PATTERN,
-    code: "INVALID_EVALUATION_PROFILE",
-  });
-  return parsed as EvaluationProfile | undefined;
-}
-
-function parseChannel(input: unknown, issues: ProviderDeploymentIssue[]): "current-main" | undefined {
-  if (input === "current-main") return input;
-  issues.push(issue("INVALID_MODE", "request.channel", "Canonical channel must be the fixed policy channel", "current-main", String(input)));
-  return undefined;
-}
-
-function parseLocator(input: unknown, issues: ProviderDeploymentIssue[]): ContentRecordLocator | undefined {
-  const nested: ProviderDeploymentIssue[] = [];
-  if (!exactRecord(input, ["repositoryIdentity", "workspaceRoot"], "request.locator", nested)) {
-    issues.push(...nested);
-    return undefined;
-  }
-  const repository = parseRepositoryIdentity(input.repositoryIdentity, "request.locator.repositoryIdentity");
-  if (!repository.ok) nested.push(...repository.issues.map((entry) => issue("INVALID_LOCATOR", entry.path, entry.message)));
-  const root = canonicalString(input.workspaceRoot, "request.locator.workspaceRoot", nested, {
-    maxBytes: 4_096,
-    pattern: REPOSITORY_PATH_PATTERN,
-    code: "INVALID_LOCATOR",
-  });
-  if (root !== undefined && (root.includes("/../") || root.includes("/./") || root.endsWith("/..") || root.endsWith("/."))) {
-    nested.push(issue("INVALID_LOCATOR", "request.locator.workspaceRoot", "Workspace root must be a canonical absolute path", "canonical absolute path", root));
-  }
-  issues.push(...nested);
-  return nested.length === 0 && repository.ok && root !== undefined
-    ? Object.freeze({ repositoryIdentity: repository.value, workspaceRoot: root as ContentWorkspaceRoot })
-    : undefined;
 }
 
 function digestRequest(input: Omit<TargetedTest, "requestDigest"> | Omit<CompleteTest, "requestDigest"> | Omit<CanonicalSync, "requestDigest"> | Omit<CanonicalStatusRequest, "requestDigest">): ProviderRequestDigest {

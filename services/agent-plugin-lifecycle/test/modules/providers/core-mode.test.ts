@@ -1,13 +1,19 @@
 import { describe, expect, it } from "vitest";
+import { Value } from "typebox/value";
 
 import {
+  normalizeCanonicalSyncRequest,
   normalizeCompleteTestRequest,
   normalizeCanonicalStatusRequest,
   normalizeTargetedTestRequest,
-  parseCanonicalStatusRequest,
-  parseProviderDeploymentRequest,
 } from "../../../src/service/modules/providers/model/dto/mode";
 import { contract } from "../../../src/service/modules/providers/contract";
+import {
+  CanonicalStatusInputSchema,
+  CanonicalSyncInputSchema,
+  CompleteTestInputSchema,
+  TargetedTestInputSchema,
+} from "../../../src/service/modules/providers/schemas";
 
 const RELEASE = Object.freeze({
   kind: "release",
@@ -20,30 +26,25 @@ const LOCATOR = Object.freeze({
   repositoryIdentity: "git:github.com/example/personal-rawr-hq",
   workspaceRoot: "/tmp/personal-rawr-hq",
 });
-const DEPLOYMENT_APPS = ["deployment"] as const;
-const INVALID_SELECTOR_CASES = [
-  ["release+set", { kind: "targeted-test", releases: [RELEASE], releaseSet: SET, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["release+channel", { kind: "targeted-test", releases: [RELEASE], channel: "current-main", locator: LOCATOR, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["set+release", { kind: "complete-test", releaseSet: SET, releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["set+channel", { kind: "complete-test", releaseSet: SET, channel: "current-main", locator: LOCATOR, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["canonical release override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, releases: [RELEASE], targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["canonical set override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, releaseSet: SET, targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["canonical acceptance override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, acceptanceDigest: `ac1_${"d".repeat(64)}`, targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["canonical evidence override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, evidenceDigest: `ev1_${"e".repeat(64)}`, targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["canonical projection override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, projectionDigest: `pd1_${"f".repeat(64)}`, targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["canonical promotion override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, promotionDigest: `pm1_${"0".repeat(64)}`, targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["unknown channel", { kind: "canonical-sync", channel: "next", locator: LOCATOR, targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["path-shaped channel", { kind: "canonical-sync", channel: "/tmp/current-main", locator: LOCATOR, targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["relative locator", { kind: "canonical-sync", channel: "current-main", locator: { ...LOCATOR, workspaceRoot: "relative/worktree" }, targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["path repository identity", { kind: "canonical-sync", channel: "current-main", locator: { ...LOCATOR, repositoryIdentity: "/tmp/personal-rawr-hq" }, targets: [TARGET] }, DEPLOYMENT_APPS],
-  ["duplicate home", { kind: "targeted-test", releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [TARGET, TARGET] }, DEPLOYMENT_APPS],
-  ["unsupported home", { kind: "targeted-test", releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [{ provider: "cowork", home: "/tmp/cowork" }] }, DEPLOYMENT_APPS],
-  ["relative home", { kind: "targeted-test", releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [{ provider: "codex", home: "relative/home" }] }, DEPLOYMENT_APPS],
-  ["status set override", { kind: "canonical-status", channel: "current-main", locator: LOCATOR, targets: [TARGET], releaseSet: SET }, ["status"]],
-  ["retired managed-retire mode", { kind: "managed-retire", pluginId: "alpha", targets: [TARGET] }, ["deployment", "status"]],
+const STRUCTURALLY_INVALID_REQUESTS = [
+  ["release+set", { kind: "targeted-test", releases: [RELEASE], releaseSet: SET, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
+  ["release+channel", { kind: "targeted-test", releases: [RELEASE], channel: "current-main", locator: LOCATOR, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
+  ["set+release", { kind: "complete-test", releaseSet: SET, releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
+  ["set+channel", { kind: "complete-test", releaseSet: SET, channel: "current-main", locator: LOCATOR, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
+  ["canonical release override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, releases: [RELEASE], targets: [TARGET] }],
+  ["canonical set override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, releaseSet: SET, targets: [TARGET] }],
+  ["canonical acceptance override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, acceptanceDigest: `ac1_${"d".repeat(64)}`, targets: [TARGET] }],
+  ["canonical evidence override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, evidenceDigest: `ev1_${"e".repeat(64)}`, targets: [TARGET] }],
+  ["canonical projection override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, projectionDigest: `pd1_${"f".repeat(64)}`, targets: [TARGET] }],
+  ["canonical promotion override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, promotionDigest: `pm1_${"0".repeat(64)}`, targets: [TARGET] }],
+  ["unknown channel", { kind: "canonical-sync", channel: "next", locator: LOCATOR, targets: [TARGET] }],
+  ["path-shaped channel", { kind: "canonical-sync", channel: "/tmp/current-main", locator: LOCATOR, targets: [TARGET] }],
+  ["unsupported home", { kind: "targeted-test", releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [{ provider: "cowork", home: "/tmp/cowork" }] }],
+  ["status set override", { kind: "canonical-status", channel: "current-main", locator: LOCATOR, targets: [TARGET], releaseSet: SET }],
+  ["retired managed-retire mode", { kind: "managed-retire", pluginId: "alpha", targets: [TARGET] }],
 ] as const;
 
-describe("closed lifecycle mode parsers", () => {
+describe("closed lifecycle request contracts", () => {
   it("exposes the closed provider procedure set", () => {
     expect(Object.keys(contract).sort()).toEqual([
       "canonicalStatus",
@@ -54,23 +55,20 @@ describe("closed lifecycle mode parsers", () => {
   });
 
   it.each([
-    [{ kind: "targeted-test", releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [TARGET] }, "targeted-test"],
-    [{ kind: "complete-test", releaseSet: SET, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }, "complete-test"],
-    [{ kind: "canonical-sync", channel: "current-main", locator: LOCATOR, targets: [TARGET] }, "canonical-sync"],
-  ] as const)("accepts exactly one legal deployment mode", (input, expectedKind) => {
-    const parsed = parseProviderDeploymentRequest(input);
-    expect(parsed.ok).toBe(true);
-    if (parsed.ok) expect(parsed.value.kind).toBe(expectedKind);
+    [TargetedTestInputSchema, { kind: "targeted-test", releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
+    [CompleteTestInputSchema, { kind: "complete-test", releaseSet: SET, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
+    [CanonicalSyncInputSchema, { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, targets: [TARGET] }],
+  ] as const)("accepts each legal deployment request at its TypeBox boundary", (schema, input) => {
+    expect(Value.Check(schema, input)).toBe(true);
   });
 
-  it("accepts status only through its separate exact parser", () => {
-    const status = parseCanonicalStatusRequest({
+  it("accepts status only through its separate TypeBox boundary", () => {
+    expect(Value.Check(CanonicalStatusInputSchema, {
       kind: "canonical-status",
       channel: "current-main",
       locator: LOCATOR,
       targets: [TARGET],
-    });
-    expect(status.ok).toBe(true);
+    })).toBe(true);
   });
 
   it("normalizes complete-test targets once with stable ordering and request identity", () => {
@@ -192,12 +190,34 @@ describe("closed lifecycle mode parsers", () => {
     });
   });
 
-  it.each(INVALID_SELECTOR_CASES)("rejects %s at the exact mode boundary", (_label, input, parsers) => {
-    for (const parser of parsers) {
-      const result = parser === "status"
-        ? parseCanonicalStatusRequest(input)
-        : parseProviderDeploymentRequest(input);
-      expect(result.ok).toBe(false);
-    }
+  it("normalizes canonical sync from the schema-derived locator and targets", () => {
+    const parsed = normalizeCanonicalSyncRequest({
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator: LOCATOR,
+      targets: [TARGET],
+    });
+    expect(parsed).toMatchObject({
+      ok: true,
+      value: {
+        kind: "canonical-sync",
+        channel: "current-main",
+        locator: LOCATOR,
+        requestDigest: expect.stringMatching(/^prq1_[0-9a-f]{64}$/u),
+      },
+    });
+  });
+
+  it.each(STRUCTURALLY_INVALID_REQUESTS)("rejects %s at the owning TypeBox boundary", (_label, input) => {
+    const valid = input.kind === "targeted-test"
+      ? Value.Check(TargetedTestInputSchema, input)
+      : input.kind === "complete-test"
+        ? Value.Check(CompleteTestInputSchema, input)
+        : input.kind === "canonical-sync"
+          ? Value.Check(CanonicalSyncInputSchema, input)
+          : input.kind === "canonical-status"
+            ? Value.Check(CanonicalStatusInputSchema, input)
+            : false;
+    expect(valid).toBe(false);
   });
 });

@@ -1,4 +1,7 @@
-import { parseProviderDeploymentRequest } from "../model/dto/mode";
+import {
+  normalizeCanonicalSyncRequest,
+  type CanonicalSyncInput,
+} from "../model/dto/mode";
 import {
   canonicalMutationRecord,
   type CanonicalMutationRecord,
@@ -6,8 +9,6 @@ import {
   type CanonicalSyncTargetOutcome,
 } from "../model/dto/outcome";
 import {
-  issue,
-  failure,
   success,
   type DeploymentResult,
   type NonEmptyReadonlyArray,
@@ -55,20 +56,11 @@ export const canonicalSync = module.canonicalSync.handler(
 );
 
 export async function executeCanonicalSync(
-  input: unknown,
+  input: CanonicalSyncInput,
   dependencies: CanonicalSyncDependencies,
 ): Promise<DeploymentResult<CanonicalSyncOutcome>> {
-  const parsed = parseProviderDeploymentRequest(input);
+  const parsed = normalizeCanonicalSyncRequest(input);
   if (!parsed.ok) return parsed;
-  if (parsed.value.kind !== "canonical-sync") {
-    return failure([issue(
-        "INVALID_MODE",
-        "request.kind",
-        "Canonical sync accepts only canonical-sync requests",
-        "canonical-sync",
-        parsed.value.kind,
-      )]);
-  }
 
   const selection = await resolveCanonicalOperationSelection(
     parsed.value.locator,
