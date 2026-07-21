@@ -1,7 +1,10 @@
 import type {
   RetentionIssue,
 } from "../model/dto/retention";
-import { MAX_RETENTION_REFS } from "../model/dto/retention";
+import {
+  MAX_RETENTION_ISSUE_DETAIL_LENGTH,
+  MAX_RETENTION_REFS,
+} from "../model/dto/retention";
 import {
   blockedRetentionPlan,
   constructRetentionPlan,
@@ -12,6 +15,9 @@ import {
   type NormalizedRetentionRef,
 } from "../model/policy/retention";
 import { module } from "../module";
+
+const TRUNCATED_RETENTION_DETAIL_SUFFIX = "...[truncated]";
+const UNREADABLE_RETENTION_READER_FAILURE = "retention reader failed without a readable diagnostic";
 
 export const planRetention = module.planRetention.handler(async ({ context, input: policy }) => {
   if (context.retention === undefined) {
@@ -80,11 +86,24 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
     });
   } catch (error) {
     return blockedRetentionPlan([{
-      detail: `retention planning failed closed: ${errorMessage(error)}`,
+      detail: retentionReaderFailureDetail(error),
     }]);
   }
 });
 
+function retentionReaderFailureDetail(error: unknown): string {
+  const detail = `retention planning failed closed: ${errorMessage(error)}`;
+  if (detail.length <= MAX_RETENTION_ISSUE_DETAIL_LENGTH) return detail;
+  return `${detail.slice(
+    0,
+    MAX_RETENTION_ISSUE_DETAIL_LENGTH - TRUNCATED_RETENTION_DETAIL_SUFFIX.length,
+  )}${TRUNCATED_RETENTION_DETAIL_SUFFIX}`;
+}
+
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  try {
+    return error instanceof Error ? error.message : String(error);
+  } catch {
+    return UNREADABLE_RETENTION_READER_FAILURE;
+  }
 }

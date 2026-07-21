@@ -9,6 +9,7 @@ import {
 } from "../../../../shared/release";
 
 export const MAX_RETENTION_REFS = 16_384;
+export const MAX_RETENTION_ISSUE_DETAIL_LENGTH = 4_096;
 
 export const RetentionRefInputSchema = Type.Union([
   ArtifactRefInputSchema,
@@ -23,7 +24,10 @@ export const RetentionRefSchema = Type.Union([
 export const RetentionIssueSchema = ReadonlyObject(Type.Object(
   {
     ref: Type.Optional(RetentionRefSchema),
-    detail: Type.String({ minLength: 1 }),
+    detail: Type.String({
+      minLength: 1,
+      maxLength: MAX_RETENTION_ISSUE_DETAIL_LENGTH,
+    }),
   },
 ), { additionalProperties: false });
 

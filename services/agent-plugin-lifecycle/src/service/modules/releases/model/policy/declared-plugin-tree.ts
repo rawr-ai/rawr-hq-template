@@ -4,7 +4,10 @@ import {
   type PluginId,
   type ReleaseRelativePath,
 } from "../../../../shared/release";
-import type { SourceEligibilityIssue } from "../../../../model/dto/releases/content-workspace";
+import {
+  sourceEligibilityIssue,
+  type SourceEligibilityIssue,
+} from "../../../../model/dto/releases/content-workspace";
 
 export function validateDeclaredPluginTree(input: Readonly<{
   pluginRoot: ReleaseRelativePath;
@@ -27,10 +30,10 @@ export function validateDeclaredPluginTree(input: Readonly<{
   for (const child of [...observedChildren].sort(compareCanonicalText)) {
     const parsed = parsePluginId(child, "pluginTree.child");
     if (!parsed.ok || parsed.value !== child || rootFileChildren.has(child)) {
-      return Object.freeze({
-        code: "PayloadMismatch",
-        detail: `plugin tree contains noncanonical child ${child}`,
-      });
+      return sourceEligibilityIssue(
+        "PayloadMismatch",
+        `plugin tree contains noncanonical child ${child}`,
+      );
     }
     observedPluginIds.push(parsed.value);
   }
@@ -40,8 +43,8 @@ export function validateDeclaredPluginTree(input: Readonly<{
 
   return undeclaredPluginId === undefined
     ? undefined
-    : Object.freeze({
-      code: "PayloadMismatch",
-      detail: `plugin tree contains undeclared member ${undeclaredPluginId}`,
-    });
+    : sourceEligibilityIssue(
+      "PayloadMismatch",
+      `plugin tree contains undeclared member ${undeclaredPluginId}`,
+    );
 }

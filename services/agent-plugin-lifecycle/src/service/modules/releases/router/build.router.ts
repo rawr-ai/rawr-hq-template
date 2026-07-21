@@ -18,11 +18,13 @@ import type {
   ContentWorkspacePolicy,
   SourceEligibilityIssue,
 } from "../../../model/dto/releases/content-workspace";
-import type {
-  AgentPluginBuildRequest,
-  BuildIssue,
-  BuildMode,
-  BuildResult,
+import {
+  artifactStoreBuildIssue,
+  releaseConstructionBuildIssue,
+  type AgentPluginBuildRequest,
+  type BuildIssue,
+  type BuildMode,
+  type BuildResult,
 } from "../model/dto/release-lifecycle";
 import { constructPlan, type ConstructedPlan } from "../model/policy/release-plan";
 import { module } from "../module";
@@ -123,10 +125,9 @@ async function publishComplete(
     return { kind: "ReadOnlyConverged", mode: request.mode, ref: setRef };
   }
   if (existingSet.kind === "Mismatch") {
-    return rejected(request.mode, [{
-      kind: "ArtifactStore",
-      detail: existingSet.issues.map((issue) => issue.detail).join("; "),
-    }]);
+    return rejected(request.mode, [artifactStoreBuildIssue(
+      existingSet.issues.map((issue) => issue.detail).join("; "),
+    )]);
   }
 
   const newlyPublished: ReleaseArtifactRef[] = [];
@@ -362,7 +363,7 @@ function appendIssue(
 }
 
 function artifactObservationIssue(detail: string): BuildIssue {
-  return Object.freeze({ kind: "ArtifactStore", detail });
+  return artifactStoreBuildIssue(detail);
 }
 
 function unsettled(
@@ -399,17 +400,13 @@ function sourceIssues(
 }
 
 function constructionIssue(detail: string): BuildIssue {
-  return Object.freeze({ kind: "ReleaseConstruction", detail });
+  return releaseConstructionBuildIssue(detail);
 }
 
 function storeIssue(
   result: Extract<ArtifactPublicationResult, { kind: "Rejected" | "Unsettled" }>,
 ): BuildIssue {
-  return Object.freeze({
-    kind: "ArtifactStore",
-    detail: result.failure,
-    ...(result.cleanupFailure === undefined ? {} : { cleanupFailure: result.cleanupFailure }),
-  });
+  return artifactStoreBuildIssue(result.failure, result.cleanupFailure);
 }
 
 async function hit(failpoint: BuildFailpoint | undefined, event: BuildFailpointEvent): Promise<void> {

@@ -8,7 +8,11 @@ import {
   type ArtifactRef,
 } from "../../../../shared/release";
 import type { ContentWorkspaceSnapshot } from "../../../../model/dto/releases/content-workspace";
-import type { BuildIssue, BuildMode } from "../dto/release-lifecycle";
+import {
+  releaseConstructionBuildIssue,
+  type BuildIssue,
+  type BuildMode,
+} from "../dto/release-lifecycle";
 
 export interface ConstructedPlan {
   readonly releases: readonly AgentPluginRelease[];
@@ -73,5 +77,5 @@ export function constructPlan(
 }
 
 function constructionIssue(detail: string): BuildIssue {
-  return Object.freeze({ kind: "ReleaseConstruction", detail });
+  return releaseConstructionBuildIssue(detail);
 }

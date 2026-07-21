@@ -31,6 +31,7 @@ import type {
   SourceEligibilityIssue,
   SourceEligibilityIssueCode,
 } from "../../../model/dependencies/releases";
+import { sourceEligibilityIssue } from "../../../model/dto/releases/content-workspace";
 import { validateDeclaredPluginTree } from "../model/policy/declared-plugin-tree";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
@@ -620,7 +621,7 @@ function hashBytes(bytes: Uint8Array): string {
 }
 
 function ineligible(code: SourceEligibilityIssueCode, detail: string): ContentWorkspaceInspection {
-  return { kind: "Ineligible", issues: [Object.freeze({ code, detail })] };
+  return { kind: "Ineligible", issues: [sourceEligibilityIssue(code, detail)] };
 }
 
 function validatePolicy(policy: ContentWorkspacePolicy): SourceEligibilityIssue | undefined {
@@ -668,7 +669,7 @@ function validatePolicy(policy: ContentWorkspacePolicy): SourceEligibilityIssue 
 }
 
 function sourceIssue(code: SourceEligibilityIssueCode, detail: string): SourceEligibilityIssue {
-  return Object.freeze({ code, detail });
+  return sourceEligibilityIssue(code, detail);
 }
 
 function eligibilityError(

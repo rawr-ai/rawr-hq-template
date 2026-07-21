@@ -18,6 +18,9 @@ import {
   testInvocation,
 } from "../../../../../../services/agent-plugin-lifecycle/test/support/client";
 import {
+  MAX_RETENTION_ISSUE_DETAIL_LENGTH,
+} from "../../../../../../services/agent-plugin-lifecycle/src/service/modules/releases/model/dto/retention";
+import {
   createResourceArtifactReader,
 } from "../../../../../../services/agent-plugin-lifecycle/src/service/repository/artifact-repository";
 import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
@@ -76,7 +79,7 @@ describe("closed read-only retention planning", () => {
       });
       await expect(bare.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
         kind: "RetentionPlanBlocked",
-        issues: [{ detail: expect.stringContaining("not a closed artifact or evidence ref") }],
+        issues: [{ detail: expect.stringContaining("must match RetentionPinsV1") }],
       });
 
       const overCount = retentionClient({
@@ -90,7 +93,7 @@ describe("closed read-only retention planning", () => {
       });
       await expect(overCount.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
         kind: "RetentionPlanBlocked",
-        issues: [{ detail: expect.stringContaining("exceed") }],
+        issues: [{ detail: expect.stringContaining("must match RetentionPinsV1") }],
       });
 
       const missingDigest = must(parseArtifactDigest(mutateDigest(built.memberRef.artifactDigest)));
@@ -251,18 +254,25 @@ describe("closed read-only retention planning", () => {
     });
     expect(artifactReads).toBe(0);
 
+    const oversizedReaderDetail = `pin reader exploded: ${"x".repeat(
+      MAX_RETENTION_ISSUE_DETAIL_LENGTH * 2,
+    )}`;
     const throwing = retentionClient({
       pins: async () => {
-        throw new Error("pin reader exploded");
+        throw new Error(oversizedReaderDetail);
       },
       inventory: async () => [],
       artifactRepository: observedRepository,
       artifactRepositoryRoot: join(fixture.path, "artifacts-v1"),
     });
-    await expect(throwing.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
+    const blocked = await throwing.releases.planRetention(zeroBudget, testInvocation);
+    expect(blocked).toMatchObject({
       kind: "RetentionPlanBlocked",
       issues: [{ detail: expect.stringContaining("pin reader exploded") }],
     });
+    if (blocked.kind !== "RetentionPlanBlocked") throw new Error("retention reader failure was not blocked");
+    expect(blocked.issues[0].detail).toHaveLength(MAX_RETENTION_ISSUE_DETAIL_LENGTH);
+    expect(blocked.issues[0].detail).toMatch(/\.\.\.\[truncated\]$/u);
     expect(artifactReads).toBe(0);
   });
 

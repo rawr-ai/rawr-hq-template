@@ -12,8 +12,9 @@ import {
   type PluginId,
   type ReleaseIssue,
 } from "../../../../shared/release";
-import type {
-  SourceEligibilityIssueCode,
+import {
+  sourceEligibilityIssue,
+  type SourceEligibilityIssueCode,
 } from "../../../../model/dto/releases/content-workspace";
 import type {
   ReleaseInputRefreshResult,
@@ -131,7 +132,7 @@ export function releaseInputRefreshIneligible(
   return Object.freeze({
     kind: "RepositoryIneligible",
     mode: "staged",
-    issues: Object.freeze([Object.freeze({ code, detail })] as const),
+    issues: Object.freeze([sourceEligibilityIssue(code, detail)] as const),
   });
 }
 

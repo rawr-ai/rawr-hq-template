@@ -48,6 +48,18 @@ const Uint8ArraySchema = Refine(
 );
 
 const ReleaseInputDigestSchema = Type.String({ pattern: "^ri1_[0-9a-f]{64}$" });
+const WorkspaceBindingSchema = Type.String({
+  minLength: 64,
+  maxLength: 64,
+  pattern: "^[0-9a-f]{64}$",
+});
+
+export const MAX_ARTIFACT_STORE_ISSUE_DETAIL_LENGTH = 4_096;
+export const MAX_ARTIFACT_STORE_CLEANUP_FAILURE_LENGTH = 4_096;
+export const MAX_RELEASE_CONSTRUCTION_ISSUE_DETAIL_LENGTH = 4_096;
+export const MAX_RELEASE_SOURCE_CHANGED_DETAIL_LENGTH = 4_096;
+
+const TRUNCATED_RELEASE_DIAGNOSTIC_SUFFIX = "...[truncated]";
 
 export const ReleaseInputRecordInputSchema = Type.Union([
   ReadonlyObject(Type.Object(
@@ -136,7 +148,10 @@ export const ReleaseInputRefreshResultSchema = Type.Union([
     {
       kind: Type.Literal("SourceChanged"),
       mode: Type.Literal("staged"),
-      detail: Type.String({ minLength: 1 }),
+      detail: Type.String({
+        minLength: 1,
+        maxLength: MAX_RELEASE_SOURCE_CHANGED_DETAIL_LENGTH,
+      }),
     },
   ), { additionalProperties: false }),
 ]);
@@ -171,7 +186,7 @@ export const RepositoryCheckResultSchema = Type.Union([
       refName: QualifiedHeadRefSchema,
       headCommit: GitCommitIdSchema,
       headTree: GitTreeIdSchema,
-      stagedBinding: Type.String({ minLength: 1 }),
+      stagedBinding: WorkspaceBindingSchema,
     },
   ), { additionalProperties: false }),
   ReadonlyObject(Type.Object(
@@ -181,7 +196,7 @@ export const RepositoryCheckResultSchema = Type.Union([
       refName: QualifiedHeadRefSchema,
       sourceCommit: GitCommitIdSchema,
       sourceTree: GitTreeIdSchema,
-      eligibilityBinding: Type.String({ minLength: 1 }),
+      eligibilityBinding: WorkspaceBindingSchema,
     },
   ), { additionalProperties: false }),
   ReadonlyObject(Type.Object(
@@ -195,7 +210,10 @@ export const RepositoryCheckResultSchema = Type.Union([
     {
       kind: Type.Literal("SourceChanged"),
       mode: Type.Literal("staged"),
-      detail: Type.String({ minLength: 1 }),
+      detail: Type.String({
+        minLength: 1,
+        maxLength: MAX_RELEASE_SOURCE_CHANGED_DETAIL_LENGTH,
+      }),
     },
   ), { additionalProperties: false }),
 ]);
@@ -205,13 +223,25 @@ export const BuildIssueSchema = Type.Union([
     { kind: Type.Literal("SourceEligibility"), issue: SourceEligibilityIssueSchema },
   ), { additionalProperties: false }),
   ReadonlyObject(Type.Object(
-    { kind: Type.Literal("ReleaseConstruction"), detail: Type.String({ minLength: 1 }) },
+    {
+      kind: Type.Literal("ReleaseConstruction"),
+      detail: Type.String({
+        minLength: 1,
+        maxLength: MAX_RELEASE_CONSTRUCTION_ISSUE_DETAIL_LENGTH,
+      }),
+    },
   ), { additionalProperties: false }),
   ReadonlyObject(Type.Object(
     {
       kind: Type.Literal("ArtifactStore"),
-      detail: Type.String({ minLength: 1 }),
-      cleanupFailure: Type.Optional(Type.String({ minLength: 1 })),
+      detail: Type.String({
+        minLength: 1,
+        maxLength: MAX_ARTIFACT_STORE_ISSUE_DETAIL_LENGTH,
+      }),
+      cleanupFailure: Type.Optional(Type.String({
+        minLength: 1,
+        maxLength: MAX_ARTIFACT_STORE_CLEANUP_FAILURE_LENGTH,
+      })),
     },
   ), { additionalProperties: false }),
 ]);
@@ -229,7 +259,7 @@ export const CheckResultSchema = Type.Union([
       kind: Type.Literal("EligibleReport"),
       mode: BuildModeSchema,
       candidate: ArtifactRefSchema,
-      eligibilityBinding: Type.String({ minLength: 1 }),
+      eligibilityBinding: WorkspaceBindingSchema,
     },
   ), { additionalProperties: false }),
   ReadonlyObject(Type.Object(
@@ -293,3 +323,42 @@ export type RepositoryCheckResult = Static<typeof RepositoryCheckResultSchema>;
 export type BuildIssue = Static<typeof BuildIssueSchema>;
 export type CheckResult = Static<typeof CheckResultSchema>;
 export type BuildResult = Static<typeof BuildResultSchema>;
+
+export function artifactStoreBuildIssue(
+  detail: string,
+  cleanupFailure?: string,
+): Extract<BuildIssue, { kind: "ArtifactStore" }> {
+  return Object.freeze({
+    kind: "ArtifactStore",
+    detail: boundedReleaseDiagnostic(detail, MAX_ARTIFACT_STORE_ISSUE_DETAIL_LENGTH),
+    ...(cleanupFailure === undefined
+      ? {}
+      : {
+        cleanupFailure: boundedReleaseDiagnostic(
+          cleanupFailure,
+          MAX_ARTIFACT_STORE_CLEANUP_FAILURE_LENGTH,
+        ),
+      }),
+  });
+}
+
+export function releaseConstructionBuildIssue(
+  detail: string,
+): Extract<BuildIssue, { kind: "ReleaseConstruction" }> {
+  return Object.freeze({
+    kind: "ReleaseConstruction",
+    detail: boundedReleaseDiagnostic(detail, MAX_RELEASE_CONSTRUCTION_ISSUE_DETAIL_LENGTH),
+  });
+}
+
+export function normalizeReleaseSourceChangedDetail(detail: string): string {
+  return boundedReleaseDiagnostic(detail, MAX_RELEASE_SOURCE_CHANGED_DETAIL_LENGTH);
+}
+
+function boundedReleaseDiagnostic(value: string, maximumLength: number): string {
+  if (value.length <= maximumLength) return value;
+  return `${value.slice(
+    0,
+    maximumLength - TRUNCATED_RELEASE_DIAGNOSTIC_SUFFIX.length,
+  )}${TRUNCATED_RELEASE_DIAGNOSTIC_SUFFIX}`;
+}
