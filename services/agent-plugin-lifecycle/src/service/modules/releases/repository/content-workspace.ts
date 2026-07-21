@@ -42,10 +42,11 @@ const MAX_ADMITTED_WORKTREE_FILE_BYTES = Math.max(
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
 );
+const MAX_ADMITTED_WORKTREE_BYTES = MAX_RELEASE_INPUT_ENVELOPE_BYTES + MAX_RELEASE_SET_PAYLOAD_BYTES;
 
 export type ResourceContentWorkspaceSnapshotReadPort = Pick<
   ContentWorkspaceGitReadAsyncPort,
-  "inspectGitWorkspace" | "readGitTree" | "readGitBlob" | "captureGitWorkspaceEvidence"
+  "inspectGitWorkspace" | "readGitTree" | "readGitBlob" | "readGitBlobs" | "captureGitWorkspaceEvidence"
 >;
 
 interface TreeEntry {
@@ -159,15 +160,23 @@ async function inspectWorkspace(
     const aggregatePayloadIssue = preflightAggregatePayloadBytes(releaseInput);
     if (aggregatePayloadIssue !== undefined) return ineligible("PayloadMismatch", aggregatePayloadIssue);
 
-    const payloads: Array<Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>> = [];
     const admitted = new Set<ReleaseRelativePath>([policy.releaseInputPath]);
     const consumedRoots: ReleaseRelativePath[] = [];
+    const declaredPayloads: Array<Readonly<{
+      pluginId: PluginId;
+      expected: AgentPluginReleaseInput["body"]["members"][number]["payload"];
+      entries: readonly Readonly<{
+        path: ReleaseRelativePath;
+        entry: TreeEntry;
+      }>[];
+    }>> = [];
+    const uniqueBlobEntries = new Map<string, TreeEntry>();
     for (const member of releaseInput.body.members) {
       const rootResult = parseReleaseRelativePath(`${policy.pluginRoot}/${member.pluginId}`, "memberRoot");
       if (!rootResult.ok) return ineligible("ReleaseInputMismatch", "member root is not canonical");
       const memberRoot = rootResult.value;
       consumedRoots.push(memberRoot);
-      const payloadEntries: Array<{ path: ReleaseRelativePath; mode: number; bytes: Uint8Array }> = [];
+      const entries: Array<Readonly<{ path: ReleaseRelativePath; entry: TreeEntry }>> = [];
       for (const declared of member.payload.manifest) {
         const repositoryPathResult = parseReleaseRelativePath(
           `${memberRoot}/${declared.path}`,
@@ -177,32 +186,56 @@ async function inspectWorkspace(
         const repositoryPath = repositoryPathResult.value;
         const entry = entryByPath.get(repositoryPath);
         if (entry === undefined) return ineligible("PayloadMismatch", `missing tracked payload ${repositoryPath}`);
-        const bytes = await readGitBlobObject(
-          contentWorkspace,
-          anchor.root,
-          entry,
-          objectFormat,
-          objectIdPattern,
-          MAX_PAYLOAD_BYTES_PER_MEMBER,
-        );
-        payloadEntries.push({ path: declared.path, mode: entry.mode, bytes });
+        entries.push(Object.freeze({ path: declared.path, entry }));
+        uniqueBlobEntries.set(entry.objectId, entry);
         admitted.add(repositoryPath);
       }
       const actualUnderRoot = treeEntries.filter((entry) => entry.path.startsWith(`${memberRoot}/`));
       if (actualUnderRoot.some((entry) => !admitted.has(entry.path))) {
         return ineligible("PayloadMismatch", `tracked payload root ${memberRoot} contains undeclared files`);
       }
+      declaredPayloads.push(Object.freeze({
+        pluginId: member.pluginId,
+        expected: member.payload,
+        entries: Object.freeze(entries),
+      }));
+    }
+
+    const blobEntries = [...uniqueBlobEntries.values()];
+    const blobObservations = await contentWorkspace.readGitBlobs({
+      root: anchor.root,
+      blobs: blobEntries.map((entry) => entry.objectId),
+      objectFormat,
+      maxBlobs: MAX_TREE_ENTRIES,
+      maxBlobBytes: MAX_PAYLOAD_BYTES_PER_MEMBER,
+      maxTotalBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
+    });
+    const bytesByBlob = new Map(blobObservations.map((observation) => [observation.blob, observation.bytes]));
+    if (bytesByBlob.size !== blobEntries.length) {
+      return ineligible("PayloadMismatch", "Git batch omitted or duplicated a declared payload blob");
+    }
+
+    const payloads: Array<Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>> = [];
+    for (const declaredPayload of declaredPayloads) {
+      const payloadEntries: Array<{ path: ReleaseRelativePath; mode: number; bytes: Uint8Array }> = [];
+      for (const declared of declaredPayload.entries) {
+        const bytes = bytesByBlob.get(declared.entry.objectId);
+        if (bytes === undefined) {
+          return ineligible("PayloadMismatch", `Git batch omitted declared payload ${declared.entry.path}`);
+        }
+        payloadEntries.push({ path: declared.path, mode: declared.entry.mode, bytes });
+      }
       const payloadResult = createAgentPluginPayload(payloadEntries);
       if (!payloadResult.ok) {
         return ineligible("PayloadMismatch", payloadResult.issues.map((entry) => entry.code).join(","));
       }
       if (
-        payloadResult.value.payloadDigest !== member.payload.payloadDigest
-        || !sameManifest(payloadResult.value.manifest, member.payload.manifest)
+        payloadResult.value.payloadDigest !== declaredPayload.expected.payloadDigest
+        || !sameManifest(payloadResult.value.manifest, declaredPayload.expected.manifest)
       ) {
-        return ineligible("PayloadMismatch", `payload declaration differs for ${member.pluginId}`);
+        return ineligible("PayloadMismatch", `payload declaration differs for ${declaredPayload.pluginId}`);
       }
-      payloads.push(Object.freeze({ pluginId: member.pluginId, payload: payloadResult.value }));
+      payloads.push(Object.freeze({ pluginId: declaredPayload.pluginId, payload: payloadResult.value }));
     }
 
     const admittedPaths = [...admitted].sort(compareCanonicalText);
@@ -299,6 +332,7 @@ async function captureWorkspaceEvidence(
     objectFormat: policy.sourceCommit.length === 40 ? "sha1" : "sha256",
     maxPaths: MAX_TREE_ENTRIES,
     maxWorktreeFileBytes: MAX_ADMITTED_WORKTREE_FILE_BYTES,
+    maxWorktreeBytes: MAX_ADMITTED_WORKTREE_BYTES,
     maxBytes: MAX_INDEX_BYTES,
   });
   const openingStatus = classifyWorkspaceStatus(evidence.openingStatus, consumedPathspecs);

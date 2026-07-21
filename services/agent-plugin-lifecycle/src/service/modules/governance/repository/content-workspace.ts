@@ -83,6 +83,7 @@ async function inspect(
       objectFormat: anchor.objectFormat,
       maxPaths: 1,
       maxWorktreeFileBytes: MAX_GIT_EVIDENCE_BYTES,
+      maxWorktreeBytes: MAX_GIT_EVIDENCE_BYTES,
       maxBytes: MAX_GIT_EVIDENCE_BYTES,
     });
     if (

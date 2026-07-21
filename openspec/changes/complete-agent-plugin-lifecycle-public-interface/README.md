@@ -930,6 +930,24 @@ thin stack. It changes test ownership and scheduling only.
 | Static proof | DevOps lint, typecheck, build, and sync passed. CLI lint, test-inclusive typecheck, and build passed. Lifecycle lint and typecheck passed after its owner correction. Strict OpenSpec validation, `git diff --check`, and the complete required repository ratchet passed with the protected untracked note held outside the closed structural scan and restored byte-identically. |
 | Reviews | Architecture/authority, behavior/testing, TypeScript/refactor, and structural/Habitat reviewers report no remaining P1/P2/P3. The loop added the missing DevOps lint target to the dynamic required ratchet and removed an unneeded `rootDirs` overlay before closure. |
 
+## Repository Check Performance Stabilization
+
+This bounded controller checkpoint supports
+[[tasks#3C. Installed Distribution And Personal Prerequisite|task 3C.5]] without
+changing the thin authority in [[authority-amendment#Corrected Frame]]. It
+removes process and filesystem fan-out from the existing repository checks; it
+does not cache repository truth, weaken revalidation, or add another lifecycle
+owner.
+
+| Boundary | Result |
+| --- | --- |
+| Root cause | One 1,561-file Personal release caused about 9,468 scalar Git subprocesses, followed by sequential per-file worktree reads. The full clean wrapper measured 326.57 seconds; after blob batching alone, the equivalent in-process inspect plus revalidate was still running at 135.36 seconds and was stopped. |
+| Native mechanics | Declared Git blobs use one bounded, ordered `cat-file --batch`; staged materialization reuses the same helper. Worktree identities use metadata-only pre/post checks around one non-writing `hash-object --no-filters --stdin-paths` invocation. No provider installer, cache, session, daemon, or hidden repository state was added. |
+| Bounds | Blob count, member bytes, aggregate bytes, output framing, worktree path count, per-file bytes, aggregate worktree bytes, and each Git evidence output remain independent positive bounds. Releases select exactly the 96 MiB release-input plus 64 MiB payload ceiling. Control characters are excluded from generic relative paths, making the native line protocol total. |
+| Behavior | Exact object order, object type, missing/reordered/malformed/truncated/trailing output, file type, canonical path, device/inode/size continuity, opening/closing Git anchors, flags, status, and final eligibility binding remain fail-closed. Early tree-closure refusal proves the batch payload reader stays cold. |
+| Measured proof | Against the same 11-member Personal worktree, final clean inspect plus revalidate completed in 6.174 seconds; the four native staged observations used by the two-pass staged check completed in 2.152 seconds. The work-count oracles assert one native batch rather than O(files) Git commands. |
+| Scope | No Personal file, provider home, release/channel record, controller selector, app/runtime surface, or protected-lane input was mutated. The later Nx/Habitat ratchet composition remains a repository-tooling checkpoint, not part of this resource mechanic. |
+
 ## Standing Reviews
 
 | Role | Pivot focus |

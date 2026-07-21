@@ -28,6 +28,12 @@ export interface GitWorktreeObjectId {
   readonly objectId: string;
 }
 
+/** Bytes for one exact blob returned by a bounded Git batch read. */
+export interface GitBlobObservation {
+  readonly blob: string;
+  readonly bytes: Uint8Array;
+}
+
 /**
  * Raw mechanics for one bounded workspace observation. Semantic owners decide
  * whether the evidence is eligible and construct any derived binding digest.
@@ -211,6 +217,15 @@ export interface ContentWorkspaceResource<R = never> {
     maxBytes: number;
   }>) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
 
+  readonly readGitBlobs: (input: Readonly<{
+    root: string;
+    blobs: readonly string[];
+    objectFormat: GitObjectFormat;
+    maxBlobs: number;
+    maxBlobBytes: number;
+    maxTotalBytes: number;
+  }>) => Effect.Effect<readonly GitBlobObservation[], ContentWorkspaceFailure, R>;
+
   readonly captureGitWorkspaceEvidence: (input: Readonly<{
     root: string;
     remoteSelection: GitRemoteSelection;
@@ -221,6 +236,8 @@ export interface ContentWorkspaceResource<R = never> {
     maxPaths: number;
     /** Per-file bound for each admitted worktree path. */
     maxWorktreeFileBytes: number;
+    /** Aggregate bound for all admitted worktree file bytes. */
+    maxWorktreeBytes: number;
     /** Independent bound for each Git status, tracked-flag, or index output. */
     maxBytes: number;
   }>) => Effect.Effect<GitWorkspaceEvidence, ContentWorkspaceFailure, R>;
@@ -352,6 +369,7 @@ export interface ContentWorkspaceGitReadAsyncPort {
   readonly inspectGitWorkspace: (input: Parameters<ContentWorkspaceResource["inspectGitWorkspace"]>[0]) => Promise<GitWorkspaceAnchor>;
   readonly readGitTree: (input: Parameters<ContentWorkspaceResource["readGitTree"]>[0]) => Promise<Uint8Array>;
   readonly readGitBlob: (input: Parameters<ContentWorkspaceResource["readGitBlob"]>[0]) => Promise<Uint8Array>;
+  readonly readGitBlobs: (input: Parameters<ContentWorkspaceResource["readGitBlobs"]>[0]) => Promise<readonly GitBlobObservation[]>;
   readonly captureGitWorkspaceEvidence: (input: Parameters<ContentWorkspaceResource["captureGitWorkspaceEvidence"]>[0]) => Promise<GitWorkspaceEvidence>;
   readonly observeGitStagedIndex: (input: Parameters<ContentWorkspaceResource["observeGitStagedIndex"]>[0]) => Promise<GitStagedIndexObservation>;
   readonly readGitBlobAtPath: (input: Parameters<ContentWorkspaceResource["readGitBlobAtPath"]>[0]) => Promise<GitBlobAtPathObservation>;
