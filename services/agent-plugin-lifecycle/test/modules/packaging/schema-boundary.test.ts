@@ -8,9 +8,12 @@ import type { Static } from "typebox";
 import { Value } from "typebox/value";
 
 import { contract } from "../../../src/service/modules/packaging/contract";
-import type {
-  PackageAgentPluginRequest,
-  PackageAgentPluginResult,
+import {
+  MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
+  MAX_PACKAGING_FAILURE_PHASE_LENGTH,
+  MAX_PACKAGING_OUTPUT_PATH_LENGTH,
+  type PackageAgentPluginRequest,
+  type PackageAgentPluginResult,
 } from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
 import {
   ArtifactRefSchema,
@@ -147,6 +150,51 @@ describe("packaging procedure result schema boundary", () => {
     for (const candidate of invalid) {
       expect(Value.Check(PackageAgentPluginResultSchema, candidate)).toBe(false);
       const validated = await schema(PackageAgentPluginResultSchema)["~standard"].validate(candidate);
+      expect("issues" in validated).toBe(true);
+    }
+  });
+
+  it("keeps public output paths and failure diagnostics finite at the schema boundary", async () => {
+    const maximumOutputPath = `/${"p".repeat(MAX_PACKAGING_OUTPUT_PATH_LENGTH - 1)}`;
+    const maximumFailure = {
+      ...failure,
+      phase: "p".repeat(MAX_PACKAGING_FAILURE_PHASE_LENGTH),
+      message: "m".repeat(MAX_PACKAGING_FAILURE_MESSAGE_LENGTH),
+    };
+    const maximumRequest = {
+      artifactRef,
+      format: "cowork-v1",
+      outputPath: maximumOutputPath,
+    };
+    const maximumResult = {
+      kind: "OutputUnsettled",
+      ...identity,
+      outputPath: maximumOutputPath,
+      primaryFailure: maximumFailure,
+    };
+
+    expect(Value.Check(PackageAgentPluginRequestSchema, maximumRequest)).toBe(true);
+    expect(Value.Check(PackageAgentPluginResultSchema, maximumResult)).toBe(true);
+
+    const invalid = [
+      { ...maximumRequest, outputPath: `${maximumOutputPath}p` },
+      { ...maximumResult, outputPath: `${maximumOutputPath}p` },
+      {
+        ...maximumResult,
+        primaryFailure: { ...maximumFailure, phase: `${maximumFailure.phase}p` },
+      },
+      {
+        ...maximumResult,
+        primaryFailure: { ...maximumFailure, message: `${maximumFailure.message}m` },
+      },
+    ];
+
+    for (const candidate of invalid) {
+      const candidateSchema = "kind" in candidate
+        ? PackageAgentPluginResultSchema
+        : PackageAgentPluginRequestSchema;
+      expect(Value.Check(candidateSchema, candidate)).toBe(false);
+      const validated = await schema(candidateSchema)["~standard"].validate(candidate);
       expect("issues" in validated).toBe(true);
     }
   });

@@ -11,8 +11,15 @@ import {
 import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
+import { Value } from "typebox/value";
 
-import { COWORK_PACKAGE_FORMAT } from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
+import {
+  COWORK_PACKAGE_FORMAT,
+  MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
+  MAX_PACKAGING_FAILURE_PHASE_LENGTH,
+  MAX_PACKAGING_OUTPUT_PATH_LENGTH,
+} from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
+import { PackageAgentPluginResultSchema } from "../../../src/service/modules/packaging/schemas";
 import { createResourceArtifactStore } from "../../../src/service/repository/artifact-repository";
 import type {
   AgentPluginRelease,
@@ -203,6 +210,26 @@ describe("package agent plugin application", () => {
     expect(await readdir(root.path)).toEqual([]);
   });
 
+  it("rejects an oversized output path before reading artifacts or touching output", async () => {
+    const root = await fixtureRoot();
+    const fixture = packagingArtifactFixture();
+    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
+    const output = new CountingOutput({ kind: "ReadOnlyConverged" });
+    const application = createPackageAgentPluginApplication({
+      ...artifacts,
+      packageOutput: output,
+    });
+
+    await expect(application.package({
+      artifactRef: fixture.alphaSnapshot.ref,
+      format: COWORK_PACKAGE_FORMAT,
+      outputPath: `/${"p".repeat(MAX_PACKAGING_OUTPUT_PATH_LENGTH)}`,
+    })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(artifacts.artifactRepository.readTreeCalls).toBe(0);
+    expect(output.calls).toBe(0);
+    expect(await readdir(root.path)).toEqual([]);
+  });
+
   it("maps missing and mismatched artifacts to closed pre-output failures", async () => {
     const root = await fixtureRoot();
     const fixture = packagingArtifactFixture();
@@ -252,7 +279,7 @@ describe("package agent plugin application", () => {
     expect(await readdir(root.path)).toEqual([]);
   });
 
-  it("reports an unclosed output-port exception as unsettled rather than claiming success", async () => {
+  it("bounds an unclosed output-port exception and reports unsettled rather than claiming success", async () => {
     const root = await fixtureRoot();
     const fixture = packagingArtifactFixture();
     const nodeOutput = makeNodePackageOutputAsyncPort();
@@ -262,7 +289,7 @@ describe("package agent plugin application", () => {
       packageOutput: {
         encodeCoworkV1: nodeOutput.encodeCoworkV1,
         async publish() {
-          throw new Error("unknown output boundary");
+          throw new Error("unknown output boundary ".repeat(512));
         },
       },
     });
@@ -278,6 +305,43 @@ describe("package agent plugin application", () => {
       primaryFailure: { code: "OutputVerifyFailed", phase: "output-port" },
       artifactRef: fixture.alphaSnapshot.ref,
     });
+    if (result.kind !== "OutputUnsettled") throw new Error("Expected unsettled output");
+    expect(result.primaryFailure.message).toHaveLength(MAX_PACKAGING_FAILURE_MESSAGE_LENGTH);
+    expect(result.primaryFailure.message.endsWith("...[truncated]")).toBe(true);
+    expect(Value.Check(PackageAgentPluginResultSchema, result)).toBe(true);
+  });
+
+  it("bounds returned resource diagnostics before validating the public result", async () => {
+    const root = await fixtureRoot();
+    const fixture = packagingArtifactFixture();
+    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
+    const oversizedPhase = "resource-phase-".repeat(64);
+    const oversizedDetail = "private resource detail ".repeat(512);
+    const application = createPackageAgentPluginApplication({
+      ...artifacts,
+      packageOutput: new CountingOutput({
+        kind: "OutputUnsettled",
+        primaryFailure: resourceFailure("OutputVerifyFailed", oversizedPhase, oversizedDetail),
+        cleanupFailure: resourceFailure("FilesystemFailed", oversizedPhase, oversizedDetail),
+      }),
+    });
+
+    const result = await application.package({
+      artifactRef: fixture.alphaSnapshot.ref,
+      format: COWORK_PACKAGE_FORMAT,
+      outputPath: join(root.path, "bounded-resource-diagnostic.zip"),
+    });
+
+    expect(result.kind).toBe("OutputUnsettled");
+    if (result.kind !== "OutputUnsettled") throw new Error("Expected unsettled output");
+    for (const diagnostic of [result.primaryFailure, result.cleanupFailure]) {
+      if (diagnostic === undefined) throw new Error("Expected both resource diagnostics");
+      expect(diagnostic.phase).toHaveLength(MAX_PACKAGING_FAILURE_PHASE_LENGTH);
+      expect(diagnostic.message).toHaveLength(MAX_PACKAGING_FAILURE_MESSAGE_LENGTH);
+      expect(diagnostic.phase.endsWith("...[truncated]")).toBe(true);
+      expect(diagnostic.message.endsWith("...[truncated]")).toBe(true);
+    }
+    expect(Value.Check(PackageAgentPluginResultSchema, result)).toBe(true);
   });
 
   it.each([

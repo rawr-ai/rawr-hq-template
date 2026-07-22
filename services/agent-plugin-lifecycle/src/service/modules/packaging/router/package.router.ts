@@ -1,5 +1,7 @@
 import {
   COWORK_PACKAGE_FORMAT,
+  MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
+  MAX_PACKAGING_FAILURE_PHASE_LENGTH,
   type PackageAgentPluginRequest,
   type PackageAgentPluginResult,
   type PackagingFailure,
@@ -26,6 +28,9 @@ interface PackagingDependencies {
   readonly artifacts: ArtifactReader;
   readonly packageOutput: AgentPluginPackageOutputAsyncPort;
 }
+
+const TRUNCATED_PACKAGING_DIAGNOSTIC_SUFFIX = "...[truncated]";
+const UNREADABLE_EXTERNAL_DIAGNOSTIC = "External dependency failed without a readable diagnostic";
 
 export const packageProcedure = module.package.handler(async ({ context, input }) => {
   return packageAgentPlugin(input, {
@@ -199,17 +204,46 @@ function createFailure(
   phase: string,
   message: string,
 ): PackagingFailure {
-  return Object.freeze({ code, phase, message });
+  return Object.freeze({
+    code,
+    phase: boundedDiagnostic(phase, MAX_PACKAGING_FAILURE_PHASE_LENGTH),
+    message: boundedDiagnostic(message, MAX_PACKAGING_FAILURE_MESSAGE_LENGTH),
+  });
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  try {
+    return diagnosticString(error instanceof Error ? error.message : error);
+  } catch {
+    return UNREADABLE_EXTERNAL_DIAGNOSTIC;
+  }
 }
 
 function errorDetail(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "object" && error !== null && "detail" in error && typeof error.detail === "string") {
-    return error.detail;
+  try {
+    if (error instanceof Error) return diagnosticString(error.message);
+    if (typeof error === "object" && error !== null && "detail" in error) {
+      const detail = error.detail;
+      if (typeof detail === "string") return detail;
+    }
+    return diagnosticString(error);
+  } catch {
+    return UNREADABLE_EXTERNAL_DIAGNOSTIC;
   }
-  return String(error);
+}
+
+function diagnosticString(value: unknown): string {
+  try {
+    return typeof value === "string" ? value : String(value);
+  } catch {
+    return UNREADABLE_EXTERNAL_DIAGNOSTIC;
+  }
+}
+
+function boundedDiagnostic(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(
+    0,
+    maxLength - TRUNCATED_PACKAGING_DIAGNOSTIC_SUFFIX.length,
+  )}${TRUNCATED_PACKAGING_DIAGNOSTIC_SUFFIX}`;
 }
