@@ -260,6 +260,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   source at the selected immutable Personal revision; a disposable local source
   must share one bounded lifetime with its disposable home. Test returns inline
   results and ordinary CI may retain them externally.
+- [x] 5.5a Remove packaging's artifact-store reader and digest-addressed handle.
+  `rawr agent plugins package` now accepts one exact Git selection plus a
+  targeted or complete-set member selection, derives releases in memory,
+  revalidates the selected Git state immediately before writing, and mutates
+  only the explicit package output. This checkpoint does not complete task 5.5;
+  build, provider, retention, and controller readers remain to be deleted.
 - [ ] 5.6 Keep native provider adapters thin and point-addressed. No provider
   home scan, direct cache/config write, rollback state, or ambient multi-home
   coordinator. Remove the orphan `.rawr-agent-plugin-owner.json` sentinel and
