@@ -14,7 +14,7 @@ import {
   createMechanicalProviderEvidence,
 } from "../../../src/service/modules/providers/model/dto/mechanical-evidence";
 import {
-  parseProviderDeploymentRequest,
+  normalizeCompleteTestRequest,
 } from "../../../src/service/modules/providers/model/dto/mode";
 import {
   renderCompleteProjection,
@@ -103,14 +103,13 @@ function completeEvidence() {
     members,
   });
   if (!projection.ok) throw new Error(projection.issues[0].message);
-  const request = parseProviderDeploymentRequest({
+  const request = normalizeCompleteTestRequest({
     kind: "complete-test",
     releaseSet,
     evaluationProfile: "complete-default",
     targets: [{ provider: "codex", home: "/tmp/codex-home" }],
   });
   if (!request.ok) throw new Error(request.issues[0].message);
-  if (request.value.kind !== "complete-test") throw new Error("complete-test fixture changed kind");
   const target = request.value.targets[0];
   if (target === undefined) throw new Error("complete-test fixture lost its target");
   return createMechanicalProviderEvidence(

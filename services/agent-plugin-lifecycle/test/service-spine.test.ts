@@ -296,6 +296,18 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     });
     expect(calls).toEqual([]);
   });
+
+  it("rejects malformed canonical-sync input before content or provider ports are invoked", async () => {
+    const calls: string[] = [];
+    const client = spineClient(calls);
+    const request = canonicalSyncRequest();
+
+    await expect(client.providers.canonicalSync({
+      ...request,
+      releaseSet: { kind: "complete-set", releaseSetDigest: `rs1_${"f".repeat(64)}` },
+    } as never, invocation)).rejects.toThrow();
+    expect(calls).toEqual([]);
+  });
 });
 
 interface SpineObservations {

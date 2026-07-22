@@ -7,7 +7,7 @@ import type { AgentProviderRecordsAsyncPort } from "@rawr/resource-agent-provide
 import { makeNodeAgentProviderRecordsAsyncPort } from "@rawr/resource-agent-provider-records/providers/effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { parseProviderDeploymentRequest } from "../../../src/service/modules/providers/model/dto/mode";
+import { normalizeCompleteTestRequest } from "../../../src/service/modules/providers/model/dto/mode";
 import {
   parseProviderTarget,
   type ProviderTarget,
@@ -226,13 +226,12 @@ function receiptFor(
   projection: AgentProviderProjection,
   registration: ReturnType<typeof createProviderMarketplaceRegistration>,
 ) {
-  const request = mustResult(parseProviderDeploymentRequest({
+  const request = mustResult(normalizeCompleteTestRequest({
     kind: "complete-test",
     releaseSet: snapshot.ref,
     evaluationProfile: "provider-smoke@v1",
     targets: [{ provider: target.provider, home: target.home }],
   }));
-  if (request.kind !== "complete-test") throw new Error("Provider fixture request mode changed");
   const verifiedMembers = projection.members.map((member) => Object.freeze({
     pluginId: member.pluginId,
     nativeIdentity: member.nativeIdentity,

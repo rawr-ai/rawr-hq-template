@@ -51,9 +51,8 @@ import {
   type MechanicalProviderEvidence,
 } from "../../../src/service/modules/providers/model/dto/mechanical-evidence";
 import {
-  parseProviderDeploymentRequest,
-  type CompleteTest,
-  type TargetedTest,
+  type CompleteTestInput,
+  type TargetedTestInput,
 } from "../../../src/service/modules/providers/model/dto/mode";
 import {
   parseProviderTarget,
@@ -82,43 +81,11 @@ import {
 } from "../../../src/service/modules/providers/router/targeted-test.router";
 
 function createCompleteTest(dependencies: () => CompleteTestDependencies) {
-  return async (input: unknown) => {
-    const parsed = parseProviderDeploymentRequest(input);
-    if (!parsed.ok) return parsed;
-    if (parsed.value.kind !== "complete-test") {
-      return failure([issue("INVALID_MODE", "request.kind", "Expected complete-test request")]);
-    }
-    return executeCompleteTest(completeTestInput(parsed.value), dependencies());
-  };
+  return async (input: CompleteTestInput) => executeCompleteTest(input, dependencies());
 }
 
 function createTargetedTest(dependencies: () => TargetedTestDependencies) {
-  return async (input: unknown) => {
-    const parsed = parseProviderDeploymentRequest(input);
-    if (!parsed.ok) return parsed;
-    if (parsed.value.kind !== "targeted-test") {
-      return failure([issue("INVALID_MODE", "request.kind", "Expected targeted-test request")]);
-    }
-    return executeTargetedTest(targetedTestInput(parsed.value), dependencies());
-  };
-}
-
-function completeTestInput(input: CompleteTest) {
-  return {
-    kind: input.kind,
-    releaseSet: { ...input.releaseSet },
-    evaluationProfile: input.evaluationProfile,
-    targets: input.targets.map(({ provider, home }) => ({ provider, home })),
-  };
-}
-
-function targetedTestInput(input: TargetedTest) {
-  return {
-    kind: input.kind,
-    releases: input.releases.map((release) => ({ ...release })),
-    evaluationProfile: input.evaluationProfile,
-    targets: input.targets.map(({ provider, home }) => ({ provider, home })),
-  };
+  return async (input: TargetedTestInput) => executeTargetedTest(input, dependencies());
 }
 
 describe("provider deployment state machine", () => {
@@ -622,7 +589,9 @@ class Harness {
   identityAdmissions: ProviderTarget[] = [];
   counters = freshCounters();
 
-  completeRequest(targets: readonly { readonly provider: ProviderTarget["provider"]; readonly home: string }[]) {
+  completeRequest(
+    targets: readonly { readonly provider: ProviderTarget["provider"]; readonly home: string }[],
+  ): CompleteTestInput {
     return this.completeRequestFor(this.activeCompleteSnapshot, targets);
   }
 
@@ -635,7 +604,7 @@ class Harness {
   completeRequestFor(
     snapshot: Extract<VerifiedArtifactSnapshotV1, { readonly kind: "complete-set" }>,
     targets: readonly { readonly provider: ProviderTarget["provider"]; readonly home: string }[],
-  ) {
+  ): CompleteTestInput {
     return {
       kind: "complete-test",
       releaseSet: snapshot.ref,

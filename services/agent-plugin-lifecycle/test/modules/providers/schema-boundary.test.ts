@@ -23,8 +23,10 @@ import type {
   TargetedTestInput,
 } from "../../../src/service/modules/providers/model/dto/mode";
 import {
-  parseCanonicalStatusRequest,
-  parseProviderDeploymentRequest,
+  normalizeCanonicalStatusRequest,
+  normalizeCanonicalSyncRequest,
+  normalizeCompleteTestRequest,
+  normalizeTargetedTestRequest,
 } from "../../../src/service/modules/providers/model/dto/mode";
 import {
   type CanonicalStatusOutcome,
@@ -439,34 +441,32 @@ describe("provider procedure input schema boundary", () => {
   });
 
   it.each([
-    ["relative provider home", {
+    ["relative provider home", () => normalizeTargetedTestRequest({
       kind: "targeted-test",
       releases: [release],
       evaluationProfile: "provider-smoke@v1",
       targets: [{ ...providerTarget, home: "relative/home" }],
-    }, "INVALID_HOME", "deployment"],
-    ["root provider home", {
+    }), "INVALID_HOME"],
+    ["root provider home", () => normalizeCompleteTestRequest({
       kind: "complete-test",
       releaseSet,
       evaluationProfile: "provider-smoke@v1",
       targets: [{ ...providerTarget, home: "/" }],
-    }, "INVALID_HOME", "deployment"],
-    ["path repository identity", {
+    }), "INVALID_HOME"],
+    ["path repository identity", () => normalizeCanonicalSyncRequest({
       kind: "canonical-sync",
       channel: "current-main",
       locator: { ...locator, repositoryIdentity: "/tmp/rawr-hq" },
       targets: [providerTarget],
-    }, "INVALID_LOCATOR", "deployment"],
-    ["relative workspace root", {
+    }), "INVALID_LOCATOR"],
+    ["relative workspace root", () => normalizeCanonicalStatusRequest({
       kind: "canonical-status",
       channel: "current-main",
       locator: { ...locator, workspaceRoot: "relative/rawr-hq" },
       targets: [providerTarget],
-    }, "INVALID_LOCATOR", "status"],
-  ] as const)("returns typed $expectedCode for $label", (_label, candidate, expectedCode, parser) => {
-    const result = parser === "status"
-      ? parseCanonicalStatusRequest(candidate)
-      : parseProviderDeploymentRequest(candidate);
+    }), "INVALID_LOCATOR"],
+  ] as const)("returns typed $expectedCode for $label", (_label, normalize, expectedCode) => {
+    const result = normalize();
     expect(result).toMatchObject({
       ok: false,
       issues: [{ code: expectedCode }],
