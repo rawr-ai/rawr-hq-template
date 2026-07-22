@@ -8,7 +8,7 @@ fixtures, results, and evidence.
 
 | Epoch | Repository + HEAD | Phase | Active writer | Claimed paths / slice | Review commit | Blockers | Next legal transition |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 4 | RAWR HQ-Template accepted design `c5a94f491e32498306fbb07bf362a7aaeb253d55`; first BUILD slice pending exact commit | BUILD | oRPC director | package scaffold; core/runtime contracts and tests; necessary root lock, Nx, and Habitat wiring | Pending exact first BUILD commit; design through `c5a94f491e32498306fbb07bf362a7aaeb253d55` accepted by both directors | None | Commit first BUILD slice; exact Inngest review before adapter breadth |
+| 5 | RAWR HQ-Template accepted core `bf1b50a5b1e2337a1426f03435dcfec2f9a18c77` | BUILD | oRPC director | Git/Bun adapter and deterministic tests only | Core through `bf1b50a5b1e2337a1426f03435dcfec2f9a18c77` accepted by both directors | None | Commit the Git/Bun adapter; exact Inngest review before the next adapter |
 
 ## Record
 
