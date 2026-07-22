@@ -29,6 +29,9 @@ objects. Structural checking MUST use a noncorrective path independent of
 TypeBox's process-global corrective setting. Semantic validation and the
 clone/freeze snapshot MUST remain explicit later steps, and callback-bearing
 refinements MUST NOT be exported as portable schemas.
+The composition helper MUST make generic and subject property-key overlap
+unrepresentable at the type level and MUST reject any dynamically supplied
+overlap before merging properties or constructing the final `Type.Object`.
 
 #### Scenario: Subject and secret configuration stay outside core
 - **WHEN** oRPC and Inngest decode their retained study definitions
@@ -48,12 +51,21 @@ own aggregation and reporting.
 - **AND** the SDK does not infer ordering beyond exact predecessor identities
 
 ### Requirement: Observation scopes execution without owning correctness
-Observe MUST acquire experiment and trace correlation before Execute. Execute
-MUST persist that exact observation handle in the solver terminal beside the
-agent outcome and artifact. Observe MUST settle against the exact handle and
-execution exit, and MUST project later evaluation scores against that same
-handle. Settlement or projection failure MAY resume independently from the
-persisted handle and MUST NOT change a solver or evaluation outcome. Missing or
+Lane composition MUST attempt exact solver-terminal adoption before acquiring a
+new observation. On a hit it MUST recover the persisted handle and skip both
+acquisition and solver execution. Only a miss MAY acquire experiment and trace
+correlation before Execute. Execute MUST persist that exact observation handle
+in the solver terminal beside the agent outcome and artifact. An acquired handle
+without a published terminal is a non-authoritative orphan: the lane MUST
+preserve or settle it when observable, MUST NOT adopt it as the trial subject,
+and MAY replace that pre-terminal execution under the same instance. Observe
+MUST settle against the exact terminal-bound handle and MUST project later
+evaluation scores against that same handle. The exact `EvaluationResult` used
+for projection MUST first be published as a lane-declared durable `StageOutput`;
+its predecessor set MUST bind the exact `SolverTerminal`. Projection resumption
+MUST adopt it rather than silently reevaluate. Settlement or projection failure
+MAY resume independently and MUST NOT change a solver or evaluation outcome.
+Missing or
 uncorrelated required evidence MUST fail the observation boundary, while
 cosmetic topology and provider namespace cleanliness MUST NOT be admissibility
 criteria. The Langfuse trial subject MUST be the experiment-item root
@@ -75,12 +87,17 @@ host-owned `Captured` or scoreable `Empty` submitted artifact. Its lane
 composition MUST use the Codex and Git/Bun capabilities plus a lane-owned
 durable sink internally. Publication MUST be write-once and put-if-absent:
 identical existing values MAY be adopted, while a conflicting value at the same
-key MUST reject without overwrite. `SolverTerminal` MUST be a lane-declared
+key MUST reject without overwrite. The terminal sink port MUST require each
+lane-owned implementation to provide atomic create-if-absent publication and
+read-after-unknown reconciliation for commit-before-ack ambiguity.
+`SolverTerminal` MUST be a
+lane-declared
 durable `StageOutput`, so that key MUST bind the exact cell and instance,
 frozen-input digest, implementation revision, and declared predecessor
 identities. Core MUST own only the sink port and pure publication/adoption
-conflict validation; it MUST NOT own the store or evidence retention. Solver
-prose and telemetry MUST NOT replace the product artifact. The Git/Bun adapter
+conflict validation; it MUST NOT own the store, a general CAS, or evidence
+retention. Solver prose and telemetry MUST NOT replace the product artifact.
+The Git/Bun adapter
 MUST support full-index binary-capable patches, including added, deleted,
 renamed, and binary files.
 
@@ -89,6 +106,14 @@ renamed, and binary files.
 - **THEN** a later identical invocation adopts the solver terminal and artifact
 - **AND** reruns only the incomplete evaluation boundary
 
+#### Scenario: Terminal publication acknowledgement is lost
+- **WHEN** create-if-absent may have committed before its acknowledgement failed
+- **THEN** the lane-owned sink implementation reads the exact key and adopts an
+  identical value
+- **AND** an authoritative absent read MAY retry create-if-absent, while an
+  unavailable read or conflicting value remains typed uncertainty or conflict
+  rather than triggering an unconditional overwrite
+
 ### Requirement: Exact stage adoption and disjoint failures
 Every lane-declared durable stage output MUST bind its exact cell, including a
 stable lane-supplied instance identity, frozen-input digest, implementation
@@ -96,6 +121,10 @@ revision, declared predecessor digest set or closure, and output digest.
 Adoption MUST reject any mismatch. This typed envelope MUST NOT imply a store,
 transition graph, controller, or global continuation authority, and ephemeral
 adapter outputs need not use it.
+Retries and re-entry for one logical invocation MUST retain the same instance.
+Only explicit lane authority MAY create a new replicate or replay instance, and
+that decision MUST bind predecessor lineage and a reason without mutating any
+prior terminal.
 Product noncompletion, empty or invalid artifacts, compile/test failure, policy
 violation, and low scores MUST remain terminal study values. Transport,
 containment, corrupt transfer, input mismatch, malformed external output, and
@@ -124,6 +153,13 @@ submitted artifacts. EVLog MUST own non-authoritative operational events.
 - **AND** the adapter does not select a rubric, retry product work, or declare
   correctness
 
+#### Scenario: Parented Codex projection preserves the supplied subject
+- **WHEN** Codex-Langfuse receives a valid parent carrier and a decoded turn set
+- **THEN** it rejects legacy trace-seed mode and cannot create a second
+  application root
+- **AND** it projects the supplied set without selecting turns, including a
+  supplied incomplete or interrupted turn
+
 ### Requirement: Concrete adapter composition
 Core configuration MUST NOT contain selected adapter names, an adapter registry,
 or string-based vendor dispatch. Each adapter MUST own a TypeBox configuration
@@ -147,16 +183,24 @@ Codex MUST own cancellation and termination of the active agent invocation.
 If graceful interruption does not terminate within its declared deadline, Codex
 MUST escalate to a bounded forced termination and retain that outcome as
 evidence.
-OpenShell MUST finalize the containing sandbox only after that invocation exits.
+If process exit remains unconfirmed after escalation, Codex MUST return a typed
+`ProcessTerminationUnconfirmed` outcome. The Codex-OpenShell or lane composition
+MUST bind it to the exact sandbox locator as unresolved residue and MUST NOT
+claim release, silently delete, or rerun that subject. OpenShell MUST finalize
+the containing sandbox only after
+that invocation exits; otherwise scoped release MUST end in explicit retained
+residue. Confirmed cleanup or retained residue MUST preserve primary and
+secondary failure precedence.
 The adapters MUST NOT race to terminate each other's directly owned resource.
 The SDK MUST own an exact Effect 4 closure. Effect 3 Template packages MUST NOT
 import or re-export SDK Effect runtime values; only Effect-neutral,
 TypeBox-decoded data MAY cross the major-version boundary.
 
-#### Scenario: Interrupted sandbox work releases its resource
+#### Scenario: Interrupted sandbox work terminates or retains residue
 - **WHEN** an executing stage is interrupted after sandbox registration
-- **THEN** the directly owned process is terminated and sandbox deletion runs
-- **AND** any deletion failure is retained without erasing the primary cause
+- **THEN** the directly owned process reaches confirmed termination and sandbox
+  deletion runs, or the result retains typed unresolved residue and its locator
+- **AND** cleanup or residue diagnostics never erase the primary cause
 
 ### Requirement: Lane-owned study and evidence topology
 Each investigation MUST retain its study definitions, cases, inputs,
@@ -177,7 +221,7 @@ be able to bind a retained study through the same generic stage interfaces.
 Template Habitat MUST enforce only the SDK package shape and dependency
 direction. Each lane MUST own a local compatibility or Habitat check for its
 explicit study mapping. Deterministic tests MUST probe TypeBox checking and
-snapshotting, process
+snapshotting, generic/subject key collision, process
 interruption, scoped resource release, artifact round-trip, terminal adoption,
 failure separation, exact observation subjects, effective Codex rollout
 envelopes, deterministic projection, EVLog lifecycle, and package-local
@@ -247,16 +291,29 @@ plugin provenance manifest, or other mismatched closure identity
 - **WHEN** Codex-Langfuse source is frozen for BUILD
 - **THEN** its upstream digest manifest is derived from the named official Git
   objects and the deterministic bundle is rebuilt from maintained source
-- **AND** the two historical manifests with mismatched upstream hashes are
+- **AND** historical records with reproduced mismatched upstream hashes are
   retained only as historical evidence, never copied as current authority
 
 ### Requirement: Canonical submitted-artifact substrate
 The Git/Bun adapter MUST hash durable identities with cryptographic SHA-256 and
 MUST produce a staged full-index binary Git patch with external diff and
-textconv disabled. It MUST apply-check and apply against a fresh exact baseline,
-then regenerate and compare canonical bytes and digest. It MUST NOT use
+textconv disabled. `FrozenInput` MUST bind an artifact-substrate identity with
+the exact resolved Git binary and version plus a normalized environment and
+explicit path-quoting, line-ending, file-mode, rename-detection, prefix,
+diff-algorithm, color, and indent-heuristic settings. Generation, apply-check,
+apply, and regeneration MUST use that same substrate. Adoption MUST reject a
+different Git identity or canonicalization configuration rather than compare
+unlike bytes. It MUST apply-check and apply against a fresh exact baseline, then
+regenerate and compare canonical bytes and digest. It MUST NOT use
 noncryptographic `Bun.hash`, three-way patch inference, or solver-authored tests
 as artifact authority.
+
+#### Scenario: Patch substrate identity changes
+- **WHEN** an otherwise identical invocation resolves a different Git binary,
+  version, normalized environment, or canonical diff configuration
+- **THEN** artifact adoption rejects before comparing patch bytes
+- **AND** the lane must prepare a new explicitly governed input rather than
+  reinterpret old bytes under new Git semantics
 
 #### Scenario: Patch contains every product change
 - **WHEN** a solver adds, deletes, renames, changes mode, or modifies binary and
@@ -278,9 +335,9 @@ does not preserve the retiring controller as an SDK dependency.
 
 ### Requirement: No second control plane
 The SDK MUST NOT add a generic scheduler around Langfuse Experiments, a
-controller, workflow engine, receipt graph, CAS, database, hosted service,
-package manager, release plane, or evidence authority. Multiple packages MUST
-NOT be introduced without a proved dependency or bundle boundary.
+controller, workflow engine, receipt graph, SDK-owned general CAS, database,
+hosted service, package manager, release plane, or evidence authority. Multiple
+packages MUST NOT be introduced without a proved dependency or bundle boundary.
 
 #### Scenario: Consolidation remains a library
 - **WHEN** a study runs through the SDK

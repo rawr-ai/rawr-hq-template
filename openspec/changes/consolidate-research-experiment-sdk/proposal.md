@@ -21,9 +21,10 @@ removes duplicate ownership without moving research truth.
 - Expose four generic stage interfaces: Prepare, Execute, Observe, and
   Evaluate. Observe is a scoped correlation boundary around execution, not a
   strictly later phase.
-- Publish one write-once solver terminal containing the acquired observation
-  handle and submitted artifact before verification, then permit exact-input
-  adoption of declared durable downstream outputs.
+- Attempt exact solver-terminal adoption before observation acquisition. On a
+  miss, publish one write-once terminal containing the acquired observation
+  handle and submitted artifact before verification, then publish and adopt
+  declared durable downstream outputs before projection.
 - Separate scoreable agent outcomes from infrastructure and evaluator failures.
 - Extract generic Effect runtime, command, identity, and adoption behavior.
 - Add named adapters for OpenShell, Codex, Langfuse, Codex-Langfuse tracing,
@@ -45,8 +46,9 @@ removes duplicate ownership without moving research truth.
 - No migration of prompts, rubrics, packets, fixtures, historical results, or
   evidence into Template.
 - No generic scheduler around Langfuse Experiments.
-- No controller, workflow engine, CAS, evidence authority, receipt graph,
-  database, hosted service, package manager, or custom retry control plane.
+- No controller, workflow engine, SDK-owned general CAS, evidence authority,
+  receipt graph, database, hosted service, package manager, or custom retry
+  control plane.
 - No oRPC, Inngest, or skill-efficacy semantics in SDK core.
 - No initial package split unless a real dependency or bundle boundary proves
   one package insufficient.

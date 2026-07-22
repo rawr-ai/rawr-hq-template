@@ -73,9 +73,12 @@ The accepted core entities are deliberately few:
 
 - `StudyIdentity`: stable study ID and revision.
 - `CellKey`: study, case, condition, profile, and a stable lane-supplied
-  instance identity. The instance distinguishes valid replicates or replays
-  without giving core their study meaning.
-- `FrozenInput`: canonical input hash plus declared authorities.
+  instance identity. Retries and re-entry for one logical invocation retain
+  that instance. Only explicit lane authority creates a new replicate or
+  replay instance, recording its predecessor lineage and reason without
+  changing the prior instance.
+- `FrozenInput`: canonical input hash plus declared authorities, including the
+  artifact-substrate identity whenever the study accepts a Git patch.
 - `StageOutput<S, V>`: an envelope for a lane-declared durable output that binds
   its stage, exact cell, frozen-input digest, implementation revision, declared
   predecessor digest set or closure, output digest, and value.
@@ -91,7 +94,9 @@ The accepted core entities are deliberately few:
   their digests. It is a lane-declared durable `StageOutput` and therefore its
   publication key also binds frozen input, implementation revision, declared
   predecessor identities, and instance.
-- `EvaluationResult`: deterministic and/or judged study result.
+- `EvaluationResult`: deterministic and/or judged study result, published as a
+  lane-declared durable `StageOutput` whose predecessors bind the exact
+  `SolverTerminal` before score projection.
 
 Raw evidence, accepted stage output, remote telemetry, and historical claims
 remain distinguishable. Matching names do not imply matching identity; hashes
@@ -102,12 +107,14 @@ and exact predecessors do.
 ```text
 StudyDefinition
   -> Prepare -> PreparedCell
-  -> Observe.acquire -> ObservationHandle
-       -> Execute (Codex + host artifact capture + terminal sink)
-          -> persisted SolverTerminal (handle + agent outcome + artifact)
-     Observe.settle(handle, execution exit) (independent result)
-  -> Evaluate -> EvaluationResult
-  -> Observe.project(handle, evaluation) (independently resumable)
+  -> attempt exact SolverTerminal adoption
+       hit  -> recover persisted ObservationHandle; skip acquire and solver
+       miss -> Observe.acquire -> ObservationHandle
+                 -> Execute (Codex + host artifact capture + terminal sink)
+                    -> persisted SolverTerminal
+  -> Observe.settle(recovered or acquired handle, execution exit)
+  -> adopt or Evaluate -> persist exact EvaluationResult
+  -> Observe.project(handle, persisted evaluation) (independently resumable)
   -> lane-owned pure aggregation and reporting
 ```
 
@@ -143,15 +150,22 @@ interface Evaluate<I, O, E, R> {
 Studies compose these interfaces directly with Effect. The SDK does not expose
 a phase registry, DAG, generic worker, or global state machine.
 
-Observation acquisition may prevent execution when correlation cannot be
-established. After acquisition, the lane supplies the exact handle to Execute;
-the persisted solver terminal binds that handle to the submitted artifact and
-agent outcome. The lane then calls settlement with the handle and execution
-`Exit` on every exit it can observe. A crash after terminal publication can
-recover the same handle from that terminal and resume settlement or later score
-projection without rerunning the solver. Settlement failure therefore cannot
-erase a successful execution or its terminal artifact. Projection is
-independently resumable and is not ordered ahead of Evaluate by the SDK.
+Lane composition attempts exact solver-terminal adoption before observation
+acquisition. On an adoption hit it recovers the persisted handle and skips both
+acquisition and solver execution. Only a miss may acquire a new handle; failure
+to establish required correlation may then prevent execution. After
+acquisition, the lane supplies the exact handle to Execute, and the persisted
+solver terminal binds that handle to the submitted artifact and agent outcome.
+The lane calls settlement with the handle and execution `Exit` on every exit it
+can observe. A crash after acquisition but before terminal publication may
+leave a non-authoritative orphan observation: the lane preserves or settles it
+when discoverable, never adopts it as the trial subject, and may replace that
+pre-terminal execution under the same instance. A crash after terminal
+publication recovers the same handle and resumes settlement without rerunning
+the solver. Evaluation publishes its exact result durably before projection;
+later projection adopts that result instead of rerunning a blind or otherwise
+nondeterministic evaluation. Settlement and projection failures therefore
+cannot erase or change successful execution or evaluation truth.
 
 ## Continuation And Failure Law
 
@@ -163,6 +177,10 @@ This is a reasoning model, not a controller implementation.
 
 - `SolverTerminal` is absorbing for an exact frozen tuple, including its
   lane-supplied instance identity.
+- Retries and re-entry for the same logical invocation retain that instance.
+  Only an explicit lane decision may create a new replicate or replay instance;
+  it records predecessor lineage and a reason while leaving every prior
+  terminal immutable.
 - Host artifact capture and the agent outcome form one `SolverTerminal` with an
   explicit `Captured` or `Empty` artifact variant. A lane-provided durable sink
   publishes that complete value as a lane-declared durable `StageOutput` with
@@ -170,11 +188,13 @@ This is a reasoning model, not a controller implementation.
   verifier starts. Its key necessarily binds the exact cell and instance,
   frozen-input digest, implementation revision, and declared predecessor
   identities. An identical existing value may be adopted; a conflicting value
-  at the same key is rejected and never overwritten. The lane composition
-  behind Execute owns Codex invocation, Git/Bun artifact capture, and its sink
-  implementation/durability. Core owns only the sink port plus pure
-  publication/adoption conflict validation; it owns no store or evidence
-  retention.
+  at the same key is rejected and never overwritten. The typed sink port
+  requires atomic create-if-absent publication plus read-after-unknown
+  reconciliation when a write may have committed before acknowledgement. The
+  lane composition behind Execute owns Codex invocation, Git/Bun artifact
+  capture, and the sink implementation, store, and durability. Core owns only
+  the typed port and pure equality/adoption conflict law; it owns no store,
+  general CAS, or evidence retention.
 - A lane-declared durable output is adoptable only when its exact cell
   (including instance), frozen-input digest, implementation revision, declared
   predecessor digest set or closure, and output digest match. The `StageOutput`
@@ -184,6 +204,10 @@ This is a reasoning model, not a controller implementation.
 - Pre-terminal infrastructure interruption may replace only that execution.
 - Post-terminal evaluation or observation failure resumes only the incomplete
   boundary and cannot rerun the solver.
+- The exact `EvaluationResult` used for projection is itself a lane-declared
+  durable `StageOutput` whose predecessor set binds the exact `SolverTerminal`.
+  It is published before projection. Re-entry adopts that value; it does not
+  silently repeat blind or nondeterministic evaluation.
 - Product noncompletion, empty patches, compile failures, policy violations,
   and low scores are terminal study values.
 - Transport, containment, corrupt transfer, frozen-input mismatch, malformed
@@ -199,7 +223,10 @@ Every final public TypeBox object is closed once with
 `additionalProperties: false`. Reusable generic property maps or schema
 fragments are not independently decoded public objects: a lane merges its
 generic and subject properties first, then constructs one closed final
-`Type.Object`. It MUST NOT intersect separately closed objects. Boundaries use
+`Type.Object`. The composition helper makes overlapping generic and subject
+property keys unrepresentable in its TypeScript signature and rejects a
+runtime-supplied overlap before merging or constructing the object. It MUST NOT
+intersect separately closed objects. Boundaries use
 noncorrective `Value.Check`/`Value.Errors`, then perform semantic validation and
 an explicit clone/freeze snapshot as separate steps. They do not call
 `Value.Parse` or depend on process-global `Settings.correctiveParse`.
@@ -365,7 +392,7 @@ be recorded and preflighted for each study:
 
 | Boundary | Accepted identity | Authority and disposition |
 | --- | --- | --- |
-| Effect | `effect@4.0.0-beta.99` | Tag `6184a7dc53cb9310e299b65ad6d6c712c2cbf202`; admission-time pin after applying the initiative's 72-hour package-age window on 2026-07-22, not a claim that it remains latest. Recheck immediately before install; a newly admitted beta requires another exact verification rather than a silent float. |
+| Effect | `effect@4.0.0-beta.99` | Annotated ref `refs/tags/effect@4.0.0-beta.99`, tag object `c4f81f1cc9e2bbb18b2722ea6aeb4a76288dc286`, peeled commit `6184a7dc53cb9310e299b65ad6d6c712c2cbf202`; admission-time pin after applying the initiative's 72-hour package-age window on 2026-07-22, not a claim that it remains latest. Recheck immediately before install; a newly admitted beta requires another exact verification rather than a silent float. |
 | TypeBox | `typebox@1.3.6` | Tag `41f0b1dd2b5f307c5e889c4463fe48839b8a5aaf`; sole public SDK schema engine. |
 | SDK compiler | `typescript@7.0.2`, `@types/bun@1.3.14`, `@types/node@22.20.1` | Package-local CLI and standalone configs; Node types are isolated to the Node 22 projection boundary. |
 | Bun / Git | Bun `1.3.14`; Git `>=2.48.0` | Record the resolved binaries and versions. Apple Git `2.39.5` is below the admitted patch substrate. |
@@ -426,6 +453,13 @@ and [EVLog tag](https://github.com/HugoRCD/evlog/tree/evlog%402.22.3).
   instructions on resume are prohibited or explicitly unproved.
 - Codex owns SIGINT and bounded escalation and must reach terminal process state
   before OpenShell releases the sandbox.
+- If bounded escalation is sent but process exit cannot be confirmed, Codex
+  returns typed `ProcessTerminationUnconfirmed` evidence. The
+  Codex-OpenShell/lane composition binds it to the exact sandbox locator as
+  unresolved residue. OpenShell does not claim release, silently delete, or
+  rerun that subject. Scoped release ends with confirmed cleanup or explicit
+  retained residue, preserving the primary failure and any secondary cleanup
+  failure.
 
 ### Langfuse, OpenTelemetry, And Codex Projection
 
@@ -443,16 +477,20 @@ and [EVLog tag](https://github.com/HugoRCD/evlog/tree/evlog%402.22.3).
   `PromptRef` values and links each only to that turn's first real generation.
   It never chooses turns, episodes, prompt policy, metadata admissibility, or
   failure policy.
+- Parented mode rejects legacy trace-seed configuration and cannot create a
+  second application root. Projection is selection-neutral over the exact
+  decoded turn set supplied by the lane, including an incomplete or interrupted
+  turn.
 - Score IDs are idempotent update keys, not write-once evidence. BOOLEAN writes
   use numeric `0`/`1`. Flush is not ingestion proof; bounded paginated readback
   verifies exact subject, type, config, value, and metadata.
 - One OTel bootstrap owns each projection process. Force-flush and shutdown are
   distinct, idempotent lifecycle steps; use after close rejects.
 - Before source freeze, derive the upstream plugin digest manifest directly
-  from Git objects. Both historical `PROVENANCE.md` files contain three alleged
-  upstream hashes that do not match the named official tree, so they cannot be
-  copied as byte-exact authority. At upstream commit `33bc50ba`, the official
-  SHA-256 values are
+  from Git objects. Historical provenance records include three alleged
+  upstream hashes that do not match the named official tree, so those records
+  cannot be copied as byte-exact authority. At upstream commit `33bc50ba`, the
+  official SHA-256 values are
   `67549029a3d3f2c5766432fded11c92c26857911dd7eaa3b194eeef8d92ae9a9`
   for `config.ts`,
   `430bac98eac56c29099d740b211a14c883bf2c53ef3a450e47ac8abc64c9cc51`
@@ -477,9 +515,23 @@ and [EVLog tag](https://github.com/HugoRCD/evlog/tree/evlog%402.22.3).
 ### Bun And Git Artifacts
 
 - Use `Bun.CryptoHasher("sha256")` for durable identities, never `Bun.hash`.
-- Git creates the submission: `git add -A`, then a cached diff with `--binary`,
-  `--full-index`, `--no-ext-diff`, and `--no-textconv`. Apply-check and apply it
-  to a fresh exact baseline, regenerate it, and require identical bytes/digest.
+- `FrozenInput` binds an artifact-substrate identity containing the exact
+  resolved Git binary and version plus the normalized environment and diff
+  configuration. At minimum that substrate
+  fixes `LC_ALL=C`, `LANG=C`, `TZ=UTC`, `GIT_CONFIG_NOSYSTEM=1`, and
+  `GIT_CONFIG_GLOBAL` to an empty lane-owned file. It explicitly fixes path
+  quoting, line-ending conversion, file-mode handling, rename detection, diff
+  prefixes, diff algorithm, color, and the indent heuristic.
+- Git creates the submission with that substrate: `git add -A`, then
+  `git diff --cached` with config overrides `core.quotePath=true`,
+  `core.autocrlf=false`, `core.fileMode=true`, and `color.ui=false`, plus
+  `--binary`, `--full-index`, `--no-ext-diff`, `--no-textconv`, `--no-renames`,
+  `--src-prefix=a/`, `--dst-prefix=b/`, `--diff-algorithm=myers`, and
+  `--no-indent-heuristic`.
+  The same binary, environment, and configuration apply-check and apply it to a
+  fresh exact baseline, regenerate it, and require identical bytes and digest.
+  Adoption rejects a different Git identity or canonicalization configuration
+  rather than comparing unlike patch bytes.
 - Git archive owns history-free materialization. Bun archive is not assumed
   portable until mode and symlink behavior prove it for the target platform.
 - Build before `bun pm pack --ignore-scripts`; inspect the archive, bind package
@@ -495,7 +547,9 @@ Tests target persistent behavioral guarantees, not implementation text:
 1. Strict TypeBox checking accepts a merged generic-plus-lane object and rejects
    an additional unknown field, malformed tagged unions, numeric-string
    coercion, default insertion, and unknown-field cleaning even when global
-   corrective parsing is enabled. Semantic validation rejects temporary/symlink
+   corrective parsing is enabled. A type fixture makes generic/subject key
+   overlap unrepresentable, and a dynamic collision rejects before merge or
+   `Type.Object` construction. Semantic validation rejects temporary/symlink
    roots, secrets, invalid deadlines, and noncanonical predecessor sets; the
    explicit snapshot is unchanged by later mutation of the caller's input.
 2. One Effect runtime builds/releases once; command success, failure, timeout,
@@ -506,18 +560,29 @@ Tests target persistent behavioral guarantees, not implementation text:
    behave correctly inside one workspace.
 4. Codex success/failure/retryable/malformed/unknown JSONL, local fixture-server
    requests, rollout envelope admission, explicit resume, and SIGINT retain all
-   evidence. An ignored-SIGINT fixture proves bounded escalation reaches an
-   observed terminal process before OpenShell release and preserves both
-   termination and cleanup failures under the primary/secondary failure law.
+   evidence. An ignored-SIGINT fixture proves bounded escalation either reaches
+   an observed terminal process before OpenShell release or returns typed
+   `ProcessTerminationUnconfirmed` with retained sandbox residue; both paths
+   preserve termination and cleanup failures under the primary/secondary law.
 5. Submitted artifacts round-trip add/delete/rename/binary/mode changes through
-   a fresh baseline and regenerate identical canonical patch bytes.
-6. Observation handle, agent outcome, and artifact publish once as one solver
-   terminal; identical retries adopt it and conflicting publication rejects.
+   a fresh baseline and regenerate identical canonical patch bytes. A different
+   Git binary, version, environment, or diff configuration rejects adoption
+   before comparing bytes.
+6. Composition attempts exact terminal adoption before observation acquisition.
+   On a miss, observation handle, agent outcome, and artifact publish once as
+   one solver terminal through atomic create-if-absent; an unknown write outcome
+   reconciles by read. Identical retries adopt it, conflicts reject, and a
+   pre-terminal orphan observation never becomes the trial subject. The exact
+   evaluation result publishes durably before projection and is adopted on
+   projection retry.
 7. Product failure and infrastructure failure remain disjoint.
 8. Full W3C carrier extraction, one provider-owned root, multi-turn Codex
    projection, prompt linkage, exact trace-and-observation score subjects,
    pagination, timeout/abort, weak flush, and bounded readback behave correctly
-   without global namespace cleanliness.
+   without global namespace cleanliness. Parented mode rejects legacy
+   trace-seed mode and cannot create a second application root. Projection is
+   selection-neutral over the supplied decoded turns, including an incomplete
+   or interrupted turn.
 9. Codex-Langfuse rebuilds deterministically from a Git-object-derived upstream
    manifest and executes from an arbitrary working directory under Node 22.
 10. EVLog proves redaction, correlation, independent sink isolation, overflow
@@ -600,7 +665,7 @@ The design is wrong or too elaborate if any of these become true:
 - OpenShell owns Codex semantics, Codex owns OpenShell lifecycle, or either lane
   duplicates the shared provider bridge.
 - Using the SDK requires moving historical evidence.
-- The package adds a controller, scheduler, workflow graph, receipt/CAS
-  authority, database, hosted service, or release plane.
+- The package adds a controller, scheduler, workflow graph, SDK-owned general
+  CAS or receipt/evidence authority, database, hosted service, or release plane.
 - Multiple packages appear without a proved dependency or bundle boundary.
 - Template root dependencies must be upgraded to host the package.
