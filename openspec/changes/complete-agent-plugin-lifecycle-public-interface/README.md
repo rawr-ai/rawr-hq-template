@@ -152,6 +152,16 @@ owns positive architecture topology and source relationships. Full-corpus
 lintEffect is intentionally not part of the required push ratchet because its
 cold-run cost is an upstream limitation rather than repository admission logic.
 
+The Biome tooling checkpoint pins Biome `2.5.3` and lintEffect `0.0.6`, carries
+the narrow upstream severity compatibility patch byte-for-byte from Civ7, and
+exposes both commands through the Habitat consumer's Nx project. A frozen Bun
+install applied the patch; the required Biome leaf inspected 1,180 files in
+327 ms; the Habitat consumer's lint, typecheck, four tests, and bounded packet
+check passed. A focused disposable lintEffect source produced the expected
+patched diagnostic and was removed without recursive cleanup. Repository-wide
+formatting and import organization remain a separate mechanical checkpoint;
+lintEffect remains advisory.
+
 ## Native Marketplace Grounding
 
 A disposable Codex 0.144.6 probe used the absolute native binary and an isolated
@@ -191,7 +201,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx lint/typecheck target population | Complete on the active Template stack; final ratchet wiring pending |
 | Typechecked Habitat consumer and TypeBox release manifest | Complete on the active Template stack |
-| Civ-aligned Biome/Nx/TypeScript toolchain | Pending as separate semantic nodes |
+| Civ-aligned Biome/Nx/TypeScript toolchain | Biome configuration complete; mechanical adoption, Nx, and TypeScript nodes pending |
 | Positive Habitat/Nx ratchet | Pending |
 | Direct Oclif development and external extension path | Pending |
 | Conventional CLI package/release | Pending |
