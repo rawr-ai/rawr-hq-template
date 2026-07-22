@@ -1,10 +1,10 @@
+import type { BaseMetadata, ServiceDepsOf, ServiceMetadataOf } from "../baseline/types";
 import type {
   DeclaredContext,
   ExecutionContext,
   ORPCInitialContext,
   RequiredExtensionExecutionContext,
 } from "../context/types";
-import type { BaseMetadata, ServiceDepsOf, ServiceMetadataOf } from "../baseline/types";
 
 /**
  * Canonical service declaration shape for `defineService(...)`.

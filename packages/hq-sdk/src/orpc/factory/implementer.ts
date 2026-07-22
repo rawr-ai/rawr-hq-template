@@ -1,11 +1,9 @@
-import { isContractProcedure } from "@orpc/contract";
 import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
+import { isContractProcedure } from "@orpc/contract";
+import type { Context, ImplementerInternalWithMiddlewares } from "@orpc/server";
 import { implement } from "@orpc/server";
-import type { Context } from "@orpc/server";
-import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
-
-import type { ExecutionContext } from "../context/types";
 import type { BaseDeps } from "../baseline/types";
+import type { ExecutionContext } from "../context/types";
 
 type AnyContractRouterObject = {
   [k: string]: AnyContractRouter;

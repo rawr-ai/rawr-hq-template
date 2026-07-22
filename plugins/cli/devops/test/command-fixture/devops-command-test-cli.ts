@@ -1,6 +1,6 @@
-import { Config, flush, handle, run } from "@oclif/core";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { Config, flush, handle, run } from "@oclif/core";
 
 // Owner-local command harness: load the devops extension exactly as Oclif does.
 const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");

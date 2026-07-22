@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
 import type { ReadableSpan, SpanExporter } from "@opentelemetry/sdk-trace-base";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   __appendOtlpSignalPathForTests,
   __resetRawrOrpcTelemetryForTests,

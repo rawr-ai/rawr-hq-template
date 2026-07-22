@@ -9,11 +9,11 @@
  * - runtime projection or transport-specific helpers
  */
 export type {
-  ServicePackage,
-  ServicePackageBoundary,
   InferConfig,
   InferDeps,
   InferInvocation,
   InferScope,
+  ServicePackage,
+  ServicePackageBoundary,
 } from "./orpc/boundary/service-package";
 export { defineServicePackage } from "./orpc/boundary/service-package";

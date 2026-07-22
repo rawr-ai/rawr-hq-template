@@ -2,11 +2,11 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import HyperresearchCodexSlice from "../src/commands/hyperresearch/codex-slice";
 import HyperresearchCodexAdvance from "../src/commands/hyperresearch/codex/advance";
 import HyperresearchCodexRunFixture from "../src/commands/hyperresearch/codex/run-fixture";
 import HyperresearchCodexStart from "../src/commands/hyperresearch/codex/start";
 import HyperresearchCodexValidate from "../src/commands/hyperresearch/codex/validate";
+import HyperresearchCodexSlice from "../src/commands/hyperresearch/codex-slice";
 
 const tempDirs: string[] = [];
 const v8StepFiles = [

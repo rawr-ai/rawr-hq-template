@@ -1,10 +1,11 @@
+import { afterEach, describe, expect, test } from "bun:test";
 import { Buffer } from "node:buffer";
 import {
   lstat,
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
+  readFile,
   realpath,
   rename,
   rm,
@@ -14,21 +15,18 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-
-import { afterEach, describe, expect, test } from "bun:test";
 import { FileSystem, Path } from "@effect/platform";
 import { SystemError } from "@effect/platform/Error";
 import { NodeContext } from "@effect/platform-node";
-import { Effect } from "effect";
-
 import type {
   CoworkV1ArchiveEncodingRequest,
   PackageOutputFailure,
 } from "@rawr/resource-agent-plugin-package-output";
+import { Effect } from "effect";
 import {
   makeAgentPluginPackageOutputResource,
-  runNodePackageOutput,
   type PackageOutputProviderFailpoints,
+  runNodePackageOutput,
 } from "../index";
 
 const encoder = new TextEncoder();
