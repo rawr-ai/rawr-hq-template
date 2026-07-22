@@ -6,14 +6,14 @@ import {
 } from "../../../shared/release";
 
 import {
+  type CanonicalChannelSelection,
   CURRENT_MAIN_V2_CANONICAL_REF,
   CURRENT_MAIN_V2_RECORD_PATH,
   CURRENT_MAIN_V2_RELEASE_INPUT_PATH,
-  MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
-  type CanonicalChannelSelection,
   type CurrentMainBodyV2,
   type CurrentMainSelectionFailureKind,
   type CurrentMainSelectionResult,
+  MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
 } from "../model/dto/current-main";
 import { parseCanonicalRef } from "../model/dto/primitives";
 import { validateCurrentMainEnvelopeV2 } from "../model/policy/current-main-record";

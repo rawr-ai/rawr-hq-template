@@ -1,10 +1,9 @@
-import { describe, expect, it } from "vitest";
-
 import type {
   ContentWorkspaceFailure,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
+import { describe, expect, it } from "vitest";
 import {
   createExactGitBlobPointer,
   type GitBlobSelection,

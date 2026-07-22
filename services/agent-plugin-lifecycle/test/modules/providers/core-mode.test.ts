@@ -1,13 +1,12 @@
-import { describe, expect, it } from "vitest";
 import { Value } from "typebox/value";
-
+import { describe, expect, it } from "vitest";
+import { contract } from "../../../src/service/modules/providers/contract";
 import {
+  normalizeCanonicalStatusRequest,
   normalizeCanonicalSyncRequest,
   normalizeCompleteTestRequest,
-  normalizeCanonicalStatusRequest,
   normalizeTargetedTestRequest,
 } from "../../../src/service/modules/providers/model/dto/mode";
-import { contract } from "../../../src/service/modules/providers/contract";
 import {
   CanonicalStatusInputSchema,
   CanonicalSyncInputSchema,

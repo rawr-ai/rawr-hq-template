@@ -1,19 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
-
-import { executeCanonicalConvergence } from "../../../src/service/modules/providers/router/canonical-convergence-executor";
 import type {
   CanonicalConvergenceStep,
   CanonicalNativeMutationAction,
   CanonicalNativeObservation,
   CanonicalObservedConvergencePlan,
 } from "../../../src/service/modules/providers/model/dto/canonical-convergence";
+import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
 import {
+  type DeploymentResult,
   failure,
   issue,
   success,
-  type DeploymentResult,
 } from "../../../src/service/modules/providers/model/errors/deployment-result";
-import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
 import {
   createProviderMarketplaceRegistration,
   marketplaceState,
@@ -31,6 +29,7 @@ import {
   type ProviderInventory,
 } from "../../../src/service/modules/providers/model/policy/state-machine";
 import type { NativeMutationAttempt } from "../../../src/service/modules/providers/model/repositories/provider";
+import { executeCanonicalConvergence } from "../../../src/service/modules/providers/router/canonical-convergence-executor";
 
 const TARGET = mustTarget();
 const OWNER = "rawr-hq" as ProviderProjectionMember["providerSourceIdentity"];

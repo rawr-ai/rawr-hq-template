@@ -1,22 +1,21 @@
-import {
-  createAgentPluginPayload,
-  createAgentPluginRelease,
-  createAgentPluginReleaseInput,
-  createCompleteSetArtifactRef,
-  createReleaseArtifactRef,
-  payloadEntryBytes,
-  type AgentPluginRelease,
-  type VerifiedReleaseArtifactV1,
-} from "../../../src/service/shared/release";
 import { describe, expect, it } from "vitest";
-
-import { must, productFixture, releaseInputBody, SOURCE } from "../../shared/release/fixtures";
 import {
   evaluateCapabilities,
   parseAdapterProtocol,
   renderCompleteProjection,
   renderTargetedProjection,
 } from "../../../src/service/modules/providers/model/policy/projection";
+import {
+  type AgentPluginRelease,
+  createAgentPluginPayload,
+  createAgentPluginRelease,
+  createAgentPluginReleaseInput,
+  createCompleteSetArtifactRef,
+  createReleaseArtifactRef,
+  payloadEntryBytes,
+  type VerifiedReleaseArtifactV1,
+} from "../../../src/service/shared/release";
+import { must, productFixture, releaseInputBody, SOURCE } from "../../shared/release/fixtures";
 
 describe("artifact-only provider projections", () => {
   it("is deterministic across member order, byte ownership, and same-protocol refactors", () => {

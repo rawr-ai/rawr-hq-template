@@ -5,10 +5,10 @@ export {
   BuildResultSchema,
   CheckInputSchema,
   CheckResultSchema,
-  ReleaseInputRefreshInputSchema,
-  ReleaseInputRefreshResultSchema,
   ReleaseInputRecordInputSchema,
   ReleaseInputRecordResultSchema,
+  ReleaseInputRefreshInputSchema,
+  ReleaseInputRefreshResultSchema,
   RepositoryCheckInputSchema,
   RepositoryCheckResultSchema,
 } from "./model/dto/release-lifecycle";
@@ -16,9 +16,9 @@ export {
 export {
   PlanRetentionInputSchema,
   PlanRetentionResultSchema,
-  RetentionInventorySchema,
   RetentionInventoryEntryInputSchema,
   RetentionInventoryEntrySchema,
+  RetentionInventorySchema,
   RetentionIssueSchema,
   RetentionPinsV1Schema,
   RetentionPlanBlockedSchema,

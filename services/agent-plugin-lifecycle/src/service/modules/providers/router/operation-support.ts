@@ -1,7 +1,4 @@
 import type { ContentAuthority, VerifiedArtifactSnapshotV1 } from "../../../shared/release";
-
-import { equalBytes } from "../model/helpers/canonical";
-import { marketplaceState, sameMarketplaceState } from "../model/policy/marketplace";
 import {
   createMechanicalProviderEvidence,
   type MechanicalEvidenceSource,
@@ -14,30 +11,32 @@ import type {
   TargetOperationOutcome,
   UnboundTargetOperationOutcome,
 } from "../model/dto/outcome";
+import type { ProviderTarget } from "../model/dto/provider-target";
 import {
+  type DeploymentResult,
+  failure,
+  issue,
+  type NonEmptyReadonlyArray,
+  type ProviderDeploymentIssue,
+  success,
+} from "../model/errors/deployment-result";
+import { equalBytes } from "../model/helpers/canonical";
+import { marketplaceState, sameMarketplaceState } from "../model/policy/marketplace";
+import {
+  type AgentProviderProjection,
+  type CapabilityObservation,
   evaluateCapabilities,
   renderCompleteProjection,
   renderTargetedProjection,
-  type AgentProviderProjection,
-  type CapabilityObservation,
 } from "../model/policy/projection";
+import { type ManagedMemberClaim, visibleFingerprint } from "../model/policy/receipt";
 import {
-  failure,
-  issue,
-  success,
-  type DeploymentResult,
-  type NonEmptyReadonlyArray,
-  type ProviderDeploymentIssue,
-} from "../model/errors/deployment-result";
-import {
-  planTarget,
   type DeploymentAuthority,
   type NativeProviderMutationAction,
   type ProviderMutationAction,
   type ProviderTargetPlan,
+  planTarget,
 } from "../model/policy/state-machine";
-import { visibleFingerprint, type ManagedMemberClaim } from "../model/policy/receipt";
-import type { ProviderTarget } from "../model/dto/provider-target";
 import type { MechanicalEvidencePublisher } from "../model/repositories/evidence";
 import type {
   NativeMutationAttempt,

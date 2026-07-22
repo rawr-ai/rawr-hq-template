@@ -1,37 +1,36 @@
 import {
-  parseArtifactRef,
   type CompleteSetArtifactRef,
+  parseArtifactRef,
   type ReleaseArtifactRef,
 } from "../../../../shared/release";
-
-import { canonicalBytes, canonicalDigest, compareCanonical, equalBytes } from "./canonical";
 import {
   AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
-  PROVIDER_EVIDENCE_SCHEMA_PROTOCOL,
   evidenceBodyValue,
   type MechanicalEvidenceDigest,
   type MechanicalEvidenceSource,
   type MechanicalProviderEvidence,
   type MechanicalProviderEvidenceBody,
+  PROVIDER_EVIDENCE_SCHEMA_PROTOCOL,
   type ProviderVerificationFact,
 } from "../dto/mechanical-evidence";
 import type { EvaluationProfile } from "../dto/mode";
-import { boundedArray, canonicalString, exactRecord } from "./parse";
+import type { ProviderId, ProviderTargetDigest } from "../dto/provider-target";
+import {
+  type DeploymentResult,
+  failure,
+  firstIssue,
+  issue,
+  type ProviderDeploymentIssue,
+  type ProviderDeploymentIssueCode,
+  success,
+} from "../errors/deployment-result";
 import type {
   AdapterProtocol,
   CapabilityProfileDigest,
   ProjectionDigest,
 } from "../policy/projection";
-import {
-  failure,
-  firstIssue,
-  issue,
-  success,
-  type DeploymentResult,
-  type ProviderDeploymentIssue,
-  type ProviderDeploymentIssueCode,
-} from "../errors/deployment-result";
-import type { ProviderId, ProviderTargetDigest } from "../dto/provider-target";
+import { canonicalBytes, canonicalDigest, compareCanonical, equalBytes } from "./canonical";
+import { boundedArray, canonicalString, exactRecord } from "./parse";
 
 const MAX_EVIDENCE_BYTES = 16 * 1024 * 1024;
 const MAX_TARGETS = 64;

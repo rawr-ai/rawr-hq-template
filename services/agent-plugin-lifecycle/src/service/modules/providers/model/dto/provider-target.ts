@@ -1,19 +1,19 @@
-import { ReadonlyObject, Type, type Static } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
 import {
   isCanonicalAbsolutePath,
   MAX_CANONICAL_ABSOLUTE_PATH_BYTES,
 } from "../../../../model/dto/structural";
-import { canonicalDigest, compareCanonical, type CanonicalValue } from "../helpers/canonical";
 import {
+  type DeploymentResult,
   failure,
   firstIssue,
   issue,
-  success,
-  type DeploymentResult,
   type ProviderDeploymentIssue,
+  success,
 } from "../errors/deployment-result";
+import { type CanonicalValue, canonicalDigest, compareCanonical } from "../helpers/canonical";
 
 declare const providerHomeBrand: unique symbol;
 declare const providerTargetDigestBrand: unique symbol;

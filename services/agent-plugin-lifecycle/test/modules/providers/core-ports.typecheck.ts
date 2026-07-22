@@ -1,7 +1,7 @@
+import type { CurrentMainSelectionReader } from "../../../src/service/model/dependencies/current-main";
 import type { ProviderDeploymentRequest } from "../../../src/service/modules/providers/model/dto/mode";
 import type { VerifiedReleaseReader } from "../../../src/service/modules/providers/model/repositories/artifact";
 import type { CanonicalNativeRuntime } from "../../../src/service/modules/providers/model/repositories/canonical-native";
-import type { CurrentMainSelectionReader } from "../../../src/service/model/dependencies/current-main";
 import type {
   ProviderMarketplaceMaterializer,
   ProviderProjectionMaterializer,

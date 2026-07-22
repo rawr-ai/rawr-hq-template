@@ -1,13 +1,12 @@
-import { Type, type Static } from "typebox";
-
-import type { MechanicalEvidenceDigest } from "./mechanical-evidence";
-import type { CanonicalNativeMutationAction } from "./canonical-convergence";
+import { type Static, Type } from "typebox";
+import type { NonEmptyReadonlyArray, ProviderDeploymentIssue } from "../errors/deployment-result";
 import type {
   NativeProviderMutationAction,
   ProviderMutationAction,
   ProviderTargetPlan,
 } from "../policy/state-machine";
-import type { NonEmptyReadonlyArray, ProviderDeploymentIssue } from "../errors/deployment-result";
+import type { CanonicalNativeMutationAction } from "./canonical-convergence";
+import type { MechanicalEvidenceDigest } from "./mechanical-evidence";
 import type { ProviderTarget } from "./provider-target";
 
 const PROVIDER_PROTOCOL_PATTERN = "^[a-z0-9][a-z0-9._/-]*@v[1-9][0-9]*$";

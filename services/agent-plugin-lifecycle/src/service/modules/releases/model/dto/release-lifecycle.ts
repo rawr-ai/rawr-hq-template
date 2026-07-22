@@ -1,13 +1,4 @@
-import { ReadonlyObject, Refine, Type, type Static } from "typebox";
-
-import { NonEmptyReadonlyArray } from "../../../../model/dto/structural";
-import {
-  ArtifactRefSchema,
-  MAX_RELEASE_MEMBERS,
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  ReleaseArtifactRefSchema,
-  ReleaseIssueSchema,
-} from "../../../../shared/release";
+import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import {
   ContentWorkspacePolicySchema,
   GitCommitIdSchema,
@@ -17,6 +8,14 @@ import {
   RepositoryIdentitySchema,
   SourceEligibilityIssueSchema,
 } from "../../../../model/dto/releases/content-workspace";
+import { NonEmptyReadonlyArray } from "../../../../model/dto/structural";
+import {
+  ArtifactRefSchema,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
+  ReleaseArtifactRefSchema,
+  ReleaseIssueSchema,
+} from "../../../../shared/release";
 import { StagedContentWorkspacePolicySchema } from "./staged-content-workspace";
 
 export const BuildModeSchema = Type.Union([

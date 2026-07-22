@@ -1,11 +1,11 @@
 import { Value } from "typebox/value";
 
 import {
+  type ArtifactRef,
   compareCanonicalText,
+  type MechanicalEvidenceHandleV1,
   normalizeArtifactRef,
   normalizeMechanicalEvidenceHandle,
-  type ArtifactRef,
-  type MechanicalEvidenceHandleV1,
 } from "../../../../shared/release";
 import type {
   RetentionIssue,

@@ -1,8 +1,8 @@
-import { schema } from "@rawr/hq-sdk";
 import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
-import { describe, expect, expectTypeOf, it } from "vitest";
+import { schema } from "@rawr/hq-sdk";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import { contract } from "../../../src/service/modules/vendors/contract";
 import type {

@@ -1,29 +1,16 @@
-import { describe, expect, it } from "vitest";
 import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
-
-import {
-  canonicalSerializeAgentPluginReleaseInput,
-  contentDigest,
-  createAgentPluginPayload,
-  createAgentPluginReleaseInput,
-  parseGitCommitId,
-  parseGitTreeId,
-  parseReleaseRelativePath,
-  parseRepositoryIdentity,
-  type AgentPluginReleaseInput,
-  type ReleaseResult,
-} from "../../../src/service/shared/release";
+import { describe, expect, it } from "vitest";
 import {
   CURRENT_MAIN_V2_RECORD_PATH,
   CURRENT_MAIN_V2_RELEASE_INPUT_PATH,
-  MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
-  createExactGitBlobPointer,
-  encodeCurrentMainBodyV2,
-  parseCanonicalRef,
   type CurrentMainBodyV2,
+  createExactGitBlobPointer,
   type ExactGitBlobObservation,
+  encodeCurrentMainBodyV2,
   type GitBlobSelection,
   type GitLocator,
+  MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
+  parseCanonicalRef,
 } from "../../../src/service/modules/governance/model";
 import type {
   ExactGitReader,
@@ -32,6 +19,18 @@ import type {
   RepositoryInspection,
 } from "../../../src/service/modules/governance/model/repositories/exact-git";
 import { resolveCurrentMainSelection } from "../../../src/service/modules/governance/router/current-main-selection";
+import {
+  type AgentPluginReleaseInput,
+  canonicalSerializeAgentPluginReleaseInput,
+  contentDigest,
+  createAgentPluginPayload,
+  createAgentPluginReleaseInput,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseReleaseRelativePath,
+  parseRepositoryIdentity,
+  type ReleaseResult,
+} from "../../../src/service/shared/release";
 import {
   createLifecycleTestClient,
   testInvocation,

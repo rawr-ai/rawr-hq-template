@@ -1,24 +1,31 @@
 import {
+  type CanonicalJsonValue,
   canonicalJsonLine,
   decodeCanonicalJson,
   equalBytes,
-  type CanonicalJsonValue,
 } from "./canonical";
-import { issue, sortReleaseIssues, type ReleaseIssue } from "./issues";
+import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import {
+  type DistributionOwnershipIndex,
   ownershipClaimsFor,
   ownershipIndexValue,
   parseDistributionOwnershipIndex,
-  type DistributionOwnershipIndex,
 } from "./ownership";
 import { collect, isExactRecord, parseBoundedArray } from "./parse";
 import { payloadManifestValue } from "./payload";
 import {
   AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
+  type AgentPluginReleaseSetSchemaVersion,
+  type ArtifactDigest,
   BUILDER_PROTOCOL_VERSION,
+  type BuilderProtocolVersion,
+  type ContentAuthority,
+  compareCanonicalText,
+  type GitCommitId,
+  type GitTreeId,
   MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-  compareCanonicalText,
+  type PluginId,
   parseArtifactDigest,
   parseContentAuthority,
   parseGitCommitId,
@@ -28,34 +35,27 @@ import {
   parseReleaseInputDigest,
   parseReleaseSetDigest,
   parseRepositoryIdentity,
-  releaseSetDigest,
-  type AgentPluginReleaseSetSchemaVersion,
-  type ArtifactDigest,
-  type BuilderProtocolVersion,
-  type ContentAuthority,
-  type GitCommitId,
-  type GitTreeId,
-  type PluginId,
   type ReleaseDigest,
   type ReleaseInputDigest,
   type ReleaseSetDigest,
   type RepositoryIdentity,
+  releaseSetDigest,
 } from "./primitives";
 import {
+  type AgentPluginRelease,
   agentPluginReleaseInputValue,
   agentPluginReleaseValue,
   verifyAgentPluginRelease,
-  type AgentPluginRelease,
 } from "./release";
 import {
+  type AgentPluginReleaseInput,
+  type CompletenessWitness,
   completenessWitnessValue,
   parseCompletenessWitness,
   provenanceBindingValue,
   verifyAgentPluginReleaseInput,
-  type AgentPluginReleaseInput,
-  type CompletenessWitness,
 } from "./release-input";
-import { asNonEmpty, failure, success, type ReleaseResult } from "./result";
+import { asNonEmpty, failure, type ReleaseResult, success } from "./result";
 
 declare const agentPluginReleaseSetBrand: unique symbol;
 

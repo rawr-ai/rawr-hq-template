@@ -1,26 +1,26 @@
+import type {
+  NativeResourcePackageObservation,
+  NativeResourceSessionInput,
+} from "../../../model/dependencies/providers";
 import {
-  parseContentAuthority,
-  parsePluginId,
   type ContentAuthority,
   type PluginId,
+  parseContentAuthority,
+  parsePluginId,
 } from "../../../shared/release";
+import type { ProviderId } from "../model/dto/provider-target";
 import {
   marketplaceState,
-  sameMarketplaceState,
   type ProviderMarketplaceObservation,
   type ProviderMarketplaceRegistration,
+  sameMarketplaceState,
 } from "../model/policy/marketplace";
 import type {
   AdapterProtocol,
   ProviderCapability,
   ProviderSourceIdentity,
 } from "../model/policy/projection";
-import type { ProviderId } from "../model/dto/provider-target";
 import { inspectMarketplaceSource } from "./resource-marketplace";
-import type {
-  NativeResourceSessionInput,
-  NativeResourcePackageObservation,
-} from "../../../model/dependencies/providers";
 
 export function createSessionCache<Session>(
   executablePath: string,

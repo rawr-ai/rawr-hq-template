@@ -1,34 +1,32 @@
 import { describe, expect, it } from "vitest";
-
-import {
-  createProviderMarketplaceRegistration,
-  marketplaceState,
-} from "../../../src/service/modules/providers/model/policy/marketplace";
-import {
-  renderCompleteProjection,
-  type AgentProviderProjection,
-} from "../../../src/service/modules/providers/model/policy/projection";
-import {
-  canonicalSerializeTargetReceipt,
-  createTargetReceipt,
-  visibleFingerprint,
-  type TargetReceipt,
-} from "../../../src/service/modules/providers/model/policy/receipt";
-import { createTargetIdentitySidecar } from "../../../src/service/modules/providers/model/policy/state-machine";
 import type {
   EvaluationProfile,
   ProviderRequestDigest,
 } from "../../../src/service/modules/providers/model/dto/mode";
 import {
-  parseProviderTarget,
   type ProviderTarget,
+  parseProviderTarget,
 } from "../../../src/service/modules/providers/model/dto/provider-target";
-import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
 import {
-  canonicalSerializeTargetIdentitySidecar,
-  decodeTargetIdentitySidecar,
-} from "../../../src/service/modules/providers/repository/target-record-codec";
-import { createPathlessTargetState } from "../../../src/service/modules/providers/repository/target-records";
+  failure,
+  issue,
+  success,
+} from "../../../src/service/modules/providers/model/errors/deployment-result";
+import {
+  createProviderMarketplaceRegistration,
+  marketplaceState,
+} from "../../../src/service/modules/providers/model/policy/marketplace";
+import {
+  type AgentProviderProjection,
+  renderCompleteProjection,
+} from "../../../src/service/modules/providers/model/policy/projection";
+import {
+  canonicalSerializeTargetReceipt,
+  createTargetReceipt,
+  type TargetReceipt,
+  visibleFingerprint,
+} from "../../../src/service/modules/providers/model/policy/receipt";
+import { createTargetIdentitySidecar } from "../../../src/service/modules/providers/model/policy/state-machine";
 import type {
   PathlessTargetRecordCollection,
   TargetRecordCapture,
@@ -39,16 +37,17 @@ import type {
   TargetRecordPlanInput,
   TargetRecordReadToken,
 } from "../../../src/service/modules/providers/model/repositories/target-record-storage";
+import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
 import {
-  failure,
-  issue,
-  success,
-} from "../../../src/service/modules/providers/model/errors/deployment-result";
+  canonicalSerializeTargetIdentitySidecar,
+  decodeTargetIdentitySidecar,
+} from "../../../src/service/modules/providers/repository/target-record-codec";
+import { createPathlessTargetState } from "../../../src/service/modules/providers/repository/target-records";
 import {
+  type AgentPluginRelease,
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
   payloadEntryBytes,
-  type AgentPluginRelease,
   type VerifiedReleaseArtifactV1,
 } from "../../../src/service/shared/release";
 import { productFixture } from "../../shared/release/fixtures";

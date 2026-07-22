@@ -5,11 +5,11 @@ import type {
 } from "@rawr/resource-content-workspace";
 
 import {
+  contentDigest,
+  decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  contentDigest,
-  decodeAgentPluginReleaseInput,
   type ProvenanceBinding,
 } from "../../../../shared/release";
 import type { VendorContentWorkspaceRef } from "../dto/vendor-operations";
@@ -39,8 +39,8 @@ import {
   decodeVendorLockRecord,
   decodeVendorProvenanceRecord,
   decodeVendorSourceDeclaration,
-  vendorPayloadDigest,
   type VendorRecordDecodeResult,
+  vendorPayloadDigest,
 } from "./vendor-record-codec";
 import { vendorWorkspaceReadToken } from "./vendor-workspace-token";
 

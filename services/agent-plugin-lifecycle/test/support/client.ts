@@ -6,7 +6,7 @@ import type {
   ContentWorkspaceNodeAsyncPort,
 } from "@rawr/resource-content-workspace";
 
-import { createClient, type Client, type Deps } from "../../src/client";
+import { type Client, createClient, type Deps } from "../../src/client";
 
 export const testInvocation = Object.freeze({
   context: {

@@ -1,9 +1,9 @@
 import {
-  MECHANICAL_EVIDENCE_PROTOCOL_VERSION,
   createMechanicalEvidenceHandle,
-  parseMechanicalEvidenceHandle,
+  MECHANICAL_EVIDENCE_PROTOCOL_VERSION,
   type MechanicalEvidenceHandleV1,
   type MechanicalEvidenceStore,
+  parseMechanicalEvidenceHandle,
 } from "../../../shared/release";
 
 import type { MechanicalEvidenceDigest } from "../model/dto/mechanical-evidence";

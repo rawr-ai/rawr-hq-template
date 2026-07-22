@@ -1,4 +1,4 @@
-import { ReadonlyObject, Type, type Static, type TArrayOptions, type TSchema } from "typebox";
+import { ReadonlyObject, type Static, type TArrayOptions, type TSchema, Type } from "typebox";
 
 type BoundedArrayOptions = Omit<TArrayOptions, "minItems" | "maxItems"> &
   Readonly<{

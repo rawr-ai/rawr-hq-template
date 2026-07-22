@@ -1,28 +1,27 @@
 import { schema } from "@rawr/hq-sdk";
-import { describe, expect, expectTypeOf, it } from "vitest";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
-
+import { describe, expect, expectTypeOf, it } from "vitest";
+import {
+  type CanonicalChannelSelection,
+  CanonicalChannelSelectionSchema,
+  type CurrentMainSelectionResult,
+} from "../../../src/service/model/dto/current-main-selection";
+import { contract } from "../../../src/service/modules/governance/contract";
+import {
+  type CurrentMainBodyV2,
+  CurrentMainBodyV2Schema,
+  encodeCurrentMainBodyV2,
+  MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
+  MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH,
+  MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH,
+} from "../../../src/service/modules/governance/model";
 import {
   CurrentMainRecordInputSchema,
   CurrentMainRecordResultSchema,
   CurrentMainSelectionInputSchema,
   CurrentMainSelectionResultSchema,
 } from "../../../src/service/modules/governance/schemas";
-import {
-  CurrentMainBodyV2Schema,
-  MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
-  MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH,
-  MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH,
-  encodeCurrentMainBodyV2,
-  type CurrentMainBodyV2,
-} from "../../../src/service/modules/governance/model";
-import {
-  CanonicalChannelSelectionSchema,
-  type CanonicalChannelSelection,
-  type CurrentMainSelectionResult,
-} from "../../../src/service/model/dto/current-main-selection";
-import { contract } from "../../../src/service/modules/governance/contract";
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
 describe("governance procedure schema boundary", () => {

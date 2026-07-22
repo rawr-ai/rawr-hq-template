@@ -1,13 +1,13 @@
 import {
+  type AgentPluginPayload,
+  type AgentPluginRelease,
+  type AgentPluginReleaseInput,
+  type AgentPluginReleaseSet,
   contentDigest,
   createAgentPluginPayload,
   createAgentPluginRelease,
   createAgentPluginReleaseInput,
   createAgentPluginReleaseSet,
-  type AgentPluginPayload,
-  type AgentPluginRelease,
-  type AgentPluginReleaseInput,
-  type AgentPluginReleaseSet,
   type ReleaseResult,
 } from "../../../src/service/shared/release";
 

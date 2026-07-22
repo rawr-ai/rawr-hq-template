@@ -1,15 +1,25 @@
-import type { PluginId } from "../../../shared/release";
 import {
   isNativeAgentProviderFailure,
   type NativeAgentProviderFailure,
 } from "@rawr/resource-native-agent-provider";
-
+import type { PluginId } from "../../../shared/release";
+import type { CanonicalNativeMutationAction } from "../model/dto/canonical-convergence";
+import type { ProviderId, ProviderTarget } from "../model/dto/provider-target";
+import {
+  type DeploymentResult,
+  failure,
+  issue,
+  type NonEmptyReadonlyArray,
+  type ProviderDeploymentIssue,
+  success,
+} from "../model/errors/deployment-result";
+import { NativeProviderPreMutationRefusal } from "../model/errors/native-resource";
 import { compareCanonical } from "../model/helpers/canonical";
 import {
   marketplaceState,
-  sameMarketplaceState,
   type ProviderMarketplaceObservation,
   type ProviderMarketplaceRegistration,
+  sameMarketplaceState,
 } from "../model/policy/marketplace";
 import type {
   AdapterProtocol,
@@ -21,15 +31,7 @@ import type {
   ProviderProjectionMember,
   ProviderSourceIdentity,
 } from "../model/policy/projection";
-import { visibleFingerprint, type VerifiedMemberIdentity } from "../model/policy/receipt";
-import {
-  failure,
-  issue,
-  success,
-  type DeploymentResult,
-  type NonEmptyReadonlyArray,
-  type ProviderDeploymentIssue,
-} from "../model/errors/deployment-result";
+import { type VerifiedMemberIdentity, visibleFingerprint } from "../model/policy/receipt";
 import {
   createProviderInventory,
   hasProjectionExposureCollision,
@@ -37,8 +39,6 @@ import {
   type NativeStandaloneExposureObservation,
   type ProviderInventory,
 } from "../model/policy/state-machine";
-import type { ProviderId, ProviderTarget } from "../model/dto/provider-target";
-import type { CanonicalNativeMutationAction } from "../model/dto/canonical-convergence";
 import type {
   NativeMutationAttempt,
   NativeProviderMutationAction,
@@ -54,7 +54,6 @@ import {
   isNativeProvenanceAmbiguity,
   type NativeProvenanceAmbiguityReason,
 } from "./resource-provenance";
-import { NativeProviderPreMutationRefusal } from "../model/errors/native-resource";
 
 type NativeMemberMutationAction = Exclude<
   NativeProviderMutationAction,

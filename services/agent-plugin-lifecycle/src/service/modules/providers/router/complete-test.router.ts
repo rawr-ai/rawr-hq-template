@@ -1,12 +1,11 @@
-import { normalizeCompleteTestRequest, type CompleteTestInput } from "../model/dto/mode";
-import { issue, success, type DeploymentResult } from "../model/errors/deployment-result";
-import { module } from "../module";
+import { type CompleteTestInput, normalizeCompleteTestRequest } from "../model/dto/mode";
 import type {
   CompleteTestProviderOperationOutcome,
   CompleteTestTargetOperationOutcome,
   ProviderProjectionBinding,
   UnboundTargetOperationOutcome,
 } from "../model/dto/outcome";
+import { type DeploymentResult, issue, success } from "../model/errors/deployment-result";
 import type { ProviderTargetPlan } from "../model/policy/state-machine";
 import type { VerifiedReleaseReader } from "../model/repositories/artifact";
 import type { MechanicalEvidencePublisher } from "../model/repositories/evidence";
@@ -19,6 +18,7 @@ import type {
   TargetReceiptReader,
   TargetReceiptWriter,
 } from "../model/repositories/state";
+import { module } from "../module";
 import {
   aggregateOutcome,
   attachMechanicalEvidence,

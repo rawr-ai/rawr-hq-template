@@ -1,26 +1,25 @@
-import { ReadonlyObject, Type, type Static } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 
 import {
   isCanonicalAbsolutePath,
   MAX_CANONICAL_ABSOLUTE_PATH_BYTES,
 } from "../../../../model/dto/structural";
 import {
+  type CompleteSetArtifactRef,
   CompleteSetArtifactRefInputSchema,
   normalizeArtifactRef,
   parseRepositoryIdentity,
-  ReleaseArtifactRefInputSchema,
-  type CompleteSetArtifactRef,
   type ReleaseArtifactRef,
+  ReleaseArtifactRefInputSchema,
   type RepositoryIdentity,
 } from "../../../../shared/release";
-
-import { canonicalDigest, compareCanonical, type CanonicalValue } from "../helpers/canonical";
-import { failure, issue, success, type DeploymentResult } from "../errors/deployment-result";
+import { type DeploymentResult, failure, issue, success } from "../errors/deployment-result";
+import { type CanonicalValue, canonicalDigest, compareCanonical } from "../helpers/canonical";
 import {
-  ProviderTargetsInputSchema,
   normalizeProviderTargets,
-  targetValue,
   type ProviderTarget,
+  ProviderTargetsInputSchema,
+  targetValue,
 } from "./provider-target";
 
 declare const evaluationProfileBrand: unique symbol;

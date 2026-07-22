@@ -1,13 +1,13 @@
 import {
+  type SourceEligibilityIssue,
+  sourceEligibilityIssue,
+} from "../../../../model/dto/releases/content-workspace";
+import {
   compareCanonicalText,
-  parsePluginId,
   type PluginId,
+  parsePluginId,
   type ReleaseRelativePath,
 } from "../../../../shared/release";
-import {
-  sourceEligibilityIssue,
-  type SourceEligibilityIssue,
-} from "../../../../model/dto/releases/content-workspace";
 
 export function validateDeclaredPluginTree(
   input: Readonly<{

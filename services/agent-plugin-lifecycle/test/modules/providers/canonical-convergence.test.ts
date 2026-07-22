@@ -1,18 +1,17 @@
 import { describe, expect, it } from "vitest";
-
+import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
 import type {
   CanonicalConvergencePlan,
   CanonicalNativeObservation,
 } from "../../../src/service/modules/providers/model/dto/canonical-convergence";
-import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
 import type { CanonicalDesiredState } from "../../../src/service/modules/providers/model/dto/canonical-desired-state";
 import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
+import { planCanonicalConvergence } from "../../../src/service/modules/providers/model/policy/canonical-convergence";
 import {
   createProviderMarketplaceRegistration,
   marketplaceState,
   type ProviderMarketplaceObservation,
 } from "../../../src/service/modules/providers/model/policy/marketplace";
-import { planCanonicalConvergence } from "../../../src/service/modules/providers/model/policy/canonical-convergence";
 import type {
   AgentProviderProjection,
   CapabilityObservation,

@@ -1,5 +1,5 @@
-import type { VerifiedArtifactSnapshotV1 } from "../../../../shared/release";
 import type { CanonicalChannelSelection } from "../../../../model/dto/current-main-selection";
+import type { VerifiedArtifactSnapshotV1 } from "../../../../shared/release";
 
 import {
   type CanonicalDesiredState,
@@ -7,12 +7,12 @@ import {
 } from "../dto/canonical-desired-state";
 import type { ProviderId } from "../dto/provider-target";
 import {
+  type DeploymentResult,
   failure,
   issue,
-  success,
-  type DeploymentResult,
   type NonEmptyReadonlyArray,
   type ProviderDeploymentIssue,
+  success,
 } from "../errors/deployment-result";
 import { parseAdapterProtocol, renderCompleteProjection } from "./projection";
 

@@ -1,16 +1,16 @@
-import {
-  contentDigest,
-  parseReleaseRelativePath,
-  verifyCompleteReleaseSet,
-  type ArtifactRef,
-  type VerifiedArtifactSnapshotV1,
-  type VerifiedPayloadFileV1,
-  type VerifiedReleaseArtifactV1,
-} from "../../../../shared/release/index";
 import type {
   CoworkV1ArchiveEncodingRequest,
   PackageArchiveEntry,
 } from "@rawr/resource-agent-plugin-package-output";
+import {
+  type ArtifactRef,
+  contentDigest,
+  parseReleaseRelativePath,
+  type VerifiedArtifactSnapshotV1,
+  type VerifiedPayloadFileV1,
+  type VerifiedReleaseArtifactV1,
+  verifyCompleteReleaseSet,
+} from "../../../../shared/release/index";
 
 import type { PackageDigest } from "../dto/packaging-lifecycle";
 
