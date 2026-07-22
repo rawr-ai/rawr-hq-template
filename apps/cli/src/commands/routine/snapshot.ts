@@ -3,7 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Flags } from "@oclif/core";
 import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
-import { resolveCliReentry } from "../../lib/subprocess";
+import { resolveCliInvocation } from "../../lib/subprocess";
 
 type Snapshot = {
   timestamp: string;
@@ -80,20 +80,18 @@ export default class RoutineSnapshot extends RawrCommand {
 
     await mkdir(outDir, { recursive: true });
 
-    const rawr = resolveCliReentry();
+    const rawr = resolveCliInvocation();
 
-    const rawrVersion = runCapture(
-      rawr.cmd,
-      [...rawr.args, "--version"],
-      rawr.cwd,
-      rawr.env
-    ).stdout.trim();
-    const bunVersion = runCapture(
-      rawr.cmd,
-      ["--config=/dev/null", "--no-env-file", "--no-install", "--version"],
-      rawr.cwd,
-      rawr.env
-    ).stdout.trim();
+    const rawrVersion = this.config.version;
+    const bunObservation =
+      process.versions.bun === undefined
+        ? runCapture("bun", ["--version"], rawr.cwd, rawr.env)
+        : undefined;
+    const bunVersion =
+      process.versions.bun ??
+      (bunObservation?.status === 0 && bunObservation.stdout.trim().length > 0
+        ? bunObservation.stdout.trim()
+        : "unavailable");
     const toolsExport = safeJson(
       runCapture(rawr.cmd, [...rawr.args, "tools", "export", "--json"], rawr.cwd, rawr.env).stdout
     );

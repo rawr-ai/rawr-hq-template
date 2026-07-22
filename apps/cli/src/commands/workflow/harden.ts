@@ -8,7 +8,7 @@ import {
 } from "../../lib/hq-ops-client";
 import { recordArtifact, recordStep } from "../../lib/journal-context";
 import { journalId, safePreview } from "../../lib/journal-projection";
-import { resolveCliReentry, runStep, type StepResult } from "../../lib/subprocess";
+import { resolveCliInvocation, runStep, type StepResult } from "../../lib/subprocess";
 
 type HardenStep = StepResult & { stdoutJson?: any };
 
@@ -47,7 +47,7 @@ export default class WorkflowHarden extends RawrCommand {
     const snapshotOutDir = path.join(workspaceRoot, ".rawr", "routines", tsDir);
     const postureOutDir = path.join(workspaceRoot, ".rawr", "security", "posture", tsDir);
 
-    const rawr = resolveCliReentry();
+    const rawr = resolveCliInvocation();
 
     const planned: HardenStep[] = [
       {
