@@ -22,7 +22,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --project plugin-hyperresearch"
+    "test": "vitest run --project plugin-hyperresearch",
+    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
   },
   "rawr": {
     "kind": "toolkit",

@@ -13,7 +13,8 @@
   },
   "scripts": {
     "build": "bunx tsc -p tsconfig.json",
-    "typecheck": "bunx tsc -p tsconfig.json --noEmit"
+    "typecheck": "bunx tsc -p tsconfig.json --noEmit",
+    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
     "@orpc/client": "^1.13.5"
