@@ -2,6 +2,9 @@
   "name": "provider-native-agent-provider-codex-effect-platform-node",
   "projectType": "library",
   "sourceRoot": "resources/native-agent-provider/providers/codex-effect-platform-node",
+  "implicitDependencies": [
+    "@rawr/resource-native-agent-provider"
+  ],
   "tags": [
     "type:provider",
     "layer:resource-provider",

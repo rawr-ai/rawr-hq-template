@@ -47,6 +47,13 @@
     "tags": [
       "type:plugin",
       "migration-slice:workstream-b-devops"
-    ]
+    ],
+    "targets": {
+      "test": {
+        "dependsOn": [
+          "build"
+        ]
+      }
+    }
   }
 }
