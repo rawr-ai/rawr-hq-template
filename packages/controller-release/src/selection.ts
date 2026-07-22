@@ -13,20 +13,22 @@ export type ControllerSelection = Readonly<{
 
 export type ControllerSelectionPlan =
   | Readonly<{
-    kind: "converged";
-    selection: ControllerSelection;
-    bytes: Uint8Array;
-  }>
+      kind: "converged";
+      selection: ControllerSelection;
+      bytes: Uint8Array;
+    }>
   | Readonly<{
-    kind: "replace";
-    reason: "missing" | "invalid" | "different";
-    selection: ControllerSelection;
-    bytes: Uint8Array;
-    current?: ControllerSelection;
-    currentIssues?: NonEmptyReadonlyArray<ControllerIssue>;
-  }>;
+      kind: "replace";
+      reason: "missing" | "invalid" | "different";
+      selection: ControllerSelection;
+      bytes: Uint8Array;
+      current?: ControllerSelection;
+      currentIssues?: NonEmptyReadonlyArray<ControllerIssue>;
+    }>;
 
-export function createControllerSelection(controllerDigest: unknown): ControllerResult<ControllerSelection, ControllerIssue> {
+export function createControllerSelection(
+  controllerDigest: unknown
+): ControllerResult<ControllerSelection, ControllerIssue> {
   const parsed = parseControllerDigest(controllerDigest, "selection.controllerDigest");
   return parsed.ok
     ? success(Object.freeze({ controllerDigest: parsed.value }) as ControllerSelection)
@@ -42,20 +44,31 @@ export function encodeControllerSelection(selection: ControllerSelection): Uint8
   return bytes;
 }
 
-export function decodeControllerSelection(bytes: unknown): ControllerResult<ControllerSelection, ControllerIssue> {
+export function decodeControllerSelection(
+  bytes: unknown
+): ControllerResult<ControllerSelection, ControllerIssue> {
   if (!(bytes instanceof Uint8Array)) {
-    return failure([issue("EXPECTED_BYTES", "selection", "Controller selection must be a Uint8Array")]);
+    return failure([
+      issue("EXPECTED_BYTES", "selection", "Controller selection must be a Uint8Array"),
+    ]);
   }
   if (bytes.byteLength !== CONTROLLER_SELECTION_BYTES) {
     return failure([
-      issue("INVALID_SELECTION_LENGTH", "selection", "Controller selection must be one digest plus a newline", {
-        expected: CONTROLLER_SELECTION_BYTES,
-        actual: bytes.byteLength,
-      }),
+      issue(
+        "INVALID_SELECTION_LENGTH",
+        "selection",
+        "Controller selection must be one digest plus a newline",
+        {
+          expected: CONTROLLER_SELECTION_BYTES,
+          actual: bytes.byteLength,
+        }
+      ),
     ]);
   }
   if (bytes[CONTROLLER_SELECTION_BYTES - 1] !== 0x0a) {
-    return failure([issue("INVALID_SELECTION", "selection", "Controller selection must end with one LF byte")]);
+    return failure([
+      issue("INVALID_SELECTION", "selection", "Controller selection must end with one LF byte"),
+    ]);
   }
   let digest = "";
   for (let index = 0; index < CONTROLLER_SELECTION_BYTES - 1; index += 1) {
@@ -64,10 +77,15 @@ export function decodeControllerSelection(bytes: unknown): ControllerResult<Cont
     const isLowerHex = value >= 0x61 && value <= 0x66;
     if (!isDigit && !isLowerHex) {
       return failure([
-        issue("INVALID_SELECTION", "selection.controllerDigest", "Selection digest must be lowercase ASCII hexadecimal", {
-          actual: value,
-          offset: index,
-        }),
+        issue(
+          "INVALID_SELECTION",
+          "selection.controllerDigest",
+          "Selection digest must be lowercase ASCII hexadecimal",
+          {
+            actual: value,
+            offset: index,
+          }
+        ),
       ]);
     }
     digest += String.fromCharCode(value);
@@ -77,7 +95,7 @@ export function decodeControllerSelection(bytes: unknown): ControllerResult<Cont
 
 export function planControllerSelection(
   currentBytes: Uint8Array | null | undefined,
-  candidate: ControllerSelection,
+  candidate: ControllerSelection
 ): ControllerSelectionPlan {
   const bytes = encodeControllerSelection(candidate);
   if (currentBytes === null || currentBytes === undefined) {
@@ -85,10 +103,22 @@ export function planControllerSelection(
   }
   const current = decodeControllerSelection(currentBytes);
   if (!current.ok) {
-    return { kind: "replace", reason: "invalid", selection: candidate, bytes, currentIssues: current.issues };
+    return {
+      kind: "replace",
+      reason: "invalid",
+      selection: candidate,
+      bytes,
+      currentIssues: current.issues,
+    };
   }
   if (current.value.controllerDigest === candidate.controllerDigest) {
     return { kind: "converged", selection: current.value, bytes };
   }
-  return { kind: "replace", reason: "different", selection: candidate, bytes, current: current.value };
+  return {
+    kind: "replace",
+    reason: "different",
+    selection: candidate,
+    bytes,
+    current: current.value,
+  };
 }

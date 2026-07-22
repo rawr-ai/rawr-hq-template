@@ -51,7 +51,7 @@ export function issue(
   code: ControllerIssueCode,
   path: string,
   message: string,
-  details: Pick<ControllerIssue, "expected" | "actual" | "offset"> = {},
+  details: Pick<ControllerIssue, "expected" | "actual" | "offset"> = {}
 ): ControllerIssue {
   return { code, path, message, ...details };
 }

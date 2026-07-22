@@ -9,7 +9,9 @@ declare const releaseRelativePathBrand: unique symbol;
 
 export type Sha256Digest = string & { readonly [sha256DigestBrand]: "Sha256Digest" };
 export type ControllerDigest = string & { readonly [controllerDigestBrand]: "ControllerDigest" };
-export type ReleaseRelativePath = string & { readonly [releaseRelativePathBrand]: "ReleaseRelativePath" };
+export type ReleaseRelativePath = string & {
+  readonly [releaseRelativePathBrand]: "ReleaseRelativePath";
+};
 
 export const CONTROLLER_PAYLOAD_SCHEMA_VERSION = 1 as const;
 export const CONTROLLER_RELEASE_ENVELOPE_SCHEMA_VERSION = 1 as const;
@@ -17,7 +19,8 @@ export const SHA256_HEX_LENGTH = 64;
 export const MAX_RELEASE_RELATIVE_PATH_BYTES = 1_024;
 
 export type ControllerPayloadSchemaVersion = typeof CONTROLLER_PAYLOAD_SCHEMA_VERSION;
-export type ControllerReleaseEnvelopeSchemaVersion = typeof CONTROLLER_RELEASE_ENVELOPE_SCHEMA_VERSION;
+export type ControllerReleaseEnvelopeSchemaVersion =
+  typeof CONTROLLER_RELEASE_ENVELOPE_SCHEMA_VERSION;
 export type ControllerPlatform = "darwin" | "linux" | "win32";
 export type ControllerArchitecture = "arm64" | "x64";
 
@@ -25,22 +28,37 @@ const encoder = new TextEncoder();
 const SHA256_PATTERN = /^[0-9a-f]{64}$/;
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
 
-export function parseSha256Digest(value: unknown, path = "digest"): ControllerResult<Sha256Digest, ControllerIssue> {
+export function parseSha256Digest(
+  value: unknown,
+  path = "digest"
+): ControllerResult<Sha256Digest, ControllerIssue> {
   if (typeof value !== "string") {
     return failure([issue("EXPECTED_STRING", path, "SHA-256 digest must be a string")]);
   }
   if (!SHA256_PATTERN.test(value)) {
     return failure([
-      issue("INVALID_SHA256_DIGEST", path, "SHA-256 digest must be exactly 64 lowercase hexadecimal characters"),
+      issue(
+        "INVALID_SHA256_DIGEST",
+        path,
+        "SHA-256 digest must be exactly 64 lowercase hexadecimal characters"
+      ),
     ]);
   }
   return success(value as Sha256Digest);
 }
 
-export function parseControllerDigest(value: unknown, path = "controllerDigest"): ControllerResult<ControllerDigest, ControllerIssue> {
+export function parseControllerDigest(
+  value: unknown,
+  path = "controllerDigest"
+): ControllerResult<ControllerDigest, ControllerIssue> {
   const parsed = parseSha256Digest(value, path);
   if (!parsed.ok) {
-    return failure(parsed.issues.map((entry) => ({ ...entry, code: "INVALID_CONTROLLER_DIGEST" })) as [ControllerIssue, ...ControllerIssue[]]);
+    return failure(
+      parsed.issues.map((entry) => ({ ...entry, code: "INVALID_CONTROLLER_DIGEST" })) as [
+        ControllerIssue,
+        ...ControllerIssue[],
+      ]
+    );
   }
   return success(parsed.value as string as ControllerDigest);
 }
@@ -56,49 +74,67 @@ export function controllerDigestFromSha256(value: Sha256Digest): ControllerDiges
 
 export function parseReleaseRelativePath(
   value: unknown,
-  path = "path",
+  path = "path"
 ): ControllerResult<ReleaseRelativePath, ControllerIssue> {
-  return parseRelativePath(value, path, "INVALID_RELEASE_RELATIVE_PATH", (parsed) => parsed as ReleaseRelativePath);
+  return parseRelativePath(
+    value,
+    path,
+    "INVALID_RELEASE_RELATIVE_PATH",
+    (parsed) => parsed as ReleaseRelativePath
+  );
 }
 
-export function parseControllerPlatform(value: unknown, path = "platform"): ControllerResult<ControllerPlatform, ControllerIssue> {
+export function parseControllerPlatform(
+  value: unknown,
+  path = "platform"
+): ControllerResult<ControllerPlatform, ControllerIssue> {
   return value === "darwin" || value === "linux" || value === "win32"
     ? success(value)
-    : failure([issue("INVALID_PLATFORM", path, "Controller platform must be darwin, linux, or win32")]);
+    : failure([
+        issue("INVALID_PLATFORM", path, "Controller platform must be darwin, linux, or win32"),
+      ]);
 }
 
 export function parseControllerArchitecture(
   value: unknown,
-  path = "architecture",
+  path = "architecture"
 ): ControllerResult<ControllerArchitecture, ControllerIssue> {
   return value === "arm64" || value === "x64"
     ? success(value)
-    : failure([issue("INVALID_ARCHITECTURE", path, "Controller architecture must be arm64 or x64")]);
+    : failure([
+        issue("INVALID_ARCHITECTURE", path, "Controller architecture must be arm64 or x64"),
+      ]);
 }
 
 function parseRelativePath<T extends string>(
   value: unknown,
   path: string,
   code: "INVALID_RELEASE_RELATIVE_PATH",
-  brand: (value: string) => T,
+  brand: (value: string) => T
 ): ControllerResult<T, ControllerIssue> {
   if (typeof value !== "string") {
     return failure([issue("EXPECTED_STRING", path, "Relative path must be a string")]);
   }
   if (
-    value.length === 0
-    || value.startsWith("/")
-    || value.endsWith("/")
-    || value.includes("\\")
-    || value.includes(":")
-    || CONTROL_CHARACTER_PATTERN.test(value)
-    || value.normalize("NFC") !== value
+    value.length === 0 ||
+    value.startsWith("/") ||
+    value.endsWith("/") ||
+    value.includes("\\") ||
+    value.includes(":") ||
+    CONTROL_CHARACTER_PATTERN.test(value) ||
+    value.normalize("NFC") !== value
   ) {
     return failure([issue(code, path, "Path must be a non-empty canonical POSIX relative path")]);
   }
   const segments = value.split("/");
   if (segments.some((segment) => segment.length === 0 || segment === "." || segment === "..")) {
-    return failure([issue(code, path, "Path must not contain empty, current-directory, or parent-directory segments")]);
+    return failure([
+      issue(
+        code,
+        path,
+        "Path must not contain empty, current-directory, or parent-directory segments"
+      ),
+    ]);
   }
   if (encoder.encode(value).byteLength > MAX_RELEASE_RELATIVE_PATH_BYTES) {
     return failure([
@@ -125,7 +161,9 @@ export function compareCanonicalText(left: string, right: string): number {
 export function parseBoundedCanonicalString(
   value: unknown,
   path: string,
-  options: { readonly minBytes?: number; readonly maxBytes: number; readonly pattern?: RegExp } = { maxBytes: 512 },
+  options: { readonly minBytes?: number; readonly maxBytes: number; readonly pattern?: RegExp } = {
+    maxBytes: 512,
+  }
 ): ControllerResult<string, ControllerIssue> {
   if (typeof value !== "string") {
     return failure([issue("EXPECTED_STRING", path, "Value must be a string")]);
@@ -133,14 +171,18 @@ export function parseBoundedCanonicalString(
   const byteLength = encoder.encode(value).byteLength;
   const minBytes = options.minBytes ?? 1;
   if (
-    byteLength < minBytes
-    || byteLength > options.maxBytes
-    || CONTROL_CHARACTER_PATTERN.test(value)
-    || value.normalize("NFC") !== value
-    || (options.pattern !== undefined && !options.pattern.test(value))
+    byteLength < minBytes ||
+    byteLength > options.maxBytes ||
+    CONTROL_CHARACTER_PATTERN.test(value) ||
+    value.normalize("NFC") !== value ||
+    (options.pattern !== undefined && !options.pattern.test(value))
   ) {
     return failure([
-      issue("INVALID_STRING", path, `Value must be canonical UTF-8 between ${minBytes} and ${options.maxBytes} bytes`),
+      issue(
+        "INVALID_STRING",
+        path,
+        `Value must be canonical UTF-8 between ${minBytes} and ${options.maxBytes} bytes`
+      ),
     ]);
   }
   return success(value);

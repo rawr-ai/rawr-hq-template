@@ -24,7 +24,9 @@ export default class SessionsList extends RawrCommand {
       min: 0,
       max: 50_000,
     }),
-    project: Flags.string({ description: "Filter Claude sessions by project (path or name substring)" }),
+    project: Flags.string({
+      description: "Filter Claude sessions by project (path or name substring)",
+    }),
     "cwd-contains": Flags.string({ description: "Filter by cwd substring" }),
     branch: Flags.string({ description: "Filter by git branch substring" }),
     model: Flags.string({ description: "Filter by model substring" }),
@@ -58,7 +60,7 @@ export default class SessionsList extends RawrCommand {
           until: flags.until ? String(flags.until) : undefined,
         },
       },
-      options,
+      options
     );
     const { sessions } = response;
 

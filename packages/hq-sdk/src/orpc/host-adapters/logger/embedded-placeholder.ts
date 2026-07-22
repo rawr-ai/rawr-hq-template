@@ -20,7 +20,7 @@ type EmbeddedPlaceholderLoggerOptions = {
 };
 
 export function createEmbeddedPlaceholderLoggerAdapter(
-  options: EmbeddedPlaceholderLoggerOptions = {},
+  options: EmbeddedPlaceholderLoggerOptions = {}
 ): Logger {
   return {
     info(event, payload) {

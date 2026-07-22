@@ -8,7 +8,7 @@ import CorpusInit from "../src/commands/corpus/init";
 const tempPaths: string[] = [];
 const FIXTURES_ROOT = path.resolve(
   path.dirname(new URL(import.meta.url).pathname),
-  "../../../../services/chatgpt-corpus/test/fixtures",
+  "../../../../services/chatgpt-corpus/test/fixtures"
 );
 
 afterEach(async () => {
@@ -36,31 +36,35 @@ async function copyFixtureWorkspace(workspaceRoot: string): Promise<void> {
   await fs.cp(
     path.join(FIXTURES_ROOT, "raw-json"),
     path.join(workspaceRoot, "source-material", "conversations", "raw-json"),
-    { recursive: true },
+    { recursive: true }
   );
   await fs.cp(
     path.join(FIXTURES_ROOT, "docs"),
     path.join(workspaceRoot, "work", "docs", "source"),
-    { recursive: true },
+    { recursive: true }
   );
 }
 
 describe("@rawr/plugin-chatgpt-corpus", () => {
   it("initializes a workspace and returns structured json", async () => {
     const workspaceRoot = await makeTempWorkspace("rawr-plugin-corpus-init-");
-    const outputSpy = vi.spyOn(CorpusInit.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    const outputSpy = vi
+      .spyOn(CorpusInit.prototype as any, "outputResult" as any)
+      .mockImplementation(() => {});
 
     await CorpusInit.run([workspaceRoot, "--json"]);
 
-    const [parsed] = outputSpy.mock.calls[0] as unknown as [{
-      ok: boolean;
-      data: {
-        workspaceRoot: string;
-        files: {
-          readmePath: string;
+    const [parsed] = outputSpy.mock.calls[0] as unknown as [
+      {
+        ok: boolean;
+        data: {
+          workspaceRoot: string;
+          files: {
+            readmePath: string;
+          };
         };
-      };
-    }];
+      },
+    ];
 
     expect(parsed.ok).toBe(true);
     expect(parsed.data.workspaceRoot).toBe(workspaceRoot);
@@ -73,21 +77,25 @@ describe("@rawr/plugin-chatgpt-corpus", () => {
     await CorpusInit.run([workspaceRoot, "--json"]);
     await copyFixtureWorkspace(workspaceRoot);
 
-    const outputSpy = vi.spyOn(CorpusConsolidate.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    const outputSpy = vi
+      .spyOn(CorpusConsolidate.prototype as any, "outputResult" as any)
+      .mockImplementation(() => {});
     await CorpusConsolidate.run([workspaceRoot, "--json"]);
 
-    const [parsed] = outputSpy.mock.calls[0] as unknown as [{
-      ok: boolean;
-      data: {
-        familyCount: number;
-        sourceCounts: {
-          jsonConversations: number;
+    const [parsed] = outputSpy.mock.calls[0] as unknown as [
+      {
+        ok: boolean;
+        data: {
+          familyCount: number;
+          sourceCounts: {
+            jsonConversations: number;
+          };
+          outputPaths: {
+            manifest: string;
+          };
         };
-        outputPaths: {
-          manifest: string;
-        };
-      };
-    }];
+      },
+    ];
 
     expect(parsed.ok).toBe(true);
     expect(parsed.data.familyCount).toBe(2);
@@ -102,14 +110,20 @@ describe("@rawr/plugin-chatgpt-corpus", () => {
     await copyFixtureWorkspace(workspaceRoot);
 
     const logMessages: string[] = [];
-    vi.spyOn(CorpusConsolidate.prototype as any, "log" as any).mockImplementation((...args: unknown[]) => {
-      logMessages.push(args.map((value) => String(value)).join(" "));
-    });
+    vi.spyOn(CorpusConsolidate.prototype as any, "log" as any).mockImplementation(
+      (...args: unknown[]) => {
+        logMessages.push(args.map((value) => String(value)).join(" "));
+      }
+    );
     vi.spyOn(CorpusConsolidate.prototype as any, "warn" as any).mockImplementation(() => {});
 
     await CorpusConsolidate.run([workspaceRoot]);
 
-    expect(logMessages.join("\n")).toContain("consolidated 4 conversation export(s) into 2 family/families");
-    expect(logMessages.join("\n")).toContain(path.join(workspaceRoot, "work", "generated", "reports"));
+    expect(logMessages.join("\n")).toContain(
+      "consolidated 4 conversation export(s) into 2 family/families"
+    );
+    expect(logMessages.join("\n")).toContain(
+      path.join(workspaceRoot, "work", "generated", "reports")
+    );
   });
 });

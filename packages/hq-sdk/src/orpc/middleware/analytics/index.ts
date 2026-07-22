@@ -37,15 +37,12 @@ export type {
   ServiceAnalyticsMiddlewareInput,
 } from "./types";
 
-function brandRequiredAnalyticsMiddleware<
-  TContext extends object,
-  TMeta extends BaseMetadata,
->(
+function brandRequiredAnalyticsMiddleware<TContext extends object, TMeta extends BaseMetadata>(
   middleware: ReturnType<typeof createNormalMiddlewareBuilder<TContext, TMeta>> extends {
     middleware(callback: infer _T): infer TMiddleware;
   }
     ? TMiddleware
-    : never,
+    : never
 ) {
   return Object.assign(middleware, {
     [requiredAnalyticsMiddlewareBrand]: "analytics" as const,
@@ -77,12 +74,10 @@ export function createBaseAnalyticsMiddleware() {
     try {
       const result = await next();
       return result;
-    }
-    catch (error) {
+    } catch (error) {
       outcome = "error";
       throw error;
-    }
-    finally {
+    } finally {
       const payloadArgs: AnalyticsPayloadArgs<BaseMetadata, typeof context> = {
         context,
         meta,
@@ -103,8 +98,7 @@ export function createBaseAnalyticsMiddleware() {
           ...requiredPayload,
           ...localPayload,
         });
-      }
-      catch (error) {
+      } catch (error) {
         context.deps.logger.error("orpc.analytics", {
           path: pathLabel,
           outcome,
@@ -126,10 +120,7 @@ export function createBaseAnalyticsMiddleware() {
 export function createRequiredServiceAnalyticsMiddleware<
   TMeta extends BaseMetadata,
   TContext extends object,
->(
-  baseMetadata: TMeta,
-  input: RequiredServiceAnalyticsMiddlewareInput<TMeta, TContext>,
-) {
+>(baseMetadata: TMeta, input: RequiredServiceAnalyticsMiddlewareInput<TMeta, TContext>) {
   const middleware = createNormalMiddlewareBuilder<TContext, TMeta>({
     baseMetadata,
   }).middleware(async ({ context, next, path, procedure }) => {
@@ -137,16 +128,14 @@ export function createRequiredServiceAnalyticsMiddleware<
       const pathLabel = path.join(".");
       const meta = getProcedureMeta(procedure, baseMetadata);
 
-      setRequiredAnalyticsContributor<TMeta, TContext>(
-        context,
-        ({ outcome }) =>
-          input.payload?.({
-            context,
-            meta,
-            path,
-            pathLabel,
-            outcome,
-          }),
+      setRequiredAnalyticsContributor<TMeta, TContext>(context, ({ outcome }) =>
+        input.payload?.({
+          context,
+          meta,
+          path,
+          pathLabel,
+          outcome,
+        })
       );
     }
 
@@ -166,10 +155,7 @@ export function createRequiredServiceAnalyticsMiddleware<
 export function createServiceAnalyticsMiddleware<
   TMeta extends BaseMetadata,
   TContext extends object,
->(
-  baseMetadata: TMeta,
-  input: ServiceAnalyticsMiddlewareInput<TMeta, TContext>,
-) {
+>(baseMetadata: TMeta, input: ServiceAnalyticsMiddlewareInput<TMeta, TContext>) {
   return createNormalMiddlewareBuilder<TContext, TMeta>({
     baseMetadata,
   }).middleware(async ({ context, next, path, procedure }) => {
@@ -185,7 +171,7 @@ export function createServiceAnalyticsMiddleware<
             path,
             pathLabel,
             outcome,
-          }) as Record<string, unknown> | undefined,
+          }) as Record<string, unknown> | undefined
       );
     }
 

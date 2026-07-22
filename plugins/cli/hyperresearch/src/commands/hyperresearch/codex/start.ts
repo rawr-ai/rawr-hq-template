@@ -15,7 +15,8 @@ export default class HyperresearchCodexStart extends RawrCommand {
     tier: Flags.string({
       options: ["auto", "light", "full"],
       default: "auto",
-      description: "Tier request; auto currently defaults to light until step-1 classification is proven",
+      description:
+        "Tier request; auto currently defaults to light until step-1 classification is proven",
     }),
     vault: Flags.string({
       required: true,
@@ -45,19 +46,22 @@ export default class HyperresearchCodexStart extends RawrCommand {
     });
 
     try {
-      const resultData = await client.runs.startV8Run({
-        canonicalQuery: String(flags.query),
-        tier: String(flags.tier) as "auto" | "light" | "full",
-        vaultRoot: String(flags.vault),
-        stepsRoot: String(flags.steps),
-        vaultTag: typeof flags["vault-tag"] === "string" ? flags["vault-tag"] : undefined,
-      }, {
-        context: {
-          invocation: {
-            traceId: `hyperresearch-codex-v8-start-${Date.now()}`,
-          },
+      const resultData = await client.runs.startV8Run(
+        {
+          canonicalQuery: String(flags.query),
+          tier: String(flags.tier) as "auto" | "light" | "full",
+          vaultRoot: String(flags.vault),
+          stepsRoot: String(flags.steps),
+          vaultTag: typeof flags["vault-tag"] === "string" ? flags["vault-tag"] : undefined,
         },
-      });
+        {
+          context: {
+            invocation: {
+              traceId: `hyperresearch-codex-v8-start-${Date.now()}`,
+            },
+          },
+        }
+      );
 
       const responseData = summarizeV8Result(resultData);
       const blockingFindings = hasBlockingV8Findings(resultData);

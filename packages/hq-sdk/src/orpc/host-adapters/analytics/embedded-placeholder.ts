@@ -19,7 +19,7 @@ type EmbeddedPlaceholderAnalyticsOptions = {
 };
 
 export function createEmbeddedPlaceholderAnalyticsAdapter(
-  options: EmbeddedPlaceholderAnalyticsOptions = {},
+  options: EmbeddedPlaceholderAnalyticsOptions = {}
 ): AnalyticsClient {
   return {
     track(event, payload) {

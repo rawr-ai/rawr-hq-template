@@ -64,37 +64,37 @@ export interface PackageOutputFailure {
 export type PackageOutputPublicationResult =
   | Readonly<{ kind: "ReadOnlyConverged" }>
   | Readonly<{
-    kind: "OutputReplacedVerified";
-    priorOutput: "Absent" | "Replaced";
-  }>
+      kind: "OutputReplacedVerified";
+      priorOutput: "Absent" | "Replaced";
+    }>
   | Readonly<{
-    kind: "RejectedBeforeOutputMutation";
-    primaryFailure: PackageOutputFailure;
-    cleanupFailure?: PackageOutputFailure;
-  }>
+      kind: "RejectedBeforeOutputMutation";
+      primaryFailure: PackageOutputFailure;
+      cleanupFailure?: PackageOutputFailure;
+    }>
   | Readonly<{
-    kind: "OutputUnsettled";
-    primaryFailure: PackageOutputFailure;
-    cleanupFailure?: PackageOutputFailure;
-  }>;
+      kind: "OutputUnsettled";
+      primaryFailure: PackageOutputFailure;
+      cleanupFailure?: PackageOutputFailure;
+    }>;
 
 /** Mechanical archive encoding and package-output publication capability. */
 export interface AgentPluginPackageOutputResource<R = never> {
   readonly encodeCoworkV1: (
-    input: CoworkV1ArchiveEncodingRequest,
+    input: CoworkV1ArchiveEncodingRequest
   ) => Effect.Effect<Uint8Array, PackageOutputFailure, R>;
 
   readonly publish: (
-    input: PackageOutputPublicationRequest,
+    input: PackageOutputPublicationRequest
   ) => Effect.Effect<PackageOutputPublicationResult, PackageOutputFailure, R>;
 }
 
 /** Promise projection for callers that bind the provider runtime at their edge. */
 export interface AgentPluginPackageOutputAsyncPort {
   readonly encodeCoworkV1: (
-    input: Parameters<AgentPluginPackageOutputResource["encodeCoworkV1"]>[0],
+    input: Parameters<AgentPluginPackageOutputResource["encodeCoworkV1"]>[0]
   ) => Promise<Uint8Array>;
   readonly publish: (
-    input: Parameters<AgentPluginPackageOutputResource["publish"]>[0],
+    input: Parameters<AgentPluginPackageOutputResource["publish"]>[0]
   ) => Promise<PackageOutputPublicationResult>;
 }

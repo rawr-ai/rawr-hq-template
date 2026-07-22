@@ -10,7 +10,9 @@ type CatalogResolveOptions = NonNullable<Parameters<Client["catalog"]["resolve"]
 function formatResolveHuman(input: unknown, format: OutputFormat): string {
   if (format === "json") return JSON.stringify(input, null, 2);
   if (format === "markdown") {
-    return ["# Session Resolve", "", "```json", JSON.stringify(input, null, 2), "```", ""].join("\n");
+    return ["# Session Resolve", "", "```json", JSON.stringify(input, null, 2), "```", ""].join(
+      "\n"
+    );
   }
   const resolved = input as any;
   const p = resolved?.resolved?.path ? String(resolved.resolved.path) : JSON.stringify(input);

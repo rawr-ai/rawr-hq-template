@@ -45,9 +45,7 @@ type DefineServiceOptions<
   baseline: DefineServiceBaselineOptions<TPolicy>;
 };
 
-type RequiredServiceExtensions<
-  TService extends AnyService,
-> = {
+type RequiredServiceExtensions<TService extends AnyService> = {
   observability: RequiredServiceObservabilityMiddleware<
     ServiceRequiredExtensionExecutionContextFrom<TService>,
     ServiceMetadataFrom<TService>
@@ -77,7 +75,7 @@ export type DefinedService<
     input: ServiceObservabilityMiddlewareInput<
       ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
       TRequiredContext
-    >,
+    >
   ): ReturnType<
     typeof createServiceObservabilityMiddleware<
       ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
@@ -89,7 +87,7 @@ export type DefinedService<
       ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
       ServiceRequiredExtensionExecutionContextFrom<ServiceTypesOf<TDeclaration>>,
       TPolicy["events"]
-    >,
+    >
   ): RequiredServiceObservabilityMiddleware<
     ServiceRequiredExtensionExecutionContextFrom<ServiceTypesOf<TDeclaration>>,
     ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>
@@ -100,7 +98,7 @@ export type DefinedService<
     input: ServiceAnalyticsMiddlewareInput<
       ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
       TRequiredContext
-    >,
+    >
   ): ReturnType<
     typeof createServiceAnalyticsMiddleware<
       ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
@@ -111,7 +109,7 @@ export type DefinedService<
     input: RequiredServiceAnalyticsMiddlewareInput<
       ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>,
       ServiceRequiredExtensionExecutionContextFrom<ServiceTypesOf<TDeclaration>>
-    >,
+    >
   ): RequiredServiceAnalyticsMiddleware<
     ServiceRequiredExtensionExecutionContextFrom<ServiceTypesOf<TDeclaration>>,
     ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>
@@ -125,7 +123,7 @@ export type DefinedService<
   createImplementer: {
     <const TContract extends AnyContractProcedure>(
       contract: TContract,
-      requiredExtensions: RequiredServiceExtensions<ServiceTypesOf<TDeclaration>>,
+      requiredExtensions: RequiredServiceExtensions<ServiceTypesOf<TDeclaration>>
     ): ImplementerInternalWithMiddlewares<
       TContract,
       ServiceExecutionContextFrom<ServiceTypesOf<TDeclaration>>,
@@ -133,7 +131,7 @@ export type DefinedService<
     >;
     <const TContract extends AnyContractRouterObject>(
       contract: TContract,
-      requiredExtensions: RequiredServiceExtensions<ServiceTypesOf<TDeclaration>>,
+      requiredExtensions: RequiredServiceExtensions<ServiceTypesOf<TDeclaration>>
     ): ImplementerInternalWithMiddlewares<
       TContract,
       ServiceExecutionContextFrom<ServiceTypesOf<TDeclaration>>,
@@ -142,8 +140,9 @@ export type DefinedService<
   };
 };
 
-export type ServiceOf<TDefinedService extends { readonly __service?: AnyService }> =
-  NonNullable<TDefinedService["__service"]>;
+export type ServiceOf<TDefinedService extends { readonly __service?: AnyService }> = NonNullable<
+  TDefinedService["__service"]
+>;
 
 /**
  * Bind the service-local authoring surfaces once.
@@ -181,9 +180,7 @@ export type ServiceOf<TDefinedService extends { readonly __service?: AnyService 
 export function defineService<
   TDeclaration extends ServiceDeclaration,
   TPolicy extends BasePolicyProfile = BasePolicyProfile,
->(
-  options: DefineServiceOptions<TDeclaration, TPolicy>,
-): DefinedService<TDeclaration, TPolicy> {
+>(options: DefineServiceOptions<TDeclaration, TPolicy>): DefinedService<TDeclaration, TPolicy> {
   type TService = ServiceTypesOf<TDeclaration>;
   type TMeta = ServiceMetadataFrom<TService>;
   type TContext = ServiceExecutionContextFrom<TService>;
@@ -191,15 +188,15 @@ export function defineService<
 
   function createServiceImplementer<const TContract extends AnyContractProcedure>(
     contract: TContract,
-    requiredExtensions: RequiredServiceExtensions<TService>,
+    requiredExtensions: RequiredServiceExtensions<TService>
   ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
   function createServiceImplementer<const TContract extends AnyContractRouterObject>(
     contract: TContract,
-    requiredExtensions: RequiredServiceExtensions<TService>,
+    requiredExtensions: RequiredServiceExtensions<TService>
   ): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
   function createServiceImplementer(
     contract: AnyContractRouter,
-    requiredExtensions: RequiredServiceExtensions<TService>,
+    requiredExtensions: RequiredServiceExtensions<TService>
   ) {
     if (isContractProcedure(contract)) {
       return createBaseImplementer<AnyContractProcedure, TContext>(contract)
@@ -208,7 +205,7 @@ export function defineService<
     }
 
     return createBaseImplementer<AnyContractRouterObject, TContext>(
-      contract as AnyContractRouterObject,
+      contract as AnyContractRouterObject
     )
       .use(requiredExtensions.observability)
       .use(requiredExtensions.analytics);
@@ -216,44 +213,36 @@ export function defineService<
 
   return {
     oc: createContractBuilder<TMeta>({ baseMetadata: options.metadataDefaults }),
-    createMiddleware<
-      TRequiredContext extends object = {},
-    >() {
+    createMiddleware<TRequiredContext extends object = {}>() {
       return createNormalMiddlewareBuilder<TRequiredContext, TMeta>({
         baseMetadata: options.metadataDefaults,
       });
     },
-    createObservabilityMiddleware<
-      TRequiredContext extends object = TContext,
-    >(input: ServiceObservabilityMiddlewareInput<TMeta, TRequiredContext>) {
+    createObservabilityMiddleware<TRequiredContext extends object = TContext>(
+      input: ServiceObservabilityMiddlewareInput<TMeta, TRequiredContext>
+    ) {
       return createServiceObservabilityMiddleware(options.metadataDefaults, input);
     },
     createRequiredObservabilityMiddleware(
-      input: RequiredServiceObservabilityMiddlewareInput<
-        TMeta,
-        TRequiredContext,
-        TPolicy["events"]
-      >,
+      input: RequiredServiceObservabilityMiddlewareInput<TMeta, TRequiredContext, TPolicy["events"]>
     ) {
       return createRequiredServiceObservabilityMiddleware(
         options.metadataDefaults,
         input,
-        options.baseline.policy.events,
+        options.baseline.policy.events
       );
     },
-    createAnalyticsMiddleware<
-      TRequiredContext extends object = TContext,
-    >(input: ServiceAnalyticsMiddlewareInput<TMeta, TRequiredContext>) {
+    createAnalyticsMiddleware<TRequiredContext extends object = TContext>(
+      input: ServiceAnalyticsMiddlewareInput<TMeta, TRequiredContext>
+    ) {
       return createServiceAnalyticsMiddleware(options.metadataDefaults, input);
     },
     createRequiredAnalyticsMiddleware(
-      input: RequiredServiceAnalyticsMiddlewareInput<TMeta, TRequiredContext>,
+      input: RequiredServiceAnalyticsMiddlewareInput<TMeta, TRequiredContext>
     ) {
       return createRequiredServiceAnalyticsMiddleware(options.metadataDefaults, input);
     },
-    createProvider<
-      TRequiredContext extends object = {},
-    >() {
+    createProvider<TRequiredContext extends object = {}>() {
       return createServiceProviderBuilder<TRequiredContext, TMeta>({
         baseMetadata: options.metadataDefaults,
       });

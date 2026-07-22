@@ -11,10 +11,7 @@ export type ObservabilityFields = Record<string, ObservabilityScalar | undefined
 
 export type ObservabilityErrorDetails = ReturnType<typeof getErrorDetails>;
 
-export type ObservabilityBaseArgs<
-  TMeta extends BaseMetadata,
-  TContext extends object,
-> = {
+export type ObservabilityBaseArgs<TMeta extends BaseMetadata, TContext extends object> = {
   context: TContext;
   meta: TMeta;
   path: readonly string[];
@@ -52,16 +49,22 @@ export type RequiredServiceObservabilityMiddlewareInput<
   startEventAttributes?: (args: ObservabilityBaseArgs<TMeta, TContext>) => Attributes;
   successEventAttributes?: (args: ObservabilityDurationArgs<TMeta, TContext>) => Attributes;
   errorEventAttributes?: (args: ObservabilityFailedArgs<TMeta, TContext>) => Attributes;
-  onStart?(args: {
-    span: Span | undefined;
-  } & ObservabilityBaseArgs<TMeta, TContext>): void;
-  onSuccess?(args: {
-    span: Span | undefined;
-  } & ObservabilityDurationArgs<TMeta, TContext>): void;
-  onError?(args: {
-    span: Span | undefined;
-    policyEvents: TPolicyEvents;
-  } & ObservabilityFailedArgs<TMeta, TContext>): void;
+  onStart?(
+    args: {
+      span: Span | undefined;
+    } & ObservabilityBaseArgs<TMeta, TContext>
+  ): void;
+  onSuccess?(
+    args: {
+      span: Span | undefined;
+    } & ObservabilityDurationArgs<TMeta, TContext>
+  ): void;
+  onError?(
+    args: {
+      span: Span | undefined;
+      policyEvents: TPolicyEvents;
+    } & ObservabilityFailedArgs<TMeta, TContext>
+  ): void;
 };
 
 export type ServiceObservabilityMiddlewareInput<
@@ -69,15 +72,21 @@ export type ServiceObservabilityMiddlewareInput<
   TContext extends object,
 > = {
   spanAttributes?: (args: ObservabilityBaseArgs<TMeta, TContext>) => ObservabilityFields;
-  onStart?(args: {
-    span: Span | undefined;
-  } & ObservabilityBaseArgs<TMeta, TContext>): void;
-  onSuccess?(args: {
-    span: Span | undefined;
-  } & ObservabilityDurationArgs<TMeta, TContext>): void;
-  onError?(args: {
-    span: Span | undefined;
-  } & ObservabilityFailedArgs<TMeta, TContext>): void;
+  onStart?(
+    args: {
+      span: Span | undefined;
+    } & ObservabilityBaseArgs<TMeta, TContext>
+  ): void;
+  onSuccess?(
+    args: {
+      span: Span | undefined;
+    } & ObservabilityDurationArgs<TMeta, TContext>
+  ): void;
+  onError?(
+    args: {
+      span: Span | undefined;
+    } & ObservabilityFailedArgs<TMeta, TContext>
+  ): void;
 };
 
 export type ObservabilityHandlerArgs<
@@ -95,16 +104,16 @@ export type ObservabilityHandlerArgs<
 };
 
 export const requiredObservabilityMiddlewareBrand = Symbol(
-  "rawr.orpc.requiredObservabilityMiddleware",
+  "rawr.orpc.requiredObservabilityMiddleware"
 );
 
 export type RequiredServiceObservabilityMiddleware<
   TContext extends object = object,
   TMeta extends BaseMetadata = BaseMetadata,
-> = ReturnType<
-  typeof createNormalMiddlewareBuilder<TContext, TMeta>
->["middleware"] extends (callback: infer _T) => infer TMiddleware
+> = ReturnType<typeof createNormalMiddlewareBuilder<TContext, TMeta>>["middleware"] extends (
+  callback: infer _T
+) => infer TMiddleware
   ? TMiddleware & {
-    readonly [requiredObservabilityMiddlewareBrand]: "observability";
-  }
+      readonly [requiredObservabilityMiddlewareBrand]: "observability";
+    }
   : never;

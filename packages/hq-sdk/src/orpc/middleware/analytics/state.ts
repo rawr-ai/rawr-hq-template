@@ -45,26 +45,24 @@ export function getRequiredAnalyticsContributor<
 export function setRequiredAnalyticsContributor<
   TMeta extends BaseMetadata,
   TContext extends object,
->(
-  context: TContext,
-  contributor: AnalyticsPayloadContributor<TMeta, TContext>,
-) {
-  getAnalyticsState(context).requiredContributor = contributor as AnalyticsPayloadContributor<any, any>;
+>(context: TContext, contributor: AnalyticsPayloadContributor<TMeta, TContext>) {
+  getAnalyticsState(context).requiredContributor = contributor as AnalyticsPayloadContributor<
+    any,
+    any
+  >;
 }
 
-export function getLocalAnalyticsContributors<
-  TMeta extends BaseMetadata,
-  TContext extends object,
->(context: TContext) {
+export function getLocalAnalyticsContributors<TMeta extends BaseMetadata, TContext extends object>(
+  context: TContext
+) {
   const state = getAnalyticsState(context);
   state.localContributors ??= [];
   return state.localContributors as AnalyticsPayloadContributor<TMeta, TContext>[];
 }
 
-export function peekLocalAnalyticsContributors<
-  TMeta extends BaseMetadata,
-  TContext extends object,
->(context: TContext) {
+export function peekLocalAnalyticsContributors<TMeta extends BaseMetadata, TContext extends object>(
+  context: TContext
+) {
   return analyticsState.get(getAnalyticsCarrier(context))?.localContributors as
     | AnalyticsPayloadContributor<TMeta, TContext>[]
     | undefined;

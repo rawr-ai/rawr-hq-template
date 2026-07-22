@@ -22,7 +22,7 @@ export type MountHandle = Readonly<{
 
 export type MountFn = (
   el: HTMLElement,
-  ctx: MountContext,
+  ctx: MountContext
 ) => void | MountHandle | Promise<void | MountHandle>;
 
 export type MicroFrontendModule = Readonly<{
@@ -32,4 +32,3 @@ export type MicroFrontendModule = Readonly<{
 export function defineMicroFrontend(mount: MountFn): MicroFrontendModule {
   return { mount };
 }
-

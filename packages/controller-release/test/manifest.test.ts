@@ -43,7 +43,7 @@ describe("controller payload manifest", () => {
     const baseline = requireManifest(baselineInput);
     const permuted = requireManifest(permutedInput);
     expect(canonicalSerializeControllerPayloadManifest(permuted)).toEqual(
-      canonicalSerializeControllerPayloadManifest(baseline),
+      canonicalSerializeControllerPayloadManifest(baseline)
     );
     expect(computeControllerDigest(permuted)).toBe(computeControllerDigest(baseline));
   });
@@ -57,15 +57,17 @@ describe("controller payload manifest", () => {
     });
     const substitutedCommand = requireManifest({
       ...input,
-      officialMembers: input.officialMembers.map((member) => member.packageId === "@rawr/plugin-devops"
-        ? { ...member, commandIds: ["deploy"] }
-        : member),
+      officialMembers: input.officialMembers.map((member) =>
+        member.packageId === "@rawr/plugin-devops" ? { ...member, commandIds: ["deploy"] } : member
+      ),
     });
     const substitutedPayload = requireManifest({
       ...input,
-      entries: input.entries.map((entry) => entry.path === "app/rawr.mjs" && entry.kind === "file"
-        ? { ...entry, digest: DIGEST_B }
-        : entry),
+      entries: input.entries.map((entry) =>
+        entry.path === "app/rawr.mjs" && entry.kind === "file"
+          ? { ...entry, digest: DIGEST_B }
+          : entry
+      ),
     });
 
     expect(computeControllerDigest(withoutDevops)).not.toBe(baselineDigest);
@@ -88,20 +90,28 @@ describe("controller payload manifest", () => {
     expect(computeControllerDigest(changedRuntime)).not.toBe(baselineDigest);
     expect(mismatchedRuntime).toMatchObject({
       ok: false,
-      issues: expect.arrayContaining([expect.objectContaining({ code: "RUNTIME_DIGEST_MISMATCH" })]),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ code: "RUNTIME_DIGEST_MISMATCH" }),
+      ]),
     });
 
-    expect(createControllerPayloadManifest({
-      ...input,
-      runtime: { ...input.runtime, revision: "ABC" },
-    })).toMatchObject({
+    expect(
+      createControllerPayloadManifest({
+        ...input,
+        runtime: { ...input.runtime, revision: "ABC" },
+      })
+    ).toMatchObject({
       ok: false,
-      issues: expect.arrayContaining([expect.objectContaining({ code: "INVALID_STRING", path: "manifest.runtime.revision" })]),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ code: "INVALID_STRING", path: "manifest.runtime.revision" }),
+      ]),
     });
-    expect(createControllerPayloadManifest({
-      ...input,
-      runtime: { ...input.runtime, platform: "freebsd" },
-    })).toMatchObject({
+    expect(
+      createControllerPayloadManifest({
+        ...input,
+        runtime: { ...input.runtime, platform: "freebsd" },
+      })
+    ).toMatchObject({
       ok: false,
       issues: expect.arrayContaining([expect.objectContaining({ code: "INVALID_PLATFORM" })]),
     });
@@ -111,48 +121,62 @@ describe("controller payload manifest", () => {
     const input = controllerManifestInput();
     const cliDigest = computeControllerMemberPayloadDigest(input.entries, "app/cli");
     const changedCliDigest = computeControllerMemberPayloadDigest(
-      input.entries.map((entry) => entry.path === "app/cli/index.mjs" && entry.kind === "file"
-        ? { ...entry, digest: DIGEST_B }
-        : entry),
-      "app/cli",
+      input.entries.map((entry) =>
+        entry.path === "app/cli/index.mjs" && entry.kind === "file"
+          ? { ...entry, digest: DIGEST_B }
+          : entry
+      ),
+      "app/cli"
     );
     const unrelatedRuntimeDigest = computeControllerMemberPayloadDigest(
-      input.entries.map((entry) => entry.path === "runtime/bun" && entry.kind === "file"
-        ? { ...entry, digest: DIGEST_A }
-        : entry),
-      "app/cli",
+      input.entries.map((entry) =>
+        entry.path === "runtime/bun" && entry.kind === "file"
+          ? { ...entry, digest: DIGEST_A }
+          : entry
+      ),
+      "app/cli"
     );
     expect(cliDigest.ok && changedCliDigest.ok && unrelatedRuntimeDigest.ok).toBe(true);
     if (!cliDigest.ok || !changedCliDigest.ok || !unrelatedRuntimeDigest.ok) return;
-    expect(cliDigest.value).toBe("6db24b058547d600a56787013b6a83548192a08c63a2bac1ebf28cc99c3448f0");
+    expect(cliDigest.value).toBe(
+      "6db24b058547d600a56787013b6a83548192a08c63a2bac1ebf28cc99c3448f0"
+    );
     expect(changedCliDigest.value).not.toBe(cliDigest.value);
     expect(unrelatedRuntimeDigest.value).toBe(cliDigest.value);
 
     const mismatch = createControllerPayloadManifest({
       ...input,
-      officialMembers: input.officialMembers.map((member) => member.packageId === "@rawr/cli"
-        ? { ...member, payloadDigest: DIGEST_A }
-        : member),
+      officialMembers: input.officialMembers.map((member) =>
+        member.packageId === "@rawr/cli" ? { ...member, payloadDigest: DIGEST_A } : member
+      ),
     });
     expect(mismatch).toMatchObject({
       ok: false,
-      issues: expect.arrayContaining([expect.objectContaining({ code: "MEMBER_PAYLOAD_DIGEST_MISMATCH" })]),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ code: "MEMBER_PAYLOAD_DIGEST_MISMATCH" }),
+      ]),
     });
   });
 
   it("binds dependency-lock provenance to one inventoried file", () => {
     const input = controllerManifestInput();
-    expect(createControllerPayloadManifest({
-      ...input,
-      dependencyLock: { ...input.dependencyLock, digest: DIGEST_A },
-    })).toMatchObject({
+    expect(
+      createControllerPayloadManifest({
+        ...input,
+        dependencyLock: { ...input.dependencyLock, digest: DIGEST_A },
+      })
+    ).toMatchObject({
       ok: false,
-      issues: expect.arrayContaining([expect.objectContaining({ code: "DEPENDENCY_LOCK_DIGEST_MISMATCH" })]),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ code: "DEPENDENCY_LOCK_DIGEST_MISMATCH" }),
+      ]),
     });
-    expect(createControllerPayloadManifest({
-      ...input,
-      dependencyLock: { ...input.dependencyLock, path: "meta/missing.lock" },
-    })).toMatchObject({
+    expect(
+      createControllerPayloadManifest({
+        ...input,
+        dependencyLock: { ...input.dependencyLock, path: "meta/missing.lock" },
+      })
+    ).toMatchObject({
       ok: false,
       issues: expect.arrayContaining([expect.objectContaining({ code: "MISSING_PAYLOAD_ENTRY" })]),
     });
@@ -166,9 +190,9 @@ describe("controller payload manifest", () => {
     });
     const overlappingRoot = createControllerPayloadManifest({
       ...input,
-      officialMembers: input.officialMembers.map((member) => member.packageId === "@rawr/plugin-devops"
-        ? { ...member, root: "app/cli/nested" }
-        : member),
+      officialMembers: input.officialMembers.map((member) =>
+        member.packageId === "@rawr/plugin-devops" ? { ...member, root: "app/cli/nested" } : member
+      ),
       entries: [
         ...input.entries,
         { kind: "file", path: "app/cli/nested/index.mjs", mode: 0o644, digest: DIGEST_A },
@@ -176,9 +200,11 @@ describe("controller payload manifest", () => {
     });
     const commandCollision = createControllerPayloadManifest({
       ...input,
-      officialMembers: input.officialMembers.map((member) => member.packageId === "@rawr/plugin-devops"
-        ? { ...member, aliases: ["doctor:global"] }
-        : member),
+      officialMembers: input.officialMembers.map((member) =>
+        member.packageId === "@rawr/plugin-devops"
+          ? { ...member, aliases: ["doctor:global"] }
+          : member
+      ),
     });
 
     expect(missingMemberBytes).toMatchObject({
@@ -204,21 +230,28 @@ describe("controller payload manifest", () => {
 
     expect(result).toMatchObject({ ok: true });
     if (!result.ok) return;
-    expect(result.value.map((member) => member.packageId)).toEqual(["@rawr/cli", "@rawr/plugin-devops"]);
+    expect(result.value.map((member) => member.packageId)).toEqual([
+      "@rawr/cli",
+      "@rawr/plugin-devops",
+    ]);
   });
 
   it("rejects an entrypoint not present as a file and rejects uncontained link targets", () => {
     const input = controllerManifestInput();
-    expect(createControllerPayloadManifest({ ...input, entrypoint: "app/missing.mjs" })).toMatchObject({
+    expect(
+      createControllerPayloadManifest({ ...input, entrypoint: "app/missing.mjs" })
+    ).toMatchObject({
       ok: false,
       issues: expect.arrayContaining([expect.objectContaining({ code: "MISSING_PAYLOAD_ENTRY" })]),
     });
-    expect(createControllerPayloadManifest({
-      ...input,
-      entries: input.entries.map((entry) => entry.kind === "link"
-        ? { ...entry, target: "outside/missing.mjs" }
-        : entry),
-    })).toMatchObject({
+    expect(
+      createControllerPayloadManifest({
+        ...input,
+        entries: input.entries.map((entry) =>
+          entry.kind === "link" ? { ...entry, target: "outside/missing.mjs" } : entry
+        ),
+      })
+    ).toMatchObject({
       ok: false,
       issues: expect.arrayContaining([expect.objectContaining({ code: "UNSAFE_LINK_TARGET" })]),
     });
@@ -226,14 +259,16 @@ describe("controller payload manifest", () => {
 
   it("verifies complete observed inventory independent of enumeration order", () => {
     const manifest = requireManifest();
-    expect(verifyControllerPayload(manifest, controllerObservedPayloadEntries().reverse())).toMatchObject({ ok: true });
+    expect(
+      verifyControllerPayload(manifest, controllerObservedPayloadEntries().reverse())
+    ).toMatchObject({ ok: true });
   });
 
   it("rejects a payload file whose inode is shared through a hardlink", () => {
     const manifest = requireManifest();
-    const observed = controllerObservedPayloadEntries().map((entry) => entry.path === "node_modules/shared/index.mjs"
-      ? { ...entry, nlink: 2 }
-      : entry);
+    const observed = controllerObservedPayloadEntries().map((entry) =>
+      entry.path === "node_modules/shared/index.mjs" ? { ...entry, nlink: 2 } : entry
+    );
 
     expect(verifyControllerPayload(manifest, observed)).toMatchObject({
       ok: false,
@@ -252,28 +287,50 @@ describe("controller payload manifest", () => {
     const manifest = requireManifest();
     const observed = controllerObservedPayloadEntries()
       .filter((entry) => entry.path !== "runtime/bun")
-      .map((entry) => entry.path === "app/rawr.mjs" && entry.kind === "file"
-        ? { ...entry, mode: 0o644, digest: DIGEST_B }
-        : entry);
-    observed.push({ kind: "file", path: "unexpected.txt", mode: 0o644, digest: DIGEST_A, nlink: 1 });
+      .map((entry) =>
+        entry.path === "app/rawr.mjs" && entry.kind === "file"
+          ? { ...entry, mode: 0o644, digest: DIGEST_B }
+          : entry
+      );
+    observed.push({
+      kind: "file",
+      path: "unexpected.txt",
+      mode: 0o644,
+      digest: DIGEST_A,
+      nlink: 1,
+    });
 
     const result = verifyControllerPayload(manifest, observed);
     expect(result).toMatchObject({
       ok: false,
       issues: expect.arrayContaining([
-        expect.objectContaining({ code: "MISSING_PAYLOAD_ENTRY", path: "observedEntries.runtime/bun" }),
-        expect.objectContaining({ code: "PAYLOAD_MODE_MISMATCH", path: "observedEntries.app/rawr.mjs.mode" }),
-        expect.objectContaining({ code: "PAYLOAD_DIGEST_MISMATCH", path: "observedEntries.app/rawr.mjs.digest" }),
-        expect.objectContaining({ code: "UNEXPECTED_PAYLOAD_ENTRY", path: "observedEntries.unexpected.txt" }),
+        expect.objectContaining({
+          code: "MISSING_PAYLOAD_ENTRY",
+          path: "observedEntries.runtime/bun",
+        }),
+        expect.objectContaining({
+          code: "PAYLOAD_MODE_MISMATCH",
+          path: "observedEntries.app/rawr.mjs.mode",
+        }),
+        expect.objectContaining({
+          code: "PAYLOAD_DIGEST_MISMATCH",
+          path: "observedEntries.app/rawr.mjs.digest",
+        }),
+        expect.objectContaining({
+          code: "UNEXPECTED_PAYLOAD_ENTRY",
+          path: "observedEntries.unexpected.txt",
+        }),
       ]),
     });
   });
 
   it("rejects ignored manifest fields rather than creating an alternate identity projection", () => {
-    expect(createControllerPayloadManifest({
-      ...controllerManifestInput(),
-      fallbackController: "/tmp/other-controller",
-    })).toMatchObject({
+    expect(
+      createControllerPayloadManifest({
+        ...controllerManifestInput(),
+        fallbackController: "/tmp/other-controller",
+      })
+    ).toMatchObject({
       ok: false,
       issues: expect.arrayContaining([
         expect.objectContaining({ code: "UNKNOWN_FIELD", path: "manifest.fallbackController" }),

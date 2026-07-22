@@ -27,9 +27,7 @@ export type { FeedbackClient } from "./orpc/ports/feedback";
 export type { Logger } from "./orpc/ports/logger";
 export * from "./apis";
 export * from "./workflows";
-export {
-  defineService,
-} from "./orpc/service/define";
+export { defineService } from "./orpc/service/define";
 export type { ServiceOf } from "./orpc/service/define";
 export { schema, typeBoxStandardSchema } from "./orpc/schema";
 export {

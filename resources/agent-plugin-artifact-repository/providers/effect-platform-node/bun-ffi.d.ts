@@ -5,10 +5,15 @@ declare module "bun:ffi" {
 
   export function dlopen(
     name: string,
-    symbols: Readonly<Record<string, Readonly<{
-      args: readonly string[];
-      returns: string;
-    }>>>,
+    symbols: Readonly<
+      Record<
+        string,
+        Readonly<{
+          args: readonly string[];
+          returns: string;
+        }>
+      >
+    >
   ): Readonly<{
     symbols: Readonly<Record<string, FfiCallable>>;
     close(): void;

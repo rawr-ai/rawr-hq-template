@@ -81,26 +81,38 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     const bytes = encoder.encode("deterministic package\n");
     const resource = makeAgentPluginPackageOutputResource();
 
-    const first = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    })));
+    const first = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes,
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
     expect(first).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
     expect(await readFile(outputPath)).toEqual(Buffer.from(bytes));
     const before = await lstat(outputPath);
     const namesBefore = await readdir(fixture.root);
 
-    const second = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    })));
+    const second = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes,
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
     const after = await lstat(outputPath);
     expect(second).toEqual({ kind: "ReadOnlyConverged" });
     expect(await readdir(fixture.root)).toEqual(namesBefore);
-    expect({ ino: after.ino, mode: after.mode, size: after.size, mtimeMs: after.mtimeMs })
-      .toEqual({ ino: before.ino, mode: before.mode, size: before.size, mtimeMs: before.mtimeMs });
+    expect({ ino: after.ino, mode: after.mode, size: after.size, mtimeMs: after.mtimeMs }).toEqual({
+      ino: before.ino,
+      mode: before.mode,
+      size: before.size,
+      mtimeMs: before.mtimeMs,
+    });
   });
 
   test("atomically replaces one canonical regular output and verifies its mode", async () => {
@@ -110,11 +122,15 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     const bytes = encoder.encode("replacement\n");
     const resource = makeAgentPluginPackageOutputResource();
 
-    const result = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    })));
+    const result = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes,
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
 
     expect(result).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Replaced" });
     expect(await readFile(outputPath)).toEqual(Buffer.from(bytes));
@@ -129,11 +145,15 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     await writeFile(outputPath, bytes, { mode: 0o600 });
     const resource = makeAgentPluginPackageOutputResource();
 
-    const result = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    })));
+    const result = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes,
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
 
     expect(result).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Replaced" });
     expect((await lstat(outputPath)).mode & 0o777).toBe(0o644);
@@ -164,17 +184,21 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
       },
     });
 
-    const first = runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes: encoder.encode("first\n"),
-      maxPriorOutputBytes: 1024,
-    }));
+    const first = runNodePackageOutput(
+      resource.publish({
+        outputPath,
+        bytes: encoder.encode("first\n"),
+        maxPriorOutputBytes: 1024,
+      })
+    );
     await firstAdmitted;
-    const second = runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes: encoder.encode("second\n"),
-      maxPriorOutputBytes: 1024,
-    }));
+    const second = runNodePackageOutput(
+      resource.publish({
+        outputPath,
+        bytes: encoder.encode("second\n"),
+        maxPriorOutputBytes: 1024,
+      })
+    );
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(observed).toBe(1);
     releaseFirst?.();
@@ -196,11 +220,15 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     const outputPath = path.join(alias, "escaped.zip");
     const resource = makeAgentPluginPackageOutputResource();
 
-    const result = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes: encoder.encode("package\n"),
-      maxPriorOutputBytes: 1024,
-    })));
+    const result = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes: encoder.encode("package\n"),
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
 
     expect(result).toMatchObject({
       kind: "RejectedBeforeOutputMutation",
@@ -217,11 +245,15 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     });
     const resource = makeAgentPluginPackageOutputResource({ failpoints });
 
-    const result = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes: encoder.encode("package\n"),
-      maxPriorOutputBytes: 1024,
-    })));
+    const result = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes: encoder.encode("package\n"),
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
 
     expect(result).toMatchObject({
       kind: "RejectedBeforeOutputMutation",
@@ -274,11 +306,15 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
       },
     });
 
-    const result = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    })));
+    const result = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes,
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
 
     expect(result).toMatchObject({
       kind: "OutputUnsettled",
@@ -298,7 +334,8 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
       failpoints: {
         async hit(point, context) {
           if (point !== "BeforeCommit" || substituted) return;
-          if (context.temporaryPath === undefined) throw new Error("Expected an owned temporary path");
+          if (context.temporaryPath === undefined)
+            throw new Error("Expected an owned temporary path");
           substituted = true;
           replacement = context.temporaryPath;
           preserved = `${replacement}.preserved`;
@@ -308,11 +345,15 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
       },
     });
 
-    const result = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    })));
+    const result = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes,
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
 
     expect(result).toMatchObject({
       kind: "RejectedBeforeOutputMutation",
@@ -320,23 +361,32 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
       cleanupFailure: { operation: "cleanup", reason: "TemporaryFailed" },
     });
     expect(await Bun.file(outputPath).exists()).toBe(false);
-    if (replacement === undefined || preserved === undefined) throw new Error("Expected substituted paths");
+    if (replacement === undefined || preserved === undefined)
+      throw new Error("Expected substituted paths");
     expect(await readFile(replacement, "utf8")).toBe("replacement identity\n");
     expect(await readFile(preserved)).toEqual(Buffer.from(bytes));
 
     await unlink(replacement);
     await unlink(preserved);
-    const retry = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    })));
+    const retry = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes,
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
     expect(retry).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
-    const repeated = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    })));
+    const repeated = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes,
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
     expect(repeated).toEqual({ kind: "ReadOnlyConverged" });
   });
 
@@ -347,33 +397,46 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     const resource = makeAgentPluginPackageOutputResource();
     let injected = false;
 
-    const attempted = await runWithFileSystem(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    }), (base) => fileSystemProxy(base, {
-      chmod(candidate, mode) {
-        if (isPrivateTemporary(candidate) && !injected) {
-          injected = true;
-          return Effect.fail(injectedFileSystemFailure("chmod", candidate, "preparation probe"));
-        }
-        return base.chmod(candidate, mode);
-      },
-    }));
+    const attempted = await runWithFileSystem(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      }),
+      (base) =>
+        fileSystemProxy(base, {
+          chmod(candidate, mode) {
+            if (isPrivateTemporary(candidate) && !injected) {
+              injected = true;
+              return Effect.fail(
+                injectedFileSystemFailure("chmod", candidate, "preparation probe")
+              );
+            }
+            return base.chmod(candidate, mode);
+          },
+        })
+    );
 
     expect(attempted._tag).toBe("Right");
     if (attempted._tag === "Left") throw attempted.left;
     expect(attempted.right).toMatchObject({
       kind: "RejectedBeforeOutputMutation",
-      primaryFailure: { phase: "temporary-mode", detail: expect.stringContaining("preparation probe") },
+      primaryFailure: {
+        phase: "temporary-mode",
+        detail: expect.stringContaining("preparation probe"),
+      },
     });
     expect(privateEntries(await readdir(fixture.root))).toEqual([]);
 
-    const retry = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    })));
+    const retry = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes,
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
     expect(retry).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
   });
 
@@ -383,40 +446,53 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     const bytes = encoder.encode("cleanup failure truth\n");
     const resource = makeAgentPluginPackageOutputResource();
 
-    const attempted = await runWithFileSystem(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    }), (base) => fileSystemProxy(base, {
-      chmod(candidate, mode) {
-        return isPrivateTemporary(candidate)
-          ? Effect.fail(injectedFileSystemFailure("chmod", candidate, "persistent preparation probe"))
-          : base.chmod(candidate, mode);
-      },
-      remove(candidate, options) {
-        return isPrivateTemporary(candidate)
-          ? Effect.fail(injectedFileSystemFailure("remove", candidate, "cleanup removal probe"))
-          : base.remove(candidate, options);
-      },
-    }));
+    const attempted = await runWithFileSystem(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      }),
+      (base) =>
+        fileSystemProxy(base, {
+          chmod(candidate, mode) {
+            return isPrivateTemporary(candidate)
+              ? Effect.fail(
+                  injectedFileSystemFailure("chmod", candidate, "persistent preparation probe")
+                )
+              : base.chmod(candidate, mode);
+          },
+          remove(candidate, options) {
+            return isPrivateTemporary(candidate)
+              ? Effect.fail(injectedFileSystemFailure("remove", candidate, "cleanup removal probe"))
+              : base.remove(candidate, options);
+          },
+        })
+    );
 
     expect(attempted._tag).toBe("Right");
     if (attempted._tag === "Left") throw attempted.left;
     expect(attempted.right).toMatchObject({
       kind: "RejectedBeforeOutputMutation",
       primaryFailure: { detail: expect.stringContaining("persistent preparation probe") },
-      cleanupFailure: { operation: "cleanup", detail: expect.stringContaining("cleanup removal probe") },
+      cleanupFailure: {
+        operation: "cleanup",
+        detail: expect.stringContaining("cleanup removal probe"),
+      },
     });
     const [orphan] = privateEntries(await readdir(fixture.root));
     expect(orphan?.startsWith(PRIVATE_TEMPORARY_PREFIX)).toBe(true);
     if (orphan === undefined) throw new Error("Expected an explicitly unsettled private temporary");
     await unlink(path.join(fixture.root, orphan));
 
-    const retry = unwrap(await runNodePackageOutput(resource.publish({
-      outputPath,
-      bytes,
-      maxPriorOutputBytes: 1024,
-    })));
+    const retry = unwrap(
+      await runNodePackageOutput(
+        resource.publish({
+          outputPath,
+          bytes,
+          maxPriorOutputBytes: 1024,
+        })
+      )
+    );
     expect(retry).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
   });
 });
@@ -424,8 +500,16 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
 function archiveRequest(): CoworkV1ArchiveEncodingRequest {
   return Object.freeze({
     entries: Object.freeze([
-      Object.freeze({ path: "scripts/alpha.sh", mode: 0o755, bytes: encoder.encode("#!/bin/sh\n") }),
-      Object.freeze({ path: "skills/alpha/SKILL.md", mode: 0o644, bytes: encoder.encode("alpha\n") }),
+      Object.freeze({
+        path: "scripts/alpha.sh",
+        mode: 0o755,
+        bytes: encoder.encode("#!/bin/sh\n"),
+      }),
+      Object.freeze({
+        path: "skills/alpha/SKILL.md",
+        mode: 0o644,
+        bytes: encoder.encode("alpha\n"),
+      }),
     ]),
     comment: "rawr-agent-plugin-cowork-v1",
     fixedTimestamp: "2000-01-01T00:00:00.000",
@@ -445,19 +529,19 @@ async function createFixture(): Promise<FixtureOwner> {
 
 async function disposeFixture(fixture: FixtureOwner): Promise<void> {
   if (
-    path.dirname(fixture.root) !== fixture.parent
-    || !path.basename(fixture.root).startsWith(FIXTURE_PREFIX)
+    path.dirname(fixture.root) !== fixture.parent ||
+    !path.basename(fixture.root).startsWith(FIXTURE_PREFIX)
   ) {
     throw new Error("Refusing to remove a fixture outside the owned temporary boundary");
   }
   const canonical = await realpath(fixture.root);
   const stats = await lstat(fixture.root);
   if (
-    canonical !== fixture.root
-    || !stats.isDirectory()
-    || stats.isSymbolicLink()
-    || stats.dev !== fixture.dev
-    || stats.ino !== fixture.ino
+    canonical !== fixture.root ||
+    !stats.isDirectory() ||
+    stats.isSymbolicLink() ||
+    stats.dev !== fixture.dev ||
+    stats.ino !== fixture.ino
   ) {
     throw new Error("Refusing to remove a fixture whose identity changed");
   }
@@ -523,20 +607,22 @@ function inspectZip(bytes: Uint8Array): {
 
 async function runWithFileSystem<A>(
   operation: Effect.Effect<A, PackageOutputFailure, FileSystem.FileSystem | Path.Path>,
-  transform: (base: FileSystem.FileSystem) => FileSystem.FileSystem,
+  transform: (base: FileSystem.FileSystem) => FileSystem.FileSystem
 ) {
-  return Effect.runPromise(Effect.gen(function* () {
-    const base = yield* FileSystem.FileSystem;
-    return yield* operation.pipe(
-      Effect.provideService(FileSystem.FileSystem, transform(base)),
-      Effect.either,
-    );
-  }).pipe(Effect.provide(NodeContext.layer)));
+  return Effect.runPromise(
+    Effect.gen(function* () {
+      const base = yield* FileSystem.FileSystem;
+      return yield* operation.pipe(
+        Effect.provideService(FileSystem.FileSystem, transform(base)),
+        Effect.either
+      );
+    }).pipe(Effect.provide(NodeContext.layer))
+  );
 }
 
 function fileSystemProxy(
   base: FileSystem.FileSystem,
-  overrides: Partial<FileSystem.FileSystem>,
+  overrides: Partial<FileSystem.FileSystem>
 ): FileSystem.FileSystem {
   return new Proxy(base, {
     get(target, property, receiver) {
@@ -551,7 +637,11 @@ function isPrivateTemporary(candidate: string): boolean {
   return path.basename(candidate).startsWith(PRIVATE_TEMPORARY_PREFIX);
 }
 
-function injectedFileSystemFailure(method: string, candidate: string, description: string): SystemError {
+function injectedFileSystemFailure(
+  method: string,
+  candidate: string,
+  description: string
+): SystemError {
   return new SystemError({
     reason: "Unknown",
     module: "FileSystem",

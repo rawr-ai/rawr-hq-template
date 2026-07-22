@@ -39,9 +39,7 @@ export type EmbeddedInMemorySqlOptions = {
   failIfQueryIncludes?: string[];
 };
 
-export function createEmbeddedInMemorySqlAdapter(
-  options: EmbeddedInMemorySqlOptions = {},
-): Sql {
+export function createEmbeddedInMemorySqlAdapter(options: EmbeddedInMemorySqlOptions = {}): Sql {
   const tasks = new Map<string, EmbeddedTaskRow>();
   const tags = new Map<string, EmbeddedTagRow>();
   const assignments = new Map<string, EmbeddedAssignmentRow>();
@@ -77,7 +75,7 @@ export function createEmbeddedInMemorySqlAdapter(
 
     if (text.includes("SELECT id FROM tags WHERE name = $1 AND workspace_id = $2")) {
       const existing = [...tags.values()].find(
-        (tag) => tag.name === String(params[0]) && tag.workspaceId === String(params[1]),
+        (tag) => tag.name === String(params[0]) && tag.workspaceId === String(params[1])
       );
       return (existing ? { id: existing.id } : null) as T | null;
     }
@@ -100,12 +98,16 @@ export function createEmbeddedInMemorySqlAdapter(
       return tag as T;
     }
 
-    if (text.includes("SELECT id FROM task_tags WHERE task_id = $1 AND tag_id = $2 AND workspace_id = $3")) {
+    if (
+      text.includes(
+        "SELECT id FROM task_tags WHERE task_id = $1 AND tag_id = $2 AND workspace_id = $3"
+      )
+    ) {
       const existing = [...assignments.values()].find(
         (assignment) =>
-          assignment.taskId === String(params[0])
-          && assignment.tagId === String(params[1])
-          && assignment.workspaceId === String(params[2]),
+          assignment.taskId === String(params[0]) &&
+          assignment.tagId === String(params[1]) &&
+          assignment.workspaceId === String(params[2])
       );
       return (existing ? { id: existing.id } : null) as T | null;
     }
@@ -137,7 +139,9 @@ export function createEmbeddedInMemorySqlAdapter(
         .sort((a, b) => a.name.localeCompare(b.name)) as T[];
     }
 
-    if (text.includes("SELECT * FROM tags WHERE id = ANY($1) AND workspace_id = $2 ORDER BY name ASC")) {
+    if (
+      text.includes("SELECT * FROM tags WHERE id = ANY($1) AND workspace_id = $2 ORDER BY name ASC")
+    ) {
       const ids = new Set((params[0] as string[]) ?? []);
       const workspaceId = String(params[1]);
       return [...tags.values()]
@@ -145,7 +149,11 @@ export function createEmbeddedInMemorySqlAdapter(
         .sort((a, b) => a.name.localeCompare(b.name)) as T[];
     }
 
-    if (text.includes("SELECT * FROM tasks WHERE id = ANY($1) AND workspace_id = $2 ORDER BY created_at DESC")) {
+    if (
+      text.includes(
+        "SELECT * FROM tasks WHERE id = ANY($1) AND workspace_id = $2 ORDER BY created_at DESC"
+      )
+    ) {
       const ids = new Set((params[0] as string[]) ?? []);
       const workspaceId = String(params[1]);
       return [...tasks.values()]
@@ -153,11 +161,17 @@ export function createEmbeddedInMemorySqlAdapter(
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)) as T[];
     }
 
-    if (text.includes("SELECT * FROM task_tags WHERE task_id = $1 AND workspace_id = $2 ORDER BY created_at DESC")) {
+    if (
+      text.includes(
+        "SELECT * FROM task_tags WHERE task_id = $1 AND workspace_id = $2 ORDER BY created_at DESC"
+      )
+    ) {
       const taskId = String(params[0]);
       const workspaceId = String(params[1]);
       return [...assignments.values()]
-        .filter((assignment) => assignment.taskId === taskId && assignment.workspaceId === workspaceId)
+        .filter(
+          (assignment) => assignment.taskId === taskId && assignment.workspaceId === workspaceId
+        )
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)) as T[];
     }
 
@@ -168,7 +182,7 @@ export function createEmbeddedInMemorySqlAdapter(
 }
 
 export function createEmbeddedInMemoryDbPoolAdapter(
-  options: EmbeddedInMemorySqlOptions = {},
+  options: EmbeddedInMemorySqlOptions = {}
 ): DbPool {
   const sql = createEmbeddedInMemorySqlAdapter(options);
 

@@ -1,5 +1,9 @@
 import fs from "node:fs/promises";
-import type { SessionIndexBatch, SessionIndexRuntime, SessionIndexStatement } from "@rawr/session-intelligence/ports/session-index-runtime";
+import type {
+  SessionIndexBatch,
+  SessionIndexRuntime,
+  SessionIndexStatement,
+} from "@rawr/session-intelligence/ports/session-index-runtime";
 import { defaultSessionIndexPathSync } from "./session-paths";
 import { openSqliteDb } from "./sqlite";
 
@@ -13,7 +17,10 @@ async function removeIndexFiles(indexPath: string): Promise<void> {
   await fs.rm(`${indexPath}-wal`, { force: true }).catch(() => undefined);
 }
 
-async function withDb<T>(input: { indexPath: string }, fn: (db: Awaited<ReturnType<typeof openSqliteDb>>) => T): Promise<T> {
+async function withDb<T>(
+  input: { indexPath: string },
+  fn: (db: Awaited<ReturnType<typeof openSqliteDb>>) => T
+): Promise<T> {
   const db = await openSqliteDb(input.indexPath);
   try {
     return fn(db);
@@ -41,7 +48,9 @@ export function createSessionIndexRuntime(indexPath?: string): SessionIndexRunti
       });
     },
 
-    async query<Row extends Record<string, unknown> = Record<string, unknown>>(input: SessionIndexStatement & { indexPath: string }): Promise<Row[]> {
+    async query<Row extends Record<string, unknown> = Record<string, unknown>>(
+      input: SessionIndexStatement & { indexPath: string }
+    ): Promise<Row[]> {
       return await withDb(input, (db) => (db.query(input.sql).all?.(input.params) ?? []) as Row[]);
     },
 

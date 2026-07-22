@@ -40,16 +40,22 @@ export type ResolvedObservabilityProfile<
   getStartEventAttributes?(args: ObservabilityBaseArgs<TMeta, TContext>): Attributes;
   getSuccessEventAttributes?(args: ObservabilityDurationArgs<TMeta, TContext>): Attributes;
   getErrorEventAttributes?(args: ObservabilityFailedArgs<TMeta, TContext>): Attributes;
-  onStart?(args: {
-    span: Span | undefined;
-  } & ObservabilityBaseArgs<TMeta, TContext>): void;
-  onSuccess?(args: {
-    span: Span | undefined;
-  } & ObservabilityDurationArgs<TMeta, TContext>): void;
-  onError?(args: {
-    span: Span | undefined;
-    policyEvents: TPolicyEvents;
-  } & ObservabilityFailedArgs<TMeta, TContext>): void;
+  onStart?(
+    args: {
+      span: Span | undefined;
+    } & ObservabilityBaseArgs<TMeta, TContext>
+  ): void;
+  onSuccess?(
+    args: {
+      span: Span | undefined;
+    } & ObservabilityDurationArgs<TMeta, TContext>
+  ): void;
+  onError?(
+    args: {
+      span: Span | undefined;
+      policyEvents: TPolicyEvents;
+    } & ObservabilityFailedArgs<TMeta, TContext>
+  ): void;
 };
 
 export function createBaseObservabilityProfile(): ResolvedObservabilityProfile<
@@ -92,7 +98,7 @@ export function resolveRequiredServiceObservabilityProfile<
   TPolicyEvents extends Record<string, string | undefined> | undefined,
 >(
   baseMetadata: TMeta,
-  input: RequiredServiceObservabilityMiddlewareInput<TMeta, TContext, TPolicyEvents>,
+  input: RequiredServiceObservabilityMiddlewareInput<TMeta, TContext, TPolicyEvents>
 ): ResolvedObservabilityProfile<TMeta, TContext, TPolicyEvents> {
   const names = deriveServiceNames(baseMetadata);
 
