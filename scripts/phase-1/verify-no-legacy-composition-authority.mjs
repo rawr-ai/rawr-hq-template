@@ -22,21 +22,21 @@ const [legacyCutoverSource, rawrSource, testingHostSource] = await Promise.all([
 
 assertCondition(
   legacyCutoverSource.includes("../server/src/bootstrap"),
-  "legacy-cutover.ts must localize the sanctioned runtime bootstrap bridge",
+  "legacy-cutover.ts must localize the sanctioned runtime bootstrap bridge"
 );
 assertCondition(
   legacyCutoverSource.includes("../server/src/host-composition"),
-  "legacy-cutover.ts must be the only surviving importer of host-composition",
+  "legacy-cutover.ts must be the only surviving importer of host-composition"
 );
 assertCondition(
   !legacyCutoverSource.includes("../server/src/host-seam") &&
     !legacyCutoverSource.includes("../server/src/host-realization"),
-  "legacy-cutover.ts must not bypass host-composition by importing host-seam or host-realization directly",
+  "legacy-cutover.ts must not bypass host-composition by importing host-seam or host-realization directly"
 );
 assertCondition(
   !legacyCutoverSource.includes("registerStateApiPlugin") &&
     !legacyCutoverSource.includes("registerExampleTodoApiPlugin"),
-  "legacy-cutover.ts must not own plugin declaration membership",
+  "legacy-cutover.ts must not own plugin declaration membership"
 );
 
 for (const [name, source] of [
@@ -44,25 +44,25 @@ for (const [name, source] of [
   ["apps/server/src/testing-host.ts", testingHostSource],
 ]) {
   assertCondition(
-    source.includes('@rawr/hq-app/legacy-cutover'),
-    `${name} must consume the sanctioned HQ legacy cutover bridge`,
+    source.includes("@rawr/hq-app/legacy-cutover"),
+    `${name} must consume the sanctioned HQ legacy cutover bridge`
   );
   assertCondition(
     !source.includes("./host-composition") &&
       !source.includes("./host-seam") &&
       !source.includes("./host-realization"),
-    `${name} must not import legacy host authority directly`,
+    `${name} must not import legacy host authority directly`
   );
   assertCondition(
     !source.includes("createRawrHostComposition"),
-    `${name} must not create host composition directly`,
+    `${name} must not create host composition directly`
   );
 }
 
 const indexSource = await readFile("apps/hq/src/index.ts");
 assertCondition(
   !indexSource.includes("legacy-cutover"),
-  "apps/hq/src/index.ts must not re-export legacy-cutover symbols from the barrel export",
+  "apps/hq/src/index.ts must not re-export legacy-cutover symbols from the barrel export"
 );
 
 console.log("no legacy composition authority verified");

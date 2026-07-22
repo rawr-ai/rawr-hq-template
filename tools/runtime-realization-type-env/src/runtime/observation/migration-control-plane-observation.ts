@@ -5,10 +5,7 @@ import {
   type RuntimeRecordAttributes,
   type RuntimeRecordValue,
 } from "../catalog";
-import type {
-  RuntimeTelemetryOtlpExportResult,
-  RuntimeTelemetryRecord,
-} from "./telemetry-export";
+import type { RuntimeTelemetryOtlpExportResult, RuntimeTelemetryRecord } from "./telemetry-export";
 
 export interface MigrationControlPlanePlacementCandidateInput {
   readonly targetId: string;
@@ -151,7 +148,7 @@ function stableHex(input: string, length: number): string {
 function assertNoForbiddenInputKeys(
   value: unknown,
   path: string,
-  seen: WeakSet<object> = new WeakSet(),
+  seen: WeakSet<object> = new WeakSet()
 ): void {
   if (typeof value === "function" || typeof value === "symbol") {
     throw new Error(`migration control-plane observation rejects live handle at ${path}`);
@@ -165,9 +162,7 @@ function assertNoForbiddenInputKeys(
   seen.add(value);
 
   if (Array.isArray(value)) {
-    value.forEach((entry, index) =>
-      assertNoForbiddenInputKeys(entry, `${path}[${index}]`, seen),
-    );
+    value.forEach((entry, index) => assertNoForbiddenInputKeys(entry, `${path}[${index}]`, seen));
     seen.delete(value);
     return;
   }
@@ -176,7 +171,7 @@ function assertNoForbiddenInputKeys(
     const childPath = `${path}.${key}`;
     if (FORBIDDEN_CONTROL_PLANE_INPUT_KEY.test(key)) {
       throw new Error(
-        `migration control-plane observation rejects forbidden field at ${childPath}`,
+        `migration control-plane observation rejects forbidden field at ${childPath}`
       );
     }
     assertNoForbiddenInputKeys(entry, childPath, seen);
@@ -188,7 +183,7 @@ function assertNoForbiddenInputKeys(
 function redactControlPlaneValue(
   value: unknown,
   key?: string,
-  seen: WeakSet<object> = new WeakSet(),
+  seen: WeakSet<object> = new WeakSet()
 ): RuntimeRecordValue {
   if (key && CONTROL_PLANE_REDACTED_KEY.test(key)) {
     return "[redacted]";
@@ -201,11 +196,7 @@ function redactControlPlaneValue(
   if (typeof value === "number") return Number.isFinite(value) ? value : String(value);
   if (typeof value === "bigint") return value.toString();
 
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
     return "[redacted:live-handle]";
   }
 
@@ -238,7 +229,7 @@ function redactControlPlaneValue(
       Object.entries(value).map(([entryKey, entryValue]) => [
         entryKey,
         redactControlPlaneValue(entryValue, entryKey, seen),
-      ]),
+      ])
     ) as RuntimeRecordAttributes;
     seen.delete(value);
     return redacted;
@@ -248,20 +239,20 @@ function redactControlPlaneValue(
 }
 
 function redactControlPlaneAttributes(
-  attributes: Record<string, unknown> = {},
+  attributes: Record<string, unknown> = {}
 ): RuntimeRecordAttributes {
   return redactControlPlaneValue(attributes) as RuntimeRecordAttributes;
 }
 
 function deploymentObservation(
-  handoff: DeploymentRuntimeHandoff,
+  handoff: DeploymentRuntimeHandoff
 ): MigrationControlPlaneDeploymentObservation {
   if (
     handoff.appId !== handoff.portableArtifact.appId ||
     handoff.appId !== handoff.compiledProcessPlan.appId
   ) {
     throw new Error(
-      `migration control-plane observation appId mismatch for deployment handoff ${handoff.appId}`,
+      `migration control-plane observation appId mismatch for deployment handoff ${handoff.appId}`
     );
   }
 
@@ -277,8 +268,7 @@ function deploymentObservation(
     executionPlanCount: handoff.compiledProcessPlan.executionPlans.length,
     serviceBindingPlanCount: handoff.portableArtifact.serviceBindingPlans.length,
     surfaceRuntimePlanCount: handoff.portableArtifact.surfaceRuntimePlans.length,
-    serverRouteDescriptorCount:
-      handoff.portableArtifact.serverRouteDescriptors.length,
+    serverRouteDescriptorCount: handoff.portableArtifact.serverRouteDescriptors.length,
     workflowDispatcherDescriptorCount:
       handoff.portableArtifact.workflowDispatcherDescriptors.length,
     diagnosticCount: handoff.portableArtifact.diagnostics.length,
@@ -288,7 +278,7 @@ function deploymentObservation(
 }
 
 function catalogObservation(
-  catalog: InMemoryRuntimeCatalog,
+  catalog: InMemoryRuntimeCatalog
 ): MigrationControlPlaneCatalogObservation {
   return {
     kind: "runtime.migration-control-plane-catalog-observation",
@@ -314,7 +304,7 @@ function telemetryObservation(input: {
   for (const record of input.records) {
     if (record.attributes.telemetryRunId !== input.runId) {
       throw new Error(
-        `migration control-plane observation telemetry runId mismatch: expected ${input.runId}`,
+        `migration control-plane observation telemetry runId mismatch: expected ${input.runId}`
       );
     }
   }
@@ -332,8 +322,7 @@ function telemetryObservation(input: {
             kind: input.exportResult.kind,
             status: input.exportResult.status,
             endpoint: input.exportResult.endpoint,
-            ...("httpStatus" in input.exportResult &&
-            input.exportResult.httpStatus !== undefined
+            ...("httpStatus" in input.exportResult && input.exportResult.httpStatus !== undefined
               ? { httpStatus: input.exportResult.httpStatus }
               : {}),
           },
@@ -343,7 +332,7 @@ function telemetryObservation(input: {
 }
 
 function placementCandidate(
-  input: MigrationControlPlanePlacementCandidateInput,
+  input: MigrationControlPlanePlacementCandidateInput
 ): MigrationControlPlanePlacementCandidate {
   // Candidates preserve a possible destination without crossing into policy,
   // scheduling, or deployment authority.
@@ -359,7 +348,7 @@ function placementCandidate(
 }
 
 export function createMigrationControlPlaneObservationPacket(
-  input: MigrationControlPlaneObservationInput,
+  input: MigrationControlPlaneObservationInput
 ): MigrationControlPlaneObservationPacket {
   const telemetryRecords = input.telemetryRecords ?? [];
   const deployment = deploymentObservation(input.deploymentHandoff);
@@ -380,7 +369,7 @@ export function createMigrationControlPlaneObservationPacket(
         telemetryRecords: telemetry.recordCount,
         placementCandidates: input.placementCandidates?.length ?? 0,
       }),
-      12,
+      12
     )}`;
   const observationId =
     input.observationId ??
@@ -397,8 +386,6 @@ export function createMigrationControlPlaneObservationPacket(
     catalog,
     telemetry,
     placementCandidates: (input.placementCandidates ?? []).map(placementCandidate),
-    attributes: redactRuntimeRecordAttributes(
-      redactControlPlaneAttributes(input.attributes),
-    ),
+    attributes: redactRuntimeRecordAttributes(redactControlPlaneAttributes(input.attributes)),
   };
 }

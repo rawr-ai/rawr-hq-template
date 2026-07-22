@@ -19,7 +19,10 @@ describe("Effect vendor-native runtime lane", () => {
       return one + two;
     });
 
-    const rootPipe = pipe(program, Effect.map((value) => value * 2));
+    const rootPipe = pipe(
+      program,
+      Effect.map((value) => value * 2)
+    );
     const valuePipe = program.pipe(Effect.map((value) => value + 4));
 
     await expect(Effect.runPromise(rootPipe)).resolves.toBe(6);
@@ -37,9 +40,7 @@ describe("Effect vendor-native runtime lane", () => {
       expect(Cause.isFailure(failure.cause)).toBe(true);
     }
 
-    const defect = await Effect.runPromiseExit(
-      Effect.die(new Error("defect-failure")),
-    );
+    const defect = await Effect.runPromiseExit(Effect.die(new Error("defect-failure")));
     expect(Exit.isFailure(defect)).toBe(true);
     if (Exit.isFailure(defect)) {
       expect(Cause.isDie(defect.cause)).toBe(true);
@@ -64,7 +65,7 @@ describe("Effect vendor-native runtime lane", () => {
       (resource, exit) =>
         Effect.sync(() => {
           successEvents.push(`release:${resource}:${exit._tag}`);
-        }),
+        })
     );
 
     const success = await Effect.runPromiseExit(
@@ -73,16 +74,12 @@ describe("Effect vendor-native runtime lane", () => {
           const resource = yield* scopedResource;
           successEvents.push(`use:${resource}`);
           return resource;
-        }),
-      ),
+        })
+      )
     );
 
     expect(Exit.isSuccess(success)).toBe(true);
-    expect(successEvents).toEqual([
-      "acquire",
-      "use:resource",
-      "release:resource:Success",
-    ]);
+    expect(successEvents).toEqual(["acquire", "use:resource", "release:resource:Success"]);
 
     const interruptEvents: string[] = [];
     const interruptController = new AbortController();
@@ -97,21 +94,18 @@ describe("Effect vendor-native runtime lane", () => {
             (resource, exit) =>
               Effect.sync(() => {
                 interruptEvents.push(`release:${resource}:${exit._tag}`);
-              }),
+              })
           );
           yield* Effect.never;
-        }),
+        })
       ),
-      { signal: interruptController.signal },
+      { signal: interruptController.signal }
     );
 
     interruptController.abort();
     const interruptedExit = await interrupted;
     expect(Exit.isInterrupted(interruptedExit)).toBe(true);
-    expect(interruptEvents).toEqual([
-      "acquire",
-      "release:interrupt-resource:Failure",
-    ]);
+    expect(interruptEvents).toEqual(["acquire", "release:interrupt-resource:Failure"]);
   });
 
   test("runs process-local coordination primitives inside real Effect", async () => {

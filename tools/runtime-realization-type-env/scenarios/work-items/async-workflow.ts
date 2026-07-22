@@ -44,9 +44,7 @@ export const SyncWorkItemStep = defineAsyncStepEffect<
 export const WorkItemsSyncWorkflow = defineWorkflow({
   kind: "async.workflow",
   id: "work-items.sync",
-  async run(
-    ctx: AsyncStepBridgeInput<typeof WorkItemsAsyncServices, WorkItemsSyncEvent>,
-  ) {
+  async run(ctx: AsyncStepBridgeInput<typeof WorkItemsAsyncServices, WorkItemsSyncEvent>) {
     return stepEffect(ctx).run(SyncWorkItemStep);
   },
 });

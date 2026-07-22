@@ -35,7 +35,9 @@ console.log(`nx:doctor resolved ${projects.length} project(s).`);
 const disabledMarker = path.join(root, ".nx", "workspace-data", "d", "disabled");
 try {
   await fs.access(disabledMarker);
-  console.warn("nx:doctor warning: Nx daemon is currently disabled; graph/caching may still be correct, but warm-run latency will be worse.");
+  console.warn(
+    "nx:doctor warning: Nx daemon is currently disabled; graph/caching may still be correct, but warm-run latency will be worse."
+  );
 } catch {
   console.log("nx:doctor: Nx daemon marker not present.");
 }

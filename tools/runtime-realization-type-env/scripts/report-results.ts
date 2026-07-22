@@ -34,7 +34,7 @@ interface Manifest {
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const manifest = JSON.parse(
-  fs.readFileSync(path.join(root, "evidence", "proof-manifest.json"), "utf8"),
+  fs.readFileSync(path.join(root, "evidence", "proof-manifest.json"), "utf8")
 ) as Manifest;
 
 const byStatus = new Map<ManifestStatus, ManifestEntry[]>();
@@ -60,9 +60,7 @@ if (manifest.currentExperiment) {
   console.log("");
   console.log(`current experiment: ${manifest.currentExperiment.id}`);
   console.log(`focus: ${manifest.currentExperiment.focus}`);
-  console.log(
-    `related entries: ${manifest.currentExperiment.relatedEntries.join(", ")}`,
-  );
+  console.log(`related entries: ${manifest.currentExperiment.relatedEntries.join(", ")}`);
 }
 
 console.log("");
@@ -79,6 +77,6 @@ for (const [status, entries] of byStatus) {
 
 console.log("");
 console.log(
-  "green gate means proof, vendor-proof, and simulation-proof entries passed their named gates while open entries stayed fenced.",
+  "green gate means proof, vendor-proof, and simulation-proof entries passed their named gates while open entries stayed fenced."
 );
 console.log("xfail means architecture unresolved, not necessarily TypeScript failure.");

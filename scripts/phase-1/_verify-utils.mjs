@@ -56,18 +56,29 @@ function escapeRegex(text) {
 function parseJsonSection(markdown, heading) {
   const headingToken = `## ${heading}`;
   const startIndex = markdown.indexOf(headingToken);
-  assertCondition(startIndex !== -1, `missing section "${heading}" in .context/M1-execution/phase-1-ledger.md`);
+  assertCondition(
+    startIndex !== -1,
+    `missing section "${heading}" in .context/M1-execution/phase-1-ledger.md`
+  );
 
   const sectionStart = startIndex + headingToken.length;
   const nextHeadingIndex = markdown.indexOf("\n## ", sectionStart);
-  const sectionBody = markdown.slice(sectionStart, nextHeadingIndex === -1 ? markdown.length : nextHeadingIndex);
+  const sectionBody = markdown.slice(
+    sectionStart,
+    nextHeadingIndex === -1 ? markdown.length : nextHeadingIndex
+  );
   const jsonMatch = sectionBody.match(/```json\s*([\s\S]*?)\s*```/);
-  assertCondition(Boolean(jsonMatch), `missing json section for "${heading}" in .context/M1-execution/phase-1-ledger.md`);
+  assertCondition(
+    Boolean(jsonMatch),
+    `missing json section for "${heading}" in .context/M1-execution/phase-1-ledger.md`
+  );
   return JSON.parse(jsonMatch[1]);
 }
 
 export async function readPhase1Ledger() {
-  const markdown = await readFile("docs/projects/rawr-final-architecture-migration/.context/M1-execution/phase-1-ledger.md");
+  const markdown = await readFile(
+    "docs/projects/rawr-final-architecture-migration/.context/M1-execution/phase-1-ledger.md"
+  );
   return {
     markdown,
     live: parseJsonSection(markdown, "Live lane"),
@@ -107,7 +118,13 @@ async function listSourceFiles() {
 }
 
 function collectModuleSpecifiers(filePath, source) {
-  const sourceFile = ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX
+  );
   const specifiers = new Set();
 
   function visit(node) {
@@ -159,6 +176,6 @@ export function assertExactSet(actual, expected, label) {
   const expectedJoined = expectedSet.join("\n");
   assertCondition(
     actualJoined === expectedJoined,
-    `${label} drifted.\nExpected:\n${expectedJoined || "(none)"}\n\nActual:\n${actualJoined || "(none)"}`,
+    `${label} drifted.\nExpected:\n${expectedJoined || "(none)"}\n\nActual:\n${actualJoined || "(none)"}`
   );
 }

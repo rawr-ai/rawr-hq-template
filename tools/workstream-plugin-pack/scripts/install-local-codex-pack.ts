@@ -23,17 +23,20 @@ const AGENTS = [
   {
     name: "workstream-opening-steward",
     source: "workstream-opening-steward.md",
-    description: "Workstream setup and opening steward for checking workstream framing, authority, selected capabilities, design lock, and stop conditions.",
+    description:
+      "Workstream setup and opening steward for checking workstream framing, authority, selected capabilities, design lock, and stop conditions.",
   },
   {
     name: "workstream-proof-ledger-auditor",
     source: "workstream-proof-ledger-auditor.md",
-    description: "Workstream proof and evidence steward for checking claim strength, evidence homes, waivers, deferred inventory, promotion boundaries, and finding disposition.",
+    description:
+      "Workstream proof and evidence steward for checking claim strength, evidence homes, waivers, deferred inventory, promotion boundaries, and finding disposition.",
   },
   {
     name: "workstream-closure-steward",
     source: "workstream-closure-steward.md",
-    description: "Workstream closure steward for checking outputs, review disposition, scratch cleanup, gates, repo state, deferred inventory, and zero-context Next Packet.",
+    description:
+      "Workstream closure steward for checking outputs, review disposition, scratch cleanup, gates, repo state, deferred inventory, and zero-context Next Packet.",
   },
 ] as const;
 function repoRoot(): string {
@@ -62,10 +65,12 @@ function logCopy(source: string, target: string): void {
 
 function isInside(root: string, candidate: string): boolean {
   const candidateRelative = relative(root, candidate);
-  return candidateRelative !== ""
-    && candidateRelative !== ".."
-    && !candidateRelative.startsWith(`..${sep}`)
-    && !isAbsolute(candidateRelative);
+  return (
+    candidateRelative !== "" &&
+    candidateRelative !== ".." &&
+    !candidateRelative.startsWith(`..${sep}`) &&
+    !isAbsolute(candidateRelative)
+  );
 }
 
 function lstatIfPresent(entryPath: string): ReturnType<typeof lstatSync> | null {
@@ -80,7 +85,7 @@ function lstatIfPresent(entryPath: string): ReturnType<typeof lstatSync> | null 
 function assertOwnedProjectionTarget(
   root: string,
   target: string,
-  allowedTargets: ReadonlySet<string>,
+  allowedTargets: ReadonlySet<string>
 ): void {
   const normalizedRoot = resolve(root);
   const normalizedTarget = resolve(target);
@@ -110,7 +115,7 @@ function copyTree(
   source: string,
   target: string,
   allowedTargets: ReadonlySet<string>,
-  dryRun: boolean,
+  dryRun: boolean
 ): void {
   if (!existsSync(source)) throw new Error(`missing source: ${source}`);
   assertOwnedProjectionTarget(root, target, allowedTargets);
@@ -126,7 +131,7 @@ function writeOwnedFile(
   target: string,
   content: string,
   allowedTargets: ReadonlySet<string>,
-  dryRun: boolean,
+  dryRun: boolean
 ): void {
   assertOwnedProjectionTarget(root, target, allowedTargets);
   console.log(`write ${target}`);
@@ -140,7 +145,8 @@ function codexAgentToml(name: string, description: string, brief: string): strin
     `name = ${tomlString(name)}`,
     `description = ${tomlString(description)}`,
     'sandbox_mode = "read-only"',
-    "developer_instructions = " + tomlMultiline(`${brief}
+    "developer_instructions = " +
+      tomlMultiline(`${brief}
 
 You are the project-scoped Codex installation for this provider-neutral role brief. Stay read-only and follow the brief exactly. Do not edit files, stage changes, commit, spawn agents, submit, push, merge, restack, define programs, define subordinate workstream units, create nested execution models, or set sequence authority.`),
     "",
@@ -149,10 +155,7 @@ You are the project-scoped Codex installation for this provider-neutral role bri
 
 function localHooksJson(): string {
   const source = read(join(repoRoot(), ...PACK_ROOT, "hooks", "hooks.json"));
-  return source.replaceAll(
-    "tools/workstream-plugin-pack/hooks/",
-    ".codex/hooks/",
-  );
+  return source.replaceAll("tools/workstream-plugin-pack/hooks/", ".codex/hooks/");
 }
 
 function parseArgs(argv: string[]): { dryRun: boolean } {
@@ -176,7 +179,7 @@ function projectLocal(root: string, packRoot: string, dryRun: boolean): void {
       join(packRoot, "skills", skill),
       join(root, ".agents", "skills", skill),
       allowedTargets,
-      dryRun,
+      dryRun
     );
   }
 
@@ -187,7 +190,7 @@ function projectLocal(root: string, packRoot: string, dryRun: boolean): void {
       join(root, ".codex", "agents", `${agent.name}.toml`),
       codexAgentToml(agent.name, agent.description, brief),
       allowedTargets,
-      dryRun,
+      dryRun
     );
   }
 
@@ -197,7 +200,7 @@ function projectLocal(root: string, packRoot: string, dryRun: boolean): void {
       join(packRoot, "hooks", hookFile),
       join(root, ".codex", "hooks", hookFile),
       allowedTargets,
-      dryRun,
+      dryRun
     );
   }
 
@@ -206,7 +209,7 @@ function projectLocal(root: string, packRoot: string, dryRun: boolean): void {
     join(root, ".codex", "hooks.json"),
     localHooksJson(),
     allowedTargets,
-    dryRun,
+    dryRun
   );
 }
 

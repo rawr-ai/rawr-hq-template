@@ -19,12 +19,13 @@ const USAGE = [
 
 function valueAfter(args: readonly string[], index: number, flag: string): string {
   const value = args[index + 1];
-  if (value === undefined || value.startsWith("--")) throw new Error(`${flag} requires a value\n${USAGE}`);
+  if (value === undefined || value.startsWith("--"))
+    throw new Error(`${flag} requires a value\n${USAGE}`);
   return value;
 }
 
 export function parseInstalledControllerDistributionOptions(
-  argv: readonly string[],
+  argv: readonly string[]
 ): InstalledControllerDistributionOptions {
   let dataRoot: string | undefined;
   let outputDirectory: string | undefined;
@@ -34,10 +35,12 @@ export function parseInstalledControllerDistributionOptions(
     if (argument === undefined) throw new Error(USAGE);
     if (argument === "--data-root") dataRoot = valueAfter(argv, index++, argument);
     else if (argument.startsWith("--data-root=")) dataRoot = argument.slice("--data-root=".length);
-    else if (argument === "--output-directory") outputDirectory = valueAfter(argv, index++, argument);
+    else if (argument === "--output-directory")
+      outputDirectory = valueAfter(argv, index++, argument);
     else if (argument.startsWith("--output-directory=")) {
       outputDirectory = argument.slice("--output-directory=".length);
-    } else if (argument === "--source-revision") sourceRevision = valueAfter(argv, index++, argument);
+    } else if (argument === "--source-revision")
+      sourceRevision = valueAfter(argv, index++, argument);
     else if (argument.startsWith("--source-revision=")) {
       sourceRevision = argument.slice("--source-revision=".length);
     } else {
@@ -56,7 +59,7 @@ export function parseInstalledControllerDistributionOptions(
 
 async function main(): Promise<void> {
   const result = await createInstalledControllerAsset(
-    parseInstalledControllerDistributionOptions(process.argv.slice(2)),
+    parseInstalledControllerDistributionOptions(process.argv.slice(2))
   );
   process.stdout.write(`${JSON.stringify(result.provenance)}\n`);
 }

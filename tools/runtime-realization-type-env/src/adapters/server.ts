@@ -4,10 +4,7 @@ import type {
   ServerRouteDescriptor,
 } from "../spine/artifacts";
 import type { ProcessExecutionRuntime } from "../runtime/process-runtime";
-import {
-  delegateAdapterInvocation,
-  type AdapterDelegationInput,
-} from "./delegation";
+import { delegateAdapterInvocation, type AdapterDelegationInput } from "./delegation";
 
 export interface ServerCallbackInput extends Omit<AdapterDelegationInput, "ref"> {
   readonly ref: Extract<
@@ -16,27 +13,18 @@ export interface ServerCallbackInput extends Omit<AdapterDelegationInput, "ref">
   >;
 }
 
-export interface ServerAdapterCallbackInput
-  extends Omit<AdapterDelegationInput, "ref"> {}
+export interface ServerAdapterCallbackInput extends Omit<AdapterDelegationInput, "ref"> {}
 
-function routePathMatches(
-  left: readonly string[],
-  right: readonly string[],
-): boolean {
+function routePathMatches(left: readonly string[], right: readonly string[]): boolean {
   return left.length === right.length && left.every((part, index) => part === right[index]);
 }
 
-function assertServerRoutePayload(
-  payload: ServerAdapterCallbackPayload,
-): void {
+function assertServerRoutePayload(payload: ServerAdapterCallbackPayload): void {
   const { ref, routeDescriptor } = payload;
 
-  if (
-    ref.boundary !== "plugin.server-api" &&
-    ref.boundary !== "plugin.server-internal"
-  ) {
+  if (ref.boundary !== "plugin.server-api" && ref.boundary !== "plugin.server-internal") {
     throw new Error(
-      `server adapter payload cannot invoke ${ref.boundary} boundary ${ref.executionId}`,
+      `server adapter payload cannot invoke ${ref.boundary} boundary ${ref.executionId}`
     );
   }
 
@@ -50,7 +38,7 @@ function assertServerRoutePayload(
     !routePathMatches(routeDescriptor.routePath, ref.routePath)
   ) {
     throw new Error(
-      `server adapter payload ${ref.executionId} route descriptor does not match its execution ref`,
+      `server adapter payload ${ref.executionId} route descriptor does not match its execution ref`
     );
   }
 }
@@ -79,7 +67,7 @@ export function createServerAdapterCallbackPayload(input: {
 
 export async function lowerServerCallback<TOutput>(
   runtime: ProcessExecutionRuntime,
-  input: ServerCallbackInput,
+  input: ServerCallbackInput
 ) {
   return delegateAdapterInvocation<TOutput>("server", runtime, input);
 }
@@ -92,7 +80,7 @@ export async function lowerServerCallback<TOutput>(
 export async function lowerServerAdapterCallback<TOutput>(
   runtime: ProcessExecutionRuntime,
   payload: ServerAdapterCallbackPayload,
-  input: ServerAdapterCallbackInput,
+  input: ServerAdapterCallbackInput
 ) {
   assertServerRoutePayload(payload);
   return lowerServerCallback<TOutput>(runtime, {

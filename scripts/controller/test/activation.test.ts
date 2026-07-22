@@ -119,7 +119,7 @@ describe("controller activation", () => {
         verifyRelease: async () => {
           throw new Error("mixed controller fixture");
         },
-      }),
+      })
     ).rejects.toThrow("mixed controller fixture");
 
     expect(await readFile(selectorPath)).toEqual(before);
@@ -182,7 +182,7 @@ describe("controller activation", () => {
         verifyRelease: async () => {
           throw new Error("verification must remain unreachable");
         },
-      }),
+      })
     ).rejects.toThrow("must be a canonical directory");
 
     await expect(lstat(outsideSelector)).rejects.toMatchObject({ code: "ENOENT" });
@@ -217,7 +217,7 @@ describe("controller activation", () => {
           selectorStore: createNodeControllerSelectorStore((observed) => {
             if (observed === phase) throw new Error(`selector failpoint: ${phase}`);
           }),
-        }),
+        })
       ).rejects.toThrow(`selector failpoint: ${phase}`);
 
       expect(await readFile(selectorPath)).toEqual(before);
@@ -243,7 +243,9 @@ describe("controller activation", () => {
         verifyRelease: async () => {},
         selectorStore: createNodeControllerSelectorStore(async (phase) => {
           if (phase !== "temporary-created") return;
-          const temporaryName = (await readdir(selectorParent)).find((name) => name.startsWith("current.tmp-"));
+          const temporaryName = (await readdir(selectorParent)).find((name) =>
+            name.startsWith("current.tmp-")
+          );
           if (temporaryName === undefined) throw new Error("fixture selector temporary missing");
           const temporaryPath = join(selectorParent, temporaryName);
           await rm(temporaryPath);
@@ -257,7 +259,7 @@ describe("controller activation", () => {
 
     expect(observed).toBeInstanceOf(AggregateError);
     expect((observed as AggregateError).errors.map(String).join("\n")).toContain(
-      "fixture selector primary failure",
+      "fixture selector primary failure"
     );
     expect((observed as AggregateError).errors).toHaveLength(2);
   });
@@ -289,7 +291,7 @@ describe("controller activation", () => {
       selectorDurability: "unconfirmed",
     });
     const decoded = decodeControllerSelection(
-      new Uint8Array(await readFile(controllerSelectorPath(dataRoot))),
+      new Uint8Array(await readFile(controllerSelectorPath(dataRoot)))
     );
     expect(decoded).toMatchObject({
       ok: true,
@@ -347,9 +349,9 @@ describe("controller activation", () => {
     await mkdir(join(dataRoot, "controller"), { recursive: true });
     await symlink(outsideRoot, join(dataRoot, "controller", "bin"));
 
-    await expect(
-      installStableControllerLauncher({ dataRoot }),
-    ).rejects.toThrow("must be a canonical directory");
+    await expect(installStableControllerLauncher({ dataRoot })).rejects.toThrow(
+      "must be a canonical directory"
+    );
 
     expect(await readdir(outsideRoot)).toEqual([]);
   });

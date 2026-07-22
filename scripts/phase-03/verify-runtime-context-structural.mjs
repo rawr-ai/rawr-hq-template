@@ -12,7 +12,12 @@ const [pkgRaw, source] = await Promise.all([
 ]);
 
 const pkg = JSON.parse(pkgRaw);
-const requiredTags = ["type:package", "migration-slice:structural-tranche", "role:support", "surface:runtime-context"];
+const requiredTags = [
+  "type:package",
+  "migration-slice:structural-tranche",
+  "role:support",
+  "surface:runtime-context",
+];
 for (const tag of requiredTags) {
   if (!(pkg.nx?.tags ?? []).includes(tag)) {
     console.error(`runtime-context structural failed: missing tag ${tag}`);
@@ -39,12 +44,17 @@ for (const deprecatedExport of [
   "export type RequestBoundaryContext",
 ]) {
   if (source.includes(deprecatedExport)) {
-    console.error(`runtime-context structural failed: deprecated alias survived ${deprecatedExport}.`);
+    console.error(
+      `runtime-context structural failed: deprecated alias survived ${deprecatedExport}.`
+    );
     process.exit(1);
   }
 }
 
-if (source.includes("createHqRuntimeRouter") || source.includes("createWorkflowTriggerRuntimeRouter")) {
+if (
+  source.includes("createHqRuntimeRouter") ||
+  source.includes("createWorkflowTriggerRuntimeRouter")
+) {
   console.error("runtime-context structural failed: support seam must stay type-only.");
   process.exit(1);
 }

@@ -1,8 +1,4 @@
-import {
-  Data,
-  Effect as VendorEffect,
-  pipe,
-} from "effect";
+import { Data, Effect as VendorEffect, pipe } from "effect";
 import type { YieldWrap } from "effect/Utils";
 
 /**
@@ -10,43 +6,38 @@ import type { YieldWrap } from "effect/Utils";
  * Effect in the lab, but it intentionally does not expose raw runtime
  * constructors or settle the final public helper set.
  */
-export type RawrEffect<TSuccess, TError = never, TRequirements = never> =
-  VendorEffect.Effect<TSuccess, TError, TRequirements>;
+export type RawrEffect<TSuccess, TError = never, TRequirements = never> = VendorEffect.Effect<
+  TSuccess,
+  TError,
+  TRequirements
+>;
 
-export type RawrEffectYield<TError = never, TRequirements = never> =
-  YieldWrap<RawrEffect<unknown, TError, TRequirements>>;
+export type RawrEffectYield<TError = never, TRequirements = never> = YieldWrap<
+  RawrEffect<unknown, TError, TRequirements>
+>;
 
 export type RawrEffectSuccess<TEffect> =
-  TEffect extends RawrEffect<infer TSuccess, unknown, unknown>
-    ? TSuccess
-    : never;
+  TEffect extends RawrEffect<infer TSuccess, unknown, unknown> ? TSuccess : never;
 
 export type RawrEffectError<TEffect> =
-  TEffect extends RawrEffect<unknown, infer TError, unknown>
-    ? TError
-    : never;
+  TEffect extends RawrEffect<unknown, infer TError, unknown> ? TError : never;
 
 export type RawrEffectRequirements<TEffect> =
-  TEffect extends RawrEffect<unknown, unknown, infer TRequirements>
-    ? TRequirements
-    : never;
+  TEffect extends RawrEffect<unknown, unknown, infer TRequirements> ? TRequirements : never;
 
-export type EffectBody<TContext, TOutput, TError = never, TRequirements = never> =
-  (
-    context: TContext,
-  ) =>
-    | Generator<RawrEffectYield<TError, TRequirements>, TOutput, unknown>
-    | RawrEffect<TOutput, TError, TRequirements>;
+export type EffectBody<TContext, TOutput, TError = never, TRequirements = never> = (
+  context: TContext
+) =>
+  | Generator<RawrEffectYield<TError, TRequirements>, TOutput, unknown>
+  | RawrEffect<TOutput, TError, TRequirements>;
 
 export function makeRawrEffect<TSuccess, TError = never, TRequirements = never>(
-  value: TSuccess,
+  value: TSuccess
 ): RawrEffect<TSuccess, TError, TRequirements> {
   return VendorEffect.succeed(value);
 }
 
-export function makeRawrFailure<TError>(
-  error: TError,
-): RawrEffect<never, TError> {
+export function makeRawrFailure<TError>(error: TError): RawrEffect<never, TError> {
   return VendorEffect.fail(error);
 }
 

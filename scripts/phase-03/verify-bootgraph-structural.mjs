@@ -12,7 +12,12 @@ const [pkgRaw, source] = await Promise.all([
 ]);
 
 const pkg = JSON.parse(pkgRaw);
-const requiredTags = ["type:package", "migration-slice:structural-tranche", "role:support", "surface:bootgraph"];
+const requiredTags = [
+  "type:package",
+  "migration-slice:structural-tranche",
+  "role:support",
+  "surface:bootgraph",
+];
 for (const tag of requiredTags) {
   if (!(pkg.nx?.tags ?? []).includes(tag)) {
     console.error(`bootgraph structural failed: missing tag ${tag}`);
@@ -25,8 +30,14 @@ if (!source.includes("reserved-support-shell")) {
   process.exit(1);
 }
 
-if (source.includes("@rawr/coordination") || source.includes("@rawr/state") || source.includes("RuntimeRouterContext")) {
-  console.error("bootgraph structural failed: bootgraph must remain support-only and not own service/runtime context seams.");
+if (
+  source.includes("@rawr/coordination") ||
+  source.includes("@rawr/state") ||
+  source.includes("RuntimeRouterContext")
+) {
+  console.error(
+    "bootgraph structural failed: bootgraph must remain support-only and not own service/runtime context seams."
+  );
   process.exit(1);
 }
 

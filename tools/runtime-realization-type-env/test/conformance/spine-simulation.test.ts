@@ -1,9 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
-import type {
-  RuntimeResourceAccess,
-  WorkflowDispatcher,
-} from "@rawr/sdk/spine";
+import type { RuntimeResourceAccess, WorkflowDispatcher } from "@rawr/sdk/spine";
 import {
   createExecutionDescriptorTable,
   createProcessExecutionRuntime,
@@ -98,21 +95,21 @@ describe("runtime realization type env simulation", () => {
           ref: CreateWorkItemRef,
           descriptor: CreateWorkItemDescriptor,
         },
-      ]),
+      ])
     ).toThrow("duplicate descriptor");
 
     expect(() =>
       createExecutionRegistry({
         plans: [CreateWorkItemPlan, CreateWorkItemPlan],
         descriptorTable: table,
-      }),
+      })
     ).toThrow("duplicate execution plan");
 
     expect(() =>
       createExecutionRegistry({
         plans: [CreateWorkItemPlan],
         descriptorTable: createExecutionDescriptorTable([]),
-      }),
+      })
     ).toThrow("missing descriptor");
 
     const mismatchedDescriptor = {
@@ -129,7 +126,7 @@ describe("runtime realization type env simulation", () => {
           ref: CreateWorkItemRef,
           descriptor: mismatchedDescriptor,
         },
-      ]),
+      ])
     ).toThrow("descriptor table entry mismatch");
 
     const sameIdDifferentIdentityRef = {
@@ -147,7 +144,7 @@ describe("runtime realization type env simulation", () => {
           ref: CreateWorkItemRef,
           descriptor: sameIdDifferentIdentityDescriptor,
         },
-      ]),
+      ])
     ).toThrow("descriptor table entry mismatch");
 
     expect(() =>
@@ -159,7 +156,7 @@ describe("runtime realization type env simulation", () => {
           },
         ],
         descriptorTable: table,
-      }),
+      })
     ).toThrow("execution plan descriptor mismatch");
   });
 
@@ -281,7 +278,7 @@ describe("runtime realization type env simulation", () => {
     const missingClockProfile = {
       ...WorkItemsRuntimeProfile,
       providerSelections: WorkItemsRuntimeProfile.providerSelections.filter(
-        (selection) => selection.resource.id !== "clock",
+        (selection) => selection.resource.id !== "clock"
       ),
     };
 

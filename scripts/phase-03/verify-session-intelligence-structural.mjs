@@ -2,7 +2,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import ts from "typescript";
-import { collectImportSites, pathExists, readFile, readJson, root, toPosix } from "../phase-1/_verify-utils.mjs";
+import {
+  collectImportSites,
+  pathExists,
+  readFile,
+  readJson,
+  root,
+  toPosix,
+} from "../phase-1/_verify-utils.mjs";
 
 const SERVICE_ROOT = "services/session-intelligence";
 const HOST_ROOT = "packages/session-intelligence-host";
@@ -77,7 +84,8 @@ const FORBIDDEN_COMMON_LOGIC_IMPORTS = [
   "../../shared/transcript-logic",
   "../../shared/search-logic",
 ];
-const FORBIDDEN_PLUGIN_DATABASE_QUERY_PATTERN = /\bdb\.query\s*\(\s*(?:`[^`]*(?:CREATE|SELECT|INSERT|UPDATE|DELETE)\b|["'][^"']*(?:CREATE|SELECT|INSERT|UPDATE|DELETE)\b)/iu;
+const FORBIDDEN_PLUGIN_DATABASE_QUERY_PATTERN =
+  /\bdb\.query\s*\(\s*(?:`[^`]*(?:CREATE|SELECT|INSERT|UPDATE|DELETE)\b|["'][^"']*(?:CREATE|SELECT|INSERT|UPDATE|DELETE)\b)/iu;
 const FORBIDDEN_PLUGIN_DATABASE_SEMANTIC_TOKENS = [
   "session_cache",
   "codex_file_index",
@@ -127,7 +135,13 @@ async function walkSourceFiles(relPath, files) {
 }
 
 function collectModuleSpecifiers(filePath, source) {
-  const sourceFile = ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX
+  );
   const specifiers = [];
 
   function visit(node) {
@@ -193,17 +207,20 @@ async function verifyServiceShape(findings) {
     `${SERVICE_ROOT}/src/service/common/repositories/codex-indexed-discovery-repository.ts`,
     `${SERVICE_ROOT}/src/service/common/repositories/codex-discovery-index-repository.ts`,
     `${SERVICE_ROOT}/src/service/modules/search/repositories/search-cache-repository.ts`,
-    `${SERVICE_ROOT}/src/service/modules/search/helpers/search-text.ts`,
+    `${SERVICE_ROOT}/src/service/modules/search/helpers/search-text.ts`
   );
 
   for (const relPath of requiredPaths) {
-    if (!(await pathExists(relPath))) findings.push(`missing required session-intelligence path: ${relPath}`);
+    if (!(await pathExists(relPath)))
+      findings.push(`missing required session-intelligence path: ${relPath}`);
   }
 
   const pkg = await readJsonIfExists(`${SERVICE_ROOT}/package.json`, findings);
   if (pkg) {
     if (pkg.name !== "@rawr/session-intelligence") {
-      findings.push(`expected ${SERVICE_ROOT}/package.json name @rawr/session-intelligence, got ${pkg.name}`);
+      findings.push(
+        `expected ${SERVICE_ROOT}/package.json name @rawr/session-intelligence, got ${pkg.name}`
+      );
     }
 
     const tags = pkg.nx?.tags ?? [];
@@ -212,22 +229,55 @@ async function verifyServiceShape(findings) {
     }
 
     for (const key of SERVICE_EXPORTS) {
-      if (!pkg.exports?.[key]) findings.push(`@rawr/session-intelligence package exports must include ${key}`);
+      if (!pkg.exports?.[key])
+        findings.push(`@rawr/session-intelligence package exports must include ${key}`);
     }
   }
 
-  const [indexSource, clientSource, contractSource, routerSource, baseSource, shapeTestSource] = await Promise.all([
-    readFileIfExists(`${SERVICE_ROOT}/src/index.ts`, findings, `${SERVICE_ROOT}/src/index.ts`, false),
-    readFileIfExists(`${SERVICE_ROOT}/src/client.ts`, findings, `${SERVICE_ROOT}/src/client.ts`, false),
-    readFileIfExists(`${SERVICE_ROOT}/src/service/contract.ts`, findings, `${SERVICE_ROOT}/src/service/contract.ts`, false),
-    readFileIfExists(`${SERVICE_ROOT}/src/service/router.ts`, findings, `${SERVICE_ROOT}/src/service/router.ts`, false),
-    readFileIfExists(`${SERVICE_ROOT}/src/service/base.ts`, findings, `${SERVICE_ROOT}/src/service/base.ts`, false),
-    readFileIfExists(`${SERVICE_ROOT}/test/service-shape.test.ts`, findings, `${SERVICE_ROOT}/test/service-shape.test.ts`, false),
-  ]);
+  const [indexSource, clientSource, contractSource, routerSource, baseSource, shapeTestSource] =
+    await Promise.all([
+      readFileIfExists(
+        `${SERVICE_ROOT}/src/index.ts`,
+        findings,
+        `${SERVICE_ROOT}/src/index.ts`,
+        false
+      ),
+      readFileIfExists(
+        `${SERVICE_ROOT}/src/client.ts`,
+        findings,
+        `${SERVICE_ROOT}/src/client.ts`,
+        false
+      ),
+      readFileIfExists(
+        `${SERVICE_ROOT}/src/service/contract.ts`,
+        findings,
+        `${SERVICE_ROOT}/src/service/contract.ts`,
+        false
+      ),
+      readFileIfExists(
+        `${SERVICE_ROOT}/src/service/router.ts`,
+        findings,
+        `${SERVICE_ROOT}/src/service/router.ts`,
+        false
+      ),
+      readFileIfExists(
+        `${SERVICE_ROOT}/src/service/base.ts`,
+        findings,
+        `${SERVICE_ROOT}/src/service/base.ts`,
+        false
+      ),
+      readFileIfExists(
+        `${SERVICE_ROOT}/test/service-shape.test.ts`,
+        findings,
+        `${SERVICE_ROOT}/test/service-shape.test.ts`,
+        false
+      ),
+    ]);
 
   if (indexSource) {
     for (const token of ["createClient", "router", "Client", "Router"]) {
-      if (!indexSource.includes(token)) findings.push(`${SERVICE_ROOT}/src/index.ts must keep boundary export ${token}`);
+      if (!indexSource.includes(token))
+        findings.push(`${SERVICE_ROOT}/src/index.ts must keep boundary export ${token}`);
     }
   }
 
@@ -253,18 +303,32 @@ async function verifyServiceShape(findings) {
     }
   }
 
-  const searchContract = await readFileIfExists(`${SERVICE_ROOT}/src/service/modules/search/contract.ts`, findings, undefined, false);
-  const searchRouter = await readFileIfExists(`${SERVICE_ROOT}/src/service/modules/search/router.ts`, findings, undefined, false);
+  const searchContract = await readFileIfExists(
+    `${SERVICE_ROOT}/src/service/modules/search/contract.ts`,
+    findings,
+    undefined,
+    false
+  );
+  const searchRouter = await readFileIfExists(
+    `${SERVICE_ROOT}/src/service/modules/search/router.ts`,
+    findings,
+    undefined,
+    false
+  );
   if (searchContract) {
     if (searchContract.includes("sessions: Type.Array")) {
-      findings.push("session-intelligence search contract must not require caller-provided catalog sessions");
+      findings.push(
+        "session-intelligence search contract must not require caller-provided catalog sessions"
+      );
     }
     if (searchContract.includes("indexPath: Type.String")) {
       findings.push("session-intelligence search contract must not expose index storage paths");
     }
   }
   if (searchRouter && !searchRouter.includes("context.indexRuntime.defaultIndexPath()")) {
-    findings.push("session-intelligence search router must resolve index storage from the service runtime");
+    findings.push(
+      "session-intelligence search router must resolve index storage from the service runtime"
+    );
   }
 }
 
@@ -283,7 +347,9 @@ async function verifyServiceRuntimePurity(findings) {
 
     for (const { pattern, label } of FORBIDDEN_SERVICE_SOURCE_PATTERNS) {
       if (pattern.test(source)) {
-        findings.push(`${relPath} references ${label}; keep concrete runtime access in plugin/app/runtime resource providers`);
+        findings.push(
+          `${relPath} references ${label}; keep concrete runtime access in plugin/app/runtime resource providers`
+        );
       }
     }
   }
@@ -332,18 +398,47 @@ async function verifyPluginCutover(findings) {
     findings.push("@rawr/plugin-session-tools must depend on @rawr/session-intelligence");
   }
 
-  const clientSource = await readFileIfExists(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts`, findings, undefined, false);
+  const clientSource = await readFileIfExists(
+    `${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts`,
+    findings,
+    undefined,
+    false
+  );
   if (clientSource) {
-    for (const forbidden of ["@rawr/session-intelligence-host", "createNodeSessionIntelligenceBoundary", "RawHostModule"]) {
-      if (clientSource.includes(forbidden)) findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must not reference ${forbidden}`);
+    for (const forbidden of [
+      "@rawr/session-intelligence-host",
+      "createNodeSessionIntelligenceBoundary",
+      "RawHostModule",
+    ]) {
+      if (clientSource.includes(forbidden))
+        findings.push(
+          `${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must not reference ${forbidden}`
+        );
     }
-    for (const forbidden of ["callProcedure(", "rawClient: unknown", "rawClient as any", "raw?.catalog", "raw?.search", "raw?.transcripts"]) {
+    for (const forbidden of [
+      "callProcedure(",
+      "rawClient: unknown",
+      "rawClient as any",
+      "raw?.catalog",
+      "raw?.search",
+      "raw?.transcripts",
+    ]) {
       if (clientSource.includes(forbidden)) {
-        findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must use the typed @rawr/session-intelligence client directly, not an untyped procedure shim containing ${forbidden}`);
+        findings.push(
+          `${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must use the typed @rawr/session-intelligence client directly, not an untyped procedure shim containing ${forbidden}`
+        );
       }
     }
-    for (const required of ["@rawr/session-intelligence/client", "@rawr/hq-sdk/plugins", "CreateClientOptions", "bindService("]) {
-      if (!clientSource.includes(required)) findings.push(`${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must statically bind ${required}`);
+    for (const required of [
+      "@rawr/session-intelligence/client",
+      "@rawr/hq-sdk/plugins",
+      "CreateClientOptions",
+      "bindService(",
+    ]) {
+      if (!clientSource.includes(required))
+        findings.push(
+          `${PLUGIN_ROOT}/src/lib/session-intelligence-client.ts must statically bind ${required}`
+        );
     }
   }
 
@@ -353,7 +448,10 @@ async function verifyPluginCutover(findings) {
     const source = await readFile(relPath);
     if (relPath.endsWith("/session-types.ts")) continue;
     for (const forbidden of FORBIDDEN_HOST_VERB_NAMES) {
-      const exportPattern = new RegExp(`\\bexport\\s+(?:async\\s+)?(?:function|const)\\s+${forbidden}\\b`, "u");
+      const exportPattern = new RegExp(
+        `\\bexport\\s+(?:async\\s+)?(?:function|const)\\s+${forbidden}\\b`,
+        "u"
+      );
       if (exportPattern.test(source)) {
         findings.push(`${relPath} exports forbidden service-level verb ${forbidden}`);
       }
@@ -368,7 +466,9 @@ async function verifyPluginDoesNotOwnDatabaseSemantics(findings) {
   for (const relPath of files.sort()) {
     const source = await readFile(relPath);
     if (FORBIDDEN_PLUGIN_DATABASE_QUERY_PATTERN.test(source)) {
-      findings.push(`${relPath} must not run direct SQL statements that implement session catalog/search/index behavior`);
+      findings.push(
+        `${relPath} must not run direct SQL statements that implement session catalog/search/index behavior`
+      );
     }
     for (const token of FORBIDDEN_PLUGIN_DATABASE_SEMANTIC_TOKENS) {
       if (source.includes(token)) {
@@ -380,7 +480,12 @@ async function verifyPluginDoesNotOwnDatabaseSemantics(findings) {
 
 async function verifyModuleSchemaOwnership(findings) {
   const commonSchemasPath = `${SERVICE_ROOT}/src/service/common/entities.ts`;
-  const commonSchemasSource = await readFileIfExists(commonSchemasPath, findings, commonSchemasPath, false);
+  const commonSchemasSource = await readFileIfExists(
+    commonSchemasPath,
+    findings,
+    commonSchemasPath,
+    false
+  );
   if (commonSchemasSource) {
     for (const schemaName of MODULE_OWNED_SCHEMA_EXPORTS) {
       const exportPattern = new RegExp(`\\bexport\\s+(?:const|type)\\s+${schemaName}\\b`, "u");
@@ -394,7 +499,9 @@ async function verifyModuleSchemaOwnership(findings) {
     for (const fileName of ["schemas.ts", "model.ts", "models.ts", "support.ts"]) {
       const relPath = `${SERVICE_ROOT}/src/service/modules/${moduleName}/${fileName}`;
       if (await pathExists(relPath)) {
-        findings.push(`${relPath} must not exist; contract IO belongs inline in contract.ts and reusable entities belong in an intentional entities.ts only when needed`);
+        findings.push(
+          `${relPath} must not exist; contract IO belongs inline in contract.ts and reusable entities belong in an intentional entities.ts only when needed`
+        );
       }
     }
   }
@@ -403,7 +510,9 @@ async function verifyModuleSchemaOwnership(findings) {
 async function verifyNoSameDomainSharedLogicDelegation(findings) {
   for (const relPath of FORBIDDEN_COMMON_LOGIC_FILES) {
     if (await pathExists(relPath)) {
-      findings.push(`${relPath} must not exist; move same-domain service logic into its owning module`);
+      findings.push(
+        `${relPath} must not exist; move same-domain service logic into its owning module`
+      );
     }
   }
 
@@ -413,9 +522,13 @@ async function verifyNoSameDomainSharedLogicDelegation(findings) {
     await walkSourceFiles(moduleRoot, files);
     for (const sourcePath of files) {
       const relativeToModule = path.posix.relative(moduleRoot, sourcePath);
-      const isAllowedModuleRootFile = !relativeToModule.includes("/") && /^(contract|middleware|module|router|errors|entities)\.ts$/u.test(relativeToModule);
+      const isAllowedModuleRootFile =
+        !relativeToModule.includes("/") &&
+        /^(contract|middleware|module|router|errors|entities)\.ts$/u.test(relativeToModule);
       if (!relativeToModule.includes("/") && !isAllowedModuleRootFile) {
-        findings.push(`${sourcePath} must not exist as a module-root behavior bucket; put precise reusable helpers under helpers/ or keep procedure flow in router.ts`);
+        findings.push(
+          `${sourcePath} must not exist as a module-root behavior bucket; put precise reusable helpers under helpers/ or keep procedure flow in router.ts`
+        );
       }
 
       const source = await readFile(sourcePath);

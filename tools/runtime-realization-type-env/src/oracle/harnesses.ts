@@ -3,18 +3,9 @@ import type {
   RuntimeDiagnostic,
   ServerAdapterCallbackPayload,
 } from "../spine/artifacts";
-import {
-  lowerAsyncStepBridge,
-  type AsyncStepBridgeInvocationInput,
-} from "../adapters/async";
-import {
-  lowerServerAdapterCallback,
-  type ServerAdapterCallbackInput,
-} from "../adapters/server";
-import type {
-  ProcessExecutionRuntime,
-  RuntimeInvocationResult,
-} from "../runtime/process-runtime";
+import { lowerAsyncStepBridge, type AsyncStepBridgeInvocationInput } from "../adapters/async";
+import { lowerServerAdapterCallback, type ServerAdapterCallbackInput } from "../adapters/server";
+import type { ProcessExecutionRuntime, RuntimeInvocationResult } from "../runtime/process-runtime";
 
 export type OracleHarnessKind = "server" | "async";
 
@@ -62,9 +53,11 @@ export interface StartedOracleServerHarness extends StartedHarnessBase {
    * The harness owns the runtime invocation; it is not mounting Elysia, oRPC,
    * or any future server adapter as an architectural commitment.
    */
-  handleRoute<TOutput>(input: {
-    readonly executionId: string;
-  } & ServerAdapterCallbackInput): Promise<RuntimeInvocationResult<TOutput>>;
+  handleRoute<TOutput>(
+    input: {
+      readonly executionId: string;
+    } & ServerAdapterCallbackInput
+  ): Promise<RuntimeInvocationResult<TOutput>>;
 }
 
 export interface StartedOracleAsyncHarness extends StartedHarnessBase {
@@ -74,9 +67,11 @@ export interface StartedOracleAsyncHarness extends StartedHarnessBase {
    * This proves adapter-to-runtime lowering only; retry, queueing,
    * cancellation, durability, and workflow status semantics remain undecided.
    */
-  runStep<TOutput>(input: {
-    readonly executionId: string;
-  } & AsyncStepBridgeInvocationInput): Promise<RuntimeInvocationResult<TOutput>>;
+  runStep<TOutput>(
+    input: {
+      readonly executionId: string;
+    } & AsyncStepBridgeInvocationInput
+  ): Promise<RuntimeInvocationResult<TOutput>>;
 }
 
 function record(input: Omit<OracleHarnessRecord, "kind">): OracleHarnessRecord {
@@ -100,8 +95,7 @@ function assertAsyncPayload(value: unknown): asserts value is AsyncStepBridgePay
   if (
     !value ||
     typeof value !== "object" ||
-    (value as { readonly kind?: unknown }).kind !==
-      "adapter.async-step-bridge-payload"
+    (value as { readonly kind?: unknown }).kind !== "adapter.async-step-bridge-payload"
   ) {
     throw new Error("async harness accepts only adapter.async-step-bridge-payload inputs");
   }
@@ -113,7 +107,7 @@ function assertAsyncPayload(value: unknown): asserts value is AsyncStepBridgePay
  * ownership from source descriptors at mount time.
  */
 function payloadByExecutionId<TPayload extends { readonly ref: { readonly executionId: string } }>(
-  payloads: readonly TPayload[],
+  payloads: readonly TPayload[]
 ): Map<string, TPayload> {
   const byId = new Map<string, TPayload>();
 
@@ -152,7 +146,7 @@ function createHarnessLifecycle(input: {
             phase: "harness.invoke.failed",
             executionId,
             status: "stopped",
-          }),
+          })
         );
         throw new Error(`${input.harness} harness ${input.harnessId} is stopped`);
       }
@@ -171,7 +165,7 @@ function createHarnessLifecycle(input: {
             harnessId: input.harnessId,
             phase: "harness.stop",
             status: "stopped",
-          }),
+          })
         );
       }
       return [...records];
@@ -209,7 +203,7 @@ export function mountOracleServerHarness(input: {
     },
     stop: lifecycle.stop,
     async handleRoute<TOutput>(
-      routeInput: { readonly executionId: string } & ServerAdapterCallbackInput,
+      routeInput: { readonly executionId: string } & ServerAdapterCallbackInput
     ) {
       const { executionId, ...callbackInput } = routeInput;
       lifecycle.assertActive(executionId);
@@ -222,7 +216,7 @@ export function mountOracleServerHarness(input: {
             phase: "harness.invoke.failed",
             executionId,
             status: "failure",
-          }),
+          })
         );
         throw new Error(`server harness missing payload ${executionId}`);
       }
@@ -233,14 +227,14 @@ export function mountOracleServerHarness(input: {
           harnessId: input.harnessId,
           phase: "harness.invoke.start",
           executionId,
-        }),
+        })
       );
 
       try {
         const result = await lowerServerAdapterCallback<TOutput>(
           input.runtime,
           payload,
-          callbackInput,
+          callbackInput
         );
         lifecycle.records.push(
           record({
@@ -249,7 +243,7 @@ export function mountOracleServerHarness(input: {
             phase: "harness.invoke.finished",
             executionId,
             status: result.status,
-          }),
+          })
         );
         return result;
       } catch (error) {
@@ -260,7 +254,7 @@ export function mountOracleServerHarness(input: {
             phase: "harness.invoke.failed",
             executionId,
             status: "failure",
-          }),
+          })
         );
         throw error;
       }
@@ -297,7 +291,7 @@ export function mountOracleAsyncHarness(input: {
     },
     stop: lifecycle.stop,
     async runStep<TOutput>(
-      stepInput: { readonly executionId: string } & AsyncStepBridgeInvocationInput,
+      stepInput: { readonly executionId: string } & AsyncStepBridgeInvocationInput
     ) {
       const { executionId, ...bridgeInput } = stepInput;
       lifecycle.assertActive(executionId);
@@ -310,7 +304,7 @@ export function mountOracleAsyncHarness(input: {
             phase: "harness.invoke.failed",
             executionId,
             status: "failure",
-          }),
+          })
         );
         throw new Error(`async harness missing payload ${executionId}`);
       }
@@ -321,15 +315,11 @@ export function mountOracleAsyncHarness(input: {
           harnessId: input.harnessId,
           phase: "harness.invoke.start",
           executionId,
-        }),
+        })
       );
 
       try {
-        const result = await lowerAsyncStepBridge<TOutput>(
-          input.runtime,
-          payload,
-          bridgeInput,
-        );
+        const result = await lowerAsyncStepBridge<TOutput>(input.runtime, payload, bridgeInput);
         lifecycle.records.push(
           record({
             harness: "async",
@@ -337,7 +327,7 @@ export function mountOracleAsyncHarness(input: {
             phase: "harness.invoke.finished",
             executionId,
             status: result.status,
-          }),
+          })
         );
         return result;
       } catch (error) {
@@ -348,7 +338,7 @@ export function mountOracleAsyncHarness(input: {
             phase: "harness.invoke.failed",
             executionId,
             status: "failure",
-          }),
+          })
         );
         throw error;
       }

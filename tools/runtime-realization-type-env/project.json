@@ -3,11 +3,7 @@
   "name": "runtime-realization-type-env",
   "root": "tools/runtime-realization-type-env",
   "sourceRoot": "tools/runtime-realization-type-env/src",
-  "tags": [
-    "type:tool",
-    "migration-slice:runtime-realization",
-    "spec-conformance"
-  ],
+  "tags": ["type:tool", "migration-slice:runtime-realization", "spec-conformance"],
   "targets": {
     "sync": {
       "executor": "nx:run-commands",

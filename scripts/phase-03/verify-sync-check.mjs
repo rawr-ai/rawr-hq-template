@@ -19,14 +19,16 @@ const inventories = await Promise.all(
       fileName,
       projects: parsed.projects ?? {},
     };
-  }),
+  })
 );
 
 const combinedProjects = new Map();
 for (const inventory of inventories) {
   for (const [projectName, projectSpec] of Object.entries(inventory.projects)) {
     if (combinedProjects.has(projectName)) {
-      console.error(`sync:check failed: project ${projectName} is declared more than once in tools/architecture-inventory.`);
+      console.error(
+        `sync:check failed: project ${projectName} is declared more than once in tools/architecture-inventory.`
+      );
       process.exit(1);
     }
     combinedProjects.set(projectName, projectSpec);
@@ -39,7 +41,9 @@ const selectedEntries = projectFilter
   : projectEntries;
 
 if (projectFilter && selectedEntries.length === 0) {
-  console.error(`sync:check failed: project ${projectFilter} is not declared in ${path.relative(root, inventoryDir)}.`);
+  console.error(
+    `sync:check failed: project ${projectFilter} is not declared in ${path.relative(root, inventoryDir)}.`
+  );
   process.exit(1);
 }
 
@@ -83,5 +87,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `sync:check passed for ${selectedEntries.length} project${selectedEntries.length === 1 ? "" : "s"} using ${path.relative(root, inventoryDir)}.`,
+  `sync:check passed for ${selectedEntries.length} project${selectedEntries.length === 1 ? "" : "s"} using ${path.relative(root, inventoryDir)}.`
 );

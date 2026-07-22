@@ -66,7 +66,10 @@ function run(root: string, args: string[], timeout = 5000) {
 }
 
 function nulFields(value: string): string[] {
-  return value.split("\0").map((item) => item.trim()).filter(Boolean);
+  return value
+    .split("\0")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 export function changedFiles(root: string): string[] {
@@ -104,8 +107,10 @@ export function changedFiles(root: string): string[] {
 }
 
 export function isWorkstreamPackRepo(root: string): boolean {
-  return existsSync(join(root, PACK_ROOT, "README.md"))
-    || existsSync(join(root, ".agents", "skills", "workstream-runner", "SKILL.md"));
+  return (
+    existsSync(join(root, PACK_ROOT, "README.md")) ||
+    existsSync(join(root, ".agents", "skills", "workstream-runner", "SKILL.md"))
+  );
 }
 
 export function currentWorkstreamPointer(root: string): Record<string, unknown> | null {
@@ -132,7 +137,8 @@ export function continuationIssues(root: string): string[] {
   if (!pointer) return [];
   if (pointer.malformed) return [".workstream/current.json is malformed JSON"];
   const status = String(pointer.status ?? "active").toLowerCase();
-  if (!["active", "active-draft", "planning", "implementation", "review"].includes(status)) return [];
+  if (!["active", "active-draft", "planning", "implementation", "review"].includes(status))
+    return [];
   const nextPacket = pointer.next_packet ?? pointer.nextPacket;
   if (typeof nextPacket !== "string" || !nextPacket.trim()) {
     return [".workstream/current.json does not name next_packet / nextPacket"];
@@ -195,7 +201,9 @@ export function validateRuntimeBundle(root: string, compileHooks = false): strin
   }
   issues.push(...packHookConfigIssues(root));
   if (compileHooks) {
-    for (const relPath of REQUIRED_PACK_FILES.filter((path) => path.startsWith(`${PACK_ROOT}/hooks/`) && path.endsWith(".ts"))) {
+    for (const relPath of REQUIRED_PACK_FILES.filter(
+      (path) => path.startsWith(`${PACK_ROOT}/hooks/`) && path.endsWith(".ts")
+    )) {
       const syntaxIssue = validateHookSyntax(root, relPath);
       if (syntaxIssue) issues.push(syntaxIssue);
     }
@@ -205,10 +213,13 @@ export function validateRuntimeBundle(root: string, compileHooks = false): strin
 
 export function runtimeRelated(files: Iterable<string>): string[] {
   return [...files]
-    .filter((path) => path.startsWith(PACK_ROOT)
-      || path.startsWith(".agents/skills/workstream-")
-      || path.startsWith(".codex/agents/workstream-")
-      || path === ".codex/hooks.json")
+    .filter(
+      (path) =>
+        path.startsWith(PACK_ROOT) ||
+        path.startsWith(".agents/skills/workstream-") ||
+        path.startsWith(".codex/agents/workstream-") ||
+        path === ".codex/hooks.json"
+    )
     .sort();
 }
 

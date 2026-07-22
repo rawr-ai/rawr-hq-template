@@ -1,7 +1,4 @@
-import type {
-  CompiledProcessPlan,
-  PortableRuntimePlanArtifact,
-} from "../spine/artifacts";
+import type { CompiledProcessPlan, PortableRuntimePlanArtifact } from "../spine/artifacts";
 
 export interface DeploymentRuntimeHandoff {
   readonly kind: "deployment.runtime-handoff";
@@ -16,7 +13,7 @@ const FORBIDDEN_HANDOFF_KEYS =
 function assertDeploymentHandoffSerializable(
   value: unknown,
   path: string,
-  seen: WeakSet<object> = new WeakSet(),
+  seen: WeakSet<object> = new WeakSet()
 ): void {
   if (typeof value === "function" || typeof value === "symbol") {
     throw new Error(`deployment handoff rejects live handle at ${path}`);
@@ -31,7 +28,7 @@ function assertDeploymentHandoffSerializable(
 
   if (Array.isArray(value)) {
     value.forEach((entry, index) =>
-      assertDeploymentHandoffSerializable(entry, `${path}[${index}]`, seen),
+      assertDeploymentHandoffSerializable(entry, `${path}[${index}]`, seen)
     );
     seen.delete(value);
     return;
@@ -53,18 +50,12 @@ export function createDeploymentRuntimeHandoff(input: {
 }): DeploymentRuntimeHandoff {
   if (input.portableArtifact.appId !== input.compiledProcessPlan.appId) {
     throw new Error(
-      `deployment handoff appId mismatch: portable artifact ${input.portableArtifact.appId} does not match compiled process plan ${input.compiledProcessPlan.appId}`,
+      `deployment handoff appId mismatch: portable artifact ${input.portableArtifact.appId} does not match compiled process plan ${input.compiledProcessPlan.appId}`
     );
   }
 
-  assertDeploymentHandoffSerializable(
-    input.portableArtifact,
-    "portableArtifact",
-  );
-  assertDeploymentHandoffSerializable(
-    input.compiledProcessPlan,
-    "compiledProcessPlan",
-  );
+  assertDeploymentHandoffSerializable(input.portableArtifact, "portableArtifact");
+  assertDeploymentHandoffSerializable(input.compiledProcessPlan, "compiledProcessPlan");
 
   return {
     kind: "deployment.runtime-handoff",

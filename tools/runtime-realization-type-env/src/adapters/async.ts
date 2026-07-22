@@ -1,20 +1,12 @@
-import type {
-  AsyncStepBridgePayload,
-  ExecutionDescriptorRef,
-} from "../spine/artifacts";
+import type { AsyncStepBridgePayload, ExecutionDescriptorRef } from "../spine/artifacts";
 import type { ProcessExecutionRuntime } from "../runtime/process-runtime";
-import {
-  delegateAdapterInvocation,
-  type AdapterDelegationInput,
-} from "./delegation";
+import { delegateAdapterInvocation, type AdapterDelegationInput } from "./delegation";
 
-export interface AsyncHostStepCallbackInput
-  extends Omit<AdapterDelegationInput, "ref"> {
+export interface AsyncHostStepCallbackInput extends Omit<AdapterDelegationInput, "ref"> {
   readonly ref: Extract<ExecutionDescriptorRef, { boundary: "plugin.async-step" }>;
 }
 
-export interface AsyncStepBridgeInvocationInput
-  extends Omit<AdapterDelegationInput, "ref"> {}
+export interface AsyncStepBridgeInvocationInput extends Omit<AdapterDelegationInput, "ref"> {}
 
 /**
  * Reads the already-derived async owner marker from a widened execution ref.
@@ -34,7 +26,7 @@ function asyncOwnerEntries(ref: AsyncHostStepCallbackInput["ref"]) {
     { kind: "consumer" as const, id: widened.consumerId },
   ].filter(
     (entry): entry is AsyncStepBridgePayload["owner"] =>
-      typeof entry.id === "string" && entry.id.length > 0,
+      typeof entry.id === "string" && entry.id.length > 0
   );
 }
 
@@ -42,22 +34,20 @@ function assertAsyncStepBridgePayload(payload: AsyncStepBridgePayload): void {
   const { ref } = payload;
 
   if (ref.boundary !== "plugin.async-step") {
-    throw new Error(
-      `async-step adapter cannot invoke ${ref.boundary} boundary ${ref.executionId}`,
-    );
+    throw new Error(`async-step adapter cannot invoke ${ref.boundary} boundary ${ref.executionId}`);
   }
 
   const owners = asyncOwnerEntries(ref);
   if (owners.length !== 1) {
     throw new Error(
-      `async bridge payload ${ref.executionId} must declare exactly one workflow, schedule, or consumer owner`,
+      `async bridge payload ${ref.executionId} must declare exactly one workflow, schedule, or consumer owner`
     );
   }
 
   const owner = owners[0];
   if (!owner) {
     throw new Error(
-      `async bridge payload ${ref.executionId} must declare exactly one workflow, schedule, or consumer owner`,
+      `async bridge payload ${ref.executionId} must declare exactly one workflow, schedule, or consumer owner`
     );
   }
   if (
@@ -66,7 +56,7 @@ function assertAsyncStepBridgePayload(payload: AsyncStepBridgePayload): void {
     payload.stepId !== ref.stepId
   ) {
     throw new Error(
-      `async bridge payload ${ref.executionId} owner or step metadata does not match its execution ref`,
+      `async bridge payload ${ref.executionId} owner or step metadata does not match its execution ref`
     );
   }
 }
@@ -82,14 +72,14 @@ export function createAsyncStepBridgePayload(input: {
   const owners = asyncOwnerEntries(input.ref);
   if (owners.length !== 1) {
     throw new Error(
-      `async bridge payload ${input.ref.executionId} must declare exactly one workflow, schedule, or consumer owner`,
+      `async bridge payload ${input.ref.executionId} must declare exactly one workflow, schedule, or consumer owner`
     );
   }
 
   const owner = owners[0];
   if (!owner) {
     throw new Error(
-      `async bridge payload ${input.ref.executionId} must declare exactly one workflow, schedule, or consumer owner`,
+      `async bridge payload ${input.ref.executionId} must declare exactly one workflow, schedule, or consumer owner`
     );
   }
 
@@ -107,7 +97,7 @@ export function createAsyncStepBridgePayload(input: {
 
 export async function lowerAsyncStepCallback<TOutput>(
   runtime: ProcessExecutionRuntime,
-  input: AsyncHostStepCallbackInput,
+  input: AsyncHostStepCallbackInput
 ) {
   return delegateAdapterInvocation<TOutput>("async-step", runtime, input);
 }
@@ -120,7 +110,7 @@ export async function lowerAsyncStepCallback<TOutput>(
 export async function lowerAsyncStepBridge<TOutput>(
   runtime: ProcessExecutionRuntime,
   payload: AsyncStepBridgePayload,
-  input: AsyncStepBridgeInvocationInput,
+  input: AsyncStepBridgeInvocationInput
 ) {
   assertAsyncStepBridgePayload(payload);
   return lowerAsyncStepCallback<TOutput>(runtime, {

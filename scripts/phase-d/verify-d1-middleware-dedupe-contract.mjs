@@ -17,36 +17,38 @@ const [contextSource, orpcSource, middlewareDedupeTestSource, scripts] = await P
 
 assertCondition(
   /RAWR_MIDDLEWARE_DEDUPE_MARKERS\s*=/.test(contextSource),
-  "context.ts must export RAWR_MIDDLEWARE_DEDUPE_MARKERS",
+  "context.ts must export RAWR_MIDDLEWARE_DEDUPE_MARKERS"
 );
 assertCondition(
   /RPC_AUTHORIZATION_DECISION:\s*"rpc\.authorization\.decision"/.test(contextSource),
-  "context.ts must include RPC_AUTHORIZATION_DECISION marker",
+  "context.ts must include RPC_AUTHORIZATION_DECISION marker"
 );
 assertCondition(
   /markerCache:\s*Map<RawrMiddlewareDedupeMarker,\s*unknown>/.test(contextSource),
-  "context.ts must define markerCache in middleware state",
+  "context.ts must define markerCache in middleware state"
 );
 assertCondition(
   /middlewareState:\s*getRequestScopedBoundaryMiddlewareState\(request\)/.test(contextSource),
-  "createRequestScopedBoundaryContext must hydrate request-scoped middleware state",
+  "createRequestScopedBoundaryContext must hydrate request-scoped middleware state"
 );
 assertCondition(
   /resolveRequestScopedMiddlewareValue(?:<[^>]+>)?\s*\(/.test(contextSource),
-  "context.ts must expose request-scoped middleware value resolver",
+  "context.ts must expose request-scoped middleware value resolver"
 );
 assertCondition(
   /assertRequestScopedMiddlewareMarker\(/.test(contextSource),
-  "context.ts must expose middleware marker assertion helper",
+  "context.ts must expose middleware marker assertion helper"
 );
 
 assertCondition(
-  /const\s+RPC_AUTH_DEDUPE_MARKER\s*=\s*RAWR_MIDDLEWARE_DEDUPE_MARKERS\.RPC_AUTHORIZATION_DECISION/.test(orpcSource),
-  "orpc.ts must bind RPC auth dedupe marker constant",
+  /const\s+RPC_AUTH_DEDUPE_MARKER\s*=\s*RAWR_MIDDLEWARE_DEDUPE_MARKERS\.RPC_AUTHORIZATION_DECISION/.test(
+    orpcSource
+  ),
+  "orpc.ts must bind RPC auth dedupe marker constant"
 );
 assertCondition(
   /isRpcRequestAllowedWithDedupe\(/.test(orpcSource),
-  "orpc.ts must evaluate RPC auth through dedupe resolver",
+  "orpc.ts must evaluate RPC auth through dedupe resolver"
 );
 const markerAssertionMatches = orpcSource.match(/assertRpcAuthDedupeMarker\(context\)/g) ?? [];
 const rpcRouteHandlerInvocations = orpcSource.match(/return handleRpcRoute\(\{/g) ?? [];
@@ -55,35 +57,37 @@ const hasCentralizedRpcAssertion =
   rpcRouteHandlerInvocations.length >= 2;
 assertCondition(
   markerAssertionMatches.length >= 2 || hasCentralizedRpcAssertion,
-  "orpc.ts must assert dedupe marker for both /rpc handlers (inline or centralized helper)",
+  "orpc.ts must assert dedupe marker for both /rpc handlers (inline or centralized helper)"
 );
 assertCondition(
   middlewareDedupeTestSource.includes("RPC_AUTHORIZATION_DECISION") &&
     middlewareDedupeTestSource.includes("hard-fails when context factory drifts"),
-  "middleware-dedupe.test.ts must cover marker presence and structural drift hard-fail",
+  "middleware-dedupe.test.ts must cover marker presence and structural drift hard-fail"
 );
 
 assertCondition(
   scripts["phase-d:gate:drift-core"] === "bun run phase-c:gate:drift-core",
-  "package.json must define phase-d:gate:drift-core",
+  "package.json must define phase-d:gate:drift-core"
 );
 assertCondition(
-  scripts["phase-d:gate:d1-middleware-dedupe-contract"] === "bun scripts/phase-d/verify-d1-middleware-dedupe-contract.mjs",
-  "package.json must define phase-d:gate:d1-middleware-dedupe-contract",
+  scripts["phase-d:gate:d1-middleware-dedupe-contract"] ===
+    "bun scripts/phase-d/verify-d1-middleware-dedupe-contract.mjs",
+  "package.json must define phase-d:gate:d1-middleware-dedupe-contract"
 );
 assertCondition(
   scripts["phase-d:gate:d1-middleware-dedupe-runtime"] ===
     "bunx vitest run --project server apps/server/test/middleware-dedupe.test.ts",
-  "package.json must define phase-d:gate:d1-middleware-dedupe-runtime",
+  "package.json must define phase-d:gate:d1-middleware-dedupe-runtime"
 );
 assertCondition(
   scripts["phase-d:d1:quick"] ===
     "bun run phase-d:gate:drift-core && bun run phase-d:gate:d1-middleware-dedupe-contract && bun run phase-d:gate:d1-middleware-dedupe-runtime",
-  "package.json must define phase-d:d1:quick chain",
+  "package.json must define phase-d:d1:quick chain"
 );
 assertCondition(
-  scripts["phase-d:d1:full"] === "bun run phase-d:d1:quick && bunx vitest run --project server apps/server/test/rawr.test.ts",
-  "package.json must define phase-d:d1:full chain",
+  scripts["phase-d:d1:full"] ===
+    "bun run phase-d:d1:quick && bunx vitest run --project server apps/server/test/rawr.test.ts",
+  "package.json must define phase-d:d1:full chain"
 );
 
 console.log("phase-d d1 middleware dedupe contract verified");

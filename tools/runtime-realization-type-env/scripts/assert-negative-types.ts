@@ -3,10 +3,7 @@ import path from "node:path";
 import ts from "typescript";
 import { fileURLToPath } from "node:url";
 
-const root = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-);
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failDir = path.join(root, "fixtures", "fail");
 const configPath = path.join(root, "tsconfig.fail-base.json");
 
@@ -25,20 +22,14 @@ function loadCompilerOptions(): ts.CompilerOptions {
     throw new Error(ts.flattenDiagnosticMessageText(config.error.messageText, "\n"));
   }
 
-  const parsed = ts.parseJsonConfigFileContent(
-    config.config,
-    ts.sys,
-    root,
-    {},
-    configPath,
-  );
+  const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, root, {}, configPath);
 
   const errors = parsed.errors.filter((diagnostic) => diagnostic.code !== 18003);
   if (errors.length > 0) {
     throw new Error(
       errors
         .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"))
-        .join("\n"),
+        .join("\n")
     );
   }
 
@@ -71,12 +62,10 @@ for (const filePath of failFiles) {
 
   if (!codes.has(expectedCode)) {
     failures.push(
-      `${path.relative(root, filePath)} failed, but did not emit TS${expectedCode}; saw ${[
-        ...codes,
-      ]
+      `${path.relative(root, filePath)} failed, but did not emit TS${expectedCode}; saw ${[...codes]
         .sort((a, b) => a - b)
         .map((code) => `TS${code}`)
-        .join(", ")}`,
+        .join(", ")}`
     );
   }
 }

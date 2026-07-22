@@ -1,14 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
-import {
-  chmod,
-  lstat,
-  mkdir,
-  open,
-  realpath,
-  rename,
-  rm,
-} from "node:fs/promises";
+import { chmod, lstat, mkdir, open, realpath, rename, rm } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 export async function sha256File(path: string): Promise<string> {
@@ -28,11 +20,7 @@ export function assertAbsolutePath(path: string, label: string): void {
   }
 }
 
-export function assertContainedPath(
-  root: string,
-  candidate: string,
-  label: string,
-): void {
+export function assertContainedPath(root: string, candidate: string, label: string): void {
   const offset = relative(root, candidate);
   if (offset === "" || offset === ".." || offset.startsWith(`..${sep}`) || isAbsolute(offset)) {
     throw new Error(`${label} must be strictly inside ${root}: ${candidate}`);
@@ -55,7 +43,11 @@ async function assertCanonicalDirectory(path: string, label: string): Promise<vo
   }
 }
 
-function containedParentSegments(root: string, candidate: string, label: string): readonly string[] {
+function containedParentSegments(
+  root: string,
+  candidate: string,
+  label: string
+): readonly string[] {
   assertAbsolutePath(root, `${label} root`);
   assertAbsolutePath(candidate, label);
   const normalizedRoot = resolve(root);
@@ -72,7 +64,7 @@ function containedParentSegments(root: string, candidate: string, label: string)
 export async function assertCanonicalContainedParent(
   root: string,
   candidate: string,
-  label: string,
+  label: string
 ): Promise<void> {
   const normalizedRoot = resolve(root);
   await assertCanonicalDirectory(normalizedRoot, `${label} root`);
@@ -92,7 +84,7 @@ export async function assertCanonicalContainedParent(
 export async function ensureCanonicalContainedDirectory(
   root: string,
   directory: string,
-  label: string,
+  label: string
 ): Promise<void> {
   const normalizedRoot = resolve(root);
   const normalizedDirectory = resolve(directory);
@@ -115,14 +107,14 @@ export async function removeCanonicalDirectChildDirectory(
   parent: string,
   candidate: string,
   expectedName: string,
-  label: string,
+  label: string
 ): Promise<void> {
   const normalizedParent = resolve(parent);
   const normalizedCandidate = resolve(candidate);
   await assertCanonicalDirectory(normalizedParent, `${label} parent`);
   if (
-    dirname(normalizedCandidate) !== normalizedParent
-    || basename(normalizedCandidate) !== expectedName
+    dirname(normalizedCandidate) !== normalizedParent ||
+    basename(normalizedCandidate) !== expectedName
   ) {
     throw new Error(`${label} must be the expected direct child of ${normalizedParent}`);
   }
@@ -146,7 +138,7 @@ export async function removeCanonicalDirectChildDirectory(
 export async function resolveContainedFile(
   root: string,
   releaseRelativePath: string,
-  label: string,
+  label: string
 ): Promise<string> {
   assertAbsolutePath(root, "containment root");
   const rootRealpath = await realpath(root);
@@ -188,14 +180,10 @@ export async function atomicWriteFile(
   destination: string,
   bytes: Uint8Array,
   mode = 0o600,
-  observe?: AtomicWriteObserver,
+  observe?: AtomicWriteObserver
 ): Promise<AtomicWriteResult> {
   const parent = dirname(destination);
-  await ensureCanonicalContainedDirectory(
-    containmentRoot,
-    parent,
-    "atomic write destination",
-  );
+  await ensureCanonicalContainedDirectory(containmentRoot, parent, "atomic write destination");
   const temporary = `${destination}.tmp-${process.pid}-${randomUUID()}`;
   let temporaryExists = false;
   let result: AtomicWriteResult | undefined;
@@ -223,7 +211,7 @@ export async function atomicWriteFile(
     if (handlePrimaryError !== undefined && handleCloseError !== undefined) {
       throw new AggregateError(
         [handlePrimaryError, handleCloseError],
-        "atomic write failed and temporary handle close also failed",
+        "atomic write failed and temporary handle close also failed"
       );
     }
     if (handlePrimaryError !== undefined) throw handlePrimaryError;
@@ -252,7 +240,7 @@ export async function atomicWriteFile(
   if (primaryError !== undefined && cleanupError !== undefined) {
     throw new AggregateError(
       [primaryError, cleanupError],
-      "atomic write failed and temporary cleanup also failed",
+      "atomic write failed and temporary cleanup also failed"
     );
   }
   if (primaryError !== undefined) throw primaryError;

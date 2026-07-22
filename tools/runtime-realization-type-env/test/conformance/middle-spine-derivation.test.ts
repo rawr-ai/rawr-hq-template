@@ -27,13 +27,11 @@ function collectFunctionPaths(value: unknown, path = "$"): string[] {
   if (!value || typeof value !== "object") return [];
 
   if (Array.isArray(value)) {
-    return value.flatMap((item, index) =>
-      collectFunctionPaths(item, `${path}[${index}]`),
-    );
+    return value.flatMap((item, index) => collectFunctionPaths(item, `${path}[${index}]`));
   }
 
   return Object.entries(value as Record<string, unknown>).flatMap(([key, entry]) =>
-    collectFunctionPaths(entry, `${path}.${key}`),
+    collectFunctionPaths(entry, `${path}.${key}`)
   );
 }
 
@@ -339,7 +337,7 @@ describe("middle spine derivation and compiler simulation", () => {
       },
     ]);
     expect(compilation.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
-      "runtime.provider-effect-plan.lowering-reserved",
+      "runtime.provider-effect-plan.lowering-reserved"
     );
 
     const registry = createExecutionRegistry({
@@ -578,8 +576,7 @@ describe("middle spine derivation and compiler simulation", () => {
     ]);
     expect(derivation.diagnostics).toContainEqual({
       code: "runtime.server-route-derivation.invalid-boundary",
-      message:
-        "server route derivation input must use a server API or server internal boundary",
+      message: "server route derivation input must use a server API or server internal boundary",
     });
     expect(derivation.diagnostics).toContainEqual({
       code: "runtime.server-route-derivation.invalid-route-path",
@@ -659,7 +656,7 @@ describe("middle spine derivation and compiler simulation", () => {
       },
     ]);
     expect(derivation.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
-      "runtime.dispatcher-access.reserved",
+      "runtime.dispatcher-access.reserved"
     );
   });
 
@@ -694,8 +691,7 @@ describe("middle spine derivation and compiler simulation", () => {
     ]);
     expect(derivation.diagnostics).toContainEqual({
       code: "runtime.dispatcher-access.workflow-unlisted",
-      message:
-        "dispatcher operation dispatch targets undeclared workflow work-items.missing",
+      message: "dispatcher operation dispatch targets undeclared workflow work-items.missing",
     });
   });
 
@@ -792,8 +788,7 @@ describe("middle spine derivation and compiler simulation", () => {
 
     expect(derivation.diagnostics).toContainEqual({
       code: "runtime.async-step-membership.duplicate",
-      message:
-        "duplicate async step membership for workflow work-items.sync step sync-work-item",
+      message: "duplicate async step membership for workflow work-items.sync step sync-work-item",
     });
     expect(derivation.diagnostics).toContainEqual({
       code: "runtime.async-step-membership.invalid-owner",
@@ -843,13 +838,15 @@ describe("middle spine derivation and compiler simulation", () => {
 
     expect("providerDependencyGraph" in derivation).toBeFalse();
     expect("providerDependencyGraph" in derivation.normalizedGraph).toBeFalse();
-    expect(compilation.providerDependencyGraph?.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+    expect(
+      compilation.providerDependencyGraph?.diagnostics.map((diagnostic) => diagnostic.code)
+    ).toEqual([
       "provider.coverage.ambiguous",
       "provider.coverage.missing",
       "provider.coverage.missing",
     ]);
     expect(compilation.bootgraphInput.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
-      "runtime.provider-effect-plan.lowering-reserved",
+      "runtime.provider-effect-plan.lowering-reserved"
     );
   });
 
@@ -944,10 +941,7 @@ describe("middle spine derivation and compiler simulation", () => {
       id: "process-clock",
       title: "Process clock",
     });
-    const ClockConsumerResource = defineRuntimeResource<
-      "clock-consumer",
-      { consume(): void }
-    >({
+    const ClockConsumerResource = defineRuntimeResource<"clock-consumer", { consume(): void }>({
       id: "clock-consumer",
       title: "Clock consumer",
     });
@@ -1012,7 +1006,7 @@ describe("middle spine derivation and compiler simulation", () => {
         appId: "hq",
         profile,
         executions: [],
-      }),
+      })
     );
 
     expect(compilation.providerDependencyGraph?.diagnostics).toContainEqual({
@@ -1102,7 +1096,7 @@ describe("middle spine derivation and compiler simulation", () => {
         appId: "hq",
         profile,
         executions: [],
-      }),
+      })
     );
 
     expect(compilation.providerDependencyGraph?.diagnostics).toEqual([]);
@@ -1131,8 +1125,8 @@ describe("middle spine derivation and compiler simulation", () => {
     });
     expect(
       compilation.bootgraphInput.resourceModules.filter(
-        (module) => module.resourceId === "scoped-clock",
-      ),
+        (module) => module.resourceId === "scoped-clock"
+      )
     ).toEqual([
       {
         kind: "boot.resource-module",
@@ -1179,7 +1173,7 @@ describe("middle spine derivation and compiler simulation", () => {
             routePath: ["items", "rename"],
           },
         ],
-      }),
+      })
     ).toThrow("duplicate execution derivation");
 
     expect(() =>
@@ -1198,7 +1192,7 @@ describe("middle spine derivation and compiler simulation", () => {
             descriptor: CreateWorkItemDescriptor,
           },
         ],
-      }),
+      })
     ).toThrow("descriptor derivation mismatch");
   });
 
@@ -1214,8 +1208,8 @@ describe("middle spine derivation and compiler simulation", () => {
     expect("compiledProcessPlan" in portable).toBe(false);
     expect(
       JSON.stringify(portable, (_key, value) =>
-        typeof value === "function" ? "__function__" : value,
-      ),
+        typeof value === "function" ? "__function__" : value
+      )
     ).not.toContain("__function__");
   });
 });

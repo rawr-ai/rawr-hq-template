@@ -73,7 +73,7 @@ function serviceBindingInstanceId(plan: ServiceBindingPlan): string {
  */
 export function serviceBindingConstructionIdentity(
   plan: ServiceBindingPlan,
-  processId = "process",
+  processId = "process"
 ): string {
   return stableJson({
     capability: plan.capability,
@@ -90,7 +90,7 @@ export function serviceBindingConstructionIdentity(
 }
 
 function indexServiceBindingInstances(
-  plans: readonly ServiceBindingPlan[],
+  plans: readonly ServiceBindingPlan[]
 ): ReadonlyMap<string, readonly ServiceBindingPlan[]> {
   const byInstance = new Map<string, ServiceBindingPlan[]>();
 
@@ -112,13 +112,13 @@ function resolveServiceBindingDependency(input: {
 
   if (matches.length === 0) {
     throw new Error(
-      `runtime.service-binding.dependency.missing: ${planId} -> ${input.dependencyInstance}`,
+      `runtime.service-binding.dependency.missing: ${planId} -> ${input.dependencyInstance}`
     );
   }
 
   if (matches.length > 1) {
     throw new Error(
-      `runtime.service-binding.dependency.ambiguous: ${planId} -> ${input.dependencyInstance}`,
+      `runtime.service-binding.dependency.ambiguous: ${planId} -> ${input.dependencyInstance}`
     );
   }
 
@@ -133,27 +133,19 @@ function validateServiceBindingDependencyGraph(input: {
 
   // This validates explicit lab ServiceBindingPlan dependency inputs only. It
   // is not the production service compiler or the final service ownership law.
-  function visit(
-    plan: ServiceBindingPlan,
-    path: readonly ServiceBindingPlan[],
-  ): void {
+  function visit(plan: ServiceBindingPlan, path: readonly ServiceBindingPlan[]): void {
     const key = serviceBindingKey(plan);
     const visitState = state.get(key);
 
     if (visitState === "visited") return;
 
     if (visitState === "visiting") {
-      const cycleStart = path.findIndex(
-        (pathPlan) => serviceBindingKey(pathPlan) === key,
+      const cycleStart = path.findIndex((pathPlan) => serviceBindingKey(pathPlan) === key);
+      const cycle = [...(cycleStart >= 0 ? path.slice(cycleStart) : path), plan].map(
+        serviceBindingInstanceId
       );
-      const cycle = [
-        ...(cycleStart >= 0 ? path.slice(cycleStart) : path),
-        plan,
-      ].map(serviceBindingInstanceId);
 
-      throw new Error(
-        `runtime.service-binding.dependency.cycle: ${cycle.join(" -> ")}`,
-      );
+      throw new Error(`runtime.service-binding.dependency.cycle: ${cycle.join(" -> ")}`);
     }
 
     state.set(key, "visiting");
@@ -165,7 +157,7 @@ function validateServiceBindingDependencyGraph(input: {
           dependencyInstance,
           byInstance: input.byInstance,
         }),
-        [...path, plan],
+        [...path, plan]
       );
     }
 
@@ -208,10 +200,7 @@ export function createRuntimeServiceBindingCache<TClient>(input: {
   });
 
   function createEntry(plan: ServiceBindingPlan): RuntimeServiceBindingCacheEntry<TClient> {
-    const constructionIdentity = serviceBindingConstructionIdentity(
-      plan,
-      input.processId,
-    );
+    const constructionIdentity = serviceBindingConstructionIdentity(plan, input.processId);
     return {
       plan,
       constructionIdentity,
@@ -233,7 +222,7 @@ export function createRuntimeServiceBindingCache<TClient>(input: {
           plan,
           dependencyInstance,
           byInstance,
-        }),
+        })
       );
     }
 
@@ -248,9 +237,7 @@ export function createRuntimeServiceBindingCache<TClient>(input: {
       const key = serviceBindingKey(plan);
       const allowedPlan = allowedPlans.get(key);
       if (!allowedPlan) {
-        throw new Error(
-          `missing service binding plan: ${key}`,
-        );
+        throw new Error(`missing service binding plan: ${key}`);
       }
 
       return getOrCreateAllowedPlan(allowedPlan);

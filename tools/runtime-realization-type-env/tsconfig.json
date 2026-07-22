@@ -19,14 +19,6 @@
       "@rawr/spec-env/scenarios/work-items/*": ["scenarios/work-items/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "scenarios/**/*.ts",
-    "fixtures/inline-negative/**/*.ts"
-  ],
-  "exclude": [
-    "fixtures/fail/**",
-    "fixtures/todo/**",
-    "test/**"
-  ]
+  "include": ["src/**/*.ts", "scenarios/**/*.ts", "fixtures/inline-negative/**/*.ts"],
+  "exclude": ["fixtures/fail/**", "fixtures/todo/**", "test/**"]
 }

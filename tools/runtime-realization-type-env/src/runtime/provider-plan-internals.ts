@@ -15,26 +15,23 @@ export interface ProviderEffectPlanInternals<TValue = unknown, TError = unknown>
  * Lab-internal bridge from the intentionally opaque public provider plan to the
  * contained provisioning path. This is not final ProviderEffectPlan shape.
  */
-const providerPlanInternals = new WeakMap<
-  object,
-  ProviderEffectPlanInternals<any, any>
->();
+const providerPlanInternals = new WeakMap<object, ProviderEffectPlanInternals<any, any>>();
 
 function providerBodyToEffect<TValue, TError>(
-  body: ReturnType<ProviderAcquire<TValue>>,
+  body: ReturnType<ProviderAcquire<TValue>>
 ): RawrEffect<TValue, TError, never> {
   if (VendorEffect.isEffect(body)) {
     return body as RawrEffect<TValue, TError, never>;
   }
 
   return VendorEffect.gen(function* () {
-    return yield* (body as Generator<any, TValue, unknown>);
+    return yield* body as Generator<any, TValue, unknown>;
   }) as RawrEffect<TValue, TError, never>;
 }
 
 function providerReleaseToEffect<TValue>(
   release: ProviderRelease<TValue>,
-  value: TValue,
+  value: TValue
 ): RawrEffect<void, unknown, never> {
   const body = release(value);
   if (VendorEffect.isEffect(body)) {
@@ -42,7 +39,7 @@ function providerReleaseToEffect<TValue>(
   }
 
   return VendorEffect.gen(function* () {
-    return yield* (body as Generator<any, void, unknown>);
+    return yield* body as Generator<any, void, unknown>;
   }) as RawrEffect<void, unknown, never>;
 }
 
@@ -96,7 +93,7 @@ export function createTryProviderEffectPlan<TValue, TError>(input: {
  * Absence is a fail-closed signal for plans this lab runtime cannot lower.
  */
 export function readProviderEffectPlanInternals<TValue, TError>(
-  plan: ProviderEffectPlan<TValue, TError>,
+  plan: ProviderEffectPlan<TValue, TError>
 ): ProviderEffectPlanInternals<TValue, TError> | undefined {
   return providerPlanInternals.get(plan as object);
 }

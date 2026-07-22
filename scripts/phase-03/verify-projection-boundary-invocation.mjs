@@ -12,7 +12,16 @@ const SCANNED_ROOTS = [
 ];
 
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"]);
-const SKIP_DIRS = new Set(["dist", "node_modules", "coverage", ".nx", ".git", "test", "tests", "__tests__"]);
+const SKIP_DIRS = new Set([
+  "dist",
+  "node_modules",
+  "coverage",
+  ".nx",
+  ".git",
+  "test",
+  "tests",
+  "__tests__",
+]);
 
 const FORBIDDEN_PATTERNS = [
   {
@@ -21,11 +30,13 @@ const FORBIDDEN_PATTERNS = [
   },
   {
     pattern: /\bcreateServiceInvocationOptions\b/u,
-    message: "production projections must rely on client-derived call option types, not the generic service invocation helper",
+    message:
+      "production projections must rely on client-derived call option types, not the generic service invocation helper",
   },
   {
     pattern: /\bcallProcedure\s*\(/u,
-    message: "production projections must not dispatch service procedures through untyped callProcedure helpers",
+    message:
+      "production projections must not dispatch service procedures through untyped callProcedure helpers",
   },
   {
     pattern: /\bprocedure:\s*unknown\b/u,
@@ -40,12 +51,14 @@ const FORBIDDEN_PATTERNS = [
     message: "production projections must not cast service clients to any",
   },
   {
-    pattern: /\braw\?\.(?:catalog|search|transcripts|planning|execution|retirement|workspace|corpusArtifacts)\b/u,
+    pattern:
+      /\braw\?\.(?:catalog|search|transcripts|planning|execution|retirement|workspace|corpusArtifacts)\b/u,
     message: "production projections must not optional-probe raw service procedure trees",
   },
   {
     pattern: /\b(?:export\s+)?function\s+create[A-Za-z0-9]*Boundary\s*\(/u,
-    message: "production projections must not define service boundary factory helpers; use bindService",
+    message:
+      "production projections must not define service boundary factory helpers; use bindService",
   },
   {
     pattern: /\btype\s+\w*Client\s*=\s*\{/u,
@@ -95,7 +108,9 @@ function findUntypedInlineInvocation(relPath, source) {
   for (const match of source.matchAll(pattern)) {
     const window = source.slice(match.index, match.index + 500);
     if (!window.includes("satisfies")) {
-      findings.push(`${relPath} contains inline invocation options without a nearby satisfies type check`);
+      findings.push(
+        `${relPath} contains inline invocation options without a nearby satisfies type check`
+      );
     }
   }
   return findings;
@@ -116,7 +131,8 @@ function findDirectServiceCreateClientCalls(relPath, source) {
 
     for (const name of names) {
       const pattern = new RegExp(`\\b${name}\\s*\\(`, "u");
-      if (pattern.test(source)) findings.push(`${relPath}: projection code must not call service ${name} directly`);
+      if (pattern.test(source))
+        findings.push(`${relPath}: projection code must not call service ${name} directly`);
     }
   }
   return findings;
@@ -136,13 +152,20 @@ for (const relPath of files.sort()) {
   }
 
   if (SERVICE_IMPORT_PATTERN.test(source) && !source.includes("bindService(")) {
-    findings.push(`${relPath}: service createClient imports in projections must be lowered through bindService`);
+    findings.push(
+      `${relPath}: service createClient imports in projections must be lowered through bindService`
+    );
   }
 
   findings.push(...findDirectServiceCreateClientCalls(relPath, source));
 
-  if (relPath === "plugins/cli/session-tools/src/lib/session-types.ts" && /\bexport\s+type\s+(?:Session|Resolve|Search|Metadata|Reindex|Extract)/u.test(source)) {
-    findings.push(`${relPath}: session DTOs must be re-exported from @rawr/session-intelligence/types, not redeclared locally`);
+  if (
+    relPath === "plugins/cli/session-tools/src/lib/session-types.ts" &&
+    /\bexport\s+type\s+(?:Session|Resolve|Search|Metadata|Reindex|Extract)/u.test(source)
+  ) {
+    findings.push(
+      `${relPath}: session DTOs must be re-exported from @rawr/session-intelligence/types, not redeclared locally`
+    );
   }
 
   findings.push(...findUntypedInlineInvocation(relPath, source));

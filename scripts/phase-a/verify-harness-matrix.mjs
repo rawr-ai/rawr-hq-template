@@ -35,7 +35,13 @@ const searchRoots = [
   path.join(process.cwd(), "plugins", "cli", "plugins", "test"),
 ];
 
-const routeBoundaryMatrixPath = path.join(process.cwd(), "apps", "server", "test", "route-boundary-matrix.test.ts");
+const routeBoundaryMatrixPath = path.join(
+  process.cwd(),
+  "apps",
+  "server",
+  "test",
+  "route-boundary-matrix.test.ts"
+);
 
 async function listTestFiles(dir) {
   const out = [];
@@ -93,7 +99,9 @@ function collectSuiteCoverage(files, fileAsts) {
 
 const files = (await Promise.all(searchRoots.map(listTestFiles))).flat().sort();
 if (files.length === 0) {
-  console.error("harness-matrix failed: no test files were discovered under configured search roots.");
+  console.error(
+    "harness-matrix failed: no test files were discovered under configured search roots."
+  );
   process.exit(1);
 }
 
@@ -118,32 +126,50 @@ try {
 }
 
 if (!routeBoundaryMatrixSource) {
-  console.error(`harness-matrix failed: missing required route matrix file ${routeBoundaryMatrixPath}`);
+  console.error(
+    `harness-matrix failed: missing required route matrix file ${routeBoundaryMatrixPath}`
+  );
   process.exit(1);
 }
 const routeBoundaryMatrixAst = parseTypeScript(routeBoundaryMatrixPath, routeBoundaryMatrixSource);
 
-const routeMatrixDeclaredSuiteArray = findConstArrayLiteral(routeBoundaryMatrixAst, "REQUIRED_SUITE_IDS");
-const routeMatrixDeclaredNegativeArray = findConstArrayLiteral(routeBoundaryMatrixAst, "REQUIRED_NEGATIVE_ASSERTION_KEYS");
+const routeMatrixDeclaredSuiteArray = findConstArrayLiteral(
+  routeBoundaryMatrixAst,
+  "REQUIRED_SUITE_IDS"
+);
+const routeMatrixDeclaredNegativeArray = findConstArrayLiteral(
+  routeBoundaryMatrixAst,
+  "REQUIRED_NEGATIVE_ASSERTION_KEYS"
+);
 if (!routeMatrixDeclaredSuiteArray || !routeMatrixDeclaredNegativeArray) {
-  console.error("harness-matrix failed: route boundary matrix must declare REQUIRED_SUITE_IDS and REQUIRED_NEGATIVE_ASSERTION_KEYS arrays.");
+  console.error(
+    "harness-matrix failed: route boundary matrix must declare REQUIRED_SUITE_IDS and REQUIRED_NEGATIVE_ASSERTION_KEYS arrays."
+  );
   process.exit(1);
 }
 
 const routeDeclaredSuites = new Set(stringArrayValues(routeMatrixDeclaredSuiteArray));
 const routeDeclaredNegatives = new Set(stringArrayValues(routeMatrixDeclaredNegativeArray));
-const missingRouteDeclaredSuites = REQUIRED_SUITES.filter((suiteId) => !routeDeclaredSuites.has(suiteId));
+const missingRouteDeclaredSuites = REQUIRED_SUITES.filter(
+  (suiteId) => !routeDeclaredSuites.has(suiteId)
+);
 if (missingRouteDeclaredSuites.length > 0) {
-  console.error("harness-matrix failed: route boundary matrix declaration is missing required suite IDs:");
+  console.error(
+    "harness-matrix failed: route boundary matrix declaration is missing required suite IDs:"
+  );
   for (const suiteId of missingRouteDeclaredSuites) {
     console.error(`  - ${suiteId}`);
   }
   process.exit(1);
 }
 
-const missingRouteDeclaredNegatives = REQUIRED_NEGATIVE_ASSERTION_KEYS.filter((key) => !routeDeclaredNegatives.has(key));
+const missingRouteDeclaredNegatives = REQUIRED_NEGATIVE_ASSERTION_KEYS.filter(
+  (key) => !routeDeclaredNegatives.has(key)
+);
 if (missingRouteDeclaredNegatives.length > 0) {
-  console.error("harness-matrix failed: route boundary matrix declaration is missing required negative assertion keys:");
+  console.error(
+    "harness-matrix failed: route boundary matrix declaration is missing required negative assertion keys:"
+  );
   for (const key of missingRouteDeclaredNegatives) {
     console.error(`  - ${key}`);
   }
@@ -174,9 +200,12 @@ for (const element of routeCasesArray.elements) {
     const propName = propertyNameText(property.name);
     const initializer = unwrapExpression(property.initializer);
 
-    if (propName === "suiteId" && initializer && ts.isStringLiteral(initializer)) suiteId = initializer.text;
-    if (propName === "assertionKey" && initializer && ts.isStringLiteral(initializer)) assertionKey = initializer.text;
-    if (propName === "path" && initializer && ts.isStringLiteral(initializer)) routePath = initializer.text;
+    if (propName === "suiteId" && initializer && ts.isStringLiteral(initializer))
+      suiteId = initializer.text;
+    if (propName === "assertionKey" && initializer && ts.isStringLiteral(initializer))
+      assertionKey = initializer.text;
+    if (propName === "path" && initializer && ts.isStringLiteral(initializer))
+      routePath = initializer.text;
     if (propName === "expectedStatus" && initializer && ts.isNumericLiteral(initializer)) {
       expectedStatus = Number(initializer.text);
     }
@@ -205,7 +234,9 @@ if (missingMatrixSuiteIds.length > 0) {
   process.exit(1);
 }
 
-const missingNegativeKeys = REQUIRED_NEGATIVE_ASSERTION_KEYS.filter((key) => !routeCaseNegativeKeys.has(key));
+const missingNegativeKeys = REQUIRED_NEGATIVE_ASSERTION_KEYS.filter(
+  (key) => !routeCaseNegativeKeys.has(key)
+);
 if (missingNegativeKeys.length > 0) {
   console.error("harness-matrix failed: MATRIX_CASES is missing required negative assertion keys:");
   for (const key of missingNegativeKeys) {
@@ -216,16 +247,20 @@ if (missingNegativeKeys.length > 0) {
 
 if (!hasRpcWorkflowsNegativeCase) {
   console.error(
-    "harness-matrix failed: MATRIX_CASES must include a /rpc/workflows negative case using assertion:reject-rpc-workflows-route-family.",
+    "harness-matrix failed: MATRIX_CASES must include a /rpc/workflows negative case using assertion:reject-rpc-workflows-route-family."
   );
   process.exit(1);
 }
 
-console.log(`harness-matrix passed: ${REQUIRED_SUITES.length} required suite IDs present across ${files.length} test files.`);
+console.log(
+  `harness-matrix passed: ${REQUIRED_SUITES.length} required suite IDs present across ${files.length} test files.`
+);
 for (const suiteId of REQUIRED_SUITES) {
   const suiteFiles = coverage.get(suiteId) ?? [];
   for (const filePath of suiteFiles) {
     console.log(`  - ${suiteId} :: ${path.relative(process.cwd(), filePath)}`);
   }
 }
-console.log(`harness-matrix passed: ${REQUIRED_NEGATIVE_ASSERTION_KEYS.length} negative assertion keys verified in route matrix.`);
+console.log(
+  `harness-matrix passed: ${REQUIRED_NEGATIVE_ASSERTION_KEYS.length} negative assertion keys verified in route matrix.`
+);

@@ -1,13 +1,4 @@
-import {
-  access,
-  copyFile,
-  lstat,
-  mkdir,
-  readFile,
-  rm,
-  symlink,
-  writeFile,
-} from "node:fs/promises";
+import { access, copyFile, lstat, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 
 import { CONTROLLER_PRODUCTION_APP_NAME } from "./constants.ts";
@@ -22,7 +13,7 @@ export type StagedPackage = Readonly<{
 
 export async function loadRuntimePackageVersion(
   sourceRoot: string,
-  sourceRevision: string,
+  sourceRevision: string
 ): Promise<string> {
   const source = JSON.parse(await readFile(join(sourceRoot, "package.json"), "utf8")) as JsonRecord;
   return typeof source.version === "string"
@@ -82,7 +73,7 @@ async function pathExists(path: string): Promise<boolean> {
 async function mapBuiltPath(
   sourceRoot: string,
   sourcePath: string,
-  expectedKind: "file" | "directory",
+  expectedKind: "file" | "directory"
 ): Promise<string> {
   if (!sourcePath.startsWith("./")) {
     throw new Error(`runtime package path must be relative: ${sourcePath}`);
@@ -92,29 +83,33 @@ async function mapBuiltPath(
   const withoutSourcePrefix = emitted.startsWith("src/") ? emitted.slice(4) : emitted;
   const candidates = input.startsWith("dist/")
     ? [join(sourceRoot, input)]
-    : [...new Set([
-        join(sourceRoot, "dist", withoutSourcePrefix),
-        join(sourceRoot, "dist", emitted),
-      ])];
+    : [
+        ...new Set([
+          join(sourceRoot, "dist", withoutSourcePrefix),
+          join(sourceRoot, "dist", emitted),
+        ]),
+      ];
   const matches: string[] = [];
   for (const candidate of candidates) {
     try {
       const status = await lstat(candidate);
       if (
-        (expectedKind === "file" && status.isFile())
-        || (expectedKind === "directory" && status.isDirectory())
+        (expectedKind === "file" && status.isFile()) ||
+        (expectedKind === "directory" && status.isDirectory())
       ) {
         matches.push(candidate);
       }
     } catch (error) {
-      if (!(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")) {
+      if (
+        !(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")
+      ) {
         throw error;
       }
     }
   }
   if (matches.length !== 1) {
     throw new Error(
-      `built runtime path must resolve exactly once (${expectedKind}): ${sourceRoot}:${sourcePath} -> ${matches.join(",")}`,
+      `built runtime path must resolve exactly once (${expectedKind}): ${sourceRoot}:${sourcePath} -> ${matches.join(",")}`
     );
   }
   return `./${relative(sourceRoot, matches[0]!).split("\\").join("/")}`;
@@ -127,10 +122,7 @@ async function mapBuiltPattern(sourceRoot: string, sourcePath: string): Promise<
   const input = sourcePath.slice(2);
   const emitted = input.endsWith(".ts") ? `${input.slice(0, -3)}.js` : input;
   const withoutSourcePrefix = emitted.startsWith("src/") ? emitted.slice(4) : emitted;
-  const candidates = [...new Set([
-    `dist/${withoutSourcePrefix}`,
-    `dist/${emitted}`,
-  ])];
+  const candidates = [...new Set([`dist/${withoutSourcePrefix}`, `dist/${emitted}`])];
   const matches: string[] = [];
   for (const candidate of candidates) {
     const prefix = candidate.slice(0, candidate.indexOf("*"));
@@ -139,13 +131,17 @@ async function mapBuiltPattern(sourceRoot: string, sourcePath: string): Promise<
       const status = await lstat(join(sourceRoot, patternDirectory));
       if (status.isDirectory()) matches.push(candidate);
     } catch (error) {
-      if (!(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")) {
+      if (
+        !(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")
+      ) {
         throw error;
       }
     }
   }
   if (matches.length !== 1) {
-    throw new Error(`built runtime import pattern must resolve exactly once: ${sourceRoot}:${sourcePath}`);
+    throw new Error(
+      `built runtime import pattern must resolve exactly once: ${sourceRoot}:${sourcePath}`
+    );
   }
   return `./${matches[0]}`;
 }
@@ -157,7 +153,8 @@ async function rewriteExportTarget(sourceRoot: string, value: unknown): Promise<
       : await mapBuiltPath(sourceRoot, value, "file");
   }
   if (!isRecord(value)) throw new Error(`unsupported runtime export target in ${sourceRoot}`);
-  if (typeof value.default === "string") return await rewriteExportTarget(sourceRoot, value.default);
+  if (typeof value.default === "string")
+    return await rewriteExportTarget(sourceRoot, value.default);
   const rewritten: JsonRecord = {};
   for (const [condition, target] of Object.entries(value)) {
     if (condition === "types") continue;
@@ -174,7 +171,9 @@ export async function createRuntimePackageManifest(options: {
   sourceRevision: string;
   closurePackageVersions: ReadonlyMap<string, string>;
 }): Promise<JsonRecord> {
-  const source = JSON.parse(await readFile(join(options.sourceRoot, "package.json"), "utf8")) as JsonRecord;
+  const source = JSON.parse(
+    await readFile(join(options.sourceRoot, "package.json"), "utf8")
+  ) as JsonRecord;
   if (typeof source.name !== "string" || source.name.length === 0) {
     throw new Error(`runtime package has no name: ${options.sourceRoot}`);
   }
@@ -212,20 +211,35 @@ export async function createRuntimePackageManifest(options: {
       dependencies[name] = version.startsWith("workspace:")
         ? options.closurePackageVersions.has(name)
           ? options.closurePackageVersions.get(name)!
-          : (() => { throw new Error(`runtime dependency outside controller closure: ${source.name}->${name}`); })()
+          : (() => {
+              throw new Error(
+                `runtime dependency outside controller closure: ${source.name}->${name}`
+              );
+            })()
         : version;
     }
     if (Object.keys(dependencies).length > 0) runtime.dependencies = dependencies;
   }
   if (isRecord(source.oclif)) {
     const oclif: JsonRecord = {};
-    for (const key of ["aliases", "bin", "flexibleTaxonomy", "hooks", "plugins", "scope", "topicSeparator", "topics"]) {
+    for (const key of [
+      "aliases",
+      "bin",
+      "flexibleTaxonomy",
+      "hooks",
+      "plugins",
+      "scope",
+      "topicSeparator",
+      "topics",
+    ]) {
       if (source.oclif[key] !== undefined) oclif[key] = source.oclif[key];
     }
     if (typeof source.oclif.commands === "string") {
       oclif.commands = await mapBuiltPath(options.sourceRoot, source.oclif.commands, "directory");
     } else if (source.oclif.commands !== undefined) {
-      throw new Error(`controller package requires static directory command discovery: ${source.name}`);
+      throw new Error(
+        `controller package requires static directory command discovery: ${source.name}`
+      );
     }
     runtime.oclif = oclif;
   }
@@ -240,13 +254,14 @@ export async function stageWorkspaceRuntimePackage(options: {
 }): Promise<StagedPackage> {
   const manifest = await createRuntimePackageManifest(options);
   const distRoot = join(options.sourceRoot, "dist");
-  if (!(await pathExists(distRoot))) throw new Error(`built package output is missing: ${distRoot}`);
+  if (!(await pathExists(distRoot)))
+    throw new Error(`built package output is missing: ${distRoot}`);
   await mkdir(options.destinationRoot, { recursive: true });
   await copyIndependentTree(distRoot, join(options.destinationRoot, "dist"));
   await writeFile(
     join(options.destinationRoot, "package.json"),
     `${JSON.stringify(manifest, null, 2)}\n`,
-    { mode: 0o644 },
+    { mode: 0o644 }
   );
   return Object.freeze({
     packageId: manifest.name as string,
@@ -265,12 +280,11 @@ export async function sanitizeNativeManagerPackage(root: string): Promise<{
   if (typeof source.name !== "string" || typeof source.version !== "string") {
     throw new Error("native external manager package identity is invalid");
   }
-  const hooks = isRecord(source.oclif) && isRecord(source.oclif.hooks)
-    ? Object.keys(source.oclif.hooks).sort()
-    : [];
-  source.oclif = hooks.length === 0
-    ? undefined
-    : { hooks: (source.oclif as JsonRecord).hooks };
+  const hooks =
+    isRecord(source.oclif) && isRecord(source.oclif.hooks)
+      ? Object.keys(source.oclif.hooks).sort()
+      : [];
+  source.oclif = hooks.length === 0 ? undefined : { hooks: (source.oclif as JsonRecord).hooks };
   delete source.devDependencies;
   delete source.scripts;
   await writeFile(manifestPath, `${JSON.stringify(source, null, 2)}\n`, { mode: 0o644 });
@@ -283,7 +297,10 @@ export async function sanitizeNativeManagerPackage(root: string): Promise<{
   });
 }
 
-export async function copyIndependentTree(sourceRoot: string, destinationRoot: string): Promise<void> {
+export async function copyIndependentTree(
+  sourceRoot: string,
+  destinationRoot: string
+): Promise<void> {
   const sourceStatus = await lstat(sourceRoot);
   if (!sourceStatus.isDirectory()) throw new Error(`tree source is not a directory: ${sourceRoot}`);
   await mkdir(destinationRoot, { recursive: true, mode: sourceStatus.mode & 0o777 });
@@ -300,7 +317,8 @@ export async function copyIndependentTree(sourceRoot: string, destinationRoot: s
       await copyFile(source, destination);
       await chmodFile(destination, status.mode & 0o777);
       const copied = await lstat(destination);
-      if (copied.nlink !== 1) throw new Error(`copied production file has shared inode: ${destination}`);
+      if (copied.nlink !== 1)
+        throw new Error(`copied production file has shared inode: ${destination}`);
     } else if (status.isSymbolicLink()) {
       const target = await readlinkValue(source);
       await symlink(target, destination);

@@ -29,8 +29,6 @@ export function providerSelection<
   } as const satisfies ProviderSelection<TResource, TProvider>;
 }
 
-export function defineRuntimeProfile<const TInput extends RuntimeProfile>(
-  input: TInput,
-): TInput {
+export function defineRuntimeProfile<const TInput extends RuntimeProfile>(input: TInput): TInput {
   return input;
 }

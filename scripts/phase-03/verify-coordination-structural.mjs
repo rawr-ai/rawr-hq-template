@@ -154,7 +154,10 @@ if (
   fail("required service middleware must live in dedicated middleware files.");
 }
 
-if (serviceBaseSource.includes("runsRuntime") || serviceBaseSource.includes("CoordinationRunsRuntime")) {
+if (
+  serviceBaseSource.includes("runsRuntime") ||
+  serviceBaseSource.includes("CoordinationRunsRuntime")
+) {
   fail("service base must not declare run runtime ownership.");
 }
 
@@ -217,13 +220,12 @@ if (
   pluginRouterSource.includes("projection-bridge") ||
   pluginRouterSource.includes("@rawr/coordination/node")
 ) {
-  fail("workflow plugin router must not forward run routes through the service client bridge or node backdoors.");
+  fail(
+    "workflow plugin router must not forward run routes through the service client bridge or node backdoors."
+  );
 }
 
-if (
-  pluginRouterSource.includes("@rawr/core") ||
-  pluginRouterSource.includes("apps/server/src")
-) {
+if (pluginRouterSource.includes("@rawr/core") || pluginRouterSource.includes("apps/server/src")) {
   fail("workflow plugin router must stay host-agnostic.");
 }
 
@@ -231,12 +233,14 @@ if (
   !pluginContextSource.includes("CoordinationWorkflowAuthoringClientResolver") ||
   !pluginContextSource.includes('CoordinationClient["workflows"]')
 ) {
-  fail("workflow plugin context must declare a narrow coordination workflow authoring client resolver.");
+  fail(
+    "workflow plugin context must declare a narrow coordination workflow authoring client resolver."
+  );
 }
 
 if (
   pluginContextSource.includes("createEmbeddedPlaceholder") ||
-  pluginContextSource.includes('createClient({')
+  pluginContextSource.includes("createClient({")
 ) {
   fail("workflow plugin context must not synthesize placeholder-backed coordination clients.");
 }
@@ -249,9 +253,13 @@ if (
   !pluginServerSource.includes("GetRunStatusInputSchema") ||
   !pluginServerSource.includes("QueueRunInputSchema") ||
   !pluginServerSource.includes("options.resolveAuthoringClient") ||
-  !pluginServerSource.includes("getRunTimeline: async (runId) => getRunTimeline(input.repoRoot, runId)")
+  !pluginServerSource.includes(
+    "getRunTimeline: async (runId) => getRunTimeline(input.repoRoot, runId)"
+  )
 ) {
-  fail("workflow plugin server surface must re-export run schemas and own runtime/authoring composition.");
+  fail(
+    "workflow plugin server surface must re-export run schemas and own runtime/authoring composition."
+  );
 }
 
 if (!indexSource.includes('export { createClient, type Client } from "./client";')) {

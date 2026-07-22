@@ -16,11 +16,7 @@ import {
 } from "../../../scenarios/work-items/app-and-plan-artifacts";
 
 function assertNoLiveHandles(value: unknown): void {
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
     throw new Error(`migration control-plane packet leaked live handle: ${String(value)}`);
   }
 
@@ -121,10 +117,7 @@ describe("runtime migration control-plane observation", () => {
     expect(packet.traceId).toBe("trace:control-plane");
     expect(packet.deployment.executionPlanCount).toBe(2);
     expect(packet.deployment.executionDescriptorRefCount).toBe(2);
-    expect(packet.deployment.boundaries).toEqual([
-      "plugin.async-step",
-      "plugin.server-api",
-    ]);
+    expect(packet.deployment.boundaries).toEqual(["plugin.async-step", "plugin.server-api"]);
     expect(packet.catalog.moduleCount).toBe(1);
     expect(packet.catalog.recordCount).toBe(1);
     expect(packet.telemetry.runId).toBe("control-plane-run");
@@ -175,7 +168,7 @@ describe("runtime migration control-plane observation", () => {
         deploymentHandoff: widenedHandoff,
         catalog,
         runId: "control-plane-run",
-      }),
+      })
     ).toThrow("descriptorTable");
   });
 
@@ -195,7 +188,7 @@ describe("runtime migration control-plane observation", () => {
         deploymentHandoff: driftedHandoff,
         catalog,
         runId: "control-plane-run",
-      }),
+      })
     ).toThrow("appId mismatch");
   });
 
@@ -218,7 +211,7 @@ describe("runtime migration control-plane observation", () => {
             },
           },
         ],
-      }),
+      })
     ).toThrow("telemetry runId mismatch");
 
     expect(() =>
@@ -235,7 +228,7 @@ describe("runtime migration control-plane observation", () => {
             attributes: {},
           },
         ],
-      }),
+      })
     ).toThrow("telemetry runId mismatch");
 
     const packet = createMigrationControlPlaneObservationPacket({

@@ -12,41 +12,46 @@ const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const MANIFEST_PATH = fileURLToPath(new URL("./release.json", import.meta.url));
 
 const NonEmptyStringSchema = Type.String({ minLength: 1 });
-const HabitatReleaseAssetSchema = ReadonlyObject(Type.Object(
-  {
+const HabitatReleaseAssetSchema = ReadonlyObject(
+  Type.Object({
     filename: NonEmptyStringSchema,
     bytes: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
     sha256: Type.String({ pattern: "^[a-f0-9]{64}$" }),
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
-export const HabitatReleaseManifestSchema = ReadonlyObject(Type.Object(
-  {
+export const HabitatReleaseManifestSchema = ReadonlyObject(
+  Type.Object({
     schemaVersion: Type.Literal(1),
-    owner: ReadonlyObject(Type.Object(
-      {
+    owner: ReadonlyObject(
+      Type.Object({
         repository: NonEmptyStringSchema,
         sourceCommit: NonEmptyStringSchema,
         habitatTree: NonEmptyStringSchema,
-      },
-    ), { additionalProperties: false }),
-    build: ReadonlyObject(Type.Object(
-      {
+      }),
+      { additionalProperties: false }
+    ),
+    build: ReadonlyObject(
+      Type.Object({
         bunVersion: NonEmptyStringSchema,
         bunRevision: NonEmptyStringSchema,
-      },
-    ), { additionalProperties: false }),
-    release: ReadonlyObject(Type.Object(
-      { tag: NonEmptyStringSchema },
-    ), { additionalProperties: false }),
-    assets: ReadonlyObject(Type.Object(
-      {
+      }),
+      { additionalProperties: false }
+    ),
+    release: ReadonlyObject(Type.Object({ tag: NonEmptyStringSchema }), {
+      additionalProperties: false,
+    }),
+    assets: ReadonlyObject(
+      Type.Object({
         "darwin-arm64": HabitatReleaseAssetSchema,
         "linux-x64": HabitatReleaseAssetSchema,
-      },
-    ), { additionalProperties: false }),
-  },
-), { additionalProperties: false });
+      }),
+      { additionalProperties: false }
+    ),
+  }),
+  { additionalProperties: false }
+);
 
 /** @typedef {import("typebox").Static<typeof HabitatReleaseAssetSchema>} HabitatReleaseAsset */
 /** @typedef {import("typebox").Static<typeof HabitatReleaseManifestSchema>} HabitatReleaseManifest */
@@ -62,11 +67,11 @@ export const HabitatReleaseManifestSchema = ReadonlyObject(Type.Object(
 /** @param {string} filename @param {string} field */
 function requireAssetFilename(filename, field) {
   if (
-    filename === "."
-    || filename === ".."
-    || filename.includes("/")
-    || filename.includes("\\")
-    || filename.includes("\0")
+    filename === "." ||
+    filename === ".." ||
+    filename.includes("/") ||
+    filename.includes("\\") ||
+    filename.includes("\0")
   ) {
     throw new Error(`Habitat release manifest requires a basename ${field}`);
   }
@@ -96,12 +101,9 @@ export function parseReleaseManifest(value) {
     assets: Object.freeze({
       "darwin-arm64": normalizeReleaseAsset(
         value.assets["darwin-arm64"],
-        "assets.darwin-arm64.filename",
+        "assets.darwin-arm64.filename"
       ),
-      "linux-x64": normalizeReleaseAsset(
-        value.assets["linux-x64"],
-        "assets.linux-x64.filename",
-      ),
+      "linux-x64": normalizeReleaseAsset(value.assets["linux-x64"], "assets.linux-x64.filename"),
     }),
   });
 }
@@ -155,10 +157,7 @@ function releaseAssetUrl(manifest, asset) {
 
 /** @param {unknown} error */
 function isMissingPath(error) {
-  return typeof error === "object"
-    && error !== null
-    && "code" in error
-    && error.code === "ENOENT";
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }
 
 /** @param {string} filename */
@@ -178,17 +177,17 @@ async function downloadAsset(url, destination) {
   }
   await pipeline(
     Readable.fromWeb(response.body),
-    createWriteStream(destination, { flags: "wx", mode: 0o755 }),
+    createWriteStream(destination, { flags: "wx", mode: 0o755 })
   );
 }
 
 /** @param {ProvisionHabitatBinaryOptions} [options] */
 export async function provisionHabitatBinary(options = {}) {
-  const manifest = options.manifest ?? await readManifest();
+  const manifest = options.manifest ?? (await readManifest());
   const asset = selectReleaseAsset(
     manifest,
     options.platform ?? process.platform,
-    options.arch ?? process.arch,
+    options.arch ?? process.arch
   );
   const explicitBinary = options.explicitBinary ?? process.env.HABITAT_SDK_BINARY;
   if (explicitBinary !== undefined) {

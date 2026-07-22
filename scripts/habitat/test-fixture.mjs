@@ -28,9 +28,9 @@ export async function removeHabitatTestRoot(root, prefix) {
   const tempRoot = await canonicalTempRoot();
   const canonicalRoot = await realpath(root);
   if (
-    canonicalRoot !== root
-    || dirname(canonicalRoot) !== tempRoot
-    || !basename(canonicalRoot).startsWith(prefix)
+    canonicalRoot !== root ||
+    dirname(canonicalRoot) !== tempRoot ||
+    !basename(canonicalRoot).startsWith(prefix)
   ) {
     throw new Error(`Refusing unsafe Habitat fixture cleanup: ${canonicalRoot}`);
   }
