@@ -18,28 +18,26 @@ This guide targets maintainers working inside `RAWR HQ-Template`.
 6. For stack drains or cross-repository interface acceptance, follow
    [[docs/process/HQ_OPERATIONS]] and [[docs/process/CROSS_REPO_WORKFLOWS]].
 
-## Installed Controller Setup
+## CLI Development And Installation
 
-Materialize and select an immutable controller release from a clean Template
-revision:
+During the distribution transition, run the Oclif application from a clean
+Template checkout through the repository-owned script:
 
 ```bash
-./scripts/dev/install-global-rawr.sh
-rawr --version
-rawr doctor global --json
+bun run rawr -- --version
+bun run rawr -- --help
 ```
 
-Mode contract:
-- The global shim points to one stable Template-owned launcher under the controller
-  data root, never a checkout.
-- `install-global-rawr.sh` builds, verifies, installs, and selects a release.
-- `activate-global-rawr.sh <digest>` selects an already installed verified release;
-  it does not build from source.
-- A checkout, hook, alias, or Oclif link cannot become controller identity.
+The intended distribution is an ordinary Oclif CLI package built and published
+by one fixed Nx Release group. That package group is not active yet, so do not
+fabricate package metadata or treat the current workspace closure as releasable.
+Do not run the removed custom installer, selector, release store, or launcher.
+A previously installed custom distribution may remain executable, but it is
+obsolete and is not invoked, updated, or accepted as current CLI authority.
 
 ## Plugin Boundaries
 
-- Template fixtures validate controller and generic lifecycle behavior; they are not
+- Template fixtures validate official Oclif commands and generic lifecycle behavior; they are not
   personal curated content.
 - External Oclif extension management uses `rawr plugins ...` only.
 - Curated agent-plugin source and records live in personal `RAWR HQ`; their
@@ -68,7 +66,7 @@ git config core.hooksPath scripts/githooks
 ```
 
 Then `post-merge` and `post-checkout` may refresh repository dependencies. They do
-not build, activate, or relink the installed controller. `pre-push` preserves
+not publish or install the CLI. `pre-push` preserves
 the remote-identity guard and runs `bun run ratchet:required`. Nx selects the
 affected projects after an Nx-owned project-graph check proves that every
 project has exactly one `type:*` kind and every code project owns lint and

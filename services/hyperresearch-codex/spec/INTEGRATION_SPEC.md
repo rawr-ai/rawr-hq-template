@@ -80,7 +80,8 @@ The final cross-repository integration proof is gated on a versioned
 agent-plugin artifact interface. Once that interface exists, the test uses this
 split:
 
-1. Install the Hyperresearch CLI topic from an immutable RAWR HQ-Template controller release.
+1. Install the ordinary versioned `@rawr/cli` package containing the
+   Hyperresearch topic after the fixed Nx Release group lands.
 2. Obtain a personal-repository release record and immutable curated-content artifact with exact digest and interface version.
 3. Use the Template-owned agent-plugin lifecycle and provider adapter to project that artifact into an explicit disposable Codex home.
 4. Invoke the Codex Hyperresearch entry skill against a fresh vault.
@@ -92,6 +93,10 @@ must not use a personal checkout path or the external-Oclif `rawr plugins`
 channel for curated content. Until the versioned artifact/lifecycle interface
 is available, this package claims service/CLI proof only and records the
 cross-repository plugin-system proof as pending.
+
+Until the ordinary CLI package exists, repository-local service and command
+verification uses `bun run rawr -- hyperresearch ...`; it is development proof,
+not installed-package or cross-repository settlement.
 
 Hook and MCP drafts must stay in skill references until they are real, verified provider config. Do not place note-only draft material under source `hooks/` or `mcp/` directories. Current hook and MCP policy is recorded in `HOOKS_MCP_PARITY.md`, and the concrete hook proof ladder is `HOOKS_GUARDRAIL_PLAN.md`: Codex `PreToolUse` and `Stop` can become guardrails after fixture proof, missing subagent/compaction hook events are handled by durable ledger and child-session evidence, and Hyperresearch MCP writes are denied by default.
 

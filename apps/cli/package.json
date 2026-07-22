@@ -15,7 +15,6 @@
     "@oclif/plugin-plugins": "^5.4.36",
     "@orpc/client": "^1.13.5",
     "@rawr/agent-plugin-lifecycle": "workspace:*",
-    "@rawr/controller-release": "workspace:*",
     "@rawr/core": "workspace:*",
     "@rawr/dev": "workspace:*",
     "@rawr/dev-node": "workspace:*",

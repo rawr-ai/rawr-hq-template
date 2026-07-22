@@ -353,9 +353,9 @@ skill. It cannot authorize HF01 materialization or release.
 | Typechecked Habitat consumer and TypeBox release manifest | Complete on the active Template stack |
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
 | Positive Habitat/Nx ratchet | Required lifecycle topology active; broader generic live-tree policy remains task 1.5 |
-| Direct Oclif development and external extension path | Direct source/built entrypoints, app-local native extension ownership, and disposable round trip complete; controller-embedded residue pending task 4 |
+| Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Conventional CLI package/release | Bun-installed registry package selected; implementation waits for controller/state deletion and Effect 4 closure |
-| Custom controller/extension deletion | Pending |
+| Custom controller/extension deletion | Distribution, release package, installer/selector, workflow, and diagnostics deleted; lifecycle reentry/resource identity remains task 4.2b |
 | Persistent agent artifact/projection store deletion | Pending |
 | Bounded lifecycle simplification | Pending |
 | Personal content-only recut | Pending |
@@ -504,6 +504,34 @@ takes 3 minutes 16 seconds. The rejected artifact-store vertical alone takes
 87.2 seconds. This is not accepted as healthy test
 infrastructure: tasks 4 and 5 delete the custom distribution and persistent
 artifact verticals that dominate it rather than optimizing rejected machinery.
+
+The first controller-deletion checkpoint removes the complete private
+distribution: 36 controller build/selection files, the installed-release
+workflow, global install/activate wrappers, obsolete Phase C distribution gate,
+controller classification and `doctor global`, the dead release inspector and
+runtime context, and the 17-file `@rawr/controller-release` package. The release
+package had no live runtime caller after global diagnostics were removed; its
+remaining context chain was unused, so retaining it for a later bridge would
+have manufactured reachability. The agent-plugin layout now accepts only the
+plain data-root value it actually consumes.
+
+Nx now reports 46 projects and no `@rawr/controller-build` or
+`@rawr/controller-release`; the still-live
+`@rawr/resource-controller-authority` remains explicit for task 4.2b. The
+post-deletion CLI suite passes all 109 remaining tests. Uncached CLI lint and
+typecheck pass in 14.3 seconds. The source/built Oclif inventory and direct
+invocation both reject
+`doctor:global`, and the full native extension install-list-invoke-remove
+acceptance passes in 4.8 seconds within its guarded disposable root. Active
+operator guidance now uses `bun run rawr -- ...` and truthfully records the
+fixed Nx Release package group as pending. No repository release, provider home,
+Personal repository, or old global installation was mutated.
+
+This checkpoint does not claim lifecycle decoupling: the service runtime client
+still resolves controller reentry and its data root through `@rawr/core` and the
+controller-authority resource. Task 4.2b removes that live identity together
+with the persistent lifecycle roots; task 4.6 remains open until direct status
+execution is green without it.
 
 The earlier owner-qualified lifecycle dependency mega-pattern is retired rather
 than carried into the corrected ratchet. It enumerated package names, exact

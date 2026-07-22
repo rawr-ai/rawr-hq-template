@@ -3,8 +3,8 @@
 Use this runbook when you need to start, stop, inspect, or debug the managed local HQ runtime.
 
 Related docs:
-- `docs/process/HQ_USAGE.md`
-- `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md`
+- [[docs/process/HQ_USAGE]]
+- [[docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW]]
 
 ## Scope
 
@@ -44,15 +44,15 @@ Telemetry subsystem docs and proof-lane runbooks are quarantined. Mine them thro
 
 Start the managed HQ runtime:
 ```bash
-rawr hq up --observability required
+bun run rawr -- hq up --observability required
 ```
 
 Canonical lifecycle controls:
 ```bash
-rawr hq status
-rawr hq attach
-rawr hq restart
-rawr hq down
+bun run rawr -- hq status
+bun run rawr -- hq attach
+bun run rawr -- hq restart
+bun run rawr -- hq down
 ```
 
 Use `--observability auto` only when you intentionally want HQ to degrade cleanly without the managed HyperDX stack.
@@ -80,22 +80,24 @@ The managed runtime contract is backed by:
 - `.rawr/hq/status.json`
 - `.rawr/hq/runtime.log`
 
-`rawr hq status --json` writes `.rawr/hq/status.json`.
+`bun run rawr -- hq status --json` writes `.rawr/hq/status.json`.
 
-## Controller Provenance Failures
+## CLI Command Resolution
 
-If an official `hq` command is missing or its stack resolves through a checkout,
-stop. Official commands must come from one verified installed controller and are
-never repaired through Oclif user state.
+During the distribution transition, official commands run from the Template
+checkout through the repository-owned Oclif script:
 
 ```bash
-rawr doctor global --json
-command -v rawr
+bun run rawr -- --version
+bun run rawr -- hq status
 ```
 
-Build/select a verified release with `scripts/dev/install-global-rawr.sh` when the
-installed controller is absent. Do not link `@rawr/cli`, relink official plugins,
-or point the global command at a source checkout.
+If an official `hq` command is missing there, verify the owning Nx build and Oclif
+composition instead of repairing it through Oclif user state. The conventional
+fixed Nx Release package group and ordinary installed CLI are pending. Do not run
+the removed custom installer or selector. A previously installed custom
+distribution may remain executable, but it is obsolete and is not invoked,
+updated, or used for acceptance.
 
 ## Browser Behavior
 
@@ -111,21 +113,21 @@ Current behavior:
 - HQ reuses and focuses an existing HQ browser context when possible.
 - Inngest, HyperDX, and Nx Graph launchers live in the shell sidebar.
 - utility surfaces open only as needed
-- `rawr hq graph` opens Nx Graph on demand; it is not part of runtime health
+- `bun run rawr -- hq graph` opens Nx Graph on demand; it is not part of runtime health
 
 Examples:
 ```bash
-RAWR_HQ_OPEN=none rawr hq up
-RAWR_HQ_OBSERVABILITY=required rawr hq up
-rawr hq restart --open all --observability auto
-rawr hq graph
+RAWR_HQ_OPEN=none bun run rawr -- hq up
+RAWR_HQ_OBSERVABILITY=required bun run rawr -- hq up
+bun run rawr -- hq restart --open all --observability auto
+bun run rawr -- hq graph
 ```
 
 ## Basic Runtime Checks
 
 1. Confirm runtime status and artifact write:
 ```bash
-rawr hq status --json
+bun run rawr -- hq status --json
 ```
 Expected:
 - `summary` is present
@@ -148,7 +150,7 @@ Expected: `200` response from the Inngest serve handler.
 
 4. Tail correlated runtime logs:
 ```bash
-rawr hq attach
+bun run rawr -- hq attach
 ```
 
 ## Debug Surfaces

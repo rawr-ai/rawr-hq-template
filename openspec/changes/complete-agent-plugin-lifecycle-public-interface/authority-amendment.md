@@ -109,7 +109,7 @@ identity, release identity, or Git ancestry between repositories.
 ```text
 RAWR HQ-Template source
   -> Nx build and release
-  -> registry-published Oclif package requiring installed Bun, or Oclif standalone package
+  -> registry-published Oclif application package group requiring installed Bun
   -> normal installer exposes `rawr`
      -> `rawr plugins` delegates to @oclif/plugin-plugins
      -> `rawr agent plugins` calls one oRPC lifecycle service
@@ -123,17 +123,17 @@ RAWR HQ-Template source
 ```
 
 Development uses the same Oclif application through Nx without an installed
-controller. Packaging may initially require Bun because existing first-party
-runtime code uses Bun-only APIs. That is a bounded release decision: either ship
-a registry-published Oclif package whose executable requires installed Bun, or
-remove those runtime dependencies before using Oclif's Node-bearing standalone
-archives. It does not authorize another selector or version store.
+controller. This release uses a fixed Nx Release package group whose executable
+requires installed Bun because surviving first-party runtime code uses Bun-only
+APIs. Oclif's Node-bearing standalone archives and whole-application Bun
+compilation are outside this workstream. The selected package group does not
+authorize another selector or version store.
 
 ## Component Disposition
 
 | Component | Disposition |
 | --- | --- |
-| `scripts/controller/**` | Delete after conventional CLI smoke verification |
+| `scripts/controller/**` | Delete after direct source/built Oclif equivalence and native extension acceptance |
 | `packages/controller-release/**` | Delete |
 | `resources/controller-authority/**` | Delete; rehome only narrow surviving checks at their actual owner |
 | `apps/cli/src/lib/controller/**` | Delete |
@@ -226,9 +226,11 @@ release, or mutate HF01 candidate bytes.
 
 ## Execution Rule
 
-The next durable changes follow [[tasks]]. First land this correction, then the
-positive Habitat/Nx ratchet, then conventional Oclif execution and packaging,
-then delete the superseded distribution and extension systems, then simplify
-the lifecycle service and Personal records. No provider or repository release
-mutation occurs until the replacement path is landed and its owning behavior
-checks pass.
+The next durable changes follow [[tasks]]. First land this correction and the
+positive Habitat/Nx ratchet, then restore conventional Oclif execution and native
+extension management. Inventory the release form, delete the superseded
+distribution and persistent lifecycle state, migrate the surviving resource
+family to Effect 4, and only then package the actual surviving runtime closure.
+Simplify Personal records after the ordinary CLI release lands. No provider or
+repository release mutation occurs until the replacement path is landed and its
+owning behavior checks pass.

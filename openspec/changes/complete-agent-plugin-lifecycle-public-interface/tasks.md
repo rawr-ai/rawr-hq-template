@@ -103,7 +103,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 - [x] 2.1 Restore `apps/cli/bin/run.js` and `apps/cli/src/index.ts` as ordinary
   Oclif entrypoints. Development and built invocation must discover the same
   core command set without controller environment variables.
-- [ ] 2.2 Complete direct `@oclif/plugin-plugins` ownership across the installed
+- [x] 2.2 Complete direct `@oclif/plugin-plugins` ownership across the installed
   Oclif app by closing both bounded deletion subtasks below. Do not adapt
   rejected controller-distribution copies merely to make this parent checkbox
   true early.
@@ -111,7 +111,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   wrappers, bootstrap, protocol, registry reconstruction, sandbox, recovery
   code, tests, and custom doctor projection. Preserve CLI extension source
   authoring as a separate non-mutating capability.
-- [ ] 2.2b Delete the remaining custom-manager copies embedded in the rejected
+- [x] 2.2b Delete the remaining custom-manager copies embedded in the rejected
   controller distribution with task 4. Do not adapt that distribution to the
   new native app path merely to close this task early.
 - [x] 2.3 Normalize TypeScript and compiled command roots for the CLI app and
@@ -195,21 +195,21 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   data root.
 - [ ] 4.2 Delete the custom controller in two independently green Graphite
   nodes; do not combine distribution deletion with lifecycle context changes.
-- [ ] 4.2a Delete `scripts/controller/**`, `packages/controller-release/**`, the
-  controller publication workflow, controller-only CLI classification and
-  release-inspection commands/tests, root build/dependency wiring, and obsolete
-  architecture gates. Preserve no embedded copy of the custom extension manager.
-- [ ] 4.2b Delete `resources/controller-authority/**`,
+- [x] 4.2a Delete `scripts/controller/**`, the controller publication workflow,
+  `packages/controller-release/**`, controller-only CLI classification,
+  diagnostics, and dead release inspection/context, root build/dependency wiring,
+  and obsolete architecture gates. Preserve no embedded copy of the custom
+  extension manager.
+- [ ] 4.2b Delete `resources/controller-authority/**`, the remaining
   `apps/cli/src/lib/controller/**`, and
   `packages/core/src/cli/controller-reentry.ts` with every lifecycle reader,
   writer, context field, export, dependency, and test. This node may compose with
   task 5.5 only where the same reader genuinely owns both rejected identities.
-- [ ] 4.3 Replace controller installation, activation, selection, and rollback
+- [x] 4.3 Replace controller installation, activation, selection, and rollback
   guidance with the conventional package/release/install path. The workflow and
   script deletion itself belongs to task 4.2a.
-- [ ] 4.4 Delete obsolete controller-specific diagnostics. `doctor global`, if retained, reports the
-  installed CLI version/path, Oclif directories, loaded plugins, and provider
-  reachability only.
+- [x] 4.4 Delete obsolete controller-specific diagnostics. Do not replace
+  `doctor global` with another distribution authority read model.
 - [ ] 4.5 Remove controller requirements from active and
   canonical specifications. Do not add compatibility aliases or scan old local
   controller stores.

@@ -23,7 +23,6 @@
         "@getgrit/cli": "0.1.0-alpha.1743007075",
         "@nx/eslint-plugin": "23.1.0",
         "@rawr/agent-plugin-lifecycle": "workspace:*",
-        "@rawr/controller-release": "workspace:*",
         "@types/node": "^22.14.0",
         "@typescript-eslint/parser": "^8.57.1",
         "@vitest/ui": "^4.0.18",
@@ -50,7 +49,6 @@
         "@oclif/plugin-plugins": "^5.4.36",
         "@orpc/client": "^1.13.5",
         "@rawr/agent-plugin-lifecycle": "workspace:*",
-        "@rawr/controller-release": "workspace:*",
         "@rawr/core": "workspace:*",
         "@rawr/dev": "workspace:*",
         "@rawr/dev-node": "workspace:*",
@@ -143,12 +141,6 @@
     },
     "packages/bootgraph": {
       "name": "@rawr/bootgraph",
-      "devDependencies": {
-        "typescript": "^5.9.3",
-      },
-    },
-    "packages/controller-release": {
-      "name": "@rawr/controller-release",
       "devDependencies": {
         "typescript": "^5.9.3",
       },
@@ -1311,8 +1303,6 @@
     "@rawr/chatgpt-corpus": ["@rawr/chatgpt-corpus@workspace:services/chatgpt-corpus"],
 
     "@rawr/cli": ["@rawr/cli@workspace:apps/cli"],
-
-    "@rawr/controller-release": ["@rawr/controller-release@workspace:packages/controller-release"],
 
     "@rawr/core": ["@rawr/core@workspace:packages/core"],
 
