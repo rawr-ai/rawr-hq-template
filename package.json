@@ -54,6 +54,9 @@
     "habitat": "bun scripts/habitat/check.mjs",
     "habitat:provision": "bun scripts/habitat/provision.mjs",
     "habitat:grit:provision": "bun node_modules/@getgrit/cli/install.js",
+    "format": "bunx nx run @rawr/habitat-consumer:format",
+    "lint:biome": "bunx nx run @rawr/habitat-consumer:lint:biome",
+    "lint:effect": "bunx nx run @rawr/habitat-consumer:lint:effect",
     "ratchet:required": "bun run lint && bun run typecheck && bun run habitat:grit:provision && bunx nx run @rawr/habitat-consumer:test && bun run architecture:gate:repository-separation && bunx nx run @rawr/agent-plugin-lifecycle:check",
     "architecture:gate:no-old-operational-packages": "bun scripts/architecture/verify-no-old-operational-packages.mjs",
     "architecture:gate:no-legacy-hq-imports": "bun scripts/architecture/verify-no-legacy-hq-imports.mjs",
@@ -201,8 +204,12 @@
     "@getgrit/cli"
   ],
   "overrides": {
+    "@biomejs/biome": "2.5.3",
     "npm": "11.9.0",
     "tar": "7.5.7"
+  },
+  "patchedDependencies": {
+    "@catenarycloud/linteffect@0.0.6": "patches/@catenarycloud%2Flinteffect@0.0.6.patch"
   },
   "dependencies": {
     "@orpc/contract": "^1.13.5",
@@ -216,6 +223,8 @@
     "typebox": "1.3.6"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.3",
+    "@catenarycloud/linteffect": "0.0.6",
     "@effect/platform": "0.96.1",
     "@effect/platform-node": "0.107.0",
     "@getgrit/cli": "0.1.0-alpha.1743007075",
