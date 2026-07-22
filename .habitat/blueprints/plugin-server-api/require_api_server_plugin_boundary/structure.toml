@@ -1,0 +1,27 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "api-server-plugin-packages"
+root = "plugins/server/api/!(*.*)"
+kind = "directory"
+mode = "closed"
+required = [
+  "project.json",
+  "src",
+]
+allowed = [
+  "AGENTS.md",
+  "test",
+]
+
+[[scopes]]
+name = "api-server-plugin-public-faces"
+root = "plugins/server/api/!(*.*)/src"
+kind = "directory"
+mode = "closed"
+required = [
+  "client.ts",
+  "server.ts",
+  "service",
+]
+allowed = []

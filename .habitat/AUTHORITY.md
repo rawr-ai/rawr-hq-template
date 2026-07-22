@@ -1,28 +1,29 @@
-# Authority Boundary
+# Habitat Authority Boundary
 
-RAWR HQ-Template owns the constraints in this directory. The external Habitat
-binary owns only read-only evaluation mechanics. The lifecycle changeset owns
-the execution record, while the accepted architecture and lifecycle design own
-product behavior.
+RAWR HQ-Template owns the constraints in this directory. The pinned Habitat
+binary owns read-only evaluation mechanics; it does not own repository
+architecture or product behavior.
 
-This tree narrows three structural axes:
+This tree narrows reusable package kinds through positive structure and source
+relationships:
 
-1. Curated lifecycle behavior has one oRPC service with five domain modules,
-   one uniform module shell, and closed model categories where domain matter
-   is already populated.
-2. Curated and external plugin commands occupy distinct closed namespaces.
-3. Service code depends on resource contracts rather than concrete providers or
-   controller implementation. The reachable CLI runtime projection is closed
-   around declared bindings, release construction, native-provider testing and
-   convergence, and current-main selection. Concrete provider construction
-   remains outside the semantic service, where filesystem or process mechanics
-   cannot accumulate.
+1. A `service` has one contract-first oRPC spine, module-owned domain matter,
+   native context projection, and one router lineage.
+2. An API server plugin adds one public client/server pair around an embedded
+   service while its application host retains transport ownership.
+3. Each admitted package root has one concise `AGENTS.md` operator router with
+   stable orientation anchors and repository-relative routes.
 
-The rules do not govern application composition, provider behavior, repository
-promotion mechanics, or content-repository ancestry. Extending one of those
-areas requires its own authority rather than an expansion of this tree.
+Blueprints constrain monotonic structural axes shared by packages of a kind.
+They do not encode product inventories, retired names, historical migration
+state, or one lifecycle service's current file list. Behavior, caller
+compatibility, package admission, and provider effects remain with their
+qualified owners and tests.
 
-See [[README|the packet index]],
-[[openspec/changes/archive/2026-07-18-retire-mixed-plugin-lifecycle/README|the archived C5 execution record]],
-[[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec|the canonical system overview]],
-and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the runtime service boundary]].
+Rules under `.habitat/rawr/agent-plugin-lifecycle` remain qualified lifecycle
+constraints rather than generic blueprints. They currently preserve the
+curated command channel and service-to-resource dependency direction and will
+shrink with the implementation instead of being generalized into package law.
+
+See [[README|the Habitat blueprint index]], [[AGENTS|the repository router]],
+and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the service runtime boundary]].

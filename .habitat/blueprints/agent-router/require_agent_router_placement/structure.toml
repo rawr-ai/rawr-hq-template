@@ -1,0 +1,71 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "workspace-package-router"
+root = "."
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "application-package-routers"
+root = "apps/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "service-package-routers"
+root = "services/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "api-server-plugin-package-routers"
+root = "plugins/server/api/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "workflow-plugin-package-routers"
+root = "plugins/async/workflows/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "generic-package-routers"
+root = "packages/!(*.*|adapters)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "adapter-package-routers"
+root = "packages/adapters/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "resource-package-routers"
+root = "resources/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "provider-package-routers"
+root = "resources/!(*.*)/providers/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "tool-package-routers"
+root = "tools/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
