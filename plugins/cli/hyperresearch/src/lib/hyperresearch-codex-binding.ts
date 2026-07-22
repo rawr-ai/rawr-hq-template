@@ -1,8 +1,4 @@
-import {
-  createClient,
-  type Client,
-  type CreateClientOptions,
-} from "@rawr/hyperresearch-codex";
+import { createClient, type Client, type CreateClientOptions } from "@rawr/hyperresearch-codex";
 import type { HyperresearchCliBackend } from "@rawr/hyperresearch-codex/resources";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
@@ -67,8 +63,9 @@ export function createHyperresearchCodexClientForBackend(input: {
 }): Client {
   return createHyperresearchCodexClient({
     repoRoot: input.repoRoot,
-    cli: input.backend === "fixture"
-      ? new FixtureHyperresearchCliBackend()
-      : new NodeHyperresearchCliBackend(),
+    cli:
+      input.backend === "fixture"
+        ? new FixtureHyperresearchCliBackend()
+        : new NodeHyperresearchCliBackend(),
   });
 }

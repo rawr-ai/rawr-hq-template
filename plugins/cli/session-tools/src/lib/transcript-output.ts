@@ -1,4 +1,9 @@
-import { chunkMessages, formatTranscript, formatTranscriptMessagesOnly, writeTranscriptFileName } from "./format";
+import {
+  chunkMessages,
+  formatTranscript,
+  formatTranscriptMessagesOnly,
+  writeTranscriptFileName,
+} from "./format";
 import type { ExtractedSession, OutputFormat } from "./session-types";
 
 export type TranscriptOutput = {
@@ -24,7 +29,7 @@ export function buildTranscriptOutputs(input: {
       const content = formatTranscriptMessagesOnly(
         { ...extracted, messages: chunk, messageCount: chunk.length },
         format,
-        { includeHeader: true, chunkTitle },
+        { includeHeader: true, chunkTitle }
       );
       outputs.push({ name: writeTranscriptFileName(format, i + 1), content });
     }
@@ -39,7 +44,7 @@ export function buildTranscriptOutputs(input: {
       const content = formatTranscriptMessagesOnly(
         { ...extracted, messages: chunk, messageCount: chunk.length },
         format,
-        { includeHeader: i === 0, chunkTitle },
+        { includeHeader: i === 0, chunkTitle }
       );
       parts.push(content.trimEnd());
     }
@@ -47,7 +52,9 @@ export function buildTranscriptOutputs(input: {
     return outputs;
   }
 
-  outputs.push({ name: writeTranscriptFileName(format), content: `${formatTranscript(extracted, format)}\n` });
+  outputs.push({
+    name: writeTranscriptFileName(format),
+    content: `${formatTranscript(extracted, format)}\n`,
+  });
   return outputs;
 }
-

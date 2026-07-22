@@ -12,7 +12,11 @@ async function createWorkspaceRoot(name: string): Promise<string> {
   tempDirs.push(tempRoot);
   const workspaceRoot = path.join(tempRoot, "repo");
   await fs.mkdir(path.join(workspaceRoot, "plugins"), { recursive: true });
-  await fs.writeFile(path.join(workspaceRoot, "package.json"), JSON.stringify({ private: true }, null, 2), "utf8");
+  await fs.writeFile(
+    path.join(workspaceRoot, "package.json"),
+    JSON.stringify({ private: true }, null, 2),
+    "utf8"
+  );
   return workspaceRoot;
 }
 
@@ -24,7 +28,10 @@ async function createPlainDir(name: string): Promise<string> {
   return dir;
 }
 
-async function withEnv<T>(env: Record<string, string | undefined>, fn: () => Promise<T>): Promise<T> {
+async function withEnv<T>(
+  env: Record<string, string | undefined>,
+  fn: () => Promise<T>
+): Promise<T> {
   const previous = Object.fromEntries(Object.keys(env).map((key) => [key, process.env[key]]));
   try {
     for (const [key, value] of Object.entries(env)) {
@@ -59,7 +66,9 @@ describe("findWorkspaceRoot", () => {
     const hqRoot = await createWorkspaceRoot("rawr-core-hq-root");
 
     await expect(
-      withEnv({ RAWR_WORKSPACE_ROOT: workspaceRoot, RAWR_HQ_ROOT: hqRoot }, () => findWorkspaceRoot(path.join(hqRoot, "plugins"))),
+      withEnv({ RAWR_WORKSPACE_ROOT: workspaceRoot, RAWR_HQ_ROOT: hqRoot }, () =>
+        findWorkspaceRoot(path.join(hqRoot, "plugins"))
+      )
     ).resolves.toBe(workspaceRoot);
   });
 
@@ -67,7 +76,9 @@ describe("findWorkspaceRoot", () => {
     const workspaceRoot = await createWorkspaceRoot("rawr-core-hq-only");
 
     await expect(
-      withEnv({ RAWR_WORKSPACE_ROOT: undefined, RAWR_HQ_ROOT: workspaceRoot }, () => findWorkspaceRoot(os.tmpdir())),
+      withEnv({ RAWR_WORKSPACE_ROOT: undefined, RAWR_HQ_ROOT: workspaceRoot }, () =>
+        findWorkspaceRoot(os.tmpdir())
+      )
     ).resolves.toBe(workspaceRoot);
   });
 
@@ -76,14 +87,20 @@ describe("findWorkspaceRoot", () => {
     const nested = path.join(workspaceRoot, "plugins", "cli", "demo", "src");
     await fs.mkdir(nested, { recursive: true });
 
-    await expect(withEnv({ RAWR_WORKSPACE_ROOT: undefined, RAWR_HQ_ROOT: undefined }, () => findWorkspaceRoot(nested))).resolves.toBe(
-      workspaceRoot,
-    );
+    await expect(
+      withEnv({ RAWR_WORKSPACE_ROOT: undefined, RAWR_HQ_ROOT: undefined }, () =>
+        findWorkspaceRoot(nested)
+      )
+    ).resolves.toBe(workspaceRoot);
   });
 
   it("returns null when no workspace root is found", async () => {
     const plain = await createPlainDir("rawr-core-no-root");
 
-    await expect(withEnv({ RAWR_WORKSPACE_ROOT: undefined, RAWR_HQ_ROOT: undefined }, () => findWorkspaceRoot(plain))).resolves.toBeNull();
+    await expect(
+      withEnv({ RAWR_WORKSPACE_ROOT: undefined, RAWR_HQ_ROOT: undefined }, () =>
+        findWorkspaceRoot(plain)
+      )
+    ).resolves.toBeNull();
   });
 });

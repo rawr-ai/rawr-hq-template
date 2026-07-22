@@ -54,14 +54,12 @@ export function createBareImplementer<
   TContext extends ExecutionContext<BaseDeps, object, object, object>,
 >(contract: TContract) {
   if (isContractProcedure(contract)) {
-    return createBareProcedureImplementer<
-      Extract<TContract, AnyContractProcedure>,
-      TContext
-    >(contract as Extract<TContract, AnyContractProcedure>);
+    return createBareProcedureImplementer<Extract<TContract, AnyContractProcedure>, TContext>(
+      contract as Extract<TContract, AnyContractProcedure>
+    );
   }
 
-  return createBareRouterImplementer<
-    Extract<TContract, AnyContractRouterObject>,
-    TContext
-  >(contract as Extract<TContract, AnyContractRouterObject>);
+  return createBareRouterImplementer<Extract<TContract, AnyContractRouterObject>, TContext>(
+    contract as Extract<TContract, AnyContractRouterObject>
+  );
 }

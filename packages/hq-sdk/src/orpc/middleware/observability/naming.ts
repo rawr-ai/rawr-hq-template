@@ -4,7 +4,7 @@ import type { ObservabilityFields } from "./types";
 
 export function prefixAttributes(
   prefix: string,
-  fields: ObservabilityFields | undefined,
+  fields: ObservabilityFields | undefined
 ): Attributes {
   const attributes: Attributes = {};
 

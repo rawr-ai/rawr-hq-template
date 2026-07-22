@@ -40,7 +40,10 @@ async function listFiles(dirPath: string, extension: string): Promise<string[]> 
   }
 }
 
-async function writeManagedFile(filePath: string, contents: string): Promise<"created" | "existing"> {
+async function writeManagedFile(
+  filePath: string,
+  contents: string
+): Promise<"created" | "existing"> {
   const existed = await pathExists(filePath);
   if (existed) {
     const current = await fs.readFile(filePath, "utf8");
@@ -87,13 +90,13 @@ export function createFilesystemWorkspaceStore(): WorkspaceStore {
           conversationPaths.map(async (absolutePath) => ({
             relativePath: toRelativePath(workspaceRef, absolutePath),
             contents: await fs.readFile(absolutePath, "utf8"),
-          })),
+          }))
         ),
         documents: await Promise.all(
           documentPaths.map(async (absolutePath) => ({
             relativePath: toRelativePath(workspaceRef, absolutePath),
             contents: await fs.readFile(absolutePath, "utf8"),
-          })),
+          }))
         ),
       };
     },

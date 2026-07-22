@@ -1,5 +1,15 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { chmod, lstat, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -8,7 +18,10 @@ import { SystemError } from "@effect/platform/Error";
 import { NodeContext } from "@effect/platform-node";
 import { Effect, Exit } from "effect";
 
-import type { ArtifactObjectAddress, ArtifactTreeLocation } from "@rawr/resource-agent-plugin-artifact-repository";
+import type {
+  ArtifactObjectAddress,
+  ArtifactTreeLocation,
+} from "@rawr/resource-agent-plugin-artifact-repository";
 import {
   makeArtifactRepositoryResource,
   runNodeArtifactRepository,
@@ -22,11 +35,11 @@ afterEach(async () => {
   for (const root of roots.splice(0)) {
     const status = await lstat(root);
     if (
-      path.dirname(root) !== canonicalTemp
-      || !path.basename(root).startsWith("rawr-native-provider-test-")
-      || !status.isDirectory()
-      || status.isSymbolicLink()
-      || await realpath(root) !== root
+      path.dirname(root) !== canonicalTemp ||
+      !path.basename(root).startsWith("rawr-native-provider-test-") ||
+      !status.isDirectory() ||
+      status.isSymbolicLink() ||
+      (await realpath(root)) !== root
     ) {
       throw new Error(`Refusing to remove unexpected test root: ${root}`);
     }
@@ -39,31 +52,41 @@ describe("claude-effect-platform-node", () => {
     const fixture = await makeFixture();
     const marketplace = await publishMarketplace(fixture.root, "claude-marketplace");
     await writeFile(path.join(fixture.home, "expected-marketplace-source"), `${marketplace}\n`);
-    await writeProviderJson(fixture.home, "claude-marketplaces.json", [{
-      name: "rawr-hq",
-      source: "directory",
-      path: marketplace,
-      installLocation: marketplace,
-    }]);
+    await writeProviderJson(fixture.home, "claude-marketplaces.json", [
+      {
+        name: "rawr-hq",
+        source: "directory",
+        path: marketplace,
+        installLocation: marketplace,
+      },
+    ]);
     const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
 
     const probe = await Effect.runPromise(session.probe());
     expect(probe.pluginCommands).toEqual(["disable", "enable", "install", "list", "uninstall"]);
     expect(probe.marketplaceCommands).toEqual(["add", "list", "remove"]);
-    expect((await Effect.runPromise(session.listMarketplaces())).json).toEqual([{
-      name: "rawr-hq",
-      source: "directory",
-      path: marketplace,
-      installLocation: marketplace,
-    }]);
+    expect((await Effect.runPromise(session.listMarketplaces())).json).toEqual([
+      {
+        name: "rawr-hq",
+        source: "directory",
+        path: marketplace,
+        installLocation: marketplace,
+      },
+    ]);
     expect((await Effect.runPromise(session.listPlugins())).json).toEqual({ installed: [] });
-    expect((await Effect.runPromise(session.readMarketplace({
-      identity: "rawr-hq",
-      maxEntries: 4,
-      maxBytes: 1024,
-    }))).entries.map((entry) => entry.path)).toEqual(["marketplace.json"]);
+    expect(
+      (
+        await Effect.runPromise(
+          session.readMarketplace({
+            identity: "rawr-hq",
+            maxEntries: 4,
+            maxBytes: 1024,
+          })
+        )
+      ).entries.map((entry) => entry.path)
+    ).toEqual(["marketplace.json"]);
     await Effect.runPromise(session.addMarketplace(marketplace));
     await Effect.runPromise(session.removeMarketplace({ identity: "rawr-hq" }));
     await Effect.runPromise(session.installPlugin({ selector: "demo@rawr-hq" }));
@@ -87,44 +110,55 @@ describe("claude-effect-platform-node", () => {
 
   it("reads raw configuration and the uniquely selected bounded plugin cache", async () => {
     const fixture = await makeFixture();
-    await writeFile(path.join(fixture.home, "settings.json"), '{"enabledPlugins":{"demo@rawr-hq":true}}');
+    await writeFile(
+      path.join(fixture.home, "settings.json"),
+      '{"enabledPlugins":{"demo@rawr-hq":true}}'
+    );
     const packageRoot = path.join(fixture.home, "plugins", "cache", "rawr-hq", "demo", "1.0.0");
     await mkdir(packageRoot, { recursive: true });
     await writeFile(path.join(packageRoot, "README.md"), "readme\n", { mode: 0o644 });
     await writeFile(path.join(packageRoot, "plugin.json"), "{}\n", { mode: 0o644 });
-    await writeProviderJson(fixture.home, "claude-installed.json", [{
-      id: "demo@rawr-hq",
-      version: "1.0.0",
-      scope: "user",
-      enabled: true,
-      installPath: packageRoot,
-    }]);
+    await writeProviderJson(fixture.home, "claude-installed.json", [
+      {
+        id: "demo@rawr-hq",
+        version: "1.0.0",
+        scope: "user",
+        enabled: true,
+        installPath: packageRoot,
+      },
+    ]);
     const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
 
     expect(await Effect.runPromise(session.readConfiguration())).toEqual({
       enabledPlugins: { "demo@rawr-hq": true },
     });
-    const observed = await Effect.runPromise(session.readPlugin({
-      selector: "demo@rawr-hq",
-      maxEntries: 2,
-      maxBytes: 16,
-    }));
+    const observed = await Effect.runPromise(
+      session.readPlugin({
+        selector: "demo@rawr-hq",
+        maxEntries: 2,
+        maxBytes: 16,
+      })
+    );
     expect(observed.entries.map((entry) => entry.path)).toEqual(["README.md", "plugin.json"]);
 
-    const entryOverflow = await Effect.runPromiseExit(session.readPlugin({
-      selector: "demo@rawr-hq",
-      maxEntries: 1,
-      maxBytes: 1024,
-    }));
+    const entryOverflow = await Effect.runPromiseExit(
+      session.readPlugin({
+        selector: "demo@rawr-hq",
+        maxEntries: 1,
+        maxBytes: 1024,
+      })
+    );
     expect(failureReason(entryOverflow)).toBe("LimitExceeded");
 
-    const byteOverflow = await Effect.runPromiseExit(session.readPlugin({
-      selector: "demo@rawr-hq",
-      maxEntries: 2,
-      maxBytes: 1,
-    }));
+    const byteOverflow = await Effect.runPromiseExit(
+      session.readPlugin({
+        selector: "demo@rawr-hq",
+        maxEntries: 2,
+        maxBytes: 1,
+      })
+    );
     expect(Exit.isFailure(byteOverflow)).toBe(true);
     if (Exit.isFailure(byteOverflow)) {
       const failure = byteOverflow.cause._tag === "Fail" ? byteOverflow.cause.error : undefined;
@@ -134,11 +168,13 @@ describe("claude-effect-platform-node", () => {
     const target = path.join(fixture.root, "aliased-plugin-file");
     await writeFile(target, "not admitted\n");
     await symlink(target, path.join(packageRoot, "alias"));
-    const unsupported = await Effect.runPromiseExit(session.readPlugin({
-      selector: "demo@rawr-hq",
-      maxEntries: 4,
-      maxBytes: 1024,
-    }));
+    const unsupported = await Effect.runPromiseExit(
+      session.readPlugin({
+        selector: "demo@rawr-hq",
+        maxEntries: 4,
+        maxBytes: 1024,
+      })
+    );
     expect(failureReason(unsupported)).toBe("UnsupportedEntry");
   });
 
@@ -148,14 +184,16 @@ describe("claude-effect-platform-node", () => {
     await mkdir(path.join(packageRoot, "first", "second", "overflow"), { recursive: true });
     await writeProviderJson(fixture.home, "claude-installed.json", [installedPlugin(packageRoot)]);
     const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
 
-    const overflow = await Effect.runPromiseExit(session.readPlugin({
-      selector: "demo@rawr-hq",
-      maxEntries: 2,
-      maxBytes: 1024,
-    }));
+    const overflow = await Effect.runPromiseExit(
+      session.readPlugin({
+        selector: "demo@rawr-hq",
+        maxEntries: 2,
+        maxBytes: 1024,
+      })
+    );
 
     expect(failureReason(overflow)).toBe("LimitExceeded");
   });
@@ -168,25 +206,29 @@ describe("claude-effect-platform-node", () => {
     await writeFile(oversizedFile, "oversized\n");
     await writeProviderJson(fixture.home, "claude-installed.json", [installedPlugin(packageRoot)]);
     let packageReadCount = 0;
-    const session = await Effect.runPromise(Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem;
-      const observed: FileSystem.FileSystem = {
-        ...fs,
-        readFile: (candidate) => {
-          if (candidate === oversizedFile) packageReadCount += 1;
-          return fs.readFile(candidate);
-        },
-      };
-      return yield* claudeEffectPlatformNodeProvider.acquire(fixture).pipe(
-        Effect.provideService(FileSystem.FileSystem, observed),
-      );
-    }).pipe(Effect.provide(NodeContext.layer)));
+    const session = await Effect.runPromise(
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem;
+        const observed: FileSystem.FileSystem = {
+          ...fs,
+          readFile: (candidate) => {
+            if (candidate === oversizedFile) packageReadCount += 1;
+            return fs.readFile(candidate);
+          },
+        };
+        return yield* claudeEffectPlatformNodeProvider
+          .acquire(fixture)
+          .pipe(Effect.provideService(FileSystem.FileSystem, observed));
+      }).pipe(Effect.provide(NodeContext.layer))
+    );
 
-    const overflow = await Effect.runPromiseExit(session.readPlugin({
-      selector: "demo@rawr-hq",
-      maxEntries: 1,
-      maxBytes: 1,
-    }));
+    const overflow = await Effect.runPromiseExit(
+      session.readPlugin({
+        selector: "demo@rawr-hq",
+        maxEntries: 1,
+        maxBytes: 1,
+      })
+    );
 
     expect(failureReason(overflow)).toBe("LimitExceeded");
     expect(packageReadCount).toBe(0);
@@ -200,23 +242,27 @@ describe("claude-effect-platform-node", () => {
     await writeFile(path.join(outside, "plugin.json"), "{}\n");
     await writeFile(unsupported, "not a directory\n");
     const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
 
     await writeProviderJson(fixture.home, "claude-installed.json", [installedPlugin(outside)]);
-    const escaped = await Effect.runPromiseExit(session.readPlugin({
-      selector: "demo@rawr-hq",
-      maxEntries: 4,
-      maxBytes: 1024,
-    }));
+    const escaped = await Effect.runPromiseExit(
+      session.readPlugin({
+        selector: "demo@rawr-hq",
+        maxEntries: 4,
+        maxBytes: 1024,
+      })
+    );
     expect(failureReason(escaped)).toBe("Aliased");
 
     await writeProviderJson(fixture.home, "claude-installed.json", [installedPlugin(unsupported)]);
-    const wrongShape = await Effect.runPromiseExit(session.readPlugin({
-      selector: "demo@rawr-hq",
-      maxEntries: 4,
-      maxBytes: 1024,
-    }));
+    const wrongShape = await Effect.runPromiseExit(
+      session.readPlugin({
+        selector: "demo@rawr-hq",
+        maxEntries: 4,
+        maxBytes: 1024,
+      })
+    );
     expect(failureReason(wrongShape)).toBe("UnsupportedEntry");
   });
 
@@ -224,14 +270,16 @@ describe("claude-effect-platform-node", () => {
     const fixture = await makeFixture();
     const marketplace = await publishMarketplace(fixture.root, "claude-ambiguous");
     const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
 
-    const missing = await Effect.runPromiseExit(session.readMarketplace({
-      identity: "rawr-hq",
-      maxEntries: 4,
-      maxBytes: 1024,
-    }));
+    const missing = await Effect.runPromiseExit(
+      session.readMarketplace({
+        identity: "rawr-hq",
+        maxEntries: 4,
+        maxBytes: 1024,
+      })
+    );
     expect(failureReason(missing)).toBe("Missing");
 
     const entry = Object.freeze({
@@ -241,18 +289,20 @@ describe("claude-effect-platform-node", () => {
       installLocation: marketplace,
     });
     await writeProviderJson(fixture.home, "claude-marketplaces.json", [entry, entry]);
-    const ambiguous = await Effect.runPromiseExit(session.readMarketplace({
-      identity: "rawr-hq",
-      maxEntries: 4,
-      maxBytes: 1024,
-    }));
+    const ambiguous = await Effect.runPromiseExit(
+      session.readMarketplace({
+        identity: "rawr-hq",
+        maxEntries: 4,
+        maxBytes: 1024,
+      })
+    );
     expect(failureReason(ambiguous)).toBe("ProtocolFailed");
   });
 
   it("rechecks the ownership slot before starting a Claude command", async () => {
     const fixture = await makeFixture();
     const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
     await writeFile(path.join(fixture.home, ".rawr-agent-plugin-owner.json"), "occupied\n");
 
@@ -265,30 +315,37 @@ describe("claude-effect-platform-node", () => {
   it("maps an unreadable ownership slot to a collision before native execution", async () => {
     const fixture = await makeFixture();
     const ownerSlot = path.join(fixture.home, ".rawr-agent-plugin-owner.json");
-    const exit = await Effect.runPromiseExit(Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem;
-      const injected: FileSystem.FileSystem = {
-        ...fs,
-        readLink: (candidate) => candidate === ownerSlot
-          ? Effect.fail(new SystemError({
-              reason: "PermissionDenied",
-              module: "FileSystem",
-              method: "readLink",
-              pathOrDescriptor: candidate,
-            }))
-          : fs.readLink(candidate),
-      };
-      return yield* claudeEffectPlatformNodeProvider.acquire(fixture).pipe(
-        Effect.provideService(FileSystem.FileSystem, injected),
-      );
-    }).pipe(Effect.provide(NodeContext.layer)));
+    const exit = await Effect.runPromiseExit(
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem;
+        const injected: FileSystem.FileSystem = {
+          ...fs,
+          readLink: (candidate) =>
+            candidate === ownerSlot
+              ? Effect.fail(
+                  new SystemError({
+                    reason: "PermissionDenied",
+                    module: "FileSystem",
+                    method: "readLink",
+                    pathOrDescriptor: candidate,
+                  })
+                )
+              : fs.readLink(candidate),
+        };
+        return yield* claudeEffectPlatformNodeProvider
+          .acquire(fixture)
+          .pipe(Effect.provideService(FileSystem.FileSystem, injected));
+      }).pipe(Effect.provide(NodeContext.layer))
+    );
 
     expect(failureReason(exit)).toBe("OwnershipConflict");
     expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
   });
 });
 
-async function makeFixture(): Promise<Readonly<{ root: string; executablePath: string; home: string }>> {
+async function makeFixture(): Promise<
+  Readonly<{ root: string; executablePath: string; home: string }>
+> {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-native-provider-test-")));
   roots.push(root);
   const home = path.join(root, "home");
@@ -306,22 +363,32 @@ async function publishMarketplace(root: string, objectId: string): Promise<Artif
     objectId,
   });
   const resource = makeArtifactRepositoryResource();
-  const published = await runNodeArtifactRepository(resource.publishTree({
-    address,
-    entries: Object.freeze([Object.freeze({
-      path: "marketplace.json",
-      mode: 0o444,
-      bytes: new TextEncoder().encode('{"identity":"rawr-hq"}\n'),
-    })]),
-    limits: Object.freeze({ maxEntries: 4, maxBytes: 1024 }),
-  }));
-  if (!published.ok || published.value.kind === "Rejected" || published.value.kind === "Unsettled") {
+  const published = await runNodeArtifactRepository(
+    resource.publishTree({
+      address,
+      entries: Object.freeze([
+        Object.freeze({
+          path: "marketplace.json",
+          mode: 0o444,
+          bytes: new TextEncoder().encode('{"identity":"rawr-hq"}\n'),
+        }),
+      ]),
+      limits: Object.freeze({ maxEntries: 4, maxBytes: 1024 }),
+    })
+  );
+  if (
+    !published.ok ||
+    published.value.kind === "Rejected" ||
+    published.value.kind === "Unsettled"
+  ) {
     throw new Error("Failed to publish marketplace fixture");
   }
-  const located = await runNodeArtifactRepository(resource.locateTree({
-    address,
-    limits: Object.freeze({ maxEntries: 4, maxBytes: 1024 }),
-  }));
+  const located = await runNodeArtifactRepository(
+    resource.locateTree({
+      address,
+      limits: Object.freeze({ maxEntries: 4, maxBytes: 1024 }),
+    })
+  );
   if (!located.ok || located.value.kind !== "Present") {
     throw new Error("Failed to locate marketplace fixture");
   }

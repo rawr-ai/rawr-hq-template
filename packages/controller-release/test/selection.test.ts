@@ -50,13 +50,18 @@ describe("controller selection", () => {
     expect(candidate.ok && current.ok).toBe(true);
     if (!candidate.ok || !current.ok) return;
 
-    expect(planControllerSelection(undefined, candidate.value)).toMatchObject({ kind: "replace", reason: "missing" });
+    expect(planControllerSelection(undefined, candidate.value)).toMatchObject({
+      kind: "replace",
+      reason: "missing",
+    });
     expect(planControllerSelection(new Uint8Array([1, 2, 3]), candidate.value)).toMatchObject({
       kind: "replace",
       reason: "invalid",
       currentIssues: [{ code: "INVALID_SELECTION_LENGTH" }],
     });
-    expect(planControllerSelection(encodeControllerSelection(current.value), candidate.value)).toMatchObject({
+    expect(
+      planControllerSelection(encodeControllerSelection(current.value), candidate.value)
+    ).toMatchObject({
       kind: "replace",
       reason: "different",
       current: { controllerDigest: DIGEST_A },

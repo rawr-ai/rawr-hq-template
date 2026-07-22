@@ -7,4 +7,3 @@ export default class Hello extends Command {
     this.log("hello");
   }
 }
-

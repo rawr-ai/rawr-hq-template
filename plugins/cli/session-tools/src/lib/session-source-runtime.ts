@@ -1,8 +1,17 @@
 import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { DiscoverSessionsInput, SessionSourceRuntime } from "@rawr/session-intelligence/ports/session-source-runtime";
-import type { CodexSessionFile, CodexSessionSource, DiscoveredSessionFile, SessionSource, SessionStatus } from "@rawr/session-intelligence/types";
+import type {
+  DiscoverSessionsInput,
+  SessionSourceRuntime,
+} from "@rawr/session-intelligence/ports/session-source-runtime";
+import type {
+  CodexSessionFile,
+  CodexSessionSource,
+  DiscoveredSessionFile,
+  SessionSource,
+  SessionStatus,
+} from "@rawr/session-intelligence/types";
 import { readJsonlObjects } from "./jsonl";
 import {
   codexDiscoveryMaxAgeMs,
@@ -37,7 +46,13 @@ function basename(value: string): string {
 }
 
 function looksLikePath(input: string): boolean {
-  return input.includes("/") || input.includes("\\") || input.endsWith(".jsonl") || input.endsWith(".json") || input.startsWith("~");
+  return (
+    input.includes("/") ||
+    input.includes("\\") ||
+    input.endsWith(".jsonl") ||
+    input.endsWith(".json") ||
+    input.startsWith("~")
+  );
 }
 
 function guessClaudeProjectName(dirName: string): string {
@@ -52,7 +67,11 @@ function containsFilter(value: string | undefined, needle: string | undefined): 
   return !needle || Boolean(value?.toLowerCase().includes(needle.toLowerCase()));
 }
 
-function pushNewestBounded<T extends { modifiedMs: number }>(files: T[], next: T, max: number): void {
+function pushNewestBounded<T extends { modifiedMs: number }>(
+  files: T[],
+  next: T,
+  max: number
+): void {
   if (files.length < max) {
     files.push(next);
     if (files.length === max) files.sort((a, b) => a.modifiedMs - b.modifiedMs);
@@ -100,7 +119,10 @@ async function collectCodexSources(): Promise<CodexSource[]> {
   return out;
 }
 
-async function discoverCodexFromFilesystem(sources: CodexSource[], max: number): Promise<SessionFileCandidate[]> {
+async function discoverCodexFromFilesystem(
+  sources: CodexSource[],
+  max: number
+): Promise<SessionFileCandidate[]> {
   /**
    * This remains the monolithic discovery path for callers that do not opt into
    * the service-owned Codex index. It keeps the newest bounded set in memory
@@ -129,7 +151,9 @@ async function discoverCodexFromFilesystem(sources: CodexSource[], max: number):
   return out.sort((a, b) => b.modifiedMs - a.modifiedMs);
 }
 
-async function discoverCodexFilesForSource(source: CodexSessionSource): Promise<CodexSessionFile[]> {
+async function discoverCodexFilesForSource(
+  source: CodexSessionSource
+): Promise<CodexSessionFile[]> {
   /**
    * Root-scoped enumeration is intentionally dumb: return current files and
    * stats only. Refresh cadence, stale-row pruning, and query limits belong to
@@ -157,20 +181,26 @@ async function discoverCodexCandidates(limit?: number): Promise<SessionFileCandi
   return discoverCodexFromFilesystem(sources, max);
 }
 
-async function discoverClaudeCandidates(input: { project?: string; limit?: number }): Promise<SessionFileCandidate[]> {
+async function discoverClaudeCandidates(input: {
+  project?: string;
+  limit?: number;
+}): Promise<SessionFileCandidate[]> {
   const candidates: SessionFileCandidate[] = [];
   const projectsDir = getClaudeProjectsDir();
   if (!(await pathExists(projectsDir))) return [];
   const projectFilter = input.project ? String(input.project).trim() : "";
   const absoluteProjectDir =
-    projectFilter && looksLikePath(projectFilter) ? path.resolve(expandHomePath(projectFilter)) : null;
+    projectFilter && looksLikePath(projectFilter)
+      ? path.resolve(expandHomePath(projectFilter))
+      : null;
   const dirs = await fs.readdir(projectsDir, { withFileTypes: true });
   for (const d of dirs) {
     if (!d.isDirectory() || d.name.startsWith(".")) continue;
     const projectDir = absoluteProjectDir ?? path.join(projectsDir, d.name);
     if (!absoluteProjectDir && projectFilter) {
       const guessed = guessClaudeProjectName(d.name);
-      if (!containsFilter(d.name, projectFilter) && !containsFilter(guessed, projectFilter)) continue;
+      if (!containsFilter(d.name, projectFilter) && !containsFilter(guessed, projectFilter))
+        continue;
     }
     if (absoluteProjectDir && projectDir !== absoluteProjectDir) continue;
     const files = await fs.readdir(projectDir).catch(() => []);
@@ -219,7 +249,10 @@ export function createSessionSourceRuntime(): SessionSourceRuntime {
     async discoverSessions(input: DiscoverSessionsInput): Promise<DiscoveredSessionFile[]> {
       const out: DiscoveredSessionFile[] = [];
       if (input.source === "claude" || input.source === "all") {
-        const candidates = await discoverClaudeCandidates({ project: input.project, limit: input.limit });
+        const candidates = await discoverClaudeCandidates({
+          project: input.project,
+          limit: input.limit,
+        });
         out.push(...candidates.map(candidateToDiscovered));
       }
       if (input.source === "codex" || input.source === "all") {

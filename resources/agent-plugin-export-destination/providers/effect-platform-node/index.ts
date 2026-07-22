@@ -28,7 +28,14 @@ type Operation = ExportDestinationFailure["operation"];
 
 export const EXPORT_DESTINATION_TEMP_PREFIX = ".rawr-export-destination-tmp-v1-";
 
-type CaptureLifecycle = "Captured" | "Applying" | "Partial" | "Applied" | "Converged" | "Restoring" | "Restored";
+type CaptureLifecycle =
+  | "Captured"
+  | "Applying"
+  | "Partial"
+  | "Applied"
+  | "Converged"
+  | "Restoring"
+  | "Restored";
 
 interface DestinationRoot {
   readonly path: string;
@@ -75,7 +82,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       paths: readonly string[];
       maxEntries: number;
       maxBytes: number;
-    }>,
+    }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
@@ -97,7 +104,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       paths: readonly string[];
       maxEntries: number;
       maxBytes: number;
-    }>,
+    }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
@@ -132,27 +139,43 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       destination: string;
       readToken: string;
       captureHandle: string;
-    }>,
+    }>
   ) {
     yield* validateOpaque(input.readToken, "readToken", "release");
     yield* validateOpaque(input.captureHandle, "captureHandle", "release");
     if (consumedHandles.has(input.captureHandle)) {
-      return yield* fail("release", "HandleConsumed", undefined, "Capture handle has already been consumed");
+      return yield* fail(
+        "release",
+        "HandleConsumed",
+        undefined,
+        "Capture handle has already been consumed"
+      );
     }
     const authority = captures.get(input.captureHandle);
-    if (authority === undefined) return yield* fail("release", "InvalidHandle", undefined, "Capture handle is unknown");
+    if (authority === undefined)
+      return yield* fail("release", "InvalidHandle", undefined, "Capture handle is unknown");
     if (authority.readToken !== input.readToken) {
-      return yield* fail("release", "WrongToken", undefined, "Capture handle belongs to another read token");
+      return yield* fail(
+        "release",
+        "WrongToken",
+        undefined,
+        "Capture handle belongs to another read token"
+      );
     }
     if (authority.destination.path !== input.destination) {
-      return yield* fail("release", "WrongDestination", input.destination, "Capture handle belongs to another destination");
+      return yield* fail(
+        "release",
+        "WrongDestination",
+        input.destination,
+        "Capture handle belongs to another destination"
+      );
     }
     if (authority.lifecycle !== "Captured") {
       return yield* fail(
         "release",
         "HandleState",
         undefined,
-        `Capture handle cannot release from ${authority.lifecycle}; restore mutated authority instead`,
+        `Capture handle cannot release from ${authority.lifecycle}; restore mutated authority instead`
       );
     }
     captures.delete(input.captureHandle);
@@ -164,7 +187,8 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
     }) satisfies ExportDestinationReleaseReceipt;
   });
 
-  const release = (input: Parameters<typeof releaseUnsafe>[0]) => mutationGate.withPermits(1)(releaseUnsafe(input));
+  const release = (input: Parameters<typeof releaseUnsafe>[0]) =>
+    mutationGate.withPermits(1)(releaseUnsafe(input));
 
   const applyUnsafe = Effect.fn("exportDestination.apply")(function* (
     input: Readonly<{
@@ -173,7 +197,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       readToken: string;
       captureHandle: string;
       mutations: readonly ExportDestinationMutation[];
-    }>,
+    }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
@@ -186,7 +210,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       captures,
       consumedHandles,
       input,
-      "apply",
+      "apply"
     );
     yield* validateMutationSet(path, authority, input.mutations);
     authority.plannedMutations = Object.freeze([...input.mutations]);
@@ -194,16 +218,31 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
     const current = yield* observeAuthority(fs, path, authority, "apply");
     if (authority.lifecycle === "Applied" || authority.lifecycle === "Converged") {
       if (!allMutationsConverged(current, input.mutations)) {
-        return yield* fail("apply", "IdentityChanged", undefined, "Applied destination no longer matches the exact plan");
+        return yield* fail(
+          "apply",
+          "IdentityChanged",
+          undefined,
+          "Applied destination no longer matches the exact plan"
+        );
       }
       authority.lifecycle = authority.lifecycle === "Applied" ? "Applied" : "Converged";
       return applyReceipt(input, "Converged", [], current, authority.paths);
     }
     if (authority.lifecycle !== "Captured") {
-      return yield* fail("apply", "HandleState", undefined, `Capture handle cannot apply from ${authority.lifecycle}`);
+      return yield* fail(
+        "apply",
+        "HandleState",
+        undefined,
+        `Capture handle cannot apply from ${authority.lifecycle}`
+      );
     }
     if (!sameObservationMap(current, authority.preimages, true)) {
-      return yield* fail("apply", "IdentityChanged", undefined, "Destination entries changed after capture");
+      return yield* fail(
+        "apply",
+        "IdentityChanged",
+        undefined,
+        "Destination entries changed after capture"
+      );
     }
     if (allMutationsConverged(current, input.mutations)) {
       authority.planDigest = input.planDigest;
@@ -216,10 +255,19 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
     authority.lifecycle = "Applying";
     const changedPaths: string[] = [];
     for (const mutation of input.mutations) {
-      const before = yield* observeOne(fs, path, authority.destination, mutation.path, makeBudget(authority), "apply");
+      const before = yield* observeOne(
+        fs,
+        path,
+        authority.destination,
+        mutation.path,
+        makeBudget(authority),
+        "apply"
+      );
       if (mutationConverged(before, mutation)) continue;
       authority.mutatedPaths.push(mutation.path);
-      const result = yield* Effect.either(applyMutation(fs, path, authority.destination, mutation, authority));
+      const result = yield* Effect.either(
+        applyMutation(fs, path, authority.destination, mutation, authority)
+      );
       if (result._tag === "Left") {
         authority.lifecycle = "Partial";
         const partial = yield* Effect.either(observeAuthority(fs, path, authority, "apply"));
@@ -237,14 +285,20 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
     const postimages = observedPostimages.right;
     if (!allMutationsConverged(postimages, input.mutations)) {
       authority.lifecycle = "Partial";
-      return yield* fail("apply", "IdentityChanged", undefined, "Applied destination does not match the exact plan");
+      return yield* fail(
+        "apply",
+        "IdentityChanged",
+        undefined,
+        "Applied destination does not match the exact plan"
+      );
     }
     replaceMap(authority.postimages, postimages);
     authority.lifecycle = "Applied";
     return applyReceipt(input, "Applied", changedPaths, postimages, authority.paths);
   });
 
-  const apply = (input: Parameters<typeof applyUnsafe>[0]) => mutationGate.withPermits(1)(applyUnsafe(input));
+  const apply = (input: Parameters<typeof applyUnsafe>[0]) =>
+    mutationGate.withPermits(1)(applyUnsafe(input));
 
   const restoreUnsafe = Effect.fn("exportDestination.restore")(function* (
     input: Readonly<{
@@ -252,7 +306,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       planDigest: string;
       readToken: string;
       captureHandle: string;
-    }>,
+    }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
@@ -265,7 +319,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       captures,
       consumedHandles,
       input,
-      "restore",
+      "restore"
     );
     if (authority.lifecycle === "Converged") {
       authority.lifecycle = "Restored";
@@ -276,7 +330,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
         "restore",
         authority.lifecycle === "Restored" ? "HandleConsumed" : "HandleState",
         undefined,
-        `Capture handle cannot restore from ${authority.lifecycle}`,
+        `Capture handle cannot restore from ${authority.lifecycle}`
       );
     }
     const current = yield* observeAuthority(fs, path, authority, "restore");
@@ -285,7 +339,12 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
         ? !sameObservationMap(current, authority.postimages, true)
         : !recoverablePartial(current, authority)
     ) {
-      return yield* fail("restore", "IdentityChanged", undefined, "Destination changed after apply; restore refused");
+      return yield* fail(
+        "restore",
+        "IdentityChanged",
+        undefined,
+        "Destination changed after apply; restore refused"
+      );
     }
 
     authority.lifecycle = "Restoring";
@@ -298,7 +357,9 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       }
       const observed = current.get(relative);
       if (observed !== undefined && sameObservation(observed, preimage, true)) continue;
-      const restored = yield* Effect.either(restoreObservation(fs, path, authority.destination, preimage, authority));
+      const restored = yield* Effect.either(
+        restoreObservation(fs, path, authority.destination, preimage, authority)
+      );
       if (restored._tag === "Left") {
         authority.lifecycle = "Partial";
         return yield* Effect.fail(restored.left);
@@ -308,14 +369,20 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
     const verified = yield* observeAuthority(fs, path, authority, "restore");
     if (!sameObservationMap(verified, authority.preimages, false)) {
       authority.lifecycle = "Partial";
-      return yield* fail("restore", "IdentityChanged", undefined, "Restored destination does not match captured preimages");
+      return yield* fail(
+        "restore",
+        "IdentityChanged",
+        undefined,
+        "Restored destination does not match captured preimages"
+      );
     }
     replaceMap(authority.postimages, verified);
     authority.lifecycle = "Restored";
     return restoreReceipt(input, restoredPaths, verified, authority.paths);
   });
 
-  const restore = (input: Parameters<typeof restoreUnsafe>[0]) => mutationGate.withPermits(1)(restoreUnsafe(input));
+  const restore = (input: Parameters<typeof restoreUnsafe>[0]) =>
+    mutationGate.withPermits(1)(restoreUnsafe(input));
 
   const settleUnsafe = Effect.fn("exportDestination.settle")(function* (
     input: Readonly<{
@@ -323,7 +390,7 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       planDigest: string;
       readToken: string;
       captureHandle: string;
-    }>,
+    }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
@@ -336,20 +403,30 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       captures,
       consumedHandles,
       input,
-      "settle",
+      "settle"
     );
     if (
-      authority.lifecycle !== "Applied"
-      && authority.lifecycle !== "Converged"
-      && authority.lifecycle !== "Restored"
+      authority.lifecycle !== "Applied" &&
+      authority.lifecycle !== "Converged" &&
+      authority.lifecycle !== "Restored"
     ) {
-      return yield* fail("settle", "HandleState", undefined, `Capture handle cannot settle from ${authority.lifecycle}`);
+      return yield* fail(
+        "settle",
+        "HandleState",
+        undefined,
+        `Capture handle cannot settle from ${authority.lifecycle}`
+      );
     }
     const current = yield* observeAuthority(fs, path, authority, "settle");
     const expected = authority.postimages;
     const includeIdentity = authority.lifecycle !== "Restored";
     if (!sameObservationMap(current, expected, includeIdentity)) {
-      return yield* fail("settle", "IdentityChanged", undefined, "Destination does not match its verified settlement image");
+      return yield* fail(
+        "settle",
+        "IdentityChanged",
+        undefined,
+        "Destination does not match its verified settlement image"
+      );
     }
     captures.delete(input.captureHandle);
     consumedHandles.add(input.captureHandle);
@@ -361,7 +438,8 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
     }) satisfies ExportDestinationSettleReceipt;
   });
 
-  const settle = (input: Parameters<typeof settleUnsafe>[0]) => mutationGate.withPermits(1)(settleUnsafe(input));
+  const settle = (input: Parameters<typeof settleUnsafe>[0]) =>
+    mutationGate.withPermits(1)(settleUnsafe(input));
 
   return Object.freeze({ inspect, capture, release, apply, restore, settle });
 }
@@ -371,33 +449,42 @@ export type NodeExportDestinationResult<A> =
   | Readonly<{ ok: false; failure: ExportDestinationFailure }>;
 
 export function runNodeExportDestination<A>(
-  operation: Effect.Effect<A, ExportDestinationFailure, ProviderRequirements>,
+  operation: Effect.Effect<A, ExportDestinationFailure, ProviderRequirements>
 ): Promise<NodeExportDestinationResult<A>> {
-  return Effect.runPromise(operation.pipe(
-    Effect.map((value): NodeExportDestinationResult<A> => Object.freeze({ ok: true, value })),
-    Effect.catchAll((failure) => Effect.succeed<NodeExportDestinationResult<A>>(Object.freeze({ ok: false, failure }))),
-    Effect.provide(NodeContext.layer),
-  ));
+  return Effect.runPromise(
+    operation.pipe(
+      Effect.map((value): NodeExportDestinationResult<A> => Object.freeze({ ok: true, value })),
+      Effect.catchAll((failure) =>
+        Effect.succeed<NodeExportDestinationResult<A>>(Object.freeze({ ok: false, failure }))
+      ),
+      Effect.provide(NodeContext.layer)
+    )
+  );
 }
 
 export function makeNodeExportDestinationPort(): ExportDestinationAsyncPort {
   const resource = makeExportDestinationResource();
   return Object.freeze({
-    inspect: (input: Parameters<typeof resource.inspect>[0]) => runNodeOrReject(resource.inspect(input)),
-    capture: (input: Parameters<typeof resource.capture>[0]) => runNodeOrReject(resource.capture(input)),
-    release: (input: Parameters<typeof resource.release>[0]) => runNodeOrReject(resource.release(input)),
+    inspect: (input: Parameters<typeof resource.inspect>[0]) =>
+      runNodeOrReject(resource.inspect(input)),
+    capture: (input: Parameters<typeof resource.capture>[0]) =>
+      runNodeOrReject(resource.capture(input)),
+    release: (input: Parameters<typeof resource.release>[0]) =>
+      runNodeOrReject(resource.release(input)),
     apply: (input: Parameters<typeof resource.apply>[0]) => runNodeOrReject(resource.apply(input)),
-    restore: (input: Parameters<typeof resource.restore>[0]) => runNodeOrReject(resource.restore(input)),
-    settle: (input: Parameters<typeof resource.settle>[0]) => runNodeOrReject(resource.settle(input)),
+    restore: (input: Parameters<typeof resource.restore>[0]) =>
+      runNodeOrReject(resource.restore(input)),
+    settle: (input: Parameters<typeof resource.settle>[0]) =>
+      runNodeOrReject(resource.settle(input)),
   });
 }
 
 function runNodeOrReject<A>(
-  operation: Effect.Effect<A, ExportDestinationFailure, ProviderRequirements>,
+  operation: Effect.Effect<A, ExportDestinationFailure, ProviderRequirements>
 ): Promise<A> {
-  return runNodeExportDestination(operation).then((result) => result.ok
-    ? result.value
-    : Promise.reject(result.failure));
+  return runNodeExportDestination(operation).then((result) =>
+    result.ok ? result.value : Promise.reject(result.failure)
+  );
 }
 
 function applyReceipt(
@@ -405,7 +492,7 @@ function applyReceipt(
   outcome: ExportDestinationApplyReceipt["outcome"],
   changedPaths: readonly string[],
   entries: ReadonlyMap<string, ExportDestinationEntryObservation>,
-  order: readonly string[],
+  order: readonly string[]
 ): ExportDestinationApplyReceipt {
   return Object.freeze({
     planDigest: input.planDigest,
@@ -420,7 +507,7 @@ function restoreReceipt(
   input: Readonly<{ planDigest: string; readToken: string }>,
   changedPaths: readonly string[],
   entries: ReadonlyMap<string, ExportDestinationEntryObservation>,
-  order: readonly string[],
+  order: readonly string[]
 ): ExportDestinationRestoreReceipt {
   return Object.freeze({
     planDigest: input.planDigest,
@@ -433,13 +520,15 @@ function restoreReceipt(
 
 function orderedEntries(
   entries: ReadonlyMap<string, ExportDestinationEntryObservation>,
-  order: readonly string[],
+  order: readonly string[]
 ): readonly ExportDestinationEntryObservation[] {
-  return Object.freeze(order.map((relative) => {
-    const entry = entries.get(relative);
-    if (entry === undefined) throw new Error(`Missing provider observation for ${relative}`);
-    return entry;
-  }));
+  return Object.freeze(
+    order.map((relative) => {
+      const entry = entries.get(relative);
+      if (entry === undefined) throw new Error(`Missing provider observation for ${relative}`);
+      return entry;
+    })
+  );
 }
 
 function validateReadInput(
@@ -450,23 +539,47 @@ function validateReadInput(
     maxEntries: number;
     maxBytes: number;
   }>,
-  operation: "inspect" | "capture",
+  operation: "inspect" | "capture"
 ) {
   return Effect.gen(function* () {
     yield* validateOpaque(input.readToken, "readToken", operation);
-    if (!Number.isSafeInteger(input.maxEntries) || input.maxEntries < 1 || input.maxEntries > 1_000_000) {
-      return yield* fail(operation, "InvalidInput", undefined, "maxEntries must be a positive bounded safe integer");
+    if (
+      !Number.isSafeInteger(input.maxEntries) ||
+      input.maxEntries < 1 ||
+      input.maxEntries > 1_000_000
+    ) {
+      return yield* fail(
+        operation,
+        "InvalidInput",
+        undefined,
+        "maxEntries must be a positive bounded safe integer"
+      );
     }
-    if (!Number.isSafeInteger(input.maxBytes) || input.maxBytes < 0 || input.maxBytes > 1024 * 1024 * 1024) {
-      return yield* fail(operation, "InvalidInput", undefined, "maxBytes must be a bounded non-negative safe integer");
+    if (
+      !Number.isSafeInteger(input.maxBytes) ||
+      input.maxBytes < 0 ||
+      input.maxBytes > 1024 * 1024 * 1024
+    ) {
+      return yield* fail(
+        operation,
+        "InvalidInput",
+        undefined,
+        "maxBytes must be a bounded non-negative safe integer"
+      );
     }
     if (input.paths.length === 0 || input.paths.length > input.maxEntries) {
-      return yield* fail(operation, "LimitExceeded", undefined, "Requested path count exceeds its declared entry bound");
+      return yield* fail(
+        operation,
+        "LimitExceeded",
+        undefined,
+        "Requested path count exceeds its declared entry bound"
+      );
     }
     const seen = new Set<string>();
     for (const relative of input.paths) {
       yield* validateRelativePath(path, relative, operation);
-      if (seen.has(relative)) return yield* fail(operation, "InvalidInput", relative, "Requested paths must be distinct");
+      if (seen.has(relative))
+        return yield* fail(operation, "InvalidInput", relative, "Requested paths must be distinct");
       seen.add(relative);
     }
   });
@@ -475,21 +588,36 @@ function validateReadInput(
 function validateMutationSet(
   path: Path.Path,
   authority: CaptureAuthority,
-  mutations: readonly ExportDestinationMutation[],
+  mutations: readonly ExportDestinationMutation[]
 ) {
   return Effect.gen(function* () {
     if (mutations.length > authority.maxEntries) {
-      return yield* fail("apply", "LimitExceeded", undefined, "Mutation count exceeds captured entry bounds");
+      return yield* fail(
+        "apply",
+        "LimitExceeded",
+        undefined,
+        "Mutation count exceeds captured entry bounds"
+      );
     }
     const seen = new Set<string>();
     let totalBytes = 0;
     for (const mutation of mutations) {
       yield* validateRelativePath(path, mutation.path, "apply");
       if (seen.has(mutation.path)) {
-        return yield* fail("apply", "InvalidInput", mutation.path, "Mutation paths must be distinct");
+        return yield* fail(
+          "apply",
+          "InvalidInput",
+          mutation.path,
+          "Mutation paths must be distinct"
+        );
       }
       if (!authority.preimages.has(mutation.path)) {
-        return yield* fail("apply", "InvalidInput", mutation.path, "Mutation path has no captured preimage");
+        return yield* fail(
+          "apply",
+          "InvalidInput",
+          mutation.path,
+          "Mutation path has no captured preimage"
+        );
       }
       seen.add(mutation.path);
       if (mutation.kind === "WriteFile" || mutation.kind === "EnsureDirectory") {
@@ -498,7 +626,12 @@ function validateMutationSet(
       if (mutation.kind === "WriteFile") {
         totalBytes += mutation.bytes.byteLength;
         if (totalBytes > authority.maxBytes) {
-          return yield* fail("apply", "LimitExceeded", mutation.path, "Mutation bytes exceed captured byte bounds");
+          return yield* fail(
+            "apply",
+            "LimitExceeded",
+            mutation.path,
+            "Mutation bytes exceed captured byte bounds"
+          );
         }
       }
     }
@@ -508,40 +641,60 @@ function validateMutationSet(
 function validateOpaque(
   value: string,
   name: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, ExportDestinationFailure> {
   return value.length >= 1 && value.length <= 256 && !value.includes("\0")
     ? Effect.void
-    : fail(operation, "InvalidInput", undefined, `${name} must be a non-empty bounded opaque value`);
+    : fail(
+        operation,
+        "InvalidInput",
+        undefined,
+        `${name} must be a non-empty bounded opaque value`
+      );
 }
 
 function validateMode(
   mode: number,
   relative: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, ExportDestinationFailure> {
   return Number.isSafeInteger(mode) && mode >= 0 && mode <= 0o777
     ? Effect.void
-    : fail(operation, "InvalidInput", relative, "File mode must contain only visible permission bits");
+    : fail(
+        operation,
+        "InvalidInput",
+        relative,
+        "File mode must contain only visible permission bits"
+      );
 }
 
 function validateRelativePath(
   path: Path.Path,
   relative: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, ExportDestinationFailure> {
   if (
-    relative.length === 0
-    || relative.length > 4096
-    || relative.includes("\0")
-    || relative.includes("\\")
-    || path.isAbsolute(relative)
+    relative.length === 0 ||
+    relative.length > 4096 ||
+    relative.includes("\0") ||
+    relative.includes("\\") ||
+    path.isAbsolute(relative)
   ) {
-    return fail(operation, "InvalidInput", relative, "Destination entry path must be a bounded relative POSIX path");
+    return fail(
+      operation,
+      "InvalidInput",
+      relative,
+      "Destination entry path must be a bounded relative POSIX path"
+    );
   }
   const segments = relative.split("/");
   if (segments.some((segment) => segment.length === 0 || segment === "." || segment === "..")) {
-    return fail(operation, "InvalidInput", relative, "Destination entry path contains an unsafe segment");
+    return fail(
+      operation,
+      "InvalidInput",
+      relative,
+      "Destination entry path contains an unsafe segment"
+    );
   }
   if (path.normalize(relative) !== relative) {
     return fail(operation, "InvalidInput", relative, "Destination entry path must be canonical");
@@ -553,21 +706,36 @@ function requireCanonicalDestination(
   fs: FileSystem.FileSystem,
   path: Path.Path,
   input: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<DestinationRoot, ExportDestinationFailure> {
   return Effect.gen(function* () {
-    if (!path.isAbsolute(input) || path.resolve(input) !== input || path.parse(input).root === input) {
-      return yield* fail(operation, "InvalidInput", input, "Destination must be a canonical absolute non-root path");
+    if (
+      !path.isAbsolute(input) ||
+      path.resolve(input) !== input ||
+      path.parse(input).root === input
+    ) {
+      return yield* fail(
+        operation,
+        "InvalidInput",
+        input,
+        "Destination must be a canonical absolute non-root path"
+      );
     }
     const canonical = yield* fs.realPath(input).pipe(mapPlatform(operation, input));
-    if (canonical !== input) return yield* fail(operation, "Aliased", input, "Destination resolves through an alias");
+    if (canonical !== input)
+      return yield* fail(operation, "Aliased", input, "Destination resolves through an alias");
     const info = yield* fs.stat(input).pipe(mapPlatform(operation, input));
     if (info.type !== "Directory") {
       return yield* fail(operation, "UnsupportedEntry", input, "Destination must be a directory");
     }
     const stat = yield* exactDirectoryStat(input, operation);
     if (!sameExactIdentity(stat, info)) {
-      return yield* fail(operation, "IdentityChanged", input, "Destination identity changed while reading raw stat metadata");
+      return yield* fail(
+        operation,
+        "IdentityChanged",
+        input,
+        "Destination identity changed while reading raw stat metadata"
+      );
     }
     return Object.freeze({ path: input, identity: entryIdentity(info), stat });
   });
@@ -577,12 +745,14 @@ function revalidateDestination(
   fs: FileSystem.FileSystem,
   path: Path.Path,
   expected: DestinationRoot,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<DestinationRoot, ExportDestinationFailure> {
   return requireCanonicalDestination(fs, path, expected.path, operation).pipe(
-    Effect.flatMap((current) => sameIdentity(current.identity, expected.identity)
-      ? Effect.succeed(current)
-      : fail(operation, "IdentityChanged", expected.path, "Destination identity changed")),
+    Effect.flatMap((current) =>
+      sameIdentity(current.identity, expected.identity)
+        ? Effect.succeed(current)
+        : fail(operation, "IdentityChanged", expected.path, "Destination identity changed")
+    )
   );
 }
 
@@ -590,16 +760,24 @@ function resolveContained(
   path: Path.Path,
   destination: string,
   relative: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<string, ExportDestinationFailure> {
   return validateRelativePath(path, relative, operation).pipe(
     Effect.flatMap(() => {
       const candidate = path.resolve(destination, ...relative.split("/"));
       const fromRoot = path.relative(destination, candidate);
-      return fromRoot === relative && fromRoot !== "" && !fromRoot.startsWith(`..${path.sep}`) && fromRoot !== ".."
+      return fromRoot === relative &&
+        fromRoot !== "" &&
+        !fromRoot.startsWith(`..${path.sep}`) &&
+        fromRoot !== ".."
         ? Effect.succeed(candidate)
-        : fail(operation, "InvalidInput", relative, "Destination entry escapes its canonical destination");
-    }),
+        : fail(
+            operation,
+            "InvalidInput",
+            relative,
+            "Destination entry escapes its canonical destination"
+          );
+    })
   );
 }
 
@@ -609,26 +787,25 @@ function observePaths(
   destination: DestinationRoot,
   paths: readonly string[],
   limits: Readonly<{ maxEntries: number; maxBytes: number }>,
-  operation: "inspect" | "capture",
+  operation: "inspect" | "capture"
 ): Effect.Effect<readonly ExportDestinationEntryObservation[], ExportDestinationFailure> {
   const budget: CaptureBudget = { entries: 0, bytes: 0, ...limits };
-  return Effect.forEach(paths, (relative) => observeOne(fs, path, destination, relative, budget, operation)).pipe(
-    Effect.map((entries) => Object.freeze(entries)),
-  );
+  return Effect.forEach(paths, (relative) =>
+    observeOne(fs, path, destination, relative, budget, operation)
+  ).pipe(Effect.map((entries) => Object.freeze(entries)));
 }
 
 function observeAuthority(
   fs: FileSystem.FileSystem,
   path: Path.Path,
   authority: CaptureAuthority,
-  operation: "apply" | "restore" | "settle",
+  operation: "apply" | "restore" | "settle"
 ): Effect.Effect<ReadonlyMap<string, ExportDestinationEntryObservation>, ExportDestinationFailure> {
   return Effect.gen(function* () {
     yield* revalidateDestination(fs, path, authority.destination, operation);
     const budget = makeBudget(authority);
-    const observations = yield* Effect.forEach(
-      authority.paths,
-      (relative) => observeOne(fs, path, authority.destination, relative, budget, operation),
+    const observations = yield* Effect.forEach(authority.paths, (relative) =>
+      observeOne(fs, path, authority.destination, relative, budget, operation)
     );
     return new Map(observations.map((entry) => [entry.path, entry]));
   });
@@ -640,37 +817,74 @@ function observeOne(
   destination: DestinationRoot,
   relative: string,
   budget: CaptureBudget,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<ExportDestinationEntryObservation, ExportDestinationFailure> {
   return Effect.gen(function* () {
     const candidate = yield* resolveContained(path, destination.path, relative, operation);
-    const parentPresent = yield* requireCanonicalParentChain(fs, path, destination, candidate, operation);
+    const parentPresent = yield* requireCanonicalParentChain(
+      fs,
+      path,
+      destination,
+      candidate,
+      operation
+    );
     yield* consumeEntry(budget, relative, operation);
     if (!parentPresent) return Object.freeze({ kind: "Absent", path: relative });
     yield* rejectSymbolicLink(fs, candidate, operation);
     const info = yield* statIfPresent(fs, candidate, operation);
     if (info === undefined) return Object.freeze({ kind: "Absent", path: relative });
     const canonical = yield* fs.realPath(candidate).pipe(mapPlatform(operation, candidate));
-    if (canonical !== candidate) return yield* fail(operation, "Aliased", relative, "Destination entry resolves through an alias");
+    if (canonical !== candidate)
+      return yield* fail(
+        operation,
+        "Aliased",
+        relative,
+        "Destination entry resolves through an alias"
+      );
     if (info.type === "File") {
       const size = Number(info.size);
       if (!Number.isSafeInteger(size) || size < 0 || budget.bytes + size > budget.maxBytes) {
-        return yield* fail(operation, "LimitExceeded", relative, "Destination file bytes exceed the declared bound");
+        return yield* fail(
+          operation,
+          "LimitExceeded",
+          relative,
+          "Destination file bytes exceed the declared bound"
+        );
       }
       const bytes = yield* fs.readFile(candidate).pipe(mapPlatform(operation, candidate));
       if (bytes.byteLength !== size) {
-        return yield* fail(operation, "IdentityChanged", relative, "Destination file size changed while reading");
+        return yield* fail(
+          operation,
+          "IdentityChanged",
+          relative,
+          "Destination file size changed while reading"
+        );
       }
       const verified = yield* fs.stat(candidate).pipe(mapPlatform(operation, candidate));
       if (verified.type !== "File" || !sameFileInfo(info, verified)) {
-        return yield* fail(operation, "IdentityChanged", relative, "Destination file changed while reading");
+        return yield* fail(
+          operation,
+          "IdentityChanged",
+          relative,
+          "Destination file changed while reading"
+        );
       }
       const stat = yield* exactFileStat(candidate, operation);
       if (stat.nlink !== "1") {
-        return yield* fail(operation, "UnsupportedEntry", relative, "Destination regular files must have one filesystem link");
+        return yield* fail(
+          operation,
+          "UnsupportedEntry",
+          relative,
+          "Destination regular files must have one filesystem link"
+        );
       }
       if (!sameExactIdentity(stat, verified)) {
-        return yield* fail(operation, "IdentityChanged", relative, "Destination file identity changed while reading raw stat metadata");
+        return yield* fail(
+          operation,
+          "IdentityChanged",
+          relative,
+          "Destination file identity changed while reading raw stat metadata"
+        );
       }
       budget.bytes += bytes.byteLength;
       return Object.freeze({
@@ -683,16 +897,41 @@ function observeOne(
       });
     }
     if (info.type !== "Directory") {
-      return yield* fail(operation, "UnsupportedEntry", relative, `Unsupported destination entry type: ${info.type}`);
+      return yield* fail(
+        operation,
+        "UnsupportedEntry",
+        relative,
+        `Unsupported destination entry type: ${info.type}`
+      );
     }
-    const children = yield* observeDirectoryChildren(fs, path, destination, candidate, budget, operation);
+    const children = yield* observeDirectoryChildren(
+      fs,
+      path,
+      destination,
+      candidate,
+      budget,
+      operation
+    );
     const verified = yield* fs.stat(candidate).pipe(mapPlatform(operation, candidate));
-    if (verified.type !== "Directory" || !sameIdentity(entryIdentity(info), entryIdentity(verified))) {
-      return yield* fail(operation, "IdentityChanged", relative, "Destination directory changed while reading");
+    if (
+      verified.type !== "Directory" ||
+      !sameIdentity(entryIdentity(info), entryIdentity(verified))
+    ) {
+      return yield* fail(
+        operation,
+        "IdentityChanged",
+        relative,
+        "Destination directory changed while reading"
+      );
     }
     const stat = yield* exactDirectoryStat(candidate, operation);
     if (!sameExactIdentity(stat, verified)) {
-      return yield* fail(operation, "IdentityChanged", relative, "Destination directory identity changed while reading raw stat metadata");
+      return yield* fail(
+        operation,
+        "IdentityChanged",
+        relative,
+        "Destination directory identity changed while reading raw stat metadata"
+      );
     }
     return Object.freeze({
       kind: "Directory",
@@ -711,38 +950,66 @@ function observeDirectoryChildren(
   destination: DestinationRoot,
   directory: string,
   budget: CaptureBudget,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<readonly ExportDestinationDirectoryChild[], ExportDestinationFailure> {
   return Effect.gen(function* () {
     const names = yield* fs.readDirectory(directory).pipe(mapPlatform(operation, directory));
     const distinct = new Set(names);
     if (distinct.size !== names.length) {
-      return yield* fail(operation, "IdentityChanged", directory, "Destination directory returned duplicate entries");
+      return yield* fail(
+        operation,
+        "IdentityChanged",
+        directory,
+        "Destination directory returned duplicate entries"
+      );
     }
     const sorted = [...names].sort(compareText);
     const children: ExportDestinationDirectoryChild[] = [];
     for (const name of sorted) {
       if (name.length === 0 || name === "." || name === ".." || path.basename(name) !== name) {
-        return yield* fail(operation, "UnsupportedEntry", directory, "Destination directory contains an unsafe child name");
+        return yield* fail(
+          operation,
+          "UnsupportedEntry",
+          directory,
+          "Destination directory contains an unsafe child name"
+        );
       }
       yield* consumeEntry(budget, path.join(directory, name), operation);
       const child = path.join(directory, name);
       if (!isContained(path, destination.path, child)) {
-        return yield* fail(operation, "InvalidInput", child, "Destination child escapes its canonical destination");
+        return yield* fail(
+          operation,
+          "InvalidInput",
+          child,
+          "Destination child escapes its canonical destination"
+        );
       }
       yield* rejectSymbolicLink(fs, child, operation);
       const info = yield* fs.stat(child).pipe(mapPlatform(operation, child));
       const canonical = yield* fs.realPath(child).pipe(mapPlatform(operation, child));
-      if (canonical !== child) return yield* fail(operation, "Aliased", child, "Destination child resolves through an alias");
+      if (canonical !== child)
+        return yield* fail(
+          operation,
+          "Aliased",
+          child,
+          "Destination child resolves through an alias"
+        );
       if (info.type !== "File" && info.type !== "Directory") {
-        return yield* fail(operation, "UnsupportedEntry", child, `Unsupported destination child type: ${info.type}`);
+        return yield* fail(
+          operation,
+          "UnsupportedEntry",
+          child,
+          `Unsupported destination child type: ${info.type}`
+        );
       }
-      children.push(Object.freeze({
-        name,
-        kind: info.type,
-        mode: visibleMode(info.mode),
-        ...entryIdentity(info),
-      }));
+      children.push(
+        Object.freeze({
+          name,
+          kind: info.type,
+          mode: visibleMode(info.mode),
+          ...entryIdentity(info),
+        })
+      );
     }
     return Object.freeze(children);
   });
@@ -753,14 +1020,19 @@ function requireCanonicalParentChain(
   path: Path.Path,
   destination: DestinationRoot,
   candidate: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<boolean, ExportDestinationFailure> {
   return Effect.gen(function* () {
     const parent = path.dirname(candidate);
     if (parent === destination.path) return true;
     const relative = path.relative(destination.path, parent);
     if (relative === "" || relative === ".." || relative.startsWith(`..${path.sep}`)) {
-      return yield* fail(operation, "InvalidInput", candidate, "Destination entry parent escapes its destination");
+      return yield* fail(
+        operation,
+        "InvalidInput",
+        candidate,
+        "Destination entry parent escapes its destination"
+      );
     }
     let current = destination.path;
     for (const segment of relative.split(path.sep)) {
@@ -769,10 +1041,21 @@ function requireCanonicalParentChain(
       const info = yield* statIfPresent(fs, current, operation);
       if (info === undefined) return false;
       if (info.type !== "Directory") {
-        return yield* fail(operation, "UnsupportedEntry", current, "Destination entry parent is not a directory");
+        return yield* fail(
+          operation,
+          "UnsupportedEntry",
+          current,
+          "Destination entry parent is not a directory"
+        );
       }
       const canonical = yield* fs.realPath(current).pipe(mapPlatform(operation, current));
-      if (canonical !== current) return yield* fail(operation, "Aliased", current, "Destination entry parent resolves through an alias");
+      if (canonical !== current)
+        return yield* fail(
+          operation,
+          "Aliased",
+          current,
+          "Destination entry parent resolves through an alias"
+        );
     }
     return true;
   });
@@ -783,17 +1066,24 @@ function requireCanonicalExistingDirectory(
   path: Path.Path,
   destination: DestinationRoot,
   candidate: string,
-  operation: Operation,
+  operation: Operation
 ) {
   return Effect.gen(function* () {
     if (!isContained(path, destination.path, candidate) && candidate !== destination.path) {
-      return yield* fail(operation, "InvalidInput", candidate, "Directory escapes its canonical destination");
+      return yield* fail(
+        operation,
+        "InvalidInput",
+        candidate,
+        "Directory escapes its canonical destination"
+      );
     }
     yield* rejectSymbolicLink(fs, candidate, operation);
     const info = yield* fs.stat(candidate).pipe(mapPlatform(operation, candidate));
     const canonical = yield* fs.realPath(candidate).pipe(mapPlatform(operation, candidate));
-    if (canonical !== candidate) return yield* fail(operation, "Aliased", candidate, "Directory resolves through an alias");
-    if (info.type !== "Directory") return yield* fail(operation, "UnsupportedEntry", candidate, "Expected a directory");
+    if (canonical !== candidate)
+      return yield* fail(operation, "Aliased", candidate, "Directory resolves through an alias");
+    if (info.type !== "Directory")
+      return yield* fail(operation, "UnsupportedEntry", candidate, "Expected a directory");
     return info;
   });
 }
@@ -801,91 +1091,125 @@ function requireCanonicalExistingDirectory(
 function rejectSymbolicLink(
   fs: FileSystem.FileSystem,
   candidate: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, ExportDestinationFailure> {
   return Effect.either(fs.readLink(candidate)).pipe(
-    Effect.flatMap((result) => result._tag === "Right"
-      ? fail(operation, "Aliased", candidate, "Symbolic links are not supported in an export destination")
-      : Effect.void),
+    Effect.flatMap((result) =>
+      result._tag === "Right"
+        ? fail(
+            operation,
+            "Aliased",
+            candidate,
+            "Symbolic links are not supported in an export destination"
+          )
+        : Effect.void
+    )
   );
 }
 
 function statIfPresent(
   fs: FileSystem.FileSystem,
   candidate: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<FileSystem.File.Info | undefined, ExportDestinationFailure> {
   return fs.stat(candidate).pipe(
     Effect.map((info): FileSystem.File.Info | undefined => info),
-    Effect.catchTag("SystemError", (error) => error.reason === "NotFound"
-      ? Effect.succeed(undefined)
-      : Effect.fail(toFailure(operation, candidate, error))),
-    Effect.catchTag("BadArgument", (error) => Effect.fail(toFailure(operation, candidate, error))),
+    Effect.catchTag("SystemError", (error) =>
+      error.reason === "NotFound"
+        ? Effect.succeed(undefined)
+        : Effect.fail(toFailure(operation, candidate, error))
+    ),
+    Effect.catchTag("BadArgument", (error) => Effect.fail(toFailure(operation, candidate, error)))
   );
 }
 
 function exactFileStat(
   candidate: string,
-  operation: Operation,
-): Effect.Effect<Extract<ExportDestinationEntryObservation, { kind: "File" }>["stat"], ExportDestinationFailure> {
-  return exactStat(candidate, operation).pipe(Effect.flatMap((info) => info.isFile()
-    ? Effect.succeed(Object.freeze({
-      dev: info.dev.toString(10),
-      ino: info.ino.toString(10),
-      nlink: info.nlink.toString(10),
-      size: info.size.toString(10),
-      mtimeNs: info.mtimeNs.toString(10),
-      ctimeNs: info.ctimeNs.toString(10),
-    }))
-    : fail(operation, "IdentityChanged", candidate, "Raw stat no longer identifies a regular file")));
+  operation: Operation
+): Effect.Effect<
+  Extract<ExportDestinationEntryObservation, { kind: "File" }>["stat"],
+  ExportDestinationFailure
+> {
+  return exactStat(candidate, operation).pipe(
+    Effect.flatMap((info) =>
+      info.isFile()
+        ? Effect.succeed(
+            Object.freeze({
+              dev: info.dev.toString(10),
+              ino: info.ino.toString(10),
+              nlink: info.nlink.toString(10),
+              size: info.size.toString(10),
+              mtimeNs: info.mtimeNs.toString(10),
+              ctimeNs: info.ctimeNs.toString(10),
+            })
+          )
+        : fail(
+            operation,
+            "IdentityChanged",
+            candidate,
+            "Raw stat no longer identifies a regular file"
+          )
+    )
+  );
 }
 
 function exactDirectoryStat(
   candidate: string,
-  operation: Operation,
-): Effect.Effect<Extract<ExportDestinationEntryObservation, { kind: "Directory" }>["stat"], ExportDestinationFailure> {
-  return exactStat(candidate, operation).pipe(Effect.flatMap((info) => info.isDirectory()
-    ? Effect.succeed(Object.freeze({
-      dev: info.dev.toString(10),
-      ino: info.ino.toString(10),
-      birthtimeNs: info.birthtimeNs.toString(10),
-      mtimeNs: info.mtimeNs.toString(10),
-      ctimeNs: info.ctimeNs.toString(10),
-    }))
-    : fail(operation, "IdentityChanged", candidate, "Raw stat no longer identifies a directory")));
+  operation: Operation
+): Effect.Effect<
+  Extract<ExportDestinationEntryObservation, { kind: "Directory" }>["stat"],
+  ExportDestinationFailure
+> {
+  return exactStat(candidate, operation).pipe(
+    Effect.flatMap((info) =>
+      info.isDirectory()
+        ? Effect.succeed(
+            Object.freeze({
+              dev: info.dev.toString(10),
+              ino: info.ino.toString(10),
+              birthtimeNs: info.birthtimeNs.toString(10),
+              mtimeNs: info.mtimeNs.toString(10),
+              ctimeNs: info.ctimeNs.toString(10),
+            })
+          )
+        : fail(operation, "IdentityChanged", candidate, "Raw stat no longer identifies a directory")
+    )
+  );
 }
 
-function exactStat(
-  candidate: string,
-  operation: Operation,
-) {
+function exactStat(candidate: string, operation: Operation) {
   return Effect.tryPromise({
     try: () => lstat(candidate, { bigint: true }),
-    catch: (error): ExportDestinationFailure => Object.freeze({
-      _tag: "ExportDestinationFailure",
-      operation,
-      reason: nativeErrorCode(error) === "ENOENT" ? "Missing" : "FilesystemFailed",
-      path: candidate,
-      detail: error instanceof Error ? error.message : String(error),
-    }),
+    catch: (error): ExportDestinationFailure =>
+      Object.freeze({
+        _tag: "ExportDestinationFailure",
+        operation,
+        reason: nativeErrorCode(error) === "ENOENT" ? "Missing" : "FilesystemFailed",
+        path: candidate,
+        detail: error instanceof Error ? error.message : String(error),
+      }),
   });
 }
 
 function sameExactIdentity(
   exact: Readonly<{ dev: string; ino: string }>,
-  info: FileSystem.File.Info,
+  info: FileSystem.File.Info
 ): boolean {
-  return exact.dev === String(info.dev)
-    && exact.ino === String(Option.getOrNull(info.ino));
+  return exact.dev === String(info.dev) && exact.ino === String(Option.getOrNull(info.ino));
 }
 
 function consumeEntry(
   budget: CaptureBudget,
   entry: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, ExportDestinationFailure> {
   if (budget.entries >= budget.maxEntries) {
-    return fail(operation, "LimitExceeded", entry, "Destination entry count exceeds the declared bound");
+    return fail(
+      operation,
+      "LimitExceeded",
+      entry,
+      "Destination entry count exceeds the declared bound"
+    );
   }
   budget.entries += 1;
   return Effect.void;
@@ -902,7 +1226,12 @@ function makeBudget(authority: CaptureAuthority): CaptureBudget {
 
 function isContained(path: Path.Path, destination: string, candidate: string): boolean {
   const relative = path.relative(destination, candidate);
-  return relative !== "" && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+  return (
+    relative !== "" &&
+    relative !== ".." &&
+    !relative.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(relative)
+  );
 }
 
 function entryIdentity(info: FileSystem.File.Info): ExportDestinationEntryIdentity {
@@ -917,12 +1246,17 @@ function visibleMode(mode: number): number {
 }
 
 function sameFileInfo(left: FileSystem.File.Info, right: FileSystem.File.Info): boolean {
-  return sameIdentity(entryIdentity(left), entryIdentity(right))
-    && left.mode === right.mode
-    && left.size === right.size;
+  return (
+    sameIdentity(entryIdentity(left), entryIdentity(right)) &&
+    left.mode === right.mode &&
+    left.size === right.size
+  );
 }
 
-function sameIdentity(left: ExportDestinationEntryIdentity, right: ExportDestinationEntryIdentity): boolean {
+function sameIdentity(
+  left: ExportDestinationEntryIdentity,
+  right: ExportDestinationEntryIdentity
+): boolean {
   return left.dev === right.dev && left.ino === right.ino;
 }
 
@@ -937,23 +1271,44 @@ function requireCaptureAuthority(
     captureHandle: string;
     planDigest: string;
   }>,
-  operation: "apply" | "restore" | "settle",
+  operation: "apply" | "restore" | "settle"
 ): Effect.Effect<CaptureAuthority, ExportDestinationFailure> {
   return Effect.gen(function* () {
     if (consumedHandles.has(input.captureHandle)) {
-      return yield* fail(operation, "HandleConsumed", undefined, "Capture handle has already been consumed");
+      return yield* fail(
+        operation,
+        "HandleConsumed",
+        undefined,
+        "Capture handle has already been consumed"
+      );
     }
     const authority = captures.get(input.captureHandle);
-    if (authority === undefined) return yield* fail(operation, "InvalidHandle", undefined, "Capture handle is unknown");
+    if (authority === undefined)
+      return yield* fail(operation, "InvalidHandle", undefined, "Capture handle is unknown");
     if (authority.readToken !== input.readToken) {
-      return yield* fail(operation, "WrongToken", undefined, "Capture handle belongs to another read token");
+      return yield* fail(
+        operation,
+        "WrongToken",
+        undefined,
+        "Capture handle belongs to another read token"
+      );
     }
     if (authority.destination.path !== input.destination) {
-      return yield* fail(operation, "WrongDestination", input.destination, "Capture handle belongs to another destination");
+      return yield* fail(
+        operation,
+        "WrongDestination",
+        input.destination,
+        "Capture handle belongs to another destination"
+      );
     }
     yield* revalidateDestination(fs, path, authority.destination, operation);
     if (authority.planDigest !== undefined && authority.planDigest !== input.planDigest) {
-      return yield* fail(operation, "WrongPlan", undefined, "Capture handle belongs to another semantic plan");
+      return yield* fail(
+        operation,
+        "WrongPlan",
+        undefined,
+        "Capture handle belongs to another semantic plan"
+      );
     }
     return authority;
   });
@@ -961,7 +1316,7 @@ function requireCaptureAuthority(
 
 function allMutationsConverged(
   observations: ReadonlyMap<string, ExportDestinationEntryObservation>,
-  mutations: readonly ExportDestinationMutation[],
+  mutations: readonly ExportDestinationMutation[]
 ): boolean {
   return mutations.every((mutation) => {
     const observation = observations.get(mutation.path);
@@ -971,15 +1326,17 @@ function allMutationsConverged(
 
 function mutationConverged(
   observation: ExportDestinationEntryObservation,
-  mutation: ExportDestinationMutation,
+  mutation: ExportDestinationMutation
 ): boolean {
   switch (mutation.kind) {
     case "EnsureDirectory":
       return observation.kind === "Directory" && observation.mode === mutation.mode;
     case "WriteFile":
-      return observation.kind === "File"
-        && observation.mode === mutation.mode
-        && equalBytes(observation.bytes, mutation.bytes);
+      return (
+        observation.kind === "File" &&
+        observation.mode === mutation.mode &&
+        equalBytes(observation.bytes, mutation.bytes)
+      );
     case "RemoveFile":
     case "RemoveEmptyDirectory":
       return observation.kind === "Absent";
@@ -989,12 +1346,16 @@ function mutationConverged(
 function sameObservationMap(
   observed: ReadonlyMap<string, ExportDestinationEntryObservation>,
   expected: ReadonlyMap<string, ExportDestinationEntryObservation>,
-  includeIdentity: boolean,
+  includeIdentity: boolean
 ): boolean {
   if (observed.size !== expected.size) return false;
   for (const [relative, expectedEntry] of expected) {
     const observedEntry = observed.get(relative);
-    if (observedEntry === undefined || !sameObservation(observedEntry, expectedEntry, includeIdentity)) return false;
+    if (
+      observedEntry === undefined ||
+      !sameObservation(observedEntry, expectedEntry, includeIdentity)
+    )
+      return false;
   }
   return true;
 }
@@ -1002,35 +1363,42 @@ function sameObservationMap(
 function sameObservation(
   left: ExportDestinationEntryObservation,
   right: ExportDestinationEntryObservation,
-  includeIdentity: boolean,
+  includeIdentity: boolean
 ): boolean {
   if (left.kind !== right.kind || left.path !== right.path) return false;
-  if (left.kind === "Absent" || right.kind === "Absent") return left.kind === "Absent" && right.kind === "Absent";
+  if (left.kind === "Absent" || right.kind === "Absent")
+    return left.kind === "Absent" && right.kind === "Absent";
   if (left.mode !== right.mode) return false;
   if (includeIdentity && !sameIdentity(left.identity, right.identity)) return false;
   if (left.kind === "File" || right.kind === "File") {
-    return left.kind === "File"
-      && right.kind === "File"
-      && (!includeIdentity || sameFileStat(left.stat, right.stat))
-      && equalBytes(left.bytes, right.bytes);
+    return (
+      left.kind === "File" &&
+      right.kind === "File" &&
+      (!includeIdentity || sameFileStat(left.stat, right.stat)) &&
+      equalBytes(left.bytes, right.bytes)
+    );
   }
   if (includeIdentity && !sameDirectoryStat(left.stat, right.stat)) return false;
   if (left.children.length !== right.children.length) return false;
   return left.children.every((child, index) => {
     const peer = right.children[index];
-    return peer !== undefined
-      && child.name === peer.name
-      && child.kind === peer.kind
-      && child.mode === peer.mode
-      && (!includeIdentity || sameIdentity(child, peer));
+    return (
+      peer !== undefined &&
+      child.name === peer.name &&
+      child.kind === peer.kind &&
+      child.mode === peer.mode &&
+      (!includeIdentity || sameIdentity(child, peer))
+    );
   });
 }
 
 function recoverablePartial(
   observed: ReadonlyMap<string, ExportDestinationEntryObservation>,
-  authority: CaptureAuthority,
+  authority: CaptureAuthority
 ): boolean {
-  const mutations = new Map((authority.plannedMutations ?? []).map((mutation) => [mutation.path, mutation]));
+  const mutations = new Map(
+    (authority.plannedMutations ?? []).map((mutation) => [mutation.path, mutation])
+  );
   if (observed.size !== authority.preimages.size) return false;
   for (const [relative, preimage] of authority.preimages) {
     const current = observed.get(relative);
@@ -1044,30 +1412,34 @@ function recoverablePartial(
 
 function sameFileStat(
   left: Extract<ExportDestinationEntryObservation, { kind: "File" }>["stat"],
-  right: Extract<ExportDestinationEntryObservation, { kind: "File" }>["stat"],
+  right: Extract<ExportDestinationEntryObservation, { kind: "File" }>["stat"]
 ): boolean {
-  return left.dev === right.dev
-    && left.ino === right.ino
-    && left.nlink === right.nlink
-    && left.size === right.size
-    && left.mtimeNs === right.mtimeNs
-    && left.ctimeNs === right.ctimeNs;
+  return (
+    left.dev === right.dev &&
+    left.ino === right.ino &&
+    left.nlink === right.nlink &&
+    left.size === right.size &&
+    left.mtimeNs === right.mtimeNs &&
+    left.ctimeNs === right.ctimeNs
+  );
 }
 
 function sameDirectoryStat(
   left: Extract<ExportDestinationEntryObservation, { kind: "Directory" }>["stat"],
-  right: Extract<ExportDestinationEntryObservation, { kind: "Directory" }>["stat"],
+  right: Extract<ExportDestinationEntryObservation, { kind: "Directory" }>["stat"]
 ): boolean {
-  return left.dev === right.dev
-    && left.ino === right.ino
-    && left.birthtimeNs === right.birthtimeNs
-    && left.mtimeNs === right.mtimeNs
-    && left.ctimeNs === right.ctimeNs;
+  return (
+    left.dev === right.dev &&
+    left.ino === right.ino &&
+    left.birthtimeNs === right.birthtimeNs &&
+    left.mtimeNs === right.mtimeNs &&
+    left.ctimeNs === right.ctimeNs
+  );
 }
 
 function replaceMap(
   target: Map<string, ExportDestinationEntryObservation>,
-  source: ReadonlyMap<string, ExportDestinationEntryObservation>,
+  source: ReadonlyMap<string, ExportDestinationEntryObservation>
 ): void {
   target.clear();
   for (const [key, value] of source) target.set(key, value);
@@ -1087,7 +1459,7 @@ function applyMutation(
   path: Path.Path,
   destination: DestinationRoot,
   mutation: ExportDestinationMutation,
-  authority: CaptureAuthority,
+  authority: CaptureAuthority
 ): Effect.Effect<void, ExportDestinationFailure> {
   return Effect.gen(function* () {
     yield* revalidateDestination(fs, path, destination, "apply");
@@ -1101,48 +1473,107 @@ function applyMutation(
       case "EnsureDirectory": {
         if (current !== undefined) {
           if (current.type !== "Directory" || visibleMode(current.mode) !== mutation.mode) {
-            return yield* fail("apply", "IdentityChanged", mutation.path, "Directory creation target is occupied by another exact state");
+            return yield* fail(
+              "apply",
+              "IdentityChanged",
+              mutation.path,
+              "Directory creation target is occupied by another exact state"
+            );
           }
           return;
         }
-        yield* fs.makeDirectory(candidate, { recursive: false, mode: mutation.mode }).pipe(mapPlatform("apply", candidate));
+        yield* fs
+          .makeDirectory(candidate, { recursive: false, mode: mutation.mode })
+          .pipe(mapPlatform("apply", candidate));
         yield* fs.chmod(candidate, mutation.mode).pipe(mapPlatform("apply", candidate));
-        const created = yield* requireCanonicalExistingDirectory(fs, path, destination, candidate, "apply");
+        const created = yield* requireCanonicalExistingDirectory(
+          fs,
+          path,
+          destination,
+          candidate,
+          "apply"
+        );
         if (visibleMode(created.mode) !== mutation.mode) {
-          return yield* fail("apply", "IdentityChanged", mutation.path, "Created directory mode does not match the exact plan");
+          return yield* fail(
+            "apply",
+            "IdentityChanged",
+            mutation.path,
+            "Created directory mode does not match the exact plan"
+          );
         }
         return;
       }
       case "WriteFile": {
         if (current?.type === "Directory") {
-          return yield* fail("apply", "UnsupportedEntry", mutation.path, "File write target is a directory");
+          return yield* fail(
+            "apply",
+            "UnsupportedEntry",
+            mutation.path,
+            "File write target is a directory"
+          );
         }
-        yield* writeAtomic(fs, path, destination, candidate, mutation.bytes, mutation.mode, authority, "apply");
+        yield* writeAtomic(
+          fs,
+          path,
+          destination,
+          candidate,
+          mutation.bytes,
+          mutation.mode,
+          authority,
+          "apply"
+        );
         return;
       }
       case "RemoveFile": {
         if (current === undefined) return;
         if (current.type !== "File") {
-          return yield* fail("apply", "UnsupportedEntry", mutation.path, "File removal target is not a file");
+          return yield* fail(
+            "apply",
+            "UnsupportedEntry",
+            mutation.path,
+            "File removal target is not a file"
+          );
         }
-        yield* fs.remove(candidate, { recursive: false, force: false }).pipe(mapPlatform("apply", candidate));
+        yield* fs
+          .remove(candidate, { recursive: false, force: false })
+          .pipe(mapPlatform("apply", candidate));
         if ((yield* statIfPresent(fs, candidate, "apply")) !== undefined) {
-          return yield* fail("apply", "IdentityChanged", mutation.path, "Removed file remains present");
+          return yield* fail(
+            "apply",
+            "IdentityChanged",
+            mutation.path,
+            "Removed file remains present"
+          );
         }
         return;
       }
       case "RemoveEmptyDirectory": {
         if (current === undefined) return;
         if (current.type !== "Directory") {
-          return yield* fail("apply", "UnsupportedEntry", mutation.path, "Directory removal target is not a directory");
+          return yield* fail(
+            "apply",
+            "UnsupportedEntry",
+            mutation.path,
+            "Directory removal target is not a directory"
+          );
         }
         const entries = yield* fs.readDirectory(candidate).pipe(mapPlatform("apply", candidate));
         if (entries.length !== 0) {
-          return yield* fail("apply", "IdentityChanged", mutation.path, "Directory removal is bounded to an empty captured directory");
+          return yield* fail(
+            "apply",
+            "IdentityChanged",
+            mutation.path,
+            "Directory removal is bounded to an empty captured directory"
+          );
         }
         yield* removeEmptyDirectory(candidate, "apply");
         if ((yield* statIfPresent(fs, candidate, "apply")) !== undefined) {
-          return yield* fail("apply", "IdentityChanged", mutation.path, "Removed directory remains present");
+          return yield* fail(
+            "apply",
+            "IdentityChanged",
+            mutation.path,
+            "Removed directory remains present"
+          );
         }
       }
     }
@@ -1154,7 +1585,7 @@ function restoreObservation(
   path: Path.Path,
   destination: DestinationRoot,
   preimage: ExportDestinationEntryObservation,
-  authority: CaptureAuthority,
+  authority: CaptureAuthority
 ): Effect.Effect<void, ExportDestinationFailure> {
   return Effect.gen(function* () {
     yield* revalidateDestination(fs, path, destination, "restore");
@@ -1169,28 +1600,62 @@ function restoreObservation(
       if (current.type === "Directory") {
         const entries = yield* fs.readDirectory(candidate).pipe(mapPlatform("restore", candidate));
         if (entries.length !== 0) {
-          return yield* fail("restore", "IdentityChanged", preimage.path, "Provider-created directory is no longer empty");
+          return yield* fail(
+            "restore",
+            "IdentityChanged",
+            preimage.path,
+            "Provider-created directory is no longer empty"
+          );
         }
       } else if (current.type !== "File") {
-        return yield* fail("restore", "UnsupportedEntry", preimage.path, "Restore target is not a supported provider-created entry");
+        return yield* fail(
+          "restore",
+          "UnsupportedEntry",
+          preimage.path,
+          "Restore target is not a supported provider-created entry"
+        );
       }
       if (current.type === "Directory") yield* removeEmptyDirectory(candidate, "restore");
-      else yield* fs.remove(candidate, { recursive: false, force: false }).pipe(mapPlatform("restore", candidate));
+      else
+        yield* fs
+          .remove(candidate, { recursive: false, force: false })
+          .pipe(mapPlatform("restore", candidate));
       return;
     }
 
     if (preimage.kind === "File") {
       if (current?.type === "Directory") {
-        return yield* fail("restore", "UnsupportedEntry", preimage.path, "File preimage is occupied by a directory");
+        return yield* fail(
+          "restore",
+          "UnsupportedEntry",
+          preimage.path,
+          "File preimage is occupied by a directory"
+        );
       }
-      yield* writeAtomic(fs, path, destination, candidate, preimage.bytes, preimage.mode, authority, "restore");
+      yield* writeAtomic(
+        fs,
+        path,
+        destination,
+        candidate,
+        preimage.bytes,
+        preimage.mode,
+        authority,
+        "restore"
+      );
       return;
     }
 
     if (current === undefined) {
-      yield* fs.makeDirectory(candidate, { recursive: false, mode: preimage.mode }).pipe(mapPlatform("restore", candidate));
+      yield* fs
+        .makeDirectory(candidate, { recursive: false, mode: preimage.mode })
+        .pipe(mapPlatform("restore", candidate));
     } else if (current.type !== "Directory") {
-      return yield* fail("restore", "UnsupportedEntry", preimage.path, "Directory preimage is occupied by another entry type");
+      return yield* fail(
+        "restore",
+        "UnsupportedEntry",
+        preimage.path,
+        "Directory preimage is occupied by another entry type"
+      );
     }
     yield* fs.chmod(candidate, preimage.mode).pipe(mapPlatform("restore", candidate));
   });
@@ -1204,34 +1669,48 @@ function writeAtomic(
   bytes: Uint8Array,
   mode: number,
   authority: CaptureAuthority,
-  operation: "apply" | "restore",
+  operation: "apply" | "restore"
 ): Effect.Effect<void, ExportDestinationFailure> {
   return Effect.gen(function* () {
     const parent = path.dirname(target);
     yield* requireCanonicalExistingDirectory(fs, path, destination, parent, operation);
-    const temporary = path.join(parent, `${EXPORT_DESTINATION_TEMP_PREFIX}${authority.handle}-${randomUUID()}`);
+    const temporary = path.join(
+      parent,
+      `${EXPORT_DESTINATION_TEMP_PREFIX}${authority.handle}-${randomUUID()}`
+    );
     if (
-      path.dirname(temporary) !== parent
-      || !path.basename(temporary).startsWith(EXPORT_DESTINATION_TEMP_PREFIX)
-      || !isContained(path, destination.path, temporary)
+      path.dirname(temporary) !== parent ||
+      !path.basename(temporary).startsWith(EXPORT_DESTINATION_TEMP_PREFIX) ||
+      !isContained(path, destination.path, temporary)
     ) {
-      return yield* fail(operation, "InvalidInput", temporary, "Provider temporary path failed its direct-child containment guard");
+      return yield* fail(
+        operation,
+        "InvalidInput",
+        temporary,
+        "Provider temporary path failed its direct-child containment guard"
+      );
     }
 
     let temporaryOpened = false;
     let temporaryIdentity: OwnedTemporaryIdentity | undefined;
-    const attempted = yield* Effect.either(Effect.scoped(Effect.gen(function* () {
-      const file = yield* fs.open(temporary, { flag: "wx", mode: 0o600 }).pipe(mapPlatform(operation, temporary));
-      temporaryOpened = true;
-      temporaryIdentity = yield* openedTemporaryIdentity(file.fd, temporary, operation);
-      if (bytes.byteLength > 0) {
-        yield* file.writeAll(bytes).pipe(mapPlatform(operation, temporary));
-      }
-      yield* file.sync.pipe(mapPlatform(operation, temporary));
-    }).pipe(
-      Effect.andThen(fs.chmod(temporary, mode).pipe(mapPlatform(operation, temporary))),
-      Effect.andThen(fs.rename(temporary, target).pipe(mapPlatform(operation, target))),
-    )));
+    const attempted = yield* Effect.either(
+      Effect.scoped(
+        Effect.gen(function* () {
+          const file = yield* fs
+            .open(temporary, { flag: "wx", mode: 0o600 })
+            .pipe(mapPlatform(operation, temporary));
+          temporaryOpened = true;
+          temporaryIdentity = yield* openedTemporaryIdentity(file.fd, temporary, operation);
+          if (bytes.byteLength > 0) {
+            yield* file.writeAll(bytes).pipe(mapPlatform(operation, temporary));
+          }
+          yield* file.sync.pipe(mapPlatform(operation, temporary));
+        }).pipe(
+          Effect.andThen(fs.chmod(temporary, mode).pipe(mapPlatform(operation, temporary))),
+          Effect.andThen(fs.rename(temporary, target).pipe(mapPlatform(operation, target)))
+        )
+      )
+    );
     if (attempted._tag === "Right") return;
     if (!temporaryOpened) return yield* Effect.fail(attempted.left);
     if (temporaryIdentity === undefined) {
@@ -1239,23 +1718,19 @@ function writeAtomic(
         operation,
         "CleanupFailed",
         temporary,
-        `${attempted.left.detail}; temporary cleanup refused because exact ownership identity was unavailable`,
+        `${attempted.left.detail}; temporary cleanup refused because exact ownership identity was unavailable`
       );
     }
 
-    const cleanup = yield* Effect.either(cleanupOwnedTemporary(
-      fs,
-      path,
-      destination,
-      temporary,
-      temporaryIdentity,
-    ));
+    const cleanup = yield* Effect.either(
+      cleanupOwnedTemporary(fs, path, destination, temporary, temporaryIdentity)
+    );
     if (cleanup._tag === "Left") {
       return yield* fail(
         operation,
         "CleanupFailed",
         temporary,
-        `${attempted.left.detail}; temporary cleanup also failed: ${cleanup.left.detail}`,
+        `${attempted.left.detail}; temporary cleanup also failed: ${cleanup.left.detail}`
       );
     }
     return yield* Effect.fail(attempted.left);
@@ -1267,17 +1742,22 @@ function cleanupOwnedTemporary(
   path: Path.Path,
   destination: DestinationRoot,
   temporary: string,
-  ownedIdentity: OwnedTemporaryIdentity,
+  ownedIdentity: OwnedTemporaryIdentity
 ): Effect.Effect<void, ExportDestinationFailure> {
   return Effect.gen(function* () {
     const parent = path.dirname(temporary);
     if (
-      !path.basename(temporary).startsWith(EXPORT_DESTINATION_TEMP_PREFIX)
-      || !isContained(path, destination.path, temporary)
-      || parent === destination.path
-      || !isContained(path, destination.path, parent)
+      !path.basename(temporary).startsWith(EXPORT_DESTINATION_TEMP_PREFIX) ||
+      !isContained(path, destination.path, temporary) ||
+      parent === destination.path ||
+      !isContained(path, destination.path, parent)
     ) {
-      return yield* fail("cleanup", "CleanupFailed", temporary, "Temporary cleanup authority failed containment and prefix guards");
+      return yield* fail(
+        "cleanup",
+        "CleanupFailed",
+        temporary,
+        "Temporary cleanup authority failed containment and prefix guards"
+      );
     }
     yield* requireCanonicalExistingDirectory(fs, path, destination, parent, "cleanup");
     const currentIdentity = yield* exactTemporaryIdentityIfPresent(temporary);
@@ -1287,37 +1767,41 @@ function cleanupOwnedTemporary(
         "cleanup",
         "CleanupFailed",
         temporary,
-        "Temporary cleanup refused a same-path entry with another exact filesystem identity",
+        "Temporary cleanup refused a same-path entry with another exact filesystem identity"
       );
     }
-    yield* fs.remove(temporary, { recursive: false, force: false }).pipe(mapPlatform("cleanup", temporary));
+    yield* fs
+      .remove(temporary, { recursive: false, force: false })
+      .pipe(mapPlatform("cleanup", temporary));
   });
 }
 
 function openedTemporaryIdentity(
   descriptor: FileSystem.File.Descriptor,
   temporary: string,
-  operation: "apply" | "restore",
+  operation: "apply" | "restore"
 ): Effect.Effect<OwnedTemporaryIdentity, ExportDestinationFailure> {
   // Effect's portable File.Info uses numeric identity; cleanup authority retains exact bigint fd identity.
   return Effect.try({
     try: () => {
       const info = fstatSync(Number(descriptor), { bigint: true });
-      if (!info.isFile() || info.isSymbolicLink()) throw new TypeError("Opened temporary is not a regular file");
+      if (!info.isFile() || info.isSymbolicLink())
+        throw new TypeError("Opened temporary is not a regular file");
       return Object.freeze({ dev: info.dev, ino: info.ino });
     },
-    catch: (error): ExportDestinationFailure => Object.freeze({
-      _tag: "ExportDestinationFailure",
-      operation,
-      reason: "FilesystemFailed",
-      path: temporary,
-      detail: error instanceof Error ? error.message : String(error),
-    }),
+    catch: (error): ExportDestinationFailure =>
+      Object.freeze({
+        _tag: "ExportDestinationFailure",
+        operation,
+        reason: "FilesystemFailed",
+        path: temporary,
+        detail: error instanceof Error ? error.message : String(error),
+      }),
   });
 }
 
 function exactTemporaryIdentityIfPresent(
-  temporary: string,
+  temporary: string
 ): Effect.Effect<OwnedTemporaryIdentity | undefined, ExportDestinationFailure> {
   return Effect.tryPromise({
     try: async () => {
@@ -1328,36 +1812,45 @@ function exactTemporaryIdentityIfPresent(
         throw error;
       }
     },
-    catch: (error): ExportDestinationFailure => Object.freeze({
-      _tag: "ExportDestinationFailure",
-      operation: "cleanup",
-      reason: "FilesystemFailed",
-      path: temporary,
-      detail: error instanceof Error ? error.message : String(error),
-    }),
-  }).pipe(Effect.flatMap((info) => {
-    if (info === undefined) return Effect.succeed(undefined);
-    if (!info.isFile() || info.isSymbolicLink()) {
-      return fail("cleanup", "CleanupFailed", temporary, "Temporary cleanup is bounded to one provider-owned regular file");
-    }
-    return Effect.succeed(Object.freeze({ dev: info.dev, ino: info.ino }));
-  }));
+    catch: (error): ExportDestinationFailure =>
+      Object.freeze({
+        _tag: "ExportDestinationFailure",
+        operation: "cleanup",
+        reason: "FilesystemFailed",
+        path: temporary,
+        detail: error instanceof Error ? error.message : String(error),
+      }),
+  }).pipe(
+    Effect.flatMap((info) => {
+      if (info === undefined) return Effect.succeed(undefined);
+      if (!info.isFile() || info.isSymbolicLink()) {
+        return fail(
+          "cleanup",
+          "CleanupFailed",
+          temporary,
+          "Temporary cleanup is bounded to one provider-owned regular file"
+        );
+      }
+      return Effect.succeed(Object.freeze({ dev: info.dev, ino: info.ino }));
+    })
+  );
 }
 
 /** Effect Platform `remove` lowers to `rm`; this narrow gap preserves rmdir's nonrecursive refusal. */
 function removeEmptyDirectory(
   candidate: string,
-  operation: "apply" | "restore",
+  operation: "apply" | "restore"
 ): Effect.Effect<void, ExportDestinationFailure> {
   return Effect.tryPromise({
     try: () => rmdir(candidate),
     catch: (error) => {
       const code = nativeErrorCode(error);
-      const reason: ExportDestinationFailureReason = code === "ENOENT"
-        ? "Missing"
-        : code === "ENOTEMPTY" || code === "EEXIST"
-          ? "IdentityChanged"
-          : "FilesystemFailed";
+      const reason: ExportDestinationFailureReason =
+        code === "ENOENT"
+          ? "Missing"
+          : code === "ENOTEMPTY" || code === "EEXIST"
+            ? "IdentityChanged"
+            : "FilesystemFailed";
       return Object.freeze({
         _tag: "ExportDestinationFailure",
         operation,
@@ -1376,14 +1869,19 @@ function nativeErrorCode(error: unknown): string | undefined {
 }
 
 function mapPlatform(operation: Operation, path?: string) {
-  return <A, R>(effect: Effect.Effect<A, PlatformError, R>): Effect.Effect<A, ExportDestinationFailure, R> =>
+  return <A, R>(
+    effect: Effect.Effect<A, PlatformError, R>
+  ): Effect.Effect<A, ExportDestinationFailure, R> =>
     effect.pipe(Effect.mapError((error) => toFailure(operation, path, error)));
 }
 
-function toFailure(operation: Operation, path: string | undefined, error: PlatformError): ExportDestinationFailure {
-  const reason: ExportDestinationFailureReason = error._tag === "SystemError" && error.reason === "NotFound"
-    ? "Missing"
-    : "FilesystemFailed";
+function toFailure(
+  operation: Operation,
+  path: string | undefined,
+  error: PlatformError
+): ExportDestinationFailure {
+  const reason: ExportDestinationFailureReason =
+    error._tag === "SystemError" && error.reason === "NotFound" ? "Missing" : "FilesystemFailed";
   return Object.freeze({
     _tag: "ExportDestinationFailure",
     operation,
@@ -1397,13 +1895,15 @@ function fail(
   operation: Operation,
   reason: ExportDestinationFailureReason,
   path: string | undefined,
-  detail: string,
+  detail: string
 ): Effect.Effect<never, ExportDestinationFailure> {
-  return Effect.fail(Object.freeze({
-    _tag: "ExportDestinationFailure",
-    operation,
-    reason,
-    ...(path === undefined ? {} : { path }),
-    detail,
-  }));
+  return Effect.fail(
+    Object.freeze({
+      _tag: "ExportDestinationFailure",
+      operation,
+      reason,
+      ...(path === undefined ? {} : { path }),
+      detail,
+    })
+  );
 }

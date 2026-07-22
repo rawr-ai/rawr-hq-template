@@ -8,7 +8,9 @@ export type ComposedApiPluginSurface = Readonly<{
   publishedRouter: AnyProcedureRouterObject;
 }>;
 
-export type ComposedWorkflowPluginSurface<TCreateInngestFunctions = (...args: readonly unknown[]) => readonly unknown[]> = Readonly<{
+export type ComposedWorkflowPluginSurface<
+  TCreateInngestFunctions = (...args: readonly unknown[]) => readonly unknown[],
+> = Readonly<{
   surfaces: readonly WorkflowSurfaceMetadata[];
   internalContract: AnyContractRouterObject;
   internalRouter: AnyProcedureRouterObject;
@@ -18,12 +20,17 @@ export type ComposedWorkflowPluginSurface<TCreateInngestFunctions = (...args: re
 }>;
 
 function isMergeableSurfaceNode(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value) && !("~orpc" in (value as Record<string, unknown>));
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    !("~orpc" in (value as Record<string, unknown>))
+  );
 }
 
 export function mergeDeclaredSurfaceTrees<TTree extends object>(
   trees: readonly TTree[],
-  path: readonly string[] = [],
+  path: readonly string[] = []
 ): TTree {
   const merged: Record<string, unknown> = {};
 
@@ -38,7 +45,7 @@ export function mergeDeclaredSurfaceTrees<TTree extends object>(
       if (isMergeableSurfaceNode(existing) && isMergeableSurfaceNode(value)) {
         merged[key] = mergeDeclaredSurfaceTrees(
           [existing, value] as readonly Record<string, unknown>[],
-          [...path, key],
+          [...path, key]
         );
         continue;
       }

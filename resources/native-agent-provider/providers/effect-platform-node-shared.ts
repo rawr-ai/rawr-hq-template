@@ -31,28 +31,28 @@ export interface EffectPlatformNodeProviderKernel {
   readonly run: (
     operation: NativeAgentProviderOperation,
     args: readonly string[],
-    stdin?: string,
+    stdin?: string
   ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
   readonly runCodexAppServer: (
     operation: NativeAgentProviderOperation,
-    requests: readonly CodexAppServerRequest[],
+    requests: readonly CodexAppServerRequest[]
   ) => Effect.Effect<readonly NativeProviderJsonValue[], NativeAgentProviderFailure>;
   readonly readMarketplacePackage: (
     root: string,
-    limits: NativeProviderPackageReadLimits,
+    limits: NativeProviderPackageReadLimits
   ) => Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure>;
   readonly readPluginPackage: (
     root: string,
-    limits: NativeProviderPackageReadLimits,
+    limits: NativeProviderPackageReadLimits
   ) => Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure>;
   readonly homePath: (...segments: readonly string[]) => string;
   readonly readHomeJsonFile: (
     relativePath: string,
-    maxBytes: number,
+    maxBytes: number
   ) => Effect.Effect<NativeProviderJsonValue | null, NativeAgentProviderFailure>;
   readonly requireCanonicalDirectory: (
     operation: NativeAgentProviderOperation,
-    candidate: string,
+    candidate: string
   ) => Effect.Effect<string, NativeAgentProviderFailure>;
 }
 
@@ -63,7 +63,7 @@ export interface CodexAppServerRequest {
 
 export function acquireEffectPlatformNodeProvider(
   provider: NativeAgentProviderId,
-  input: NativeProviderSessionInput,
+  input: NativeProviderSessionInput
 ): Effect.Effect<
   EffectPlatformNodeProviderKernel,
   NativeAgentProviderFailure,
@@ -73,53 +73,81 @@ export function acquireEffectPlatformNodeProvider(
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
     const executor = yield* CommandExecutor.CommandExecutor;
-    const executablePath = yield* requireCanonicalExecutable(fs, paths, provider, input.executablePath);
-    const home = yield* requireCanonicalDirectory(fs, paths, provider, "acquire", input.home, false);
+    const executablePath = yield* requireCanonicalExecutable(
+      fs,
+      paths,
+      provider,
+      input.executablePath
+    );
+    const home = yield* requireCanonicalDirectory(
+      fs,
+      paths,
+      provider,
+      "acquire",
+      input.home,
+      false
+    );
     yield* requireVacantOwnerSlot(fs, paths, provider, "acquire", home);
     const commandMutex = yield* Effect.makeSemaphore(1);
 
     const run: EffectPlatformNodeProviderKernel["run"] = (operation, args, stdin = "") =>
-      commandMutex.withPermits(1)(Effect.gen(function* () {
-        yield* requireCanonicalDirectory(fs, paths, provider, operation, home, false);
-        yield* requireVacantOwnerSlot(fs, paths, provider, operation, home);
-        return yield* runCommand({
-          provider,
-          operation,
-          executablePath,
-          home,
-          args,
-          stdin,
-          executor,
-        });
-      }));
+      commandMutex.withPermits(1)(
+        Effect.gen(function* () {
+          yield* requireCanonicalDirectory(fs, paths, provider, operation, home, false);
+          yield* requireVacantOwnerSlot(fs, paths, provider, operation, home);
+          return yield* runCommand({
+            provider,
+            operation,
+            executablePath,
+            home,
+            args,
+            stdin,
+            executor,
+          });
+        })
+      );
 
-    const runCodexAppServer: EffectPlatformNodeProviderKernel["runCodexAppServer"] = (operation, requests) =>
-      commandMutex.withPermits(1)(Effect.gen(function* () {
-        yield* requireCanonicalDirectory(fs, paths, provider, operation, home, false);
-        yield* requireVacantOwnerSlot(fs, paths, provider, operation, home);
-        return yield* runCodexAppServerProcess({
-          provider,
-          operation,
-          executablePath,
-          home,
-          requests,
-          executor,
-        });
-      }));
+    const runCodexAppServer: EffectPlatformNodeProviderKernel["runCodexAppServer"] = (
+      operation,
+      requests
+    ) =>
+      commandMutex.withPermits(1)(
+        Effect.gen(function* () {
+          yield* requireCanonicalDirectory(fs, paths, provider, operation, home, false);
+          yield* requireVacantOwnerSlot(fs, paths, provider, operation, home);
+          return yield* runCodexAppServerProcess({
+            provider,
+            operation,
+            executablePath,
+            home,
+            requests,
+            executor,
+          });
+        })
+      );
 
-    const readMarketplacePackage: EffectPlatformNodeProviderKernel["readMarketplacePackage"] = (root, limits) =>
-      readProviderPackage(fs, paths, provider, "marketplace-read", home, root, limits, false);
+    const readMarketplacePackage: EffectPlatformNodeProviderKernel["readMarketplacePackage"] = (
+      root,
+      limits
+    ) => readProviderPackage(fs, paths, provider, "marketplace-read", home, root, limits, false);
 
-    const readPluginPackage: EffectPlatformNodeProviderKernel["readPluginPackage"] = (root, limits) =>
-      readProviderPackage(fs, paths, provider, "plugin-read", home, root, limits, true);
+    const readPluginPackage: EffectPlatformNodeProviderKernel["readPluginPackage"] = (
+      root,
+      limits
+    ) => readProviderPackage(fs, paths, provider, "plugin-read", home, root, limits, true);
 
-    const homePath: EffectPlatformNodeProviderKernel["homePath"] = (...segments) => paths.join(home, ...segments);
+    const homePath: EffectPlatformNodeProviderKernel["homePath"] = (...segments) =>
+      paths.join(home, ...segments);
 
-    const readHomeJsonFile: EffectPlatformNodeProviderKernel["readHomeJsonFile"] = (relativePath, maxBytes) =>
-      readOptionalHomeJsonFile(fs, paths, provider, home, relativePath, maxBytes);
+    const readHomeJsonFile: EffectPlatformNodeProviderKernel["readHomeJsonFile"] = (
+      relativePath,
+      maxBytes
+    ) => readOptionalHomeJsonFile(fs, paths, provider, home, relativePath, maxBytes);
 
-    const requireDirectory: EffectPlatformNodeProviderKernel["requireCanonicalDirectory"] = (operation, candidate) =>
-      requireCanonicalDirectory(fs, paths, provider, operation, candidate, false);
+    const requireDirectory: EffectPlatformNodeProviderKernel["requireCanonicalDirectory"] = (
+      operation,
+      candidate
+    ) => requireCanonicalDirectory(fs, paths, provider, operation, candidate, false);
 
     return Object.freeze({
       provider,
@@ -139,10 +167,10 @@ export function acquireEffectPlatformNodeProvider(
 export function parseJsonObservation(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  result: NativeProviderCommandResult,
+  result: NativeProviderCommandResult
 ): Effect.Effect<NativeProviderJsonObservation, NativeAgentProviderFailure> {
   return decodeJson(provider, operation, result.stdout).pipe(
-    Effect.map((json) => Object.freeze({ ...result, json })),
+    Effect.map((json) => Object.freeze({ ...result, json }))
   );
 }
 
@@ -159,7 +187,7 @@ export function parseHelpCommands(stdout: string): readonly string[] {
 export function requireMarketplaceIdentity(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  identity: string,
+  identity: string
 ): Effect.Effect<string, NativeAgentProviderFailure> {
   return /^[a-z0-9][a-z0-9_-]*$/u.test(identity)
     ? Effect.succeed(identity)
@@ -169,7 +197,7 @@ export function requireMarketplaceIdentity(
 export function requirePluginSelector(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  selector: string,
+  selector: string
 ): Effect.Effect<string, NativeAgentProviderFailure> {
   return /^[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9_-]*$/u.test(selector)
     ? Effect.succeed(selector)
@@ -179,7 +207,7 @@ export function requirePluginSelector(
 export function runCodexAppServerRequests(
   kernel: EffectPlatformNodeProviderKernel,
   operation: NativeAgentProviderOperation,
-  requests: readonly Readonly<{ method: string; params: NativeProviderJsonValue }>[],
+  requests: readonly Readonly<{ method: string; params: NativeProviderJsonValue }>[]
 ): Effect.Effect<readonly NativeProviderJsonValue[], NativeAgentProviderFailure> {
   return kernel.runCodexAppServer(operation, requests);
 }
@@ -203,160 +231,241 @@ interface CodexAppServerRunInput {
   readonly executor: CommandExecutor.CommandExecutor;
 }
 
-function runCommand(input: CommandRunInput): Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure> {
+function runCommand(
+  input: CommandRunInput
+): Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure> {
   const command = Command.make(input.executablePath, ...input.args).pipe(
     Command.workingDirectory(input.home),
     Command.env(providerEnvironment(input.provider, input.home)),
-    Command.feed(input.stdin),
+    Command.feed(input.stdin)
   );
-  const operation = Effect.scoped(Effect.gen(function* () {
-    const process = yield* input.executor.start(command).pipe(
-      Effect.mapError((cause) => platformFailure(input.provider, input.operation, input.executablePath, cause, "CommandFailed")),
-    );
-    const [stdout, stderr, exitCode] = yield* Effect.all([
-      collectBoundedOutput(process.stdout, input.provider, input.operation),
-      collectBoundedOutput(process.stderr, input.provider, input.operation),
-      process.exitCode.pipe(
-        Effect.mapError((cause) => platformFailure(input.provider, input.operation, input.executablePath, cause, "CommandFailed")),
-      ),
-    ], { concurrency: "unbounded" });
-    if (Number(exitCode) !== 0) {
-      return yield* fail(
-        input.provider,
-        input.operation,
-        "CommandFailed",
-        input.executablePath,
-        `Provider command exited ${Number(exitCode)}: ${stderr.trim() || stdout.trim()}`,
+  const operation = Effect.scoped(
+    Effect.gen(function* () {
+      const process = yield* input.executor
+        .start(command)
+        .pipe(
+          Effect.mapError((cause) =>
+            platformFailure(
+              input.provider,
+              input.operation,
+              input.executablePath,
+              cause,
+              "CommandFailed"
+            )
+          )
+        );
+      const [stdout, stderr, exitCode] = yield* Effect.all(
+        [
+          collectBoundedOutput(process.stdout, input.provider, input.operation),
+          collectBoundedOutput(process.stderr, input.provider, input.operation),
+          process.exitCode.pipe(
+            Effect.mapError((cause) =>
+              platformFailure(
+                input.provider,
+                input.operation,
+                input.executablePath,
+                cause,
+                "CommandFailed"
+              )
+            )
+          ),
+        ],
+        { concurrency: "unbounded" }
       );
-    }
-    return Object.freeze({ stdout, stderr });
-  }));
+      if (Number(exitCode) !== 0) {
+        return yield* fail(
+          input.provider,
+          input.operation,
+          "CommandFailed",
+          input.executablePath,
+          `Provider command exited ${Number(exitCode)}: ${stderr.trim() || stdout.trim()}`
+        );
+      }
+      return Object.freeze({ stdout, stderr });
+    })
+  );
   return operation.pipe(
     Effect.timeoutFail({
       duration: PROCESS_TIMEOUT,
-      onTimeout: () => failure(
-        input.provider,
-        input.operation,
-        "CommandTimedOut",
-        input.executablePath,
-        "Provider command exceeded its bounded execution timeout",
-      ),
-    }),
+      onTimeout: () =>
+        failure(
+          input.provider,
+          input.operation,
+          "CommandTimedOut",
+          input.executablePath,
+          "Provider command exceeded its bounded execution timeout"
+        ),
+    })
   );
 }
 
 function runCodexAppServerProcess(
-  input: CodexAppServerRunInput,
+  input: CodexAppServerRunInput
 ): Effect.Effect<readonly NativeProviderJsonValue[], NativeAgentProviderFailure> {
-  const operation = Effect.scoped(Effect.gen(function* () {
-    const inputLines = yield* Queue.unbounded<Uint8Array>();
-    const outputLines = yield* Queue.bounded<string>(1024);
-    const command = Command.make(input.executablePath, "app-server", "--listen", "stdio://").pipe(
-      Command.workingDirectory(input.home),
-      Command.env(providerEnvironment(input.provider, input.home)),
-      Command.stdin(Stream.fromQueue(inputLines)),
-    );
-    const process = yield* input.executor.start(command).pipe(
-      Effect.mapError((cause) => platformFailure(input.provider, input.operation, input.executablePath, cause, "CommandFailed")),
-    );
-    yield* process.stdout.pipe(
-      Stream.decodeText(),
-      Stream.splitLines,
-      Stream.runForEach((line) => Queue.offer(outputLines, line)),
-      Effect.mapError((cause) => platformFailure(input.provider, input.operation, input.executablePath, cause, "ProtocolFailed")),
-      Effect.forkScoped,
-    );
-    yield* process.stderr.pipe(
-      Stream.runDrain,
-      Effect.mapError((cause) => platformFailure(input.provider, input.operation, input.executablePath, cause, "ProtocolFailed")),
-      Effect.forkScoped,
-    );
-
-    const request = Effect.fn("nativeAgentProvider.codexAppServerRequest")(function* (
-      id: number,
-      method: string,
-      params: NativeProviderJsonValue,
-    ) {
-      yield* offerAppServerLine(inputLines, Object.freeze({ id, method, params }));
-      while (true) {
-        const line = yield* Queue.take(outputLines);
-        const decoded = yield* decodeJson(input.provider, input.operation, line);
-        if (!isJsonRecord(decoded) || decoded.id !== id) continue;
-        if ("error" in decoded) {
-          return yield* fail(
-            input.provider,
-            input.operation,
-            "ProtocolFailed",
-            undefined,
-            `Codex app server rejected request ${id}: ${JSON.stringify(decoded.error)}`,
-          );
-        }
-        if (!("result" in decoded)) {
-          return yield* fail(
-            input.provider,
-            input.operation,
-            "ProtocolFailed",
-            undefined,
-            `Codex app server response ${id} has no result`,
-          );
-        }
-        return decoded.result;
-      }
-    });
-
-    yield* request(1, "initialize", Object.freeze({
-      clientInfo: Object.freeze({ name: "rawr-native-agent-provider-resource", version: "1.0.0" }),
-      capabilities: Object.freeze({ experimentalApi: true }),
-    }));
-    yield* offerAppServerLine(inputLines, Object.freeze({ method: "initialized", params: Object.freeze({}) }));
-    const results: NativeProviderJsonValue[] = [];
-    for (let index = 0; index < input.requests.length; index += 1) {
-      const current = input.requests[index];
-      if (current === undefined) {
-        return yield* fail(input.provider, input.operation, "ProtocolFailed", undefined, "Codex app server request set changed");
-      }
-      results.push(yield* request(index + 2, current.method, current.params));
-    }
-    yield* Queue.shutdown(inputLines);
-    const exitCode = yield* process.exitCode.pipe(
-      Effect.mapError((cause) => platformFailure(input.provider, input.operation, input.executablePath, cause, "CommandFailed")),
-    );
-    if (Number(exitCode) !== 0) {
-      return yield* fail(
-        input.provider,
-        input.operation,
-        "CommandFailed",
-        input.executablePath,
-        `Codex app server exited ${Number(exitCode)}`,
+  const operation = Effect.scoped(
+    Effect.gen(function* () {
+      const inputLines = yield* Queue.unbounded<Uint8Array>();
+      const outputLines = yield* Queue.bounded<string>(1024);
+      const command = Command.make(input.executablePath, "app-server", "--listen", "stdio://").pipe(
+        Command.workingDirectory(input.home),
+        Command.env(providerEnvironment(input.provider, input.home)),
+        Command.stdin(Stream.fromQueue(inputLines))
       );
-    }
-    return Object.freeze(results);
-  }));
+      const process = yield* input.executor
+        .start(command)
+        .pipe(
+          Effect.mapError((cause) =>
+            platformFailure(
+              input.provider,
+              input.operation,
+              input.executablePath,
+              cause,
+              "CommandFailed"
+            )
+          )
+        );
+      yield* process.stdout.pipe(
+        Stream.decodeText(),
+        Stream.splitLines,
+        Stream.runForEach((line) => Queue.offer(outputLines, line)),
+        Effect.mapError((cause) =>
+          platformFailure(
+            input.provider,
+            input.operation,
+            input.executablePath,
+            cause,
+            "ProtocolFailed"
+          )
+        ),
+        Effect.forkScoped
+      );
+      yield* process.stderr.pipe(
+        Stream.runDrain,
+        Effect.mapError((cause) =>
+          platformFailure(
+            input.provider,
+            input.operation,
+            input.executablePath,
+            cause,
+            "ProtocolFailed"
+          )
+        ),
+        Effect.forkScoped
+      );
+
+      const request = Effect.fn("nativeAgentProvider.codexAppServerRequest")(function* (
+        id: number,
+        method: string,
+        params: NativeProviderJsonValue
+      ) {
+        yield* offerAppServerLine(inputLines, Object.freeze({ id, method, params }));
+        while (true) {
+          const line = yield* Queue.take(outputLines);
+          const decoded = yield* decodeJson(input.provider, input.operation, line);
+          if (!isJsonRecord(decoded) || decoded.id !== id) continue;
+          if ("error" in decoded) {
+            return yield* fail(
+              input.provider,
+              input.operation,
+              "ProtocolFailed",
+              undefined,
+              `Codex app server rejected request ${id}: ${JSON.stringify(decoded.error)}`
+            );
+          }
+          if (!("result" in decoded)) {
+            return yield* fail(
+              input.provider,
+              input.operation,
+              "ProtocolFailed",
+              undefined,
+              `Codex app server response ${id} has no result`
+            );
+          }
+          return decoded.result;
+        }
+      });
+
+      yield* request(
+        1,
+        "initialize",
+        Object.freeze({
+          clientInfo: Object.freeze({
+            name: "rawr-native-agent-provider-resource",
+            version: "1.0.0",
+          }),
+          capabilities: Object.freeze({ experimentalApi: true }),
+        })
+      );
+      yield* offerAppServerLine(
+        inputLines,
+        Object.freeze({ method: "initialized", params: Object.freeze({}) })
+      );
+      const results: NativeProviderJsonValue[] = [];
+      for (let index = 0; index < input.requests.length; index += 1) {
+        const current = input.requests[index];
+        if (current === undefined) {
+          return yield* fail(
+            input.provider,
+            input.operation,
+            "ProtocolFailed",
+            undefined,
+            "Codex app server request set changed"
+          );
+        }
+        results.push(yield* request(index + 2, current.method, current.params));
+      }
+      yield* Queue.shutdown(inputLines);
+      const exitCode = yield* process.exitCode.pipe(
+        Effect.mapError((cause) =>
+          platformFailure(
+            input.provider,
+            input.operation,
+            input.executablePath,
+            cause,
+            "CommandFailed"
+          )
+        )
+      );
+      if (Number(exitCode) !== 0) {
+        return yield* fail(
+          input.provider,
+          input.operation,
+          "CommandFailed",
+          input.executablePath,
+          `Codex app server exited ${Number(exitCode)}`
+        );
+      }
+      return Object.freeze(results);
+    })
+  );
   return operation.pipe(
     Effect.timeoutFail({
       duration: APP_SERVER_TIMEOUT,
-      onTimeout: () => failure(
-        input.provider,
-        input.operation,
-        "CommandTimedOut",
-        input.executablePath,
-        "Codex app server operation exceeded its bounded timeout",
-      ),
-    }),
+      onTimeout: () =>
+        failure(
+          input.provider,
+          input.operation,
+          "CommandTimedOut",
+          input.executablePath,
+          "Codex app server operation exceeded its bounded timeout"
+        ),
+    })
   );
 }
 
 function offerAppServerLine(
   queue: Queue.Queue<Uint8Array>,
-  message: NativeProviderJsonValue,
+  message: NativeProviderJsonValue
 ): Effect.Effect<void> {
-  return Queue.offer(queue, new TextEncoder().encode(`${JSON.stringify(message)}\n`)).pipe(Effect.asVoid);
+  return Queue.offer(queue, new TextEncoder().encode(`${JSON.stringify(message)}\n`)).pipe(
+    Effect.asVoid
+  );
 }
 
 function collectBoundedOutput(
   stream: Stream.Stream<Uint8Array, PlatformError>,
   provider: NativeAgentProviderId,
-  operation: NativeAgentProviderOperation,
+  operation: NativeAgentProviderOperation
 ): Effect.Effect<string, NativeAgentProviderFailure> {
   interface OutputState {
     readonly chunks: readonly Uint8Array[];
@@ -364,7 +473,7 @@ function collectBoundedOutput(
   }
   const initial: OutputState = Object.freeze({ chunks: Object.freeze([]), bytes: 0 });
   const mapped = stream.pipe(
-    Stream.mapError((cause) => platformFailure(provider, operation, undefined, cause)),
+    Stream.mapError((cause) => platformFailure(provider, operation, undefined, cause))
   );
   return Stream.runFoldEffect(
     mapped,
@@ -372,13 +481,19 @@ function collectBoundedOutput(
     (state, chunk): Effect.Effect<OutputState, NativeAgentProviderFailure> => {
       const bytes = state.bytes + chunk.byteLength;
       if (bytes > MAX_PROCESS_OUTPUT_BYTES) {
-        return fail(provider, operation, "LimitExceeded", undefined, "Provider command exceeded its bounded output limit");
+        return fail(
+          provider,
+          operation,
+          "LimitExceeded",
+          undefined,
+          "Provider command exceeded its bounded output limit"
+        );
       }
-      return Effect.succeed(Object.freeze({ chunks: Object.freeze([...state.chunks, chunk]), bytes }));
-    },
-  ).pipe(
-    Effect.flatMap((state) => decodeText(provider, operation, concatenate(state.chunks))),
-  );
+      return Effect.succeed(
+        Object.freeze({ chunks: Object.freeze([...state.chunks, chunk]), bytes })
+      );
+    }
+  ).pipe(Effect.flatMap((state) => decodeText(provider, operation, concatenate(state.chunks))));
 }
 
 function readProviderPackage(
@@ -389,18 +504,36 @@ function readProviderPackage(
   home: string,
   rootInput: string,
   limits: NativeProviderPackageReadLimits,
-  requireHomeContainment: boolean,
+  requireHomeContainment: boolean
 ): Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure> {
   return Effect.gen(function* () {
     if (!Number.isSafeInteger(limits.maxEntries) || limits.maxEntries <= 0) {
-      return yield* fail(provider, operation, "InvalidInput", rootInput, "maxEntries must be a positive safe integer");
+      return yield* fail(
+        provider,
+        operation,
+        "InvalidInput",
+        rootInput,
+        "maxEntries must be a positive safe integer"
+      );
     }
     if (!Number.isSafeInteger(limits.maxBytes) || limits.maxBytes <= 0) {
-      return yield* fail(provider, operation, "InvalidInput", rootInput, "maxBytes must be a positive safe integer");
+      return yield* fail(
+        provider,
+        operation,
+        "InvalidInput",
+        rootInput,
+        "maxBytes must be a positive safe integer"
+      );
     }
     const root = yield* requireCanonicalDirectory(fs, paths, provider, operation, rootInput, false);
     if (requireHomeContainment && !isContained(paths, home, root)) {
-      return yield* fail(provider, operation, "Aliased", root, "Installed plugin root escaped the explicit provider home");
+      return yield* fail(
+        provider,
+        operation,
+        "Aliased",
+        root,
+        "Installed plugin root escaped the explicit provider home"
+      );
     }
     const budget = { entries: 0, bytes: 0 };
     const entries = yield* walkPackage(fs, paths, provider, operation, root, "", limits, budget);
@@ -417,45 +550,102 @@ function walkPackage(
   root: string,
   relativeRoot: string,
   limits: NativeProviderPackageReadLimits,
-  budget: { entries: number; bytes: number },
-): Effect.Effect<NativeProviderPackageObservation["entries"][number][], NativeAgentProviderFailure> {
+  budget: { entries: number; bytes: number }
+): Effect.Effect<
+  NativeProviderPackageObservation["entries"][number][],
+  NativeAgentProviderFailure
+> {
   const directory = relativeRoot === "" ? root : paths.join(root, relativeRoot);
   return fs.readDirectory(directory).pipe(
     mapPlatform(provider, operation, directory),
-    Effect.flatMap((names) => Effect.forEach([...names].sort(compareText), (name) => Effect.gen(function* () {
-      const relativePath = relativeRoot === "" ? name : paths.join(relativeRoot, name);
-      const candidate = paths.join(root, relativePath);
-      budget.entries += 1;
-      if (budget.entries > limits.maxEntries) {
-        return yield* fail(provider, operation, "LimitExceeded", candidate, "Package exceeds maxEntries");
-      }
-      const resolved = yield* fs.realPath(candidate).pipe(mapPlatform(provider, operation, candidate));
-      if (resolved !== candidate) {
-        return yield* fail(provider, operation, "UnsupportedEntry", candidate, "Package cannot contain aliases or symlinks");
-      }
-      const status = yield* fs.stat(candidate).pipe(mapPlatform(provider, operation, candidate));
-      if (status.type === "Directory") {
-        return yield* walkPackage(fs, paths, provider, operation, root, relativePath, limits, budget);
-      }
-      if (status.type !== "File") {
-        return yield* fail(provider, operation, "UnsupportedEntry", candidate, "Package contains an unsupported entry");
-      }
-      const size = Number(status.size);
-      budget.bytes += size;
-      if (!Number.isSafeInteger(size) || size < 0 || budget.bytes > limits.maxBytes) {
-        return yield* fail(provider, operation, "LimitExceeded", candidate, "Package exceeds maxBytes");
-      }
-      const bytes = yield* fs.readFile(candidate).pipe(mapPlatform(provider, operation, candidate));
-      if (bytes.byteLength !== size) {
-        return yield* fail(provider, operation, "FilesystemFailed", candidate, "Package file size changed while reading");
-      }
-      return [Object.freeze({
-        path: relativePath.split(paths.sep).join("/"),
-        mode: status.mode & 0o777,
-        bytes,
-      })];
-    }), { concurrency: 1 })),
-    Effect.map((groups) => groups.flat()),
+    Effect.flatMap((names) =>
+      Effect.forEach(
+        [...names].sort(compareText),
+        (name) =>
+          Effect.gen(function* () {
+            const relativePath = relativeRoot === "" ? name : paths.join(relativeRoot, name);
+            const candidate = paths.join(root, relativePath);
+            budget.entries += 1;
+            if (budget.entries > limits.maxEntries) {
+              return yield* fail(
+                provider,
+                operation,
+                "LimitExceeded",
+                candidate,
+                "Package exceeds maxEntries"
+              );
+            }
+            const resolved = yield* fs
+              .realPath(candidate)
+              .pipe(mapPlatform(provider, operation, candidate));
+            if (resolved !== candidate) {
+              return yield* fail(
+                provider,
+                operation,
+                "UnsupportedEntry",
+                candidate,
+                "Package cannot contain aliases or symlinks"
+              );
+            }
+            const status = yield* fs
+              .stat(candidate)
+              .pipe(mapPlatform(provider, operation, candidate));
+            if (status.type === "Directory") {
+              return yield* walkPackage(
+                fs,
+                paths,
+                provider,
+                operation,
+                root,
+                relativePath,
+                limits,
+                budget
+              );
+            }
+            if (status.type !== "File") {
+              return yield* fail(
+                provider,
+                operation,
+                "UnsupportedEntry",
+                candidate,
+                "Package contains an unsupported entry"
+              );
+            }
+            const size = Number(status.size);
+            budget.bytes += size;
+            if (!Number.isSafeInteger(size) || size < 0 || budget.bytes > limits.maxBytes) {
+              return yield* fail(
+                provider,
+                operation,
+                "LimitExceeded",
+                candidate,
+                "Package exceeds maxBytes"
+              );
+            }
+            const bytes = yield* fs
+              .readFile(candidate)
+              .pipe(mapPlatform(provider, operation, candidate));
+            if (bytes.byteLength !== size) {
+              return yield* fail(
+                provider,
+                operation,
+                "FilesystemFailed",
+                candidate,
+                "Package file size changed while reading"
+              );
+            }
+            return [
+              Object.freeze({
+                path: relativePath.split(paths.sep).join("/"),
+                mode: status.mode & 0o777,
+                bytes,
+              }),
+            ];
+          }),
+        { concurrency: 1 }
+      )
+    ),
+    Effect.map((groups) => groups.flat())
   );
 }
 
@@ -465,29 +655,70 @@ function readOptionalHomeJsonFile(
   provider: NativeAgentProviderId,
   home: string,
   relativePath: string,
-  maxBytes: number,
+  maxBytes: number
 ): Effect.Effect<NativeProviderJsonValue | null, NativeAgentProviderFailure> {
   return Effect.gen(function* () {
-    if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0 || relativePath === "" || paths.isAbsolute(relativePath)) {
-      return yield* fail(provider, "config-read", "InvalidInput", relativePath, "Configuration read input is invalid");
+    if (
+      !Number.isSafeInteger(maxBytes) ||
+      maxBytes <= 0 ||
+      relativePath === "" ||
+      paths.isAbsolute(relativePath)
+    ) {
+      return yield* fail(
+        provider,
+        "config-read",
+        "InvalidInput",
+        relativePath,
+        "Configuration read input is invalid"
+      );
     }
     const candidate = paths.join(home, relativePath);
     if (!isContained(paths, home, candidate)) {
-      return yield* fail(provider, "config-read", "Aliased", candidate, "Configuration path escaped the explicit provider home");
+      return yield* fail(
+        provider,
+        "config-read",
+        "Aliased",
+        candidate,
+        "Configuration path escaped the explicit provider home"
+      );
     }
-    const present = yield* fs.exists(candidate).pipe(mapPlatform(provider, "config-read", candidate));
+    const present = yield* fs
+      .exists(candidate)
+      .pipe(mapPlatform(provider, "config-read", candidate));
     if (!present) return null;
-    const resolved = yield* fs.realPath(candidate).pipe(mapPlatform(provider, "config-read", candidate));
+    const resolved = yield* fs
+      .realPath(candidate)
+      .pipe(mapPlatform(provider, "config-read", candidate));
     if (resolved !== candidate) {
-      return yield* fail(provider, "config-read", "Aliased", candidate, "Configuration path is not canonical");
+      return yield* fail(
+        provider,
+        "config-read",
+        "Aliased",
+        candidate,
+        "Configuration path is not canonical"
+      );
     }
     const status = yield* fs.stat(candidate).pipe(mapPlatform(provider, "config-read", candidate));
     if (status.type !== "File" || Number(status.size) > maxBytes) {
-      return yield* fail(provider, "config-read", status.type === "File" ? "LimitExceeded" : "UnsupportedEntry", candidate, "Configuration file shape is invalid");
+      return yield* fail(
+        provider,
+        "config-read",
+        status.type === "File" ? "LimitExceeded" : "UnsupportedEntry",
+        candidate,
+        "Configuration file shape is invalid"
+      );
     }
-    const bytes = yield* fs.readFile(candidate).pipe(mapPlatform(provider, "config-read", candidate));
+    const bytes = yield* fs
+      .readFile(candidate)
+      .pipe(mapPlatform(provider, "config-read", candidate));
     if (bytes.byteLength > maxBytes) {
-      return yield* fail(provider, "config-read", "LimitExceeded", candidate, "Configuration file exceeds maxBytes");
+      return yield* fail(
+        provider,
+        "config-read",
+        "LimitExceeded",
+        candidate,
+        "Configuration file exceeds maxBytes"
+      );
     }
     const text = yield* decodeText(provider, "config-read", bytes);
     return yield* decodeJson(provider, "config-read", text);
@@ -498,19 +729,39 @@ function requireCanonicalExecutable(
   fs: FileSystem.FileSystem,
   paths: Path.Path,
   provider: NativeAgentProviderId,
-  candidate: string,
+  candidate: string
 ): Effect.Effect<string, NativeAgentProviderFailure> {
   return Effect.gen(function* () {
     if (!isCanonicalAbsolutePath(paths, candidate, false)) {
-      return yield* fail(provider, "acquire", "InvalidInput", candidate, "Provider executable must be an explicit canonical absolute path");
+      return yield* fail(
+        provider,
+        "acquire",
+        "InvalidInput",
+        candidate,
+        "Provider executable must be an explicit canonical absolute path"
+      );
     }
-    const resolved = yield* fs.realPath(candidate).pipe(mapPlatform(provider, "acquire", candidate));
+    const resolved = yield* fs
+      .realPath(candidate)
+      .pipe(mapPlatform(provider, "acquire", candidate));
     if (resolved !== candidate) {
-      return yield* fail(provider, "acquire", "Aliased", candidate, "Provider executable path is aliased");
+      return yield* fail(
+        provider,
+        "acquire",
+        "Aliased",
+        candidate,
+        "Provider executable path is aliased"
+      );
     }
     const status = yield* fs.stat(candidate).pipe(mapPlatform(provider, "acquire", candidate));
     if (status.type !== "File" || (status.mode & 0o111) === 0) {
-      return yield* fail(provider, "acquire", "UnsupportedEntry", candidate, "Provider executable must be one executable regular file");
+      return yield* fail(
+        provider,
+        "acquire",
+        "UnsupportedEntry",
+        candidate,
+        "Provider executable must be one executable regular file"
+      );
     }
     return candidate;
   });
@@ -522,19 +773,33 @@ function requireCanonicalDirectory(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
   candidate: string,
-  allowRoot: boolean,
+  allowRoot: boolean
 ): Effect.Effect<string, NativeAgentProviderFailure> {
   return Effect.gen(function* () {
     if (!isCanonicalAbsolutePath(paths, candidate, allowRoot)) {
-      return yield* fail(provider, operation, "InvalidInput", candidate, "Directory must be an explicit canonical absolute path");
+      return yield* fail(
+        provider,
+        operation,
+        "InvalidInput",
+        candidate,
+        "Directory must be an explicit canonical absolute path"
+      );
     }
-    const resolved = yield* fs.realPath(candidate).pipe(mapPlatform(provider, operation, candidate));
+    const resolved = yield* fs
+      .realPath(candidate)
+      .pipe(mapPlatform(provider, operation, candidate));
     if (resolved !== candidate) {
       return yield* fail(provider, operation, "Aliased", candidate, "Directory path is aliased");
     }
     const status = yield* fs.stat(candidate).pipe(mapPlatform(provider, operation, candidate));
     if (status.type !== "Directory") {
-      return yield* fail(provider, operation, "UnsupportedEntry", candidate, "Path must be one existing directory");
+      return yield* fail(
+        provider,
+        operation,
+        "UnsupportedEntry",
+        candidate,
+        "Path must be one existing directory"
+      );
     }
     return candidate;
   });
@@ -545,44 +810,53 @@ function requireVacantOwnerSlot(
   paths: Path.Path,
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  home: string,
+  home: string
 ): Effect.Effect<void, NativeAgentProviderFailure> {
   const candidate = paths.join(home, OWNER_SLOT);
   return Effect.matchEffect(fs.readLink(candidate), {
-    onFailure: (cause) => cause._tag === "SystemError" && cause.reason === "NotFound"
-      ? Effect.void
-      : fail(
-          provider,
-          operation,
-          "OwnershipConflict",
-          candidate,
-          "Provider ownership slot could not be proven absent",
-        ),
-    onSuccess: () => fail(
-      provider,
-      operation,
-      "OwnershipConflict",
-      candidate,
-      "Provider ownership slot is occupied",
-    ),
+    onFailure: (cause) =>
+      cause._tag === "SystemError" && cause.reason === "NotFound"
+        ? Effect.void
+        : fail(
+            provider,
+            operation,
+            "OwnershipConflict",
+            candidate,
+            "Provider ownership slot could not be proven absent"
+          ),
+    onSuccess: () =>
+      fail(
+        provider,
+        operation,
+        "OwnershipConflict",
+        candidate,
+        "Provider ownership slot is occupied"
+      ),
   });
 }
 
 function isCanonicalAbsolutePath(paths: Path.Path, candidate: string, allowRoot: boolean): boolean {
-  return paths.isAbsolute(candidate)
-    && paths.normalize(candidate) === candidate
-    && (allowRoot || candidate !== paths.parse(candidate).root);
+  return (
+    paths.isAbsolute(candidate) &&
+    paths.normalize(candidate) === candidate &&
+    (allowRoot || candidate !== paths.parse(candidate).root)
+  );
 }
 
 function isContained(paths: Path.Path, root: string, candidate: string): boolean {
   const relative = paths.relative(root, candidate);
-  return relative !== ""
-    && relative !== ".."
-    && !relative.startsWith(`..${paths.sep}`)
-    && !paths.isAbsolute(relative);
+  return (
+    relative !== "" &&
+    relative !== ".." &&
+    !relative.startsWith(`..${paths.sep}`) &&
+    !paths.isAbsolute(relative)
+  );
 }
 
-function providerEnvironment(provider: NativeAgentProviderId, home: string): Record<string, string | undefined> {
+function providerEnvironment(
+  provider: NativeAgentProviderId,
+  home: string
+): Record<string, string | undefined> {
   return {
     HOME: home,
     CODEX_HOME: provider === "codex" ? home : undefined,
@@ -596,26 +870,29 @@ function providerEnvironment(provider: NativeAgentProviderId, home: string): Rec
 function decodeJson(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  text: string,
+  text: string
 ): Effect.Effect<NativeProviderJsonValue, NativeAgentProviderFailure> {
   return Effect.try({
     try: () => JSON.parse(text),
     catch: (cause) => failure(provider, operation, "InvalidJson", undefined, errorMessage(cause)),
   }).pipe(
-    Effect.flatMap((value: unknown) => isJsonValue(value)
-      ? Effect.succeed(value)
-      : fail(provider, operation, "InvalidJson", undefined, "Provider returned a non-JSON value")),
+    Effect.flatMap((value: unknown) =>
+      isJsonValue(value)
+        ? Effect.succeed(value)
+        : fail(provider, operation, "InvalidJson", undefined, "Provider returned a non-JSON value")
+    )
   );
 }
 
 function decodeText(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  bytes: Uint8Array,
+  bytes: Uint8Array
 ): Effect.Effect<string, NativeAgentProviderFailure> {
   return Effect.try({
     try: () => new TextDecoder("utf-8", { fatal: true }).decode(bytes),
-    catch: (cause) => failure(provider, operation, "ProtocolFailed", undefined, errorMessage(cause)),
+    catch: (cause) =>
+      failure(provider, operation, "ProtocolFailed", undefined, errorMessage(cause)),
   });
 }
 
@@ -626,7 +903,9 @@ function isJsonValue(value: unknown): value is NativeProviderJsonValue {
   return typeof value === "object" && Object.values(value).every(isJsonValue);
 }
 
-function isJsonRecord(value: NativeProviderJsonValue): value is Readonly<Record<string, NativeProviderJsonValue>> {
+function isJsonRecord(
+  value: NativeProviderJsonValue
+): value is Readonly<Record<string, NativeProviderJsonValue>> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
@@ -644,11 +923,10 @@ function concatenate(chunks: readonly Uint8Array[]): Uint8Array {
 function mapPlatform(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  candidate: string | undefined,
+  candidate: string | undefined
 ) {
-  return <A, R>(effect: Effect.Effect<A, PlatformError, R>) => effect.pipe(
-    Effect.mapError((cause) => platformFailure(provider, operation, candidate, cause)),
-  );
+  return <A, R>(effect: Effect.Effect<A, PlatformError, R>) =>
+    effect.pipe(Effect.mapError((cause) => platformFailure(provider, operation, candidate, cause)));
 }
 
 function platformFailure(
@@ -656,7 +934,7 @@ function platformFailure(
   operation: NativeAgentProviderOperation,
   candidate: string | undefined,
   cause: PlatformError,
-  fallback: NativeAgentProviderFailure["reason"] = "FilesystemFailed",
+  fallback: NativeAgentProviderFailure["reason"] = "FilesystemFailed"
 ): NativeAgentProviderFailure {
   const missing = cause._tag === "SystemError" && cause.reason === "NotFound";
   return failure(provider, operation, missing ? "Missing" : fallback, candidate, cause.message);
@@ -667,7 +945,7 @@ function fail(
   operation: NativeAgentProviderOperation,
   reason: NativeAgentProviderFailure["reason"],
   candidate: string | undefined,
-  detail: string,
+  detail: string
 ) {
   return Effect.fail(failure(provider, operation, reason, candidate, detail));
 }
@@ -677,7 +955,7 @@ function failure(
   operation: NativeAgentProviderOperation,
   reason: NativeAgentProviderFailure["reason"],
   candidate: string | undefined,
-  detail: string,
+  detail: string
 ): NativeAgentProviderFailure {
   return Object.freeze({
     _tag: "NativeAgentProviderFailure",

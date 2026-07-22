@@ -18,24 +18,21 @@ export function createObservabilityHandler<
   profile: ResolvedObservabilityProfile<TMeta, TContext, TPolicyEvents>;
   policyEvents: TPolicyEvents;
 }) {
-  return async ({
-    context,
-    path,
-    procedure,
-    next,
-  }: ObservabilityHandlerArgs<TMeta, TContext>) => {
+  return async ({ context, path, procedure, next }: ObservabilityHandlerArgs<TMeta, TContext>) => {
     const span = getActiveSpan();
     const startedAt = Date.now();
     const meta = options.getMeta(procedure);
     const pathLabel = path.join(".");
     const spanTraceId = getTraceId(span);
 
-    span?.setAttributes(options.profile.getSpanAttributes({
-      context,
-      meta,
-      path,
-      pathLabel,
-    }));
+    span?.setAttributes(
+      options.profile.getSpanAttributes({
+        context,
+        meta,
+        path,
+        pathLabel,
+      })
+    );
     span?.addEvent(options.profile.startedEvent, {
       path: pathLabel,
       ...options.profile.getStartEventAttributes?.({
@@ -92,21 +89,18 @@ export function createObservabilityHandler<
       });
 
       return result;
-    }
-    catch (error) {
+    } catch (error) {
       const durationMs = Date.now() - startedAt;
       const details = getErrorDetails(error);
 
       span?.recordException(
         error instanceof Error
           ? error
-          : new Error(String(details.errorMessage ?? "procedure failed")),
+          : new Error(String(details.errorMessage ?? "procedure failed"))
       );
       setSpanError(
         span,
-        typeof details.errorMessage === "string"
-          ? details.errorMessage
-          : "procedure failed",
+        typeof details.errorMessage === "string" ? details.errorMessage : "procedure failed"
       );
       span?.addEvent(options.profile.failedEvent, {
         path: pathLabel,

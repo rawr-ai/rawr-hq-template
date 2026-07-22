@@ -18,9 +18,7 @@ export interface ProviderTargetRecordAddress {
   readonly targetKey: string;
 }
 
-export type ProviderRecordAddress =
-  | ProviderProjectionRecordAddress
-  | ProviderTargetRecordAddress;
+export type ProviderRecordAddress = ProviderProjectionRecordAddress | ProviderTargetRecordAddress;
 
 export interface ProviderRecordIdentity {
   readonly dev: number;
@@ -33,11 +31,11 @@ export interface ProviderRecordIdentity {
 export type ProviderRecordObservation<A extends ProviderRecordAddress = ProviderRecordAddress> =
   | Readonly<{ kind: "Absent"; address: A }>
   | Readonly<{
-    kind: "Present";
-    address: A;
-    identity: ProviderRecordIdentity;
-    bytes: Uint8Array;
-  }>;
+      kind: "Present";
+      address: A;
+      identity: ProviderRecordIdentity;
+      bytes: Uint8Array;
+    }>;
 
 export interface ProviderTargetRecordCapture {
   /** Provider-owned, process-local restore authority. */
@@ -124,90 +122,106 @@ export interface AgentProviderRecordsFailure {
  * evidence, transition policy, and provider ownership.
  */
 export interface AgentProviderRecordsResource<R = never> {
-  readonly readProjection: (input: Readonly<{
-    address: ProviderProjectionRecordAddress;
-    maxBytes: number;
-  }>) => Effect.Effect<
+  readonly readProjection: (
+    input: Readonly<{
+      address: ProviderProjectionRecordAddress;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<
     ProviderRecordObservation<ProviderProjectionRecordAddress>,
     AgentProviderRecordsFailure,
     R
   >;
 
-  readonly publishProjection: (input: Readonly<{
-    address: ProviderProjectionRecordAddress;
-    bytes: Uint8Array;
-    maxBytes: number;
-  }>) => Effect.Effect<ProviderRecordPublicationReceipt, AgentProviderRecordsFailure, R>;
+  readonly publishProjection: (
+    input: Readonly<{
+      address: ProviderProjectionRecordAddress;
+      bytes: Uint8Array;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<ProviderRecordPublicationReceipt, AgentProviderRecordsFailure, R>;
 
-  readonly readTarget: (input: Readonly<{
-    address: ProviderTargetRecordAddress;
-    maxBytes: number;
-  }>) => Effect.Effect<
+  readonly readTarget: (
+    input: Readonly<{
+      address: ProviderTargetRecordAddress;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<
     ProviderRecordObservation<ProviderTargetRecordAddress>,
     AgentProviderRecordsFailure,
     R
   >;
 
-  readonly captureTarget: (input: Readonly<{
-    address: ProviderTargetRecordAddress;
-    readToken: string;
-    maxBytes: number;
-  }>) => Effect.Effect<ProviderTargetRecordCapture, AgentProviderRecordsFailure, R>;
+  readonly captureTarget: (
+    input: Readonly<{
+      address: ProviderTargetRecordAddress;
+      readToken: string;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<ProviderTargetRecordCapture, AgentProviderRecordsFailure, R>;
 
   /** Consumes only a still-unmutated capture. Mutated authority must be restored and settled. */
-  readonly releaseTarget: (input: Readonly<{
-    address: ProviderTargetRecordAddress;
-    readToken: string;
-    captureHandle: string;
-  }>) => Effect.Effect<ProviderTargetRecordReleaseReceipt, AgentProviderRecordsFailure, R>;
+  readonly releaseTarget: (
+    input: Readonly<{
+      address: ProviderTargetRecordAddress;
+      readToken: string;
+      captureHandle: string;
+    }>
+  ) => Effect.Effect<ProviderTargetRecordReleaseReceipt, AgentProviderRecordsFailure, R>;
 
-  readonly writeTarget: (input: Readonly<{
-    address: ProviderTargetRecordAddress;
-    planDigest: string;
-    readToken: string;
-    captureHandle: string;
-    mutation: ProviderTargetRecordMutation;
-  }>) => Effect.Effect<ProviderTargetRecordWriteReceipt, AgentProviderRecordsFailure, R>;
+  readonly writeTarget: (
+    input: Readonly<{
+      address: ProviderTargetRecordAddress;
+      planDigest: string;
+      readToken: string;
+      captureHandle: string;
+      mutation: ProviderTargetRecordMutation;
+    }>
+  ) => Effect.Effect<ProviderTargetRecordWriteReceipt, AgentProviderRecordsFailure, R>;
 
-  readonly restoreTarget: (input: Readonly<{
-    address: ProviderTargetRecordAddress;
-    planDigest: string;
-    readToken: string;
-    captureHandle: string;
-  }>) => Effect.Effect<ProviderTargetRecordRestoreReceipt, AgentProviderRecordsFailure, R>;
+  readonly restoreTarget: (
+    input: Readonly<{
+      address: ProviderTargetRecordAddress;
+      planDigest: string;
+      readToken: string;
+      captureHandle: string;
+    }>
+  ) => Effect.Effect<ProviderTargetRecordRestoreReceipt, AgentProviderRecordsFailure, R>;
 
-  readonly settleTarget: (input: Readonly<{
-    address: ProviderTargetRecordAddress;
-    planDigest: string;
-    readToken: string;
-    captureHandle: string;
-  }>) => Effect.Effect<ProviderTargetRecordSettleReceipt, AgentProviderRecordsFailure, R>;
+  readonly settleTarget: (
+    input: Readonly<{
+      address: ProviderTargetRecordAddress;
+      planDigest: string;
+      readToken: string;
+      captureHandle: string;
+    }>
+  ) => Effect.Effect<ProviderTargetRecordSettleReceipt, AgentProviderRecordsFailure, R>;
 }
 
 /** Promise projection for callers that bind the provider runtime at their edge. */
 export interface AgentProviderRecordsAsyncPort {
   readonly readProjection: (
-    input: Parameters<AgentProviderRecordsResource["readProjection"]>[0],
+    input: Parameters<AgentProviderRecordsResource["readProjection"]>[0]
   ) => Promise<ProviderRecordObservation<ProviderProjectionRecordAddress>>;
   readonly publishProjection: (
-    input: Parameters<AgentProviderRecordsResource["publishProjection"]>[0],
+    input: Parameters<AgentProviderRecordsResource["publishProjection"]>[0]
   ) => Promise<ProviderRecordPublicationReceipt>;
   readonly readTarget: (
-    input: Parameters<AgentProviderRecordsResource["readTarget"]>[0],
+    input: Parameters<AgentProviderRecordsResource["readTarget"]>[0]
   ) => Promise<ProviderRecordObservation<ProviderTargetRecordAddress>>;
   readonly captureTarget: (
-    input: Parameters<AgentProviderRecordsResource["captureTarget"]>[0],
+    input: Parameters<AgentProviderRecordsResource["captureTarget"]>[0]
   ) => Promise<ProviderTargetRecordCapture>;
   readonly releaseTarget: (
-    input: Parameters<AgentProviderRecordsResource["releaseTarget"]>[0],
+    input: Parameters<AgentProviderRecordsResource["releaseTarget"]>[0]
   ) => Promise<ProviderTargetRecordReleaseReceipt>;
   readonly writeTarget: (
-    input: Parameters<AgentProviderRecordsResource["writeTarget"]>[0],
+    input: Parameters<AgentProviderRecordsResource["writeTarget"]>[0]
   ) => Promise<ProviderTargetRecordWriteReceipt>;
   readonly restoreTarget: (
-    input: Parameters<AgentProviderRecordsResource["restoreTarget"]>[0],
+    input: Parameters<AgentProviderRecordsResource["restoreTarget"]>[0]
   ) => Promise<ProviderTargetRecordRestoreReceipt>;
   readonly settleTarget: (
-    input: Parameters<AgentProviderRecordsResource["settleTarget"]>[0],
+    input: Parameters<AgentProviderRecordsResource["settleTarget"]>[0]
   ) => Promise<ProviderTargetRecordSettleReceipt>;
 }

@@ -19,7 +19,12 @@ import type {
 } from "../src/lib/session-types";
 
 const tempPaths: string[] = [];
-const envKeys = ["HOME", "CODEX_HOME", "RAWR_SESSION_INDEX_PATH", "RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS"] as const;
+const envKeys = [
+  "HOME",
+  "CODEX_HOME",
+  "RAWR_SESSION_INDEX_PATH",
+  "RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS",
+] as const;
 let envSnapshot: Record<string, string | undefined>;
 
 const session: SessionListItem = {
@@ -144,7 +149,9 @@ async function writeCodexSession(input: {
   return filePath;
 }
 
-function createFakeClient(overrides: Partial<SessionIntelligenceClient> = {}): SessionIntelligenceClient {
+function createFakeClient(
+  overrides: Partial<SessionIntelligenceClient> = {}
+): SessionIntelligenceClient {
   const client = {
     catalog: {
       list: vi.fn(async () => ({ sessions: [session] })),
@@ -156,20 +163,22 @@ function createFakeClient(overrides: Partial<SessionIntelligenceClient> = {}): S
     },
     search: {
       metadata: vi.fn(async () => ({ hits: [{ ...session, matchScore: 3 }] })),
-      content: vi.fn(async () => ({ hits: [{ ...session, matchCount: 1, matchSnippet: "A: The oclif command saw it." }] })),
+      content: vi.fn(async () => ({
+        hits: [{ ...session, matchCount: 1, matchSnippet: "A: The oclif command saw it." }],
+      })),
       facets: vi.fn(async () => ({ hits: [{ ...session, facets: sessionFacets }] })),
       clearIndex: vi.fn(async () => ({ cleared: true })),
       reindex: vi.fn(async () => ({ indexed: 1, total: 1 })),
     },
   };
 
-  return ({
+  return {
     ...client,
     ...overrides,
     catalog: { ...client.catalog, ...overrides.catalog },
     transcripts: { ...client.transcripts, ...overrides.transcripts },
     search: { ...client.search, ...overrides.search },
-  } as unknown) as SessionIntelligenceClient;
+  } as unknown as SessionIntelligenceClient;
 }
 
 function installFakeClient(client = createFakeClient()): SessionIntelligenceClient {
@@ -188,7 +197,9 @@ function firstOutputData<T>(spy: ReturnType<typeof spyOutput>): T {
 }
 
 function firstOutputError(spy: ReturnType<typeof spyOutput>): { code?: string; message: string } {
-  const [result] = spy.mock.calls[0] as unknown as [{ ok: false; error: { code?: string; message: string } }];
+  const [result] = spy.mock.calls[0] as unknown as [
+    { ok: false; error: { code?: string; message: string } },
+  ];
   expect(result.ok).toBe(false);
   return result.error;
 }
@@ -218,13 +229,7 @@ describe("@rawr/plugin-session-tools", () => {
     }
     process.env.RAWR_SESSION_INDEX_PATH = environmentPath;
     await SessionsSearch.run(["--query", "rawr-fixture", "--json"]);
-    await SessionsSearch.run([
-      "--query",
-      "rawr-fixture",
-      "--index-path",
-      explicitPath,
-      "--json",
-    ]);
+    await SessionsSearch.run(["--query", "rawr-fixture", "--index-path", explicitPath, "--json"]);
 
     expect(outputSpy).toHaveBeenCalledTimes(4);
     expect(observedIndexPaths).toEqual([
@@ -238,7 +243,15 @@ describe("@rawr/plugin-session-tools", () => {
     const client = installFakeClient();
     const outputSpy = spyOutput(SessionsList);
 
-    await SessionsList.run(["--source", "codex", "--limit", "1", "--cwd-contains", "rawr", "--json"]);
+    await SessionsList.run([
+      "--source",
+      "codex",
+      "--limit",
+      "1",
+      "--cwd-contains",
+      "rawr",
+      "--json",
+    ]);
 
     expect(client.catalog.list).toHaveBeenCalledWith(
       {
@@ -253,7 +266,9 @@ describe("@rawr/plugin-session-tools", () => {
           until: undefined,
         },
       },
-      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.catalog.list" } } }),
+      expect.objectContaining({
+        context: { invocation: { traceId: "plugin-session-tools.catalog.list" } },
+      })
     );
     const data = firstOutputData<{ sessions: SessionListItem[]; outDir: string | null }>(outputSpy);
     expect(data.sessions).toEqual([session]);
@@ -277,11 +292,13 @@ describe("@rawr/plugin-session-tools", () => {
         catalog: {
           resolve: vi.fn(async () => ({ error: "Session not found: missing" })),
         } as unknown as SessionIntelligenceClient["catalog"],
-      }),
+      })
     );
     const outputSpy = spyOutput(SessionsResolve);
 
-    await expect(SessionsResolve.run(["missing", "--json"])).rejects.toMatchObject({ oclif: { exit: 2 } });
+    await expect(SessionsResolve.run(["missing", "--json"])).rejects.toMatchObject({
+      oclif: { exit: 2 },
+    });
 
     expect(firstOutputError(outputSpy).code).toBe("SESSION_NOT_FOUND");
   });
@@ -290,7 +307,15 @@ describe("@rawr/plugin-session-tools", () => {
     const client = installFakeClient();
     const outputSpy = spyOutput(SessionsSearch);
 
-    await SessionsSearch.run(["--query-metadata", "rawr-fixture", "--source", "all", "--limit", "5", "--json"]);
+    await SessionsSearch.run([
+      "--query-metadata",
+      "rawr-fixture",
+      "--source",
+      "all",
+      "--limit",
+      "5",
+      "--json",
+    ]);
 
     expect(client.catalog.list).not.toHaveBeenCalled();
     expect(client.search.metadata).toHaveBeenCalledWith(
@@ -307,11 +332,15 @@ describe("@rawr/plugin-session-tools", () => {
         needle: "rawr-fixture",
         limit: 5,
       },
-      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.search.metadata" } } }),
+      expect.objectContaining({
+        context: { invocation: { traceId: "plugin-session-tools.search.metadata" } },
+      })
     );
-    const data = firstOutputData<{ query: string; hits: Array<SessionListItem & { matchScore: number }>; outDir: string | null }>(
-      outputSpy,
-    );
+    const data = firstOutputData<{
+      query: string;
+      hits: Array<SessionListItem & { matchScore: number }>;
+      outDir: string | null;
+    }>(outputSpy);
     expect(data.query).toBe("rawr-fixture");
     expect(data.hits).toHaveLength(1);
     expect(data.hits[0]?.matchScore).toBe(3);
@@ -321,9 +350,11 @@ describe("@rawr/plugin-session-tools", () => {
     const client = installFakeClient(
       createFakeClient({
         search: {
-          metadata: vi.fn(async () => ({ hits: [{ ...session, matchScore: 3, facets: sessionFacets }] })),
+          metadata: vi.fn(async () => ({
+            hits: [{ ...session, matchScore: 3, facets: sessionFacets }],
+          })),
         } as unknown as SessionIntelligenceClient["search"],
-      }),
+      })
     );
     const outDir = await makeTempDir("rawr-plugin-session-search-facets-");
     const outputSpy = spyOutput(SessionsSearch);
@@ -376,14 +407,18 @@ describe("@rawr/plugin-session-tools", () => {
         candidateLimit: 9,
         includeFacets: true,
       },
-      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.search.metadata" } } }),
+      expect.objectContaining({
+        context: { invocation: { traceId: "plugin-session-tools.search.metadata" } },
+      })
     );
-    const data = firstOutputData<{ hits: Array<SessionListItem & { matchScore: number; facets?: SessionFacets }> }>(
-      outputSpy,
-    );
+    const data = firstOutputData<{
+      hits: Array<SessionListItem & { matchScore: number; facets?: SessionFacets }>;
+    }>(outputSpy);
     expect(data.hits[0]?.facets).toEqual(sessionFacets);
 
-    const written = JSON.parse(await fs.readFile(path.join(outDir, "search-results.json"), "utf8")) as any;
+    const written = JSON.parse(
+      await fs.readFile(path.join(outDir, "search-results.json"), "utf8")
+    ) as any;
     expect(written.mode).toBe("query-metadata");
     expect(written.hits[0].facets).toEqual(sessionFacets);
   });
@@ -431,15 +466,20 @@ describe("@rawr/plugin-session-tools", () => {
         candidateLimit: 7,
         includeFacets: true,
       },
-      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.search.facets" } } }),
+      expect.objectContaining({
+        context: { invocation: { traceId: "plugin-session-tools.search.facets" } },
+      })
     );
-    const data = firstOutputData<{ query: string | null; hits: Array<SessionListItem & { facets?: SessionFacets }> }>(
-      outputSpy,
-    );
+    const data = firstOutputData<{
+      query: string | null;
+      hits: Array<SessionListItem & { facets?: SessionFacets }>;
+    }>(outputSpy);
     expect(data.query).toBeNull();
     expect(data.hits[0]?.facets).toEqual(sessionFacets);
 
-    const written = JSON.parse(await fs.readFile(path.join(outDir, "search-results.json"), "utf8")) as any;
+    const written = JSON.parse(
+      await fs.readFile(path.join(outDir, "search-results.json"), "utf8")
+    ) as any;
     expect(written.mode).toBe("facets");
     expect(written.hits[0].facets).toEqual(sessionFacets);
   });
@@ -475,9 +515,14 @@ describe("@rawr/plugin-session-tools", () => {
         },
         candidateLimit: 2,
       }),
-      expect.objectContaining({ context: { invocation: { traceId: "plugin-session-tools.search.content" } } }),
+      expect.objectContaining({
+        context: { invocation: { traceId: "plugin-session-tools.search.content" } },
+      })
     );
-    const data = firstOutputData<{ query: string; hits: Array<SessionListItem & { matchCount: number }> }>(outputSpy);
+    const data = firstOutputData<{
+      query: string;
+      hits: Array<SessionListItem & { matchCount: number }>;
+    }>(outputSpy);
     expect(data.query).toBe("oclif");
     expect(data.hits[0]?.matchCount).toBe(1);
   });
@@ -486,7 +531,9 @@ describe("@rawr/plugin-session-tools", () => {
     const client = installFakeClient();
     const outputSpy = spyOutput(SessionsSearch);
 
-    await expect(SessionsSearch.run(["--query-metadata", "rawr", "--query", "oclif", "--json"])).rejects.toMatchObject({
+    await expect(
+      SessionsSearch.run(["--query-metadata", "rawr", "--query", "oclif", "--json"])
+    ).rejects.toMatchObject({
       oclif: { exit: 2 },
     });
 
@@ -529,17 +576,27 @@ describe("@rawr/plugin-session-tools", () => {
       "--json",
     ]);
 
-    const metadata = JSON.parse(await fs.readFile(path.join(outDir, "metadata.json"), "utf8")) as unknown;
+    const metadata = JSON.parse(
+      await fs.readFile(path.join(outDir, "metadata.json"), "utf8")
+    ) as unknown;
     const chunkOne = await fs.readFile(path.join(outDir, "transcript.chunk-001.md"), "utf8");
     const chunkTwo = await fs.readFile(path.join(outDir, "transcript.chunk-002.md"), "utf8");
-    const data = firstOutputData<{ outFiles: string[]; outputs: Array<{ name: string }> }>(outputSpy);
+    const data = firstOutputData<{ outFiles: string[]; outputs: Array<{ name: string }> }>(
+      outputSpy
+    );
 
-    expect(metadata).toMatchObject({ resolved, extracted: { sessionId: session.sessionId, messageCount: 2 } });
+    expect(metadata).toMatchObject({
+      resolved,
+      extracted: { sessionId: session.sessionId, messageCount: 2 },
+    });
     expect(chunkOne).toContain("## Chunk 1/2");
     expect(chunkOne).toContain("## User");
     expect(chunkTwo).toContain("## Chunk 2/2");
     expect(chunkTwo).toContain("## Assistant");
-    expect(data.outputs.map((o) => o.name)).toEqual(["transcript.chunk-001.md", "transcript.chunk-002.md"]);
+    expect(data.outputs.map((o) => o.name)).toEqual([
+      "transcript.chunk-001.md",
+      "transcript.chunk-002.md",
+    ]);
     expect(data.outFiles).toHaveLength(2);
   });
 
@@ -547,7 +604,9 @@ describe("@rawr/plugin-session-tools", () => {
     const client = installFakeClient();
     const outputSpy = spyOutput(SessionsExtract);
 
-    await expect(SessionsExtract.run(["abcdef", "--chunk-size", "1", "--chunk-output", "split", "--json"])).rejects.toMatchObject({
+    await expect(
+      SessionsExtract.run(["abcdef", "--chunk-size", "1", "--chunk-output", "split", "--json"])
+    ).rejects.toMatchObject({
       oclif: { exit: 2 },
     });
 
@@ -575,9 +634,12 @@ describe("@rawr/plugin-session-tools", () => {
     });
 
     const client = await createSessionIntelligenceClient();
-    const listedResponse = await client.catalog.list({ source: "codex", limit: 1, filters: {} }, {
-      context: { invocation: { traceId: "test.session.catalog.list" } },
-    });
+    const listedResponse = await client.catalog.list(
+      { source: "codex", limit: 1, filters: {} },
+      {
+        context: { invocation: { traceId: "test.session.catalog.list" } },
+      }
+    );
     const listed = listedResponse.sessions;
     expect(listed).toHaveLength(1);
     expect(listed[0]).toMatchObject({
@@ -588,9 +650,12 @@ describe("@rawr/plugin-session-tools", () => {
     });
     await expect(fs.stat(indexPath)).resolves.toMatchObject({ size: expect.any(Number) });
 
-    const resolved = await client.catalog.resolve({ session: "resource-test", source: "codex" }, {
-      context: { invocation: { traceId: "test.session.catalog.resolve" } },
-    });
+    const resolved = await client.catalog.resolve(
+      { session: "resource-test", source: "codex" },
+      {
+        context: { invocation: { traceId: "test.session.catalog.resolve" } },
+      }
+    );
     expect("error" in resolved).toBe(false);
     if ("error" in resolved) throw new Error(String(resolved.error));
     expect(resolved.resolved.path).toBe(filePath);
@@ -605,7 +670,7 @@ describe("@rawr/plugin-session-tools", () => {
       },
       {
         context: { invocation: { traceId: "test.session.search.reindex" } },
-      },
+      }
     );
     expect(reindex).toEqual({ indexed: 1, total: 1 });
 
@@ -624,7 +689,7 @@ describe("@rawr/plugin-session-tools", () => {
       },
       {
         context: { invocation: { traceId: "test.session.search.content" } },
-      },
+      }
     );
     const hits = contentResponse.hits;
     expect(hits).toHaveLength(1);
@@ -644,7 +709,7 @@ describe("@rawr/plugin-session-tools", () => {
       },
       {
         context: { invocation: { traceId: "test.session.transcripts.extract" } },
-      },
+      }
     );
     expect("error" in extracted).toBe(false);
     if ("error" in extracted) throw new Error(String(extracted.error));

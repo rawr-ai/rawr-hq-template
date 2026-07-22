@@ -15,7 +15,7 @@ export type RunCommandOptions = {
 export async function runCommand(
   command: string,
   args: string[],
-  { cwd, env, timeoutMs = 10_000 }: RunCommandOptions = {},
+  { cwd, env, timeoutMs = 10_000 }: RunCommandOptions = {}
 ): Promise<CommandResult> {
   const bun = (globalThis as any).Bun;
   if (bun?.spawn) {
@@ -29,7 +29,7 @@ export async function runCommand(
     const exited = Promise.race([
       proc.exited,
       new Promise<number>((_, reject) =>
-        setTimeout(() => reject(new Error(`Command timed out after ${timeoutMs}ms`)), timeoutMs),
+        setTimeout(() => reject(new Error(`Command timed out after ${timeoutMs}ms`)), timeoutMs)
       ),
     ]);
 
@@ -77,4 +77,3 @@ export async function runCommand(
     stderr: Buffer.concat(stderrChunks).toString("utf8"),
   };
 }
-

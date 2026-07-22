@@ -19,11 +19,7 @@ export type ProvidedContext<TProvided extends object = {}> = {
  * It does not include per-call invocation input or execution-time provided
  * resources.
  */
-export type DeclaredContext<
-  TDeps,
-  TScope extends object = {},
-  TConfig extends object = {},
-> = {
+export type DeclaredContext<TDeps, TScope extends object = {}, TConfig extends object = {}> = {
   deps: TDeps;
   scope: TScope;
   config: TConfig;

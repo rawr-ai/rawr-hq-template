@@ -52,32 +52,32 @@ export type ArtifactTreeObservation =
   | Readonly<{ kind: "Missing"; address: ArtifactObjectAddress }>
   | Readonly<{ kind: "Present"; snapshot: ArtifactTreeSnapshot }>
   | Readonly<{
-    kind: "Mismatch";
-    address: ArtifactObjectAddress;
-    issues: readonly [ArtifactRepositoryIssue, ...ArtifactRepositoryIssue[]];
-  }>;
+      kind: "Mismatch";
+      address: ArtifactObjectAddress;
+      issues: readonly [ArtifactRepositoryIssue, ...ArtifactRepositoryIssue[]];
+    }>;
 
 export type ArtifactTreeLocationObservation =
   | Readonly<{ kind: "Missing"; address: ArtifactObjectAddress }>
   | Readonly<{
-    kind: "Present";
-    address: ArtifactObjectAddress;
-    location: ArtifactTreeLocation;
-  }>
+      kind: "Present";
+      address: ArtifactObjectAddress;
+      location: ArtifactTreeLocation;
+    }>
   | Readonly<{
-    kind: "Mismatch";
-    address: ArtifactObjectAddress;
-    issues: readonly [ArtifactRepositoryIssue, ...ArtifactRepositoryIssue[]];
-  }>;
+      kind: "Mismatch";
+      address: ArtifactObjectAddress;
+      issues: readonly [ArtifactRepositoryIssue, ...ArtifactRepositoryIssue[]];
+    }>;
 
 export type ArtifactEvidenceObservation =
   | Readonly<{ kind: "Missing"; address: ArtifactObjectAddress }>
   | Readonly<{ kind: "Present"; address: ArtifactObjectAddress; bytes: Uint8Array }>
   | Readonly<{
-    kind: "Mismatch";
-    address: ArtifactObjectAddress;
-    issues: readonly [ArtifactRepositoryIssue, ...ArtifactRepositoryIssue[]];
-  }>;
+      kind: "Mismatch";
+      address: ArtifactObjectAddress;
+      issues: readonly [ArtifactRepositoryIssue, ...ArtifactRepositoryIssue[]];
+    }>;
 
 export type ArtifactPublicationObservation = "Present" | "Missing" | "Mismatch" | "Unknown";
 
@@ -85,24 +85,24 @@ export type ArtifactPublicationResult =
   | Readonly<{ kind: "Published"; address: ArtifactObjectAddress }>
   | Readonly<{ kind: "ReadOnlyConverged"; address: ArtifactObjectAddress }>
   | Readonly<{
-    kind: "Occupied";
-    address: ArtifactObjectAddress;
-    observation: Exclude<ArtifactPublicationObservation, "Unknown">;
-    cleanupFailure?: string;
-  }>
+      kind: "Occupied";
+      address: ArtifactObjectAddress;
+      observation: Exclude<ArtifactPublicationObservation, "Unknown">;
+      cleanupFailure?: string;
+    }>
   | Readonly<{
-    kind: "Rejected";
-    address: ArtifactObjectAddress;
-    failure: string;
-    cleanupFailure?: string;
-  }>
+      kind: "Rejected";
+      address: ArtifactObjectAddress;
+      failure: string;
+      cleanupFailure?: string;
+    }>
   | Readonly<{
-    kind: "Unsettled";
-    address: ArtifactObjectAddress;
-    failure: string;
-    observation: ArtifactPublicationObservation;
-    cleanupFailure?: string;
-  }>;
+      kind: "Unsettled";
+      address: ArtifactObjectAddress;
+      failure: string;
+      observation: ArtifactPublicationObservation;
+      cleanupFailure?: string;
+    }>;
 
 export type ArtifactCommitDecision =
   | Readonly<{ kind: "Proceed" }>
@@ -154,50 +154,60 @@ export interface ArtifactRepositoryResource<R = never> {
    * Locates a tree only after the same bounded mechanical admission as readTree.
    * The opaque location is an implementation handoff, not semantic artifact state.
    */
-  readonly locateTree: (input: Readonly<{
-    address: ArtifactObjectAddress;
-    limits: ArtifactReadLimits;
-  }>) => Effect.Effect<ArtifactTreeLocationObservation, ArtifactRepositoryFailure, R>;
+  readonly locateTree: (
+    input: Readonly<{
+      address: ArtifactObjectAddress;
+      limits: ArtifactReadLimits;
+    }>
+  ) => Effect.Effect<ArtifactTreeLocationObservation, ArtifactRepositoryFailure, R>;
 
-  readonly readTree: (input: Readonly<{
-    address: ArtifactObjectAddress;
-    limits: ArtifactReadLimits;
-  }>) => Effect.Effect<ArtifactTreeObservation, ArtifactRepositoryFailure, R>;
+  readonly readTree: (
+    input: Readonly<{
+      address: ArtifactObjectAddress;
+      limits: ArtifactReadLimits;
+    }>
+  ) => Effect.Effect<ArtifactTreeObservation, ArtifactRepositoryFailure, R>;
 
-  readonly publishTree: (input: Readonly<{
-    address: ArtifactObjectAddress;
-    entries: readonly ArtifactTreeEntry[];
-    limits: ArtifactReadLimits;
-    control?: ArtifactPublicationControl;
-  }>) => Effect.Effect<ArtifactPublicationResult, ArtifactRepositoryFailure, R>;
+  readonly publishTree: (
+    input: Readonly<{
+      address: ArtifactObjectAddress;
+      entries: readonly ArtifactTreeEntry[];
+      limits: ArtifactReadLimits;
+      control?: ArtifactPublicationControl;
+    }>
+  ) => Effect.Effect<ArtifactPublicationResult, ArtifactRepositoryFailure, R>;
 
-  readonly readEvidence: (input: Readonly<{
-    address: ArtifactObjectAddress;
-    maxBytes: number;
-  }>) => Effect.Effect<ArtifactEvidenceObservation, ArtifactRepositoryFailure, R>;
+  readonly readEvidence: (
+    input: Readonly<{
+      address: ArtifactObjectAddress;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<ArtifactEvidenceObservation, ArtifactRepositoryFailure, R>;
 
-  readonly publishEvidence: (input: Readonly<{
-    address: ArtifactObjectAddress;
-    bytes: Uint8Array;
-    maxBytes: number;
-    control?: ArtifactPublicationControl;
-  }>) => Effect.Effect<ArtifactPublicationResult, ArtifactRepositoryFailure, R>;
+  readonly publishEvidence: (
+    input: Readonly<{
+      address: ArtifactObjectAddress;
+      bytes: Uint8Array;
+      maxBytes: number;
+      control?: ArtifactPublicationControl;
+    }>
+  ) => Effect.Effect<ArtifactPublicationResult, ArtifactRepositoryFailure, R>;
 }
 
 export interface ArtifactRepositoryAsyncPort {
   readonly locateTree: (
-    input: Parameters<ArtifactRepositoryResource["locateTree"]>[0],
+    input: Parameters<ArtifactRepositoryResource["locateTree"]>[0]
   ) => Promise<ArtifactTreeLocationObservation>;
   readonly readTree: (
-    input: Parameters<ArtifactRepositoryResource["readTree"]>[0],
+    input: Parameters<ArtifactRepositoryResource["readTree"]>[0]
   ) => Promise<ArtifactTreeObservation>;
   readonly publishTree: (
-    input: Parameters<ArtifactRepositoryResource["publishTree"]>[0],
+    input: Parameters<ArtifactRepositoryResource["publishTree"]>[0]
   ) => Promise<ArtifactPublicationResult>;
   readonly readEvidence: (
-    input: Parameters<ArtifactRepositoryResource["readEvidence"]>[0],
+    input: Parameters<ArtifactRepositoryResource["readEvidence"]>[0]
   ) => Promise<ArtifactEvidenceObservation>;
   readonly publishEvidence: (
-    input: Parameters<ArtifactRepositoryResource["publishEvidence"]>[0],
+    input: Parameters<ArtifactRepositoryResource["publishEvidence"]>[0]
   ) => Promise<ArtifactPublicationResult>;
 }

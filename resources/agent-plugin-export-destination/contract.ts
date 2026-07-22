@@ -34,25 +34,25 @@ export interface ExportDestinationDirectoryChild extends ExportDestinationEntryI
 
 export type ExportDestinationEntryObservation =
   | Readonly<{
-    kind: "Absent";
-    path: string;
-  }>
+      kind: "Absent";
+      path: string;
+    }>
   | Readonly<{
-    kind: "File";
-    path: string;
-    identity: ExportDestinationEntryIdentity;
-    stat: ExportDestinationFileStat;
-    mode: number;
-    bytes: Uint8Array;
-  }>
+      kind: "File";
+      path: string;
+      identity: ExportDestinationEntryIdentity;
+      stat: ExportDestinationFileStat;
+      mode: number;
+      bytes: Uint8Array;
+    }>
   | Readonly<{
-    kind: "Directory";
-    path: string;
-    identity: ExportDestinationEntryIdentity;
-    stat: ExportDestinationDirectoryStat;
-    mode: number;
-    children: readonly ExportDestinationDirectoryChild[];
-  }>;
+      kind: "Directory";
+      path: string;
+      identity: ExportDestinationEntryIdentity;
+      stat: ExportDestinationDirectoryStat;
+      mode: number;
+      children: readonly ExportDestinationDirectoryChild[];
+    }>;
 
 export interface ExportDestinationSnapshot {
   readonly canonicalDestination: string;
@@ -69,24 +69,24 @@ export interface ExportDestinationCapture extends ExportDestinationSnapshot {
 /** Exact service-authored filesystem mutations; no layout or ledger meaning is carried here. */
 export type ExportDestinationMutation =
   | Readonly<{
-    kind: "EnsureDirectory";
-    path: string;
-    mode: number;
-  }>
+      kind: "EnsureDirectory";
+      path: string;
+      mode: number;
+    }>
   | Readonly<{
-    kind: "WriteFile";
-    path: string;
-    mode: number;
-    bytes: Uint8Array;
-  }>
+      kind: "WriteFile";
+      path: string;
+      mode: number;
+      bytes: Uint8Array;
+    }>
   | Readonly<{
-    kind: "RemoveFile";
-    path: string;
-  }>
+      kind: "RemoveFile";
+      path: string;
+    }>
   | Readonly<{
-    kind: "RemoveEmptyDirectory";
-    path: string;
-  }>;
+      kind: "RemoveEmptyDirectory";
+      path: string;
+    }>;
 
 export interface ExportDestinationApplyReceipt {
   readonly planDigest: string;
@@ -138,77 +138,96 @@ export type ExportDestinationFailureReason =
 
 export interface ExportDestinationFailure {
   readonly _tag: "ExportDestinationFailure";
-  readonly operation: "inspect" | "capture" | "release" | "apply" | "restore" | "settle" | "cleanup";
+  readonly operation:
+    | "inspect"
+    | "capture"
+    | "release"
+    | "apply"
+    | "restore"
+    | "settle"
+    | "cleanup";
   readonly reason: ExportDestinationFailureReason;
   readonly path?: string;
   readonly detail: string;
 }
 
 export interface ExportDestinationResource<R = never> {
-  readonly inspect: (input: Readonly<{
-    destination: string;
-    readToken: string;
-    paths: readonly string[];
-    maxEntries: number;
-    maxBytes: number;
-  }>) => Effect.Effect<ExportDestinationSnapshot, ExportDestinationFailure, R>;
+  readonly inspect: (
+    input: Readonly<{
+      destination: string;
+      readToken: string;
+      paths: readonly string[];
+      maxEntries: number;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<ExportDestinationSnapshot, ExportDestinationFailure, R>;
 
-  readonly capture: (input: Readonly<{
-    destination: string;
-    readToken: string;
-    paths: readonly string[];
-    maxEntries: number;
-    maxBytes: number;
-  }>) => Effect.Effect<ExportDestinationCapture, ExportDestinationFailure, R>;
+  readonly capture: (
+    input: Readonly<{
+      destination: string;
+      readToken: string;
+      paths: readonly string[];
+      maxEntries: number;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<ExportDestinationCapture, ExportDestinationFailure, R>;
 
   /** Consumes only a still-unmutated capture. Applied or partial authority must be restored instead. */
-  readonly release: (input: Readonly<{
-    destination: string;
-    readToken: string;
-    captureHandle: string;
-  }>) => Effect.Effect<ExportDestinationReleaseReceipt, ExportDestinationFailure, R>;
+  readonly release: (
+    input: Readonly<{
+      destination: string;
+      readToken: string;
+      captureHandle: string;
+    }>
+  ) => Effect.Effect<ExportDestinationReleaseReceipt, ExportDestinationFailure, R>;
 
-  readonly apply: (input: Readonly<{
-    destination: string;
-    planDigest: string;
-    readToken: string;
-    captureHandle: string;
-    mutations: readonly ExportDestinationMutation[];
-  }>) => Effect.Effect<ExportDestinationApplyReceipt, ExportDestinationFailure, R>;
+  readonly apply: (
+    input: Readonly<{
+      destination: string;
+      planDigest: string;
+      readToken: string;
+      captureHandle: string;
+      mutations: readonly ExportDestinationMutation[];
+    }>
+  ) => Effect.Effect<ExportDestinationApplyReceipt, ExportDestinationFailure, R>;
 
-  readonly restore: (input: Readonly<{
-    destination: string;
-    planDigest: string;
-    readToken: string;
-    captureHandle: string;
-  }>) => Effect.Effect<ExportDestinationRestoreReceipt, ExportDestinationFailure, R>;
+  readonly restore: (
+    input: Readonly<{
+      destination: string;
+      planDigest: string;
+      readToken: string;
+      captureHandle: string;
+    }>
+  ) => Effect.Effect<ExportDestinationRestoreReceipt, ExportDestinationFailure, R>;
 
-  readonly settle: (input: Readonly<{
-    destination: string;
-    planDigest: string;
-    readToken: string;
-    captureHandle: string;
-  }>) => Effect.Effect<ExportDestinationSettleReceipt, ExportDestinationFailure, R>;
+  readonly settle: (
+    input: Readonly<{
+      destination: string;
+      planDigest: string;
+      readToken: string;
+      captureHandle: string;
+    }>
+  ) => Effect.Effect<ExportDestinationSettleReceipt, ExportDestinationFailure, R>;
 }
 
 /** Promise projection for non-Effect callers; provider requirements bind at the edge. */
 export interface ExportDestinationAsyncPort {
   readonly inspect: (
-    input: Parameters<ExportDestinationResource["inspect"]>[0],
+    input: Parameters<ExportDestinationResource["inspect"]>[0]
   ) => Promise<ExportDestinationSnapshot>;
   readonly capture: (
-    input: Parameters<ExportDestinationResource["capture"]>[0],
+    input: Parameters<ExportDestinationResource["capture"]>[0]
   ) => Promise<ExportDestinationCapture>;
   readonly release: (
-    input: Parameters<ExportDestinationResource["release"]>[0],
+    input: Parameters<ExportDestinationResource["release"]>[0]
   ) => Promise<ExportDestinationReleaseReceipt>;
   readonly apply: (
-    input: Parameters<ExportDestinationResource["apply"]>[0],
+    input: Parameters<ExportDestinationResource["apply"]>[0]
   ) => Promise<ExportDestinationApplyReceipt>;
   readonly restore: (
-    input: Parameters<ExportDestinationResource["restore"]>[0],
+    input: Parameters<ExportDestinationResource["restore"]>[0]
   ) => Promise<ExportDestinationRestoreReceipt>;
   readonly settle: (
-    input: Parameters<ExportDestinationResource["settle"]>[0],
+    input: Parameters<ExportDestinationResource["settle"]>[0]
   ) => Promise<ExportDestinationSettleReceipt>;
 }
