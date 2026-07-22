@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "id": "require_oclif_command_source_relationships",
+  "title": "Require Oclif Command Source Relationships",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "oclif-command-plugin",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "a command file without a default export, a dependency through another package's mechanical source or output tree, or a dependency from one command plugin to another",
+  "why": "Oclif discovers command classes from one command root. The host composes command plugins, while their implementation depends on public service, resource, and library packages rather than another plugin or a mechanical package directory.",
+  "remediate": "Default-export the command implementation from every command file. Replace command-plugin dependencies and mechanical package-directory imports with the owning service, resource, or library package's public entrypoint.",
+  "message": "Oclif commands must be discoverable classes and remain on public package boundaries.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "plugins/cli/*/src/**/*.ts"
+      ]
+    }
+  ],
+  "scanRoots": [
+    "plugins/cli"
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_source_relationships/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_source_relationships/pattern.md"
+    },
+    "patternName": "require_oclif_command_source_relationships"
+  }
+}

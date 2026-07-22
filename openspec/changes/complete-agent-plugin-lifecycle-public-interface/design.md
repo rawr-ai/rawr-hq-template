@@ -283,7 +283,7 @@ CLI. No compatibility layer connects the two models.
 - **Simplify the custom controller:** rejected because the ownership model is
   wrong, not merely too large.
 - **Bundle the whole Oclif closure into a new Bun binary immediately:** rejected
-  until native Oclif plugin discovery and extension mechanics are proven.
+  until direct Oclif plugin discovery and extension mechanics are proven.
 - **Use Oclif standalone Node archives immediately:** rejected until Bun-only
   first-party command dependencies are removed or isolated.
 - **Restore the old mixed agent sync service:** rejected because its command

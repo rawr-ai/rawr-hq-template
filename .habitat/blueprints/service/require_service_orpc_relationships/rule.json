@@ -36,7 +36,7 @@
   "runner": {
     "name": "grit",
     "files": {
-      "pattern": ".habitat/blueprints/service/require_service_orpc_relationships/require_service_orpc_relationships.md"
+      "pattern": ".habitat/blueprints/service/require_service_orpc_relationships/pattern.md"
     },
     "patternName": "require_service_orpc_relationships"
   }

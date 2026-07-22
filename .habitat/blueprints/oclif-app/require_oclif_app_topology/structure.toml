@@ -1,0 +1,43 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "oclif-app-package"
+root = "apps/cli"
+kind = "directory"
+mode = "closed"
+required = [
+  "bin",
+  "package.json",
+  "src",
+  "test",
+  "tsconfig.build.json",
+  "tsconfig.json",
+]
+allowed = [
+  "AGENTS.md",
+  "README.md",
+  "coverage",
+  "dist",
+  "node_modules",
+  "oclif.manifest.json",
+  "tsconfig.test.json",
+]
+
+[[scopes]]
+name = "oclif-app-binary"
+root = "apps/cli/bin"
+kind = "directory"
+mode = "closed"
+required = ["run.js"]
+allowed = []
+
+[[scopes]]
+name = "oclif-app-source"
+root = "apps/cli/src"
+kind = "directory"
+mode = "closed"
+required = [
+  "commands",
+  "index.ts",
+]
+allowed = ["lib"]

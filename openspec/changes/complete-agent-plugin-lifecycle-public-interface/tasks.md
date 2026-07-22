@@ -32,17 +32,21 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 - [ ] 1.2 Correct the generic service topology once so a module has either a
   single `router.ts` or a closed composed `router/` directory behind its
   `router.ts` boundary. Prove both accepted shapes and reject mixed/open forms.
-- [ ] 1.3 Add generic positive Oclif app and Oclif command-plugin blueprints.
+- [x] 1.3 Add generic positive Oclif app and Oclif command-plugin blueprints.
   Constrain entrypoint, binary, `package.json#oclif` discovery/core-plugin
-  composition, generated-manifest target, command root, public dependency
-  boundary, and no cross-plugin internal imports. Do not encode retired
-  filenames as a forbidden list or model `nx release` as a project target.
+  composition, the package-owned manifest target, TypeScript source-to-output
+  mapping, command root, no plugin-to-plugin dependency, and no mechanical
+  package-directory imports. Leave general package exports to TypeScript and Nx.
+  Do not encode retired filenames as a forbidden list or model `nx release` as
+  a project target.
 - [ ] 1.4 Add positive resource/provider topology only after the current corpus
   supports one generic invariant. Do not claim Magic prior art that does not
   exist.
 - [ ] 1.5 Give the Habitat consumer an Nx `check:policy` target, pattern tests,
-  isolated named inputs, and live-tree noncacheable execution where required.
-  Keep the compiled Bun 1.4 artifact consumer and reproducible update recipe.
+  isolated named inputs, a blueprint-packet topology law requiring canonical
+  `pattern.md`/`structure.toml` runner files, and live-tree noncacheable execution
+  where required. Keep the compiled Bun 1.4 artifact consumer and reproducible
+  update recipe.
 - [ ] 1.6 Replace the sequential repository ratchet with Nx affected/cached lint
   and typecheck plus one Habitat policy check. Preserve one non-skippable remote
   required result for the candidate revision.
@@ -51,7 +55,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   reviews. Land architecture patterns and task wiring as separately reviewable
   Graphite nodes if both change independently.
 
-## 2. Native Oclif Development And Extension Management
+## 2. Direct Oclif Development And Extension Management
 
 - [ ] 2.1 Restore `apps/cli/bin/run.js` and `apps/cli/src/index.ts` as ordinary
   Oclif entrypoints. Development and built invocation must discover the same

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_oclif_command_plugin_topology",
+  "title": "Require Oclif Command Plugin Topology",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "oclif-command-plugin",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "a missing command-plugin package anchor, a second command root, an open source root, or a plugin-owned executable binary",
+  "why": "Every first-party Oclif command capability has the same package shell and one source command root. Generated dependency and build directories remain admitted outputs, while the host application alone owns the executable.",
+  "remediate": "Keep package, test, and TypeScript anchors at each plugins/cli package root. Put commands under src/commands, shared private helpers under src/lib, and expose no package-local bin directory.",
+  "message": "Every Oclif command plugin must retain one closed package and command-source topology.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "plugins/cli/*/**"
+      ]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_plugin_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_plugin_topology/structure.toml"
+    }
+  }
+}
