@@ -8,7 +8,11 @@ describe("hq-ops service shell", () => {
     expect(typeof createClient).toBe("function");
     expect(router).toBeDefined();
     expect(Object.keys(contract)).toEqual(["config", "journal", "security"]);
-    expect(Object.keys(contract.config)).toEqual(["getWorkspaceConfig", "getGlobalConfig", "getLayeredConfig"]);
+    expect(Object.keys(contract.config)).toEqual([
+      "getWorkspaceConfig",
+      "getGlobalConfig",
+      "getLayeredConfig",
+    ]);
     expect(Object.keys(contract.journal)).toEqual([
       "writeEvent",
       "writeSnippet",
@@ -16,6 +20,10 @@ describe("hq-ops service shell", () => {
       "tailSnippets",
       "searchSnippets",
     ]);
-    expect(Object.keys(contract.security)).toEqual(["securityCheck", "gateEnable", "getSecurityReport"]);
+    expect(Object.keys(contract.security)).toEqual([
+      "securityCheck",
+      "gateEnable",
+      "getSecurityReport",
+    ]);
   });
 });

@@ -19,7 +19,7 @@ const SessionFiltersSchema = Type.Object(
     since: Type.Optional(Type.String()),
     until: Type.Optional(Type.String()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type SessionFilters = Static<typeof SessionFiltersSchema>;
 
@@ -33,11 +33,11 @@ const ResolveResultSchema = Type.Object(
         modified: Type.String(),
         sizeBytes: Type.Number(),
       },
-      { additionalProperties: false },
+      { additionalProperties: false }
     ),
     metadata: SessionMetadataSchema,
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type ResolveResult = Static<typeof ResolveResultSchema>;
 
@@ -52,11 +52,18 @@ export const contract = {
             limit: Type.Number(),
             filters: Type.Optional(SessionFiltersSchema),
           },
-          { additionalProperties: false },
-        ),
-      ),
+          { additionalProperties: false }
+        )
+      )
     )
-    .output(schema(Type.Object({ sessions: Type.Array(SessionListItemSchema) }, { additionalProperties: false }))),
+    .output(
+      schema(
+        Type.Object(
+          { sessions: Type.Array(SessionListItemSchema) },
+          { additionalProperties: false }
+        )
+      )
+    ),
   resolve: ocBase
     .meta({ idempotent: true, entity: "catalog" })
     .input(
@@ -66,9 +73,9 @@ export const contract = {
             session: Type.String({ minLength: 1 }),
             source: SessionSourceFilterSchema,
           },
-          { additionalProperties: false },
-        ),
-      ),
+          { additionalProperties: false }
+        )
+      )
     )
     .output(schema(ResolveResultSchema))
     .errors({ SESSION_NOT_FOUND, UNKNOWN_SESSION_FORMAT }),

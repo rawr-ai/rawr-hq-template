@@ -1,18 +1,30 @@
 import type { JsonConversationSourceRecord } from "../../source-materials/entities";
-import type { Anomaly, FamilyGraph, IntermediateGraph, NormalizedThread, Relationship } from "../entities";
+import type {
+  Anomaly,
+  FamilyGraph,
+  IntermediateGraph,
+  NormalizedThread,
+  Relationship,
+} from "../entities";
 import { filename, filenameStem, slugify } from "./names";
 
 export function buildUnifiedThread(
   family: FamilyGraph,
   jsonRecordsById: Map<string, JsonConversationSourceRecord>,
-  anomalies: Anomaly[],
+  anomalies: Anomaly[]
 ): NormalizedThread {
-  const sourceLookup = new Map(family.member_source_ids.map((sourceId) => [sourceId, jsonRecordsById.get(sourceId)!]));
+  const sourceLookup = new Map(
+    family.member_source_ids.map((sourceId) => [sourceId, jsonRecordsById.get(sourceId)!])
+  );
   const edgesBySourceId = new Map(
-    family.edges.filter((edge) => edge.type !== "duplicate_of").map((edge) => [edge.from_source_id, edge]),
+    family.edges
+      .filter((edge) => edge.type !== "duplicate_of")
+      .map((edge) => [edge.from_source_id, edge])
   );
   const duplicateEdgesBySourceId = new Map(
-    family.edges.filter((edge) => edge.type === "duplicate_of").map((edge) => [edge.from_source_id, edge]),
+    family.edges
+      .filter((edge) => edge.type === "duplicate_of")
+      .map((edge) => [edge.from_source_id, edge])
   );
 
   const visited = new Set<string>();
@@ -41,7 +53,7 @@ export function buildUnifiedThread(
     record: JsonConversationSourceRecord,
     divergenceIndex: number,
     parentSourceId?: string,
-    branchPointId?: string,
+    branchPointId?: string
   ) => {
     const branchNodes: string[] = [];
     for (const [index, message] of record.messages.entries()) {
@@ -82,7 +94,9 @@ export function buildUnifiedThread(
       }
     }
     sourcePathNodes.set(record.sourceId, branchNodes);
-    const uniqueNodes = branchNodes.filter((nodeId, index) => index === 0 || nodeId !== branchNodes[index - 1]);
+    const uniqueNodes = branchNodes.filter(
+      (nodeId, index) => index === 0 || nodeId !== branchNodes[index - 1]
+    );
     return {
       startNodeId: uniqueNodes[0],
       endNodeId: uniqueNodes.at(-1),
@@ -108,9 +122,10 @@ export function buildUnifiedThread(
     const record = sourceLookup.get(sourceId)!;
     const edge = edgesBySourceId.get(sourceId)!;
     const divergenceIndex = edge.shared_prefix_len;
-    const anchorNodeId = divergenceIndex > 0
-      ? representativeNodeId.get(messageKey(edge.to_source_id, divergenceIndex - 1))
-      : undefined;
+    const anchorNodeId =
+      divergenceIndex > 0
+        ? representativeNodeId.get(messageKey(edge.to_source_id, divergenceIndex - 1))
+        : undefined;
     const branchPointId = `${family.family_id}__branch-point__${slugify(filenameStem(record.relativePath))}`;
     branchPoints.push({
       branch_point_id: branchPointId,
@@ -180,7 +195,7 @@ export function buildUnifiedThread(
   }
 
   const familyAnomalies = anomalies.filter((anomaly) =>
-    anomaly.source_ids.some((sourceId) => family.member_source_ids.includes(sourceId)),
+    anomaly.source_ids.some((sourceId) => family.member_source_ids.includes(sourceId))
   );
 
   return {
@@ -197,11 +212,13 @@ export function buildUnifiedThread(
       link: record.link ?? null,
       message_count: record.messages.length,
     })),
-    source_links: [...new Set(
-      [...sourceLookup.values()]
-        .map((record) => record.link)
-        .filter((link): link is string => typeof link === "string" && link.length > 0),
-    )].sort(),
+    source_links: [
+      ...new Set(
+        [...sourceLookup.values()]
+          .map((record) => record.link)
+          .filter((link): link is string => typeof link === "string" && link.length > 0)
+      ),
+    ].sort(),
     summary: family.summary,
     nodes,
     edges: graphEdges,
@@ -213,7 +230,10 @@ export function buildUnifiedThread(
       branch_orders: Object.fromEntries(
         branches
           .filter((branch) => branch.source_file_ids.length > 0)
-          .map((branch) => [branch.branch_id, sourcePathNodes.get(branch.source_file_ids[0]!) ?? []]),
+          .map((branch) => [
+            branch.branch_id,
+            sourcePathNodes.get(branch.source_file_ids[0]!) ?? [],
+          ])
       ),
     },
     anomalies: familyAnomalies,
@@ -222,19 +242,19 @@ export function buildUnifiedThread(
 
 export function buildIntermediateGraph(
   normalizedThreads: NormalizedThread[],
-  relationships: Relationship[],
+  relationships: Relationship[]
 ): IntermediateGraph {
   const nodes = normalizedThreads.flatMap((thread) =>
     thread.nodes.map((node) => ({
       thread_id: thread.thread_id,
       ...node,
-    })),
+    }))
   );
   const edges = normalizedThreads.flatMap((thread) =>
     thread.edges.map((edge) => ({
       thread_id: thread.thread_id,
       ...edge,
-    })),
+    }))
   );
   return {
     schema_version: "rawr.conversation-intermediate-graph.v1",

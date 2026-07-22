@@ -46,10 +46,7 @@ import {
   type SearchSessionFilters,
 } from "./helpers/session-filters";
 import { searchSessionsByMetadata } from "./helpers/metadata-search";
-import {
-  getSearchTextCached,
-  getSearchTextUncached,
-} from "./helpers/search-text-cache";
+import { getSearchTextCached, getSearchTextUncached } from "./helpers/search-text-cache";
 import {
   extractSessionFacets,
   facetFiltersHaveValues,
@@ -74,7 +71,7 @@ function asSearchSource(source: SessionSource | "unknown"): SessionSource {
 async function loadSearchSessions(
   runtime: SessionSourceRuntime,
   indexRuntime: SessionIndexRuntime,
-  input: SearchSessionSelection,
+  input: SearchSessionSelection
 ): Promise<SessionListItem[]> {
   const limit = input.limit > 0 ? input.limit : 0;
   const filters = input.filters ?? {};
@@ -93,27 +90,23 @@ async function loadSearchSessions(
     const out: DiscoveredSessionFile[] = [];
     if (input.source === "all") {
       out.push(
-        ...await runtime.discoverSessions({
+        ...(await runtime.discoverSessions({
           source: "claude",
           limit: limit > 0 && !hasMetadataFilters(filters) ? limit : undefined,
           project: filters.project,
-        }),
+        }))
       );
     }
 
     const codexLimit = limit > 0 && !hasMetadataFilters(filters) ? limit : 0;
-    const indexed = await discoverCodexSessionsFromIndexOrNull(
-      runtime,
-      indexRuntime,
-      codexLimit,
-    );
+    const indexed = await discoverCodexSessionsFromIndexOrNull(runtime, indexRuntime, codexLimit);
     if (indexed) out.push(...indexed);
     else {
       out.push(
-        ...await runtime.discoverSessions({
+        ...(await runtime.discoverSessions({
           source: "codex",
           limit: codexLimit || undefined,
-        }),
+        }))
       );
     }
 
@@ -160,9 +153,7 @@ async function loadSearchSessions(
     }
   }
 
-  sessions.sort((a, b) =>
-    a.modified < b.modified ? 1 : a.modified > b.modified ? -1 : 0,
-  );
+  sessions.sort((a, b) => (a.modified < b.modified ? 1 : a.modified > b.modified ? -1 : 0));
   const filtered = sessions.filter((session) => matchesSearchFilters(session, filters));
   return limit ? filtered.slice(0, limit) : filtered;
 }
@@ -199,7 +190,7 @@ async function selectSessionsByFacets(input: {
 async function withRequestedFacets<Hit extends { path: string }>(
   runtime: SessionSourceRuntime,
   hits: Hit[],
-  facetsByPath: Map<string, SessionFacets>,
+  facetsByPath: Map<string, SessionFacets>
 ): Promise<Array<Hit & { facets?: SessionFacets }>> {
   const out: Array<Hit & { facets?: SessionFacets }> = [];
   for (const hit of hits) {
@@ -254,9 +245,7 @@ const content = module.content.handler(async ({ context, input, errors }) => {
     const indexPath = context.indexRuntime.defaultIndexPath();
 
     for (const session of selected.sessions) {
-      const source = asSearchSource(
-        await detectSessionFormat(context.sourceRuntime, session.path),
-      );
+      const source = asSearchSource(await detectSessionFormat(context.sourceRuntime, session.path));
       const text = input.useIndex
         ? await getSearchTextCached({
             sourceRuntime: context.sourceRuntime,
@@ -272,22 +261,17 @@ const content = module.content.handler(async ({ context, input, errors }) => {
             session.path,
             source,
             input.roles,
-            input.includeTools,
+            input.includeTools
           );
 
       const matches = [...text.matchAll(rx)];
       if (!matches.length) continue;
 
-      const start = Math.max(
-        0,
-        matches[0]!.index! - Math.floor(input.snippetLen / 2),
-      );
+      const start = Math.max(0, matches[0]!.index! - Math.floor(input.snippetLen / 2));
       hits.push({
         ...session,
         matchCount: matches.length,
-        matchSnippet: text
-          .slice(start, start + input.snippetLen)
-          .replaceAll("\n", "\\n"),
+        matchSnippet: text.slice(start, start + input.snippetLen).replaceAll("\n", "\\n"),
       });
     }
 
@@ -296,7 +280,7 @@ const content = module.content.handler(async ({ context, input, errors }) => {
         ? a.modified < b.modified
           ? 1
           : -1
-        : b.matchCount - a.matchCount,
+        : b.matchCount - a.matchCount
     );
 
     const limited = input.maxMatches > 0 ? hits.slice(0, input.maxMatches) : hits;
@@ -346,9 +330,7 @@ const reindex = module.reindex.handler(async ({ context, input }) => {
   for (const session of sessions.slice(0, limit)) {
     const source =
       session.source ??
-      asSearchSource(
-        await detectSessionFormat(context.sourceRuntime, session.path),
-      );
+      asSearchSource(await detectSessionFormat(context.sourceRuntime, session.path));
     await getSearchTextCached({
       sourceRuntime: context.sourceRuntime,
       indexRuntime: context.indexRuntime,

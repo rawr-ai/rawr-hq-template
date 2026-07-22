@@ -51,10 +51,7 @@ class MemoryWorkspaceStore implements WorkspaceStore {
     return this.getState(workspaceRef).artifactBundle;
   }
 
-  async scaffoldWorkspace(input: {
-    workspaceRef: string;
-    template: WorkspaceTemplate;
-  }) {
+  async scaffoldWorkspace(input: { workspaceRef: string; template: WorkspaceTemplate }) {
     const state = this.getState(input.workspaceRef);
     const createdEntries: string[] = [];
     const existingEntries: string[] = [];
@@ -112,7 +109,10 @@ export function createMemoryWorkspaceStore() {
   return new MemoryWorkspaceStore();
 }
 
-export function createClientOptions(workspaceStore: WorkspaceStore, workspaceRef = "workspace://test"): CreateClientOptions {
+export function createClientOptions(
+  workspaceStore: WorkspaceStore,
+  workspaceRef = "workspace://test"
+): CreateClientOptions {
   return {
     deps: {
       logger: createEmbeddedPlaceholderLoggerAdapter(),
@@ -136,6 +136,9 @@ export function createInvocation(traceId = "trace-chatgpt-corpus") {
   } as const;
 }
 
-export function seedFixtureWorkspace(workspaceStore: MemoryWorkspaceStore, workspaceRef = "workspace://fixture") {
+export function seedFixtureWorkspace(
+  workspaceStore: MemoryWorkspaceStore,
+  workspaceRef = "workspace://fixture"
+) {
   workspaceStore.seedSourceMaterials(workspaceRef, FIXTURE_SOURCE_MATERIALS);
 }

@@ -35,19 +35,17 @@ export const contract = {
               Type.String({
                 maxLength: 2000,
                 description: "Optional longer details for the task.",
-              }),
+              })
             ),
           },
           {
             additionalProperties: false,
             description: "Input payload for creating a new task.",
-          },
-        ),
-      ),
+          }
+        )
+      )
     )
-    .output(
-      schema(TaskSchema),
-    )
+    .output(schema(TaskSchema))
     .errors({
       READ_ONLY_MODE,
       INVALID_TASK_TITLE: {
@@ -59,18 +57,19 @@ export const contract = {
               title: Type.Optional(
                 Type.String({
                   description: "Raw title value that failed validation or normalization.",
-                }),
+                })
               ),
             },
             {
               additionalProperties: false,
               description: "Context describing why the task title was rejected.",
-            },
-          ),
+            }
+          )
         ),
       },
     }),
-  get: ocBase.meta({ idempotent: true })
+  get: ocBase
+    .meta({ idempotent: true })
     .input(
       schema(
         Type.Object(
@@ -83,12 +82,10 @@ export const contract = {
           {
             additionalProperties: false,
             description: "Input payload for fetching a task by id.",
-          },
-        ),
-      ),
+          }
+        )
+      )
     )
-    .output(
-      schema(TaskSchema),
-    )
+    .output(schema(TaskSchema))
     .errors({ RESOURCE_NOT_FOUND }),
 };

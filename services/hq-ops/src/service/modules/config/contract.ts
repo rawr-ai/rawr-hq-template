@@ -1,12 +1,13 @@
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
-import {
-  ConfigLayeredResultSchema,
-  ConfigLoadResultSchema,
-} from "./entities";
+import { ConfigLayeredResultSchema, ConfigLoadResultSchema } from "./entities";
 
-export type { ConfigValidationIssue, LoadRawrConfigLayeredResult, LoadRawrConfigResult } from "./entities";
+export type {
+  ConfigValidationIssue,
+  LoadRawrConfigLayeredResult,
+  LoadRawrConfigResult,
+} from "./entities";
 
 const EmptyInputSchema = schema(
   Type.Object(
@@ -14,8 +15,8 @@ const EmptyInputSchema = schema(
     {
       additionalProperties: false,
       description: "No caller input is required.",
-    },
-  ),
+    }
+  )
 );
 
 export const contract = {

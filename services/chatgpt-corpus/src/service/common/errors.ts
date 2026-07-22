@@ -8,8 +8,8 @@ const CorpusErrorData = schema(
       path: Type.String({ minLength: 1 }),
       reason: Type.String({ minLength: 1 }),
     },
-    { additionalProperties: false },
-  ),
+    { additionalProperties: false }
+  )
 );
 
 export const INVALID_CONVERSATION_JSON: ErrorMapItem<typeof CorpusErrorData> = {

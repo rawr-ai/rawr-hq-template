@@ -14,8 +14,8 @@ const SecurityCheckInputSchema = schema(
     {
       mode: SecurityModeSchema,
     },
-    { additionalProperties: false },
-  ),
+    { additionalProperties: false }
+  )
 );
 
 const GateEnableInputSchema = schema(
@@ -25,8 +25,8 @@ const GateEnableInputSchema = schema(
       riskTolerance: RiskToleranceSchema,
       mode: SecurityModeSchema,
     },
-    { additionalProperties: false },
-  ),
+    { additionalProperties: false }
+  )
 );
 
 const EmptyInputSchema = schema(Type.Object({}, { additionalProperties: false }));

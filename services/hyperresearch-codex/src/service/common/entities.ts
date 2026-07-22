@@ -1,9 +1,6 @@
 import { type Static, Type } from "typebox";
 
-export const HyperresearchTierSchema = Type.Union([
-  Type.Literal("light"),
-  Type.Literal("full"),
-]);
+export const HyperresearchTierSchema = Type.Union([Type.Literal("light"), Type.Literal("full")]);
 export type HyperresearchTier = Static<typeof HyperresearchTierSchema>;
 
 export const HyperresearchStepStatusSchema = Type.Union([
@@ -42,7 +39,7 @@ export const HyperresearchCliCallSchema = Type.Object(
     stdout: Type.Optional(Type.String()),
     stderr: Type.Optional(Type.String()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchCliCall = Static<typeof HyperresearchCliCallSchema>;
 
@@ -54,7 +51,7 @@ export const HyperresearchStepLoadSchema = Type.Object(
     sha256: Type.String({ minLength: 1 }),
     loadedAt: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchStepLoad = Static<typeof HyperresearchStepLoadSchema>;
 
@@ -72,7 +69,7 @@ export const HyperresearchStepRecordSchema = Type.Object(
     artifacts: Type.Array(Type.String({ minLength: 1 })),
     failure: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchStepRecord = Static<typeof HyperresearchStepRecordSchema>;
 
@@ -82,7 +79,7 @@ export const HyperresearchResumeEventSchema = Type.Object(
     reason: Type.String({ minLength: 1 }),
     nextStepId: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchResumeEvent = Static<typeof HyperresearchResumeEventSchema>;
 
@@ -100,7 +97,7 @@ export const HyperresearchFailureSchema = Type.Object(
     ]),
     message: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchFailure = Static<typeof HyperresearchFailureSchema>;
 
@@ -117,7 +114,7 @@ export const HyperresearchAgentArtifactWriteSchema = Type.Object(
     sha256: Type.String({ minLength: 1 }),
     summary: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchAgentArtifactWrite = Static<typeof HyperresearchAgentArtifactWriteSchema>;
 
@@ -139,7 +136,7 @@ export const HyperresearchAgentAttemptSchema = Type.Object(
     createdAt: Type.Optional(Type.String({ minLength: 1 })),
     completedAt: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchAgentAttempt = Static<typeof HyperresearchAgentAttemptSchema>;
 
@@ -168,7 +165,7 @@ export const HyperresearchAgentJobSchema = Type.Object(
     completedAt: Type.Optional(Type.String({ minLength: 1 })),
     failure: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchAgentJob = Static<typeof HyperresearchAgentJobSchema>;
 
@@ -189,7 +186,7 @@ export const HyperresearchAgentOutputSchema = Type.Object(
     sourceUrls: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
     failure: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchAgentOutput = Static<typeof HyperresearchAgentOutputSchema>;
 
@@ -197,11 +194,16 @@ export const HyperresearchReviewDispositionSchema = Type.Object(
   {
     id: Type.String({ minLength: 1 }),
     severity: Type.Union([Type.Literal("blocking"), Type.Literal("warning")]),
-    status: Type.Union([Type.Literal("open"), Type.Literal("accepted"), Type.Literal("deferred"), Type.Literal("closed")]),
+    status: Type.Union([
+      Type.Literal("open"),
+      Type.Literal("accepted"),
+      Type.Literal("deferred"),
+      Type.Literal("closed"),
+    ]),
     evidence: Type.Array(Type.String({ minLength: 1 })),
     disposition: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchReviewDisposition = Static<typeof HyperresearchReviewDispositionSchema>;
 
@@ -212,7 +214,7 @@ export const HyperresearchReportSnapshotSchema = Type.Object(
     sha256: Type.String({ minLength: 1 }),
     createdAt: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchReportSnapshot = Static<typeof HyperresearchReportSnapshotSchema>;
 
@@ -227,7 +229,7 @@ export const HyperresearchSourceCaptureSchema = Type.Object(
     sourceIds: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
     capturedAt: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchSourceCapture = Static<typeof HyperresearchSourceCaptureSchema>;
 
@@ -237,7 +239,7 @@ export const HyperresearchPatchGuardSchema = Type.Object(
     snapshotSha256: Type.Optional(Type.String({ minLength: 1 })),
     violations: Type.Array(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchPatchGuard = Static<typeof HyperresearchPatchGuardSchema>;
 
@@ -247,7 +249,14 @@ export const HyperresearchRunLedgerSchema = Type.Object(
     runId: Type.String({ minLength: 1 }),
     canonicalQuery: Type.String({ minLength: 1 }),
     tier: HyperresearchTierSchema,
-    tierSource: Type.Optional(Type.Union([Type.Literal("user"), Type.Literal("auto-default"), Type.Literal("decomposition"), Type.Literal("fixture")])),
+    tierSource: Type.Optional(
+      Type.Union([
+        Type.Literal("user"),
+        Type.Literal("auto-default"),
+        Type.Literal("decomposition"),
+        Type.Literal("fixture"),
+      ])
+    ),
     vaultTag: Type.Optional(Type.String({ minLength: 1 })),
     vaultRoot: Type.String({ minLength: 1 }),
     artifactRoot: Type.String({ minLength: 1 }),
@@ -269,7 +278,7 @@ export const HyperresearchRunLedgerSchema = Type.Object(
     resumes: Type.Array(HyperresearchResumeEventSchema),
     failures: Type.Array(HyperresearchFailureSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchRunLedger = Static<typeof HyperresearchRunLedgerSchema>;
 
@@ -279,7 +288,12 @@ export const HyperresearchV8RunLedgerSchema = Type.Object(
     runId: Type.String({ minLength: 1 }),
     canonicalQuery: Type.String({ minLength: 1 }),
     tier: HyperresearchTierSchema,
-    tierSource: Type.Union([Type.Literal("user"), Type.Literal("auto-default"), Type.Literal("decomposition"), Type.Literal("fixture")]),
+    tierSource: Type.Union([
+      Type.Literal("user"),
+      Type.Literal("auto-default"),
+      Type.Literal("decomposition"),
+      Type.Literal("fixture"),
+    ]),
     vaultTag: Type.String({ minLength: 1 }),
     vaultRoot: Type.String({ minLength: 1 }),
     artifactRoot: Type.String({ minLength: 1 }),
@@ -301,7 +315,7 @@ export const HyperresearchV8RunLedgerSchema = Type.Object(
     resumes: Type.Array(HyperresearchResumeEventSchema),
     failures: Type.Array(HyperresearchFailureSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchV8RunLedger = Static<typeof HyperresearchV8RunLedgerSchema>;
 
@@ -344,7 +358,7 @@ export const HyperresearchIntegrityFindingSchema = Type.Object(
     stepId: Type.Optional(Type.String({ minLength: 1 })),
     artifact: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type HyperresearchIntegrityFinding = Static<typeof HyperresearchIntegrityFindingSchema>;
 

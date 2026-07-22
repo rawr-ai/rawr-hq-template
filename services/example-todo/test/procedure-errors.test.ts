@@ -12,7 +12,7 @@ async function expectOrpcError(
     code: string;
     status: number;
     data?: Record<string, unknown>;
-  },
+  }
 ) {
   const result = await safe(promise);
   expect(result.isSuccess).toBe(false);
@@ -50,7 +50,7 @@ describe("example-todo typed procedure errors", () => {
       {
         code: "READ_ONLY_MODE",
         status: 409,
-      },
+      }
     );
   });
 
@@ -63,7 +63,7 @@ describe("example-todo typed procedure errors", () => {
         code: "INVALID_TASK_TITLE",
         status: 400,
         data: { title: "   " },
-      },
+      }
     );
   });
 
@@ -78,31 +78,40 @@ describe("example-todo typed procedure errors", () => {
         code: "DUPLICATE_TAG",
         status: 409,
         data: { name: "infra" },
-      },
+      }
     );
   });
 
   it("returns RESOURCE_NOT_FOUND when assignment references missing task", async () => {
     const client = createClient(createClientOptions());
-    const tag = await client.tags.create({ name: "ops", color: "#00aaff" }, invocation("trace-tag"));
+    const tag = await client.tags.create(
+      { name: "ops", color: "#00aaff" },
+      invocation("trace-tag")
+    );
 
     await expectOrpcError(
-      client.assignments.assign({
-        taskId: "00000000-0000-0000-0000-000000000001",
-        tagId: tag.id,
-      }, invocation("trace-missing-task")),
+      client.assignments.assign(
+        {
+          taskId: "00000000-0000-0000-0000-000000000001",
+          tagId: tag.id,
+        },
+        invocation("trace-missing-task")
+      ),
       {
         code: "RESOURCE_NOT_FOUND",
         status: 404,
         data: { entity: "Task", id: "00000000-0000-0000-0000-000000000001" },
-      },
+      }
     );
   });
 
   it("returns ALREADY_ASSIGNED when same task/tag pair is assigned twice", async () => {
     const client = createClient(createClientOptions());
     const task = await client.tasks.create({ title: "Review PR" }, invocation("trace-task"));
-    const tag = await client.tags.create({ name: "review", color: "#ff6600" }, invocation("trace-tag"));
+    const tag = await client.tags.create(
+      { name: "review", color: "#ff6600" },
+      invocation("trace-tag")
+    );
 
     await client.assignments.assign({ taskId: task.id, tagId: tag.id }, invocation("trace-assign"));
 
@@ -112,20 +121,35 @@ describe("example-todo typed procedure errors", () => {
         code: "ALREADY_ASSIGNED",
         status: 409,
         data: { taskId: task.id, tagId: tag.id },
-      },
+      }
     );
   });
 
   it("returns ASSIGNMENT_LIMIT_REACHED when configured assignment ceiling is hit", async () => {
     const client = createClient(createClientOptions({ maxAssignmentsPerTask: 1 }));
-    const task = await client.tasks.create({ title: "Bounded task" }, invocation("trace-limit-task"));
-    const urgent = await client.tags.create({ name: "urgent", color: "#ff0000" }, invocation("trace-limit-tag-1"));
-    const backend = await client.tags.create({ name: "backend", color: "#00aa00" }, invocation("trace-limit-tag-2"));
+    const task = await client.tasks.create(
+      { title: "Bounded task" },
+      invocation("trace-limit-task")
+    );
+    const urgent = await client.tags.create(
+      { name: "urgent", color: "#ff0000" },
+      invocation("trace-limit-tag-1")
+    );
+    const backend = await client.tags.create(
+      { name: "backend", color: "#00aa00" },
+      invocation("trace-limit-tag-2")
+    );
 
-    await client.assignments.assign({ taskId: task.id, tagId: urgent.id }, invocation("trace-limit-assign-1"));
+    await client.assignments.assign(
+      { taskId: task.id, tagId: urgent.id },
+      invocation("trace-limit-assign-1")
+    );
 
     await expectOrpcError(
-      client.assignments.assign({ taskId: task.id, tagId: backend.id }, invocation("trace-limit-assign-2")),
+      client.assignments.assign(
+        { taskId: task.id, tagId: backend.id },
+        invocation("trace-limit-assign-2")
+      ),
       {
         code: "ASSIGNMENT_LIMIT_REACHED",
         status: 409,
@@ -133,7 +157,7 @@ describe("example-todo typed procedure errors", () => {
           taskId: task.id,
           maxAssignmentsPerTask: 1,
         },
-      },
+      }
     );
   });
 
@@ -141,13 +165,15 @@ describe("example-todo typed procedure errors", () => {
     const client = createClient(
       createClientOptions({
         failIfQueryIncludes: ["SELECT * FROM tasks WHERE id = $1 AND workspace_id = $2"],
-      }),
+      })
     );
 
-    const result = await safe(client.tasks.get(
-      { id: "00000000-0000-0000-0000-000000000001" },
-      invocation("trace-storage-failure"),
-    ));
+    const result = await safe(
+      client.tasks.get(
+        { id: "00000000-0000-0000-0000-000000000001" },
+        invocation("trace-storage-failure")
+      )
+    );
     expect(result.isSuccess).toBe(false);
     expect(result.isDefined).toBe(false);
     expect(result.error).toBeTruthy();
@@ -157,10 +183,12 @@ describe("example-todo typed procedure errors", () => {
     const client = createClient(
       createClientOptions({
         failIfQueryIncludes: ["SELECT * FROM tasks WHERE id = $1 AND workspace_id = $2"],
-      }),
+      })
     );
 
-    const result = await safe(client.tasks.get({ id: "not-a-uuid" }, invocation("trace-invalid-schema")));
+    const result = await safe(
+      client.tasks.get({ id: "not-a-uuid" }, invocation("trace-invalid-schema"))
+    );
     expect(result.isSuccess).toBe(false);
 
     if (!result.isSuccess) {

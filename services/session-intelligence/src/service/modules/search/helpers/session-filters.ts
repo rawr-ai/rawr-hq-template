@@ -1,8 +1,5 @@
 import { looksLikePath } from "../../../common/path-utils";
-import type {
-  DiscoveredSessionFile,
-  SessionListItem,
-} from "../../../common/entities";
+import type { DiscoveredSessionFile, SessionListItem } from "../../../common/entities";
 
 export type SearchSessionFilters = {
   project?: string;
@@ -17,25 +14,16 @@ function parseDatetimeBestEffort(value?: string): Date | null {
   if (!value) return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
-  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(trimmed)
-    ? `${trimmed}T00:00:00`
-    : trimmed;
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? `${trimmed}T00:00:00` : trimmed;
   const dt = new Date(normalized);
   return Number.isNaN(dt.getTime()) ? null : dt;
 }
 
-function containsFilter(
-  value: string | undefined,
-  needle: string | undefined,
-): boolean {
+function containsFilter(value: string | undefined, needle: string | undefined): boolean {
   return !needle || Boolean(value?.toLowerCase().includes(needle.toLowerCase()));
 }
 
-function sessionWithinWindow(
-  modifiedIso: string,
-  since?: string,
-  until?: string,
-): boolean {
+function sessionWithinWindow(modifiedIso: string, since?: string, until?: string): boolean {
   const dt = parseDatetimeBestEffort(modifiedIso);
   if (!dt) return false;
   const sinceDt = since ? parseDatetimeBestEffort(since) : null;
@@ -52,19 +40,17 @@ export function hasMetadataFilters(filters: SearchSessionFilters): boolean {
       filters.branch ||
       filters.model ||
       filters.since ||
-      filters.until,
+      filters.until
   );
 }
 
-export function toModifiedIso(
-  candidate: Pick<DiscoveredSessionFile, "modifiedMs">,
-): string {
+export function toModifiedIso(candidate: Pick<DiscoveredSessionFile, "modifiedMs">): string {
   return new Date(candidate.modifiedMs).toISOString();
 }
 
 export function matchesSearchFilters(
   session: SessionListItem,
-  filters: SearchSessionFilters,
+  filters: SearchSessionFilters
 ): boolean {
   if (filters.project) {
     const projectFilter = filters.project.trim();

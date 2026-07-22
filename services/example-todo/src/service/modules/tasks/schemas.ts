@@ -37,7 +37,7 @@ export const TaskSchema = Type.Object(
           description: "No description is set for this task.",
         }),
       ],
-      { description: "Optional task description value." },
+      { description: "Optional task description value." }
     ),
     completed: Type.Boolean({
       description: "Completion status of the task.",
@@ -54,7 +54,7 @@ export const TaskSchema = Type.Object(
   {
     additionalProperties: false,
     description: "Canonical persisted task entity.",
-  },
+  }
 );
 
 export type Task = Static<typeof TaskSchema>;

@@ -21,7 +21,7 @@ export const SessionFacetsSchema = Type.Object(
     topLevelTypes: Type.Array(Type.String()),
     payloadTypes: Type.Array(Type.String()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type SessionFacets = Static<typeof SessionFacetsSchema>;
@@ -34,7 +34,7 @@ export const SessionFacetFiltersSchema = Type.Object(
     payloadTypes: Type.Optional(Type.Array(Type.String())),
     topTypes: Type.Optional(Type.Array(Type.String())),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type SessionFacetFilters = Static<typeof SessionFacetFiltersSchema>;
@@ -44,7 +44,7 @@ export const FacetSearchHitSchema = Type.Object(
     ...SessionListItemSchema.properties,
     facets: Type.Optional(SessionFacetsSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type FacetSearchHit = Static<typeof FacetSearchHitSchema>;
@@ -55,7 +55,7 @@ export const MetadataSearchHitSchema = Type.Object(
     matchScore: Type.Number(),
     facets: Type.Optional(SessionFacetsSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type MetadataSearchHit = Static<typeof MetadataSearchHitSchema>;
@@ -67,7 +67,7 @@ export const SearchHitSchema = Type.Object(
     matchSnippet: Type.String(),
     facets: Type.Optional(SessionFacetsSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type SearchHit = Static<typeof SearchHitSchema>;
@@ -77,7 +77,7 @@ export const ReindexResultSchema = Type.Object(
     indexed: Type.Number(),
     total: Type.Number(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type ReindexResult = Static<typeof ReindexResultSchema>;

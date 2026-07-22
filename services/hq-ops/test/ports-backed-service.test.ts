@@ -3,7 +3,13 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createClient } from "../src/client";
-import { createClientOptions, createTestHqOpsResources, invocation, writeGlobalRawrConfig, writeRawrConfig } from "./helpers";
+import {
+  createClientOptions,
+  createTestHqOpsResources,
+  invocation,
+  writeGlobalRawrConfig,
+  writeRawrConfig,
+} from "./helpers";
 
 const tempDirs: string[] = [];
 
@@ -39,7 +45,7 @@ describe("hq-ops service resource-backed behavior", () => {
       createClientOptions({
         repoRoot,
         homeDir,
-      }),
+      })
     );
 
     const layered = await client.config.getLayeredConfig({}, invocation("trace-config"));
@@ -65,7 +71,9 @@ describe("hq-ops service resource-backed behavior", () => {
     };
 
     const writeResult = await client.journal.writeSnippet(snippet, invocation("trace-write"));
-    expect(writeResult.path).toBe(path.join(repoRoot, ".rawr", "journal", "snippets", "snippet-1.json"));
+    expect(writeResult.path).toBe(
+      path.join(repoRoot, ".rawr", "journal", "snippets", "snippet-1.json")
+    );
 
     const getResult = await client.journal.getSnippet({ id: "snippet-1" }, invocation("trace-get"));
     expect(getResult.snippet?.id).toBe("snippet-1");
@@ -75,14 +83,14 @@ describe("hq-ops service resource-backed behavior", () => {
 
     const fts = await client.journal.searchSnippets(
       { query: "aardvark", limit: 1, mode: "fts" },
-      invocation("trace-search-fts"),
+      invocation("trace-search-fts")
     );
     expect(fts.mode).toBe("fts");
     expect(fts.snippets[0]?.id).toBe("snippet-1");
 
     const semantic = await client.journal.searchSnippets(
       { query: "Saved", limit: 1, mode: "semantic" },
-      invocation("trace-search-semantic"),
+      invocation("trace-search-semantic")
     );
     expect(semantic.mode).toBe("semantic");
     expect(semantic.snippets[0]?.score).toBeTypeOf("number");
@@ -131,7 +139,7 @@ describe("hq-ops service resource-backed behavior", () => {
                     severity: "high",
                   },
                 ],
-              }),
+              })
             ),
             stderr: new Uint8Array(),
             durationMs: 0,
@@ -149,7 +157,10 @@ describe("hq-ops service resource-backed behavior", () => {
 
     const client = createClient(createClientOptions({ repoRoot, resources }));
 
-    const report = await client.security.securityCheck({ mode: "repo" }, invocation("trace-security"));
+    const report = await client.security.securityCheck(
+      { mode: "repo" },
+      invocation("trace-security")
+    );
     expect(report.ok).toBe(false);
     expect(report.summary).toBe("vulns=1, untrusted=0, secrets=0");
     expect(report.reportPath).toContain(path.join(repoRoot, ".rawr", "security", "report-"));
@@ -160,7 +171,7 @@ describe("hq-ops service resource-backed behavior", () => {
         riskTolerance: "balanced",
         mode: "repo",
       },
-      invocation("trace-gate"),
+      invocation("trace-gate")
     );
     expect(evaluation.allowed).toBe(false);
     expect(evaluation.requiresForce).toBe(true);

@@ -23,7 +23,10 @@ function looksBinary(buf: Uint8Array): boolean {
   return sample.includes(0);
 }
 
-function findMatches(text: string, pattern: SecretPattern): Array<{ value: string; index: number }> {
+function findMatches(
+  text: string,
+  pattern: SecretPattern
+): Array<{ value: string; index: number }> {
   const matches: Array<{ value: string; index: number }> = [];
   const flags = pattern.re.flags.includes("g") ? pattern.re.flags : `${pattern.re.flags}g`;
   const re = new RegExp(pattern.re.source, flags);
@@ -54,7 +57,10 @@ function scanTextForSecrets(text: string, filePath: string): SecurityFinding[] {
   return findings;
 }
 
-export async function scanSecretsStaged(resources: HqOpsResources, repoRoot: string): Promise<SecurityFinding[]> {
+export async function scanSecretsStaged(
+  resources: HqOpsResources,
+  repoRoot: string
+): Promise<SecurityFinding[]> {
   const maxFileBytes = 256_000;
   const stagedPaths = await listStagedPaths(resources, repoRoot);
 
@@ -70,7 +76,10 @@ export async function scanSecretsStaged(resources: HqOpsResources, repoRoot: str
   return findings;
 }
 
-export async function scanSecretsRepo(resources: HqOpsResources, repoRoot: string): Promise<SecurityFinding[]> {
+export async function scanSecretsRepo(
+  resources: HqOpsResources,
+  repoRoot: string
+): Promise<SecurityFinding[]> {
   const maxFileBytes = 256_000;
   const files = await listRepoFiles(resources, repoRoot);
 

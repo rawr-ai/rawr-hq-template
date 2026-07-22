@@ -18,7 +18,8 @@ import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";
 
 export const contract = {
-  assign: ocBase.meta({ idempotent: false })
+  assign: ocBase
+    .meta({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -35,13 +36,11 @@ export const contract = {
           {
             additionalProperties: false,
             description: "Input payload for creating a task-tag assignment.",
-          },
-        ),
-      ),
+          }
+        )
+      )
     )
-    .output(
-      schema(AssignmentSchema),
-    )
+    .output(schema(AssignmentSchema))
     .errors({
       ASSIGNMENT_LIMIT_REACHED,
       READ_ONLY_MODE,
@@ -56,24 +55,25 @@ export const contract = {
                 Type.String({
                   minLength: 1,
                   description: "Task id that is already associated with the tag.",
-                }),
+                })
               ),
               tagId: Type.Optional(
                 Type.String({
                   minLength: 1,
                   description: "Tag id that is already associated with the task.",
-                }),
+                })
               ),
             },
             {
               additionalProperties: false,
               description: "Context for ALREADY_ASSIGNED errors.",
-            },
-          ),
+            }
+          )
         ),
       },
     }),
-  listForTask: ocBase.meta({ idempotent: true })
+  listForTask: ocBase
+    .meta({ idempotent: true })
     .input(
       schema(
         Type.Object(
@@ -86,9 +86,9 @@ export const contract = {
           {
             additionalProperties: false,
             description: "Input payload for listing tags assigned to a task.",
-          },
-        ),
-      ),
+          }
+        )
+      )
     )
     .output(
       schema(
@@ -105,15 +105,15 @@ export const contract = {
               }),
               {
                 description: "All tags currently assigned to the task.",
-              },
+              }
             ),
           },
           {
             additionalProperties: false,
             description: "Task plus all tags assigned to that task.",
-          },
-        ),
-      ),
+          }
+        )
+      )
     )
     .errors({ RESOURCE_NOT_FOUND }),
 };

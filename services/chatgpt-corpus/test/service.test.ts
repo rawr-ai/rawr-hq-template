@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { createClient } from "../src";
-import { createMemoryWorkspaceStore, createClientOptions, createInvocation, seedFixtureWorkspace } from "./helpers";
+import {
+  createMemoryWorkspaceStore,
+  createClientOptions,
+  createInvocation,
+  seedFixtureWorkspace,
+} from "./helpers";
 
 describe("@rawr/chatgpt-corpus", () => {
   it("keeps the package-root client entrypoint stable", async () => {
@@ -10,7 +15,7 @@ describe("@rawr/chatgpt-corpus", () => {
 
     const result = await client.workspace.describeTemplate(
       {},
-      createInvocation("trace-package-root"),
+      createInvocation("trace-package-root")
     );
 
     expect(result.requiredDirectories).toContain("source-material/conversations/raw-json");
@@ -20,10 +25,7 @@ describe("@rawr/chatgpt-corpus", () => {
     const workspaceStore = createMemoryWorkspaceStore();
     const client = createClient(createClientOptions(workspaceStore));
 
-    const result = await client.workspace.describeTemplate(
-      {},
-      createInvocation("trace-template"),
-    );
+    const result = await client.workspace.describeTemplate({}, createInvocation("trace-template"));
 
     expect(result.requiredDirectories).toEqual([
       "source-material/conversations/raw-json",
@@ -44,10 +46,7 @@ describe("@rawr/chatgpt-corpus", () => {
     const workspaceStore = createMemoryWorkspaceStore();
     const client = createClient(createClientOptions(workspaceStore, workspaceRef));
 
-    const result = await client.workspace.initialize(
-      {},
-      createInvocation("trace-init"),
-    );
+    const result = await client.workspace.initialize({}, createInvocation("trace-init"));
 
     expect(result.workspaceRef).toBe(workspaceRef);
     expect(result.createdEntries).toContain("source-material/conversations/raw-json");
@@ -66,7 +65,7 @@ describe("@rawr/chatgpt-corpus", () => {
 
     const result = await client.sourceMaterials.readSnapshot(
       {},
-      createInvocation("trace-read-snapshot"),
+      createInvocation("trace-read-snapshot")
     );
 
     expect(result.sourceCounts).toEqual({
@@ -82,11 +81,14 @@ describe("@rawr/chatgpt-corpus", () => {
     const workspaceStore = createMemoryWorkspaceStore();
     seedFixtureWorkspace(workspaceStore, workspaceRef);
     const client = createClient(createClientOptions(workspaceStore, workspaceRef));
-    const snapshot = await client.sourceMaterials.readSnapshot({}, createInvocation("trace-build-read"));
+    const snapshot = await client.sourceMaterials.readSnapshot(
+      {},
+      createInvocation("trace-build-read")
+    );
 
     const result = await client.corpusArtifacts.build(
       { snapshot: snapshot.snapshot },
-      createInvocation("trace-build"),
+      createInvocation("trace-build")
     );
 
     expect(result.sourceCounts).toEqual({
@@ -104,7 +106,9 @@ describe("@rawr/chatgpt-corpus", () => {
       source_count: 5,
       family_count: 2,
     });
-    const alphaFamily = result.familyGraphs.find((family) => family.canonical_title === "Alpha Architecture");
+    const alphaFamily = result.familyGraphs.find(
+      (family) => family.canonical_title === "Alpha Architecture"
+    );
     expect(alphaFamily).toBeTruthy();
     expect(Object.values(alphaFamily!.classification)).toContain("duplicate");
   });
@@ -117,7 +121,7 @@ describe("@rawr/chatgpt-corpus", () => {
 
     const result = await client.corpusArtifacts.materialize(
       {},
-      createInvocation("trace-materialize"),
+      createInvocation("trace-materialize")
     );
 
     expect(result.familyCount).toBe(2);
@@ -126,7 +130,10 @@ describe("@rawr/chatgpt-corpus", () => {
       relativePath: "work/generated/reports",
     });
     expect(result.outputEntries.map((entry) => entry.fileId)).toContain("manifest");
-    const manifestText = workspaceStore.getFileContents(workspaceRef, "work/generated/corpus/corpus-manifest.json");
+    const manifestText = workspaceStore.getFileContents(
+      workspaceRef,
+      "work/generated/corpus/corpus-manifest.json"
+    );
     expect(manifestText).toBeTruthy();
     expect(JSON.parse(manifestText ?? "{}")).toMatchObject({
       corpus_summary: {
@@ -140,18 +147,19 @@ describe("@rawr/chatgpt-corpus", () => {
     const workspaceStore = createMemoryWorkspaceStore();
     const client = createClient(createClientOptions(workspaceStore, "workspace://empty"));
 
-    const result = await client.corpusArtifacts.materialize(
-      {},
-      createInvocation("trace-empty"),
-    );
+    const result = await client.corpusArtifacts.materialize({}, createInvocation("trace-empty"));
 
     expect(result.sourceCounts).toEqual({
       jsonConversations: 0,
       markdownDocuments: 0,
       totalSources: 0,
     });
-    expect(result.warnings).toContain("No conversation exports were found under source-material/conversations/raw-json.");
-    expect(result.warnings).toContain("No curated Markdown source docs were found under work/docs/source.");
+    expect(result.warnings).toContain(
+      "No conversation exports were found under source-material/conversations/raw-json."
+    );
+    expect(result.warnings).toContain(
+      "No curated Markdown source docs were found under work/docs/source."
+    );
   });
 
   it("keeps source identities distinct even when basenames collide", async () => {
@@ -186,7 +194,7 @@ describe("@rawr/chatgpt-corpus", () => {
 
     const snapshotResult = await client.sourceMaterials.readSnapshot(
       {},
-      createInvocation("trace-duplicate-basenames"),
+      createInvocation("trace-duplicate-basenames")
     );
 
     const sourceIds = snapshotResult.snapshot.jsonRecords.map((record) => record.sourceId);
@@ -194,7 +202,7 @@ describe("@rawr/chatgpt-corpus", () => {
 
     const buildResult = await client.corpusArtifacts.build(
       { snapshot: snapshotResult.snapshot },
-      createInvocation("trace-duplicate-basenames-build"),
+      createInvocation("trace-duplicate-basenames-build")
     );
 
     expect(buildResult.familyGraphs).toHaveLength(1);
@@ -216,10 +224,7 @@ describe("@rawr/chatgpt-corpus", () => {
     const client = createClient(createClientOptions(workspaceStore, workspaceRef));
 
     await expect(
-      client.sourceMaterials.readSnapshot(
-        {},
-        createInvocation("trace-invalid-shape"),
-      ),
+      client.sourceMaterials.readSnapshot({}, createInvocation("trace-invalid-shape"))
     ).rejects.toMatchObject({
       defined: true,
       code: "INVALID_CONVERSATION_EXPORT",
@@ -244,10 +249,7 @@ describe("@rawr/chatgpt-corpus", () => {
     const client = createClient(createClientOptions(workspaceStore, workspaceRef));
 
     await expect(
-      client.corpusArtifacts.materialize(
-        {},
-        createInvocation("trace-invalid-json"),
-      ),
+      client.corpusArtifacts.materialize({}, createInvocation("trace-invalid-json"))
     ).rejects.toMatchObject({
       defined: true,
       code: "INVALID_CONVERSATION_JSON",

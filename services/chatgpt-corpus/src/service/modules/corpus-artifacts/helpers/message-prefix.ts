@@ -13,7 +13,7 @@ function normalizeMessageText(text: string): string {
 export function sharedPrefix(
   left: JsonConversationMessage[],
   right: JsonConversationMessage[],
-  fuzzy = false,
+  fuzzy = false
 ): number {
   let count = 0;
   const max = Math.min(left.length, right.length);

@@ -1,9 +1,5 @@
-import {
-  createEmbeddedPlaceholderAnalyticsAdapter,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import {
-  createEmbeddedPlaceholderLoggerAdapter,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import path from "node:path";
 import type { CreateClientOptions } from "../src/client";
 import type { Service } from "../src/service/base";
@@ -27,11 +23,13 @@ function matches(candidate: FakeCommand, command: string, args: string[]): boole
   return candidate.args.every((arg, index) => arg === args[index]);
 }
 
-export function createFakeResources(input: {
-  commands?: FakeCommand[];
-  now?: Date;
-  dirs?: Record<string, Array<{ name: string; isDirectory: boolean }>>;
-} = {}): { resources: DevResources; calls: Array<{ command: string; args: string[]; cwd?: string }> } {
+export function createFakeResources(
+  input: {
+    commands?: FakeCommand[];
+    now?: Date;
+    dirs?: Record<string, Array<{ name: string; isDirectory: boolean }>>;
+  } = {}
+): { resources: DevResources; calls: Array<{ command: string; args: string[]; cwd?: string }> } {
   const calls: Array<{ command: string; args: string[]; cwd?: string }> = [];
   return {
     calls,
@@ -50,7 +48,8 @@ export function createFakeResources(input: {
         exec: async (command, args, opts) => {
           calls.push({ command, args, cwd: opts?.cwd });
           const found = input.commands?.find((candidate) => matches(candidate, command, args));
-          if (found?.throws) throw typeof found.throws === "string" ? new Error(found.throws) : found.throws;
+          if (found?.throws)
+            throw typeof found.throws === "string" ? new Error(found.throws) : found.throws;
           return {
             exitCode: found?.exitCode ?? 0,
             signal: null,
@@ -68,10 +67,9 @@ export function createFakeResources(input: {
   };
 }
 
-export function createClientOptions(input: {
-  workspaceRoot?: string;
-  resources?: DevResources;
-} = {}): CreateClientOptions {
+export function createClientOptions(
+  input: { workspaceRoot?: string; resources?: DevResources } = {}
+): CreateClientOptions {
   const deps: Service["Deps"] = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),

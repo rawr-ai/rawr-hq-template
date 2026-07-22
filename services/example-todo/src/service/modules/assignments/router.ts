@@ -22,13 +22,15 @@ import { type Assignment } from "./schemas";
  * Implement concrete procedure handlers below using `module.<procedure>.handler(...)`.
  */
 const assign = module.assign
-  .use(createProcedureObservability({
-    onSuccess: ({ span, context }) => {
-      span?.addEvent("todo.assignments.assign.completed", {
-        workspace_id: context.workspaceId,
-      });
-    },
-  }))
+  .use(
+    createProcedureObservability({
+      onSuccess: ({ span, context }) => {
+        span?.addEvent("todo.assignments.assign.completed", {
+          workspace_id: context.workspaceId,
+        });
+      },
+    })
+  )
   .handler(async ({ context, input, errors }) => {
     const task = await context.tasks.findById(input.taskId);
     if (!task) {

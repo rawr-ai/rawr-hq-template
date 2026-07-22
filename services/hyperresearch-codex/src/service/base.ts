@@ -2,10 +2,7 @@
  * @fileoverview Single service definition seam for the hyperresearch-codex package.
  */
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
-import type {
-  HyperresearchCliBackend,
-  HyperresearchCodexIO,
-} from "./common/resources";
+import type { HyperresearchCliBackend, HyperresearchCodexIO } from "./common/resources";
 
 type InitialContext = {
   deps: {
@@ -53,7 +50,8 @@ export type Service = ServiceOf<typeof service>;
 export const ocBase = service.oc;
 export const createServiceMiddleware = service.createMiddleware;
 export const createServiceObservabilityMiddleware = service.createObservabilityMiddleware;
-export const createRequiredServiceObservabilityMiddleware = service.createRequiredObservabilityMiddleware;
+export const createRequiredServiceObservabilityMiddleware =
+  service.createRequiredObservabilityMiddleware;
 export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddleware;
 export const createRequiredServiceAnalyticsMiddleware = service.createRequiredAnalyticsMiddleware;
 export const createServiceProvider = service.createProvider;

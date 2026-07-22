@@ -35,11 +35,16 @@ describe("provider middleware", () => {
     });
 
     const feedbackContract = {
-      ping: ocBase
-        .input(schema(Type.Object({}, { additionalProperties: false })))
-        .output(schema(Type.Object({
-          sessionId: Type.String(),
-        }, { additionalProperties: false }))),
+      ping: ocBase.input(schema(Type.Object({}, { additionalProperties: false }))).output(
+        schema(
+          Type.Object(
+            {
+              sessionId: Type.String(),
+            },
+            { additionalProperties: false }
+          )
+        )
+      ),
     };
 
     const os = implement(feedbackContract)
@@ -66,13 +71,18 @@ describe("provider middleware", () => {
       }),
     });
 
-    await expect(client.ping({}, {
-      context: {
-        invocation: {
-          traceId: "trace-42",
-        },
-      },
-    })).resolves.toEqual({ sessionId: "session-123" });
+    await expect(
+      client.ping(
+        {},
+        {
+          context: {
+            invocation: {
+              traceId: "trace-42",
+            },
+          },
+        }
+      )
+    ).resolves.toEqual({ sessionId: "session-123" });
     expect(calls).toEqual([{ path: "ping", traceId: "trace-42" }]);
   });
 
@@ -115,15 +125,24 @@ describe("provider middleware", () => {
       ping: service.oc
         .meta({ idempotent: true })
         .input(schema(Type.Object({}, { additionalProperties: false })))
-        .output(schema(Type.Object({
-          ok: Type.Boolean(),
-        }, { additionalProperties: false }))),
+        .output(
+          schema(
+            Type.Object(
+              {
+                ok: Type.Boolean(),
+              },
+              { additionalProperties: false }
+            )
+          )
+        ),
     };
 
-    const metadataAwareMiddleware = service.createMiddleware().middleware(async ({ procedure, next }) => {
-      expect(procedure["~orpc"].meta.audit).toBe("basic");
-      return next();
-    });
+    const metadataAwareMiddleware = service
+      .createMiddleware()
+      .middleware(async ({ procedure, next }) => {
+        expect(procedure["~orpc"].meta.audit).toBe("basic");
+        return next();
+      });
 
     const os = implement(contract)
       .$context<{
@@ -189,11 +208,16 @@ describe("provider middleware", () => {
     });
 
     const contract = {
-      ping: service.oc
-        .input(schema(Type.Object({}, { additionalProperties: false })))
-        .output(schema(Type.Object({
-          readOnly: Type.Boolean(),
-        }, { additionalProperties: false }))),
+      ping: service.oc.input(schema(Type.Object({}, { additionalProperties: false }))).output(
+        schema(
+          Type.Object(
+            {
+              readOnly: Type.Boolean(),
+            },
+            { additionalProperties: false }
+          )
+        )
+      ),
     };
 
     const requiredExtensions = {
@@ -259,11 +283,16 @@ describe("provider middleware", () => {
     });
 
     const contract = {
-      ping: service.oc
-        .input(schema(Type.Object({}, { additionalProperties: false })))
-        .output(schema(Type.Object({
-          repoId: Type.String(),
-        }, { additionalProperties: false }))),
+      ping: service.oc.input(schema(Type.Object({}, { additionalProperties: false }))).output(
+        schema(
+          Type.Object(
+            {
+              repoId: Type.String(),
+            },
+            { additionalProperties: false }
+          )
+        )
+      ),
     };
 
     const repoProvider = service.createProvider().middleware<{
@@ -341,11 +370,16 @@ describe("provider middleware", () => {
     });
 
     const contract = {
-      ping: service.oc
-        .input(schema(Type.Object({}, { additionalProperties: false })))
-        .output(schema(Type.Object({
-          repoId: Type.String(),
-        }, { additionalProperties: false }))),
+      ping: service.oc.input(schema(Type.Object({}, { additionalProperties: false }))).output(
+        schema(
+          Type.Object(
+            {
+              repoId: Type.String(),
+            },
+            { additionalProperties: false }
+          )
+        )
+      ),
     };
 
     const firstProvider = service.createProvider().middleware<{
@@ -360,13 +394,13 @@ describe("provider middleware", () => {
       });
     });
 
-    const collidingProvider = (service.createProvider as () => {
-      middleware<TAdded extends object>(
-        callback: (options: {
-          next(provided: TAdded): unknown;
-        }) => unknown,
-      ): unknown;
-    })().middleware<{ repo: { id: string } }>(({ next }) => {
+    const collidingProvider = (
+      service.createProvider as () => {
+        middleware<TAdded extends object>(
+          callback: (options: { next(provided: TAdded): unknown }) => unknown
+        ): unknown;
+      }
+    )().middleware<{ repo: { id: string } }>(({ next }) => {
       return next({
         repo: {
           id: "repo-overwrite",
@@ -378,7 +412,8 @@ describe("provider middleware", () => {
       observability: service.createRequiredObservabilityMiddleware({}),
       analytics: service.createRequiredAnalyticsMiddleware({}),
     };
-    const os = service.createImplementer(contract, requiredExtensions)
+    const os = service
+      .createImplementer(contract, requiredExtensions)
       .use(firstProvider)
       .use(collidingProvider as never);
 

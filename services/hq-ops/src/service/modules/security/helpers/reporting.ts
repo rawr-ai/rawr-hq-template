@@ -14,7 +14,7 @@ export { readLatestSecurityReport };
 
 export async function writeSecurityReportWithResources(
   resources: HqOpsResources,
-  opts: Parameters<typeof writeSecurityReport>[1],
+  opts: Parameters<typeof writeSecurityReport>[1]
 ): Promise<Awaited<ReturnType<typeof writeSecurityReport>>> {
   return await writeSecurityReport(resources, opts);
 }

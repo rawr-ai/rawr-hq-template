@@ -19,36 +19,25 @@ import {
   readV8HyperresearchRunLedger,
   writeHyperresearchRunLedger,
 } from "./helpers/ledger";
-import {
-  definitionForV8Step,
-  loadHyperresearchStep,
-  v8StepsForTier,
-} from "./helpers/steps";
-import {
-  resolveRequestedTier,
-  slugifyQuery,
-} from "./helpers/input";
-import {
-  finishStep,
-  writeCanonicalBootstrap,
-} from "./helpers/artifacts";
+import { definitionForV8Step, loadHyperresearchStep, v8StepsForTier } from "./helpers/steps";
+import { resolveRequestedTier, slugifyQuery } from "./helpers/input";
+import { finishStep, writeCanonicalBootstrap } from "./helpers/artifacts";
 import {
   createAgentJobs,
   validateAgentOutputs,
   writeFixtureAgentOutputs,
 } from "./helpers/agent-packets";
 import { runRequiredCliForStep } from "./helpers/source-capture";
-import {
-  makeResult,
-  resultStatus,
-} from "./helpers/result";
+import { makeResult, resultStatus } from "./helpers/result";
 import { module } from "./module";
 
 const startV8Run = module.startV8Run.handler(async ({ context, input }) => {
   const { io, cli } = context;
   const { tier, tierSource } = resolveRequestedTier(input);
   const vaultTag = input.vaultTag ?? slugifyQuery(input.canonicalQuery);
-  const ledgerPath = input.ledgerPath ?? io.join(input.vaultRoot, "research", "temp", "hyperresearch-codex-run.json");
+  const ledgerPath =
+    input.ledgerPath ??
+    io.join(input.vaultRoot, "research", "temp", "hyperresearch-codex-run.json");
   const queryFilePath = io.join(input.vaultRoot, `research/query-${vaultTag}.md`);
   const steps = v8StepsForTier(tier);
 
@@ -191,9 +180,8 @@ const advanceV8Run = module.advanceV8Run.handler(async ({ context, input }) => {
         return await makeResult({ ledgerPath: input.ledgerPath, ledger, io });
       }
 
-      const agentOutputs = jobs.length > 0
-        ? await writeFixtureAgentOutputs({ ledger, step, io })
-        : [];
+      const agentOutputs =
+        jobs.length > 0 ? await writeFixtureAgentOutputs({ ledger, step, io }) : [];
 
       if (agentMode === "synthesize") {
         await runRequiredCliForStep({

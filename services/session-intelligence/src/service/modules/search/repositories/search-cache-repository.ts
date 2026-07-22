@@ -5,9 +5,16 @@
  * search text cache. The search router uses it as a persistence boundary so
  * query strings and table shapes do not leak into procedures.
  */
-import type { SessionIndexRuntime, SessionSearchCacheEntry, SessionSearchCacheKey } from "../../../common/ports/session-index-runtime";
+import type {
+  SessionIndexRuntime,
+  SessionSearchCacheEntry,
+  SessionSearchCacheKey,
+} from "../../../common/ports/session-index-runtime";
 
-async function initializeSearchIndex(indexRuntime: SessionIndexRuntime, indexPath: string): Promise<void> {
+async function initializeSearchIndex(
+  indexRuntime: SessionIndexRuntime,
+  indexPath: string
+): Promise<void> {
   await indexRuntime.execute({
     indexPath,
     sql: `
@@ -28,7 +35,10 @@ async function initializeSearchIndex(indexRuntime: SessionIndexRuntime, indexPat
   });
 }
 
-export async function readCachedSearchText(indexRuntime: SessionIndexRuntime, input: SessionSearchCacheKey): Promise<SessionSearchCacheEntry | null> {
+export async function readCachedSearchText(
+  indexRuntime: SessionIndexRuntime,
+  input: SessionSearchCacheKey
+): Promise<SessionSearchCacheEntry | null> {
   await initializeSearchIndex(indexRuntime, input.indexPath);
   const rows = await indexRuntime.query<{ mtime?: unknown; size?: unknown; content?: unknown }>({
     indexPath: input.indexPath,
@@ -45,7 +55,10 @@ export async function readCachedSearchText(indexRuntime: SessionIndexRuntime, in
   };
 }
 
-export async function writeCachedSearchText(indexRuntime: SessionIndexRuntime, input: SessionSearchCacheEntry): Promise<void> {
+export async function writeCachedSearchText(
+  indexRuntime: SessionIndexRuntime,
+  input: SessionSearchCacheEntry
+): Promise<void> {
   await initializeSearchIndex(indexRuntime, input.indexPath);
   await indexRuntime.execute({
     indexPath: input.indexPath,
@@ -61,7 +74,10 @@ export async function writeCachedSearchText(indexRuntime: SessionIndexRuntime, i
   });
 }
 
-export async function clearCachedSearchText(indexRuntime: SessionIndexRuntime, input: { indexPath: string; path: string }): Promise<void> {
+export async function clearCachedSearchText(
+  indexRuntime: SessionIndexRuntime,
+  input: { indexPath: string; path: string }
+): Promise<void> {
   await initializeSearchIndex(indexRuntime, input.indexPath);
   await indexRuntime.execute({
     indexPath: input.indexPath,
