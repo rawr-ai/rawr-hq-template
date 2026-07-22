@@ -84,6 +84,7 @@ export const CanonicalStatusInputSchema = ReadonlyObject(Type.Object(
 export type EvaluationProfile = string & { readonly [evaluationProfileBrand]: "EvaluationProfile" };
 export type ProviderRequestDigest = string & { readonly [requestDigestBrand]: "ProviderRequestDigest" };
 export type ContentWorkspaceRoot = string & { readonly [workspaceRootBrand]: "ContentWorkspaceRoot" };
+export type ContentRecordLocatorInput = Static<typeof ContentRecordLocatorInputSchema>;
 export type TargetedTestInput = Static<typeof TargetedTestInputSchema>;
 export type CompleteTestInput = Static<typeof CompleteTestInputSchema>;
 export type CanonicalSyncInput = Static<typeof CanonicalSyncInputSchema>;
@@ -196,6 +197,22 @@ export function normalizeTargetedTestRequest(
     kind: input.kind,
     releases: Object.freeze(releases),
     evaluationProfile: input.evaluationProfile as EvaluationProfile,
+    targets: targets.value,
+  } as const;
+  return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
+}
+
+export function normalizeCanonicalStatusRequest(
+  input: CanonicalStatusInput,
+): DeploymentResult<CanonicalStatusRequest> {
+  const targets = normalizeProviderTargets(input.targets, "request.targets");
+  if (!targets.ok) return targets;
+  const locator = normalizeContentRecordLocator(input.locator);
+  if (!locator.ok) return locator;
+  const body = {
+    kind: input.kind,
+    channel: input.channel,
+    locator: locator.value,
     targets: targets.value,
   } as const;
   return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
@@ -329,6 +346,35 @@ function requestValue(input: Omit<TargetedTest, "requestDigest"> | Omit<Complete
 
 export function locatorValue(locator: ContentRecordLocator): CanonicalValue {
   return { repositoryIdentity: locator.repositoryIdentity, workspaceRoot: locator.workspaceRoot };
+}
+
+function normalizeContentRecordLocator(
+  input: ContentRecordLocatorInput,
+): DeploymentResult<ContentRecordLocator> {
+  const repository = parseRepositoryIdentity(
+    input.repositoryIdentity,
+    "request.locator.repositoryIdentity",
+  );
+  if (!repository.ok) {
+    const [first, ...remaining] = repository.issues;
+    return failure([
+      issue("INVALID_LOCATOR", first.path, first.message),
+      ...remaining.map((entry) => issue("INVALID_LOCATOR", entry.path, entry.message)),
+    ]);
+  }
+  if (!isCanonicalContentWorkspaceRoot(input.workspaceRoot)) {
+    return failure([issue(
+      "INVALID_LOCATOR",
+      "request.locator.workspaceRoot",
+      "Content workspace root must be a canonical non-root absolute path",
+      "canonical absolute path",
+      input.workspaceRoot,
+    )]);
+  }
+  return success(Object.freeze({
+    repositoryIdentity: repository.value,
+    workspaceRoot: input.workspaceRoot as ContentWorkspaceRoot,
+  }));
 }
 
 export function targetRequestDigest(

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   normalizeCompleteTestRequest,
+  normalizeCanonicalStatusRequest,
   normalizeTargetedTestRequest,
   parseCanonicalStatusRequest,
   parseProviderDeploymentRequest,
@@ -154,6 +155,40 @@ describe("closed lifecycle mode parsers", () => {
     expect(parsed).toMatchObject({
       ok: false,
       issues: [{ code: "DUPLICATE_MEMBER" }],
+    });
+  });
+
+  it("normalizes canonical status from the schema-derived locator and targets", () => {
+    const parsed = normalizeCanonicalStatusRequest({
+      kind: "canonical-status",
+      channel: "current-main",
+      locator: LOCATOR,
+      targets: [TARGET],
+    });
+    expect(parsed).toMatchObject({
+      ok: true,
+      value: {
+        kind: "canonical-status",
+        channel: "current-main",
+        locator: LOCATOR,
+        requestDigest: expect.stringMatching(/^prq1_[0-9a-f]{64}$/u),
+      },
+    });
+  });
+
+  it.each([
+    ["relative workspace root", { ...LOCATOR, workspaceRoot: "relative/worktree" }],
+    ["path repository identity", { ...LOCATOR, repositoryIdentity: "/tmp/personal-rawr-hq" }],
+  ])("retains %s refusal as typed locator policy", (_label, locator) => {
+    const parsed = normalizeCanonicalStatusRequest({
+      kind: "canonical-status",
+      channel: "current-main",
+      locator,
+      targets: [TARGET],
+    });
+    expect(parsed).toMatchObject({
+      ok: false,
+      issues: [{ code: "INVALID_LOCATOR" }],
     });
   });
 

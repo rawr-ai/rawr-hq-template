@@ -281,6 +281,21 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     } as never, invocation)).rejects.toThrow();
     expect(calls).toEqual([]);
   });
+
+  it("returns a typed invalid-locator refusal before content or provider ports are invoked", async () => {
+    const calls: string[] = [];
+    const client = spineClient(calls);
+    const request = canonicalStatusRequest();
+
+    await expect(client.providers.canonicalStatus({
+      ...request,
+      locator: { ...request.locator, workspaceRoot: "relative/content-workspace" },
+    } as never, invocation)).resolves.toMatchObject({
+      ok: false,
+      issues: [{ code: "INVALID_LOCATOR" }],
+    });
+    expect(calls).toEqual([]);
+  });
 });
 
 interface SpineObservations {
