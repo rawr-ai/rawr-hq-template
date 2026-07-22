@@ -116,7 +116,9 @@ function isHostTrusted(hostnames: string[], trustedHostnames: ReadonlySet<string
   return hostnames.some((hostname) => trustedHostnames.has(hostname));
 }
 
-function isAllowedCallerSurface(callerSurface: string): callerSurface is RpcAllowedCallerClass | "in-process" {
+function isAllowedCallerSurface(
+  callerSurface: string
+): callerSurface is RpcAllowedCallerClass | "in-process" {
   return (
     callerSurface === "first-party" ||
     callerSurface === "internal" ||
@@ -135,7 +137,9 @@ export function createRpcAuthPolicy(input: RpcAuthPolicyInput = {}): RpcAuthPoli
 export function resolveRpcAuthEvidence(request: Request, policy: RpcAuthPolicy): RpcAuthEvidence {
   const requestHostnames = resolveRequestHostnames(request);
   // Only explicit auth evidence fields should influence caller authorization.
-  const serviceAuthenticated = isAffirmativeAuthSignal(request.headers.get(RPC_SERVICE_AUTH_HEADER));
+  const serviceAuthenticated = isAffirmativeAuthSignal(
+    request.headers.get(RPC_SERVICE_AUTH_HEADER)
+  );
 
   return {
     callerSurface: callerSurfaceFromRequest(request),
@@ -173,8 +177,15 @@ export function resolveRpcCallerClass(evidence: RpcAuthEvidence): RpcCallerClass
   return evidence.serviceAuthenticated ? "internal" : "unlabeled";
 }
 
-export function isRpcCallerClassAllowed(callerClass: RpcCallerClass): callerClass is RpcAllowedCallerClass {
-  return callerClass === "first-party" || callerClass === "internal" || callerClass === "trusted-service" || callerClass === "cli";
+export function isRpcCallerClassAllowed(
+  callerClass: RpcCallerClass
+): callerClass is RpcAllowedCallerClass {
+  return (
+    callerClass === "first-party" ||
+    callerClass === "internal" ||
+    callerClass === "trusted-service" ||
+    callerClass === "cli"
+  );
 }
 
 export function classifyRpcRequest(request: Request, policy: RpcAuthPolicy): RpcCallerClass {

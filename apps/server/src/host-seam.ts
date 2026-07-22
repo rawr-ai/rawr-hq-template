@@ -1,7 +1,4 @@
-import {
-  composeApiPlugins,
-  type MaterializedApiPluginRegistration,
-} from "@rawr/hq-sdk/apis";
+import { composeApiPlugins, type MaterializedApiPluginRegistration } from "@rawr/hq-sdk/apis";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
 import type { ExampleTodoApiPluginRegistration } from "@rawr/plugin-server-api-example-todo/server";
 import type { RawrHostSatisfiers } from "./host-satisfiers";

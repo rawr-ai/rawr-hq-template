@@ -27,28 +27,31 @@ describe("native manager entry", () => {
     const calls: unknown[] = [];
     vi.stubEnv("RAWR_CONTROLLER_RELEASE_ROOT", fixture.releaseRoot);
 
-    await executeNativeManagerInvocation({
-      protocolVersion: NATIVE_MANAGER_PROTOCOL_VERSION,
-      cliRoot: fixture.cliRoot,
-      nativeDataDir: fixture.nativeDataDir,
-      request: {
-        commandExport: "plugins:uninstall",
-        argv: ["@fixture/external"],
-        contract: GUARDED_NATIVE_MANAGER_CONTRACT,
-      },
-    }, {
-      async loadConfig(value) {
-        options.push(value);
-        return { dataDir: fixture.nativeDataDir } as Config;
-      },
-      commands: {
-        "plugins:uninstall": {
-          async run(argv, config) {
-            calls.push({ argv, dataDir: config.dataDir });
-          },
+    await executeNativeManagerInvocation(
+      {
+        protocolVersion: NATIVE_MANAGER_PROTOCOL_VERSION,
+        cliRoot: fixture.cliRoot,
+        nativeDataDir: fixture.nativeDataDir,
+        request: {
+          commandExport: "plugins:uninstall",
+          argv: ["@fixture/external"],
+          contract: GUARDED_NATIVE_MANAGER_CONTRACT,
         },
       },
-    });
+      {
+        async loadConfig(value) {
+          options.push(value);
+          return { dataDir: fixture.nativeDataDir } as Config;
+        },
+        commands: {
+          "plugins:uninstall": {
+            async run(argv, config) {
+              calls.push({ argv, dataDir: config.dataDir });
+            },
+          },
+        },
+      }
+    );
 
     expect(options).toEqual([
       {
@@ -58,9 +61,7 @@ describe("native manager entry", () => {
         jitPlugins: false,
       },
     ]);
-    expect(calls).toEqual([
-      { argv: ["@fixture/external"], dataDir: fixture.nativeDataDir },
-    ]);
+    expect(calls).toEqual([{ argv: ["@fixture/external"], dataDir: fixture.nativeDataDir }]);
   });
 
   it("rejects an install artifact changed after inspection before config or command load", async () => {
@@ -74,20 +75,25 @@ describe("native manager entry", () => {
     const run = vi.fn();
     vi.stubEnv("RAWR_CONTROLLER_RELEASE_ROOT", fixture.releaseRoot);
 
-    await expect(executeNativeManagerInvocation({
-      protocolVersion: NATIVE_MANAGER_PROTOCOL_VERSION,
-      cliRoot: fixture.cliRoot,
-      nativeDataDir: fixture.nativeDataDir,
-      request: {
-        commandExport: "plugins:install",
-        argv: [`file:${artifact}`, "--silent"],
-        contract: GUARDED_NATIVE_MANAGER_CONTRACT,
-        inspectedArtifact: { path: artifact, sha256 },
-      },
-    }, {
-      loadConfig,
-      commands: { "plugins:install": { run } },
-    })).rejects.toThrow("NATIVE_MANAGER_ARTIFACT_HASH_MISMATCH");
+    await expect(
+      executeNativeManagerInvocation(
+        {
+          protocolVersion: NATIVE_MANAGER_PROTOCOL_VERSION,
+          cliRoot: fixture.cliRoot,
+          nativeDataDir: fixture.nativeDataDir,
+          request: {
+            commandExport: "plugins:install",
+            argv: [`file:${artifact}`, "--silent"],
+            contract: GUARDED_NATIVE_MANAGER_CONTRACT,
+            inspectedArtifact: { path: artifact, sha256 },
+          },
+        },
+        {
+          loadConfig,
+          commands: { "plugins:install": { run } },
+        }
+      )
+    ).rejects.toThrow("NATIVE_MANAGER_ARTIFACT_HASH_MISMATCH");
 
     expect(loadConfig).not.toHaveBeenCalled();
     expect(run).not.toHaveBeenCalled();
@@ -107,7 +113,9 @@ describe("native manager entry", () => {
       temporaryDataHome: path.join(temporaryRoot, "temporary-data"),
       temporaryDirectory: path.join(temporaryRoot, "tmp"),
     };
-    for (const directory of Object.values(directories).filter((value) => value !== directories.bin)) {
+    for (const directory of Object.values(directories).filter(
+      (value) => value !== directories.bin
+    )) {
       mkdirSync(directory);
     }
     const env: Record<string, string> = {
@@ -132,18 +140,22 @@ describe("native manager entry", () => {
       },
     });
 
-    const result = spawnSync(bunPath, [
-      "--config=/dev/null",
-      "--no-env-file",
-      "--no-install",
-      `--preload=${path.join(cliRoot, "src", "lib", "external-extensions", "native-import-sandbox.ts")}`,
-      path.join(cliRoot, "src", "lib", "external-extensions", "native-manager-entry.ts"),
-    ], {
-      cwd: workspaceRoot,
-      env,
-      input: invocation,
-      encoding: "utf8",
-    });
+    const result = spawnSync(
+      bunPath,
+      [
+        "--config=/dev/null",
+        "--no-env-file",
+        "--no-install",
+        `--preload=${path.join(cliRoot, "src", "lib", "external-extensions", "native-import-sandbox.ts")}`,
+        path.join(cliRoot, "src", "lib", "external-extensions", "native-manager-entry.ts"),
+      ],
+      {
+        cwd: workspaceRoot,
+        env,
+        input: invocation,
+        encoding: "utf8",
+      }
+    );
 
     expect(result.status, result.stderr).toBe(0);
     expect(result.stderr).not.toContain("NATIVE_MANAGER_DATA_DIR_MISMATCH");

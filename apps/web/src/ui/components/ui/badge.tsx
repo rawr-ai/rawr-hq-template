@@ -17,7 +17,7 @@ const badgeVariants = cva(
     defaultVariants: {
       variant: "neutral",
     },
-  },
+  }
 );
 
 export type BadgeProps = React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof badgeVariants>;

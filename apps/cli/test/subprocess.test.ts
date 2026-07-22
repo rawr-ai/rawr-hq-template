@@ -14,11 +14,11 @@ function removeTemporaryRoot(root: string): void {
   const canonicalRoot = realpathSync(root);
   const status = lstatSync(root);
   if (
-    !status.isDirectory()
-    || status.isSymbolicLink()
-    || canonicalRoot !== root
-    || path.dirname(canonicalRoot) !== canonicalTemporaryRoot
-    || !path.basename(canonicalRoot).startsWith(TEMPORARY_ROOT_PREFIX)
+    !status.isDirectory() ||
+    status.isSymbolicLink() ||
+    canonicalRoot !== root ||
+    path.dirname(canonicalRoot) !== canonicalTemporaryRoot ||
+    !path.basename(canonicalRoot).startsWith(TEMPORARY_ROOT_PREFIX)
   ) {
     throw new Error(`refusing to remove invalid command-entry test root: ${root}`);
   }
@@ -33,7 +33,9 @@ afterEach(() => {
 
 describe("CLI subprocess reentry", () => {
   it("reuses one bound authority despite later ambient mutation", () => {
-    const root = realpathSync(mkdtempSync(path.join(realpathSync(tmpdir()), TEMPORARY_ROOT_PREFIX)));
+    const root = realpathSync(
+      mkdtempSync(path.join(realpathSync(tmpdir()), TEMPORARY_ROOT_PREFIX))
+    );
     temporaryRoots.push(root);
     const entrypoint = path.join(root, "command-test-cli.ts");
     writeFileSync(entrypoint, "export {};\n");

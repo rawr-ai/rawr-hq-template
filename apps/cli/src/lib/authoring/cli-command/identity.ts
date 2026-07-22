@@ -11,29 +11,37 @@ export type OfficialCommandIdentityIssue = Readonly<{
 const SEGMENT_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const RESERVED_TOPICS = new Set(["agent", "plugins"]);
 
-export function parseOfficialCommandTopic(input: unknown): OfficialCommandTopic | OfficialCommandIdentityIssue {
+export function parseOfficialCommandTopic(
+  input: unknown
+): OfficialCommandTopic | OfficialCommandIdentityIssue {
   if (
-    typeof input !== "string"
-    || input.length > 64
-    || !SEGMENT_PATTERN.test(input)
-    || RESERVED_TOPICS.has(input)
+    typeof input !== "string" ||
+    input.length > 64 ||
+    !SEGMENT_PATTERN.test(input) ||
+    RESERVED_TOPICS.has(input)
   ) {
     return Object.freeze({
       path: "topic",
-      message: "Official command topic must be safe lowercase kebab-case and outside lifecycle-owned topics",
+      message:
+        "Official command topic must be safe lowercase kebab-case and outside lifecycle-owned topics",
     });
   }
   return input as OfficialCommandTopic;
 }
 
-export function parseOfficialCommandName(input: unknown): OfficialCommandName | OfficialCommandIdentityIssue {
+export function parseOfficialCommandName(
+  input: unknown
+): OfficialCommandName | OfficialCommandIdentityIssue {
   return typeof input === "string" && input.length <= 64 && SEGMENT_PATTERN.test(input)
-    ? input as OfficialCommandName
-    : Object.freeze({ path: "name", message: "Official command name must be bounded lowercase kebab-case" });
+    ? (input as OfficialCommandName)
+    : Object.freeze({
+        path: "name",
+        message: "Official command name must be bounded lowercase kebab-case",
+      });
 }
 
 export function isOfficialCommandIdentityIssue(
-  value: OfficialCommandTopic | OfficialCommandName | OfficialCommandIdentityIssue,
+  value: OfficialCommandTopic | OfficialCommandName | OfficialCommandIdentityIssue
 ): value is OfficialCommandIdentityIssue {
   return typeof value === "object";
 }

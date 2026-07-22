@@ -66,7 +66,7 @@ describe("host logging correlation", () => {
               title: "RPC correlated log",
             },
           }),
-        }),
+        })
       );
 
       expect(response.status).toBe(200);
@@ -74,17 +74,19 @@ describe("host logging correlation", () => {
       __flushHostLoggerForTests();
 
       const entries = await readRuntimeLogs(repoRoot);
-      expect(entries).toEqual(expect.arrayContaining([
-        expect.objectContaining({
-          event: "todo.procedure",
-          requestId: "rpc-request-1",
-          correlationId: "rpc-correlation-1",
-          requestMethod: "POST",
-          requestPath: "/rpc/exampleTodo/tasks/create",
-          surface: "rpc",
-          callerSurface: "first-party",
-        }),
-      ]));
+      expect(entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            event: "todo.procedure",
+            requestId: "rpc-request-1",
+            correlationId: "rpc-correlation-1",
+            requestMethod: "POST",
+            requestPath: "/rpc/exampleTodo/tasks/create",
+            surface: "rpc",
+            callerSurface: "first-party",
+          }),
+        ])
+      );
     } finally {
       await fs.rm(repoRoot, { recursive: true, force: true });
     }
@@ -105,7 +107,7 @@ describe("host logging correlation", () => {
           body: JSON.stringify({
             title: "OpenAPI correlated log",
           }),
-        }),
+        })
       );
 
       expect(response.status).toBe(200);
@@ -113,17 +115,19 @@ describe("host logging correlation", () => {
       __flushHostLoggerForTests();
 
       const entries = await readRuntimeLogs(repoRoot);
-      expect(entries).toEqual(expect.arrayContaining([
-        expect.objectContaining({
-          event: "todo.procedure",
-          requestId: "openapi-request-1",
-          correlationId: "openapi-correlation-1",
-          requestMethod: "POST",
-          requestPath: "/api/orpc/exampleTodo/tasks/create",
-          surface: "openapi",
-          callerSurface: "external",
-        }),
-      ]));
+      expect(entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            event: "todo.procedure",
+            requestId: "openapi-request-1",
+            correlationId: "openapi-correlation-1",
+            requestMethod: "POST",
+            requestPath: "/api/orpc/exampleTodo/tasks/create",
+            surface: "openapi",
+            callerSurface: "external",
+          }),
+        ])
+      );
     } finally {
       await fs.rm(repoRoot, { recursive: true, force: true });
     }

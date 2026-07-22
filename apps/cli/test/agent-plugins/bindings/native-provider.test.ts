@@ -56,9 +56,11 @@ describe("native provider resource binding", () => {
     provider.codexAcquire.mockReset();
     provider.claudeAcquire.mockReset();
     provider.codexAcquire.mockImplementation((input: NativeProviderSessionInput) =>
-      Effect.succeed(codexSession(input)));
+      Effect.succeed(codexSession(input))
+    );
     provider.claudeAcquire.mockImplementation((input: NativeProviderSessionInput) =>
-      Effect.succeed(claudeSession(input)));
+      Effect.succeed(claudeSession(input))
+    );
   });
 
   afterEach(async () => {
@@ -66,24 +68,22 @@ describe("native provider resource binding", () => {
     fixture = undefined;
   });
 
-  it.each(PROVIDER_IDS)(
-    "selects only the explicit %s Effect provider",
-    async (providerId) => {
-      const home = `/tmp/rawr-native-binding-${providerId}`;
-      const resource = createNodeNativeProviderResource();
-      const session = providerId === "codex"
+  it.each(PROVIDER_IDS)("selects only the explicit %s Effect provider", async (providerId) => {
+    const home = `/tmp/rawr-native-binding-${providerId}`;
+    const resource = createNodeNativeProviderResource();
+    const session =
+      providerId === "codex"
         ? await resource.acquireCodex({ executablePath: EXECUTABLES[providerId], home })
         : await resource.acquireClaude({ executablePath: EXECUTABLES[providerId], home });
 
-      const observed = await session.probe();
+    const observed = await session.probe();
 
-      expect(observed.provider).toBe(providerId);
-      expect(provider.codexAcquire).toHaveBeenCalledTimes(providerId === "codex" ? 1 : 0);
-      expect(provider.claudeAcquire).toHaveBeenCalledTimes(providerId === "claude" ? 1 : 0);
-      const selected = providerId === "codex" ? provider.codexAcquire : provider.claudeAcquire;
-      expect(selected).toHaveBeenCalledWith({ executablePath: EXECUTABLES[providerId], home });
-    },
-  );
+    expect(observed.provider).toBe(providerId);
+    expect(provider.codexAcquire).toHaveBeenCalledTimes(providerId === "codex" ? 1 : 0);
+    expect(provider.claudeAcquire).toHaveBeenCalledTimes(providerId === "claude" ? 1 : 0);
+    const selected = providerId === "codex" ? provider.codexAcquire : provider.claudeAcquire;
+    expect(selected).toHaveBeenCalledWith({ executablePath: EXECUTABLES[providerId], home });
+  });
 
   it("preserves the resource-owned provider failure across the Effect runtime edge", async () => {
     const conflict: NativeAgentProviderFailure = Object.freeze({
@@ -120,19 +120,33 @@ describe("native provider resource binding", () => {
       events.push("claude-add");
       return Effect.succeed({ stdout: "", stderr: "" });
     });
-    provider.codexAcquire.mockImplementation((input: NativeProviderSessionInput) => Effect.succeed(Object.freeze({
-      ...codexSession(input),
-      addMarketplace: codexAdd,
-      setMarketplaceSource: codexSet,
-    })));
-    provider.claudeAcquire.mockImplementation((input: NativeProviderSessionInput) => Effect.succeed(Object.freeze({
-      ...claudeSession(input),
-      addMarketplace: claudeAdd,
-    })));
+    provider.codexAcquire.mockImplementation((input: NativeProviderSessionInput) =>
+      Effect.succeed(
+        Object.freeze({
+          ...codexSession(input),
+          addMarketplace: codexAdd,
+          setMarketplaceSource: codexSet,
+        })
+      )
+    );
+    provider.claudeAcquire.mockImplementation((input: NativeProviderSessionInput) =>
+      Effect.succeed(
+        Object.freeze({
+          ...claudeSession(input),
+          addMarketplace: claudeAdd,
+        })
+      )
+    );
 
     const resource = createNodeNativeProviderResource();
-    const codex = await resource.acquireCodex({ executablePath: EXECUTABLES.codex, home: "/tmp/codex" });
-    const claude = await resource.acquireClaude({ executablePath: EXECUTABLES.claude, home: "/tmp/claude" });
+    const codex = await resource.acquireCodex({
+      executablePath: EXECUTABLES.codex,
+      home: "/tmp/codex",
+    });
+    const claude = await resource.acquireClaude({
+      executablePath: EXECUTABLES.claude,
+      home: "/tmp/claude",
+    });
     await codex.addMarketplace(location);
     await codex.setMarketplaceSource({ identity: "rawr-hq", source: location });
     await claude.addMarketplace(location);
@@ -149,16 +163,18 @@ function commonSession(input: NativeProviderSessionInput, providerId: ProviderId
     provider: providerId,
     executablePath: input.executablePath,
     home: input.home,
-    probe: () => Effect.succeed({
-      provider: providerId,
-      executablePath: input.executablePath,
-      home: input.home,
-      pluginCommands: providerId === "codex"
-        ? ["add", "list", "remove"]
-        : ["disable", "enable", "install", "list", "uninstall"],
-      marketplaceCommands: ["add", "list", "remove"],
-      appServerMethods: providerId === "codex" ? ["plugin/list"] : [],
-    }),
+    probe: () =>
+      Effect.succeed({
+        provider: providerId,
+        executablePath: input.executablePath,
+        home: input.home,
+        pluginCommands:
+          providerId === "codex"
+            ? ["add", "list", "remove"]
+            : ["disable", "enable", "install", "list", "uninstall"],
+        marketplaceCommands: ["add", "list", "remove"],
+        appServerMethods: providerId === "codex" ? ["plugin/list"] : [],
+      }),
     listMarketplaces: () => Effect.succeed({ stdout: "", stderr: "", json: [] }),
     addMarketplace: () => Effect.succeed({ stdout: "", stderr: "" }),
     readMarketplace: () => Effect.succeed({ entries: [] }),
@@ -199,22 +215,28 @@ async function publishMarketplace(root: string): Promise<ArtifactTreeLocation> {
     namespace: Object.freeze(["marketplaces"] satisfies [string]),
     objectId: "provider-issued-location",
   });
-  const published = await runNodeArtifactRepository(artifactRepositoryResource.publishTree({
-    address,
-    entries: Object.freeze([Object.freeze({
-      path: "plugin.json",
-      mode: 0o444,
-      bytes: new TextEncoder().encode("{}\n"),
-    })]),
-    limits: MARKETPLACE_TREE_LIMITS,
-  }));
+  const published = await runNodeArtifactRepository(
+    artifactRepositoryResource.publishTree({
+      address,
+      entries: Object.freeze([
+        Object.freeze({
+          path: "plugin.json",
+          mode: 0o444,
+          bytes: new TextEncoder().encode("{}\n"),
+        }),
+      ]),
+      limits: MARKETPLACE_TREE_LIMITS,
+    })
+  );
   if (!published.ok || published.value.kind !== "Published") {
     throw new Error("Marketplace tree fixture was not published");
   }
-  const located = await runNodeArtifactRepository(artifactRepositoryResource.locateTree({
-    address,
-    limits: MARKETPLACE_TREE_LIMITS,
-  }));
+  const located = await runNodeArtifactRepository(
+    artifactRepositoryResource.locateTree({
+      address,
+      limits: MARKETPLACE_TREE_LIMITS,
+    })
+  );
   if (!located.ok || located.value.kind !== "Present") {
     throw new Error("Marketplace tree fixture was not admitted");
   }

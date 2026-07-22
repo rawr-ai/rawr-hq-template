@@ -25,16 +25,46 @@ function hasStringLiteral(sourceFile: ts.SourceFile, value: string): boolean {
 
 describe("phase-a gate scaffold (server)", () => {
   it("no legacy composition authority gate scaffold verifies the explicit HQ composition bridge and quarantines legacy host seams", async () => {
-    const rawrSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "rawr.ts"), "utf8");
-    const legacyCutoverSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "legacy-cutover.ts"), "utf8");
-    const hostCompositionSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-composition.ts"), "utf8");
-    const hostSatisfiersSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-satisfiers.ts"), "utf8");
-    const hqOpsBindingSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "hq-ops-binding.ts"), "utf8");
-    const hostSeamSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "host-seam.ts"), "utf8");
-    const testingHostSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "testing-host.ts"), "utf8");
-    const workflowRuntimeSource = await fs.readFile(path.join(repoRoot, "apps", "server", "src", "workflows", "runtime.ts"), "utf8");
-    const routeMatrixSource = await fs.readFile(path.join(repoRoot, "apps", "server", "test", "route-boundary-matrix.test.ts"), "utf8");
-    const routeMatrixAst = parseTypeScript(path.join(repoRoot, "apps", "server", "test", "route-boundary-matrix.test.ts"), routeMatrixSource);
+    const rawrSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "rawr.ts"),
+      "utf8"
+    );
+    const legacyCutoverSource = await fs.readFile(
+      path.join(repoRoot, "apps", "hq", "legacy-cutover.ts"),
+      "utf8"
+    );
+    const hostCompositionSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "host-composition.ts"),
+      "utf8"
+    );
+    const hostSatisfiersSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "host-satisfiers.ts"),
+      "utf8"
+    );
+    const hqOpsBindingSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "hq-ops-binding.ts"),
+      "utf8"
+    );
+    const hostSeamSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "host-seam.ts"),
+      "utf8"
+    );
+    const testingHostSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "testing-host.ts"),
+      "utf8"
+    );
+    const workflowRuntimeSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "workflows", "runtime.ts"),
+      "utf8"
+    );
+    const routeMatrixSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "test", "route-boundary-matrix.test.ts"),
+      "utf8"
+    );
+    const routeMatrixAst = parseTypeScript(
+      path.join(repoRoot, "apps", "server", "test", "route-boundary-matrix.test.ts"),
+      routeMatrixSource
+    );
 
     expect(rawrSource).toContain('from "@rawr/hq-app/legacy-cutover"');
     expect(rawrSource).toContain('from "./workflows/runtime"');
@@ -53,21 +83,27 @@ describe("phase-a gate scaffold (server)", () => {
     expect(hostCompositionSource).toContain("createRawrHostSatisfiers");
     expect(hostCompositionSource).toContain("createRawrHostBoundRolePlan");
     expect(hostSatisfiersSource).not.toContain(["@rawr", "hq-ops-" + "host"].join("/"));
-    expect(hostSatisfiersSource).not.toContain('./hq-ops-resources');
-    expect(hqOpsBindingSource).toContain('./hq-ops-resources');
+    expect(hostSatisfiersSource).not.toContain("./hq-ops-resources");
+    expect(hqOpsBindingSource).toContain("./hq-ops-resources");
     expect(hqOpsBindingSource).toContain('roleId: "hq-ops-config"');
     expect(hostSeamSource).toContain("workflows: Readonly<Record<string, never>>");
-    expect(testingHostSource).toContain('@rawr/hq-app/legacy-cutover');
+    expect(testingHostSource).toContain("@rawr/hq-app/legacy-cutover");
     expect(testingHostSource).not.toContain("createRawrHostComposition");
     expect(testingHostSource).not.toContain("manifest.fixtures");
     expect(workflowRuntimeSource).toContain("resolveRawrWorkflowInngestBaseUrl");
     expect(workflowRuntimeSource).not.toContain("createCoordinationWorkflowRuntimeAdapter");
-    expect(hasStringLiteral(routeMatrixAst, "assertion:reject-rpc-workflows-route-family")).toBe(true);
+    expect(hasStringLiteral(routeMatrixAst, "assertion:reject-rpc-workflows-route-family")).toBe(
+      true
+    );
   });
 
   it("observability contract gate scaffold keeps canonical host observability proofs present", async () => {
-    const ingressProbe = await fs.access(path.join(repoRoot, "apps", "server", "test", "ingress-signature-observability.test.ts"));
-    const loggingProbe = await fs.access(path.join(repoRoot, "apps", "server", "test", "logging-correlation.test.ts"));
+    const ingressProbe = await fs.access(
+      path.join(repoRoot, "apps", "server", "test", "ingress-signature-observability.test.ts")
+    );
+    const loggingProbe = await fs.access(
+      path.join(repoRoot, "apps", "server", "test", "logging-correlation.test.ts")
+    );
 
     expect(ingressProbe == null).toBe(true);
     expect(loggingProbe == null).toBe(true);

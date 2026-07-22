@@ -20,11 +20,7 @@ export function controllerSelectorPath(dataRoot: string): string {
 }
 
 export function controllerReleasePath(dataRoot: string, digest: string): string {
-  return path.join(
-    controllerDirectory(dataRoot),
-    CONTROLLER_RELEASES_DIRECTORY,
-    digest,
-  );
+  return path.join(controllerDirectory(dataRoot), CONTROLLER_RELEASES_DIRECTORY, digest);
 }
 
 export function controllerLauncherPath(dataRoot: string): string {

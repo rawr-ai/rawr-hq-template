@@ -124,7 +124,7 @@ describe("Node external extension preparation", () => {
     writeFileSync(artifact, "caller replacement");
 
     await expect(subject.stageInstall(inspected)).rejects.toThrow(
-      "EXTERNAL_EXTENSION_ARTIFACT_CHANGED_AFTER_INSPECTION",
+      "EXTERNAL_EXTENSION_ARTIFACT_CHANGED_AFTER_INSPECTION"
     );
   });
 
@@ -159,10 +159,10 @@ describe("Node external extension preparation", () => {
   it("uses distinct content-addressed basenames for distinct install artifacts", async () => {
     const subject = preparation();
     const firstInspection = await subject.inspectInstall(
-      await extensionTarball({ packageId: "@fixture/first" }),
+      await extensionTarball({ packageId: "@fixture/first" })
     );
     const secondInspection = await subject.inspectInstall(
-      await extensionTarball({ packageId: "@fixture/second" }),
+      await extensionTarball({ packageId: "@fixture/second" })
     );
     const first = await subject.stageInstall(firstInspection);
     const second = await subject.stageInstall(secondInspection);
@@ -200,7 +200,11 @@ describe("Node external extension preparation", () => {
         read: async () => state,
       },
       subject,
-      { dispatch: async () => { throw new Error("NATIVE_MUTATION_WRITE_TRAP"); } },
+      {
+        dispatch: async () => {
+          throw new Error("NATIVE_MUTATION_WRITE_TRAP");
+        },
+      }
     );
     const sourceBytes = readFileSync(artifact);
 
@@ -222,20 +226,25 @@ describe("Node external extension preparation", () => {
     const prepared = await preparation().prepareUpdate(state);
 
     expect(prepared.entries).toEqual([
-      expect.objectContaining({ kind: "delegate-native", entry: expect.objectContaining({ name: current.packageId }) }),
+      expect.objectContaining({
+        kind: "delegate-native",
+        entry: expect.objectContaining({ name: current.packageId }),
+      }),
     ]);
   });
 
   it("classifies local and native update entries separately when local staging is gone", async () => {
     const local = staticExtension({ packageId: "@fixture/local" });
     const native = staticExtension({ packageId: "@fixture/native" });
-    const localArtifactUrl = pathToFileURL(path.join(
-      "/tmp/removed-stage",
-      nativeInstallArtifactName({
-        artifactSha256: "a".repeat(64),
-        staticFingerprint: local.fingerprint,
-      }),
-    )).href;
+    const localArtifactUrl = pathToFileURL(
+      path.join(
+        "/tmp/removed-stage",
+        nativeInstallArtifactName({
+          artifactSha256: "a".repeat(64),
+          staticFingerprint: local.fingerprint,
+        })
+      )
+    ).href;
     const localState = activeState(local, {
       name: local.packageId,
       type: "user",
@@ -273,15 +282,13 @@ class StagingTrappedPreparation extends NodeExternalExtensionPreparationPort {
 
 function preparation(): NodeExternalExtensionPreparationPort {
   return new NodeExternalExtensionPreparationPort(
-    createReservedControllerSurface({ packageIds: ["@rawr/cli"] }),
+    createReservedControllerSurface({ packageIds: ["@rawr/cli"] })
   );
 }
 
-async function extensionTarball(input: {
-  commandSentinel?: string;
-  packageId?: string;
-  scriptSentinel?: string;
-} = {}): Promise<string> {
+async function extensionTarball(
+  input: { commandSentinel?: string; packageId?: string; scriptSentinel?: string } = {}
+): Promise<string> {
   const sourceParent = tempRoot("candidate-package-source");
   const packageRoot = path.join(sourceParent, "package");
   writeExtensionFixture({

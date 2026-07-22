@@ -43,7 +43,7 @@ const testingHostLogger = {
 } as const;
 
 async function resolveBootstrapServer(
-  deps?: RawrHqLegacyServerDependencies,
+  deps?: RawrHqLegacyServerDependencies
 ): Promise<typeof import("../server/src/bootstrap").bootstrapServer> {
   if (deps?.bootstrapServer) return deps.bootstrapServer;
   return (await import("../server/src/bootstrap")).bootstrapServer;

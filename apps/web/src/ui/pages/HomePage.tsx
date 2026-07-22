@@ -6,9 +6,12 @@ export function HomePage() {
     <section className="mx-auto max-w-5xl space-y-4">
       <header className="space-y-2">
         <p className="kicker m-0">Overview</p>
-        <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground md:text-4xl">RAWR HQ-Template</h1>
+        <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+          RAWR HQ-Template
+        </h1>
         <p className="m-0 max-w-3xl text-sm leading-relaxed text-muted-foreground md:text-base">
-          Modern host shell with client-side routing, typed micro-frontend mounts, and a focused Phase 1 runtime lane.
+          Modern host shell with client-side routing, typed micro-frontend mounts, and a focused
+          Phase 1 runtime lane.
         </p>
       </header>
 
@@ -22,7 +25,9 @@ export function HomePage() {
       <Card className="max-w-3xl">
         <CardHeader>
           <CardTitle>Next Steps</CardTitle>
-          <CardDescription>Recommended follow-up integration tasks for a productionized host shell.</CardDescription>
+          <CardDescription>
+            Recommended follow-up integration tasks for a productionized host shell.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="m-0 list-disc space-y-2 pl-5 text-sm text-foreground/90">

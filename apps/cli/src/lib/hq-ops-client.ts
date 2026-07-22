@@ -4,13 +4,15 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { createClient, type CreateClientOptions } from "@rawr/hq-ops";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import {
-  createEmbeddedPlaceholderAnalyticsAdapter,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import {
-  createEmbeddedPlaceholderLoggerAdapter,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import { bindService, type ProcessView, type RoleView, type ServiceBinding, type ServiceBindingContext } from "@rawr/hq-sdk/plugins";
+  bindService,
+  type ProcessView,
+  type RoleView,
+  type ServiceBinding,
+  type ServiceBindingContext,
+} from "@rawr/hq-sdk/plugins";
 
 type HqOpsBoundary = CreateClientOptions;
 type HqOpsResources = HqOpsBoundary["deps"]["resources"];
@@ -32,19 +34,30 @@ async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
   return new Database(dbPath);
 }
 
-async function embedText(input: { text: string; config: { provider: "openai" | "voyage"; model: string } }): Promise<Float32Array> {
-  const apiKey = input.config.provider === "openai" ? process.env.OPENAI_API_KEY : process.env.VOYAGE_API_KEY;
+async function embedText(input: {
+  text: string;
+  config: { provider: "openai" | "voyage"; model: string };
+}): Promise<Float32Array> {
+  const apiKey =
+    input.config.provider === "openai" ? process.env.OPENAI_API_KEY : process.env.VOYAGE_API_KEY;
   if (!apiKey) throw new Error(`Missing ${input.config.provider} embeddings API key`);
-  const url = input.config.provider === "openai" ? "https://api.openai.com/v1/embeddings" : "https://api.voyageai.com/v1/embeddings";
-  const body = input.config.provider === "openai"
-    ? { model: input.config.model, input: input.text }
-    : { model: input.config.model, input: [input.text] };
+  const url =
+    input.config.provider === "openai"
+      ? "https://api.openai.com/v1/embeddings"
+      : "https://api.voyageai.com/v1/embeddings";
+  const body =
+    input.config.provider === "openai"
+      ? { model: input.config.model, input: input.text }
+      : { model: input.config.model, input: [input.text] };
   const res = await fetch(url, {
     method: "POST",
     headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`${input.config.provider} embeddings failed: ${res.status} ${await res.text()}`.trim());
+  if (!res.ok)
+    throw new Error(
+      `${input.config.provider} embeddings failed: ${res.status} ${await res.text()}`.trim()
+    );
   const json = (await res.json()) as { data?: Array<{ embedding?: unknown }> };
   const embedding = json.data?.[0]?.embedding;
   if (!Array.isArray(embedding) || !embedding.every((value) => typeof value === "number")) {
@@ -141,26 +154,32 @@ function createHqOpsResources(): HqOpsResources {
       },
       async exec(cmd, args, opts = {}) {
         const startedAt = Date.now();
-        return await new Promise<Awaited<ReturnType<HqOpsResources["process"]["exec"]>>>((resolve) => {
-          const child = spawn(cmd, args, { cwd: opts.cwd, env: opts.env as NodeJS.ProcessEnv | undefined });
-          const stdoutChunks: Buffer[] = [];
-          const stderrChunks: Buffer[] = [];
-          child.stdout.on("data", (data) => stdoutChunks.push(Buffer.from(data)));
-          child.stderr.on("data", (data) => stderrChunks.push(Buffer.from(data)));
-          const timeout = opts.timeoutMs && opts.timeoutMs > 0
-            ? setTimeout(() => child.kill("SIGKILL"), opts.timeoutMs)
-            : null;
-          child.on("close", (exitCode, signal) => {
-            if (timeout) clearTimeout(timeout);
-            resolve({
-              exitCode,
-              signal,
-              stdout: Buffer.concat(stdoutChunks),
-              stderr: Buffer.concat(stderrChunks),
-              durationMs: Date.now() - startedAt,
+        return await new Promise<Awaited<ReturnType<HqOpsResources["process"]["exec"]>>>(
+          (resolve) => {
+            const child = spawn(cmd, args, {
+              cwd: opts.cwd,
+              env: opts.env as NodeJS.ProcessEnv | undefined,
             });
-          });
-        });
+            const stdoutChunks: Buffer[] = [];
+            const stderrChunks: Buffer[] = [];
+            child.stdout.on("data", (data) => stdoutChunks.push(Buffer.from(data)));
+            child.stderr.on("data", (data) => stderrChunks.push(Buffer.from(data)));
+            const timeout =
+              opts.timeoutMs && opts.timeoutMs > 0
+                ? setTimeout(() => child.kill("SIGKILL"), opts.timeoutMs)
+                : null;
+            child.on("close", (exitCode, signal) => {
+              if (timeout) clearTimeout(timeout);
+              resolve({
+                exitCode,
+                signal,
+                stdout: Buffer.concat(stdoutChunks),
+                stderr: Buffer.concat(stderrChunks),
+                durationMs: Date.now() - startedAt,
+              });
+            });
+          }
+        );
       },
     },
     sqlite: {
@@ -169,10 +188,16 @@ function createHqOpsResources(): HqOpsResources {
     embeddings: {
       getConfig() {
         if (process.env.OPENAI_API_KEY) {
-          return { provider: "openai", model: (process.env.RAWR_EMBEDDINGS_MODEL ?? "text-embedding-3-small").trim() };
+          return {
+            provider: "openai",
+            model: (process.env.RAWR_EMBEDDINGS_MODEL ?? "text-embedding-3-small").trim(),
+          };
         }
         if (process.env.VOYAGE_API_KEY) {
-          return { provider: "voyage", model: (process.env.RAWR_EMBEDDINGS_MODEL ?? "voyage-3-lite").trim() };
+          return {
+            provider: "voyage",
+            model: (process.env.RAWR_EMBEDDINGS_MODEL ?? "voyage-3-lite").trim(),
+          };
         }
         return null;
       },
@@ -192,7 +217,8 @@ const hqOpsService = bindService(createClient, {
     repoRoot: context.process.repoRoot,
   }),
   config: {},
-  cacheKey: (context: BindingContext) => `${context.process.processId}:${context.process.repoRoot}:${context.role.roleId}`,
+  cacheKey: (context: BindingContext) =>
+    `${context.process.processId}:${context.process.repoRoot}:${context.role.roleId}`,
 } satisfies ServiceBinding<HqOpsBoundary, HqOpsProcess, HqOpsRole>);
 
 export function createHqOpsClient(repoRoot: string) {
@@ -225,4 +251,6 @@ export function createHqOpsCallOptions(traceId: string) {
 export type HqOpsClient = ReturnType<typeof createHqOpsClient>;
 export type HqOpsJournalEvent = Parameters<HqOpsClient["journal"]["writeEvent"]>[0];
 export type HqOpsJournalSnippet = Parameters<HqOpsClient["journal"]["writeSnippet"]>[0];
-export type HqOpsConfigLoadResult = Awaited<ReturnType<HqOpsClient["config"]["getWorkspaceConfig"]>>;
+export type HqOpsConfigLoadResult = Awaited<
+  ReturnType<HqOpsClient["config"]["getWorkspaceConfig"]>
+>;

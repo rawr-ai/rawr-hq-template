@@ -29,7 +29,7 @@ describe("agent-plugin controller layout", () => {
     "/verified/controller-data/.",
   ])("rejects noncanonical data root %s", (dataRoot) => {
     expect(() => deriveAgentPluginControllerLayout({ dataRoot })).toThrow(
-      "AGENT_PLUGIN_CONTROLLER_DATA_ROOT_INVALID",
+      "AGENT_PLUGIN_CONTROLLER_DATA_ROOT_INVALID"
     );
   });
 });

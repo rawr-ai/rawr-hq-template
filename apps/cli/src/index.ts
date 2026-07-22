@@ -13,7 +13,7 @@ class InterceptedExit extends Error {
 
 async function runCli(
   argv: string[] = process.argv.slice(2),
-  options: Interfaces.LoadOptions = import.meta.url,
+  options: Interfaces.LoadOptions = import.meta.url
 ): Promise<void> {
   let exitCode = 0;
   const originalExit = process.exit;
@@ -42,10 +42,12 @@ async function runCli(
   }
 }
 
-export async function runControllerCli(input: Readonly<{
-  argv?: readonly string[];
-  entryUrl: string | URL;
-}>): Promise<void> {
+export async function runControllerCli(
+  input: Readonly<{
+    argv?: readonly string[];
+    entryUrl: string | URL;
+  }>
+): Promise<void> {
   const argv = [...(input.argv ?? process.argv.slice(2))];
   let context;
   try {

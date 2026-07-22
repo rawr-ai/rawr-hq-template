@@ -56,7 +56,7 @@ describe("api plugin example surface", () => {
             description: "Keep host-owned boundary construction",
           },
         }),
-      }),
+      })
     );
 
     expect(createResponse.status).toBe(200);
@@ -81,7 +81,7 @@ describe("api plugin example surface", () => {
             id: taskId,
           },
         }),
-      }),
+      })
     );
 
     expect(getResponse.status).toBe(200);
@@ -108,7 +108,7 @@ describe("api plugin example surface", () => {
           title: "External example-todo path",
           description: "Exercise the caller-facing proof surface",
         }),
-      }),
+      })
     );
 
     expect(createResponse.status).toBe(200);
@@ -128,7 +128,7 @@ describe("api plugin example surface", () => {
         headers: {
           "x-rawr-caller-surface": "external",
         },
-      }),
+      })
     );
 
     expect(getResponse.status).toBe(200);
@@ -154,7 +154,7 @@ describe("api plugin example surface", () => {
             title: "   ",
           },
         }),
-      }),
+      })
     );
     expect(rpcResponse.status).toBe(400);
     const rpcPayload = (await rpcResponse.json()) as RpcErrorPayload;
@@ -170,7 +170,7 @@ describe("api plugin example surface", () => {
         body: JSON.stringify({
           title: "   ",
         }),
-      }),
+      })
     );
     expect(openApiResponse.status).toBe(400);
     const openApiPayload = (await openApiResponse.json()) as OpenApiErrorPayload;
@@ -193,7 +193,7 @@ describe("api plugin example surface", () => {
             id: missingId,
           },
         }),
-      }),
+      })
     );
     expect(rpcResponse.status).toBe(404);
     const rpcPayload = (await rpcResponse.json()) as RpcErrorPayload;
@@ -208,7 +208,7 @@ describe("api plugin example surface", () => {
         headers: {
           "x-rawr-caller-surface": "external",
         },
-      }),
+      })
     );
     expect(openApiResponse.status).toBe(404);
     const openApiPayload = (await openApiResponse.json()) as OpenApiErrorPayload;

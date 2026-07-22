@@ -23,7 +23,7 @@ export default class ConfigShow extends RawrCommand {
 
     const loaded = await createHqOpsClient(workspaceRoot).config.getWorkspaceConfig(
       {},
-      createHqOpsCallOptions("cli.config.show"),
+      createHqOpsCallOptions("cli.config.show")
     );
     if (loaded.error) {
       const result = this.fail(loaded.error.message, { details: loaded.error });

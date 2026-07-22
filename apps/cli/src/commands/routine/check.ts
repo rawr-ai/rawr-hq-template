@@ -77,7 +77,8 @@ export default class RoutineCheck extends RawrCommand {
       this.outputResult(result, {
         flags: baseFlags,
         human: () => {
-          for (const step of planned) this.log(`[dry-run] ${step.name}: ${step.cmd} ${step.args.join(" ")}`);
+          for (const step of planned)
+            this.log(`[dry-run] ${step.name}: ${step.cmd} ${step.args.join(" ")}`);
         },
       });
       return;

@@ -65,7 +65,7 @@ export function AppShell({
           type="button"
           className={cn(
             "fixed inset-0 z-30 border-0 bg-black/45 p-0 transition-opacity",
-            sidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+            sidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
           )}
           aria-hidden={!sidebarOpen}
           tabIndex={sidebarOpen ? 0 : -1}
@@ -81,7 +81,7 @@ export function AppShell({
             isMobile
               ? "fixed left-2 top-2 h-[calc(100vh-1rem)] w-[min(84vw,280px)] transition-transform duration-200"
               : "translate-x-0",
-            isMobile && !sidebarOpen ? "-translate-x-[106%]" : "translate-x-0",
+            isMobile && !sidebarOpen ? "-translate-x-[106%]" : "translate-x-0"
           )}
         >
           {sidebar}
@@ -91,7 +91,9 @@ export function AppShell({
           <header className="surface-card sticky top-2 z-20 mb-2 flex flex-wrap items-center justify-between gap-3 px-4 py-3">
             <div>
               <p className="kicker m-0">HQ Shell</p>
-              <p className="m-0 text-sm text-muted-foreground">Unified shell with the active Phase 1 surfaces only</p>
+              <p className="m-0 text-sm text-muted-foreground">
+                Unified shell with the active Phase 1 surfaces only
+              </p>
             </div>
 
             <div className="flex items-center gap-2">

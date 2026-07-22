@@ -20,7 +20,7 @@ function runCapture(
   cmd: string,
   args: readonly string[],
   cwd: string,
-  env: NodeJS.ProcessEnv,
+  env: NodeJS.ProcessEnv
 ): { status: number; stdout: string; stderr: string } {
   const proc = spawnSync(cmd, args, {
     cwd,
@@ -83,14 +83,27 @@ export default class RoutineSnapshot extends RawrCommand {
 
     const rawr = resolveCliReentry();
 
-    const rawrVersion = runCapture(rawr.cmd, [...rawr.args, "--version"], rawr.cwd, rawr.env).stdout.trim();
-    const bunVersion = runCapture(rawr.cmd, ["--config=/dev/null", "--no-env-file", "--no-install", "--version"], rawr.cwd, rawr.env).stdout.trim();
-    const toolsExport = safeJson(runCapture(rawr.cmd, [...rawr.args, "tools", "export", "--json"], rawr.cwd, rawr.env).stdout);
+    const rawrVersion = runCapture(
+      rawr.cmd,
+      [...rawr.args, "--version"],
+      rawr.cwd,
+      rawr.env
+    ).stdout.trim();
+    const bunVersion = runCapture(
+      rawr.cmd,
+      ["--config=/dev/null", "--no-env-file", "--no-install", "--version"],
+      rawr.cwd,
+      rawr.env
+    ).stdout.trim();
+    const toolsExport = safeJson(
+      runCapture(rawr.cmd, [...rawr.args, "tools", "export", "--json"], rawr.cwd, rawr.env).stdout
+    );
     const pluginsList = safeJson(
-      runCapture(rawr.cmd, [...rawr.args, "plugins", "list", "--json"], rawr.cwd, rawr.env).stdout,
+      runCapture(rawr.cmd, [...rawr.args, "plugins", "list", "--json"], rawr.cwd, rawr.env).stdout
     );
     const securityReport = safeJson(
-      runCapture(rawr.cmd, [...rawr.args, "security", "report", "--json"], rawr.cwd, rawr.env).stdout,
+      runCapture(rawr.cmd, [...rawr.args, "security", "report", "--json"], rawr.cwd, rawr.env)
+        .stdout
     );
 
     const snapshot: Snapshot = {

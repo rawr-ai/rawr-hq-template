@@ -57,7 +57,9 @@ describe("qualified lifecycle command boundary", () => {
       path.join(cliRoot, "src", "lib", "agent-plugins", "commands"),
     ]);
 
-    expect(closure.some((file) => file.includes(`${path.sep}external-extensions${path.sep}`))).toBe(false);
+    expect(closure.some((file) => file.includes(`${path.sep}external-extensions${path.sep}`))).toBe(
+      false
+    );
     for (const file of closure) {
       const source = readFileSync(file, "utf8");
       expect(source, file).not.toContain("@oclif/plugin-plugins");
@@ -77,7 +79,8 @@ describe("qualified lifecycle command boundary", () => {
       const root = id.startsWith("agent:plugins:")
         ? path.join(cliRoot, "src", "commands", "agent", "plugins")
         : path.join(cliRoot, "src", "commands", "plugins");
-      const relative = id.replace(id.startsWith("agent:plugins:") ? "agent:plugins:" : "plugins:", "")
+      const relative = id
+        .replace(id.startsWith("agent:plugins:") ? "agent:plugins:" : "plugins:", "")
         .split(":")
         .join(path.sep);
       const source = readFileSync(path.join(root, `${relative}.ts`), "utf8");
@@ -85,7 +88,9 @@ describe("qualified lifecycle command boundary", () => {
     }
   });
 
-  it("loads every admitted command and refuses retired aggregate, alias, and composition surfaces", { timeout: 60_000 }, () => {
+  it("loads every admitted command and refuses retired aggregate, alias, and composition surfaces", {
+    timeout: 60_000,
+  }, () => {
     for (const id of EXACT_PLUGIN_COMMANDS) {
       const result = runRawr([...id.split(":"), "--help"]);
       expect(result.status, `${id}\n${result.stderr}`).toBe(0);
@@ -121,21 +126,29 @@ describe("qualified lifecycle command boundary", () => {
       () => parseArtifactHandle(`release:rd1_${"A".repeat(64)}:ad1_${"2".repeat(64)}`),
       () => parseCheckOperationRequest({ mode: "codec" }),
       () => parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha", "complete-set": true }),
-      () => parsePackageRequest({ artifact: releaseHandle, format: "cowork-v1", output: "relative.zip" }),
-      () => parseTestRequest({
-        release: [releaseHandle],
-        "release-set": setHandle,
-        "evaluation-profile": "native@v1",
-        target: ["codex=/tmp/codex-home"],
-      }),
-      () => parseStatusRequest({
-        "content-workspace": "/tmp/content",
-        "repository-identity": "repo",
-        target: ["codex=relative"],
-      }),
-      () => parseControllerProjectionBinding({
-        "provider-executable": ["codex=/tmp/codex", "codex=/tmp/other-codex"],
-      }),
+      () =>
+        parsePackageRequest({
+          artifact: releaseHandle,
+          format: "cowork-v1",
+          output: "relative.zip",
+        }),
+      () =>
+        parseTestRequest({
+          release: [releaseHandle],
+          "release-set": setHandle,
+          "evaluation-profile": "native@v1",
+          target: ["codex=/tmp/codex-home"],
+        }),
+      () =>
+        parseStatusRequest({
+          "content-workspace": "/tmp/content",
+          "repository-identity": "repo",
+          target: ["codex=relative"],
+        }),
+      () =>
+        parseControllerProjectionBinding({
+          "provider-executable": ["codex=/tmp/codex", "codex=/tmp/other-codex"],
+        }),
     ]) {
       expect(() => {
         invalid();
@@ -145,10 +158,15 @@ describe("qualified lifecycle command boundary", () => {
     expect(clientConstructions).toBe(0);
 
     const command = runRawr([
-      "agent", "plugins", "package",
-      "--artifact", releaseHandle,
-      "--format", "cowork-v1",
-      "--output", "relative.zip",
+      "agent",
+      "plugins",
+      "package",
+      "--artifact",
+      releaseHandle,
+      "--format",
+      "cowork-v1",
+      "--output",
+      "relative.zip",
       "--json",
     ]);
     expect(command.status).toBe(2);
@@ -220,10 +238,12 @@ describe("qualified lifecycle command boundary", () => {
     }
 
     expect(clientConstructions).toBe(0);
-    expect(() => parseCheckOperationRequest(
-      { mode: "release-input-record" },
-      new Uint8Array(MAX_RELEASE_INPUT_ENVELOPE_BYTES + 1),
-    )).toThrow("stdin exceeds");
+    expect(() =>
+      parseCheckOperationRequest(
+        { mode: "release-input-record" },
+        new Uint8Array(MAX_RELEASE_INPUT_ENVELOPE_BYTES + 1)
+      )
+    ).toThrow("stdin exceeds");
 
     for (const retired of [
       ["--mode", "protected-lanes"],
@@ -237,23 +257,31 @@ describe("qualified lifecycle command boundary", () => {
   });
 
   it("parses every command into its closed procedure request", () => {
-    expect(parseCheckOperationRequest({ ...releaseWorkspace(), mode: "release", plugin: "alpha" }))
-      .toMatchObject({ operation: "releases.check", input: { mode: { kind: "targeted", pluginId: "alpha" } } });
-    expect(parseCheckOperationRequest({ ...stagedReleaseWorkspace(), mode: "repository-staged" }))
-      .toMatchObject({
-        operation: "releases.checkRepository",
-        input: { kind: "staged", contentWorkspace: { locator: "/tmp/content" } },
-      });
-    expect(parseCheckOperationRequest({ ...releaseWorkspace(), mode: "repository-clean" }))
-      .toMatchObject({
-        operation: "releases.checkRepository",
-        input: { kind: "clean", contentWorkspace: { sourceCommit: hex40, sourceTree: hex64 } },
-      });
-    expect(parseCheckOperationRequest({
-      ...stagedReleaseWorkspace(),
-      mode: "release-input-refresh",
-      member: ["dev", "cognition"],
-    })).toEqual({
+    expect(
+      parseCheckOperationRequest({ ...releaseWorkspace(), mode: "release", plugin: "alpha" })
+    ).toMatchObject({
+      operation: "releases.check",
+      input: { mode: { kind: "targeted", pluginId: "alpha" } },
+    });
+    expect(
+      parseCheckOperationRequest({ ...stagedReleaseWorkspace(), mode: "repository-staged" })
+    ).toMatchObject({
+      operation: "releases.checkRepository",
+      input: { kind: "staged", contentWorkspace: { locator: "/tmp/content" } },
+    });
+    expect(
+      parseCheckOperationRequest({ ...releaseWorkspace(), mode: "repository-clean" })
+    ).toMatchObject({
+      operation: "releases.checkRepository",
+      input: { kind: "clean", contentWorkspace: { sourceCommit: hex40, sourceTree: hex64 } },
+    });
+    expect(
+      parseCheckOperationRequest({
+        ...stagedReleaseWorkspace(),
+        mode: "release-input-refresh",
+        member: ["dev", "cognition"],
+      })
+    ).toEqual({
       operation: "releases.refreshReleaseInput",
       input: {
         contentWorkspace: {
@@ -269,44 +297,46 @@ describe("qualified lifecycle command boundary", () => {
         memberIds: ["dev", "cognition"],
       },
     });
-    expect(parseCheckOperationRequest({
-      mode: "current-main-record",
-      "current-main-body-json": JSON.stringify(currentMainBodyFixture()),
-    })).toEqual({
+    expect(
+      parseCheckOperationRequest({
+        mode: "current-main-record",
+        "current-main-body-json": JSON.stringify(currentMainBodyFixture()),
+      })
+    ).toEqual({
       operation: "governance.currentMainRecord",
       input: { kind: "encode-body", body: currentMainBodyFixture() },
     });
-    const envelopeJson = "{\"schemaVersion\":2}\n";
-    expect(parseCheckOperationRequest({
-      mode: "current-main-record",
-      "current-main-envelope-json": envelopeJson,
-    })).toEqual({
+    const envelopeJson = '{"schemaVersion":2}\n';
+    expect(
+      parseCheckOperationRequest({
+        mode: "current-main-record",
+        "current-main-envelope-json": envelopeJson,
+      })
+    ).toEqual({
       operation: "governance.currentMainRecord",
       input: { kind: "validate-envelope", bytes: new TextEncoder().encode(envelopeJson) },
     });
     const releaseInputBody = { schemaVersion: 1, contentAuthority: "rawr-hq" };
-    expect(parseCheckOperationRequest(
-      { mode: "release-input-record" },
-      new TextEncoder().encode(JSON.stringify(releaseInputBody)),
-    )).toEqual({
+    expect(
+      parseCheckOperationRequest(
+        { mode: "release-input-record" },
+        new TextEncoder().encode(JSON.stringify(releaseInputBody))
+      )
+    ).toEqual({
       operation: "releases.releaseInputRecord",
       input: { kind: "encode-body", body: releaseInputBody },
     });
     const releaseInputEnvelope = new TextEncoder().encode(
-      `{\"releaseInputDigest\":\"ri1_${"0".repeat(64)}\",\"body\":{}}\n`,
+      `{\"releaseInputDigest\":\"ri1_${"0".repeat(64)}\",\"body\":{}}\n`
     );
-    expect(parseCheckOperationRequest(
-      { mode: "release-input-record" },
-      releaseInputEnvelope,
-    )).toEqual({
+    expect(
+      parseCheckOperationRequest({ mode: "release-input-record" }, releaseInputEnvelope)
+    ).toEqual({
       operation: "releases.releaseInputRecord",
       input: { kind: "validate-envelope", bytes: releaseInputEnvelope },
     });
     const invalidUtf8 = new Uint8Array([0xff]);
-    expect(parseCheckOperationRequest(
-      { mode: "release-input-record" },
-      invalidUtf8,
-    )).toEqual({
+    expect(parseCheckOperationRequest({ mode: "release-input-record" }, invalidUtf8)).toEqual({
       operation: "releases.releaseInputRecord",
       input: { kind: "validate-envelope", bytes: invalidUtf8 },
     });
@@ -320,20 +350,35 @@ describe("qualified lifecycle command boundary", () => {
     expect(parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] })).toMatchObject({
       sourceIds: ["vendor-a"],
     });
-    expect(parsePackageRequest({ artifact: releaseHandle, format: "cowork-v1", output: "/tmp/alpha.zip" }))
-      .toMatchObject({ artifactRef: { kind: "release" }, outputPath: "/tmp/alpha.zip" });
-    expect(parseTestRequest({
-      "release-set": setHandle,
-      "evaluation-profile": "native@v1",
-      target: ["codex=/tmp/codex-home", "claude=/tmp/claude-home"],
-    })).toMatchObject({ kind: "complete-test" });
-    expect(parseSyncRequest(providerWorkspace())).toMatchObject({ kind: "canonical-sync", channel: "current-main" });
-    expect(parseStatusRequest(providerWorkspace())).toMatchObject({ kind: "canonical-status", channel: "current-main" });
-    expect(parseCheckOperationRequest({
-      mode: "current-main-selection",
-      "content-workspace": "/tmp/content",
-      "repository-identity": "git:github.com/rawr-ai/rawr-hq",
-    })).toMatchObject({
+    expect(
+      parsePackageRequest({
+        artifact: releaseHandle,
+        format: "cowork-v1",
+        output: "/tmp/alpha.zip",
+      })
+    ).toMatchObject({ artifactRef: { kind: "release" }, outputPath: "/tmp/alpha.zip" });
+    expect(
+      parseTestRequest({
+        "release-set": setHandle,
+        "evaluation-profile": "native@v1",
+        target: ["codex=/tmp/codex-home", "claude=/tmp/claude-home"],
+      })
+    ).toMatchObject({ kind: "complete-test" });
+    expect(parseSyncRequest(providerWorkspace())).toMatchObject({
+      kind: "canonical-sync",
+      channel: "current-main",
+    });
+    expect(parseStatusRequest(providerWorkspace())).toMatchObject({
+      kind: "canonical-status",
+      channel: "current-main",
+    });
+    expect(
+      parseCheckOperationRequest({
+        mode: "current-main-selection",
+        "content-workspace": "/tmp/content",
+        "repository-identity": "git:github.com/rawr-ai/rawr-hq",
+      })
+    ).toMatchObject({
       operation: "governance.currentMainSelection",
       input: {
         locator: {
@@ -346,9 +391,13 @@ describe("qualified lifecycle command boundary", () => {
 
   it("executes the pure current-main record operation without executable authority", () => {
     const result = runRawr([
-      "agent", "plugins", "check",
-      "--mode", "current-main-record",
-      "--current-main-body-json", JSON.stringify(currentMainBodyFixture()),
+      "agent",
+      "plugins",
+      "check",
+      "--mode",
+      "current-main-record",
+      "--current-main-body-json",
+      JSON.stringify(currentMainBodyFixture()),
       "--json",
     ]);
 
@@ -370,17 +419,25 @@ describe("qualified lifecycle command boundary", () => {
     expect(new TextEncoder().encode(projected.envelopeText).byteLength).toBe(projected.byteLength);
 
     const human = runRawr([
-      "agent", "plugins", "check",
-      "--mode", "current-main-record",
-      "--current-main-body-json", JSON.stringify(currentMainBodyFixture()),
+      "agent",
+      "plugins",
+      "check",
+      "--mode",
+      "current-main-record",
+      "--current-main-body-json",
+      JSON.stringify(currentMainBodyFixture()),
     ]);
     expect(human.status, human.stderr).toBe(0);
     expect(human.stdout).toBe(projected.envelopeText);
 
     const validated = runRawr([
-      "agent", "plugins", "check",
-      "--mode", "current-main-record",
-      "--current-main-envelope-json", projected.envelopeText,
+      "agent",
+      "plugins",
+      "check",
+      "--mode",
+      "current-main-record",
+      "--current-main-envelope-json",
+      projected.envelopeText,
       "--json",
     ]);
     expect(validated.status, validated.stderr).toBe(0);
@@ -395,10 +452,7 @@ describe("qualified lifecycle command boundary", () => {
 
   it("authors and validates release-input records from bounded stdin without executable authority", () => {
     const bodyText = JSON.stringify(productFixture().releaseInput.body);
-    const args = [
-      "agent", "plugins", "check",
-      "--mode", "release-input-record",
-    ] as const;
+    const args = ["agent", "plugins", "check", "--mode", "release-input-record"] as const;
     const result = runRawr([...args, "--json"], bodyText);
 
     expect(result.status, result.stderr).toBe(0);
@@ -407,7 +461,10 @@ describe("qualified lifecycle command boundary", () => {
       ok: true,
       data: {
         operation: "releases.releaseInputRecord",
-        result: { ok: true, value: { releaseInputDigest: expect.stringMatching(/^ri1_[0-9a-f]{64}$/u) } },
+        result: {
+          ok: true,
+          value: { releaseInputDigest: expect.stringMatching(/^ri1_[0-9a-f]{64}$/u) },
+        },
       },
     });
     const data = jsonRecord(jsonRecord(output).data);
@@ -415,8 +472,11 @@ describe("qualified lifecycle command boundary", () => {
     const projectedValue = jsonRecord(projectedResult.value);
     expect(projectedValue.bytes).toBeUndefined();
     expect(typeof projectedValue.envelopeText).toBe("string");
-    if (typeof projectedValue.envelopeText !== "string") throw new Error("Missing release-input envelope text");
-    expect(new TextEncoder().encode(projectedValue.envelopeText).byteLength).toBe(projectedValue.byteLength);
+    if (typeof projectedValue.envelopeText !== "string")
+      throw new Error("Missing release-input envelope text");
+    expect(new TextEncoder().encode(projectedValue.envelopeText).byteLength).toBe(
+      projectedValue.byteLength
+    );
 
     const human = runRawr(args, bodyText);
     expect(human.status, human.stderr).toBe(0);
@@ -439,11 +499,10 @@ describe("qualified lifecycle command boundary", () => {
       expect(rejected.status, `${rejected.stderr}\n${rejected.stdout}`).not.toBe(0);
       expect(parseSingleJson(rejected.stdout)).toMatchObject({ ok: false });
     }
-    const providerBinding = runRawr([
-      ...args,
-      "--provider-executable", "codex=/usr/bin/false",
-      "--json",
-    ], bodyText);
+    const providerBinding = runRawr(
+      [...args, "--provider-executable", "codex=/usr/bin/false", "--json"],
+      bodyText
+    );
     expect(providerBinding.status).toBe(2);
     expect(providerBinding.stderr).toContain("Nonexistent flag: --provider-executable");
 
@@ -483,18 +542,31 @@ describe("qualified lifecycle command boundary", () => {
       git(fixture.path, ["commit", "-m", "fixture"]);
 
       const args = [
-        "agent", "plugins", "check",
-        "--mode", "release-input-refresh",
-        "--content-workspace", fixture.path,
-        "--repository-identity", "git:personal-rawr-hq",
-        "--content-authority", "personal-rawr-hq",
-        "--remote-name", "origin",
-        "--remote-url", "https://example.invalid/rawr-hq.git",
-        "--ref", "refs/heads/main",
-        "--release-input", ".rawr/release-input.json",
-        "--plugin-root", "plugins/agents",
-        "--member", "alpha",
-        "--git-executable", "/usr/bin/git",
+        "agent",
+        "plugins",
+        "check",
+        "--mode",
+        "release-input-refresh",
+        "--content-workspace",
+        fixture.path,
+        "--repository-identity",
+        "git:personal-rawr-hq",
+        "--content-authority",
+        "personal-rawr-hq",
+        "--remote-name",
+        "origin",
+        "--remote-url",
+        "https://example.invalid/rawr-hq.git",
+        "--ref",
+        "refs/heads/main",
+        "--release-input",
+        ".rawr/release-input.json",
+        "--plugin-root",
+        "plugins/agents",
+        "--member",
+        "alpha",
+        "--git-executable",
+        "/usr/bin/git",
       ] as const;
       const json = runRawr([...args, "--json"]);
       expect(json.status, `${json.stderr}\n${json.stdout}`).toBe(0);
@@ -528,45 +600,65 @@ describe("qualified lifecycle command boundary", () => {
   });
 
   it("preserves status exit semantics and stutter outcomes without mutation dispatch", async () => {
-    expect(lifecycleResultExitCode("providers.canonicalStatus", {
-      ok: true,
-      value: [{ status: "CONVERGED" }, { status: "CONVERGED" }],
-    })).toBe(0);
-    expect(lifecycleResultExitCode("providers.canonicalStatus", {
-      ok: true,
-      value: [{ status: "CONVERGED" }, { status: "DRIFTED" }],
-    })).toBe(1);
-    expect(lifecycleResultExitCode("providers.canonicalStatus", {
-      ok: true,
-      value: [{ status: "CONVERGED" }, { status: "BLOCKED_SELECTION" }],
-    })).toBe(2);
+    expect(
+      lifecycleResultExitCode("providers.canonicalStatus", {
+        ok: true,
+        value: [{ status: "CONVERGED" }, { status: "CONVERGED" }],
+      })
+    ).toBe(0);
+    expect(
+      lifecycleResultExitCode("providers.canonicalStatus", {
+        ok: true,
+        value: [{ status: "CONVERGED" }, { status: "DRIFTED" }],
+      })
+    ).toBe(1);
+    expect(
+      lifecycleResultExitCode("providers.canonicalStatus", {
+        ok: true,
+        value: [{ status: "CONVERGED" }, { status: "BLOCKED_SELECTION" }],
+      })
+    ).toBe(2);
     expect(lifecycleResultExitCode("providers.canonicalStatus", { ok: false, issues: [] })).toBe(1);
-    expect(lifecycleResultExitCode("providers.canonicalSync", {
-      ok: true,
-      value: {
-        status: "Blocked",
-        targets: [{ status: "BLOCKED_SELECTION" }],
-      },
-    })).toBe(2);
-    expect(lifecycleResultExitCode("governance.currentMainRecord", { ok: true, value: {} })).toBe(0);
-    expect(lifecycleResultExitCode("releases.refreshReleaseInput", {
-      kind: "ReleaseInputCandidateReady",
-    })).toBe(0);
-    expect(lifecycleResultExitCode("releases.refreshReleaseInput", {
-      kind: "RepositoryIneligible",
-    })).toBe(1);
-    expect(lifecycleResultExitCode("governance.currentMainRecord", {
-      ok: false,
-      failure: { code: "InvalidSchema", path: "currentMain", message: "invalid" },
-    })).toBe(1);
-    expect(lifecycleResultExitCode("governance.currentMainSelection", {
-      kind: "CURRENT_ELIGIBLE",
-      selection: {},
-    })).toBe(0);
-    expect(lifecycleResultExitCode("governance.currentMainSelection", {
-      kind: "STALE_RECORD",
-      reason: "stale",
-    })).toBe(2);
+    expect(
+      lifecycleResultExitCode("providers.canonicalSync", {
+        ok: true,
+        value: {
+          status: "Blocked",
+          targets: [{ status: "BLOCKED_SELECTION" }],
+        },
+      })
+    ).toBe(2);
+    expect(lifecycleResultExitCode("governance.currentMainRecord", { ok: true, value: {} })).toBe(
+      0
+    );
+    expect(
+      lifecycleResultExitCode("releases.refreshReleaseInput", {
+        kind: "ReleaseInputCandidateReady",
+      })
+    ).toBe(0);
+    expect(
+      lifecycleResultExitCode("releases.refreshReleaseInput", {
+        kind: "RepositoryIneligible",
+      })
+    ).toBe(1);
+    expect(
+      lifecycleResultExitCode("governance.currentMainRecord", {
+        ok: false,
+        failure: { code: "InvalidSchema", path: "currentMain", message: "invalid" },
+      })
+    ).toBe(1);
+    expect(
+      lifecycleResultExitCode("governance.currentMainSelection", {
+        kind: "CURRENT_ELIGIBLE",
+        selection: {},
+      })
+    ).toBe(0);
+    expect(
+      lifecycleResultExitCode("governance.currentMainSelection", {
+        kind: "STALE_RECORD",
+        reason: "stale",
+      })
+    ).toBe(2);
 
     let writes = 0;
     const client = {
@@ -583,18 +675,30 @@ describe("qualified lifecycle command boundary", () => {
       },
     } as unknown as Client;
 
-    await invokeLifecycleProcedure({
-      operation: "vendors.status",
-      input: parseVendorStatusRequest(vendorWorkspace()),
-    }, { providerExecutables: {} }, () => client);
-    await invokeLifecycleProcedure({
-      operation: "vendors.update",
-      input: parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] }),
-    }, { providerExecutables: {} }, () => client);
-    await invokeLifecycleProcedure({
-      operation: "providers.canonicalStatus",
-      input: parseStatusRequest(providerWorkspace()),
-    }, { providerExecutables: {} }, () => client);
+    await invokeLifecycleProcedure(
+      {
+        operation: "vendors.status",
+        input: parseVendorStatusRequest(vendorWorkspace()),
+      },
+      { providerExecutables: {} },
+      () => client
+    );
+    await invokeLifecycleProcedure(
+      {
+        operation: "vendors.update",
+        input: parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] }),
+      },
+      { providerExecutables: {} },
+      () => client
+    );
+    await invokeLifecycleProcedure(
+      {
+        operation: "providers.canonicalStatus",
+        input: parseStatusRequest(providerWorkspace()),
+      },
+      { providerExecutables: {} },
+      () => client
+    );
     expect(writes).toBe(0);
 
     const fixture = await createOwnedFixtureRoot();
@@ -605,7 +709,7 @@ describe("qualified lifecycle command boundary", () => {
         ...canonicalStatusCommand(
           path.join(fixture.path, "missing-content-workspace"),
           [`codex=${providerHome}`],
-          "/usr/bin/false",
+          "/usr/bin/false"
         ),
         "--json",
       ]);
@@ -628,19 +732,33 @@ describe("qualified lifecycle command boundary", () => {
   it("emits one typed result when a lifecycle procedure exits nonzero", () => {
     const missingWorkspace = path.join(tmpdir(), `rawr-c5-missing-content-${randomUUID()}`);
     const args = [
-      "agent", "plugins", "check",
-      "--content-workspace", missingWorkspace,
-      "--repository-identity", "github:rawr/hq",
-      "--content-authority", "rawr-hq",
-      "--remote-name", "origin",
-      "--remote-url", "https://example.invalid/rawr-hq.git",
-      "--ref", "refs/heads/main",
-      "--source-commit", hex40,
-      "--source-tree", hex64,
-      "--release-input", "records/release-input.json",
-      "--plugin-root", "plugins/agents",
-      "--plugin", "alpha",
-      "--git-executable", "/usr/bin/git",
+      "agent",
+      "plugins",
+      "check",
+      "--content-workspace",
+      missingWorkspace,
+      "--repository-identity",
+      "github:rawr/hq",
+      "--content-authority",
+      "rawr-hq",
+      "--remote-name",
+      "origin",
+      "--remote-url",
+      "https://example.invalid/rawr-hq.git",
+      "--ref",
+      "refs/heads/main",
+      "--source-commit",
+      hex40,
+      "--source-tree",
+      hex64,
+      "--release-input",
+      "records/release-input.json",
+      "--plugin-root",
+      "plugins/agents",
+      "--plugin",
+      "alpha",
+      "--git-executable",
+      "/usr/bin/git",
     ] as const;
     const result = runRawr([...args, "--json"]);
 
@@ -673,7 +791,8 @@ describe("qualified lifecycle command boundary", () => {
         "evaluation-profile": "native@v1",
         target: [`codex=${providerHome}`],
       });
-      if (targetedTest.kind !== "targeted-test") throw new Error("targeted test fixture parsed as complete-set mode");
+      if (targetedTest.kind !== "targeted-test")
+        throw new Error("targeted test fixture parsed as complete-set mode");
 
       const cases: readonly Readonly<{
         label: string;
@@ -683,7 +802,10 @@ describe("qualified lifecycle command boundary", () => {
       }>[] = [
         {
           label: "missing Git executable",
-          request: { operation: "releases.check", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
+          request: {
+            operation: "releases.check",
+            input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }),
+          },
           binding: { gitExecutable: missingGit, providerExecutables: {} },
           command: releaseCheckCommand(fixture.path, missingGit),
         },
@@ -695,25 +817,29 @@ describe("qualified lifecycle command boundary", () => {
           },
           binding: { providerExecutables: { codex: providerAlias } },
           command: [
-            "agent", "plugins", "test",
-            "--release", releaseHandle,
-            "--evaluation-profile", "native@v1",
-            "--target", `codex=${providerHome}`,
-            "--provider-executable", `codex=${providerAlias}`,
+            "agent",
+            "plugins",
+            "test",
+            "--release",
+            releaseHandle,
+            "--evaluation-profile",
+            "native@v1",
+            "--target",
+            `codex=${providerHome}`,
+            "--provider-executable",
+            `codex=${providerAlias}`,
           ],
         },
       ];
 
       for (const testCase of cases) {
         let clientConstructions = 0;
-        const rejected = await captureRejection(projectLifecycleOperation(
-          testCase.request,
-          testCase.binding,
-          () => {
+        const rejected = await captureRejection(
+          projectLifecycleOperation(testCase.request, testCase.binding, () => {
             clientConstructions += 1;
             return recordingClient([]);
-          },
-        ));
+          })
+        );
         expect.soft(rejected, testCase.label).toMatchObject({
           code: "LIFECYCLE_AUTHORITY_BINDING_INVALID",
         });
@@ -766,10 +892,12 @@ describe("qualified lifecycle command boundary", () => {
           providerExecutables: testCase.providerExecutables,
         };
         let clientConstructions = 0;
-        const rejected = await captureRejection(projectLifecycleOperation(request, binding, () => {
-          clientConstructions += 1;
-          return recordingClient([]);
-        }));
+        const rejected = await captureRejection(
+          projectLifecycleOperation(request, binding, () => {
+            clientConstructions += 1;
+            return recordingClient([]);
+          })
+        );
         expect.soft(rejected, testCase.label).toMatchObject({ code: "LIFECYCLE_INPUT_INVALID" });
         expect.soft(clientConstructions, testCase.label).toBe(0);
 
@@ -778,7 +906,7 @@ describe("qualified lifecycle command boundary", () => {
             fixture.path,
             testCase.targets,
             "/bin/echo",
-            "claude" in testCase.providerExecutables ? "/bin/echo" : undefined,
+            "claude" in testCase.providerExecutables ? "/bin/echo" : undefined
           ),
           "--json",
         ]);
@@ -823,7 +951,11 @@ function commandFiles(root: string, prefix: string): string[] {
         continue;
       }
       if (!entry.isFile() || !entry.name.endsWith(".ts")) continue;
-      const relative = path.relative(root, absolute).slice(0, -".ts".length).split(path.sep).join(":");
+      const relative = path
+        .relative(root, absolute)
+        .slice(0, -".ts".length)
+        .split(path.sep)
+        .join(":");
       ids.push(`${prefix}:${relative}`);
     }
   };
@@ -862,7 +994,8 @@ function recordingClient(calls: string[]): Client {
 function operationRequests(): LifecycleOperationRequest[] {
   const release = parseArtifactHandle(releaseHandle);
   const releaseSet = parseArtifactHandle(setHandle);
-  if (release.kind !== "release" || releaseSet.kind !== "complete-set") throw new Error("fixture handle mismatch");
+  if (release.kind !== "release" || releaseSet.kind !== "complete-set")
+    throw new Error("fixture handle mismatch");
   const target = [{ provider: "codex" as const, home: "/tmp/codex-home" }];
   const stagedCheck = parseCheckOperationRequest({
     ...stagedReleaseWorkspace(),
@@ -879,7 +1012,7 @@ function operationRequests(): LifecycleOperationRequest[] {
   });
   const releaseInputRecord = parseCheckOperationRequest(
     { mode: "release-input-record" },
-    new TextEncoder().encode(JSON.stringify({ schemaVersion: 1 })),
+    new TextEncoder().encode(JSON.stringify({ schemaVersion: 1 }))
   );
   const releaseInputRefresh = parseCheckOperationRequest({
     ...stagedReleaseWorkspace(),
@@ -887,18 +1020,45 @@ function operationRequests(): LifecycleOperationRequest[] {
     member: ["alpha"],
   });
   return [
-    { operation: "releases.check", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
+    {
+      operation: "releases.check",
+      input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }),
+    },
     stagedCheck,
     releaseInputRecord,
     releaseInputRefresh,
     currentMainRecord,
     currentMainSelection,
-    { operation: "releases.build", input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }) },
+    {
+      operation: "releases.build",
+      input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }),
+    },
     { operation: "vendors.status", input: parseVendorStatusRequest(vendorWorkspace()) },
-    { operation: "vendors.update", input: parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] }) },
-    { operation: "packaging.package", input: parsePackageRequest({ artifact: releaseHandle, format: "cowork-v1", output: "/tmp/a.zip" }) },
-    { operation: "providers.targetedTest", input: { kind: "targeted-test", releases: [release], evaluationProfile: "native@v1", targets: target } },
-    { operation: "providers.completeTest", input: { kind: "complete-test", releaseSet, evaluationProfile: "native@v1", targets: target } },
+    {
+      operation: "vendors.update",
+      input: parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] }),
+    },
+    {
+      operation: "packaging.package",
+      input: parsePackageRequest({
+        artifact: releaseHandle,
+        format: "cowork-v1",
+        output: "/tmp/a.zip",
+      }),
+    },
+    {
+      operation: "providers.targetedTest",
+      input: {
+        kind: "targeted-test",
+        releases: [release],
+        evaluationProfile: "native@v1",
+        targets: target,
+      },
+    },
+    {
+      operation: "providers.completeTest",
+      input: { kind: "complete-test", releaseSet, evaluationProfile: "native@v1", targets: target },
+    },
     { operation: "providers.canonicalSync", input: parseSyncRequest(providerWorkspace()) },
     { operation: "providers.canonicalStatus", input: parseStatusRequest(providerWorkspace()) },
   ];
@@ -985,12 +1145,16 @@ function currentMainBodyFixture() {
 }
 
 function runRawr(args: readonly string[], input?: string | Uint8Array) {
-  return spawnSync("bun", [path.join(cliRoot, "test", "command-fixture", "command-test-cli.ts"), ...args], {
-    cwd: cliRoot,
-    encoding: "utf8",
-    env: { ...process.env, BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" },
-    input,
-  });
+  return spawnSync(
+    "bun",
+    [path.join(cliRoot, "test", "command-fixture", "command-test-cli.ts"), ...args],
+    {
+      cwd: cliRoot,
+      encoding: "utf8",
+      env: { ...process.env, BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" },
+      input,
+    }
+  );
 }
 
 function git(cwd: string, args: readonly string[]): void {
@@ -1002,19 +1166,33 @@ function git(cwd: string, args: readonly string[]): void {
 
 function releaseCheckCommand(contentWorkspace: string, gitExecutable: string): readonly string[] {
   return [
-    "agent", "plugins", "check",
-    "--content-workspace", contentWorkspace,
-    "--repository-identity", "github:rawr/hq",
-    "--content-authority", "rawr-hq",
-    "--remote-name", "origin",
-    "--remote-url", "https://example.invalid/rawr-hq.git",
-    "--ref", "refs/heads/main",
-    "--source-commit", hex40,
-    "--source-tree", hex64,
-    "--release-input", "records/release-input.json",
-    "--plugin-root", "plugins/agents",
-    "--plugin", "alpha",
-    "--git-executable", gitExecutable,
+    "agent",
+    "plugins",
+    "check",
+    "--content-workspace",
+    contentWorkspace,
+    "--repository-identity",
+    "github:rawr/hq",
+    "--content-authority",
+    "rawr-hq",
+    "--remote-name",
+    "origin",
+    "--remote-url",
+    "https://example.invalid/rawr-hq.git",
+    "--ref",
+    "refs/heads/main",
+    "--source-commit",
+    hex40,
+    "--source-tree",
+    hex64,
+    "--release-input",
+    "records/release-input.json",
+    "--plugin-root",
+    "plugins/agents",
+    "--plugin",
+    "alpha",
+    "--git-executable",
+    gitExecutable,
   ];
 }
 
@@ -1022,16 +1200,24 @@ function canonicalStatusCommand(
   contentWorkspace: string,
   targets: readonly string[],
   codexExecutable: string,
-  claudeExecutable?: string,
+  claudeExecutable?: string
 ): readonly string[] {
   return [
-    "agent", "plugins", "status",
-    "--content-workspace", contentWorkspace,
-    "--repository-identity", "git:fixture-agent-plugins",
+    "agent",
+    "plugins",
+    "status",
+    "--content-workspace",
+    contentWorkspace,
+    "--repository-identity",
+    "git:fixture-agent-plugins",
     ...targets.flatMap((target) => ["--target", target]),
-    "--git-executable", "/usr/bin/git",
-    "--provider-executable", `codex=${codexExecutable}`,
-    ...(claudeExecutable === undefined ? [] : ["--provider-executable", `claude=${claudeExecutable}`]),
+    "--git-executable",
+    "/usr/bin/git",
+    "--provider-executable",
+    `codex=${codexExecutable}`,
+    ...(claudeExecutable === undefined
+      ? []
+      : ["--provider-executable", `claude=${claudeExecutable}`]),
   ];
 }
 

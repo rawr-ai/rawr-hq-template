@@ -26,13 +26,14 @@ export default class JournalTail extends RawrCommand {
 
     const response = await createHqOpsClient(workspaceRoot).journal.tailSnippets(
       { limit: Number.isFinite(limit) ? limit : 20 },
-      createHqOpsCallOptions("cli.journal.tail"),
+      createHqOpsCallOptions("cli.journal.tail")
     );
     const result = this.ok({ snippets: response.snippets });
     this.outputResult(result, {
       flags: baseFlags,
       human: () => {
-        for (const snippet of response.snippets) this.log(`${snippet.id}  ${snippet.title}  (${snippet.preview})`);
+        for (const snippet of response.snippets)
+          this.log(`${snippet.id}  ${snippet.title}  (${snippet.preview})`);
       },
     });
   }

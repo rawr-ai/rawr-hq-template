@@ -29,7 +29,7 @@ export default class JournalShow extends RawrCommand {
     const id = String(args.id);
     const response = await createHqOpsClient(workspaceRoot).journal.getSnippet(
       { id },
-      createHqOpsCallOptions("cli.journal.show"),
+      createHqOpsCallOptions("cli.journal.show")
     );
     const snippet = response.snippet;
     if (!snippet) {

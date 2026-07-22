@@ -9,10 +9,7 @@ import type {
   ReservedControllerSurface,
 } from "./model";
 import { sha256RegularFile } from "./native-manager-protocol";
-import {
-  nativeInstallArtifactName,
-  parseNativeInstallProvenance,
-} from "./install-provenance";
+import { nativeInstallArtifactName, parseNativeInstallProvenance } from "./install-provenance";
 import type {
   ExternalExtensionPreparationPort,
   InspectedInstallArtifact,
@@ -58,10 +55,10 @@ export class NodeExternalExtensionPreparationPort implements ExternalExtensionPr
   private async stageLocalArtifact(
     inspected: InspectedInstallArtifact & {
       candidate: Extract<CandidateInspection, { accepted: true }>;
-    },
+    }
   ): Promise<PreparedInstallArtifact> {
     const stagingRoot = await realpath(
-      await mkdtemp(path.join(os.tmpdir(), "rawr-external-artifact-")),
+      await mkdtemp(path.join(os.tmpdir(), "rawr-external-artifact-"))
     );
     let artifactPath = path.join(stagingRoot, "candidate.tgz");
     try {
@@ -81,7 +78,7 @@ export class NodeExternalExtensionPreparationPort implements ExternalExtensionPr
         nativeInstallArtifactName({
           artifactSha256,
           staticFingerprint: inspected.candidate.extension.fingerprint,
-        }),
+        })
       );
       await rename(artifactPath, addressedPath);
       artifactPath = addressedPath;
@@ -96,7 +93,7 @@ export class NodeExternalExtensionPreparationPort implements ExternalExtensionPr
       } catch (cleanupError) {
         throw new AggregateError(
           [primaryError, cleanupError],
-          "external install staging failed and guarded cleanup also failed",
+          "external install staging failed and guarded cleanup also failed"
         );
       }
       throw primaryError;
@@ -126,7 +123,7 @@ async function requireCanonicalTarball(requestedPath: string): Promise<string> {
 function nativeUserEntries(state: NativeRegistryProjection): readonly NativeRegistryUserEntry[] {
   const entries = [
     ...state.active.map((entry) => entry.entry),
-    ...state.quarantined.flatMap((entry) => entry.entry ? [entry.entry] : []),
+    ...state.quarantined.flatMap((entry) => (entry.entry ? [entry.entry] : [])),
   ].filter((entry): entry is NativeRegistryUserEntry => entry.type === "user");
   const unique = new Map(entries.map((entry) => [entry.name, entry]));
   if (unique.size !== entries.length) {
@@ -137,7 +134,7 @@ function nativeUserEntries(state: NativeRegistryProjection): readonly NativeRegi
 
 function classifyUpdateEntry(
   state: NativeRegistryProjection,
-  entry: NativeRegistryUserEntry,
+  entry: NativeRegistryUserEntry
 ): PreparedUpdateEntry {
   const entryProvenance = parseNativeInstallProvenance(entry.url);
   const dependencyProvenance = parseNativeInstallProvenance(entry.dependencySpec);
@@ -161,9 +158,9 @@ function classifyUpdateEntry(
         };
   }
   if (
-    dependencyProvenance === null
-    || entryProvenance.artifactSha256 !== dependencyProvenance.artifactSha256
-    || entryProvenance.staticFingerprint !== dependencyProvenance.staticFingerprint
+    dependencyProvenance === null ||
+    entryProvenance.artifactSha256 !== dependencyProvenance.artifactSha256 ||
+    entryProvenance.staticFingerprint !== dependencyProvenance.staticFingerprint
   ) {
     return {
       kind: "reject",
@@ -174,9 +171,9 @@ function classifyUpdateEntry(
 
   const active = state.active.find((candidate) => candidate.entry.name === entry.name);
   if (
-    active === undefined
-    || active.entry.type !== "user"
-    || active.extension.fingerprint !== entryProvenance.staticFingerprint
+    active === undefined ||
+    active.entry.type !== "user" ||
+    active.extension.fingerprint !== entryProvenance.staticFingerprint
   ) {
     return {
       kind: "reject",
@@ -205,12 +202,12 @@ async function removePrivateStagingRoot(root: string): Promise<void> {
   const lexicalRoot = path.resolve(root);
   const offset = path.relative(canonicalTemporaryRoot, lexicalRoot);
   if (
-    path.dirname(lexicalRoot) !== canonicalTemporaryRoot
-    || !path.basename(lexicalRoot).startsWith("rawr-external-artifact-")
-    || offset === ""
-    || offset === ".."
-    || offset.startsWith(`..${path.sep}`)
-    || path.isAbsolute(offset)
+    path.dirname(lexicalRoot) !== canonicalTemporaryRoot ||
+    !path.basename(lexicalRoot).startsWith("rawr-external-artifact-") ||
+    offset === "" ||
+    offset === ".." ||
+    offset.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(offset)
   ) {
     throw new Error("EXTERNAL_EXTENSION_STAGING_CLEANUP_PATH_INVALID");
   }
@@ -219,7 +216,8 @@ async function removePrivateStagingRoot(root: string): Promise<void> {
   try {
     status = await lstat(lexicalRoot);
   } catch (error) {
-    if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") return;
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")
+      return;
     throw error;
   }
   if (status.isSymbolicLink()) {

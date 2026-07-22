@@ -31,11 +31,14 @@ let hostLoggerOverrideDestination: DestinationStream | undefined;
 let fallbackHostLogger = createPinoLogger();
 
 function createPinoLogger(destination: DestinationStream = process.stdout): PinoLogger {
-  return pino({
-    base: null,
-    messageKey: "message",
-    timestamp: pino.stdTimeFunctions.isoTime,
-  }, destination);
+  return pino(
+    {
+      base: null,
+      messageKey: "message",
+      timestamp: pino.stdTimeFunctions.isoTime,
+    },
+    destination
+  );
 }
 
 function createFileDestination(repoRoot: string): DestinationStream {
@@ -60,7 +63,9 @@ function resolveHostLogger(): PinoLogger {
     return existing;
   }
 
-  const logger = createPinoLogger(hostLoggerOverrideDestination ?? createFileDestination(context.repoRoot));
+  const logger = createPinoLogger(
+    hostLoggerOverrideDestination ?? createFileDestination(context.repoRoot)
+  );
   hostLoggersByRepoRoot.set(context.repoRoot, logger);
   return logger;
 }
@@ -85,14 +90,16 @@ function getCorrelationFields(): Record<string, unknown> {
   const spanId = storedSpanContext?.spanId ?? activeSpan?.spanId;
 
   return {
-    ...(context ? {
-      requestId: context.requestId,
-      correlationId: context.correlationId,
-      requestMethod: context.requestMethod,
-      requestPath: context.requestPath,
-      surface: context.surface,
-      ...(context.callerSurface ? { callerSurface: context.callerSurface } : {}),
-    } : {}),
+    ...(context
+      ? {
+          requestId: context.requestId,
+          correlationId: context.correlationId,
+          requestMethod: context.requestMethod,
+          requestPath: context.requestPath,
+          surface: context.surface,
+          ...(context.callerSurface ? { callerSurface: context.callerSurface } : {}),
+        }
+      : {}),
     ...(traceId ? { traceId } : {}),
     ...(spanId ? { spanId } : {}),
   };
@@ -100,11 +107,14 @@ function getCorrelationFields(): Record<string, unknown> {
 
 function emit(level: "info" | "error", event: string, meta?: Record<string, unknown>): void {
   const payload = meta ?? {};
-  resolveHostLogger()[level]({
-    event,
-    ...payload,
-    ...getCorrelationFields(),
-  }, event);
+  resolveHostLogger()[level](
+    {
+      event,
+      ...payload,
+      ...getCorrelationFields(),
+    },
+    event
+  );
 }
 
 export function createHostLoggerAdapter(): ServiceLogger {
@@ -141,14 +151,14 @@ export function createHostLoggingContext(args: {
 
 export async function withHostLoggingContext<T>(
   context: HostLoggingContext,
-  fn: () => Promise<T>,
+  fn: () => Promise<T>
 ): Promise<T> {
   return hostLoggingContext.run(context, fn);
 }
 
 export async function withHostLoggingSpanContext<T>(
   spanContext: Pick<SpanContext, "traceId" | "spanId"> | undefined,
-  fn: () => Promise<T>,
+  fn: () => Promise<T>
 ): Promise<T> {
   if (!spanContext) {
     return fn();
@@ -159,9 +169,9 @@ export async function withHostLoggingSpanContext<T>(
   return hostLoggingSpanContext.run(spanContext, fn);
 }
 
-export function __configureHostLoggerForTests(options: {
-  destination?: DestinationStream;
-} = {}): void {
+export function __configureHostLoggerForTests(
+  options: { destination?: DestinationStream } = {}
+): void {
   flushHostLogger();
   hostLoggersByRepoRoot.clear();
   hostLoggerOverrideDestination = options.destination;

@@ -54,7 +54,7 @@ describe("rpc auth source classification", () => {
           "x-rawr-caller-surface": "internal",
           "x-rawr-service-auth": "verified",
         },
-      }),
+      })
     ).toBe("internal");
 
     expect(
@@ -63,7 +63,7 @@ describe("rpc auth source classification", () => {
           "x-rawr-caller-surface": "trusted-service",
           "x-rawr-service-auth": "verified",
         },
-      }),
+      })
     ).toBe("trusted-service");
 
     expect(
@@ -71,7 +71,7 @@ describe("rpc auth source classification", () => {
         headers: {
           "x-rawr-caller-surface": "internal",
         },
-      }),
+      })
     ).toBe("unlabeled");
 
     expect(
@@ -79,7 +79,7 @@ describe("rpc auth source classification", () => {
         headers: {
           "x-rawr-caller-surface": "trusted-service",
         },
-      }),
+      })
     ).toBe("unlabeled");
   });
 
@@ -90,7 +90,7 @@ describe("rpc auth source classification", () => {
           "x-rawr-caller-surface": "cli",
           "x-rawr-cli-auth": "verified",
         },
-      }),
+      })
     ).toBe("cli");
 
     expect(
@@ -98,7 +98,7 @@ describe("rpc auth source classification", () => {
         headers: {
           "x-rawr-caller-surface": "cli",
         },
-      }),
+      })
     ).toBe("unlabeled");
   });
 
@@ -109,7 +109,7 @@ describe("rpc auth source classification", () => {
           "x-rawr-caller-surface": "first-party",
           cookie: "rawr-session=spoofed-session",
         },
-      }),
+      })
     ).toBe("unlabeled");
 
     expect(
@@ -118,7 +118,7 @@ describe("rpc auth source classification", () => {
           "x-rawr-caller-surface": "internal",
           authorization: "service spoofed-token",
         },
-      }),
+      })
     ).toBe("unlabeled");
 
     expect(
@@ -128,12 +128,14 @@ describe("rpc auth source classification", () => {
           "x-rawr-service-auth": "verified",
           "user-agent": "rawr-cli/9.9.9",
         },
-      }),
+      })
     ).toBe("unlabeled");
   });
 
   it("denies runtime-ingress, external, and unlabeled rpc requests", () => {
-    expect(classify({ headers: { "x-rawr-caller-surface": "runtime-ingress" } })).toBe("runtime-ingress");
+    expect(classify({ headers: { "x-rawr-caller-surface": "runtime-ingress" } })).toBe(
+      "runtime-ingress"
+    );
     expect(classify({ headers: { "x-rawr-caller-surface": "external" } })).toBe("external");
     expect(classify({ headers: {} })).toBe("unlabeled");
   });
@@ -146,7 +148,7 @@ describe("rpc auth source classification", () => {
           "x-rawr-caller-surface": "first-party",
           "x-rawr-session-auth": "verified",
         },
-      }),
+      })
     ).toBe("external");
   });
 });

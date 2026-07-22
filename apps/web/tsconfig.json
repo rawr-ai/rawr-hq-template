@@ -7,4 +7,3 @@
   },
   "include": ["src", "test", "vite.config.ts"]
 }
-

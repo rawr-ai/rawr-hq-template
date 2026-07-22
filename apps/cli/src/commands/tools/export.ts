@@ -19,21 +19,51 @@ const TOOLS: ToolExport[] = [
   { command: "routine check", description: "Run doctor + security + tests" },
   { command: "routine snapshot", description: "Write a routine snapshot packet" },
   { command: "tools export", description: "Export a list of known CLI commands" },
-  { command: "sessions list", description: "List Claude/Codex sessions (provided by template example plugin)" },
-  { command: "sessions resolve <id>", description: "Resolve a session id/path to a file (example plugin)" },
-  { command: "sessions search --query-metadata <q>", description: "Search sessions by metadata (example plugin)" },
-  { command: "sessions search --query <regex>", description: "Search sessions by transcript content (example plugin)" },
-  { command: "sessions extract <id>", description: "Extract a session transcript (example plugin)" },
+  {
+    command: "sessions list",
+    description: "List Claude/Codex sessions (provided by template example plugin)",
+  },
+  {
+    command: "sessions resolve <id>",
+    description: "Resolve a session id/path to a file (example plugin)",
+  },
+  {
+    command: "sessions search --query-metadata <q>",
+    description: "Search sessions by metadata (example plugin)",
+  },
+  {
+    command: "sessions search --query <regex>",
+    description: "Search sessions by transcript content (example plugin)",
+  },
+  {
+    command: "sessions extract <id>",
+    description: "Extract a session transcript (example plugin)",
+  },
   { command: "agent plugins check", description: "Inspect curated source and release eligibility" },
   { command: "agent plugins vendors status", description: "Inspect declared vendor state" },
-  { command: "agent plugins vendors update", description: "Author one reviewable declared vendor update" },
+  {
+    command: "agent plugins vendors update",
+    description: "Author one reviewable declared vendor update",
+  },
   { command: "agent plugins build", description: "Build immutable curated release artifacts" },
-  { command: "agent plugins test", description: "Test explicit release artifacts against explicit provider homes" },
-  { command: "agent plugins package", description: "Render a deterministic package at an explicit output" },
-  { command: "agent plugins sync", description: "Converge current-main at explicit provider homes" },
+  {
+    command: "agent plugins test",
+    description: "Test explicit release artifacts against explicit provider homes",
+  },
+  {
+    command: "agent plugins package",
+    description: "Render a deterministic package at an explicit output",
+  },
+  {
+    command: "agent plugins sync",
+    description: "Converge current-main at explicit provider homes",
+  },
   { command: "agent plugins status", description: "Inspect current-main and provider state" },
   { command: "plugins install <pkg>", description: "Install an external oclif plugin (Channel A)" },
-  { command: "plugins link <path>", description: "Link an external oclif plugin for development (Channel A)" },
+  {
+    command: "plugins link <path>",
+    description: "Link an external oclif plugin for development (Channel A)",
+  },
   { command: "plugins list", description: "List external oclif plugins" },
   { command: "plugins inspect <pkg>", description: "Inspect an external oclif plugin" },
   { command: "plugins update [pkg]", description: "Update external oclif plugins" },
@@ -48,8 +78,14 @@ const TOOLS: ToolExport[] = [
   { command: "reflect", description: "Suggest commands/workflows based on journal" },
   { command: "workflow harden", description: "Run snapshot + security + posture workflow" },
   { command: "cli command create <topic> <name>", description: "Create one official CLI command" },
-  { command: "cli extension create <id> --destination <path>", description: "Create portable external extension source" },
-  { command: "agent plugins create <id> --content-workspace <path>", description: "Create curated agent-plugin content" },
+  {
+    command: "cli extension create <id> --destination <path>",
+    description: "Create portable external extension source",
+  },
+  {
+    command: "agent plugins create <id> --content-workspace <path>",
+    description: "Create curated agent-plugin content",
+  },
 ];
 
 export default class ToolsExport extends RawrCommand {

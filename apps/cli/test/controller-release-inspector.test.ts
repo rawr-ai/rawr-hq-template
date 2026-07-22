@@ -93,37 +93,42 @@ describe("controller release inspector", () => {
     });
 
     expect(inspection.status).toBe("invalid");
-    expect(inspection.issues).toContainEqual(expect.objectContaining({ code: "RELEASE_ROOT_ALIAS" }));
+    expect(inspection.issues).toContainEqual(
+      expect.objectContaining({ code: "RELEASE_ROOT_ALIAS" })
+    );
   });
 
-  it.each(["symlink", "hardlink"] as const)(
-    "rejects a byte-identical %s release envelope",
-    async (aliasKind) => {
-      const fixture = await writeReleaseFixture();
-      const envelopePath = path.join(fixture.root, CONTROLLER_ENVELOPE_PATH);
-      const outsidePath = path.join(await temporaryDirectory(`${aliasKind}-envelope`), "envelope.json");
-      await writeFile(outsidePath, await readFile(envelopePath));
-      await rm(envelopePath);
-      if (aliasKind === "symlink") await symlink(outsidePath, envelopePath);
-      else await link(outsidePath, envelopePath);
+  it.each([
+    "symlink",
+    "hardlink",
+  ] as const)("rejects a byte-identical %s release envelope", async (aliasKind) => {
+    const fixture = await writeReleaseFixture();
+    const envelopePath = path.join(fixture.root, CONTROLLER_ENVELOPE_PATH);
+    const outsidePath = path.join(
+      await temporaryDirectory(`${aliasKind}-envelope`),
+      "envelope.json"
+    );
+    await writeFile(outsidePath, await readFile(envelopePath));
+    await rm(envelopePath);
+    if (aliasKind === "symlink") await symlink(outsidePath, envelopePath);
+    else await link(outsidePath, envelopePath);
 
-      const inspection = await inspectControllerRelease({
-        releaseRoot: fixture.root,
-        expectedDigest: fixture.digest,
-      });
+    const inspection = await inspectControllerRelease({
+      releaseRoot: fixture.root,
+      expectedDigest: fixture.digest,
+    });
 
-      expect(inspection.status).toBe("invalid");
-      expect(inspection.issues).toContainEqual(
-        expect.objectContaining({ code: "RELEASE_ENVELOPE_ALIAS" }),
-      );
-    },
-  );
+    expect(inspection.status).toBe("invalid");
+    expect(inspection.issues).toContainEqual(
+      expect.objectContaining({ code: "RELEASE_ENVELOPE_ALIAS" })
+    );
+  });
 
   it("rejects an oversized sparse release envelope before decoding it", async () => {
     const fixture = await writeReleaseFixture();
     await truncate(
       path.join(fixture.root, CONTROLLER_ENVELOPE_PATH),
-      MAX_CONTROLLER_RELEASE_ENVELOPE_BYTES + 1,
+      MAX_CONTROLLER_RELEASE_ENVELOPE_BYTES + 1
     );
 
     const inspection = await inspectControllerRelease({
@@ -132,7 +137,9 @@ describe("controller release inspector", () => {
     });
 
     expect(inspection.status).toBe("invalid");
-    expect(inspection.issues).toContainEqual(expect.objectContaining({ code: "ENVELOPE_TOO_LARGE" }));
+    expect(inspection.issues).toContainEqual(
+      expect.objectContaining({ code: "ENVELOPE_TOO_LARGE" })
+    );
   });
 });
 
@@ -174,18 +181,20 @@ async function writeReleaseFixture(): Promise<{ root: string; digest: string }> 
       architecture: process.arch === "x64" ? "x64" : "arm64",
     },
     entrypoint: CONTROLLER_ENTRY_PATH,
-    officialMembers: [{
-      packageId: "@rawr/cli",
-      role: "command",
-      version: "1.0.0",
-      root: "app",
-      payloadDigest: memberDigest.value,
-      commandIds: ["doctor:global"],
-      topics: ["doctor"],
-      aliases: [],
-      hiddenAliases: [],
-      hooks: [],
-    }],
+    officialMembers: [
+      {
+        packageId: "@rawr/cli",
+        role: "command",
+        version: "1.0.0",
+        root: "app",
+        payloadDigest: memberDigest.value,
+        commandIds: ["doctor:global"],
+        topics: ["doctor"],
+        aliases: [],
+        hiddenAliases: [],
+        hooks: [],
+      },
+    ],
     dependencyLock: {
       path: CONTROLLER_DEPENDENCY_LOCK_PATH,
       digest: digest(files.get(CONTROLLER_DEPENDENCY_LOCK_PATH)!.content),
@@ -199,7 +208,7 @@ async function writeReleaseFixture(): Promise<{ root: string; digest: string }> 
   await rename(staging, root);
   await writeFile(
     path.join(root, CONTROLLER_ENVELOPE_PATH),
-    canonicalSerializeControllerReleaseEnvelope(envelope),
+    canonicalSerializeControllerReleaseEnvelope(envelope)
   );
   return { root, digest: envelope.controllerDigest };
 }

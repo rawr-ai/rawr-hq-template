@@ -9,8 +9,7 @@ const buttonVariants = cva(
       variant: {
         default:
           "border border-border/80 bg-card text-card-foreground shadow-sm hover:border-border hover:bg-muted/60",
-        primary:
-          "border border-primary/45 bg-primary text-primary-foreground hover:bg-primary/90",
+        primary: "border border-primary/45 bg-primary text-primary-foreground hover:bg-primary/90",
         secondary:
           "border border-border/80 bg-secondary text-secondary-foreground hover:bg-secondary/85",
         ghost: "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
@@ -28,7 +27,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  },
+  }
 );
 
 export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
@@ -36,8 +35,15 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, type = "button", ...props }, ref) => {
-    return <button ref={ref} type={type} className={cn(buttonVariants({ variant, size, className }))} {...props} />;
-  },
+    return (
+      <button
+        ref={ref}
+        type={type}
+        className={cn(buttonVariants({ variant, size, className }))}
+        {...props}
+      />
+    );
+  }
 );
 Button.displayName = "Button";
 

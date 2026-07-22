@@ -26,7 +26,9 @@ function materializeRawrHostOrpc(boundRolePlan: RawrHostBoundRolePlan) {
     boundRolePlan.workflows.internalRouter,
   ]);
   const requestScopedOrpc = implement(contract).$context<BoundaryRequestSupportContext>();
-  const requestScopedPublishedApi = implement(boundRolePlan.api.publishedContract).$context<BoundaryRequestSupportContext>();
+  const requestScopedPublishedApi = implement(
+    boundRolePlan.api.publishedContract
+  ).$context<BoundaryRequestSupportContext>();
 
   return {
     contract,
@@ -39,8 +41,12 @@ function materializeRawrHostOrpc(boundRolePlan: RawrHostBoundRolePlan) {
 }
 
 function materializeRawrHostWorkflows(boundRolePlan: RawrHostBoundRolePlan) {
-  const requestScopedPublishedWorkflow = implement(boundRolePlan.workflows.publishedContract).$context<BoundaryRequestSupportContext>();
-  const requestScopedInternalWorkflow = implement(boundRolePlan.workflows.internalContract).$context<BoundaryRequestSupportContext>();
+  const requestScopedPublishedWorkflow = implement(
+    boundRolePlan.workflows.publishedContract
+  ).$context<BoundaryRequestSupportContext>();
+  const requestScopedInternalWorkflow = implement(
+    boundRolePlan.workflows.internalContract
+  ).$context<BoundaryRequestSupportContext>();
 
   return {
     surfaces: boundRolePlan.workflows.surfaces,
@@ -56,9 +62,7 @@ function materializeRawrHostWorkflows(boundRolePlan: RawrHostBoundRolePlan) {
   } as const;
 }
 
-export function materializeRawrHostBoundRolePlan(
-  boundRolePlan: RawrHostBoundRolePlan,
-) {
+export function materializeRawrHostBoundRolePlan(boundRolePlan: RawrHostBoundRolePlan) {
   return {
     orpc: materializeRawrHostOrpc(boundRolePlan),
     workflows: materializeRawrHostWorkflows(boundRolePlan),

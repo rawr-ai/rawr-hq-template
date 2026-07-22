@@ -29,16 +29,25 @@ export default class CliCommandCreate extends RawrCommand {
       dryRun: baseFlags.dryRun,
     });
     if (!request.ok) {
-      this.outputResult(this.fail("Official command request rejected", { details: request.issues }), { flags: baseFlags });
+      this.outputResult(
+        this.fail("Official command request rejected", { details: request.issues }),
+        { flags: baseFlags }
+      );
       this.exit(2);
       return;
     }
     const result = await authorOfficialCommand(request.value);
     const view = authoringResultView(result);
-    const failed = result.kind === "AuthoringRejected" || result.kind === "AuthoringFailed" || result.kind === "AuthoringPartial";
-    this.outputResult(failed
-      ? this.fail("Official command authoring did not complete", { details: view })
-      : this.ok(view), { flags: baseFlags });
+    const failed =
+      result.kind === "AuthoringRejected" ||
+      result.kind === "AuthoringFailed" ||
+      result.kind === "AuthoringPartial";
+    this.outputResult(
+      failed
+        ? this.fail("Official command authoring did not complete", { details: view })
+        : this.ok(view),
+      { flags: baseFlags }
+    );
     if (failed) this.exit(1);
   }
 }

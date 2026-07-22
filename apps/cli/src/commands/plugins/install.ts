@@ -6,7 +6,10 @@ export default class PluginsInstall extends ExternalExtensionCommand {
   static description = "Install an inspected local external CLI extension artifact";
 
   static args = {
-    artifact: Args.string({ description: "Path to a local inspected package artifact", required: true }),
+    artifact: Args.string({
+      description: "Path to a local inspected package artifact",
+      required: true,
+    }),
   } as const;
 
   static flags = {

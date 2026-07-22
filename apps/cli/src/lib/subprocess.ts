@@ -2,9 +2,7 @@ import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export {
-  resolveControllerReentry as resolveCliReentry,
-} from "@rawr/core";
+export { resolveControllerReentry as resolveCliReentry } from "@rawr/core";
 
 export type StepStatus = "planned" | "skipped" | "ok" | "failed";
 

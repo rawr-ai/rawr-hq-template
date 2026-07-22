@@ -28,11 +28,11 @@ export async function createOwnedFixtureRoot(): Promise<OwnedFixtureRoot> {
   const canonical = await realpath(candidate);
   const candidateBasename = basename(candidate);
   if (
-    !status.isDirectory()
-    || status.isSymbolicLink()
-    || canonical !== candidate
-    || dirname(candidate) !== parent
-    || !candidateBasename.startsWith(FIXTURE_PREFIX)
+    !status.isDirectory() ||
+    status.isSymbolicLink() ||
+    canonical !== candidate ||
+    dirname(candidate) !== parent ||
+    !candidateBasename.startsWith(FIXTURE_PREFIX)
   ) {
     throw new Error(`fixture root failed its creation proof: ${candidate}`);
   }
@@ -54,19 +54,19 @@ export async function removeOwnedFixtureRoot(fixture: OwnedFixtureRoot): Promise
   const status = await lstat(candidate, { bigint: true });
   const canonical = await realpath(candidate);
   if (
-    canonicalParent !== fixture.parent
-    || !parentStatus.isDirectory()
-    || parentStatus.isSymbolicLink()
-    || parentStatus.dev !== fixture.parentDev
-    || parentStatus.ino !== fixture.parentIno
-    || dirname(candidate) !== canonicalParent
-    || basename(candidate) !== fixture.basename
-    || !fixture.basename.startsWith(FIXTURE_PREFIX)
-    || !status.isDirectory()
-    || status.isSymbolicLink()
-    || status.dev !== fixture.dev
-    || status.ino !== fixture.ino
-    || canonical !== candidate
+    canonicalParent !== fixture.parent ||
+    !parentStatus.isDirectory() ||
+    parentStatus.isSymbolicLink() ||
+    parentStatus.dev !== fixture.parentDev ||
+    parentStatus.ino !== fixture.parentIno ||
+    dirname(candidate) !== canonicalParent ||
+    basename(candidate) !== fixture.basename ||
+    !fixture.basename.startsWith(FIXTURE_PREFIX) ||
+    !status.isDirectory() ||
+    status.isSymbolicLink() ||
+    status.dev !== fixture.dev ||
+    status.ino !== fixture.ino ||
+    canonical !== candidate
   ) {
     throw new Error(`refusing to remove substituted fixture root: ${candidate}`);
   }
@@ -75,19 +75,19 @@ export async function removeOwnedFixtureRoot(fixture: OwnedFixtureRoot): Promise
   const admitted = await lstat(candidate, { bigint: true });
   const admittedCanonical = await realpath(candidate);
   if (
-    admittedParentCanonical !== fixture.parent
-    || !admittedParent.isDirectory()
-    || admittedParent.isSymbolicLink()
-    || admittedParent.dev !== fixture.parentDev
-    || admittedParent.ino !== fixture.parentIno
-    || dirname(candidate) !== fixture.parent
-    || basename(candidate) !== fixture.basename
-    || !fixture.basename.startsWith(FIXTURE_PREFIX)
-    || !admitted.isDirectory()
-    || admitted.isSymbolicLink()
-    || admitted.dev !== fixture.dev
-    || admitted.ino !== fixture.ino
-    || admittedCanonical !== candidate
+    admittedParentCanonical !== fixture.parent ||
+    !admittedParent.isDirectory() ||
+    admittedParent.isSymbolicLink() ||
+    admittedParent.dev !== fixture.parentDev ||
+    admittedParent.ino !== fixture.parentIno ||
+    dirname(candidate) !== fixture.parent ||
+    basename(candidate) !== fixture.basename ||
+    !fixture.basename.startsWith(FIXTURE_PREFIX) ||
+    !admitted.isDirectory() ||
+    admitted.isSymbolicLink() ||
+    admitted.dev !== fixture.dev ||
+    admitted.ino !== fixture.ino ||
+    admittedCanonical !== candidate
   ) {
     throw new Error(`fixture root changed at recursive removal admission: ${candidate}`);
   }

@@ -59,19 +59,25 @@ beforeEach(() => {
     createHistogram: () => ({ record: histogramRecord }),
   } as never);
 
-  startActiveSpan.mockImplementation(async (_name: string, fn: (span: {
-    setAttribute(key: string, value: string | boolean | number): void;
-    setStatus(status: unknown): void;
-    recordException(error: unknown): void;
-    end(): void;
-    spanContext(): { traceId: string; spanId: string; traceFlags: number };
-  }) => Promise<Response>) => fn({
-    setAttribute: spanSetAttribute,
-    setStatus: spanSetStatus,
-    recordException: spanRecordException,
-    end: spanEnd,
-    spanContext,
-  }));
+  startActiveSpan.mockImplementation(
+    async (
+      _name: string,
+      fn: (span: {
+        setAttribute(key: string, value: string | boolean | number): void;
+        setStatus(status: unknown): void;
+        recordException(error: unknown): void;
+        end(): void;
+        spanContext(): { traceId: string; spanId: string; traceFlags: number };
+      }) => Promise<Response>
+    ) =>
+      fn({
+        setAttribute: spanSetAttribute,
+        setStatus: spanSetStatus,
+        recordException: spanRecordException,
+        end: spanEnd,
+        spanContext,
+      })
+  );
 
   spanContext.mockReturnValue({
     traceId: "11111111111111111111111111111111",
@@ -99,22 +105,28 @@ describe("host oRPC route metrics", () => {
           method: "POST",
           headers: FIRST_PARTY_RPC_HEADERS,
           body: JSON.stringify({ json: { title: "Metrics proof" } }),
-        }),
+        })
       );
 
       expect(response.status).toBe(200);
-      expect(counterAdd).toHaveBeenCalledWith(1, expect.objectContaining({
-        "rawr.orpc.surface": "rpc",
-        "rawr.orpc.router": "rpc",
-        "rawr.orpc.authorized": true,
-        "http.response.status_code": 200,
-      }));
-      expect(histogramRecord).toHaveBeenCalledWith(expect.any(Number), expect.objectContaining({
-        "rawr.orpc.surface": "rpc",
-        "rawr.orpc.router": "rpc",
-        "rawr.orpc.authorized": true,
-        "http.response.status_code": 200,
-      }));
+      expect(counterAdd).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          "rawr.orpc.surface": "rpc",
+          "rawr.orpc.router": "rpc",
+          "rawr.orpc.authorized": true,
+          "http.response.status_code": 200,
+        })
+      );
+      expect(histogramRecord).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.objectContaining({
+          "rawr.orpc.surface": "rpc",
+          "rawr.orpc.router": "rpc",
+          "rawr.orpc.authorized": true,
+          "http.response.status_code": 200,
+        })
+      );
       expect(startActiveSpan).toHaveBeenCalledWith("rawr.orpc.rpc.request", expect.any(Function));
       expect(spanSetAttribute).toHaveBeenCalledWith("rawr.orpc.surface", "rpc");
       expect(spanSetAttribute).toHaveBeenCalledWith("http.response.status_code", 200);
@@ -136,16 +148,19 @@ describe("host oRPC route metrics", () => {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ json: { id: "forbidden" } }),
-        }),
+        })
       );
 
       expect(response.status).toBe(403);
-      expect(counterAdd).toHaveBeenCalledWith(1, expect.objectContaining({
-        "rawr.orpc.surface": "rpc",
-        "rawr.orpc.router": "rpc",
-        "rawr.orpc.authorized": false,
-        "http.response.status_code": 403,
-      }));
+      expect(counterAdd).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          "rawr.orpc.surface": "rpc",
+          "rawr.orpc.router": "rpc",
+          "rawr.orpc.authorized": false,
+          "http.response.status_code": 403,
+        })
+      );
     } finally {
       await fs.rm(tempRoot, { recursive: true, force: true });
     }
@@ -160,16 +175,19 @@ describe("host oRPC route metrics", () => {
           method: "POST",
           headers: FIRST_PARTY_RPC_HEADERS,
           body: JSON.stringify({ json: {} }),
-        }),
+        })
       );
 
       expect(response.status).toBe(404);
-      expect(counterAdd).toHaveBeenCalledWith(1, expect.objectContaining({
-        "rawr.orpc.surface": "rpc",
-        "rawr.orpc.router": "rpc",
-        "rawr.orpc.authorized": true,
-        "http.response.status_code": 404,
-      }));
+      expect(counterAdd).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          "rawr.orpc.surface": "rpc",
+          "rawr.orpc.router": "rpc",
+          "rawr.orpc.authorized": true,
+          "http.response.status_code": 404,
+        })
+      );
     } finally {
       await fs.rm(tempRoot, { recursive: true, force: true });
     }
@@ -188,16 +206,19 @@ describe("host oRPC route metrics", () => {
           method: "POST",
           headers: FIRST_PARTY_RPC_HEADERS,
           body: JSON.stringify({ json: { id: "context-error" } }),
-        }),
+        })
       );
 
       expect(response.status).toBe(500);
-      expect(counterAdd).toHaveBeenCalledWith(1, expect.objectContaining({
-        "rawr.orpc.surface": "rpc",
-        "rawr.orpc.router": "rpc",
-        "rawr.orpc.authorized": true,
-        "http.response.status_code": 500,
-      }));
+      expect(counterAdd).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          "rawr.orpc.surface": "rpc",
+          "rawr.orpc.router": "rpc",
+          "rawr.orpc.authorized": true,
+          "http.response.status_code": 500,
+        })
+      );
       expect(spanSetStatus).toHaveBeenCalled();
       expect(spanRecordException).toHaveBeenCalled();
     } finally {
@@ -219,16 +240,22 @@ describe("host oRPC route metrics", () => {
           body: JSON.stringify({
             title: "Metrics proof route",
           }),
-        }),
+        })
       );
 
       expect(response.status).toBe(200);
-      expect(counterAdd).toHaveBeenCalledWith(1, expect.objectContaining({
-        "rawr.orpc.surface": "openapi",
-        "rawr.orpc.router": "openapi",
-        "http.response.status_code": 200,
-      }));
-      expect(startActiveSpan).toHaveBeenCalledWith("rawr.orpc.openapi.request", expect.any(Function));
+      expect(counterAdd).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          "rawr.orpc.surface": "openapi",
+          "rawr.orpc.router": "openapi",
+          "http.response.status_code": 200,
+        })
+      );
+      expect(startActiveSpan).toHaveBeenCalledWith(
+        "rawr.orpc.openapi.request",
+        expect.any(Function)
+      );
       expect(spanSetAttribute).toHaveBeenCalledWith("rawr.orpc.surface", "openapi");
 
       const attributes = counterAdd.mock.calls[0]?.[1] as Record<string, unknown>;

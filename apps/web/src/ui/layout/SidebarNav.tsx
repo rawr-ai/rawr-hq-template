@@ -1,12 +1,6 @@
 import { Link, usePathname } from "../routing/router";
 import { cn } from "../lib/cn";
-import {
-  CpuIcon,
-  ExternalLinkIcon,
-  HomeIcon,
-  InboxIcon,
-  LayersIcon,
-} from "../components/icons";
+import { CpuIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LayersIcon } from "../components/icons";
 import type { SVGProps } from "react";
 
 type NavItem = Readonly<{
@@ -37,12 +31,14 @@ function NavLink({ item }: { item: NavItem }) {
           "flex items-center gap-2.5 rounded-sm border px-3 py-2 text-sm font-medium transition",
           isActive
             ? "border-primary/40 bg-primary/15 text-primary"
-            : "border-transparent text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground",
+            : "border-transparent text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground"
         )}
       >
         {(() => {
           const Icon = ICONS[item.label];
-          return Icon ? <Icon className={cn("h-4 w-4", isActive ? "opacity-100" : "opacity-60")} /> : null;
+          return Icon ? (
+            <Icon className={cn("h-4 w-4", isActive ? "opacity-100" : "opacity-60")} />
+          ) : null;
         })()}
         {item.label}
       </Link>
@@ -88,12 +84,18 @@ export function SidebarNav({
         <p className="kicker m-0">Host Shell</p>
         <p className="m-0 text-lg font-semibold tracking-tight text-foreground">{title}</p>
       </div>
-      <ul className="grid list-none gap-2 p-0">{items.map((item) => <NavLink key={item.to} item={item} />)}</ul>
+      <ul className="grid list-none gap-2 p-0">
+        {items.map((item) => (
+          <NavLink key={item.to} item={item} />
+        ))}
+      </ul>
       {utilityLinks.length > 0 ? (
         <div className="grid gap-2 border-t border-border/70 pt-4">
           <p className="kicker m-0">Utilities</p>
           <ul className="grid list-none gap-2 p-0">
-            {utilityLinks.map((item) => <UtilityNavLink key={item.href} item={item} />)}
+            {utilityLinks.map((item) => (
+              <UtilityNavLink key={item.href} item={item} />
+            ))}
           </ul>
         </div>
       ) : null}

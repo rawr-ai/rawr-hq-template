@@ -26,7 +26,7 @@ export class NativeRegistryState implements ExternalExtensionStatePort {
   constructor(
     dataDir: string,
     private readonly reserved: ReservedControllerSurface,
-    private readonly evidence: StaticEvidencePort,
+    private readonly evidence: StaticEvidencePort
   ) {
     this.dataDir = path.resolve(dataDir);
     this.registryPath = path.join(this.dataDir, "package.json");
@@ -67,7 +67,7 @@ export class NativeRegistryState implements ExternalExtensionStatePort {
     const packageResidue = nativePackageResidue(
       [...parsed.dependencies.keys()],
       parsed.entries,
-      packageArtifacts,
+      packageArtifacts
     );
     if (packageResidue) quarantined.push(packageResidue);
 
@@ -112,7 +112,8 @@ export class NativeRegistryState implements ExternalExtensionStatePort {
     return {
       registryPath: this.registryPath,
       status: "valid",
-      hasResidue: parsed.entries.length > 0 || parsed.quarantined.length > 0 || packageResidue !== undefined,
+      hasResidue:
+        parsed.entries.length > 0 || parsed.quarantined.length > 0 || packageResidue !== undefined,
       active,
       quarantined,
     };
@@ -178,7 +179,7 @@ type NativePackageArtifactObservation = {
 
 async function observeNativePackageArtifacts(
   dataDir: string,
-  evidence: StaticEvidencePort,
+  evidence: StaticEvidencePort
 ): Promise<readonly NativePackageArtifactObservation[]> {
   const checks = await Promise.all([
     observeArtifact(path.join(dataDir, "node_modules"), "installed tree", "directory", evidence),
@@ -192,7 +193,7 @@ async function observeArtifact(
   artifactPath: string,
   label: string,
   expectedKind: "directory" | "file",
-  evidence: StaticEvidencePort,
+  evidence: StaticEvidencePort
 ): Promise<NativePackageArtifactObservation | undefined> {
   const observation =
     expectedKind === "directory"
@@ -211,9 +212,11 @@ async function observeArtifact(
 function nativePackageResidue(
   dependencies: readonly string[],
   entries: readonly NativeRegistryEntry[],
-  artifacts: readonly NativePackageArtifactObservation[],
+  artifacts: readonly NativePackageArtifactObservation[]
 ): QuarantinedExternalExtension | undefined {
-  const userEntries = new Set(entries.filter((entry) => entry.type === "user").map((entry) => entry.name));
+  const userEntries = new Set(
+    entries.filter((entry) => entry.type === "user").map((entry) => entry.name)
+  );
   const orphanDependencies = dependencies.filter((dependency) => !userEntries.has(dependency));
   const orphanArtifacts = userEntries.size === 0 ? artifacts : [];
   if (orphanDependencies.length === 0 && orphanArtifacts.length === 0) return undefined;
@@ -232,10 +235,11 @@ function nativePackageResidue(
 }
 
 function parseNativeEntry(
-  value: unknown,
+  value: unknown
 ): { ok: true; value: NativeRegistryEntry } | { ok: false; reason: string } {
   if (typeof value === "string") {
-    if (!isCanonicalPackageId(value)) return { ok: false, reason: `Invalid package identity ${value}` };
+    if (!isCanonicalPackageId(value))
+      return { ok: false, reason: `Invalid package identity ${value}` };
     return { ok: true, value: { name: value, type: "user", tag: "latest" } };
   }
   if (!isRecord(value)) return { ok: false, reason: "Native registry entry is not an object" };
@@ -296,7 +300,7 @@ type NativeDependencyBinding =
 
 function bindNativeDependency(
   entry: NativeRegistryEntry,
-  dependencies: ReadonlyMap<string, string>,
+  dependencies: ReadonlyMap<string, string>
 ): NativeDependencyBinding {
   if (entry.type === "link") return { ok: true, entry };
 
@@ -316,13 +320,11 @@ function bindNativeDependency(
   const entryProvenance = parseNativeInstallProvenance(entry.url);
   const dependencyProvenance = parseNativeInstallProvenance(dependencySpec);
   if (
-    (entryProvenance !== null || dependencyProvenance !== null)
-    && (
-      entryProvenance === null
-      || dependencyProvenance === null
-      || entryProvenance.artifactSha256 !== dependencyProvenance.artifactSha256
-      || entryProvenance.staticFingerprint !== dependencyProvenance.staticFingerprint
-    )
+    (entryProvenance !== null || dependencyProvenance !== null) &&
+    (entryProvenance === null ||
+      dependencyProvenance === null ||
+      entryProvenance.artifactSha256 !== dependencyProvenance.artifactSha256 ||
+      entryProvenance.staticFingerprint !== dependencyProvenance.staticFingerprint)
   ) {
     return {
       ok: false,
@@ -349,7 +351,7 @@ function findDuplicates(values: readonly string[]): ReadonlySet<string> {
 
 function compareQuarantine(
   left: QuarantinedExternalExtension,
-  right: QuarantinedExternalExtension,
+  right: QuarantinedExternalExtension
 ): number {
   return (
     left.identity.localeCompare(right.identity) ||

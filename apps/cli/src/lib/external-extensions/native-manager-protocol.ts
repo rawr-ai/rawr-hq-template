@@ -50,7 +50,7 @@ export function decodeNativeManagerInvocation(text: string): NativeManagerInvoca
 }
 
 export function validateNativeManagerInvocation(
-  value: unknown,
+  value: unknown
 ): asserts value is NativeManagerInvocation {
   if (!isRecord(value) || value.protocolVersion !== NATIVE_MANAGER_PROTOCOL_VERSION) {
     throw new Error("NATIVE_MANAGER_PROTOCOL_INVALID");
@@ -62,9 +62,13 @@ export function validateNativeManagerInvocation(
 }
 
 export function validateNativeMutationRequest(
-  value: unknown,
+  value: unknown
 ): asserts value is NativeMutationRequest {
-  if (!isRecord(value) || typeof value.commandExport !== "string" || !COMMANDS.has(value.commandExport as PublicPluginCommandExport)) {
+  if (
+    !isRecord(value) ||
+    typeof value.commandExport !== "string" ||
+    !COMMANDS.has(value.commandExport as PublicPluginCommandExport)
+  ) {
     throw new Error("NATIVE_MANAGER_COMMAND_REJECTED");
   }
   if (!Array.isArray(value.argv) || value.argv.some((entry) => typeof entry !== "string")) {
@@ -78,30 +82,35 @@ export function validateNativeMutationRequest(
   switch (value.commandExport) {
     case "plugins:install": {
       if (
-        argv.length !== 2
-        || argv[1] !== "--silent"
-        || !argv[0]?.startsWith("file:")
-        || !isRecord(value.inspectedArtifact)
-        || !absoluteString(value.inspectedArtifact.path)
-        || typeof value.inspectedArtifact.sha256 !== "string"
-        || !SHA256.test(value.inspectedArtifact.sha256)
-        || argv[0] !== `file:${value.inspectedArtifact.path}`
+        argv.length !== 2 ||
+        argv[1] !== "--silent" ||
+        !argv[0]?.startsWith("file:") ||
+        !isRecord(value.inspectedArtifact) ||
+        !absoluteString(value.inspectedArtifact.path) ||
+        typeof value.inspectedArtifact.sha256 !== "string" ||
+        !SHA256.test(value.inspectedArtifact.sha256) ||
+        argv[0] !== `file:${value.inspectedArtifact.path}`
       ) {
         throw new Error("NATIVE_MANAGER_INSTALL_BINDING_INVALID");
       }
       break;
     }
     case "plugins:link": {
-      if (argv.length !== 2 || !absoluteString(argv[0]) || argv[1] !== "--no-install" || value.inspectedArtifact !== undefined) {
+      if (
+        argv.length !== 2 ||
+        !absoluteString(argv[0]) ||
+        argv[1] !== "--no-install" ||
+        value.inspectedArtifact !== undefined
+      ) {
         throw new Error("NATIVE_MANAGER_LINK_ARGUMENTS_INVALID");
       }
       break;
     }
     case "plugins:uninstall": {
       if (
-        argv.length !== 1
-        || !isCanonicalPackageId(argv[0] ?? "")
-        || value.inspectedArtifact !== undefined
+        argv.length !== 1 ||
+        !isCanonicalPackageId(argv[0] ?? "") ||
+        value.inspectedArtifact !== undefined
       ) {
         throw new Error("NATIVE_MANAGER_UNINSTALL_ARGUMENTS_INVALID");
       }
@@ -115,8 +124,8 @@ export function validateNativeMutationRequest(
     }
     case "plugins:reset": {
       if (
-        (argv.length !== 0 && (argv.length !== 1 || argv[0] !== "--hard"))
-        || value.inspectedArtifact !== undefined
+        (argv.length !== 0 && (argv.length !== 1 || argv[0] !== "--hard")) ||
+        value.inspectedArtifact !== undefined
       ) {
         throw new Error("NATIVE_MANAGER_RESET_ARGUMENTS_INVALID");
       }
@@ -126,10 +135,11 @@ export function validateNativeMutationRequest(
 }
 
 export async function verifyInspectedInstallArtifact(
-  request: NativeMutationRequest,
+  request: NativeMutationRequest
 ): Promise<void> {
   validateNativeMutationRequest(request);
-  if (request.commandExport !== "plugins:install" || request.inspectedArtifact === undefined) return;
+  if (request.commandExport !== "plugins:install" || request.inspectedArtifact === undefined)
+    return;
 
   const artifact = request.inspectedArtifact;
   const canonicalPath = await realpath(artifact.path);
@@ -140,7 +150,7 @@ export async function verifyInspectedInstallArtifact(
   if (!status.isFile() || status.nlink !== 1) {
     throw new Error("NATIVE_MANAGER_ARTIFACT_NOT_PRIVATE_FILE");
   }
-  if (await sha256RegularFile(canonicalPath) !== artifact.sha256) {
+  if ((await sha256RegularFile(canonicalPath)) !== artifact.sha256) {
     throw new Error("NATIVE_MANAGER_ARTIFACT_HASH_MISMATCH");
   }
 }
@@ -153,9 +163,11 @@ export async function sha256RegularFile(filePath: string): Promise<string> {
 
 function managerContractMatches(value: unknown): boolean {
   if (!isRecord(value)) return false;
-  return Object.entries(GUARDED_NATIVE_MANAGER_CONTRACT).every(
-    ([key, expected]) => value[key] === expected,
-  ) && Object.keys(value).length === Object.keys(GUARDED_NATIVE_MANAGER_CONTRACT).length;
+  return (
+    Object.entries(GUARDED_NATIVE_MANAGER_CONTRACT).every(
+      ([key, expected]) => value[key] === expected
+    ) && Object.keys(value).length === Object.keys(GUARDED_NATIVE_MANAGER_CONTRACT).length
+  );
 }
 
 function absoluteString(value: unknown): value is string {

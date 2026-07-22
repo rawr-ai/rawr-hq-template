@@ -123,11 +123,13 @@ describe("Template external extension command projections", () => {
       operation: "install",
       disposition: "delegate-native",
       nativeStatus: "completed",
-      cleanup: [{
-        owner: "install-staging",
-        status: "failed",
-        error: "fixture cleanup failure",
-      }],
+      cleanup: [
+        {
+          owner: "install-staging",
+          status: "failed",
+          error: "fixture cleanup failure",
+        },
+      ],
       before,
       after,
     };
@@ -154,7 +156,7 @@ class ProjectionHarness extends ExternalExtensionCommand {
 
   emit(
     result: ExternalExtensionOperationResult,
-    flags: { json: boolean; dryRun: boolean; yes: boolean },
+    flags: { json: boolean; dryRun: boolean; yes: boolean }
   ): void {
     this.outputOperation(result, flags);
   }
