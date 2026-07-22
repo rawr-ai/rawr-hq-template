@@ -50,22 +50,6 @@ describe("controller command-package classification", () => {
     );
   });
 
-  it("makes static Oclif discovery exactly the classified discoverable set", () => {
-    const cliManifest = JSON.parse(
-      fs.readFileSync(path.join(workspaceRoot, "apps", "cli", "package.json"), "utf8")
-    ) as { oclif?: { plugins?: string[] } };
-    const expected = controllerCommandPackages
-      .filter(
-        (row) =>
-          row.disposition === "controller-member" && row.discoverCommands && row.role !== "cli-root"
-      )
-      .map((row) => row.packageId)
-      .sort();
-
-    expect([...(cliManifest.oclif?.plugins ?? [])].sort()).toEqual(expected);
-    expect(cliManifest.oclif?.plugins).not.toContain("@oclif/plugin-plugins");
-  });
-
   it("rejects duplicate identities instead of choosing an owner", () => {
     expect(() =>
       assertControllerClassification([controllerCommandPackages[0], controllerCommandPackages[0]])

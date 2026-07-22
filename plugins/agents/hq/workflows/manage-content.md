@@ -86,11 +86,11 @@ rename, or delete existing content without explicit user authorization.
 
 ## Command Boundary
 
-- `rawr agent plugins create` is the controller-owned source scaffold command.
+- `rawr agent plugins create` is the lifecycle service's source scaffold command.
   It does not grant authority to build or sync automatically.
 - `rawr agent plugins check` verifies an explicit governed candidate.
-- `rawr plugins inspect`, `rawr plugins install`, `rawr plugins link`,
-  `rawr plugins list`, `rawr plugins reset`, `rawr plugins uninstall`, and
+- `rawr plugins`, `rawr plugins inspect`, `rawr plugins install`, `rawr plugins link`,
+  `rawr plugins reset`, `rawr plugins uninstall`, and
   `rawr plugins update` are external Oclif extension operations and are not
   agent-plugin fallbacks.
 

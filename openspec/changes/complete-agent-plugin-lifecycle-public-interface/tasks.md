@@ -102,10 +102,17 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 - [x] 2.1 Restore `apps/cli/bin/run.js` and `apps/cli/src/index.ts` as ordinary
   Oclif entrypoints. Development and built invocation must discover the same
   core command set without controller environment variables.
-- [ ] 2.2 Enable `@oclif/plugin-plugins` directly in the Oclif core-plugin list.
-  Delete the complete custom external-extension vertical in the same change:
-  local wrappers, bootstrap, protocol, registry reconstruction, sandbox,
-  recovery code, tests, and architecture gates.
+- [ ] 2.2 Complete direct `@oclif/plugin-plugins` ownership across the installed
+  Oclif app by closing both bounded deletion subtasks below. Do not adapt
+  rejected controller-distribution copies merely to make this parent checkbox
+  true early.
+- [x] 2.2a Enable direct Oclif app composition and delete the app-local command
+  wrappers, bootstrap, protocol, registry reconstruction, sandbox, recovery
+  code, tests, and custom doctor projection. Preserve CLI extension source
+  authoring as a separate non-mutating capability.
+- [ ] 2.2b Delete the remaining custom-manager copies embedded in the rejected
+  controller distribution with task 4. Do not adapt that distribution to the
+  new native app path merely to close this task early.
 - [x] 2.3 Normalize TypeScript and compiled command roots for the CLI app and
   first-party command plugins. Move toward
   `plugins/cli/commands/<capability>` only through complete owner-local moves;

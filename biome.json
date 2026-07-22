@@ -36,7 +36,6 @@
       "!tools/runtime-realization-type-env/fixtures/**",
       "!tools/semantica-workbench/fixtures/**",
       "!tools/eslint-fixtures/**",
-      "!apps/cli/test/external-extensions/fixtures/**",
       "!scripts/chatgpt-corpus-template/source-material/conversations/raw-json/**",
       "!scripts/chatgpt-corpus-template/work/docs/source/**",
       "!scripts/chatgpt-corpus-template/work/generated/**",
