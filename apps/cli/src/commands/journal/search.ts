@@ -1,7 +1,6 @@
-import { RawrCommand } from "@rawr/core";
 import { Flags } from "@oclif/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
-import { findWorkspaceRoot } from "@rawr/core";
 
 export default class JournalSearch extends RawrCommand {
   static description = "Search journal snippets";

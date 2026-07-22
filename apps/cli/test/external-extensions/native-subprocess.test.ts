@@ -18,9 +18,9 @@ import {
   NATIVE_IMPORT_SANDBOX_RELATIVE_PATH,
   NATIVE_MANAGER_ENTRY_RELATIVE_PATH,
   NativePluginSubprocessPort,
-  NodeNativeSubprocessRunner,
   type NativeSubprocessInput,
   type NativeSubprocessRunner,
+  NodeNativeSubprocessRunner,
 } from "../../src/lib/external-extensions/native-subprocess";
 import { removeFixtureRoots, tempRoot } from "./fixtures";
 

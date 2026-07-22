@@ -1,10 +1,8 @@
 import { execFile } from "node:child_process";
-import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-
-import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 import {
   canonicalSerializeAgentPluginReleaseInput,
@@ -16,13 +14,14 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
 } from "@rawr/agent-plugin-lifecycle/release";
+import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createProductionLifecycleClient } from "../../../../src/lib/agent-plugins/service-runtime/client";
 import {
   createOwnedFixtureRoot,
-  removeOwnedFixtureRoot,
   type OwnedFixtureRoot,
+  removeOwnedFixtureRoot,
 } from "../releases/owned-fixture-root";
 
 const execFileAsync = promisify(execFile);

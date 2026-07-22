@@ -1,6 +1,5 @@
-import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
-import { findWorkspaceRoot } from "@rawr/core";
 
 export default class ConfigShow extends RawrCommand {
   static description = "Show the resolved rawr.config.ts (if present)";

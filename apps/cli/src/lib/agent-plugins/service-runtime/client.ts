@@ -1,14 +1,11 @@
-import { resolveControllerReentry } from "@rawr/core";
 import {
-  createClient,
   type Client,
   type CreateClientOptions,
+  createClient,
 } from "@rawr/agent-plugin-lifecycle/client";
+import { resolveControllerReentry } from "@rawr/core";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import { makeDeferredNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
-import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
-import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import {
   bindService,
   type ProcessView,
@@ -16,15 +13,17 @@ import {
   type ServiceBinding,
   type ServiceBindingContext,
 } from "@rawr/hq-sdk/plugins";
-
-import { deriveAgentPluginControllerLayout } from "../layout";
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+import { makeDeferredNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import {
-  LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
+  LifecycleAuthorityBindingError,
   type LifecycleClientFactory,
-  type LifecycleOperationClient,
   type LifecycleOperation,
+  type LifecycleOperationClient,
 } from "../commands/binding";
+import { deriveAgentPluginControllerLayout } from "../layout";
 import {
   createNodeProviderLifecycleDeps,
   createNodeProviderRecordState,

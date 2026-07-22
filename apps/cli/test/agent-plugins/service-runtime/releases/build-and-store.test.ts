@@ -5,8 +5,8 @@ import {
   lstat,
   mkdir,
   opendir,
-  readFile,
   readdir,
+  readFile,
   realpath,
   rename,
   symlink,
@@ -14,31 +14,28 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { join, posix } from "node:path";
-
-import { afterEach, describe, expect, it } from "vitest";
-
 import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
-
+import { afterEach, describe, expect, it } from "vitest";
+import { createResourceArtifactReader } from "../../../../../../services/agent-plugin-lifecycle/src/service/repository/artifact-repository";
 import {
   createLifecycleTestClient,
   testInvocation,
 } from "../../../../../../services/agent-plugin-lifecycle/test/support/client";
-import { createResourceArtifactReader } from "../../../../../../services/agent-plugin-lifecycle/src/service/repository/artifact-repository";
-import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
 import {
-  GIT_EXECUTABLE,
   commitGeneratedGitRepository,
   createGeneratedGitRepository,
   createGeneratedMultiMemberGitRepository,
+  GIT_EXECUTABLE,
 } from "../../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
+import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
 import {
   createOwnedFixtureRoot,
-  removeOwnedFixtureRoot,
   type OwnedFixtureRoot,
+  removeOwnedFixtureRoot,
 } from "./owned-fixture-root";
 
 type ArtifactStoreFailpoint = NonNullable<Deps["releaseArtifactFailpoint"]>;

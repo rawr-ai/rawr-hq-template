@@ -1,7 +1,7 @@
-import { installRawrOrpcTelemetry, type InstalledTelemetry } from "@rawr/core/telemetry";
-import type { Client as HqOpsClient } from "@rawr/hq-ops";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { type InstalledTelemetry, installRawrOrpcTelemetry } from "@rawr/core/telemetry";
+import type { Client as HqOpsClient } from "@rawr/hq-ops";
 import { createServerApp } from "./app";
 import { getServerConfig } from "./config";
 import { resolveServerHqOpsClient } from "./hq-ops-binding";

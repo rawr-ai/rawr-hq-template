@@ -1,6 +1,7 @@
 import path from "node:path";
-
+import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 import {
+  type ArtifactRef,
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
@@ -14,9 +15,7 @@ import {
   parseReleaseRelativePath,
   parseReleaseSetDigest,
   parseRepositoryIdentity,
-  type ArtifactRef,
 } from "@rawr/agent-plugin-lifecycle/release";
-import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 
 import { CHECK_MODES, type CheckMode } from "./flags";
 

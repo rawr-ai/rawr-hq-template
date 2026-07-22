@@ -24,20 +24,20 @@ import {
   parseVendorStatusRequest,
   parseVendorUpdateRequest,
 } from "../../src/lib/agent-plugins/commands/input";
+import * as projectionSurface from "../../src/lib/agent-plugins/commands/projection";
 import {
+  type ControllerProjectionBinding,
   invokeLifecycleProcedure,
+  type LifecycleOperationRequest,
   lifecycleResultExitCode,
   parseControllerProjectionBinding,
   projectLifecycleOperation,
-  type ControllerProjectionBinding,
-  type LifecycleOperationRequest,
 } from "../../src/lib/agent-plugins/commands/projection";
-import * as projectionSurface from "../../src/lib/agent-plugins/commands/projection";
+import { productFixture } from "./service-runtime/providers/product-fixture";
 import {
   createOwnedFixtureRoot,
   removeOwnedFixtureRoot,
 } from "./service-runtime/releases/owned-fixture-root";
-import { productFixture } from "./service-runtime/providers/product-fixture";
 
 const cliRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const hex40 = "a".repeat(40);

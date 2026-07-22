@@ -1,6 +1,6 @@
-import { useTheme, type Theme } from "./theme-provider";
 import { Button } from "../components/ui/button";
 import { cn } from "../lib/cn";
+import { type Theme, useTheme } from "./theme-provider";
 
 const OPTIONS: ReadonlyArray<{ label: string; value: Theme }> = [
   { label: "Light", value: "light" },

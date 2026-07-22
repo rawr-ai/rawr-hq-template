@@ -1,10 +1,10 @@
-import { createGuardedExternalConfiguration } from "../external-extensions/bootstrap";
 import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
+import { createGuardedExternalConfiguration } from "../external-extensions/bootstrap";
 import { NativePluginSubprocessPort } from "../external-extensions/native-subprocess";
 import { NodeExternalExtensionPreparationPort } from "../external-extensions/node-preparation";
 import { ExternalExtensionService } from "../external-extensions/service";
 import { reservedSurfaceFromControllerManifest } from "./reserved-surface";
-import { restoreControllerOperatorContext, type ControllerRuntimeContext } from "./runtime-context";
+import { type ControllerRuntimeContext, restoreControllerOperatorContext } from "./runtime-context";
 
 export async function prepareControllerInvocation(input: {
   argv: readonly string[];

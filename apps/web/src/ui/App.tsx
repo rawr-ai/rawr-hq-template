@@ -1,8 +1,8 @@
 import { AppShell } from "./layout/AppShell";
 import { SidebarNav } from "./layout/SidebarNav";
-import { Router } from "./routing/router";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { Router } from "./routing/router";
 
 function HostRoutes() {
   return <Router routes={[{ path: "/", element: <HomePage /> }]} fallback={<NotFoundPage />} />;

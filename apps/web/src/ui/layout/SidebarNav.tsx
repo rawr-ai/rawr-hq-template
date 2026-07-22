@@ -1,7 +1,7 @@
-import { Link, usePathname } from "../routing/router";
-import { cn } from "../lib/cn";
-import { CpuIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LayersIcon } from "../components/icons";
 import type { SVGProps } from "react";
+import { CpuIcon, ExternalLinkIcon, HomeIcon, InboxIcon, LayersIcon } from "../components/icons";
+import { cn } from "../lib/cn";
+import { Link, usePathname } from "../routing/router";
 
 type NavItem = Readonly<{
   label: string;
