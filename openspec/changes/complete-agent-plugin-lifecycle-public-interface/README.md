@@ -121,8 +121,8 @@ uses placement as identity, removes the second metadata classification, and
 keeps the CLI family, package, and source roots closed. Command-plugin manifest contracts
 execute the official generator through Bun. All 24 Grit fixtures,
 the blueprint-packet topology check, and the live direct-entrypoint rule pass;
-the package move is recorded separately by task 2.3a while the verb-first vendor
-command move keeps task 2.3 open.
+the package move is recorded separately by task 2.3a and the verb-first vendor
+command move completes task 2.3 without an alias.
 
 The Oclif configuration rules now anchor their JSON constraints at the parsed
 document root. This preserves the positive package and compiler constraints
@@ -391,6 +391,15 @@ and unknown-command behavior instead of requiring controller identity. CLI lint
 and typecheck pass in 14.7 seconds. App manifest generation and publish metadata
 stay deferred to task 3.3, so a partial generated manifest cannot hide missing
 or stale plugin output.
+
+The vendor CLI projection is now verb-first at
+`rawr agent plugins status vendors` and `rawr agent plugins update vendors`.
+The oRPC owner and procedure identities remain `vendors.status` and
+`vendors.update`; only the Oclif word order changed. Exact command inventory,
+compiled/source discovery, the exported command catalog, and explicit refusal
+of both old paths are green across 21 focused cases. The CLI build, lint, and
+typecheck targets pass, and the closed command-channel Habitat rule passes in
+23 ms. No alias or compatibility command was added.
 
 The complete CLI suite is green at 254 tests, but its uncached target takes 3
 minutes 30 seconds. A predecessor artifact-store file alone took 98.3 seconds in
