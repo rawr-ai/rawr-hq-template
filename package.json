@@ -57,7 +57,7 @@
     "format": "bunx nx run @rawr/habitat-consumer:format",
     "lint:biome": "bunx nx run @rawr/habitat-consumer:lint:biome",
     "lint:effect": "bunx nx run @rawr/habitat-consumer:lint:effect",
-    "ratchet:required": "bun scripts/nx/quality-target-admission.mjs && bunx nx run @rawr/nx-admission:test && bunx nx affected -t lint,typecheck --parallel=6 --nxBail && bunx nx run @rawr/habitat-consumer:lint:biome && bunx nx run @rawr/habitat-consumer:test && bun run architecture:gate:repository-separation && bunx nx run @rawr/agent-plugin-lifecycle:structure-check",
+    "ratchet:required": "bun scripts/nx/quality-target-admission.mjs && bunx nx run @rawr/nx-admission:test && bunx nx affected -t lint,typecheck --parallel=6 --nxBail && bunx nx run @rawr/habitat-consumer:lint:biome && bunx nx run @rawr/habitat-consumer:test && bun run architecture:gate:repository-separation && bunx nx run @rawr/agent-plugin-lifecycle:structure-check && bunx nx run @rawr/cli:structure-oclif && bunx nx run @rawr/cli:test-oclif-boundary",
     "architecture:gate:no-old-operational-packages": "bun scripts/architecture/verify-no-old-operational-packages.mjs",
     "architecture:gate:no-legacy-hq-imports": "bun scripts/architecture/verify-no-legacy-hq-imports.mjs",
     "architecture:gate:canonical-plugin-topology": "bun scripts/architecture/verify-canonical-plugin-topology.mjs",

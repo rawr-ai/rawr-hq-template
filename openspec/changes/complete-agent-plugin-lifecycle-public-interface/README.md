@@ -128,9 +128,9 @@ The Oclif configuration rules now anchor their JSON constraints at the parsed
 document root. This preserves the positive package and compiler constraints
 without diagnosing nested `scripts`, dependency, `oclif`, or `compilerOptions`
 objects as package roots. The app rule currently locks installed identity,
-binary, the declared native extension dependency, command discovery, and the
-TypeScript mapping. Task 2.2 tightens native extension composition and task 3.3
-tightens generated-manifest packaging only when those behaviors exist. The
+binary, the declared and composed native extension owner, command discovery,
+and the TypeScript mapping. Task 3.3 tightens generated-manifest packaging only
+when that behavior exists. The
 configuration fixtures and both live rules pass with zero diagnostics.
 
 The Template Habitat consumer already pins the newest published Civ7 artifact:
@@ -307,7 +307,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Typechecked Habitat consumer and TypeBox release manifest | Complete on the active Template stack |
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
 | Positive Habitat/Nx ratchet | Required lifecycle topology active; broader generic live-tree policy remains task 1.5 |
-| Direct Oclif development and external extension path | Direct source/built entrypoints complete; native extension-manager activation pending |
+| Direct Oclif development and external extension path | Direct source/built entrypoints and app-local native extension ownership complete; disposable round trip and controller-embedded residue pending |
 | Conventional CLI package/release | Pending |
 | Custom controller/extension deletion | Pending |
 | Persistent agent artifact/projection store deletion | Pending |
@@ -401,9 +401,27 @@ of both old paths are green across 21 focused cases. The CLI build, lint, and
 typecheck targets pass, and the closed command-channel Habitat rule passes in
 23 ms. No alias or compatibility command was added.
 
-The complete CLI suite is green at 254 tests, but its uncached target takes 3
-minutes 30 seconds. A predecessor artifact-store file alone took 98.3 seconds in
-the preceding diagnostic run. This is not accepted as healthy test
+The CLI app now composes `@oclif/plugin-plugins` directly. Its current native
+surface is `plugins`, `plugins:{add,inspect,install,link,remove,reset,uninstall,unlink,update}`,
+and Oclif reports `@oclif/plugin-plugins` as the owner of every command. The
+app-local wrappers, bootstrap, registry reconstruction, staging, import
+sandbox, recovery path, custom doctor projection, and their tests are deleted:
+roughly 7,900 lines removed with no replacement manager. CLI extension source
+authoring remains separate and non-mutating. The required Nx ratchet now runs
+the two selected Oclif Habitat rules and one isolated source/compiled ownership
+suite. It requires Oclif's canonical operations and native ownership of every
+discovered `plugins` command without freezing upstream convenience aliases. The
+uncached ownership target and its five builds complete in 13.2 seconds,
+including 2.6 seconds for the isolated behavior case; the selected Habitat
+rules complete in 117 ms. The unchanged combined repeat is a 100% cache hit in
+28 ms. CLI build, lint, and typecheck pass together uncached in 12.5 seconds.
+The disposable native install round trip remains task 2.4.
+Copies embedded only in the rejected controller distribution remain pending
+deletion with task 4 rather than being adapted to this native path.
+
+The post-cut CLI suite is green at 129 tests, but its uncached target still
+takes 3 minutes 16 seconds. The rejected artifact-store vertical alone takes
+87.2 seconds. This is not accepted as healthy test
 infrastructure: tasks 4 and 5 delete the custom distribution and persistent
 artifact verticals that dominate it rather than optimizing rejected machinery.
 

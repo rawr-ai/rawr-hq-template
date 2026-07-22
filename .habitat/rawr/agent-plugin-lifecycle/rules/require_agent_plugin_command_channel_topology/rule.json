@@ -12,17 +12,16 @@
   },
   "ownerProject": "@rawr/agent-plugin-lifecycle",
   "lane": "enforced",
-  "forbids": "a second controller runtime projection, a second curated command namespace, nested command aliases, or external-extension commands under the curated channel",
-  "why": "Controller reachability and command authority are closed axes: one lifecycle projection binds the service, curated lifecycle is under rawr agent plugins, and external Oclif extension management is under rawr plugins.",
-  "remediate": "Keep controller projection code under the declared service-runtime roots, curated commands under agent/plugins, vendor commands at agent/plugins/status/vendors.ts and agent/plugins/update/vendors.ts, and external extension commands under plugins.",
-  "message": "Agent-plugin controller projection and command channels must remain in their closed topology.",
+  "forbids": "lifecycle runtime bindings or curated commands outside their one closed root, or nested curated command aliases",
+  "why": "The CLI has one lifecycle runtime-binding root and one curated command root under rawr agent plugins; native Oclif extension commands are composed from @oclif/plugin-plugins rather than authored in this source tree.",
+  "remediate": "Keep lifecycle runtime bindings under the declared service-runtime roots, curated commands under agent/plugins, and vendor commands at agent/plugins/status/vendors.ts and agent/plugins/update/vendors.ts.",
+  "message": "Agent-plugin lifecycle bindings and curated commands must remain in their closed topology.",
   "pathCoverage": [
     {
       "kind": "exact-path",
       "patterns": [
         "apps/cli/src/lib/agent-plugins/service-runtime/**",
-        "apps/cli/src/commands/agent/**",
-        "apps/cli/src/commands/plugins/**"
+        "apps/cli/src/commands/agent/**"
       ]
     }
   ],

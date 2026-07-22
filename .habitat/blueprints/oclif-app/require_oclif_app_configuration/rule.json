@@ -12,9 +12,9 @@
   },
   "ownerProject": "@rawr/habitat-consumer",
   "lane": "enforced",
-  "forbids": "an incorrectly identified, unversioned, or non-ESM CLI package; a missing declared Oclif extension dependency; mismatched binary or command discovery; or an ambiguous source-to-output mapping",
-  "why": "Package configuration is the installed CLI identity. This first closed ratchet fixes the app identity, binary, declared Oclif dependency, compiled command root, and TypeScript source-to-output mapping. The same rule tightens when native extension composition and generated release manifests land.",
-  "remediate": "Declare the versioned @rawr/cli ESM package and rawr binary, depend on @oclif/plugin-plugins, discover dist/commands, and map TypeScript rootDir src to outDir dist.",
+  "forbids": "an incorrectly identified, unversioned, or non-ESM CLI package; a missing declared or composed Oclif extension manager; mismatched binary or command discovery; or an ambiguous source-to-output mapping",
+  "why": "Package configuration is the installed CLI identity. This closed ratchet fixes the app identity, binary, declared and composed @oclif/plugin-plugins owner, compiled command root, and TypeScript source-to-output mapping. The same rule tightens when generated release manifests land.",
+  "remediate": "Declare the versioned @rawr/cli ESM package and rawr binary, depend on and compose @oclif/plugin-plugins, discover dist/commands, and map TypeScript rootDir src to outDir dist.",
   "message": "The Oclif app package must describe one conventional installed CLI.",
   "pathCoverage": [
     {

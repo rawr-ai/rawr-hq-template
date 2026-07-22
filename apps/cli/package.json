@@ -28,14 +28,11 @@
     "@rawr/resource-controller-authority": "workspace:*",
     "@rawr/resource-native-agent-provider": "workspace:*",
     "effect": "3.21.3",
-    "tar": "7.5.7",
-    "yazl": "^3.3.1",
     "zod": "^3.24.3"
   },
   "devDependencies": {
     "@types/bun": "^1.2.10",
     "@types/node": "^22.14.0",
-    "@types/yazl": "^3.3.0",
     "typescript": "^5.9.3"
   },
   "oclif": {
@@ -45,6 +42,7 @@
     "topicSeparator": " ",
     "plugins": [
       "@oclif/plugin-help",
+      "@oclif/plugin-plugins",
       "@rawr/plugin-chatgpt-corpus",
       "@rawr/plugin-devops",
       "@rawr/plugin-hyperresearch",
@@ -61,8 +59,10 @@
     "build": "tsc -p tsconfig.build.json",
     "sync": "bun run --cwd ../.. sync:check --project @rawr/cli",
     "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/cli",
+    "structure-oclif": "bun ../../scripts/habitat/check.mjs --rule require_oclif_app_configuration --rule require_oclif_app_topology",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli",
+    "test-oclif-boundary": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli test/bin-run.test.ts --testNamePattern='discovers the same commands from source and compiled output'",
     "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
   },
   "bin": {
@@ -83,12 +83,45 @@
             "projects": [
               "@rawr/plugin-chatgpt-corpus",
               "@rawr/plugin-devops",
+              "@rawr/plugin-hello",
               "@rawr/plugin-hyperresearch",
               "@rawr/plugin-session-tools"
             ],
             "target": "build"
           }
         ]
+      },
+      "structure-oclif": {
+        "cache": true,
+        "inputs": [
+          "default",
+          "{workspaceRoot}/.habitat/blueprints/oclif-app/**/*",
+          "{workspaceRoot}/scripts/habitat/**/*",
+          "bunToolchain"
+        ],
+        "outputs": []
+      },
+      "test-oclif-boundary": {
+        "cache": true,
+        "dependsOn": [
+          "build",
+          {
+            "projects": [
+              "@rawr/plugin-chatgpt-corpus",
+              "@rawr/plugin-devops",
+              "@rawr/plugin-hyperresearch",
+              "@rawr/plugin-session-tools"
+            ],
+            "target": "build"
+          }
+        ],
+        "inputs": [
+          "default",
+          "^default",
+          "typescriptRuntime",
+          "{workspaceRoot}/vitest.config.ts"
+        ],
+        "outputs": []
       }
     }
   }

@@ -4,10 +4,9 @@ import {
   type GlobalDoctorData,
   inspectGlobalController,
 } from "../../lib/controller/global-diagnostics";
-import { resolveExternalExtensionRuntime } from "../../lib/external-extensions/runtime";
 
 export default class DoctorGlobal extends RawrCommand {
-  static description = "Inspect selected controller and external extension provenance";
+  static description = "Inspect selected controller provenance";
 
   static flags = {
     ...RawrCommand.baseFlags,
@@ -19,8 +18,6 @@ export default class DoctorGlobal extends RawrCommand {
     const data = await inspectGlobalController({
       env: process.env,
       cwd: process.cwd(),
-      oclifDataDir: this.config.dataDir,
-      readExternalExtensions: () => resolveExternalExtensionRuntime(this.config).list(),
     });
 
     const result = data.healthy
@@ -55,9 +52,6 @@ function outputHumanDiagnostics(command: DoctorGlobal, data: GlobalDoctorData): 
     command.log(`- Bun: ${data.release.runtime.version} (${data.release.runtime.revision})`);
   }
   command.log(`- official members: ${data.release.officialMembers.length}`);
-  command.log(
-    `- external extensions: ${data.externalExtensions.active.length} active, ${data.externalExtensions.quarantined.length} quarantined`
-  );
   if (data.issues.length > 0) {
     command.log("Issues:");
     for (const entry of data.issues) command.log(`- ${entry.code}: ${entry.message}`);
