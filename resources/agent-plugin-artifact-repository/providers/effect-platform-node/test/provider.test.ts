@@ -1,10 +1,11 @@
+import { afterEach, describe, expect, test } from "bun:test";
 import {
   link,
   lstat,
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
+  readFile,
   realpath,
   rename,
   rm,
@@ -13,8 +14,6 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-
-import { afterEach, describe, expect, test } from "bun:test";
 import { FileSystem, Path } from "@effect/platform";
 import { SystemError } from "@effect/platform/Error";
 import { NodeContext } from "@effect/platform-node";
@@ -29,8 +28,8 @@ import type {
 import {
   makeArtifactRepositoryResource,
   makeNodeArtifactRepositoryAsyncPort,
-  runNodeArtifactRepository,
   type NodeArtifactRepositoryResult,
+  runNodeArtifactRepository,
 } from "../index";
 
 const FIXTURE_PREFIX = "rawr-artifact-repository-test-";

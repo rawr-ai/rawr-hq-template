@@ -1,6 +1,6 @@
-import { issue, type ControllerIssue } from "./issues";
-import { parseControllerDigest, type ControllerDigest } from "./primitives";
-import { failure, success, type ControllerResult, type NonEmptyReadonlyArray } from "./result";
+import { type ControllerIssue, issue } from "./issues";
+import { type ControllerDigest, parseControllerDigest } from "./primitives";
+import { type ControllerResult, failure, type NonEmptyReadonlyArray, success } from "./result";
 
 declare const controllerSelectionBrand: unique symbol;
 

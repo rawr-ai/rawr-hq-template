@@ -1,1 +1,1 @@
-export { exampleTodoApiContract, type ExampleTodoApiContract } from "./contract";
+export { type ExampleTodoApiContract, exampleTodoApiContract } from "./contract";

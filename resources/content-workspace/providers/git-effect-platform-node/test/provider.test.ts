@@ -1,11 +1,12 @@
+import { afterEach, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import {
   chmod,
   lstat,
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
+  readFile,
   realpath,
   rename,
   rm,
@@ -14,8 +15,6 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-
-import { afterEach, describe, expect, test } from "bun:test";
 import { FileSystem } from "@effect/platform";
 import { SystemError } from "@effect/platform/Error";
 import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";

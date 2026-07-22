@@ -8,8 +8,8 @@ import SessionsResolve from "../src/commands/sessions/resolve";
 import SessionsSearch from "../src/commands/sessions/search";
 import {
   createSessionIntelligenceClient,
-  setSessionIntelligenceClientFactoryForTest,
   type SessionIntelligenceClient,
+  setSessionIntelligenceClientFactoryForTest,
 } from "../src/lib/session-intelligence-client";
 import type {
   ExtractedSession,

@@ -1,10 +1,11 @@
+import { afterEach, describe, expect, it } from "bun:test";
 import {
   chmod,
   lstat,
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
+  readFile,
   realpath,
   rename,
   rm,
@@ -15,16 +16,14 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { afterEach, describe, expect, it } from "bun:test";
-
 import type {
   ProviderProjectionRecordAddress,
   ProviderTargetRecordAddress,
 } from "@rawr/resource-agent-provider-records";
 import {
+  type AgentProviderRecordsEvent,
   makeAgentProviderRecordsResource,
   runNodeAgentProviderRecords,
-  type AgentProviderRecordsEvent,
 } from "../index";
 
 const encoder = new TextEncoder();

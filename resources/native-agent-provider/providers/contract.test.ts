@@ -3,8 +3,8 @@ import type { Static } from "typebox";
 
 import {
   isNativeAgentProviderFailure,
-  NativeAgentProviderFailureSchema,
   type NativeAgentProviderFailure,
+  NativeAgentProviderFailureSchema,
 } from "../contract";
 
 type Equal<Left, Right> =
