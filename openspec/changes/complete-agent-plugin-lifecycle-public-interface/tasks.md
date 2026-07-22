@@ -238,6 +238,16 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   coordinator. Remove the orphan `.rawr-agent-plugin-owner.json` sentinel and
   its veto authority unconditionally; retain process-local serialization where
   needed.
+- [ ] 5.6a After tasks 4.2 and 5.5 remove the rejected Effect-owning runtime
+  surfaces, migrate the complete surviving resource/provider family and CLI
+  adapter to the current official Effect 4 line as one distinct reviewed
+  Graphite node. Re-query and pin exact aligned `effect` and
+  `@effect/platform-node` versions; remove `@effect/platform`; migrate Node
+  services, process, filesystem, path, platform-error, concurrency, and
+  finalization APIs without compatibility wrappers. Require one Effect 4
+  runtime copy, no active Effect 3 copy, and no active `@effect/platform`
+  import. Keep the oRPC upgrade separate, keep TypeBox authoritative, and add no
+  Effect-oRPC while every Effect program terminates inside its resource adapter.
 - [ ] 5.7 Seal one module at a time with owner-local behavior, schema, lint,
   typecheck, and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.

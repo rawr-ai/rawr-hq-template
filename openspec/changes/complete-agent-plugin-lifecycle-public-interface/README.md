@@ -164,13 +164,24 @@ rather than copying configuration blindly:
 | ESLint / parser | `9.39.2` / `8.54.0` | Keep Template's newer `10.0.3` / `8.57.1`; do not downgrade for parity |
 | TypeBox | `1.3.6` | Already aligned |
 | oRPC | `1.14.6` | Upgrade as a separate behavior-reviewed vendor change |
-| Effect / Platform | `3.21.3` / `0.96.1` | Already aligned; add Effect-oRPC only where consumed |
+| Effect / Platform | Current official Effect 4 line | Migrate the surviving resource/provider family after rejected owners are deleted; use exact aligned pins and remove `@effect/platform` |
 
 TypeScript 6 and 7 are a split of responsibilities, not a doubled CI matrix.
 Biome owns fast general hygiene; ESLint remains the boundary-rule leaf; Habitat
 owns positive architecture topology and source relationships. Full-corpus
 lintEffect is intentionally not part of the required push ratchet because its
 cold-run cost is an upstream limitation rather than repository admission logic.
+
+Official npm metadata on 2026-07-22 reports stable Effect `3.22.0` and the
+current Effect 4 line as `4.0.0-beta.100`; `@effect/platform-node` exposes the
+same Effect 4 beta while `@effect/platform` has no Effect 4 release. Effect 4 is
+therefore an explicit prerelease adoption, not a claim that the major is stable.
+The migration waits until controller and persistent lifecycle-state deletion so
+dead owners are not ported. It then moves the surviving filesystem/process
+resource family and CLI adapter together in one distinct Graphite node, using
+the exact current Effect 4 versions at execution. The lifecycle service remains
+native oRPC/TypeBox over ready Promise ports; no Effect-oRPC dependency is added
+without an Effect program crossing that boundary.
 
 The Biome tooling checkpoint pins Biome `2.5.3` and lintEffect `0.0.6`, carries
 the narrow upstream severity compatibility patch byte-for-byte from Civ7, and

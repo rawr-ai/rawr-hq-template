@@ -158,6 +158,17 @@ Effect/Platform programs terminate inside resource adapters and expose ready
 capabilities. Effect-oRPC is used only when an Effect program genuinely crosses
 the procedure boundary, not merely because an adapter uses Effect internally.
 
+The surviving filesystem/process resource family migrates coherently to Effect
+4 only after controller authority, persistent artifact/projection state, target
+records, and other rejected owners are deleted. The lifecycle service itself
+has no direct Effect dependency and is not made Effectful to justify the
+upgrade. At migration opening, re-query the official Effect 4 line and pin one
+exact aligned `effect` and `@effect/platform-node` release; remove
+`@effect/platform`, whose filesystem, path, platform-error, and process
+capabilities moved in Effect 4. Keep the oRPC family upgrade separate. TypeBox
+remains the public schema authority, and Effect-oRPC remains absent unless an
+Effect program actually crosses a procedure boundary.
+
 The canonical public product operations are:
 
 - `status`: inspect selected membership and explicit native state without
