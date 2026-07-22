@@ -1,7 +1,7 @@
 import type { Exit } from "effect";
 import type { ExecutionDescriptorRef, ProviderEffectBoundaryKind } from "../spine/artifacts";
 import { Cause } from "../vendor/effect/runtime";
-import { redactRuntimeRecordAttributes, type RuntimeRecordAttributes } from "./catalog";
+import { type RuntimeRecordAttributes, redactRuntimeRecordAttributes } from "./catalog";
 
 /**
  * Boundary policies are keyed to the exact matrix cells:

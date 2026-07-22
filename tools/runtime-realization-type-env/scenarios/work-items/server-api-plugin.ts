@@ -1,6 +1,6 @@
 import { defineServerApiPlugin } from "@rawr/sdk/plugins/server";
 import { useService } from "@rawr/sdk/service";
-import { WorkItemsService, type CreateWorkItemInput, type WorkItem } from "./work-items-service";
+import { type CreateWorkItemInput, type WorkItem, WorkItemsService } from "./work-items-service";
 
 export const WorkItemsServerApiServices = {
   workItems: useService(WorkItemsService),

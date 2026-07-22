@@ -1,4 +1,4 @@
-import { Type, type Static } from "typebox";
+import { type Static, Type } from "typebox";
 import { Compile } from "typebox/compile";
 import { Value } from "typebox/value";
 import { defineRuntimeSchema } from "../../sdk/runtime/schema";

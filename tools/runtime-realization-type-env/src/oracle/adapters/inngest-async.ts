@@ -1,9 +1,9 @@
 import { Inngest } from "inngest";
 import { serve } from "inngest/bun";
+import type { AdapterDelegationEvent } from "../../adapters/delegation";
+import type { RuntimeSimulationEvent } from "../../runtime/process-runtime";
 import type { AsyncStepBridgePayload } from "../../spine/artifacts";
 import type { OracleHarnessRecord, StartedOracleAsyncHarness } from "../harnesses";
-import type { RuntimeSimulationEvent } from "../../runtime/process-runtime";
-import type { AdapterDelegationEvent } from "../../adapters/delegation";
 
 export interface RuntimeInngestAsyncEvent {
   readonly name: string;

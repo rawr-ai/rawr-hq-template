@@ -1,11 +1,10 @@
-import { createRequire } from "node:module";
 import { lstat, readFile, realpath, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
-
+import type { ControllerOfficialMemberInput } from "@rawr/controller-release";
 // Classification is controller product input; the build app does not own a duplicate copy.
 import type { ControllerCommandPackageClassification } from "../../../apps/cli/src/lib/controller/classification.ts";
-import type { ControllerOfficialMemberInput } from "@rawr/controller-release";
 
 type CachedCommand = Readonly<{
   aliases?: unknown;

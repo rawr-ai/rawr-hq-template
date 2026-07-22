@@ -1,5 +1,5 @@
-import type { RuntimeDiagnostic } from "../spine/artifacts";
 import type { RuntimeProfile } from "../sdk/runtime/profiles";
+import type { RuntimeDiagnostic } from "../spine/artifacts";
 
 export function validateProviderClosure(profile: RuntimeProfile): RuntimeDiagnostic[] {
   const selectedResourceIds = new Set(

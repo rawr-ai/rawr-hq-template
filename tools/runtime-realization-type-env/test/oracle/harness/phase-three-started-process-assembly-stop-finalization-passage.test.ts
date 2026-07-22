@@ -2,12 +2,20 @@ import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
 import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
 import type { WorkflowDispatcher } from "@rawr/sdk/spine";
+import { SyncWorkItemStepDescriptor } from "../../../scenarios/work-items/app-and-plan-artifacts";
+import {
+  EmailProvider,
+  WorkItemsRuntimeProfile,
+} from "../../../scenarios/work-items/resource-provider-profile";
+import { WorkItemsServerApiPlugin } from "../../../scenarios/work-items/server-api-plugin";
+import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
 import {
   buildRuntimeTelemetryOtlpTracePayload,
+  type ContainedRuntimeResourceDefinition,
+  createContainedRuntimeResourceAccess,
   createDeploymentRuntimeHandoff,
   createExecutionRegistry,
   createMigrationControlPlaneObservationPacket,
-  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   createProviderProvisioningModules,
   createProviderProvisioningTrace,
@@ -18,28 +26,22 @@ import {
   mountOracleServerHarness,
   mountRuntimeInngestAsyncBoundary,
   mountRuntimeOrpcServerBoundary,
+  type ProcessExecutionRuntime,
+  type ProviderProvisionedValue,
   projectRuntimeCatalogToTelemetryRecords,
   projectRuntimeEventsToTelemetryRecords,
   providerBootResourceModuleId,
-  type ContainedRuntimeResourceDefinition,
-  type ProcessExecutionRuntime,
-  type ProviderProvisionedValue,
   type RuntimeInngestAsyncStepResponse,
   type RuntimeOrpcServerResponse,
   type RuntimeTelemetryEventLike,
   type RuntimeTelemetryRecord,
 } from "../../../src/oracle";
-import { compileRuntimeSpine, deriveRuntimeSpine } from "../../../src/spine/simulate";
 import type {
   AsyncStepBridgePayload,
   RuntimeSpineCompilation,
   ServerAdapterCallbackPayload,
 } from "../../../src/spine/artifacts";
-import { SyncWorkItemStepDescriptor } from "../../../scenarios/work-items/app-and-plan-artifacts";
-import { WorkItemsRuntimeProfile } from "../../../scenarios/work-items/resource-provider-profile";
-import { EmailProvider } from "../../../scenarios/work-items/resource-provider-profile";
-import { WorkItemsServerApiPlugin } from "../../../scenarios/work-items/server-api-plugin";
-import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
+import { compileRuntimeSpine, deriveRuntimeSpine } from "../../../src/spine/simulate";
 
 interface OrpcEncoded<T> {
   readonly json: T;

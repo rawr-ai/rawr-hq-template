@@ -1,5 +1,5 @@
-import type { EffectBody, RawrEffect } from "./effect";
 import type { ExecutionDescriptor } from "../spine/artifacts";
+import type { EffectBody, RawrEffect } from "./effect";
 
 export interface ServiceInvocation {
   readonly traceId: string;

@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { describeInngestProbe } from "../../src/vendor/boundaries/inngest";
+import { describeOrpcProbe } from "../../src/vendor/boundaries/orpc";
 import {
   TypeBoxRuntimeSchemaProbe,
   validateTypeBoxInput,
 } from "../../src/vendor/boundaries/typebox";
-import { describeOrpcProbe } from "../../src/vendor/boundaries/orpc";
-import { describeInngestProbe } from "../../src/vendor/boundaries/inngest";
 
 describe("runtime realization boundary vendor lane", () => {
   test("validates TypeBox-backed runtime schema values", () => {

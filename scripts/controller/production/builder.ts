@@ -14,9 +14,9 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 
 import {
-  decodeControllerSelection,
   type ControllerArchitecture,
   type ControllerPlatform,
+  decodeControllerSelection,
 } from "@rawr/controller-release";
 // Classification is controller product input; the build app does not own a duplicate copy.
 import {
@@ -26,11 +26,12 @@ import {
 import { buildControllerRelease } from "../build-release.ts";
 import { controllerReleasePath, controllerSelectorPath } from "../layout.ts";
 import { removeCanonicalDirectChildDirectory, sha256File } from "../lib/filesystem.ts";
-import { nodeControllerSelectorStore } from "../selector-store.ts";
 import {
   assertCanonicalControllerNxProjectRoots,
   resolveControllerNxClosure,
 } from "../nx-closure.ts";
+import { nodeControllerSelectorStore } from "../selector-store.ts";
+import { selectProductionControllerRelease } from "./activation.ts";
 import {
   CONTROLLER_PRODUCTION_INTERFACE_VERSION,
   PINNED_BUN_LICENSE_PATH,
@@ -43,7 +44,6 @@ import {
   assertNoProtectedRuntimeImports,
   assertProductionDependencyClosure,
 } from "./dependencies.ts";
-import { selectProductionControllerRelease } from "./activation.ts";
 import { generateOfficialMemberInputs } from "./official-manifest.ts";
 import { createExactPayloadSourcePlan } from "./payload.ts";
 import {

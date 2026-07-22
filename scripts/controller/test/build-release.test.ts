@@ -7,8 +7,8 @@ import { decodeControllerReleaseEnvelope } from "@rawr/controller-release";
 
 import { buildControllerRelease } from "../build-release.ts";
 import {
-  CONTROLLER_ENVELOPE_PATH,
   CONTROLLER_ENTRY_PATH,
+  CONTROLLER_ENVELOPE_PATH,
   CONTROLLER_RUNTIME_LICENSE_PATH,
   CONTROLLER_RUNTIME_PATH,
   CONTROLLER_STAGING_DIRECTORY,

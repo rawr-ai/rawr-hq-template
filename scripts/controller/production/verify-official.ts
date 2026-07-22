@@ -2,13 +2,13 @@ import { lstat, readFile, realpath } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 
 import type { ControllerOfficialMember } from "@rawr/controller-release";
-import { CONTROLLER_PRODUCTION_APP_NAME } from "./constants.ts";
 // The semantic adapter extends the sole release byte verifier; it does not
 // create a second envelope or inventory read model.
 import {
   requireVerifiedControllerRelease,
   type VerifiedControllerRelease,
 } from "../../../apps/cli/src/lib/controller/release-inspector.ts";
+import { CONTROLLER_PRODUCTION_APP_NAME } from "./constants.ts";
 
 type JsonRecord = Record<string, unknown>;
 const COMMAND_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*(?::[A-Za-z0-9][A-Za-z0-9._-]*)*$/u;

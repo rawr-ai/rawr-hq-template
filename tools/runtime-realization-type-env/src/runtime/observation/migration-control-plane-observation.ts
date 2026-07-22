@@ -1,10 +1,10 @@
-import type { DeploymentRuntimeHandoff } from "../deployment-handoff";
 import {
-  redactRuntimeRecordAttributes,
   type InMemoryRuntimeCatalog,
   type RuntimeRecordAttributes,
   type RuntimeRecordValue,
+  redactRuntimeRecordAttributes,
 } from "../catalog";
+import type { DeploymentRuntimeHandoff } from "../deployment-handoff";
 import type { RuntimeTelemetryOtlpExportResult, RuntimeTelemetryRecord } from "./telemetry-export";
 
 export interface MigrationControlPlanePlacementCandidateInput {
