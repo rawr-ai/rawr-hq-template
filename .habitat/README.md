@@ -19,4 +19,4 @@ The active set is intentionally small: one service topology, one command
 channel/controller-projection topology, and one dependency-direction boundary.
 
 See [[AUTHORITY|the authority boundary]] and
-[[openspec/changes/retire-mixed-plugin-lifecycle/SERVICE_TOPOLOGY|the lifecycle service topology]].
+[[openspec/changes/archive/2026-07-18-retire-mixed-plugin-lifecycle/SERVICE_TOPOLOGY|the archived lifecycle service topology]].
