@@ -155,12 +155,30 @@ cold-run cost is an upstream limitation rather than repository admission logic.
 The Biome tooling checkpoint pins Biome `2.5.3` and lintEffect `0.0.6`, carries
 the narrow upstream severity compatibility patch byte-for-byte from Civ7, and
 exposes both commands through the Habitat consumer's Nx project. A frozen Bun
-install applied the patch; the required Biome leaf inspected 1,180 files in
+install applied the patch; the Biome lint leaf inspected 1,180 files in
 327 ms; the Habitat consumer's lint, typecheck, four tests, and bounded packet
 check passed. A focused disposable lintEffect source produced the expected
-patched diagnostic and was removed without recursive cleanup. Repository-wide
-formatting and import organization remain a separate mechanical checkpoint;
-lintEffect remains advisory.
+patched diagnostic and was removed without recursive cleanup. lintEffect
+remains advisory.
+
+The separately reviewed mechanical checkpoint formatted 1,178 files in 660 ms,
+changing 817, and organized imports across 1,180 files in 318 ms, changing 467.
+The changes were split by application, lifecycle service, remaining services,
+packages/resources, and tooling; repeated formatter and import checks are
+idempotent. Changed-owner lint, typecheck, and completed non-CLI behavior suites
+pass. A source-order review found no reordered side-effect registration. Two
+existing Nx target-graph defects remain explicit inputs to task 1.6 rather than
+being hidden in the mechanical change: the DevOps Oclif fixture requires its
+build output but its test target does not declare that prerequisite, and the
+native-provider aggregate duplicates its nested provider test ownership when Nx
+runs both scopes in parallel. Build-then-test and each non-overlapping provider
+owner pass. Separately, the runtime-realization structural oracle still demands
+Effect `3.21.2` although the repository already pins `3.21.3`; its lint,
+typecheck, negative types, vendor, 69-test runtime oracle, middle-spine, and
+simulation targets pass, but the stale structural oracle does not. The full CLI
+test target remained live without output beyond three minutes and was stopped;
+its focused 40-test command smoke passed. Task 1.5b therefore remains open until
+task 1.6 supplies bounded full-owner proof and makes Biome an admission gate.
 
 ## Native Marketplace Grounding
 
@@ -201,7 +219,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx lint/typecheck target population | Complete on the active Template stack; final ratchet wiring pending |
 | Typechecked Habitat consumer and TypeBox release manifest | Complete on the active Template stack |
-| Civ-aligned Biome/Nx/TypeScript toolchain | Biome configuration complete; mechanical adoption, Nx, and TypeScript nodes pending |
+| Civ-aligned Biome/Nx/TypeScript toolchain | Biome configuration and mechanical rewrite implemented; admission wiring and bounded CLI proof remain with Nx, and TypeScript is pending |
 | Positive Habitat/Nx ratchet | Pending |
 | Direct Oclif development and external extension path | Pending |
 | Conventional CLI package/release | Pending |
