@@ -305,7 +305,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Typechecked Habitat consumer and TypeBox release manifest | Complete on the active Template stack |
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
 | Positive Habitat/Nx ratchet | Required lifecycle topology active; broader generic live-tree policy remains task 1.5 |
-| Direct Oclif development and external extension path | Direct source/built entrypoints and app-local native extension ownership complete; disposable round trip and controller-embedded residue pending |
+| Direct Oclif development and external extension path | Direct source/built entrypoints, app-local native extension ownership, and disposable round trip complete; controller-embedded residue pending task 4 |
 | Conventional CLI package/release | Pending |
 | Custom controller/extension deletion | Pending |
 | Persistent agent artifact/projection store deletion | Pending |
@@ -413,9 +413,43 @@ uncached ownership target and its five builds complete in 13.2 seconds,
 including 2.6 seconds for the isolated behavior case; the selected Habitat
 rules complete in 117 ms. The unchanged combined repeat is a 100% cache hit in
 28 ms. CLI build, lint, and typecheck pass together uncached in 12.5 seconds.
-The disposable native install round trip remains task 2.4.
 Copies embedded only in the rejected controller distribution remain pending
 deletion with task 4 rather than being adapted to this native path.
+
+The owner-local native extension acceptance runs the built Oclif entrypoint in
+one disposable state root. It gives Oclif and npm explicit `HOME`, XDG data,
+config, and cache roots; npm cache, prefix, user/global configuration, and
+registry inputs; and inert Codex and Claude homes. The native manager requires
+a `file:` URL for a local package because a bare filesystem path is repository
+shorthand. It observes the Hello fixture absent, installs and lists it as an
+Oclif user plugin, invokes `hello`, uninstalls it, and observes both inventory
+and command absence. The fixture package manifest and provider sentinels remain
+byte-identical. Cleanup is registered before setup and refuses recursive
+removal unless the canonical path is a non-symlink directory directly under
+the canonical temporary parent with the exact acceptance prefix.
+
+The CLI declares Bun `>=1.3.14` for its entrypoint and Node
+`^20.17.0 || >=22.9.0` for the bundled npm `11.9.0` used by native extension
+installation. Task 3 re-derives these requirements from the packed closure.
+The stateful target is uncached and composes the cached source/built ownership
+oracle with the Hello manifest owner. Its behavior case completes in 4.6
+seconds; an uncached dependency graph including CLI/core-plugin builds and the
+fixture manifest completes in 21.5 seconds. It remains outside the fast
+repository ratchet and becomes a mandatory publication predecessor in task 3.
+The native case has its own Vitest project, while the cacheable `cli` project
+continues to discover only the 129 deterministic behavior cases.
+
+The final task-2 gate passed the native acceptance again in 4.5 seconds, the
+Hello behavior and manifest owners in 1.6 seconds, and uncached CLI/Hello build,
+lint, and typecheck in 12.9 seconds. A complete pre-separation CLI run passed
+all 129 deterministic cases plus the native case; project discovery now proves
+the native file is absent from the cacheable suite and present exactly once in
+the uncached acceptance project. The required repository ratchet passed with
+91 of 98 affected lint/typecheck tasks restored from Nx cache, both Oclif
+Habitat rules enforced, repository separation intact, and the source/built
+native ownership oracle restored. Strict OpenSpec, Biome, and diff hygiene are
+green. Standing Oclif architecture, Nx structure, and behavior/testing reviews
+found no blocker.
 
 The post-cut CLI suite is green at 129 tests, but its uncached target still
 takes 3 minutes 16 seconds. The rejected artifact-store vertical alone takes
