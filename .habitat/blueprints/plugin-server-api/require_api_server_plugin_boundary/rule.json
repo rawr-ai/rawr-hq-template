@@ -19,9 +19,7 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [
-        "plugins/server/api/*/**"
-      ]
+      "patterns": ["plugins/server/api/*/**"]
     }
   ],
   "supportFiles": {
