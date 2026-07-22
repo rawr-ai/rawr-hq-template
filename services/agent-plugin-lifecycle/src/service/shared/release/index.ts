@@ -64,10 +64,14 @@ export { addReleaseSetPayloadBytes, type PayloadByteTotal } from "./payload-boun
 export {
   MAX_MECHANICAL_EVIDENCE_BYTES,
   MECHANICAL_EVIDENCE_PROTOCOL_VERSION,
+  MechanicalEvidenceHandleInputSchema,
+  MechanicalEvidenceHandleSchema,
   createMechanicalEvidenceHandle,
   mechanicalEvidenceDigest,
+  normalizeMechanicalEvidenceHandle,
   parseMechanicalEvidenceHandle,
   type MechanicalEvidenceDigest,
+  type MechanicalEvidenceHandleInput,
   type MechanicalEvidenceHandleV1,
   type MechanicalEvidenceIssue,
   type MechanicalEvidencePublicationResult,
@@ -148,8 +152,11 @@ export {
 
 export {
   ArtifactRefInputSchema,
+  ArtifactRefSchema,
   CompleteSetArtifactRefInputSchema,
+  CompleteSetArtifactRefSchema,
   ReleaseArtifactRefInputSchema,
+  ReleaseArtifactRefSchema,
   canonicalSerializeArtifactRef,
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,

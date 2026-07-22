@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
+import { ReadonlyObject, Type, type Static } from "typebox";
+import { Value } from "typebox/value";
 
 export const MECHANICAL_EVIDENCE_PROTOCOL_VERSION = 1 as const;
 export const MAX_MECHANICAL_EVIDENCE_BYTES = 64 * 1024 * 1024;
-
-const DIGEST_PATTERN = /^me1_[0-9a-f]{64}$/u;
 
 declare const mechanicalEvidenceDigestBrand: unique symbol;
 export type MechanicalEvidenceDigest = string & {
@@ -15,6 +15,20 @@ export interface MechanicalEvidenceHandleV1 {
   readonly protocolVersion: typeof MECHANICAL_EVIDENCE_PROTOCOL_VERSION;
   readonly digest: MechanicalEvidenceDigest;
 }
+
+export const MechanicalEvidenceHandleInputSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Literal("mechanical-evidence"),
+    protocolVersion: Type.Literal(MECHANICAL_EVIDENCE_PROTOCOL_VERSION),
+    digest: Type.String({ pattern: "^me1_[0-9a-f]{64}$" }),
+  },
+), { additionalProperties: false });
+
+export const MechanicalEvidenceHandleSchema = Type.Unsafe<MechanicalEvidenceHandleV1>(
+  MechanicalEvidenceHandleInputSchema,
+);
+
+export type MechanicalEvidenceHandleInput = Static<typeof MechanicalEvidenceHandleInputSchema>;
 
 export interface MechanicalEvidenceIssue {
   readonly code:
@@ -93,39 +107,28 @@ export function createMechanicalEvidenceHandle(bytes: Uint8Array): MechanicalEvi
   });
 }
 
+export function normalizeMechanicalEvidenceHandle(
+  input: MechanicalEvidenceHandleInput,
+): MechanicalEvidenceHandleV1 {
+  return Object.freeze({
+    kind: input.kind,
+    protocolVersion: input.protocolVersion,
+    digest: input.digest as MechanicalEvidenceDigest,
+  });
+}
+
 export function parseMechanicalEvidenceHandle(input: unknown):
   | Readonly<{ ok: true; value: MechanicalEvidenceHandleV1 }>
   | Readonly<{ ok: false; issue: MechanicalEvidenceIssue }> {
-  if (!isExactRecord(input, ["digest", "kind", "protocolVersion"])) {
-    return invalidHandle("Mechanical evidence handle must be a closed object");
-  }
-  if (
-    input.kind !== "mechanical-evidence"
-    || input.protocolVersion !== MECHANICAL_EVIDENCE_PROTOCOL_VERSION
-    || typeof input.digest !== "string"
-    || !DIGEST_PATTERN.test(input.digest)
-  ) {
-    return invalidHandle("Mechanical evidence handle has an invalid protocol or digest");
+  if (!Value.Check(MechanicalEvidenceHandleInputSchema, input)) {
+    return invalidHandle("Mechanical evidence handle must be a closed object matching its protocol schema");
   }
   return {
     ok: true,
-    value: Object.freeze({
-      kind: "mechanical-evidence",
-      protocolVersion: MECHANICAL_EVIDENCE_PROTOCOL_VERSION,
-      digest: input.digest as MechanicalEvidenceDigest,
-    }),
+    value: normalizeMechanicalEvidenceHandle(input),
   };
 }
 
 function invalidHandle(detail: string): Readonly<{ ok: false; issue: MechanicalEvidenceIssue }> {
   return { ok: false, issue: Object.freeze({ code: "InvalidHandle", detail }) };
-}
-
-function isExactRecord(input: unknown, keys: readonly string[]): input is Record<string, unknown> {
-  if (typeof input !== "object" || input === null || Array.isArray(input)) return false;
-  const prototype = Object.getPrototypeOf(input);
-  if (prototype !== Object.prototype && prototype !== null) return false;
-  const actual = Object.keys(input).sort();
-  const expected = [...keys].sort();
-  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
 }

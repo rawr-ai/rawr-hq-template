@@ -1,14 +1,15 @@
 import type {
-  RetentionInventoryEntry,
   RetentionIssue,
-  RetentionRef,
 } from "../model/dto/retention";
+import { MAX_RETENTION_REFS } from "../model/dto/retention";
 import {
   blockedRetentionPlan,
   constructRetentionPlan,
   parseRetentionInventory,
   parseRetentionPinsV1,
   retentionRefKey,
+  type NormalizedRetentionInventoryEntry,
+  type NormalizedRetentionRef,
 } from "../model/policy/retention";
 import { module } from "../module";
 
@@ -21,7 +22,7 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
     const pins = parseRetentionPinsV1(await context.retention.pins.read());
     if (!pins.ok) return blockedRetentionPlan(pins.issues);
 
-    const pinned = new Map<string, RetentionRef>();
+    const pinned = new Map<string, NormalizedRetentionRef>();
     const pinIssues: RetentionIssue[] = [];
     for (const ref of pins.value.refs) {
       if (ref.kind === "mechanical-evidence") {
@@ -45,12 +46,17 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
           pinned.set(retentionRefKey(member.ref), member.ref);
         }
       }
+      if (pinned.size > MAX_RETENTION_REFS) {
+        return blockedRetentionPlan([{
+          detail: `expanded retention pins exceed ${MAX_RETENTION_REFS} refs`,
+        }]);
+      }
     }
     if (pinIssues.length > 0) return blockedRetentionPlan(pinIssues);
 
     const inventory = parseRetentionInventory(await context.retention.inventory.read());
     const blockedEntries: RetentionIssue[] = [...inventory.issues];
-    const unpinned: RetentionInventoryEntry[] = [];
+    const unpinned: NormalizedRetentionInventoryEntry[] = [];
     for (const entry of inventory.entries) {
       if (pinned.has(retentionRefKey(entry.ref))) continue;
       const verified = entry.ref.kind === "mechanical-evidence"

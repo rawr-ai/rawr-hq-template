@@ -131,7 +131,7 @@ export function releaseInputRefreshIneligible(
   return Object.freeze({
     kind: "RepositoryIneligible",
     mode: "staged",
-    issues: Object.freeze([Object.freeze({ code, detail })]),
+    issues: Object.freeze([Object.freeze({ code, detail })] as const),
   });
 }
 
@@ -178,9 +178,13 @@ function preflightReleaseInputPayloadBounds(
       aggregateBytes,
     ));
   }
-  return issues.length === 0
+  const [first, ...rest] = issues;
+  return first === undefined
     ? undefined
-    : Object.freeze({ kind: "ReleaseInputRejected", issues: Object.freeze(issues) });
+    : Object.freeze({
+      kind: "ReleaseInputRejected",
+      issues: Object.freeze([first, ...rest] as const),
+    });
 }
 
 function addLogicalBytes(total: number, next: number): number {

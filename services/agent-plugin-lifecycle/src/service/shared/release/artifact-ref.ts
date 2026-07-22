@@ -69,6 +69,19 @@ export type CompleteSetArtifactRef = Readonly<{
 
 export type ArtifactRef = ReleaseArtifactRef | CompleteSetArtifactRef;
 
+export const ReleaseArtifactRefSchema = Type.Unsafe<ReleaseArtifactRef>(
+  ReleaseArtifactRefInputSchema,
+);
+
+export const CompleteSetArtifactRefSchema = Type.Unsafe<CompleteSetArtifactRef>(
+  CompleteSetArtifactRefInputSchema,
+);
+
+export const ArtifactRefSchema = Type.Union([
+  ReleaseArtifactRefSchema,
+  CompleteSetArtifactRefSchema,
+]);
+
 export function createReleaseArtifactRef(
   releaseDigest: ReleaseDigest,
   artifactDigest: ArtifactDigest,

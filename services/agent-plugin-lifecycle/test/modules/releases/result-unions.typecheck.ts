@@ -6,6 +6,7 @@ import type {
 import type { Deps } from "../../../src/client";
 
 import type { BuildResult } from "../../../src/service/modules/releases/model/dto/release-lifecycle";
+import type { RetentionResult } from "../../../src/service/modules/releases/model/dto/retention";
 
 declare const pluginId: PluginId;
 declare const artifactRef: ArtifactRef;
@@ -27,6 +28,16 @@ void partialRetention;
 
 const targeted = { kind: "targeted", pluginId } as const;
 const completeSet = { kind: "complete-set" } as const;
+
+type RejectedBuildIssues = Extract<BuildResult, { kind: "RejectedBeforePublication" }>["issues"];
+type BlockedRetentionIssues = Extract<RetentionResult, { kind: "RetentionPlanBlocked" }>["issues"];
+
+// @ts-expect-error A rejected build always reports at least one issue.
+const emptyBuildIssues: RejectedBuildIssues = [];
+// @ts-expect-error A blocked retention plan always reports at least one issue.
+const emptyRetentionIssues: BlockedRetentionIssues = [];
+void emptyBuildIssues;
+void emptyRetentionIssues;
 
 const published: BuildResult = {
   kind: "Published",
@@ -70,3 +81,16 @@ const contradictoryPublished: BuildResult = {
   requestedFinalCommit: "Unknown",
 };
 void contradictoryPublished;
+
+const canonicalBlockedRetention: RetentionResult = {
+  kind: "RetentionPlanBlocked",
+  issues: [{ detail: "fixture" }],
+};
+void canonicalBlockedRetention;
+
+const legacyBlockedRetention: RetentionResult = {
+  // @ts-expect-error RetentionPlanBlocked is the only blocked public discriminant.
+  kind: "BlockedPinnedGraph",
+  issues: [{ detail: "fixture" }],
+};
+void legacyBlockedRetention;

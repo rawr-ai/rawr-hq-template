@@ -8,24 +8,52 @@ import type { Static } from "typebox";
 import { Value } from "typebox/value";
 
 import type {
+  AgentPluginBuildRequest,
+  AgentPluginCheckRequest,
+  BuildIssue,
+  BuildMode,
+  BuildResult,
+  CheckResult,
   ReleaseInputRefreshRequest,
   ReleaseInputRefreshResult,
   ReleaseInputRecordRequest,
   ReleaseInputRecordResult,
+  RepositoryCheckRequest,
+  RepositoryCheckResult,
 } from "../../../src/service/modules/releases/model/dto/release-lifecycle";
+import type {
+  RetentionInventoryEntry,
+  RetentionIssue,
+  RetentionPlan,
+  RetentionPlanBlocked,
+  RetentionRef,
+  RetentionResult,
+  RetentionSpacePolicyV1,
+} from "../../../src/service/modules/releases/model/dto/retention";
 import {
   BuildInputSchema,
+  BuildIssueSchema,
+  BuildModeSchema,
   BuildResultSchema,
   CheckInputSchema,
   CheckResultSchema,
+  PlanRetentionInputSchema,
   PlanRetentionResultSchema,
+  RetentionInventorySchema,
+  RetentionPinsV1Schema,
   ReleaseInputRefreshInputSchema,
   ReleaseInputRefreshResultSchema,
   ReleaseInputRecordInputSchema,
   ReleaseInputRecordResultSchema,
   RepositoryCheckInputSchema,
   RepositoryCheckResultSchema,
+  RetentionInventoryEntrySchema,
+  RetentionIssueSchema,
+  RetentionPlanBlockedSchema,
+  RetentionPlanSchema,
+  RetentionRefSchema,
 } from "../../../src/service/modules/releases/schemas";
+import { MAX_RETENTION_REFS } from "../../../src/service/modules/releases/model/dto/retention";
 import {
   ReleaseInputBodySchema,
   ReleaseInputEnvelopeSchema,
@@ -53,10 +81,37 @@ const artifactDigest = `ad1_${"d".repeat(64)}`;
 const releaseSetDigest = `rs1_${"e".repeat(64)}`;
 
 describe("release procedure schema boundary", () => {
-  it("derives release-input request and result types from their TypeBox schemas", () => {
+  it("derives every public release contract type from its TypeBox schema", () => {
     type ContractInputs = InferContractRouterInputs<typeof contract>;
     type ContractOutputs = InferContractRouterOutputs<typeof contract>;
 
+    expectTypeOf<BuildMode>().toEqualTypeOf<Static<typeof BuildModeSchema>>();
+    expectTypeOf<AgentPluginCheckRequest>().toEqualTypeOf<Static<typeof CheckInputSchema>>();
+    expectTypeOf<AgentPluginBuildRequest>().toEqualTypeOf<Static<typeof BuildInputSchema>>();
+    expectTypeOf<BuildIssue>().toEqualTypeOf<Static<typeof BuildIssueSchema>>();
+    expectTypeOf<CheckResult>().toEqualTypeOf<Static<typeof CheckResultSchema>>();
+    expectTypeOf<BuildResult>().toEqualTypeOf<Static<typeof BuildResultSchema>>();
+    expectTypeOf<RepositoryCheckRequest>().toEqualTypeOf<
+      Static<typeof RepositoryCheckInputSchema>
+    >();
+    expectTypeOf<RepositoryCheckResult>().toEqualTypeOf<
+      Static<typeof RepositoryCheckResultSchema>
+    >();
+    expectTypeOf<RetentionRef>().toEqualTypeOf<Static<typeof RetentionRefSchema>>();
+    expectTypeOf<RetentionIssue>().toEqualTypeOf<Static<typeof RetentionIssueSchema>>();
+    expectTypeOf<RetentionInventoryEntry>().toEqualTypeOf<
+      Static<typeof RetentionInventoryEntrySchema>
+    >();
+    expectTypeOf<RetentionSpacePolicyV1>().toEqualTypeOf<
+      Static<typeof PlanRetentionInputSchema>
+    >();
+    expectTypeOf<RetentionPlan>().toEqualTypeOf<Static<typeof RetentionPlanSchema>>();
+    expectTypeOf<RetentionPlanBlocked>().toEqualTypeOf<
+      Static<typeof RetentionPlanBlockedSchema>
+    >();
+    expectTypeOf<RetentionResult>().toEqualTypeOf<
+      Static<typeof PlanRetentionResultSchema>
+    >();
     expectTypeOf<ReleaseInputRecordRequest>().toEqualTypeOf<
       Static<typeof ReleaseInputRecordInputSchema>
     >();
@@ -83,6 +138,22 @@ describe("release procedure schema boundary", () => {
     >();
     expectTypeOf<ContractOutputs["refreshReleaseInput"]>().toEqualTypeOf<
       Static<typeof ReleaseInputRefreshResultSchema>
+    >();
+    expectTypeOf<ContractInputs["check"]>().toEqualTypeOf<Static<typeof CheckInputSchema>>();
+    expectTypeOf<ContractOutputs["check"]>().toEqualTypeOf<Static<typeof CheckResultSchema>>();
+    expectTypeOf<ContractInputs["build"]>().toEqualTypeOf<Static<typeof BuildInputSchema>>();
+    expectTypeOf<ContractOutputs["build"]>().toEqualTypeOf<Static<typeof BuildResultSchema>>();
+    expectTypeOf<ContractInputs["checkRepository"]>().toEqualTypeOf<
+      Static<typeof RepositoryCheckInputSchema>
+    >();
+    expectTypeOf<ContractOutputs["checkRepository"]>().toEqualTypeOf<
+      Static<typeof RepositoryCheckResultSchema>
+    >();
+    expectTypeOf<ContractInputs["planRetention"]>().toEqualTypeOf<
+      Static<typeof PlanRetentionInputSchema>
+    >();
+    expectTypeOf<ContractOutputs["planRetention"]>().toEqualTypeOf<
+      Static<typeof PlanRetentionResultSchema>
     >();
   });
 
@@ -199,6 +270,147 @@ describe("release procedure schema boundary", () => {
       kind: "BlockedPinnedGraph",
       issues: [{ detail: "legacy ambiguous discriminator" }],
     })).toBe(false);
+  });
+
+  it("rejects retention collections beyond the domain limit", () => {
+    const ref = { kind: "complete-set", releaseSetDigest } as const;
+    const refs = Array.from({ length: MAX_RETENTION_REFS + 1 }, () => ref);
+    const entries = refs.map((entryRef) => ({ ref: entryRef, storedBytes: 1 }));
+
+    expect(Value.Check(RetentionPinsV1Schema, { schemaVersion: 1, refs })).toBe(false);
+    expect(Value.Check(RetentionInventorySchema, entries)).toBe(false);
+    expect(Value.Check(PlanRetentionResultSchema, {
+      kind: "RetentionPlan",
+      pinned: refs,
+      retained: [],
+      collectible: [],
+      blockedEntries: [],
+    })).toBe(false);
+    expect(Value.Check(PlanRetentionResultSchema, {
+      kind: "RetentionPlanBlocked",
+      issues: refs.map(() => ({ detail: "bounded" })),
+    })).toBe(false);
+  });
+
+  it("rejects malformed and surplus check/build outcomes at the callable boundary", async () => {
+    const invalidCheckResults = [
+      {
+        kind: "EligibleReport",
+        mode: { kind: "complete-set" },
+        candidate: { kind: "complete-set", releaseSetDigest, locator: "not-public" },
+        eligibilityBinding: "binding-v1",
+      },
+      {
+        kind: "EligibleReport",
+        mode: { kind: "complete-set" },
+        candidate: { kind: "complete-set", releaseSetDigest },
+        eligibilityBinding: "",
+      },
+      {
+        kind: "IneligibleReport",
+        mode: { kind: "targeted", pluginId: "cognition", extra: true },
+        issues: [{ kind: "ReleaseConstruction", detail: "fixture" }],
+      },
+    ];
+    for (const candidate of invalidCheckResults) {
+      expect(Value.Check(CheckResultSchema, candidate)).toBe(false);
+      const validated = await schema(CheckResultSchema)["~standard"].validate(candidate);
+      expect("issues" in validated).toBe(true);
+    }
+
+    const invalidBuildResults = [
+      {
+        kind: "Published",
+        mode: { kind: "complete-set" },
+        ref: { kind: "complete-set", releaseSetDigest },
+        newlyPublished: [],
+        preExisting: [],
+        requestedFinalCommit: "Unknown",
+      },
+      {
+        kind: "PublicationIncomplete",
+        mode: { kind: "complete-set" },
+        newlyPublished: [{ kind: "release", releaseDigest, artifactDigest, extra: true }],
+        preExisting: [],
+        requestedSetRefAbsent: true,
+        issues: [{ kind: "ReleaseConstruction", detail: "fixture" }],
+      },
+      {
+        kind: "PublicationUnsettled",
+        mode: { kind: "complete-set" },
+        observedVerifiedReleases: [],
+        requestedFinalCommit: "Known",
+        issues: [{ kind: "ArtifactStore", detail: "fixture" }],
+      },
+    ];
+    for (const candidate of invalidBuildResults) {
+      expect(Value.Check(BuildResultSchema, candidate)).toBe(false);
+      const validated = await schema(BuildResultSchema)["~standard"].validate(candidate);
+      expect("issues" in validated).toBe(true);
+    }
+  });
+
+  it("keeps retention policy and result envelopes closed and bounded", async () => {
+    expect(Value.Check(PlanRetentionInputSchema, {
+      kind: "space-v1",
+      maximumUnpinnedBytes: Number.MAX_SAFE_INTEGER,
+    })).toBe(true);
+
+    const invalidPolicies = [
+      { kind: "space-v1", maximumUnpinnedBytes: -1 },
+      { kind: "space-v1", maximumUnpinnedBytes: 0.5 },
+      { kind: "space-v1", maximumUnpinnedBytes: Number.MAX_SAFE_INTEGER + 1 },
+      { kind: "space-v1", maximumUnpinnedBytes: 0, unit: "bytes" },
+    ];
+    for (const candidate of invalidPolicies) {
+      expect(Value.Check(PlanRetentionInputSchema, candidate)).toBe(false);
+      const validated = await schema(PlanRetentionInputSchema)["~standard"].validate(candidate);
+      expect("issues" in validated).toBe(true);
+    }
+
+    expect(Value.Check(PlanRetentionResultSchema, {
+      kind: "RetentionPlan",
+      pinned: [{ kind: "complete-set", releaseSetDigest }],
+      retained: [{
+        ref: { kind: "mechanical-evidence", protocolVersion: 1, digest: `me1_${"f".repeat(64)}` },
+        storedBytes: Number.MAX_SAFE_INTEGER,
+      }],
+      collectible: [{
+        ref: { kind: "release", releaseDigest, artifactDigest },
+        storedBytes: 0,
+      }],
+      blockedEntries: [],
+    })).toBe(true);
+
+    const invalidResults = [
+      {
+        kind: "RetentionPlan",
+        pinned: [{ kind: "complete-set", releaseSetDigest, path: "not-public" }],
+        retained: [],
+        collectible: [],
+        blockedEntries: [],
+      },
+      {
+        kind: "RetentionPlan",
+        pinned: [],
+        retained: [{ ref: { kind: "release", releaseDigest, artifactDigest }, storedBytes: -1 }],
+        collectible: [],
+        blockedEntries: [],
+      },
+      {
+        kind: "RetentionPlanBlocked",
+        issues: [],
+      },
+      {
+        kind: "RetentionPlanBlocked",
+        issues: [{ detail: "", source: "not-public" }],
+      },
+    ];
+    for (const candidate of invalidResults) {
+      expect(Value.Check(PlanRetentionResultSchema, candidate)).toBe(false);
+      const validated = await schema(PlanRetentionResultSchema)["~standard"].validate(candidate);
+      expect("issues" in validated).toBe(true);
+    }
   });
 
   it("keeps release-input record authoring pure and schema closed", async () => {

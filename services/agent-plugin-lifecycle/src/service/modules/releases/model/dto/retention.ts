@@ -1,41 +1,99 @@
-import type {
-  ArtifactRef,
-  MechanicalEvidenceHandleV1,
+import { ReadonlyObject, Type, type Static } from "typebox";
+
+import { NonEmptyReadonlyArray } from "../../../../model/dto/structural";
+import {
+  ArtifactRefInputSchema,
+  ArtifactRefSchema,
+  MechanicalEvidenceHandleInputSchema,
+  MechanicalEvidenceHandleSchema,
 } from "../../../../shared/release";
 
-export interface RetentionIssue {
-  readonly ref?: RetentionRef;
-  readonly detail: string;
-}
+export const MAX_RETENTION_REFS = 16_384;
 
-export type RetentionRef = ArtifactRef | MechanicalEvidenceHandleV1;
+export const RetentionRefInputSchema = Type.Union([
+  ArtifactRefInputSchema,
+  MechanicalEvidenceHandleInputSchema,
+]);
 
-export interface RetentionPinsV1 {
-  readonly schemaVersion: 1;
-  readonly refs: readonly RetentionRef[];
-}
+export const RetentionRefSchema = Type.Union([
+  ArtifactRefSchema,
+  MechanicalEvidenceHandleSchema,
+]);
 
-export interface RetentionInventoryEntry {
-  readonly ref: RetentionRef;
-  readonly storedBytes: number;
-}
+export const RetentionIssueSchema = ReadonlyObject(Type.Object(
+  {
+    ref: Type.Optional(RetentionRefSchema),
+    detail: Type.String({ minLength: 1 }),
+  },
+), { additionalProperties: false });
 
-export interface RetentionSpacePolicyV1 {
-  readonly kind: "space-v1";
-  readonly maximumUnpinnedBytes: number;
-}
+export const RetentionPinsV1Schema = ReadonlyObject(Type.Object(
+  {
+    schemaVersion: Type.Literal(1),
+    refs: ReadonlyObject(Type.Array(RetentionRefInputSchema), {
+      maxItems: MAX_RETENTION_REFS,
+    }),
+  },
+), { additionalProperties: false });
 
-export interface RetentionPlan {
-  readonly kind: "RetentionPlan";
-  readonly pinned: readonly RetentionRef[];
-  readonly retained: readonly RetentionInventoryEntry[];
-  readonly collectible: readonly RetentionInventoryEntry[];
-  readonly blockedEntries: readonly RetentionIssue[];
-}
+export const RetentionInventoryEntrySchema = ReadonlyObject(Type.Object(
+  {
+    ref: RetentionRefSchema,
+    storedBytes: Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER }),
+  },
+), { additionalProperties: false });
 
-export interface RetentionPlanBlocked {
-  readonly kind: "RetentionPlanBlocked";
-  readonly issues: readonly [RetentionIssue, ...RetentionIssue[]];
-}
+export const RetentionInventoryEntryInputSchema = ReadonlyObject(Type.Object(
+  {
+    ref: RetentionRefInputSchema,
+    storedBytes: Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER }),
+  },
+), { additionalProperties: false });
 
-export type RetentionResult = RetentionPlan | RetentionPlanBlocked;
+export const RetentionInventorySchema = ReadonlyObject(
+  Type.Array(RetentionInventoryEntryInputSchema),
+  { maxItems: MAX_RETENTION_REFS },
+);
+
+export const PlanRetentionInputSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Literal("space-v1"),
+    maximumUnpinnedBytes: Type.Integer({
+      minimum: 0,
+      maximum: Number.MAX_SAFE_INTEGER,
+    }),
+  },
+), { additionalProperties: false });
+
+export const RetentionPlanSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Literal("RetentionPlan"),
+    pinned: ReadonlyObject(Type.Array(RetentionRefSchema), { maxItems: MAX_RETENTION_REFS }),
+    retained: ReadonlyObject(Type.Array(RetentionInventoryEntrySchema), { maxItems: MAX_RETENTION_REFS }),
+    collectible: ReadonlyObject(Type.Array(RetentionInventoryEntrySchema), { maxItems: MAX_RETENTION_REFS }),
+    blockedEntries: ReadonlyObject(Type.Array(RetentionIssueSchema), { maxItems: MAX_RETENTION_REFS }),
+  },
+), { additionalProperties: false });
+
+export const RetentionPlanBlockedSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Literal("RetentionPlanBlocked"),
+    issues: NonEmptyReadonlyArray(RetentionIssueSchema, {
+      maxItems: MAX_RETENTION_REFS,
+    }),
+  },
+), { additionalProperties: false });
+
+export const PlanRetentionResultSchema = Type.Union([
+  RetentionPlanSchema,
+  RetentionPlanBlockedSchema,
+]);
+
+export type RetentionRef = Static<typeof RetentionRefSchema>;
+export type RetentionIssue = Static<typeof RetentionIssueSchema>;
+export type RetentionPinsV1 = Static<typeof RetentionPinsV1Schema>;
+export type RetentionInventoryEntry = Static<typeof RetentionInventoryEntrySchema>;
+export type RetentionSpacePolicyV1 = Static<typeof PlanRetentionInputSchema>;
+export type RetentionPlan = Static<typeof RetentionPlanSchema>;
+export type RetentionPlanBlocked = Static<typeof RetentionPlanBlockedSchema>;
+export type RetentionResult = Static<typeof PlanRetentionResultSchema>;
