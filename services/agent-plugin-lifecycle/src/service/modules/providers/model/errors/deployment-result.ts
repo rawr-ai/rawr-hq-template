@@ -1,5 +1,9 @@
 export type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
 
+export const MAX_PROVIDER_ISSUE_TEXT_LENGTH = 4_096;
+
+const TRUNCATED_PROVIDER_ISSUE_SUFFIX = "...[truncated]";
+
 export type DeploymentResult<T, E = ProviderDeploymentIssue> =
   | Readonly<{ ok: true; value: T }>
   | Readonly<{ ok: false; issues: NonEmptyReadonlyArray<E> }>;
@@ -60,7 +64,21 @@ export function issue(
   expected = "",
   actual = "",
 ): ProviderDeploymentIssue {
-  return Object.freeze({ code, path, message, expected, actual });
+  return Object.freeze({
+    code,
+    path: boundedIssueText(path),
+    message: boundedIssueText(message),
+    expected: boundedIssueText(expected),
+    actual: boundedIssueText(actual),
+  });
+}
+
+function boundedIssueText(value: string): string {
+  if (value.length <= MAX_PROVIDER_ISSUE_TEXT_LENGTH) return value;
+  return `${value.slice(
+    0,
+    MAX_PROVIDER_ISSUE_TEXT_LENGTH - TRUNCATED_PROVIDER_ISSUE_SUFFIX.length,
+  )}${TRUNCATED_PROVIDER_ISSUE_SUFFIX}`;
 }
 
 export function firstIssue(
