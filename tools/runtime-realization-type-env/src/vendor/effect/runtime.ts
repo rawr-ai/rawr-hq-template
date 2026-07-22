@@ -32,7 +32,7 @@ export {
   Stream,
 };
 
-export const effectVersionProof = "3.21.2" as const;
+export const effectVersionProof = "3.21.3" as const;
 
 export function createEmptyManagedRuntime() {
   return ManagedRuntime.make(Layer.empty);

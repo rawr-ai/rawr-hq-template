@@ -11,7 +11,7 @@
 
 ## Current Vendor Facts
 
-- Installed package: `effect@3.21.2` as a root `devDependency` only. It is
+- Installed package: `effect@3.21.3` as a root `devDependency` only. It is
   not a production dependency and the tool is not a workspace package.
 - `@rawr/sdk/effect` remains a RAWR facade, but `RawrEffect<A, E, R>` is backed
   by real `Effect.Effect<A, E, R>`.
