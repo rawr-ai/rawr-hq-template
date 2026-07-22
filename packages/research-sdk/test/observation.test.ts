@@ -1,11 +1,20 @@
 import { Effect, Exit } from "effect";
 import { describe, expect, test } from "vitest";
-import type { EvaluationResult, SolverTerminal } from "../src/contracts/index.js";
+import type {
+  EvaluationResult,
+  PortableStageOutput,
+  SolverTerminal,
+  StageOutputShape,
+} from "../src/contracts/index.js";
 import {
   bindObservationProjection,
   bindObservationSettlement,
+  classifyAdoption,
+  classifyEvaluationAdoption,
+  classifyEvaluationPublication,
   classifyPublication,
   type Observe,
+  reconcileEvaluationPublicationAfterUnknown,
   reconcilePublicationAfterUnknown,
   stageOutputIdentityOf,
   stageOutputKeyOf,
@@ -194,25 +203,154 @@ describe("observation subject binding", () => {
       expect(stageOutputKeyOf(existing)).toEqual(stageOutputKeyOf(candidate));
       expect(existing.value.terminalPredecessor).not.toEqual(candidate.value.terminalPredecessor);
       expect(
-        classifyPublication(
+        classifyEvaluationPublication({
+          terminal: original,
           candidate,
-          { kind: "Existing", value: existing },
-          digestEvaluationResultValue
-        )
+          outcome: { kind: "Existing", value: existing },
+          digestEvaluationValue: digestEvaluationResultValue,
+        })
       ).toEqual({
         kind: "Conflict",
         conflict: { kind: "DivergentExistingOutput" },
       });
       expect(
-        reconcilePublicationAfterUnknown(
+        reconcileEvaluationPublicationAfterUnknown({
+          terminal: original,
           candidate,
-          { kind: "Found", value: existing },
-          digestEvaluationResultValue
-        )
+          read: { kind: "Found", value: existing },
+          digestEvaluationValue: digestEvaluationResultValue,
+        })
       ).toEqual({
         kind: "Conflict",
         conflict: { kind: "DivergentExistingOutput" },
       });
+    }
+  });
+
+  test("adopts an evaluation only when it binds the exact terminal envelope", () => {
+    const terminal = solverTerminal();
+    const evaluation = evaluationResult(terminal);
+    const differentRevision = { ...terminal, implementationRevision: "sdk-2" };
+
+    expect(
+      classifyEvaluationAdoption({
+        expectedEvaluation: stageOutputKeyOf(evaluation),
+        stored: { kind: "Found", value: evaluation },
+        terminal,
+        digestEvaluationValue: digestEvaluationResultValue,
+      })
+    ).toEqual({ kind: "Adopted", value: evaluation });
+
+    expect(
+      classifyEvaluationAdoption({
+        expectedEvaluation: stageOutputKeyOf(evaluation),
+        stored: { kind: "Found", value: evaluationResult(differentRevision) },
+        terminal,
+        digestEvaluationValue: digestEvaluationResultValue,
+      })
+    ).toEqual({
+      kind: "Conflict",
+      conflict: { kind: "EvaluationPredecessorMismatch" },
+    });
+  });
+
+  test("rejects an unbound evaluation before publication or read-after-unknown", () => {
+    const terminal = solverTerminal();
+    const differentRevision = { ...terminal, implementationRevision: "sdk-2" };
+    const unbound = evaluationResult(differentRevision);
+    const expectedConflict = {
+      kind: "Conflict" as const,
+      conflict: { kind: "EvaluationPredecessorMismatch" as const },
+    };
+
+    expect(
+      classifyEvaluationPublication({
+        terminal,
+        candidate: unbound,
+        outcome: { kind: "Created" },
+        digestEvaluationValue: digestEvaluationResultValue,
+      })
+    ).toEqual(expectedConflict);
+    expect(
+      reconcileEvaluationPublicationAfterUnknown({
+        terminal,
+        candidate: unbound,
+        read: { kind: "Absent" },
+        digestEvaluationValue: digestEvaluationResultValue,
+      })
+    ).toEqual(expectedConflict);
+  });
+
+  test("generic durable-output paths fail closed for evaluation results", () => {
+    const evaluation = evaluationResult();
+
+    if (false) {
+      classifyAdoption(
+        // @ts-expect-error evaluation adoption requires the exact terminal envelope
+        stageOutputKeyOf(evaluation),
+        { kind: "Found", value: evaluation },
+        digestEvaluationResultValue
+      );
+      // @ts-expect-error evaluation publication requires the exact terminal envelope
+      classifyPublication(evaluation, { kind: "Created" }, digestEvaluationResultValue);
+      reconcilePublicationAfterUnknown(
+        // @ts-expect-error evaluation reconciliation requires the exact terminal envelope
+        evaluation,
+        { kind: "Found", value: evaluation },
+        digestEvaluationResultValue
+      );
+    }
+
+    const widened = evaluation as PortableStageOutput<StageOutputShape>;
+    const digestWidened = () => evaluation.outputDigest;
+    const expectedConflict = {
+      kind: "Conflict" as const,
+      conflict: { kind: "EvaluationResultRequiresExactTerminalBinding" as const },
+    };
+
+    expect(
+      classifyAdoption(
+        // @ts-expect-error broad stages cannot use generic semantic-stage adoption
+        stageOutputKeyOf(widened),
+        { kind: "Found", value: widened },
+        digestWidened
+      )
+    ).toEqual(expectedConflict);
+    // @ts-expect-error broad stages cannot use generic semantic-stage publication
+    expect(classifyPublication(widened, { kind: "Created" }, digestWidened)).toEqual(
+      expectedConflict
+    );
+    expect(
+      reconcilePublicationAfterUnknown(
+        // @ts-expect-error broad stages cannot use generic semantic-stage reconciliation
+        widened,
+        { kind: "Found", value: widened },
+        digestWidened
+      )
+    ).toEqual(expectedConflict);
+
+    if (false) {
+      const mixed = evaluation as PortableStageOutput<
+        StageOutputShape<"PreparedCell" | "EvaluationResult">
+      >;
+      classifyAdoption(
+        // @ts-expect-error a mixed stage union containing EvaluationResult is not generic
+        stageOutputKeyOf(mixed),
+        { kind: "Found", value: mixed },
+        digestWidened
+      );
+      classifyPublication(
+        // @ts-expect-error a mixed stage union containing EvaluationResult is not generic
+        mixed,
+        { kind: "Created" },
+        digestWidened
+      );
+      reconcilePublicationAfterUnknown(
+        // @ts-expect-error a mixed stage union containing EvaluationResult is not generic
+        mixed,
+        { kind: "Found", value: mixed },
+        digestWidened
+      );
     }
   });
 });

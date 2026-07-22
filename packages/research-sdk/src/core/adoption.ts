@@ -7,7 +7,7 @@ import type {
   StageOutputShape,
 } from "../contracts/stage-output.js";
 import type { DigestAttemptValue, ExecutionAttemptFence } from "./residue.js";
-import type { SolverTerminalShape } from "./stage-shapes.js";
+import type { EvaluationResultShape, SolverTerminalShape } from "./stage-shapes.js";
 import type { CreateOutcome, ReadExact } from "./terminal-sink.js";
 
 export type AdoptionConflict =
@@ -15,12 +15,38 @@ export type AdoptionConflict =
   | { readonly kind: "StoredOutputDigestMismatch" }
   | { readonly kind: "CandidateOutputDigestMismatch" }
   | { readonly kind: "DivergentExistingOutput" }
-  | { readonly kind: "SolverTerminalRequiresAdmittedAttempt" };
+  | { readonly kind: "SolverTerminalRequiresAdmittedAttempt" }
+  | { readonly kind: "SolverTerminalRequiresExactAdoption" }
+  | { readonly kind: "EvaluationResultRequiresExactTerminalBinding" };
 
 export type AdoptionOutcome<Output> =
   | { readonly kind: "Absent" }
   | { readonly kind: "Adopted"; readonly value: Output }
   | { readonly kind: "Conflict"; readonly conflict: AdoptionConflict };
+
+export type SolverTerminalAdoptionConflict =
+  | AdoptionConflict
+  | { readonly kind: "TerminalAttemptDigestMismatch" };
+
+export type SolverTerminalAdoptionOutcome<Output> =
+  | Exclude<AdoptionOutcome<Output>, { readonly kind: "Conflict" }>
+  | {
+      readonly kind: "Conflict";
+      readonly conflict: SolverTerminalAdoptionConflict;
+    };
+
+export type EvaluationBindingConflict =
+  | { readonly kind: "EvaluationIdentityMismatch" }
+  | { readonly kind: "EvaluationPredecessorMismatch" };
+
+export type EvaluationAdoptionConflict = AdoptionConflict | EvaluationBindingConflict;
+
+export type EvaluationAdoptionOutcome<Output> =
+  | Exclude<AdoptionOutcome<Output>, { readonly kind: "Conflict" }>
+  | {
+      readonly kind: "Conflict";
+      readonly conflict: EvaluationAdoptionConflict;
+    };
 
 export type PublicationOutcome<Output, Uncertainty> =
   | { readonly kind: "Published"; readonly value: Output }
@@ -42,7 +68,24 @@ export type SolverTerminalPublicationOutcome<Output, Uncertainty> =
       readonly conflict: SolverTerminalPublicationConflict;
     };
 
+export type EvaluationPublicationConflict = AdoptionConflict | EvaluationBindingConflict;
+
+export type EvaluationPublicationOutcome<Output, Uncertainty> =
+  | Exclude<PublicationOutcome<Output, Uncertainty>, { readonly kind: "Conflict" }>
+  | {
+      readonly kind: "Conflict";
+      readonly conflict: EvaluationPublicationConflict;
+    };
+
 export type DigestValue<Value> = (value: Value) => DigestIdentity;
+
+type SemanticallyBoundStage = "SolverTerminal" | "EvaluationResult";
+
+type GenericStageGuard<Stage extends string> = [Extract<SemanticallyBoundStage, Stage>] extends [
+  never,
+]
+  ? unknown
+  : never;
 
 export function stageOutputKeyOf<const Output extends StageOutputShape>(
   output: PortableStageOutput<Output>
@@ -69,6 +112,69 @@ export function classifyAdoption<
   const Stage extends string,
   const Output extends StageOutputShape<Stage>,
 >(
+  expected: StageOutputKey<Stage> & GenericStageGuard<Stage>,
+  stored: ReadExact<PortableStageOutput<Output>>,
+  digestValue: DigestValue<PortableStageOutput<Output>["value"]>
+): AdoptionOutcome<PortableStageOutput<Output>> {
+  const semanticConflict = genericSemanticStageConflict(expected.stage);
+  if (semanticConflict) {
+    return { kind: "Conflict", conflict: semanticConflict };
+  }
+
+  return classifyAdoptionUnchecked(expected, stored, digestValue);
+}
+
+export function classifySolverTerminalAdoption<const Terminal extends SolverTerminalShape>(input: {
+  readonly expectedTerminal: StageOutputKey<"SolverTerminal">;
+  readonly stored: ReadExact<PortableStageOutput<Terminal>>;
+  readonly digestTerminalValue: DigestValue<PortableStageOutput<Terminal>["value"]>;
+  readonly digestAttemptValue: DigestAttemptValue;
+}): SolverTerminalAdoptionOutcome<PortableStageOutput<Terminal>> {
+  const adoption = classifyAdoptionUnchecked(
+    input.expectedTerminal,
+    input.stored,
+    input.digestTerminalValue
+  );
+  if (adoption.kind !== "Adopted") {
+    return adoption;
+  }
+
+  if (!terminalAttemptIsSelfConsistent(adoption.value, input.digestAttemptValue)) {
+    return {
+      kind: "Conflict",
+      conflict: { kind: "TerminalAttemptDigestMismatch" },
+    };
+  }
+
+  return adoption;
+}
+
+export function classifyEvaluationAdoption<
+  const Terminal extends SolverTerminalShape<unknown>,
+  const Evaluation extends EvaluationResultShape,
+>(input: {
+  readonly expectedEvaluation: StageOutputKey<"EvaluationResult">;
+  readonly stored: ReadExact<PortableStageOutput<Evaluation>>;
+  readonly terminal: PortableStageOutput<Terminal>;
+  readonly digestEvaluationValue: DigestValue<PortableStageOutput<Evaluation>["value"]>;
+}): EvaluationAdoptionOutcome<PortableStageOutput<Evaluation>> {
+  const adoption = classifyAdoptionUnchecked(
+    input.expectedEvaluation,
+    input.stored,
+    input.digestEvaluationValue
+  );
+  if (adoption.kind !== "Adopted") {
+    return adoption;
+  }
+
+  const bindingConflict = classifyEvaluationBinding(input.terminal, adoption.value);
+  return bindingConflict ? { kind: "Conflict", conflict: bindingConflict } : adoption;
+}
+
+function classifyAdoptionUnchecked<
+  const Stage extends string,
+  const Output extends StageOutputShape<Stage>,
+>(
   expected: StageOutputKey<Stage>,
   stored: ReadExact<PortableStageOutput<Output>>,
   digestValue: DigestValue<PortableStageOutput<Output>["value"]>
@@ -92,15 +198,18 @@ export function classifyAdoption<
 }
 
 export function classifyPublication<const Output extends StageOutputShape, const Uncertainty>(
-  candidate: PortableStageOutput<Output> &
-    (Output["stage"] extends "SolverTerminal" ? never : unknown),
+  candidate: PortableStageOutput<Output> & GenericStageGuard<Output["stage"]>,
   outcome: CreateOutcome<PortableStageOutput<Output>, Uncertainty>,
   digestValue: DigestValue<PortableStageOutput<Output>["value"]>
 ): PublicationOutcome<PortableStageOutput<Output>, Uncertainty> {
-  if (candidate.stage === "SolverTerminal") {
+  const semanticConflict = genericSemanticStageConflict(candidate.stage);
+  if (semanticConflict) {
     return {
       kind: "Conflict",
-      conflict: { kind: "SolverTerminalRequiresAdmittedAttempt" },
+      conflict:
+        candidate.stage === "SolverTerminal"
+          ? { kind: "SolverTerminalRequiresAdmittedAttempt" }
+          : semanticConflict,
     };
   }
   return classifyPublicationUnchecked(candidate, outcome, digestValue);
@@ -123,6 +232,24 @@ export function classifySolverTerminalPublication<
   }
 
   return classifyPublicationUnchecked(input.candidate, input.outcome, input.digestTerminalValue);
+}
+
+export function classifyEvaluationPublication<
+  const Terminal extends SolverTerminalShape<unknown>,
+  const Evaluation extends EvaluationResultShape,
+  const Uncertainty,
+>(input: {
+  readonly terminal: PortableStageOutput<Terminal>;
+  readonly candidate: PortableStageOutput<Evaluation>;
+  readonly outcome: CreateOutcome<PortableStageOutput<Evaluation>, Uncertainty>;
+  readonly digestEvaluationValue: DigestValue<PortableStageOutput<Evaluation>["value"]>;
+}): EvaluationPublicationOutcome<PortableStageOutput<Evaluation>, Uncertainty> {
+  const bindingConflict = classifyEvaluationBinding(input.terminal, input.candidate);
+  if (bindingConflict) {
+    return { kind: "Conflict", conflict: bindingConflict };
+  }
+
+  return classifyPublicationUnchecked(input.candidate, input.outcome, input.digestEvaluationValue);
 }
 
 function classifyPublicationUnchecked<const Output extends StageOutputShape, const Uncertainty>(
@@ -149,15 +276,18 @@ function classifyPublicationUnchecked<const Output extends StageOutputShape, con
 }
 
 export function reconcilePublicationAfterUnknown<const Output extends StageOutputShape>(
-  candidate: PortableStageOutput<Output> &
-    (Output["stage"] extends "SolverTerminal" ? never : unknown),
+  candidate: PortableStageOutput<Output> & GenericStageGuard<Output["stage"]>,
   read: ReadExact<PortableStageOutput<Output>>,
   digestValue: DigestValue<PortableStageOutput<Output>["value"]>
 ): PublicationOutcome<PortableStageOutput<Output>, never> {
-  if (candidate.stage === "SolverTerminal") {
+  const semanticConflict = genericSemanticStageConflict(candidate.stage);
+  if (semanticConflict) {
     return {
       kind: "Conflict",
-      conflict: { kind: "SolverTerminalRequiresAdmittedAttempt" },
+      conflict:
+        candidate.stage === "SolverTerminal"
+          ? { kind: "SolverTerminalRequiresAdmittedAttempt" }
+          : semanticConflict,
     };
   }
   return reconcilePublicationAfterUnknownUnchecked(candidate, read, digestValue);
@@ -182,6 +312,27 @@ export function reconcileSolverTerminalPublicationAfterUnknown<
     input.candidate,
     input.read,
     input.digestTerminalValue
+  );
+}
+
+export function reconcileEvaluationPublicationAfterUnknown<
+  const Terminal extends SolverTerminalShape<unknown>,
+  const Evaluation extends EvaluationResultShape,
+>(input: {
+  readonly terminal: PortableStageOutput<Terminal>;
+  readonly candidate: PortableStageOutput<Evaluation>;
+  readonly read: ReadExact<PortableStageOutput<Evaluation>>;
+  readonly digestEvaluationValue: DigestValue<PortableStageOutput<Evaluation>["value"]>;
+}): EvaluationPublicationOutcome<PortableStageOutput<Evaluation>, never> {
+  const bindingConflict = classifyEvaluationBinding(input.terminal, input.candidate);
+  if (bindingConflict) {
+    return { kind: "Conflict", conflict: bindingConflict };
+  }
+
+  return reconcilePublicationAfterUnknownUnchecked(
+    input.candidate,
+    input.read,
+    input.digestEvaluationValue
   );
 }
 
@@ -230,12 +381,63 @@ function solverTerminalPublicationBindingConflict<
   return undefined;
 }
 
+function terminalAttemptIsSelfConsistent<Terminal extends SolverTerminalShape>(
+  terminal: PortableStageOutput<Terminal>,
+  digestAttemptValue: DigestAttemptValue
+): boolean {
+  const storedAttempt = terminal.value.attempt;
+  const attemptValue = {
+    terminal: stageOutputKeyOf(terminal),
+    attemptId: storedAttempt.attemptId,
+  };
+  return equalStructuredData(digestAttemptValue(attemptValue), storedAttempt.attemptDigest);
+}
+
+export function classifyEvaluationBinding<
+  const Terminal extends SolverTerminalShape<unknown>,
+  const Evaluation extends EvaluationResultShape,
+>(
+  terminal: PortableStageOutput<Terminal>,
+  evaluation: PortableStageOutput<Evaluation>
+): EvaluationBindingConflict | undefined {
+  if (
+    !equalStructuredData(terminal.cell, evaluation.cell) ||
+    !equalStructuredData(terminal.frozenInputDigest, evaluation.frozenInputDigest)
+  ) {
+    return { kind: "EvaluationIdentityMismatch" };
+  }
+
+  const roots =
+    evaluation.predecessors.kind === "Set"
+      ? evaluation.predecessors.digests
+      : evaluation.predecessors.rootDigests;
+
+  if (
+    !equalStructuredData(evaluation.value.terminalPredecessor, stageOutputIdentityOf(terminal)) ||
+    !roots.some((digest) => equalStructuredData(digest, terminal.outputDigest))
+  ) {
+    return { kind: "EvaluationPredecessorMismatch" };
+  }
+
+  return undefined;
+}
+
+function genericSemanticStageConflict(stage: string): AdoptionConflict | undefined {
+  if (stage === "SolverTerminal") {
+    return { kind: "SolverTerminalRequiresExactAdoption" };
+  }
+  if (stage === "EvaluationResult") {
+    return { kind: "EvaluationResultRequiresExactTerminalBinding" };
+  }
+  return undefined;
+}
+
 function classifyExisting<const Output extends StageOutputShape>(
   candidate: PortableStageOutput<Output>,
   existing: PortableStageOutput<Output>,
   digestValue: DigestValue<PortableStageOutput<Output>["value"]>
 ): PublicationOutcome<PortableStageOutput<Output>, never> {
-  const adoption = classifyAdoption(
+  const adoption = classifyAdoptionUnchecked(
     stageOutputKeyOf(candidate),
     { kind: "Found", value: existing },
     digestValue

@@ -14,9 +14,11 @@ import type {
   ResidueTerminationEvidence,
 } from "../src/core/index.js";
 import {
+  classifyAdoption,
   classifyAttemptReconciliation,
   classifyPublication,
   classifyResidueReconciliation,
+  classifySolverTerminalAdoption,
   classifySolverTerminalPublication,
   inspectExecutionReentry,
   reconcilePublicationAfterUnknown,
@@ -152,8 +154,20 @@ describe("same-instance re-entry", () => {
     const admission = { kind: "Admitted" as const, attempt: admitted };
 
     if (false) {
+      classifyAdoption(
+        // @ts-expect-error solver terminal adoption requires attempt self-consistency proof
+        stageOutputKeyOf(candidate),
+        { kind: "Found", value: candidate },
+        digestSolverTerminalValue
+      );
       // @ts-expect-error solver terminals require their admitted execution fence
       classifyPublication(candidate, { kind: "Created" }, digestSolverTerminalValue);
+      reconcilePublicationAfterUnknown(
+        // @ts-expect-error solver terminal reconciliation requires its admitted execution fence
+        candidate,
+        { kind: "Found", value: candidate },
+        digestSolverTerminalValue
+      );
     }
 
     expect(
@@ -226,6 +240,18 @@ describe("same-instance re-entry", () => {
     });
 
     const widened = candidate as PortableStageOutput<StageOutputShape>;
+    expect(
+      classifyAdoption(
+        // @ts-expect-error broad stages cannot use generic semantic-stage adoption
+        stageOutputKeyOf(widened),
+        { kind: "Found", value: widened },
+        () => candidate.outputDigest
+      )
+    ).toEqual({
+      kind: "Conflict",
+      conflict: { kind: "SolverTerminalRequiresExactAdoption" },
+    });
+    // @ts-expect-error broad stages cannot use generic semantic-stage publication
     expect(classifyPublication(widened, { kind: "Created" }, () => candidate.outputDigest)).toEqual(
       {
         kind: "Conflict",
@@ -234,6 +260,7 @@ describe("same-instance re-entry", () => {
     );
     expect(
       reconcilePublicationAfterUnknown(
+        // @ts-expect-error broad stages cannot use generic semantic-stage reconciliation
         widened,
         { kind: "Found", value: widened },
         () => candidate.outputDigest
@@ -241,6 +268,58 @@ describe("same-instance re-entry", () => {
     ).toEqual({
       kind: "Conflict",
       conflict: { kind: "SolverTerminalRequiresAdmittedAttempt" },
+    });
+
+    if (false) {
+      const mixed = candidate as PortableStageOutput<
+        StageOutputShape<"PreparedCell" | "SolverTerminal">
+      >;
+      classifyAdoption(
+        // @ts-expect-error a mixed stage union containing SolverTerminal is not generic
+        stageOutputKeyOf(mixed),
+        { kind: "Found", value: mixed },
+        () => candidate.outputDigest
+      );
+      classifyPublication(
+        // @ts-expect-error a mixed stage union containing SolverTerminal is not generic
+        mixed,
+        { kind: "Created" },
+        () => candidate.outputDigest
+      );
+      reconcilePublicationAfterUnknown(
+        // @ts-expect-error a mixed stage union containing SolverTerminal is not generic
+        mixed,
+        { kind: "Found", value: mixed },
+        () => candidate.outputDigest
+      );
+    }
+  });
+
+  test("specialized terminal adoption validates its carried attempt against its exact key", () => {
+    const terminal = solverTerminal();
+    expect(
+      classifySolverTerminalAdoption({
+        expectedTerminal: stageOutputKeyOf(terminal),
+        stored: { kind: "Found", value: terminal },
+        digestTerminalValue: digestSolverTerminalValue,
+        digestAttemptValue: digestExecutionAttemptValue,
+      })
+    ).toEqual({ kind: "Adopted", value: terminal });
+
+    const alias = terminalWithAttemptBoundTo({
+      ...stageOutputKeyOf(terminal),
+      implementationRevision: "sdk-other",
+    });
+    expect(
+      classifySolverTerminalAdoption({
+        expectedTerminal: stageOutputKeyOf(terminal),
+        stored: { kind: "Found", value: alias },
+        digestTerminalValue: digestSolverTerminalValue,
+        digestAttemptValue: digestExecutionAttemptValue,
+      })
+    ).toEqual({
+      kind: "Conflict",
+      conflict: { kind: "TerminalAttemptDigestMismatch" },
     });
   });
 

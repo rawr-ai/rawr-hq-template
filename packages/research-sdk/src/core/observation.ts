@@ -1,7 +1,11 @@
 import { Exit } from "effect";
 import type { Portable } from "../contracts/schema.js";
 import type { PortableStageOutput } from "../contracts/stage-output.js";
-import { equalStructuredData, stageOutputIdentityOf } from "./adoption.js";
+import {
+  classifyEvaluationBinding,
+  type EvaluationBindingConflict,
+  equalStructuredData,
+} from "./adoption.js";
 import type { EvaluationResultShape, SolverTerminalShape } from "./stage-shapes.js";
 
 const ObservationSettlementBinding = Symbol("@rawr/research-sdk/core/ObservationSettlement");
@@ -30,8 +34,7 @@ export interface BoundObservationProjection<
 
 export type ObservationBindingConflict =
   | { readonly kind: "ObservationHandleMismatch" }
-  | { readonly kind: "EvaluationIdentityMismatch" }
-  | { readonly kind: "EvaluationPredecessorMismatch" };
+  | EvaluationBindingConflict;
 
 export type ObservationBindingOutcome<Value> =
   | { readonly kind: "Ready"; readonly value: Value }
@@ -82,30 +85,9 @@ export function bindObservationProjection<
   terminal: PortableStageOutput<Terminal>,
   evaluation: PortableStageOutput<Evaluation>
 ): ObservationBindingOutcome<BoundObservationProjection<Handle, Terminal, Evaluation>> {
-  if (
-    !equalStructuredData(terminal.cell, evaluation.cell) ||
-    !equalStructuredData(terminal.frozenInputDigest, evaluation.frozenInputDigest)
-  ) {
-    return {
-      kind: "Conflict",
-      conflict: { kind: "EvaluationIdentityMismatch" },
-    };
-  }
-
-  const terminalDigest = terminal.outputDigest;
-  const roots =
-    evaluation.predecessors.kind === "Set"
-      ? evaluation.predecessors.digests
-      : evaluation.predecessors.rootDigests;
-
-  if (
-    !equalStructuredData(evaluation.value.terminalPredecessor, stageOutputIdentityOf(terminal)) ||
-    !roots.some((digest) => equalStructuredData(digest, terminalDigest))
-  ) {
-    return {
-      kind: "Conflict",
-      conflict: { kind: "EvaluationPredecessorMismatch" },
-    };
+  const bindingConflict = classifyEvaluationBinding(terminal, evaluation);
+  if (bindingConflict) {
+    return { kind: "Conflict", conflict: bindingConflict };
   }
 
   return {

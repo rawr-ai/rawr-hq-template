@@ -3,10 +3,8 @@ import type { UnresolvedExecutionResidue } from "../contracts/execution.js";
 import type { PortableStageOutput, StageOutputKey } from "../contracts/stage-output.js";
 import {
   type AdoptionConflict,
-  classifyAdoption,
+  classifySolverTerminalAdoption,
   type DigestValue,
-  equalStructuredData,
-  stageOutputKeyOf,
 } from "./adoption.js";
 import {
   type AttemptAdmissionOutcome,
@@ -134,25 +132,21 @@ function classifyTerminalAdoption<Terminal extends SolverTerminalShape>(input: {
       readonly kind: "TerminalAttemptDigestMismatch";
       readonly terminal: PortableStageOutput<Terminal>;
     } {
-  const adoption = classifyAdoption(
-    input.expectedTerminal,
-    { kind: "Found", value: input.terminal },
-    input.digestTerminalValue
-  );
+  const adoption = classifySolverTerminalAdoption({
+    expectedTerminal: input.expectedTerminal,
+    stored: { kind: "Found", value: input.terminal },
+    digestTerminalValue: input.digestTerminalValue,
+    digestAttemptValue: input.digestAttemptValue,
+  });
   if (adoption.kind === "Conflict") {
+    if (adoption.conflict.kind === "TerminalAttemptDigestMismatch") {
+      return { kind: "TerminalAttemptDigestMismatch", terminal: input.terminal };
+    }
     return { kind: "TerminalConflict", conflict: adoption.conflict };
   }
   if (adoption.kind === "Absent") {
     return { kind: "TerminalConflict", conflict: { kind: "IdentityMismatch" } };
   }
 
-  const storedAttempt = adoption.value.value.attempt;
-  const attemptValue = {
-    terminal: stageOutputKeyOf(adoption.value),
-    attemptId: storedAttempt.attemptId,
-  };
-  if (!equalStructuredData(input.digestAttemptValue(attemptValue), storedAttempt.attemptDigest)) {
-    return { kind: "TerminalAttemptDigestMismatch", terminal: adoption.value };
-  }
   return { kind: "AdoptTerminal", terminal: adoption.value };
 }
