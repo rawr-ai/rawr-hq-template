@@ -2,6 +2,9 @@
   "name": "provider-native-agent-provider-claude-effect-platform-node",
   "projectType": "library",
   "sourceRoot": "resources/native-agent-provider/providers/claude-effect-platform-node",
+  "implicitDependencies": [
+    "@rawr/resource-native-agent-provider"
+  ],
   "tags": [
     "type:provider",
     "layer:resource-provider",
