@@ -75,8 +75,11 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   `typescript6@6.0.2` fallback. Remove the two deprecated `baseUrl` settings and
   make path mappings explicit. Do not run every check twice.
 - [ ] 1.6 Replace the sequential repository ratchet with Nx affected/cached lint
-  and typecheck plus one Habitat policy check. Preserve one non-skippable remote
-  required result for the candidate revision.
+  and typecheck plus one Habitat policy check. Make test ownership and
+  prerequisites explicit: the DevOps Oclif fixture must depend on its build,
+  aggregate and nested native-provider suites must not be scheduled as duplicate
+  owners, and the CLI owner target must complete with bounded visible progress.
+  Preserve one non-skippable remote required result for the candidate revision.
 - [ ] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable
