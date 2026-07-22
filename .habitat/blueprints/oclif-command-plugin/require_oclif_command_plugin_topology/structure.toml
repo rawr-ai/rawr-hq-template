@@ -2,7 +2,7 @@ schemaVersion = 1
 
 [[scopes]]
 name = "oclif-command-plugin-packages"
-root = "plugins/cli/*"
+root = "plugins/cli/commands/*"
 kind = "directory"
 mode = "closed"
 required = [
@@ -24,7 +24,7 @@ allowed = [
 
 [[scopes]]
 name = "oclif-command-plugin-sources"
-root = "plugins/cli/*/src"
+root = "plugins/cli/commands/*/src"
 kind = "directory"
 mode = "closed"
 required = ["commands"]

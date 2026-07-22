@@ -113,6 +113,16 @@ allows only one module `router.ts`, while current Magic modules also use compose
 forms. Magic-specific import aliases and constructor spellings are adapted to
 generic relationships rather than copied as false RAWR law.
 
+A standing architecture review found that the first Oclif command-plugin
+blueprint had incorrectly classified every `plugins/cli/*` package and required
+`rawr.kind=toolkit`, contradicting the canonical
+`plugins/cli/commands/<capability>` projection topology. The corrected packet
+uses placement as identity, removes the second metadata classification, and
+keeps the package and source roots closed. App and command-plugin manifest
+contracts execute the official generator through Bun. All 24 Grit fixtures,
+the blueprint-packet topology check, and the live direct-entrypoint rule pass;
+moving the production command plugins remains task 2.3.
+
 The Template Habitat consumer already pins the newest published Civ7 artifact:
 
 | Field | Value |

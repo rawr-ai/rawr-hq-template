@@ -12,17 +12,17 @@
   },
   "ownerProject": "@rawr/habitat-consumer",
   "lane": "enforced",
-  "forbids": "an unversioned or non-ESM command plugin, a non-toolkit identity, a dependency on another command plugin, mismatched command discovery, a plugin-owned binary, a missing package-owned manifest command, or an ambiguous source-to-output mapping",
-  "why": "Each command capability is a versioned Oclif plugin composed by the host rather than another command plugin. Oclif discovers one compiled command root, its development mode maps dist commands back to src through TypeScript rootDir and outDir, and Nx infers the package-owned manifest script as a target.",
-  "remediate": "Declare a versioned @rawr/plugin-* ESM toolkit with @oclif/core, no command-plugin dependency, dist/commands discovery, TypeScript rootDir src and outDir dist, no bin field, a publishable dist/manifest file set, and oclif manifest as the package manifest script.",
+  "forbids": "an unversioned or non-ESM command plugin, a dependency on another command plugin, mismatched command discovery, a plugin-owned binary, a missing package-owned manifest command, or an ambiguous source-to-output mapping",
+  "why": "Each command capability is a versioned Oclif plugin composed by the host rather than another command plugin. Oclif discovers one compiled command root, its development mode maps dist commands back to src through TypeScript rootDir and outDir, and Nx infers the package-owned Bun-executed Oclif manifest script as a target.",
+  "remediate": "Place a versioned @rawr/plugin-* ESM command plugin under plugins/cli/commands, depend on @oclif/core but no command plugin, discover dist/commands, map TypeScript rootDir src to outDir dist, expose no bin field, publish dist and oclif.manifest.json, and use bun --bun oclif manifest as the package manifest script.",
   "message": "The Oclif command-plugin package must describe one host-composed command capability.",
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": ["plugins/cli/*/package.json", "plugins/cli/*/tsconfig.json"]
+      "patterns": ["plugins/cli/commands/*/package.json", "plugins/cli/commands/*/tsconfig.json"]
     }
   ],
-  "scanRoots": ["plugins/cli"],
+  "scanRoots": ["plugins/cli/commands"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_plugin_configuration/baseline.json"

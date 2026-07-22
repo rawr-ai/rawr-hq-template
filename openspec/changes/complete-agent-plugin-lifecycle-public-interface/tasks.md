@@ -45,6 +45,11 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   package-directory imports. Leave general package exports to TypeScript and Nx.
   Do not encode retired filenames as a forbidden list or model `nx release` as
   a project target.
+- [x] 1.3a Correct command-plugin identity to
+  `plugins/cli/commands/<capability>`, remove `rawr.kind` as projection
+  classification, require Bun to execute the official Oclif manifest command,
+  and prove the exact direct app entrypoints without admitting extra bootstrap
+  statements.
 - [ ] 1.4 Add positive resource/provider topology only after the current corpus
   supports one generic invariant. Do not claim Magic prior art that does not
   exist.
