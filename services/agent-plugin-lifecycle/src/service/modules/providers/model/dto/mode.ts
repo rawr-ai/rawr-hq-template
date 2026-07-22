@@ -121,6 +121,7 @@ export type CanonicalStatusRequest = Readonly<Omit<CanonicalStatusInput, "locato
 }>;
 
 const pathEncoder = new TextEncoder();
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/u;
 
 export function normalizeCompleteTestRequest(
   input: CompleteTestInput,
@@ -288,5 +289,6 @@ function isCanonicalContentWorkspaceRoot(value: string): boolean {
     && !value.endsWith("/")
     && !value.includes("\\")
     && value.normalize("NFC") === value
+    && !CONTROL_CHARACTER_PATTERN.test(value)
     && pathEncoder.encode(value).byteLength <= 4_096;
 }

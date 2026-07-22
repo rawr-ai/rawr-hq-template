@@ -416,6 +416,12 @@ describe("provider procedure input schema boundary", () => {
       locator: { ...locator, workspaceRoot: "relative/rawr-hq" },
       targets: [providerTarget],
     }],
+    ["control character in workspace root", CanonicalSyncInputSchema, {
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator: { ...locator, workspaceRoot: "/tmp/rawr\nhq" },
+      targets: [providerTarget],
+    }],
   ] as const)("accepts structurally bounded %s for domain classification", async (_label, inputSchema, candidate) => {
     expect(Value.Check(inputSchema, candidate)).toBe(true);
     const adapted = await schema(inputSchema)["~standard"].validate(candidate);
@@ -463,6 +469,12 @@ describe("provider procedure input schema boundary", () => {
       kind: "canonical-status",
       channel: "current-main",
       locator: { ...locator, workspaceRoot: "relative/rawr-hq" },
+      targets: [providerTarget],
+    }), "INVALID_LOCATOR"],
+    ["control character in workspace root", () => normalizeCanonicalSyncRequest({
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator: { ...locator, workspaceRoot: "/tmp/rawr\nhq" },
       targets: [providerTarget],
     }), "INVALID_LOCATOR"],
   ] as const)("returns typed $expectedCode for $label", (_label, normalize, expectedCode) => {
