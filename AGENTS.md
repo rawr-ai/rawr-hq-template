@@ -17,14 +17,17 @@
 
 ## Repo Role Boundary
 
-- `RAWR HQ-Template` owns the executable controller, official CLI, provider adapters,
-  generic lifecycle services, schemas/tooling implementations, and generic validators.
+- `RAWR HQ-Template` owns the executable Oclif CLI, official commands, provider
+  adapters, generic lifecycle services, schemas/tooling implementations, and
+  generic validators.
 - Personal `RAWR HQ` owns curated agent-plugin content, vendor provenance,
   declarative policy/evaluation inputs, and its own governed release/channel records.
 - The repositories are independent. Do not merge, cherry-pick, transplant, mirror, or
   preserve Template executable paths in personal.
-- Cross-repository use is limited to explicit versioned data/artifact interfaces. A
-  repository path is a content locator, never controller identity or Git ancestry.
+- Cross-repository use is limited to explicit versioned data interfaces and
+  ordinary package artifacts. A Personal repository path is a Git content
+  locator, never CLI installation identity, executable ancestry, or code-sharing
+  authority.
 - Use [[AGENTS_SPLIT|the repository destination guide]] first for
   Template-vs-personal destination decisions.
 
