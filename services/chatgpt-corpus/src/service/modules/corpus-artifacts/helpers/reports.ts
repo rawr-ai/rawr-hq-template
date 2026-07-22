@@ -1,6 +1,6 @@
 import {
-  SOURCE_MATERIAL_DIRECTORIES,
   createNormalizedThreadArtifactRef,
+  SOURCE_MATERIAL_DIRECTORIES,
 } from "../../../../shared/layout";
 import type {
   AmbiguityFlag,

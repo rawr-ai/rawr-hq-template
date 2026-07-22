@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { safe } from "@orpc/server";
+import { describe, expect, it } from "vitest";
 import { createClient } from "../src";
 import {
   type AnalyticsEntry,

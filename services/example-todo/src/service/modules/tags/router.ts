@@ -16,8 +16,8 @@
  * middleware.
  */
 import { randomUUID } from "node:crypto";
-import { module } from "./module";
 import { createProcedureAnalytics, createProcedureObservability } from "./middleware";
+import { module } from "./module";
 import { type Tag } from "./schemas";
 
 /**

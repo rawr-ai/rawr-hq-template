@@ -7,10 +7,11 @@
  *
  * Service-wide middleware is authored and attached in `src/service/impl.ts`.
  */
+
+import { impl } from "./impl";
 import { router as assignments } from "./modules/assignments/router";
 import { router as tags } from "./modules/tags/router";
 import { router as tasks } from "./modules/tasks/router";
-import { impl } from "./impl";
 
 export const router = impl.router({
   tasks,

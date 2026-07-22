@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createClient } from "../src/client";
-import { contract } from "../src/service/contract";
 import { router } from "../src/router";
+import { contract } from "../src/service/contract";
 import { createClientOptions, createFakeResources } from "./helpers";
 
 const cleanStatus = "## agent/devops...origin/agent/devops\n";

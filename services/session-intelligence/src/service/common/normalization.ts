@@ -1,11 +1,3 @@
-import type { SessionSourceRuntime } from "./ports/session-source-runtime";
-import {
-  basename,
-  inferProjectFromCwd,
-  inferStatusFromPath,
-  stem,
-  stripKnownSessionExtension,
-} from "./path-utils";
 import type {
   ClaudeSessionMetadata,
   CodexSessionMetadata,
@@ -13,6 +5,14 @@ import type {
   SessionMessage,
   SessionSource,
 } from "./entities";
+import {
+  basename,
+  inferProjectFromCwd,
+  inferStatusFromPath,
+  stem,
+  stripKnownSessionExtension,
+} from "./path-utils";
+import type { SessionSourceRuntime } from "./ports/session-source-runtime";
 
 function asRecord(value: unknown): Record<string, any> | null {
   return value && typeof value === "object" ? (value as Record<string, any>) : null;

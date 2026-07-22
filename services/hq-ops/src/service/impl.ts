@@ -10,8 +10,9 @@
  * This file is the only package-wide runtime assembly seam. Required service
  * observability semantics are supplied here exactly once.
  */
-import { contract } from "./contract";
+
 import { createServiceImplementer } from "./base";
+import { contract } from "./contract";
 import { analytics } from "./middleware/analytics";
 import { observability } from "./middleware/observability";
 

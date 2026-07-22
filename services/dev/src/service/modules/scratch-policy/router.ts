@@ -1,5 +1,5 @@
-import { module } from "./module";
 import { checkScratchPolicy as checkScratchPolicyHelper } from "./helpers";
+import { module } from "./module";
 
 const check = module.check.handler(async ({ context, input }) => {
   return checkScratchPolicyHelper({

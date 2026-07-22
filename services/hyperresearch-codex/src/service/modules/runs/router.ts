@@ -8,10 +8,17 @@
  */
 import { runHyperresearchCli } from "../../common/adapters/hyperresearch-cli";
 import type { HyperresearchV8RunLedger } from "../../common/entities";
+import {
+  createAgentJobs,
+  validateAgentOutputs,
+  writeFixtureAgentOutputs,
+} from "./helpers/agent-packets";
+import { finishStep, writeCanonicalBootstrap } from "./helpers/artifacts";
+import { resolveRequestedTier, slugifyQuery } from "./helpers/input";
 import { validateHyperresearchRunIntegrity } from "./helpers/integrity";
 import {
-  assertV8LedgerMatches,
   appendV8ResumeEvent,
+  assertV8LedgerMatches,
   blockV8Step,
   createV8HyperresearchRunLedger,
   ensureV8LedgerState,
@@ -19,16 +26,9 @@ import {
   readV8HyperresearchRunLedger,
   writeHyperresearchRunLedger,
 } from "./helpers/ledger";
-import { definitionForV8Step, loadHyperresearchStep, v8StepsForTier } from "./helpers/steps";
-import { resolveRequestedTier, slugifyQuery } from "./helpers/input";
-import { finishStep, writeCanonicalBootstrap } from "./helpers/artifacts";
-import {
-  createAgentJobs,
-  validateAgentOutputs,
-  writeFixtureAgentOutputs,
-} from "./helpers/agent-packets";
-import { runRequiredCliForStep } from "./helpers/source-capture";
 import { makeResult, resultStatus } from "./helpers/result";
+import { runRequiredCliForStep } from "./helpers/source-capture";
+import { definitionForV8Step, loadHyperresearchStep, v8StepsForTier } from "./helpers/steps";
 import { module } from "./module";
 
 const startV8Run = module.startV8Run.handler(async ({ context, input }) => {

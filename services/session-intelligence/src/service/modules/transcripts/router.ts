@@ -5,7 +5,8 @@
  * detecting format and extracting normalized message transcripts. It exists so
  * projections can request transcripts without coupling to on-disk formats.
  */
-import { module } from "./module";
+
+import type { SessionMessage } from "../../common/entities";
 import {
   detectSessionFormat,
   extractClaudeMessages,
@@ -13,7 +14,7 @@ import {
   getClaudeSessionMetadata,
   getCodexSessionMetadata,
 } from "../../common/normalization";
-import type { SessionMessage } from "../../common/entities";
+import { module } from "./module";
 
 function dedupeMessages(messages: SessionMessage[]): SessionMessage[] {
   const seen = new Set<string>();

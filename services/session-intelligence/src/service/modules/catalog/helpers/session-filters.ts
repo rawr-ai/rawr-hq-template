@@ -1,5 +1,5 @@
-import { looksLikePath } from "../../../common/path-utils";
 import type { DiscoveredSessionFile, SessionListItem } from "../../../common/entities";
+import { looksLikePath } from "../../../common/path-utils";
 
 export type SessionFilters = {
   project?: string;
