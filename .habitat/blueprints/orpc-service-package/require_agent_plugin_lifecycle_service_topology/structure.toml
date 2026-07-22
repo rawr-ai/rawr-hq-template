@@ -73,6 +73,7 @@ mode = "closed"
 required = [
   "current-main-selection.ts",
   "releases",
+  "structural.ts",
 ]
 allowed = []
 

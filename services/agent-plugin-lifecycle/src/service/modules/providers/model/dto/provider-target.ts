@@ -1,4 +1,5 @@
 import path from "node:path";
+import { ReadonlyObject, Type, type Static } from "typebox";
 
 import { canonicalDigest, compareCanonical, type CanonicalValue } from "../helpers/canonical";
 import { exactRecord } from "../helpers/parse";
@@ -7,8 +8,27 @@ import { failure, firstIssue, issue, success, type DeploymentResult, type Provid
 declare const providerHomeBrand: unique symbol;
 declare const providerTargetDigestBrand: unique symbol;
 
-export type ProviderId = "claude" | "codex";
+export const ProviderIdSchema = Type.Union([Type.Literal("claude"), Type.Literal("codex")]);
+export const MAX_PROVIDER_TARGETS = 64;
+export const MAX_PROVIDER_HOME_LENGTH = 4_096;
+export const ProviderHomeSchema = Type.String({
+  minLength: 1,
+  maxLength: MAX_PROVIDER_HOME_LENGTH,
+});
+export const ProviderTargetInputSchema = ReadonlyObject(Type.Object(
+  {
+    provider: ProviderIdSchema,
+    home: ProviderHomeSchema,
+  },
+), { additionalProperties: false });
+export const ProviderTargetsInputSchema = ReadonlyObject(Type.Array(ProviderTargetInputSchema, {
+  minItems: 1,
+  maxItems: MAX_PROVIDER_TARGETS,
+}));
+
+export type ProviderId = Static<typeof ProviderIdSchema>;
 export type ProviderHome = string & { readonly [providerHomeBrand]: "ProviderHome" };
+export type ProviderTargetInput = Static<typeof ProviderTargetInputSchema>;
 export type ProviderTargetDigest = string & { readonly [providerTargetDigestBrand]: "ProviderTargetDigest" };
 
 export interface ProviderTarget {
@@ -17,7 +37,6 @@ export interface ProviderTarget {
   readonly targetDigest: ProviderTargetDigest;
 }
 
-const MAX_TARGETS = 64;
 const MAX_HOME_BYTES = 4_096;
 const encoder = new TextEncoder();
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/u;
@@ -41,8 +60,8 @@ export function parseProviderTarget(input: unknown, pathPrefix = "target"): Depl
 }
 
 export function parseProviderTargets(input: unknown, pathPrefix = "targets"): DeploymentResult<readonly ProviderTarget[]> {
-  if (!Array.isArray(input) || input.length === 0 || input.length > MAX_TARGETS) {
-    return failure([issue("EXPECTED_ARRAY", pathPrefix, `Targets must contain between 1 and ${MAX_TARGETS} entries`, `1..${MAX_TARGETS}`, Array.isArray(input) ? String(input.length) : typeof input)]);
+  if (!Array.isArray(input) || input.length === 0 || input.length > MAX_PROVIDER_TARGETS) {
+    return failure([issue("EXPECTED_ARRAY", pathPrefix, `Targets must contain between 1 and ${MAX_PROVIDER_TARGETS} entries`, `1..${MAX_PROVIDER_TARGETS}`, Array.isArray(input) ? String(input.length) : typeof input)]);
   }
   const issues: ProviderDeploymentIssue[] = [];
   const targets: ProviderTarget[] = [];
@@ -89,19 +108,21 @@ function parseProviderHome(
     issues.push(issue("EXPECTED_STRING", pathPrefix, "Provider home must be a string"));
     return undefined;
   }
-  const normalized = path.posix.normalize(value);
-  if (
-    value === "/"
-    || !path.posix.isAbsolute(value)
-    || normalized !== value
-    || value.endsWith("/")
-    || value.includes("\\")
-    || value.normalize("NFC") !== value
-    || CONTROL_CHARACTER_PATTERN.test(value)
-    || encoder.encode(value).byteLength > MAX_HOME_BYTES
-  ) {
+  if (!isCanonicalProviderHome(value)) {
     issues.push(issue("INVALID_HOME", pathPrefix, "Provider home must be a non-root canonical absolute POSIX path", "canonical absolute home", value));
     return undefined;
   }
   return value as ProviderHome;
+}
+
+function isCanonicalProviderHome(value: string): boolean {
+  const normalized = path.posix.normalize(value);
+  return value !== "/"
+    && path.posix.isAbsolute(value)
+    && normalized === value
+    && !value.endsWith("/")
+    && !value.includes("\\")
+    && value.normalize("NFC") === value
+    && !CONTROL_CHARACTER_PATTERN.test(value)
+    && encoder.encode(value).byteLength <= MAX_HOME_BYTES;
 }

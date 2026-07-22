@@ -1,6 +1,11 @@
+import path from "node:path";
+import { ReadonlyObject, Type, type Static } from "typebox";
+
 import {
+  CompleteSetArtifactRefInputSchema,
   parseArtifactRef,
   parseRepositoryIdentity,
+  ReleaseArtifactRefInputSchema,
   type CompleteSetArtifactRef,
   type ReleaseArtifactRef,
   type RepositoryIdentity,
@@ -9,58 +14,116 @@ import {
 import { canonicalDigest, compareCanonical, type CanonicalValue } from "../helpers/canonical";
 import { boundedArray, canonicalString, exactRecord } from "../helpers/parse";
 import { failure, firstIssue, issue, success, type DeploymentResult, type ProviderDeploymentIssue } from "../errors/deployment-result";
-import { parseProviderTargets, targetValue, type ProviderTarget } from "./provider-target";
+import {
+  ProviderTargetsInputSchema,
+  parseProviderTargets,
+  targetValue,
+  type ProviderTarget,
+} from "./provider-target";
 
 declare const evaluationProfileBrand: unique symbol;
 declare const requestDigestBrand: unique symbol;
 declare const workspaceRootBrand: unique symbol;
 
+export const EvaluationProfileSchema = Type.String({
+  minLength: 1,
+  maxLength: 256,
+  pattern: "^[a-z0-9][a-z0-9._:@/-]*$",
+});
+export const ProviderRepositoryIdentitySchema = Type.String({
+  minLength: 1,
+  maxLength: 512,
+});
+export const ProviderContentWorkspaceRootSchema = Type.String({
+  minLength: 1,
+  maxLength: 4_096,
+});
+export const ReleaseArtifactRefSchema = ReleaseArtifactRefInputSchema;
+export const CompleteSetArtifactRefSchema = CompleteSetArtifactRefInputSchema;
+export const ContentRecordLocatorInputSchema = ReadonlyObject(Type.Object(
+  {
+    repositoryIdentity: ProviderRepositoryIdentitySchema,
+    workspaceRoot: ProviderContentWorkspaceRootSchema,
+  },
+), { additionalProperties: false });
+export const TargetedTestInputSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Literal("targeted-test"),
+    releases: ReadonlyObject(Type.Array(ReleaseArtifactRefSchema, { minItems: 1, maxItems: 1_024 })),
+    evaluationProfile: EvaluationProfileSchema,
+    targets: ProviderTargetsInputSchema,
+  },
+), { additionalProperties: false });
+export const CompleteTestInputSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Literal("complete-test"),
+    releaseSet: CompleteSetArtifactRefSchema,
+    evaluationProfile: EvaluationProfileSchema,
+    targets: ProviderTargetsInputSchema,
+  },
+), { additionalProperties: false });
+export const CanonicalSyncInputSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Literal("canonical-sync"),
+    channel: Type.Literal("current-main"),
+    locator: ContentRecordLocatorInputSchema,
+    targets: ProviderTargetsInputSchema,
+  },
+), { additionalProperties: false });
+export const CanonicalStatusInputSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Literal("canonical-status"),
+    channel: Type.Literal("current-main"),
+    locator: ContentRecordLocatorInputSchema,
+    targets: ProviderTargetsInputSchema,
+  },
+), { additionalProperties: false });
+
 export type EvaluationProfile = string & { readonly [evaluationProfileBrand]: "EvaluationProfile" };
 export type ProviderRequestDigest = string & { readonly [requestDigestBrand]: "ProviderRequestDigest" };
 export type ContentWorkspaceRoot = string & { readonly [workspaceRootBrand]: "ContentWorkspaceRoot" };
+export type TargetedTestInput = Static<typeof TargetedTestInputSchema>;
+export type CompleteTestInput = Static<typeof CompleteTestInputSchema>;
+export type CanonicalSyncInput = Static<typeof CanonicalSyncInputSchema>;
+export type CanonicalStatusInput = Static<typeof CanonicalStatusInputSchema>;
 
 export interface ContentRecordLocator {
   readonly repositoryIdentity: RepositoryIdentity;
   readonly workspaceRoot: ContentWorkspaceRoot;
 }
 
-export interface TargetedTest {
-  readonly kind: "targeted-test";
+export type TargetedTest = Readonly<Omit<TargetedTestInput, "evaluationProfile" | "releases" | "targets"> & {
   readonly releases: readonly ReleaseArtifactRef[];
   readonly evaluationProfile: EvaluationProfile;
   readonly targets: readonly ProviderTarget[];
   readonly requestDigest: ProviderRequestDigest;
-}
+}>;
 
-export interface CompleteTest {
-  readonly kind: "complete-test";
+export type CompleteTest = Readonly<Omit<CompleteTestInput, "evaluationProfile" | "releaseSet" | "targets"> & {
   readonly releaseSet: CompleteSetArtifactRef;
   readonly evaluationProfile: EvaluationProfile;
   readonly targets: readonly ProviderTarget[];
   readonly requestDigest: ProviderRequestDigest;
-}
+}>;
 
-export interface CanonicalSync {
-  readonly kind: "canonical-sync";
-  readonly channel: "current-main";
+export type CanonicalSync = Readonly<Omit<CanonicalSyncInput, "locator" | "targets"> & {
   readonly locator: ContentRecordLocator;
   readonly targets: readonly ProviderTarget[];
   readonly requestDigest: ProviderRequestDigest;
-}
+}>;
 
 export type ProviderDeploymentRequest = TargetedTest | CompleteTest | CanonicalSync;
 
-export interface CanonicalStatusRequest {
-  readonly kind: "canonical-status";
-  readonly channel: "current-main";
+export type CanonicalStatusRequest = Readonly<Omit<CanonicalStatusInput, "locator" | "targets"> & {
   readonly locator: ContentRecordLocator;
   readonly targets: readonly ProviderTarget[];
   readonly requestDigest: ProviderRequestDigest;
-}
+}>;
 
 const MAX_RELEASES = 1_024;
 const EVALUATION_PROFILE_PATTERN = /^[a-z0-9][a-z0-9._:@/-]*$/u;
 const REPOSITORY_PATH_PATTERN = /^\/(?:[^/\u0000-\u001f\u007f]+\/)*[^/\u0000-\u001f\u007f]+$/u;
+const pathEncoder = new TextEncoder();
 
 export function parseProviderDeploymentRequest(input: unknown): DeploymentResult<ProviderDeploymentRequest> {
   if (input === null || typeof input !== "object" || Array.isArray(input)) {
@@ -259,4 +322,15 @@ export function releaseRefValue(ref: ReleaseArtifactRef): CanonicalValue {
 
 export function setRefValue(ref: CompleteSetArtifactRef): CanonicalValue {
   return { kind: ref.kind, releaseSetDigest: ref.releaseSetDigest };
+}
+
+function isCanonicalContentWorkspaceRoot(value: string): boolean {
+  const normalized = path.posix.normalize(value);
+  return value !== "/"
+    && path.posix.isAbsolute(value)
+    && normalized === value
+    && !value.endsWith("/")
+    && !value.includes("\\")
+    && value.normalize("NFC") === value
+    && pathEncoder.encode(value).byteLength <= 4_096;
 }

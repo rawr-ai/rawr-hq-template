@@ -1,3 +1,6 @@
+import { ReadonlyObject, Type, type Static } from "typebox";
+import { Value } from "typebox/value";
+
 import {
   canonicalJsonLine,
   decodeCanonicalJson,
@@ -5,21 +8,51 @@ import {
   type CanonicalJsonValue,
 } from "./canonical";
 import { issue, type ReleaseIssue } from "./issues";
-import { collect, isExactRecord } from "./parse";
 import {
-  parseArtifactDigest,
-  parseReleaseDigest,
-  parseReleaseSetDigest,
   type ArtifactDigest,
   type ReleaseDigest,
   type ReleaseSetDigest,
 } from "./primitives";
-import { asNonEmpty, failure, success, type ReleaseResult } from "./result";
+import { failure, success, type ReleaseResult } from "./result";
 
 declare const releaseArtifactRefBrand: unique symbol;
 declare const completeSetArtifactRefBrand: unique symbol;
 
 const MAX_ARTIFACT_REF_BYTES = 512;
+
+const ReleaseDigestInputSchema = Type.String({
+  pattern: "^rd1_[0-9a-f]{64}$",
+});
+const ArtifactDigestInputSchema = Type.String({
+  pattern: "^ad1_[0-9a-f]{64}$",
+});
+const ReleaseSetDigestInputSchema = Type.String({
+  pattern: "^rs1_[0-9a-f]{64}$",
+});
+
+export const ReleaseArtifactRefInputSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Literal("release"),
+    releaseDigest: ReleaseDigestInputSchema,
+    artifactDigest: ArtifactDigestInputSchema,
+  },
+), { additionalProperties: false });
+
+export const CompleteSetArtifactRefInputSchema = ReadonlyObject(Type.Object(
+  {
+    kind: Type.Literal("complete-set"),
+    releaseSetDigest: ReleaseSetDigestInputSchema,
+  },
+), { additionalProperties: false });
+
+export const ArtifactRefInputSchema = Type.Union([
+  ReleaseArtifactRefInputSchema,
+  CompleteSetArtifactRefInputSchema,
+]);
+
+export type ReleaseArtifactRefInput = Static<typeof ReleaseArtifactRefInputSchema>;
+export type CompleteSetArtifactRefInput = Static<typeof CompleteSetArtifactRefInputSchema>;
+export type ArtifactRefInput = Static<typeof ArtifactRefInputSchema>;
 
 export type ReleaseArtifactRef = Readonly<{
   kind: "release";
@@ -49,38 +82,27 @@ export function createCompleteSetArtifactRef(
   return Object.freeze({ kind: "complete-set", releaseSetDigest }) as CompleteSetArtifactRef;
 }
 
+export function normalizeArtifactRef(input: ReleaseArtifactRefInput): ReleaseArtifactRef;
+export function normalizeArtifactRef(input: CompleteSetArtifactRefInput): CompleteSetArtifactRef;
+export function normalizeArtifactRef(input: ArtifactRefInput): ArtifactRef;
+export function normalizeArtifactRef(input: ArtifactRefInput): ArtifactRef {
+  return input.kind === "release"
+    ? createReleaseArtifactRef(
+      input.releaseDigest as ReleaseDigest,
+      input.artifactDigest as ArtifactDigest,
+    )
+    : createCompleteSetArtifactRef(input.releaseSetDigest as ReleaseSetDigest);
+}
+
 export function parseArtifactRef(input: unknown): ReleaseResult<ArtifactRef, ReleaseIssue> {
-  const issues: ReleaseIssue[] = [];
-  if (typeof input !== "object" || input === null || Array.isArray(input)) {
-    return failure([issue("INVALID_ARTIFACT_REF", "artifactRef", "Artifact reference must be a closed object")]);
+  if (!Value.Check(ArtifactRefInputSchema, input)) {
+    return failure([issue(
+      "INVALID_ARTIFACT_REF",
+      "artifactRef",
+      "Artifact reference must match the closed artifact-ref schema",
+    )]);
   }
-  const kind = (input as Record<string, unknown>).kind;
-  if (kind === "release") {
-    if (!isExactRecord(input, ["artifactDigest", "kind", "releaseDigest"], "artifactRef", issues)) {
-      return failure([issues[0] ?? issue("INVALID_ARTIFACT_REF", "artifactRef", "Invalid release artifact reference")]);
-    }
-    const rd = collect(parseReleaseDigest(input.releaseDigest, "artifactRef.releaseDigest"), issues);
-    const ad = collect(parseArtifactDigest(input.artifactDigest, "artifactRef.artifactDigest"), issues);
-    const nonEmpty = asNonEmpty(issues);
-    if (nonEmpty !== undefined) return failure(nonEmpty);
-    if (rd === undefined || ad === undefined) {
-      return failure([issue("INVALID_ARTIFACT_REF", "artifactRef", "Invalid release artifact reference")]);
-    }
-    return success(createReleaseArtifactRef(rd, ad));
-  }
-  if (kind === "complete-set") {
-    if (!isExactRecord(input, ["kind", "releaseSetDigest"], "artifactRef", issues)) {
-      return failure([issues[0] ?? issue("INVALID_ARTIFACT_REF", "artifactRef", "Invalid complete-set artifact reference")]);
-    }
-    const rs = collect(parseReleaseSetDigest(input.releaseSetDigest, "artifactRef.releaseSetDigest"), issues);
-    const nonEmpty = asNonEmpty(issues);
-    if (nonEmpty !== undefined) return failure(nonEmpty);
-    if (rs === undefined) {
-      return failure([issue("INVALID_ARTIFACT_REF", "artifactRef", "Invalid complete-set artifact reference")]);
-    }
-    return success(createCompleteSetArtifactRef(rs));
-  }
-  return failure([issue("INVALID_ARTIFACT_REF", "artifactRef.kind", "Artifact reference kind must be release or complete-set")]);
+  return success(normalizeArtifactRef(input));
 }
 
 export function decodeArtifactRef(bytes: unknown): ReleaseResult<ArtifactRef, ReleaseIssue> {

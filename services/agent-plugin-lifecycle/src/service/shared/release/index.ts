@@ -147,14 +147,21 @@ export {
 } from "./release-set";
 
 export {
+  ArtifactRefInputSchema,
+  CompleteSetArtifactRefInputSchema,
+  ReleaseArtifactRefInputSchema,
   canonicalSerializeArtifactRef,
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
   decodeArtifactRef,
+  normalizeArtifactRef,
   parseArtifactRef,
   type ArtifactRef,
+  type ArtifactRefInput,
   type CompleteSetArtifactRef,
+  type CompleteSetArtifactRefInput,
   type ReleaseArtifactRef,
+  type ReleaseArtifactRefInput,
 } from "./artifact-ref";
 
 export type {
