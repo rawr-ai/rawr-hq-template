@@ -254,6 +254,21 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     } as never, invocation)).rejects.toThrow();
     expect(calls).toEqual([]);
   });
+
+  it("returns a typed invalid-home refusal before artifact or provider ports are invoked", async () => {
+    const calls: string[] = [];
+    const client = spineClient(calls);
+    const request = completeTestRequest();
+
+    await expect(client.providers.completeTest({
+      ...request,
+      targets: [{ provider: "codex", home: "relative/provider-home" }],
+    } as never, invocation)).resolves.toMatchObject({
+      ok: false,
+      issues: [{ code: "INVALID_HOME" }],
+    });
+    expect(calls).toEqual([]);
+  });
 });
 
 interface SpineObservations {

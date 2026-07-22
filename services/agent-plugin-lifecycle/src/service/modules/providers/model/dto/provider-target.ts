@@ -70,15 +70,58 @@ export function parseProviderTargets(input: unknown, pathPrefix = "targets"): De
     if (parsed.ok) targets.push(parsed.value);
     else issues.push(...parsed.issues);
   }
-  targets.sort(compareTargets);
-  for (let index = 1; index < targets.length; index += 1) {
-    if (targets[index - 1]?.targetDigest === targets[index]?.targetDigest) {
-      issues.push(issue("DUPLICATE_TARGET", pathPrefix, "Provider targets must be distinct after canonicalization", "distinct provider/home pairs", targets[index]!.targetDigest));
-    }
-  }
+  issues.push(...duplicateTargetIssues(targets, pathPrefix));
   return issues.length > 0
     ? failure(firstIssue(issues, issue("INVALID_TARGET", pathPrefix, "Provider target list is invalid")))
     : success(Object.freeze(targets));
+}
+
+export function normalizeProviderTargets(
+  input: readonly ProviderTargetInput[],
+  pathPrefix = "targets",
+): DeploymentResult<readonly ProviderTarget[]> {
+  const targets: ProviderTarget[] = [];
+  const issues: ProviderDeploymentIssue[] = [];
+  for (const [index, candidate] of input.entries()) {
+    const normalized = normalizeProviderTarget(candidate, `${pathPrefix}[${index}]`);
+    if (normalized.ok) targets.push(normalized.value);
+    else issues.push(...normalized.issues);
+  }
+  issues.push(...duplicateTargetIssues(targets, pathPrefix));
+  return issues.length > 0
+    ? failure(firstIssue(issues, issue("INVALID_TARGET", pathPrefix, "Provider target list is invalid")))
+    : success(Object.freeze(targets));
+}
+
+function normalizeProviderTarget(
+  input: ProviderTargetInput,
+  pathPrefix: string,
+): DeploymentResult<ProviderTarget> {
+  const issues: ProviderDeploymentIssue[] = [];
+  const home = parseProviderHome(input.home, `${pathPrefix}.home`, issues);
+  return home === undefined
+    ? failure(firstIssue(issues, issue("INVALID_TARGET", pathPrefix, "Provider target is invalid")))
+    : success(createProviderTarget(input.provider, home));
+}
+
+function duplicateTargetIssues(
+  targets: ProviderTarget[],
+  pathPrefix: string,
+): ProviderDeploymentIssue[] {
+  targets.sort(compareTargets);
+  const issues: ProviderDeploymentIssue[] = [];
+  for (let index = 1; index < targets.length; index += 1) {
+    if (targets[index - 1]?.targetDigest === targets[index]?.targetDigest) {
+      issues.push(issue(
+        "DUPLICATE_TARGET",
+        pathPrefix,
+        "Provider targets must be distinct after canonicalization",
+        "distinct provider/home pairs",
+        targets[index]!.targetDigest,
+      ));
+    }
+  }
+  return issues;
 }
 
 export function compareTargets(left: ProviderTarget, right: ProviderTarget): number {
@@ -97,6 +140,14 @@ function parseProviderId(
   if (value === "codex" || value === "claude") return value;
   issues.push(issue("UNSUPPORTED_PROVIDER", pathPrefix, "Provider must be one of the supported native providers", "codex|claude", String(value)));
   return undefined;
+}
+
+function createProviderTarget(provider: ProviderId, home: ProviderHome): ProviderTarget {
+  return Object.freeze({
+    provider,
+    home,
+    targetDigest: canonicalDigest("pt1_", targetValue({ provider, home })) as ProviderTargetDigest,
+  });
 }
 
 function parseProviderHome(
