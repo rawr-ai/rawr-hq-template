@@ -1,7 +1,16 @@
-import { createClient as createExampleTodoClient, type Client as ExampleTodoClient } from "@rawr/example-todo";
+import {
+  createClient as createExampleTodoClient,
+  type Client as ExampleTodoClient,
+} from "@rawr/example-todo";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
-import { bindService, type ProcessView, type RoleView, type ServiceBinding, type ServiceBindingContext } from "@rawr/hq-sdk/plugins";
+import {
+  bindService,
+  type ProcessView,
+  type RoleView,
+  type ServiceBinding,
+  type ServiceBindingContext,
+} from "@rawr/hq-sdk/plugins";
 type ExampleTodoBoundary = Parameters<typeof createExampleTodoClient>[0];
 type HostProcess = ProcessView & {
   processId: "server";
@@ -73,7 +82,8 @@ function createExampleTodoBinding(hostLogger: HostServiceLogger) {
         maxAssignmentsPerTask: 2,
       },
     },
-    cacheKey: (context: ExampleTodoBindingContext) => `${context.process.processId}:${context.process.repoRoot}:${context.role.roleId}`,
+    cacheKey: (context: ExampleTodoBindingContext) =>
+      `${context.process.processId}:${context.process.repoRoot}:${context.role.roleId}`,
   } satisfies ServiceBinding<ExampleTodoBoundary, HostProcess, ExampleTodoRole>);
 }
 

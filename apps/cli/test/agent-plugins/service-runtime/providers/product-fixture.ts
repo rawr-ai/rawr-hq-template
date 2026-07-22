@@ -29,37 +29,49 @@ export interface ProductFixture {
 }
 
 export function productFixture(): ProductFixture {
-  const alphaPayload = must(createAgentPluginPayload([
-    { path: "skills/alpha/SKILL.md", mode: 0o644, bytes: encoder.encode("alpha\n") },
-    { path: "agents/alpha.md", mode: 0o644, bytes: encoder.encode("agent alpha\n") },
-  ]));
-  const betaPayload = must(createAgentPluginPayload([
-    { path: "skills/beta/SKILL.md", mode: 0o644, bytes: encoder.encode("beta\n") },
-    { path: "scripts/check.sh", mode: 0o755, bytes: encoder.encode("#!/bin/sh\nexit 0\n") },
-  ]));
-  const releaseInput = must(createAgentPluginReleaseInput(releaseInputBody(alphaPayload, betaPayload)));
-  const alphaRelease = must(createAgentPluginRelease({
-    releaseInput,
-    pluginId: "alpha",
-    source: SOURCE,
-    payload: alphaPayload,
-  }));
-  const betaRelease = must(createAgentPluginRelease({
-    releaseInput,
-    pluginId: "beta",
-    source: SOURCE,
-    payload: betaPayload,
-  }));
-  const releaseSet = must(createAgentPluginReleaseSet({
-    releaseInput,
-    releases: [betaRelease, alphaRelease],
-  }));
+  const alphaPayload = must(
+    createAgentPluginPayload([
+      { path: "skills/alpha/SKILL.md", mode: 0o644, bytes: encoder.encode("alpha\n") },
+      { path: "agents/alpha.md", mode: 0o644, bytes: encoder.encode("agent alpha\n") },
+    ])
+  );
+  const betaPayload = must(
+    createAgentPluginPayload([
+      { path: "skills/beta/SKILL.md", mode: 0o644, bytes: encoder.encode("beta\n") },
+      { path: "scripts/check.sh", mode: 0o755, bytes: encoder.encode("#!/bin/sh\nexit 0\n") },
+    ])
+  );
+  const releaseInput = must(
+    createAgentPluginReleaseInput(releaseInputBody(alphaPayload, betaPayload))
+  );
+  const alphaRelease = must(
+    createAgentPluginRelease({
+      releaseInput,
+      pluginId: "alpha",
+      source: SOURCE,
+      payload: alphaPayload,
+    })
+  );
+  const betaRelease = must(
+    createAgentPluginRelease({
+      releaseInput,
+      pluginId: "beta",
+      source: SOURCE,
+      payload: betaPayload,
+    })
+  );
+  const releaseSet = must(
+    createAgentPluginReleaseSet({
+      releaseInput,
+      releases: [betaRelease, alphaRelease],
+    })
+  );
   return { releaseInput, alphaPayload, betaPayload, alphaRelease, betaRelease, releaseSet };
 }
 
 export function releaseInputBody(
   alphaPayload: AgentPluginPayload,
-  betaPayload: AgentPluginPayload,
+  betaPayload: AgentPluginPayload
 ): Record<string, unknown> {
   return {
     schemaVersion: 1,
@@ -85,7 +97,7 @@ export function releaseInputBody(
 
 function skillClaims(
   pluginId: string,
-  payload: AgentPluginPayload,
+  payload: AgentPluginPayload
 ): readonly Record<string, unknown>[] {
   return payload.manifest
     .filter((entry) => /^skills\/[^/]+\/SKILL\.md$/u.test(entry.path))
@@ -100,7 +112,7 @@ function member(
   pluginId: string,
   payload: AgentPluginPayload,
   vendorId: string,
-  curationId: string,
+  curationId: string
 ): Record<string, unknown> {
   return {
     kind: "agent-plugin",

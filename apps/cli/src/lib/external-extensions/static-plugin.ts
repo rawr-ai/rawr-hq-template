@@ -4,11 +4,13 @@ import path from "node:path";
 import type { StaticCommandManifest, StaticExternalExtension } from "./model";
 import type { ExternalExtensionStatePort } from "./native-registry";
 
-export function createStaticManifestPlugin(input: Readonly<{
-  extension: StaticExternalExtension;
-  type: string;
-  state: ExternalExtensionStatePort;
-}>): Plugin {
+export function createStaticManifestPlugin(
+  input: Readonly<{
+    extension: StaticExternalExtension;
+    type: string;
+    state: ExternalExtensionStatePort;
+  }>
+): Plugin {
   const extension = input.extension;
   const pjson = {
     name: extension.packageId,
@@ -40,7 +42,7 @@ export function createStaticManifestPlugin(input: Readonly<{
   plugin.hooks = groupHooks(extension);
 
   const manifestCommands = Object.fromEntries(
-    extension.commands.map((command) => [command.id, cachedCommand(command)]),
+    extension.commands.map((command) => [command.id, cachedCommand(command)])
   );
   plugin.manifest = {
     version: extension.version,
@@ -52,12 +54,13 @@ export function createStaticManifestPlugin(input: Readonly<{
       ...cached,
       pluginAlias: extension.packageId,
       pluginType: input.type,
-      load: async () => await loadGuardedCommand({
-        command,
-        extension,
-        plugin,
-        state: input.state,
-      }),
+      load: async () =>
+        await loadGuardedCommand({
+          command,
+          extension,
+          plugin,
+          state: input.state,
+        }),
     };
   });
   return plugin;
@@ -71,8 +74,8 @@ function cachedCommand(command: StaticCommandManifest): Command.Cached {
     aliases: [...command.aliases],
     hiddenAliases: [...command.hiddenAliases],
     relativePath: [...command.relativePath],
-    args: isRecord(metadata.args) ? metadata.args as Command.Cached["args"] : {},
-    flags: isRecord(metadata.flags) ? metadata.flags as Command.Cached["flags"] : {},
+    args: isRecord(metadata.args) ? (metadata.args as Command.Cached["args"]) : {},
+    flags: isRecord(metadata.flags) ? (metadata.flags as Command.Cached["flags"]) : {},
     hidden: typeof metadata.hidden === "boolean" ? metadata.hidden : false,
   };
   for (const key of ["description", "state", "summary", "type"] as const) {
@@ -91,7 +94,10 @@ function cachedCommand(command: StaticCommandManifest): Command.Cached {
     cached.examples = [...metadata.examples] as Command.Cached["examples"];
   }
   if (typeof metadata.usage === "string") cached.usage = metadata.usage;
-  else if (Array.isArray(metadata.usage) && metadata.usage.every((value) => typeof value === "string")) {
+  else if (
+    Array.isArray(metadata.usage) &&
+    metadata.usage.every((value) => typeof value === "string")
+  ) {
     cached.usage = [...metadata.usage] as string[];
   }
   if (isRecord(metadata.deprecationOptions)) {
@@ -113,20 +119,22 @@ function groupHooks(extension: StaticExternalExtension): Plugin["hooks"] {
   return hooks;
 }
 
-async function loadGuardedCommand(input: Readonly<{
-  command: StaticCommandManifest;
-  extension: StaticExternalExtension;
-  plugin: Plugin;
-  state: ExternalExtensionStatePort;
-}>): Promise<Command.Class> {
+async function loadGuardedCommand(
+  input: Readonly<{
+    command: StaticCommandManifest;
+    extension: StaticExternalExtension;
+    plugin: Plugin;
+    state: ExternalExtensionStatePort;
+  }>
+): Promise<Command.Class> {
   const inspection = await input.state.inspectRoot(
     input.extension.canonicalRoot,
-    input.extension.packageId,
+    input.extension.packageId
   );
   if (
-    !inspection.accepted
-    || inspection.extension.canonicalRoot !== input.extension.canonicalRoot
-    || inspection.extension.fingerprint !== input.extension.fingerprint
+    !inspection.accepted ||
+    inspection.extension.canonicalRoot !== input.extension.canonicalRoot ||
+    inspection.extension.fingerprint !== input.extension.fingerprint
   ) {
     throw new Error(`External extension evidence changed before command load: ${input.command.id}`);
   }
@@ -134,7 +142,7 @@ async function loadGuardedCommand(input: Readonly<{
   const cached = cachedCommand(input.command);
   const loaded = await ModuleLoader.loadWithDataFromManifest<Record<string, unknown>>(
     cached,
-    input.extension.canonicalRoot,
+    input.extension.canonicalRoot
   );
   const commandClass = findCommandClass(loaded.module);
   if (commandClass === undefined) {
@@ -159,9 +167,11 @@ function findCommandClass(module: Record<string, unknown>): Command.Class | unde
 }
 
 function isCommandClass(value: unknown): value is Command.Class {
-  return typeof value === "function"
-    && "run" in value
-    && typeof (value as { run?: unknown }).run === "function";
+  return (
+    typeof value === "function" &&
+    "run" in value &&
+    typeof (value as { run?: unknown }).run === "function"
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

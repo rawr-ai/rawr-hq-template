@@ -20,7 +20,9 @@ export type BootstrappedServer = {
   telemetry: InstalledTelemetry;
 };
 
-type LoadConfig = (repoRoot: string) => Promise<Awaited<ReturnType<typeof loadWorkspaceConfigFromHost>>>;
+type LoadConfig = (
+  repoRoot: string
+) => Promise<Awaited<ReturnType<typeof loadWorkspaceConfigFromHost>>>;
 type BootstrapServerDependencies = {
   env: NodeJS.ProcessEnv;
   resolveRepoRoot(): string;
@@ -30,7 +32,9 @@ type BootstrapServerDependencies = {
   registerRoutes: typeof registerRawrRoutes;
 };
 
-type LoadWorkspaceConfigOptions = NonNullable<Parameters<HqOpsClient["config"]["getWorkspaceConfig"]>[1]>;
+type LoadWorkspaceConfigOptions = NonNullable<
+  Parameters<HqOpsClient["config"]["getWorkspaceConfig"]>[1]
+>;
 
 async function loadWorkspaceConfigFromHost(repoRoot: string) {
   const client = resolveServerHqOpsClient(repoRoot);
@@ -41,7 +45,7 @@ async function loadWorkspaceConfigFromHost(repoRoot: string) {
 }
 
 export async function bootstrapServer(
-  overrides: Partial<BootstrapServerDependencies> = {},
+  overrides: Partial<BootstrapServerDependencies> = {}
 ): Promise<BootstrappedServer> {
   const deps: BootstrapServerDependencies = {
     env: process.env,
@@ -58,7 +62,8 @@ export async function bootstrapServer(
     (typeof deps.env.RAWR_SERVER_PORT === "string" && deps.env.RAWR_SERVER_PORT.trim() !== "") ||
     (typeof deps.env.PORT === "string" && deps.env.PORT.trim() !== "");
   const envBaseUrlSpecified =
-    typeof deps.env.RAWR_SERVER_BASE_URL === "string" && deps.env.RAWR_SERVER_BASE_URL.trim() !== "";
+    typeof deps.env.RAWR_SERVER_BASE_URL === "string" &&
+    deps.env.RAWR_SERVER_BASE_URL.trim() !== "";
 
   const baseConfig = getServerConfig(deps.env);
   const loaded = await deps.loadConfig(repoRoot);

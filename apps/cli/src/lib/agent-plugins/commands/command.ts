@@ -14,13 +14,17 @@ import {
 export abstract class AgentPluginLifecycleCommand extends RawrCommand {
   protected parseInput<T>(
     flags: Readonly<Record<string, unknown>>,
-    parser: (flags: Readonly<Record<string, unknown>>) => T,
+    parser: (flags: Readonly<Record<string, unknown>>) => T
   ): T | undefined {
     try {
       return parser(flags);
     } catch (error) {
       if (error instanceof LifecycleInputError) {
-        this.rejectInput(error.message, RawrCommand.extractBaseFlags(flags as Record<string, unknown>), error.code);
+        this.rejectInput(
+          error.message,
+          RawrCommand.extractBaseFlags(flags as Record<string, unknown>),
+          error.code
+        );
         return undefined;
       }
       throw error;
@@ -33,11 +37,14 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
     requirements: Readonly<{
       git?: boolean;
       providers?: readonly ("claude" | "codex")[];
-    }> = {},
+    }> = {}
   ): Promise<void> {
     const baseFlags = RawrCommand.extractBaseFlags(flags as Record<string, unknown>);
     if (baseFlags.dryRun || baseFlags.yes) {
-      this.rejectInput("--dry-run and --yes are not part of the closed lifecycle procedure contract", baseFlags);
+      this.rejectInput(
+        "--dry-run and --yes are not part of the closed lifecycle procedure contract",
+        baseFlags
+      );
       return;
     }
     let exitCode: 0 | 1 | 2;
@@ -49,7 +56,8 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
       this.outputResult(this.ok({ operation: request.operation, result: projectedResult }), {
         flags: baseFlags,
         human: () => {
-          for (const line of lifecycleHumanLines(request.operation, projectedResult)) this.log(line);
+          for (const line of lifecycleHumanLines(request.operation, projectedResult))
+            this.log(line);
         },
       });
     } catch (error) {
@@ -58,10 +66,13 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
         return;
       }
       const message = error instanceof Error ? error.message : String(error);
-      this.outputResult(this.fail("Lifecycle procedure failed", {
-        code: "LIFECYCLE_PROCEDURE_FAILED",
-        details: { operation: request.operation, message },
-      }), { flags: baseFlags });
+      this.outputResult(
+        this.fail("Lifecycle procedure failed", {
+          code: "LIFECYCLE_PROCEDURE_FAILED",
+          details: { operation: request.operation, message },
+        }),
+        { flags: baseFlags }
+      );
       this.exit(1);
     }
     if (exitCode !== 0) this.exit(exitCode);
@@ -70,18 +81,21 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
   protected rejectInput(
     message: string,
     flags: RawrBaseFlags,
-    code = "LIFECYCLE_INPUT_INVALID",
+    code = "LIFECYCLE_INPUT_INVALID"
   ): void {
     this.outputResult(this.fail(message, { code }), { flags });
     this.exit(2);
   }
 }
 
-function lifecycleHumanLines(operation: LifecycleOperationRequest["operation"], result: unknown): readonly string[] {
+function lifecycleHumanLines(
+  operation: LifecycleOperationRequest["operation"],
+  result: unknown
+): readonly string[] {
   const record = asRecord(result);
   if (
-    (operation === "releases.releaseInputRecord" || operation === "governance.currentMainRecord")
-    && record.ok === true
+    (operation === "releases.releaseInputRecord" || operation === "governance.currentMainRecord") &&
+    record.ok === true
   ) {
     const envelopeText = asRecord(record.value).envelopeText;
     if (typeof envelopeText === "string" && envelopeText.endsWith("\n")) {
@@ -89,14 +103,19 @@ function lifecycleHumanLines(operation: LifecycleOperationRequest["operation"], 
     }
   }
   if (
-    operation === "releases.refreshReleaseInput"
-    && (record.kind === "ReleaseInputCandidateReady" || record.kind === "ReleaseInputReadOnlyConverged")
-    && typeof record.envelopeText === "string"
-    && record.envelopeText.endsWith("\n")
+    operation === "releases.refreshReleaseInput" &&
+    (record.kind === "ReleaseInputCandidateReady" ||
+      record.kind === "ReleaseInputReadOnlyConverged") &&
+    typeof record.envelopeText === "string" &&
+    record.envelopeText.endsWith("\n")
   ) {
     return [record.envelopeText.slice(0, -1)];
   }
-  if (operation === "providers.canonicalStatus" && record.ok === true && Array.isArray(record.value)) {
+  if (
+    operation === "providers.canonicalStatus" &&
+    record.ok === true &&
+    Array.isArray(record.value)
+  ) {
     return [
       `${operation}:`,
       ...record.value.map((value) => {
@@ -116,6 +135,6 @@ function lifecycleHumanLines(operation: LifecycleOperationRequest["operation"], 
 
 function asRecord(value: unknown): Readonly<Record<string, unknown>> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
-    ? value as Readonly<Record<string, unknown>>
+    ? (value as Readonly<Record<string, unknown>>)
     : {};
 }

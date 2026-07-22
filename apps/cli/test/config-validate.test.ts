@@ -19,7 +19,11 @@ function runRawrInWorkspace(workspaceRoot: string, args: string[]) {
 async function makeWorkspace(): Promise<string> {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-ws-"));
   await fs.mkdir(path.join(dir, "plugins"), { recursive: true });
-  await fs.writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "tmp-ws", private: true }, null, 2), "utf8");
+  await fs.writeFile(
+    path.join(dir, "package.json"),
+    JSON.stringify({ name: "tmp-ws", private: true }, null, 2),
+    "utf8"
+  );
   return dir;
 }
 
@@ -44,7 +48,7 @@ describe("rawr config validate", () => {
     semantic: { candidateLimit: 200 },
   },
 };`,
-      "utf8",
+      "utf8"
     );
     const proc = runRawrInWorkspace(ws, ["config", "validate", "--json"]);
     expect(proc.status).toBe(0);

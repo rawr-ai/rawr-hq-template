@@ -11,15 +11,18 @@ afterEach(removeFixtureRoots);
 describe("tarball static evidence", () => {
   it("rejects a file that is later reused as a child path parent", async () => {
     const artifact = path.join(tempRoot("archive-impossible-parent"), "candidate.tar");
-    writeFileSync(artifact, Buffer.concat([
-      tarFile("package/dist", "parent is a file"),
-      tarFile("package/dist/commands/run.js", "export default class Run {}"),
-      Buffer.alloc(1024),
-    ]));
+    writeFileSync(
+      artifact,
+      Buffer.concat([
+        tarFile("package/dist", "parent is a file"),
+        tarFile("package/dist/commands/run.js", "export default class Run {}"),
+        Buffer.alloc(1024),
+      ])
+    );
 
-    await expect(
-      TarballStaticEvidencePort.read(artifact, "a".repeat(64)),
-    ).rejects.toThrow("EXTERNAL_EXTENSION_ARCHIVE_PATH_DUPLICATE");
+    await expect(TarballStaticEvidencePort.read(artifact, "a".repeat(64))).rejects.toThrow(
+      "EXTERNAL_EXTENSION_ARCHIVE_PATH_DUPLICATE"
+    );
   });
 });
 

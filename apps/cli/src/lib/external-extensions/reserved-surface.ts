@@ -23,7 +23,7 @@ type ReservedControllerSurfaceInput = {
 };
 
 export function createReservedControllerSurface(
-  input: ReservedControllerSurfaceInput,
+  input: ReservedControllerSurfaceInput
 ): ReservedControllerSurface {
   return {
     packageIds: normalizedSet(input.packageIds),
@@ -31,16 +31,13 @@ export function createReservedControllerSurface(
     topics: normalizedCommandSet(input.topics),
     aliases: normalizedCommandSet(input.aliases),
     hiddenAliases: normalizedCommandSet(input.hiddenAliases),
-    hooks: new Set([
-      ...normalizedSet(input.hooks),
-      ...RESERVED_MANAGER_LIFECYCLE_HOOKS,
-    ]),
+    hooks: new Set([...normalizedSet(input.hooks), ...RESERVED_MANAGER_LIFECYCLE_HOOKS]),
   };
 }
 
 export function findReservedSurfaceCollisions(
   extension: StaticExternalExtension,
-  reserved: ReservedControllerSurface,
+  reserved: ReservedControllerSurface
 ): readonly ExternalExtensionCollision[] {
   const collisions: ExternalExtensionCollision[] = [];
 
@@ -58,8 +55,10 @@ export function findReservedSurfaceCollisions(
 
   for (const command of extension.commands) {
     collectCommandCollision(collisions, "command", command.id, reserved);
-    for (const topic of command.topics) collectCommandCollision(collisions, "topic", topic, reserved);
-    for (const alias of command.aliases) collectCommandCollision(collisions, "alias", alias, reserved);
+    for (const topic of command.topics)
+      collectCommandCollision(collisions, "topic", topic, reserved);
+    for (const alias of command.aliases)
+      collectCommandCollision(collisions, "alias", alias, reserved);
     for (const alias of command.hiddenAliases) {
       collectCommandCollision(collisions, "hidden-alias", alias, reserved);
     }
@@ -78,7 +77,7 @@ function collectCommandCollision(
   target: ExternalExtensionCollision[],
   collisionClass: Exclude<CollisionClass, "package" | "hook">,
   value: string,
-  reserved: ReservedControllerSurface,
+  reserved: ReservedControllerSurface
 ): void {
   const reservedAs: ReservedIdentityClass[] = [];
   if (reserved.commandIds.has(value)) reservedAs.push("command");
@@ -93,7 +92,7 @@ function normalizedSet(values: Iterable<string> | undefined): Set<string> {
     [...(values ?? [])]
       .map((value) => value.trim())
       .filter(Boolean)
-      .sort(),
+      .sort()
   );
 }
 
@@ -102,7 +101,7 @@ function normalizedCommandSet(values: Iterable<string> | undefined): Set<string>
     [...(values ?? [])]
       .map(normalizeCommandId)
       .filter((value): value is string => value !== null)
-      .sort(),
+      .sort()
   );
 }
 
@@ -123,7 +122,7 @@ export function commandTopics(commandId: string): readonly string[] {
 }
 
 function uniqueCollisions(
-  collisions: readonly ExternalExtensionCollision[],
+  collisions: readonly ExternalExtensionCollision[]
 ): ExternalExtensionCollision[] {
   const seen = new Set<string>();
   return collisions.filter((collision) => {
@@ -134,7 +133,10 @@ function uniqueCollisions(
   });
 }
 
-function compareCollision(left: ExternalExtensionCollision, right: ExternalExtensionCollision): number {
+function compareCollision(
+  left: ExternalExtensionCollision,
+  right: ExternalExtensionCollision
+): number {
   return (
     left.collisionClass.localeCompare(right.collisionClass) ||
     left.value.localeCompare(right.value) ||

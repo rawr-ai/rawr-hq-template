@@ -34,7 +34,7 @@ export default class Reflect extends RawrCommand {
 
     const response = await createHqOpsClient(workspaceRoot).journal.tailSnippets(
       { limit: Number.isFinite(limit) ? limit : 50 },
-      createHqOpsCallOptions("cli.reflect"),
+      createHqOpsCallOptions("cli.reflect")
     );
     const suggestions = suggest(response.snippets);
     const result = this.ok({ suggestions, considered: response.snippets.length });
@@ -42,7 +42,9 @@ export default class Reflect extends RawrCommand {
       flags: baseFlags,
       human: () => {
         if (suggestions.length === 0) {
-          this.log("No suggestions yet. Keep journaling; then try `rawr journal search --query <q>`.");
+          this.log(
+            "No suggestions yet. Keep journaling; then try `rawr journal search --query <q>`."
+          );
           return;
         }
         for (const suggestion of suggestions) {
@@ -55,7 +57,9 @@ export default class Reflect extends RawrCommand {
   }
 }
 
-function suggest(snippets: Array<{ id: string; kind: string; tags: string[]; title: string }>): ReflectSuggestion[] {
+function suggest(
+  snippets: Array<{ id: string; kind: string; tags: string[]; title: string }>
+): ReflectSuggestion[] {
   const commandCounts = new Map<string, { count: number; ids: string[] }>();
 
   for (const s of snippets) {
@@ -69,7 +73,9 @@ function suggest(snippets: Array<{ id: string; kind: string; tags: string[]; tit
   }
 
   const suggestions: ReflectSuggestion[] = [];
-  for (const [commandId, info] of [...commandCounts.entries()].sort((a, b) => b[1].count - a[1].count)) {
+  for (const [commandId, info] of [...commandCounts.entries()].sort(
+    (a, b) => b[1].count - a[1].count
+  )) {
     if (info.count < 3) continue;
     suggestions.push({
       kind: "promote-workflow",
@@ -85,7 +91,8 @@ function suggest(snippets: Array<{ id: string; kind: string; tags: string[]; tit
     suggestions.push({
       kind: "note",
       title: "Journal is active",
-      rationale: "Try `rawr journal search --query security` or `rawr journal tail --limit 10` to retrieve atomic snippets.",
+      rationale:
+        "Try `rawr journal search --query security` or `rawr journal tail --limit 10` to retrieve atomic snippets.",
     });
   }
 

@@ -1,9 +1,11 @@
 import * as React from "react";
 import { cn } from "../../lib/cn";
 
-const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <section ref={ref} className={cn("surface-card", className)} {...props} />
-));
+const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <section ref={ref} className={cn("surface-card", className)} {...props} />
+  )
+);
 Card.displayName = "Card";
 
 function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
@@ -15,7 +17,9 @@ function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElem
 }
 
 function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-sm leading-relaxed text-muted-foreground", className)} {...props} />;
+  return (
+    <p className={cn("text-sm leading-relaxed text-muted-foreground", className)} {...props} />
+  );
 }
 
 function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

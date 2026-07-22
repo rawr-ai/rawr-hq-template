@@ -12,10 +12,12 @@ type ProviderLifecycleDeps = Pick<
   | "providerProjectionRepositoryRoot"
 >;
 
-export function createNodeProviderLifecycleDeps(options: Readonly<{
-  state: NodeProviderRecordState;
-  providerExecutables: ProviderLifecycleDeps["providerExecutables"];
-}>): ProviderLifecycleDeps {
+export function createNodeProviderLifecycleDeps(
+  options: Readonly<{
+    state: NodeProviderRecordState;
+    providerExecutables: ProviderLifecycleDeps["providerExecutables"];
+  }>
+): ProviderLifecycleDeps {
   return Object.freeze({
     providerRecords: options.state.records,
     providerNativeResource: createNodeNativeProviderResource(),
@@ -37,7 +39,7 @@ export type NodeProviderRecordState = Readonly<{
 
 /** Creates the raw provider resources once at the controller host edge. */
 export function createNodeProviderRecordState(
-  roots: NodeProviderRecordRoots,
+  roots: NodeProviderRecordRoots
 ): NodeProviderRecordState {
   const records = makeNodeAgentProviderRecordsAsyncPort({
     controllerDataRoot: roots.controllerDataRoot,

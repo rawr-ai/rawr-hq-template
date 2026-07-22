@@ -31,7 +31,7 @@ export type VerifiedContentWorkspaceV1 = Readonly<{
 }>;
 
 export type ContentWorkspaceVerifier = (
-  contentWorkspace: string,
+  contentWorkspace: string
 ) => Promise<VerifiedContentWorkspaceV1>;
 
 export async function authorCuratedAgentPlugin(
@@ -39,27 +39,33 @@ export async function authorCuratedAgentPlugin(
   dependencies: Readonly<{
     verifyContentWorkspace?: ContentWorkspaceVerifier;
     port?: QualifiedWritePort;
-  }> = {},
+  }> = {}
 ): Promise<AuthoringExecutionResult> {
   let workspace: VerifiedContentWorkspaceV1;
   try {
-    workspace = await (dependencies.verifyContentWorkspace ?? verifyContentWorkspaceV1)(request.contentWorkspace);
+    workspace = await (dependencies.verifyContentWorkspace ?? verifyContentWorkspaceV1)(
+      request.contentWorkspace
+    );
   } catch (error) {
-    return rejectedAuthoringResult([Object.freeze({
-      code: "INVALID_DESTINATION",
-      path: "contentWorkspace",
-      message: errorMessage(error),
-    })]);
+    return rejectedAuthoringResult([
+      Object.freeze({
+        code: "INVALID_DESTINATION",
+        path: "contentWorkspace",
+        message: errorMessage(error),
+      }),
+    ]);
   }
 
   try {
     await rejectDuplicatePluginLeaf(workspace.root, request.pluginId);
   } catch (error) {
-    return rejectedAuthoringResult([Object.freeze({
-      code: "IDENTITY_COLLISION",
-      path: "id",
-      message: errorMessage(error),
-    })]);
+    return rejectedAuthoringResult([
+      Object.freeze({
+        code: "IDENTITY_COLLISION",
+        path: "id",
+        message: errorMessage(error),
+      }),
+    ]);
   }
 
   return await executeAuthoringPlan({
@@ -69,7 +75,10 @@ export async function authorCuratedAgentPlugin(
   });
 }
 
-async function rejectDuplicatePluginLeaf(root: VerifiedDestinationRoot, pluginId: string): Promise<void> {
+async function rejectDuplicatePluginLeaf(
+  root: VerifiedDestinationRoot,
+  pluginId: string
+): Promise<void> {
   for (const pluginRoot of OTHER_PLUGIN_ROOTS) {
     const candidate = path.join(root, ...pluginRoot.split("/"), pluginId);
     try {
@@ -81,13 +90,19 @@ async function rejectDuplicatePluginLeaf(root: VerifiedDestinationRoot, pluginId
   }
 }
 
-export async function verifyContentWorkspaceV1(contentWorkspace: string): Promise<VerifiedContentWorkspaceV1> {
+export async function verifyContentWorkspaceV1(
+  contentWorkspace: string
+): Promise<VerifiedContentWorkspaceV1> {
   const requestedRoot = path.resolve(contentWorkspace);
   const gitRoot = path.resolve(gitText(requestedRoot, ["rev-parse", "--show-toplevel"]));
   const origin = gitText(gitRoot, ["remote", "get-url", "origin"]);
-  const packageJson = JSON.parse(await fs.readFile(path.join(gitRoot, "package.json"), "utf8")) as { name?: unknown };
+  const packageJson = JSON.parse(await fs.readFile(path.join(gitRoot, "package.json"), "utf8")) as {
+    name?: unknown;
+  };
   if (gitRoot !== requestedRoot || origin !== PERSONAL_ORIGIN || packageJson.name !== "rawr-hq") {
-    throw new Error("Curated agent-plugin authoring requires the exact personal content-workspace interface");
+    throw new Error(
+      "Curated agent-plugin authoring requires the exact personal content-workspace interface"
+    );
   }
   return Object.freeze({
     protocol: CONTENT_WORKSPACE_PROTOCOL,

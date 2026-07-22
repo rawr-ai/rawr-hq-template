@@ -17,7 +17,10 @@ function normalizeSemanticSource(source: string): string {
 
 describe("hq app declaration seam guard", () => {
   it("keeps the canonical app shell cold and explicit about role/surface membership", async () => {
-    const manifestSource = await fs.readFile(path.join(repoRoot, "apps", "hq", "rawr.hq.ts"), "utf8");
+    const manifestSource = await fs.readFile(
+      path.join(repoRoot, "apps", "hq", "rawr.hq.ts"),
+      "utf8"
+    );
 
     expect(manifestSource).toContain('id: "hq"');
     expect(manifestSource).toContain("roles:");
@@ -42,9 +45,11 @@ describe("hq app declaration seam guard", () => {
       fs.readFile(manifestCompatPath, "utf8"),
     ]);
 
-    expect(testingSource === null || normalizeSemanticSource(testingSource) === "export{};").toBe(true);
+    expect(testingSource === null || normalizeSemanticSource(testingSource) === "export{};").toBe(
+      true
+    );
     expect(normalizeSemanticSource(manifestCompatSource)).toBe(
-      'export{createRawrHqManifest}from"../rawr.hq";exporttype{RawrHqManifest}from"../rawr.hq";',
+      'export{createRawrHqManifest}from"../rawr.hq";exporttype{RawrHqManifest}from"../rawr.hq";'
     );
   });
 
@@ -65,7 +70,7 @@ describe("hq app declaration seam guard", () => {
     expect(serverSource).not.toContain("../server/src/host-composition");
     expect(asyncSource).not.toContain("../server/src/host-composition");
     expect(devSource).not.toContain("../server/src/host-composition");
-    expect(legacyCutoverSource).toContain('../server/src/bootstrap');
+    expect(legacyCutoverSource).toContain("../server/src/bootstrap");
     expect(legacyCutoverSource).toContain("../server/src/host-composition");
     expect(legacyCutoverSource).not.toContain("../server/src/host-seam");
     expect(legacyCutoverSource).not.toContain("../server/src/host-realization");
@@ -104,7 +109,7 @@ describe("hq app declaration seam guard", () => {
 
   it("does not publish a testing export from the HQ app package", async () => {
     const packageJson = JSON.parse(
-      await fs.readFile(path.join(repoRoot, "apps", "hq", "package.json"), "utf8"),
+      await fs.readFile(path.join(repoRoot, "apps", "hq", "package.json"), "utf8")
     ) as { exports?: Record<string, unknown> };
 
     expect(packageJson.exports?.["./testing"]).toBeUndefined();

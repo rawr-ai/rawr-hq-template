@@ -62,24 +62,61 @@ describe("qualified authoring command surface", () => {
 
     for (const retired of retiredCommands) {
       const result = runRawr([...retired.args, "--help"]);
-      expect(result.status, `${retired.args.join(" ")}\n${result.stdout}\n${result.stderr}`).not.toBe(0);
+      expect(
+        result.status,
+        `${retired.args.join(" ")}\n${result.stdout}\n${result.stderr}`
+      ).not.toBe(0);
       expect(result.stdout).toBe("");
       expect(result.stderr).toContain(`Command ${retired.id} not found.`);
     }
   });
 
-  it("rejects cross-owner and incomplete inputs before any repository write", { timeout: 30_000 }, () => {
+  it("rejects cross-owner and incomplete inputs before any repository write", {
+    timeout: 30_000,
+  }, () => {
     const workspaceRoot = path.resolve(cliRoot, "../..");
     const sentinel = path.join(workspaceRoot, "apps", "hq", "rawr.hq.ts");
-    const destination = path.join(os.tmpdir(), `rawr-invalid-authoring-${process.pid}-${randomUUID()}`);
+    const destination = path.join(
+      os.tmpdir(),
+      `rawr-invalid-authoring-${process.pid}-${randomUUID()}`
+    );
     const before = readFileSync(sentinel);
     const beforeMtime = statSync(sentinel, { bigint: true }).mtimeNs;
     expect(existsSync(destination)).toBe(false);
 
     for (const args of [
-      ["cli", "command", "create", "sample", "inspect", "--content-workspace", destination, "--json"],
-      ["cli", "extension", "create", "invalid", "--destination", destination, "--content-workspace", destination, "--json"],
-      ["agent", "plugins", "create", "invalid", "--content-workspace", destination, "--destination", destination, "--json"],
+      [
+        "cli",
+        "command",
+        "create",
+        "sample",
+        "inspect",
+        "--content-workspace",
+        destination,
+        "--json",
+      ],
+      [
+        "cli",
+        "extension",
+        "create",
+        "invalid",
+        "--destination",
+        destination,
+        "--content-workspace",
+        destination,
+        "--json",
+      ],
+      [
+        "agent",
+        "plugins",
+        "create",
+        "invalid",
+        "--content-workspace",
+        destination,
+        "--destination",
+        destination,
+        "--json",
+      ],
     ]) {
       const result = runRawr(args);
       expect(result.status, `${args.join(" ")}\n${result.stdout}\n${result.stderr}`).not.toBe(0);
@@ -90,7 +127,9 @@ describe("qualified authoring command surface", () => {
     expect(existsSync(destination)).toBe(false);
   });
 
-  it("dry-runs, applies, and converges each creator through the operator command surface", { timeout: 120_000 }, async () => {
+  it("dry-runs, applies, and converges each creator through the operator command surface", {
+    timeout: 120_000,
+  }, async () => {
     const personal = await gitFixture({
       origin: "https://github.com/rawr-ai/rawr-hq.git",
       packageName: "rawr-hq",
@@ -132,12 +171,13 @@ describe("qualified authoring command surface", () => {
     for (const flow of flows) {
       const adjacentBefore = await snapshotTree(flow.authorities.root);
       const outputExistedBeforeDryRun = existsSync(flow.outputRoot);
-      const beforeDryRun = outputExistedBeforeDryRun
-        ? await snapshotTree(flow.outputRoot)
-        : null;
+      const beforeDryRun = outputExistedBeforeDryRun ? await snapshotTree(flow.outputRoot) : null;
       const dryRun = runRawr([...flow.args, "--dry-run", "--json"], flow.cwd, flow.authorities.env);
       expect(dryRun.status, dryRun.stderr || dryRun.stdout).toBe(0);
-      expect(JSON.parse(dryRun.stdout)).toMatchObject({ ok: true, data: { kind: "AuthoringDryRun" } });
+      expect(JSON.parse(dryRun.stdout)).toMatchObject({
+        ok: true,
+        data: { kind: "AuthoringDryRun" },
+      });
       expect(existsSync(flow.outputRoot)).toBe(outputExistedBeforeDryRun);
       if (beforeDryRun !== null) {
         expect(await snapshotTree(flow.outputRoot)).toEqual(beforeDryRun);
@@ -146,18 +186,28 @@ describe("qualified authoring command surface", () => {
 
       const applied = runRawr([...flow.args, "--json"], flow.cwd, flow.authorities.env);
       expect(applied.status, applied.stderr || applied.stdout).toBe(0);
-      expect(JSON.parse(applied.stdout)).toMatchObject({ ok: true, data: { kind: "AuthoringAuthored" } });
+      expect(JSON.parse(applied.stdout)).toMatchObject({
+        ok: true,
+        data: { kind: "AuthoringAuthored" },
+      });
       const firstSnapshot = await snapshotTree(flow.outputRoot);
       expect(await snapshotTree(flow.authorities.root)).toEqual(adjacentBefore);
 
       const repeated = runRawr([...flow.args, "--json"], flow.cwd, flow.authorities.env);
       expect(repeated.status, repeated.stderr || repeated.stdout).toBe(0);
-      expect(JSON.parse(repeated.stdout)).toMatchObject({ ok: true, data: { kind: "AuthoringConverged" } });
+      expect(JSON.parse(repeated.stdout)).toMatchObject({
+        ok: true,
+        data: { kind: "AuthoringConverged" },
+      });
       expect(await snapshotTree(flow.outputRoot)).toEqual(firstSnapshot);
       expect(await snapshotTree(flow.authorities.root)).toEqual(adjacentBefore);
     }
 
-    for (const args of [["install", "--ignore-scripts"], ["run", "build"], ["run", "test"]]) {
+    for (const args of [
+      ["install", "--ignore-scripts"],
+      ["run", "build"],
+      ["run", "test"],
+    ]) {
       const result = spawnSync("bun", args, { cwd: extension, encoding: "utf8" });
       expect(result.status, result.stderr || result.stdout).toBe(0);
     }
@@ -165,11 +215,15 @@ describe("qualified authoring command surface", () => {
 });
 
 function runRawr(args: readonly string[], cwd = cliRoot, env: NodeJS.ProcessEnv = {}) {
-  return spawnSync("bun", [path.join(cliRoot, "test", "command-fixture", "command-test-cli.ts"), ...args], {
-    cwd,
-    encoding: "utf8",
-    env: { ...process.env, ...env, BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" },
-  });
+  return spawnSync(
+    "bun",
+    [path.join(cliRoot, "test", "command-fixture", "command-test-cli.ts"), ...args],
+    {
+      cwd,
+      encoding: "utf8",
+      env: { ...process.env, ...env, BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0" },
+    }
+  );
 }
 
 type AdjacentAuthorityFixture = Readonly<{
@@ -192,10 +246,15 @@ async function adjacentAuthorityFixture(): Promise<AdjacentAuthorityFixture> {
     personalRecords: path.join(root, "personal-lifecycle-records"),
   } as const;
   const namedRoots = Object.entries(roots);
-  await Promise.all(namedRoots.map(async ([name, authorityRoot]) => {
-    await fs.mkdir(authorityRoot, { recursive: true });
-    await fs.writeFile(path.join(authorityRoot, "sentinel.json"), `${JSON.stringify({ authority: name })}\n`);
-  }));
+  await Promise.all(
+    namedRoots.map(async ([name, authorityRoot]) => {
+      await fs.mkdir(authorityRoot, { recursive: true });
+      await fs.writeFile(
+        path.join(authorityRoot, "sentinel.json"),
+        `${JSON.stringify({ authority: name })}\n`
+      );
+    })
+  );
 
   const home = path.join(root, "operator-home");
   const xdgConfigHome = path.join(roots.nativeOclif, "xdg-config");
@@ -237,21 +296,29 @@ async function commandTempRoot(): Promise<string> {
   return root;
 }
 
-async function gitFixture(input: Readonly<{
-  origin: string;
-  packageName: string;
-  cliPackageName?: string;
-}>): Promise<string> {
+async function gitFixture(
+  input: Readonly<{
+    origin: string;
+    packageName: string;
+    cliPackageName?: string;
+  }>
+): Promise<string> {
   const root = await commandTempRoot();
-  await fs.writeFile(path.join(root, "package.json"), `${JSON.stringify({ name: input.packageName })}\n`);
+  await fs.writeFile(
+    path.join(root, "package.json"),
+    `${JSON.stringify({ name: input.packageName })}\n`
+  );
   if (input.cliPackageName) {
     await fs.mkdir(path.join(root, "apps", "cli"), { recursive: true });
     await fs.writeFile(
       path.join(root, "apps", "cli", "package.json"),
-      `${JSON.stringify({ name: input.cliPackageName })}\n`,
+      `${JSON.stringify({ name: input.cliPackageName })}\n`
     );
   }
-  for (const args of [["init", "--quiet"], ["remote", "add", "origin", input.origin]]) {
+  for (const args of [
+    ["init", "--quiet"],
+    ["remote", "add", "origin", input.origin],
+  ]) {
     const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
     expect(result.status, result.stderr || result.stdout).toBe(0);
   }
@@ -300,11 +367,11 @@ async function removeOwnedCommandFixture(root: string): Promise<void> {
   const actualParent = await fs.realpath(path.dirname(root));
   const stat = await fs.lstat(root);
   if (
-    actualParent !== expectedParent
-    || await fs.realpath(root) !== root
-    || !path.basename(root).startsWith("rawr-authoring-command-test-")
-    || !stat.isDirectory()
-    || stat.isSymbolicLink()
+    actualParent !== expectedParent ||
+    (await fs.realpath(root)) !== root ||
+    !path.basename(root).startsWith("rawr-authoring-command-test-") ||
+    !stat.isDirectory() ||
+    stat.isSymbolicLink()
   ) {
     throw new Error("Refusing cleanup outside an owned command fixture root");
   }

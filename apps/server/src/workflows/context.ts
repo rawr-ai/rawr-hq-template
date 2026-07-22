@@ -16,7 +16,8 @@ export const RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY = {
   requiredMarkers: [RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION] as const,
 } as const;
 
-export type RawrBoundaryMiddlewareState = BoundaryMiddlewareSupportState<RawrMiddlewareDedupeMarker>;
+export type RawrBoundaryMiddlewareState =
+  BoundaryMiddlewareSupportState<RawrMiddlewareDedupeMarker>;
 
 export type RawrBoundaryContextDeps<TRuntime = unknown> = HostRuntimeSupportContext<TRuntime> & {
   hostLogger?: Logger;
@@ -49,7 +50,9 @@ function resolveCorrelationId(request: Request, requestId: string): string {
   return requestId;
 }
 
-export function getRequestScopedBoundaryMiddlewareState(request: Request): RawrBoundaryMiddlewareState {
+export function getRequestScopedBoundaryMiddlewareState(
+  request: Request
+): RawrBoundaryMiddlewareState {
   const cached = requestScopedMiddlewareStateCache.get(request);
   if (cached) return cached;
 
@@ -61,7 +64,7 @@ export function getRequestScopedBoundaryMiddlewareState(request: Request): RawrB
 export function resolveRequestScopedMiddlewareValue<T>(
   request: Request,
   marker: RawrMiddlewareDedupeMarker,
-  evaluate: () => T,
+  evaluate: () => T
 ): T {
   const state = getRequestScopedBoundaryMiddlewareState(request);
   if (state.markerCache.has(marker)) {
@@ -75,14 +78,14 @@ export function resolveRequestScopedMiddlewareValue<T>(
 
 export function hasRequestScopedMiddlewareMarker(
   context: Pick<RawrBoundaryContext, "middlewareState">,
-  marker: RawrMiddlewareDedupeMarker,
+  marker: RawrMiddlewareDedupeMarker
 ): boolean {
   return context.middlewareState.markerCache.has(marker);
 }
 
 export function assertRequestScopedMiddlewareMarker(
   context: Pick<RawrBoundaryContext, "middlewareState">,
-  marker: RawrMiddlewareDedupeMarker,
+  marker: RawrMiddlewareDedupeMarker
 ): void {
   if (hasRequestScopedMiddlewareMarker(context, marker)) {
     return;
@@ -93,7 +96,7 @@ export function assertRequestScopedMiddlewareMarker(
 
 export function assertHeavyMiddlewareDedupeMarkers(
   context: Pick<RawrBoundaryContext, "middlewareState">,
-  markers: readonly RawrMiddlewareDedupeMarker[],
+  markers: readonly RawrMiddlewareDedupeMarker[]
 ): void {
   const missing = markers.filter((marker) => !hasRequestScopedMiddlewareMarker(context, marker));
   if (missing.length === 0) {
@@ -118,7 +121,7 @@ export function assertHeavyMiddlewareDedupeMarkers(
  */
 export function createRequestScopedBoundaryContext<TRuntime>(
   request: Request,
-  deps: RawrBoundaryContextDeps<TRuntime>,
+  deps: RawrBoundaryContextDeps<TRuntime>
 ): RawrBoundaryContext<TRuntime> {
   const requestId = resolveRequestId(request);
   const correlationId = resolveCorrelationId(request, requestId);
@@ -138,7 +141,7 @@ export function createRequestScopedBoundaryContext<TRuntime>(
  */
 export function createWorkflowBoundaryContext<TRuntime>(
   request: Request,
-  deps: RawrBoundaryContextDeps<TRuntime>,
+  deps: RawrBoundaryContextDeps<TRuntime>
 ): RawrBoundaryContext<TRuntime> {
   return createRequestScopedBoundaryContext(request, deps);
 }

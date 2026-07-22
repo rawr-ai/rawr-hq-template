@@ -20,7 +20,7 @@ export default class SecurityCheck extends RawrCommand {
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
     const report = await createHqOpsClient(workspaceRoot ?? process.cwd()).security.securityCheck(
       { mode },
-      createHqOpsCallOptions("cli.security.check"),
+      createHqOpsCallOptions("cli.security.check")
     );
 
     const result = this.ok({ report });

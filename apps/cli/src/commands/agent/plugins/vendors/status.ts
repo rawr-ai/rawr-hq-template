@@ -19,6 +19,7 @@ export default class AgentPluginsVendorsStatus extends AgentPluginLifecycleComma
   async run(): Promise<void> {
     const { flags } = await this.parseRawr(AgentPluginsVendorsStatus);
     const input = this.parseInput(flags, parseVendorStatusRequest);
-    if (input !== undefined) await this.project({ operation: "vendors.status", input }, flags, { git: true });
+    if (input !== undefined)
+      await this.project({ operation: "vendors.status", input }, flags, { git: true });
   }
 }

@@ -2,20 +2,9 @@ import {
   createMechanicalEvidenceHandle,
   type ArtifactRef,
 } from "@rawr/agent-plugin-lifecycle/release";
-import type {
-  Config,
-  CreateClientOptions,
-  Deps,
-  Scope,
-} from "@rawr/agent-plugin-lifecycle/client";
-import {
-  router,
-  type Router,
-} from "@rawr/agent-plugin-lifecycle/router";
-import {
-  contract,
-  type Contract,
-} from "@rawr/agent-plugin-lifecycle/service/contract";
+import type { Config, CreateClientOptions, Deps, Scope } from "@rawr/agent-plugin-lifecycle/client";
+import { router, type Router } from "@rawr/agent-plugin-lifecycle/router";
+import { contract, type Contract } from "@rawr/agent-plugin-lifecycle/service/contract";
 import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 
 // @ts-expect-error Contract types are exposed only through the owner-qualified contract subpath.
@@ -57,21 +46,22 @@ type ProviderCurrentMainIsAbsent = "providerCurrentMain" extends keyof Deps ? ne
 const providerCurrentMainIsAbsent: ProviderCurrentMainIsAbsent = true;
 void providerCurrentMainIsAbsent;
 
-type CallerSemanticArtifactDepsAreAbsent = Extract<
-  keyof Deps,
-  | "releaseArtifacts"
-  | "releaseEvidence"
-  | "providerArtifactRepository"
-  | "providerEvidenceStore"
-> extends never ? true : never;
+type CallerSemanticArtifactDepsAreAbsent =
+  Extract<
+    keyof Deps,
+    "releaseArtifacts" | "releaseEvidence" | "providerArtifactRepository" | "providerEvidenceStore"
+  > extends never
+    ? true
+    : never;
 const callerSemanticArtifactDepsAreAbsent: CallerSemanticArtifactDepsAreAbsent = true;
 void callerSemanticArtifactDepsAreAbsent;
 
-type RawArtifactRepositoryIsRequired = Deps["artifactRepository"] extends ArtifactRepositoryAsyncPort
-  ? ArtifactRepositoryAsyncPort extends Deps["artifactRepository"]
-    ? true
-    : never
-  : never;
+type RawArtifactRepositoryIsRequired =
+  Deps["artifactRepository"] extends ArtifactRepositoryAsyncPort
+    ? ArtifactRepositoryAsyncPort extends Deps["artifactRepository"]
+      ? true
+      : never
+    : never;
 const rawArtifactRepositoryIsRequired: RawArtifactRepositoryIsRequired = true;
 void rawArtifactRepositoryIsRequired;
 

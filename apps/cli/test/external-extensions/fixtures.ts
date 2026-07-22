@@ -29,11 +29,11 @@ export function removeFixtureRoots(): void {
     const canonicalRoot = realpathSync(root);
     const status = lstatSync(root);
     if (
-      !status.isDirectory()
-      || status.isSymbolicLink()
-      || canonicalRoot !== root
-      || path.dirname(canonicalRoot) !== CANONICAL_TEMP_ROOT
-      || !path.basename(canonicalRoot).startsWith(FIXTURE_PREFIX)
+      !status.isDirectory() ||
+      status.isSymbolicLink() ||
+      canonicalRoot !== root ||
+      path.dirname(canonicalRoot) !== CANONICAL_TEMP_ROOT ||
+      !path.basename(canonicalRoot).startsWith(FIXTURE_PREFIX)
     ) {
       throw new Error(`refusing to remove invalid external-extension fixture root: ${root}`);
     }
@@ -45,7 +45,9 @@ export function tempRoot(label: string): string {
   if (!/^[a-z0-9-]+$/u.test(label)) {
     throw new Error(`invalid external-extension fixture label: ${label}`);
   }
-  const root = realpathSync(mkdtempSync(path.join(CANONICAL_TEMP_ROOT, `${FIXTURE_PREFIX}${label}-`)));
+  const root = realpathSync(
+    mkdtempSync(path.join(CANONICAL_TEMP_ROOT, `${FIXTURE_PREFIX}${label}-`))
+  );
   fixtureRoots.push(root);
   return root;
 }
@@ -93,8 +95,8 @@ export function writeExtensionFixture(input: ExtensionFixtureInput = {}): string
         },
       },
       null,
-      2,
-    ),
+      2
+    )
   );
   if (!input.omitCommandModule) {
     const sentinel = input.sentinelPath
@@ -127,19 +129,16 @@ export function writeExtensionFixture(input: ExtensionFixtureInput = {}): string
               },
             },
             null,
-            2,
-          ),
+            2
+          )
     );
   }
   return root;
 }
 
-export function staticExtension(input: {
-  packageId?: string;
-  root?: string;
-  fingerprint?: string;
-  commandId?: string;
-} = {}): StaticExternalExtension {
+export function staticExtension(
+  input: { packageId?: string; root?: string; fingerprint?: string; commandId?: string } = {}
+): StaticExternalExtension {
   const packageId = input.packageId ?? "@fixture/external";
   const root = input.root ?? "/external/fixture";
   const commandId = input.commandId ?? "fixture:hello";
@@ -181,7 +180,7 @@ export function activeState(
     type: "user",
     tag: "latest",
     dependencySpec: extension.version,
-  },
+  }
 ): NativeRegistryProjection {
   return {
     registryPath: "/native/package.json",
@@ -203,7 +202,7 @@ export function emptyState(): NativeRegistryProjection {
 }
 
 export function quarantinedState(
-  quarantine: QuarantinedExternalExtension,
+  quarantine: QuarantinedExternalExtension
 ): NativeRegistryProjection {
   return {
     registryPath: "/native/package.json",

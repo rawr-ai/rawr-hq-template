@@ -58,19 +58,23 @@ export async function inspectControllerRelease(input: {
           "releaseRoot",
           "Controller release root must be its canonical path",
           releaseRoot,
-          canonicalRoot,
+          canonicalRoot
         ),
       ]);
     }
 
     const envelopePath = path.join(canonicalRoot, CONTROLLER_ENVELOPE_PATH);
     const envelopeStatus = await lstat(envelopePath);
-    if (!envelopeStatus.isFile() || envelopeStatus.nlink !== 1 || await realpath(envelopePath) !== envelopePath) {
+    if (
+      !envelopeStatus.isFile() ||
+      envelopeStatus.nlink !== 1 ||
+      (await realpath(envelopePath)) !== envelopePath
+    ) {
       return invalid(canonicalRoot, input.expectedDigest, [
         issue(
           "RELEASE_ENVELOPE_ALIAS",
           CONTROLLER_ENVELOPE_PATH,
-          "Controller release envelope must be one independent in-release regular file",
+          "Controller release envelope must be one independent in-release regular file"
         ),
       ]);
     }
@@ -81,13 +85,11 @@ export async function inspectControllerRelease(input: {
           CONTROLLER_ENVELOPE_PATH,
           `Controller release envelope exceeds ${MAX_CONTROLLER_RELEASE_ENVELOPE_BYTES} bytes`,
           MAX_CONTROLLER_RELEASE_ENVELOPE_BYTES,
-          envelopeStatus.size,
+          envelopeStatus.size
         ),
       ]);
     }
-    const envelopeBytes = new Uint8Array(
-      await readFile(envelopePath),
-    );
+    const envelopeBytes = new Uint8Array(await readFile(envelopePath));
     const envelope = decodeControllerReleaseEnvelope(envelopeBytes, {
       controllerDigest: input.expectedDigest,
       ...(input.requireDigestDirectory === false
@@ -134,7 +136,7 @@ export class ControllerReleaseInspectionError extends Error {
     super(
       `CONTROLLER_RELEASE_INVALID: ${inspection.issues
         .map((entry) => `${entry.path}: ${entry.message}`)
-        .join("; ")}`,
+        .join("; ")}`
     );
     this.name = "ControllerReleaseInspectionError";
     this.inspection = inspection;
@@ -142,7 +144,7 @@ export class ControllerReleaseInspectionError extends Error {
 }
 
 export async function observeControllerPayload(
-  releaseRoot: string,
+  releaseRoot: string
 ): Promise<readonly ControllerObservedPayloadEntryInput[]> {
   const canonicalRoot = await realpath(releaseRoot);
   const entries: ControllerObservedPayloadEntryInput[] = [];
@@ -201,7 +203,12 @@ async function sha256File(filePath: string): Promise<string> {
 
 function canonicalRelativePath(root: string, candidate: string): string {
   const relative = path.relative(root, candidate);
-  if (!relative || relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+  if (
+    !relative ||
+    relative === ".." ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative)
+  ) {
     throw new Error(`Controller payload path escapes release root: ${candidate}`);
   }
   return relative.split(path.sep).join("/");
@@ -209,7 +216,10 @@ function canonicalRelativePath(root: string, candidate: string): string {
 
 function assertContained(root: string, candidate: string, label: string): void {
   const offset = path.relative(root, candidate);
-  if (offset === "" || (!offset.startsWith(`..${path.sep}`) && offset !== ".." && !path.isAbsolute(offset))) {
+  if (
+    offset === "" ||
+    (!offset.startsWith(`..${path.sep}`) && offset !== ".." && !path.isAbsolute(offset))
+  ) {
     return;
   }
   throw new Error(`Controller payload ${label} resolves outside the release`);
@@ -218,7 +228,7 @@ function assertContained(root: string, candidate: string, label: string): void {
 function invalid(
   releaseRoot: string,
   controllerDigest: string,
-  issues: readonly ControllerReleaseInspectionIssue[] | readonly ControllerIssue[],
+  issues: readonly ControllerReleaseInspectionIssue[] | readonly ControllerIssue[]
 ): InvalidControllerRelease {
   return Object.freeze({
     status: "invalid",
@@ -233,7 +243,7 @@ function filesystemIssue(error: unknown): ControllerReleaseInspectionIssue {
   return issue(
     code === "ENOENT" || code === "ENOTDIR" ? "RELEASE_PATH_MISSING" : "RELEASE_FILESYSTEM_ERROR",
     "releaseRoot",
-    error instanceof Error ? error.message : String(error),
+    error instanceof Error ? error.message : String(error)
   );
 }
 
@@ -242,7 +252,7 @@ function issue(
   issuePath: string,
   message: string,
   expected?: unknown,
-  actual?: unknown,
+  actual?: unknown
 ): ControllerReleaseInspectionIssue {
   return {
     code,

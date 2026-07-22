@@ -26,7 +26,7 @@ const PROVIDER_PROJECTION_DIRECTORY = "provider-projections-v1";
 const PROVIDER_TARGET_STATE_DIRECTORY = "provider-target-state-v1";
 
 export function deriveAgentPluginControllerLayout(
-  context: Pick<ControllerRuntimeContext, "dataRoot">,
+  context: Pick<ControllerRuntimeContext, "dataRoot">
 ): AgentPluginControllerLayout {
   const dataRoot = requireCanonicalAbsoluteRoot(context.dataRoot);
   const ownerRoot = path.join(dataRoot, AGENT_PLUGIN_STATE_DIRECTORY);
@@ -35,9 +35,9 @@ export function deriveAgentPluginControllerLayout(
   const providerTargetStateRoot = path.join(ownerRoot, PROVIDER_TARGET_STATE_DIRECTORY);
 
   if (
-    !isContained(dataRoot, artifactStoreRoot)
-    || !isContained(dataRoot, providerProjectionRoot)
-    || !isContained(dataRoot, providerTargetStateRoot)
+    !isContained(dataRoot, artifactStoreRoot) ||
+    !isContained(dataRoot, providerProjectionRoot) ||
+    !isContained(dataRoot, providerTargetStateRoot)
   ) {
     throw new Error("AGENT_PLUGIN_LAYOUT_OUTSIDE_CONTROLLER_DATA_ROOT");
   }
@@ -58,8 +58,10 @@ function requireCanonicalAbsoluteRoot(value: string): string {
 
 function isContained(root: string, candidate: string): boolean {
   const offset = path.relative(root, candidate);
-  return offset !== ""
-    && offset !== ".."
-    && !offset.startsWith(`..${path.sep}`)
-    && !path.isAbsolute(offset);
+  return (
+    offset !== "" &&
+    offset !== ".." &&
+    !offset.startsWith(`..${path.sep}`) &&
+    !path.isAbsolute(offset)
+  );
 }

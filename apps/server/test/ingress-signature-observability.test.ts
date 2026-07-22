@@ -44,7 +44,7 @@ describe("ingress signature observability", () => {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ name: "exampleTodo/task.created", data: {} }),
-        }),
+        })
       );
       expect(ok).toBe(true);
     } finally {
@@ -75,7 +75,7 @@ describe("ingress signature observability", () => {
             "x-inngest-signature": `t=${Math.floor(Date.now() / 1000)}&s=deadbeef`,
           },
           body: JSON.stringify({ name: "exampleTodo/task.created", data: { id: "t-1" } }),
-        }),
+        })
       );
 
       expect(response.status).toBe(403);
@@ -114,7 +114,7 @@ describe("ingress signature observability", () => {
             "x-rawr-cli-auth": "verified",
           },
           body: JSON.stringify({ name: "exampleTodo/task.created", data: { id: "t-1" } }),
-        }),
+        })
       );
 
       expect(response.status).toBe(403);

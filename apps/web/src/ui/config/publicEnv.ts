@@ -4,7 +4,5 @@ export const publicEnv = Object.freeze({
   isDev: import.meta.env.DEV,
   isProd: import.meta.env.PROD,
   rpcUrl:
-    typeof import.meta.env.VITE_RAWR_RPC_URL === "string"
-      ? import.meta.env.VITE_RAWR_RPC_URL
-      : "",
+    typeof import.meta.env.VITE_RAWR_RPC_URL === "string" ? import.meta.env.VITE_RAWR_RPC_URL : "",
 });

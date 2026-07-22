@@ -3,7 +3,8 @@ import { Args } from "@oclif/core";
 import { ExternalExtensionCommand } from "../../lib/external-extensions/command";
 
 export default class PluginsLink extends ExternalExtensionCommand {
-  static description = "Link a statically verified external CLI extension without installing dependencies";
+  static description =
+    "Link a statically verified external CLI extension without installing dependencies";
 
   static args = {
     path: Args.string({ description: "Path to an external CLI extension", required: true }),

@@ -8,7 +8,7 @@ const runtimes = new WeakMap<object, ExternalExtensionCommandRuntime>();
 
 export function registerExternalExtensionRuntime(
   config: Config,
-  runtime: ExternalExtensionCommandRuntime,
+  runtime: ExternalExtensionCommandRuntime
 ): void {
   const owner = runtimeOwner(config);
   if (runtimes.has(owner)) throw new Error("EXTERNAL_EXTENSION_RUNTIME_ALREADY_CONFIGURED");

@@ -3,9 +3,7 @@ import path from "node:path";
 
 import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
 import { createClient } from "@rawr/agent-plugin-lifecycle/client";
-import {
-  parseArtifactRef,
-} from "@rawr/agent-plugin-lifecycle/release";
+import { parseArtifactRef } from "@rawr/agent-plugin-lifecycle/release";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { LifecycleOperation } from "../../../src/lib/agent-plugins/commands/binding";
@@ -55,7 +53,11 @@ const OPERATION_CASES = Object.freeze([
   { operation: "providers.completeTest", owner: "providers", procedure: "completeTest" },
   { operation: "providers.canonicalSync", owner: "providers", procedure: "canonicalSync" },
   { operation: "providers.canonicalStatus", owner: "providers", procedure: "canonicalStatus" },
-  { operation: "governance.currentMainRecord", owner: "governance", procedure: "currentMainRecord" },
+  {
+    operation: "governance.currentMainRecord",
+    owner: "governance",
+    procedure: "currentMainRecord",
+  },
   {
     operation: "governance.currentMainSelection",
     owner: "governance",
@@ -168,7 +170,7 @@ describe("production lifecycle service context", () => {
     await unlink(repository.releaseInputFile);
     const contentWorkspace = await commitGeneratedGitRepository(
       repository,
-      "remove governed release input",
+      "remove governed release input"
     );
     const before = await directoryNames(root.path);
     const unboundDeps = createProductionLifecycleDeps({
@@ -198,17 +200,24 @@ describe("production lifecycle service context", () => {
       },
       config: {},
     });
-    const artifactRef = must(parseArtifactRef({
-      kind: "release",
-      releaseDigest: `rd1_${"1".repeat(64)}`,
-      artifactDigest: `ad1_${"2".repeat(64)}`,
-    }));
+    const artifactRef = must(
+      parseArtifactRef({
+        kind: "release",
+        releaseDigest: `rd1_${"1".repeat(64)}`,
+        artifactDigest: `ad1_${"2".repeat(64)}`,
+      })
+    );
 
-    await expect(unboundClient.packaging.package({
-      artifactRef,
-      format: "cowork-v1",
-      outputPath: path.join(root.path, "unused.cowork"),
-    }, invocation)).resolves.toMatchObject({
+    await expect(
+      unboundClient.packaging.package(
+        {
+          artifactRef,
+          format: "cowork-v1",
+          outputPath: path.join(root.path, "unused.cowork"),
+        },
+        invocation
+      )
+    ).resolves.toMatchObject({
       kind: "RejectedBeforeOutputMutation",
       primaryFailure: { code: "ArtifactMissing" },
     });
@@ -220,20 +229,24 @@ describe("production lifecycle service context", () => {
     });
     await expect(boundClient.releases.check(request, invocation)).resolves.toMatchObject({
       kind: "IneligibleReport",
-      issues: [{
-        kind: "SourceEligibility",
-        issue: { code: "MissingReleaseInput" },
-      }],
+      issues: [
+        {
+          kind: "SourceEligibility",
+          issue: { code: "MissingReleaseInput" },
+        },
+      ],
     });
     expect(await directoryNames(root.path)).toEqual(before);
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
       await expect(unboundClient.releases.check(request, invocation)).resolves.toMatchObject({
         kind: "IneligibleReport",
-        issues: [{
-          kind: "SourceEligibility",
-          issue: { code: "GitFailure" },
-        }],
+        issues: [
+          {
+            kind: "SourceEligibility",
+            issue: { code: "GitFailure" },
+          },
+        ],
       });
       expect(await directoryNames(root.path)).toEqual(before);
     }
@@ -250,8 +263,9 @@ function directoryNames(root: string): Promise<readonly string[]> {
 }
 
 function must<T, E>(
-  result: Readonly<{ ok: true; value: T }> | Readonly<{ ok: false; issues: readonly E[] }>,
+  result: Readonly<{ ok: true; value: T }> | Readonly<{ ok: false; issues: readonly E[] }>
 ): T {
-  if (!result.ok) throw new Error(`fixture value failed validation: ${JSON.stringify(result.issues)}`);
+  if (!result.ok)
+    throw new Error(`fixture value failed validation: ${JSON.stringify(result.issues)}`);
   return result.value;
 }

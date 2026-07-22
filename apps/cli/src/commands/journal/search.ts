@@ -37,7 +37,7 @@ export default class JournalSearch extends RawrCommand {
         limit: Number.isFinite(limit) ? limit : 10,
         mode: semantic ? "semantic" : "fts",
       },
-      createHqOpsCallOptions("cli.journal.search"),
+      createHqOpsCallOptions("cli.journal.search")
     );
 
     const warnings = response.warning ? [response.warning] : undefined;
@@ -47,7 +47,10 @@ export default class JournalSearch extends RawrCommand {
       human: () => {
         if (warnings) for (const warning of warnings) this.warn(warning);
         for (const snippet of response.snippets) {
-          const score = typeof (snippet as any).score === "number" ? ` score=${(snippet as any).score.toFixed(3)}` : "";
+          const score =
+            typeof (snippet as any).score === "number"
+              ? ` score=${(snippet as any).score.toFixed(3)}`
+              : "";
           this.log(`${snippet.id}  ${snippet.title}  (${snippet.preview})${score}`);
         }
       },

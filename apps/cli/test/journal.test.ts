@@ -23,11 +23,11 @@ function removeTestRoot(): void {
   const canonicalTestRoot = realpathSync(TEST_ROOT);
   const status = lstatSync(TEST_ROOT);
   if (
-    !status.isDirectory()
-    || status.isSymbolicLink()
-    || canonicalTestRoot !== TEST_ROOT
-    || path.dirname(canonicalTestRoot) !== canonicalTemporaryRoot
-    || !path.basename(canonicalTestRoot).startsWith(TEST_ROOT_PREFIX)
+    !status.isDirectory() ||
+    status.isSymbolicLink() ||
+    canonicalTestRoot !== TEST_ROOT ||
+    path.dirname(canonicalTestRoot) !== canonicalTemporaryRoot ||
+    !path.basename(canonicalTestRoot).startsWith(TEST_ROOT_PREFIX)
   ) {
     throw new Error(`refusing to remove invalid journal test root: ${TEST_ROOT}`);
   }
@@ -96,7 +96,15 @@ describe("journal + reflect", () => {
     const seed = seedJournal(snippet);
     expect(seed.status, seed.stderr).toBe(0);
 
-    const searchProc = runRawr(["journal", "search", "--query", "doctor", "--limit", "5", "--json"]);
+    const searchProc = runRawr([
+      "journal",
+      "search",
+      "--query",
+      "doctor",
+      "--limit",
+      "5",
+      "--json",
+    ]);
     expect(searchProc.status).toBe(0);
     const search = parseJson(searchProc);
     expect(search.ok).toBe(true);
@@ -113,9 +121,11 @@ describe("journal + reflect", () => {
     expect(tail.ok).toBe(true);
     expect(Array.isArray(tail.data.snippets)).toBe(true);
     expect(tail.data.snippets.length).toBeGreaterThan(0);
-    expect(tail.data.snippets.every((snippet: any) => typeof snippet.id === "string" && typeof snippet.title === "string")).toBe(
-      true,
-    );
+    expect(
+      tail.data.snippets.every(
+        (snippet: any) => typeof snippet.id === "string" && typeof snippet.title === "string"
+      )
+    ).toBe(true);
 
     const showProc = runRawr(["journal", "show", id, "--json"]);
     expect(showProc.status).toBe(0);

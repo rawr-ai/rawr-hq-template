@@ -17,12 +17,8 @@ import {
   createLifecycleTestClient,
   testInvocation,
 } from "../../../../../../services/agent-plugin-lifecycle/test/support/client";
-import {
-  MAX_RETENTION_ISSUE_DETAIL_LENGTH,
-} from "../../../../../../services/agent-plugin-lifecycle/src/service/modules/releases/model/dto/retention";
-import {
-  createResourceArtifactReader,
-} from "../../../../../../services/agent-plugin-lifecycle/src/service/repository/artifact-repository";
+import { MAX_RETENTION_ISSUE_DETAIL_LENGTH } from "../../../../../../services/agent-plugin-lifecycle/src/service/modules/releases/model/dto/retention";
+import { createResourceArtifactReader } from "../../../../../../services/agent-plugin-lifecycle/src/service/repository/artifact-repository";
 import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
 import {
   GIT_EXECUTABLE,
@@ -58,13 +54,15 @@ describe("closed read-only retention planning", () => {
         artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
 
-      await expect(client.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
+      await expect(
+        client.releases.planRetention(zeroBudget, testInvocation)
+      ).resolves.toMatchObject({
         kind: "RetentionPlan",
         pinned: expect.arrayContaining([built.setRef, built.memberRef]),
         retained: [],
         collectible: [],
       });
-    },
+    }
   );
 
   it.runIf("Bun" in globalThis)(
@@ -91,7 +89,9 @@ describe("closed read-only retention planning", () => {
         artifactRepository: built.artifactRepository,
         artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
-      await expect(overCount.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
+      await expect(
+        overCount.releases.planRetention(zeroBudget, testInvocation)
+      ).resolves.toMatchObject({
         kind: "RetentionPlanBlocked",
         issues: [{ detail: expect.stringContaining("must match RetentionPinsV1") }],
       });
@@ -104,11 +104,13 @@ describe("closed read-only retention planning", () => {
         artifactRepository: built.artifactRepository,
         artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
-      await expect(missing.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
+      await expect(
+        missing.releases.planRetention(zeroBudget, testInvocation)
+      ).resolves.toMatchObject({
         kind: "RetentionPlanBlocked",
         issues: [{ ref: missingRef }],
       });
-    },
+    }
   );
 
   it.runIf("Bun" in globalThis)(
@@ -121,7 +123,7 @@ describe("closed read-only retention planning", () => {
       const overflowHandle = await seedEvidence(
         built.artifactRepository,
         built.artifactRepositoryRoot,
-        new TextEncoder().encode("overflow fixture\n"),
+        new TextEncoder().encode("overflow fixture\n")
       );
       const client = retentionClient({
         pins: async () => ({ schemaVersion: 1, refs: [] }),
@@ -134,12 +136,14 @@ describe("closed read-only retention planning", () => {
         artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
 
-      await expect(client.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
+      await expect(
+        client.releases.planRetention(zeroBudget, testInvocation)
+      ).resolves.toMatchObject({
         kind: "RetentionPlan",
         retained: [{ ref: built.memberRef, storedBytes: 0 }],
         blockedEntries: [{ detail: expect.stringContaining("overflows") }],
       });
-    },
+    }
   );
 
   it("pins governed mechanical evidence only through its opaque reader", async () => {
@@ -183,7 +187,9 @@ describe("closed read-only retention planning", () => {
       artifactRepository: observedRepository,
       artifactRepositoryRoot: join(fixture.path, "missing-artifacts-v1"),
     });
-    await expect(unavailable.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
+    await expect(
+      unavailable.releases.planRetention(zeroBudget, testInvocation)
+    ).resolves.toMatchObject({
       kind: "RetentionPlanBlocked",
       issues: [{ ref: handle, detail: expect.stringContaining("missing") }],
     });
@@ -194,13 +200,30 @@ describe("closed read-only retention planning", () => {
     async () => {
       const built = await buildCompleteSet();
       const [largest, firstTieCandidate, secondTieCandidate, smallest] = await Promise.all([
-        seedEvidence(built.artifactRepository, built.artifactRepositoryRoot, new TextEncoder().encode("largest\n")),
-        seedEvidence(built.artifactRepository, built.artifactRepositoryRoot, new TextEncoder().encode("tie-first\n")),
-        seedEvidence(built.artifactRepository, built.artifactRepositoryRoot, new TextEncoder().encode("tie-second\n")),
-        seedEvidence(built.artifactRepository, built.artifactRepositoryRoot, new TextEncoder().encode("smallest\n")),
+        seedEvidence(
+          built.artifactRepository,
+          built.artifactRepositoryRoot,
+          new TextEncoder().encode("largest\n")
+        ),
+        seedEvidence(
+          built.artifactRepository,
+          built.artifactRepositoryRoot,
+          new TextEncoder().encode("tie-first\n")
+        ),
+        seedEvidence(
+          built.artifactRepository,
+          built.artifactRepositoryRoot,
+          new TextEncoder().encode("tie-second\n")
+        ),
+        seedEvidence(
+          built.artifactRepository,
+          built.artifactRepositoryRoot,
+          new TextEncoder().encode("smallest\n")
+        ),
       ]);
-      const [tieFirst, tieSecond] = [firstTieCandidate, secondTieCandidate]
-        .sort((left, right) => left.digest.localeCompare(right.digest));
+      const [tieFirst, tieSecond] = [firstTieCandidate, secondTieCandidate].sort((left, right) =>
+        left.digest.localeCompare(right.digest)
+      );
       const client = retentionClient({
         pins: async () => ({ schemaVersion: 1, refs: [] }),
         inventory: async () => [
@@ -230,7 +253,7 @@ describe("closed read-only retention planning", () => {
         ],
         blockedEntries: [],
       });
-    },
+    }
   );
 
   it("fails closed when retention capability is absent or a reader throws", async () => {
@@ -255,7 +278,7 @@ describe("closed read-only retention planning", () => {
     expect(artifactReads).toBe(0);
 
     const oversizedReaderDetail = `pin reader exploded: ${"x".repeat(
-      MAX_RETENTION_ISSUE_DETAIL_LENGTH * 2,
+      MAX_RETENTION_ISSUE_DETAIL_LENGTH * 2
     )}`;
     const throwing = retentionClient({
       pins: async () => {
@@ -270,7 +293,8 @@ describe("closed read-only retention planning", () => {
       kind: "RetentionPlanBlocked",
       issues: [{ detail: expect.stringContaining("pin reader exploded") }],
     });
-    if (blocked.kind !== "RetentionPlanBlocked") throw new Error("retention reader failure was not blocked");
+    if (blocked.kind !== "RetentionPlanBlocked")
+      throw new Error("retention reader failure was not blocked");
     expect(blocked.issues[0].detail).toHaveLength(MAX_RETENTION_ISSUE_DETAIL_LENGTH);
     expect(blocked.issues[0].detail).toMatch(/\.\.\.\[truncated\]$/u);
     expect(artifactReads).toBe(0);
@@ -306,7 +330,9 @@ describe("closed read-only retention planning", () => {
 
     for (const field of ["pins", "inventory", "artifacts", "evidence", "delete"] as const) {
       const injected = { ...zeroBudget, [field]: true };
-      await expect(client.releases.planRetention(injected as never, testInvocation)).rejects.toThrow();
+      await expect(
+        client.releases.planRetention(injected as never, testInvocation)
+      ).rejects.toThrow();
     }
     expect(reads).toBe(0);
   });
@@ -324,10 +350,13 @@ describe("closed read-only retention planning", () => {
       artifactRepository,
       artifactRepositoryRoot: root,
     });
-    const result = await client.releases.build({
-      contentWorkspace: repository.policy,
-      mode: { kind: "complete-set" },
-    }, testInvocation);
+    const result = await client.releases.build(
+      {
+        contentWorkspace: repository.policy,
+        mode: { kind: "complete-set" },
+      },
+      testInvocation
+    );
     expect(result.kind, JSON.stringify(result)).toBe("Published");
     if (result.kind !== "Published" || result.ref.kind !== "complete-set") {
       throw new Error("complete generated fixture did not publish");
@@ -364,12 +393,7 @@ function retentionDeps(options: {
   readonly inventory: () => Promise<unknown>;
   readonly artifactRepository: ArtifactRepositoryAsyncPort;
   readonly artifactRepositoryRoot: string;
-}): Pick<
-  Deps,
-  | "artifactRepository"
-  | "artifactRepositoryRoot"
-  | "releaseRetention"
-> {
+}): Pick<Deps, "artifactRepository" | "artifactRepositoryRoot" | "releaseRetention"> {
   return {
     artifactRepository: options.artifactRepository,
     artifactRepositoryRoot: options.artifactRepositoryRoot,
@@ -385,15 +409,20 @@ function mutateDigest(digest: string): string {
   return `${digest.slice(0, -1)}${final}`;
 }
 
-function must<T, E>(result: { readonly ok: true; readonly value: T } | { readonly ok: false; readonly issues: readonly E[] }): T {
-  if (!result.ok) throw new Error(`retention fixture parse failed: ${JSON.stringify(result.issues)}`);
+function must<T, E>(
+  result:
+    | { readonly ok: true; readonly value: T }
+    | { readonly ok: false; readonly issues: readonly E[] }
+): T {
+  if (!result.ok)
+    throw new Error(`retention fixture parse failed: ${JSON.stringify(result.issues)}`);
   return result.value;
 }
 
 async function seedEvidence(
   artifactRepository: ArtifactRepositoryAsyncPort,
   artifactRepositoryRoot: string,
-  bytes: Uint8Array,
+  bytes: Uint8Array
 ) {
   const handle = createMechanicalEvidenceHandle(bytes);
   const result = await artifactRepository.publishEvidence({

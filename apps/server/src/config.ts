@@ -26,4 +26,3 @@ export function getServerConfig(env: NodeJS.ProcessEnv = process.env): ServerCon
 
   return { port, baseUrl };
 }
-

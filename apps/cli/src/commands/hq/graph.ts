@@ -53,7 +53,12 @@ export default class HqGraph extends RawrCommand {
       return;
     }
 
-    const targets = rawTargets.flatMap((value) => value.split(",").map((item) => item.trim()).filter(Boolean));
+    const targets = rawTargets.flatMap((value) =>
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    );
 
     const plan = buildHqGraphPlan({
       workspaceRoot,

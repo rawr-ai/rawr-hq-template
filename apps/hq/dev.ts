@@ -7,9 +7,7 @@ import { createRawrHqManifest } from "./rawr.hq";
 
 export const rawrHqDevProcessShape = ["server", "async"] as const;
 
-export async function bootstrapRawrHqDev(input: {
-  deps?: RawrHqLegacyServerDependencies;
-} = {}) {
+export async function bootstrapRawrHqDev(input: { deps?: RawrHqLegacyServerDependencies } = {}) {
   const manifest = createRawrHqManifest();
   return await bootstrapRawrHqDevViaLegacyCutover({
     manifest,
@@ -17,9 +15,7 @@ export async function bootstrapRawrHqDev(input: {
   });
 }
 
-export async function startRawrHqDev(input: {
-  deps?: RawrHqLegacyServerDependencies;
-} = {}) {
+export async function startRawrHqDev(input: { deps?: RawrHqLegacyServerDependencies } = {}) {
   const manifest = createRawrHqManifest();
   return await startRawrHqDevViaLegacyCutover({
     manifest,
@@ -29,5 +25,7 @@ export async function startRawrHqDev(input: {
 
 if (import.meta.main) {
   const dev = await startRawrHqDev();
-  console.log(`@rawr/hq-app dev booted via legacy cutover on ${dev.server.bootstrapped.config.baseUrl}`);
+  console.log(
+    `@rawr/hq-app dev booted via legacy cutover on ${dev.server.bootstrapped.config.baseUrl}`
+  );
 }

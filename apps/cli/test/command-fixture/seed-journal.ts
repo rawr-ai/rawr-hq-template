@@ -14,5 +14,5 @@ if (workspaceRoot === undefined || encodedSnippet === undefined) {
 const snippet = JSON.parse(encodedSnippet) as HqOpsJournalSnippet;
 await createHqOpsClient(workspaceRoot).journal.writeSnippet(
   snippet,
-  createHqOpsCallOptions("test.journal.seed"),
+  createHqOpsCallOptions("test.journal.seed")
 );

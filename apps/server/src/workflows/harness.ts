@@ -2,7 +2,12 @@ import type { AnyContractRouter } from "@orpc/contract";
 import { metrics, SpanStatusCode, trace, type Counter, type Histogram } from "@opentelemetry/api";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { Context, Router } from "@orpc/server";
-import { createHostLoggerAdapter, createHostLoggingContext, withHostLoggingContext, withHostLoggingSpanContext } from "../logging";
+import {
+  createHostLoggerAdapter,
+  createHostLoggingContext,
+  withHostLoggingContext,
+  withHostLoggingSpanContext,
+} from "../logging";
 import type { RawrBoundaryContextDeps } from "./context";
 
 export const WORKFLOW_BASE_PATH = "/api/workflows" as const;
@@ -57,7 +62,7 @@ function recordWorkflowRequestMetrics(args: {
 
 async function withWorkflowRouteSpan(
   request: Request,
-  fn: () => Promise<Response>,
+  fn: () => Promise<Response>
 ): Promise<Response> {
   return getRouteTracer().startActiveSpan("rawr.workflow.request", async (span) => {
     span.setAttribute("rawr.workflow.surface", "published");
@@ -123,7 +128,9 @@ export function createWorkflowRouteHarness<
             prefix: WORKFLOW_BASE_PATH,
             context,
           });
-          const nextResponse = result.matched ? result.response : new Response("not found", { status: 404 });
+          const nextResponse = result.matched
+            ? result.response
+            : new Response("not found", { status: 404 });
           hostLogger.info("workflow.route", {
             outcome: nextResponse.status >= 400 ? "error" : "success",
             statusCode: nextResponse.status,

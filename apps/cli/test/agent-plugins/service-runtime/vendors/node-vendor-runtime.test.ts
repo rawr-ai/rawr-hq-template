@@ -86,10 +86,13 @@ describe("node vendor lifecycle runtime", () => {
       const recordPath = path.join(content.root, relativePath);
       const original = await readFile(recordPath);
       try {
-        await writeFile(recordPath, "{\"schemaVersion\":999}\n");
+        await writeFile(recordPath, '{"schemaVersion":999}\n');
         const before = await repositoryState(content.root);
 
-        const result = await client.vendors.status({ contentWorkspace: content.workspace }, invocation);
+        const result = await client.vendors.status(
+          { contentWorkspace: content.workspace },
+          invocation
+        );
 
         expect.soft(result, relativePath).toMatchObject({
           kind: "Rejected",
@@ -132,8 +135,12 @@ describe("node vendor lifecycle runtime", () => {
       changedPaths,
     });
 
-    expect(await readFile(path.join(content.root, "plugins/example/vendor/payload.txt"), "utf8")).toBe("updated\n");
-    const release = decodeAgentPluginReleaseInput(await readFile(path.join(content.root, ".rawr/release-input.json")));
+    expect(
+      await readFile(path.join(content.root, "plugins/example/vendor/payload.txt"), "utf8")
+    ).toBe("updated\n");
+    const release = decodeAgentPluginReleaseInput(
+      await readFile(path.join(content.root, ".rawr/release-input.json"))
+    );
     expect(release.ok).toBe(true);
     if (!release.ok) throw new Error("authored release input did not decode");
     const governedPaths = [
@@ -141,12 +148,15 @@ describe("node vendor lifecycle runtime", () => {
       "vendor/provenance/example.json",
       "vendor/locks/example.json",
     ] as const;
-    const declaredDigests = new Map<string, string>([
-      ...(release.value.body.members[0]?.vendor ?? []),
-      ...release.value.body.locks,
-    ].map((binding) => [String(binding.id), binding.contentDigest]));
+    const declaredDigests = new Map<string, string>(
+      [...(release.value.body.members[0]?.vendor ?? []), ...release.value.body.locks].map(
+        (binding) => [String(binding.id), binding.contentDigest]
+      )
+    );
     for (const relativePath of governedPaths) {
-      expect(declaredDigests.get(relativePath)).toBe(contentDigest(await readFile(path.join(content.root, relativePath))));
+      expect(declaredDigests.get(relativePath)).toBe(
+        contentDigest(await readFile(path.join(content.root, relativePath)))
+      );
     }
 
     const convergedState = await repositoryState(content.root);
@@ -158,10 +168,12 @@ describe("node vendor lifecycle runtime", () => {
   });
 });
 
-async function createUpstreamRepository(parent: string): Promise<Readonly<{
-  root: string;
-  initialIdentity: VendorSourceIdentity;
-}>> {
+async function createUpstreamRepository(parent: string): Promise<
+  Readonly<{
+    root: string;
+    initialIdentity: VendorSourceIdentity;
+  }>
+> {
   const root = path.join(parent, "upstream");
   await mkdir(path.join(root, "source"), { recursive: true, mode: 0o700 });
   await writeFile(path.join(root, "source", "SKILL.md"), "# Vendor fixture\n");
@@ -180,18 +192,25 @@ async function createUpstreamRepository(parent: string): Promise<Readonly<{
     refName: "refs/heads/main",
     sourceCommit,
     sourceTree,
-    payloadDigest: contentDigest(jsonLine([
-      { blob: skillBlob, mode: "100644", path: "SKILL.md" },
-      { blob: payloadBlob, mode: "100644", path: "payload.txt" },
-    ])),
+    payloadDigest: contentDigest(
+      jsonLine([
+        { blob: skillBlob, mode: "100644", path: "SKILL.md" },
+        { blob: payloadBlob, mode: "100644", path: "payload.txt" },
+      ])
+    ),
   });
   return Object.freeze({ root, initialIdentity });
 }
 
-async function createContentRepository(parent: string, admitted: VendorSourceIdentity): Promise<Readonly<{
-  root: string;
-  workspace: VendorContentWorkspaceRef;
-}>> {
+async function createContentRepository(
+  parent: string,
+  admitted: VendorSourceIdentity
+): Promise<
+  Readonly<{
+    root: string;
+    workspace: VendorContentWorkspaceRef;
+  }>
+> {
   const root = path.join(parent, "content");
   const repositoryIdentity = `file://${path.join(parent, "content-origin.git")}`;
   const declaration = Object.freeze({
@@ -249,36 +268,67 @@ async function createContentRepository(parent: string, admitted: VendorSourceIde
     sourceId: lock.sourceId,
   });
   const pluginPayloadPath = must(parseReleaseRelativePath("skills/example/SKILL.md"));
-  const pluginPayload = must(createAgentPluginPayload([{
-    path: pluginPayloadPath,
-    mode: 0o644,
-    bytes: new TextEncoder().encode("# Fixture\n"),
-  }]));
-  const release = must(createAgentPluginReleaseInput({
-    schemaVersion: 1,
-    contentAuthority: must(parseContentAuthority("fixture-authority")),
-    members: [{
-      kind: "agent-plugin",
-      pluginId: must(parsePluginId("example")),
-      skillInventory: [{ identity: "example", manifestPath: pluginPayloadPath }],
-      payload: { protocolVersion: 1, manifest: pluginPayload.manifest, payloadDigest: pluginPayload.payloadDigest },
-      vendor: [
-        { id: "vendor/sources/example.json", protocol: VENDOR_SOURCE_PROTOCOL, contentDigest: contentDigest(declarationBytes) },
-        { id: "vendor/provenance/example.json", protocol: VENDOR_PROVENANCE_PROTOCOL, contentDigest: contentDigest(provenanceBytes) },
+  const pluginPayload = must(
+    createAgentPluginPayload([
+      {
+        path: pluginPayloadPath,
+        mode: 0o644,
+        bytes: new TextEncoder().encode("# Fixture\n"),
+      },
+    ])
+  );
+  const release = must(
+    createAgentPluginReleaseInput({
+      schemaVersion: 1,
+      contentAuthority: must(parseContentAuthority("fixture-authority")),
+      members: [
+        {
+          kind: "agent-plugin",
+          pluginId: must(parsePluginId("example")),
+          skillInventory: [{ identity: "example", manifestPath: pluginPayloadPath }],
+          payload: {
+            protocolVersion: 1,
+            manifest: pluginPayload.manifest,
+            payloadDigest: pluginPayload.payloadDigest,
+          },
+          vendor: [
+            {
+              id: "vendor/sources/example.json",
+              protocol: VENDOR_SOURCE_PROTOCOL,
+              contentDigest: contentDigest(declarationBytes),
+            },
+            {
+              id: "vendor/provenance/example.json",
+              protocol: VENDOR_PROVENANCE_PROTOCOL,
+              contentDigest: contentDigest(provenanceBytes),
+            },
+          ],
+          curation: [],
+        },
       ],
-      curation: [],
-    }],
-    ownershipClaims: [{ kind: "skill", identity: "example", ownerPluginId: must(parsePluginId("example")) }],
-    locks: [{ id: "vendor/locks/example.json", protocol: VENDOR_LOCK_PROTOCOL, contentDigest: contentDigest(lockBytes) }],
-    qualityPolicies: [],
-  }));
+      ownershipClaims: [
+        { kind: "skill", identity: "example", ownerPluginId: must(parsePluginId("example")) },
+      ],
+      locks: [
+        {
+          id: "vendor/locks/example.json",
+          protocol: VENDOR_LOCK_PROTOCOL,
+          contentDigest: contentDigest(lockBytes),
+        },
+      ],
+      qualityPolicies: [],
+    })
+  );
   await mkdir(path.join(root, ".rawr"), { recursive: true, mode: 0o700 });
   await mkdir(path.join(root, "vendor/sources"), { recursive: true, mode: 0o700 });
   await mkdir(path.join(root, "vendor/provenance"), { recursive: true, mode: 0o700 });
   await mkdir(path.join(root, "vendor/locks"), { recursive: true, mode: 0o700 });
   await mkdir(path.join(root, "plugins/example/vendor"), { recursive: true, mode: 0o700 });
   await mkdir(path.join(root, "plugins/example/skills/example"), { recursive: true, mode: 0o700 });
-  await writeFile(path.join(root, ".rawr/release-input.json"), canonicalSerializeAgentPluginReleaseInput(release));
+  await writeFile(
+    path.join(root, ".rawr/release-input.json"),
+    canonicalSerializeAgentPluginReleaseInput(release)
+  );
   await writeFile(path.join(root, "vendor/sources/example.json"), declarationBytes);
   await writeFile(path.join(root, "vendor/provenance/example.json"), provenanceBytes);
   await writeFile(path.join(root, "vendor/locks/example.json"), lockBytes);
@@ -334,21 +384,25 @@ interface SnapshotEntry {
 async function snapshotTree(root: string, relative = ""): Promise<readonly SnapshotEntry[]> {
   const entries: SnapshotEntry[] = [];
   const current = relative === "" ? root : path.join(root, relative);
-  for (const entry of (await readdir(current, { withFileTypes: true })).sort((left, right) => left.name.localeCompare(right.name))) {
+  for (const entry of (await readdir(current, { withFileTypes: true })).sort((left, right) =>
+    left.name.localeCompare(right.name)
+  )) {
     if (relative === "" && entry.name === ".git") continue;
     const childRelative = relative === "" ? entry.name : `${relative}/${entry.name}`;
     const child = path.join(root, childRelative);
     const info = await stat(child, { bigint: true });
-    const kind = entry.isDirectory() ? "directory" as const : "file" as const;
-    entries.push(Object.freeze({
-      path: childRelative,
-      kind,
-      mode: info.mode.toString(8),
-      size: info.size.toString(),
-      mtimeNs: info.mtimeNs.toString(),
-      bytes: kind === "file" ? Object.freeze([...await readFile(child)]) : null,
-    }));
-    if (kind === "directory") entries.push(...await snapshotTree(root, childRelative));
+    const kind = entry.isDirectory() ? ("directory" as const) : ("file" as const);
+    entries.push(
+      Object.freeze({
+        path: childRelative,
+        kind,
+        mode: info.mode.toString(8),
+        size: info.size.toString(),
+        mtimeNs: info.mtimeNs.toString(),
+        bytes: kind === "file" ? Object.freeze([...(await readFile(child))]) : null,
+      })
+    );
+    if (kind === "directory") entries.push(...(await snapshotTree(root, childRelative)));
   }
   return Object.freeze(entries);
 }
@@ -395,7 +449,9 @@ function identityValue(identity: VendorSourceIdentity) {
   });
 }
 
-function must<T>(result: Readonly<{ ok: true; value: T } | { ok: false; issues?: readonly unknown[] }>): T {
+function must<T>(
+  result: Readonly<{ ok: true; value: T } | { ok: false; issues?: readonly unknown[] }>
+): T {
   if (!result.ok) throw new Error(`fixture value is invalid: ${JSON.stringify(result.issues)}`);
   return result.value;
 }

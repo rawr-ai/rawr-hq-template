@@ -151,28 +151,43 @@ describe("static external extension manifests", () => {
   });
 
   it.each([
-    ["padded key", (manifest: any) => {
-      manifest.commands[" fixture:hello "] = manifest.commands["fixture:hello"];
-      delete manifest.commands["fixture:hello"];
-    }],
-    ["whitespace-separated key and id", (manifest: any) => {
-      const command = manifest.commands["fixture:hello"];
-      command.id = "fixture hello";
-      manifest.commands["fixture hello"] = command;
-      delete manifest.commands["fixture:hello"];
-    }],
-    ["repeated-colon key and id", (manifest: any) => {
-      const command = manifest.commands["fixture:hello"];
-      command.id = "fixture::hello";
-      manifest.commands["fixture::hello"] = command;
-      delete manifest.commands["fixture:hello"];
-    }],
-    ["whitespace-separated alias", (manifest: any) => {
-      manifest.commands["fixture:hello"].aliases = ["fixture alias"];
-    }],
-    ["repeated-colon hidden alias", (manifest: any) => {
-      manifest.commands["fixture:hello"].hiddenAliases = ["fixture::hidden"];
-    }],
+    [
+      "padded key",
+      (manifest: any) => {
+        manifest.commands[" fixture:hello "] = manifest.commands["fixture:hello"];
+        delete manifest.commands["fixture:hello"];
+      },
+    ],
+    [
+      "whitespace-separated key and id",
+      (manifest: any) => {
+        const command = manifest.commands["fixture:hello"];
+        command.id = "fixture hello";
+        manifest.commands["fixture hello"] = command;
+        delete manifest.commands["fixture:hello"];
+      },
+    ],
+    [
+      "repeated-colon key and id",
+      (manifest: any) => {
+        const command = manifest.commands["fixture:hello"];
+        command.id = "fixture::hello";
+        manifest.commands["fixture::hello"] = command;
+        delete manifest.commands["fixture:hello"];
+      },
+    ],
+    [
+      "whitespace-separated alias",
+      (manifest: any) => {
+        manifest.commands["fixture:hello"].aliases = ["fixture alias"];
+      },
+    ],
+    [
+      "repeated-colon hidden alias",
+      (manifest: any) => {
+        manifest.commands["fixture:hello"].hiddenAliases = ["fixture::hidden"];
+      },
+    ],
   ])("rejects a noncanonical %s instead of rewriting its command identity", async (_name, mutate) => {
     const root = writeExtensionFixture();
     const manifestPath = path.join(root, "oclif.manifest.json");
@@ -267,7 +282,11 @@ describe("static external extension manifests", () => {
       collisionClass: "hook",
       value: "update",
     },
-  ])("rejects a reserved $name identity with its exact class", async ({ fixture, collisionClass, value }) => {
+  ])("rejects a reserved $name identity with its exact class", async ({
+    fixture,
+    collisionClass,
+    value,
+  }) => {
     const root = writeExtensionFixture(fixture as Parameters<typeof writeExtensionFixture>[0]);
 
     const result = await inspectStaticExternalExtension({ root, reserved, evidence });
@@ -276,7 +295,7 @@ describe("static external extension manifests", () => {
     if (result.accepted) return;
     expect(result.quarantine.reason.code).toBe("reserved-surface-collision");
     expect(result.quarantine.reason.collisions).toContainEqual(
-      expect.objectContaining({ collisionClass, value }),
+      expect.objectContaining({ collisionClass, value })
     );
   });
 

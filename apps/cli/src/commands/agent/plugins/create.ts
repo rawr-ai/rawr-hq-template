@@ -16,7 +16,10 @@ export default class AgentPluginsCreate extends RawrCommand {
 
   static flags = {
     ...RawrCommand.baseFlags,
-    "content-workspace": Flags.string({ required: true, description: "Explicit personal content workspace" }),
+    "content-workspace": Flags.string({
+      required: true,
+      description: "Explicit personal content workspace",
+    }),
   } as const;
 
   async run(): Promise<void> {
@@ -28,16 +31,25 @@ export default class AgentPluginsCreate extends RawrCommand {
       dryRun: baseFlags.dryRun,
     });
     if (!request.ok) {
-      this.outputResult(this.fail("Curated agent-plugin request rejected", { details: request.issues }), { flags: baseFlags });
+      this.outputResult(
+        this.fail("Curated agent-plugin request rejected", { details: request.issues }),
+        { flags: baseFlags }
+      );
       this.exit(2);
       return;
     }
     const result = await authorCuratedAgentPlugin(request.value);
     const view = authoringResultView(result);
-    const failed = result.kind === "AuthoringRejected" || result.kind === "AuthoringFailed" || result.kind === "AuthoringPartial";
-    this.outputResult(failed
-      ? this.fail("Curated agent-plugin authoring did not complete", { details: view })
-      : this.ok(view), { flags: baseFlags });
+    const failed =
+      result.kind === "AuthoringRejected" ||
+      result.kind === "AuthoringFailed" ||
+      result.kind === "AuthoringPartial";
+    this.outputResult(
+      failed
+        ? this.fail("Curated agent-plugin authoring did not complete", { details: view })
+        : this.ok(view),
+      { flags: baseFlags }
+    );
     if (failed) this.exit(1);
   }
 }

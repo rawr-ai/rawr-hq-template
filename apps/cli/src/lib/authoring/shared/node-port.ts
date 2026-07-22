@@ -11,7 +11,7 @@ import type { QualifiedWrite, VerifiedDestinationRoot } from "./model";
 export class NodeQualifiedWritePort implements QualifiedWritePort {
   async inspect(
     root: VerifiedDestinationRoot,
-    write: QualifiedWrite,
+    write: QualifiedWrite
   ): Promise<QualifiedWriteInspection> {
     const target = resolveTarget(root, write);
     const parentConflict = await inspectExistingParentDirectories(root, target);
@@ -19,7 +19,10 @@ export class NodeQualifiedWritePort implements QualifiedWritePort {
     try {
       const stat = await fs.lstat(target);
       if (!stat.isFile() || stat.isSymbolicLink()) {
-        return Object.freeze({ kind: "Conflict", message: "Planned path exists but is not a regular file" });
+        return Object.freeze({
+          kind: "Conflict",
+          message: "Planned path exists but is not a regular file",
+        });
       }
       const bytes = await fs.readFile(target);
       return equalBytes(bytes, write.bytes)
@@ -33,7 +36,7 @@ export class NodeQualifiedWritePort implements QualifiedWritePort {
 
   async publish(
     root: VerifiedDestinationRoot,
-    write: QualifiedWrite,
+    write: QualifiedWrite
   ): Promise<QualifiedWritePublication> {
     const target = resolveTarget(root, write);
     try {
@@ -48,7 +51,7 @@ export class NodeQualifiedWritePort implements QualifiedWritePort {
 
 async function inspectExistingParentDirectories(
   root: VerifiedDestinationRoot,
-  target: string,
+  target: string
 ): Promise<QualifiedWriteInspection | undefined> {
   for (const directory of parentDirectories(root, target)) {
     try {
@@ -69,7 +72,7 @@ async function inspectExistingParentDirectories(
 
 async function ensureDestinationDirectories(
   root: VerifiedDestinationRoot,
-  target: string,
+  target: string
 ): Promise<void> {
   await fs.mkdir(root, { recursive: true });
   for (const directory of parentDirectories(root, target)) {
@@ -102,10 +105,10 @@ function resolveTarget(root: VerifiedDestinationRoot, write: QualifiedWrite): st
   const target = path.resolve(root, ...write.relativePath.split("/"));
   const relative = path.relative(root, target);
   if (
-    relative === ""
-    || relative === ".."
-    || relative.startsWith(`..${path.sep}`)
-    || path.isAbsolute(relative)
+    relative === "" ||
+    relative === ".." ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative)
   ) {
     throw new Error("Qualified authoring path escapes its verified destination");
   }

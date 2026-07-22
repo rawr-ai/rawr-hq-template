@@ -269,7 +269,9 @@ async function readStateFile(workspaceRoot: string): Promise<HqStateFile | null>
 
 function collectManagedPids(state: HqStateFile | null): number[] {
   if (!state) return [];
-  const roots = [state.managerPid, state.serverPid, state.webPid, state.asyncPid].filter((value): value is number => value !== null);
+  const roots = [state.managerPid, state.serverPid, state.webPid, state.asyncPid].filter(
+    (value): value is number => value !== null
+  );
   const managed = new Set<number>();
 
   // Child/grandchild processes inherit managed runtime ownership even when a
@@ -332,28 +334,44 @@ function getListenerPids(port: number): { listenerPids: number[]; unknownOwnersh
   }
 
   if (commandExists("ss")) {
-    const proc = runProbe("sh", ["-lc", `ss -ltnp 2>/dev/null | awk '$4 ~ /:${port}$/ { print $0 }'`]);
+    const proc = runProbe("sh", [
+      "-lc",
+      `ss -ltnp 2>/dev/null | awk '$4 ~ /:${port}$/ { print $0 }'`,
+    ]);
     if (probeTimedOut(proc) || proc.error) {
       disabledProbeCommands.add("ss");
     } else {
-      const lines = proc.stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      const lines = proc.stdout
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
       return { listenerPids: [], unknownOwnership: lines.length > 0 };
     }
   }
 
   if (commandExists("netstat")) {
-    const proc = runProbe("sh", ["-lc", `netstat -an 2>/dev/null | awk '$4 ~ /\\.${port}$/ && /LISTEN/ { print $0 }'`]);
+    const proc = runProbe("sh", [
+      "-lc",
+      `netstat -an 2>/dev/null | awk '$4 ~ /\\.${port}$/ && /LISTEN/ { print $0 }'`,
+    ]);
     if (probeTimedOut(proc) || proc.error) {
       return { listenerPids: [], unknownOwnership: true };
     }
-    const lines = proc.stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    const lines = proc.stdout
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
     return { listenerPids: [], unknownOwnership: lines.length > 0 };
   }
 
   return { listenerPids: [], unknownOwnership: false };
 }
 
-function deriveOwnership(listenerPids: number[], unknownOwnership: boolean, managedPids: number[]): HqOwnership {
+function deriveOwnership(
+  listenerPids: number[],
+  unknownOwnership: boolean,
+  managedPids: number[]
+): HqOwnership {
   if (listenerPids.length === 0) {
     return unknownOwnership ? "unknown" : "unknown";
   }
@@ -411,7 +429,11 @@ async function collectRoleStatus(args: {
   managedPids: number[];
 }): Promise<HqRoleStatus> {
   const listeners = getListenerPids(args.port);
-  const ownership = deriveOwnership(listeners.listenerPids, listeners.unknownOwnership, args.managedPids);
+  const ownership = deriveOwnership(
+    listeners.listenerPids,
+    listeners.unknownOwnership,
+    args.managedPids
+  );
   const portStatus: HqPortStatus = {
     port: args.port,
     listening: listeners.listenerPids.length > 0 || listeners.unknownOwnership,
@@ -430,12 +452,21 @@ async function collectRoleStatus(args: {
   };
 }
 
-function getDockerContainerState(containerName: string): { available: boolean; running: boolean; exists: boolean } {
+function getDockerContainerState(containerName: string): {
+  available: boolean;
+  running: boolean;
+  exists: boolean;
+} {
   if (!commandExists("docker")) {
     return { available: false, running: false, exists: false };
   }
 
-  const runningProc = runProbe("docker", ["inspect", "--format", "{{.State.Running}}", containerName]);
+  const runningProc = runProbe("docker", [
+    "inspect",
+    "--format",
+    "{{.State.Running}}",
+    containerName,
+  ]);
   if (probeTimedOut(runningProc) || runningProc.error) {
     return { available: true, running: false, exists: false };
   }
@@ -478,9 +509,10 @@ async function collectObservabilityStatus(args: {
   const docker = getDockerContainerState("rawr-hq-hyperdx");
   const ports = [HQ_PORTS.observabilityUi, HQ_PORTS.observabilityOtlp].map((port) => {
     const listeners = getListenerPids(port);
-    const ownership = docker.running && (listeners.listenerPids.length > 0 || listeners.unknownOwnership)
-      ? "managed"
-      : deriveOwnership(listeners.listenerPids, listeners.unknownOwnership, args.managedPids);
+    const ownership =
+      docker.running && (listeners.listenerPids.length > 0 || listeners.unknownOwnership)
+        ? "managed"
+        : deriveOwnership(listeners.listenerPids, listeners.unknownOwnership, args.managedPids);
     return {
       port,
       listening: listeners.listenerPids.length > 0 || listeners.unknownOwnership,
@@ -502,7 +534,9 @@ async function collectObservabilityStatus(args: {
       command: "rawr hq up",
     });
   } else {
-    const hasPortConflict = ports.some((port) => port.listening && port.ownership !== "unknown" && port.ownership !== "managed");
+    const hasPortConflict = ports.some(
+      (port) => port.listening && port.ownership !== "unknown" && port.ownership !== "managed"
+    );
 
     if (!docker.available) {
       state = "degraded-missing-docker";
@@ -529,8 +563,10 @@ async function collectObservabilityStatus(args: {
       state = "degraded-unavailable";
       remediation.push({
         code: "PROVISION_HYPERDX",
-        message: "Create the local HyperDX container named rawr-hq-hyperdx before requiring observability.",
-        command: "docker run -d --name rawr-hq-hyperdx -p 8080:8080 -p 4318:4318 docker.hyperdx.io/hyperdx/hyperdx-local",
+        message:
+          "Create the local HyperDX container named rawr-hq-hyperdx before requiring observability.",
+        command:
+          "docker run -d --name rawr-hq-hyperdx -p 8080:8080 -p 4318:4318 docker.hyperdx.io/hyperdx/hyperdx-local",
       });
     }
   }
@@ -566,7 +602,9 @@ function deriveSummary(args: {
   if (roleStates.every((state) => state === "stopped")) return "stopped";
   if (roleStates.some((state) => state === "degraded")) return "degraded";
   if (roleStates.every((state) => state === "running")) {
-    return args.observability.state === "running" || args.observability.state === "disabled" ? "running" : "degraded";
+    return args.observability.state === "running" || args.observability.state === "disabled"
+      ? "running"
+      : "degraded";
   }
   if (roleStates.some((state) => state === "running")) return "partial";
   return "stopped";
@@ -608,7 +646,7 @@ export async function collectHqStatus(args: {
     }),
     async: await collectRoleStatus({
       expected: asyncExpected,
-      pid: asyncExpected ? effectiveState?.asyncPid ?? null : null,
+      pid: asyncExpected ? (effectiveState?.asyncPid ?? null) : null,
       port: HQ_PORTS.async,
       healthUrl: asyncExpected ? HQ_URLS.asyncRuns : null,
       implementation: "inngest",
@@ -653,7 +691,9 @@ export async function collectHqStatus(args: {
     summary: deriveSummary({ roles: Object.values(roles), observability }),
     manager: {
       state: managerState,
-      pid: isPidRunning(effectiveState?.managerPid ?? null) ? (effectiveState?.managerPid ?? null) : null,
+      pid: isPidRunning(effectiveState?.managerPid ?? null)
+        ? (effectiveState?.managerPid ?? null)
+        : null,
       startedAt: effectiveState?.startedAt ?? state?.startedAt ?? null,
       stale,
     },
