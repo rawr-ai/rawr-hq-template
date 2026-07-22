@@ -39,6 +39,7 @@
     },
     "apps/cli": {
       "name": "@rawr/cli",
+      "version": "0.1.0",
       "bin": {
         "rawr": "./bin/run.js",
       },

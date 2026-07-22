@@ -2,17 +2,17 @@
 
 ## Status
 
-`STANDARD_CLI_ARCHITECTURE_CORRECTION`
+`EXECUTING_STANDARD_CLI_ARCHITECTURE`
 
 The user rejected the custom controller distribution and custom Oclif extension
 manager after an installed-system audit showed that they form a private CLI
 package/version manager rather than a necessary agent-plugin lifecycle boundary.
 [[authority-amendment]] is now controlling.
 
-Implementation and provider settlement are paused at a clean boundary while the
-replacement architecture is recorded and ratcheted. No canonical provider home,
-Personal record, repository release, or HF01 candidate was mutated by this
-correction.
+Implementation is proceeding as independently green Graphite checkpoints.
+Provider settlement remains closed until the conventional installed CLI and
+bounded lifecycle path land. No canonical provider home, Personal record,
+repository release, or HF01 candidate was mutated by this correction.
 
 ## Canonical Repositories
 
@@ -295,7 +295,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Typechecked Habitat consumer and TypeBox release manifest | Complete on the active Template stack |
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
 | Positive Habitat/Nx ratchet | Required lifecycle topology active; broader generic live-tree policy remains task 1.5 |
-| Direct Oclif development and external extension path | Pending |
+| Direct Oclif development and external extension path | Direct source/built entrypoints complete; native extension-manager activation pending |
 | Conventional CLI package/release | Pending |
 | Custom controller/extension deletion | Pending |
 | Persistent agent artifact/projection store deletion | Pending |
@@ -334,15 +334,29 @@ package-directory imports. TypeScript package exports and Nx own the remaining
 public dependency boundary. The packet does not encode a product command
 inventory, retired mechanism names, or `nx release` as a project target.
 
-Four Grit patterns pass all twenty-three canonical and rejection samples. Isolated
+Four Grit patterns pass all twenty-four canonical and rejection samples. Isolated
 Habitat structure fixtures accept both app and plugin shells with generated
 `oclif.manifest.json` files present, then reject a second app entrypoint and a
 plugin-owned `bin` directory with exact closed-topology diagnostics. The
 app/plugin structure work completes in 7-19 ms inside the bounded fixture. The
-current implementation remains intentionally nonconforming until tasks 2 and 3
-move it. Task 1.5 owns workspace activation, including the Nx target-default
+command-plugin packages remain intentionally nonconforming until task 2.3 moves
+them. Task 1.5 owns workspace activation, including the Nx target-default
 contract and an honest disposition for the published SDK's unbounded wildcard
 walk on the live dependency tree.
+
+The direct-entrypoint checkpoint replaces the controller bootstrap with Oclif's
+standard `execute` call in both development and compiled entrypoints. A focused
+behavior test runs both forms with an allowlisted process environment and one
+guarded disposable home, rejects an app-root generated manifest, compares the
+complete sorted command-ID inventory, and observes `agent:plugins:status` in
+both modes. The pre-existing integration oracle now exercises ordinary Oclif
+help and unknown-command behavior instead of requiring controller identity.
+The five required app/core-plugin builds pass in 10.5 seconds; the focused
+two-test entrypoint suite passes in 4.1 seconds; the isolated integration oracle
+passes in 1.7 seconds; CLI lint and typecheck pass in 2.7 and 13.0 seconds. App
+manifest generation and publish metadata stay
+deferred until task 2.3 normalizes every first-party command-plugin build, so a
+partial generated manifest cannot hide missing or stale plugin output.
 
 The earlier owner-qualified lifecycle dependency mega-pattern is retired rather
 than carried into the corrected ratchet. It enumerated package names, exact

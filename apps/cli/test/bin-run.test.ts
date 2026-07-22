@@ -1,45 +1,104 @@
 import { spawnSync } from "node:child_process";
-import fs from "node:fs";
+import { existsSync, lstatSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 const cliRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const temporaryRoot = realpathSync(os.tmpdir());
+const stateRootPrefix = "rawr-oclif-entry-";
+const isolatedStateRoot = realpathSync(mkdtempSync(path.join(temporaryRoot, stateRootPrefix)));
+const inventoryEntrypoint = path.join(
+  cliRoot,
+  "test",
+  "command-fixture",
+  "discover-command-ids.ts"
+);
 
-function runNode(args: string[], opts?: { cwd?: string }) {
-  return spawnSync("node", ["bin/run.js", ...args], {
-    cwd: opts?.cwd ?? cliRoot,
+afterAll(() => {
+  const canonicalRoot = realpathSync(isolatedStateRoot);
+  const status = lstatSync(canonicalRoot);
+  if (
+    !status.isDirectory() ||
+    status.isSymbolicLink() ||
+    canonicalRoot !== isolatedStateRoot ||
+    path.dirname(canonicalRoot) !== temporaryRoot ||
+    !path.basename(canonicalRoot).startsWith(stateRootPrefix)
+  ) {
+    throw new Error(`refusing to remove invalid Oclif test root: ${isolatedStateRoot}`);
+  }
+  rmSync(canonicalRoot, { recursive: true, force: true });
+});
+
+function childEnvironment(nodeEnv?: "development" | "production"): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {};
+  for (const name of [
+    "LANG",
+    "LC_ALL",
+    "PATH",
+    "PATHEXT",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "TMPDIR",
+    "WINDIR",
+  ]) {
+    if (process.env[name] !== undefined) env[name] = process.env[name];
+  }
+  return {
+    ...env,
+    HOME: isolatedStateRoot,
+    ...(nodeEnv === undefined ? {} : { NODE_ENV: nodeEnv }),
+    NO_COLOR: "1",
+    XDG_CACHE_HOME: path.join(isolatedStateRoot, "xdg-cache"),
+    XDG_CONFIG_HOME: path.join(isolatedStateRoot, "xdg-config"),
+    XDG_DATA_HOME: path.join(isolatedStateRoot, "xdg-data"),
+  };
+}
+
+function runCli(entrypoint: "bin/run.js" | "src/index.ts", args: string[]) {
+  return spawnSync("bun", [entrypoint, ...args], {
+    cwd: cliRoot,
     encoding: "utf8",
-    env: { ...process.env },
+    env: childEnvironment(),
   });
 }
 
+function discoverCommandIds(nodeEnv: "development" | "production"): string[] {
+  const result = spawnSync("bun", [inventoryEntrypoint, cliRoot], {
+    cwd: cliRoot,
+    encoding: "utf8",
+    env: childEnvironment(nodeEnv),
+  });
+  expect(result.status, result.stderr).toBe(0);
+  expect(result.stderr).toBe("");
+  return JSON.parse(result.stdout) as string[];
+}
+
 describe("bin/run.js", () => {
-  it("refuses source-local execution without a materialized controller", () => {
-    const proc = runNode(["--version"]);
-    expect(proc.status).toBe(78);
-    expect(proc.stderr).toContain("CONTROLLER_RELEASE_REQUIRED");
+  it("runs the built CLI through the ordinary Oclif entrypoint", () => {
+    const result = runCli("bin/run.js", ["--version"]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("@rawr/cli");
+    expect(result.stderr).toBe("");
   });
 
-  it("does not fall back to an ambient bun executable", () => {
-    const temp = fs.mkdtempSync(path.join(os.tmpdir(), "rawr-source-launcher-"));
-    const sentinel = path.join(temp, "ambient-bun-executed");
-    const fakeBun = path.join(temp, "bun");
-    fs.writeFileSync(fakeBun, `#!/bin/sh\ntouch ${JSON.stringify(sentinel)}\n`, { mode: 0o755 });
+  it("discovers the same commands from source and compiled output", () => {
+    expect(existsSync(path.join(cliRoot, "oclif.manifest.json"))).toBe(false);
 
-    try {
-      const proc = spawnSync("node", ["bin/run.js", "doctor"], {
-        cwd: cliRoot,
-        encoding: "utf8",
-        env: { ...process.env, PATH: `${temp}${path.delimiter}${process.env.PATH ?? ""}` },
-      });
+    const source = runCli("src/index.ts", ["--help"]);
+    const built = runCli("bin/run.js", ["--help"]);
+    const sourceCommandIds = discoverCommandIds("development");
+    const builtCommandIds = discoverCommandIds("production");
 
-      expect(proc.status).toBe(78);
-      expect(proc.stderr).toContain("CONTROLLER_RELEASE_REQUIRED");
-      expect(fs.existsSync(sentinel)).toBe(false);
-    } finally {
-      fs.rmSync(temp, { recursive: true, force: true });
-    }
+    expect(source.status).toBe(0);
+    expect(built.status).toBe(0);
+    expect(source.stdout).toBe(built.stdout);
+    expect(source.stderr).toBe("");
+    expect(built.stderr).toBe("");
+    expect(sourceCommandIds).toEqual(builtCommandIds);
+    expect(sourceCommandIds).toContain("agent:plugins:status");
   });
 });
