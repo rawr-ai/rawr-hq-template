@@ -48,14 +48,32 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   supports one generic invariant. Do not claim Magic prior art that does not
   exist.
 - [ ] 1.5 Give the Habitat consumer owner-local policy targets, pattern execution,
-  isolated named inputs, and a blueprint-packet topology law requiring canonical
-  `pattern.md`/`structure.toml` runner files. The bounded packet check is
-  complete. Native Grit fixture automation and full live-tree `check:policy`
-  activation remain pending because the published standalone binary exposes no
-  packet-fixture runner and still performs an unbounded wildcard walk through
-  installed dependency trees. Do not hide either limitation behind another
-  parser or runner. Keep the compiled Bun 1.4 artifact consumer and reproducible
-  update recipe.
+  isolated named inputs, and a blueprint-packet topology law closing the allowed
+  packet filename set. The bounded packet check is complete, but it does not yet
+  prove that `rule.json` selects exactly one present runner source. Native Grit
+  fixture automation and full live-tree `check:policy` activation also remain
+  pending because the published standalone binary exposes no packet-fixture
+  runner and still performs an unbounded wildcard walk through installed
+  dependency trees. Do not hide these limitations behind another parser or
+  runner. Keep the compiled Bun 1.4 artifact consumer and reproducible update
+  recipe.
+- [x] 1.5a Give every admitted code project an Nx lint and typecheck target.
+  Keep content and fixture projects explicitly classified outside that law.
+  Typecheck the Habitat consumer against `bun-types@1.3.14`; derive its release
+  manifest type and validation from one closed TypeBox schema; keep its asset
+  cache fixed under the repository and reject non-basename asset filenames.
+- [ ] 1.5b Adopt Civ7's Biome `2.5.3` hygiene and formatting responsibilities,
+  adapted to Template paths and generated outputs. Preserve ESLint as the
+  separate boundary-rule leaf. Expose the Civ7 lintEffect configuration and
+  patched dependency as an advisory command; do not put its cold full-corpus run
+  in the required hook or CI ratchet.
+- [ ] 1.5c Upgrade Nx and `@nx/eslint-plugin` to `23.1.0` as one exact migration.
+  Preserve resolved target behavior and cache inputs; add no recursive root Nx
+  target or project-name inventory.
+- [ ] 1.5d Make native TypeScript `7.0.2` the normal compiler, keep
+  `typescript@6.0.3` as compiler-API authority, and expose the narrow
+  `typescript6@6.0.2` fallback. Remove the two deprecated `baseUrl` settings and
+  make path mappings explicit. Do not run every check twice.
 - [ ] 1.6 Replace the sequential repository ratchet with Nx affected/cached lint
   and typecheck plus one Habitat policy check. Preserve one non-skippable remote
   required result for the candidate revision.
@@ -168,12 +186,11 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   dependency bags instead of using the module-projected handler context.
 - [ ] 5.3 Make TypeBox the sole public structural schema and generated-type
   source. Remove manual closed-object parsing while retaining canonical order,
-  digest, uniqueness, and cross-field domain checks. Pin one coherent oRPC
-  dependency family. The current resolved `1.13.5` family is an unclassified
-  repository tuple; keep it unchanged unless version-dependent work first
-  recovers the exact source, type, and behavior evidence required by the current
-  oRPC skill. Any move to `1.14.8` is a separate dependency slice requiring exact
-  tuple and compatibility proof rather than skill proximity.
+  digest, uniqueness, and cross-field domain checks. Upgrade the coherent oRPC
+  client/contract/server family from `1.13.5` to the grounded Civ7 baseline
+  `1.14.6` as its own dependency slice. Run the exact source, type, and behavior
+  review required by the current oRPC skill; do not infer compatibility from
+  version proximity or mix family versions.
 - [ ] 5.4 Narrow root context to genuinely cross-cutting ready host capabilities,
   let module middleware acquire or project owner-specific capabilities, and give
   each procedure only the exact context it consumes. Effect/Platform programs
