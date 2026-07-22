@@ -24,9 +24,10 @@ compatibility, package admission, and provider effects remain with their
 qualified owners and tests.
 
 Rules under `.habitat/rawr/agent-plugin-lifecycle` remain qualified lifecycle
-constraints rather than generic blueprints. They currently preserve the
-curated command channel and service-to-resource dependency direction and will
-shrink with the implementation instead of being generalized into package law.
+constraints rather than generic blueprints. The remaining rule closes the
+curated command channel and will shrink with the implementation. Reusable
+service and package dependency relationships belong to their generic
+blueprints, TypeScript package boundaries, and the Nx project graph.
 
 See [[README|the Habitat blueprint index]], [[AGENTS|the repository router]],
 and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the service runtime boundary]].

@@ -213,6 +213,15 @@ move it. Task 1.5 owns workspace activation, including the Nx target-default
 contract and an honest disposition for the published SDK's unbounded wildcard
 walk on the live dependency tree.
 
+The earlier owner-qualified lifecycle dependency mega-pattern is retired rather
+than carried into the corrected ratchet. It enumerated package names, exact
+composition files, and the now-rejected artifact/evidence repositories. Those
+are transient implementation details, not one reusable structural axis. The
+generic service and Oclif blueprints, TypeScript package boundaries, and Nx
+project graph now carry the applicable reusable constraints; the remaining
+lifecycle niche rule is limited to the curated command channel until task 2
+replaces that topology.
+
 Personal PR #182 (`9378d33b`) and child PR #183 (`852702b8`) are not valid
 settlement inputs in their controller-bound form. They remain unlanded; prior
 required jobs were blocked before runner allocation by account billing. Do not

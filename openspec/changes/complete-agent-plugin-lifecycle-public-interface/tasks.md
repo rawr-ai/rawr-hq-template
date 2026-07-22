@@ -29,6 +29,11 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   agent-router blueprints from commit
   `31c4e1ac1944d88b5ae867e46603eddff36142fc`, preserving pattern semantics and
   recording every identity-only adaptation.
+- [x] 1.1a Retire the owner-qualified lifecycle dependency mega-pattern. Its
+  package-name and path exceptions encoded a transient implementation inventory,
+  including the rejected artifact repository, rather than a reusable monotonic
+  constraint. Generic service and Oclif blueprints, TypeScript package
+  boundaries, and the Nx project graph own those relationships.
 - [ ] 1.2 Correct the generic service topology once so a module has either a
   single `router.ts` or a closed composed `router/` directory behind its
   `router.ts` boundary. Prove both accepted shapes and reject mixed/open forms.
