@@ -21,14 +21,26 @@ Interpretation:
 - `check-remotes.sh` must pass.
 - `doctor global` should report one verified installed controller release and no
   checkout owner.
-- Root lint and typecheck must cover every Nx project that declares those
-  targets; no hand-maintained project inventory should narrow the population.
-- The Habitat gate must positively close the lifecycle service/module,
-  command-channel, and dependency-direction axes.
+- The Nx project-graph admission check must prove that every non-root project
+  has exactly one `type:*` kind and every code project owns lint and typecheck
+  targets; only projects classified as content or fixtures are exempt from
+  those targets.
+- The Nx admission tests must cover accepted, missing-kind, ambiguous-kind,
+  missing-target, and invalid-graph transitions.
+- Affected lint and typecheck must cover every changed admitted project; no
+  hand-maintained project inventory may narrow the population.
+- The repository-wide Biome formatting, lint, and import-organization check and
+  the Habitat consumer integrity tests must pass through their Nx owners.
+- The repository-separation guard must pass.
+- The required Habitat gate must positively close the current curated and
+  external command-channel topology against the live candidate; it is
+  deliberately not cached. Do not claim generic service/Oclif live-tree
+  enforcement until its separately tracked bounded gate is active.
 - The `rg` command is a quick markdown-link surface scan used before deeper audits.
-- Protected `main` must require
-  `Repository Ratchet / Required lint, typecheck, and topology`. A local
-  pre-push pass is useful feedback but is not merge authority.
+- Protected `main` must require the job context
+  `Required lint, typecheck, and topology` published by the
+  `Repository Ratchet` workflow. A local pre-push pass is useful feedback but is
+  not merge authority.
 
 ## Monthly Interface Rehearsal
 
