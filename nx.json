@@ -28,8 +28,20 @@
   "targetDefaults": {
     "build": {
       "cache": true,
-      "inputs": ["production", "^production"],
+      "inputs": ["production", "^production", "typescriptRuntime"],
       "outputs": ["{projectRoot}/dist"]
+    },
+    "manifest": {
+      "cache": true,
+      "dependsOn": ["build"],
+      "inputs": [
+        "production",
+        "^production",
+        "bunToolchain",
+        "typescriptRuntime",
+        "!{projectRoot}/oclif.manifest.json"
+      ],
+      "outputs": ["{projectRoot}/oclif.manifest.json"]
     },
     "typecheck": {
       "cache": true,

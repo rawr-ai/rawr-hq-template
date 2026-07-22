@@ -14,7 +14,8 @@ This skill is the "where does it go?" and "what owns what?" guide for the RAWR p
 
 ### Which plugin kind?
 
-- `rawr.kind=toolkit` (`plugins/cli/*`): reporter commands (stateless, mechanical)
+- `plugins/cli/commands/*`: host-composed Oclif command capabilities; placement
+  is the package kind and no `rawr.kind` duplicate is required
 - `rawr.kind=agent` (`plugins/agents/*`): Claude Code runtime artifacts (skills, workflows, agents, hooks), plus optional actor commands
 - `rawr.kind=web` (`plugins/web/*`): runtime/web source classified for the dedicated runtime architecture
 

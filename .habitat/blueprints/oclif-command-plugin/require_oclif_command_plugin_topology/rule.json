@@ -12,14 +12,14 @@
   },
   "ownerProject": "@rawr/habitat-consumer",
   "lane": "enforced",
-  "forbids": "a missing command-plugin package anchor, a second command root, an open source root, or a plugin-owned executable binary",
-  "why": "Every first-party Oclif command capability has the same package shell and one source command root. Generated dependency and build directories remain admitted outputs, while the host application alone owns the executable.",
-  "remediate": "Keep package, test, and TypeScript anchors at each plugins/cli/commands package root. Put commands under src/commands, shared private helpers under src/lib, and expose no package-local bin directory.",
-  "message": "Every Oclif command plugin must retain one closed package and command-source topology.",
+  "forbids": "a second first-party CLI package family, a missing command-plugin package anchor, a second command root, an open source root, or a plugin-owned executable binary",
+  "why": "The first-party CLI plugin root contains only host-composed command capabilities. Every capability has the same package shell and one source command root. Generated dependency and build directories remain admitted outputs, while the host application alone owns the executable.",
+  "remediate": "Keep commands as the only plugins/cli child. Keep package, test, and TypeScript anchors at each plugins/cli/commands package root. Put commands under src/commands, shared private helpers under src/lib, and expose no package-local bin directory.",
+  "message": "The first-party CLI root and every command plugin must retain one closed topology.",
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": ["plugins/cli/commands/*/**"]
+      "patterns": ["plugins/cli/**"]
     }
   ],
   "supportFiles": {

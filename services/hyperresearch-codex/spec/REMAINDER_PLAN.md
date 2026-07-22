@@ -142,7 +142,7 @@ Run proof gates in this order:
 - `bunx nx show project @rawr/hyperresearch-codex --json`
 - `bun run --cwd services/hyperresearch-codex typecheck`
 - `bunx vitest run --project hyperresearch-codex`
-- `bun run --cwd plugins/cli/hyperresearch typecheck`
+- `bun run --cwd plugins/cli/commands/hyperresearch typecheck`
 - `bunx vitest run --project plugin-hyperresearch`
 - CLI fixture light/full routes using absolute `--steps` paths or copied temporary step references.
 - Negative CLI fixture with a missing step file.

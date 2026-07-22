@@ -8,7 +8,7 @@ raise SystemExit(
     "  rawr corpus consolidate [path]\n\n"
     "Canonical sources of truth:\n"
     "  - services/chatgpt-corpus\n"
-    "  - plugins/cli/chatgpt-corpus\n"
+    "  - plugins/cli/commands/chatgpt-corpus\n"
 )
     by_messages_hash: dict[str, list[SourceRecord]] = defaultdict(list)
     by_link: dict[str, list[SourceRecord]] = defaultdict(list)
