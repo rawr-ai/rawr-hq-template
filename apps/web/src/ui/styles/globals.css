@@ -48,11 +48,11 @@
 
   --shadow-shell: 0 16px 40px rgba(15, 23, 42, 0.08);
   --shadow-panel:
-    0 0 0 0.5px rgba(15, 23, 42, 0.06),
-    0 1px 3px rgba(15, 23, 42, 0.08),
+    0 0 0 0.5px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08),
     0 10px 28px rgba(15, 23, 42, 0.06);
 
-  --shell-glow: radial-gradient(circle at 15% -12%, rgba(0, 177, 177, 0.2), transparent 42%),
+  --shell-glow:
+    radial-gradient(circle at 15% -12%, rgba(0, 177, 177, 0.2), transparent 42%),
     radial-gradient(circle at 100% 0%, rgba(41, 128, 255, 0.14), transparent 35%);
 
   --ui-surface-0: hsl(var(--background));
@@ -135,11 +135,11 @@
 
   --shadow-shell: 0 16px 48px rgba(1, 8, 20, 0.52);
   --shadow-panel:
-    0 0 0 0.5px rgba(191, 210, 233, 0.14),
-    0 1px 2px rgba(2, 7, 15, 0.45),
+    0 0 0 0.5px rgba(191, 210, 233, 0.14), 0 1px 2px rgba(2, 7, 15, 0.45),
     0 12px 30px rgba(2, 7, 15, 0.44);
 
-  --shell-glow: radial-gradient(circle at 18% -8%, rgba(95, 214, 205, 0.2), transparent 43%),
+  --shell-glow:
+    radial-gradient(circle at 18% -8%, rgba(95, 214, 205, 0.2), transparent 43%),
     radial-gradient(circle at 100% -6%, rgba(87, 115, 255, 0.18), transparent 38%);
 
   --ui-surface-0: hsl(var(--background));

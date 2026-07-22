@@ -61,13 +61,13 @@ export async function loadControllerRuntimeContext(input: {
 
   const entryPath = path.join(releaseRoot, CONTROLLER_ENTRY_PATH);
   const loadedEntryPath = path.resolve(fileURLToPath(input.entryUrl));
-  if (await realpath(loadedEntryPath) !== await realpath(entryPath)) {
+  if ((await realpath(loadedEntryPath)) !== (await realpath(entryPath))) {
     throw new Error("CONTROLLER_ENTRY_CONTEXT_INVALID");
   }
 
   const runtimePath = path.join(releaseRoot, CONTROLLER_RUNTIME_PATH);
   const observedExecPath = path.resolve(input.observedExecPath ?? process.execPath);
-  if (await realpath(observedExecPath) !== await realpath(runtimePath)) {
+  if ((await realpath(observedExecPath)) !== (await realpath(runtimePath))) {
     throw new Error("CONTROLLER_RUNTIME_CONTEXT_INVALID");
   }
 
@@ -76,15 +76,15 @@ export async function loadControllerRuntimeContext(input: {
     expectedDigest: digest,
   });
   const cliMember = verifiedRelease.envelope.manifest.officialMembers.find(
-    (member) => member.packageId === "@rawr/cli",
+    (member) => member.packageId === "@rawr/cli"
   );
   if (cliMember === undefined) throw new Error("CONTROLLER_CLI_MEMBER_REQUIRED");
   const cliMemberRoot = path.resolve(releaseRoot, cliMember.root);
   const canonicalCliMemberRoot = await realpath(cliMemberRoot);
   if (
-    !isContained(releaseRoot, cliMemberRoot)
-    || !isContained(releaseRoot, canonicalCliMemberRoot)
-    || !(await lstat(canonicalCliMemberRoot)).isDirectory()
+    !isContained(releaseRoot, cliMemberRoot) ||
+    !isContained(releaseRoot, canonicalCliMemberRoot) ||
+    !(await lstat(canonicalCliMemberRoot)).isDirectory()
   ) {
     throw new Error("CONTROLLER_CLI_MEMBER_CONTEXT_INVALID");
   }
@@ -108,12 +108,15 @@ export async function loadControllerRuntimeContext(input: {
 
 function isContained(root: string, candidate: string): boolean {
   const offset = path.relative(root, candidate);
-  return offset === "" || (!offset.startsWith(`..${path.sep}`) && offset !== ".." && !path.isAbsolute(offset));
+  return (
+    offset === "" ||
+    (!offset.startsWith(`..${path.sep}`) && offset !== ".." && !path.isAbsolute(offset))
+  );
 }
 
 export function restoreControllerOperatorContext(
   context: ControllerOperatorContext,
-  env: NodeJS.ProcessEnv = process.env,
+  env: NodeJS.ProcessEnv = process.env
 ): void {
   process.chdir(context.cwd);
   assignOptionalEnvironment(env, "HOME", context.home);
@@ -138,7 +141,7 @@ function readOperatorContext(env: NodeJS.ProcessEnv): ControllerOperatorContext 
 
 function capturedEnvironment(
   env: NodeJS.ProcessEnv,
-  name: "HOME" | "XDG_CONFIG_HOME",
+  name: "HOME" | "XDG_CONFIG_HOME"
 ): string | undefined {
   const set = requiredEnvironment(env, `RAWR_OPERATOR_${name}_SET`);
   if (set === "0") return undefined;
@@ -148,14 +151,15 @@ function capturedEnvironment(
 
 function requiredEnvironment(env: NodeJS.ProcessEnv, name: string): string {
   const value = env[name];
-  if (value === undefined || value.length === 0) throw new Error(`CONTROLLER_RELEASE_REQUIRED:${name}`);
+  if (value === undefined || value.length === 0)
+    throw new Error(`CONTROLLER_RELEASE_REQUIRED:${name}`);
   return value;
 }
 
 function assignOptionalEnvironment(
   env: NodeJS.ProcessEnv,
   name: string,
-  value: string | undefined,
+  value: string | undefined
 ): void {
   if (value === undefined) delete env[name];
   else env[name] = value;

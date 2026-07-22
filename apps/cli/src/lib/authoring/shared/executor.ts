@@ -23,11 +23,13 @@ export interface QualifiedWritePort {
   publish(root: VerifiedDestinationRoot, write: QualifiedWrite): Promise<QualifiedWritePublication>;
 }
 
-export async function executeAuthoringPlan(input: Readonly<{
-  plan: CompleteOrderedWritePlan;
-  dryRun: boolean;
-  port: QualifiedWritePort;
-}>): Promise<AuthoringExecutionResult> {
+export async function executeAuthoringPlan(
+  input: Readonly<{
+    plan: CompleteOrderedWritePlan;
+    dryRun: boolean;
+    port: QualifiedWritePort;
+  }>
+): Promise<AuthoringExecutionResult> {
   const inspections: QualifiedWriteInspection[] = [];
   const issues: AuthoringPlanIssue[] = [];
   for (const write of input.plan.writes) {
@@ -35,18 +37,22 @@ export async function executeAuthoringPlan(input: Readonly<{
       const inspection = await input.port.inspect(input.plan.destinationRoot, write);
       inspections.push(inspection);
       if (inspection.kind === "Conflict") {
-        issues.push(Object.freeze({
-          code: "PATH_COLLISION",
-          path: write.relativePath,
-          message: inspection.message,
-        }));
+        issues.push(
+          Object.freeze({
+            code: "PATH_COLLISION",
+            path: write.relativePath,
+            message: inspection.message,
+          })
+        );
       }
     } catch (error) {
-      issues.push(Object.freeze({
-        code: "PLAN_INSPECTION_FAILED",
-        path: write.relativePath,
-        message: errorMessage(error),
-      }));
+      issues.push(
+        Object.freeze({
+          code: "PLAN_INSPECTION_FAILED",
+          path: write.relativePath,
+          message: errorMessage(error),
+        })
+      );
     }
   }
   if (issues.length > 0) {
@@ -56,7 +62,11 @@ export async function executeAuthoringPlan(input: Readonly<{
     return Object.freeze({ kind: "AuthoringDryRun", plan: input.plan, write: NO_AUTHORING_WRITE });
   }
   if (inspections.every((inspection) => inspection.kind === "Exact")) {
-    return Object.freeze({ kind: "AuthoringConverged", plan: input.plan, write: NO_AUTHORING_WRITE });
+    return Object.freeze({
+      kind: "AuthoringConverged",
+      plan: input.plan,
+      write: NO_AUTHORING_WRITE,
+    });
   }
 
   const applied: QualifiedWrite[] = [];
@@ -65,10 +75,22 @@ export async function executeAuthoringPlan(input: Readonly<{
     try {
       inspection = await input.port.inspect(input.plan.destinationRoot, write);
     } catch (error) {
-      return publicationFailure(input.plan, applied, write, "PUBLICATION_FAILED", errorMessage(error));
+      return publicationFailure(
+        input.plan,
+        applied,
+        write,
+        "PUBLICATION_FAILED",
+        errorMessage(error)
+      );
     }
     if (inspection.kind === "Conflict") {
-      return publicationFailure(input.plan, applied, write, "PUBLICATION_FAILED", inspection.message);
+      return publicationFailure(
+        input.plan,
+        applied,
+        write,
+        "PUBLICATION_FAILED",
+        inspection.message
+      );
     }
     const needsPublication = inspection.kind === "Missing";
     if (needsPublication) {
@@ -76,17 +98,35 @@ export async function executeAuthoringPlan(input: Readonly<{
       try {
         publication = await input.port.publish(input.plan.destinationRoot, write);
       } catch (error) {
-        return publicationFailure(input.plan, applied, write, "PUBLICATION_FAILED", errorMessage(error));
+        return publicationFailure(
+          input.plan,
+          applied,
+          write,
+          "PUBLICATION_FAILED",
+          errorMessage(error)
+        );
       }
       if (publication.kind === "Failed") {
-        return publicationFailure(input.plan, applied, write, "PUBLICATION_FAILED", publication.message);
+        return publicationFailure(
+          input.plan,
+          applied,
+          write,
+          "PUBLICATION_FAILED",
+          publication.message
+        );
       }
     }
     let verified: QualifiedWriteInspection;
     try {
       verified = await input.port.inspect(input.plan.destinationRoot, write);
     } catch (error) {
-      return publicationFailure(input.plan, applied, write, "PUBLICATION_NOT_VERIFIED", errorMessage(error));
+      return publicationFailure(
+        input.plan,
+        applied,
+        write,
+        "PUBLICATION_NOT_VERIFIED",
+        errorMessage(error)
+      );
     }
     if (verified.kind !== "Exact") {
       return publicationFailure(
@@ -94,14 +134,18 @@ export async function executeAuthoringPlan(input: Readonly<{
         applied,
         write,
         "PUBLICATION_NOT_VERIFIED",
-        verified.kind === "Conflict" ? verified.message : "Published path is missing",
+        verified.kind === "Conflict" ? verified.message : "Published path is missing"
       );
     }
     if (needsPublication) applied.push(write);
   }
 
   if (applied.length === 0) {
-    return Object.freeze({ kind: "AuthoringConverged", plan: input.plan, write: NO_AUTHORING_WRITE });
+    return Object.freeze({
+      kind: "AuthoringConverged",
+      plan: input.plan,
+      write: NO_AUTHORING_WRITE,
+    });
   }
 
   return Object.freeze({
@@ -116,7 +160,7 @@ function publicationFailure(
   applied: readonly QualifiedWrite[],
   write: QualifiedWrite,
   code: AuthoringWriteFailure["code"],
-  message: string,
+  message: string
 ): AuthoringExecutionResult {
   const failure = Object.freeze({ code, path: write.relativePath, message });
   if (applied.length === 0) {

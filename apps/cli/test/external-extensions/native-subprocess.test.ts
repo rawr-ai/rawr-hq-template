@@ -87,11 +87,13 @@ describe("native plugin manager subprocess", () => {
       temporaryParent: fixture.temporaryParent,
     });
 
-    await expect(subject.dispatch({
-      commandExport: "plugins:update",
-      argv: [],
-      contract: GUARDED_NATIVE_MANAGER_CONTRACT,
-    })).rejects.toThrow("child failed");
+    await expect(
+      subject.dispatch({
+        commandExport: "plugins:update",
+        argv: [],
+        contract: GUARDED_NATIVE_MANAGER_CONTRACT,
+      })
+    ).rejects.toThrow("child failed");
 
     expect(readdirSync(fixture.temporaryParent)).toEqual([]);
   });
@@ -171,7 +173,7 @@ describe("native plugin manager subprocess", () => {
     const source = [
       'const { spawn } = require("node:child_process");',
       `const child = spawn(process.execPath, ["-e", ${JSON.stringify(
-        `setTimeout(() => { require("node:fs").writeFileSync(${JSON.stringify(sentinel)}, "done"); process.stdout.write("late"); }, 30);`,
+        `setTimeout(() => { require("node:fs").writeFileSync(${JSON.stringify(sentinel)}, "done"); process.stdout.write("late"); }, 30);`
       )}], { stdio: ["ignore", "inherit", "inherit"] });`,
       "child.unref();",
     ].join("\n");
@@ -199,7 +201,9 @@ class RecordingRunner implements NativeSubprocessRunner {
     this.calls += 1;
     this.input = input;
     const bin = input.env.PATH?.split(path.delimiter)[0];
-    this.nodeShimObserved = bin !== undefined && existsSync(path.join(bin, process.platform === "win32" ? "node.exe" : "node"));
+    this.nodeShimObserved =
+      bin !== undefined &&
+      existsSync(path.join(bin, process.platform === "win32" ? "node.exe" : "node"));
     if (this.failure) throw this.failure;
   }
 }

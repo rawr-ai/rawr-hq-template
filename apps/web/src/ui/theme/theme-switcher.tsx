@@ -30,7 +30,9 @@ export function ThemeSwitcher() {
           );
         })}
       </div>
-      <span className="hidden text-xs text-muted-foreground md:inline">Active: {resolvedTheme}</span>
+      <span className="hidden text-xs text-muted-foreground md:inline">
+        Active: {resolvedTheme}
+      </span>
     </section>
   );
 }

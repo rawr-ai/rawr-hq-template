@@ -17,17 +17,21 @@ async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
     return new Database(dbPath);
   } catch {
     const mod = await import("node:sqlite");
-    const DatabaseSync = (mod as {
-      DatabaseSync: new (dbPath: string) => {
-        exec(sql: string): unknown;
-        prepare(sql: string): {
-          get(...params: unknown[]): unknown;
-          run(...params: unknown[]): unknown;
-          all(...params: unknown[]): unknown[];
+    const DatabaseSync = (
+      mod as {
+        DatabaseSync: new (
+          dbPath: string
+        ) => {
+          exec(sql: string): unknown;
+          prepare(sql: string): {
+            get(...params: unknown[]): unknown;
+            run(...params: unknown[]): unknown;
+            all(...params: unknown[]): unknown[];
+          };
+          close(): void;
         };
-        close(): void;
-      };
-    }).DatabaseSync;
+      }
+    ).DatabaseSync;
     const db = new DatabaseSync(dbPath);
 
     return {
@@ -55,14 +59,22 @@ async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
   }
 }
 
-async function embedText(input: { text: string; config: { provider: "openai" | "voyage"; model: string } }): Promise<Float32Array> {
-  const apiKey = input.config.provider === "openai" ? process.env.OPENAI_API_KEY : process.env.VOYAGE_API_KEY;
+async function embedText(input: {
+  text: string;
+  config: { provider: "openai" | "voyage"; model: string };
+}): Promise<Float32Array> {
+  const apiKey =
+    input.config.provider === "openai" ? process.env.OPENAI_API_KEY : process.env.VOYAGE_API_KEY;
   if (!apiKey) throw new Error(`Missing ${input.config.provider} embeddings API key`);
 
-  const url = input.config.provider === "openai" ? "https://api.openai.com/v1/embeddings" : "https://api.voyageai.com/v1/embeddings";
-  const body = input.config.provider === "openai"
-    ? { model: input.config.model, input: input.text }
-    : { model: input.config.model, input: [input.text] };
+  const url =
+    input.config.provider === "openai"
+      ? "https://api.openai.com/v1/embeddings"
+      : "https://api.voyageai.com/v1/embeddings";
+  const body =
+    input.config.provider === "openai"
+      ? { model: input.config.model, input: input.text }
+      : { model: input.config.model, input: [input.text] };
   const res = await fetch(url, {
     method: "POST",
     headers: {
@@ -173,26 +185,32 @@ export function createHqOpsResources(): HqOpsResources {
       },
       async exec(cmd, args, opts = {}) {
         const startedAt = Date.now();
-        return await new Promise<Awaited<ReturnType<HqOpsResources["process"]["exec"]>>>((resolve) => {
-          const child = spawn(cmd, args, { cwd: opts.cwd, env: opts.env as NodeJS.ProcessEnv | undefined });
-          const stdoutChunks: Buffer[] = [];
-          const stderrChunks: Buffer[] = [];
-          child.stdout.on("data", (data) => stdoutChunks.push(Buffer.from(data)));
-          child.stderr.on("data", (data) => stderrChunks.push(Buffer.from(data)));
-          const timeout = opts.timeoutMs && opts.timeoutMs > 0
-            ? setTimeout(() => child.kill("SIGKILL"), opts.timeoutMs)
-            : null;
-          child.on("close", (exitCode, signal) => {
-            if (timeout) clearTimeout(timeout);
-            resolve({
-              exitCode,
-              signal,
-              stdout: Buffer.concat(stdoutChunks),
-              stderr: Buffer.concat(stderrChunks),
-              durationMs: Date.now() - startedAt,
+        return await new Promise<Awaited<ReturnType<HqOpsResources["process"]["exec"]>>>(
+          (resolve) => {
+            const child = spawn(cmd, args, {
+              cwd: opts.cwd,
+              env: opts.env as NodeJS.ProcessEnv | undefined,
             });
-          });
-        });
+            const stdoutChunks: Buffer[] = [];
+            const stderrChunks: Buffer[] = [];
+            child.stdout.on("data", (data) => stdoutChunks.push(Buffer.from(data)));
+            child.stderr.on("data", (data) => stderrChunks.push(Buffer.from(data)));
+            const timeout =
+              opts.timeoutMs && opts.timeoutMs > 0
+                ? setTimeout(() => child.kill("SIGKILL"), opts.timeoutMs)
+                : null;
+            child.on("close", (exitCode, signal) => {
+              if (timeout) clearTimeout(timeout);
+              resolve({
+                exitCode,
+                signal,
+                stdout: Buffer.concat(stdoutChunks),
+                stderr: Buffer.concat(stderrChunks),
+                durationMs: Date.now() - startedAt,
+              });
+            });
+          }
+        );
       },
     },
     sqlite: {

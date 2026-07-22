@@ -20,7 +20,7 @@ type StaticManifestInput = {
 };
 
 export async function inspectStaticExternalExtension(
-  input: StaticManifestInput,
+  input: StaticManifestInput
 ): Promise<CandidateInspection> {
   const canonicalRootResult = await input.evidence.canonicalPath(input.root);
   if (!canonicalRootResult.ok) {
@@ -28,16 +28,12 @@ export async function inspectStaticExternalExtension(
       input.expectedPackageId ?? input.root,
       input.root,
       canonicalRootResult.error.kind === "missing" ? "root-missing" : "root-unreadable",
-      canonicalRootResult.error.message,
+      canonicalRootResult.error.message
     );
   }
 
   const canonicalRoot = canonicalRootResult.value;
-  const packageEvidence = await readContainedFile(
-    canonicalRoot,
-    ["package.json"],
-    input.evidence,
-  );
+  const packageEvidence = await readContainedFile(canonicalRoot, ["package.json"], input.evidence);
   if (!packageEvidence.ok) {
     return rejected(
       input.expectedPackageId ?? input.root,
@@ -45,7 +41,7 @@ export async function inspectStaticExternalExtension(
       packageEvidence.error.kind === "missing"
         ? "package-manifest-missing"
         : "package-manifest-malformed",
-      packageEvidence.error.message,
+      packageEvidence.error.message
     );
   }
 
@@ -55,7 +51,7 @@ export async function inspectStaticExternalExtension(
       input.expectedPackageId ?? input.root,
       canonicalRoot,
       parsedPackage.code,
-      parsedPackage.reason,
+      parsedPackage.reason
     );
   }
   if (input.expectedPackageId && parsedPackage.value.packageId !== input.expectedPackageId) {
@@ -63,14 +59,14 @@ export async function inspectStaticExternalExtension(
       input.expectedPackageId,
       canonicalRoot,
       "package-identity-mismatch",
-      `Registry identity ${input.expectedPackageId} does not match package ${parsedPackage.value.packageId}`,
+      `Registry identity ${input.expectedPackageId} does not match package ${parsedPackage.value.packageId}`
     );
   }
 
   const commandEvidence = await readContainedFile(
     canonicalRoot,
     ["oclif.manifest.json"],
-    input.evidence,
+    input.evidence
   );
   if (!commandEvidence.ok) {
     return rejected(
@@ -79,7 +75,7 @@ export async function inspectStaticExternalExtension(
       commandEvidence.error.kind === "missing"
         ? "command-manifest-missing"
         : "command-manifest-malformed",
-      commandEvidence.error.message,
+      commandEvidence.error.message
     );
   }
 
@@ -89,7 +85,7 @@ export async function inspectStaticExternalExtension(
       parsedPackage.value.packageId,
       canonicalRoot,
       parsedCommands.code,
-      parsedCommands.reason,
+      parsedCommands.reason
     );
   }
   if (parsedCommands.value.version !== parsedPackage.value.version) {
@@ -97,21 +93,21 @@ export async function inspectStaticExternalExtension(
       parsedPackage.value.packageId,
       canonicalRoot,
       "command-manifest-version-mismatch",
-      `Static command manifest version ${parsedCommands.value.version} does not match package version ${parsedPackage.value.version}`,
+      `Static command manifest version ${parsedCommands.value.version} does not match package version ${parsedPackage.value.version}`
     );
   }
 
   const commandRoot = await inspectContainedDirectory(
     canonicalRoot,
     parsedPackage.value.commandRoot,
-    input.evidence,
+    input.evidence
   );
   if (!commandRoot.ok) {
     return rejected(
       parsedPackage.value.packageId,
       canonicalRoot,
       "package-manifest-malformed",
-      commandRoot.error.message,
+      commandRoot.error.message
     );
   }
 
@@ -127,27 +123,27 @@ export async function inspectStaticExternalExtension(
   ];
   for (const declaration of declaredFiles) {
     if (
-      declaration.label.startsWith("command ")
-      && !hasPathPrefix(declaration.relativePath, parsedPackage.value.commandRoot)
+      declaration.label.startsWith("command ") &&
+      !hasPathPrefix(declaration.relativePath, parsedPackage.value.commandRoot)
     ) {
       return rejected(
         parsedPackage.value.packageId,
         canonicalRoot,
         "command-manifest-malformed",
-        `${declaration.label}: Declared command is outside package oclif.commands`,
+        `${declaration.label}: Declared command is outside package oclif.commands`
       );
     }
     const file = await inspectContainedFile(
       canonicalRoot,
       declaration.relativePath,
-      input.evidence,
+      input.evidence
     );
     if (!file.ok) {
       return rejected(
         parsedPackage.value.packageId,
         canonicalRoot,
         file.error.kind === "outside" ? "command-module-outside-root" : "command-module-missing",
-        `${declaration.label}: ${file.error.message}`,
+        `${declaration.label}: ${file.error.message}`
       );
     }
   }
@@ -191,19 +187,25 @@ export async function inspectStaticExternalExtension(
 async function inspectContainedDirectory(
   canonicalRoot: string,
   relativePath: readonly string[],
-  evidence: StaticEvidencePort,
+  evidence: StaticEvidencePort
 ): Promise<
   | { ok: true; value: string }
   | { ok: false; error: { kind: "missing" | "unreadable" | "outside"; message: string } }
 > {
   const lexicalPath = path.resolve(canonicalRoot, ...relativePath);
   if (!isContained(canonicalRoot, lexicalPath)) {
-    return { ok: false, error: { kind: "outside", message: "Command root escapes extension root" } };
+    return {
+      ok: false,
+      error: { kind: "outside", message: "Command root escapes extension root" },
+    };
   }
   const canonical = await evidence.canonicalPath(lexicalPath);
   if (!canonical.ok) return canonical;
   if (!isContained(canonicalRoot, canonical.value)) {
-    return { ok: false, error: { kind: "outside", message: "Command root resolves outside extension root" } };
+    return {
+      ok: false,
+      error: { kind: "outside", message: "Command root resolves outside extension root" },
+    };
   }
   const directory = await evidence.isDirectory(canonical.value);
   if (!directory.ok) return directory;
@@ -215,7 +217,7 @@ async function inspectContainedDirectory(
 async function readContainedFile(
   canonicalRoot: string,
   relativePath: readonly string[],
-  evidence: StaticEvidencePort,
+  evidence: StaticEvidencePort
 ): Promise<StaticEvidenceResult<{ path: string; text: string }>> {
   const inspected = await inspectContainedFile(canonicalRoot, relativePath, evidence);
   if (!inspected.ok) {
@@ -235,14 +237,17 @@ async function readContainedFile(
 async function inspectContainedFile(
   canonicalRoot: string,
   relativePath: readonly string[],
-  evidence: StaticEvidencePort,
+  evidence: StaticEvidencePort
 ): Promise<
   | { ok: true; value: string }
   | { ok: false; error: { kind: "missing" | "unreadable" | "outside"; message: string } }
 > {
   const lexicalPath = path.resolve(canonicalRoot, ...relativePath);
   if (!isContained(canonicalRoot, lexicalPath)) {
-    return { ok: false, error: { kind: "outside", message: "Declared path escapes extension root" } };
+    return {
+      ok: false,
+      error: { kind: "outside", message: "Declared path escapes extension root" },
+    };
   }
   const canonical = await evidence.canonicalPath(lexicalPath);
   if (!canonical.ok) return canonical;
@@ -266,15 +271,17 @@ function isContained(root: string, candidate: string): boolean {
 }
 
 function hasPathPrefix(pathSegments: readonly string[], prefix: readonly string[]): boolean {
-  return pathSegments.length > prefix.length
-    && prefix.every((segment, index) => pathSegments[index] === segment);
+  return (
+    pathSegments.length > prefix.length &&
+    prefix.every((segment, index) => pathSegments[index] === segment)
+  );
 }
 
 function rejected(
   identity: string,
   root: string | undefined,
   code: QuarantineCode,
-  message: string,
+  message: string
 ): CandidateInspection {
   const quarantine: QuarantinedExternalExtension = {
     identity,

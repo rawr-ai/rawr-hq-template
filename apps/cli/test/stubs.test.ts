@@ -54,7 +54,9 @@ describe("rawr command surfaces", () => {
     expect(commands.some((command: string) => command.startsWith("plugins web"))).toBe(false);
     expect(commands.some((command: string) => command.startsWith("plugins scaffold"))).toBe(false);
     expect(commands).not.toContain("agent plugins retire");
-    expect(commands.some((command: string) => command.startsWith("workflow forge-command"))).toBe(false);
+    expect(commands.some((command: string) => command.startsWith("workflow forge-command"))).toBe(
+      false
+    );
   });
 
   it("security check returns a machine-readable report", { timeout: 30000 }, () => {

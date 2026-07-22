@@ -36,10 +36,7 @@ describe("provider resource context", () => {
 
     expect(Object.isFrozen(state)).toBe(true);
     expect(Object.isFrozen(deps)).toBe(true);
-    expect(Reflect.ownKeys(state)).toEqual([
-      "records",
-      "projectionRepositoryRoot",
-    ]);
+    expect(Reflect.ownKeys(state)).toEqual(["records", "projectionRepositoryRoot"]);
     expect(state).not.toHaveProperty("artifactRepository");
     expect(deps.providerRecords).toBe(state.records);
     expect(deps.providerExecutables).toBe(providerExecutables);
@@ -63,11 +60,14 @@ describe("provider resource context", () => {
 
 async function removeOwnedFixture(root: string): Promise<void> {
   const parent = await realpath(tmpdir());
-  if (path.dirname(root) !== parent || !path.basename(root).startsWith("rawr-c5-provider-records-")) {
+  if (
+    path.dirname(root) !== parent ||
+    !path.basename(root).startsWith("rawr-c5-provider-records-")
+  ) {
     throw new Error("Refusing recursive cleanup outside the owned provider-record fixture root");
   }
   const status = await lstat(root);
-  if (!status.isDirectory() || status.isSymbolicLink() || await realpath(root) !== root) {
+  if (!status.isDirectory() || status.isSymbolicLink() || (await realpath(root)) !== root) {
     throw new Error("Refusing recursive cleanup of a non-canonical provider-record fixture root");
   }
   await rm(root, { recursive: true });

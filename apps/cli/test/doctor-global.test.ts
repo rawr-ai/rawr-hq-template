@@ -46,13 +46,14 @@ import type { NativeRegistryProjection } from "../src/lib/external-extensions/mo
 
 const temporaryRoots: string[] = [];
 const BUN_REVISION = "0d9b296af33f2b851fcbf4df3e9ec89751734ba4";
-const HOST_PLATFORM: ControllerPlatform = process.platform === "darwin" || process.platform === "win32"
-  ? process.platform
-  : "linux";
+const HOST_PLATFORM: ControllerPlatform =
+  process.platform === "darwin" || process.platform === "win32" ? process.platform : "linux";
 const HOST_ARCHITECTURE: ControllerArchitecture = process.arch === "arm64" ? "arm64" : "x64";
 
 afterEach(async () => {
-  await Promise.all(temporaryRoots.splice(0).map((root) => rm(root, { force: true, recursive: true })));
+  await Promise.all(
+    temporaryRoots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
+  );
 });
 
 describe("rawr doctor global provenance", () => {
@@ -112,12 +113,14 @@ describe("rawr doctor global provenance", () => {
     expect(await snapshotTree(fixture.dataRoot)).toEqual(before);
     expect(diagnostics.healthy).toBe(false);
     expect(diagnostics.release.status).toBe("invalid");
-    expect(diagnostics.issues).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        code: "PAYLOAD_DIGEST_MISMATCH",
-        path: "observedEntries.app/cli/index.mjs.digest",
-      }),
-    ]));
+    expect(diagnostics.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "PAYLOAD_DIGEST_MISMATCH",
+          path: "observedEntries.app/cli/index.mjs.digest",
+        }),
+      ])
+    );
   });
 
   it("names an absent official member without attempting repair", async () => {
@@ -129,12 +132,14 @@ describe("rawr doctor global provenance", () => {
 
     expect(await snapshotTree(fixture.dataRoot)).toEqual(before);
     expect(diagnostics.release.status).toBe("invalid");
-    expect(diagnostics.issues).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        code: "MISSING_PAYLOAD_ENTRY",
-        path: "observedEntries.app/cli/index.mjs",
-      }),
-    ]));
+    expect(diagnostics.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "MISSING_PAYLOAD_ENTRY",
+          path: "observedEntries.app/cli/index.mjs",
+        }),
+      ])
+    );
   });
 
   it("rejects a global rawr resolution whose realpath is not the stable launcher", async () => {
@@ -153,9 +158,9 @@ describe("rawr doctor global provenance", () => {
       commandRealpath: foreignRawr,
       matchesLauncher: false,
     });
-    expect(diagnostics.issues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ code: "GLOBAL_RAWR_RESOLUTION_MISMATCH" }),
-    ]));
+    expect(diagnostics.issues).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "GLOBAL_RAWR_RESOLUTION_MISMATCH" })])
+    );
   });
 
   it("reports when the running release no longer matches the current selector", async () => {
@@ -166,9 +171,11 @@ describe("rawr doctor global provenance", () => {
 
     expect(diagnostics.invocation.selectorMatchesInvocation).toBe(false);
     expect(diagnostics.healthy).toBe(false);
-    expect(diagnostics.issues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ code: "CONTROLLER_INVOCATION_SELECTION_MISMATCH" }),
-    ]));
+    expect(diagnostics.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "CONTROLLER_INVOCATION_SELECTION_MISMATCH" }),
+      ])
+    );
   });
 
   it("bounds an oversized sparse selector before reading it", async () => {
@@ -179,11 +186,13 @@ describe("rawr doctor global provenance", () => {
 
     expect(diagnostics.healthy).toBe(false);
     expect(diagnostics.selector).toMatchObject({ status: "invalid", controllerDigest: null });
-    expect(diagnostics.issues).toContainEqual(expect.objectContaining({
-      code: "INVALID_SELECTION_LENGTH",
-      expected: 65,
-      actual: 1024 * 1024,
-    }));
+    expect(diagnostics.issues).toContainEqual(
+      expect.objectContaining({
+        code: "INVALID_SELECTION_LENGTH",
+        expected: 65,
+        actual: 1024 * 1024,
+      })
+    );
   });
 
   it("rejects a byte-identical hardlinked launcher without mutating it", async () => {
@@ -199,9 +208,9 @@ describe("rawr doctor global provenance", () => {
 
     expect(await snapshotTree(fixture.dataRoot)).toEqual(before);
     expect(diagnostics.launcher?.status).toBe("other");
-    expect(diagnostics.issues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ code: "CONTROLLER_LAUNCHER_INVALID" }),
-    ]));
+    expect(diagnostics.issues).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "CONTROLLER_LAUNCHER_INVALID" })])
+    );
   });
 
   it("reports a symlinked launcher parent as unhealthy without reading it as controller state", async () => {
@@ -227,9 +236,9 @@ describe("rawr doctor global provenance", () => {
       executable: false,
       digest: null,
     });
-    expect(diagnostics.issues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ code: "CONTROLLER_LAUNCHER_INVALID" }),
-    ]));
+    expect(diagnostics.issues).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "CONTROLLER_LAUNCHER_INVALID" })])
+    );
     expect(await snapshotTree(fixture.dataRoot)).toEqual(beforeData);
     expect(await snapshotTree(outsideParent)).toEqual(beforeOutside);
   });
@@ -305,14 +314,19 @@ describe("rawr doctor global provenance", () => {
         },
       ],
     });
-    expect(diagnostics.issues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ code: "EXTERNAL_EXTENSION_STATE_UNHEALTHY" }),
-    ]));
+    expect(diagnostics.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "EXTERNAL_EXTENSION_STATE_UNHEALTHY" }),
+      ])
+    );
   });
 
   it("keeps malformed or missing selection diagnosable", async () => {
     const malformed = await controllerFixture();
-    await writeFile(controllerSelectorPath(malformed.dataRoot), `${malformed.controllerDigest}\nextra\n`);
+    await writeFile(
+      controllerSelectorPath(malformed.dataRoot),
+      `${malformed.controllerDigest}\nextra\n`
+    );
     const malformedResult = await malformed.inspect();
     expect(malformedResult.selector.status).toBe("invalid");
     expect(malformedResult.release.status).toBe("unavailable");
@@ -322,32 +336,32 @@ describe("rawr doctor global provenance", () => {
     const missingResult = await missing.inspect();
     expect(missingResult.selector.status).toBe("missing");
     expect(missingResult.release.status).toBe("unavailable");
-    expect(missingResult.issues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ code: "CONTROLLER_SELECTION_MISSING" }),
-    ]));
+    expect(missingResult.issues).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "CONTROLLER_SELECTION_MISSING" })])
+    );
   });
 
-  it.each(["symlink", "hardlink"] as const)(
-    "reports a byte-identical %s selector as invalid without repairing it",
-    async (aliasKind) => {
-      const fixture = await controllerFixture();
-      const selectorPath = controllerSelectorPath(fixture.dataRoot);
-      const outsidePath = path.join(fixture.root, `${aliasKind}-outside-selector`);
-      await writeFile(outsidePath, `${fixture.controllerDigest}\n`);
-      await rm(selectorPath);
-      if (aliasKind === "symlink") await symlink(outsidePath, selectorPath);
-      else await link(outsidePath, selectorPath);
-      const before = await snapshotTree(fixture.dataRoot);
+  it.each([
+    "symlink",
+    "hardlink",
+  ] as const)("reports a byte-identical %s selector as invalid without repairing it", async (aliasKind) => {
+    const fixture = await controllerFixture();
+    const selectorPath = controllerSelectorPath(fixture.dataRoot);
+    const outsidePath = path.join(fixture.root, `${aliasKind}-outside-selector`);
+    await writeFile(outsidePath, `${fixture.controllerDigest}\n`);
+    await rm(selectorPath);
+    if (aliasKind === "symlink") await symlink(outsidePath, selectorPath);
+    else await link(outsidePath, selectorPath);
+    const before = await snapshotTree(fixture.dataRoot);
 
-      const diagnostics = await fixture.inspect();
+    const diagnostics = await fixture.inspect();
 
-      expect(diagnostics.selector.status).toBe("invalid");
-      expect(diagnostics.issues).toEqual(expect.arrayContaining([
-        expect.objectContaining({ code: "CONTROLLER_SELECTION_ALIAS" }),
-      ]));
-      expect(await snapshotTree(fixture.dataRoot)).toEqual(before);
-    },
-  );
+    expect(diagnostics.selector.status).toBe("invalid");
+    expect(diagnostics.issues).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "CONTROLLER_SELECTION_ALIAS" })])
+    );
+    expect(await snapshotTree(fixture.dataRoot)).toEqual(before);
+  });
 });
 
 type ControllerFixture = Readonly<{
@@ -359,9 +373,11 @@ type ControllerFixture = Readonly<{
   inspect(env?: NodeJS.ProcessEnv): Promise<GlobalDoctorData>;
 }>;
 
-async function controllerFixture(options: Readonly<{
-  readExternalExtensions?: () => Promise<NativeRegistryProjection>;
-}> = {}): Promise<ControllerFixture> {
+async function controllerFixture(
+  options: Readonly<{
+    readExternalExtensions?: () => Promise<NativeRegistryProjection>;
+  }> = {}
+): Promise<ControllerFixture> {
   const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "rawr-doctor-global-"));
   temporaryRoots.push(temporaryRoot);
   const root = await realpath(temporaryRoot);
@@ -381,13 +397,24 @@ async function controllerFixture(options: Readonly<{
   };
   const entries: ControllerPayloadEntryInput[] = [
     { kind: "file", path: CONTROLLER_ENTRY_PATH, mode: 0o644, digest: sha256(bytes.entry) },
-    { kind: "file", path: CONTROLLER_DEPENDENCY_LOCK_PATH, mode: 0o644, digest: sha256(bytes.lock) },
+    {
+      kind: "file",
+      path: CONTROLLER_DEPENDENCY_LOCK_PATH,
+      mode: 0o644,
+      digest: sha256(bytes.lock),
+    },
     { kind: "file", path: "app/cli/index.mjs", mode: 0o644, digest: sha256(bytes.cli) },
-    { kind: "file", path: CONTROLLER_RUNTIME_LICENSE_PATH, mode: 0o644, digest: sha256(bytes.license) },
+    {
+      kind: "file",
+      path: CONTROLLER_RUNTIME_LICENSE_PATH,
+      mode: 0o644,
+      digest: sha256(bytes.license),
+    },
     { kind: "file", path: CONTROLLER_RUNTIME_PATH, mode: 0o755, digest: sha256(bytes.runtime) },
   ];
   const memberDigest = computeControllerMemberPayloadDigest(entries, "app/cli");
-  if (!memberDigest.ok) throw new Error(memberDigest.issues.map((entry) => entry.message).join("; "));
+  if (!memberDigest.ok)
+    throw new Error(memberDigest.issues.map((entry) => entry.message).join("; "));
   const manifest = createControllerPayloadManifest({
     schemaVersion: CONTROLLER_PAYLOAD_SCHEMA_VERSION,
     sourceRevision: "1".repeat(40),
@@ -435,7 +462,7 @@ async function controllerFixture(options: Readonly<{
     releaseRoot,
     CONTROLLER_ENVELOPE_PATH,
     canonicalSerializeControllerReleaseEnvelope(envelope),
-    0o644,
+    0o644
   );
 
   const selectorPath = controllerSelectorPath(dataRoot);
@@ -446,13 +473,15 @@ async function controllerFixture(options: Readonly<{
   await writeFile(launcherPath, "#!/bin/sh\nexit 0\n");
   await chmod(launcherPath, 0o755);
 
-  const readExternalExtensions = options.readExternalExtensions ?? (async () => ({
-    registryPath: path.join(oclifDataDir, "package.json"),
-    status: "missing" as const,
-    hasResidue: false,
-    active: [],
-    quarantined: [],
-  }));
+  const readExternalExtensions =
+    options.readExternalExtensions ??
+    (async () => ({
+      registryPath: path.join(oclifDataDir, "package.json"),
+      status: "missing" as const,
+      hasResidue: false,
+      active: [],
+      quarantined: [],
+    }));
 
   return Object.freeze({
     root,
@@ -460,20 +489,21 @@ async function controllerFixture(options: Readonly<{
     dataRoot,
     releaseRoot,
     controllerDigest: envelope.controllerDigest,
-    inspect: (env: NodeJS.ProcessEnv = {}) => inspectGlobalController({
-      env: {
-        RAWR_DATA_DIR: dataRoot,
-        RAWR_CONTROLLER_DIGEST: envelope.controllerDigest,
-        RAWR_CONTROLLER_RELEASE_ROOT: releaseRoot,
-        PATH: path.dirname(launcherPath),
-        ...env,
-      },
-      cwd: root,
-      oclifDataDir,
-      readExternalExtensions,
-      hostPlatform: HOST_PLATFORM,
-      hostArchitecture: HOST_ARCHITECTURE,
-    }),
+    inspect: (env: NodeJS.ProcessEnv = {}) =>
+      inspectGlobalController({
+        env: {
+          RAWR_DATA_DIR: dataRoot,
+          RAWR_CONTROLLER_DIGEST: envelope.controllerDigest,
+          RAWR_CONTROLLER_RELEASE_ROOT: releaseRoot,
+          PATH: path.dirname(launcherPath),
+          ...env,
+        },
+        cwd: root,
+        oclifDataDir,
+        readExternalExtensions,
+        hostPlatform: HOST_PLATFORM,
+        hostArchitecture: HOST_ARCHITECTURE,
+      }),
   });
 }
 
@@ -481,7 +511,7 @@ async function writePayloadFile(
   releaseRoot: string,
   releasePath: string,
   contents: string | Uint8Array,
-  mode: number,
+  mode: number
 ): Promise<void> {
   const destination = path.join(releaseRoot, releasePath);
   await mkdir(path.dirname(destination), { recursive: true });
@@ -498,9 +528,17 @@ async function snapshotTree(root: string): Promise<readonly string[]> {
       const absolute = path.join(directory, child.name);
       const relative = path.relative(root, absolute).split(path.sep).join("/");
       const status = await lstat(absolute);
-      const kind = child.isDirectory() ? "directory" : child.isFile() ? "file" : child.isSymbolicLink() ? "link" : "other";
+      const kind = child.isDirectory()
+        ? "directory"
+        : child.isFile()
+          ? "file"
+          : child.isSymbolicLink()
+            ? "link"
+            : "other";
       const target = child.isSymbolicLink() ? await readlink(absolute) : "";
-      rows.push([relative, kind, status.mode, status.size, status.mtimeMs, status.ctimeMs, target].join("|"));
+      rows.push(
+        [relative, kind, status.mode, status.size, status.mtimeMs, status.ctimeMs, target].join("|")
+      );
       if (child.isDirectory()) await visit(absolute);
     }
   };

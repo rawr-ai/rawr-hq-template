@@ -7,10 +7,7 @@ import type {
   QuarantinedExternalExtension,
   ReservedControllerSurface,
 } from "./model";
-import {
-  NativeRegistryState,
-  type ExternalExtensionStatePort,
-} from "./native-registry";
+import { NativeRegistryState, type ExternalExtensionStatePort } from "./native-registry";
 import { registerExternalExtensionRuntime } from "./runtime";
 import type { ExternalExtensionCommandRuntime } from "./service";
 import { NodeStaticEvidencePort, type StaticEvidencePort } from "./static-evidence";
@@ -35,10 +32,12 @@ export type GuardedExternalConfiguration = Readonly<{
   recovery: boolean;
 }>;
 
-export type GuardedExternalRuntimeFactory = (input: Readonly<{
-  base: Config;
-  state: ExternalExtensionStatePort;
-}>) => ExternalExtensionCommandRuntime;
+export type GuardedExternalRuntimeFactory = (
+  input: Readonly<{
+    base: Config;
+    state: ExternalExtensionStatePort;
+  }>
+) => ExternalExtensionCommandRuntime;
 
 export async function createGuardedExternalConfiguration(input: {
   argv: readonly string[];
@@ -55,25 +54,21 @@ export async function createGuardedExternalConfiguration(input: {
     jitPlugins: false,
   });
   if (
-    input.expectedDataDir !== undefined
-    && path.resolve(base.dataDir) !== path.resolve(input.expectedDataDir)
+    input.expectedDataDir !== undefined &&
+    path.resolve(base.dataDir) !== path.resolve(input.expectedDataDir)
   ) {
     throw new Error(
-      `CONTROLLER_NATIVE_DATA_ROOT_MISMATCH: expected ${path.resolve(input.expectedDataDir)}, received ${path.resolve(base.dataDir)}`,
+      `CONTROLLER_NATIVE_DATA_ROOT_MISMATCH: expected ${path.resolve(input.expectedDataDir)}, received ${path.resolve(base.dataDir)}`
     );
   }
   const reserved = Object.freeze({
     ...input.reserved,
-    packageIds: new Set([
-      ...input.reserved.packageIds,
-      ...base.plugins.keys(),
-      base.pjson.name,
-    ]),
+    packageIds: new Set([...input.reserved.packageIds, ...base.plugins.keys(), base.pjson.name]),
   });
   const nativeState = new NativeRegistryState(
     base.dataDir,
     reserved,
-    input.evidence ?? new NodeStaticEvidencePort(),
+    input.evidence ?? new NodeStaticEvidencePort()
   );
   const projection = await nativeState.read();
   const recovery = isRecoveryInvocation(input.argv);
@@ -86,12 +81,12 @@ export async function createGuardedExternalConfiguration(input: {
       try {
         const activationInspection = await nativeState.inspectRoot(
           active.extension.canonicalRoot,
-          active.extension.packageId,
+          active.extension.packageId
         );
         if (
-          !activationInspection.accepted
-          || activationInspection.extension.canonicalRoot !== active.extension.canonicalRoot
-          || activationInspection.extension.fingerprint !== active.extension.fingerprint
+          !activationInspection.accepted ||
+          activationInspection.extension.canonicalRoot !== active.extension.canonicalRoot ||
+          activationInspection.extension.fingerprint !== active.extension.fingerprint
         ) {
           throw new Error("Static extension evidence changed during Oclif activation");
         }
@@ -101,7 +96,9 @@ export async function createGuardedExternalConfiguration(input: {
           state: nativeState,
         });
         if (plugins.has(plugin.name)) {
-          throw new Error(`External package identity collides with controller plugin: ${plugin.name}`);
+          throw new Error(
+            `External package identity collides with controller plugin: ${plugin.name}`
+          );
         }
         plugins.set(plugin.name, plugin);
         added = true;
@@ -127,13 +124,9 @@ export async function createGuardedExternalConfiguration(input: {
     devPlugins: false,
     jitPlugins: false,
   });
-  const state = overlays.length === 0
-    ? nativeState
-    : new OverlayExternalExtensionState(nativeState, overlays);
-  registerExternalExtensionRuntime(
-    config,
-    input.createRuntime({ base, state }),
-  );
+  const state =
+    overlays.length === 0 ? nativeState : new OverlayExternalExtensionState(nativeState, overlays);
+  registerExternalExtensionRuntime(config, input.createRuntime({ base, state }));
 
   return Object.freeze({
     config,
@@ -158,7 +151,7 @@ export function isRecoveryInvocation(argv: readonly string[]): boolean {
 class OverlayExternalExtensionState implements ExternalExtensionStatePort {
   constructor(
     private readonly inner: ExternalExtensionStatePort,
-    private readonly overlays: readonly QuarantinedExternalExtension[],
+    private readonly overlays: readonly QuarantinedExternalExtension[]
   ) {}
 
   inspectRoot(root: string, expectedPackageId?: string) {
@@ -172,7 +165,7 @@ class OverlayExternalExtensionState implements ExternalExtensionStatePort {
 
 function overlayProjection(
   projection: NativeRegistryProjection,
-  overlays: readonly QuarantinedExternalExtension[],
+  overlays: readonly QuarantinedExternalExtension[]
 ): NativeRegistryProjection {
   const identities = new Set(overlays.map((entry) => entry.identity));
   return {

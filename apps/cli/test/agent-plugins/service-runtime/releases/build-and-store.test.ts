@@ -27,9 +27,7 @@ import {
   createLifecycleTestClient,
   testInvocation,
 } from "../../../../../../services/agent-plugin-lifecycle/test/support/client";
-import {
-  createResourceArtifactReader,
-} from "../../../../../../services/agent-plugin-lifecycle/src/service/repository/artifact-repository";
+import { createResourceArtifactReader } from "../../../../../../services/agent-plugin-lifecycle/src/service/repository/artifact-repository";
 import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
 import {
   GIT_EXECUTABLE,
@@ -60,7 +58,10 @@ describe("build application and append-only artifact store", () => {
   it("initializes a fresh branded root, publishes exact bytes, and converges without metadata writes", async () => {
     const setup = await buildSetup();
     const mode = { kind: "targeted", pluginId: setup.repository.pluginId } as const;
-    const first = await setup.applications.build({ contentWorkspace: setup.repository.policy, mode });
+    const first = await setup.applications.build({
+      contentWorkspace: setup.repository.policy,
+      mode,
+    });
     expect(first.kind).toBe("Published");
     if (first.kind !== "Published" || first.ref.kind !== "release") return;
 
@@ -68,10 +69,15 @@ describe("build application and append-only artifact store", () => {
     const read = await artifactReader.read(first.ref);
     expect(read.kind).toBe("Verified");
     if (read.kind !== "Verified" || read.snapshot.kind !== "release") return;
-    expect(new TextDecoder().decode(read.snapshot.files[0]!.bytes)).toContain("Generated fixture-plugin");
+    expect(new TextDecoder().decode(read.snapshot.files[0]!.bytes)).toContain(
+      "Generated fixture-plugin"
+    );
     const before = await snapshotTree(setup.artifactRoot);
 
-    const repeated = await setup.applications.build({ contentWorkspace: setup.repository.policy, mode });
+    const repeated = await setup.applications.build({
+      contentWorkspace: setup.repository.policy,
+      mode,
+    });
     expect(repeated).toMatchObject({ kind: "ReadOnlyConverged", ref: first.ref });
     expect(await snapshotTree(setup.artifactRoot)).toEqual(before);
 
@@ -89,7 +95,7 @@ describe("build application and append-only artifact store", () => {
         "payload",
         "skills",
         "example",
-        "SKILL.md",
+        "SKILL.md"
       );
       const tamperedBytes = new Uint8Array(heldBytes);
       tamperedBytes[0] = tamperedBytes[0]! ^ 1;
@@ -119,12 +125,17 @@ describe("build application and append-only artifact store", () => {
     });
     expect(await directoryNames(join(setup.artifactRoot, "sets", "sha256"))).toEqual([]);
 
-    const retried = await setup.applications.build({ contentWorkspace: setup.repository.policy, mode });
+    const retried = await setup.applications.build({
+      contentWorkspace: setup.repository.policy,
+      mode,
+    });
     expect(retried.kind).toBe("Published");
     if (retried.kind !== "Published" || retried.ref.kind !== "complete-set") return;
     expect(retried.newlyPublished).toEqual([]);
     expect(retried.preExisting).toHaveLength(1);
-    const verified = await createArtifactReader(setup.artifactRepository, setup.artifactRoot).read(retried.ref);
+    const verified = await createArtifactReader(setup.artifactRepository, setup.artifactRoot).read(
+      retried.ref
+    );
     expect(verified).toMatchObject({ kind: "Verified", snapshot: { kind: "complete-set" } });
   });
 
@@ -165,7 +176,9 @@ describe("build application and append-only artifact store", () => {
     });
     if (partial.kind !== "PublicationIncomplete") return;
     expect("ref" in partial).toBe(false);
-    await expect(createArtifactReader(artifactRepository, artifactRoot).read(checked.candidate)).resolves.toMatchObject({
+    await expect(
+      createArtifactReader(artifactRepository, artifactRoot).read(checked.candidate)
+    ).resolves.toMatchObject({
       kind: "Missing",
     });
     expect(await directoryNames(join(artifactRoot, "sets", "sha256"))).toEqual([]);
@@ -174,7 +187,9 @@ describe("build application and append-only artifact store", () => {
     const firstRef = partial.newlyPublished[0]!;
     const firstReleaseRoot = join(artifactRoot, "releases", "sha256", firstRef.artifactDigest);
     const firstReleaseBeforeRetry = await snapshotTree(firstReleaseRoot);
-    await expect(createArtifactReader(artifactRepository, artifactRoot).read(firstRef)).resolves.toMatchObject({
+    await expect(
+      createArtifactReader(artifactRepository, artifactRoot).read(firstRef)
+    ).resolves.toMatchObject({
       kind: "Verified",
       snapshot: { kind: "release" },
     });
@@ -187,14 +202,18 @@ describe("build application and append-only artifact store", () => {
       preExisting: [firstRef],
     });
     expect(await snapshotTree(firstReleaseRoot)).toEqual(firstReleaseBeforeRetry);
-    const complete = await createArtifactReader(artifactRepository, artifactRoot).read(checked.candidate);
+    const complete = await createArtifactReader(artifactRepository, artifactRoot).read(
+      checked.candidate
+    );
     expect(complete).toMatchObject({
       kind: "Verified",
       snapshot: { kind: "complete-set", members: [{}, {}] },
     });
 
     const completeTree = await snapshotTree(artifactRoot);
-    await expect(applications.build({ contentWorkspace: repository.policy, mode })).resolves.toEqual({
+    await expect(
+      applications.build({ contentWorkspace: repository.policy, mode })
+    ).resolves.toEqual({
       kind: "ReadOnlyConverged",
       mode,
       ref: checked.candidate,
@@ -244,13 +263,15 @@ describe("build application and append-only artifact store", () => {
 
     expect(result).toMatchObject({
       kind: "RejectedBeforePublication",
-      issues: [{
-        kind: "SourceEligibility",
-        issue: {
-          code: "ReleaseInputMismatch",
-          detail: expect.stringContaining("SKILL_OWNERSHIP_MISMATCH"),
+      issues: [
+        {
+          kind: "SourceEligibility",
+          issue: {
+            code: "ReleaseInputMismatch",
+            detail: expect.stringContaining("SKILL_OWNERSHIP_MISMATCH"),
+          },
         },
-      }],
+      ],
     });
     expect(artifactOperations).toBe(0);
   });
@@ -261,7 +282,10 @@ describe("build application and append-only artifact store", () => {
     const releaseInput = JSON.parse(await readFile(repository.releaseInputFile, "utf8")) as any;
     releaseInput.body.members[0].payload.manifest[0].path = "agent-pack/skills/example/SKILL.md";
     await writeFile(repository.releaseInputFile, `${JSON.stringify(releaseInput)}\n`);
-    const policy = await commitGeneratedGitRepository(repository, "relabel toolkit agent pack as agent plugin");
+    const policy = await commitGeneratedGitRepository(
+      repository,
+      "relabel toolkit agent pack as agent plugin"
+    );
 
     let artifactOperations = 0;
     const artifactRepository: ArtifactRepositoryAsyncPort = {
@@ -297,13 +321,15 @@ describe("build application and append-only artifact store", () => {
 
     expect(result).toMatchObject({
       kind: "RejectedBeforePublication",
-      issues: [{
-        kind: "SourceEligibility",
-        issue: {
-          code: "ReleaseInputMismatch",
-          detail: expect.stringContaining("FORBIDDEN_UNIT_KIND"),
+      issues: [
+        {
+          kind: "SourceEligibility",
+          issue: {
+            code: "ReleaseInputMismatch",
+            detail: expect.stringContaining("FORBIDDEN_UNIT_KIND"),
+          },
         },
-      }],
+      ],
     });
     expect(artifactOperations).toBe(0);
   });
@@ -311,7 +337,10 @@ describe("build application and append-only artifact store", () => {
   it("revalidates after staging and rejects a source race without a durable digest path", async () => {
     const setup = await buildSetup();
     const mode = { kind: "targeted", pluginId: setup.repository.pluginId } as const;
-    const check = await setup.applications.check({ contentWorkspace: setup.repository.policy, mode });
+    const check = await setup.applications.check({
+      contentWorkspace: setup.repository.policy,
+      mode,
+    });
     expect(check.kind).toBe("EligibleReport");
     if (check.kind !== "EligibleReport" || check.candidate.kind !== "release") return;
 
@@ -325,12 +354,9 @@ describe("build application and append-only artifact store", () => {
       },
     });
     expect(result.kind).toBe("RejectedBeforePublication");
-    await expect(lstat(join(
-      setup.artifactRoot,
-      "releases",
-      "sha256",
-      check.candidate.artifactDigest,
-    ))).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(
+      lstat(join(setup.artifactRoot, "releases", "sha256", check.candidate.artifactDigest))
+    ).rejects.toMatchObject({ code: "ENOENT" });
     expect(await directoryNames(join(setup.artifactRoot, ".staging"))).toEqual([]);
   });
 
@@ -353,8 +379,12 @@ describe("build application and append-only artifact store", () => {
     await removeOwnedFixtureRoot(fixture);
     fixture = undefined;
     const before = await snapshotTree(artifactRoot);
-    await expect(createArtifactReader(artifactRepository, artifactRoot).read(built.ref)).resolves.toMatchObject({ kind: "Verified" });
-    await expect(applications.build({ contentWorkspace: repository.policy, mode })).resolves.toMatchObject({
+    await expect(
+      createArtifactReader(artifactRepository, artifactRoot).read(built.ref)
+    ).resolves.toMatchObject({ kind: "Verified" });
+    await expect(
+      applications.build({ contentWorkspace: repository.policy, mode })
+    ).resolves.toMatchObject({
       kind: "RejectedBeforePublication",
     });
     expect(await snapshotTree(artifactRoot)).toEqual(before);
@@ -363,7 +393,10 @@ describe("build application and append-only artifact store", () => {
   it("rejects mode tampering and returns no usable payload snapshot", async () => {
     const setup = await buildSetup();
     const mode = { kind: "targeted", pluginId: setup.repository.pluginId } as const;
-    const built = await setup.applications.build({ contentWorkspace: setup.repository.policy, mode });
+    const built = await setup.applications.build({
+      contentWorkspace: setup.repository.policy,
+      mode,
+    });
     expect(built.kind).toBe("Published");
     if (built.kind !== "Published" || built.ref.kind !== "release") return;
     const payload = join(
@@ -374,10 +407,12 @@ describe("build application and append-only artifact store", () => {
       "payload",
       "skills",
       "example",
-      "SKILL.md",
+      "SKILL.md"
     );
     await chmod(payload, 0o600);
-    const read = await createArtifactReader(setup.artifactRepository, setup.artifactRoot).read(built.ref);
+    const read = await createArtifactReader(setup.artifactRepository, setup.artifactRoot).read(
+      built.ref
+    );
     expect(read).toMatchObject({ kind: "Mismatch", issues: [{ code: "ModeMismatch" }] });
   });
 
@@ -431,16 +466,19 @@ describe("build application and append-only artifact store", () => {
     expect(initial.kind).toBe("Verified");
     if (initial.kind !== "Verified" || initial.snapshot.kind !== "complete-set") return;
     const memberRef = initial.snapshot.members[0]!.ref;
-    await chmod(join(
-      setup.artifactRoot,
-      "releases",
-      "sha256",
-      memberRef.artifactDigest,
-      "payload",
-      "skills",
-      "example",
-      "SKILL.md",
-    ), 0o600);
+    await chmod(
+      join(
+        setup.artifactRoot,
+        "releases",
+        "sha256",
+        memberRef.artifactDigest,
+        "payload",
+        "skills",
+        "example",
+        "SKILL.md"
+      ),
+      0o600
+    );
     await expect(reader.read(built.ref)).resolves.toMatchObject({
       kind: "Mismatch",
       issues: [{ code: "ReferenceMismatch" }],
@@ -477,7 +515,10 @@ describe("build application and append-only artifact store", () => {
       newlyPublished: [],
       preExisting: [{ kind: "release" }],
     });
-    const converged = await setup.applications.build({ contentWorkspace: setup.repository.policy, mode });
+    const converged = await setup.applications.build({
+      contentWorkspace: setup.repository.policy,
+      mode,
+    });
     expect(converged).toMatchObject({ kind: "ReadOnlyConverged", ref: { kind: "complete-set" } });
   });
 
@@ -524,30 +565,33 @@ describe("build application and append-only artifact store", () => {
     });
   });
 
-  it.each(["AfterMemberPublication", "BeforeSetPublication"] as const)(
-    "classifies a concurrent exact set winner at %s as final success",
-    async (boundary) => {
-      const setup = await buildSetup();
-      const mode = { kind: "complete-set" } as const;
-      let concurrentResult: Awaited<ReturnType<typeof setup.applications.build>> | undefined;
-      const first = await setup.applications.build({
-        contentWorkspace: setup.repository.policy,
-        mode,
-        async failpoint(event) {
-          if (event.kind !== boundary) return;
-          concurrentResult = await setup.applications.build({ contentWorkspace: setup.repository.policy, mode });
-          throw new Error(`first builder stopped at ${boundary}`);
-        },
-      });
-      expect(concurrentResult).toMatchObject({ kind: "Published", ref: { kind: "complete-set" } });
-      expect(first).toMatchObject({
-        kind: "Published",
-        ref: concurrentResult?.kind === "Published" ? concurrentResult.ref : undefined,
-        newlyPublished: [{ kind: "release" }],
-      });
-      expect("requestedSetRefAbsent" in first).toBe(false);
-    },
-  );
+  it.each([
+    "AfterMemberPublication",
+    "BeforeSetPublication",
+  ] as const)("classifies a concurrent exact set winner at %s as final success", async (boundary) => {
+    const setup = await buildSetup();
+    const mode = { kind: "complete-set" } as const;
+    let concurrentResult: Awaited<ReturnType<typeof setup.applications.build>> | undefined;
+    const first = await setup.applications.build({
+      contentWorkspace: setup.repository.policy,
+      mode,
+      async failpoint(event) {
+        if (event.kind !== boundary) return;
+        concurrentResult = await setup.applications.build({
+          contentWorkspace: setup.repository.policy,
+          mode,
+        });
+        throw new Error(`first builder stopped at ${boundary}`);
+      },
+    });
+    expect(concurrentResult).toMatchObject({ kind: "Published", ref: { kind: "complete-set" } });
+    expect(first).toMatchObject({
+      kind: "Published",
+      ref: concurrentResult?.kind === "Published" ? concurrentResult.ref : undefined,
+      newlyPublished: [{ kind: "release" }],
+    });
+    expect("requestedSetRefAbsent" in first).toBe(false);
+  });
 
   it("reclassifies a rejected member path when a concurrent builder commits the exact set", async () => {
     const setup = await buildSetup();
@@ -568,7 +612,10 @@ describe("build application and append-only artifact store", () => {
         if (!isReleaseAddress(input.address)) {
           return await setup.artifactRepository.publishTree(input);
         }
-        concurrentResult = await setup.applications.build({ contentWorkspace: setup.repository.policy, mode });
+        concurrentResult = await setup.applications.build({
+          contentWorkspace: setup.repository.policy,
+          mode,
+        });
         return {
           kind: "Rejected",
           address: input.address,
@@ -581,73 +628,81 @@ describe("build application and append-only artifact store", () => {
       artifactRepository: rejectingRepository,
       artifactRepositoryRoot: setup.artifactRoot,
     });
-    const result = await racingApplication.build({ contentWorkspace: setup.repository.policy, mode });
+    const result = await racingApplication.build({
+      contentWorkspace: setup.repository.policy,
+      mode,
+    });
     expect(concurrentResult).toMatchObject({ kind: "Published", ref: { kind: "complete-set" } });
     expect(result).toMatchObject({ kind: "ReadOnlyConverged", ref: { kind: "complete-set" } });
     expect("requestedSetRefAbsent" in result).toBe(false);
   });
 
-  it.each(["mismatch", "read-failure"] as const)(
-    "reports a %s while classifying an incomplete set as unsettled, never absent",
-    async (outcome) => {
-      fixture = await createOwnedFixtureRoot();
-      const repository = await createGeneratedGitRepository(fixture);
-      const contentWorkspace = await realContentWorkspace();
-      let setReads = 0;
-      const artifactRepository: ArtifactRepositoryAsyncPort = {
-        async locateTree({ address }) {
-          return { kind: "Missing", address };
-        },
-        async readTree({ address }) {
-          if (isReleaseAddress(address)) return { kind: "Missing", address };
-          setReads += 1;
-          if (setReads === 1) return { kind: "Missing", address };
-          if (outcome === "read-failure") throw new Error("injected set-marker read failure");
-          return {
-            kind: "Mismatch",
-            address,
-            issues: [{ code: "ReadFailure", detail: "injected set-marker mismatch" }],
-          };
-        },
-        async publishTree({ address }) {
-          if (!isReleaseAddress(address)) throw new Error("set publication must remain closed");
-          return {
-            kind: "Rejected",
-            address,
-            failure: "injected member rejection",
-          };
-        },
-        async readEvidence({ address }) {
-          return { kind: "Missing", address };
-        },
-        async publishEvidence({ address }) {
-          return { kind: "Rejected", address, failure: "evidence publication must remain closed" };
-        },
-      };
-      const result = await createReleaseLifecycleApplications({
-        contentWorkspace,
-        artifactRepository,
-        artifactRepositoryRoot: join(fixture.path, "artifacts-v1"),
-      }).build({
-        contentWorkspace: repository.policy,
-        mode: { kind: "complete-set" },
-      });
-      expect(result).toMatchObject({
-        kind: "PublicationUnsettled",
-        requestedFinalCommit: "Unknown",
-        issues: [
-          { kind: "ArtifactStore", detail: "injected member rejection" },
-          { kind: "ArtifactStore", detail: expect.stringContaining("set-marker") },
-        ],
-      });
-      expect("requestedSetRefAbsent" in result).toBe(false);
-    },
-  );
+  it.each([
+    "mismatch",
+    "read-failure",
+  ] as const)("reports a %s while classifying an incomplete set as unsettled, never absent", async (outcome) => {
+    fixture = await createOwnedFixtureRoot();
+    const repository = await createGeneratedGitRepository(fixture);
+    const contentWorkspace = await realContentWorkspace();
+    let setReads = 0;
+    const artifactRepository: ArtifactRepositoryAsyncPort = {
+      async locateTree({ address }) {
+        return { kind: "Missing", address };
+      },
+      async readTree({ address }) {
+        if (isReleaseAddress(address)) return { kind: "Missing", address };
+        setReads += 1;
+        if (setReads === 1) return { kind: "Missing", address };
+        if (outcome === "read-failure") throw new Error("injected set-marker read failure");
+        return {
+          kind: "Mismatch",
+          address,
+          issues: [{ code: "ReadFailure", detail: "injected set-marker mismatch" }],
+        };
+      },
+      async publishTree({ address }) {
+        if (!isReleaseAddress(address)) throw new Error("set publication must remain closed");
+        return {
+          kind: "Rejected",
+          address,
+          failure: "injected member rejection",
+        };
+      },
+      async readEvidence({ address }) {
+        return { kind: "Missing", address };
+      },
+      async publishEvidence({ address }) {
+        return { kind: "Rejected", address, failure: "evidence publication must remain closed" };
+      },
+    };
+    const result = await createReleaseLifecycleApplications({
+      contentWorkspace,
+      artifactRepository,
+      artifactRepositoryRoot: join(fixture.path, "artifacts-v1"),
+    }).build({
+      contentWorkspace: repository.policy,
+      mode: { kind: "complete-set" },
+    });
+    expect(result).toMatchObject({
+      kind: "PublicationUnsettled",
+      requestedFinalCommit: "Unknown",
+      issues: [
+        { kind: "ArtifactStore", detail: "injected member rejection" },
+        { kind: "ArtifactStore", detail: expect.stringContaining("set-marker") },
+      ],
+    });
+    expect("requestedSetRefAbsent" in result).toBe(false);
+  });
 
   async function buildSetup() {
     fixture = await createOwnedFixtureRoot();
     const repository = await createGeneratedGitRepository(fixture);
-    const artifactRoot = join(fixture.path, "fresh", "controller", "artifacts-v1") as ArtifactStoreRoot;
+    const artifactRoot = join(
+      fixture.path,
+      "fresh",
+      "controller",
+      "artifacts-v1"
+    ) as ArtifactStoreRoot;
     const contentWorkspace = await realContentWorkspace();
     const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
     return {
@@ -681,14 +736,14 @@ function createReleaseLifecycleApplications(options: {
     artifactRepositoryRoot: options.artifactRepositoryRoot,
   });
   const client = createLifecycleTestClient(releaseDeps);
-  type BuildRequest = Parameters<typeof client.releases.build>[0] & Readonly<{
-    failpoint?: BuildFailpoint;
-    artifactFailpoint?: ArtifactStoreFailpoint;
-  }>;
+  type BuildRequest = Parameters<typeof client.releases.build>[0] &
+    Readonly<{
+      failpoint?: BuildFailpoint;
+      artifactFailpoint?: ArtifactStoreFailpoint;
+    }>;
   return Object.freeze({
-    check: (request: Parameters<typeof client.releases.check>[0]) => (
-      client.releases.check(request, testInvocation)
-    ),
+    check: (request: Parameters<typeof client.releases.check>[0]) =>
+      client.releases.check(request, testInvocation),
     build: (request: BuildRequest) => {
       const { failpoint, artifactFailpoint, ...input } = request;
       const buildClient = createLifecycleTestClient({
@@ -701,18 +756,19 @@ function createReleaseLifecycleApplications(options: {
   });
 }
 
-function createArtifactReader(
-  repository: ArtifactRepositoryAsyncPort,
-  repositoryRoot: string,
-) {
+function createArtifactReader(repository: ArtifactRepositoryAsyncPort, repositoryRoot: string) {
   return createResourceArtifactReader({ repository, repositoryRoot });
 }
 
-function isReleaseAddress(address: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0]["address"]): boolean {
+function isReleaseAddress(
+  address: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0]["address"]
+): boolean {
   return address.namespace[0] === "releases";
 }
 
-function isSetAddress(address: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0]["address"]): boolean {
+function isSetAddress(
+  address: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0]["address"]
+): boolean {
   return address.namespace[0] === "sets";
 }
 
@@ -748,7 +804,13 @@ async function walk(root: string, parent: string, result: SnapshotTreeEntry[]): 
     const path = join(root, ...relativePath.split("/"));
     const status = await lstat(path, { bigint: true });
     if (status.isDirectory()) {
-      result.push({ path: relativePath, kind: "directory", mode: status.mode, mtimeNs: status.mtimeNs, ino: status.ino });
+      result.push({
+        path: relativePath,
+        kind: "directory",
+        mode: status.mode,
+        mtimeNs: status.mtimeNs,
+        ino: status.ino,
+      });
       await walk(root, relativePath, result);
     } else {
       const bytes = await readFile(path);
@@ -762,5 +824,5 @@ async function walk(root: string, parent: string, result: SnapshotTreeEntry[]): 
       });
     }
   }
-  result.sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
+  result.sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0));
 }

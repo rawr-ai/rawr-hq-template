@@ -22,7 +22,12 @@ export type CompleteOrderedWritePlan = Readonly<{
 }>;
 
 export type AuthoringPlanIssue = Readonly<{
-  code: "INVALID_DESTINATION" | "INVALID_PLAN" | "IDENTITY_COLLISION" | "PATH_COLLISION" | "PLAN_INSPECTION_FAILED";
+  code:
+    | "INVALID_DESTINATION"
+    | "INVALID_PLAN"
+    | "IDENTITY_COLLISION"
+    | "PATH_COLLISION"
+    | "PLAN_INSPECTION_FAILED";
   path: string;
   message: string;
 }>;
@@ -96,13 +101,13 @@ export function verifiedDestinationRoot(root: string): VerifiedDestinationRoot {
 export function qualifiedRelativePath(input: string): QualifiedRelativePath {
   const normalized = path.posix.normalize(input);
   if (
-    input.length === 0
-    || input !== normalized
-    || input.startsWith("/")
-    || input.endsWith("/")
-    || input.includes("\\")
-    || input.split("/").some((segment) => segment === "" || segment === "." || segment === "..")
-    || /[\u0000-\u001f\u007f]/u.test(input)
+    input.length === 0 ||
+    input !== normalized ||
+    input.startsWith("/") ||
+    input.endsWith("/") ||
+    input.includes("\\") ||
+    input.split("/").some((segment) => segment === "" || segment === "." || segment === "..") ||
+    /[\u0000-\u001f\u007f]/u.test(input)
   ) {
     throw new Error(`Authoring path is not a qualified relative path: ${input}`);
   }
@@ -122,15 +127,16 @@ export function qualifiedByteWrite(relativePath: string, bytes: Uint8Array): Qua
 
 export function completeOrderedWritePlan(
   destinationRoot: VerifiedDestinationRoot,
-  writes: readonly QualifiedWrite[],
+  writes: readonly QualifiedWrite[]
 ): CompleteOrderedWritePlan {
   if (writes.length === 0) throw new Error("An authoring plan must contain at least one write");
-  const ordered = [...writes].sort((left, right) => (
+  const ordered = [...writes].sort((left, right) =>
     left.relativePath < right.relativePath ? -1 : left.relativePath > right.relativePath ? 1 : 0
-  ));
+  );
   const seen = new Set<string>();
   for (const write of ordered) {
-    if (seen.has(write.relativePath)) throw new Error(`Duplicate authoring path: ${write.relativePath}`);
+    if (seen.has(write.relativePath))
+      throw new Error(`Duplicate authoring path: ${write.relativePath}`);
     seen.add(write.relativePath);
   }
   return Object.freeze({
@@ -139,9 +145,7 @@ export function completeOrderedWritePlan(
   });
 }
 
-export function rejectedAuthoringResult(
-  issues: NonEmptyAuthoringPlanIssues,
-): AuthoringRejected {
+export function rejectedAuthoringResult(issues: NonEmptyAuthoringPlanIssues): AuthoringRejected {
   return Object.freeze({
     kind: "AuthoringRejected",
     issues: Object.freeze([...issues]) as NonEmptyAuthoringPlanIssues,
@@ -149,7 +153,9 @@ export function rejectedAuthoringResult(
   });
 }
 
-export function authoringResultView(result: AuthoringExecutionResult): Readonly<Record<string, unknown>> {
+export function authoringResultView(
+  result: AuthoringExecutionResult
+): Readonly<Record<string, unknown>> {
   if (result.kind === "AuthoringRejected") {
     return Object.freeze({ kind: result.kind, issues: result.issues, write: result.write });
   }

@@ -39,9 +39,9 @@ export type LifecycleOperationRequest =
   | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>
   | Readonly<{ operation: "releases.releaseInputRecord"; input: ReleaseInputRecordRequest }>
   | Readonly<{
-    operation: "releases.refreshReleaseInput";
-    input: ReleaseInputRefreshRequest;
-  }>
+      operation: "releases.refreshReleaseInput";
+      input: ReleaseInputRefreshRequest;
+    }>
   | Readonly<{ operation: "releases.build"; input: BuildRequest }>
   | Readonly<{ operation: "vendors.status"; input: VendorStatusRequest }>
   | Readonly<{ operation: "vendors.update"; input: VendorUpdateRequest }>
@@ -52,9 +52,9 @@ export type LifecycleOperationRequest =
   | Readonly<{ operation: "providers.canonicalStatus"; input: StatusRequest }>
   | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>
   | Readonly<{
-    operation: "governance.currentMainSelection";
-    input: CurrentMainSelectionRequest;
-  }>;
+      operation: "governance.currentMainSelection";
+      input: CurrentMainSelectionRequest;
+    }>;
 
 type LifecycleCallOptions = NonNullable<Parameters<Client["releases"]["check"]>[1]>;
 
@@ -72,7 +72,7 @@ export function parseControllerProjectionBinding(
     git?: boolean;
     providers?: readonly ("claude" | "codex")[];
     admittedProviders?: readonly ("claude" | "codex")[];
-  }> = {},
+  }> = {}
 ): ControllerProjectionBinding {
   const gitExecutable = optionalAbsoluteExecutable(flags["git-executable"], "--git-executable");
   if (requirements.git && gitExecutable === undefined) {
@@ -86,12 +86,16 @@ export function parseControllerProjectionBinding(
   const admittedProviders = requirements.admittedProviders ?? requiredProviders;
   for (const provider of requiredProviders) {
     if (providerExecutables[provider] === undefined) {
-      throw new LifecycleInputError(`--provider-executable ${provider}=<absolute-path> is required`);
+      throw new LifecycleInputError(
+        `--provider-executable ${provider}=<absolute-path> is required`
+      );
     }
   }
   for (const provider of Object.keys(providerExecutables) as ("claude" | "codex")[]) {
     if (!admittedProviders.includes(provider)) {
-      throw new LifecycleInputError(`--provider-executable ${provider}=... is not selected by this command`);
+      throw new LifecycleInputError(
+        `--provider-executable ${provider}=... is not selected by this command`
+      );
     }
   }
   return Object.freeze({
@@ -103,7 +107,7 @@ export function parseControllerProjectionBinding(
 export async function projectLifecycleOperation(
   request: LifecycleOperationRequest,
   binding: ControllerProjectionBinding,
-  factory: LifecycleClientFactory = createProductionLifecycleClient,
+  factory: LifecycleClientFactory = createProductionLifecycleClient
 ): Promise<unknown> {
   await preflightLifecycleAuthority(request, binding);
   return invokeLifecycleProcedure(request, binding, factory);
@@ -112,7 +116,7 @@ export async function projectLifecycleOperation(
 export async function invokeLifecycleProcedure(
   request: LifecycleOperationRequest,
   binding: ControllerProjectionBinding,
-  factory: LifecycleClientFactory,
+  factory: LifecycleClientFactory
 ): Promise<unknown> {
   const callOptions = invocation(request.operation);
   switch (request.operation) {
@@ -177,10 +181,7 @@ export async function invokeLifecycleProcedure(
   }
 }
 
-export function lifecycleResultExitCode(
-  operation: LifecycleOperation,
-  result: unknown,
-): 0 | 1 | 2 {
+export function lifecycleResultExitCode(operation: LifecycleOperation, result: unknown): 0 | 1 | 2 {
   const record = asRecord(result);
   if (operation === "providers.canonicalStatus") {
     if (record.ok !== true || !Array.isArray(record.value)) return 1;
@@ -190,22 +191,31 @@ export function lifecycleResultExitCode(
   if (operation === "providers.canonicalSync") {
     if (record.ok !== true) return 1;
     const value = asRecord(record.value);
-    if (Array.isArray(value.targets)
-      && value.targets.some((entry) => asRecord(entry).status === "BLOCKED_SELECTION")) return 2;
-    return value.status === "Blocked" || value.status === "Failed" || value.status === "PartialFailure" ? 1 : 0;
+    if (
+      Array.isArray(value.targets) &&
+      value.targets.some((entry) => asRecord(entry).status === "BLOCKED_SELECTION")
+    )
+      return 2;
+    return value.status === "Blocked" ||
+      value.status === "Failed" ||
+      value.status === "PartialFailure"
+      ? 1
+      : 0;
   }
   if (operation.startsWith("providers.")) {
     if (record.ok !== true) return 1;
     const value = asRecord(record.value);
-    return value.status === "Blocked" || value.status === "Failed" || value.status === "PartialFailure" ? 1 : 0;
+    return value.status === "Blocked" ||
+      value.status === "Failed" ||
+      value.status === "PartialFailure"
+      ? 1
+      : 0;
   }
-  if (
-    operation === "releases.releaseInputRecord"
-    || operation === "governance.currentMainRecord"
-  ) return record.ok === true ? 0 : 1;
+  if (operation === "releases.releaseInputRecord" || operation === "governance.currentMainRecord")
+    return record.ok === true ? 0 : 1;
   if (operation === "releases.refreshReleaseInput") {
-    return record.kind === "ReleaseInputCandidateReady"
-      || record.kind === "ReleaseInputReadOnlyConverged"
+    return record.kind === "ReleaseInputCandidateReady" ||
+      record.kind === "ReleaseInputReadOnlyConverged"
       ? 0
       : 1;
   }
@@ -233,19 +243,21 @@ export function lifecycleResultExitCode(
 
 export function projectLifecycleResultForOutput(
   operation: LifecycleOperation,
-  result: unknown,
+  result: unknown
 ): unknown {
   if (
-    operation !== "releases.releaseInputRecord"
-    && operation !== "releases.refreshReleaseInput"
-    && operation !== "governance.currentMainRecord"
-  ) return result;
+    operation !== "releases.releaseInputRecord" &&
+    operation !== "releases.refreshReleaseInput" &&
+    operation !== "governance.currentMainRecord"
+  )
+    return result;
   const record = asRecord(result);
-  const value = operation === "releases.refreshReleaseInput"
-    ? record
-    : record.ok === true
-      ? asRecord(record.value)
-      : undefined;
+  const value =
+    operation === "releases.refreshReleaseInput"
+      ? record
+      : record.ok === true
+        ? asRecord(record.value)
+        : undefined;
   if (value === undefined) return result;
   if (!(value.bytes instanceof Uint8Array)) return result;
   const { bytes, ...projectedValue } = value;
@@ -272,14 +284,14 @@ function invocation(operation: LifecycleOperation) {
 
 async function preflightLifecycleAuthority(
   request: LifecycleOperationRequest,
-  binding: ControllerProjectionBinding,
+  binding: ControllerProjectionBinding
 ): Promise<void> {
   await preflightBindingAuthority(binding, providerHomes(request));
 }
 
 async function preflightBindingAuthority(
   binding: ControllerProjectionBinding,
-  homes: readonly ControllerProviderHomeAuthority[],
+  homes: readonly ControllerProviderHomeAuthority[]
 ): Promise<void> {
   const executables: ControllerExecutableAuthority[] = [];
   if (binding.gitExecutable !== undefined) {
@@ -300,7 +312,9 @@ async function preflightBindingAuthority(
   throw new LifecycleAuthorityBindingError(result.failure.detail);
 }
 
-function providerHomes(request: LifecycleOperationRequest): readonly ControllerProviderHomeAuthority[] {
+function providerHomes(
+  request: LifecycleOperationRequest
+): readonly ControllerProviderHomeAuthority[] {
   switch (request.operation) {
     case "providers.targetedTest":
     case "providers.completeTest":
@@ -319,7 +333,8 @@ function parseProviderExecutables(input: unknown): Partial<Record<"claude" | "co
   const values = input === undefined ? [] : Array.isArray(input) ? input : [input];
   const result: Partial<Record<"claude" | "codex", string>> = {};
   for (const raw of values) {
-    if (typeof raw !== "string") throw new LifecycleInputError("--provider-executable must be a string");
+    if (typeof raw !== "string")
+      throw new LifecycleInputError("--provider-executable must be a string");
     const separator = raw.indexOf("=");
     if (separator <= 0 || separator !== raw.lastIndexOf("=")) {
       throw new LifecycleInputError("--provider-executable must use provider=absolute-path");
@@ -328,7 +343,8 @@ function parseProviderExecutables(input: unknown): Partial<Record<"claude" | "co
     if (provider !== "claude" && provider !== "codex") {
       throw new LifecycleInputError("--provider-executable provider must be claude or codex");
     }
-    if (result[provider] !== undefined) throw new LifecycleInputError(`Duplicate ${provider} executable binding`);
+    if (result[provider] !== undefined)
+      throw new LifecycleInputError(`Duplicate ${provider} executable binding`);
     result[provider] = requireAbsoluteExecutable(raw.slice(separator + 1), "--provider-executable");
   }
   return result;
@@ -343,10 +359,10 @@ function requireAbsoluteExecutable(input: unknown, label: string): string {
     throw new LifecycleInputError(`${label} must be a bounded absolute executable path`);
   }
   if (
-    !path.isAbsolute(input)
-    || path.normalize(input) !== input
-    || path.resolve(input) !== input
-    || input === path.parse(input).root
+    !path.isAbsolute(input) ||
+    path.normalize(input) !== input ||
+    path.resolve(input) !== input ||
+    input === path.parse(input).root
   ) {
     throw new LifecycleInputError(`${label} must be an absolute lexically canonical non-root path`);
   }
@@ -355,7 +371,7 @@ function requireAbsoluteExecutable(input: unknown, label: string): string {
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
+    ? (value as Record<string, unknown>)
     : {};
 }
 

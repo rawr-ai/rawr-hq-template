@@ -49,7 +49,7 @@ export function parsePackageManifest(text: string): ManifestParseResult<ParsedPa
     if (!Array.isArray(declaration) || declaration.length > 0) {
       return malformed(
         "nested-plugin-declaration",
-        `External extension declares nested oclif.${field}`,
+        `External extension declares nested oclif.${field}`
       );
     }
   }
@@ -58,7 +58,7 @@ export function parsePackageManifest(text: string): ManifestParseResult<ParsedPa
   if (!commandRoot.ok) {
     return malformed(
       "package-manifest-malformed",
-      "External extension requires one bounded static oclif.commands directory",
+      "External extension requires one bounded static oclif.commands directory"
     );
   }
   const topics = parseTopics(parsed.value.oclif.topics);
@@ -85,7 +85,7 @@ export function parseCommandManifest(text: string): ManifestParseResult<ParsedCo
   if (!version || !isRecord(parsed.value.commands)) {
     return malformed(
       "command-manifest-malformed",
-      "Static command manifest requires a version and commands object",
+      "Static command manifest requires a version and commands object"
     );
   }
 
@@ -100,7 +100,7 @@ export function parseCommandManifest(text: string): ManifestParseResult<ParsedCo
     if (!key || !id || key !== id) {
       return malformed(
         "command-manifest-malformed",
-        `Command key ${manifestKey} does not match a valid static id`,
+        `Command key ${manifestKey} does not match a valid static id`
       );
     }
     const aliases = parseCommandIdArray(value.aliases, `aliases for ${id}`);
@@ -112,7 +112,7 @@ export function parseCommandManifest(text: string): ManifestParseResult<ParsedCo
     if (typeof value.isESM !== "boolean") {
       return malformed(
         "command-manifest-malformed",
-        `Command ${id} lacks the static isESM cache discriminator`,
+        `Command ${id} lacks the static isESM cache discriminator`
       );
     }
 
@@ -140,7 +140,7 @@ export function parseCommandManifest(text: string): ManifestParseResult<ParsedCo
         if (prior) {
           return malformed(
             "command-manifest-malformed",
-            `${kind} ${identity} duplicates ${prior} inside the extension`,
+            `${kind} ${identity} duplicates ${prior} inside the extension`
           );
         }
         declaredIdentities.set(identity, `${kind} on ${id}`);
@@ -172,18 +172,18 @@ function parseHooks(value: unknown): ManifestParseResult<readonly HookDeclaratio
       const rawTarget = typeof target === "string" ? target : declarationRecord?.target;
       const relativePath = parsePathString(rawTarget);
       if (!relativePath.ok) {
-        return malformed("package-manifest-malformed", `Hook ${event} has an invalid static target`);
+        return malformed(
+          "package-manifest-malformed",
+          `Hook ${event} has an invalid static target`
+        );
       }
       let identifier = "default";
       if (declarationRecord?.identifier !== undefined) {
         const declaredIdentifier = nonEmptyString(declarationRecord.identifier);
-        if (
-          declaredIdentifier === null
-          || declaredIdentifier !== declarationRecord.identifier
-        ) {
+        if (declaredIdentifier === null || declaredIdentifier !== declarationRecord.identifier) {
           return malformed(
             "package-manifest-malformed",
-            `Hook ${event} has an invalid static identifier`,
+            `Hook ${event} has an invalid static identifier`
           );
         }
         identifier = declaredIdentifier;
@@ -196,7 +196,7 @@ function parseHooks(value: unknown): ManifestParseResult<readonly HookDeclaratio
 
 function parseTopics(
   value: unknown,
-  parent: readonly string[] = [],
+  parent: readonly string[] = []
 ): ManifestParseResult<readonly string[]> {
   if (value === undefined) return { ok: true, value: [] };
 
@@ -238,7 +238,10 @@ function parseTopics(
   return { ok: true, value: topics.sort() };
 }
 
-function parseCommandIdArray(value: unknown, label: string): ManifestParseResult<readonly string[]> {
+function parseCommandIdArray(
+  value: unknown,
+  label: string
+): ManifestParseResult<readonly string[]> {
   if (value === undefined) return { ok: true, value: [] };
   if (!Array.isArray(value)) {
     return malformed("command-manifest-malformed", `${label} must be an array`);
@@ -266,7 +269,7 @@ function parseRelativePath(value: unknown): ManifestParseResult<readonly string[
   if (!Array.isArray(value) || value.some((part) => typeof part !== "string")) {
     return malformed(
       "command-manifest-malformed",
-      "Command relativePath must be a static string array",
+      "Command relativePath must be a static string array"
     );
   }
   return parsePathString(value.join("/"));
@@ -287,7 +290,7 @@ function parsePathString(value: unknown): ManifestParseResult<readonly string[]>
 function parseObject(
   text: string,
   code: QuarantineCode,
-  label: string,
+  label: string
 ): ManifestParseResult<Record<string, unknown>> {
   try {
     const value: unknown = JSON.parse(text);

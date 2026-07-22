@@ -76,12 +76,18 @@ describe("middleware dedupe", () => {
     const context = createRequestScopedBoundaryContext(request, TEST_DEPS);
 
     expect(() =>
-      assertHeavyMiddlewareDedupeMarkers(context, RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY.requiredMarkers)
+      assertHeavyMiddlewareDedupeMarkers(
+        context,
+        RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY.requiredMarkers
+      )
     ).toThrowError(/missing required heavy middleware dedupe marker/);
 
     resolveRequestScopedMiddlewareValue(request, RPC_AUTH_MARKER, () => true);
     expect(() =>
-      assertHeavyMiddlewareDedupeMarkers(context, RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY.requiredMarkers)
+      assertHeavyMiddlewareDedupeMarkers(
+        context,
+        RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY.requiredMarkers
+      )
     ).not.toThrow();
   });
 
@@ -101,7 +107,7 @@ describe("middleware dedupe", () => {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: { title: "Dedupe proof" } }),
-      }),
+      })
     );
 
     expect(res.status).toBe(200);
@@ -126,7 +132,7 @@ describe("middleware dedupe", () => {
         method: "POST",
         headers: FIRST_PARTY_RPC_HEADERS,
         body: JSON.stringify({ json: { id: "dedupe-failure" } }),
-      }),
+      })
     );
 
     expect(res.status).toBeGreaterThanOrEqual(500);

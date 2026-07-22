@@ -5,14 +5,7 @@ import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function HostRoutes() {
-  return (
-    <Router
-      routes={[
-        { path: "/", element: <HomePage /> },
-      ]}
-      fallback={<NotFoundPage />}
-    />
-  );
+  return <Router routes={[{ path: "/", element: <HomePage /> }]} fallback={<NotFoundPage />} />;
 }
 
 export function App() {
@@ -21,9 +14,7 @@ export function App() {
       sidebar={
         <SidebarNav
           title="RAWR HQ-Template"
-          items={[
-            { label: "Home", to: "/" },
-          ]}
+          items={[{ label: "Home", to: "/" }]}
           utilityLinks={[
             { label: "Inngest Runs", href: "http://localhost:8288/runs" },
             { label: "HyperDX", href: "http://localhost:8080/" },

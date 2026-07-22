@@ -92,7 +92,8 @@ export default class WorkflowHarden extends RawrCommand {
       this.outputResult(result, {
         flags: baseFlags,
         human: () => {
-          for (const step of planned) this.log(`[dry-run] ${step.name}: ${step.cmd} ${step.args.join(" ")}`);
+          for (const step of planned)
+            this.log(`[dry-run] ${step.name}: ${step.cmd} ${step.args.join(" ")}`);
         },
       });
       return;
@@ -130,7 +131,8 @@ export default class WorkflowHarden extends RawrCommand {
         exitCode: publicStep.exitCode,
       });
 
-      if (publicStep.name === "snapshot") recordArtifact(path.join(snapshotOutDir, "snapshot.json"));
+      if (publicStep.name === "snapshot")
+        recordArtifact(path.join(snapshotOutDir, "snapshot.json"));
       if (publicStep.name === "posture") recordArtifact(path.join(postureOutDir, "latest.json"));
 
       if (publicStep.name === "posture") {
@@ -217,7 +219,7 @@ async function tryWriteWorkflowSnippet(input: {
   try {
     await createHqOpsClient(input.repoRoot).journal.writeSnippet(
       snippet,
-      createHqOpsCallOptions("cli.workflow.harden"),
+      createHqOpsCallOptions("cli.workflow.harden")
     );
   } catch {
     // best-effort

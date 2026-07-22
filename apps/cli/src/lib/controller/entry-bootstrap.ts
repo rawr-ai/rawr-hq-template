@@ -4,10 +4,7 @@ import { NativePluginSubprocessPort } from "../external-extensions/native-subpro
 import { NodeExternalExtensionPreparationPort } from "../external-extensions/node-preparation";
 import { ExternalExtensionService } from "../external-extensions/service";
 import { reservedSurfaceFromControllerManifest } from "./reserved-surface";
-import {
-  restoreControllerOperatorContext,
-  type ControllerRuntimeContext,
-} from "./runtime-context";
+import { restoreControllerOperatorContext, type ControllerRuntimeContext } from "./runtime-context";
 
 export async function prepareControllerInvocation(input: {
   argv: readonly string[];
@@ -30,10 +27,11 @@ export async function prepareControllerInvocation(input: {
     cliRoot: input.context.cliRoot,
     reserved,
     expectedDataDir: input.context.dataRoot,
-    createRuntime: ({ base, state }) => new ExternalExtensionService(
-      state,
-      new NodeExternalExtensionPreparationPort(reserved),
-      new NativePluginSubprocessPort(input.context, base.dataDir),
-    ),
+    createRuntime: ({ base, state }) =>
+      new ExternalExtensionService(
+        state,
+        new NodeExternalExtensionPreparationPort(reserved),
+        new NativePluginSubprocessPort(input.context, base.dataDir)
+      ),
   });
 }

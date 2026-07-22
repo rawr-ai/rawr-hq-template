@@ -30,7 +30,8 @@ type PostureSummary = {
 };
 
 export default class SecurityPosture extends RawrCommand {
-  static description = "Generate a deterministic security posture summary from the latest security report";
+  static description =
+    "Generate a deterministic security posture summary from the latest security report";
 
   static flags = {
     ...RawrCommand.baseFlags,
@@ -65,7 +66,9 @@ export default class SecurityPosture extends RawrCommand {
     }
 
     const posture = buildPosture(report, Number.isFinite(limit) ? limit : 20);
-    const outDir = outArg ? path.resolve(process.cwd(), outArg) : path.join(workspaceRoot, ".rawr", "security", "posture");
+    const outDir = outArg
+      ? path.resolve(process.cwd(), outArg)
+      : path.join(workspaceRoot, ".rawr", "security", "posture");
     const jsonPath = path.join(outDir, "latest.json");
     const mdPath = path.join(outDir, "latest.md");
 
@@ -129,18 +132,25 @@ function buildPosture(report: SecurityReport, limit: number): PostureSummary {
 function suggestNextActions(byKind: Record<string, number>): string[] {
   const actions: string[] = [];
   if ((byKind.secret ?? 0) > 0) {
-    actions.push("Remove committed secrets; rotate exposed credentials; add scanners + pre-commit guardrails.");
+    actions.push(
+      "Remove committed secrets; rotate exposed credentials; add scanners + pre-commit guardrails."
+    );
   }
   if ((byKind.vulnerability ?? 0) > 0) {
-    actions.push("Review vulnerabilities; upgrade dependencies; re-run `rawr security check` until clean.");
+    actions.push(
+      "Review vulnerabilities; upgrade dependencies; re-run `rawr security check` until clean."
+    );
   }
   if ((byKind.untrustedDependencyScripts ?? 0) > 0) {
-    actions.push("Audit install scripts; tighten bun trustedDependencies; prefer pinned, reviewed packages.");
+    actions.push(
+      "Audit install scripts; tighten bun trustedDependencies; prefer pinned, reviewed packages."
+    );
   }
   if ((byKind.toolError ?? 0) > 0) {
     actions.push("Fix security tooling errors; posture is only as good as the checks that ran.");
   }
-  if (actions.length === 0) actions.push("No findings: keep checks on, and re-run after dependency changes.");
+  if (actions.length === 0)
+    actions.push("No findings: keep checks on, and re-run after dependency changes.");
   return actions;
 }
 
@@ -150,7 +160,8 @@ function renderMarkdown(posture: PostureSummary): string {
   lines.push("");
   lines.push(`- ok: ${posture.ok ? "true" : "false"}`);
   lines.push(`- generatedAt: ${posture.timestamp}`);
-  if (posture.sourceReportTimestamp) lines.push(`- sourceReportTimestamp: ${posture.sourceReportTimestamp}`);
+  if (posture.sourceReportTimestamp)
+    lines.push(`- sourceReportTimestamp: ${posture.sourceReportTimestamp}`);
   lines.push("");
   lines.push("## Counts");
   lines.push("");

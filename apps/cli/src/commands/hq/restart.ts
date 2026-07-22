@@ -1,7 +1,12 @@
 import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { buildHqLifecyclePlan, runHqLifecycle } from "../../lib/hq";
-import { HQ_OBSERVABILITY_MODES, HQ_OPEN_POLICIES, type HqObservabilityMode, type HqOpenPolicy } from "../../lib/hq-status";
+import {
+  HQ_OBSERVABILITY_MODES,
+  HQ_OPEN_POLICIES,
+  type HqObservabilityMode,
+  type HqOpenPolicy,
+} from "../../lib/hq-status";
 import { findWorkspaceRoot } from "@rawr/core";
 
 export default class HqRestart extends RawrCommand {

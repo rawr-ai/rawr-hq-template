@@ -13,7 +13,10 @@ const rawrHqHostSeam = createTestingRawrHostSeam();
 
 describe("orpc openapi", () => {
   it("generates published openapi paths only for the public example-todo surface", async () => {
-    const spec = (await generateOrpcOpenApiSpec("http://localhost:3000", rawrHqHostSeam.realization.orpc.published.router)) as {
+    const spec = (await generateOrpcOpenApiSpec(
+      "http://localhost:3000",
+      rawrHqHostSeam.realization.orpc.published.router
+    )) as {
       openapi?: string;
       paths?: Record<string, unknown>;
     };

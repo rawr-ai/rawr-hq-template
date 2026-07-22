@@ -51,12 +51,14 @@ export class NodeStaticEvidencePort implements StaticEvidencePort {
       const status = await handle.stat();
       if (!status.isFile() || status.size > MAX_STATIC_EVIDENCE_TEXT_BYTES) {
         throw new Error(
-          `Static evidence must be a regular file no larger than ${MAX_STATIC_EVIDENCE_TEXT_BYTES} bytes`,
+          `Static evidence must be a regular file no larger than ${MAX_STATIC_EVIDENCE_TEXT_BYTES} bytes`
         );
       }
       const bytes = await handle.readFile();
       if (bytes.byteLength > MAX_STATIC_EVIDENCE_TEXT_BYTES) {
-        throw new Error(`Static evidence exceeded ${MAX_STATIC_EVIDENCE_TEXT_BYTES} bytes while reading`);
+        throw new Error(
+          `Static evidence exceeded ${MAX_STATIC_EVIDENCE_TEXT_BYTES} bytes while reading`
+        );
       }
       return { ok: true, value: bytes.toString("utf8") };
     } catch (error) {

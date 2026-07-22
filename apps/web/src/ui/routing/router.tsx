@@ -21,11 +21,7 @@ function subscribeToPathname(onStoreChange: () => void) {
 }
 
 export function usePathname() {
-  return useSyncExternalStore(
-    subscribeToPathname,
-    getPathnameSnapshot,
-    () => "/",
-  );
+  return useSyncExternalStore(subscribeToPathname, getPathnameSnapshot, () => "/");
 }
 
 export function navigate(to: string, options: NavigateOptions = {}) {
@@ -39,10 +35,7 @@ export function navigate(to: string, options: NavigateOptions = {}) {
   window.dispatchEvent(new Event(ROUTER_EVENT));
 }
 
-export type LinkProps = Omit<
-  React.AnchorHTMLAttributes<HTMLAnchorElement>,
-  "href" | "onClick"
-> & {
+export type LinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "onClick"> & {
   to: string;
   replace?: boolean;
   onClick?: React.MouseEventHandler<HTMLAnchorElement>;
@@ -96,4 +89,3 @@ export function Router({
 
   return fallback;
 }
-

@@ -1,9 +1,7 @@
 import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "@rawr/agent-plugin-lifecycle/release";
 import { describe, expect, it } from "vitest";
 
-import {
-  readReleaseInputRecordStdin,
-} from "../../src/commands/agent/plugins/check";
+import { readReleaseInputRecordStdin } from "../../src/commands/agent/plugins/check";
 
 describe("release-input record stdin boundary", () => {
   it("refuses terminal input before reading a chunk", async () => {
@@ -23,10 +21,7 @@ describe("release-input record stdin boundary", () => {
   it("admits the exact protocol ceiling across chunks", async () => {
     const result = await readReleaseInputRecordStdin({
       isTTY: false,
-      chunks: chunks(
-        new Uint8Array(MAX_RELEASE_INPUT_ENVELOPE_BYTES - 1),
-        new Uint8Array(1),
-      ),
+      chunks: chunks(new Uint8Array(MAX_RELEASE_INPUT_ENVELOPE_BYTES - 1), new Uint8Array(1)),
     });
 
     expect(result.ok).toBe(true);
@@ -37,10 +32,7 @@ describe("release-input record stdin boundary", () => {
   it("refuses the first byte beyond the protocol ceiling across chunks", async () => {
     const result = await readReleaseInputRecordStdin({
       isTTY: false,
-      chunks: chunks(
-        new Uint8Array(MAX_RELEASE_INPUT_ENVELOPE_BYTES),
-        new Uint8Array(1),
-      ),
+      chunks: chunks(new Uint8Array(MAX_RELEASE_INPUT_ENVELOPE_BYTES), new Uint8Array(1)),
     });
 
     expect(result).toMatchObject({ ok: false, message: expect.stringContaining("stdin exceeds") });

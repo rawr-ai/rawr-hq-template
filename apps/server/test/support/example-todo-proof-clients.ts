@@ -1,7 +1,5 @@
 import type { Client as ExampleTodoClient } from "@rawr/example-todo";
-import {
-  createTestingExampleTodoServiceClient,
-} from "../../src/testing-host";
+import { createTestingExampleTodoServiceClient } from "../../src/testing-host";
 
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
@@ -64,7 +62,7 @@ export function createExampleTodoProofClients(args: {
             method: "POST",
             headers: FIRST_PARTY_RPC_HEADERS,
             body: JSON.stringify({ json: input }),
-          }),
+          })
         );
 
         return ((await response.json()) as ExampleTodoRpcTaskPayload).json as ExampleTodoTask;
@@ -75,7 +73,7 @@ export function createExampleTodoProofClients(args: {
             method: "POST",
             headers: FIRST_PARTY_RPC_HEADERS,
             body: JSON.stringify({ json: input }),
-          }),
+          })
         );
 
         return ((await response.json()) as ExampleTodoRpcTaskPayload).json as ExampleTodoTask;
@@ -88,7 +86,7 @@ export function createExampleTodoProofClients(args: {
             method: "POST",
             headers: EXTERNAL_OPENAPI_HEADERS,
             body: JSON.stringify(input),
-          }),
+          })
         );
 
         return (await response.json()) as ExampleTodoTask;
@@ -98,7 +96,7 @@ export function createExampleTodoProofClients(args: {
           new Request(`${baseUrl}/api/orpc/exampleTodo/tasks/${input.id}`, {
             method: "GET",
             headers: EXTERNAL_OPENAPI_HEADERS,
-          }),
+          })
         );
 
         return (await response.json()) as ExampleTodoTask;

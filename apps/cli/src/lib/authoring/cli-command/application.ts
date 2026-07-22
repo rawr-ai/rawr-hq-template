@@ -16,39 +16,51 @@ import { officialCommandWritePlan } from "./template";
 
 const TEMPLATE_ORIGIN = "https://github.com/rawr-ai/rawr-hq-template.git";
 
-export type OfficialCommandWorkspaceVerifier = (
-  cwd: string,
-) => Promise<VerifiedDestinationRoot>;
+export type OfficialCommandWorkspaceVerifier = (cwd: string) => Promise<VerifiedDestinationRoot>;
 
 export async function authorOfficialCommand(
   request: OfficialCommandAuthoringRequest,
   dependencies: Readonly<{
     verifyWorkspace?: OfficialCommandWorkspaceVerifier;
     port?: QualifiedWritePort;
-  }> = {},
+  }> = {}
 ): Promise<AuthoringExecutionResult> {
   try {
-    const root = await (dependencies.verifyWorkspace ?? verifyOfficialCommandTemplateWorkspace)(request.workspaceCwd);
+    const root = await (dependencies.verifyWorkspace ?? verifyOfficialCommandTemplateWorkspace)(
+      request.workspaceCwd
+    );
     return await executeAuthoringPlan({
       plan: officialCommandWritePlan(root, request),
       dryRun: request.dryRun,
       port: dependencies.port ?? new NodeQualifiedWritePort(),
     });
   } catch (error) {
-    return rejectedAuthoringResult([Object.freeze({
-      code: "INVALID_DESTINATION",
-      path: "workspace",
-      message: errorMessage(error),
-    })]);
+    return rejectedAuthoringResult([
+      Object.freeze({
+        code: "INVALID_DESTINATION",
+        path: "workspace",
+        message: errorMessage(error),
+      }),
+    ]);
   }
 }
 
-export async function verifyOfficialCommandTemplateWorkspace(cwd: string): Promise<VerifiedDestinationRoot> {
+export async function verifyOfficialCommandTemplateWorkspace(
+  cwd: string
+): Promise<VerifiedDestinationRoot> {
   const root = gitText(cwd, ["rev-parse", "--show-toplevel"]);
   const origin = gitText(root, ["remote", "get-url", "origin"]);
-  const rootPackage = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8")) as { name?: unknown };
-  const cliPackage = JSON.parse(await fs.readFile(path.join(root, "apps", "cli", "package.json"), "utf8")) as { name?: unknown };
-  if (origin !== TEMPLATE_ORIGIN || rootPackage.name !== "rawr-hq-template" || cliPackage.name !== "@rawr/cli") {
+  const rootPackage = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8")) as {
+    name?: unknown;
+  };
+  const cliPackage = JSON.parse(
+    await fs.readFile(path.join(root, "apps", "cli", "package.json"), "utf8")
+  ) as { name?: unknown };
+  if (
+    origin !== TEMPLATE_ORIGIN ||
+    rootPackage.name !== "rawr-hq-template" ||
+    cliPackage.name !== "@rawr/cli"
+  ) {
     throw new Error("Official command authoring requires the exact RAWR HQ-Template workspace");
   }
   return verifiedDestinationRoot(path.resolve(root));

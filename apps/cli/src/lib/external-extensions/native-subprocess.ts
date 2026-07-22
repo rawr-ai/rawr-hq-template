@@ -16,8 +16,10 @@ import {
   type NativeMutationRequest,
 } from "./native-mutation";
 
-export const NATIVE_MANAGER_ENTRY_RELATIVE_PATH = "dist/lib/external-extensions/native-manager-entry.js";
-export const NATIVE_IMPORT_SANDBOX_RELATIVE_PATH = "dist/lib/external-extensions/native-import-sandbox.js";
+export const NATIVE_MANAGER_ENTRY_RELATIVE_PATH =
+  "dist/lib/external-extensions/native-manager-entry.js";
+export const NATIVE_IMPORT_SANDBOX_RELATIVE_PATH =
+  "dist/lib/external-extensions/native-import-sandbox.js";
 
 const SCRUBBED_ENVIRONMENT_KEYS = Object.freeze([
   "BUN_OPTIONS",
@@ -65,7 +67,7 @@ export class NativePluginSubprocessPort implements NativeMutationPort {
       "cliMemberRoot" | "cliRoot" | "dataRoot" | "digest" | "releaseRoot" | "runtimePath"
     >,
     nativeDataDir: string,
-    options: NativePluginSubprocessOptions = {},
+    options: NativePluginSubprocessOptions = {}
   ) {
     if (!path.isAbsolute(nativeDataDir) || path.normalize(nativeDataDir) !== nativeDataDir) {
       throw new Error("NATIVE_MANAGER_DATA_DIR_INVALID");
@@ -80,16 +82,16 @@ export class NativePluginSubprocessPort implements NativeMutationPort {
 
     const entryPath = await requireReleaseFile(
       this.context.releaseRoot,
-      path.join(this.context.cliMemberRoot, NATIVE_MANAGER_ENTRY_RELATIVE_PATH),
+      path.join(this.context.cliMemberRoot, NATIVE_MANAGER_ENTRY_RELATIVE_PATH)
     );
     const sandboxPath = await requireReleaseFile(
       this.context.releaseRoot,
-      path.join(this.context.cliMemberRoot, NATIVE_IMPORT_SANDBOX_RELATIVE_PATH),
+      path.join(this.context.cliMemberRoot, NATIVE_IMPORT_SANDBOX_RELATIVE_PATH)
     );
     await mkdir(this.temporaryParent, { recursive: true });
     const canonicalTemporaryParent = await realpath(this.temporaryParent);
     const temporaryRoot = await realpath(
-      await mkdtemp(path.join(canonicalTemporaryParent, NATIVE_MANAGER_TEMPORARY_PREFIX)),
+      await mkdtemp(path.join(canonicalTemporaryParent, NATIVE_MANAGER_TEMPORARY_PREFIX))
     );
     const temporaryName = path.basename(temporaryRoot);
 
@@ -109,7 +111,10 @@ export class NativePluginSubprocessPort implements NativeMutationPort {
         mkdir(bin),
         mkdir(temporaryDirectory),
       ]);
-      await symlink(this.context.runtimePath, path.join(bin, process.platform === "win32" ? "node.exe" : "node"));
+      await symlink(
+        this.context.runtimePath,
+        path.join(bin, process.platform === "win32" ? "node.exe" : "node")
+      );
 
       const invocation = {
         protocolVersion: NATIVE_MANAGER_PROTOCOL_VERSION,
@@ -151,7 +156,7 @@ export class NativePluginSubprocessPort implements NativeMutationPort {
       await removeNativeManagerTemporaryRoot(
         canonicalTemporaryParent,
         temporaryRoot,
-        temporaryName,
+        temporaryName
       );
       cleanup = Object.freeze({ owner: "native-manager-temporary", status: "completed" });
     } catch (error) {
@@ -169,22 +174,22 @@ export class NativePluginSubprocessPort implements NativeMutationPort {
 async function removeNativeManagerTemporaryRoot(
   parent: string,
   temporaryRoot: string,
-  expectedName: string,
+  expectedName: string
 ): Promise<void> {
   const normalizedParent = path.resolve(parent);
   const normalizedRoot = path.resolve(temporaryRoot);
   const parentStatus = await lstat(normalizedParent);
   if (
-    !parentStatus.isDirectory()
-    || parentStatus.isSymbolicLink()
-    || await realpath(normalizedParent) !== normalizedParent
+    !parentStatus.isDirectory() ||
+    parentStatus.isSymbolicLink() ||
+    (await realpath(normalizedParent)) !== normalizedParent
   ) {
     throw new Error(`refusing invalid native-manager temporary parent: ${parent}`);
   }
   if (
-    path.dirname(normalizedRoot) !== normalizedParent
-    || path.basename(normalizedRoot) !== expectedName
-    || !expectedName.startsWith(NATIVE_MANAGER_TEMPORARY_PREFIX)
+    path.dirname(normalizedRoot) !== normalizedParent ||
+    path.basename(normalizedRoot) !== expectedName ||
+    !expectedName.startsWith(NATIVE_MANAGER_TEMPORARY_PREFIX)
   ) {
     throw new Error(`refusing unowned native-manager temporary root: ${temporaryRoot}`);
   }
@@ -199,7 +204,7 @@ async function removeNativeManagerTemporaryRoot(
   if (!status.isDirectory() || status.isSymbolicLink()) {
     throw new Error(`refusing aliased native-manager temporary root: ${temporaryRoot}`);
   }
-  if (await realpath(normalizedRoot) !== normalizedRoot) {
+  if ((await realpath(normalizedRoot)) !== normalizedRoot) {
     throw new Error(`refusing noncanonical native-manager temporary root: ${temporaryRoot}`);
   }
   await rm(normalizedRoot, { recursive: true });
@@ -232,9 +237,11 @@ export class NodeNativeSubprocessRunner implements NativeSubprocessRunner {
         } else if (code === 0) {
           resolveProcess();
         } else {
-          rejectProcess(new Error(
-          `NATIVE_MANAGER_SUBPROCESS_FAILED:${signal ?? String(code)}${stderr ? `:${stderr.trim()}` : ""}`,
-          ));
+          rejectProcess(
+            new Error(
+              `NATIVE_MANAGER_SUBPROCESS_FAILED:${signal ?? String(code)}${stderr ? `:${stderr.trim()}` : ""}`
+            )
+          );
         }
       });
       child.stdin?.once("error", (error) => {
@@ -294,7 +301,10 @@ async function requireReleaseFile(releaseRoot: string, requestedPath: string): P
   if (!entry.isFile() || entry.nlink !== 1) throw new Error("NATIVE_MANAGER_RELEASE_FILE_INVALID");
   const canonicalReleaseRoot = await realpath(releaseRoot);
   const canonicalPath = await realpath(requestedPath);
-  if (!isContained(canonicalReleaseRoot, requestedPath) || !isContained(canonicalReleaseRoot, canonicalPath)) {
+  if (
+    !isContained(canonicalReleaseRoot, requestedPath) ||
+    !isContained(canonicalReleaseRoot, canonicalPath)
+  ) {
     throw new Error("NATIVE_MANAGER_RELEASE_FILE_OUTSIDE_CONTROLLER");
   }
   return canonicalPath;
@@ -302,14 +312,14 @@ async function requireReleaseFile(releaseRoot: string, requestedPath: string): P
 
 function isContained(root: string, candidate: string): boolean {
   const relative = path.relative(root, candidate);
-  return relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative));
+  return (
+    relative === "" ||
+    (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative))
+  );
 }
 
 function isMissing(error: unknown): boolean {
-  return typeof error === "object"
-    && error !== null
-    && "code" in error
-    && error.code === "ENOENT";
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }
 
 function errorMessage(error: unknown): string {

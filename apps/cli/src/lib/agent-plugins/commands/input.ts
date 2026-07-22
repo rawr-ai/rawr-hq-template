@@ -44,14 +44,14 @@ export type CheckOperationRequest =
   | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>
   | Readonly<{ operation: "releases.releaseInputRecord"; input: ReleaseInputRecordRequest }>
   | Readonly<{
-    operation: "releases.refreshReleaseInput";
-    input: ReleaseInputRefreshRequest;
-  }>
+      operation: "releases.refreshReleaseInput";
+      input: ReleaseInputRefreshRequest;
+    }>
   | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>
   | Readonly<{
-    operation: "governance.currentMainSelection";
-    input: CurrentMainSelectionRequest;
-  }>;
+      operation: "governance.currentMainSelection";
+      input: CurrentMainSelectionRequest;
+    }>;
 
 export class LifecycleInputError extends Error {
   readonly code = "LIFECYCLE_INPUT_INVALID";
@@ -130,35 +130,27 @@ const CHECK_MODE_ADMITTED_FLAGS = {
     "plugin-root",
     "member",
   ],
-  "current-main-record": [
-    "current-main-body-json",
-    "current-main-envelope-json",
-  ],
-  "current-main-selection": [
-    "content-workspace",
-    "repository-identity",
-  ],
+  "current-main-record": ["current-main-body-json", "current-main-envelope-json"],
+  "current-main-selection": ["content-workspace", "repository-identity"],
 } as const satisfies Readonly<Record<CheckMode, readonly CheckDomainFlag[]>>;
 
-const CHECK_DOMAIN_FLAGS = Object.freeze(
-  [...new Set(Object.values(CHECK_MODE_ADMITTED_FLAGS).flat())],
-) satisfies readonly CheckDomainFlag[];
+const CHECK_DOMAIN_FLAGS = Object.freeze([
+  ...new Set(Object.values(CHECK_MODE_ADMITTED_FLAGS).flat()),
+]) satisfies readonly CheckDomainFlag[];
 
 export function parseCheckOperationRequest(
   flags: RawFlags,
-  releaseInputRecordBytes?: Uint8Array,
+  releaseInputRecordBytes?: Uint8Array
 ): CheckOperationRequest {
-  const mode = flags.mode === undefined
-    ? "release"
-    : requireLiteral(
-      flags.mode,
-      "--mode",
-      CHECK_MODES,
-    );
+  const mode =
+    flags.mode === undefined ? "release" : requireLiteral(flags.mode, "--mode", CHECK_MODES);
   switch (mode) {
     case "release":
       assertCheckDomain(flags, CHECK_MODE_ADMITTED_FLAGS.release);
-      return Object.freeze({ operation: "releases.check", input: parseReleaseWorkspaceRequest(flags) });
+      return Object.freeze({
+        operation: "releases.check",
+        input: parseReleaseWorkspaceRequest(flags),
+      });
     case "repository-staged":
       assertCheckDomain(flags, CHECK_MODE_ADMITTED_FLAGS["repository-staged"]);
       return Object.freeze({
@@ -193,8 +185,7 @@ export function parseCheckOperationRequest(
             requireStringList(flags.member, "--member", {
               maxItems: MAX_RELEASE_MEMBERS,
               unique: true,
-            }).map((memberId) =>
-              requireReleaseValue(parsePluginId(memberId, "--member"))),
+            }).map((memberId) => requireReleaseValue(parsePluginId(memberId, "--member")))
           ),
         }),
       });
@@ -212,11 +203,11 @@ export function parseCheckOperationRequest(
           locator: Object.freeze({
             workspacePath: requireCanonicalAbsolute(
               flags["content-workspace"],
-              "--content-workspace",
+              "--content-workspace"
             ),
             expectedRepositoryIdentity: requireString(
               flags["repository-identity"],
-              "--repository-identity",
+              "--repository-identity"
             ),
           }),
         }),
@@ -224,15 +215,13 @@ export function parseCheckOperationRequest(
   }
 }
 
-function parseReleaseInputRecordRequest(
-  bytes: Uint8Array | undefined,
-): ReleaseInputRecordRequest {
+function parseReleaseInputRecordRequest(bytes: Uint8Array | undefined): ReleaseInputRecordRequest {
   if (bytes === undefined || bytes.byteLength === 0) {
     throw new LifecycleInputError("--mode release-input-record requires nonempty stdin");
   }
   if (bytes.byteLength > MAX_RELEASE_INPUT_ENVELOPE_BYTES) {
     throw new LifecycleInputError(
-      `--mode release-input-record stdin exceeds ${MAX_RELEASE_INPUT_ENVELOPE_BYTES} bytes`,
+      `--mode release-input-record stdin exceeds ${MAX_RELEASE_INPUT_ENVELOPE_BYTES} bytes`
     );
   }
 
@@ -245,10 +234,10 @@ function parseReleaseInputRecordRequest(
   }
 
   if (
-    body !== null
-    && typeof body === "object"
-    && !Array.isArray(body)
-    && (Object.hasOwn(body, "releaseInputDigest") || Object.hasOwn(body, "body"))
+    body !== null &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    (Object.hasOwn(body, "releaseInputDigest") || Object.hasOwn(body, "body"))
   ) {
     return Object.freeze({ kind: "validate-envelope", bytes });
   }
@@ -258,15 +247,15 @@ function parseReleaseInputRecordRequest(
 function parseCurrentMainRecordRequest(flags: RawFlags): CurrentMainRecordRequest {
   const bodyJson = optionalBoundedJsonText(
     flags["current-main-body-json"],
-    "--current-main-body-json",
+    "--current-main-body-json"
   );
   const envelopeJson = optionalBoundedJsonText(
     flags["current-main-envelope-json"],
-    "--current-main-envelope-json",
+    "--current-main-envelope-json"
   );
   if ((bodyJson === undefined) === (envelopeJson === undefined)) {
     throw new LifecycleInputError(
-      "Select exactly one of --current-main-body-json or --current-main-envelope-json",
+      "Select exactly one of --current-main-body-json or --current-main-envelope-json"
     );
   }
   if (bodyJson !== undefined) {
@@ -367,17 +356,22 @@ export function parseArtifactHandle(input: unknown): ArtifactRef {
     const releaseDigest = parseReleaseDigest(release[1], "artifact.releaseDigest");
     const artifactDigest = parseArtifactDigest(release[2], "artifact.artifactDigest");
     if (!releaseDigest.ok || !artifactDigest.ok) {
-      throw new LifecycleInputError("Artifact handle contains an invalid release or artifact digest");
+      throw new LifecycleInputError(
+        "Artifact handle contains an invalid release or artifact digest"
+      );
     }
     return createReleaseArtifactRef(releaseDigest.value, artifactDigest.value);
   }
   const complete = /^release-set:(rs1_[0-9a-f]{64})$/u.exec(handle);
   if (complete !== null) {
     const releaseSetDigest = parseReleaseSetDigest(complete[1], "artifact.releaseSetDigest");
-    if (!releaseSetDigest.ok) throw new LifecycleInputError("Artifact handle contains an invalid release-set digest");
+    if (!releaseSetDigest.ok)
+      throw new LifecycleInputError("Artifact handle contains an invalid release-set digest");
     return createCompleteSetArtifactRef(releaseSetDigest.value);
   }
-  throw new LifecycleInputError("Artifact handle must be canonical release:<rd1>:<ad1> or release-set:<rs1>");
+  throw new LifecycleInputError(
+    "Artifact handle must be canonical release:<rd1>:<ad1> or release-set:<rs1>"
+  );
 }
 
 function parseReleaseWorkspaceRequest(flags: RawFlags): CheckRequest {
@@ -386,9 +380,8 @@ function parseReleaseWorkspaceRequest(flags: RawFlags): CheckRequest {
   if ((plugin === undefined) === !completeSet) {
     throw new LifecycleInputError("Select exactly one of --plugin or --complete-set");
   }
-  const mode = plugin === undefined
-    ? Object.freeze({ kind: "complete-set" as const })
-    : targetMode(plugin);
+  const mode =
+    plugin === undefined ? Object.freeze({ kind: "complete-set" as const }) : targetMode(plugin);
   return Object.freeze({
     contentWorkspace: releaseContentWorkspacePolicy(flags),
     mode,
@@ -404,30 +397,29 @@ function releaseContentWorkspacePolicy(flags: RawFlags): CheckRequest["contentWo
 }
 
 function stagedContentWorkspacePolicy(
-  flags: RawFlags,
+  flags: RawFlags
 ): Extract<RepositoryCheckRequest, Readonly<{ kind: "staged" }>>["contentWorkspace"] {
   return Object.freeze({
     locator: requireCanonicalAbsolute(flags["content-workspace"], "--content-workspace"),
     repositoryIdentity: requireReleaseValue(
-      parseRepositoryIdentity(flags["repository-identity"], "--repository-identity"),
+      parseRepositoryIdentity(flags["repository-identity"], "--repository-identity")
     ),
     contentAuthority: requireReleaseValue(
-      parseContentAuthority(flags["content-authority"], "--content-authority"),
+      parseContentAuthority(flags["content-authority"], "--content-authority")
     ),
     remoteName: requireString(flags["remote-name"], "--remote-name"),
     remoteUrl: requireString(flags["remote-url"], "--remote-url"),
     refName: requireString(flags.ref, "--ref"),
     releaseInputPath: requireReleaseValue(
-      parseReleaseRelativePath(flags["release-input"], "--release-input"),
+      parseReleaseRelativePath(flags["release-input"], "--release-input")
     ),
-    pluginRoot: requireReleaseValue(parseReleaseRelativePath(flags["plugin-root"], "--plugin-root")),
+    pluginRoot: requireReleaseValue(
+      parseReleaseRelativePath(flags["plugin-root"], "--plugin-root")
+    ),
   });
 }
 
-function assertCheckDomain(
-  flags: RawFlags,
-  admitted: readonly CheckDomainFlag[],
-): void {
+function assertCheckDomain(flags: RawFlags, admitted: readonly CheckDomainFlag[]): void {
   const admittedSet = new Set<string>(admitted);
   for (const flag of CHECK_DOMAIN_FLAGS) {
     const value = flags[flag];
@@ -480,14 +472,17 @@ function parseProviderTargets(input: unknown): TargetedTestRequest["targets"] {
   const identities = new Set<string>();
   for (const target of targets) {
     const identity = `${target.provider}\0${target.home}`;
-    if (identities.has(identity)) throw new LifecycleInputError("--target contains a duplicate canonical target");
+    if (identities.has(identity))
+      throw new LifecycleInputError("--target contains a duplicate canonical target");
     identities.add(identity);
   }
   return targets;
 }
 
 function requireReleaseValue<T>(
-  result: Readonly<{ ok: true; value: T }> | Readonly<{ ok: false; issues: readonly { message: string }[] }>,
+  result:
+    | Readonly<{ ok: true; value: T }>
+    | Readonly<{ ok: false; issues: readonly { message: string }[] }>
 ): T {
   if (!result.ok) {
     throw new LifecycleInputError(result.issues[0]?.message ?? "Invalid release identity");
@@ -498,13 +493,14 @@ function requireReleaseValue<T>(
 function requireCanonicalAbsolute(
   input: unknown,
   label: string,
-  options: Readonly<{ allowFile?: boolean }> = {},
+  options: Readonly<{ allowFile?: boolean }> = {}
 ): string {
   const value = requireString(input, label, { max: 16_384 });
   if (!path.isAbsolute(value) || path.normalize(value) !== value || path.resolve(value) !== value) {
     throw new LifecycleInputError(`${label} must be an absolute lexically canonical path`);
   }
-  if (value === path.parse(value).root) throw new LifecycleInputError(`${label} may not be a filesystem root`);
+  if (value === path.parse(value).root)
+    throw new LifecycleInputError(`${label} may not be a filesystem root`);
   if (!options.allowFile && path.basename(value).length === 0) {
     throw new LifecycleInputError(`${label} must identify a concrete authority root`);
   }
@@ -514,11 +510,11 @@ function requireCanonicalAbsolute(
 function requireRelativePath(input: unknown, label: string): string {
   const value = requireString(input, label, { max: 4_096 });
   if (
-    value.includes("\\")
-    || value.startsWith("/")
-    || value.endsWith("/")
-    || path.posix.normalize(value) !== value
-    || value.split("/").some((segment) => segment === "" || segment === "." || segment === "..")
+    value.includes("\\") ||
+    value.startsWith("/") ||
+    value.endsWith("/") ||
+    path.posix.normalize(value) !== value ||
+    value.split("/").some((segment) => segment === "" || segment === "." || segment === "..")
   ) {
     throw new LifecycleInputError(`${label} must be a canonical repository-relative path`);
   }
@@ -536,16 +532,18 @@ function requireGitObject(input: unknown, label: string): string {
 function requireString(
   input: unknown,
   label: string,
-  options: Readonly<{ max?: number }> = {},
+  options: Readonly<{ max?: number }> = {}
 ): string {
   const max = options.max ?? 512;
   if (
-    typeof input !== "string"
-    || input.length === 0
-    || input.length > max
-    || /[\u0000-\u001f\u007f]/u.test(input)
+    typeof input !== "string" ||
+    input.length === 0 ||
+    input.length > max ||
+    /[\u0000-\u001f\u007f]/u.test(input)
   ) {
-    throw new LifecycleInputError(`${label} must be a bounded nonempty string without control characters`);
+    throw new LifecycleInputError(
+      `${label} must be a bounded nonempty string without control characters`
+    );
   }
   return input;
 }
@@ -557,10 +555,10 @@ function optionalString(input: unknown, label: string): string | undefined {
 function optionalBoundedJsonText(input: unknown, label: string): string | undefined {
   if (input === undefined) return undefined;
   if (
-    typeof input !== "string"
-    || input.length === 0
-    || new TextEncoder().encode(input).byteLength > 2 * 1024 * 1024
-    || input.includes("\0")
+    typeof input !== "string" ||
+    input.length === 0 ||
+    new TextEncoder().encode(input).byteLength > 2 * 1024 * 1024 ||
+    input.includes("\0")
   ) {
     throw new LifecycleInputError(`${label} must be bounded nonempty UTF-8 JSON text`);
   }
@@ -570,7 +568,7 @@ function optionalBoundedJsonText(input: unknown, label: string): string | undefi
 function requireStringList(
   input: unknown,
   label: string,
-  options: Readonly<{ maxItems?: number; unique?: boolean }> = {},
+  options: Readonly<{ maxItems?: number; unique?: boolean }> = {}
 ): string[] {
   const values = optionalStringList(input, label);
   if (values.length === 0) throw new LifecycleInputError(`${label} must be provided at least once`);
@@ -592,7 +590,7 @@ function optionalStringList(input: unknown, label: string): string[] {
 function requireLiteral<const T extends readonly string[]>(
   input: unknown,
   label: string,
-  allowed: T,
+  allowed: T
 ): T[number] {
   const value = requireString(input, label);
   if (!allowed.includes(value)) {

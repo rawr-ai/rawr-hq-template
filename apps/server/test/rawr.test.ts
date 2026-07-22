@@ -42,7 +42,9 @@ function collectProcedureRoutes(node: unknown, namespace: string[] = []): string
 describe("rawr server routes", () => {
   it("does not expose retired web modules or an interim composition endpoint", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot });
-    const retiredWeb = await app.handle(new Request("http://localhost/rawr/plugins/web/fixture-web"));
+    const retiredWeb = await app.handle(
+      new Request("http://localhost/rawr/plugins/web/fixture-web")
+    );
     const interimComposition = await app.handle(new Request("http://localhost/rawr/composition"));
 
     expect(retiredWeb.status).toBe(404);
@@ -51,7 +53,7 @@ describe("rawr server routes", () => {
 
   it("ignores stale persisted enablement without migrating or deleting it", async () => {
     const tempRoot = await fs.realpath(
-      await fs.mkdtemp(path.join(os.tmpdir(), "rawr-stale-membership-")),
+      await fs.mkdtemp(path.join(os.tmpdir(), "rawr-stale-membership-"))
     );
     const stateDirectory = path.join(tempRoot, ".rawr", "state");
     const statePath = path.join(stateDirectory, "state.json");
@@ -63,7 +65,10 @@ describe("rawr server routes", () => {
     await fs.mkdir(path.dirname(pluginModulePath), { recursive: true });
     await fs.writeFile(statePath, staleBytes);
     await fs.writeFile(pluginPackagePath, '{"name":"foreign-web","rawr":{"kind":"web"}}\n');
-    await fs.writeFile(pluginModulePath, 'export function mount() { throw new Error("must not mount"); }\n');
+    await fs.writeFile(
+      pluginModulePath,
+      'export function mount() { throw new Error("must not mount"); }\n'
+    );
     const before = await Promise.all([
       fs.readFile(statePath),
       fs.readFile(pluginPackagePath),
@@ -102,7 +107,9 @@ describe("rawr server routes", () => {
 
   it("no-legacy-composition-authority: rejects unsigned ingress before runtime dispatch", async () => {
     const app = registerRawrRoutes(createServerApp(), { repoRoot });
-    const res = await app.handle(new Request("http://localhost/api/inngest", { method: "GET", headers: { host: "localhost" } }));
+    const res = await app.handle(
+      new Request("http://localhost/api/inngest", { method: "GET", headers: { host: "localhost" } })
+    );
     expect(res.status).toBe(403);
   });
 
@@ -119,7 +126,7 @@ describe("rawr server routes", () => {
             "x-inngest-signature": `t=${Math.floor(Date.now() / 1000)}&s=deadbeef`,
           },
           body: JSON.stringify({ ping: true }),
-        }),
+        })
       );
       expect(res.status).toBe(403);
     } finally {
@@ -138,7 +145,9 @@ describe("rawr server routes", () => {
   });
 
   it("no-legacy-composition-authority: keeps canonical realized procedure routes stable", () => {
-    const routes = collectProcedureRoutes(minifyContractRouter(createTestingRawrHostSeam().realization.orpc.contract)).sort();
+    const routes = collectProcedureRoutes(
+      minifyContractRouter(createTestingRawrHostSeam().realization.orpc.contract)
+    ).sort();
     expect(routes).toEqual([
       "exampleTodo.tasks.create POST /exampleTodo/tasks/create",
       "exampleTodo.tasks.get GET /exampleTodo/tasks/{id}",
@@ -165,21 +174,25 @@ describe("rawr server routes", () => {
         method: "POST",
         headers: { ...FIRST_PARTY_RPC_HEADERS, "x-request-id": "req-a" },
         body: JSON.stringify({ json: { id: "task-a" } }),
-      }),
+      })
     );
     await app.handle(
       new Request("http://localhost/rpc/exampleTodo/tasks/get", {
         method: "POST",
         headers: { ...FIRST_PARTY_RPC_HEADERS, "x-request-id": "req-b" },
         body: JSON.stringify({ json: { id: "task-b" } }),
-      }),
+      })
     );
 
     expect(requestIds).toEqual(["req-a", "req-b"]);
   });
 
   it("no-legacy-composition-authority: enforces ingress -> workflows -> rpc/openapi mount order contract", () => {
-    expect(PHASE_A_HOST_MOUNT_ORDER).toEqual(["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"]);
+    expect(PHASE_A_HOST_MOUNT_ORDER).toEqual([
+      "/api/inngest",
+      "/api/workflows/<capability>/*",
+      "/rpc + /api/orpc/*",
+    ]);
   });
 });
 
@@ -196,11 +209,11 @@ async function removeOwnedStaleMembershipFixture(root: string): Promise<void> {
   const stat = await fs.lstat(root);
   const canonicalRoot = await fs.realpath(root);
   if (
-    actualParent !== expectedParent
-    || canonicalRoot !== root
-    || !path.basename(root).startsWith("rawr-stale-membership-")
-    || !stat.isDirectory()
-    || stat.isSymbolicLink()
+    actualParent !== expectedParent ||
+    canonicalRoot !== root ||
+    !path.basename(root).startsWith("rawr-stale-membership-") ||
+    !stat.isDirectory() ||
+    stat.isSymbolicLink()
   ) {
     throw new Error("Refusing cleanup outside an owned stale-membership fixture root");
   }

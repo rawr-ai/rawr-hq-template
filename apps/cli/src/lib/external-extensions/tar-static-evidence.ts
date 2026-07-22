@@ -20,13 +20,18 @@ export class TarballStaticEvidencePort implements StaticEvidencePort {
     digest: string,
     private readonly files: ReadonlySet<string>,
     private readonly directories: ReadonlySet<string>,
-    private readonly text: ReadonlyMap<string, string>,
+    private readonly text: ReadonlyMap<string, string>
   ) {
     this.root = path.resolve(path.parse(process.cwd()).root, ".rawr-artifact", digest, "package");
   }
 
   static async read(artifactPath: string, digest: string): Promise<TarballStaticEvidencePort> {
-    const virtualRoot = path.resolve(path.parse(process.cwd()).root, ".rawr-artifact", digest, "package");
+    const virtualRoot = path.resolve(
+      path.parse(process.cwd()).root,
+      ".rawr-artifact",
+      digest,
+      "package"
+    );
     const files = new Set<string>();
     const directories = new Set<string>([virtualRoot]);
     const text = new Map<string, string>();
@@ -52,7 +57,8 @@ export class TarballStaticEvidencePort implements StaticEvidencePort {
           const virtualPath = path.join(virtualRoot, ...archiveEntry.relativeSegments);
           addParentDirectories(virtualRoot, virtualPath, files, directories);
           if (archiveEntry.kind === "directory") {
-            if (files.has(virtualPath)) throw new Error("EXTERNAL_EXTENSION_ARCHIVE_PATH_DUPLICATE");
+            if (files.has(virtualPath))
+              throw new Error("EXTERNAL_EXTENSION_ARCHIVE_PATH_DUPLICATE");
             directories.add(virtualPath);
             return;
           }
@@ -77,7 +83,10 @@ export class TarballStaticEvidencePort implements StaticEvidencePort {
 
   async canonicalPath(requestedPath: string): Promise<StaticEvidenceResult<string>> {
     const normalized = path.resolve(requestedPath);
-    if (!isContained(this.root, normalized) || (!this.files.has(normalized) && !this.directories.has(normalized))) {
+    if (
+      !isContained(this.root, normalized) ||
+      (!this.files.has(normalized) && !this.directories.has(normalized))
+    ) {
       return missing(`Archive path is missing: ${requestedPath}`);
     }
     return { ok: true, value: normalized };
@@ -85,7 +94,10 @@ export class TarballStaticEvidencePort implements StaticEvidencePort {
 
   async isFile(requestedPath: string): Promise<StaticEvidenceResult<boolean>> {
     const normalized = path.resolve(requestedPath);
-    if (!isContained(this.root, normalized) || (!this.files.has(normalized) && !this.directories.has(normalized))) {
+    if (
+      !isContained(this.root, normalized) ||
+      (!this.files.has(normalized) && !this.directories.has(normalized))
+    ) {
       return missing(`Archive path is missing: ${requestedPath}`);
     }
     return { ok: true, value: this.files.has(normalized) };
@@ -93,7 +105,10 @@ export class TarballStaticEvidencePort implements StaticEvidencePort {
 
   async isDirectory(requestedPath: string): Promise<StaticEvidenceResult<boolean>> {
     const normalized = path.resolve(requestedPath);
-    if (!isContained(this.root, normalized) || (!this.files.has(normalized) && !this.directories.has(normalized))) {
+    if (
+      !isContained(this.root, normalized) ||
+      (!this.files.has(normalized) && !this.directories.has(normalized))
+    ) {
       return missing(`Archive path is missing: ${requestedPath}`);
     }
     return { ok: true, value: this.directories.has(normalized) };
@@ -115,13 +130,17 @@ type ParsedArchiveEntry = Readonly<{
 function parseArchiveEntry(entry: ReadEntry): ParsedArchiveEntry | null {
   if (entry.meta) return null;
   const archivePath = entry.path;
-  if (archivePath.includes("\\") || archivePath.includes("\0") || path.posix.isAbsolute(archivePath)) {
+  if (
+    archivePath.includes("\\") ||
+    archivePath.includes("\0") ||
+    path.posix.isAbsolute(archivePath)
+  ) {
     throw new Error("EXTERNAL_EXTENSION_ARCHIVE_PATH_REJECTED");
   }
   const segments = archivePath.split("/").filter(Boolean);
   if (
-    segments[0] !== "package"
-    || segments.some((segment) => segment === "." || segment === "..")
+    segments[0] !== "package" ||
+    segments.some((segment) => segment === "." || segment === "..")
   ) {
     throw new Error("EXTERNAL_EXTENSION_ARCHIVE_LAYOUT_REJECTED");
   }
@@ -138,7 +157,7 @@ function parseArchiveEntry(entry: ReadEntry): ParsedArchiveEntry | null {
 function readManifestEntry(
   entry: ReadEntry,
   virtualPath: string,
-  text: Map<string, string>,
+  text: Map<string, string>
 ): Promise<void> {
   return new Promise((resolveEntry, rejectEntry) => {
     const chunks: Buffer[] = [];
@@ -156,7 +175,7 @@ function readManifestEntry(
       try {
         text.set(
           virtualPath,
-          new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)),
+          new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks))
         );
         resolveEntry();
       } catch {
@@ -170,7 +189,7 @@ function addParentDirectories(
   root: string,
   filePath: string,
   files: ReadonlySet<string>,
-  directories: Set<string>,
+  directories: Set<string>
 ): void {
   let current = path.dirname(filePath);
   while (isContained(root, current)) {
@@ -187,7 +206,10 @@ function missing<T>(message: string): StaticEvidenceResult<T> {
 
 function isContained(root: string, candidate: string): boolean {
   const relative = path.relative(root, candidate);
-  return relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative));
+  return (
+    relative === "" ||
+    (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative))
+  );
 }
 
 function asError(error: unknown): Error {
