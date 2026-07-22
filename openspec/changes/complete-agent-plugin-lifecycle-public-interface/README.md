@@ -5,29 +5,35 @@
 `T6F_LANDING_AND_SETTLEMENT`
 
 The user accepted the proportionality correction in [[authority-amendment]].
-Template continuation through PR #410 is landed on canonical `main` at
-`ec58d06ca89bc0c6d0e6866624e4991d8830ad3f`, tree
-`fc6efdee5445a354e2ca9e1462a90565e2775e23`. Its installed immutable controller
-digest is `dc14ccd20df37da774749908b5660494d60ce2dadb3c3cef2c5b76bca52f69de`.
+Template continuation through PR #437 is landed on canonical `main` at
+`86a55a750a3bb28217f6cdb1adb0e3291c3dcf30`, tree
+`556054214d179bff4d52ae93f1044e097b79a644`. The immutable release built from
+that exact revision is published and selected; the installed Darwin arm64
+controller digest is
+`3e1a8a4cc16640171ef546811eb6c922a6a0c59ac22300b08d9c9c79f2726d5d`.
 
-Personal curated content and repository lifecycle machinery are independently landed on personal
-`main` at `a4201247795d1fa18d46ecab206515e33660a171`, tree
+Personal canonical `main` remains independently at
+`a4201247795d1fa18d46ecab206515e33660a171`, tree
 `e71a93857b72dc4beaa5605c5e6a8366558055b2`. The reviewed current-main record is
-committed on PR #182 at `9378d33bb2d3e752a51c739af94145c70ff33260`;
-its local installed-controller gate is green, while the remote job is externally
-blocked before step execution by the repository account's billing limit. It
-remains unlanded without a bypass.
+committed on PR #182 at `9378d33bb2d3e752a51c739af94145c70ff33260`.
+The final-controller binding is committed on its Graphite child PR #183 at
+`852702b839888f70b82e27632c675c2ebe0c658d`; both local required gates are
+green. Their remote jobs remain externally blocked before runner allocation by
+the repository account's billing limit, so both remain unlanded without a
+bypass.
 
-The current Template continuation is rooted directly at `ec58d06c`. Releases,
-providers, governance, vendors, and packaging now derive their public oRPC
-request/result types from closed TypeBox schemas. Canonical brands, ordering,
+The landed Template boundary derives the releases, providers, governance,
+vendors, and packaging public oRPC request/result types from closed TypeBox
+schemas. Canonical brands, ordering,
 uniqueness, digest policy, and other cross-field rules remain owner-local. The
 required Nx check separates production and test typing, binds deterministic
 static cache inputs to their toolchains, runs noncacheable live Git behavior
 only after static checks, and uses direct operational terms for release-set
 verification. It adds no state owner, provider installer, repository
 relationship, app/runtime surface, or protected-lane input. The public-boundary
-conversion is sealed; landing and controller publication remain open.
+conversion, Template landing, immutable publication, and controller selection
+are complete. Ruleset `19508824` is now active prospectively on `main`;
+Personal landing and provider settlement remain open.
 
 ## Repository Record
 
@@ -35,7 +41,7 @@ conversion is sealed; landing and controller publication remain open.
 | --- | --- |
 | Repository | RAWR HQ-Template |
 | Worktree | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-c6-install-8d9` |
-| Parent commit / tree | canonical Template `main` `ec58d06ca89bc0c6d0e6866624e4991d8830ad3f` / `fc6efdee5445a354e2ca9e1462a90565e2775e23` |
+| Parent commit / tree | canonical Template `main` `86a55a750a3bb28217f6cdb1adb0e3291c3dcf30` / `556054214d179bff4d52ae93f1044e097b79a644` |
 | Packet provenance | personal commit `cc631f60c9254802be647d66662823ae47d5e7db`; project tree `97f0a634fcd8d1d24d4a95fcb57d277e9bf75ae3` |
 | Repository-separation amendment | personal commit `43a49d48ab6c6a29b4877f20576b42b533fc82ba`; blob `10bb040317d62834806b86b36a3a14f13c539fbc` |
 | Proportionality amendment | [[authority-amendment]] |
@@ -64,8 +70,12 @@ conversion is sealed; landing and controller publication remain open.
 | Packaging diagnostic boundary | `codex/c6-bound-packaging-contracts` / `0e92b1cf` |
 | Governance diagnostic boundary | `codex/c6-bound-governance-contracts` / `69358753` |
 | Release diagnostic boundary | `codex/c6-bound-release-contracts` / `c199e5c1` |
-| Installed controller | `dc14ccd20df37da774749908b5660494d60ce2dadb3c3cef2c5b76bca52f69de` from landed Template `ec58d06c` |
-| Personal checkpoint | independent personal `main` `a4201247`; PR #182 commit `9378d33b`, remote job blocked before execution without bypass |
+| Final continuation landing | PRs #411-#437; canonical Template `main` `86a55a75`; tree `556054214d179bff4d52ae93f1044e097b79a644` |
+| Immutable controller release | `controller-86a55a750a3bb28217f6cdb1adb0e3291c3dcf30`; workflow run `29882221794`; immutable, exact target, closed nine-asset inventory |
+| Installed controller | Darwin arm64 digest `3e1a8a4cc16640171ef546811eb6c922a6a0c59ac22300b08d9c9c79f2726d5d` from landed Template `86a55a75`; selector and invocation agree; `rawr doctor global` is healthy |
+| Repository admission | active ruleset `19508824`, `Repository Ratchet`; strict required context `Required lint, typecheck, and topology` on `main`; no bypass actors |
+| Personal checkpoint | independent personal `main` `a4201247`; PR #182 commit `9378d33b` and child PR #183 commit `852702b8`; remote jobs blocked before runner allocation without bypass |
+| Operator-note disposition | The user authorized deletion of `bindings/exports/NOTE-TO-AGENT.md` after its guidance was incorporated or tracked. The accepted topology and this execution record retain that guidance; the temporary note is intentionally absent. |
 | Native hook-claim correction | `codex/c6-scope-native-hook-claims`; parent is canonical Template `main` `b7b6524db818d7119340f2afc572a1159c708785` |
 | Opening controller | `0823cfe6...`; diagnostic only, never an active input |
 | T6A branch | `codex/c6-agent-lifecycle-public-interface` / `3f3a3be2dda70dae2682f88feeb23e5e9d349575` |
@@ -97,9 +107,11 @@ conversion is sealed; landing and controller publication remain open.
 | C5 export artifact service composition | `codex/c6-own-export-artifact-context` / `b902a668386879bc6ed8c4d95395ffd81074a1cb` |
 | Lifecycle test owner | `codex/c6-serialize-lifecycle-test-target` / `8b70a87fada52018f00c5fbaa267f24933d0c84e` |
 
-Personal records remain unlanded until the installed Template interface can
-enforce their first semantic checkpoint. No hook bypass, legacy mixed sync, or
-global-state repair is authorized as preparation.
+The Personal candidate branches pass their installed-controller checks locally;
+that result is feedback, not merge authority. Their required remote jobs were
+not allocated while the repository account was billing-blocked, so both PRs
+remain unlanded without bypass. No legacy mixed sync or global-state repair is
+authorized as preparation.
 
 ## Authority And Scope
 
@@ -135,8 +147,8 @@ machinery, and Inngest candidate bytes.
 | T6C3 legacy export retirement | complete, reviewed | no export/undo command, service module, capsule runtime, public facade, or complete-home aggregate |
 | T6D truthful test owners | complete, reviewed | owner-local DevOps fixture and ordinary serialized lifecycle/CLI targets |
 | T6E deterministic manifest | complete, reviewed | native JSON projection, code-unit canonicalization, and full build-twice equality |
-| T6F Template prerequisite implementation | source complete; landing and installed-controller refresh open | TypeBox-owned release-input wire records, controller-owned refresh, positive declared-tree closure, tested provider bindings, corrected channel path, and immutable controller distribution without repository coupling |
-| T6F landing/settlement | active; disposable complete-test accepted, personal current-main PR externally blocked | independently landed repos, canonical disposable/live native convergence, read-only repeat |
+| T6F Template prerequisite implementation | complete, landed, published, and installed | TypeBox-owned release-input wire records, controller-owned refresh, positive declared-tree closure, tested provider bindings, corrected channel path, and immutable controller distribution without repository coupling |
+| T6F landing/settlement | active; Template landing/publication/selection complete, disposable complete-test accepted, Personal PRs externally blocked | land Personal PRs through required checks, then canonical disposable/live convergence and read-only repeats |
 
 ## Retired Unlanded Nodes
 
@@ -151,13 +163,14 @@ follow-up work.
 
 ## Current Gate
 
-- Land the bounded TypeBox, Nx-check, and terminology continuation rooted at
-  canonical Template `ec58d06c`; publish and select the resulting immutable
-  controller through [[tasks#8. T6F: Landing And Settlement|task 8.1c]].
-- Retry personal PR #182 only through its unchanged required remote check. Do not
+- Keep the landed Template controller unchanged; its publication and selection
+  close [[tasks#8. T6F: Landing And Settlement|task 8.1c]]. The prospectively
+  active repository rule is a separate branch-ref admission control.
+- Retry personal PRs #182 and #183 only through their unchanged required remote
+  checks. Do not
   use `--no-verify`, legacy sync, a source checkout fallback, or live-state repair
   to compensate for the external account limit.
-- After the personal record lands, run canonical status, sync, repeat sync, and
+- After Personal PRs #182 and #183 land, run canonical status, sync, repeat sync, and
   final status first against the accepted disposable Codex and Claude homes,
   then against approved native homes. The repeated sync must inspect live state
   while performing zero native or lifecycle mutation.
@@ -201,7 +214,7 @@ other lifecycle mutation.
 | Reviews | Architecture/authority, TypeScript/refactor/TypeBox, behavior/testing/state-machine, and structural code quality report no remaining P0-P3 findings. Native disposable-home convergence remains the operational acceptance boundary. |
 | Scope | No Personal repository, provider home, destination, channel, controller selector, protected-lane input, or app/runtime composition was mutated or expanded. Destination/export realization remains transferred to the dedicated full architecture migration. |
 
-## Template Continuation Landing Proof
+## Historical Template Prerequisite Landing
 
 The continuation landed as one simple Graphite stack above the landed
 predecessor. Each node remained an independently reviewable behavior or
@@ -213,7 +226,7 @@ entered the landing.
 | Stack identity | `dd6ad50f` -> `c60b0748` -> `50089718` -> `94190680` -> `40204918` -> `abc62679`, rooted directly at canonical Template `main` `5b588ae6`; the composed tree is `c2da5b8bd8110fa1df5b5ea77c245972b76b444d`. |
 | Behavior | The latest integrated behavior gate passed 42 lifecycle files / 381 tests and 47 CLI files / 325 tests. The native-provider resource passed 23 tests, and the controller distribution suite passed 93 tests / 1,240 assertions. The final package-only node changed no runtime behavior. |
 | Static and structural | Resource, lifecycle, CLI, and controller lint/typecheck/build gates passed at their owning nodes. The composed required ratchet passed all 29 admitted lint targets, all 42 admitted typecheck targets, Habitat provisioning/consumer proof, and all three locked positive topology rules. Strict OpenSpec and `git diff --check` pass on the recorded tip. |
-| Standing reviews | Architecture/oRPC, TypeScript/TypeBox, and structural/Habitat composed-tip reviews report no P0-P3. Behavior/testing reports no P0-P2 and retains one nonblocking P3: the workflow-only immutable-release transitions are not product proof until the landed-main publication runs. That ceiling is exactly task 3C.4. |
+| Standing reviews | Architecture/oRPC, TypeScript/TypeBox, and structural/Habitat composed-tip reviews reported no P0-P3 at this landing. Behavior/testing reported no P0-P2 and retained one nonblocking P3: workflow-only immutable-release transitions were not operational evidence until the landed-main publication ran. [[#T6F Installed Controller Publication And Selection|The final publication record]] resolves that ceiling. |
 | Landing | PRs #390-#396 are merged. Canonical Template `main` is `2f9e303a13860e92d0011d228277c4c2149f6b78`, tree `70f9f5332252c67926d8fc5d48c0109eb32fff50`; exact-tip ratchet run `29735592428` passed. |
 | Proof ceiling | Publication run `29736289655` failed before upload and release creation. No controller asset was published or installed, and no Personal, provider, channel, or protected-lane state was mutated. |
 
@@ -381,17 +394,18 @@ rewriting the setting or treating it as settlement:
 | Premature mutation | At `2026-07-20T04:03:51.270Z`, the active task invoked `PUT repos/rawr-ai/rawr-hq-template/immutable-releases`; it completed at `04:03:55.552Z` with an empty response body, and the postimage below confirms success. This occurred before the distribution slice was landed or [[tasks#8. T6F: Landing And Settlement|the landing and settlement gate]] opened. |
 | Outcome | A read-only verification begun at `2026-07-20T04:04:02.812Z` returned `{"enabled":true,"enforced_by_owner":false}` at `04:04:06.565Z`. The enabled setting is retained; no compensating disable mutation is authorized. |
 | No dispatch | Read-only follow-up at `2026-07-20T05:04:57Z` found `release_count=0`, no `workflow_dispatch` run since `04:00Z`, and only the existing `Repository Ratchet` workflow. The installed-controller workflow is not present on canonical `main`, so the setting change created no release, tag, asset, controller selection, workflow dispatch, channel transition, or provider mutation. |
-| Remaining gate | The landed workflow requires a nonempty `CONTROLLER_RELEASE_ADMIN_READ_TOKEN` solely for its Administration-read setting check and exits before release creation when that secret is absent; release mutation remains on GitHub's native workflow token. The temporary credential is removed after the bounded repair/retry cycle. |
+| Later completion | The landed workflow requires a nonempty `CONTROLLER_RELEASE_ADMIN_READ_TOKEN` solely for its Administration-read setting check and exits before release creation when that secret is absent; release mutation remains on GitHub's native workflow token. The final publication attempt first refused the missing secret, then succeeded unchanged after the repository secret was supplied as the declared read prerequisite. |
 
 This is operational evidence, not controller installation or release proof. It
 does not advance any T6F checkbox.
 
-## T6F Installed Controller Distribution Prerequisite
+## T6F Installed Controller Publication And Selection
 
-This prepared checkpoint supplies [[tasks#3C. Personal Checkpoint Prerequisites|task 3C.4]]
+This landed boundary completes [[tasks#3C. Personal Checkpoint Prerequisites|task 3C.4]]
 without making a Template checkout, Personal repository, provider home, or
-ambient `rawr` executable part of controller identity. Task 3C.4 remains open
-until the landed workflow publishes and the exact immutable asset is verified.
+ambient `rawr` executable part of controller identity. Historical preparation
+and failed-closed attempts remain below; the final publication and installation
+records follow them.
 
 | Boundary | Result |
 | --- | --- |
@@ -405,18 +419,44 @@ until the landed workflow publishes and the exact immutable asset is verified.
 | Repair proof | The manifest check is retained. Archive construction preserves exact entry modes while omitting host-local owner/time/device/inode/link-count metadata, including through a PAX-length entry and an inode replacement between deterministic builds. Production and test extraction now use argv-safe `tar -xpf`; the complete controller suite passes 93/93 tests with 1,246 assertions and proves exact `0755`, `0444`, and `0664` extraction. All 29 admitted lint targets, all 42 admitted typecheck targets, Habitat consumer proof, and all three locked lifecycle topology rules pass. Strict OpenSpec and `git diff --check` pass; final standing review reports no P0-P3. |
 | Scope | The attempt created no release, tag, asset, controller selector, channel, or provider state. The repair changes no schema, controller selection, provider adapter, Personal record, or release-set semantics. |
 
+The final continuation landed through PR #437 at Template `main`
+`86a55a750a3bb28217f6cdb1adb0e3291c3dcf30`, tree
+`556054214d179bff4d52ae93f1044e097b79a644`. Exact-main
+`bun run ratchet:required` passed 29 lint projects, 42 production and test type
+projects, all three Habitat rules, 38 owner-local unit files / 418 tests, and 2
+live-Git files / 21 tests.
+
+| Final publication boundary | Result |
+| --- | --- |
+| Failed-closed prerequisite | Workflow run `29882221794`, attempt 1, built and verified all four platform tuples and their eight build artifacts. Its release job stopped before creation because `CONTROLLER_RELEASE_ADMIN_READ_TOKEN` was absent. No release, tag, durable operator controller selection, channel, or provider mutation occurred. |
+| Immutable publication | After the declared Administration-read repository secret was supplied, attempt 2 reran only the failed release job and succeeded. Release `controller-86a55a750a3bb28217f6cdb1adb0e3291c3dcf30` is immutable, targets the exact source revision, and contains the closed nine-asset inventory. `SHA256SUMS` has digest `c50252f50cc67860805483eb3c0c3bb18dd235fb1d29d07258a2f80f32d4f076`. |
+| Installed selection | The stable installer selected Darwin arm64 controller `3e1a8a4cc16640171ef546811eb6c922a6a0c59ac22300b08d9c9c79f2726d5d`. `rawr doctor global --json` reports the selected installed controller healthy at exact source revision `86a55a75`. |
+| Authority boundary | Publication changed only Template GitHub release state; installation and selection changed only the installed-controller data root and selector. Neither operation mutated Personal, current-main records, provider homes, destinations, app/runtime composition, or protected-lane inputs. |
+
+Each provenance record uses runtime Bun `1.3.14` revision
+`0d9b296af33f2b851fcbf4df3e9ec89751734ba4` and update recipe
+`.github/workflows/controller-installed-release.yml@86a55a750a3bb28217f6cdb1adb0e3291c3dcf30`.
+
+| Platform | Controller digest | Archive bytes | Archive SHA-256 |
+| --- | --- | ---: | --- |
+| Darwin arm64 | `3e1a8a4cc16640171ef546811eb6c922a6a0c59ac22300b08d9c9c79f2726d5d` | `212073472` | `f0a4eb0e9d61d8af4a8ca67e77e0eaa6f7783043fd430f9837685d0edb144f72` |
+| Darwin x64 | `f97eae80b99a8e039eb9bc52a23d2b7abcb93c6f8ae0438fa56e0338ef7e131e` | `218121216` | `ac4f60d85206534becb15503ff86b864eaf1907c84baff816a8d1499f0d88480` |
+| Linux arm64 | `8e58f2e4ef7ace19307181b482dc243029c8a09dfb478363005a7c7f5ddf0b06` | `241382400` | `1bae7e04b3bbc5550c3758b19a0953b94216b4b1989807a3d9a2b43d42c3637f` |
+| Linux x64 | `b1b65a6866c47a3ba9a3d04e3cd8b887938c1e95aa107a810d41a89358a103ca` | `242454528` | `f142ee94e643239cdcdd75eca3dcaeba2425b86f8c70a48eaaaa04567cd4a596` |
+
 ## Template Required Ratchet Settlement Gate
 
-The Template repository has the required workflow but does not yet have the
-server-side rule that makes it non-optional. This is a settlement precondition,
-not another source-code mechanism:
+The Template repository now has an active server-owned strict branch-ref
+admission rule requiring the named status context. This completes the
+repository-admission precondition without adding another source-code mechanism:
 
 | Observation | Exact evidence |
 | --- | --- |
 | Preimage | At `2026-07-20T09:03:01Z`, read-only GitHub API inspection returned HTTP 404 `Branch not protected` for `rawr-ai/rawr-hq-template` `main` and `[]` for repository rulesets. |
-| Consequence | `.github/workflows/repository-ratchet.yml` runs `ratchet:required`, and the local pre-push hook provides ordinary feedback, but neither currently prevents an authorized direct push or `--no-verify`. The initiative cannot call lint, typecheck, and Habitat non-skippable yet. |
-| Settlement order | Perform no repository-policy mutation before [[tasks#8. T6F: Landing And Settlement|task 8]]. After the continuation stack lands, configure one server-owned rule for canonical `main` requiring `Repository Ratchet / Required lint, typecheck, and topology`, then read back the exact rule and prove a failing candidate cannot merge before closure. |
-| Boundary | The repository rule owns merge admission only. It does not become lifecycle state, run provider convergence, modify Personal, or create a fallback controller path. |
+| Active rule | Ruleset `19508824`, `Repository Ratchet`, is active for `refs/heads/main`. It has no bypass actors and reports `current_user_can_bypass: never`. |
+| Required admission | The rule requires strict, up-to-date status context `Required lint, typecheck, and topology`; enforcement also applies when the ref is created. GitHub binds the context string, not a specific workflow integration identity. |
+| Timing | The rule was created at `2026-07-22T01:05:32Z`, after PR #437 landed at `01:01:50Z`. It governs subsequent `main` admission; this record does not retroactively claim it governed PRs #411-#437. |
+| Boundary | The repository rule owns `main` branch-ref admission. It does not become lifecycle state, run provider convergence, modify Personal, or create a fallback controller path. |
 
 ## Template Submission Readiness Proof
 
@@ -443,7 +483,7 @@ activation and retirement changes.
 | Required ratchet | Repository lint passed across 29 projects, typecheck passed across 42 projects, and the locked positive Habitat topology, dependency-direction, and qualified-command rules passed 3/3. Lifecycle lint and typecheck also passed uncached after the owner correction. |
 | Record and protected path | Strict OpenSpec and `git diff --check` passed before final review. The protected note remained unstaged and was restored byte-identically at SHA-256 `d06966389dac095f8a7f620aa4b27a50935a75762300000f987a848e45c2aadb`; no holding root remained. |
 | Remote submission | All 43 retained PR nodes passed `Required lint, typecheck, and topology` independently after resubmission. `gt merge --no-interactive --dry-run` accepted the complete stack. |
-| Proof ceiling | No provider or personal repository was mutated. Landing, installation, personal checkpointing, native acceptance, and settlement remain T6F work. The remote ratchet is a completed submission gate, not native or product-settlement proof. |
+| Proof ceiling | At this submission checkpoint no provider or Personal repository was mutated; landing, installation, Personal checkpointing, native acceptance, and settlement were still T6F work. The final publication record above supersedes only the landing and installation portion. |
 
 ## T6E Deterministic Official Manifest Proof
 
@@ -953,7 +993,7 @@ thin stack. It changes test ownership and scheduling only.
 ## Repository Check Performance Stabilization
 
 This bounded controller checkpoint supports
-[[tasks#3C. Installed Distribution And Personal Prerequisite|task 3C.5]] without
+[[tasks#3C. Personal Checkpoint Prerequisites|task 3C.5]] without
 changing the thin authority in [[authority-amendment#Corrected Frame]]. It
 removes process and filesystem fan-out from the existing repository checks; it
 does not cache repository truth, weaken revalidation, or add another lifecycle
@@ -981,21 +1021,22 @@ T6A closed its record reviews with no remaining P1/P2. Later standing reviews
 independently closed provider capsule retirement, native convergence, task
 5.1's provider refusal, the deterministic manifest, each retained C5 context
 checkpoint, and the final five-module TypeBox/diagnostic continuation at exact
-tip `c199e5c1`. The source continuation is sealed with no remaining P0-P3.
-Landing, immutable controller publication, Personal checkpointing, and native
-settlement still require their own operational verification.
+tip `c199e5c1`. The source continuation has no remaining P0-P3. Template landing
+and immutable controller publication are operationally verified. Personal
+checkpoint landing and native settlement still require verification.
 
 ## Closure Oracle
 
 ```text
-land personal content
-  -> build one complete set in one durable controller root
-  -> complete-test real Codex and Claude in disposable homes, preserving omissions
-  -> review and land one current-main record
+land Personal current-main PR #182 and final-controller-binding PR #183
+  -> verify canonical current-main selection from Personal main
   -> canonically converge disposable homes and repeat read-only
   -> converge approved native homes
   -> repeat with identical managed inventory and every lifecycle-owned write
      plus native mutating-call counter at zero
+  -> record persistent Codex task visibility and settle cognition
+  -> queue the bounded oRPC corrective release
+  -> archive records and drain branches, PRs, stacks, and worktrees
 ```
 
 Closure additionally requires Template and personal canonical `main` clean and
