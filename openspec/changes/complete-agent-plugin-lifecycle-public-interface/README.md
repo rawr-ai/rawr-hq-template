@@ -372,6 +372,12 @@ with the two structure rules sharing one 8.8-second traversal. The closed
 `plugins/cli` scope admits only `commands`, so an old sibling package topology
 cannot return.
 
+Each package now exposes production and test typechecking as separate inferred
+Nx targets. The admitted `typecheck` target depends on `typecheck-tests`, while
+its production-only inputs keep a test edit from invalidating the source check.
+The ten-task uncached run passes in 12.8 seconds; after cache population, the
+unchanged repeat is a 100% cache hit in 25 ms.
+
 The direct-entrypoint checkpoint replaces the controller bootstrap with Oclif's
 standard `execute` call in both development and compiled entrypoints. A focused
 behavior test runs both forms with an allowlisted process environment and one
