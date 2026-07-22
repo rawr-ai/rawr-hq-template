@@ -4,10 +4,7 @@ import type { WorkflowDispatcher } from "@rawr/sdk/spine";
 import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
 import { providerFx, defineRuntimeProvider } from "@rawr/sdk/runtime/providers";
 import { defineRuntimeResource } from "@rawr/sdk/runtime/resources";
-import {
-  defineRuntimeProfile,
-  providerSelection,
-} from "@rawr/sdk/runtime/profiles";
+import { defineRuntimeProfile, providerSelection } from "@rawr/sdk/runtime/profiles";
 import {
   buildRuntimeTelemetryOtlpTracePayload,
   createDeploymentRuntimeHandoff,
@@ -61,11 +58,7 @@ interface InngestStepRunOp<T> {
 }
 
 function assertNoLiveHandles(value: unknown): void {
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
     throw new Error(`phase two observation leaked live handle: ${String(value)}`);
   }
 
@@ -81,9 +74,7 @@ function assertNoLiveHandles(value: unknown): void {
   }
 }
 
-function createClients(): ConstructionBoundServiceClients<
-  typeof WorkItemsServerApiServices
-> {
+function createClients(): ConstructionBoundServiceClients<typeof WorkItemsServerApiServices> {
   return {
     workItems: {
       withInvocation() {
@@ -178,10 +169,7 @@ function createServerInvocationContext(request: {
   };
 }
 
-function createAsyncInvocationContext(event: {
-  readonly name: string;
-  readonly data: unknown;
-}) {
+function createAsyncInvocationContext(event: { readonly name: string; readonly data: unknown }) {
   return {
     event: {
       name: event.name,
@@ -243,13 +231,13 @@ function appendTelemetryRecords(
     readonly source: string;
     readonly runId: string;
     readonly events: readonly RuntimeTelemetryEventLike[];
-  },
+  }
 ) {
   records.push(
     ...projectRuntimeEventsToTelemetryRecords({
       ...input,
       startingSequence: records.length,
-    }),
+    })
   );
 }
 
@@ -365,7 +353,7 @@ describe("phase two telemetry HyperDX catalog observation", () => {
           title: "Phase Two observation",
           secretToken: "server-request-secret",
         },
-      }),
+      })
     );
     expect(serverResult.response.status).toBe(200);
     const serverBody =
@@ -414,7 +402,7 @@ describe("phase two telemetry HyperDX catalog observation", () => {
           requestedBy: "actor-observation",
           secretToken: "async-event-secret",
         },
-      }),
+      })
     );
     expect(asyncResponse.status).toBe(206);
     const asyncBody =
@@ -449,7 +437,7 @@ describe("phase two telemetry HyperDX catalog observation", () => {
         runId,
         catalog: providerResult.catalog(),
         startingSequence: telemetryRecords.length,
-      }),
+      })
     );
 
     const payload = buildRuntimeTelemetryOtlpTracePayload({
@@ -527,9 +515,7 @@ describe("phase two telemetry HyperDX catalog observation", () => {
     const packetJson = JSON.stringify(packet);
     expect(exportResult.status).toBe("accepted");
     expect(captured?.url).toBe("http://127.0.0.1:4318/v1/traces");
-    expect(telemetryRecords.map((record) => record.source)).toContain(
-      "phase-two.async.inngest",
-    );
+    expect(telemetryRecords.map((record) => record.source)).toContain("phase-two.async.inngest");
     expect(payloadJson).toContain("provider.acquire");
     expect(payloadJson).toContain("provider.release");
     expect(payloadJson).toContain("plugin.server-api");

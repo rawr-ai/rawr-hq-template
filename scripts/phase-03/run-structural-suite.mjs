@@ -37,7 +37,9 @@ const project = args.project;
 const suite = args.suite ?? "default";
 
 if (!project) {
-  console.error("Usage: bun scripts/phase-03/run-structural-suite.mjs --project <project> [--suite <suite>]");
+  console.error(
+    "Usage: bun scripts/phase-03/run-structural-suite.mjs --project <project> [--suite <suite>]"
+  );
   process.exit(2);
 }
 
@@ -75,7 +77,9 @@ const suiteCommandsByProject = {
       "bun run observability:gate:host-metrics",
       "bun run observability:gate:logging",
     ],
-    "m2-u00-current-findings": ["bun run phase-2:gate:u00:server-role-runtime-path -- --allow-findings"],
+    "m2-u00-current-findings": [
+      "bun run phase-2:gate:u00:server-role-runtime-path -- --allow-findings",
+    ],
   },
   "@rawr/cli": {
     default: [
@@ -96,7 +100,9 @@ const suiteCommandsByProject = {
       "bun run architecture:gate:projection-boundaries",
       "bun run architecture:gate:legacy-membership-authoring",
     ],
-    "m2-u00-current-findings": ["bun run phase-2:gate:u00:runtime-public-seams -- --allow-findings"],
+    "m2-u00-current-findings": [
+      "bun run phase-2:gate:u00:runtime-public-seams -- --allow-findings",
+    ],
   },
   "@rawr/bootgraph": {
     default: ["bun scripts/phase-03/verify-bootgraph-structural.mjs"],
@@ -111,9 +117,7 @@ const suiteCommandsByProject = {
     default: ["bun scripts/phase-03/verify-hq-ops-resource-binding.mjs"],
   },
   "@rawr/agent-plugin-lifecycle": {
-    default: [
-      "bun scripts/habitat/check.mjs --owner @rawr/agent-plugin-lifecycle",
-    ],
+    default: ["bun scripts/habitat/check.mjs --owner @rawr/agent-plugin-lifecycle"],
   },
   "@rawr/chatgpt-corpus": {
     default: ["bun scripts/phase-03/verify-chatgpt-corpus-service-shape.mjs"],
@@ -135,9 +139,11 @@ const suiteCommandsByProject = {
 const suiteCommands = suiteCommandsByProject[project]?.[suite];
 
 if (!suiteCommands) {
-  const supportedSuites = Object.keys(suiteCommandsByProject[project] ?? {}).sort().join(", ");
+  const supportedSuites = Object.keys(suiteCommandsByProject[project] ?? {})
+    .sort()
+    .join(", ");
   console.error(
-    `Unsupported structural suite "${suite}" for ${project}. Supported suites: ${supportedSuites || "none"}.`,
+    `Unsupported structural suite "${suite}" for ${project}. Supported suites: ${supportedSuites || "none"}.`
   );
   process.exit(2);
 }

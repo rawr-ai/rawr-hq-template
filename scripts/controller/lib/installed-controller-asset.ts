@@ -1,9 +1,4 @@
-import {
-  lstat,
-  open,
-  realpath,
-  rm,
-} from "node:fs/promises";
+import { lstat, open, realpath, rm } from "node:fs/promises";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 
@@ -31,7 +26,8 @@ import { requireVerifiedOfficialControllerRelease } from "../production/verify-o
 import { nodeControllerSelectorStore } from "../selector-store.ts";
 
 export const INSTALLED_CONTROLLER_ASSET_SCHEMA_VERSION = 1;
-export const INSTALLED_CONTROLLER_ASSET_RECIPE = ".github/workflows/controller-installed-release.yml";
+export const INSTALLED_CONTROLLER_ASSET_RECIPE =
+  ".github/workflows/controller-installed-release.yml";
 
 const NonEmptyCanonicalTextSchema = Type.String({
   minLength: 1,
@@ -42,33 +38,39 @@ const Sha256Schema = Type.String({ pattern: "^[0-9a-f]{64}$" });
 const SourceRevisionSchema = Type.String({ pattern: "^[0-9a-f]{40}$" });
 const ControllerDigestSchema = Type.Unsafe<ControllerDigest>(Sha256Schema);
 
-export const InstalledControllerProvenanceSchema = Type.Readonly(Type.Object(
-  {
-    schemaVersion: Type.Literal(INSTALLED_CONTROLLER_ASSET_SCHEMA_VERSION),
-    kind: Type.Literal("rawr-installed-controller"),
-    sourceRevision: SourceRevisionSchema,
-    platform: Type.Union([Type.Literal("darwin"), Type.Literal("linux")]),
-    architecture: Type.Union([Type.Literal("arm64"), Type.Literal("x64")]),
-    controllerDigest: ControllerDigestSchema,
-    runtime: Type.Readonly(Type.Object(
-      {
-        version: NonEmptyCanonicalTextSchema,
-        revision: NonEmptyCanonicalTextSchema,
-      },
-      { additionalProperties: false },
-    )),
-    archive: Type.Readonly(Type.Object(
-      {
-        fileName: NonEmptyCanonicalTextSchema,
-        byteLength: Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER }),
-        sha256: Sha256Schema,
-      },
-      { additionalProperties: false },
-    )),
-    recipe: NonEmptyCanonicalTextSchema,
-  },
-  { additionalProperties: false },
-));
+export const InstalledControllerProvenanceSchema = Type.Readonly(
+  Type.Object(
+    {
+      schemaVersion: Type.Literal(INSTALLED_CONTROLLER_ASSET_SCHEMA_VERSION),
+      kind: Type.Literal("rawr-installed-controller"),
+      sourceRevision: SourceRevisionSchema,
+      platform: Type.Union([Type.Literal("darwin"), Type.Literal("linux")]),
+      architecture: Type.Union([Type.Literal("arm64"), Type.Literal("x64")]),
+      controllerDigest: ControllerDigestSchema,
+      runtime: Type.Readonly(
+        Type.Object(
+          {
+            version: NonEmptyCanonicalTextSchema,
+            revision: NonEmptyCanonicalTextSchema,
+          },
+          { additionalProperties: false }
+        )
+      ),
+      archive: Type.Readonly(
+        Type.Object(
+          {
+            fileName: NonEmptyCanonicalTextSchema,
+            byteLength: Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER }),
+            sha256: Sha256Schema,
+          },
+          { additionalProperties: false }
+        )
+      ),
+      recipe: NonEmptyCanonicalTextSchema,
+    },
+    { additionalProperties: false }
+  )
+);
 
 export type InstalledControllerProvenance = Static<typeof InstalledControllerProvenanceSchema>;
 
@@ -89,7 +91,7 @@ function describeIssues(issues: readonly Readonly<{ path: string; message: strin
 async function failAfterCleanup(
   primaryError: unknown,
   cleanupActions: readonly (() => Promise<void>)[],
-  message: string,
+  message: string
 ): Promise<never> {
   const errors = [primaryError];
   for (const cleanup of cleanupActions) {
@@ -108,13 +110,13 @@ function releaseArchivePath(controllerDigest: ControllerDigest, entry: string): 
     CONTROLLER_DIRECTORY,
     CONTROLLER_RELEASES_DIRECTORY,
     controllerDigest,
-    entry,
+    entry
   );
 }
 
 export function installedControllerArchiveEntries(
   controllerDigest: ControllerDigest,
-  releaseEntries: readonly VerifiedControllerPayloadEntry[],
+  releaseEntries: readonly VerifiedControllerPayloadEntry[]
 ): readonly string[] {
   const entries = [
     CONTROLLER_LAUNCHER_PATH,
@@ -130,12 +132,12 @@ export function installedControllerArchiveEntries(
 
 function assertArchiveEntry(entry: string): void {
   if (
-    entry.length === 0
-    || entry.startsWith("/")
-    || entry.includes("\\")
-    || path.posix.normalize(entry) !== entry
-    || entry === ".."
-    || entry.startsWith("../")
+    entry.length === 0 ||
+    entry.startsWith("/") ||
+    entry.includes("\\") ||
+    path.posix.normalize(entry) !== entry ||
+    entry === ".." ||
+    entry.startsWith("../")
   ) {
     throw new Error(`CONTROLLER_ASSET_PATH_INVALID: ${entry}`);
   }
@@ -144,7 +146,7 @@ function assertArchiveEntry(entry: string): void {
 async function writeExclusiveArchive(
   dataRoot: string,
   archivePath: string,
-  entries: readonly string[],
+  entries: readonly string[]
 ): Promise<void> {
   const output = await open(archivePath, "wx", 0o644);
   try {
@@ -156,7 +158,9 @@ async function writeExclusiveArchive(
         noMtime: true,
         onWriteEntry: (entry) => {
           if (!entry.stat) {
-            throw new Error("CONTROLLER_ASSET_ENTRY_STAT_MISSING: archive entry has no filesystem identity");
+            throw new Error(
+              "CONTROLLER_ASSET_ENTRY_STAT_MISSING: archive entry has no filesystem identity"
+            );
           }
           // tar's portable mode rewrites permission bits. Omit only host-local
           // metadata so the verified payload's exact modes survive extraction.
@@ -172,17 +176,14 @@ async function writeExclusiveArchive(
         portable: false,
         strict: true,
       },
-      [...entries],
+      [...entries]
     );
     await pipeline(archive, output.createWriteStream());
   } catch (primaryError) {
     return failAfterCleanup(
       primaryError,
-      [
-        () => output.close(),
-        () => rm(archivePath, { force: true }),
-      ],
-      "installed controller archive write failed and output cleanup also failed",
+      [() => output.close(), () => rm(archivePath, { force: true })],
+      "installed controller archive write failed and output cleanup also failed"
     );
   }
 }
@@ -203,7 +204,9 @@ export async function writeInstalledControllerArchive(input: {
 
 function canonicalProvenanceBytes(provenance: InstalledControllerProvenance): Uint8Array {
   if (!Value.Check(InstalledControllerProvenanceSchema, provenance)) {
-    throw new Error("CONTROLLER_ASSET_PROVENANCE_INVALID: provenance must match the closed TypeBox schema");
+    throw new Error(
+      "CONTROLLER_ASSET_PROVENANCE_INVALID: provenance must match the closed TypeBox schema"
+    );
   }
   return new TextEncoder().encode(`${JSON.stringify(provenance)}\n`);
 }
@@ -217,11 +220,8 @@ async function writeExclusiveFile(filePath: string, bytes: Uint8Array): Promise<
   } catch (primaryError) {
     return failAfterCleanup(
       primaryError,
-      [
-        () => output.close(),
-        () => rm(filePath, { force: true }),
-      ],
-      "installed controller provenance write failed and output cleanup also failed",
+      [() => output.close(), () => rm(filePath, { force: true })],
+      "installed controller provenance write failed and output cleanup also failed"
     );
   }
 }
@@ -238,7 +238,9 @@ export async function writeInstalledControllerProvenance(input: {
 }): Promise<InstalledControllerProvenance> {
   const archiveStatus = await lstat(input.archivePath);
   if (!archiveStatus.isFile() || archiveStatus.nlink !== 1) {
-    throw new Error("CONTROLLER_ASSET_ARCHIVE_INVALID: output must be one independent regular file");
+    throw new Error(
+      "CONTROLLER_ASSET_ARCHIVE_INVALID: output must be one independent regular file"
+    );
   }
   const provenance: InstalledControllerProvenance = Object.freeze({
     schemaVersion: INSTALLED_CONTROLLER_ASSET_SCHEMA_VERSION,
@@ -265,7 +267,7 @@ export async function writeInstalledControllerProvenance(input: {
 async function canonicalDirectory(directory: string, label: string): Promise<string> {
   const resolved = path.resolve(directory);
   const status = await lstat(resolved);
-  if (!status.isDirectory() || status.isSymbolicLink() || await realpath(resolved) !== resolved) {
+  if (!status.isDirectory() || status.isSymbolicLink() || (await realpath(resolved)) !== resolved) {
     throw new Error(`${label} must be a canonical directory: ${directory}`);
   }
   return resolved;
@@ -273,17 +275,16 @@ async function canonicalDirectory(directory: string, label: string): Promise<str
 
 function containsOrEquals(root: string, candidate: string): boolean {
   const offset = path.relative(root, candidate);
-  return offset === ""
-    || (offset !== ".." && !offset.startsWith(`..${path.sep}`) && !path.isAbsolute(offset));
+  return (
+    offset === "" ||
+    (offset !== ".." && !offset.startsWith(`..${path.sep}`) && !path.isAbsolute(offset))
+  );
 }
 
 function assertDisjointRoots(dataRoot: string, outputDirectory: string): void {
-  if (
-    containsOrEquals(dataRoot, outputDirectory)
-    || containsOrEquals(outputDirectory, dataRoot)
-  ) {
+  if (containsOrEquals(dataRoot, outputDirectory) || containsOrEquals(outputDirectory, dataRoot)) {
     throw new Error(
-      "CONTROLLER_ASSET_ROOTS_OVERLAP: controller data root and asset output directory must be disjoint",
+      "CONTROLLER_ASSET_ROOTS_OVERLAP: controller data root and asset output directory must be disjoint"
     );
   }
 }
@@ -294,10 +295,15 @@ export async function createInstalledControllerAsset(input: {
   sourceRevision: string;
 }): Promise<InstalledControllerAsset> {
   if (!Value.Check(SourceRevisionSchema, input.sourceRevision)) {
-    throw new Error("CONTROLLER_ASSET_SOURCE_REVISION_INVALID: expected one lowercase 40-character Git revision");
+    throw new Error(
+      "CONTROLLER_ASSET_SOURCE_REVISION_INVALID: expected one lowercase 40-character Git revision"
+    );
   }
   const dataRoot = await canonicalDirectory(input.dataRoot, "controller asset data root");
-  const outputDirectory = await canonicalDirectory(input.outputDirectory, "controller asset output directory");
+  const outputDirectory = await canonicalDirectory(
+    input.outputDirectory,
+    "controller asset output directory"
+  );
   assertDisjointRoots(dataRoot, outputDirectory);
   const selectorPath = controllerSelectorPath(dataRoot);
   const selector = await nodeControllerSelectorStore.read(selectorPath);
@@ -321,17 +327,20 @@ export async function createInstalledControllerAsset(input: {
   const manifest = release.envelope.manifest;
   if (manifest.sourceRevision !== input.sourceRevision) {
     throw new Error(
-      `CONTROLLER_ASSET_SOURCE_REVISION_MISMATCH: expected ${input.sourceRevision}, observed ${manifest.sourceRevision}`,
+      `CONTROLLER_ASSET_SOURCE_REVISION_MISMATCH: expected ${input.sourceRevision}, observed ${manifest.sourceRevision}`
     );
   }
   if (manifest.runtime.platform !== "darwin" && manifest.runtime.platform !== "linux") {
     throw new Error(
-      `CONTROLLER_ASSET_RUNTIME_UNSUPPORTED: installed assets support darwin/linux, observed ${manifest.runtime.platform}`,
+      `CONTROLLER_ASSET_RUNTIME_UNSUPPORTED: installed assets support darwin/linux, observed ${manifest.runtime.platform}`
     );
   }
-  if (manifest.runtime.platform !== process.platform || manifest.runtime.architecture !== process.arch) {
+  if (
+    manifest.runtime.platform !== process.platform ||
+    manifest.runtime.architecture !== process.arch
+  ) {
     throw new Error(
-      `CONTROLLER_ASSET_RUNTIME_HOST_MISMATCH: release ${manifest.runtime.platform}/${manifest.runtime.architecture}, host ${process.platform}/${process.arch}`,
+      `CONTROLLER_ASSET_RUNTIME_HOST_MISMATCH: release ${manifest.runtime.platform}/${manifest.runtime.architecture}, host ${process.platform}/${process.arch}`
     );
   }
 
@@ -362,7 +371,7 @@ export async function createInstalledControllerAsset(input: {
     return failAfterCleanup(
       primaryError,
       [() => rm(archivePath, { force: true })],
-      "installed controller asset construction failed and archive cleanup also failed",
+      "installed controller asset construction failed and archive cleanup also failed"
     );
   }
 }

@@ -54,7 +54,7 @@ interface RuntimeOrpcServerContext {
 }
 
 function record(
-  input: Omit<RuntimeOrpcServerBoundaryRecord, "kind">,
+  input: Omit<RuntimeOrpcServerBoundaryRecord, "kind">
 ): RuntimeOrpcServerBoundaryRecord {
   return {
     kind: "orpc.runtime-server-boundary-record",
@@ -76,65 +76,63 @@ const RuntimeOrpcServerImplementer =
   implement(RuntimeOrpcServerContract).$context<RuntimeOrpcServerContext>();
 
 const RuntimeOrpcServerRouter = RuntimeOrpcServerImplementer.router({
-  invoke: RuntimeOrpcServerImplementer.invoke.handler(
-    async ({ context, input }) => {
-      const adapterEvents: AdapterDelegationEvent[] = [];
-      context.records.push(
-        record({
-          boundaryId: context.boundaryId,
-          phase: "orpc.handler.enter",
-          executionId: input.executionId,
-        }),
-      );
-
-      if (input.executionId !== context.payload.ref.executionId) {
-        context.records.push(
-          record({
-            boundaryId: context.boundaryId,
-            phase: "orpc.handler.failed",
-            executionId: input.executionId,
-            status: "failure",
-          }),
-        );
-        throw new Error(`oRPC server boundary missing payload ${input.executionId}`);
-      }
-
-      const result = await context.harness.handleRoute({
+  invoke: RuntimeOrpcServerImplementer.invoke.handler(async ({ context, input }) => {
+    const adapterEvents: AdapterDelegationEvent[] = [];
+    context.records.push(
+      record({
+        boundaryId: context.boundaryId,
+        phase: "orpc.handler.enter",
         executionId: input.executionId,
-        context: context.createInvocationContext(input),
-        instrumentation: {
-          record(event) {
-            adapterEvents.push(event);
-          },
-        },
-      });
+      })
+    );
 
+    if (input.executionId !== context.payload.ref.executionId) {
       context.records.push(
         record({
           boundaryId: context.boundaryId,
-          phase: "orpc.handler.finished",
+          phase: "orpc.handler.failed",
           executionId: input.executionId,
-          status: result.status,
-        }),
+          status: "failure",
+        })
       );
+      throw new Error(`oRPC server boundary missing payload ${input.executionId}`);
+    }
 
-      return {
-        kind: "orpc.runtime-server-response",
+    const result = await context.harness.handleRoute({
+      executionId: input.executionId,
+      context: context.createInvocationContext(input),
+      instrumentation: {
+        record(event) {
+          adapterEvents.push(event);
+        },
+      },
+    });
+
+    context.records.push(
+      record({
+        boundaryId: context.boundaryId,
+        phase: "orpc.handler.finished",
         executionId: input.executionId,
         status: result.status,
-        ...(result.status === "success" ? { output: result.output } : {}),
-        runtimeEvents: result.events,
-        adapterEvents,
-        harnessRecords: context.harness.records(),
-        route: {
-          boundary: context.payload.ref.boundary,
-          routePath: context.payload.routeDescriptor.routePath,
-          surface: context.payload.routeDescriptor.surface,
-          capability: context.payload.routeDescriptor.capability,
-        },
-      } satisfies RuntimeOrpcServerResponse;
-    },
-  ),
+      })
+    );
+
+    return {
+      kind: "orpc.runtime-server-response",
+      executionId: input.executionId,
+      status: result.status,
+      ...(result.status === "success" ? { output: result.output } : {}),
+      runtimeEvents: result.events,
+      adapterEvents,
+      harnessRecords: context.harness.records(),
+      route: {
+        boundary: context.payload.ref.boundary,
+        routePath: context.payload.routeDescriptor.routePath,
+        surface: context.payload.routeDescriptor.surface,
+        capability: context.payload.routeDescriptor.capability,
+      },
+    } satisfies RuntimeOrpcServerResponse;
+  }),
 });
 
 export interface StartedRuntimeOrpcServerBoundary {
@@ -180,7 +178,7 @@ export function mountRuntimeOrpcServerBoundary(input: {
         record({
           boundaryId: input.boundaryId,
           phase: "orpc.fetch.received",
-        }),
+        })
       );
 
       const { matched, response } = await handler.handle(request, {
@@ -200,7 +198,7 @@ export function mountRuntimeOrpcServerBoundary(input: {
           phase: matched ? "orpc.fetch.matched" : "orpc.fetch.unmatched",
           status: matched ? undefined : "unmatched",
           httpStatus: response?.status,
-        }),
+        })
       );
 
       return {

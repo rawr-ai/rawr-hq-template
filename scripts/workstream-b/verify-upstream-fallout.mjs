@@ -69,18 +69,22 @@ const mfeFiles = [
   "apps/web/src/ui/pages/MountsPage.tsx",
   "services/hq-ops/test/ports-backed-service.test.ts",
 ];
-const mfeContents = new Map(await Promise.all(mfeFiles.map(async (file) => [file, await readIfExists(file)])));
+const mfeContents = new Map(
+  await Promise.all(mfeFiles.map(async (file) => [file, await readIfExists(file)]))
+);
 assertNoMatch(mfeContents, /@rawr\/plugin-mfe-demo|mfe-demo/u, "mfe-demo reference");
 
 const activeCoordFiles = [
   ...(await listFiles("docs/process")),
   ...(await listFiles("scripts/runtime")),
 ];
-const coordContents = new Map(await Promise.all(activeCoordFiles.map(async (file) => [file, await readIfExists(file)])));
+const coordContents = new Map(
+  await Promise.all(activeCoordFiles.map(async (file) => [file, await readIfExists(file)]))
+);
 assertNoMatch(
   coordContents,
   /\/coordination|\/rpc\/coordination|rawr workflow coord|COORDINATION_CANVAS_OPERATIONS|coordination canvas|\.rawr\/coordination/iu,
-  "stale coordination canvas reference",
+  "stale coordination canvas reference"
 );
 
 const rootPackage = await readIfExists("package.json");

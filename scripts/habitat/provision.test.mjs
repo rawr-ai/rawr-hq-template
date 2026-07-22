@@ -7,10 +7,7 @@ import {
   sha256File,
   verifyReleaseAsset,
 } from "./provision.mjs";
-import {
-  createHabitatTestRoot,
-  removeHabitatTestRoot,
-} from "./test-fixture.mjs";
+import { createHabitatTestRoot, removeHabitatTestRoot } from "./test-fixture.mjs";
 
 const TEMP_PREFIX = "rawr-habitat-provision-test-";
 const roots = /** @type {string[]} */ ([]);
@@ -40,13 +37,15 @@ function fixtureManifest() {
 
 describe("Habitat standalone release consumer", () => {
   it("refuses an unsupported host", () => {
-    expect(() => selectReleaseAsset(fixtureManifest(), "win32", "x64"))
-      .toThrow("unavailable for win32-x64");
+    expect(() => selectReleaseAsset(fixtureManifest(), "win32", "x64")).toThrow(
+      "unavailable for win32-x64"
+    );
   });
 
   it("refuses fields outside the release schema", () => {
-    expect(() => parseReleaseManifest({ ...fixtureManifest(), extra: true }))
-      .toThrow("release manifest is invalid");
+    expect(() => parseReleaseManifest({ ...fixtureManifest(), extra: true })).toThrow(
+      "release manifest is invalid"
+    );
   });
 
   it("refuses an asset filename outside the release cache", () => {

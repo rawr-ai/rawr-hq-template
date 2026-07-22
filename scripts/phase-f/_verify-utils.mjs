@@ -21,7 +21,10 @@ export function assertNotMatches(source, pattern, message) {
 }
 
 export function assertScriptEquals(scripts, scriptName, expectedCommand) {
-  assertCondition(scripts[scriptName] === expectedCommand, `package.json must define ${scriptName}`);
+  assertCondition(
+    scripts[scriptName] === expectedCommand,
+    `package.json must define ${scriptName}`
+  );
 }
 
 export async function mustExist(relPath) {

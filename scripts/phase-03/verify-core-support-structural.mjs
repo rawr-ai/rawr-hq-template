@@ -36,14 +36,23 @@ if (!("./telemetry" in (pkg.exports ?? {}))) {
   process.exit(1);
 }
 
-for (const dependency of ["@rawr/coordination", "@rawr/runtime-context", "@rawr/state", "inngest"]) {
+for (const dependency of [
+  "@rawr/coordination",
+  "@rawr/runtime-context",
+  "@rawr/state",
+  "inngest",
+]) {
   if (dependency in (pkg.dependencies ?? {})) {
     console.error(`core structural failed: unexpected live dependency ${dependency}.`);
     process.exit(1);
   }
 }
 
-for (const stalePath of ["packages/core/src/orpc/hq-router.ts", "packages/core/src/orpc/runtime-router.ts", "packages/core/src/orpc/index.ts"]) {
+for (const stalePath of [
+  "packages/core/src/orpc/hq-router.ts",
+  "packages/core/src/orpc/runtime-router.ts",
+  "packages/core/src/orpc/index.ts",
+]) {
   try {
     await fs.access(path.join(root, stalePath));
     console.error(`core structural failed: stale file still exists at ${stalePath}.`);
@@ -53,7 +62,7 @@ for (const stalePath of ["packages/core/src/orpc/hq-router.ts", "packages/core/s
   }
 }
 
-if (!indexSource.includes('./cli/rawr-command') && !indexSource.includes("./cli/rawr-command")) {
+if (!indexSource.includes("./cli/rawr-command") && !indexSource.includes("./cli/rawr-command")) {
   console.error("core structural failed: RawrCommand residue missing.");
   process.exit(1);
 }

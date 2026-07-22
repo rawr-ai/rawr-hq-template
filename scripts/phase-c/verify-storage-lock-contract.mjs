@@ -11,7 +11,10 @@ for (const relPath of [
   "apps/server/test/repo-state-store.concurrent.test.ts",
   "apps/server/test/storage-lock-route-guard.test.ts",
 ]) {
-  const absent = await fs.access(relPath).then(() => false, () => true);
+  const absent = await fs.access(relPath).then(
+    () => false,
+    () => true
+  );
   assertCondition(absent, `${relPath} must remain retired`);
 }
 

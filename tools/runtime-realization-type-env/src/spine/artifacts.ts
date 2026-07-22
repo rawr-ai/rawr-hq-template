@@ -12,9 +12,7 @@ export type ExecutionBoundaryKind =
   | "plugin.agent-tool"
   | "plugin.desktop-background";
 
-export type ProviderEffectBoundaryKind =
-  | "provider.acquire"
-  | "provider.release";
+export type ProviderEffectBoundaryKind = "provider.acquire" | "provider.release";
 
 /**
  * Portable identity for an executable boundary. A ref may cross derivation,
@@ -79,11 +77,14 @@ export type ExecutionDescriptorRef =
       readonly backgroundId: string;
     });
 
-export type DistributiveOmit<TValue, TKey extends PropertyKey> =
-  TValue extends unknown ? Omit<TValue, TKey> : never;
+export type DistributiveOmit<TValue, TKey extends PropertyKey> = TValue extends unknown
+  ? Omit<TValue, TKey>
+  : never;
 
-export type ExecutionDescriptorIdentityInput =
-  DistributiveOmit<ExecutionDescriptorRef, "kind" | "executionId">;
+export type ExecutionDescriptorIdentityInput = DistributiveOmit<
+  ExecutionDescriptorRef,
+  "kind" | "executionId"
+>;
 
 export interface EffectBoundaryContext {
   readonly traceId: string;
@@ -124,11 +125,11 @@ export interface ProcessRuntimeAccess {
   readonly roles: readonly AppRole[];
   resource<TResource extends { readonly id: string }>(
     resource: TResource,
-    input?: { readonly instance?: string },
+    input?: { readonly instance?: string }
   ): unknown;
   optionalResource<TResource extends { readonly id: string }>(
     resource: TResource,
-    input?: { readonly instance?: string },
+    input?: { readonly instance?: string }
   ): unknown | undefined;
   telemetry(): RuntimeTelemetry;
   emitTopology(record: RuntimeTopologyRecord): void;
@@ -153,11 +154,11 @@ export interface RoleRuntimeAccess {
   readonly selectedSurfaces: readonly RoleSurfaceIdentity[];
   resource<TResource extends { readonly id: string }>(
     resource: TResource,
-    input?: { readonly instance?: string },
+    input?: { readonly instance?: string }
   ): unknown;
   optionalResource<TResource extends { readonly id: string }>(
     resource: TResource,
-    input?: { readonly instance?: string },
+    input?: { readonly instance?: string }
   ): unknown | undefined;
   forSurface(input: {
     readonly surface: string;
@@ -376,16 +377,17 @@ export interface IdentityPolicy {
   executionDescriptorId(input: ExecutionDescriptorIdentityInput): string;
 }
 
-export type RuntimeExecutionDerivationIdentityInput =
-  DistributiveOmit<ExecutionDescriptorRef, "kind" | "executionId" | "appId">;
+export type RuntimeExecutionDerivationIdentityInput = DistributiveOmit<
+  ExecutionDescriptorRef,
+  "kind" | "executionId" | "appId"
+>;
 
-export type RuntimeExecutionDerivationInput =
-  RuntimeExecutionDerivationIdentityInput & {
-    readonly kind: "runtime.execution-derivation-input";
-    readonly executionId?: string;
-    readonly descriptor?: ExecutionDescriptor<any, any, any, any, any>;
-    readonly policy?: CompiledExecutionPlan["policy"];
-  };
+export type RuntimeExecutionDerivationInput = RuntimeExecutionDerivationIdentityInput & {
+  readonly kind: "runtime.execution-derivation-input";
+  readonly executionId?: string;
+  readonly descriptor?: ExecutionDescriptor<any, any, any, any, any>;
+  readonly policy?: CompiledExecutionPlan["policy"];
+};
 
 export interface ServiceBindingDerivationInput {
   readonly kind: "service.binding-derivation-input";
@@ -492,13 +494,7 @@ export interface RuntimeSpineDerivation {
   readonly diagnostics: readonly RuntimeDiagnostic[];
 }
 
-export type RuntimeHarnessKind =
-  | "server"
-  | "async"
-  | "cli"
-  | "web"
-  | "agent"
-  | "desktop";
+export type RuntimeHarnessKind = "server" | "async" | "cli" | "web" | "agent" | "desktop";
 
 export interface RuntimeHarnessPlanPlaceholder {
   readonly kind: "harness.plan-placeholder";
@@ -541,9 +537,7 @@ export interface AsyncStepBridgePayload {
   readonly diagnostics: readonly RuntimeDiagnostic[];
 }
 
-export type RuntimeAdapterLoweringPayload =
-  | ServerAdapterCallbackPayload
-  | AsyncStepBridgePayload;
+export type RuntimeAdapterLoweringPayload = ServerAdapterCallbackPayload | AsyncStepBridgePayload;
 
 /**
  * Pre-harness adapter lowering output. The compiler can check which adapter

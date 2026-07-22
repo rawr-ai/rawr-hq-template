@@ -1,17 +1,11 @@
 import type { ExecutionDescriptorRef } from "../spine/artifacts";
-import type {
-  ProcessExecutionRuntime,
-  RuntimeInvocationResult,
-} from "../runtime/process-runtime";
+import type { ProcessExecutionRuntime, RuntimeInvocationResult } from "../runtime/process-runtime";
 
 export type AdapterDelegationKind = "server" | "async-step";
 
 export interface AdapterDelegationEvent {
   readonly kind: "adapter.delegation-event";
-  readonly name:
-    | "adapter.delegate.start"
-    | "adapter.delegate.finish"
-    | "adapter.delegate.failure";
+  readonly name: "adapter.delegate.start" | "adapter.delegate.finish" | "adapter.delegate.failure";
   readonly adapter: AdapterDelegationKind;
   readonly executionId: string;
   readonly boundary: string;
@@ -30,7 +24,7 @@ export interface AdapterDelegationInput {
 
 function adapterAcceptsBoundary(
   adapter: AdapterDelegationKind,
-  boundary: ExecutionDescriptorRef["boundary"],
+  boundary: ExecutionDescriptorRef["boundary"]
 ): boolean {
   if (adapter === "server") {
     return boundary === "plugin.server-api" || boundary === "plugin.server-internal";
@@ -47,7 +41,7 @@ function adapterAcceptsBoundary(
 export async function delegateAdapterInvocation<TOutput>(
   adapter: AdapterDelegationKind,
   runtime: ProcessExecutionRuntime,
-  input: AdapterDelegationInput,
+  input: AdapterDelegationInput
 ): Promise<RuntimeInvocationResult<TOutput>> {
   input.instrumentation?.record({
     kind: "adapter.delegation-event",
@@ -60,7 +54,7 @@ export async function delegateAdapterInvocation<TOutput>(
   try {
     if (!adapterAcceptsBoundary(adapter, input.ref.boundary)) {
       throw new Error(
-        `${adapter} adapter cannot invoke ${input.ref.boundary} boundary ${input.ref.executionId}`,
+        `${adapter} adapter cannot invoke ${input.ref.boundary} boundary ${input.ref.executionId}`
       );
     }
 

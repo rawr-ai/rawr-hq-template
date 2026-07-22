@@ -39,7 +39,8 @@ async function walk(dirPath, files) {
 }
 
 function isActiveScanPath(relPath) {
-  if (relPath === "package.json" || relPath === "vitest.config.ts" || relPath === "bun.lock") return true;
+  if (relPath === "package.json" || relPath === "vitest.config.ts" || relPath === "bun.lock")
+    return true;
   if (relPath.startsWith("apps/")) return true;
   if (relPath.startsWith("services/hq-ops/")) return true;
   if (relPath.startsWith("plugins/cli/plugins/")) return true;
@@ -80,7 +81,11 @@ for (const absPath of files.sort()) {
   if (!isActiveScanPath(relPath)) continue;
   const source = await fs.readFile(absPath, "utf8");
 
-  if (source.includes(removedPackageName) || source.includes(removedPackageRoot) || source.includes(removedPackageToken)) {
+  if (
+    source.includes(removedPackageName) ||
+    source.includes(removedPackageRoot) ||
+    source.includes(removedPackageToken)
+  ) {
     findings.push(`${relPath} still references the removed HQ Ops host package`);
   }
 

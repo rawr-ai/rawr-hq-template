@@ -42,7 +42,10 @@ async function temporaryDirectory(label: string): Promise<string> {
   return path;
 }
 
-async function fixturePlan(workspaceRoot: string, digest: string): Promise<ControllerMaterializationPlan> {
+async function fixturePlan(
+  workspaceRoot: string,
+  digest: string
+): Promise<ControllerMaterializationPlan> {
   const runtimeSource = join(workspaceRoot, "build", "bun");
   const licenseSource = join(workspaceRoot, "build", "BUN-LICENSE.txt");
   const entrySource = join(workspaceRoot, "build", "rawr.mjs");
@@ -87,11 +90,14 @@ async function fixturePlan(workspaceRoot: string, digest: string): Promise<Contr
 function fixtureFinalizer(digest: string): ControllerReleaseFinalizer {
   return {
     async writeEnvelope(stagingRoot) {
-      await writeFile(join(stagingRoot, "controller-envelope.json"), `${JSON.stringify({ digest })}\n`);
+      await writeFile(
+        join(stagingRoot, "controller-envelope.json"),
+        `${JSON.stringify({ digest })}\n`
+      );
     },
     async verifyRelease(releaseRoot, expectedDigest) {
       const envelope = JSON.parse(
-        await readFile(join(releaseRoot, "controller-envelope.json"), "utf8"),
+        await readFile(join(releaseRoot, "controller-envelope.json"), "utf8")
       ) as { digest?: unknown };
       expect(envelope.digest).toBe(expectedDigest);
       expect((await lstat(join(releaseRoot, CONTROLLER_RUNTIME_PATH))).isFile()).toBe(true);
@@ -114,8 +120,8 @@ describe("controller release materialization", () => {
         stagingParent,
         operationRoot,
         operationId,
-        "controller staging cleanup",
-      ),
+        "controller staging cleanup"
+      )
     ).rejects.toThrow("must be a non-aliased directory");
 
     expect(await readFile(join(outsideRoot, "keep"), "utf8")).toBe("outside state\n");
@@ -148,7 +154,9 @@ describe("controller release materialization", () => {
 
     expect(first.kind).toBe("materialized");
     expect(second.kind).toBe("converged");
-    expect(await readFile(join(first.releaseRoot, CONTROLLER_ENTRY_PATH), "utf8")).toContain("fixture");
+    expect(await readFile(join(first.releaseRoot, CONTROLLER_ENTRY_PATH), "utf8")).toContain(
+      "fixture"
+    );
     expect(await readdir(stagingParent)).toEqual([]);
     expect({ inode: after.ino, mtime: after.mtimeMs }).toEqual({
       inode: before.ino,
@@ -169,7 +177,8 @@ describe("controller release materialization", () => {
       plan,
       finalizer: fixtureFinalizer(digest),
       observe: (phase) => {
-        if (phase === "after-final-replace") throw new Error("fixture release parent fsync failure");
+        if (phase === "after-final-replace")
+          throw new Error("fixture release parent fsync failure");
       },
     });
 
@@ -179,7 +188,9 @@ describe("controller release materialization", () => {
       cleanup: "completed",
       postCommitError: "fixture release parent fsync failure",
     });
-    expect(await readFile(join(result.releaseRoot, CONTROLLER_ENTRY_PATH), "utf8")).toContain("fixture");
+    expect(await readFile(join(result.releaseRoot, CONTROLLER_ENTRY_PATH), "utf8")).toContain(
+      "fixture"
+    );
   });
 
   test("reports postcommit staging cleanup failure without losing the materialized release", async () => {
@@ -210,8 +221,12 @@ describe("controller release materialization", () => {
       cleanupError: "fixture staging cleanup failure",
     });
     expect(cleanupAttempts).toBe(1);
-    expect(await readFile(join(result.releaseRoot, CONTROLLER_ENTRY_PATH), "utf8")).toContain("fixture");
-    expect(await readdir(join(controllerDirectory(dataRoot), CONTROLLER_STAGING_DIRECTORY))).toHaveLength(1);
+    expect(await readFile(join(result.releaseRoot, CONTROLLER_ENTRY_PATH), "utf8")).toContain(
+      "fixture"
+    );
+    expect(
+      await readdir(join(controllerDirectory(dataRoot), CONTROLLER_STAGING_DIRECTORY))
+    ).toHaveLength(1);
   });
 
   test("removes a partial staging release when verification fails", async () => {
@@ -234,37 +249,37 @@ describe("controller release materialization", () => {
             throw new Error("incomplete controller");
           },
         },
-      }),
+      })
     ).rejects.toThrow("incomplete controller");
 
     const stagingParent = join(controllerDirectory(dataRoot), CONTROLLER_STAGING_DIRECTORY);
     expect(await readdir(stagingParent)).toEqual([]);
   });
 
-  test.each(["staging", "releases"] as const)(
-    "refuses an aliased %s parent without writing outside the data root",
-    async (directory) => {
-      const dataRoot = await temporaryDirectory(`aliased-${directory}-data`);
-      const workspaceRoot = await temporaryDirectory(`aliased-${directory}-workspace`);
-      const outsideRoot = await temporaryDirectory(`aliased-${directory}-outside`);
-      const digest = "b".repeat(64);
-      const plan = await fixturePlan(workspaceRoot, digest);
-      await mkdir(controllerDirectory(dataRoot), { recursive: true });
-      await symlink(outsideRoot, join(controllerDirectory(dataRoot), directory));
+  test.each([
+    "staging",
+    "releases",
+  ] as const)("refuses an aliased %s parent without writing outside the data root", async (directory) => {
+    const dataRoot = await temporaryDirectory(`aliased-${directory}-data`);
+    const workspaceRoot = await temporaryDirectory(`aliased-${directory}-workspace`);
+    const outsideRoot = await temporaryDirectory(`aliased-${directory}-outside`);
+    const digest = "b".repeat(64);
+    const plan = await fixturePlan(workspaceRoot, digest);
+    await mkdir(controllerDirectory(dataRoot), { recursive: true });
+    await symlink(outsideRoot, join(controllerDirectory(dataRoot), directory));
 
-      await expect(
-        materializeControllerRelease({
-          dataRoot,
-          workspaceRoot,
-          allowedSourceRoots: [workspaceRoot],
-          plan,
-          finalizer: fixtureFinalizer(digest),
-        }),
-      ).rejects.toThrow("must be a canonical directory");
+    await expect(
+      materializeControllerRelease({
+        dataRoot,
+        workspaceRoot,
+        allowedSourceRoots: [workspaceRoot],
+        plan,
+        finalizer: fixtureFinalizer(digest),
+      })
+    ).rejects.toThrow("must be a canonical directory");
 
-      expect(await readdir(outsideRoot)).toEqual([]);
-    },
-  );
+    expect(await readdir(outsideRoot)).toEqual([]);
+  });
 
   test("rejects a release plan without the bundled Bun license", async () => {
     const dataRoot = await temporaryDirectory("license-data");
@@ -274,7 +289,7 @@ describe("controller release materialization", () => {
     const plan: ControllerMaterializationPlan = {
       ...fixture,
       sources: fixture.sources.filter(
-        (source) => source.releasePath !== CONTROLLER_RUNTIME_LICENSE_PATH,
+        (source) => source.releasePath !== CONTROLLER_RUNTIME_LICENSE_PATH
       ),
     };
 
@@ -285,7 +300,7 @@ describe("controller release materialization", () => {
         allowedSourceRoots: [workspaceRoot],
         plan,
         finalizer: fixtureFinalizer(digest),
-      }),
+      })
     ).rejects.toThrow(`missing required file: ${CONTROLLER_RUNTIME_LICENSE_PATH}`);
     await expect(lstat(controllerDirectory(dataRoot))).rejects.toThrow();
   });
@@ -337,7 +352,7 @@ describe("controller release materialization", () => {
         allowedSourceRoots: [workspaceRoot],
         plan,
         finalizer: fixtureFinalizer(plan.controllerDigest),
-      }),
+      })
     ).rejects.toThrow("protected workspace path");
     await expect(lstat(controllerDirectory(dataRoot))).rejects.toThrow();
   });
@@ -362,20 +377,22 @@ describe("controller release materialization", () => {
     };
     let finalizerCalls = 0;
 
-    await expect(materializeControllerRelease({
-      dataRoot,
-      workspaceRoot,
-      allowedSourceRoots: [workspaceRoot],
-      plan,
-      finalizer: {
-        async writeEnvelope() {
-          finalizerCalls += 1;
+    await expect(
+      materializeControllerRelease({
+        dataRoot,
+        workspaceRoot,
+        allowedSourceRoots: [workspaceRoot],
+        plan,
+        finalizer: {
+          async writeEnvelope() {
+            finalizerCalls += 1;
+          },
+          async verifyRelease() {
+            finalizerCalls += 1;
+          },
         },
-        async verifyRelease() {
-          finalizerCalls += 1;
-        },
-      },
-    })).rejects.toThrow("traverses an aliased path");
+      })
+    ).rejects.toThrow("traverses an aliased path");
 
     expect(finalizerCalls).toBe(0);
     await expect(lstat(controllerDirectory(dataRoot))).rejects.toThrow();
@@ -405,7 +422,7 @@ describe("controller release materialization", () => {
         allowedSourceRoots: [workspaceRoot],
         plan,
         finalizer: fixtureFinalizer(digest),
-      }),
+      })
     ).rejects.toThrow("controller payload link target contains an unsafe segment");
   });
 });

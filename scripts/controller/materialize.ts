@@ -11,14 +11,7 @@ import {
   rename,
   symlink,
 } from "node:fs/promises";
-import {
-  dirname,
-  isAbsolute,
-  join,
-  relative,
-  resolve,
-  sep,
-} from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 import {
   assertAbsolutePath,
@@ -66,9 +59,7 @@ export type ControllerMaterializationResult = Readonly<{
   cleanupError?: string;
 }>;
 
-export type ControllerMaterializationPhase =
-  | "after-final-replace"
-  | "before-staging-cleanup";
+export type ControllerMaterializationPhase = "after-final-replace" | "before-staging-cleanup";
 
 export interface ControllerReleaseFinalizer {
   writeEnvelope(stagingRoot: string): Promise<void>;
@@ -86,11 +77,11 @@ type CanonicalRoot = Readonly<{ locator: string; canonical: string }>;
 
 function assertReleasePath(path: string, label: string): void {
   if (
-    path.length === 0
-    || isAbsolute(path)
-    || path.includes("\\")
-    || path.includes(":")
-    || path.endsWith("/")
+    path.length === 0 ||
+    isAbsolute(path) ||
+    path.includes("\\") ||
+    path.includes(":") ||
+    path.endsWith("/")
   ) {
     throw new Error(`${label} must be a canonical release-relative path: ${path}`);
   }
@@ -111,7 +102,7 @@ function workspaceRelativePath(workspaceRoot: string, sourcePath: string): strin
 async function assertAllowedSource(
   sourcePath: string,
   workspaceRoot: CanonicalRoot,
-  allowedSourceRoots: readonly CanonicalRoot[],
+  allowedSourceRoots: readonly CanonicalRoot[]
 ): Promise<void> {
   assertAbsolutePath(sourcePath, "controller payload source");
   const normalizedSource = resolve(sourcePath);
@@ -124,16 +115,16 @@ async function assertAllowedSource(
   });
   if (!allowed) {
     throw new Error(
-      `controller payload source is outside its canonical source root or traverses an aliased path: ${sourcePath}`,
+      `controller payload source is outside its canonical source root or traverses an aliased path: ${sourcePath}`
     );
   }
 
   const workspacePath = workspaceRelativePath(workspaceRoot.canonical, canonicalSource);
   if (
-    workspacePath !== null
-    && (workspacePath === ".git"
-      || workspacePath.startsWith(".git/")
-      || PROTECTED_WORKSPACE_PATHS.some((pattern) => pattern.test(workspacePath)))
+    workspacePath !== null &&
+    (workspacePath === ".git" ||
+      workspacePath.startsWith(".git/") ||
+      PROTECTED_WORKSPACE_PATHS.some((pattern) => pattern.test(workspacePath)))
   ) {
     throw new Error(`protected workspace path cannot enter a controller release: ${workspacePath}`);
   }
@@ -142,7 +133,7 @@ async function assertAllowedSource(
 async function validatePlan(
   plan: ControllerMaterializationPlan,
   workspaceRoot: CanonicalRoot,
-  allowedSourceRoots: readonly CanonicalRoot[],
+  allowedSourceRoots: readonly CanonicalRoot[]
 ): Promise<void> {
   if (!CONTROLLER_DIGEST_PATTERN.test(plan.controllerDigest)) {
     throw new Error(`invalid controller digest: ${plan.controllerDigest}`);
@@ -156,7 +147,10 @@ async function validatePlan(
     destinations.add(source.releasePath);
     if (source.kind === "file") {
       await assertAllowedSource(source.sourcePath, workspaceRoot, allowedSourceRoots);
-      if (source.mode !== undefined && (!Number.isInteger(source.mode) || source.mode < 0 || source.mode > 0o777)) {
+      if (
+        source.mode !== undefined &&
+        (!Number.isInteger(source.mode) || source.mode < 0 || source.mode > 0o777)
+      ) {
         throw new Error(`invalid payload mode for ${source.releasePath}: ${String(source.mode)}`);
       }
     } else {
@@ -195,7 +189,7 @@ async function stageSource(stagingRoot: string, source: ControllerPayloadSource)
       throw new Error(`controller payload source must be a regular file: ${source.sourcePath}`);
     }
     await copyFile(source.sourcePath, destination);
-    await chmod(destination, source.mode ?? (status.mode & 0o777));
+    await chmod(destination, source.mode ?? status.mode & 0o777);
     const destinationStatus = await lstat(destination);
     if (destinationStatus.nlink !== 1) {
       throw new Error(`staged controller file shares a mutable inode: ${source.releasePath}`);
@@ -245,10 +239,10 @@ async function syncStagedTree(stagingRoot: string): Promise<void> {
 
 function isDestinationRace(error: unknown): boolean {
   return (
-    typeof error === "object"
-    && error !== null
-    && "code" in error
-    && (error.code === "EEXIST" || error.code === "ENOTEMPTY")
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error.code === "EEXIST" || error.code === "ENOTEMPTY")
   );
 }
 
@@ -270,24 +264,22 @@ export async function materializeControllerRelease(options: {
     locator: workspaceRoot,
     canonical: await realpath(workspaceRoot),
   });
-  const allowedSourceRoots = await Promise.all(options.allowedSourceRoots.map(async (root) => {
-    const normalizedRoot = resolve(root);
-    return Object.freeze({
-      locator: normalizedRoot,
-      canonical: await realpath(normalizedRoot),
-    });
-  }));
+  const allowedSourceRoots = await Promise.all(
+    options.allowedSourceRoots.map(async (root) => {
+      const normalizedRoot = resolve(root);
+      return Object.freeze({
+        locator: normalizedRoot,
+        canonical: await realpath(normalizedRoot),
+      });
+    })
+  );
   await validatePlan(options.plan, canonicalWorkspaceRoot, allowedSourceRoots);
 
   await mkdir(options.dataRoot, { recursive: true });
   const dataRoot = await realpath(options.dataRoot);
 
   const finalRoot = controllerReleasePath(dataRoot, options.plan.controllerDigest);
-  await assertCanonicalContainedParent(
-    dataRoot,
-    finalRoot,
-    "controller release destination",
-  );
+  await assertCanonicalContainedParent(dataRoot, finalRoot, "controller release destination");
   try {
     const status = await lstat(finalRoot);
     if (!status.isDirectory()) {
@@ -302,7 +294,9 @@ export async function materializeControllerRelease(options: {
       cleanup: "not-required",
     });
   } catch (error) {
-    if (!(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")) {
+    if (
+      !(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")
+    ) {
       throw error;
     }
   }
@@ -311,20 +305,16 @@ export async function materializeControllerRelease(options: {
   const operationId = randomUUID();
   const stagingOperationRoot = join(stagingParent, operationId);
   const stagingRoot = join(stagingOperationRoot, options.plan.controllerDigest);
-  await ensureCanonicalContainedDirectory(
-    dataRoot,
-    stagingParent,
-    "controller staging directory",
-  );
+  await ensureCanonicalContainedDirectory(dataRoot, stagingParent, "controller staging directory");
   await ensureCanonicalContainedDirectory(
     dataRoot,
     dirname(finalRoot),
-    "controller releases directory",
+    "controller releases directory"
   );
   await ensureCanonicalContainedDirectory(
     stagingParent,
     stagingOperationRoot,
-    "controller staging operation",
+    "controller staging operation"
   );
   const cleanupStaging = async (): Promise<void> => {
     await options.observe?.("before-staging-cleanup");
@@ -332,14 +322,14 @@ export async function materializeControllerRelease(options: {
       stagingParent,
       stagingOperationRoot,
       operationId,
-      "controller staging cleanup",
+      "controller staging cleanup"
     );
   };
   try {
     await ensureCanonicalContainedDirectory(
       stagingOperationRoot,
       stagingRoot,
-      "controller staged release",
+      "controller staged release"
     );
     for (const source of options.plan.sources) {
       await stageSource(stagingRoot, source);
@@ -398,7 +388,7 @@ export async function materializeControllerRelease(options: {
     } catch (cleanupError) {
       throw new AggregateError(
         [error, cleanupError],
-        "controller materialization and precommit staging cleanup both failed",
+        "controller materialization and precommit staging cleanup both failed"
       );
     }
     throw error;

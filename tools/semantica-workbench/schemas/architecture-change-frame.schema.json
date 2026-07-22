@@ -119,12 +119,7 @@
     "document_ref": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "source_path",
-        "title",
-        "authority_context",
-        "source_scope"
-      ],
+      "required": ["source_path", "title", "authority_context", "source_scope"],
       "properties": {
         "source_path": {
           "type": "string",
@@ -217,10 +212,7 @@
         },
         "char_span_kind": {
           "type": "string",
-          "enum": [
-            "document-offset",
-            "line-offset"
-          ]
+          "enum": ["document-offset", "line-offset"]
         },
         "text": {
           "type": "string",
@@ -276,12 +268,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "pilot",
-            "fallback",
-            "blocked",
-            "manual"
-          ]
+          "enum": ["pilot", "fallback", "blocked", "manual"]
         },
         "llm_provider_status": {
           "type": "string",
@@ -337,10 +324,7 @@
         },
         "reference_geometry_status": {
           "type": "string",
-          "enum": [
-            "comparison-only",
-            "not-used"
-          ]
+          "enum": ["comparison-only", "not-used"]
         },
         "requires_human_promotion": {
           "const": true
@@ -352,13 +336,7 @@
     },
     "mapping_state": {
       "type": "string",
-      "enum": [
-        "resolved",
-        "candidate",
-        "extension-slot",
-        "unresolved",
-        "rejected"
-      ]
+      "enum": ["resolved", "candidate", "extension-slot", "unresolved", "rejected"]
     },
     "noun_mapping": {
       "type": "object",
@@ -413,13 +391,7 @@
     },
     "polarity": {
       "type": "string",
-      "enum": [
-        "positive",
-        "negative",
-        "prohibitive",
-        "conditional",
-        "unknown"
-      ]
+      "enum": ["positive", "negative", "prohibitive", "conditional", "unknown"]
     },
     "modality": {
       "type": "string",
@@ -448,14 +420,7 @@
     },
     "review_state": {
       "type": "string",
-      "enum": [
-        "evidence-only",
-        "candidate",
-        "tbd",
-        "review-needed",
-        "rejected",
-        "suppressed"
-      ]
+      "enum": ["evidence-only", "candidate", "tbd", "review-needed", "rejected", "suppressed"]
     },
     "verdict": {
       "type": "string",
@@ -602,10 +567,7 @@
       "properties": {
         "status": {
           "type": "string",
-          "enum": [
-            "extraction-only",
-            "evaluated"
-          ]
+          "enum": ["extraction-only", "evaluated"]
         },
         "overall_verdict": {
           "$ref": "#/$defs/verdict"

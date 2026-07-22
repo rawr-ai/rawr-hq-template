@@ -29,18 +29,13 @@ import {
   type RuntimeTelemetryEventLike,
   type RuntimeTelemetryRecord,
 } from "../../../src/oracle";
-import {
-  compileRuntimeSpine,
-  deriveRuntimeSpine,
-} from "../../../src/spine/simulate";
+import { compileRuntimeSpine, deriveRuntimeSpine } from "../../../src/spine/simulate";
 import type {
   AsyncStepBridgePayload,
   RuntimeSpineCompilation,
   ServerAdapterCallbackPayload,
 } from "../../../src/spine/artifacts";
-import {
-  SyncWorkItemStepDescriptor,
-} from "../../../scenarios/work-items/app-and-plan-artifacts";
+import { SyncWorkItemStepDescriptor } from "../../../scenarios/work-items/app-and-plan-artifacts";
 import { WorkItemsRuntimeProfile } from "../../../scenarios/work-items/resource-provider-profile";
 import { EmailProvider } from "../../../scenarios/work-items/resource-provider-profile";
 import { WorkItemsServerApiPlugin } from "../../../scenarios/work-items/server-api-plugin";
@@ -65,14 +60,8 @@ interface InngestStepErrorOp {
 }
 
 function assertNoLiveHandles(value: unknown): void {
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
-    throw new Error(
-      `phase three started passage leaked live handle: ${String(value)}`,
-    );
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
+    throw new Error(`phase three started passage leaked live handle: ${String(value)}`);
   }
 
   if (value === null || typeof value !== "object") return;
@@ -92,13 +81,11 @@ function collectFunctionPaths(value: unknown, path = "$"): string[] {
   if (!value || typeof value !== "object") return [];
 
   if (Array.isArray(value)) {
-    return value.flatMap((item, index) =>
-      collectFunctionPaths(item, `${path}[${index}]`),
-    );
+    return value.flatMap((item, index) => collectFunctionPaths(item, `${path}[${index}]`));
   }
 
   return Object.entries(value as Record<string, unknown>).flatMap(([key, entry]) =>
-    collectFunctionPaths(entry, `${path}.${key}`),
+    collectFunctionPaths(entry, `${path}.${key}`)
   );
 }
 
@@ -185,27 +172,22 @@ function deriveAndCompileSpine(): RuntimeSpineCompilation {
           ],
         },
       ],
-    }),
+    })
   );
 }
 
-function serverPayloadFrom(
-  compilation: RuntimeSpineCompilation,
-): ServerAdapterCallbackPayload {
+function serverPayloadFrom(compilation: RuntimeSpineCompilation): ServerAdapterCallbackPayload {
   const payload = compilation.adapterLoweringPlan.payloads.find(
     (entry): entry is ServerAdapterCallbackPayload =>
-      entry.kind === "adapter.server-callback-payload",
+      entry.kind === "adapter.server-callback-payload"
   );
   if (!payload) throw new Error("missing phase three server payload");
   return payload;
 }
 
-function asyncPayloadFrom(
-  compilation: RuntimeSpineCompilation,
-): AsyncStepBridgePayload {
+function asyncPayloadFrom(compilation: RuntimeSpineCompilation): AsyncStepBridgePayload {
   const payload = compilation.adapterLoweringPlan.payloads.find(
-    (entry): entry is AsyncStepBridgePayload =>
-      entry.kind === "adapter.async-step-bridge-payload",
+    (entry): entry is AsyncStepBridgePayload => entry.kind === "adapter.async-step-bridge-payload"
   );
   if (!payload) throw new Error("missing phase three async payload");
   return payload;
@@ -244,7 +226,7 @@ function createClients(): ConstructionBoundServiceClients<
 }
 
 function providerResourcesFromStartedValues(
-  startedValues: ReadonlyMap<string, unknown>,
+  startedValues: ReadonlyMap<string, unknown>
 ): readonly ContainedRuntimeResourceDefinition[] {
   return [...startedValues.values()].flatMap((started) => {
     const providerValue = started as ProviderProvisionedValue | undefined;
@@ -276,9 +258,7 @@ function workflowDispatcher(): WorkflowDispatcher {
   };
 }
 
-function createServerInvocationContext(
-  resources: readonly ContainedRuntimeResourceDefinition[],
-) {
+function createServerInvocationContext(resources: readonly ContainedRuntimeResourceDefinition[]) {
   return (request: { readonly input: unknown; readonly requestId?: string }) => ({
     input: request.input,
     context: {
@@ -301,9 +281,7 @@ function createServerInvocationContext(
   });
 }
 
-function createAsyncInvocationContext(
-  resources: readonly ContainedRuntimeResourceDefinition[],
-) {
+function createAsyncInvocationContext(resources: readonly ContainedRuntimeResourceDefinition[]) {
   return (event: { readonly name: string; readonly data: unknown }) => ({
     event: {
       name: event.name,
@@ -354,19 +332,17 @@ function appendTelemetryRecords(
     readonly source: string;
     readonly runId: string;
     readonly events: readonly RuntimeTelemetryEventLike[];
-  },
+  }
 ) {
   records.push(
     ...projectRuntimeEventsToTelemetryRecords({
       ...input,
       startingSequence: records.length,
-    }),
+    })
   );
 }
 
-async function suppressExpectedInngestStoppedError<T>(
-  task: () => Promise<T>,
-): Promise<T> {
+async function suppressExpectedInngestStoppedError<T>(task: () => Promise<T>): Promise<T> {
   const originalError = console.error;
   console.error = (...args: unknown[]) => {
     const text = args.map(String).join("\n");
@@ -396,10 +372,7 @@ describe("phase three started process assembly stop finalization passage", () =>
     expect(compilation.portableArtifact.executionDescriptorRefs).toHaveLength(2);
     expect(collectFunctionPaths(compilation.portableArtifact)).toEqual([]);
     expect(compilation.adapterLoweringPlan.diagnostics).toEqual([]);
-    expect(compilation.harnessPlans.map((plan) => plan.harness)).toEqual([
-      "server",
-      "async",
-    ]);
+    expect(compilation.harnessPlans.map((plan) => plan.harness)).toEqual(["server", "async"]);
 
     if (!compilation.providerDependencyGraph) {
       throw new Error("phase three passage expected provider dependency graph");
@@ -452,9 +425,7 @@ describe("phase three started process assembly stop finalization passage", () =>
         return runtime.dispose();
       },
     };
-    const resources = providerResourcesFromStartedValues(
-      providerResult.startedValues(),
-    );
+    const resources = providerResourcesFromStartedValues(providerResult.startedValues());
     const serverHarness = mountOracleServerHarness({
       harnessId: "server:hq:phase-three-started",
       runtime: countedRuntime,
@@ -494,7 +465,7 @@ describe("phase three started process assembly stop finalization passage", () =>
             title: "Phase Three started passage",
             secretToken: "phase-three-server-request-secret",
           },
-        }),
+        })
       );
       expect(serverResult.matched).toBe(true);
       expect(serverResult.response.status).toBe(200);
@@ -509,7 +480,7 @@ describe("phase three started process assembly stop finalization passage", () =>
             requestedBy: "actor-phase-three",
             secretToken: "phase-three-async-event-secret",
           },
-        }),
+        })
       );
       expect(asyncResponse.status).toBe(206);
       const asyncBody =
@@ -536,23 +507,22 @@ describe("phase three started process assembly stop finalization passage", () =>
             title: "Phase Three post-stop server",
             secretToken: "phase-three-post-stop-server-secret",
           },
-        }),
+        })
       );
       expect(postStopServerResult.matched).toBe(true);
       expect(postStopServerResult.response.status).toBeGreaterThanOrEqual(400);
 
-      const postStopAsyncResponse = await suppressExpectedInngestStoppedError(
-        () =>
-          asyncBoundary.handle(
-            asyncBoundary.createRequest({
-              runId: `${runId}:post-stop`,
-              eventData: {
-                itemId: "item-1",
-                requestedBy: "actor-phase-three",
-                secretToken: "phase-three-post-stop-async-secret",
-              },
-            }),
-          ),
+      const postStopAsyncResponse = await suppressExpectedInngestStoppedError(() =>
+        asyncBoundary.handle(
+          asyncBoundary.createRequest({
+            runId: `${runId}:post-stop`,
+            eventData: {
+              itemId: "item-1",
+              requestedBy: "actor-phase-three",
+              secretToken: "phase-three-post-stop-async-secret",
+            },
+          })
+        )
       );
       expect(postStopAsyncResponse.status).toBe(206);
       const postStopAsyncBody =
@@ -648,7 +618,7 @@ describe("phase three started process assembly stop finalization passage", () =>
           runId,
           catalog: providerResult.catalog(),
           startingSequence: telemetryRecords.length,
-        }),
+        })
       );
 
       let exportedEndpoint = "";
@@ -719,7 +689,7 @@ describe("phase three started process assembly stop finalization passage", () =>
           "phase-three.started.async.harness",
           "phase-three.started.runtime.lifecycle",
           "phase-three.started.catalog",
-        ]),
+        ])
       );
       expect(payloadJson).toContain("provider.acquire");
       expect(payloadJson).toContain("boot.finalize.finished");

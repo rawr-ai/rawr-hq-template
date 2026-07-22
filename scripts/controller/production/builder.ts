@@ -24,14 +24,8 @@ import {
   controllerCommandPackages,
 } from "../../../apps/cli/src/lib/controller/classification.ts";
 import { buildControllerRelease } from "../build-release.ts";
-import {
-  controllerReleasePath,
-  controllerSelectorPath,
-} from "../layout.ts";
-import {
-  removeCanonicalDirectChildDirectory,
-  sha256File,
-} from "../lib/filesystem.ts";
+import { controllerReleasePath, controllerSelectorPath } from "../layout.ts";
+import { removeCanonicalDirectChildDirectory, sha256File } from "../lib/filesystem.ts";
 import { nodeControllerSelectorStore } from "../selector-store.ts";
 import {
   assertCanonicalControllerNxProjectRoots,
@@ -70,7 +64,7 @@ import { requireVerifiedOfficialControllerRelease } from "./verify-official.ts";
 const WORKSPACE_CONTROLLER_ROOTS = Object.freeze(
   controllerCommandPackages
     .filter((row) => row.disposition === "controller-member" && row.source === "workspace")
-    .map((row) => row.packageId),
+    .map((row) => row.packageId)
 );
 const PRODUCTION_OPERATION_ROOT_PREFIX = "rawr-controller-production-";
 
@@ -103,10 +97,7 @@ export type ProductionControllerInstallOptions = Readonly<{
 }>;
 
 function isMissingFilesystemEntry(error: unknown): boolean {
-  return typeof error === "object"
-    && error !== null
-    && "code" in error
-    && error.code === "ENOENT";
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }
 
 async function removeProductionOperationRoot(operationRoot: string): Promise<void> {
@@ -120,21 +111,18 @@ async function removeProductionOperationRoot(operationRoot: string): Promise<voi
   }
   const status = await lstat(operationRoot);
   if (
-    !status.isDirectory()
-    || status.isSymbolicLink()
-    || canonicalOperationRoot !== operationRoot
-    || dirname(canonicalOperationRoot) !== canonicalTemporaryRoot
-    || !basename(canonicalOperationRoot).startsWith(PRODUCTION_OPERATION_ROOT_PREFIX)
+    !status.isDirectory() ||
+    status.isSymbolicLink() ||
+    canonicalOperationRoot !== operationRoot ||
+    dirname(canonicalOperationRoot) !== canonicalTemporaryRoot ||
+    !basename(canonicalOperationRoot).startsWith(PRODUCTION_OPERATION_ROOT_PREFIX)
   ) {
     throw new Error(`refusing to remove invalid controller production root: ${operationRoot}`);
   }
   await rm(canonicalOperationRoot, { recursive: true, force: true });
 }
 
-async function requireCleanSource(
-  workspaceRoot: string,
-  runner: CommandRunner,
-): Promise<string> {
+async function requireCleanSource(workspaceRoot: string, runner: CommandRunner): Promise<string> {
   const status = await runner("git", ["status", "--porcelain=v1", "--untracked-files=all"], {
     cwd: workspaceRoot,
     env: scrubbedGitEnvironment(),
@@ -142,11 +130,14 @@ async function requireCleanSource(
   if (status.stdout.length !== 0) {
     throw new Error("production controller build requires a clean Template source checkout");
   }
-  const revision = (await runner("git", ["rev-parse", "HEAD"], {
-    cwd: workspaceRoot,
-    env: scrubbedGitEnvironment(),
-  })).stdout.trim();
-  if (!/^[0-9a-f]{40}$/u.test(revision)) throw new Error(`invalid Template source revision: ${revision}`);
+  const revision = (
+    await runner("git", ["rev-parse", "HEAD"], {
+      cwd: workspaceRoot,
+      env: scrubbedGitEnvironment(),
+    })
+  ).stdout.trim();
+  if (!/^[0-9a-f]{40}$/u.test(revision))
+    throw new Error(`invalid Template source revision: ${revision}`);
   return revision;
 }
 
@@ -159,7 +150,7 @@ export async function finalizeWithStableSourceRevision<T>(options: {
   const observedRevision = await requireCleanSource(options.workspaceRoot, options.runner);
   if (observedRevision !== options.expectedRevision) {
     throw new Error(
-      `production controller source changed during build: expected ${options.expectedRevision}, received ${observedRevision}`,
+      `production controller source changed during build: expected ${options.expectedRevision}, received ${observedRevision}`
     );
   }
   return await options.finalize();
@@ -168,22 +159,24 @@ export async function finalizeWithStableSourceRevision<T>(options: {
 async function verifyPinnedBun(
   bunBinary: string,
   workspaceRoot: string,
-  runner: CommandRunner,
+  runner: CommandRunner
 ): Promise<void> {
   const status = await lstat(bunBinary);
   if (!status.isFile() || (status.mode & constants.S_IXUSR) === 0) {
     throw new Error(`pinned Bun binary is not executable: ${bunBinary}`);
   }
-  const version = (await runner(
-    bunBinary,
-    ["--config=/dev/null", "--no-env-file", "--no-install", "--version"],
-    { cwd: workspaceRoot, env: scrubbedBunEnvironment() },
-  )).stdout.trim();
-  const revision = (await runner(
-    bunBinary,
-    ["--config=/dev/null", "--no-env-file", "--no-install", "--revision"],
-    { cwd: workspaceRoot, env: scrubbedBunEnvironment() },
-  )).stdout.trim();
+  const version = (
+    await runner(bunBinary, ["--config=/dev/null", "--no-env-file", "--no-install", "--version"], {
+      cwd: workspaceRoot,
+      env: scrubbedBunEnvironment(),
+    })
+  ).stdout.trim();
+  const revision = (
+    await runner(bunBinary, ["--config=/dev/null", "--no-env-file", "--no-install", "--revision"], {
+      cwd: workspaceRoot,
+      env: scrubbedBunEnvironment(),
+    })
+  ).stdout.trim();
   if (version !== PINNED_BUN_VERSION) {
     throw new Error(`controller builder requires Bun ${PINNED_BUN_VERSION}, received ${version}`);
   }
@@ -192,38 +185,43 @@ async function verifyPinnedBun(
     ? revision.slice(revisionPrefix.length)
     : "";
   if (
-    abbreviatedRevision.length < 8
-    || !/^[0-9a-f]+$/u.test(abbreviatedRevision)
-    || !PINNED_BUN_REVISION.startsWith(abbreviatedRevision)
+    abbreviatedRevision.length < 8 ||
+    !/^[0-9a-f]+$/u.test(abbreviatedRevision) ||
+    !PINNED_BUN_REVISION.startsWith(abbreviatedRevision)
   ) {
     throw new Error(`controller builder received unexpected Bun revision: ${revision}`);
   }
-  const runtimeIdentityText = (await runner(
-    bunBinary,
-    [
-      "--config=/dev/null",
-      "--no-env-file",
-      "--no-install",
-      "-e",
-      "process.stdout.write(JSON.stringify({platform:process.platform,architecture:process.arch}))",
-    ],
-    { cwd: workspaceRoot, env: scrubbedBunEnvironment() },
-  )).stdout;
+  const runtimeIdentityText = (
+    await runner(
+      bunBinary,
+      [
+        "--config=/dev/null",
+        "--no-env-file",
+        "--no-install",
+        "-e",
+        "process.stdout.write(JSON.stringify({platform:process.platform,architecture:process.arch}))",
+      ],
+      { cwd: workspaceRoot, env: scrubbedBunEnvironment() }
+    )
+  ).stdout;
   let runtimeIdentity: { platform?: unknown; architecture?: unknown };
   try {
     runtimeIdentity = JSON.parse(runtimeIdentityText) as typeof runtimeIdentity;
   } catch (error) {
-    throw new Error(`controller builder received invalid Bun runtime identity: ${runtimeIdentityText}`, {
-      cause: error,
-    });
+    throw new Error(
+      `controller builder received invalid Bun runtime identity: ${runtimeIdentityText}`,
+      {
+        cause: error,
+      }
+    );
   }
   const expectedRuntime = hostRuntime();
   if (
-    runtimeIdentity.platform !== expectedRuntime.platform
-    || runtimeIdentity.architecture !== expectedRuntime.architecture
+    runtimeIdentity.platform !== expectedRuntime.platform ||
+    runtimeIdentity.architecture !== expectedRuntime.architecture
   ) {
     throw new Error(
-      `controller builder Bun runtime mismatch: expected ${expectedRuntime.platform}/${expectedRuntime.architecture}, received ${String(runtimeIdentity.platform)}/${String(runtimeIdentity.architecture)}`,
+      `controller builder Bun runtime mismatch: expected ${expectedRuntime.platform}/${expectedRuntime.architecture}, received ${String(runtimeIdentity.platform)}/${String(runtimeIdentity.architecture)}`
     );
   }
 }
@@ -260,12 +258,20 @@ async function loadNxGraph(options: {
   const graphPath = join(options.operationRoot, "nx-graph.json");
   await options.runner(
     options.bunBinary,
-    ["--config=/dev/null", "--no-env-file", "--no-install", "x", "nx", "graph", `--file=${graphPath}`],
+    [
+      "--config=/dev/null",
+      "--no-env-file",
+      "--no-install",
+      "x",
+      "nx",
+      "graph",
+      `--file=${graphPath}`,
+    ],
     {
       cwd: options.workspaceRoot,
       env: scrubbedBunEnvironment(),
       stdout: "inherit",
-    },
+    }
   );
   return JSON.parse(await readFile(graphPath, "utf8")) as unknown;
 }
@@ -282,7 +288,7 @@ async function buildNxClosure(options: {
       projectRoot,
       join(projectRoot, "dist"),
       "dist",
-      `controller build output for ${project.name}`,
+      `controller build output for ${project.name}`
     );
   }
   await options.runner(
@@ -303,7 +309,7 @@ async function buildNxClosure(options: {
       cwd: options.workspaceRoot,
       env: scrubbedBunEnvironment(),
       stdout: "inherit",
-    },
+    }
   );
 }
 
@@ -314,7 +320,9 @@ async function matchingSelectedRelease(options: {
 }): Promise<{ controllerDigest: string; releaseRoot: string } | null> {
   try {
     const dataRoot = await realpath(options.dataRoot);
-    const observedSelection = await nodeControllerSelectorStore.read(controllerSelectorPath(dataRoot));
+    const observedSelection = await nodeControllerSelectorStore.read(
+      controllerSelectorPath(dataRoot)
+    );
     if (observedSelection.kind !== "regular") return null;
     const selection = decodeControllerSelection(observedSelection.bytes);
     if (!selection.ok) return null;
@@ -330,38 +338,40 @@ async function matchingSelectedRelease(options: {
       .sort();
     const actualMembers = manifest.officialMembers.map((member) => member.packageId).sort();
     const manager = manifest.officialMembers.find(
-      (member) => member.packageId === "@oclif/plugin-plugins",
+      (member) => member.packageId === "@oclif/plugin-plugins"
     );
     const expectedRuntime = hostRuntime();
     const hasBuilderInterface = manifest.buildInterfaces.some(
-      (entry) => entry.name === "production-controller-builder"
-        && entry.version === CONTROLLER_PRODUCTION_INTERFACE_VERSION,
+      (entry) =>
+        entry.name === "production-controller-builder" &&
+        entry.version === CONTROLLER_PRODUCTION_INTERFACE_VERSION
     );
     if (
-      manifest.sourceRevision !== options.sourceRevision
-      || manifest.dependencyLock.digest !== options.dependencyLockDigest
-      || manifest.runtime.version !== PINNED_BUN_VERSION
-      || manifest.runtime.revision !== PINNED_BUN_REVISION
-      || manifest.runtime.platform !== expectedRuntime.platform
-      || manifest.runtime.architecture !== expectedRuntime.architecture
-      || JSON.stringify(actualMembers) !== JSON.stringify(expectedMembers)
-      || manager === undefined
-      || manager.commandIds.length !== 0
-      || !hasBuilderInterface
+      manifest.sourceRevision !== options.sourceRevision ||
+      manifest.dependencyLock.digest !== options.dependencyLockDigest ||
+      manifest.runtime.version !== PINNED_BUN_VERSION ||
+      manifest.runtime.revision !== PINNED_BUN_REVISION ||
+      manifest.runtime.platform !== expectedRuntime.platform ||
+      manifest.runtime.architecture !== expectedRuntime.architecture ||
+      JSON.stringify(actualMembers) !== JSON.stringify(expectedMembers) ||
+      manager === undefined ||
+      manager.commandIds.length !== 0 ||
+      !hasBuilderInterface
     ) {
       return null;
     }
     return { controllerDigest: selection.value.controllerDigest, releaseRoot };
   } catch (error) {
     if (
-      typeof error === "object"
-      && error !== null
-      && "code" in error
-      && (error.code === "ENOENT" || error.code === "ENOTDIR")
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error.code === "ENOENT" || error.code === "ENOTDIR")
     ) {
       return null;
     }
-    if (error instanceof Error && error.message.startsWith("CONTROLLER_RELEASE_INVALID:")) return null;
+    if (error instanceof Error && error.message.startsWith("CONTROLLER_RELEASE_INVALID:"))
+      return null;
     throw error;
   }
 }
@@ -398,7 +408,7 @@ async function installProductionDependencies(options: {
         BUN_INSTALL_CACHE_DIR: options.cacheRoot,
       },
       stdout: "inherit",
-    },
+    }
   );
 }
 
@@ -423,8 +433,8 @@ async function createPayload(options: {
       project.name,
       await loadRuntimePackageVersion(
         join(options.workspaceRoot, project.root),
-        options.sourceRevision,
-      ),
+        options.sourceRevision
+      )
     );
   }
   for (const project of options.projects) {
@@ -437,12 +447,13 @@ async function createPayload(options: {
   }
 
   const cliVersion = closureVersions.get("@rawr/cli");
-  if (cliVersion === undefined) throw new Error("production controller closure has no @rawr/cli version");
+  if (cliVersion === undefined)
+    throw new Error("production controller closure has no @rawr/cli version");
   await writeProductionAppManifest({ appRoot, cliVersion });
 
   const canonicalAppRoot = await realpath(appRoot);
   const manager = await sanitizeNativeManagerPackage(
-    join(canonicalAppRoot, "node_modules", "@oclif/plugin-plugins"),
+    join(canonicalAppRoot, "node_modules", "@oclif/plugin-plugins")
   );
   const officialMembers = await generateOfficialMemberInputs({
     appRoot: canonicalAppRoot,
@@ -452,7 +463,7 @@ async function createPayload(options: {
   await writeFile(
     join(appRoot, "rawr.mjs"),
     'import { runControllerCli } from "./node_modules/@rawr/cli/dist/index.js";\nawait runControllerCli({ argv: process.argv.slice(2), entryUrl: import.meta.url });\n',
-    { mode: 0o644 },
+    { mode: 0o644 }
   );
 
   const runtimeRoot = join(payloadRoot, "runtime");
@@ -465,7 +476,7 @@ async function createPayload(options: {
 }
 
 export async function installProductionController(
-  input: ProductionControllerInstallOptions,
+  input: ProductionControllerInstallOptions
 ): Promise<ProductionControllerInstallResult> {
   assertControllerClassification();
   const runner = input.commandRunner ?? runCommand;
@@ -475,7 +486,11 @@ export async function installProductionController(
   const sourceRevision = await requireCleanSource(workspaceRoot, runner);
   await verifyPinnedBun(bunBinary, workspaceRoot, runner);
   const dependencyLockDigest = await sha256File(PRODUCTION_DEPENDENCY_LOCK_PATH);
-  const reusable = await matchingSelectedRelease({ dataRoot, sourceRevision, dependencyLockDigest });
+  const reusable = await matchingSelectedRelease({
+    dataRoot,
+    sourceRevision,
+    dependencyLockDigest,
+  });
 
   let release: ProductionControllerInstallResult["release"];
   let operationCleanup: ProductionControllerInstallResult["operationCleanup"] = Object.freeze({
@@ -491,7 +506,7 @@ export async function installProductionController(
   } else {
     const canonicalTemporaryRoot = await realpath(tmpdir());
     const operationRoot = await realpath(
-      await mkdtemp(join(canonicalTemporaryRoot, PRODUCTION_OPERATION_ROOT_PREFIX)),
+      await mkdtemp(join(canonicalTemporaryRoot, PRODUCTION_OPERATION_ROOT_PREFIX))
     );
     try {
       const buildBunBinary = await stageVerifiedPinnedBun({
@@ -541,7 +556,7 @@ export async function installProductionController(
       const stagedDependencyLockPath = join(stagedInputRoot, "bun.lock");
       await mkdir(stagedInputRoot, { recursive: true });
       await copyFile(PRODUCTION_DEPENDENCY_LOCK_PATH, stagedDependencyLockPath);
-      if (await sha256File(stagedDependencyLockPath) !== dependencyLockDigest) {
+      if ((await sha256File(stagedDependencyLockPath)) !== dependencyLockDigest) {
         throw new Error("production controller dependency lock changed during build");
       }
       const runtime = hostRuntime();
@@ -549,26 +564,30 @@ export async function installProductionController(
         workspaceRoot,
         expectedRevision: sourceRevision,
         runner,
-        finalize: async () => await buildControllerRelease({
-          dataRoot,
-          workspaceRoot,
-          allowedSourceRoots: [payload.payloadRoot, stagedInputRoot],
-          sourceRevision,
-          dependencyLockPath: stagedDependencyLockPath,
-          runtime: {
-            version: PINNED_BUN_VERSION,
-            revision: PINNED_BUN_REVISION,
-            ...runtime,
-          },
-          officialMembers: payload.officialMembers,
-          buildInterfaces: [
-            { name: "production-controller-builder", version: CONTROLLER_PRODUCTION_INTERFACE_VERSION },
-            { name: "oclif-static-manifest", version: "1" },
-          ],
-          nxGraph,
-          nxRootProjectNames: WORKSPACE_CONTROLLER_ROOTS,
-          sources,
-        }),
+        finalize: async () =>
+          await buildControllerRelease({
+            dataRoot,
+            workspaceRoot,
+            allowedSourceRoots: [payload.payloadRoot, stagedInputRoot],
+            sourceRevision,
+            dependencyLockPath: stagedDependencyLockPath,
+            runtime: {
+              version: PINNED_BUN_VERSION,
+              revision: PINNED_BUN_REVISION,
+              ...runtime,
+            },
+            officialMembers: payload.officialMembers,
+            buildInterfaces: [
+              {
+                name: "production-controller-builder",
+                version: CONTROLLER_PRODUCTION_INTERFACE_VERSION,
+              },
+              { name: "oclif-static-manifest", version: "1" },
+            ],
+            nxGraph,
+            nxRootProjectNames: WORKSPACE_CONTROLLER_ROOTS,
+            sources,
+          }),
       });
       release = Object.freeze({
         kind: built.kind,
@@ -585,7 +604,7 @@ export async function installProductionController(
       } catch (cleanupError) {
         throw new AggregateError(
           [error, cleanupError],
-          "production controller build and precommit operation cleanup both failed",
+          "production controller build and precommit operation cleanup both failed"
         );
       }
       throw error;

@@ -8,10 +8,7 @@ export type RuntimeElysiaHostBoundaryPhase =
   | "elysia.host.delegate.failed"
   | "elysia.host.responded";
 
-export type RuntimeElysiaHostBoundaryStatus =
-  | "success"
-  | "failure"
-  | "unmatched";
+export type RuntimeElysiaHostBoundaryStatus = "success" | "failure" | "unmatched";
 
 export interface RuntimeElysiaHostBoundaryRecord {
   readonly kind: "elysia.runtime-host-boundary-record";
@@ -41,7 +38,7 @@ function requestPath(request: Request): string {
 }
 
 function record(
-  input: Omit<RuntimeElysiaHostBoundaryRecord, "kind">,
+  input: Omit<RuntimeElysiaHostBoundaryRecord, "kind">
 ): RuntimeElysiaHostBoundaryRecord {
   return {
     kind: "elysia.runtime-host-boundary-record",
@@ -80,7 +77,7 @@ export function mountRuntimeElysiaHostBoundary(input: {
           phase: "elysia.host.received",
           method: request.method,
           path: requestPath(request),
-        }),
+        })
       );
     })
     .all(
@@ -93,7 +90,7 @@ export function mountRuntimeElysiaHostBoundary(input: {
             method: request.method,
             path: requestPath(request),
             downstreamBoundaryId: input.serverBoundary.boundaryId,
-          }),
+          })
         );
 
         try {
@@ -108,7 +105,7 @@ export function mountRuntimeElysiaHostBoundary(input: {
               downstreamMatched: matched,
               status: matched ? "success" : "unmatched",
               httpStatus: response.status,
-            }),
+            })
           );
           return response;
         } catch (error) {
@@ -121,14 +118,14 @@ export function mountRuntimeElysiaHostBoundary(input: {
               downstreamBoundaryId: input.serverBoundary.boundaryId,
               status: "failure",
               errorName: error instanceof Error ? error.name : typeof error,
-            }),
+            })
           );
           throw error;
         }
       },
       {
         parse: "none",
-      },
+      }
     );
 
   return {
@@ -153,12 +150,10 @@ export function mountRuntimeElysiaHostBoundary(input: {
           method: request.method,
           path: requestPath(request),
           delegated,
-          downstreamBoundaryId: delegated
-            ? input.serverBoundary.boundaryId
-            : undefined,
+          downstreamBoundaryId: delegated ? input.serverBoundary.boundaryId : undefined,
           status: responseStatus({ delegated, response }),
           httpStatus: response.status,
-        }),
+        })
       );
 
       return response;

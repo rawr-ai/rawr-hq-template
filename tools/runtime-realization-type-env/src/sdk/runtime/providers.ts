@@ -4,11 +4,7 @@ import {
   createTryProviderEffectPlan,
 } from "../../runtime/provider-plan-internals";
 import type { RuntimeSchema } from "./schema";
-import type {
-  ResourceRequirement,
-  RuntimeResource,
-  RuntimeResourceValue,
-} from "./resources";
+import type { ResourceRequirement, RuntimeResource, RuntimeResourceValue } from "./resources";
 
 const PROVIDER_PLAN_VALUE: unique symbol = Symbol("provider.effect-plan.value");
 
@@ -44,11 +40,13 @@ export interface ProviderBuildContext<TConfig> {
   readonly diagnostics: RuntimeDiagnosticSink;
 }
 
-export type ProviderAcquire<TValue> =
-  () => RawrEffect<TValue> | Generator<RawrEffectYield<unknown, unknown>, TValue, unknown>;
+export type ProviderAcquire<TValue> = () =>
+  | RawrEffect<TValue>
+  | Generator<RawrEffectYield<unknown, unknown>, TValue, unknown>;
 
-export type ProviderRelease<TValue> =
-  (value: TValue) => RawrEffect<void> | Generator<RawrEffectYield<unknown, unknown>, void, unknown>;
+export type ProviderRelease<TValue> = (
+  value: TValue
+) => RawrEffect<void> | Generator<RawrEffectYield<unknown, unknown>, void, unknown>;
 
 export interface RuntimeProvider<
   TResource extends RuntimeResource<unknown> = RuntimeResource<unknown>,
@@ -60,17 +58,13 @@ export interface RuntimeProvider<
   readonly provides: TResource;
   readonly requires: readonly ResourceRequirement[];
   readonly configSchema?: RuntimeSchema<TConfig>;
-  build(
-    input: ProviderBuildContext<TConfig>,
-  ): ProviderEffectPlan<RuntimeResourceValue<TResource>>;
+  build(input: ProviderBuildContext<TConfig>): ProviderEffectPlan<RuntimeResourceValue<TResource>>;
 }
 
 export function defineRuntimeProvider<
   const TResource extends RuntimeResource<unknown>,
   TConfig = unknown,
->(
-  input: RuntimeProvider<TResource, TConfig>,
-): RuntimeProvider<TResource, TConfig> {
+>(input: RuntimeProvider<TResource, TConfig>): RuntimeProvider<TResource, TConfig> {
   return input;
 }
 
@@ -92,7 +86,7 @@ export const providerFx = {
   withSpan<TValue, TError>(
     name: string,
     plan: ProviderEffectPlan<TValue, TError>,
-    attributes?: Record<string, string | number | boolean>,
+    attributes?: Record<string, string | number | boolean>
   ): ProviderEffectPlan<TValue, TError> {
     void name;
     void attributes;

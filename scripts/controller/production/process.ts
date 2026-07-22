@@ -12,7 +12,7 @@ export type CommandRunner = (
     cwd: string;
     env?: NodeJS.ProcessEnv;
     stdout?: "capture" | "inherit";
-  }>,
+  }>
 ) => Promise<CommandResult>;
 
 export const runCommand: CommandRunner = async (executable, args, options) => {
@@ -49,8 +49,8 @@ export const runCommand: CommandRunner = async (executable, args, options) => {
       }
       reject(
         new Error(
-          `${executable} ${args.join(" ")} failed (${signal === null ? `exit ${String(code)}` : `signal ${signal}`}): ${result.stderr.trim()}`,
-        ),
+          `${executable} ${args.join(" ")} failed (${signal === null ? `exit ${String(code)}` : `signal ${signal}`}): ${result.stderr.trim()}`
+        )
       );
     });
   });

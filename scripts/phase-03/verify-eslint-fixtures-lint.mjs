@@ -11,14 +11,13 @@ const negativeFixtures = [
   "negative-plugin-imports-plugin.ts",
   "negative-service-imports-app.ts",
 ];
-const fixturePaths = [positiveFixture, ...negativeFixtures]
-  .map((fileName) => path.join(fixtureRoot, fileName));
+const fixturePaths = [positiveFixture, ...negativeFixtures].map((fileName) =>
+  path.join(fixtureRoot, fileName)
+);
 
 const eslint = new ESLint({ cwd: workspaceRoot, errorOnUnmatchedPattern: true });
 const results = await eslint.lintFiles(fixturePaths);
-const resultsByPath = new Map(
-  results.map((result) => [path.resolve(result.filePath), result]),
-);
+const resultsByPath = new Map(results.map((result) => [path.resolve(result.filePath), result]));
 const failures = [];
 
 function formatMessages(messages) {
@@ -45,17 +44,19 @@ for (const fileName of negativeFixtures) {
   }
 
   const boundaryErrors = result.messages.filter(
-    (message) => message.severity === 2 && message.ruleId === boundaryRule,
+    (message) => message.severity === 2 && message.ruleId === boundaryRule
   );
   const unexpectedMessages = result.messages.filter(
-    (message) => message.severity !== 2 || message.ruleId !== boundaryRule,
+    (message) => message.severity !== 2 || message.ruleId !== boundaryRule
   );
 
   if (boundaryErrors.length === 0) {
     failures.push(`${fileName} must fail ${boundaryRule}`);
   }
   if (unexpectedMessages.length > 0) {
-    failures.push(`${fileName} has unexpected lint findings (${formatMessages(unexpectedMessages)})`);
+    failures.push(
+      `${fileName} has unexpected lint findings (${formatMessages(unexpectedMessages)})`
+    );
   }
 }
 
@@ -66,5 +67,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `eslint-fixtures lint verified: ${positiveFixture} is clean and ${negativeFixtures.length} negative fixtures fail ${boundaryRule}`,
+  `eslint-fixtures lint verified: ${positiveFixture} is clean and ${negativeFixtures.length} negative fixtures fail ${boundaryRule}`
 );

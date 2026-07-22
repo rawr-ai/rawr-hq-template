@@ -1,7 +1,4 @@
-import {
-  createRuntimeObservationRecorder,
-  type InMemoryRuntimeCatalog,
-} from "./catalog";
+import { createRuntimeObservationRecorder, type InMemoryRuntimeCatalog } from "./catalog";
 
 type Awaitable<TValue> = TValue | Promise<TValue>;
 
@@ -22,14 +19,8 @@ export interface RuntimeBootgraphModule<TStarted = unknown> {
   readonly dependencies?: readonly string[];
   readonly metadata?: Record<string, unknown>;
   start(context: RuntimeBootgraphModuleContext): Awaitable<TStarted>;
-  finalize?(
-    started: TStarted,
-    context: RuntimeBootgraphModuleContext,
-  ): Awaitable<void>;
-  rollback?(
-    started: TStarted,
-    context: RuntimeBootgraphModuleContext,
-  ): Awaitable<void>;
+  finalize?(started: TStarted, context: RuntimeBootgraphModuleContext): Awaitable<void>;
+  rollback?(started: TStarted, context: RuntimeBootgraphModuleContext): Awaitable<void>;
 }
 
 export type RuntimeBootgraphExecutionResult =
@@ -61,7 +52,7 @@ interface StartedRuntimeBootModule {
 }
 
 function orderModules(
-  modules: readonly RuntimeBootgraphModule[],
+  modules: readonly RuntimeBootgraphModule[]
 ): readonly RuntimeBootgraphModule[] {
   const byId = new Map<string, RuntimeBootgraphModule>();
   for (const module of modules) {
@@ -85,9 +76,7 @@ function orderModules(
     for (const dependencyId of module.dependencies ?? []) {
       const dependency = byId.get(dependencyId);
       if (!dependency) {
-        throw new Error(
-          `boot module ${module.id} depends on missing module ${dependencyId}`,
-        );
+        throw new Error(`boot module ${module.id} depends on missing module ${dependencyId}`);
       }
       visit(dependency);
     }
@@ -109,11 +98,12 @@ function failureMessage(error: unknown): string {
 
 async function releaseStartedModule(
   entry: StartedRuntimeBootModule,
-  phase: "boot.rollback" | "boot.finalize",
+  phase: "boot.rollback" | "boot.finalize"
 ): Promise<void> {
-  const release = phase === "boot.rollback"
-    ? entry.module.rollback ?? entry.module.finalize
-    : entry.module.finalize;
+  const release =
+    phase === "boot.rollback"
+      ? (entry.module.rollback ?? entry.module.finalize)
+      : entry.module.finalize;
 
   if (!release) return;
   await release(entry.started, entry.context);
@@ -142,7 +132,7 @@ export async function executeRuntimeBootgraph(input: {
         (module.dependencies ?? []).map((dependencyId) => [
           dependencyId,
           startedById.get(dependencyId),
-        ]),
+        ])
       ),
       orderIndex,
     } satisfies RuntimeBootgraphModuleContext;

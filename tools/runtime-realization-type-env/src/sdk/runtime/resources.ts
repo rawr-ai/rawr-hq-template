@@ -41,11 +41,9 @@ export function defineRuntimeResource<const TId extends string, TValue>(input: {
   };
 }
 
-export function resourceRequirement<
-  const TResource extends RuntimeResource<unknown>,
->(
+export function resourceRequirement<const TResource extends RuntimeResource<unknown>>(
   resource: TResource,
-  options: Omit<ResourceRequirement<TResource>, "resource">,
+  options: Omit<ResourceRequirement<TResource>, "resource">
 ): ResourceRequirement<TResource> {
   return {
     ...options,

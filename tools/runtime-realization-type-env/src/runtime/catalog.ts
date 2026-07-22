@@ -52,8 +52,7 @@ export interface RuntimeObservationRecorder {
   catalog(): InMemoryRuntimeCatalog;
 }
 
-const SENSITIVE_RECORD_KEY =
-  /secret|token|password|credential|api[-_]?key|private[-_]?key|handle/i;
+const SENSITIVE_RECORD_KEY = /secret|token|password|credential|api[-_]?key|private[-_]?key|handle/i;
 
 /**
  * Redacts contained runtime observation values before they enter lab records.
@@ -65,17 +64,13 @@ const SENSITIVE_RECORD_KEY =
 export function redactRuntimeRecordValue(
   value: unknown,
   key?: string,
-  seen: WeakSet<object> = new WeakSet(),
+  seen: WeakSet<object> = new WeakSet()
 ): RuntimeRecordValue {
   if (key && SENSITIVE_RECORD_KEY.test(key)) {
     return "[redacted]";
   }
 
-  if (
-    value === null ||
-    typeof value === "string" ||
-    typeof value === "boolean"
-  ) {
+  if (value === null || typeof value === "string" || typeof value === "boolean") {
     return value;
   }
 
@@ -87,11 +82,7 @@ export function redactRuntimeRecordValue(
     return value.toString();
   }
 
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
     return "[redacted:live-handle]";
   }
 
@@ -116,7 +107,7 @@ export function redactRuntimeRecordValue(
       Object.entries(value).map(([entryKey, entryValue]) => [
         entryKey,
         redactRuntimeRecordValue(entryValue, entryKey, seen),
-      ]),
+      ])
     ) as RuntimeRecordAttributes;
   }
 
@@ -124,7 +115,7 @@ export function redactRuntimeRecordValue(
 }
 
 export function redactRuntimeRecordAttributes(
-  attributes: Record<string, unknown> = {},
+  attributes: Record<string, unknown> = {}
 ): RuntimeRecordAttributes {
   return redactRuntimeRecordValue(attributes) as RuntimeRecordAttributes;
 }

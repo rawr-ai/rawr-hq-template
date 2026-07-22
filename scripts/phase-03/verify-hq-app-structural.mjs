@@ -12,7 +12,15 @@ const devEntrypointPath = path.join(root, "apps", "hq", "dev.ts");
 const legacyCutoverPath = path.join(root, "apps", "hq", "legacy-cutover.ts");
 const testingPath = path.join(root, "apps", "hq", "src", "testing.ts");
 
-const [pkgRaw, manifestSource, manifestCompatSource, serverEntrypointSource, asyncEntrypointSource, devEntrypointSource, legacyCutoverSource] = await Promise.all([
+const [
+  pkgRaw,
+  manifestSource,
+  manifestCompatSource,
+  serverEntrypointSource,
+  asyncEntrypointSource,
+  devEntrypointSource,
+  legacyCutoverSource,
+] = await Promise.all([
   fs.readFile(packagePath, "utf8"),
   fs.readFile(manifestPath, "utf8"),
   fs.readFile(manifestCompatPath, "utf8"),
@@ -56,8 +64,13 @@ if (!manifestSource.includes("export function createRawrHqManifest")) {
   process.exit(1);
 }
 
-if (normalizeSemanticSource(manifestCompatSource) !== 'export{createRawrHqManifest}from"../rawr.hq";exporttype{RawrHqManifest}from"../rawr.hq";') {
-  console.error("hq-app structural failed: src/manifest.ts must remain a thin compatibility forwarder to rawr.hq.ts.");
+if (
+  normalizeSemanticSource(manifestCompatSource) !==
+  'export{createRawrHqManifest}from"../rawr.hq";exporttype{RawrHqManifest}from"../rawr.hq";'
+) {
+  console.error(
+    "hq-app structural failed: src/manifest.ts must remain a thin compatibility forwarder to rawr.hq.ts."
+  );
   process.exit(1);
 }
 
@@ -72,7 +85,9 @@ if (pkg.exports?.["./manifest"]?.default !== "./rawr.hq.ts") {
 }
 
 if (pkg.exports?.["./legacy-cutover"]?.default !== "./legacy-cutover.ts") {
-  console.error("hq-app structural failed: @rawr/hq-app/legacy-cutover must resolve to legacy-cutover.ts.");
+  console.error(
+    "hq-app structural failed: @rawr/hq-app/legacy-cutover must resolve to legacy-cutover.ts."
+  );
   process.exit(1);
 }
 
@@ -82,12 +97,19 @@ if (
   !manifestSource.includes("server:") ||
   !manifestSource.includes("async:")
 ) {
-  console.error("hq-app structural failed: canonical shell must author explicit role and surface membership.");
+  console.error(
+    "hq-app structural failed: canonical shell must author explicit role and surface membership."
+  );
   process.exit(1);
 }
 
-if (!manifestSource.includes("registerExampleTodoApiPlugin") || manifestSource.includes("registerStateApiPlugin")) {
-  console.error("hq-app structural failed: manifest must keep the surviving plugin-owned ORPC surface only.");
+if (
+  !manifestSource.includes("registerExampleTodoApiPlugin") ||
+  manifestSource.includes("registerStateApiPlugin")
+) {
+  console.error(
+    "hq-app structural failed: manifest must keep the surviving plugin-owned ORPC surface only."
+  );
   process.exit(1);
 }
 
@@ -97,17 +119,30 @@ if (
   manifestSource.includes("support-example") ||
   manifestSource.includes("supportExample")
 ) {
-  console.error("hq-app structural failed: archived coordination and support-example surfaces must stay out of the HQ app manifest.");
+  console.error(
+    "hq-app structural failed: archived coordination and support-example surfaces must stay out of the HQ app manifest."
+  );
   process.exit(1);
 }
 
-if (manifestSource.includes("createHqRuntimeRouter") || manifestSource.includes("@rawr/core/orpc")) {
-  console.error("hq-app structural failed: app authority must not own or import a special HQ router seam.");
+if (
+  manifestSource.includes("createHqRuntimeRouter") ||
+  manifestSource.includes("@rawr/core/orpc")
+) {
+  console.error(
+    "hq-app structural failed: app authority must not own or import a special HQ router seam."
+  );
   process.exit(1);
 }
 
-if (manifestSource.includes("apps/server/src/logging") || manifestSource.includes('from "pino"') || manifestSource.includes("from 'pino'")) {
-  console.error("hq-app structural failed: app authority seam must not import host logging implementation.");
+if (
+  manifestSource.includes("apps/server/src/logging") ||
+  manifestSource.includes('from "pino"') ||
+  manifestSource.includes("from 'pino'")
+) {
+  console.error(
+    "hq-app structural failed: app authority seam must not import host logging implementation."
+  );
   process.exit(1);
 }
 
@@ -120,7 +155,9 @@ if (
   manifestSource.includes("createEmbeddedInMemoryDbPoolAdapter") ||
   manifestSource.includes("hostLogger")
 ) {
-  console.error("hq-app structural failed: manifest must stay composition-only and free of executable host authority.");
+  console.error(
+    "hq-app structural failed: manifest must stay composition-only and free of executable host authority."
+  );
   process.exit(1);
 }
 
@@ -132,7 +169,9 @@ if (
   !devEntrypointSource.includes('from "./rawr.hq"') ||
   !devEntrypointSource.includes('from "./legacy-cutover"')
 ) {
-  console.error("hq-app structural failed: entrypoints must import the canonical shell and the sanctioned legacy cutover seam.");
+  console.error(
+    "hq-app structural failed: entrypoints must import the canonical shell and the sanctioned legacy cutover seam."
+  );
   process.exit(1);
 }
 
@@ -143,17 +182,23 @@ if (
   legacyCutoverSource.includes("../server/src/host-seam") ||
   legacyCutoverSource.includes("../server/src/host-realization")
 ) {
-  console.error("hq-app structural failed: entrypoint bridge must not bypass through host-composition internals.");
+  console.error(
+    "hq-app structural failed: entrypoint bridge must not bypass through host-composition internals."
+  );
   process.exit(1);
 }
 
 if (!legacyCutoverSource.includes("../server/src/host-composition")) {
-  console.error("hq-app structural failed: legacy-cutover.ts must be the sole surviving importer of host-composition.");
+  console.error(
+    "hq-app structural failed: legacy-cutover.ts must be the sole surviving importer of host-composition."
+  );
   process.exit(1);
 }
 
 if (testingSource !== null && normalizeSemanticSource(testingSource) !== "export{};") {
-  console.error("hq-app structural failed: testing.ts must be absent or stay an inert marker module only.");
+  console.error(
+    "hq-app structural failed: testing.ts must be absent or stay an inert marker module only."
+  );
   process.exit(1);
 }
 

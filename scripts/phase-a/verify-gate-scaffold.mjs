@@ -75,7 +75,8 @@ function hasRegisterOrpcRoutesManifestRouter(sourceFile) {
     const optionsArg = unwrapExpression(node.arguments[1]);
     if (!optionsArg || !ts.isObjectLiteralExpression(optionsArg)) return;
     for (const property of optionsArg.properties) {
-      if (!ts.isPropertyAssignment(property) || propertyNameText(property.name) !== "router") continue;
+      if (!ts.isPropertyAssignment(property) || propertyNameText(property.name) !== "router")
+        continue;
       if (matchesPropertyAccessChain(property.initializer, ["rawrHostSeam", "orpc", "router"])) {
         matched = true;
       }
@@ -86,72 +87,115 @@ function hasRegisterOrpcRoutesManifestRouter(sourceFile) {
 
 async function verifyHostCompositionGuard() {
   const { source, ast: rawrAst } = await readTypeScriptFile("apps/server/src/rawr.ts");
-  const { source: hostCompositionSource, ast: hostCompositionAst } = await readTypeScriptFile("apps/server/src/host-composition.ts");
-  const { source: hostSeamSource, ast: hostSeamAst } = await readTypeScriptFile("apps/server/src/host-seam.ts");
-  const { source: testingHostSource, ast: testingHostAst } = await readTypeScriptFile("apps/server/src/testing-host.ts");
-  const { source: hostRealizationSource, ast: hostRealizationAst } = await readTypeScriptFile("apps/server/src/host-realization.ts");
-  const { source: workflowRuntimeSource, ast: workflowRuntimeAst } = await readTypeScriptFile("apps/server/src/workflows/runtime.ts");
+  const { source: hostCompositionSource, ast: hostCompositionAst } = await readTypeScriptFile(
+    "apps/server/src/host-composition.ts"
+  );
+  const { source: hostSeamSource, ast: hostSeamAst } = await readTypeScriptFile(
+    "apps/server/src/host-seam.ts"
+  );
+  const { source: testingHostSource, ast: testingHostAst } = await readTypeScriptFile(
+    "apps/server/src/testing-host.ts"
+  );
+  const { source: hostRealizationSource, ast: hostRealizationAst } = await readTypeScriptFile(
+    "apps/server/src/host-realization.ts"
+  );
+  const { source: workflowRuntimeSource, ast: workflowRuntimeAst } = await readTypeScriptFile(
+    "apps/server/src/workflows/runtime.ts"
+  );
   const { source: orpcSource } = await readTypeScriptFile("apps/server/src/orpc.ts");
-  const { source: openApiSource } = await readTypeScriptFile("apps/server/scripts/write-orpc-openapi.ts");
-  const { source: supportProofSource } = await readTypeScriptFile("apps/server/test/support/example-todo-proof-clients.ts");
+  const { source: openApiSource } = await readTypeScriptFile(
+    "apps/server/scripts/write-orpc-openapi.ts"
+  );
+  const { source: supportProofSource } = await readTypeScriptFile(
+    "apps/server/test/support/example-todo-proof-clients.ts"
+  );
 
   assertCondition(
     hasNamedImport(rawrAst, "./host-composition", "createRawrHostComposition"),
-    "rawr host must consume one server-owned executable composition entrypoint",
+    "rawr host must consume one server-owned executable composition entrypoint"
   );
   assertCondition(
     hasNamedImport(testingHostAst, "./host-composition", "createRawrHostComposition") &&
       hasNamedImport(hostCompositionAst, "@rawr/hq-app/manifest", "createRawrHqManifest") &&
       hasNamedImport(hostCompositionAst, "./host-satisfiers", "createRawrHostSatisfiers") &&
       hasNamedImport(hostCompositionAst, "./host-seam", "createRawrHostBoundRolePlan") &&
-      hasNamedImport(hostCompositionAst, "./host-realization", "materializeRawrHostBoundRolePlan") &&
+      hasNamedImport(
+        hostCompositionAst,
+        "./host-realization",
+        "materializeRawrHostBoundRolePlan"
+      ) &&
       !hostSeamSource.includes('from "../../../rawr.hq"') &&
       !testingHostSource.includes('from "../../../rawr.hq"') &&
       !hostSeamSource.includes("@rawr/hq-app/manifest") &&
       !testingHostSource.includes("@rawr/hq-app/manifest"),
-    "host composition must localize the narrow @rawr/hq-app/manifest input instead of letting rawr, host-seam, and testing-host each consume it directly",
+    "host composition must localize the narrow @rawr/hq-app/manifest input instead of letting rawr, host-seam, and testing-host each consume it directly"
   );
-  assertCondition(hasRouteRegistration(rawrAst, "/api/inngest"), "rawr host must register /api/inngest route");
-  assertCondition(hasRouteRegistration(rawrAst, "/api/workflows/*"), "rawr host must register /api/workflows/* route");
-  assertCondition(hasIdentifierCall(rawrAst, "registerOrpcRoutes"), "rawr host must register ORPC routes through registerOrpcRoutes");
-  assertCondition(hasRegisterOrpcRoutesManifestRouter(rawrAst), "rawr host must pass host-materialized ORPC seam to registerOrpcRoutes");
+  assertCondition(
+    hasRouteRegistration(rawrAst, "/api/inngest"),
+    "rawr host must register /api/inngest route"
+  );
+  assertCondition(
+    hasRouteRegistration(rawrAst, "/api/workflows/*"),
+    "rawr host must register /api/workflows/* route"
+  );
+  assertCondition(
+    hasIdentifierCall(rawrAst, "registerOrpcRoutes"),
+    "rawr host must register ORPC routes through registerOrpcRoutes"
+  );
+  assertCondition(
+    hasRegisterOrpcRoutesManifestRouter(rawrAst),
+    "rawr host must pass host-materialized ORPC seam to registerOrpcRoutes"
+  );
   assertCondition(
     hasIdentifierCall(rawrAst, "createRawrHostComposition") &&
       hasIdentifierCall(hostCompositionAst, "createRawrHqManifest") &&
       hasIdentifierCall(hostCompositionAst, "createRawrHostSatisfiers") &&
       hasIdentifierCall(hostCompositionAst, "createRawrHostBoundRolePlan") &&
       hasIdentifierCall(hostCompositionAst, "materializeRawrHostBoundRolePlan"),
-    "host composition must be the only place that consumes declarations, constructs satisfiers, binds registrations, and materializes realized host surfaces",
+    "host composition must be the only place that consumes declarations, constructs satisfiers, binds registrations, and materializes realized host surfaces"
   );
   assertCondition(
     hasIdentifierCall(rawrAst, "createWorkflowRouteHarness") &&
       /publishedRouter:\s*rawrHostSeam\.workflows\.published\.router/s.test(source) &&
-      /contextFactory:\s*\(request,\s*deps\)\s*=>\s*createWorkflowBoundaryContext\(request,\s*deps\)/s.test(source),
-    "rawr host must consume host-materialized published workflow router seam through createWorkflowRouteHarness",
+      /contextFactory:\s*\(request,\s*deps\)\s*=>\s*createWorkflowBoundaryContext\(request,\s*deps\)/s.test(
+        source
+      ),
+    "rawr host must consume host-materialized published workflow router seam through createWorkflowRouteHarness"
   );
   assertCondition(
-    hasPropertyAccessChain(rawrAst, ["rawrHostComposition", "realization", "workflows", "createInngestFunctions"]) &&
-      !source.includes("rawrHqManifest.inngest"),
-    "rawr host must compose runtime workflow functions from host-materialized workflow seams instead of manifest-owned inngest seams",
+    hasPropertyAccessChain(rawrAst, [
+      "rawrHostComposition",
+      "realization",
+      "workflows",
+      "createInngestFunctions",
+    ]) && !source.includes("rawrHqManifest.inngest"),
+    "rawr host must compose runtime workflow functions from host-materialized workflow seams instead of manifest-owned inngest seams"
   );
   assertCondition(
     hasNamedImport(rawrAst, "inngest/bun", "serve") &&
-      hasPropertyAccessChain(rawrAst, ["rawrHostComposition", "realization", "workflows", "createInngestFunctions"]) &&
+      hasPropertyAccessChain(rawrAst, [
+        "rawrHostComposition",
+        "realization",
+        "workflows",
+        "createInngestFunctions",
+      ]) &&
       hasIdentifierCall(rawrAst, "inngestServe") &&
       hasNamedImport(rawrAst, "./workflows/runtime", "createRawrWorkflowRuntime") &&
       !hasImport(rawrAst, "@rawr/plugin-api-coordination/server") &&
       !hasImport(rawrAst, "@rawr/plugin-workflows-support-example/server") &&
       !hasImport(rawrAst, "@rawr/plugin-workflows-coordination/server"),
-    "rawr host must compose the runtime-owned inngest bundle through host-materialized workflow seams",
+    "rawr host must compose the runtime-owned inngest bundle through host-materialized workflow seams"
   );
   assertCondition(
-    /contextFactory:\s*\(request,\s*deps\)\s*=>\s*createRequestScopedBoundaryContext\(request,\s*deps\)/s.test(source) &&
-      !source.includes("rawrHqManifest.orpc.enrichContext"),
-    "rawr host must keep workflow context enrichment out of canonical ORPC registration",
+    /contextFactory:\s*\(request,\s*deps\)\s*=>\s*createRequestScopedBoundaryContext\(request,\s*deps\)/s.test(
+      source
+    ) && !source.includes("rawrHqManifest.orpc.enrichContext"),
+    "rawr host must keep workflow context enrichment out of canonical ORPC registration"
   );
   assertCondition(
-    !hasNamedImport(rawrAst, "./orpc", "createOrpcRouter") && !hasIdentifierCall(rawrAst, "createOrpcRouter"),
-    "rawr host must not bypass the manifest-owned ORPC router seam",
+    !hasNamedImport(rawrAst, "./orpc", "createOrpcRouter") &&
+      !hasIdentifierCall(rawrAst, "createOrpcRouter"),
+    "rawr host must not bypass the manifest-owned ORPC router seam"
   );
   assertCondition(
     !orpcSource.includes("@rawr/hq-app/testing") &&
@@ -161,36 +205,41 @@ async function verifyHostCompositionGuard() {
       !testingHostSource.includes("createRawrHostSatisfiers") &&
       !supportProofSource.includes("createTestingRawrHqManifest") &&
       !supportProofSource.includes("manifest.fixtures"),
-    "proof and openapi helpers must not bypass host realization through HQ testing or direct manifest fixtures",
+    "proof and openapi helpers must not bypass host realization through HQ testing or direct manifest fixtures"
   );
   assertCondition(
     hasNamedImport(hostRealizationAst, "./host-surface-merge", "mergeRawrHostSurfaceTrees") &&
       !hasImport(hostRealizationAst, "@rawr/hq-sdk/composition") &&
-      hostRealizationSource.includes("implement(contract).$context<BoundaryRequestSupportContext>()"),
-    "host realization must own executable surface merging instead of reaching through @rawr/hq-sdk/composition",
+      hostRealizationSource.includes(
+        "implement(contract).$context<BoundaryRequestSupportContext>()"
+      ),
+    "host realization must own executable surface merging instead of reaching through @rawr/hq-sdk/composition"
   );
   assertCondition(
     hasExportedFunction(workflowRuntimeAst, "createRawrWorkflowRuntime") &&
       workflowRuntimeSource.includes("resolveRawrWorkflowInngestBaseUrl") &&
       !workflowRuntimeSource.includes("createCoordinationWorkflowRuntimeAdapter") &&
       !source.includes("createCoordinationWorkflowRuntimeAdapter"),
-    "workflow runtime adapter construction must live in the host-owned workflow runtime home instead of inline in rawr.ts",
+    "workflow runtime adapter construction must live in the host-owned workflow runtime home instead of inline in rawr.ts"
   );
 }
 
 async function verifyRouteNegativeAssertions() {
-  const { source, ast } = await readTypeScriptFile("apps/server/test/route-boundary-matrix.test.ts");
+  const { source, ast } = await readTypeScriptFile(
+    "apps/server/test/route-boundary-matrix.test.ts"
+  );
   assertCondition(
     source.includes("assertion:reject-rpc-from-external-callers"),
-    "route boundary matrix must include external caller RPC rejection assertion key",
+    "route boundary matrix must include external caller RPC rejection assertion key"
   );
   assertCondition(
     source.includes("assertion:reject-rpc-workflows-route-family"),
-    "route boundary matrix must include /rpc/workflows route-family rejection assertion key",
+    "route boundary matrix must include /rpc/workflows route-family rejection assertion key"
   );
   assertCondition(
-    hasRouteRegistration(ast, "/rpc/workflows/state/getRuntimeState") || source.includes("/rpc/workflows/state/getRuntimeState"),
-    "route boundary matrix must explicitly cover /rpc/workflows route family",
+    hasRouteRegistration(ast, "/rpc/workflows/state/getRuntimeState") ||
+      source.includes("/rpc/workflows/state/getRuntimeState"),
+    "route boundary matrix must explicitly cover /rpc/workflows route family"
   );
 }
 
@@ -214,15 +263,16 @@ async function verifyTelemetryContract() {
   const scripts = packageJson.scripts ?? {};
   assertCondition(
     phaseCTelemetryVerifierSource.includes("phase-c telemetry contract verified"),
-    "phase-c telemetry verifier must remain the source-of-truth structural gate",
+    "phase-c telemetry verifier must remain the source-of-truth structural gate"
   );
   assertCondition(
-    scripts["phase-a:gate:telemetry-contract"] === "bun scripts/phase-a/verify-gate-scaffold.mjs telemetry",
-    "package.json must hard-wire phase-a telemetry contract gate",
+    scripts["phase-a:gate:telemetry-contract"] ===
+      "bun scripts/phase-a/verify-gate-scaffold.mjs telemetry",
+    "package.json must hard-wire phase-a telemetry contract gate"
   );
   assertCondition(
     !Object.prototype.hasOwnProperty.call(scripts, "phase-a:telemetry:optional"),
-    "package.json must not expose optional phase-a telemetry gate semantics",
+    "package.json must not expose optional phase-a telemetry gate semantics"
   );
 }
 

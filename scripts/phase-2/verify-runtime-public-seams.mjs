@@ -1,5 +1,12 @@
 #!/usr/bin/env bun
-import { finishVerification, listFilesUnder, parseAllowFindings, pathExists, readFile, readJson } from "./_verify-utils.mjs";
+import {
+  finishVerification,
+  listFilesUnder,
+  parseAllowFindings,
+  pathExists,
+  readFile,
+  readJson,
+} from "./_verify-utils.mjs";
 
 const allowFindings = parseAllowFindings();
 const failures = [];
@@ -11,10 +18,7 @@ for (const exportName of ["./app", "./app-runtime"]) {
   }
 }
 
-for (const relPath of [
-  "packages/hq-sdk/src/app.ts",
-  "packages/hq-sdk/src/app-runtime.ts",
-]) {
+for (const relPath of ["packages/hq-sdk/src/app.ts", "packages/hq-sdk/src/app-runtime.ts"]) {
   if (!(await pathExists(relPath))) {
     failures.push(`${relPath} must exist as part of the public app/runtime seam.`);
   }
@@ -46,7 +50,9 @@ if (!(await pathExists("packages/runtime/bootgraph/package.json"))) {
   const bootgraphPackage = await readJson("packages/runtime/bootgraph/package.json");
   for (const forbiddenExport of ["./app", "./app-runtime"]) {
     if (bootgraphPackage.exports?.[forbiddenExport] !== undefined) {
-      failures.push(`packages/runtime/bootgraph must not export ${forbiddenExport}; that public seam belongs in hq-sdk.`);
+      failures.push(
+        `packages/runtime/bootgraph must not export ${forbiddenExport}; that public seam belongs in hq-sdk.`
+      );
     }
   }
 }
@@ -62,11 +68,14 @@ if (await pathExists("packages/runtime/bootgraph/src")) {
 }
 
 for (const exportPath of Object.values(hqSdkPackage.exports ?? {})) {
-  const relPath = typeof exportPath === "string"
-    ? exportPath
-    : typeof exportPath === "object" && exportPath !== null && typeof exportPath.default === "string"
-      ? exportPath.default
-      : null;
+  const relPath =
+    typeof exportPath === "string"
+      ? exportPath
+      : typeof exportPath === "object" &&
+          exportPath !== null &&
+          typeof exportPath.default === "string"
+        ? exportPath.default
+        : null;
   if (!relPath || !relPath.startsWith("./")) continue;
 
   const resolvedPath = `packages/hq-sdk/${relPath.slice(2)}`;

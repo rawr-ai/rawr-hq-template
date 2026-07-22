@@ -30,13 +30,12 @@ export type LauncherInstallResult =
       reason: "missing" | "not-regular" | "shared-inode" | "not-executable" | "bytes-mismatch";
     }>;
 
-const sourceLauncherPath = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "stable-launcher.sh",
-);
+const sourceLauncherPath = join(dirname(fileURLToPath(import.meta.url)), "stable-launcher.sh");
 
 function sameBytes(left: Uint8Array, right: Uint8Array): boolean {
-  return left.byteLength === right.byteLength && left.every((value, index) => value === right[index]);
+  return (
+    left.byteLength === right.byteLength && left.every((value, index) => value === right[index])
+  );
 }
 
 export async function installStableControllerLauncher(options: {
@@ -51,23 +50,25 @@ export async function installStableControllerLauncher(options: {
   await ensureCanonicalContainedDirectory(
     dataRoot,
     dirname(destination),
-    "stable controller launcher parent",
+    "stable controller launcher parent"
   );
   const sourceBytes = new Uint8Array(await readFile(sourcePath));
 
   try {
     const status = await lstat(destination);
     if (
-      status.isFile()
-      && status.nlink === 1
-      && (status.mode & constants.S_IXUSR) !== 0
-      && status.size === sourceBytes.byteLength
-      && sameBytes(new Uint8Array(await readFile(destination)), sourceBytes)
+      status.isFile() &&
+      status.nlink === 1 &&
+      (status.mode & constants.S_IXUSR) !== 0 &&
+      status.size === sourceBytes.byteLength &&
+      sameBytes(new Uint8Array(await readFile(destination)), sourceBytes)
     ) {
       return Object.freeze({ kind: "converged", path: destination, durability: "unchanged" });
     }
   } catch (error) {
-    if (!(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")) {
+    if (
+      !(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")
+    ) {
       throw error;
     }
   }
@@ -77,7 +78,7 @@ export async function installStableControllerLauncher(options: {
     destination,
     sourceBytes,
     0o755,
-    options.observe,
+    options.observe
   );
   return replacement.durability === "confirmed"
     ? Object.freeze({ kind: "installed", path: destination, durability: "confirmed" })
@@ -117,7 +118,7 @@ export async function inspectStableControllerLauncher(options: {
 
 function drifted(
   path: string,
-  reason: Extract<LauncherInstallResult, { kind: "drifted" }>["reason"],
+  reason: Extract<LauncherInstallResult, { kind: "drifted" }>["reason"]
 ): LauncherInstallResult {
   return Object.freeze({ kind: "drifted", path, durability: "unchanged", reason });
 }

@@ -10,7 +10,10 @@ const workbenchRoot = resolve(dirname(scriptPath), "..");
 function findRepoRoot(start) {
   let current = resolve(start);
   while (current !== dirname(current)) {
-    if (existsSync(join(current, "package.json")) && existsSync(join(current, "docs", "process", "GRAPHITE.md"))) {
+    if (
+      existsSync(join(current, "package.json")) &&
+      existsSync(join(current, "docs", "process", "GRAPHITE.md"))
+    ) {
       return current;
     }
     current = dirname(current);
@@ -48,5 +51,14 @@ if (argv[0] === "--") {
 if (command === "setup") {
   run("uv", ["sync", "--project", workbenchRoot, "--python", "3.12"]);
 } else {
-  run("uv", ["run", "--project", workbenchRoot, "--python", "3.12", "semantica-workbench", command, ...argv]);
+  run("uv", [
+    "run",
+    "--project",
+    workbenchRoot,
+    "--python",
+    "3.12",
+    "semantica-workbench",
+    command,
+    ...argv,
+  ]);
 }

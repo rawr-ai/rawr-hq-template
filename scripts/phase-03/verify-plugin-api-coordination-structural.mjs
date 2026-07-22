@@ -16,7 +16,13 @@ const [projectRaw, indexSource, serverSource, routerSource] = await Promise.all(
 ]);
 
 const project = JSON.parse(projectRaw);
-const requiredTags = ["type:plugin", "migration-slice:structural-tranche", "role:api", "surface:orpc", "capability:coordination"];
+const requiredTags = [
+  "type:plugin",
+  "migration-slice:structural-tranche",
+  "role:api",
+  "surface:orpc",
+  "capability:coordination",
+];
 for (const tag of requiredTags) {
   if (!(project.tags ?? []).includes(tag)) {
     console.error(`plugin-api-coordination structural failed: missing tag ${tag}`);
@@ -25,26 +31,32 @@ for (const tag of requiredTags) {
 }
 
 if (
-  !indexSource.includes("createCoordinationApiClient")
-  || !indexSource.includes("coordinationApiContract")
-  || indexSource.includes("registerCoordinationApiPlugin")
+  !indexSource.includes("createCoordinationApiClient") ||
+  !indexSource.includes("coordinationApiContract") ||
+  indexSource.includes("registerCoordinationApiPlugin")
 ) {
-  console.error("plugin-api-coordination structural failed: plugin root must stay app-safe and must not register the host ORPC surface.");
+  console.error(
+    "plugin-api-coordination structural failed: plugin root must stay app-safe and must not register the host ORPC surface."
+  );
   process.exit(1);
 }
 
 if (
-  !serverSource.includes("defineApiPlugin")
-  || !serverSource.includes("internal:")
-  || !serverSource.includes("coordinationApiContract")
-  || !serverSource.includes("createCoordinationApiRouter(input.resolveClient)")
+  !serverSource.includes("defineApiPlugin") ||
+  !serverSource.includes("internal:") ||
+  !serverSource.includes("coordinationApiContract") ||
+  !serverSource.includes("createCoordinationApiRouter(input.resolveClient)")
 ) {
-  console.error("plugin-api-coordination structural failed: plugin server surface must register the ORPC coordination surface.");
+  console.error(
+    "plugin-api-coordination structural failed: plugin server surface must register the ORPC coordination surface."
+  );
   process.exit(1);
 }
 
 if (!routerSource.includes("createCoordinationRouter") || routerSource.includes("@rawr/hq-app")) {
-  console.error("plugin-api-coordination structural failed: router must remain a thin service projection.");
+  console.error(
+    "plugin-api-coordination structural failed: router must remain a thin service projection."
+  );
   process.exit(1);
 }
 

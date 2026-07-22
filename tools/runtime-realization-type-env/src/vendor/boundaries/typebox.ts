@@ -19,7 +19,7 @@ export const TypeBoxRuntimeSchemaProbe = defineRuntimeSchema({
       throw new Error(
         Value.Errors(TypeBoxRuntimePayloadSchema, value)
           .map((error) => error.message)
-          .join("; "),
+          .join("; ")
       );
     }
 

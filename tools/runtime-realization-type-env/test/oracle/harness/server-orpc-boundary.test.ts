@@ -25,9 +25,7 @@ interface OrpcEncoded<T> {
   readonly json: T;
 }
 
-function createClients(): ConstructionBoundServiceClients<
-  typeof WorkItemsServerApiServices
-> {
+function createClients(): ConstructionBoundServiceClients<typeof WorkItemsServerApiServices> {
   return {
     workItems: {
       withInvocation() {
@@ -158,13 +156,12 @@ describe("phase two server oRPC live boundary", () => {
           context: {
             secretToken: "smuggled-request-context-secret",
           },
-        }),
+        })
       );
       expect(result.matched).toBe(true);
       expect(result.response.status).toBe(200);
 
-      const body =
-        (await result.response.json()) as OrpcEncoded<RuntimeOrpcServerResponse>;
+      const body = (await result.response.json()) as OrpcEncoded<RuntimeOrpcServerResponse>;
 
       expect(body.json.status).toBe("success");
       expect(body.json.output).toEqual({
@@ -255,7 +252,7 @@ describe("phase two server oRPC live boundary", () => {
             },
           },
         }),
-      }),
+      })
     );
 
     expect(result.matched).toBe(false);

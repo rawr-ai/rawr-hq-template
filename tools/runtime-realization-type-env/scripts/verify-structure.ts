@@ -3,10 +3,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const toolRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-);
+const toolRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = path.resolve(toolRoot, "..", "..");
 
 function readJson<T>(relativePath: string): T {
@@ -28,7 +25,7 @@ function assert(condition: unknown, message: string): asserts condition {
 function assertArrayEquals(actual: string[], expected: string[], message: string): void {
   assert(
     JSON.stringify(actual) === JSON.stringify(expected),
-    `${message}: expected [${expected.join(", ")}], got [${actual.join(", ")}]`,
+    `${message}: expected [${expected.join(", ")}], got [${actual.join(", ")}]`
   );
 }
 
@@ -156,9 +153,7 @@ const retiredRuntimeTitlePrefix =
   retiredRuntimePrefix.charAt(0).toUpperCase() + retiredRuntimePrefix.slice(1);
 const retiredOraclePathSegment = [retiredRuntimePrefix, "runtime"].join("-");
 const retiredOraclePhrase = [retiredRuntimePrefix, "runtime"].join(" ");
-const retiredOracleTitlePhrase = [retiredRuntimeTitlePrefix, "runtime"].join(
-  "-",
-);
+const retiredOracleTitlePhrase = [retiredRuntimeTitlePrefix, "runtime"].join("-");
 const retiredPhaseTwoOverclaimSlug = [
   "phase-two",
   "production",
@@ -166,11 +161,7 @@ const retiredPhaseTwoOverclaimSlug = [
   "program",
   "workstream.md",
 ].join("-");
-const retiredWorkstreamReportTemplate = [
-  "template",
-  "workstream",
-  "report.md",
-].join("-");
+const retiredWorkstreamReportTemplate = ["template", "workstream", "report.md"].join("-");
 
 for (const retiredPath of [
   "tools/runtime-realization-type-env/evidence/phases",
@@ -224,20 +215,20 @@ for (const retiredPath of [
 ]) {
   assert(
     !exists(retiredPath),
-    `retired runtime lab evidence topology path must not exist: ${retiredPath}`,
+    `retired runtime lab evidence topology path must not exist: ${retiredPath}`
   );
 }
 
 const toolFiles = walk(toolRoot).map((filePath) =>
-  path.relative(toolRoot, filePath).split(path.sep).join("/"),
+  path.relative(toolRoot, filePath).split(path.sep).join("/")
 );
 
 const retiredOracleNamedPaths = toolFiles.filter((filePath) =>
-  filePath.toLowerCase().includes(retiredOraclePathSegment),
+  filePath.toLowerCase().includes(retiredOraclePathSegment)
 );
 assert(
   retiredOracleNamedPaths.length === 0,
-  `runtime lab paths must use Oracle naming, not the retired proof-harness name: ${retiredOracleNamedPaths.join(", ")}`,
+  `runtime lab paths must use Oracle naming, not the retired proof-harness name: ${retiredOracleNamedPaths.join(", ")}`
 );
 
 const namingFramePaths = [
@@ -268,15 +259,12 @@ const retiredActivePhrases = [
 for (const namingFramePath of namingFramePaths) {
   const content = read(namingFramePath);
   for (const term of requiredNamingTerms) {
-    assert(
-      content.includes(term),
-      `${namingFramePath} must carry naming-frame term: ${term}`,
-    );
+    assert(content.includes(term), `${namingFramePath} must carry naming-frame term: ${term}`);
   }
   for (const retiredPhrase of retiredActivePhrases) {
     assert(
       !content.includes(retiredPhrase),
-      `${namingFramePath} contains retired naming phrase: ${retiredPhrase}`,
+      `${namingFramePath} contains retired naming phrase: ${retiredPhrase}`
     );
   }
 }
@@ -289,13 +277,15 @@ const directPhaseFiles = fs
   .map((entry) => entry.name);
 assert(
   directPhaseFiles.length === 0,
-  `phase files must live inside a phase dossier: ${directPhaseFiles.join(", ")}`,
+  `phase files must live inside a phase dossier: ${directPhaseFiles.join(", ")}`
 );
 
-const evidenceRootEntries = fs
-  .readdirSync(path.join(repoRoot, "tools/runtime-realization-type-env/evidence"), {
+const evidenceRootEntries = fs.readdirSync(
+  path.join(repoRoot, "tools/runtime-realization-type-env/evidence"),
+  {
     withFileTypes: true,
-  });
+  }
+);
 const invalidEvidenceRootFiles = evidenceRootEntries
   .filter((entry) => entry.isFile())
   .map((entry) => entry.name)
@@ -307,11 +297,11 @@ const invalidEvidenceRootFiles = evidenceRootEntries
         "current-lab-state.md",
         "proof-manifest.json",
         "runtime-spine-verification-diagnostic.md",
-      ].includes(fileName),
+      ].includes(fileName)
   );
 assert(
   invalidEvidenceRootFiles.length === 0,
-  `evidence root files must stay authority/current-state only: ${invalidEvidenceRootFiles.join(", ")}`,
+  `evidence root files must stay authority/current-state only: ${invalidEvidenceRootFiles.join(", ")}`
 );
 
 const invalidEvidenceRootDirs = evidenceRootEntries
@@ -320,46 +310,46 @@ const invalidEvidenceRootDirs = evidenceRootEntries
   .filter((dirName) => dirName !== "systems" && dirName !== "vendors");
 assert(
   invalidEvidenceRootDirs.length === 0,
-  `evidence root directories must be systems or vendors only: ${invalidEvidenceRootDirs.join(", ")}`,
+  `evidence root directories must be systems or vendors only: ${invalidEvidenceRootDirs.join(", ")}`
 );
 
 const systemEvidenceEntries = fs.readdirSync(
   path.join(repoRoot, "tools/runtime-realization-type-env/evidence/systems"),
   {
     withFileTypes: true,
-  },
+  }
 );
 const invalidSystemEvidenceDirs = systemEvidenceEntries
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name);
 assert(
   invalidSystemEvidenceDirs.length === 0,
-  `system evidence directories are not allowed: ${invalidSystemEvidenceDirs.join(", ")}`,
+  `system evidence directories are not allowed: ${invalidSystemEvidenceDirs.join(", ")}`
 );
 
 const systemEvidenceFiles = systemEvidenceEntries
   .filter((entry) => entry.isFile())
   .map((entry) => entry.name);
 const invalidSystemEvidenceFiles = systemEvidenceFiles.filter(
-  (fileName) => fileName !== "README.md" && !/.+-map\.md$/.test(fileName),
+  (fileName) => fileName !== "README.md" && !/.+-map\.md$/.test(fileName)
 );
 assert(
   invalidSystemEvidenceFiles.length === 0,
-  `system evidence files must be README.md or *-map.md: ${invalidSystemEvidenceFiles.join(", ")}`,
+  `system evidence files must be README.md or *-map.md: ${invalidSystemEvidenceFiles.join(", ")}`
 );
 
 const vendorEvidenceEntries = fs.readdirSync(
   path.join(repoRoot, "tools/runtime-realization-type-env/evidence/vendors"),
   {
     withFileTypes: true,
-  },
+  }
 );
 const invalidVendorEvidenceDirs = vendorEvidenceEntries
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name);
 assert(
   invalidVendorEvidenceDirs.length === 0,
-  `vendor evidence directories are not allowed: ${invalidVendorEvidenceDirs.join(", ")}`,
+  `vendor evidence directories are not allowed: ${invalidVendorEvidenceDirs.join(", ")}`
 );
 
 const vendorEvidenceFiles = vendorEvidenceEntries
@@ -377,11 +367,11 @@ const expectedVendorEvidenceFiles = new Set([
   "semantica.md",
 ]);
 const invalidVendorEvidenceFiles = vendorEvidenceFiles.filter(
-  (fileName) => !expectedVendorEvidenceFiles.has(fileName),
+  (fileName) => !expectedVendorEvidenceFiles.has(fileName)
 );
 assert(
   invalidVendorEvidenceFiles.length === 0,
-  `unexpected vendor evidence files: ${invalidVendorEvidenceFiles.join(", ")}`,
+  `unexpected vendor evidence files: ${invalidVendorEvidenceFiles.join(", ")}`
 );
 
 const guidanceFiles = fs
@@ -394,29 +384,27 @@ const invalidGuidanceFiles = guidanceFiles.filter(
   (fileName) =>
     fileName !== "README.md" &&
     fileName !== "workstream-record-overlay.md" &&
-    !/^(guardrails|workflow)-.+\.md$/.test(fileName),
+    !/^(guardrails|workflow)-.+\.md$/.test(fileName)
 );
 assert(
   invalidGuidanceFiles.length === 0,
-  `guidance files must be README.md, workstream-record-overlay.md, or use guardrails- or workflow- prefixes: ${invalidGuidanceFiles.join(", ")}`,
+  `guidance files must be README.md, workstream-record-overlay.md, or use guardrails- or workflow- prefixes: ${invalidGuidanceFiles.join(", ")}`
 );
 
 const runtimeRecordOverlay = read(
-  "tools/runtime-realization-type-env/guidance/workstream-record-overlay.md",
+  "tools/runtime-realization-type-env/guidance/workstream-record-overlay.md"
 );
 const retiredRepoRecordTemplate = [
   "docs",
   "_templates",
   ["WORKSTREAM", "RECORD.md"].join("_"),
 ].join("/");
-const retiredRuntimeReportTemplate = [
-  "template",
-  "workstream",
-  "report.md",
-].join("-");
+const retiredRuntimeReportTemplate = ["template", "workstream", "report.md"].join("-");
 assert(
-  runtimeRecordOverlay.includes("tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md"),
-  "runtime workstream record overlay must point at the Workstream Plugin Pack record asset",
+  runtimeRecordOverlay.includes(
+    "tools/workstream-plugin-pack/skills/workstream-runner/assets/workstream-record.md"
+  ),
+  "runtime workstream record overlay must point at the Workstream Plugin Pack record asset"
 );
 for (const retiredWorkstreamDuty of [
   ["Research", "program", "refreshed"].join(" "),
@@ -424,13 +412,13 @@ for (const retiredWorkstreamDuty of [
 ]) {
   assert(
     !runtimeRecordOverlay.includes(retiredWorkstreamDuty),
-    `runtime workstream record overlay must not carry retired duty: ${retiredWorkstreamDuty}`,
+    `runtime workstream record overlay must not carry retired duty: ${retiredWorkstreamDuty}`
   );
 }
 assert(
   runtimeRecordOverlay.includes("containing program") ||
     runtimeRecordOverlay.includes("containing-program"),
-  "runtime workstream record overlay must label program material as containing-program context only",
+  "runtime workstream record overlay must label program material as containing-program context only"
 );
 
 for (const activeRuntimeDoc of [
@@ -448,15 +436,15 @@ for (const activeRuntimeDoc of [
   const text = read(activeRuntimeDoc);
   assert(
     !text.includes(retiredRepoRecordTemplate),
-    `${activeRuntimeDoc} must not point at the retired repo workstream record template`,
+    `${activeRuntimeDoc} must not point at the retired repo workstream record template`
   );
   assert(
     !text.includes(retiredRuntimeReportTemplate),
-    `${activeRuntimeDoc} must not reference retired runtime workstream report template`,
+    `${activeRuntimeDoc} must not reference retired runtime workstream report template`
   );
   assert(
     !text.toLowerCase().includes("focus log"),
-    `${activeRuntimeDoc} must not reference retired focus log language`,
+    `${activeRuntimeDoc} must not reference retired focus log language`
   );
 }
 
@@ -472,7 +460,7 @@ assert(phaseNames.length > 0, "phases directory must contain phase-* dossiers");
 for (const phaseName of phaseNames) {
   const phaseEntries = fs.readdirSync(
     path.join(repoRoot, "tools/runtime-realization-type-env/phases", phaseName),
-    { withFileTypes: true },
+    { withFileTypes: true }
   );
   const invalidPhaseRootFiles = phaseEntries
     .filter((entry) => entry.isFile())
@@ -481,25 +469,22 @@ for (const phaseName of phaseNames) {
       (fileName) =>
         fileName !== "README.md" &&
         !/^workflow-.+\.md$/.test(fileName) &&
-        !/^ref-.+\.md$/.test(fileName),
+        !/^ref-.+\.md$/.test(fileName)
     );
   assert(
     invalidPhaseRootFiles.length === 0,
-    `phase root files must be README.md, workflow-*.md, or ref-*.md: ${phaseName}: ${invalidPhaseRootFiles.join(", ")}`,
+    `phase root files must be README.md, workflow-*.md, or ref-*.md: ${phaseName}: ${invalidPhaseRootFiles.join(", ")}`
   );
 
   const invalidPhaseRootDirs = phaseEntries
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .filter(
-      (dirName) =>
-        dirName !== "workstreams" &&
-        dirName !== "handoffs" &&
-        dirName !== "_archive",
+      (dirName) => dirName !== "workstreams" && dirName !== "handoffs" && dirName !== "_archive"
     );
   assert(
     invalidPhaseRootDirs.length === 0,
-    `phase root directories must be workstreams, handoffs, or _archive: ${phaseName}: ${invalidPhaseRootDirs.join(", ")}`,
+    `phase root directories must be workstreams, handoffs, or _archive: ${phaseName}: ${invalidPhaseRootDirs.join(", ")}`
   );
 
   for (const producedDir of ["workstreams", "handoffs"]) {
@@ -507,7 +492,7 @@ for (const phaseName of phaseNames) {
       repoRoot,
       "tools/runtime-realization-type-env/phases",
       phaseName,
-      producedDir,
+      producedDir
     );
     if (!fs.existsSync(producedPath)) continue;
 
@@ -517,7 +502,7 @@ for (const phaseName of phaseNames) {
       .map((entry) => entry.name);
     assert(
       nestedDirs.length === 0,
-      `phase ${producedDir} directories must stay flat: ${phaseName}: ${nestedDirs.join(", ")}`,
+      `phase ${producedDir} directories must stay flat: ${phaseName}: ${nestedDirs.join(", ")}`
     );
 
     const allowedFilePattern =
@@ -530,7 +515,7 @@ for (const phaseName of phaseNames) {
       .filter((fileName) => !allowedFilePattern.test(fileName));
     assert(
       invalidProducedFiles.length === 0,
-      `phase ${producedDir} files use invalid names: ${phaseName}: ${invalidProducedFiles.join(", ")}`,
+      `phase ${producedDir} files use invalid names: ${phaseName}: ${invalidProducedFiles.join(", ")}`
     );
   }
 }
@@ -542,12 +527,12 @@ const unprefixedDatedPhaseReports = toolFiles.filter((filePath) => {
 });
 assert(
   unprefixedDatedPhaseReports.length === 0,
-  `phase reports must use workstream-, handoff-, ref-, or workflow- prefixes: ${unprefixedDatedPhaseReports.join(", ")}`,
+  `phase reports must use workstream-, handoff-, ref-, or workflow- prefixes: ${unprefixedDatedPhaseReports.join(", ")}`
 );
 
 assert(
   !exists("tools/runtime-realization-type-env/package.json"),
-  "type env must not be a workspace package",
+  "type env must not be a workspace package"
 );
 
 const rootPackage = readJson<{
@@ -560,41 +545,41 @@ const rootPackage = readJson<{
 assert(
   rootPackage.scripts["runtime-realization:type-env"] ===
     "bunx nx run runtime-realization-type-env:gate",
-  "root convenience script drifted",
+  "root convenience script drifted"
 );
 
 for (const scriptName of ["build", "typecheck", "pretest:vitest", "test:vitest", "test"]) {
   const script = rootPackage.scripts[scriptName] ?? "";
   assert(
     !script.includes("runtime-realization-type-env"),
-    `${scriptName} must not include runtime-realization-type-env`,
+    `${scriptName} must not include runtime-realization-type-env`
   );
 }
 
 assert(
   !(rootPackage.workspaces ?? []).some((workspace) => workspace.includes("tools/")),
-  "tools must not be added to package workspaces",
+  "tools must not be added to package workspaces"
 );
 
 assert(
   rootPackage.devDependencies?.effect === "3.21.2",
-  "runtime type env must pin effect@3.21.2 as a root dev dependency",
+  "runtime type env must pin effect@3.21.2 as a root dev dependency"
 );
 assert(
   !("effect" in (rootPackage.dependencies ?? {})),
-  "effect must not be added as a production dependency for the lab",
+  "effect must not be added as a production dependency for the lab"
 );
 
 const tsconfigBase = read("tsconfig.base.json");
 assert(
   !tsconfigBase.includes("@rawr/sdk"),
-  "pseudo-SDK aliases must stay local to the type env tsconfig",
+  "pseudo-SDK aliases must stay local to the type env tsconfig"
 );
 
 const vitestConfig = read("vitest.config.ts");
 assert(
   !vitestConfig.includes("runtime-realization-type-env"),
-  "root Vitest project list must not include the type env",
+  "root Vitest project list must not include the type env"
 );
 
 const project = readJson<{
@@ -639,12 +624,12 @@ const inventoryProject = architectureInventory.projects["runtime-realization-typ
 assert(inventoryProject, "architecture inventory missing runtime-realization-type-env");
 assert(
   inventoryProject.config === "tools/runtime-realization-type-env/project.json",
-  "architecture inventory config drifted for runtime-realization-type-env",
+  "architecture inventory config drifted for runtime-realization-type-env"
 );
 assertArrayEquals(
   inventoryProject.targets,
   projectTargetNames,
-  "architecture inventory targets drifted from project.json",
+  "architecture inventory targets drifted from project.json"
 );
 
 for (const referenceRuntimeDir of ["src/reference-runtime", "test/reference-runtime"]) {
@@ -653,7 +638,7 @@ for (const referenceRuntimeDir of ["src/reference-runtime", "test/reference-runt
 
   assert(
     exists(`${referenceRuntimePath}/README.md`),
-    `${referenceRuntimePath} must contain README.md before deeper scaffolding`,
+    `${referenceRuntimePath} must contain README.md before deeper scaffolding`
   );
 
   const referenceRuntimeTsFiles = walk(path.join(toolRoot, referenceRuntimeDir))
@@ -661,31 +646,33 @@ for (const referenceRuntimeDir of ["src/reference-runtime", "test/reference-runt
     .filter((filePath) => /\.(?:c|m)?tsx?$/.test(filePath));
   assert(
     "reference-runtime" in project.targets || referenceRuntimeTsFiles.length === 0,
-    `Reference Runtime TypeScript requires an explicit reference-runtime target: ${referenceRuntimeTsFiles.join(", ")}`,
+    `Reference Runtime TypeScript requires an explicit reference-runtime target: ${referenceRuntimeTsFiles.join(", ")}`
   );
 
   if (!("reference-runtime" in project.targets)) {
     const referenceRuntimeFiles = walk(path.join(toolRoot, referenceRuntimeDir))
-      .map((filePath) => path.relative(path.join(toolRoot, referenceRuntimeDir), filePath).split(path.sep).join("/"))
+      .map((filePath) =>
+        path.relative(path.join(toolRoot, referenceRuntimeDir), filePath).split(path.sep).join("/")
+      )
       .filter((filePath) => filePath !== "README.md");
     assert(
       referenceRuntimeFiles.length === 0,
-      `Reference Runtime scaffold must stay README-only before an explicit reference-runtime target: ${referenceRuntimeFiles.join(", ")}`,
+      `Reference Runtime scaffold must stay README-only before an explicit reference-runtime target: ${referenceRuntimeFiles.join(", ")}`
     );
   }
 }
 
 const gateTargets = new Set(
-  projectTargetNames.filter((target) => target !== "sync" && target !== "gate"),
+  projectTargetNames.filter((target) => target !== "sync" && target !== "gate")
 );
 const proofBearingTargets = projectTargetNames.filter(
-  (target) => !["sync", "structural", "report", "gate"].includes(target),
+  (target) => !["sync", "structural", "report", "gate"].includes(target)
 );
 const gateCommand = project.targets.gate?.options?.command ?? "";
 for (const target of proofBearingTargets) {
   assert(
     gateCommand.includes(`runtime-realization-type-env:${target}`),
-    `gate target must invoke proof-bearing target ${target}`,
+    `gate target must invoke proof-bearing target ${target}`
   );
 }
 const structuralOnlyTargets = new Set(["structural", "report"]);
@@ -710,11 +697,7 @@ const allowedStatuses = new Set<ManifestStatus>([
   "todo",
   "out-of-scope",
 ]);
-const gatedProofStatuses = new Set<ManifestStatus>([
-  "proof",
-  "vendor-proof",
-  "simulation-proof",
-]);
+const gatedProofStatuses = new Set<ManifestStatus>(["proof", "vendor-proof", "simulation-proof"]);
 
 const manifest = readJson<{
   spec: { path: string; sha256: string };
@@ -734,19 +717,15 @@ const manifest = readJson<{
 assert(
   manifest.spec.path ===
     "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md",
-  "proof manifest must pin the repo canonical runtime spec",
+  "proof manifest must pin the repo canonical runtime spec"
 );
-const runtimeSpecSha256 = createHash("sha256")
-  .update(read(manifest.spec.path))
-  .digest("hex");
+const runtimeSpecSha256 = createHash("sha256").update(read(manifest.spec.path)).digest("hex");
 assert(
   manifest.spec.sha256 === runtimeSpecSha256,
-  `proof manifest authority hash drifted: expected ${runtimeSpecSha256}`,
+  `proof manifest authority hash drifted: expected ${runtimeSpecSha256}`
 );
 
-const manifestFixtures = new Set(
-  manifest.entries.flatMap((entry) => entry.fixtures ?? []),
-);
+const manifestFixtures = new Set(manifest.entries.flatMap((entry) => entry.fixtures ?? []));
 const manifestEntryIds = new Set<string>();
 
 for (const entry of manifest.entries) {
@@ -755,31 +734,31 @@ for (const entry of manifest.entries) {
   manifestEntryIds.add(entry.id);
   assert(
     allowedStatuses.has(entry.status as ManifestStatus),
-    `manifest entry ${entry.id} has invalid status: ${entry.status}`,
+    `manifest entry ${entry.id} has invalid status: ${entry.status}`
   );
 
   if (gatedProofStatuses.has(entry.status as ManifestStatus)) {
     assert(
       (entry.gates ?? []).length > 0,
-      `manifest entry ${entry.id} must name at least one regression gate`,
+      `manifest entry ${entry.id} must name at least one regression gate`
     );
     for (const gate of entry.gates ?? []) {
       assert(gateTargets.has(gate), `manifest entry ${entry.id} names unknown gate ${gate}`);
     }
     assert(
       (entry.gates ?? []).some((gate) => !structuralOnlyTargets.has(gate)),
-      `manifest entry ${entry.id} cannot be gated only by structural/report`,
+      `manifest entry ${entry.id} cannot be gated only by structural/report`
     );
     if (entry.status === "simulation-proof") {
       assert(
         (entry.gates ?? []).some((gate) => simulationBehaviorTargets.has(gate)),
-        `simulation-proof entry ${entry.id} must include oracle, simulate, middle-spine, or reference-runtime when available`,
+        `simulation-proof entry ${entry.id} must include oracle, simulate, middle-spine, or reference-runtime when available`
       );
     }
     if (entry.status === "vendor-proof") {
       assert(
         (entry.gates ?? []).some((gate) => vendorBehaviorTargets.has(gate)),
-        `vendor-proof entry ${entry.id} must include vendor-effect or vendor-boundaries`,
+        `vendor-proof entry ${entry.id} must include vendor-effect or vendor-boundaries`
       );
     }
   }
@@ -787,20 +766,20 @@ for (const entry of manifest.entries) {
   for (const fixture of entry.fixtures ?? []) {
     assert(
       exists(`tools/runtime-realization-type-env/${fixture}`),
-      `manifest fixture missing: ${fixture}`,
+      `manifest fixture missing: ${fixture}`
     );
 
     if (gatedProofStatuses.has(entry.status as ManifestStatus)) {
       assert(
         !fixture.startsWith("fixtures/todo/"),
-        `proof entry ${entry.id} must not point at todo fixture ${fixture}`,
+        `proof entry ${entry.id} must not point at todo fixture ${fixture}`
       );
     }
 
     if (fixture.startsWith("fixtures/todo/")) {
       assert(
         entry.status === "xfail" || entry.status === "todo",
-        `todo fixture ${fixture} must belong to xfail or todo entry, not ${entry.status}`,
+        `todo fixture ${fixture} must belong to xfail or todo entry, not ${entry.status}`
       );
     }
   }
@@ -811,13 +790,10 @@ if (manifest.currentExperiment) {
   assert(manifest.currentExperiment.focus, "currentExperiment missing focus");
   assert(
     manifest.currentExperiment.relatedEntries.length > 0,
-    "currentExperiment must name related manifest entries",
+    "currentExperiment must name related manifest entries"
   );
   for (const entryId of manifest.currentExperiment.relatedEntries) {
-    assert(
-      manifestEntryIds.has(entryId),
-      `currentExperiment references unknown entry: ${entryId}`,
-    );
+    assert(manifestEntryIds.has(entryId), `currentExperiment references unknown entry: ${entryId}`);
   }
 }
 
@@ -836,7 +812,7 @@ const typeEnvTsconfig = readJson<{
 
 assert(
   (typeEnvTsconfig.exclude ?? []).includes("fixtures/todo/**"),
-  "todo fixtures must remain excluded from the positive typecheck",
+  "todo fixtures must remain excluded from the positive typecheck"
 );
 
 const sourceFiles = walk(toolRoot).filter((filePath) => filePath.endsWith(".ts"));
@@ -862,18 +838,21 @@ function importSpecifiers(source: string): string[] {
 
 function resolvedImportPath(relativeSourceFile: string, specifier: string): string | undefined {
   if (!specifier.startsWith(".")) return undefined;
-  return path.normalize(path.join(path.dirname(relativeSourceFile), specifier)).split(path.sep).join("/");
+  return path
+    .normalize(path.join(path.dirname(relativeSourceFile), specifier))
+    .split(path.sep)
+    .join("/");
 }
 
 function importsToolPath(
   relativeSourceFile: string,
   specifier: string,
-  prefixes: string[],
+  prefixes: string[]
 ): boolean {
   const resolvedPath = resolvedImportPath(relativeSourceFile, specifier);
   if (!resolvedPath) return false;
   return prefixes.some(
-    (prefix) => resolvedPath === prefix || resolvedPath.startsWith(`${prefix}/`),
+    (prefix) => resolvedPath === prefix || resolvedPath.startsWith(`${prefix}/`)
   );
 }
 
@@ -887,8 +866,7 @@ function importsParentRepoPath(relativeSourceFile: string, specifier: string): b
 
   const resolvedPath = resolvedImportPath(relativeSourceFile, specifier);
   return Boolean(
-    resolvedPath &&
-      /^(?:(?:\.\.\/)+)?(?:apps|packages|services|plugins)(?:\/|$)/.test(resolvedPath),
+    resolvedPath && /^(?:(?:\.\.\/)+)?(?:apps|packages|services|plugins)(?:\/|$)/.test(resolvedPath)
   );
 }
 
@@ -898,11 +876,11 @@ for (const sourceFile of sourceFiles) {
   const specifiers = importSpecifiers(source);
   assert(
     !forbiddenImportPattern.test(source),
-    `forbidden production import in ${path.relative(repoRoot, sourceFile)}`,
+    `forbidden production import in ${path.relative(repoRoot, sourceFile)}`
   );
   assert(
     !staleRuntimePlaneImportPattern.test(source),
-    `stale Oracle-as-runtime import in ${path.relative(repoRoot, sourceFile)}`,
+    `stale Oracle-as-runtime import in ${path.relative(repoRoot, sourceFile)}`
   );
   if (
     relativeSourceFile.startsWith("src/spine/") ||
@@ -913,15 +891,16 @@ for (const sourceFile of sourceFiles) {
   ) {
     assert(
       !sharedPlaneOracleImportPattern.test(source),
-      `shared/source plane must not import Oracle in ${path.relative(repoRoot, sourceFile)}`,
+      `shared/source plane must not import Oracle in ${path.relative(repoRoot, sourceFile)}`
     );
   }
   if (rawEffectImportPattern.test(source)) {
     assert(
-      rawEffectAllowedPrefixes.some((allowedPath) =>
-        relativeSourceFile === allowedPath || relativeSourceFile.startsWith(allowedPath),
+      rawEffectAllowedPrefixes.some(
+        (allowedPath) =>
+          relativeSourceFile === allowedPath || relativeSourceFile.startsWith(allowedPath)
       ),
-      `raw effect import is not allowed in ${path.relative(repoRoot, sourceFile)}`,
+      `raw effect import is not allowed in ${path.relative(repoRoot, sourceFile)}`
     );
   }
 
@@ -932,11 +911,11 @@ for (const sourceFile of sourceFiles) {
     for (const specifier of specifiers) {
       assert(
         !importsToolPath(relativeSourceFile, specifier, ["src/oracle"]),
-        `Reference Runtime must not import Oracle in ${path.relative(repoRoot, sourceFile)}`,
+        `Reference Runtime must not import Oracle in ${path.relative(repoRoot, sourceFile)}`
       );
       assert(
         !importsParentRepoPath(relativeSourceFile, specifier),
-        `Reference Runtime must not import parent repo apps/packages/services/plugins in ${path.relative(repoRoot, sourceFile)}`,
+        `Reference Runtime must not import parent repo apps/packages/services/plugins in ${path.relative(repoRoot, sourceFile)}`
       );
     }
   }
@@ -952,11 +931,11 @@ for (const sourceFile of sourceFiles) {
           "src/vendor",
           "src/spine",
         ]),
-        `scenarios must not import Oracle, Reference Runtime, or runtime internals in ${path.relative(repoRoot, sourceFile)}`,
+        `scenarios must not import Oracle, Reference Runtime, or runtime internals in ${path.relative(repoRoot, sourceFile)}`
       );
       assert(
         !importsParentRepoPath(relativeSourceFile, specifier),
-        `scenarios must not import parent repo apps/packages/services/plugins in ${path.relative(repoRoot, sourceFile)}`,
+        `scenarios must not import parent repo apps/packages/services/plugins in ${path.relative(repoRoot, sourceFile)}`
       );
     }
   }
@@ -984,17 +963,17 @@ for (const activeNamingFile of activeNamingFiles) {
   for (const retiredSharedRuntimeName of retiredSharedRuntimeNames) {
     assert(
       !content.includes(retiredSharedRuntimeName),
-      `${activeNamingFile} contains retired Oracle shared-runtime name: ${retiredSharedRuntimeName}`,
+      `${activeNamingFile} contains retired Oracle shared-runtime name: ${retiredSharedRuntimeName}`
     );
   }
   assert(
     !retiredOracleBootKindPattern.test(content),
-    `${activeNamingFile} contains retired oracle.boot-* kind naming`,
+    `${activeNamingFile} contains retired oracle.boot-* kind naming`
   );
 }
 
 const scenarioNamingFiles = toolFiles.filter(
-  (filePath) => filePath.startsWith("scenarios/") && /\.(?:md|json|tsx?)$/.test(filePath),
+  (filePath) => filePath.startsWith("scenarios/") && /\.(?:md|json|tsx?)$/.test(filePath)
 );
 const retiredScenarioNames = [
   "RuntimeFixtureProfile",
@@ -1008,7 +987,7 @@ for (const scenarioNamingFile of scenarioNamingFiles) {
   for (const retiredScenarioName of retiredScenarioNames) {
     assert(
       !content.includes(retiredScenarioName),
-      `${scenarioNamingFile} contains retired scenario fixture naming: ${retiredScenarioName}`,
+      `${scenarioNamingFile} contains retired scenario fixture naming: ${retiredScenarioName}`
     );
   }
 }
@@ -1040,7 +1019,7 @@ for (const activeDocPath of activeDocStalePhrasePaths) {
   for (const stalePattern of staleExternalityDesignAttractorPatterns) {
     assert(
       !stalePattern.test(content),
-      `${activeDocPath} contains stale externality/design residual scoping attractor`,
+      `${activeDocPath} contains stale externality/design residual scoping attractor`
     );
   }
 }

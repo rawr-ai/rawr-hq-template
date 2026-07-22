@@ -28,18 +28,27 @@ for (const tag of requiredTags) {
   }
 }
 
-if (!indexSource.includes("exampleTodoApiContract") || indexSource.includes("registerExampleTodoApiPlugin")) {
-  console.error("plugin-server-api-example-todo structural failed: src/index.ts must stay app-safe and export the example-todo contract only.");
+if (
+  !indexSource.includes("exampleTodoApiContract") ||
+  indexSource.includes("registerExampleTodoApiPlugin")
+) {
+  console.error(
+    "plugin-server-api-example-todo structural failed: src/index.ts must stay app-safe and export the example-todo contract only."
+  );
   process.exit(1);
 }
 
 if (!serverSource.includes("defineApiPlugin") || !serverSource.includes("exampleTodoApiContract")) {
-  console.error("plugin-server-api-example-todo structural failed: src/server.ts must register the example-todo API plugin through defineApiPlugin.");
+  console.error(
+    "plugin-server-api-example-todo structural failed: src/server.ts must register the example-todo API plugin through defineApiPlugin."
+  );
   process.exit(1);
 }
 
 if (!routerSource.includes("resolveClient(context.repoRoot)")) {
-  console.error("plugin-server-api-example-todo structural failed: router must remain a thin host-client projection.");
+  console.error(
+    "plugin-server-api-example-todo structural failed: router must remain a thin host-client projection."
+  );
   process.exit(1);
 }
 

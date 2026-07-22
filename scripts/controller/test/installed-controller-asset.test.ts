@@ -41,15 +41,13 @@ const roots: string[] = [];
 const TEMPORARY_PREFIX = "rawr-controller-distribution-";
 
 type Equal<Left, Right> =
-  (<Value>() => Value extends Left ? 1 : 2) extends
-  (<Value>() => Value extends Right ? 1 : 2)
+  (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2
     ? true
     : false;
 type Expect<Value extends true> = Value;
-export type InstalledControllerProvenanceComesFromTypeBox = Expect<Equal<
-  InstalledControllerProvenance,
-  Static<typeof InstalledControllerProvenanceSchema>
->>;
+export type InstalledControllerProvenanceComesFromTypeBox = Expect<
+  Equal<InstalledControllerProvenance, Static<typeof InstalledControllerProvenanceSchema>>
+>;
 
 async function temporaryRoot(): Promise<string> {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), TEMPORARY_PREFIX)));
@@ -57,7 +55,10 @@ async function temporaryRoot(): Promise<string> {
   return root;
 }
 
-async function installedControllerFixture(root: string, sourceRevision: string): Promise<{
+async function installedControllerFixture(
+  root: string,
+  sourceRevision: string
+): Promise<{
   dataRoot: string;
   outputRoot: string;
   assetName: string;
@@ -99,11 +100,13 @@ async function expectRootOverlapRefusal(input: {
   expectedOutputEntries: readonly string[];
 }): Promise<void> {
   const sourceBytes = await readFile(input.sourcePath);
-  await expect(createInstalledControllerAsset({
-    dataRoot: input.dataRoot,
-    outputDirectory: input.outputRoot,
-    sourceRevision: "4".repeat(40),
-  })).rejects.toThrow("CONTROLLER_ASSET_ROOTS_OVERLAP");
+  await expect(
+    createInstalledControllerAsset({
+      dataRoot: input.dataRoot,
+      outputDirectory: input.outputRoot,
+      sourceRevision: "4".repeat(40),
+    })
+  ).rejects.toThrow("CONTROLLER_ASSET_ROOTS_OVERLAP");
   expect(await readFile(input.sourcePath)).toEqual(sourceBytes);
   expect((await readdir(input.dataRoot)).sort()).toEqual([...input.expectedDataEntries].sort());
   expect((await readdir(input.outputRoot)).sort()).toEqual([...input.expectedOutputEntries].sort());
@@ -112,9 +115,9 @@ async function expectRootOverlapRefusal(input: {
 async function removeTemporaryRoot(root: string): Promise<void> {
   const canonicalTemporaryParent = await realpath(tmpdir());
   if (
-    path.dirname(root) !== canonicalTemporaryParent
-    || !path.basename(root).startsWith(TEMPORARY_PREFIX)
-    || await realpath(root) !== root
+    path.dirname(root) !== canonicalTemporaryParent ||
+    !path.basename(root).startsWith(TEMPORARY_PREFIX) ||
+    (await realpath(root)) !== root
   ) {
     throw new Error(`refusing to remove unexpected controller distribution test root: ${root}`);
   }
@@ -183,66 +186,79 @@ describe("installed controller archive", () => {
     expect(await sha256File(secondArchive)).toBe(await sha256File(firstArchive));
     expect(await readFile(secondArchive)).toEqual(await readFile(firstArchive));
 
-    const archivedEntries: Array<Readonly<{
-      path: string;
-      mode: number | undefined;
-      uid: number | undefined;
-      gid: number | undefined;
-      uname: string | undefined;
-      gname: string | undefined;
-      atime: Date | undefined;
-      ctime: Date | undefined;
-      dev: number | undefined;
-      ino: number | undefined;
-      nlink: number | undefined;
-    }>> = [];
+    const archivedEntries: Array<
+      Readonly<{
+        path: string;
+        mode: number | undefined;
+        uid: number | undefined;
+        gid: number | undefined;
+        uname: string | undefined;
+        gname: string | undefined;
+        atime: Date | undefined;
+        ctime: Date | undefined;
+        dev: number | undefined;
+        ino: number | undefined;
+        nlink: number | undefined;
+      }>
+    > = [];
     await listTar({
       file: firstArchive,
-      onentry: (entry) => archivedEntries.push({
-        path: entry.path,
-        mode: entry.mode,
-        uid: entry.uid,
-        gid: entry.gid,
-        uname: entry.uname,
-        gname: entry.gname,
-        atime: entry.atime,
-        ctime: entry.ctime,
-        dev: entry.dev,
-        ino: entry.ino,
-        nlink: entry.nlink,
-      }),
+      onentry: (entry) =>
+        archivedEntries.push({
+          path: entry.path,
+          mode: entry.mode,
+          uid: entry.uid,
+          gid: entry.gid,
+          uname: entry.uname,
+          gname: entry.gname,
+          atime: entry.atime,
+          ctime: entry.ctime,
+          dev: entry.dev,
+          ino: entry.ino,
+          nlink: entry.nlink,
+        }),
     });
     expect(archivedEntries.map((entry) => entry.path)).toEqual([...entries].sort());
     expect(archivedEntries.find((entry) => entry.path === longPayloadEntry)?.mode).toBe(0o664);
-    expect(archivedEntries.every((entry) => (
-      entry.uid === undefined
-      && entry.gid === undefined
-      && !entry.uname
-      && !entry.gname
-      && entry.atime === undefined
-      && entry.ctime === undefined
-      && entry.dev === undefined
-      && entry.ino === undefined
-      && entry.nlink === undefined
-    ))).toBe(true);
+    expect(
+      archivedEntries.every(
+        (entry) =>
+          entry.uid === undefined &&
+          entry.gid === undefined &&
+          !entry.uname &&
+          !entry.gname &&
+          entry.atime === undefined &&
+          entry.ctime === undefined &&
+          entry.dev === undefined &&
+          entry.ino === undefined &&
+          entry.nlink === undefined
+      )
+    ).toBe(true);
 
     const extraction = Bun.spawnSync(["tar", "-xpf", firstArchive, "-C", extractRoot]);
     expect(extraction.exitCode, extraction.stderr.toString()).toBe(0);
-    expect(await readFile(path.join(extractRoot, "controller", "current"), "utf8")).toBe(`${digest}\n`);
-    expect(await readlink(path.join(extractRoot, "controller", "releases", digest, "app", "entry.mjs")))
-      .toBe("rawr.mjs");
-    expect((await lstat(path.join(extractRoot, "controller", "bin", "rawr"))).mode & 0o7777).toBe(0o755);
-    expect((await lstat(path.join(extractRoot, "controller", "releases", digest, "app", "rawr.mjs"))).mode & 0o7777)
-      .toBe(0o444);
-    expect((await lstat(path.join(extractRoot, ...longPayloadEntry.split("/")))).mode & 0o7777).toBe(0o664);
-    await expect(readFile(path.join(extractRoot, "not-distributed.txt"))).rejects.toMatchObject({ code: "ENOENT" });
-    await expect(readFile(path.join(
-      extractRoot,
-      "controller",
-      "releases",
-      digest,
-      "not-in-manifest.txt",
-    ))).rejects.toMatchObject({ code: "ENOENT" });
+    expect(await readFile(path.join(extractRoot, "controller", "current"), "utf8")).toBe(
+      `${digest}\n`
+    );
+    expect(
+      await readlink(path.join(extractRoot, "controller", "releases", digest, "app", "entry.mjs"))
+    ).toBe("rawr.mjs");
+    expect((await lstat(path.join(extractRoot, "controller", "bin", "rawr"))).mode & 0o7777).toBe(
+      0o755
+    );
+    expect(
+      (await lstat(path.join(extractRoot, "controller", "releases", digest, "app", "rawr.mjs")))
+        .mode & 0o7777
+    ).toBe(0o444);
+    expect(
+      (await lstat(path.join(extractRoot, ...longPayloadEntry.split("/")))).mode & 0o7777
+    ).toBe(0o664);
+    await expect(readFile(path.join(extractRoot, "not-distributed.txt"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    await expect(
+      readFile(path.join(extractRoot, "controller", "releases", digest, "not-in-manifest.txt"))
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("refuses to replace an existing archive", async () => {
@@ -256,7 +272,7 @@ describe("installed controller archive", () => {
     await writeFile(archivePath, "keep\n");
 
     await expect(
-      writeInstalledControllerArchive({ dataRoot, archivePath, entries: ["only.txt"] }),
+      writeInstalledControllerArchive({ dataRoot, archivePath, entries: ["only.txt"] })
     ).rejects.toMatchObject({ code: "EEXIST" });
     expect(await readFile(archivePath, "utf8")).toBe("keep\n");
   });
@@ -302,7 +318,9 @@ describe("installed controller archive", () => {
     };
     expect(provenance).toEqual(expected);
     expect(Value.Check(InstalledControllerProvenanceSchema, provenance)).toBe(true);
-    expect(Value.Check(InstalledControllerProvenanceSchema, { ...expected, extra: true })).toBe(false);
+    expect(Value.Check(InstalledControllerProvenanceSchema, { ...expected, extra: true })).toBe(
+      false
+    );
     expect(await readFile(provenancePath, "utf8")).toBe(`${JSON.stringify(expected)}\n`);
   });
 
@@ -314,16 +332,18 @@ describe("installed controller archive", () => {
     const parsedControllerDigest = parseControllerDigest("d".repeat(64));
     if (!parsedControllerDigest.ok) throw new Error("fixture controller digest is invalid");
 
-    await expect(writeInstalledControllerProvenance({
-      archivePath,
-      provenancePath,
-      sourceRevision: "not-a-git-revision",
-      platform: "darwin",
-      architecture: "arm64",
-      controllerDigest: parsedControllerDigest.value,
-      runtimeVersion: "1.3.14",
-      runtimeRevision: "revision",
-    })).rejects.toThrow("CONTROLLER_ASSET_PROVENANCE_INVALID");
+    await expect(
+      writeInstalledControllerProvenance({
+        archivePath,
+        provenancePath,
+        sourceRevision: "not-a-git-revision",
+        platform: "darwin",
+        architecture: "arm64",
+        controllerDigest: parsedControllerDigest.value,
+        runtimeVersion: "1.3.14",
+        runtimeRevision: "revision",
+      })
+    ).rejects.toThrow("CONTROLLER_ASSET_PROVENANCE_INVALID");
     await expect(readFile(provenancePath)).rejects.toMatchObject({ code: "ENOENT" });
   });
 });
@@ -396,7 +416,7 @@ describe("installed controller production orchestration", () => {
 
     expect(result.archivePath).toBe(path.join(fixture.outputRoot, `${fixture.assetName}.tar`));
     expect(result.provenancePath).toBe(
-      path.join(fixture.outputRoot, `${fixture.assetName}.provenance.json`),
+      path.join(fixture.outputRoot, `${fixture.assetName}.provenance.json`)
     );
     expect(result.provenance).toMatchObject({
       sourceRevision,
@@ -405,7 +425,7 @@ describe("installed controller production orchestration", () => {
     });
     expect((await lstat(result.archivePath)).isFile()).toBe(true);
     expect(await readFile(result.provenancePath, "utf8")).toBe(
-      `${JSON.stringify(result.provenance)}\n`,
+      `${JSON.stringify(result.provenance)}\n`
     );
   });
 
@@ -413,11 +433,13 @@ describe("installed controller production orchestration", () => {
     const root = await temporaryRoot();
     const fixture = await installedControllerFixture(root, "1".repeat(40));
 
-    await expect(createInstalledControllerAsset({
-      dataRoot: fixture.dataRoot,
-      outputDirectory: fixture.outputRoot,
-      sourceRevision: "2".repeat(40),
-    })).rejects.toThrow("CONTROLLER_ASSET_SOURCE_REVISION_MISMATCH");
+    await expect(
+      createInstalledControllerAsset({
+        dataRoot: fixture.dataRoot,
+        outputDirectory: fixture.outputRoot,
+        sourceRevision: "2".repeat(40),
+      })
+    ).rejects.toThrow("CONTROLLER_ASSET_SOURCE_REVISION_MISMATCH");
 
     expect(await readdir(fixture.outputRoot)).toEqual([]);
   });
@@ -427,18 +449,17 @@ describe("installed controller production orchestration", () => {
     const sourceRevision = "3".repeat(40);
     const fixture = await installedControllerFixture(root, sourceRevision);
     const archivePath = path.join(fixture.outputRoot, `${fixture.assetName}.tar`);
-    const provenancePath = path.join(
-      fixture.outputRoot,
-      `${fixture.assetName}.provenance.json`,
-    );
+    const provenancePath = path.join(fixture.outputRoot, `${fixture.assetName}.provenance.json`);
     const existingProvenance = new TextEncoder().encode("existing provenance\n");
     await writeFile(provenancePath, existingProvenance);
 
-    await expect(createInstalledControllerAsset({
-      dataRoot: fixture.dataRoot,
-      outputDirectory: fixture.outputRoot,
-      sourceRevision,
-    })).rejects.toMatchObject({ code: "EEXIST" });
+    await expect(
+      createInstalledControllerAsset({
+        dataRoot: fixture.dataRoot,
+        outputDirectory: fixture.outputRoot,
+        sourceRevision,
+      })
+    ).rejects.toMatchObject({ code: "EEXIST" });
 
     await expect(lstat(archivePath)).rejects.toMatchObject({ code: "ENOENT" });
     expect(await readFile(provenancePath)).toEqual(existingProvenance);
@@ -448,19 +469,23 @@ describe("installed controller production orchestration", () => {
 
 describe("installed controller distribution CLI", () => {
   it("requires explicit absolute roots and a source revision", () => {
-    expect(parseInstalledControllerDistributionOptions([
-      "--data-root=/tmp/data",
-      "--output-directory=/tmp/output",
-      `--source-revision=${"b".repeat(40)}`,
-    ])).toEqual({
+    expect(
+      parseInstalledControllerDistributionOptions([
+        "--data-root=/tmp/data",
+        "--output-directory=/tmp/output",
+        `--source-revision=${"b".repeat(40)}`,
+      ])
+    ).toEqual({
       dataRoot: "/tmp/data",
       outputDirectory: "/tmp/output",
       sourceRevision: "b".repeat(40),
     });
-    expect(() => parseInstalledControllerDistributionOptions([
-      "--data-root=relative",
-      "--output-directory=/tmp/output",
-      `--source-revision=${"b".repeat(40)}`,
-    ])).toThrow("--data-root must be absolute");
+    expect(() =>
+      parseInstalledControllerDistributionOptions([
+        "--data-root=relative",
+        "--output-directory=/tmp/output",
+        `--source-revision=${"b".repeat(40)}`,
+      ])
+    ).toThrow("--data-root must be absolute");
   });
 });

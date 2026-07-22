@@ -1,13 +1,7 @@
 import { Effect } from "@rawr/sdk/effect";
 import { providerFx, defineRuntimeProvider } from "@rawr/sdk/runtime/providers";
-import {
-  defineRuntimeResource,
-  resourceRequirement,
-} from "@rawr/sdk/runtime/resources";
-import {
-  defineRuntimeProfile,
-  providerSelection,
-} from "@rawr/sdk/runtime/profiles";
+import { defineRuntimeResource, resourceRequirement } from "@rawr/sdk/runtime/resources";
+import { defineRuntimeProfile, providerSelection } from "@rawr/sdk/runtime/profiles";
 import { RuntimeSchema, schema } from "@rawr/sdk/runtime/schema";
 
 export interface EmailSender {
@@ -18,13 +12,11 @@ export interface EmailSenderConfig {
   readonly from: string;
 }
 
-export const EmailSenderConfigSchema = schema.object<
-  "email.sender.config",
-  EmailSenderConfig
->("email.sender.config");
+export const EmailSenderConfigSchema = schema.object<"email.sender.config", EmailSenderConfig>(
+  "email.sender.config"
+);
 
-export type DecodedEmailSenderConfig =
-  RuntimeSchema.Infer<typeof EmailSenderConfigSchema>;
+export type DecodedEmailSenderConfig = RuntimeSchema.Infer<typeof EmailSenderConfigSchema>;
 
 export const EmailSenderResource = defineRuntimeResource<"email.sender", EmailSender>({
   id: "email.sender",
