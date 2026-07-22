@@ -13,29 +13,42 @@ import {
   type PackageAgentPluginResult,
 } from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
 import {
-  ArtifactRefSchema,
   PackageAgentPluginRequestSchema,
   PackageAgentPluginResultSchema,
+  PackagedReleaseIdentitySchema,
 } from "../../../src/service/modules/packaging/schemas";
-import {
-  type ArtifactRefInput,
-  ArtifactRefInputSchema,
-  type CompleteSetArtifactRefInput,
-  CompleteSetArtifactRefInputSchema,
-  type ReleaseArtifactRefInput,
-  ReleaseArtifactRefInputSchema,
-} from "../../../src/service/shared/release";
 
-const artifactRef = Object.freeze({
+const contentWorkspace = Object.freeze({
+  locator: "/tmp/content",
+  repositoryIdentity: "git:github.com/rawr-ai/rawr-hq",
+  contentAuthority: "rawr-hq",
+  remoteName: "origin",
+  remoteUrl: "https://github.com/rawr-ai/rawr-hq.git",
+  refName: "refs/heads/main",
+  sourceCommit: "a".repeat(40),
+  sourceTree: "b".repeat(40),
+  releaseInputPath: ".rawr/release-input.json",
+  pluginRoot: "plugins/agent",
+});
+const release = Object.freeze({
   kind: "release",
+  pluginId: "cognition",
   releaseDigest: `rd1_${"a".repeat(64)}`,
-  artifactDigest: `ad1_${"b".repeat(64)}`,
 });
 const identity = Object.freeze({
-  artifactRef,
+  repositoryIdentity: contentWorkspace.repositoryIdentity,
+  sourceCommit: contentWorkspace.sourceCommit,
+  sourceTree: contentWorkspace.sourceTree,
+  release,
   format: "cowork-v1",
   outputPath: "/tmp/cognition.zip",
   packageDigest: `pkg1_${"c".repeat(64)}`,
+});
+const request = Object.freeze({
+  contentWorkspace,
+  mode: { kind: "targeted", pluginId: "cognition" },
+  format: "cowork-v1",
+  outputPath: identity.outputPath,
 });
 const failure = Object.freeze({
   code: "OutputChanged",
@@ -44,55 +57,35 @@ const failure = Object.freeze({
 });
 
 describe("packaging procedure result schema boundary", () => {
-  it("derives shared refs and public procedure types from their owning schemas", () => {
+  it("derives the callable request and result types from TypeBox", () => {
     type ContractInputs = InferContractRouterInputs<typeof contract>;
     type ContractOutputs = InferContractRouterOutputs<typeof contract>;
 
-    expect(ArtifactRefSchema).toBe(ArtifactRefInputSchema);
-    expectTypeOf<ReleaseArtifactRefInput>().toEqualTypeOf<
-      Static<typeof ReleaseArtifactRefInputSchema>
-    >();
-    expectTypeOf<CompleteSetArtifactRefInput>().toEqualTypeOf<
-      Static<typeof CompleteSetArtifactRefInputSchema>
-    >();
-    expectTypeOf<ArtifactRefInput>().toEqualTypeOf<Static<typeof ArtifactRefInputSchema>>();
     expectTypeOf<PackageAgentPluginRequest>().toEqualTypeOf<
       Static<typeof PackageAgentPluginRequestSchema>
     >();
     expectTypeOf<PackageAgentPluginResult>().toEqualTypeOf<
       Static<typeof PackageAgentPluginResultSchema>
     >();
-    expectTypeOf<PackageAgentPluginRequest["artifactRef"]>().toEqualTypeOf<ArtifactRefInput>();
     expectTypeOf<ContractInputs["package"]>().toEqualTypeOf<PackageAgentPluginRequest>();
     expectTypeOf<ContractOutputs["package"]>().toEqualTypeOf<PackageAgentPluginResult>();
+    expect(Value.Check(PackageAgentPluginRequestSchema, request)).toBe(true);
+    expect(Value.Check(PackagedReleaseIdentitySchema, release)).toBe(true);
   });
 
-  it("rejects swapped or foreign artifact digest domains at the callable boundary", async () => {
-    const request = {
-      artifactRef,
-      format: "cowork-v1",
-      outputPath: identity.outputPath,
-    };
-    expect(Value.Check(PackageAgentPluginRequestSchema, request)).toBe(true);
-
+  it("accepts only exact Git content plus one closed release selection", async () => {
     const invalid = [
-      {
-        ...request,
-        artifactRef: {
-          kind: "release",
-          releaseDigest: artifactRef.artifactDigest,
-          artifactDigest: artifactRef.releaseDigest,
-        },
-      },
-      {
-        ...request,
-        artifactRef: { kind: "complete-set", releaseSetDigest: `foreign_${"c".repeat(64)}` },
-      },
+      { ...request, artifactRef: release },
+      { ...request, contentWorkspace: { ...contentWorkspace, sourceCommit: "A".repeat(40) } },
+      { ...request, contentWorkspace: { ...contentWorkspace, sourceTree: "short" } },
+      { ...request, mode: { kind: "targeted", pluginId: "Invalid/Plugin" } },
+      { ...request, mode: { kind: "complete-set", pluginId: "cognition" } },
       { ...request, format: "cowork-v2" },
       { ...request, outputPath: "" },
+      { ...request, outputPath: "relative.zip" },
+      { ...request, outputPath: "/" },
+      { ...request, outputPath: "/tmp/../escape.zip" },
       { ...request, ambientAuthority: true },
-      { ...request, artifactRef: { ...artifactRef, releaseSetDigest: `rs1_${"c".repeat(64)}` } },
-      { ...request, artifactRef: { kind: "release", releaseDigest: artifactRef.releaseDigest } },
     ];
     for (const candidate of invalid) {
       expect(Value.Check(PackageAgentPluginRequestSchema, candidate)).toBe(false);
@@ -105,10 +98,7 @@ describe("packaging procedure result schema boundary", () => {
 
   it("admits exactly the four closed packaging outcomes", () => {
     const outcomes = [
-      {
-        kind: "RejectedBeforeOutputMutation",
-        primaryFailure: failure,
-      },
+      { kind: "RejectedBeforeOutputMutation", primaryFailure: failure },
       { kind: "ReadOnlyConverged", ...identity },
       { kind: "OutputReplacedVerified", ...identity, priorOutput: "Absent" },
       {
@@ -124,26 +114,21 @@ describe("packaging procedure result schema boundary", () => {
     }
   });
 
-  it("rejects unknown variants, extra fields, and malformed nested failures at the output validator", async () => {
+  it("rejects handles, unknown variants, extra fields, and malformed result identity", async () => {
     const invalid = [
       { kind: "Succeeded", ...identity },
+      { kind: "ReadOnlyConverged", ...identity, artifactRef: release },
       { kind: "ReadOnlyConverged", ...identity, extra: true },
+      {
+        kind: "ReadOnlyConverged",
+        ...identity,
+        release: { ...release, releaseDigest: `ad1_${"a".repeat(64)}` },
+      },
       {
         kind: "RejectedBeforeOutputMutation",
         primaryFailure: { ...failure, code: "MadeUpFailure" },
       },
-      {
-        kind: "RejectedBeforeOutputMutation",
-        primaryFailure: { ...failure, detail: failure.message },
-      },
-      { kind: "ReadOnlyConverged", ...identity, cleanupFailure: failure },
       { kind: "OutputReplacedVerified", ...identity, priorOutput: "Unknown" },
-      {
-        kind: "OutputUnsettled",
-        ...identity,
-        artifactRef: { ...artifactRef, ambientAuthority: true },
-        primaryFailure: failure,
-      },
     ];
 
     for (const candidate of invalid) {
@@ -155,18 +140,14 @@ describe("packaging procedure result schema boundary", () => {
     }
   });
 
-  it("keeps public output paths and failure diagnostics finite at the schema boundary", async () => {
+  it("keeps output paths and diagnostics finite at the public boundary", async () => {
     const maximumOutputPath = `/${"p".repeat(MAX_PACKAGING_OUTPUT_PATH_LENGTH - 1)}`;
     const maximumFailure = {
       ...failure,
       phase: "p".repeat(MAX_PACKAGING_FAILURE_PHASE_LENGTH),
       message: "m".repeat(MAX_PACKAGING_FAILURE_MESSAGE_LENGTH),
     };
-    const maximumRequest = {
-      artifactRef,
-      format: "cowork-v1",
-      outputPath: maximumOutputPath,
-    };
+    const maximumRequest = { ...request, outputPath: maximumOutputPath };
     const maximumResult = {
       kind: "OutputUnsettled",
       ...identity,
@@ -177,7 +158,7 @@ describe("packaging procedure result schema boundary", () => {
     expect(Value.Check(PackageAgentPluginRequestSchema, maximumRequest)).toBe(true);
     expect(Value.Check(PackageAgentPluginResultSchema, maximumResult)).toBe(true);
 
-    const invalid = [
+    for (const candidate of [
       { ...maximumRequest, outputPath: `${maximumOutputPath}p` },
       { ...maximumResult, outputPath: `${maximumOutputPath}p` },
       {
@@ -188,9 +169,7 @@ describe("packaging procedure result schema boundary", () => {
         ...maximumResult,
         primaryFailure: { ...maximumFailure, message: `${maximumFailure.message}m` },
       },
-    ];
-
-    for (const candidate of invalid) {
+    ]) {
       const candidateSchema =
         "kind" in candidate ? PackageAgentPluginResultSchema : PackageAgentPluginRequestSchema;
       expect(Value.Check(candidateSchema, candidate)).toBe(false);

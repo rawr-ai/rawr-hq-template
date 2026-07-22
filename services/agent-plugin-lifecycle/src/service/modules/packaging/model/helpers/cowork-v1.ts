@@ -3,12 +3,11 @@ import type {
   PackageArchiveEntry,
 } from "@rawr/resource-agent-plugin-package-output";
 import {
-  type ArtifactRef,
+  type AgentPluginRelease,
+  type AgentPluginReleaseSet,
   contentDigest,
   parseReleaseRelativePath,
-  type VerifiedArtifactSnapshotV1,
-  type VerifiedPayloadFileV1,
-  type VerifiedReleaseArtifactV1,
+  payloadEntryBytes,
   verifyCompleteReleaseSet,
 } from "../../../../shared/release/index";
 
@@ -30,38 +29,16 @@ export interface CoworkV1ProtocolEntrySize {
   readonly byteLength: number;
 }
 
-export function assertSnapshotMatchesRef(
-  snapshot: VerifiedArtifactSnapshotV1,
-  ref: ArtifactRef
-): void {
-  if (snapshot.kind !== ref.kind || !sameArtifactRef(snapshot.ref, ref)) {
-    throw new Error("Artifact reader returned a snapshot for a different reference");
-  }
-  if (snapshot.kind === "release") {
-    assertReleaseSnapshot(snapshot);
-    return;
-  }
-
-  if (snapshot.releaseSet.releaseSetDigest !== snapshot.ref.releaseSetDigest) {
-    throw new Error("Complete-set snapshot envelope differs from its reference");
-  }
-  const verification = verifyCompleteReleaseSet(
-    snapshot.releaseSet,
-    snapshot.members.map((member) => member.release)
-  );
-  if (!verification.ok) {
-    throw new Error(
-      `Complete release-set verification failed: ${verification.issues.map((entry) => entry.code).join(",")}`
-    );
-  }
-  for (const member of snapshot.members) assertReleaseSnapshot(member);
+export interface PackageReleaseSelection {
+  readonly releases: readonly AgentPluginRelease[];
+  readonly releaseSet?: AgentPluginReleaseSet;
 }
 
 export function createCoworkV1ArchiveRequest(
-  snapshot: VerifiedArtifactSnapshotV1
+  selection: PackageReleaseSelection
 ): CoworkV1ArchiveEncodingRequest {
   return Object.freeze({
-    entries: collectCoworkEntries(snapshot),
+    entries: collectCoworkEntries(selection),
     comment: COWORK_V1_ARCHIVE_COMMENT,
     fixedTimestamp: COWORK_V1_FIXED_TIMESTAMP,
     compression: "store",
@@ -75,18 +52,18 @@ export function coworkV1PackageDigest(bytes: Uint8Array): PackageDigest {
 }
 
 function collectCoworkEntries(
-  snapshot: VerifiedArtifactSnapshotV1
+  selection: PackageReleaseSelection
 ): readonly PackageArchiveEntry[] {
-  assertCoworkV1ProtocolBounds(protocolEntrySizes(snapshot));
-  const entries =
-    snapshot.kind === "release"
-      ? collectReleaseEntries(snapshot, "")
-      : snapshot.members.flatMap((member) =>
-          collectReleaseEntries(
-            member,
-            `plugins/${member.release.artifactBody.releaseBody.pluginId}/`
-          )
-        );
+  const releases = verifiedSelectionReleases(selection);
+  assertCoworkV1ProtocolBounds(protocolEntrySizes(releases, selection.releaseSet !== undefined));
+  const entries = releases.flatMap((release) =>
+    collectReleaseEntries(
+      release,
+      selection.releaseSet === undefined
+        ? ""
+        : `plugins/${release.artifactBody.releaseBody.pluginId}/`
+    )
+  );
   entries.sort((left, right) => compareUtf8(left.path, right.path));
   for (let index = 1; index < entries.length; index += 1) {
     if (entries[index - 1]?.path === entries[index]?.path) {
@@ -128,97 +105,78 @@ export function assertCoworkV1ProtocolBounds(entries: Iterable<CoworkV1ProtocolE
 }
 
 function* protocolEntrySizes(
-  snapshot: VerifiedArtifactSnapshotV1
+  releases: readonly AgentPluginRelease[],
+  completeSet: boolean
 ): Generator<CoworkV1ProtocolEntrySize> {
-  if (snapshot.kind === "release") {
-    yield* releaseProtocolEntrySizes(snapshot, "");
-    return;
-  }
-  for (const member of snapshot.members) {
+  for (const release of releases) {
     yield* releaseProtocolEntrySizes(
-      member,
-      `plugins/${member.release.artifactBody.releaseBody.pluginId}/`
+      release,
+      completeSet ? `plugins/${release.artifactBody.releaseBody.pluginId}/` : ""
     );
   }
 }
 
 function* releaseProtocolEntrySizes(
-  snapshot: VerifiedReleaseArtifactV1,
+  release: AgentPluginRelease,
   prefix: string
 ): Generator<CoworkV1ProtocolEntrySize> {
-  for (const file of snapshot.files) {
-    if (!(file.bytes instanceof Uint8Array)) {
-      throw new Error("Cowork v1 entry bytes must be a Uint8Array before protocol accounting");
-    }
-    yield { path: `${prefix}${file.path}`, byteLength: file.bytes.byteLength };
+  for (const entry of release.artifactBody.payloadEntries) {
+    yield { path: `${prefix}${entry.path}`, byteLength: entry.byteLength };
   }
 }
 
 function collectReleaseEntries(
-  snapshot: VerifiedReleaseArtifactV1,
+  release: AgentPluginRelease,
   prefix: string
 ): PackageArchiveEntry[] {
-  assertReleaseSnapshot(snapshot);
-  return snapshot.files.map((file) => ({
-    path: `${prefix}${file.path}`,
-    mode: file.mode,
-    bytes: new Uint8Array(file.bytes),
-  }));
+  return release.artifactBody.payloadEntries.map((entry) => {
+    const bytes = payloadEntryBytes(entry);
+    assertPayloadEntry(entry.path, entry.mode, entry.contentDigest, entry.byteLength, bytes);
+    return {
+      path: `${prefix}${entry.path}`,
+      mode: entry.mode,
+      bytes,
+    };
+  });
 }
 
-function assertReleaseSnapshot(snapshot: VerifiedReleaseArtifactV1): void {
-  if (
-    snapshot.ref.releaseDigest !== snapshot.release.releaseDigest ||
-    snapshot.ref.artifactDigest !== snapshot.release.artifactDigest
-  ) {
-    throw new Error("Release snapshot envelope differs from its reference");
+function verifiedSelectionReleases(
+  selection: PackageReleaseSelection
+): readonly AgentPluginRelease[] {
+  if (selection.releaseSet === undefined && selection.releases.length !== 1) {
+    throw new Error("Targeted packaging requires exactly one release");
   }
-
-  const manifest = snapshot.release.artifactBody.storageManifest;
-  if (manifest.length !== snapshot.files.length) {
-    throw new Error("Release snapshot file count differs from its storage manifest");
-  }
-  const orderedFiles = [...snapshot.files].sort((left, right) =>
-    compareUtf8(left.path, right.path)
+  const releases = [...selection.releases].sort((left, right) =>
+    compareUtf8(left.artifactBody.releaseBody.pluginId, right.artifactBody.releaseBody.pluginId)
   );
-  for (let index = 0; index < orderedFiles.length; index += 1) {
-    const file = orderedFiles[index];
-    const expected = manifest[index];
-    if (file === undefined || expected === undefined) {
-      throw new Error("Release snapshot manifest is incomplete");
-    }
-    assertPayloadFile(file);
-    if (
-      file.path !== expected.path ||
-      file.mode !== expected.mode ||
-      file.contentDigest !== expected.contentDigest ||
-      file.bytes.byteLength !== expected.byteLength
-    ) {
-      throw new Error(`Release snapshot file ${file.path} differs from its storage manifest`);
+  if (selection.releaseSet !== undefined) {
+    const verification = verifyCompleteReleaseSet(selection.releaseSet, releases);
+    if (!verification.ok) {
+      throw new Error(
+        `Complete release-set verification failed: ${verification.issues.map((issue) => issue.code).join(",")}`
+      );
     }
   }
+  return releases;
 }
 
-function assertPayloadFile(file: VerifiedPayloadFileV1): void {
-  const parsedPath = parseReleaseRelativePath(file.path);
-  if (!parsedPath.ok || parsedPath.value !== file.path) {
-    throw new Error("Artifact reader returned a non-canonical payload path");
+function assertPayloadEntry(
+  path: string,
+  mode: number,
+  expectedDigest: string,
+  expectedByteLength: number,
+  bytes: Uint8Array
+): void {
+  const parsedPath = parseReleaseRelativePath(path);
+  if (!parsedPath.ok || parsedPath.value !== path) {
+    throw new Error("Release contains a non-canonical payload path");
   }
-  if (file.mode !== 0o644 && file.mode !== 0o755) {
-    throw new Error(`Artifact reader returned an invalid mode for ${file.path}`);
+  if (mode !== 0o644 && mode !== 0o755) {
+    throw new Error(`Release contains an invalid mode for ${path}`);
   }
-  if (!(file.bytes instanceof Uint8Array) || contentDigest(file.bytes) !== file.contentDigest) {
-    throw new Error(`Artifact reader returned mismatched bytes for ${file.path}`);
+  if (bytes.byteLength !== expectedByteLength || contentDigest(bytes) !== expectedDigest) {
+    throw new Error(`Release contains mismatched bytes for ${path}`);
   }
-}
-
-function sameArtifactRef(left: ArtifactRef, right: ArtifactRef): boolean {
-  if (left.kind !== right.kind) return false;
-  return left.kind === "release" && right.kind === "release"
-    ? left.releaseDigest === right.releaseDigest && left.artifactDigest === right.artifactDigest
-    : left.kind === "complete-set" &&
-        right.kind === "complete-set" &&
-        left.releaseSetDigest === right.releaseSetDigest;
 }
 
 function compareUtf8(left: string, right: string): number {
