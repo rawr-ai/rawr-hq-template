@@ -3,9 +3,7 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import type {
-  AgentPluginPackageOutputAsyncPort,
-} from "@rawr/resource-agent-plugin-package-output";
+import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
 import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 
@@ -46,7 +44,10 @@ describe("agent-plugin lifecycle resource adapters", () => {
       const first = await setup.store.publishRelease(setup.fixture.alphaRelease);
       expect(first).toMatchObject({ kind: "Published", ref: setup.fixture.alphaSnapshot.ref });
       const repeated = await setup.store.publishRelease(setup.fixture.alphaRelease);
-      expect(repeated).toMatchObject({ kind: "ReadOnlyConverged", ref: setup.fixture.alphaSnapshot.ref });
+      expect(repeated).toMatchObject({
+        kind: "ReadOnlyConverged",
+        ref: setup.fixture.alphaSnapshot.ref,
+      });
       await setup.store.publishRelease(setup.fixture.betaRelease);
       await expect(setup.store.publishReleaseSet(setup.fixture.releaseSet)).resolves.toMatchObject({
         kind: "Published",
@@ -64,7 +65,7 @@ describe("agent-plugin lifecycle resource adapters", () => {
         kind: "Verified",
         snapshot: { kind: "complete-set" },
       });
-    },
+    }
   );
 
   it.runIf("Bun" in globalThis)(
@@ -72,10 +73,7 @@ describe("agent-plugin lifecycle resource adapters", () => {
     async () => {
       const setup = await outputSetup();
       await setup.store.publishRelease(setup.fixture.alphaRelease);
-      setup.repository.addDirectory(
-        setup.fixture.alphaRelease.artifactDigest,
-        "unexpected-empty",
-      );
+      setup.repository.addDirectory(setup.fixture.alphaRelease.artifactDigest, "unexpected-empty");
 
       await expect(setup.reader.read(setup.fixture.alphaSnapshot.ref)).resolves.toMatchObject({
         kind: "Mismatch",
@@ -85,7 +83,7 @@ describe("agent-plugin lifecycle resource adapters", () => {
         kind: "Rejected",
         failure: expect.stringContaining("present"),
       });
-    },
+    }
   );
 
   it.runIf("Bun" in globalThis)(
@@ -94,7 +92,8 @@ describe("agent-plugin lifecycle resource adapters", () => {
       const setup = await outputSetup();
       const result = await setup.store.publishRelease(setup.fixture.alphaRelease, {
         failpoint(event) {
-          if (event.kind === "AfterNoReplacePublication") throw new Error("post-commit fixture failure");
+          if (event.kind === "AfterNoReplacePublication")
+            throw new Error("post-commit fixture failure");
         },
       });
 
@@ -103,8 +102,10 @@ describe("agent-plugin lifecycle resource adapters", () => {
         observation: "Verified",
         failure: expect.stringContaining("post-commit fixture failure"),
       });
-      await expect(setup.reader.read(setup.fixture.alphaSnapshot.ref)).resolves.toMatchObject({ kind: "Verified" });
-    },
+      await expect(setup.reader.read(setup.fixture.alphaSnapshot.ref)).resolves.toMatchObject({
+        kind: "Verified",
+      });
+    }
   );
 
   it.runIf("Bun" in globalThis)(
@@ -117,7 +118,7 @@ describe("agent-plugin lifecycle resource adapters", () => {
           setup.repository.replaceEntry(
             setup.fixture.alphaRelease.artifactDigest,
             "release.json",
-            new TextEncoder().encode("{}\n"),
+            new TextEncoder().encode("{}\n")
           );
           throw new Error("post-commit artifact changed");
         },
@@ -128,7 +129,7 @@ describe("agent-plugin lifecycle resource adapters", () => {
         observation: "Mismatch",
         failure: expect.stringContaining("post-commit artifact changed"),
       });
-    },
+    }
   );
 
   it("publishes evidence through the generic repository and converges by service handle", async () => {
@@ -136,7 +137,10 @@ describe("agent-plugin lifecycle resource adapters", () => {
     const bytes = new TextEncoder().encode('{"schemaVersion":1,"verified":true}\n');
     const handle = createMechanicalEvidenceHandle(bytes);
 
-    await expect(setup.store.publish(handle, bytes)).resolves.toEqual({ kind: "Published", handle });
+    await expect(setup.store.publish(handle, bytes)).resolves.toEqual({
+      kind: "Published",
+      handle,
+    });
     const read = await setup.reader.read(handle);
     expect(read).toEqual({ kind: "Verified", handle, bytes });
     if (read.kind === "Verified") read.bytes.fill(0);
@@ -158,10 +162,9 @@ describe("agent-plugin lifecycle resource adapters", () => {
     const expected = new TextEncoder().encode("expected\n");
     const handle = createMechanicalEvidenceHandle(expected);
 
-    await expect(setup.store.publish(
-      handle,
-      new TextEncoder().encode("different\n"),
-    )).resolves.toMatchObject({
+    await expect(
+      setup.store.publish(handle, new TextEncoder().encode("different\n"))
+    ).resolves.toMatchObject({
       kind: "Rejected",
       failure: expect.stringContaining("do not match"),
     });
@@ -202,7 +205,7 @@ describe("agent-plugin lifecycle resource adapters", () => {
     setup.repository.replaceEntry(
       handle.digest,
       "evidence.json",
-      new TextEncoder().encode("tampered evidence\n"),
+      new TextEncoder().encode("tampered evidence\n")
     );
 
     await expect(setup.reader.read(handle)).resolves.toMatchObject({ kind: "Mismatch", handle });
@@ -226,7 +229,10 @@ describe("agent-plugin lifecycle resource adapters", () => {
       failure: "injected publication outage",
     });
     await expect(setup.reader.read(handle)).resolves.toEqual({ kind: "Missing", handle });
-    await expect(setup.store.publish(handle, bytes)).resolves.toEqual({ kind: "Published", handle });
+    await expect(setup.store.publish(handle, bytes)).resolves.toEqual({
+      kind: "Published",
+      handle,
+    });
     await expect(setup.store.publish(handle, bytes)).resolves.toEqual({
       kind: "ReadOnlyConverged",
       handle,
@@ -283,8 +289,11 @@ describe("agent-plugin lifecycle resource adapters", () => {
         packageDigest: first.packageDigest,
       });
       const after = await lstat(outputPath, { bigint: true });
-      expect({ ino: after.ino, mtimeNs: after.mtimeNs }).toEqual({ ino: before.ino, mtimeNs: before.mtimeNs });
-    },
+      expect({ ino: after.ino, mtimeNs: after.mtimeNs }).toEqual({
+        ino: before.ino,
+        mtimeNs: before.mtimeNs,
+      });
+    }
   );
 
   it.runIf("Bun" in globalThis)(
@@ -316,7 +325,7 @@ describe("agent-plugin lifecycle resource adapters", () => {
           message: expect.stringContaining("package commit refused"),
         },
       });
-    },
+    }
   );
 
   it.runIf("Bun" in globalThis)(
@@ -333,22 +342,24 @@ describe("agent-plugin lifecycle resource adapters", () => {
         },
       });
 
-      await expect(createPackageAgentPluginApplication({
-        artifactRepository: setup.repository,
-        artifactRepositoryRoot: setup.artifactRoot,
-        packageOutput,
-      }).package({
-        artifactRef: setup.fixture.alphaSnapshot.ref,
-        format: "cowork-v1",
-        outputPath: join(setup.root, "four-transitions.cowork.zip"),
-      })).resolves.toMatchObject({ kind: "OutputReplacedVerified" });
+      await expect(
+        createPackageAgentPluginApplication({
+          artifactRepository: setup.repository,
+          artifactRepositoryRoot: setup.artifactRoot,
+          packageOutput,
+        }).package({
+          artifactRef: setup.fixture.alphaSnapshot.ref,
+          format: "cowork-v1",
+          outputPath: join(setup.root, "four-transitions.cowork.zip"),
+        })
+      ).resolves.toMatchObject({ kind: "OutputReplacedVerified" });
       expect(points).toEqual([
         "AfterOutputObserved",
         "BeforeCommit",
         "AfterCommit",
         "BeforeFinalVerification",
       ]);
-    },
+    }
   );
 
   async function outputSetup() {
@@ -380,19 +391,19 @@ describe("agent-plugin lifecycle resource adapters", () => {
   }
 });
 
-function createPackageAgentPluginApplication(options: Readonly<{
-  artifactRepository: ArtifactRepositoryAsyncPort;
-  artifactRepositoryRoot: string;
-  packageOutput?: AgentPluginPackageOutputAsyncPort;
-}>) {
+function createPackageAgentPluginApplication(
+  options: Readonly<{
+    artifactRepository: ArtifactRepositoryAsyncPort;
+    artifactRepositoryRoot: string;
+    packageOutput?: AgentPluginPackageOutputAsyncPort;
+  }>
+) {
   const client = createLifecycleTestClient({
     artifactRepository: options.artifactRepository,
     artifactRepositoryRoot: options.artifactRepositoryRoot,
     packageOutput: options.packageOutput ?? makeNodePackageOutputAsyncPort(),
   });
   return Object.freeze({
-    package: (request: unknown) => (
-      client.packaging.package(request as never, testInvocation)
-    ),
+    package: (request: unknown) => client.packaging.package(request as never, testInvocation),
   });
 }

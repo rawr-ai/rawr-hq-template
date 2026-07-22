@@ -60,29 +60,33 @@ const TRUNCATED_RELEASE_ISSUE_SUFFIX = "...[truncated]";
 
 export const ReleaseIssueCodeSchema = Type.Enum(RELEASE_ISSUE_CODES);
 
-export const ReleaseIssueSchema = ReadonlyObject(Type.Object(
-  {
+export const ReleaseIssueSchema = ReadonlyObject(
+  Type.Object({
     code: ReleaseIssueCodeSchema,
     path: Type.String({ minLength: 1, maxLength: MAX_RELEASE_ISSUE_PATH_LENGTH }),
     message: Type.String({ minLength: 1, maxLength: MAX_RELEASE_ISSUE_MESSAGE_LENGTH }),
-    expected: Type.Optional(Type.Union([
-      Type.String({ maxLength: MAX_RELEASE_ISSUE_EXPECTED_LENGTH }),
-      Type.Number(),
-    ])),
-    actual: Type.Optional(Type.Union([
-      Type.String({ maxLength: MAX_RELEASE_ISSUE_ACTUAL_LENGTH }),
-      Type.Number({
-        minimum: -Number.MAX_SAFE_INTEGER,
-        maximum: Number.MAX_SAFE_INTEGER,
-      }),
-    ])),
+    expected: Type.Optional(
+      Type.Union([Type.String({ maxLength: MAX_RELEASE_ISSUE_EXPECTED_LENGTH }), Type.Number()])
+    ),
+    actual: Type.Optional(
+      Type.Union([
+        Type.String({ maxLength: MAX_RELEASE_ISSUE_ACTUAL_LENGTH }),
+        Type.Number({
+          minimum: -Number.MAX_SAFE_INTEGER,
+          maximum: Number.MAX_SAFE_INTEGER,
+        }),
+      ])
+    ),
     claimKind: Type.Optional(Type.String({ maxLength: MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH })),
     claim: Type.Optional(Type.String({ maxLength: MAX_RELEASE_ISSUE_CLAIM_LENGTH })),
-    claimants: Type.Optional(ReadonlyObject(Type.Array(
-      Type.String({ maxLength: MAX_RELEASE_ISSUE_CLAIMANT_LENGTH }),
-    ), { maxItems: 200_000 })),
-  },
-), { additionalProperties: false });
+    claimants: Type.Optional(
+      ReadonlyObject(Type.Array(Type.String({ maxLength: MAX_RELEASE_ISSUE_CLAIMANT_LENGTH })), {
+        maxItems: 200_000,
+      })
+    ),
+  }),
+  { additionalProperties: false }
+);
 
 export type ReleaseIssueCode = Static<typeof ReleaseIssueCodeSchema>;
 export type ReleaseIssue = Static<typeof ReleaseIssueSchema>;
@@ -91,23 +95,29 @@ export function issue(
   code: ReleaseIssueCode,
   path: string,
   message: string,
-  details: Pick<ReleaseIssue, "expected" | "actual" | "claimKind" | "claim" | "claimants"> = {},
+  details: Pick<ReleaseIssue, "expected" | "actual" | "claimKind" | "claim" | "claimants"> = {}
 ): ReleaseIssue {
-  const expected = typeof details.expected === "string"
-    ? boundedIssueText(details.expected, MAX_RELEASE_ISSUE_EXPECTED_LENGTH)
-    : details.expected;
+  const expected =
+    typeof details.expected === "string"
+      ? boundedIssueText(details.expected, MAX_RELEASE_ISSUE_EXPECTED_LENGTH)
+      : details.expected;
   const actual = details.actual === undefined ? undefined : boundedIssueActual(details.actual);
-  const claimKind = details.claimKind === undefined
-    ? undefined
-    : boundedIssueText(details.claimKind, MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH);
-  const claim = details.claim === undefined
-    ? undefined
-    : boundedIssueText(details.claim, MAX_RELEASE_ISSUE_CLAIM_LENGTH);
-  const claimants = details.claimants === undefined
-    ? undefined
-    : Object.freeze(details.claimants.map((claimant) => (
-      boundedIssueText(claimant, MAX_RELEASE_ISSUE_CLAIMANT_LENGTH)
-    )));
+  const claimKind =
+    details.claimKind === undefined
+      ? undefined
+      : boundedIssueText(details.claimKind, MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH);
+  const claim =
+    details.claim === undefined
+      ? undefined
+      : boundedIssueText(details.claim, MAX_RELEASE_ISSUE_CLAIM_LENGTH);
+  const claimants =
+    details.claimants === undefined
+      ? undefined
+      : Object.freeze(
+          details.claimants.map((claimant) =>
+            boundedIssueText(claimant, MAX_RELEASE_ISSUE_CLAIMANT_LENGTH)
+          )
+        );
   return Object.freeze({
     code,
     path: boundedIssueText(path, MAX_RELEASE_ISSUE_PATH_LENGTH),
@@ -122,10 +132,11 @@ export function issue(
 
 function boundedIssueActual(actual: string | number): string | number {
   if (
-    typeof actual === "number"
-    && Number.isFinite(actual)
-    && Math.abs(actual) <= Number.MAX_SAFE_INTEGER
-  ) return actual;
+    typeof actual === "number" &&
+    Number.isFinite(actual) &&
+    Math.abs(actual) <= Number.MAX_SAFE_INTEGER
+  )
+    return actual;
   return boundedIssueText(String(actual), MAX_RELEASE_ISSUE_ACTUAL_LENGTH);
 }
 

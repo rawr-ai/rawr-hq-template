@@ -3,12 +3,8 @@ import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-ar
 import { createServiceProvider } from "../base";
 import type { CurrentMainSelectionReader } from "../model/dependencies/current-main";
 import type { ArtifactStore } from "../model/dependencies/releases";
-import {
-  createResourceArtifactStore,
-} from "../repository/artifact-repository";
-import {
-  createResourceMechanicalEvidenceStore,
-} from "../repository/mechanical-evidence";
+import { createResourceArtifactStore } from "../repository/artifact-repository";
+import { createResourceMechanicalEvidenceStore } from "../repository/mechanical-evidence";
 import type { MechanicalEvidenceStore } from "../shared/release";
 
 /** Derives the lifecycle-owned artifact and evidence capabilities from one raw repository. */

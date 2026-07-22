@@ -13,5 +13,5 @@ export function failure<E>(issues: NonEmptyReadonlyArray<E>): ReleaseResult<neve
 }
 
 export function asNonEmpty<E>(issues: readonly E[]): NonEmptyReadonlyArray<E> | undefined {
-  return issues.length === 0 ? undefined : issues as NonEmptyReadonlyArray<E>;
+  return issues.length === 0 ? undefined : (issues as NonEmptyReadonlyArray<E>);
 }

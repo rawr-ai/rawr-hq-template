@@ -39,7 +39,11 @@ import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-pack
 
 import { packagingArtifactFixture } from "./artifact-fixture";
 import { MemoryArtifactRepository } from "../../support/artifact-repository";
-import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "../../support/owned-fixture-root";
+import {
+  createOwnedFixtureRoot,
+  disposeOwnedFixtureRoot,
+  type OwnedFixtureRoot,
+} from "../../support/owned-fixture-root";
 import {
   createLifecycleTestClient,
   testInvocation,
@@ -84,7 +88,9 @@ describe("package agent plugin application", () => {
       "packageDigest",
       "priorOutput",
     ]);
-    expect((await readFile(outputPath)).subarray(0, 4)).toEqual(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+    expect((await readFile(outputPath)).subarray(0, 4)).toEqual(
+      Buffer.from([0x50, 0x4b, 0x03, 0x04])
+    );
     expect(artifacts.artifactRepository.readTreeCalls).toBe(1);
 
     const beforeNames = await readdir(root.path);
@@ -93,7 +99,10 @@ describe("package agent plugin application", () => {
       format: COWORK_PACKAGE_FORMAT,
       outputPath,
     });
-    expect(second).toMatchObject({ kind: "ReadOnlyConverged", packageDigest: first.kind === "OutputReplacedVerified" ? first.packageDigest : "" });
+    expect(second).toMatchObject({
+      kind: "ReadOnlyConverged",
+      packageDigest: first.kind === "OutputReplacedVerified" ? first.packageDigest : "",
+    });
     expect(await readdir(root.path)).toEqual(beforeNames);
     expect(artifacts.artifactRepository.readTreeCalls).toBe(2);
   });
@@ -132,14 +141,15 @@ describe("package agent plugin application", () => {
     const artifacts = await publishedRepository(
       root.path,
       [fixture.alphaRelease, fixture.betaRelease],
-      fixture.releaseSet,
+      fixture.releaseSet
     );
     const application = createPackageAgentPluginApplication(artifacts);
-    const packageAt = (outputPath: string) => application.package({
-      artifactRef: fixture.setSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath,
-    });
+    const packageAt = (outputPath: string) =>
+      application.package({
+        artifactRef: fixture.setSnapshot.ref,
+        format: COWORK_PACKAGE_FORMAT,
+        outputPath,
+      });
 
     const first = await packageAt(firstOutput);
     const second = await packageAt(secondOutput);
@@ -158,12 +168,9 @@ describe("package agent plugin application", () => {
     expect(await readFile(adjacent, "utf8")).toBe("must remain unchanged\n");
     expect(await fileIdentityAndMetadata(adjacent)).toEqual(adjacentBefore);
 
-    const beforeRepeat = await Promise.all([
-      root.path,
-      firstOutput,
-      secondOutput,
-      adjacent,
-    ].map(fileIdentityAndMetadata));
+    const beforeRepeat = await Promise.all(
+      [root.path, firstOutput, secondOutput, adjacent].map(fileIdentityAndMetadata)
+    );
     const firstBytes = await readFile(firstOutput);
     const secondBytes = await readFile(secondOutput);
     const namesBeforeRepeat = (await readdir(root.path)).sort();
@@ -177,12 +184,11 @@ describe("package agent plugin application", () => {
       packageDigest: first.packageDigest,
     });
     expect(artifacts.artifactRepository.readTreeCalls).toBe(12);
-    expect(await Promise.all([
-      root.path,
-      firstOutput,
-      secondOutput,
-      adjacent,
-    ].map(fileIdentityAndMetadata))).toEqual(beforeRepeat);
+    expect(
+      await Promise.all(
+        [root.path, firstOutput, secondOutput, adjacent].map(fileIdentityAndMetadata)
+      )
+    ).toEqual(beforeRepeat);
     expect(await readFile(firstOutput)).toEqual(firstBytes);
     expect(await readFile(secondOutput)).toEqual(secondBytes);
     expect((await readdir(root.path)).sort()).toEqual(namesBeforeRepeat);
@@ -199,12 +205,14 @@ describe("package agent plugin application", () => {
       packageOutput: output,
     });
 
-    await expect(application.package({
-      artifactRef: fixture.alphaSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath: join(root.path, "invalid.zip"),
-      sourceWorkspace: root.path,
-    })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(
+      application.package({
+        artifactRef: fixture.alphaSnapshot.ref,
+        format: COWORK_PACKAGE_FORMAT,
+        outputPath: join(root.path, "invalid.zip"),
+        sourceWorkspace: root.path,
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(artifacts.artifactRepository.readTreeCalls).toBe(0);
     expect(output.calls).toBe(0);
     expect(await readdir(root.path)).toEqual([]);
@@ -220,11 +228,13 @@ describe("package agent plugin application", () => {
       packageOutput: output,
     });
 
-    await expect(application.package({
-      artifactRef: fixture.alphaSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath: `/${"p".repeat(MAX_PACKAGING_OUTPUT_PATH_LENGTH)}`,
-    })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(
+      application.package({
+        artifactRef: fixture.alphaSnapshot.ref,
+        format: COWORK_PACKAGE_FORMAT,
+        outputPath: `/${"p".repeat(MAX_PACKAGING_OUTPUT_PATH_LENGTH)}`,
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(artifacts.artifactRepository.readTreeCalls).toBe(0);
     expect(output.calls).toBe(0);
     expect(await readdir(root.path)).toEqual([]);
@@ -241,19 +251,22 @@ describe("package agent plugin application", () => {
       artifactRepositoryRoot,
       packageOutput: output,
     });
-    const mismatchIssues: readonly [ArtifactRepositoryIssue] = Object.freeze([Object.freeze({
-      code: "ReadFailure",
-      detail: "tampered artifact fixture",
-    })]);
+    const mismatchIssues: readonly [ArtifactRepositoryIssue] = Object.freeze([
+      Object.freeze({
+        code: "ReadFailure",
+        detail: "tampered artifact fixture",
+      }),
+    ]);
     const mismatchRepository: ArtifactRepositoryAsyncPort = Object.freeze({
       ...unavailableArtifactRepository(),
       readTree: async (
-        input: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0],
-      ): Promise<ArtifactTreeObservation> => Object.freeze({
-        kind: "Mismatch",
-        address: input.address,
-        issues: mismatchIssues,
-      }),
+        input: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0]
+      ): Promise<ArtifactTreeObservation> =>
+        Object.freeze({
+          kind: "Mismatch",
+          address: input.address,
+          issues: mismatchIssues,
+        }),
     });
     const mismatch = createPackageAgentPluginApplication({
       artifactRepository: mismatchRepository,
@@ -403,9 +416,10 @@ describe("package agent plugin application", () => {
     const application = createPackageAgentPluginApplication({
       ...artifacts,
       packageOutput: {
-        encodeCoworkV1: async () => Promise.reject(
-          resourceFailure("ArchiveEncodingFailed", "archive-codec", "codec refused"),
-        ),
+        encodeCoworkV1: async () =>
+          Promise.reject(
+            resourceFailure("ArchiveEncodingFailed", "archive-codec", "codec refused")
+          ),
         publish: async () => {
           publicationCalls += 1;
           return { kind: "ReadOnlyConverged" };
@@ -413,11 +427,13 @@ describe("package agent plugin application", () => {
       },
     });
 
-    await expect(application.package({
-      artifactRef: fixture.alphaSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath: join(root.path, "unencoded.zip"),
-    })).resolves.toMatchObject({
+    await expect(
+      application.package({
+        artifactRef: fixture.alphaSnapshot.ref,
+        format: COWORK_PACKAGE_FORMAT,
+        outputPath: join(root.path, "unencoded.zip"),
+      })
+    ).resolves.toMatchObject({
       kind: "RejectedBeforeOutputMutation",
       primaryFailure: {
         code: "PackageRenderFailed",
@@ -437,7 +453,7 @@ class CountingOutput implements AgentPluginPackageOutputAsyncPort {
   constructor(private readonly result: PackageOutputPublicationResult) {}
 
   encodeCoworkV1(
-    request: Parameters<AgentPluginPackageOutputAsyncPort["encodeCoworkV1"]>[0],
+    request: Parameters<AgentPluginPackageOutputAsyncPort["encodeCoworkV1"]>[0]
   ): Promise<Uint8Array> {
     return this.#node.encodeCoworkV1(request);
   }
@@ -451,7 +467,7 @@ class CountingOutput implements AgentPluginPackageOutputAsyncPort {
 function resourceFailure(
   reason: PackageOutputFailure["reason"],
   phase: string,
-  detail = `${reason} fixture`,
+  detail = `${reason} fixture`
 ): PackageOutputFailure {
   return Object.freeze({
     _tag: "PackageOutputFailure",
@@ -468,31 +484,33 @@ async function fixtureRoot(): Promise<OwnedFixtureRoot> {
   return root;
 }
 
-function createPackageAgentPluginApplication(options: Readonly<{
-  artifactRepository: ArtifactRepositoryAsyncPort;
-  artifactRepositoryRoot: string;
-  packageOutput?: AgentPluginPackageOutputAsyncPort;
-}>) {
+function createPackageAgentPluginApplication(
+  options: Readonly<{
+    artifactRepository: ArtifactRepositoryAsyncPort;
+    artifactRepositoryRoot: string;
+    packageOutput?: AgentPluginPackageOutputAsyncPort;
+  }>
+) {
   const client = createLifecycleTestClient({
     artifactRepository: options.artifactRepository,
     artifactRepositoryRoot: options.artifactRepositoryRoot,
     packageOutput: options.packageOutput ?? makeNodePackageOutputAsyncPort(),
   });
   return Object.freeze({
-    package: (request: unknown) => (
-      client.packaging.package(request as never, testInvocation)
-    ),
+    package: (request: unknown) => client.packaging.package(request as never, testInvocation),
   });
 }
 
 async function publishedRepository(
   fixtureRoot: string,
   releases: readonly AgentPluginRelease[],
-  releaseSet?: AgentPluginReleaseSet,
-): Promise<Readonly<{
-  artifactRepository: MemoryArtifactRepository;
-  artifactRepositoryRoot: string;
-}>> {
+  releaseSet?: AgentPluginReleaseSet
+): Promise<
+  Readonly<{
+    artifactRepository: MemoryArtifactRepository;
+    artifactRepositoryRoot: string;
+  }>
+> {
   const artifactRepository = new MemoryArtifactRepository();
   const artifactRepositoryRoot = join(fixtureRoot, "artifacts-v1");
   const store = createResourceArtifactStore({

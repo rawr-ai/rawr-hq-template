@@ -14,13 +14,9 @@ import {
   AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
   createMechanicalProviderEvidence,
 } from "../../../src/service/modules/providers/model/dto/mechanical-evidence";
-import {
-  normalizeCompleteTestRequest,
-} from "../../../src/service/modules/providers/model/dto/mode";
+import { normalizeCompleteTestRequest } from "../../../src/service/modules/providers/model/dto/mode";
 import { decodeMechanicalProviderEvidence } from "../../../src/service/modules/providers/model/helpers/evidence-codec";
-import {
-  renderCompleteProjection,
-} from "../../../src/service/modules/providers/model/policy/projection";
+import { renderCompleteProjection } from "../../../src/service/modules/providers/model/policy/projection";
 import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
 import { createResourceMechanicalEvidencePublisher } from "../../../src/service/modules/providers/repository/resource-evidence";
 import { productFixture } from "../../shared/release/fixtures";
@@ -42,21 +38,18 @@ describe("provider mechanical evidence resource projection", () => {
   it("binds evidence to the lifecycle controller protocol", () => {
     const evidence = completeEvidence();
 
-    expect(evidence.body.controllerProtocol).toBe(
-      AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
-    );
+    expect(evidence.body.controllerProtocol).toBe(AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL);
     expect(new TextDecoder().decode(evidence.bytes)).toContain(
-      '"controllerProtocol":"agent-plugin-lifecycle-controller@v1"',
+      '"controllerProtocol":"agent-plugin-lifecycle-controller@v1"'
     );
   });
 
   it("rejects canonical evidence from the retired controller protocol", () => {
     const evidence = completeEvidence();
     const legacyBytes = new TextEncoder().encode(
-      new TextDecoder().decode(evidence.bytes).replace(
-        AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
-        "rawr-controller-capsule@v1",
-      ),
+      new TextDecoder()
+        .decode(evidence.bytes)
+        .replace(AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL, "rawr-controller-capsule@v1")
     );
 
     const decoded = decodeMechanicalProviderEvidence(legacyBytes);
@@ -111,8 +104,8 @@ class MemoryEvidenceStore implements MechanicalEvidenceStore {
 
 function completeEvidence() {
   const fixture = productFixture();
-  const members: VerifiedReleaseArtifactV1[] = [fixture.alphaRelease, fixture.betaRelease]
-    .map((release) => ({
+  const members: VerifiedReleaseArtifactV1[] = [fixture.alphaRelease, fixture.betaRelease].map(
+    (release) => ({
       kind: "release",
       ref: createReleaseArtifactRef(release.releaseDigest, release.artifactDigest),
       release,
@@ -122,7 +115,8 @@ function completeEvidence() {
         contentDigest: entry.contentDigest,
         bytes: payloadEntryBytes(entry),
       })),
-    }));
+    })
+  );
   const releaseSet = createCompleteSetArtifactRef(fixture.releaseSet.releaseSetDigest);
   const projection = renderCompleteProjection("codex", CODEX_ADAPTER_PROTOCOL, {
     kind: "complete-set",
@@ -143,15 +137,17 @@ function completeEvidence() {
   return createMechanicalProviderEvidence(
     { kind: "complete-test", releaseSet },
     request.value.evaluationProfile,
-    [{
-      kind: "verified",
-      targetDigest: target.targetDigest,
-      provider: "codex",
-      projectionDigest: projection.value.projectionDigest,
-      adapterProtocol: projection.value.adapterProtocol,
-      capabilityProfileDigest: projection.value.capabilityProfile.capabilityProfileDigest,
-      visibleFingerprint: `vf1_${"1".repeat(64)}`,
-      payloadDigests: projection.value.members.map((member) => member.releaseRef.artifactDigest),
-    }],
+    [
+      {
+        kind: "verified",
+        targetDigest: target.targetDigest,
+        provider: "codex",
+        projectionDigest: projection.value.projectionDigest,
+        adapterProtocol: projection.value.adapterProtocol,
+        capabilityProfileDigest: projection.value.capabilityProfile.capabilityProfileDigest,
+        visibleFingerprint: `vf1_${"1".repeat(64)}`,
+        payloadDigests: projection.value.members.map((member) => member.releaseRef.artifactDigest),
+      },
+    ]
   );
 }

@@ -62,7 +62,7 @@ export function issue(
   path: string,
   message: string,
   expected = "",
-  actual = "",
+  actual = ""
 ): ProviderDeploymentIssue {
   return Object.freeze({
     code,
@@ -77,13 +77,13 @@ function boundedIssueText(value: string): string {
   if (value.length <= MAX_PROVIDER_ISSUE_TEXT_LENGTH) return value;
   return `${value.slice(
     0,
-    MAX_PROVIDER_ISSUE_TEXT_LENGTH - TRUNCATED_PROVIDER_ISSUE_SUFFIX.length,
+    MAX_PROVIDER_ISSUE_TEXT_LENGTH - TRUNCATED_PROVIDER_ISSUE_SUFFIX.length
   )}${TRUNCATED_PROVIDER_ISSUE_SUFFIX}`;
 }
 
 export function firstIssue(
   issues: readonly ProviderDeploymentIssue[],
-  fallback: ProviderDeploymentIssue,
+  fallback: ProviderDeploymentIssue
 ): NonEmptyReadonlyArray<ProviderDeploymentIssue> {
   const first = issues[0];
   return first === undefined ? [fallback] : [first, ...issues.slice(1)];
@@ -91,7 +91,7 @@ export function firstIssue(
 
 export function collect<T>(
   result: DeploymentResult<T>,
-  issues: ProviderDeploymentIssue[],
+  issues: ProviderDeploymentIssue[]
 ): T | undefined {
   if (!result.ok) {
     issues.push(...result.issues);

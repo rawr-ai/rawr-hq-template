@@ -42,17 +42,21 @@ export function constructRetentionPlan(options: {
     return blockedRetentionPlan([{ detail: "retention space bound is invalid" }]);
   }
   if (
-    options.pinned.length > MAX_RETENTION_REFS
-    || options.unpinned.length > MAX_RETENTION_REFS
-    || options.blockedEntries.length > MAX_RETENTION_REFS
+    options.pinned.length > MAX_RETENTION_REFS ||
+    options.unpinned.length > MAX_RETENTION_REFS ||
+    options.blockedEntries.length > MAX_RETENTION_REFS
   ) {
-    return blockedRetentionPlan([{
-      detail: `retention plan exceeds ${MAX_RETENTION_REFS} refs`,
-    }]);
+    return blockedRetentionPlan([
+      {
+        detail: `retention plan exceeds ${MAX_RETENTION_REFS} refs`,
+      },
+    ]);
   }
   const ordered = [...options.unpinned].sort((left, right) => {
     const bySize = right.storedBytes - left.storedBytes;
-    return bySize !== 0 ? bySize : compareCanonicalText(retentionRefKey(left.ref), retentionRefKey(right.ref));
+    return bySize !== 0
+      ? bySize
+      : compareCanonicalText(retentionRefKey(left.ref), retentionRefKey(right.ref));
   });
   const total = ordered.reduce((sum, entry) => sum + entry.storedBytes, 0);
   let bytesToPlan = Math.max(0, total - options.policy.maximumUnpinnedBytes);
@@ -68,9 +72,11 @@ export function constructRetentionPlan(options: {
   }
   return {
     kind: "RetentionPlan",
-    pinned: Object.freeze([...options.pinned].sort((left, right) => {
-      return compareCanonicalText(retentionRefKey(left), retentionRefKey(right));
-    })),
+    pinned: Object.freeze(
+      [...options.pinned].sort((left, right) => {
+        return compareCanonicalText(retentionRefKey(left), retentionRefKey(right));
+      })
+    ),
     retained: Object.freeze(retained),
     collectible: Object.freeze(collectible),
     blockedEntries: Object.freeze([...options.blockedEntries]),
@@ -80,26 +86,30 @@ export function constructRetentionPlan(options: {
 export function parseRetentionPinsV1(input: unknown):
   | Readonly<{ ok: true; value: ParsedRetentionPinsV1 }>
   | Readonly<{
-    ok: false;
-    issues: readonly [RetentionIssue, ...RetentionIssue[]];
-  }> {
+      ok: false;
+      issues: readonly [RetentionIssue, ...RetentionIssue[]];
+    }> {
   if (!Value.Check(RetentionPinsV1Schema, input)) {
     return { ok: false, issues: [{ detail: "retention pins must match RetentionPinsV1" }] };
   }
   const refs: NormalizedRetentionRef[] = [];
   for (const candidate of input.refs) {
-    refs.push(candidate.kind === "mechanical-evidence"
-      ? normalizeMechanicalEvidenceHandle(candidate)
-      : normalizeArtifactRef(candidate));
+    refs.push(
+      candidate.kind === "mechanical-evidence"
+        ? normalizeMechanicalEvidenceHandle(candidate)
+        : normalizeArtifactRef(candidate)
+    );
   }
   const unique = new Map(refs.map((ref) => [retentionRefKey(ref), ref]));
   return {
     ok: true,
     value: Object.freeze({
       schemaVersion: 1,
-      refs: Object.freeze([...unique.values()].sort((left, right) => {
-        return compareCanonicalText(retentionRefKey(left), retentionRefKey(right));
-      })),
+      refs: Object.freeze(
+        [...unique.values()].sort((left, right) => {
+          return compareCanonicalText(retentionRefKey(left), retentionRefKey(right));
+        })
+      ),
     }),
   };
 }
@@ -109,16 +119,20 @@ export function parseRetentionInventory(input: unknown): {
   readonly issues: readonly RetentionIssue[];
 } {
   if (!Value.Check(RetentionInventorySchema, input)) {
-    return { entries: [], issues: [{ detail: "retention inventory must match its closed bounded schema" }] };
+    return {
+      entries: [],
+      issues: [{ detail: "retention inventory must match its closed bounded schema" }],
+    };
   }
   const entries: NormalizedRetentionInventoryEntry[] = [];
   const issues: RetentionIssue[] = [];
   const seen = new Set<string>();
   let aggregateBytes = 0;
   for (const candidate of input) {
-    const ref = candidate.ref.kind === "mechanical-evidence"
-      ? normalizeMechanicalEvidenceHandle(candidate.ref)
-      : normalizeArtifactRef(candidate.ref);
+    const ref =
+      candidate.ref.kind === "mechanical-evidence"
+        ? normalizeMechanicalEvidenceHandle(candidate.ref)
+        : normalizeArtifactRef(candidate.ref);
     const storedBytes = candidate.storedBytes;
     if (!Number.isSafeInteger(aggregateBytes + storedBytes)) {
       issues.push(Object.freeze({ ref, detail: "inventory aggregate byte count overflows" }));
@@ -145,12 +159,14 @@ export function retentionRefKey(ref: RetentionRef): string {
 }
 
 export function blockedRetentionPlan(
-  issues: readonly RetentionIssue[],
+  issues: readonly RetentionIssue[]
 ): Extract<RetentionResult, { kind: "RetentionPlanBlocked" }> {
   return { kind: "RetentionPlanBlocked", issues: nonEmptyIssues(issues) };
 }
 
-function nonEmptyIssues(issues: readonly RetentionIssue[]): readonly [RetentionIssue, ...RetentionIssue[]] {
+function nonEmptyIssues(
+  issues: readonly RetentionIssue[]
+): readonly [RetentionIssue, ...RetentionIssue[]] {
   const first = issues[0] ?? Object.freeze({ detail: "retention plan is blocked" });
   return Object.freeze([first, ...issues.slice(1)]);
 }

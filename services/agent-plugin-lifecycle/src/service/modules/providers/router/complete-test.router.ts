@@ -1,7 +1,4 @@
-import {
-  normalizeCompleteTestRequest,
-  type CompleteTestInput,
-} from "../model/dto/mode";
+import { normalizeCompleteTestRequest, type CompleteTestInput } from "../model/dto/mode";
 import { issue, success, type DeploymentResult } from "../model/errors/deployment-result";
 import { module } from "../module";
 import type {
@@ -45,8 +42,8 @@ export interface CompleteTestDependencies {
   readonly evidence: MechanicalEvidencePublisher;
 }
 
-export const completeTest = module.completeTest.handler(
-  async ({ context, input }) => completeTestOperationResult(
+export const completeTest = module.completeTest.handler(async ({ context, input }) =>
+  completeTestOperationResult(
     executeCompleteTest(input, {
       releases: context.releases,
       provider: context.provider,
@@ -58,49 +55,61 @@ export const completeTest = module.completeTest.handler(
       projectionMaterializer: context.projectionMaterializer,
       marketplaceMaterializer: context.marketplaceMaterializer,
       evidence: context.evidence,
-    }),
-  ),
+    })
+  )
 );
 
 export async function executeCompleteTest(
   input: CompleteTestInput,
-  ports: CompleteTestDependencies,
+  ports: CompleteTestDependencies
 ): Promise<DeploymentResult<CompleteTestProviderOperationOutcome>> {
-    const parsed = normalizeCompleteTestRequest(input);
-    if (!parsed.ok) return parsed;
-    const read = await ports.releases.read(parsed.value.releaseSet);
-    if (!read.ok) return read;
-    if (read.value.kind !== "complete-set" || read.value.ref.releaseSetDigest !== parsed.value.releaseSet.releaseSetDigest) {
-      return resultFailure([issue("PROJECTION_MISMATCH", "artifact", "Artifact reader returned a snapshot for another complete set")]);
-    }
-    const request = parsed.value;
-    const plans = await createProjectionPlans({
-      targets: request.targets,
-      snapshot: read.value,
-      sourceKind: "complete",
-      dependencies: ports,
-      authority: (projection) => success(Object.freeze({ kind: "complete-test", request, projection })),
-    });
-    const targetOutcomes = await executeProjectionPlans(plans, {
-      provider: ports.provider,
-      ...createDeploymentActionAppliers(ports),
-      projectionMaterializer: ports.projectionMaterializer,
-      marketplaceMaterializer: ports.marketplaceMaterializer,
-    });
-    const boundOutcomes = bindCompleteProjectionOutcomes(plans, targetOutcomes);
-    const aggregate = aggregateOutcome(boundOutcomes);
-    return success(await attachMechanicalEvidence(
+  const parsed = normalizeCompleteTestRequest(input);
+  if (!parsed.ok) return parsed;
+  const read = await ports.releases.read(parsed.value.releaseSet);
+  if (!read.ok) return read;
+  if (
+    read.value.kind !== "complete-set" ||
+    read.value.ref.releaseSetDigest !== parsed.value.releaseSet.releaseSetDigest
+  ) {
+    return resultFailure([
+      issue(
+        "PROJECTION_MISMATCH",
+        "artifact",
+        "Artifact reader returned a snapshot for another complete set"
+      ),
+    ]);
+  }
+  const request = parsed.value;
+  const plans = await createProjectionPlans({
+    targets: request.targets,
+    snapshot: read.value,
+    sourceKind: "complete",
+    dependencies: ports,
+    authority: (projection) =>
+      success(Object.freeze({ kind: "complete-test", request, projection })),
+  });
+  const targetOutcomes = await executeProjectionPlans(plans, {
+    provider: ports.provider,
+    ...createDeploymentActionAppliers(ports),
+    projectionMaterializer: ports.projectionMaterializer,
+    marketplaceMaterializer: ports.marketplaceMaterializer,
+  });
+  const boundOutcomes = bindCompleteProjectionOutcomes(plans, targetOutcomes);
+  const aggregate = aggregateOutcome(boundOutcomes);
+  return success(
+    await attachMechanicalEvidence(
       aggregate,
       plans,
       Object.freeze({ kind: "complete-test", releaseSet: request.releaseSet }),
       request.evaluationProfile,
-      ports.evidence,
-    ));
+      ports.evidence
+    )
+  );
 }
 
 export function bindCompleteProjectionOutcomes(
   plans: readonly ProviderTargetPlan[],
-  outcomes: readonly UnboundTargetOperationOutcome[],
+  outcomes: readonly UnboundTargetOperationOutcome[]
 ): readonly CompleteTestTargetOperationOutcome[] {
   const plansByTarget = new Map(plans.map((plan) => [plan.target.targetDigest, plan]));
   const bound: CompleteTestTargetOperationOutcome[] = [];
@@ -111,29 +120,35 @@ export function bindCompleteProjectionOutcomes(
       continue;
     }
     const projection = plansByTarget.get(outcome.target.targetDigest)?.projection;
-    if (projection === null || projection === undefined || projection.provider !== outcome.target.provider) {
+    if (
+      projection === null ||
+      projection === undefined ||
+      projection.provider !== outcome.target.provider
+    ) {
       const bindingIssue = issue(
         "PROJECTION_MISMATCH",
         `targets[${index}].projectionBinding`,
         "Successful complete-test outcome requires its exact rendered projection binding",
         outcome.target.provider,
-        projection?.provider ?? "missing",
+        projection?.provider ?? "missing"
       );
-      bound.push(Object.freeze({
-        target: outcome.target,
-        status: "failed",
-        events: Object.freeze([
-          ...outcome.events,
-          Object.freeze({
-            phase: "failed" as const,
-            target: outcome.target,
-            issues: Object.freeze([bindingIssue]),
-          }),
-        ]),
-        issues: Object.freeze([...outcome.issues, bindingIssue]),
-        visibleFingerprint: outcome.visibleFingerprint,
-        projectionBinding: null,
-      }));
+      bound.push(
+        Object.freeze({
+          target: outcome.target,
+          status: "failed",
+          events: Object.freeze([
+            ...outcome.events,
+            Object.freeze({
+              phase: "failed" as const,
+              target: outcome.target,
+              issues: Object.freeze([bindingIssue]),
+            }),
+          ]),
+          issues: Object.freeze([...outcome.issues, bindingIssue]),
+          visibleFingerprint: outcome.visibleFingerprint,
+          projectionBinding: null,
+        })
+      );
       continue;
     }
     const projectionBinding: ProviderProjectionBinding = Object.freeze({

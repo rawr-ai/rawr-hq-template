@@ -1,7 +1,4 @@
-import {
-  normalizeCanonicalStatusRequest,
-  type CanonicalStatusInput,
-} from "../model/dto/mode";
+import { normalizeCanonicalStatusRequest, type CanonicalStatusInput } from "../model/dto/mode";
 import type { CanonicalStatusOutcome, CanonicalTargetStatus } from "../model/dto/outcome";
 import {
   success,
@@ -14,10 +11,7 @@ import { module } from "../module";
 import type { VerifiedReleaseReader } from "../model/repositories/artifact";
 import type { CanonicalNativeRuntime } from "../model/repositories/canonical-native";
 import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
-import {
-  desiredForTarget,
-  resolveCanonicalOperationSelection,
-} from "./canonical-operation";
+import { desiredForTarget, resolveCanonicalOperationSelection } from "./canonical-operation";
 import { canonicalStatusResult } from "./procedure-result";
 
 export interface CanonicalStatusDependencies {
@@ -26,30 +20,31 @@ export interface CanonicalStatusDependencies {
   readonly native: Pick<CanonicalNativeRuntime, "inspectCapabilities" | "observe">;
 }
 
-export const canonicalStatus = module.canonicalStatus.handler(
-  async ({ context, input }) => canonicalStatusResult(executeCanonicalStatus(input, {
-    currentMain: context.currentMain,
-    releases: context.releases,
-    native: context.native,
-  })),
+export const canonicalStatus = module.canonicalStatus.handler(async ({ context, input }) =>
+  canonicalStatusResult(
+    executeCanonicalStatus(input, {
+      currentMain: context.currentMain,
+      releases: context.releases,
+      native: context.native,
+    })
+  )
 );
 
 export async function executeCanonicalStatus(
   input: CanonicalStatusInput,
-  dependencies: CanonicalStatusDependencies,
+  dependencies: CanonicalStatusDependencies
 ): Promise<DeploymentResult<readonly CanonicalStatusOutcome[]>> {
   const parsed = normalizeCanonicalStatusRequest(input);
   if (!parsed.ok) return parsed;
-  const selection = await resolveCanonicalOperationSelection(
-    parsed.value.locator,
-    dependencies,
-  );
+  const selection = await resolveCanonicalOperationSelection(parsed.value.locator, dependencies);
   if (selection.status === "BLOCKED_SELECTION") {
-    return success(Object.freeze(parsed.value.targets.map((target) => statusOutcome(
-      target,
-      "BLOCKED_SELECTION",
-      selection.issues,
-    ))));
+    return success(
+      Object.freeze(
+        parsed.value.targets.map((target) =>
+          statusOutcome(target, "BLOCKED_SELECTION", selection.issues)
+        )
+      )
+    );
   }
 
   const outcomes: CanonicalStatusOutcome[] = [];
@@ -57,26 +52,32 @@ export async function executeCanonicalStatus(
     const desired = desiredForTarget(selection.desired, target.provider);
     const capabilities = await dependencies.native.inspectCapabilities(
       target,
-      desired.projection.artifactAuthority.contentAuthority,
+      desired.projection.artifactAuthority.contentAuthority
     );
     if (!capabilities.ok) {
-      outcomes.push(statusOutcome(
-        target,
-        hasOwnershipCollision(capabilities.issues) ? "BLOCKED_COLLISION" : "INCOMPATIBLE_PROVIDER",
-        capabilities.issues,
-      ));
+      outcomes.push(
+        statusOutcome(
+          target,
+          hasOwnershipCollision(capabilities.issues)
+            ? "BLOCKED_COLLISION"
+            : "INCOMPATIBLE_PROVIDER",
+          capabilities.issues
+        )
+      );
       continue;
     }
     const observation = await dependencies.native.observe(
       target,
-      desired.projection.artifactAuthority.contentAuthority,
+      desired.projection.artifactAuthority.contentAuthority
     );
     if (!observation.ok) {
-      outcomes.push(statusOutcome(
-        target,
-        hasOwnershipCollision(observation.issues) ? "BLOCKED_COLLISION" : "DRIFTED",
-        observation.issues,
-      ));
+      outcomes.push(
+        statusOutcome(
+          target,
+          hasOwnershipCollision(observation.issues) ? "BLOCKED_COLLISION" : "DRIFTED",
+          observation.issues
+        )
+      );
       continue;
     }
     const plan = planCanonicalConvergence({
@@ -96,7 +97,7 @@ function hasOwnershipCollision(issues: readonly ProviderDeploymentIssue[]): bool
 function statusOutcome(
   target: ProviderTarget,
   status: CanonicalTargetStatus,
-  issues: readonly ProviderDeploymentIssue[],
+  issues: readonly ProviderDeploymentIssue[]
 ): CanonicalStatusOutcome {
   return Object.freeze({
     target,

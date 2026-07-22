@@ -16,10 +16,7 @@ import type { MechanicalEvidenceStore } from "../../shared/release";
 import type { VerifiedReleaseReader } from "./model/repositories/artifact";
 import type { CanonicalNativeRuntime } from "./model/repositories/canonical-native";
 import type { MechanicalEvidencePublisher } from "./model/repositories/evidence";
-import type {
-  ProviderTargetMutator,
-  ProviderTargetReader,
-} from "./model/repositories/provider";
+import type { ProviderTargetMutator, ProviderTargetReader } from "./model/repositories/provider";
 import type {
   ProviderMarketplaceMaterializer,
   ProviderProjectionMaterializer,
@@ -80,15 +77,15 @@ export const resources = createServiceProvider<{
     context.deps.providerExecutables,
     context.deps.providerNativeResource,
     state.projections.marketplaceSources,
-    marketplaceLocations,
+    marketplaceLocations
   );
   const observer = createResourceNativeProviderObserverResolver(
     context.deps.providerExecutables,
-    context.deps.providerNativeResource,
+    context.deps.providerNativeResource
   );
   const canonicalObserver = createResourceCanonicalNativeObserverResolver(
     context.deps.providerExecutables,
-    context.deps.providerNativeResource,
+    context.deps.providerNativeResource
   );
   return next({
     native: createResourceCanonicalNativeRuntime(adapter, canonicalObserver),

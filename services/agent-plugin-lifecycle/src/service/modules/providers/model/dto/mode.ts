@@ -42,48 +42,60 @@ export const ProviderContentWorkspaceRootSchema = Type.String({
 });
 export const ReleaseArtifactRefSchema = ReleaseArtifactRefInputSchema;
 export const CompleteSetArtifactRefSchema = CompleteSetArtifactRefInputSchema;
-export const ContentRecordLocatorInputSchema = ReadonlyObject(Type.Object(
-  {
+export const ContentRecordLocatorInputSchema = ReadonlyObject(
+  Type.Object({
     repositoryIdentity: ProviderRepositoryIdentitySchema,
     workspaceRoot: ProviderContentWorkspaceRootSchema,
-  },
-), { additionalProperties: false });
-export const TargetedTestInputSchema = ReadonlyObject(Type.Object(
-  {
+  }),
+  { additionalProperties: false }
+);
+export const TargetedTestInputSchema = ReadonlyObject(
+  Type.Object({
     kind: Type.Literal("targeted-test"),
-    releases: ReadonlyObject(Type.Array(ReleaseArtifactRefSchema), { minItems: 1, maxItems: 1_024 }),
+    releases: ReadonlyObject(Type.Array(ReleaseArtifactRefSchema), {
+      minItems: 1,
+      maxItems: 1_024,
+    }),
     evaluationProfile: EvaluationProfileSchema,
     targets: ProviderTargetsInputSchema,
-  },
-), { additionalProperties: false });
-export const CompleteTestInputSchema = ReadonlyObject(Type.Object(
-  {
+  }),
+  { additionalProperties: false }
+);
+export const CompleteTestInputSchema = ReadonlyObject(
+  Type.Object({
     kind: Type.Literal("complete-test"),
     releaseSet: CompleteSetArtifactRefSchema,
     evaluationProfile: EvaluationProfileSchema,
     targets: ProviderTargetsInputSchema,
-  },
-), { additionalProperties: false });
-export const CanonicalSyncInputSchema = ReadonlyObject(Type.Object(
-  {
+  }),
+  { additionalProperties: false }
+);
+export const CanonicalSyncInputSchema = ReadonlyObject(
+  Type.Object({
     kind: Type.Literal("canonical-sync"),
     channel: Type.Literal("current-main"),
     locator: ContentRecordLocatorInputSchema,
     targets: ProviderTargetsInputSchema,
-  },
-), { additionalProperties: false });
-export const CanonicalStatusInputSchema = ReadonlyObject(Type.Object(
-  {
+  }),
+  { additionalProperties: false }
+);
+export const CanonicalStatusInputSchema = ReadonlyObject(
+  Type.Object({
     kind: Type.Literal("canonical-status"),
     channel: Type.Literal("current-main"),
     locator: ContentRecordLocatorInputSchema,
     targets: ProviderTargetsInputSchema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 export type EvaluationProfile = string & { readonly [evaluationProfileBrand]: "EvaluationProfile" };
-export type ProviderRequestDigest = string & { readonly [requestDigestBrand]: "ProviderRequestDigest" };
-export type ContentWorkspaceRoot = string & { readonly [workspaceRootBrand]: "ContentWorkspaceRoot" };
+export type ProviderRequestDigest = string & {
+  readonly [requestDigestBrand]: "ProviderRequestDigest";
+};
+export type ContentWorkspaceRoot = string & {
+  readonly [workspaceRootBrand]: "ContentWorkspaceRoot";
+};
 export type ContentRecordLocatorInput = Static<typeof ContentRecordLocatorInputSchema>;
 export type TargetedTestInput = Static<typeof TargetedTestInputSchema>;
 export type CompleteTestInput = Static<typeof CompleteTestInputSchema>;
@@ -95,36 +107,44 @@ export interface ContentRecordLocator {
   readonly workspaceRoot: ContentWorkspaceRoot;
 }
 
-export type TargetedTest = Readonly<Omit<TargetedTestInput, "evaluationProfile" | "releases" | "targets"> & {
-  readonly releases: readonly ReleaseArtifactRef[];
-  readonly evaluationProfile: EvaluationProfile;
-  readonly targets: readonly ProviderTarget[];
-  readonly requestDigest: ProviderRequestDigest;
-}>;
+export type TargetedTest = Readonly<
+  Omit<TargetedTestInput, "evaluationProfile" | "releases" | "targets"> & {
+    readonly releases: readonly ReleaseArtifactRef[];
+    readonly evaluationProfile: EvaluationProfile;
+    readonly targets: readonly ProviderTarget[];
+    readonly requestDigest: ProviderRequestDigest;
+  }
+>;
 
-export type CompleteTest = Readonly<Omit<CompleteTestInput, "evaluationProfile" | "releaseSet" | "targets"> & {
-  readonly releaseSet: CompleteSetArtifactRef;
-  readonly evaluationProfile: EvaluationProfile;
-  readonly targets: readonly ProviderTarget[];
-  readonly requestDigest: ProviderRequestDigest;
-}>;
+export type CompleteTest = Readonly<
+  Omit<CompleteTestInput, "evaluationProfile" | "releaseSet" | "targets"> & {
+    readonly releaseSet: CompleteSetArtifactRef;
+    readonly evaluationProfile: EvaluationProfile;
+    readonly targets: readonly ProviderTarget[];
+    readonly requestDigest: ProviderRequestDigest;
+  }
+>;
 
-export type CanonicalSync = Readonly<Omit<CanonicalSyncInput, "locator" | "targets"> & {
-  readonly locator: ContentRecordLocator;
-  readonly targets: readonly ProviderTarget[];
-  readonly requestDigest: ProviderRequestDigest;
-}>;
+export type CanonicalSync = Readonly<
+  Omit<CanonicalSyncInput, "locator" | "targets"> & {
+    readonly locator: ContentRecordLocator;
+    readonly targets: readonly ProviderTarget[];
+    readonly requestDigest: ProviderRequestDigest;
+  }
+>;
 
 export type ProviderDeploymentRequest = TargetedTest | CompleteTest | CanonicalSync;
 
-export type CanonicalStatusRequest = Readonly<Omit<CanonicalStatusInput, "locator" | "targets"> & {
-  readonly locator: ContentRecordLocator;
-  readonly targets: readonly ProviderTarget[];
-  readonly requestDigest: ProviderRequestDigest;
-}>;
+export type CanonicalStatusRequest = Readonly<
+  Omit<CanonicalStatusInput, "locator" | "targets"> & {
+    readonly locator: ContentRecordLocator;
+    readonly targets: readonly ProviderTarget[];
+    readonly requestDigest: ProviderRequestDigest;
+  }
+>;
 
 export function normalizeCompleteTestRequest(
-  input: CompleteTestInput,
+  input: CompleteTestInput
 ): DeploymentResult<CompleteTest> {
   const targets = normalizeProviderTargets(input.targets, "request.targets");
   if (!targets.ok) return targets;
@@ -138,7 +158,7 @@ export function normalizeCompleteTestRequest(
 }
 
 export function normalizeTargetedTestRequest(
-  input: TargetedTestInput,
+  input: TargetedTestInput
 ): DeploymentResult<TargetedTest> {
   const targets = normalizeProviderTargets(input.targets, "request.targets");
   if (!targets.ok) return targets;
@@ -146,13 +166,15 @@ export function normalizeTargetedTestRequest(
   releases.sort((left, right) => compareCanonical(left.releaseDigest, right.releaseDigest));
   for (let index = 1; index < releases.length; index += 1) {
     if (releases[index - 1]?.releaseDigest === releases[index]?.releaseDigest) {
-      return failure([issue(
-        "DUPLICATE_MEMBER",
-        "request.releases",
-        "Targeted release refs must be distinct",
-        "distinct release digests",
-        releases[index]!.releaseDigest,
-      )]);
+      return failure([
+        issue(
+          "DUPLICATE_MEMBER",
+          "request.releases",
+          "Targeted release refs must be distinct",
+          "distinct release digests",
+          releases[index]!.releaseDigest
+        ),
+      ]);
     }
   }
   const body = {
@@ -165,7 +187,7 @@ export function normalizeTargetedTestRequest(
 }
 
 export function normalizeCanonicalStatusRequest(
-  input: CanonicalStatusInput,
+  input: CanonicalStatusInput
 ): DeploymentResult<CanonicalStatusRequest> {
   const targets = normalizeProviderTargets(input.targets, "request.targets");
   if (!targets.ok) return targets;
@@ -181,7 +203,7 @@ export function normalizeCanonicalStatusRequest(
 }
 
 export function normalizeCanonicalSyncRequest(
-  input: CanonicalSyncInput,
+  input: CanonicalSyncInput
 ): DeploymentResult<CanonicalSync> {
   const targets = normalizeProviderTargets(input.targets, "request.targets");
   if (!targets.ok) return targets;
@@ -196,19 +218,46 @@ export function normalizeCanonicalSyncRequest(
   return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
 }
 
-function digestRequest(input: Omit<TargetedTest, "requestDigest"> | Omit<CompleteTest, "requestDigest"> | Omit<CanonicalSync, "requestDigest"> | Omit<CanonicalStatusRequest, "requestDigest">): ProviderRequestDigest {
+function digestRequest(
+  input:
+    | Omit<TargetedTest, "requestDigest">
+    | Omit<CompleteTest, "requestDigest">
+    | Omit<CanonicalSync, "requestDigest">
+    | Omit<CanonicalStatusRequest, "requestDigest">
+): ProviderRequestDigest {
   return canonicalDigest("prq1_", requestValue(input)) as ProviderRequestDigest;
 }
 
-function requestValue(input: Omit<TargetedTest, "requestDigest"> | Omit<CompleteTest, "requestDigest"> | Omit<CanonicalSync, "requestDigest"> | Omit<CanonicalStatusRequest, "requestDigest">): CanonicalValue {
+function requestValue(
+  input:
+    | Omit<TargetedTest, "requestDigest">
+    | Omit<CompleteTest, "requestDigest">
+    | Omit<CanonicalSync, "requestDigest">
+    | Omit<CanonicalStatusRequest, "requestDigest">
+): CanonicalValue {
   switch (input.kind) {
     case "targeted-test":
-      return { kind: input.kind, releases: input.releases.map(releaseRefValue), evaluationProfile: input.evaluationProfile, targets: input.targets.map(targetValue) };
+      return {
+        kind: input.kind,
+        releases: input.releases.map(releaseRefValue),
+        evaluationProfile: input.evaluationProfile,
+        targets: input.targets.map(targetValue),
+      };
     case "complete-test":
-      return { kind: input.kind, releaseSet: setRefValue(input.releaseSet), evaluationProfile: input.evaluationProfile, targets: input.targets.map(targetValue) };
+      return {
+        kind: input.kind,
+        releaseSet: setRefValue(input.releaseSet),
+        evaluationProfile: input.evaluationProfile,
+        targets: input.targets.map(targetValue),
+      };
     case "canonical-sync":
     case "canonical-status":
-      return { kind: input.kind, channel: input.channel, locator: locatorValue(input.locator), targets: input.targets.map(targetValue) };
+      return {
+        kind: input.kind,
+        channel: input.channel,
+        locator: locatorValue(input.locator),
+        targets: input.targets.map(targetValue),
+      };
   }
 }
 
@@ -217,11 +266,11 @@ export function locatorValue(locator: ContentRecordLocator): CanonicalValue {
 }
 
 function normalizeContentRecordLocator(
-  input: ContentRecordLocatorInput,
+  input: ContentRecordLocatorInput
 ): DeploymentResult<ContentRecordLocator> {
   const repository = parseRepositoryIdentity(
     input.repositoryIdentity,
-    "request.locator.repositoryIdentity",
+    "request.locator.repositoryIdentity"
   );
   if (!repository.ok) {
     const [first, ...remaining] = repository.issues;
@@ -231,45 +280,50 @@ function normalizeContentRecordLocator(
     ]);
   }
   if (!isCanonicalAbsolutePath(input.workspaceRoot)) {
-    return failure([issue(
-      "INVALID_LOCATOR",
-      "request.locator.workspaceRoot",
-      "Content workspace root must be a canonical non-root absolute path",
-      "canonical absolute path",
-      input.workspaceRoot,
-    )]);
+    return failure([
+      issue(
+        "INVALID_LOCATOR",
+        "request.locator.workspaceRoot",
+        "Content workspace root must be a canonical non-root absolute path",
+        "canonical absolute path",
+        input.workspaceRoot
+      ),
+    ]);
   }
-  return success(Object.freeze({
-    repositoryIdentity: repository.value,
-    workspaceRoot: input.workspaceRoot as ContentWorkspaceRoot,
-  }));
+  return success(
+    Object.freeze({
+      repositoryIdentity: repository.value,
+      workspaceRoot: input.workspaceRoot as ContentWorkspaceRoot,
+    })
+  );
 }
 
 export function targetRequestDigest(
   request: ProviderDeploymentRequest,
-  target: ProviderTarget,
+  target: ProviderTarget
 ): ProviderRequestDigest {
   const targetIdentity = targetValue(target);
-  const value: CanonicalValue = request.kind === "targeted-test"
-    ? {
-      kind: request.kind,
-      releases: request.releases.map(releaseRefValue),
-      evaluationProfile: request.evaluationProfile,
-      target: targetIdentity,
-    }
-    : request.kind === "complete-test"
+  const value: CanonicalValue =
+    request.kind === "targeted-test"
       ? {
-        kind: request.kind,
-        releaseSet: setRefValue(request.releaseSet),
-        evaluationProfile: request.evaluationProfile,
-        target: targetIdentity,
-      }
-      : {
-        kind: request.kind,
-        channel: request.channel,
-        repositoryIdentity: request.locator.repositoryIdentity,
-        target: targetIdentity,
-      };
+          kind: request.kind,
+          releases: request.releases.map(releaseRefValue),
+          evaluationProfile: request.evaluationProfile,
+          target: targetIdentity,
+        }
+      : request.kind === "complete-test"
+        ? {
+            kind: request.kind,
+            releaseSet: setRefValue(request.releaseSet),
+            evaluationProfile: request.evaluationProfile,
+            target: targetIdentity,
+          }
+        : {
+            kind: request.kind,
+            channel: request.channel,
+            repositoryIdentity: request.locator.repositoryIdentity,
+            target: targetIdentity,
+          };
   return canonicalDigest("prq1_", value) as ProviderRequestDigest;
 }
 

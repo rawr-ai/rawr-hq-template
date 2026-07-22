@@ -1,7 +1,4 @@
-import {
-  createCompleteSetArtifactRef,
-  parseReleaseSetDigest,
-} from "../../../shared/release";
+import { createCompleteSetArtifactRef, parseReleaseSetDigest } from "../../../shared/release";
 
 import type {
   CanonicalDesiredState,
@@ -24,46 +21,46 @@ export interface CanonicalSelectionDependencies {
 
 export type CanonicalOperationSelection =
   | Readonly<{
-    status: "RESOLVED";
-    desired: CanonicalDesiredStateResolution & { readonly status: "RESOLVED" };
-  }>
+      status: "RESOLVED";
+      desired: CanonicalDesiredStateResolution & { readonly status: "RESOLVED" };
+    }>
   | Readonly<{
-    status: "BLOCKED_SELECTION";
-    issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>;
-  }>;
+      status: "BLOCKED_SELECTION";
+      issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>;
+    }>;
 
 export async function resolveCanonicalOperationSelection(
   locator: ContentRecordLocator,
-  dependencies: CanonicalSelectionDependencies,
+  dependencies: CanonicalSelectionDependencies
 ): Promise<CanonicalOperationSelection> {
   const currentMain = await dependencies.currentMain.resolve({
     workspacePath: locator.workspaceRoot,
     expectedRepositoryIdentity: locator.repositoryIdentity,
   });
   if (currentMain.kind !== "CURRENT_ELIGIBLE") {
-    return blocked([issue(
-      "CHANNEL_NOT_ELIGIBLE",
-      "selection.currentMain",
-      currentMain.reason,
-      "CURRENT_ELIGIBLE",
-      currentMain.kind,
-    )]);
+    return blocked([
+      issue(
+        "CHANNEL_NOT_ELIGIBLE",
+        "selection.currentMain",
+        currentMain.reason,
+        "CURRENT_ELIGIBLE",
+        currentMain.kind
+      ),
+    ]);
   }
 
   const releaseSetDigest = parseReleaseSetDigest(
     currentMain.selection.releaseSetDigest,
-    "selection.releaseSetDigest",
+    "selection.releaseSetDigest"
   );
   if (!releaseSetDigest.ok) {
-    return blocked([issue(
-      "INVALID_DIGEST",
-      "selection.releaseSetDigest",
-      releaseSetDigest.issues[0].message,
-    )]);
+    return blocked([
+      issue("INVALID_DIGEST", "selection.releaseSetDigest", releaseSetDigest.issues[0].message),
+    ]);
   }
 
   const artifact = await dependencies.releases.read(
-    createCompleteSetArtifactRef(releaseSetDigest.value),
+    createCompleteSetArtifactRef(releaseSetDigest.value)
   );
   if (!artifact.ok) return blocked(artifact.issues);
 
@@ -75,13 +72,13 @@ export async function resolveCanonicalOperationSelection(
 
 export function desiredForTarget(
   desired: Extract<CanonicalOperationSelection, { status: "RESOLVED" }>["desired"],
-  provider: CanonicalDesiredState["projection"]["provider"],
+  provider: CanonicalDesiredState["projection"]["provider"]
 ): CanonicalDesiredState {
   return provider === "claude" ? desired.desired[0] : desired.desired[1];
 }
 
 function blocked(
-  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>,
+  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>
 ): Extract<CanonicalOperationSelection, { status: "BLOCKED_SELECTION" }> {
   return Object.freeze({
     status: "BLOCKED_SELECTION",

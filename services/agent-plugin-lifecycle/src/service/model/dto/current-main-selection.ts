@@ -20,40 +20,42 @@ const CurrentMainDigestSchema = Type.TemplateLiteral("cm2_${string}", {
   pattern: CURRENT_MAIN_DIGEST_PATTERN,
 });
 
-export const CurrentMainSelectionLocatorSchema = ReadonlyObject(Type.Object(
-  {
+export const CurrentMainSelectionLocatorSchema = ReadonlyObject(
+  Type.Object({
     workspacePath: CanonicalAbsolutePathSchema,
     expectedRepositoryIdentity: CanonicalRepositoryIdentitySchema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
-export const ClaudeCanonicalChannelProjectionSchema = ReadonlyObject(Type.Object(
-  {
+export const ClaudeCanonicalChannelProjectionSchema = ReadonlyObject(
+  Type.Object({
     provider: Type.Literal("claude"),
     projectionDigest: Type.String({ pattern: PROJECTION_DIGEST_PATTERN }),
     rendererProtocol: CanonicalIdSchema,
     adapterProtocol: CanonicalIdSchema,
     capabilityProfileDigest: Type.String({ pattern: CAPABILITY_PROFILE_DIGEST_PATTERN }),
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
-export const CodexCanonicalChannelProjectionSchema = ReadonlyObject(Type.Object(
-  {
+export const CodexCanonicalChannelProjectionSchema = ReadonlyObject(
+  Type.Object({
     provider: Type.Literal("codex"),
     projectionDigest: Type.String({ pattern: PROJECTION_DIGEST_PATTERN }),
     rendererProtocol: CanonicalIdSchema,
     adapterProtocol: CanonicalIdSchema,
     capabilityProfileDigest: Type.String({ pattern: CAPABILITY_PROFILE_DIGEST_PATTERN }),
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
-export const CanonicalChannelProjectionTupleSchema = ReadonlyObject(Type.Tuple([
-  ClaudeCanonicalChannelProjectionSchema,
-  CodexCanonicalChannelProjectionSchema,
-]));
+export const CanonicalChannelProjectionTupleSchema = ReadonlyObject(
+  Type.Tuple([ClaudeCanonicalChannelProjectionSchema, CodexCanonicalChannelProjectionSchema])
+);
 
-export const CanonicalChannelSelectionSchema = ReadonlyObject(Type.Object(
-  {
+export const CanonicalChannelSelectionSchema = ReadonlyObject(
+  Type.Object({
     currentMainDigest: CurrentMainDigestSchema,
     contentAuthority: Type.String({
       minLength: 1,
@@ -67,26 +69,30 @@ export const CanonicalChannelSelectionSchema = ReadonlyObject(Type.Object(
     releaseSetDigest: Type.String({ pattern: RELEASE_SET_DIGEST_PATTERN }),
     evaluationProfile: CanonicalIdSchema,
     projections: CanonicalChannelProjectionTupleSchema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
-const selectionFailure = <const TKind extends string>(kind: TKind) => ReadonlyObject(Type.Object(
-  {
-    kind: Type.Literal(kind),
-    reason: Type.String({
-      minLength: 1,
-      maxLength: MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
+const selectionFailure = <const TKind extends string>(kind: TKind) =>
+  ReadonlyObject(
+    Type.Object({
+      kind: Type.Literal(kind),
+      reason: Type.String({
+        minLength: 1,
+        maxLength: MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
+      }),
     }),
-  },
-), { additionalProperties: false });
+    { additionalProperties: false }
+  );
 
 export const CurrentMainSelectionResultSchema = Type.Union([
-  ReadonlyObject(Type.Object(
-    {
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("CURRENT_ELIGIBLE"),
       selection: CanonicalChannelSelectionSchema,
-    },
-  ), { additionalProperties: false }),
+    }),
+    { additionalProperties: false }
+  ),
   selectionFailure("DIRTY_REPOSITORY"),
   selectionFailure("WRONG_REPOSITORY"),
   selectionFailure("UNREACHABLE_REPOSITORY"),

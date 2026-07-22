@@ -13,7 +13,11 @@ import {
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 
 import { packagingArtifactFixture } from "./artifact-fixture";
-import { createOwnedFixtureRoot, disposeOwnedFixtureRoot, type OwnedFixtureRoot } from "../../support/owned-fixture-root";
+import {
+  createOwnedFixtureRoot,
+  disposeOwnedFixtureRoot,
+  type OwnedFixtureRoot,
+} from "../../support/owned-fixture-root";
 
 interface ZipEntryView {
   readonly path: string;
@@ -111,8 +115,9 @@ describe("cowork-v1", () => {
     };
 
     await expect(renderCoworkV1(tampered)).rejects.toThrow("mismatched bytes");
-    expect(() => assertSnapshotMatchesRef(fixture.alphaSnapshot, fixture.betaSnapshot.ref))
-      .toThrow("different reference");
+    expect(() => assertSnapshotMatchesRef(fixture.alphaSnapshot, fixture.betaSnapshot.ref)).toThrow(
+      "different reference"
+    );
   });
 
   it("renders complete-set members below deterministic plugin roots", async () => {
@@ -128,30 +133,32 @@ describe("cowork-v1", () => {
   });
 
   it("admits exact Cowork v1 count and payload limits and rejects the next unit", () => {
-    expect(() => assertCoworkV1ProtocolBounds(
-      repeatedEntrySizes(COWORK_V1_MAX_ENTRY_COUNT, 0),
-    )).not.toThrow();
-    expect(() => assertCoworkV1ProtocolBounds(
-      repeatedEntrySizes(COWORK_V1_MAX_ENTRY_COUNT + 1, 0),
-    )).toThrow("entry limit");
-    expect(() => assertCoworkV1ProtocolBounds([
-      { path: "boundary", byteLength: COWORK_V1_MAX_PAYLOAD_BYTES },
-    ])).not.toThrow();
-    expect(() => assertCoworkV1ProtocolBounds([
-      { path: "overbound", byteLength: COWORK_V1_MAX_PAYLOAD_BYTES + 1 },
-    ])).toThrow("payload-byte limit");
+    expect(() =>
+      assertCoworkV1ProtocolBounds(repeatedEntrySizes(COWORK_V1_MAX_ENTRY_COUNT, 0))
+    ).not.toThrow();
+    expect(() =>
+      assertCoworkV1ProtocolBounds(repeatedEntrySizes(COWORK_V1_MAX_ENTRY_COUNT + 1, 0))
+    ).toThrow("entry limit");
+    expect(() =>
+      assertCoworkV1ProtocolBounds([{ path: "boundary", byteLength: COWORK_V1_MAX_PAYLOAD_BYTES }])
+    ).not.toThrow();
+    expect(() =>
+      assertCoworkV1ProtocolBounds([
+        { path: "overbound", byteLength: COWORK_V1_MAX_PAYLOAD_BYTES + 1 },
+      ])
+    ).toThrow("payload-byte limit");
   });
 
   it("bounds classic ZIP path overhead before rendering", () => {
     const longPath = "x".repeat(2_048);
-    expect(() => assertCoworkV1ProtocolBounds(
-      repeatedEntrySizes(COWORK_V1_MAX_ENTRY_COUNT, 0, longPath),
-    )).toThrow("projected archive-byte limit");
+    expect(() =>
+      assertCoworkV1ProtocolBounds(repeatedEntrySizes(COWORK_V1_MAX_ENTRY_COUNT, 0, longPath))
+    ).toThrow("projected archive-byte limit");
   });
 });
 
 async function renderCoworkV1(
-  snapshot: Parameters<typeof createCoworkV1ArchiveRequest>[0],
+  snapshot: Parameters<typeof createCoworkV1ArchiveRequest>[0]
 ): Promise<Readonly<{ bytes: Uint8Array; packageDigest: string }>> {
   const bytes = await nodePackageOutput.encodeCoworkV1(createCoworkV1ArchiveRequest(snapshot));
   return Object.freeze({ bytes, packageDigest: coworkV1PackageDigest(bytes) });
@@ -160,12 +167,15 @@ async function renderCoworkV1(
 function* repeatedEntrySizes(
   count: number,
   byteLength: number,
-  path = "x",
+  path = "x"
 ): Generator<{ readonly path: string; readonly byteLength: number }> {
   for (let index = 0; index < count; index += 1) yield { path, byteLength };
 }
 
-function inspectZip(bytes: Uint8Array): { readonly entries: readonly ZipEntryView[]; readonly comment: string } {
+function inspectZip(bytes: Uint8Array): {
+  readonly entries: readonly ZipEntryView[];
+  readonly comment: string;
+} {
   const archive = Buffer.from(bytes);
   let offset = 0;
   while (archive.readUInt32LE(offset) === 0x04034b50) {

@@ -1,9 +1,5 @@
-import {
-  createEmbeddedPlaceholderAnalyticsAdapter,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import {
-  createEmbeddedPlaceholderLoggerAdapter,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type {
   ArtifactObjectAddress,
   ArtifactRepositoryAsyncPort,
@@ -21,9 +17,7 @@ import {
 import { MemoryArtifactRepository } from "./support/artifact-repository";
 import { productFixture } from "./shared/release/fixtures";
 import { createResourceArtifactStore } from "../src/service/repository/artifact-repository";
-import {
-  parseProviderTarget,
-} from "../src/service/modules/providers/model/dto/provider-target";
+import { parseProviderTarget } from "../src/service/modules/providers/model/dto/provider-target";
 import {
   parseArtifactRef,
   parseContentAuthority,
@@ -67,21 +61,31 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     });
     expect(calls.splice(0)).toEqual(["artifactRepository.readTree"]);
 
-    await expect(client.governance.currentMainRecord({
-      kind: "encode-body",
-      body: currentMainBody(),
-    }, invocation)).resolves.toMatchObject({
+    await expect(
+      client.governance.currentMainRecord(
+        {
+          kind: "encode-body",
+          body: currentMainBody(),
+        },
+        invocation
+      )
+    ).resolves.toMatchObject({
       ok: true,
       value: { protocol: "agent-plugin-current-main@v2" },
     });
     expect(calls.splice(0)).toEqual([]);
 
-    await expect(client.governance.currentMainSelection({
-      locator: {
-        workspacePath: "/tmp/content-workspace",
-        expectedRepositoryIdentity: "git:personal-rawr-hq",
-      },
-    }, invocation)).resolves.toEqual({
+    await expect(
+      client.governance.currentMainSelection(
+        {
+          locator: {
+            workspacePath: "/tmp/content-workspace",
+            expectedRepositoryIdentity: "git:personal-rawr-hq",
+          },
+        },
+        invocation
+      )
+    ).resolves.toEqual({
       kind: "DIRTY_REPOSITORY",
       reason: "Canonical content workspace is dirty",
     });
@@ -89,7 +93,6 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       "governance.contentWorkspace.inspectGitWorkspace",
       "governance.contentWorkspace.captureGitWorkspaceEvidence",
     ]);
-
   });
 
   it("derives canonical provider selection from the raw content-workspace dependency", async () => {
@@ -124,7 +127,7 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     });
     expect(calls.splice(0)).toEqual(["artifactRepository.readTree"]);
     expect(artifactReads.splice(0).map((input) => input.address)).toEqual(
-      targetedRequest.releases.map(artifactAddress),
+      targetedRequest.releases.map(artifactAddress)
     );
 
     const canonicalRequest = canonicalSyncRequest();
@@ -140,13 +143,15 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       ok: true,
       value: {
         status: "Blocked",
-        targets: [{
-          kind: "blocked",
-          status: "BLOCKED_SELECTION",
-          target,
-          appliedPrefix: [],
-          issues: [selectionIssue],
-        }],
+        targets: [
+          {
+            kind: "blocked",
+            status: "BLOCKED_SELECTION",
+            target,
+            appliedPrefix: [],
+            issues: [selectionIssue],
+          },
+        ],
         issues: [selectionIssue],
       },
     });
@@ -154,31 +159,37 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       "governance.contentWorkspace.inspectGitWorkspace",
       "governance.contentWorkspace.captureGitWorkspaceEvidence",
     ]);
-    expect(contentWorkspaceInspections.splice(0)).toEqual([{
-      locator: canonicalRequest.locator.workspaceRoot,
-      remoteSelection: { kind: "All" },
-      refName: "refs/heads/main",
-    }]);
+    expect(contentWorkspaceInspections.splice(0)).toEqual([
+      {
+        locator: canonicalRequest.locator.workspaceRoot,
+        remoteSelection: { kind: "All" },
+        refName: "refs/heads/main",
+      },
+    ]);
     expect(artifactReads).toEqual([]);
 
     const statusRequest = canonicalStatusRequest();
     await expect(client.providers.canonicalStatus(statusRequest, invocation)).resolves.toEqual({
       ok: true,
-      value: [{
-        status: "BLOCKED_SELECTION",
-        target,
-        issues: [selectionIssue],
-      }],
+      value: [
+        {
+          status: "BLOCKED_SELECTION",
+          target,
+          issues: [selectionIssue],
+        },
+      ],
     });
     expect(calls.splice(0)).toEqual([
       "governance.contentWorkspace.inspectGitWorkspace",
       "governance.contentWorkspace.captureGitWorkspaceEvidence",
     ]);
-    expect(contentWorkspaceInspections).toEqual([{
-      locator: statusRequest.locator.workspaceRoot,
-      remoteSelection: { kind: "All" },
-      refName: "refs/heads/main",
-    }]);
+    expect(contentWorkspaceInspections).toEqual([
+      {
+        locator: statusRequest.locator.workspaceRoot,
+        remoteSelection: { kind: "All" },
+        refName: "refs/heads/main",
+      },
+    ]);
     expect(artifactReads).toEqual([]);
   });
 
@@ -190,7 +201,9 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       repositoryRoot: artifactRepositoryRoot,
     });
     for (const release of [fixture.alphaRelease, fixture.betaRelease]) {
-      await expect(artifactStore.publishRelease(release)).resolves.toMatchObject({ kind: "Published" });
+      await expect(artifactStore.publishRelease(release)).resolves.toMatchObject({
+        kind: "Published",
+      });
     }
     const setPublication = await artifactStore.publishReleaseSet(fixture.releaseSet);
     expect(setPublication).toMatchObject({ kind: "Published", ref: { kind: "complete-set" } });
@@ -239,7 +252,7 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     expect(repository.readEvidenceCalls).toBeGreaterThan(firstEvidenceReads);
     expect(repository.publishedEvidenceCalls).toBe(1);
     expect(repository.lastTreeAddress?.repositoryRoot).toBe(
-      repository.lastEvidenceAddress?.repositoryRoot,
+      repository.lastEvidenceAddress?.repositoryRoot
     );
   });
 
@@ -248,10 +261,15 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     const client = spineClient(calls);
     const request = releaseRequest();
 
-    await expect(client.releases.check({
-      ...request,
-      contentWorkspace: { ...request.contentWorkspace, locator: "relative/content-workspace" },
-    } as never, invocation)).rejects.toThrow();
+    await expect(
+      client.releases.check(
+        {
+          ...request,
+          contentWorkspace: { ...request.contentWorkspace, locator: "relative/content-workspace" },
+        } as never,
+        invocation
+      )
+    ).rejects.toThrow();
     expect(calls).toEqual([]);
   });
 
@@ -260,10 +278,15 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     const client = spineClient(calls);
     const request = completeTestRequest();
 
-    await expect(client.providers.completeTest({
-      ...request,
-      targets: [{ provider: "codex", home: "relative/provider-home" }],
-    } as never, invocation)).resolves.toMatchObject({
+    await expect(
+      client.providers.completeTest(
+        {
+          ...request,
+          targets: [{ provider: "codex", home: "relative/provider-home" }],
+        } as never,
+        invocation
+      )
+    ).resolves.toMatchObject({
       ok: false,
       issues: [{ code: "INVALID_HOME" }],
     });
@@ -275,10 +298,15 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     const client = spineClient(calls);
     const request = targetedTestRequest();
 
-    await expect(client.providers.targetedTest({
-      ...request,
-      evaluationProfile: "Provider Smoke",
-    } as never, invocation)).rejects.toThrow();
+    await expect(
+      client.providers.targetedTest(
+        {
+          ...request,
+          evaluationProfile: "Provider Smoke",
+        } as never,
+        invocation
+      )
+    ).rejects.toThrow();
     expect(calls).toEqual([]);
   });
 
@@ -287,10 +315,15 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     const client = spineClient(calls);
     const request = canonicalStatusRequest();
 
-    await expect(client.providers.canonicalStatus({
-      ...request,
-      locator: { ...request.locator, workspaceRoot: "relative/content-workspace" },
-    } as never, invocation)).resolves.toMatchObject({
+    await expect(
+      client.providers.canonicalStatus(
+        {
+          ...request,
+          locator: { ...request.locator, workspaceRoot: "relative/content-workspace" },
+        } as never,
+        invocation
+      )
+    ).resolves.toMatchObject({
       ok: false,
       issues: [{ code: "INVALID_LOCATOR" }],
     });
@@ -302,10 +335,15 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     const client = spineClient(calls);
     const request = canonicalSyncRequest();
 
-    await expect(client.providers.canonicalSync({
-      ...request,
-      releaseSet: { kind: "complete-set", releaseSetDigest: `rs1_${"f".repeat(64)}` },
-    } as never, invocation)).rejects.toThrow();
+    await expect(
+      client.providers.canonicalSync(
+        {
+          ...request,
+          releaseSet: { kind: "complete-set", releaseSetDigest: `rs1_${"f".repeat(64)}` },
+        } as never,
+        invocation
+      )
+    ).rejects.toThrow();
     expect(calls).toEqual([]);
   });
 });
@@ -379,20 +417,21 @@ function spineClient(calls: string[], observations: SpineObservations = {}): Cli
 }
 
 function artifactAddress(
-  ref: Parameters<Client["providers"]["completeTest"]>[0]["releaseSet"]
-    | Parameters<Client["providers"]["targetedTest"]>[0]["releases"][number],
+  ref:
+    | Parameters<Client["providers"]["completeTest"]>[0]["releaseSet"]
+    | Parameters<Client["providers"]["targetedTest"]>[0]["releases"][number]
 ): ArtifactObjectAddress {
   return ref.kind === "release"
     ? Object.freeze({
-      repositoryRoot: artifactRepositoryRoot,
-      namespace: Object.freeze(["releases", "sha256"] as const),
-      objectId: ref.artifactDigest,
-    })
+        repositoryRoot: artifactRepositoryRoot,
+        namespace: Object.freeze(["releases", "sha256"] as const),
+        objectId: ref.artifactDigest,
+      })
     : Object.freeze({
-      repositoryRoot: artifactRepositoryRoot,
-      namespace: Object.freeze(["sets", "sha256"] as const),
-      objectId: ref.releaseSetDigest,
-    });
+        repositoryRoot: artifactRepositoryRoot,
+        namespace: Object.freeze(["sets", "sha256"] as const),
+        objectId: ref.releaseSetDigest,
+      });
 }
 
 function governanceAnchor(): GitWorkspaceAnchor {
@@ -444,11 +483,13 @@ function vendorRequest(): Parameters<Client["vendors"]["status"]>[0] {
 
 function packagingRequest(): Parameters<Client["packaging"]["package"]>[0] {
   return {
-    artifactRef: parsed(parseArtifactRef({
-      kind: "release",
-      releaseDigest: `rd1_${"c".repeat(64)}`,
-      artifactDigest: `ad1_${"d".repeat(64)}`,
-    })),
+    artifactRef: parsed(
+      parseArtifactRef({
+        kind: "release",
+        releaseDigest: `rd1_${"c".repeat(64)}`,
+        artifactDigest: `ad1_${"d".repeat(64)}`,
+      })
+    ),
     format: "cowork-v1",
     outputPath: "/tmp/cognition.cowork.zip",
   };
@@ -469,11 +510,13 @@ function completeTestRequest(): Parameters<Client["providers"]["completeTest"]>[
 function targetedTestRequest(): Parameters<Client["providers"]["targetedTest"]>[0] {
   return {
     kind: "targeted-test",
-    releases: [{
-      kind: "release",
-      releaseDigest: `rd1_${"b".repeat(64)}`,
-      artifactDigest: `ad1_${"c".repeat(64)}`,
-    }],
+    releases: [
+      {
+        kind: "release",
+        releaseDigest: `rd1_${"b".repeat(64)}`,
+        artifactDigest: `ad1_${"c".repeat(64)}`,
+      },
+    ],
     evaluationProfile: "provider-smoke@v1",
     targets: [providerTargetInput()],
   };

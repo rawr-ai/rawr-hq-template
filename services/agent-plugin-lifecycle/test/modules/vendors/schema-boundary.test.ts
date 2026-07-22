@@ -1,8 +1,5 @@
 import { schema } from "@rawr/hq-sdk";
-import type {
-  InferContractRouterInputs,
-  InferContractRouterOutputs,
-} from "@orpc/contract";
+import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
@@ -119,26 +116,36 @@ describe("vendor procedure schema boundary", () => {
 
   it("keeps status read-only and update selection explicit", () => {
     expect(Value.Check(VendorStatusInputSchema, { contentWorkspace })).toBe(true);
-    expect(Value.Check(VendorStatusInputSchema, {
-      contentWorkspace,
-      sourceIds: ["upstream"],
-    })).toBe(false);
-    expect(Value.Check(VendorUpdateInputSchema, {
-      contentWorkspace,
-      sourceIds: ["upstream"],
-    })).toBe(true);
-    expect(Value.Check(VendorUpdateInputSchema, {
-      contentWorkspace,
-      sourceIds: [],
-    })).toBe(false);
-    expect(Value.Check(VendorUpdateInputSchema, {
-      contentWorkspace,
-      sourceIds: ["UPSTREAM"],
-    })).toBe(false);
-    expect(Value.Check(VendorUpdateInputSchema, {
-      contentWorkspace,
-      sourceIds: ["upstream-"],
-    })).toBe(false);
+    expect(
+      Value.Check(VendorStatusInputSchema, {
+        contentWorkspace,
+        sourceIds: ["upstream"],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(VendorUpdateInputSchema, {
+        contentWorkspace,
+        sourceIds: ["upstream"],
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(VendorUpdateInputSchema, {
+        contentWorkspace,
+        sourceIds: [],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(VendorUpdateInputSchema, {
+        contentWorkspace,
+        sourceIds: ["UPSTREAM"],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(VendorUpdateInputSchema, {
+        contentWorkspace,
+        sourceIds: ["upstream-"],
+      })
+    ).toBe(false);
   });
 
   it("rejects malformed and surplus request authority at the callable boundary", async () => {
@@ -183,92 +190,122 @@ describe("vendor procedure schema boundary", () => {
     for (const invalid of invalidWorkspaces) {
       expect(Value.Check(VendorStatusInputSchema, { contentWorkspace: invalid })).toBe(false);
     }
-    expect(Value.Check(VendorStatusInputSchema, {
-      contentWorkspace: { ...contentWorkspace, sourceCommit: "a".repeat(64) },
-    })).toBe(true);
+    expect(
+      Value.Check(VendorStatusInputSchema, {
+        contentWorkspace: { ...contentWorkspace, sourceCommit: "a".repeat(64) },
+      })
+    ).toBe(true);
   });
 
   it("exposes the six truthful classifications and closed update outcomes", () => {
-    expect(Value.Check(VendorStatusResultSchema, {
-      kind: "VendorStatus",
-      sources: [{
-        sourceId: "upstream",
-        classification: "UpdateAvailable",
-        admitted,
-        observed,
-      }],
-    })).toBe(true);
-    expect(Value.Check(VendorStatusResultSchema, {
-      kind: "VendorStatus",
-      sources: [{
-        sourceId: "upstream",
-        classification: "Deploying",
-        admitted,
-        observed: null,
-      }],
-    })).toBe(false);
-    expect(Value.Check(VendorStatusResultSchema, {
-      kind: "VendorStatus",
-      sources: [{
-        sourceId: "upstream",
-        classification: "Current",
-        admitted: { ...admitted, payloadDigest: "e".repeat(64) },
-        observed: null,
-      }],
-    })).toBe(false);
-    expect(Value.Check(VendorStatusResultSchema, {
-      kind: "Rejected",
-      issues: [{ code: "WrongRepository", detail: "wrong repository" }],
-    })).toBe(true);
-    expect(Value.Check(VendorUpdateResultSchema, {
-      kind: "Rejected",
-      sourceIds: ["upstream"],
-      issues: [{ code: "HeldSource", sourceId: "upstream", detail: "governance hold" }],
-    })).toBe(true);
-    expect(Value.Check(VendorUpdateResultSchema, {
-      kind: "Rejected",
-      sourceIds: ["upstream"],
-      issues: [],
-    })).toBe(false);
-    expect(Value.Check(VendorUpdateResultSchema, {
-      kind: "AuthoredReviewableChanges",
-      sourceIds: ["upstream"],
-      changedPaths: ["plugins/cognition/vendor.lock"],
-    })).toBe(true);
-    expect(Value.Check(VendorUpdateResultSchema, {
-      kind: "FailedRestored",
-      sourceIds: ["upstream"],
-      restoredPaths: ["plugins/cognition/vendor.lock"],
-      issues: [{ code: "AuthoringFailed", sourceId: "upstream", detail: "write failed" }],
-    })).toBe(true);
-    expect(Value.Check(VendorUpdateResultSchema, {
-      kind: "RestorationFailed",
-      sourceIds: ["upstream"],
-      unsettledPaths: [],
-      issues: [{ code: "RestorationFailed", sourceId: "upstream", detail: "restore failed" }],
-    })).toBe(false);
+    expect(
+      Value.Check(VendorStatusResultSchema, {
+        kind: "VendorStatus",
+        sources: [
+          {
+            sourceId: "upstream",
+            classification: "UpdateAvailable",
+            admitted,
+            observed,
+          },
+        ],
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(VendorStatusResultSchema, {
+        kind: "VendorStatus",
+        sources: [
+          {
+            sourceId: "upstream",
+            classification: "Deploying",
+            admitted,
+            observed: null,
+          },
+        ],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(VendorStatusResultSchema, {
+        kind: "VendorStatus",
+        sources: [
+          {
+            sourceId: "upstream",
+            classification: "Current",
+            admitted: { ...admitted, payloadDigest: "e".repeat(64) },
+            observed: null,
+          },
+        ],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(VendorStatusResultSchema, {
+        kind: "Rejected",
+        issues: [{ code: "WrongRepository", detail: "wrong repository" }],
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(VendorUpdateResultSchema, {
+        kind: "Rejected",
+        sourceIds: ["upstream"],
+        issues: [{ code: "HeldSource", sourceId: "upstream", detail: "governance hold" }],
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(VendorUpdateResultSchema, {
+        kind: "Rejected",
+        sourceIds: ["upstream"],
+        issues: [],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(VendorUpdateResultSchema, {
+        kind: "AuthoredReviewableChanges",
+        sourceIds: ["upstream"],
+        changedPaths: ["plugins/cognition/vendor.lock"],
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(VendorUpdateResultSchema, {
+        kind: "FailedRestored",
+        sourceIds: ["upstream"],
+        restoredPaths: ["plugins/cognition/vendor.lock"],
+        issues: [{ code: "AuthoringFailed", sourceId: "upstream", detail: "write failed" }],
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(VendorUpdateResultSchema, {
+        kind: "RestorationFailed",
+        sourceIds: ["upstream"],
+        unsettledPaths: [],
+        issues: [{ code: "RestorationFailed", sourceId: "upstream", detail: "restore failed" }],
+      })
+    ).toBe(false);
   });
 
   it("rejects malformed and surplus fields throughout public result branches", () => {
     const invalidStatusResults = [
       {
         kind: "VendorStatus",
-        sources: [{
-          sourceId: "upstream",
-          classification: "Current",
-          admitted,
-          observed,
-          extra: true,
-        }],
+        sources: [
+          {
+            sourceId: "upstream",
+            classification: "Current",
+            admitted,
+            observed,
+            extra: true,
+          },
+        ],
       },
       {
         kind: "VendorStatus",
-        sources: [{
-          sourceId: "upstream",
-          classification: "Current",
-          admitted: { ...admitted, extra: true },
-          observed,
-        }],
+        sources: [
+          {
+            sourceId: "upstream",
+            classification: "Current",
+            admitted: { ...admitted, extra: true },
+            observed,
+          },
+        ],
       },
       {
         kind: "Rejected",
@@ -323,11 +360,13 @@ describe("vendor procedure schema boundary", () => {
     expect(Value.Check(VendorSourceDeclarationSchema, declaration)).toBe(true);
     expect(Value.Check(VendorLockRecordSchema, lock)).toBe(true);
     expect(Value.Check(VendorProvenanceRecordSchema, provenance)).toBe(true);
-    expect(Value.Check(VendorRecordBindingSchema, {
-      id: "vendor/sources/upstream.json",
-      protocol: "rawr-vendor-source@v1",
-      contentDigest: `sha256_${"3".repeat(64)}`,
-    })).toBe(true);
+    expect(
+      Value.Check(VendorRecordBindingSchema, {
+        id: "vendor/sources/upstream.json",
+        protocol: "rawr-vendor-source@v1",
+        contentDigest: `sha256_${"3".repeat(64)}`,
+      })
+    ).toBe(true);
 
     const invalidDeclarations = [
       { ...declaration, schemaVersion: 2 },
@@ -378,8 +417,17 @@ describe("vendor procedure schema boundary", () => {
     const invalidBindings = [
       { id: "../source.json", protocol: "rawr-vendor-source@v1", contentDigest: digest("3") },
       { id: "vendor/source.json", protocol: "rawr-vendor-source@v2", contentDigest: digest("3") },
-      { id: "vendor/source.json", protocol: "rawr-vendor-source@v1", contentDigest: "3".repeat(64) },
-      { id: "vendor/source.json", protocol: "rawr-vendor-source@v1", contentDigest: digest("3"), extra: true },
+      {
+        id: "vendor/source.json",
+        protocol: "rawr-vendor-source@v1",
+        contentDigest: "3".repeat(64),
+      },
+      {
+        id: "vendor/source.json",
+        protocol: "rawr-vendor-source@v1",
+        contentDigest: digest("3"),
+        extra: true,
+      },
     ];
     for (const candidate of invalidBindings) {
       expect(Value.Check(VendorRecordBindingSchema, candidate)).toBe(false);

@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { Value } from "typebox/value";
 
 import type { CanonicalNativeRuntime } from "../../../src/service/modules/providers/model/repositories/canonical-native";
-import type { CompleteTestInput, TargetedTestInput } from "../../../src/service/modules/providers/model/dto/mode";
+import type {
+  CompleteTestInput,
+  TargetedTestInput,
+} from "../../../src/service/modules/providers/model/dto/mode";
 import {
   issue,
   MAX_PROVIDER_ISSUE_TEXT_LENGTH,
@@ -57,7 +60,7 @@ describe("provider diagnostic boundary", () => {
       OVERSIZED_EXTERNAL_DETAIL,
       OVERSIZED_EXTERNAL_DETAIL,
       OVERSIZED_EXTERNAL_DETAIL,
-      OVERSIZED_EXTERNAL_DETAIL,
+      OVERSIZED_EXTERNAL_DETAIL
     );
 
     for (const value of [
@@ -81,10 +84,9 @@ describe("provider diagnostic boundary", () => {
       targets: [{ provider: "codex", home: "/tmp/rawr-diagnostic-complete" }],
     };
 
-    const result = await completeTestOperationResult(executeCompleteTest(
-      input,
-      testDependencies(releases),
-    ));
+    const result = await completeTestOperationResult(
+      executeCompleteTest(input, testDependencies(releases))
+    );
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("Expected complete-test artifact failure");
@@ -97,18 +99,19 @@ describe("provider diagnostic boundary", () => {
     const releases = mismatchedReleaseReader();
     const input: TargetedTestInput = {
       kind: "targeted-test",
-      releases: [createReleaseArtifactRef(
-        fixture.alphaRelease.releaseDigest,
-        fixture.alphaRelease.artifactDigest,
-      )],
+      releases: [
+        createReleaseArtifactRef(
+          fixture.alphaRelease.releaseDigest,
+          fixture.alphaRelease.artifactDigest
+        ),
+      ],
       evaluationProfile: "provider-smoke@v1",
       targets: [{ provider: "codex", home: "/tmp/rawr-diagnostic-targeted" }],
     };
 
-    const result = await targetedTestOperationResult(executeTargetedTest(
-      input,
-      testDependencies(releases),
-    ));
+    const result = await targetedTestOperationResult(
+      executeTargetedTest(input, testDependencies(releases))
+    );
 
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("Expected targeted-test artifact failure");
@@ -120,15 +123,20 @@ describe("provider diagnostic boundary", () => {
     const fixture = desiredStateFixture();
     const dependencies = canonicalDependencies(fixture);
 
-    const result = await canonicalStatusResult(executeCanonicalStatus({
-      kind: "canonical-status",
-      channel: "current-main",
-      locator: {
-        repositoryIdentity: fixture.selection.sourceRepositoryIdentity,
-        workspaceRoot: "/tmp/rawr-diagnostic-status",
-      },
-      targets: [{ provider: "codex", home: "/tmp/rawr-diagnostic-status-home" }],
-    }, dependencies));
+    const result = await canonicalStatusResult(
+      executeCanonicalStatus(
+        {
+          kind: "canonical-status",
+          channel: "current-main",
+          locator: {
+            repositoryIdentity: fixture.selection.sourceRepositoryIdentity,
+            workspaceRoot: "/tmp/rawr-diagnostic-status",
+          },
+          targets: [{ provider: "codex", home: "/tmp/rawr-diagnostic-status-home" }],
+        },
+        dependencies
+      )
+    );
 
     expect(result).toMatchObject({
       ok: true,
@@ -145,15 +153,20 @@ describe("provider diagnostic boundary", () => {
     const fixture = desiredStateFixture();
     const dependencies = canonicalDependencies(fixture);
 
-    const result = await canonicalSyncResult(executeCanonicalSync({
-      kind: "canonical-sync",
-      channel: "current-main",
-      locator: {
-        repositoryIdentity: fixture.selection.sourceRepositoryIdentity,
-        workspaceRoot: "/tmp/rawr-diagnostic-sync",
-      },
-      targets: [{ provider: "codex", home: "/tmp/rawr-diagnostic-sync-home" }],
-    }, dependencies));
+    const result = await canonicalSyncResult(
+      executeCanonicalSync(
+        {
+          kind: "canonical-sync",
+          channel: "current-main",
+          locator: {
+            repositoryIdentity: fixture.selection.sourceRepositoryIdentity,
+            workspaceRoot: "/tmp/rawr-diagnostic-sync",
+          },
+          targets: [{ provider: "codex", home: "/tmp/rawr-diagnostic-sync-home" }],
+        },
+        dependencies
+      )
+    );
 
     expect(result).toMatchObject({
       ok: true,
@@ -172,19 +185,22 @@ describe("provider diagnostic boundary", () => {
 
 function mismatchedReleaseReader(): VerifiedReleaseReader {
   return createResourceProviderReleaseReader({
-    read: async (ref) => Object.freeze({
-      kind: "Mismatch" as const,
-      ref,
-      issues: [Object.freeze({
-        code: "ReadFailure" as const,
-        detail: OVERSIZED_EXTERNAL_DETAIL,
-      })] as const,
-    }),
+    read: async (ref) =>
+      Object.freeze({
+        kind: "Mismatch" as const,
+        ref,
+        issues: [
+          Object.freeze({
+            code: "ReadFailure" as const,
+            detail: OVERSIZED_EXTERNAL_DETAIL,
+          }),
+        ] as const,
+      }),
   });
 }
 
 function testDependencies(
-  releases: VerifiedReleaseReader,
+  releases: VerifiedReleaseReader
 ): CompleteTestDependencies & TargetedTestDependencies {
   return {
     releases,
@@ -223,7 +239,7 @@ function testDependencies(
 }
 
 function canonicalDependencies(
-  fixture: ReturnType<typeof desiredStateFixture>,
+  fixture: ReturnType<typeof desiredStateFixture>
 ): CanonicalSyncDependencies & CanonicalStatusDependencies {
   const observer = createNativeProviderObserver({
     provider: "codex",
@@ -242,10 +258,11 @@ function canonicalDependencies(
   };
   return {
     currentMain: {
-      resolve: async () => Object.freeze({
-        kind: "CURRENT_ELIGIBLE" as const,
-        selection: fixture.selection,
-      }),
+      resolve: async () =>
+        Object.freeze({
+          kind: "CURRENT_ELIGIBLE" as const,
+          selection: fixture.selection,
+        }),
     },
     releases: {
       read: async () => success(fixture.snapshot),

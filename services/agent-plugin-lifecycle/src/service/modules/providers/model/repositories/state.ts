@@ -17,7 +17,11 @@ export interface TargetReceiptReader {
 }
 
 export interface TargetReceiptWriter {
-  publish(target: ProviderTarget, prior: ReceiptObservation, receipt: TargetReceipt): Promise<DeploymentResult<TargetReceipt>>;
+  publish(
+    target: ProviderTarget,
+    prior: ReceiptObservation,
+    receipt: TargetReceipt
+  ): Promise<DeploymentResult<TargetReceipt>>;
 }
 
 export interface TargetIdentityReader {
@@ -25,7 +29,10 @@ export interface TargetIdentityReader {
 }
 
 export interface TargetIdentityWriter {
-  admit(target: ProviderTarget, sidecar: TargetIdentitySidecar): Promise<DeploymentResult<TargetIdentitySidecar>>;
+  admit(
+    target: ProviderTarget,
+    sidecar: TargetIdentitySidecar
+  ): Promise<DeploymentResult<TargetIdentitySidecar>>;
 }
 
 export interface ProjectionMaterializationObservation {
@@ -35,7 +42,7 @@ export interface ProjectionMaterializationObservation {
 
 export interface ProviderProjectionMaterializer {
   materialize(
-    projection: AgentProviderProjection,
+    projection: AgentProviderProjection
   ): Promise<DeploymentResult<ProjectionMaterializationObservation>>;
 }
 
@@ -48,7 +55,7 @@ export interface MarketplaceMaterializationObservation {
 export interface ProviderMarketplaceMaterializer {
   materialize(
     provider: ProviderId,
-    registration: ProviderMarketplaceRegistration,
+    registration: ProviderMarketplaceRegistration
   ): Promise<DeploymentResult<MarketplaceMaterializationObservation>>;
 }
 
@@ -60,6 +67,6 @@ export interface ProviderMarketplaceSource {
 export interface ProviderMarketplaceSourceReader {
   read(
     target: ProviderTarget,
-    registration: ProviderMarketplaceRegistration,
+    registration: ProviderMarketplaceRegistration
   ): Promise<DeploymentResult<ProviderMarketplaceSource>>;
 }
