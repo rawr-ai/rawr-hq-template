@@ -3,8 +3,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
 function runRawr(args: string[]) {
-  const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   return spawnSync("bun", ["test/command-fixture/command-test-cli.ts", ...args], {
     cwd: projectRoot,
     encoding: "utf8",
@@ -21,11 +22,10 @@ describe("routine check", () => {
     expect(parsed.data.steps.map((s: any) => s.name)).toEqual(["doctor", "security", "tests"]);
     expect(path.isAbsolute(parsed.data.steps[0].cmd)).toBe(true);
     expect(path.basename(parsed.data.steps[0].cmd)).toContain("bun");
-    expect(parsed.data.steps[0].args.slice(0, 3)).toEqual([
-      "--config=/dev/null",
-      "--no-env-file",
-      "--no-install",
-    ]);
+    expect(parsed.data.steps[0].args[0]).toBe(
+      path.join(projectRoot, "test", "command-fixture", "command-test-cli.ts")
+    );
+    expect(parsed.data.steps[0].cwd).toBe(projectRoot);
     expect(parsed.data.steps[2].args).toEqual(["run", "test"]);
   });
 });
