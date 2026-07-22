@@ -48,8 +48,10 @@ describe("hq app declaration seam guard", () => {
     expect(testingSource === null || normalizeSemanticSource(testingSource) === "export{};").toBe(
       true
     );
-    expect(normalizeSemanticSource(manifestCompatSource)).toBe(
-      'export{createRawrHqManifest}from"../rawr.hq";exporttype{RawrHqManifest}from"../rawr.hq";'
+    const valueExport = 'export{createRawrHqManifest}from"../rawr.hq";';
+    const typeExport = 'exporttype{RawrHqManifest}from"../rawr.hq";';
+    expect([valueExport + typeExport, typeExport + valueExport]).toContain(
+      normalizeSemanticSource(manifestCompatSource)
     );
   });
 

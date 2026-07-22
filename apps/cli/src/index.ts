@@ -1,4 +1,4 @@
-import { flush, handle, run, type Interfaces } from "@oclif/core";
+import { flush, handle, type Interfaces, run } from "@oclif/core";
 
 import { prepareControllerInvocation } from "./lib/controller/entry-bootstrap";
 import { loadControllerRuntimeContext } from "./lib/controller/runtime-context";

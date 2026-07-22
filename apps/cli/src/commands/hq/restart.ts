@@ -1,5 +1,5 @@
 import { Flags } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { buildHqLifecyclePlan, runHqLifecycle } from "../../lib/hq";
 import {
   HQ_OBSERVABILITY_MODES,
@@ -7,7 +7,6 @@ import {
   type HqObservabilityMode,
   type HqOpenPolicy,
 } from "../../lib/hq-status";
-import { findWorkspaceRoot } from "@rawr/core";
 
 export default class HqRestart extends RawrCommand {
   static description = "Restart the managed RAWR HQ runtime";

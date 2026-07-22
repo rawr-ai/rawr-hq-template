@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import path from "node:path";
-
+import { parseCommandManifest, parsePackageManifest } from "./manifest-parser";
 import type {
   CandidateInspection,
   QuarantineCode,
@@ -8,7 +8,6 @@ import type {
   ReservedControllerSurface,
   StaticExternalExtension,
 } from "./model";
-import { parseCommandManifest, parsePackageManifest } from "./manifest-parser";
 import { findReservedSurfaceCollisions } from "./reserved-surface";
 import type { StaticEvidencePort, StaticEvidenceResult } from "./static-evidence";
 

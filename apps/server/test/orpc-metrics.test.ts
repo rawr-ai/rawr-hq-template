@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as otelApi from "@opentelemetry/api";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createServerApp } from "../src/app";
 import { __resetOrpcRouteTelemetryForTests, registerOrpcRoutes } from "../src/orpc";
 import { createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";

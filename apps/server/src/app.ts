@@ -1,4 +1,4 @@
-import { Elysia, type AnyElysia } from "elysia";
+import { type AnyElysia, Elysia } from "elysia";
 
 export type RawrServerApp = AnyElysia;
 

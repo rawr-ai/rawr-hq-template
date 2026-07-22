@@ -1,10 +1,10 @@
 import path from "node:path";
 
 import {
-  isCuratedAgentPluginIdentityIssue,
-  parseCuratedAgentPluginIdentity,
   type CuratedAgentPluginIdentity,
   type CuratedAgentPluginIdentityIssue,
+  isCuratedAgentPluginIdentityIssue,
+  parseCuratedAgentPluginIdentity,
 } from "./identity";
 
 export type CuratedAgentPluginAuthoringRequest = Readonly<{

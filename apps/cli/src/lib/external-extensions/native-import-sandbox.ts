@@ -1,5 +1,5 @@
-import { builtinModules } from "node:module";
 import { readFileSync, realpathSync, statSync } from "node:fs";
+import { builtinModules } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 

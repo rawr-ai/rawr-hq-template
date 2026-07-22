@@ -1,5 +1,5 @@
+import { type Counter, type Histogram, metrics, SpanStatusCode, trace } from "@opentelemetry/api";
 import type { AnyContractRouter } from "@orpc/contract";
-import { metrics, SpanStatusCode, trace, type Counter, type Histogram } from "@opentelemetry/api";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { Context, Router } from "@orpc/server";
 import {

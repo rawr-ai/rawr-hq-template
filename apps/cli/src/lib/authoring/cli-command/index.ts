@@ -1,13 +1,13 @@
 export { authorOfficialCommand, verifyOfficialCommandTemplateWorkspace } from "./application";
 export {
-  parseOfficialCommandName,
-  parseOfficialCommandTopic,
   type OfficialCommandName,
   type OfficialCommandTopic,
+  parseOfficialCommandName,
+  parseOfficialCommandTopic,
 } from "./identity";
 export {
-  parseOfficialCommandAuthoringRequest,
   type OfficialCommandAuthoringRequest,
   type OfficialCommandRequestResult,
+  parseOfficialCommandAuthoringRequest,
 } from "./request";
 export { officialCommandWritePlan } from "./template";

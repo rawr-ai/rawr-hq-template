@@ -2,7 +2,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { describe, expect, it } from "vitest";
-
+import { nativeInstallArtifactName } from "../../src/lib/external-extensions/install-provenance";
 import type {
   CandidateInspection,
   NativeRegistryProjection,
@@ -15,10 +15,9 @@ import type {
   NativeMutationRequest,
 } from "../../src/lib/external-extensions/native-mutation";
 import type { ExternalExtensionStatePort } from "../../src/lib/external-extensions/native-registry";
-import { nativeInstallArtifactName } from "../../src/lib/external-extensions/install-provenance";
 import {
-  ExternalExtensionService,
   type ExternalExtensionPreparationPort,
+  ExternalExtensionService,
   type InspectedInstallArtifact,
   type PreparedInstallArtifact,
   type PreparedUpdate,

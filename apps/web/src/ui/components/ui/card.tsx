@@ -30,4 +30,4 @@ function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement
   return <footer className={cn("flex items-center gap-2 p-5 pt-0", className)} {...props} />;
 }
 
-export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter };
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };

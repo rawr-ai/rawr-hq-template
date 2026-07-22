@@ -1,11 +1,11 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import fsSync from "node:fs";
 import path from "node:path";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createRawrHqLegacyRouteAuthority } from "@rawr/hq-app/legacy-cutover";
 import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
-import { createRawrHqLegacyRouteAuthority } from "@rawr/hq-app/legacy-cutover";
-import { createHostLoggerAdapter } from "./logging";
 import type { RawrServerApp } from "./app";
+import { createHostLoggerAdapter } from "./logging";
 import { registerOrpcRoutes } from "./orpc";
 import {
   createRequestScopedBoundaryContext,

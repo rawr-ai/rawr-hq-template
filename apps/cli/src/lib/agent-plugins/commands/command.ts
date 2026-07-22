@@ -4,11 +4,11 @@ import { RawrCommand } from "@rawr/core";
 import { LifecycleInputError } from "./input";
 import {
   LifecycleAuthorityBindingError,
+  type LifecycleOperationRequest,
   lifecycleResultExitCode,
   parseControllerProjectionBinding,
-  projectLifecycleResultForOutput,
   projectLifecycleOperation,
-  type LifecycleOperationRequest,
+  projectLifecycleResultForOutput,
 } from "./projection";
 
 export abstract class AgentPluginLifecycleCommand extends RawrCommand {

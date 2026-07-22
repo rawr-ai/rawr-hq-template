@@ -3,13 +3,13 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import {
-  NodeQualifiedWritePort,
-  executeAuthoringPlan,
-  rejectedAuthoringResult,
-  verifiedDestinationRoot,
   type AuthoringExecutionResult,
+  executeAuthoringPlan,
+  NodeQualifiedWritePort,
   type QualifiedWritePort,
+  rejectedAuthoringResult,
   type VerifiedDestinationRoot,
+  verifiedDestinationRoot,
 } from "../shared";
 import type { OfficialCommandAuthoringRequest } from "./request";
 import { officialCommandWritePlan } from "./template";

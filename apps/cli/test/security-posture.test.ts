@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
 
 const TEST_HOME = mkdtempSync(path.join(tmpdir(), "rawr-test-security-posture-"));
 

@@ -1,9 +1,9 @@
-import { afterAll, describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
 import { lstatSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { tmpdir } from "node:os";
+import { afterAll, describe, expect, it } from "vitest";
 
 import type { HqOpsJournalSnippet } from "../src/lib/hq-ops-client";
 

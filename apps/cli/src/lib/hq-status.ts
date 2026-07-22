@@ -1,6 +1,6 @@
+import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 export const HQ_OPEN_POLICIES = ["none", "app", "app+inngest", "all"] as const;

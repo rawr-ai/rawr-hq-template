@@ -1,6 +1,6 @@
-import { afterAll, describe, expect, it } from "vitest";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { afterAll, describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
 import { generateOrpcOpenApiSpec } from "../src/orpc";
 import { registerRawrRoutes } from "../src/rawr";

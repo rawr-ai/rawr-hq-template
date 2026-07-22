@@ -1,24 +1,23 @@
 import path from "node:path";
-
+import { parseNativeInstallProvenance } from "./install-provenance";
 import type {
   ActiveExternalExtension,
   CandidateInspection,
   ExternalExtensionInspection,
   ExternalExtensionOperationResult,
   NativeRegistryEntry,
-  NativeRegistryUserEntry,
   NativeRegistryProjection,
+  NativeRegistryUserEntry,
   NativeUserEntry,
   StaticExternalExtension,
 } from "./model";
-import type { ExternalExtensionStatePort } from "./native-registry";
-import { parseNativeInstallProvenance } from "./install-provenance";
 import {
   GUARDED_NATIVE_MANAGER_CONTRACT,
   NativeMutationDispatchError,
   type NativeMutationPort,
   type NativeMutationRequest,
 } from "./native-mutation";
+import type { ExternalExtensionStatePort } from "./native-registry";
 import { isCanonicalPackageId } from "./package-id";
 
 export type InspectedInstallArtifact = {

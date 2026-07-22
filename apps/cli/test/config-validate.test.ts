@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
 
 const CLI_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const COMMAND_TEST_CLI = path.join(CLI_ROOT, "test", "command-fixture", "command-test-cli.ts");

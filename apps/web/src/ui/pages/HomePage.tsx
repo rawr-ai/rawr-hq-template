@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from "../components/ui";
+import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui";
 import { publicEnv } from "../config/publicEnv";
 
 export function HomePage() {

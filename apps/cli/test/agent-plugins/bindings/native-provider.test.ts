@@ -1,8 +1,4 @@
 import path from "node:path";
-
-import { Effect } from "effect";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import type {
   ArtifactObjectAddress,
   ArtifactTreeLocation,
@@ -18,6 +14,8 @@ import type {
   NativeProviderCapabilityProbe,
   NativeProviderSessionInput,
 } from "@rawr/resource-native-agent-provider";
+import { Effect } from "effect";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const provider = vi.hoisted(() => ({
   codexAcquire: vi.fn(),
@@ -34,8 +32,8 @@ vi.mock("@rawr/resource-native-agent-provider/providers/claude-effect-platform-n
 import { createNodeNativeProviderResource } from "../../../src/lib/agent-plugins/bindings/providers";
 import {
   createOwnedFixtureRoot,
-  removeOwnedFixtureRoot,
   type OwnedFixtureRoot,
+  removeOwnedFixtureRoot,
 } from "../service-runtime/releases/owned-fixture-root";
 
 const EXECUTABLES = Object.freeze({

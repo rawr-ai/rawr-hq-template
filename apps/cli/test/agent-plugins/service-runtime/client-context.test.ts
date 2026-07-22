@@ -1,11 +1,14 @@
 import { readdir, realpath, unlink } from "node:fs/promises";
 import path from "node:path";
-
-import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
 import { createClient } from "@rawr/agent-plugin-lifecycle/client";
 import { parseArtifactRef } from "@rawr/agent-plugin-lifecycle/release";
+import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-
+import {
+  commitGeneratedGitRepository,
+  createGeneratedGitRepository,
+  GIT_EXECUTABLE,
+} from "../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
 import type { LifecycleOperation } from "../../../src/lib/agent-plugins/commands/binding";
 import { deriveAgentPluginControllerLayout } from "../../../src/lib/agent-plugins/layout";
 import {
@@ -13,14 +16,9 @@ import {
   createProductionLifecycleDeps,
 } from "../../../src/lib/agent-plugins/service-runtime/client";
 import {
-  commitGeneratedGitRepository,
-  createGeneratedGitRepository,
-  GIT_EXECUTABLE,
-} from "../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
-import {
   createOwnedFixtureRoot,
-  removeOwnedFixtureRoot,
   type OwnedFixtureRoot,
+  removeOwnedFixtureRoot,
 } from "./releases/owned-fixture-root";
 
 const LIFECYCLE_OBJECT_DEP_KEYS = Object.freeze([

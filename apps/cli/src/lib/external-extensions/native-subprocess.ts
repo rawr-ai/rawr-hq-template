@@ -9,8 +9,8 @@ import {
   validateNativeMutationRequest,
 } from "./native-manager-protocol";
 import {
-  NativeMutationDispatchError,
   type NativeMutationCleanupSettlement,
+  NativeMutationDispatchError,
   type NativeMutationDispatchResult,
   type NativeMutationPort,
   type NativeMutationRequest,

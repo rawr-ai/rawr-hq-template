@@ -1,4 +1,4 @@
-import { RawrCommand, type RawrBaseFlags } from "@rawr/core";
+import { type RawrBaseFlags, RawrCommand } from "@rawr/core";
 
 import type { ExternalExtensionOperation, ExternalExtensionOperationResult } from "./model";
 import { resolveExternalExtensionRuntime } from "./runtime";

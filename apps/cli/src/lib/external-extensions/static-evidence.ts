@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { lstat, open, realpath, type FileHandle } from "node:fs/promises";
+import { type FileHandle, lstat, open, realpath } from "node:fs/promises";
 
 export const MAX_STATIC_EVIDENCE_TEXT_BYTES = 1024 * 1024;
 

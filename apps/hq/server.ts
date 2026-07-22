@@ -1,7 +1,7 @@
 import {
   bootstrapRawrHqServerViaLegacyCutover,
-  startRawrHqServerViaLegacyCutover,
   type RawrHqLegacyServerDependencies,
+  startRawrHqServerViaLegacyCutover,
 } from "./legacy-cutover";
 import { createRawrHqManifest } from "./rawr.hq";
 
