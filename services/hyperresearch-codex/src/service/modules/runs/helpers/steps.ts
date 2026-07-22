@@ -1,6 +1,6 @@
 import type {
-  HyperresearchTier,
   HyperresearchStepDefinition,
+  HyperresearchTier,
   LoadedHyperresearchStep,
 } from "../../../common/entities";
 import type { HyperresearchCodexIO } from "../../../common/resources";

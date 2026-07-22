@@ -7,6 +7,7 @@
  * decide severity policy independently.
  */
 import type { HqOpsResources } from "../../common/ports/resources";
+import type { SecurityFinding, SecurityMode } from "./entities";
 import { runBunAudit, runBunPmUntrusted } from "./helpers/audit";
 import { getRepoRoot } from "./helpers/process";
 import { securityReport, severityRank, sortFindings } from "./helpers/report-format";
@@ -14,7 +15,6 @@ import { readLatestSecurityReport, writeSecurityReport } from "./helpers/report-
 import { maxFindingSeverity, toleranceToMaxSeverity } from "./helpers/report-risk";
 import { scanSecretsRepo, scanSecretsStaged } from "./helpers/secrets";
 import { module } from "./module";
-import type { SecurityFinding, SecurityMode } from "./entities";
 
 async function collectSecurityFindings(
   resources: HqOpsResources,

@@ -1,11 +1,11 @@
 import { schema } from "@rawr/hq-sdk";
+import { ocBase } from "../../base";
 import {
   StackDoctorInputSchema,
   StackDoctorResultSchema,
   StackDrainInputSchema,
   StackDrainResultSchema,
 } from "../../common/entities";
-import { ocBase } from "../../base";
 
 export const contract = {
   doctor: ocBase

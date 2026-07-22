@@ -1,8 +1,8 @@
 import { schema } from "@rawr/hq-sdk";
 import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
-import { UNKNOWN_SESSION_FORMAT } from "../../common/errors";
 import { RoleFilterSchema, SessionMessageSchema, SessionSourceSchema } from "../../common/entities";
+import { UNKNOWN_SESSION_FORMAT } from "../../common/errors";
 
 const ExtractOptionsSchema = Type.Object(
   {

@@ -1,1 +1,1 @@
-export { router, type Router } from "./service/router";
+export { type Router, router } from "./service/router";

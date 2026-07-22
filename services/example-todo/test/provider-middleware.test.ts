@@ -1,16 +1,16 @@
-import { describe, expect, it } from "vitest";
 import { createRouterClient, implement } from "@orpc/server";
 import {
+  type BaseMetadata,
   createContractBuilder,
   defineService,
+  type FeedbackClient,
   feedbackProvider,
   schema,
-  type BaseMetadata,
-  type FeedbackClient,
 } from "@rawr/hq-sdk";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import { Type } from "typebox";
+import { describe, expect, it } from "vitest";
 
 function createBaselineDeps() {
   return {

@@ -22,7 +22,7 @@
  * observability or analytics behavior here; that belongs in
  * `src/service/middleware/*`.
  */
-import { defineService, type DbPool, type ServiceOf } from "@rawr/hq-sdk";
+import { type DbPool, defineService, type ServiceOf } from "@rawr/hq-sdk";
 
 /**
  * Host-owned time source used by task/tag creation and similar flows.

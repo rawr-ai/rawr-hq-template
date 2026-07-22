@@ -1,10 +1,10 @@
 import { Value } from "typebox/value";
 import {
-  clampJournalCandidateLimit,
   type ConfigValidationIssue,
-  RawrConfigV1Schema,
+  clampJournalCandidateLimit,
   type RawrConfig,
   type RawrConfigV1,
+  RawrConfigV1Schema,
 } from "../entities";
 
 const clampInt = (value: number, min: number, max: number) =>

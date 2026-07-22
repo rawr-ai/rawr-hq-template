@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createClient } from "../src";
 import {
-  createMemoryWorkspaceStore,
   createClientOptions,
   createInvocation,
+  createMemoryWorkspaceStore,
   seedFixtureWorkspace,
 } from "./helpers";
 

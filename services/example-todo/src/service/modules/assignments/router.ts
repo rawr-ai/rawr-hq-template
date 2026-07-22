@@ -12,8 +12,8 @@
  * Do not route through client-to-client calls inside the same domain package.
  */
 import { randomUUID } from "node:crypto";
-import { module } from "./module";
 import { createProcedureObservability } from "./middleware";
+import { module } from "./module";
 import { type Assignment } from "./schemas";
 
 /**

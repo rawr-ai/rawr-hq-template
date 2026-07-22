@@ -1,8 +1,8 @@
 import type { WorkspaceArtifactBundle } from "../../../../orpc/ports/workspace-store";
 import {
   ARTIFACT_OUTPUT_DIRECTORIES,
-  STATIC_ARTIFACT_FILE_REFS,
   createNormalizedThreadArtifactRef,
+  STATIC_ARTIFACT_FILE_REFS,
 } from "../../../../shared/layout";
 import type {
   AmbiguityFlag,

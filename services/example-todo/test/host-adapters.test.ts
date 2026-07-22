@@ -1,5 +1,3 @@
-import { describe, expect, it } from "vitest";
-
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
@@ -16,6 +14,7 @@ import {
   createEmbeddedInMemoryDbPoolAdapter,
   createEmbeddedInMemorySqlAdapter,
 } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
+import { describe, expect, it } from "vitest";
 
 describe("host adapters", () => {
   it("records placeholder logger output into the provided sink", () => {

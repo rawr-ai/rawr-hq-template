@@ -1,6 +1,6 @@
 import { schema } from "@rawr/hq-sdk";
-import { RepoSyncUpstreamInputSchema, RepoSyncUpstreamResultSchema } from "../../common/entities";
 import { ocBase } from "../../base";
+import { RepoSyncUpstreamInputSchema, RepoSyncUpstreamResultSchema } from "../../common/entities";
 
 export const contract = {
   syncUpstream: ocBase

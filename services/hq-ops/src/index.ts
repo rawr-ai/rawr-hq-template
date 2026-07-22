@@ -17,11 +17,11 @@
  * root by default.
  */
 export {
-  createClient,
   type Client,
   type Config,
   type CreateClientOptions,
+  createClient,
   type Deps,
   type Scope,
 } from "./client";
-export { router, type Router } from "./router";
+export { type Router, router } from "./router";
