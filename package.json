@@ -228,7 +228,7 @@
     "@effect/platform": "0.96.1",
     "@effect/platform-node": "0.107.0",
     "@getgrit/cli": "0.1.0-alpha.1743007075",
-    "@nx/eslint-plugin": "^22.5.4",
+    "@nx/eslint-plugin": "23.1.0",
     "@rawr/agent-plugin-lifecycle": "workspace:*",
     "@rawr/controller-release": "workspace:*",
     "@types/node": "^22.14.0",
@@ -238,7 +238,7 @@
     "cytoscape": "^3.33.2",
     "effect": "3.21.3",
     "eslint": "^10.0.3",
-    "nx": "22.5.4",
+    "nx": "23.1.0",
     "tar": "7.5.7",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"

@@ -67,7 +67,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   separate boundary-rule leaf. Expose the Civ7 lintEffect configuration and
   patched dependency as an advisory command; do not put its cold full-corpus run
   in the required hook or CI ratchet.
-- [ ] 1.5c Upgrade Nx and `@nx/eslint-plugin` to `23.1.0` as one exact migration.
+- [x] 1.5c Upgrade Nx and `@nx/eslint-plugin` to `23.1.0` as one exact migration.
   Preserve resolved target behavior and cache inputs; add no recursive root Nx
   target or project-name inventory.
 - [ ] 1.5d Make native TypeScript `7.0.2` the normal compiler, keep
