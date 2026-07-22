@@ -118,6 +118,24 @@ describe("bin/run.js", () => {
     expect(result.stderr).toBe("");
   });
 
+  it("re-enters source and built Oclif entrypoints without controller state", () => {
+    for (const entrypoint of ["src/index.ts", "bin/run.js"] as const) {
+      const result = runCli(entrypoint, ["routine", "check", "--json", "--dry-run"]);
+
+      expect(result.status, result.stderr).toBe(0);
+      const output = JSON.parse(result.stdout) as {
+        ok: boolean;
+        data: { steps: readonly { cmd: string; args: readonly string[]; cwd: string }[] };
+      };
+      expect(output.ok).toBe(true);
+      expect(output.data.steps[0]).toMatchObject({
+        cmd: process.execPath,
+        args: [path.join(cliRoot, entrypoint), "doctor", "--json"],
+        cwd: cliRoot,
+      });
+    }
+  });
+
   it("discovers the same commands from source and compiled output", () => {
     expect(existsSync(path.join(cliRoot, "oclif.manifest.json"))).toBe(false);
 

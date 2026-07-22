@@ -1,6 +1,6 @@
 import { Flags } from "@oclif/core";
 import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
-import { resolveCliReentry, runStep, type StepResult } from "../../lib/subprocess";
+import { resolveCliInvocation, runStep, type StepResult } from "../../lib/subprocess";
 
 export default class RoutineCheck extends RawrCommand {
   static description = "Run the routine dev hygiene loop (doctor + security + tests)";
@@ -39,7 +39,7 @@ export default class RoutineCheck extends RawrCommand {
     const shouldContinue = Boolean(flags.continue);
     const skipTests = Boolean((flags as Record<string, unknown>)["skip-tests"]);
 
-    const rawr = resolveCliReentry();
+    const rawr = resolveCliInvocation();
 
     const planned: StepResult[] = [
       {
