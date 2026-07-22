@@ -1,0 +1,28 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@rawr/nx-admission",
+  "root": "scripts/nx",
+  "sourceRoot": "scripts/nx",
+  "projectType": "application",
+  "tags": ["type:tool", "role:repository-admission"],
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx eslint scripts/nx --ext .mjs"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test scripts/nx/*.test.mjs"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p scripts/nx/tsconfig.json --noEmit"
+      }
+    }
+  }
+}

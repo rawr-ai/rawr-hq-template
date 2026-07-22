@@ -14,7 +14,7 @@
         "command": "bun ../../scripts/habitat/check.mjs --owner @rawr/agent-plugin-lifecycle",
         "cwd": "services/agent-plugin-lifecycle"
       },
-      "cache": true,
+      "cache": false,
       "inputs": [
         "{projectRoot}/src/**/*",
         "{workspaceRoot}/apps/cli/src/**/*",
