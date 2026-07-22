@@ -133,22 +133,28 @@ standing-review gate is complete.
   plugin root to `.rawr/agent-plugin-lifecycle/channels/current-main.json`.
   Accept no old-path alias, scan, fallback, or migration reader; old-path-only
   state is inert and rejected as undeclared plugin content.
-- [ ] 3C.4 Publish an immutable installed-controller artifact from landed
+- [x] 3C.4 Publish an immutable installed-controller artifact from landed
   Template `main` for repository-independent consumption. Personal CI may
   verify and invoke that artifact by absolute path; it may not checkout,
   rebuild, import, or vendor Template implementation. Record the exact digest,
   source revision, platform, byte length, and update recipe.
   The first landed-main attempt, run `29736289655` at `2f9e303a...`, failed
   closed before upload because portable archive construction changed verified
-  payload modes. Land and rerun the bounded exact-mode repair before closing
-  this task; do not weaken manifest verification.
+  payload modes. The bounded exact-mode repair and final continuation landed at
+  `86a55a75`; run `29882221794` then published the closed immutable release and
+  the exact Darwin arm64 artifact was installed at controller digest
+  `3e1a8a4c...`. Manifest verification remains unchanged. Evidence:
+  [[README#T6F Installed Controller Publication And Selection]].
 - [ ] 3C.5 Replace the obsolete Personal hook only after 3C.1-3C.4 are landed
   and installed. The first Personal checkpoint must include its canonical
   release input, positive content topology, honest lint/typecheck units, and
   unconditional CI invocation of the pinned external controller. Do not use
   `--no-verify`, legacy mixed sync, ambient global repair, or a source checkout
   fallback. Server-side required-check enforcement remains an explicit external
-  precondition wherever the repository host plan cannot enforce it.
+  precondition wherever the repository host plan cannot enforce it. Child PR
+  #183 at `852702b8...` implements the final-controller binding, but it and
+  current-main PR #182 remain unlanded because billing blocked their required
+  jobs before runner allocation.
 
 ## 4. T6C2: Thin Canonical Provider Path
 
@@ -264,14 +270,18 @@ standing-review gate is complete.
 - [x] 8.1b Land the bounded installed-asset mode repair, publish and verify the
   immutable controller from exact canonical Template `main`, then install/select
   that exact controller through the existing stable installer.
-- [ ] 8.1c Land the final TypeBox boundary-ownership, deterministic Nx-check,
+- [x] 8.1c Land the final TypeBox boundary-ownership, deterministic Nx-check,
   and standard operational-terminology continuation. All five module boundaries
   are sealed and the no-cache integrated lifecycle check passes; land the stack,
   then publish and select the resulting immutable controller before canonical
-  settlement. Add no lifecycle state or provider mutation mechanism.
-- [ ] 8.2 Keep the obsolete personal hook replacement on its landed Template
-  interface and land the reviewed personal current-main record through its
-  required remote check without bypass.
+  settlement. Add no lifecycle state or provider mutation mechanism. PRs
+  #411-#437 landed at canonical Template `main` `86a55a75`, workflow run
+  `29882221794` published the immutable release, the exact Darwin arm64
+  controller digest `3e1a8a4c...` is selected and healthy. Evidence:
+  [[README#T6F Installed Controller Publication And Selection]].
+- [ ] 8.2 Land current-main PR #182 and child final-controller-binding PR #183
+  through their unchanged required remote checks. Both remain unlanded because
+  billing blocked job allocation; no bypass is authorized.
 - [x] 8.3 Build/test the complete current personal-main set, including
   `cognition:state-machine-design`, in one durable non-repository controller
   data root. Keep Inngest excluded while `HF01_PENDING`.
@@ -283,8 +293,9 @@ standing-review gate is complete.
   event without a global collision. This is owner-scoped lifecycle/provider
   acceptance (a small shared scenario driver is allowed), never
   `@rawr/controller-build:acceptance`.
-- [ ] 8.5 Review and land one personal `current-main` record binding both Codex
-  and Claude, then canonically converge the same disposable homes. Verify
+- [ ] 8.5 After Personal PRs #182 and #183 land, resolve the landed
+  `current-main` record binding both Codex and Claude, then canonically converge
+  the same disposable homes. Verify
   omitted-member native/config/cache residue removal and repeat with identical
   managed inventory plus every lifecycle/native mutation counter zero. Cleanup
   may recursively remove only an owner-created disposable root after proving the
@@ -301,9 +312,10 @@ standing-review gate is complete.
 - [ ] 8.8 Archive the change records, land record-only closure nodes, drain local
   and remote Graphite branches/worktrees in both repositories, and prove clean
   canonical `main`, healthy installed operations, and a read-back server-side
-  Template rule that requires `Repository Ratchet / Required lint, typecheck,
-  and topology` on `main`; local hooks and a merely present workflow are not
-  sufficient proof.
+  Template rule that requires `Required lint, typecheck, and topology` on
+  `main`; local hooks and a merely present workflow are not sufficient proof.
+  Ruleset `19508824` already satisfies only the prospective rule-readback
+  component; see [[README#Template Required Ratchet Settlement Gate]].
 
 ## Related
 
