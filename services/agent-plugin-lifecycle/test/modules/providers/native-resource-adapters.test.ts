@@ -1,35 +1,29 @@
-import { describe, expect, it } from "vitest";
-
 import type {
   NativeAgentProviderFailure,
   NativeAgentProviderId,
 } from "@rawr/resource-native-agent-provider";
-
+import { describe, expect, it } from "vitest";
+import type {
+  ClaudeNativeResourceSession,
+  CodexNativeResourceSession,
+  NativeResourceMarketplaceReadInput,
+  NativeResourcePackageEntry,
+  NativeResourcePluginReadInput,
+  NativeResourceSessionInput,
+} from "../../../src/service/model/dependencies/providers";
+import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
+import { canonicalBytes } from "../../../src/service/modules/providers/model/helpers/canonical";
 import {
   createProviderMarketplaceRegistration,
   type ProviderMarketplaceRegistration,
 } from "../../../src/service/modules/providers/model/policy/marketplace";
 import {
-  renderCompleteProjection,
   type AgentProviderProjection,
+  renderCompleteProjection,
 } from "../../../src/service/modules/providers/model/policy/projection";
 import type { NativeStandaloneExposureObservation } from "../../../src/service/modules/providers/model/policy/state-machine";
-import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
-import { canonicalBytes } from "../../../src/service/modules/providers/model/helpers/canonical";
-import {
-  createAgentPluginPayload,
-  createAgentPluginRelease,
-  createAgentPluginReleaseInput,
-  createAgentPluginReleaseSet,
-  createCompleteSetArtifactRef,
-  createReleaseArtifactRef,
-  payloadEntryBytes,
-  type AgentPluginRelease,
-  type VerifiedReleaseArtifactV1,
-} from "../../../src/service/shared/release";
-import { SOURCE, must, productFixture, releaseInputBody } from "../../shared/release/fixtures";
-import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
 import { CLAUDE_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/claude";
+import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
 import {
   claudeCapabilitiesFromCommands,
   createResourceClaudeCanonicalObserver,
@@ -40,20 +34,24 @@ import {
   createResourceCodexCanonicalObserver,
   createResourceCodexProviderAdapter,
 } from "../../../src/service/modules/providers/repository/resource-codex";
-import type {
-  ClaudeNativeResourceSession,
-  CodexNativeResourceSession,
-  NativeResourceMarketplaceReadInput,
-  NativeResourcePackageEntry,
-  NativeResourcePluginReadInput,
-  NativeResourceSessionInput,
-} from "../../../src/service/model/dependencies/providers";
 import { inspectMarketplaceSource } from "../../../src/service/modules/providers/repository/resource-marketplace";
 import {
   inspectNativePluginPackage,
   inspectNativePluginVisibility,
 } from "../../../src/service/modules/providers/repository/resource-package";
 import { createSessionCache } from "../../../src/service/modules/providers/repository/resource-shared";
+import {
+  type AgentPluginRelease,
+  createAgentPluginPayload,
+  createAgentPluginRelease,
+  createAgentPluginReleaseInput,
+  createAgentPluginReleaseSet,
+  createCompleteSetArtifactRef,
+  createReleaseArtifactRef,
+  payloadEntryBytes,
+  type VerifiedReleaseArtifactV1,
+} from "../../../src/service/shared/release";
+import { must, productFixture, releaseInputBody, SOURCE } from "../../shared/release/fixtures";
 
 const EXPECTED_CAPABILITIES = Object.freeze([
   "native-plugin-enable",

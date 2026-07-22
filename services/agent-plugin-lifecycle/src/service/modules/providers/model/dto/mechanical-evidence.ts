@@ -1,20 +1,19 @@
 import type { CompleteSetArtifactRef, ReleaseArtifactRef } from "../../../../shared/release";
-
+import type { ProviderDeploymentIssueCode } from "../errors/deployment-result";
+import { type DeploymentResult, failure, issue, success } from "../errors/deployment-result";
 import {
+  type CanonicalValue,
   canonicalBytes,
   canonicalDigest,
   compareCanonical,
-  type CanonicalValue,
 } from "../helpers/canonical";
-import type { EvaluationProfile } from "./mode";
-import { releaseRefValue, setRefValue } from "./mode";
 import type {
   AdapterProtocol,
   CapabilityProfileDigest,
   ProjectionDigest,
 } from "../policy/projection";
-import type { ProviderDeploymentIssueCode } from "../errors/deployment-result";
-import { failure, issue, success, type DeploymentResult } from "../errors/deployment-result";
+import type { EvaluationProfile } from "./mode";
+import { releaseRefValue, setRefValue } from "./mode";
 import type { ProviderId, ProviderTargetDigest } from "./provider-target";
 
 declare const evidenceDigestBrand: unique symbol;

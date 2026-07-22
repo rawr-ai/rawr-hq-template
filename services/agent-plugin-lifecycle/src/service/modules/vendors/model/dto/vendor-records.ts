@@ -1,4 +1,4 @@
-import { Type, type Static } from "typebox";
+import { type Static, Type } from "typebox";
 
 export const VENDOR_SOURCE_PROTOCOL = "rawr-vendor-source@v1" as const;
 export const VENDOR_PROVENANCE_PROTOCOL = "rawr-vendor-provenance@v1" as const;

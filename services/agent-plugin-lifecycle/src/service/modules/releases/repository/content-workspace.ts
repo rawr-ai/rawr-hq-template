@@ -5,25 +5,6 @@ import type {
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
-
-import {
-  addReleaseSetPayloadBytes,
-  createAgentPluginPayload,
-  compareCanonicalText,
-  decodeAgentPluginReleaseInput,
-  MAX_PAYLOAD_BYTES_PER_MEMBER,
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
-  parseContentAuthority,
-  parseGitCommitId,
-  parseGitTreeId,
-  parseReleaseRelativePath,
-  parseRepositoryIdentity,
-  type AgentPluginPayload,
-  type AgentPluginReleaseInput,
-  type PluginId,
-  type ReleaseRelativePath,
-} from "../../../shared/release";
 import type {
   ContentWorkspaceInspection,
   ContentWorkspacePolicy,
@@ -32,6 +13,24 @@ import type {
   SourceEligibilityIssueCode,
 } from "../../../model/dependencies/releases";
 import { sourceEligibilityIssue } from "../../../model/dto/releases/content-workspace";
+import {
+  type AgentPluginPayload,
+  type AgentPluginReleaseInput,
+  addReleaseSetPayloadBytes,
+  compareCanonicalText,
+  createAgentPluginPayload,
+  decodeAgentPluginReleaseInput,
+  MAX_PAYLOAD_BYTES_PER_MEMBER,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+  type PluginId,
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseReleaseRelativePath,
+  parseRepositoryIdentity,
+  type ReleaseRelativePath,
+} from "../../../shared/release";
 import { validateDeclaredPluginTree } from "../model/policy/declared-plugin-tree";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });

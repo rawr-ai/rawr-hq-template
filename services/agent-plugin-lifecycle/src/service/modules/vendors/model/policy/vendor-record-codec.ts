@@ -2,19 +2,19 @@ import { type Static, type TSchema } from "typebox";
 import { Value } from "typebox/value";
 
 import {
+  type CanonicalJsonValue,
   canonicalJsonLine,
   decodeCanonicalJson,
   equalBytes,
-  type CanonicalJsonValue,
 } from "../../../../shared/release/canonical";
 import { contentDigest } from "../../../../shared/release/primitives";
 import {
-  VendorLockRecordSchema,
-  VendorProvenanceRecordSchema,
-  VendorSourceDeclarationSchema,
   type VendorLockRecord,
+  VendorLockRecordSchema,
   type VendorProvenanceRecord,
+  VendorProvenanceRecordSchema,
   type VendorSourceDeclaration,
+  VendorSourceDeclarationSchema,
   type VendorSourceIdentity,
 } from "../dto/vendor-records";
 

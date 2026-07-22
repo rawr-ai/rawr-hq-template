@@ -2,8 +2,7 @@ import type { VerifiedArtifactSnapshotV1 } from "../../../shared/release";
 
 import { normalizeTargetedTestRequest, type TargetedTestInput } from "../model/dto/mode";
 import type { TargetedTestProviderOperationOutcome } from "../model/dto/outcome";
-import { issue, success, type DeploymentResult } from "../model/errors/deployment-result";
-import { module } from "../module";
+import { type DeploymentResult, issue, success } from "../model/errors/deployment-result";
 import type { VerifiedReleaseReader } from "../model/repositories/artifact";
 import type { MechanicalEvidencePublisher } from "../model/repositories/evidence";
 import type { ProviderTargetMutator, ProviderTargetReader } from "../model/repositories/provider";
@@ -15,6 +14,7 @@ import type {
   TargetReceiptReader,
   TargetReceiptWriter,
 } from "../model/repositories/state";
+import { module } from "../module";
 import {
   aggregateOutcome,
   attachMechanicalEvidence,

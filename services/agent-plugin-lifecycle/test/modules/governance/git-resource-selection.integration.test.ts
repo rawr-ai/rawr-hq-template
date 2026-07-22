@@ -1,19 +1,18 @@
 import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-
-import { afterEach, describe, expect, it } from "vitest";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   CURRENT_MAIN_V2_RECORD_PATH,
   createExactGitBlobPointer,
   parseRepository,
 } from "../../../src/service/modules/governance/model";
-import { decodeAgentPluginReleaseInput } from "../../../src/service/shared/release";
 import { createResourceExactGitReader } from "../../../src/service/modules/governance/repository/content-workspace";
+import { decodeAgentPluginReleaseInput } from "../../../src/service/shared/release";
 
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
-import { GIT_EXECUTABLE, createGeneratedGitRepository, git } from "../../support/git-repository";
+import { createGeneratedGitRepository, GIT_EXECUTABLE, git } from "../../support/git-repository";
 import {
   createOwnedFixtureRoot,
   disposeOwnedFixtureRoot,

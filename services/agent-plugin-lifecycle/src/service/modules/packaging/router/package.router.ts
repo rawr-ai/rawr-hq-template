@@ -1,3 +1,10 @@
+import type {
+  AgentPluginPackageOutputAsyncPort,
+  PackageOutputFailure,
+  PackageOutputPublicationResult,
+} from "@rawr/resource-agent-plugin-package-output";
+import type { ArtifactReader } from "../../../model/dependencies/releases";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES, normalizeArtifactRef } from "../../../shared/release";
 import {
   COWORK_PACKAGE_FORMAT,
   MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
@@ -13,13 +20,6 @@ import {
   createCoworkV1ArchiveRequest,
 } from "../model/helpers/cowork-v1";
 import { module } from "../module";
-import type {
-  AgentPluginPackageOutputAsyncPort,
-  PackageOutputFailure,
-  PackageOutputPublicationResult,
-} from "@rawr/resource-agent-plugin-package-output";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES, normalizeArtifactRef } from "../../../shared/release";
-import type { ArtifactReader } from "../../../model/dependencies/releases";
 
 interface PackagingDependencies {
   readonly artifacts: ArtifactReader;

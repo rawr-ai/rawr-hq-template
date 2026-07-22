@@ -1,27 +1,27 @@
 import {
-  contentDigest,
-  parseReleaseRelativePath,
   type ContentDigest,
+  contentDigest,
   type NormalizedFileMode,
+  parseReleaseRelativePath,
   type ReleaseRelativePath,
 } from "../../../shared/release";
 
 import {
+  type CanonicalValue,
   canonicalBytes,
   canonicalDigest,
   compareCanonical,
   equalBytes,
-  type CanonicalValue,
 } from "../model/helpers/canonical";
 import type { ProviderMarketplaceRegistration } from "../model/policy/marketplace";
 import {
+  type AgentProviderProjection,
   memberValue,
+  type ProviderMemberFingerprint,
+  type ProviderProjectionMember,
   projectionValue,
   providerSourceTreeValue,
   renderProviderMarketplaceManifestFile,
-  type AgentProviderProjection,
-  type ProviderMemberFingerprint,
-  type ProviderProjectionMember,
 } from "../model/policy/projection";
 import type { ImmutableProviderTreeFile } from "../model/repositories/projection-storage";
 

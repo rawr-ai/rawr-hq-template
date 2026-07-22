@@ -5,10 +5,10 @@ import {
   CanonicalStatusResultSchema,
   CanonicalSyncInputSchema,
   CanonicalSyncResultSchema,
-  CompleteTestResultSchema,
   CompleteTestInputSchema,
-  TargetedTestResultSchema,
+  CompleteTestResultSchema,
   TargetedTestInputSchema,
+  TargetedTestResultSchema,
 } from "./schemas";
 
 export const contract = {

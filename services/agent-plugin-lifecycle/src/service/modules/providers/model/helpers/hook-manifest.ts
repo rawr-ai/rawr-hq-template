@@ -1,4 +1,4 @@
-import { Type, type Static } from "typebox";
+import { type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
 const HOOK_EVENT_NAME_PATTERN_SOURCE = "^[A-Za-z][A-Za-z0-9]*$";

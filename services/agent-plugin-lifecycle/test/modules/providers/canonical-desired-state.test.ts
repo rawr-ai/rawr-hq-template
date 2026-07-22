@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
-
+import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
+import { resolveCanonicalDesiredStates } from "../../../src/service/modules/providers/model/policy/canonical-desired-state";
 import {
   createCompleteSetArtifactRef,
   parseReleaseSetDigest,
 } from "../../../src/service/shared/release";
-import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
-import { resolveCanonicalDesiredStates } from "../../../src/service/modules/providers/model/policy/canonical-desired-state";
 import { must } from "../../shared/release/fixtures";
-import { desiredStateFixture, type CompleteSetSnapshot } from "./canonical-fixture";
+import { type CompleteSetSnapshot, desiredStateFixture } from "./canonical-fixture";
 
 describe("canonical desired-state resolution", () => {
   it("resolves the exact selected complete set in fixed claude then codex order", () => {

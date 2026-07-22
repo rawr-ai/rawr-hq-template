@@ -1,29 +1,34 @@
-import { schema } from "@rawr/hq-sdk";
 import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
-import { describe, expect, expectTypeOf, it } from "vitest";
+import { schema } from "@rawr/hq-sdk";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
-
+import { describe, expect, expectTypeOf, it } from "vitest";
 import {
+  MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH,
+  SourceEligibilityIssueSchema,
+  sourceEligibilityIssue,
+} from "../../../src/service/model/dto/releases/content-workspace";
+import { contract } from "../../../src/service/modules/releases/contract";
+import {
+  type AgentPluginBuildRequest,
+  type AgentPluginCheckRequest,
   artifactStoreBuildIssue,
+  type BuildIssue,
+  type BuildMode,
+  type BuildResult,
+  type CheckResult,
   MAX_ARTIFACT_STORE_CLEANUP_FAILURE_LENGTH,
   MAX_ARTIFACT_STORE_ISSUE_DETAIL_LENGTH,
   MAX_RELEASE_CONSTRUCTION_ISSUE_DETAIL_LENGTH,
   MAX_RELEASE_SOURCE_CHANGED_DETAIL_LENGTH,
   normalizeReleaseSourceChangedDetail,
-  releaseConstructionBuildIssue,
-  type AgentPluginBuildRequest,
-  type AgentPluginCheckRequest,
-  type BuildIssue,
-  type BuildMode,
-  type BuildResult,
-  type CheckResult,
-  type ReleaseInputRefreshRequest,
-  type ReleaseInputRefreshResult,
   type ReleaseInputRecordRequest,
   type ReleaseInputRecordResult,
+  type ReleaseInputRefreshRequest,
+  type ReleaseInputRefreshResult,
   type RepositoryCheckRequest,
   type RepositoryCheckResult,
+  releaseConstructionBuildIssue,
 } from "../../../src/service/modules/releases/model/dto/release-lifecycle";
 import type {
   RetentionInventoryEntry,
@@ -35,6 +40,10 @@ import type {
   RetentionSpacePolicyV1,
 } from "../../../src/service/modules/releases/model/dto/retention";
 import {
+  MAX_RETENTION_ISSUE_DETAIL_LENGTH,
+  MAX_RETENTION_REFS,
+} from "../../../src/service/modules/releases/model/dto/retention";
+import {
   BuildInputSchema,
   BuildIssueSchema,
   BuildModeSchema,
@@ -43,44 +52,34 @@ import {
   CheckResultSchema,
   PlanRetentionInputSchema,
   PlanRetentionResultSchema,
-  RetentionInventorySchema,
-  RetentionPinsV1Schema,
-  ReleaseInputRefreshInputSchema,
-  ReleaseInputRefreshResultSchema,
   ReleaseInputRecordInputSchema,
   ReleaseInputRecordResultSchema,
+  ReleaseInputRefreshInputSchema,
+  ReleaseInputRefreshResultSchema,
   RepositoryCheckInputSchema,
   RepositoryCheckResultSchema,
   RetentionInventoryEntrySchema,
+  RetentionInventorySchema,
   RetentionIssueSchema,
+  RetentionPinsV1Schema,
   RetentionPlanBlockedSchema,
   RetentionPlanSchema,
   RetentionRefSchema,
 } from "../../../src/service/modules/releases/schemas";
 import {
-  MAX_RETENTION_ISSUE_DETAIL_LENGTH,
-  MAX_RETENTION_REFS,
-} from "../../../src/service/modules/releases/model/dto/retention";
-import {
-  MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH,
-  SourceEligibilityIssueSchema,
-  sourceEligibilityIssue,
-} from "../../../src/service/model/dto/releases/content-workspace";
-import {
-  ReleaseInputBodySchema,
-  ReleaseInputEnvelopeSchema,
-  ReleaseIssueSchema,
   type ReleaseInputBody,
+  ReleaseInputBodySchema,
   type ReleaseInputEnvelope,
+  ReleaseInputEnvelopeSchema,
   type ReleaseIssue,
+  ReleaseIssueSchema,
 } from "../../../src/service/shared/release";
-import { contract } from "../../../src/service/modules/releases/contract";
 import {
   issue,
   MAX_RELEASE_ISSUE_ACTUAL_LENGTH,
-  MAX_RELEASE_ISSUE_CLAIMANT_LENGTH,
   MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH,
   MAX_RELEASE_ISSUE_CLAIM_LENGTH,
+  MAX_RELEASE_ISSUE_CLAIMANT_LENGTH,
   MAX_RELEASE_ISSUE_EXPECTED_LENGTH,
   MAX_RELEASE_ISSUE_MESSAGE_LENGTH,
   MAX_RELEASE_ISSUE_PATH_LENGTH,

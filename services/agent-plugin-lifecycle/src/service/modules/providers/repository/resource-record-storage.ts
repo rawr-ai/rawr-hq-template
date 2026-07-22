@@ -12,7 +12,7 @@ import type {
 } from "@rawr/resource-agent-provider-records";
 
 import { MAX_RELEASE_SET_PAYLOAD_BYTES, parseReleaseRelativePath } from "../../../shared/release";
-import { failure, issue, success, type DeploymentResult } from "../model/errors/deployment-result";
+import { type DeploymentResult, failure, issue, success } from "../model/errors/deployment-result";
 import type {
   FlatProjectionRecordCollection,
   ImmutableProviderTreeCollection,
@@ -40,8 +40,8 @@ import {
   createPathlessProjectionStorage,
   type PathlessProjectionStorage,
 } from "./projection-storage";
-import { createPathlessTargetState, type PathlessTargetState } from "./target-records";
 import { providerTreeAddress, sameProviderTreeAddress } from "./resource-tree-address";
+import { createPathlessTargetState, type PathlessTargetState } from "./target-records";
 
 const MAX_RECORD_BYTES = MAX_RELEASE_SET_PAYLOAD_BYTES;
 const PROVIDER_TREE_LIMITS = Object.freeze({

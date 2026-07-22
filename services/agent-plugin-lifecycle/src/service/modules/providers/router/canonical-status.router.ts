@@ -1,16 +1,16 @@
-import { normalizeCanonicalStatusRequest, type CanonicalStatusInput } from "../model/dto/mode";
+import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
+import { type CanonicalStatusInput, normalizeCanonicalStatusRequest } from "../model/dto/mode";
 import type { CanonicalStatusOutcome, CanonicalTargetStatus } from "../model/dto/outcome";
+import type { ProviderTarget } from "../model/dto/provider-target";
 import {
-  success,
   type DeploymentResult,
   type ProviderDeploymentIssue,
+  success,
 } from "../model/errors/deployment-result";
 import { planCanonicalConvergence } from "../model/policy/canonical-convergence";
-import type { ProviderTarget } from "../model/dto/provider-target";
-import { module } from "../module";
 import type { VerifiedReleaseReader } from "../model/repositories/artifact";
 import type { CanonicalNativeRuntime } from "../model/repositories/canonical-native";
-import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
+import { module } from "../module";
 import { desiredForTarget, resolveCanonicalOperationSelection } from "./canonical-operation";
 import { canonicalStatusResult } from "./procedure-result";
 

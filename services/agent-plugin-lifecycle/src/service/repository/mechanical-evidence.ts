@@ -1,24 +1,24 @@
 import type {
   ArtifactEvidenceObservation,
   ArtifactObjectAddress,
-  ArtifactPublicationResult as ResourcePublicationResult,
   ArtifactRepositoryAsyncPort,
   ArtifactRepositoryIssue,
   ArtifactRepositoryPublicationEvent,
+  ArtifactPublicationResult as ResourcePublicationResult,
 } from "@rawr/resource-agent-plugin-artifact-repository";
 
 import {
-  MAX_MECHANICAL_EVIDENCE_BYTES,
   createMechanicalEvidenceHandle,
-  mechanicalEvidenceDigest,
-  parseMechanicalEvidenceHandle,
+  MAX_MECHANICAL_EVIDENCE_BYTES,
   type MechanicalEvidenceHandleV1,
   type MechanicalEvidenceIssue,
   type MechanicalEvidencePublicationResult,
-  type MechanicalEvidenceReadResult,
   type MechanicalEvidenceReader,
+  type MechanicalEvidenceReadResult,
   type MechanicalEvidenceStore,
   type MechanicalEvidenceStoreFailpointEvent,
+  mechanicalEvidenceDigest,
+  parseMechanicalEvidenceHandle,
 } from "../shared/release";
 
 const EVIDENCE_NAMESPACE = Object.freeze(["mechanical-evidence", "sha256"] satisfies [

@@ -1,3 +1,4 @@
+import type { StagedContentWorkspaceObservationReader } from "../../../model/dependencies/releases";
 import type { SourceEligibilityIssue } from "../../../model/dto/releases/content-workspace";
 import {
   normalizeReleaseSourceChangedDetail,
@@ -7,7 +8,6 @@ import type {
   StagedContentWorkspaceInspection,
   StagedContentWorkspacePolicy,
 } from "../model/dto/staged-content-workspace";
-import type { StagedContentWorkspaceObservationReader } from "../../../model/dependencies/releases";
 import {
   classifyStagedMaterializationObservation,
   classifyStagedReleaseInputObservation,

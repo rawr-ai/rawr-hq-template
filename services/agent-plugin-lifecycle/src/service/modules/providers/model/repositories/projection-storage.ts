@@ -1,12 +1,11 @@
 import type { NormalizedFileMode, ReleaseRelativePath } from "../../../../shared/release";
-
+import type { DeploymentResult } from "../errors/deployment-result";
 import type { MarketplaceProjectionDigest } from "../policy/marketplace";
 import type {
   ProjectionDigest,
   ProviderMemberFingerprint,
   ProviderSourceDigest,
 } from "../policy/projection";
-import type { DeploymentResult } from "../errors/deployment-result";
 
 export type ProjectionRecordKey =
   | Readonly<{ kind: "manifest"; projectionDigest: ProjectionDigest }>

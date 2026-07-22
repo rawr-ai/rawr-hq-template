@@ -1,14 +1,13 @@
 import type { PluginId } from "../../../../shared/release";
-
-import { canonicalDigest, compareCanonical, type CanonicalValue } from "../helpers/canonical";
+import type { ProviderId } from "../dto/provider-target";
+import { type CanonicalValue, canonicalDigest, compareCanonical } from "../helpers/canonical";
 import type {
   AdapterProtocol,
+  ProjectionDigest,
   ProviderMemberFingerprint,
   ProviderSourceDigest,
   ProviderSourceIdentity,
-  ProjectionDigest,
 } from "./projection";
-import type { ProviderId } from "../dto/provider-target";
 
 declare const marketplaceProjectionDigestBrand: unique symbol;
 

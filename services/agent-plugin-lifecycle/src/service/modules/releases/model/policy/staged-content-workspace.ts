@@ -1,25 +1,5 @@
 import { createHash } from "node:crypto";
-
 import {
-  addReleaseSetPayloadBytes,
-  compareCanonicalText,
-  createAgentPluginPayload,
-  decodeAgentPluginReleaseInput,
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
-  parseContentAuthority,
-  parseGitCommitId,
-  parseGitTreeId,
-  parsePluginId,
-  parseReleaseRelativePath,
-  parseRepositoryIdentity,
-  type AgentPluginPayload,
-  type AgentPluginReleaseInput,
-  type PluginId,
-  type ReleaseRelativePath,
-} from "../../../../shared/release";
-import {
-  sourceEligibilityIssue,
   type SourceEligibilityIssue,
   type SourceEligibilityIssueCode,
   type StagedIndexBindingObservation,
@@ -27,7 +7,26 @@ import {
   type StagedIndexObservationRequest,
   type StagedIndexObservationResult,
   type StagedObservationFailureReason,
+  sourceEligibilityIssue,
 } from "../../../../model/dto/releases/content-workspace";
+import {
+  type AgentPluginPayload,
+  type AgentPluginReleaseInput,
+  addReleaseSetPayloadBytes,
+  compareCanonicalText,
+  createAgentPluginPayload,
+  decodeAgentPluginReleaseInput,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+  type PluginId,
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parsePluginId,
+  parseReleaseRelativePath,
+  parseRepositoryIdentity,
+  type ReleaseRelativePath,
+} from "../../../../shared/release";
 import {
   normalizeReleaseSourceChangedDetail,
   type ReleaseInputRefreshRequest,

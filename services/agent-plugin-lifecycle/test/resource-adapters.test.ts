@@ -1,17 +1,12 @@
 import { lstat, readFile } from "node:fs/promises";
 import { join } from "node:path";
-
-import { afterEach, describe, expect, it } from "vitest";
+import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 
 import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
-import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { coworkV1PackageDigest } from "../src/service/modules/packaging/model/helpers/cowork-v1";
-import {
-  createMechanicalEvidenceHandle,
-  parseMechanicalEvidenceHandle,
-} from "../src/service/shared/release";
 import {
   createResourceArtifactReader,
   createResourceArtifactStore,
@@ -20,14 +15,18 @@ import {
   createResourceMechanicalEvidenceReader,
   createResourceMechanicalEvidenceStore,
 } from "../src/service/repository/mechanical-evidence";
+import {
+  createMechanicalEvidenceHandle,
+  parseMechanicalEvidenceHandle,
+} from "../src/service/shared/release";
 import { packagingArtifactFixture } from "./modules/packaging/artifact-fixture";
+import { MemoryArtifactRepository } from "./support/artifact-repository";
+import { createLifecycleTestClient, testInvocation } from "./support/client";
 import {
   createOwnedFixtureRoot,
   disposeOwnedFixtureRoot,
   type OwnedFixtureRoot,
 } from "./support/owned-fixture-root";
-import { MemoryArtifactRepository } from "./support/artifact-repository";
-import { createLifecycleTestClient, testInvocation } from "./support/client";
 
 describe("agent-plugin lifecycle resource adapters", () => {
   let fixtureRoot: OwnedFixtureRoot | undefined;

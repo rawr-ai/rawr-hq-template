@@ -1,17 +1,17 @@
+import type { ContentWorkspaceSnapshot } from "../../../../model/dto/releases/content-workspace";
 import {
+  type AgentPluginRelease,
+  type AgentPluginReleaseSet,
+  type ArtifactRef,
   createAgentPluginRelease,
   createAgentPluginReleaseSet,
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
-  type AgentPluginRelease,
-  type AgentPluginReleaseSet,
-  type ArtifactRef,
 } from "../../../../shared/release";
-import type { ContentWorkspaceSnapshot } from "../../../../model/dto/releases/content-workspace";
 import {
-  releaseConstructionBuildIssue,
   type BuildIssue,
   type BuildMode,
+  releaseConstructionBuildIssue,
 } from "../dto/release-lifecycle";
 
 export interface ConstructedPlan {

@@ -1,24 +1,24 @@
+import { parseProviderTarget } from "../model/dto/provider-target";
+import {
+  type DeploymentResult,
+  failure,
+  firstIssue,
+  issue,
+  type ProviderDeploymentIssue,
+  success,
+} from "../model/errors/deployment-result";
 import {
   byteDigest,
+  type CanonicalValue,
   canonicalBytes,
   canonicalDigest,
   equalBytes,
-  type CanonicalValue,
 } from "../model/helpers/canonical";
 import { exactRecord } from "../model/helpers/parse";
 import {
   createTargetIdentitySidecar,
   type TargetIdentitySidecar,
 } from "../model/policy/state-machine";
-import {
-  failure,
-  firstIssue,
-  issue,
-  success,
-  type DeploymentResult,
-  type ProviderDeploymentIssue,
-} from "../model/errors/deployment-result";
-import { parseProviderTarget } from "../model/dto/provider-target";
 import type {
   TargetRecordKey,
   TargetRecordMutation,

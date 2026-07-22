@@ -2,25 +2,24 @@ import { execFile } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
-
+import type { Client } from "../../src/client";
 import {
+  type ContentAuthority,
   canonicalSerializeAgentPluginReleaseInput,
   createAgentPluginPayload,
   createAgentPluginReleaseInput,
+  type GitCommitId,
+  type GitTreeId,
+  type PluginId,
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
   parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-  type ContentAuthority,
-  type GitCommitId,
-  type GitTreeId,
-  type PluginId,
   type ReleaseRelativePath,
   type RepositoryIdentity,
 } from "../../src/service/shared/release";
-import type { Client } from "../../src/client";
 
 type ContentWorkspacePolicy = Parameters<Client["releases"]["check"]>[0]["contentWorkspace"];
 type GitRepositoryFixtureRoot = Readonly<{ path: string }>;

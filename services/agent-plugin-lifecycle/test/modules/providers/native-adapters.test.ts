@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-
+import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
+import { success } from "../../../src/service/modules/providers/model/errors/deployment-result";
 import {
   createProviderMarketplaceRegistration,
   marketplaceState,
@@ -15,18 +16,16 @@ import type {
   NativeMemberObservation,
   NativeStandaloneExposureObservation,
 } from "../../../src/service/modules/providers/model/policy/state-machine";
-import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
-import { success } from "../../../src/service/modules/providers/model/errors/deployment-result";
-import {
-  CODEX_ADAPTER_PROTOCOL,
-  createCodexProviderAdapter,
-  type CodexMarketplacePlugin,
-} from "../../../src/service/modules/providers/repository/codex";
 import {
   CLAUDE_ADAPTER_PROTOCOL,
-  createClaudeProviderAdapter,
   type ClaudeNativePlugin,
+  createClaudeProviderAdapter,
 } from "../../../src/service/modules/providers/repository/claude";
+import {
+  CODEX_ADAPTER_PROTOCOL,
+  type CodexMarketplacePlugin,
+  createCodexProviderAdapter,
+} from "../../../src/service/modules/providers/repository/codex";
 import {
   createNativeProviderAdapter,
   type NativeProviderBridge,

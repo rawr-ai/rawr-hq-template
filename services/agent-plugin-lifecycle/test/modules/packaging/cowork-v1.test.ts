@@ -1,23 +1,20 @@
 import { Buffer } from "node:buffer";
-
+import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
-
 import {
-  COWORK_V1_MAX_ENTRY_COUNT,
-  COWORK_V1_MAX_PAYLOAD_BYTES,
   assertCoworkV1ProtocolBounds,
   assertSnapshotMatchesRef,
+  COWORK_V1_MAX_ENTRY_COUNT,
+  COWORK_V1_MAX_PAYLOAD_BYTES,
   coworkV1PackageDigest,
   createCoworkV1ArchiveRequest,
 } from "../../../src/service/modules/packaging/model/helpers/cowork-v1";
-import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
-
-import { packagingArtifactFixture } from "./artifact-fixture";
 import {
   createOwnedFixtureRoot,
   disposeOwnedFixtureRoot,
   type OwnedFixtureRoot,
 } from "../../support/owned-fixture-root";
+import { packagingArtifactFixture } from "./artifact-fixture";
 
 interface ZipEntryView {
   readonly path: string;

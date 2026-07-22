@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
-
+import {
+  failure,
+  issue,
+  success,
+} from "../../../src/service/modules/providers/model/errors/deployment-result";
 import {
   createProviderMarketplaceRegistration,
   type ProviderMarketplaceRegistration,
 } from "../../../src/service/modules/providers/model/policy/marketplace";
 import {
-  renderCompleteProjection,
   type AgentProviderProjection,
+  renderCompleteProjection,
 } from "../../../src/service/modules/providers/model/policy/projection";
-import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
-import { createPathlessProjectionStorage } from "../../../src/service/modules/providers/repository/projection-storage";
 import type {
   FlatProjectionRecordCollection,
   ImmutableProviderTreeCollection,
@@ -17,16 +19,13 @@ import type {
   ImmutableProviderTreeKey,
   ProjectionRecordKey,
 } from "../../../src/service/modules/providers/model/repositories/projection-storage";
+import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
+import { createPathlessProjectionStorage } from "../../../src/service/modules/providers/repository/projection-storage";
 import {
-  failure,
-  issue,
-  success,
-} from "../../../src/service/modules/providers/model/errors/deployment-result";
-import {
+  type AgentPluginRelease,
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
   payloadEntryBytes,
-  type AgentPluginRelease,
   type VerifiedReleaseArtifactV1,
 } from "../../../src/service/shared/release";
 import { productFixture } from "../../shared/release/fixtures";

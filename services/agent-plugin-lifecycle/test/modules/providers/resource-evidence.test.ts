@@ -1,15 +1,4 @@
 import { describe, expect, it } from "vitest";
-
-import {
-  createCompleteSetArtifactRef,
-  createReleaseArtifactRef,
-  mechanicalEvidenceDigest,
-  payloadEntryBytes,
-  type MechanicalEvidenceHandleV1,
-  type MechanicalEvidenceReadResult,
-  type MechanicalEvidenceStore,
-  type VerifiedReleaseArtifactV1,
-} from "../../../src/service/shared/release";
 import {
   AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
   createMechanicalProviderEvidence,
@@ -19,6 +8,16 @@ import { decodeMechanicalProviderEvidence } from "../../../src/service/modules/p
 import { renderCompleteProjection } from "../../../src/service/modules/providers/model/policy/projection";
 import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
 import { createResourceMechanicalEvidencePublisher } from "../../../src/service/modules/providers/repository/resource-evidence";
+import {
+  createCompleteSetArtifactRef,
+  createReleaseArtifactRef,
+  type MechanicalEvidenceHandleV1,
+  type MechanicalEvidenceReadResult,
+  type MechanicalEvidenceStore,
+  mechanicalEvidenceDigest,
+  payloadEntryBytes,
+  type VerifiedReleaseArtifactV1,
+} from "../../../src/service/shared/release";
 import { productFixture } from "../../shared/release/fixtures";
 
 describe("provider mechanical evidence resource projection", () => {

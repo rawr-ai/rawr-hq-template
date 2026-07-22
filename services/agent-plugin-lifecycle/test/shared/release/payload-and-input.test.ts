@@ -1,30 +1,30 @@
 import type { Static } from "typebox";
-import { describe, expect, expectTypeOf, it } from "vitest";
 import { Value } from "typebox/value";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
-  MAX_OWNERSHIP_CLAIMS,
-  MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
-  MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
-  MAX_PAYLOAD_BYTES_PER_MEMBER,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_MEMBERS,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
-  PayloadManifestEntrySchema,
-  ReleaseInputBodySchema,
-  ReleaseInputEnvelopeSchema,
   canonicalSerializeAgentPluginPayload,
   canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
   createAgentPluginPayload,
   createAgentPluginReleaseInput,
-  decodeAgentPluginReleaseInput,
   decodeAgentPluginRelease,
+  decodeAgentPluginReleaseInput,
   decodeAgentPluginReleaseSet,
-  payloadEntryBytes,
-  verifyAgentPluginPayload,
+  MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
+  MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
+  MAX_OWNERSHIP_CLAIMS,
+  MAX_PAYLOAD_BYTES_PER_MEMBER,
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
   type PayloadManifestEntry,
+  PayloadManifestEntrySchema,
+  payloadEntryBytes,
+  ReleaseInputBodySchema,
+  ReleaseInputEnvelopeSchema,
+  verifyAgentPluginPayload,
 } from "../../../src/service/shared/release";
 import { binding, member, must, productFixture, releaseInputBody, wire } from "./fixtures";
 
