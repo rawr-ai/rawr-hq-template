@@ -16,13 +16,19 @@
       "{workspaceRoot}/nx.json",
       "{workspaceRoot}/eslint.config.mjs",
       "{workspaceRoot}/package.json",
+      "{workspaceRoot}/.habitat/**/*",
       "{workspaceRoot}/scripts/architecture/**/*.mjs",
+      "{workspaceRoot}/scripts/habitat/**/*",
       "{workspaceRoot}/scripts/observability/**/*.mjs",
       "{workspaceRoot}/scripts/phase-a/**/*.mjs",
       "{workspaceRoot}/scripts/phase-2/**/*.mjs",
       "{workspaceRoot}/scripts/phase-03/**/*.mjs",
       "{workspaceRoot}/scripts/runtime/**/*.mjs",
       "{workspaceRoot}/tools/architecture-inventory/**/*.json"
+    ],
+    "typescriptRuntime": [
+      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/bun.lock"
     ]
   },
   "targetDefaults": {
@@ -35,9 +41,19 @@
       "cache": true,
       "inputs": ["default", "^default"]
     },
+    "typecheck-tests": {
+      "cache": true,
+      "inputs": ["default", "^default", "typescriptRuntime"],
+      "outputs": []
+    },
     "lint": {
       "cache": true,
       "inputs": ["default", "^default", "{workspaceRoot}/eslint.config.mjs"]
+    },
+    "test": {
+      "cache": true,
+      "inputs": ["default", "^default", "typescriptRuntime", "{workspaceRoot}/vitest.config.ts"],
+      "outputs": []
     },
     "sync": {
       "cache": false,

@@ -54,7 +54,7 @@
     "habitat": "bun scripts/habitat/check.mjs",
     "habitat:provision": "bun scripts/habitat/provision.mjs",
     "habitat:grit:provision": "bun node_modules/@getgrit/cli/install.js",
-    "ratchet:required": "bun run lint && bun run typecheck && bun run habitat:grit:provision && bunx nx run @rawr/habitat-consumer:test && bun run architecture:gate:agent-plugin-lifecycle",
+    "ratchet:required": "bun run lint && bun run typecheck && bun run habitat:grit:provision && bunx nx run @rawr/habitat-consumer:test && bunx nx run @rawr/agent-plugin-lifecycle:check",
     "architecture:gate:no-old-operational-packages": "bun scripts/architecture/verify-no-old-operational-packages.mjs",
     "architecture:gate:no-legacy-hq-imports": "bun scripts/architecture/verify-no-legacy-hq-imports.mjs",
     "architecture:gate:canonical-plugin-topology": "bun scripts/architecture/verify-canonical-plugin-topology.mjs",
