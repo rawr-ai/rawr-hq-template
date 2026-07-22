@@ -1,376 +1,232 @@
 ## RENAMED Requirements
 
 - FROM: `### Requirement: Native replacement is visible before receipt-owned cleanup`
-- TO: `### Requirement: Canonical replacement precedes omitted-member cleanup`
-- FROM: `### Requirement: Stale receipt normalization is an explicit mutation`
-- TO: `### Requirement: Noncanonical stale receipt normalization is an explicit mutation`
-- FROM: `### Requirement: Provider homes are exposed as a complete read snapshot`
-- TO: `### Requirement: Noncanonical provider homes are exposed as a complete read snapshot`
+- TO: `### Requirement: Native replacement precedes omitted-member cleanup`
+- FROM: `### Requirement: Ownership proof bounds all native retirement`
+- TO: `### Requirement: Verified native provenance bounds all retirement`
+- FROM: `### Requirement: Native state does not depend on a content checkout`
+- TO: `### Requirement: Native state does not depend on mutable checkout bytes`
 
 ## MODIFIED Requirements
 
 ### Requirement: Live provider truth is read for every operation
+
 Each selected provider home MUST be inventoried through its native adapter on
-every plan, status, test, and sync operation. Inventory MUST include
-native plugin identity, enablement and configuration, visible skills and hooks
-required by the projection, relevant marketplace/source identity, and embedded
-RAWR artifact provenance. Targeted and complete-test modes also observe their
-target receipts. Canonical sync and status MUST NOT require a receipt or target
-sidecar to observe, adopt, preserve, replace, or retire managed native state.
+every status, test, and sync operation. Inventory MUST include native plugin
+identity, enablement/configuration, provider-visible skills and hooks required by
+the projection, relevant marketplace/source identity, and embedded RAWR
+provenance. Native observation MUST win over any prior evidence, cache, or test
+record. Canonical status and sync MUST NOT require a receipt or sidecar.
 
 #### Scenario: Recorded and live state disagree
-- **WHEN** any prior record claims convergence but native plugins, skills,
-  hooks, enablement, provenance, or bytes are missing or altered
-- **THEN** live truth wins and the target is classified drifted or blocked
-  without unrelated repair
+- **WHEN** prior evidence or cache claims convergence but native state is missing,
+  changed, disabled, or provenance-mismatched
+- **THEN** the target is classified from live truth without unrelated repair
 
 #### Scenario: Manually added native state is observed
 - **WHEN** unmanaged native state appears after the last operation
-- **THEN** inventory reports it and planning preserves it unless it blocks an
-  exact planned identity
-
-### Requirement: Receipt scope is closed by lifecycle mode
-Every target receipt MUST retain exactly one of the landed closed scope variants
-with no optional or combined fields. `TargetedTestScope` and
-`CompleteTestScope` are the complete receipt union and keep their existing
-mode-local authority. The retired canonical-accepted variant and its
-acceptance/promotion digests MUST fail closed at receipt decoding. Canonical
-sync and status MUST NOT read, create, normalize, or write any target receipt,
-and no receipt may authorize canonical selection, ownership, convergence, or
-omitted-member retirement.
-
-#### Scenario: Test receipts cannot claim canonical authority
-- **WHEN** a targeted or complete-test receipt contains channel, canonical
-  retirement, or canonical convergence fields
-- **THEN** receipt validation rejects before planning or mutation
-
-#### Scenario: Retired canonical receipt is decoded
-- **WHEN** receipt decoding encounters the retired canonical-accepted scope or
-  its acceptance/promotion fields
-- **THEN** decoding rejects it as invalid and exposes no compatibility value
+- **THEN** inventory reports and preserves it unless it blocks an exact desired
+  identity
 
 ### Requirement: Planning is target-scoped and read-only
-The deployment service MUST canonicalize selected homes and create a
-deterministic independent plan per provider-home target. Targeted and
-complete-test planning retains its existing projection, capability, inventory,
-and receipt inputs. Every provider mode MUST avoid controller capsule ports.
-Canonical planning MUST use only the resolved
-`CanonicalChannelSelection`, verified immutable release/projection, observed
-capabilities, and live native inventory/provenance. It MUST NOT call, read, or
-write receipt, target-sidecar, evidence, hosted-governance, or promotion
-ports and MUST perform no mutation. Canonical handlers MUST express this as a
-required narrow static dependency view rather than an optional context bag.
+
+The deployment service MUST canonicalize explicit provider homes and produce an
+independent deterministic plan for each target. Canonical planning MUST use only
+the governance-resolved selection, verified release/projection, observed
+capabilities, and live native inventory/provenance. It MUST perform no mutation
+and MUST NOT read or write receipts, sidecars, evidence, export, undo,
+hosted-governance, promotion, Oclif-extension, or app/runtime state.
 
 #### Scenario: Same desired state yields independent plans
-- **WHEN** home A is converged and home B is missing one selected plugin
-- **THEN** A plans read-only verification while B plans only its target-local
-  native changes
+- **WHEN** home A is converged and home B lacks one selected plugin
+- **THEN** A plans only verification and B plans only its target-local native
+  changes
 
-#### Scenario: Ambiguous native provenance blocks canonical cleanup
-- **WHEN** an occupied identity lacks exact `rawr-hq` marketplace identity and
-  verified embedded artifact provenance
-- **THEN** canonical planning preserves it and blocks the conflicting target
+#### Scenario: Ambiguous native provenance blocks cleanup
+- **WHEN** an occupied identity lacks exact managed marketplace/source identity
+  and verified embedded RAWR provenance
+- **THEN** planning preserves it and blocks the conflicting target
 
-#### Scenario: Marketplace alone cannot prove ownership
-- **WHEN** native state uses the exact `rawr-hq` marketplace but embedded RAWR
-  artifact provenance is missing, invalid, or mismatched
-- **THEN** canonical planning returns `BLOCKED_COLLISION` with zero native
-  mutation
+### Requirement: Native replacement precedes omitted-member cleanup
 
-#### Scenario: Embedded provenance alone cannot prove ownership
-- **WHEN** native state carries valid-looking embedded RAWR provenance under a
-  foreign marketplace identity
-- **THEN** canonical planning returns `BLOCKED_COLLISION` with zero native
-  mutation
+Canonical replacement MUST retire a stale same-ID RAWR-managed member through
+the provider's native command, verify it absent, install and enable the selected
+member through native commands, and verify provider-visible projection before
+retiring omitted managed members. Fresh catalog or list metadata MUST NOT
+substitute for the native refresh transition. Canonical apply MUST publish no
+receipt, sidecar, evidence, export record, or undo state.
 
-### Requirement: Canonical replacement precedes omitted-member cleanup
-When canonical desired state replaces a same-ID managed member, apply MUST
-retire the exact native member proven by `rawr-hq` marketplace identity and
-verified embedded RAWR artifact provenance, verify membership plus
-enablement/configuration residue absent, install and enable the selected member
-through native commands, and verify the selected provider-visible projection.
-Fresh catalog or plugin-list metadata MUST NOT substitute for the native
-remove/add refresh transition. Omitted managed members MUST retire only after
-the selected replacement set is visible. Canonical apply MUST publish no
-receipt, sidecar, evidence, or undo capsule.
+#### Scenario: Successful same-ID replacement orders mutations
+- **WHEN** canonical convergence replaces a stale managed member
+- **THEN** native retirement precedes reinstall and selected visibility precedes
+  omitted-member cleanup
 
-#### Scenario: Successful canonical replacement orders mutations
-- **WHEN** canonical convergence replaces managed prior state
-- **THEN** the changed same-ID member is natively retired before reinstall,
-  selected visibility precedes omitted-member cleanup, and final native
-  inventory equals the selected set
+#### Scenario: Visibility fails after native install
+- **WHEN** native install returns success but selected provider-visible state is
+  not verified
+- **THEN** cleanup does not run, the result is non-success with the exact applied
+  prefix, and retry starts from a fresh native inspection
 
-#### Scenario: Catalog metadata cannot masquerade as a refresh
-- **WHEN** a marketplace advertises changed bytes for an enabled identity but
-  the old native installation or configuration remains
-- **THEN** the target is not converged and apply performs the typed native
-  remove/add transition
+### Requirement: Verified native provenance bounds all retirement
 
-#### Scenario: Visibility failure preserves the exact applied prefix
-- **WHEN** native install returns success but selected provider-visible state
-  cannot be verified
-- **THEN** cleanup does not run, the result is non-success, and retry starts by
-  re-reading live state without claiming rollback
+Canonical retirement MUST affect only live native state whose exact
+marketplace/source identity and embedded RAWR provenance prove management in the
+same explicit home. Names, paths, byte similarity, another home's record,
+export state, or the channel record alone MUST NOT prove installed ownership.
+Unmanaged and ambiguous collisions MUST be preserved and block before mutation.
 
-### Requirement: Ownership proof bounds all native retirement
-Targeted and complete-test mutation MUST retain the existing same-target receipt
-ownership law. Canonical omitted-member retirement MUST affect only native state
-with both exact `rawr-hq` marketplace identity and verified embedded RAWR
-artifact provenance in that home. Names, paths, byte similarity,
-another home's receipt, an export ledger, a channel record alone, or legacy
-receipt/sidecar bytes MUST NOT prove canonical ownership. Unmanaged and
-ambiguous collisions MUST be preserved and block.
-
-Canonical convergence MAY retire one exact selected-owner provider
-configuration slot without artifact provenance only when live native inventory
-proves that the owner-qualified selector is configured but has no installed
-package. This exception authorizes only the provider's native configuration
-remove/uninstall command; it MUST NOT classify, delete, or claim package bytes,
-receipts, sidecars, or other provider state. Residue for a selected member MUST
-retire before that member is installed or enabled. Residue for an omitted
-member MUST retire only after selected visibility. An installed exposure or an
-exposure owned by another provider source remains preserved and blocks when it
-collides.
-
-#### Scenario: Proven canonical member retires
-- **WHEN** the reviewed complete set omits a native member whose marketplace and
-  embedded provenance prove RAWR management in that same home
-- **THEN** only that exact member retires after the selected set is visible
-
-#### Scenario: Exact selected-owner configuration residue retires
-- **WHEN** an owner-qualified native selector remains configured but exact live
-  inventory proves that no package is installed for that selector
-- **THEN** canonical convergence removes only that configuration exposure,
-  verifies the exact selector absent, and preserves replacement-before-omission
-  ordering
+#### Scenario: Proven omitted member retires
+- **WHEN** the reviewed complete set omits a live member with exact same-home
+  managed identity and provenance
+- **THEN** only that member retires after the selected set is visible
 
 #### Scenario: Unmanaged collision is preserved
-- **WHEN** an unmanaged marketplace, standalone skill, or native plugin occupies
-  a planned identity
-- **THEN** it is preserved, the target is `BLOCKED_COLLISION`, and no fallback
-  or automatic adoption occurs
+- **WHEN** a foreign marketplace, standalone skill, or native plugin occupies a
+  planned identity
+- **THEN** it remains unchanged and the target is `BLOCKED_COLLISION`
 
 ### Requirement: Desired-state mode limits convergence authority
-Targeted tests MUST mutate only selected release members in explicit test homes
-and MUST NOT retire omitted members or claim channel convergence. Complete tests
-MAY evaluate the full candidate set in explicit test homes, MUST preserve every
-omitted member, and MUST NOT authorize absent-member retirement, acceptance, or
-canonical state. Canonical convergence MUST use exactly one valid reviewed
-current-main v2 selector and is the only mode that may retire omitted
-provenance-managed members.
 
-#### Scenario: Targeted and complete-test omission is non-retiring
-- **WHEN** either test mode omits an existing member
-- **THEN** the member remains untouched and no canonical/channel claim is made
+Canonical convergence MUST require exactly one valid reviewed current-main
+selection and MUST be the only mode that retires omitted managed members.
+Targeted and complete tests MUST use explicit disposable homes, MUST preserve
+omitted members, and MUST NOT authorize channel selection or canonical
+convergence.
+
+#### Scenario: Noncanonical test omits an existing member
+- **WHEN** a targeted or complete test excludes a member already in its explicit
+  disposable home
+- **THEN** the member remains unchanged and no channel claim is made
 
 #### Scenario: Canonical selection is invalid
-- **WHEN** canonical deployment lacks a valid current-main v2 record, selected
-  complete-set artifact, or exact Codex and Claude projection bindings
-- **THEN** every requested target is `BLOCKED_SELECTION` before native mutation
+- **WHEN** canonical deployment lacks a valid selection, verified complete set,
+  or exact provider projections
+- **THEN** every target is `BLOCKED_SELECTION` before native mutation
 
 ### Requirement: Repeated convergence is read-only
-A fully converged repeated operation MUST still inspect its desired-state
-authority, immutable artifact/projection, capability profile, live native
-inventory, visible state, and mode-owned provenance. Targeted and complete-test
-modes retain their receipt reads. Canonical sync/status MUST perform zero native
-mutation and MUST NOT call or write receipt, sidecar, evidence, hosted, or
-promotion ports. Every provider mode MUST leave controller capsule ports cold.
-No repeated mode may rebuild or republish artifacts.
+
+A converged repeat MUST re-read its desired selection, derived projection,
+capabilities, live native inventory, and provider-visible state. It MUST perform
+zero native mutation and MUST NOT publish or update a receipt, sidecar, evidence
+artifact, cache, export record, undo state, or projection.
 
 #### Scenario: Second canonical sync makes no changes
-- **WHEN** canonical convergence executes twice with identical selected state
-  and unchanged live targets
-- **THEN** the second result is `ReadOnlyConverged`, positive read counters are
-  observed, managed inventory is identical, and every lifecycle/native mutation
-  counter is zero
-
-### Requirement: Noncanonical stale receipt normalization is an explicit mutation
-Targeted and complete-test status MUST only report their receipt/live-state
-disagreement. A mutating targeted or complete-test operation MAY retain the
-existing bounded receipt-normalization transition, reporting its exact applied
-prefix and retrying from live observation without inverse coverage.
-Canonical sync/status MUST NOT inspect, normalize, remove, or publish a receipt,
-and legacy receipt bytes MUST NOT alter canonical planning or status.
-
-#### Scenario: Canonical operation encounters stale receipt bytes
-- **WHEN** native state is valid for the selected current-main projection but a
-  stale legacy receipt also exists
-- **THEN** canonical status is derived from native truth and canonical sync
-  performs no receipt or capsule mutation
+- **WHEN** canonical sync repeats with unchanged desired and live state
+- **THEN** it returns `ReadOnlyConverged` after positive reads with every
+  lifecycle and native mutation counter at zero
 
 ### Requirement: Multi-home results preserve partial truth and isolation
-Multiple explicit targets MUST be processed in canonical order under one
-operation result. Targeted and complete-test modes retain their target-local
-plans, phase events, inventory, status, and receipt results. Canonical status
-returns only terminal classification and issues; canonical sync adds only its
-exact native applied prefix and terminal verification result. Canonical results
-MUST NOT contain or infer receipts, persisted inventory, or a replacement event
-history. One target's success, failure, capability/provenance observation, or
-cleanup proof MUST NOT authorize or falsify another. A partial run MUST be
-non-success and MUST preserve verified successful targets without claiming
-failed targets advanced or were rolled back.
+
+Multiple explicit targets MUST be processed in canonical order and reported
+independently. Canonical status MUST return terminal classification and issues;
+canonical sync MUST add only the exact confirmed native applied prefix,
+uncertainty, and terminal verification. One target MUST NOT authorize or
+falsify another, and partial success MUST remain non-success without claiming
+rollback.
 
 #### Scenario: Home A verifies and home B fails
-- **WHEN** A completes and B fails capability, native install, visibility, or
+- **WHEN** A completes and B fails capability, native mutation, visibility, or
   cleanup
-- **THEN** A's exact verified state remains truthful, B reports its exact
-  applied prefix, and the aggregate is non-success
-
-### Requirement: Mechanical evidence is aggregate and immutable
-Complete-test evidence MUST retain its existing bounded immutable proof over
-its candidate inputs and final provider-visible facts. It MUST exclude channel
-authority and MUST NOT authorize current-main, canonical ownership, canonical
-cleanup, or native state. Canonical sync/status MUST neither require nor publish
-mechanical evidence.
-
-#### Scenario: Complete test emits mechanical proof
-- **WHEN** all complete-test targets settle and evidence publication succeeds
-- **THEN** the result exposes deterministic proof with no accepted, channel,
-  ownership, or canonical-cleanup claim
+- **THEN** A remains truthfully verified and B reports its exact applied prefix
+  and uncertainty under a non-success operation result
 
 ### Requirement: Outcomes report every observable phase truthfully
-Targeted and complete-test mutations MUST retain target-scoped planned,
-applied, verified, retired, skipped, blocked, and failed events that agree with
-actual adapter calls and mode-owned persisted state. Canonical sync MUST report
-its target status, exact applied native prefix, terminal verification, and
-issues without recreating that event envelope. No mode may return success after
-a provider-visible, cleanup, receipt (when applicable), or selected-target
-failure, or claim rollback that was not observed.
 
-#### Scenario: Failure after partial application is visible
-- **WHEN** a failpoint fires after one or more native actions
-- **THEN** the outcome reports each applied action, the missing later phases,
-  and non-success; retry begins by re-reading live state
+Public deployment results MUST report terminal status, exact confirmed native
+mutations, uncertainty, bounded issues, and inline verification facts. They
+MUST NOT require or expose internal plan steps, action objects,
+projection payloads, receipt transitions, or event histories. No operation may
+claim rollback or success that live observation did not verify.
 
-#### Scenario: Omitted-member retirement fails after selected visibility
-- **WHEN** the selected set is verified visible and native retirement of an
-  omitted provenance-managed member fails after one applied cleanup action
-- **THEN** the outcome reports that exact applied prefix without rollback, and a
-  retry re-reads native state and converges from what actually happened
-
-### Requirement: Provider procedure results keep execution bytes private
-Targeted and complete-test plans and events MUST preserve their ordered phase,
-action, visible-claim, path, mode, and content-digest observations, but their
-public TypeBox result schemas MUST NOT expose package payload bytes. Byte-bearing
-files remain private inputs to provider planning and native mutation. Output size
-therefore scales with declared file observations rather than payload byte length.
-
-#### Scenario: Large provider payload is projected to bounded observations
-- **WHEN** targeted-test or complete-test executes a projection containing large
-  package files
-- **THEN** the public result retains the exact plan and event order with each
-  file's path, mode, and content digest, contains no payload byte field, and
-  serializes identically for equal file observations regardless of payload size
+#### Scenario: Failure follows partial application
+- **WHEN** a native command fails after one or more confirmed mutations
+- **THEN** the result reports the exact confirmed prefix and uncertainty, and a
+  retry begins by re-reading live state
 
 ### Requirement: Status is disjoint, target-scoped, and non-mutating
-Canonical status MUST join the reviewed current-main selector, artifact and
-projection availability, capability compatibility, live native inventory, and
-embedded provenance to return exactly one primary classification per target:
-`BLOCKED_SELECTION`, `CONVERGED`, `DRIFTED`, `BLOCKED_COLLISION`, or
-`INCOMPATIBLE_PROVIDER`. It MUST NOT repair provider, receipt, channel, Oclif,
-export, app, sidecar, evidence, or capsule state. Noncanonical status retains
-its existing mode-owned classifications and receipt observations.
 
-#### Scenario: Oclif drift is irrelevant
-- **WHEN** provider/channel state is observed while unrelated Oclif registry
-  drift exists
-- **THEN** target classifications remain determined solely by lifecycle owners
-  and no Oclif read or repair occurs
+Canonical status MUST join the reviewed selection, derived release/projection,
+capability compatibility, and live native inventory to return exactly one
+primary classification per explicit target: `BLOCKED_SELECTION`, `CONVERGED`,
+`DRIFTED`, `BLOCKED_COLLISION`, or `INCOMPATIBLE_PROVIDER`. It MUST NOT repair
+provider, Oclif, repository, export, app, evidence, cache, or other state.
+
+#### Scenario: External Oclif state drifts
+- **WHEN** canonical status runs while unrelated Oclif extension state differs
+- **THEN** lifecycle classification remains unchanged and Oclif state is neither
+  read nor repaired
 
 #### Scenario: Newer unselected content exists
-- **WHEN** canonical personal main contains content newer than the exact
-  reviewed selector
-- **THEN** status evaluates only the selected release set and does not infer a
-  content-ahead or pending-promotion state
+- **WHEN** Personal main contains content newer than the reviewed selection
+- **THEN** status evaluates only the selected release set and infers no pending
+  promotion
 
-### Requirement: Noncanonical provider homes are exposed as a complete read snapshot
-Targeted and complete-test modes MUST retain the existing target-identity
-sidecar admission, snapshot, and alias law. Provider operations no longer use
-capsule inverse coverage. Canonical sync and
-status MUST NOT enumerate, create, update, delete, or infer target identity from
-those sidecars. Canonical homes are explicit operation inputs and native state
-is their provider truth.
+### Requirement: Native state does not depend on mutable checkout bytes
 
-#### Scenario: Canonical target has no sidecar
-- **WHEN** canonical sync selects an explicit home with valid managed native
-  state and no target-identity sidecar
-- **THEN** planning adopts native truth and no sidecar admission is planned
+Provider-native input MUST derive from exact selected Git objects. Canonical
+mutation MUST use a provider-native Git marketplace source at the selected
+immutable Personal revision, and the provider MUST own its resulting snapshot
+inside the explicit native home. A local content workspace remains only a Git
+object locator and MUST NOT become package, provider, cache, or next-invocation
+identity. Local marketplace paths are test-only and MUST share the bounded
+lifetime of their disposable home.
 
-### Requirement: Native state does not depend on a content checkout
-Native package staging and provider-visible state MUST derive from immutable
-artifacts and stable Template runtime roots. No marketplace, provider identity,
-package source, installed state, or mode-owned receipt may use a disposable
-content or implementation worktree as operational authority.
+#### Scenario: Mutable worktree differs from selected objects
+- **WHEN** worktree bytes differ from the reviewed selected commit and tree
+- **THEN** status or sync reads only the exact selected Git objects or returns
+  `BLOCKED_SELECTION`
+- **AND** it never substitutes mutable worktree bytes or a retained local copy
 
-#### Scenario: Worktrees disappear after convergence
-- **WHEN** content and implementation worktrees are removed after artifact
-  publication and native convergence
-- **THEN** live provider verification, status, and repeated convergence remain
-  correct from the installed controller, immutable artifacts, reviewed channel,
-  and native target state
+## REMOVED Requirements
+
+### Requirement: Receipt scope is closed by lifecycle mode
+**Reason**: No lifecycle mode needs a persisted receipt or identity sidecar.
+**Migration**: Canonical status/sync use live native state; disposable tests
+return bounded inline observations that ordinary CI may retain externally.
+
+### Requirement: Stale receipt normalization is an explicit mutation
+**Reason**: Canonical behavior cannot depend on receipt normalization, and the
+adjacent test implementation does not define lifecycle authority.
+**Migration**: Reinspect live native state and report drift without canonical
+receipt mutation.
+
+### Requirement: Mechanical evidence is aggregate and immutable
+**Reason**: The lifecycle-owned custom evidence store has no independent
+product consumer after the corrected distribution and test model.
+**Migration**: Return bounded inline verification facts; ordinary CI may retain
+the command result externally. No lifecycle evidence identity remains.
+
+### Requirement: Provider homes are exposed as a complete read snapshot
+**Reason**: Provider homes are explicit operation inputs. Sidecar snapshots and
+home aggregation are not product authority.
+**Migration**: Validate each explicit home and inspect it through its native
+adapter.
 
 ## ADDED Requirements
 
 ### Requirement: Canonical handlers consume one resolved selection
-Canonical sync and status MUST consume one governance-resolved
-`CanonicalChannelSelection`; provider code MUST NOT parse current-main bytes or
-own another channel DTO. Governance verifies Git and record identity. Provider
-planning MUST verify selected artifact and re-rendered projection bytes before
-native mutation. The complete-set artifact's embedded content authority,
-repository identity, source commit, source tree, and release-input digest MUST
-equal the selection exactly.
 
-#### Scenario: Artifact or projection does not match the selector
-- **WHEN** the selected artifact is missing/tampered or a re-rendered projection
-  differs from its exact binding, or any embedded source identity differs
-- **THEN** the target is `BLOCKED_SELECTION` and every native mutation counter
-  remains zero
+Canonical sync and status MUST consume one governance-resolved
+`CanonicalChannelSelection`. Provider code MUST NOT parse raw current-main bytes
+or own another channel DTO. Provider planning MUST derive and verify the complete
+release set and current provider projection from the selected Git objects before
+native mutation.
+
+#### Scenario: Selected content cannot be derived exactly
+- **WHEN** a selected Git object is absent or tampered, or derived release state
+  does not bind the selected repository, commit, tree, and release-input digest
+- **THEN** the target is `BLOCKED_SELECTION` with zero native mutation
 
 ### Requirement: Persistent active visibility is an operational oracle
-The Codex adapter MUST execute and verify the native remove/add refresh
-transition for stale same-ID releases. Fresh app-server inventory MUST NOT be
-claimed as proof that an already-running Desktop task reloaded its catalog.
-Approved-home settlement MUST record one bounded persistent-task observation
-separately, and C6 MUST NOT add app/runtime composition machinery to manufacture
-that proof.
+
+The Codex adapter MUST execute the provider-native refresh transition for a stale
+same-ID release. Fresh native inventory MUST NOT be represented as evidence that
+an already-running Desktop task reloaded its catalog. Approved-home settlement
+MUST return that bounded observation for the operator or external settlement
+record without writing lifecycle state or adding app/runtime composition.
 
 #### Scenario: Fresh inspection passes but persistent task is stale
-- **WHEN** fresh native inventory sees the selected cognition release but the
-  bounded persistent Desktop task still exposes the old catalog
-- **THEN** settlement remains unproven until the native refresh boundary is
-  observed in that task; no fresh-process result is relabeled as active proof
-
-### Requirement: Reserved owner-marker occupancy blocks every provider mode
-Every provider plan/status operation MUST require its explicit canonical home to
-already exist as a directory, then read only the fixed
-`.rawr-agent-plugin-owner.json` slot at that home before native execution. Any
-entry or unreadable result at the slot MUST be `BLOCKED_COLLISION`; absence
-permits ordinary provider planning. The native resource MUST recheck slot
-absence immediately before each native command. A missing home MUST block and
-the provider lifecycle MUST NOT create it. Provider code MUST NOT parse the
-marker, read a destination ledger, scan destinations, aggregate native homes, or
-infer ownership from path shape. This reservation is only a bounded collision
-guard; it does not authorize or implement destination export.
-
-#### Scenario: A reserved owner marker occupies a provider home candidate
-- **WHEN** a provider request selects a home whose fixed marker slot is occupied
-- **THEN** the target is `BLOCKED_COLLISION` before native mutation and no
-  provider receipt, sidecar, or capsule changes
-
-#### Scenario: Provider state exists first
-- **WHEN** an explicit existing unmarked root is selected as a provider home
-- **THEN** provider convergence and a repeated read-only invocation succeed and
-  provider state remains the sole root owner
-
-#### Scenario: Missing home is not prepared
-- **WHEN** a provider request selects an absent explicit home
-- **THEN** the operation blocks without creating the home or invoking a native
-  command
-
-#### Scenario: Marker slot becomes occupied at the native edge
-- **WHEN** planning observes an absent marker slot but the native resource
-  recheck observes any entry or unreadable result before command execution
-- **THEN** that native invocation does not start and reports a
-  `BLOCKED_COLLISION` issue; capability or observation remains blocked, while a
-  mutation bridge that may already have invoked an earlier native command
-  remains uncertain rather than falsely reporting a zero-mutation target
+- **WHEN** fresh inventory sees selected cognition bytes but the bounded
+  persistent Desktop task still exposes the old catalog
+- **THEN** active-task settlement remains unproven and no fresh-process result is
+  relabeled as that observation

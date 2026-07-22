@@ -1,10 +1,15 @@
+## RENAMED Requirements
+
+- FROM: `### Requirement: Controller and repository identities never collapse`
+- TO: `### Requirement: CLI installation and content repository identities remain separate`
+
 ## MODIFIED Requirements
 
 ### Requirement: Curated lifecycle has one exact qualified command ontology
 
-The installed Template controller MUST expose curated lifecycle only as
-`rawr agent plugins check|create|vendors status|vendors update|build|test|package|sync|status`.
-Every command and nested topic MUST be an immutable controller member. Bare
+The installed Template CLI MUST expose curated lifecycle only as
+`rawr agent plugins check|create|status vendors|update vendors|build|test|package|sync|status`.
+Every command and nested topic MUST be a declared first-party Oclif command. Bare
 `rawr plugins`, root `rawr undo`, `rawr agent sync`, retired
 `rawr agent plugins retire`, retired `rawr agent plugins attest-promotion`,
 retired `rawr agent plugins export`, retired `rawr agent plugins undo`, and any
@@ -15,23 +20,26 @@ alias or forwarding route MUST NOT expose curated lifecycle behavior.
   enumerated
 - **THEN** the exact qualified curated family appears only below
   `rawr agent plugins`
-- **AND** bare `rawr plugins` contains only the seven external-extension
-  operations and every retired lifecycle command is absent everywhere
+- **AND** bare `rawr plugins` is owned directly by `@oclif/plugin-plugins`,
+  contains no curated lifecycle behavior, and every retired lifecycle command
+  is absent everywhere
 
 ### Requirement: CLI parsing preserves closed procedure requests
 
 Every lifecycle command MUST reject unknown, legacy, retired, cross-mode,
 relative, noncanonical, or ambiguous inputs before constructing a Git,
-artifact, provider, destination, output, capsule, Oclif, app, or runtime port.
-Artifact inputs MUST use only canonical domain-qualified release or release-set
-handles. Provider selection MUST use only repeatable `provider=absolute-home`
-tuples. A parsed request MUST retain the typed procedure's discriminated union
-and MUST NOT collapse into an optional-field bag.
+provider, output, Oclif, app, or runtime port. Retired artifact handles,
+destinations, capsules, receipts, and evidence identities MUST reject. Git
+selection MUST use a closed procedure-specific locator/commit/tree/channel
+shape, and provider selection MUST use only repeatable
+`provider=absolute-home` tuples. A parsed request MUST retain the typed
+procedure's discriminated union and MUST NOT collapse into an optional-field
+bag.
 
 #### Scenario: Foreign mode fields reject without calls
 - **WHEN** a command receives a raw digest/path, uppercase or surplus handle,
   legacy agent/source/repair/hosted-governance flag, retired promotion input,
-  mixed release/release-set/channel input, unsupported provider, relative home,
+  mixed targeted/canonical selection input, unsupported provider, relative home,
   or duplicate canonical target
 - **THEN** parsing exits as invalid input before every observable port call
 
@@ -60,7 +68,7 @@ Qualified status MUST preserve every canonical repository/provider
 classification and exit `0` only when every selected target is `CONVERGED`, `1`
 for a valid observed non-converged state, and `2` for invalid input or authority
 binding. A converged canonical operation MAY inspect live state but MUST NOT
-publish artifacts/projections, write receipts/ledgers/capsules/outputs, invoke
+  publish lifecycle state, write receipts/ledgers/capsules/outputs, invoke
 native mutation, or change bytes or metadata.
 
 #### Scenario: Repeated convergence stutters
@@ -75,6 +83,24 @@ native mutation, or change bytes or metadata.
   whose live provider state is merely drifted
 - **THEN** authority-invalid selection exits `2` while observed drift exits `1`
 
+### Requirement: CLI installation and content repository identities remain separate
+
+Curated lifecycle MUST own no durable local data root. Oclif MAY use its
+ordinary host-provided application directories for its own installed
+extension/configuration state. Content and channel records MUST be read only through an
+explicit absolute versioned Git locator; provider homes and package outputs
+MUST remain explicit procedure inputs. A repository path MUST NOT select a CLI
+package version, provider home, channel, executable implementation, or Oclif
+application directory. Personal executable modules MUST never load.
+
+#### Scenario: Misleading Personal runtime files have no authority
+- **WHEN** an explicit content workspace contains command, service, adapter,
+  renderer, or CLI-like executable files
+- **THEN** lifecycle reads only the admitted versioned data interface through
+  fixed Git objects
+- **AND** Oclif dispatch and implementation imports remain inside the ordinarily
+  installed Template package
+
 ## ADDED Requirements
 
 ### Requirement: Existing check command exposes closed repository and channel modes
@@ -82,13 +108,13 @@ native mutation, or change bytes or metadata.
 `rawr agent plugins check` MUST parse exactly one of release eligibility,
 staged/clean repository validation, release-input body/envelope
 canonicalization, release-input staged refresh, current-main v2 encode/validate,
-or current-main selection validation before acquiring any Git, filesystem, artifact, provider,
-destination, capsule, Oclif, app, or runtime port. Each selected mode MUST
+  or current-main selection validation before acquiring any Git, filesystem,
+  provider, Oclif, app, or runtime port. Each selected mode MUST
 invoke exactly one typed `@rawr/agent-plugin-lifecycle` procedure once.
 
 The prior protected-lane runtime mode MUST be absent. C6 settlement MUST select
 the exact canonical personal-main workspace/release input and MUST NOT supply or
-read an external pending research candidate. The generic controller MUST NOT
+read an external pending research candidate. The generic lifecycle service MUST NOT
 infer candidate status from an explicit content-workspace path.
 
 #### Scenario: Mixed check domains reject before ports
@@ -110,8 +136,8 @@ stream. A body request MUST produce one newline-terminated canonical envelope;
 an envelope request MUST preserve the exact validated canonical bytes. Invalid
 UTF-8, malformed JSON, noncanonical envelopes, digest mismatch, or invalid body
 shape MUST return releases-owned typed issues. The CLI MUST NOT write a record,
-select a repository path, or acquire Git, filesystem, artifact, provider,
-destination, package, governance, capsule, Oclif, app, or runtime authority.
+  select a repository path, or acquire Git, filesystem, provider, package,
+  governance, Oclif, app, or runtime authority.
 
 #### Scenario: Body and envelope reach one pure procedure
 - **WHEN** an operator supplies either a valid body or the resulting canonical
@@ -146,9 +172,9 @@ logical byte total. Each selected path counts its full logical bytes even when
 multiple paths reference the same Git object.
 
 A valid existing record MUST contribute surviving explicit vendor, curation,
-alias, provider-identity, destination, lock, and quality-policy declarations.
+alias, provider-identity, lock, and quality-policy declarations.
 Absent existing state MUST contribute empty ancillary declarations; the
-controller MUST NOT infer them from package metadata, frontmatter, legacy
+lifecycle service MUST NOT infer them from package metadata, frontmatter, legacy
 tooling, installed providers, or repository paths. The operation MUST emit the
 unique canonical release-input bytes and MUST NOT write, stage, build, publish,
 package, export, mutate providers, or create a store, receipt, or ledger.
@@ -165,7 +191,7 @@ package, export, mutate providers, or create a store, receipt, or ledger.
 - **WHEN** the emitted canonical bytes are staged with unchanged selected roots
 - **THEN** the same operation emits byte-identical
   `ReleaseInputReadOnlyConverged`
-- **AND** every Git, artifact, package, export, provider, governance, capsule,
+- **AND** every Git, package, provider, governance,
   and filesystem mutation counter remains zero
 
 #### Scenario: Membership or source is not closed
@@ -198,9 +224,9 @@ the release input. Staged mode MUST NOT authorize build or release.
 The current-main v2 encode/validate mode MUST return identical canonical bytes,
 protocol, digest, and byte length for one semantically identical body. It MUST
 reject unknown fields, malformed or noncanonical bytes, missing/duplicate
-Codex/Claude bindings, wrong protocol/digest, and oversized input. The pure
+Personal-owned fields, wrong protocol/digest, and oversized input. The pure
 codec MUST take no dependency argument; the procedure MUST NOT call, read, or
-write a Git, provider, artifact, export, or other lifecycle port.
+write a Git, provider, package-output, or other lifecycle port.
 
 #### Scenario: Equivalent record bodies encode
 - **WHEN** two semantically identical valid bodies differ only in input object
