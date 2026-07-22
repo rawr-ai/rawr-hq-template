@@ -13,7 +13,7 @@ import {
 
 const SERVICE_ROOT = "services/session-intelligence";
 const HOST_ROOT = "packages/session-intelligence-host";
-const PLUGIN_ROOT = "plugins/cli/session-tools";
+const PLUGIN_ROOT = "plugins/cli/commands/session-tools";
 
 const SERVICE_MODULES = ["catalog", "transcripts", "search"];
 const SERVICE_EXPORTS = [

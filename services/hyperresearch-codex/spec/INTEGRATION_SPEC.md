@@ -12,7 +12,7 @@ checkout, copied implementation, or Git relationship.
 RAWR HQ-Template owns:
 
 - `services/hyperresearch-codex`: reusable Codex orchestration service.
-- `plugins/cli/hyperresearch`: thin `rawr hyperresearch ...` topic.
+- `plugins/cli/commands/hyperresearch`: thin `rawr hyperresearch ...` topic.
 - Control-plane specs, tests, and synthetic runtime proof.
 - Backend resource ports for direct calls to the installed Python `hyperresearch` CLI.
 - Service modules: `fixtures.runSyntheticSlice` for the synthetic proof path and `runs.startV8Run` / `runs.advanceV8Run` / `runs.inspectV8Run` / `runs.validateV8Run` for durable V8 orchestration. Shared mechanics are not modules.

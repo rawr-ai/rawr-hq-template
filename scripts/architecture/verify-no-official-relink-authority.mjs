@@ -35,7 +35,7 @@ const scanRoots = [
   "scripts/githooks",
   "services/hq-ops/src",
   "services/dev/src",
-  "plugins/cli/devops/src",
+  "plugins/cli/commands/devops/src",
 ];
 
 const findings = [];

@@ -33,7 +33,7 @@ describe("controller Nx closure", () => {
       graph: graph(
         {
           "@rawr/cli": "apps/cli",
-          "@rawr/plugin-devops": "plugins/cli/devops",
+          "@rawr/plugin-devops": "plugins/cli/commands/devops",
           "@rawr/core": "packages/core",
         },
         {
@@ -48,7 +48,7 @@ describe("controller Nx closure", () => {
     expect(result).toEqual([
       { name: "@rawr/cli", root: "apps/cli" },
       { name: "@rawr/core", root: "packages/core" },
-      { name: "@rawr/plugin-devops", root: "plugins/cli/devops" },
+      { name: "@rawr/plugin-devops", root: "plugins/cli/commands/devops" },
     ]);
   });
 
@@ -58,7 +58,7 @@ describe("controller Nx closure", () => {
         graph: graph(
           {
             "@rawr/cli": "apps/cli",
-            "@rawr/plugin-hello": "plugins/cli/hello",
+            "@rawr/plugin-hello": "plugins/cli/commands/hello",
           },
           {
             "@rawr/cli": ["@rawr/plugin-hello"],
