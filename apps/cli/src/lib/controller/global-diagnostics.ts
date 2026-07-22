@@ -8,7 +8,6 @@ import {
   decodeControllerSelection,
 } from "@rawr/controller-release";
 
-import type { NativeRegistryProjection } from "../external-extensions/model";
 import {
   CONTROLLER_DEPENDENCY_LOCK_PATH,
   CONTROLLER_ENTRY_PATH,
@@ -30,8 +29,7 @@ type DiagnosticDomain =
   | "launcher"
   | "release"
   | "runtime"
-  | "global-resolution"
-  | "external-extensions";
+  | "global-resolution";
 
 export type GlobalDoctorIssue = Readonly<{
   domain: DiagnosticDomain;
@@ -118,26 +116,6 @@ type ReleaseDiagnostics = Readonly<{
   issues: readonly GlobalDoctorIssue[];
 }>;
 
-type ExternalExtensionDiagnostics = Readonly<{
-  registryPath: string;
-  status: NativeRegistryProjection["status"] | "unavailable";
-  hasResidue: boolean;
-  active: readonly Readonly<{
-    packageId: string;
-    version: string;
-    type: "link" | "user";
-    root: string;
-    fingerprint: string;
-  }>[];
-  quarantined: readonly Readonly<{
-    identity: string;
-    root: string | null;
-    code: string;
-    message: string;
-  }>[];
-  healthy: boolean;
-}>;
-
 export type GlobalDoctorData = Readonly<{
   healthy: boolean;
   dataRoot: Readonly<{
@@ -158,15 +136,12 @@ export type GlobalDoctorData = Readonly<{
     expectedLauncherRealpath: string | null;
     matchesLauncher: boolean;
   }>;
-  externalExtensions: ExternalExtensionDiagnostics;
   issues: readonly GlobalDoctorIssue[];
 }>;
 
 export type GlobalDoctorInspectionOptions = Readonly<{
   env: NodeJS.ProcessEnv;
   cwd: string;
-  oclifDataDir: string;
-  readExternalExtensions: () => Promise<NativeRegistryProjection>;
   hostPlatform?: string;
   hostArchitecture?: string;
 }>;
@@ -260,35 +235,6 @@ export async function inspectGlobalController(
     );
   }
 
-  if (effectiveDataRoot !== null && path.resolve(options.oclifDataDir) !== effectiveDataRoot) {
-    issues.push(
-      issue(
-        "external-extensions",
-        "EXTERNAL_EXTENSION_DATA_ROOT_MISMATCH",
-        options.oclifDataDir,
-        "Native external extension state must share the canonical controller data root",
-        effectiveDataRoot,
-        path.resolve(options.oclifDataDir)
-      )
-    );
-  }
-  const external = await inspectExternalExtensions(
-    options.oclifDataDir,
-    options.readExternalExtensions
-  );
-  if (!external.healthy) {
-    issues.push(
-      issue(
-        "external-extensions",
-        "EXTERNAL_EXTENSION_STATE_UNHEALTHY",
-        external.registryPath,
-        "Native external extension state contains unreadable or quarantined entries",
-        "missing or valid registry with no quarantine",
-        `${external.status}; quarantined=${external.quarantined.length}`
-      )
-    );
-  }
-
   return Object.freeze({
     healthy: issues.length === 0,
     dataRoot: dataRoot.value,
@@ -303,7 +249,6 @@ export async function inspectGlobalController(
       expectedLauncherRealpath: launcher?.realpath ?? null,
       matchesLauncher,
     }),
-    externalExtensions: external,
     issues: Object.freeze(issues),
   });
 }
@@ -908,57 +853,6 @@ async function resolveExecutable(
     }
   }
   return { path: null, realpath: null };
-}
-
-async function inspectExternalExtensions(
-  oclifDataDir: string,
-  readProjection: () => Promise<NativeRegistryProjection>
-): Promise<ExternalExtensionDiagnostics> {
-  try {
-    const projection = await readProjection();
-    const quarantined = projection.quarantined.map((entry) =>
-      Object.freeze({
-        identity: entry.identity,
-        root: entry.root ?? null,
-        code: entry.reason.code,
-        message: entry.reason.message,
-      })
-    );
-    return Object.freeze({
-      registryPath: projection.registryPath,
-      status: projection.status,
-      hasResidue: projection.hasResidue,
-      active: Object.freeze(
-        projection.active.map((entry) =>
-          Object.freeze({
-            packageId: entry.extension.packageId,
-            version: entry.extension.version,
-            type: entry.entry.type,
-            root: entry.extension.canonicalRoot,
-            fingerprint: entry.extension.fingerprint,
-          })
-        )
-      ),
-      quarantined: Object.freeze(quarantined),
-      healthy: projection.status !== "malformed" && quarantined.length === 0,
-    });
-  } catch (error) {
-    return Object.freeze({
-      registryPath: path.join(oclifDataDir, "package.json"),
-      status: "unavailable",
-      hasResidue: false,
-      active: Object.freeze([]),
-      quarantined: Object.freeze([
-        {
-          identity: "native-registry",
-          root: null,
-          code: "registry-unavailable",
-          message: errorMessage(error),
-        },
-      ]),
-      healthy: false,
-    });
-  }
 }
 
 function controllerIssue(domain: DiagnosticDomain, entry: ControllerIssue): GlobalDoctorIssue {

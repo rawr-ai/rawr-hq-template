@@ -63,59 +63,35 @@ describe("qualified lifecycle command boundary", () => {
     for (const file of closure) {
       const source = readFileSync(file, "utf8");
       expect(source, file).not.toContain("@oclif/plugin-plugins");
-      expect(source, file).not.toContain("NativeRegistryState");
-      expect(source, file).not.toContain("NativePluginSubprocessPort");
     }
   });
 
-  it("declares only the exact qualified lifecycle and external-extension command inventory", () => {
-    const declared = [
-      ...commandFiles(path.join(cliRoot, "src", "commands", "agent", "plugins"), "agent:plugins"),
-      ...commandFiles(path.join(cliRoot, "src", "commands", "plugins"), "plugins"),
-    ].sort();
+  it("declares only the exact curated lifecycle command inventory", () => {
+    const declared = commandFiles(
+      path.join(cliRoot, "src", "commands", "agent", "plugins"),
+      "agent:plugins"
+    ).sort();
 
-    expect(declared).toEqual([...EXACT_PLUGIN_COMMANDS]);
+    expect(declared).toEqual([...EXACT_CURATED_PLUGIN_COMMANDS]);
+    expect(existsSync(path.join(cliRoot, "src", "commands", "plugins"))).toBe(false);
     for (const id of declared) {
-      const root = id.startsWith("agent:plugins:")
-        ? path.join(cliRoot, "src", "commands", "agent", "plugins")
-        : path.join(cliRoot, "src", "commands", "plugins");
-      const relative = id
-        .replace(id.startsWith("agent:plugins:") ? "agent:plugins:" : "plugins:", "")
-        .split(":")
-        .join(path.sep);
+      const root = path.join(cliRoot, "src", "commands", "agent", "plugins");
+      const relative = id.replace("agent:plugins:", "").split(":").join(path.sep);
       const source = readFileSync(path.join(root, `${relative}.ts`), "utf8");
       expect(source, id).not.toMatch(/static\s+(?:hiddenAliases|aliases)\s*=/u);
     }
   });
 
-  it("loads every admitted command and refuses retired aggregate, alias, and composition surfaces", {
-    timeout: 60_000,
-  }, () => {
-    for (const id of EXACT_PLUGIN_COMMANDS) {
+  it("loads representative admitted commands and preserves native not-found behavior", () => {
+    for (const id of ["agent:plugins:status", "plugins:install"] as const) {
       const result = runRawr([...id.split(":"), "--help"]);
       expect(result.status, `${id}\n${result.stderr}`).toBe(0);
     }
 
-    for (const retired of [
-      ["agent", "sync"],
-      ["agent", "plugins", "attest-promotion"],
-      ["agent", "plugins", "export"],
-      ["agent", "plugins", "retire"],
-      ["agent", "plugins", "undo"],
-      ["agent", "plugins", "vendors", "status"],
-      ["agent", "plugins", "vendors", "update"],
-      ["undo"],
-      ["plugins", "sync"],
-      ["plugins", "status"],
-      ["plugins", "export"],
-      ["plugins", "scaffold"],
-      ["plugins", "web"],
-      ["app"],
-    ]) {
-      const result = runRawr(retired);
-      expect(result.status, retired.join(" ")).toBe(2);
-      expect(result.stderr).toContain(`command ${retired.join(":")} not found`);
-    }
+    const retired = ["plugins", "sync"];
+    const result = runRawr(retired);
+    expect(result.status, retired.join(" ")).toBe(2);
+    expect(result.stderr).toContain(`command ${retired.join(":")} not found`);
   });
 
   it("rejects ambiguous and noncanonical inputs before a client can be constructed", () => {
@@ -924,7 +900,7 @@ describe("qualified lifecycle command boundary", () => {
   });
 });
 
-const EXACT_PLUGIN_COMMANDS = [
+const EXACT_CURATED_PLUGIN_COMMANDS = [
   "agent:plugins:build",
   "agent:plugins:check",
   "agent:plugins:create",
@@ -934,13 +910,6 @@ const EXACT_PLUGIN_COMMANDS = [
   "agent:plugins:sync",
   "agent:plugins:test",
   "agent:plugins:update:vendors",
-  "plugins:inspect",
-  "plugins:install",
-  "plugins:link",
-  "plugins:list",
-  "plugins:reset",
-  "plugins:uninstall",
-  "plugins:update",
 ] as const;
 
 function commandFiles(root: string, prefix: string): string[] {

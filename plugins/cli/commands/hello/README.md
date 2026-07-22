@@ -6,7 +6,7 @@ Sample oclif plugin shipped by `RAWR HQ-Template`.
 
 ```bash
 bunx nx run @rawr/plugin-hello:build
-rawr plugins link "$(pwd -P)/plugins/cli/commands/hello"
+rawr plugins link --no-install "$(pwd -P)/plugins/cli/commands/hello"
 rawr hello --json
 ```
 

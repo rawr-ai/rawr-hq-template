@@ -42,7 +42,6 @@ import {
   controllerReleasePath,
   controllerSelectorPath,
 } from "../src/lib/controller/layout";
-import type { NativeRegistryProjection } from "../src/lib/external-extensions/model";
 
 const temporaryRoots: string[] = [];
 const BUN_REVISION = "0d9b296af33f2b851fcbf4df3e9ec89751734ba4";
@@ -99,7 +98,6 @@ describe("rawr doctor global provenance", () => {
     expect(diagnostics.launcher).toMatchObject({ status: "regular", executable: true });
     expect(diagnostics.launcher?.digest).toMatch(/^[0-9a-f]{64}$/u);
     expect(diagnostics.globalResolution.matchesLauncher).toBe(true);
-    expect(diagnostics.externalExtensions).toMatchObject({ status: "missing", healthy: true });
     expect(JSON.stringify(diagnostics)).not.toMatch(/owner|checkout|workspace/iu);
   });
 
@@ -243,84 +241,6 @@ describe("rawr doctor global provenance", () => {
     expect(await snapshotTree(outsideParent)).toEqual(beforeOutside);
   });
 
-  it("reports quarantined external state without loading or mutating it", async () => {
-    let reads = 0;
-    const fixture = await controllerFixture({
-      readExternalExtensions: async () => {
-        reads += 1;
-        return {
-          registryPath: path.join(fixtureRootPlaceholder(), "package.json"),
-          status: "valid",
-          hasResidue: true,
-          active: [
-            {
-              entry: {
-                name: "@fixture/healthy",
-                type: "link",
-                root: "/external/healthy",
-              },
-              extension: {
-                packageId: "@fixture/healthy",
-                version: "1.2.3",
-                root: "/external/healthy",
-                canonicalRoot: "/external/healthy",
-                fingerprint: "f".repeat(64),
-                moduleType: "module",
-                commandRoot: ["dist", "commands"],
-                topics: [],
-                commands: [],
-                hooks: [],
-                hookManifests: [],
-              },
-            },
-          ],
-          quarantined: [
-            {
-              identity: "@fixture/broken",
-              root: "/deleted/external",
-              reason: {
-                code: "root-missing",
-                message: "External extension root is absent",
-              },
-            },
-          ],
-        };
-      },
-    });
-    const before = await snapshotTree(fixture.dataRoot);
-
-    const diagnostics = await fixture.inspect();
-
-    expect(reads).toBe(1);
-    expect(await snapshotTree(fixture.dataRoot)).toEqual(before);
-    expect(diagnostics.externalExtensions).toMatchObject({
-      status: "valid",
-      healthy: false,
-      active: [
-        {
-          packageId: "@fixture/healthy",
-          version: "1.2.3",
-          type: "link",
-          root: "/external/healthy",
-          fingerprint: "f".repeat(64),
-        },
-      ],
-      quarantined: [
-        {
-          identity: "@fixture/broken",
-          root: "/deleted/external",
-          code: "root-missing",
-          message: "External extension root is absent",
-        },
-      ],
-    });
-    expect(diagnostics.issues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ code: "EXTERNAL_EXTENSION_STATE_UNHEALTHY" }),
-      ])
-    );
-  });
-
   it("keeps malformed or missing selection diagnosable", async () => {
     const malformed = await controllerFixture();
     await writeFile(
@@ -373,17 +293,12 @@ type ControllerFixture = Readonly<{
   inspect(env?: NodeJS.ProcessEnv): Promise<GlobalDoctorData>;
 }>;
 
-async function controllerFixture(
-  options: Readonly<{
-    readExternalExtensions?: () => Promise<NativeRegistryProjection>;
-  }> = {}
-): Promise<ControllerFixture> {
+async function controllerFixture(): Promise<ControllerFixture> {
   const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "rawr-doctor-global-"));
   temporaryRoots.push(temporaryRoot);
   const root = await realpath(temporaryRoot);
   const sourceRoot = path.join(root, "deleted-source");
   const dataRoot = path.join(root, "data");
-  const oclifDataDir = dataRoot;
   await mkdir(sourceRoot, { recursive: true });
   await mkdir(dataRoot, { recursive: true });
   await writeFile(path.join(sourceRoot, "source-marker"), "not authority\n");
@@ -473,16 +388,6 @@ async function controllerFixture(
   await writeFile(launcherPath, "#!/bin/sh\nexit 0\n");
   await chmod(launcherPath, 0o755);
 
-  const readExternalExtensions =
-    options.readExternalExtensions ??
-    (async () => ({
-      registryPath: path.join(oclifDataDir, "package.json"),
-      status: "missing" as const,
-      hasResidue: false,
-      active: [],
-      quarantined: [],
-    }));
-
   return Object.freeze({
     root,
     sourceRoot,
@@ -499,8 +404,6 @@ async function controllerFixture(
           ...env,
         },
         cwd: root,
-        oclifDataDir,
-        readExternalExtensions,
         hostPlatform: HOST_PLATFORM,
         hostArchitecture: HOST_ARCHITECTURE,
       }),
@@ -544,8 +447,4 @@ async function snapshotTree(root: string): Promise<readonly string[]> {
   };
   await visit(root);
   return Object.freeze(rows);
-}
-
-function fixtureRootPlaceholder(): string {
-  return path.join(os.tmpdir(), "rawr-native-registry");
 }
