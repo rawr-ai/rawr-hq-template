@@ -24,6 +24,43 @@
         "command": "tsc -p scripts/habitat/tsconfig.json --noEmit"
       }
     },
+    "format": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "biome format --write ."
+      }
+    },
+    "lint:biome": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/**/*.{js,jsx,ts,tsx,cjs,mjs,cts,mts,json,jsonc,css,html}",
+        "{workspaceRoot}/biome.json",
+        "{workspaceRoot}/package.json",
+        "{workspaceRoot}/bun.lock"
+      ],
+      "outputs": [],
+      "options": {
+        "command": "biome lint --diagnostic-level=error ."
+      }
+    },
+    "lint:effect": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/**/*.{js,jsx,ts,tsx,cjs,mjs,cts,mts}",
+        "{workspaceRoot}/biome.json",
+        "{workspaceRoot}/biome.effect.json",
+        "{workspaceRoot}/package.json",
+        "{workspaceRoot}/bun.lock",
+        "{workspaceRoot}/patches/@catenarycloud%2Flinteffect@0.0.6.patch"
+      ],
+      "outputs": [],
+      "options": {
+        "command": "biome lint --config-path=biome.effect.json ."
+      }
+    },
     "check:packets": {
       "executor": "nx:run-commands",
       "options": {
