@@ -9,18 +9,18 @@
   `911f319c3d3abdab5255d831e8e16ee16543c3bf` without broader replay.
 - [x] 1.5 Run bounded standing vendor reviews and select the exact compatible
   dependency/tool closure.
-- [ ] 1.6 Obtain exact-commit acceptance of the vendor disposition from both
+- [x] 1.6 Obtain exact-commit acceptance of the vendor disposition from both
   directors before BUILD.
 
 ## 2. Generic SDK
 
-- [ ] 2.1 Generate one buildable `packages/research-sdk` Nx project without
+- [x] 2.1 Generate one buildable `packages/research-sdk` Nx project without
   changing unrelated root dependencies.
-- [ ] 2.2 Implement TypeBox identity/config contracts (including lane-supplied
+- [x] 2.2 Implement TypeBox identity/config contracts (including lane-supplied
   governed instance identity and disjoint subject properties), stage interfaces,
   durable-output envelopes, atomic sink port, typed residue port, and pure
   adopt-or-reject behavior.
-- [ ] 2.3 Implement exact-environment command execution and one Effect runtime
+- [x] 2.3 Implement exact-environment command execution and one Effect runtime
   composition boundary.
 - [ ] 2.4 Implement named OpenShell, Codex, Langfuse, Codex-Langfuse,
   Codex-OpenShell, Git/Bun, and EVLog adapters.
@@ -37,7 +37,7 @@
   effective Codex envelopes, exact score subjects, parented trace-seed rejection
   with one application root, selection-neutral incomplete-turn projection, and
   diagnostic event lifecycle.
-- [ ] 2.7 Add only Template SDK package/dependency-direction Habitat rules and
+- [x] 2.7 Add only Template SDK package/dependency-direction Habitat rules and
   define the owner-local lane mapping check contract.
 
 ## 3. Lane Compatibility

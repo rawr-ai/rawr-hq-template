@@ -1,0 +1,57 @@
+{
+  "name": "@rawr/research-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.14",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./contracts": {
+      "types": "./dist/contracts/index.d.ts",
+      "import": "./dist/contracts/index.js",
+      "default": "./dist/contracts/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js",
+      "default": "./dist/core/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js",
+      "default": "./dist/runtime/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "bunx --bun tsc -p tsconfig.build.json",
+    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\"",
+    "typecheck": "bunx --bun tsc -p tsconfig.json --noEmit",
+    "test": "bunx --bun vitest run --config vitest.config.ts",
+    "habitat": "bun ../../scripts/habitat/check.mjs --owner @rawr/research-sdk"
+  },
+  "dependencies": {
+    "effect": "4.0.0-beta.99",
+    "typebox": "1.3.6"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.14",
+    "typescript": "7.0.2"
+  },
+  "nx": {
+    "tags": [
+      "type:package",
+      "role:research-sdk",
+      "surface:research-sdk"
+    ]
+  }
+}

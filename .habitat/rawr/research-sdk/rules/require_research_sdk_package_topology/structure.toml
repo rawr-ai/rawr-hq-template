@@ -1,0 +1,33 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "research-sdk-package"
+root = "packages/research-sdk"
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "package.json",
+  "src",
+  "test",
+  "tsconfig.build.json",
+  "tsconfig.json",
+  "vitest.config.ts",
+]
+allowed = [
+  "dist",
+  "node_modules",
+]
+
+[[scopes]]
+name = "research-sdk-source"
+root = "packages/research-sdk/src"
+kind = "directory"
+mode = "closed"
+required = [
+  "contracts",
+  "core",
+  "index.ts",
+  "runtime",
+]
+allowed = []

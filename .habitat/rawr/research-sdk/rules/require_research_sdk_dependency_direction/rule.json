@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "id": "require_research_sdk_dependency_direction",
+  "title": "Require Research SDK Dependency Direction",
+  "placement": {
+    "niche": "rawr/research-sdk",
+    "blueprint": "_self",
+    "category": "boundary"
+  },
+  "operation": { "kind": "check" },
+  "ownerProject": "@rawr/research-sdk",
+  "lane": "enforced",
+  "forbids": "Effect-bearing public contracts, inward contract dependencies, or core dependencies on runtime",
+  "why": "The package root and contracts are neutral data boundaries; runtime depends inward on contracts and core, never the reverse.",
+  "remediate": "Move Effect-bearing APIs into core or runtime and reverse inward dependency edges.",
+  "message": "Research SDK dependencies must follow contracts <- core <- runtime without leaking Effect through the public root.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "packages/research-sdk/src/**/*.ts",
+        "packages/research-sdk/src/**/*.tsx",
+        "packages/research-sdk/src/**/*.mts",
+        "packages/research-sdk/src/**/*.cts",
+        "packages/research-sdk/src/**/*.js",
+        "packages/research-sdk/src/**/*.jsx",
+        "packages/research-sdk/src/**/*.mjs",
+        "packages/research-sdk/src/**/*.cjs"
+      ]
+    }
+  ],
+  "scanRoots": ["packages/research-sdk/src"],
+  "supportFiles": {
+    "baseline": ".habitat/rawr/research-sdk/rules/require_research_sdk_dependency_direction/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/rawr/research-sdk/rules/require_research_sdk_dependency_direction/pattern.md"
+    },
+    "patternName": "require_research_sdk_dependency_direction"
+  }
+}

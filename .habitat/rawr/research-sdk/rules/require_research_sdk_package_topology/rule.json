@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "id": "require_research_sdk_package_topology",
+  "title": "Require Research SDK Package Topology",
+  "placement": {
+    "niche": "rawr/research-sdk",
+    "blueprint": "_self",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/research-sdk",
+  "lane": "enforced",
+  "forbids": "subject-owned study material in the shared SDK, implicit package surfaces, or a controller-shaped package root",
+  "why": "The research SDK is one generic package with an Effect-neutral contract root and explicit core/runtime subpaths.",
+  "remediate": "Keep neutral contracts, core capabilities, runtime resources, tests, and package metadata in their declared roots; keep study content in its owner repository.",
+  "message": "Research SDK package topology must remain explicit and subject-neutral.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["packages/research-sdk/**"]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/rawr/research-sdk/rules/require_research_sdk_package_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/rawr/research-sdk/rules/require_research_sdk_package_topology/structure.toml"
+    }
+  }
+}

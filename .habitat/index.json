@@ -3,6 +3,7 @@
   "schemaVersion": 2,
   "ownerRoots": {
     "@rawr/habitat-consumer": ".",
-    "@rawr/agent-plugin-lifecycle": "services/agent-plugin-lifecycle"
+    "@rawr/agent-plugin-lifecycle": "services/agent-plugin-lifecycle",
+    "@rawr/research-sdk": "packages/research-sdk"
   }
 }
