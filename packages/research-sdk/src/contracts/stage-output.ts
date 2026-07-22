@@ -49,6 +49,10 @@ export interface StageOutput<Stage extends string = string, Value = PortableData
   readonly value: Value & Portable<Value>;
 }
 
+export interface StageOutputIdentity<Stage extends string = string> extends StageOutputKey<Stage> {
+  readonly outputDigest: DigestIdentity;
+}
+
 export interface StageOutputShape<Stage extends string = string> extends StageOutputKey<Stage> {
   readonly outputDigest: DigestIdentity;
   readonly value: unknown;
@@ -77,6 +81,12 @@ export function createStageOutputSchema<
   return closedObject(createStageOutputKeySchema(stage).properties, {
     outputDigest: DigestIdentitySchema,
     value,
+  });
+}
+
+export function createStageOutputIdentitySchema<const Stage extends string>(stage: Stage) {
+  return closedObject(createStageOutputKeySchema(stage).properties, {
+    outputDigest: DigestIdentitySchema,
   });
 }
 

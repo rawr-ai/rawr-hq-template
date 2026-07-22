@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "id": "require_research_sdk_external_neutrality",
+  "title": "Require Research SDK External Neutrality",
+  "placement": {
+    "niche": "rawr/research-sdk",
+    "blueprint": "_self",
+    "category": "boundary"
+  },
+  "operation": { "kind": "check" },
+  "ownerProject": "@rawr/research-sdk",
+  "lane": "enforced",
+  "forbids": "Template packages outside the research SDK importing or re-exporting Effect-bearing research SDK subpaths",
+  "why": "Only neutral decoded data may cross from the research SDK into unrelated Template packages; Effect services remain package-local and lane consumers bind through an immutable artifact.",
+  "remediate": "Import @rawr/research-sdk or @rawr/research-sdk/contracts, or move the Effect-bearing integration into the research SDK or its owner-local lane consumer.",
+  "message": "Unrelated Template packages may consume only neutral research SDK surfaces.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "apps/**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}",
+        "packages/**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}",
+        "plugins/**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}",
+        "resources/**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}",
+        "services/**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}",
+        "tools/**/*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}"
+      ]
+    }
+  ],
+  "scanRoots": ["apps", "packages", "plugins", "resources", "services", "tools"],
+  "supportFiles": {
+    "baseline": ".habitat/rawr/research-sdk/rules/require_research_sdk_external_neutrality/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/rawr/research-sdk/rules/require_research_sdk_external_neutrality/pattern.md"
+    },
+    "patternName": "require_research_sdk_external_neutrality"
+  }
+}

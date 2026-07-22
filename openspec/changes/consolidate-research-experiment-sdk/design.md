@@ -83,6 +83,11 @@ The accepted core entities are deliberately few:
   its stage, exact cell, frozen-input digest, implementation revision, declared
   predecessor digest set or closure, output digest, and value.
 - `PreparedCell`: materialized input ready for execution.
+- `ExecutionAttemptFence`: a lane-durable, atomic execution admission binding
+  the exact expected `SolverTerminal` key, lane-supplied attempt ID, and attempt
+  digest. The lane persists it before observation, sandbox, or process effects
+  and only while that key has no published terminal, active attempt, or
+  unresolved residue. The resulting terminal carries the admitted identity.
 - `ObservationHandle`: acquired correlation carrier established before
   execution, embedded in the solver terminal, and settled or projected against
   that exact subject afterward.
@@ -90,10 +95,10 @@ The accepted core entities are deliberately few:
 - `SubmittedArtifact`: host-owned `Captured` or scoreable `Empty` product
   submission and digest.
 - `SolverTerminal`: write-once execution result containing the exact cell and
-  input identities, observation handle, agent outcome, submitted artifact, and
-  their digests. It is a lane-declared durable `StageOutput` and therefore its
-  publication key also binds frozen input, implementation revision, declared
-  predecessor identities, and instance.
+  input identities, admitted attempt identity, observation handle, agent
+  outcome, submitted artifact, and their digests. It is a lane-declared durable
+  `StageOutput`; its publication key therefore also binds frozen input,
+  implementation revision, declared predecessor identities, and instance.
 - `EvaluationResult`: deterministic and/or judged study result, published as a
   lane-declared durable `StageOutput` whose predecessors bind the exact
   `SolverTerminal` before score projection.
@@ -112,11 +117,12 @@ StudyDefinition
   -> Prepare -> PreparedCell
   -> attempt exact SolverTerminal adoption
        hit  -> recover persisted ObservationHandle; skip acquire and solver
-       miss -> reconcile residue for exact cell + instance
-                 unresolved -> stop; do not acquire observation or execute
-                 clear -> Observe.acquire -> ObservationHandle
-                 -> Execute (Codex + host artifact capture + terminal sink)
-                    -> persisted SolverTerminal
+       miss -> atomically admit exact ExecutionAttemptFence
+                 Admitted -> Observe.acquire -> ObservationHandle
+                   -> Execute (Codex + host artifact capture + terminal sink)
+                      -> persisted SolverTerminal carrying attempt identity
+                 Conflict(published terminal) -> validate and adopt terminal
+                 Occupied | Conflict(attempt/residue) | Unknown -> stop
   -> Observe.settle(recovered or acquired handle, execution exit)
   -> adopt or Evaluate -> persist exact EvaluationResult
   -> Observe.project(handle, persisted evaluation) (independently resumable)
@@ -157,22 +163,35 @@ a phase registry, DAG, generic worker, or global state machine.
 
 Lane composition attempts exact solver-terminal adoption before observation
 acquisition. On an adoption hit it recovers the persisted handle and skips both
-acquisition and solver execution. On a miss it checks its durable residue port
-for the exact cell and instance. Unresolved residue blocks observation
-acquisition and execution re-entry until the lane proves process termination
-and reconciles the record. Only a miss with no unresolved residue may acquire a
-new handle; failure
-to establish required correlation may then prevent execution. After
-acquisition, the lane supplies the exact handle to Execute, and the persisted
-solver terminal binds that handle to the submitted artifact and agent outcome.
+acquisition and solver execution. On a miss it asks its lane-owned durable
+attempt port to atomically admit one exact fence binding the expected terminal
+key, attempt ID, and attempt digest, and only while the key has no published
+terminal, active attempt, or unresolved residue. The lane persists that fence
+before any observation, sandbox, or process effect. Only `Admitted` authorizes
+acquisition and execution. `Occupied`, `Conflict`, and `Unknown` never authorize
+effects, even when an occupied fence is byte-identical. When atomic admission
+surfaces a terminal published after the initial read, composition validates and
+adopts it instead. The SDK owns only the typed port and pure identity/admission
+laws; the lane owns atomic persistence and exact reconciliation.
+
+An interrupted pre-terminal attempt remains blocking until the lane supplies
+exact quiescence or process-termination evidence for that same attempt or
+residue and reconciles it. Elapsed time, expiry, stealing, heartbeats, or leases
+cannot clear the fence. Re-entry then restarts with terminal adoption and a new
+explicit admission decision; reconciliation does not directly authorize
+effects. After admission, failure to establish required correlation may still
+prevent execution. After acquisition, the lane supplies the exact handle to
+Execute, and the persisted solver terminal binds the admitted attempt identity
+and handle to the submitted artifact and agent outcome.
 The lane calls settlement with the handle and execution `Exit` on every exit it
 can observe. A crash after acquisition but before terminal publication may
 leave a non-authoritative orphan observation: the lane preserves or settles it
 when discoverable, never adopts it as the trial subject, and may replace that
 pre-terminal execution under the same instance only after confirming process
-termination and the absence of unresolved residue. A crash after terminal
-publication recovers the same handle and resumes settlement without rerunning
-the solver. Evaluation publishes its exact result durably before projection;
+quiescence or termination and reconciling the exact attempt fence plus any
+unresolved residue. A crash after terminal publication recovers the same handle
+and resumes settlement without rerunning the solver. Evaluation publishes its
+exact result durably before projection;
 later projection adopts that result instead of rerunning a blind or otherwise
 nondeterministic evaluation. Settlement and projection failures therefore
 cannot erase or change successful execution or evaluation truth.
@@ -187,6 +206,14 @@ This is a reasoning model, not a controller implementation.
 
 - `SolverTerminal` is absorbing for an exact frozen tuple, including its
   lane-supplied instance identity.
+- Every execution attempt first wins one lane-owned atomic, durable
+  create-if-clear fence for an exact expected terminal key with no published
+  terminal, active attempt, or unresolved residue. Only an exact `Admitted`
+  result authorizes observation, sandbox, or process effects;
+  occupied, conflicting, or uncertain admission blocks them. The fence has no
+  expiry, steal, heartbeat, lease, timer, queue, or SDK-owned storage semantics.
+  Exact lane-produced quiescence or termination evidence is required to
+  reconcile it, and the admitted attempt identity is carried in the terminal.
 - Retries and re-entry for the same logical invocation retain that instance.
   Only an explicit lane decision may create a new replicate or replay instance;
   it records predecessor lineage and a reason while leaving every prior
@@ -201,8 +228,12 @@ This is a reasoning model, not a controller implementation.
   at the same key is rejected and never overwritten. The typed sink port
   requires atomic create-if-absent publication plus read-after-unknown
   reconciliation when a write may have committed before acknowledgement. The
-  lane composition behind Execute owns Codex invocation, Git/Bun artifact
-  capture, and the sink implementation, store, and durability. Core owns only
+  core-owned pure solver-terminal publication law compares the candidate's
+  exact outer key and carried attempt identity with the fence that received
+  `Admitted`; any mismatch rejects before publication or unknown-write
+  reconciliation. The lane composition behind Execute owns Codex invocation,
+  Git/Bun artifact capture, and the sink implementation, store, and durability.
+  Core owns only
   the typed port and pure equality/adoption conflict law; it owns no store,
   general CAS, or evidence retention.
 - A lane-declared durable output is adoptable only when its exact cell
@@ -212,7 +243,8 @@ This is a reasoning model, not a controller implementation.
   continuation authority. Ephemeral adapter results need not use it.
 - A mismatched or corrupt output blocks adoption; it is not silently repaired.
 - Pre-terminal infrastructure interruption may replace only that execution,
-  and only after confirmed process termination and residue reconciliation.
+  and only after confirmed process quiescence or termination plus exact attempt
+  and residue reconciliation.
 - Post-terminal evaluation or observation failure resumes only the incomplete
   boundary and cannot rerun the solver.
 - The exact `EvaluationResult` used for projection is itself a lane-declared
@@ -583,20 +615,30 @@ Tests target persistent behavioral guarantees, not implementation text:
    an observed terminal process before OpenShell release or returns typed
    `ProcessTerminationUnconfirmed` with retained sandbox residue; both paths
    preserve termination and cleanup failures under the primary/secondary law.
-   A model-free re-entry probe proves unresolved residue blocks observation
-   reacquisition and execution for the same cell and instance until confirmed
-   termination and reconciliation.
+   Model-free re-entry probes prove that concurrent same-terminal admissions
+   authorize at most one execution, admission uncertainty fails closed, and a
+   crash before residue publication remains fenced until exact quiescence or
+   termination evidence is reconciled. Unresolved residue likewise blocks
+   observation reacquisition and execution for the same cell and instance
+   until confirmed termination and exact reconciliation. A terminal published
+   between the initial adoption read and atomic admission is surfaced by the
+   port and adopted rather than permitting a second execution.
 5. Submitted artifacts round-trip add/delete/rename/binary/mode changes through
    a fresh baseline and regenerate identical canonical patch bytes. A different
    Git binary, version, environment, or diff configuration rejects adoption
    before comparing bytes.
-6. Composition attempts exact terminal adoption before observation acquisition.
-   On a miss, observation handle, agent outcome, and artifact publish once as
-   one solver terminal through atomic create-if-absent; an unknown write outcome
-   reconciles by read. Identical retries adopt it, conflicts reject, and a
-   pre-terminal orphan observation never becomes the trial subject. The exact
-   evaluation result publishes durably before projection and is adopted on
-   projection retry.
+6. Composition attempts exact terminal adoption before execution-attempt
+   admission. On a miss, only an atomically persisted exact `Admitted` fence
+   permits observation acquisition or execution; `Occupied`, `Conflict`, and
+   `Unknown` permit no effects. Observation handle, admitted attempt identity,
+   agent outcome, and artifact then publish once as one solver terminal through
+   an exact admitted-attempt binding and atomic create-if-absent; a terminal
+   carrying another otherwise-valid attempt rejects, and an unknown write
+   outcome reconciles by read under the same binding.
+   Identical retries adopt the terminal, conflicts reject, and a pre-terminal
+   orphan observation never becomes the trial subject. The exact evaluation
+   result publishes durably before projection and is adopted on projection
+   retry.
 7. Product failure and infrastructure failure remain disjoint.
 8. Full W3C carrier extraction, one provider-owned root, multi-turn Codex
    projection, prompt linkage, exact trace-and-observation score subjects,

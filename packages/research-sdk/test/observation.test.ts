@@ -4,24 +4,35 @@ import type { EvaluationResult, SolverTerminal } from "../src/contracts/index.js
 import {
   bindObservationProjection,
   bindObservationSettlement,
-  equalStructuredData,
+  classifyPublication,
   type Observe,
+  reconcilePublicationAfterUnknown,
+  stageOutputIdentityOf,
+  stageOutputKeyOf,
 } from "../src/core/index.js";
 import { cellKey, digestIdentity, solverTerminal } from "./fixtures.js";
 
 function evaluationResult(
-  terminalDigest = solverTerminal().outputDigest
+  terminal = solverTerminal(),
+  citedDigest = terminal.outputDigest
 ): EvaluationResult<{ readonly score: number }> {
-  const value = { score: 92 };
+  const value = {
+    terminalPredecessor: stageOutputIdentityOf(terminal),
+    result: { score: 92 },
+  };
   return {
     stage: "EvaluationResult",
-    cell: solverTerminal().cell,
-    frozenInputDigest: solverTerminal().frozenInputDigest,
+    cell: terminal.cell,
+    frozenInputDigest: terminal.frozenInputDigest,
     implementationRevision: "sdk-1",
-    predecessors: { kind: "Set", digests: [terminalDigest] },
+    predecessors: { kind: "Set", digests: [citedDigest] },
     outputDigest: digestIdentity("research-sdk.evaluation-result-value.v1", value),
     value,
   };
+}
+
+function digestEvaluationResultValue(value: EvaluationResult<{ readonly score: number }>["value"]) {
+  return digestIdentity("research-sdk.evaluation-result-value.v1", value);
 }
 
 describe("observation subject binding", () => {
@@ -53,13 +64,13 @@ describe("observation subject binding", () => {
     const ready = bindObservationSettlement({
       acquiredHandle: equalHandle,
       execution: Exit.succeed(terminal),
-      equalsHandle: equalStructuredData,
     });
-    const mismatch = bindObservationSettlement({
+    const callerAttemptedOverride = {
       acquiredHandle: { traceId: "another-trace" },
       execution: Exit.succeed(terminal),
-      equalsHandle: equalStructuredData,
-    });
+      equalsHandle: () => true,
+    };
+    const mismatch = bindObservationSettlement(callerAttemptedOverride);
 
     expect(ready.kind).toBe("Ready");
     if (ready.kind === "Ready") {
@@ -76,7 +87,6 @@ describe("observation subject binding", () => {
     const binding = bindObservationSettlement({
       acquiredHandle,
       execution: Exit.fail("execution-failed"),
-      equalsHandle: equalStructuredData,
     });
 
     expect(binding.kind).toBe("Ready");
@@ -88,10 +98,13 @@ describe("observation subject binding", () => {
 
   test("derives projection subject from the terminal and requires its predecessor", () => {
     const terminal = solverTerminal();
-    const ready = bindObservationProjection(terminal, evaluationResult(terminal.outputDigest));
+    const ready = bindObservationProjection(terminal, evaluationResult(terminal));
     const mismatch = bindObservationProjection(
       terminal,
-      evaluationResult(digestIdentity("research-sdk.solver-terminal-value.v1", "another-terminal"))
+      evaluationResult(
+        terminal,
+        digestIdentity("research-sdk.solver-terminal-value.v1", "another-terminal")
+      )
     );
 
     expect(ready.kind).toBe("Ready");
@@ -108,7 +121,7 @@ describe("observation subject binding", () => {
   test("rejects a cross-cell evaluation even when it cites the terminal digest", () => {
     const terminal = solverTerminal();
     const evaluation = {
-      ...evaluationResult(terminal.outputDigest),
+      ...evaluationResult(terminal),
       cell: cellKey("another-instance"),
     };
 
@@ -121,7 +134,7 @@ describe("observation subject binding", () => {
   test("rejects an evaluation bound to a different frozen input", () => {
     const terminal = solverTerminal();
     const evaluation = {
-      ...evaluationResult(terminal.outputDigest),
+      ...evaluationResult(terminal),
       frozenInputDigest: digestIdentity("research-sdk.frozen-input.v1", "another-input"),
     };
 
@@ -129,5 +142,77 @@ describe("observation subject binding", () => {
       kind: "Conflict",
       conflict: { kind: "EvaluationIdentityMismatch" },
     });
+  });
+
+  test("rejects equal terminal values from a different implementation revision", () => {
+    const original = solverTerminal();
+    const differentRevision = {
+      ...original,
+      implementationRevision: "sdk-2",
+    };
+
+    expect(bindObservationProjection(differentRevision, evaluationResult(original))).toEqual({
+      kind: "Conflict",
+      conflict: { kind: "EvaluationPredecessorMismatch" },
+    });
+  });
+
+  test("rejects equal terminal values with a different predecessor closure", () => {
+    const original = solverTerminal();
+    const differentPredecessors = {
+      ...original,
+      predecessors: {
+        kind: "Set" as const,
+        digests: [digestIdentity("research-sdk.prepared-cell.v1", "another-predecessor")],
+      },
+    };
+
+    expect(bindObservationProjection(differentPredecessors, evaluationResult(original))).toEqual({
+      kind: "Conflict",
+      conflict: { kind: "EvaluationPredecessorMismatch" },
+    });
+  });
+
+  test("durable publication cannot alias equal scores bound to another exact terminal", () => {
+    const original = solverTerminal();
+    const candidate = evaluationResult(original);
+    const otherTerminals = [
+      { ...original, implementationRevision: "sdk-2" },
+      {
+        ...original,
+        predecessors: {
+          kind: "Set" as const,
+          digests: [digestIdentity("research-sdk.prepared-cell.v1", "another-predecessor")],
+        },
+      },
+    ];
+
+    for (const otherTerminal of otherTerminals) {
+      const existing = evaluationResult(otherTerminal);
+
+      expect(existing.value.result).toEqual(candidate.value.result);
+      expect(stageOutputKeyOf(existing)).toEqual(stageOutputKeyOf(candidate));
+      expect(existing.value.terminalPredecessor).not.toEqual(candidate.value.terminalPredecessor);
+      expect(
+        classifyPublication(
+          candidate,
+          { kind: "Existing", value: existing },
+          digestEvaluationResultValue
+        )
+      ).toEqual({
+        kind: "Conflict",
+        conflict: { kind: "DivergentExistingOutput" },
+      });
+      expect(
+        reconcilePublicationAfterUnknown(
+          candidate,
+          { kind: "Found", value: existing },
+          digestEvaluationResultValue
+        )
+      ).toEqual({
+        kind: "Conflict",
+        conflict: { kind: "DivergentExistingOutput" },
+      });
+    }
   });
 });

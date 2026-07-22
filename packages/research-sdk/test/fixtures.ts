@@ -52,20 +52,31 @@ export function solverTerminal(): SolverTerminal<
   { readonly traceId: string },
   { readonly kind: "Completed" }
 > {
+  const key = {
+    stage: "SolverTerminal" as const,
+    cell: cellKey(),
+    frozenInputDigest: digestIdentity("research-sdk.frozen-input.v1", {
+      fixture: "case-1",
+    }),
+    implementationRevision: "sdk-1",
+    predecessors: { kind: "Set" as const, digests: [] },
+  };
+  const attemptValue = {
+    terminal: key,
+    attemptId: "attempt-1",
+  };
   const value = {
+    attempt: {
+      attemptId: attemptValue.attemptId,
+      attemptDigest: digestIdentity("research-sdk.execution-attempt.v1", attemptValue),
+    },
     observation: { traceId: "trace-1" },
     agentExecution: { kind: "Completed" } as const,
     artifact: { kind: "Empty" } as const,
   };
 
   return {
-    stage: "SolverTerminal",
-    cell: cellKey(),
-    frozenInputDigest: digestIdentity("research-sdk.frozen-input.v1", {
-      fixture: "case-1",
-    }),
-    implementationRevision: "sdk-1",
-    predecessors: { kind: "Set", digests: [] },
+    ...key,
     outputDigest: digestIdentity("research-sdk.solver-terminal-value.v1", value),
     value,
   };

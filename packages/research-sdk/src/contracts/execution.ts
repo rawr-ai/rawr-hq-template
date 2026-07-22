@@ -1,7 +1,12 @@
 import { type Static, type TSchema, Type } from "typebox";
-import { CellKeySchema, DigestIdentitySchema } from "./identity.js";
+import { CellKeySchema, DigestIdentitySchema, NonEmptyStringSchema } from "./identity.js";
 import { closedObject, type Portable, type PortableSchema } from "./schema.js";
-import { createStageOutputKeySchema, type StageOutput } from "./stage-output.js";
+import {
+  createStageOutputIdentitySchema,
+  createStageOutputKeySchema,
+  type StageOutput,
+  type StageOutputIdentity,
+} from "./stage-output.js";
 
 export const CapturedArtifactSchema = closedObject(
   {},
@@ -20,6 +25,14 @@ export const EmptyArtifactSchema = closedObject(
 );
 
 export const SubmittedArtifactSchema = Type.Union([CapturedArtifactSchema, EmptyArtifactSchema]);
+
+export const ExecutionAttemptIdentitySchema = closedObject(
+  {},
+  {
+    attemptId: NonEmptyStringSchema,
+    attemptDigest: DigestIdentitySchema,
+  }
+);
 
 export const ProcessTerminationUnconfirmedSchema = closedObject(
   {},
@@ -42,14 +55,21 @@ export const UnresolvedExecutionResidueSchema = closedObject(
 );
 
 export type SubmittedArtifact = Static<typeof SubmittedArtifactSchema>;
+export type ExecutionAttemptIdentity = Static<typeof ExecutionAttemptIdentitySchema>;
 export type ProcessTerminationUnconfirmed = Static<typeof ProcessTerminationUnconfirmedSchema>;
 export type UnresolvedExecutionResidue = Static<typeof UnresolvedExecutionResidueSchema>;
 export type UnresolvedExecutionResidueValue = Omit<UnresolvedExecutionResidue, "residueDigest">;
 
 export interface SolverTerminalValue<Observation, AgentExecution> {
+  readonly attempt: ExecutionAttemptIdentity;
   readonly observation: Observation & Portable<Observation>;
   readonly agentExecution: AgentExecution & Portable<AgentExecution>;
   readonly artifact: SubmittedArtifact;
+}
+
+export interface EvaluationResultValue<Result> {
+  readonly terminalPredecessor: StageOutputIdentity<"SolverTerminal">;
+  readonly result: Result & Portable<Result>;
 }
 
 export type SolverTerminal<Observation, AgentExecution> = StageOutput<
@@ -58,7 +78,10 @@ export type SolverTerminal<Observation, AgentExecution> = StageOutput<
 >;
 
 export type PreparedCell<Value> = StageOutput<"PreparedCell", Value>;
-export type EvaluationResult<Value> = StageOutput<"EvaluationResult", Value>;
+export type EvaluationResult<Result> = StageOutput<
+  "EvaluationResult",
+  EvaluationResultValue<Result>
+>;
 
 export function createPreparedCellSchema<const ValueSchema extends TSchema>(
   value: ValueSchema & PortableSchema<ValueSchema>
@@ -81,6 +104,7 @@ export function createSolverTerminalSchema<
     value: closedObject(
       {},
       {
+        attempt: ExecutionAttemptIdentitySchema,
         observation,
         agentExecution,
         artifact: SubmittedArtifactSchema,
@@ -90,10 +114,16 @@ export function createSolverTerminalSchema<
 }
 
 export function createEvaluationResultSchema<const ValueSchema extends TSchema>(
-  value: ValueSchema & PortableSchema<ValueSchema>
+  result: ValueSchema & PortableSchema<ValueSchema>
 ) {
   return closedObject(createStageOutputKeySchema("EvaluationResult").properties, {
     outputDigest: DigestIdentitySchema,
-    value,
+    value: closedObject(
+      {},
+      {
+        terminalPredecessor: createStageOutputIdentitySchema("SolverTerminal"),
+        result,
+      }
+    ),
   });
 }

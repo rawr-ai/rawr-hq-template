@@ -48,32 +48,76 @@ own aggregation and reporting.
 - **WHEN** a lane binds its preparation, execution, observation, and evaluation
   functions
 - **THEN** each function receives only its declared capability dependencies
-- **AND** the SDK does not infer ordering beyond exact predecessor identities
+- **AND** the SDK does not schedule the composition or infer ordering beyond
+  exact predecessor identities and execution-attempt admission laws
+
+### Requirement: Exact attempt admission precedes execution effects
+Lane composition MUST attempt exact solver-terminal adoption first. After an
+adoption miss, it MUST construct an execution-attempt fence binding the exact
+expected `SolverTerminal` key, a lane-supplied attempt ID, and its attempt
+digest. A lane-owned durable port MUST atomically persist that fence only when
+the same terminal key has neither a published terminal, active attempt, nor
+unresolved execution residue. This admission MUST complete before observation
+acquisition, sandbox acquisition, process launch, or any other execution
+effect. Only an exact `Admitted` result MAY authorize those effects. `Occupied`,
+`Conflict`, and `Unknown` MUST fail closed without effects; an identical
+occupied fence MUST still block. If atomic admission surfaces a terminal
+published after the initial adoption read, composition MUST validate and adopt
+that terminal rather than execute. The resulting `SolverTerminal` MUST carry
+the exact admitted attempt identity, and its publication MUST reject any
+candidate whose outer terminal key or carried attempt differs from that fence.
+
+Core MUST own only the typed admission port and pure identity, digest,
+admit-or-block, and reconciliation laws. The lane MUST own atomic durability
+and reconciliation. An attempt or residue MAY be cleared only with exact
+lane-produced quiescence or process-termination evidence for that same
+identity. Expiry, elapsed time, stealing, heartbeats, or lease semantics MUST
+NOT authorize clearing or re-entry. After reconciliation, composition MUST
+restart with exact terminal adoption and a new explicit admission decision;
+reconciliation itself MUST NOT authorize execution effects.
+
+#### Scenario: Concurrent invocations target one terminal
+- **WHEN** two invocations concurrently seek execution authority for the same
+  expected solver-terminal key
+- **THEN** at most one receives exact `Admitted` authority
+- **AND** every occupied, conflicting, or uncertain invocation performs no
+  observation, sandbox, or process effect
+
+#### Scenario: A process starts before residue or terminal publication
+- **WHEN** an admitted attempt may still own a live process but interruption
+  occurs before a terminal or unresolved-residue record is published
+- **THEN** the durable attempt fence blocks observation reacquisition and rerun
+- **AND** re-entry remains blocked until exact quiescence or termination
+  evidence reconciles that attempt and a later invocation passes admission
+  again
+
+#### Scenario: A terminal appears between adoption and admission
+- **WHEN** the initial terminal read is absent but atomic attempt admission finds
+  a terminal published for that exact key
+- **THEN** composition validates and adopts that terminal
+- **AND** it does not acquire an observation, sandbox, or process for a second
+  execution
 
 ### Requirement: Observation scopes execution without owning correctness
 Lane composition MUST attempt exact solver-terminal adoption before acquiring a
 new observation. On a hit it MUST recover the persisted handle and skip both
-acquisition and solver execution. On a miss it MUST query its durable residue
-port for the exact cell and instance. An unresolved record MUST block
-observation acquisition and execution re-entry until the lane confirms process
-termination and reconciles that record. Only a miss with no unresolved residue
-MAY acquire experiment and trace correlation before Execute. Execute MUST
-persist that exact observation handle
-in the solver terminal beside the agent outcome and artifact. An acquired handle
-without a published terminal is a non-authoritative orphan: the lane MUST
-preserve or settle it when observable, MUST NOT adopt it as the trial subject,
-and MAY replace that pre-terminal execution under the same instance only after
-confirmed process termination and residue reconciliation. Observe
+acquisition and solver execution. On a miss, observation acquisition remains
+forbidden until the exact attempt-admission requirement returns `Admitted`.
+Execute MUST persist that exact observation handle in the solver terminal
+beside the agent outcome and artifact. An acquired handle without a published
+terminal is a non-authoritative orphan: the lane MUST preserve or settle it when
+observable, MUST NOT adopt it as the trial subject, and MAY replace that
+pre-terminal execution under the same instance only after confirmed quiescence
+or process termination plus exact attempt and residue reconciliation. Observe
 MUST settle against the exact terminal-bound handle and MUST project later
 evaluation scores against that same handle. The exact `EvaluationResult` used
 for projection MUST first be published as a lane-declared durable `StageOutput`;
 its predecessor set MUST bind the exact `SolverTerminal`. Projection resumption
 MUST adopt it rather than silently reevaluate. Settlement or projection failure
 MAY resume independently and MUST NOT change a solver or evaluation outcome.
-Missing or
-uncorrelated required evidence MUST fail the observation boundary, while
-cosmetic topology and provider namespace cleanliness MUST NOT be admissibility
-criteria. The Langfuse trial subject MUST be the experiment-item root
+Missing or uncorrelated required evidence MUST fail the observation boundary,
+while cosmetic topology and provider namespace cleanliness MUST NOT be
+admissibility criteria. The Langfuse trial subject MUST be the experiment-item root
 observation. Scores for a trial MUST target its exact trace and observation IDs;
 trace-summary I/O and run-level scores MUST NOT substitute for that subject. A
 full W3C carrier MUST preserve `traceparent`, optional `tracestate`, and exactly
@@ -95,16 +139,18 @@ identical existing values MAY be adopted, while a conflicting value at the same
 key MUST reject without overwrite. The terminal sink port MUST require each
 lane-owned implementation to provide atomic create-if-absent publication and
 read-after-unknown reconciliation for commit-before-ack ambiguity.
-`SolverTerminal` MUST be a
-lane-declared
-durable `StageOutput`, so that key MUST bind the exact cell and instance,
-frozen-input digest, implementation revision, and declared predecessor
-identities. Core MUST own only the sink port and pure publication/adoption
-conflict validation; it MUST NOT own the store, a general CAS, or evidence
-retention. Solver prose and telemetry MUST NOT replace the product artifact.
-The Git/Bun adapter
-MUST support full-index binary-capable patches, including added, deleted,
-renamed, and binary files.
+`SolverTerminal` MUST be a lane-declared durable `StageOutput`, so that key MUST
+bind the exact cell and instance, frozen-input digest, implementation revision,
+and declared predecessor identities. The terminal value MUST carry the exact
+admitted execution-attempt identity. A core-owned pure solver-terminal
+publication classifier MUST compare the candidate outer key and carried attempt
+identity with the exact fence that received `Admitted`, including unknown-write
+reconciliation, and MUST reject a mismatch before publication. Core MUST own
+only the sink port and pure publication/adoption conflict validation; it MUST
+NOT own the store, a general CAS, or evidence retention. Solver prose and
+telemetry MUST NOT replace the product artifact. The Git/Bun adapter MUST
+support full-index binary-capable patches, including added, deleted, renamed,
+and binary files.
 
 #### Scenario: Verifier fails after solver completion
 - **WHEN** a verifier infrastructure failure occurs after artifact persistence
@@ -239,11 +285,12 @@ direction. Each lane MUST own a local compatibility or Habitat check for its
 explicit study mapping. Deterministic tests MUST probe TypeBox checking and
 snapshotting, generic/subject key collision, process
 interruption, scoped resource release, artifact round-trip, terminal adoption,
+concurrent exact-attempt admission, crash-before-residue fencing,
+terminal/admission race adoption, admitted-attempt terminal binding,
 unresolved-residue re-entry blocking, failure separation, exact observation
 subjects, effective Codex rollout envelopes, deterministic projection, EVLog
-lifecycle, and package-local
-compiler isolation. Tests MUST NOT assert source strings, helper counts, command
-spelling, or a preferred internal implementation.
+lifecycle, and package-local compiler isolation. Tests MUST NOT assert source
+strings, helper counts, command spelling, or a preferred internal implementation.
 Dependency-direction enforcement MUST use GritQL import patterns rather than
 brittle text matching. On the current BUILD base it MUST prove that SDK Effect
 4 runtime subpaths do not cross into Effect 3 packages and that only the

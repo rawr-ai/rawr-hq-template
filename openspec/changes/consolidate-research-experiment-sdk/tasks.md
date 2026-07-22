@@ -18,8 +18,8 @@
   changing unrelated root dependencies.
 - [x] 2.2 Implement TypeBox identity/config contracts (including lane-supplied
   governed instance identity and disjoint subject properties), stage interfaces,
-  durable-output envelopes, atomic sink port, typed residue port, and pure
-  adopt-or-reject behavior.
+  durable-output envelopes, atomic terminal sink, lane-owned exact-attempt
+  admission and residue ports, and pure admit/adopt/reconcile behavior.
 - [x] 2.3 Implement exact-environment command execution and one Effect runtime
   composition boundary.
 - [ ] 2.4 Implement named OpenShell, Codex, Langfuse, Codex-Langfuse,
@@ -31,7 +31,9 @@
   unresolved process residue and same-instance re-entry blocking, canonical
   Git-substrate artifact round-trip,
   create-if-absent terminal publication and unknown-write reconciliation,
-  adoption-before-observation continuation, durable evaluation projection,
+  adoption-before-admission continuation, concurrent exact-attempt admission,
+  terminal/admission race adoption, admitted-attempt terminal binding,
+  crash-before-residue fencing, durable evaluation projection,
   observation failure preserving execution, governed instance rotation,
   TypeBox property collision, interruption ownership, failure separation,
   effective Codex envelopes, exact score subjects, parented trace-seed rejection

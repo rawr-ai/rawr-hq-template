@@ -1,7 +1,7 @@
 import { Exit } from "effect";
 import type { Portable } from "../contracts/schema.js";
 import type { PortableStageOutput } from "../contracts/stage-output.js";
-import { equalStructuredData } from "./adoption.js";
+import { equalStructuredData, stageOutputIdentityOf } from "./adoption.js";
 import type { EvaluationResultShape, SolverTerminalShape } from "./stage-shapes.js";
 
 const ObservationSettlementBinding = Symbol("@rawr/research-sdk/core/ObservationSettlement");
@@ -44,10 +44,6 @@ export function bindObservationSettlement<
 >(input: {
   readonly acquiredHandle: Handle & Portable<Handle>;
   readonly execution: Exit.Exit<PortableStageOutput<Terminal>, ExecutionError>;
-  readonly equalsHandle: (
-    left: Handle & Portable<Handle>,
-    right: Handle & Portable<Handle>
-  ) => boolean;
 }): ObservationBindingOutcome<BoundObservationSettlement<Handle, Terminal, ExecutionError>> {
   if (Exit.isFailure(input.execution)) {
     return {
@@ -61,7 +57,7 @@ export function bindObservationSettlement<
   }
 
   const terminalHandle = input.execution.value.value.observation as Handle & Portable<Handle>;
-  if (!input.equalsHandle(input.acquiredHandle, terminalHandle)) {
+  if (!equalStructuredData(input.acquiredHandle, terminalHandle)) {
     return {
       kind: "Conflict",
       conflict: { kind: "ObservationHandleMismatch" },
@@ -102,7 +98,10 @@ export function bindObservationProjection<
       ? evaluation.predecessors.digests
       : evaluation.predecessors.rootDigests;
 
-  if (!roots.some((digest) => equalStructuredData(digest, terminalDigest))) {
+  if (
+    !equalStructuredData(evaluation.value.terminalPredecessor, stageOutputIdentityOf(terminal)) ||
+    !roots.some((digest) => equalStructuredData(digest, terminalDigest))
+  ) {
     return {
       kind: "Conflict",
       conflict: { kind: "EvaluationPredecessorMismatch" },

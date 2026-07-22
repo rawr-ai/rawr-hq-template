@@ -172,6 +172,71 @@ describe("Bun command capability", () => {
     expect(outcome.kind).toBe("CommandTimedOut");
   });
 
+  test("bounds output drain when a descendant retains the exited command's pipes", async () => {
+    let terminationAttempts = 0;
+    const command = makeBunCommandProcess({
+      terminateAndConfirm: async () => {
+        terminationAttempts += 1;
+        throw new Error("must not signal an already-exited command");
+      },
+    });
+    const execution = Effect.runPromiseExit(
+      command.run({
+        executable: "/bin/sh",
+        arguments: ["-c", "/bin/sleep 1 & printf 'parent-exited\\n'"],
+        cwd: import.meta.dirname,
+        environment: {},
+        timeoutMs: 20,
+        terminationGraceMs: 40,
+      })
+    );
+    const bounded = await Promise.race([
+      execution.then((exit) => ({ kind: "Completed" as const, exit })),
+      Bun.sleep(300).then(() => ({ kind: "OuterTimeout" as const })),
+    ]);
+
+    expect(bounded.kind).toBe("Completed");
+    if (bounded.kind !== "Completed") {
+      throw new Error("Command timeout remained coupled to descendant-held output pipes.");
+    }
+
+    expect(terminationAttempts).toBe(0);
+    expect(Exit.isFailure(bounded.exit)).toBe(true);
+    if (Exit.isFailure(bounded.exit)) {
+      const failures = bounded.exit.cause.reasons
+        .filter(Cause.isFailReason)
+        .map(({ error }) => error);
+      const timeout = failures.find(({ kind }) => kind === "CommandTimedOut");
+      const drain = failures.find(({ kind }) => kind === "CommandIoFailed");
+
+      expect(timeout).toEqual(
+        expect.objectContaining({
+          kind: "CommandTimedOut",
+          result: expect.objectContaining({
+            kind: "Exited",
+            exitCode: 0,
+          }),
+          capture: expect.objectContaining({
+            stdoutComplete: false,
+            stderrComplete: false,
+          }),
+        })
+      );
+      expect(drain).toEqual(
+        expect.objectContaining({
+          kind: "CommandIoFailed",
+          capture: expect.objectContaining({
+            stdoutComplete: false,
+            stderrComplete: false,
+          }),
+        })
+      );
+      if (timeout?.kind === "CommandTimedOut") {
+        expect(new TextDecoder().decode(timeout.capture.stdout)).toContain("parent-exited");
+      }
+    }
+  });
+
   test("retains interruption and unconfirmed termination in one Effect cause", async () => {
     let terminationAttempts = 0;
     const command = makeBunCommandProcess({
@@ -356,7 +421,7 @@ describe("Bun command capability", () => {
 describe("package-local vendor closure", () => {
   test("resolves the admitted package versions inside the SDK", async () => {
     const versions = await Promise.all(
-      ["effect", "typebox", "typescript", "@types/bun"].map(async (name) => {
+      ["effect", "typebox", "typescript", "@types/bun", "@types/node"].map(async (name) => {
         const url = import.meta.resolve(`${name}/package.json`);
         const manifest = (await Bun.file(new URL(url)).json()) as {
           readonly version: string;
@@ -370,6 +435,7 @@ describe("package-local vendor closure", () => {
       typebox: "1.3.6",
       typescript: "7.0.2",
       "@types/bun": "1.3.14",
+      "@types/node": "22.20.1",
     });
   });
 });
