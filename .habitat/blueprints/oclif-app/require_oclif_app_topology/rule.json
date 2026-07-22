@@ -19,9 +19,7 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [
-        "apps/cli/**"
-      ]
+      "patterns": ["apps/cli/**"]
     }
   ],
   "supportFiles": {

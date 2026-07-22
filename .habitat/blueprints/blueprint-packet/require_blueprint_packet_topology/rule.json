@@ -19,9 +19,7 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [
-        ".habitat/blueprints/*/*/**"
-      ]
+      "patterns": [".habitat/blueprints/*/*/**"]
     }
   ],
   "supportFiles": {

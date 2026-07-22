@@ -1,11 +1,7 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "!{projectRoot}/dist/**",
-      "!{projectRoot}/coverage/**"
-    ],
+    "default": ["{projectRoot}/**/*", "!{projectRoot}/dist/**", "!{projectRoot}/coverage/**"],
     "production": [
       "default",
       "!{projectRoot}/test/**",
@@ -26,14 +22,8 @@
       "{workspaceRoot}/scripts/runtime/**/*.mjs",
       "{workspaceRoot}/tools/architecture-inventory/**/*.json"
     ],
-    "typescriptRuntime": [
-      "{workspaceRoot}/tsconfig.base.json",
-      "{workspaceRoot}/bun.lock"
-    ],
-    "bunToolchain": [
-      "{workspaceRoot}/package.json",
-      "{workspaceRoot}/bun.lock"
-    ]
+    "typescriptRuntime": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/bun.lock"],
+    "bunToolchain": ["{workspaceRoot}/package.json", "{workspaceRoot}/bun.lock"]
   },
   "targetDefaults": {
     "build": {

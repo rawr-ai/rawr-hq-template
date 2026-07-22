@@ -19,10 +19,7 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [
-        "services/*/src/service/**",
-        "plugins/server/api/*/src/service/**"
-      ]
+      "patterns": ["services/*/src/service/**", "plugins/server/api/*/src/service/**"]
     }
   ],
   "supportFiles": {
