@@ -9,16 +9,16 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { normalizeCompleteTestRequest } from "../../../src/service/modules/providers/model/dto/mode";
 import {
-  parseProviderTarget,
   type ProviderTarget,
+  parseProviderTarget,
 } from "../../../src/service/modules/providers/model/dto/provider-target";
 import {
   createProviderMarketplaceRegistration,
   marketplaceState,
 } from "../../../src/service/modules/providers/model/policy/marketplace";
 import {
-  renderCompleteProjection,
   type AgentProviderProjection,
+  renderCompleteProjection,
 } from "../../../src/service/modules/providers/model/policy/projection";
 import {
   createTargetReceipt,

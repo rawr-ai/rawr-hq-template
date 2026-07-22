@@ -1,3 +1,5 @@
+import type { ProviderId, ProviderTarget } from "../model/dto/provider-target";
+import { type DeploymentResult, failure, issue, success } from "../model/errors/deployment-result";
 import {
   createProviderMarketplaceRegistration,
   type ProviderMarketplaceRegistration,
@@ -7,22 +9,20 @@ import type {
   ProviderMemberFingerprint,
   ProviderProjectionMember,
 } from "../model/policy/projection";
-import { failure, issue, success, type DeploymentResult } from "../model/errors/deployment-result";
-import type { ProviderId, ProviderTarget } from "../model/dto/provider-target";
 import type {
+  FlatProjectionRecordCollection,
   ImmutableProviderTreeCollection,
   ImmutableProviderTreeFile,
   ImmutableProviderTreeKey,
-  FlatProjectionRecordCollection,
   ProjectionRecordKey,
 } from "../model/repositories/projection-storage";
 import type {
+  MarketplaceMaterializationObservation,
+  ProjectionMaterializationObservation,
   ProviderMarketplaceMaterializer,
   ProviderMarketplaceSource,
   ProviderMarketplaceSourceReader,
   ProviderProjectionMaterializer,
-  MarketplaceMaterializationObservation,
-  ProjectionMaterializationObservation,
 } from "../model/repositories/state";
 import {
   decodeProjectionManifest,

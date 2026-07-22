@@ -1,12 +1,3 @@
-import { compareCanonical } from "../helpers/canonical";
-import {
-  failure,
-  issue,
-  success,
-  type DeploymentResult,
-  type NonEmptyReadonlyArray,
-  type ProviderDeploymentIssue,
-} from "../errors/deployment-result";
 import type {
   CanonicalConvergencePlan,
   CanonicalConvergenceStep,
@@ -16,20 +7,29 @@ import type {
 } from "../dto/canonical-convergence";
 import type { ProviderTarget } from "../dto/provider-target";
 import {
+  type DeploymentResult,
+  failure,
+  issue,
+  type NonEmptyReadonlyArray,
+  type ProviderDeploymentIssue,
+  success,
+} from "../errors/deployment-result";
+import { compareCanonical } from "../helpers/canonical";
+import {
   createProviderMarketplaceRegistration,
   marketplaceState,
-  sameMarketplaceState,
   type ProviderMarketplaceRegistration,
+  sameMarketplaceState,
 } from "./marketplace";
 import {
-  evaluateCapabilities,
   type AgentProviderProjection,
   type CapabilityEvaluation,
+  evaluateCapabilities,
   type ProviderProjectionMember,
 } from "./projection";
 import type {
-  NativeMemberObservation,
   NativeConfiguredExposureObservation,
+  NativeMemberObservation,
   NativeStandaloneExposureObservation,
   ProviderInventory,
 } from "./state-machine";

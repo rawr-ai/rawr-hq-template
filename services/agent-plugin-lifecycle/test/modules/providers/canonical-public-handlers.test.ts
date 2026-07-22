@@ -1,26 +1,20 @@
 import { Value } from "typebox/value";
 import { describe, expect, it, vi } from "vitest";
-
-import { executeCanonicalStatus } from "../../../src/service/modules/providers/router/canonical-status.router";
-import { executeCanonicalSync } from "../../../src/service/modules/providers/router/canonical-sync.router";
-import {
-  createCompleteSetArtifactRef,
-  parsePluginId,
-  parseReleaseSetDigest,
-  type ContentAuthority,
-  type VerifiedArtifactSnapshotV1,
-} from "../../../src/service/shared/release";
 import type { CurrentMainSelectionResult } from "../../../src/service/model/dto/current-main-selection";
 import type {
   CanonicalNativeMutationAction,
   CanonicalNativeObservation,
 } from "../../../src/service/modules/providers/model/dto/canonical-convergence";
 import type { CanonicalTargetStatus } from "../../../src/service/modules/providers/model/dto/outcome";
-import type { NativeMutationAttempt } from "../../../src/service/modules/providers/model/repositories/provider";
 import {
-  parseProviderTarget,
   type ProviderTarget,
+  parseProviderTarget,
 } from "../../../src/service/modules/providers/model/dto/provider-target";
+import {
+  failure,
+  issue,
+  success,
+} from "../../../src/service/modules/providers/model/errors/deployment-result";
 import {
   createProviderMarketplaceRegistration,
   marketplaceState,
@@ -36,12 +30,17 @@ import {
   type NativeStandaloneExposureObservation,
   type ProviderInventory,
 } from "../../../src/service/modules/providers/model/policy/state-machine";
-import {
-  failure,
-  issue,
-  success,
-} from "../../../src/service/modules/providers/model/errors/deployment-result";
+import type { NativeMutationAttempt } from "../../../src/service/modules/providers/model/repositories/provider";
+import { executeCanonicalStatus } from "../../../src/service/modules/providers/router/canonical-status.router";
+import { executeCanonicalSync } from "../../../src/service/modules/providers/router/canonical-sync.router";
 import { CanonicalSyncResultSchema } from "../../../src/service/modules/providers/schemas";
+import {
+  type ContentAuthority,
+  createCompleteSetArtifactRef,
+  parsePluginId,
+  parseReleaseSetDigest,
+  type VerifiedArtifactSnapshotV1,
+} from "../../../src/service/shared/release";
 import { desiredStateFixture } from "./canonical-fixture";
 
 describe("canonical provider public handlers", () => {

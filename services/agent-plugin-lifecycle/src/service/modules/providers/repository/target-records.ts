@@ -1,25 +1,31 @@
+import { type ProviderTarget, parseProviderTarget } from "../model/dto/provider-target";
 import {
-  canonicalSerializeTargetReceipt,
-  decodeTargetReceipt,
-  verifyTargetReceipt,
-  type TargetReceipt,
-} from "../model/policy/receipt";
-import {
+  type DeploymentResult,
   failure,
   firstIssue,
   issue,
-  success,
-  type DeploymentResult,
   type ProviderDeploymentIssue,
   type ProviderDeploymentIssueCode,
+  success,
 } from "../model/errors/deployment-result";
+import {
+  canonicalSerializeTargetReceipt,
+  decodeTargetReceipt,
+  type TargetReceipt,
+  verifyTargetReceipt,
+} from "../model/policy/receipt";
 import {
   createTargetIdentitySidecar,
   type ReceiptObservation,
   type TargetIdentityObservation,
   type TargetIdentitySidecar,
 } from "../model/policy/state-machine";
-import { parseProviderTarget, type ProviderTarget } from "../model/dto/provider-target";
+import type {
+  TargetIdentityReader,
+  TargetIdentityWriter,
+  TargetReceiptReader,
+  TargetReceiptWriter,
+} from "../model/repositories/state";
 import type {
   PathlessTargetRecordCollection,
   TargetRecordCapture,
@@ -28,12 +34,6 @@ import type {
   TargetRecordObservation,
   TargetRecordPlanInput,
 } from "../model/repositories/target-record-storage";
-import type {
-  TargetIdentityReader,
-  TargetIdentityWriter,
-  TargetReceiptReader,
-  TargetReceiptWriter,
-} from "../model/repositories/state";
 import {
   canonicalSerializeTargetIdentitySidecar,
   decodeTargetIdentitySidecar,

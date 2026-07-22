@@ -1,8 +1,6 @@
 import type { NativeAgentProviderFailure } from "@rawr/resource-native-agent-provider";
-import { describe, expect, it } from "vitest";
 import { Value } from "typebox/value";
-
-import type { CanonicalNativeRuntime } from "../../../src/service/modules/providers/model/repositories/canonical-native";
+import { describe, expect, it } from "vitest";
 import type {
   CompleteTestInput,
   TargetedTestInput,
@@ -13,25 +11,20 @@ import {
   success,
 } from "../../../src/service/modules/providers/model/errors/deployment-result";
 import type { VerifiedReleaseReader } from "../../../src/service/modules/providers/model/repositories/artifact";
+import type { CanonicalNativeRuntime } from "../../../src/service/modules/providers/model/repositories/canonical-native";
 import { createNativeProviderObserver } from "../../../src/service/modules/providers/repository/native";
 import { createResourceProviderReleaseReader } from "../../../src/service/modules/providers/repository/resource-artifact";
 import {
-  CanonicalStatusResultSchema,
-  CanonicalSyncResultSchema,
-  CompleteTestResultSchema,
-  TargetedTestResultSchema,
-} from "../../../src/service/modules/providers/schemas";
-import {
-  executeCanonicalStatus,
   type CanonicalStatusDependencies,
+  executeCanonicalStatus,
 } from "../../../src/service/modules/providers/router/canonical-status.router";
 import {
-  executeCanonicalSync,
   type CanonicalSyncDependencies,
+  executeCanonicalSync,
 } from "../../../src/service/modules/providers/router/canonical-sync.router";
 import {
-  executeCompleteTest,
   type CompleteTestDependencies,
+  executeCompleteTest,
 } from "../../../src/service/modules/providers/router/complete-test.router";
 import {
   canonicalStatusResult,
@@ -43,6 +36,12 @@ import {
   executeTargetedTest,
   type TargetedTestDependencies,
 } from "../../../src/service/modules/providers/router/targeted-test.router";
+import {
+  CanonicalStatusResultSchema,
+  CanonicalSyncResultSchema,
+  CompleteTestResultSchema,
+  TargetedTestResultSchema,
+} from "../../../src/service/modules/providers/schemas";
 import {
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,

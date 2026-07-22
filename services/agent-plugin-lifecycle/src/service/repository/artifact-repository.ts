@@ -1,7 +1,27 @@
+import type {
+  ArtifactObjectAddress,
+  ArtifactRepositoryAsyncPort,
+  ArtifactRepositoryIssue,
+  ArtifactRepositoryPublicationEvent,
+  ArtifactTreeEntry,
+  ArtifactTreeObservation,
+  ArtifactTreeSnapshot,
+  ArtifactPublicationResult as ResourcePublicationResult,
+} from "@rawr/resource-agent-plugin-artifact-repository";
+import type {
+  ArtifactPublicationOptions,
+  ArtifactPublicationResult,
+  ArtifactReader,
+  ArtifactReadIssue,
+  ArtifactReadResult,
+  ArtifactStore,
+  ArtifactStoreFailpoint,
+  ArtifactStoreFailpointEvent,
+} from "../model/dependencies/releases";
 import {
-  MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
-  MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
+  type AgentPluginRelease,
+  type AgentPluginReleaseSet,
+  type ArtifactRef,
   addReleaseSetPayloadBytes,
   canonicalSerializeAgentPluginRelease,
   canonicalSerializeAgentPluginReleaseSet,
@@ -10,36 +30,16 @@ import {
   createReleaseArtifactRef,
   decodeAgentPluginRelease,
   decodeAgentPluginReleaseSet,
+  MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
+  MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
   payloadEntryBytes,
-  verifyCompleteReleaseSet,
-  type AgentPluginRelease,
-  type AgentPluginReleaseSet,
-  type ArtifactRef,
   type ReleaseArtifactRef,
   type VerifiedArtifactSnapshotV1,
   type VerifiedPayloadFileV1,
   type VerifiedReleaseArtifactV1,
+  verifyCompleteReleaseSet,
 } from "../shared/release";
-import type {
-  ArtifactPublicationOptions,
-  ArtifactPublicationResult,
-  ArtifactReadIssue,
-  ArtifactReadResult,
-  ArtifactReader,
-  ArtifactStore,
-  ArtifactStoreFailpoint,
-  ArtifactStoreFailpointEvent,
-} from "../model/dependencies/releases";
-import type {
-  ArtifactObjectAddress,
-  ArtifactPublicationResult as ResourcePublicationResult,
-  ArtifactRepositoryAsyncPort,
-  ArtifactRepositoryIssue,
-  ArtifactRepositoryPublicationEvent,
-  ArtifactTreeEntry,
-  ArtifactTreeObservation,
-  ArtifactTreeSnapshot,
-} from "@rawr/resource-agent-plugin-artifact-repository";
 
 const RELEASE_ENVELOPE_FILE = "release.json";
 const RELEASE_SET_ENVELOPE_FILE = "release-set.json";

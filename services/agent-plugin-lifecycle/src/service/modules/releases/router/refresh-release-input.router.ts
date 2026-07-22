@@ -1,8 +1,8 @@
+import type { ReleaseInputRefreshRequest } from "../model/dto/release-lifecycle";
 import {
   classifyReleaseInputRefreshObservation,
   planReleaseInputRefreshObservation,
 } from "../model/policy/staged-content-workspace";
-import type { ReleaseInputRefreshRequest } from "../model/dto/release-lifecycle";
 import { module } from "../module";
 
 export const refreshReleaseInput = module.refreshReleaseInput.handler(

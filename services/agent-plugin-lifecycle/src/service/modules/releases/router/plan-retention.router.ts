@@ -3,11 +3,11 @@ import { MAX_RETENTION_ISSUE_DETAIL_LENGTH, MAX_RETENTION_REFS } from "../model/
 import {
   blockedRetentionPlan,
   constructRetentionPlan,
+  type NormalizedRetentionInventoryEntry,
+  type NormalizedRetentionRef,
   parseRetentionInventory,
   parseRetentionPinsV1,
   retentionRefKey,
-  type NormalizedRetentionInventoryEntry,
-  type NormalizedRetentionRef,
 } from "../model/policy/retention";
 import { module } from "../module";
 

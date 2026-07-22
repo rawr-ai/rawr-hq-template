@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 import { issue, type ReleaseIssue } from "./issues";
 import { parseCanonicalString, parseInteger } from "./parse";
-import { failure, success, type ReleaseResult } from "./result";
+import { failure, type ReleaseResult, success } from "./result";
 
 declare const contentAuthorityBrand: unique symbol;
 declare const repositoryIdentityBrand: unique symbol;

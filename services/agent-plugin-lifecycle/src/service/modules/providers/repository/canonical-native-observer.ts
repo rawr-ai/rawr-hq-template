@@ -1,7 +1,7 @@
-import type { CanonicalNativeObservation } from "../model/dto/canonical-convergence";
 import type { ContentAuthority } from "../../../shared/release";
-import { failure, issue, success, type DeploymentResult } from "../model/errors/deployment-result";
+import type { CanonicalNativeObservation } from "../model/dto/canonical-convergence";
 import type { ProviderId, ProviderTarget } from "../model/dto/provider-target";
+import { type DeploymentResult, failure, issue, success } from "../model/errors/deployment-result";
 import { inspectNativeInventory, type NativeProviderInventoryBridge } from "./native";
 
 export interface CanonicalNativeObserver {

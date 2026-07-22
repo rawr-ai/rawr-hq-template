@@ -1,34 +1,34 @@
-import { normalizeCanonicalSyncRequest, type CanonicalSyncInput } from "../model/dto/mode";
-import {
-  canonicalMutationRecord,
-  type CanonicalMutationRecord,
-  type CanonicalSyncOutcome,
-  type CanonicalSyncTargetOutcome,
-} from "../model/dto/outcome";
-import {
-  success,
-  type DeploymentResult,
-  type NonEmptyReadonlyArray,
-  type ProviderDeploymentIssue,
-} from "../model/errors/deployment-result";
+import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
 import type {
   CanonicalConvergencePlan,
   CanonicalObservedConvergencePlan,
 } from "../model/dto/canonical-convergence";
+import { type CanonicalSyncInput, normalizeCanonicalSyncRequest } from "../model/dto/mode";
+import {
+  type CanonicalMutationRecord,
+  type CanonicalSyncOutcome,
+  type CanonicalSyncTargetOutcome,
+  canonicalMutationRecord,
+} from "../model/dto/outcome";
+import {
+  type DeploymentResult,
+  type NonEmptyReadonlyArray,
+  type ProviderDeploymentIssue,
+  success,
+} from "../model/errors/deployment-result";
 import {
   canonicalMarketplaceRegistration,
   planCanonicalConvergence,
 } from "../model/policy/canonical-convergence";
-import { module } from "../module";
 import type { VerifiedReleaseReader } from "../model/repositories/artifact";
 import type { CanonicalNativeRuntime } from "../model/repositories/canonical-native";
-import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
 import type {
   ProviderMarketplaceMaterializer,
   ProviderProjectionMaterializer,
 } from "../model/repositories/state";
-import { desiredForTarget, resolveCanonicalOperationSelection } from "./canonical-operation";
+import { module } from "../module";
 import { executeCanonicalConvergence } from "./canonical-convergence-executor";
+import { desiredForTarget, resolveCanonicalOperationSelection } from "./canonical-operation";
 import { canonicalSyncResult } from "./procedure-result";
 
 export interface CanonicalSyncDependencies {

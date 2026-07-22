@@ -1,12 +1,11 @@
+import type { Deps } from "../../../src/client";
+import type { BuildResult } from "../../../src/service/modules/releases/model/dto/release-lifecycle";
+import type { RetentionResult } from "../../../src/service/modules/releases/model/dto/retention";
 import type {
   ArtifactRef,
   PluginId,
   ReleaseArtifactRef,
 } from "../../../src/service/shared/release";
-import type { Deps } from "../../../src/client";
-
-import type { BuildResult } from "../../../src/service/modules/releases/model/dto/release-lifecycle";
-import type { RetentionResult } from "../../../src/service/modules/releases/model/dto/retention";
 
 declare const pluginId: PluginId;
 declare const artifactRef: ArtifactRef;

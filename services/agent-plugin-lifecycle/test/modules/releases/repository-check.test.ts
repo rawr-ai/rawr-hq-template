@@ -1,14 +1,12 @@
 import { createHash } from "node:crypto";
 import type {
-  ContentWorkspaceNodeAsyncPort,
   ContentWorkspaceFailure,
+  ContentWorkspaceNodeAsyncPort,
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
 import { describe, expect, it } from "vitest";
-
-import type { ResourceContentWorkspaceStagedReadPort } from "../../../src/service/modules/releases/repository/staged-content-workspace";
 import type {
   ContentWorkspaceInspection,
   StagedIndexObservationResult,
@@ -18,16 +16,17 @@ import {
   classifyStagedObservationFailure,
   MAX_STAGED_MATERIALIZED_BLOB_BYTES,
 } from "../../../src/service/modules/releases/model/policy/staged-content-workspace";
+import type { ResourceContentWorkspaceStagedReadPort } from "../../../src/service/modules/releases/repository/staged-content-workspace";
 import {
-  parseContentAuthority,
   canonicalSerializeAgentPluginReleaseInput,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
+  parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
-  payloadEntryBytes,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
+  payloadEntryBytes,
 } from "../../../src/service/shared/release";
 import { productFixture } from "../../shared/release/fixtures";
 import {

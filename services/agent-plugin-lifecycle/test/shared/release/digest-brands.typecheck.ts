@@ -1,7 +1,7 @@
 import {
+  type ArtifactDigest,
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
-  type ArtifactDigest,
   type PayloadDigest,
   type ReleaseDigest,
   type ReleaseInputDigest,

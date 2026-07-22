@@ -1,36 +1,35 @@
 import {
-  contentDigest,
-  parseReleaseRelativePath,
   type CompleteSetArtifactRef,
   type ContentAuthority,
   type ContentDigest,
+  contentDigest,
   type GitCommitId,
   type NormalizedFileMode,
   type PluginId,
+  parseReleaseRelativePath,
   type ReleaseArtifactRef,
   type ReleaseRelativePath,
   type VerifiedArtifactSnapshotV1,
   type VerifiedReleaseArtifactV1,
 } from "../../../../shared/release";
-
+import { releaseRefValue, setRefValue } from "../dto/mode";
+import type { ProviderId } from "../dto/provider-target";
 import {
-  canonicalBytes,
-  canonicalDigest,
-  compareCanonical,
-  type CanonicalValue,
-} from "../helpers/canonical";
-import { hookEventSlugsFromManifests } from "../helpers/hook-manifest";
-import { canonicalString } from "../helpers/parse";
-import {
+  type DeploymentResult,
   failure,
   firstIssue,
   issue,
-  success,
-  type DeploymentResult,
   type ProviderDeploymentIssue,
+  success,
 } from "../errors/deployment-result";
-import type { ProviderId } from "../dto/provider-target";
-import { releaseRefValue, setRefValue } from "../dto/mode";
+import {
+  type CanonicalValue,
+  canonicalBytes,
+  canonicalDigest,
+  compareCanonical,
+} from "../helpers/canonical";
+import { hookEventSlugsFromManifests } from "../helpers/hook-manifest";
+import { canonicalString } from "../helpers/parse";
 
 declare const adapterProtocolBrand: unique symbol;
 declare const rendererProtocolBrand: unique symbol;

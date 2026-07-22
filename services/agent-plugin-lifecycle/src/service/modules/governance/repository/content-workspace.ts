@@ -13,11 +13,11 @@ import {
   type GitLocator,
 } from "../model/dto/git";
 import {
+  type CanonicalRef,
+  type GitCommitId,
   parseCommit,
   parseRepository,
   parseTree,
-  type CanonicalRef,
-  type GitCommitId,
 } from "../model/dto/primitives";
 import type {
   ExactGitReader,

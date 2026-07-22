@@ -1,4 +1,4 @@
-import { ReadonlyObject, Type, type Static } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 
 export const RELEASE_ISSUE_CODES = [
   "EXPECTED_ARRAY",

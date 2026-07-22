@@ -1,7 +1,7 @@
 import type { CompleteSetArtifactRef, ReleaseArtifactRef } from "./artifact-ref";
+import type { ContentDigest, NormalizedFileMode, ReleaseRelativePath } from "./primitives";
 import type { AgentPluginRelease } from "./release";
 import type { AgentPluginReleaseSet } from "./release-set";
-import type { ContentDigest, NormalizedFileMode, ReleaseRelativePath } from "./primitives";
 
 /** An ownership-transferred payload file. Readers must return a fresh `bytes` copy. */
 export interface VerifiedPayloadFileV1 {

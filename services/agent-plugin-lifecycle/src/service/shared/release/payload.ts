@@ -1,32 +1,32 @@
-import { ReadonlyObject, Refine, Type, type Static } from "typebox";
+import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
 import {
+  type CanonicalJsonValue,
   canonicalJsonLine,
   decodeBase64,
   encodeBase64,
-  type CanonicalJsonValue,
 } from "./canonical";
-import { issue, sortReleaseIssues, type ReleaseIssue } from "./issues";
+import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import { collect, isExactRecord, parseBoundedArray, parseInteger } from "./parse";
 import {
+  type ContentDigest,
+  compareCanonicalText,
+  contentDigest,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   MAX_RELEASE_RELATIVE_PATH_BYTES,
+  type NormalizedFileMode,
   PAYLOAD_PROTOCOL_VERSION,
-  compareCanonicalText,
-  contentDigest,
+  type PayloadDigest,
+  type PayloadProtocolVersion,
   parseContentDigest,
   parseNormalizedFileMode,
   parsePayloadDigest,
   parseReleaseRelativePath,
   payloadDigest,
-  type ContentDigest,
-  type NormalizedFileMode,
-  type PayloadDigest,
-  type PayloadProtocolVersion,
   type ReleaseRelativePath,
 } from "./primitives";
-import { asNonEmpty, failure, success, type ReleaseResult } from "./result";
+import { asNonEmpty, failure, type ReleaseResult, success } from "./result";
 
 declare const agentPluginPayloadBrand: unique symbol;
 

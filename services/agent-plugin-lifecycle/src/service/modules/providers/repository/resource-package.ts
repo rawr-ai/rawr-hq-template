@@ -1,37 +1,37 @@
-import {
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
-  contentDigest,
-  parseArtifactRef,
-  parseContentAuthority,
-  parseGitCommitId,
-  parsePluginId,
-  parseReleaseRelativePath,
-  type ContentDigest,
-  type NormalizedFileMode,
-  type PluginId,
-  type ReleaseArtifactRef,
-  type ReleaseRelativePath,
-} from "../../../shared/release";
-import {
-  canonicalBytes,
-  canonicalDigest,
-  equalBytes,
-  type CanonicalValue,
-} from "../model/helpers/canonical";
-import { hookEventSlugsFromManifests } from "../model/helpers/hook-manifest";
-import {
-  PROVIDER_ARTIFACT_AUTHORITY_PROTOCOL,
-  artifactAuthorityValue,
-  type ProviderArtifactAuthority,
-  type ProviderMemberFingerprint,
-  type ProviderSourceIdentity,
-} from "../model/policy/projection";
-import type { ProviderId } from "../model/dto/provider-target";
 import type {
   NativeResourcePackageEntry,
   NativeResourcePackageObservation,
   NativeResourcePackageReadLimits,
 } from "../../../model/dependencies/providers";
+import {
+  type ContentDigest,
+  contentDigest,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+  type NormalizedFileMode,
+  type PluginId,
+  parseArtifactRef,
+  parseContentAuthority,
+  parseGitCommitId,
+  parsePluginId,
+  parseReleaseRelativePath,
+  type ReleaseArtifactRef,
+  type ReleaseRelativePath,
+} from "../../../shared/release";
+import type { ProviderId } from "../model/dto/provider-target";
+import {
+  type CanonicalValue,
+  canonicalBytes,
+  canonicalDigest,
+  equalBytes,
+} from "../model/helpers/canonical";
+import { hookEventSlugsFromManifests } from "../model/helpers/hook-manifest";
+import {
+  artifactAuthorityValue,
+  PROVIDER_ARTIFACT_AUTHORITY_PROTOCOL,
+  type ProviderArtifactAuthority,
+  type ProviderMemberFingerprint,
+  type ProviderSourceIdentity,
+} from "../model/policy/projection";
 
 export const NATIVE_PACKAGE_READ_LIMITS: NativeResourcePackageReadLimits = Object.freeze({
   maxEntries: 200_000,

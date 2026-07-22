@@ -1,11 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-
+import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
+import type { ProviderSourceIdentity } from "../../../src/service/modules/providers/model/policy/projection";
 import { createCanonicalNativeObserver } from "../../../src/service/modules/providers/repository/canonical-native-observer";
 import type { NativeProviderInventoryBridge } from "../../../src/service/modules/providers/repository/native";
 import { NativeProvenanceAmbiguity } from "../../../src/service/modules/providers/repository/resource-provenance";
 import { parseContentAuthority } from "../../../src/service/shared/release";
-import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
-import type { ProviderSourceIdentity } from "../../../src/service/modules/providers/model/policy/projection";
 
 const TARGET = mustTarget();
 const OWNER = mustContentAuthority("rawr-hq");

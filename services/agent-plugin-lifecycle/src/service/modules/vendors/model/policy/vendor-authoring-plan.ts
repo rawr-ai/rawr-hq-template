@@ -8,7 +8,8 @@ import {
   contentDigest,
   createAgentPluginReleaseInput,
 } from "../../../../shared/release";
-import { canonicalJsonLine, type CanonicalJsonValue } from "../../../../shared/release/canonical";
+import { type CanonicalJsonValue, canonicalJsonLine } from "../../../../shared/release/canonical";
+import type { VendorContentWorkspaceRef } from "../dto/vendor-operations";
 import {
   VENDOR_LOCK_PROTOCOL,
   VENDOR_PROVENANCE_PROTOCOL,
@@ -26,7 +27,6 @@ import type {
   VendorSourceChange,
   VendorWorkspaceObservation,
 } from "../dto/vendor-workspace";
-import type { VendorContentWorkspaceRef } from "../dto/vendor-operations";
 import {
   policyFailure,
   policySuccess,

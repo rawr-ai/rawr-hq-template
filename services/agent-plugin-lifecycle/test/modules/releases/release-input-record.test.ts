@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/shared/release";
-import { createLifecycleTestClient, testInvocation } from "../../support/client";
 import { productFixture } from "../../shared/release/fixtures";
+import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
 describe("release-input record procedure", () => {
   it("encodes and validates canonical records without consulting lifecycle ports", async () => {

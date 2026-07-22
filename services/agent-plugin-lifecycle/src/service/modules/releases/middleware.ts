@@ -1,9 +1,9 @@
+import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
 import {
   createServiceAnalyticsMiddleware,
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
-import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
 import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
 import type { ArtifactStore } from "../../model/dependencies/releases";
 import type { MechanicalEvidenceStore } from "../../shared/release";

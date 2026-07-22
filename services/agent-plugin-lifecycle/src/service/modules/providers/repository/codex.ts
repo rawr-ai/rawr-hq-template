@@ -1,20 +1,20 @@
+import type { ProviderTargetDigest } from "../model/dto/provider-target";
+import type {
+  ProviderMarketplaceObservation,
+  ProviderMarketplaceRegistration,
+} from "../model/policy/marketplace";
 import {
-  parseAdapterProtocol,
   type AdapterProtocol,
   type ProviderArtifactAuthority,
   type ProviderCapability,
   type ProviderMemberFingerprint,
   type ProviderSourceIdentity,
+  parseAdapterProtocol,
 } from "../model/policy/projection";
-import type {
-  ProviderMarketplaceObservation,
-  ProviderMarketplaceRegistration,
-} from "../model/policy/marketplace";
 import type {
   NativeConfiguredExposureObservation,
   NativeStandaloneExposureObservation,
 } from "../model/policy/state-machine";
-import type { ProviderTargetDigest } from "../model/dto/provider-target";
 import type {
   ProviderMarketplaceSource,
   ProviderMarketplaceSourceReader,
