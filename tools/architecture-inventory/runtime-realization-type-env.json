@@ -18,7 +18,8 @@
         "oracle",
         "middle-spine",
         "simulate",
-        "gate"
+        "gate",
+        "lint"
       ]
     }
   }

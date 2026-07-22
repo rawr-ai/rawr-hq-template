@@ -75,7 +75,7 @@
       "id": "accepted.curated-effect-public-surface",
       "status": "vendor-proof",
       "source": "Runtime spec sections 5, 9, and 25",
-      "oracle": "The lab @rawr/sdk/effect facade is backed by real effect@3.21.2 while the public authoring surface rejects raw runtime constructors and the unverified Effect.pipe spelling.",
+      "oracle": "The lab @rawr/sdk/effect facade is backed by real effect@3.21.3 while the public authoring surface rejects raw runtime constructors and the unverified Effect.pipe spelling.",
       "fixtures": [
         "fixtures/inline-negative/effect-public-surface.ts",
         "test/vendor/effect-runtime.test.ts"
@@ -152,7 +152,7 @@
       "id": "vendor.effect.runtime-substrate",
       "status": "vendor-proof",
       "source": "Runtime spec sections 9, 17, 18, and 24",
-      "oracle": "Real effect@3.21.2 executes Effect.gen, root pipe, value .pipe, Exit/Cause failure modes, interruption, scoped acquire/release, finalizers, and a process-owned ManagedRuntime wrapper.",
+      "oracle": "Real effect@3.21.3 executes Effect.gen, root pipe, value .pipe, Exit/Cause failure modes, interruption, scoped acquire/release, finalizers, and a process-owned ManagedRuntime wrapper.",
       "fixtures": [
         "src/sdk/effect.ts",
         "src/runtime/effect-runtime.ts",
