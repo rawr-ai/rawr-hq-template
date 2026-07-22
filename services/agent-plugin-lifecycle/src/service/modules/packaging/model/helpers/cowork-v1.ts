@@ -1,7 +1,7 @@
 import {
   contentDigest,
   parseReleaseRelativePath,
-  verifyCompleteReleaseSetGraph,
+  verifyCompleteReleaseSet,
   type ArtifactRef,
   type VerifiedArtifactSnapshotV1,
   type VerifiedPayloadFileV1,
@@ -45,12 +45,12 @@ export function assertSnapshotMatchesRef(
   if (snapshot.releaseSet.releaseSetDigest !== snapshot.ref.releaseSetDigest) {
     throw new Error("Complete-set snapshot envelope differs from its reference");
   }
-  const graph = verifyCompleteReleaseSetGraph(
+  const verification = verifyCompleteReleaseSet(
     snapshot.releaseSet,
     snapshot.members.map((member) => member.release),
   );
-  if (!graph.ok) {
-    throw new Error(`Complete-set snapshot graph is invalid: ${graph.issues.map((entry) => entry.code).join(",")}`);
+  if (!verification.ok) {
+    throw new Error(`Complete release-set verification failed: ${verification.issues.map((entry) => entry.code).join(",")}`);
   }
   for (const member of snapshot.members) assertReleaseSnapshot(member);
 }

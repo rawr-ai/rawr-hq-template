@@ -27,7 +27,7 @@ import {
   verifyAgentPluginRelease,
   verifyAgentPluginReleaseInput,
   verifyAgentPluginReleaseSet,
-  verifyCompleteReleaseSetGraph,
+  verifyCompleteReleaseSet,
 } from "../../../src/service/shared/release";
 import {
   artifactDigest,
@@ -36,7 +36,7 @@ import {
 } from "../../../src/service/shared/release/primitives";
 import { member, must, productFixture, releaseInputBody, SOURCE, wire } from "./fixtures";
 
-describe("release and complete-set digest graph", () => {
+describe("release and complete-set integrity", () => {
   it("constructs and verifies exact non-circular release and artifact bodies", () => {
     const fixture = productFixture();
     const release = fixture.alphaRelease;
@@ -189,22 +189,22 @@ describe("release and complete-set digest graph", () => {
     if (!result.ok) expect(result.issues.map((entry) => entry.code)).toContain("RELEASE_INPUT_IDENTITY_MISMATCH");
   });
 
-  it("verifies the exact ordered complete graph without partial fallback", () => {
+  it("verifies the exact ordered complete release set without partial fallback", () => {
     const fixture = productFixture();
     const ordered = [fixture.alphaRelease, fixture.betaRelease];
-    expect(verifyCompleteReleaseSetGraph(fixture.releaseSet, ordered).ok).toBe(true);
+    expect(verifyCompleteReleaseSet(fixture.releaseSet, ordered).ok).toBe(true);
 
-    const missing = verifyCompleteReleaseSetGraph(fixture.releaseSet, [fixture.alphaRelease]);
+    const missing = verifyCompleteReleaseSet(fixture.releaseSet, [fixture.alphaRelease]);
     expect(missing.ok).toBe(false);
     if (!missing.ok) expect(missing.issues.map((entry) => entry.code)).toContain("MISSING_EXPECTED_MEMBER");
 
-    const reordered = verifyCompleteReleaseSetGraph(fixture.releaseSet, [...ordered].reverse());
+    const reordered = verifyCompleteReleaseSet(fixture.releaseSet, [...ordered].reverse());
     expect(reordered.ok).toBe(false);
     if (!reordered.ok) expect(reordered.issues.map((entry) => entry.code)).toContain("RELEASE_SET_DIGEST_MISMATCH");
 
     const tampered = wire(canonicalSerializeAgentPluginRelease(fixture.betaRelease));
     tampered.artifactBody.payloadEntries[0].bytesBase64 = "eA==";
-    expect(verifyCompleteReleaseSetGraph(fixture.releaseSet, [fixture.alphaRelease, tampered]).ok).toBe(false);
+    expect(verifyCompleteReleaseSet(fixture.releaseSet, [fixture.alphaRelease, tampered]).ok).toBe(false);
   });
 
   it("rejects a self-consistent set whose plugin ownership identity differs from its member", () => {
@@ -224,9 +224,9 @@ describe("release and complete-set digest graph", () => {
     const verified = verifyAgentPluginReleaseSet(forged);
     expect(verified.ok).toBe(false);
     if (!verified.ok) expect(verified.issues.map((entry) => entry.code)).toContain("OWNERSHIP_INDEX_MISMATCH");
-    const graph = verifyCompleteReleaseSetGraph(forged, [fixture.alphaRelease, fixture.betaRelease]);
-    expect(graph.ok).toBe(false);
-    if (!graph.ok) expect(graph.issues.map((entry) => entry.code)).toContain("OWNERSHIP_INDEX_MISMATCH");
+    const verification = verifyCompleteReleaseSet(forged, [fixture.alphaRelease, fixture.betaRelease]);
+    expect(verification.ok).toBe(false);
+    if (!verification.ok) expect(verification.issues.map((entry) => entry.code)).toContain("OWNERSHIP_INDEX_MISMATCH");
   });
 
   it("round-trips one canonical set envelope and rejects noncanonical member ordering", () => {
@@ -255,7 +255,7 @@ describe("release and complete-set digest graph", () => {
       () => createAgentPluginReleaseSet({ releaseInput: {}, releases: [] }),
       () => verifyAgentPluginReleaseSet({ body: {}, releaseSetDigest: "", schemaVersion: 1 }),
       () => decodeAgentPluginReleaseSet({}),
-      () => verifyCompleteReleaseSetGraph({}, {}),
+      () => verifyCompleteReleaseSet({}, {}),
       () => parseArtifactRef({}),
       () => decodeArtifactRef({}),
     ];
