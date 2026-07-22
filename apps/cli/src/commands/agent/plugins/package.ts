@@ -2,15 +2,15 @@ import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 
 import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands/command";
-import { artifactFlag } from "../../../lib/agent-plugins/commands/flags";
+import { releaseWorkspaceFlags } from "../../../lib/agent-plugins/commands/flags";
 import { parsePackageRequest } from "../../../lib/agent-plugins/commands/input";
 
 export default class AgentPluginsPackage extends AgentPluginLifecycleCommand {
-  static description = "Render a deterministic package from one immutable artifact";
+  static description = "Render a deterministic package from exact selected Git content";
 
   static flags = {
     json: RawrCommand.baseFlags.json,
-    artifact: artifactFlag,
+    ...releaseWorkspaceFlags,
     format: Flags.string({ options: ["cowork-v1"], description: "Package format" }),
     output: Flags.string({ description: "Canonical absolute package output path" }),
   } as const;

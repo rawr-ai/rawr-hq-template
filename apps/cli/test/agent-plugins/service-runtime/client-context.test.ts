@@ -1,7 +1,6 @@
 import { readdir, realpath, unlink } from "node:fs/promises";
 import path from "node:path";
 import { createClient } from "@rawr/agent-plugin-lifecycle/client";
-import { parseArtifactRef } from "@rawr/agent-plugin-lifecycle/release";
 import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -198,18 +197,11 @@ describe("production lifecycle service context", () => {
       },
       config: {},
     });
-    const artifactRef = must(
-      parseArtifactRef({
-        kind: "release",
-        releaseDigest: `rd1_${"1".repeat(64)}`,
-        artifactDigest: `ad1_${"2".repeat(64)}`,
-      })
-    );
-
     await expect(
       unboundClient.packaging.package(
         {
-          artifactRef,
+          contentWorkspace,
+          mode: { kind: "complete-set" },
           format: "cowork-v1",
           outputPath: path.join(root.path, "unused.cowork"),
         },
@@ -217,7 +209,7 @@ describe("production lifecycle service context", () => {
       )
     ).resolves.toMatchObject({
       kind: "RejectedBeforeOutputMutation",
-      primaryFailure: { code: "ArtifactMissing" },
+      primaryFailure: { code: "SourceReadFailed" },
     });
     expect(await directoryNames(root.path)).toEqual(before);
 
@@ -258,12 +250,4 @@ function requireFixture(): OwnedFixtureRoot {
 
 function directoryNames(root: string): Promise<readonly string[]> {
   return readdir(root).then((entries) => entries.sort());
-}
-
-function must<T, E>(
-  result: Readonly<{ ok: true; value: T }> | Readonly<{ ok: false; issues: readonly E[] }>
-): T {
-  if (!result.ok)
-    throw new Error(`fixture value failed validation: ${JSON.stringify(result.issues)}`);
-  return result.value;
 }

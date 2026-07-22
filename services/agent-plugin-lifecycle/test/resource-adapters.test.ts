@@ -1,12 +1,6 @@
-import { lstat, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
-
-import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
-import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { coworkV1PackageDigest } from "../src/service/modules/packaging/model/helpers/cowork-v1";
 import {
   createResourceArtifactReader,
   createResourceArtifactStore,
@@ -21,7 +15,6 @@ import {
 } from "../src/service/shared/release";
 import { packagingArtifactFixture } from "./modules/packaging/artifact-fixture";
 import { MemoryArtifactRepository } from "./support/artifact-repository";
-import { createLifecycleTestClient, testInvocation } from "./support/client";
 import {
   createOwnedFixtureRoot,
   disposeOwnedFixtureRoot,
@@ -260,107 +253,6 @@ describe("agent-plugin lifecycle resource adapters", () => {
     await expect(setup.reader.read(handle)).resolves.toMatchObject({ kind: "Verified", handle });
   });
 
-  it.runIf("Bun" in globalThis)(
-    "packages verified artifact bytes and converges without rewriting the canonical output",
-    async () => {
-      const setup = await outputSetup();
-      await setup.store.publishRelease(setup.fixture.alphaRelease);
-      const application = createPackageAgentPluginApplication({
-        artifactRepository: setup.repository,
-        artifactRepositoryRoot: setup.artifactRoot,
-      });
-      const outputPath = join(setup.root, "alpha.cowork.zip");
-      const request = {
-        artifactRef: setup.fixture.alphaSnapshot.ref,
-        format: "cowork-v1",
-        outputPath,
-      };
-
-      const first = await application.package(request);
-      expect(first).toMatchObject({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
-      if (first.kind !== "OutputReplacedVerified") return;
-      expect(first.packageDigest).toBe(coworkV1PackageDigest(await readFile(outputPath)));
-      expect((await lstat(outputPath)).mode & 0o777).toBe(0o644);
-      const before = await lstat(outputPath, { bigint: true });
-
-      await expect(application.package(request)).resolves.toMatchObject({
-        kind: "ReadOnlyConverged",
-        packageDigest: first.packageDigest,
-      });
-      const after = await lstat(outputPath, { bigint: true });
-      expect({ ino: after.ino, mtimeNs: after.mtimeNs }).toEqual({
-        ino: before.ino,
-        mtimeNs: before.mtimeNs,
-      });
-    }
-  );
-
-  it.runIf("Bun" in globalThis)(
-    "maps a provider failpoint to a closed pre-mutation package refusal",
-    async () => {
-      const setup = await outputSetup();
-      await setup.store.publishRelease(setup.fixture.alphaRelease);
-      const packageOutput = makeNodePackageOutputAsyncPort({
-        failpoints: {
-          async hit(point) {
-            if (point === "BeforeCommit") throw new Error("package commit refused");
-          },
-        },
-      });
-      const result = await createPackageAgentPluginApplication({
-        artifactRepository: setup.repository,
-        artifactRepositoryRoot: setup.artifactRoot,
-        packageOutput,
-      }).package({
-        artifactRef: setup.fixture.alphaSnapshot.ref,
-        format: "cowork-v1",
-        outputPath: join(setup.root, "refused.cowork.zip"),
-      });
-
-      expect(result).toMatchObject({
-        kind: "RejectedBeforeOutputMutation",
-        primaryFailure: {
-          code: "FailpointFailed",
-          message: expect.stringContaining("package commit refused"),
-        },
-      });
-    }
-  );
-
-  it.runIf("Bun" in globalThis)(
-    "relays each real package-output transition exactly once",
-    async () => {
-      const setup = await outputSetup();
-      await setup.store.publishRelease(setup.fixture.alphaRelease);
-      const points: string[] = [];
-      const packageOutput = makeNodePackageOutputAsyncPort({
-        failpoints: {
-          async hit(point) {
-            points.push(point);
-          },
-        },
-      });
-
-      await expect(
-        createPackageAgentPluginApplication({
-          artifactRepository: setup.repository,
-          artifactRepositoryRoot: setup.artifactRoot,
-          packageOutput,
-        }).package({
-          artifactRef: setup.fixture.alphaSnapshot.ref,
-          format: "cowork-v1",
-          outputPath: join(setup.root, "four-transitions.cowork.zip"),
-        })
-      ).resolves.toMatchObject({ kind: "OutputReplacedVerified" });
-      expect(points).toEqual([
-        "AfterOutputObserved",
-        "BeforeCommit",
-        "AfterCommit",
-        "BeforeFinalVerification",
-      ]);
-    }
-  );
-
   async function outputSetup() {
     fixtureRoot = await createOwnedFixtureRoot();
     const artifactRoot = join(fixtureRoot.path, "artifacts-v1");
@@ -368,7 +260,6 @@ describe("agent-plugin lifecycle resource adapters", () => {
     const binding = { repositoryRoot: artifactRoot, repository };
     return Object.freeze({
       fixture: packagingArtifactFixture(),
-      root: fixtureRoot.path,
       artifactRoot,
       repository,
       store: createResourceArtifactStore(binding),
@@ -389,20 +280,3 @@ describe("agent-plugin lifecycle resource adapters", () => {
     });
   }
 });
-
-function createPackageAgentPluginApplication(
-  options: Readonly<{
-    artifactRepository: ArtifactRepositoryAsyncPort;
-    artifactRepositoryRoot: string;
-    packageOutput?: AgentPluginPackageOutputAsyncPort;
-  }>
-) {
-  const client = createLifecycleTestClient({
-    artifactRepository: options.artifactRepository,
-    artifactRepositoryRoot: options.artifactRepositoryRoot,
-    packageOutput: options.packageOutput ?? makeNodePackageOutputAsyncPort(),
-  });
-  return Object.freeze({
-    package: (request: unknown) => client.packaging.package(request as never, testInvocation),
-  });
-}

@@ -11,7 +11,6 @@ import { type Client, createClient, type Deps } from "../src/client";
 import { parseProviderTarget } from "../src/service/modules/providers/model/dto/provider-target";
 import { createResourceArtifactStore } from "../src/service/repository/artifact-repository";
 import {
-  parseArtifactRef,
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
@@ -47,7 +46,7 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       kind: "IneligibleReport",
       issues: [{ kind: "SourceEligibility", issue: { code: "GitFailure" } }],
     });
-    expect(calls.splice(0)).toEqual(["releases.source.inspect"]);
+    expect(calls.splice(0)).toEqual(["contentWorkspace.inspectGitWorkspace"]);
 
     await expect(client.vendors.status(vendorRequest(), invocation)).resolves.toMatchObject({
       kind: "Rejected",
@@ -57,9 +56,9 @@ describe("agent plugin lifecycle oRPC service spine", () => {
 
     await expect(client.packaging.package(packagingRequest(), invocation)).resolves.toMatchObject({
       kind: "RejectedBeforeOutputMutation",
-      primaryFailure: { code: "ArtifactMissing" },
+      primaryFailure: { code: "SourceIneligible" },
     });
-    expect(calls.splice(0)).toEqual(["artifactRepository.readTree"]);
+    expect(calls.splice(0)).toEqual(["contentWorkspace.inspectGitWorkspace"]);
 
     await expect(
       client.governance.currentMainRecord(
@@ -373,7 +372,7 @@ function spineClient(calls: string[], observations: SpineObservations = {}): Cli
       ...unavailableContentWorkspace(),
       inspectGitWorkspace: async (input) => {
         if (input.remoteSelection.kind === "Named") {
-          calls.push("releases.source.inspect");
+          calls.push("contentWorkspace.inspectGitWorkspace");
           throw new Error("fixture repository is unavailable");
         }
         calls.push("governance.contentWorkspace.inspectGitWorkspace");
@@ -483,13 +482,8 @@ function vendorRequest(): Parameters<Client["vendors"]["status"]>[0] {
 
 function packagingRequest(): Parameters<Client["packaging"]["package"]>[0] {
   return {
-    artifactRef: parsed(
-      parseArtifactRef({
-        kind: "release",
-        releaseDigest: `rd1_${"c".repeat(64)}`,
-        artifactDigest: `ad1_${"d".repeat(64)}`,
-      })
-    ),
+    contentWorkspace: releaseRequest().contentWorkspace,
+    mode: { kind: "targeted", pluginId: parsed(parsePluginId("cognition")) },
     format: "cowork-v1",
     outputPath: "/tmp/cognition.cowork.zip",
   };
