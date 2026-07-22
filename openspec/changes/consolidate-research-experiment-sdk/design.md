@@ -97,6 +97,9 @@ The accepted core entities are deliberately few:
 - `EvaluationResult`: deterministic and/or judged study result, published as a
   lane-declared durable `StageOutput` whose predecessors bind the exact
   `SolverTerminal` before score projection.
+- `UnresolvedExecutionResidue`: a blocking, lane-durable infrastructure record
+  binding the exact cell and instance, `ProcessTerminationUnconfirmed`, and the
+  containing sandbox locator. It is not a solver terminal or trial subject.
 
 Raw evidence, accepted stage output, remote telemetry, and historical claims
 remain distinguishable. Matching names do not imply matching identity; hashes
@@ -109,7 +112,9 @@ StudyDefinition
   -> Prepare -> PreparedCell
   -> attempt exact SolverTerminal adoption
        hit  -> recover persisted ObservationHandle; skip acquire and solver
-       miss -> Observe.acquire -> ObservationHandle
+       miss -> reconcile residue for exact cell + instance
+                 unresolved -> stop; do not acquire observation or execute
+                 clear -> Observe.acquire -> ObservationHandle
                  -> Execute (Codex + host artifact capture + terminal sink)
                     -> persisted SolverTerminal
   -> Observe.settle(recovered or acquired handle, execution exit)
@@ -152,7 +157,11 @@ a phase registry, DAG, generic worker, or global state machine.
 
 Lane composition attempts exact solver-terminal adoption before observation
 acquisition. On an adoption hit it recovers the persisted handle and skips both
-acquisition and solver execution. Only a miss may acquire a new handle; failure
+acquisition and solver execution. On a miss it checks its durable residue port
+for the exact cell and instance. Unresolved residue blocks observation
+acquisition and execution re-entry until the lane proves process termination
+and reconciles the record. Only a miss with no unresolved residue may acquire a
+new handle; failure
 to establish required correlation may then prevent execution. After
 acquisition, the lane supplies the exact handle to Execute, and the persisted
 solver terminal binds that handle to the submitted artifact and agent outcome.
@@ -160,7 +169,8 @@ The lane calls settlement with the handle and execution `Exit` on every exit it
 can observe. A crash after acquisition but before terminal publication may
 leave a non-authoritative orphan observation: the lane preserves or settles it
 when discoverable, never adopts it as the trial subject, and may replace that
-pre-terminal execution under the same instance. A crash after terminal
+pre-terminal execution under the same instance only after confirming process
+termination and the absence of unresolved residue. A crash after terminal
 publication recovers the same handle and resumes settlement without rerunning
 the solver. Evaluation publishes its exact result durably before projection;
 later projection adopts that result instead of rerunning a blind or otherwise
@@ -201,7 +211,8 @@ This is a reasoning model, not a controller implementation.
   envelope provides no store, transition graph, controller, or global
   continuation authority. Ephemeral adapter results need not use it.
 - A mismatched or corrupt output blocks adoption; it is not silently repaired.
-- Pre-terminal infrastructure interruption may replace only that execution.
+- Pre-terminal infrastructure interruption may replace only that execution,
+  and only after confirmed process termination and residue reconciliation.
 - Post-terminal evaluation or observation failure resumes only the incomplete
   boundary and cannot rerun the solver.
 - The exact `EvaluationResult` used for projection is itself a lane-declared
@@ -456,8 +467,12 @@ and [EVLog tag](https://github.com/HugoRCD/evlog/tree/evlog%402.22.3).
 - If bounded escalation is sent but process exit cannot be confirmed, Codex
   returns typed `ProcessTerminationUnconfirmed` evidence. The
   Codex-OpenShell/lane composition binds it to the exact sandbox locator as
-  unresolved residue. OpenShell does not claim release, silently delete, or
-  rerun that subject. Scoped release ends with confirmed cleanup or explicit
+  unresolved residue and publishes it durably through a typed residue port
+  before returning. OpenShell does not claim release, silently delete, or rerun
+  that subject. Re-entry for the exact cell and instance remains blocked until
+  the lane confirms process termination and reconciles the record. Core owns
+  only the port contract and pure identity checks; the lane owns storage and
+  reconciliation. Scoped release ends with confirmed cleanup or explicit
   retained residue, preserving the primary failure and any secondary cleanup
   failure.
 
@@ -564,6 +579,9 @@ Tests target persistent behavioral guarantees, not implementation text:
    an observed terminal process before OpenShell release or returns typed
    `ProcessTerminationUnconfirmed` with retained sandbox residue; both paths
    preserve termination and cleanup failures under the primary/secondary law.
+   A model-free re-entry probe proves unresolved residue blocks observation
+   reacquisition and execution for the same cell and instance until confirmed
+   termination and reconciliation.
 5. Submitted artifacts round-trip add/delete/rename/binary/mode changes through
    a fresh baseline and regenerate identical canonical patch bytes. A different
    Git binary, version, environment, or diff configuration rejects adoption

@@ -18,7 +18,8 @@
   changing unrelated root dependencies.
 - [ ] 2.2 Implement TypeBox identity/config contracts (including lane-supplied
   governed instance identity and disjoint subject properties), stage interfaces,
-  durable-output envelopes, atomic sink port, and pure adopt-or-reject behavior.
+  durable-output envelopes, atomic sink port, typed residue port, and pure
+  adopt-or-reject behavior.
 - [ ] 2.3 Implement exact-environment command execution and one Effect runtime
   composition boundary.
 - [ ] 2.4 Implement named OpenShell, Codex, Langfuse, Codex-Langfuse,
@@ -27,7 +28,8 @@
   freeze exact maintained-source/patch/lock identities, and reproduce the Node
   22 ESM bundle deterministically.
 - [ ] 2.6 Implement behavioral tests for resource release, interruption,
-  unresolved process residue, canonical Git-substrate artifact round-trip,
+  unresolved process residue and same-instance re-entry blocking, canonical
+  Git-substrate artifact round-trip,
   create-if-absent terminal publication and unknown-write reconciliation,
   adoption-before-observation continuation, durable evaluation projection,
   observation failure preserving execution, governed instance rotation,

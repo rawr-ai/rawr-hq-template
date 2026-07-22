@@ -26,6 +26,9 @@ removes duplicate ownership without moving research truth.
   handle and submitted artifact before verification, then publish and adopt
   declared durable downstream outputs before projection.
 - Separate scoreable agent outcomes from infrastructure and evaluator failures.
+- Persist unconfirmed process residue as a blocking lane-owned fact and forbid
+  same-instance reacquisition or execution until termination is confirmed and
+  the record is reconciled.
 - Extract generic Effect runtime, command, identity, and adoption behavior.
 - Add named adapters for OpenShell, Codex, Langfuse, Codex-Langfuse tracing,
   the proved Codex-OpenShell provider bridge, Git/Bun artifacts, and EVLog.

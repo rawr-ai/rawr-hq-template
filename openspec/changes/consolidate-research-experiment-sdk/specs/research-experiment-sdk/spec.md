@@ -53,12 +53,17 @@ own aggregation and reporting.
 ### Requirement: Observation scopes execution without owning correctness
 Lane composition MUST attempt exact solver-terminal adoption before acquiring a
 new observation. On a hit it MUST recover the persisted handle and skip both
-acquisition and solver execution. Only a miss MAY acquire experiment and trace
-correlation before Execute. Execute MUST persist that exact observation handle
+acquisition and solver execution. On a miss it MUST query its durable residue
+port for the exact cell and instance. An unresolved record MUST block
+observation acquisition and execution re-entry until the lane confirms process
+termination and reconciles that record. Only a miss with no unresolved residue
+MAY acquire experiment and trace correlation before Execute. Execute MUST
+persist that exact observation handle
 in the solver terminal beside the agent outcome and artifact. An acquired handle
 without a published terminal is a non-authoritative orphan: the lane MUST
 preserve or settle it when observable, MUST NOT adopt it as the trial subject,
-and MAY replace that pre-terminal execution under the same instance. Observe
+and MAY replace that pre-terminal execution under the same instance only after
+confirmed process termination and residue reconciliation. Observe
 MUST settle against the exact terminal-bound handle and MUST project later
 evaluation scores against that same handle. The exact `EvaluationResult` used
 for projection MUST first be published as a lane-declared durable `StageOutput`;
@@ -186,8 +191,11 @@ evidence.
 If process exit remains unconfirmed after escalation, Codex MUST return a typed
 `ProcessTerminationUnconfirmed` outcome. The Codex-OpenShell or lane composition
 MUST bind it to the exact sandbox locator as unresolved residue and MUST NOT
-claim release, silently delete, or rerun that subject. OpenShell MUST finalize
-the containing sandbox only after
+claim release, silently delete, or rerun that subject. It MUST publish that
+residue durably before returning. A typed residue port MUST allow the lane to
+query and reconcile the exact cell-and-instance record; core MUST own only that
+port contract and pure identity law, while the lane owns storage, durability,
+and reconciliation. OpenShell MUST finalize the containing sandbox only after
 that invocation exits; otherwise scoped release MUST end in explicit retained
 residue. Confirmed cleanup or retained residue MUST preserve primary and
 secondary failure precedence.
@@ -201,6 +209,12 @@ TypeBox-decoded data MAY cross the major-version boundary.
 - **THEN** the directly owned process reaches confirmed termination and sandbox
   deletion runs, or the result retains typed unresolved residue and its locator
 - **AND** cleanup or residue diagnostics never erase the primary cause
+
+#### Scenario: Unconfirmed termination blocks same-instance re-entry
+- **WHEN** an exact cell and instance has durable unresolved process residue
+- **THEN** a later invocation cannot reacquire observation or execute that cell
+- **AND** re-entry becomes legal only after the lane confirms process
+  termination and reconciles the exact residue record
 
 ### Requirement: Lane-owned study and evidence topology
 Each investigation MUST retain its study definitions, cases, inputs,
@@ -223,8 +237,9 @@ direction. Each lane MUST own a local compatibility or Habitat check for its
 explicit study mapping. Deterministic tests MUST probe TypeBox checking and
 snapshotting, generic/subject key collision, process
 interruption, scoped resource release, artifact round-trip, terminal adoption,
-failure separation, exact observation subjects, effective Codex rollout
-envelopes, deterministic projection, EVLog lifecycle, and package-local
+unresolved-residue re-entry blocking, failure separation, exact observation
+subjects, effective Codex rollout envelopes, deterministic projection, EVLog
+lifecycle, and package-local
 compiler isolation. Tests MUST NOT assert source strings, helper counts, command
 spelling, or a preferred internal implementation.
 Dependency-direction enforcement MUST use GritQL import patterns rather than
