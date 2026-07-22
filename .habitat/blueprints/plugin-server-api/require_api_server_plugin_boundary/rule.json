@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_api_server_plugin_boundary",
+  "title": "Require API Server Plugin Boundary",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "plugin-server-api",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "a missing or alternate package face beside required project.json and src, permitted AGENTS.md and test, or a missing or alternate public source face beside client.ts, server.ts, and service",
+  "why": "An API server plugin adds exactly one client face and one server face around one embedded service. Keeping that package delta small preserves the reusable service law while the application host remains the sole HTTP transport owner. The agent-router blueprint independently owns whether the permitted AGENTS.md plaque is required.",
+  "remediate": "Keep project.json and src as the required plugin root faces, permit only AGENTS.md and test beside them, and keep only client.ts, server.ts, and service under src. Apply the agent-router, service, and transport packets independently to their own concerns.",
+  "message": "Every API server plugin must expose one client/server pair around one embedded service boundary.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "plugins/server/api/*/**"
+      ]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/plugin-server-api/require_api_server_plugin_boundary/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/blueprints/plugin-server-api/require_api_server_plugin_boundary/structure.toml"
+    }
+  }
+}

@@ -25,7 +25,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 
 ## 1. Positive Habitat And Nx Ratchet
 
-- [ ] 1.1 Port the generic Magic Migration service, API server plugin, and
+- [x] 1.1 Port the generic Magic Migration service, API server plugin, and
   agent-router blueprints from commit
   `31c4e1ac1944d88b5ae867e46603eddff36142fc`, preserving pattern semantics and
   recording every identity-only adaptation.

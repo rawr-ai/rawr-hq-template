@@ -1,0 +1,92 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "standalone-service-spines"
+root = "services/*/src/service"
+kind = "directory"
+mode = "closed"
+required = [
+  "base.ts",
+  "contract.ts",
+  "impl.ts",
+  "modules",
+  "router.ts",
+]
+allowed = [
+  "db",
+  "middleware",
+  "model",
+  "project.json",
+  "test",
+]
+
+[[scopes]]
+name = "api-embedded-service-spines"
+root = "plugins/server/api/*/src/service"
+kind = "directory"
+mode = "closed"
+required = [
+  "base.ts",
+  "contract.ts",
+  "impl.ts",
+  "modules",
+  "router.ts",
+]
+allowed = [
+  "middleware",
+  "model",
+  "test",
+]
+
+[[scopes]]
+name = "standalone-service-module-shells"
+root = "services/*/src/service/modules/*"
+kind = "directory"
+mode = "closed"
+required = [
+  "contract.ts",
+  "module.ts",
+  "router.ts",
+]
+allowed = [
+  "errors.ts",
+  "middleware",
+  "model",
+  "project.json",
+  "router",
+  "test",
+]
+
+[[scopes]]
+name = "api-embedded-service-module-shells"
+root = "plugins/server/api/*/src/service/modules/*"
+kind = "directory"
+mode = "closed"
+required = [
+  "contract.ts",
+  "module.ts",
+  "router.ts",
+]
+allowed = [
+  "errors.ts",
+  "middleware",
+  "model",
+  "router",
+  "test",
+]
+
+[[scopes]]
+name = "standalone-service-module-router-interiors"
+root = "services/*/src/service/modules/*/router"
+kind = "directory"
+mode = "closed"
+required = ["index.ts"]
+allowed = ["*.router.ts"]
+
+[[scopes]]
+name = "api-embedded-service-module-router-interiors"
+root = "plugins/server/api/*/src/service/modules/*/router"
+kind = "directory"
+mode = "closed"
+required = ["index.ts"]
+allowed = ["*.router.ts"]

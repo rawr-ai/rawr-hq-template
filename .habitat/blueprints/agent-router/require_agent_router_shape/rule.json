@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "id": "require_agent_router_shape",
+  "title": "Require Agent Router Shape",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "agent-router",
+    "category": "quality"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "an AGENTS.md router without the Scope, Boundaries, Flow, Routing, and Validation anchors or without a repository-relative Markdown edge to another AGENTS.md",
+  "why": "A stable local plaque must identify its jurisdiction, name its boundary and flow, join the operator-router graph, route deeper concepts to repository-owned authority, and tell an operator how to prove local work.",
+  "remediate": "Add the missing structural anchor and at least one repository-relative Markdown link to the applicable parent or child AGENTS.md. Keep deep explanation and temporal state in the linked owner rather than expanding the router.",
+  "message": "Agent routers require local orientation anchors, flow, and a repository-relative edge in the AGENTS.md graph.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "AGENTS.md",
+        "**/AGENTS.md"
+      ]
+    }
+  ],
+  "scanRoots": [
+    "."
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/agent-router/require_agent_router_shape/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/agent-router/require_agent_router_shape/pattern.md"
+    },
+    "patternName": "require_agent_router_shape"
+  }
+}

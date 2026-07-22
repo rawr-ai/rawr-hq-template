@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 2,
+  "id": "require_agent_router_placement",
+  "title": "Require Agent Router Placement",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "agent-router",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "a package root without its local AGENTS.md operator router",
+  "why": "Every package is an intentional ownership and consumption boundary, so its operators need a local first hop without relying on a hand-maintained inventory of today's package names.",
+  "remediate": "Add AGENTS.md at the matched package root and keep its contents within the agent-router source-shape rule.",
+  "message": "Every package boundary must expose its local AGENTS.md router.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "AGENTS.md",
+        "apps/*/AGENTS.md",
+        "services/*/AGENTS.md",
+        "plugins/server/api/*/AGENTS.md",
+        "plugins/async/workflows/*/AGENTS.md",
+        "packages/!(*.*|adapters)/AGENTS.md",
+        "packages/adapters/*/AGENTS.md",
+        "resources/*/AGENTS.md",
+        "resources/*/providers/*/AGENTS.md",
+        "tools/*/AGENTS.md"
+      ]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/agent-router/require_agent_router_placement/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/blueprints/agent-router/require_agent_router_placement/structure.toml"
+    }
+  }
+}
