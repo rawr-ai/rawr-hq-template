@@ -1,6 +1,7 @@
 import type { GitLocator } from "./git";
 import { parseRepository } from "./primitives";
 import type { CurrentMainSelectionLocator } from "../../../../model/dto/current-main-selection";
+import { isCanonicalAbsolutePath } from "../../../../model/dto/structural";
 
 export type GitLocatorInput = CurrentMainSelectionLocator;
 
@@ -9,6 +10,12 @@ export type GovernanceBoundaryResult<T> =
   | { readonly ok: false; readonly reason: string };
 
 export function decodeGitLocator(input: GitLocatorInput): GovernanceBoundaryResult<GitLocator> {
+  if (!isCanonicalAbsolutePath(input.workspacePath)) {
+    return {
+      ok: false,
+      reason: "locator.workspacePath must be a canonical non-root absolute path",
+    };
+  }
   const repository = parseRepository(input.expectedRepositoryIdentity, "locator.expectedRepositoryIdentity");
   if (!repository.ok) {
     return {

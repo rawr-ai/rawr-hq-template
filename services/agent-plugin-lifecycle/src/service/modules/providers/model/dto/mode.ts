@@ -1,6 +1,9 @@
-import path from "node:path";
 import { ReadonlyObject, Type, type Static } from "typebox";
 
+import {
+  isCanonicalAbsolutePath,
+  MAX_CANONICAL_ABSOLUTE_PATH_BYTES,
+} from "../../../../model/dto/structural";
 import {
   CompleteSetArtifactRefInputSchema,
   normalizeArtifactRef,
@@ -35,7 +38,7 @@ export const ProviderRepositoryIdentitySchema = Type.String({
 });
 export const ProviderContentWorkspaceRootSchema = Type.String({
   minLength: 1,
-  maxLength: 4_096,
+  maxLength: MAX_CANONICAL_ABSOLUTE_PATH_BYTES,
 });
 export const ReleaseArtifactRefSchema = ReleaseArtifactRefInputSchema;
 export const CompleteSetArtifactRefSchema = CompleteSetArtifactRefInputSchema;
@@ -119,9 +122,6 @@ export type CanonicalStatusRequest = Readonly<Omit<CanonicalStatusInput, "locato
   readonly targets: readonly ProviderTarget[];
   readonly requestDigest: ProviderRequestDigest;
 }>;
-
-const pathEncoder = new TextEncoder();
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/u;
 
 export function normalizeCompleteTestRequest(
   input: CompleteTestInput,
@@ -230,7 +230,7 @@ function normalizeContentRecordLocator(
       ...remaining.map((entry) => issue("INVALID_LOCATOR", entry.path, entry.message)),
     ]);
   }
-  if (!isCanonicalContentWorkspaceRoot(input.workspaceRoot)) {
+  if (!isCanonicalAbsolutePath(input.workspaceRoot)) {
     return failure([issue(
       "INVALID_LOCATOR",
       "request.locator.workspaceRoot",
@@ -279,16 +279,4 @@ export function releaseRefValue(ref: ReleaseArtifactRef): CanonicalValue {
 
 export function setRefValue(ref: CompleteSetArtifactRef): CanonicalValue {
   return { kind: ref.kind, releaseSetDigest: ref.releaseSetDigest };
-}
-
-function isCanonicalContentWorkspaceRoot(value: string): boolean {
-  const normalized = path.posix.normalize(value);
-  return value !== "/"
-    && path.posix.isAbsolute(value)
-    && normalized === value
-    && !value.endsWith("/")
-    && !value.includes("\\")
-    && value.normalize("NFC") === value
-    && !CONTROL_CHARACTER_PATTERN.test(value)
-    && pathEncoder.encode(value).byteLength <= 4_096;
 }

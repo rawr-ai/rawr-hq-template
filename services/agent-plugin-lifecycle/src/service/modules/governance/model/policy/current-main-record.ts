@@ -9,14 +9,6 @@ import {
   type CanonicalJsonValue,
 } from "../../../../shared/release/canonical";
 import {
-  parseContentAuthority,
-  parseGitCommitId,
-  parseGitTreeId,
-  parseReleaseInputDigest,
-  parseReleaseSetDigest,
-  parseRepositoryIdentity,
-} from "../../../../shared/release";
-import {
   CURRENT_MAIN_V2_PROTOCOL,
   CURRENT_MAIN_V2_SCHEMA_VERSION,
   CurrentMainBodyV2Schema,
@@ -29,6 +21,10 @@ import {
   type CurrentMainV2CodecFailureCode,
   type CurrentMainV2CodecResult,
 } from "../dto/current-main";
+import {
+  isCanonicalId,
+  isCanonicalRepositoryIdentity,
+} from "../../../../model/dto/structural";
 
 export function encodeCurrentMainBodyV2(
   input: unknown,
@@ -122,20 +118,14 @@ function encodeBody(body: CurrentMainBodyV2): CurrentMainV2CodecResult {
 function normalizeBody(input: unknown): CurrentMainBodyV2 | undefined {
   if (!Value.Check(CurrentMainBodyV2Schema, input)) return undefined;
   if (
-    !parseContentAuthority(input.contentAuthority).ok
-    || !parseRepositoryIdentity(input.sourceRepositoryIdentity).ok
-    || !parseGitCommitId(input.sourceCommit).ok
-    || !parseGitTreeId(input.sourceTree).ok
-    || !parseReleaseInputDigest(input.releaseInputDigest).ok
-    || !parseReleaseSetDigest(input.releaseSetDigest).ok
+    !isCanonicalId(input.contentAuthority)
+    || !isCanonicalRepositoryIdentity(input.sourceRepositoryIdentity)
     || !isCanonicalId(input.evaluationProfile)
-    || input.projections.some((projection) => (
-      !isCanonicalId(projection.rendererProtocol)
-      || !isCanonicalId(projection.adapterProtocol)
-    ))
-  ) {
-    return undefined;
-  }
+    || input.projections.some((projection) => {
+      return !isCanonicalId(projection.rendererProtocol)
+        || !isCanonicalId(projection.adapterProtocol);
+    })
+  ) return undefined;
   return Object.freeze({
     schemaVersion: input.schemaVersion,
     channel: input.channel,
@@ -148,10 +138,6 @@ function normalizeBody(input: unknown): CurrentMainBodyV2 | undefined {
     evaluationProfile: input.evaluationProfile,
     projections: freezeProjections(input.projections),
   });
-}
-
-function isCanonicalId(value: string): boolean {
-  return !value.split("/").some((segment) => segment === "." || segment === "..");
 }
 
 function freezeProjections(

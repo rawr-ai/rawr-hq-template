@@ -394,7 +394,7 @@ describe("provider procedure input schema boundary", () => {
     })).toBe(true);
   });
 
-  it("uses the owning TypeBox schemas when decoding persisted provider targets", () => {
+  it("decodes persisted provider targets structurally before domain normalization", () => {
     expect(parseProviderTarget({ ...providerTarget, extra: true }).ok).toBe(false);
     expect(parseProviderTarget({ ...providerTarget, home: "/tmp/codex\nhome" }).ok).toBe(false);
     expect(parseProviderTargets([]).ok).toBe(false);

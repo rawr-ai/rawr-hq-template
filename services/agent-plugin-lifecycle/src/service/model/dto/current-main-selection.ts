@@ -1,8 +1,12 @@
 import { ReadonlyObject, Type, type Static } from "typebox";
 
-const CANONICAL_ID_PATTERN = "^[a-z0-9][a-z0-9._:@/+\\-]*$";
+import {
+  CanonicalAbsolutePathSchema,
+  CanonicalIdSchema,
+  CanonicalRepositoryIdentitySchema,
+} from "./structural";
+
 const CONTENT_AUTHORITY_PATTERN = "^[a-z0-9][a-z0-9._:-]*$";
-const REPOSITORY_IDENTITY_PATTERN = "^[a-z][a-z0-9+.-]*:[a-z0-9][a-z0-9._~/-]*$";
 const GIT_OBJECT_ID_PATTERN = "^(?:[0-9a-f]{40}|[0-9a-f]{64})$";
 const RELEASE_INPUT_DIGEST_PATTERN = "^ri1_[0-9a-f]{64}$";
 const RELEASE_SET_DIGEST_PATTERN = "^rs1_[0-9a-f]{64}$";
@@ -10,19 +14,14 @@ const PROJECTION_DIGEST_PATTERN = "^ap1_[0-9a-f]{64}$";
 const CAPABILITY_PROFILE_DIGEST_PATTERN = "^cp1_[0-9a-f]{64}$";
 const CURRENT_MAIN_DIGEST_PATTERN = "^cm2_[0-9a-f]{64}$";
 
-const CanonicalIdSchema = Type.String({
-  minLength: 1,
-  maxLength: 512,
-  pattern: CANONICAL_ID_PATTERN,
-});
 const CurrentMainDigestSchema = Type.TemplateLiteral("cm2_${string}", {
   pattern: CURRENT_MAIN_DIGEST_PATTERN,
 });
 
 export const CurrentMainSelectionLocatorSchema = ReadonlyObject(Type.Object(
   {
-    workspacePath: Type.String({ minLength: 1 }),
-    expectedRepositoryIdentity: Type.String({ minLength: 1, maxLength: 512 }),
+    workspacePath: CanonicalAbsolutePathSchema,
+    expectedRepositoryIdentity: CanonicalRepositoryIdentitySchema,
   },
 ), { additionalProperties: false });
 
@@ -59,11 +58,7 @@ export const CanonicalChannelSelectionSchema = ReadonlyObject(Type.Object(
       maxLength: 512,
       pattern: CONTENT_AUTHORITY_PATTERN,
     }),
-    sourceRepositoryIdentity: Type.String({
-      minLength: 1,
-      maxLength: 512,
-      pattern: REPOSITORY_IDENTITY_PATTERN,
-    }),
+    sourceRepositoryIdentity: CanonicalRepositoryIdentitySchema,
     sourceCommit: Type.String({ pattern: GIT_OBJECT_ID_PATTERN }),
     sourceTree: Type.String({ pattern: GIT_OBJECT_ID_PATTERN }),
     releaseInputDigest: Type.String({ pattern: RELEASE_INPUT_DIGEST_PATTERN }),

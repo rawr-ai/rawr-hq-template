@@ -10,6 +10,7 @@ import {
   CurrentMainSelectionResultSchema,
 } from "../../../src/service/modules/governance/schemas";
 import {
+  CurrentMainBodyV2Schema,
   encodeCurrentMainBodyV2,
   type CurrentMainBodyV2,
 } from "../../../src/service/modules/governance/model";
@@ -19,6 +20,10 @@ import {
   type CurrentMainSelectionResult,
 } from "../../../src/service/model/dto/current-main-selection";
 import { contract } from "../../../src/service/modules/governance/contract";
+import {
+  createLifecycleTestClient,
+  testInvocation,
+} from "../../support/client";
 
 describe("governance procedure schema boundary", () => {
   it("keeps neutral selection observations exact with governance schemas", () => {
@@ -107,6 +112,47 @@ describe("governance procedure schema boundary", () => {
     })).toBe(false);
   });
 
+  it("routes traversal-shaped current-main identities through the typed codec result", async () => {
+    const body = currentMainBodyFixture();
+    const invalidBodies = [
+      {
+        ...body,
+        sourceRepositoryIdentity: "git:github.com/rawr-ai/../evil",
+      },
+      {
+        ...body,
+        evaluationProfile: "provider/../smoke",
+      },
+      {
+        ...body,
+        projections: [
+          { ...body.projections[0], rendererProtocol: "claude/./projection@v1" },
+          body.projections[1],
+        ],
+      },
+      {
+        ...body,
+        projections: [
+          body.projections[0],
+          { ...body.projections[1], adapterProtocol: "codex/../adapter@v1" },
+        ],
+      },
+    ];
+
+    for (const invalidBody of invalidBodies) {
+      const input = { kind: "encode-body", body: invalidBody };
+      expect(Value.Check(CurrentMainBodyV2Schema, invalidBody)).toBe(true);
+      expect(Value.Check(CurrentMainRecordInputSchema, input)).toBe(true);
+      expect(encodeCurrentMainBodyV2(invalidBody)).toMatchObject({
+        ok: false,
+        failure: { code: "InvalidSchema" },
+      });
+
+      const validated = await schema(CurrentMainRecordInputSchema)["~standard"].validate(input);
+      expect("value" in validated).toBe(true);
+    }
+  });
+
   it("accepts only the v2 locator request for current-main selection", async () => {
     const locator = {
       workspacePath: "/tmp/personal-rawr-hq",
@@ -139,6 +185,40 @@ describe("governance procedure schema boundary", () => {
       const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(candidate);
       expect("issues" in validated).toBe(true);
     }
+  });
+
+  it("routes noncanonical current-main locators through the typed selection result", async () => {
+    const locator = {
+      workspacePath: "/tmp/personal-rawr-hq",
+      expectedRepositoryIdentity: "git:github.com/example/personal-rawr-hq",
+    };
+    const semanticRefusals = [
+      { ...locator, workspacePath: "relative/personal-rawr-hq" },
+      { ...locator, workspacePath: "/" },
+      { ...locator, workspacePath: "/tmp/../personal-rawr-hq" },
+      { ...locator, workspacePath: "/tmp//personal-rawr-hq" },
+      { ...locator, workspacePath: "/tmp/personal-rawr-hq/" },
+      {
+        ...locator,
+        expectedRepositoryIdentity: "git:github.com/example/../evil",
+      },
+    ];
+
+    for (const invalidLocator of semanticRefusals) {
+      const input = { locator: invalidLocator };
+      expect(Value.Check(CurrentMainSelectionInputSchema, input)).toBe(true);
+      const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(input);
+      expect("value" in validated).toBe(true);
+      await expect(createLifecycleTestClient().governance.currentMainSelection(
+        input,
+        testInvocation,
+      )).resolves.toMatchObject({ kind: "WRONG_REPOSITORY" });
+    }
+
+    const oversized = { locator: { ...locator, workspacePath: `/${"a".repeat(4_096)}` } };
+    expect(Value.Check(CurrentMainSelectionInputSchema, oversized)).toBe(false);
+    const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(oversized);
+    expect("issues" in validated).toBe(true);
   });
 
   it("closes eligible and refused current-main selection results", () => {
