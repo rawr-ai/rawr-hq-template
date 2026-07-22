@@ -17,6 +17,12 @@
       "options": {
         "command": "bun test scripts/habitat/provision.test.mjs"
       }
+    },
+    "check:packets": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun scripts/habitat/check.mjs --rule require_blueprint_packet_topology"
+      }
     }
   }
 }
