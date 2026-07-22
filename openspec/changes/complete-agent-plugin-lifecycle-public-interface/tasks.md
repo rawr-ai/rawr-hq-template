@@ -126,13 +126,13 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   Bun-executed Oclif manifest target, and closed Habitat topology. Keep generated
   manifests ignored and verify their command IDs and structure rather than
   claiming byte identity Oclif does not provide.
-- [ ] 2.4 Prove one external fixture round trip in a disposable Oclif
+- [x] 2.4 Prove one external fixture round trip in a disposable Oclif
   state root with explicit `HOME`, `XDG_DATA_HOME`, `XDG_CONFIG_HOME`,
   `XDG_CACHE_HOME`, and isolated npm cache/config/registry inputs: discover the
   native command surface, install, list, invoke, remove, and observe the fixture
   absent. Prove `rawr plugins` cannot reach curated agent lifecycle commands.
   Do not retest Oclif's package-manager internals.
-- [ ] 2.5 Run CLI behavior, manifest generation, lint, typecheck, build, Habitat,
+- [x] 2.5 Run CLI behavior, manifest generation, lint, typecheck, build, Habitat,
   and standing Oclif/TypeScript/testing reviews. Land this semantic node before
   packaging work.
 

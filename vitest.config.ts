@@ -26,10 +26,21 @@ export default defineConfig({
         test: {
           name: "cli",
           environment: "node",
+          exclude: ["test/native-oclif-extension-roundtrip.test.ts"],
           fileParallelism: false,
           include: [...includes],
           env: { NODE_ENV: "production" },
           testTimeout: 60_000,
+        },
+      },
+      {
+        extends: true,
+        root: r("apps/cli"),
+        test: {
+          name: "cli-native-acceptance",
+          environment: "node",
+          fileParallelism: false,
+          include: ["test/native-oclif-extension-roundtrip.test.ts"],
         },
       },
       {
