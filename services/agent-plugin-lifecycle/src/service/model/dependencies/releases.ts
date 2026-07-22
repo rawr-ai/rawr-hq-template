@@ -42,7 +42,10 @@ export type BuildFailpoint = (event: BuildFailpointEvent) => void | Promise<void
 
 export interface ContentWorkspaceSnapshotReader {
   inspect(policy: ContentWorkspacePolicy): Promise<ContentWorkspaceInspection>;
-  revalidate(policy: ContentWorkspacePolicy, eligibilityBinding: string): Promise<ContentWorkspaceInspection>;
+  revalidate(
+    policy: ContentWorkspacePolicy,
+    eligibilityBinding: string
+  ): Promise<ContentWorkspaceInspection>;
 }
 
 export interface StagedContentWorkspaceObservationReader {
@@ -56,11 +59,11 @@ export interface ArtifactReader {
 export interface ArtifactStore extends ArtifactReader {
   publishRelease(
     release: AgentPluginRelease,
-    options?: ArtifactPublicationOptions,
+    options?: ArtifactPublicationOptions
   ): Promise<ArtifactPublicationResult>;
   publishReleaseSet(
     releaseSet: AgentPluginReleaseSet,
-    options?: ArtifactPublicationOptions,
+    options?: ArtifactPublicationOptions
   ): Promise<ArtifactPublicationResult>;
 }
 

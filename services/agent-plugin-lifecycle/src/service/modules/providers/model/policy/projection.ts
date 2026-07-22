@@ -13,10 +13,22 @@ import {
   type VerifiedReleaseArtifactV1,
 } from "../../../../shared/release";
 
-import { canonicalBytes, canonicalDigest, compareCanonical, type CanonicalValue } from "../helpers/canonical";
+import {
+  canonicalBytes,
+  canonicalDigest,
+  compareCanonical,
+  type CanonicalValue,
+} from "../helpers/canonical";
 import { hookEventSlugsFromManifests } from "../helpers/hook-manifest";
 import { canonicalString } from "../helpers/parse";
-import { failure, firstIssue, issue, success, type DeploymentResult, type ProviderDeploymentIssue } from "../errors/deployment-result";
+import {
+  failure,
+  firstIssue,
+  issue,
+  success,
+  type DeploymentResult,
+  type ProviderDeploymentIssue,
+} from "../errors/deployment-result";
 import type { ProviderId } from "../dto/provider-target";
 import { releaseRefValue, setRefValue } from "../dto/mode";
 
@@ -30,9 +42,15 @@ declare const providerSourceDigestBrand: unique symbol;
 export type AdapterProtocol = string & { readonly [adapterProtocolBrand]: "AdapterProtocol" };
 export type RendererProtocol = string & { readonly [rendererProtocolBrand]: "RendererProtocol" };
 export type ProjectionDigest = string & { readonly [projectionDigestBrand]: "ProjectionDigest" };
-export type CapabilityProfileDigest = string & { readonly [capabilityProfileDigestBrand]: "CapabilityProfileDigest" };
-export type ProviderMemberFingerprint = string & { readonly [memberFingerprintBrand]: "ProviderMemberFingerprint" };
-export type ProviderSourceDigest = string & { readonly [providerSourceDigestBrand]: "ProviderSourceDigest" };
+export type CapabilityProfileDigest = string & {
+  readonly [capabilityProfileDigestBrand]: "CapabilityProfileDigest";
+};
+export type ProviderMemberFingerprint = string & {
+  readonly [memberFingerprintBrand]: "ProviderMemberFingerprint";
+};
+export type ProviderSourceDigest = string & {
+  readonly [providerSourceDigestBrand]: "ProviderSourceDigest";
+};
 export type ProviderSourceIdentity = ContentAuthority;
 
 export const CODEX_RENDERER_PROTOCOL = "rawr-provider-renderer/codex@v1" as RendererProtocol;
@@ -124,7 +142,10 @@ const PROTOCOL_PATTERN = /^[a-z0-9][a-z0-9._/-]*@v[1-9][0-9]*$/u;
 const PROJECTION_DIGEST_PATTERN = /^ap1_[0-9a-f]{64}$/u;
 const CAPABILITY_PROFILE_DIGEST_PATTERN = /^cp1_[0-9a-f]{64}$/u;
 
-export function parseAdapterProtocol(input: unknown, path = "adapterProtocol"): DeploymentResult<AdapterProtocol> {
+export function parseAdapterProtocol(
+  input: unknown,
+  path = "adapterProtocol"
+): DeploymentResult<AdapterProtocol> {
   const issues: ProviderDeploymentIssue[] = [];
   const parsed = canonicalString(input, path, issues, {
     maxBytes: 256,
@@ -138,78 +159,114 @@ export function parseAdapterProtocol(input: unknown, path = "adapterProtocol"): 
 
 export function parseProjectionDigest(
   input: unknown,
-  path = "projectionDigest",
+  path = "projectionDigest"
 ): DeploymentResult<ProjectionDigest> {
   return parseBrandedDigest(
     input,
     path,
     PROJECTION_DIGEST_PATTERN,
     "projection",
-    (value) => value as ProjectionDigest,
+    (value) => value as ProjectionDigest
   );
 }
 
 export function parseCapabilityProfileDigest(
   input: unknown,
-  path = "capabilityProfileDigest",
+  path = "capabilityProfileDigest"
 ): DeploymentResult<CapabilityProfileDigest> {
   return parseBrandedDigest(
     input,
     path,
     CAPABILITY_PROFILE_DIGEST_PATTERN,
     "capability profile",
-    (value) => value as CapabilityProfileDigest,
+    (value) => value as CapabilityProfileDigest
   );
 }
 
 export function renderTargetedProjection(
   provider: ProviderId,
   adapterProtocol: AdapterProtocol,
-  snapshots: readonly VerifiedArtifactSnapshotV1[],
+  snapshots: readonly VerifiedArtifactSnapshotV1[]
 ): DeploymentResult<AgentProviderProjection> {
   const releases: VerifiedReleaseArtifactV1[] = [];
   const issues: ProviderDeploymentIssue[] = [];
   for (const [index, snapshot] of snapshots.entries()) {
     if (snapshot.kind !== "release") {
-      issues.push(issue("ARTIFACT_KIND_MISMATCH", `snapshots[${index}]`, "Targeted projection requires only release snapshots", "release", snapshot.kind));
+      issues.push(
+        issue(
+          "ARTIFACT_KIND_MISMATCH",
+          `snapshots[${index}]`,
+          "Targeted projection requires only release snapshots",
+          "release",
+          snapshot.kind
+        )
+      );
     } else {
       releases.push(snapshot);
     }
   }
-  releases.sort((left, right) => compareCanonical(left.release.artifactBody.releaseBody.pluginId, right.release.artifactBody.releaseBody.pluginId));
-  return renderProjection(provider, adapterProtocol, Object.freeze({
-    kind: "targeted",
-    releases: Object.freeze(releases.map((snapshot) => snapshot.ref)),
-  }), releases, null, issues);
+  releases.sort((left, right) =>
+    compareCanonical(
+      left.release.artifactBody.releaseBody.pluginId,
+      right.release.artifactBody.releaseBody.pluginId
+    )
+  );
+  return renderProjection(
+    provider,
+    adapterProtocol,
+    Object.freeze({
+      kind: "targeted",
+      releases: Object.freeze(releases.map((snapshot) => snapshot.ref)),
+    }),
+    releases,
+    null,
+    issues
+  );
 }
 
 export function renderCompleteProjection(
   provider: ProviderId,
   adapterProtocol: AdapterProtocol,
-  snapshot: VerifiedArtifactSnapshotV1,
+  snapshot: VerifiedArtifactSnapshotV1
 ): DeploymentResult<AgentProviderProjection> {
   if (snapshot.kind !== "complete-set") {
-    return failure([issue("ARTIFACT_KIND_MISMATCH", "snapshot", "Complete projection requires a complete-set snapshot", "complete-set", snapshot.kind)]);
+    return failure([
+      issue(
+        "ARTIFACT_KIND_MISMATCH",
+        "snapshot",
+        "Complete projection requires a complete-set snapshot",
+        "complete-set",
+        snapshot.kind
+      ),
+    ]);
   }
-  const members = [...snapshot.members].sort((left, right) => compareCanonical(
-    left.release.artifactBody.releaseBody.pluginId,
-    right.release.artifactBody.releaseBody.pluginId,
-  ));
+  const members = [...snapshot.members].sort((left, right) =>
+    compareCanonical(
+      left.release.artifactBody.releaseBody.pluginId,
+      right.release.artifactBody.releaseBody.pluginId
+    )
+  );
   return renderProjection(
     provider,
     adapterProtocol,
     Object.freeze({ kind: "complete-set", releaseSet: snapshot.ref }),
     members,
-    artifactAuthority(snapshot.releaseSet.body.contentAuthority, snapshot.releaseSet.body.sourceCommit),
-    [],
+    artifactAuthority(
+      snapshot.releaseSet.body.contentAuthority,
+      snapshot.releaseSet.body.sourceCommit
+    ),
+    []
   );
 }
 
 export function evaluateCapabilities(
   profile: CapabilityProfile,
-  observation: CapabilityObservation,
+  observation: CapabilityObservation
 ): CapabilityEvaluation {
-  if (profile.provider !== observation.provider || profile.adapterProtocol !== observation.adapterProtocol) {
+  if (
+    profile.provider !== observation.provider ||
+    profile.adapterProtocol !== observation.adapterProtocol
+  ) {
     return Object.freeze({ compatible: false, missing: profile.required });
   }
   const available = new Set(observation.available);
@@ -217,7 +274,9 @@ export function evaluateCapabilities(
   return Object.freeze({ compatible: missing.length === 0, missing: Object.freeze(missing) });
 }
 
-export function projectionValue(projection: Omit<AgentProviderProjection, "projectionDigest">): CanonicalValue {
+export function projectionValue(
+  projection: Omit<AgentProviderProjection, "projectionDigest">
+): CanonicalValue {
   return {
     schemaVersion: projection.schemaVersion,
     provider: projection.provider,
@@ -272,7 +331,9 @@ export function artifactAuthorityValue(authority: ProviderArtifactAuthority): Ca
   };
 }
 
-export function providerSourceIdentity(authority: ProviderArtifactAuthority): ProviderSourceIdentity {
+export function providerSourceIdentity(
+  authority: ProviderArtifactAuthority
+): ProviderSourceIdentity {
   return authority.contentAuthority;
 }
 
@@ -291,29 +352,41 @@ function renderProjection(
   source: ProjectionSource,
   snapshots: readonly VerifiedReleaseArtifactV1[],
   expectedArtifactAuthority: ProviderArtifactAuthority | null,
-  initialIssues: readonly ProviderDeploymentIssue[],
+  initialIssues: readonly ProviderDeploymentIssue[]
 ): DeploymentResult<AgentProviderProjection> {
   const issues = [...initialIssues];
   const members: ProviderProjectionMember[] = [];
   const seen = new Set<string>();
   const firstSnapshot = snapshots[0];
-  const authority = expectedArtifactAuthority ?? (firstSnapshot === undefined ? null : authorityFromSnapshot(firstSnapshot));
+  const authority =
+    expectedArtifactAuthority ??
+    (firstSnapshot === undefined ? null : authorityFromSnapshot(firstSnapshot));
   for (const [index, snapshot] of snapshots.entries()) {
     const pluginId = snapshot.release.artifactBody.releaseBody.pluginId;
     if (seen.has(pluginId)) {
-      issues.push(issue("DUPLICATE_MEMBER", `snapshots[${index}]`, "Projection members must be unique by curated plugin ID", "unique plugin ID", pluginId));
+      issues.push(
+        issue(
+          "DUPLICATE_MEMBER",
+          `snapshots[${index}]`,
+          "Projection members must be unique by curated plugin ID",
+          "unique plugin ID",
+          pluginId
+        )
+      );
       continue;
     }
     seen.add(pluginId);
     const observedAuthority = authorityFromSnapshot(snapshot);
     if (authority !== null && !sameArtifactAuthority(authority, observedAuthority)) {
-      issues.push(issue(
-        "PROJECTION_MISMATCH",
-        `snapshots[${index}].release.artifactBody.releaseBody`,
-        "Every selected release must have the same content authority and source commit",
-        `${authority.contentAuthority}@${authority.sourceCommit}`,
-        `${observedAuthority.contentAuthority}@${observedAuthority.sourceCommit}`,
-      ));
+      issues.push(
+        issue(
+          "PROJECTION_MISMATCH",
+          `snapshots[${index}].release.artifactBody.releaseBody`,
+          "Every selected release must have the same content authority and source commit",
+          `${authority.contentAuthority}@${authority.sourceCommit}`,
+          `${observedAuthority.contentAuthority}@${observedAuthority.sourceCommit}`
+        )
+      );
       continue;
     }
     const rendered = renderMember(provider, snapshot, observedAuthority);
@@ -322,20 +395,33 @@ function renderProjection(
   }
   detectDuplicateClaims(members, issues);
   if (members.length === 0 && issues.length === 0) {
-    issues.push(issue("DUPLICATE_MEMBER", "snapshots", "Projection must contain at least one member"));
+    issues.push(
+      issue("DUPLICATE_MEMBER", "snapshots", "Projection must contain at least one member")
+    );
   }
   if (authority === null && issues.length === 0) {
-    issues.push(issue("PROJECTION_MISMATCH", "snapshots", "Projection requires an artifact authority"));
+    issues.push(
+      issue("PROJECTION_MISMATCH", "snapshots", "Projection requires an artifact authority")
+    );
   }
-  if (issues.length > 0) return failure(firstIssue(issues, issue("PROJECTION_MISMATCH", "projection", "Projection could not be rendered")));
-  if (authority === null) return failure([issue("PROJECTION_MISMATCH", "projection", "Projection requires an artifact authority")]);
+  if (issues.length > 0)
+    return failure(
+      firstIssue(
+        issues,
+        issue("PROJECTION_MISMATCH", "projection", "Projection could not be rendered")
+      )
+    );
+  if (authority === null)
+    return failure([
+      issue("PROJECTION_MISMATCH", "projection", "Projection requires an artifact authority"),
+    ]);
   const renderedMarketplace = renderMarketplace(provider, authority, members);
   if (!renderedMarketplace.ok) return renderedMarketplace;
   const marketplace = Object.freeze({
     ...renderedMarketplace.value,
     sourceDigest: canonicalDigest(
       "ps1_",
-      providerSourceTreeValue(renderedMarketplace.value.files, members),
+      providerSourceTreeValue(renderedMarketplace.value.files, members)
     ) as ProviderSourceDigest,
   });
 
@@ -345,8 +431,10 @@ function renderProjection(
     "native-plugin-retire",
     "visible-plugin-inventory",
   ]);
-  if (members.some((member) => member.visible.skills.length > 0)) required.add("visible-skill-inventory");
-  if (members.some((member) => member.visible.hooks.length > 0)) required.add("visible-hook-inventory");
+  if (members.some((member) => member.visible.skills.length > 0))
+    required.add("visible-skill-inventory");
+  if (members.some((member) => member.visible.hooks.length > 0))
+    required.add("visible-hook-inventory");
   const requiredList = [...required].sort(compareCanonical);
   const profileBody = {
     schemaVersion: PROVIDER_PROJECTION_SCHEMA_VERSION,
@@ -356,7 +444,10 @@ function renderProjection(
   } as const;
   const capabilityProfile = Object.freeze({
     ...profileBody,
-    capabilityProfileDigest: canonicalDigest("cp1_", capabilityProfileValue(profileBody as CapabilityProfile)) as CapabilityProfileDigest,
+    capabilityProfileDigest: canonicalDigest(
+      "cp1_",
+      capabilityProfileValue(profileBody as CapabilityProfile)
+    ) as CapabilityProfileDigest,
   });
   const body = {
     schemaVersion: PROVIDER_PROJECTION_SCHEMA_VERSION,
@@ -369,21 +460,25 @@ function renderProjection(
     capabilityProfile,
     members: Object.freeze(members),
   } as const;
-  return success(Object.freeze({
-    ...body,
-    projectionDigest: canonicalDigest("ap1_", projectionValue(body)) as ProjectionDigest,
-  }));
+  return success(
+    Object.freeze({
+      ...body,
+      projectionDigest: canonicalDigest("ap1_", projectionValue(body)) as ProjectionDigest,
+    })
+  );
 }
 
 function renderMember(
   provider: ProviderId,
   snapshot: VerifiedReleaseArtifactV1,
-  authority: ProviderArtifactAuthority,
+  authority: ProviderArtifactAuthority
 ): DeploymentResult<ProviderProjectionMember> {
   const pluginId = snapshot.release.artifactBody.releaseBody.pluginId;
   const nativeIdentity = `rawr:${pluginId}`;
   const sourceIdentity = providerSourceIdentity(authority);
-  const manifestPath = parseGeneratedPath(provider === "codex" ? ".codex-plugin/plugin.json" : ".claude-plugin/plugin.json");
+  const manifestPath = parseGeneratedPath(
+    provider === "codex" ? ".codex-plugin/plugin.json" : ".claude-plugin/plugin.json"
+  );
   const version = `0.0.0-rawr.${authority.sourceCommit.slice(0, 12)}`;
   const manifestBytes = canonicalBytes({
     name: pluginId,
@@ -409,15 +504,25 @@ function renderMember(
   const seenPaths = new Set<string>([manifestPath]);
   for (const file of snapshot.files) {
     if (seenPaths.has(file.path)) {
-      return failure([issue("PROJECTION_MISMATCH", "snapshot.files", "Release payload collides with provider-owned manifest path", "non-reserved path", file.path)]);
+      return failure([
+        issue(
+          "PROJECTION_MISMATCH",
+          "snapshot.files",
+          "Release payload collides with provider-owned manifest path",
+          "non-reserved path",
+          file.path
+        ),
+      ]);
     }
     seenPaths.add(file.path);
-    files.push(Object.freeze({
-      path: file.path,
-      mode: file.mode,
-      contentDigest: file.contentDigest,
-      bytes: new Uint8Array(file.bytes),
-    }));
+    files.push(
+      Object.freeze({
+        path: file.path,
+        mode: file.mode,
+        contentDigest: file.contentDigest,
+        bytes: new Uint8Array(file.bytes),
+      })
+    );
   }
   files.sort((left, right) => compareCanonical(left.path, right.path));
   const skills = visibleNames(files, /^skills\/([^/]+)\/SKILL\.md$/u);
@@ -425,13 +530,15 @@ function renderMember(
   try {
     hooks = hookEventSlugsFromManifests(files);
   } catch (error) {
-    return failure([issue(
-      "PROJECTION_MISMATCH",
-      "snapshot.files",
-      "Release payload contains an invalid provider hook manifest",
-      "supported TypeBox hook manifest",
-      error instanceof Error ? error.message : String(error),
-    )]);
+    return failure([
+      issue(
+        "PROJECTION_MISMATCH",
+        "snapshot.files",
+        "Release payload contains an invalid provider hook manifest",
+        "supported TypeBox hook manifest",
+        error instanceof Error ? error.message : String(error)
+      ),
+    ]);
   }
   const visible = Object.freeze({ pluginIdentity: nativeIdentity, skills, hooks });
   const body = {
@@ -449,7 +556,11 @@ function renderMember(
     artifactAuthority: artifactAuthorityValue(authority),
     providerSourceIdentity: sourceIdentity,
     nativeIdentity,
-    files: files.map((file) => ({ path: file.path, mode: file.mode, contentDigest: file.contentDigest })),
+    files: files.map((file) => ({
+      path: file.path,
+      mode: file.mode,
+      contentDigest: file.contentDigest,
+    })),
     visible: { pluginIdentity: nativeIdentity, skills, hooks },
   }) as ProviderMemberFingerprint;
   return success(Object.freeze({ ...body, memberFingerprint: fingerprint }));
@@ -458,55 +569,60 @@ function renderMember(
 function renderMarketplace(
   provider: ProviderId,
   authority: ProviderArtifactAuthority,
-  members: readonly ProviderProjectionMember[],
+  members: readonly ProviderProjectionMember[]
 ): DeploymentResult<Omit<ProviderMarketplaceProjection, "sourceDigest">> {
   const identity = providerSourceIdentity(authority);
   if (!/^[a-z0-9][a-z0-9_-]*$/u.test(identity)) {
-    return failure([issue(
-      "PROJECTION_MISMATCH",
-      "projection.artifactAuthority.contentAuthority",
-      "Content authority must be a native provider marketplace identity",
-      "lowercase letters, digits, underscore, or hyphen",
-      identity,
-    )]);
+    return failure([
+      issue(
+        "PROJECTION_MISMATCH",
+        "projection.artifactAuthority.contentAuthority",
+        "Content authority must be a native provider marketplace identity",
+        "lowercase letters, digits, underscore, or hyphen",
+        identity
+      ),
+    ]);
   }
-  return success(Object.freeze({
-    identity,
-    files: Object.freeze([renderProviderMarketplaceManifestFile(provider, identity, members)]),
-  }));
+  return success(
+    Object.freeze({
+      identity,
+      files: Object.freeze([renderProviderMarketplaceManifestFile(provider, identity, members)]),
+    })
+  );
 }
 
 /** One canonical owner for provider-native marketplace manifest bytes. */
 export function renderProviderMarketplaceManifestFile(
   provider: ProviderId,
   identity: ProviderSourceIdentity,
-  members: readonly Pick<ProviderProjectionMember, "pluginId">[],
+  members: readonly Pick<ProviderProjectionMember, "pluginId">[]
 ): ProviderPackageFile {
-  const manifestPath = parseGeneratedPath(provider === "codex"
-    ? ".agents/plugins/marketplace.json"
-    : ".claude-plugin/marketplace.json");
-  const manifestValue: CanonicalValue = provider === "codex"
-    ? {
-        name: identity,
-        plugins: members.map((member) => ({
-        name: member.pluginId,
-        source: { source: "local", path: `./plugins/${member.pluginId}` },
-        policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
-        category: "agent",
-        })),
-      }
-    : {
-        name: identity,
-        version: "1.0.0",
-        description: `RAWR curated agent plugin authority ${identity}`,
-        owner: { name: "RAWR" },
-        plugins: members.map((member) => ({
-          name: member.pluginId,
-          description: `RAWR curated agent plugin ${member.pluginId}`,
-          source: `./plugins/${member.pluginId}`,
-          category: "development",
-        })),
-      };
+  const manifestPath = parseGeneratedPath(
+    provider === "codex" ? ".agents/plugins/marketplace.json" : ".claude-plugin/marketplace.json"
+  );
+  const manifestValue: CanonicalValue =
+    provider === "codex"
+      ? {
+          name: identity,
+          plugins: members.map((member) => ({
+            name: member.pluginId,
+            source: { source: "local", path: `./plugins/${member.pluginId}` },
+            policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
+            category: "agent",
+          })),
+        }
+      : {
+          name: identity,
+          version: "1.0.0",
+          description: `RAWR curated agent plugin authority ${identity}`,
+          owner: { name: "RAWR" },
+          plugins: members.map((member) => ({
+            name: member.pluginId,
+            description: `RAWR curated agent plugin ${member.pluginId}`,
+            source: `./plugins/${member.pluginId}`,
+            category: "development",
+          })),
+        };
   const bytes = canonicalBytes(manifestValue);
   return Object.freeze({
     path: manifestPath,
@@ -518,7 +634,7 @@ export function renderProviderMarketplaceManifestFile(
 
 export function providerSourceTreeValue(
   marketplaceFiles: readonly ProviderPackageFile[],
-  members: readonly ProviderProjectionMember[],
+  members: readonly ProviderProjectionMember[]
 ): CanonicalValue {
   const files = [
     ...marketplaceFiles.map((file) => ({
@@ -526,16 +642,21 @@ export function providerSourceTreeValue(
       mode: file.mode,
       contentDigest: file.contentDigest,
     })),
-    ...members.flatMap((member) => member.files.map((file) => ({
-      path: `plugins/${member.pluginId}/${file.path}`,
-      mode: file.mode,
-      contentDigest: file.contentDigest,
-    }))),
+    ...members.flatMap((member) =>
+      member.files.map((file) => ({
+        path: `plugins/${member.pluginId}/${file.path}`,
+        mode: file.mode,
+        contentDigest: file.contentDigest,
+      }))
+    ),
   ].sort((left, right) => compareCanonical(left.path, right.path));
   return { files };
 }
 
-function artifactAuthority(contentAuthority: ContentAuthority, sourceCommit: GitCommitId): ProviderArtifactAuthority {
+function artifactAuthority(
+  contentAuthority: ContentAuthority,
+  sourceCommit: GitCommitId
+): ProviderArtifactAuthority {
   return Object.freeze({
     protocol: PROVIDER_ARTIFACT_AUTHORITY_PROTOCOL,
     contentAuthority,
@@ -548,24 +669,50 @@ function authorityFromSnapshot(snapshot: VerifiedReleaseArtifactV1): ProviderArt
   return artifactAuthority(body.contentAuthority, body.sourceCommit);
 }
 
-function sameArtifactAuthority(left: ProviderArtifactAuthority, right: ProviderArtifactAuthority): boolean {
-  return left.protocol === right.protocol
-    && left.contentAuthority === right.contentAuthority
-    && left.sourceCommit === right.sourceCommit;
+function sameArtifactAuthority(
+  left: ProviderArtifactAuthority,
+  right: ProviderArtifactAuthority
+): boolean {
+  return (
+    left.protocol === right.protocol &&
+    left.contentAuthority === right.contentAuthority &&
+    left.sourceCommit === right.sourceCommit
+  );
 }
 
 function detectDuplicateClaims(
   members: readonly ProviderProjectionMember[],
-  issues: ProviderDeploymentIssue[],
+  issues: ProviderDeploymentIssue[]
 ): void {
   const nativeIdentities = new Map<string, PluginId>();
   const pluginIdentities = new Map<string, PluginId>();
   const skills = new Map<string, PluginId>();
   for (const [index, member] of members.entries()) {
-    detectDuplicateClaim(nativeIdentities, member.nativeIdentity, member.pluginId, `members[${index}].nativeIdentity`, "native plugin identity", issues);
-    detectDuplicateClaim(pluginIdentities, member.visible.pluginIdentity, member.pluginId, `members[${index}].visible.pluginIdentity`, "visible plugin identity", issues);
+    detectDuplicateClaim(
+      nativeIdentities,
+      member.nativeIdentity,
+      member.pluginId,
+      `members[${index}].nativeIdentity`,
+      "native plugin identity",
+      issues
+    );
+    detectDuplicateClaim(
+      pluginIdentities,
+      member.visible.pluginIdentity,
+      member.pluginId,
+      `members[${index}].visible.pluginIdentity`,
+      "visible plugin identity",
+      issues
+    );
     for (const [skillIndex, skill] of member.visible.skills.entries()) {
-      detectDuplicateClaim(skills, skill, member.pluginId, `members[${index}].visible.skills[${skillIndex}]`, "visible skill", issues);
+      detectDuplicateClaim(
+        skills,
+        skill,
+        member.pluginId,
+        `members[${index}].visible.skills[${skillIndex}]`,
+        "visible skill",
+        issues
+      );
     }
   }
 }
@@ -576,20 +723,22 @@ function detectDuplicateClaim(
   pluginId: PluginId,
   path: string,
   label: string,
-  issues: ProviderDeploymentIssue[],
+  issues: ProviderDeploymentIssue[]
 ): void {
   const existing = claims.get(claim);
   if (existing === undefined) {
     claims.set(claim, pluginId);
     return;
   }
-  issues.push(issue(
-    "DUPLICATE_MEMBER",
-    path,
-    `Projection members must not claim the same ${label}`,
-    `unique across curated members (first claimed by ${existing})`,
-    claim,
-  ));
+  issues.push(
+    issue(
+      "DUPLICATE_MEMBER",
+      path,
+      `Projection members must not claim the same ${label}`,
+      `unique across curated members (first claimed by ${existing})`,
+      claim
+    )
+  );
 }
 
 function visibleNames(files: readonly ProviderPackageFile[], pattern: RegExp): readonly string[] {
@@ -612,7 +761,7 @@ function parseBrandedDigest<T extends string>(
   path: string,
   pattern: RegExp,
   label: string,
-  brand: (value: string) => T,
+  brand: (value: string) => T
 ): DeploymentResult<T> {
   if (typeof input !== "string" || !pattern.test(input)) {
     return failure([issue("INVALID_DIGEST", path, `${label} digest is invalid`)]);

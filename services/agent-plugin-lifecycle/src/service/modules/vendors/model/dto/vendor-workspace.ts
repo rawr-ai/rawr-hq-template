@@ -18,10 +18,10 @@ import type {
 
 export type VendorDestinationObservation =
   | Readonly<{
-    kind: "Present";
-    entries: readonly ContentTreeEntry[];
-    payloadDigest: string;
-  }>
+      kind: "Present";
+      entries: readonly ContentTreeEntry[];
+      payloadDigest: string;
+    }>
   | Readonly<{ kind: "Missing" }>
   | Readonly<{ kind: "Invalid"; detail: string }>;
 

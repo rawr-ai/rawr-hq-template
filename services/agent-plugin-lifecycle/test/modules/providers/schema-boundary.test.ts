@@ -73,14 +73,8 @@ type ReadOnlyCanonicalTarget = Extract<
   SuccessfulCanonicalSync["targets"][number],
   { kind: "read-only-converged" }
 >;
-type SuccessfulCanonicalStatus = Extract<
-  CanonicalStatusProcedureResult,
-  { ok: true }
->["value"];
-type SuccessfulCompleteTest = Extract<
-  CompleteTestProcedureResult,
-  { ok: true }
->["value"];
+type SuccessfulCanonicalStatus = Extract<CanonicalStatusProcedureResult, { ok: true }>["value"];
+type SuccessfulCompleteTest = Extract<CompleteTestProcedureResult, { ok: true }>["value"];
 
 // @ts-expect-error Procedure failure always reports at least one issue.
 const emptyProviderFailureIssues: ProviderFailureIssues = [];
@@ -103,10 +97,10 @@ function findUnboundedPublicResultLeaves(value: unknown): string[] {
       if (node["~immutable"] !== true) findings.push(`${path}: mutable array`);
     }
     if (
-      node.type === "string"
-      && node.const === undefined
-      && node.pattern === undefined
-      && !Number.isSafeInteger(node.maxLength)
+      node.type === "string" &&
+      node.const === undefined &&
+      node.pattern === undefined &&
+      !Number.isSafeInteger(node.maxLength)
     ) {
       findings.push(`${path}: unbounded text`);
     }
@@ -164,13 +158,15 @@ const marketplaceState = Object.freeze({
 });
 const registration = Object.freeze({
   ...marketplaceState,
-  members: [{
-    pluginId: member.pluginId,
-    nativeIdentity: member.nativeIdentity,
-    providerSourceIdentity: member.providerSourceIdentity,
-    sourceProjectionDigest: digest("ap1_", "8"),
-    memberFingerprint: member.memberFingerprint,
-  }],
+  members: [
+    {
+      pluginId: member.pluginId,
+      nativeIdentity: member.nativeIdentity,
+      providerSourceIdentity: member.providerSourceIdentity,
+      sourceProjectionDigest: digest("ap1_", "8"),
+      memberFingerprint: member.memberFingerprint,
+    },
+  ],
 });
 const projection = Object.freeze({
   schemaVersion: 1,
@@ -326,14 +322,16 @@ const byteBearingResult = Object.freeze({
   ok: true,
   value: {
     status: "Mutated",
-    targets: [{
-      target,
-      status: "mutated",
-      events,
-      issues: [],
-      visibleFingerprint: digest("vf1_", "c"),
-      projectionBinding,
-    }],
+    targets: [
+      {
+        target,
+        status: "mutated",
+        events,
+        issues: [],
+        visibleFingerprint: digest("vf1_", "c"),
+        projectionBinding,
+      },
+    ],
     evidence: null,
     issues: [],
   },
@@ -368,30 +366,38 @@ describe("provider procedure input schema boundary", () => {
   });
 
   it("accepts the four canonical request shapes", () => {
-    expect(Value.Check(TargetedTestInputSchema, {
-      kind: "targeted-test",
-      releases: [release],
-      evaluationProfile: "provider-smoke@v1",
-      targets: [providerTarget],
-    })).toBe(true);
-    expect(Value.Check(CompleteTestInputSchema, {
-      kind: "complete-test",
-      releaseSet,
-      evaluationProfile: "provider-smoke@v1",
-      targets: [providerTarget],
-    })).toBe(true);
-    expect(Value.Check(CanonicalSyncInputSchema, {
-      kind: "canonical-sync",
-      channel: "current-main",
-      locator,
-      targets: [providerTarget],
-    })).toBe(true);
-    expect(Value.Check(CanonicalStatusInputSchema, {
-      kind: "canonical-status",
-      channel: "current-main",
-      locator,
-      targets: [providerTarget],
-    })).toBe(true);
+    expect(
+      Value.Check(TargetedTestInputSchema, {
+        kind: "targeted-test",
+        releases: [release],
+        evaluationProfile: "provider-smoke@v1",
+        targets: [providerTarget],
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(CompleteTestInputSchema, {
+        kind: "complete-test",
+        releaseSet,
+        evaluationProfile: "provider-smoke@v1",
+        targets: [providerTarget],
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(CanonicalSyncInputSchema, {
+        kind: "canonical-sync",
+        channel: "current-main",
+        locator,
+        targets: [providerTarget],
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(CanonicalStatusInputSchema, {
+        kind: "canonical-status",
+        channel: "current-main",
+        locator,
+        targets: [providerTarget],
+      })
+    ).toBe(true);
   });
 
   it("decodes persisted provider targets structurally before domain normalization", () => {
@@ -401,36 +407,56 @@ describe("provider procedure input schema boundary", () => {
   });
 
   it.each([
-    ["relative provider home", TargetedTestInputSchema, {
-      kind: "targeted-test",
-      releases: [release],
-      evaluationProfile: "provider-smoke@v1",
-      targets: [{ ...providerTarget, home: "relative/home" }],
-    }],
-    ["root provider home", CompleteTestInputSchema, {
-      kind: "complete-test",
-      releaseSet,
-      evaluationProfile: "provider-smoke@v1",
-      targets: [{ ...providerTarget, home: "/" }],
-    }],
-    ["path repository identity", CanonicalSyncInputSchema, {
-      kind: "canonical-sync",
-      channel: "current-main",
-      locator: { ...locator, repositoryIdentity: "/tmp/rawr-hq" },
-      targets: [providerTarget],
-    }],
-    ["relative workspace root", CanonicalStatusInputSchema, {
-      kind: "canonical-status",
-      channel: "current-main",
-      locator: { ...locator, workspaceRoot: "relative/rawr-hq" },
-      targets: [providerTarget],
-    }],
-    ["control character in workspace root", CanonicalSyncInputSchema, {
-      kind: "canonical-sync",
-      channel: "current-main",
-      locator: { ...locator, workspaceRoot: "/tmp/rawr\nhq" },
-      targets: [providerTarget],
-    }],
+    [
+      "relative provider home",
+      TargetedTestInputSchema,
+      {
+        kind: "targeted-test",
+        releases: [release],
+        evaluationProfile: "provider-smoke@v1",
+        targets: [{ ...providerTarget, home: "relative/home" }],
+      },
+    ],
+    [
+      "root provider home",
+      CompleteTestInputSchema,
+      {
+        kind: "complete-test",
+        releaseSet,
+        evaluationProfile: "provider-smoke@v1",
+        targets: [{ ...providerTarget, home: "/" }],
+      },
+    ],
+    [
+      "path repository identity",
+      CanonicalSyncInputSchema,
+      {
+        kind: "canonical-sync",
+        channel: "current-main",
+        locator: { ...locator, repositoryIdentity: "/tmp/rawr-hq" },
+        targets: [providerTarget],
+      },
+    ],
+    [
+      "relative workspace root",
+      CanonicalStatusInputSchema,
+      {
+        kind: "canonical-status",
+        channel: "current-main",
+        locator: { ...locator, workspaceRoot: "relative/rawr-hq" },
+        targets: [providerTarget],
+      },
+    ],
+    [
+      "control character in workspace root",
+      CanonicalSyncInputSchema,
+      {
+        kind: "canonical-sync",
+        channel: "current-main",
+        locator: { ...locator, workspaceRoot: "/tmp/rawr\nhq" },
+        targets: [providerTarget],
+      },
+    ],
   ] as const)("accepts structurally bounded %s for domain classification", async (_label, inputSchema, candidate) => {
     expect(Value.Check(inputSchema, candidate)).toBe(true);
     const adapted = await schema(inputSchema)["~standard"].validate(candidate);
@@ -438,66 +464,107 @@ describe("provider procedure input schema boundary", () => {
   });
 
   it.each([
-    ["empty provider target set", CompleteTestInputSchema, {
-      kind: "complete-test",
-      releaseSet,
-      evaluationProfile: "provider-smoke@v1",
-      targets: [],
-    }],
-    ["empty targeted release set", TargetedTestInputSchema, {
-      kind: "targeted-test",
-      releases: [],
-      evaluationProfile: "provider-smoke@v1",
-      targets: [providerTarget],
-    }],
-    ["invalid evaluation profile", CompleteTestInputSchema, {
-      kind: "complete-test",
-      releaseSet,
-      evaluationProfile: "Provider Smoke",
-      targets: [providerTarget],
-    }],
-    ["extra selector", CanonicalSyncInputSchema, {
-      kind: "canonical-sync",
-      channel: "current-main",
-      locator,
-      targets: [providerTarget],
-      releaseSet,
-    }],
+    [
+      "empty provider target set",
+      CompleteTestInputSchema,
+      {
+        kind: "complete-test",
+        releaseSet,
+        evaluationProfile: "provider-smoke@v1",
+        targets: [],
+      },
+    ],
+    [
+      "empty targeted release set",
+      TargetedTestInputSchema,
+      {
+        kind: "targeted-test",
+        releases: [],
+        evaluationProfile: "provider-smoke@v1",
+        targets: [providerTarget],
+      },
+    ],
+    [
+      "invalid evaluation profile",
+      CompleteTestInputSchema,
+      {
+        kind: "complete-test",
+        releaseSet,
+        evaluationProfile: "Provider Smoke",
+        targets: [providerTarget],
+      },
+    ],
+    [
+      "extra selector",
+      CanonicalSyncInputSchema,
+      {
+        kind: "canonical-sync",
+        channel: "current-main",
+        locator,
+        targets: [providerTarget],
+        releaseSet,
+      },
+    ],
   ] as const)("rejects %s before handler execution", (_label, inputSchema, candidate) => {
     expect(Value.Check(inputSchema, candidate)).toBe(false);
   });
 
   it.each([
-    ["relative provider home", () => normalizeTargetedTestRequest({
-      kind: "targeted-test",
-      releases: [release],
-      evaluationProfile: "provider-smoke@v1",
-      targets: [{ ...providerTarget, home: "relative/home" }],
-    }), "INVALID_HOME"],
-    ["root provider home", () => normalizeCompleteTestRequest({
-      kind: "complete-test",
-      releaseSet,
-      evaluationProfile: "provider-smoke@v1",
-      targets: [{ ...providerTarget, home: "/" }],
-    }), "INVALID_HOME"],
-    ["path repository identity", () => normalizeCanonicalSyncRequest({
-      kind: "canonical-sync",
-      channel: "current-main",
-      locator: { ...locator, repositoryIdentity: "/tmp/rawr-hq" },
-      targets: [providerTarget],
-    }), "INVALID_LOCATOR"],
-    ["relative workspace root", () => normalizeCanonicalStatusRequest({
-      kind: "canonical-status",
-      channel: "current-main",
-      locator: { ...locator, workspaceRoot: "relative/rawr-hq" },
-      targets: [providerTarget],
-    }), "INVALID_LOCATOR"],
-    ["control character in workspace root", () => normalizeCanonicalSyncRequest({
-      kind: "canonical-sync",
-      channel: "current-main",
-      locator: { ...locator, workspaceRoot: "/tmp/rawr\nhq" },
-      targets: [providerTarget],
-    }), "INVALID_LOCATOR"],
+    [
+      "relative provider home",
+      () =>
+        normalizeTargetedTestRequest({
+          kind: "targeted-test",
+          releases: [release],
+          evaluationProfile: "provider-smoke@v1",
+          targets: [{ ...providerTarget, home: "relative/home" }],
+        }),
+      "INVALID_HOME",
+    ],
+    [
+      "root provider home",
+      () =>
+        normalizeCompleteTestRequest({
+          kind: "complete-test",
+          releaseSet,
+          evaluationProfile: "provider-smoke@v1",
+          targets: [{ ...providerTarget, home: "/" }],
+        }),
+      "INVALID_HOME",
+    ],
+    [
+      "path repository identity",
+      () =>
+        normalizeCanonicalSyncRequest({
+          kind: "canonical-sync",
+          channel: "current-main",
+          locator: { ...locator, repositoryIdentity: "/tmp/rawr-hq" },
+          targets: [providerTarget],
+        }),
+      "INVALID_LOCATOR",
+    ],
+    [
+      "relative workspace root",
+      () =>
+        normalizeCanonicalStatusRequest({
+          kind: "canonical-status",
+          channel: "current-main",
+          locator: { ...locator, workspaceRoot: "relative/rawr-hq" },
+          targets: [providerTarget],
+        }),
+      "INVALID_LOCATOR",
+    ],
+    [
+      "control character in workspace root",
+      () =>
+        normalizeCanonicalSyncRequest({
+          kind: "canonical-sync",
+          channel: "current-main",
+          locator: { ...locator, workspaceRoot: "/tmp/rawr\nhq" },
+          targets: [providerTarget],
+        }),
+      "INVALID_LOCATOR",
+    ],
   ] as const)("returns typed $expectedCode for $label", (_label, normalize, expectedCode) => {
     const result = normalize();
     expect(result).toMatchObject({
@@ -529,13 +596,13 @@ describe("provider procedure result schema boundary", () => {
     expect(Value.Check(bounded, ["first"])).toBe(true);
     expect(Value.Check(bounded, ["first", "second", "third"])).toBe(false);
     expect(() => NonEmptyReadonlyArray(Type.String(), { maxItems: 0 })).toThrow(
-      "Non-empty array schemas require maxItems >= 1",
+      "Non-empty array schemas require maxItems >= 1"
     );
     expect(() => BoundedReadonlyArray(Type.String(), { maxItems: -1 })).toThrow(
-      "Bounded array schemas require maxItems >= 0",
+      "Bounded array schemas require maxItems >= 0"
     );
     expect(() => BoundedReadonlyArray(Type.String(), { minItems: 2, maxItems: 1 })).toThrow(
-      "Bounded array schemas require 0 <= minItems <= maxItems",
+      "Bounded array schemas require 0 <= minItems <= maxItems"
     );
     expectTypeOf<Static<typeof emptyReadonly>>().toEqualTypeOf<readonly []>();
     expectTypeOf<ReadOnlyCanonicalTarget["appliedPrefix"]>().toEqualTypeOf<readonly []>();
@@ -549,36 +616,34 @@ describe("provider procedure result schema boundary", () => {
   });
 
   it("enforces public result text and target collection bounds", () => {
-    expect(Value.Check(CompleteTestResultSchema, {
-      ok: false,
-      issues: [{ ...issue, message: "x".repeat(4_097) }],
-    })).toBe(false);
-    expect(Value.Check(CompleteTestResultSchema, {
-      ...byteBearingResult,
-      value: {
-        ...byteBearingResult.value,
-        targets: Array.from(
-          { length: 65 },
-          () => byteBearingResult.value.targets[0],
-        ),
-      },
-    })).toBe(false);
+    expect(
+      Value.Check(CompleteTestResultSchema, {
+        ok: false,
+        issues: [{ ...issue, message: "x".repeat(4_097) }],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(CompleteTestResultSchema, {
+        ...byteBearingResult,
+        value: {
+          ...byteBearingResult.value,
+          targets: Array.from({ length: 65 }, () => byteBearingResult.value.targets[0]),
+        },
+      })
+    ).toBe(false);
   });
 
   it("owns the projection binding schema, static type, and closed runtime shape together", () => {
     type Equal<TLeft, TRight> =
-      (<T>() => T extends TLeft ? 1 : 2) extends
-      (<T>() => T extends TRight ? 1 : 2)
-        ? (<T>() => T extends TRight ? 1 : 2) extends
-          (<T>() => T extends TLeft ? 1 : 2)
+      (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2
+        ? (<T>() => T extends TRight ? 1 : 2) extends <T>() => T extends TLeft ? 1 : 2
           ? true
           : false
         : false;
     type Assert<TValue extends true> = TValue;
-    type ProjectionBindingParity = Assert<Equal<
-      ProviderProjectionBinding,
-      Static<typeof ProviderProjectionBindingSchema>
-    >>;
+    type ProjectionBindingParity = Assert<
+      Equal<ProviderProjectionBinding, Static<typeof ProviderProjectionBindingSchema>>
+    >;
     expectTypeOf<ProjectionBindingParity>().toEqualTypeOf<true>();
     expect(Value.Check(ProviderProjectionBindingSchema, projectionBinding)).toBe(true);
 
@@ -604,11 +669,13 @@ describe("provider procedure result schema boundary", () => {
     const domainIssues = Object.freeze([
       providerIssue("VISIBILITY_FAILED", "targets[0]", "visible skill was absent"),
     ]);
-    const domainValue: readonly CanonicalStatusOutcome[] = Object.freeze([Object.freeze({
-      target: parsedTarget,
-      status: "DRIFTED",
-      issues: domainIssues,
-    })]);
+    const domainValue: readonly CanonicalStatusOutcome[] = Object.freeze([
+      Object.freeze({
+        target: parsedTarget,
+        status: "DRIFTED",
+        issues: domainIssues,
+      }),
+    ]);
 
     const projected = await canonicalStatusResult(Promise.resolve(success(domainValue)));
     expect(Value.Check(CanonicalStatusResultSchema, projected)).toBe(true);
@@ -627,24 +694,24 @@ describe("provider procedure result schema boundary", () => {
       targets: [{ ...byteBearingResult.value.targets[0], projectionBinding: null }],
     };
     const [complete, targeted] = await Promise.all([
-      completeTestOperationResult(Promise.resolve(success(
-        byteBearingResult.value as unknown as CompleteTestProviderOperationOutcome,
-      ))),
-      targetedTestOperationResult(Promise.resolve(success(
-        targetedValue as unknown as TargetedTestProviderOperationOutcome,
-      ))),
+      completeTestOperationResult(
+        Promise.resolve(
+          success(byteBearingResult.value as unknown as CompleteTestProviderOperationOutcome)
+        )
+      ),
+      targetedTestOperationResult(
+        Promise.resolve(success(targetedValue as unknown as TargetedTestProviderOperationOutcome))
+      ),
     ]);
 
     expect(Value.Check(CompleteTestResultSchema, complete)).toBe(true);
     expect(Value.Check(TargetedTestResultSchema, targeted)).toBe(true);
-    const expectedEventOrder = events.map((event) => (
+    const expectedEventOrder = events.map((event) =>
       event.action === undefined ? event.phase : `${event.phase}:${event.action.kind}`
-    ));
-    const expectedStepOrder = plan.steps.map((step) => (
-      "action" in step && step.action !== undefined
-        ? `${step.kind}:${step.action.kind}`
-        : step.kind
-    ));
+    );
+    const expectedStepOrder = plan.steps.map((step) =>
+      "action" in step && step.action !== undefined ? `${step.kind}:${step.action.kind}` : step.kind
+    );
     for (const [result, binding] of [
       [complete, projectionBinding],
       [targeted, null],
@@ -653,33 +720,39 @@ describe("provider procedure result schema boundary", () => {
       if (!result.ok) throw new Error("provider fixture projection failed");
       const projectedTarget = result.value.targets[0];
       if (projectedTarget === undefined) throw new Error("expected projected provider target");
-      expect(projectedTarget.events.map((event) => (
-        "action" in event ? `${event.phase}:${event.action.kind}` : event.phase
-      ))).toEqual(expectedEventOrder);
+      expect(
+        projectedTarget.events.map((event) =>
+          "action" in event ? `${event.phase}:${event.action.kind}` : event.phase
+        )
+      ).toEqual(expectedEventOrder);
       const planned = projectedTarget.events.find((event) => event.phase === "planned");
       if (planned?.phase !== "planned") throw new Error("expected projected provider plan");
-      expect(planned.plan.steps.map((step) => (
-        step.kind === "mutate" ? `${step.kind}:${step.action.kind}` : step.kind
-      ))).toEqual(expectedStepOrder);
+      expect(
+        planned.plan.steps.map((step) =>
+          step.kind === "mutate" ? `${step.kind}:${step.action.kind}` : step.kind
+        )
+      ).toEqual(expectedStepOrder);
       expect(projectedTarget.projectionBinding).toEqual(binding);
       expect(containsUint8Array(result)).toBe(false);
     }
 
     expect(Value.Check(CompleteTestResultSchema, byteBearingResult)).toBe(false);
-    expect(Value.Check(TargetedTestResultSchema, {
-      ...byteBearingResult,
-      value: {
-        ...byteBearingResult.value,
-        targets: [{ ...byteBearingResult.value.targets[0], projectionBinding: null }],
-      },
-    })).toBe(false);
+    expect(
+      Value.Check(TargetedTestResultSchema, {
+        ...byteBearingResult,
+        value: {
+          ...byteBearingResult.value,
+          targets: [{ ...byteBearingResult.value.targets[0], projectionBinding: null }],
+        },
+      })
+    ).toBe(false);
   });
 
   it("serializes identically regardless of internal provider payload byte length", async () => {
     const tinyComplete = replaceFixtureBytes(byteBearingResult.value, Uint8Array.of(1));
     const largeComplete = replaceFixtureBytes(
       byteBearingResult.value,
-      new Uint8Array(2 * 1024 * 1024),
+      new Uint8Array(2 * 1024 * 1024)
     );
     const targeted = {
       ...byteBearingResult.value,
@@ -688,20 +761,21 @@ describe("provider procedure result schema boundary", () => {
     const tinyTargeted = replaceFixtureBytes(targeted, Uint8Array.of(1));
     const largeTargeted = replaceFixtureBytes(targeted, new Uint8Array(2 * 1024 * 1024));
 
-    const [tinyCompleteResult, largeCompleteResult, tinyTargetedResult, largeTargetedResult] = await Promise.all([
-      completeTestOperationResult(Promise.resolve(success(
-        tinyComplete as CompleteTestProviderOperationOutcome,
-      ))),
-      completeTestOperationResult(Promise.resolve(success(
-        largeComplete as CompleteTestProviderOperationOutcome,
-      ))),
-      targetedTestOperationResult(Promise.resolve(success(
-        tinyTargeted as TargetedTestProviderOperationOutcome,
-      ))),
-      targetedTestOperationResult(Promise.resolve(success(
-        largeTargeted as TargetedTestProviderOperationOutcome,
-      ))),
-    ]);
+    const [tinyCompleteResult, largeCompleteResult, tinyTargetedResult, largeTargetedResult] =
+      await Promise.all([
+        completeTestOperationResult(
+          Promise.resolve(success(tinyComplete as CompleteTestProviderOperationOutcome))
+        ),
+        completeTestOperationResult(
+          Promise.resolve(success(largeComplete as CompleteTestProviderOperationOutcome))
+        ),
+        targetedTestOperationResult(
+          Promise.resolve(success(tinyTargeted as TargetedTestProviderOperationOutcome))
+        ),
+        targetedTestOperationResult(
+          Promise.resolve(success(largeTargeted as TargetedTestProviderOperationOutcome))
+        ),
+      ]);
 
     expect(JSON.stringify(largeCompleteResult)).toBe(JSON.stringify(tinyCompleteResult));
     expect(JSON.stringify(largeTargetedResult)).toBe(JSON.stringify(tinyTargetedResult));
@@ -741,9 +815,9 @@ describe("provider procedure result schema boundary", () => {
 
   it("rejects unknown events, extra nested action state, malformed plans, and bogus issue codes", async () => {
     const validResult = await completeTestOperationResult(
-      Promise.resolve(success(
-        byteBearingResult.value as unknown as CompleteTestProviderOperationOutcome,
-      )),
+      Promise.resolve(
+        success(byteBearingResult.value as unknown as CompleteTestProviderOperationOutcome)
+      )
     );
     if (!validResult.ok) throw new Error("provider fixture projection failed");
     const targetOutcome = validResult.value.targets[0];
@@ -762,79 +836,97 @@ describe("provider procedure result schema boundary", () => {
         ...validResult,
         value: {
           ...validResult.value,
-          targets: [{
-            ...targetOutcome,
-            events: [{ phase: "applied", target, action: { ...actions[0], ambient: true } }],
-          }],
+          targets: [
+            {
+              ...targetOutcome,
+              events: [{ phase: "applied", target, action: { ...actions[0], ambient: true } }],
+            },
+          ],
         },
       },
       {
         ...validResult,
         value: {
           ...validResult.value,
-          targets: [{
-            ...targetOutcome,
-            events: [{
-              phase: "planned",
-              target,
-              plan: {
-                ...planned.plan,
-                steps: [{ kind: "mutate", action: { kind: "RetireMember", target } }],
-              },
-            }],
-          }],
+          targets: [
+            {
+              ...targetOutcome,
+              events: [
+                {
+                  phase: "planned",
+                  target,
+                  plan: {
+                    ...planned.plan,
+                    steps: [{ kind: "mutate", action: { kind: "RetireMember", target } }],
+                  },
+                },
+              ],
+            },
+          ],
         },
       },
       {
         ...validResult,
         value: {
           ...validResult.value,
-          targets: [{
-            ...targetOutcome,
-            events: [{
-              phase: "uncertain",
-              target,
-              action: actions[5],
-              lastKnown: "bridge-returned",
-              issues: [issue],
-            }],
-          }],
+          targets: [
+            {
+              ...targetOutcome,
+              events: [
+                {
+                  phase: "uncertain",
+                  target,
+                  action: actions[5],
+                  lastKnown: "bridge-returned",
+                  issues: [issue],
+                },
+              ],
+            },
+          ],
         },
       },
       {
         ...validResult,
         value: {
           ...validResult.value,
-          targets: [{
-            ...targetOutcome,
-            events: [{
-              phase: "uncertain",
-              target,
-              action: actions[1],
-              lastKnown: "bridge-returned",
-              issues: [],
-            }],
-          }],
+          targets: [
+            {
+              ...targetOutcome,
+              events: [
+                {
+                  phase: "uncertain",
+                  target,
+                  action: actions[1],
+                  lastKnown: "bridge-returned",
+                  issues: [],
+                },
+              ],
+            },
+          ],
         },
       },
       {
         ...validResult,
         value: {
           ...validResult.value,
-          targets: [{
-            ...targetOutcome,
-            projectionBinding: { ...targetOutcome.projectionBinding, extraAuthority: true },
-          }],
+          targets: [
+            {
+              ...targetOutcome,
+              projectionBinding: { ...targetOutcome.projectionBinding, extraAuthority: true },
+            },
+          ],
         },
       },
       {
         ...validResult,
         value: {
           ...validResult.value,
-          targets: [{
-            ...targetOutcome,
-            status: "failed",
-          }],
+          targets: [
+            {
+              ...targetOutcome,
+              status: "failed",
+            },
+          ],
         },
       },
       {
@@ -864,10 +956,9 @@ function replaceFixtureBytes(value: unknown, bytes: Uint8Array): unknown {
   if (value instanceof Uint8Array) return bytes;
   if (Array.isArray(value)) return value.map((entry) => replaceFixtureBytes(entry, bytes));
   if (value === null || typeof value !== "object") return value;
-  return Object.fromEntries(Object.entries(value).map(([key, entry]) => [
-    key,
-    replaceFixtureBytes(entry, bytes),
-  ]));
+  return Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => [key, replaceFixtureBytes(entry, bytes)])
+  );
 }
 
 function containsUint8Array(value: unknown): boolean {

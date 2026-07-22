@@ -1,9 +1,5 @@
-import {
-  createEmbeddedPlaceholderAnalyticsAdapter,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import {
-  createEmbeddedPlaceholderLoggerAdapter,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 import type {
   ContentWorkspaceAsyncPort,
@@ -48,7 +44,7 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
 }
 
 export function withUnavailableGitReads(
-  contentWorkspace: ContentWorkspaceAsyncPort,
+  contentWorkspace: ContentWorkspaceAsyncPort
 ): ContentWorkspaceNodeAsyncPort {
   return Object.freeze({
     ...contentWorkspace,
@@ -56,7 +52,8 @@ export function withUnavailableGitReads(
     readGitTree: async () => unavailableAsync("release Git tree read"),
     readGitBlob: async () => unavailableAsync("release Git blob read"),
     readGitBlobs: async () => unavailableAsync("release Git blob batch read"),
-    captureGitWorkspaceEvidence: async () => unavailableAsync("release Git workspace evidence capture"),
+    captureGitWorkspaceEvidence: async () =>
+      unavailableAsync("release Git workspace evidence capture"),
     observeGitStagedIndex: async () => unavailableAsync("staged release index observation"),
     readGitBlobAtPath: async () => unavailableAsync("release Git path read"),
     isLocalGitAncestor: async () => unavailableAsync("release Git ancestry"),
@@ -102,7 +99,7 @@ export function unavailableProviderResources() {
 }
 
 export function unavailableArtifactRepository(
-  onAccess: (operation: keyof ArtifactRepositoryAsyncPort) => void = () => {},
+  onAccess: (operation: keyof ArtifactRepositoryAsyncPort) => void = () => {}
 ): ArtifactRepositoryAsyncPort {
   const refuse = async (operation: keyof ArtifactRepositoryAsyncPort): Promise<never> => {
     onAccess(operation);

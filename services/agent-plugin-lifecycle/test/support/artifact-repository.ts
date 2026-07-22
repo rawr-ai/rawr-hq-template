@@ -20,7 +20,7 @@ export interface SeededArtifactRepository {
 
 export async function createSeededArtifactRepository(
   snapshots: readonly VerifiedArtifactSnapshotV1[],
-  repositoryRoot = MEMORY_ARTIFACT_REPOSITORY_ROOT,
+  repositoryRoot = MEMORY_ARTIFACT_REPOSITORY_ROOT
 ): Promise<SeededArtifactRepository> {
   const artifactRepository = new MemoryArtifactRepository();
   await seedArtifactRepository(artifactRepository, repositoryRoot, snapshots);
@@ -31,10 +31,13 @@ export async function createSeededArtifactRepository(
 export async function seedArtifactRepository(
   artifactRepository: ArtifactRepositoryAsyncPort,
   repositoryRoot: string,
-  snapshots: readonly VerifiedArtifactSnapshotV1[],
+  snapshots: readonly VerifiedArtifactSnapshotV1[]
 ): Promise<void> {
   const store = createResourceArtifactStore({ repository: artifactRepository, repositoryRoot });
-  const releases = new Map<string, Extract<VerifiedArtifactSnapshotV1, { kind: "release" }>["release"]>();
+  const releases = new Map<
+    string,
+    Extract<VerifiedArtifactSnapshotV1, { kind: "release" }>["release"]
+  >();
   const releaseSets = new Map<
     string,
     Extract<VerifiedArtifactSnapshotV1, { kind: "complete-set" }>["releaseSet"]
@@ -68,14 +71,12 @@ export class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
   lastTreeAddress: ArtifactObjectAddress | undefined;
   lastEvidenceAddress: ArtifactObjectAddress | undefined;
 
-  locateTree(
-    _input: Parameters<ArtifactRepositoryAsyncPort["locateTree"]>[0],
-  ): Promise<never> {
+  locateTree(_input: Parameters<ArtifactRepositoryAsyncPort["locateTree"]>[0]): Promise<never> {
     return unavailable("artifact tree location");
   }
 
   async readTree(
-    input: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0],
+    input: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0]
   ): Promise<ArtifactTreeObservation> {
     this.readTreeCalls += 1;
     this.lastTreeAddress = input.address;
@@ -91,7 +92,7 @@ export class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
   }
 
   async publishTree(
-    input: Parameters<ArtifactRepositoryAsyncPort["publishTree"]>[0],
+    input: Parameters<ArtifactRepositoryAsyncPort["publishTree"]>[0]
   ): Promise<ArtifactPublicationResult> {
     const key = addressKey(input.address);
     const candidate = snapshotFor(input.address, input.entries);
@@ -115,7 +116,7 @@ export class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
   }
 
   async readEvidence(
-    input: Parameters<ArtifactRepositoryAsyncPort["readEvidence"]>[0],
+    input: Parameters<ArtifactRepositoryAsyncPort["readEvidence"]>[0]
   ): Promise<ArtifactEvidenceObservation> {
     this.readEvidenceCalls += 1;
     this.lastEvidenceAddress = input.address;
@@ -123,15 +124,17 @@ export class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
     if (snapshot === undefined) return Object.freeze({ kind: "Missing", address: input.address });
     const entry = snapshot.entries[0];
     if (
-      snapshot.directories.length !== 0
-      || snapshot.entries.length !== 1
-      || entry?.path !== "evidence.json"
-      || entry.mode !== 0o444
+      snapshot.directories.length !== 0 ||
+      snapshot.entries.length !== 1 ||
+      entry?.path !== "evidence.json" ||
+      entry.mode !== 0o444
     ) {
-      const issues: [Readonly<{ code: "UnexpectedEntry"; detail: string }>] = [Object.freeze({
-        code: "UnexpectedEntry",
-        detail: "Mechanical evidence fixture has an unexpected tree shape",
-      })];
+      const issues: [Readonly<{ code: "UnexpectedEntry"; detail: string }>] = [
+        Object.freeze({
+          code: "UnexpectedEntry",
+          detail: "Mechanical evidence fixture has an unexpected tree shape",
+        }),
+      ];
       return Object.freeze({
         kind: "Mismatch",
         address: input.address,
@@ -146,7 +149,7 @@ export class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
   }
 
   async publishEvidence(
-    input: Parameters<ArtifactRepositoryAsyncPort["publishEvidence"]>[0],
+    input: Parameters<ArtifactRepositoryAsyncPort["publishEvidence"]>[0]
   ): Promise<ArtifactPublicationResult> {
     this.publishedEvidenceCalls += 1;
     this.lastEvidenceAddress = input.address;
@@ -157,11 +160,13 @@ export class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
     }
     return this.publishTree({
       address: input.address,
-      entries: Object.freeze([Object.freeze({
-        path: "evidence.json",
-        mode: 0o444,
-        bytes: new Uint8Array(input.bytes),
-      })]),
+      entries: Object.freeze([
+        Object.freeze({
+          path: "evidence.json",
+          mode: 0o444,
+          bytes: new Uint8Array(input.bytes),
+        }),
+      ]),
       limits: Object.freeze({ maxEntries: 1, maxBytes: input.maxBytes }),
       ...(input.control === undefined ? {} : { control: input.control }),
     });
@@ -185,28 +190,37 @@ export class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
 
   addDirectory(objectId: string, path: string): void {
     const [key, snapshot] = this.findByObjectId(objectId);
-    this.trees.set(key, Object.freeze({
-      ...snapshot,
-      directories: Object.freeze([
-        ...snapshot.directories,
-        Object.freeze({ path, mode: 0o700 }),
-      ].sort((left, right) => left.path.localeCompare(right.path))),
-    }));
+    this.trees.set(
+      key,
+      Object.freeze({
+        ...snapshot,
+        directories: Object.freeze(
+          [...snapshot.directories, Object.freeze({ path, mode: 0o700 })].sort((left, right) =>
+            left.path.localeCompare(right.path)
+          )
+        ),
+      })
+    );
   }
 
   replaceEntry(objectId: string, path: string, bytes: Uint8Array): void {
     const [key, snapshot] = this.findByObjectId(objectId);
-    this.trees.set(key, Object.freeze({
-      ...snapshot,
-      entries: Object.freeze(snapshot.entries.map((entry) =>
-        entry.path === path ? Object.freeze({ ...entry, bytes: new Uint8Array(bytes) }) : entry
-      )),
-    }));
+    this.trees.set(
+      key,
+      Object.freeze({
+        ...snapshot,
+        entries: Object.freeze(
+          snapshot.entries.map((entry) =>
+            entry.path === path ? Object.freeze({ ...entry, bytes: new Uint8Array(bytes) }) : entry
+          )
+        ),
+      })
+    );
   }
 
   private findByObjectId(objectId: string): readonly [string, ArtifactTreeSnapshot] {
-    const found = [...this.trees.entries()].find(([, snapshot]) =>
-      snapshot.address.objectId === objectId
+    const found = [...this.trees.entries()].find(
+      ([, snapshot]) => snapshot.address.objectId === objectId
     );
     if (found === undefined) throw new Error(`Missing fixture artifact ${objectId}`);
     return found;
@@ -215,7 +229,7 @@ export class MemoryArtifactRepository implements ArtifactRepositoryAsyncPort {
 
 function snapshotFor(
   address: ArtifactObjectAddress,
-  entries: readonly ArtifactTreeEntry[],
+  entries: readonly ArtifactTreeEntry[]
 ): ArtifactTreeSnapshot {
   const directoryPaths = new Set<string>();
   for (const entry of entries) {
@@ -226,37 +240,49 @@ function snapshotFor(
   }
   return Object.freeze({
     address,
-    directories: Object.freeze([...directoryPaths]
-      .sort()
-      .map((path) => Object.freeze({ path, mode: 0o700 }))),
-    entries: Object.freeze([...entries]
-      .sort((left, right) => left.path.localeCompare(right.path))
-      .map((entry) => Object.freeze({ ...entry, bytes: new Uint8Array(entry.bytes) }))),
+    directories: Object.freeze(
+      [...directoryPaths].sort().map((path) => Object.freeze({ path, mode: 0o700 }))
+    ),
+    entries: Object.freeze(
+      [...entries]
+        .sort((left, right) => left.path.localeCompare(right.path))
+        .map((entry) => Object.freeze({ ...entry, bytes: new Uint8Array(entry.bytes) }))
+    ),
   });
 }
 
 function copyTree(snapshot: ArtifactTreeSnapshot): ArtifactTreeSnapshot {
   return Object.freeze({
     ...snapshot,
-    directories: Object.freeze(snapshot.directories.map((directory) => Object.freeze({ ...directory }))),
-    entries: Object.freeze(snapshot.entries.map((entry) => Object.freeze({
-      ...entry,
-      bytes: new Uint8Array(entry.bytes),
-    }))),
+    directories: Object.freeze(
+      snapshot.directories.map((directory) => Object.freeze({ ...directory }))
+    ),
+    entries: Object.freeze(
+      snapshot.entries.map((entry) =>
+        Object.freeze({
+          ...entry,
+          bytes: new Uint8Array(entry.bytes),
+        })
+      )
+    ),
   });
 }
 
 function sameTree(left: ArtifactTreeSnapshot, right: ArtifactTreeSnapshot): boolean {
-  return JSON.stringify(left.directories) === JSON.stringify(right.directories)
-    && left.entries.length === right.entries.length
-    && left.entries.every((entry, index) => {
+  return (
+    JSON.stringify(left.directories) === JSON.stringify(right.directories) &&
+    left.entries.length === right.entries.length &&
+    left.entries.every((entry, index) => {
       const candidate = right.entries[index];
-      return candidate !== undefined
-        && entry.path === candidate.path
-        && entry.mode === candidate.mode
-        && entry.bytes.byteLength === candidate.bytes.byteLength
-        && entry.bytes.every((byte, byteIndex) => byte === candidate.bytes[byteIndex]);
-    });
+      return (
+        candidate !== undefined &&
+        entry.path === candidate.path &&
+        entry.mode === candidate.mode &&
+        entry.bytes.byteLength === candidate.bytes.byteLength &&
+        entry.bytes.every((byte, byteIndex) => byte === candidate.bytes[byteIndex])
+      );
+    })
+  );
 }
 
 function addressKey(address: ArtifactObjectAddress): string {
@@ -267,7 +293,9 @@ async function unavailable(label: string): Promise<never> {
   throw new Error(`Unexpected ${label} access in memory artifact repository`);
 }
 
-function requirePublication(result: Awaited<ReturnType<ReturnType<typeof createResourceArtifactStore>["publishRelease"]>>): void {
+function requirePublication(
+  result: Awaited<ReturnType<ReturnType<typeof createResourceArtifactStore>["publishRelease"]>>
+): void {
   if (result.kind === "Published" || result.kind === "ReadOnlyConverged") return;
   throw new Error(`Artifact fixture publication failed: ${result.failure}`);
 }

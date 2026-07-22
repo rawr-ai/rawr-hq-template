@@ -10,12 +10,7 @@ import {
 } from "../../../src/service/shared/release";
 import { describe, expect, it } from "vitest";
 
-import {
-  must,
-  productFixture,
-  releaseInputBody,
-  SOURCE,
-} from "../../shared/release/fixtures";
+import { must, productFixture, releaseInputBody, SOURCE } from "../../shared/release/fixtures";
 import {
   evaluateCapabilities,
   parseAdapterProtocol,
@@ -30,7 +25,10 @@ describe("artifact-only provider projections", () => {
     const alpha = snapshot(fixture.alphaRelease);
     const beta = snapshot(fixture.betaRelease);
     const first = renderTargetedProjection("codex", protocol, [alpha, beta]);
-    const reordered = renderTargetedProjection("codex", protocol, [copySnapshot(beta), copySnapshot(alpha)]);
+    const reordered = renderTargetedProjection("codex", protocol, [
+      copySnapshot(beta),
+      copySnapshot(alpha),
+    ]);
     expect(first.ok).toBe(true);
     expect(reordered.ok).toBe(true);
     if (first.ok && reordered.ok) {
@@ -42,7 +40,9 @@ describe("artifact-only provider projections", () => {
         contentAuthority: fixture.releaseInput.body.contentAuthority,
         sourceCommit: fixture.alphaRelease.artifactBody.releaseBody.sourceCommit,
       });
-      expect(first.value.members[0]?.providerSourceIdentity).toBe(fixture.releaseInput.body.contentAuthority);
+      expect(first.value.members[0]?.providerSourceIdentity).toBe(
+        fixture.releaseInput.body.contentAuthority
+      );
     }
   });
 
@@ -51,40 +51,68 @@ describe("artifact-only provider projections", () => {
     const otherAuthorityBody = releaseInputBody(fixture.alphaPayload, fixture.betaPayload);
     otherAuthorityBody.contentAuthority = "other-content-authority";
     const otherAuthorityInput = must(createAgentPluginReleaseInput(otherAuthorityBody));
-    const otherAuthorityBeta = must(createAgentPluginRelease({
-      releaseInput: otherAuthorityInput,
-      pluginId: "beta",
-      source: SOURCE,
-      payload: fixture.betaPayload,
-    }));
-    const otherCommitBeta = must(createAgentPluginRelease({
-      releaseInput: fixture.releaseInput,
-      pluginId: "beta",
-      source: { ...SOURCE, sourceCommit: "c".repeat(40) },
-      payload: fixture.betaPayload,
-    }));
+    const otherAuthorityBeta = must(
+      createAgentPluginRelease({
+        releaseInput: otherAuthorityInput,
+        pluginId: "beta",
+        source: SOURCE,
+        payload: fixture.betaPayload,
+      })
+    );
+    const otherCommitBeta = must(
+      createAgentPluginRelease({
+        releaseInput: fixture.releaseInput,
+        pluginId: "beta",
+        source: { ...SOURCE, sourceCommit: "c".repeat(40) },
+        payload: fixture.betaPayload,
+      })
+    );
     const protocol = mustProtocol("codex-native-adapter@v1");
 
-    expect(renderTargetedProjection("codex", protocol, [
-      snapshot(fixture.alphaRelease),
-      snapshot(otherAuthorityBeta),
-    ]).ok).toBe(false);
-    expect(renderTargetedProjection("codex", protocol, [
-      snapshot(fixture.alphaRelease),
-      snapshot(otherCommitBeta),
-    ]).ok).toBe(false);
+    expect(
+      renderTargetedProjection("codex", protocol, [
+        snapshot(fixture.alphaRelease),
+        snapshot(otherAuthorityBeta),
+      ]).ok
+    ).toBe(false);
+    expect(
+      renderTargetedProjection("codex", protocol, [
+        snapshot(fixture.alphaRelease),
+        snapshot(otherCommitBeta),
+      ]).ok
+    ).toBe(false);
   });
 
   it("rejects duplicate native exposure claims across distinct curated members", () => {
-    const alphaPayload = must(createAgentPluginPayload([
-      { path: "skills/shared/SKILL.md", mode: 0o644, bytes: new TextEncoder().encode("alpha\n") },
-    ]));
-    const betaPayload = must(createAgentPluginPayload([
-      { path: "skills/shared/SKILL.md", mode: 0o644, bytes: new TextEncoder().encode("beta\n") },
-    ]));
-    const releaseInput = must(createAgentPluginReleaseInput(releaseInputBody(alphaPayload, betaPayload)));
-    const alpha = must(createAgentPluginRelease({ releaseInput, pluginId: "alpha", source: SOURCE, payload: alphaPayload }));
-    const beta = must(createAgentPluginRelease({ releaseInput, pluginId: "beta", source: SOURCE, payload: betaPayload }));
+    const alphaPayload = must(
+      createAgentPluginPayload([
+        { path: "skills/shared/SKILL.md", mode: 0o644, bytes: new TextEncoder().encode("alpha\n") },
+      ])
+    );
+    const betaPayload = must(
+      createAgentPluginPayload([
+        { path: "skills/shared/SKILL.md", mode: 0o644, bytes: new TextEncoder().encode("beta\n") },
+      ])
+    );
+    const releaseInput = must(
+      createAgentPluginReleaseInput(releaseInputBody(alphaPayload, betaPayload))
+    );
+    const alpha = must(
+      createAgentPluginRelease({
+        releaseInput,
+        pluginId: "alpha",
+        source: SOURCE,
+        payload: alphaPayload,
+      })
+    );
+    const beta = must(
+      createAgentPluginRelease({
+        releaseInput,
+        pluginId: "beta",
+        source: SOURCE,
+        payload: betaPayload,
+      })
+    );
 
     const result = renderTargetedProjection("codex", mustProtocol("codex-native-adapter@v1"), [
       snapshot(alpha),
@@ -93,20 +121,44 @@ describe("artifact-only provider projections", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.issues.some((entry) => entry.code === "DUPLICATE_MEMBER" && entry.actual === "shared")).toBe(true);
+      expect(
+        result.issues.some(
+          (entry) => entry.code === "DUPLICATE_MEMBER" && entry.actual === "shared"
+        )
+      ).toBe(true);
     }
   });
 
   it("keeps same-event hook claims plugin-scoped and renders event slugs instead of filenames", () => {
-    const alphaPayload = must(createAgentPluginPayload([
-      { path: "hooks/hooks.json", mode: 0o644, bytes: hookManifestBytes("Stop") },
-    ]));
-    const betaPayload = must(createAgentPluginPayload([
-      { path: "hooks/hooks.json", mode: 0o644, bytes: hookManifestBytes("Stop") },
-    ]));
-    const releaseInput = must(createAgentPluginReleaseInput(releaseInputBody(alphaPayload, betaPayload)));
-    const alpha = must(createAgentPluginRelease({ releaseInput, pluginId: "alpha", source: SOURCE, payload: alphaPayload }));
-    const beta = must(createAgentPluginRelease({ releaseInput, pluginId: "beta", source: SOURCE, payload: betaPayload }));
+    const alphaPayload = must(
+      createAgentPluginPayload([
+        { path: "hooks/hooks.json", mode: 0o644, bytes: hookManifestBytes("Stop") },
+      ])
+    );
+    const betaPayload = must(
+      createAgentPluginPayload([
+        { path: "hooks/hooks.json", mode: 0o644, bytes: hookManifestBytes("Stop") },
+      ])
+    );
+    const releaseInput = must(
+      createAgentPluginReleaseInput(releaseInputBody(alphaPayload, betaPayload))
+    );
+    const alpha = must(
+      createAgentPluginRelease({
+        releaseInput,
+        pluginId: "alpha",
+        source: SOURCE,
+        payload: alphaPayload,
+      })
+    );
+    const beta = must(
+      createAgentPluginRelease({
+        releaseInput,
+        pluginId: "beta",
+        source: SOURCE,
+        payload: betaPayload,
+      })
+    );
 
     const result = renderTargetedProjection("codex", mustProtocol("codex-native-adapter@v1"), [
       snapshot(alpha),
@@ -119,22 +171,34 @@ describe("artifact-only provider projections", () => {
         ["stop"],
         ["stop"],
       ]);
-      expect(result.value.members.flatMap((member) => member.visible.hooks)).not.toContain("hooks.json");
+      expect(result.value.members.flatMap((member) => member.visible.hooks)).not.toContain(
+        "hooks.json"
+      );
     }
   });
 
   it("binds provider, renderer protocol, adapter protocol, capabilities, and provider-visible bytes", () => {
     const fixture = productFixture();
     const snapshotValue = snapshot(fixture.alphaRelease);
-    const codexV1 = renderTargetedProjection("codex", mustProtocol("codex-native-adapter@v1"), [snapshotValue]);
-    const codexV2 = renderTargetedProjection("codex", mustProtocol("codex-native-adapter@v2"), [snapshotValue]);
-    const claudeV1 = renderTargetedProjection("claude", mustProtocol("claude-native-adapter@v1"), [snapshotValue]);
+    const codexV1 = renderTargetedProjection("codex", mustProtocol("codex-native-adapter@v1"), [
+      snapshotValue,
+    ]);
+    const codexV2 = renderTargetedProjection("codex", mustProtocol("codex-native-adapter@v2"), [
+      snapshotValue,
+    ]);
+    const claudeV1 = renderTargetedProjection("claude", mustProtocol("claude-native-adapter@v1"), [
+      snapshotValue,
+    ]);
     expect(codexV1.ok && codexV2.ok && claudeV1.ok).toBe(true);
     if (codexV1.ok && codexV2.ok && claudeV1.ok) {
       expect(codexV1.value.projectionDigest).not.toBe(codexV2.value.projectionDigest);
       expect(codexV1.value.projectionDigest).not.toBe(claudeV1.value.projectionDigest);
-      expect(codexV1.value.members[0]?.files.some((file) => file.path === ".codex-plugin/plugin.json")).toBe(true);
-      expect(claudeV1.value.members[0]?.files.some((file) => file.path === ".claude-plugin/plugin.json")).toBe(true);
+      expect(
+        codexV1.value.members[0]?.files.some((file) => file.path === ".codex-plugin/plugin.json")
+      ).toBe(true);
+      expect(
+        claudeV1.value.members[0]?.files.some((file) => file.path === ".claude-plugin/plugin.json")
+      ).toBe(true);
       expect(codexV1.value.capabilityProfile.required).toContain("visible-skill-inventory");
     }
   });
@@ -167,7 +231,11 @@ describe("artifact-only provider projections", () => {
 
   it("rejects the wrong artifact kind instead of falling back", () => {
     const fixture = productFixture();
-    const result = renderCompleteProjection("codex", mustProtocol("codex-native-adapter@v1"), snapshot(fixture.alphaRelease));
+    const result = renderCompleteProjection(
+      "codex",
+      mustProtocol("codex-native-adapter@v1"),
+      snapshot(fixture.alphaRelease)
+    );
     expect(result.ok).toBe(false);
   });
 });
@@ -200,10 +268,19 @@ function mustProtocol(value: string) {
 }
 
 function hookManifestBytes(...eventNames: readonly string[]): Uint8Array {
-  return new TextEncoder().encode(JSON.stringify({
-    description: "Fixture hooks",
-    hooks: Object.fromEntries(eventNames.map((eventName) => [eventName, [{
-      hooks: [{ type: "command", command: "printf hook" }],
-    }]])),
-  }));
+  return new TextEncoder().encode(
+    JSON.stringify({
+      description: "Fixture hooks",
+      hooks: Object.fromEntries(
+        eventNames.map((eventName) => [
+          eventName,
+          [
+            {
+              hooks: [{ type: "command", command: "printf hook" }],
+            },
+          ],
+        ])
+      ),
+    })
+  );
 }

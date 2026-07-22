@@ -5,8 +5,10 @@ export const module = impl.governance
   .use(observability)
   .use(analytics)
   .use(repositories)
-  .use(async ({ context, next }) => next({
-    context: {
-      git: context.provided.git,
-    },
-  }));
+  .use(async ({ context, next }) =>
+    next({
+      context: {
+        git: context.provided.git,
+      },
+    })
+  );

@@ -33,14 +33,18 @@ const encoder = new TextEncoder();
 describe("canonical payload and release input", () => {
   it("owns payload bytes, sorts entries, and emits exactly one trailing LF", () => {
     const mutable = encoder.encode("owned\n");
-    const first = must(createAgentPluginPayload([
-      { path: "z.txt", mode: 0o644, bytes: mutable },
-      { path: "a.sh", mode: 0o755, bytes: encoder.encode("a\n") },
-    ]));
-    const second = must(createAgentPluginPayload([
-      { path: "a.sh", mode: 0o755, bytes: encoder.encode("a\n") },
-      { path: "z.txt", mode: 0o644, bytes: encoder.encode("owned\n") },
-    ]));
+    const first = must(
+      createAgentPluginPayload([
+        { path: "z.txt", mode: 0o644, bytes: mutable },
+        { path: "a.sh", mode: 0o755, bytes: encoder.encode("a\n") },
+      ])
+    );
+    const second = must(
+      createAgentPluginPayload([
+        { path: "a.sh", mode: 0o755, bytes: encoder.encode("a\n") },
+        { path: "z.txt", mode: 0o644, bytes: encoder.encode("owned\n") },
+      ])
+    );
     mutable.fill(0);
 
     expect(first.payloadDigest).toBe(second.payloadDigest);
@@ -54,19 +58,34 @@ describe("canonical payload and release input", () => {
   });
 
   it("changes payload identity for path, mode, or exact bytes", () => {
-    const base = must(createAgentPluginPayload([{ path: "a", mode: 0o644, bytes: encoder.encode("x") }]));
-    const path = must(createAgentPluginPayload([{ path: "b", mode: 0o644, bytes: encoder.encode("x") }]));
-    const mode = must(createAgentPluginPayload([{ path: "a", mode: 0o755, bytes: encoder.encode("x") }]));
-    const bytes = must(createAgentPluginPayload([{ path: "a", mode: 0o644, bytes: encoder.encode("y") }]));
-    expect(new Set([base.payloadDigest, path.payloadDigest, mode.payloadDigest, bytes.payloadDigest]).size).toBe(4);
+    const base = must(
+      createAgentPluginPayload([{ path: "a", mode: 0o644, bytes: encoder.encode("x") }])
+    );
+    const path = must(
+      createAgentPluginPayload([{ path: "b", mode: 0o644, bytes: encoder.encode("x") }])
+    );
+    const mode = must(
+      createAgentPluginPayload([{ path: "a", mode: 0o755, bytes: encoder.encode("x") }])
+    );
+    const bytes = must(
+      createAgentPluginPayload([{ path: "a", mode: 0o644, bytes: encoder.encode("y") }])
+    );
+    expect(
+      new Set([base.payloadDigest, path.payloadDigest, mode.payloadDigest, bytes.payloadDigest])
+        .size
+    ).toBe(4);
   });
 
   it("rejects unsafe paths, duplicate paths, unknown fields, and manifest tampering", () => {
-    expect(createAgentPluginPayload([{ path: "../escape", mode: 0o644, bytes: new Uint8Array() }]).ok).toBe(false);
-    expect(createAgentPluginPayload([
-      { path: "same", mode: 0o644, bytes: new Uint8Array() },
-      { path: "same", mode: 0o644, bytes: new Uint8Array() },
-    ]).ok).toBe(false);
+    expect(
+      createAgentPluginPayload([{ path: "../escape", mode: 0o644, bytes: new Uint8Array() }]).ok
+    ).toBe(false);
+    expect(
+      createAgentPluginPayload([
+        { path: "same", mode: 0o644, bytes: new Uint8Array() },
+        { path: "same", mode: 0o644, bytes: new Uint8Array() },
+      ]).ok
+    ).toBe(false);
 
     const fixture = productFixture();
     const payloadWire = wire(canonicalSerializeAgentPluginPayload(fixture.alphaPayload));
@@ -76,7 +95,8 @@ describe("canonical payload and release input", () => {
     payloadWire.entries[0].bytesBase64 = "eA==";
     const verified = verifyAgentPluginPayload(payloadWire);
     expect(verified.ok).toBe(false);
-    if (!verified.ok) expect(verified.issues.map((entry) => entry.code)).toContain("PAYLOAD_DIGEST_MISMATCH");
+    if (!verified.ok)
+      expect(verified.issues.map((entry) => entry.code)).toContain("PAYLOAD_DIGEST_MISMATCH");
   });
 
   it("canonicalizes unordered declarations and covers every admitted declaration class", () => {
@@ -97,49 +117,131 @@ describe("canonical payload and release input", () => {
     const equivalent = must(createAgentPluginReleaseInput(permuted));
     expect(equivalent.releaseInputDigest).toBe(canonical.releaseInputDigest);
     expect(canonicalSerializeAgentPluginReleaseInput(equivalent)).toEqual(
-      canonicalSerializeAgentPluginReleaseInput(canonical),
+      canonicalSerializeAgentPluginReleaseInput(canonical)
     );
 
     const mutations: Array<readonly [string, (body: any) => void]> = [
-      ["authority", (body) => { body.contentAuthority = "personal-rawr-hq-v2"; }],
-      ["member identity", (body) => {
-        body.members[0].pluginId = "alpha-v2";
-        for (const claim of body.ownershipClaims) {
-          if (claim.ownerPluginId === "alpha") claim.ownerPluginId = "alpha-v2";
-        }
-      }],
-      ["payload digest", (body) => { body.members[0].payload.payloadDigest = fixture.betaPayload.payloadDigest; }],
-      ["manifest path", (body) => { body.members[0].payload.manifest[0].path = "agents/alpha-v2.md"; }],
-      ["manifest mode", (body) => { body.members[0].payload.manifest[0].mode = 0o755; }],
-      ["manifest byte length", (body) => { body.members[0].payload.manifest[0].byteLength += 1; }],
-      ["manifest content digest", (body) => {
-        body.members[0].payload.manifest[0].contentDigest = contentDigest(encoder.encode("manifest changed"));
-      }],
-      ["skill identity", (body) => {
-        body.members[0].skillInventory[0].identity = "alpha-skill-v2";
-        body.ownershipClaims.find((claim: any) => claim.kind === "skill" && claim.ownerPluginId === "alpha").identity =
-          "alpha-skill-v2";
-      }],
-      ["skill manifest path", (body) => {
-        const oldPath = body.members[0].skillInventory[0].manifestPath;
-        body.members[0].skillInventory[0].manifestPath = "skills/alpha-v2/SKILL.md";
-        body.members[0].payload.manifest.find((entry: any) => entry.path === oldPath).path = "skills/alpha-v2/SKILL.md";
-      }],
-      ["vendor digest", (body) => {
-        body.members[0].vendor[0].contentDigest = contentDigest(encoder.encode("vendor changed"));
-      }],
-      ["vendor id", (body) => { body.members[0].vendor[0].id = "vendor-alpha-v2"; }],
-      ["vendor protocol", (body) => { body.members[0].vendor[0].protocol = "vendor-v2"; }],
-      ["curation", (body) => {
-        body.members[0].curation[0].contentDigest = contentDigest(encoder.encode("curation changed"));
-      }],
-      ["lock", (body) => { body.locks[0].contentDigest = contentDigest(encoder.encode("lock changed")); }],
-      ["quality", (body) => {
-        body.qualityPolicies[0].contentDigest = contentDigest(encoder.encode("quality changed"));
-      }],
-      ["ownership identity", (body) => { body.ownershipClaims[1].identity = "alpha-alt"; }],
-      ["ownership owner", (body) => { body.ownershipClaims[3].ownerPluginId = "beta"; }],
-      ["ownership kind", (body) => { body.ownershipClaims[2].kind = "destination"; }],
+      [
+        "authority",
+        (body) => {
+          body.contentAuthority = "personal-rawr-hq-v2";
+        },
+      ],
+      [
+        "member identity",
+        (body) => {
+          body.members[0].pluginId = "alpha-v2";
+          for (const claim of body.ownershipClaims) {
+            if (claim.ownerPluginId === "alpha") claim.ownerPluginId = "alpha-v2";
+          }
+        },
+      ],
+      [
+        "payload digest",
+        (body) => {
+          body.members[0].payload.payloadDigest = fixture.betaPayload.payloadDigest;
+        },
+      ],
+      [
+        "manifest path",
+        (body) => {
+          body.members[0].payload.manifest[0].path = "agents/alpha-v2.md";
+        },
+      ],
+      [
+        "manifest mode",
+        (body) => {
+          body.members[0].payload.manifest[0].mode = 0o755;
+        },
+      ],
+      [
+        "manifest byte length",
+        (body) => {
+          body.members[0].payload.manifest[0].byteLength += 1;
+        },
+      ],
+      [
+        "manifest content digest",
+        (body) => {
+          body.members[0].payload.manifest[0].contentDigest = contentDigest(
+            encoder.encode("manifest changed")
+          );
+        },
+      ],
+      [
+        "skill identity",
+        (body) => {
+          body.members[0].skillInventory[0].identity = "alpha-skill-v2";
+          body.ownershipClaims.find(
+            (claim: any) => claim.kind === "skill" && claim.ownerPluginId === "alpha"
+          ).identity = "alpha-skill-v2";
+        },
+      ],
+      [
+        "skill manifest path",
+        (body) => {
+          const oldPath = body.members[0].skillInventory[0].manifestPath;
+          body.members[0].skillInventory[0].manifestPath = "skills/alpha-v2/SKILL.md";
+          body.members[0].payload.manifest.find((entry: any) => entry.path === oldPath).path =
+            "skills/alpha-v2/SKILL.md";
+        },
+      ],
+      [
+        "vendor digest",
+        (body) => {
+          body.members[0].vendor[0].contentDigest = contentDigest(encoder.encode("vendor changed"));
+        },
+      ],
+      [
+        "vendor id",
+        (body) => {
+          body.members[0].vendor[0].id = "vendor-alpha-v2";
+        },
+      ],
+      [
+        "vendor protocol",
+        (body) => {
+          body.members[0].vendor[0].protocol = "vendor-v2";
+        },
+      ],
+      [
+        "curation",
+        (body) => {
+          body.members[0].curation[0].contentDigest = contentDigest(
+            encoder.encode("curation changed")
+          );
+        },
+      ],
+      [
+        "lock",
+        (body) => {
+          body.locks[0].contentDigest = contentDigest(encoder.encode("lock changed"));
+        },
+      ],
+      [
+        "quality",
+        (body) => {
+          body.qualityPolicies[0].contentDigest = contentDigest(encoder.encode("quality changed"));
+        },
+      ],
+      [
+        "ownership identity",
+        (body) => {
+          body.ownershipClaims[1].identity = "alpha-alt";
+        },
+      ],
+      [
+        "ownership owner",
+        (body) => {
+          body.ownershipClaims[3].ownerPluginId = "beta";
+        },
+      ],
+      [
+        "ownership kind",
+        (body) => {
+          body.ownershipClaims[2].kind = "destination";
+        },
+      ],
     ];
     for (const [name, mutate] of mutations) {
       const candidate = structuredClone(baseBody) as any;
@@ -159,60 +261,140 @@ describe("canonical payload and release input", () => {
     expect(Value.Check(ReleaseInputEnvelopeSchema, envelope)).toBe(true);
 
     const invalidBodies: Array<readonly [string, Record<string, unknown>]> = [
-      ["body field", withMutation(body, (candidate) => { candidate.unexpected = true; })],
-      ["member field", withMutation(body, (candidate) => { candidate.members[0].unexpected = true; })],
-      ["payload field", withMutation(body, (candidate) => { candidate.members[0].payload.unexpected = true; })],
-      ["manifest field", withMutation(body, (candidate) => {
-        candidate.members[0].payload.manifest[0].unexpected = true;
-      })],
-      ["inventory field", withMutation(body, (candidate) => {
-        candidate.members[0].skillInventory[0].unexpected = true;
-      })],
-      ["claim field", withMutation(body, (candidate) => { candidate.ownershipClaims[0].unexpected = true; })],
-      ["provenance field", withMutation(body, (candidate) => { candidate.locks[0].unexpected = true; })],
-      ["member kind", withMutation(body, (candidate) => { candidate.members[0].kind = "toolkit"; })],
-      ["claim kind", withMutation(body, (candidate) => { candidate.ownershipClaims[0].kind = "plugin"; })],
+      [
+        "body field",
+        withMutation(body, (candidate) => {
+          candidate.unexpected = true;
+        }),
+      ],
+      [
+        "member field",
+        withMutation(body, (candidate) => {
+          candidate.members[0].unexpected = true;
+        }),
+      ],
+      [
+        "payload field",
+        withMutation(body, (candidate) => {
+          candidate.members[0].payload.unexpected = true;
+        }),
+      ],
+      [
+        "manifest field",
+        withMutation(body, (candidate) => {
+          candidate.members[0].payload.manifest[0].unexpected = true;
+        }),
+      ],
+      [
+        "inventory field",
+        withMutation(body, (candidate) => {
+          candidate.members[0].skillInventory[0].unexpected = true;
+        }),
+      ],
+      [
+        "claim field",
+        withMutation(body, (candidate) => {
+          candidate.ownershipClaims[0].unexpected = true;
+        }),
+      ],
+      [
+        "provenance field",
+        withMutation(body, (candidate) => {
+          candidate.locks[0].unexpected = true;
+        }),
+      ],
+      [
+        "member kind",
+        withMutation(body, (candidate) => {
+          candidate.members[0].kind = "toolkit";
+        }),
+      ],
+      [
+        "claim kind",
+        withMutation(body, (candidate) => {
+          candidate.ownershipClaims[0].kind = "plugin";
+        }),
+      ],
     ];
     for (const [name, candidate] of invalidBodies) {
       expect(Value.Check(ReleaseInputBodySchema, candidate), name).toBe(false);
     }
 
-    expect(Value.Check(ReleaseInputEnvelopeSchema, {
-      ...envelope,
-      ownershipIndex: fixture.releaseInput.ownershipIndex,
-    })).toBe(false);
-    expect(Value.Check(ReleaseInputEnvelopeSchema, {
-      ...envelope,
-      completenessWitness: fixture.releaseInput.completenessWitness,
-    })).toBe(false);
+    expect(
+      Value.Check(ReleaseInputEnvelopeSchema, {
+        ...envelope,
+        ownershipIndex: fixture.releaseInput.ownershipIndex,
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(ReleaseInputEnvelopeSchema, {
+        ...envelope,
+        completenessWitness: fixture.releaseInput.completenessWitness,
+      })
+    ).toBe(false);
   });
 
   it("closes every skill manifest over one inventory row and one same-member ownership claim", () => {
     const fixture = productFixture();
     const cases: Array<readonly [string, (body: any) => void, string]> = [
-      ["missing inventory", (body) => { body.members[0].skillInventory = []; }, "SKILL_INVENTORY_MISMATCH"],
-      ["missing claim", (body) => {
-        body.ownershipClaims = body.ownershipClaims.filter(
-          (claim: any) => !(claim.kind === "skill" && claim.identity === "alpha-skill"),
-        );
-      }, "SKILL_OWNERSHIP_MISMATCH"],
-      ["extra inventory", (body) => {
-        body.members[0].skillInventory.push({
-          identity: "alpha-extra",
-          manifestPath: "skills/alpha/SKILL.md",
-        });
-        body.ownershipClaims.push({ kind: "skill", identity: "alpha-extra", ownerPluginId: "alpha" });
-      }, "SKILL_INVENTORY_MISMATCH"],
-      ["extra claim", (body) => {
-        body.ownershipClaims.push({ kind: "skill", identity: "alpha-extra", ownerPluginId: "alpha" });
-      }, "SKILL_OWNERSHIP_MISMATCH"],
-      ["wrong owner", (body) => {
-        body.ownershipClaims.find((claim: any) => claim.kind === "skill" && claim.identity === "alpha-skill")
-          .ownerPluginId = "beta";
-      }, "SKILL_OWNERSHIP_MISMATCH"],
-      ["wrong path", (body) => {
-        body.members[0].skillInventory[0].manifestPath = "skills/missing/SKILL.md";
-      }, "SKILL_INVENTORY_MISMATCH"],
+      [
+        "missing inventory",
+        (body) => {
+          body.members[0].skillInventory = [];
+        },
+        "SKILL_INVENTORY_MISMATCH",
+      ],
+      [
+        "missing claim",
+        (body) => {
+          body.ownershipClaims = body.ownershipClaims.filter(
+            (claim: any) => !(claim.kind === "skill" && claim.identity === "alpha-skill")
+          );
+        },
+        "SKILL_OWNERSHIP_MISMATCH",
+      ],
+      [
+        "extra inventory",
+        (body) => {
+          body.members[0].skillInventory.push({
+            identity: "alpha-extra",
+            manifestPath: "skills/alpha/SKILL.md",
+          });
+          body.ownershipClaims.push({
+            kind: "skill",
+            identity: "alpha-extra",
+            ownerPluginId: "alpha",
+          });
+        },
+        "SKILL_INVENTORY_MISMATCH",
+      ],
+      [
+        "extra claim",
+        (body) => {
+          body.ownershipClaims.push({
+            kind: "skill",
+            identity: "alpha-extra",
+            ownerPluginId: "alpha",
+          });
+        },
+        "SKILL_OWNERSHIP_MISMATCH",
+      ],
+      [
+        "wrong owner",
+        (body) => {
+          body.ownershipClaims.find(
+            (claim: any) => claim.kind === "skill" && claim.identity === "alpha-skill"
+          ).ownerPluginId = "beta";
+        },
+        "SKILL_OWNERSHIP_MISMATCH",
+      ],
+      [
+        "wrong path",
+        (body) => {
+          body.members[0].skillInventory[0].manifestPath = "skills/missing/SKILL.md";
+        },
+        "SKILL_INVENTORY_MISMATCH",
+      ],
     ];
 
     for (const [name, mutate, expectedCode] of cases) {
@@ -220,14 +402,21 @@ describe("canonical payload and release input", () => {
       mutate(body);
       const result = createAgentPluginReleaseInput(body);
       expect(result.ok, name).toBe(false);
-      if (!result.ok) expect(result.issues.map((entry) => entry.code), name).toContain(expectedCode);
+      if (!result.ok)
+        expect(
+          result.issues.map((entry) => entry.code),
+          name
+        ).toContain(expectedCode);
     }
   });
 
   it("reports the full cross-member skill conflict with otherwise valid inventories independent of order", () => {
     const fixture = productFixture();
-    const body = structuredClone(releaseInputBody(fixture.alphaPayload, fixture.betaPayload)) as any;
-    for (const memberDeclaration of body.members) memberDeclaration.skillInventory[0].identity = "shared-skill";
+    const body = structuredClone(
+      releaseInputBody(fixture.alphaPayload, fixture.betaPayload)
+    ) as any;
+    for (const memberDeclaration of body.members)
+      memberDeclaration.skillInventory[0].identity = "shared-skill";
     for (const claim of body.ownershipClaims) {
       if (claim.kind === "skill") claim.identity = "shared-skill";
     }
@@ -242,23 +431,29 @@ describe("canonical payload and release input", () => {
     expect(right.ok).toBe(false);
     if (!left.ok && !right.ok) {
       expect(right.issues).toEqual(left.issues);
-      expect(left.issues).toContainEqual(expect.objectContaining({
-        code: "OWNERSHIP_CONFLICT",
-        claimKind: "skill",
-        claim: "shared-skill",
-        claimants: ["alpha", "beta"],
-      }));
+      expect(left.issues).toContainEqual(
+        expect.objectContaining({
+          code: "OWNERSHIP_CONFLICT",
+          claimKind: "skill",
+          claim: "shared-skill",
+          claimants: ["alpha", "beta"],
+        })
+      );
       expect(left.issues.map((entry) => entry.code)).not.toContain("SKILL_OWNERSHIP_MISMATCH");
     }
   });
 
   it("accepts the maximum closed skill inventory independent of declaration order", () => {
     const skillCount = MAX_OWNERSHIP_CLAIMS - 1;
-    const payload = must(createAgentPluginPayload(Array.from({ length: skillCount }, (_, index) => ({
-      path: `skills/skill-${index}/SKILL.md`,
-      mode: 0o644,
-      bytes: new Uint8Array(),
-    }))));
+    const payload = must(
+      createAgentPluginPayload(
+        Array.from({ length: skillCount }, (_, index) => ({
+          path: `skills/skill-${index}/SKILL.md`,
+          mode: 0o644,
+          bytes: new Uint8Array(),
+        }))
+      )
+    );
     const declaration = member("alpha", payload) as any;
     const body = {
       schemaVersion: 1,
@@ -323,13 +518,20 @@ describe("canonical payload and release input", () => {
         "DUPLICATE_OWNERSHIP_CLAIM",
         "OWNERSHIP_CONFLICT",
         "MISSING_OWNER",
-      ] as const) expect(codes.has(code), code).toBe(true);
-      expect(left.issues.filter((entry) => entry.code === "OWNERSHIP_CONFLICT").length).toBeGreaterThanOrEqual(4);
+      ] as const)
+        expect(codes.has(code), code).toBe(true);
+      expect(
+        left.issues.filter((entry) => entry.code === "OWNERSHIP_CONFLICT").length
+      ).toBeGreaterThanOrEqual(4);
       for (const claim of ["shared-skill", "shared", "codex:shared", "exports/shared"]) {
-        const conflict = left.issues.find((entry) => entry.code === "OWNERSHIP_CONFLICT" && entry.claim === claim);
+        const conflict = left.issues.find(
+          (entry) => entry.code === "OWNERSHIP_CONFLICT" && entry.claim === claim
+        );
         expect(conflict?.claimants, claim).toEqual(["alpha", "beta"]);
       }
-      const missingOwner = left.issues.find((entry) => entry.code === "MISSING_OWNER" && entry.claim === "orphan");
+      const missingOwner = left.issues.find(
+        (entry) => entry.code === "MISSING_OWNER" && entry.claim === "orphan"
+      );
       expect(missingOwner?.claimants).toEqual(["ghost"]);
     }
   });
@@ -341,7 +543,8 @@ describe("canonical payload and release input", () => {
       body.members[0].kind = kind;
       const result = createAgentPluginReleaseInput(body);
       expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.issues.map((entry) => entry.code)).toContain("FORBIDDEN_UNIT_KIND");
+      if (!result.ok)
+        expect(result.issues.map((entry) => entry.code)).toContain("FORBIDDEN_UNIT_KIND");
     }
   });
 
@@ -360,11 +563,15 @@ describe("canonical payload and release input", () => {
     ] as const;
 
     for (const candidate of cases) {
-      const payload = must(createAgentPluginPayload([{
-        path: candidate.path,
-        mode: 0o644,
-        bytes: candidate.bytes,
-      }]));
+      const payload = must(
+        createAgentPluginPayload([
+          {
+            path: candidate.path,
+            mode: 0o644,
+            bytes: candidate.bytes,
+          },
+        ])
+      );
       const result = createAgentPluginReleaseInput({
         schemaVersion: 1,
         contentAuthority: "personal-rawr-hq",
@@ -376,19 +583,27 @@ describe("canonical payload and release input", () => {
 
       expect(result.ok, candidate.name).toBe(false);
       if (!result.ok) {
-        expect(result.issues, candidate.name).toContainEqual(expect.objectContaining({
-          code: "FORBIDDEN_UNIT_KIND",
-          actual: candidate.path,
-        }));
+        expect(result.issues, candidate.name).toContainEqual(
+          expect.objectContaining({
+            code: "FORBIDDEN_UNIT_KIND",
+            actual: candidate.path,
+          })
+        );
       }
     }
   });
 
   it("keeps similarly named nested documentation outside the structural source guard", () => {
-    const payload = must(createAgentPluginPayload([
-      { path: "docs/agent-pack/example.md", mode: 0o644, bytes: encoder.encode("documentation\n") },
-      { path: "docs/plugin.yaml", mode: 0o644, bytes: encoder.encode("example: true\n") },
-    ]));
+    const payload = must(
+      createAgentPluginPayload([
+        {
+          path: "docs/agent-pack/example.md",
+          mode: 0o644,
+          bytes: encoder.encode("documentation\n"),
+        },
+        { path: "docs/plugin.yaml", mode: 0o644, bytes: encoder.encode("example: true\n") },
+      ])
+    );
     const result = createAgentPluginReleaseInput({
       schemaVersion: 1,
       contentAuthority: "personal-rawr-hq",
@@ -411,11 +626,15 @@ describe("canonical payload and release input", () => {
     expect(MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES).toBe(288 * 1024 * 1024);
     expect(MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES).toBe(96 * 1024 * 1024);
 
-    const tiny = must(createAgentPluginPayload([{ path: "x", mode: 0o644, bytes: new Uint8Array() }]));
+    const tiny = must(
+      createAgentPluginPayload([{ path: "x", mode: 0o644, bytes: new Uint8Array() }])
+    );
     const tooManyMembers = {
       schemaVersion: 1,
       contentAuthority: "personal-rawr-hq",
-      members: Array.from({ length: MAX_RELEASE_MEMBERS + 1 }, (_, index) => member(`p${index}`, tiny)),
+      members: Array.from({ length: MAX_RELEASE_MEMBERS + 1 }, (_, index) =>
+        member(`p${index}`, tiny)
+      ),
       ownershipClaims: [],
       locks: [],
       qualityPolicies: [],
@@ -428,11 +647,14 @@ describe("canonical payload and release input", () => {
     });
     const memberResult = createAgentPluginReleaseInput(tooManyMembers);
     expect(memberResult.ok).toBe(false);
-    if (!memberResult.ok) expect(memberResult.issues.map((entry) => entry.code)).toContain("COUNT_LIMIT_EXCEEDED");
-    expect(createAgentPluginReleaseInput({
-      ...tooManyMembers,
-      members: tooManyMembers.members.slice(0, MAX_RELEASE_MEMBERS),
-    }).ok).toBe(true);
+    if (!memberResult.ok)
+      expect(memberResult.issues.map((entry) => entry.code)).toContain("COUNT_LIMIT_EXCEEDED");
+    expect(
+      createAgentPluginReleaseInput({
+        ...tooManyMembers,
+        members: tooManyMembers.members.slice(0, MAX_RELEASE_MEMBERS),
+      }).ok
+    ).toBe(true);
 
     const tooManyClaims = {
       schemaVersion: 1,
@@ -448,20 +670,27 @@ describe("canonical payload and release input", () => {
     };
     const claimResult = createAgentPluginReleaseInput(tooManyClaims);
     expect(claimResult.ok).toBe(false);
-    if (!claimResult.ok) expect(claimResult.issues.map((entry) => entry.code)).toContain("COUNT_LIMIT_EXCEEDED");
-    expect(createAgentPluginReleaseInput({
-      ...tooManyClaims,
-      ownershipClaims: tooManyClaims.ownershipClaims.slice(0, MAX_OWNERSHIP_CLAIMS - 1),
-    }).ok).toBe(true);
+    if (!claimResult.ok)
+      expect(claimResult.issues.map((entry) => entry.code)).toContain("COUNT_LIMIT_EXCEEDED");
+    expect(
+      createAgentPluginReleaseInput({
+        ...tooManyClaims,
+        ownershipClaims: tooManyClaims.ownershipClaims.slice(0, MAX_OWNERSHIP_CLAIMS - 1),
+      }).ok
+    ).toBe(true);
 
-    const entryInputs = Array.from(
-      { length: MAX_PAYLOAD_ENTRIES_PER_MEMBER + 1 },
-      (_, index) => ({ path: `files/${index}`, mode: 0o644, bytes: new Uint8Array() }),
-    );
+    const entryInputs = Array.from({ length: MAX_PAYLOAD_ENTRIES_PER_MEMBER + 1 }, (_, index) => ({
+      path: `files/${index}`,
+      mode: 0o644,
+      bytes: new Uint8Array(),
+    }));
     const tooManyEntries = createAgentPluginPayload(entryInputs);
     expect(tooManyEntries.ok).toBe(false);
-    if (!tooManyEntries.ok) expect(tooManyEntries.issues.map((entry) => entry.code)).toContain("COUNT_LIMIT_EXCEEDED");
-    expect(createAgentPluginPayload(entryInputs.slice(0, MAX_PAYLOAD_ENTRIES_PER_MEMBER)).ok).toBe(true);
+    if (!tooManyEntries.ok)
+      expect(tooManyEntries.issues.map((entry) => entry.code)).toContain("COUNT_LIMIT_EXCEEDED");
+    expect(createAgentPluginPayload(entryInputs.slice(0, MAX_PAYLOAD_ENTRIES_PER_MEMBER)).ok).toBe(
+      true
+    );
 
     const inventoryOverflow = {
       schemaVersion: 1,
@@ -469,7 +698,7 @@ describe("canonical payload and release input", () => {
       members: [
         {
           ...member("alpha", tiny),
-          skillInventory: Array.from({ length: (MAX_OWNERSHIP_CLAIMS / 2) + 1 }, (_, index) => ({
+          skillInventory: Array.from({ length: MAX_OWNERSHIP_CLAIMS / 2 + 1 }, (_, index) => ({
             identity: `alpha-${index}`,
             manifestPath: `skills/alpha-${index}/SKILL.md`,
           })),
@@ -489,25 +718,36 @@ describe("canonical payload and release input", () => {
     const inventoryResult = createAgentPluginReleaseInput(inventoryOverflow);
     expect(inventoryResult.ok).toBe(false);
     if (!inventoryResult.ok) {
-      expect(inventoryResult.issues).toContainEqual(expect.objectContaining({
-        code: "COUNT_LIMIT_EXCEEDED",
-        path: "releaseInput.body.members.skillInventory",
-        expected: MAX_OWNERSHIP_CLAIMS,
-        actual: MAX_OWNERSHIP_CLAIMS + 1,
-      }));
+      expect(inventoryResult.issues).toContainEqual(
+        expect.objectContaining({
+          code: "COUNT_LIMIT_EXCEEDED",
+          path: "releaseInput.body.members.skillInventory",
+          expected: MAX_OWNERSHIP_CLAIMS,
+          actual: MAX_OWNERSHIP_CLAIMS + 1,
+        })
+      );
     }
 
-    const tooManyBytes = createAgentPluginPayload([{
-      path: "large",
-      mode: 0o644,
-      bytes: new Uint8Array(MAX_PAYLOAD_BYTES_PER_MEMBER + 1),
-    }]);
+    const tooManyBytes = createAgentPluginPayload([
+      {
+        path: "large",
+        mode: 0o644,
+        bytes: new Uint8Array(MAX_PAYLOAD_BYTES_PER_MEMBER + 1),
+      },
+    ]);
     expect(tooManyBytes.ok).toBe(false);
-    if (!tooManyBytes.ok) expect(tooManyBytes.issues.map((entry) => entry.code)).toContain("PAYLOAD_BYTES_LIMIT_EXCEEDED");
+    if (!tooManyBytes.ok)
+      expect(tooManyBytes.issues.map((entry) => entry.code)).toContain(
+        "PAYLOAD_BYTES_LIMIT_EXCEEDED"
+      );
 
     const aggregateBoundary = structuredClone(releaseInputBody(tiny, tiny)) as any;
-    aggregateBoundary.members[0].payload.manifest = structuredClone(aggregateBoundary.members[0].payload.manifest);
-    aggregateBoundary.members[1].payload.manifest = structuredClone(aggregateBoundary.members[1].payload.manifest);
+    aggregateBoundary.members[0].payload.manifest = structuredClone(
+      aggregateBoundary.members[0].payload.manifest
+    );
+    aggregateBoundary.members[1].payload.manifest = structuredClone(
+      aggregateBoundary.members[1].payload.manifest
+    );
     aggregateBoundary.members[0].payload.manifest[0].byteLength = MAX_RELEASE_SET_PAYLOAD_BYTES / 2;
     aggregateBoundary.members[1].payload.manifest[0].byteLength = MAX_RELEASE_SET_PAYLOAD_BYTES / 2;
     expect(createAgentPluginReleaseInput(aggregateBoundary).ok).toBe(true);
@@ -516,12 +756,14 @@ describe("canonical payload and release input", () => {
     const aggregateResult = createAgentPluginReleaseInput(aggregateOverflow);
     expect(aggregateResult.ok).toBe(false);
     if (!aggregateResult.ok) {
-      expect(aggregateResult.issues).toContainEqual(expect.objectContaining({
-        code: "PAYLOAD_BYTES_LIMIT_EXCEEDED",
-        path: "releaseInput.body.members",
-        expected: MAX_RELEASE_SET_PAYLOAD_BYTES,
-        actual: MAX_RELEASE_SET_PAYLOAD_BYTES + 1,
-      }));
+      expect(aggregateResult.issues).toContainEqual(
+        expect.objectContaining({
+          code: "PAYLOAD_BYTES_LIMIT_EXCEEDED",
+          path: "releaseInput.body.members",
+          expected: MAX_RELEASE_SET_PAYLOAD_BYTES,
+          actual: MAX_RELEASE_SET_PAYLOAD_BYTES + 1,
+        })
+      );
     }
 
     const oversizedInputOrSet = new Uint8Array(MAX_RELEASE_INPUT_ENVELOPE_BYTES + 1);
@@ -533,10 +775,11 @@ describe("canonical payload and release input", () => {
     if (!setEnvelopeResult.ok) expect(setEnvelopeResult.issues[0]?.code).toBe("ENVELOPE_TOO_LARGE");
 
     const releaseEnvelopeResult = decodeAgentPluginRelease(
-      new Uint8Array(MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES + 1),
+      new Uint8Array(MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES + 1)
     );
     expect(releaseEnvelopeResult.ok).toBe(false);
-    if (!releaseEnvelopeResult.ok) expect(releaseEnvelopeResult.issues[0]?.code).toBe("ENVELOPE_TOO_LARGE");
+    if (!releaseEnvelopeResult.ok)
+      expect(releaseEnvelopeResult.issues[0]?.code).toBe("ENVELOPE_TOO_LARGE");
   }, 30_000);
 
   it("rejects noncanonical, invalid UTF-8, and unknown release-input envelopes", () => {
@@ -565,7 +808,11 @@ describe("canonical payload and release input", () => {
       unknown.body[field] = value;
       const result = createAgentPluginReleaseInput(unknown.body);
       expect(result.ok, field).toBe(false);
-      if (!result.ok) expect(result.issues.map((entry) => entry.code), field).toContain("UNKNOWN_FIELD");
+      if (!result.ok)
+        expect(
+          result.issues.map((entry) => entry.code),
+          field
+        ).toContain("UNKNOWN_FIELD");
     }
 
     const externalBefore = {
@@ -582,14 +829,14 @@ describe("canonical payload and release input", () => {
     };
     expect(externalAfter).not.toEqual(externalBefore);
     expect(must(createAgentPluginReleaseInput(fixture.releaseInput.body)).releaseInputDigest).toBe(
-      fixture.releaseInput.releaseInputDigest,
+      fixture.releaseInput.releaseInputDigest
     );
   });
 });
 
 function withMutation(
   source: Record<string, unknown>,
-  mutate: (candidate: any) => void,
+  mutate: (candidate: any) => void
 ): Record<string, unknown> {
   const candidate = structuredClone(source);
   mutate(candidate);

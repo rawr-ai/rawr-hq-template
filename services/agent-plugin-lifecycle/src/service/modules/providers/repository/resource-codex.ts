@@ -1,17 +1,11 @@
-import {
-  parsePluginId,
-  type ContentAuthority,
-  type PluginId,
-} from "../../../shared/release";
+import { parsePluginId, type ContentAuthority, type PluginId } from "../../../shared/release";
 import { normalizeHookEventSlug } from "../model/helpers/hook-manifest";
 import {
   marketplaceState,
   type ProviderMarketplaceObservation,
   type ProviderMarketplaceRegistration,
 } from "../model/policy/marketplace";
-import type {
-  ProviderCapability,
-} from "../model/policy/projection";
+import type { ProviderCapability } from "../model/policy/projection";
 import type { NativeStandaloneExposureObservation } from "../model/policy/state-machine";
 import type { ProviderMarketplaceLocationResolver } from "../model/repositories/marketplace-location";
 import type { ProviderMarketplaceSourceReader } from "../model/repositories/state";
@@ -31,10 +25,7 @@ import {
   createCanonicalNativeObserver,
   type CanonicalNativeObserver,
 } from "./canonical-native-observer";
-import {
-  createNativeProviderObserver,
-  type NativeProviderObserver,
-} from "./native";
+import { createNativeProviderObserver, type NativeProviderObserver } from "./native";
 import {
   NATIVE_PACKAGE_READ_LIMITS,
   inspectNativePluginPackage,
@@ -78,7 +69,7 @@ export type ResourceCodexCanonicalObserverOptions = Pick<
 >;
 
 export function createResourceCodexProviderObserver(
-  input: ResourceCodexProviderObserverOptions,
+  input: ResourceCodexProviderObserverOptions
 ): NativeProviderObserver {
   const { session, listPlugins } = createCodexResourceAccess(input);
   return createNativeProviderObserver({
@@ -89,20 +80,20 @@ export function createResourceCodexProviderObserver(
         const observed = await (await session(home)).probe();
         return Object.freeze({
           adapterProtocol: CODEX_ADAPTER_PROTOCOL,
-          available: codexCapabilitiesFromCommands(observed.pluginCommands, observed.marketplaceCommands),
+          available: codexCapabilitiesFromCommands(
+            observed.pluginCommands,
+            observed.marketplaceCommands
+          ),
         });
       },
-      inventoryExposures: async (home) => await inventoryCodexExposures(
-        await session(home),
-        await listPlugins(home),
-        home,
-      ),
+      inventoryExposures: async (home) =>
+        await inventoryCodexExposures(await session(home), await listPlugins(home), home),
     },
   });
 }
 
 export function createResourceCodexProviderAdapter(
-  input: ResourceCodexProviderAdapterOptions,
+  input: ResourceCodexProviderAdapterOptions
 ): CodexProviderAdapter {
   return createCodexProviderAdapter({
     ...createResourceCodexProviderPorts(input, false),
@@ -111,7 +102,7 @@ export function createResourceCodexProviderAdapter(
 }
 
 export function createResourceCodexCanonicalObserver(
-  input: ResourceCodexCanonicalObserverOptions,
+  input: ResourceCodexCanonicalObserverOptions
 ): CanonicalNativeObserver {
   const ports = createResourceCodexProviderPorts(input, true);
   return createCanonicalNativeObserver({
@@ -122,56 +113,49 @@ export function createResourceCodexCanonicalObserver(
 }
 
 function createResourceCodexProviderPorts(
-  input: ResourceCodexCanonicalObserverOptions & Readonly<{
-    marketplaceLocations?: ProviderMarketplaceLocationResolver;
-  }>,
-  canonicalProvenance: boolean,
+  input: ResourceCodexCanonicalObserverOptions &
+    Readonly<{
+      marketplaceLocations?: ProviderMarketplaceLocationResolver;
+    }>,
+  canonicalProvenance: boolean
 ) {
   const { session, listPlugins } = createCodexResourceAccess(input);
 
-  const inventoryMarketplaceRegistration: CodexProcessPort["inventoryMarketplaceRegistration"] = async ({ home }) => {
-    const provider = await session(home);
-    const observation = await provider.listMarketplaces();
-    const record = requireRecord(observation.json, "Codex marketplace list");
-    const matches = requireArray(record.marketplaces, "Codex marketplaces")
-      .map(parseMarketplaceEntry)
-      .filter((entry) => entry.name === input.contentAuthority);
-    if (matches.length === 0) return Object.freeze({ kind: "absent" });
-    if (matches.length !== 1) {
-      throw new NativeProvenanceAmbiguity(
-        "duplicate-managed-marketplace",
-        "Codex managed marketplace identity is ambiguous",
-      );
-    }
-    if (matches[0] === undefined) throw new Error("Codex managed marketplace disappeared during observation");
-    const marketplace = await provider.readMarketplace({
-      identity: input.contentAuthority,
-      ...NATIVE_PACKAGE_READ_LIMITS,
-    });
-    let registration: ProviderMarketplaceRegistration;
-    try {
-      registration = await readMarketplaceSource(
-        marketplace,
-        "codex",
-        CODEX_ADAPTER_PROTOCOL,
-      );
-    } catch (error) {
-      throw new NativeProvenanceAmbiguity(
-        "managed-marketplace-metadata-invalid",
-        error,
-      );
-    }
-    if (
-      canonicalProvenance
-      && registration.marketplaceIdentity !== input.contentAuthority
-    ) {
-      throw new NativeProvenanceAmbiguity(
-        "managed-marketplace-owner-mismatch",
-        "Codex marketplace metadata does not match its managed marketplace identity",
-      );
-    }
-    return Object.freeze({ kind: "present", state: marketplaceState(registration) });
-  };
+  const inventoryMarketplaceRegistration: CodexProcessPort["inventoryMarketplaceRegistration"] =
+    async ({ home }) => {
+      const provider = await session(home);
+      const observation = await provider.listMarketplaces();
+      const record = requireRecord(observation.json, "Codex marketplace list");
+      const matches = requireArray(record.marketplaces, "Codex marketplaces")
+        .map(parseMarketplaceEntry)
+        .filter((entry) => entry.name === input.contentAuthority);
+      if (matches.length === 0) return Object.freeze({ kind: "absent" });
+      if (matches.length !== 1) {
+        throw new NativeProvenanceAmbiguity(
+          "duplicate-managed-marketplace",
+          "Codex managed marketplace identity is ambiguous"
+        );
+      }
+      if (matches[0] === undefined)
+        throw new Error("Codex managed marketplace disappeared during observation");
+      const marketplace = await provider.readMarketplace({
+        identity: input.contentAuthority,
+        ...NATIVE_PACKAGE_READ_LIMITS,
+      });
+      let registration: ProviderMarketplaceRegistration;
+      try {
+        registration = await readMarketplaceSource(marketplace, "codex", CODEX_ADAPTER_PROTOCOL);
+      } catch (error) {
+        throw new NativeProvenanceAmbiguity("managed-marketplace-metadata-invalid", error);
+      }
+      if (canonicalProvenance && registration.marketplaceIdentity !== input.contentAuthority) {
+        throw new NativeProvenanceAmbiguity(
+          "managed-marketplace-owner-mismatch",
+          "Codex marketplace metadata does not match its managed marketplace identity"
+        );
+      }
+      return Object.freeze({ kind: "present", state: marketplaceState(registration) });
+    };
 
   const setMarketplaceRegistration: CodexProcessPort["setMarketplaceRegistration"] = async ({
     home,
@@ -190,9 +174,11 @@ function createResourceCodexProviderPorts(
       await provider.removeMarketplace({ identity: input.contentAuthority });
     }
     if (registration !== null) {
-      if (source === null
-        || source.projectionDigest !== registration.projectionDigest
-        || source.sourceDigest !== registration.sourceDigest) {
+      if (
+        source === null ||
+        source.projectionDigest !== registration.projectionDigest ||
+        source.sourceDigest !== registration.sourceDigest
+      ) {
         throw new Error("Codex marketplace registration has no exact semantic source");
       }
       if (input.marketplaceLocations === undefined) {
@@ -214,8 +200,9 @@ function createResourceCodexProviderPorts(
   const inventoryMarketplace: CodexProcessPort["inventoryMarketplace"] = async ({ home }) => {
     const provider = await session(home);
     const observations: CodexMarketplacePlugin[] = [];
-    for (const plugin of (await listPlugins(home)).filter((entry) =>
-      entry.installed && entry.marketplaceName === input.contentAuthority)) {
+    for (const plugin of (await listPlugins(home)).filter(
+      (entry) => entry.installed && entry.marketplaceName === input.contentAuthority
+    )) {
       const pluginPackage = await provider.readPlugin({
         selector: pluginSelectorFor(plugin),
         ...NATIVE_PACKAGE_READ_LIMITS,
@@ -224,28 +211,27 @@ function createResourceCodexProviderPorts(
       try {
         inspected = inspectNativePluginPackage(pluginPackage, "codex");
       } catch (error) {
-        throw new NativeProvenanceAmbiguity(
-          "managed-plugin-provenance-invalid",
-          error,
-        );
+        throw new NativeProvenanceAmbiguity("managed-plugin-provenance-invalid", error);
       }
       if (
-        inspected.pluginId !== plugin.name
-        || inspected.artifactAuthority.contentAuthority !== input.contentAuthority
+        inspected.pluginId !== plugin.name ||
+        inspected.artifactAuthority.contentAuthority !== input.contentAuthority
       ) {
         throw new NativeProvenanceAmbiguity(
           "managed-member-owner-mismatch",
-          "Codex installed plugin does not match its managed marketplace identity",
+          "Codex installed plugin does not match its managed marketplace identity"
         );
       }
-      observations.push(Object.freeze({
-        pluginId: inspected.pluginId,
-        nativeIdentity: inspected.nativeIdentity,
-        artifactAuthority: inspected.artifactAuthority,
-        providerSourceIdentity: inspected.providerSourceIdentity,
-        marketplaceIdentity: inspected.providerSourceIdentity,
-        memberFingerprint: inspected.memberFingerprint,
-      }));
+      observations.push(
+        Object.freeze({
+          pluginId: inspected.pluginId,
+          nativeIdentity: inspected.nativeIdentity,
+          artifactAuthority: inspected.artifactAuthority,
+          providerSourceIdentity: inspected.providerSourceIdentity,
+          marketplaceIdentity: inspected.providerSourceIdentity,
+          memberFingerprint: inspected.memberFingerprint,
+        })
+      );
     }
     return Object.freeze(observations);
   };
@@ -255,7 +241,10 @@ function createResourceCodexProviderPorts(
       const observed = await (await session(home)).probe();
       return Object.freeze({
         adapterProtocol: CODEX_ADAPTER_PROTOCOL,
-        available: codexCapabilitiesFromCommands(observed.pluginCommands, observed.marketplaceCommands),
+        available: codexCapabilitiesFromCommands(
+          observed.pluginCommands,
+          observed.marketplaceCommands
+        ),
       });
     },
     inventoryMarketplaceRegistration,
@@ -267,7 +256,7 @@ function createResourceCodexProviderPorts(
         request.marketplaceIdentity,
         request.artifactAuthority.contentAuthority,
         input.contentAuthority,
-        "codex",
+        "codex"
       );
       await (await session(request.home)).addPlugin({
         selector: pluginSelector(request.nativeIdentity, input.contentAuthority, "codex"),
@@ -278,13 +267,18 @@ function createResourceCodexProviderPorts(
         selector: pluginSelector(nativeIdentity, input.contentAuthority, "codex"),
       });
     },
-    uninstallMarketplacePlugin: async ({ home, nativeIdentity, providerSourceIdentity, marketplaceIdentity }) => {
+    uninstallMarketplacePlugin: async ({
+      home,
+      nativeIdentity,
+      providerSourceIdentity,
+      marketplaceIdentity,
+    }) => {
       requireManagedRequest(
         providerSourceIdentity,
         marketplaceIdentity,
         providerSourceIdentity,
         input.contentAuthority,
-        "codex",
+        "codex"
       );
       await (await session(home)).removePlugin({
         selector: pluginSelector(nativeIdentity, input.contentAuthority, "codex"),
@@ -292,24 +286,32 @@ function createResourceCodexProviderPorts(
     },
     retireConfiguredPlugin: async ({ home, expected }) => {
       const provider = await session(home);
-      const selector = pluginSelector(expected.nativeIdentity, expected.providerSourceIdentity, "codex");
-      if (selector !== expected.exposureIdentity || expected.providerSourceIdentity !== input.contentAuthority) {
+      const selector = pluginSelector(
+        expected.nativeIdentity,
+        expected.providerSourceIdentity,
+        "codex"
+      );
+      if (
+        selector !== expected.exposureIdentity ||
+        expected.providerSourceIdentity !== input.contentAuthority
+      ) {
         throw new Error("Codex configured retirement does not bind the selected owner selector");
       }
       const [configuration, listed] = await Promise.all([
         provider.readConfiguration(),
         listPlugins(home),
       ]);
-      const configured = parseAppServerPluginConfiguration(configuration).filter((entry) =>
-        selectorFromConfiguredPlugin(entry) === selector);
+      const configured = parseAppServerPluginConfiguration(configuration).filter(
+        (entry) => selectorFromConfiguredPlugin(entry) === selector
+      );
       const exact = configured[0];
       if (
-        configured.length !== 1
-        || exact === undefined
-        || exact.nativeIdentity !== expected.nativeIdentity
-        || exact.providerSourceIdentity !== expected.providerSourceIdentity
-        || exact.enablement !== expected.enablement
-        || listed.some((entry) => entry.installed && pluginSelectorFor(entry) === selector)
+        configured.length !== 1 ||
+        exact === undefined ||
+        exact.nativeIdentity !== expected.nativeIdentity ||
+        exact.providerSourceIdentity !== expected.providerSourceIdentity ||
+        exact.enablement !== expected.enablement ||
+        listed.some((entry) => entry.installed && pluginSelectorFor(entry) === selector)
       ) {
         throw new Error("Codex configured retirement precondition changed before native remove");
       }
@@ -329,25 +331,28 @@ function createResourceCodexProviderPorts(
       const hooksByPlugin = parseAppServerHooks(observation.hooks, home, plugins);
       const visible: CodexVisiblePlugin[] = [];
       for (const plugin of plugins) {
-        const packageVisibility = inspectNativePluginVisibility(await provider.readPlugin({
-          selector: pluginSelectorFor(plugin),
-          ...NATIVE_PACKAGE_READ_LIMITS,
-        }));
-        visible.push(Object.freeze({
-          nativeIdentity: `rawr:${plugin.name}`,
-          providerSourceIdentity: parseSourceIdentity(plugin.marketplaceName, "codex"),
-          visibleSkills: packageVisibility.visibleSkills,
-          visibleHooks: hooksByPlugin.get(pluginSelectorFor(plugin)) ?? Object.freeze([]),
-        }));
+        const packageVisibility = inspectNativePluginVisibility(
+          await provider.readPlugin({
+            selector: pluginSelectorFor(plugin),
+            ...NATIVE_PACKAGE_READ_LIMITS,
+          })
+        );
+        visible.push(
+          Object.freeze({
+            nativeIdentity: `rawr:${plugin.name}`,
+            providerSourceIdentity: parseSourceIdentity(plugin.marketplaceName, "codex"),
+            visibleSkills: packageVisibility.visibleSkills,
+            visibleHooks: hooksByPlugin.get(pluginSelectorFor(plugin)) ?? Object.freeze([]),
+          })
+        );
       }
       return Object.freeze(visible);
     },
   };
 
   const configured: CodexSessionPort = {
-    inspectConfiguredPlugins: async ({ home }) => parseAppServerPluginConfiguration(
-      await (await session(home)).readConfiguration(),
-    ),
+    inspectConfiguredPlugins: async ({ home }) =>
+      parseAppServerPluginConfiguration(await (await session(home)).readConfiguration()),
   };
 
   return Object.freeze({
@@ -365,9 +370,9 @@ function createCodexResourceAccess(input: ResourceCodexProviderObserverOptions):
   const session = async (home: string): Promise<CodexNativeResourceSession> => {
     const acquired = await acquire(home);
     if (
-      acquired.provider !== "codex"
-      || acquired.home !== home
-      || acquired.executablePath !== input.executablePath
+      acquired.provider !== "codex" ||
+      acquired.home !== home ||
+      acquired.executablePath !== input.executablePath
     ) {
       throw new Error("Codex resource returned a session for different explicit authority");
     }
@@ -376,17 +381,19 @@ function createCodexResourceAccess(input: ResourceCodexProviderObserverOptions):
   const listPlugins = async (home: string): Promise<readonly CodexListPlugin[]> => {
     const observation = await (await session(home)).listPlugins();
     const record = requireRecord(observation.json, "Codex plugin list");
-    return Object.freeze([
-      ...requireArray(record.installed, "Codex installed plugins"),
-      ...requireArray(record.available, "Codex available plugins"),
-    ].map(parseListPlugin));
+    return Object.freeze(
+      [
+        ...requireArray(record.installed, "Codex installed plugins"),
+        ...requireArray(record.available, "Codex available plugins"),
+      ].map(parseListPlugin)
+    );
   };
   return Object.freeze({ session, listPlugins });
 }
 
 export function codexCapabilitiesFromCommands(
   pluginCommands: readonly string[],
-  marketplaceCommands: readonly string[],
+  marketplaceCommands: readonly string[]
 ): readonly ProviderCapability[] {
   return capabilitiesFromCommands("codex", pluginCommands, marketplaceCommands);
 }
@@ -403,13 +410,13 @@ function parseListPlugin(input: unknown): CodexListPlugin {
   const record = requireRecord(input, "Codex plugin entry");
   const name = parsePluginId(record.name, "plugin.name");
   if (
-    !name.ok
-    || typeof record.marketplaceName !== "string"
-    || !/^[a-z0-9][a-z0-9_-]*$/u.test(record.marketplaceName)
-    || typeof record.version !== "string"
-    || !/^[0-9A-Za-z][0-9A-Za-z.+-]*$/u.test(record.version)
-    || typeof record.installed !== "boolean"
-    || typeof record.enabled !== "boolean"
+    !name.ok ||
+    typeof record.marketplaceName !== "string" ||
+    !/^[a-z0-9][a-z0-9_-]*$/u.test(record.marketplaceName) ||
+    typeof record.version !== "string" ||
+    !/^[0-9A-Za-z][0-9A-Za-z.+-]*$/u.test(record.version) ||
+    typeof record.installed !== "boolean" ||
+    typeof record.enabled !== "boolean"
   ) {
     throw new Error("Codex plugin entry is invalid");
   }
@@ -433,24 +440,34 @@ function parseMarketplaceEntry(input: unknown): Readonly<{ name: string }> {
 function parseAppServerPlugins(input: unknown): readonly CodexListPlugin[] {
   const record = requireRecord(input, "Codex app-server plugin response");
   const plugins: CodexListPlugin[] = [];
-  for (const marketplaceInput of requireArray(record.marketplaces, "Codex app-server marketplaces")) {
+  for (const marketplaceInput of requireArray(
+    record.marketplaces,
+    "Codex app-server marketplaces"
+  )) {
     const marketplace = requireRecord(marketplaceInput, "Codex app-server marketplace");
     const marketplaceName = requireString(marketplace.name, "Codex app-server marketplace name");
     for (const pluginInput of requireArray(marketplace.plugins, "Codex app-server plugins")) {
       const plugin = requireRecord(pluginInput, "Codex app-server plugin");
       const name = parsePluginId(plugin.name, "appServer.plugin.name");
-      if (!name.ok || typeof plugin.installed !== "boolean" || typeof plugin.enabled !== "boolean") {
+      if (
+        !name.ok ||
+        typeof plugin.installed !== "boolean" ||
+        typeof plugin.enabled !== "boolean"
+      ) {
         throw new Error("Codex app-server plugin is invalid");
       }
       const version = plugin.localVersion ?? plugin.version;
-      if (typeof version !== "string") throw new Error("Codex app-server installed plugin has no version");
-      plugins.push(Object.freeze({
-        name: name.value,
-        marketplaceName,
-        version,
-        installed: plugin.installed,
-        enabled: plugin.enabled,
-      }));
+      if (typeof version !== "string")
+        throw new Error("Codex app-server installed plugin has no version");
+      plugins.push(
+        Object.freeze({
+          name: name.value,
+          marketplaceName,
+          version,
+          installed: plugin.installed,
+          enabled: plugin.enabled,
+        })
+      );
     }
   }
   return Object.freeze(plugins);
@@ -459,7 +476,7 @@ function parseAppServerPlugins(input: unknown): readonly CodexListPlugin[] {
 function parseAppServerHooks(
   input: unknown,
   home: string,
-  plugins: readonly CodexListPlugin[],
+  plugins: readonly CodexListPlugin[]
 ): ReadonlyMap<string, readonly string[]> {
   const response = requireRecord(input, "Codex app-server hook response");
   const data = requireArray(response.data, "Codex app-server hook inventories");
@@ -468,9 +485,10 @@ function parseAppServerHooks(
   if (requireString(inventory.cwd, "Codex app-server hook inventory cwd") !== home) {
     throw new Error("Codex app-server hook inventory belongs to a different provider home");
   }
-  const errors = inventory.errors === undefined
-    ? Object.freeze([])
-    : requireArray(inventory.errors, "Codex app-server hook inventory errors");
+  const errors =
+    inventory.errors === undefined
+      ? Object.freeze([])
+      : requireArray(inventory.errors, "Codex app-server hook inventory errors");
   if (errors.length > 0) throw new Error("Codex app-server hook inventory is incomplete");
 
   const hooksByPlugin = new Map<string, Set<string>>();
@@ -494,16 +512,17 @@ function parseAppServerHooks(
       throw new Error("Codex app-server hook enablement is invalid");
     }
     if (hook.enabled) {
-      attributed.add(normalizeHookEventSlug(requireString(
-        hook.eventName,
-        "Codex app-server hook event name",
-      )));
+      attributed.add(
+        normalizeHookEventSlug(requireString(hook.eventName, "Codex app-server hook event name"))
+      );
     }
   }
-  return new Map([...hooksByPlugin].map(([selector, names]) => [
-    selector,
-    Object.freeze([...names].sort(compareText)),
-  ]));
+  return new Map(
+    [...hooksByPlugin].map(([selector, names]) => [
+      selector,
+      Object.freeze([...names].sort(compareText)),
+    ])
+  );
 }
 
 function parseAppServerPluginConfiguration(input: unknown): readonly CodexConfiguredPlugin[] {
@@ -511,30 +530,32 @@ function parseAppServerPluginConfiguration(input: unknown): readonly CodexConfig
   const config = requireRecord(response.config, "Codex effective config");
   if (config.plugins === undefined) return Object.freeze([]);
   const plugins = requireRecord(config.plugins, "Codex configured plugins");
-  return Object.freeze(Object.entries(plugins).map(([selector, value]) => {
-    const separator = selector.lastIndexOf("@");
-    const pluginId = parsePluginId(selector.slice(0, separator), "config.plugins.pluginId");
-    const entry = requireRecord(value, `Codex configured plugin ${selector}`);
-    if (
-      separator <= 0
-      || separator === selector.length - 1
-      || !pluginId.ok
-      || typeof entry.enabled !== "boolean"
-    ) {
-      throw new Error("Codex configured plugin entry is invalid");
-    }
-    return Object.freeze({
-      nativeIdentity: `rawr:${pluginId.value}`,
-      providerSourceIdentity: parseSourceIdentity(selector.slice(separator + 1), "codex"),
-      enablement: entry.enabled ? "enabled" as const : "disabled" as const,
-    });
-  }));
+  return Object.freeze(
+    Object.entries(plugins).map(([selector, value]) => {
+      const separator = selector.lastIndexOf("@");
+      const pluginId = parsePluginId(selector.slice(0, separator), "config.plugins.pluginId");
+      const entry = requireRecord(value, `Codex configured plugin ${selector}`);
+      if (
+        separator <= 0 ||
+        separator === selector.length - 1 ||
+        !pluginId.ok ||
+        typeof entry.enabled !== "boolean"
+      ) {
+        throw new Error("Codex configured plugin entry is invalid");
+      }
+      return Object.freeze({
+        nativeIdentity: `rawr:${pluginId.value}`,
+        providerSourceIdentity: parseSourceIdentity(selector.slice(separator + 1), "codex"),
+        enablement: entry.enabled ? ("enabled" as const) : ("disabled" as const),
+      });
+    })
+  );
 }
 
 async function inventoryCodexExposures(
   provider: CodexNativeResourceSession,
   listed: readonly CodexListPlugin[],
-  home: string,
+  home: string
 ): Promise<readonly NativeStandaloneExposureObservation[]> {
   const [appServer, configuredInput] = await Promise.all([
     provider.inspectAppServer(),
@@ -583,23 +604,30 @@ async function inventoryCodexExposures(
 
 function recordCodexExposure(
   exposures: Map<string, NativeStandaloneExposureObservation>,
-  candidate: NativeStandaloneExposureObservation,
+  candidate: NativeStandaloneExposureObservation
 ): void {
   const prior = exposures.get(candidate.exposureIdentity);
-  if (prior !== undefined && (
-    prior.nativeIdentity !== candidate.nativeIdentity
-    || prior.providerSourceIdentity !== candidate.providerSourceIdentity
-  )) {
-    throw new Error(`Codex exposure identity changed across observations for ${candidate.exposureIdentity}`);
+  if (
+    prior !== undefined &&
+    (prior.nativeIdentity !== candidate.nativeIdentity ||
+      prior.providerSourceIdentity !== candidate.providerSourceIdentity)
+  ) {
+    throw new Error(
+      `Codex exposure identity changed across observations for ${candidate.exposureIdentity}`
+    );
   }
-  exposures.set(candidate.exposureIdentity, Object.freeze({
-    ...candidate,
-    exposureKind: prior?.exposureKind === "installed" || candidate.exposureKind === "installed"
-      ? "installed"
-      : "configured-only",
-    visibleSkills: mergeNames(prior?.visibleSkills ?? Object.freeze([]), candidate.visibleSkills),
-    visibleHooks: mergeNames(prior?.visibleHooks ?? Object.freeze([]), candidate.visibleHooks),
-  }));
+  exposures.set(
+    candidate.exposureIdentity,
+    Object.freeze({
+      ...candidate,
+      exposureKind:
+        prior?.exposureKind === "installed" || candidate.exposureKind === "installed"
+          ? "installed"
+          : "configured-only",
+      visibleSkills: mergeNames(prior?.visibleSkills ?? Object.freeze([]), candidate.visibleSkills),
+      visibleHooks: mergeNames(prior?.visibleHooks ?? Object.freeze([]), candidate.visibleHooks),
+    })
+  );
 }
 
 function selectorFromConfiguredPlugin(plugin: CodexConfiguredPlugin): string {

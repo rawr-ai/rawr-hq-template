@@ -29,57 +29,69 @@ export const CanonicalAbsoluteLocatorSchema = Refine(
       "^/(?!.*//)(?!.*(?:/\\.{1,2})(?:/|$))(?!.*\\\\)(?!.*[\\u0000-\\u001f\\u007f])[^/]+(?:/[^/]+)*$",
   }),
   isCanonicalAbsoluteLocator,
-  () => "Expected a canonical non-root absolute workspace locator",
+  () => "Expected a canonical non-root absolute workspace locator"
 );
 
-export const RepositoryIdentitySchema = Type.Unsafe<RepositoryIdentity>(Refine(
-  Type.String({
-    minLength: 3,
-    maxLength: 512,
-    pattern:
-      "^(?!file:)[a-z][a-z0-9+.-]*:[a-z0-9][a-z0-9._~-]*(?:/(?!\\.{1,2}(?:/|$))[a-z0-9._~-]+)*$",
-  }),
-  (value) => parseRepositoryIdentity(value).ok,
-  () => "Expected a canonical logical repository identity",
-));
+export const RepositoryIdentitySchema = Type.Unsafe<RepositoryIdentity>(
+  Refine(
+    Type.String({
+      minLength: 3,
+      maxLength: 512,
+      pattern:
+        "^(?!file:)[a-z][a-z0-9+.-]*:[a-z0-9][a-z0-9._~-]*(?:/(?!\\.{1,2}(?:/|$))[a-z0-9._~-]+)*$",
+    }),
+    (value) => parseRepositoryIdentity(value).ok,
+    () => "Expected a canonical logical repository identity"
+  )
+);
 
-export const ContentAuthoritySchema = Type.Unsafe<ContentAuthority>(Refine(
-  Type.String({
-    minLength: 1,
-    maxLength: 512,
-    pattern: "^[a-z0-9][a-z0-9._:-]*$",
-  }),
-  (value) => parseContentAuthority(value).ok,
-  () => "Expected a canonical content authority",
-));
+export const ContentAuthoritySchema = Type.Unsafe<ContentAuthority>(
+  Refine(
+    Type.String({
+      minLength: 1,
+      maxLength: 512,
+      pattern: "^[a-z0-9][a-z0-9._:-]*$",
+    }),
+    (value) => parseContentAuthority(value).ok,
+    () => "Expected a canonical content authority"
+  )
+);
 
-export const PluginIdSchema = Type.Unsafe<PluginId>(Refine(
-  Type.String({
-    minLength: 1,
-    maxLength: 512,
-    pattern: "^[a-z0-9][a-z0-9._-]*$",
-  }),
-  (value) => parsePluginId(value).ok,
-  () => "Expected a canonical plugin identity",
-));
+export const PluginIdSchema = Type.Unsafe<PluginId>(
+  Refine(
+    Type.String({
+      minLength: 1,
+      maxLength: 512,
+      pattern: "^[a-z0-9][a-z0-9._-]*$",
+    }),
+    (value) => parsePluginId(value).ok,
+    () => "Expected a canonical plugin identity"
+  )
+);
 
-export const GitCommitIdSchema = Type.Unsafe<GitCommitId>(Refine(
-  Type.String({ pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" }),
-  (value) => parseGitCommitId(value).ok,
-  () => "Expected an exact lowercase Git commit object ID",
-));
+export const GitCommitIdSchema = Type.Unsafe<GitCommitId>(
+  Refine(
+    Type.String({ pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" }),
+    (value) => parseGitCommitId(value).ok,
+    () => "Expected an exact lowercase Git commit object ID"
+  )
+);
 
-export const GitTreeIdSchema = Type.Unsafe<GitTreeId>(Refine(
-  Type.String({ pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" }),
-  (value) => parseGitTreeId(value).ok,
-  () => "Expected an exact lowercase Git tree object ID",
-));
+export const GitTreeIdSchema = Type.Unsafe<GitTreeId>(
+  Refine(
+    Type.String({ pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" }),
+    (value) => parseGitTreeId(value).ok,
+    () => "Expected an exact lowercase Git tree object ID"
+  )
+);
 
-export const ReleaseRelativePathSchema = Type.Unsafe<ReleaseRelativePath>(Refine(
-  Type.String({ minLength: 1, maxLength: 1_024 }),
-  (value) => parseReleaseRelativePath(value).ok,
-  () => "Expected a canonical POSIX release-relative path",
-));
+export const ReleaseRelativePathSchema = Type.Unsafe<ReleaseRelativePath>(
+  Refine(
+    Type.String({ minLength: 1, maxLength: 1_024 }),
+    (value) => parseReleaseRelativePath(value).ok,
+    () => "Expected a canonical POSIX release-relative path"
+  )
+);
 
 export const RemoteNameSchema = Type.String({
   minLength: 1,
@@ -100,11 +112,11 @@ export const QualifiedHeadRefSchema = Refine(
     pattern: "^refs/heads/[^\\u0000-\\u0020~^:?*\\\\[]+$",
   }),
   isCanonicalHeadRef,
-  () => "Expected a canonical fully qualified branch ref",
+  () => "Expected a canonical fully qualified branch ref"
 );
 
-export const ContentWorkspacePolicySchema = ReadonlyObject(Type.Object(
-  {
+export const ContentWorkspacePolicySchema = ReadonlyObject(
+  Type.Object({
     locator: CanonicalAbsoluteLocatorSchema,
     repositoryIdentity: RepositoryIdentitySchema,
     contentAuthority: ContentAuthoritySchema,
@@ -115,8 +127,9 @@ export const ContentWorkspacePolicySchema = ReadonlyObject(Type.Object(
     sourceTree: GitTreeIdSchema,
     releaseInputPath: ReleaseRelativePathSchema,
     pluginRoot: ReleaseRelativePathSchema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 export type ContentWorkspacePolicy = Static<typeof ContentWorkspacePolicySchema>;
 
@@ -169,14 +182,14 @@ export type StagedObservationFailureReason =
 
 export type StagedIndexObservationResult =
   | Readonly<{
-    kind: "Observed";
-    observation: StagedIndexObservation;
-  }>
+      kind: "Observed";
+      observation: StagedIndexObservation;
+    }>
   | Readonly<{
-    kind: "Failed";
-    reason: StagedObservationFailureReason;
-    detail: string;
-  }>;
+      kind: "Failed";
+      reason: StagedObservationFailureReason;
+      detail: string;
+    }>;
 
 export interface ContentWorkspaceSnapshot {
   readonly repositoryIdentity: RepositoryIdentity;
@@ -210,57 +223,68 @@ export const SourceEligibilityIssueCodeSchema = Type.Union([
   Type.Literal("SourceChanged"),
 ]);
 
-export const SourceEligibilityIssueSchema = ReadonlyObject(Type.Object(
-  {
+export const SourceEligibilityIssueSchema = ReadonlyObject(
+  Type.Object({
     code: SourceEligibilityIssueCodeSchema,
     detail: Type.String({
       minLength: 1,
       maxLength: MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH,
     }),
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 export type SourceEligibilityIssueCode = Static<typeof SourceEligibilityIssueCodeSchema>;
 export type SourceEligibilityIssue = Static<typeof SourceEligibilityIssueSchema>;
 
 export function sourceEligibilityIssue(
   code: SourceEligibilityIssueCode,
-  detail: string,
+  detail: string
 ): SourceEligibilityIssue {
-  const boundedDetail = detail.length <= MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH
-    ? detail
-    : `${detail.slice(
-      0,
-      MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH - TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX.length,
-    )}${TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX}`;
+  const boundedDetail =
+    detail.length <= MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH
+      ? detail
+      : `${detail.slice(
+          0,
+          MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH -
+            TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX.length
+        )}${TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX}`;
   return Object.freeze({ code, detail: boundedDetail });
 }
 
 export type ContentWorkspaceInspection =
   | Readonly<{ kind: "Eligible"; snapshot: ContentWorkspaceSnapshot }>
   | Readonly<{
-    kind: "Ineligible";
-    issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]];
-  }>;
+      kind: "Ineligible";
+      issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]];
+    }>;
 
 function isCanonicalAbsoluteLocator(value: string): boolean {
   if (
-    value.length < 2
-    || !value.startsWith("/")
-    || value.endsWith("/")
-    || value.includes("\\")
-    || /[\u0000-\u001f\u007f]/u.test(value)
-  ) return false;
-  return value.split("/").slice(1).every((segment) => segment !== "" && segment !== "." && segment !== "..");
+    value.length < 2 ||
+    !value.startsWith("/") ||
+    value.endsWith("/") ||
+    value.includes("\\") ||
+    /[\u0000-\u001f\u007f]/u.test(value)
+  )
+    return false;
+  return value
+    .split("/")
+    .slice(1)
+    .every((segment) => segment !== "" && segment !== "." && segment !== "..");
 }
 
 function isCanonicalHeadRef(value: string): boolean {
-  return value.startsWith("refs/heads/")
-    && value.length <= 512
-    && !/[\u0000-\u0020~^:?*\\[]/u.test(value)
-    && !value.includes("..")
-    && !value.includes("@{")
-    && !value.endsWith("/")
-    && !value.endsWith(".")
-    && value.split("/").every((part) => part !== "" && !part.startsWith(".") && !part.endsWith(".lock"));
+  return (
+    value.startsWith("refs/heads/") &&
+    value.length <= 512 &&
+    !/[\u0000-\u0020~^:?*\\[]/u.test(value) &&
+    !value.includes("..") &&
+    !value.includes("@{") &&
+    !value.endsWith("/") &&
+    !value.endsWith(".") &&
+    value
+      .split("/")
+      .every((part) => part !== "" && !part.startsWith(".") && !part.endsWith(".lock"))
+  );
 }

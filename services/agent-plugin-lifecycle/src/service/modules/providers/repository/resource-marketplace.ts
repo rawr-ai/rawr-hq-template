@@ -1,7 +1,4 @@
-import {
-  parseContentAuthority,
-  parsePluginId,
-} from "../../../shared/release";
+import { parseContentAuthority, parsePluginId } from "../../../shared/release";
 import { canonicalBytes, equalBytes, type CanonicalValue } from "../model/helpers/canonical";
 import {
   createProviderMarketplaceRegistration,
@@ -18,19 +15,27 @@ import type { NativeResourcePackageObservation } from "../../../model/dependenci
 
 const MARKETPLACE_METADATA_PATH = ".rawr/marketplace.json";
 
-export function inspectMarketplaceSource(input: Readonly<{
-  observation: NativeResourcePackageObservation;
-  provider: ProviderId;
-  adapterProtocol: AdapterProtocol;
-}>): ProviderMarketplaceRegistration {
-  const matches = input.observation.entries.filter((entry) => entry.path === MARKETPLACE_METADATA_PATH);
-  if (matches.length !== 1) throw new Error("Provider marketplace source has no unique metadata file");
+export function inspectMarketplaceSource(
+  input: Readonly<{
+    observation: NativeResourcePackageObservation;
+    provider: ProviderId;
+    adapterProtocol: AdapterProtocol;
+  }>
+): ProviderMarketplaceRegistration {
+  const matches = input.observation.entries.filter(
+    (entry) => entry.path === MARKETPLACE_METADATA_PATH
+  );
+  if (matches.length !== 1)
+    throw new Error("Provider marketplace source has no unique metadata file");
   const metadata = matches[0];
   if (metadata === undefined || metadata.mode !== 0o644) {
     throw new Error("Provider marketplace source metadata has an unsupported mode");
   }
   const decoded = decodeJson(metadata.bytes);
-  if (!isRecord(decoded) || !equalBytes(canonicalBytes(decoded as CanonicalValue), metadata.bytes)) {
+  if (
+    !isRecord(decoded) ||
+    !equalBytes(canonicalBytes(decoded as CanonicalValue), metadata.bytes)
+  ) {
     throw new Error("Provider marketplace source metadata is not canonical JSON");
   }
   requireKeys(decoded, [
@@ -41,10 +46,15 @@ export function inspectMarketplaceSource(input: Readonly<{
     "provider",
     "sourceDigest",
   ]);
-  if (decoded.protocol !== "agent-provider-marketplace-source@v1" || decoded.provider !== input.provider) {
+  if (
+    decoded.protocol !== "agent-provider-marketplace-source@v1" ||
+    decoded.provider !== input.provider
+  ) {
     throw new Error("Provider marketplace source protocol or provider is invalid");
   }
-  const identity = requireParsed(parseContentAuthority(decoded.marketplaceIdentity, "marketplaceIdentity"));
+  const identity = requireParsed(
+    parseContentAuthority(decoded.marketplaceIdentity, "marketplaceIdentity")
+  );
   const registration = createProviderMarketplaceRegistration({
     provider: input.provider,
     adapterProtocol: input.adapterProtocol,
@@ -52,8 +62,8 @@ export function inspectMarketplaceSource(input: Readonly<{
     members: parseMembers(decoded.members, identity),
   });
   if (
-    decoded.projectionDigest !== registration.projectionDigest
-    || decoded.sourceDigest !== registration.sourceDigest
+    decoded.projectionDigest !== registration.projectionDigest ||
+    decoded.sourceDigest !== registration.sourceDigest
   ) {
     throw new Error("Provider marketplace source digest metadata is invalid");
   }
@@ -62,45 +72,51 @@ export function inspectMarketplaceSource(input: Readonly<{
 
 function parseMembers(
   value: unknown,
-  marketplaceIdentity: ProviderSourceIdentity,
+  marketplaceIdentity: ProviderSourceIdentity
 ): ProviderMarketplaceRegistration["members"] {
   if (!Array.isArray(value) || value.length === 0) {
     throw new Error("Provider marketplace source must contain managed members");
   }
-  return Object.freeze(value.map((entry) => {
-    const member = requireRecord(entry, "marketplace member");
-    requireKeys(member, [
-      "memberFingerprint",
-      "nativeIdentity",
-      "pluginId",
-      "providerSourceIdentity",
-      "sourceProjectionDigest",
-    ]);
-    const pluginId = requireParsed(parsePluginId(member.pluginId, "marketplace.member.pluginId"));
-    const sourceIdentity = requireParsed(parseContentAuthority(
-      member.providerSourceIdentity,
-      "marketplace.member.providerSourceIdentity",
-    ));
-    const sourceProjectionDigest = requireParsed(parseProjectionDigest(
-      member.sourceProjectionDigest,
-      "marketplace.member.sourceProjectionDigest",
-    ));
-    if (
-      sourceIdentity !== marketplaceIdentity
-      || member.nativeIdentity !== `rawr:${pluginId}`
-      || typeof member.memberFingerprint !== "string"
-      || !/^pm1_[0-9a-f]{64}$/u.test(member.memberFingerprint)
-    ) {
-      throw new Error("Provider marketplace member identity is invalid");
-    }
-    return Object.freeze({
-      pluginId,
-      nativeIdentity: member.nativeIdentity,
-      providerSourceIdentity: sourceIdentity,
-      sourceProjectionDigest,
-      memberFingerprint: member.memberFingerprint as ProviderMemberFingerprint,
-    });
-  }));
+  return Object.freeze(
+    value.map((entry) => {
+      const member = requireRecord(entry, "marketplace member");
+      requireKeys(member, [
+        "memberFingerprint",
+        "nativeIdentity",
+        "pluginId",
+        "providerSourceIdentity",
+        "sourceProjectionDigest",
+      ]);
+      const pluginId = requireParsed(parsePluginId(member.pluginId, "marketplace.member.pluginId"));
+      const sourceIdentity = requireParsed(
+        parseContentAuthority(
+          member.providerSourceIdentity,
+          "marketplace.member.providerSourceIdentity"
+        )
+      );
+      const sourceProjectionDigest = requireParsed(
+        parseProjectionDigest(
+          member.sourceProjectionDigest,
+          "marketplace.member.sourceProjectionDigest"
+        )
+      );
+      if (
+        sourceIdentity !== marketplaceIdentity ||
+        member.nativeIdentity !== `rawr:${pluginId}` ||
+        typeof member.memberFingerprint !== "string" ||
+        !/^pm1_[0-9a-f]{64}$/u.test(member.memberFingerprint)
+      ) {
+        throw new Error("Provider marketplace member identity is invalid");
+      }
+      return Object.freeze({
+        pluginId,
+        nativeIdentity: member.nativeIdentity,
+        providerSourceIdentity: sourceIdentity,
+        sourceProjectionDigest,
+        memberFingerprint: member.memberFingerprint as ProviderMemberFingerprint,
+      });
+    })
+  );
 }
 
 function decodeJson(bytes: Uint8Array): unknown {
@@ -112,7 +128,8 @@ function decodeJson(bytes: Uint8Array): unknown {
 }
 
 function requireParsed<T>(result: Readonly<{ ok: true; value: T } | { ok: false }>): T {
-  if (!result.ok) throw new Error("Provider marketplace source contains an invalid canonical value");
+  if (!result.ok)
+    throw new Error("Provider marketplace source contains an invalid canonical value");
   return result.value;
 }
 

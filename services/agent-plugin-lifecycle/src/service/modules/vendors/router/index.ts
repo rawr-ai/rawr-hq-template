@@ -24,10 +24,7 @@ import {
   validVendorIdentity,
   vendorWorkspaceIssue,
 } from "../model/policy/vendor-state-validation";
-import {
-  materializeVendorUpstream,
-  observeVendorUpstream,
-} from "../model/policy/vendor-upstream";
+import { materializeVendorUpstream, observeVendorUpstream } from "../model/policy/vendor-upstream";
 import { observeVendorWorkspace } from "../model/policy/vendor-workspace-observation";
 import { vendorIssue } from "../model/policy/vendor-policy-result";
 import { module } from "../module";
@@ -89,11 +86,13 @@ const update = module.update.handler(async ({ context, input: request }) => {
   for (const source of selected.sources) {
     const assessment = await assessSource(context.contentWorkspace, source);
     if (assessment.issue !== undefined) assessmentIssues.push(assessment.issue);
-    if (assessment.candidate !== undefined) candidates.push({ source, upstream: assessment.candidate });
+    if (assessment.candidate !== undefined)
+      candidates.push({ source, upstream: assessment.candidate });
   }
   const assessmentFailure = nonEmpty(assessmentIssues);
   if (assessmentFailure !== null) return rejected(request.sourceIds, assessmentFailure);
-  if (candidates.length === 0) return { kind: "ReadOnlyConverged" as const, sourceIds: request.sourceIds };
+  if (candidates.length === 0)
+    return { kind: "ReadOnlyConverged" as const, sourceIds: request.sourceIds };
 
   const changes: VendorSourceChange[] = [];
   const preparationIssues: VendorUpdateIssue[] = [];
@@ -102,7 +101,7 @@ const update = module.update.handler(async ({ context, input: request }) => {
       context.contentWorkspace,
       context.clock,
       candidate.source,
-      candidate.upstream,
+      candidate.upstream
     );
     if (!materialized.ok) {
       preparationIssues.push(...materialized.issues);
@@ -115,7 +114,11 @@ const update = module.update.handler(async ({ context, input: request }) => {
   const preparationFailure = nonEmpty(preparationIssues);
   if (preparationFailure !== null) return rejected(request.sourceIds, preparationFailure);
 
-  const planned = createVendorAuthoringPlan(request.contentWorkspace, workspace.observation, changes);
+  const planned = createVendorAuthoringPlan(
+    request.contentWorkspace,
+    workspace.observation,
+    changes
+  );
   if (!planned.ok) return rejected(request.sourceIds, planned.issues);
   return executeVendorAuthoringPlan(context.contentWorkspace, request, planned.value);
 });
@@ -124,7 +127,7 @@ export const router = Object.freeze({ status, update });
 
 async function observeWorkspace(
   contentWorkspace: ContentWorkspaceAsyncPort,
-  request: VendorStatusRequest,
+  request: VendorStatusRequest
 ): Promise<ObservedWorkspace | WorkspaceFailure> {
   const observed = await observeVendorWorkspace(contentWorkspace, request.contentWorkspace);
   if (!observed.ok) return { issues: observed.issues };
@@ -134,7 +137,7 @@ async function observeWorkspace(
 
 function selectSources(
   request: VendorUpdateRequest,
-  observation: VendorWorkspaceObservation,
+  observation: VendorWorkspaceObservation
 ): Readonly<{ sources: readonly VendorDeclaredSourceObservation[] }> | WorkspaceFailure {
   const byId = new Map(observation.sources.map((source) => [source.declaration.sourceId, source]));
   const selected: VendorDeclaredSourceObservation[] = [];
@@ -142,18 +145,36 @@ function selectSources(
   for (const selectedId of request.sourceIds) {
     const source = byId.get(selectedId);
     if (source === undefined) {
-      issues.push(vendorIssue("UndeclaredSource", `Vendor source ${selectedId} is absent from the canonical release input.`, selectedId));
+      issues.push(
+        vendorIssue(
+          "UndeclaredSource",
+          `Vendor source ${selectedId} is absent from the canonical release input.`,
+          selectedId
+        )
+      );
       continue;
     }
     selected.push(source);
     if (source.declaration.policy === "held") {
-      issues.push(vendorIssue("HeldSource", `Vendor source ${selectedId} is held and cannot be authored.`, selectedId));
+      issues.push(
+        vendorIssue(
+          "HeldSource",
+          `Vendor source ${selectedId} is held and cannot be authored.`,
+          selectedId
+        )
+      );
       continue;
     }
     const localIssue = localVendorSourceIssue(source);
     if (localIssue !== undefined) issues.push(localIssue);
     if (source.declaration.curationRevision >= Number.MAX_SAFE_INTEGER) {
-      issues.push(vendorIssue("PayloadMismatch", "Vendor source cannot advance beyond the maximum curation revision.", selectedId));
+      issues.push(
+        vendorIssue(
+          "PayloadMismatch",
+          "Vendor source cannot advance beyond the maximum curation revision.",
+          selectedId
+        )
+      );
     }
   }
   const failure = nonEmpty(issues);
@@ -162,12 +183,15 @@ function selectSources(
 
 async function assessSource(
   contentWorkspace: ContentWorkspaceAsyncPort,
-  source: VendorDeclaredSourceObservation,
+  source: VendorDeclaredSourceObservation
 ): Promise<SourceAssessment> {
   const observed = await observeVendorUpstream(contentWorkspace, source);
   if (!observed.ok) {
     const failure = observed.issues[0];
-    return { status: statusFromIssue(source, failure, statusClassification(failure)), issue: failure };
+    return {
+      status: statusFromIssue(source, failure, statusClassification(failure)),
+      issue: failure,
+    };
   }
   const admitted = admittedIdentity(source);
   const upstream = observed.value;
@@ -175,9 +199,12 @@ async function assessSource(
     const failure = vendorIssue(
       "NonFastForward",
       "The admitted commit is not an ancestor of the observed upstream commit.",
-      source.declaration.sourceId,
+      source.declaration.sourceId
     );
-    return { status: statusFromIssue(source, failure, "Diverged", upstream.identity), issue: failure };
+    return {
+      status: statusFromIssue(source, failure, "Diverged", upstream.identity),
+      issue: failure,
+    };
   }
   if (sameVendorIdentity(admitted, upstream.identity) && upstream.ancestry === "same") {
     return {
@@ -189,13 +216,19 @@ async function assessSource(
       },
     };
   }
-  if (upstream.ancestry !== "fast-forward" || upstream.identity.sourceCommit === admitted.sourceCommit) {
+  if (
+    upstream.ancestry !== "fast-forward" ||
+    upstream.identity.sourceCommit === admitted.sourceCommit
+  ) {
     const failure = vendorIssue(
       "PayloadMismatch",
       "Upstream identity changed without a valid fast-forward commit transition.",
-      source.declaration.sourceId,
+      source.declaration.sourceId
     );
-    return { status: statusFromIssue(source, failure, "Diverged", upstream.identity), issue: failure };
+    return {
+      status: statusFromIssue(source, failure, "Diverged", upstream.identity),
+      issue: failure,
+    };
   }
   return {
     status: {
@@ -211,8 +244,10 @@ async function assessSource(
 function statusFromIssue(
   source: VendorDeclaredSourceObservation,
   failure: VendorUpdateIssue,
-  classification: VendorSourceStatus["classification"] = failure.code === "LocalDrift" ? "Diverged" : "Invalid",
-  observed: VendorSourceIdentity | null = null,
+  classification: VendorSourceStatus["classification"] = failure.code === "LocalDrift"
+    ? "Diverged"
+    : "Invalid",
+  observed: VendorSourceIdentity | null = null
 ): VendorSourceStatus {
   return {
     sourceId: source.declaration.sourceId,
@@ -225,7 +260,12 @@ function statusFromIssue(
 
 function statusClassification(issue: VendorUpdateIssue): VendorSourceStatus["classification"] {
   if (issue.code === "RuntimeFailure" || issue.code === "CleanupFailed") return "Unavailable";
-  if (issue.code === "NonFastForward" || issue.code === "WrongRepository" || issue.code === "WrongRef") return "Diverged";
+  if (
+    issue.code === "NonFastForward" ||
+    issue.code === "WrongRepository" ||
+    issue.code === "WrongRef"
+  )
+    return "Diverged";
   return "Invalid";
 }
 
@@ -234,12 +274,16 @@ function admittedIdentity(source: VendorDeclaredSourceObservation): VendorSource
   return source.lock.admitted;
 }
 
-function admittedIdentityOrNull(source: VendorDeclaredSourceObservation): VendorSourceIdentity | null {
-  return source.lock !== null && validVendorIdentity(source.lock.admitted) ? source.lock.admitted : null;
+function admittedIdentityOrNull(
+  source: VendorDeclaredSourceObservation
+): VendorSourceIdentity | null {
+  return source.lock !== null && validVendorIdentity(source.lock.admitted)
+    ? source.lock.admitted
+    : null;
 }
 
 function nonEmpty(
-  issues: readonly VendorUpdateIssue[],
+  issues: readonly VendorUpdateIssue[]
 ): readonly [VendorUpdateIssue, ...VendorUpdateIssue[]] | null {
   const [first, ...rest] = issues;
   return first === undefined ? null : [first, ...rest];
@@ -247,7 +291,7 @@ function nonEmpty(
 
 function rejected(
   sourceIds: readonly string[],
-  issues: readonly [VendorUpdateIssue, ...VendorUpdateIssue[]],
+  issues: readonly [VendorUpdateIssue, ...VendorUpdateIssue[]]
 ): VendorUpdateResult {
   return { kind: "Rejected", sourceIds, issues };
 }

@@ -1,9 +1,6 @@
 import type { VerifiedArtifactSnapshotV1 } from "../../../shared/release";
 
-import {
-  normalizeTargetedTestRequest,
-  type TargetedTestInput,
-} from "../model/dto/mode";
+import { normalizeTargetedTestRequest, type TargetedTestInput } from "../model/dto/mode";
 import type { TargetedTestProviderOperationOutcome } from "../model/dto/outcome";
 import { issue, success, type DeploymentResult } from "../model/errors/deployment-result";
 import { module } from "../module";
@@ -41,8 +38,8 @@ export interface TargetedTestDependencies {
   readonly evidence: MechanicalEvidencePublisher;
 }
 
-export const targetedTest = module.targetedTest.handler(
-  async ({ context, input }) => targetedTestOperationResult(
+export const targetedTest = module.targetedTest.handler(async ({ context, input }) =>
+  targetedTestOperationResult(
     executeTargetedTest(input, {
       releases: context.releases,
       provider: context.provider,
@@ -54,47 +51,60 @@ export const targetedTest = module.targetedTest.handler(
       projectionMaterializer: context.projectionMaterializer,
       marketplaceMaterializer: context.marketplaceMaterializer,
       evidence: context.evidence,
-    }),
-  ),
+    })
+  )
 );
 
 export async function executeTargetedTest(
   input: TargetedTestInput,
-  ports: TargetedTestDependencies,
+  ports: TargetedTestDependencies
 ): Promise<DeploymentResult<TargetedTestProviderOperationOutcome>> {
-    const parsed = normalizeTargetedTestRequest(input);
-    if (!parsed.ok) return parsed;
-    const snapshots: VerifiedArtifactSnapshotV1[] = [];
-    const artifactIssues = [];
-    for (const ref of parsed.value.releases) {
-      const read = await ports.releases.read(ref);
-      if (read.ok) {
-        if (read.value.kind !== "release" || read.value.ref.releaseDigest !== ref.releaseDigest || read.value.ref.artifactDigest !== ref.artifactDigest) {
-          artifactIssues.push(issue("PROJECTION_MISMATCH", "artifact", "Artifact reader returned a snapshot for another release"));
-        } else snapshots.push(read.value);
-      } else artifactIssues.push(...read.issues);
-    }
-    if (artifactIssues.length > 0) return resultFailure(artifactIssues);
-    const request = parsed.value;
-    const plans = await createProjectionPlans({
-      targets: request.targets,
-      snapshot: Object.freeze(snapshots),
-      sourceKind: "targeted",
-      dependencies: ports,
-      authority: (projection) => success(Object.freeze({ kind: "targeted-test", request, projection })),
-    });
-    const targetOutcomes = await executeProjectionPlans(plans, {
-      provider: ports.provider,
-      ...createDeploymentActionAppliers(ports),
-      projectionMaterializer: ports.projectionMaterializer,
-      marketplaceMaterializer: ports.marketplaceMaterializer,
-    });
-    const aggregate = aggregateOutcome(targetOutcomes);
-    return success(await attachMechanicalEvidence(
+  const parsed = normalizeTargetedTestRequest(input);
+  if (!parsed.ok) return parsed;
+  const snapshots: VerifiedArtifactSnapshotV1[] = [];
+  const artifactIssues = [];
+  for (const ref of parsed.value.releases) {
+    const read = await ports.releases.read(ref);
+    if (read.ok) {
+      if (
+        read.value.kind !== "release" ||
+        read.value.ref.releaseDigest !== ref.releaseDigest ||
+        read.value.ref.artifactDigest !== ref.artifactDigest
+      ) {
+        artifactIssues.push(
+          issue(
+            "PROJECTION_MISMATCH",
+            "artifact",
+            "Artifact reader returned a snapshot for another release"
+          )
+        );
+      } else snapshots.push(read.value);
+    } else artifactIssues.push(...read.issues);
+  }
+  if (artifactIssues.length > 0) return resultFailure(artifactIssues);
+  const request = parsed.value;
+  const plans = await createProjectionPlans({
+    targets: request.targets,
+    snapshot: Object.freeze(snapshots),
+    sourceKind: "targeted",
+    dependencies: ports,
+    authority: (projection) =>
+      success(Object.freeze({ kind: "targeted-test", request, projection })),
+  });
+  const targetOutcomes = await executeProjectionPlans(plans, {
+    provider: ports.provider,
+    ...createDeploymentActionAppliers(ports),
+    projectionMaterializer: ports.projectionMaterializer,
+    marketplaceMaterializer: ports.marketplaceMaterializer,
+  });
+  const aggregate = aggregateOutcome(targetOutcomes);
+  return success(
+    await attachMechanicalEvidence(
       aggregate,
       plans,
       Object.freeze({ kind: "targeted-test", releases: request.releases }),
       request.evaluationProfile,
-      ports.evidence,
-    ));
+      ports.evidence
+    )
+  );
 }

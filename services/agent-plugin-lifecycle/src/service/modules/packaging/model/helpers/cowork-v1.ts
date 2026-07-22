@@ -32,7 +32,7 @@ export interface CoworkV1ProtocolEntrySize {
 
 export function assertSnapshotMatchesRef(
   snapshot: VerifiedArtifactSnapshotV1,
-  ref: ArtifactRef,
+  ref: ArtifactRef
 ): void {
   if (snapshot.kind !== ref.kind || !sameArtifactRef(snapshot.ref, ref)) {
     throw new Error("Artifact reader returned a snapshot for a different reference");
@@ -47,16 +47,18 @@ export function assertSnapshotMatchesRef(
   }
   const verification = verifyCompleteReleaseSet(
     snapshot.releaseSet,
-    snapshot.members.map((member) => member.release),
+    snapshot.members.map((member) => member.release)
   );
   if (!verification.ok) {
-    throw new Error(`Complete release-set verification failed: ${verification.issues.map((entry) => entry.code).join(",")}`);
+    throw new Error(
+      `Complete release-set verification failed: ${verification.issues.map((entry) => entry.code).join(",")}`
+    );
   }
   for (const member of snapshot.members) assertReleaseSnapshot(member);
 }
 
 export function createCoworkV1ArchiveRequest(
-  snapshot: VerifiedArtifactSnapshotV1,
+  snapshot: VerifiedArtifactSnapshotV1
 ): CoworkV1ArchiveEncodingRequest {
   return Object.freeze({
     entries: collectCoworkEntries(snapshot),
@@ -72,13 +74,19 @@ export function coworkV1PackageDigest(bytes: Uint8Array): PackageDigest {
   return `pkg1_${digest.slice("sha256_".length)}`;
 }
 
-function collectCoworkEntries(snapshot: VerifiedArtifactSnapshotV1): readonly PackageArchiveEntry[] {
+function collectCoworkEntries(
+  snapshot: VerifiedArtifactSnapshotV1
+): readonly PackageArchiveEntry[] {
   assertCoworkV1ProtocolBounds(protocolEntrySizes(snapshot));
-  const entries = snapshot.kind === "release"
-    ? collectReleaseEntries(snapshot, "")
-    : snapshot.members.flatMap((member) =>
-      collectReleaseEntries(member, `plugins/${member.release.artifactBody.releaseBody.pluginId}/`)
-    );
+  const entries =
+    snapshot.kind === "release"
+      ? collectReleaseEntries(snapshot, "")
+      : snapshot.members.flatMap((member) =>
+          collectReleaseEntries(
+            member,
+            `plugins/${member.release.artifactBody.releaseBody.pluginId}/`
+          )
+        );
   entries.sort((left, right) => compareUtf8(left.path, right.path));
   for (let index = 1; index < entries.length; index += 1) {
     if (entries[index - 1]?.path === entries[index]?.path) {
@@ -88,13 +96,11 @@ function collectCoworkEntries(snapshot: VerifiedArtifactSnapshotV1): readonly Pa
   return Object.freeze(entries);
 }
 
-export function assertCoworkV1ProtocolBounds(
-  entries: Iterable<CoworkV1ProtocolEntrySize>,
-): void {
+export function assertCoworkV1ProtocolBounds(entries: Iterable<CoworkV1ProtocolEntrySize>): void {
   let entryCount = 0n;
   let payloadBytes = 0n;
-  let projectedArchiveBytes = CLASSIC_ZIP_END_FIXED_BYTES
-    + BigInt(utf8Bytes(COWORK_V1_ARCHIVE_COMMENT).byteLength);
+  let projectedArchiveBytes =
+    CLASSIC_ZIP_END_FIXED_BYTES + BigInt(utf8Bytes(COWORK_V1_ARCHIVE_COMMENT).byteLength);
   for (const entry of entries) {
     if (!Number.isSafeInteger(entry.byteLength) || entry.byteLength < 0) {
       throw new Error("Cowork v1 entry byte length is not a safe non-negative integer");
@@ -105,9 +111,8 @@ export function assertCoworkV1ProtocolBounds(
     }
     entryCount += 1n;
     payloadBytes += BigInt(entry.byteLength);
-    projectedArchiveBytes += BigInt(entry.byteLength)
-      + CLASSIC_ZIP_ENTRY_FIXED_BYTES
-      + (2n * BigInt(pathBytes));
+    projectedArchiveBytes +=
+      BigInt(entry.byteLength) + CLASSIC_ZIP_ENTRY_FIXED_BYTES + 2n * BigInt(pathBytes);
     if (entryCount > BigInt(COWORK_V1_MAX_ENTRY_COUNT)) {
       throw new Error(`Cowork v1 exceeds its ${COWORK_V1_MAX_ENTRY_COUNT} entry limit`);
     }
@@ -116,14 +121,14 @@ export function assertCoworkV1ProtocolBounds(
     }
     if (projectedArchiveBytes > BigInt(COWORK_V1_MAX_PROJECTED_ARCHIVE_BYTES)) {
       throw new Error(
-        `Cowork v1 exceeds its ${COWORK_V1_MAX_PROJECTED_ARCHIVE_BYTES} projected archive-byte limit`,
+        `Cowork v1 exceeds its ${COWORK_V1_MAX_PROJECTED_ARCHIVE_BYTES} projected archive-byte limit`
       );
     }
   }
 }
 
 function* protocolEntrySizes(
-  snapshot: VerifiedArtifactSnapshotV1,
+  snapshot: VerifiedArtifactSnapshotV1
 ): Generator<CoworkV1ProtocolEntrySize> {
   if (snapshot.kind === "release") {
     yield* releaseProtocolEntrySizes(snapshot, "");
@@ -132,14 +137,14 @@ function* protocolEntrySizes(
   for (const member of snapshot.members) {
     yield* releaseProtocolEntrySizes(
       member,
-      `plugins/${member.release.artifactBody.releaseBody.pluginId}/`,
+      `plugins/${member.release.artifactBody.releaseBody.pluginId}/`
     );
   }
 }
 
 function* releaseProtocolEntrySizes(
   snapshot: VerifiedReleaseArtifactV1,
-  prefix: string,
+  prefix: string
 ): Generator<CoworkV1ProtocolEntrySize> {
   for (const file of snapshot.files) {
     if (!(file.bytes instanceof Uint8Array)) {
@@ -151,7 +156,7 @@ function* releaseProtocolEntrySizes(
 
 function collectReleaseEntries(
   snapshot: VerifiedReleaseArtifactV1,
-  prefix: string,
+  prefix: string
 ): PackageArchiveEntry[] {
   assertReleaseSnapshot(snapshot);
   return snapshot.files.map((file) => ({
@@ -163,8 +168,8 @@ function collectReleaseEntries(
 
 function assertReleaseSnapshot(snapshot: VerifiedReleaseArtifactV1): void {
   if (
-    snapshot.ref.releaseDigest !== snapshot.release.releaseDigest
-    || snapshot.ref.artifactDigest !== snapshot.release.artifactDigest
+    snapshot.ref.releaseDigest !== snapshot.release.releaseDigest ||
+    snapshot.ref.artifactDigest !== snapshot.release.artifactDigest
   ) {
     throw new Error("Release snapshot envelope differs from its reference");
   }
@@ -173,7 +178,9 @@ function assertReleaseSnapshot(snapshot: VerifiedReleaseArtifactV1): void {
   if (manifest.length !== snapshot.files.length) {
     throw new Error("Release snapshot file count differs from its storage manifest");
   }
-  const orderedFiles = [...snapshot.files].sort((left, right) => compareUtf8(left.path, right.path));
+  const orderedFiles = [...snapshot.files].sort((left, right) =>
+    compareUtf8(left.path, right.path)
+  );
   for (let index = 0; index < orderedFiles.length; index += 1) {
     const file = orderedFiles[index];
     const expected = manifest[index];
@@ -182,10 +189,10 @@ function assertReleaseSnapshot(snapshot: VerifiedReleaseArtifactV1): void {
     }
     assertPayloadFile(file);
     if (
-      file.path !== expected.path
-      || file.mode !== expected.mode
-      || file.contentDigest !== expected.contentDigest
-      || file.bytes.byteLength !== expected.byteLength
+      file.path !== expected.path ||
+      file.mode !== expected.mode ||
+      file.contentDigest !== expected.contentDigest ||
+      file.bytes.byteLength !== expected.byteLength
     ) {
       throw new Error(`Release snapshot file ${file.path} differs from its storage manifest`);
     }
@@ -209,8 +216,9 @@ function sameArtifactRef(left: ArtifactRef, right: ArtifactRef): boolean {
   if (left.kind !== right.kind) return false;
   return left.kind === "release" && right.kind === "release"
     ? left.releaseDigest === right.releaseDigest && left.artifactDigest === right.artifactDigest
-    : left.kind === "complete-set" && right.kind === "complete-set"
-      && left.releaseSetDigest === right.releaseSetDigest;
+    : left.kind === "complete-set" &&
+        right.kind === "complete-set" &&
+        left.releaseSetDigest === right.releaseSetDigest;
 }
 
 function compareUtf8(left: string, right: string): number {

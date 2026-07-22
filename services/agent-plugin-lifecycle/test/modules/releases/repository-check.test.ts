@@ -49,16 +49,46 @@ describe("releases.checkRepository", () => {
   it("binds and revalidates one exact staged index and selected blob snapshot", async () => {
     const fixture = productFixture();
     const stagedEntries = [
-      stagedEntry(releaseInputPath, "1".repeat(40), 0o644, canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput)),
-      stagedEntry("plugins/agent/alpha/agents/alpha.md", "2".repeat(40), 0o644, bytes("agent alpha\n")),
-      stagedEntry("plugins/agent/alpha/skills/alpha/SKILL.md", "3".repeat(40), 0o644, bytes("alpha\n")),
-      stagedEntry("plugins/agent/beta/scripts/check.sh", "4".repeat(40), 0o755, bytes("#!/bin/sh\nexit 0\n")),
-      stagedEntry("plugins/agent/beta/skills/beta/SKILL.md", "5".repeat(40), 0o644, bytes("beta\n")),
+      stagedEntry(
+        releaseInputPath,
+        "1".repeat(40),
+        0o644,
+        canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput)
+      ),
+      stagedEntry(
+        "plugins/agent/alpha/agents/alpha.md",
+        "2".repeat(40),
+        0o644,
+        bytes("agent alpha\n")
+      ),
+      stagedEntry(
+        "plugins/agent/alpha/skills/alpha/SKILL.md",
+        "3".repeat(40),
+        0o644,
+        bytes("alpha\n")
+      ),
+      stagedEntry(
+        "plugins/agent/beta/scripts/check.sh",
+        "4".repeat(40),
+        0o755,
+        bytes("#!/bin/sh\nexit 0\n")
+      ),
+      stagedEntry(
+        "plugins/agent/beta/skills/beta/SKILL.md",
+        "5".repeat(40),
+        0o644,
+        bytes("beta\n")
+      ),
       stagedEntry("unrelated/large.bin", "6".repeat(40), 0o644, bytes("x".repeat(1024))),
     ].sort((left, right) => left.path.localeCompare(right.path));
-    const indexEntries = bytes(stagedEntries.map((entry) => (
-      `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
-    )).join(""));
+    const indexEntries = bytes(
+      stagedEntries
+        .map(
+          (entry) =>
+            `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
+        )
+        .join("")
+    );
     const selections: Array<Readonly<{ paths: readonly string[]; roots: readonly string[] }>> = [];
     const blobLimits: number[] = [];
     let fullMaterializations = 0;
@@ -66,10 +96,13 @@ describe("releases.checkRepository", () => {
       observeGitStagedIndex: async (input) => {
         selections.push({ paths: input.materializedPaths, roots: input.materializedRoots });
         blobLimits.push(input.maxBlobBytes);
-        const selected = stagedEntries.filter((entry) => (
-          input.materializedPaths.includes(entry.path)
-          || input.materializedRoots.some((root) => entry.path === root || entry.path.startsWith(`${root}/`))
-        ));
+        const selected = stagedEntries.filter(
+          (entry) =>
+            input.materializedPaths.includes(entry.path) ||
+            input.materializedRoots.some(
+              (root) => entry.path === root || entry.path.startsWith(`${root}/`)
+            )
+        );
         if (input.materializedRoots.length > 0) fullMaterializations += 1;
         const observed = fullMaterializations === 2 ? [...selected].reverse() : selected;
         return {
@@ -86,10 +119,15 @@ describe("releases.checkRepository", () => {
       }),
     });
 
-    await expect(client.releases.checkRepository({
-      kind: "staged",
-      contentWorkspace: stagedPolicy(),
-    }, testInvocation)).resolves.toMatchObject({
+    await expect(
+      client.releases.checkRepository(
+        {
+          kind: "staged",
+          contentWorkspace: stagedPolicy(),
+        },
+        testInvocation
+      )
+    ).resolves.toMatchObject({
       kind: "StagedRepositoryEligible",
       repositoryIdentity,
       refName: "refs/heads/main",
@@ -113,21 +151,59 @@ describe("releases.checkRepository", () => {
   });
 
   it("rejects the first canonical undeclared staged plugin after one read and zero writes", async () => {
-    await expectStagedTreeClosureRefusal([
-      stagedEntry("plugins/agent/zulu/skills/zulu/SKILL.md", "2".repeat(40), 0o644, bytes("zulu\n")),
-      stagedEntry("plugins/agent/zulu/agents/zulu.md", "3".repeat(40), 0o644, bytes("zulu agent\n")),
-      stagedEntry("a-unrelated/skills/example/SKILL.md", "4".repeat(40), 0o644, bytes("unrelated\n")),
-      stagedEntry("plugins/agent/aardvark/skills/aardvark/SKILL.md", "5".repeat(40), 0o644, bytes("aardvark\n")),
-    ], "plugin tree contains undeclared member aardvark");
+    await expectStagedTreeClosureRefusal(
+      [
+        stagedEntry(
+          "plugins/agent/zulu/skills/zulu/SKILL.md",
+          "2".repeat(40),
+          0o644,
+          bytes("zulu\n")
+        ),
+        stagedEntry(
+          "plugins/agent/zulu/agents/zulu.md",
+          "3".repeat(40),
+          0o644,
+          bytes("zulu agent\n")
+        ),
+        stagedEntry(
+          "a-unrelated/skills/example/SKILL.md",
+          "4".repeat(40),
+          0o644,
+          bytes("unrelated\n")
+        ),
+        stagedEntry(
+          "plugins/agent/aardvark/skills/aardvark/SKILL.md",
+          "5".repeat(40),
+          0o644,
+          bytes("aardvark\n")
+        ),
+      ],
+      "plugin tree contains undeclared member aardvark"
+    );
   });
 
   it.each([
     {
       name: "the first code-unit-sorted noncanonical plugin directory",
       entries: [
-        stagedEntry("plugins/agent/Zulu/skills/zulu/SKILL.md", "2".repeat(40), 0o644, bytes("zulu\n")),
-        stagedEntry("plugins/agent/Cognition/skills/cognition/SKILL.md", "3".repeat(40), 0o644, bytes("cognition\n")),
-        stagedEntry("a-unrelated/skills/example/SKILL.md", "4".repeat(40), 0o644, bytes("unrelated\n")),
+        stagedEntry(
+          "plugins/agent/Zulu/skills/zulu/SKILL.md",
+          "2".repeat(40),
+          0o644,
+          bytes("zulu\n")
+        ),
+        stagedEntry(
+          "plugins/agent/Cognition/skills/cognition/SKILL.md",
+          "3".repeat(40),
+          0o644,
+          bytes("cognition\n")
+        ),
+        stagedEntry(
+          "a-unrelated/skills/example/SKILL.md",
+          "4".repeat(40),
+          0o644,
+          bytes("unrelated\n")
+        ),
       ],
       child: "Cognition",
     },
@@ -142,7 +218,12 @@ describe("releases.checkRepository", () => {
     {
       name: "a root-level file named for a declared plugin",
       entries: [
-        stagedEntry("plugins/agent/alpha", "2".repeat(40), 0o644, bytes("not a plugin directory\n")),
+        stagedEntry(
+          "plugins/agent/alpha",
+          "2".repeat(40),
+          0o644,
+          bytes("not a plugin directory\n")
+        ),
         stagedEntry("a-unrelated/README.md", "3".repeat(40), 0o644, bytes("unrelated\n")),
       ],
       child: "alpha",
@@ -150,7 +231,7 @@ describe("releases.checkRepository", () => {
   ])("rejects $name after one read and zero writes", async ({ entries, child }) => {
     await expectStagedTreeClosureRefusal(
       entries,
-      `plugin tree contains noncanonical child ${child}`,
+      `plugin tree contains noncanonical child ${child}`
     );
   });
 
@@ -196,10 +277,15 @@ describe("releases.checkRepository", () => {
       }),
     });
 
-    await expect(client.releases.checkRepository({
-      kind: "staged",
-      contentWorkspace: stagedPolicy(),
-    }, testInvocation)).resolves.toEqual({
+    await expect(
+      client.releases.checkRepository(
+        {
+          kind: "staged",
+          contentWorkspace: stagedPolicy(),
+        },
+        testInvocation
+      )
+    ).resolves.toEqual({
       kind: "SourceChanged",
       mode: "staged",
       detail: "Git HEAD, ref, repository, or index changed during staged observation",
@@ -222,10 +308,15 @@ describe("releases.checkRepository", () => {
       }),
     });
 
-    await expect(client.releases.checkRepository({
-      kind: "staged",
-      contentWorkspace: stagedPolicy(),
-    }, testInvocation)).resolves.toEqual({
+    await expect(
+      client.releases.checkRepository(
+        {
+          kind: "staged",
+          contentWorkspace: stagedPolicy(),
+        },
+        testInvocation
+      )
+    ).resolves.toEqual({
       kind: "RepositoryIneligible",
       mode: "staged",
       issues: [{ code: "GitFailure", detail: "staged index read failed" }],
@@ -252,32 +343,43 @@ describe("releases.checkRepository", () => {
         }),
       });
 
-      await expect(client.releases.checkRepository({
-        kind: "staged",
-        contentWorkspace: stagedPolicy(),
-      }, testInvocation)).resolves.toEqual({
+      await expect(
+        client.releases.checkRepository(
+          {
+            kind: "staged",
+            contentWorkspace: stagedPolicy(),
+          },
+          testInvocation
+        )
+      ).resolves.toEqual({
         kind: "RepositoryIneligible",
         mode: "staged",
         issues: [{ code: fixture.code, detail: `${fixture.reason} fixture` }],
       });
     }
 
-    expect(classifyStagedObservationFailure("LimitExceeded", "payload overflow", "payloads")).toEqual({
+    expect(
+      classifyStagedObservationFailure("LimitExceeded", "payload overflow", "payloads")
+    ).toEqual({
       kind: "StagedContentWorkspaceIneligible",
       issues: [{ code: "PayloadMismatch", detail: "payload overflow" }],
     });
   });
 
   it("admits the maximum release-input envelope plus aggregate payload without unsafe overflow", () => {
-    expect(addStagedObservationByteLimits(
-      MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-      MAX_RELEASE_SET_PAYLOAD_BYTES,
-    )).toEqual({ ok: true, value: MAX_STAGED_MATERIALIZED_BLOB_BYTES });
+    expect(
+      addStagedObservationByteLimits(
+        MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+        MAX_RELEASE_SET_PAYLOAD_BYTES
+      )
+    ).toEqual({ ok: true, value: MAX_STAGED_MATERIALIZED_BLOB_BYTES });
     expect(MAX_STAGED_MATERIALIZED_BLOB_BYTES).toBe(
-      MAX_RELEASE_INPUT_ENVELOPE_BYTES + MAX_RELEASE_SET_PAYLOAD_BYTES,
+      MAX_RELEASE_INPUT_ENVELOPE_BYTES + MAX_RELEASE_SET_PAYLOAD_BYTES
     );
     expect(addStagedObservationByteLimits(Number.MAX_SAFE_INTEGER, 1)).toEqual({ ok: false });
-    expect(addStagedObservationByteLimits(-1, MAX_RELEASE_SET_PAYLOAD_BYTES)).toEqual({ ok: false });
+    expect(addStagedObservationByteLimits(-1, MAX_RELEASE_SET_PAYLOAD_BYTES)).toEqual({
+      ok: false,
+    });
   });
 
   it("returns only the clean mismatch after final exact revalidation", async () => {
@@ -291,8 +393,14 @@ describe("releases.checkRepository", () => {
         sourceTree: headTree,
         releaseInput: fixture.releaseInput,
         payloads: [
-          { pluginId: fixture.alphaRelease.artifactBody.releaseBody.pluginId, payload: fixture.alphaPayload },
-          { pluginId: fixture.betaRelease.artifactBody.releaseBody.pluginId, payload: fixture.betaPayload },
+          {
+            pluginId: fixture.alphaRelease.artifactBody.releaseBody.pluginId,
+            payload: fixture.alphaPayload,
+          },
+          {
+            pluginId: fixture.betaRelease.artifactBody.releaseBody.pluginId,
+            payload: fixture.betaPayload,
+          },
         ],
         objectBindings: [],
         eligibilityBinding: "clean-binding-v1",
@@ -311,10 +419,15 @@ describe("releases.checkRepository", () => {
       }),
     });
 
-    await expect(client.releases.checkRepository({
-      kind: "clean",
-      contentWorkspace: cleanPolicy(),
-    }, testInvocation)).resolves.toEqual({
+    await expect(
+      client.releases.checkRepository(
+        {
+          kind: "clean",
+          contentWorkspace: cleanPolicy(),
+        },
+        testInvocation
+      )
+    ).resolves.toEqual({
       kind: "RepositoryIneligible",
       mode: "clean",
       issues: [{ code: "WrongTree", detail: expect.stringContaining("observed") }],
@@ -336,8 +449,14 @@ describe("releases.checkRepository", () => {
         sourceTree: headTree,
         releaseInput: fixture.releaseInput,
         payloads: [
-          { pluginId: fixture.alphaRelease.artifactBody.releaseBody.pluginId, payload: fixture.alphaPayload },
-          { pluginId: fixture.betaRelease.artifactBody.releaseBody.pluginId, payload: fixture.betaPayload },
+          {
+            pluginId: fixture.alphaRelease.artifactBody.releaseBody.pluginId,
+            payload: fixture.alphaPayload,
+          },
+          {
+            pluginId: fixture.betaRelease.artifactBody.releaseBody.pluginId,
+            payload: fixture.betaPayload,
+          },
         ],
         objectBindings: [],
         eligibilityBinding: "clean-binding-v1",
@@ -357,10 +476,15 @@ describe("releases.checkRepository", () => {
       }),
     });
 
-    await expect(client.releases.checkRepository({
-      kind: "clean",
-      contentWorkspace: cleanPolicy(),
-    }, testInvocation)).resolves.toEqual({
+    await expect(
+      client.releases.checkRepository(
+        {
+          kind: "clean",
+          contentWorkspace: cleanPolicy(),
+        },
+        testInvocation
+      )
+    ).resolves.toEqual({
       kind: "CleanRepositoryEligible",
       repositoryIdentity,
       refName: "refs/heads/main",
@@ -393,10 +517,15 @@ describe("releases.checkRepository", () => {
       }),
     });
 
-    await expect(client.releases.checkRepository({
-      kind: "staged",
-      contentWorkspace: stagedPolicy(),
-    }, testInvocation)).resolves.toEqual({
+    await expect(
+      client.releases.checkRepository(
+        {
+          kind: "staged",
+          contentWorkspace: stagedPolicy(),
+        },
+        testInvocation
+      )
+    ).resolves.toEqual({
       kind: "SourceChanged",
       mode: "staged",
       detail: "Git HEAD, ref, repository, or index changed during staged observation",
@@ -424,10 +553,15 @@ describe("releases.checkRepository", () => {
       }),
     });
 
-    await expect(client.releases.checkRepository({
-      kind: "staged",
-      contentWorkspace: stagedPolicy(),
-    }, testInvocation)).resolves.toEqual({
+    await expect(
+      client.releases.checkRepository(
+        {
+          kind: "staged",
+          contentWorkspace: stagedPolicy(),
+        },
+        testInvocation
+      )
+    ).resolves.toEqual({
       kind: "StagedRepositoryEligible",
       repositoryIdentity,
       refName: "refs/heads/main",
@@ -442,19 +576,24 @@ describe("releases.checkRepository", () => {
 
 async function expectStagedTreeClosureRefusal(
   treeEntries: readonly ReturnType<typeof stagedEntry>[],
-  expectedDetail: string,
+  expectedDetail: string
 ): Promise<void> {
   const fixture = productFixture();
   const releaseInput = stagedEntry(
     releaseInputPath,
     "1".repeat(40),
     0o644,
-    canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput),
+    canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput)
   );
   const stagedEntries = [...treeEntries, releaseInput];
-  const indexEntries = bytes(stagedEntries.map((entry) => (
-    `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
-  )).join(""));
+  const indexEntries = bytes(
+    stagedEntries
+      .map(
+        (entry) =>
+          `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
+      )
+      .join("")
+  );
   const binding = Object.freeze({ anchor: stagedAnchor(), indexEntries });
   let observations = 0;
   let writes = 0;
@@ -495,10 +634,15 @@ async function expectStagedTreeClosureRefusal(
     }),
   });
 
-  await expect(client.releases.checkRepository({
-    kind: "staged",
-    contentWorkspace: stagedPolicy(),
-  }, testInvocation)).resolves.toEqual({
+  await expect(
+    client.releases.checkRepository(
+      {
+        kind: "staged",
+        contentWorkspace: stagedPolicy(),
+      },
+      testInvocation
+    )
+  ).resolves.toEqual({
     kind: "RepositoryIneligible",
     mode: "staged",
     issues: [{ code: "PayloadMismatch", detail: expectedDetail }],
@@ -513,36 +657,65 @@ function validStagedObservationResults(): readonly [
 ] {
   const fixture = productFixture();
   const entries = [
-    stagedEntry(releaseInputPath, "1".repeat(40), 0o644, canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput)),
-    stagedEntry("plugins/agent/alpha/agents/alpha.md", "2".repeat(40), 0o644, bytes("agent alpha\n")),
-    stagedEntry("plugins/agent/alpha/skills/alpha/SKILL.md", "3".repeat(40), 0o644, bytes("alpha\n")),
-    stagedEntry("plugins/agent/beta/scripts/check.sh", "4".repeat(40), 0o755, bytes("#!/bin/sh\nexit 0\n")),
+    stagedEntry(
+      releaseInputPath,
+      "1".repeat(40),
+      0o644,
+      canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput)
+    ),
+    stagedEntry(
+      "plugins/agent/alpha/agents/alpha.md",
+      "2".repeat(40),
+      0o644,
+      bytes("agent alpha\n")
+    ),
+    stagedEntry(
+      "plugins/agent/alpha/skills/alpha/SKILL.md",
+      "3".repeat(40),
+      0o644,
+      bytes("alpha\n")
+    ),
+    stagedEntry(
+      "plugins/agent/beta/scripts/check.sh",
+      "4".repeat(40),
+      0o755,
+      bytes("#!/bin/sh\nexit 0\n")
+    ),
     stagedEntry("plugins/agent/beta/skills/beta/SKILL.md", "5".repeat(40), 0o644, bytes("beta\n")),
   ].sort((left, right) => left.path.localeCompare(right.path));
-  const indexEntries = bytes(entries.map((entry) => (
-    `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
-  )).join(""));
+  const indexEntries = bytes(
+    entries
+      .map(
+        (entry) =>
+          `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
+      )
+      .join("")
+  );
   const binding = Object.freeze({ anchor: stagedAnchor(), indexEntries });
-  const observe = (selected: readonly typeof entries[number][]): StagedIndexObservationResult => Object.freeze({
-    kind: "Observed",
-    observation: Object.freeze({
-      opening: binding,
-      blobs: Object.freeze(selected.map((entry) => Object.freeze({
-        objectId: entry.objectId,
-        bytes: entry.bytes,
-      }))),
-      closing: binding,
-    }),
-  });
+  const observe = (selected: readonly (typeof entries)[number][]): StagedIndexObservationResult =>
+    Object.freeze({
+      kind: "Observed",
+      observation: Object.freeze({
+        opening: binding,
+        blobs: Object.freeze(
+          selected.map((entry) =>
+            Object.freeze({
+              objectId: entry.objectId,
+              bytes: entry.bytes,
+            })
+          )
+        ),
+        closing: binding,
+      }),
+    });
   const releaseInputEntry = entries.find((entry) => entry.path === releaseInputPath);
   if (releaseInputEntry === undefined) throw new Error("Missing staged release-input fixture");
-  return Object.freeze([
-    observe([releaseInputEntry]),
-    observe(entries),
-  ]);
+  return Object.freeze([observe([releaseInputEntry]), observe(entries)]);
 }
 
-function sourceChangedObservation(result: StagedIndexObservationResult): StagedIndexObservationResult {
+function sourceChangedObservation(
+  result: StagedIndexObservationResult
+): StagedIndexObservationResult {
   if (result.kind !== "Observed") throw new Error("Expected observed staged fixture");
   return Object.freeze({
     kind: "Observed",
@@ -559,7 +732,7 @@ function sourceChangedObservation(result: StagedIndexObservationResult): StagedI
 
 function contentWorkspaceFailure(
   reason: "Aliased" | "InvalidInput" | "LimitExceeded",
-  detail: string,
+  detail: string
 ): ContentWorkspaceFailure {
   return Object.freeze({
     _tag: "ContentWorkspaceFailure",
@@ -604,12 +777,7 @@ function stagedAnchor(): GitWorkspaceAnchor {
   };
 }
 
-function stagedEntry(
-  path: string,
-  objectId: string,
-  mode: 0o644 | 0o755,
-  entryBytes: Uint8Array,
-) {
+function stagedEntry(path: string, objectId: string, mode: 0o644 | 0o755, entryBytes: Uint8Array) {
   return Object.freeze({ path, objectId, mode, bytes: entryBytes });
 }
 
@@ -619,35 +787,46 @@ function cleanContentWorkspace(
     onInspect?: () => void;
     onStagedObserve?: () => void;
     treeAfterFirstInspect?: string;
-  }> = {},
+  }> = {}
 ): ContentWorkspaceNodeAsyncPort {
   const blobs = new Map<string, Uint8Array>();
-  const entries: Array<Readonly<{
-    path: string;
-    mode: 0o644 | 0o755;
-    objectId: string;
-  }>> = [];
+  const entries: Array<
+    Readonly<{
+      path: string;
+      mode: 0o644 | 0o755;
+      objectId: string;
+    }>
+  > = [];
   const addBlob = (path: string, mode: 0o644 | 0o755, value: Uint8Array) => {
     const objectId = gitBlobId(value);
     blobs.set(objectId, value);
     entries.push(Object.freeze({ path, mode, objectId }));
   };
 
-  addBlob(releaseInputPath, 0o644, canonicalSerializeAgentPluginReleaseInput(eligible.snapshot.releaseInput));
+  addBlob(
+    releaseInputPath,
+    0o644,
+    canonicalSerializeAgentPluginReleaseInput(eligible.snapshot.releaseInput)
+  );
   for (const member of eligible.snapshot.payloads) {
     for (const entry of member.payload.entries) {
       addBlob(
         `${pluginRoot}/${member.pluginId}/${entry.path}`,
         entry.mode,
-        payloadEntryBytes(entry),
+        payloadEntryBytes(entry)
       );
     }
   }
   entries.sort((left, right) => left.path.localeCompare(right.path));
   const byPath = new Map(entries.map((entry) => [entry.path, entry]));
-  const treeBytes = bytes(entries.map((entry) => (
-    `${entry.mode === 0o755 ? "100755" : "100644"} blob ${entry.objectId}\t${entry.path}\0`
-  )).join(""));
+  const treeBytes = bytes(
+    entries
+      .map(
+        (entry) =>
+          `${entry.mode === 0o755 ? "100755" : "100644"} blob ${entry.objectId}\t${entry.path}\0`
+      )
+      .join("")
+  );
   let inspections = 0;
 
   const contentWorkspace: ContentWorkspaceNodeAsyncPort = {
@@ -701,7 +880,8 @@ function cleanContentWorkspace(
 }
 
 function rawStagedObservation(result: StagedIndexObservationResult): GitStagedIndexObservation {
-  if (result.kind !== "Observed") throw new Error(`Expected observed staged result, received ${result.kind}`);
+  if (result.kind !== "Observed")
+    throw new Error(`Expected observed staged result, received ${result.kind}`);
   return Object.freeze({
     opening: result.observation.opening,
     blobs: result.observation.blobs,

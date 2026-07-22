@@ -27,11 +27,11 @@ export interface VendorRecordDecodeFailure {
 
 export type VendorRecordDecodeResult<T> =
   | Readonly<{
-    ok: true;
-    value: T;
-    exactBytes: Uint8Array;
-    contentDigest: string;
-  }>
+      ok: true;
+      value: T;
+      exactBytes: Uint8Array;
+      contentDigest: string;
+    }>
   | Readonly<{ ok: false; failure: VendorRecordDecodeFailure }>;
 
 export interface VendorPayloadDigestEntry {
@@ -41,38 +41,36 @@ export interface VendorPayloadDigestEntry {
 }
 
 export function decodeVendorSourceDeclaration(
-  bytes: unknown,
+  bytes: unknown
 ): VendorRecordDecodeResult<VendorSourceDeclaration> {
   return decodeRecord(
     bytes,
     "vendor declaration",
     VendorSourceDeclarationSchema,
     freezeDeclaration,
-    encodeVendorSourceDeclaration,
+    encodeVendorSourceDeclaration
   );
 }
 
 export function decodeVendorProvenanceRecord(
-  bytes: unknown,
+  bytes: unknown
 ): VendorRecordDecodeResult<VendorProvenanceRecord> {
   return decodeRecord(
     bytes,
     "vendor provenance",
     VendorProvenanceRecordSchema,
     freezeProvenance,
-    encodeVendorProvenanceRecord,
+    encodeVendorProvenanceRecord
   );
 }
 
-export function decodeVendorLockRecord(
-  bytes: unknown,
-): VendorRecordDecodeResult<VendorLockRecord> {
+export function decodeVendorLockRecord(bytes: unknown): VendorRecordDecodeResult<VendorLockRecord> {
   return decodeRecord(
     bytes,
     "vendor lock",
     VendorLockRecordSchema,
     freezeLock,
-    encodeVendorLockRecord,
+    encodeVendorLockRecord
   );
 }
 
@@ -115,11 +113,15 @@ export function encodeVendorLockRecord(value: VendorLockRecord): Uint8Array {
 }
 
 export function vendorPayloadDigest(entries: readonly VendorPayloadDigestEntry[]): string {
-  return contentDigest(canonicalJsonLine(entries.map((entry) => ({
-    blob: entry.blob,
-    mode: entry.mode,
-    path: entry.path,
-  }))));
+  return contentDigest(
+    canonicalJsonLine(
+      entries.map((entry) => ({
+        blob: entry.blob,
+        mode: entry.mode,
+        path: entry.path,
+      }))
+    )
+  );
 }
 
 function decodeRecord<const Schema extends TSchema, ValueType>(
@@ -127,7 +129,7 @@ function decodeRecord<const Schema extends TSchema, ValueType>(
   label: string,
   schema: Schema,
   freeze: (value: Static<Schema>) => ValueType,
-  encode: (value: ValueType) => Uint8Array,
+  encode: (value: ValueType) => Uint8Array
 ): VendorRecordDecodeResult<ValueType> {
   const decoded = decodeCanonicalJson(bytes, label, MAX_VENDOR_RECORD_BYTES);
   if (!decoded.ok) {
@@ -149,11 +151,15 @@ function decodeRecord<const Schema extends TSchema, ValueType>(
   });
 }
 
-function freezeDeclaration(value: Static<typeof VendorSourceDeclarationSchema>): VendorSourceDeclaration {
+function freezeDeclaration(
+  value: Static<typeof VendorSourceDeclarationSchema>
+): VendorSourceDeclaration {
   return Object.freeze({ ...value });
 }
 
-function freezeProvenance(value: Static<typeof VendorProvenanceRecordSchema>): VendorProvenanceRecord {
+function freezeProvenance(
+  value: Static<typeof VendorProvenanceRecordSchema>
+): VendorProvenanceRecord {
   return Object.freeze({
     ...value,
     admitted: freezeIdentity(value.admitted),
@@ -165,7 +171,9 @@ function freezeLock(value: Static<typeof VendorLockRecordSchema>): VendorLockRec
   return Object.freeze({ ...value, admitted: freezeIdentity(value.admitted) });
 }
 
-function freezeIdentity(value: Static<typeof VendorLockRecordSchema>["admitted"]): VendorSourceIdentity {
+function freezeIdentity(
+  value: Static<typeof VendorLockRecordSchema>["admitted"]
+): VendorSourceIdentity {
   return Object.freeze({ ...value });
 }
 
@@ -179,6 +187,9 @@ function identityValue(value: VendorSourceIdentity): CanonicalJsonValue {
   };
 }
 
-function failed(kind: VendorRecordDecodeFailure["kind"], detail: string): VendorRecordDecodeResult<never> {
+function failed(
+  kind: VendorRecordDecodeFailure["kind"],
+  detail: string
+): VendorRecordDecodeResult<never> {
   return Object.freeze({ ok: false, failure: Object.freeze({ kind, detail }) });
 }

@@ -21,11 +21,13 @@ describe("canonical native observation", () => {
       visibleSkills: Object.freeze(["local"]),
       visibleHooks: Object.freeze([]),
     });
-    const inventory = vi.fn(async () => Object.freeze({
-      marketplace: Object.freeze({ kind: "absent" as const }),
-      members: Object.freeze([]),
-      standaloneExposures: Object.freeze([standalone]),
-    }));
+    const inventory = vi.fn(async () =>
+      Object.freeze({
+        marketplace: Object.freeze({ kind: "absent" as const }),
+        members: Object.freeze([]),
+        standaloneExposures: Object.freeze([standalone]),
+      })
+    );
 
     const observed = await createCanonicalNativeObserver({
       provider: "codex",
@@ -84,17 +86,19 @@ describe("canonical native observation", () => {
 
     expect(observed).toEqual({
       ok: false,
-      issues: [expect.objectContaining({
-        code: "VISIBILITY_FAILED",
-        path: "target.inventory",
-      })],
+      issues: [
+        expect.objectContaining({
+          code: "VISIBILITY_FAILED",
+          path: "target.inventory",
+        }),
+      ],
     });
     expect(inventory).toHaveBeenCalledOnce();
   });
 });
 
 function bridge(
-  inventory: NativeProviderInventoryBridge["inventory"],
+  inventory: NativeProviderInventoryBridge["inventory"]
 ): NativeProviderInventoryBridge {
   return Object.freeze({ inventory });
 }

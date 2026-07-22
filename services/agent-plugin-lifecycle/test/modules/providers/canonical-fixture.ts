@@ -37,13 +37,9 @@ export function desiredStateFixture(): DesiredStateFixture {
   const claude = mustProjection(
     "claude",
     mustAdapterProtocol("claude-native-adapter@v1"),
-    snapshot,
+    snapshot
   );
-  const codex = mustProjection(
-    "codex",
-    mustAdapterProtocol("codex-native-adapter@v1"),
-    snapshot,
-  );
+  const codex = mustProjection("codex", mustAdapterProtocol("codex-native-adapter@v1"), snapshot);
   const body = product.releaseSet.body;
   const selectedProjections: CanonicalChannelSelection["projections"] = [
     Object.freeze({
@@ -83,7 +79,7 @@ export function desiredStateFixture(): DesiredStateFixture {
 function mustProjection(
   provider: "claude" | "codex",
   adapterProtocol: AdapterProtocol,
-  snapshot: CompleteSetSnapshot,
+  snapshot: CompleteSetSnapshot
 ): AgentProviderProjection {
   const rendered = renderCompleteProjection(provider, adapterProtocol, snapshot);
   if (!rendered.ok) throw new Error("fixture projection must render");
@@ -101,11 +97,15 @@ function releaseSnapshot(release: AgentPluginRelease): VerifiedReleaseArtifactV1
     kind: "release",
     ref: createReleaseArtifactRef(release.releaseDigest, release.artifactDigest),
     release,
-    files: Object.freeze(release.artifactBody.payloadEntries.map((entry) => Object.freeze({
-      path: entry.path,
-      mode: entry.mode,
-      contentDigest: entry.contentDigest,
-      bytes: payloadEntryBytes(entry),
-    }))),
+    files: Object.freeze(
+      release.artifactBody.payloadEntries.map((entry) =>
+        Object.freeze({
+          path: entry.path,
+          mode: entry.mode,
+          contentDigest: entry.contentDigest,
+          bytes: payloadEntryBytes(entry),
+        })
+      )
+    ),
   });
 }

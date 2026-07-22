@@ -28,7 +28,7 @@ export interface FlatProjectionRecordCollection {
   read(key: ProjectionRecordKey): Promise<DeploymentResult<ProjectionRecordObservation>>;
   publish(
     key: ProjectionRecordKey,
-    bytes: Uint8Array,
+    bytes: Uint8Array
   ): Promise<DeploymentResult<ProjectionRecordPublication>>;
 }
 
@@ -41,10 +41,10 @@ export interface ImmutableProviderTreeFile {
 export type ImmutableProviderTreeKey =
   | Readonly<{ kind: "member"; memberFingerprint: ProviderMemberFingerprint }>
   | Readonly<{
-    kind: "marketplace";
-    projectionDigest: MarketplaceProjectionDigest;
-    sourceDigest: ProviderSourceDigest;
-  }>;
+      kind: "marketplace";
+      projectionDigest: MarketplaceProjectionDigest;
+      sourceDigest: ProviderSourceDigest;
+    }>;
 
 export type ImmutableProviderTreeObservation =
   | Readonly<{ kind: "absent" }>
@@ -62,6 +62,6 @@ export interface ImmutableProviderTreeCollection {
   read(key: ImmutableProviderTreeKey): Promise<DeploymentResult<ImmutableProviderTreeObservation>>;
   publish(
     key: ImmutableProviderTreeKey,
-    files: readonly ImmutableProviderTreeFile[],
+    files: readonly ImmutableProviderTreeFile[]
   ): Promise<DeploymentResult<ImmutableProviderTreePublication>>;
 }

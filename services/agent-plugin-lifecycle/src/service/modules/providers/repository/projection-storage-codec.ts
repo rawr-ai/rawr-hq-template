@@ -6,7 +6,13 @@ import {
   type ReleaseRelativePath,
 } from "../../../shared/release";
 
-import { canonicalBytes, canonicalDigest, compareCanonical, equalBytes, type CanonicalValue } from "../model/helpers/canonical";
+import {
+  canonicalBytes,
+  canonicalDigest,
+  compareCanonical,
+  equalBytes,
+  type CanonicalValue,
+} from "../model/helpers/canonical";
 import type { ProviderMarketplaceRegistration } from "../model/policy/marketplace";
 import {
   memberValue,
@@ -43,10 +49,12 @@ export function validateProjectionPayload(projection: AgentProviderProjection): 
   }
   for (const member of projection.members) validateProjectionMember(member);
   for (const file of projection.marketplace.files) validatePayloadFile(file);
-  if (canonicalDigest(
-    "ps1_",
-    providerSourceTreeValue(projection.marketplace.files, projection.members),
-  ) !== projection.marketplace.sourceDigest) {
+  if (
+    canonicalDigest(
+      "ps1_",
+      providerSourceTreeValue(projection.marketplace.files, projection.members)
+    ) !== projection.marketplace.sourceDigest
+  ) {
     throw new Error("Provider projection source digest is invalid");
   }
 }
@@ -74,7 +82,7 @@ export function projectionManifestRecordBytes(projection: AgentProviderProjectio
 
 export function decodeProjectionManifest(
   bytes: Uint8Array,
-  projectionDigest: AgentProviderProjection["projectionDigest"],
+  projectionDigest: AgentProviderProjection["projectionDigest"]
 ): DecodedProjectionManifest {
   const decoded = decodeCanonicalRecord(bytes, "Projection manifest");
   requireExactKeys(decoded, [
@@ -88,18 +96,23 @@ export function decodeProjectionManifest(
   const members = requireArray(projection.members, "Projection manifest members");
   const memberFingerprints = requireArray(
     decoded.memberFingerprints,
-    "Projection manifest member fingerprints",
-  ).map((value, index) => requireFingerprint(value, `Projection manifest member fingerprints[${index}]`));
+    "Projection manifest member fingerprints"
+  ).map((value, index) =>
+    requireFingerprint(value, `Projection manifest member fingerprints[${index}]`)
+  );
   const projectedFingerprints = members.map((value, index) => {
     const member = requireRecord(value, `Projection manifest member[${index}]`);
-    return requireFingerprint(member.memberFingerprint, `Projection manifest member[${index}].memberFingerprint`);
+    return requireFingerprint(
+      member.memberFingerprint,
+      `Projection manifest member[${index}].memberFingerprint`
+    );
   });
   if (
-    decoded.protocol !== MANIFEST_RECORD_PROTOCOL
-    || decoded.schemaVersion !== 1
-    || decoded.projectionDigest !== projectionDigest
-    || canonicalDigest("ap1_", projection as CanonicalValue) !== projectionDigest
-    || !sameStrings(memberFingerprints, projectedFingerprints)
+    decoded.protocol !== MANIFEST_RECORD_PROTOCOL ||
+    decoded.schemaVersion !== 1 ||
+    decoded.projectionDigest !== projectionDigest ||
+    canonicalDigest("ap1_", projection as CanonicalValue) !== projectionDigest ||
+    !sameStrings(memberFingerprints, projectedFingerprints)
   ) {
     throw new Error("Projection manifest does not bind its semantic projection");
   }
@@ -108,7 +121,7 @@ export function decodeProjectionManifest(
 
 export function decodeProjectionMemberRecord(
   bytes: Uint8Array,
-  memberFingerprint: ProviderMemberFingerprint,
+  memberFingerprint: ProviderMemberFingerprint
 ): DecodedProjectionMemberRecord {
   const decoded = decodeCanonicalRecord(bytes, "Projection member record");
   requireExactKeys(decoded, ["member", "memberFingerprint", "protocol", "schemaVersion"]);
@@ -125,23 +138,26 @@ export function decodeProjectionMemberRecord(
   ]);
   const { memberFingerprint: _memberFingerprint, ...fingerprintBody } = member;
   if (
-    decoded.protocol !== MEMBER_RECORD_PROTOCOL
-    || decoded.schemaVersion !== 1
-    || decoded.memberFingerprint !== memberFingerprint
-    || member.memberFingerprint !== memberFingerprint
-    || canonicalDigest("pm1_", fingerprintBody as CanonicalValue) !== memberFingerprint
+    decoded.protocol !== MEMBER_RECORD_PROTOCOL ||
+    decoded.schemaVersion !== 1 ||
+    decoded.memberFingerprint !== memberFingerprint ||
+    member.memberFingerprint !== memberFingerprint ||
+    canonicalDigest("pm1_", fingerprintBody as CanonicalValue) !== memberFingerprint
   ) {
     throw new Error("Projection member record does not bind its semantic fingerprint");
   }
   const files = requireArray(member.files, "Projection member file table").map((value, index) => {
     const file = requireRecord(value, `Projection member file[${index}]`);
     requireExactKeys(file, ["contentDigest", "mode", "path"]);
-    const parsedPath = parseReleaseRelativePath(file.path, `projection.member.files[${index}].path`);
+    const parsedPath = parseReleaseRelativePath(
+      file.path,
+      `projection.member.files[${index}].path`
+    );
     if (
-      !parsedPath.ok
-      || (file.mode !== 0o644 && file.mode !== 0o755)
-      || typeof file.contentDigest !== "string"
-      || !/^sha256_[0-9a-f]{64}$/u.test(file.contentDigest)
+      !parsedPath.ok ||
+      (file.mode !== 0o644 && file.mode !== 0o755) ||
+      typeof file.contentDigest !== "string" ||
+      !/^sha256_[0-9a-f]{64}$/u.test(file.contentDigest)
     ) {
       throw new Error("Projection member record has an invalid file table");
     }
@@ -154,18 +170,24 @@ export function decodeProjectionMemberRecord(
   return Object.freeze({ memberFingerprint, member, files: Object.freeze(files) });
 }
 
-export function memberTreeFiles(member: ProviderProjectionMember): readonly ImmutableProviderTreeFile[] {
+export function memberTreeFiles(
+  member: ProviderProjectionMember
+): readonly ImmutableProviderTreeFile[] {
   validateProjectionMember(member);
-  return Object.freeze(member.files.map((file) => Object.freeze({
-    path: file.path,
-    mode: file.mode,
-    bytes: new Uint8Array(file.bytes),
-  })));
+  return Object.freeze(
+    member.files.map((file) =>
+      Object.freeze({
+        path: file.path,
+        mode: file.mode,
+        bytes: new Uint8Array(file.bytes),
+      })
+    )
+  );
 }
 
 export function validateMemberTree(
   record: DecodedProjectionMemberRecord,
-  files: readonly ImmutableProviderTreeFile[],
+  files: readonly ImmutableProviderTreeFile[]
 ): void {
   const actual = canonicalTree(files);
   if (actual.length !== record.files.length) {
@@ -174,10 +196,10 @@ export function validateMemberTree(
   for (const [index, expected] of record.files.entries()) {
     const observed = actual[index];
     if (
-      observed === undefined
-      || observed.path !== expected.path
-      || observed.mode !== expected.mode
-      || contentDigest(observed.bytes) !== expected.contentDigest
+      observed === undefined ||
+      observed.path !== expected.path ||
+      observed.mode !== expected.mode ||
+      contentDigest(observed.bytes) !== expected.contentDigest
     ) {
       throw new Error(`Projection member tree differs at ${expected.path}`);
     }
@@ -186,32 +208,38 @@ export function validateMemberTree(
 
 export function marketplaceTreeFiles(
   registration: ProviderMarketplaceRegistration,
-  memberTrees: ReadonlyMap<ProviderMemberFingerprint, readonly ImmutableProviderTreeFile[]>,
+  memberTrees: ReadonlyMap<ProviderMemberFingerprint, readonly ImmutableProviderTreeFile[]>
 ): readonly ImmutableProviderTreeFile[] {
   const files: ImmutableProviderTreeFile[] = [];
   const marketplace = renderProviderMarketplaceManifestFile(
     registration.provider,
     registration.marketplaceIdentity,
-    registration.members,
+    registration.members
   );
   files.push(treeFile(marketplace.path, marketplace.bytes, marketplace.mode));
-  files.push(treeFile(".rawr/marketplace.json", canonicalBytes({
-    protocol: MARKETPLACE_SOURCE_PROTOCOL,
-    provider: registration.provider,
-    marketplaceIdentity: registration.marketplaceIdentity,
-    projectionDigest: registration.projectionDigest,
-    sourceDigest: registration.sourceDigest,
-    members: registration.members.map((member) => ({
-      pluginId: member.pluginId,
-      nativeIdentity: member.nativeIdentity,
-      providerSourceIdentity: member.providerSourceIdentity,
-      sourceProjectionDigest: member.sourceProjectionDigest,
-      memberFingerprint: member.memberFingerprint,
-    })),
-  })));
+  files.push(
+    treeFile(
+      ".rawr/marketplace.json",
+      canonicalBytes({
+        protocol: MARKETPLACE_SOURCE_PROTOCOL,
+        provider: registration.provider,
+        marketplaceIdentity: registration.marketplaceIdentity,
+        projectionDigest: registration.projectionDigest,
+        sourceDigest: registration.sourceDigest,
+        members: registration.members.map((member) => ({
+          pluginId: member.pluginId,
+          nativeIdentity: member.nativeIdentity,
+          providerSourceIdentity: member.providerSourceIdentity,
+          sourceProjectionDigest: member.sourceProjectionDigest,
+          memberFingerprint: member.memberFingerprint,
+        })),
+      })
+    )
+  );
   for (const member of registration.members) {
     const tree = memberTrees.get(member.memberFingerprint);
-    if (tree === undefined) throw new Error(`Marketplace member tree is absent: ${member.pluginId}`);
+    if (tree === undefined)
+      throw new Error(`Marketplace member tree is absent: ${member.pluginId}`);
     for (const file of tree) {
       files.push(treeFile(`plugins/${member.pluginId}/${file.path}`, file.bytes, file.mode));
     }
@@ -221,17 +249,22 @@ export function marketplaceTreeFiles(
 
 export function sameTree(
   left: readonly ImmutableProviderTreeFile[],
-  right: readonly ImmutableProviderTreeFile[],
+  right: readonly ImmutableProviderTreeFile[]
 ): boolean {
   const a = canonicalTree(left);
   const b = canonicalTree(right);
-  return a.length === b.length && a.every((file, index) => {
-    const other = b[index];
-    return other !== undefined
-      && file.path === other.path
-      && file.mode === other.mode
-      && equalBytes(file.bytes, other.bytes);
-  });
+  return (
+    a.length === b.length &&
+    a.every((file, index) => {
+      const other = b[index];
+      return (
+        other !== undefined &&
+        file.path === other.path &&
+        file.mode === other.mode &&
+        equalBytes(file.bytes, other.bytes)
+      );
+    })
+  );
 }
 
 function validateProjectionMember(member: ProviderProjectionMember): void {
@@ -244,12 +277,14 @@ function validateProjectionMember(member: ProviderProjectionMember): void {
   for (const file of member.files) validatePayloadFile(file);
 }
 
-function validatePayloadFile(file: Readonly<{ path: string; mode: number; contentDigest: string; bytes: Uint8Array }>): void {
+function validatePayloadFile(
+  file: Readonly<{ path: string; mode: number; contentDigest: string; bytes: Uint8Array }>
+): void {
   const parsed = parseReleaseRelativePath(file.path, "providerPackage.path");
   if (
-    !parsed.ok
-    || (file.mode !== 0o644 && file.mode !== 0o755)
-    || contentDigest(file.bytes) !== file.contentDigest
+    !parsed.ok ||
+    (file.mode !== 0o644 && file.mode !== 0o755) ||
+    contentDigest(file.bytes) !== file.contentDigest
   ) {
     throw new Error(`Provider package file is invalid: ${file.path}`);
   }
@@ -269,14 +304,22 @@ function decodeCanonicalRecord(bytes: Uint8Array, label: string): Record<string,
   return record;
 }
 
-function canonicalTree(files: readonly ImmutableProviderTreeFile[]): readonly ImmutableProviderTreeFile[] {
-  const canonical = files.map((file) => {
-    const path = parseReleaseRelativePath(file.path, "providerTree.path");
-    if (!path.ok || (file.mode !== 0o644 && file.mode !== 0o755)) {
-      throw new Error(`Provider tree file is invalid: ${file.path}`);
-    }
-    return Object.freeze({ path: path.value, mode: file.mode, bytes: new Uint8Array(file.bytes) });
-  }).sort((left, right) => compareCanonical(left.path, right.path));
+function canonicalTree(
+  files: readonly ImmutableProviderTreeFile[]
+): readonly ImmutableProviderTreeFile[] {
+  const canonical = files
+    .map((file) => {
+      const path = parseReleaseRelativePath(file.path, "providerTree.path");
+      if (!path.ok || (file.mode !== 0o644 && file.mode !== 0o755)) {
+        throw new Error(`Provider tree file is invalid: ${file.path}`);
+      }
+      return Object.freeze({
+        path: path.value,
+        mode: file.mode,
+        bytes: new Uint8Array(file.bytes),
+      });
+    })
+    .sort((left, right) => compareCanonical(left.path, right.path));
   for (let index = 1; index < canonical.length; index += 1) {
     if (canonical[index - 1]?.path === canonical[index]?.path) {
       throw new Error(`Provider tree contains duplicate path: ${canonical[index]?.path}`);
@@ -288,7 +331,7 @@ function canonicalTree(files: readonly ImmutableProviderTreeFile[]): readonly Im
 function treeFile(
   pathValue: string,
   bytes: Uint8Array,
-  mode: NormalizedFileMode = 0o644,
+  mode: NormalizedFileMode = 0o644
 ): ImmutableProviderTreeFile {
   const path = parseReleaseRelativePath(pathValue, "providerTree.path");
   if (!path.ok) throw new Error(`Provider tree path is invalid: ${pathValue}`);

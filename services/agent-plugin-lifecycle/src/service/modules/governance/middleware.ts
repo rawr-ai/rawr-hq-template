@@ -21,11 +21,13 @@ export const repositories = createServiceProvider<{
   };
 }>().middleware<{
   git: ReturnType<typeof createResourceExactGitReader>;
-}>(async ({ context, next }) => next({
-  git: createResourceExactGitReader({
-    contentWorkspace: context.deps.contentWorkspace,
-  }),
-}));
+}>(async ({ context, next }) =>
+  next({
+    git: createResourceExactGitReader({
+      contentWorkspace: context.deps.contentWorkspace,
+    }),
+  })
+);
 
 export const observability = createServiceObservabilityMiddleware({
   spanAttributes: ({ context }) => ({

@@ -67,9 +67,12 @@ export interface PathlessTargetRecordCollection {
   read(key: TargetRecordKey): Promise<DeploymentResult<TargetRecordObservation>>;
   capture(key: TargetRecordKey): Promise<DeploymentResult<TargetRecordCapture>>;
   release(capture: TargetRecordCapture): Promise<DeploymentResult<null>>;
-  write(input: TargetRecordPlanInput & Readonly<{
-    mutation: TargetRecordMutation;
-  }>): Promise<DeploymentResult<TargetRecordWriteObservation>>;
+  write(
+    input: TargetRecordPlanInput &
+      Readonly<{
+        mutation: TargetRecordMutation;
+      }>
+  ): Promise<DeploymentResult<TargetRecordWriteObservation>>;
   restore(input: TargetRecordPlanInput): Promise<DeploymentResult<TargetRecordRestoreObservation>>;
   settle(input: TargetRecordPlanInput): Promise<DeploymentResult<null>>;
   retainUnreleased(capture: TargetRecordCapture): void;

@@ -6,10 +6,13 @@ import { createLifecycleTestClient, testInvocation } from "../../support/client"
 describe("current-main record procedure", () => {
   it("encodes and validates v2 records without consulting lifecycle ports", async () => {
     const client = createLifecycleTestClient();
-    const encoded = await client.governance.currentMainRecord({
-      kind: "encode-body",
-      body: bodyFixture(),
-    }, testInvocation);
+    const encoded = await client.governance.currentMainRecord(
+      {
+        kind: "encode-body",
+        body: bodyFixture(),
+      },
+      testInvocation
+    );
 
     expect(encoded).toMatchObject({
       ok: true,
@@ -17,10 +20,15 @@ describe("current-main record procedure", () => {
     });
     if (!encoded.ok) throw new Error(encoded.failure.message);
 
-    await expect(client.governance.currentMainRecord({
-      kind: "validate-envelope",
-      bytes: encoded.value.bytes,
-    }, testInvocation)).resolves.toEqual(encoded);
+    await expect(
+      client.governance.currentMainRecord(
+        {
+          kind: "validate-envelope",
+          bytes: encoded.value.bytes,
+        },
+        testInvocation
+      )
+    ).resolves.toEqual(encoded);
   });
 });
 

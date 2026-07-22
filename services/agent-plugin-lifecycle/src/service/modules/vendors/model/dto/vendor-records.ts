@@ -52,8 +52,15 @@ export const SourceIdSchema = Type.String({
 });
 export const GitObjectIdSchema = Type.String({ pattern: GIT_OBJECT_ID_PATTERN });
 export const Sha256DigestSchema = Type.String({ pattern: SHA256_DIGEST_PATTERN });
-export const PluginIdSchema = Type.String({ minLength: 1, maxLength: 128, pattern: PLUGIN_ID_PATTERN });
-export const PositiveCurationRevisionSchema = Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER });
+export const PluginIdSchema = Type.String({
+  minLength: 1,
+  maxLength: 128,
+  pattern: PLUGIN_ID_PATTERN,
+});
+export const PositiveCurationRevisionSchema = Type.Integer({
+  minimum: 1,
+  maximum: Number.MAX_SAFE_INTEGER,
+});
 export const SupportedBaselineSchema = Type.String({
   minLength: 1,
   maxLength: 4_096,
@@ -73,7 +80,7 @@ export const VendorSourceIdentitySchema = Type.Object(
     sourceTree: GitObjectIdSchema,
     payloadDigest: Sha256DigestSchema,
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const VendorRecordBindingSchema = Type.Object(
@@ -86,7 +93,7 @@ export const VendorRecordBindingSchema = Type.Object(
     ]),
     contentDigest: Sha256DigestSchema,
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const VendorSourceDeclarationSchema = Type.Object(
@@ -103,7 +110,7 @@ export const VendorSourceDeclarationSchema = Type.Object(
     curationRevision: PositiveCurationRevisionSchema,
     supportedBaseline: SupportedBaselineSchema,
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const VendorLockRecordSchema = Type.Object(
@@ -112,7 +119,7 @@ export const VendorLockRecordSchema = Type.Object(
     sourceId: SourceIdSchema,
     admitted: VendorSourceIdentitySchema,
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const VendorProvenanceRecordSchema = Type.Object(
@@ -131,7 +138,7 @@ export const VendorProvenanceRecordSchema = Type.Object(
       Type.Literal("review-required"),
     ]),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type VendorSourceIdentity = Readonly<Static<typeof VendorSourceIdentitySchema>>;

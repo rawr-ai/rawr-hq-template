@@ -105,11 +105,14 @@ export interface CreateAgentPluginReleaseInput {
 }
 
 export function createAgentPluginRelease(
-  input: unknown,
+  input: unknown
 ): ReleaseResult<AgentPluginRelease, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
   if (!isExactRecord(input, ["payload", "pluginId", "releaseInput", "source"], "release", issues)) {
-    return failure([issues[0] ?? issue("EXPECTED_OBJECT", "release", "Release construction input must be an object")]);
+    return failure([
+      issues[0] ??
+        issue("EXPECTED_OBJECT", "release", "Release construction input must be an object"),
+    ]);
   }
 
   const verifiedInput = verifyEmbeddedReleaseInput(input.releaseInput, issues);
@@ -117,35 +120,66 @@ export function createAgentPluginRelease(
   const source = parseReleaseSourceIdentity(input.source, "release.source", issues);
   const payload = verifyEmbeddedPayload(input.payload, issues);
 
-  const member = verifiedInput !== undefined && pluginId !== undefined
-    ? verifiedInput.body.members.find((candidate) => candidate.pluginId === pluginId)
-    : undefined;
+  const member =
+    verifiedInput !== undefined && pluginId !== undefined
+      ? verifiedInput.body.members.find((candidate) => candidate.pluginId === pluginId)
+      : undefined;
   if (verifiedInput !== undefined && pluginId !== undefined && member === undefined) {
-    issues.push(issue("MEMBER_NOT_DECLARED", "release.pluginId", "Plugin is not declared by the verified release input", {
-      actual: pluginId,
-    }));
+    issues.push(
+      issue(
+        "MEMBER_NOT_DECLARED",
+        "release.pluginId",
+        "Plugin is not declared by the verified release input",
+        {
+          actual: pluginId,
+        }
+      )
+    );
   }
   if (member !== undefined && payload !== undefined) {
     if (member.payload.payloadDigest !== payload.payloadDigest) {
-      issues.push(issue("PAYLOAD_DIGEST_MISMATCH", "release.payload.payloadDigest", "Payload differs from the member declaration", {
-        expected: member.payload.payloadDigest,
-        actual: payload.payloadDigest,
-      }));
+      issues.push(
+        issue(
+          "PAYLOAD_DIGEST_MISMATCH",
+          "release.payload.payloadDigest",
+          "Payload differs from the member declaration",
+          {
+            expected: member.payload.payloadDigest,
+            actual: payload.payloadDigest,
+          }
+        )
+      );
     }
     if (!sameManifest(member.payload.manifest, payload.manifest)) {
-      issues.push(issue("PAYLOAD_MANIFEST_MISMATCH", "release.payload.manifest", "Payload manifest differs from the member declaration"));
+      issues.push(
+        issue(
+          "PAYLOAD_MANIFEST_MISMATCH",
+          "release.payload.manifest",
+          "Payload manifest differs from the member declaration"
+        )
+      );
     }
   }
 
   const nonEmpty = asNonEmpty(sortReleaseIssues(issues));
   if (nonEmpty !== undefined) return failure(nonEmpty);
-  if (verifiedInput === undefined || pluginId === undefined || source === undefined || payload === undefined || member === undefined) {
-    return failure([issue("EXPECTED_OBJECT", "release", "Release validation did not produce a complete value")]);
+  if (
+    verifiedInput === undefined ||
+    pluginId === undefined ||
+    source === undefined ||
+    payload === undefined ||
+    member === undefined
+  ) {
+    return failure([
+      issue("EXPECTED_OBJECT", "release", "Release validation did not produce a complete value"),
+    ]);
   }
 
-  const aliases = Object.freeze(ownershipClaimsFor(verifiedInput.ownershipIndex, pluginId, "alias")
-    .map((claim) => claim.identity)
-    .sort(compareCanonicalText));
+  const aliases = Object.freeze(
+    ownershipClaimsFor(verifiedInput.ownershipIndex, pluginId, "alias")
+      .map((claim) => claim.identity)
+      .sort(compareCanonicalText)
+  );
   const body: AgentPluginReleaseBody = Object.freeze({
     schemaVersion: AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
     builderProtocolVersion: BUILDER_PROTOCOL_VERSION,
@@ -164,65 +198,121 @@ export function createAgentPluginRelease(
   const release = freezeRelease(body, payload);
   const byteLength = canonicalSerializeAgentPluginRelease(release).byteLength;
   if (byteLength > MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES) {
-    return failure([issue("ENVELOPE_TOO_LARGE", "release", "Release envelope exceeds its derived protocol bound", {
-      expected: MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
-      actual: byteLength,
-    })]);
+    return failure([
+      issue(
+        "ENVELOPE_TOO_LARGE",
+        "release",
+        "Release envelope exceeds its derived protocol bound",
+        {
+          expected: MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
+          actual: byteLength,
+        }
+      ),
+    ]);
   }
   return success(release);
 }
 
 export function verifyAgentPluginRelease(
-  input: unknown,
+  input: unknown
 ): ReleaseResult<AgentPluginRelease, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
-  if (!isExactRecord(
-    input,
-    ["artifactBody", "artifactDigest", "releaseDigest", "schemaVersion"],
-    "release",
-    issues,
-  )) {
-    return failure([issues[0] ?? issue("EXPECTED_OBJECT", "release", "Release envelope must be an object")]);
+  if (
+    !isExactRecord(
+      input,
+      ["artifactBody", "artifactDigest", "releaseDigest", "schemaVersion"],
+      "release",
+      issues
+    )
+  ) {
+    return failure([
+      issues[0] ?? issue("EXPECTED_OBJECT", "release", "Release envelope must be an object"),
+    ]);
   }
   if (input.schemaVersion !== AGENT_PLUGIN_RELEASE_SCHEMA_VERSION) {
-    issues.push(issue("INVALID_SCHEMA_VERSION", "release.schemaVersion", "Unsupported release envelope version", {
-      expected: AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
-      actual: typeof input.schemaVersion === "number" ? input.schemaVersion : String(input.schemaVersion),
-    }));
+    issues.push(
+      issue(
+        "INVALID_SCHEMA_VERSION",
+        "release.schemaVersion",
+        "Unsupported release envelope version",
+        {
+          expected: AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
+          actual:
+            typeof input.schemaVersion === "number"
+              ? input.schemaVersion
+              : String(input.schemaVersion),
+        }
+      )
+    );
   }
-  const claimedReleaseDigest = collect(parseReleaseDigest(input.releaseDigest, "release.releaseDigest"), issues);
-  const claimedArtifactDigest = collect(parseArtifactDigest(input.artifactDigest, "release.artifactDigest"), issues);
+  const claimedReleaseDigest = collect(
+    parseReleaseDigest(input.releaseDigest, "release.releaseDigest"),
+    issues
+  );
+  const claimedArtifactDigest = collect(
+    parseArtifactDigest(input.artifactDigest, "release.artifactDigest"),
+    issues
+  );
   const artifactBody = parseArtifactBody(input.artifactBody, "release.artifactBody", issues);
 
   if (artifactBody !== undefined && claimedReleaseDigest !== undefined) {
-    const computed = releaseDigest(canonicalSerializeAgentPluginReleaseBody(artifactBody.releaseBody));
+    const computed = releaseDigest(
+      canonicalSerializeAgentPluginReleaseBody(artifactBody.releaseBody)
+    );
     if (computed !== claimedReleaseDigest) {
-      issues.push(issue("RELEASE_DIGEST_MISMATCH", "release.releaseDigest", "Claimed release digest differs from the release body", {
-        expected: computed,
-        actual: claimedReleaseDigest,
-      }));
+      issues.push(
+        issue(
+          "RELEASE_DIGEST_MISMATCH",
+          "release.releaseDigest",
+          "Claimed release digest differs from the release body",
+          {
+            expected: computed,
+            actual: claimedReleaseDigest,
+          }
+        )
+      );
     }
     if (artifactBody.releaseDigest !== claimedReleaseDigest) {
-      issues.push(issue("RELEASE_DIGEST_MISMATCH", "release.artifactBody.releaseDigest", "Artifact body binds a different release digest", {
-        expected: claimedReleaseDigest,
-        actual: artifactBody.releaseDigest,
-      }));
+      issues.push(
+        issue(
+          "RELEASE_DIGEST_MISMATCH",
+          "release.artifactBody.releaseDigest",
+          "Artifact body binds a different release digest",
+          {
+            expected: claimedReleaseDigest,
+            actual: artifactBody.releaseDigest,
+          }
+        )
+      );
     }
   }
   if (artifactBody !== undefined && claimedArtifactDigest !== undefined) {
     const computed = artifactDigest(canonicalSerializeAgentPluginArtifactBody(artifactBody));
     if (computed !== claimedArtifactDigest) {
-      issues.push(issue("ARTIFACT_DIGEST_MISMATCH", "release.artifactDigest", "Claimed artifact digest differs from the exact artifact body", {
-        expected: computed,
-        actual: claimedArtifactDigest,
-      }));
+      issues.push(
+        issue(
+          "ARTIFACT_DIGEST_MISMATCH",
+          "release.artifactDigest",
+          "Claimed artifact digest differs from the exact artifact body",
+          {
+            expected: computed,
+            actual: claimedArtifactDigest,
+          }
+        )
+      );
     }
   }
 
   const nonEmpty = asNonEmpty(sortReleaseIssues(issues));
   if (nonEmpty !== undefined) return failure(nonEmpty);
-  if (claimedReleaseDigest === undefined || claimedArtifactDigest === undefined || artifactBody === undefined) {
-    return failure([issue("EXPECTED_OBJECT", "release", "Release validation did not produce a complete value")]);
+  if (
+    claimedReleaseDigest === undefined ||
+    claimedArtifactDigest === undefined ||
+    artifactBody === undefined
+  ) {
+    return failure([
+      issue("EXPECTED_OBJECT", "release", "Release validation did not produce a complete value"),
+    ]);
   }
   const release = Object.freeze({
     schemaVersion: AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
@@ -232,23 +322,39 @@ export function verifyAgentPluginRelease(
   }) as AgentPluginRelease;
   const byteLength = canonicalSerializeAgentPluginRelease(release).byteLength;
   if (byteLength > MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES) {
-    return failure([issue("ENVELOPE_TOO_LARGE", "release", "Release envelope exceeds its derived protocol bound", {
-      expected: MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
-      actual: byteLength,
-    })]);
+    return failure([
+      issue(
+        "ENVELOPE_TOO_LARGE",
+        "release",
+        "Release envelope exceeds its derived protocol bound",
+        {
+          expected: MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
+          actual: byteLength,
+        }
+      ),
+    ]);
   }
   return success(release);
 }
 
 export function decodeAgentPluginRelease(
-  bytes: unknown,
+  bytes: unknown
 ): ReleaseResult<AgentPluginRelease, ReleaseIssue> {
   const decoded = decodeCanonicalJson(bytes, "release", MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES);
   if (!decoded.ok) return decoded;
   const verified = verifyAgentPluginRelease(decoded.value);
   if (!verified.ok) return verified;
-  if (!(bytes instanceof Uint8Array) || !equalBytes(bytes, canonicalSerializeAgentPluginRelease(verified.value))) {
-    return failure([issue("NON_CANONICAL_ENVELOPE", "release", "Release bytes are not the unique canonical representation")]);
+  if (
+    !(bytes instanceof Uint8Array) ||
+    !equalBytes(bytes, canonicalSerializeAgentPluginRelease(verified.value))
+  ) {
+    return failure([
+      issue(
+        "NON_CANONICAL_ENVELOPE",
+        "release",
+        "Release bytes are not the unique canonical representation"
+      ),
+    ]);
   }
   return verified;
 }
@@ -257,7 +363,9 @@ export function canonicalSerializeAgentPluginReleaseBody(body: AgentPluginReleas
   return canonicalJsonLine(agentPluginReleaseBodyValue(body));
 }
 
-export function canonicalSerializeAgentPluginArtifactBody(body: AgentPluginArtifactBody): Uint8Array {
+export function canonicalSerializeAgentPluginArtifactBody(
+  body: AgentPluginArtifactBody
+): Uint8Array {
   return canonicalJsonLine(agentPluginArtifactBodyValue(body));
 }
 
@@ -305,38 +413,77 @@ export function agentPluginReleaseValue(release: AgentPluginRelease): CanonicalJ
 function parseArtifactBody(
   input: unknown,
   path: string,
-  issues: ReleaseIssue[],
+  issues: ReleaseIssue[]
 ): AgentPluginArtifactBody | undefined {
-  if (!isExactRecord(
-    input,
-    ["payloadEntries", "protocolVersion", "releaseBody", "releaseDigest", "storageManifest"],
-    path,
-    issues,
-  )) return undefined;
+  if (
+    !isExactRecord(
+      input,
+      ["payloadEntries", "protocolVersion", "releaseBody", "releaseDigest", "storageManifest"],
+      path,
+      issues
+    )
+  )
+    return undefined;
   if (input.protocolVersion !== ARTIFACT_PROTOCOL_VERSION) {
-    issues.push(issue("INVALID_SCHEMA_VERSION", `${path}.protocolVersion`, "Unsupported artifact protocol version", {
-      expected: ARTIFACT_PROTOCOL_VERSION,
-      actual: typeof input.protocolVersion === "number" ? input.protocolVersion : String(input.protocolVersion),
-    }));
+    issues.push(
+      issue(
+        "INVALID_SCHEMA_VERSION",
+        `${path}.protocolVersion`,
+        "Unsupported artifact protocol version",
+        {
+          expected: ARTIFACT_PROTOCOL_VERSION,
+          actual:
+            typeof input.protocolVersion === "number"
+              ? input.protocolVersion
+              : String(input.protocolVersion),
+        }
+      )
+    );
   }
   const body = parseReleaseBody(input.releaseBody, `${path}.releaseBody`, issues);
-  const boundDigest = collect(parseReleaseDigest(input.releaseDigest, `${path}.releaseDigest`), issues);
-  const storageManifest = parsePayloadManifest(input.storageManifest, `${path}.storageManifest`, issues);
+  const boundDigest = collect(
+    parseReleaseDigest(input.releaseDigest, `${path}.releaseDigest`),
+    issues
+  );
+  const storageManifest = parsePayloadManifest(
+    input.storageManifest,
+    `${path}.storageManifest`,
+    issues
+  );
   let payload: AgentPluginPayload | undefined;
   if (body !== undefined) {
-    const verified = verifyAgentPluginPayload({
-      protocolVersion: 1,
-      manifest: input.storageManifest,
-      entries: input.payloadEntries,
-      payloadDigest: body.payloadDigest,
-    }, `${path}.payload`);
+    const verified = verifyAgentPluginPayload(
+      {
+        protocolVersion: 1,
+        manifest: input.storageManifest,
+        entries: input.payloadEntries,
+        payloadDigest: body.payloadDigest,
+      },
+      `${path}.payload`
+    );
     if (verified.ok) payload = verified.value;
     else issues.push(...verified.issues);
   }
-  if (body !== undefined && storageManifest !== undefined && !sameManifest(body.payloadManifest, storageManifest)) {
-    issues.push(issue("PAYLOAD_MANIFEST_MISMATCH", `${path}.storageManifest`, "Storage manifest differs from the release payload manifest"));
+  if (
+    body !== undefined &&
+    storageManifest !== undefined &&
+    !sameManifest(body.payloadManifest, storageManifest)
+  ) {
+    issues.push(
+      issue(
+        "PAYLOAD_MANIFEST_MISMATCH",
+        `${path}.storageManifest`,
+        "Storage manifest differs from the release payload manifest"
+      )
+    );
   }
-  if (input.protocolVersion !== ARTIFACT_PROTOCOL_VERSION || body === undefined || boundDigest === undefined || storageManifest === undefined || payload === undefined) {
+  if (
+    input.protocolVersion !== ARTIFACT_PROTOCOL_VERSION ||
+    body === undefined ||
+    boundDigest === undefined ||
+    storageManifest === undefined ||
+    payload === undefined
+  ) {
     return undefined;
   }
   return Object.freeze({
@@ -351,38 +498,72 @@ function parseArtifactBody(
 function parseReleaseBody(
   input: unknown,
   path: string,
-  issues: ReleaseIssue[],
+  issues: ReleaseIssue[]
 ): AgentPluginReleaseBody | undefined {
-  if (!isExactRecord(input, [
-    "aliases",
-    "builderProtocolVersion",
-    "contentAuthority",
-    "curation",
-    "payloadDigest",
-    "payloadManifest",
-    "pluginId",
-    "releaseInputDigest",
-    "schemaVersion",
-    "sourceCommit",
-    "sourceRepository",
-    "sourceTree",
-    "vendor",
-  ], path, issues)) return undefined;
+  if (
+    !isExactRecord(
+      input,
+      [
+        "aliases",
+        "builderProtocolVersion",
+        "contentAuthority",
+        "curation",
+        "payloadDigest",
+        "payloadManifest",
+        "pluginId",
+        "releaseInputDigest",
+        "schemaVersion",
+        "sourceCommit",
+        "sourceRepository",
+        "sourceTree",
+        "vendor",
+      ],
+      path,
+      issues
+    )
+  )
+    return undefined;
   if (input.schemaVersion !== AGENT_PLUGIN_RELEASE_SCHEMA_VERSION) {
-    issues.push(issue("INVALID_SCHEMA_VERSION", `${path}.schemaVersion`, "Unsupported release-body schema version", {
-      expected: AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
-      actual: typeof input.schemaVersion === "number" ? input.schemaVersion : String(input.schemaVersion),
-    }));
+    issues.push(
+      issue(
+        "INVALID_SCHEMA_VERSION",
+        `${path}.schemaVersion`,
+        "Unsupported release-body schema version",
+        {
+          expected: AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
+          actual:
+            typeof input.schemaVersion === "number"
+              ? input.schemaVersion
+              : String(input.schemaVersion),
+        }
+      )
+    );
   }
   if (input.builderProtocolVersion !== BUILDER_PROTOCOL_VERSION) {
-    issues.push(issue("INVALID_SCHEMA_VERSION", `${path}.builderProtocolVersion`, "Unsupported builder protocol version", {
-      expected: BUILDER_PROTOCOL_VERSION,
-      actual: typeof input.builderProtocolVersion === "number" ? input.builderProtocolVersion : String(input.builderProtocolVersion),
-    }));
+    issues.push(
+      issue(
+        "INVALID_SCHEMA_VERSION",
+        `${path}.builderProtocolVersion`,
+        "Unsupported builder protocol version",
+        {
+          expected: BUILDER_PROTOCOL_VERSION,
+          actual:
+            typeof input.builderProtocolVersion === "number"
+              ? input.builderProtocolVersion
+              : String(input.builderProtocolVersion),
+        }
+      )
+    );
   }
-  const contentAuthority = collect(parseContentAuthority(input.contentAuthority, `${path}.contentAuthority`), issues);
+  const contentAuthority = collect(
+    parseContentAuthority(input.contentAuthority, `${path}.contentAuthority`),
+    issues
+  );
   const source = parseReleaseSourceFields(input, path, issues);
-  const inputDigest = collect(parseReleaseInputDigest(input.releaseInputDigest, `${path}.releaseInputDigest`), issues);
+  const inputDigest = collect(
+    parseReleaseInputDigest(input.releaseInputDigest, `${path}.releaseInputDigest`),
+    issues
+  );
   const pluginId = collect(parsePluginId(input.pluginId, `${path}.pluginId`), issues);
   const aliases = parseAliases(input.aliases, `${path}.aliases`, issues);
   const manifest = parsePayloadManifest(input.payloadManifest, `${path}.payloadManifest`, issues);
@@ -390,18 +571,19 @@ function parseReleaseBody(
   const vendor = parseProvenanceBindings(input.vendor, `${path}.vendor`, issues);
   const curation = parseProvenanceBindings(input.curation, `${path}.curation`, issues);
   if (
-    input.schemaVersion !== AGENT_PLUGIN_RELEASE_SCHEMA_VERSION
-    || input.builderProtocolVersion !== BUILDER_PROTOCOL_VERSION
-    || contentAuthority === undefined
-    || source === undefined
-    || inputDigest === undefined
-    || pluginId === undefined
-    || aliases === undefined
-    || manifest === undefined
-    || digest === undefined
-    || vendor === undefined
-    || curation === undefined
-  ) return undefined;
+    input.schemaVersion !== AGENT_PLUGIN_RELEASE_SCHEMA_VERSION ||
+    input.builderProtocolVersion !== BUILDER_PROTOCOL_VERSION ||
+    contentAuthority === undefined ||
+    source === undefined ||
+    inputDigest === undefined ||
+    pluginId === undefined ||
+    aliases === undefined ||
+    manifest === undefined ||
+    digest === undefined ||
+    vendor === undefined ||
+    curation === undefined
+  )
+    return undefined;
   return Object.freeze({
     schemaVersion: AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
     builderProtocolVersion: BUILDER_PROTOCOL_VERSION,
@@ -420,18 +602,22 @@ function parseReleaseBody(
 function parseReleaseSourceIdentity(
   input: unknown,
   path: string,
-  issues: ReleaseIssue[],
+  issues: ReleaseIssue[]
 ): ReleaseSourceIdentity | undefined {
-  if (!isExactRecord(input, ["sourceCommit", "sourceRepository", "sourceTree"], path, issues)) return undefined;
+  if (!isExactRecord(input, ["sourceCommit", "sourceRepository", "sourceTree"], path, issues))
+    return undefined;
   return parseReleaseSourceFields(input, path, issues);
 }
 
 function parseReleaseSourceFields(
   input: Record<string, unknown>,
   path: string,
-  issues: ReleaseIssue[],
+  issues: ReleaseIssue[]
 ): ReleaseSourceIdentity | undefined {
-  const repository = collect(parseRepositoryIdentity(input.sourceRepository, `${path}.sourceRepository`), issues);
+  const repository = collect(
+    parseRepositoryIdentity(input.sourceRepository, `${path}.sourceRepository`),
+    issues
+  );
   const commit = collect(parseGitCommitId(input.sourceCommit, `${path}.sourceCommit`), issues);
   const tree = collect(parseGitTreeId(input.sourceTree, `${path}.sourceTree`), issues);
   if (repository === undefined || commit === undefined || tree === undefined) return undefined;
@@ -441,7 +627,7 @@ function parseReleaseSourceFields(
 function parseAliases(
   input: unknown,
   path: string,
-  issues: ReleaseIssue[],
+  issues: ReleaseIssue[]
 ): readonly OwnershipIdentity[] | undefined {
   const values = parseBoundedArray(input, path, MAX_OWNERSHIP_CLAIMS, issues);
   if (values === undefined) return undefined;
@@ -461,10 +647,12 @@ function parseAliases(
 
 function verifyEmbeddedReleaseInput(
   input: unknown,
-  issues: ReleaseIssue[],
+  issues: ReleaseIssue[]
 ): AgentPluginReleaseInput | undefined {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
-    issues.push(issue("EXPECTED_OBJECT", "release.releaseInput", "Release input must be a verified value"));
+    issues.push(
+      issue("EXPECTED_OBJECT", "release.releaseInput", "Release input must be a verified value")
+    );
     return undefined;
   }
   let candidate: unknown;
@@ -481,7 +669,10 @@ function verifyEmbeddedReleaseInput(
   return verified.value;
 }
 
-function verifyEmbeddedPayload(input: unknown, issues: ReleaseIssue[]): AgentPluginPayload | undefined {
+function verifyEmbeddedPayload(
+  input: unknown,
+  issues: ReleaseIssue[]
+): AgentPluginPayload | undefined {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     issues.push(issue("EXPECTED_OBJECT", "release.payload", "Payload must be a verified value"));
     return undefined;
@@ -500,7 +691,10 @@ function verifyEmbeddedPayload(input: unknown, issues: ReleaseIssue[]): AgentPlu
   return verified.value;
 }
 
-function freezeRelease(body: AgentPluginReleaseBody, payload: AgentPluginPayload): AgentPluginRelease {
+function freezeRelease(
+  body: AgentPluginReleaseBody,
+  payload: AgentPluginPayload
+): AgentPluginRelease {
   const rd = releaseDigest(canonicalSerializeAgentPluginReleaseBody(body));
   const artifactBody: AgentPluginArtifactBody = Object.freeze({
     protocolVersion: ARTIFACT_PROTOCOL_VERSION,
@@ -518,15 +712,20 @@ function freezeRelease(body: AgentPluginReleaseBody, payload: AgentPluginPayload
   }) as AgentPluginRelease;
 }
 
-function sameManifest(left: readonly PayloadManifestEntry[], right: readonly PayloadManifestEntry[]): boolean {
+function sameManifest(
+  left: readonly PayloadManifestEntry[],
+  right: readonly PayloadManifestEntry[]
+): boolean {
   if (left.length !== right.length) return false;
   return left.every((entry, index) => {
     const other = right[index];
-    return other !== undefined
-      && entry.path === other.path
-      && entry.mode === other.mode
-      && entry.byteLength === other.byteLength
-      && entry.contentDigest === other.contentDigest;
+    return (
+      other !== undefined &&
+      entry.path === other.path &&
+      entry.mode === other.mode &&
+      entry.byteLength === other.byteLength &&
+      entry.contentDigest === other.contentDigest
+    );
   });
 }
 

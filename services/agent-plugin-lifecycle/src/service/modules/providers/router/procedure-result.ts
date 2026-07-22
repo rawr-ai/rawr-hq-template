@@ -31,61 +31,53 @@ import {
 } from "../schemas";
 
 export async function completeTestOperationResult(
-  operation: Promise<DeploymentResult<CompleteTestProviderOperationOutcome>>,
+  operation: Promise<DeploymentResult<CompleteTestProviderOperationOutcome>>
 ): Promise<CompleteTestProcedureResult> {
   const result = await operation;
   return projectProcedureResult(
     CompleteTestResultSchema,
-    result.ok
-      ? { ok: true, value: projectCompleteTestOutcome(result.value) }
-      : result,
+    result.ok ? { ok: true, value: projectCompleteTestOutcome(result.value) } : result
   );
 }
 
 export async function targetedTestOperationResult(
-  operation: Promise<DeploymentResult<TargetedTestProviderOperationOutcome>>,
+  operation: Promise<DeploymentResult<TargetedTestProviderOperationOutcome>>
 ): Promise<TargetedTestProcedureResult> {
   const result = await operation;
   return projectProcedureResult(
     TargetedTestResultSchema,
-    result.ok
-      ? { ok: true, value: projectTargetedTestOutcome(result.value) }
-      : result,
+    result.ok ? { ok: true, value: projectTargetedTestOutcome(result.value) } : result
   );
 }
 
 export async function canonicalStatusResult(
-  operation: Promise<DeploymentResult<readonly CanonicalStatusOutcome[]>>,
+  operation: Promise<DeploymentResult<readonly CanonicalStatusOutcome[]>>
 ): Promise<CanonicalStatusProcedureResult> {
   return projectProcedureResult(CanonicalStatusResultSchema, await operation);
 }
 
 export async function canonicalSyncResult(
-  operation: Promise<DeploymentResult<CanonicalSyncOutcome>>,
+  operation: Promise<DeploymentResult<CanonicalSyncOutcome>>
 ): Promise<CanonicalSyncProcedureResult> {
   return projectProcedureResult(CanonicalSyncResultSchema, await operation);
 }
 
 function projectProcedureResult<const TBoundary extends TSchema>(
   boundary: TBoundary,
-  result: unknown,
+  result: unknown
 ): Static<TBoundary> {
   // Parse returns an already-valid input unchanged, so clone first to sever domain aliases.
   return Parse(boundary, Clone(result));
 }
 
-function projectCompleteTestOutcome(
-  outcome: CompleteTestProviderOperationOutcome,
-) {
+function projectCompleteTestOutcome(outcome: CompleteTestProviderOperationOutcome) {
   return {
     ...outcome,
     targets: outcome.targets.map(projectProviderTarget),
   };
 }
 
-function projectTargetedTestOutcome(
-  outcome: TargetedTestProviderOperationOutcome,
-) {
+function projectTargetedTestOutcome(outcome: TargetedTestProviderOperationOutcome) {
   return {
     ...outcome,
     targets: outcome.targets.map(projectProviderTarget),
@@ -93,7 +85,8 @@ function projectTargetedTestOutcome(
 }
 
 function projectProviderTarget<
-  const TTarget extends CompleteTestProviderOperationOutcome["targets"][number]
+  const TTarget extends
+    | CompleteTestProviderOperationOutcome["targets"][number]
     | TargetedTestProviderOperationOutcome["targets"][number],
 >(outcome: TTarget) {
   return {
@@ -129,9 +122,7 @@ function projectProviderEvent(event: ProviderEvent) {
 function projectProviderTargetPlan(plan: ProviderTargetPlan) {
   return {
     ...plan,
-    projection: plan.projection === null
-      ? null
-      : projectAgentProviderProjection(plan.projection),
+    projection: plan.projection === null ? null : projectAgentProviderProjection(plan.projection),
     steps: plan.steps.map(projectProviderPlanStep),
   };
 }
@@ -156,9 +147,7 @@ function projectProviderPlanStep(step: ProviderPlanStep) {
   }
 }
 
-function projectProviderMutationAction(
-  action: ProviderMutationAction,
-) {
+function projectProviderMutationAction(action: ProviderMutationAction) {
   switch (action.kind) {
     case "InstallMember":
     case "EnableMember":
@@ -176,9 +165,7 @@ function projectProviderMutationAction(
   }
 }
 
-function projectAgentProviderProjection(
-  projection: AgentProviderProjection,
-) {
+function projectAgentProviderProjection(projection: AgentProviderProjection) {
   return {
     ...projection,
     marketplace: {
@@ -189,18 +176,14 @@ function projectAgentProviderProjection(
   };
 }
 
-function projectProviderProjectionMember(
-  member: ProviderProjectionMember,
-) {
+function projectProviderProjectionMember(member: ProviderProjectionMember) {
   return {
     ...member,
     files: member.files.map(projectProviderPackageFile),
   };
 }
 
-function projectProviderPackageFile(
-  file: ProviderPackageFile,
-) {
+function projectProviderPackageFile(file: ProviderPackageFile) {
   return {
     path: file.path,
     mode: file.mode,

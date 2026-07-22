@@ -32,20 +32,13 @@ import {
 import { canonicalBytes } from "../../../src/service/modules/providers/model/helpers/canonical";
 import { success } from "../../../src/service/modules/providers/model/errors/deployment-result";
 import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
-import {
-  createResourceClaudeProviderAdapter,
-} from "../../../src/service/modules/providers/repository/resource-claude";
-import {
-  createResourceCodexProviderAdapter,
-} from "../../../src/service/modules/providers/repository/resource-codex";
+import { createResourceClaudeProviderAdapter } from "../../../src/service/modules/providers/repository/resource-claude";
+import { createResourceCodexProviderAdapter } from "../../../src/service/modules/providers/repository/resource-codex";
 import { CLAUDE_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/claude";
 import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
 import { NATIVE_PACKAGE_READ_LIMITS } from "../../../src/service/modules/providers/repository/resource-package";
 import { createResourceMarketplaceLocationResolver } from "../../../src/service/modules/providers/repository/resource-marketplace-location";
-import {
-  createOwnedFixtureRoot,
-  disposeOwnedFixtureRoot,
-} from "../../support/owned-fixture-root";
+import { createOwnedFixtureRoot, disposeOwnedFixtureRoot } from "../../support/owned-fixture-root";
 import { desiredStateFixture } from "./canonical-fixture";
 
 interface LocationFailureCase {
@@ -58,30 +51,35 @@ const LOCATION_FAILURES: readonly LocationFailureCase[] = Object.freeze([
   Object.freeze({
     name: "missing",
     expectedMessage: "is not materialized",
-    observe: (address: ArtifactObjectAddress): ArtifactTreeLocationObservation => Object.freeze({
-      kind: "Missing",
-      address,
-    }),
+    observe: (address: ArtifactObjectAddress): ArtifactTreeLocationObservation =>
+      Object.freeze({
+        kind: "Missing",
+        address,
+      }),
   }),
   Object.freeze({
     name: "mismatched",
     expectedMessage: "failed mechanical admission",
-    observe: (address: ArtifactObjectAddress): ArtifactTreeLocationObservation => Object.freeze({
-      kind: "Mismatch",
-      address,
-      issues: Object.freeze([Object.freeze({
-        code: "IdentityChanged",
-        detail: "fixture identity changed during admission",
-      })] satisfies [ArtifactRepositoryIssue]),
-    }),
+    observe: (address: ArtifactObjectAddress): ArtifactTreeLocationObservation =>
+      Object.freeze({
+        kind: "Mismatch",
+        address,
+        issues: Object.freeze([
+          Object.freeze({
+            code: "IdentityChanged",
+            detail: "fixture identity changed during admission",
+          }),
+        ] satisfies [ArtifactRepositoryIssue]),
+      }),
   }),
   Object.freeze({
     name: "foreign-address",
     expectedMessage: "foreign marketplace projection address",
-    observe: (address: ArtifactObjectAddress): ArtifactTreeLocationObservation => Object.freeze({
-      kind: "Missing",
-      address: Object.freeze({ ...address, objectId: "foreign-projection" }),
-    }),
+    observe: (address: ArtifactObjectAddress): ArtifactTreeLocationObservation =>
+      Object.freeze({
+        kind: "Missing",
+        address: Object.freeze({ ...address, objectId: "foreign-projection" }),
+      }),
   }),
 ]);
 
@@ -96,25 +94,33 @@ describe("provider marketplace location admission", () => {
         namespace: Object.freeze(["marketplaces"] satisfies [string]),
         objectId: source.projectionDigest,
       });
-      const published = await runNodeArtifactRepository(artifactRepositoryResource.publishTree({
-        address,
-        entries: Object.freeze([Object.freeze({
-          path: ".rawr/marketplace.json",
-          mode: 0o644,
-          bytes: new TextEncoder().encode("{}\n"),
-        })]),
-        limits: NATIVE_PACKAGE_READ_LIMITS,
-      }));
+      const published = await runNodeArtifactRepository(
+        artifactRepositoryResource.publishTree({
+          address,
+          entries: Object.freeze([
+            Object.freeze({
+              path: ".rawr/marketplace.json",
+              mode: 0o644,
+              bytes: new TextEncoder().encode("{}\n"),
+            }),
+          ]),
+          limits: NATIVE_PACKAGE_READ_LIMITS,
+        })
+      );
       if (!published.ok || published.value.kind !== "Published") {
         throw new Error("Marketplace location fixture did not publish");
       }
-      const locateTree = vi.fn(async (
-        input: Parameters<ArtifactRepositoryAsyncPort["locateTree"]>[0],
-      ): Promise<ArtifactTreeLocationObservation> => {
-        const observed = await runNodeArtifactRepository(artifactRepositoryResource.locateTree(input));
-        if (!observed.ok) throw new Error(observed.failure.detail);
-        return observed.value;
-      });
+      const locateTree = vi.fn(
+        async (
+          input: Parameters<ArtifactRepositoryAsyncPort["locateTree"]>[0]
+        ): Promise<ArtifactTreeLocationObservation> => {
+          const observed = await runNodeArtifactRepository(
+            artifactRepositoryResource.locateTree(input)
+          );
+          if (!observed.ok) throw new Error(observed.failure.detail);
+          return observed.value;
+        }
+      );
       const resolver = createResourceMarketplaceLocationResolver({
         repository: { locateTree },
         projectionRepositoryRoot: repositoryRoot,
@@ -130,12 +136,17 @@ describe("provider marketplace location admission", () => {
     }
   });
 
-  it.each(LOCATION_FAILURES)("fails closed for a $name observation", async ({ observe, expectedMessage }) => {
+  it.each(LOCATION_FAILURES)("fails closed for a $name observation", async ({
+    observe,
+    expectedMessage,
+  }) => {
     const source = marketplaceSource();
     const repositoryRoot = "/controller/provider-projections";
-    const locateTree = vi.fn(async (
-      input: Parameters<ArtifactRepositoryAsyncPort["locateTree"]>[0],
-    ): Promise<ArtifactTreeLocationObservation> => observe(input.address));
+    const locateTree = vi.fn(
+      async (
+        input: Parameters<ArtifactRepositoryAsyncPort["locateTree"]>[0]
+      ): Promise<ArtifactTreeLocationObservation> => observe(input.address)
+    );
     const resolver = createResourceMarketplaceLocationResolver({
       repository: { locateTree },
       projectionRepositoryRoot: repositoryRoot,
@@ -185,15 +196,20 @@ describe("provider marketplace location admission", () => {
       const events: string[] = [];
       let current: ProviderMarketplaceRegistration | null = null;
       const resource = Object.freeze({
-        acquireCodex: async (input: NativeResourceSessionInput): Promise<CodexNativeResourceSession> => Object.freeze({
-          ...codexObservationSession(input, () => current),
-          addMarketplace: async (observedLocation: ArtifactTreeLocation) => {
-            events.push("native-add");
-            expect(observedLocation).toBe(location);
-            current = registration;
-          },
-          setMarketplaceSource: async () => { throw new Error("unexpected Codex replace"); },
-        }),
+        acquireCodex: async (
+          input: NativeResourceSessionInput
+        ): Promise<CodexNativeResourceSession> =>
+          Object.freeze({
+            ...codexObservationSession(input, () => current),
+            addMarketplace: async (observedLocation: ArtifactTreeLocation) => {
+              events.push("native-add");
+              expect(observedLocation).toBe(location);
+              current = registration;
+            },
+            setMarketplaceSource: async () => {
+              throw new Error("unexpected Codex replace");
+            },
+          }),
         acquireClaude: async (): Promise<ClaudeNativeResourceSession> => {
           throw new Error("unused Claude resource");
         },
@@ -212,13 +228,15 @@ describe("provider marketplace location admission", () => {
         },
       });
 
-      const result = await adapter.apply(Object.freeze({
-        kind: "SetMarketplace",
-        role: "final",
-        target,
-        expected: Object.freeze({ kind: "absent" }),
-        registration,
-      }));
+      const result = await adapter.apply(
+        Object.freeze({
+          kind: "SetMarketplace",
+          role: "final",
+          target,
+          expected: Object.freeze({ kind: "absent" }),
+          registration,
+        })
+      );
 
       expect(result).toEqual({ kind: "applied" });
       expect(events).toEqual(["locate", "native-add"]);
@@ -232,11 +250,16 @@ describe("provider marketplace location admission", () => {
     const target = providerTarget("codex", "/tmp/rawr-codex-missing-marketplace-location");
     const nativeAdd = vi.fn(async (_: ArtifactTreeLocation) => undefined);
     const resource = Object.freeze({
-      acquireCodex: async (input: NativeResourceSessionInput): Promise<CodexNativeResourceSession> => Object.freeze({
-        ...codexObservationSession(input, () => null),
-        addMarketplace: nativeAdd,
-        setMarketplaceSource: async () => { throw new Error("unexpected Codex replace"); },
-      }),
+      acquireCodex: async (
+        input: NativeResourceSessionInput
+      ): Promise<CodexNativeResourceSession> =>
+        Object.freeze({
+          ...codexObservationSession(input, () => null),
+          addMarketplace: nativeAdd,
+          setMarketplaceSource: async () => {
+            throw new Error("unexpected Codex replace");
+          },
+        }),
       acquireClaude: async (): Promise<ClaudeNativeResourceSession> => {
         throw new Error("unused Claude resource");
       },
@@ -248,20 +271,20 @@ describe("provider marketplace location admission", () => {
       marketplaceSources: { read: async () => success(source) },
       marketplaceLocations: {
         locate: async () => {
-          throw new NativeProviderPreMutationRefusal(
-            "Marketplace projection is not materialized",
-          );
+          throw new NativeProviderPreMutationRefusal("Marketplace projection is not materialized");
         },
       },
     });
 
-    const result = await adapter.apply(Object.freeze({
-      kind: "SetMarketplace",
-      role: "final",
-      target,
-      expected: Object.freeze({ kind: "absent" }),
-      registration,
-    }));
+    const result = await adapter.apply(
+      Object.freeze({
+        kind: "SetMarketplace",
+        role: "final",
+        target,
+        expected: Object.freeze({ kind: "absent" }),
+        registration,
+      })
+    );
 
     expect(result).toMatchObject({
       kind: "not-applied",
@@ -289,11 +312,14 @@ describe("provider marketplace location admission", () => {
       acquireCodex: async (): Promise<CodexNativeResourceSession> => {
         throw new Error("unused Codex resource");
       },
-      acquireClaude: async (input: NativeResourceSessionInput): Promise<ClaudeNativeResourceSession> => Object.freeze({
-        ...claudeObservationSession(input, () => previous),
-        removeMarketplace: nativeRemove,
-        addMarketplace: nativeAdd,
-      }),
+      acquireClaude: async (
+        input: NativeResourceSessionInput
+      ): Promise<ClaudeNativeResourceSession> =>
+        Object.freeze({
+          ...claudeObservationSession(input, () => previous),
+          removeMarketplace: nativeRemove,
+          addMarketplace: nativeAdd,
+        }),
     });
     const adapter = createResourceClaudeProviderAdapter({
       resource,
@@ -302,20 +328,20 @@ describe("provider marketplace location admission", () => {
       marketplaceSources: { read: async () => success(source) },
       marketplaceLocations: {
         locate: async () => {
-          throw new NativeProviderPreMutationRefusal(
-            "Marketplace projection is not materialized",
-          );
+          throw new NativeProviderPreMutationRefusal("Marketplace projection is not materialized");
         },
       },
     });
 
-    const result = await adapter.apply(Object.freeze({
-      kind: "SetMarketplace",
-      role: "final",
-      target,
-      expected: Object.freeze({ kind: "present", state: marketplaceState(previous) }),
-      registration,
-    }));
+    const result = await adapter.apply(
+      Object.freeze({
+        kind: "SetMarketplace",
+        role: "final",
+        target,
+        expected: Object.freeze({ kind: "present", state: marketplaceState(previous) }),
+        registration,
+      })
+    );
 
     expect(result).toMatchObject({
       kind: "not-applied",
@@ -337,15 +363,20 @@ describe("provider marketplace location admission", () => {
         acquireCodex: async (): Promise<CodexNativeResourceSession> => {
           throw new Error("unused Codex resource");
         },
-        acquireClaude: async (input: NativeResourceSessionInput): Promise<ClaudeNativeResourceSession> => Object.freeze({
-          ...claudeObservationSession(input, () => current),
-          removeMarketplace: async () => { throw new Error("unexpected Claude remove"); },
-          addMarketplace: async (observedLocation: ArtifactTreeLocation) => {
-            events.push("native-add");
-            expect(observedLocation).toBe(location);
-            current = registration;
-          },
-        }),
+        acquireClaude: async (
+          input: NativeResourceSessionInput
+        ): Promise<ClaudeNativeResourceSession> =>
+          Object.freeze({
+            ...claudeObservationSession(input, () => current),
+            removeMarketplace: async () => {
+              throw new Error("unexpected Claude remove");
+            },
+            addMarketplace: async (observedLocation: ArtifactTreeLocation) => {
+              events.push("native-add");
+              expect(observedLocation).toBe(location);
+              current = registration;
+            },
+          }),
       });
       const adapter = createResourceClaudeProviderAdapter({
         resource,
@@ -360,13 +391,15 @@ describe("provider marketplace location admission", () => {
         },
       });
 
-      const result = await adapter.apply(Object.freeze({
-        kind: "SetMarketplace",
-        role: "final",
-        target,
-        expected: Object.freeze({ kind: "absent" }),
-        registration,
-      }));
+      const result = await adapter.apply(
+        Object.freeze({
+          kind: "SetMarketplace",
+          role: "final",
+          target,
+          expected: Object.freeze({ kind: "absent" }),
+          registration,
+        })
+      );
 
       expect(result).toEqual({ kind: "applied" });
       expect(events).toEqual(["locate", "native-add"]);
@@ -394,19 +427,22 @@ describe("provider marketplace location admission", () => {
         acquireCodex: async (): Promise<CodexNativeResourceSession> => {
           throw new Error("unused Codex resource");
         },
-        acquireClaude: async (input: NativeResourceSessionInput): Promise<ClaudeNativeResourceSession> => Object.freeze({
-          ...claudeObservationSession(input, () => current),
-          removeMarketplace: async () => {
-            events.push("native-remove");
-            current = null;
-            installedMembers.clear();
-          },
-          addMarketplace: async (observedLocation: ArtifactTreeLocation) => {
-            events.push("native-add");
-            expect(observedLocation).toBe(location);
-            current = registration;
-          },
-        }),
+        acquireClaude: async (
+          input: NativeResourceSessionInput
+        ): Promise<ClaudeNativeResourceSession> =>
+          Object.freeze({
+            ...claudeObservationSession(input, () => current),
+            removeMarketplace: async () => {
+              events.push("native-remove");
+              current = null;
+              installedMembers.clear();
+            },
+            addMarketplace: async (observedLocation: ArtifactTreeLocation) => {
+              events.push("native-add");
+              expect(observedLocation).toBe(location);
+              current = registration;
+            },
+          }),
       });
       const adapter = createResourceClaudeProviderAdapter({
         resource,
@@ -421,13 +457,15 @@ describe("provider marketplace location admission", () => {
         },
       });
 
-      const result = await adapter.apply(Object.freeze({
-        kind: "SetMarketplace",
-        role: "final",
-        target,
-        expected: Object.freeze({ kind: "present", state: marketplaceState(previous) }),
-        registration,
-      }));
+      const result = await adapter.apply(
+        Object.freeze({
+          kind: "SetMarketplace",
+          role: "final",
+          target,
+          expected: Object.freeze({ kind: "present", state: marketplaceState(previous) }),
+          registration,
+        })
+      );
 
       expect(result).toEqual({ kind: "applied" });
       expect(events).toEqual(["locate", "native-add"]);
@@ -445,31 +483,48 @@ describe("provider marketplace location admission", () => {
       acquireCodex: async (): Promise<CodexNativeResourceSession> => {
         throw new Error("unused Codex resource");
       },
-      acquireClaude: async (input: NativeResourceSessionInput): Promise<ClaudeNativeResourceSession> => Object.freeze({
-        ...claudeObservationSession(input, () => current),
-        removeMarketplace: async ({ identity }: Parameters<ClaudeNativeResourceSession["removeMarketplace"]>[0]) => {
-          events.push("native-remove");
-          expect(identity).toBe(projection.artifactAuthority.contentAuthority);
-          current = null;
-        },
-        addMarketplace: async () => { throw new Error("unexpected Claude add"); },
-      }),
+      acquireClaude: async (
+        input: NativeResourceSessionInput
+      ): Promise<ClaudeNativeResourceSession> =>
+        Object.freeze({
+          ...claudeObservationSession(input, () => current),
+          removeMarketplace: async ({
+            identity,
+          }: Parameters<ClaudeNativeResourceSession["removeMarketplace"]>[0]) => {
+            events.push("native-remove");
+            expect(identity).toBe(projection.artifactAuthority.contentAuthority);
+            current = null;
+          },
+          addMarketplace: async () => {
+            throw new Error("unexpected Claude add");
+          },
+        }),
     });
     const adapter = createResourceClaudeProviderAdapter({
       resource,
       executablePath: "/opt/rawr/bin/claude",
       contentAuthority: projection.artifactAuthority.contentAuthority,
-      marketplaceSources: { read: async () => { throw new Error("unexpected marketplace source read"); } },
-      marketplaceLocations: { locate: async () => { throw new Error("unexpected marketplace location lookup"); } },
+      marketplaceSources: {
+        read: async () => {
+          throw new Error("unexpected marketplace source read");
+        },
+      },
+      marketplaceLocations: {
+        locate: async () => {
+          throw new Error("unexpected marketplace location lookup");
+        },
+      },
     });
 
-    const result = await adapter.apply(Object.freeze({
-      kind: "SetMarketplace",
-      role: "final",
-      target,
-      expected: Object.freeze({ kind: "present", state: marketplaceState(registration) }),
-      registration: null,
-    }));
+    const result = await adapter.apply(
+      Object.freeze({
+        kind: "SetMarketplace",
+        role: "final",
+        target,
+        expected: Object.freeze({ kind: "present", state: marketplaceState(registration) }),
+        registration: null,
+      })
+    );
 
     expect(result).toEqual({ kind: "applied" });
     expect(events).toEqual(["native-remove"]);
@@ -484,29 +539,33 @@ function providerProjection(provider: "claude" | "codex"): AgentProviderProjecti
   const rendered = renderCompleteProjection(
     provider,
     provider === "codex" ? CODEX_ADAPTER_PROTOCOL : CLAUDE_ADAPTER_PROTOCOL,
-    desiredStateFixture().snapshot,
+    desiredStateFixture().snapshot
   );
   if (!rendered.ok) throw new Error(`Desired-state fixture cannot render ${provider}`);
   return rendered.value;
 }
 
-function marketplaceRegistration(projection: AgentProviderProjection): ProviderMarketplaceRegistration {
+function marketplaceRegistration(
+  projection: AgentProviderProjection
+): ProviderMarketplaceRegistration {
   return createProviderMarketplaceRegistration({
     provider: projection.provider,
     adapterProtocol: projection.adapterProtocol,
     marketplaceIdentity: projection.marketplace.identity,
-    members: projection.members.map((member) => Object.freeze({
-      pluginId: member.pluginId,
-      nativeIdentity: member.nativeIdentity,
-      providerSourceIdentity: member.providerSourceIdentity,
-      sourceProjectionDigest: projection.projectionDigest,
-      memberFingerprint: member.memberFingerprint,
-    })),
+    members: projection.members.map((member) =>
+      Object.freeze({
+        pluginId: member.pluginId,
+        nativeIdentity: member.nativeIdentity,
+        providerSourceIdentity: member.providerSourceIdentity,
+        sourceProjectionDigest: projection.projectionDigest,
+        memberFingerprint: member.memberFingerprint,
+      })
+    ),
   });
 }
 
 function marketplaceSourceFromRegistration(
-  registration: ProviderMarketplaceRegistration,
+  registration: ProviderMarketplaceRegistration
 ): ProviderMarketplaceSource {
   return Object.freeze({
     projectionDigest: registration.projectionDigest,
@@ -522,96 +581,120 @@ function providerTarget(provider: "claude" | "codex", home: string) {
 
 function codexObservationSession(
   input: NativeResourceSessionInput,
-  current: () => ProviderMarketplaceRegistration | null,
+  current: () => ProviderMarketplaceRegistration | null
 ): Omit<CodexNativeResourceSession, "addMarketplace" | "setMarketplaceSource"> {
   return Object.freeze({
     provider: "codex",
     executablePath: input.executablePath,
     home: input.home,
-    probe: async () => Object.freeze({
-      provider: "codex",
-      executablePath: input.executablePath,
-      home: input.home,
-      pluginCommands: Object.freeze(["add", "list", "remove"]),
-      marketplaceCommands: Object.freeze(["add", "list", "remove"]),
-      appServerMethods: Object.freeze(["hooks/list", "plugin/list"]),
-    }),
-    listMarketplaces: async () => Object.freeze({
-      stdout: "",
-      stderr: "",
-      json: {
-        marketplaces: current() === null ? [] : [{ name: current()?.marketplaceIdentity }],
-      },
-    }),
+    probe: async () =>
+      Object.freeze({
+        provider: "codex",
+        executablePath: input.executablePath,
+        home: input.home,
+        pluginCommands: Object.freeze(["add", "list", "remove"]),
+        marketplaceCommands: Object.freeze(["add", "list", "remove"]),
+        appServerMethods: Object.freeze(["hooks/list", "plugin/list"]),
+      }),
+    listMarketplaces: async () =>
+      Object.freeze({
+        stdout: "",
+        stderr: "",
+        json: {
+          marketplaces: current() === null ? [] : [{ name: current()?.marketplaceIdentity }],
+        },
+      }),
     readMarketplace: async () => Object.freeze({ entries: marketplaceEntries(current()) }),
-    removeMarketplace: async () => { throw new Error("unexpected Codex remove"); },
-    listPlugins: async () => Object.freeze({ stdout: "", stderr: "", json: { installed: [], available: [] } }),
-    readPlugin: async () => { throw new Error("unexpected Codex plugin read"); },
-    addPlugin: async () => { throw new Error("unexpected Codex plugin add"); },
-    removePlugin: async () => { throw new Error("unexpected Codex plugin remove"); },
-    inspectAppServer: async () => Object.freeze({
-      plugins: { marketplaces: [] },
-      hooks: { data: [{ cwd: input.home, hooks: [], warnings: [], errors: [] }] },
-    }),
+    removeMarketplace: async () => {
+      throw new Error("unexpected Codex remove");
+    },
+    listPlugins: async () =>
+      Object.freeze({ stdout: "", stderr: "", json: { installed: [], available: [] } }),
+    readPlugin: async () => {
+      throw new Error("unexpected Codex plugin read");
+    },
+    addPlugin: async () => {
+      throw new Error("unexpected Codex plugin add");
+    },
+    removePlugin: async () => {
+      throw new Error("unexpected Codex plugin remove");
+    },
+    inspectAppServer: async () =>
+      Object.freeze({
+        plugins: { marketplaces: [] },
+        hooks: { data: [{ cwd: input.home, hooks: [], warnings: [], errors: [] }] },
+      }),
     readConfiguration: async () => Object.freeze({ config: { plugins: {} } }),
   });
 }
 
 function claudeObservationSession(
   input: NativeResourceSessionInput,
-  current: () => ProviderMarketplaceRegistration | null,
+  current: () => ProviderMarketplaceRegistration | null
 ): Omit<ClaudeNativeResourceSession, "addMarketplace" | "removeMarketplace"> {
   return Object.freeze({
     provider: "claude",
     executablePath: input.executablePath,
     home: input.home,
-    probe: async () => Object.freeze({
-      provider: "claude",
-      executablePath: input.executablePath,
-      home: input.home,
-      pluginCommands: Object.freeze(["enable", "install", "list", "uninstall"]),
-      marketplaceCommands: Object.freeze(["add", "list", "remove"]),
-      appServerMethods: Object.freeze([]),
-    }),
-    listMarketplaces: async () => Object.freeze({
-      stdout: "",
-      stderr: "",
-      json: current() === null ? [] : [{ name: current()?.marketplaceIdentity }],
-    }),
+    probe: async () =>
+      Object.freeze({
+        provider: "claude",
+        executablePath: input.executablePath,
+        home: input.home,
+        pluginCommands: Object.freeze(["enable", "install", "list", "uninstall"]),
+        marketplaceCommands: Object.freeze(["add", "list", "remove"]),
+        appServerMethods: Object.freeze([]),
+      }),
+    listMarketplaces: async () =>
+      Object.freeze({
+        stdout: "",
+        stderr: "",
+        json: current() === null ? [] : [{ name: current()?.marketplaceIdentity }],
+      }),
     readMarketplace: async () => Object.freeze({ entries: marketplaceEntries(current()) }),
     listPlugins: async () => Object.freeze({ stdout: "", stderr: "", json: { installed: [] } }),
-    readPlugin: async () => { throw new Error("unexpected Claude plugin read"); },
-    installPlugin: async () => { throw new Error("unexpected Claude plugin install"); },
-    enablePlugin: async () => { throw new Error("unexpected Claude plugin enable"); },
-    uninstallPlugin: async () => { throw new Error("unexpected Claude plugin uninstall"); },
+    readPlugin: async () => {
+      throw new Error("unexpected Claude plugin read");
+    },
+    installPlugin: async () => {
+      throw new Error("unexpected Claude plugin install");
+    },
+    enablePlugin: async () => {
+      throw new Error("unexpected Claude plugin enable");
+    },
+    uninstallPlugin: async () => {
+      throw new Error("unexpected Claude plugin uninstall");
+    },
     readConfiguration: async () => Object.freeze({ enabledPlugins: {} }),
   });
 }
 
 function marketplaceEntries(registration: ProviderMarketplaceRegistration | null) {
   if (registration === null) throw new Error("Marketplace observation is absent");
-  return Object.freeze([Object.freeze({
-    path: ".rawr/marketplace.json",
-    mode: 0o644,
-    bytes: canonicalBytes({
-      protocol: "agent-provider-marketplace-source@v1",
-      provider: registration.provider,
-      marketplaceIdentity: registration.marketplaceIdentity,
-      projectionDigest: registration.projectionDigest,
-      sourceDigest: registration.sourceDigest,
-      members: registration.members.map((member) => ({
-        pluginId: member.pluginId,
-        nativeIdentity: member.nativeIdentity,
-        providerSourceIdentity: member.providerSourceIdentity,
-        sourceProjectionDigest: member.sourceProjectionDigest,
-        memberFingerprint: member.memberFingerprint,
-      })),
+  return Object.freeze([
+    Object.freeze({
+      path: ".rawr/marketplace.json",
+      mode: 0o644,
+      bytes: canonicalBytes({
+        protocol: "agent-provider-marketplace-source@v1",
+        provider: registration.provider,
+        marketplaceIdentity: registration.marketplaceIdentity,
+        projectionDigest: registration.projectionDigest,
+        sourceDigest: registration.sourceDigest,
+        members: registration.members.map((member) => ({
+          pluginId: member.pluginId,
+          nativeIdentity: member.nativeIdentity,
+          providerSourceIdentity: member.providerSourceIdentity,
+          sourceProjectionDigest: member.sourceProjectionDigest,
+          memberFingerprint: member.memberFingerprint,
+        })),
+      }),
     }),
-  })]);
+  ]);
 }
 
 async function withOwnedLocation(
-  run: (location: ArtifactTreeLocation) => Promise<void>,
+  run: (location: ArtifactTreeLocation) => Promise<void>
 ): Promise<void> {
   const fixture = await createOwnedFixtureRoot();
   try {
@@ -620,22 +703,28 @@ async function withOwnedLocation(
       namespace: Object.freeze(["provider-input"] satisfies [string]),
       objectId: "marketplace-location",
     });
-    const published = await runNodeArtifactRepository(artifactRepositoryResource.publishTree({
-      address,
-      entries: Object.freeze([Object.freeze({
-        path: ".rawr/marketplace.json",
-        mode: 0o644,
-        bytes: new TextEncoder().encode("{}\n"),
-      })]),
-      limits: NATIVE_PACKAGE_READ_LIMITS,
-    }));
+    const published = await runNodeArtifactRepository(
+      artifactRepositoryResource.publishTree({
+        address,
+        entries: Object.freeze([
+          Object.freeze({
+            path: ".rawr/marketplace.json",
+            mode: 0o644,
+            bytes: new TextEncoder().encode("{}\n"),
+          }),
+        ]),
+        limits: NATIVE_PACKAGE_READ_LIMITS,
+      })
+    );
     if (!published.ok || published.value.kind !== "Published") {
       throw new Error("Opaque location fixture did not publish");
     }
-    const located = await runNodeArtifactRepository(artifactRepositoryResource.locateTree({
-      address,
-      limits: NATIVE_PACKAGE_READ_LIMITS,
-    }));
+    const located = await runNodeArtifactRepository(
+      artifactRepositoryResource.locateTree({
+        address,
+        limits: NATIVE_PACKAGE_READ_LIMITS,
+      })
+    );
     if (!located.ok || located.value.kind !== "Present") {
       throw new Error("Opaque location fixture did not admit");
     }

@@ -10,15 +10,13 @@ export class NativeProvenanceAmbiguity extends Error {
 
   constructor(
     readonly reason: NativeProvenanceAmbiguityReason,
-    detail?: unknown,
+    detail?: unknown
   ) {
     super(detail instanceof Error ? detail.message : String(detail ?? reason));
     this.name = "NativeProvenanceAmbiguity";
   }
 }
 
-export function isNativeProvenanceAmbiguity(
-  error: unknown,
-): error is NativeProvenanceAmbiguity {
+export function isNativeProvenanceAmbiguity(error: unknown): error is NativeProvenanceAmbiguity {
   return error instanceof NativeProvenanceAmbiguity;
 }
