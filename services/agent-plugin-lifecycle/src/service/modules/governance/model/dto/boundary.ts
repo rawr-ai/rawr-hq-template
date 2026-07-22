@@ -1,10 +1,8 @@
 import type { GitLocator } from "./git";
 import { parseRepository } from "./primitives";
+import type { CurrentMainSelectionLocator } from "../../../../model/dto/current-main-selection";
 
-export interface GitLocatorInput {
-  readonly workspacePath: string;
-  readonly expectedRepositoryIdentity: string;
-}
+export type GitLocatorInput = CurrentMainSelectionLocator;
 
 export type GovernanceBoundaryResult<T> =
   | { readonly ok: true; readonly value: T }

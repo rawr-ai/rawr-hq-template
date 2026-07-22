@@ -15,10 +15,8 @@ import {
 } from "../../../src/service/modules/governance/model";
 import {
   CanonicalChannelSelectionSchema,
-} from "../../../src/service/modules/governance/model/dto/current-main";
-import type {
-  CanonicalChannelSelection,
-  CurrentMainSelectionResult,
+  type CanonicalChannelSelection,
+  type CurrentMainSelectionResult,
 } from "../../../src/service/model/dto/current-main-selection";
 import { contract } from "../../../src/service/modules/governance/contract";
 
