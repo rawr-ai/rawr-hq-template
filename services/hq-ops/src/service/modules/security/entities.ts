@@ -33,7 +33,7 @@ export const SecurityFindingSchema = Type.Union([
       cvssScore: Type.Optional(Type.Number()),
       cwe: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
     },
-    { additionalProperties: false },
+    { additionalProperties: false }
   ),
   Type.Object(
     {
@@ -41,7 +41,7 @@ export const SecurityFindingSchema = Type.Union([
       severity: Type.Literal("high"),
       count: Type.Number(),
     },
-    { additionalProperties: false },
+    { additionalProperties: false }
   ),
   Type.Object(
     {
@@ -51,7 +51,7 @@ export const SecurityFindingSchema = Type.Union([
       patternId: Type.String({ minLength: 1 }),
       index: Type.Number(),
     },
-    { additionalProperties: false },
+    { additionalProperties: false }
   ),
   Type.Object(
     {
@@ -60,7 +60,7 @@ export const SecurityFindingSchema = Type.Union([
       tool: Type.String({ minLength: 1 }),
       message: Type.String({ minLength: 1 }),
     },
-    { additionalProperties: false },
+    { additionalProperties: false }
   ),
 ]);
 export type SecurityFinding = Static<typeof SecurityFindingSchema>;
@@ -70,7 +70,7 @@ export const SecurityReportMetaSchema = Type.Object(
     pluginId: Type.Optional(Type.String({ minLength: 1 })),
     repoRoot: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const SecurityReportSchema = Type.Object(
@@ -82,7 +82,7 @@ export const SecurityReportSchema = Type.Object(
     mode: SecurityModeSchema,
     meta: Type.Optional(SecurityReportMetaSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type SecurityReport = Static<typeof SecurityReportSchema>;
 
@@ -96,7 +96,7 @@ export const SecurityReportWithPathSchema = Type.Object(
     meta: Type.Optional(SecurityReportMetaSchema),
     reportPath: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const SecurityGateEnableResultSchema = Type.Object(
@@ -105,6 +105,6 @@ export const SecurityGateEnableResultSchema = Type.Object(
     report: SecurityReportWithPathSchema,
     requiresForce: Type.Boolean(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type GateEnableResult = Static<typeof SecurityGateEnableResultSchema>;

@@ -19,9 +19,15 @@ const readSnapshot = module.readSnapshot.handler(async ({ context, errors }) => 
   if (!recordsResult.ok) {
     const message = recordsResult.error.reason;
     if (recordsResult.error.kind === "invalid-json") {
-      throw errors.INVALID_CONVERSATION_JSON({ message, data: { path: recordsResult.error.sourcePath, reason: message } });
+      throw errors.INVALID_CONVERSATION_JSON({
+        message,
+        data: { path: recordsResult.error.sourcePath, reason: message },
+      });
     }
-    throw errors.INVALID_CONVERSATION_EXPORT({ message, data: { path: recordsResult.error.sourcePath, reason: message } });
+    throw errors.INVALID_CONVERSATION_EXPORT({
+      message,
+      data: { path: recordsResult.error.sourcePath, reason: message },
+    });
   }
 
   const snapshot = {

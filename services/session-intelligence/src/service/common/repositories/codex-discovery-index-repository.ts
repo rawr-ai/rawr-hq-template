@@ -13,7 +13,10 @@ export type IndexedCodexRootState = {
   scanned_at_ms?: unknown;
 };
 
-export async function initializeDiscoveryIndex(indexRuntime: SessionIndexRuntime, indexPath: string): Promise<void> {
+export async function initializeDiscoveryIndex(
+  indexRuntime: SessionIndexRuntime,
+  indexPath: string
+): Promise<void> {
   await indexRuntime.execute({
     indexPath,
     sql: `
@@ -67,7 +70,11 @@ export async function replaceCodexRootIndex(input: {
   });
 }
 
-export async function deleteCodexRootIndex(indexRuntime: SessionIndexRuntime, indexPath: string, rootDir: string): Promise<void> {
+export async function deleteCodexRootIndex(
+  indexRuntime: SessionIndexRuntime,
+  indexPath: string,
+  rootDir: string
+): Promise<void> {
   await indexRuntime.transaction({
     indexPath,
     statements: [
@@ -77,7 +84,11 @@ export async function deleteCodexRootIndex(indexRuntime: SessionIndexRuntime, in
   });
 }
 
-export async function readCodexRootState(indexRuntime: SessionIndexRuntime, indexPath: string, rootDir: string): Promise<IndexedCodexRootState | null> {
+export async function readCodexRootState(
+  indexRuntime: SessionIndexRuntime,
+  indexPath: string,
+  rootDir: string
+): Promise<IndexedCodexRootState | null> {
   const rows = await indexRuntime.query<IndexedCodexRootState>({
     indexPath,
     sql: "SELECT root_mtime_ms, scanned_at_ms FROM codex_root_scan_state WHERE root_dir=?",
@@ -86,7 +97,12 @@ export async function readCodexRootState(indexRuntime: SessionIndexRuntime, inde
   return rows[0] ?? null;
 }
 
-export async function queryIndexedCodexRows(indexRuntime: SessionIndexRuntime, indexPath: string, sources: CodexSessionSource[], max: number): Promise<CodexSessionFile[]> {
+export async function queryIndexedCodexRows(
+  indexRuntime: SessionIndexRuntime,
+  indexPath: string,
+  sources: CodexSessionSource[],
+  max: number
+): Promise<CodexSessionFile[]> {
   if (!sources.length) return [];
   const placeholders = sources.map(() => "?").join(",");
   const queryLimit = max > 0 ? max * 8 + 32 : 0;
@@ -110,7 +126,11 @@ export async function queryIndexedCodexRows(indexRuntime: SessionIndexRuntime, i
   }));
 }
 
-export async function deleteCodexFileIndexEntry(indexRuntime: SessionIndexRuntime, indexPath: string, filePath: string): Promise<void> {
+export async function deleteCodexFileIndexEntry(
+  indexRuntime: SessionIndexRuntime,
+  indexPath: string,
+  filePath: string
+): Promise<void> {
   await indexRuntime.execute({
     indexPath,
     sql: "DELETE FROM codex_file_index WHERE file_path=?",
@@ -118,7 +138,11 @@ export async function deleteCodexFileIndexEntry(indexRuntime: SessionIndexRuntim
   });
 }
 
-export async function updateCodexFileIndexEntry(indexRuntime: SessionIndexRuntime, indexPath: string, row: CodexSessionFile): Promise<void> {
+export async function updateCodexFileIndexEntry(
+  indexRuntime: SessionIndexRuntime,
+  indexPath: string,
+  row: CodexSessionFile
+): Promise<void> {
   await indexRuntime.execute({
     indexPath,
     sql: "UPDATE codex_file_index SET modified_ms=?, size_bytes=? WHERE file_path=?",

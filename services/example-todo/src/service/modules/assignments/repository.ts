@@ -14,14 +14,14 @@ export function createRepository(sql: Sql, workspaceId: string) {
     async findByTask(taskId: string): Promise<Assignment[]> {
       return await sql.query<Assignment>(
         "SELECT * FROM task_tags WHERE task_id = $1 AND workspace_id = $2 ORDER BY created_at DESC",
-        [taskId, workspaceId],
+        [taskId, workspaceId]
       );
     },
 
     async exists(taskId: string, tagId: string): Promise<boolean> {
       const row = await sql.queryOne<{ id: string }>(
         "SELECT id FROM task_tags WHERE task_id = $1 AND tag_id = $2 AND workspace_id = $3",
-        [taskId, tagId, workspaceId],
+        [taskId, tagId, workspaceId]
       );
       return !!row;
     },
@@ -30,7 +30,13 @@ export function createRepository(sql: Sql, workspaceId: string) {
       const row = await sql.queryOne<Assignment>(
         `INSERT INTO task_tags (id, workspace_id, task_id, tag_id, created_at)
          VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [assignment.id, assignment.workspaceId, assignment.taskId, assignment.tagId, assignment.createdAt],
+        [
+          assignment.id,
+          assignment.workspaceId,
+          assignment.taskId,
+          assignment.tagId,
+          assignment.createdAt,
+        ]
       );
 
       if (!row) {
@@ -43,7 +49,7 @@ export function createRepository(sql: Sql, workspaceId: string) {
     async countByTask(taskId: string): Promise<number> {
       const rows = await sql.query<Assignment>(
         "SELECT * FROM task_tags WHERE task_id = $1 AND workspace_id = $2 ORDER BY created_at DESC",
-        [taskId, workspaceId],
+        [taskId, workspaceId]
       );
       return rows.length;
     },

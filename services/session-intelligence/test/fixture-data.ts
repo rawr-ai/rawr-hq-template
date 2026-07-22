@@ -1,6 +1,8 @@
 export const CLAUDE_FIXTURE_PATH = "/fixtures/claude-project/fixture-claude-001.jsonl";
-export const CODEX_FIXTURE_PATH = "/fixtures/.codex/sessions/2026/02/05/rollout-019c21af-23f2-7401-af13-9582c5881d39.jsonl";
-export const CODEX_STRUCTURED_FIXTURE_PATH = "/fixtures/.codex/sessions/2026/02/06/rollout-structured-facets.jsonl";
+export const CODEX_FIXTURE_PATH =
+  "/fixtures/.codex/sessions/2026/02/05/rollout-019c21af-23f2-7401-af13-9582c5881d39.jsonl";
+export const CODEX_STRUCTURED_FIXTURE_PATH =
+  "/fixtures/.codex/sessions/2026/02/06/rollout-structured-facets.jsonl";
 
 export const CLAUDE_FIXTURE = `{"type":"summary","summary":"Summarize the session so far"}
 {"type":"user","cwd":"/tmp/rawr-fixture-claude","gitBranch":"main","sessionId":"fixture-claude-001","timestamp":"2026-02-05T00:00:00.000Z","message":{"model":"claude-3-5-sonnet","content":[{"type":"input_text","text":"Hello from the fixture"}]}}

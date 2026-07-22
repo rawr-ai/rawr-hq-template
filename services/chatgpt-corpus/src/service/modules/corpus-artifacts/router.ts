@@ -32,7 +32,9 @@ const build = module.build.handler(async ({ input }) => {
   const familyGraphs = buildFamilyGraphs(snapshot.jsonRecords);
   const relationships = buildRelationships(familyGraphs);
   const jsonRecordsById = new Map(snapshot.jsonRecords.map((record) => [record.sourceId, record]));
-  const normalizedThreads = familyGraphs.map((family) => buildUnifiedThread(family, jsonRecordsById, anomalies));
+  const normalizedThreads = familyGraphs.map((family) =>
+    buildUnifiedThread(family, jsonRecordsById, anomalies)
+  );
   const intermediateGraph = buildIntermediateGraph(normalizedThreads, relationships);
   const manifest = buildManifest({
     inventory,
@@ -41,7 +43,11 @@ const build = module.build.handler(async ({ input }) => {
     relationships,
     anomalies,
   });
-  const ambiguityFlags = buildAmbiguityFlags(familyGraphs, relationships, snapshot.markdownDocCount);
+  const ambiguityFlags = buildAmbiguityFlags(
+    familyGraphs,
+    relationships,
+    snapshot.markdownDocCount
+  );
   const canonicalitySummary = buildCanonicalitySummary(familyGraphs);
   const decisionLog = buildDecisionLog();
   const mentalMap = buildMentalMap(familyGraphs, anomalies);
@@ -102,9 +108,15 @@ const materialize = module.materialize.handler(async ({ context, errors }) => {
   if (!recordsResult.ok) {
     const message = recordsResult.error.reason;
     if (recordsResult.error.kind === "invalid-json") {
-      throw errors.INVALID_CONVERSATION_JSON({ message, data: { path: recordsResult.error.sourcePath, reason: message } });
+      throw errors.INVALID_CONVERSATION_JSON({
+        message,
+        data: { path: recordsResult.error.sourcePath, reason: message },
+      });
     }
-    throw errors.INVALID_CONVERSATION_EXPORT({ message, data: { path: recordsResult.error.sourcePath, reason: message } });
+    throw errors.INVALID_CONVERSATION_EXPORT({
+      message,
+      data: { path: recordsResult.error.sourcePath, reason: message },
+    });
   }
   const snapshot: SourceSnapshot = {
     workspaceRef: context.workspaceRef,
@@ -119,7 +131,9 @@ const materialize = module.materialize.handler(async ({ context, errors }) => {
   const familyGraphs = buildFamilyGraphs(snapshot.jsonRecords);
   const relationships = buildRelationships(familyGraphs);
   const jsonRecordsById = new Map(snapshot.jsonRecords.map((record) => [record.sourceId, record]));
-  const normalizedThreads = familyGraphs.map((family) => buildUnifiedThread(family, jsonRecordsById, anomalies));
+  const normalizedThreads = familyGraphs.map((family) =>
+    buildUnifiedThread(family, jsonRecordsById, anomalies)
+  );
   const intermediateGraph = buildIntermediateGraph(normalizedThreads, relationships);
   const manifest = buildManifest({
     inventory,
@@ -128,7 +142,11 @@ const materialize = module.materialize.handler(async ({ context, errors }) => {
     relationships,
     anomalies,
   });
-  const ambiguityFlags = buildAmbiguityFlags(familyGraphs, relationships, snapshot.markdownDocCount);
+  const ambiguityFlags = buildAmbiguityFlags(
+    familyGraphs,
+    relationships,
+    snapshot.markdownDocCount
+  );
   const canonicalitySummary = buildCanonicalitySummary(familyGraphs);
   const decisionLog = buildDecisionLog();
   const mentalMap = buildMentalMap(familyGraphs, anomalies);

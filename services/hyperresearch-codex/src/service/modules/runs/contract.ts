@@ -24,7 +24,7 @@ const StartV8RunInputSchema = Type.Object(
     vaultTag: Type.Optional(Type.String({ minLength: 1 })),
     wrapperRequirements: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const AdvanceV8RunInputSchema = Type.Object(
@@ -34,14 +34,14 @@ const AdvanceV8RunInputSchema = Type.Object(
     maxSteps: Type.Optional(Type.Number({ minimum: 1 })),
     resumeReason: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const InspectV8RunInputSchema = Type.Object(
   {
     ledgerPath: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const V8RunnerResultSchema = Type.Object(
@@ -52,7 +52,7 @@ const V8RunnerResultSchema = Type.Object(
     pendingAgentJobs: Type.Array(HyperresearchAgentJobSchema),
     integrity: Type.Array(HyperresearchIntegrityFindingSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const V8ValidationResultSchema = Type.Object(
@@ -64,7 +64,7 @@ const V8ValidationResultSchema = Type.Object(
     blockingFindings: Type.Array(HyperresearchIntegrityFindingSchema),
     warningFindings: Type.Array(HyperresearchIntegrityFindingSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const contract = {

@@ -19,12 +19,12 @@ export const RawrConfigV1Schema = Type.Object(
                 candidateLimit: Type.Optional(Type.Integer()),
                 model: Type.Optional(Type.String()),
               },
-              { additionalProperties: false },
-            ),
+              { additionalProperties: false }
+            )
           ),
         },
-        { additionalProperties: false },
-      ),
+        { additionalProperties: false }
+      )
     ),
     server: Type.Optional(
       Type.Object(
@@ -32,11 +32,11 @@ export const RawrConfigV1Schema = Type.Object(
           port: Type.Optional(Type.Integer()),
           baseUrl: Type.Optional(Type.String()),
         },
-        { additionalProperties: false },
-      ),
+        { additionalProperties: false }
+      )
     ),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type RawrConfigV1 = Static<typeof RawrConfigV1Schema>;
@@ -47,7 +47,7 @@ export const ConfigValidationIssueSchema = Type.Object(
     path: Type.String({ minLength: 1 }),
     message: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type ConfigValidationIssue = Static<typeof ConfigValidationIssueSchema>;
@@ -58,7 +58,7 @@ export const ConfigLoadErrorSchema = Type.Object(
     cause: Type.Optional(Type.String({ minLength: 1 })),
     issues: Type.Optional(Type.Array(ConfigValidationIssueSchema)),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const ConfigLoadResultSchema = Type.Object(
@@ -68,7 +68,7 @@ export const ConfigLoadResultSchema = Type.Object(
     warnings: Type.Array(Type.String()),
     error: Type.Optional(ConfigLoadErrorSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type LoadRawrConfigResult = Static<typeof ConfigLoadResultSchema>;
@@ -79,7 +79,7 @@ export const ConfigLayeredResultSchema = Type.Object(
     workspace: ConfigLoadResultSchema,
     merged: Type.Union([RawrConfigV1Schema, Type.Null()]),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type LoadRawrConfigLayeredResult = Static<typeof ConfigLayeredResultSchema>;

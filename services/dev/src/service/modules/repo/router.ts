@@ -15,11 +15,19 @@ import {
 import { checkScratchPolicy } from "../scratch-policy/helpers";
 import { module } from "./module";
 
-async function resolveUpstreamRef(context: { workspaceRoot: string; resources: any }, explicit?: string) {
+async function resolveUpstreamRef(
+  context: { workspaceRoot: string; resources: any },
+  explicit?: string
+) {
   if (explicit) return { ref: explicit, source: "flag" as const };
-  const config = await execText(context.resources, context.workspaceRoot, "git", ["config", "--get", "rawr.upstreamRef"]);
+  const config = await execText(context.resources, context.workspaceRoot, "git", [
+    "config",
+    "--get",
+    "rawr.upstreamRef",
+  ]);
   const configured = (config.stdout ?? "").trim();
-  if (config.status === "succeeded" && configured) return { ref: configured, source: "git-config" as const };
+  if (config.status === "succeeded" && configured)
+    return { ref: configured, source: "git-config" as const };
   return { ref: "origin/main", source: "default" as const };
 }
 
@@ -48,46 +56,92 @@ const syncUpstream = module.syncUpstream.handler(async ({ context, input }) => {
     : [];
   const issues = [];
 
-  const gitStatus = await execText(context.resources, context.workspaceRoot, "git", ["status", "--short", "--branch"]);
+  const gitStatus = await execText(context.resources, context.workspaceRoot, "git", [
+    "status",
+    "--short",
+    "--branch",
+  ]);
   const parsedStatus = parseGitStatus(gitStatus.stdout ?? "");
-  if (parsedStatus.dirty) issues.push(issue("DIRTY_WORKING_TREE", "Working tree must be clean before upstream sync."));
-  if (parsedStatus.detached) issues.push(issue("DETACHED_HEAD_UNSUPPORTED", "Upstream sync requires a named branch."));
+  if (parsedStatus.dirty)
+    issues.push(issue("DIRTY_WORKING_TREE", "Working tree must be clean before upstream sync."));
+  if (parsedStatus.detached)
+    issues.push(issue("DETACHED_HEAD_UNSUPPORTED", "Upstream sync requires a named branch."));
 
-  const refCheck = await execText(context.resources, context.workspaceRoot, "git", ["rev-parse", "--verify", upstreamRef.ref]);
+  const refCheck = await execText(context.resources, context.workspaceRoot, "git", [
+    "rev-parse",
+    "--verify",
+    upstreamRef.ref,
+  ]);
   if (refCheck.status !== "succeeded") {
-    issues.push(issue("UPSTREAM_REF_MISSING", "Configured upstream ref does not exist.", { upstreamRef: upstreamRef.ref }));
+    issues.push(
+      issue("UPSTREAM_REF_MISSING", "Configured upstream ref does not exist.", {
+        upstreamRef: upstreamRef.ref,
+      })
+    );
   }
 
-  const branchCheck = await execText(context.resources, context.workspaceRoot, "git", ["show-ref", "--verify", `refs/heads/${branchName}`]);
+  const branchCheck = await execText(context.resources, context.workspaceRoot, "git", [
+    "show-ref",
+    "--verify",
+    `refs/heads/${branchName}`,
+  ]);
   if (branchCheck.status === "succeeded") {
-    issues.push(issue("BRANCH_ALREADY_EXISTS", "Generated sync branch already exists.", { branchName }));
+    issues.push(
+      issue("BRANCH_ALREADY_EXISTS", "Generated sync branch already exists.", { branchName })
+    );
   }
 
-  const worktreeList = await execText(context.resources, context.workspaceRoot, "git", ["worktree", "list", "--porcelain"]);
+  const worktreeList = await execText(context.resources, context.workspaceRoot, "git", [
+    "worktree",
+    "list",
+    "--porcelain",
+  ]);
   if (worktreeList.status === "succeeded") {
-    const occupied = parseWorktrees(worktreeList.stdout ?? "").find((entry) => entry.branch === branchName);
+    const occupied = parseWorktrees(worktreeList.stdout ?? "").find(
+      (entry) => entry.branch === branchName
+    );
     if (occupied) {
-      issues.push(issue("BRANCH_CHECKED_OUT_ELSEWHERE", "Generated sync branch is checked out in another worktree.", {
-        branchName,
-        path: occupied.path,
-      }));
+      issues.push(
+        issue(
+          "BRANCH_CHECKED_OUT_ELSEWHERE",
+          "Generated sync branch is checked out in another worktree.",
+          {
+            branchName,
+            path: occupied.path,
+          }
+        )
+      );
     }
   }
   const gtLs = await execText(context.resources, context.workspaceRoot, "gt", ["ls"]);
   if (gtLs.status !== "succeeded") {
-    issues.push(issue("GRAPHITE_UNAVAILABLE", "Graphite stack state is not readable.", { stderr: gtLs.stderr }));
+    issues.push(
+      issue("GRAPHITE_UNAVAILABLE", "Graphite stack state is not readable.", {
+        stderr: gtLs.stderr,
+      })
+    );
   }
 
   if (scratchPolicy.blocked) {
-    issues.push(issue("SCRATCH_POLICY_BLOCKED", "Scratch policy blocked upstream sync.", { missing: scratchPolicy.missing }));
+    issues.push(
+      issue("SCRATCH_POLICY_BLOCKED", "Scratch policy blocked upstream sync.", {
+        missing: scratchPolicy.missing,
+      })
+    );
   } else if (scratchPolicy.mode === "warn" && scratchPolicy.missing.length > 0 && apply) {
-    issues.push(warning("SCRATCH_POLICY_WARNING", "Scratch policy warning.", { missing: scratchPolicy.missing }));
+    issues.push(
+      warning("SCRATCH_POLICY_WARNING", "Scratch policy warning.", {
+        missing: scratchPolicy.missing,
+      })
+    );
   }
   if (input.inspectAfter) {
-    issues.push(warning(
-      "INSPECT_AFTER_PLANNED_ONLY",
-      "Controller and external-extension diagnostics are emitted as explicit follow-up commands, not executed inside DevOps sync.",
-    ));
+    issues.push(
+      warning(
+        "INSPECT_AFTER_PLANNED_ONLY",
+        "Controller and external-extension diagnostics are emitted as explicit follow-up commands, not executed inside DevOps sync."
+      )
+    );
   }
 
   const check = preflight(issues);
@@ -107,7 +161,13 @@ const syncUpstream = module.syncUpstream.handler(async ({ context, input }) => {
   }
 
   const appliedSteps = [
-    await execStep(context.resources, context.workspaceRoot, "git", ["fetch", "--all", "--prune"], 180_000),
+    await execStep(
+      context.resources,
+      context.workspaceRoot,
+      "git",
+      ["fetch", "--all", "--prune"],
+      180_000
+    ),
     skipped("git", ["switch", "-c", branchName]),
     skipped("git", ["merge", "--no-ff", upstreamRef.ref]),
     skipped("gt", ["sync", "--no-restack"]),
@@ -115,19 +175,43 @@ const syncUpstream = module.syncUpstream.handler(async ({ context, input }) => {
   ];
 
   if (appliedSteps[0].status === "succeeded") {
-    appliedSteps[1] = await execStep(context.resources, context.workspaceRoot, "git", ["switch", "-c", branchName]);
+    appliedSteps[1] = await execStep(context.resources, context.workspaceRoot, "git", [
+      "switch",
+      "-c",
+      branchName,
+    ]);
   }
   if (appliedSteps[1].status === "succeeded") {
-    appliedSteps[2] = await execStep(context.resources, context.workspaceRoot, "git", ["merge", "--no-ff", upstreamRef.ref], 300_000);
+    appliedSteps[2] = await execStep(
+      context.resources,
+      context.workspaceRoot,
+      "git",
+      ["merge", "--no-ff", upstreamRef.ref],
+      300_000
+    );
   }
   if (appliedSteps[2].status === "succeeded") {
-    appliedSteps[3] = await execStep(context.resources, context.workspaceRoot, "gt", ["sync", "--no-restack"], 120_000);
+    appliedSteps[3] = await execStep(
+      context.resources,
+      context.workspaceRoot,
+      "gt",
+      ["sync", "--no-restack"],
+      120_000
+    );
     if (appliedSteps[3].status === "succeeded") {
-      appliedSteps[4] = await execStep(context.resources, context.workspaceRoot, "gt", ["restack", "--upstack"], 120_000);
+      appliedSteps[4] = await execStep(
+        context.resources,
+        context.workspaceRoot,
+        "gt",
+        ["restack", "--upstack"],
+        120_000
+      );
     }
   }
   const executionIssues = appliedSteps
-    .map((step) => executionIssueFromStep(step, "REPO_SYNC_COMMAND_FAILED", "Repo sync command failed."))
+    .map((step) =>
+      executionIssueFromStep(step, "REPO_SYNC_COMMAND_FAILED", "Repo sync command failed.")
+    )
     .filter((item): item is NonNullable<typeof item> => Boolean(item));
 
   return {

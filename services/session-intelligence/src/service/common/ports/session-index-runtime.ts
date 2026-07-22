@@ -31,7 +31,9 @@ export type SessionIndexBatch = {
 export interface SessionIndexRuntime {
   defaultIndexPath(): string;
   execute(input: SessionIndexStatement & { indexPath: string }): Promise<void>;
-  query<Row extends Record<string, unknown> = Record<string, unknown>>(input: SessionIndexStatement & { indexPath: string }): Promise<Row[]>;
+  query<Row extends Record<string, unknown> = Record<string, unknown>>(
+    input: SessionIndexStatement & { indexPath: string }
+  ): Promise<Row[]>;
   transaction(input: SessionIndexBatch): Promise<void>;
   removeIndex(input: { indexPath: string }): Promise<void>;
 }

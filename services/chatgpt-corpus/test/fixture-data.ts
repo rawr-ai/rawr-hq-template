@@ -3,7 +3,8 @@ import type { RawSourceMaterials } from "../src/orpc/ports/workspace-store";
 export const FIXTURE_SOURCE_MATERIALS: RawSourceMaterials = {
   conversations: [
     {
-      relativePath: "source-material/conversations/raw-json/Alpha Architecture Branch 01 Duplicate.json",
+      relativePath:
+        "source-material/conversations/raw-json/Alpha Architecture Branch 01 Duplicate.json",
       contents: `{
   "metadata": {
     "title": "Branch · Alpha Architecture",

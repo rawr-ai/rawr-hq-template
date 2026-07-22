@@ -1,7 +1,4 @@
-import type {
-  HyperresearchRunLedger,
-  HyperresearchStepDefinition,
-} from "../../../common/entities";
+import type { HyperresearchRunLedger, HyperresearchStepDefinition } from "../../../common/entities";
 import type { HyperresearchCodexIO } from "../../../common/resources";
 
 function createSyntheticRunLedger(input: {

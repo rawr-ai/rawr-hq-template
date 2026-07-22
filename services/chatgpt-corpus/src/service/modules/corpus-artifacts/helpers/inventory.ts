@@ -6,10 +6,14 @@ import { filename } from "./names";
 export function buildWarnings(snapshot: SourceSnapshot): string[] {
   const warnings: string[] = [];
   if (snapshot.jsonRecords.length === 0) {
-    warnings.push(`No conversation exports were found under ${SOURCE_MATERIAL_DIRECTORIES.conversations}.`);
+    warnings.push(
+      `No conversation exports were found under ${SOURCE_MATERIAL_DIRECTORIES.conversations}.`
+    );
   }
   if (snapshot.markdownDocCount === 0) {
-    warnings.push(`No curated Markdown source docs were found under ${SOURCE_MATERIAL_DIRECTORIES.documents}.`);
+    warnings.push(
+      `No curated Markdown source docs were found under ${SOURCE_MATERIAL_DIRECTORIES.documents}.`
+    );
   }
   return warnings;
 }
@@ -35,7 +39,8 @@ export function buildInventory(records: SourceRecord[]): InventoryItem[] {
         exported: record.exported,
         link: record.link,
         first_prompt: record.messages.find((message) => message.role === "Prompt")?.say ?? "",
-        last_response: [...record.messages].reverse().find((message) => message.role === "Response")?.say ?? "",
+        last_response:
+          [...record.messages].reverse().find((message) => message.role === "Response")?.say ?? "",
       };
     }
 

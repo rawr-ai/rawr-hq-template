@@ -16,20 +16,20 @@ const ResourceNotFoundData = schema(
         Type.String({
           minLength: 1,
           description: "Entity name that was not found (for example Task or Tag).",
-        }),
+        })
       ),
       id: Type.Optional(
         Type.String({
           minLength: 1,
           description: "Identifier associated with the missing entity.",
-        }),
+        })
       ),
     },
     {
       additionalProperties: false,
       description: "Context payload for RESOURCE_NOT_FOUND boundary errors.",
-    },
-  ),
+    }
+  )
 );
 
 const ReadOnlyModeData = schema(
@@ -39,14 +39,14 @@ const ReadOnlyModeData = schema(
         Type.String({
           minLength: 1,
           description: "Procedure path that was blocked while read-only mode was enabled.",
-        }),
+        })
       ),
     },
     {
       additionalProperties: false,
       description: "Context payload for READ_ONLY_MODE boundary errors.",
-    },
-  ),
+    }
+  )
 );
 
 const AssignmentLimitReachedData = schema(
@@ -56,20 +56,20 @@ const AssignmentLimitReachedData = schema(
         Type.String({
           minLength: 1,
           description: "Task id that hit the configured assignment limit.",
-        }),
+        })
       ),
       maxAssignmentsPerTask: Type.Optional(
         Type.Number({
           minimum: 1,
           description: "Configured per-task assignment ceiling.",
-        }),
+        })
       ),
     },
     {
       additionalProperties: false,
       description: "Context payload for ASSIGNMENT_LIMIT_REACHED boundary errors.",
-    },
-  ),
+    }
+  )
 );
 
 export const RESOURCE_NOT_FOUND: ErrorMapItem<typeof ResourceNotFoundData> = {

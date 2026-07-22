@@ -29,16 +29,30 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
 
   const currentRun = await execText(context.resources, context.workspaceRoot, "pwd", ["-P"]);
   const currentPath = (currentRun.stdout ?? "").trim() || context.workspaceRoot;
-  const listRun = await execText(context.resources, context.workspaceRoot, "git", ["worktree", "list", "--porcelain"]);
+  const listRun = await execText(context.resources, context.workspaceRoot, "git", [
+    "worktree",
+    "list",
+    "--porcelain",
+  ]);
   if (listRun.status !== "succeeded") {
-    issues.push(issue("WORKTREE_LIST_FAILED", "Git worktree list was not readable.", { stderr: listRun.stderr }));
+    issues.push(
+      issue("WORKTREE_LIST_FAILED", "Git worktree list was not readable.", {
+        stderr: listRun.stderr,
+      })
+    );
   }
 
   for (const entry of parseWorktrees(listRun.stdout ?? "")) {
     const baseName = context.resources.path.basename(entry.path);
     if (!baseName.startsWith(input.prefix)) continue;
-    if (context.resources.path.resolve(entry.path) === context.resources.path.resolve(currentPath)) {
-      issues.push(issue("UNSAFE_CURRENT_WORKTREE_MATCH", "Cleanup candidate matches the current worktree.", { path: entry.path }));
+    if (
+      context.resources.path.resolve(entry.path) === context.resources.path.resolve(currentPath)
+    ) {
+      issues.push(
+        issue("UNSAFE_CURRENT_WORKTREE_MATCH", "Cleanup candidate matches the current worktree.", {
+          path: entry.path,
+        })
+      );
       skipped.push({ path: entry.path, reason: "current-worktree" });
       continue;
     }
@@ -55,7 +69,13 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
       continue;
     }
     if (mergedOnly) {
-      const mergedRun = await execText(context.resources, context.workspaceRoot, "git", ["branch", "--merged", trunk, "--list", entry.branch]);
+      const mergedRun = await execText(context.resources, context.workspaceRoot, "git", [
+        "branch",
+        "--merged",
+        trunk,
+        "--list",
+        entry.branch,
+      ]);
       if (mergedRun.status !== "succeeded" || !(mergedRun.stdout ?? "").trim()) {
         skipped.push({ path: entry.path, reason: "not-merged" });
         continue;
@@ -65,11 +85,21 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
   }
 
   if (scratchPolicy.blocked) {
-    issues.push(issue("SCRATCH_POLICY_BLOCKED", "Scratch policy blocked worktree cleanup.", { missing: scratchPolicy.missing }));
+    issues.push(
+      issue("SCRATCH_POLICY_BLOCKED", "Scratch policy blocked worktree cleanup.", {
+        missing: scratchPolicy.missing,
+      })
+    );
   } else if (scratchPolicy.mode === "warn" && scratchPolicy.missing.length > 0 && apply) {
-    issues.push(warning("SCRATCH_POLICY_WARNING", "Scratch policy warning.", { missing: scratchPolicy.missing }));
+    issues.push(
+      warning("SCRATCH_POLICY_WARNING", "Scratch policy warning.", {
+        missing: scratchPolicy.missing,
+      })
+    );
   }
-  const plannedRemovals = candidates.map((candidate) => planned("git", ["worktree", "remove", candidate.path]));
+  const plannedRemovals = candidates.map((candidate) =>
+    planned("git", ["worktree", "remove", candidate.path])
+  );
   const followUpCommands: ReturnType<typeof planned>[] = [];
   const check = preflight(issues);
   if (!apply || !check.ok) {
@@ -89,10 +119,20 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
 
   const removed = [];
   for (const candidate of candidates) {
-    removed.push(await execStep(context.resources, context.workspaceRoot, "git", ["worktree", "remove", candidate.path], 120_000));
+    removed.push(
+      await execStep(
+        context.resources,
+        context.workspaceRoot,
+        "git",
+        ["worktree", "remove", candidate.path],
+        120_000
+      )
+    );
   }
   const executionIssues = removed
-    .map((step) => executionIssueFromStep(step, "WORKTREE_REMOVE_FAILED", "Worktree removal failed."))
+    .map((step) =>
+      executionIssueFromStep(step, "WORKTREE_REMOVE_FAILED", "Worktree removal failed.")
+    )
     .filter((item): item is NonNullable<typeof item> => Boolean(item));
 
   return {

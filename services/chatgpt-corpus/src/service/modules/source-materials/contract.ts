@@ -1,10 +1,7 @@
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
-import {
-  INVALID_CONVERSATION_EXPORT,
-  INVALID_CONVERSATION_JSON,
-} from "../../common/errors";
+import { INVALID_CONVERSATION_EXPORT, INVALID_CONVERSATION_JSON } from "../../common/errors";
 import { SourceSnapshotSchema } from "./entities";
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
@@ -17,11 +14,11 @@ const ReadSourceSnapshotOutputSchema = Type.Object(
         markdownDocuments: Type.Number({ minimum: 0 }),
         totalSources: Type.Number({ minimum: 0 }),
       },
-      { additionalProperties: false },
+      { additionalProperties: false }
     ),
     snapshot: SourceSnapshotSchema,
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const contract = {

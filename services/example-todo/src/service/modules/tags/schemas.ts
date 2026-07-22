@@ -38,7 +38,7 @@ export const TagSchema = Type.Object(
   {
     additionalProperties: false,
     description: "Canonical persisted tag entity.",
-  },
+  }
 );
 
 export type Tag = Static<typeof TagSchema>;

@@ -5,10 +5,7 @@ import type {
   HyperresearchStepDefinition,
   HyperresearchV8RunLedger,
 } from "../../../common/entities";
-import type {
-  HyperresearchCliBackend,
-  HyperresearchCodexIO,
-} from "../../../common/resources";
+import type { HyperresearchCliBackend, HyperresearchCodexIO } from "../../../common/resources";
 
 function isHttpUrl(value: string): boolean {
   try {
@@ -44,7 +41,9 @@ function addUniqueNumber(target: number[], values: number[]) {
   }
 }
 
-function sourceSuggestionsFromAgentOutputs(agentOutputs: HyperresearchAgentOutput[]): SourceSuggestion[] {
+function sourceSuggestionsFromAgentOutputs(
+  agentOutputs: HyperresearchAgentOutput[]
+): SourceSuggestion[] {
   const suggestions = new Map<string, SourceSuggestion>();
   const ensure = (url: string) => {
     const existing = suggestions.get(url);
@@ -180,11 +179,17 @@ export async function runRequiredCliForStep(input: {
     const args = (() => {
       if (operation === "search") return [input.ledger.canonicalQuery, "--json"];
       if (operation === "fetch") {
-        if (!sourceUrls[0]) throw new Error(`Step ${input.definition.id} requires a source URL for Hyperresearch fetch`);
+        if (!sourceUrls[0])
+          throw new Error(
+            `Step ${input.definition.id} requires a source URL for Hyperresearch fetch`
+          );
         return undefined;
       }
       if (operation === "fetch-batch") {
-        if (sourceUrls.length === 0) throw new Error(`Step ${input.definition.id} requires source URLs for Hyperresearch fetch-batch`);
+        if (sourceUrls.length === 0)
+          throw new Error(
+            `Step ${input.definition.id} requires source URLs for Hyperresearch fetch-batch`
+          );
         return [...sourceUrls, "--json"];
       }
       if (operation === "note") return ["new", "--json", "Hyperresearch Codex V8 fixture source"];

@@ -32,7 +32,7 @@ export type DevProcessResource = {
   exec(
     command: string,
     args: string[],
-    opts?: { cwd?: string; env?: Record<string, string | undefined>; timeoutMs?: number },
+    opts?: { cwd?: string; env?: Record<string, string | undefined>; timeoutMs?: number }
   ): Promise<DevExecResult>;
   sleep(ms: number): Promise<void>;
 };

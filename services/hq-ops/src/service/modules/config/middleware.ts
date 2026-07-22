@@ -1,10 +1,7 @@
 /**
  * @fileoverview Config module middleware exports.
  */
-import {
-  createServiceAnalyticsMiddleware,
-  createServiceObservabilityMiddleware,
-} from "../../base";
+import { createServiceAnalyticsMiddleware, createServiceObservabilityMiddleware } from "../../base";
 
 export {
   createServiceAnalyticsMiddleware as createProcedureAnalytics,

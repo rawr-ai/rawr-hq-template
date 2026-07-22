@@ -1,6 +1,11 @@
 import type { SessionIndexRuntime } from "../ports/session-index-runtime";
 import type { SessionSourceRuntime } from "../ports/session-source-runtime";
-import type { CodexSessionFile, CodexSessionSource, DiscoveredSessionFile, SessionStatus } from "../entities";
+import type {
+  CodexSessionFile,
+  CodexSessionSource,
+  DiscoveredSessionFile,
+  SessionStatus,
+} from "../entities";
 import {
   deleteCodexFileIndexEntry,
   deleteCodexRootIndex,
@@ -14,23 +19,34 @@ import {
 const DEFAULT_CODEX_DISCOVERY_LIVE_MAX_AGE_MS = 15_000;
 const DEFAULT_CODEX_DISCOVERY_ARCHIVED_MAX_AGE_MS = 5 * 60_000;
 
-function hasServiceOwnedCodexDiscovery(runtime: SessionSourceRuntime): runtime is SessionSourceRuntime & {
+function hasServiceOwnedCodexDiscovery(
+  runtime: SessionSourceRuntime
+): runtime is SessionSourceRuntime & {
   listCodexSources(): Promise<CodexSessionSource[]>;
   discoverCodexSessionFiles(input: CodexSessionSource): Promise<CodexSessionFile[]>;
 } {
-  return typeof runtime.listCodexSources === "function" && typeof runtime.discoverCodexSessionFiles === "function";
+  return (
+    typeof runtime.listCodexSources === "function" &&
+    typeof runtime.discoverCodexSessionFiles === "function"
+  );
 }
 
-function codexDiscoveryMaxAgeMs(runtime: SessionSourceRuntime, status: SessionStatus): number | Promise<number> {
-  if (typeof runtime.codexDiscoveryMaxAgeMs === "function") return runtime.codexDiscoveryMaxAgeMs({ status });
-  return status === "live" ? DEFAULT_CODEX_DISCOVERY_LIVE_MAX_AGE_MS : DEFAULT_CODEX_DISCOVERY_ARCHIVED_MAX_AGE_MS;
+function codexDiscoveryMaxAgeMs(
+  runtime: SessionSourceRuntime,
+  status: SessionStatus
+): number | Promise<number> {
+  if (typeof runtime.codexDiscoveryMaxAgeMs === "function")
+    return runtime.codexDiscoveryMaxAgeMs({ status });
+  return status === "live"
+    ? DEFAULT_CODEX_DISCOVERY_LIVE_MAX_AGE_MS
+    : DEFAULT_CODEX_DISCOVERY_ARCHIVED_MAX_AGE_MS;
 }
 
 function shouldRefreshRoot(
   row: { root_mtime_ms?: unknown; scanned_at_ms?: unknown } | null,
   rootMtimeMs: number,
   nowMs: number,
-  maxAgeMs: number,
+  maxAgeMs: number
 ): boolean {
   if (!row) return true;
   if (Number(row.root_mtime_ms) !== Number(rootMtimeMs)) return true;
@@ -40,7 +56,9 @@ function shouldRefreshRoot(
 }
 
 async function refreshCodexRootIndex(input: {
-  runtime: SessionSourceRuntime & { discoverCodexSessionFiles(input: CodexSessionSource): Promise<CodexSessionFile[]> };
+  runtime: SessionSourceRuntime & {
+    discoverCodexSessionFiles(input: CodexSessionSource): Promise<CodexSessionFile[]>;
+  };
   indexRuntime: SessionIndexRuntime;
   indexPath: string;
   source: CodexSessionSource;
@@ -62,7 +80,7 @@ async function validateIndexedCodexRows(
   indexRuntime: SessionIndexRuntime,
   indexPath: string,
   rows: CodexSessionFile[],
-  max: number,
+  max: number
 ): Promise<CodexSessionFile[]> {
   const out: CodexSessionFile[] = [];
   for (const row of rows) {
@@ -71,7 +89,10 @@ async function validateIndexedCodexRows(
       await deleteCodexFileIndexEntry(indexRuntime, indexPath, row.path);
       continue;
     }
-    if (Number(stat.modifiedMs) !== Number(row.modifiedMs) || Number(stat.sizeBytes) !== Number(row.sizeBytes)) {
+    if (
+      Number(stat.modifiedMs) !== Number(row.modifiedMs) ||
+      Number(stat.sizeBytes) !== Number(row.sizeBytes)
+    ) {
       row.modifiedMs = stat.modifiedMs;
       row.sizeBytes = stat.sizeBytes;
       await updateCodexFileIndexEntry(indexRuntime, indexPath, row);
@@ -85,7 +106,7 @@ async function validateIndexedCodexRows(
 async function discoverCodexFromIndex(
   runtime: SessionSourceRuntime,
   indexRuntime: SessionIndexRuntime,
-  max: number,
+  max: number
 ): Promise<CodexSessionFile[] | null> {
   if (!hasServiceOwnedCodexDiscovery(runtime)) return null;
 
@@ -105,7 +126,14 @@ async function discoverCodexFromIndex(
     }
 
     if (!max) {
-      await refreshCodexRootIndex({ runtime, indexRuntime, indexPath, source, rootMtimeMs: rootStat.modifiedMs, nowMs });
+      await refreshCodexRootIndex({
+        runtime,
+        indexRuntime,
+        indexPath,
+        source,
+        rootMtimeMs: rootStat.modifiedMs,
+        nowMs,
+      });
       fullRefreshDone = true;
       continue;
     }
@@ -113,7 +141,14 @@ async function discoverCodexFromIndex(
     const maxAgeMs = await codexDiscoveryMaxAgeMs(runtime, source.status);
     const rootState = await readCodexRootState(indexRuntime, indexPath, source.dir);
     if (shouldRefreshRoot(rootState, rootStat.modifiedMs, nowMs, maxAgeMs)) {
-      await refreshCodexRootIndex({ runtime, indexRuntime, indexPath, source, rootMtimeMs: rootStat.modifiedMs, nowMs });
+      await refreshCodexRootIndex({
+        runtime,
+        indexRuntime,
+        indexPath,
+        source,
+        rootMtimeMs: rootStat.modifiedMs,
+        nowMs,
+      });
     }
   }
 
@@ -123,7 +158,14 @@ async function discoverCodexFromIndex(
     for (const source of sources) {
       const rootStat = await runtime.statFile({ path: source.dir });
       if (rootStat) {
-        await refreshCodexRootIndex({ runtime, indexRuntime, indexPath, source, rootMtimeMs: rootStat.modifiedMs, nowMs: Date.now() });
+        await refreshCodexRootIndex({
+          runtime,
+          indexRuntime,
+          indexPath,
+          source,
+          rootMtimeMs: rootStat.modifiedMs,
+          nowMs: Date.now(),
+        });
       }
     }
     rows = await queryIndexedCodexRows(indexRuntime, indexPath, sources, max);
@@ -151,7 +193,7 @@ function codexFileToDiscovered(file: CodexSessionFile): DiscoveredSessionFile {
 export async function discoverCodexSessionsFromIndexOrNull(
   runtime: SessionSourceRuntime,
   indexRuntime: SessionIndexRuntime,
-  max: number,
+  max: number
 ): Promise<DiscoveredSessionFile[] | null> {
   if (!hasServiceOwnedCodexDiscovery(runtime)) return null;
   const indexed = await discoverCodexFromIndex(runtime, indexRuntime, max);

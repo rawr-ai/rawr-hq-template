@@ -1,18 +1,11 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import {
-  createEmbeddedPlaceholderAnalyticsAdapter,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import {
-  createEmbeddedPlaceholderLoggerAdapter,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
 import type { Service } from "../src/service/base";
-import type {
-  HyperresearchCliOperation,
-  HyperresearchCliResult,
-} from "../src/types";
+import type { HyperresearchCliOperation, HyperresearchCliResult } from "../src/types";
 import type {
   HyperresearchCliBackend,
   HyperresearchCodexIO,
@@ -66,10 +59,12 @@ export function createNodeTestIO(): HyperresearchCodexIO {
 export class RecordingCli implements HyperresearchCliBackend {
   readonly calls: Array<{ operation: HyperresearchCliOperation; args: string[]; cwd: string }> = [];
 
-  constructor(private readonly result: HyperresearchCliResult = {
-    exitCode: 0,
-    stdout: JSON.stringify({ ok: true }),
-  }) {}
+  constructor(
+    private readonly result: HyperresearchCliResult = {
+      exitCode: 0,
+      stdout: JSON.stringify({ ok: true }),
+    }
+  ) {}
 
   async run(input: { operation: HyperresearchCliOperation; args: string[]; cwd: string }) {
     this.calls.push(input);
@@ -77,11 +72,9 @@ export class RecordingCli implements HyperresearchCliBackend {
   }
 }
 
-export function createClientOptions(input: {
-  repoRoot?: string;
-  io?: HyperresearchCodexIO;
-  cli?: HyperresearchCliBackend;
-} = {}): CreateClientOptions {
+export function createClientOptions(
+  input: { repoRoot?: string; io?: HyperresearchCodexIO; cli?: HyperresearchCliBackend } = {}
+): CreateClientOptions {
   const deps: Service["Deps"] = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),

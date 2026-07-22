@@ -19,7 +19,7 @@ describe("example-todo service", () => {
         title: "Ship n=1 todo package",
         description: "Wire TypeBox + direct ORPC boundary errors",
       },
-      invocation("trace-create"),
+      invocation("trace-create")
     );
 
     const loaded = await client.tasks.get({ id: created.id }, invocation("trace-load"));
@@ -69,13 +69,28 @@ describe("example-todo service", () => {
     const client = createClient(createClientOptions());
 
     const task = await client.tasks.create({ title: "Prepare release" }, invocation("trace-task"));
-    const urgent = await client.tags.create({ name: "urgent", color: "#ff0000" }, invocation("trace-urgent"));
-    const backend = await client.tags.create({ name: "backend", color: "#00aa00" }, invocation("trace-backend"));
+    const urgent = await client.tags.create(
+      { name: "urgent", color: "#ff0000" },
+      invocation("trace-urgent")
+    );
+    const backend = await client.tags.create(
+      { name: "backend", color: "#00aa00" },
+      invocation("trace-backend")
+    );
 
-    await client.assignments.assign({ taskId: task.id, tagId: urgent.id }, invocation("trace-assign-1"));
-    await client.assignments.assign({ taskId: task.id, tagId: backend.id }, invocation("trace-assign-2"));
+    await client.assignments.assign(
+      { taskId: task.id, tagId: urgent.id },
+      invocation("trace-assign-1")
+    );
+    await client.assignments.assign(
+      { taskId: task.id, tagId: backend.id },
+      invocation("trace-assign-2")
+    );
 
-    const forTask = await client.assignments.listForTask({ taskId: task.id }, invocation("trace-list"));
+    const forTask = await client.assignments.listForTask(
+      { taskId: task.id },
+      invocation("trace-list")
+    );
 
     expect(forTask.task.id).toBe(task.id);
     expect(forTask.tags.map((tag: { name: string }) => tag.name)).toEqual(["backend", "urgent"]);
@@ -85,13 +100,25 @@ describe("example-todo service", () => {
     const client = createClient(createClientOptions({ maxAssignmentsPerTask: 1 }));
 
     const task = await client.tasks.create({ title: "Limit demo" }, invocation("trace-limit-task"));
-    const urgent = await client.tags.create({ name: "urgent", color: "#ff0000" }, invocation("trace-limit-urgent"));
-    const backend = await client.tags.create({ name: "backend", color: "#00aa00" }, invocation("trace-limit-backend"));
+    const urgent = await client.tags.create(
+      { name: "urgent", color: "#ff0000" },
+      invocation("trace-limit-urgent")
+    );
+    const backend = await client.tags.create(
+      { name: "backend", color: "#00aa00" },
+      invocation("trace-limit-backend")
+    );
 
-    await client.assignments.assign({ taskId: task.id, tagId: urgent.id }, invocation("trace-limit-first"));
+    await client.assignments.assign(
+      { taskId: task.id, tagId: urgent.id },
+      invocation("trace-limit-first")
+    );
 
     const result = await safe(
-      client.assignments.assign({ taskId: task.id, tagId: backend.id }, invocation("trace-limit-second")),
+      client.assignments.assign(
+        { taskId: task.id, tagId: backend.id },
+        invocation("trace-limit-second")
+      )
     );
 
     expect(result.isSuccess).toBe(false);
@@ -122,12 +149,19 @@ describe("example-todo service", () => {
       },
     });
 
-    const created = await writableClient.tasks.create({ title: "Seed before read-only" }, invocation("trace-seed"));
+    const created = await writableClient.tasks.create(
+      { title: "Seed before read-only" },
+      invocation("trace-seed")
+    );
 
-    const readResult = await safe(readOnlyClient.tasks.get({ id: created.id }, invocation("trace-read")));
+    const readResult = await safe(
+      readOnlyClient.tasks.get({ id: created.id }, invocation("trace-read"))
+    );
     expect(readResult.isSuccess).toBe(true);
 
-    const writeResult = await safe(readOnlyClient.tasks.create({ title: "blocked write" }, invocation("trace-blocked")));
+    const writeResult = await safe(
+      readOnlyClient.tasks.create({ title: "blocked write" }, invocation("trace-blocked"))
+    );
     expect(writeResult.isSuccess).toBe(false);
     expect(writeResult.isDefined).toBe(true);
     if (!writeResult.isSuccess && writeResult.isDefined) {
@@ -145,12 +179,24 @@ describe("example-todo service", () => {
     await safe(client.tasks.create({ title: "blocked write" }, invocation("trace-error")));
     await client.tags.list({}, invocation("trace-success"));
 
-    expect(logs.some((entry) => entry.event === "orpc.procedure" && entry.payload.outcome === "success")).toBe(true);
-    expect(logs.some((entry) => entry.event === "todo.procedure" && entry.payload.outcome === "error")).toBe(true);
+    expect(
+      logs.some((entry) => entry.event === "orpc.procedure" && entry.payload.outcome === "success")
+    ).toBe(true);
+    expect(
+      logs.some((entry) => entry.event === "todo.procedure" && entry.payload.outcome === "error")
+    ).toBe(true);
     expect(logs.some((entry) => entry.payload.invocationTraceId === "trace-error")).toBe(true);
     expect(logs.some((entry) => entry.payload.invocationTraceId === "trace-success")).toBe(true);
-    expect(analytics.some((entry) => entry.event === "orpc.procedure" && entry.payload.outcome === "error")).toBe(true);
-    expect(analytics.some((entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list")).toBe(true);
+    expect(
+      analytics.some(
+        (entry) => entry.event === "orpc.procedure" && entry.payload.outcome === "error"
+      )
+    ).toBe(true);
+    expect(
+      analytics.some(
+        (entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list"
+      )
+    ).toBe(true);
   });
 
   it("keeps analytics enrichment stable when the same invocation object is reused concurrently", async () => {
@@ -163,7 +209,9 @@ describe("example-todo service", () => {
       client.tags.list({}, { context: { invocation: sharedInvocation } }),
     ]);
 
-    const tagEvents = analytics.filter((entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list");
+    const tagEvents = analytics.filter(
+      (entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list"
+    );
     expect(tagEvents).toHaveLength(2);
     for (const entry of tagEvents) {
       expect(entry.payload.analytics_layer).toBe("module");
@@ -178,14 +226,21 @@ describe("example-todo service", () => {
     const client = createClient(createClientOptions({ analytics }));
 
     await expect(
-      client.tags.list({}, {
-        context: {
-          invocation: Object.freeze({ traceId: "trace-frozen" }),
-        },
-      }),
+      client.tags.list(
+        {},
+        {
+          context: {
+            invocation: Object.freeze({ traceId: "trace-frozen" }),
+          },
+        }
+      )
     ).resolves.toEqual([]);
 
-    expect(analytics.some((entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list")).toBe(true);
+    expect(
+      analytics.some(
+        (entry) => entry.event === "orpc.procedure" && entry.payload.path === "tags.list"
+      )
+    ).toBe(true);
   });
 
   it("fails open when analytics emission throws", async () => {
@@ -207,6 +262,8 @@ describe("example-todo service", () => {
     });
 
     await expect(client.tags.list({}, invocation("trace-analytics-failure"))).resolves.toEqual([]);
-    expect(logs.some((entry) => entry.level === "error" && entry.event === "orpc.analytics")).toBe(true);
+    expect(logs.some((entry) => entry.level === "error" && entry.event === "orpc.analytics")).toBe(
+      true
+    );
   });
 });

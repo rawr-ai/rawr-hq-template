@@ -30,7 +30,7 @@ export const SessionMessageSchema = Type.Object(
     content: Type.String(),
     timestamp: Type.Optional(Type.String()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type SessionMessage = Static<typeof SessionMessageSchema>;
 
@@ -47,7 +47,7 @@ export const ClaudeSessionMetadataSchema = Type.Object(
     modelProvider: Type.Optional(Type.String()),
     error: Type.Optional(Type.String()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type ClaudeSessionMetadata = Static<typeof ClaudeSessionMetadataSchema>;
 
@@ -71,11 +71,14 @@ export const CodexSessionMetadataSchema = Type.Object(
     compactionLastTimestamp: Type.Optional(Type.String()),
     error: Type.Optional(Type.String()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type CodexSessionMetadata = Static<typeof CodexSessionMetadataSchema>;
 
-export const SessionMetadataSchema = Type.Union([ClaudeSessionMetadataSchema, CodexSessionMetadataSchema]);
+export const SessionMetadataSchema = Type.Union([
+  ClaudeSessionMetadataSchema,
+  CodexSessionMetadataSchema,
+]);
 export type SessionMetadata = Static<typeof SessionMetadataSchema>;
 
 export const SessionListItemSchema = Type.Object(
@@ -95,7 +98,7 @@ export const SessionListItemSchema = Type.Object(
     started: Type.Optional(Type.String()),
     sizeKb: Type.Number(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type SessionListItem = Static<typeof SessionListItemSchema>;
 
@@ -108,7 +111,7 @@ export const DiscoveredSessionFileSchema = Type.Object(
     modifiedMs: Type.Number(),
     sizeBytes: Type.Number(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type DiscoveredSessionFile = Static<typeof DiscoveredSessionFileSchema>;
 
@@ -129,6 +132,6 @@ export const SessionFileStatSchema = Type.Object(
     modifiedMs: Type.Number(),
     sizeBytes: Type.Number(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 export type SessionFileStat = Static<typeof SessionFileStatSchema>;

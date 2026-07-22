@@ -4,6 +4,4 @@
 import { impl } from "../../impl";
 import { analytics, observability } from "./middleware";
 
-export const module = impl.security
-  .use(observability)
-  .use(analytics);
+export const module = impl.security.use(observability).use(analytics);

@@ -1,8 +1,4 @@
-import type {
-  DevCommandStep,
-  DevIssue,
-  DevPreflight,
-} from "./entities";
+import type { DevCommandStep, DevIssue, DevPreflight } from "./entities";
 import type { DevResources } from "./resources";
 
 const textDecoder = new TextDecoder();
@@ -29,7 +25,11 @@ export function issue(code: string, message: string, details?: Record<string, un
   return { code, message, severity: "error", details };
 }
 
-export function warning(code: string, message: string, details?: Record<string, unknown>): DevIssue {
+export function warning(
+  code: string,
+  message: string,
+  details?: Record<string, unknown>
+): DevIssue {
   return { code, message, severity: "warning", details };
 }
 
@@ -41,7 +41,11 @@ export function execution(issues: DevIssue[] = []): DevPreflight {
   return preflight(issues);
 }
 
-export function executionIssueFromStep(step: DevCommandStep, code: string, message: string): DevIssue | null {
+export function executionIssueFromStep(
+  step: DevCommandStep,
+  code: string,
+  message: string
+): DevIssue | null {
   if (step.status !== "failed") return null;
   return issue(code, message, {
     command: commandText(step.command, step.args),
@@ -55,7 +59,7 @@ export async function execStep(
   workspaceRoot: string,
   command: string,
   args: string[],
-  timeoutMs?: number,
+  timeoutMs?: number
 ): Promise<DevCommandStep> {
   let result;
   try {
@@ -85,12 +89,16 @@ export async function execText(
   workspaceRoot: string,
   command: string,
   args: string[],
-  timeoutMs?: number,
+  timeoutMs?: number
 ): Promise<DevCommandStep> {
   return execStep(resources, workspaceRoot, command, args, timeoutMs);
 }
 
-export function parseGitStatus(output: string): { branch: string | null; detached: boolean; dirty: boolean } {
+export function parseGitStatus(output: string): {
+  branch: string | null;
+  detached: boolean;
+  dirty: boolean;
+} {
   const lines = output.split(/\r?\n/).filter(Boolean);
   const header = lines[0] ?? "";
   const dirty = lines.slice(1).some((line) => line.trim().length > 0);
@@ -113,7 +121,8 @@ export function parseWorktrees(output: string): GitWorktreeEntry[] {
       continue;
     }
     if (!current) continue;
-    if (line.startsWith("branch ")) current.branch = line.slice("branch ".length).replace(/^refs\/heads\//, "");
+    if (line.startsWith("branch "))
+      current.branch = line.slice("branch ".length).replace(/^refs\/heads\//, "");
     else if (line === "detached") current.detached = true;
   }
   if (current) entries.push(current);

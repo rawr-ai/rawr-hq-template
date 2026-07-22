@@ -1,7 +1,4 @@
-import type {
-  HyperresearchCliOperation,
-  HyperresearchCliResult,
-} from "./entities";
+import type { HyperresearchCliOperation, HyperresearchCliResult } from "./entities";
 
 export interface HyperresearchCliBackend {
   run(input: {

@@ -135,7 +135,8 @@ export const createServiceObservabilityMiddleware = service.createObservabilityM
  * Use this only for the one required service-wide observability middleware
  * attached in `src/service/impl.ts`.
  */
-export const createRequiredServiceObservabilityMiddleware = service.createRequiredObservabilityMiddleware;
+export const createRequiredServiceObservabilityMiddleware =
+  service.createRequiredObservabilityMiddleware;
 
 /**
  * Service-local additive analytics middleware builder.

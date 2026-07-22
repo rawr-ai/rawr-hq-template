@@ -37,7 +37,7 @@ export async function writeSecurityReport(
     repoRoot: string;
     report: SecurityReport;
     maxReportBytes?: number;
-  },
+  }
 ): Promise<{ reportDir: string; reportPath: string; latestPath: string }> {
   const maxBytes = opts.maxReportBytes ?? DEFAULT_MAX_REPORT_BYTES;
   const reportDir = resources.path.join(opts.repoRoot, ".rawr", "security");
@@ -57,7 +57,7 @@ export async function writeSecurityReport(
 
 export async function readLatestSecurityReport(
   resources: HqOpsResources,
-  repoRoot: string,
+  repoRoot: string
 ): Promise<SecurityReport | null> {
   const latestPath = resources.path.join(repoRoot, ".rawr", "security", "latest.json");
   const raw = await resources.fs.readText(latestPath);
@@ -68,4 +68,3 @@ export async function readLatestSecurityReport(
     return null;
   }
 }
-

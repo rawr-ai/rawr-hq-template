@@ -32,7 +32,10 @@ function normalizeRowFull(row: Record<string, unknown>): JournalSnippetRowFull {
   return { ...normalizeRow(row), body: String(row.body) };
 }
 
-export async function openJournalDb(resources: HqOpsResources, repoRoot: string): Promise<SqliteDatabase> {
+export async function openJournalDb(
+  resources: HqOpsResources,
+  repoRoot: string
+): Promise<SqliteDatabase> {
   const db = await resources.sqlite.open(indexDbPath(resources, repoRoot));
 
   db.exec(`
@@ -75,7 +78,7 @@ export function upsertSnippet(db: SqliteDatabase, snippet: JournalSnippet): void
 
   db.prepare(
     `INSERT OR REPLACE INTO snippets (id, ts, kind, title, preview, body, tags, sourceEventId)
-     VALUES ($id, $ts, $kind, $title, $preview, $body, $tags, $sourceEventId)`,
+     VALUES ($id, $ts, $kind, $title, $preview, $body, $tags, $sourceEventId)`
   ).run({
     $id: snippet.id,
     $ts: snippet.ts,
@@ -89,7 +92,7 @@ export function upsertSnippet(db: SqliteDatabase, snippet: JournalSnippet): void
 
   db.prepare(
     `INSERT OR REPLACE INTO snippets_fts (id, title, preview, body, tags)
-     VALUES ($id, $title, $preview, $body, $tags)`,
+     VALUES ($id, $title, $preview, $body, $tags)`
   ).run({
     $id: snippet.id,
     $title: snippet.title,
@@ -100,47 +103,63 @@ export function upsertSnippet(db: SqliteDatabase, snippet: JournalSnippet): void
 }
 
 export function tailIndexedSnippets(db: SqliteDatabase, limit: number): JournalSearchRow[] {
-  const rows = db.prepare(
-    `SELECT id, ts, kind, title, preview, tags, sourceEventId
+  const rows = db
+    .prepare(
+      `SELECT id, ts, kind, title, preview, tags, sourceEventId
      FROM snippets
      ORDER BY ts DESC
-     LIMIT $limit`,
-  ).all({ $limit: limit }) as Array<Record<string, unknown>>;
+     LIMIT $limit`
+    )
+    .all({ $limit: limit }) as Array<Record<string, unknown>>;
   return rows.map(normalizeRow);
 }
 
-export function searchSnippetsFts(db: SqliteDatabase, query: string, limit: number): JournalSearchRow[] {
-  const ids = db.prepare(
-    `SELECT id
+export function searchSnippetsFts(
+  db: SqliteDatabase,
+  query: string,
+  limit: number
+): JournalSearchRow[] {
+  const ids = db
+    .prepare(
+      `SELECT id
      FROM snippets_fts
      WHERE snippets_fts MATCH $q
-     LIMIT $limit`,
-  ).all({ $q: query, $limit: limit }) as Array<{ id: string }>;
+     LIMIT $limit`
+    )
+    .all({ $q: query, $limit: limit }) as Array<{ id: string }>;
 
   if (ids.length === 0) return [];
 
   const placeholders = ids.map(() => "?").join(",");
-  const rows = db.prepare(
-    `SELECT id, ts, kind, title, preview, tags, sourceEventId
+  const rows = db
+    .prepare(
+      `SELECT id, ts, kind, title, preview, tags, sourceEventId
      FROM snippets
      WHERE id IN (${placeholders})
-     ORDER BY ts DESC`,
-  ).all(...ids.map((row) => row.id)) as Array<Record<string, unknown>>;
+     ORDER BY ts DESC`
+    )
+    .all(...ids.map((row) => row.id)) as Array<Record<string, unknown>>;
 
   return rows.map(normalizeRow);
 }
 
 export function listRecentSnippetsFull(db: SqliteDatabase, limit: number): JournalSnippetRowFull[] {
-  const rows = db.prepare(
-    `SELECT id, ts, kind, title, preview, body, tags, sourceEventId
+  const rows = db
+    .prepare(
+      `SELECT id, ts, kind, title, preview, body, tags, sourceEventId
      FROM snippets
      ORDER BY ts DESC
-     LIMIT $limit`,
-  ).all({ $limit: limit }) as Array<Record<string, unknown>>;
+     LIMIT $limit`
+    )
+    .all({ $limit: limit }) as Array<Record<string, unknown>>;
   return rows.map(normalizeRowFull);
 }
 
-export async function readSnippetJson(resources: HqOpsResources, repoRoot: string, id: string): Promise<JournalSnippet | null> {
+export async function readSnippetJson(
+  resources: HqOpsResources,
+  repoRoot: string,
+  id: string
+): Promise<JournalSnippet | null> {
   const raw = await resources.fs.readText(snippetJsonPath(resources, repoRoot, id));
   if (raw === null) return null;
   try {
@@ -150,7 +169,11 @@ export async function readSnippetJson(resources: HqOpsResources, repoRoot: strin
   }
 }
 
-export async function writeEventJson(resources: HqOpsResources, repoRoot: string, event: JournalEvent): Promise<string> {
+export async function writeEventJson(
+  resources: HqOpsResources,
+  repoRoot: string,
+  event: JournalEvent
+): Promise<string> {
   await resources.fs.mkdir(eventsDir(resources, repoRoot));
   const filePath = eventJsonPath(resources, repoRoot, event.id);
   await resources.fs.writeText(filePath, JSON.stringify(event, null, 2));
@@ -160,7 +183,7 @@ export async function writeEventJson(resources: HqOpsResources, repoRoot: string
 export async function writeSnippetJson(
   resources: HqOpsResources,
   repoRoot: string,
-  snippet: JournalSnippet,
+  snippet: JournalSnippet
 ): Promise<string> {
   await resources.fs.mkdir(snippetsDir(resources, repoRoot));
   const filePath = snippetJsonPath(resources, repoRoot, snippet.id);

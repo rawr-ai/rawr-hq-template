@@ -5,7 +5,7 @@ export const ErrorMessageSchema = Type.Object(
   {
     message: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const SESSION_NOT_FOUND = {
