@@ -7,7 +7,7 @@ attestation envelope, or reconstructed Oclif extension manager.
 
 The previous implementation made those mechanisms self-authorizing by wiring
 later behavior to their identities. [[authority-amendment]] rejects that model.
-This continuation removes the machinery, restores native Oclif and Nx ownership,
+This continuation removes the machinery, restores direct Oclif and Nx ownership,
 and keeps the lifecycle behavior that solves the actual product problem.
 
 ## What Changes

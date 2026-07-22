@@ -1,6 +1,6 @@
 ## REMOVED Requirements
 
-### Requirement: External-only native Oclif state (B03, I08)
+### Requirement: External-only Oclif state (B03, I08)
 **Reason**: Local RAWR projections around official Oclif plugin commands create a
 second extension manager.
 **Migration**: Enable `@oclif/plugin-plugins` directly as an Oclif core plugin.
@@ -12,7 +12,7 @@ extension loading for an adversarial local-code model outside scope.
 loading behavior; keep RAWR first-party commands in core plugins.
 
 ### Requirement: Recovery-safe core dispatch (B03)
-**Reason**: The bespoke recovery bootstrap exists only because native Oclif
+**Reason**: The bespoke recovery bootstrap exists only because Oclif-provided
 loading was disabled and reconstructed.
 **Migration**: Use ordinary Oclif startup and native plugin recovery commands.
 
@@ -36,13 +36,13 @@ Habitat and verify observable command dispatch.
 
 ### Requirement: Bare plugins is exactly the external extension surface
 **Reason**: The command-surface rule remains valid but is now owned directly by
-native Oclif composition rather than a Template projection.
+direct Oclif composition rather than a Template projection.
 **Migration**: Keep `rawr plugins` under `@oclif/plugin-plugins` and curated
 lifecycle only under `rawr agent plugins`.
 
 ## ADDED Requirements
 
-### Requirement: Native Oclif owns external extension lifecycle
+### Requirement: Oclif owns external extension lifecycle
 
 The `rawr plugins` command surface MUST be supplied directly by
 `@oclif/plugin-plugins` through ordinary Oclif core-plugin composition. RAWR

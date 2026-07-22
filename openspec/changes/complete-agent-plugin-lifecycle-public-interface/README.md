@@ -2,7 +2,7 @@
 
 ## Status
 
-`NATIVE_CLI_ARCHITECTURE_CORRECTION`
+`STANDARD_CLI_ARCHITECTURE_CORRECTION`
 
 The user rejected the custom controller distribution and custom Oclif extension
 manager after an installed-system audit showed that they form a private CLI
@@ -97,7 +97,7 @@ them product authority.
 The conventional CLI package decision remains bounded by current Bun runtime
 use. A registry-published Oclif package whose executable requires installed Bun
 is acceptable. Oclif standalone Node archives require Node-compatibility
-verification. Bun compilation requires native Oclif extension behavior
+verification. Bun compilation requires Oclif-provided extension behavior
 verification. None permits another selector or release store.
 
 ## Habitat Provenance
@@ -162,8 +162,9 @@ skill. It cannot authorize HF01 materialization or release.
 | --- | --- |
 | Corrected authority record | Complete on the active Template branch; pending Graphite submission |
 | Generic Habitat source port | Complete on the active Template stack; execution wiring pending |
+| Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Positive Habitat/Nx ratchet | Pending |
-| Native Oclif development and external extension path | Pending |
+| Direct Oclif development and external extension path | Pending |
 | Conventional CLI package/release | Pending |
 | Custom controller/extension deletion | Pending |
 | Persistent agent artifact/projection store deletion | Pending |
@@ -191,6 +192,26 @@ mutation. Civ7 has unreleased exact-root batching and traversal reuse, but no
 new compiled artifact exists; Template does not call a worktree or vendor that
 source. The source port therefore does not claim task 1.2 or ratchet activation
 complete before executable verification is both green and bounded.
+
+The RAWR-authored Oclif blueprint source is a separate positive checkpoint. It
+defines one closed executable app shell, one uniform host-composed
+command-plugin shell, direct production/development entrypoints, compiled
+command discovery, an explicit TypeScript source-to-output mapping, a
+package-owned `oclif manifest` command inferred by Nx, default command exports,
+no command-plugin-to-command-plugin dependency, and rejection of mechanical
+package-directory imports. TypeScript package exports and Nx own the remaining
+public dependency boundary. The packet does not encode a product command
+inventory, retired mechanism names, or `nx release` as a project target.
+
+Four Grit patterns pass all twenty-three canonical and rejection samples. Isolated
+Habitat structure fixtures accept both app and plugin shells with generated
+`oclif.manifest.json` files present, then reject a second app entrypoint and a
+plugin-owned `bin` directory with exact closed-topology diagnostics. The
+app/plugin structure work completes in 7-19 ms inside the bounded fixture. The
+current implementation remains intentionally nonconforming until tasks 2 and 3
+move it. Task 1.5 owns workspace activation, including the Nx target-default
+contract and an honest disposition for the published SDK's unbounded wildcard
+walk on the live dependency tree.
 
 Personal PR #182 (`9378d33b`) and child PR #183 (`852702b8`) are not valid
 settlement inputs in their controller-bound form. They remain unlanded; prior

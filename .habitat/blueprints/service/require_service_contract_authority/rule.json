@@ -36,7 +36,7 @@
   "runner": {
     "name": "grit",
     "files": {
-      "pattern": ".habitat/blueprints/service/require_service_contract_authority/require_service_contract_authority.md"
+      "pattern": ".habitat/blueprints/service/require_service_contract_authority/pattern.md"
     },
     "patternName": "require_service_contract_authority"
   }

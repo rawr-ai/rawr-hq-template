@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "id": "require_oclif_app_configuration",
+  "title": "Require Oclif App Configuration",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "oclif-app",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "an unversioned or non-ESM CLI package, mismatched binary or command discovery, missing Oclif-provided plugin management, a missing package-owned manifest command, or an ambiguous source-to-output mapping",
+  "why": "Package configuration is the installed CLI identity. Oclif discovers the compiled command tree and extension manager, its development mode maps dist commands back to src through TypeScript rootDir and outDir, and Nx infers the package-owned manifest script as a target.",
+  "remediate": "Declare the versioned ESM rawr package and binary, depend on and compose @oclif/plugin-plugins, discover dist/commands, map TypeScript rootDir src to outDir dist, publish bin/dist/oclif.manifest.json, and expose oclif manifest as the package manifest script.",
+  "message": "The Oclif app package must describe one conventional installed CLI.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "apps/cli/package.json",
+        "apps/cli/tsconfig.json"
+      ]
+    }
+  ],
+  "scanRoots": [
+    "apps/cli/package.json",
+    "apps/cli/tsconfig.json"
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/oclif-app/require_oclif_app_configuration/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/oclif-app/require_oclif_app_configuration/pattern.md"
+    },
+    "patternName": "require_oclif_app_configuration"
+  }
+}

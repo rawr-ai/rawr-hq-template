@@ -13,6 +13,9 @@ relationships:
    service while its application host retains transport ownership.
 3. Each admitted package root has one concise `AGENTS.md` operator router with
    stable orientation anchors and repository-relative routes.
+4. The executable CLI is one conventional Oclif app, and every first-party
+   command capability is one uniform host-composed Oclif plugin on public
+   package boundaries.
 
 Blueprints constrain monotonic structural axes shared by packages of a kind.
 They do not encode product inventories, retired names, historical migration

@@ -41,7 +41,7 @@ root. It MUST NOT install, update, or select a CLI version.
 CLI in a foreign directory with no RAWR or Nx workspace. It MUST require one
 explicit destination and produce a self-contained genuine external Oclif
 extension package with no workspace-relative runtime dependency. It MUST NOT
-call native Oclif mutation, load generated code, or claim activation.
+call Oclif extension mutation, load generated code, or claim activation.
 
 #### Scenario: Foreign-directory extension creation succeeds
 - **WHEN** the installed CLI runs from a fresh foreign directory with isolated

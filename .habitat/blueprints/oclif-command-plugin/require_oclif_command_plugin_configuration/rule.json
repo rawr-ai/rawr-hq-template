@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "id": "require_oclif_command_plugin_configuration",
+  "title": "Require Oclif Command Plugin Configuration",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "oclif-command-plugin",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "an unversioned or non-ESM command plugin, a non-toolkit identity, a dependency on another command plugin, mismatched command discovery, a plugin-owned binary, a missing package-owned manifest command, or an ambiguous source-to-output mapping",
+  "why": "Each command capability is a versioned Oclif plugin composed by the host rather than another command plugin. Oclif discovers one compiled command root, its development mode maps dist commands back to src through TypeScript rootDir and outDir, and Nx infers the package-owned manifest script as a target.",
+  "remediate": "Declare a versioned @rawr/plugin-* ESM toolkit with @oclif/core, no command-plugin dependency, dist/commands discovery, TypeScript rootDir src and outDir dist, no bin field, a publishable dist/manifest file set, and oclif manifest as the package manifest script.",
+  "message": "The Oclif command-plugin package must describe one host-composed command capability.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "plugins/cli/*/package.json",
+        "plugins/cli/*/tsconfig.json"
+      ]
+    }
+  ],
+  "scanRoots": [
+    "plugins/cli"
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_plugin_configuration/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_plugin_configuration/pattern.md"
+    },
+    "patternName": "require_oclif_command_plugin_configuration"
+  }
+}

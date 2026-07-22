@@ -193,7 +193,7 @@ Tests assert the product transitions:
 
 - ordinary Oclif development invocation and packaged invocation expose the
   same core commands;
-- `rawr plugins` uses native Oclif extension state in a disposable home;
+- `rawr plugins` uses Oclif-provided extension state in a disposable home;
 - `rawr agent plugins status` inspects without mutation;
 - sync refreshes a stale same-ID selected plugin;
 - sync removes omitted RAWR-managed residue, including native enablement state;
