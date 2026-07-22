@@ -24,7 +24,8 @@
         "{workspaceRoot}/.habitat/rawr/agent-plugin-lifecycle/rules/require_agent_plugin_command_channel_topology/**/*",
         "{workspaceRoot}/scripts/habitat/check.mjs",
         "{workspaceRoot}/scripts/habitat/provision.mjs",
-        "{workspaceRoot}/scripts/habitat/release.json"
+        "{workspaceRoot}/scripts/habitat/release.json",
+        "bunToolchain"
       ],
       "outputs": []
     },
@@ -38,9 +39,32 @@
       "inputs": ["default", "^default", "typescriptRuntime"],
       "outputs": []
     },
-    "test": {
+    "test-unit": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun --bun ../../node_modules/.bin/vitest run --config vitest.config.ts --fileParallelism --exclude test/modules/releases/git-eligibility.test.ts --exclude test/modules/governance/git-resource-selection.integration.test.ts",
+        "cwd": "services/agent-plugin-lifecycle"
+      },
+      "dependsOn": ["lint", "typecheck", "structure-check"],
       "cache": true,
       "inputs": ["default", "^default", "typescriptRuntime", "{workspaceRoot}/vitest.config.ts"],
+      "outputs": []
+    },
+    "test-exact-git": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun --bun ../../node_modules/.bin/vitest run --config vitest.config.ts --no-file-parallelism test/modules/releases/git-eligibility.test.ts test/modules/governance/git-resource-selection.integration.test.ts",
+        "cwd": "services/agent-plugin-lifecycle"
+      },
+      "dependsOn": ["test-unit"],
+      "cache": false,
+      "inputs": ["default", "^default", "typescriptRuntime", "{workspaceRoot}/vitest.config.ts"],
+      "outputs": []
+    },
+    "test": {
+      "executor": "nx:noop",
+      "dependsOn": ["test-exact-git"],
+      "cache": false,
       "outputs": []
     },
     "typecheck": {
