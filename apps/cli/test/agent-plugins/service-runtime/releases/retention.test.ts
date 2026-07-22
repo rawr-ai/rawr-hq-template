@@ -65,7 +65,7 @@ describe("closed read-only retention planning", () => {
   );
 
   it.runIf("Bun" in globalThis)(
-    "blocks bare, over-count, and unverifiable pin graphs through the native procedure",
+    "blocks bare, over-count, and unverifiable pin closures through the native procedure",
     async () => {
       const built = await buildCompleteSet();
       const bare = retentionClient({
@@ -75,7 +75,7 @@ describe("closed read-only retention planning", () => {
         artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
       await expect(bare.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
-        kind: "BlockedPinnedGraph",
+        kind: "RetentionPlanBlocked",
         issues: [{ detail: expect.stringContaining("not a closed artifact or evidence ref") }],
       });
 
@@ -89,7 +89,7 @@ describe("closed read-only retention planning", () => {
         artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
       await expect(overCount.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
-        kind: "BlockedPinnedGraph",
+        kind: "RetentionPlanBlocked",
         issues: [{ detail: expect.stringContaining("exceed") }],
       });
 
@@ -102,7 +102,7 @@ describe("closed read-only retention planning", () => {
         artifactRepositoryRoot: built.artifactRepositoryRoot,
       });
       await expect(missing.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
-        kind: "BlockedPinnedGraph",
+        kind: "RetentionPlanBlocked",
         issues: [{ ref: missingRef }],
       });
     },
@@ -181,7 +181,7 @@ describe("closed read-only retention planning", () => {
       artifactRepositoryRoot: join(fixture.path, "missing-artifacts-v1"),
     });
     await expect(unavailable.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
-      kind: "BlockedPinnedGraph",
+      kind: "RetentionPlanBlocked",
       issues: [{ ref: handle, detail: expect.stringContaining("missing") }],
     });
   });
@@ -246,7 +246,7 @@ describe("closed read-only retention planning", () => {
       artifactRepositoryRoot: join(fixture.path, "artifacts-v1"),
     });
     await expect(absent.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
-      kind: "BlockedPinnedGraph",
+      kind: "RetentionPlanBlocked",
       issues: [{ detail: expect.stringContaining("unavailable") }],
     });
     expect(artifactReads).toBe(0);
@@ -260,7 +260,7 @@ describe("closed read-only retention planning", () => {
       artifactRepositoryRoot: join(fixture.path, "artifacts-v1"),
     });
     await expect(throwing.releases.planRetention(zeroBudget, testInvocation)).resolves.toMatchObject({
-      kind: "BlockedPinnedGraph",
+      kind: "RetentionPlanBlocked",
       issues: [{ detail: expect.stringContaining("pin reader exploded") }],
     });
     expect(artifactReads).toBe(0);

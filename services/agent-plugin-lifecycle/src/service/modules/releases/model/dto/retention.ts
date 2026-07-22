@@ -33,9 +33,9 @@ export interface RetentionPlan {
   readonly blockedEntries: readonly RetentionIssue[];
 }
 
-export interface BlockedPinnedGraph {
-  readonly kind: "BlockedPinnedGraph";
+export interface RetentionPlanBlocked {
+  readonly kind: "RetentionPlanBlocked";
   readonly issues: readonly [RetentionIssue, ...RetentionIssue[]];
 }
 
-export type RetentionResult = RetentionPlan | BlockedPinnedGraph;
+export type RetentionResult = RetentionPlan | RetentionPlanBlocked;

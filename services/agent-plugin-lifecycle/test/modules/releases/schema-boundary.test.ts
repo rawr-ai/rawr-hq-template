@@ -18,6 +18,7 @@ import {
   BuildResultSchema,
   CheckInputSchema,
   CheckResultSchema,
+  PlanRetentionResultSchema,
   ReleaseInputRefreshInputSchema,
   ReleaseInputRefreshResultSchema,
   ReleaseInputRecordInputSchema,
@@ -189,6 +190,14 @@ describe("release procedure schema boundary", () => {
       kind: "ReadOnlyConverged",
       mode: { kind: "complete-set" },
       ref: { kind: "complete-set", releaseSetDigest: "rs1_deadbeef" },
+    })).toBe(false);
+    expect(Value.Check(PlanRetentionResultSchema, {
+      kind: "RetentionPlanBlocked",
+      issues: [{ detail: "retention readers are unavailable" }],
+    })).toBe(true);
+    expect(Value.Check(PlanRetentionResultSchema, {
+      kind: "BlockedPinnedGraph",
+      issues: [{ detail: "legacy ambiguous discriminator" }],
     })).toBe(false);
   });
 

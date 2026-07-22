@@ -147,7 +147,7 @@ export const PlanRetentionResultSchema = Type.Unsafe<RetentionResult>(Type.Union
   ),
   Type.Object(
     {
-      kind: Type.Literal("BlockedPinnedGraph"),
+      kind: Type.Literal("RetentionPlanBlocked"),
       issues: Type.Array(RetentionIssueSchema, { minItems: 1 }),
     },
     { additionalProperties: false },
