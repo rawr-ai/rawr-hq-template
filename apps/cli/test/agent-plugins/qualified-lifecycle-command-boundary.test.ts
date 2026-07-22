@@ -106,7 +106,8 @@ describe("qualified lifecycle command boundary", () => {
       () => parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha", "complete-set": true }),
       () =>
         parsePackageRequest({
-          artifact: releaseHandle,
+          ...releaseWorkspace(),
+          plugin: "alpha",
           format: "cowork-v1",
           output: "relative.zip",
         }),
@@ -139,8 +140,9 @@ describe("qualified lifecycle command boundary", () => {
       "agent",
       "plugins",
       "package",
-      "--artifact",
-      releaseHandle,
+      ...releaseWorkspaceArgs(),
+      "--plugin",
+      "alpha",
       "--format",
       "cowork-v1",
       "--output",
@@ -330,11 +332,16 @@ describe("qualified lifecycle command boundary", () => {
     });
     expect(
       parsePackageRequest({
-        artifact: releaseHandle,
+        ...releaseWorkspace(),
+        plugin: "alpha",
         format: "cowork-v1",
         output: "/tmp/alpha.zip",
       })
-    ).toMatchObject({ artifactRef: { kind: "release" }, outputPath: "/tmp/alpha.zip" });
+    ).toMatchObject({
+      mode: { kind: "targeted", pluginId: "alpha" },
+      contentWorkspace: { sourceCommit: hex40, sourceTree: hex64 },
+      outputPath: "/tmp/alpha.zip",
+    });
     expect(
       parseTestRequest({
         "release-set": setHandle,
@@ -1012,7 +1019,8 @@ function operationRequests(): LifecycleOperationRequest[] {
     {
       operation: "packaging.package",
       input: parsePackageRequest({
-        artifact: releaseHandle,
+        ...releaseWorkspace(),
+        plugin: "alpha",
         format: "cowork-v1",
         output: "/tmp/a.zip",
       }),
@@ -1048,6 +1056,32 @@ function releaseWorkspace() {
     "release-input": "records/release-input.json",
     "plugin-root": "plugins/agents",
   };
+}
+
+function releaseWorkspaceArgs(): string[] {
+  const workspace = releaseWorkspace();
+  return [
+    "--content-workspace",
+    workspace["content-workspace"],
+    "--repository-identity",
+    workspace["repository-identity"],
+    "--content-authority",
+    workspace["content-authority"],
+    "--remote-name",
+    workspace["remote-name"],
+    "--remote-url",
+    workspace["remote-url"],
+    "--ref",
+    workspace.ref,
+    "--source-commit",
+    workspace["source-commit"],
+    "--source-tree",
+    workspace["source-tree"],
+    "--release-input",
+    workspace["release-input"],
+    "--plugin-root",
+    workspace["plugin-root"],
+  ];
 }
 
 function stagedReleaseWorkspace() {

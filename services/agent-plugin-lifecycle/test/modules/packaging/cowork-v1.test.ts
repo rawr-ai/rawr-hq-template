@@ -3,12 +3,12 @@ import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-pack
 import { afterEach, describe, expect, it } from "vitest";
 import {
   assertCoworkV1ProtocolBounds,
-  assertSnapshotMatchesRef,
   COWORK_V1_MAX_ENTRY_COUNT,
   COWORK_V1_MAX_PAYLOAD_BYTES,
   coworkV1PackageDigest,
   createCoworkV1ArchiveRequest,
 } from "../../../src/service/modules/packaging/model/helpers/cowork-v1";
+import type { AgentPluginRelease } from "../../../src/service/shared/release";
 import {
   createOwnedFixtureRoot,
   disposeOwnedFixtureRoot,
@@ -44,17 +44,13 @@ describe("cowork-v1", () => {
     try {
       process.chdir(firstRoot.path);
       process.env.TZ = "Pacific/Honolulu";
-      const first = await renderCoworkV1(fixture.setSnapshot);
+      const first = await renderCoworkV1(completePlan(fixture));
 
       process.chdir(secondRoot.path);
       process.env.TZ = "Asia/Tokyo";
-      const second = await renderCoworkV1({
-        ...fixture.setSnapshot,
-        members: [...fixture.setSnapshot.members].reverse().map((member) => ({
-          ...member,
-          files: [...member.files].reverse(),
-        })),
-      });
+      const second = await renderCoworkV1(
+        completePlan(fixture, [fixture.betaRelease, fixture.alphaRelease])
+      );
 
       expect(second.packageDigest).toBe(first.packageDigest);
       expect(second.bytes).toEqual(first.bytes);
@@ -71,7 +67,7 @@ describe("cowork-v1", () => {
 
   it("writes canonical paths, modes, timestamps, and the versioned protocol marker", async () => {
     const fixture = packagingArtifactFixture();
-    const rendered = await renderCoworkV1(fixture.alphaSnapshot);
+    const rendered = await renderCoworkV1(targetedPlan(fixture));
     const archive = inspectZip(rendered.bytes);
 
     expect(archive.entries).toEqual([
@@ -93,34 +89,37 @@ describe("cowork-v1", () => {
   });
 
   it("changes package identity when admitted artifact bytes change", async () => {
-    const first = await renderCoworkV1(packagingArtifactFixture("alpha one\n").alphaSnapshot);
-    const second = await renderCoworkV1(packagingArtifactFixture("alpha two\n").alphaSnapshot);
+    const firstFixture = packagingArtifactFixture("alpha one\n");
+    const secondFixture = packagingArtifactFixture("alpha two\n");
+    const first = await renderCoworkV1(targetedPlan(firstFixture));
+    const second = await renderCoworkV1(targetedPlan(secondFixture));
     expect(second.packageDigest).not.toBe(first.packageDigest);
     expect(second.bytes).not.toEqual(first.bytes);
   });
 
-  it("rejects a reader snapshot whose bytes or reference differ from the verified envelope", async () => {
+  it("rejects a release whose encoded bytes differ from its verified envelope", async () => {
     const fixture = packagingArtifactFixture();
-    const firstFile = fixture.alphaSnapshot.files[0];
-    if (firstFile === undefined) throw new Error("fixture file missing");
+    const firstEntry = fixture.alphaRelease.artifactBody.payloadEntries[0];
+    if (firstEntry === undefined) throw new Error("fixture entry missing");
     const tampered = {
-      ...fixture.alphaSnapshot,
-      files: [
-        { ...firstFile, bytes: new TextEncoder().encode("tampered\n") },
-        ...fixture.alphaSnapshot.files.slice(1),
-      ],
-    };
+      ...fixture.alphaRelease,
+      artifactBody: {
+        ...fixture.alphaRelease.artifactBody,
+        payloadEntries: [
+          { ...firstEntry, bytesBase64: Buffer.from("tampered\n").toString("base64") },
+          ...fixture.alphaRelease.artifactBody.payloadEntries.slice(1),
+        ],
+      },
+    } as unknown as AgentPluginRelease;
 
-    await expect(renderCoworkV1(tampered)).rejects.toThrow("mismatched bytes");
-    expect(() => assertSnapshotMatchesRef(fixture.alphaSnapshot, fixture.betaSnapshot.ref)).toThrow(
-      "different reference"
+    await expect(renderCoworkV1(targetedPlan(fixture, tampered))).rejects.toThrow(
+      "mismatched bytes"
     );
   });
 
   it("renders complete-set members below deterministic plugin roots", async () => {
     const fixture = packagingArtifactFixture();
-    assertSnapshotMatchesRef(fixture.setSnapshot, fixture.setSnapshot.ref);
-    const rendered = await renderCoworkV1(fixture.setSnapshot);
+    const rendered = await renderCoworkV1(completePlan(fixture));
     expect(inspectZip(rendered.bytes).entries.map((entry) => entry.path)).toEqual([
       "plugins/alpha/scripts/alpha.sh",
       "plugins/alpha/skills/alpha/SKILL.md",
@@ -155,10 +154,27 @@ describe("cowork-v1", () => {
 });
 
 async function renderCoworkV1(
-  snapshot: Parameters<typeof createCoworkV1ArchiveRequest>[0]
+  plan: Parameters<typeof createCoworkV1ArchiveRequest>[0]
 ): Promise<Readonly<{ bytes: Uint8Array; packageDigest: string }>> {
-  const bytes = await nodePackageOutput.encodeCoworkV1(createCoworkV1ArchiveRequest(snapshot));
+  const bytes = await nodePackageOutput.encodeCoworkV1(createCoworkV1ArchiveRequest(plan));
   return Object.freeze({ bytes, packageDigest: coworkV1PackageDigest(bytes) });
+}
+
+function targetedPlan(
+  fixture: ReturnType<typeof packagingArtifactFixture>,
+  release: AgentPluginRelease = fixture.alphaRelease
+): Parameters<typeof createCoworkV1ArchiveRequest>[0] {
+  return Object.freeze({ releases: Object.freeze([release]) });
+}
+
+function completePlan(
+  fixture: ReturnType<typeof packagingArtifactFixture>,
+  releases: readonly AgentPluginRelease[] = [fixture.alphaRelease, fixture.betaRelease]
+): Parameters<typeof createCoworkV1ArchiveRequest>[0] {
+  return Object.freeze({
+    releases: Object.freeze(releases),
+    releaseSet: fixture.releaseSet,
+  });
 }
 
 function* repeatedEntrySizes(

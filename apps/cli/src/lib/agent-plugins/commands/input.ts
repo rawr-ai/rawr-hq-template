@@ -289,9 +289,10 @@ export function parseVendorUpdateRequest(flags: RawFlags): VendorUpdateRequest {
 }
 
 export function parsePackageRequest(flags: RawFlags): PackageRequest {
+  const release = parseReleaseWorkspaceRequest(flags);
   const outputPath = requireCanonicalAbsolute(flags.output, "--output", { allowFile: true });
   return Object.freeze({
-    artifactRef: parseArtifactHandle(flags.artifact),
+    ...release,
     format: requireLiteral(flags.format, "--format", ["cowork-v1"] as const),
     outputPath,
   });
