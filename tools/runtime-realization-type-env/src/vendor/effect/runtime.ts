@@ -7,12 +7,12 @@ import {
   Layer,
   ManagedRuntime,
   PubSub,
+  pipe,
   Queue,
   Ref,
   Schedule,
   Scope,
   Stream,
-  pipe,
 } from "effect";
 
 export {
@@ -24,12 +24,12 @@ export {
   Layer,
   ManagedRuntime,
   PubSub,
+  pipe,
   Queue,
   Ref,
   Schedule,
   Scope,
   Stream,
-  pipe,
 };
 
 export const effectVersionProof = "3.21.2" as const;

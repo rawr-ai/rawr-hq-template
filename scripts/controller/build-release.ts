@@ -2,33 +2,33 @@ import { chmod, lstat, writeFile } from "node:fs/promises";
 
 import {
   CONTROLLER_PAYLOAD_SCHEMA_VERSION,
-  canonicalSerializeControllerReleaseEnvelope,
-  createControllerPayloadManifest,
-  createControllerReleaseEnvelope,
-  computeControllerMemberPayloadDigest,
-  sha256,
+  type ControllerArchitecture,
   type ControllerBuildInterfaceInput,
   type ControllerIssue,
   type ControllerOfficialMemberInput,
-  type ControllerPlatform,
-  type ControllerArchitecture,
   type ControllerPayloadEntryInput,
+  type ControllerPlatform,
+  canonicalSerializeControllerReleaseEnvelope,
+  computeControllerMemberPayloadDigest,
+  createControllerPayloadManifest,
+  createControllerReleaseEnvelope,
+  sha256,
 } from "@rawr/controller-release";
 
 // The shipped inspector is the sole filesystem-to-product verification adapter.
 import { requireVerifiedControllerRelease } from "../../apps/cli/src/lib/controller/release-inspector.ts";
-import { sha256File } from "./lib/filesystem.ts";
 import {
   CONTROLLER_DEPENDENCY_LOCK_PATH,
-  CONTROLLER_ENVELOPE_PATH,
   CONTROLLER_ENTRY_PATH,
+  CONTROLLER_ENVELOPE_PATH,
   CONTROLLER_RUNTIME_LICENSE_PATH,
   CONTROLLER_RUNTIME_PATH,
 } from "./layout.ts";
+import { sha256File } from "./lib/filesystem.ts";
 import {
-  materializeControllerRelease,
   type ControllerMaterializationResult,
   type ControllerPayloadSource,
+  materializeControllerRelease,
 } from "./materialize.ts";
 import { resolveControllerNxClosure } from "./nx-closure.ts";
 

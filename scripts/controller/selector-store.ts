@@ -1,12 +1,11 @@
 import { constants } from "node:fs";
 import { lstat, readFile } from "node:fs/promises";
-
+import { CONTROLLER_SELECTION_BYTES } from "@rawr/controller-release";
 import {
-  atomicWriteFile,
   type AtomicWriteObserver,
   type AtomicWriteResult,
+  atomicWriteFile,
 } from "./lib/filesystem.ts";
-import { CONTROLLER_SELECTION_BYTES } from "@rawr/controller-release";
 
 export type ControllerSelectorObservation =
   | Readonly<{ kind: "missing" }>

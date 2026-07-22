@@ -1,11 +1,10 @@
 import { createExecutionDescriptorTable } from "../runtime/process-runtime";
-import { deriveProviderDependencyGraph } from "./derive";
 import type {
   AsyncStepBridgePayload,
   BootResourceModule,
   CompiledExecutionPlan,
-  RuntimeBootgraphInputPlaceholder,
   RuntimeAdapterLoweringPlan,
+  RuntimeBootgraphInputPlaceholder,
   RuntimeDiagnostic,
   RuntimeHarnessKind,
   RuntimeHarnessPlanPlaceholder,
@@ -14,6 +13,7 @@ import type {
   ServerAdapterCallbackPayload,
   ServerRouteDescriptor,
 } from "./artifacts";
+import { deriveProviderDependencyGraph } from "./derive";
 
 function harnessKindFor(input: {
   readonly role: RuntimeHarnessPlanPlaceholder["role"];

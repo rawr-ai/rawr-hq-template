@@ -1,4 +1,4 @@
-import { Effect as VendorEffect, Exit, Layer, ManagedRuntime } from "effect";
+import { Exit, Layer, ManagedRuntime, Effect as VendorEffect } from "effect";
 import type { RawrEffect } from "../sdk/effect";
 
 /**

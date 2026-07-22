@@ -4,12 +4,12 @@ import {
   lstat,
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
+  readFile,
   readlink,
+  realpath,
   rename,
   rm,
-  realpath,
   symlink,
   utimes,
   writeFile,
@@ -21,19 +21,18 @@ import { parseControllerDigest } from "@rawr/controller-release";
 import { list as listTar } from "tar";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
-
-import { parseInstalledControllerDistributionOptions } from "../distribute-installed.ts";
 import { activateControllerRelease } from "../activate.ts";
+import { parseInstalledControllerDistributionOptions } from "../distribute-installed.ts";
 import { installStableControllerLauncher } from "../install-launcher.ts";
+import { sha256File } from "../lib/filesystem.ts";
 import {
   createInstalledControllerAsset,
   INSTALLED_CONTROLLER_ASSET_RECIPE,
-  InstalledControllerProvenanceSchema,
   type InstalledControllerProvenance,
+  InstalledControllerProvenanceSchema,
   writeInstalledControllerArchive,
   writeInstalledControllerProvenance,
 } from "../lib/installed-controller-asset.ts";
-import { sha256File } from "../lib/filesystem.ts";
 import { requireVerifiedOfficialControllerRelease } from "../production/verify-official.ts";
 import { buildSemanticFixture } from "./support/semantic-controller-fixture.ts";
 

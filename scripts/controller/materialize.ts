@@ -12,7 +12,15 @@ import {
   symlink,
 } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-
+import {
+  CONTROLLER_DEPENDENCY_LOCK_PATH,
+  CONTROLLER_ENTRY_PATH,
+  CONTROLLER_RUNTIME_LICENSE_PATH,
+  CONTROLLER_RUNTIME_PATH,
+  CONTROLLER_STAGING_DIRECTORY,
+  controllerDirectory,
+  controllerReleasePath,
+} from "./layout.ts";
 import {
   assertAbsolutePath,
   assertCanonicalContainedParent,
@@ -21,15 +29,6 @@ import {
   fsyncDirectory,
   removeCanonicalDirectChildDirectory,
 } from "./lib/filesystem.ts";
-import {
-  CONTROLLER_ENTRY_PATH,
-  CONTROLLER_DEPENDENCY_LOCK_PATH,
-  CONTROLLER_RUNTIME_LICENSE_PATH,
-  CONTROLLER_RUNTIME_PATH,
-  CONTROLLER_STAGING_DIRECTORY,
-  controllerDirectory,
-  controllerReleasePath,
-} from "./layout.ts";
 
 export type ControllerPayloadSource =
   | Readonly<{

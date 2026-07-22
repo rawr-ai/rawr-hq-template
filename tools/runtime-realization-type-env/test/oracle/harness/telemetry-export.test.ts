@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
-import { providerFx, defineRuntimeProvider } from "@rawr/sdk/runtime/providers";
-import { defineRuntimeResource } from "@rawr/sdk/runtime/resources";
 import { defineRuntimeProfile, providerSelection } from "@rawr/sdk/runtime/profiles";
+import { defineRuntimeProvider, providerFx } from "@rawr/sdk/runtime/providers";
+import { defineRuntimeResource } from "@rawr/sdk/runtime/resources";
 import type { ExecutionDescriptor } from "@rawr/sdk/spine";
+import {
+  CreateWorkItemRef,
+  type WorkItem,
+} from "../../../scenarios/work-items/app-and-plan-artifacts";
 import {
   buildRuntimeTelemetryOtlpTracePayload,
   createExecutionDescriptorTable,
@@ -20,10 +24,6 @@ import {
   type RuntimeBootgraphModule,
 } from "../../../src/oracle";
 import { deriveProviderDependencyGraph } from "../../../src/spine/derive";
-import {
-  CreateWorkItemRef,
-  type WorkItem,
-} from "../../../scenarios/work-items/app-and-plan-artifacts";
 
 function assertNoLiveHandles(value: unknown): void {
   if (value === undefined || typeof value === "function" || typeof value === "symbol") {

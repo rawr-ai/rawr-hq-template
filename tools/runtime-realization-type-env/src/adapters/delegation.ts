@@ -1,5 +1,5 @@
-import type { ExecutionDescriptorRef } from "../spine/artifacts";
 import type { ProcessExecutionRuntime, RuntimeInvocationResult } from "../runtime/process-runtime";
+import type { ExecutionDescriptorRef } from "../spine/artifacts";
 
 export type AdapterDelegationKind = "server" | "async-step";
 
