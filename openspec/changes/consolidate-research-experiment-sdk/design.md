@@ -33,7 +33,7 @@ A standalone SDK repository would isolate dependencies but contradicts the
 current repository authority split: Template owns generic executable tooling
 and adapters. A subject vault would preserve proven code locality but make one
 study the accidental generic owner. Template is selected because a single
-isolated package can test the historically exercised Effect 4 candidate closure
+isolated package can host the verified Effect 4 closure
 without upgrading Template's root closure or importing Template
 lifecycle/controller packages.
 
@@ -195,6 +195,20 @@ This is a reasoning model, not a controller implementation.
 TypeBox is the sole SDK schema engine. Effect owns configuration acquisition,
 redaction, dependency provision, and failure semantics.
 
+Every final public TypeBox object is closed once with
+`additionalProperties: false`. Reusable generic property maps or schema
+fragments are not independently decoded public objects: a lane merges its
+generic and subject properties first, then constructs one closed final
+`Type.Object`. It MUST NOT intersect separately closed objects. Boundaries use
+noncorrective `Value.Check`/`Value.Errors`, then perform semantic validation and
+an explicit clone/freeze snapshot as separate steps. They do not call
+`Value.Parse` or depend on process-global `Settings.correctiveParse`.
+Literal-tagged unions express variants. Portable schemas do not export
+callback-bearing `Type.Refine` values, and static readonly/immutable modifiers
+are never mistaken for runtime snapshots. Canonical paths, symlink safety,
+cross-field deadlines, secret prohibition, and predecessor ordering are
+semantic validation after structural checking.
+
 `RuntimeBaseConfig` contains:
 
 - SDK identity and revision;
@@ -208,14 +222,21 @@ core has no adapter registry, string dispatch, or selected-adapter field.
 Secrets enter through environment-backed Effect configuration and never appear
 in committed config, prompts, artifacts, telemetry metadata, or results.
 
-`StudyDefinition` contains only generic identity and cell topology. Each lane
-intersects it with its own TypeBox schema for cases, treatments, prompts,
-rubrics, checks, and output interpretation. No `unknown` extension bag is added
-to core.
+The SDK's reusable study-definition property fragment contains only generic
+identity and cell topology. Each lane merges those properties with its own
+TypeBox properties for cases, treatments, prompts, rubrics, checks, and output
+interpretation, then closes the resulting public object once. No `unknown`
+extension bag or intersection of separately closed objects is added to core.
 
-Exact dependency pins remain unresolved until bounded vendor verifiers compare
-the proposed closure with current official documentation/source. The package
-may isolate Effect 4 without changing Template's root Effect 3 closure.
+The SDK owns an exact Effect 4 dependency while Template remains on Effect 3.
+Effect 4 `Effect`, `Layer`, `Context.Tag`, `Scope`, `Exit`, runtime, and service
+values MUST NOT cross into Effect 3 packages or be re-exported through neutral
+contracts. Only Effect-neutral, TypeBox-decoded data crosses that boundary.
+
+The SDK also owns a standalone TypeScript 7 configuration and does not extend
+Template's root TypeScript configuration. Bun package scripts resolve the
+package-local compiler; Nx invokes those scripts without loading TypeScript 7
+through the Nx API. Root TypeScript, Nx, and Effect versions remain independent.
 
 ## Study Directory Topology
 
@@ -248,6 +269,11 @@ over the vault.
 
 ```text
 packages/research-sdk/
+  AGENTS.md
+  package.json
+  tsconfig.json
+  tsconfig.build.json
+  vitest.config.ts
   src/
     core/           # config, identity, stages, adoption, errors
     runtime/        # command capability and ManagedRuntime composition
@@ -256,6 +282,7 @@ packages/research-sdk/
       codex/
       langfuse/
       codex-langfuse/
+      codex-openshell/
       git-bun/
       evlog/
   test/             # behavior and adapter boundary probes
@@ -272,31 +299,47 @@ core + selected adapters <- lane study
 Core imports no runtime, adapter, vendor, or study module. Runtime depends only
 on core ports and Effect. Adapters depend on core contracts and one vendor
 surface. Adapters do not import each other except the explicit
-`codex-langfuse -> codex + langfuse` composition boundary. Lane studies select
-adapters and own orchestration policy.
+`codex-langfuse -> codex + langfuse` and
+`codex-openshell -> codex + openshell` composition boundaries. Lane studies
+select adapters and own orchestration policy.
 
 One package with explicit subpath exports is the default. A second package is
 allowed only when dependency or bundle isolation cannot be enforced inside the
 package.
 
 Lane compatibility consumes an immutable locally packed SDK artifact. The
-artifact binds the package version, protocol version, and content digest; a
-Template Git SHA remains provenance but is not the package interface. Standard
-local package build/pack behavior supplies this boundary. This change adds no
-registry publication, release plane, artifact service, or cross-repository
-source import.
+artifact binds the package version, protocol version, content digest, and a
+machine-readable resolution/integrity manifest for the SDK's complete runtime
+dependency closure derived from the frozen workspace lock. A Template Git SHA
+remains provenance but is not the package interface. Standard local build
+followed by `bun pm pack --ignore-scripts` into an external artifact directory
+supplies this boundary. Each lane installs the tarball in an isolated
+compatibility consumer under a frozen owner-local lock that resolves exactly
+that manifest, then a Bun-native preflight compares the resolved lock and
+installed package graph to the embedded manifest before any SDK adapter import.
+The root module does not re-export adapters; consumers import explicit package
+subpaths. This change adds no registry publication, release plane, artifact
+service, custom package manager, or cross-repository source import.
 
 ## Adapter Responsibilities
 
 - `openshell`: gateway access, sandbox acquire/use/delete, transfer, command
-  execution, and cleanup visibility.
-- `codex`: profile selection, model-envelope admission, agent invocation, exec
-  JSONL decoding, session/rollout capture, and terminal response extraction.
+  execution, workspace-scoped targeting, and cleanup visibility. It consumes an
+  explicitly selected gateway but never starts or owns gateway lifecycle.
+- `codex`: literal model/effort invocation, model-envelope admission, exec JSONL
+  decoding, session/rollout capture, cancellation, and terminal extraction. It
+  owns no model catalog or profile matrix.
 - `langfuse`: experiment item context, trace identity, dataset/run membership,
   score projection, flush, and bounded readback. It never decides correctness.
 - `codex-langfuse`: W3C carrier propagation and patched Codex plugin build,
-  configuration, and observation linkage. Zod may remain private here only if
-  exact qualified plugin compatibility requires it.
+  configuration, decoded-session projection, per-turn prompt linkage, and
+  observation parenting. Its verified replacement uses TypeBox and does not
+  retain Zod merely to reproduce historical parsing.
+- `codex-openshell`: the namespaced gateway-refresh Codex provider profile,
+  ephemeral auth-to-provider setup, profile/refresh qualification,
+  placeholder-auth harness, explicit provider attachment, and endpoint
+  coverage. It owns no registry, persisted secret, study admission, or retry
+  policy.
 - `git-bun`: history-free materialization, safe tree transfer, full-index
   binary patch capture, patch application, and artifact hashing.
 - `evlog`: bounded host-side phase/failure events. Drain failure is diagnostic
@@ -312,70 +355,219 @@ Reviewer behavior remains lane-owned and receives a generic agent capability;
 there is no reviewer adapter until a second genuinely different provider proves
 one useful.
 
-## Vendor Verification Before Build
+## Vendor Closure Disposition
 
-One bounded standing verifier is assigned to each selected dependency closure:
+Bounded verifiers checked official documentation, exact source tags, published
+packages, and the behavior already proved by both lanes. Package pins are exact
+and their resolved transitive graph is manifest-bound. External executable rows
+state admitted version constraints and require the resolved path and version to
+be recorded and preflighted for each study:
 
-| Verifier | Checks |
-| --- | --- |
-| Effect | current scoped resource, Layer, Config, interruption, and ManagedRuntime APIs |
-| TypeBox | current schema compilation/decoding and static type APIs |
-| OpenShell | current gateway, policy, transfer, exec, deletion, and image contract |
-| Codex | current CLI/profile/JSONL/auth/session behavior and model envelope |
-| Langfuse/OTel | Experiments, W3C parent context, trace subjects, scores, flush/readback |
-| EVLog | wide-event construction, drains, lifecycle, and failure isolation |
-| Bun/Git | exact spawn, hashing, archive, binary patch, and package build behavior |
+| Boundary | Accepted identity | Authority and disposition |
+| --- | --- | --- |
+| Effect | `effect@4.0.0-beta.99` | Tag `6184a7dc53cb9310e299b65ad6d6c712c2cbf202`; admission-time pin after applying the initiative's 72-hour package-age window on 2026-07-22, not a claim that it remains latest. Recheck immediately before install; a newly admitted beta requires another exact verification rather than a silent float. |
+| TypeBox | `typebox@1.3.6` | Tag `41f0b1dd2b5f307c5e889c4463fe48839b8a5aaf`; sole public SDK schema engine. |
+| SDK compiler | `typescript@7.0.2`, `@types/bun@1.3.14`, `@types/node@22.20.1` | Package-local CLI and standalone configs; Node types are isolated to the Node 22 projection boundary. |
+| Bun / Git | Bun `1.3.14`; Git `>=2.48.0` | Record the resolved binaries and versions. Apple Git `2.39.5` is below the admitted patch substrate. |
+| OpenShell | `0.0.89` | Tag `cbdeb4d537ad8b4b8592596b7668b9d03464544c`; workspace scoping, upstream Landlock fix, and deletion-event correction replace historical `0.0.85` patches. |
+| Codex CLI | `0.144.6` | Tag commit `5d1fbf26c43abc65a203928b2e31561cb039e06d`; CLI adapter only, not Codex SDK or experimental app-server RPC. |
+| Langfuse | `@langfuse/{client,otel,tracing}@5.9.1` | Source `ff6038a361ccda92bd00160bd26c1e11530febec`; the frozen Bun lock binds transitive `@langfuse/core`. |
+| OpenTelemetry | API `1.9.1`; core/resources/trace SDK `2.9.0`; OTLP HTTP exporter `0.220.0` | API source `7e74509a4d848e94b2970bb5262dd3e8efeed0a2`; SDK source `40d67b7690a61bd9af0a4e5b5b9f4a14b11fc50e`. |
+| Codex-Langfuse | upstream plugin `0.1.0` at `33bc50ba75ef82ed1f3718df6fdd06cdbfc7c02e` plus the required semantic delta | Upstream identity and semantic requirements are accepted DESIGN inputs. Exact maintained-source, patch, lock, and Node 22 ESM bundle identities are BUILD source-freeze outputs derived from authority, never copied from a historical bundle. |
+| EVLog | `evlog@2.22.3` | Tag commit `64b0bf067ef94c3e4928ed49e4ddb7208eae5ce3`; npm integrity `sha512-xybbUKtV26ezgyagT0aZ6tigIjwQuc4mI0Fm52goospAdGAA4ApC+keC36Bsxt1Gm7vT8W429T3WIsqMc8nwMQ==`. |
 
-Each returns required boundaries, exact compatible versions, and tests. These
-roles review vendor usage only; they do not redesign the SDK or import vendor
-documentation as runtime authority.
+OpenShell binds the macOS arm64 CLI archive
+`5f880d1757dcb34382d2235754cae614398a34b908f482efd0cc107598a0bbc4`,
+gateway archive
+`cf1a2c92edb7a199a7e72cb81455ba7ed9ad01644425e662fe97067a63f69b3b`,
+and supervisor OCI index
+`sha256:165f2e1e4e2ebaebed47de8acbf5d84cbbcf1bc5cf86f4bf1137f42715e5acbe`.
+Study images remain lane-supplied immutable digests.
+
+Authoritative sources are the exact official trees and references, not copied
+documentation: [Effect tag](https://github.com/Effect-TS/effect/tree/6184a7dc53cb9310e299b65ad6d6c712c2cbf202),
+[TypeBox tag](https://github.com/sinclairzx81/typebox/tree/1.3.6),
+[OpenShell release](https://github.com/NVIDIA/OpenShell/releases/tag/v0.0.89),
+[Codex source](https://github.com/openai/codex/tree/5d1fbf26c43abc65a203928b2e31561cb039e06d),
+[Langfuse JS source](https://github.com/langfuse/langfuse-js/tree/ff6038a361ccda92bd00160bd26c1e11530febec/packages),
+[OpenTelemetry source](https://github.com/open-telemetry/opentelemetry-js/tree/40d67b7690a61bd9af0a4e5b5b9f4a14b11fc50e),
+[Codex observability plugin](https://github.com/langfuse/codex-observability-plugin/tree/33bc50ba75ef82ed1f3718df6fdd06cdbfc7c02e),
+and [EVLog tag](https://github.com/HugoRCD/evlog/tree/evlog%402.22.3).
+
+### Effect And Process Runtime
+
+- One `ManagedRuntime` owns each process composition boundary, not each cell.
+- Effect `Config` and `Redacted` acquire secrets; TypeBox owns structural data.
+- `Layer` and scoped `acquireRelease` own resources. Cleanup failures remain
+  visible secondary diagnostics and never replace the primary solver outcome.
+- No Effect source checkout or submodule is required. Exact published package
+  types plus the official tag are authority unless BUILD proves a source-asset
+  dependency that the package cannot supply.
+
+### OpenShell And Codex
+
+- Every OpenShell operation names the gateway or endpoint and workspace. The
+  gateway owner supplies explicit config and database; the SDK never relies on
+  XDG defaults, starts the gateway, uses implicit last/default resources, or
+  deletes globally.
+- Provider v2/profile and image identities are preflight inputs. Landlock uses
+  `hard_requirement`; sandbox transfer uses exact archives; cleanup targets only
+  the preselected sandbox name and compensates ambiguous partial acquisition.
+- Codex receives isolated `HOME`, `CODEX_HOME`, and `CODEX_SQLITE_HOME`, explicit
+  model/effort/cwd/config, structured argv, and no ambient user config/rules.
+  External-sandbox bypass is legal only beneath the OpenShell confinement
+  composition.
+- Process exit, signal, timeout, stdout JSONL, stderr, final-message output, and
+  rollout files are independent evidence. Unknown JSONL events are preserved.
+  Interruption cannot depend on a terminal JSON event.
+- Effective model/effort/instruction admission comes from the exact
+  version-bound rollout `session_meta` and `turn_context`, not requested flags,
+  public JSONL, or telemetry. Resume is by exact thread ID; changed base
+  instructions on resume are prohibited or explicitly unproved.
+- Codex owns SIGINT and bounded escalation and must reach terminal process state
+  before OpenShell releases the sandbox.
+
+### Langfuse, OpenTelemetry, And Codex Projection
+
+- The Langfuse experiment item root observation is the trial subject. Acquire
+  and retain both trace ID and observation ID synchronously. Item scores target
+  that exact trace-and-observation pair; aggregate scores target the dataset run.
+  Trace-summary input/output is not authority.
+- `experiment.run` may omit rejected tasks or evaluators. Lanes reconcile the
+  expected set; Langfuse is not a recovery transaction or correctness oracle.
+- Full W3C propagation includes `traceparent`, optional `tracestate`, and exactly
+  one matching `langfuse_trace_id` in baggage. Projection runs under the
+  extracted context so baggage and the provider-owned root remain intact.
+- Codex-Langfuse projects decoded Codex turns, real model generations, tools,
+  and subagents below the one provider root. It accepts optional per-turn
+  `PromptRef` values and links each only to that turn's first real generation.
+  It never chooses turns, episodes, prompt policy, metadata admissibility, or
+  failure policy.
+- Score IDs are idempotent update keys, not write-once evidence. BOOLEAN writes
+  use numeric `0`/`1`. Flush is not ingestion proof; bounded paginated readback
+  verifies exact subject, type, config, value, and metadata.
+- One OTel bootstrap owns each projection process. Force-flush and shutdown are
+  distinct, idempotent lifecycle steps; use after close rejects.
+- Before source freeze, derive the upstream plugin digest manifest directly
+  from Git objects. Both historical `PROVENANCE.md` files contain three alleged
+  upstream hashes that do not match the named official tree, so they cannot be
+  copied as byte-exact authority. At upstream commit `33bc50ba`, the official
+  SHA-256 values are
+  `67549029a3d3f2c5766432fded11c92c26857911dd7eaa3b194eeef8d92ae9a9`
+  for `config.ts`,
+  `430bac98eac56c29099d740b211a14c883bf2c53ef3a450e47ac8abc64c9cc51`
+  for `instrumentation.ts`, and
+  `d26b335955f183da51bb95cb91fdc236b9d3cb252ca7ec70d3366371a0a4359c`
+  for `trace.ts`; BUILD derives and verifies rather than hand-copying them.
+
+### EVLog
+
+- Initialize EVLog once per process composition boundary. Its public module has
+  no reset/dispose contract and does not support independent concurrent configs.
+- Use public `initLogger`, `createLogger`, ordinary `emit`, and independently
+  accountable low-level sink pipelines. Do not migrate underscored lifecycle
+  options or high-level drains that swallow sender failures.
+- Redact after event construction and before console/drains. The lane supplies
+  bounded event vocabulary and correlation. Events never contain error causes,
+  stacks, prompts, secrets, artifacts, or evidence truth.
+- Stop intake before idempotent final flush. Track buffered and in-flight work
+  separately; terminal drops remain diagnostics and cannot reclassify product
+  or evaluator outcomes.
+
+### Bun And Git Artifacts
+
+- Use `Bun.CryptoHasher("sha256")` for durable identities, never `Bun.hash`.
+- Git creates the submission: `git add -A`, then a cached diff with `--binary`,
+  `--full-index`, `--no-ext-diff`, and `--no-textconv`. Apply-check and apply it
+  to a fresh exact baseline, regenerate it, and require identical bytes/digest.
+- Git archive owns history-free materialization. Bun archive is not assumed
+  portable until mode and symlink behavior prove it for the target platform.
+- Build before `bun pm pack --ignore-scripts`; inspect the archive, bind package
+  version, protocol version, SHA-256, and the resolution/integrity manifest
+  derived from the frozen SDK lock. Both lane consumers import the same tarball
+  bytes and prove their own frozen locks and installed graphs match that
+  manifest before importing an adapter.
 
 ## Testing Strategy
 
 Tests target persistent behavioral guarantees, not implementation text:
 
-1. TypeBox decode rejects malformed identity, temporary roots, mixed secret
-   config, and invalid deadlines.
-2. Command interruption terminates the owned child and preserves bounded
-   output.
-3. Sandbox release runs after success, typed failure, interruption, and partial
-   acquisition; cleanup failure remains visible.
-4. Codex invocation cancellation completes before OpenShell sandbox release;
-   each adapter terminates only its directly owned resource.
-5. Submitted artifact round-trips added, deleted, renamed, and binary files.
+1. Strict TypeBox checking accepts a merged generic-plus-lane object and rejects
+   an additional unknown field, malformed tagged unions, numeric-string
+   coercion, default insertion, and unknown-field cleaning even when global
+   corrective parsing is enabled. Semantic validation rejects temporary/symlink
+   roots, secrets, invalid deadlines, and noncanonical predecessor sets; the
+   explicit snapshot is unchanged by later mutation of the caller's input.
+2. One Effect runtime builds/releases once; command success, failure, timeout,
+   interruption, and cleanup failure preserve the right primary and secondary
+   outcomes without leaking redacted values.
+3. OpenShell exact-target preflight, model-free containment/transfer,
+   partial-acquisition compensation, dual-failure visibility, and named cleanup
+   behave correctly inside one workspace.
+4. Codex success/failure/retryable/malformed/unknown JSONL, local fixture-server
+   requests, rollout envelope admission, explicit resume, and SIGINT retain all
+   evidence. An ignored-SIGINT fixture proves bounded escalation reaches an
+   observed terminal process before OpenShell release and preserves both
+   termination and cleanup failures under the primary/secondary failure law.
+5. Submitted artifacts round-trip add/delete/rename/binary/mode changes through
+   a fresh baseline and regenerate identical canonical patch bytes.
 6. Observation handle, agent outcome, and artifact publish once as one solver
    terminal; identical retries adopt it and conflicting publication rejects.
 7. Product failure and infrastructure failure remain disjoint.
-8. Observation settlement failure preserves the execution exit and correlation
-   handle; later score projection validates the exact trace subject without
-   imposing cosmetic topology or global namespace cleanliness.
-9. Each lane consumes the same immutable packed SDK artifact and supplies one
-   model-free compatibility cell proving its explicit path mapping can bind the
-   same interfaces.
-10. Template Habitat proves SDK package shape and dependency direction; each
-   lane's owner-local check proves its own study mapping. Neither tests runtime
-   behavior by scanning another repository.
+8. Full W3C carrier extraction, one provider-owned root, multi-turn Codex
+   projection, prompt linkage, exact trace-and-observation score subjects,
+   pagination, timeout/abort, weak flush, and bounded readback behave correctly
+   without global namespace cleanliness.
+9. Codex-Langfuse rebuilds deterministically from a Git-object-derived upstream
+   manifest and executes from an arbitrary working directory under Node 22.
+10. EVLog proves redaction, correlation, independent sink isolation, overflow
+    versus retry-exhaustion drops, in-flight flush, close-before-flush, and
+    idempotent disposal without changing study outcomes.
+11. Nx package scripts resolve TypeScript `7.0.2` while root TypeScript remains
+    unchanged. SDK resolution proves Effect `4.0.0-beta.99`; Template remains on
+    Effect `3.21.3`; Habitat/GritQL rejects imports or re-exports of
+    Effect-bearing SDK subpaths from Effect-3 packages while permitting the
+    designated neutral decoded contract. The packed artifact imports and
+    typechecks in both model-free lane consumers, whose frozen locks and
+    installed graphs match the same embedded resolution/integrity manifest and
+    tarball digest.
+12. Template Habitat proves SDK package shape and dependency direction; each
+    lane's owner-local check proves its own study mapping. Neither tests runtime
+    behavior by scanning another repository.
 
-Mocks may isolate a vendor port, but the SDK's anchors remain real TypeBox
-decoding, Effect scopes, Git patches, Bun processes, and adapter contract tests.
-No test asserts source-code strings, helper counts, or a preferred internal
-implementation.
+Habitat dependency-direction checks use GritQL patterns over imports. They are
+structural law, not source-string assertions or a second runtime test suite.
+
+Local fixture servers, captured rollouts, and injected command/provider
+boundaries force failures, but the SDK's anchors remain real TypeBox checking,
+Effect scopes, Git patches, Bun processes, built plugin projection, and
+model-free adapter contract probes. Automated BUILD checks MUST NOT invoke a
+model, create or change a provider/profile, start or reconfigure a gateway,
+mutate an image, or write a remote Langfuse resource. One OpenShell lifecycle
+check MAY acquire and delete an explicitly named, provider-free sandbox against
+a caller-supplied running gateway; it owns neither gateway lifecycle nor
+configuration. No test asserts source-code strings, helper counts, command
+spelling, or a preferred internal implementation.
 
 ## Migration
 
 1. Accept this exact frame commit.
-2. Restack onto the primary Template lane's accepted controller simplification,
-   confirming that the SDK imports no lifecycle/controller package.
-3. Run and disposition the bounded vendor verifiers; freeze exact versions.
+2. Restack the two accepted frame commits onto exact Template checkpoint
+   `911f319c3d3abdab5255d831e8e16ee16543c3bf`, confirming no broader replay and
+   no lifecycle/controller dependency.
+3. Run and disposition the bounded vendor verifiers; freeze exact versions and
+   derive the Codex-Langfuse upstream manifest from official Git objects.
 4. Generate one buildable Nx package and minimal Habitat rules.
 5. Extract only the near-identical proven oRPC/Inngest behavior. Keep lane
    names, path conventions, service identities, and study pins in lane-owned
    configuration or bindings.
 6. Merge the union of adapter behavior, including Inngest multi-turn prompt
-   linkage and oRPC plugin source ownership, without importing study policy.
+   linkage, the Codex-OpenShell provider bridge, and oRPC plugin source
+   ownership, without importing study policy.
 7. Implement and test terminal-before-evaluation continuation.
-8. Pack one immutable local SDK artifact with package/protocol version and
-   digest; consume it from both lane bindings without a source checkout link.
+8. Pack one immutable local SDK artifact with package/protocol version,
+   resolution/integrity manifest, and digest; consume it under frozen
+   manifest-matching locks in both lane bindings without a source checkout link.
 9. Bind the oRPC study through lane-owned configuration/bindings and pass a
    model-free cell.
 10. Bind the Inngest study through lane-owned configuration/bindings and pass a
@@ -401,6 +593,12 @@ The design is wrong or too elaborate if any of these become true:
 - Per-cell execution regenerates corpus qualification or unrelated proofs.
 - A downstream failure can erase or rerun an exact valid solver terminal.
 - Telemetry availability becomes correctness authority.
+- A score is attached only to a trace summary or dataset run when the trial
+  subject is the experiment-item root observation.
+- Effect 3 and Effect 4 exchange runtime values rather than neutral decoded
+  data.
+- OpenShell owns Codex semantics, Codex owns OpenShell lifecycle, or either lane
+  duplicates the shared provider bridge.
 - Using the SDK requires moving historical evidence.
 - The package adds a controller, scheduler, workflow graph, receipt/CAS
   authority, database, hosted service, or release plane.

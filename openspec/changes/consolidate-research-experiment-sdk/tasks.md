@@ -4,11 +4,13 @@
   study-owned content, historical evidence, and delete/supersede.
 - [x] 1.2 Agree on Template ownership, one-package topology, four stage
   interfaces, re-entry law, and write/review leases.
-- [ ] 1.3 Obtain exact-commit frame acceptance from both directors.
-- [ ] 1.4 Restack onto the accepted primary Template controller simplification
-  and confirm the SDK has no lifecycle/controller dependency.
-- [ ] 1.5 Run bounded standing vendor reviews and freeze the compatible
-  dependency closure.
+- [x] 1.3 Obtain exact-commit frame acceptance from both directors.
+- [x] 1.4 Restack the two accepted frame commits onto exact Template checkpoint
+  `911f319c3d3abdab5255d831e8e16ee16543c3bf` without broader replay.
+- [x] 1.5 Run bounded standing vendor reviews and select the exact compatible
+  dependency/tool closure.
+- [ ] 1.6 Obtain exact-commit acceptance of the vendor disposition from both
+  directors before BUILD.
 
 ## 2. Generic SDK
 
@@ -19,19 +21,25 @@
   adopt-or-reject behavior.
 - [ ] 2.3 Implement exact-environment command execution and one Effect runtime
   composition boundary.
-- [ ] 2.4 Implement named OpenShell, Codex, Langfuse, Codex-Langfuse, Git/Bun,
-  and EVLog adapters.
-- [ ] 2.5 Implement behavioral tests for resource release, interruption,
+- [ ] 2.4 Implement named OpenShell, Codex, Langfuse, Codex-Langfuse,
+  Codex-OpenShell, Git/Bun, and EVLog adapters.
+- [ ] 2.5 Derive the Codex-Langfuse upstream manifest from official Git objects,
+  freeze exact maintained-source/patch/lock identities, and reproduce the Node
+  22 ESM bundle deterministically.
+- [ ] 2.6 Implement behavioral tests for resource release, interruption,
   artifact round-trip, write-once terminal publication, terminal continuation,
   observation failure preserving execution, interruption ownership, failure
-  separation, and exact observation subjects.
-- [ ] 2.6 Add only Template SDK package/dependency-direction Habitat rules and
+  separation, effective Codex envelopes, exact score subjects, and diagnostic
+  event lifecycle.
+- [ ] 2.7 Add only Template SDK package/dependency-direction Habitat rules and
   define the owner-local lane mapping check contract.
 
 ## 3. Lane Compatibility
 
-- [ ] 3.1 Pack one immutable local SDK artifact with package/protocol version
-  and digest for both lane checks.
+- [ ] 3.1 Build and `bun pm pack --ignore-scripts` one immutable local SDK
+  artifact with package/protocol version, runtime resolution/integrity manifest,
+  and SHA-256; verify matching frozen consumer locks and installed graphs in
+  both lanes.
 - [ ] 3.2 Bind one retained oRPC study through the SDK interfaces and pass one
   model-free compatibility cell.
 - [ ] 3.3 Bind one retained Inngest study through the same interfaces and pass

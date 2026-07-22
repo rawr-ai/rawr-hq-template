@@ -27,7 +27,7 @@ removes duplicate ownership without moving research truth.
 - Separate scoreable agent outcomes from infrastructure and evaluator failures.
 - Extract generic Effect runtime, command, identity, and adoption behavior.
 - Add named adapters for OpenShell, Codex, Langfuse, Codex-Langfuse tracing,
-  Git/Bun artifacts, and EVLog.
+  the proved Codex-OpenShell provider bridge, Git/Bun artifacts, and EVLog.
 - Add only the Habitat topology and dependency-direction rules that protect
   these actual boundaries.
 - Express the retained oRPC and Inngest studies through lane-owned bindings and
@@ -38,7 +38,10 @@ removes duplicate ownership without moving research truth.
 ## Explicitly Outside The Change
 
 - No model, reviewer, calibration, or other usage-consuming trial.
-- No provider, gateway, image, skill, Personal RAWR HQ, or release mutation.
+- No provider/profile, gateway lifecycle/configuration, image, skill, Personal
+  RAWR HQ, or release mutation. A deterministic OpenShell check may acquire and
+  delete one explicitly named, provider-free sandbox against a caller-supplied
+  running gateway; it neither configures nor owns that gateway.
 - No migration of prompts, rubrics, packets, fixtures, historical results, or
   evidence into Template.
 - No generic scheduler around Langfuse Experiments.
@@ -61,16 +64,17 @@ removes duplicate ownership without moving research truth.
   packages. Simplification or deletion of that system remains owned by the
   primary Template lane.
 - Template's root Effect 3 dependency closure remains unchanged; the SDK
-  isolates its own compatible dependency closure.
+  isolates its own compatible Effect 4 dependency closure. Effect runtime
+  values never cross between those majors; only TypeBox-decoded data does.
 
 ## Integration Condition
 
 The primary Template lane is actively replacing the rejected custom
-controller/distribution system on a separate Graphite stack. This frame may be
-committed independently, but the SDK branch MUST restack onto that accepted
-Template architecture before BUILD begins and again before landing if the
-upstream stack changes. The SDK does not preserve, replace, or depend on the
-retiring controller.
+controller/distribution system on a separate Graphite stack. The accepted frame
+has been restacked onto checkpoint
+`911f319c3d3abdab5255d831e8e16ee16543c3bf`; the SDK branch MUST restack again
+before landing if the accepted upstream stack changes. The SDK does not
+preserve, replace, or depend on the retiring controller.
 
 ## Capabilities
 

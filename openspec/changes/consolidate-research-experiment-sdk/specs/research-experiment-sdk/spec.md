@@ -6,7 +6,9 @@ generic research execution contracts and named vendor adapters. SDK core MUST
 NOT contain oRPC, Inngest, skill-efficacy, challenge, corpus, rubric, or
 individual-study semantics. The package MUST isolate its dependency closure and
 MUST NOT require upgrading Template's root Effect 3 runtime. The package MUST
-NOT import or depend on Template lifecycle/controller packages.
+NOT import or depend on Template lifecycle/controller packages. Its standalone
+TypeScript 7 configuration MUST NOT extend Template's root TypeScript config or
+load TypeScript 7 through the Nx API.
 
 #### Scenario: A third study integrates without core modification
 - **WHEN** a new investigation supplies its own TypeBox study schema, stage
@@ -19,8 +21,14 @@ The SDK MUST use TypeBox as its external schema engine for runtime identity,
 paths, deadlines, stage identities, and adapter public configuration. Adapter
 secrets MUST enter through environment-backed Effect configuration and MUST NOT
 appear in committed files, prompts, artifacts, metadata, or results. Lane study
-schemas MUST extend the generic definition explicitly rather than through an
-untyped extension bag.
+schemas MUST compose the generic definition explicitly rather than through an
+untyped extension bag. Reusable generic property fragments MUST NOT be decoded
+as independent public objects: lanes MUST merge generic and subject properties
+and close the final public object once, never intersect separately closed
+objects. Structural checking MUST use a noncorrective path independent of
+TypeBox's process-global corrective setting. Semantic validation and the
+clone/freeze snapshot MUST remain explicit later steps, and callback-bearing
+refinements MUST NOT be exported as portable schemas.
 
 #### Scenario: Subject and secret configuration stay outside core
 - **WHEN** oRPC and Inngest decode their retained study definitions
@@ -48,7 +56,11 @@ handle. Settlement or projection failure MAY resume independently from the
 persisted handle and MUST NOT change a solver or evaluation outcome. Missing or
 uncorrelated required evidence MUST fail the observation boundary, while
 cosmetic topology and provider namespace cleanliness MUST NOT be admissibility
-criteria.
+criteria. The Langfuse trial subject MUST be the experiment-item root
+observation. Scores for a trial MUST target its exact trace and observation IDs;
+trace-summary I/O and run-level scores MUST NOT substitute for that subject. A
+full W3C carrier MUST preserve `traceparent`, optional `tracestate`, and exactly
+one matching Langfuse trace ID in baggage beneath the provider-owned root.
 
 #### Scenario: Telemetry settlement fails after a valid artifact
 - **WHEN** execution produces a persisted solver terminal and submitted artifact
@@ -96,11 +108,15 @@ missing correlation MUST remain typed infrastructure or evaluator failures.
 
 ### Requirement: Named adapter ownership
 The package MUST provide named adapter modules for OpenShell, Codex, Langfuse,
-Codex-Langfuse, Git/Bun, and EVLog. OpenShell MUST own sandbox lifecycle only.
-Codex MUST own agent invocation and session decoding. Langfuse MUST own
-experiment/trace/score projection only. Codex-Langfuse MUST own carrier and
-plugin instrumentation only. Git/Bun MUST own materialization and submitted
-artifacts. EVLog MUST own non-authoritative operational events.
+Codex-Langfuse, Codex-OpenShell, Git/Bun, and EVLog. OpenShell MUST own sandbox
+lifecycle only. Codex MUST own agent invocation and session decoding. Langfuse
+MUST own experiment/trace/score projection only. Codex-Langfuse MUST own its
+maintained plugin source/build/configuration, carrier propagation,
+decoded-session projection, supplied per-turn prompt linkage, and observation
+parenting only; it MUST NOT select turns or own study/failure policy.
+Codex-OpenShell MUST own only the reusable provider/auth/profile bridge and MUST
+NOT persist secrets or own study policy. Git/Bun MUST own materialization and
+submitted artifacts. EVLog MUST own non-authoritative operational events.
 
 #### Scenario: Vendor behavior cannot decide study policy
 - **WHEN** an adapter returns a typed vendor result or failure
@@ -112,7 +128,9 @@ artifacts. EVLog MUST own non-authoritative operational events.
 Core configuration MUST NOT contain selected adapter names, an adapter registry,
 or string-based vendor dispatch. Each adapter MUST own a TypeBox configuration
 schema and expose an Effect Layer. Lane code MUST import concrete adapter
-subpaths and compose those Layers directly.
+subpaths and compose those Layers directly. The only legal adapter crossings
+MUST be `codex-langfuse -> codex + langfuse` and
+`codex-openshell -> codex + openshell`.
 
 #### Scenario: A lane selects a vendor without a plugin manager
 - **WHEN** a study uses OpenShell and Codex execution with Langfuse observation
@@ -126,8 +144,14 @@ Every acquired sandbox and provider resource MUST have one scoped release path.
 Interruption MUST reach the directly owned process, partial acquisition MUST
 compensate registered remote resources, and cleanup failure MUST remain visible.
 Codex MUST own cancellation and termination of the active agent invocation.
+If graceful interruption does not terminate within its declared deadline, Codex
+MUST escalate to a bounded forced termination and retain that outcome as
+evidence.
 OpenShell MUST finalize the containing sandbox only after that invocation exits.
 The adapters MUST NOT race to terminate each other's directly owned resource.
+The SDK MUST own an exact Effect 4 closure. Effect 3 Template packages MUST NOT
+import or re-export SDK Effect runtime values; only Effect-neutral,
+TypeBox-decoded data MAY cross the major-version boundary.
 
 #### Scenario: Interrupted sandbox work releases its resource
 - **WHEN** an executing stage is interrupted after sandbox registration
@@ -152,10 +176,24 @@ be able to bind a retained study through the same generic stage interfaces.
 ### Requirement: Structural and behavioral verification
 Template Habitat MUST enforce only the SDK package shape and dependency
 direction. Each lane MUST own a local compatibility or Habitat check for its
-explicit study mapping. Deterministic tests MUST probe TypeBox decoding, process
+explicit study mapping. Deterministic tests MUST probe TypeBox checking and
+snapshotting, process
 interruption, scoped resource release, artifact round-trip, terminal adoption,
-failure separation, and exact observation subjects. Tests MUST NOT assert source
-strings, helper counts, or a preferred internal implementation.
+failure separation, exact observation subjects, effective Codex rollout
+envelopes, deterministic projection, EVLog lifecycle, and package-local
+compiler isolation. Tests MUST NOT assert source strings, helper counts, command
+spelling, or a preferred internal implementation.
+Dependency-direction enforcement MUST use GritQL import patterns rather than
+brittle text matching. It MUST also prove that SDK Effect 4 runtime subpaths do
+not cross into Effect 3 packages and that only the designated neutral decoded
+contract is eligible for cross-major consumption.
+
+All automated BUILD checks MUST be model-free. They MUST use captured rollouts,
+local fixture servers, and injected command/provider boundaries rather than
+invoking a model, changing a provider/profile, starting or reconfiguring a
+gateway, mutating an image, or writing remote Langfuse resources. A model-free
+OpenShell lifecycle check MAY acquire and delete one explicitly named,
+provider-free sandbox against a caller-supplied running gateway.
 
 #### Scenario: Both lanes pass model-free compatibility
 - **WHEN** the SDK and lane bindings are ready for cutover
@@ -166,17 +204,65 @@ strings, helper counts, or a preferred internal implementation.
 
 ### Requirement: Immutable local package compatibility
 Lane compatibility MUST consume an immutable locally packed SDK artifact that
-binds package version, protocol version, and content digest. A Template Git SHA
-MAY provide provenance but MUST NOT be the cross-repository package interface.
-This change MUST NOT introduce registry publication, a release plane, artifact
-service, or direct cross-repository source dependency. The OpenSpec change MUST
+is built before `bun pm pack --ignore-scripts` and binds package version,
+protocol version, content digest, and a resolution/integrity manifest for the
+SDK's complete runtime dependency closure derived from the frozen workspace
+lock. Each isolated lane consumer MUST use a frozen owner-local lock that
+resolves exactly that manifest and MUST compare its resolved lock and installed
+graph to the embedded manifest before any SDK adapter import. A Template Git
+SHA MAY provide provenance but MUST NOT
+be the cross-repository package interface. This change MUST NOT introduce
+registry publication, a release plane, artifact service, custom package
+manager, or direct cross-repository source dependency. The OpenSpec change MUST
 remain the sole shared design and coordination record; each repository's branch
 and checks own its local mutations.
 
 #### Scenario: Both lanes test the same package bytes
 - **WHEN** oRPC and Inngest run their model-free compatibility checks
 - **THEN** both consume the same locally packed artifact identity and protocol
+- **AND** both installed dependency graphs match its exact resolution/integrity
+  manifest
 - **AND** neither imports the Template source checkout or relocates evidence
+
+### Requirement: Verified exact vendor closure
+The SDK MUST use the exact package/dependency closure accepted in the DESIGN
+disposition. External executables MUST satisfy their admitted version
+constraints, and their resolved paths and versions MUST be recorded and
+preflighted before resource acquisition.
+OpenShell operations MUST name an explicit gateway or endpoint and workspace;
+the SDK MUST consume but MUST NOT start or own gateway lifecycle. Codex
+admission MUST combine process truth with its version-bound rollout evidence and
+MUST NOT treat requested flags, public JSONL, or telemetry as effective-model
+proof. Langfuse readback MUST verify exact score subjects and MUST NOT treat
+flush as ingestion proof. EVLog MUST use one public process-global
+initialization and MUST remain diagnostic.
+
+#### Scenario: Historical qualified versions do not silently become current
+- **WHEN** a lane attempts to run with an old OpenShell, Codex, dependency lock,
+plugin provenance manifest, or other mismatched closure identity
+- **THEN** preparation fails before sandbox or provider acquisition
+- **AND** no historical receipt is reinterpreted as qualification of new bytes
+
+#### Scenario: Patched plugin provenance is rebuilt from authority
+- **WHEN** Codex-Langfuse source is frozen for BUILD
+- **THEN** its upstream digest manifest is derived from the named official Git
+  objects and the deterministic bundle is rebuilt from maintained source
+- **AND** the two historical manifests with mismatched upstream hashes are
+  retained only as historical evidence, never copied as current authority
+
+### Requirement: Canonical submitted-artifact substrate
+The Git/Bun adapter MUST hash durable identities with cryptographic SHA-256 and
+MUST produce a staged full-index binary Git patch with external diff and
+textconv disabled. It MUST apply-check and apply against a fresh exact baseline,
+then regenerate and compare canonical bytes and digest. It MUST NOT use
+noncryptographic `Bun.hash`, three-way patch inference, or solver-authored tests
+as artifact authority.
+
+#### Scenario: Patch contains every product change
+- **WHEN** a solver adds, deletes, renames, changes mode, or modifies binary and
+  text files
+- **THEN** the fresh verifier reconstructs exactly those bytes from the patch
+- **AND** regenerated canonical patch bytes and SHA-256 match the submission
 
 ### Requirement: Current-upstream integration
 The SDK branch MUST restack onto the accepted Template simplification before

@@ -8,7 +8,7 @@ fixtures, results, and evidence.
 
 | Epoch | Repository + HEAD | Phase | Active writer | Claimed paths / slice | Review commit | Blockers | Next legal transition |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | RAWR HQ-Template `6c0fe651809f7ff2e3a1d620be1f44e202247787` | DESIGN | oRPC director | `openspec/changes/consolidate-research-experiment-sdk/**` | `6c0fe651809f7ff2e3a1d620be1f44e202247787` (blocking corrections returned) | Accepted Template simplification target is not yet settled; BUILD is prohibited | Correct frame; exact peer acceptance; restack; vendor verification; then BUILD |
+| 2 | RAWR HQ-Template `e8f27f389eb15fa98898371e87a2e265aee83d93` on `911f319c3d3abdab5255d831e8e16ee16543c3bf` | DESIGN | oRPC director | vendor closure in this OpenSpec only | Pre-restack frame `f388775abfbec88f4f732669782329e535fc1de0` accepted by both directors; content replayed unchanged | Vendor disposition needs exact review; plugin provenance is a BUILD source-freeze obligation | Commit vendor disposition; exact peer review; then BUILD |
 
 ## Record
 
