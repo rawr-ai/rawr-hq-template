@@ -118,10 +118,19 @@ blueprint had incorrectly classified every `plugins/cli/*` package and required
 `rawr.kind=toolkit`, contradicting the canonical
 `plugins/cli/commands/<capability>` projection topology. The corrected packet
 uses placement as identity, removes the second metadata classification, and
-keeps the package and source roots closed. App and command-plugin manifest
-contracts execute the official generator through Bun. All 24 Grit fixtures,
+keeps the package and source roots closed. Command-plugin manifest contracts
+execute the official generator through Bun. All 24 Grit fixtures,
 the blueprint-packet topology check, and the live direct-entrypoint rule pass;
 moving the production command plugins remains task 2.3.
+
+The Oclif configuration rules now anchor their JSON constraints at the parsed
+document root. This preserves the positive package and compiler constraints
+without diagnosing nested `scripts`, dependency, `oclif`, or `compilerOptions`
+objects as package roots. The app rule currently locks installed identity,
+binary, the declared native extension dependency, command discovery, and the
+TypeScript mapping. Task 2.2 tightens native extension composition and task 3.3
+tightens generated-manifest packaging only when those behaviors exist. The
+configuration fixtures and both live rules pass with zero diagnostics.
 
 The Template Habitat consumer already pins the newest published Civ7 artifact:
 
