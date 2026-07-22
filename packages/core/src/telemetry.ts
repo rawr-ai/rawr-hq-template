@@ -1,7 +1,11 @@
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
-import { CompositePropagator, W3CBaggagePropagator, W3CTraceContextPropagator } from "@opentelemetry/core";
+import {
+  CompositePropagator,
+  W3CBaggagePropagator,
+  W3CTraceContextPropagator,
+} from "@opentelemetry/core";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
@@ -38,7 +42,10 @@ export type RawrOrpcTelemetryOptions = {
 export type InstalledTelemetry = {
   sdk: NodeSDK;
   instrumentationNames: string[];
-  options: Readonly<Required<Pick<RawrOrpcTelemetryOptions, "serviceName">> & Omit<RawrOrpcTelemetryOptions, "serviceName">>;
+  options: Readonly<
+    Required<Pick<RawrOrpcTelemetryOptions, "serviceName">> &
+      Omit<RawrOrpcTelemetryOptions, "serviceName">
+  >;
   shutdown(): Promise<void>;
 };
 
@@ -63,17 +70,17 @@ function resolveTelemetryOptions(options: RawrOrpcTelemetryOptions) {
     serviceVersion: options.serviceVersion,
     exporter: {
       url:
-        options.exporter?.url
-        ?? process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-        ?? appendOtlpSignalPath(otlpBaseUrl, "/v1/traces"),
+        options.exporter?.url ??
+        process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ??
+        appendOtlpSignalPath(otlpBaseUrl, "/v1/traces"),
       headers: options.exporter?.headers,
     },
     traceExporter: options.traceExporter,
     metrics: {
       url:
-        options.metrics?.url
-        ?? process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
-        ?? appendOtlpSignalPath(otlpBaseUrl, "/v1/metrics"),
+        options.metrics?.url ??
+        process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT ??
+        appendOtlpSignalPath(otlpBaseUrl, "/v1/metrics"),
       headers: options.metrics?.headers,
       exportIntervalMillis: options.metrics?.exportIntervalMillis ?? 1000,
     },
@@ -137,32 +144,31 @@ function stringifyHeaders(headers?: Record<string, string>) {
   }
 
   return JSON.stringify(
-    Object.entries(headers)
-      .sort(([left], [right]) => left.localeCompare(right)),
+    Object.entries(headers).sort(([left], [right]) => left.localeCompare(right))
   );
 }
 
 function assertCompatibleInstall(
   current: ReturnType<typeof resolveTelemetryOptions>,
-  next: ReturnType<typeof resolveTelemetryOptions>,
+  next: ReturnType<typeof resolveTelemetryOptions>
 ) {
   const isCompatible =
-    current.serviceName === next.serviceName
-    && current.environment === next.environment
-    && current.serviceVersion === next.serviceVersion
-    && current.exporter.url === next.exporter.url
-    && stringifyHeaders(current.exporter.headers) === stringifyHeaders(next.exporter.headers)
-    && current.metrics.url === next.metrics.url
-    && stringifyHeaders(current.metrics.headers) === stringifyHeaders(next.metrics.headers)
-    && current.metrics.exportIntervalMillis === next.metrics.exportIntervalMillis
-    && current.traceExporter === next.traceExporter;
+    current.serviceName === next.serviceName &&
+    current.environment === next.environment &&
+    current.serviceVersion === next.serviceVersion &&
+    current.exporter.url === next.exporter.url &&
+    stringifyHeaders(current.exporter.headers) === stringifyHeaders(next.exporter.headers) &&
+    current.metrics.url === next.metrics.url &&
+    stringifyHeaders(current.metrics.headers) === stringifyHeaders(next.metrics.headers) &&
+    current.metrics.exportIntervalMillis === next.metrics.exportIntervalMillis &&
+    current.traceExporter === next.traceExporter;
 
   if (isCompatible) {
     return;
   }
 
   throw new Error(
-    "installRawrOrpcTelemetry(...) received incompatible options after telemetry was already configured",
+    "installRawrOrpcTelemetry(...) received incompatible options after telemetry was already configured"
   );
 }
 
@@ -201,7 +207,7 @@ function registerProcessHooks(shutdown: () => Promise<void>) {
 }
 
 export async function installRawrOrpcTelemetry(
-  options: RawrOrpcTelemetryOptions,
+  options: RawrOrpcTelemetryOptions
 ): Promise<InstalledTelemetry> {
   const state = getTelemetryState();
   const resolvedOptions = resolveTelemetryOptions(options);
@@ -216,25 +222,23 @@ export async function installRawrOrpcTelemetry(
 
   state.requestedOptions = resolvedOptions;
   state.installPromise = (async () => {
-    const instrumentations = [
-      new HttpInstrumentation(),
-      new ORPCInstrumentation(),
-    ];
+    const instrumentations = [new HttpInstrumentation(), new ORPCInstrumentation()];
 
     const sdk = new NodeSDK({
       resource: resourceFromAttributes({
         "service.name": resolvedOptions.serviceName,
-        ...(resolvedOptions.serviceVersion ? { "service.version": resolvedOptions.serviceVersion } : {}),
-        ...(resolvedOptions.environment ? { "deployment.environment.name": resolvedOptions.environment } : {}),
+        ...(resolvedOptions.serviceVersion
+          ? { "service.version": resolvedOptions.serviceVersion }
+          : {}),
+        ...(resolvedOptions.environment
+          ? { "deployment.environment.name": resolvedOptions.environment }
+          : {}),
       }),
       traceExporter: createTraceExporter(resolvedOptions),
       metricReader: createMetricReader(resolvedOptions),
       instrumentations,
       textMapPropagator: new CompositePropagator({
-        propagators: [
-          new W3CTraceContextPropagator(),
-          new W3CBaggagePropagator(),
-        ],
+        propagators: [new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
       }),
     });
 
@@ -243,7 +247,9 @@ export async function installRawrOrpcTelemetry(
     let shuttingDown = false;
     const installed: InstalledTelemetry = {
       sdk,
-      instrumentationNames: instrumentations.map((instrumentation) => instrumentation.constructor.name),
+      instrumentationNames: instrumentations.map(
+        (instrumentation) => instrumentation.constructor.name
+      ),
       options: resolvedOptions,
       async shutdown() {
         if (shuttingDown) {

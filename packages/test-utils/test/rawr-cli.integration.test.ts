@@ -14,7 +14,7 @@ describe("rawr CLI (integration)", () => {
     const proc = await runCommand("bun", ["run", "rawr", "--", ...args], { cwd: repoRoot });
     expect(proc.exitCode).toBe(78);
     expect(`${proc.stdout}\n${proc.stderr}`).toContain(
-      "CONTROLLER_RELEASE_REQUIRED:RAWR_CONTROLLER_DIGEST",
+      "CONTROLLER_RELEASE_REQUIRED:RAWR_CONTROLLER_DIGEST"
     );
   });
 });

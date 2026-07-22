@@ -1,11 +1,19 @@
 import { createClient, type Client, type CreateClientOptions } from "@rawr/chatgpt-corpus";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import { bindService, type ProcessView, type RoleView, type ServiceBinding, type ServiceBindingContext } from "@rawr/hq-sdk/plugins";
+import {
+  bindService,
+  type ProcessView,
+  type RoleView,
+  type ServiceBinding,
+  type ServiceBindingContext,
+} from "@rawr/hq-sdk/plugins";
 import { createFilesystemWorkspaceStore } from "./workspace-store";
 
 export type CorpusInitializeOptions = NonNullable<Parameters<Client["workspace"]["initialize"]>[1]>;
-export type CorpusMaterializeOptions = NonNullable<Parameters<Client["corpusArtifacts"]["materialize"]>[1]>;
+export type CorpusMaterializeOptions = NonNullable<
+  Parameters<Client["corpusArtifacts"]["materialize"]>[1]
+>;
 
 type CorpusProcess = ProcessView & {
   processId: "plugin-chatgpt-corpus";
@@ -30,7 +38,8 @@ const corpusService = bindService(createClient, {
     workspaceRef: context.process.workspaceRef,
   }),
   config: {},
-  cacheKey: (context: BindingContext) => `${context.process.processId}:${context.process.workspaceRef}:${context.role.roleId}`,
+  cacheKey: (context: BindingContext) =>
+    `${context.process.processId}:${context.process.workspaceRef}:${context.role.roleId}`,
 } satisfies ServiceBinding<CreateClientOptions, CorpusProcess, CorpusRole>);
 
 export function createCorpusClient(workspaceRef: string): Client {
@@ -58,7 +67,10 @@ export function describeServiceError(error: unknown): {
       data?: unknown;
     };
     return {
-      message: typeof typed.message === "string" && typed.message.trim() !== "" ? typed.message : String(error),
+      message:
+        typeof typed.message === "string" && typed.message.trim() !== ""
+          ? typed.message
+          : String(error),
       code: typeof typed.code === "string" ? typed.code : undefined,
       details: typed.data,
     };

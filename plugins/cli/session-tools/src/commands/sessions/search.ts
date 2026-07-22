@@ -22,16 +22,14 @@ type SearchClearIndexOptions = NonNullable<Parameters<Client["search"]["clearInd
 type SearchReindexOptions = NonNullable<Parameters<Client["search"]["reindex"]>[1]>;
 
 function normalizeFacetToken(input: string): string {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/_+/g, "_");
+  return input.trim().toLowerCase().replace(/\s+/g, "_").replace(/_+/g, "_");
 }
 
 function facetFlagValues(value: unknown): string[] | undefined {
   const values = Array.isArray(value) ? value : value == null ? [] : [value];
-  const normalized = [...new Set(values.map((item) => normalizeFacetToken(String(item))).filter(Boolean))].sort();
+  const normalized = [
+    ...new Set(values.map((item) => normalizeFacetToken(String(item))).filter(Boolean)),
+  ].sort();
   return normalized.length ? normalized : undefined;
 }
 
@@ -41,7 +39,7 @@ function hasFacetFilters(filters: SessionFacetFilters): boolean {
       filters.directives?.length ||
       filters.tools?.length ||
       filters.payloadTypes?.length ||
-      filters.topTypes?.length,
+      filters.topTypes?.length
   );
 }
 
@@ -57,9 +55,18 @@ export default class SessionsSearch extends RawrCommand {
       options: ["claude", "codex", "all"],
       default: "all",
     }),
-    limit: Flags.integer({ description: "Max results to return", default: SessionsSearch.DEFAULT_SAFE_LIMIT, min: 1, max: 50_000 }),
-    "query-metadata": Flags.string({ description: "Metadata substring query (no transcript reads)" }),
-    query: Flags.string({ description: "Regex content query (reads transcripts; optionally uses index)" }),
+    limit: Flags.integer({
+      description: "Max results to return",
+      default: SessionsSearch.DEFAULT_SAFE_LIMIT,
+      min: 1,
+      max: 50_000,
+    }),
+    "query-metadata": Flags.string({
+      description: "Metadata substring query (no transcript reads)",
+    }),
+    query: Flags.string({
+      description: "Regex content query (reads transcripts; optionally uses index)",
+    }),
     "ignore-case": Flags.boolean({ description: "Case-insensitive regex search", default: false }),
     "max-matches": Flags.integer({
       description: "Max sessions to return for content search",
@@ -67,10 +74,21 @@ export default class SessionsSearch extends RawrCommand {
       min: 1,
       max: 50_000,
     }),
-    snippet: Flags.integer({ description: "Snippet length for content search", default: 300, min: 50, max: 5_000 }),
-    "use-index": Flags.boolean({ description: "Use sqlite cache for transcript text", default: false }),
+    snippet: Flags.integer({
+      description: "Snippet length for content search",
+      default: 300,
+      min: 50,
+      max: 5_000,
+    }),
+    "use-index": Flags.boolean({
+      description: "Use sqlite cache for transcript text",
+      default: false,
+    }),
     "index-path": Flags.string({ description: "Sqlite index file path" }),
-    reindex: Flags.boolean({ description: "Rebuild sqlite cache for matching sessions (runs before search)", default: false }),
+    reindex: Flags.boolean({
+      description: "Rebuild sqlite cache for matching sessions (runs before search)",
+      default: false,
+    }),
     "reindex-limit": Flags.integer({
       description: "Limit sessions to reindex (0 = all matches)",
       default: SessionsSearch.DEFAULT_SAFE_LIMIT,
@@ -78,25 +96,49 @@ export default class SessionsSearch extends RawrCommand {
       max: 50_000,
     }),
     roles: Flags.string({
-      description: "Roles to include for content search (repeatable): user | assistant | tool | all",
+      description:
+        "Roles to include for content search (repeatable): user | assistant | tool | all",
       options: ["user", "assistant", "tool", "all"],
       multiple: true,
       default: ["user", "assistant"],
     }),
-    "include-tools": Flags.boolean({ description: "Include tool / non-dialog events in content search", default: false }),
-    "has-tag": Flags.string({ description: "Require XML-ish block tag facet (repeatable)", multiple: true }),
-    "has-directive": Flags.string({ description: "Require directive facet such as code-comment (repeatable)", multiple: true }),
-    "has-tool": Flags.string({ description: "Require tool call facet such as apply_patch (repeatable)", multiple: true }),
-    "has-payload-type": Flags.string({ description: "Require Codex payload.type facet (repeatable)", multiple: true }),
-    "has-top-type": Flags.string({ description: "Require top-level JSONL type facet (repeatable)", multiple: true }),
+    "include-tools": Flags.boolean({
+      description: "Include tool / non-dialog events in content search",
+      default: false,
+    }),
+    "has-tag": Flags.string({
+      description: "Require XML-ish block tag facet (repeatable)",
+      multiple: true,
+    }),
+    "has-directive": Flags.string({
+      description: "Require directive facet such as code-comment (repeatable)",
+      multiple: true,
+    }),
+    "has-tool": Flags.string({
+      description: "Require tool call facet such as apply_patch (repeatable)",
+      multiple: true,
+    }),
+    "has-payload-type": Flags.string({
+      description: "Require Codex payload.type facet (repeatable)",
+      multiple: true,
+    }),
+    "has-top-type": Flags.string({
+      description: "Require top-level JSONL type facet (repeatable)",
+      multiple: true,
+    }),
     "candidate-limit": Flags.integer({
       description: "Max sessions to scan for structured facets",
       default: SessionsSearch.DEFAULT_FACET_CANDIDATE_LIMIT,
       min: 1,
       max: 50_000,
     }),
-    "print-facets": Flags.boolean({ description: "Include computed facets in --out-dir JSON", default: false }),
-    project: Flags.string({ description: "Filter Claude sessions by project (path or name substring)" }),
+    "print-facets": Flags.boolean({
+      description: "Include computed facets in --out-dir JSON",
+      default: false,
+    }),
+    project: Flags.string({
+      description: "Filter Claude sessions by project (path or name substring)",
+    }),
     "cwd-contains": Flags.string({ description: "Filter by cwd substring" }),
     branch: Flags.string({ description: "Filter by git branch substring" }),
     model: Flags.string({ description: "Filter by model substring" }),
@@ -141,27 +183,36 @@ export default class SessionsSearch extends RawrCommand {
     const includeFacets = Boolean(flags["print-facets"]);
 
     if (metadataQuery && flags.reindex) {
-      const result = this.fail("--reindex is only supported for content search (use --query)", { code: "REINDEX_WITH_METADATA_QUERY" });
+      const result = this.fail("--reindex is only supported for content search (use --query)", {
+        code: "REINDEX_WITH_METADATA_QUERY",
+      });
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
 
     if (metadataQuery && contentQuery) {
-      const result = this.fail("Use only one of --query-metadata or --query", { code: "AMBIGUOUS_QUERY" });
+      const result = this.fail("Use only one of --query-metadata or --query", {
+        code: "AMBIGUOUS_QUERY",
+      });
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
     if (hasFacets && flags.reindex && !contentQuery) {
-      const result = this.fail("--reindex with structured facet filters requires --query", { code: "REINDEX_WITH_FACET_FILTERS" });
+      const result = this.fail("--reindex with structured facet filters requires --query", {
+        code: "REINDEX_WITH_FACET_FILTERS",
+      });
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
 
     if (!metadataQuery && !contentQuery && !flags.reindex && !hasFacets) {
-      const result = this.fail("Provide either --query-metadata, --query, --reindex, or at least one --has-* facet filter", { code: "MISSING_QUERY" });
+      const result = this.fail(
+        "Provide either --query-metadata, --query, --reindex, or at least one --has-* facet filter",
+        { code: "MISSING_QUERY" }
+      );
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
@@ -176,13 +227,18 @@ export default class SessionsSearch extends RawrCommand {
       return limit;
     })();
 
-    const indexPath = contentQuery || flags.reindex
-      ? String(flags["index-path"] ?? defaultSessionIndexPathSync())
-      : undefined;
+    const indexPath =
+      contentQuery || flags.reindex
+        ? String(flags["index-path"] ?? defaultSessionIndexPathSync())
+        : undefined;
     const client = await createSessionIntelligenceClient(indexPath ? { indexPath } : {});
 
     let hits: Array<SearchHit | MetadataSearchHit | FacetSearchHit> = [];
-    let mode: "query-metadata" | "query" | "facets" = metadataQuery ? "query-metadata" : contentQuery ? "query" : "facets";
+    let mode: "query-metadata" | "query" | "facets" = metadataQuery
+      ? "query-metadata"
+      : contentQuery
+        ? "query"
+        : "facets";
     if (metadataQuery) {
       const metadataOptions = {
         context: { invocation: { traceId: "plugin-session-tools.search.metadata" } },
@@ -196,7 +252,7 @@ export default class SessionsSearch extends RawrCommand {
           ...(hasFacets ? { facetFilters, candidateLimit } : {}),
           ...(includeFacets ? { includeFacets: true } : {}),
         },
-        metadataOptions,
+        metadataOptions
       );
       hits = response.hits;
     } else if (contentQuery || flags.reindex) {
@@ -219,12 +275,15 @@ export default class SessionsSearch extends RawrCommand {
             includeTools,
             limit: reindexLimit,
           },
-          reindexOptions,
+          reindexOptions
         );
         if (!contentQuery) {
           if (outDir) {
             await ensureDir(outDir);
-            await writeJsonFile(outDir, "search-results.json", { mode: "reindex", reindex: reindexResult });
+            await writeJsonFile(outDir, "search-results.json", {
+              mode: "reindex",
+              reindex: reindexResult,
+            });
           }
 
           const result = this.ok({ query: null, hits: [], outDir, reindex: reindexResult });
@@ -257,7 +316,7 @@ export default class SessionsSearch extends RawrCommand {
           ...(hasFacets ? { facetFilters, candidateLimit } : {}),
           ...(includeFacets ? { includeFacets: true } : {}),
         },
-        contentOptions,
+        contentOptions
       );
       hits = response.hits;
     } else {
@@ -273,7 +332,7 @@ export default class SessionsSearch extends RawrCommand {
           candidateLimit,
           ...(includeFacets ? { includeFacets: true } : {}),
         },
-        facetsOptions,
+        facetsOptions
       );
       hits = response.hits;
     }

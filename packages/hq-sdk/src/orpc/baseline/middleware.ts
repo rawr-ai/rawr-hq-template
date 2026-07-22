@@ -12,9 +12,7 @@ const baseMiddlewareMetadata: BaseMetadata = {
 /**
  * Baseline middleware builder for reusable service-package middleware.
  */
-export function createBaseMiddleware<
-  TRequiredContext extends object = {},
->() {
+export function createBaseMiddleware<TRequiredContext extends object = {}>() {
   return createNormalMiddlewareBuilder<TRequiredContext, BaseMetadata>({
     baseMetadata: baseMiddlewareMetadata,
   });
@@ -23,9 +21,7 @@ export function createBaseMiddleware<
 /**
  * Baseline provider builder for shared/framework middleware.
  */
-export function createBaseProvider<
-  TRequiredContext extends object = {},
->() {
+export function createBaseProvider<TRequiredContext extends object = {}>() {
   return createSharedProviderBuilder<TRequiredContext, BaseMetadata>({
     baseMetadata: baseMiddlewareMetadata,
   });
@@ -34,9 +30,7 @@ export function createBaseProvider<
 /**
  * Service-local provider builder for domain-authored execution context.
  */
-export function createBaseServiceProvider<
-  TRequiredContext extends object = {},
->() {
+export function createBaseServiceProvider<TRequiredContext extends object = {}>() {
   return createServiceProviderBuilder<TRequiredContext, BaseMetadata>({
     baseMetadata: baseMiddlewareMetadata,
   });

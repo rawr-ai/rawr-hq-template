@@ -4,11 +4,7 @@ import type {
   ORPCInitialContext,
   RequiredExtensionExecutionContext,
 } from "../context/types";
-import type {
-  BaseMetadata,
-  ServiceDepsOf,
-  ServiceMetadataOf,
-} from "../baseline/types";
+import type { BaseMetadata, ServiceDepsOf, ServiceMetadataOf } from "../baseline/types";
 
 /**
  * Canonical service declaration shape for `defineService(...)`.
@@ -47,9 +43,7 @@ export type ServiceDeclaration = {
  * execution-context projections, the helper is wrong and should be redesigned
  * rather than patched over with silent typing workarounds.
  */
-export type ServiceTypesOf<
-  T extends ServiceDeclaration,
-> = {
+export type ServiceTypesOf<T extends ServiceDeclaration> = {
   Deps: ServiceDepsOf<T["initialContext"]["deps"]>;
   Scope: T["initialContext"]["scope"];
   Config: T["initialContext"]["config"];
@@ -96,7 +90,8 @@ export type ServiceConfigFrom<TService extends AnyService> = TService["Config"];
 export type ServiceInvocationFrom<TService extends AnyService> = TService["Invocation"];
 export type ServiceMetadataFrom<TService extends AnyService> = TService["Metadata"];
 export type ServiceDeclaredContextFrom<TService extends AnyService> = TService["DeclaredContext"];
-export type ServiceORPCInitialContextFrom<TService extends AnyService> = TService["ORPCInitialContext"];
+export type ServiceORPCInitialContextFrom<TService extends AnyService> =
+  TService["ORPCInitialContext"];
 export type ServiceExecutionContextFrom<TService extends AnyService> = TService["ExecutionContext"];
 export type ServiceRequiredExtensionExecutionContextFrom<TService extends AnyService> =
   TService["RequiredExtensionExecutionContext"];

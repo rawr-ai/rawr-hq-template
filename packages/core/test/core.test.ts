@@ -6,4 +6,3 @@ describe("@rawr/core", () => {
     expect(RAWR_CORE_VERSION).toBe("0.0.0");
   });
 });
-

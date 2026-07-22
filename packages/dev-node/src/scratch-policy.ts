@@ -17,9 +17,13 @@ export async function resolveNodeScratchPolicyInput(input: {
   if (envMode) return { mode: envMode };
 
   const resources = createNodeDevResources(env);
-  const gitConfig = await resources.process.exec("git", ["config", "--get", "rawr.scratchPolicyMode"], {
-    cwd: input.workspaceRoot,
-  });
+  const gitConfig = await resources.process.exec(
+    "git",
+    ["config", "--get", "rawr.scratchPolicyMode"],
+    {
+      cwd: input.workspaceRoot,
+    }
+  );
   if (gitConfig.exitCode === 0) {
     const mode = normalizeMode(new TextDecoder().decode(gitConfig.stdout).trim());
     if (mode) return { mode };

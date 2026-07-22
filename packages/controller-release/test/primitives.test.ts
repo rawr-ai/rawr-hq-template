@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  parseControllerDigest,
-  parseReleaseRelativePath,
-  parseSha256Digest,
-  sha256,
-} from "../src";
+import { parseControllerDigest, parseReleaseRelativePath, parseSha256Digest, sha256 } from "../src";
 
 describe("controller release primitives", () => {
   it("computes and accepts only canonical lowercase SHA-256 values", () => {

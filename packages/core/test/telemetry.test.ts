@@ -40,10 +40,9 @@ describe("oRPC telemetry bootstrap", () => {
     });
 
     expect(second).toBe(first);
-    expect(first.instrumentationNames).toEqual(expect.arrayContaining([
-      "ORPCInstrumentation",
-      "HttpInstrumentation",
-    ]));
+    expect(first.instrumentationNames).toEqual(
+      expect.arrayContaining(["ORPCInstrumentation", "HttpInstrumentation"])
+    );
     expect(first.options.serviceName).toBe("@rawr/server-test");
     expect(first.options.metrics).toBeDefined();
     expect(first.options.metrics?.exportIntervalMillis).toBe(1000);
@@ -58,11 +57,13 @@ describe("oRPC telemetry bootstrap", () => {
       traceExporter: exporter,
     });
 
-    await expect(installRawrOrpcTelemetry({
-      serviceName: "@rawr/other-server",
-      environment: "test",
-      traceExporter: exporter,
-    })).rejects.toThrow(/incompatible options/);
+    await expect(
+      installRawrOrpcTelemetry({
+        serviceName: "@rawr/other-server",
+        environment: "test",
+        traceExporter: exporter,
+      })
+    ).rejects.toThrow(/incompatible options/);
   });
 
   it("fails loudly when telemetry is re-installed with incompatible metrics options", async () => {
@@ -77,14 +78,16 @@ describe("oRPC telemetry bootstrap", () => {
       },
     });
 
-    await expect(installRawrOrpcTelemetry({
-      serviceName: "@rawr/server-test",
-      environment: "test",
-      traceExporter: exporter,
-      metrics: {
-        url: "http://127.0.0.1:4318/custom/metrics",
-      },
-    })).rejects.toThrow(/incompatible options/);
+    await expect(
+      installRawrOrpcTelemetry({
+        serviceName: "@rawr/server-test",
+        environment: "test",
+        traceExporter: exporter,
+        metrics: {
+          url: "http://127.0.0.1:4318/custom/metrics",
+        },
+      })
+    ).rejects.toThrow(/incompatible options/);
   });
 
   it("derives trace and metrics OTLP HTTP endpoints from the base OTLP endpoint", async () => {
@@ -119,8 +122,12 @@ describe("oRPC telemetry bootstrap", () => {
   });
 
   it("appends signal paths only when the OTLP base endpoint has no explicit path", () => {
-    expect(__appendOtlpSignalPathForTests("http://127.0.0.1:4318", "/v1/metrics")).toBe("http://127.0.0.1:4318/v1/metrics");
-    expect(__appendOtlpSignalPathForTests("http://127.0.0.1:4318/custom", "/v1/metrics")).toBe("http://127.0.0.1:4318/custom");
+    expect(__appendOtlpSignalPathForTests("http://127.0.0.1:4318", "/v1/metrics")).toBe(
+      "http://127.0.0.1:4318/v1/metrics"
+    );
+    expect(__appendOtlpSignalPathForTests("http://127.0.0.1:4318/custom", "/v1/metrics")).toBe(
+      "http://127.0.0.1:4318/custom"
+    );
     expect(__appendOtlpSignalPathForTests(undefined, "/v1/metrics")).toBeUndefined();
   });
 

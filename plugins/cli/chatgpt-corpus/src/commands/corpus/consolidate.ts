@@ -1,7 +1,11 @@
 import path from "node:path";
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { createCorpusClient, describeServiceError, type CorpusMaterializeOptions } from "../../lib/client";
+import {
+  createCorpusClient,
+  describeServiceError,
+  type CorpusMaterializeOptions,
+} from "../../lib/client";
 import { projectConsolidateResult } from "../../lib/projection";
 
 export default class CorpusConsolidate extends RawrCommand {
@@ -25,18 +29,19 @@ export default class CorpusConsolidate extends RawrCommand {
       const options = {
         context: { invocation: { traceId: `corpus-consolidate-${Date.now()}` } },
       } satisfies CorpusMaterializeOptions;
-      const data = await client.corpusArtifacts.materialize(
-        {},
-        options,
-      );
+      const data = await client.corpusArtifacts.materialize({}, options);
       const resultData = projectConsolidateResult(workspaceRoot, data);
-      const result = this.ok(resultData, undefined, resultData.warnings.length > 0 ? resultData.warnings : undefined);
+      const result = this.ok(
+        resultData,
+        undefined,
+        resultData.warnings.length > 0 ? resultData.warnings : undefined
+      );
       this.outputResult(result, {
         flags: baseFlags,
         human: () => {
           for (const warning of resultData.warnings) this.warn(warning);
           this.log(
-            `consolidated ${resultData.sourceCounts.jsonConversations} conversation export(s) into ${resultData.familyCount} family/families`,
+            `consolidated ${resultData.sourceCounts.jsonConversations} conversation export(s) into ${resultData.familyCount} family/families`
           );
           this.log(`wrote outputs to ${resultData.outputPaths.reportsDir}`);
         },

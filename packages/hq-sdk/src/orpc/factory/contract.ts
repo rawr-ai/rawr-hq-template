@@ -10,7 +10,7 @@ type CreateContractBuilderOptions<TMeta extends BaseMetadata = BaseMetadata> = {
  * Create a metadata-aware contract builder.
  */
 export function createContractBuilder<TMeta extends BaseMetadata = BaseMetadata>(
-  options: CreateContractBuilderOptions<TMeta>,
+  options: CreateContractBuilderOptions<TMeta>
 ) {
   return oc.$meta<TMeta>(options.baseMetadata as TMeta);
 }

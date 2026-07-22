@@ -1,4 +1,16 @@
-import { link, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, rmdir, symlink } from "node:fs/promises";
+import {
+  link,
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rename,
+  rm,
+  rmdir,
+  symlink,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -41,16 +53,22 @@ describe("Effect Platform Node artifact repository provider", () => {
     const parent = await createFixture();
     const address = artifactAddress(path.join(parent, "repository"), "artifact-async-location");
     const resource = makeArtifactRepositoryResource();
-    unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries: releaseEntries("async-location"),
-      limits: LIMITS,
-    })));
+    unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries: releaseEntries("async-location"),
+          limits: LIMITS,
+        })
+      )
+    );
     const destination = path.join(address.repositoryRoot, ...address.namespace, address.objectId);
     const payload = path.join(destination, "payload", "tool.sh");
     const beforeTree = await lstat(destination, { bigint: true });
     const beforePayload = await lstat(payload, { bigint: true });
-    const expected = unwrap(await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS })));
+    const expected = unwrap(
+      await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS }))
+    );
 
     const observed = await makeNodeArtifactRepositoryAsyncPort(resource).locateTree({
       address,
@@ -59,13 +77,20 @@ describe("Effect Platform Node artifact repository provider", () => {
 
     expect(observed).toEqual(expected);
     expect(observed.kind).toBe("Present");
-    expect(stableMetadata(await lstat(destination, { bigint: true }))).toEqual(stableMetadata(beforeTree));
-    expect(stableMetadata(await lstat(payload, { bigint: true }))).toEqual(stableMetadata(beforePayload));
+    expect(stableMetadata(await lstat(destination, { bigint: true }))).toEqual(
+      stableMetadata(beforeTree)
+    );
+    expect(stableMetadata(await lstat(payload, { bigint: true }))).toEqual(
+      stableMetadata(beforePayload)
+    );
   });
 
   test("async port reports a missing location without creating repository state", async () => {
     const parent = await createFixture();
-    const address = artifactAddress(path.join(parent, "missing-repository"), "artifact-async-missing");
+    const address = artifactAddress(
+      path.join(parent, "missing-repository"),
+      "artifact-async-missing"
+    );
     const port = makeNodeArtifactRepositoryAsyncPort();
 
     const observed = await port.locateTree({ address, limits: LIMITS });
@@ -78,14 +103,20 @@ describe("Effect Platform Node artifact repository provider", () => {
     const parent = await createFixture();
     const address = artifactAddress(path.join(parent, "repository"), "artifact-location");
     const resource = makeArtifactRepositoryResource();
-    unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries: releaseEntries("location"),
-      limits: LIMITS,
-    })));
+    unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries: releaseEntries("location"),
+          limits: LIMITS,
+        })
+      )
+    );
     const destination = path.join(address.repositoryRoot, ...address.namespace, address.objectId);
 
-    const located = unwrap(await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS })));
+    const located = unwrap(
+      await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS }))
+    );
 
     expect(located.kind).toBe("Present");
     if (located.kind === "Present") {
@@ -99,7 +130,9 @@ describe("Effect Platform Node artifact repository provider", () => {
     const address = artifactAddress(path.join(parent, "repository"), "artifact-missing-location");
     const resource = makeArtifactRepositoryResource();
 
-    const located = unwrap(await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS })));
+    const located = unwrap(
+      await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS }))
+    );
 
     expect(located).toEqual({ kind: "Missing", address });
     expect(await Bun.file(address.repositoryRoot).exists()).toBe(false);
@@ -111,45 +144,72 @@ describe("Effect Platform Node artifact repository provider", () => {
     const resource = makeArtifactRepositoryResource();
 
     const aliasedAddress = artifactAddress(repositoryRoot, "artifact-aliased-location");
-    unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address: aliasedAddress,
-      entries: releaseEntries("aliased-location"),
-      limits: LIMITS,
-    })));
-    const aliasedDestination = path.join(repositoryRoot, ...aliasedAddress.namespace, aliasedAddress.objectId);
+    unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address: aliasedAddress,
+          entries: releaseEntries("aliased-location"),
+          limits: LIMITS,
+        })
+      )
+    );
+    const aliasedDestination = path.join(
+      repositoryRoot,
+      ...aliasedAddress.namespace,
+      aliasedAddress.objectId
+    );
     const preserved = `${aliasedDestination}.preserved`;
     await rename(aliasedDestination, preserved);
     await symlink(preserved, aliasedDestination, "dir");
 
-    const aliased = unwrap(await runNodeArtifactRepository(resource.locateTree({
-      address: aliasedAddress,
-      limits: LIMITS,
-    })));
+    const aliased = unwrap(
+      await runNodeArtifactRepository(
+        resource.locateTree({
+          address: aliasedAddress,
+          limits: LIMITS,
+        })
+      )
+    );
     expect(aliased).toMatchObject({
       kind: "Mismatch",
       issues: [{ code: "AliasedEntry" }],
     });
 
     const linkedAddress = artifactAddress(repositoryRoot, "artifact-linked-location");
-    unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address: linkedAddress,
-      entries: releaseEntries("linked-location"),
-      limits: LIMITS,
-    })));
-    const linkedDestination = path.join(repositoryRoot, ...linkedAddress.namespace, linkedAddress.objectId);
+    unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address: linkedAddress,
+          entries: releaseEntries("linked-location"),
+          limits: LIMITS,
+        })
+      )
+    );
+    const linkedDestination = path.join(
+      repositoryRoot,
+      ...linkedAddress.namespace,
+      linkedAddress.objectId
+    );
     await link(
       path.join(linkedDestination, "release.json"),
-      path.join(linkedDestination, "release-copy.json"),
+      path.join(linkedDestination, "release-copy.json")
     );
 
-    const linked = unwrap(await runNodeArtifactRepository(resource.locateTree({
-      address: linkedAddress,
-      limits: LIMITS,
-    })));
+    const linked = unwrap(
+      await runNodeArtifactRepository(
+        resource.locateTree({
+          address: linkedAddress,
+          limits: LIMITS,
+        })
+      )
+    );
     expect(linked.kind).toBe("Mismatch");
     if (linked.kind === "Mismatch") {
-      expect(linked.issues.some((candidate) =>
-        candidate.code === "SharedInode" && candidate.path === "release-copy.json")).toBe(true);
+      expect(
+        linked.issues.some(
+          (candidate) => candidate.code === "SharedInode" && candidate.path === "release-copy.json"
+        )
+      ).toBe(true);
     }
   });
 
@@ -157,23 +217,41 @@ describe("Effect Platform Node artifact repository provider", () => {
     const parent = await createFixture();
     const address = artifactAddress(path.join(parent, "repository"), "artifact-drifting-location");
     const resource = makeArtifactRepositoryResource();
-    unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries: releaseEntries("drifting-location"),
-      limits: LIMITS,
-    })));
-    const target = path.join(address.repositoryRoot, ...address.namespace, address.objectId, "payload", "tool.sh");
+    unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries: releaseEntries("drifting-location"),
+          limits: LIMITS,
+        })
+      )
+    );
+    const target = path.join(
+      address.repositoryRoot,
+      ...address.namespace,
+      address.objectId,
+      "payload",
+      "tool.sh"
+    );
     let targetStats = 0;
 
-    const attempted = await runWithFileSystem(resource.locateTree({ address, limits: LIMITS }), (base) =>
-      fileSystemProxy(base, {
-        stat(candidate) {
-          return base.stat(candidate).pipe(Effect.map((info) =>
-            candidate === target && ++targetStats === 2
-              ? Object.freeze({ ...info, dev: info.dev + 1 })
-              : info));
-        },
-      }));
+    const attempted = await runWithFileSystem(
+      resource.locateTree({ address, limits: LIMITS }),
+      (base) =>
+        fileSystemProxy(base, {
+          stat(candidate) {
+            return base
+              .stat(candidate)
+              .pipe(
+                Effect.map((info) =>
+                  candidate === target && ++targetStats === 2
+                    ? Object.freeze({ ...info, dev: info.dev + 1 })
+                    : info
+                )
+              );
+          },
+        })
+    );
 
     expect(attempted._tag).toBe("Right");
     if (attempted._tag === "Left") throw attempted.left;
@@ -185,28 +263,43 @@ describe("Effect Platform Node artifact repository provider", () => {
 
   test("reports nested directory substitution instead of issuing a location", async () => {
     const parent = await createFixture();
-    const address = artifactAddress(path.join(parent, "repository"), "artifact-substituted-location");
+    const address = artifactAddress(
+      path.join(parent, "repository"),
+      "artifact-substituted-location"
+    );
     const resource = makeArtifactRepositoryResource();
-    unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries: releaseEntries("substituted-location"),
-      limits: LIMITS,
-    })));
-    const target = path.join(address.repositoryRoot, ...address.namespace, address.objectId, "payload");
+    unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries: releaseEntries("substituted-location"),
+          limits: LIMITS,
+        })
+      )
+    );
+    const target = path.join(
+      address.repositoryRoot,
+      ...address.namespace,
+      address.objectId,
+      "payload"
+    );
     const preserved = `${target}.preserved`;
     let substituted = false;
 
-    const attempted = await runWithFileSystem(resource.locateTree({ address, limits: LIMITS }), (base) =>
-      fileSystemProxy(base, {
-        readDirectory(candidate) {
-          if (candidate !== target || substituted) return base.readDirectory(candidate);
-          substituted = true;
-          return Effect.promise(async () => {
-            await rename(target, preserved);
-            await mkdir(target);
-          }).pipe(Effect.zipRight(base.readDirectory(candidate)));
-        },
-      }));
+    const attempted = await runWithFileSystem(
+      resource.locateTree({ address, limits: LIMITS }),
+      (base) =>
+        fileSystemProxy(base, {
+          readDirectory(candidate) {
+            if (candidate !== target || substituted) return base.readDirectory(candidate);
+            substituted = true;
+            return Effect.promise(async () => {
+              await rename(target, preserved);
+              await mkdir(target);
+            }).pipe(Effect.zipRight(base.readDirectory(candidate)));
+          },
+        })
+    );
 
     expect(attempted._tag).toBe("Right");
     if (attempted._tag === "Left") throw attempted.left;
@@ -222,26 +315,33 @@ describe("Effect Platform Node artifact repository provider", () => {
     const parent = await createFixture();
     const address = artifactAddress(path.join(parent, "repository"), "artifact-substituted-root");
     const resource = makeArtifactRepositoryResource();
-    unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries: releaseEntries("substituted-root"),
-      limits: LIMITS,
-    })));
+    unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries: releaseEntries("substituted-root"),
+          limits: LIMITS,
+        })
+      )
+    );
     const target = path.join(address.repositoryRoot, ...address.namespace, address.objectId);
     const preserved = `${target}.preserved`;
     let substituted = false;
 
-    const attempted = await runWithFileSystem(resource.locateTree({ address, limits: LIMITS }), (base) =>
-      fileSystemProxy(base, {
-        readDirectory(candidate) {
-          if (candidate !== target || substituted) return base.readDirectory(candidate);
-          substituted = true;
-          return Effect.promise(async () => {
-            await rename(target, preserved);
-            await mkdir(target);
-          }).pipe(Effect.zipRight(base.readDirectory(candidate)));
-        },
-      }));
+    const attempted = await runWithFileSystem(
+      resource.locateTree({ address, limits: LIMITS }),
+      (base) =>
+        fileSystemProxy(base, {
+          readDirectory(candidate) {
+            if (candidate !== target || substituted) return base.readDirectory(candidate);
+            substituted = true;
+            return Effect.promise(async () => {
+              await rename(target, preserved);
+              await mkdir(target);
+            }).pipe(Effect.zipRight(base.readDirectory(candidate)));
+          },
+        })
+    );
 
     expect(attempted._tag).toBe("Right");
     if (attempted._tag === "Left") throw attempted.left;
@@ -257,18 +357,26 @@ describe("Effect Platform Node artifact repository provider", () => {
     const parent = await createFixture();
     const address = artifactAddress(path.join(parent, "repository"), "artifact-location-repeat");
     const resource = makeArtifactRepositoryResource();
-    unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries: releaseEntries("location-repeat"),
-      limits: LIMITS,
-    })));
+    unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries: releaseEntries("location-repeat"),
+          limits: LIMITS,
+        })
+      )
+    );
     const destination = path.join(address.repositoryRoot, ...address.namespace, address.objectId);
     const payload = path.join(destination, "payload", "tool.sh");
     const beforeTree = await lstat(destination, { bigint: true });
     const beforePayload = await lstat(payload, { bigint: true });
 
-    const first = unwrap(await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS })));
-    const second = unwrap(await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS })));
+    const first = unwrap(
+      await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS }))
+    );
+    const second = unwrap(
+      await runNodeArtifactRepository(resource.locateTree({ address, limits: LIMITS }))
+    );
     const afterTree = await lstat(destination, { bigint: true });
     const afterPayload = await lstat(payload, { bigint: true });
 
@@ -284,23 +392,27 @@ describe("Effect Platform Node artifact repository provider", () => {
     const entries = releaseEntries("first");
     const resource = makeArtifactRepositoryResource();
 
-    const published = unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries,
-      limits: LIMITS,
-    })));
+    const published = unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries,
+          limits: LIMITS,
+        })
+      )
+    );
     expect(published.kind).toBe("Published");
 
-    const observed = unwrap(await runNodeArtifactRepository(resource.readTree({ address, limits: LIMITS })));
+    const observed = unwrap(
+      await runNodeArtifactRepository(resource.readTree({ address, limits: LIMITS }))
+    );
     expect(observed.kind).toBe("Present");
     if (observed.kind === "Present") {
       expect(observed.snapshot.entries.map((entry) => [entry.path, entry.mode])).toEqual([
         ["payload/tool.sh", 0o755],
         ["release.json", 0o444],
       ]);
-      expect(observed.snapshot.directories).toEqual([
-        { path: "payload", mode: 0o700 },
-      ]);
+      expect(observed.snapshot.directories).toEqual([{ path: "payload", mode: 0o700 }]);
       expect(text(observed.snapshot.entries[0]?.bytes)).toBe("#!/bin/sh\necho first\n");
       expect(text(observed.snapshot.entries[1]?.bytes)).toBe('{"release":"first"}\n');
     }
@@ -309,7 +421,7 @@ describe("Effect Platform Node artifact repository provider", () => {
       address.repositoryRoot,
       ...address.namespace,
       address.objectId,
-      "release.json",
+      "release.json"
     );
     expect(await readFile(storedEnvelope, "utf8")).toBe('{"release":"first"}\n');
   });
@@ -326,17 +438,27 @@ describe("Effect Platform Node artifact repository provider", () => {
     ]);
     const resource = makeArtifactRepositoryResource();
 
-    const published = unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries,
-      limits: LIMITS,
-    })));
-    const repeated = unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries,
-      limits: LIMITS,
-    })));
-    const observed = unwrap(await runNodeArtifactRepository(resource.readTree({ address, limits: LIMITS })));
+    const published = unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries,
+          limits: LIMITS,
+        })
+      )
+    );
+    const repeated = unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries,
+          limits: LIMITS,
+        })
+      )
+    );
+    const observed = unwrap(
+      await runNodeArtifactRepository(resource.readTree({ address, limits: LIMITS }))
+    );
 
     expect(published.kind).toBe("Published");
     expect(repeated.kind).toBe("ReadOnlyConverged");
@@ -364,12 +486,18 @@ describe("Effect Platform Node artifact repository provider", () => {
     ]);
     const resource = makeArtifactRepositoryResource();
 
-    const published = unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries,
-      limits: LIMITS,
-    })));
-    const observed = unwrap(await runNodeArtifactRepository(resource.readTree({ address, limits: LIMITS })));
+    const published = unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries,
+          limits: LIMITS,
+        })
+      )
+    );
+    const observed = unwrap(
+      await runNodeArtifactRepository(resource.readTree({ address, limits: LIMITS }))
+    );
 
     expect(published.kind).toBe("Published");
     expect(observed.kind).toBe("Present");
@@ -390,15 +518,21 @@ describe("Effect Platform Node artifact repository provider", () => {
     const address = artifactAddress(path.join(parent, "repository"), "artifact-converged");
     const entries = releaseEntries("stable");
     const resource = makeArtifactRepositoryResource();
-    unwrap(await runNodeArtifactRepository(resource.publishTree({ address, entries, limits: LIMITS })));
+    unwrap(
+      await runNodeArtifactRepository(resource.publishTree({ address, entries, limits: LIMITS }))
+    );
     const destination = path.join(address.repositoryRoot, ...address.namespace, address.objectId);
     const before = await lstat(destination, { bigint: true });
 
-    const repeated = unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries,
-      limits: LIMITS,
-    })));
+    const repeated = unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries,
+          limits: LIMITS,
+        })
+      )
+    );
     const after = await lstat(destination, { bigint: true });
 
     expect(repeated.kind).toBe("ReadOnlyConverged");
@@ -425,27 +559,37 @@ describe("Effect Platform Node artifact repository provider", () => {
     const secondResource = makeArtifactRepositoryResource();
 
     const results = await Promise.all([
-      runNodeArtifactRepository(firstResource.publishTree({
-        address,
-        entries: releaseEntries("candidate-a"),
-        limits: LIMITS,
-        control: { beforeCommit },
-      })),
-      runNodeArtifactRepository(secondResource.publishTree({
-        address,
-        entries: releaseEntries("candidate-b"),
-        limits: LIMITS,
-        control: { beforeCommit },
-      })),
+      runNodeArtifactRepository(
+        firstResource.publishTree({
+          address,
+          entries: releaseEntries("candidate-a"),
+          limits: LIMITS,
+          control: { beforeCommit },
+        })
+      ),
+      runNodeArtifactRepository(
+        secondResource.publishTree({
+          address,
+          entries: releaseEntries("candidate-b"),
+          limits: LIMITS,
+          control: { beforeCommit },
+        })
+      ),
     ]);
     const values = results.map(unwrap);
     expect(values.map((result) => result.kind).sort()).toEqual(["Occupied", "Published"]);
 
-    const observed = unwrap(await runNodeArtifactRepository(firstResource.readTree({ address, limits: LIMITS })));
+    const observed = unwrap(
+      await runNodeArtifactRepository(firstResource.readTree({ address, limits: LIMITS }))
+    );
     expect(observed.kind).toBe("Present");
     if (observed.kind === "Present") {
-      const envelope = text(observed.snapshot.entries.find((entry) => entry.path === "release.json")?.bytes);
-      expect(["candidate-a", "candidate-b"].some((candidate) => envelope.includes(candidate))).toBe(true);
+      const envelope = text(
+        observed.snapshot.entries.find((entry) => entry.path === "release.json")?.bytes
+      );
+      expect(["candidate-a", "candidate-b"].some((candidate) => envelope.includes(candidate))).toBe(
+        true
+      );
     }
   });
 
@@ -455,17 +599,27 @@ describe("Effect Platform Node artifact repository provider", () => {
     const bytes = new TextEncoder().encode('{"evidence":1}\n');
     const resource = makeArtifactRepositoryResource();
 
-    const published = unwrap(await runNodeArtifactRepository(resource.publishEvidence({
-      address,
-      bytes,
-      maxBytes: 1024,
-    })));
-    const repeated = unwrap(await runNodeArtifactRepository(resource.publishEvidence({
-      address,
-      bytes,
-      maxBytes: 1024,
-    })));
-    const observed = unwrap(await runNodeArtifactRepository(resource.readEvidence({ address, maxBytes: 1024 })));
+    const published = unwrap(
+      await runNodeArtifactRepository(
+        resource.publishEvidence({
+          address,
+          bytes,
+          maxBytes: 1024,
+        })
+      )
+    );
+    const repeated = unwrap(
+      await runNodeArtifactRepository(
+        resource.publishEvidence({
+          address,
+          bytes,
+          maxBytes: 1024,
+        })
+      )
+    );
+    const observed = unwrap(
+      await runNodeArtifactRepository(resource.readEvidence({ address, maxBytes: 1024 }))
+    );
 
     expect(published.kind).toBe("Published");
     expect(repeated.kind).toBe("ReadOnlyConverged");
@@ -477,22 +631,27 @@ describe("Effect Platform Node artifact repository provider", () => {
     const parent = await createFixture();
     const address = artifactAddress(path.join(parent, "repository"), "artifact-directory-shape");
     const resource = makeArtifactRepositoryResource();
-    unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries: releaseEntries("shape"),
-      limits: LIMITS,
-    })));
-    await mkdir(path.join(address.repositoryRoot, ...address.namespace, address.objectId, "unexpected"));
+    unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries: releaseEntries("shape"),
+          limits: LIMITS,
+        })
+      )
+    );
+    await mkdir(
+      path.join(address.repositoryRoot, ...address.namespace, address.objectId, "unexpected")
+    );
 
-    const observed = unwrap(await runNodeArtifactRepository(resource.readTree({ address, limits: LIMITS })));
+    const observed = unwrap(
+      await runNodeArtifactRepository(resource.readTree({ address, limits: LIMITS }))
+    );
 
     expect(observed).toMatchObject({
       kind: "Present",
       snapshot: {
-        directories: [
-          { path: "payload" },
-          { path: "unexpected" },
-        ],
+        directories: [{ path: "payload" }, { path: "unexpected" }],
       },
     });
   });
@@ -501,15 +660,17 @@ describe("Effect Platform Node artifact repository provider", () => {
     const parent = await createFixture();
     const repositoryRoot = path.join(parent, "repository");
     const resource = makeArtifactRepositoryResource();
-    const result = await runNodeArtifactRepository(resource.publishTree({
-      address: Object.freeze({
-        repositoryRoot,
-        namespace: ["releases", "sha256"],
-        objectId: "../outside",
-      }),
-      entries: releaseEntries("escape"),
-      limits: LIMITS,
-    }));
+    const result = await runNodeArtifactRepository(
+      resource.publishTree({
+        address: Object.freeze({
+          repositoryRoot,
+          namespace: ["releases", "sha256"],
+          objectId: "../outside",
+        }),
+        entries: releaseEntries("escape"),
+        limits: LIMITS,
+      })
+    );
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.failure.reason).toBe("InvalidInput");
@@ -525,11 +686,15 @@ describe("Effect Platform Node artifact repository provider", () => {
         if (event.kind === "AfterStagingWrite") throw new Error("injected staging failure");
       },
     });
-    const failed = unwrap(await runNodeArtifactRepository(failing.publishTree({
-      address,
-      entries: releaseEntries("retry"),
-      limits: LIMITS,
-    })));
+    const failed = unwrap(
+      await runNodeArtifactRepository(
+        failing.publishTree({
+          address,
+          entries: releaseEntries("retry"),
+          limits: LIMITS,
+        })
+      )
+    );
     expect(failed).toMatchObject({
       kind: "Rejected",
       failure: expect.stringContaining("injected staging failure"),
@@ -537,13 +702,15 @@ describe("Effect Platform Node artifact repository provider", () => {
 
     const staging = path.join(address.repositoryRoot, ".staging");
     expect(await readdir(staging)).toEqual([]);
-    const successful = unwrap(await runNodeArtifactRepository(
-      makeArtifactRepositoryResource().publishTree({
-        address,
-        entries: releaseEntries("retry"),
-        limits: LIMITS,
-      }),
-    ));
+    const successful = unwrap(
+      await runNodeArtifactRepository(
+        makeArtifactRepositoryResource().publishTree({
+          address,
+          entries: releaseEntries("retry"),
+          limits: LIMITS,
+        })
+      )
+    );
     expect(successful.kind).toBe("Published");
   });
 
@@ -568,28 +735,37 @@ describe("Effect Platform Node artifact repository provider", () => {
       },
     });
 
-    const result = unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries: releaseEntries("substituted"),
-      limits: LIMITS,
-    })));
+    const result = unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries: releaseEntries("substituted"),
+          limits: LIMITS,
+        })
+      )
+    );
 
     expect(result).toMatchObject({
       kind: "Unsettled",
       observation: "Present",
       cleanupFailure: expect.stringContaining("identity changed"),
     });
-    if (replacement === undefined || preserved === undefined) throw new Error("Expected substituted paths");
+    if (replacement === undefined || preserved === undefined)
+      throw new Error("Expected substituted paths");
     expect((await lstat(replacement)).isDirectory()).toBe(true);
     expect((await lstat(preserved)).isDirectory()).toBe(true);
 
     await rmdir(replacement);
     await rmdir(preserved);
-    const retry = unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address: artifactAddress(repositoryRoot, "artifact-clean-retry"),
-      entries: releaseEntries("clean-retry"),
-      limits: LIMITS,
-    })));
+    const retry = unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address: artifactAddress(repositoryRoot, "artifact-clean-retry"),
+          entries: releaseEntries("clean-retry"),
+          limits: LIMITS,
+        })
+      )
+    );
     expect(retry.kind).toBe("Published");
   });
 
@@ -599,18 +775,22 @@ describe("Effect Platform Node artifact repository provider", () => {
     const resource = makeArtifactRepositoryResource();
     let allocationStats = 0;
 
-    const attempted = await runWithFileSystem(resource.publishTree({
-      address,
-      entries: releaseEntries("admission-retry"),
-      limits: LIMITS,
-    }), (base) => fileSystemProxy(base, {
-      stat(candidate) {
-        if (isPrivateAllocation(candidate) && ++allocationStats === 2) {
-          return Effect.fail(injectedFileSystemFailure("stat", candidate, "admission probe"));
-        }
-        return base.stat(candidate);
-      },
-    }));
+    const attempted = await runWithFileSystem(
+      resource.publishTree({
+        address,
+        entries: releaseEntries("admission-retry"),
+        limits: LIMITS,
+      }),
+      (base) =>
+        fileSystemProxy(base, {
+          stat(candidate) {
+            if (isPrivateAllocation(candidate) && ++allocationStats === 2) {
+              return Effect.fail(injectedFileSystemFailure("stat", candidate, "admission probe"));
+            }
+            return base.stat(candidate);
+          },
+        })
+    );
 
     expect(attempted._tag).toBe("Right");
     if (attempted._tag === "Left") throw attempted.left;
@@ -621,32 +801,45 @@ describe("Effect Platform Node artifact repository provider", () => {
     const staging = path.join(address.repositoryRoot, ".staging");
     expect(await readdir(staging)).toEqual([]);
 
-    const retry = unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries: releaseEntries("admission-retry"),
-      limits: LIMITS,
-    })));
+    const retry = unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries: releaseEntries("admission-retry"),
+          limits: LIMITS,
+        })
+      )
+    );
     expect(retry.kind).toBe("Published");
   });
 
   test("reports cleanup failure when a failed admission cannot re-admit its allocation", async () => {
     const parent = await createFixture();
-    const address = artifactAddress(path.join(parent, "repository"), "artifact-admission-cleanup-failure");
+    const address = artifactAddress(
+      path.join(parent, "repository"),
+      "artifact-admission-cleanup-failure"
+    );
     const resource = makeArtifactRepositoryResource();
     let allocationStats = 0;
 
-    const attempted = await runWithFileSystem(resource.publishTree({
-      address,
-      entries: releaseEntries("admission-cleanup-failure"),
-      limits: LIMITS,
-    }), (base) => fileSystemProxy(base, {
-      stat(candidate) {
-        if (isPrivateAllocation(candidate) && ++allocationStats >= 2) {
-          return Effect.fail(injectedFileSystemFailure("stat", candidate, "persistent admission probe"));
-        }
-        return base.stat(candidate);
-      },
-    }));
+    const attempted = await runWithFileSystem(
+      resource.publishTree({
+        address,
+        entries: releaseEntries("admission-cleanup-failure"),
+        limits: LIMITS,
+      }),
+      (base) =>
+        fileSystemProxy(base, {
+          stat(candidate) {
+            if (isPrivateAllocation(candidate) && ++allocationStats >= 2) {
+              return Effect.fail(
+                injectedFileSystemFailure("stat", candidate, "persistent admission probe")
+              );
+            }
+            return base.stat(candidate);
+          },
+        })
+    );
 
     expect(attempted._tag).toBe("Right");
     if (attempted._tag === "Left") throw attempted.left;
@@ -658,14 +851,19 @@ describe("Effect Platform Node artifact repository provider", () => {
     const staging = path.join(address.repositoryRoot, ".staging");
     const [orphan] = await readdir(staging);
     expect(orphan?.startsWith("rawr-agent-plugin-artifact-")).toBe(true);
-    if (orphan === undefined) throw new Error("Expected an explicitly unsettled private allocation");
+    if (orphan === undefined)
+      throw new Error("Expected an explicitly unsettled private allocation");
     await rmdir(path.join(staging, orphan));
 
-    const retry = unwrap(await runNodeArtifactRepository(resource.publishTree({
-      address,
-      entries: releaseEntries("admission-cleanup-failure"),
-      limits: LIMITS,
-    })));
+    const retry = unwrap(
+      await runNodeArtifactRepository(
+        resource.publishTree({
+          address,
+          entries: releaseEntries("admission-cleanup-failure"),
+          limits: LIMITS,
+        })
+      )
+    );
     expect(retry.kind).toBe("Published");
   });
 });
@@ -733,10 +931,10 @@ async function removeOwnedFixture(fixture: OwnedFixture): Promise<void> {
   const canonical = await realpath(fixture.root);
   const info = await lstat(fixture.root, { bigint: true });
   if (
-    path.dirname(canonical) !== parent
-    || !path.basename(canonical).startsWith(FIXTURE_PREFIX)
-    || info.dev !== fixture.dev
-    || info.ino !== fixture.ino
+    path.dirname(canonical) !== parent ||
+    !path.basename(canonical).startsWith(FIXTURE_PREFIX) ||
+    info.dev !== fixture.dev ||
+    info.ino !== fixture.ino
   ) {
     throw new Error(`Refusing to remove unowned artifact repository fixture: ${fixture.root}`);
   }
@@ -745,20 +943,22 @@ async function removeOwnedFixture(fixture: OwnedFixture): Promise<void> {
 
 async function runWithFileSystem<A>(
   operation: Effect.Effect<A, ArtifactRepositoryFailure, FileSystem.FileSystem | Path.Path>,
-  transform: (base: FileSystem.FileSystem) => FileSystem.FileSystem,
+  transform: (base: FileSystem.FileSystem) => FileSystem.FileSystem
 ) {
-  return Effect.runPromise(Effect.gen(function* () {
-    const base = yield* FileSystem.FileSystem;
-    return yield* operation.pipe(
-      Effect.provideService(FileSystem.FileSystem, transform(base)),
-      Effect.either,
-    );
-  }).pipe(Effect.provide(NodeContext.layer)));
+  return Effect.runPromise(
+    Effect.gen(function* () {
+      const base = yield* FileSystem.FileSystem;
+      return yield* operation.pipe(
+        Effect.provideService(FileSystem.FileSystem, transform(base)),
+        Effect.either
+      );
+    }).pipe(Effect.provide(NodeContext.layer))
+  );
 }
 
 function fileSystemProxy(
   base: FileSystem.FileSystem,
-  overrides: Partial<FileSystem.FileSystem>,
+  overrides: Partial<FileSystem.FileSystem>
 ): FileSystem.FileSystem {
   return new Proxy(base, {
     get(target, property, receiver) {
@@ -773,7 +973,11 @@ function isPrivateAllocation(candidate: string): boolean {
   return path.basename(candidate).startsWith("rawr-agent-plugin-artifact-");
 }
 
-function injectedFileSystemFailure(method: string, candidate: string, description: string): SystemError {
+function injectedFileSystemFailure(
+  method: string,
+  candidate: string,
+  description: string
+): SystemError {
   return new SystemError({
     reason: "Unknown",
     module: "FileSystem",

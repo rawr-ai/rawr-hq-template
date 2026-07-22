@@ -19,7 +19,9 @@ function parseIssuePath(instancePath: unknown): PropertyKey[] | undefined {
   return segments.length > 0 ? segments : undefined;
 }
 
-export function typeBoxStandardSchema<T extends TSchema>(typeboxSchema: T): Schema<Static<T>, Static<T>> {
+export function typeBoxStandardSchema<T extends TSchema>(
+  typeboxSchema: T
+): Schema<Static<T>, Static<T>> {
   return {
     "~standard": {
       version: 1,
@@ -48,4 +50,3 @@ export function typeBoxStandardSchema<T extends TSchema>(typeboxSchema: T): Sche
 export function schema<T extends TSchema>(typeboxSchema: T): Schema<Static<T>, Static<T>> {
   return typeBoxStandardSchema(typeboxSchema);
 }
-

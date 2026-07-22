@@ -15,7 +15,8 @@ export default class HyperresearchCodexAdvance extends RawrCommand {
     "agent-mode": Flags.string({
       options: ["packets", "synthesize"],
       default: "packets",
-      description: "Packet mode waits for Codex agent outputs; synthesize mode generates fixture outputs",
+      description:
+        "Packet mode waits for Codex agent outputs; synthesize mode generates fixture outputs",
     }),
     "max-steps": Flags.integer({
       required: false,
@@ -41,18 +42,22 @@ export default class HyperresearchCodexAdvance extends RawrCommand {
     });
 
     try {
-      const resultData = await client.runs.advanceV8Run({
-        ledgerPath: String(flags.ledger),
-        agentMode: String(flags["agent-mode"]) as "packets" | "synthesize",
-        maxSteps: typeof flags["max-steps"] === "number" ? flags["max-steps"] : undefined,
-        resumeReason: typeof flags["resume-reason"] === "string" ? flags["resume-reason"] : undefined,
-      }, {
-        context: {
-          invocation: {
-            traceId: `hyperresearch-codex-v8-advance-${Date.now()}`,
-          },
+      const resultData = await client.runs.advanceV8Run(
+        {
+          ledgerPath: String(flags.ledger),
+          agentMode: String(flags["agent-mode"]) as "packets" | "synthesize",
+          maxSteps: typeof flags["max-steps"] === "number" ? flags["max-steps"] : undefined,
+          resumeReason:
+            typeof flags["resume-reason"] === "string" ? flags["resume-reason"] : undefined,
         },
-      });
+        {
+          context: {
+            invocation: {
+              traceId: `hyperresearch-codex-v8-advance-${Date.now()}`,
+            },
+          },
+        }
+      );
 
       const responseData = summarizeV8Result(resultData);
       const blockingFindings = hasBlockingV8Findings(resultData);

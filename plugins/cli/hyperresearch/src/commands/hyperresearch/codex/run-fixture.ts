@@ -36,34 +36,45 @@ export default class HyperresearchCodexRunFixture extends RawrCommand {
     });
 
     try {
-      let resultData = await client.runs.startV8Run({
-        canonicalQuery: String(flags.query),
-        tier: String(flags.tier) as "light" | "full",
-        vaultRoot: String(flags.vault),
-        stepsRoot: String(flags.steps),
-      }, {
-        context: {
-          invocation: {
-            traceId: `hyperresearch-codex-v8-fixture-start-${Date.now()}`,
-          },
+      let resultData = await client.runs.startV8Run(
+        {
+          canonicalQuery: String(flags.query),
+          tier: String(flags.tier) as "light" | "full",
+          vaultRoot: String(flags.vault),
+          stepsRoot: String(flags.steps),
         },
-      });
-
-      for (let pass = 0; pass < 64 && resultData.status !== "complete" && resultData.status !== "blocked"; pass += 1) {
-        resultData = await client.runs.advanceV8Run({
-          ledgerPath: resultData.ledgerPath,
-          agentMode: "synthesize",
-        }, {
+        {
           context: {
             invocation: {
-              traceId: `hyperresearch-codex-v8-fixture-advance-${Date.now()}-${pass}`,
+              traceId: `hyperresearch-codex-v8-fixture-start-${Date.now()}`,
             },
           },
-        });
+        }
+      );
+
+      for (
+        let pass = 0;
+        pass < 64 && resultData.status !== "complete" && resultData.status !== "blocked";
+        pass += 1
+      ) {
+        resultData = await client.runs.advanceV8Run(
+          {
+            ledgerPath: resultData.ledgerPath,
+            agentMode: "synthesize",
+          },
+          {
+            context: {
+              invocation: {
+                traceId: `hyperresearch-codex-v8-fixture-advance-${Date.now()}-${pass}`,
+              },
+            },
+          }
+        );
       }
 
       const responseData = summarizeV8Result(resultData);
-      const blockingFindings = hasBlockingV8Findings(resultData) || resultData.status !== "complete";
+      const blockingFindings =
+        hasBlockingV8Findings(resultData) || resultData.status !== "complete";
       const result = blockingFindings
         ? this.fail("Hyperresearch Codex V8 fixture did not pass integrity gates", {
             code: "HYPERRESEARCH_CODEX_V8_FIXTURE_BLOCKED",

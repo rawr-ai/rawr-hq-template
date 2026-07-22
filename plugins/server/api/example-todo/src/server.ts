@@ -27,8 +27,11 @@ const exampleTodoApiDeclaration = defineApiPluginDeclaration({
 });
 
 function contributeExampleTodoApiPlugin(
-  bound: ExampleTodoApiPluginBound,
-): ApiPluginContribution<typeof exampleTodoApiContract, ReturnType<typeof createExampleTodoApiRouter>> {
+  bound: ExampleTodoApiPluginBound
+): ApiPluginContribution<
+  typeof exampleTodoApiContract,
+  ReturnType<typeof createExampleTodoApiRouter>
+> {
   const internal = {
     contract: exampleTodoApiDeclaration.internal.contract,
     router: createExampleTodoApiRouter(bound.resolveClient),

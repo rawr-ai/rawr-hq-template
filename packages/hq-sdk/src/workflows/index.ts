@@ -3,9 +3,7 @@ import type { AnyContractRouterObject, AnyProcedureRouterObject } from "../orpc/
 import { createContextualRouterBuilder } from "../orpc/factory/implementer";
 import { mergeNamedSurfaceTrees } from "../composition/merge-named-surface-trees";
 import type { Context } from "@orpc/server";
-export {
-  createInternalTraceForwardingOptions as createWorkflowTraceForwardingOptions,
-} from "../orpc/boundary/trace-forwarding";
+export { createInternalTraceForwardingOptions as createWorkflowTraceForwardingOptions } from "../orpc/boundary/trace-forwarding";
 
 export type WorkflowSurfaceContribution<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
@@ -24,15 +22,17 @@ export type WorkflowSurfaceDeclaration<
 export type WorkflowPublishedContribution<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
   TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
-> = WorkflowSurfaceContribution<TContract, TRouter> & Readonly<{
-  routeBase: `/${string}`;
-}>;
+> = WorkflowSurfaceContribution<TContract, TRouter> &
+  Readonly<{
+    routeBase: `/${string}`;
+  }>;
 
 export type WorkflowPublishedDeclaration<
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
-> = WorkflowSurfaceDeclaration<TContract> & Readonly<{
-  routeBase: `/${string}`;
-}>;
+> = WorkflowSurfaceDeclaration<TContract> &
+  Readonly<{
+    routeBase: `/${string}`;
+  }>;
 
 export type WorkflowRuntimeDeclaration = Readonly<{
   kind: "inngest-functions";
@@ -94,12 +94,19 @@ export type WorkflowPluginRegistration<
   TRuntimeInput = WorkflowRuntimeInput,
   TFunction = unknown,
   TBound = never,
-> = WorkflowPluginContribution<TContract, TRouter, TRuntimeInput, TFunction> & Readonly<{
-  capability: TCapability;
-  namespace: "workflows";
-  declaration?: WorkflowPluginDeclaration<TCapability, TContract>;
-  contribute?: WorkflowPluginContributionBuilder<TBound, TContract, TRouter, TRuntimeInput, TFunction>;
-}>;
+> = WorkflowPluginContribution<TContract, TRouter, TRuntimeInput, TFunction> &
+  Readonly<{
+    capability: TCapability;
+    namespace: "workflows";
+    declaration?: WorkflowPluginDeclaration<TCapability, TContract>;
+    contribute?: WorkflowPluginContributionBuilder<
+      TBound,
+      TContract,
+      TRouter,
+      TRuntimeInput,
+      TFunction
+    >;
+  }>;
 
 export type WorkflowSurfaceMetadata = Readonly<{
   capability: string;
@@ -109,57 +116,61 @@ export type WorkflowSurfaceMetadata = Readonly<{
   hasRuntimeFunctions: boolean;
 }>;
 
-type WorkflowRuntimeInputOf<TPlugin> =
-  TPlugin extends {
-    runtime?: WorkflowRuntimeContribution<infer TInput, unknown>;
-  } ? TInput : never;
+type WorkflowRuntimeInputOf<TPlugin> = TPlugin extends {
+  runtime?: WorkflowRuntimeContribution<infer TInput, unknown>;
+}
+  ? TInput
+  : never;
 
-type UnionToIntersection<T> =
-  (T extends unknown ? (input: T) => void : never) extends (input: infer TIntersected) => void
-    ? TIntersected
-    : never;
+type UnionToIntersection<T> = (T extends unknown ? (input: T) => void : never) extends (
+  input: infer TIntersected
+) => void
+  ? TIntersected
+  : never;
 
 type Simplify<T> = {
   [K in keyof T]: T[K];
 } & {};
 
-type ComposedWorkflowRuntimeInput<TPlugins extends readonly WorkflowPluginRegistration[]> = Simplify<
-  WorkflowRuntimeInput & UnionToIntersection<Exclude<WorkflowRuntimeInputOf<TPlugins[number]>, never>>
->;
+type ComposedWorkflowRuntimeInput<TPlugins extends readonly WorkflowPluginRegistration[]> =
+  Simplify<
+    WorkflowRuntimeInput &
+      UnionToIntersection<Exclude<WorkflowRuntimeInputOf<TPlugins[number]>, never>>
+  >;
 
 function mergeWorkflowInternalContracts(
-  plugins: readonly WorkflowPluginRegistration[],
+  plugins: readonly WorkflowPluginRegistration[]
 ): AnyContractRouterObject {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.internal ? [plugin.internal.contract] : [])),
-    { kind: "workflow", surface: "contract" },
+    { kind: "workflow", surface: "contract" }
   );
 }
 
 function mergeWorkflowInternalRouters(
-  plugins: readonly WorkflowPluginRegistration[],
+  plugins: readonly WorkflowPluginRegistration[]
 ): AnyProcedureRouterObject {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.internal ? [plugin.internal.router] : [])),
-    { kind: "workflow", surface: "router" },
+    { kind: "workflow", surface: "router" }
   );
 }
 
 function mergeWorkflowPublishedContracts(
-  plugins: readonly WorkflowPluginRegistration[],
+  plugins: readonly WorkflowPluginRegistration[]
 ): AnyContractRouterObject {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.published ? [plugin.published.contract] : [])),
-    { kind: "workflow", surface: "contract" },
+    { kind: "workflow", surface: "contract" }
   );
 }
 
 function mergeWorkflowPublishedRouters(
-  plugins: readonly WorkflowPluginRegistration[],
+  plugins: readonly WorkflowPluginRegistration[]
 ): AnyProcedureRouterObject {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.published ? [plugin.published.router] : [])),
-    { kind: "workflow", surface: "router" },
+    { kind: "workflow", surface: "router" }
   );
 }
 
@@ -174,7 +185,7 @@ export function defineWorkflowPlugin<
   input: Omit<
     WorkflowPluginRegistration<TCapability, TContract, TRouter, TRuntimeInput, TFunction, TBound>,
     "namespace"
-  >,
+  >
 ): WorkflowPluginRegistration<TCapability, TContract, TRouter, TRuntimeInput, TFunction, TBound> {
   return {
     namespace: "workflows",
@@ -186,7 +197,7 @@ export function defineWorkflowPluginDeclaration<
   const TCapability extends string,
   TContract extends AnyContractRouterObject = AnyContractRouterObject,
 >(
-  input: Omit<WorkflowPluginDeclaration<TCapability, TContract>, "namespace">,
+  input: Omit<WorkflowPluginDeclaration<TCapability, TContract>, "namespace">
 ): WorkflowPluginDeclaration<TCapability, TContract> {
   return {
     namespace: "workflows",
@@ -201,27 +212,29 @@ export function createWorkflowRouterBuilder<
   return createContextualRouterBuilder<TContract, TContext>(contract);
 }
 
-export function composeWorkflowPlugins<const TPlugins extends readonly WorkflowPluginRegistration[]>(
-  plugins: TPlugins,
-) {
+export function composeWorkflowPlugins<
+  const TPlugins extends readonly WorkflowPluginRegistration[],
+>(plugins: TPlugins) {
   return {
     surfaces: plugins.map(
       (plugin) =>
         ({
           capability: plugin.declaration?.capability ?? plugin.capability,
-          routeBase: plugin.declaration?.published?.routeBase ?? plugin.published?.routeBase ?? null,
-          hasInternalRouter: plugin.declaration?.internal !== undefined || plugin.internal !== undefined,
-          hasPublishedRouter: plugin.declaration?.published !== undefined || plugin.published !== undefined,
-          hasRuntimeFunctions: plugin.declaration?.runtime !== undefined || plugin.runtime !== undefined,
-        }) satisfies WorkflowSurfaceMetadata,
+          routeBase:
+            plugin.declaration?.published?.routeBase ?? plugin.published?.routeBase ?? null,
+          hasInternalRouter:
+            plugin.declaration?.internal !== undefined || plugin.internal !== undefined,
+          hasPublishedRouter:
+            plugin.declaration?.published !== undefined || plugin.published !== undefined,
+          hasRuntimeFunctions:
+            plugin.declaration?.runtime !== undefined || plugin.runtime !== undefined,
+        }) satisfies WorkflowSurfaceMetadata
     ),
     internalContract: mergeWorkflowInternalContracts(plugins),
     internalRouter: mergeWorkflowInternalRouters(plugins),
     publishedContract: mergeWorkflowPublishedContracts(plugins),
     publishedRouter: mergeWorkflowPublishedRouters(plugins),
-    createInngestFunctions(
-      input: ComposedWorkflowRuntimeInput<TPlugins>,
-    ): readonly unknown[] {
+    createInngestFunctions(input: ComposedWorkflowRuntimeInput<TPlugins>): readonly unknown[] {
       return plugins.flatMap((plugin) => plugin.runtime?.createInngestFunctions(input) ?? []);
     },
   } as const;

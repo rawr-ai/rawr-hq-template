@@ -50,7 +50,13 @@ export function codexDiscoveryMaxAgeMs(status: SessionStatus): number {
   const shared = parsePositiveNumberEnv("RAWR_CODEX_DISCOVERY_MAX_AGE_MS");
   if (shared != null) return shared;
   if (status === "live") {
-    return parsePositiveNumberEnv("RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS") ?? DEFAULT_CODEX_DISCOVERY_LIVE_MAX_AGE_MS;
+    return (
+      parsePositiveNumberEnv("RAWR_CODEX_DISCOVERY_LIVE_MAX_AGE_MS") ??
+      DEFAULT_CODEX_DISCOVERY_LIVE_MAX_AGE_MS
+    );
   }
-  return parsePositiveNumberEnv("RAWR_CODEX_DISCOVERY_ARCHIVED_MAX_AGE_MS") ?? DEFAULT_CODEX_DISCOVERY_ARCHIVED_MAX_AGE_MS;
+  return (
+    parsePositiveNumberEnv("RAWR_CODEX_DISCOVERY_ARCHIVED_MAX_AGE_MS") ??
+    DEFAULT_CODEX_DISCOVERY_ARCHIVED_MAX_AGE_MS
+  );
 }

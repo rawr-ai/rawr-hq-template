@@ -21,14 +21,15 @@ type EmbeddedPlaceholderFeedbackOptions = {
 };
 
 export function createEmbeddedPlaceholderFeedbackAdapter(
-  options: EmbeddedPlaceholderFeedbackOptions = {},
+  options: EmbeddedPlaceholderFeedbackOptions = {}
 ): FeedbackClient {
   let count = 0;
 
   return {
     async createSession(input) {
       count += 1;
-      const sessionId = options.createSessionId?.(input, count) ?? `embedded-feedback-session-${count}`;
+      const sessionId =
+        options.createSessionId?.(input, count) ?? `embedded-feedback-session-${count}`;
       options.sink?.push({
         path: input.path,
         traceId: input.traceId,

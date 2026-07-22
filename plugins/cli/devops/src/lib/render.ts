@@ -7,7 +7,7 @@ type DevResultProjection = {
 };
 
 export function devHumanRenderer<T extends DevResultProjection>(
-  command: RawrCommand,
+  command: RawrCommand
 ): (result: RawrResult<T>) => void {
   return (output) => {
     if (!output.ok) {
@@ -31,7 +31,10 @@ export function devHumanRenderer<T extends DevResultProjection>(
   };
 }
 
-export function exitForPreflight(data: { preflight?: { ok: boolean }; execution?: { ok: boolean } }): number {
+export function exitForPreflight(data: {
+  preflight?: { ok: boolean };
+  execution?: { ok: boolean };
+}): number {
   if (data.preflight && !data.preflight.ok) return 1;
   if (data.execution && !data.execution.ok) return 1;
   return 0;

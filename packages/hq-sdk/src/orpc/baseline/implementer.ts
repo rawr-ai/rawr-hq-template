@@ -20,11 +20,9 @@ type AnyContractRouterObject = {
  * baseline middleware.
  */
 export function createBaseProcedureImplementer<
- const TContract extends AnyContractProcedure,
+  const TContract extends AnyContractProcedure,
   TContext extends ExecutionContext<BaseDeps, object, object, object>,
->(
-  contract: TContract,
-) {
+>(contract: TContract) {
   return createBareProcedureImplementer<TContract, TContext>(contract)
     .use(createBaseObservabilityMiddleware())
     .use(createBaseAnalyticsMiddleware());
@@ -35,11 +33,9 @@ export function createBaseProcedureImplementer<
  * framework baseline middleware.
  */
 export function createBaseRouterImplementer<
- const TContract extends AnyContractRouterObject,
+  const TContract extends AnyContractRouterObject,
   TContext extends ExecutionContext<BaseDeps, object, object, object>,
->(
-  contract: TContract,
-) {
+>(contract: TContract) {
   return createBareRouterImplementer<TContract, TContext>(contract)
     .use(createBaseObservabilityMiddleware())
     .use(createBaseAnalyticsMiddleware());
@@ -48,18 +44,12 @@ export function createBaseRouterImplementer<
 export function createBaseImplementer<
   const TContract extends AnyContractProcedure,
   TContext extends ExecutionContext<BaseDeps, object, object, object>,
->(
-  contract: TContract,
-): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
+>(contract: TContract): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
 export function createBaseImplementer<
   const TContract extends AnyContractRouterObject,
   TContext extends ExecutionContext<BaseDeps, object, object, object>,
->(
-  contract: TContract,
-): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
-export function createBaseImplementer(
-  contract: AnyContractRouter,
-) {
+>(contract: TContract): ImplementerInternalWithMiddlewares<TContract, TContext, TContext>;
+export function createBaseImplementer(contract: AnyContractRouter) {
   if (isContractProcedure(contract)) {
     return createBaseProcedureImplementer(contract);
   }

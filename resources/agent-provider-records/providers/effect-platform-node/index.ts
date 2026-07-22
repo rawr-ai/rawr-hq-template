@@ -81,14 +81,14 @@ interface CaptureAuthority {
 }
 
 export function makeAgentProviderRecordsResource(
-  options: EffectPlatformNodeAgentProviderRecordsOptions,
+  options: EffectPlatformNodeAgentProviderRecordsOptions
 ): AgentProviderRecordsResource<ProviderRequirements> {
   const captures = new Map<string, CaptureAuthority>();
   const consumedHandles = new Set<string>();
   const targetMutationFence = Effect.unsafeMakeSemaphore(1);
 
   const readProjection = Effect.fn("agentProviderRecords.readProjection")(function* (
-    input: Readonly<{ address: ProviderProjectionRecordAddress; maxBytes: number }>,
+    input: Readonly<{ address: ProviderProjectionRecordAddress; maxBytes: number }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
@@ -103,14 +103,26 @@ export function makeAgentProviderRecordsResource(
       address: ProviderProjectionRecordAddress;
       bytes: Uint8Array;
       maxBytes: number;
-    }>,
+    }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
     const roots = yield* resolveRoots(paths, options, "publish-projection");
     yield* validateBytes(input.bytes, input.maxBytes, "publish-projection");
-    const resolved = yield* resolveProjectionRecord(paths, roots, input.address, "publish-projection");
-    const prior = yield* readRecord(fs, paths, roots, resolved, input.maxBytes, "publish-projection");
+    const resolved = yield* resolveProjectionRecord(
+      paths,
+      roots,
+      input.address,
+      "publish-projection"
+    );
+    const prior = yield* readRecord(
+      fs,
+      paths,
+      roots,
+      resolved,
+      input.maxBytes,
+      "publish-projection"
+    );
     if (prior.kind === "Present") {
       if (recordMatches(input.bytes, prior, RECORD_MODE)) {
         return publication("ReadOnlyConverged", input.address);
@@ -120,16 +132,30 @@ export function makeAgentProviderRecordsResource(
         "Occupied",
         "projection-observation",
         resolved.path,
-        "Immutable projection record already exists with different bytes",
+        "Immutable projection record already exists with different bytes"
       );
     }
 
-    yield* ensureDirectoryChain(fs, paths, roots.controller, resolved.directory, "publish-projection");
-    return yield* publishProjectionRecord(fs, paths, roots, resolved, input.bytes, input.maxBytes, options);
+    yield* ensureDirectoryChain(
+      fs,
+      paths,
+      roots.controller,
+      resolved.directory,
+      "publish-projection"
+    );
+    return yield* publishProjectionRecord(
+      fs,
+      paths,
+      roots,
+      resolved,
+      input.bytes,
+      input.maxBytes,
+      options
+    );
   });
 
   const readTarget = Effect.fn("agentProviderRecords.readTarget")(function* (
-    input: Readonly<{ address: ProviderTargetRecordAddress; maxBytes: number }>,
+    input: Readonly<{ address: ProviderTargetRecordAddress; maxBytes: number }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
@@ -144,7 +170,7 @@ export function makeAgentProviderRecordsResource(
       address: ProviderTargetRecordAddress;
       readToken: string;
       maxBytes: number;
-    }>,
+    }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
@@ -152,7 +178,14 @@ export function makeAgentProviderRecordsResource(
     yield* validateOpaque(input.readToken, "readToken", "capture-target");
     yield* validateLimit(input.maxBytes, "capture-target");
     const resolved = yield* resolveTargetRecord(paths, roots, input.address, "capture-target");
-    const preimage = yield* readRecord(fs, paths, roots, resolved, input.maxBytes, "capture-target");
+    const preimage = yield* readRecord(
+      fs,
+      paths,
+      roots,
+      resolved,
+      input.maxBytes,
+      "capture-target"
+    );
     const handle = randomUUID();
     captures.set(handle, {
       handle,
@@ -174,7 +207,7 @@ export function makeAgentProviderRecordsResource(
       address: ProviderTargetRecordAddress;
       readToken: string;
       captureHandle: string;
-    }>,
+    }>
   ) {
     const paths = yield* Path.Path;
     const roots = yield* resolveRoots(paths, options, "release-target");
@@ -186,7 +219,7 @@ export function makeAgentProviderRecordsResource(
       consumedHandles,
       input,
       "release-target",
-      true,
+      true
     );
     if (authority.lifecycle !== "Captured") {
       return yield* rejected(
@@ -194,7 +227,7 @@ export function makeAgentProviderRecordsResource(
         "HandleState",
         "capture-lifecycle",
         resolved.path,
-        `Capture handle cannot release from ${authority.lifecycle}; restore mutated authority instead`,
+        `Capture handle cannot release from ${authority.lifecycle}; restore mutated authority instead`
       );
     }
     captures.delete(input.captureHandle);
@@ -213,7 +246,7 @@ export function makeAgentProviderRecordsResource(
       readToken: string;
       captureHandle: string;
       mutation: ProviderTargetRecordMutation;
-    }>,
+    }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
@@ -225,25 +258,37 @@ export function makeAgentProviderRecordsResource(
       yield* validateBytes(input.mutation.bytes, MAX_RECORD_BYTES, "write-target");
     }
     const resolved = yield* resolveTargetRecord(paths, roots, input.address, "write-target");
-    const authority = yield* requireCaptureAuthority(captures, consumedHandles, input, "write-target");
+    const authority = yield* requireCaptureAuthority(
+      captures,
+      consumedHandles,
+      input,
+      "write-target"
+    );
     if (input.mutation.kind === "Put") {
       yield* validateBytes(input.mutation.bytes, authority.maxBytes, "write-target");
     }
     yield* bindPlanAndMutation(authority, input.planDigest, input.mutation);
-    const current = yield* readRecord(fs, paths, roots, resolved, authority.maxBytes, "write-target");
+    const current = yield* readRecord(
+      fs,
+      paths,
+      roots,
+      resolved,
+      authority.maxBytes,
+      "write-target"
+    );
 
     if (authority.lifecycle === "Applied" || authority.lifecycle === "Converged") {
       if (
-        authority.postimage === undefined
-        || !sameObservationExact(current, authority.postimage)
-        || !mutationMatches(input.mutation, current)
+        authority.postimage === undefined ||
+        !sameObservationExact(current, authority.postimage) ||
+        !mutationMatches(input.mutation, current)
       ) {
         return yield* rejected(
           "write-target",
           "IdentityChanged",
           "repeat-observation",
           resolved.path,
-          "Applied target record changed before the converged repeat",
+          "Applied target record changed before the converged repeat"
         );
       }
       return writeReceipt(input, "ReadOnlyConverged");
@@ -254,7 +299,7 @@ export function makeAgentProviderRecordsResource(
         "HandleState",
         "capture-lifecycle",
         resolved.path,
-        `Capture handle cannot write from ${authority.lifecycle}`,
+        `Capture handle cannot write from ${authority.lifecycle}`
       );
     }
     if (!sameObservationExact(current, authority.preimage)) {
@@ -263,7 +308,7 @@ export function makeAgentProviderRecordsResource(
         "IdentityChanged",
         "preimage-revalidation",
         resolved.path,
-        "Target record changed after capture",
+        "Target record changed after capture"
       );
     }
     if (mutationMatches(input.mutation, current)) {
@@ -273,24 +318,26 @@ export function makeAgentProviderRecordsResource(
     }
 
     authority.lifecycle = "Writing";
-    const attempted = yield* Effect.either(commitTargetMutation(
-      fs,
-      paths,
-      roots,
-      resolved,
-      current,
-      input.mutation,
-      RECORD_MODE,
-      authority.maxBytes,
-      options,
-      "write-target",
-    ));
+    const attempted = yield* Effect.either(
+      commitTargetMutation(
+        fs,
+        paths,
+        roots,
+        resolved,
+        current,
+        input.mutation,
+        RECORD_MODE,
+        authority.maxBytes,
+        options,
+        "write-target"
+      )
+    );
     if (attempted._tag === "Left") {
       authority.lifecycle = "Partial";
       return yield* Effect.fail(attempted.left);
     }
     const observedPostimage = yield* Effect.either(
-      readRecord(fs, paths, roots, resolved, authority.maxBytes, "write-target"),
+      readRecord(fs, paths, roots, resolved, authority.maxBytes, "write-target")
     );
     if (observedPostimage._tag === "Left") {
       authority.lifecycle = "Partial";
@@ -304,7 +351,7 @@ export function makeAgentProviderRecordsResource(
         "IdentityChanged",
         "postimage-verification",
         resolved.path,
-        "Atomic target record publication did not produce the exact requested bytes",
+        "Atomic target record publication did not produce the exact requested bytes"
       );
     }
     authority.postimage = postimage;
@@ -318,7 +365,7 @@ export function makeAgentProviderRecordsResource(
       planDigest: string;
       readToken: string;
       captureHandle: string;
-    }>,
+    }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
@@ -327,49 +374,62 @@ export function makeAgentProviderRecordsResource(
     yield* validateOpaque(input.readToken, "readToken", "restore-target");
     yield* validateOpaque(input.captureHandle, "captureHandle", "restore-target");
     const resolved = yield* resolveTargetRecord(paths, roots, input.address, "restore-target");
-    const authority = yield* requireCaptureAuthority(captures, consumedHandles, input, "restore-target", true);
+    const authority = yield* requireCaptureAuthority(
+      captures,
+      consumedHandles,
+      input,
+      "restore-target",
+      true
+    );
     if (authority.planDigest !== input.planDigest || authority.mutation === undefined) {
       return yield* rejected(
         "restore-target",
         "WrongPlan",
         "restore-binding",
         resolved.path,
-        "Restore plan does not match the captured write",
+        "Restore plan does not match the captured write"
       );
     }
     if (authority.lifecycle === "Restored") {
       return restoreReceipt(input, false);
     }
     if (
-      authority.lifecycle !== "Applied"
-      && authority.lifecycle !== "Converged"
-      && authority.lifecycle !== "Partial"
+      authority.lifecycle !== "Applied" &&
+      authority.lifecycle !== "Converged" &&
+      authority.lifecycle !== "Partial"
     ) {
       return yield* rejected(
         "restore-target",
         "HandleState",
         "capture-lifecycle",
         resolved.path,
-        `Capture handle cannot restore from ${authority.lifecycle}`,
+        `Capture handle cannot restore from ${authority.lifecycle}`
       );
     }
 
-    const current = yield* readRecord(fs, paths, roots, resolved, authority.maxBytes, "restore-target");
+    const current = yield* readRecord(
+      fs,
+      paths,
+      roots,
+      resolved,
+      authority.maxBytes,
+      "restore-target"
+    );
     if (sameObservationValue(current, authority.preimage)) {
       authority.lifecycle = "Restored";
       authority.postimage = current;
       return restoreReceipt(input, false);
     }
     if (
-      authority.lifecycle !== "Partial"
-      && (authority.postimage === undefined || !sameObservationExact(current, authority.postimage))
+      authority.lifecycle !== "Partial" &&
+      (authority.postimage === undefined || !sameObservationExact(current, authority.postimage))
     ) {
       return yield* rejected(
         "restore-target",
         "IdentityChanged",
         "restore-observation",
         resolved.path,
-        "Target record changed after the captured write",
+        "Target record changed after the captured write"
       );
     }
     if (authority.lifecycle === "Partial" && !mutationMatches(authority.mutation, current)) {
@@ -378,32 +438,42 @@ export function makeAgentProviderRecordsResource(
         "IdentityChanged",
         "partial-observation",
         resolved.path,
-        "Partial target write matches neither captured prior nor requested postimage",
+        "Partial target write matches neither captured prior nor requested postimage"
       );
     }
 
     authority.lifecycle = "Restoring";
     const priorMutation = observationMutation(authority.preimage);
-    const priorMode = authority.preimage.kind === "Present"
-      ? authority.preimage.identity.mode & 0o777
-      : RECORD_MODE;
-    const attempted = yield* Effect.either(commitTargetMutation(
-      fs,
-      paths,
-      roots,
-      resolved,
-      current,
-      priorMutation,
-      priorMode,
-      authority.maxBytes,
-      options,
-      "restore-target",
-    ));
+    const priorMode =
+      authority.preimage.kind === "Present"
+        ? authority.preimage.identity.mode & 0o777
+        : RECORD_MODE;
+    const attempted = yield* Effect.either(
+      commitTargetMutation(
+        fs,
+        paths,
+        roots,
+        resolved,
+        current,
+        priorMutation,
+        priorMode,
+        authority.maxBytes,
+        options,
+        "restore-target"
+      )
+    );
     if (attempted._tag === "Left") {
       authority.lifecycle = "Partial";
       return yield* Effect.fail(attempted.left);
     }
-    const restored = yield* readRecord(fs, paths, roots, resolved, authority.maxBytes, "restore-target");
+    const restored = yield* readRecord(
+      fs,
+      paths,
+      roots,
+      resolved,
+      authority.maxBytes,
+      "restore-target"
+    );
     if (!sameObservationValue(restored, authority.preimage)) {
       authority.lifecycle = "Partial";
       return yield* rejected(
@@ -411,7 +481,7 @@ export function makeAgentProviderRecordsResource(
         "IdentityChanged",
         "restore-verification",
         resolved.path,
-        "Restored target record bytes differ from the captured preimage",
+        "Restored target record bytes differ from the captured preimage"
       );
     }
     authority.lifecycle = "Restored";
@@ -425,7 +495,7 @@ export function makeAgentProviderRecordsResource(
       planDigest: string;
       readToken: string;
       captureHandle: string;
-    }>,
+    }>
   ) {
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
@@ -434,18 +504,24 @@ export function makeAgentProviderRecordsResource(
     yield* validateOpaque(input.readToken, "readToken", "settle-target");
     yield* validateOpaque(input.captureHandle, "captureHandle", "settle-target");
     const resolved = yield* resolveTargetRecord(paths, roots, input.address, "settle-target");
-    const authority = yield* requireCaptureAuthority(captures, consumedHandles, input, "settle-target", true);
+    const authority = yield* requireCaptureAuthority(
+      captures,
+      consumedHandles,
+      input,
+      "settle-target",
+      true
+    );
     if (
-      authority.lifecycle !== "Applied"
-      && authority.lifecycle !== "Converged"
-      && authority.lifecycle !== "Restored"
+      authority.lifecycle !== "Applied" &&
+      authority.lifecycle !== "Converged" &&
+      authority.lifecycle !== "Restored"
     ) {
       return yield* rejected(
         "settle-target",
         "HandleState",
         "capture-lifecycle",
         resolved.path,
-        `Capture handle cannot settle from ${authority.lifecycle}`,
+        `Capture handle cannot settle from ${authority.lifecycle}`
       );
     }
     if (authority.planDigest !== input.planDigest) {
@@ -454,21 +530,29 @@ export function makeAgentProviderRecordsResource(
         "WrongPlan",
         "settle-binding",
         resolved.path,
-        "Settlement plan does not match the captured write",
+        "Settlement plan does not match the captured write"
       );
     }
-    const current = yield* readRecord(fs, paths, roots, resolved, authority.maxBytes, "settle-target");
+    const current = yield* readRecord(
+      fs,
+      paths,
+      roots,
+      resolved,
+      authority.maxBytes,
+      "settle-target"
+    );
     const expected = authority.postimage;
-    const verified = authority.lifecycle === "Restored"
-      ? sameObservationValue(current, authority.preimage)
-      : expected !== undefined && sameObservationExact(current, expected);
+    const verified =
+      authority.lifecycle === "Restored"
+        ? sameObservationValue(current, authority.preimage)
+        : expected !== undefined && sameObservationExact(current, expected);
     if (!verified) {
       return yield* rejected(
         "settle-target",
         "IdentityChanged",
         "settle-verification",
         resolved.path,
-        "Target record does not match its verified settlement image",
+        "Target record does not match its verified settlement image"
       );
     }
     captures.delete(input.captureHandle);
@@ -502,19 +586,21 @@ export type NodeAgentProviderRecordsResult<A> =
   | Readonly<{ ok: false; failure: AgentProviderRecordsFailure }>;
 
 export function runNodeAgentProviderRecords<A>(
-  operation: Effect.Effect<A, AgentProviderRecordsFailure, ProviderRequirements>,
+  operation: Effect.Effect<A, AgentProviderRecordsFailure, ProviderRequirements>
 ): Promise<NodeAgentProviderRecordsResult<A>> {
-  return Effect.runPromise(operation.pipe(
-    Effect.map((value): NodeAgentProviderRecordsResult<A> => Object.freeze({ ok: true, value })),
-    Effect.catchAll((failure) => Effect.succeed<NodeAgentProviderRecordsResult<A>>(
-      Object.freeze({ ok: false, failure }),
-    )),
-    Effect.provide(NodeContext.layer),
-  ));
+  return Effect.runPromise(
+    operation.pipe(
+      Effect.map((value): NodeAgentProviderRecordsResult<A> => Object.freeze({ ok: true, value })),
+      Effect.catchAll((failure) =>
+        Effect.succeed<NodeAgentProviderRecordsResult<A>>(Object.freeze({ ok: false, failure }))
+      ),
+      Effect.provide(NodeContext.layer)
+    )
+  );
 }
 
 export function makeNodeAgentProviderRecordsAsyncPort(
-  options: EffectPlatformNodeAgentProviderRecordsOptions,
+  options: EffectPlatformNodeAgentProviderRecordsOptions
 ): AgentProviderRecordsAsyncPort {
   const resource = makeAgentProviderRecordsResource(options);
   return Object.freeze({
@@ -544,68 +630,98 @@ function publishProjectionRecord(
   resolved: ResolvedRecord<ProviderProjectionRecordAddress>,
   bytes: Uint8Array,
   maxBytes: number,
-  options: EffectPlatformNodeAgentProviderRecordsOptions,
+  options: EffectPlatformNodeAgentProviderRecordsOptions
 ): Effect.Effect<ProviderRecordPublicationReceipt, AgentProviderRecordsFailure> {
-  return Effect.scoped(Effect.gen(function* () {
-    const temporary = yield* fs.makeTempFileScoped({
-      directory: resolved.directory,
-      prefix: PRIVATE_FILE_PREFIX,
-    }).pipe(mapPlatform("publish-projection", "temporary-allocation", resolved.directory));
-    yield* admitPrivateFile(fs, paths, resolved.directory, temporary, "publish-projection");
-    yield* writeTemporary(fs, temporary, bytes, RECORD_MODE, "publish-projection");
-    yield* hit(options, { kind: "AfterTemporaryWrite", address: resolved.address }, "publish-projection", resolved.path);
-    const prior = yield* readRecord(fs, paths, roots, resolved, maxBytes, "publish-projection");
-    if (prior.kind === "Present") {
-      return recordMatches(bytes, prior, RECORD_MODE)
-        ? publication("ReadOnlyConverged", resolved.address)
-        : yield* rejected(
+  return Effect.scoped(
+    Effect.gen(function* () {
+      const temporary = yield* fs
+        .makeTempFileScoped({
+          directory: resolved.directory,
+          prefix: PRIVATE_FILE_PREFIX,
+        })
+        .pipe(mapPlatform("publish-projection", "temporary-allocation", resolved.directory));
+      yield* admitPrivateFile(fs, paths, resolved.directory, temporary, "publish-projection");
+      yield* writeTemporary(fs, temporary, bytes, RECORD_MODE, "publish-projection");
+      yield* hit(
+        options,
+        { kind: "AfterTemporaryWrite", address: resolved.address },
+        "publish-projection",
+        resolved.path
+      );
+      const prior = yield* readRecord(fs, paths, roots, resolved, maxBytes, "publish-projection");
+      if (prior.kind === "Present") {
+        return recordMatches(bytes, prior, RECORD_MODE)
+          ? publication("ReadOnlyConverged", resolved.address)
+          : yield* rejected(
+              "publish-projection",
+              "Occupied",
+              "projection-revalidation",
+              resolved.path,
+              "Immutable projection record was occupied before publication"
+            );
+      }
+      yield* hit(
+        options,
+        { kind: "BeforeAtomicCommit", address: resolved.address },
+        "publish-projection",
+        resolved.path
+      );
+      const linked = yield* Effect.either(fs.link(temporary, resolved.path));
+      if (linked._tag === "Left") {
+        if (linked.left._tag !== "SystemError" || linked.left.reason !== "AlreadyExists") {
+          return yield* Effect.fail(
+            platformFailure("publish-projection", "projection-link", resolved.path, linked.left)
+          );
+        }
+        const winner = yield* readRecord(
+          fs,
+          paths,
+          roots,
+          resolved,
+          maxBytes,
+          "publish-projection"
+        );
+        if (winner.kind === "Present" && recordMatches(bytes, winner, RECORD_MODE)) {
+          return publication("ReadOnlyConverged", resolved.address);
+        }
+        return yield* rejected(
           "publish-projection",
           "Occupied",
-          "projection-revalidation",
+          "projection-race",
           resolved.path,
-          "Immutable projection record was occupied before publication",
+          "Concurrent projection publication used different bytes"
         );
-    }
-    yield* hit(options, { kind: "BeforeAtomicCommit", address: resolved.address }, "publish-projection", resolved.path);
-    const linked = yield* Effect.either(fs.link(temporary, resolved.path));
-    if (linked._tag === "Left") {
-      if (linked.left._tag !== "SystemError" || linked.left.reason !== "AlreadyExists") {
-        return yield* Effect.fail(platformFailure(
+      }
+      yield* fs
+        .remove(temporary)
+        .pipe(mapPlatform("cleanup", "projection-temporary-release", temporary, "CleanupFailed"));
+      yield* hit(
+        options,
+        { kind: "AfterAtomicCommit", address: resolved.address },
+        "publish-projection",
+        resolved.path
+      );
+      yield* syncPath(fs, resolved.directory, "publish-projection", "projection-parent-sync");
+      const published = yield* readRecord(
+        fs,
+        paths,
+        roots,
+        resolved,
+        maxBytes,
+        "publish-projection"
+      );
+      if (published.kind !== "Present" || !recordMatches(bytes, published, RECORD_MODE)) {
+        return yield* rejected(
           "publish-projection",
-          "projection-link",
+          "IdentityChanged",
+          "projection-verification",
           resolved.path,
-          linked.left,
-        ));
+          "Published projection record does not contain the exact requested bytes"
+        );
       }
-      const winner = yield* readRecord(fs, paths, roots, resolved, maxBytes, "publish-projection");
-      if (winner.kind === "Present" && recordMatches(bytes, winner, RECORD_MODE)) {
-        return publication("ReadOnlyConverged", resolved.address);
-      }
-      return yield* rejected(
-        "publish-projection",
-        "Occupied",
-        "projection-race",
-        resolved.path,
-        "Concurrent projection publication used different bytes",
-      );
-    }
-    yield* fs.remove(temporary).pipe(
-      mapPlatform("cleanup", "projection-temporary-release", temporary, "CleanupFailed"),
-    );
-    yield* hit(options, { kind: "AfterAtomicCommit", address: resolved.address }, "publish-projection", resolved.path);
-    yield* syncPath(fs, resolved.directory, "publish-projection", "projection-parent-sync");
-    const published = yield* readRecord(fs, paths, roots, resolved, maxBytes, "publish-projection");
-    if (published.kind !== "Present" || !recordMatches(bytes, published, RECORD_MODE)) {
-      return yield* rejected(
-        "publish-projection",
-        "IdentityChanged",
-        "projection-verification",
-        resolved.path,
-        "Published projection record does not contain the exact requested bytes",
-      );
-    }
-    return publication("Published", resolved.address);
-  }));
+      return publication("Published", resolved.address);
+    })
+  );
 }
 
 function commitTargetMutation(
@@ -618,57 +734,83 @@ function commitTargetMutation(
   mode: number,
   maxBytes: number,
   options: EffectPlatformNodeAgentProviderRecordsOptions,
-  operation: "write-target" | "restore-target",
+  operation: "write-target" | "restore-target"
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
-  return Effect.scoped(Effect.gen(function* () {
-    yield* ensureDirectoryChain(fs, paths, roots.controller, resolved.directory, operation);
-    if (mutation.kind === "Put") {
-      const temporary = yield* fs.makeTempFileScoped({
-        directory: resolved.directory,
-        prefix: PRIVATE_FILE_PREFIX,
-      }).pipe(mapPlatform(operation, "temporary-allocation", resolved.directory));
-      yield* admitPrivateFile(fs, paths, resolved.directory, temporary, operation);
-      yield* writeTemporary(fs, temporary, mutation.bytes, mode, operation);
-      yield* hit(options, { kind: "AfterTemporaryWrite", address: resolved.address }, operation, resolved.path);
-      const current = yield* readRecord(fs, paths, roots, resolved, maxBytes, operation);
-      if (!sameObservationExact(current, expected)) {
-        return yield* rejected(
+  return Effect.scoped(
+    Effect.gen(function* () {
+      yield* ensureDirectoryChain(fs, paths, roots.controller, resolved.directory, operation);
+      if (mutation.kind === "Put") {
+        const temporary = yield* fs
+          .makeTempFileScoped({
+            directory: resolved.directory,
+            prefix: PRIVATE_FILE_PREFIX,
+          })
+          .pipe(mapPlatform(operation, "temporary-allocation", resolved.directory));
+        yield* admitPrivateFile(fs, paths, resolved.directory, temporary, operation);
+        yield* writeTemporary(fs, temporary, mutation.bytes, mode, operation);
+        yield* hit(
+          options,
+          { kind: "AfterTemporaryWrite", address: resolved.address },
           operation,
-          "IdentityChanged",
-          "precommit-revalidation",
-          resolved.path,
-          "Target record changed immediately before atomic publication",
+          resolved.path
         );
-      }
-      yield* hit(options, { kind: "BeforeAtomicCommit", address: resolved.address }, operation, resolved.path);
-      yield* fs.rename(temporary, resolved.path).pipe(
-        mapPlatform(operation, "atomic-replace", resolved.path),
-      );
-    } else {
-      const allocation = yield* fs.makeTempDirectoryScoped({
-        directory: resolved.directory,
-        prefix: PRIVATE_REMOVAL_PREFIX,
-      }).pipe(mapPlatform(operation, "removal-allocation", resolved.directory));
-      yield* admitPrivateDirectory(fs, paths, resolved.directory, allocation, operation);
-      const tombstone = paths.join(allocation, "record");
-      const current = yield* readRecord(fs, paths, roots, resolved, maxBytes, operation);
-      if (!sameObservationExact(current, expected) || current.kind !== "Present") {
-        return yield* rejected(
+        const current = yield* readRecord(fs, paths, roots, resolved, maxBytes, operation);
+        if (!sameObservationExact(current, expected)) {
+          return yield* rejected(
+            operation,
+            "IdentityChanged",
+            "precommit-revalidation",
+            resolved.path,
+            "Target record changed immediately before atomic publication"
+          );
+        }
+        yield* hit(
+          options,
+          { kind: "BeforeAtomicCommit", address: resolved.address },
           operation,
-          "IdentityChanged",
-          "precommit-revalidation",
-          resolved.path,
-          "Target record changed immediately before atomic removal",
+          resolved.path
         );
+        yield* fs
+          .rename(temporary, resolved.path)
+          .pipe(mapPlatform(operation, "atomic-replace", resolved.path));
+      } else {
+        const allocation = yield* fs
+          .makeTempDirectoryScoped({
+            directory: resolved.directory,
+            prefix: PRIVATE_REMOVAL_PREFIX,
+          })
+          .pipe(mapPlatform(operation, "removal-allocation", resolved.directory));
+        yield* admitPrivateDirectory(fs, paths, resolved.directory, allocation, operation);
+        const tombstone = paths.join(allocation, "record");
+        const current = yield* readRecord(fs, paths, roots, resolved, maxBytes, operation);
+        if (!sameObservationExact(current, expected) || current.kind !== "Present") {
+          return yield* rejected(
+            operation,
+            "IdentityChanged",
+            "precommit-revalidation",
+            resolved.path,
+            "Target record changed immediately before atomic removal"
+          );
+        }
+        yield* hit(
+          options,
+          { kind: "BeforeAtomicCommit", address: resolved.address },
+          operation,
+          resolved.path
+        );
+        yield* fs
+          .rename(resolved.path, tombstone)
+          .pipe(mapPlatform(operation, "atomic-remove", resolved.path));
       }
-      yield* hit(options, { kind: "BeforeAtomicCommit", address: resolved.address }, operation, resolved.path);
-      yield* fs.rename(resolved.path, tombstone).pipe(
-        mapPlatform(operation, "atomic-remove", resolved.path),
+      yield* hit(
+        options,
+        { kind: "AfterAtomicCommit", address: resolved.address },
+        operation,
+        resolved.path
       );
-    }
-    yield* hit(options, { kind: "AfterAtomicCommit", address: resolved.address }, operation, resolved.path);
-    yield* syncPath(fs, resolved.directory, operation, "target-parent-sync");
-  }));
+      yield* syncPath(fs, resolved.directory, operation, "target-parent-sync");
+    })
+  );
 }
 
 function readRecord<A extends ProviderRecordAddress>(
@@ -677,7 +819,7 @@ function readRecord<A extends ProviderRecordAddress>(
   roots: ResolvedRoots,
   resolved: ResolvedRecord<A>,
   maxBytes: number,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<ProviderRecordObservation<A>, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
     const present = yield* requireExistingDirectoryChain(
@@ -685,12 +827,12 @@ function readRecord<A extends ProviderRecordAddress>(
       paths,
       roots.controller,
       resolved.directory,
-      operation,
+      operation
     );
     if (!present) return absent(resolved.address);
-    const exists = yield* fs.exists(resolved.path).pipe(
-      mapPlatform(operation, "record-exists", resolved.path),
-    );
+    const exists = yield* fs
+      .exists(resolved.path)
+      .pipe(mapPlatform(operation, "record-exists", resolved.path));
     if (!exists) return absent(resolved.address);
     return yield* readPresentRecord(fs, resolved, maxBytes, operation);
   });
@@ -700,30 +842,30 @@ function readPresentRecord<A extends ProviderRecordAddress>(
   fs: FileSystem.FileSystem,
   resolved: ResolvedRecord<A>,
   maxBytes: number,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<ProviderRecordObservation<A>, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
-    const canonical = yield* fs.realPath(resolved.path).pipe(
-      mapPlatform(operation, "record-realpath", resolved.path),
-    );
-    const before = yield* fs.stat(resolved.path).pipe(
-      mapPlatform(operation, "record-stat", resolved.path),
-    );
+    const canonical = yield* fs
+      .realPath(resolved.path)
+      .pipe(mapPlatform(operation, "record-realpath", resolved.path));
+    const before = yield* fs
+      .stat(resolved.path)
+      .pipe(mapPlatform(operation, "record-stat", resolved.path));
     const size = Number(before.size);
     const nlink = Option.getOrUndefined(before.nlink);
     if (
-      canonical !== resolved.path
-      || before.type !== "File"
-      || nlink !== 1
-      || !Number.isSafeInteger(size)
-      || size < 0
+      canonical !== resolved.path ||
+      before.type !== "File" ||
+      nlink !== 1 ||
+      !Number.isSafeInteger(size) ||
+      size < 0
     ) {
       return yield* rejected(
         operation,
         "Aliased",
         "record-admission",
         resolved.path,
-        "Provider record must be one canonical unaliased regular file",
+        "Provider record must be one canonical unaliased regular file"
       );
     }
     if (size > maxBytes) {
@@ -732,22 +874,22 @@ function readPresentRecord<A extends ProviderRecordAddress>(
         "LimitExceeded",
         "record-size",
         resolved.path,
-        "Provider record exceeds maxBytes",
+        "Provider record exceeds maxBytes"
       );
     }
-    const bytes = yield* fs.readFile(resolved.path).pipe(
-      mapPlatform(operation, "record-read", resolved.path),
-    );
-    const after = yield* fs.stat(resolved.path).pipe(
-      mapPlatform(operation, "record-revalidation", resolved.path),
-    );
+    const bytes = yield* fs
+      .readFile(resolved.path)
+      .pipe(mapPlatform(operation, "record-read", resolved.path));
+    const after = yield* fs
+      .stat(resolved.path)
+      .pipe(mapPlatform(operation, "record-revalidation", resolved.path));
     if (bytes.byteLength !== size || !sameFileInfo(before, after)) {
       return yield* rejected(
         operation,
         "IdentityChanged",
         "record-revalidation",
         resolved.path,
-        "Provider record identity changed while its bytes were read",
+        "Provider record identity changed while its bytes were read"
       );
     }
     return Object.freeze({
@@ -762,19 +904,27 @@ function readPresentRecord<A extends ProviderRecordAddress>(
 function resolveRoots(
   paths: Path.Path,
   options: EffectPlatformNodeAgentProviderRecordsOptions,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<ResolvedRoots, AgentProviderRecordsFailure> {
   return checked(operation, "root-config", undefined, () => {
-    const controller = requireCanonicalLexicalRoot(paths, options.controllerDataRoot, "controllerDataRoot");
+    const controller = requireCanonicalLexicalRoot(
+      paths,
+      options.controllerDataRoot,
+      "controllerDataRoot"
+    );
     const projection = requireCanonicalLexicalRoot(paths, options.projectionRoot, "projectionRoot");
-    const targets = requireCanonicalLexicalRoot(paths, options.targetRecordsRoot, "targetRecordsRoot");
+    const targets = requireCanonicalLexicalRoot(
+      paths,
+      options.targetRecordsRoot,
+      "targetRecordsRoot"
+    );
     if (!isContained(paths, controller, projection) || !isContained(paths, controller, targets)) {
       throw new Error("Projection and target record roots must be contained by controllerDataRoot");
     }
     if (
-      projection === targets
-      || isContained(paths, projection, targets)
-      || isContained(paths, targets, projection)
+      projection === targets ||
+      isContained(paths, projection, targets) ||
+      isContained(paths, targets, projection)
     ) {
       throw new Error("Projection and target record roots must be disjoint");
     }
@@ -786,21 +936,22 @@ function resolveProjectionRecord(
   paths: Path.Path,
   roots: ResolvedRoots,
   address: ProviderProjectionRecordAddress,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<ResolvedRecord<ProviderProjectionRecordAddress>, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
     yield* checked(operation, "projection-address", undefined, () => {
       if (
-        address.scope !== "Projection"
-        || (address.kind !== "Manifest" && address.kind !== "Member")
+        address.scope !== "Projection" ||
+        (address.kind !== "Manifest" && address.kind !== "Member")
       ) {
         throw new Error("Projection address must use one admitted projection record kind");
       }
     });
     yield* validateRecordKey(address.key, operation);
-    const directory = address.kind === "Manifest"
-      ? paths.join(roots.projection, "manifests")
-      : paths.join(roots.projection, "members");
+    const directory =
+      address.kind === "Manifest"
+        ? paths.join(roots.projection, "manifests")
+        : paths.join(roots.projection, "members");
     return Object.freeze({
       address,
       root: roots.projection,
@@ -814,13 +965,13 @@ function resolveTargetRecord(
   paths: Path.Path,
   roots: ResolvedRoots,
   address: ProviderTargetRecordAddress,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<ResolvedRecord<ProviderTargetRecordAddress>, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
     yield* checked(operation, "target-address", undefined, () => {
       if (
-        address.scope !== "Target"
-        || (address.kind !== "Identity" && address.kind !== "Receipt")
+        address.scope !== "Target" ||
+        (address.kind !== "Identity" && address.kind !== "Receipt")
       ) {
         throw new Error("Target address must use one admitted target record kind");
       }
@@ -836,7 +987,11 @@ function resolveTargetRecord(
   });
 }
 
-function targetDirectory(paths: Path.Path, roots: ResolvedRoots, kind: ProviderTargetRecordKind): string {
+function targetDirectory(
+  paths: Path.Path,
+  roots: ResolvedRoots,
+  kind: ProviderTargetRecordKind
+): string {
   return kind === "Identity"
     ? paths.join(roots.targets, "identities")
     : paths.join(roots.targets, "receipts");
@@ -847,7 +1002,7 @@ function ensureDirectoryChain(
   paths: Path.Path,
   controller: string,
   directory: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
     yield* requireControllerRoot(fs, controller, operation);
@@ -855,16 +1010,18 @@ function ensureDirectoryChain(
     let current = controller;
     for (const segment of relative.split(paths.sep).filter((entry) => entry.length > 0)) {
       current = paths.join(current, segment);
-      const exists = yield* fs.exists(current).pipe(
-        mapPlatform(operation, "directory-exists", current),
-      );
+      const exists = yield* fs
+        .exists(current)
+        .pipe(mapPlatform(operation, "directory-exists", current));
       if (!exists) {
         const made = yield* Effect.either(fs.makeDirectory(current, { mode: 0o700 }));
         if (
-          made._tag === "Left"
-          && (made.left._tag !== "SystemError" || made.left.reason !== "AlreadyExists")
+          made._tag === "Left" &&
+          (made.left._tag !== "SystemError" || made.left.reason !== "AlreadyExists")
         ) {
-          return yield* Effect.fail(platformFailure(operation, "directory-create", current, made.left));
+          return yield* Effect.fail(
+            platformFailure(operation, "directory-create", current, made.left)
+          );
         }
       }
       yield* requireCanonicalDirectory(fs, current, operation);
@@ -877,7 +1034,7 @@ function requireExistingDirectoryChain(
   paths: Path.Path,
   controller: string,
   directory: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<boolean, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
     yield* requireControllerRoot(fs, controller, operation);
@@ -885,9 +1042,9 @@ function requireExistingDirectoryChain(
     let current = controller;
     for (const segment of relative.split(paths.sep).filter((entry) => entry.length > 0)) {
       current = paths.join(current, segment);
-      const exists = yield* fs.exists(current).pipe(
-        mapPlatform(operation, "directory-exists", current),
-      );
+      const exists = yield* fs
+        .exists(current)
+        .pipe(mapPlatform(operation, "directory-exists", current));
       if (!exists) return false;
       yield* requireCanonicalDirectory(fs, current, operation);
     }
@@ -898,19 +1055,19 @@ function requireExistingDirectoryChain(
 function requireControllerRoot(
   fs: FileSystem.FileSystem,
   controller: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
-    const exists = yield* fs.exists(controller).pipe(
-      mapPlatform(operation, "controller-root-exists", controller),
-    );
+    const exists = yield* fs
+      .exists(controller)
+      .pipe(mapPlatform(operation, "controller-root-exists", controller));
     if (!exists) {
       return yield* rejected(
         operation,
         "MissingControllerRoot",
         "controller-root",
         controller,
-        "Explicit controller data root does not exist",
+        "Explicit controller data root does not exist"
       );
     }
     yield* requireCanonicalDirectory(fs, controller, operation);
@@ -920,22 +1077,22 @@ function requireControllerRoot(
 function requireCanonicalDirectory(
   fs: FileSystem.FileSystem,
   candidate: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
-    const canonical = yield* fs.realPath(candidate).pipe(
-      mapPlatform(operation, "directory-realpath", candidate),
-    );
-    const info = yield* fs.stat(candidate).pipe(
-      mapPlatform(operation, "directory-stat", candidate),
-    );
+    const canonical = yield* fs
+      .realPath(candidate)
+      .pipe(mapPlatform(operation, "directory-realpath", candidate));
+    const info = yield* fs
+      .stat(candidate)
+      .pipe(mapPlatform(operation, "directory-stat", candidate));
     if (canonical !== candidate || info.type !== "Directory") {
       return yield* rejected(
         operation,
         "Aliased",
         "directory-admission",
         candidate,
-        "Provider record directory must be canonical and non-aliased",
+        "Provider record directory must be canonical and non-aliased"
       );
     }
   });
@@ -946,37 +1103,37 @@ function admitPrivateFile(
   paths: Path.Path,
   parent: string,
   temporary: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
     const allocation = paths.dirname(temporary);
     if (
-      paths.dirname(allocation) !== parent
-      || !paths.basename(allocation).startsWith(PRIVATE_FILE_PREFIX)
+      paths.dirname(allocation) !== parent ||
+      !paths.basename(allocation).startsWith(PRIVATE_FILE_PREFIX)
     ) {
       return yield* rejected(
         "cleanup",
         "CleanupFailed",
         "temporary-containment",
         temporary,
-        "Scoped temporary file escaped its exact record directory",
+        "Scoped temporary file escaped its exact record directory"
       );
     }
     yield* requireCanonicalDirectory(fs, parent, operation);
     yield* requireCanonicalDirectory(fs, allocation, operation);
-    const canonical = yield* fs.realPath(temporary).pipe(
-      mapPlatform(operation, "temporary-realpath", temporary),
-    );
-    const info = yield* fs.stat(temporary).pipe(
-      mapPlatform(operation, "temporary-stat", temporary),
-    );
+    const canonical = yield* fs
+      .realPath(temporary)
+      .pipe(mapPlatform(operation, "temporary-realpath", temporary));
+    const info = yield* fs
+      .stat(temporary)
+      .pipe(mapPlatform(operation, "temporary-stat", temporary));
     if (canonical !== temporary || info.type !== "File") {
       return yield* rejected(
         "cleanup",
         "CleanupFailed",
         "temporary-admission",
         temporary,
-        "Scoped temporary must be a canonical regular file",
+        "Scoped temporary must be a canonical regular file"
       );
     }
   });
@@ -987,19 +1144,19 @@ function admitPrivateDirectory(
   paths: Path.Path,
   parent: string,
   allocation: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
     if (
-      paths.dirname(allocation) !== parent
-      || !paths.basename(allocation).startsWith(PRIVATE_REMOVAL_PREFIX)
+      paths.dirname(allocation) !== parent ||
+      !paths.basename(allocation).startsWith(PRIVATE_REMOVAL_PREFIX)
     ) {
       return yield* rejected(
         "cleanup",
         "CleanupFailed",
         "removal-containment",
         allocation,
-        "Scoped removal directory escaped its exact record directory",
+        "Scoped removal directory escaped its exact record directory"
       );
     }
     yield* requireCanonicalDirectory(fs, parent, operation);
@@ -1012,26 +1169,24 @@ function writeTemporary(
   temporary: string,
   bytes: Uint8Array,
   mode: number,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
-    yield* fs.writeFile(temporary, bytes, { flag: "w", mode }).pipe(
-      mapPlatform(operation, "temporary-write", temporary),
-    );
-    yield* fs.chmod(temporary, mode).pipe(
-      mapPlatform(operation, "temporary-mode", temporary),
-    );
+    yield* fs
+      .writeFile(temporary, bytes, { flag: "w", mode })
+      .pipe(mapPlatform(operation, "temporary-write", temporary));
+    yield* fs.chmod(temporary, mode).pipe(mapPlatform(operation, "temporary-mode", temporary));
     yield* syncPath(fs, temporary, operation, "temporary-sync");
-    const observed = yield* fs.readFile(temporary).pipe(
-      mapPlatform(operation, "temporary-read", temporary),
-    );
+    const observed = yield* fs
+      .readFile(temporary)
+      .pipe(mapPlatform(operation, "temporary-read", temporary));
     if (!equalBytes(observed, bytes)) {
       return yield* rejected(
         operation,
         "IdentityChanged",
         "temporary-verification",
         temporary,
-        "Scoped temporary bytes differ from the write request",
+        "Scoped temporary bytes differ from the write request"
       );
     }
   });
@@ -1041,14 +1196,16 @@ function syncPath(
   fs: FileSystem.FileSystem,
   candidate: string,
   operation: Operation,
-  phase: string,
+  phase: string
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
-  return Effect.scoped(Effect.gen(function* () {
-    const file = yield* fs.open(candidate, { flag: "r" }).pipe(
-      mapPlatform(operation, phase, candidate),
-    );
-    yield* file.sync.pipe(mapPlatform(operation, phase, candidate));
-  }));
+  return Effect.scoped(
+    Effect.gen(function* () {
+      const file = yield* fs
+        .open(candidate, { flag: "r" })
+        .pipe(mapPlatform(operation, phase, candidate));
+      yield* file.sync.pipe(mapPlatform(operation, phase, candidate));
+    })
+  );
 }
 
 function requireCaptureAuthority(
@@ -1060,7 +1217,7 @@ function requireCaptureAuthority(
     captureHandle: string;
   }>,
   operation: "release-target" | "write-target" | "restore-target" | "settle-target",
-  allowRestored = false,
+  allowRestored = false
 ): Effect.Effect<CaptureAuthority, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
     if (consumedHandles.has(input.captureHandle)) {
@@ -1069,7 +1226,7 @@ function requireCaptureAuthority(
         "HandleConsumed",
         "capture-handle",
         undefined,
-        "Capture handle has already been consumed",
+        "Capture handle has already been consumed"
       );
     }
     const authority = captures.get(input.captureHandle);
@@ -1079,7 +1236,7 @@ function requireCaptureAuthority(
         "InvalidHandle",
         "capture-handle",
         undefined,
-        "Capture handle is not owned by this provider instance",
+        "Capture handle is not owned by this provider instance"
       );
     }
     if (!sameAddress(authority.address, input.address)) {
@@ -1088,7 +1245,7 @@ function requireCaptureAuthority(
         "WrongAddress",
         "capture-address",
         undefined,
-        "Capture handle belongs to another provider target record",
+        "Capture handle belongs to another provider target record"
       );
     }
     if (authority.readToken !== input.readToken) {
@@ -1097,7 +1254,7 @@ function requireCaptureAuthority(
         "WrongToken",
         "capture-token",
         undefined,
-        "Capture handle read token does not match",
+        "Capture handle read token does not match"
       );
     }
     if (!allowRestored && authority.lifecycle === "Restored") {
@@ -1106,7 +1263,7 @@ function requireCaptureAuthority(
         "HandleConsumed",
         "capture-lifecycle",
         undefined,
-        "Restored capture handle cannot be written again",
+        "Restored capture handle cannot be written again"
       );
     }
     return authority;
@@ -1116,7 +1273,7 @@ function requireCaptureAuthority(
 function bindPlanAndMutation(
   authority: CaptureAuthority,
   planDigest: string,
-  mutation: ProviderTargetRecordMutation,
+  mutation: ProviderTargetRecordMutation
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
   if (authority.planDigest !== undefined && authority.planDigest !== planDigest) {
     return rejected(
@@ -1124,7 +1281,7 @@ function bindPlanAndMutation(
       "WrongPlan",
       "write-binding",
       undefined,
-      "Capture handle is already bound to another plan",
+      "Capture handle is already bound to another plan"
     );
   }
   if (authority.mutation !== undefined && !sameMutation(authority.mutation, mutation)) {
@@ -1133,7 +1290,7 @@ function bindPlanAndMutation(
       "WrongPlan",
       "write-binding",
       undefined,
-      "Capture handle is already bound to another mutation",
+      "Capture handle is already bound to another mutation"
     );
   }
   authority.planDigest = planDigest;
@@ -1141,13 +1298,20 @@ function bindPlanAndMutation(
   return Effect.void;
 }
 
-function validateRecordKey(key: string, operation: Operation): Effect.Effect<void, AgentProviderRecordsFailure> {
+function validateRecordKey(
+  key: string,
+  operation: Operation
+): Effect.Effect<void, AgentProviderRecordsFailure> {
   return checked(operation, "record-key", undefined, () => {
-    if (!RECORD_KEY_PATTERN.test(key)) throw new Error("Record key must be one bounded path-free segment");
+    if (!RECORD_KEY_PATTERN.test(key))
+      throw new Error("Record key must be one bounded path-free segment");
   });
 }
 
-function validateLimit(maxBytes: number, operation: Operation): Effect.Effect<void, AgentProviderRecordsFailure> {
+function validateLimit(
+  maxBytes: number,
+  operation: Operation
+): Effect.Effect<void, AgentProviderRecordsFailure> {
   return checked(operation, "max-bytes", undefined, () => {
     if (!Number.isSafeInteger(maxBytes) || maxBytes < 0 || maxBytes > MAX_RECORD_BYTES) {
       throw new Error(`maxBytes must be a safe integer between zero and ${MAX_RECORD_BYTES}`);
@@ -1158,7 +1322,7 @@ function validateLimit(maxBytes: number, operation: Operation): Effect.Effect<vo
 function validateBytes(
   bytes: Uint8Array,
   maxBytes: number,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
   return Effect.gen(function* () {
     yield* validateLimit(maxBytes, operation);
@@ -1168,7 +1332,7 @@ function validateBytes(
         "LimitExceeded",
         "record-bytes",
         undefined,
-        "Record bytes exceed their declared bound",
+        "Record bytes exceed their declared bound"
       );
     }
   });
@@ -1177,7 +1341,7 @@ function validateBytes(
 function validateOpaque(
   value: string,
   label: string,
-  operation: Operation,
+  operation: Operation
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
   return checked(operation, label, undefined, () => {
     if (value.length < 1 || value.length > 512 || /[\u0000-\u001f\u007f]/u.test(value)) {
@@ -1195,10 +1359,12 @@ function requireCanonicalLexicalRoot(paths: Path.Path, root: string, label: stri
 
 function isContained(paths: Path.Path, root: string, candidate: string): boolean {
   const relative = paths.relative(root, candidate);
-  return relative !== ""
-    && relative !== ".."
-    && !relative.startsWith(`..${paths.sep}`)
-    && !paths.isAbsolute(relative);
+  return (
+    relative !== "" &&
+    relative !== ".." &&
+    !relative.startsWith(`..${paths.sep}`) &&
+    !paths.isAbsolute(relative)
+  );
 }
 
 function recordIdentity(info: FileSystem.File.Info): ProviderRecordIdentity {
@@ -1212,18 +1378,21 @@ function recordIdentity(info: FileSystem.File.Info): ProviderRecordIdentity {
 }
 
 function sameFileInfo(left: FileSystem.File.Info, right: FileSystem.File.Info): boolean {
-  return left.type === right.type
-    && left.dev === right.dev
-    && Option.getOrUndefined(left.ino) === Option.getOrUndefined(right.ino)
-    && left.mode === right.mode
-    && Number(left.size) === Number(right.size)
-    && Option.getOrUndefined(left.mtime)?.getTime() === Option.getOrUndefined(right.mtime)?.getTime()
-    && Option.getOrUndefined(left.nlink) === Option.getOrUndefined(right.nlink);
+  return (
+    left.type === right.type &&
+    left.dev === right.dev &&
+    Option.getOrUndefined(left.ino) === Option.getOrUndefined(right.ino) &&
+    left.mode === right.mode &&
+    Number(left.size) === Number(right.size) &&
+    Option.getOrUndefined(left.mtime)?.getTime() ===
+      Option.getOrUndefined(right.mtime)?.getTime() &&
+    Option.getOrUndefined(left.nlink) === Option.getOrUndefined(right.nlink)
+  );
 }
 
 function sameObservationExact<A extends ProviderRecordAddress>(
   left: ProviderRecordObservation<A>,
-  right: ProviderRecordObservation<A>,
+  right: ProviderRecordObservation<A>
 ): boolean {
   if (!sameAddress(left.address, right.address) || left.kind !== right.kind) return false;
   if (left.kind === "Absent" || right.kind === "Absent") return true;
@@ -1232,7 +1401,7 @@ function sameObservationExact<A extends ProviderRecordAddress>(
 
 function sameObservationValue<A extends ProviderRecordAddress>(
   left: ProviderRecordObservation<A>,
-  right: ProviderRecordObservation<A>,
+  right: ProviderRecordObservation<A>
 ): boolean {
   if (!sameAddress(left.address, right.address) || left.kind !== right.kind) return false;
   return left.kind === "Absent" || right.kind === "Absent"
@@ -1241,11 +1410,13 @@ function sameObservationValue<A extends ProviderRecordAddress>(
 }
 
 function sameIdentity(left: ProviderRecordIdentity, right: ProviderRecordIdentity): boolean {
-  return left.dev === right.dev
-    && left.ino === right.ino
-    && left.mode === right.mode
-    && left.size === right.size
-    && left.mtimeMillis === right.mtimeMillis;
+  return (
+    left.dev === right.dev &&
+    left.ino === right.ino &&
+    left.mode === right.mode &&
+    left.size === right.size &&
+    left.mtimeMillis === right.mtimeMillis
+  );
 }
 
 function sameAddress(left: ProviderRecordAddress, right: ProviderRecordAddress): boolean {
@@ -1255,14 +1426,19 @@ function sameAddress(left: ProviderRecordAddress, right: ProviderRecordAddress):
     : left.scope === "Target" && right.scope === "Target" && left.targetKey === right.targetKey;
 }
 
-function sameMutation(left: ProviderTargetRecordMutation, right: ProviderTargetRecordMutation): boolean {
-  return left.kind === right.kind
-    && (left.kind === "Remove" || (right.kind === "Put" && equalBytes(left.bytes, right.bytes)));
+function sameMutation(
+  left: ProviderTargetRecordMutation,
+  right: ProviderTargetRecordMutation
+): boolean {
+  return (
+    left.kind === right.kind &&
+    (left.kind === "Remove" || (right.kind === "Put" && equalBytes(left.bytes, right.bytes)))
+  );
 }
 
 function mutationMatches(
   mutation: ProviderTargetRecordMutation,
-  observation: ProviderRecordObservation<ProviderTargetRecordAddress>,
+  observation: ProviderRecordObservation<ProviderTargetRecordAddress>
 ): boolean {
   return mutation.kind === "Remove"
     ? observation.kind === "Absent"
@@ -1272,13 +1448,13 @@ function mutationMatches(
 function recordMatches<A extends ProviderRecordAddress>(
   bytes: Uint8Array,
   observation: Extract<ProviderRecordObservation<A>, { readonly kind: "Present" }>,
-  mode: number,
+  mode: number
 ): boolean {
   return equalBytes(bytes, observation.bytes) && (observation.identity.mode & 0o777) === mode;
 }
 
 function observationMutation(
-  observation: ProviderRecordObservation<ProviderTargetRecordAddress>,
+  observation: ProviderRecordObservation<ProviderTargetRecordAddress>
 ): ProviderTargetRecordMutation {
   return observation.kind === "Absent"
     ? Object.freeze({ kind: "Remove" })
@@ -1292,16 +1468,16 @@ function copyMutation(mutation: ProviderTargetRecordMutation): ProviderTargetRec
 }
 
 function copyObservation<A extends ProviderRecordAddress>(
-  observation: ProviderRecordObservation<A>,
+  observation: ProviderRecordObservation<A>
 ): ProviderRecordObservation<A> {
   return observation.kind === "Absent"
     ? Object.freeze({ kind: "Absent", address: observation.address })
     : Object.freeze({
-      kind: "Present",
-      address: observation.address,
-      identity: observation.identity,
-      bytes: new Uint8Array(observation.bytes),
-    });
+        kind: "Present",
+        address: observation.address,
+        identity: observation.identity,
+        bytes: new Uint8Array(observation.bytes),
+      });
 }
 
 function absent<A extends ProviderRecordAddress>(address: A): ProviderRecordObservation<A> {
@@ -1310,7 +1486,7 @@ function absent<A extends ProviderRecordAddress>(address: A): ProviderRecordObse
 
 function publication(
   outcome: ProviderRecordPublicationReceipt["outcome"],
-  address: ProviderProjectionRecordAddress,
+  address: ProviderProjectionRecordAddress
 ): ProviderRecordPublicationReceipt {
   return Object.freeze({ outcome, address });
 }
@@ -1321,7 +1497,7 @@ function writeReceipt(
     planDigest: string;
     readToken: string;
   }>,
-  outcome: ProviderTargetRecordWriteReceipt["outcome"],
+  outcome: ProviderTargetRecordWriteReceipt["outcome"]
 ): ProviderTargetRecordWriteReceipt {
   return Object.freeze({
     planDigest: input.planDigest,
@@ -1337,7 +1513,7 @@ function restoreReceipt(
     planDigest: string;
     readToken: string;
   }>,
-  changed: boolean,
+  changed: boolean
 ): ProviderTargetRecordRestoreReceipt {
   return Object.freeze({
     planDigest: input.planDigest,
@@ -1352,7 +1528,7 @@ function hit(
   options: EffectPlatformNodeAgentProviderRecordsOptions,
   event: AgentProviderRecordsEvent,
   operation: Operation,
-  path: string,
+  path: string
 ): Effect.Effect<void, AgentProviderRecordsFailure> {
   const onEvent = options.onEvent;
   if (onEvent === undefined) return Effect.void;
@@ -1360,13 +1536,14 @@ function hit(
     try: async () => {
       await onEvent(event);
     },
-    catch: (cause) => failure(
-      operation,
-      "FilesystemFailed",
-      `event:${event.kind}`,
-      path,
-      `Provider event failed: ${errorMessage(cause)}`,
-    ),
+    catch: (cause) =>
+      failure(
+        operation,
+        "FilesystemFailed",
+        `event:${event.kind}`,
+        path,
+        `Provider event failed: ${errorMessage(cause)}`
+      ),
   });
 }
 
@@ -1374,17 +1551,11 @@ function checked<A>(
   operation: Operation,
   phase: string,
   path: string | undefined,
-  evaluate: () => A,
+  evaluate: () => A
 ): Effect.Effect<A, AgentProviderRecordsFailure> {
   return Effect.try({
     try: evaluate,
-    catch: (cause) => failure(
-      operation,
-      "InvalidInput",
-      phase,
-      path,
-      errorMessage(cause),
-    ),
+    catch: (cause) => failure(operation, "InvalidInput", phase, path, errorMessage(cause)),
   });
 }
 
@@ -1392,18 +1563,17 @@ function mapPlatform(
   operation: Operation,
   phase: string,
   path: string,
-  reason: AgentProviderRecordsFailureReason = "FilesystemFailed",
+  reason: AgentProviderRecordsFailureReason = "FilesystemFailed"
 ) {
-  return <A, R>(effect: Effect.Effect<A, PlatformError, R>) => effect.pipe(
-    Effect.mapError((cause) => failure(operation, reason, phase, path, cause.message)),
-  );
+  return <A, R>(effect: Effect.Effect<A, PlatformError, R>) =>
+    effect.pipe(Effect.mapError((cause) => failure(operation, reason, phase, path, cause.message)));
 }
 
 function platformFailure(
   operation: Operation,
   phase: string,
   path: string,
-  cause: PlatformError,
+  cause: PlatformError
 ): AgentProviderRecordsFailure {
   return failure(operation, "FilesystemFailed", phase, path, cause.message);
 }
@@ -1413,7 +1583,7 @@ function rejected(
   reason: AgentProviderRecordsFailureReason,
   phase: string,
   path: string | undefined,
-  detail: string,
+  detail: string
 ): Effect.Effect<never, AgentProviderRecordsFailure> {
   return Effect.fail(failure(operation, reason, phase, path, detail));
 }
@@ -1423,7 +1593,7 @@ function failure(
   reason: AgentProviderRecordsFailureReason,
   phase: string,
   path: string | undefined,
-  detail: string,
+  detail: string
 ): AgentProviderRecordsFailure {
   return Object.freeze({
     _tag: "AgentProviderRecordsFailure",
@@ -1436,16 +1606,17 @@ function failure(
 }
 
 function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
-  return left.byteLength === right.byteLength
-    && left.every((value, index) => value === right[index]);
+  return (
+    left.byteLength === right.byteLength && left.every((value, index) => value === right[index])
+  );
 }
 
 function errorMessage(error: unknown): string {
   if (
-    error !== null
-    && typeof error === "object"
-    && "detail" in error
-    && typeof error.detail === "string"
+    error !== null &&
+    typeof error === "object" &&
+    "detail" in error &&
+    typeof error.detail === "string"
   ) {
     return error.detail;
   }
@@ -1453,9 +1624,9 @@ function errorMessage(error: unknown): string {
 }
 
 function runOrReject<A>(
-  operation: Effect.Effect<A, AgentProviderRecordsFailure, ProviderRequirements>,
+  operation: Effect.Effect<A, AgentProviderRecordsFailure, ProviderRequirements>
 ): Promise<A> {
-  return runNodeAgentProviderRecords(operation).then((result) => result.ok
-    ? result.value
-    : Promise.reject(result.failure));
+  return runNodeAgentProviderRecords(operation).then((result) =>
+    result.ok ? result.value : Promise.reject(result.failure)
+  );
 }

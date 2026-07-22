@@ -41,21 +41,25 @@ export const NativeAgentProviderFailureReasonSchema = Type.Union([
   Type.Literal("FilesystemFailed"),
 ]);
 
-export const NativeAgentProviderFailureSchema = Type.Readonly(Type.Object(
-  {
-    _tag: Type.Literal("NativeAgentProviderFailure"),
-    provider: NativeAgentProviderIdSchema,
-    operation: NativeAgentProviderOperationSchema,
-    reason: NativeAgentProviderFailureReasonSchema,
-    path: Type.Optional(Type.String()),
-    detail: Type.String(),
-  },
-  { additionalProperties: false },
-));
+export const NativeAgentProviderFailureSchema = Type.Readonly(
+  Type.Object(
+    {
+      _tag: Type.Literal("NativeAgentProviderFailure"),
+      provider: NativeAgentProviderIdSchema,
+      operation: NativeAgentProviderOperationSchema,
+      reason: NativeAgentProviderFailureReasonSchema,
+      path: Type.Optional(Type.String()),
+      detail: Type.String(),
+    },
+    { additionalProperties: false }
+  )
+);
 
 export type NativeAgentProviderId = Static<typeof NativeAgentProviderIdSchema>;
 export type NativeAgentProviderOperation = Static<typeof NativeAgentProviderOperationSchema>;
-export type NativeAgentProviderFailureReason = Static<typeof NativeAgentProviderFailureReasonSchema>;
+export type NativeAgentProviderFailureReason = Static<
+  typeof NativeAgentProviderFailureReasonSchema
+>;
 export type NativeAgentProviderFailure = Static<typeof NativeAgentProviderFailureSchema>;
 
 /** Recognizes the complete resource-owned failure contract at host boundaries. */
@@ -128,19 +132,25 @@ export interface NativeAgentProviderSessionBase {
   readonly executablePath: string;
   readonly home: string;
   readonly probe: () => Effect.Effect<NativeProviderCapabilityProbe, NativeAgentProviderFailure>;
-  readonly listMarketplaces: () => Effect.Effect<NativeProviderJsonObservation, NativeAgentProviderFailure>;
+  readonly listMarketplaces: () => Effect.Effect<
+    NativeProviderJsonObservation,
+    NativeAgentProviderFailure
+  >;
   readonly addMarketplace: (
-    source: ArtifactTreeLocation,
+    source: ArtifactTreeLocation
   ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
   readonly readMarketplace: (
-    input: NativeProviderMarketplaceReadInput,
+    input: NativeProviderMarketplaceReadInput
   ) => Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure>;
   readonly removeMarketplace: (
-    input: NativeProviderMarketplaceIdentityInput,
+    input: NativeProviderMarketplaceIdentityInput
   ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
-  readonly listPlugins: () => Effect.Effect<NativeProviderJsonObservation, NativeAgentProviderFailure>;
+  readonly listPlugins: () => Effect.Effect<
+    NativeProviderJsonObservation,
+    NativeAgentProviderFailure
+  >;
   readonly readPlugin: (
-    input: NativeProviderPluginReadInput,
+    input: NativeProviderPluginReadInput
   ) => Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure>;
 }
 
@@ -152,40 +162,49 @@ export interface CodexAppServerObservation {
 export interface CodexNativeAgentProviderSession extends NativeAgentProviderSessionBase {
   readonly provider: "codex";
   readonly addPlugin: (
-    input: NativeProviderPluginSelectorInput,
+    input: NativeProviderPluginSelectorInput
   ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
   readonly removePlugin: (
-    input: NativeProviderPluginSelectorInput,
+    input: NativeProviderPluginSelectorInput
   ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
-  readonly inspectAppServer: () => Effect.Effect<CodexAppServerObservation, NativeAgentProviderFailure>;
-  readonly readConfiguration: () => Effect.Effect<NativeProviderJsonValue, NativeAgentProviderFailure>;
+  readonly inspectAppServer: () => Effect.Effect<
+    CodexAppServerObservation,
+    NativeAgentProviderFailure
+  >;
+  readonly readConfiguration: () => Effect.Effect<
+    NativeProviderJsonValue,
+    NativeAgentProviderFailure
+  >;
   readonly setMarketplaceSource: (
-    input: Readonly<{ identity: string; source: ArtifactTreeLocation }>,
+    input: Readonly<{ identity: string; source: ArtifactTreeLocation }>
   ) => Effect.Effect<void, NativeAgentProviderFailure>;
   readonly setPluginEnabled: (
-    input: Readonly<{ selector: string; enabled: boolean }>,
+    input: Readonly<{ selector: string; enabled: boolean }>
   ) => Effect.Effect<void, NativeAgentProviderFailure>;
 }
 
 export interface ClaudeNativeAgentProviderSession extends NativeAgentProviderSessionBase {
   readonly provider: "claude";
   readonly installPlugin: (
-    input: NativeProviderPluginSelectorInput,
+    input: NativeProviderPluginSelectorInput
   ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
   readonly enablePlugin: (
-    input: NativeProviderPluginSelectorInput,
+    input: NativeProviderPluginSelectorInput
   ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
   readonly disablePlugin: (
-    input: NativeProviderPluginSelectorInput,
+    input: NativeProviderPluginSelectorInput
   ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
   readonly uninstallPlugin: (
-    input: NativeProviderPluginSelectorInput,
+    input: NativeProviderPluginSelectorInput
   ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
-  readonly readConfiguration: () => Effect.Effect<NativeProviderJsonValue | null, NativeAgentProviderFailure>;
+  readonly readConfiguration: () => Effect.Effect<
+    NativeProviderJsonValue | null,
+    NativeAgentProviderFailure
+  >;
 }
 
 export interface NativeAgentProviderResource<Session, R = never> {
   readonly acquire: (
-    input: NativeProviderSessionInput,
+    input: NativeProviderSessionInput
   ) => Effect.Effect<Session, NativeAgentProviderFailure, R>;
 }

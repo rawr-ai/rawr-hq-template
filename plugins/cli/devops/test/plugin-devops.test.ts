@@ -11,7 +11,12 @@ import DevStackDrain from "../src/commands/dev/stack/drain";
 import DevWorktreeCleanup from "../src/commands/dev/worktree/cleanup";
 
 const PLUGIN_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const COMMAND_TEST_CLI = path.join(PLUGIN_ROOT, "test", "command-fixture", "devops-command-test-cli.ts");
+const COMMAND_TEST_CLI = path.join(
+  PLUGIN_ROOT,
+  "test",
+  "command-fixture",
+  "devops-command-test-cli.ts"
+);
 const TEMP_DIR_PREFIX = "rawr-plugin-devops-cli-";
 const BUN_EXECUTABLE = resolveBunExecutable();
 const tempDirs: string[] = [];
@@ -43,7 +48,11 @@ async function makeFixture(): Promise<{ fixturePath: string; logPath: string; ho
       logPath,
       default: { exitCode: 127, stderr: "forbidden command" },
       commands: [
-        { command: "git", args: ["status", "--short", "--branch"], stdout: "## agent/devops...origin/agent/devops\n" },
+        {
+          command: "git",
+          args: ["status", "--short", "--branch"],
+          stdout: "## agent/devops...origin/agent/devops\n",
+        },
         { command: "gt", args: ["ls"], stdout: "◉ agent/devops\n" },
         {
           command: "git",
@@ -60,26 +69,34 @@ async function makeFixture(): Promise<{ fixturePath: string; logPath: string; ho
         },
         { command: "git", args: ["config", "--get", "rawr.upstreamRef"], exitCode: 1 },
         { command: "git", args: ["rev-parse", "--verify", "origin/main"], stdout: "abc\n" },
-        { command: "git", args: ["branch", "--merged", "main", "--list", "agent/devops-old"], stdout: "agent/devops-old\n" },
+        {
+          command: "git",
+          args: ["branch", "--merged", "main", "--list", "agent/devops-old"],
+          stdout: "agent/devops-old\n",
+        },
         { command: "pwd", args: ["-P"], stdout: "/repo/rawr\n" },
         { command: "git", exitCode: 1 },
       ],
     }),
-    "utf8",
+    "utf8"
   );
   return { fixturePath, logPath, home };
 }
 
 function runDevops(args: readonly string[], env: Readonly<Record<string, string>>) {
-  return spawnSync(BUN_EXECUTABLE, ["--config=/dev/null", "--no-env-file", "--no-install", COMMAND_TEST_CLI, ...args], {
-    cwd: PLUGIN_ROOT,
-    encoding: "utf8",
-    maxBuffer: 10 * 1024 * 1024,
-    env: {
-      ...process.env,
-      ...env,
-    },
-  });
+  return spawnSync(
+    BUN_EXECUTABLE,
+    ["--config=/dev/null", "--no-env-file", "--no-install", COMMAND_TEST_CLI, ...args],
+    {
+      cwd: PLUGIN_ROOT,
+      encoding: "utf8",
+      maxBuffer: 10 * 1024 * 1024,
+      env: {
+        ...process.env,
+        ...env,
+      },
+    }
+  );
 }
 
 function resolveBunExecutable(): string {
@@ -92,9 +109,10 @@ function resolveBunExecutable(): string {
       .map((directory) => path.join(directory, "bun")),
   ];
   const executable = candidates.find(
-    (candidate): candidate is string => typeof candidate === "string" && existsSync(candidate),
+    (candidate): candidate is string => typeof candidate === "string" && existsSync(candidate)
   );
-  if (!executable) throw new Error("The @rawr/plugin-devops command test requires an absolute Bun executable");
+  if (!executable)
+    throw new Error("The @rawr/plugin-devops command test requires an absolute Bun executable");
   return path.resolve(executable);
 }
 
@@ -121,28 +139,32 @@ function parseSuccessEnvelope(proc: CommandProcess): { ok: true; data: Record<st
 
 async function readCalls(logPath: string): Promise<LoggedCall[]> {
   const raw = await fs.readFile(logPath, "utf8");
-  return raw.trim().split("\n").filter(Boolean).map((line) => {
-    const parsed: unknown = JSON.parse(line);
-    if (
-      !isRecord(parsed)
-      || typeof parsed.command !== "string"
-      || !Array.isArray(parsed.args)
-      || !parsed.args.every((arg) => typeof arg === "string")
-      || typeof parsed.cwd !== "string"
-    ) {
-      throw new Error("Invalid RAWR dev command fixture log entry");
-    }
-    return { command: parsed.command, args: parsed.args, cwd: parsed.cwd };
-  });
+  return raw
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => {
+      const parsed: unknown = JSON.parse(line);
+      if (
+        !isRecord(parsed) ||
+        typeof parsed.command !== "string" ||
+        !Array.isArray(parsed.args) ||
+        !parsed.args.every((arg) => typeof arg === "string") ||
+        typeof parsed.cwd !== "string"
+      ) {
+        throw new Error("Invalid RAWR dev command fixture log entry");
+      }
+      return { command: parsed.command, args: parsed.args, cwd: parsed.cwd };
+    });
 }
 
 function requireOwnedTempDir(candidate: string): string {
   const resolved = path.resolve(candidate);
   const tempRoot = path.resolve(os.tmpdir());
   if (
-    path.dirname(resolved) !== tempRoot
-    || !path.basename(resolved).startsWith(TEMP_DIR_PREFIX)
-    || resolved === path.parse(resolved).root
+    path.dirname(resolved) !== tempRoot ||
+    !path.basename(resolved).startsWith(TEMP_DIR_PREFIX) ||
+    resolved === path.parse(resolved).root
   ) {
     throw new Error(`Refusing to remove unowned test directory: ${candidate}`);
   }
@@ -172,7 +194,9 @@ describe("@rawr/plugin-devops command surface", () => {
     expect(output).toContain("dev worktree");
   });
 
-  it("returns strict planning envelopes without running mutating commands by default", { timeout: 20_000 }, async () => {
+  it("returns strict planning envelopes without running mutating commands by default", {
+    timeout: 20_000,
+  }, async () => {
     const fixture = await makeFixture();
     const env = commandEnvironment(fixture);
     const commands = [
@@ -190,7 +214,9 @@ describe("@rawr/plugin-devops command surface", () => {
       expect(isRecord(execution) && execution.ok).toBe(true);
     }
 
-    const rendered = (await readCalls(fixture.logPath)).map((call) => `${call.command} ${call.args.join(" ")}`);
+    const rendered = (await readCalls(fixture.logPath)).map(
+      (call) => `${call.command} ${call.args.join(" ")}`
+    );
     const mutatingPrefixes = [
       "git fetch ",
       "git merge ",
@@ -202,26 +228,34 @@ describe("@rawr/plugin-devops command surface", () => {
       "gt ss ",
       "gt sync ",
     ];
-    expect(rendered.filter((call) => mutatingPrefixes.some((prefix) => call.startsWith(prefix)))).toEqual([]);
+    expect(
+      rendered.filter((call) => mutatingPrefixes.some((prefix) => call.startsWith(prefix)))
+    ).toEqual([]);
   });
 
   it("returns nonzero and stops sequencing when an applied stack command fails", async () => {
     const fixture = await makeFixture();
     const proc = runDevops(
       ["dev", "stack", "drain", "--json", "--apply"],
-      commandEnvironment(fixture),
+      commandEnvironment(fixture)
     );
 
     expect(proc.status).toBe(1);
     const envelope = parseSuccessEnvelope(proc);
     const execution = envelope.data.execution;
-    if (!isRecord(execution) || !Array.isArray(execution.issues) || !isRecord(execution.issues[0])) {
+    if (
+      !isRecord(execution) ||
+      !Array.isArray(execution.issues) ||
+      !isRecord(execution.issues[0])
+    ) {
       throw new Error("Expected a failed execution issue in the RAWR JSON envelope");
     }
     expect(execution.ok).toBe(false);
     expect(execution.issues[0].code).toBe("STACK_DRAIN_COMMAND_FAILED");
 
-    const rendered = (await readCalls(fixture.logPath)).map((call) => `${call.command} ${call.args.join(" ")}`);
+    const rendered = (await readCalls(fixture.logPath)).map(
+      (call) => `${call.command} ${call.args.join(" ")}`
+    );
     expect(rendered.some((call) => call.startsWith("gt ss --publish"))).toBe(true);
     expect(rendered).not.toContain("gt merge --no-interactive");
     expect(rendered).not.toContain("gt sync --no-restack --no-interactive");

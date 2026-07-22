@@ -1,4 +1,9 @@
-import type { Middleware, MiddlewareOptions, MiddlewareOutputFn, MiddlewareResult } from "@orpc/server";
+import type {
+  Middleware,
+  MiddlewareOptions,
+  MiddlewareOutputFn,
+  MiddlewareResult,
+} from "@orpc/server";
 
 import type { BaseMetadata } from "../baseline/types";
 import type { ProvidedContext, ReservedContextKey } from "../context/types";
@@ -15,33 +20,30 @@ type MaybePromise<T> = T | Promise<T>;
 type NonReservedOutput<T extends object> =
   Extract<keyof T, ReservedContextKey> extends never ? T : never;
 
-type ExistingProvided<TContext extends object> =
-  TContext extends { provided: infer TProvided extends object } ? TProvided : {};
+type ExistingProvided<TContext extends object> = TContext extends {
+  provided: infer TProvided extends object;
+}
+  ? TProvided
+  : {};
 
-type NonOverlappingProvided<
-  TContext extends object,
-  TAdded extends object,
-> = Extract<keyof ExistingProvided<TContext>, keyof TAdded> extends never ? TAdded : never;
+type NonOverlappingProvided<TContext extends object, TAdded extends object> =
+  Extract<keyof ExistingProvided<TContext>, keyof TAdded> extends never ? TAdded : never;
 
-type MergeProvided<
-  TContext extends object,
-  TAdded extends object,
-> = ProvidedContext<ExistingProvided<TContext> & TAdded>;
+type MergeProvided<TContext extends object, TAdded extends object> = ProvidedContext<
+  ExistingProvided<TContext> & TAdded
+>;
 
-type AuthoringOptions<
-  TInContext extends object,
-  TMeta extends BaseMetadata,
-> = Omit<MiddlewareOptions<TInContext, any, any, TMeta>, "next">;
+type AuthoringOptions<TInContext extends object, TMeta extends BaseMetadata> = Omit<
+  MiddlewareOptions<TInContext, any, any, TMeta>,
+  "next"
+>;
 
-type NormalMiddlewareCallback<
-  TInContext extends object,
-  TMeta extends BaseMetadata,
-> = (
+type NormalMiddlewareCallback<TInContext extends object, TMeta extends BaseMetadata> = (
   options: AuthoringOptions<TInContext, TMeta> & {
     next(): MiddlewareResult<Record<never, never>, any>;
   },
   input: unknown,
-  output: MiddlewareOutputFn<unknown>,
+  output: MiddlewareOutputFn<unknown>
 ) => MaybePromise<MiddlewareResult<Record<never, never>, any>>;
 
 type ProviderCallback<
@@ -51,20 +53,20 @@ type ProviderCallback<
 > = (
   options: AuthoringOptions<TInContext, TMeta> & {
     next(
-      provided: NonReservedOutput<NonOverlappingProvided<TInContext, TAdded>>,
+      provided: NonReservedOutput<NonOverlappingProvided<TInContext, TAdded>>
     ): MiddlewareResult<MergeProvided<TInContext, TAdded>, unknown>;
   },
   input: unknown,
-  output: MiddlewareOutputFn<unknown>,
+  output: MiddlewareOutputFn<unknown>
 ) => MaybePromise<MiddlewareResult<MergeProvided<TInContext, TAdded>, unknown>>;
 
 function assertNoProvidedKeyCollisions(
   currentProvided: object,
   nextProvided: object,
-  builderKind: "shared" | "service",
+  builderKind: "shared" | "service"
 ) {
   const overlappingKeys = Object.keys(nextProvided).filter((key) =>
-    Object.prototype.hasOwnProperty.call(currentProvided, key),
+    Object.prototype.hasOwnProperty.call(currentProvided, key)
   );
 
   if (overlappingKeys.length === 0) {
@@ -72,7 +74,7 @@ function assertNoProvidedKeyCollisions(
   }
 
   throw new Error(
-    `${builderKind} provider attempted to overwrite existing provided keys: ${overlappingKeys.join(", ")}`,
+    `${builderKind} provider attempted to overwrite existing provided keys: ${overlappingKeys.join(", ")}`
   );
 }
 
@@ -82,23 +84,22 @@ function assertNoProvidedKeyCollisions(
 export function createNormalMiddlewareBuilder<
   TRequiredContext extends object = {},
   TMeta extends BaseMetadata = BaseMetadata,
->(
-  options: CreateMiddlewareBuilderOptions<TMeta>,
-) {
+>(options: CreateMiddlewareBuilderOptions<TMeta>) {
   return {
     middleware(callback: NormalMiddlewareCallback<TRequiredContext, TMeta>) {
-      const middleware: Middleware<
-        TRequiredContext,
-        Record<never, never>,
-        any,
-        any,
-        any,
-        TMeta
-      > = (middlewareOptions, input, output) => {
-        return callback({
-          ...middlewareOptions,
-          next: () => middlewareOptions.next(),
-        }, input, output);
+      const middleware: Middleware<TRequiredContext, Record<never, never>, any, any, any, TMeta> = (
+        middlewareOptions,
+        input,
+        output
+      ) => {
+        return callback(
+          {
+            ...middlewareOptions,
+            next: () => middlewareOptions.next(),
+          },
+          input,
+          output
+        );
       };
 
       return middleware;
@@ -109,14 +110,9 @@ export function createNormalMiddlewareBuilder<
 function createProviderBuilder<
   TRequiredContext extends object = {},
   TMeta extends BaseMetadata = BaseMetadata,
->(
-  _options: CreateMiddlewareBuilderOptions<TMeta>,
-  builderKind: "shared" | "service",
-) {
+>(_options: CreateMiddlewareBuilderOptions<TMeta>, builderKind: "shared" | "service") {
   return {
-    middleware<TAdded extends object>(
-      callback: ProviderCallback<TRequiredContext, TAdded, TMeta>,
-    ) {
+    middleware<TAdded extends object>(callback: ProviderCallback<TRequiredContext, TAdded, TMeta>) {
       const middleware: Middleware<
         TRequiredContext,
         MergeProvided<TRequiredContext, TAdded>,
@@ -125,25 +121,30 @@ function createProviderBuilder<
         any,
         TMeta
       > = (middlewareOptions, input, output) => {
-        return callback({
-          ...middlewareOptions,
-          next: (provided) => {
-            const currentProvided = (middlewareOptions.context as { provided?: object }).provided ?? {};
-            assertNoProvidedKeyCollisions(currentProvided, provided, builderKind);
+        return callback(
+          {
+            ...middlewareOptions,
+            next: (provided) => {
+              const currentProvided =
+                (middlewareOptions.context as { provided?: object }).provided ?? {};
+              assertNoProvidedKeyCollisions(currentProvided, provided, builderKind);
 
-            // oRPC correctly merges the nested execution context here, but TS does not
-            // preserve the widened `provided` bag through `middlewareOptions.next(...)`.
-            // Keep the cast local to this seam and pin the behavior with tests.
-            return middlewareOptions.next({
-              context: {
-                provided: {
-                  ...currentProvided,
-                  ...provided,
+              // oRPC correctly merges the nested execution context here, but TS does not
+              // preserve the widened `provided` bag through `middlewareOptions.next(...)`.
+              // Keep the cast local to this seam and pin the behavior with tests.
+              return middlewareOptions.next({
+                context: {
+                  provided: {
+                    ...currentProvided,
+                    ...provided,
+                  },
                 },
-              },
-            }) as unknown as MiddlewareResult<MergeProvided<TRequiredContext, TAdded>, unknown>;
+              }) as unknown as MiddlewareResult<MergeProvided<TRequiredContext, TAdded>, unknown>;
+            },
           },
-        }, input, output);
+          input,
+          output
+        );
       };
 
       return middleware;
@@ -160,9 +161,7 @@ function createProviderBuilder<
 export function createSharedProviderBuilder<
   TRequiredContext extends object = {},
   TMeta extends BaseMetadata = BaseMetadata,
->(
-  options: CreateMiddlewareBuilderOptions<TMeta>,
-) {
+>(options: CreateMiddlewareBuilderOptions<TMeta>) {
   return createProviderBuilder<TRequiredContext, TMeta>(options, "shared");
 }
 
@@ -176,8 +175,6 @@ export function createSharedProviderBuilder<
 export function createServiceProviderBuilder<
   TRequiredContext extends object = {},
   TMeta extends BaseMetadata = BaseMetadata,
->(
-  options: CreateMiddlewareBuilderOptions<TMeta>,
-) {
+>(options: CreateMiddlewareBuilderOptions<TMeta>) {
   return createProviderBuilder<TRequiredContext, TMeta>(options, "service");
 }

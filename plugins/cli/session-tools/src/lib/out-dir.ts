@@ -16,4 +16,3 @@ export async function writeTextFile(dir: string, fileName: string, data: string)
   await fs.writeFile(abs, data, "utf8");
   return abs;
 }
-

@@ -54,7 +54,7 @@ async function runFixtureCommand(
   fixturePath: string,
   command: string,
   args: string[],
-  cwd: string,
+  cwd: string
 ): Promise<DevExecResult> {
   const fixture = JSON.parse(await fs.readFile(fixturePath, "utf8")) as CommandFixture;
   if (fixture.logPath) {
@@ -62,16 +62,19 @@ async function runFixtureCommand(
     await fs.appendFile(fixture.logPath, `${JSON.stringify({ command, args, cwd })}\n`, "utf8");
   }
   const found = fixture.commands?.find((candidate) => matches(candidate, command, args, cwd));
-  return resultFromText(found ?? fixture.default ?? {
-    exitCode: 127,
-    stderr: `No fixture entry for ${command} ${args.join(" ")}`,
-  });
+  return resultFromText(
+    found ??
+      fixture.default ?? {
+        exitCode: 127,
+        stderr: `No fixture entry for ${command} ${args.join(" ")}`,
+      }
+  );
 }
 
 async function runNodeCommand(
   command: string,
   args: string[],
-  opts: { cwd?: string; env?: Record<string, string | undefined>; timeoutMs?: number },
+  opts: { cwd?: string; env?: Record<string, string | undefined>; timeoutMs?: number }
 ): Promise<DevExecResult> {
   const startedAt = Date.now();
   const timeoutMs = opts.timeoutMs ?? 60_000;
@@ -95,8 +98,15 @@ async function runNodeCommand(
       resolve(result);
     };
 
-    const finishFailure = (input: { exitCode: number | null; signal: string | null; message: string }) => {
-      const stderr = Buffer.concat([...stderrChunks, Buffer.from(textEncoder.encode(input.message))]);
+    const finishFailure = (input: {
+      exitCode: number | null;
+      signal: string | null;
+      message: string;
+    }) => {
+      const stderr = Buffer.concat([
+        ...stderrChunks,
+        Buffer.from(textEncoder.encode(input.message)),
+      ]);
       finish({
         exitCode: input.exitCode,
         signal: input.signal,
