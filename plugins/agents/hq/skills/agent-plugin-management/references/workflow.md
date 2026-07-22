@@ -20,7 +20,7 @@ object does not reopen source as preparation.
 ## Operation Selector
 
 <operation-selector>
-<branch operation="vendors status|vendors update">
+<branch operation="status vendors|update vendors">
 Bind exact content-workspace repository coordinates. For update, also bind only
 the selected vendor-source ids. Status inspects; update authors reviewable
 source bytes. Neither continues into check or build.
