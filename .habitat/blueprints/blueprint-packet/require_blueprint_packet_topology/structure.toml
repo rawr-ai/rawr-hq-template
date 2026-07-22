@@ -1,0 +1,15 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "generic-blueprint-rule-packets"
+root = ".habitat/blueprints/!(*.*)/!(*.*)"
+kind = "directory"
+mode = "closed"
+required = [
+  "baseline.json",
+  "rule.json",
+]
+allowed = [
+  "pattern.md",
+  "structure.toml",
+]

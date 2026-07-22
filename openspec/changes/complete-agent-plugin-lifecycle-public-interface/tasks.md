@@ -47,10 +47,14 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 - [ ] 1.4 Add positive resource/provider topology only after the current corpus
   supports one generic invariant. Do not claim Magic prior art that does not
   exist.
-- [ ] 1.5 Give the Habitat consumer an Nx `check:policy` target, pattern tests,
-  isolated named inputs, a blueprint-packet topology law requiring canonical
-  `pattern.md`/`structure.toml` runner files, and live-tree noncacheable execution
-  where required. Keep the compiled Bun 1.4 artifact consumer and reproducible
+- [ ] 1.5 Give the Habitat consumer owner-local policy targets, pattern execution,
+  isolated named inputs, and a blueprint-packet topology law requiring canonical
+  `pattern.md`/`structure.toml` runner files. The bounded packet check is
+  complete. Native Grit fixture automation and full live-tree `check:policy`
+  activation remain pending because the published standalone binary exposes no
+  packet-fixture runner and still performs an unbounded wildcard walk through
+  installed dependency trees. Do not hide either limitation behind another
+  parser or runner. Keep the compiled Bun 1.4 artifact consumer and reproducible
   update recipe.
 - [ ] 1.6 Replace the sequential repository ratchet with Nx affected/cached lint
   and typecheck plus one Habitat policy check. Preserve one non-skippable remote

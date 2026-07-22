@@ -222,6 +222,15 @@ project graph now carry the applicable reusable constraints; the remaining
 lifecycle niche rule is limited to the curated command channel until task 2
 replaces that topology.
 
+The generic blueprint packet itself is now closed: every packet contains its
+rule and locked baseline plus only the selected canonical `pattern.md` or
+`structure.toml` runner source. The pinned Habitat binary checks that topology.
+It does not expose a native packet-fixture runner, and its live wildcard walk is
+not bounded against installed dependency trees, so this repository does not add
+a parallel Markdown fixture parser or wrapper. Native pattern execution and
+full live-tree policy activation remain open until a suitable standalone asset
+is published.
+
 Personal PR #182 (`9378d33b`) and child PR #183 (`852702b8`) are not valid
 settlement inputs in their controller-bound form. They remain unlanded; prior
 required jobs were blocked before runner allocation by account billing. Do not

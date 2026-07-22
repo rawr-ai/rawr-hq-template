@@ -11,6 +11,8 @@ them.
 
 The current generic kinds are:
 
+- `blueprint-packet`: the closed canonical policy packet shared by every
+  generic blueprint rule.
 - `service`: the reusable contract-first oRPC service spine, contract and error
   authority, context flow, module composition, and optional closed router
   interior.
@@ -38,6 +40,11 @@ rule-specific semantics belong in the packet directory and rule metadata, not
 in a second filename convention. Grit rules own source relationships.
 Behavioral semantics stay in TypeScript tests and owner review rather than
 being approximated as source shape.
+
+`@rawr/habitat-consumer:check:packets` evaluates the packet topology through the
+pinned standalone binary. The published binary does not expose a native fixture
+runner for these Habitat packet sources, so the repository does not add a second
+Markdown parser or duplicate pattern inventory to simulate one.
 
 The `service`, `plugin-server-api`, `agent-router`, `plugin`, and
 `plugin-server` packets originate from Magic Migration commit
