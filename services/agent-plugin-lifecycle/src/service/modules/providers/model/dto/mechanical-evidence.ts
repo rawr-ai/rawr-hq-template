@@ -15,7 +15,8 @@ export type MechanicalEvidenceDigest = string & { readonly [evidenceDigestBrand]
 export type MechanicalTargetFactDigest = string & { readonly [targetFactDigestBrand]: "MechanicalTargetFactDigest" };
 
 export const PROVIDER_EVIDENCE_SCHEMA_PROTOCOL = "agent-provider-evidence@v1" as const;
-export const CONTROLLER_PROTOCOL = "rawr-controller-capsule@v1" as const;
+export const AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL =
+  "agent-plugin-lifecycle-controller@v1" as const;
 
 export function parseMechanicalEvidenceDigest(
   input: unknown,
@@ -55,7 +56,7 @@ export type ProviderVerificationFact =
 export interface MechanicalProviderEvidenceBody {
   readonly schemaVersion: 1;
   readonly schemaProtocol: typeof PROVIDER_EVIDENCE_SCHEMA_PROTOCOL;
-  readonly controllerProtocol: typeof CONTROLLER_PROTOCOL;
+  readonly controllerProtocol: typeof AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL;
   readonly source: MechanicalEvidenceSource;
   readonly evaluationProfile: EvaluationProfile;
   readonly procedures: readonly string[];
@@ -80,7 +81,7 @@ export function createMechanicalProviderEvidence(
   const body = Object.freeze({
     schemaVersion: 1,
     schemaProtocol: PROVIDER_EVIDENCE_SCHEMA_PROTOCOL,
-    controllerProtocol: CONTROLLER_PROTOCOL,
+    controllerProtocol: AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
     source,
     evaluationProfile,
     procedures: Object.freeze([

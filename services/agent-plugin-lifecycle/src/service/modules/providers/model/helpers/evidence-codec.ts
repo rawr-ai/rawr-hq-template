@@ -2,7 +2,7 @@ import { parseArtifactRef, type CompleteSetArtifactRef, type ReleaseArtifactRef 
 
 import { canonicalBytes, canonicalDigest, compareCanonical, equalBytes } from "./canonical";
 import {
-  CONTROLLER_PROTOCOL,
+  AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
   PROVIDER_EVIDENCE_SCHEMA_PROTOCOL,
   evidenceBodyValue,
   type MechanicalEvidenceDigest,
@@ -67,7 +67,15 @@ function parseBody(input: unknown): DeploymentResult<MechanicalProviderEvidenceB
   }
   if (input.schemaVersion !== 1) issues.push(issue("EVIDENCE_FAILED", "evidence.schemaVersion", "Unsupported evidence schema", "1", String(input.schemaVersion)));
   if (input.schemaProtocol !== PROVIDER_EVIDENCE_SCHEMA_PROTOCOL) issues.push(issue("INVALID_PROTOCOL", "evidence.schemaProtocol", "Unsupported evidence protocol", PROVIDER_EVIDENCE_SCHEMA_PROTOCOL, String(input.schemaProtocol)));
-  if (input.controllerProtocol !== CONTROLLER_PROTOCOL) issues.push(issue("INVALID_PROTOCOL", "evidence.controllerProtocol", "Unsupported controller protocol", CONTROLLER_PROTOCOL, String(input.controllerProtocol)));
+  if (input.controllerProtocol !== AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL) {
+    issues.push(issue(
+      "INVALID_PROTOCOL",
+      "evidence.controllerProtocol",
+      "Unsupported controller protocol",
+      AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
+      String(input.controllerProtocol),
+    ));
+  }
   const evaluationProfile = canonicalString(input.evaluationProfile, "evidence.evaluationProfile", issues, { maxBytes: 256, pattern: ID_PATTERN, code: "INVALID_EVALUATION_PROFILE" }) as EvaluationProfile | undefined;
   const source = parseSource(input.source, issues);
   const procedures = parseProcedures(input.procedures, issues);
@@ -78,7 +86,7 @@ function parseBody(input: unknown): DeploymentResult<MechanicalProviderEvidenceB
   return success(Object.freeze({
     schemaVersion: 1,
     schemaProtocol: PROVIDER_EVIDENCE_SCHEMA_PROTOCOL,
-    controllerProtocol: CONTROLLER_PROTOCOL,
+    controllerProtocol: AGENT_PLUGIN_LIFECYCLE_CONTROLLER_PROTOCOL,
     source,
     evaluationProfile,
     procedures,
