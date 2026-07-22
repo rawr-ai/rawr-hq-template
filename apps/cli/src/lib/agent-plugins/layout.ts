@@ -1,7 +1,5 @@
 import path from "node:path";
 
-import type { ControllerRuntimeContext } from "../controller/runtime-context";
-
 export type ArtifactStoreRoot = string & {
   readonly __artifactStoreRoot: "ArtifactStoreRootV1";
 };
@@ -26,7 +24,7 @@ const PROVIDER_PROJECTION_DIRECTORY = "provider-projections-v1";
 const PROVIDER_TARGET_STATE_DIRECTORY = "provider-target-state-v1";
 
 export function deriveAgentPluginControllerLayout(
-  context: Pick<ControllerRuntimeContext, "dataRoot">
+  context: Readonly<{ dataRoot: string }>
 ): AgentPluginControllerLayout {
   const dataRoot = requireCanonicalAbsoluteRoot(context.dataRoot);
   const ownerRoot = path.join(dataRoot, AGENT_PLUGIN_STATE_DIRECTORY);

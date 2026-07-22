@@ -10,7 +10,7 @@ Run from repo root:
 git status --short
 gt trunk
 ./scripts/dev/check-remotes.sh
-rawr doctor global --json
+bun run rawr -- --version
 bun run ratchet:required
 rg -n "\]\(([^)#]+)\)" docs --glob '*.md'
 ```
@@ -19,8 +19,10 @@ Interpretation:
 - `git status` must be clean before and after the check.
 - `gt trunk` must print `main`.
 - `check-remotes.sh` must pass.
-- `doctor global` should report one verified installed controller release and no
-  checkout owner.
+- The repository-local Oclif CLI must start from the checked-out Template source.
+  This is development verification, not installed-package acceptance. The fixed
+  Nx Release group and ordinary installation path remain pending, and the
+  obsolete predecessor distribution is not invoked, checked, or updated.
 - The Nx project-graph admission check must prove that every non-root project
   has exactly one `type:*` kind and every code project owns lint and typecheck
   targets; only projects classified as content or fixtures are exempt from
@@ -44,12 +46,17 @@ Interpretation:
 
 ## Monthly Interface Rehearsal
 
-Use disposable homes and an immutable content fixture to verify:
+After the fixed Nx Release package group is published, use disposable homes and
+an exact content fixture to verify:
 
-1. the exact installed Template tool accepts the declared schema/protocol version;
-2. content and governed record digests bind the result;
+1. the exact ordinarily installed Template CLI accepts the declared
+   schema/protocol version;
+2. the personal content commit/tree and governed record digests bind the result;
 3. no personal executable mirror or cross-repository workspace link exists;
 4. repeated convergence performs no writes.
+
+Until that release exists, run only the equivalent repository-local compatibility
+checks through `bun run rawr -- ...`; do not promote them as installed settlement.
 
 When advancing the Habitat binary, accept only a Civ7-owned standalone release
 compiled with Bun 1.4. Update `scripts/habitat/release.json` with its immutable

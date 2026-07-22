@@ -8,18 +8,20 @@
 
 ## Before Operations
 
-1. Use an installed immutable controller release.
+1. During the CLI distribution transition, use the Template-owned Oclif app via
+   `bun run rawr -- ...` from a clean Template checkout. The ordinary fixed Nx
+   Release package is pending; do not invoke the obsolete predecessor distribution.
 2. Select exactly one requested operation.
-3. Bind only that operation's authority inputs from the selector below.
+3. Bind only that operation's authority inputs from the table below.
 4. Use explicit disposable provider homes until canonical settlement is authorized.
 
 There is no universal checkout, clean-worktree, or preflight-check requirement.
 A branch that consumes an immutable artifact, governed channel, or governance
 object does not reopen source as preparation.
 
-## Operation Selector
+## Operation Inputs
 
-<operation-selector>
+<operation-inputs>
 <branch operation="status vendors|update vendors">
 Bind exact content-workspace repository coordinates. For update, also bind only
 the selected vendor-source ids. Status inspects; update authors reviewable
@@ -64,7 +66,7 @@ canonical bytes without writing a content repository or acquiring Git/provider
 authority.
 </branch>
 
-</operation-selector>
+</operation-inputs>
 
 After the selected branch records its result and owner proof, stop. A later
 operation requires a new explicit selection and its own authority inputs.

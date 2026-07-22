@@ -5,8 +5,8 @@ and independent cross-repository acceptance.
 
 ## Repository Boundary
 
-- Run controller builds, generic lifecycle/tooling tests, provider-adapter tests,
-  schema publication, and controller release activation in `RAWR HQ-Template`.
+- Run Oclif CLI builds, generic lifecycle/tooling tests, provider-adapter tests,
+  schema publication, and ordinary CLI packaging in `RAWR HQ-Template`.
 - Run curated content authoring, provenance/policy/evaluation checks, and governed
   content acceptance/release/channel records in personal `RAWR HQ`.
 - Never merge, cherry-pick, transplant, mirror, or tree-compare executable roots
@@ -18,22 +18,26 @@ and independent cross-repository acceptance.
 
 - `rawr plugins ...` manages external Oclif extensions only.
 - `rawr agent plugins ...` manages curated agent-plugin lifecycle only.
-- `rawr doctor global` is an installed-controller read model; it never selects,
-  builds, repairs, or relinks a controller.
+- During the distribution transition, invoke the Template CLI with
+  `bun run rawr -- ...`. The fixed Nx Release package group and ordinary
+  installed CLI are pending; the obsolete predecessor distribution may remain
+  executable, but it is not invoked, updated, or accepted as authority.
 - App composition and repository hooks own no lifecycle mutation.
 
 ## Pre-Change Impact Check
 
 - Is this executable or generic lifecycle behavior? Put it in Template.
 - Is this curated agent content or a governed decision about that content? Put it in personal.
-- Does a cross-repository need have an explicit schema/protocol version and artifact digest?
+- Does a cross-repository need have an explicit CLI package version,
+  schema/protocol version, and exact content identity?
 - Would the proposed change create a copy, fallback, aggregate, or second state owner?
 
 ## Safety And Verification
 
-For Template changes, run the affected Nx targets and the relevant installed
-controller acceptance. For personal changes, run repository-owned content checks
-and exact-version interface validation. Mutating provider/Oclif acceptance uses
+For Template changes, run the affected Nx targets and the relevant repository-local
+Oclif acceptance. Once the ordinary package is published, add installed-package
+acceptance. For personal changes, run repository-owned content checks and
+exact-version interface validation. Mutating provider/Oclif acceptance uses
 explicit disposable homes until its owning container authorizes settlement.
 
 ## Transient Test Failure Policy
@@ -55,8 +59,8 @@ For each repository independently:
 
 For cross-repository protocol acceptance:
 
-1. bind exact controller/tool release, schema/protocol, content/release-set, and
-   governed-record digests;
+1. bind the exact ordinary CLI package version, schema/protocol version, personal
+   content commit/tree, and governed-record digests;
 2. verify personal contains no Template executable mirror or workspace link;
 3. reconcile only the explicitly named provider/export destination;
 4. repeat the converged operation and prove it performs no writes.
