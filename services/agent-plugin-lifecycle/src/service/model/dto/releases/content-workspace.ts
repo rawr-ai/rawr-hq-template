@@ -17,6 +17,10 @@ import {
   type RepositoryIdentity,
 } from "../../../shared/release";
 
+export const MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH = 4_096;
+
+const TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX = "...[truncated]";
+
 export const CanonicalAbsoluteLocatorSchema = Refine(
   Type.String({
     minLength: 2,
@@ -209,12 +213,28 @@ export const SourceEligibilityIssueCodeSchema = Type.Union([
 export const SourceEligibilityIssueSchema = ReadonlyObject(Type.Object(
   {
     code: SourceEligibilityIssueCodeSchema,
-    detail: Type.String({ minLength: 1 }),
+    detail: Type.String({
+      minLength: 1,
+      maxLength: MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH,
+    }),
   },
 ), { additionalProperties: false });
 
 export type SourceEligibilityIssueCode = Static<typeof SourceEligibilityIssueCodeSchema>;
 export type SourceEligibilityIssue = Static<typeof SourceEligibilityIssueSchema>;
+
+export function sourceEligibilityIssue(
+  code: SourceEligibilityIssueCode,
+  detail: string,
+): SourceEligibilityIssue {
+  const boundedDetail = detail.length <= MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH
+    ? detail
+    : `${detail.slice(
+      0,
+      MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH - TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX.length,
+    )}${TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX}`;
+  return Object.freeze({ code, detail: boundedDetail });
+}
 
 export type ContentWorkspaceInspection =
   | Readonly<{ kind: "Eligible"; snapshot: ContentWorkspaceSnapshot }>

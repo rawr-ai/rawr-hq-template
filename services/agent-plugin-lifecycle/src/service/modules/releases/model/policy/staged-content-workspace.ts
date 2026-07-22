@@ -18,18 +18,20 @@ import {
   type PluginId,
   type ReleaseRelativePath,
 } from "../../../../shared/release";
-import type {
-  SourceEligibilityIssue,
-  SourceEligibilityIssueCode,
-  StagedIndexBindingObservation,
-  StagedIndexObservation,
-  StagedIndexObservationRequest,
-  StagedIndexObservationResult,
-  StagedObservationFailureReason,
+import {
+  sourceEligibilityIssue,
+  type SourceEligibilityIssue,
+  type SourceEligibilityIssueCode,
+  type StagedIndexBindingObservation,
+  type StagedIndexObservation,
+  type StagedIndexObservationRequest,
+  type StagedIndexObservationResult,
+  type StagedObservationFailureReason,
 } from "../../../../model/dto/releases/content-workspace";
-import type {
-  ReleaseInputRefreshRequest,
-  ReleaseInputRefreshResult,
+import {
+  normalizeReleaseSourceChangedDetail,
+  type ReleaseInputRefreshRequest,
+  type ReleaseInputRefreshResult,
 } from "../dto/release-lifecycle";
 import type {
   StagedContentWorkspaceInspection,
@@ -688,7 +690,11 @@ function refreshInspectionFailure(
 function refreshSourceChanged(
   detail: string,
 ): Extract<ReleaseInputRefreshResult, { kind: "SourceChanged" }> {
-  return Object.freeze({ kind: "SourceChanged", mode: "staged", detail });
+  return Object.freeze({
+    kind: "SourceChanged",
+    mode: "staged",
+    detail: normalizeReleaseSourceChangedDetail(detail),
+  });
 }
 
 function stagedIneligible(
@@ -705,7 +711,7 @@ function sourceChanged(
 }
 
 function sourceIssue(code: SourceEligibilityIssueCode, detail: string): SourceEligibilityIssue {
-  return Object.freeze({ code, detail });
+  return sourceEligibilityIssue(code, detail);
 }
 
 class StagedClassificationError extends Error {

@@ -48,18 +48,39 @@ export const RELEASE_ISSUE_CODES = [
   "INVALID_ARTIFACT_REF",
 ] as const;
 
+export const MAX_RELEASE_ISSUE_PATH_LENGTH = 4_096;
+export const MAX_RELEASE_ISSUE_MESSAGE_LENGTH = 4_096;
+export const MAX_RELEASE_ISSUE_EXPECTED_LENGTH = 4_096;
+export const MAX_RELEASE_ISSUE_ACTUAL_LENGTH = 4_096;
+export const MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH = 32;
+export const MAX_RELEASE_ISSUE_CLAIM_LENGTH = 512;
+export const MAX_RELEASE_ISSUE_CLAIMANT_LENGTH = 512;
+
+const TRUNCATED_RELEASE_ISSUE_SUFFIX = "...[truncated]";
+
 export const ReleaseIssueCodeSchema = Type.Enum(RELEASE_ISSUE_CODES);
 
 export const ReleaseIssueSchema = ReadonlyObject(Type.Object(
   {
     code: ReleaseIssueCodeSchema,
-    path: Type.String({ minLength: 1 }),
-    message: Type.String({ minLength: 1 }),
-    expected: Type.Optional(Type.Union([Type.String(), Type.Number()])),
-    actual: Type.Optional(Type.Union([Type.String(), Type.Number()])),
-    claimKind: Type.Optional(Type.String()),
-    claim: Type.Optional(Type.String()),
-    claimants: Type.Optional(ReadonlyObject(Type.Array(Type.String()), { maxItems: 200_000 })),
+    path: Type.String({ minLength: 1, maxLength: MAX_RELEASE_ISSUE_PATH_LENGTH }),
+    message: Type.String({ minLength: 1, maxLength: MAX_RELEASE_ISSUE_MESSAGE_LENGTH }),
+    expected: Type.Optional(Type.Union([
+      Type.String({ maxLength: MAX_RELEASE_ISSUE_EXPECTED_LENGTH }),
+      Type.Number(),
+    ])),
+    actual: Type.Optional(Type.Union([
+      Type.String({ maxLength: MAX_RELEASE_ISSUE_ACTUAL_LENGTH }),
+      Type.Number({
+        minimum: -Number.MAX_SAFE_INTEGER,
+        maximum: Number.MAX_SAFE_INTEGER,
+      }),
+    ])),
+    claimKind: Type.Optional(Type.String({ maxLength: MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH })),
+    claim: Type.Optional(Type.String({ maxLength: MAX_RELEASE_ISSUE_CLAIM_LENGTH })),
+    claimants: Type.Optional(ReadonlyObject(Type.Array(
+      Type.String({ maxLength: MAX_RELEASE_ISSUE_CLAIMANT_LENGTH }),
+    ), { maxItems: 200_000 })),
   },
 ), { additionalProperties: false });
 
@@ -72,13 +93,45 @@ export function issue(
   message: string,
   details: Pick<ReleaseIssue, "expected" | "actual" | "claimKind" | "claim" | "claimants"> = {},
 ): ReleaseIssue {
+  const expected = typeof details.expected === "string"
+    ? boundedIssueText(details.expected, MAX_RELEASE_ISSUE_EXPECTED_LENGTH)
+    : details.expected;
+  const actual = details.actual === undefined ? undefined : boundedIssueActual(details.actual);
+  const claimKind = details.claimKind === undefined
+    ? undefined
+    : boundedIssueText(details.claimKind, MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH);
+  const claim = details.claim === undefined
+    ? undefined
+    : boundedIssueText(details.claim, MAX_RELEASE_ISSUE_CLAIM_LENGTH);
+  const claimants = details.claimants === undefined
+    ? undefined
+    : Object.freeze(details.claimants.map((claimant) => (
+      boundedIssueText(claimant, MAX_RELEASE_ISSUE_CLAIMANT_LENGTH)
+    )));
   return Object.freeze({
     code,
-    path,
-    message,
-    ...details,
-    ...(details.claimants === undefined ? {} : { claimants: Object.freeze([...details.claimants]) }),
+    path: boundedIssueText(path, MAX_RELEASE_ISSUE_PATH_LENGTH),
+    message: boundedIssueText(message, MAX_RELEASE_ISSUE_MESSAGE_LENGTH),
+    ...(expected === undefined ? {} : { expected }),
+    ...(actual === undefined ? {} : { actual }),
+    ...(claimKind === undefined ? {} : { claimKind }),
+    ...(claim === undefined ? {} : { claim }),
+    ...(claimants === undefined ? {} : { claimants }),
   });
+}
+
+function boundedIssueActual(actual: string | number): string | number {
+  if (
+    typeof actual === "number"
+    && Number.isFinite(actual)
+    && Math.abs(actual) <= Number.MAX_SAFE_INTEGER
+  ) return actual;
+  return boundedIssueText(String(actual), MAX_RELEASE_ISSUE_ACTUAL_LENGTH);
+}
+
+function boundedIssueText(value: string, maximumLength: number): string {
+  if (value.length <= maximumLength) return value;
+  return `${value.slice(0, maximumLength - TRUNCATED_RELEASE_ISSUE_SUFFIX.length)}${TRUNCATED_RELEASE_ISSUE_SUFFIX}`;
 }
 
 export function sortReleaseIssues(issues: readonly ReleaseIssue[]): ReleaseIssue[] {

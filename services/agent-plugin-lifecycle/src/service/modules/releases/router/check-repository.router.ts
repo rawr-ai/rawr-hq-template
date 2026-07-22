@@ -1,7 +1,10 @@
 import type {
   SourceEligibilityIssue,
 } from "../../../model/dto/releases/content-workspace";
-import type { RepositoryCheckResult } from "../model/dto/release-lifecycle";
+import {
+  normalizeReleaseSourceChangedDetail,
+  type RepositoryCheckResult,
+} from "../model/dto/release-lifecycle";
 import type {
   StagedContentWorkspaceInspection,
   StagedContentWorkspacePolicy,
@@ -98,7 +101,11 @@ function stagedIneligible(
 }
 
 function stagedSourceChanged(detail: string): RepositoryCheckResult {
-  return { kind: "SourceChanged", mode: "staged", detail };
+  return {
+    kind: "SourceChanged",
+    mode: "staged",
+    detail: normalizeReleaseSourceChangedDetail(detail),
+  };
 }
 
 function assertNever(value: never): never {

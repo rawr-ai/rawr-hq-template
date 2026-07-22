@@ -7,19 +7,26 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
 
-import type {
-  AgentPluginBuildRequest,
-  AgentPluginCheckRequest,
-  BuildIssue,
-  BuildMode,
-  BuildResult,
-  CheckResult,
-  ReleaseInputRefreshRequest,
-  ReleaseInputRefreshResult,
-  ReleaseInputRecordRequest,
-  ReleaseInputRecordResult,
-  RepositoryCheckRequest,
-  RepositoryCheckResult,
+import {
+  artifactStoreBuildIssue,
+  MAX_ARTIFACT_STORE_CLEANUP_FAILURE_LENGTH,
+  MAX_ARTIFACT_STORE_ISSUE_DETAIL_LENGTH,
+  MAX_RELEASE_CONSTRUCTION_ISSUE_DETAIL_LENGTH,
+  MAX_RELEASE_SOURCE_CHANGED_DETAIL_LENGTH,
+  normalizeReleaseSourceChangedDetail,
+  releaseConstructionBuildIssue,
+  type AgentPluginBuildRequest,
+  type AgentPluginCheckRequest,
+  type BuildIssue,
+  type BuildMode,
+  type BuildResult,
+  type CheckResult,
+  type ReleaseInputRefreshRequest,
+  type ReleaseInputRefreshResult,
+  type ReleaseInputRecordRequest,
+  type ReleaseInputRecordResult,
+  type RepositoryCheckRequest,
+  type RepositoryCheckResult,
 } from "../../../src/service/modules/releases/model/dto/release-lifecycle";
 import type {
   RetentionInventoryEntry,
@@ -53,7 +60,15 @@ import {
   RetentionPlanSchema,
   RetentionRefSchema,
 } from "../../../src/service/modules/releases/schemas";
-import { MAX_RETENTION_REFS } from "../../../src/service/modules/releases/model/dto/retention";
+import {
+  MAX_RETENTION_ISSUE_DETAIL_LENGTH,
+  MAX_RETENTION_REFS,
+} from "../../../src/service/modules/releases/model/dto/retention";
+import {
+  MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH,
+  SourceEligibilityIssueSchema,
+  sourceEligibilityIssue,
+} from "../../../src/service/model/dto/releases/content-workspace";
 import {
   ReleaseInputBodySchema,
   ReleaseInputEnvelopeSchema,
@@ -63,6 +78,16 @@ import {
   type ReleaseIssue,
 } from "../../../src/service/shared/release";
 import { contract } from "../../../src/service/modules/releases/contract";
+import {
+  issue,
+  MAX_RELEASE_ISSUE_ACTUAL_LENGTH,
+  MAX_RELEASE_ISSUE_CLAIMANT_LENGTH,
+  MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH,
+  MAX_RELEASE_ISSUE_CLAIM_LENGTH,
+  MAX_RELEASE_ISSUE_EXPECTED_LENGTH,
+  MAX_RELEASE_ISSUE_MESSAGE_LENGTH,
+  MAX_RELEASE_ISSUE_PATH_LENGTH,
+} from "../../../src/service/shared/release/issues";
 
 const contentWorkspace = Object.freeze({
   locator: "/tmp/content-workspace",
@@ -79,6 +104,7 @@ const contentWorkspace = Object.freeze({
 const releaseDigest = `rd1_${"c".repeat(64)}`;
 const artifactDigest = `ad1_${"d".repeat(64)}`;
 const releaseSetDigest = `rs1_${"e".repeat(64)}`;
+const workspaceBinding = "f".repeat(64);
 
 describe("release procedure schema boundary", () => {
   it("derives every public release contract type from its TypeBox schema", () => {
@@ -241,7 +267,7 @@ describe("release procedure schema boundary", () => {
       kind: "EligibleReport",
       mode: { kind: "complete-set" },
       candidate: { kind: "complete-set", releaseSetDigest },
-      eligibilityBinding: "binding-v1",
+      eligibilityBinding: workspaceBinding,
     })).toBe(true);
     expect(Value.Check(BuildResultSchema, {
       kind: "ReadOnlyConverged",
@@ -583,7 +609,7 @@ describe("release procedure schema boundary", () => {
       refName: contentWorkspace.refName,
       headCommit: contentWorkspace.sourceCommit,
       headTree: contentWorkspace.sourceTree,
-      stagedBinding: "staged-binding-v1",
+      stagedBinding: workspaceBinding,
     })).toBe(true);
     expect(Value.Check(RepositoryCheckResultSchema, {
       kind: "StagedRepositoryEligible",
@@ -591,7 +617,7 @@ describe("release procedure schema boundary", () => {
       refName: contentWorkspace.refName,
       headCommit: contentWorkspace.sourceCommit,
       headTree: contentWorkspace.sourceTree,
-      stagedBinding: "staged-binding-v1",
+      stagedBinding: workspaceBinding,
       candidate: { kind: "complete-set", releaseSetDigest },
     })).toBe(false);
     expect(Value.Check(RepositoryCheckResultSchema, {
@@ -600,7 +626,7 @@ describe("release procedure schema boundary", () => {
       refName: contentWorkspace.refName,
       sourceCommit: contentWorkspace.sourceCommit,
       sourceTree: contentWorkspace.sourceTree,
-      eligibilityBinding: "clean-binding-v1",
+      eligibilityBinding: workspaceBinding,
       stagedBinding: "forbidden",
     })).toBe(false);
     expect(Value.Check(RepositoryCheckResultSchema, {
@@ -608,5 +634,130 @@ describe("release procedure schema boundary", () => {
       mode: "clean",
       detail: "forbidden clean source-changed variant",
     })).toBe(false);
+  });
+
+  it("admits only exact lowercase SHA-256 workspace bindings", () => {
+    const checkResult = {
+      kind: "EligibleReport",
+      mode: { kind: "complete-set" },
+      candidate: { kind: "complete-set", releaseSetDigest },
+      eligibilityBinding: workspaceBinding,
+    } as const;
+    const stagedResult = {
+      kind: "StagedRepositoryEligible",
+      repositoryIdentity: contentWorkspace.repositoryIdentity,
+      refName: contentWorkspace.refName,
+      headCommit: contentWorkspace.sourceCommit,
+      headTree: contentWorkspace.sourceTree,
+      stagedBinding: workspaceBinding,
+    } as const;
+    const cleanResult = {
+      kind: "CleanRepositoryEligible",
+      repositoryIdentity: contentWorkspace.repositoryIdentity,
+      refName: contentWorkspace.refName,
+      sourceCommit: contentWorkspace.sourceCommit,
+      sourceTree: contentWorkspace.sourceTree,
+      eligibilityBinding: workspaceBinding,
+    } as const;
+
+    expect(Value.Check(CheckResultSchema, checkResult)).toBe(true);
+    expect(Value.Check(RepositoryCheckResultSchema, stagedResult)).toBe(true);
+    expect(Value.Check(RepositoryCheckResultSchema, cleanResult)).toBe(true);
+
+    for (const invalid of [
+      "f".repeat(63),
+      "f".repeat(65),
+      "F".repeat(64),
+      "g".repeat(64),
+      "binding-v1",
+    ]) {
+      expect(Value.Check(CheckResultSchema, {
+        ...checkResult,
+        eligibilityBinding: invalid,
+      })).toBe(false);
+      expect(Value.Check(RepositoryCheckResultSchema, {
+        ...stagedResult,
+        stagedBinding: invalid,
+      })).toBe(false);
+      expect(Value.Check(RepositoryCheckResultSchema, {
+        ...cleanResult,
+        eligibilityBinding: invalid,
+      })).toBe(false);
+    }
+  });
+
+  it("bounds externally influenced release diagnostics at owner constructors", () => {
+    const oversized = "x".repeat(8_192);
+    const releaseIssue = issue(
+      "INVALID_STRING",
+      oversized,
+      oversized,
+      {
+        expected: oversized,
+        actual: oversized,
+        claimKind: oversized,
+        claim: oversized,
+        claimants: [oversized],
+      },
+    );
+    const sourceIssue = sourceEligibilityIssue("GitFailure", oversized);
+    const artifactIssue = artifactStoreBuildIssue(oversized, oversized);
+    const constructionIssue = releaseConstructionBuildIssue(oversized);
+    const sourceChangedDetail = normalizeReleaseSourceChangedDetail(oversized);
+
+    expect(releaseIssue.path).toHaveLength(MAX_RELEASE_ISSUE_PATH_LENGTH);
+    expect(releaseIssue.message).toHaveLength(MAX_RELEASE_ISSUE_MESSAGE_LENGTH);
+    expect(releaseIssue.expected).toHaveLength(MAX_RELEASE_ISSUE_EXPECTED_LENGTH);
+    expect(releaseIssue.actual).toHaveLength(MAX_RELEASE_ISSUE_ACTUAL_LENGTH);
+    expect(releaseIssue.claimKind).toHaveLength(MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH);
+    expect(releaseIssue.claim).toHaveLength(MAX_RELEASE_ISSUE_CLAIM_LENGTH);
+    expect(releaseIssue.claimants?.[0]).toHaveLength(MAX_RELEASE_ISSUE_CLAIMANT_LENGTH);
+    expect(Value.Check(ReleaseIssueSchema, releaseIssue)).toBe(true);
+    expect(sourceIssue.detail).toHaveLength(MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH);
+    expect(Value.Check(SourceEligibilityIssueSchema, sourceIssue)).toBe(true);
+    expect(artifactIssue.detail).toHaveLength(MAX_ARTIFACT_STORE_ISSUE_DETAIL_LENGTH);
+    expect(artifactIssue.cleanupFailure).toHaveLength(
+      MAX_ARTIFACT_STORE_CLEANUP_FAILURE_LENGTH,
+    );
+    expect(Value.Check(BuildIssueSchema, artifactIssue)).toBe(true);
+    expect(constructionIssue.detail).toHaveLength(MAX_RELEASE_CONSTRUCTION_ISSUE_DETAIL_LENGTH);
+    expect(Value.Check(BuildIssueSchema, constructionIssue)).toBe(true);
+    expect(sourceChangedDetail).toHaveLength(MAX_RELEASE_SOURCE_CHANGED_DETAIL_LENGTH);
+
+    expect(Value.Check(ReleaseIssueSchema, {
+      code: "INVALID_STRING",
+      path: oversized,
+      message: oversized,
+      expected: oversized,
+      actual: oversized,
+      claimKind: oversized,
+      claim: oversized,
+      claimants: [oversized],
+    })).toBe(false);
+    expect(Value.Check(SourceEligibilityIssueSchema, {
+      code: "GitFailure",
+      detail: oversized,
+    })).toBe(false);
+    expect(Value.Check(BuildIssueSchema, {
+      kind: "ArtifactStore",
+      detail: oversized,
+      cleanupFailure: oversized,
+    })).toBe(false);
+    expect(Value.Check(BuildIssueSchema, {
+      kind: "ReleaseConstruction",
+      detail: oversized,
+    })).toBe(false);
+    expect(Value.Check(RetentionIssueSchema, { detail: oversized })).toBe(false);
+    expect(Value.Check(ReleaseInputRefreshResultSchema, {
+      kind: "SourceChanged",
+      mode: "staged",
+      detail: oversized,
+    })).toBe(false);
+    expect(Value.Check(RepositoryCheckResultSchema, {
+      kind: "SourceChanged",
+      mode: "staged",
+      detail: oversized,
+    })).toBe(false);
+    expect(MAX_RETENTION_ISSUE_DETAIL_LENGTH).toBe(4_096);
   });
 });
