@@ -61,7 +61,7 @@ subject changes.
 | Core | `@rawr/research-sdk/core` | identities, TypeBox contracts, four stage interfaces, typed stage outputs, adopt-or-reject logic | vendor clients, study policy, persistence controller |
 | Runtime | `@rawr/research-sdk/runtime` | one Effect `ManagedRuntime`, exact host command capability, resource composition | sandbox command transport, study topology, global scheduling, evidence disposition |
 | Adapter | named adapter module | translation to one vendor or artifact substrate | rubric, product correctness, cross-stage orchestration |
-| Study | lane vault | cases, prompts, treatment, verification, evaluation, aggregation, outputs | generic vendor implementation |
+| Study | lane vault | cases, prompts, treatment, configuration, bindings, verification, evaluation, aggregation, outputs | generic vendor implementation or vendor adapters |
 | Evidence | lane vault | immutable run artifacts and historical interpretation | SDK continuation authority |
 
 The seam is language and authority: the SDK knows cells, stage inputs, artifacts,
@@ -72,17 +72,25 @@ observations, and typed failures. A study knows what those values mean.
 The accepted core entities are deliberately few:
 
 - `StudyIdentity`: stable study ID and revision.
-- `CellKey`: study, case, condition, and profile identity.
+- `CellKey`: study, case, condition, profile, and a stable lane-supplied
+  instance identity. The instance distinguishes valid replicates or replays
+  without giving core their study meaning.
 - `FrozenInput`: canonical input hash plus declared authorities.
-- `StageOutput<S, V>`: stage, cell, predecessor hash, output hash, and value.
+- `StageOutput<S, V>`: an envelope for a lane-declared durable output that binds
+  its stage, exact cell, frozen-input digest, implementation revision, declared
+  predecessor digest set or closure, output digest, and value.
 - `PreparedCell`: materialized input ready for execution.
-- `ObservationScope`: correlation carrier established before execution and
-  settled independently afterward.
+- `ObservationHandle`: acquired correlation carrier established before
+  execution, embedded in the solver terminal, and settled or projected against
+  that exact subject afterward.
 - `AgentExecution`: terminal agent response/workspace diagnostics.
 - `SubmittedArtifact`: host-owned `Captured` or scoreable `Empty` product
   submission and digest.
-- `SolverTerminal`: atomically persisted execution result containing the agent
-  outcome, submitted artifact, and both digests.
+- `SolverTerminal`: write-once execution result containing the exact cell and
+  input identities, observation handle, agent outcome, submitted artifact, and
+  their digests. It is a lane-declared durable `StageOutput` and therefore its
+  publication key also binds frozen input, implementation revision, declared
+  predecessor identities, and instance.
 - `EvaluationResult`: deterministic and/or judged study result.
 
 Raw evidence, accepted stage output, remote telemetry, and historical claims
@@ -94,11 +102,12 @@ and exact predecessors do.
 ```text
 StudyDefinition
   -> Prepare -> PreparedCell
-  -> Observe.acquire -> ObservationScope
-       -> Execute -> AgentExecution -> host artifact capture
-          -> SolverTerminal (agent outcome + artifact, atomically persisted)
-     Observe.settle (independent result)
+  -> Observe.acquire -> ObservationHandle
+       -> Execute (Codex + host artifact capture + terminal sink)
+          -> persisted SolverTerminal (handle + agent outcome + artifact)
+     Observe.settle(handle, execution exit) (independent result)
   -> Evaluate -> EvaluationResult
+  -> Observe.project(handle, evaluation) (independently resumable)
   -> lane-owned pure aggregation and reporting
 ```
 
@@ -109,26 +118,20 @@ interface Prepare<I, O, E, R> {
   prepare(input: I): Effect.Effect<O, E, R>
 }
 
-interface Execute<I, O, E, R> {
-  execute(input: I): Effect.Effect<O, E, R>
+interface Execute<I, T extends SolverTerminal, E, R> {
+  execute(input: I): Effect.Effect<T, E, R>
 }
 
 interface Observe<C, AcquireE, SettleE, R> {
-  scope<A, E2, R2>(
-    context: C,
-    use: (scope: ObservationScope) => Effect.Effect<A, E2, R2>,
-  ): Effect.Effect<
-    {
-      execution: Exit.Exit<A, E2>
-      handle: ObservationHandle
-      settlement: Exit.Exit<ObservationResult, SettleE>
-    },
-    AcquireE,
-    R | R2
-  >
+  acquire(context: C): Effect.Effect<ObservationHandle, AcquireE, R>
+
+  settle<E2>(input: {
+    handle: ObservationHandle
+    execution: Exit.Exit<SolverTerminal, E2>
+  }): Effect.Effect<ObservationResult, SettleE, R>
 
   project(
-    input: ObservationProjection,
+    input: ObservationProjection & { handle: ObservationHandle },
   ): Effect.Effect<ObservationProjectionResult, ObservationProjectionError, R>
 }
 
@@ -141,12 +144,14 @@ Studies compose these interfaces directly with Effect. The SDK does not expose
 a phase registry, DAG, generic worker, or global state machine.
 
 Observation acquisition may prevent execution when correlation cannot be
-established. After acquisition, `scope` captures the execution `Exit`, runs
-settlement on every exit, and returns the correlation handle plus both exits as
-values. Settlement failure therefore cannot erase a successful execution or
-its terminal artifact. The handle remains available to project evaluation
-scores later; projection is independently resumable and is not ordered ahead of
-Evaluate by the SDK.
+established. After acquisition, the lane supplies the exact handle to Execute;
+the persisted solver terminal binds that handle to the submitted artifact and
+agent outcome. The lane then calls settlement with the handle and execution
+`Exit` on every exit it can observe. A crash after terminal publication can
+recover the same handle from that terminal and resume settlement or later score
+projection without rerunning the solver. Settlement failure therefore cannot
+erase a successful execution or its terminal artifact. Projection is
+independently resumable and is not ordered ahead of Evaluate by the SDK.
 
 ## Continuation And Failure Law
 
@@ -156,14 +161,25 @@ Declared -> Prepared -> Executing -> SolverTerminal -> Evaluated -> Finalized
 
 This is a reasoning model, not a controller implementation.
 
-- `SolverTerminal` is absorbing for an exact frozen tuple.
+- `SolverTerminal` is absorbing for an exact frozen tuple, including its
+  lane-supplied instance identity.
 - Host artifact capture and the agent outcome form one `SolverTerminal` with an
   explicit `Captured` or `Empty` artifact variant. A lane-provided durable sink
-  persists that complete value atomically before it becomes adoptable or any
-  verifier starts. Core validates identity and adoption; it owns no store or
-  evidence retention.
-- A stage output is adoptable only when cell, frozen input, predecessor, and
-  implementation revision match exactly.
+  publishes that complete value as a lane-declared durable `StageOutput` with
+  write-once, put-if-absent semantics before it becomes adoptable or any
+  verifier starts. Its key necessarily binds the exact cell and instance,
+  frozen-input digest, implementation revision, and declared predecessor
+  identities. An identical existing value may be adopted; a conflicting value
+  at the same key is rejected and never overwritten. The lane composition
+  behind Execute owns Codex invocation, Git/Bun artifact capture, and its sink
+  implementation/durability. Core owns only the sink port plus pure
+  publication/adoption conflict validation; it owns no store or evidence
+  retention.
+- A lane-declared durable output is adoptable only when its exact cell
+  (including instance), frozen-input digest, implementation revision, declared
+  predecessor digest set or closure, and output digest match. The `StageOutput`
+  envelope provides no store, transition graph, controller, or global
+  continuation authority. Ephemeral adapter results need not use it.
 - A mismatched or corrupt output blocks adoption; it is not silently repaired.
 - Pre-terminal infrastructure interruption may replace only that execution.
 - Post-terminal evaluation or observation failure resumes only the incomplete
@@ -203,15 +219,16 @@ may isolate Effect 4 without changing Template's root Effect 3 closure.
 
 ## Study Directory Topology
 
-Lane vaults expose the same vendor-neutral logical roles. These names are the
-minimum common shape, not an exhaustive directory whitelist:
+Lane vaults expose the same vendor-neutral logical roles through one explicit
+owner-local path mapping. The names below are illustrative roles, not mandatory
+directory names, an exhaustive whitelist, or material the migration relocates:
 
 ```text
 studies/<study-id>/
   study.ts          # identity, cells, concrete imports, stage composition
   cases/            # lane-owned case definitions
   inputs/           # frozen source/config authority
-  bindings/         # thin lane bindings to generic stages
+  bindings/         # thin lane bindings/configuration selecting SDK adapters
   prompts/          # optional lane-owned prompt material
   rubrics/          # optional lane-owned evaluation material
   checks/           # optional lane-owned behavioral oracles
@@ -220,9 +237,12 @@ studies/<study-id>/
   history/          # superseded studies and frozen provenance
 ```
 
-The study explicitly imports active lane-owned inputs; the SDK never discovers
-them by scanning directories. It never scans or interprets `results/`,
-`evidence/`, or `history/`.
+The study mapping explicitly imports active lane-owned material; the SDK never
+discovers it by scanning directories and never cross-repository scans. It never
+scans or interprets results, evidence, or history. Template Habitat may enforce
+the SDK package and dependency structure. Each lane's owner-local compatibility
+or Habitat check proves that lane's mapping without granting Template authority
+over the vault.
 
 ## Package Topology And Legal Crossings
 
@@ -258,6 +278,13 @@ adapters and own orchestration policy.
 One package with explicit subpath exports is the default. A second package is
 allowed only when dependency or bundle isolation cannot be enforced inside the
 package.
+
+Lane compatibility consumes an immutable locally packed SDK artifact. The
+artifact binds the package version, protocol version, and content digest; a
+Template Git SHA remains provenance but is not the package interface. Standard
+local package build/pack behavior supplies this boundary. This change adds no
+registry publication, release plane, artifact service, or cross-repository
+source import.
 
 ## Adapter Responsibilities
 
@@ -316,16 +343,18 @@ Tests target persistent behavioral guarantees, not implementation text:
 4. Codex invocation cancellation completes before OpenShell sandbox release;
    each adapter terminates only its directly owned resource.
 5. Submitted artifact round-trips added, deleted, renamed, and binary files.
-6. Agent outcome and artifact persist atomically as one solver terminal, which
-   is adopted after downstream failure without rerunning execution.
+6. Observation handle, agent outcome, and artifact publish once as one solver
+   terminal; identical retries adopt it and conflicting publication rejects.
 7. Product failure and infrastructure failure remain disjoint.
 8. Observation settlement failure preserves the execution exit and correlation
    handle; later score projection validates the exact trace subject without
    imposing cosmetic topology or global namespace cleanliness.
-9. Each lane supplies one model-free compatibility cell proving its retained
-   study can bind the same interfaces and topology.
-10. Habitat proves package shape, study-container shape, and dependency
-   direction. It does not test runtime behavior.
+9. Each lane consumes the same immutable packed SDK artifact and supplies one
+   model-free compatibility cell proving its explicit path mapping can bind the
+   same interfaces.
+10. Template Habitat proves SDK package shape and dependency direction; each
+   lane's owner-local check proves its own study mapping. Neither tests runtime
+   behavior by scanning another repository.
 
 Mocks may isolate a vendor port, but the SDK's anchors remain real TypeBox
 decoding, Effect scopes, Git patches, Bun processes, and adapter contract tests.
@@ -345,15 +374,20 @@ implementation.
 6. Merge the union of adapter behavior, including Inngest multi-turn prompt
    linkage and oRPC plugin source ownership, without importing study policy.
 7. Implement and test terminal-before-evaluation continuation.
-8. Bind the oRPC study through a lane-owned adapter and pass a model-free cell.
-9. Bind the Inngest study through a lane-owned adapter and pass a model-free
-   cell.
-10. Review dependency direction, vendor correctness, deterministic tests, Nx,
+8. Pack one immutable local SDK artifact with package/protocol version and
+   digest; consume it from both lane bindings without a source checkout link.
+9. Bind the oRPC study through lane-owned configuration/bindings and pass a
+   model-free cell.
+10. Bind the Inngest study through lane-owned configuration/bindings and pass a
+    model-free cell.
+11. Review dependency direction, vendor correctness, deterministic tests, Nx,
    and Habitat.
-11. Remove or archive only the superseded active SDK copies; never move frozen
-    evidence or historical runtime bytes.
-12. Both directors accept the same exact Template commit and leave all three
-    repositories clean.
+12. Remove or archive only the superseded active SDK copies; never move frozen
+   evidence or historical runtime bytes.
+13. Restack onto current accepted Template upstream immediately before landing,
+    rerun all checks, and prove no lifecycle/controller dependency entered.
+14. Both directors accept the same exact Template commit and leave all three
+   repositories clean.
 
 ## Falsifiers
 

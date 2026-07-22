@@ -21,18 +21,18 @@ removes duplicate ownership without moving research truth.
 - Expose four generic stage interfaces: Prepare, Execute, Observe, and
   Evaluate. Observe is a scoped correlation boundary around execution, not a
   strictly later phase.
-- Persist one atomic solver terminal containing the submitted artifact before
-  verification, then permit exact-input adoption of completed downstream
-  stages.
+- Publish one write-once solver terminal containing the acquired observation
+  handle and submitted artifact before verification, then permit exact-input
+  adoption of declared durable downstream outputs.
 - Separate scoreable agent outcomes from infrastructure and evaluator failures.
 - Extract generic Effect runtime, command, identity, and adoption behavior.
 - Add named adapters for OpenShell, Codex, Langfuse, Codex-Langfuse tracing,
   Git/Bun artifacts, and EVLog.
 - Add only the Habitat topology and dependency-direction rules that protect
   these actual boundaries.
-- Express the retained oRPC and Inngest studies through lane-owned adapters
-  against the same SDK interfaces.
-- Remove or archive superseded live SDK copies only after both lane adapters
+- Express the retained oRPC and Inngest studies through lane-owned bindings and
+  configuration against the same Template-owned SDK adapters and interfaces.
+- Remove or archive superseded live SDK copies only after both lane bindings
   pass deterministic compatibility checks.
 
 ## Explicitly Outside The Change
@@ -52,8 +52,9 @@ removes duplicate ownership without moving research truth.
 
 - Template gains one independent executable SDK package with an isolated
   dependency closure.
-- The oRPC and Inngest vaults retain all research ownership and consume the SDK
-  only through explicit adapters and versioned package interfaces.
+- The oRPC and Inngest vaults retain all research ownership and consume an
+  immutable locally packed SDK artifact through explicit bindings and a
+  versioned package/protocol interface.
 - Frozen historical/runtime bytes remain path-stable provenance and are never
   reinterpreted as current SDK authority.
 - The SDK neither imports nor depends on Template lifecycle/controller
@@ -70,6 +71,15 @@ committed independently, but the SDK branch MUST restack onto that accepted
 Template architecture before BUILD begins and again before landing if the
 upstream stack changes. The SDK does not preserve, replace, or depend on the
 retiring controller.
+
+## Capabilities
+
+### New Capabilities
+
+- `research-experiment-sdk`: provides one Template-owned library of typed
+  research-stage contracts, scoped runtime behavior, named vendor adapters,
+  exact durable-output adoption, and locally packed lane compatibility without
+  owning study semantics, evidence, scheduling, or release authority.
 
 ## Related
 

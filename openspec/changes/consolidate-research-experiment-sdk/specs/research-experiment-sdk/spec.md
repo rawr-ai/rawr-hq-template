@@ -40,12 +40,12 @@ own aggregation and reporting.
 - **AND** the SDK does not infer ordering beyond exact predecessor identities
 
 ### Requirement: Observation scopes execution without owning correctness
-Observe MUST establish experiment and trace correlation before Execute, scope
-that correlation across execution, and attempt settlement on every execution
-exit. Its scoped result MUST preserve the execution exit, correlation handle,
-and settlement exit independently. The handle MUST remain usable for later
-score projection after Evaluate. Settlement or projection failure MAY resume
-independently and MUST NOT change a solver or evaluation outcome. Missing or
+Observe MUST acquire experiment and trace correlation before Execute. Execute
+MUST persist that exact observation handle in the solver terminal beside the
+agent outcome and artifact. Observe MUST settle against the exact handle and
+execution exit, and MUST project later evaluation scores against that same
+handle. Settlement or projection failure MAY resume independently from the
+persisted handle and MUST NOT change a solver or evaluation outcome. Missing or
 uncorrelated required evidence MUST fail the observation boundary, while
 cosmetic topology and provider namespace cleanliness MUST NOT be admissibility
 criteria.
@@ -57,13 +57,20 @@ criteria.
 - **AND** the solver terminal and artifact remain valid and are not rerun
 
 ### Requirement: Terminal artifact precedes evaluation
-Execute MUST produce one exact solver terminal containing the agent outcome and
-a host-owned `Captured` or scoreable `Empty` submitted artifact. A lane-provided
-durable sink MUST persist that complete value atomically before it becomes
-adoptable or Evaluate begins. Core MUST validate adoption but MUST NOT own the
-store or evidence retention. Solver prose and telemetry MUST NOT replace the
-product artifact. The Git/Bun adapter MUST support full-index binary-capable
-patches, including added, deleted, renamed, and binary files.
+The public lane-bound Execute capability MUST return one already-persisted exact
+solver terminal containing the observation handle, agent outcome, and a
+host-owned `Captured` or scoreable `Empty` submitted artifact. Its lane
+composition MUST use the Codex and Git/Bun capabilities plus a lane-owned
+durable sink internally. Publication MUST be write-once and put-if-absent:
+identical existing values MAY be adopted, while a conflicting value at the same
+key MUST reject without overwrite. `SolverTerminal` MUST be a lane-declared
+durable `StageOutput`, so that key MUST bind the exact cell and instance,
+frozen-input digest, implementation revision, and declared predecessor
+identities. Core MUST own only the sink port and pure publication/adoption
+conflict validation; it MUST NOT own the store or evidence retention. Solver
+prose and telemetry MUST NOT replace the product artifact. The Git/Bun adapter
+MUST support full-index binary-capable patches, including added, deleted,
+renamed, and binary files.
 
 #### Scenario: Verifier fails after solver completion
 - **WHEN** a verifier infrastructure failure occurs after artifact persistence
@@ -71,8 +78,12 @@ patches, including added, deleted, renamed, and binary files.
 - **AND** reruns only the incomplete evaluation boundary
 
 ### Requirement: Exact stage adoption and disjoint failures
-Every durable stage output MUST bind its cell, frozen input, predecessor,
-implementation revision, and output digest. Adoption MUST reject any mismatch.
+Every lane-declared durable stage output MUST bind its exact cell, including a
+stable lane-supplied instance identity, frozen-input digest, implementation
+revision, declared predecessor digest set or closure, and output digest.
+Adoption MUST reject any mismatch. This typed envelope MUST NOT imply a store,
+transition graph, controller, or global continuation authority, and ephemeral
+adapter outputs need not use it.
 Product noncompletion, empty or invalid artifacts, compile/test failure, policy
 violation, and low scores MUST remain terminal study values. Transport,
 containment, corrupt transfer, input mismatch, malformed external output, and
@@ -124,11 +135,13 @@ The adapters MUST NOT race to terminate each other's directly owned resource.
 - **AND** any deletion failure is retained without erasing the primary cause
 
 ### Requirement: Lane-owned study and evidence topology
-Each investigation MUST retain its study definitions, cases, inputs, adapters,
-results, evidence, and history in its own vault. The SDK MUST NOT scan,
+Each investigation MUST retain its study definitions, cases, inputs,
+configuration, bindings, results, evidence, and history in its own vault.
+Template SDK MUST be the sole owner of the named vendor adapters. Logical study
+roles MUST be supplied through an explicit lane-owned path mapping rather than
+mandatory directory names. The SDK MUST NOT scan across repositories,
 interpret, relocate, or become authority for frozen evidence. Both lanes MUST
-be able to bind a retained study through the same generic directory topology and
-stage interfaces.
+be able to bind a retained study through the same generic stage interfaces.
 
 #### Scenario: Historical evidence stays path-stable
 - **WHEN** the shared SDK replaces an active duplicate runtime
@@ -137,18 +150,45 @@ stage interfaces.
 - **AND** only the live adapter binding changes
 
 ### Requirement: Structural and behavioral verification
-Habitat MUST enforce only the SDK package shape, lane study-container shape, and
-dependency direction. Deterministic tests MUST probe TypeBox decoding, process
+Template Habitat MUST enforce only the SDK package shape and dependency
+direction. Each lane MUST own a local compatibility or Habitat check for its
+explicit study mapping. Deterministic tests MUST probe TypeBox decoding, process
 interruption, scoped resource release, artifact round-trip, terminal adoption,
 failure separation, and exact observation subjects. Tests MUST NOT assert source
 strings, helper counts, or a preferred internal implementation.
 
 #### Scenario: Both lanes pass model-free compatibility
-- **WHEN** the SDK and lane adapters are ready for cutover
+- **WHEN** the SDK and lane bindings are ready for cutover
 - **THEN** one retained oRPC cell and one retained Inngest cell complete their
   deterministic preparation/evaluation paths without model or provider mutation
 - **AND** SDK lint, typecheck, tests, build, Nx checks, Habitat, and bounded
   vendor reviews are green
+
+### Requirement: Immutable local package compatibility
+Lane compatibility MUST consume an immutable locally packed SDK artifact that
+binds package version, protocol version, and content digest. A Template Git SHA
+MAY provide provenance but MUST NOT be the cross-repository package interface.
+This change MUST NOT introduce registry publication, a release plane, artifact
+service, or direct cross-repository source dependency. The OpenSpec change MUST
+remain the sole shared design and coordination record; each repository's branch
+and checks own its local mutations.
+
+#### Scenario: Both lanes test the same package bytes
+- **WHEN** oRPC and Inngest run their model-free compatibility checks
+- **THEN** both consume the same locally packed artifact identity and protocol
+- **AND** neither imports the Template source checkout or relocates evidence
+
+### Requirement: Current-upstream integration
+The SDK branch MUST restack onto the accepted Template simplification before
+BUILD and again immediately before landing when upstream changed. Final checks
+MUST prove the branch is current, imports no lifecycle/controller package, and
+does not preserve the retiring controller as an SDK dependency.
+
+#### Scenario: Upstream architecture changes before landing
+- **WHEN** the primary Template simplification advances after SDK BUILD
+- **THEN** the SDK branch restacks onto the accepted current commit
+- **AND** all deterministic, Nx, Habitat, vendor, and no-controller-dependency
+  checks rerun before director acceptance
 
 ### Requirement: No second control plane
 The SDK MUST NOT add a generic scheduler around Langfuse Experiments, a
