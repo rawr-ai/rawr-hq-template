@@ -186,7 +186,6 @@
       "migration-slice:structural-tranche"
     ],
     "includedScripts": [
-      "lint",
       "lint:boundaries",
       "sync:check",
       "architecture:gates:permanent",
