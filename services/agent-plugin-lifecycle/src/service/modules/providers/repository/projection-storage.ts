@@ -47,13 +47,15 @@ export interface PathlessProjectionStorage {
  * The collections never learn projection codecs or publication order, and the
  * service never learns a filesystem or artifact address.
  */
-export function createPathlessProjectionStorage(input: Readonly<{
-  records: FlatProjectionRecordCollection;
-  trees: ImmutableProviderTreeCollection;
-}>): PathlessProjectionStorage {
+export function createPathlessProjectionStorage(
+  input: Readonly<{
+    records: FlatProjectionRecordCollection;
+    trees: ImmutableProviderTreeCollection;
+  }>
+): PathlessProjectionStorage {
   const inspectMember = async (
     projectionDigest: AgentProviderProjection["projectionDigest"],
-    member: Pick<ProviderProjectionMember, "memberFingerprint">,
+    member: Pick<ProviderProjectionMember, "memberFingerprint">
   ): Promise<DeploymentResult<readonly ImmutableProviderTreeFile[]>> => {
     const manifest = await input.records.read(manifestKey(projectionDigest));
     if (!manifest.ok) return manifest;
@@ -69,14 +71,14 @@ export function createPathlessProjectionStorage(input: Readonly<{
     if (!decodedManifest.memberFingerprints.includes(member.memberFingerprint)) {
       return projectionFailure(
         "projection.manifest.members",
-        "Projection manifest does not contain the requested member fingerprint",
+        "Projection manifest does not contain the requested member fingerprint"
       );
     }
     return await inspectMemberByFingerprint(member.memberFingerprint);
   };
 
   const inspectMemberByFingerprint = async (
-    memberFingerprint: ProviderMemberFingerprint,
+    memberFingerprint: ProviderMemberFingerprint
   ): Promise<DeploymentResult<readonly ImmutableProviderTreeFile[]>> => {
     const record = await input.records.read(memberKey(memberFingerprint));
     if (!record.ok) return record;
@@ -99,7 +101,7 @@ export function createPathlessProjectionStorage(input: Readonly<{
 
   const projectionMaterializer: ProviderProjectionMaterializer = Object.freeze({
     async materialize(
-      projection: AgentProviderProjection,
+      projection: AgentProviderProjection
     ): Promise<DeploymentResult<ProjectionMaterializationObservation>> {
       try {
         validateProjectionPayload(projection);
@@ -112,11 +114,16 @@ export function createPathlessProjectionStorage(input: Readonly<{
       if (!existing.ok) return existing;
       if (existing.value.kind === "present") {
         if (!sameBytes(existing.value.bytes, manifestBytes)) {
-          return projectionFailure("projection.manifest", "Projection manifest conflicts with immutable authority");
+          return projectionFailure(
+            "projection.manifest",
+            "Projection manifest conflicts with immutable authority"
+          );
         }
         const verified = await verifyProjectionMembers(projection, input.records, input.trees);
         return verified.ok
-          ? success(Object.freeze({ kind: "existing", projectionDigest: projection.projectionDigest }))
+          ? success(
+              Object.freeze({ kind: "existing", projectionDigest: projection.projectionDigest })
+            )
           : verified;
       }
 
@@ -125,14 +132,14 @@ export function createPathlessProjectionStorage(input: Readonly<{
         const treePublication = await publishTreeExact(
           input.trees,
           memberTreeKey(member.memberFingerprint),
-          memberTreeFiles(member),
+          memberTreeFiles(member)
         );
         if (!treePublication.ok) return treePublication;
         if (treePublication.value === "published") published = true;
         const recordPublication = await publishRecordExact(
           input.records,
           memberKey(member.memberFingerprint),
-          projectionMemberRecordBytes(member),
+          projectionMemberRecordBytes(member)
         );
         if (!recordPublication.ok) return recordPublication;
         if (recordPublication.value === "published") published = true;
@@ -145,19 +152,25 @@ export function createPathlessProjectionStorage(input: Readonly<{
       const manifestPublication = await publishRecordExact(input.records, key, manifestBytes);
       if (!manifestPublication.ok) return manifestPublication;
       if (manifestPublication.value === "published") published = true;
-      return success(Object.freeze({
-        kind: published ? "published" : "existing",
-        projectionDigest: projection.projectionDigest,
-      }));
+      return success(
+        Object.freeze({
+          kind: published ? "published" : "existing",
+          projectionDigest: projection.projectionDigest,
+        })
+      );
     },
   });
 
   const prepareMarketplace = async (
-    registration: ProviderMarketplaceRegistration,
-  ): Promise<DeploymentResult<Readonly<{
-    key: ImmutableProviderTreeKey;
-    files: readonly ImmutableProviderTreeFile[];
-  }>>> => {
+    registration: ProviderMarketplaceRegistration
+  ): Promise<
+    DeploymentResult<
+      Readonly<{
+        key: ImmutableProviderTreeKey;
+        files: readonly ImmutableProviderTreeFile[];
+      }>
+    >
+  > => {
     const canonical = canonicalRegistration(registration);
     if (!canonical.ok) return canonical;
     const normalized = canonical.value;
@@ -168,7 +181,10 @@ export function createPathlessProjectionStorage(input: Readonly<{
       const record = await input.records.read(memberKey(member.memberFingerprint));
       if (!record.ok) return record;
       if (record.value.kind === "absent") {
-        return projectionFailure("marketplace.member.record", "Marketplace member record is absent");
+        return projectionFailure(
+          "marketplace.member.record",
+          "Marketplace member record is absent"
+        );
       }
       try {
         const decoded = decodeProjectionMemberRecord(record.value.bytes, member.memberFingerprint);
@@ -188,26 +204,35 @@ export function createPathlessProjectionStorage(input: Readonly<{
   };
 
   const materializeMarketplace = async (
-    registration: ProviderMarketplaceRegistration,
+    registration: ProviderMarketplaceRegistration
   ): Promise<DeploymentResult<MarketplaceMaterializationObservation>> => {
     const prepared = await prepareMarketplace(registration);
     if (!prepared.ok) return prepared;
-    const publication = await publishTreeExact(input.trees, prepared.value.key, prepared.value.files);
+    const publication = await publishTreeExact(
+      input.trees,
+      prepared.value.key,
+      prepared.value.files
+    );
     if (!publication.ok) return publication;
-    return success(Object.freeze({
-      kind: publication.value,
-      projectionDigest: registration.projectionDigest,
-      sourceDigest: registration.sourceDigest,
-    }));
+    return success(
+      Object.freeze({
+        kind: publication.value,
+        projectionDigest: registration.projectionDigest,
+        sourceDigest: registration.sourceDigest,
+      })
+    );
   };
 
   const marketplaceMaterializer: ProviderMarketplaceMaterializer = Object.freeze({
     async materialize(
       provider: ProviderId,
-      registration: ProviderMarketplaceRegistration,
+      registration: ProviderMarketplaceRegistration
     ): Promise<DeploymentResult<MarketplaceMaterializationObservation>> {
       if (provider !== registration.provider) {
-        return projectionFailure("marketplace.provider", "Marketplace registration belongs to another provider");
+        return projectionFailure(
+          "marketplace.provider",
+          "Marketplace registration belongs to another provider"
+        );
       }
       return await materializeMarketplace(registration);
     },
@@ -216,19 +241,25 @@ export function createPathlessProjectionStorage(input: Readonly<{
   const marketplaceSources: ProviderMarketplaceSourceReader = Object.freeze({
     async read(
       target: ProviderTarget,
-      registration: ProviderMarketplaceRegistration,
+      registration: ProviderMarketplaceRegistration
     ): Promise<DeploymentResult<ProviderMarketplaceSource>> {
       if (target.provider !== registration.provider) {
-        return projectionFailure("marketplace.provider", "Marketplace source belongs to another provider");
+        return projectionFailure(
+          "marketplace.provider",
+          "Marketplace source belongs to another provider"
+        );
       }
       const prepared = await prepareMarketplace(registration);
       if (!prepared.ok) return prepared;
       const observed = await input.trees.read(prepared.value.key);
       if (!observed.ok) return observed;
-      if (observed.value.kind === "absent" || !sameTree(observed.value.files, prepared.value.files)) {
+      if (
+        observed.value.kind === "absent" ||
+        !sameTree(observed.value.files, prepared.value.files)
+      ) {
         return projectionFailure(
           "marketplace.tree",
-          "Marketplace source is absent or conflicts with immutable authority",
+          "Marketplace source is absent or conflicts with immutable authority"
         );
       }
       return success(marketplaceSource(registration));
@@ -245,7 +276,7 @@ export function createPathlessProjectionStorage(input: Readonly<{
 async function verifyProjectionMembers(
   projection: AgentProviderProjection,
   records: FlatProjectionRecordCollection,
-  trees: ImmutableProviderTreeCollection,
+  trees: ImmutableProviderTreeCollection
 ): Promise<DeploymentResult<null>> {
   for (const member of projection.members) {
     const expectedRecord = projectionMemberRecordBytes(member);
@@ -254,7 +285,7 @@ async function verifyProjectionMembers(
     if (record.value.kind === "absent" || !sameBytes(record.value.bytes, expectedRecord)) {
       return projectionFailure(
         "projection.member.record",
-        "Projection member record is absent or conflicts with immutable authority",
+        "Projection member record is absent or conflicts with immutable authority"
       );
     }
     const tree = await trees.read(memberTreeKey(member.memberFingerprint));
@@ -262,7 +293,7 @@ async function verifyProjectionMembers(
     if (tree.value.kind === "absent" || !sameTree(tree.value.files, memberTreeFiles(member))) {
       return projectionFailure(
         "projection.member.tree",
-        "Projection member tree is absent or conflicts with immutable authority",
+        "Projection member tree is absent or conflicts with immutable authority"
       );
     }
   }
@@ -272,14 +303,17 @@ async function verifyProjectionMembers(
 async function publishRecordExact(
   records: FlatProjectionRecordCollection,
   key: ProjectionRecordKey,
-  bytes: Uint8Array,
+  bytes: Uint8Array
 ): Promise<DeploymentResult<"existing" | "published">> {
   const before = await records.read(key);
   if (!before.ok) return before;
   if (before.value.kind === "present") {
     return sameBytes(before.value.bytes, bytes)
       ? success("existing")
-      : projectionFailure("projection.record", "Immutable projection record conflicts with requested bytes");
+      : projectionFailure(
+          "projection.record",
+          "Immutable projection record conflicts with requested bytes"
+        );
   }
   const published = await records.publish(key, bytes);
   if (!published.ok) return published;
@@ -287,20 +321,26 @@ async function publishRecordExact(
   if (!after.ok) return after;
   return after.value.kind === "present" && sameBytes(after.value.bytes, bytes)
     ? success(published.value.kind)
-    : projectionFailure("projection.record", "Projection record publication did not produce exact bytes");
+    : projectionFailure(
+        "projection.record",
+        "Projection record publication did not produce exact bytes"
+      );
 }
 
 async function publishTreeExact(
   trees: ImmutableProviderTreeCollection,
   key: ImmutableProviderTreeKey,
-  files: readonly ImmutableProviderTreeFile[],
+  files: readonly ImmutableProviderTreeFile[]
 ): Promise<DeploymentResult<"existing" | "published">> {
   const before = await trees.read(key);
   if (!before.ok) return before;
   if (before.value.kind === "present") {
     return sameTree(before.value.files, files)
       ? success("existing")
-      : projectionFailure("projection.tree", "Immutable provider tree conflicts with requested files");
+      : projectionFailure(
+          "projection.tree",
+          "Immutable provider tree conflicts with requested files"
+        );
   }
   const published = await trees.publish(key, files);
   if (!published.ok) return published;
@@ -312,7 +352,7 @@ async function publishTreeExact(
 }
 
 function canonicalRegistration(
-  registration: ProviderMarketplaceRegistration,
+  registration: ProviderMarketplaceRegistration
 ): DeploymentResult<ProviderMarketplaceRegistration> {
   try {
     const canonical = createProviderMarketplaceRegistration({
@@ -321,8 +361,8 @@ function canonicalRegistration(
       marketplaceIdentity: registration.marketplaceIdentity,
       members: registration.members,
     });
-    return canonical.projectionDigest === registration.projectionDigest
-      && canonical.sourceDigest === registration.sourceDigest
+    return canonical.projectionDigest === registration.projectionDigest &&
+      canonical.sourceDigest === registration.sourceDigest
       ? success(canonical)
       : projectionFailure("marketplace", "Marketplace registration digests are invalid");
   } catch (error) {
@@ -332,19 +372,21 @@ function canonicalRegistration(
 
 function validateMarketplaceMember(
   record: Readonly<Record<string, unknown>>,
-  member: ProviderMarketplaceRegistration["members"][number],
+  member: ProviderMarketplaceRegistration["members"][number]
 ): void {
   if (
-    record.pluginId !== member.pluginId
-    || record.nativeIdentity !== member.nativeIdentity
-    || record.providerSourceIdentity !== member.providerSourceIdentity
-    || record.memberFingerprint !== member.memberFingerprint
+    record.pluginId !== member.pluginId ||
+    record.nativeIdentity !== member.nativeIdentity ||
+    record.providerSourceIdentity !== member.providerSourceIdentity ||
+    record.memberFingerprint !== member.memberFingerprint
   ) {
     throw new Error("Marketplace member record changed from its registration");
   }
 }
 
-function manifestKey(projectionDigest: AgentProviderProjection["projectionDigest"]): ProjectionRecordKey {
+function manifestKey(
+  projectionDigest: AgentProviderProjection["projectionDigest"]
+): ProjectionRecordKey {
   return Object.freeze({ kind: "manifest", projectionDigest });
 }
 
@@ -356,7 +398,9 @@ function memberTreeKey(memberFingerprint: ProviderMemberFingerprint): ImmutableP
   return Object.freeze({ kind: "member", memberFingerprint });
 }
 
-function marketplaceTreeKey(registration: ProviderMarketplaceRegistration): ImmutableProviderTreeKey {
+function marketplaceTreeKey(
+  registration: ProviderMarketplaceRegistration
+): ImmutableProviderTreeKey {
   return Object.freeze({
     kind: "marketplace",
     projectionDigest: registration.projectionDigest,
@@ -364,7 +408,9 @@ function marketplaceTreeKey(registration: ProviderMarketplaceRegistration): Immu
   });
 }
 
-function marketplaceSource(registration: ProviderMarketplaceRegistration): ProviderMarketplaceSource {
+function marketplaceSource(
+  registration: ProviderMarketplaceRegistration
+): ProviderMarketplaceSource {
   return Object.freeze({
     projectionDigest: registration.projectionDigest,
     sourceDigest: registration.sourceDigest,

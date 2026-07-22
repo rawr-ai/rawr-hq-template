@@ -25,8 +25,8 @@ export const MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES = 2 * 1024 * 1024;
 export const MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH = 512;
 export const MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH = 4_096;
 
-export const CurrentMainBodyV2Schema = ReadonlyObject(Type.Object(
-  {
+export const CurrentMainBodyV2Schema = ReadonlyObject(
+  Type.Object({
     schemaVersion: Type.Literal(CURRENT_MAIN_V2_SCHEMA_VERSION),
     channel: Type.Literal(CURRENT_MAIN_V2_CHANNEL),
     contentAuthority: CanonicalChannelSelectionSchema.properties.contentAuthority,
@@ -37,16 +37,18 @@ export const CurrentMainBodyV2Schema = ReadonlyObject(Type.Object(
     releaseSetDigest: CanonicalChannelSelectionSchema.properties.releaseSetDigest,
     evaluationProfile: CanonicalChannelSelectionSchema.properties.evaluationProfile,
     projections: CanonicalChannelProjectionTupleSchema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
-export const CurrentMainEnvelopeV2Schema = ReadonlyObject(Type.Object(
-  {
+export const CurrentMainEnvelopeV2Schema = ReadonlyObject(
+  Type.Object({
     schemaVersion: Type.Literal(CURRENT_MAIN_V2_SCHEMA_VERSION),
     currentMainDigest: CanonicalChannelSelectionSchema.properties.currentMainDigest,
     body: CurrentMainBodyV2Schema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 export type ClaudeCurrentMainProjectionV2 = Readonly<
   Static<typeof ClaudeCanonicalChannelProjectionSchema>
@@ -58,8 +60,8 @@ export type CurrentMainProjectionTupleV2 = Static<typeof CanonicalChannelProject
 export type CurrentMainBodyV2 = Static<typeof CurrentMainBodyV2Schema>;
 export type CurrentMainEnvelopeV2 = Static<typeof CurrentMainEnvelopeV2Schema>;
 
-export const CurrentMainV2CodecFailureSchema = ReadonlyObject(Type.Object(
-  {
+export const CurrentMainV2CodecFailureSchema = ReadonlyObject(
+  Type.Object({
     code: Type.Union([
       Type.Literal("InvalidSchema"),
       Type.Literal("EnvelopeTooLarge"),
@@ -74,32 +76,35 @@ export const CurrentMainV2CodecFailureSchema = ReadonlyObject(Type.Object(
       minLength: 1,
       maxLength: MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH,
     }),
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 export const CurrentMainBytesSchema = Refine(
   Type.Unsafe<Uint8Array>(Type.Unknown()),
   (value) => value instanceof Uint8Array,
-  () => "Expected Uint8Array",
+  () => "Expected Uint8Array"
 );
 
-export const CanonicalCurrentMainV2Schema = ReadonlyObject(Type.Object(
-  {
+export const CanonicalCurrentMainV2Schema = ReadonlyObject(
+  Type.Object({
     protocol: Type.Literal(CURRENT_MAIN_V2_PROTOCOL),
     currentMainDigest: CanonicalChannelSelectionSchema.properties.currentMainDigest,
     byteLength: Type.Integer({ minimum: 1, maximum: MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES }),
     bytes: CurrentMainBytesSchema,
     record: CurrentMainEnvelopeV2Schema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 export const CurrentMainV2CodecResultSchema = Type.Union([
-  ReadonlyObject(Type.Object(
-    { ok: Type.Literal(true), value: CanonicalCurrentMainV2Schema },
-  ), { additionalProperties: false }),
-  ReadonlyObject(Type.Object(
-    { ok: Type.Literal(false), failure: CurrentMainV2CodecFailureSchema },
-  ), { additionalProperties: false }),
+  ReadonlyObject(Type.Object({ ok: Type.Literal(true), value: CanonicalCurrentMainV2Schema }), {
+    additionalProperties: false,
+  }),
+  ReadonlyObject(
+    Type.Object({ ok: Type.Literal(false), failure: CurrentMainV2CodecFailureSchema }),
+    { additionalProperties: false }
+  ),
 ]);
 
 export type CurrentMainV2CodecFailure = Static<typeof CurrentMainV2CodecFailureSchema>;

@@ -26,23 +26,26 @@ import type {
 const COMPILED_CANONICAL_REF = requireCanonicalRef();
 const COMPILED_CURRENT_MAIN_PATH = requireRelativePath(
   CURRENT_MAIN_V2_RECORD_PATH,
-  "currentMain.path",
+  "currentMain.path"
 );
 const COMPILED_RELEASE_INPUT_PATH = requireRelativePath(
   CURRENT_MAIN_V2_RELEASE_INPUT_PATH,
-  "currentMain.releaseInputPath",
+  "currentMain.releaseInputPath"
 );
 const TRUNCATED_SELECTION_REASON_SUFFIX = "...[truncated]";
 
 export async function resolveCurrentMainSelection(
   git: ExactGitReader,
-  locator: Parameters<ExactGitReader["inspect"]>[0],
+  locator: Parameters<ExactGitReader["inspect"]>[0]
 ): Promise<CurrentMainSelectionResult> {
   const opening = await git.inspect(locator, COMPILED_CANONICAL_REF);
   const openingFailure = classifyInspection(opening, locator.expectedRepositoryIdentity);
   if (openingFailure !== undefined) return openingFailure;
   if (opening.kind !== "Ready") {
-    return refused("UNREACHABLE_REPOSITORY", "Canonical Git inspection produced no readable main state");
+    return refused(
+      "UNREACHABLE_REPOSITORY",
+      "Canonical Git inspection produced no readable main state"
+    );
   }
 
   const recordRead = await git.readBlob(locator, {
@@ -52,7 +55,8 @@ export async function resolveCurrentMainSelection(
     tree: opening.headTree,
     path: COMPILED_CURRENT_MAIN_PATH,
   });
-  if (!recordRead.ok) return classifyGitReadFailure(recordRead.failure.code, recordRead.failure.message);
+  if (!recordRead.ok)
+    return classifyGitReadFailure(recordRead.failure.code, recordRead.failure.message);
 
   const currentMain = validateCurrentMainEnvelopeV2(recordRead.observation.bytes);
   if (!currentMain.ok) {
@@ -60,10 +64,13 @@ export async function resolveCurrentMainSelection(
   }
   const body = currentMain.value.record.body;
   if (
-    body.sourceRepositoryIdentity !== locator.expectedRepositoryIdentity
-    || body.sourceRepositoryIdentity !== opening.repositoryIdentity
+    body.sourceRepositoryIdentity !== locator.expectedRepositoryIdentity ||
+    body.sourceRepositoryIdentity !== opening.repositoryIdentity
   ) {
-    return refused("WRONG_REPOSITORY", "Current-main selects a repository other than the explicit locator");
+    return refused(
+      "WRONG_REPOSITORY",
+      "Current-main selects a repository other than the explicit locator"
+    );
   }
   const sourceCommit = parseGitCommitId(body.sourceCommit, "currentMain.body.sourceCommit");
   const sourceTree = parseGitTreeId(body.sourceTree, "currentMain.body.sourceTree");
@@ -75,13 +82,13 @@ export async function resolveCurrentMainSelection(
   if (!reachable.ok) {
     return refused(
       "STALE_RECORD",
-      `Selected source ancestry cannot be established: ${reachable.failure.message}`,
+      `Selected source ancestry cannot be established: ${reachable.failure.message}`
     );
   }
   if (!reachable.value) {
     return refused(
       "FORGED_RECORD",
-      "Selected source commit is not reachable from opening canonical main",
+      "Selected source commit is not reachable from opening canonical main"
     );
   }
 
@@ -110,7 +117,10 @@ export async function resolveCurrentMainSelection(
   const closingFailure = classifyInspection(closing, locator.expectedRepositoryIdentity);
   if (closingFailure !== undefined) return closingFailure;
   if (closing.kind !== "Ready" || !sameInspection(opening, closing)) {
-    return refused("UNREACHABLE_REPOSITORY", "Canonical main changed during current-main selection");
+    return refused(
+      "UNREACHABLE_REPOSITORY",
+      "Canonical main changed during current-main selection"
+    );
   }
 
   return Object.freeze({
@@ -121,7 +131,7 @@ export async function resolveCurrentMainSelection(
 
 function freezeSelection(
   currentMainDigest: `cm2_${string}`,
-  body: CurrentMainBodyV2,
+  body: CurrentMainBodyV2
 ): CanonicalChannelSelection {
   return Object.freeze({
     currentMainDigest,
@@ -138,7 +148,7 @@ function freezeSelection(
 
 function classifyInspection(
   inspection: RepositoryInspection,
-  expectedRepositoryIdentity: string,
+  expectedRepositoryIdentity: string
 ): CurrentMainSelectionResult | undefined {
   switch (inspection.kind) {
     case "DirtyRepository":
@@ -146,21 +156,24 @@ function classifyInspection(
     case "WrongRepository":
       return refused(
         "WRONG_REPOSITORY",
-        `Expected ${expectedRepositoryIdentity}, observed ${inspection.actualRepositoryIdentity}`,
+        `Expected ${expectedRepositoryIdentity}, observed ${inspection.actualRepositoryIdentity}`
       );
     case "UnreachableRepository":
       return refused("UNREACHABLE_REPOSITORY", inspection.reason);
     case "Ready":
-      return inspection.repositoryIdentity === expectedRepositoryIdentity
-        && inspection.canonicalRef === COMPILED_CANONICAL_REF
+      return inspection.repositoryIdentity === expectedRepositoryIdentity &&
+        inspection.canonicalRef === COMPILED_CANONICAL_REF
         ? undefined
-        : refused("WRONG_REPOSITORY", "Canonical Git inspection returned another repository or ref");
+        : refused(
+            "WRONG_REPOSITORY",
+            "Canonical Git inspection returned another repository or ref"
+          );
   }
 }
 
 function classifyGitReadFailure(
   code: GitReadFailureCode,
-  message: string,
+  message: string
 ): CurrentMainSelectionResult {
   switch (code) {
     case "MissingObject":
@@ -174,17 +187,19 @@ function classifyGitReadFailure(
 }
 
 function sameInspection(left: RepositoryInspection, right: RepositoryInspection): boolean {
-  return left.kind === "Ready"
-    && right.kind === "Ready"
-    && left.repositoryIdentity === right.repositoryIdentity
-    && left.canonicalRef === right.canonicalRef
-    && left.headCommit === right.headCommit
-    && left.headTree === right.headTree;
+  return (
+    left.kind === "Ready" &&
+    right.kind === "Ready" &&
+    left.repositoryIdentity === right.repositoryIdentity &&
+    left.canonicalRef === right.canonicalRef &&
+    left.headCommit === right.headCommit &&
+    left.headTree === right.headTree
+  );
 }
 
 function refused(
   kind: CurrentMainSelectionFailureKind,
-  reason: string,
+  reason: string
 ): CurrentMainSelectionResult {
   return Object.freeze({ kind, reason: boundedReason(reason) });
 }

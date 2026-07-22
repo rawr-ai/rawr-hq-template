@@ -1,23 +1,14 @@
-import type {
-  ExactGitBlobObservation,
-  GitBlobSelection,
-  GitLocator,
-} from "../dto/git";
-import type {
-  CanonicalRef,
-  GitCommitId,
-  GitTreeId,
-  RepositoryIdentity,
-} from "../dto/primitives";
+import type { ExactGitBlobObservation, GitBlobSelection, GitLocator } from "../dto/git";
+import type { CanonicalRef, GitCommitId, GitTreeId, RepositoryIdentity } from "../dto/primitives";
 
 export type RepositoryInspection =
   | {
-    readonly kind: "Ready";
-    readonly repositoryIdentity: RepositoryIdentity;
-    readonly canonicalRef: CanonicalRef;
-    readonly headCommit: GitCommitId;
-    readonly headTree: GitTreeId;
-  }
+      readonly kind: "Ready";
+      readonly repositoryIdentity: RepositoryIdentity;
+      readonly canonicalRef: CanonicalRef;
+      readonly headCommit: GitCommitId;
+      readonly headTree: GitTreeId;
+    }
   | { readonly kind: "DirtyRepository" }
   | { readonly kind: "WrongRepository"; readonly actualRepositoryIdentity: string }
   | { readonly kind: "UnreachableRepository"; readonly reason: string };
@@ -43,11 +34,17 @@ export type GitBooleanReadResult =
   | { readonly ok: false; readonly failure: GitReadFailure };
 
 export interface ExactGitReader {
-  readonly inspect: (locator: GitLocator, canonicalRef: CanonicalRef) => Promise<RepositoryInspection>;
-  readonly readBlob: (locator: GitLocator, selection: GitBlobSelection) => Promise<GitBlobReadResult>;
+  readonly inspect: (
+    locator: GitLocator,
+    canonicalRef: CanonicalRef
+  ) => Promise<RepositoryInspection>;
+  readonly readBlob: (
+    locator: GitLocator,
+    selection: GitBlobSelection
+  ) => Promise<GitBlobReadResult>;
   readonly isAncestor: (
     locator: GitLocator,
     ancestor: GitCommitId,
-    descendant: GitCommitId,
+    descendant: GitCommitId
   ) => Promise<GitBooleanReadResult>;
 }

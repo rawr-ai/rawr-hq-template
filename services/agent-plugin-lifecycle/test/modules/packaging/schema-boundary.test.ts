@@ -1,8 +1,5 @@
 import { schema } from "@rawr/hq-sdk";
-import type {
-  InferContractRouterInputs,
-  InferContractRouterOutputs,
-} from "@orpc/contract";
+import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
@@ -99,7 +96,9 @@ describe("packaging procedure result schema boundary", () => {
     ];
     for (const candidate of invalid) {
       expect(Value.Check(PackageAgentPluginRequestSchema, candidate)).toBe(false);
-      const validated = await schema(PackageAgentPluginRequestSchema)["~standard"].validate(candidate);
+      const validated = await schema(PackageAgentPluginRequestSchema)["~standard"].validate(
+        candidate
+      );
       expect("issues" in validated).toBe(true);
     }
   });
@@ -149,7 +148,9 @@ describe("packaging procedure result schema boundary", () => {
 
     for (const candidate of invalid) {
       expect(Value.Check(PackageAgentPluginResultSchema, candidate)).toBe(false);
-      const validated = await schema(PackageAgentPluginResultSchema)["~standard"].validate(candidate);
+      const validated = await schema(PackageAgentPluginResultSchema)["~standard"].validate(
+        candidate
+      );
       expect("issues" in validated).toBe(true);
     }
   });
@@ -190,9 +191,8 @@ describe("packaging procedure result schema boundary", () => {
     ];
 
     for (const candidate of invalid) {
-      const candidateSchema = "kind" in candidate
-        ? PackageAgentPluginResultSchema
-        : PackageAgentPluginRequestSchema;
+      const candidateSchema =
+        "kind" in candidate ? PackageAgentPluginResultSchema : PackageAgentPluginRequestSchema;
       expect(Value.Check(candidateSchema, candidate)).toBe(false);
       const validated = await schema(candidateSchema)["~standard"].validate(candidate);
       expect("issues" in validated).toBe(true);

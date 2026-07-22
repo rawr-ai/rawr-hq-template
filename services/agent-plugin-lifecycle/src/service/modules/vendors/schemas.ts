@@ -1,9 +1,6 @@
 import { Type } from "typebox";
 
-import {
-  PluginIdSchema,
-  VendorRecordBindingSchema,
-} from "./model/dto/vendor-records";
+import { PluginIdSchema, VendorRecordBindingSchema } from "./model/dto/vendor-records";
 
 export {
   CANONICAL_ABSOLUTE_PATH_PATTERN,
@@ -40,5 +37,5 @@ export const VendorMemberBindingContextSchema = Type.Object(
     declaration: VendorRecordBindingSchema,
     provenance: VendorRecordBindingSchema,
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );

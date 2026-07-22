@@ -13,12 +13,8 @@ import {
   renderCompleteProjection,
   type AgentProviderProjection,
 } from "../../../src/service/modules/providers/model/policy/projection";
-import type {
-  NativeStandaloneExposureObservation,
-} from "../../../src/service/modules/providers/model/policy/state-machine";
-import {
-  parseProviderTarget,
-} from "../../../src/service/modules/providers/model/dto/provider-target";
+import type { NativeStandaloneExposureObservation } from "../../../src/service/modules/providers/model/policy/state-machine";
+import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
 import { canonicalBytes } from "../../../src/service/modules/providers/model/helpers/canonical";
 import {
   createAgentPluginPayload,
@@ -31,18 +27,9 @@ import {
   type AgentPluginRelease,
   type VerifiedReleaseArtifactV1,
 } from "../../../src/service/shared/release";
-import {
-  SOURCE,
-  must,
-  productFixture,
-  releaseInputBody,
-} from "../../shared/release/fixtures";
-import {
-  CODEX_ADAPTER_PROTOCOL,
-} from "../../../src/service/modules/providers/repository/codex";
-import {
-  CLAUDE_ADAPTER_PROTOCOL,
-} from "../../../src/service/modules/providers/repository/claude";
+import { SOURCE, must, productFixture, releaseInputBody } from "../../shared/release/fixtures";
+import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
+import { CLAUDE_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/claude";
 import {
   claudeCapabilitiesFromCommands,
   createResourceClaudeCanonicalObserver,
@@ -61,16 +48,12 @@ import type {
   NativeResourcePluginReadInput,
   NativeResourceSessionInput,
 } from "../../../src/service/model/dependencies/providers";
-import {
-  inspectMarketplaceSource,
-} from "../../../src/service/modules/providers/repository/resource-marketplace";
+import { inspectMarketplaceSource } from "../../../src/service/modules/providers/repository/resource-marketplace";
 import {
   inspectNativePluginPackage,
   inspectNativePluginVisibility,
 } from "../../../src/service/modules/providers/repository/resource-package";
-import {
-  createSessionCache,
-} from "../../../src/service/modules/providers/repository/resource-shared";
+import { createSessionCache } from "../../../src/service/modules/providers/repository/resource-shared";
 
 const EXPECTED_CAPABILITIES = Object.freeze([
   "native-plugin-enable",
@@ -81,23 +64,25 @@ const EXPECTED_CAPABILITIES = Object.freeze([
   "visible-skill-inventory",
 ]);
 const UNUSED_MARKETPLACE_LOCATIONS = Object.freeze({
-  locate: async () => { throw new Error("unused marketplace location resolver"); },
+  locate: async () => {
+    throw new Error("unused marketplace location resolver");
+  },
 });
 
 describe("native provider resource interpretation", () => {
   it("derives service capabilities from raw provider command observations", () => {
-    expect(codexCapabilitiesFromCommands(
-      ["add", "list", "remove"],
-      ["add", "list", "remove"],
-    )).toEqual(EXPECTED_CAPABILITIES);
-    expect(claudeCapabilitiesFromCommands(
-      ["disable", "enable", "install", "list", "uninstall"],
-      ["add", "list", "remove"],
-    )).toEqual(EXPECTED_CAPABILITIES);
-    expect(codexCapabilitiesFromCommands(
-      ["add", "list"],
-      ["add", "list"],
-    )).not.toContain("native-plugin-retire");
+    expect(
+      codexCapabilitiesFromCommands(["add", "list", "remove"], ["add", "list", "remove"])
+    ).toEqual(EXPECTED_CAPABILITIES);
+    expect(
+      claudeCapabilitiesFromCommands(
+        ["disable", "enable", "install", "list", "uninstall"],
+        ["add", "list", "remove"]
+      )
+    ).toEqual(EXPECTED_CAPABILITIES);
+    expect(codexCapabilitiesFromCommands(["add", "list"], ["add", "list"])).not.toContain(
+      "native-plugin-retire"
+    );
   });
 
   it.each([
@@ -116,13 +101,16 @@ describe("native provider resource interpretation", () => {
     const alpha = rendered.value.members[0];
     if (alpha === undefined) throw new Error("Native projection fixture has no alpha member");
 
-    const inspected = inspectNativePluginPackage({
-      entries: alpha.files.map((file) => ({
-        path: file.path,
-        mode: file.mode,
-        bytes: new Uint8Array(file.bytes),
-      })),
-    }, provider);
+    const inspected = inspectNativePluginPackage(
+      {
+        entries: alpha.files.map((file) => ({
+          path: file.path,
+          mode: file.mode,
+          bytes: new Uint8Array(file.bytes),
+        })),
+      },
+      provider
+    );
     expect(inspected).toMatchObject({
       pluginId: alpha.pluginId,
       nativeIdentity: alpha.nativeIdentity,
@@ -147,13 +135,15 @@ describe("native provider resource interpretation", () => {
         memberFingerprint: member.memberFingerprint,
       })),
     });
-    expect(inspectMarketplaceSource({
-      observation: {
-        entries: [{ path: ".rawr/marketplace.json", mode: 0o644, bytes: metadata }],
-      },
-      provider,
-      adapterProtocol: protocol,
-    })).toEqual(registration);
+    expect(
+      inspectMarketplaceSource({
+        observation: {
+          entries: [{ path: ".rawr/marketplace.json", mode: 0o644, bytes: metadata }],
+        },
+        provider,
+        adapterProtocol: protocol,
+      })
+    ).toEqual(registration);
   });
 
   it("fails closed when raw package bytes no longer bind the projected fingerprint", () => {
@@ -175,28 +165,37 @@ describe("native provider resource interpretation", () => {
         : new Uint8Array(file.bytes),
     }));
 
-    expect(inspectNativePluginPackage({ entries }, "codex")
-      .memberFingerprint).not.toBe(alpha.memberFingerprint);
+    expect(inspectNativePluginPackage({ entries }, "codex").memberFingerprint).not.toBe(
+      alpha.memberFingerprint
+    );
   });
 
   it("reads normalized hook events from the native package manifest", () => {
-    expect(inspectNativePluginVisibility({
-      entries: [{
-        path: "hooks/hooks.json",
-        mode: 0o644,
-        bytes: hookManifestBytes("Stop", "PreToolUse"),
-      }],
-    }).visibleHooks).toEqual(["pre-tool-use", "stop"]);
+    expect(
+      inspectNativePluginVisibility({
+        entries: [
+          {
+            path: "hooks/hooks.json",
+            mode: 0o644,
+            bytes: hookManifestBytes("Stop", "PreToolUse"),
+          },
+        ],
+      }).visibleHooks
+    ).toEqual(["pre-tool-use", "stop"]);
   });
 
   it("treats an empty native hook manifest as no visible events", () => {
-    expect(inspectNativePluginVisibility({
-      entries: [{
-        path: "hooks/hooks.json",
-        mode: 0o644,
-        bytes: new TextEncoder().encode(JSON.stringify({ hooks: {} })),
-      }],
-    }).visibleHooks).toEqual([]);
+    expect(
+      inspectNativePluginVisibility({
+        entries: [
+          {
+            path: "hooks/hooks.json",
+            mode: 0o644,
+            bytes: new TextEncoder().encode(JSON.stringify({ hooks: {} })),
+          },
+        ],
+      }).visibleHooks
+    ).toEqual([]);
   });
 
   it.each([
@@ -204,13 +203,17 @@ describe("native provider resource interpretation", () => {
     { hooks: { Stop: [] } },
     { hooks: { Stop: [{ hooks: [] }] } },
   ])("rejects hook manifests without a complete visible handler declaration", (manifest) => {
-    expect(() => inspectNativePluginVisibility({
-      entries: [{
-        path: "hooks/hooks.json",
-        mode: 0o644,
-        bytes: new TextEncoder().encode(JSON.stringify(manifest)),
-      }],
-    })).toThrow("supported TypeBox schema");
+    expect(() =>
+      inspectNativePluginVisibility({
+        entries: [
+          {
+            path: "hooks/hooks.json",
+            mode: 0o644,
+            bytes: new TextEncoder().encode(JSON.stringify(manifest)),
+          },
+        ],
+      })
+    ).toThrow("supported TypeBox schema");
   });
 
   it("retries resource acquisition after a failed session instead of caching the failure", async () => {
@@ -221,7 +224,9 @@ describe("native provider resource interpretation", () => {
       return Object.freeze({ home });
     });
 
-    await expect(acquire("/tmp/rawr-native-provider-home")).rejects.toThrow("transient acquisition failure");
+    await expect(acquire("/tmp/rawr-native-provider-home")).rejects.toThrow(
+      "transient acquisition failure"
+    );
     await expect(acquire("/tmp/rawr-native-provider-home")).resolves.toEqual({
       home: "/tmp/rawr-native-provider-home",
     });
@@ -230,7 +235,7 @@ describe("native provider resource interpretation", () => {
 
   it("maps the resource-port ownership conflict to the lifecycle collision issue", async () => {
     const result = await inspectCodexCapabilityFailure(
-      nativeOwnershipConflict("/tmp/rawr-native-owner-conflict"),
+      nativeOwnershipConflict("/tmp/rawr-native-owner-conflict")
     );
 
     expect(result).toMatchObject({
@@ -240,26 +245,32 @@ describe("native provider resource interpretation", () => {
   });
 
   it("preserves a non-conflict resource failure without classifying it as a collision", async () => {
-    const result = await inspectCodexCapabilityFailure(Object.freeze({
-      ...nativeOwnershipConflict("/tmp/rawr-native-owner-conflict"),
-      reason: "CommandFailed",
-    }));
+    const result = await inspectCodexCapabilityFailure(
+      Object.freeze({
+        ...nativeOwnershipConflict("/tmp/rawr-native-owner-conflict"),
+        reason: "CommandFailed",
+      })
+    );
 
     expect(result).toMatchObject({
       ok: false,
-      issues: [{
-        code: "CAPABILITY_MISMATCH",
-        path: "target.capabilities",
-        message: "Provider ownership slot is occupied",
-      }],
+      issues: [
+        {
+          code: "CAPABILITY_MISMATCH",
+          path: "target.capabilities",
+          message: "Provider ownership slot is occupied",
+        },
+      ],
     });
   });
 
   it("does not classify an ownership reason under a foreign failure tag", async () => {
-    const result = await inspectCodexCapabilityFailure(Object.freeze({
-      ...nativeOwnershipConflict("/tmp/rawr-native-owner-conflict"),
-      _tag: "OtherProviderFailure",
-    }));
+    const result = await inspectCodexCapabilityFailure(
+      Object.freeze({
+        ...nativeOwnershipConflict("/tmp/rawr-native-owner-conflict"),
+        _tag: "OtherProviderFailure",
+      })
+    );
 
     expect(result).toMatchObject({
       ok: false,
@@ -293,7 +304,9 @@ describe("native provider resource interpretation", () => {
         operation: "plugin-repair",
       }),
     }),
-  ])("does not classify a resource-shaped failure with $name", async ({ failure: providerFailure }) => {
+  ])("does not classify a resource-shaped failure with $name", async ({
+    failure: providerFailure,
+  }) => {
     const result = await inspectCodexCapabilityFailure(providerFailure);
 
     expect(result).toMatchObject({
@@ -314,24 +327,26 @@ describe("native provider resource interpretation", () => {
   });
 
   it("maps an enabled Codex plugin hook to its exact managed native identity", async () => {
-    const verified = await verifyCodexHookVisibility(Object.freeze([
-      Object.freeze({
-        key: "opaque-upstream-key",
-        eventName: "sessionStart",
-        handlerType: "command",
-        matcher: null,
-        command: "node hooks/session-start/handler.ts",
-        timeoutSec: 10,
-        statusMessage: null,
-        source: "plugin",
-        pluginId: "alpha@personal-rawr-hq",
-        displayOrder: 0,
-        enabled: true,
-        isManaged: false,
-        currentHash: "fixture",
-        trustStatus: "trusted",
-      }),
-    ]));
+    const verified = await verifyCodexHookVisibility(
+      Object.freeze([
+        Object.freeze({
+          key: "opaque-upstream-key",
+          eventName: "sessionStart",
+          handlerType: "command",
+          matcher: null,
+          command: "node hooks/session-start/handler.ts",
+          timeoutSec: 10,
+          statusMessage: null,
+          source: "plugin",
+          pluginId: "alpha@personal-rawr-hq",
+          displayOrder: 0,
+          enabled: true,
+          isManaged: false,
+          currentHash: "fixture",
+          trustStatus: "trusted",
+        }),
+      ])
+    );
 
     expect(verified.ok).toBe(true);
   });
@@ -340,7 +355,7 @@ describe("native provider resource interpretation", () => {
     const fixture = codexResourceFixture(Object.freeze([]), "valid");
     const observed = await fixture.canonicalObserver.observe(
       fixture.target,
-      fixture.projection.artifactAuthority.contentAuthority,
+      fixture.projection.artifactAuthority.contentAuthority
     );
 
     expect(observed).toEqual({
@@ -398,7 +413,11 @@ describe("native provider resource interpretation", () => {
 
   it.each([
     ["duplicate managed marketplace", "duplicate-marketplace", "duplicate-managed-marketplace"],
-    ["mismatched marketplace owner", "marketplace-owner-mismatch", "managed-marketplace-owner-mismatch"],
+    [
+      "mismatched marketplace owner",
+      "marketplace-owner-mismatch",
+      "managed-marketplace-owner-mismatch",
+    ],
     ["mismatched selected member", "member-owner-mismatch", "managed-member-owner-mismatch"],
   ] as const)("classifies Claude %s as provenance ambiguity", async (_label, mode, reason) => {
     const observed = await observeClaudeProvenance(mode);
@@ -423,31 +442,31 @@ describe("native provider resource interpretation", () => {
     });
   });
 
-  it.each(["codex", "claude"] as const)(
-    "retires %s selected-owner config-only residue through the native selector command",
-    async (provider) => {
-      const fixture = configuredRetirementFixture(provider, "stable");
+  it.each([
+    "codex",
+    "claude",
+  ] as const)("retires %s selected-owner config-only residue through the native selector command", async (provider) => {
+    const fixture = configuredRetirementFixture(provider, "stable");
 
-      const result = await fixture.adapter.applyCanonical(fixture.action);
+    const result = await fixture.adapter.applyCanonical(fixture.action);
 
-      expect(result).toEqual({ kind: "applied" });
-      expect(fixture.nativeCalls).toEqual([fixture.action.exposure.exposureIdentity]);
-      const inventory = await fixture.adapter.readInventory(fixture.action.target);
-      expect(inventory.ok && inventory.value.standaloneExposures).toEqual([]);
-    },
-  );
+    expect(result).toEqual({ kind: "applied" });
+    expect(fixture.nativeCalls).toEqual([fixture.action.exposure.exposureIdentity]);
+    const inventory = await fixture.adapter.readInventory(fixture.action.target);
+    expect(inventory.ok && inventory.value.standaloneExposures).toEqual([]);
+  });
 
-  it.each(["codex", "claude"] as const)(
-    "refuses %s configured retirement when the exact selector changes before native mutation",
-    async (provider) => {
-      const fixture = configuredRetirementFixture(provider, "changed-before-native-call");
+  it.each([
+    "codex",
+    "claude",
+  ] as const)("refuses %s configured retirement when the exact selector changes before native mutation", async (provider) => {
+    const fixture = configuredRetirementFixture(provider, "changed-before-native-call");
 
-      const result = await fixture.adapter.applyCanonical(fixture.action);
+    const result = await fixture.adapter.applyCanonical(fixture.action);
 
-      expect(result).toMatchObject({ kind: "uncertain", lastKnown: "bridge-invoked" });
-      expect(fixture.nativeCalls).toEqual([]);
-    },
-  );
+    expect(result).toMatchObject({ kind: "uncertain", lastKnown: "bridge-invoked" });
+    expect(fixture.nativeCalls).toEqual([]);
+  });
 
   it("preserves uncertainty when the first bridge command reports provider-home ownership collision", async () => {
     const fixture = configuredRetirementFixture("codex", "ownership-conflict-before-native-call");
@@ -482,7 +501,7 @@ function configuredRetirementFixture(
     | "changed-before-native-call"
     | "ownership-conflict-after-native-call"
     | "ownership-conflict-before-native-call"
-    | "stable",
+    | "stable"
 ) {
   const protocol = provider === "codex" ? CODEX_ADAPTER_PROTOCOL : CLAUDE_ADAPTER_PROTOCOL;
   const projection = providerProjection(provider, protocol);
@@ -491,93 +510,118 @@ function configuredRetirementFixture(
   const home = `/tmp/rawr-native-${provider}-configured-retirement`;
   const targetResult = parseProviderTarget({ provider, home });
   if (!targetResult.ok) throw new Error(targetResult.issues[0].message);
-  const exposure: NativeStandaloneExposureObservation & { exposureKind: "configured-only" } = Object.freeze({
-    exposureKind: "configured-only",
-    exposureIdentity: `plugins@${owner}`,
-    nativeIdentity: "rawr:plugins",
-    providerSourceIdentity: owner,
-    enablement: "enabled",
-    visibleSkills: Object.freeze([]),
-    visibleHooks: Object.freeze([]),
-  });
+  const exposure: NativeStandaloneExposureObservation & { exposureKind: "configured-only" } =
+    Object.freeze({
+      exposureKind: "configured-only",
+      exposureIdentity: `plugins@${owner}`,
+      nativeIdentity: "rawr:plugins",
+      providerSourceIdentity: owner,
+      enablement: "enabled",
+      visibleSkills: Object.freeze([]),
+      visibleHooks: Object.freeze([]),
+    });
   let configurationReads = 0;
   let configured = true;
   const nativeCalls: string[] = [];
   const nextEnabled = () => {
     configurationReads += 1;
-    return mode === "changed-before-native-call" && configurationReads >= 2
-      ? false
-      : true;
+    return mode === "changed-before-native-call" && configurationReads >= 2 ? false : true;
   };
-  const marketplaceEntries = Object.freeze([Object.freeze({
-    path: ".rawr/marketplace.json",
-    mode: 0o644,
-    bytes: marketplaceMetadata(registration),
-  })]);
+  const marketplaceEntries = Object.freeze([
+    Object.freeze({
+      path: ".rawr/marketplace.json",
+      mode: 0o644,
+      bytes: marketplaceMetadata(registration),
+    }),
+  ]);
   const executablePath = `/opt/rawr/bin/${provider}`;
   const base = {
     executablePath,
     contentAuthority: owner,
-    marketplaceSources: { read: async () => { throw new Error("unused"); } },
+    marketplaceSources: {
+      read: async () => {
+        throw new Error("unused");
+      },
+    },
     marketplaceLocations: UNUSED_MARKETPLACE_LOCATIONS,
   } as const;
 
   if (provider === "codex") {
-    const session = (input: NativeResourceSessionInput): CodexNativeResourceSession => Object.freeze({
-      provider: "codex",
-      executablePath: input.executablePath,
-      home: input.home,
-      probe: async () => Object.freeze({
+    const session = (input: NativeResourceSessionInput): CodexNativeResourceSession =>
+      Object.freeze({
         provider: "codex",
         executablePath: input.executablePath,
         home: input.home,
-        pluginCommands: Object.freeze(["add", "list", "remove"]),
-        marketplaceCommands: Object.freeze(["add", "list", "remove"]),
-        appServerMethods: Object.freeze(["config/read", "hooks/list", "plugin/list"]),
-      }),
-      listMarketplaces: async () => Object.freeze({
-        stdout: "",
-        stderr: "",
-        json: { marketplaces: [{ name: owner }] },
-      }),
-      readMarketplace: async () => Object.freeze({ entries: marketplaceEntries }),
-      addMarketplace: async () => { throw new Error("unused"); },
-      removeMarketplace: async () => { throw new Error("unused"); },
-      listPlugins: async () => Object.freeze({
-        stdout: "",
-        stderr: "",
-        json: { installed: [], available: [] },
-      }),
-      readPlugin: async () => { throw new Error("config-only residue has no package"); },
-      addPlugin: async () => { throw new Error("unused"); },
-      removePlugin: async ({ selector }: Parameters<CodexNativeResourceSession["removePlugin"]>[0]) => {
-        if (mode === "ownership-conflict-before-native-call") throw nativeOwnershipConflict(home, provider);
-        nativeCalls.push(selector);
-        configured = false;
-      },
-      inspectAppServer: async () => Object.freeze({
-        plugins: { marketplaces: [] },
-        hooks: { data: [{ cwd: home, hooks: [], warnings: [], errors: [] }] },
-      }),
-      readConfiguration: async () => {
-        if (mode === "ownership-conflict-after-native-call" && !configured) {
-          throw nativeOwnershipConflict(home, provider);
-        }
-        return Object.freeze({
-          config: {
-            plugins: configured
-              ? { [exposure.exposureIdentity]: { enabled: nextEnabled() } }
-              : {},
-          },
-        });
-      },
-      setMarketplaceSource: async () => { throw new Error("unused"); },
-    });
+        probe: async () =>
+          Object.freeze({
+            provider: "codex",
+            executablePath: input.executablePath,
+            home: input.home,
+            pluginCommands: Object.freeze(["add", "list", "remove"]),
+            marketplaceCommands: Object.freeze(["add", "list", "remove"]),
+            appServerMethods: Object.freeze(["config/read", "hooks/list", "plugin/list"]),
+          }),
+        listMarketplaces: async () =>
+          Object.freeze({
+            stdout: "",
+            stderr: "",
+            json: { marketplaces: [{ name: owner }] },
+          }),
+        readMarketplace: async () => Object.freeze({ entries: marketplaceEntries }),
+        addMarketplace: async () => {
+          throw new Error("unused");
+        },
+        removeMarketplace: async () => {
+          throw new Error("unused");
+        },
+        listPlugins: async () =>
+          Object.freeze({
+            stdout: "",
+            stderr: "",
+            json: { installed: [], available: [] },
+          }),
+        readPlugin: async () => {
+          throw new Error("config-only residue has no package");
+        },
+        addPlugin: async () => {
+          throw new Error("unused");
+        },
+        removePlugin: async ({
+          selector,
+        }: Parameters<CodexNativeResourceSession["removePlugin"]>[0]) => {
+          if (mode === "ownership-conflict-before-native-call")
+            throw nativeOwnershipConflict(home, provider);
+          nativeCalls.push(selector);
+          configured = false;
+        },
+        inspectAppServer: async () =>
+          Object.freeze({
+            plugins: { marketplaces: [] },
+            hooks: { data: [{ cwd: home, hooks: [], warnings: [], errors: [] }] },
+          }),
+        readConfiguration: async () => {
+          if (mode === "ownership-conflict-after-native-call" && !configured) {
+            throw nativeOwnershipConflict(home, provider);
+          }
+          return Object.freeze({
+            config: {
+              plugins: configured
+                ? { [exposure.exposureIdentity]: { enabled: nextEnabled() } }
+                : {},
+            },
+          });
+        },
+        setMarketplaceSource: async () => {
+          throw new Error("unused");
+        },
+      });
     const adapter = createResourceCodexProviderAdapter({
       ...base,
       resource: Object.freeze({
         acquireCodex: async (input: NativeResourceSessionInput) => session(input),
-        acquireClaude: async () => { throw new Error("unused"); },
+        acquireClaude: async () => {
+          throw new Error("unused");
+        },
       }),
     });
     return Object.freeze({
@@ -592,46 +636,62 @@ function configuredRetirementFixture(
     });
   }
 
-  const session = (input: NativeResourceSessionInput): ClaudeNativeResourceSession => Object.freeze({
-    provider: "claude",
-    executablePath: input.executablePath,
-    home: input.home,
-    probe: async () => Object.freeze({
+  const session = (input: NativeResourceSessionInput): ClaudeNativeResourceSession =>
+    Object.freeze({
       provider: "claude",
       executablePath: input.executablePath,
       home: input.home,
-      pluginCommands: Object.freeze(["enable", "install", "list", "uninstall"]),
-      marketplaceCommands: Object.freeze(["add", "list", "remove"]),
-      appServerMethods: Object.freeze([]),
-    }),
-    listMarketplaces: async () => Object.freeze({ stdout: "", stderr: "", json: [{ name: owner }] }),
-    readMarketplace: async () => Object.freeze({ entries: marketplaceEntries }),
-    addMarketplace: async () => { throw new Error("unused"); },
-    removeMarketplace: async () => { throw new Error("unused"); },
-    listPlugins: async () => Object.freeze({ stdout: "", stderr: "", json: { installed: [] } }),
-    readPlugin: async () => { throw new Error("config-only residue has no package"); },
-    installPlugin: async () => { throw new Error("unused"); },
-    enablePlugin: async () => { throw new Error("unused"); },
-    uninstallPlugin: async ({ selector }: Parameters<ClaudeNativeResourceSession["uninstallPlugin"]>[0]) => {
-      if (mode === "ownership-conflict-before-native-call") throw nativeOwnershipConflict(home, provider);
-      nativeCalls.push(selector);
-      configured = false;
-    },
-    readConfiguration: async () => {
-      if (mode === "ownership-conflict-after-native-call" && !configured) {
-        throw nativeOwnershipConflict(home, provider);
-      }
-      return Object.freeze({
-        enabledPlugins: configured
-          ? { [exposure.exposureIdentity]: nextEnabled() }
-          : {},
-      });
-    },
-  });
+      probe: async () =>
+        Object.freeze({
+          provider: "claude",
+          executablePath: input.executablePath,
+          home: input.home,
+          pluginCommands: Object.freeze(["enable", "install", "list", "uninstall"]),
+          marketplaceCommands: Object.freeze(["add", "list", "remove"]),
+          appServerMethods: Object.freeze([]),
+        }),
+      listMarketplaces: async () =>
+        Object.freeze({ stdout: "", stderr: "", json: [{ name: owner }] }),
+      readMarketplace: async () => Object.freeze({ entries: marketplaceEntries }),
+      addMarketplace: async () => {
+        throw new Error("unused");
+      },
+      removeMarketplace: async () => {
+        throw new Error("unused");
+      },
+      listPlugins: async () => Object.freeze({ stdout: "", stderr: "", json: { installed: [] } }),
+      readPlugin: async () => {
+        throw new Error("config-only residue has no package");
+      },
+      installPlugin: async () => {
+        throw new Error("unused");
+      },
+      enablePlugin: async () => {
+        throw new Error("unused");
+      },
+      uninstallPlugin: async ({
+        selector,
+      }: Parameters<ClaudeNativeResourceSession["uninstallPlugin"]>[0]) => {
+        if (mode === "ownership-conflict-before-native-call")
+          throw nativeOwnershipConflict(home, provider);
+        nativeCalls.push(selector);
+        configured = false;
+      },
+      readConfiguration: async () => {
+        if (mode === "ownership-conflict-after-native-call" && !configured) {
+          throw nativeOwnershipConflict(home, provider);
+        }
+        return Object.freeze({
+          enabledPlugins: configured ? { [exposure.exposureIdentity]: nextEnabled() } : {},
+        });
+      },
+    });
   const adapter = createResourceClaudeProviderAdapter({
     ...base,
     resource: Object.freeze({
-      acquireCodex: async () => { throw new Error("unused"); },
+      acquireCodex: async () => {
+        throw new Error("unused");
+      },
       acquireClaude: async (input: NativeResourceSessionInput) => session(input),
     }),
   });
@@ -658,7 +718,7 @@ function nativeOwnershipConflictFields(home: string) {
 
 function nativeOwnershipConflict(
   home: string,
-  provider: NativeAgentProviderId = "codex",
+  provider: NativeAgentProviderId = "codex"
 ): NativeAgentProviderFailure {
   return Object.freeze({
     ...nativeOwnershipConflictFields(home),
@@ -676,12 +736,20 @@ async function inspectCodexCapabilityFailure(providerFailure: unknown) {
   if (!targetResult.ok) throw new Error(targetResult.issues[0].message);
   const adapter = createResourceCodexProviderAdapter({
     resource: Object.freeze({
-      acquireCodex: async () => { throw providerFailure; },
-      acquireClaude: async () => { throw new Error("unused"); },
+      acquireCodex: async () => {
+        throw providerFailure;
+      },
+      acquireClaude: async () => {
+        throw new Error("unused");
+      },
     }),
     executablePath: "/opt/rawr/bin/codex",
     contentAuthority: projection.artifactAuthority.contentAuthority,
-    marketplaceSources: { read: async () => { throw new Error("unused"); } },
+    marketplaceSources: {
+      read: async () => {
+        throw new Error("unused");
+      },
+    },
     marketplaceLocations: UNUSED_MARKETPLACE_LOCATIONS,
   });
   return await adapter.inspectCapabilities(targetResult.value);
@@ -695,37 +763,38 @@ type CodexObservationMode =
 
 async function verifyCodexHookVisibility(
   hooks: readonly Record<string, unknown>[],
-  mode: CodexObservationMode = "valid",
+  mode: CodexObservationMode = "valid"
 ) {
   const fixture = codexResourceFixture(hooks, mode);
   return await fixture.adapter.verifyProjection(fixture.target, fixture.projection);
 }
 
-async function observeCodexProvenance(
-  mode: Exclude<CodexObservationMode, "valid">,
-) {
+async function observeCodexProvenance(mode: Exclude<CodexObservationMode, "valid">) {
   const fixture = codexResourceFixture(Object.freeze([]), mode);
   return await fixture.canonicalObserver.observe(
     fixture.target,
-    fixture.projection.artifactAuthority.contentAuthority,
+    fixture.projection.artifactAuthority.contentAuthority
   );
 }
 
 function codexResourceFixture(
   hooks: readonly Record<string, unknown>[],
-  mode: CodexObservationMode,
+  mode: CodexObservationMode
 ) {
   const projection = hookedCodexProjection();
   const home = "/tmp/rawr-native-hook-provider";
   const executablePath = "/opt/rawr/bin/codex";
   const registration = marketplaceRegistration(projection);
-  const marketplaceEntries = mode === "invalid-marketplace"
-    ? Object.freeze([])
-    : Object.freeze([Object.freeze({
-        path: ".rawr/marketplace.json",
-        mode: 0o644,
-        bytes: marketplaceMetadata(registration),
-      })]);
+  const marketplaceEntries =
+    mode === "invalid-marketplace"
+      ? Object.freeze([])
+      : Object.freeze([
+          Object.freeze({
+            path: ".rawr/marketplace.json",
+            mode: 0o644,
+            bytes: marketplaceMetadata(registration),
+          }),
+        ]);
   const packageEntries = new Map<string, readonly NativeResourcePackageEntry[]>();
   const pluginRows = projection.members.map((member) => {
     const version = `0.0.0-rawr.${member.artifactAuthority.sourceCommit.slice(0, 12)}`;
@@ -733,11 +802,13 @@ function codexResourceFixture(
       `${member.pluginId}@${member.providerSourceIdentity}`,
       member.files
         .filter((file) => mode !== "invalid-plugin" || file.path !== ".codex-plugin/plugin.json")
-        .map((file) => Object.freeze({
-          path: file.path,
-          mode: file.mode,
-          bytes: new Uint8Array(file.bytes),
-        })),
+        .map((file) =>
+          Object.freeze({
+            path: file.path,
+            mode: file.mode,
+            bytes: new Uint8Array(file.bytes),
+          })
+        )
     );
     return Object.freeze({
       name: member.pluginId,
@@ -747,63 +818,84 @@ function codexResourceFixture(
       enabled: true,
     });
   });
-  const session = (input: NativeResourceSessionInput): CodexNativeResourceSession => Object.freeze({
-    provider: "codex",
-    executablePath: input.executablePath,
-    home: input.home,
-    probe: async () => Object.freeze({
+  const session = (input: NativeResourceSessionInput): CodexNativeResourceSession =>
+    Object.freeze({
       provider: "codex",
       executablePath: input.executablePath,
       home: input.home,
-      pluginCommands: Object.freeze(["add", "list", "remove"]),
-      marketplaceCommands: Object.freeze(["add", "list", "remove"]),
-      appServerMethods: Object.freeze(["hooks/list", "plugin/list"]),
-    }),
-    listMarketplaces: async () => Object.freeze({
-      stdout: "",
-      stderr: "",
-      json: { marketplaces: [{ name: registration.marketplaceIdentity }] },
-    }),
-    readMarketplace: async ({ identity }: NativeResourceMarketplaceReadInput) => {
-      if (identity !== registration.marketplaceIdentity) throw new Error(`Unexpected marketplace: ${identity}`);
-      if (mode === "marketplace-read-failure") throw new Error("native marketplace unavailable");
-      return Object.freeze({ entries: marketplaceEntries });
-    },
-    addMarketplace: async () => { throw new Error("mutation must remain cold"); },
-    removeMarketplace: async () => { throw new Error("mutation must remain cold"); },
-    listPlugins: async () => Object.freeze({
-      stdout: "",
-      stderr: "",
-      json: { installed: pluginRows, available: [] },
-    }),
-    readPlugin: async ({ selector }: NativeResourcePluginReadInput) => {
-      const entries = packageEntries.get(selector);
-      if (entries === undefined) throw new Error(`Unexpected package selector: ${selector}`);
-      return Object.freeze({ entries });
-    },
-    addPlugin: async () => { throw new Error("mutation must remain cold"); },
-    removePlugin: async () => { throw new Error("mutation must remain cold"); },
-    inspectAppServer: async () => Object.freeze({
-      plugins: {
-        marketplaces: [{
-          name: registration.marketplaceIdentity,
-          plugins: pluginRows,
-        }],
+      probe: async () =>
+        Object.freeze({
+          provider: "codex",
+          executablePath: input.executablePath,
+          home: input.home,
+          pluginCommands: Object.freeze(["add", "list", "remove"]),
+          marketplaceCommands: Object.freeze(["add", "list", "remove"]),
+          appServerMethods: Object.freeze(["hooks/list", "plugin/list"]),
+        }),
+      listMarketplaces: async () =>
+        Object.freeze({
+          stdout: "",
+          stderr: "",
+          json: { marketplaces: [{ name: registration.marketplaceIdentity }] },
+        }),
+      readMarketplace: async ({ identity }: NativeResourceMarketplaceReadInput) => {
+        if (identity !== registration.marketplaceIdentity)
+          throw new Error(`Unexpected marketplace: ${identity}`);
+        if (mode === "marketplace-read-failure") throw new Error("native marketplace unavailable");
+        return Object.freeze({ entries: marketplaceEntries });
       },
-      hooks: {
-        data: [{ cwd: home, hooks, warnings: [], errors: [] }],
+      addMarketplace: async () => {
+        throw new Error("mutation must remain cold");
       },
-    }),
-    readConfiguration: async () => Object.freeze({
-      config: {
-        plugins: Object.fromEntries(pluginRows.map((plugin) => [
-          `${plugin.name}@${plugin.marketplaceName}`,
-          { enabled: true },
-        ])),
+      removeMarketplace: async () => {
+        throw new Error("mutation must remain cold");
       },
-    }),
-    setMarketplaceSource: async () => { throw new Error("mutation must remain cold"); },
-  });
+      listPlugins: async () =>
+        Object.freeze({
+          stdout: "",
+          stderr: "",
+          json: { installed: pluginRows, available: [] },
+        }),
+      readPlugin: async ({ selector }: NativeResourcePluginReadInput) => {
+        const entries = packageEntries.get(selector);
+        if (entries === undefined) throw new Error(`Unexpected package selector: ${selector}`);
+        return Object.freeze({ entries });
+      },
+      addPlugin: async () => {
+        throw new Error("mutation must remain cold");
+      },
+      removePlugin: async () => {
+        throw new Error("mutation must remain cold");
+      },
+      inspectAppServer: async () =>
+        Object.freeze({
+          plugins: {
+            marketplaces: [
+              {
+                name: registration.marketplaceIdentity,
+                plugins: pluginRows,
+              },
+            ],
+          },
+          hooks: {
+            data: [{ cwd: home, hooks, warnings: [], errors: [] }],
+          },
+        }),
+      readConfiguration: async () =>
+        Object.freeze({
+          config: {
+            plugins: Object.fromEntries(
+              pluginRows.map((plugin) => [
+                `${plugin.name}@${plugin.marketplaceName}`,
+                { enabled: true },
+              ])
+            ),
+          },
+        }),
+      setMarketplaceSource: async () => {
+        throw new Error("mutation must remain cold");
+      },
+    });
   const resource = Object.freeze({
     acquireCodex: async (input: NativeResourceSessionInput) => session(input),
     acquireClaude: async () => {
@@ -842,27 +934,30 @@ async function observeClaudeProvenance(mode: ClaudeObservationMode) {
   const home = "/tmp/rawr-native-claude-provenance";
   const executablePath = "/opt/rawr/bin/claude";
   const registration = marketplaceRegistration(projection);
-  const marketplaceRegistrationForBytes = mode === "marketplace-owner-mismatch"
-    ? marketplaceRegistrationWithIdentity(registration, "foreign-rawr-hq")
-    : registration;
-  const marketplaceEntries = Object.freeze([Object.freeze({
-    path: ".rawr/marketplace.json",
-    mode: 0o644,
-    bytes: marketplaceMetadata(marketplaceRegistrationForBytes),
-  })]);
+  const marketplaceRegistrationForBytes =
+    mode === "marketplace-owner-mismatch"
+      ? marketplaceRegistrationWithIdentity(registration, "foreign-rawr-hq")
+      : registration;
+  const marketplaceEntries = Object.freeze([
+    Object.freeze({
+      path: ".rawr/marketplace.json",
+      mode: 0o644,
+      bytes: marketplaceMetadata(marketplaceRegistrationForBytes),
+    }),
+  ]);
   const packageEntries = new Map<string, readonly NativeResourcePackageEntry[]>();
   const pluginRows = projection.members.map((member, index) => {
-    const name = mode === "member-owner-mismatch" && index === 0
-      ? "gamma"
-      : member.pluginId;
+    const name = mode === "member-owner-mismatch" && index === 0 ? "gamma" : member.pluginId;
     const selector = `${name}@${member.providerSourceIdentity}`;
     packageEntries.set(
       selector,
-      member.files.map((file) => Object.freeze({
-        path: file.path,
-        mode: file.mode,
-        bytes: new Uint8Array(file.bytes),
-      })),
+      member.files.map((file) =>
+        Object.freeze({
+          path: file.path,
+          mode: file.mode,
+          bytes: new Uint8Array(file.bytes),
+        })
+      )
     );
     return Object.freeze({
       id: selector,
@@ -870,52 +965,70 @@ async function observeClaudeProvenance(mode: ClaudeObservationMode) {
       scope: "user",
     });
   });
-  const session = (input: NativeResourceSessionInput): ClaudeNativeResourceSession => Object.freeze({
-    provider: "claude",
-    executablePath: input.executablePath,
-    home: input.home,
-    probe: async () => Object.freeze({
+  const session = (input: NativeResourceSessionInput): ClaudeNativeResourceSession =>
+    Object.freeze({
       provider: "claude",
       executablePath: input.executablePath,
       home: input.home,
-      pluginCommands: Object.freeze(["enable", "install", "list", "uninstall"]),
-      marketplaceCommands: Object.freeze(["add", "list", "remove"]),
-      appServerMethods: Object.freeze([]),
-    }),
-    listMarketplaces: async () => Object.freeze({
-      stdout: "",
-      stderr: "",
-      json: mode === "duplicate-marketplace"
-        ? [
-            { name: registration.marketplaceIdentity },
-            { name: registration.marketplaceIdentity },
-          ]
-        : [{ name: registration.marketplaceIdentity }],
-    }),
-    readMarketplace: async () => Object.freeze({ entries: marketplaceEntries }),
-    addMarketplace: async () => { throw new Error("mutation must remain cold"); },
-    removeMarketplace: async () => { throw new Error("mutation must remain cold"); },
-    listPlugins: async () => Object.freeze({
-      stdout: "",
-      stderr: "",
-      json: { installed: pluginRows },
-    }),
-    readPlugin: async ({ selector }: NativeResourcePluginReadInput) => {
-      if (mode === "plugin-read-failure") throw new Error("native plugin unavailable");
-      const entries = packageEntries.get(selector);
-      if (entries === undefined) throw new Error(`Unexpected package selector: ${selector}`);
-      return Object.freeze({ entries });
-    },
-    installPlugin: async () => { throw new Error("mutation must remain cold"); },
-    enablePlugin: async () => { throw new Error("mutation must remain cold"); },
-    uninstallPlugin: async () => { throw new Error("mutation must remain cold"); },
-    readConfiguration: async () => Object.freeze({
-      enabledPlugins: Object.fromEntries(pluginRows.map((plugin) => [plugin.id, true])),
-    }),
-  });
+      probe: async () =>
+        Object.freeze({
+          provider: "claude",
+          executablePath: input.executablePath,
+          home: input.home,
+          pluginCommands: Object.freeze(["enable", "install", "list", "uninstall"]),
+          marketplaceCommands: Object.freeze(["add", "list", "remove"]),
+          appServerMethods: Object.freeze([]),
+        }),
+      listMarketplaces: async () =>
+        Object.freeze({
+          stdout: "",
+          stderr: "",
+          json:
+            mode === "duplicate-marketplace"
+              ? [
+                  { name: registration.marketplaceIdentity },
+                  { name: registration.marketplaceIdentity },
+                ]
+              : [{ name: registration.marketplaceIdentity }],
+        }),
+      readMarketplace: async () => Object.freeze({ entries: marketplaceEntries }),
+      addMarketplace: async () => {
+        throw new Error("mutation must remain cold");
+      },
+      removeMarketplace: async () => {
+        throw new Error("mutation must remain cold");
+      },
+      listPlugins: async () =>
+        Object.freeze({
+          stdout: "",
+          stderr: "",
+          json: { installed: pluginRows },
+        }),
+      readPlugin: async ({ selector }: NativeResourcePluginReadInput) => {
+        if (mode === "plugin-read-failure") throw new Error("native plugin unavailable");
+        const entries = packageEntries.get(selector);
+        if (entries === undefined) throw new Error(`Unexpected package selector: ${selector}`);
+        return Object.freeze({ entries });
+      },
+      installPlugin: async () => {
+        throw new Error("mutation must remain cold");
+      },
+      enablePlugin: async () => {
+        throw new Error("mutation must remain cold");
+      },
+      uninstallPlugin: async () => {
+        throw new Error("mutation must remain cold");
+      },
+      readConfiguration: async () =>
+        Object.freeze({
+          enabledPlugins: Object.fromEntries(pluginRows.map((plugin) => [plugin.id, true])),
+        }),
+    });
   const observer = createResourceClaudeCanonicalObserver({
     resource: Object.freeze({
-      acquireCodex: async () => { throw new Error("unused"); },
+      acquireCodex: async () => {
+        throw new Error("unused");
+      },
       acquireClaude: async (input: NativeResourceSessionInput) => session(input),
     }),
     executablePath,
@@ -923,36 +1036,43 @@ async function observeClaudeProvenance(mode: ClaudeObservationMode) {
   });
   const target = parseProviderTarget({ provider: "claude", home });
   if (!target.ok) throw new Error(target.issues[0].message);
-  return await observer.observe(
-    target.value,
-    projection.artifactAuthority.contentAuthority,
-  );
+  return await observer.observe(target.value, projection.artifactAuthority.contentAuthority);
 }
 
 function hookedCodexProjection(): AgentProviderProjection {
   const fixture = productFixture();
-  const alphaPayload = must(createAgentPluginPayload([
-    { path: "skills/alpha/SKILL.md", mode: 0o644, bytes: new TextEncoder().encode("alpha\n") },
-    { path: "agents/alpha.md", mode: 0o644, bytes: new TextEncoder().encode("agent alpha\n") },
-    { path: "hooks/hooks.json", mode: 0o644, bytes: hookManifestBytes("SessionStart") },
-  ]));
-  const releaseInput = must(createAgentPluginReleaseInput(releaseInputBody(alphaPayload, fixture.betaPayload)));
-  const alphaRelease = must(createAgentPluginRelease({
-    releaseInput,
-    pluginId: "alpha",
-    source: SOURCE,
-    payload: alphaPayload,
-  }));
-  const betaRelease = must(createAgentPluginRelease({
-    releaseInput,
-    pluginId: "beta",
-    source: SOURCE,
-    payload: fixture.betaPayload,
-  }));
-  const releaseSet = must(createAgentPluginReleaseSet({
-    releaseInput,
-    releases: [alphaRelease, betaRelease],
-  }));
+  const alphaPayload = must(
+    createAgentPluginPayload([
+      { path: "skills/alpha/SKILL.md", mode: 0o644, bytes: new TextEncoder().encode("alpha\n") },
+      { path: "agents/alpha.md", mode: 0o644, bytes: new TextEncoder().encode("agent alpha\n") },
+      { path: "hooks/hooks.json", mode: 0o644, bytes: hookManifestBytes("SessionStart") },
+    ])
+  );
+  const releaseInput = must(
+    createAgentPluginReleaseInput(releaseInputBody(alphaPayload, fixture.betaPayload))
+  );
+  const alphaRelease = must(
+    createAgentPluginRelease({
+      releaseInput,
+      pluginId: "alpha",
+      source: SOURCE,
+      payload: alphaPayload,
+    })
+  );
+  const betaRelease = must(
+    createAgentPluginRelease({
+      releaseInput,
+      pluginId: "beta",
+      source: SOURCE,
+      payload: fixture.betaPayload,
+    })
+  );
+  const releaseSet = must(
+    createAgentPluginReleaseSet({
+      releaseInput,
+      releases: [alphaRelease, betaRelease],
+    })
+  );
   const rendered = renderCompleteProjection("codex", CODEX_ADAPTER_PROTOCOL, {
     kind: "complete-set",
     ref: createCompleteSetArtifactRef(releaseSet.releaseSetDigest),
@@ -964,17 +1084,26 @@ function hookedCodexProjection(): AgentProviderProjection {
 }
 
 function hookManifestBytes(...eventNames: readonly string[]): Uint8Array {
-  return new TextEncoder().encode(JSON.stringify({
-    description: "Fixture hooks",
-    hooks: Object.fromEntries(eventNames.map((eventName) => [eventName, [{
-      hooks: [{ type: "command", command: "printf hook" }],
-    }]])),
-  }));
+  return new TextEncoder().encode(
+    JSON.stringify({
+      description: "Fixture hooks",
+      hooks: Object.fromEntries(
+        eventNames.map((eventName) => [
+          eventName,
+          [
+            {
+              hooks: [{ type: "command", command: "printf hook" }],
+            },
+          ],
+        ])
+      ),
+    })
+  );
 }
 
 function providerProjection(
   provider: "claude" | "codex",
-  adapterProtocol: AgentProviderProjection["adapterProtocol"],
+  adapterProtocol: AgentProviderProjection["adapterProtocol"]
 ): AgentProviderProjection {
   const fixture = productFixture();
   const rendered = renderCompleteProjection(provider, adapterProtocol, {
@@ -1005,7 +1134,7 @@ function marketplaceMetadata(registration: ProviderMarketplaceRegistration): Uin
 }
 
 function marketplaceRegistration(
-  projection: Extract<ReturnType<typeof renderCompleteProjection>, { readonly ok: true }>["value"],
+  projection: Extract<ReturnType<typeof renderCompleteProjection>, { readonly ok: true }>["value"]
 ): ProviderMarketplaceRegistration {
   return createProviderMarketplaceRegistration({
     provider: projection.provider,
@@ -1023,7 +1152,7 @@ function marketplaceRegistration(
 
 function marketplaceRegistrationWithIdentity(
   registration: ProviderMarketplaceRegistration,
-  marketplaceIdentity: string,
+  marketplaceIdentity: string
 ): ProviderMarketplaceRegistration {
   const identity = marketplaceIdentity as ProviderMarketplaceRegistration["marketplaceIdentity"];
   return createProviderMarketplaceRegistration({

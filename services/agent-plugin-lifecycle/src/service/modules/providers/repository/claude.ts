@@ -42,54 +42,74 @@ export interface ClaudeNativePlugin {
 }
 
 export interface ClaudeProcessPort {
-  probe(input: Readonly<{ home: string }>): Promise<Readonly<{
-    adapterProtocol: AdapterProtocol;
-    available: readonly ProviderCapability[];
-  }>>;
-  inventoryMarketplaceRegistration(input: Readonly<{
-    home: string;
-  }>): Promise<ProviderMarketplaceObservation>;
-  setMarketplaceRegistration(input: Readonly<{
-    home: string;
-    expected: ProviderMarketplaceObservation;
-    registration: ProviderMarketplaceRegistration | null;
-    source: ProviderMarketplaceSource | null;
-    targetDigest: ProviderTargetDigest;
-  }>): Promise<void>;
+  probe(input: Readonly<{ home: string }>): Promise<
+    Readonly<{
+      adapterProtocol: AdapterProtocol;
+      available: readonly ProviderCapability[];
+    }>
+  >;
+  inventoryMarketplaceRegistration(
+    input: Readonly<{
+      home: string;
+    }>
+  ): Promise<ProviderMarketplaceObservation>;
+  setMarketplaceRegistration(
+    input: Readonly<{
+      home: string;
+      expected: ProviderMarketplaceObservation;
+      registration: ProviderMarketplaceRegistration | null;
+      source: ProviderMarketplaceSource | null;
+      targetDigest: ProviderTargetDigest;
+    }>
+  ): Promise<void>;
   inventoryNativePlugins(input: Readonly<{ home: string }>): Promise<readonly ClaudeNativePlugin[]>;
-  inventoryStandaloneExposures(input: Readonly<{ home: string }>): Promise<readonly NativeStandaloneExposureObservation[]>;
-  installNativePlugin(input: Readonly<{
-    home: string;
-    nativeIdentity: string;
-    artifactAuthority: ProviderArtifactAuthority;
-    providerSourceIdentity: ProviderSourceIdentity;
-    marketplaceIdentity: string;
-    memberFingerprint: ProviderMemberFingerprint;
-    targetDigest: ProviderTargetDigest;
-  }>): Promise<void>;
-  enableNativePlugin(input: Readonly<{
-    home: string;
-    nativeIdentity: string;
-  }>): Promise<void>;
-  uninstallNativePlugin(input: Readonly<{
-    home: string;
-    nativeIdentity: string;
-    providerSourceIdentity: ProviderSourceIdentity;
-    memberFingerprint: ProviderMemberFingerprint;
-    targetDigest: ProviderTargetDigest;
-  }>): Promise<void>;
-  retireConfiguredPlugin(input: Readonly<{
-    home: string;
-    expected: NativeConfiguredExposureObservation;
-  }>): Promise<void>;
+  inventoryStandaloneExposures(
+    input: Readonly<{ home: string }>
+  ): Promise<readonly NativeStandaloneExposureObservation[]>;
+  installNativePlugin(
+    input: Readonly<{
+      home: string;
+      nativeIdentity: string;
+      artifactAuthority: ProviderArtifactAuthority;
+      providerSourceIdentity: ProviderSourceIdentity;
+      marketplaceIdentity: string;
+      memberFingerprint: ProviderMemberFingerprint;
+      targetDigest: ProviderTargetDigest;
+    }>
+  ): Promise<void>;
+  enableNativePlugin(
+    input: Readonly<{
+      home: string;
+      nativeIdentity: string;
+    }>
+  ): Promise<void>;
+  uninstallNativePlugin(
+    input: Readonly<{
+      home: string;
+      nativeIdentity: string;
+      providerSourceIdentity: ProviderSourceIdentity;
+      memberFingerprint: ProviderMemberFingerprint;
+      targetDigest: ProviderTargetDigest;
+    }>
+  ): Promise<void>;
+  retireConfiguredPlugin(
+    input: Readonly<{
+      home: string;
+      expected: NativeConfiguredExposureObservation;
+    }>
+  ): Promise<void>;
 }
 
 export interface ClaudeProviderAdapter extends NativeProviderAdapter {}
 
-export function createClaudeNativeInventoryBridge(input: Readonly<{
-  process: Pick<ClaudeProcessPort,
-    "inventoryMarketplaceRegistration" | "inventoryNativePlugins" | "inventoryStandaloneExposures">;
-}>): NativeProviderInventoryBridge {
+export function createClaudeNativeInventoryBridge(
+  input: Readonly<{
+    process: Pick<
+      ClaudeProcessPort,
+      "inventoryMarketplaceRegistration" | "inventoryNativePlugins" | "inventoryStandaloneExposures"
+    >;
+  }>
+): NativeProviderInventoryBridge {
   return Object.freeze({
     async inventory(home) {
       const [plugins, standaloneExposures] = await Promise.all([
@@ -118,10 +138,12 @@ export function createClaudeNativeInventoryBridge(input: Readonly<{
   });
 }
 
-export function createClaudeProviderAdapter(input: Readonly<{
-  process: ClaudeProcessPort;
-  marketplaceSources: ProviderMarketplaceSourceReader;
-}>): ClaudeProviderAdapter {
+export function createClaudeProviderAdapter(
+  input: Readonly<{
+    process: ClaudeProcessPort;
+    marketplaceSources: ProviderMarketplaceSourceReader;
+  }>
+): ClaudeProviderAdapter {
   const inventoryBridge = createClaudeNativeInventoryBridge(input);
   const bridge: NativeProviderBridge = {
     probe: async (home) => await input.process.probe({ home }),
@@ -134,27 +156,33 @@ export function createClaudeProviderAdapter(input: Readonly<{
         source: verifiedMarketplaceSource(source, registration),
         targetDigest: target.targetDigest,
       }),
-    install: async ({ target, member }) => await input.process.installNativePlugin({
-      home: target.home,
-      nativeIdentity: member.nativeIdentity,
-      artifactAuthority: member.artifactAuthority,
-      providerSourceIdentity: member.providerSourceIdentity,
-      marketplaceIdentity: member.providerSourceIdentity,
-      memberFingerprint: member.memberFingerprint,
-      targetDigest: target.targetDigest,
-    }),
-    enable: async ({ target, member }) => await input.process.enableNativePlugin({
-      home: target.home,
-      nativeIdentity: member.nativeIdentity,
-    }),
+    install: async ({ target, member }) =>
+      await input.process.installNativePlugin({
+        home: target.home,
+        nativeIdentity: member.nativeIdentity,
+        artifactAuthority: member.artifactAuthority,
+        providerSourceIdentity: member.providerSourceIdentity,
+        marketplaceIdentity: member.providerSourceIdentity,
+        memberFingerprint: member.memberFingerprint,
+        targetDigest: target.targetDigest,
+      }),
+    enable: async ({ target, member }) =>
+      await input.process.enableNativePlugin({
+        home: target.home,
+        nativeIdentity: member.nativeIdentity,
+      }),
     uninstall: async ({ target, expected }) => {
       const plugins = await input.process.inventoryNativePlugins({ home: target.home });
-      const exact = plugins.find((candidate) => candidate.nativeIdentity === expected.nativeIdentity);
-      if (exact === undefined
-        || exact.pluginId !== expected.pluginId
-        || exact.providerSourceIdentity !== expected.providerSourceIdentity
-        || exact.marketplaceIdentity !== expected.providerSourceIdentity
-        || exact.memberFingerprint !== expected.memberFingerprint) {
+      const exact = plugins.find(
+        (candidate) => candidate.nativeIdentity === expected.nativeIdentity
+      );
+      if (
+        exact === undefined ||
+        exact.pluginId !== expected.pluginId ||
+        exact.providerSourceIdentity !== expected.providerSourceIdentity ||
+        exact.marketplaceIdentity !== expected.providerSourceIdentity ||
+        exact.memberFingerprint !== expected.memberFingerprint
+      ) {
         throw new Error("Claude uninstall target changed after the adapter precondition read");
       }
       await input.process.uninstallNativePlugin({
@@ -178,16 +206,16 @@ export function createClaudeProviderAdapter(input: Readonly<{
 
 function verifiedMarketplaceSource(
   source: ProviderMarketplaceSource | null,
-  registration: ProviderMarketplaceRegistration | null,
+  registration: ProviderMarketplaceRegistration | null
 ): ProviderMarketplaceSource | null {
   if (registration === null) {
     if (source !== null) throw new Error("Claude marketplace removal cannot carry a source");
     return null;
   }
   if (
-    source === null
-    || source.projectionDigest !== registration.projectionDigest
-    || source.sourceDigest !== registration.sourceDigest
+    source === null ||
+    source.projectionDigest !== registration.projectionDigest ||
+    source.sourceDigest !== registration.sourceDigest
   ) {
     throw new Error("Claude marketplace source does not bind the requested registration");
   }

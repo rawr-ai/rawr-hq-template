@@ -69,30 +69,41 @@ describe("releases.refreshReleaseInput", () => {
       byteLength: expect.any(Number),
       bytes: expect.any(Uint8Array),
     });
-    if (first.kind !== "ReleaseInputCandidateReady") throw new Error("Fresh refresh did not produce a candidate");
+    if (first.kind !== "ReleaseInputCandidateReady")
+      throw new Error("Fresh refresh did not produce a candidate");
     const decoded = decodeAgentPluginReleaseInput(first.bytes);
     expect(decoded.ok).toBe(true);
     if (!decoded.ok) throw new Error("Generated refresh bytes did not decode");
     expect(decoded.value.body.members.map((member) => member.pluginId)).toEqual(memberIds);
-    expect(decoded.value.body.members.flatMap((member) => member.payload.manifest.map((entry) => ({
-      pluginId: member.pluginId,
-      path: entry.path,
-      mode: entry.mode,
-      byteLength: entry.byteLength,
-      contentDigest: entry.contentDigest,
-    })))).toEqual(entries.map((entry) => {
-      const [pluginId, ...relativePath] = entry.path.slice("plugins/agents/".length).split("/");
-      return {
-        pluginId,
-        path: relativePath.join("/"),
-        mode: entry.mode,
-        byteLength: entry.bytes.byteLength,
-        contentDigest: contentDigest(entry.bytes),
-      };
-    }).sort(compareManifestRows));
-    expect(decoded.value.body.members.every((member) => (
-      member.vendor.length === 0 && member.curation.length === 0
-    ))).toBe(true);
+    expect(
+      decoded.value.body.members.flatMap((member) =>
+        member.payload.manifest.map((entry) => ({
+          pluginId: member.pluginId,
+          path: entry.path,
+          mode: entry.mode,
+          byteLength: entry.byteLength,
+          contentDigest: entry.contentDigest,
+        }))
+      )
+    ).toEqual(
+      entries
+        .map((entry) => {
+          const [pluginId, ...relativePath] = entry.path.slice("plugins/agents/".length).split("/");
+          return {
+            pluginId,
+            path: relativePath.join("/"),
+            mode: entry.mode,
+            byteLength: entry.bytes.byteLength,
+            contentDigest: contentDigest(entry.bytes),
+          };
+        })
+        .sort(compareManifestRows)
+    );
+    expect(
+      decoded.value.body.members.every(
+        (member) => member.vendor.length === 0 && member.curation.length === 0
+      )
+    ).toBe(true);
     expect(decoded.value.body.members.flatMap((member) => member.skillInventory)).toHaveLength(100);
     expect(decoded.value.body.ownershipClaims).toHaveLength(100);
     expect(decoded.value.body.ownershipClaims.every((claim) => claim.kind === "skill")).toBe(true);
@@ -100,10 +111,9 @@ describe("releases.refreshReleaseInput", () => {
     expect(decoded.value.body.qualityPolicies).toEqual([]);
     expect(decoded.value.ownershipIndex.claims).toHaveLength(111);
 
-    currentObservation = stagedObservation([
-      ...entries,
-      stagedEntry(releaseInputPath, first.bytes),
-    ].reverse());
+    currentObservation = stagedObservation(
+      [...entries, stagedEntry(releaseInputPath, first.bytes)].reverse()
+    );
     const repeated = await client.releases.refreshReleaseInput(refreshRequest(), testInvocation);
     expect(repeated).toEqual({
       kind: "ReleaseInputReadOnlyConverged",
@@ -127,7 +137,8 @@ describe("releases.refreshReleaseInput", () => {
   it("preserves surviving explicit ancillary bindings without inferring new ones", async () => {
     const entries = oneMemberEntries("cognition");
     const fresh = await refreshWith(entries, ["cognition"]);
-    if (fresh.kind !== "ReleaseInputCandidateReady") throw new Error("Fresh fixture did not produce a candidate");
+    if (fresh.kind !== "ReleaseInputCandidateReady")
+      throw new Error("Fresh fixture did not produce a candidate");
     const decoded = decodeAgentPluginReleaseInput(fresh.bytes);
     if (!decoded.ok) throw new Error("Fresh fixture did not decode");
     const binding = {
@@ -151,14 +162,18 @@ describe("releases.refreshReleaseInput", () => {
     });
     if (!seeded.ok) throw new Error("Ancillary fixture was invalid");
 
-    const refreshed = await refreshWith([
-      ...entries,
-      stagedEntry(releaseInputPath, canonicalSerializeAgentPluginReleaseInput(seeded.value)),
-    ], ["cognition"]);
+    const refreshed = await refreshWith(
+      [
+        ...entries,
+        stagedEntry(releaseInputPath, canonicalSerializeAgentPluginReleaseInput(seeded.value)),
+      ],
+      ["cognition"]
+    );
     if (
-      refreshed.kind !== "ReleaseInputCandidateReady"
-      && refreshed.kind !== "ReleaseInputReadOnlyConverged"
-    ) throw new Error("Seeded fixture did not refresh");
+      refreshed.kind !== "ReleaseInputCandidateReady" &&
+      refreshed.kind !== "ReleaseInputReadOnlyConverged"
+    )
+      throw new Error("Seeded fixture did not refresh");
     const result = decodeAgentPluginReleaseInput(refreshed.bytes);
     if (!result.ok) throw new Error("Refreshed ancillary fixture did not decode");
     expect(result.value.body.members[0]).toMatchObject({ vendor: [binding], curation: [binding] });
@@ -172,10 +187,13 @@ describe("releases.refreshReleaseInput", () => {
   });
 
   it("refuses malformed existing release-input bytes instead of bootstrapping around them", async () => {
-    const result = await refreshWith([
-      ...oneMemberEntries("cognition"),
-      stagedEntry(releaseInputPath, encoder.encode("{\"unexpected\":true}\n")),
-    ], ["cognition"]);
+    const result = await refreshWith(
+      [
+        ...oneMemberEntries("cognition"),
+        stagedEntry(releaseInputPath, encoder.encode('{"unexpected":true}\n')),
+      ],
+      ["cognition"]
+    );
 
     expect(result).toMatchObject({
       kind: "RepositoryIneligible",
@@ -186,7 +204,8 @@ describe("releases.refreshReleaseInput", () => {
 
   it("refuses an existing release input owned by another content authority", async () => {
     const fresh = await refreshWith(oneMemberEntries("cognition"), ["cognition"]);
-    if (fresh.kind !== "ReleaseInputCandidateReady") throw new Error("Fresh fixture did not produce a candidate");
+    if (fresh.kind !== "ReleaseInputCandidateReady")
+      throw new Error("Fresh fixture did not produce a candidate");
     const decoded = decodeAgentPluginReleaseInput(fresh.bytes);
     if (!decoded.ok) throw new Error("Fresh fixture did not decode");
     const wrongAuthority = createAgentPluginReleaseInput({
@@ -195,17 +214,25 @@ describe("releases.refreshReleaseInput", () => {
     });
     if (!wrongAuthority.ok) throw new Error("Wrong-authority fixture was invalid");
 
-    const result = await refreshWith([
-      ...oneMemberEntries("cognition"),
-      stagedEntry(releaseInputPath, canonicalSerializeAgentPluginReleaseInput(wrongAuthority.value)),
-    ], ["cognition"]);
+    const result = await refreshWith(
+      [
+        ...oneMemberEntries("cognition"),
+        stagedEntry(
+          releaseInputPath,
+          canonicalSerializeAgentPluginReleaseInput(wrongAuthority.value)
+        ),
+      ],
+      ["cognition"]
+    );
     expect(result).toEqual({
       kind: "RepositoryIneligible",
       mode: "staged",
-      issues: [{
-        code: "ReleaseInputMismatch",
-        detail: "release input declares a different content authority",
-      }],
+      issues: [
+        {
+          code: "ReleaseInputMismatch",
+          detail: "release input declares a different content authority",
+        },
+      ],
     });
   });
 
@@ -213,7 +240,7 @@ describe("releases.refreshReleaseInput", () => {
     const selected = oneMemberEntries("cognition");
     const undeclared = stagedEntry(
       "plugins/agents/tools/skills/tools/SKILL.md",
-      encoder.encode("---\nname: tools\n---\n"),
+      encoder.encode("---\nname: tools\n---\n")
     );
     const materializedObjectIds: string[] = [];
     const observation = stagedObservation([...selected, undeclared]);
@@ -228,10 +255,9 @@ describe("releases.refreshReleaseInput", () => {
       },
     });
 
-    await expect(client.releases.refreshReleaseInput(
-      refreshRequest(["cognition"]),
-      testInvocation,
-    )).resolves.toEqual({
+    await expect(
+      client.releases.refreshReleaseInput(refreshRequest(["cognition"]), testInvocation)
+    ).resolves.toEqual({
       kind: "RepositoryIneligible",
       mode: "staged",
       issues: [{ code: "PayloadMismatch", detail: "plugin tree contains undeclared member tools" }],
@@ -259,10 +285,9 @@ describe("releases.refreshReleaseInput", () => {
       }),
     });
 
-    await expect(client.releases.refreshReleaseInput(
-      refreshRequest(["cognition"]),
-      testInvocation,
-    )).resolves.toEqual({
+    await expect(
+      client.releases.refreshReleaseInput(refreshRequest(["cognition"]), testInvocation)
+    ).resolves.toEqual({
       kind: "SourceChanged",
       mode: "staged",
       detail: "Git HEAD, ref, repository, or index changed during staged observation",
@@ -315,12 +340,14 @@ describe("releases.refreshReleaseInput", () => {
   it("rejects duplicate-object logical payload amplification before payload construction", async () => {
     const sharedBytes = new Uint8Array(1024 * 1024);
     const objectId = createHash("sha1").update(sharedBytes).digest("hex");
-    const entries = Array.from({ length: 65 }, (_, index) => Object.freeze({
-      path: `plugins/agents/cognition/references/shared-${String(index).padStart(2, "0")}.bin`,
-      objectId,
-      mode: 0o644 as const,
-      bytes: sharedBytes,
-    }));
+    const entries = Array.from({ length: 65 }, (_, index) =>
+      Object.freeze({
+        path: `plugins/agents/cognition/references/shared-${String(index).padStart(2, "0")}.bin`,
+        objectId,
+        mode: 0o644 as const,
+        bytes: sharedBytes,
+      })
+    );
     let artifactAccesses = 0;
     const client = createLifecycleTestClient({
       contentWorkspace: {
@@ -334,7 +361,7 @@ describe("releases.refreshReleaseInput", () => {
 
     const result = await client.releases.refreshReleaseInput(
       refreshRequest(["cognition"]),
-      testInvocation,
+      testInvocation
     );
     expect(result).toMatchObject({
       kind: "ReleaseInputRejected",
@@ -369,19 +396,26 @@ describe("releases.refreshReleaseInput", () => {
     });
     const request = refreshRequest(["cognition"]);
 
-    await expect(client.releases.refreshReleaseInput({
-      ...request,
-      contentWorkspace: {
-        ...request.contentWorkspace,
-        pluginRoot: parsed(parseReleaseRelativePath("p".repeat(1_024))),
-      },
-    }, testInvocation)).resolves.toEqual({
+    await expect(
+      client.releases.refreshReleaseInput(
+        {
+          ...request,
+          contentWorkspace: {
+            ...request.contentWorkspace,
+            pluginRoot: parsed(parseReleaseRelativePath("p".repeat(1_024))),
+          },
+        },
+        testInvocation
+      )
+    ).resolves.toEqual({
       kind: "RepositoryIneligible",
       mode: "staged",
-      issues: [{
-        code: "ReleaseInputMismatch",
-        detail: "derived plugin root is not canonical for cognition",
-      }],
+      issues: [
+        {
+          code: "ReleaseInputMismatch",
+          detail: "derived plugin root is not canonical for cognition",
+        },
+      ],
     });
     expect(observations).toBe(0);
   });
@@ -420,19 +454,23 @@ function personalShapedEntries(): StagedEntry[] {
     const count = memberIndex === 0 ? 10 : 9;
     for (let index = 0; index < count; index += 1) {
       const identity = `${memberId}-${String(skillIndex).padStart(3, "0")}`;
-      entries.push(stagedEntry(
-        `plugins/agents/${memberId}/skills/${identity}/SKILL.md`,
-        encoder.encode(`---\nname: ${identity}\n---\n`),
-      ));
+      entries.push(
+        stagedEntry(
+          `plugins/agents/${memberId}/skills/${identity}/SKILL.md`,
+          encoder.encode(`---\nname: ${identity}\n---\n`)
+        )
+      );
       skillIndex += 1;
     }
   }
   for (let index = 0; entries.length < 1_610; index += 1) {
     const memberId = memberIds[index % memberIds.length]!;
-    entries.push(stagedEntry(
-      `plugins/agents/${memberId}/references/generated-${String(index).padStart(4, "0")}.md`,
-      encoder.encode(`reference ${index}\n`),
-    ));
+    entries.push(
+      stagedEntry(
+        `plugins/agents/${memberId}/references/generated-${String(index).padStart(4, "0")}.md`,
+        encoder.encode(`reference ${index}\n`)
+      )
+    );
   }
   return entries;
 }
@@ -441,11 +479,11 @@ function oneMemberEntries(memberId: string): StagedEntry[] {
   return [
     stagedEntry(
       `plugins/agents/${memberId}/skills/${memberId}/SKILL.md`,
-      encoder.encode(`---\nname: ${memberId}\n---\n`),
+      encoder.encode(`---\nname: ${memberId}\n---\n`)
     ),
     stagedEntry(
       `plugins/agents/${memberId}/package.json`,
-      encoder.encode(`{"name":"${memberId}"}\n`),
+      encoder.encode(`{"name":"${memberId}"}\n`)
     ),
   ];
 }
@@ -468,16 +506,21 @@ function stagedEntry(path: string, contents: Uint8Array, mode: 0o644 | 0o755 = 0
 
 function stagedObservation(entries: readonly StagedEntry[]): GitStagedIndexObservation {
   const sorted = [...entries].sort((left, right) => codeUnitCompare(left.path, right.path));
-  const indexEntries = encoder.encode(sorted.map((entry) => (
-    `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
-  )).join(""));
+  const indexEntries = encoder.encode(
+    sorted
+      .map(
+        (entry) =>
+          `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
+      )
+      .join("")
+  );
   const binding = Object.freeze({ anchor: stagedAnchor(), indexEntries });
   const blobs = new Map<string, Readonly<{ objectId: string; bytes: Uint8Array }>>();
-  for (const entry of sorted.filter((candidate) => (
-    candidate.path === releaseInputPath || memberIds.some(
-      (memberId) => candidate.path.startsWith(`plugins/agents/${memberId}/`),
-    )
-  ))) {
+  for (const entry of sorted.filter(
+    (candidate) =>
+      candidate.path === releaseInputPath ||
+      memberIds.some((memberId) => candidate.path.startsWith(`plugins/agents/${memberId}/`))
+  )) {
     if (!blobs.has(entry.objectId)) {
       blobs.set(entry.objectId, Object.freeze({ objectId: entry.objectId, bytes: entry.bytes }));
     }
@@ -509,7 +552,7 @@ function codeUnitCompare(left: string, right: string): number {
 
 function compareManifestRows(
   left: Readonly<{ pluginId: string; path: string }>,
-  right: Readonly<{ pluginId: string; path: string }>,
+  right: Readonly<{ pluginId: string; path: string }>
 ): number {
   return codeUnitCompare(left.pluginId, right.pluginId) || codeUnitCompare(left.path, right.path);
 }

@@ -23,38 +23,31 @@ import {
   type CurrentMainSelectionResult,
 } from "../../../src/service/model/dto/current-main-selection";
 import { contract } from "../../../src/service/modules/governance/contract";
-import {
-  createLifecycleTestClient,
-  testInvocation,
-} from "../../support/client";
+import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
 describe("governance procedure schema boundary", () => {
   it("keeps neutral selection observations exact with governance schemas", () => {
     type SelectionSchema = Readonly<Static<typeof CanonicalChannelSelectionSchema>>;
     type ResultSchema = Readonly<Static<typeof CurrentMainSelectionResultSchema>>;
     type Equal<TLeft, TRight> =
-      (<T>() => T extends TLeft ? 1 : 2) extends
-      (<T>() => T extends TRight ? 1 : 2)
-        ? (<T>() => T extends TRight ? 1 : 2) extends
-          (<T>() => T extends TLeft ? 1 : 2)
+      (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2
+        ? (<T>() => T extends TRight ? 1 : 2) extends <T>() => T extends TLeft ? 1 : 2
           ? true
           : false
         : false;
     type Assert<TValue extends true> = TValue;
-    type ExactObject<TLeft, TRight> = Equal<keyof TLeft, keyof TRight> extends true
-      ? {
-        [TKey in keyof TLeft]: TKey extends keyof TRight
-          ? Equal<TLeft[TKey], TRight[TKey]>
-          : false;
-      }[keyof TLeft] extends true
-        ? true
-        : false
-      : false;
+    type ExactObject<TLeft, TRight> =
+      Equal<keyof TLeft, keyof TRight> extends true
+        ? {
+            [TKey in keyof TLeft]: TKey extends keyof TRight
+              ? Equal<TLeft[TKey], TRight[TKey]>
+              : false;
+          }[keyof TLeft] extends true
+          ? true
+          : false
+        : false;
     type SelectionParity = Assert<Equal<CanonicalChannelSelection, SelectionSchema>>;
-    type ResultKindParity = Assert<Equal<
-      CurrentMainSelectionResult["kind"],
-      ResultSchema["kind"]
-    >>;
+    type ResultKindParity = Assert<Equal<CurrentMainSelectionResult["kind"], ResultSchema["kind"]>>;
     type ResultBranchParity<TKind extends CurrentMainSelectionResult["kind"]> = ExactObject<
       Extract<CurrentMainSelectionResult, { kind: TKind }>,
       Extract<ResultSchema, { kind: TKind }>
@@ -77,10 +70,7 @@ describe("governance procedure schema boundary", () => {
   });
 
   it("exposes only the v2 record codec and current-main selector", () => {
-    expect(Object.keys(contract).sort()).toEqual([
-      "currentMainRecord",
-      "currentMainSelection",
-    ]);
+    expect(Object.keys(contract).sort()).toEqual(["currentMainRecord", "currentMainSelection"]);
   });
 
   it("closes both current-main codec actions", () => {
@@ -89,14 +79,18 @@ describe("governance procedure schema boundary", () => {
     expect(encoded.ok).toBe(true);
     if (!encoded.ok) throw new Error(encoded.failure.message);
 
-    expect(Value.Check(CurrentMainRecordInputSchema, {
-      kind: "encode-body",
-      body,
-    })).toBe(true);
-    expect(Value.Check(CurrentMainRecordInputSchema, {
-      kind: "validate-envelope",
-      bytes: encoded.value.bytes,
-    })).toBe(true);
+    expect(
+      Value.Check(CurrentMainRecordInputSchema, {
+        kind: "encode-body",
+        body,
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(CurrentMainRecordInputSchema, {
+        kind: "validate-envelope",
+        bytes: encoded.value.bytes,
+      })
+    ).toBe(true);
 
     for (const invalid of [
       { kind: "encode-body", body, bytes: encoded.value.bytes },
@@ -109,10 +103,12 @@ describe("governance procedure schema boundary", () => {
     }
 
     expect(Value.Check(CurrentMainRecordResultSchema, encoded)).toBe(true);
-    expect(Value.Check(CurrentMainRecordResultSchema, {
-      ...encoded,
-      value: { ...encoded.value, receipt: "state" },
-    })).toBe(false);
+    expect(
+      Value.Check(CurrentMainRecordResultSchema, {
+        ...encoded,
+        value: { ...encoded.value, receipt: "state" },
+      })
+    ).toBe(false);
   });
 
   it("routes traversal-shaped current-main identities through the typed codec result", async () => {
@@ -180,12 +176,17 @@ describe("governance procedure schema boundary", () => {
         acceptanceObject: v1Pointer,
       },
       { locator: { ...locator, canonicalRef: "refs/heads/main" } },
-      { workspacePath: locator.workspacePath, expectedRepositoryIdentity: locator.expectedRepositoryIdentity },
+      {
+        workspacePath: locator.workspacePath,
+        expectedRepositoryIdentity: locator.expectedRepositoryIdentity,
+      },
     ];
 
     for (const candidate of invalid) {
       expect(Value.Check(CurrentMainSelectionInputSchema, candidate)).toBe(false);
-      const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(candidate);
+      const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(
+        candidate
+      );
       expect("issues" in validated).toBe(true);
     }
   });
@@ -212,15 +213,16 @@ describe("governance procedure schema boundary", () => {
       expect(Value.Check(CurrentMainSelectionInputSchema, input)).toBe(true);
       const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(input);
       expect("value" in validated).toBe(true);
-      await expect(createLifecycleTestClient().governance.currentMainSelection(
-        input,
-        testInvocation,
-      )).resolves.toMatchObject({ kind: "WRONG_REPOSITORY" });
+      await expect(
+        createLifecycleTestClient().governance.currentMainSelection(input, testInvocation)
+      ).resolves.toMatchObject({ kind: "WRONG_REPOSITORY" });
     }
 
     const oversized = { locator: { ...locator, workspacePath: `/${"a".repeat(4_096)}` } };
     expect(Value.Check(CurrentMainSelectionInputSchema, oversized)).toBe(false);
-    const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(oversized);
+    const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(
+      oversized
+    );
     expect("issues" in validated).toBe(true);
   });
 
@@ -241,29 +243,39 @@ describe("governance procedure schema boundary", () => {
     };
 
     expect(Value.Check(CurrentMainSelectionResultSchema, eligible)).toBe(true);
-    expect(Value.Check(CurrentMainSelectionResultSchema, {
-      kind: "STALE_RECORD",
-      reason: "selected source is unavailable",
-    })).toBe(true);
-    expect(Value.Check(CurrentMainSelectionResultSchema, {
-      ...eligible,
-      observation: { legacy: true },
-    })).toBe(false);
-    expect(Value.Check(CurrentMainSelectionResultSchema, {
-      kind: "ACCEPTED_PENDING_CONVERGENCE",
-      reason: "legacy state",
-    })).toBe(false);
+    expect(
+      Value.Check(CurrentMainSelectionResultSchema, {
+        kind: "STALE_RECORD",
+        reason: "selected source is unavailable",
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(CurrentMainSelectionResultSchema, {
+        ...eligible,
+        observation: { legacy: true },
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(CurrentMainSelectionResultSchema, {
+        kind: "ACCEPTED_PENDING_CONVERGENCE",
+        reason: "legacy state",
+      })
+    ).toBe(false);
   });
 
   it("bounds public selection and codec diagnostics", () => {
-    expect(Value.Check(CurrentMainSelectionResultSchema, {
-      kind: "UNREACHABLE_REPOSITORY",
-      reason: "r".repeat(MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH),
-    })).toBe(true);
-    expect(Value.Check(CurrentMainSelectionResultSchema, {
-      kind: "UNREACHABLE_REPOSITORY",
-      reason: "r".repeat(MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH + 1),
-    })).toBe(false);
+    expect(
+      Value.Check(CurrentMainSelectionResultSchema, {
+        kind: "UNREACHABLE_REPOSITORY",
+        reason: "r".repeat(MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH),
+      })
+    ).toBe(true);
+    expect(
+      Value.Check(CurrentMainSelectionResultSchema, {
+        kind: "UNREACHABLE_REPOSITORY",
+        reason: "r".repeat(MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH + 1),
+      })
+    ).toBe(false);
 
     const boundedCodecFailure = {
       ok: false,
@@ -274,37 +286,47 @@ describe("governance procedure schema boundary", () => {
       },
     };
     expect(Value.Check(CurrentMainRecordResultSchema, boundedCodecFailure)).toBe(true);
-    expect(Value.Check(CurrentMainRecordResultSchema, {
-      ...boundedCodecFailure,
-      failure: {
-        ...boundedCodecFailure.failure,
-        path: "p".repeat(MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH + 1),
-      },
-    })).toBe(false);
-    expect(Value.Check(CurrentMainRecordResultSchema, {
-      ...boundedCodecFailure,
-      failure: {
-        ...boundedCodecFailure.failure,
-        message: "m".repeat(MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH + 1),
-      },
-    })).toBe(false);
+    expect(
+      Value.Check(CurrentMainRecordResultSchema, {
+        ...boundedCodecFailure,
+        failure: {
+          ...boundedCodecFailure.failure,
+          path: "p".repeat(MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH + 1),
+        },
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(CurrentMainRecordResultSchema, {
+        ...boundedCodecFailure,
+        failure: {
+          ...boundedCodecFailure.failure,
+          message: "m".repeat(MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH + 1),
+        },
+      })
+    ).toBe(false);
   });
 
   it("keeps current-main projections as the fixed Claude-then-Codex tuple", () => {
     const body = currentMainBodyFixture();
     expect(Value.Check(CurrentMainBodyV2Schema, body)).toBe(true);
-    expect(Value.Check(CurrentMainBodyV2Schema, {
-      ...body,
-      projections: [body.projections[0]],
-    })).toBe(false);
-    expect(Value.Check(CurrentMainBodyV2Schema, {
-      ...body,
-      projections: [...body.projections, body.projections[0]],
-    })).toBe(false);
-    expect(Value.Check(CurrentMainBodyV2Schema, {
-      ...body,
-      projections: [body.projections[1], body.projections[0]],
-    })).toBe(false);
+    expect(
+      Value.Check(CurrentMainBodyV2Schema, {
+        ...body,
+        projections: [body.projections[0]],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(CurrentMainBodyV2Schema, {
+        ...body,
+        projections: [...body.projections, body.projections[0]],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(CurrentMainBodyV2Schema, {
+        ...body,
+        projections: [body.projections[1], body.projections[0]],
+      })
+    ).toBe(false);
   });
 });
 

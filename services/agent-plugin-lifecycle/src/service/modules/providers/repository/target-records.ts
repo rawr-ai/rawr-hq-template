@@ -70,7 +70,7 @@ interface TargetRecordTransition<T> {
  * the collection owns only capture, mutation, restore, and settlement.
  */
 export function createPathlessTargetState(
-  records: PathlessTargetRecordCollection,
+  records: PathlessTargetRecordCollection
 ): PathlessTargetState {
   const identities: TargetIdentityReader & TargetIdentityWriter = Object.freeze({
     async read(target: ProviderTarget): Promise<DeploymentResult<TargetIdentityObservation>> {
@@ -84,7 +84,7 @@ export function createPathlessTargetState(
 
     async admit(
       target: ProviderTarget,
-      sidecar: TargetIdentitySidecar,
+      sidecar: TargetIdentitySidecar
     ): Promise<DeploymentResult<TargetIdentitySidecar>> {
       const canonical = canonicalTarget(target, IDENTITY_ADMIT);
       if (!canonical.ok) return canonical;
@@ -92,7 +92,7 @@ export function createPathlessTargetState(
       if (!sameSidecar(expectedSidecar, sidecar)) {
         return operationFailure(
           IDENTITY_ADMIT,
-          "Target identity admission does not bind the selected canonical home",
+          "Target identity admission does not bind the selected canonical home"
         );
       }
       const key = recordKey("identity", canonical.value);
@@ -103,7 +103,8 @@ export function createPathlessTargetState(
         desired: presentRecord(canonicalSerializeTargetIdentitySidecar(expectedSidecar)),
         result: expectedSidecar,
         operation: IDENTITY_ADMIT,
-        validate: (observation) => validateIdentityRecord(observation, canonical.value, IDENTITY_ADMIT),
+        validate: (observation) =>
+          validateIdentityRecord(observation, canonical.value, IDENTITY_ADMIT),
       });
     },
   });
@@ -121,7 +122,7 @@ export function createPathlessTargetState(
     async publish(
       target: ProviderTarget,
       prior: ReceiptObservation,
-      receipt: TargetReceipt,
+      receipt: TargetReceipt
     ): Promise<DeploymentResult<TargetReceipt>> {
       const canonical = canonicalTarget(target, RECEIPT_PUBLISH);
       if (!canonical.ok) return canonical;
@@ -139,7 +140,8 @@ export function createPathlessTargetState(
         desired: presentRecord(canonicalSerializeTargetReceipt(normalizedReceipt.value)),
         result: normalizedReceipt.value,
         operation: RECEIPT_PUBLISH,
-        validate: (observation) => validateReceiptRecord(observation, canonical.value, RECEIPT_PUBLISH),
+        validate: (observation) =>
+          validateReceiptRecord(observation, canonical.value, RECEIPT_PUBLISH),
       });
     },
   });
@@ -151,32 +153,24 @@ export function createPathlessTargetState(
 }
 
 async function transitionTargetRecord<T>(
-  input: TargetRecordTransition<T>,
+  input: TargetRecordTransition<T>
 ): Promise<DeploymentResult<T>> {
   const captured = await input.records.capture(input.key);
   if (!captured.ok) return remapFailure(captured, input.operation);
   const capture = captured.value;
   if (!sameRecordKey(capture.key, input.key)) {
-    return await failAndRelease(
-      input.records,
-      capture,
-      input.operation,
-      [mappedIssue(
+    return await failAndRelease(input.records, capture, input.operation, [
+      mappedIssue(
         input.operation,
         "Target record capture returned a foreign semantic key",
         recordKeyText(input.key),
-        recordKeyText(capture.key),
-      )],
-    );
+        recordKeyText(capture.key)
+      ),
+    ]);
   }
   const valid = input.validate(capture.observation);
   if (!valid.ok) {
-    return await failAndRelease(
-      input.records,
-      capture,
-      input.operation,
-      [...valid.issues],
-    );
+    return await failAndRelease(input.records, capture, input.operation, [...valid.issues]);
   }
   if (sameTargetRecordObservation(capture.observation, input.desired)) {
     const released = await input.records.release(capture);
@@ -187,22 +181,20 @@ async function transitionTargetRecord<T>(
     return success(input.result);
   }
   if (!sameTargetRecordObservation(capture.observation, input.expected)) {
-    return await failAndRelease(
-      input.records,
-      capture,
-      input.operation,
-      [mappedIssue(
+    return await failAndRelease(input.records, capture, input.operation, [
+      mappedIssue(
         input.operation,
         "Target record changed after lifecycle planning",
         recordObservationText(input.expected),
-        recordObservationText(capture.observation),
-      )],
-    );
+        recordObservationText(capture.observation)
+      ),
+    ]);
   }
 
-  const mutation: TargetRecordMutation = input.desired.kind === "absent"
-    ? Object.freeze({ kind: "remove" })
-    : Object.freeze({ kind: "put", bytes: input.desired.bytes });
+  const mutation: TargetRecordMutation =
+    input.desired.kind === "absent"
+      ? Object.freeze({ kind: "remove" })
+      : Object.freeze({ kind: "put", bytes: input.desired.bytes });
   const plan: TargetRecordPlanInput = Object.freeze({
     capture,
     planDigest: targetRecordPlanDigest(input.key, input.expected, mutation),
@@ -213,7 +205,7 @@ async function transitionTargetRecord<T>(
       input.records,
       plan,
       input.operation,
-      mappedIssues(written.issues, input.operation),
+      mappedIssues(written.issues, input.operation)
     );
   }
   const settled = await input.records.settle(plan);
@@ -222,7 +214,7 @@ async function transitionTargetRecord<T>(
       input.records,
       plan,
       input.operation,
-      mappedIssues(settled.issues, input.operation),
+      mappedIssues(settled.issues, input.operation)
     );
   }
   return success(input.result);
@@ -232,13 +224,11 @@ async function failAndRelease(
   records: PathlessTargetRecordCollection,
   capture: TargetRecordCapture,
   operation: OperationContext,
-  primary: readonly ProviderDeploymentIssue[],
+  primary: readonly ProviderDeploymentIssue[]
 ): Promise<DeploymentResult<never>> {
   const released = await records.release(capture);
   if (!released.ok) records.retainUnreleased(capture);
-  const issues = released.ok
-    ? primary
-    : [...primary, ...mappedIssues(released.issues, operation)];
+  const issues = released.ok ? primary : [...primary, ...mappedIssues(released.issues, operation)];
   return failure(firstIssue(issues, mappedIssue(operation, "Target record release failed")));
 }
 
@@ -246,7 +236,7 @@ async function failAndRestore(
   records: PathlessTargetRecordCollection,
   plan: TargetRecordPlanInput,
   operation: OperationContext,
-  primary: readonly ProviderDeploymentIssue[],
+  primary: readonly ProviderDeploymentIssue[]
 ): Promise<DeploymentResult<never>> {
   const restored = await records.restore(plan);
   if (!restored.ok) {
@@ -256,16 +246,14 @@ async function failAndRestore(
   }
   const settled = await records.settle(plan);
   if (!settled.ok) records.retainUnsettled(plan);
-  const issues = settled.ok
-    ? primary
-    : [...primary, ...mappedIssues(settled.issues, operation)];
+  const issues = settled.ok ? primary : [...primary, ...mappedIssues(settled.issues, operation)];
   return failure(firstIssue(issues, mappedIssue(operation, "Target record settlement failed")));
 }
 
 function decodeIdentityObservation(
   observation: TargetRecordObservation,
   target: ProviderTarget,
-  operation: OperationContext,
+  operation: OperationContext
 ): DeploymentResult<TargetIdentityObservation> {
   if (observation.kind === "absent") return success(ABSENT_IDENTITY);
   const decoded = decodeTargetIdentitySidecar(observation.bytes);
@@ -275,7 +263,7 @@ function decodeIdentityObservation(
       operation,
       "Target identity sidecar belongs to another provider home",
       target.targetDigest,
-      decoded.value.targetDigest,
+      decoded.value.targetDigest
     );
   }
   return success(Object.freeze({ kind: "present", sidecar: decoded.value }));
@@ -284,21 +272,19 @@ function decodeIdentityObservation(
 function decodeReceiptObservation(
   observation: TargetRecordObservation,
   target: ProviderTarget,
-  operation: OperationContext,
+  operation: OperationContext
 ): DeploymentResult<ReceiptObservation> {
   if (observation.kind === "absent") return success(ABSENT_RECEIPT);
   const decoded = decodeTargetReceipt(observation.bytes);
   if (!decoded.ok) return remapFailure(decoded, operation);
   const receipt = normalizeReceipt(decoded.value, target, operation);
-  return receipt.ok
-    ? success(Object.freeze({ kind: "present", receipt: receipt.value }))
-    : receipt;
+  return receipt.ok ? success(Object.freeze({ kind: "present", receipt: receipt.value })) : receipt;
 }
 
 function validateIdentityRecord(
   observation: TargetRecordObservation,
   target: ProviderTarget,
-  operation: OperationContext,
+  operation: OperationContext
 ): DeploymentResult<null> {
   const decoded = decodeIdentityObservation(observation, target, operation);
   return decoded.ok ? success(null) : decoded;
@@ -307,7 +293,7 @@ function validateIdentityRecord(
 function validateReceiptRecord(
   observation: TargetRecordObservation,
   target: ProviderTarget,
-  operation: OperationContext,
+  operation: OperationContext
 ): DeploymentResult<null> {
   const decoded = decodeReceiptObservation(observation, target, operation);
   return decoded.ok ? success(null) : decoded;
@@ -316,31 +302,29 @@ function validateReceiptRecord(
 function normalizeReceiptObservation(
   observation: ReceiptObservation,
   target: ProviderTarget,
-  operation: OperationContext,
+  operation: OperationContext
 ): DeploymentResult<ReceiptObservation> {
   if (observation.kind === "absent") return success(ABSENT_RECEIPT);
   const receipt = normalizeReceipt(observation.receipt, target, operation);
-  return receipt.ok
-    ? success(Object.freeze({ kind: "present", receipt: receipt.value }))
-    : receipt;
+  return receipt.ok ? success(Object.freeze({ kind: "present", receipt: receipt.value })) : receipt;
 }
 
 function normalizeReceipt(
   receipt: TargetReceipt,
   target: ProviderTarget,
-  operation: OperationContext,
+  operation: OperationContext
 ): DeploymentResult<TargetReceipt> {
   const verified = verifyTargetReceipt(receipt);
   if (!verified.ok) return remapFailure(verified, operation);
   if (
-    verified.value.body.provider !== target.provider
-    || verified.value.body.targetDigest !== target.targetDigest
+    verified.value.body.provider !== target.provider ||
+    verified.value.body.targetDigest !== target.targetDigest
   ) {
     return operationFailure(
       operation,
       "Target receipt belongs to another provider home",
       target.targetDigest,
-      verified.value.body.targetDigest,
+      verified.value.body.targetDigest
     );
   }
   return verified;
@@ -348,37 +332,39 @@ function normalizeReceipt(
 
 function validateReceiptSuccessor(
   prior: ReceiptObservation,
-  receipt: TargetReceipt,
+  receipt: TargetReceipt
 ): DeploymentResult<null> {
   if (prior.kind === "absent") {
     return receipt.body.generation === 1 && receipt.body.lineage.kind === "initial"
       ? success(null)
-      : failure([issue(
-        "INVALID_RECEIPT",
-        "target.receipt.lineage",
-        "First target receipt must use initial generation one",
-        "generation=1,lineage=initial",
-        receiptLineageText(receipt),
-      )]);
+      : failure([
+          issue(
+            "INVALID_RECEIPT",
+            "target.receipt.lineage",
+            "First target receipt must use initial generation one",
+            "generation=1,lineage=initial",
+            receiptLineageText(receipt)
+          ),
+        ]);
   }
-  return (
-    receipt.body.generation === prior.receipt.body.generation + 1
-    && receipt.body.lineage.kind === "successor"
-    && receipt.body.lineage.priorReceiptDigest === prior.receipt.receiptDigest
-  )
+  return receipt.body.generation === prior.receipt.body.generation + 1 &&
+    receipt.body.lineage.kind === "successor" &&
+    receipt.body.lineage.priorReceiptDigest === prior.receipt.receiptDigest
     ? success(null)
-    : failure([issue(
-      "INVALID_RECEIPT",
-      "target.receipt.lineage",
-      "Target receipt successor does not bind the exact prior generation and digest",
-      `${prior.receipt.body.generation + 1}:${prior.receipt.receiptDigest}`,
-      receiptLineageText(receipt),
-    )]);
+    : failure([
+        issue(
+          "INVALID_RECEIPT",
+          "target.receipt.lineage",
+          "Target receipt successor does not bind the exact prior generation and digest",
+          `${prior.receipt.body.generation + 1}:${prior.receipt.receiptDigest}`,
+          receiptLineageText(receipt)
+        ),
+      ]);
 }
 
 function canonicalTarget(
   target: ProviderTarget,
-  operation: OperationContext,
+  operation: OperationContext
 ): DeploymentResult<ProviderTarget> {
   const parsed = parseProviderTarget({ provider: target.provider, home: target.home });
   if (!parsed.ok) return remapFailure(parsed, operation);
@@ -387,7 +373,7 @@ function canonicalTarget(
       operation,
       "Provider target digest does not bind its canonical home",
       parsed.value.targetDigest,
-      target.targetDigest,
+      target.targetDigest
     );
   }
   return parsed;
@@ -412,42 +398,48 @@ function sameRecordKey(left: TargetRecordKey, right: TargetRecordKey): boolean {
 }
 
 function sameSidecar(left: TargetIdentitySidecar, right: TargetIdentitySidecar): boolean {
-  return left.schemaVersion === right.schemaVersion
-    && left.provider === right.provider
-    && left.canonicalHome === right.canonicalHome
-    && left.targetDigest === right.targetDigest
-    && left.identityDigest === right.identityDigest;
+  return (
+    left.schemaVersion === right.schemaVersion &&
+    left.provider === right.provider &&
+    left.canonicalHome === right.canonicalHome &&
+    left.targetDigest === right.targetDigest &&
+    left.identityDigest === right.identityDigest
+  );
 }
 
 function remapFailure<T>(
   result: DeploymentResult<T>,
-  operation: OperationContext,
+  operation: OperationContext
 ): DeploymentResult<T> {
   if (result.ok) return result;
-  return failure(firstIssue(
-    mappedIssues(result.issues, operation),
-    mappedIssue(operation, "Target record operation failed"),
-  ));
+  return failure(
+    firstIssue(
+      mappedIssues(result.issues, operation),
+      mappedIssue(operation, "Target record operation failed")
+    )
+  );
 }
 
 function mappedIssues(
   issues: readonly ProviderDeploymentIssue[],
-  operation: OperationContext,
+  operation: OperationContext
 ): readonly ProviderDeploymentIssue[] {
-  return issues.map((entry) => issue(
-    operation.code,
-    operation.path,
-    `${entry.path}: ${entry.message}`,
-    entry.expected,
-    entry.actual,
-  ));
+  return issues.map((entry) =>
+    issue(
+      operation.code,
+      operation.path,
+      `${entry.path}: ${entry.message}`,
+      entry.expected,
+      entry.actual
+    )
+  );
 }
 
 function mappedIssue(
   operation: OperationContext,
   message: string,
   expected = "",
-  actual = "",
+  actual = ""
 ): ProviderDeploymentIssue {
   return issue(operation.code, operation.path, message, expected, actual);
 }
@@ -456,7 +448,7 @@ function operationFailure(
   operation: OperationContext,
   message: string,
   expected = "",
-  actual = "",
+  actual = ""
 ): DeploymentResult<never> {
   return failure([mappedIssue(operation, message, expected, actual)]);
 }

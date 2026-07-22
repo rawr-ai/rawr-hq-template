@@ -26,16 +26,18 @@ export function canonicalJsonLine(value: CanonicalJsonValue): Uint8Array {
 export function decodeCanonicalJson(
   bytes: unknown,
   path: string,
-  maxBytes: number,
+  maxBytes: number
 ): ReleaseResult<unknown, ReleaseIssue> {
   if (!(bytes instanceof Uint8Array)) {
     return failure([issue("EXPECTED_BYTES", path, "Canonical envelope must be a Uint8Array")]);
   }
   if (bytes.byteLength > maxBytes) {
-    return failure([issue("ENVELOPE_TOO_LARGE", path, "Canonical envelope exceeds its protocol bound", {
-      expected: maxBytes,
-      actual: bytes.byteLength,
-    })]);
+    return failure([
+      issue("ENVELOPE_TOO_LARGE", path, "Canonical envelope exceeds its protocol bound", {
+        expected: maxBytes,
+        actual: bytes.byteLength,
+      }),
+    ]);
   }
   let text: string;
   try {
@@ -83,7 +85,10 @@ export function encodeBase64(bytes: Uint8Array): string {
   return chunks.join("");
 }
 
-export function decodeBase64(value: unknown, path: string): ReleaseResult<Uint8Array, ReleaseIssue> {
+export function decodeBase64(
+  value: unknown,
+  path: string
+): ReleaseResult<Uint8Array, ReleaseIssue> {
   if (typeof value !== "string") {
     return failure([issue("EXPECTED_STRING", path, "Base64 value must be a string")]);
   }
@@ -110,7 +115,9 @@ export function decodeBase64(value: unknown, path: string): ReleaseResult<Uint8A
     }
   }
   if (encodeBase64(bytes) !== value) {
-    return failure([issue("INVALID_BASE64", path, "Value is not the canonical base64 representation")]);
+    return failure([
+      issue("INVALID_BASE64", path, "Value is not the canonical base64 representation"),
+    ]);
   }
   return success(bytes);
 }

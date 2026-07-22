@@ -82,17 +82,21 @@ describe("current-main v2 codec", () => {
 
     const encoded = mustEncode(bodyFixture());
     const wire = parseEnvelope(encoded.bytes);
-    expect(validateCurrentMainEnvelopeV2(canonicalBytes({ ...wire, receipt: "state" }))).toMatchObject({
+    expect(
+      validateCurrentMainEnvelopeV2(canonicalBytes({ ...wire, receipt: "state" }))
+    ).toMatchObject({
       ok: false,
       failure: { code: "InvalidSchema" },
     });
-    expect(encodeCurrentMainBodyV2({
-      ...bodyFixture(),
-      projections: [
-        { ...bodyFixture().projections[0], receipt: "state" },
-        bodyFixture().projections[1],
-      ],
-    })).toMatchObject({ ok: false, failure: { code: "InvalidSchema" } });
+    expect(
+      encodeCurrentMainBodyV2({
+        ...bodyFixture(),
+        projections: [
+          { ...bodyFixture().projections[0], receipt: "state" },
+          bodyFixture().projections[1],
+        ],
+      })
+    ).toMatchObject({ ok: false, failure: { code: "InvalidSchema" } });
   });
 
   it("rejects malformed and overbound envelopes", () => {
@@ -101,7 +105,7 @@ describe("current-main v2 codec", () => {
       failure: { code: "InvalidSchema" },
     });
     expect(
-      validateCurrentMainEnvelopeV2(new Uint8Array(MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES + 1)),
+      validateCurrentMainEnvelopeV2(new Uint8Array(MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES + 1))
     ).toMatchObject({
       ok: false,
       failure: { code: "EnvelopeTooLarge" },
@@ -124,7 +128,10 @@ describe("current-main v2 codec", () => {
   });
 
   it.each([
-    ["unknown", [{ ...bodyFixture().projections[0], provider: "other" }, bodyFixture().projections[1]]],
+    [
+      "unknown",
+      [{ ...bodyFixture().projections[0], provider: "other" }, bodyFixture().projections[1]],
+    ],
     ["missing", [bodyFixture().projections[0]]],
     ["duplicate", [bodyFixture().projections[0], bodyFixture().projections[0]]],
     ["reordered", [...bodyFixture().projections].reverse()],
@@ -135,29 +142,39 @@ describe("current-main v2 codec", () => {
     });
 
     const wire = parseEnvelope(mustEncode(bodyFixture()).bytes);
-    expect(validateCurrentMainEnvelopeV2(canonicalBytes({
-      schemaVersion: wire.schemaVersion,
-      currentMainDigest: wire.currentMainDigest,
-      body: { ...(wire.body as Record<string, unknown>), projections },
-    }))).toMatchObject({
+    expect(
+      validateCurrentMainEnvelopeV2(
+        canonicalBytes({
+          schemaVersion: wire.schemaVersion,
+          currentMainDigest: wire.currentMainDigest,
+          body: { ...(wire.body as Record<string, unknown>), projections },
+        })
+      )
+    ).toMatchObject({
       ok: false,
       failure: { code: "InvalidSchema" },
     });
   });
 
   it("rejects invalid source identities", () => {
-    expect(encodeCurrentMainBodyV2({
-      ...bodyFixture(),
-      sourceRepositoryIdentity: "file:/tmp/rawr-hq",
-    })).toMatchObject({ ok: false, failure: { code: "InvalidSchema" } });
-    expect(encodeCurrentMainBodyV2({
-      ...bodyFixture(),
-      sourceCommit: "HEAD",
-    })).toMatchObject({ ok: false, failure: { code: "InvalidSchema" } });
-    expect(encodeCurrentMainBodyV2({
-      ...bodyFixture(),
-      schemaVersion: 1,
-    })).toMatchObject({ ok: false, failure: { code: "InvalidSchema" } });
+    expect(
+      encodeCurrentMainBodyV2({
+        ...bodyFixture(),
+        sourceRepositoryIdentity: "file:/tmp/rawr-hq",
+      })
+    ).toMatchObject({ ok: false, failure: { code: "InvalidSchema" } });
+    expect(
+      encodeCurrentMainBodyV2({
+        ...bodyFixture(),
+        sourceCommit: "HEAD",
+      })
+    ).toMatchObject({ ok: false, failure: { code: "InvalidSchema" } });
+    expect(
+      encodeCurrentMainBodyV2({
+        ...bodyFixture(),
+        schemaVersion: 1,
+      })
+    ).toMatchObject({ ok: false, failure: { code: "InvalidSchema" } });
   });
 });
 

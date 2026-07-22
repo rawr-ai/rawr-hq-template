@@ -18,10 +18,7 @@ import type {
   PackageOutputFailure,
   PackageOutputPublicationResult,
 } from "@rawr/resource-agent-plugin-package-output";
-import {
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
-  normalizeArtifactRef,
-} from "../../../shared/release";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES, normalizeArtifactRef } from "../../../shared/release";
 import type { ArtifactReader } from "../../../model/dependencies/releases";
 
 interface PackagingDependencies {
@@ -41,60 +38,62 @@ export const packageProcedure = module.package.handler(async ({ context, input }
 
 async function packageAgentPlugin(
   request: PackageAgentPluginRequest,
-  dependencies: PackagingDependencies,
+  dependencies: PackagingDependencies
 ): Promise<PackageAgentPluginResult> {
   const artifactRef = normalizeArtifactRef(request.artifactRef);
   let readResult: Awaited<ReturnType<ArtifactReader["read"]>>;
   try {
     readResult = await dependencies.artifacts.read(artifactRef);
   } catch (error) {
-    return rejected(createFailure(
-      "ArtifactMismatch",
-      "artifact-read",
-      `Artifact reader failed without a closed result: ${errorMessage(error)}`,
-    ));
+    return rejected(
+      createFailure(
+        "ArtifactMismatch",
+        "artifact-read",
+        `Artifact reader failed without a closed result: ${errorMessage(error)}`
+      )
+    );
   }
 
   if (readResult.kind === "Missing") {
-    return rejected(createFailure(
-      "ArtifactMissing",
-      "artifact-read",
-      "Requested immutable artifact is missing",
-    ));
+    return rejected(
+      createFailure("ArtifactMissing", "artifact-read", "Requested immutable artifact is missing")
+    );
   }
   if (readResult.kind === "Mismatch") {
     const issueCodes = [...readResult.issues]
       .map((issue) => issue.code)
       .sort()
       .join(",");
-    return rejected(createFailure(
-      "ArtifactMismatch",
-      "artifact-read",
-      `Requested immutable artifact failed verification: ${issueCodes}`,
-    ));
+    return rejected(
+      createFailure(
+        "ArtifactMismatch",
+        "artifact-read",
+        `Requested immutable artifact failed verification: ${issueCodes}`
+      )
+    );
   }
 
   try {
     assertSnapshotMatchesRef(readResult.snapshot, artifactRef);
   } catch (error) {
-    return rejected(createFailure(
-      "ArtifactSnapshotMismatch",
-      "artifact-snapshot",
-      errorMessage(error),
-    ));
+    return rejected(
+      createFailure("ArtifactSnapshotMismatch", "artifact-snapshot", errorMessage(error))
+    );
   }
 
   let bytes: Uint8Array;
   try {
     bytes = await dependencies.packageOutput.encodeCoworkV1(
-      createCoworkV1ArchiveRequest(readResult.snapshot),
+      createCoworkV1ArchiveRequest(readResult.snapshot)
     );
   } catch (error) {
-    return rejected(createFailure(
-      "PackageRenderFailed",
-      "package-render",
-      `Cowork v1 rendering failed: ${errorDetail(error)}`,
-    ));
+    return rejected(
+      createFailure(
+        "PackageRenderFailed",
+        "package-render",
+        `Cowork v1 rendering failed: ${errorDetail(error)}`
+      )
+    );
   }
 
   const packageDigest = coworkV1PackageDigest(bytes);
@@ -117,7 +116,7 @@ async function packageAgentPlugin(
       primaryFailure: createFailure(
         "OutputVerifyFailed",
         "output-port",
-        `Atomic output port failed without a closed result: ${errorDetail(error)}`,
+        `Atomic output port failed without a closed result: ${errorDetail(error)}`
       ),
       ...identity,
     };
@@ -151,7 +150,7 @@ function mapFailure(failure: PackageOutputFailure, cleanup = false): PackagingFa
   return createFailure(
     cleanup ? cleanupFailureCode(failure) : primaryFailureCode(failure),
     failure.phase,
-    failure.detail,
+    failure.detail
   );
 }
 
@@ -189,10 +188,12 @@ function cleanupFailureCode(failure: PackageOutputFailure): PackagingFailureCode
 }
 
 function isProviderFailpoint(phase: string): boolean {
-  return phase === "AfterOutputObserved"
-    || phase === "BeforeCommit"
-    || phase === "AfterCommit"
-    || phase === "BeforeFinalVerification";
+  return (
+    phase === "AfterOutputObserved" ||
+    phase === "BeforeCommit" ||
+    phase === "AfterCommit" ||
+    phase === "BeforeFinalVerification"
+  );
 }
 
 function rejected(primaryFailure: PackagingFailure): PackageAgentPluginResult {
@@ -202,7 +203,7 @@ function rejected(primaryFailure: PackagingFailure): PackageAgentPluginResult {
 function createFailure(
   code: PackagingFailureCode,
   phase: string,
-  message: string,
+  message: string
 ): PackagingFailure {
   return Object.freeze({
     code,
@@ -244,6 +245,6 @@ function boundedDiagnostic(value: string, maxLength: number): string {
   if (value.length <= maxLength) return value;
   return `${value.slice(
     0,
-    maxLength - TRUNCATED_PACKAGING_DIAGNOSTIC_SUFFIX.length,
+    maxLength - TRUNCATED_PACKAGING_DIAGNOSTIC_SUFFIX.length
   )}${TRUNCATED_PACKAGING_DIAGNOSTIC_SUFFIX}`;
 }

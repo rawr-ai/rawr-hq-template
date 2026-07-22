@@ -12,9 +12,7 @@ import {
   marketplaceState,
   type ProviderMarketplaceObservation,
 } from "../../../src/service/modules/providers/model/policy/marketplace";
-import {
-  planCanonicalConvergence,
-} from "../../../src/service/modules/providers/model/policy/canonical-convergence";
+import { planCanonicalConvergence } from "../../../src/service/modules/providers/model/policy/canonical-convergence";
 import type {
   AgentProviderProjection,
   CapabilityObservation,
@@ -47,11 +45,7 @@ describe("canonical native convergence policy", () => {
   it("adopts exact native state without a receipt and preserves unrelated state", () => {
     const desired = projection([member("cognition", "a")]);
     const unrelated = standalone("local@personal", "rawr:local", "personal");
-    const plan = makePlan(desired, observed(
-      desired,
-      [native(desired.members[0]!)],
-      [unrelated],
-    ));
+    const plan = makePlan(desired, observed(desired, [native(desired.members[0]!)], [unrelated]));
 
     expect(plan.status).toBe("CONVERGED");
     expect(mutations(plan)).toEqual([]);
@@ -70,7 +64,10 @@ describe("canonical native convergence policy", () => {
         visible: Object.freeze({ ...member("docs", "b").visible, hooks: sharedHooks }),
       }),
     ]);
-    const observation = observed(desired, desired.members.map((entry) => native(entry)));
+    const observation = observed(
+      desired,
+      desired.members.map((entry) => native(entry))
+    );
 
     const first = makePlan(desired, observation);
     const repeated = makePlan(desired, observation);
@@ -110,12 +107,10 @@ describe("canonical native convergence policy", () => {
   it("refreshes one same-ID stale release before selected visibility", () => {
     const prior = projection([member("cognition", "c", "1")], "1");
     const desired = projection([member("cognition", "d", "2")], "2");
-    const plan = makePlan(desired, observed(
+    const plan = makePlan(
       desired,
-      [native(prior.members[0]!)],
-      [],
-      marketplace(prior),
-    ));
+      observed(desired, [native(prior.members[0]!)], [], marketplace(prior))
+    );
 
     expect(plan.status).toBe("DRIFTED");
     expect(plan.steps.map(stepLabel)).toEqual([
@@ -130,10 +125,7 @@ describe("canonical native convergence policy", () => {
   it("refreshes a stale same-ID install when the marketplace is already current", () => {
     const prior = projection([member("cognition", "4", "4")], "4");
     const desired = projection([member("cognition", "5", "5")], "5");
-    const result = makePlan(desired, observed(
-      desired,
-      [native(prior.members[0]!)],
-    ));
+    const result = makePlan(desired, observed(desired, [native(prior.members[0]!)]));
 
     expect(result.status).toBe("DRIFTED");
     expect(result.steps.map(stepLabel)).toEqual([
@@ -150,7 +142,7 @@ describe("canonical native convergence policy", () => {
       "cognition@rawr-hq",
       desired.members[0]!.nativeIdentity,
       OWNER,
-      "configured-only",
+      "configured-only"
     );
 
     const plan = makePlan(desired, observed(desired, [], [configured]));
@@ -166,18 +158,16 @@ describe("canonical native convergence policy", () => {
 
   it("retires omitted selected-owner config only after selected visibility", () => {
     const desired = projection([member("cognition", "7")], "7");
-    const configured = standalone(
-      "plugins@rawr-hq",
-      "rawr:plugins",
-      OWNER,
-      "configured-only",
-    );
+    const configured = standalone("plugins@rawr-hq", "rawr:plugins", OWNER, "configured-only");
 
-    const plan = makePlan(desired, observed(
+    const plan = makePlan(
       desired,
-      desired.members.map((entry) => native(entry)),
-      [configured],
-    ));
+      observed(
+        desired,
+        desired.members.map((entry) => native(entry)),
+        [configured]
+      )
+    );
 
     expect(plan.status).toBe("DRIFTED");
     expect(plan.steps.map(stepLabel)).toEqual([
@@ -199,17 +189,17 @@ describe("canonical native convergence policy", () => {
   });
 
   it("verifies selected visibility before retiring a proven omitted member", () => {
-    const prior = projection([
-      member("cognition", "e"),
-      member("docs", "f"),
-    ], "3");
+    const prior = projection([member("cognition", "e"), member("docs", "f")], "3");
     const desired = projection([prior.members[0]!], "3");
-    const plan = makePlan(desired, observed(
+    const plan = makePlan(
       desired,
-      prior.members.map((entry) => native(entry)),
-      [standalone("local@personal", "rawr:local", "personal")],
-      marketplace(prior),
-    ));
+      observed(
+        desired,
+        prior.members.map((entry) => native(entry)),
+        [standalone("local@personal", "rawr:local", "personal")],
+        marketplace(prior)
+      )
+    );
 
     expect(plan.status).toBe("DRIFTED");
     expect(plan.steps.map(stepLabel)).toEqual([
@@ -219,8 +209,11 @@ describe("canonical native convergence policy", () => {
       "verify-retired",
       "verify-final",
     ]);
-    expect(mutations(plan).some((action) =>
-      action.kind === "RetireMember" && action.member.nativeIdentity === "rawr:local")).toBe(false);
+    expect(
+      mutations(plan).some(
+        (action) => action.kind === "RetireMember" && action.member.nativeIdentity === "rawr:local"
+      )
+    ).toBe(false);
   });
 
   it("preserves a foreign same-ID exposure while retiring the exact selected-owner omission", () => {
@@ -229,12 +222,10 @@ describe("canonical native convergence policy", () => {
     const omitted = native(prior.members[0]!);
     const foreign = standalone("docs@foreign", omitted.nativeIdentity, "foreign", "installed");
 
-    const plan = makePlan(desired, observed(
+    const plan = makePlan(
       desired,
-      [native(desired.members[0]!), omitted],
-      [foreign],
-      marketplace(prior),
-    ));
+      observed(desired, [native(desired.members[0]!), omitted], [foreign], marketplace(prior))
+    );
 
     expect(plan.status).toBe("DRIFTED");
     const verification = plan.steps.find((step) => step.kind === "verify-retired");
@@ -250,20 +241,31 @@ describe("canonical native convergence policy", () => {
   ] as const)("blocks %s without a native action", (_label, scenario) => {
     const desired = projection([member("cognition", "7")]);
     const selectedMember = native(desired.members[0]!);
-    const observation = scenario === "foreign-member"
-      ? observed(desired, [{
-          ...selectedMember,
-          providerSourceIdentity: "foreign" as typeof selectedMember.providerSourceIdentity,
-          artifactAuthority: {
-            ...selectedMember.artifactAuthority,
-            contentAuthority: "foreign" as typeof selectedMember.artifactAuthority.contentAuthority,
-          },
-        }])
-      : observed(desired, [selectedMember], [], marketplace(
-          projection([
-            member("foreign", "8", "8", "foreign" as typeof OWNER),
-          ], "8", "foreign" as typeof OWNER),
-        ));
+    const observation =
+      scenario === "foreign-member"
+        ? observed(desired, [
+            {
+              ...selectedMember,
+              providerSourceIdentity: "foreign" as typeof selectedMember.providerSourceIdentity,
+              artifactAuthority: {
+                ...selectedMember.artifactAuthority,
+                contentAuthority:
+                  "foreign" as typeof selectedMember.artifactAuthority.contentAuthority,
+              },
+            },
+          ])
+        : observed(
+            desired,
+            [selectedMember],
+            [],
+            marketplace(
+              projection(
+                [member("foreign", "8", "8", "foreign" as typeof OWNER)],
+                "8",
+                "foreign" as typeof OWNER
+              )
+            )
+          );
 
     const result = makePlan(desired, observation);
 
@@ -281,7 +283,7 @@ describe("canonical native convergence policy", () => {
         [],
         [],
         marketplace(desired),
-        mustTarget("claude", "/tmp/rawr-canonical-policy-claude"),
+        mustTarget("claude", "/tmp/rawr-canonical-policy-claude")
       ),
     });
 
@@ -311,32 +313,43 @@ describe("canonical native convergence policy", () => {
 
   it("preserves a conflicting unmanaged exposure and blocks mutation", () => {
     const desired = projection([member("cognition", "a")]);
-    const result = makePlan(desired, observed(
+    const result = makePlan(
       desired,
-      [],
-      [standalone("cognition@foreign", "rawr:cognition", "foreign")],
-    ));
+      observed(desired, [], [standalone("cognition@foreign", "rawr:cognition", "foreign")])
+    );
 
     expect(result.status).toBe("BLOCKED_COLLISION");
     expect(result.steps).toEqual([]);
   });
 
   it.each([
-    ["missing capability", {
-      provider: "codex",
-      adapterProtocol: ADAPTER,
-      available: AVAILABLE.filter((entry) => entry !== "visible-hook-inventory"),
-    }, "CAPABILITY_MISMATCH"],
-    ["wrong adapter", {
-      provider: "codex",
-      adapterProtocol: "rawr-native-provider/codex@v9" as typeof ADAPTER,
-      available: AVAILABLE,
-    }, "ADAPTER_PROTOCOL_MISMATCH"],
-    ["wrong provider", {
-      provider: "claude",
-      adapterProtocol: ADAPTER,
-      available: AVAILABLE,
-    }, "PROJECTION_MISMATCH"],
+    [
+      "missing capability",
+      {
+        provider: "codex",
+        adapterProtocol: ADAPTER,
+        available: AVAILABLE.filter((entry) => entry !== "visible-hook-inventory"),
+      },
+      "CAPABILITY_MISMATCH",
+    ],
+    [
+      "wrong adapter",
+      {
+        provider: "codex",
+        adapterProtocol: "rawr-native-provider/codex@v9" as typeof ADAPTER,
+        available: AVAILABLE,
+      },
+      "ADAPTER_PROTOCOL_MISMATCH",
+    ],
+    [
+      "wrong provider",
+      {
+        provider: "claude",
+        adapterProtocol: ADAPTER,
+        available: AVAILABLE,
+      },
+      "PROJECTION_MISMATCH",
+    ],
   ] as const)("reports an incompatible native %s without mutation", (_label, capabilities, code) => {
     const desired = projection([member("cognition", "c")]);
     const result = planCanonicalConvergence({
@@ -353,7 +366,7 @@ describe("canonical native convergence policy", () => {
 
 function makePlan(
   desired: AgentProviderProjection,
-  observation: CanonicalNativeObservation,
+  observation: CanonicalNativeObservation
 ): CanonicalConvergencePlan {
   return planCanonicalConvergence({
     desired: desiredState(desired),
@@ -389,9 +402,10 @@ function desiredState(projection: AgentProviderProjection): CanonicalDesiredStat
     sourceCommit: projection.artifactAuthority.sourceCommit,
     sourceTree: "f".repeat(40),
     releaseInputDigest: `ri1_${"e".repeat(64)}`,
-    releaseSetDigest: projection.source.kind === "complete-set"
-      ? projection.source.releaseSet.releaseSetDigest
-      : `rs1_${"d".repeat(64)}`,
+    releaseSetDigest:
+      projection.source.kind === "complete-set"
+        ? projection.source.releaseSet.releaseSetDigest
+        : `rs1_${"d".repeat(64)}`,
     evaluationProfile: "provider-smoke@v1",
     projections: Object.freeze(projections),
   });
@@ -406,7 +420,7 @@ function observed(
   members: readonly NativeMemberObservation[],
   standaloneExposures: readonly NativeStandaloneExposureObservation[] = [],
   marketplaceObservation: ProviderMarketplaceObservation = marketplace(desired),
-  target = TARGET,
+  target = TARGET
 ): CanonicalNativeObservation {
   return Object.freeze({
     kind: "observed",
@@ -414,7 +428,7 @@ function observed(
       target,
       members,
       standaloneExposures,
-      marketplaceObservation,
+      marketplaceObservation
     ),
   });
 }
@@ -422,7 +436,7 @@ function observed(
 function projection(
   members: readonly ProviderProjectionMember[],
   fill = "a",
-  owner: ProviderProjectionMember["providerSourceIdentity"] = OWNER,
+  owner: ProviderProjectionMember["providerSourceIdentity"] = OWNER
 ): AgentProviderProjection {
   const artifactAuthority = Object.freeze({
     protocol: "agent-plugin-artifact-authority@v1" as const,
@@ -458,11 +472,15 @@ function projection(
       ]),
       capabilityProfileDigest: `cp1_${fill.repeat(64)}`,
     },
-    members: Object.freeze(members.map((entry) => Object.freeze({
-      ...entry,
-      artifactAuthority,
-      providerSourceIdentity: owner,
-    }))),
+    members: Object.freeze(
+      members.map((entry) =>
+        Object.freeze({
+          ...entry,
+          artifactAuthority,
+          providerSourceIdentity: owner,
+        })
+      )
+    ),
     projectionDigest: `ap1_${fill.repeat(64)}`,
   }) as unknown as AgentProviderProjection;
 }
@@ -471,7 +489,7 @@ function member(
   pluginId: string,
   fingerprintFill: string,
   commitFill = "a",
-  owner: ProviderProjectionMember["providerSourceIdentity"] = OWNER,
+  owner: ProviderProjectionMember["providerSourceIdentity"] = OWNER
 ): ProviderProjectionMember {
   const nativeIdentity = `rawr:${pluginId}`;
   return {
@@ -500,7 +518,7 @@ function member(
 
 function native(
   desired: ProviderProjectionMember,
-  enablement: NativeMemberObservation["enablement"] = "enabled",
+  enablement: NativeMemberObservation["enablement"] = "enabled"
 ): NativeMemberObservation {
   return Object.freeze({
     pluginId: desired.pluginId,
@@ -518,13 +536,14 @@ function standalone(
   exposureIdentity: string,
   nativeIdentity: string,
   providerSourceIdentity: string,
-  exposureKind: NativeStandaloneExposureObservation["exposureKind"] = "installed",
+  exposureKind: NativeStandaloneExposureObservation["exposureKind"] = "installed"
 ): NativeStandaloneExposureObservation {
   return Object.freeze({
     exposureKind,
     exposureIdentity,
     nativeIdentity,
-    providerSourceIdentity: providerSourceIdentity as NativeStandaloneExposureObservation["providerSourceIdentity"],
+    providerSourceIdentity:
+      providerSourceIdentity as NativeStandaloneExposureObservation["providerSourceIdentity"],
     enablement: "enabled",
     visibleSkills: Object.freeze([`${nativeIdentity}-skill`]),
     visibleHooks: Object.freeze([`${nativeIdentity}-hook`]),
@@ -534,33 +553,32 @@ function standalone(
 function marketplace(projection: AgentProviderProjection): ProviderMarketplaceObservation {
   return Object.freeze({
     kind: "present",
-    state: marketplaceState(createProviderMarketplaceRegistration({
-      provider: projection.provider,
-      adapterProtocol: projection.adapterProtocol,
-      marketplaceIdentity: projection.marketplace.identity,
-      members: projection.members.map((entry) => ({
-        pluginId: entry.pluginId,
-        nativeIdentity: entry.nativeIdentity,
-        providerSourceIdentity: entry.providerSourceIdentity,
-        sourceProjectionDigest: projection.projectionDigest,
-        memberFingerprint: entry.memberFingerprint,
-      })),
-    })),
+    state: marketplaceState(
+      createProviderMarketplaceRegistration({
+        provider: projection.provider,
+        adapterProtocol: projection.adapterProtocol,
+        marketplaceIdentity: projection.marketplace.identity,
+        members: projection.members.map((entry) => ({
+          pluginId: entry.pluginId,
+          nativeIdentity: entry.nativeIdentity,
+          providerSourceIdentity: entry.providerSourceIdentity,
+          sourceProjectionDigest: projection.projectionDigest,
+          memberFingerprint: entry.memberFingerprint,
+        })),
+      })
+    ),
   });
 }
 
 function mutations(plan: CanonicalConvergencePlan) {
-  return plan.steps.flatMap((step) => step.kind === "mutate" ? [step.action] : []);
+  return plan.steps.flatMap((step) => (step.kind === "mutate" ? [step.action] : []));
 }
 
 function stepLabel(step: CanonicalConvergencePlan["steps"][number]): string {
   return step.kind === "mutate" ? `mutate:${step.action.kind}` : step.kind;
 }
 
-function mustTarget(
-  provider: "claude" | "codex" = "codex",
-  home = "/tmp/rawr-canonical-policy",
-) {
+function mustTarget(provider: "claude" | "codex" = "codex", home = "/tmp/rawr-canonical-policy") {
   const parsed = parseProviderTarget({ provider, home });
   if (!parsed.ok) throw new Error("Invalid provider target fixture");
   return parsed.value;

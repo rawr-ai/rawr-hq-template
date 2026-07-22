@@ -7,10 +7,7 @@ import { NativeProviderPreMutationRefusal } from "../model/errors/native-resourc
 import type { ProviderMarketplaceLocationResolver } from "../model/repositories/marketplace-location";
 import type { ProviderMarketplaceSource } from "../model/repositories/state";
 import { NATIVE_PACKAGE_READ_LIMITS } from "./resource-package";
-import {
-  providerTreeAddress,
-  sameProviderTreeAddress,
-} from "./resource-tree-address";
+import { providerTreeAddress, sameProviderTreeAddress } from "./resource-tree-address";
 
 export interface ResourceMarketplaceLocationResolverOptions {
   readonly repository: Pick<ArtifactRepositoryAsyncPort, "locateTree">;
@@ -19,7 +16,7 @@ export interface ResourceMarketplaceLocationResolverOptions {
 
 /** Admits the exact immutable marketplace tree before exposing its opaque location. */
 export function createResourceMarketplaceLocationResolver(
-  options: ResourceMarketplaceLocationResolverOptions,
+  options: ResourceMarketplaceLocationResolverOptions
 ): ProviderMarketplaceLocationResolver {
   return Object.freeze({
     async locate(source: ProviderMarketplaceSource) {
@@ -36,21 +33,25 @@ export function createResourceMarketplaceLocationResolver(
         });
       } catch (error) {
         throw locationFailure(
-          `Marketplace projection ${source.projectionDigest} location failed: ${failureDetail(error)}`,
+          `Marketplace projection ${source.projectionDigest} location failed: ${failureDetail(error)}`
         );
       }
 
       if (!sameProviderTreeAddress(observation.address, address)) {
-        throw locationFailure("Artifact repository returned a foreign marketplace projection address");
+        throw locationFailure(
+          "Artifact repository returned a foreign marketplace projection address"
+        );
       }
       if (observation.kind === "Present") return observation.location;
       if (observation.kind === "Missing") {
-        throw locationFailure(`Marketplace projection ${source.projectionDigest} is not materialized`);
+        throw locationFailure(
+          `Marketplace projection ${source.projectionDigest} is not materialized`
+        );
       }
       throw locationFailure(
         `Marketplace projection ${source.projectionDigest} failed mechanical admission: ${observation.issues
           .map((entry) => entry.detail)
-          .join("; ")}`,
+          .join("; ")}`
       );
     },
   });
@@ -63,10 +64,11 @@ function locationFailure(detail: string): NativeProviderPreMutationRefusal {
 function failureDetail(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (
-    error !== null
-    && typeof error === "object"
-    && "detail" in error
-    && typeof error.detail === "string"
-  ) return error.detail;
+    error !== null &&
+    typeof error === "object" &&
+    "detail" in error &&
+    typeof error.detail === "string"
+  )
+    return error.detail;
   return String(error);
 }

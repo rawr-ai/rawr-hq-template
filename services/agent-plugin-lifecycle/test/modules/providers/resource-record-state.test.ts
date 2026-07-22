@@ -56,11 +56,9 @@ describe("resource provider record state", () => {
     const target = mustResult(parseProviderTarget({ provider: "codex", home: providerHome }));
     const fixture = productFixture();
     const snapshot = completeSetSnapshot(fixture);
-    const projection = mustResult(renderCompleteProjection(
-      "codex",
-      CODEX_ADAPTER_PROTOCOL,
-      snapshot,
-    ));
+    const projection = mustResult(
+      renderCompleteProjection("codex", CODEX_ADAPTER_PROTOCOL, snapshot)
+    );
     const registration = createProviderMarketplaceRegistration({
       provider: target.provider,
       adapterProtocol: projection.adapterProtocol,
@@ -85,7 +83,9 @@ describe("resource provider record state", () => {
       ok: true,
       value: { kind: "published", projectionDigest: projection.projectionDigest },
     });
-    expect(await forward.projections.marketplaceMaterializer.materialize("codex", registration)).toEqual({
+    expect(
+      await forward.projections.marketplaceMaterializer.materialize("codex", registration)
+    ).toEqual({
       ok: true,
       value: {
         kind: "published",
@@ -141,9 +141,7 @@ describe("resource provider record state", () => {
     let releaseFailures = 1;
     const records: AgentProviderRecordsAsyncPort = Object.freeze({
       ...rawRecords,
-      async releaseTarget(
-        input: Parameters<AgentProviderRecordsAsyncPort["releaseTarget"]>[0],
-      ) {
+      async releaseTarget(input: Parameters<AgentProviderRecordsAsyncPort["releaseTarget"]>[0]) {
         if (releaseFailures > 0) {
           releaseFailures -= 1;
           throw new Error("injected release failure");
@@ -191,7 +189,7 @@ function createState(roots: ResourceRoots) {
 }
 
 function completeSetSnapshot(
-  fixture: ReturnType<typeof productFixture>,
+  fixture: ReturnType<typeof productFixture>
 ): Extract<VerifiedArtifactSnapshotV1, { kind: "complete-set" }> {
   return Object.freeze({
     kind: "complete-set",
@@ -205,18 +203,22 @@ function completeSetSnapshot(
 }
 
 function releaseSnapshot(
-  release: ReturnType<typeof productFixture>["alphaRelease"],
+  release: ReturnType<typeof productFixture>["alphaRelease"]
 ): VerifiedReleaseArtifactV1 {
   return Object.freeze({
     kind: "release",
     ref: createReleaseArtifactRef(release.releaseDigest, release.artifactDigest),
     release,
-    files: Object.freeze(release.artifactBody.payloadEntries.map((entry) => Object.freeze({
-      path: entry.path,
-      mode: entry.mode,
-      contentDigest: entry.contentDigest,
-      bytes: payloadEntryBytes(entry),
-    }))),
+    files: Object.freeze(
+      release.artifactBody.payloadEntries.map((entry) =>
+        Object.freeze({
+          path: entry.path,
+          mode: entry.mode,
+          contentDigest: entry.contentDigest,
+          bytes: payloadEntryBytes(entry),
+        })
+      )
+    ),
   });
 }
 
@@ -224,21 +226,25 @@ function receiptFor(
   target: ProviderTarget,
   snapshot: Extract<VerifiedArtifactSnapshotV1, { kind: "complete-set" }>,
   projection: AgentProviderProjection,
-  registration: ReturnType<typeof createProviderMarketplaceRegistration>,
+  registration: ReturnType<typeof createProviderMarketplaceRegistration>
 ) {
-  const request = mustResult(normalizeCompleteTestRequest({
-    kind: "complete-test",
-    releaseSet: snapshot.ref,
-    evaluationProfile: "provider-smoke@v1",
-    targets: [{ provider: target.provider, home: target.home }],
-  }));
-  const verifiedMembers = projection.members.map((member) => Object.freeze({
-    pluginId: member.pluginId,
-    nativeIdentity: member.nativeIdentity,
-    artifactAuthority: member.artifactAuthority,
-    providerSourceIdentity: member.providerSourceIdentity,
-    memberFingerprint: member.memberFingerprint,
-  }));
+  const request = mustResult(
+    normalizeCompleteTestRequest({
+      kind: "complete-test",
+      releaseSet: snapshot.ref,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [{ provider: target.provider, home: target.home }],
+    })
+  );
+  const verifiedMembers = projection.members.map((member) =>
+    Object.freeze({
+      pluginId: member.pluginId,
+      nativeIdentity: member.nativeIdentity,
+      artifactAuthority: member.artifactAuthority,
+      providerSourceIdentity: member.providerSourceIdentity,
+      memberFingerprint: member.memberFingerprint,
+    })
+  );
   return createTargetReceipt({
     schemaVersion: 1,
     provider: target.provider,
@@ -257,15 +263,19 @@ function receiptFor(
       releaseSet: snapshot.ref,
       evaluationProfile: request.evaluationProfile,
     }),
-    managedMembers: Object.freeze(verifiedMembers.map((member) => Object.freeze({
-      ...member,
-      sourceProjectionDigest: projection.projectionDigest,
-    }))),
+    managedMembers: Object.freeze(
+      verifiedMembers.map((member) =>
+        Object.freeze({
+          ...member,
+          sourceProjectionDigest: projection.projectionDigest,
+        })
+      )
+    ),
   });
 }
 
 function mustResult<T>(
-  result: Readonly<{ ok: true; value: T } | { ok: false; issues: readonly { message: string }[] }>,
+  result: Readonly<{ ok: true; value: T } | { ok: false; issues: readonly { message: string }[] }>
 ): T {
   if (!result.ok) throw new Error(result.issues[0]?.message ?? "Fixture construction failed");
   return result.value;
@@ -273,11 +283,14 @@ function mustResult<T>(
 
 async function removeOwnedFixture(root: string): Promise<void> {
   const parent = await realpath(tmpdir());
-  if (path.dirname(root) !== parent || !path.basename(root).startsWith("rawr-c5-provider-records-")) {
+  if (
+    path.dirname(root) !== parent ||
+    !path.basename(root).startsWith("rawr-c5-provider-records-")
+  ) {
     throw new Error("Refusing recursive cleanup outside the owned provider-record fixture root");
   }
   const status = await lstat(root);
-  if (!status.isDirectory() || status.isSymbolicLink() || await realpath(root) !== root) {
+  if (!status.isDirectory() || status.isSymbolicLink() || (await realpath(root)) !== root) {
     throw new Error("Refusing recursive cleanup of a non-canonical provider-record fixture root");
   }
   await rm(root, { recursive: true });

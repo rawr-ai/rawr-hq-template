@@ -8,7 +8,7 @@ export function isExactRecord(
   value: unknown,
   keys: readonly string[],
   path: string,
-  issues: ReleaseIssue[],
+  issues: ReleaseIssue[]
 ): value is Record<string, unknown> {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     issues.push(issue("EXPECTED_OBJECT", path, "Value must be an object"));
@@ -16,10 +16,14 @@ export function isExactRecord(
   }
   const expected = new Set(keys);
   for (const key of Object.keys(value)) {
-    if (!expected.has(key)) issues.push(issue("UNKNOWN_FIELD", `${path}.${key}`, "Field is not part of the closed schema"));
+    if (!expected.has(key))
+      issues.push(
+        issue("UNKNOWN_FIELD", `${path}.${key}`, "Field is not part of the closed schema")
+      );
   }
   for (const key of keys) {
-    if (!Object.hasOwn(value, key)) issues.push(issue("UNKNOWN_FIELD", `${path}.${key}`, "Required field is missing"));
+    if (!Object.hasOwn(value, key))
+      issues.push(issue("UNKNOWN_FIELD", `${path}.${key}`, "Required field is missing"));
   }
   return true;
 }
@@ -28,17 +32,19 @@ export function parseBoundedArray(
   value: unknown,
   path: string,
   limit: number,
-  issues: ReleaseIssue[],
+  issues: ReleaseIssue[]
 ): readonly unknown[] | undefined {
   if (!Array.isArray(value)) {
     issues.push(issue("EXPECTED_ARRAY", path, "Value must be an array"));
     return undefined;
   }
   if (value.length > limit) {
-    issues.push(issue("COUNT_LIMIT_EXCEEDED", path, `Array exceeds protocol limit ${limit}`, {
-      expected: limit,
-      actual: value.length,
-    }));
+    issues.push(
+      issue("COUNT_LIMIT_EXCEEDED", path, `Array exceeds protocol limit ${limit}`, {
+        expected: limit,
+        actual: value.length,
+      })
+    );
   }
   return value.slice(0, limit);
 }
@@ -52,7 +58,7 @@ export function parseCanonicalString(
     readonly minBytes?: number;
     readonly maxBytes: number;
     readonly pattern?: RegExp;
-  },
+  }
 ): string | undefined {
   if (typeof value !== "string") {
     issues.push(issue("EXPECTED_STRING", path, "Value must be a string"));
@@ -61,17 +67,19 @@ export function parseCanonicalString(
   const byteLength = encoder.encode(value).byteLength;
   const minBytes = options.minBytes ?? 1;
   if (
-    byteLength < minBytes
-    || byteLength > options.maxBytes
-    || CONTROL_CHARACTER_PATTERN.test(value)
-    || value.normalize("NFC") !== value
-    || (options.pattern !== undefined && !options.pattern.test(value))
+    byteLength < minBytes ||
+    byteLength > options.maxBytes ||
+    CONTROL_CHARACTER_PATTERN.test(value) ||
+    value.normalize("NFC") !== value ||
+    (options.pattern !== undefined && !options.pattern.test(value))
   ) {
-    issues.push(issue(
-      options.code ?? "INVALID_STRING",
-      path,
-      `Value must be canonical UTF-8 between ${minBytes} and ${options.maxBytes} bytes`,
-    ));
+    issues.push(
+      issue(
+        options.code ?? "INVALID_STRING",
+        path,
+        `Value must be canonical UTF-8 between ${minBytes} and ${options.maxBytes} bytes`
+      )
+    );
     return undefined;
   }
   return value;
@@ -80,7 +88,7 @@ export function parseCanonicalString(
 export function parseInteger(
   value: unknown,
   path: string,
-  issues: ReleaseIssue[],
+  issues: ReleaseIssue[]
 ): number | undefined {
   if (typeof value !== "number" || !Number.isSafeInteger(value)) {
     issues.push(issue("EXPECTED_INTEGER", path, "Value must be a safe integer"));

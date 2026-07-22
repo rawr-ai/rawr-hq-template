@@ -35,7 +35,7 @@ export interface PackagingArtifactFixture {
 
 export function packagingArtifactFixture(
   alphaText = "alpha\n",
-  betaText = "beta\n",
+  betaText = "beta\n"
 ): PackagingArtifactFixture {
   const alphaPayload = payload([
     ["skills/alpha/SKILL.md", 0o644, alphaText],
@@ -45,26 +45,30 @@ export function packagingArtifactFixture(
     ["agents/beta.md", 0o644, betaText],
     ["skills/beta/SKILL.md", 0o644, "beta skill\n"],
   ]);
-  const releaseInput = must(createAgentPluginReleaseInput({
-    schemaVersion: 1,
-    contentAuthority: "generated-content",
-    members: [
-      member("alpha", alphaPayload, "alpha-skill"),
-      member("beta", betaPayload, "beta-skill"),
-    ],
-    ownershipClaims: [
-      { kind: "skill", identity: "alpha-skill", ownerPluginId: "alpha" },
-      { kind: "skill", identity: "beta-skill", ownerPluginId: "beta" },
-    ],
-    locks: [binding("lock", "lock-v1", "lock\n")],
-    qualityPolicies: [binding("quality", "quality-v1", "quality\n")],
-  }));
+  const releaseInput = must(
+    createAgentPluginReleaseInput({
+      schemaVersion: 1,
+      contentAuthority: "generated-content",
+      members: [
+        member("alpha", alphaPayload, "alpha-skill"),
+        member("beta", betaPayload, "beta-skill"),
+      ],
+      ownershipClaims: [
+        { kind: "skill", identity: "alpha-skill", ownerPluginId: "alpha" },
+        { kind: "skill", identity: "beta-skill", ownerPluginId: "beta" },
+      ],
+      locks: [binding("lock", "lock-v1", "lock\n")],
+      qualityPolicies: [binding("quality", "quality-v1", "quality\n")],
+    })
+  );
   const alphaRelease = release(releaseInput, "alpha", alphaPayload);
   const betaRelease = release(releaseInput, "beta", betaPayload);
-  const releaseSet = must(createAgentPluginReleaseSet({
-    releaseInput,
-    releases: [betaRelease, alphaRelease],
-  }));
+  const releaseSet = must(
+    createAgentPluginReleaseSet({
+      releaseInput,
+      releases: [betaRelease, alphaRelease],
+    })
+  );
   const alphaSnapshot = snapshot(alphaRelease);
   const betaSnapshot = snapshot(betaRelease);
   return {
@@ -84,19 +88,23 @@ export function packagingArtifactFixture(
 }
 
 function payload(
-  entries: readonly (readonly [string, 0o644 | 0o755, string])[],
+  entries: readonly (readonly [string, 0o644 | 0o755, string])[]
 ): AgentPluginPayload {
-  return must(createAgentPluginPayload(entries.map(([path, mode, value]) => ({
-    path,
-    mode,
-    bytes: encoder.encode(value),
-  }))));
+  return must(
+    createAgentPluginPayload(
+      entries.map(([path, mode, value]) => ({
+        path,
+        mode,
+        bytes: encoder.encode(value),
+      }))
+    )
+  );
 }
 
 function member(
   pluginId: string,
   pluginPayload: AgentPluginPayload,
-  skillIdentity: string,
+  skillIdentity: string
 ): Record<string, unknown> {
   return {
     kind: "agent-plugin",
@@ -121,14 +129,16 @@ function binding(id: string, protocol: string, value: string): Record<string, un
 function release(
   releaseInput: AgentPluginReleaseInput,
   pluginId: string,
-  pluginPayload: AgentPluginPayload,
+  pluginPayload: AgentPluginPayload
 ): AgentPluginRelease {
-  return must(createAgentPluginRelease({
-    releaseInput,
-    pluginId,
-    source: SOURCE,
-    payload: pluginPayload,
-  }));
+  return must(
+    createAgentPluginRelease({
+      releaseInput,
+      pluginId,
+      source: SOURCE,
+      payload: pluginPayload,
+    })
+  );
 }
 
 function snapshot(releaseValue: AgentPluginRelease): VerifiedReleaseArtifactV1 {
@@ -146,6 +156,7 @@ function snapshot(releaseValue: AgentPluginRelease): VerifiedReleaseArtifactV1 {
 }
 
 function must<T, E>(result: ReleaseResult<T, E>): T {
-  if (!result.ok) throw new Error(`Generated artifact fixture is invalid: ${JSON.stringify(result.issues)}`);
+  if (!result.ok)
+    throw new Error(`Generated artifact fixture is invalid: ${JSON.stringify(result.issues)}`);
   return result.value;
 }

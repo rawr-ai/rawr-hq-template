@@ -40,12 +40,14 @@ export type ProviderMarketplaceObservation =
   | Readonly<{ kind: "absent" }>
   | Readonly<{ kind: "present"; state: ProviderMarketplaceState }>;
 
-export function createProviderMarketplaceRegistration(input: Readonly<{
-  provider: ProviderId;
-  adapterProtocol: AdapterProtocol;
-  marketplaceIdentity: ProviderSourceIdentity;
-  members: readonly ProviderMarketplaceMemberSource[];
-}>): ProviderMarketplaceRegistration {
+export function createProviderMarketplaceRegistration(
+  input: Readonly<{
+    provider: ProviderId;
+    adapterProtocol: AdapterProtocol;
+    marketplaceIdentity: ProviderSourceIdentity;
+    members: readonly ProviderMarketplaceMemberSource[];
+  }>
+): ProviderMarketplaceRegistration {
   if (input.members.length === 0) {
     throw new Error("Provider marketplace registration requires at least one managed member");
   }
@@ -91,7 +93,7 @@ export function createProviderMarketplaceRegistration(input: Readonly<{
 }
 
 export function marketplaceState(
-  registration: ProviderMarketplaceRegistration,
+  registration: ProviderMarketplaceRegistration
 ): ProviderMarketplaceState {
   return Object.freeze({
     provider: registration.provider,
@@ -113,7 +115,7 @@ export function marketplaceStateValue(state: ProviderMarketplaceState): Canonica
 }
 
 export function marketplaceObservationValue(
-  observation: ProviderMarketplaceObservation,
+  observation: ProviderMarketplaceObservation
 ): CanonicalValue {
   return observation.kind === "absent"
     ? { kind: observation.kind }
@@ -122,13 +124,15 @@ export function marketplaceObservationValue(
 
 export function sameMarketplaceState(
   left: ProviderMarketplaceState,
-  right: ProviderMarketplaceState,
+  right: ProviderMarketplaceState
 ): boolean {
-  return left.provider === right.provider
-    && left.adapterProtocol === right.adapterProtocol
-    && left.marketplaceIdentity === right.marketplaceIdentity
-    && left.projectionDigest === right.projectionDigest
-    && left.sourceDigest === right.sourceDigest;
+  return (
+    left.provider === right.provider &&
+    left.adapterProtocol === right.adapterProtocol &&
+    left.marketplaceIdentity === right.marketplaceIdentity &&
+    left.projectionDigest === right.projectionDigest &&
+    left.sourceDigest === right.sourceDigest
+  );
 }
 
 function marketplaceMemberValue(member: ProviderMarketplaceMemberSource): CanonicalValue {
@@ -143,8 +147,10 @@ function marketplaceMemberValue(member: ProviderMarketplaceMemberSource): Canoni
 
 function compareMarketplaceMembers(
   left: ProviderMarketplaceMemberSource,
-  right: ProviderMarketplaceMemberSource,
+  right: ProviderMarketplaceMemberSource
 ): number {
-  return compareCanonical(left.pluginId, right.pluginId)
-    || compareCanonical(left.nativeIdentity, right.nativeIdentity);
+  return (
+    compareCanonical(left.pluginId, right.pluginId) ||
+    compareCanonical(left.nativeIdentity, right.nativeIdentity)
+  );
 }

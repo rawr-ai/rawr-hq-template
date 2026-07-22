@@ -1,7 +1,4 @@
-import {
-  createServiceAnalyticsMiddleware,
-  createServiceObservabilityMiddleware,
-} from "../../base";
+import { createServiceAnalyticsMiddleware, createServiceObservabilityMiddleware } from "../../base";
 
 export const observability = createServiceObservabilityMiddleware({
   spanAttributes: ({ context }) => ({

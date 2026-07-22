@@ -20,8 +20,8 @@ import {
   type SourceEligibilityIssue,
 } from "../../../../model/dto/releases/content-workspace";
 
-export const StagedContentWorkspacePolicySchema = ReadonlyObject(Type.Object(
-  {
+export const StagedContentWorkspacePolicySchema = ReadonlyObject(
+  Type.Object({
     locator: CanonicalAbsoluteLocatorSchema,
     repositoryIdentity: RepositoryIdentitySchema,
     contentAuthority: ContentAuthoritySchema,
@@ -30,8 +30,9 @@ export const StagedContentWorkspacePolicySchema = ReadonlyObject(Type.Object(
     refName: QualifiedHeadRefSchema,
     releaseInputPath: ReleaseRelativePathSchema,
     pluginRoot: ReleaseRelativePathSchema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 export type StagedContentWorkspacePolicy = Static<typeof StagedContentWorkspacePolicySchema>;
 
@@ -53,14 +54,14 @@ export interface StagedContentWorkspaceSnapshot {
 
 export type StagedContentWorkspaceInspection =
   | Readonly<{
-    kind: "StagedContentWorkspaceEligible";
-    snapshot: StagedContentWorkspaceSnapshot;
-  }>
+      kind: "StagedContentWorkspaceEligible";
+      snapshot: StagedContentWorkspaceSnapshot;
+    }>
   | Readonly<{
-    kind: "StagedContentWorkspaceIneligible";
-    issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]];
-  }>
+      kind: "StagedContentWorkspaceIneligible";
+      issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]];
+    }>
   | Readonly<{
-    kind: "SourceChanged";
-    detail: string;
-  }>;
+      kind: "SourceChanged";
+      detail: string;
+    }>;

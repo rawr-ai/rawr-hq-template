@@ -1,10 +1,5 @@
-import type {
-  RetentionIssue,
-} from "../model/dto/retention";
-import {
-  MAX_RETENTION_ISSUE_DETAIL_LENGTH,
-  MAX_RETENTION_REFS,
-} from "../model/dto/retention";
+import type { RetentionIssue } from "../model/dto/retention";
+import { MAX_RETENTION_ISSUE_DETAIL_LENGTH, MAX_RETENTION_REFS } from "../model/dto/retention";
 import {
   blockedRetentionPlan,
   constructRetentionPlan,
@@ -34,7 +29,9 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
       if (ref.kind === "mechanical-evidence") {
         const evidence = await context.evidence.read(ref);
         if (evidence.kind !== "Verified") {
-          pinIssues.push(Object.freeze({ ref, detail: `pinned artifact is ${evidence.kind.toLowerCase()}` }));
+          pinIssues.push(
+            Object.freeze({ ref, detail: `pinned artifact is ${evidence.kind.toLowerCase()}` })
+          );
           continue;
         }
         pinned.set(retentionRefKey(ref), ref);
@@ -43,7 +40,9 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
 
       const result = await context.artifacts.read(ref);
       if (result.kind !== "Verified") {
-        pinIssues.push(Object.freeze({ ref, detail: `pinned artifact is ${result.kind.toLowerCase()}` }));
+        pinIssues.push(
+          Object.freeze({ ref, detail: `pinned artifact is ${result.kind.toLowerCase()}` })
+        );
         continue;
       }
       pinned.set(retentionRefKey(ref), ref);
@@ -53,9 +52,11 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
         }
       }
       if (pinned.size > MAX_RETENTION_REFS) {
-        return blockedRetentionPlan([{
-          detail: `expanded retention pins exceed ${MAX_RETENTION_REFS} refs`,
-        }]);
+        return blockedRetentionPlan([
+          {
+            detail: `expanded retention pins exceed ${MAX_RETENTION_REFS} refs`,
+          },
+        ]);
       }
     }
     if (pinIssues.length > 0) return blockedRetentionPlan(pinIssues);
@@ -65,14 +66,17 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
     const unpinned: NormalizedRetentionInventoryEntry[] = [];
     for (const entry of inventory.entries) {
       if (pinned.has(retentionRefKey(entry.ref))) continue;
-      const verified = entry.ref.kind === "mechanical-evidence"
-        ? await context.evidence.read(entry.ref)
-        : await context.artifacts.read(entry.ref);
+      const verified =
+        entry.ref.kind === "mechanical-evidence"
+          ? await context.evidence.read(entry.ref)
+          : await context.artifacts.read(entry.ref);
       if (verified.kind !== "Verified") {
-        blockedEntries.push(Object.freeze({
-          ref: entry.ref,
-          detail: `inventory artifact is ${verified.kind.toLowerCase()}`,
-        }));
+        blockedEntries.push(
+          Object.freeze({
+            ref: entry.ref,
+            detail: `inventory artifact is ${verified.kind.toLowerCase()}`,
+          })
+        );
         continue;
       }
       unpinned.push(entry);
@@ -85,9 +89,11 @@ export const planRetention = module.planRetention.handler(async ({ context, inpu
       blockedEntries,
     });
   } catch (error) {
-    return blockedRetentionPlan([{
-      detail: retentionReaderFailureDetail(error),
-    }]);
+    return blockedRetentionPlan([
+      {
+        detail: retentionReaderFailureDetail(error),
+      },
+    ]);
   }
 });
 
@@ -96,7 +102,7 @@ function retentionReaderFailureDetail(error: unknown): string {
   if (detail.length <= MAX_RETENTION_ISSUE_DETAIL_LENGTH) return detail;
   return `${detail.slice(
     0,
-    MAX_RETENTION_ISSUE_DETAIL_LENGTH - TRUNCATED_RETENTION_DETAIL_SUFFIX.length,
+    MAX_RETENTION_ISSUE_DETAIL_LENGTH - TRUNCATED_RETENTION_DETAIL_SUFFIX.length
   )}${TRUNCATED_RETENTION_DETAIL_SUFFIX}`;
 }
 

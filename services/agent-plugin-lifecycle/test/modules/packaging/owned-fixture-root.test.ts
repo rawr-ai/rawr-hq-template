@@ -27,7 +27,9 @@ describe("packaging owned fixture cleanup", () => {
       await rename(fixture.path, preserved);
       await symlink(target, fixture.path, "dir");
 
-      await expect(disposeOwnedFixtureRoot(fixture)).rejects.toThrow(/identity changed|canonical direct child/u);
+      await expect(disposeOwnedFixtureRoot(fixture)).rejects.toThrow(
+        /identity changed|canonical direct child/u
+      );
       expect(await readFile(targetFile, "utf8")).toBe("target\n");
       expect((await lstat(fixture.path)).isSymbolicLink()).toBe(true);
 
@@ -57,8 +59,10 @@ async function statusIfPresent(candidate: string) {
 }
 
 function isCode(error: unknown, code: string): boolean {
-  return error !== null
-    && typeof error === "object"
-    && "code" in error
-    && (error as { code?: unknown }).code === code;
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as { code?: unknown }).code === code
+  );
 }

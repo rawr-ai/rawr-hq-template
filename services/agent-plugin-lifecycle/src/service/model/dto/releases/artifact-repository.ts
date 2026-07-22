@@ -1,7 +1,4 @@
-import type {
-  ArtifactRef,
-  VerifiedArtifactSnapshotV1,
-} from "../../../shared/release";
+import type { ArtifactRef, VerifiedArtifactSnapshotV1 } from "../../../shared/release";
 
 export interface ArtifactReadIssue {
   readonly code:
@@ -22,10 +19,10 @@ export type ArtifactReadResult =
   | Readonly<{ kind: "Verified"; snapshot: VerifiedArtifactSnapshotV1 }>
   | Readonly<{ kind: "Missing"; ref: ArtifactRef }>
   | Readonly<{
-    kind: "Mismatch";
-    ref: ArtifactRef;
-    issues: readonly [ArtifactReadIssue, ...ArtifactReadIssue[]];
-  }>;
+      kind: "Mismatch";
+      ref: ArtifactRef;
+      issues: readonly [ArtifactReadIssue, ...ArtifactReadIssue[]];
+    }>;
 
 export type ArtifactStoreFailpointEvent =
   | Readonly<{ kind: "AfterStagingFile"; path: string }>
@@ -50,15 +47,15 @@ export type ArtifactPublicationResult =
   | Readonly<{ kind: "Published"; ref: ArtifactRef }>
   | Readonly<{ kind: "ReadOnlyConverged"; ref: ArtifactRef }>
   | Readonly<{
-    kind: "Rejected";
-    ref: ArtifactRef;
-    failure: string;
-    cleanupFailure?: string;
-  }>
+      kind: "Rejected";
+      ref: ArtifactRef;
+      failure: string;
+      cleanupFailure?: string;
+    }>
   | Readonly<{
-    kind: "Unsettled";
-    ref: ArtifactRef;
-    failure: string;
-    observation: "Verified" | "Missing" | "Mismatch" | "Unknown";
-    cleanupFailure?: string;
-  }>;
+      kind: "Unsettled";
+      ref: ArtifactRef;
+      failure: string;
+      observation: "Verified" | "Missing" | "Mismatch" | "Unknown";
+      cleanupFailure?: string;
+    }>;

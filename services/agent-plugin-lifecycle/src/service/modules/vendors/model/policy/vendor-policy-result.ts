@@ -8,28 +8,29 @@ import type { VendorUpdateIssue } from "../dto/vendor-operations";
 const MAX_PUBLIC_ISSUE_DETAIL_LENGTH = 4_096;
 const DEFAULT_PUBLIC_ISSUE_DETAIL = "Vendor lifecycle operation failed.";
 
-const operationLabels: Readonly<Record<ContentWorkspaceFailure["operation"], string>> = Object.freeze({
-  inspect: "Content workspace inspection",
-  "inspect-git-workspace": "Read-only Git workspace inspection",
-  "read-git-tree": "Read-only Git tree observation",
-  "read-git-blob": "Read-only Git blob observation",
-  "capture-git-evidence": "Read-only Git workspace evidence capture",
-  "observe-git-staged-index": "Read-only staged Git index observation",
-  "read-git-blob-at-path": "Read-only exact Git object observation",
-  "local-git-ancestry": "Read-only local Git ancestry verification",
-  "list-git-changed-paths": "Read-only Git changed-path observation",
-  "read-file": "Content file observation",
-  "read-tree": "Content tree observation",
-  "observe-remote": "Remote content observation",
-  "materialize-remote": "Remote content materialization",
-  ancestry: "Remote ancestry verification",
-  capture: "Repository preimage capture",
-  apply: "Repository authoring",
-  restore: "Repository restoration",
-  settle: "Repository settlement",
-  release: "Capture authority release",
-  cleanup: "Content workspace cleanup",
-});
+const operationLabels: Readonly<Record<ContentWorkspaceFailure["operation"], string>> =
+  Object.freeze({
+    inspect: "Content workspace inspection",
+    "inspect-git-workspace": "Read-only Git workspace inspection",
+    "read-git-tree": "Read-only Git tree observation",
+    "read-git-blob": "Read-only Git blob observation",
+    "capture-git-evidence": "Read-only Git workspace evidence capture",
+    "observe-git-staged-index": "Read-only staged Git index observation",
+    "read-git-blob-at-path": "Read-only exact Git object observation",
+    "local-git-ancestry": "Read-only local Git ancestry verification",
+    "list-git-changed-paths": "Read-only Git changed-path observation",
+    "read-file": "Content file observation",
+    "read-tree": "Content tree observation",
+    "observe-remote": "Remote content observation",
+    "materialize-remote": "Remote content materialization",
+    ancestry: "Remote ancestry verification",
+    capture: "Repository preimage capture",
+    apply: "Repository authoring",
+    restore: "Repository restoration",
+    settle: "Repository settlement",
+    release: "Capture authority release",
+    cleanup: "Content workspace cleanup",
+  });
 
 const reasonClauses: Readonly<Record<ContentWorkspaceFailureReason, string>> = Object.freeze({
   InvalidInput: "the provider rejected the bounded input",
@@ -68,7 +69,7 @@ export function policyFailure(
 export function vendorIssue(
   code: VendorUpdateIssue["code"],
   detail: string,
-  sourceId?: string,
+  sourceId?: string
 ): VendorUpdateIssue {
   const publicDetail = normalizePublicDetail(detail);
   return sourceId === undefined
@@ -78,12 +79,12 @@ export function vendorIssue(
 
 export function resourceFailureReason(error: unknown): ContentWorkspaceFailureReason | undefined {
   if (
-    typeof error === "object"
-    && error !== null
-    && "_tag" in error
-    && error._tag === "ContentWorkspaceFailure"
-    && "reason" in error
-    && isContentWorkspaceFailureReason(error.reason)
+    typeof error === "object" &&
+    error !== null &&
+    "_tag" in error &&
+    error._tag === "ContentWorkspaceFailure" &&
+    "reason" in error &&
+    isContentWorkspaceFailureReason(error.reason)
   ) {
     return error.reason;
   }
@@ -92,12 +93,11 @@ export function resourceFailureReason(error: unknown): ContentWorkspaceFailureRe
 
 export function resourceFailureDetail(
   operation: ContentWorkspaceFailure["operation"],
-  error: unknown,
+  error: unknown
 ): string {
   const reason = resourceFailureReason(error);
-  const clause = reason === undefined
-    ? "the provider returned an untyped failure"
-    : reasonClauses[reason];
+  const clause =
+    reason === undefined ? "the provider returned an untyped failure" : reasonClauses[reason];
   return `${operationLabels[operation]} failed because ${clause}.`;
 }
 

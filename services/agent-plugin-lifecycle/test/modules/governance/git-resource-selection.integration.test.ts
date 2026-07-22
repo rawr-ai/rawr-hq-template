@@ -9,22 +9,11 @@ import {
   createExactGitBlobPointer,
   parseRepository,
 } from "../../../src/service/modules/governance/model";
-import {
-  decodeAgentPluginReleaseInput,
-} from "../../../src/service/shared/release";
-import {
-  createResourceExactGitReader,
-} from "../../../src/service/modules/governance/repository/content-workspace";
+import { decodeAgentPluginReleaseInput } from "../../../src/service/shared/release";
+import { createResourceExactGitReader } from "../../../src/service/modules/governance/repository/content-workspace";
 
-import {
-  createLifecycleTestClient,
-  testInvocation,
-} from "../../support/client";
-import {
-  GIT_EXECUTABLE,
-  createGeneratedGitRepository,
-  git,
-} from "../../support/git-repository";
+import { createLifecycleTestClient, testInvocation } from "../../support/client";
+import { GIT_EXECUTABLE, createGeneratedGitRepository, git } from "../../support/git-repository";
 import {
   createOwnedFixtureRoot,
   disposeOwnedFixtureRoot,
@@ -78,13 +67,15 @@ describe("governance exact-Git resource selection", () => {
       headCommit: pointer.value.commit,
       headTree: pointer.value.tree,
     });
-    await expect(reader.readBlob(locator, {
-      repositoryIdentity: pointer.value.repositoryIdentity,
-      ref: pointer.value.ref,
-      commit: pointer.value.commit,
-      tree: pointer.value.tree,
-      path: pointer.value.path,
-    })).resolves.toEqual({
+    await expect(
+      reader.readBlob(locator, {
+        repositoryIdentity: pointer.value.repositoryIdentity,
+        ref: pointer.value.ref,
+        commit: pointer.value.commit,
+        tree: pointer.value.tree,
+        path: pointer.value.path,
+      })
+    ).resolves.toEqual({
       ok: true,
       observation: {
         pointer: pointer.value,
@@ -105,12 +96,17 @@ describe("governance exact-Git resource selection", () => {
       }),
     });
 
-    await expect(client.governance.currentMainSelection({
-      locator: {
-        workspacePath: repository.root,
-        expectedRepositoryIdentity: repositoryIdentity.value,
-      },
-    }, testInvocation)).resolves.toMatchObject({
+    await expect(
+      client.governance.currentMainSelection(
+        {
+          locator: {
+            workspacePath: repository.root,
+            expectedRepositoryIdentity: repositoryIdentity.value,
+          },
+        },
+        testInvocation
+      )
+    ).resolves.toMatchObject({
       kind: "CURRENT_ELIGIBLE",
       selection: {
         sourceRepositoryIdentity: repositoryIdentity.value,
@@ -146,93 +142,107 @@ describe("governance exact-Git resource selection", () => {
       }),
     });
 
-    await expect(client.governance.currentMainSelection({
-      locator: {
-        workspacePath: repository.root,
-        expectedRepositoryIdentity: repositoryIdentity.value,
-      },
-    }, testInvocation)).resolves.toMatchObject({
+    await expect(
+      client.governance.currentMainSelection(
+        {
+          locator: {
+            workspacePath: repository.root,
+            expectedRepositoryIdentity: repositoryIdentity.value,
+          },
+        },
+        testInvocation
+      )
+    ).resolves.toMatchObject({
       kind: "FORGED_RECORD",
       reason: expect.stringContaining("not reachable from opening canonical main"),
     });
   });
 
-  it.each(LEGACY_CURRENT_MAIN_RECORD_PATHS)(
-    "treats an old-path-only record at %s as stale without fallback",
-    async (recordPath) => {
-      fixture = await createOwnedFixtureRoot();
-      const repository = await createGeneratedGitRepository(fixture);
-      await git(repository.root, ["remote", "set-url", "origin", REMOTE_URL]);
-      const repositoryIdentity = parseRepository(REPOSITORY_IDENTITY, "fixture.repositoryIdentity");
-      if (!repositoryIdentity.ok) throw new Error(repositoryIdentity.issues[0].message);
-      await commitCurrentMainRecord({
-        repositoryRoot: repository.root,
-        releaseInputFile: repository.releaseInputFile,
-        sourceCommit: repository.policy.sourceCommit,
-        sourceTree: repository.policy.sourceTree,
-        recordPath,
-        commitMessage: "record old-path-only source selection",
-      });
-      const client = createLifecycleTestClient({
-        contentWorkspace: makeNodeContentWorkspacePort({
-          gitExecutable: await realpath(GIT_EXECUTABLE),
-        }),
-      });
+  it.each(
+    LEGACY_CURRENT_MAIN_RECORD_PATHS
+  )("treats an old-path-only record at %s as stale without fallback", async (recordPath) => {
+    fixture = await createOwnedFixtureRoot();
+    const repository = await createGeneratedGitRepository(fixture);
+    await git(repository.root, ["remote", "set-url", "origin", REMOTE_URL]);
+    const repositoryIdentity = parseRepository(REPOSITORY_IDENTITY, "fixture.repositoryIdentity");
+    if (!repositoryIdentity.ok) throw new Error(repositoryIdentity.issues[0].message);
+    await commitCurrentMainRecord({
+      repositoryRoot: repository.root,
+      releaseInputFile: repository.releaseInputFile,
+      sourceCommit: repository.policy.sourceCommit,
+      sourceTree: repository.policy.sourceTree,
+      recordPath,
+      commitMessage: "record old-path-only source selection",
+    });
+    const client = createLifecycleTestClient({
+      contentWorkspace: makeNodeContentWorkspacePort({
+        gitExecutable: await realpath(GIT_EXECUTABLE),
+      }),
+    });
 
-      await expect(client.governance.currentMainSelection({
-        locator: {
-          workspacePath: repository.root,
-          expectedRepositoryIdentity: repositoryIdentity.value,
+    await expect(
+      client.governance.currentMainSelection(
+        {
+          locator: {
+            workspacePath: repository.root,
+            expectedRepositoryIdentity: repositoryIdentity.value,
+          },
         },
-      }, testInvocation)).resolves.toMatchObject({
-        kind: "STALE_RECORD",
-      });
-    },
-  );
+        testInvocation
+      )
+    ).resolves.toMatchObject({
+      kind: "STALE_RECORD",
+    });
+  });
 });
 
-async function commitCurrentMainRecord(input: Readonly<{
-  repositoryRoot: string;
-  releaseInputFile: string;
-  sourceCommit: string;
-  sourceTree: string;
-  recordPath?: string;
-  commitMessage: string;
-}>): Promise<void> {
+async function commitCurrentMainRecord(
+  input: Readonly<{
+    repositoryRoot: string;
+    releaseInputFile: string;
+    sourceCommit: string;
+    sourceTree: string;
+    recordPath?: string;
+    commitMessage: string;
+  }>
+): Promise<void> {
   const releaseInput = decodeAgentPluginReleaseInput(
-    new Uint8Array(await readFile(input.releaseInputFile)),
+    new Uint8Array(await readFile(input.releaseInputFile))
   );
   if (!releaseInput.ok) throw new Error(releaseInput.issues[0].message);
-  const encoded = await createLifecycleTestClient().governance.currentMainRecord({
-    kind: "encode-body",
-    body: {
-      schemaVersion: 2,
-      channel: "current-main",
-      contentAuthority: releaseInput.value.body.contentAuthority,
-      sourceRepositoryIdentity: REPOSITORY_IDENTITY,
-      sourceCommit: input.sourceCommit,
-      sourceTree: input.sourceTree,
-      releaseInputDigest: releaseInput.value.releaseInputDigest,
-      releaseSetDigest: `rs1_${"1".repeat(64)}`,
-      evaluationProfile: "provider-smoke@v1",
-      projections: [
-        {
-          provider: "claude",
-          projectionDigest: `ap1_${"2".repeat(64)}`,
-          rendererProtocol: "claude-projection@v1",
-          adapterProtocol: "claude-native-adapter@v1",
-          capabilityProfileDigest: `cp1_${"3".repeat(64)}`,
-        },
-        {
-          provider: "codex",
-          projectionDigest: `ap1_${"4".repeat(64)}`,
-          rendererProtocol: "codex-projection@v1",
-          adapterProtocol: "codex-native-adapter@v1",
-          capabilityProfileDigest: `cp1_${"5".repeat(64)}`,
-        },
-      ],
+  const encoded = await createLifecycleTestClient().governance.currentMainRecord(
+    {
+      kind: "encode-body",
+      body: {
+        schemaVersion: 2,
+        channel: "current-main",
+        contentAuthority: releaseInput.value.body.contentAuthority,
+        sourceRepositoryIdentity: REPOSITORY_IDENTITY,
+        sourceCommit: input.sourceCommit,
+        sourceTree: input.sourceTree,
+        releaseInputDigest: releaseInput.value.releaseInputDigest,
+        releaseSetDigest: `rs1_${"1".repeat(64)}`,
+        evaluationProfile: "provider-smoke@v1",
+        projections: [
+          {
+            provider: "claude",
+            projectionDigest: `ap1_${"2".repeat(64)}`,
+            rendererProtocol: "claude-projection@v1",
+            adapterProtocol: "claude-native-adapter@v1",
+            capabilityProfileDigest: `cp1_${"3".repeat(64)}`,
+          },
+          {
+            provider: "codex",
+            projectionDigest: `ap1_${"4".repeat(64)}`,
+            rendererProtocol: "codex-projection@v1",
+            adapterProtocol: "codex-native-adapter@v1",
+            capabilityProfileDigest: `cp1_${"5".repeat(64)}`,
+          },
+        ],
+      },
     },
-  }, testInvocation);
+    testInvocation
+  );
   if (!encoded.ok) throw new Error(encoded.failure.message);
   const recordPath = input.recordPath ?? CURRENT_MAIN_V2_RECORD_PATH;
   const recordFile = join(input.repositoryRoot, ...recordPath.split("/"));

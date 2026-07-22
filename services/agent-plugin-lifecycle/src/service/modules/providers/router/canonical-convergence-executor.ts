@@ -23,7 +23,7 @@ import type { NativeMutationAttempt } from "../model/repositories/provider";
 export interface CanonicalExecutionDependencies {
   readonly observer: Readonly<{
     observe(
-      target: CanonicalConvergencePlan["target"],
+      target: CanonicalConvergencePlan["target"]
     ): Promise<DeploymentResult<CanonicalNativeObservation>>;
   }>;
   readonly mutator: Readonly<{
@@ -33,7 +33,7 @@ export interface CanonicalExecutionDependencies {
 
 export async function executeCanonicalConvergence(
   plan: CanonicalObservedConvergencePlan,
-  dependencies: CanonicalExecutionDependencies,
+  dependencies: CanonicalExecutionDependencies
 ): Promise<CanonicalExecutionResult> {
   const shapeIssue = planShapeIssue(plan);
   if (shapeIssue !== undefined) {
@@ -42,7 +42,9 @@ export async function executeCanonicalConvergence(
 
   const appliedPrefix: CanonicalNativeMutationAction[] = [];
   const verifiedSteps: CanonicalVerificationStep[] = [];
-  let finalInventory: Extract<CanonicalNativeObservation, { kind: "observed" }>["inventory"] | undefined;
+  let finalInventory:
+    | Extract<CanonicalNativeObservation, { kind: "observed" }>["inventory"]
+    | undefined;
 
   for (const step of plan.steps) {
     if (step.kind === "mutate") {
@@ -70,39 +72,44 @@ export async function executeCanonicalConvergence(
       return failed(plan, appliedPrefix, verifiedSteps, observation.issues);
     }
     if (observation.value.kind === "ambiguous-provenance") {
-      return failed(plan, appliedPrefix, verifiedSteps, [issue(
-        "BLOCKED_COLLISION",
-        "target.inventory.provenance",
-        "Native marketplace state has missing or invalid embedded RAWR provenance",
-        plan.projection.marketplace.identity,
-        observation.value.reason,
-      )]);
+      return failed(plan, appliedPrefix, verifiedSteps, [
+        issue(
+          "BLOCKED_COLLISION",
+          "target.inventory.provenance",
+          "Native marketplace state has missing or invalid embedded RAWR provenance",
+          plan.projection.marketplace.identity,
+          observation.value.reason
+        ),
+      ]);
     }
     const inventory = observation.value.inventory;
     if (inventory.target.targetDigest !== plan.target.targetDigest) {
-      return failed(plan, appliedPrefix, verifiedSteps, [issue(
-        "INVALID_TARGET",
-        "target.inventory.targetDigest",
-        "Native observation belongs to another provider target",
-        plan.target.targetDigest,
-        inventory.target.targetDigest,
-      )]);
+      return failed(plan, appliedPrefix, verifiedSteps, [
+        issue(
+          "INVALID_TARGET",
+          "target.inventory.targetDigest",
+          "Native observation belongs to another provider target",
+          plan.target.targetDigest,
+          inventory.target.targetDigest
+        ),
+      ]);
     }
-    const verified = step.kind === "verify-retired"
-      ? verifyCanonicalRetiredInventory(
-          inventory,
-          step.nativeIdentity,
-          step.providerSourceIdentity,
-        )
-      : step.kind === "verify-configured-retired"
-        ? verifyCanonicalConfiguredExposureRetired(
+    const verified =
+      step.kind === "verify-retired"
+        ? verifyCanonicalRetiredInventory(
             inventory,
-            step.exposureIdentity,
-            step.providerSourceIdentity,
+            step.nativeIdentity,
+            step.providerSourceIdentity
           )
-      : step.kind === "verify-final"
-        ? verifyCanonicalFinalInventory(step.projection, inventory)
-        : verifyCanonicalSelectedInventory(step.projection, inventory);
+        : step.kind === "verify-configured-retired"
+          ? verifyCanonicalConfiguredExposureRetired(
+              inventory,
+              step.exposureIdentity,
+              step.providerSourceIdentity
+            )
+          : step.kind === "verify-final"
+            ? verifyCanonicalFinalInventory(step.projection, inventory)
+            : verifyCanonicalSelectedInventory(step.projection, inventory);
     if (!verified.ok) {
       return failed(plan, appliedPrefix, verifiedSteps, verified.issues);
     }
@@ -111,11 +118,13 @@ export async function executeCanonicalConvergence(
   }
 
   if (finalInventory === undefined) {
-    return failed(plan, appliedPrefix, verifiedSteps, [issue(
-      "MUTATION_FAILED",
-      "target.plan.steps",
-      "Canonical convergence completed without a live verification barrier",
-    )]);
+    return failed(plan, appliedPrefix, verifiedSteps, [
+      issue(
+        "MUTATION_FAILED",
+        "target.plan.steps",
+        "Canonical convergence completed without a live verification barrier"
+      ),
+    ]);
   }
   return Object.freeze({
     kind: "completed",
@@ -127,7 +136,7 @@ export async function executeCanonicalConvergence(
 }
 
 function planShapeIssue(
-  plan: Extract<CanonicalConvergencePlan, { status: "CONVERGED" | "DRIFTED" }>,
+  plan: Extract<CanonicalConvergencePlan, { status: "CONVERGED" | "DRIFTED" }>
 ): ProviderDeploymentIssue | undefined {
   const sameTarget = (target: CanonicalConvergencePlan["target"]) =>
     target.targetDigest === plan.target.targetDigest;
@@ -138,7 +147,7 @@ function planShapeIssue(
         `target.plan.steps[${index}].target`,
         "Canonical convergence step belongs to another provider target",
         plan.target.targetDigest,
-        step.target.targetDigest,
+        step.target.targetDigest
       );
     }
     if (step.kind === "mutate" && !sameTarget(step.action.target)) {
@@ -147,57 +156,59 @@ function planShapeIssue(
         `target.plan.steps[${index}].action.target`,
         "Canonical convergence action belongs to another provider target",
         plan.target.targetDigest,
-        step.action.target.targetDigest,
+        step.action.target.targetDigest
       );
     }
     if (
-      (step.kind === "verify-selected" || step.kind === "verify-final")
-      && step.projection.projectionDigest !== plan.projection.projectionDigest
+      (step.kind === "verify-selected" || step.kind === "verify-final") &&
+      step.projection.projectionDigest !== plan.projection.projectionDigest
     ) {
       return issue(
         "PROJECTION_MISMATCH",
         `target.plan.steps[${index}].projection`,
         "Canonical verification step belongs to another projection",
         plan.projection.projectionDigest,
-        step.projection.projectionDigest,
+        step.projection.projectionDigest
       );
     }
     if (
-      step.kind === "mutate"
-      && (step.action.kind === "RetireMember" || step.action.kind === "RetireConfiguredExposure")
+      step.kind === "mutate" &&
+      (step.action.kind === "RetireMember" || step.action.kind === "RetireConfiguredExposure")
     ) {
       const next = plan.steps[index + 1];
-      const matches = step.action.kind === "RetireMember"
-        ? next?.kind === "verify-retired"
-          && next.nativeIdentity === step.action.member.nativeIdentity
-          && next.providerSourceIdentity === step.action.member.providerSourceIdentity
-        : next?.kind === "verify-configured-retired"
-          && next.exposureIdentity === step.action.exposure.exposureIdentity
-          && next.providerSourceIdentity === step.action.exposure.providerSourceIdentity;
+      const matches =
+        step.action.kind === "RetireMember"
+          ? next?.kind === "verify-retired" &&
+            next.nativeIdentity === step.action.member.nativeIdentity &&
+            next.providerSourceIdentity === step.action.member.providerSourceIdentity
+          : next?.kind === "verify-configured-retired" &&
+            next.exposureIdentity === step.action.exposure.exposureIdentity &&
+            next.providerSourceIdentity === step.action.exposure.providerSourceIdentity;
       if (!matches) {
         return issue(
           "MUTATION_FAILED",
           `target.plan.steps[${index}]`,
-          "Canonical retirement must be followed by its exact verification barrier",
+          "Canonical retirement must be followed by its exact verification barrier"
         );
       }
     }
     if (step.kind === "verify-retired" || step.kind === "verify-configured-retired") {
       const previous = plan.steps[index - 1];
-      const matches = step.kind === "verify-retired"
-        ? previous?.kind === "mutate"
-          && previous.action.kind === "RetireMember"
-          && previous.action.member.nativeIdentity === step.nativeIdentity
-          && previous.action.member.providerSourceIdentity === step.providerSourceIdentity
-        : previous?.kind === "mutate"
-          && previous.action.kind === "RetireConfiguredExposure"
-          && previous.action.exposure.exposureIdentity === step.exposureIdentity
-          && previous.action.exposure.providerSourceIdentity === step.providerSourceIdentity;
+      const matches =
+        step.kind === "verify-retired"
+          ? previous?.kind === "mutate" &&
+            previous.action.kind === "RetireMember" &&
+            previous.action.member.nativeIdentity === step.nativeIdentity &&
+            previous.action.member.providerSourceIdentity === step.providerSourceIdentity
+          : previous?.kind === "mutate" &&
+            previous.action.kind === "RetireConfiguredExposure" &&
+            previous.action.exposure.exposureIdentity === step.exposureIdentity &&
+            previous.action.exposure.providerSourceIdentity === step.providerSourceIdentity;
       if (!matches) {
         return issue(
           "MUTATION_FAILED",
           `target.plan.steps[${index}]`,
-          "Canonical retirement verification has no exact preceding mutation",
+          "Canonical retirement verification has no exact preceding mutation"
         );
       }
     }
@@ -205,7 +216,7 @@ function planShapeIssue(
       return issue(
         "MUTATION_FAILED",
         `target.plan.steps[${index}]`,
-        "Final canonical verification must be the last plan step",
+        "Final canonical verification must be the last plan step"
       );
     }
   }
@@ -214,7 +225,7 @@ function planShapeIssue(
     return issue(
       "MUTATION_FAILED",
       "target.plan.steps",
-      "Canonical convergence must end with selected or final verification",
+      "Canonical convergence must end with selected or final verification"
     );
   }
   return undefined;
@@ -224,7 +235,7 @@ function failed(
   plan: CanonicalConvergencePlan,
   appliedPrefix: readonly CanonicalNativeMutationAction[],
   verifiedSteps: readonly CanonicalVerificationStep[],
-  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>,
+  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>
 ): Extract<CanonicalExecutionResult, { kind: "failed" }> {
   return Object.freeze({
     kind: "failed",

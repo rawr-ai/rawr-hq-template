@@ -6,10 +6,7 @@ import type {
   NativeStandaloneExposureObservation,
   ProviderInventory,
 } from "../policy/state-machine";
-import type {
-  NonEmptyReadonlyArray,
-  ProviderDeploymentIssue,
-} from "../errors/deployment-result";
+import type { NonEmptyReadonlyArray, ProviderDeploymentIssue } from "../errors/deployment-result";
 import type { CanonicalDesiredState } from "./canonical-desired-state";
 import type { ProviderTarget } from "./provider-target";
 
@@ -20,53 +17,60 @@ export type CanonicalNativeConvergenceStatus =
   | "INCOMPATIBLE_PROVIDER";
 
 /** Adds the desired-state refusal emitted by the next private resolver node. */
-export type CanonicalConvergenceStatus =
-  | "BLOCKED_SELECTION"
-  | CanonicalNativeConvergenceStatus;
+export type CanonicalConvergenceStatus = "BLOCKED_SELECTION" | CanonicalNativeConvergenceStatus;
 
 export type CanonicalNativeMutationAction =
-  | Readonly<Omit<
-    Extract<NativeProviderMutationAction, { kind: "SetMarketplace" }>,
-    "registration" | "role"
-  > & {
-    role: "final";
-    registration: ProviderMarketplaceRegistration;
-  }>
-  | RequireActiveMarketplace<Extract<NativeProviderMutationAction, {
-    kind: "EnableMember" | "InstallMember" | "RetireMember";
-  }>>
+  | Readonly<
+      Omit<
+        Extract<NativeProviderMutationAction, { kind: "SetMarketplace" }>,
+        "registration" | "role"
+      > & {
+        role: "final";
+        registration: ProviderMarketplaceRegistration;
+      }
+    >
+  | RequireActiveMarketplace<
+      Extract<
+        NativeProviderMutationAction,
+        {
+          kind: "EnableMember" | "InstallMember" | "RetireMember";
+        }
+      >
+    >
   | Readonly<{
-    kind: "RetireConfiguredExposure";
-    target: ProviderTarget;
-    activeMarketplace: ProviderMarketplaceRegistration;
-    exposure: NativeConfiguredExposureObservation;
-  }>;
+      kind: "RetireConfiguredExposure";
+      target: ProviderTarget;
+      activeMarketplace: ProviderMarketplaceRegistration;
+      exposure: NativeConfiguredExposureObservation;
+    }>;
 
 type RequireActiveMarketplace<TAction> = TAction extends { activeMarketplace: unknown }
-  ? Readonly<Omit<TAction, "activeMarketplace"> & {
-    activeMarketplace: ProviderMarketplaceRegistration;
-  }>
+  ? Readonly<
+      Omit<TAction, "activeMarketplace"> & {
+        activeMarketplace: ProviderMarketplaceRegistration;
+      }
+    >
   : never;
 
 export type CanonicalConvergenceStep =
   | Readonly<{ kind: "mutate"; action: CanonicalNativeMutationAction }>
   | Readonly<{
-    kind: "verify-retired";
-    target: ProviderTarget;
-    nativeIdentity: string;
-    providerSourceIdentity: string;
-  }>
+      kind: "verify-retired";
+      target: ProviderTarget;
+      nativeIdentity: string;
+      providerSourceIdentity: string;
+    }>
   | Readonly<{
-    kind: "verify-configured-retired";
-    target: ProviderTarget;
-    exposureIdentity: string;
-    providerSourceIdentity: string;
-  }>
+      kind: "verify-configured-retired";
+      target: ProviderTarget;
+      exposureIdentity: string;
+      providerSourceIdentity: string;
+    }>
   | Readonly<{
-    kind: "verify-selected" | "verify-final";
-    target: ProviderTarget;
-    projection: AgentProviderProjection;
-  }>;
+      kind: "verify-selected" | "verify-final";
+      target: ProviderTarget;
+      projection: AgentProviderProjection;
+    }>;
 
 export type CanonicalVerificationStep = Exclude<
   CanonicalConvergenceStep,
@@ -76,10 +80,10 @@ export type CanonicalVerificationStep = Exclude<
 export type CanonicalNativeObservation =
   | Readonly<{ kind: "observed"; inventory: ProviderInventory }>
   | Readonly<{
-    kind: "ambiguous-provenance";
-    target: ProviderTarget;
-    reason: string;
-  }>;
+      kind: "ambiguous-provenance";
+      target: ProviderTarget;
+      reason: string;
+    }>;
 
 interface CanonicalConvergencePlanBase {
   readonly target: ProviderTarget;
@@ -115,17 +119,23 @@ interface CanonicalExecutionResultBase {
 }
 
 export type CanonicalExecutionResult =
-  | Readonly<CanonicalExecutionResultBase & {
-    kind: "completed";
-    finalInventory: ProviderInventory;
-  }>
-  | Readonly<CanonicalExecutionResultBase & {
-    kind: "failed";
-    issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>;
-  }>
-  | Readonly<CanonicalExecutionResultBase & {
-    kind: "uncertain";
-    attempted: CanonicalNativeMutationAction;
-    lastKnown: "bridge-invoked" | "bridge-returned";
-    issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>;
-  }>;
+  | Readonly<
+      CanonicalExecutionResultBase & {
+        kind: "completed";
+        finalInventory: ProviderInventory;
+      }
+    >
+  | Readonly<
+      CanonicalExecutionResultBase & {
+        kind: "failed";
+        issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>;
+      }
+    >
+  | Readonly<
+      CanonicalExecutionResultBase & {
+        kind: "uncertain";
+        attempted: CanonicalNativeMutationAction;
+        lastKnown: "bridge-invoked" | "bridge-returned";
+        issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>;
+      }
+    >;

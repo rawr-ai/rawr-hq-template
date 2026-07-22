@@ -4,12 +4,8 @@ import {
   createCompleteSetArtifactRef,
   parseReleaseSetDigest,
 } from "../../../src/service/shared/release";
-import type {
-  CanonicalChannelSelection,
-} from "../../../src/service/model/dto/current-main-selection";
-import {
-  resolveCanonicalDesiredStates,
-} from "../../../src/service/modules/providers/model/policy/canonical-desired-state";
+import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
+import { resolveCanonicalDesiredStates } from "../../../src/service/modules/providers/model/policy/canonical-desired-state";
 import { must } from "../../shared/release/fixtures";
 import { desiredStateFixture, type CompleteSetSnapshot } from "./canonical-fixture";
 
@@ -21,12 +17,9 @@ describe("canonical desired-state resolution", () => {
 
     expect(result.status).toBe("RESOLVED");
     if (result.status !== "RESOLVED") return;
-    expect(result.desired.map((entry) => entry.projection.provider)).toEqual([
-      "claude",
-      "codex",
-    ]);
+    expect(result.desired.map((entry) => entry.projection.provider)).toEqual(["claude", "codex"]);
     expect(result.desired.map((entry) => entry.projection.projectionDigest)).toEqual(
-      fixture.projections.map((projection) => projection.projectionDigest),
+      fixture.projections.map((projection) => projection.projectionDigest)
     );
     expect(result.desired[0].selection).toBe(fixture.selection);
     expect(result.desired[1].selection).toBe(fixture.selection);
@@ -43,40 +36,54 @@ describe("canonical desired-state resolution", () => {
   });
 
   it.each([
-    ["content authority", (selection: CanonicalChannelSelection) => ({
-      ...selection,
-      contentAuthority: "other-content-authority",
-    })],
-    ["repository identity", (selection: CanonicalChannelSelection) => ({
-      ...selection,
-      sourceRepositoryIdentity: "git:github.com/example/other-rawr-hq",
-    })],
-    ["source commit", (selection: CanonicalChannelSelection) => ({
-      ...selection,
-      sourceCommit: "c".repeat(40),
-    })],
-    ["source tree", (selection: CanonicalChannelSelection) => ({
-      ...selection,
-      sourceTree: "d".repeat(40),
-    })],
-    ["release-input digest", (selection: CanonicalChannelSelection) => ({
-      ...selection,
-      releaseInputDigest: `ri1_${"e".repeat(64)}`,
-    })],
-    ["release-set digest", (selection: CanonicalChannelSelection) => ({
-      ...selection,
-      releaseSetDigest: `rs1_${"f".repeat(64)}`,
-    })],
-  ] satisfies ReadonlyArray<readonly [
-    string,
-    (selection: CanonicalChannelSelection) => CanonicalChannelSelection,
-  ]>)("blocks a selected %s that differs from the verified artifact", (_label, mutate) => {
+    [
+      "content authority",
+      (selection: CanonicalChannelSelection) => ({
+        ...selection,
+        contentAuthority: "other-content-authority",
+      }),
+    ],
+    [
+      "repository identity",
+      (selection: CanonicalChannelSelection) => ({
+        ...selection,
+        sourceRepositoryIdentity: "git:github.com/example/other-rawr-hq",
+      }),
+    ],
+    [
+      "source commit",
+      (selection: CanonicalChannelSelection) => ({
+        ...selection,
+        sourceCommit: "c".repeat(40),
+      }),
+    ],
+    [
+      "source tree",
+      (selection: CanonicalChannelSelection) => ({
+        ...selection,
+        sourceTree: "d".repeat(40),
+      }),
+    ],
+    [
+      "release-input digest",
+      (selection: CanonicalChannelSelection) => ({
+        ...selection,
+        releaseInputDigest: `ri1_${"e".repeat(64)}`,
+      }),
+    ],
+    [
+      "release-set digest",
+      (selection: CanonicalChannelSelection) => ({
+        ...selection,
+        releaseSetDigest: `rs1_${"f".repeat(64)}`,
+      }),
+    ],
+  ] satisfies ReadonlyArray<
+    readonly [string, (selection: CanonicalChannelSelection) => CanonicalChannelSelection]
+  >)("blocks a selected %s that differs from the verified artifact", (_label, mutate) => {
     const fixture = desiredStateFixture();
 
-    const result = resolveCanonicalDesiredStates(
-      mutate(fixture.selection),
-      fixture.snapshot,
-    );
+    const result = resolveCanonicalDesiredStates(mutate(fixture.selection), fixture.snapshot);
 
     expect(result.status).toBe("BLOCKED_SELECTION");
   });
@@ -89,35 +96,48 @@ describe("canonical desired-state resolution", () => {
       ref: createCompleteSetArtifactRef(otherDigest),
     });
 
-    const result = resolveCanonicalDesiredStates(
-      fixture.selection,
-      mismatchedSnapshot,
-    );
+    const result = resolveCanonicalDesiredStates(fixture.selection, mismatchedSnapshot);
 
     expect(result.status).toBe("BLOCKED_SELECTION");
   });
 
   it.each([
-    ["renderer protocol", (binding: CanonicalChannelSelection["projections"][0]) => ({
-      ...binding,
-      rendererProtocol: "rawr-provider-renderer/claude@v9",
-    })],
-    ["adapter protocol", (binding: CanonicalChannelSelection["projections"][0]) => ({
-      ...binding,
-      adapterProtocol: "claude-native-adapter@v9",
-    })],
-    ["capability profile", (binding: CanonicalChannelSelection["projections"][0]) => ({
-      ...binding,
-      capabilityProfileDigest: `cp1_${"0".repeat(64)}`,
-    })],
-    ["projection digest", (binding: CanonicalChannelSelection["projections"][0]) => ({
-      ...binding,
-      projectionDigest: `ap1_${"0".repeat(64)}`,
-    })],
-  ] satisfies ReadonlyArray<readonly [
-    string,
-    (binding: CanonicalChannelSelection["projections"][0]) => CanonicalChannelSelection["projections"][0],
-  ]>)("blocks a selected %s binding that differs from the rendered projection", (_label, mutate) => {
+    [
+      "renderer protocol",
+      (binding: CanonicalChannelSelection["projections"][0]) => ({
+        ...binding,
+        rendererProtocol: "rawr-provider-renderer/claude@v9",
+      }),
+    ],
+    [
+      "adapter protocol",
+      (binding: CanonicalChannelSelection["projections"][0]) => ({
+        ...binding,
+        adapterProtocol: "claude-native-adapter@v9",
+      }),
+    ],
+    [
+      "capability profile",
+      (binding: CanonicalChannelSelection["projections"][0]) => ({
+        ...binding,
+        capabilityProfileDigest: `cp1_${"0".repeat(64)}`,
+      }),
+    ],
+    [
+      "projection digest",
+      (binding: CanonicalChannelSelection["projections"][0]) => ({
+        ...binding,
+        projectionDigest: `ap1_${"0".repeat(64)}`,
+      }),
+    ],
+  ] satisfies ReadonlyArray<
+    readonly [
+      string,
+      (
+        binding: CanonicalChannelSelection["projections"][0]
+      ) => CanonicalChannelSelection["projections"][0],
+    ]
+  >)("blocks a selected %s binding that differs from the rendered projection", (_label, mutate) => {
     const fixture = desiredStateFixture();
     const projections: CanonicalChannelSelection["projections"] = [
       Object.freeze(mutate(fixture.selection.projections[0])),

@@ -13,23 +13,26 @@ import {
 
 export const GitLocatorSchema = CurrentMainSelectionLocatorSchema;
 
-export const CurrentMainSelectionInputSchema = ReadonlyObject(Type.Object(
-  { locator: GitLocatorSchema },
-), { additionalProperties: false });
+export const CurrentMainSelectionInputSchema = ReadonlyObject(
+  Type.Object({ locator: GitLocatorSchema }),
+  { additionalProperties: false }
+);
 
 export const CurrentMainRecordInputSchema = Type.Union([
-  ReadonlyObject(Type.Object(
-    {
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("encode-body"),
       body: CurrentMainBodyV2Schema,
-    },
-  ), { additionalProperties: false }),
-  ReadonlyObject(Type.Object(
-    {
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("validate-envelope"),
       bytes: CurrentMainBytesSchema,
-    },
-  ), { additionalProperties: false }),
+    }),
+    { additionalProperties: false }
+  ),
 ]);
 
 export const CurrentMainRecordResultSchema = CurrentMainV2CodecResultSchema;

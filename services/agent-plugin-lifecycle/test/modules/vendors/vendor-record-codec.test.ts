@@ -93,7 +93,9 @@ describe("vendor record codec", () => {
       { path: "references/guide.md", mode: "100755", blob: "e".repeat(40) },
     ];
 
-    expect(vendorPayloadDigest(entries)).toBe(vendorPayloadDigest(entries.map((entry) => ({ ...entry }))));
+    expect(vendorPayloadDigest(entries)).toBe(
+      vendorPayloadDigest(entries.map((entry) => ({ ...entry })))
+    );
     expect(vendorPayloadDigest([...entries].reverse())).not.toBe(vendorPayloadDigest(entries));
   });
 });
@@ -101,7 +103,7 @@ describe("vendor record codec", () => {
 function expectNonCanonical<T>(
   value: T,
   encode: (value: T) => Uint8Array,
-  decode: (bytes: unknown) => VendorRecordDecodeResult<T>,
+  decode: (bytes: unknown) => VendorRecordDecodeResult<T>
 ): void {
   const canonical = decoder.decode(encode(value));
   const result = decode(encoder.encode(` ${canonical}`));
@@ -115,7 +117,7 @@ function expectNonCanonical<T>(
 function expectDeterministic<T>(
   value: T,
   encode: (value: T) => Uint8Array,
-  decode: (bytes: unknown) => VendorRecordDecodeResult<T>,
+  decode: (bytes: unknown) => VendorRecordDecodeResult<T>
 ): void {
   const first = encode(value);
   const second = encode(value);

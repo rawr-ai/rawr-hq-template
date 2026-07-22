@@ -29,13 +29,13 @@ import type {
 const MAX_IDENTITY_BYTES = 64 * 1024;
 
 export function canonicalSerializeTargetIdentitySidecar(
-  sidecar: TargetIdentitySidecar,
+  sidecar: TargetIdentitySidecar
 ): Uint8Array {
   return canonicalBytes(targetIdentitySidecarValue(sidecar));
 }
 
 export function decodeTargetIdentitySidecar(
-  bytes: unknown,
+  bytes: unknown
 ): DeploymentResult<TargetIdentitySidecar> {
   if (!(bytes instanceof Uint8Array) || bytes.byteLength > MAX_IDENTITY_BYTES) {
     return identityFailure("Target identity bytes must be bounded canonical JSON");
@@ -48,55 +48,70 @@ export function decodeTargetIdentitySidecar(
   }
 
   const issues: ProviderDeploymentIssue[] = [];
-  if (!exactRecord(
-    input,
-    ["canonicalHome", "identityDigest", "provider", "schemaVersion", "targetDigest"],
-    "target.identity",
-    issues,
-  )) {
-    return failure(firstIssue(issues, issue(
-      "INVALID_TARGET",
+  if (
+    !exactRecord(
+      input,
+      ["canonicalHome", "identityDigest", "provider", "schemaVersion", "targetDigest"],
       "target.identity",
-      "Target identity sidecar must be a closed record",
-    )));
+      issues
+    )
+  ) {
+    return failure(
+      firstIssue(
+        issues,
+        issue(
+          "INVALID_TARGET",
+          "target.identity",
+          "Target identity sidecar must be a closed record"
+        )
+      )
+    );
   }
   if (input.schemaVersion !== 1) {
-    issues.push(issue(
-      "INVALID_TARGET",
-      "target.identity.schemaVersion",
-      "Target identity sidecar schema is unsupported",
-      "1",
-      String(input.schemaVersion),
-    ));
+    issues.push(
+      issue(
+        "INVALID_TARGET",
+        "target.identity.schemaVersion",
+        "Target identity sidecar schema is unsupported",
+        "1",
+        String(input.schemaVersion)
+      )
+    );
   }
   if (input.provider !== "codex" && input.provider !== "claude") {
-    issues.push(issue(
-      "INVALID_TARGET",
-      "target.identity.provider",
-      "Target identity sidecar provider is unsupported",
-      "codex|claude",
-      String(input.provider),
-    ));
+    issues.push(
+      issue(
+        "INVALID_TARGET",
+        "target.identity.provider",
+        "Target identity sidecar provider is unsupported",
+        "codex|claude",
+        String(input.provider)
+      )
+    );
   }
   if (issues.length > 0 || (input.provider !== "codex" && input.provider !== "claude")) {
-    return failure(firstIssue(issues, issue(
-      "INVALID_TARGET",
-      "target.identity",
-      "Target identity sidecar is invalid",
-    )));
+    return failure(
+      firstIssue(
+        issues,
+        issue("INVALID_TARGET", "target.identity", "Target identity sidecar is invalid")
+      )
+    );
   }
 
-  const parsedTarget = parseProviderTarget({
-    provider: input.provider,
-    home: input.canonicalHome,
-  }, "target.identity");
+  const parsedTarget = parseProviderTarget(
+    {
+      provider: input.provider,
+      home: input.canonicalHome,
+    },
+    "target.identity"
+  );
   if (!parsedTarget.ok) {
     return identityFailure("Target identity sidecar contains an invalid provider home");
   }
   const expected = createTargetIdentitySidecar(parsedTarget.value);
   if (
-    input.targetDigest !== expected.targetDigest
-    || input.identityDigest !== expected.identityDigest
+    input.targetDigest !== expected.targetDigest ||
+    input.identityDigest !== expected.identityDigest
   ) {
     return identityFailure("Target identity digests do not bind the canonical provider home");
   }
@@ -109,7 +124,7 @@ export function decodeTargetIdentitySidecar(
 export function targetRecordPlanDigest(
   key: TargetRecordKey,
   expected: TargetRecordObservation,
-  mutation: TargetRecordMutation,
+  mutation: TargetRecordMutation
 ): TargetRecordPlanDigest {
   return canonicalDigest("trp1_", {
     key: targetRecordKeyValue(key),
@@ -120,7 +135,7 @@ export function targetRecordPlanDigest(
 
 export function sameTargetRecordObservation(
   left: TargetRecordObservation,
-  right: TargetRecordObservation,
+  right: TargetRecordObservation
 ): boolean {
   return left.kind === "absent"
     ? right.kind === "absent"

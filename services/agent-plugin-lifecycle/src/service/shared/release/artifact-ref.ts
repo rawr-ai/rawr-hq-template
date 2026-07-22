@@ -8,11 +8,7 @@ import {
   type CanonicalJsonValue,
 } from "./canonical";
 import { issue, type ReleaseIssue } from "./issues";
-import {
-  type ArtifactDigest,
-  type ReleaseDigest,
-  type ReleaseSetDigest,
-} from "./primitives";
+import { type ArtifactDigest, type ReleaseDigest, type ReleaseSetDigest } from "./primitives";
 import { failure, success, type ReleaseResult } from "./result";
 
 declare const releaseArtifactRefBrand: unique symbol;
@@ -30,20 +26,22 @@ const ReleaseSetDigestInputSchema = Type.String({
   pattern: "^rs1_[0-9a-f]{64}$",
 });
 
-export const ReleaseArtifactRefInputSchema = ReadonlyObject(Type.Object(
-  {
+export const ReleaseArtifactRefInputSchema = ReadonlyObject(
+  Type.Object({
     kind: Type.Literal("release"),
     releaseDigest: ReleaseDigestInputSchema,
     artifactDigest: ArtifactDigestInputSchema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
-export const CompleteSetArtifactRefInputSchema = ReadonlyObject(Type.Object(
-  {
+export const CompleteSetArtifactRefInputSchema = ReadonlyObject(
+  Type.Object({
     kind: Type.Literal("complete-set"),
     releaseSetDigest: ReleaseSetDigestInputSchema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 export const ArtifactRefInputSchema = Type.Union([
   ReleaseArtifactRefInputSchema,
@@ -70,11 +68,11 @@ export type CompleteSetArtifactRef = Readonly<{
 export type ArtifactRef = ReleaseArtifactRef | CompleteSetArtifactRef;
 
 export const ReleaseArtifactRefSchema = Type.Unsafe<ReleaseArtifactRef>(
-  ReleaseArtifactRefInputSchema,
+  ReleaseArtifactRefInputSchema
 );
 
 export const CompleteSetArtifactRefSchema = Type.Unsafe<CompleteSetArtifactRef>(
-  CompleteSetArtifactRefInputSchema,
+  CompleteSetArtifactRefInputSchema
 );
 
 export const ArtifactRefSchema = Type.Union([
@@ -84,13 +82,13 @@ export const ArtifactRefSchema = Type.Union([
 
 export function createReleaseArtifactRef(
   releaseDigest: ReleaseDigest,
-  artifactDigest: ArtifactDigest,
+  artifactDigest: ArtifactDigest
 ): ReleaseArtifactRef {
   return Object.freeze({ kind: "release", releaseDigest, artifactDigest }) as ReleaseArtifactRef;
 }
 
 export function createCompleteSetArtifactRef(
-  releaseSetDigest: ReleaseSetDigest,
+  releaseSetDigest: ReleaseSetDigest
 ): CompleteSetArtifactRef {
   return Object.freeze({ kind: "complete-set", releaseSetDigest }) as CompleteSetArtifactRef;
 }
@@ -101,19 +99,21 @@ export function normalizeArtifactRef(input: ArtifactRefInput): ArtifactRef;
 export function normalizeArtifactRef(input: ArtifactRefInput): ArtifactRef {
   return input.kind === "release"
     ? createReleaseArtifactRef(
-      input.releaseDigest as ReleaseDigest,
-      input.artifactDigest as ArtifactDigest,
-    )
+        input.releaseDigest as ReleaseDigest,
+        input.artifactDigest as ArtifactDigest
+      )
     : createCompleteSetArtifactRef(input.releaseSetDigest as ReleaseSetDigest);
 }
 
 export function parseArtifactRef(input: unknown): ReleaseResult<ArtifactRef, ReleaseIssue> {
   if (!Value.Check(ArtifactRefInputSchema, input)) {
-    return failure([issue(
-      "INVALID_ARTIFACT_REF",
-      "artifactRef",
-      "Artifact reference must match the closed artifact-ref schema",
-    )]);
+    return failure([
+      issue(
+        "INVALID_ARTIFACT_REF",
+        "artifactRef",
+        "Artifact reference must match the closed artifact-ref schema"
+      ),
+    ]);
   }
   return success(normalizeArtifactRef(input));
 }
@@ -123,8 +123,17 @@ export function decodeArtifactRef(bytes: unknown): ReleaseResult<ArtifactRef, Re
   if (!decoded.ok) return decoded;
   const parsed = parseArtifactRef(decoded.value);
   if (!parsed.ok) return parsed;
-  if (!(bytes instanceof Uint8Array) || !equalBytes(bytes, canonicalSerializeArtifactRef(parsed.value))) {
-    return failure([issue("NON_CANONICAL_ENVELOPE", "artifactRef", "Artifact-ref bytes are not the unique canonical representation")]);
+  if (
+    !(bytes instanceof Uint8Array) ||
+    !equalBytes(bytes, canonicalSerializeArtifactRef(parsed.value))
+  ) {
+    return failure([
+      issue(
+        "NON_CANONICAL_ENVELOPE",
+        "artifactRef",
+        "Artifact-ref bytes are not the unique canonical representation"
+      ),
+    ]);
   }
   return parsed;
 }

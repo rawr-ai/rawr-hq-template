@@ -20,9 +20,11 @@ export type ResourceContentWorkspaceStagedReadPort = Pick<
   "observeGitStagedIndex"
 >;
 
-export function createResourceStagedContentWorkspaceObservationReader(binding: Readonly<{
-  contentWorkspace: ResourceContentWorkspaceStagedReadPort;
-}>): StagedContentWorkspaceObservationReader {
+export function createResourceStagedContentWorkspaceObservationReader(
+  binding: Readonly<{
+    contentWorkspace: ResourceContentWorkspaceStagedReadPort;
+  }>
+): StagedContentWorkspaceObservationReader {
   return Object.freeze({
     async observe(request: StagedIndexObservationRequest) {
       try {
@@ -49,10 +51,14 @@ function observed(observation: GitStagedIndexObservation): StagedIndexObservatio
     kind: "Observed",
     observation: Object.freeze({
       opening: bindingObservation(observation.opening),
-      blobs: Object.freeze(observation.blobs.map((blob) => Object.freeze({
-        objectId: blob.objectId,
-        bytes: blob.bytes,
-      }))),
+      blobs: Object.freeze(
+        observation.blobs.map((blob) =>
+          Object.freeze({
+            objectId: blob.objectId,
+            bytes: blob.bytes,
+          })
+        )
+      ),
       closing: bindingObservation(observation.closing),
     }) satisfies StagedIndexObservation,
   });
@@ -100,5 +106,10 @@ function failed(error: unknown): StagedIndexObservationResult {
 }
 
 function isContentWorkspaceFailure(error: unknown): error is ContentWorkspaceFailure {
-  return typeof error === "object" && error !== null && "_tag" in error && error._tag === "ContentWorkspaceFailure";
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "_tag" in error &&
+    error._tag === "ContentWorkspaceFailure"
+  );
 }

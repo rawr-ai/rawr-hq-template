@@ -20,8 +20,8 @@ const ReadonlyVendorSourceIdentitySchema = ReadonlyObject(VendorSourceIdentitySc
   additionalProperties: false,
 });
 
-export const VendorContentWorkspaceRefSchema = ReadonlyObject(Type.Object(
-  {
+export const VendorContentWorkspaceRefSchema = ReadonlyObject(
+  Type.Object({
     locator: CanonicalAbsolutePathSchema,
     repositoryIdentity: RepositoryIdentitySchema,
     contentAuthority: ContentAuthoritySchema,
@@ -29,26 +29,29 @@ export const VendorContentWorkspaceRefSchema = ReadonlyObject(Type.Object(
     sourceCommit: GitObjectIdSchema,
     sourceTree: GitObjectIdSchema,
     releaseInputPath: NormalizedRelativePathSchema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
-export const VendorStatusInputSchema = ReadonlyObject(Type.Object(
-  { contentWorkspace: VendorContentWorkspaceRefSchema },
-), { additionalProperties: false });
+export const VendorStatusInputSchema = ReadonlyObject(
+  Type.Object({ contentWorkspace: VendorContentWorkspaceRefSchema }),
+  { additionalProperties: false }
+);
 
-export const VendorUpdateInputSchema = ReadonlyObject(Type.Object(
-  {
+export const VendorUpdateInputSchema = ReadonlyObject(
+  Type.Object({
     contentWorkspace: VendorContentWorkspaceRefSchema,
     sourceIds: ReadonlyObject(Type.Array(SourceIdSchema), {
       minItems: 1,
       maxItems: MAX_VENDOR_SOURCES,
       uniqueItems: true,
     }),
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
-export const VendorSourceStatusSchema = ReadonlyObject(Type.Object(
-  {
+export const VendorSourceStatusSchema = ReadonlyObject(
+  Type.Object({
     sourceId: SourceIdSchema,
     classification: Type.Union([
       Type.Literal("Current"),
@@ -61,11 +64,12 @@ export const VendorSourceStatusSchema = ReadonlyObject(Type.Object(
     admitted: Type.Union([ReadonlyVendorSourceIdentitySchema, Type.Null()]),
     observed: Type.Union([ReadonlyVendorSourceIdentitySchema, Type.Null()]),
     detail: Type.Optional(Type.String({ minLength: 1, maxLength: MAX_PUBLIC_ISSUE_DETAIL_LENGTH })),
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
-export const VendorUpdateIssueSchema = ReadonlyObject(Type.Object(
-  {
+export const VendorUpdateIssueSchema = ReadonlyObject(
+  Type.Object({
     code: Type.Union([
       Type.Literal("UndeclaredSource"),
       Type.Literal("HeldSource"),
@@ -82,39 +86,43 @@ export const VendorUpdateIssueSchema = ReadonlyObject(Type.Object(
     ]),
     detail: Type.String({ minLength: 1, maxLength: MAX_PUBLIC_ISSUE_DETAIL_LENGTH }),
     sourceId: Type.Optional(SourceIdSchema),
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 export const VendorStatusResultSchema = Type.Union([
-  ReadonlyObject(Type.Object(
-    {
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("VendorStatus"),
       sources: ReadonlyObject(Type.Array(VendorSourceStatusSchema), {
         maxItems: MAX_VENDOR_SOURCES,
       }),
-    },
-  ), { additionalProperties: false }),
-  ReadonlyObject(Type.Object(
-    {
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("Rejected"),
       issues: NonEmptyReadonlyArray(VendorUpdateIssueSchema, {
         maxItems: MAX_VENDOR_SOURCES,
       }),
-    },
-  ), { additionalProperties: false }),
+    }),
+    { additionalProperties: false }
+  ),
 ]);
 
 export const VendorUpdateResultSchema = Type.Union([
-  ReadonlyObject(Type.Object(
-    {
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("ReadOnlyConverged"),
       sourceIds: ReadonlyObject(Type.Array(SourceIdSchema), {
         maxItems: MAX_VENDOR_SOURCES,
       }),
-    },
-  ), { additionalProperties: false }),
-  ReadonlyObject(Type.Object(
-    {
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("AuthoredReviewableChanges"),
       sourceIds: ReadonlyObject(Type.Array(SourceIdSchema), {
         maxItems: MAX_VENDOR_SOURCES,
@@ -123,10 +131,11 @@ export const VendorUpdateResultSchema = Type.Union([
         maxItems: MAX_VENDOR_PATHS,
         uniqueItems: true,
       }),
-    },
-  ), { additionalProperties: false }),
-  ReadonlyObject(Type.Object(
-    {
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("Rejected"),
       sourceIds: ReadonlyObject(Type.Array(SourceIdSchema), {
         maxItems: MAX_VENDOR_SOURCES,
@@ -134,10 +143,11 @@ export const VendorUpdateResultSchema = Type.Union([
       issues: NonEmptyReadonlyArray(VendorUpdateIssueSchema, {
         maxItems: MAX_VENDOR_SOURCES,
       }),
-    },
-  ), { additionalProperties: false }),
-  ReadonlyObject(Type.Object(
-    {
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("FailedRestored"),
       sourceIds: ReadonlyObject(Type.Array(SourceIdSchema), {
         maxItems: MAX_VENDOR_SOURCES,
@@ -149,10 +159,11 @@ export const VendorUpdateResultSchema = Type.Union([
       issues: NonEmptyReadonlyArray(VendorUpdateIssueSchema, {
         maxItems: MAX_VENDOR_SOURCES,
       }),
-    },
-  ), { additionalProperties: false }),
-  ReadonlyObject(Type.Object(
-    {
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("RestorationFailed"),
       sourceIds: ReadonlyObject(Type.Array(SourceIdSchema), {
         maxItems: MAX_VENDOR_SOURCES,
@@ -165,8 +176,9 @@ export const VendorUpdateResultSchema = Type.Union([
       issues: NonEmptyReadonlyArray(VendorUpdateIssueSchema, {
         maxItems: MAX_VENDOR_SOURCES,
       }),
-    },
-  ), { additionalProperties: false }),
+    }),
+    { additionalProperties: false }
+  ),
 ]);
 
 export type VendorContentWorkspaceRef = Static<typeof VendorContentWorkspaceRefSchema>;
