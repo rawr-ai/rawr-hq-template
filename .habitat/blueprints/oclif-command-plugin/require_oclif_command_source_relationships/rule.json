@@ -19,10 +19,10 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": ["plugins/cli/*/src/**/*.ts"]
+      "patterns": ["plugins/cli/commands/*/src/**/*.ts"]
     }
   ],
-  "scanRoots": ["plugins/cli"],
+  "scanRoots": ["plugins/cli/commands"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_source_relationships/baseline.json"
