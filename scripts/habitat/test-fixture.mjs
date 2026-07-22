@@ -4,6 +4,7 @@ import { basename, dirname, join } from "node:path";
 const TEMP_ALIAS = "/tmp";
 const PREFIX_PATTERN = /^rawr-habitat-[a-z0-9-]+-$/;
 
+/** @param {string} prefix */
 export async function createHabitatTestRoot(prefix) {
   if (!PREFIX_PATTERN.test(prefix)) {
     throw new Error(`Refusing invalid Habitat fixture prefix: ${prefix}`);
@@ -13,6 +14,7 @@ export async function createHabitatTestRoot(prefix) {
   return mkdtemp(join(tempRoot, prefix));
 }
 
+/** @param {string} root @param {string} prefix */
 export async function removeHabitatTestRoot(root, prefix) {
   if (!PREFIX_PATTERN.test(prefix)) {
     throw new Error(`Refusing invalid Habitat fixture prefix: ${prefix}`);

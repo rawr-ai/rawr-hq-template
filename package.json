@@ -216,6 +216,8 @@
     "typebox": "1.3.6"
   },
   "devDependencies": {
+    "@effect/platform": "0.96.1",
+    "@effect/platform-node": "0.107.0",
     "@getgrit/cli": "0.1.0-alpha.1743007075",
     "@nx/eslint-plugin": "^22.5.4",
     "@rawr/agent-plugin-lifecycle": "workspace:*",
@@ -223,9 +225,8 @@
     "@types/node": "^22.14.0",
     "@typescript-eslint/parser": "^8.57.1",
     "@vitest/ui": "^4.0.18",
+    "bun-types": "1.3.14",
     "cytoscape": "^3.33.2",
-    "@effect/platform": "0.96.1",
-    "@effect/platform-node": "0.107.0",
     "effect": "3.21.3",
     "eslint": "^10.0.3",
     "nx": "22.5.4",
