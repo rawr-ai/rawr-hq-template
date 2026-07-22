@@ -1,11 +1,11 @@
-# Repository Separation And Artifact Workflows
+# Repository Separation And Interface Workflows
 
 This document is canonical and normative for interactions between
 `RAWR HQ-Template` and personal `RAWR HQ`.
 
 ## Repository Authorities
 
-`RAWR HQ-Template` owns executable controller code, official commands, provider
+`RAWR HQ-Template` owns the executable Oclif CLI, official commands, provider
 adapters, generic lifecycle services, schemas/tooling implementations, and generic
 validators.
 
@@ -22,19 +22,19 @@ configuration, and process records.
 - Do not copy, fork, vendor, or manually duplicate Template runtime code in personal.
 - Do not preserve Template-managed executable paths in personal through a guard,
   manifest, tree-equivalence check, or compatibility layer.
-- Do not use a checkout path as controller, artifact, channel, ledger, receipt,
+- Do not use a checkout path as CLI package, channel, ledger, receipt,
   release, provider, or export identity.
 - Do not make upstream synchronization a product or repository-process dependency.
 
 ## Allowed Interface
 
-Template may operate on personal content only through an explicit versioned
-data/artifact interface. A complete binding names:
+Template may operate on personal content only through an explicit versioned data
+interface. A complete binding names:
 
 - schema or protocol ID and version;
-- installed tool/controller release digest;
-- immutable content or release artifact digest;
-- curated release-set digest where applicable;
+- ordinary installed CLI package name and version, once published;
+- exact personal repository identity, source commit and tree, and release-input
+  record version;
 - governed record digests;
 - provider/export destination identity when mutation is requested.
 
@@ -44,19 +44,20 @@ replace any interface field above.
 ## Template Publication
 
 1. Implement and verify the generic behavior in Template.
-2. Publish the versioned schema/protocol and immutable tool or controller artifact.
-3. Record its digest and compatibility declaration.
+2. Publish the versioned schema/protocol and ordinary Oclif CLI package through
+   the fixed Nx Release group once that group is available.
+3. Record its package version, package integrity, and compatibility declaration.
 4. Land through Template's own Graphite stack and canonical `main`.
 
-No personal checkout participates in controller build, selection, or release identity.
+No personal checkout participates in CLI build, packaging, or release identity.
 
 ## Personal Acceptance
 
 1. Start from clean personal `main` and its own repository process record.
 2. Author or update only curated content and governed content records.
-3. Invoke an externally installed Template-owned tool at the exact accepted
-   interface version; do not vendor the tool.
-4. Bind the produced/accepted artifact and record digests.
+3. Invoke the ordinarily installed Template-owned CLI at the exact accepted
+   package and interface versions; do not vendor the tool.
+4. Bind the accepted content identity and governed record digests.
 5. Land through personal's own Graphite stack and canonical `main`.
 
 Repository location may be supplied as a content-workspace locator. The tool must
@@ -67,7 +68,7 @@ verify content identity from Git/data inputs rather than treating the path as au
 Cross-repository acceptance is a protocol compatibility check, not a Git integration:
 
 1. verify each repository is clean on its own canonical `main`;
-2. verify the installed controller release and interface versions;
+2. verify the ordinary installed CLI package and interface versions;
 3. verify personal content and governed records against that exact interface;
 4. reconcile only the explicitly named provider home or export destination;
 5. repeat the operation and prove inspection may occur but no state changes;
@@ -85,5 +86,9 @@ Cross-repository acceptance is a protocol compatibility check, not a Git integra
 
 Promote repositories independently. A Template release may become a prerequisite
 for validating a personal interface version, but it is never merged into personal.
-A personal content release may become an input to Template tooling, but personal
-source is never imported as executable controller code.
+A personal content release may become input data to Template tooling, but personal
+source is never imported as executable CLI code.
+
+Until the fixed Nx Release package group is active, cross-repository
+installed-package settlement is pending. Template development uses
+`bun run rawr -- ...`; the obsolete predecessor distribution is not an interface.

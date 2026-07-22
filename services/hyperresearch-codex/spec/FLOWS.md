@@ -50,7 +50,8 @@
 
 ## Final Plugin-System Proof Flow
 
-1. Install the Hyperresearch CLI topic from an immutable RAWR HQ-Template controller release.
+1. Install the ordinary versioned `@rawr/cli` package containing the
+   Hyperresearch topic after the fixed Nx Release group lands.
 2. Bind a governed immutable curated-content artifact to its exact Template interface version, release-set digest, and record digests.
 3. Use the Template-owned agent-plugin lifecycle and provider adapter to install that artifact into an explicit disposable Codex home.
 4. Start Codex in a fresh vault directory and invoke the artifact-backed Hyperresearch skill.

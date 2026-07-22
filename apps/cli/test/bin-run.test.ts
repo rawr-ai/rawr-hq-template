@@ -166,6 +166,14 @@ describe("bin/run.js", () => {
       expect(built.relativePaths.every(([root]) => root === "dist")).toBe(true);
     }
   });
+
+  it("rejects the retired global controller diagnostic", () => {
+    const result = runCli("bin/run.js", ["doctor", "global", "--help"]);
+
+    expect(result.status).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("Command doctor:global not found");
+  });
 });
 
 const REQUIRED_EXTERNAL_PLUGIN_COMMANDS = [
@@ -179,6 +187,7 @@ const REQUIRED_EXTERNAL_PLUGIN_COMMANDS = [
 ] as const;
 
 const RETIRED_COMMANDS = [
+  "doctor:global",
   "agent:sync",
   "agent:plugins:attest-promotion",
   "agent:plugins:export",

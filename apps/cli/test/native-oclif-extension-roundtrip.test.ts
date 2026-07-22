@@ -21,6 +21,7 @@ const temporaryParent = realpathSync("/tmp");
 const stateRootPrefix = "rawr-native-oclif-";
 const fixtureRoot = path.join(workspaceRoot, "plugins", "cli", "commands", "hello");
 const fixturePackage = path.join(fixtureRoot, "package.json");
+const nodeExecutable = resolveNodeExecutable();
 
 type AcceptanceState = Readonly<{
   claudeHome: string;
@@ -178,11 +179,12 @@ function childEnvironment(): NodeJS.ProcessEnv {
     XDG_CACHE_HOME: state.xdgCache,
     XDG_CONFIG_HOME: state.xdgConfig,
     XDG_DATA_HOME: state.xdgData,
+    PATH: [path.dirname(nodeExecutable), inherited.PATH].filter(Boolean).join(path.delimiter),
   };
 }
 
 function expectNodePrerequisite(): void {
-  const result = spawnSync("node", ["--version"], {
+  const result = spawnSync(nodeExecutable, ["--version"], {
     encoding: "utf8",
     env: childEnvironment(),
   });
@@ -192,6 +194,21 @@ function expectNodePrerequisite(): void {
   const major = Number(match?.groups?.major);
   const minor = Number(match?.groups?.minor);
   expect((major === 20 && minor >= 17) || (major === 22 && minor >= 9) || major > 22).toBe(true);
+}
+
+function resolveNodeExecutable(): string {
+  const result = spawnSync("node", ["--print", "process.execPath"], {
+    encoding: "utf8",
+    env: process.env,
+  });
+  if (result.status !== 0) {
+    throw new Error(`unable to resolve the ambient Node executable: ${result.stderr}`);
+  }
+  const executable = result.stdout.trim();
+  if (!path.isAbsolute(executable) || !existsSync(executable)) {
+    throw new Error(`ambient Node reported an invalid executable path: ${executable}`);
+  }
+  return realpathSync(executable);
 }
 
 function providerState() {
