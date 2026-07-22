@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
 
 import {
   canonicalSerializeAgentPluginReleaseInput,
@@ -15,6 +16,7 @@ import {
 import {
   CURRENT_MAIN_V2_RECORD_PATH,
   CURRENT_MAIN_V2_RELEASE_INPUT_PATH,
+  MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
   createExactGitBlobPointer,
   encodeCurrentMainBodyV2,
   parseCanonicalRef,
@@ -144,6 +146,45 @@ describe("observed-Git current-main v2 selection", () => {
       reason: "Canonical main changed during current-main selection",
     });
     expect(fixture.git.calls.inspect).toBe(2);
+  });
+
+  it("retains and deterministically bounds an oversized content-workspace diagnostic", async () => {
+    const suffix = "...[truncated]";
+    const detail = `content-workspace unavailable: ${"x".repeat(
+      MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
+    )}`;
+    const failure = Object.freeze({
+      _tag: "ContentWorkspaceFailure",
+      operation: "inspect-git-workspace",
+      reason: "GitFailed",
+      path: "/tmp/personal-rawr-hq",
+      detail,
+    }) satisfies ContentWorkspaceFailure;
+    const client = createLifecycleTestClient({
+      contentWorkspace: Object.freeze({
+        ...unavailableContentWorkspace(),
+        inspectGitWorkspace: async () => {
+          throw failure;
+        },
+      }),
+    });
+
+    const result = await client.governance.currentMainSelection({
+      locator: {
+        workspacePath: "/tmp/personal-rawr-hq",
+        expectedRepositoryIdentity: REPOSITORY,
+      },
+    }, testInvocation);
+
+    expect(result).toEqual({
+      kind: "UNREACHABLE_REPOSITORY",
+      reason: `${detail.slice(
+        0,
+        MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH - suffix.length,
+      )}${suffix}`,
+    });
+    if (result.kind === "CURRENT_ELIGIBLE") throw new Error("Expected a refused selection");
+    expect(result.reason).toHaveLength(MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH);
   });
 
   it("rejects a record that selects another repository before reading its source input", async () => {

@@ -14,6 +14,8 @@ const PROJECTION_DIGEST_PATTERN = "^ap1_[0-9a-f]{64}$";
 const CAPABILITY_PROFILE_DIGEST_PATTERN = "^cp1_[0-9a-f]{64}$";
 const CURRENT_MAIN_DIGEST_PATTERN = "^cm2_[0-9a-f]{64}$";
 
+export const MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH = 4_096;
+
 const CurrentMainDigestSchema = Type.TemplateLiteral("cm2_${string}", {
   pattern: CURRENT_MAIN_DIGEST_PATTERN,
 });
@@ -69,7 +71,13 @@ export const CanonicalChannelSelectionSchema = ReadonlyObject(Type.Object(
 ), { additionalProperties: false });
 
 const selectionFailure = <const TKind extends string>(kind: TKind) => ReadonlyObject(Type.Object(
-  { kind: Type.Literal(kind), reason: Type.String({ minLength: 1 }) },
+  {
+    kind: Type.Literal(kind),
+    reason: Type.String({
+      minLength: 1,
+      maxLength: MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
+    }),
+  },
 ), { additionalProperties: false });
 
 export const CurrentMainSelectionResultSchema = Type.Union([

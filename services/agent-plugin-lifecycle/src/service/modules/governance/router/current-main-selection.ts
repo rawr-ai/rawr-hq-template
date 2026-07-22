@@ -9,6 +9,7 @@ import {
   CURRENT_MAIN_V2_CANONICAL_REF,
   CURRENT_MAIN_V2_RECORD_PATH,
   CURRENT_MAIN_V2_RELEASE_INPUT_PATH,
+  MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
   type CanonicalChannelSelection,
   type CurrentMainBodyV2,
   type CurrentMainSelectionFailureKind,
@@ -31,6 +32,7 @@ const COMPILED_RELEASE_INPUT_PATH = requireRelativePath(
   CURRENT_MAIN_V2_RELEASE_INPUT_PATH,
   "currentMain.releaseInputPath",
 );
+const TRUNCATED_SELECTION_REASON_SUFFIX = "...[truncated]";
 
 export async function resolveCurrentMainSelection(
   git: ExactGitReader,
@@ -184,7 +186,15 @@ function refused(
   kind: CurrentMainSelectionFailureKind,
   reason: string,
 ): CurrentMainSelectionResult {
-  return Object.freeze({ kind, reason });
+  return Object.freeze({ kind, reason: boundedReason(reason) });
+}
+
+function boundedReason(reason: string): string {
+  const characters = [...reason];
+  if (characters.length <= MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH) return reason;
+  return `${characters
+    .slice(0, MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH - TRUNCATED_SELECTION_REASON_SUFFIX.length)
+    .join("")}${TRUNCATED_SELECTION_REASON_SUFFIX}`;
 }
 
 function requireCanonicalRef() {
