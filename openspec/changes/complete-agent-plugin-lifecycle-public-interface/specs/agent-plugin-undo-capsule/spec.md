@@ -26,7 +26,7 @@
 
 ### Requirement: Capsule has no history or cleanup authority
 **Reason**: The stronger corrected boundary is no lifecycle capsule authority at all.
-**Migration**: Remove the capsule graph and leave cleanup authority with each surviving state owner.
+**Migration**: Remove the capsule implementation and state model, and leave cleanup authority with each surviving state owner.
 
 ### Requirement: Undo results mirror persisted state
 **Reason**: There is no persisted capsule state or undo result surface to project.

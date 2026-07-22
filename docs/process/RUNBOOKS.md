@@ -38,6 +38,9 @@ fallbacks.
 
 - Local pre-push feedback and remote CI both run `bun run ratchet:required`.
 - Root lint and typecheck dynamically include every admitted Nx target.
+- The lifecycle service's Nx `check` target additionally requires its test
+  typecheck, behavior suite, and locked Habitat structure rules; unchanged
+  deterministic work is restored from Nx cache. See [[NX_AGENT_WORKFLOW]].
 - Habitat evaluates the RAWR-owned positive `.habitat` topology through a
   checksum-pinned standalone Civ7 release compiled with Bun 1.4. The SDK source
   is not vendored here.

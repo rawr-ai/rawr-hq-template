@@ -2,34 +2,40 @@
 
 ## Status
 
-`T6F_PERSONAL_CHECKPOINT_PREREQUISITES`
+`T6F_LANDING_AND_SETTLEMENT`
 
 The user accepted the proportionality correction in [[authority-amendment]].
-The retained 43-node predecessor stack landed through PR #389. The seven-node
-Template continuation then landed independently through PRs #390-#396 on
-canonical `main` at `2f9e303a13860e92d0011d228277c4c2149f6b78`, tree
-`70f9f5332252c67926d8fc5d48c0109eb32fff50`. The exact-tip repository ratchet
-is green in run `29735592428`.
+Template continuation through PR #410 is landed on canonical `main` at
+`ec58d06ca89bc0c6d0e6866624e4991d8830ad3f`, tree
+`fc6efdee5445a354e2ca9e1462a90565e2775e23`. Its installed immutable controller
+digest is `dc14ccd20df37da774749908b5660494d60ce2dadb3c3cef2c5b76bca52f69de`.
 
-The first installed-controller publication attempt, run `29736289655`, failed
-closed on all four platform tuples before asset upload or release creation. The
-exact-mode repair landed through PR #397 on canonical Template `main` at
-`04e37f596d03a352a9b6cdb37ee7cdff54b67c28`, tree
-`c41e851580aa80e32fb20c1e3616423c1b6268ff`; its repository ratchet is green in
-run `29737814922`. Before publishing that immutable interface, this bounded
-prerequisite makes the canonical release-input body and envelope structurally
-TypeBox-owned while retaining releases-owned semantic diagnostics. The public
-`encode-body` candidate remains `Type.Unknown()` deliberately so malformed
-input reaches the procedure instead of becoming an adapter-owned failure.
-Personal, channel, provider, and protected-lane state remain untouched.
+Personal curated content and repository lifecycle machinery are independently landed on personal
+`main` at `a4201247795d1fa18d46ecab206515e33660a171`, tree
+`e71a93857b72dc4beaa5605c5e6a8366558055b2`. The reviewed current-main record is
+committed on PR #182 at `9378d33bb2d3e752a51c739af94145c70ff33260`;
+its local installed-controller gate is green, while the remote job is externally
+blocked before step execution by the repository account's billing limit. It
+remains unlanded without a bypass.
+
+The current Template continuation is rooted directly at `ec58d06c`. Providers,
+governance, vendors, and packaging now derive their public oRPC request/result
+types from closed TypeBox schemas. Domain-only branding, ordering, uniqueness,
+and digest policy remain owner-local. The required Nx check separates
+production and test typing, binds deterministic static cache inputs to their
+toolchains, runs noncacheable live Git behavior only after static checks, and
+uses direct operational terms for release-set verification. It adds no state
+owner, provider installer, repository relationship, app/runtime surface, or
+protected-lane input. The remaining release build/check/retention boundary is
+the final TypeBox conversion before landing.
 
 ## Repository Record
 
 | Identity | Bound value |
 | --- | --- |
 | Repository | RAWR HQ-Template |
-| Worktree | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-c6-typebox-release-input` |
-| Parent commit / tree | canonical Template `main` `04e37f596d03a352a9b6cdb37ee7cdff54b67c28` / `c41e851580aa80e32fb20c1e3616423c1b6268ff` |
+| Worktree | `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-c6-install-8d9` |
+| Parent commit / tree | canonical Template `main` `ec58d06ca89bc0c6d0e6866624e4991d8830ad3f` / `fc6efdee5445a354e2ca9e1462a90565e2775e23` |
 | Packet provenance | personal commit `cc631f60c9254802be647d66662823ae47d5e7db`; project tree `97f0a634fcd8d1d24d4a95fcb57d277e9bf75ae3` |
 | Repository-separation amendment | personal commit `43a49d48ab6c6a29b4877f20576b42b533fc82ba`; blob `10bb040317d62834806b86b36a3a14f13c539fbc` |
 | Proportionality amendment | [[authority-amendment]] |
@@ -44,6 +50,15 @@ Personal, channel, provider, and protected-lane state remain untouched.
 | Publication repair | `codex/c6-preserve-installed-asset-modes`; parent is the landed continuation above |
 | Landed publication repair | PR #397; canonical Template `main` `04e37f596d03a352a9b6cdb37ee7cdff54b67c28`; tree `c41e851580aa80e32fb20c1e3616423c1b6268ff`; ratchet run `29737814922` |
 | Release-input schema prerequisite | `codex/c6-typebox-release-input`; parent is the landed publication repair |
+| Current TypeBox continuation | `cf54f5a3` through `7d3452fb`, then `6c48d5bb`, `a6d5807b`, and `7e5872db`; provider, governance, packaging, and vendor public structure/types are schema-owned while domain normalization remains owner-local |
+| Lifecycle Nx check ratchet | `codex/c6-nx-lifecycle-check-ratchet` / `c4e067e7` |
+| Standard release-verification terminology | `codex/c6-standard-release-verification-terms` / `77bc1f00` |
+| Required-ratchet correction | `codex/c6-strengthen-lifecycle-ratchet` / `08751cc1` |
+| Evidence protocol correction | `codex/c6-rename-controller-evidence-protocol` / `870651eb` |
+| Standard retention result | `codex/c6-standard-retention-result` / `49cfeb1e` |
+| Positive topology cleanup | `codex/c6-remove-placeholder-common-layer` / `50f01bb9` |
+| Installed controller | `dc14ccd20df37da774749908b5660494d60ce2dadb3c3cef2c5b76bca52f69de` from landed Template `ec58d06c` |
+| Personal checkpoint | independent personal `main` `a4201247`; PR #182 commit `9378d33b`, remote job blocked before execution without bypass |
 | Native hook-claim correction | `codex/c6-scope-native-hook-claims`; parent is canonical Template `main` `b7b6524db818d7119340f2afc572a1159c708785` |
 | Opening controller | `0823cfe6...`; diagnostic only, never an active input |
 | T6A branch | `codex/c6-agent-lifecycle-public-interface` / `3f3a3be2dda70dae2682f88feeb23e5e9d349575` |
@@ -113,14 +128,14 @@ machinery, and Inngest candidate bytes.
 | T6C3 legacy export retirement | complete, reviewed | no export/undo command, service module, capsule runtime, public facade, or complete-home aggregate |
 | T6D truthful test owners | complete, reviewed | owner-local DevOps fixture and ordinary serialized lifecycle/CLI targets |
 | T6E deterministic manifest | complete, reviewed | native JSON projection, code-unit canonicalization, and full build-twice equality |
-| T6F Personal checkpoint prerequisites | active; 3C.0, 3C.1a, and 3C.3a prepared, 3C.1-3C.3 landed, 3C.4 publication pending | TypeBox-owned release-input wire records, controller-owned refresh, positive declared-tree closure, tested provider bindings, corrected channel path, and immutable controller distribution without repository coupling |
-| T6F landing/settlement | active; Template continuation landed, controller publication/install pending | independently landed repos, disposable/live native convergence, read-only repeat |
+| T6F Personal checkpoint prerequisites | complete | TypeBox-owned release-input wire records, controller-owned refresh, positive declared-tree closure, tested provider bindings, corrected channel path, and immutable controller distribution without repository coupling |
+| T6F landing/settlement | active; disposable complete-test accepted, personal current-main PR externally blocked | independently landed repos, canonical disposable/live native convergence, read-only repeat |
 
 ## Retired Unlanded Nodes
 
 - `4064387b` policy/request/evidence codec.
 - `7e10868f` public evidence-handle expansion.
-- `061e827e` through `1ff6a5c0` transfer resource/export/import/CLI/A-B graph.
+- `061e827e` through `1ff6a5c0` cross-store artifact transfer and A/B implementation.
 - `70d9b50c` and `0a6c449a` second launcher and caller-binding runtime.
 - The uncommitted installed controller A/B refusal expansion.
 
@@ -129,32 +144,28 @@ follow-up work.
 
 ## Current Gate
 
-- The exact-mode repair is landed on canonical Template `main` through PR #397.
-  Land the three prepared bounded fresh-operator prerequisites in order: the
-  TypeBox-owned release-input wire record, the releases-owned read-only
-  staged-index refresh operation, and the compiled current-main path at
-  `.rawr/agent-plugin-lifecycle/channels/current-main.json` without an alias.
-  Then publish, verify, and install the exact immutable controller through
-  [[tasks#8. T6F: Landing And Settlement|task 8.1]] before the first Personal
-  semantic checkpoint. Do not add another prerequisite after those three.
-- [[tasks#3C. Personal Checkpoint Prerequisites|Tasks 3C.1-3C.3]] are landed;
-  tasks 3C.0, 3C.1a, and 3C.3a complete the bounded public interface. Task 3C.4
-  remains open until that final landed workflow publishes and the exact
-  immutable asset is verified. These are
-  public data/artifact projections, not a new controller, provider installer,
-  transfer graph, or repository relationship.
-- [[tasks#2A. C5 Context-Direction Correction|Tasks 2A.1-2A.4]] close by
-  retirement: delete the residual export facade/port/root import and the
-  complete-identity bridge instead of relocating them.
-- [[tasks#5. T6C3: Legacy Export And Aggregate Retirement|Tasks 5.3-5.5]] remove
-  export, undo, capsule, aggregate, and scan reachability. No publication
-  primitive, preclaim, stub, alias, fallback, or replacement service is
-  authorized.
-- This bounded retirement must land before final controller publication and
-  provider settlement so the released command/service graph is the corrected
-  one.
-- Keep Inngest `HF01_PENDING`; exact landed release input excludes its external
-  candidate root without blocking unrelated landed content.
+- Land the bounded TypeBox, Nx-check, and terminology continuation rooted at
+  canonical Template `ec58d06c`; publish and select the resulting immutable
+  controller through [[tasks#8. T6F: Landing And Settlement|task 8.1c]].
+- Retry personal PR #182 only through its unchanged required remote check. Do not
+  use `--no-verify`, legacy sync, a source checkout fallback, or live-state repair
+  to compensate for the external account limit.
+- After the personal record lands, run canonical status, sync, repeat sync, and
+  final status first against the accepted disposable Codex and Claude homes,
+  then against approved native homes. The repeated sync must inspect live state
+  while performing zero native or lifecycle mutation.
+- Keep Inngest `HF01_PENDING`; the exact landed release input excludes its
+  external candidate root without blocking unrelated landed content.
+
+## Current Continuation Verification
+
+| Boundary | Result |
+| --- | --- |
+| TypeBox boundary ownership | Providers, governance, vendors, and packaging use closed schemas as their public structural/type authority. Handlers receive schema-derived inputs; canonical brands, target sorting, duplicate refusal, canonicalization, and request digests remain domain policy. Releases build/check/retention remains the one open public-boundary conversion. |
+| Provider target decoding | Stored target decoding uses the owning TypeBox schemas and then constructs the branded target digest. The prior second closed-object/provider/path validator is removed without a compatibility reader. |
+| Behavior | Source and test type programs pass together. The latest focused boundary and exact-Git run passed 9 files / 75 tests, including packaging, vendors, governance, provider evidence, releases, and both live Git suites. The prior integrated tip passed the complete lifecycle suite at 39 files / 403 tests; the new full continuation gate remains open until the releases boundary is sealed. |
+| Required Nx check | Production and test type programs remain independently required. Cache keys include TypeScript and Habitat toolchains, repository separation is part of the required root ratchet, and the live exact-Git test target is deliberately noncacheable because `/usr/bin/git` and observed repository state are external inputs. Live tests run after lint, both type programs, and Habitat without retry, timeout increase, or test weakening. Cold and warm integrated timing is remeasured after the releases boundary closes. |
+| Scope | No Personal repository, provider home, current-main channel, controller selector, app/runtime surface, destination, or protected-lane input was mutated by this continuation. |
 
 ## Legacy Export Retirement Admission
 
@@ -173,8 +184,8 @@ other lifecycle mutation.
 
 | Boundary | Result |
 | --- | --- |
-| Service graph | The root oRPC contract/router/client graph contains exactly five capability modules: releases, vendors, packaging, providers, and governance. Export host dependencies, module routers, public bindings/ports, and package exports are absent without an alias or replacement implementation. |
-| Command graph | The exact curated command inventory is build, check, create, package, status, sync, test, and `vendors status`/`vendors update`. Export and undo fail command discovery; unrelated `rawr tools export` remains. |
+| Service topology | The root oRPC contract, router, and client contain exactly five capability modules: releases, vendors, packaging, providers, and governance. Export host dependencies, module routers, public bindings/ports, and package exports are absent without an alias or replacement implementation. |
+| CLI command surface | The exact curated command inventory is build, check, create, package, status, sync, test, and `vendors status`/`vendors update`. Export and undo fail command discovery; unrelated `rawr tools export` remains. |
 | Provider state | The complete-home procedure, sidecar scan port, pathless scan adapter, and caller bridge are absent. Point-addressed identity and receipt reads/writes remain the only provider target-record state path. |
 | Behavior proof | Agent-plugin lifecycle passed 39 files / 381 tests. CLI passed 40 files / 254 tests, including exact command discovery and retired nested export/undo refusal. The provider-record Effect resource passed 14 tests / 98 assertions. The one CLI case that failed only under deliberate cross-project full-suite concurrency passed 17/17 in isolated reruns, including the exact failed convergence oracle. |
 | Static proof | Resource, service, and CLI lint, typecheck, and build passed. Service/CLI sync passed. Frozen install passed after importer-lock regeneration. The complete required ratchet passed all admitted lint/typecheck targets, the three locked Habitat rules, and Habitat consumer/dependency proof. Strict OpenSpec and `git diff --check` passed. |
@@ -589,7 +600,7 @@ no invocation can choose between the old and new models.
 | Public authority | Governance exposes only the pure current-main v2 record codec and the observed-Git current-main selection. Provider canonical status/sync consume that one selection and one immutable artifact read; they receive no receipt, sidecar, evidence, hosted, promotion, channel, or undo port. |
 | Native ownership | Codex and Claude are observed and mutated through their native marketplace/plugin commands. Marketplace identity plus embedded artifact provenance owns installed members. One exact selected-owner configuration slot with no installed package may be removed through its native selector; installed and foreign exposures remain preserved collisions. |
 | Ordering and retry | Same-ID replacement retires and verifies the exact owner-qualified selector before install. Omitted managed members and configuration residue retire only after selected visibility. Failures report the exact applied prefix; retry re-reads live state, and a converged repeat performs no native mutation. |
-| Public outcomes | Canonical status returns terminal classification and issues. Canonical sync adds only the exact applied prefix and terminal verification; neither recreates receipts, persisted inventory, or the retired event graph. Selection refusal exits `2`, drift exits `1`, and convergence exits `0`. |
+| Public outcomes | Canonical status returns terminal classification and issues. Canonical sync adds only the exact applied prefix and terminal verification; neither recreates receipts, persisted inventory, or the retired event history. Selection refusal exits `2`, drift exits `1`, and convergence exits `0`. |
 | Retired machinery | V1 current-main resolution, acceptance, hosted approval, promotion attestation, `attest-promotion`, canonical receipt decoding, hosted-governance resources, and provider canonical channel bindings are absent without aliases. The disproportionate installed-controller acceptance harness is retired in the preceding Graphite node; stable install/reentry tests and owner-scoped settlement remain. |
 | Behavior proof | The lifecycle suite passed 35 files / 318 tests, including public selection, no-record adoption, same-ID refresh, config-only residue, omitted-member failure/retry, foreign same-ID preservation, multi-home isolation, and a live-read zero-mutation repeat. Focused CLI command/runtime proof passed with the `0/1/2` exit contract. |
 | Static and structural | Lifecycle lint, typecheck, build, sync, and positive structural checks passed. CLI lint, typecheck, build, sync, and positive structural checks passed. Strict OpenSpec and `git diff --check` passed. |

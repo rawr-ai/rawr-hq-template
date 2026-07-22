@@ -9,7 +9,7 @@
 **Migration**: Transfer the useful ledger requirement to the dedicated full architecture migration.
 
 ### Requirement: Scope-bounded planning and retirement
-**Reason**: Export planning and retirement leave the curated lifecycle graph with destination export.
+**Reason**: Export planning and retirement move to the destination architecture, outside curated lifecycle ownership.
 **Migration**: Preserve packaging and provider convergence; do not retain an unreachable export planner as compatibility code.
 
 ### Requirement: Explicit collision and native-home exclusion
@@ -37,5 +37,5 @@
 **Migration**: Provider, Oclif, packaging, content, and channel authorities remain disjoint; destination work moves to its dedicated owner.
 
 ### Requirement: Export results are exhaustive state transitions
-**Reason**: The export procedure and its public result schema are removed from the oRPC graph.
+**Reason**: The export procedure and its public result schema are removed from the oRPC service surface.
 **Migration**: A future destination service must define its own TypeBox boundary and transition model rather than importing this lifecycle result.

@@ -29,7 +29,9 @@
 
 ## Repository Ratchet
 - `bun run ratchet:required` composes the required `lint`, `typecheck`, and
-  positive lifecycle-topology checks.
+  lifecycle behavior, positive topology, and Habitat consumer checks. The
+  lifecycle service's Nx `check` target requires production typecheck, test
+  typecheck, lint, tests, and its locked Habitat structure rules.
 - Root lint and typecheck use Nx's complete admitted target population. A new
   project joins the gate by declaring the corresponding Nx target; the root
   commands do not maintain a hand-written project list.
@@ -46,6 +48,7 @@
 - The repository-ratchet workflow runs for ordinary pull requests, merge
   groups, and pushes to `main`. Branch protection must require its exact
   `Repository Ratchet / Required lint, typecheck, and topology` context.
+- Nx task ownership and cache behavior follow [[docs/process/NX_AGENT_WORKFLOW]].
 
 ## Conventions
 - Hook output should be short and actionable (avoid noisy logs).

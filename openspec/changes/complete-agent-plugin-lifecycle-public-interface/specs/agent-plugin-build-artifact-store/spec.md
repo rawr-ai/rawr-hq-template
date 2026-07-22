@@ -30,5 +30,5 @@ authorize provider convergence/retirement, or become a channel-retention root.
 #### Scenario: Current-main is evaluated
 - **WHEN** the artifact owner inspects retention pins for the selected release
   set
-- **THEN** it preserves the selected release/set graph without requiring or
+- **THEN** it preserves the selected release set and member artifact references without requiring or
   inferring a mechanical-evidence handle

@@ -71,7 +71,9 @@ Then `post-merge` and `post-checkout` may refresh repository dependencies. They 
 not build, activate, or relink the installed controller. `pre-push` preserves
 the remote-identity guard and runs `bun run ratchet:required`. Root lint and
 typecheck dynamically cover every Nx project that declares the corresponding
-target; the Habitat check enforces the RAWR-owned positive lifecycle topology.
+target. The lifecycle service's Nx `check` target also requires test typing,
+behavior tests, and the RAWR-owned positive Habitat topology; see
+[[NX_AGENT_WORKFLOW]].
 
 Habitat evaluation uses a checksum-pinned standalone binary owned by a Civ7
 release and compiled with Bun 1.4. `scripts/habitat/release.json` binds its

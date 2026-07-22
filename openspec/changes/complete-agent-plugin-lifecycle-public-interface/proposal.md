@@ -33,7 +33,7 @@ behavior.
   the only provider cleanup path and bounds omission cleanup by native
   provenance.
 - Retire `rawr agent plugins export` and `rawr agent plugins undo` from command
-  discovery, the oRPC contract/router/client graph, controller composition, and
+  discovery, the oRPC contract, router, client, controller composition, and
   public package surfaces. Add no stub, alias, forwarding route, or fallback.
 - Remove `completeNativeHomes`, its target-record scan, and the caller bridge.
   Provider lifecycle remains explicit and point-addressed; it does not aggregate
@@ -75,7 +75,7 @@ behavior.
   Useful destination/publication requirements transfer to the dedicated full
   architecture migration rather than being repaired here.
 - `agent-plugin-undo-capsule`: removed from the reachable controller and service
-  graph after a read-only installed-state check proves no live capsule is
+  surfaces after a read-only installed-state check proves no live capsule is
   stranded.
 - `agent-provider-deployment`: removes the complete-home aggregate and scan;
   targeted, complete-test, canonical sync, and status remain explicitly
@@ -104,6 +104,6 @@ behavior.
 
 - Corrected authority: [[authority-amendment]].
 - Decisions and state law: [[design]].
-- Execution ledger: [[tasks]] and [[README]].
+- Execution record: [[tasks]] and [[README]].
 - Landed service topology:
   [[openspec/changes/archive/2026-07-18-retire-mixed-plugin-lifecycle/SERVICE_TOPOLOGY]].
