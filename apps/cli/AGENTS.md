@@ -6,7 +6,9 @@
 
 ## Entry Points
 
-- Installed controller bootstrap and dispatch boundary: `src/index.ts`.
+- Development Oclif entrypoint: `src/index.ts`.
+- Built Oclif executable: `bin/run.js`, which invokes Oclif under Bun and
+  discovers `dist/commands`.
 - Command tree root: `src/commands/`.
 - Shared command helpers: `src/lib/`.
 
@@ -22,8 +24,8 @@
 - `rawr plugins ...` manages external Oclif extensions only.
 - `rawr agent plugins ...` manages curated agent-plugin lifecycle only.
 - App composition does not install, release, reconcile, or repair either channel.
-- Production/operational proof uses a materialized installed controller, not the
-  source entrypoint.
+- Development uses the source entrypoint; packaging and installation use the
+  compiled entrypoint. Both load the same package-owned Oclif command topology.
 
 ## Routing
 
