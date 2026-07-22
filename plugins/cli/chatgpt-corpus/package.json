@@ -24,7 +24,8 @@
     "build": "tsc -p tsconfig.build.json",
     "structural": "bun ../../../scripts/phase-03/run-structural-suite.mjs --project @rawr/plugin-chatgpt-corpus",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --project plugin-chatgpt-corpus"
+    "test": "vitest run --project plugin-chatgpt-corpus",
+    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
   },
   "rawr": {
     "kind": "toolkit",
