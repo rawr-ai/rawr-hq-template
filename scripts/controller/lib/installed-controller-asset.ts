@@ -3,12 +3,12 @@ import path from "node:path";
 import { pipeline } from "node:stream/promises";
 
 import {
-  decodeControllerSelection,
   type ControllerDigest,
+  decodeControllerSelection,
   type VerifiedControllerPayloadEntry,
 } from "@rawr/controller-release";
 import { create as createTar } from "tar";
-import { Type, type Static } from "typebox";
+import { type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
 import { inspectStableControllerLauncher } from "../install-launcher.ts";
@@ -21,9 +21,9 @@ import {
   controllerReleasePath,
   controllerSelectorPath,
 } from "../layout.ts";
-import { sha256File } from "./filesystem.ts";
 import { requireVerifiedOfficialControllerRelease } from "../production/verify-official.ts";
 import { nodeControllerSelectorStore } from "../selector-store.ts";
+import { sha256File } from "./filesystem.ts";
 
 export const INSTALLED_CONTROLLER_ASSET_SCHEMA_VERSION = 1;
 export const INSTALLED_CONTROLLER_ASSET_RECIPE =

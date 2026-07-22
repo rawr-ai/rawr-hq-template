@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import ts from "typescript";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failDir = path.join(root, "fixtures", "fail");

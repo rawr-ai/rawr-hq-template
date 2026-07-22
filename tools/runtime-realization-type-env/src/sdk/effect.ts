@@ -1,4 +1,4 @@
-import { Data, Effect as VendorEffect, pipe } from "effect";
+import { Data, pipe, Effect as VendorEffect } from "effect";
 import type { YieldWrap } from "effect/Utils";
 
 /**

@@ -1,6 +1,6 @@
-import type { AsyncStepBridgePayload, ExecutionDescriptorRef } from "../spine/artifacts";
 import type { ProcessExecutionRuntime } from "../runtime/process-runtime";
-import { delegateAdapterInvocation, type AdapterDelegationInput } from "./delegation";
+import type { AsyncStepBridgePayload, ExecutionDescriptorRef } from "../spine/artifacts";
+import { type AdapterDelegationInput, delegateAdapterInvocation } from "./delegation";
 
 export interface AsyncHostStepCallbackInput extends Omit<AdapterDelegationInput, "ref"> {
   readonly ref: Extract<ExecutionDescriptorRef, { boundary: "plugin.async-step" }>;

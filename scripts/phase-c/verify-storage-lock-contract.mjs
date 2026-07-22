@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-import { assertCondition, mustExist } from "./_verify-utils.mjs";
 import fs from "node:fs/promises";
+import { assertCondition, mustExist } from "./_verify-utils.mjs";
 
 await Promise.all([
   mustExist("scripts/architecture/verify-app-composition-authoring.mjs"),

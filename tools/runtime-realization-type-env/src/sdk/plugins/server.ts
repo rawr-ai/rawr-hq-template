@@ -1,5 +1,3 @@
-import type { EffectBody } from "../effect";
-import type { ConstructionBoundServiceClients, ServiceUses } from "../service";
 import type {
   BoundaryTelemetry,
   EffectBoundaryContext,
@@ -9,6 +7,8 @@ import type {
   ServerRouteDeclaration,
   WorkflowDispatcher,
 } from "../../spine/artifacts";
+import type { EffectBody } from "../effect";
+import type { ConstructionBoundServiceClients, ServiceUses } from "../service";
 
 export interface ServerApiInvocationContext<TServiceUses extends ServiceUses> {
   readonly request: PublicServerRequestContext;

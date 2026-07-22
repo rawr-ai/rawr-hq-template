@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Effect, type RawrEffect } from "@rawr/sdk/effect";
-import { providerFx, defineRuntimeProvider } from "@rawr/sdk/runtime/providers";
 import { defineRuntimeProfile, providerSelection } from "@rawr/sdk/runtime/profiles";
+import { defineRuntimeProvider, providerFx } from "@rawr/sdk/runtime/providers";
 import { defineRuntimeResource, resourceRequirement } from "@rawr/sdk/runtime/resources";
 import { defineRuntimeSchema } from "@rawr/sdk/runtime/schema";
 import type {
@@ -10,19 +10,19 @@ import type {
   ExecutionDescriptorRef,
 } from "@rawr/sdk/spine";
 import {
+  type ContainedRuntimeResourceDefinition,
+  createContainedRuntimeResourceAccess,
   createExecutionDescriptorTable,
   createExecutionRegistry,
   createManagedEffectRuntimeAccess,
-  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   createProviderProvisioningModules,
   createProviderProvisioningTrace,
   createRuntimeBoundaryPolicy,
-  executeRuntimeBootgraph,
-  providerBootResourceModuleId,
   type EffectRuntimeAccess,
-  type ContainedRuntimeResourceDefinition,
+  executeRuntimeBootgraph,
   type ProviderProvisionedValue,
+  providerBootResourceModuleId,
 } from "../../../src/oracle";
 import { deriveProviderDependencyGraph } from "../../../src/spine/derive";
 

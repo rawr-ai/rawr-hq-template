@@ -6,9 +6,9 @@ import type {
   PortableRuntimePlanArtifact,
   ServerRouteDescriptor,
 } from "@rawr/sdk/spine";
+import { SyncWorkItemStep, WorkItemsAsyncPlugin } from "./async-workflow";
 import { WorkItemsRuntimeProfile } from "./resource-provider-profile";
 import { WorkItemsServerApiPlugin } from "./server-api-plugin";
-import { SyncWorkItemStep, WorkItemsAsyncPlugin } from "./async-workflow";
 
 export const CreateWorkItemRef = {
   kind: "execution.descriptor-ref",

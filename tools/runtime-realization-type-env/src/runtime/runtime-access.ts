@@ -1,10 +1,10 @@
-import type { RuntimeResourceAccess } from "../spine/artifacts";
 import type {
   RuntimeDiagnostic,
+  RuntimeResourceAccess,
   RuntimeTelemetry,
   RuntimeTopologyRecord,
 } from "../spine/artifacts";
-import { redactRuntimeRecordAttributes, type RuntimeRecordAttributes } from "./catalog";
+import { type RuntimeRecordAttributes, redactRuntimeRecordAttributes } from "./catalog";
 
 export interface ContainedRuntimeResourceDefinition<TValue = unknown> {
   readonly id: string;

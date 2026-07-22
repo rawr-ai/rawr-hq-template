@@ -5,8 +5,8 @@ import {
   lstat,
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
+  readFile,
   realpath,
   rm,
   stat,
@@ -20,16 +20,16 @@ import { decodeControllerSelection } from "@rawr/controller-release";
 
 import { activateControllerRelease } from "../activate.ts";
 import { installStableControllerLauncher } from "../install-launcher.ts";
-import { createNodeControllerSelectorStore } from "../selector-store.ts";
-import type { AtomicWritePhase } from "../lib/filesystem.ts";
 import {
-  CONTROLLER_ENTRY_PATH,
   CONTROLLER_DEPENDENCY_LOCK_PATH,
+  CONTROLLER_ENTRY_PATH,
   CONTROLLER_RUNTIME_LICENSE_PATH,
   CONTROLLER_RUNTIME_PATH,
   controllerReleasePath,
   controllerSelectorPath,
 } from "../layout.ts";
+import type { AtomicWritePhase } from "../lib/filesystem.ts";
+import { createNodeControllerSelectorStore } from "../selector-store.ts";
 
 const cleanup: string[] = [];
 

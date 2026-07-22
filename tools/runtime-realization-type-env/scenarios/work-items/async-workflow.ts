@@ -1,9 +1,9 @@
 import {
+  type AsyncStepBridgeInput,
   defineAsyncStepEffect,
   defineAsyncWorkflowPlugin,
   defineWorkflow,
   stepEffect,
-  type AsyncStepBridgeInput,
 } from "@rawr/sdk/plugins/async";
 import { useService } from "@rawr/sdk/service";
 import { WorkItemNotFound, WorkItemsService } from "./work-items-service";

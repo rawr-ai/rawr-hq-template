@@ -4,8 +4,8 @@ import {
   lstat,
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
+  readFile,
   realpath,
   rm,
   stat,
@@ -14,21 +14,20 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-
 import {
-  materializeControllerRelease,
-  type ControllerMaterializationPlan,
-  type ControllerReleaseFinalizer,
-} from "../materialize.ts";
-import { removeCanonicalDirectChildDirectory } from "../lib/filesystem.ts";
-import {
-  CONTROLLER_ENTRY_PATH,
   CONTROLLER_DEPENDENCY_LOCK_PATH,
+  CONTROLLER_ENTRY_PATH,
   CONTROLLER_RUNTIME_LICENSE_PATH,
   CONTROLLER_RUNTIME_PATH,
   CONTROLLER_STAGING_DIRECTORY,
   controllerDirectory,
 } from "../layout.ts";
+import { removeCanonicalDirectChildDirectory } from "../lib/filesystem.ts";
+import {
+  type ControllerMaterializationPlan,
+  type ControllerReleaseFinalizer,
+  materializeControllerRelease,
+} from "../materialize.ts";
 
 const cleanup: string[] = [];
 

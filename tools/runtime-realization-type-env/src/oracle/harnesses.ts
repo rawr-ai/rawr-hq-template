@@ -1,11 +1,11 @@
+import { type AsyncStepBridgeInvocationInput, lowerAsyncStepBridge } from "../adapters/async";
+import { lowerServerAdapterCallback, type ServerAdapterCallbackInput } from "../adapters/server";
+import type { ProcessExecutionRuntime, RuntimeInvocationResult } from "../runtime/process-runtime";
 import type {
   AsyncStepBridgePayload,
   RuntimeDiagnostic,
   ServerAdapterCallbackPayload,
 } from "../spine/artifacts";
-import { lowerAsyncStepBridge, type AsyncStepBridgeInvocationInput } from "../adapters/async";
-import { lowerServerAdapterCallback, type ServerAdapterCallbackInput } from "../adapters/server";
-import type { ProcessExecutionRuntime, RuntimeInvocationResult } from "../runtime/process-runtime";
 
 export type OracleHarnessKind = "server" | "async";
 

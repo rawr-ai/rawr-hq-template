@@ -2,14 +2,13 @@ import { constants } from "node:fs";
 import { lstat, mkdir, readFile, realpath } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-
+import { controllerLauncherPath } from "./layout.ts";
 import {
+  type AtomicWriteObserver,
   assertCanonicalContainedParent,
   atomicWriteFile,
   ensureCanonicalContainedDirectory,
-  type AtomicWriteObserver,
 } from "./lib/filesystem.ts";
-import { controllerLauncherPath } from "./layout.ts";
 
 export type LauncherInstallResult =
   | Readonly<{

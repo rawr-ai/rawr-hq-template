@@ -1,17 +1,32 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
-import type { WorkflowDispatcher } from "@rawr/sdk/spine";
-import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
-import { providerFx, defineRuntimeProvider } from "@rawr/sdk/runtime/providers";
-import { defineRuntimeResource } from "@rawr/sdk/runtime/resources";
 import { defineRuntimeProfile, providerSelection } from "@rawr/sdk/runtime/profiles";
+import { defineRuntimeProvider, providerFx } from "@rawr/sdk/runtime/providers";
+import { defineRuntimeResource } from "@rawr/sdk/runtime/resources";
+import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
+import type { WorkflowDispatcher } from "@rawr/sdk/spine";
+import {
+  CreateWorkItemDescriptor,
+  CreateWorkItemPlan,
+  CreateWorkItemRef,
+  CreateWorkItemRouteDescriptor,
+  PortableArtifact,
+  SyncWorkItemStepDescriptor,
+  SyncWorkItemStepPlan,
+  SyncWorkItemStepRef,
+} from "../../../scenarios/work-items/app-and-plan-artifacts";
+import { WorkItemsServerApiServices } from "../../../scenarios/work-items/server-api-plugin";
+import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
+import { createAsyncStepBridgePayload } from "../../../src/adapters/async";
+import { createServerAdapterCallbackPayload } from "../../../src/adapters/server";
 import {
   buildRuntimeTelemetryOtlpTracePayload,
+  type CompiledProcessPlan,
+  createContainedRuntimeResourceAccess,
   createDeploymentRuntimeHandoff,
   createExecutionDescriptorTable,
   createExecutionRegistry,
   createMigrationControlPlaneObservationPacket,
-  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   createProviderProvisioningModules,
   createProviderProvisioningTrace,
@@ -25,27 +40,12 @@ import {
   projectRuntimeCatalogToTelemetryRecords,
   projectRuntimeEventsToTelemetryRecords,
   providerBootResourceModuleId,
-  type CompiledProcessPlan,
   type RuntimeTelemetryEventLike,
   type RuntimeTelemetryRecord,
 } from "../../../src/oracle";
-import { createAsyncStepBridgePayload } from "../../../src/adapters/async";
-import { createServerAdapterCallbackPayload } from "../../../src/adapters/server";
-import { deriveProviderDependencyGraph } from "../../../src/spine/derive";
-import {
-  CreateWorkItemDescriptor,
-  CreateWorkItemPlan,
-  CreateWorkItemRef,
-  CreateWorkItemRouteDescriptor,
-  PortableArtifact,
-  SyncWorkItemStepDescriptor,
-  SyncWorkItemStepPlan,
-  SyncWorkItemStepRef,
-} from "../../../scenarios/work-items/app-and-plan-artifacts";
-import { WorkItemsServerApiServices } from "../../../scenarios/work-items/server-api-plugin";
-import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
-import type { RuntimeOrpcServerResponse } from "../../../src/oracle/adapters/orpc-server";
 import type { RuntimeInngestAsyncStepResponse } from "../../../src/oracle/adapters/inngest-async";
+import type { RuntimeOrpcServerResponse } from "../../../src/oracle/adapters/orpc-server";
+import { deriveProviderDependencyGraph } from "../../../src/spine/derive";
 
 interface OrpcEncoded<T> {
   readonly json: T;

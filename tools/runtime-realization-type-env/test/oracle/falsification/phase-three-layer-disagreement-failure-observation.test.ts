@@ -2,12 +2,23 @@ import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
 import type { ExecutionDescriptor, WorkflowDispatcher } from "@rawr/sdk/spine";
 import {
+  CreateWorkItemPlan,
+  CreateWorkItemRef,
+  CreateWorkItemRouteDescriptor,
+  PortableArtifact,
+  SyncWorkItemStepPlan,
+  SyncWorkItemStepRef,
+} from "../../../scenarios/work-items/app-and-plan-artifacts";
+import { createAsyncStepBridgePayload } from "../../../src/adapters/async";
+import { createServerAdapterCallbackPayload } from "../../../src/adapters/server";
+import {
   buildRuntimeTelemetryOtlpTracePayload,
+  type CompiledProcessPlan,
+  createContainedRuntimeResourceAccess,
   createDeploymentRuntimeHandoff,
   createExecutionDescriptorTable,
   createExecutionRegistry,
   createMigrationControlPlaneObservationPacket,
-  createContainedRuntimeResourceAccess,
   createProcessExecutionRuntime,
   createRuntimeObservationRecorder,
   exportRuntimeTelemetryOtlpTraces,
@@ -16,20 +27,9 @@ import {
   mountRuntimeInngestAsyncBoundary,
   mountRuntimeOrpcServerBoundary,
   projectRuntimeEventsToTelemetryRecords,
-  type CompiledProcessPlan,
   type RuntimeTelemetryEventLike,
   type RuntimeTelemetryRecord,
 } from "../../../src/oracle";
-import { createAsyncStepBridgePayload } from "../../../src/adapters/async";
-import { createServerAdapterCallbackPayload } from "../../../src/adapters/server";
-import {
-  CreateWorkItemPlan,
-  CreateWorkItemRef,
-  CreateWorkItemRouteDescriptor,
-  PortableArtifact,
-  SyncWorkItemStepPlan,
-  SyncWorkItemStepRef,
-} from "../../../scenarios/work-items/app-and-plan-artifacts";
 import type { RuntimeInngestAsyncStepResponse } from "../../../src/oracle/adapters/inngest-async";
 import type { RuntimeOrpcServerResponse } from "../../../src/oracle/adapters/orpc-server";
 
