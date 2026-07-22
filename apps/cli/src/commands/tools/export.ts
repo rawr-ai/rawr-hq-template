@@ -40,9 +40,9 @@ const TOOLS: ToolExport[] = [
     description: "Extract a session transcript (example plugin)",
   },
   { command: "agent plugins check", description: "Inspect curated source and release eligibility" },
-  { command: "agent plugins vendors status", description: "Inspect declared vendor state" },
+  { command: "agent plugins status vendors", description: "Inspect declared vendor state" },
   {
-    command: "agent plugins vendors update",
+    command: "agent plugins update vendors",
     description: "Author one reviewable declared vendor update",
   },
   { command: "agent plugins build", description: "Build immutable curated release artifacts" },

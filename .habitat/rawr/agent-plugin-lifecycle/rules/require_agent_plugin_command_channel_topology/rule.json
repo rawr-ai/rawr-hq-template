@@ -14,7 +14,7 @@
   "lane": "enforced",
   "forbids": "a second controller runtime projection, a second curated command namespace, nested command aliases, or external-extension commands under the curated channel",
   "why": "Controller reachability and command authority are closed axes: one lifecycle projection binds the service, curated lifecycle is under rawr agent plugins, and external Oclif extension management is under rawr plugins.",
-  "remediate": "Keep controller projection code under the declared service-runtime roots, curated commands under agent/plugins, vendor commands under agent/plugins/vendors, and external extension commands under plugins.",
+  "remediate": "Keep controller projection code under the declared service-runtime roots, curated commands under agent/plugins, vendor commands at agent/plugins/status/vendors.ts and agent/plugins/update/vendors.ts, and external extension commands under plugins.",
   "message": "Agent-plugin controller projection and command channels must remain in their closed topology.",
   "pathCoverage": [
     {

@@ -107,7 +107,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   Delete the complete custom external-extension vertical in the same change:
   local wrappers, bootstrap, protocol, registry reconstruction, sandbox,
   recovery code, tests, and architecture gates.
-- [ ] 2.3 Normalize TypeScript and compiled command roots for the CLI app and
+- [x] 2.3 Normalize TypeScript and compiled command roots for the CLI app and
   first-party command plugins. Move toward
   `plugins/cli/commands/<capability>` only through complete owner-local moves;
   add no compatibility path. Apply the user-directed verb-first vendor commands

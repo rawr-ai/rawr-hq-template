@@ -131,6 +131,10 @@ describe("bin/run.js", () => {
     expect(built.stderr).toBe("");
     expect(sourceCommandIds).toEqual(builtCommandIds);
     expect(sourceCommandIds).toContain("agent:plugins:status");
+    expect(sourceCommandIds).toContain("agent:plugins:status:vendors");
+    expect(sourceCommandIds).toContain("agent:plugins:update:vendors");
+    expect(sourceCommandIds).not.toContain("agent:plugins:vendors:status");
+    expect(sourceCommandIds).not.toContain("agent:plugins:vendors:update");
   });
 
   it("discovers every command plugin from source and compiled output without a manifest", () => {

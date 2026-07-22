@@ -8,7 +8,7 @@ import {
 } from "../../../../lib/agent-plugins/commands/flags";
 import { parseVendorUpdateRequest } from "../../../../lib/agent-plugins/commands/input";
 
-export default class AgentPluginsVendorsUpdate extends AgentPluginLifecycleCommand {
+export default class AgentPluginsUpdateVendors extends AgentPluginLifecycleCommand {
   static description = "Author reviewable updates for explicitly selected tracked vendor sources";
 
   static flags = {
@@ -19,7 +19,7 @@ export default class AgentPluginsVendorsUpdate extends AgentPluginLifecycleComma
   } as const;
 
   async run(): Promise<void> {
-    const { flags } = await this.parseRawr(AgentPluginsVendorsUpdate);
+    const { flags } = await this.parseRawr(AgentPluginsUpdateVendors);
     const input = this.parseInput(flags, parseVendorUpdateRequest);
     if (input !== undefined)
       await this.project({ operation: "vendors.update", input }, flags, { git: true });
