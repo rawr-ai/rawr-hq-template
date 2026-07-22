@@ -1,9 +1,7 @@
 import { chmod, mkdir, realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import {
-  controllerCommandPackages,
-} from "../../../../apps/cli/src/lib/controller/classification.ts";
+import { controllerCommandPackages } from "../../../../apps/cli/src/lib/controller/classification.ts";
 import type {
   ControllerArchitecture,
   ControllerDigest,
@@ -15,14 +13,15 @@ import { createExactPayloadSourcePlan } from "../../production/payload.ts";
 type SemanticPackageOptions = Readonly<{
   appRoot: string;
   packageId: string;
-}> & (
-  | Readonly<{ kind: "manager" }>
-  | Readonly<{
-      kind: "command";
-      commandId: string;
-      cliPlugins?: readonly string[];
-    }>
-);
+}> &
+  (
+    | Readonly<{ kind: "manager" }>
+    | Readonly<{
+        kind: "command";
+        commandId: string;
+        cliPlugins?: readonly string[];
+      }>
+  );
 
 async function writeSemanticPackage(options: SemanticPackageOptions): Promise<{
   version: string;
@@ -39,7 +38,7 @@ async function writeSemanticPackage(options: SemanticPackageOptions): Promise<{
         type: "module",
         exports: "./lib/index.js",
         oclif: { hooks: { update: "./lib/update.js" } },
-      }),
+      })
     );
     await mkdir(join(root, "lib"), { recursive: true });
     await writeFile(join(root, "lib", "index.js"), "export {};\n");
@@ -61,13 +60,20 @@ async function writeSemanticPackage(options: SemanticPackageOptions): Promise<{
         commands: "./dist/commands",
         ...(options.packageId === "@rawr/cli"
           ? {
-              plugins: options.cliPlugins ?? controllerCommandPackages
-                .filter((row) => row.disposition === "controller-member" && row.discoverCommands && row.packageId !== "@rawr/cli")
-                .map((row) => row.packageId),
+              plugins:
+                options.cliPlugins ??
+                controllerCommandPackages
+                  .filter(
+                    (row) =>
+                      row.disposition === "controller-member" &&
+                      row.discoverCommands &&
+                      row.packageId !== "@rawr/cli"
+                  )
+                  .map((row) => row.packageId),
             }
           : {}),
       },
-    }),
+    })
   );
   await writeFile(
     join(root, "oclif.manifest.json"),
@@ -81,7 +87,7 @@ async function writeSemanticPackage(options: SemanticPackageOptions): Promise<{
           relativePath: modulePath,
         },
       },
-    }),
+    })
   );
   return { version };
 }
@@ -113,7 +119,7 @@ export async function buildSemanticFixture(options: {
   const members = [];
   let commandIndex = 0;
   const memberRows = controllerCommandPackages.filter(
-    (row) => row.disposition === "controller-member" && row.packageId !== options.excludedPackageId,
+    (row) => row.disposition === "controller-member" && row.packageId !== options.excludedPackageId
   );
   const cliPlugins = memberRows
     .filter((row) => row.discoverCommands && row.packageId !== "@rawr/cli")
@@ -147,9 +153,10 @@ export async function buildSemanticFixture(options: {
       commandId: actualCommandId,
       cliPlugins,
     });
-    const declaredCommandId = options.mismatch === true && row.packageId === "@rawr/plugin-devops"
-      ? "fixture-mismatch:command"
-      : actualCommandId;
+    const declaredCommandId =
+      options.mismatch === true && row.packageId === "@rawr/plugin-devops"
+        ? "fixture-mismatch:command"
+        : actualCommandId;
     members.push({
       packageId: row.packageId,
       version: staged.version,
@@ -175,7 +182,7 @@ export async function buildSemanticFixture(options: {
         topicSeparator: " ",
         plugins: options.compositionPlugins ?? ["@rawr/cli"],
       },
-    }),
+    })
   );
   const lockPathInput = join(workspaceRoot, "bun.lock");
   await writeFile(lockPathInput, "fixture lock\n");

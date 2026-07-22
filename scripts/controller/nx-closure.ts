@@ -30,14 +30,14 @@ function parseGraph(value: unknown): {
   }
   const graph = value.graph;
   if (
-    graph === null
-    || typeof graph !== "object"
-    || !("nodes" in graph)
-    || graph.nodes === null
-    || typeof graph.nodes !== "object"
-    || !("dependencies" in graph)
-    || graph.dependencies === null
-    || typeof graph.dependencies !== "object"
+    graph === null ||
+    typeof graph !== "object" ||
+    !("nodes" in graph) ||
+    graph.nodes === null ||
+    typeof graph.nodes !== "object" ||
+    !("dependencies" in graph) ||
+    graph.dependencies === null ||
+    typeof graph.dependencies !== "object"
   ) {
     throw new Error("Nx project graph has an invalid shape");
   }
@@ -85,21 +85,23 @@ export function resolveControllerNxClosure(options: {
   const projects = [...visited].map((projectName) => {
     const root = graph.nodes[projectName]?.data?.root;
     if (
-      typeof root !== "string"
-      || root.length === 0
-      || root.includes("\\")
-      || root.includes("\0")
-      || root.endsWith("/")
-      || posix.isAbsolute(root)
-      || posix.normalize(root) !== root
-      || root === "."
-      || root === ".."
-      || root.startsWith("../")
+      typeof root !== "string" ||
+      root.length === 0 ||
+      root.includes("\\") ||
+      root.includes("\0") ||
+      root.endsWith("/") ||
+      posix.isAbsolute(root) ||
+      posix.normalize(root) !== root ||
+      root === "." ||
+      root === ".." ||
+      root.startsWith("../")
     ) {
       throw new Error(`controller Nx project has an invalid root: ${projectName}`);
     }
     if (PROTECTED_PROJECT_ROOTS.some((pattern) => pattern.test(root))) {
-      throw new Error(`protected project cannot enter the controller Nx closure: ${projectName}:${root}`);
+      throw new Error(
+        `protected project cannot enter the controller Nx closure: ${projectName}:${root}`
+      );
     }
     return Object.freeze({ name: projectName, root });
   });
@@ -115,7 +117,9 @@ export async function assertCanonicalControllerNxProjectRoots(options: {
   for (const project of options.projects) {
     const lexicalRoot = resolve(workspaceRoot, project.root);
     if (!isContained(workspaceRoot, lexicalRoot)) {
-      throw new Error(`controller Nx project root escapes workspace: ${project.name}:${project.root}`);
+      throw new Error(
+        `controller Nx project root escapes workspace: ${project.name}:${project.root}`
+      );
     }
     const status = await lstat(lexicalRoot);
     const canonicalRoot = await realpath(lexicalRoot);
@@ -124,11 +128,11 @@ export async function assertCanonicalControllerNxProjectRoots(options: {
     }
     const canonicalRelative = relative(workspaceRoot, canonicalRoot).split(sep).join("/");
     if (
-      !canonicalRelative
-      || PROTECTED_PROJECT_ROOTS.some((pattern) => pattern.test(canonicalRelative))
+      !canonicalRelative ||
+      PROTECTED_PROJECT_ROOTS.some((pattern) => pattern.test(canonicalRelative))
     ) {
       throw new Error(
-        `protected or invalid project cannot enter the controller Nx closure: ${project.name}:${canonicalRelative}`,
+        `protected or invalid project cannot enter the controller Nx closure: ${project.name}:${canonicalRelative}`
       );
     }
   }

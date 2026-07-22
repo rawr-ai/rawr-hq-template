@@ -8,10 +8,7 @@ import {
   type ControllerIssue,
 } from "@rawr/controller-release";
 
-import {
-  assertAbsolutePath,
-  assertCanonicalContainedParent,
-} from "./lib/filesystem.ts";
+import { assertAbsolutePath, assertCanonicalContainedParent } from "./lib/filesystem.ts";
 import {
   CONTROLLER_ENTRY_PATH,
   CONTROLLER_DEPENDENCY_LOCK_PATH,
@@ -20,10 +17,7 @@ import {
   controllerReleasePath,
   controllerSelectorPath,
 } from "./layout.ts";
-import {
-  nodeControllerSelectorStore,
-  type ControllerSelectorStore,
-} from "./selector-store.ts";
+import { nodeControllerSelectorStore, type ControllerSelectorStore } from "./selector-store.ts";
 
 export type ControllerActivationResult = Readonly<{
   kind: "activated" | "converged";
@@ -107,31 +101,21 @@ async function inspectControllerActivationPlan(options: {
     throw new Error(`invalid controller selection: ${describeIssues(candidate.issues)}`);
   }
 
-  const releaseRoot = controllerReleasePath(
-    dataRoot,
-    candidate.value.controllerDigest,
-  );
-  await assertCanonicalContainedParent(
-    dataRoot,
-    releaseRoot,
-    "controller release",
-  );
+  const releaseRoot = controllerReleasePath(dataRoot, candidate.value.controllerDigest);
+  await assertCanonicalContainedParent(dataRoot, releaseRoot, "controller release");
   await verifyRequiredReleaseFiles(releaseRoot);
   await options.verifyRelease(releaseRoot, candidate.value.controllerDigest);
 
   const selectorPath = controllerSelectorPath(dataRoot);
-  await assertCanonicalContainedParent(
-    dataRoot,
-    selectorPath,
-    "controller selector",
-  );
+  await assertCanonicalContainedParent(dataRoot, selectorPath, "controller selector");
   const selectorStore = options.selectorStore ?? nodeControllerSelectorStore;
   const current = await selectorStore.read(selectorPath);
-  const currentBytes = current.kind === "regular"
-    ? current.bytes
-    : current.kind === "missing"
-      ? null
-      : new Uint8Array();
+  const currentBytes =
+    current.kind === "regular"
+      ? current.bytes
+      : current.kind === "missing"
+        ? null
+        : new Uint8Array();
   const selectionPlan = planControllerSelection(currentBytes, candidate.value);
   if (selectionPlan.kind === "converged") {
     return Object.freeze({

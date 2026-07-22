@@ -3,7 +3,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { assertCondition, mustExist } from "./_verify-utils.mjs";
 
-const PASS_ROOT = "docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21";
+const PASS_ROOT =
+  "docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21";
 const DEDUPE_RESULT_PATH = `${PASS_ROOT}/D4_DEDUPE_SCAN_RESULT.json`;
 const FINISHED_HOOK_RESULT_PATH = `${PASS_ROOT}/D4_FINISHED_HOOK_SCAN_RESULT.json`;
 const DISPOSITION_PATH = `${PASS_ROOT}/D4_DISPOSITION.md`;
@@ -19,7 +20,11 @@ const D3_OWNED_PATH_TOKENS = [
 ];
 const D3_GATE_COMMAND = "phase-d:gate:d3-ingress-middleware-structural-contract";
 
-await Promise.all([mustExist(DEDUPE_RESULT_PATH), mustExist(FINISHED_HOOK_RESULT_PATH), mustExist(DISPOSITION_PATH)]);
+await Promise.all([
+  mustExist(DEDUPE_RESULT_PATH),
+  mustExist(FINISHED_HOOK_RESULT_PATH),
+  mustExist(DISPOSITION_PATH),
+]);
 
 const [dedupeRaw, finishedHookRaw, dispositionSource] = await Promise.all([
   fs.readFile(path.join(process.cwd(), DEDUPE_RESULT_PATH), "utf8"),
@@ -43,10 +48,11 @@ const scratchpadEntries = agent3Scratchpad
   .filter((entry) => entry.line.trim().length > 0);
 
 const d3FailureEntries = scratchpadEntries.filter(
-  (entry) => entry.line.includes(D3_GATE_COMMAND) && /failed|error/i.test(entry.line),
+  (entry) => entry.line.includes(D3_GATE_COMMAND) && /failed|error/i.test(entry.line)
 );
 const d3SuccessEntries = scratchpadEntries.filter(
-  (entry) => entry.line.includes(D3_GATE_COMMAND) && /validation passed|pass(?:ed)?/i.test(entry.line),
+  (entry) =>
+    entry.line.includes(D3_GATE_COMMAND) && /validation passed|pass(?:ed)?/i.test(entry.line)
 );
 
 function referencesD3OwnedPath(entryLine) {
@@ -58,17 +64,19 @@ const d3RemediationEntries = scratchpadEntries.filter(
     /remediation/i.test(entry.line) &&
     /commit/i.test(entry.line) &&
     referencesD3OwnedPath(entry.line) &&
-    /d3|phase-d/i.test(entry.line),
+    /d3|phase-d/i.test(entry.line)
 );
 
 const d3RecurrenceCycles = [];
 for (const firstFailure of d3FailureEntries) {
-  const remediationAfterFailure = d3RemediationEntries.filter((entry) => entry.index > firstFailure.index);
+  const remediationAfterFailure = d3RemediationEntries.filter(
+    (entry) => entry.index > firstFailure.index
+  );
   for (const remediationEntry of remediationAfterFailure) {
     const rerunFailure = d3FailureEntries.find((entry) => entry.index > remediationEntry.index);
     if (!rerunFailure) continue;
     const successBetweenFailures = d3SuccessEntries.some(
-      (entry) => entry.index > firstFailure.index && entry.index < rerunFailure.index,
+      (entry) => entry.index > firstFailure.index && entry.index < rerunFailure.index
     );
     if (successBetweenFailures) continue;
     d3RecurrenceCycles.push({
@@ -80,45 +88,55 @@ for (const firstFailure of d3FailureEntries) {
 }
 
 const d3RecurrenceTriggered = d3RecurrenceCycles.length > 0;
-const anyTriggered = Boolean(dedupeResult.triggered) || Boolean(finishedHookResult.triggered) || d3RecurrenceTriggered;
+const anyTriggered =
+  Boolean(dedupeResult.triggered) || Boolean(finishedHookResult.triggered) || d3RecurrenceTriggered;
 const expectedState = anyTriggered ? "triggered" : "deferred";
 
 const hasTriggeredState = /state:\s*triggered/u.test(dispositionSource);
 const hasDeferredState = /state:\s*deferred/u.test(dispositionSource);
-assertCondition(hasTriggeredState !== hasDeferredState, "D4_DISPOSITION.md must contain exactly one state: triggered or deferred");
+assertCondition(
+  hasTriggeredState !== hasDeferredState,
+  "D4_DISPOSITION.md must contain exactly one state: triggered or deferred"
+);
 const declaredState = hasTriggeredState ? "triggered" : "deferred";
 assertCondition(
   declaredState === expectedState,
-  `D4_DISPOSITION.md state mismatch: expected ${expectedState} from scan evidence, found ${declaredState}`,
+  `D4_DISPOSITION.md state mismatch: expected ${expectedState} from scan evidence, found ${declaredState}`
 );
 
 assertCondition(
   /##\s*Trigger Matrix Summary/u.test(dispositionSource),
-  "D4_DISPOSITION.md must include a Trigger Matrix Summary section",
+  "D4_DISPOSITION.md must include a Trigger Matrix Summary section"
 );
 assertCondition(
   /##\s*Carry-Forward Watchpoints/u.test(dispositionSource),
-  "D4_DISPOSITION.md must include Carry-Forward Watchpoints section",
+  "D4_DISPOSITION.md must include Carry-Forward Watchpoints section"
 );
 assertCondition(
   /phase-d:gate:d4-dedupe-scan/u.test(dispositionSource) &&
     /phase-d:gate:d4-finished-hook-scan/u.test(dispositionSource),
-  "D4_DISPOSITION.md must reference both D4 scan gates",
+  "D4_DISPOSITION.md must reference both D4 scan gates"
 );
 assertCondition(
   /phase-d:gate:d3-ingress-middleware-structural-contract/u.test(dispositionSource),
-  "D4_DISPOSITION.md must reference D3 recurrence criterion",
+  "D4_DISPOSITION.md must reference D3 recurrence criterion"
 );
 
 if (declaredState === "triggered") {
   await mustExist(TRIGGER_EVIDENCE_PATH);
-  const triggerEvidenceSource = await fs.readFile(path.join(process.cwd(), TRIGGER_EVIDENCE_PATH), "utf8");
-  assertCondition(triggerEvidenceSource.trim().length > 0, "D4_TRIGGER_EVIDENCE.md must not be empty when state is triggered");
+  const triggerEvidenceSource = await fs.readFile(
+    path.join(process.cwd(), TRIGGER_EVIDENCE_PATH),
+    "utf8"
+  );
+  assertCondition(
+    triggerEvidenceSource.trim().length > 0,
+    "D4_TRIGGER_EVIDENCE.md must not be empty when state is triggered"
+  );
 }
 
 console.log("phase-d d4 disposition verified");
 console.log(
   `state=${declaredState}; dedupeTriggered=${Boolean(dedupeResult.triggered)}; finishedHookTriggered=${Boolean(
-    finishedHookResult.triggered,
-  )}; d3RecurrenceTriggered=${d3RecurrenceTriggered}; d3SuccessEvidence=${d3SuccessEntries.length}; d3FailureEvidence=${d3FailureEntries.length}; d3RemediationEvidence=${d3RemediationEntries.length}; d3RecurrenceCycles=${d3RecurrenceCycles.length}`,
+    finishedHookResult.triggered
+  )}; d3RecurrenceTriggered=${d3RecurrenceTriggered}; d3SuccessEvidence=${d3SuccessEntries.length}; d3FailureEvidence=${d3FailureEntries.length}; d3RemediationEvidence=${d3RemediationEntries.length}; d3RecurrenceCycles=${d3RecurrenceCycles.length}`
 );

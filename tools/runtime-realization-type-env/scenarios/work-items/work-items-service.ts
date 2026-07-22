@@ -1,9 +1,5 @@
 import { Effect, TaggedError } from "@rawr/sdk/effect";
-import {
-  defineService,
-  implementService,
-  serviceProcedure,
-} from "@rawr/sdk/service";
+import { defineService, implementService, serviceProcedure } from "@rawr/sdk/service";
 
 export interface WorkItem {
   readonly id: string;

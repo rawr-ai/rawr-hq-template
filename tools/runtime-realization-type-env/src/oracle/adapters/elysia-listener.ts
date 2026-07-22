@@ -41,9 +41,7 @@ interface ElysiaServerSnapshot {
   readonly url?: string | URL;
 }
 
-function record(
-  input: Omit<RuntimeElysiaListenerRecord, "kind">,
-): RuntimeElysiaListenerRecord {
+function record(input: Omit<RuntimeElysiaListenerRecord, "kind">): RuntimeElysiaListenerRecord {
   return {
     kind: "elysia.runtime-listener-record",
     ...input,
@@ -96,7 +94,7 @@ export function startRuntimeElysiaListener(input: {
           method: request.method,
           path: url.pathname,
           url: String(url),
-        }),
+        })
       );
     })
     .onStart(({ server }) => {
@@ -109,7 +107,7 @@ export function startRuntimeElysiaListener(input: {
           hostname: current?.hostname,
           port: current?.port,
           url: current?.url ? String(current.url) : undefined,
-        }),
+        })
       );
     })
     .onStop(() => {
@@ -118,7 +116,7 @@ export function startRuntimeElysiaListener(input: {
           listenerId: input.listenerId,
           hostId: input.host.hostId,
           phase: "elysia.listener.vendor.stopped",
-        }),
+        })
       );
     });
 
@@ -129,7 +127,7 @@ export function startRuntimeElysiaListener(input: {
       phase: "elysia.listener.starting",
       hostname,
       port: requestedPort,
-    }),
+    })
   );
 
   input.host.app.listen({ hostname, port: requestedPort });
@@ -147,7 +145,7 @@ export function startRuntimeElysiaListener(input: {
       hostname: server.hostname ?? hostname,
       port,
       url: String(url),
-    }),
+    })
   );
 
   return {
@@ -168,7 +166,7 @@ export function startRuntimeElysiaListener(input: {
             hostId: input.host.hostId,
             phase: "elysia.listener.stopping",
             closeActiveConnections,
-          }),
+          })
         );
         await input.host.app.stop(closeActiveConnections);
         stopped = true;
@@ -178,7 +176,7 @@ export function startRuntimeElysiaListener(input: {
             hostId: input.host.hostId,
             phase: "elysia.listener.stopped",
             closeActiveConnections,
-          }),
+          })
         );
       }
 

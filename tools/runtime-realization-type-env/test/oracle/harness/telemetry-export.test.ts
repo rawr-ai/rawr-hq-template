@@ -2,10 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
 import { providerFx, defineRuntimeProvider } from "@rawr/sdk/runtime/providers";
 import { defineRuntimeResource } from "@rawr/sdk/runtime/resources";
-import {
-  defineRuntimeProfile,
-  providerSelection,
-} from "@rawr/sdk/runtime/profiles";
+import { defineRuntimeProfile, providerSelection } from "@rawr/sdk/runtime/profiles";
 import type { ExecutionDescriptor } from "@rawr/sdk/spine";
 import {
   buildRuntimeTelemetryOtlpTracePayload,
@@ -29,11 +26,7 @@ import {
 } from "../../../scenarios/work-items/app-and-plan-artifacts";
 
 function assertNoLiveHandles(value: unknown): void {
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
     throw new Error(`telemetry payload leaked live handle: ${String(value)}`);
   }
 
@@ -62,9 +55,7 @@ describe("runtime telemetry export projection", () => {
         } satisfies WorkItem);
       },
     } satisfies ExecutionDescriptor<unknown, WorkItem, unknown, unknown>;
-    const table = createExecutionDescriptorTable([
-      { ref: CreateWorkItemRef, descriptor },
-    ]);
+    const table = createExecutionDescriptorTable([{ ref: CreateWorkItemRef, descriptor }]);
     const registry = createExecutionRegistry({
       plans: [{ kind: "compiled.execution-plan", ref: CreateWorkItemRef }],
       descriptorTable: table,
@@ -108,9 +99,7 @@ describe("runtime telemetry export projection", () => {
       });
       const payloadJson = JSON.stringify(payload);
 
-      expect(records.map((record) => record.name)).toContain(
-        "boundary.policy.exit",
-      );
+      expect(records.map((record) => record.name)).toContain("boundary.policy.exit");
       expect(payloadJson).toContain("policy:telemetry:create");
       expect(payloadJson).toContain("plugin.server-api");
       expect(payloadJson).toContain("process-telemetry-run");
@@ -127,10 +116,7 @@ describe("runtime telemetry export projection", () => {
       close(): void;
     }
 
-    const SecretResource = defineRuntimeResource<
-      "telemetry.secret",
-      TelemetrySecretValue
-    >({
+    const SecretResource = defineRuntimeResource<"telemetry.secret", TelemetrySecretValue>({
       id: "telemetry.secret",
       title: "Telemetry secret value",
     });
@@ -212,9 +198,7 @@ describe("runtime telemetry export projection", () => {
     });
     const payloadJson = JSON.stringify(payload);
 
-    expect(records.map((record) => record.name)).toContain(
-      "provider.telemetry.acquire",
-    );
+    expect(records.map((record) => record.name)).toContain("provider.telemetry.acquire");
     expect(payloadJson).toContain("provider.acquire");
     expect(payloadJson).toContain("provider.release");
     expect(payloadJson).toContain("telemetry.secret.provider");

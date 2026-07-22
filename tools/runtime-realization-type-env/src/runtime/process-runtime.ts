@@ -9,10 +9,7 @@ import type {
   ExecutionDescriptorTableEntry,
   ExecutionRegistry,
 } from "../spine/artifacts";
-import {
-  createManagedEffectRuntimeAccess,
-  type EffectRuntimeAccess,
-} from "./effect-runtime";
+import { createManagedEffectRuntimeAccess, type EffectRuntimeAccess } from "./effect-runtime";
 import {
   createRuntimeBoundaryPolicy,
   createRuntimeBoundaryPolicyRecord,
@@ -48,20 +45,20 @@ function stableJson(value: unknown): string {
 function assertSameExecutableRef(
   expected: ExecutionDescriptorRef,
   actual: ExecutionDescriptorRef,
-  label: string,
+  label: string
 ): void {
   const expectedIdentity = stableJson(expected);
   const actualIdentity = stableJson(actual);
 
   if (expectedIdentity !== actualIdentity) {
     throw new Error(
-      `${label} mismatch: expected ${expected.boundary}/${expected.executionId}, got ${actual.boundary}/${actual.executionId}`,
+      `${label} mismatch: expected ${expected.boundary}/${expected.executionId}, got ${actual.boundary}/${actual.executionId}`
     );
   }
 }
 
 export function createExecutionDescriptorTable(
-  entries: readonly ExecutionDescriptorTableEntry[],
+  entries: readonly ExecutionDescriptorTableEntry[]
 ): ExecutionDescriptorTable {
   const byId = new Map<string, ExecutionDescriptor<any, any, any, any, any>>();
 
@@ -162,9 +159,7 @@ export interface RuntimeBoundaryPolicyContext {
  * Centralizes the policy-record-to-event projection so process execution and
  * provider lowering can share one redaction/classification contract.
  */
-function policyRecordToEvent(
-  record: RuntimeBoundaryPolicyRecord,
-): RuntimeSimulationEvent {
+function policyRecordToEvent(record: RuntimeBoundaryPolicyRecord): RuntimeSimulationEvent {
   return {
     name: record.phase,
     attributes: runtimeBoundaryPolicyRecordAttributes(record),
@@ -177,7 +172,7 @@ function policyRecordToEvent(
  * preserving a single event-recording path.
  */
 function normalizePolicyResolution(
-  value: RuntimeBoundaryPolicy | RuntimeBoundaryPolicyResolution | undefined,
+  value: RuntimeBoundaryPolicy | RuntimeBoundaryPolicyResolution | undefined
 ): RuntimeBoundaryPolicyResolution | undefined {
   if (!value) return undefined;
   if ("policy" in value) return value;
@@ -192,10 +187,10 @@ function normalizePolicyResolution(
 function resolveRuntimeBoundaryPolicy(
   input: {
     readonly boundaryPolicy?: (
-      context: RuntimeBoundaryPolicyContext,
+      context: RuntimeBoundaryPolicyContext
     ) => RuntimeBoundaryPolicy | RuntimeBoundaryPolicyResolution | undefined;
   },
-  context: RuntimeBoundaryPolicyContext,
+  context: RuntimeBoundaryPolicyContext
 ): RuntimeBoundaryPolicyResolution | undefined {
   const explicit = normalizePolicyResolution(input.boundaryPolicy?.(context));
   if (explicit) return explicit;
@@ -225,14 +220,17 @@ export function createProcessExecutionRuntime(input: {
    * copied into runtime events.
    */
   readonly boundaryPolicy?: (
-    context: RuntimeBoundaryPolicyContext,
+    context: RuntimeBoundaryPolicyContext
   ) => RuntimeBoundaryPolicy | RuntimeBoundaryPolicyResolution | undefined;
 }): ProcessExecutionRuntime {
   const effectRuntime = input.effectRuntime ?? createManagedEffectRuntimeAccess();
 
   return {
     kind: "process.execution-runtime",
-    async invoke<TOutput>({ ref, context }: {
+    async invoke<TOutput>({
+      ref,
+      context,
+    }: {
       readonly ref: ExecutionDescriptorRef;
       readonly context: unknown;
     }): Promise<RuntimeInvocationResult<TOutput>> {
@@ -264,8 +262,8 @@ export function createProcessExecutionRuntime(input: {
                 executionId: ref.executionId,
                 boundary: ref.boundary,
               },
-            }),
-          ),
+            })
+          )
         );
       }
 
@@ -286,7 +284,7 @@ export function createProcessExecutionRuntime(input: {
         descriptorToEffect<TOutput>(boundary.descriptor, context),
         // The signal is the live cancellation handle. Policy records above and
         // below only retain the primitive interruption classification.
-        policyResolution?.signal ? { signal: policyResolution.signal } : undefined,
+        policyResolution?.signal ? { signal: policyResolution.signal } : undefined
       );
 
       if (policy) {
@@ -300,8 +298,8 @@ export function createProcessExecutionRuntime(input: {
                 executionId: boundary.ref.executionId,
                 boundary: boundary.ref.boundary,
               },
-            }),
-          ),
+            })
+          )
         );
       }
 
@@ -343,7 +341,7 @@ export function createProcessExecutionRuntime(input: {
 
 export function descriptorToEffect<TOutput>(
   descriptor: ExecutionDescriptor<unknown, TOutput, unknown, unknown>,
-  context: unknown,
+  context: unknown
 ): RawrEffect<TOutput, unknown, never> {
   const result = descriptor.run(context as never);
 
@@ -352,13 +350,13 @@ export function descriptorToEffect<TOutput>(
   }
 
   return VendorEffect.gen(function* () {
-    return yield* (result as Generator<any, TOutput, unknown>);
+    return yield* result as Generator<any, TOutput, unknown>;
   }) as RawrEffect<TOutput, unknown, never>;
 }
 
 export async function runDescriptor<TOutput>(
   descriptor: ExecutionDescriptor<unknown, TOutput, unknown, unknown>,
-  context: unknown,
+  context: unknown
 ): Promise<RuntimeInvocationResult<TOutput>> {
   const ref = descriptor.ref;
   const table = createExecutionDescriptorTable([{ ref, descriptor }]);

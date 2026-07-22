@@ -6,7 +6,8 @@ import ts from "typescript";
 const root = process.cwd();
 const boundaryRoot = path.join(root, "services", "hq-ops", "src", "service");
 const boundaryFilePattern = /(\/|^)(contract|schemas|model|types)\.ts$/;
-const bannedRelativeImportPattern = /(^|\/)(support|repository|storage|exec|sqlite|writer)(\.[cm]?[jt]sx?)?$/;
+const bannedRelativeImportPattern =
+  /(^|\/)(support|repository|storage|exec|sqlite|writer)(\.[cm]?[jt]sx?)?$/;
 
 function toPosix(input) {
   return input.split(path.sep).join("/");
@@ -27,15 +28,29 @@ async function walk(dirPath, files) {
 }
 
 function collectModuleSpecifiers(filePath, source) {
-  const sourceFile = ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
   const specifiers = [];
 
   function visit(node) {
-    if (ts.isImportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteralLike(node.moduleSpecifier)) {
+    if (
+      ts.isImportDeclaration(node) &&
+      node.moduleSpecifier &&
+      ts.isStringLiteralLike(node.moduleSpecifier)
+    ) {
       specifiers.push(node.moduleSpecifier.text);
     }
 
-    if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteralLike(node.moduleSpecifier)) {
+    if (
+      ts.isExportDeclaration(node) &&
+      node.moduleSpecifier &&
+      ts.isStringLiteralLike(node.moduleSpecifier)
+    ) {
       specifiers.push(node.moduleSpecifier.text);
     }
 

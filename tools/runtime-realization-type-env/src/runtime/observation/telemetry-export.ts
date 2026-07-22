@@ -124,7 +124,7 @@ export type RuntimeTelemetryFetch = (
     readonly method: "POST";
     readonly headers: Record<string, string>;
     readonly body: string;
-  },
+  }
 ) => Promise<RuntimeTelemetryFetchResponse>;
 
 export type RuntimeTelemetryOtlpExportResult =
@@ -166,7 +166,7 @@ export interface RuntimeTelemetryOtlpExportInput {
  * contract.
  */
 export function projectRuntimeEventsToTelemetryRecords(
-  input: RuntimeTelemetryProjectionInput,
+  input: RuntimeTelemetryProjectionInput
 ): readonly RuntimeTelemetryRecord[] {
   return input.events.map((event, index) => {
     const sequence = (input.startingSequence ?? 0) + index + 1;
@@ -193,7 +193,7 @@ export function projectRuntimeEventsToTelemetryRecords(
  * persistence handles remain outside the payload.
  */
 export function projectRuntimeCatalogToTelemetryRecords(
-  input: RuntimeCatalogTelemetryProjectionInput,
+  input: RuntimeCatalogTelemetryProjectionInput
 ): readonly RuntimeTelemetryRecord[] {
   const records: RuntimeTelemetryRecord[] = [];
   let sequence = input.startingSequence ?? 0;
@@ -262,9 +262,7 @@ function otlpAnyValue(value: RuntimeRecordValue): RuntimeTelemetryOtlpAnyValue {
   if (typeof value === "string") return { stringValue: value };
   if (typeof value === "boolean") return { boolValue: value };
   if (typeof value === "number") {
-    return Number.isInteger(value)
-      ? { intValue: String(value) }
-      : { doubleValue: value };
+    return Number.isInteger(value) ? { intValue: String(value) } : { doubleValue: value };
   }
   if (Array.isArray(value)) {
     return {
@@ -282,7 +280,7 @@ function otlpAnyValue(value: RuntimeRecordValue): RuntimeTelemetryOtlpAnyValue {
 }
 
 function runtimeAttributesToOtlp(
-  attributes: RuntimeRecordAttributes,
+  attributes: RuntimeRecordAttributes
 ): readonly RuntimeTelemetryOtlpKeyValue[] {
   return Object.entries(attributes)
     .sort(([left], [right]) => left.localeCompare(right))
@@ -301,12 +299,10 @@ function runtimeAttributesToOtlp(
  * history stay outside this helper.
  */
 export function buildRuntimeTelemetryOtlpTracePayload(
-  input: RuntimeTelemetryOtlpTraceInput,
+  input: RuntimeTelemetryOtlpTraceInput
 ): RuntimeTelemetryOtlpTracePayload {
   const traceId = input.traceId ?? stableHex(input.runId, 32);
-  const start = input.startTimeUnixNano
-    ? BigInt(input.startTimeUnixNano)
-    : baseTime(input.runId);
+  const start = input.startTimeUnixNano ? BigInt(input.startTimeUnixNano) : baseTime(input.runId);
 
   return {
     resourceSpans: [
@@ -318,15 +314,13 @@ export function buildRuntimeTelemetryOtlpTracePayload(
               "service.name": input.serviceName,
               telemetryRunId: input.runId,
               ...(input.resourceAttributes ?? {}),
-            }),
+            })
           ),
         },
         scopeSpans: [
           {
             scope: {
-              name:
-                input.scopeName ??
-                "rawr.runtime-realization-type-env.telemetry-export",
+              name: input.scopeName ?? "rawr.runtime-realization-type-env.telemetry-export",
               version: input.scopeVersion ?? "lab-v2",
             },
             spans: input.records.map((record, index) => {
@@ -336,7 +330,7 @@ export function buildRuntimeTelemetryOtlpTracePayload(
                 traceId,
                 spanId: stableHex(
                   `${input.runId}:${record.source}:${record.sequence}:${record.name}`,
-                  16,
+                  16
                 ),
                 name: record.name,
                 kind: 1 as const,
@@ -349,7 +343,7 @@ export function buildRuntimeTelemetryOtlpTracePayload(
                     telemetryRecordName: record.name,
                     telemetrySource: record.source,
                     telemetrySequence: record.sequence,
-                  }),
+                  })
                 ),
               };
             }),
@@ -361,9 +355,7 @@ export function buildRuntimeTelemetryOtlpTracePayload(
 }
 
 function otlpTraceEndpoint(endpoint: string): string {
-  return endpoint.endsWith("/v1/traces")
-    ? endpoint
-    : `${endpoint.replace(/\/+$/, "")}/v1/traces`;
+  return endpoint.endsWith("/v1/traces") ? endpoint : `${endpoint.replace(/\/+$/, "")}/v1/traces`;
 }
 
 function parseResponseBody(text: string): RuntimeRecordValue | undefined {
@@ -383,7 +375,7 @@ function parseResponseBody(text: string): RuntimeRecordValue | undefined {
  * submitted telemetry payload back on failure.
  */
 export async function exportRuntimeTelemetryOtlpTraces(
-  input: RuntimeTelemetryOtlpExportInput,
+  input: RuntimeTelemetryOtlpExportInput
 ): Promise<RuntimeTelemetryOtlpExportResult> {
   const endpoint = otlpTraceEndpoint(input.endpoint);
   const fetcher = input.fetch ?? globalThis.fetch?.bind(globalThis);

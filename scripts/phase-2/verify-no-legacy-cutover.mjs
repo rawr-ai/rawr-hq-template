@@ -1,5 +1,12 @@
 #!/usr/bin/env bun
-import { collectImportSites, finishVerification, parseAllowFindings, pathExists, readFile, readJson } from "./_verify-utils.mjs";
+import {
+  collectImportSites,
+  finishVerification,
+  parseAllowFindings,
+  pathExists,
+  readFile,
+  readJson,
+} from "./_verify-utils.mjs";
 
 const allowFindings = parseAllowFindings();
 const failures = [];
@@ -13,7 +20,12 @@ if (hqPackage.exports?.["./legacy-cutover"] !== undefined) {
   failures.push("apps/hq/package.json must stop exporting ./legacy-cutover.");
 }
 
-for (const relPath of ["apps/hq/server.ts", "apps/hq/async.ts", "apps/hq/dev.ts", "apps/hq/src/index.ts"]) {
+for (const relPath of [
+  "apps/hq/server.ts",
+  "apps/hq/async.ts",
+  "apps/hq/dev.ts",
+  "apps/hq/src/index.ts",
+]) {
   if (!(await pathExists(relPath))) continue;
   const source = await readFile(relPath);
   if (source.includes("./legacy-cutover") || source.includes("../legacy-cutover")) {

@@ -1,8 +1,4 @@
-import type {
-  AppRole,
-  ResourceLifetime,
-  RuntimeResource,
-} from "../sdk/runtime/resources";
+import type { AppRole, ResourceLifetime, RuntimeResource } from "../sdk/runtime/resources";
 import type {
   ExecutionDescriptor,
   ExecutionDescriptorIdentityInput,
@@ -32,20 +28,16 @@ function joinPath(parts: readonly string[]): string {
   return parts.join(".");
 }
 
-function asyncOwnerId(input: Extract<
-  ExecutionDescriptorIdentityInput,
-  { boundary: "plugin.async-step" }
->): string {
+function asyncOwnerId(
+  input: Extract<ExecutionDescriptorIdentityInput, { boundary: "plugin.async-step" }>
+): string {
   if (input.workflowId) return input.workflowId;
   if (input.scheduleId) return input.scheduleId;
   if (input.consumerId) return input.consumerId;
   throw new Error("async execution input must include workflowId, scheduleId, or consumerId");
 }
 
-type AsyncDescriptorRef = Extract<
-  ExecutionDescriptorRef,
-  { boundary: "plugin.async-step" }
->;
+type AsyncDescriptorRef = Extract<ExecutionDescriptorRef, { boundary: "plugin.async-step" }>;
 
 type ServerDescriptorRef = Extract<
   ExecutionDescriptorRef,
@@ -70,10 +62,12 @@ function asyncOwnerEntries(ref: AsyncDescriptorRef): readonly {
     { kind: "schedule" as const, id: widened.scheduleId },
     { kind: "consumer" as const, id: widened.consumerId },
   ].filter(
-    (entry): entry is {
+    (
+      entry
+    ): entry is {
       readonly kind: "workflow" | "schedule" | "consumer";
       readonly id: string;
-    } => typeof entry.id === "string" && entry.id.length > 0,
+    } => typeof entry.id === "string" && entry.id.length > 0
   );
 }
 
@@ -116,10 +110,7 @@ function stableJson(value: unknown): string {
       .sort(([left], [right]) => left.localeCompare(right));
 
     return `{${entries
-      .map(
-        ([entryKey, entryValue]) =>
-          `${JSON.stringify(entryKey)}:${stableJson(entryValue)}`,
-      )
+      .map(([entryKey, entryValue]) => `${JSON.stringify(entryKey)}:${stableJson(entryValue)}`)
       .join(",")}}`;
   }
 
@@ -129,14 +120,14 @@ function stableJson(value: unknown): string {
 function assertSameExecutableRef(
   expected: ExecutionDescriptorRef,
   actual: ExecutionDescriptorRef,
-  label: string,
+  label: string
 ): void {
   const expectedIdentity = stableJson(expected);
   const actualIdentity = stableJson(actual);
 
   if (expectedIdentity !== actualIdentity) {
     throw new Error(
-      `${label} mismatch: expected ${expected.boundary}/${expected.executionId}, got ${actual.boundary}/${actual.executionId}`,
+      `${label} mismatch: expected ${expected.boundary}/${expected.executionId}, got ${actual.boundary}/${actual.executionId}`
     );
   }
 }
@@ -151,15 +142,13 @@ function isExecutionDescriptorRef(value: unknown): value is ExecutionDescriptorR
 
 function attachDerivedRef(
   descriptor: ExecutionDescriptor<any, any, any, any, any>,
-  ref: ExecutionDescriptorRef,
+  ref: ExecutionDescriptorRef
 ): ExecutionDescriptor<any, any, any, any, any> {
   const existingRef = (descriptor as { readonly ref?: unknown }).ref;
 
   if (existingRef !== undefined) {
     if (!isExecutionDescriptorRef(existingRef)) {
-      throw new Error(
-        `descriptor ref mismatch: invalid descriptor ref for ${ref.executionId}`,
-      );
+      throw new Error(`descriptor ref mismatch: invalid descriptor ref for ${ref.executionId}`);
     }
     assertSameExecutableRef(ref, existingRef, "descriptor derivation");
   }
@@ -173,7 +162,7 @@ function attachDerivedRef(
 function deriveRef(
   appId: string,
   execution: RuntimeExecutionDerivationInput,
-  identityPolicy: IdentityPolicy,
+  identityPolicy: IdentityPolicy
 ): ExecutionDescriptorRef {
   const {
     kind: _kind,
@@ -196,7 +185,7 @@ function deriveRef(
 
 function deriveServiceBindingPlans(
   input: RuntimeSpineDerivationInput,
-  diagnostics: RuntimeDiagnostic[],
+  diagnostics: RuntimeDiagnostic[]
 ): readonly ServiceBindingPlan[] {
   const plans: ServiceBindingPlan[] = [];
   const seen = new Set<string>();
@@ -241,7 +230,7 @@ function deriveServiceBindingPlans(
 }
 
 function deriveSurfaceRuntimePlans(
-  refs: readonly ExecutionDescriptorRef[],
+  refs: readonly ExecutionDescriptorRef[]
 ): readonly SurfaceRuntimePlan[] {
   const bySurface = new Map<
     string,
@@ -278,9 +267,7 @@ function uniqueWorkflowRefs(workflowIds: readonly string[]) {
   return [...new Set(workflowIds)].map((workflowId) => ({ workflowId }));
 }
 
-function isServerRouteBoundary(
-  boundary: unknown,
-): boundary is ServerRouteBoundaryKind {
+function isServerRouteBoundary(boundary: unknown): boundary is ServerRouteBoundaryKind {
   return boundary === "plugin.server-api" || boundary === "plugin.server-internal";
 }
 
@@ -329,10 +316,7 @@ function serverRouteExecutionId(input: {
   });
 }
 
-function serverRouteMatchesRef(
-  route: ServerRouteDeclaration,
-  ref: ServerDescriptorRef,
-): boolean {
+function serverRouteMatchesRef(route: ServerRouteDeclaration, ref: ServerDescriptorRef): boolean {
   return (
     route.boundary === ref.boundary &&
     route.role === ref.role &&
@@ -351,7 +335,7 @@ interface ServerRouteDerivationOutput {
 
 function readServerRouteDeclarations(
   factory: ServerRouteDerivationInput,
-  diagnostics: RuntimeDiagnostic[],
+  diagnostics: RuntimeDiagnostic[]
 ): readonly unknown[] {
   try {
     return factory.deriveRoutes();
@@ -366,7 +350,7 @@ function readServerRouteDeclarations(
 
 function isServerRouteDeclaration(
   route: unknown,
-  diagnostics: RuntimeDiagnostic[],
+  diagnostics: RuntimeDiagnostic[]
 ): route is ServerRouteDeclaration {
   const widened = route as {
     readonly boundary?: unknown;
@@ -537,7 +521,7 @@ function deriveServerRouteDescriptors(input: {
 
 function deriveWorkflowDispatcherDescriptors(
   appId: string,
-  dispatchers: readonly WorkflowDispatcherDerivationInput[],
+  dispatchers: readonly WorkflowDispatcherDerivationInput[]
 ): readonly WorkflowDispatcherDescriptor[] {
   return dispatchers.map((dispatcher) => {
     const workflowIds = new Set(dispatcher.workflowIds);
@@ -566,8 +550,7 @@ function deriveWorkflowDispatcherDescriptors(
     return {
       kind: "workflow.dispatcher-descriptor",
       descriptorId:
-        dispatcher.descriptorId ??
-        `dispatcher:${dispatcher.capability}:${dispatcher.surface}`,
+        dispatcher.descriptorId ?? `dispatcher:${dispatcher.capability}:${dispatcher.surface}`,
       appId,
       role: dispatcher.role,
       surface: dispatcher.surface,
@@ -631,14 +614,14 @@ function roleMatches(candidateRole: AppRole | undefined, expectedRole: AppRole |
 
 function lifetimeMatches(
   candidateLifetime: ResourceLifetime,
-  expectedLifetime: ResourceLifetime | undefined,
+  expectedLifetime: ResourceLifetime | undefined
 ): boolean {
   return expectedLifetime === undefined || candidateLifetime === expectedLifetime;
 }
 
 function instanceMatches(
   candidateInstance: string | undefined,
-  expectedInstance: string | undefined,
+  expectedInstance: string | undefined
 ): boolean {
   return expectedInstance === undefined
     ? candidateInstance === undefined
@@ -646,7 +629,7 @@ function instanceMatches(
 }
 
 function collectProviderCycles(
-  edges: readonly ProviderDependencyGraphEdge[],
+  edges: readonly ProviderDependencyGraphEdge[]
 ): readonly RuntimeDiagnostic[] {
   const dependencies = new Map<string, Set<string>>();
   const labels = new Map<string, string>();
@@ -702,7 +685,7 @@ function collectProviderCycles(
 }
 
 export function deriveProviderDependencyGraph(
-  profile: RuntimeSpineDerivationInput["profile"],
+  profile: RuntimeSpineDerivationInput["profile"]
 ): ProviderDependencyGraph | undefined {
   if (!profile) return undefined;
 
@@ -739,7 +722,7 @@ export function deriveProviderDependencyGraph(
           candidate.resource.id === requirement.resource.id &&
           roleMatches(candidate.role, expectedRole) &&
           lifetimeMatches(candidate.lifetime, requirement.lifetime) &&
-          instanceMatches(candidate.instance, requirement.instance),
+          instanceMatches(candidate.instance, requirement.instance)
       );
 
       edges.push({
@@ -750,9 +733,7 @@ export function deriveProviderDependencyGraph(
         optional: requirement.optional ?? false,
         reason: requirement.reason,
         matchedProviderId: matchedSelection?.provider.id,
-        matchedProviderKey: matchedSelection
-          ? providerDependencyNode(matchedSelection)
-          : undefined,
+        matchedProviderKey: matchedSelection ? providerDependencyNode(matchedSelection) : undefined,
       });
 
       if (!requirement.optional && !matchedSelection) {
@@ -776,7 +757,7 @@ export function deriveProviderDependencyGraph(
 }
 
 function deriveNegativeSpaceDiagnostics(
-  refs: readonly ExecutionDescriptorRef[],
+  refs: readonly ExecutionDescriptorRef[]
 ): readonly RuntimeDiagnostic[] {
   const diagnostics: RuntimeDiagnostic[] = [];
   // This is a lab-only membership diagnostic: it verifies that each async step
@@ -818,9 +799,7 @@ function deriveNegativeSpaceDiagnostics(
   return diagnostics;
 }
 
-export function deriveRuntimeSpine(
-  input: RuntimeSpineDerivationInput,
-): RuntimeSpineDerivation {
+export function deriveRuntimeSpine(input: RuntimeSpineDerivationInput): RuntimeSpineDerivation {
   // Derivation is the contained SDK-extraction substitute for this lab. It
   // accepts explicit declarations and cold route factories, then emits refs,
   // inventories, and table inputs without treating descriptor bodies as portable
@@ -871,12 +850,10 @@ export function deriveRuntimeSpine(
   const serverRouteDescriptors = serverRouteDerivation.routeDescriptors;
   const workflowDispatcherDescriptors = deriveWorkflowDispatcherDescriptors(
     input.appId,
-    input.dispatchers ?? [],
+    input.dispatchers ?? []
   );
   diagnostics.push(
-    ...workflowDispatcherDescriptors.flatMap(
-      (descriptor) => descriptor.diagnostics,
-    ),
+    ...workflowDispatcherDescriptors.flatMap((descriptor) => descriptor.diagnostics)
   );
 
   const normalizedGraph: NormalizedAuthoringGraph = {

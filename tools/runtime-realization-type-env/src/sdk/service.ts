@@ -57,7 +57,7 @@ export interface ServiceUse<
 export type ServiceUses = Record<string, ServiceUse<ServiceDefinition<ServiceModules>>>;
 
 export function useService<const TService extends ServiceDefinition<ServiceModules>>(
-  service: TService,
+  service: TService
 ): ServiceUse<TService> {
   return {
     kind: "service.use",
@@ -65,30 +65,21 @@ export function useService<const TService extends ServiceDefinition<ServiceModul
   };
 }
 
-export type ServiceContractOf<TUse> =
-  TUse extends ServiceUse<infer TService> ? TService : never;
+export type ServiceContractOf<TUse> = TUse extends ServiceUse<infer TService> ? TService : never;
 
 export type ProcedureInput<TProcedure> =
-  TProcedure extends ServiceProcedure<infer TInput, unknown, unknown>
-    ? TInput
-    : never;
+  TProcedure extends ServiceProcedure<infer TInput, unknown, unknown> ? TInput : never;
 
 export type ProcedureOutput<TProcedure> =
-  TProcedure extends ServiceProcedure<unknown, infer TOutput, unknown>
-    ? TOutput
-    : never;
+  TProcedure extends ServiceProcedure<unknown, infer TOutput, unknown> ? TOutput : never;
 
 export type ProcedureError<TProcedure> =
-  TProcedure extends ServiceProcedure<unknown, unknown, infer TError>
-    ? TError
-    : never;
+  TProcedure extends ServiceProcedure<unknown, unknown, infer TError> ? TError : never;
 
-export type InvocationBoundServiceClient<
-  TService extends ServiceDefinition<ServiceModules>,
-> = {
+export type InvocationBoundServiceClient<TService extends ServiceDefinition<ServiceModules>> = {
   readonly [TModule in keyof TService["modules"]]: {
     readonly [TProcedure in keyof TService["modules"][TModule]]: (
-      input: ProcedureInput<TService["modules"][TModule][TProcedure]>,
+      input: ProcedureInput<TService["modules"][TModule][TProcedure]>
     ) => RawrEffect<
       ProcedureOutput<TService["modules"][TModule][TProcedure]>,
       ProcedureError<TService["modules"][TModule][TProcedure]>
@@ -123,12 +114,7 @@ export interface ServiceProcedureExecutionContext<TInput> {
 
 export interface ServiceProcedureImplementer<TInput, TOutput, TError = never> {
   effect<TRequirements>(
-    fn: EffectBody<
-      ServiceProcedureExecutionContext<TInput>,
-      TOutput,
-      TError,
-      TRequirements
-    >,
+    fn: EffectBody<ServiceProcedureExecutionContext<TInput>, TOutput, TError, TRequirements>
   ): ExecutionDescriptor<TInput, TOutput, TError, ServiceProcedureExecutionContext<TInput>>;
 }
 
@@ -143,7 +129,7 @@ export type ServiceImplementer<TService extends ServiceDefinition<ServiceModules
 };
 
 export function implementService<const TService extends ServiceDefinition<ServiceModules>>(
-  service: TService,
+  service: TService
 ): ServiceImplementer<TService> {
   void service;
   return new Proxy(
@@ -163,9 +149,9 @@ export function implementService<const TService extends ServiceDefinition<Servic
                 },
               };
             },
-          },
+          }
         );
       },
-    },
+    }
   ) as ServiceImplementer<TService>;
 }

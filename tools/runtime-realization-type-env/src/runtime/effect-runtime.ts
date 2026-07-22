@@ -1,9 +1,4 @@
-import {
-  Effect as VendorEffect,
-  Exit,
-  Layer,
-  ManagedRuntime,
-} from "effect";
+import { Effect as VendorEffect, Exit, Layer, ManagedRuntime } from "effect";
 import type { RawrEffect } from "../sdk/effect";
 
 /**
@@ -15,7 +10,7 @@ export interface EffectRuntimeAccess {
   readonly kind: "effect.runtime-access";
   runPromiseExit<TOutput, TError>(
     effect: RawrEffect<TOutput, TError, never>,
-    options?: { readonly signal?: AbortSignal },
+    options?: { readonly signal?: AbortSignal }
   ): Promise<Exit.Exit<TOutput, TError>>;
   dispose(): Promise<void>;
 }
@@ -36,7 +31,7 @@ export function createManagedEffectRuntimeAccess(): EffectRuntimeAccess {
 
 export function runRawrEffectExit<TOutput, TError>(
   effect: RawrEffect<TOutput, TError, never>,
-  options?: { readonly signal?: AbortSignal },
+  options?: { readonly signal?: AbortSignal }
 ): Promise<Exit.Exit<TOutput, TError>> {
   return VendorEffect.runPromiseExit(effect, options);
 }

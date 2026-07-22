@@ -1,13 +1,7 @@
 import type { Exit } from "effect";
-import type {
-  ExecutionDescriptorRef,
-  ProviderEffectBoundaryKind,
-} from "../spine/artifacts";
+import type { ExecutionDescriptorRef, ProviderEffectBoundaryKind } from "../spine/artifacts";
 import { Cause } from "../vendor/effect/runtime";
-import {
-  redactRuntimeRecordAttributes,
-  type RuntimeRecordAttributes,
-} from "./catalog";
+import { redactRuntimeRecordAttributes, type RuntimeRecordAttributes } from "./catalog";
 
 /**
  * Boundary policies are keyed to the exact matrix cells:
@@ -21,11 +15,7 @@ export type RuntimeBoundaryPolicyBoundary =
   | ExecutionDescriptorRef["boundary"]
   | ProviderEffectBoundaryKind;
 
-export type RuntimeBoundaryExitClass =
-  | "success"
-  | "failure"
-  | "defect"
-  | "interrupted";
+export type RuntimeBoundaryExitClass = "success" | "failure" | "defect" | "interrupted";
 
 export interface RuntimeBoundaryRetryPolicy {
   readonly maxAttempts: number;
@@ -104,7 +94,7 @@ function assertPositiveInteger(value: number, label: string): void {
 }
 
 function normalizeInterruptionPolicy(
-  interruption: RuntimeBoundaryPolicyInput["interruption"],
+  interruption: RuntimeBoundaryPolicyInput["interruption"]
 ): RuntimeBoundaryInterruptionPolicy | undefined {
   if (!interruption) return undefined;
 
@@ -120,7 +110,7 @@ function normalizeInterruptionPolicy(
  * handle itself is never retained in the policy or record attributes.
  */
 export function createRuntimeBoundaryPolicy(
-  input: RuntimeBoundaryPolicyInput,
+  input: RuntimeBoundaryPolicyInput
 ): RuntimeBoundaryPolicy {
   if (input.timeoutMs !== undefined) {
     assertPositiveInteger(input.timeoutMs, "boundary timeoutMs");
@@ -154,7 +144,7 @@ export function createRuntimeBoundaryPolicy(
  * records only carry the primitive interruption policy.
  */
 export function createRuntimeBoundaryPolicyResolution(
-  input: RuntimeBoundaryPolicyInput,
+  input: RuntimeBoundaryPolicyInput
 ): RuntimeBoundaryPolicyResolution {
   return {
     policy: createRuntimeBoundaryPolicy(input),
@@ -163,7 +153,7 @@ export function createRuntimeBoundaryPolicyResolution(
 }
 
 export function classifyRuntimeBoundaryExit(
-  exit: Exit.Exit<unknown, unknown>,
+  exit: Exit.Exit<unknown, unknown>
 ): RuntimeBoundaryExitClassification {
   if (exit._tag === "Success") {
     return {
@@ -234,19 +224,15 @@ export function createRuntimeBoundaryPolicyRecord(input: {
 
   return {
     ...record,
-    ...(input.policy.timeoutMs !== undefined
-      ? { timeoutMs: input.policy.timeoutMs }
-      : {}),
+    ...(input.policy.timeoutMs !== undefined ? { timeoutMs: input.policy.timeoutMs } : {}),
     ...(input.policy.retry ? { retry: input.policy.retry } : {}),
-    ...(input.policy.interruption
-      ? { interruption: input.policy.interruption }
-      : {}),
+    ...(input.policy.interruption ? { interruption: input.policy.interruption } : {}),
     ...(input.exit ? { exit: classifyRuntimeBoundaryExit(input.exit) } : {}),
   };
 }
 
 export function runtimeBoundaryPolicyRecordAttributes(
-  record: RuntimeBoundaryPolicyRecord,
+  record: RuntimeBoundaryPolicyRecord
 ): RuntimeRecordAttributes {
   const attributes: Record<string, unknown> = {
     policyId: record.policyId,

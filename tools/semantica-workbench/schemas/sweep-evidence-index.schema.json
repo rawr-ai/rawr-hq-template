@@ -49,7 +49,15 @@
     },
     "sourceSpan": {
       "type": "object",
-      "required": ["source_path", "line_start", "line_end", "char_start", "char_end", "char_span_kind", "text"],
+      "required": [
+        "source_path",
+        "line_start",
+        "line_end",
+        "char_start",
+        "char_end",
+        "char_span_kind",
+        "text"
+      ],
       "properties": {
         "source_path": { "type": "string", "minLength": 1 },
         "line_start": { "type": "integer", "minimum": 1 },
@@ -64,7 +72,16 @@
     },
     "findingRow": {
       "type": "object",
-      "required": ["index_id", "kind", "source_path", "line_start", "line_end", "source_span", "review_action", "confidence"],
+      "required": [
+        "index_id",
+        "kind",
+        "source_path",
+        "line_start",
+        "line_end",
+        "source_span",
+        "review_action",
+        "confidence"
+      ],
       "properties": {
         "index_id": { "type": "string", "minLength": 1 },
         "finding_id": { "type": "string" },
@@ -94,7 +111,15 @@
     },
     "claimRow": {
       "type": "object",
-      "required": ["index_id", "source_path", "line_start", "line_end", "source_span", "confidence", "promotion_allowed"],
+      "required": [
+        "index_id",
+        "source_path",
+        "line_start",
+        "line_end",
+        "source_span",
+        "confidence",
+        "promotion_allowed"
+      ],
       "properties": {
         "index_id": { "type": "string", "minLength": 1 },
         "claim_id": { "type": "string" },

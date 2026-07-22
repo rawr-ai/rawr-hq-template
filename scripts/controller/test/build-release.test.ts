@@ -1,13 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import {
-  chmod,
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  stat,
-  writeFile,
-} from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -121,7 +113,7 @@ describe("controller release builder", () => {
       {
         controllerDigest: first.controllerDigest,
         releaseDirectoryName: first.controllerDigest,
-      },
+      }
     );
 
     expect(first.kind).toBe("materialized");

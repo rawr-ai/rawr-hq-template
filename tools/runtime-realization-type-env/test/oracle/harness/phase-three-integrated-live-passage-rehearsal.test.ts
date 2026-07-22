@@ -35,10 +35,7 @@ import {
   type RuntimeTelemetryRecord,
   type StartedRuntimeElysiaListener,
 } from "../../../src/oracle";
-import {
-  compileRuntimeSpine,
-  deriveRuntimeSpine,
-} from "../../../src/spine/simulate";
+import { compileRuntimeSpine, deriveRuntimeSpine } from "../../../src/spine/simulate";
 import type {
   AsyncStepBridgePayload,
   RuntimeSpineCompilation,
@@ -75,14 +72,8 @@ interface InngestStepErrorOp {
 }
 
 function assertNoLiveHandles(value: unknown): void {
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
-    throw new Error(
-      `phase three integrated passage leaked live handle: ${String(value)}`,
-    );
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
+    throw new Error(`phase three integrated passage leaked live handle: ${String(value)}`);
   }
 
   if (value === null || typeof value !== "object") return;
@@ -102,13 +93,11 @@ function collectFunctionPaths(value: unknown, path = "$"): string[] {
   if (!value || typeof value !== "object") return [];
 
   if (Array.isArray(value)) {
-    return value.flatMap((item, index) =>
-      collectFunctionPaths(item, `${path}[${index}]`),
-    );
+    return value.flatMap((item, index) => collectFunctionPaths(item, `${path}[${index}]`));
   }
 
   return Object.entries(value as Record<string, unknown>).flatMap(([key, entry]) =>
-    collectFunctionPaths(entry, `${path}.${key}`),
+    collectFunctionPaths(entry, `${path}.${key}`)
   );
 }
 
@@ -220,27 +209,22 @@ function deriveAndCompileSpine(): RuntimeSpineCompilation {
           ],
         },
       ],
-    }),
+    })
   );
 }
 
-function serverPayloadFrom(
-  compilation: RuntimeSpineCompilation,
-): ServerAdapterCallbackPayload {
+function serverPayloadFrom(compilation: RuntimeSpineCompilation): ServerAdapterCallbackPayload {
   const payload = compilation.adapterLoweringPlan.payloads.find(
     (entry): entry is ServerAdapterCallbackPayload =>
-      entry.kind === "adapter.server-callback-payload",
+      entry.kind === "adapter.server-callback-payload"
   );
   if (!payload) throw new Error("missing integrated live-passage server payload");
   return payload;
 }
 
-function asyncPayloadFrom(
-  compilation: RuntimeSpineCompilation,
-): AsyncStepBridgePayload {
+function asyncPayloadFrom(compilation: RuntimeSpineCompilation): AsyncStepBridgePayload {
   const payload = compilation.adapterLoweringPlan.payloads.find(
-    (entry): entry is AsyncStepBridgePayload =>
-      entry.kind === "adapter.async-step-bridge-payload",
+    (entry): entry is AsyncStepBridgePayload => entry.kind === "adapter.async-step-bridge-payload"
   );
   if (!payload) throw new Error("missing integrated live-passage async payload");
   return payload;
@@ -279,7 +263,7 @@ function createClients(): ConstructionBoundServiceClients<
 }
 
 function providerResourcesFromStartedValues(
-  startedValues: ReadonlyMap<string, unknown>,
+  startedValues: ReadonlyMap<string, unknown>
 ): readonly ContainedRuntimeResourceDefinition[] {
   return [...startedValues.values()].flatMap((started) => {
     const providerValue = started as ProviderProvisionedValue | undefined;
@@ -314,12 +298,10 @@ function workflowDispatcher(): WorkflowDispatcher {
 function createObservedResourceAccess(
   resources: readonly ContainedRuntimeResourceDefinition[],
   onAvailableResources?: (records: readonly string[]) => void,
-  onRequiredResource?: (resourceId: string) => void,
+  onRequiredResource?: (resourceId: string) => void
 ): ContainedRuntimeResourceAccessProbe {
   const resourceAccess = createContainedRuntimeResourceAccess(resources);
-  onAvailableResources?.(
-    resourceAccess.records().map((record) => record.resourceId),
-  );
+  onAvailableResources?.(resourceAccess.records().map((record) => record.resourceId));
 
   return {
     kind: resourceAccess.kind,
@@ -361,13 +343,13 @@ function createObservedResourceAccess(
 function createServerInvocationContext(
   resources: readonly ContainedRuntimeResourceDefinition[],
   onAvailableResources?: (records: readonly string[]) => void,
-  onRequiredResource?: (resourceId: string) => void,
+  onRequiredResource?: (resourceId: string) => void
 ) {
   return (request: { readonly input: unknown; readonly requestId?: string }) => {
     const resourceAccess = createObservedResourceAccess(
       resources,
       onAvailableResources,
-      onRequiredResource,
+      onRequiredResource
     );
 
     return {
@@ -396,13 +378,13 @@ function createServerInvocationContext(
 function createAsyncInvocationContext(
   resources: readonly ContainedRuntimeResourceDefinition[],
   onAvailableResources?: (records: readonly string[]) => void,
-  onRequiredResource?: (resourceId: string) => void,
+  onRequiredResource?: (resourceId: string) => void
 ) {
   return (event: { readonly name: string; readonly data: unknown }) => {
     const resourceAccess = createObservedResourceAccess(
       resources,
       onAvailableResources,
-      onRequiredResource,
+      onRequiredResource
     );
 
     return {
@@ -467,27 +449,21 @@ function appendTelemetryRecords(
     readonly source: string;
     readonly runId: string;
     readonly events: readonly RuntimeTelemetryEventLike[];
-  },
+  }
 ) {
   records.push(
     ...projectRuntimeEventsToTelemetryRecords({
       ...input,
       startingSequence: records.length,
-    }),
+    })
   );
 }
 
-async function suppressExpectedInngestStoppedError<T>(
-  task: () => Promise<T>,
-): Promise<T> {
+async function suppressExpectedInngestStoppedError<T>(task: () => Promise<T>): Promise<T> {
   const originalError = console.error;
   console.error = (...args: unknown[]) => {
     const text = args.map(String).join("\n");
-    if (
-      text.includes(
-        "async harness async:hq:phase-three-integrated-live-passage is stopped",
-      )
-    ) {
+    if (text.includes("async harness async:hq:phase-three-integrated-live-passage is stopped")) {
       return;
     }
     originalError(...args);
@@ -529,10 +505,7 @@ describe("phase three integrated live-passage rehearsal", () => {
     expect(compilation.portableArtifact.executionDescriptorRefs).toHaveLength(2);
     expect(collectFunctionPaths(compilation.portableArtifact)).toEqual([]);
     expect(compilation.adapterLoweringPlan.diagnostics).toEqual([]);
-    expect(compilation.harnessPlans.map((plan) => plan.harness)).toEqual([
-      "server",
-      "async",
-    ]);
+    expect(compilation.harnessPlans.map((plan) => plan.harness)).toEqual(["server", "async"]);
 
     if (!compilation.providerDependencyGraph) {
       throw new Error("integrated passage expected provider dependency graph");
@@ -592,9 +565,7 @@ describe("phase three integrated live-passage rehearsal", () => {
       },
     };
 
-    const resources = providerResourcesFromStartedValues(
-      providerResult.startedValues(),
-    );
+    const resources = providerResourcesFromStartedValues(providerResult.startedValues());
     const expectedResourceIds = resources.map((resource) => resource.id).sort();
     expect(expectedResourceIds).not.toEqual([]);
 
@@ -609,7 +580,7 @@ describe("phase three integrated live-passage rehearsal", () => {
       },
       (resourceId) => {
         serverRequiredResourceIds.push(resourceId);
-      },
+      }
     );
     const asyncContext = createAsyncInvocationContext(
       resources,
@@ -618,7 +589,7 @@ describe("phase three integrated live-passage rehearsal", () => {
       },
       (resourceId) => {
         asyncRequiredResourceIds.push(resourceId);
-      },
+      }
     );
     const serverHarness = mountOracleServerHarness({
       harnessId: "server:hq:phase-three-integrated-live-passage",
@@ -683,11 +654,10 @@ describe("phase three integrated live-passage rehearsal", () => {
             title: "Phase Three integrated live passage",
             secretToken: "phase-three-integrated-server-request-secret",
           },
-        }),
+        })
       );
       expect(response.status).toBe(200);
-      const serverBody =
-        (await response.json()) as OrpcEncoded<RuntimeOrpcServerResponse>;
+      const serverBody = (await response.json()) as OrpcEncoded<RuntimeOrpcServerResponse>;
       expect(serverBody.json.output).toEqual({
         id: "created-via-phase-three-integrated-live-passage",
         title: "Phase Three integrated live passage",
@@ -702,7 +672,7 @@ describe("phase three integrated live-passage rehearsal", () => {
             requestedBy: "actor-phase-three-integrated",
             secretToken: "phase-three-integrated-async-event-secret",
           },
-        }),
+        })
       );
       expect(asyncResponse.status).toBe(206);
       const asyncBody =
@@ -714,9 +684,7 @@ describe("phase three integrated live-passage rehearsal", () => {
       expect(asyncStep.data.output).toEqual({ synced: true });
 
       expect(runtimeInvokeCount).toBe(2);
-      expect(effectRuntimeRunCount).toBeGreaterThanOrEqual(
-        effectRunCountAfterProviderStart + 2,
-      );
+      expect(effectRuntimeRunCount).toBeGreaterThanOrEqual(effectRunCountAfterProviderStart + 2);
       expect(serverAvailableResourceSnapshots).toEqual([expectedResourceIds]);
       expect(asyncAvailableResourceSnapshots).toEqual([expectedResourceIds]);
       expect(serverRequiredResourceIds).toEqual([EmailSenderResource.id]);
@@ -763,31 +731,25 @@ describe("phase three integrated live-passage rehearsal", () => {
               title: "should not delegate after listener stop",
               secretToken: "phase-three-integrated-post-listener-secret",
             },
-          }),
-        ),
+          })
+        )
       ).rejects.toThrow();
-      expect(networkFetchUrls).toEqual([
-        String(requestUrl),
-        String(requestUrl),
-      ]);
-      expect(listener.records().slice(countsBeforeListenerStop.listener).map((record) => record.phase)).toEqual([
+      expect(networkFetchUrls).toEqual([String(requestUrl), String(requestUrl)]);
+      expect(
+        listener
+          .records()
+          .slice(countsBeforeListenerStop.listener)
+          .map((record) => record.phase)
+      ).toEqual([
         "elysia.listener.stopping",
         "elysia.listener.vendor.stopped",
         "elysia.listener.stopped",
       ]);
       expect(host.records()).toHaveLength(countsBeforeListenerStop.host);
-      expect(serverBoundary.records()).toHaveLength(
-        countsBeforeListenerStop.serverBoundary,
-      );
-      expect(serverHarness.records()).toHaveLength(
-        countsBeforeListenerStop.serverHarness,
-      );
-      expect(asyncBoundary.records()).toHaveLength(
-        countsBeforeListenerStop.asyncBoundary,
-      );
-      expect(asyncHarness.records()).toHaveLength(
-        countsBeforeListenerStop.asyncHarness,
-      );
+      expect(serverBoundary.records()).toHaveLength(countsBeforeListenerStop.serverBoundary);
+      expect(serverHarness.records()).toHaveLength(countsBeforeListenerStop.serverHarness);
+      expect(asyncBoundary.records()).toHaveLength(countsBeforeListenerStop.asyncBoundary);
+      expect(asyncHarness.records()).toHaveLength(countsBeforeListenerStop.asyncHarness);
       expect(runtimeInvokeCount).toBe(countsBeforeListenerStop.runtimeInvokeCount);
 
       await asyncHarness.stop();
@@ -799,9 +761,7 @@ describe("phase three integrated live-passage rehearsal", () => {
       await countedRuntime.dispose();
       expect(runtimeDisposed).toBe(true);
       expect(effectRuntimeDisposed).toBe(true);
-      expect(effectRuntimeRunCount).toBeGreaterThanOrEqual(
-        effectRunCountAfterProviderStart + 2,
-      );
+      expect(effectRuntimeRunCount).toBeGreaterThanOrEqual(effectRunCountAfterProviderStart + 2);
 
       const invokeCountAfterStop = runtimeInvokeCount;
       const postStopServerResult = await serverBoundary.handle(
@@ -812,23 +772,22 @@ describe("phase three integrated live-passage rehearsal", () => {
             title: "Phase Three integrated post-stop server",
             secretToken: "phase-three-integrated-post-stop-server-secret",
           },
-        }),
+        })
       );
       expect(postStopServerResult.matched).toBe(true);
       expect(postStopServerResult.response.status).toBeGreaterThanOrEqual(400);
 
-      const postStopAsyncResponse = await suppressExpectedInngestStoppedError(
-        () =>
-          asyncBoundary.handle(
-            asyncBoundary.createRequest({
-              runId: `${runId}:post-stop`,
-              eventData: {
-                itemId: "item-1",
-                requestedBy: "actor-phase-three-integrated",
-                secretToken: "phase-three-integrated-post-stop-async-secret",
-              },
-            }),
-          ),
+      const postStopAsyncResponse = await suppressExpectedInngestStoppedError(() =>
+        asyncBoundary.handle(
+          asyncBoundary.createRequest({
+            runId: `${runId}:post-stop`,
+            eventData: {
+              itemId: "item-1",
+              requestedBy: "actor-phase-three-integrated",
+              secretToken: "phase-three-integrated-post-stop-async-secret",
+            },
+          })
+        )
       );
       expect(postStopAsyncResponse.status).toBe(206);
       const postStopAsyncBody =
@@ -837,8 +796,7 @@ describe("phase three integrated live-passage rehearsal", () => {
         op: "StepError",
         name: asyncPayload.stepId,
         error: {
-          message:
-            "async harness async:hq:phase-three-integrated-live-passage is stopped",
+          message: "async harness async:hq:phase-three-integrated-live-passage is stopped",
         },
       });
       expect(runtimeInvokeCount).toBe(invokeCountAfterStop);
@@ -931,7 +889,7 @@ describe("phase three integrated live-passage rehearsal", () => {
           runId,
           catalog: providerResult.catalog(),
           startingSequence: telemetryRecords.length,
-        }),
+        })
       );
 
       let exportedEndpoint = "";
@@ -971,8 +929,7 @@ describe("phase three integrated live-passage rehearsal", () => {
             targetId: "candidate:phase-three-integrated-live-passage",
             role: "server",
             surface: "api",
-            reason:
-              "phase three integrated live passage remains contained simulation proof",
+            reason: "phase three integrated live passage remains contained simulation proof",
             attributes: {
               secretToken: "phase-three-integrated-placement-secret",
               liveHandle() {},
@@ -1000,7 +957,7 @@ describe("phase three integrated live-passage rehearsal", () => {
           "phase-three.integrated.async.harness",
           "phase-three.integrated.runtime.lifecycle",
           "phase-three.integrated.catalog",
-        ]),
+        ])
       );
       for (const expectedEvent of [
         "provider.acquire",

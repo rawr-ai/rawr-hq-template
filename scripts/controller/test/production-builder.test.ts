@@ -69,7 +69,9 @@ type FilesystemSnapshotEntry = Readonly<{
 }>;
 
 afterEach(async () => {
-  await Promise.all(roots.splice(0).map(async (root) => await rm(root, { recursive: true, force: true })));
+  await Promise.all(
+    roots.splice(0).map(async (root) => await rm(root, { recursive: true, force: true }))
+  );
 });
 
 async function temporaryRoot(label: string): Promise<string> {
@@ -95,20 +97,27 @@ async function snapshotFilesystem(root: string): Promise<readonly FilesystemSnap
       const children = await readdir(entryPath);
       children.sort();
       for (const child of children) {
-        await visit(join(entryPath, child), relativePath === "." ? child : join(relativePath, child));
+        await visit(
+          join(entryPath, child),
+          relativePath === "." ? child : join(relativePath, child)
+        );
       }
       return;
     }
     if (status.isFile()) {
-      entries.push(Object.freeze({
-        ...common,
-        kind: "file",
-        bytes: Buffer.from(await readFile(entryPath)).toString("base64"),
-      }));
+      entries.push(
+        Object.freeze({
+          ...common,
+          kind: "file",
+          bytes: Buffer.from(await readFile(entryPath)).toString("base64"),
+        })
+      );
       return;
     }
     if (status.isSymbolicLink()) {
-      entries.push(Object.freeze({ ...common, kind: "symlink", target: await readlink(entryPath) }));
+      entries.push(
+        Object.freeze({ ...common, kind: "symlink", target: await readlink(entryPath) })
+      );
       return;
     }
     entries.push(Object.freeze({ ...common, kind: "other" }));
@@ -127,26 +136,30 @@ describe("production controller dependency boundary", () => {
     expect(dependencies["@oclif/plugin-plugins"]).toBe("5.4.84");
     expect(dependencies.effect).toBe("3.21.3");
     expect(dependencies.typebox).toBe("1.3.6");
-    expect(Object.values(dependencies).every((version) => !version.startsWith("^") && !version.startsWith("~"))).toBe(true);
+    expect(
+      Object.values(dependencies).every(
+        (version) => !version.startsWith("^") && !version.startsWith("~")
+      )
+    ).toBe(true);
   });
 
   it("rejects protected and missing workspace dependencies before staging", async () => {
     const workspaceRoot = await temporaryRoot("dependency-closure");
     await copyFile(
       resolve(import.meta.dir, "../../..", "bun.lock"),
-      join(workspaceRoot, "bun.lock"),
+      join(workspaceRoot, "bun.lock")
     );
     const protectedRoot = join(workspaceRoot, "plugins", "agents", "fixture");
     await mkdir(protectedRoot, { recursive: true });
     await writeFile(
       join(protectedRoot, "package.json"),
-      JSON.stringify({ name: "@fixture/protected", dependencies: {} }),
+      JSON.stringify({ name: "@fixture/protected", dependencies: {} })
     );
     await expect(
       assertProductionDependencyClosure({
         workspaceRoot,
         projects: [{ name: "@fixture/protected", root: "plugins/agents/fixture" }],
-      }),
+      })
     ).rejects.toThrow("protected project entered production controller closure");
   });
 });
@@ -190,13 +203,10 @@ describe("production controller official manifest", () => {
     expect(canonicalLeft.text).toBe(canonicalRight.text);
     expect(Object.keys(JSON.parse(canonicalLeft.text))).toEqual(["commands", "version"]);
     expect(canonicalLeft.value.commands["agent:plugins:sync"].relativePath).toEqual(
-      left.commands["agent:plugins:sync"].relativePath,
+      left.commands["agent:plugins:sync"].relativePath
     );
     expect(Object.keys(left)).toEqual(["version", "commands"]);
-    expect(Object.keys(left.commands)).toEqual([
-      "agent:plugins:sync",
-      "agent:plugins:check",
-    ]);
+    expect(Object.keys(left.commands)).toEqual(["agent:plugins:sync", "agent:plugins:check"]);
   });
 
   it("preserves native JSON projection and code-unit order for index-like keys", () => {
@@ -213,7 +223,7 @@ describe("production controller official manifest", () => {
 
     expect(serialized.text.indexOf('"10"')).toBeLessThan(serialized.text.indexOf('"2"'));
     expect((JSON.parse(serialized.text) as { generatedAt: string }).generatedAt).toBe(
-      "2026-07-19T00:00:00.000Z",
+      "2026-07-19T00:00:00.000Z"
     );
     expect(manifest.generatedAt).toBeInstanceOf(Date);
     expect(Object.keys(manifest.commands)).toEqual(["2", "10"]);
@@ -223,15 +233,19 @@ describe("production controller official manifest", () => {
 describe("production source provenance", () => {
   it("waits for inherited subprocess pipes to close before returning captured output", async () => {
     const cwd = await temporaryRoot("runner-close");
-    const result = await runCommand(process.execPath, [
-      "-e",
+    const result = await runCommand(
+      process.execPath,
       [
-        'const { spawn } = require("node:child_process");',
-        'const child = spawn(process.execPath, ["-e", "setTimeout(() => process.stdout.write(\\"late\\"), 30)"], { stdio: ["ignore", "inherit", "inherit"] });',
-        "child.unref();",
-        'process.stdout.write("early:");',
-      ].join("\n"),
-    ], { cwd });
+        "-e",
+        [
+          'const { spawn } = require("node:child_process");',
+          'const child = spawn(process.execPath, ["-e", "setTimeout(() => process.stdout.write(\\"late\\"), 30)"], { stdio: ["ignore", "inherit", "inherit"] });',
+          "child.unref();",
+          'process.stdout.write("early:");',
+        ].join("\n"),
+      ],
+      { cwd }
+    );
 
     expect(result.stdout).toBe("early:late");
   });
@@ -258,9 +272,9 @@ describe("production source provenance", () => {
           finalized = true;
           return "materialized";
         },
-      }),
+      })
     ).rejects.toThrow(
-      `production controller source changed during build: expected ${expectedRevision}, received ${observedRevision}`,
+      `production controller source changed during build: expected ${expectedRevision}, received ${observedRevision}`
     );
     expect(finalized).toBe(false);
   });
@@ -278,7 +292,7 @@ describe("production source provenance", () => {
         expectedRevision,
         runner,
         finalize: async () => "materialized",
-      }),
+      })
     ).resolves.toBe("materialized");
   });
 });
@@ -288,7 +302,10 @@ describe("production runtime package staging", () => {
     const sourceRoot = await temporaryRoot("runtime-package");
     await mkdir(join(sourceRoot, "dist", "commands"), { recursive: true });
     await writeFile(join(sourceRoot, "dist", "index.js"), "export const value = 1;\n");
-    await writeFile(join(sourceRoot, "dist", "commands", "hello.js"), "export default class Hello {}\n");
+    await writeFile(
+      join(sourceRoot, "dist", "commands", "hello.js"),
+      "export default class Hello {}\n"
+    );
     await writeFile(
       join(sourceRoot, "package.json"),
       JSON.stringify({
@@ -297,8 +314,12 @@ describe("production runtime package staging", () => {
         main: "./src/index.ts",
         exports: { ".": { types: "./src/index.ts", default: "./src/index.ts" } },
         dependencies: { "@fixture/internal": "workspace:*", inngest: "3.51.0", zod: "3.25.76" },
-        oclif: { commands: "./src/commands", topicSeparator: " ", typescript: { commands: "./src/commands" } },
-      }),
+        oclif: {
+          commands: "./src/commands",
+          topicSeparator: " ",
+          typescript: { commands: "./src/commands" },
+        },
+      })
     );
     const manifest = await createRuntimePackageManifest({
       sourceRoot,
@@ -324,7 +345,7 @@ describe("production runtime package staging", () => {
       JSON.stringify({
         name: "@rawr/controller-production-dependencies",
         dependencies: { "@oclif/core": "4.8.0" },
-      }),
+      })
     );
     const manifest = await writeProductionAppManifest({ appRoot, cliVersion: "1.2.3" });
     expect(manifest).toEqual({
@@ -367,7 +388,10 @@ describe("global stable controller alias", () => {
     await writeFile(launcher, "#!/bin/sh\n", { mode: 0o755 });
     const first = await installGlobalControllerAlias({ globalBinDir: bin, launcherPath: launcher });
     const before = await lstat(first.path);
-    const second = await installGlobalControllerAlias({ globalBinDir: bin, launcherPath: launcher });
+    const second = await installGlobalControllerAlias({
+      globalBinDir: bin,
+      launcherPath: launcher,
+    });
     const after = await lstat(second.path);
     expect(first.kind).toBe("installed");
     expect(second.kind).toBe("converged");
@@ -408,7 +432,7 @@ describe("global stable controller alias", () => {
     await writeFile(launcher, "#!/bin/sh\n", { mode: 0o755 });
     await writeFile(join(bin, "rawr"), "unrelated\n", { mode: 0o755 });
     await expect(
-      installGlobalControllerAlias({ globalBinDir: bin, launcherPath: launcher }),
+      installGlobalControllerAlias({ globalBinDir: bin, launcherPath: launcher })
     ).rejects.toThrow("not a replaceable symlink");
     expect(await readFile(join(bin, "rawr"), "utf8")).toBe("unrelated\n");
   });
@@ -423,7 +447,9 @@ describe("global stable controller alias", () => {
         launcherPath: "/controller/bin/rawr",
         observe: async (phase) => {
           if (phase !== "before-replace") return;
-          const temporaryName = (await readdir(globalBinDir)).find((name) => name.startsWith("rawr.tmp-"));
+          const temporaryName = (await readdir(globalBinDir)).find((name) =>
+            name.startsWith("rawr.tmp-")
+          );
           if (temporaryName === undefined) throw new Error("fixture alias temporary missing");
           const temporaryPath = join(globalBinDir, temporaryName);
           await rm(temporaryPath);
@@ -437,21 +463,23 @@ describe("global stable controller alias", () => {
 
     expect(observed).toBeInstanceOf(AggregateError);
     expect((observed as AggregateError).errors.map(String).join("\n")).toContain(
-      "fixture alias primary failure",
+      "fixture alias primary failure"
     );
     expect((observed as AggregateError).errors).toHaveLength(2);
   });
 });
 
-async function buildSemanticFixture(options: {
-  mismatch?: boolean;
-  compositionPlugins?: readonly string[];
-  dataRoot?: string;
-  sourceRevision?: string;
-  platform?: "darwin" | "linux";
-  architecture?: "arm64" | "x64";
-  excludedPackageId?: string;
-} = {}): Promise<{
+async function buildSemanticFixture(
+  options: {
+    mismatch?: boolean;
+    compositionPlugins?: readonly string[];
+    dataRoot?: string;
+    sourceRevision?: string;
+    platform?: "darwin" | "linux";
+    architecture?: "arm64" | "x64";
+    excludedPackageId?: string;
+  } = {}
+): Promise<{
   releaseRoot: string;
   controllerDigest: string;
   workspaceRoot: string;
@@ -476,7 +504,7 @@ describe("official static surface verification", () => {
       requireVerifiedOfficialControllerRelease({
         releaseRoot: fixture.releaseRoot,
         expectedDigest: fixture.controllerDigest,
-      }),
+      })
     ).rejects.toThrow("CONTROLLER_OFFICIAL_SURFACE_MISMATCH");
   });
 
@@ -488,14 +516,14 @@ describe("official static surface verification", () => {
       requireVerifiedOfficialControllerRelease({
         releaseRoot: fixture.releaseRoot,
         expectedDigest: fixture.controllerDigest,
-      }),
+      })
     ).rejects.toThrow("CONTROLLER_OFFICIAL_SURFACE_MISMATCH: production app composition");
   });
 });
 
 function cleanStartProbeRunner(
   calls: Array<Readonly<{ digest: string; argv: readonly string[] }>>,
-  fail?: Readonly<{ digest: string; argv: readonly string[] }>,
+  fail?: Readonly<{ digest: string; argv: readonly string[] }>
 ): CommandRunner {
   return async (executable, args, options) => {
     const environment = options.env;
@@ -506,11 +534,7 @@ function cleanStartProbeRunner(
       throw new Error("clean-start probe context missing");
     }
     expect(executable).toBe(join(releaseRoot, CONTROLLER_RUNTIME_PATH));
-    expect(args.slice(0, 3)).toEqual([
-      "--config=/dev/null",
-      "--no-env-file",
-      "--no-install",
-    ]);
+    expect(args.slice(0, 3)).toEqual(["--config=/dev/null", "--no-env-file", "--no-install"]);
     for (const name of [
       "BUN_CONFIG",
       "BUN_INSTALL",
@@ -575,7 +599,7 @@ describe("production controller activation", () => {
     await symlink(process.execPath, join(releaseRoot, CONTROLLER_RUNTIME_PATH));
     await writeFile(
       join(releaseRoot, CONTROLLER_ENTRY_PATH),
-      'if (process.env.RAWR_HOSTILE_ENV !== undefined) throw new Error("hostile dotenv loaded");\n',
+      'if (process.env.RAWR_HOSTILE_ENV !== undefined) throw new Error("hostile dotenv loaded");\n'
     );
 
     await probeControllerCleanStart({
@@ -642,7 +666,7 @@ describe("production controller activation", () => {
         "--data-root",
         dataRoot,
         "--no-global-alias",
-      ]),
+      ])
     ).rejects.toThrow("activate requires an existing controller digest");
     await expect(
       parseProductionControllerCliOptions([
@@ -653,7 +677,7 @@ describe("production controller activation", () => {
         "--no-global-alias",
         "--bun-binary",
         process.execPath,
-      ]),
+      ])
     ).rejects.toThrow("valid only for production controller install");
   });
 
@@ -707,7 +731,7 @@ describe("production controller activation", () => {
       selectorDurability: "confirmed",
     });
     expect(await readFile(controllerSelectorPath(dataRoot), "utf8")).toBe(
-      `${releaseA.controllerDigest}\n`,
+      `${releaseA.controllerDigest}\n`
     );
     expect(calls.map((call) => call.argv)).toEqual([
       ["ambient-env"],
@@ -729,7 +753,7 @@ describe("production controller activation", () => {
       ...Array(4).fill(releaseA.controllerDigest),
     ]);
     expect(formatProductionControllerResult(reselectedA)).toContain(
-      "replaced different, durability confirmed",
+      "replaced different, durability confirmed"
     );
     expect(JSON.parse(JSON.stringify(reselectedA))).toMatchObject({
       activation: {
@@ -870,13 +894,15 @@ describe("production controller activation", () => {
     await writeFile(controllerSelectorPath(dataRoot), `${release.controllerDigest}\n`);
     const before = await snapshotFilesystem(dataRoot);
 
-    await expect(activateProductionController({
-      dataRoot,
-      controllerDigest: release.controllerDigest,
-      commandRunner: async () => {
-        throw new Error("foreign-host release must not probe");
-      },
-    })).rejects.toThrow("CONTROLLER_RUNTIME_HOST_MISMATCH");
+    await expect(
+      activateProductionController({
+        dataRoot,
+        controllerDigest: release.controllerDigest,
+        commandRunner: async () => {
+          throw new Error("foreign-host release must not probe");
+        },
+      })
+    ).rejects.toThrow("CONTROLLER_RUNTIME_HOST_MISMATCH");
 
     expect(await snapshotFilesystem(dataRoot)).toEqual(before);
   });
@@ -895,15 +921,17 @@ describe("production controller activation", () => {
     const beforeBytes = await readFile(selectorPath);
     const beforeStatus = await lstat(selectorPath);
 
-    await expect(activateProductionController({
-      dataRoot,
-      controllerDigest: releaseB.controllerDigest,
-      globalBinDir,
-      commandRunner: cleanStartProbeRunner([]),
-      globalAliasWriteObserver: (phase) => {
-        if (phase === "before-replace") throw new Error("fixture alias precommit failure");
-      },
-    })).rejects.toThrow("fixture alias precommit failure");
+    await expect(
+      activateProductionController({
+        dataRoot,
+        controllerDigest: releaseB.controllerDigest,
+        globalBinDir,
+        commandRunner: cleanStartProbeRunner([]),
+        globalAliasWriteObserver: (phase) => {
+          if (phase === "before-replace") throw new Error("fixture alias precommit failure");
+        },
+      })
+    ).rejects.toThrow("fixture alias precommit failure");
 
     expect(await readFile(selectorPath)).toEqual(beforeBytes);
     const afterStatus = await lstat(selectorPath);
@@ -919,15 +947,17 @@ describe("production controller activation", () => {
     const globalBinDir = await temporaryRoot("activation-fresh-selector-failure-bin");
     const release = await buildSemanticFixture({ dataRoot, sourceRevision: "3".repeat(40) });
 
-    await expect(activateProductionController({
-      dataRoot,
-      controllerDigest: release.controllerDigest,
-      globalBinDir,
-      commandRunner: cleanStartProbeRunner([]),
-      selectorStore: createNodeControllerSelectorStore((phase) => {
-        if (phase === "before-replace") throw new Error("fixture selector precommit failure");
-      }),
-    })).rejects.toThrow("fixture selector precommit failure");
+    await expect(
+      activateProductionController({
+        dataRoot,
+        controllerDigest: release.controllerDigest,
+        globalBinDir,
+        commandRunner: cleanStartProbeRunner([]),
+        selectorStore: createNodeControllerSelectorStore((phase) => {
+          if (phase === "before-replace") throw new Error("fixture selector precommit failure");
+        }),
+      })
+    ).rejects.toThrow("fixture selector precommit failure");
 
     await expect(lstat(controllerSelectorPath(dataRoot))).rejects.toThrow();
     await expect(lstat(join(globalBinDir, "rawr"))).rejects.toThrow();
@@ -1015,15 +1045,17 @@ describe("production controller activation", () => {
       replace: delegate.replace,
     };
 
-    await expect(activateProductionController({
-      dataRoot,
-      controllerDigest: release.controllerDigest,
-      globalBinDir,
-      selectorStore,
-      commandRunner: async () => {
-        throw new Error("auxiliary selector race must not probe");
-      },
-    })).rejects.toThrow("CONTROLLER_SELECTION_CHANGED_DURING_AUXILIARY_REPAIR");
+    await expect(
+      activateProductionController({
+        dataRoot,
+        controllerDigest: release.controllerDigest,
+        globalBinDir,
+        selectorStore,
+        commandRunner: async () => {
+          throw new Error("auxiliary selector race must not probe");
+        },
+      })
+    ).rejects.toThrow("CONTROLLER_SELECTION_CHANGED_DURING_AUXILIARY_REPAIR");
 
     await expect(lstat(join(globalBinDir, "rawr"))).rejects.toThrow();
     expect(await readdir(globalBinDir)).toEqual([]);
@@ -1061,7 +1093,7 @@ describe("production controller activation", () => {
         globalAliasWriteObserver: async (phase) => {
           if (phase !== "before-replace") return;
           const temporaryName = (await readdir(globalBinDir)).find((name) =>
-            name.startsWith("rawr.tmp-"),
+            name.startsWith("rawr.tmp-")
           );
           if (temporaryName === undefined) {
             throw new Error("fixture expected a prepared global alias");
@@ -1159,7 +1191,7 @@ describe("production controller activation", () => {
           digest: releaseB.controllerDigest,
           argv: ["--help"],
         }),
-      }),
+      })
     ).rejects.toThrow("CONTROLLER_CLEAN_START_FAILED:help");
 
     expect(await readFile(selectorPath)).toEqual(beforeBytes);
@@ -1174,27 +1206,29 @@ describe("production controller activation", () => {
 
 describe("global installer scripts", () => {
   it("classifies failed production cleanup as an unhealthy command result", () => {
-    expect(isProductionControllerResultHealthy({
-      sourceRevision: "a".repeat(40),
-      release: {
-        kind: "reused",
-        controllerDigest: "b".repeat(64),
-        releaseRoot: "/data/controllers/b",
-        durability: "unchanged",
-        cleanup: "not-required",
-      },
-      operationCleanup: { status: "failed", error: "fixture cleanup failure" },
-      launcher: { kind: "converged", path: "/data/bin/rawr", durability: "unchanged" },
-      activation: {
-        kind: "converged",
-        controllerDigest: "b".repeat(64),
-        releaseRoot: "/data/controllers/b",
-        selectorPath: "/data/controller/active",
-        replaced: null,
-        selectorDurability: "unchanged",
-      },
-      globalAlias: null,
-    })).toBe(false);
+    expect(
+      isProductionControllerResultHealthy({
+        sourceRevision: "a".repeat(40),
+        release: {
+          kind: "reused",
+          controllerDigest: "b".repeat(64),
+          releaseRoot: "/data/controllers/b",
+          durability: "unchanged",
+          cleanup: "not-required",
+        },
+        operationCleanup: { status: "failed", error: "fixture cleanup failure" },
+        launcher: { kind: "converged", path: "/data/bin/rawr", durability: "unchanged" },
+        activation: {
+          kind: "converged",
+          controllerDigest: "b".repeat(64),
+          releaseRoot: "/data/controllers/b",
+          selectorPath: "/data/controller/active",
+          replaced: null,
+          selectorDurability: "unchanged",
+        },
+        globalAlias: null,
+      })
+    ).toBe(false);
   });
 
   it("delegate only to the production controller builder without checkout ownership", async () => {

@@ -24,7 +24,7 @@ function harnessKindFor(input: {
 }
 
 function compileHarnessPlaceholders(
-  derivation: RuntimeSpineDerivation,
+  derivation: RuntimeSpineDerivation
 ): readonly RuntimeHarnessPlanPlaceholder[] {
   // Harness plans are intentionally placeholders: the compiler groups executable
   // refs by role/surface, while real host mounting and native lifecycle policy
@@ -46,7 +46,7 @@ function compileHarnessPlaceholders(
 }
 
 function uniqueResourceModules(
-  providerDependencyGraph: RuntimeSpineCompilation["providerDependencyGraph"],
+  providerDependencyGraph: RuntimeSpineCompilation["providerDependencyGraph"]
 ): readonly BootResourceModule[] {
   const modules = new Map<string, BootResourceModule>();
 
@@ -75,7 +75,7 @@ function uniqueResourceModules(
 
 function compileBootgraphPlaceholder(
   derivation: RuntimeSpineDerivation,
-  providerDependencyGraph: RuntimeSpineCompilation["providerDependencyGraph"],
+  providerDependencyGraph: RuntimeSpineCompilation["providerDependencyGraph"]
 ): RuntimeBootgraphInputPlaceholder {
   // The compiler emits bootgraph-shaped input for review and downstream Oracle
   // runtime experiments only. It must not be read as production bootgraph
@@ -95,7 +95,7 @@ function compileBootgraphPlaceholder(
         message:
           "compiled bootgraph input records provider module refs only; contained provider lowering is proven separately in the Oracle provisioning runtime",
       },
-      ...providerDependencyGraph.diagnostics,
+      ...providerDependencyGraph.diagnostics
     );
   }
 
@@ -109,7 +109,7 @@ function compileBootgraphPlaceholder(
 }
 
 function compileExecutionPlans(
-  derivation: RuntimeSpineDerivation,
+  derivation: RuntimeSpineDerivation
 ): readonly CompiledExecutionPlan[] {
   return derivation.executionPlanSeeds.map((seed) => ({
     kind: "compiled.execution-plan",
@@ -118,16 +118,13 @@ function compileExecutionPlans(
   }));
 }
 
-function routePathMatches(
-  left: readonly string[],
-  right: readonly string[],
-): boolean {
+function routePathMatches(left: readonly string[], right: readonly string[]): boolean {
   return left.length === right.length && left.every((part, index) => part === right[index]);
 }
 
 function serverRouteMatchesRef(
   descriptor: ServerRouteDescriptor,
-  ref: ServerAdapterCallbackPayload["ref"],
+  ref: ServerAdapterCallbackPayload["ref"]
 ): boolean {
   return (
     descriptor.appId === ref.appId &&
@@ -141,12 +138,10 @@ function serverRouteMatchesRef(
 }
 
 function isServerAdapterRef(
-  ref: RuntimeSpineDerivation["executionDescriptorRefs"][number] | undefined,
+  ref: RuntimeSpineDerivation["executionDescriptorRefs"][number] | undefined
 ): ref is ServerAdapterCallbackPayload["ref"] {
   return (
-    !!ref &&
-    (ref.boundary === "plugin.server-api" ||
-      ref.boundary === "plugin.server-internal")
+    !!ref && (ref.boundary === "plugin.server-api" || ref.boundary === "plugin.server-internal")
   );
 }
 
@@ -163,17 +158,17 @@ function asyncOwnerEntries(ref: AsyncStepBridgePayload["ref"]) {
     { kind: "consumer" as const, id: widened.consumerId },
   ].filter(
     (entry): entry is AsyncStepBridgePayload["owner"] =>
-      typeof entry.id === "string" && entry.id.length > 0,
+      typeof entry.id === "string" && entry.id.length > 0
   );
 }
 
 function compileAdapterLoweringPlan(
-  derivation: RuntimeSpineDerivation,
+  derivation: RuntimeSpineDerivation
 ): RuntimeAdapterLoweringPlan {
   const diagnostics: RuntimeDiagnostic[] = [];
   const payloads: (ServerAdapterCallbackPayload | AsyncStepBridgePayload)[] = [];
   const refsByExecutionId = new Map(
-    derivation.executionDescriptorRefs.map((ref) => [ref.executionId, ref]),
+    derivation.executionDescriptorRefs.map((ref) => [ref.executionId, ref])
   );
 
   // Adapter payloads are the last lab-only, pre-harness lowering point. They
@@ -237,23 +232,16 @@ function compileAdapterLoweringPlan(
   };
 }
 
-export function compileRuntimeSpine(
-  derivation: RuntimeSpineDerivation,
-): RuntimeSpineCompilation {
+export function compileRuntimeSpine(derivation: RuntimeSpineDerivation): RuntimeSpineCompilation {
   // Compilation stitches derived artifacts into runtime-shaped inputs for the
   // contained lab. The descriptor table is deliberately non-portable, and the
   // remaining outputs preserve unresolved host, provider, and bootgraph seams.
   const providerDependencyGraph = deriveProviderDependencyGraph(derivation.profile);
-  const descriptorTable = createExecutionDescriptorTable(
-    derivation.descriptorTableInput.entries,
-  );
+  const descriptorTable = createExecutionDescriptorTable(derivation.descriptorTableInput.entries);
   const executionPlans = compileExecutionPlans(derivation);
   const harnessPlans = compileHarnessPlaceholders(derivation);
   const adapterLoweringPlan = compileAdapterLoweringPlan(derivation);
-  const bootgraphInput = compileBootgraphPlaceholder(
-    derivation,
-    providerDependencyGraph,
-  );
+  const bootgraphInput = compileBootgraphPlaceholder(derivation, providerDependencyGraph);
   const diagnostics = [
     ...derivation.diagnostics,
     ...harnessPlans.flatMap((plan) => plan.diagnostics),

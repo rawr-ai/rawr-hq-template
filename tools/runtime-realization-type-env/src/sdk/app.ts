@@ -11,7 +11,9 @@ export function defineApp<const TApp extends RawrAppDefinition>(app: TApp): TApp
   return app;
 }
 
-export function startApp<const TApp extends RawrAppDefinition>(app: TApp): {
+export function startApp<const TApp extends RawrAppDefinition>(
+  app: TApp
+): {
   readonly kind: "started-app";
   readonly app: TApp;
 } {

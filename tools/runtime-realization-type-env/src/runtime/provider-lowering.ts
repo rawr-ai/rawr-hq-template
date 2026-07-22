@@ -3,11 +3,7 @@ import type { RawrEffect } from "../sdk/effect";
 import { readProviderEffectPlanInternals } from "./provider-plan-internals";
 import type { ProviderSelection } from "../sdk/runtime/profiles";
 import type { RuntimeProvider, RuntimeResourceMap } from "../sdk/runtime/providers";
-import type {
-  AppRole,
-  ResourceLifetime,
-  ResourceRequirement,
-} from "../sdk/runtime/resources";
+import type { AppRole, ResourceLifetime, ResourceRequirement } from "../sdk/runtime/resources";
 import type {
   ProviderDependencyGraph,
   ProviderDependencyGraphEdge,
@@ -65,9 +61,7 @@ export interface ProviderProvisionedValue<TValue = unknown> {
   readonly diagnostics: readonly ProviderProvisioningDiagnostic[];
 }
 
-export type ProviderConfigMap =
-  | ReadonlyMap<string, unknown>
-  | { readonly [key: string]: unknown };
+export type ProviderConfigMap = ReadonlyMap<string, unknown> | { readonly [key: string]: unknown };
 
 interface ProviderConfigSelection {
   readonly value: unknown;
@@ -196,7 +190,7 @@ function providerDependencyNodeKey(node: ProviderDependencyGraphNode): ProviderB
  */
 function configFor(
   configs: ProviderConfigMap | undefined,
-  key: ProviderBootResourceKey,
+  key: ProviderBootResourceKey
 ): ProviderConfigSelection {
   if (!configs) {
     return { value: {}, source: "default" };
@@ -242,14 +236,14 @@ function roleMatches(candidateRole: AppRole | undefined, expectedRole: AppRole |
 
 function lifetimeMatches(
   candidateLifetime: ResourceLifetime,
-  expectedLifetime: ResourceLifetime | undefined,
+  expectedLifetime: ResourceLifetime | undefined
 ): boolean {
   return expectedLifetime === undefined || candidateLifetime === expectedLifetime;
 }
 
 function instanceMatches(
   candidateInstance: string | undefined,
-  expectedInstance: string | undefined,
+  expectedInstance: string | undefined
 ): boolean {
   return expectedInstance === undefined
     ? candidateInstance === undefined
@@ -268,7 +262,7 @@ function matchingDependencySelection(input: {
       candidate.resource.id === input.requirement.resource.id &&
       roleMatches(candidate.role, expectedRole) &&
       lifetimeMatches(candidate.lifetime, input.requirement.lifetime) &&
-      instanceMatches(candidate.instance, input.requirement.instance),
+      instanceMatches(candidate.instance, input.requirement.instance)
   );
 }
 
@@ -294,18 +288,18 @@ function assertProviderDependencyGraphReady(graph: ProviderDependencyGraph | und
   throw new Error(
     `provider dependency graph has diagnostics: ${diagnostics
       .map((diagnostic) => diagnostic.code)
-      .join(", ")}`,
+      .join(", ")}`
   );
 }
 
 function dependencyEdgesBySourceModule(
-  graph: ProviderDependencyGraph | undefined,
+  graph: ProviderDependencyGraph | undefined
 ): ReadonlyMap<string, readonly ProviderDependencyGraphEdge[]> {
   const bySource = new Map<string, ProviderDependencyGraphEdge[]>();
 
   for (const edge of graph?.edges ?? []) {
     const sourceModuleId = providerBootResourceModuleId(
-      providerDependencyNodeKey(edge.fromProviderKey),
+      providerDependencyNodeKey(edge.fromProviderKey)
     );
     const edges = bySource.get(sourceModuleId) ?? [];
     edges.push(edge);
@@ -316,7 +310,7 @@ function dependencyEdgesBySourceModule(
 }
 
 function resourceMapForDependencies(
-  dependencyValues: ReadonlyMap<string, unknown>,
+  dependencyValues: ReadonlyMap<string, unknown>
 ): RuntimeResourceMap {
   const resources = new Map<string, unknown>();
 
@@ -336,12 +330,10 @@ function resourceMapForDependencies(
 function pushEvent(
   trace: ProviderProvisioningTrace | undefined,
   name: string,
-  attributes?: Record<string, unknown>,
+  attributes?: Record<string, unknown>
 ): void {
   trace?.events.push(
-    attributes
-      ? { name, attributes: redactRuntimeRecordAttributes(attributes) }
-      : { name },
+    attributes ? { name, attributes: redactRuntimeRecordAttributes(attributes) } : { name }
   );
 }
 
@@ -353,17 +345,15 @@ function pushEvent(
 function pushDiagnostic(
   trace: ProviderProvisioningTrace | undefined,
   message: string,
-  attributes?: Record<string, unknown>,
+  attributes?: Record<string, unknown>
 ): void {
   trace?.diagnostics.push(
-    attributes
-      ? { message, attributes: redactRuntimeRecordAttributes(attributes) }
-      : { message },
+    attributes ? { message, attributes: redactRuntimeRecordAttributes(attributes) } : { message }
   );
 }
 
 function boundaryPolicyRecordAttributes(
-  record: RuntimeBoundaryPolicyRecord,
+  record: RuntimeBoundaryPolicyRecord
 ): RuntimeRecordAttributes {
   return runtimeBoundaryPolicyRecordAttributes(record);
 }
@@ -380,7 +370,7 @@ function pushBoundaryPolicyRecord(
     readonly phase: RuntimeBoundaryPolicyRecord["phase"];
     readonly exit?: Exit.Exit<unknown, unknown>;
     readonly attributes?: Record<string, unknown>;
-  },
+  }
 ): void {
   if (!input.policy) return;
 
@@ -405,9 +395,7 @@ function providerFailureMessage(error: unknown): string {
   return "provider failure";
 }
 
-function assertRuntimeProvider(
-  provider: ProviderSelection["provider"],
-): RuntimeProvider {
+function assertRuntimeProvider(provider: ProviderSelection["provider"]): RuntimeProvider {
   return provider as RuntimeProvider;
 }
 
@@ -464,17 +452,14 @@ function validateProviderConfig(input: {
  * harness readiness or final provider API shape.
  */
 export function createProviderProvisioningModules(
-  input: ProviderProvisioningModulesInput,
+  input: ProviderProvisioningModulesInput
 ): readonly RuntimeBootgraphModule<ProviderProvisionedValue>[] {
   assertProviderDependencyGraphReady(input.providerDependencyGraph);
 
   const effectRuntime = input.effectRuntime ?? defaultEffectRuntime;
   const nodes = input.providerDependencyGraph?.nodes ?? [];
   const nodeByModuleId = new Map(
-    nodes.map((node) => [
-      providerBootResourceModuleId(providerDependencyNodeKey(node)),
-      node,
-    ]),
+    nodes.map((node) => [providerBootResourceModuleId(providerDependencyNodeKey(node)), node])
   );
   const dependencyEdges = dependencyEdgesBySourceModule(input.providerDependencyGraph);
 
@@ -485,18 +470,14 @@ export function createProviderProvisioningModules(
     const dependencies = input.providerDependencyGraph
       ? (dependencyEdges.get(moduleId) ?? []).flatMap((edge) =>
           edge.matchedProviderKey
-            ? [
-                providerBootResourceModuleId(
-                  providerDependencyNodeKey(edge.matchedProviderKey),
-                ),
-              ]
-            : [],
+            ? [providerBootResourceModuleId(providerDependencyNodeKey(edge.matchedProviderKey))]
+            : []
         )
       : dependencySelectionsFor({
           consumerSelection: selection,
           providerSelections: input.providerSelections,
         }).map((dependencySelection) =>
-          providerBootResourceModuleId(selectedProviderKey(dependencySelection)),
+          providerBootResourceModuleId(selectedProviderKey(dependencySelection))
         );
     const configSelection = configFor(input.configs, key);
 
@@ -532,7 +513,7 @@ export function createProviderProvisioningModules(
           pushDiagnostic(
             input.trace,
             "provider config validation failed",
-            configValidation.attributes,
+            configValidation.attributes
           );
           throw new Error(configValidation.message);
         }
@@ -566,9 +547,7 @@ export function createProviderProvisioningModules(
         });
         const internals = readProviderEffectPlanInternals(plan);
         if (!internals) {
-          throw new Error(
-            `provider ${key.providerId} returned an unlowerable ProviderEffectPlan`,
-          );
+          throw new Error(`provider ${key.providerId} returned an unlowerable ProviderEffectPlan`);
         }
 
         const acquirePolicy = input.boundaryPolicy?.({ phase: "acquire", key });
@@ -596,7 +575,7 @@ export function createProviderProvisioningModules(
             resourceId: key.resourceId,
           });
           throw new Error(
-            `provider ${key.providerId} acquire failed: ${providerFailureMessage(exit.cause)}`,
+            `provider ${key.providerId} acquire failed: ${providerFailureMessage(exit.cause)}`
           );
         }
 
@@ -647,7 +626,7 @@ export function createProviderProvisioningModules(
             resourceId: key.resourceId,
           });
           throw new Error(
-            `provider ${key.providerId} release failed: ${providerFailureMessage(exit.cause)}`,
+            `provider ${key.providerId} release failed: ${providerFailureMessage(exit.cause)}`
           );
         }
         pushEvent(input.trace, "provider.release.success", {

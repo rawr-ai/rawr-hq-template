@@ -4,9 +4,7 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 
 // Classification is controller product input; the build app does not own a duplicate copy.
-import type {
-  ControllerCommandPackageClassification,
-} from "../../../apps/cli/src/lib/controller/classification.ts";
+import type { ControllerCommandPackageClassification } from "../../../apps/cli/src/lib/controller/classification.ts";
 import type { ControllerOfficialMemberInput } from "@rawr/controller-release";
 
 type CachedCommand = Readonly<{
@@ -75,8 +73,8 @@ function stringArray(value: unknown, label: string): readonly string[] {
   }
   const values = value as string[];
   if (
-    values.some((entry) => entry.length === 0 || entry.trim() !== entry)
-    || new Set(values).size !== values.length
+    values.some((entry) => entry.length === 0 || entry.trim() !== entry) ||
+    new Set(values).size !== values.length
   ) {
     throw new Error(`${label} must contain unique canonical strings`);
   }
@@ -95,18 +93,23 @@ function commandStringArray(value: unknown, label: string): readonly string[] {
 }
 
 function relativePathParts(value: unknown, label: string): readonly string[] {
-  if (!Array.isArray(value) || value.length === 0 || value.some((part) => typeof part !== "string")) {
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    value.some((part) => typeof part !== "string")
+  ) {
     throw new Error(`${label} must be a non-empty string array`);
   }
   const parts = value as string[];
   if (
     parts.some(
-      (part) => part.length === 0
-        || part === "."
-        || part === ".."
-        || part.includes("/")
-        || part.includes("\\")
-        || part.includes("\0"),
+      (part) =>
+        part.length === 0 ||
+        part === "." ||
+        part === ".." ||
+        part.includes("/") ||
+        part.includes("\\") ||
+        part.includes("\0")
     )
   ) {
     throw new Error(`${label} must contain only canonical path segments`);
@@ -128,12 +131,16 @@ function commandTopics(commandId: string): readonly string[] {
 async function loadPluginConstructor(appRoot: string): Promise<PluginConstructor> {
   const requireFromApp = createRequire(join(appRoot, "package.json"));
   const coreEntry = requireFromApp.resolve("@oclif/core");
-  const core = await import(pathToFileURL(coreEntry).href) as { Plugin?: unknown };
-  if (typeof core.Plugin !== "function") throw new Error("staged @oclif/core has no public Plugin class");
+  const core = (await import(pathToFileURL(coreEntry).href)) as { Plugin?: unknown };
+  if (typeof core.Plugin !== "function")
+    throw new Error("staged @oclif/core has no public Plugin class");
   return core.Plugin as PluginConstructor;
 }
 
-async function assertCommandModules(packageRoot: string, manifest: GeneratedManifest): Promise<void> {
+async function assertCommandModules(
+  packageRoot: string,
+  manifest: GeneratedManifest
+): Promise<void> {
   for (const [id, command] of Object.entries(manifest.commands)) {
     commandIdentity(id, `generated command ${id}`);
     if (command.id !== id) throw new Error(`generated command manifest identity mismatch: ${id}`);
@@ -142,7 +149,7 @@ async function assertCommandModules(packageRoot: string, manifest: GeneratedMani
     assertContained(packageRoot, modulePath, `${id}.relativePath`);
     const status = await lstat(modulePath);
     if (!status.isFile()) throw new Error(`generated command module is not a file: ${id}`);
-    if (await realpath(modulePath) !== modulePath) {
+    if ((await realpath(modulePath)) !== modulePath) {
       throw new Error(`generated command module is not an independent static file: ${id}`);
     }
   }
@@ -169,7 +176,7 @@ async function generatePackageManifest(options: {
   });
   await plugin.load();
   const packageManifest = JSON.parse(
-    await readFile(join(options.packageRoot, "package.json"), "utf8"),
+    await readFile(join(options.packageRoot, "package.json"), "utf8")
   ) as { name?: unknown };
   if (packageManifest.name !== options.expectedPackageId) {
     throw new Error(`generated command package identity mismatch: ${options.expectedPackageId}`);
@@ -181,17 +188,19 @@ async function generatePackageManifest(options: {
   const aliases = new Set<string>();
   const hiddenAliases = new Set<string>();
   const topics = new Set(
-    plugin.topics.map((topic) => commandIdentity(topic.name, "generated topic")),
+    plugin.topics.map((topic) => commandIdentity(topic.name, "generated topic"))
   );
   for (const [id, command] of Object.entries(manifest.commands)) {
     for (const topic of commandTopics(id)) topics.add(topic);
-    for (const alias of commandStringArray(command.aliases ?? [], `${id}.aliases`)) aliases.add(alias);
-    for (const alias of commandStringArray(command.hiddenAliases ?? [], `${id}.hiddenAliases`)) hiddenAliases.add(alias);
+    for (const alias of commandStringArray(command.aliases ?? [], `${id}.aliases`))
+      aliases.add(alias);
+    for (const alias of commandStringArray(command.hiddenAliases ?? [], `${id}.hiddenAliases`))
+      hiddenAliases.add(alias);
   }
   await writeFile(
     join(options.packageRoot, "oclif.manifest.json"),
     `${serializedManifest.text}\n`,
-    { mode: 0o644 },
+    { mode: 0o644 }
   );
   return Object.freeze({
     version: plugin.version,
@@ -218,19 +227,23 @@ export async function generateOfficialMemberInputs(options: {
     const packageRoot = join(options.appRoot, "node_modules", row.packageId);
     if (!row.discoverCommands) {
       if (row.packageId !== options.nativeManager.packageId) {
-        throw new Error(`non-discoverable controller member is not the native manager: ${row.packageId}`);
+        throw new Error(
+          `non-discoverable controller member is not the native manager: ${row.packageId}`
+        );
       }
-      results.push(Object.freeze({
-        packageId: row.packageId,
-        version: options.nativeManager.version,
-        role: "native-manager",
-        root: memberRoot,
-        commandIds: Object.freeze([]),
-        topics: Object.freeze([]),
-        aliases: Object.freeze([]),
-        hiddenAliases: Object.freeze([]),
-        hooks: options.nativeManager.hooks,
-      }));
+      results.push(
+        Object.freeze({
+          packageId: row.packageId,
+          version: options.nativeManager.version,
+          role: "native-manager",
+          root: memberRoot,
+          commandIds: Object.freeze([]),
+          topics: Object.freeze([]),
+          aliases: Object.freeze([]),
+          hiddenAliases: Object.freeze([]),
+          hooks: options.nativeManager.hooks,
+        })
+      );
       continue;
     }
     const generated = await generatePackageManifest({
@@ -241,21 +254,25 @@ export async function generateOfficialMemberInputs(options: {
     for (const commandId of generated.commandIds) {
       const priorOwner = commandOwner.get(commandId);
       if (priorOwner !== undefined) {
-        throw new Error(`production command ${commandId} is duplicated by ${priorOwner} and ${row.packageId}`);
+        throw new Error(
+          `production command ${commandId} is duplicated by ${priorOwner} and ${row.packageId}`
+        );
       }
       commandOwner.set(commandId, row.packageId);
     }
-    results.push(Object.freeze({
-      packageId: row.packageId,
-      version: generated.version,
-      role: "command",
-      root: memberRoot,
-      commandIds: generated.commandIds,
-      topics: generated.topics,
-      aliases: generated.aliases,
-      hiddenAliases: generated.hiddenAliases,
-      hooks: generated.hooks,
-    }));
+    results.push(
+      Object.freeze({
+        packageId: row.packageId,
+        version: generated.version,
+        role: "command",
+        root: memberRoot,
+        commandIds: generated.commandIds,
+        topics: generated.topics,
+        aliases: generated.aliases,
+        hiddenAliases: generated.hiddenAliases,
+        hooks: generated.hooks,
+      })
+    );
   }
   results.sort((left, right) => left.packageId.localeCompare(right.packageId));
   return Object.freeze(results);
