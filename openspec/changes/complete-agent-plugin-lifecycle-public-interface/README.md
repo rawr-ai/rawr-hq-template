@@ -137,7 +137,7 @@ rather than copying configuration blindly:
 | Bun runtime | `1.3.14` | Keep; the separately pinned Habitat artifact remains a Bun 1.4 build |
 | Biome | `2.5.3` | Adopt required workspace hygiene and formatting |
 | lintEffect | `@catenarycloud/linteffect@0.0.6` | Expose as an advisory owner command, not a universal push gate |
-| Nx | `23.1.0` | Adopt in one migration after Biome configuration is stable |
+| Nx | `23.1.0` | Adopted as exact `nx` and `@nx/eslint-plugin` pins |
 | TypeScript compiler | native `7.0.2` | Make normal `tsc`/typecheck authority |
 | TypeScript compiler API | `6.0.3` | Keep as the `typescript` package for build-tool consumers |
 | TypeScript fallback | `6.0.2` | Expose only the narrow `tsc6` compatibility command |
@@ -180,6 +180,18 @@ three minutes and was stopped;
 its focused 40-test command smoke passed. Task 1.5b therefore remains open until
 task 1.6 supplies bounded full-owner proof and makes Biome an admission gate.
 
+The exact Nx migration pins `nx` and `@nx/eslint-plugin` to `23.1.0`, refreshes
+the lockfile, and applies the official required migration set. The only durable
+migration output outside dependency metadata is the official
+`.claude/worktrees` ignore entry; the release-tag migration made no semantic
+configuration change. The workspace remains at 47 projects with 35 build, 47
+lint, 44 typecheck, and 32 test owners. Project discovery, graph generation,
+sync checking, all applicable non-root affected lint/typecheck owners, the CLI build,
+and the Habitat consumer tests pass. The root `lint` owner exposed the already
+present recursive aggregate that task 1.6 removes; it is not hidden as an Nx
+23 regression or folded into this dependency-only checkpoint. No Nx Release
+configuration or controller-coupled publication target was added.
+
 ## Native Marketplace Grounding
 
 A disposable Codex 0.144.6 probe used the absolute native binary and an isolated
@@ -219,7 +231,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx lint/typecheck target population | Complete on the active Template stack; final ratchet wiring pending |
 | Typechecked Habitat consumer and TypeBox release manifest | Complete on the active Template stack |
-| Civ-aligned Biome/Nx/TypeScript toolchain | Biome configuration and mechanical rewrite implemented; admission wiring and bounded CLI proof remain with Nx, and TypeScript is pending |
+| Civ-aligned Biome/Nx/TypeScript toolchain | Biome and exact Nx 23.1 migration implemented; admission wiring, bounded CLI proof, and TypeScript remain pending |
 | Positive Habitat/Nx ratchet | Pending |
 | Direct Oclif development and external extension path | Pending |
 | Conventional CLI package/release | Pending |
