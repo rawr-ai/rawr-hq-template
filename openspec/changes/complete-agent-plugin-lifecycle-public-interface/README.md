@@ -18,16 +18,16 @@ its local installed-controller gate is green, while the remote job is externally
 blocked before step execution by the repository account's billing limit. It
 remains unlanded without a bypass.
 
-The current Template continuation is rooted directly at `ec58d06c`. Providers,
-governance, vendors, and packaging now derive their public oRPC request/result
-types from closed TypeBox schemas. Domain-only branding, ordering, uniqueness,
-and digest policy remain owner-local. The required Nx check separates
-production and test typing, binds deterministic static cache inputs to their
-toolchains, runs noncacheable live Git behavior only after static checks, and
-uses direct operational terms for release-set verification. It adds no state
-owner, provider installer, repository relationship, app/runtime surface, or
-protected-lane input. The remaining release build/check/retention boundary is
-the final TypeBox conversion before landing.
+The current Template continuation is rooted directly at `ec58d06c`. Releases,
+providers, governance, vendors, and packaging now derive their public oRPC
+request/result types from closed TypeBox schemas. Canonical brands, ordering,
+uniqueness, digest policy, and other cross-field rules remain owner-local. The
+required Nx check separates production and test typing, binds deterministic
+static cache inputs to their toolchains, runs noncacheable live Git behavior
+only after static checks, and uses direct operational terms for release-set
+verification. It adds no state owner, provider installer, repository
+relationship, app/runtime surface, or protected-lane input. The public-boundary
+conversion is sealed; landing and controller publication remain open.
 
 ## Repository Record
 
@@ -50,13 +50,14 @@ the final TypeBox conversion before landing.
 | Publication repair | `codex/c6-preserve-installed-asset-modes`; parent is the landed continuation above |
 | Landed publication repair | PR #397; canonical Template `main` `04e37f596d03a352a9b6cdb37ee7cdff54b67c28`; tree `c41e851580aa80e32fb20c1e3616423c1b6268ff`; ratchet run `29737814922` |
 | Release-input schema prerequisite | `codex/c6-typebox-release-input`; parent is the landed publication repair |
-| Current TypeBox continuation | `cf54f5a3` through `7d3452fb`, then `6c48d5bb`, `a6d5807b`, and `7e5872db`; provider, governance, packaging, and vendor public structure/types are schema-owned while domain normalization remains owner-local |
-| Lifecycle Nx check ratchet | `codex/c6-nx-lifecycle-check-ratchet` / `c4e067e7` |
-| Standard release-verification terminology | `codex/c6-standard-release-verification-terms` / `77bc1f00` |
-| Required-ratchet correction | `codex/c6-strengthen-lifecycle-ratchet` / `08751cc1` |
-| Evidence protocol correction | `codex/c6-rename-controller-evidence-protocol` / `870651eb` |
-| Standard retention result | `codex/c6-standard-retention-result` / `49cfeb1e` |
-| Positive topology cleanup | `codex/c6-remove-placeholder-common-layer` / `50f01bb9` |
+| Current TypeBox continuation | `d6d7f7fe` through `01a6e41f`, then `47eb0ee5`, `fc73604a`, `51bc8811`, and `507a686b`; all five lifecycle modules now keep public structure/types schema-owned while domain normalization remains owner-local |
+| Lifecycle Nx check ratchet | `codex/c6-nx-lifecycle-check-ratchet` / `5fa55824` |
+| Standard release-verification terminology | `codex/c6-standard-release-verification-terms` / `40380a99` |
+| Required-ratchet correction | `codex/c6-strengthen-lifecycle-ratchet` / `73c5816e` |
+| Evidence protocol correction | `codex/c6-rename-controller-evidence-protocol` / `48f5dee7` |
+| Standard retention result | `codex/c6-standard-retention-result` / `389b1fb2` |
+| Positive topology cleanup | `codex/c6-remove-placeholder-common-layer` / `1c88cba4` |
+| Release TypeBox boundary | `codex/c6-typebox-release-contracts` / `507a686b` |
 | Installed controller | `dc14ccd20df37da774749908b5660494d60ce2dadb3c3cef2c5b76bca52f69de` from landed Template `ec58d06c` |
 | Personal checkpoint | independent personal `main` `a4201247`; PR #182 commit `9378d33b`, remote job blocked before execution without bypass |
 | Native hook-claim correction | `codex/c6-scope-native-hook-claims`; parent is canonical Template `main` `b7b6524db818d7119340f2afc572a1159c708785` |
@@ -128,7 +129,7 @@ machinery, and Inngest candidate bytes.
 | T6C3 legacy export retirement | complete, reviewed | no export/undo command, service module, capsule runtime, public facade, or complete-home aggregate |
 | T6D truthful test owners | complete, reviewed | owner-local DevOps fixture and ordinary serialized lifecycle/CLI targets |
 | T6E deterministic manifest | complete, reviewed | native JSON projection, code-unit canonicalization, and full build-twice equality |
-| T6F Personal checkpoint prerequisites | complete | TypeBox-owned release-input wire records, controller-owned refresh, positive declared-tree closure, tested provider bindings, corrected channel path, and immutable controller distribution without repository coupling |
+| T6F Template prerequisite implementation | source complete; landing and installed-controller refresh open | TypeBox-owned release-input wire records, controller-owned refresh, positive declared-tree closure, tested provider bindings, corrected channel path, and immutable controller distribution without repository coupling |
 | T6F landing/settlement | active; disposable complete-test accepted, personal current-main PR externally blocked | independently landed repos, canonical disposable/live native convergence, read-only repeat |
 
 ## Retired Unlanded Nodes
@@ -161,10 +162,10 @@ follow-up work.
 
 | Boundary | Result |
 | --- | --- |
-| TypeBox boundary ownership | Providers, governance, vendors, and packaging use closed schemas as their public structural/type authority. Handlers receive schema-derived inputs; canonical brands, target sorting, duplicate refusal, canonicalization, and request digests remain domain policy. Releases build/check/retention remains the one open public-boundary conversion. |
+| TypeBox boundary ownership | Releases, providers, governance, vendors, and packaging use closed schemas as their public structural/type authority. Handlers receive schema-derived inputs; canonical brands, target sorting, duplicate refusal, canonicalization, request digests, retention ordering, and aggregate-byte limits remain domain policy. |
 | Provider target decoding | Stored target decoding uses the owning TypeBox schemas and then constructs the branded target digest. The prior second closed-object/provider/path validator is removed without a compatibility reader. |
-| Behavior | Source and test type programs pass together. The latest focused boundary and exact-Git run passed 9 files / 75 tests, including packaging, vendors, governance, provider evidence, releases, and both live Git suites. The prior integrated tip passed the complete lifecycle suite at 39 files / 403 tests; the new full continuation gate remains open until the releases boundary is sealed. |
-| Required Nx check | Production and test type programs remain independently required. Cache keys include TypeScript and Habitat toolchains, repository separation is part of the required root ratchet, and the live exact-Git test target is deliberately noncacheable because `/usr/bin/git` and observed repository state are external inputs. Live tests run after lint, both type programs, and Habitat without retry, timeout increase, or test weakening. Cold and warm integrated timing is remeasured after the releases boundary closes. |
+| Behavior | The no-cache integrated lifecycle check passes: three locked Habitat rules, source and test type programs, lint, and 39 files / 426 tests. The release-only behavioral gate passes 6 files / 53 tests; the existing CLI retention procedure suite passes all 7 transition cases, including unavailable and throwing readers, malformed or missing pins, deterministic collection, and successful pin expansion. |
+| Required Nx check | Production and test type programs remain independently required. Cache keys include TypeScript and Habitat toolchains; the Habitat structure target additionally hashes the lifecycle and CLI source roots it scans, its three exact policy trees, and its check/provision/release mechanics. Repository separation is part of the required root ratchet, while the live exact-Git target remains noncacheable because `/usr/bin/git` and observed repository state are external inputs. The final warm required ratchet completed in 86.84 seconds: Nx restored 27/29 lint results, 41/43 type results, the Habitat consumer, and the lifecycle structure/unit results, then reran the live Git cases. No retry, timeout increase, or test weakening was used. |
 | Scope | No Personal repository, provider home, current-main channel, controller selector, app/runtime surface, destination, or protected-lane input was mutated by this continuation. |
 
 ## Legacy Export Retirement Admission
