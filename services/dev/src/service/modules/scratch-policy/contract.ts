@@ -1,6 +1,6 @@
 import { schema } from "@rawr/hq-sdk";
-import { ScratchPolicyCheckSchema, ScratchPolicyInputSchema } from "../../common/entities";
 import { ocBase } from "../../base";
+import { ScratchPolicyCheckSchema, ScratchPolicyInputSchema } from "../../common/entities";
 
 export const contract = {
   check: ocBase

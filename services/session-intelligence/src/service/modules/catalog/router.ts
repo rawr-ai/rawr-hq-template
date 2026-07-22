@@ -5,7 +5,8 @@
  * not projections, defines discovery policy (sources, refresh strategy, and
  * filtering semantics) so that the CLI/web remain orchestration and rendering.
  */
-import { module } from "./module";
+
+import type { DiscoveredSessionFile, SessionListItem, SessionStatus } from "../../common/entities";
 import {
   detectSessionFormat,
   getClaudeSessionMetadata,
@@ -14,14 +15,14 @@ import {
   inferStatusFromPath,
 } from "../../common/normalization";
 import { looksLikePath, stem } from "../../common/path-utils";
-import type { DiscoveredSessionFile, SessionListItem, SessionStatus } from "../../common/entities";
 import { discoverCodexSessionsFromIndexOrNull } from "../../common/repositories/codex-indexed-discovery-repository";
 import {
   hasMetadataFilters,
   matchesListFilters,
-  toModifiedIso,
   type SessionFilters,
+  toModifiedIso,
 } from "./helpers/session-filters";
+import { module } from "./module";
 
 const list = module.list.handler(async ({ context, input }) => {
   const limit = input.limit > 0 ? input.limit : 0;

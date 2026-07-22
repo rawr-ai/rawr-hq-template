@@ -1,3 +1,4 @@
+import type { DbPool } from "@rawr/hq-sdk";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
@@ -10,7 +11,6 @@ import {
   createEmbeddedInMemoryDbPoolAdapter,
   type EmbeddedInMemorySqlOptions,
 } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
-import type { DbPool } from "@rawr/hq-sdk";
 import type { CreateClientOptions } from "../src/client";
 import type { Service } from "../src/service/base";
 

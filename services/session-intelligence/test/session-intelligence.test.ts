@@ -1,6 +1,12 @@
-import { describe, expect, it } from "vitest";
 import { safe } from "@orpc/server";
+import { describe, expect, it } from "vitest";
 import { createClient } from "../src";
+import {
+  CLAUDE_FIXTURE_PATH,
+  CODEX_FIXTURE_PATH,
+  CODEX_STRUCTURED_FIXTURE,
+  CODEX_STRUCTURED_FIXTURE_PATH,
+} from "./fixture-data";
 import {
   createClientOptions,
   createFixtureSourceRuntime,
@@ -8,12 +14,6 @@ import {
   MemorySessionIndexRuntime,
   MemorySessionSourceRuntime,
 } from "./helpers";
-import {
-  CLAUDE_FIXTURE_PATH,
-  CODEX_STRUCTURED_FIXTURE,
-  CODEX_STRUCTURED_FIXTURE_PATH,
-  CODEX_FIXTURE_PATH,
-} from "./fixture-data";
 
 const NEWER_NO_FACET_PATH = "/fixtures/.codex/sessions/2026/02/07/newer-no-facet.jsonl";
 

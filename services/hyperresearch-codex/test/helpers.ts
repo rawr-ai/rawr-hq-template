@@ -5,11 +5,11 @@ import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-ada
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
 import type { Service } from "../src/service/base";
-import type { HyperresearchCliOperation, HyperresearchCliResult } from "../src/types";
 import type {
   HyperresearchCliBackend,
   HyperresearchCodexIO,
 } from "../src/service/common/resources";
+import type { HyperresearchCliOperation, HyperresearchCliResult } from "../src/types";
 
 async function pathExists(filePath: string): Promise<boolean> {
   try {

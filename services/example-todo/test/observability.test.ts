@@ -1,22 +1,22 @@
 import {
-  context,
-  trace,
   type Attributes,
   type Context,
+  context,
   type Span,
   type SpanContext,
   type SpanStatus,
+  trace,
 } from "@opentelemetry/api";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
-import { describe, expect, it } from "vitest";
 import { createRouterClient, safe } from "@orpc/server";
 import { defineService, schema } from "@rawr/hq-sdk";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import { Type } from "typebox";
+import { describe, expect, it } from "vitest";
 
 import { createClient } from "../src";
-import { createClientOptions, invocation, type AnalyticsEntry, type LogEntry } from "./helpers";
+import { type AnalyticsEntry, createClientOptions, invocation, type LogEntry } from "./helpers";
 
 function createBaselineDeps(logs: LogEntry[], analytics: AnalyticsEntry[]) {
   return {

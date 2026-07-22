@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createClient } from "../src/client";
-import { contract } from "../src/service/contract";
 import { router } from "../src/router";
+import { contract } from "../src/service/contract";
 
 describe("hq-ops service shell", () => {
   it("keeps the public boundary and root contract intact", () => {

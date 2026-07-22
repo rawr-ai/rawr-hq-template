@@ -7,10 +7,11 @@
  *
  * Service-wide middleware is authored and attached in `src/service/impl.ts`.
  */
+
+import { impl } from "./impl";
 import { router as config } from "./modules/config/router";
 import { router as journal } from "./modules/journal/router";
 import { router as security } from "./modules/security/router";
-import { impl } from "./impl";
 
 /**
  * Root HQ Ops router.

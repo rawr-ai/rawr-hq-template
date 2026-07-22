@@ -8,12 +8,13 @@
  * - `analytics`
  * - `repository`
  */
+
+import type { Sql } from "@rawr/hq-sdk";
 import {
   createServiceAnalyticsMiddleware,
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
-import type { Sql } from "@rawr/hq-sdk";
 import { createRepository } from "./repository";
 
 export {

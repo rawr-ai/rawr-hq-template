@@ -12,13 +12,7 @@
  *   not embedded directly in router/procedure bodies.
  * - Errors are thrown via contract-attached module errors (example-todo style).
  */
-import { module } from "./module";
-import {
-  detectSessionFormat,
-  getClaudeSessionMetadata,
-  getCodexSessionMetadata,
-  inferProjectFromCwd,
-} from "../../common/normalization";
+
 import type {
   DiscoveredSessionFile,
   RoleFilter,
@@ -27,9 +21,15 @@ import type {
   SessionSourceFilter,
   SessionStatus,
 } from "../../common/entities";
-import { discoverCodexSessionsFromIndexOrNull } from "../../common/repositories/codex-indexed-discovery-repository";
+import {
+  detectSessionFormat,
+  getClaudeSessionMetadata,
+  getCodexSessionMetadata,
+  inferProjectFromCwd,
+} from "../../common/normalization";
 import type { SessionIndexRuntime } from "../../common/ports/session-index-runtime";
 import type { SessionSourceRuntime } from "../../common/ports/session-source-runtime";
+import { discoverCodexSessionsFromIndexOrNull } from "../../common/repositories/codex-indexed-discovery-repository";
 import {
   DEFAULT_FACET_CANDIDATE_LIMIT,
   type FacetSearchHit,
@@ -38,13 +38,6 @@ import {
   type SessionFacetFilters,
   type SessionFacets,
 } from "./entities";
-import { clearCachedSearchText } from "./repositories/search-cache-repository";
-import {
-  hasMetadataFilters,
-  matchesSearchFilters,
-  toModifiedIso,
-  type SearchSessionFilters,
-} from "./helpers/session-filters";
 import { searchSessionsByMetadata } from "./helpers/metadata-search";
 import { getSearchTextCached, getSearchTextUncached } from "./helpers/search-text-cache";
 import {
@@ -52,6 +45,14 @@ import {
   facetFiltersHaveValues,
   facetsMatchAll,
 } from "./helpers/session-facets";
+import {
+  hasMetadataFilters,
+  matchesSearchFilters,
+  type SearchSessionFilters,
+  toModifiedIso,
+} from "./helpers/session-filters";
+import { module } from "./module";
+import { clearCachedSearchText } from "./repositories/search-cache-repository";
 
 type SearchSessionSelection = {
   source: SessionSourceFilter;

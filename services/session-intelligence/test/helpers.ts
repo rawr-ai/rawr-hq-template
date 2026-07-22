@@ -2,6 +2,12 @@ import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-ada
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
 import type {
+  DiscoveredSessionFile,
+  SessionFileStat,
+  SessionSource,
+  SessionStatus,
+} from "../src/service/common/entities";
+import type {
   SessionIndexRuntime,
   SessionIndexStatement,
 } from "../src/service/common/ports/session-index-runtime";
@@ -9,12 +15,6 @@ import type {
   DiscoverSessionsInput,
   SessionSourceRuntime,
 } from "../src/service/common/ports/session-source-runtime";
-import type {
-  DiscoveredSessionFile,
-  SessionFileStat,
-  SessionSource,
-  SessionStatus,
-} from "../src/service/common/entities";
 import {
   CLAUDE_FIXTURE,
   CLAUDE_FIXTURE_PATH,

@@ -7,10 +7,10 @@
  * helper files remain narrow utilities for individual transforms.
  */
 import { SOURCE_MATERIAL_DIRECTORIES } from "../../../shared/layout";
-import type { SourceSnapshot } from "../source-materials/entities";
 import { buildSnapshotRecords } from "../../common/helpers/source-records";
-import { createArtifactFiles } from "./helpers/artifact-bundle";
+import type { SourceSnapshot } from "../source-materials/entities";
 import { detectAnomalies } from "./helpers/anomalies";
+import { createArtifactFiles } from "./helpers/artifact-bundle";
 import { buildFamilyGraphs, buildRelationships } from "./helpers/families";
 import { buildInventory, buildWarnings } from "./helpers/inventory";
 import {

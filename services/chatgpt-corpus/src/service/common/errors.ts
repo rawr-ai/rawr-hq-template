@@ -1,5 +1,5 @@
-import { schema } from "@rawr/hq-sdk";
 import type { ErrorMapItem } from "@orpc/server";
+import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 
 const CorpusErrorData = schema(

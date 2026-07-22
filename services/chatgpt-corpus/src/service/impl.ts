@@ -1,5 +1,5 @@
-import { contract } from "./contract";
 import { createServiceImplementer } from "./base";
+import { contract } from "./contract";
 import { analytics } from "./middleware/analytics";
 import { observability } from "./middleware/observability";
 
