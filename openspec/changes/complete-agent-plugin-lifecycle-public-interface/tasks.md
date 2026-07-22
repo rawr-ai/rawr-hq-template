@@ -112,6 +112,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   add no compatibility path. Apply the user-directed verb-first vendor commands
   as `rawr agent plugins status vendors` and `rawr agent plugins update vendors`;
   remove `vendors status|update` rather than aliasing them.
+- [x] 2.3a Move all five existing command-plugin packages atomically to
+  `plugins/cli/commands/<capability>`. Give each one the same versioned ESM
+  package shell, source-only build, separate test typecheck, official
+  Bun-executed Oclif manifest target, and closed Habitat topology. Keep generated
+  manifests ignored and verify their command IDs and structure rather than
+  claiming byte identity Oclif does not provide.
 - [ ] 2.4 Prove one external fixture round trip in a disposable Oclif
   state root with explicit `HOME`, `XDG_DATA_HOME`, `XDG_CONFIG_HOME`,
   `XDG_CACHE_HOME`, and isolated npm cache/config/registry inputs: discover the

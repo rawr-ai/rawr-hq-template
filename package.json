@@ -10,7 +10,7 @@
     "packages/runtime/*",
     "packages/runtime/harnesses/*",
     "resources/*",
-    "plugins/cli/*",
+    "plugins/cli/commands/*",
     "plugins/agents/*",
     "plugins/web/*",
     "plugins/server/api/*",

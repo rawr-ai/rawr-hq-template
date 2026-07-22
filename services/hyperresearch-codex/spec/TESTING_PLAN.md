@@ -42,7 +42,7 @@ The long research-quality proof class is now represented by the repaired full-ti
 Current observed component evidence:
 
 - `bun run --cwd services/hyperresearch-codex typecheck`
-- `bun run --cwd plugins/cli/hyperresearch typecheck`
+- `bun run --cwd plugins/cli/commands/hyperresearch typecheck`
 - `bunx vitest run --project hyperresearch-codex`
 - `bunx vitest run --project plugin-hyperresearch`
 - `bunx nx run-many -t typecheck --projects=@rawr/hyperresearch-codex,@rawr/plugin-hyperresearch`

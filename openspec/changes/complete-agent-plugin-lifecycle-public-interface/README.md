@@ -118,10 +118,11 @@ blueprint had incorrectly classified every `plugins/cli/*` package and required
 `rawr.kind=toolkit`, contradicting the canonical
 `plugins/cli/commands/<capability>` projection topology. The corrected packet
 uses placement as identity, removes the second metadata classification, and
-keeps the package and source roots closed. Command-plugin manifest contracts
+keeps the CLI family, package, and source roots closed. Command-plugin manifest contracts
 execute the official generator through Bun. All 24 Grit fixtures,
 the blueprint-packet topology check, and the live direct-entrypoint rule pass;
-moving the production command plugins remains task 2.3.
+the package move is recorded separately by task 2.3a while the verb-first vendor
+command move keeps task 2.3 open.
 
 The Oclif configuration rules now anchor their JSON constraints at the parsed
 document root. This preserves the positive package and compiler constraints
@@ -348,24 +349,46 @@ Habitat structure fixtures accept both app and plugin shells with generated
 `oclif.manifest.json` files present, then reject a second app entrypoint and a
 plugin-owned `bin` directory with exact closed-topology diagnostics. The
 app/plugin structure work completes in 7-19 ms inside the bounded fixture. The
-command-plugin packages remain intentionally nonconforming until task 2.3 moves
-them. Task 1.5 owns workspace activation, including the Nx target-default
-contract and an honest disposition for the published SDK's unbounded wildcard
-walk on the live dependency tree.
+five command-plugin packages now inhabit the closed
+`plugins/cli/commands/<capability>` topology. Task 1.5 still owns the remaining
+workspace-wide Habitat activation and an honest disposition for the published
+SDK's unbounded wildcard walk on the live dependency tree.
+
+The package checkpoint uses the official Oclif pattern-discovery manifest
+generator as an Nx cached output after `build`. Oclif does not sort asynchronous
+filesystem discovery and exposes no ordering flag, so the generated manifest is
+ignored development output and its sorted command IDs and structure are the
+contract; byte-order identity is not. The manifest and build hashes include the
+root TypeScript configuration. This follows
+[[design#Nx owns build and release|the conventional release boundary]] without
+a command registry, canonicalizer, or build-twice gate.
+
+The uncached five-package build, test, lint, typecheck, and manifest matrix passes
+27 behavior tests in 23.8 seconds. Repeating its ten build/manifest tasks is a
+100% Nx cache hit in 27 ms. The four selected Habitat rules pass in 10.1 seconds,
+with the two structure rules sharing one 8.8-second traversal. The closed
+`plugins/cli` scope admits only `commands`, so an old sibling package topology
+cannot return.
 
 The direct-entrypoint checkpoint replaces the controller bootstrap with Oclif's
 standard `execute` call in both development and compiled entrypoints. A focused
 behavior test runs both forms with an allowlisted process environment and one
 guarded disposable home, rejects an app-root generated manifest, compares the
 complete sorted command-ID inventory, and observes `agent:plugins:status` in
-both modes. The pre-existing integration oracle now exercises ordinary Oclif
-help and unknown-command behavior instead of requiring controller identity.
-The five required app/core-plugin builds pass in 10.5 seconds; the focused
-two-test entrypoint suite passes in 4.1 seconds; the isolated integration oracle
-passes in 1.7 seconds; CLI lint and typecheck pass in 2.7 and 13.0 seconds. App
-manifest generation and publish metadata stay
-deferred until task 2.3 normalizes every first-party command-plugin build, so a
-partial generated manifest cannot hide missing or stale plugin output.
+both modes. A third case loads every command plugin with Oclif's manifest cache
+disabled and proves that development discovers `src/commands` while production
+discovers the same IDs from `dist/commands`. The three-case suite passes in 6.0
+seconds. The pre-existing integration oracle now exercises ordinary Oclif help
+and unknown-command behavior instead of requiring controller identity. CLI lint
+and typecheck pass in 14.7 seconds. App manifest generation and publish metadata
+stay deferred to task 3.3, so a partial generated manifest cannot hide missing
+or stale plugin output.
+
+The complete CLI suite is green at 254 tests, but its uncached target takes 3
+minutes 30 seconds. A predecessor artifact-store file alone took 98.3 seconds in
+the preceding diagnostic run. This is not accepted as healthy test
+infrastructure: tasks 4 and 5 delete the custom distribution and persistent
+artifact verticals that dominate it rather than optimizing rejected machinery.
 
 The earlier owner-qualified lifecycle dependency mega-pattern is retired rather
 than carried into the corrected ratchet. It enumerated package names, exact

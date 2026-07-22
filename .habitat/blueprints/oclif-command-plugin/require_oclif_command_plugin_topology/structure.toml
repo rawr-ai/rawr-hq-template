@@ -1,6 +1,13 @@
 schemaVersion = 1
 
 [[scopes]]
+name = "oclif-command-plugin-root"
+root = "plugins/cli"
+kind = "directory"
+mode = "closed"
+required = ["commands"]
+
+[[scopes]]
 name = "oclif-command-plugin-packages"
 root = "plugins/cli/commands/*"
 kind = "directory"
