@@ -1,4 +1,4 @@
-import { createClient, type Client, type CreateClientOptions } from "@rawr/chatgpt-corpus";
+import { type Client, type CreateClientOptions, createClient } from "@rawr/chatgpt-corpus";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import {

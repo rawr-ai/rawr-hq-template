@@ -1,7 +1,7 @@
 import {
+  type ApiPluginContribution,
   defineApiPlugin,
   defineApiPluginDeclaration,
-  type ApiPluginContribution,
 } from "@rawr/hq-sdk/apis";
 import type { ExampleTodoClientResolver } from "./context";
 import { exampleTodoApiContract } from "./contract";

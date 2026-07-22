@@ -9,8 +9,8 @@
  *   as `repo` from `context.provided.sql`
  */
 
-import type { DbPool, Sql } from "../ports/db";
 import { createBaseProvider } from "../baseline/middleware";
+import type { DbPool, Sql } from "../ports/db";
 
 /**
  * Zero-config SQL provider.

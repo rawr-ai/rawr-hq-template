@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  type ControllerPayloadManifestInput,
   canonicalSerializeControllerPayloadManifest,
   computeControllerDigest,
   computeControllerMemberPayloadDigest,
   createControllerOfficialSetManifest,
   createControllerPayloadManifest,
   verifyControllerPayload,
-  type ControllerPayloadManifestInput,
 } from "../src";
 import {
   controllerManifestInput,

@@ -16,8 +16,6 @@ import path from "node:path";
 import { FileSystem } from "@effect/platform";
 import { SystemError } from "@effect/platform/Error";
 import { NodeContext } from "@effect/platform-node";
-import { Effect, Exit } from "effect";
-
 import type {
   ArtifactObjectAddress,
   ArtifactTreeLocation,
@@ -26,6 +24,7 @@ import {
   makeArtifactRepositoryResource,
   runNodeArtifactRepository,
 } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+import { Effect, Exit } from "effect";
 import { claudeEffectPlatformNodeProvider } from "../index";
 
 const roots: string[] = [];

@@ -2,8 +2,8 @@ import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import { type HyperresearchTier } from "@rawr/hyperresearch-codex/types";
 import { FixtureHyperresearchCliBackend } from "../../lib/fixture-cli";
-import { NodeHyperresearchCliBackend } from "../../lib/hyperresearch-codex-resources/cli";
 import { createHyperresearchCodexClient } from "../../lib/hyperresearch-codex-binding";
+import { NodeHyperresearchCliBackend } from "../../lib/hyperresearch-codex-resources/cli";
 
 export default class HyperresearchCodexSlice extends RawrCommand {
   static description = "Run the synthetic Hyperresearch Codex control-plane slice";

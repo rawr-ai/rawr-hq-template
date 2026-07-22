@@ -2,9 +2,9 @@ import path from "node:path";
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 import {
+  type CorpusInitializeOptions,
   createCorpusClient,
   describeServiceError,
-  type CorpusInitializeOptions,
 } from "../../lib/client";
 import { projectInitResult } from "../../lib/projection";
 

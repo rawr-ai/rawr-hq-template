@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
-
-import { failure, success, type ControllerResult } from "./result";
-import { issue, type ControllerIssue } from "./issues";
+import { type ControllerIssue, issue } from "./issues";
+import { type ControllerResult, failure, success } from "./result";
 
 declare const sha256DigestBrand: unique symbol;
 declare const controllerDigestBrand: unique symbol;

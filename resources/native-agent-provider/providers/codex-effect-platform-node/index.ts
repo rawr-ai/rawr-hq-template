@@ -1,5 +1,3 @@
-import { Effect } from "effect";
-
 import type {
   CodexNativeAgentProviderSession,
   NativeAgentProviderFailure,
@@ -8,6 +6,7 @@ import type {
   NativeProviderJsonValue,
   NativeProviderSessionInput,
 } from "@rawr/resource-native-agent-provider";
+import { Effect } from "effect";
 import {
   acquireEffectPlatformNodeProvider,
   type EffectPlatformNodeRequirements,

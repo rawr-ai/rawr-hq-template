@@ -1,8 +1,8 @@
 import {
-  computeControllerMemberPayloadDigest,
   type ControllerObservedPayloadEntryInput,
   type ControllerPayloadEntryInput,
   type ControllerPayloadManifestInput,
+  computeControllerMemberPayloadDigest,
 } from "../src";
 
 /*

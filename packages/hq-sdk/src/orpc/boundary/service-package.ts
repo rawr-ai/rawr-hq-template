@@ -7,8 +7,8 @@
  * stable `defineServicePackage(router)` helper for local client creation.
  */
 import {
-  createRouterClient,
   type AnyRouter,
+  createRouterClient,
   type InferRouterInitialContext,
   type RouterClient,
 } from "@orpc/server";
