@@ -174,6 +174,33 @@ export function normalizeCompleteTestRequest(
   return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
 }
 
+export function normalizeTargetedTestRequest(
+  input: TargetedTestInput,
+): DeploymentResult<TargetedTest> {
+  const targets = normalizeProviderTargets(input.targets, "request.targets");
+  if (!targets.ok) return targets;
+  const releases = input.releases.map((entry) => normalizeArtifactRef(entry));
+  releases.sort((left, right) => compareCanonical(left.releaseDigest, right.releaseDigest));
+  for (let index = 1; index < releases.length; index += 1) {
+    if (releases[index - 1]?.releaseDigest === releases[index]?.releaseDigest) {
+      return failure([issue(
+        "DUPLICATE_MEMBER",
+        "request.releases",
+        "Targeted release refs must be distinct",
+        "distinct release digests",
+        releases[index]!.releaseDigest,
+      )]);
+    }
+  }
+  const body = {
+    kind: input.kind,
+    releases: Object.freeze(releases),
+    evaluationProfile: input.evaluationProfile as EvaluationProfile,
+    targets: targets.value,
+  } as const;
+  return success(Object.freeze({ ...body, requestDigest: digestRequest(body) }));
+}
+
 function parseTargetedTest(input: unknown): DeploymentResult<TargetedTest> {
   const issues: ProviderDeploymentIssue[] = [];
   if (!exactRecord(input, ["evaluationProfile", "kind", "releases", "targets"], "request", issues)) {
