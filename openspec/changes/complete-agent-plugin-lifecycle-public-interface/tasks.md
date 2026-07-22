@@ -161,7 +161,11 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   of root `service/model/**` into their owning modules; remove sibling-module
   reach-through by keeping behavior in procedure handlers and module-owned
   policy. Root `service/model/**` may contain only genuinely cross-cutting ready
-  host capability contracts and dependency-owned observation types.
+  host capability contracts and dependency-owned observation types. Compose
+  direct module handlers as plain router objects; do not create ornamental
+  `*Procedure` exports or parallel operation entrypoints that move handler
+  behavior outside the oRPC router surface, and do not redeclare router-local
+  dependency bags instead of using the module-projected handler context.
 - [ ] 5.3 Make TypeBox the sole public structural schema and generated-type
   source. Remove manual closed-object parsing while retaining canonical order,
   digest, uniqueness, and cross-field domain checks. Pin one coherent oRPC
