@@ -137,60 +137,87 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 
 ## 3. Conventional CLI Package And Release
 
-- [ ] 3.1 Inventory the surviving CLI runtime closure and classify Bun-only
-  dependencies. Select the smallest conventional release form:
-  a registry-published Oclif package whose executable requires installed Bun,
-  or Oclif standalone archives after Node compatibility is verified. The
-  current direct `bun:sqlite` use makes the Bun-requiring registry package the
-  first honest candidate. Do not whole-application Bun-compile Oclif; Bun 1.4
-  native compilation remains appropriate for the separate pinned Habitat CLI.
+- [x] 3.1 Inventory the current CLI runtime closure and classify Bun-only
+  dependencies. Select a registry-published Oclif application whose fixed Nx
+  Release package group requires installed Bun. Current direct `bun:sqlite` use
+  excludes Oclif's Node-bearing standalone archives from this release. Do not
+  whole-application Bun-compile Oclif; Bun 1.4 native compilation remains
+  appropriate for the separate pinned Habitat CLI.
+- [x] 3.1a Record the current pre-deletion runtime dependency closure without
+  making it publishable. Nx
+  reports 22 workspace projects including `@rawr/cli`; source reachability
+  removes only `@rawr/orpc-client`, and the four already-rejected controller,
+  controller-authority, artifact-repository, and provider-record projects reduce
+  the first deletion result to 17. `bun pm pack --dry-run` correctly fails on the
+  unversioned `@rawr/agent-plugin-lifecycle` workspace dependency. Do not repair
+  that failure until tasks 4, 5.5, 5.6, and 5.6a remove rejected owners and land
+  the coherent Effect 4 family; then recompute the actual surviving closure.
 - [ ] 3.2 Give `@rawr/cli` a real version and release metadata. Configure the
   coherent publishable runtime group under top-level `nx.json#release`; private
   workspace dependencies must be versioned, bundled by a standard tool, or
-  removed from the published closure.
+  removed from the published closure. Derive this group only after tasks 4,
+  5.5, 5.6, and 5.6a; do not version or publish predecessor machinery merely to
+  unblock packing.
 - [ ] 3.3 Add owner-local Oclif generated-manifest and package project targets
   with declared Nx inputs and outputs. Use `nx release` for version/changelog
-  and the selected standard publish command for publication. Produce ordinary
-  artifact-level checksums and release provenance, not a per-file runtime
-  envelope.
+  and configure the selected standard publish command without dispatching a
+  release from unlanded source. Produce ordinary artifact-level checksums and
+  release provenance, not a per-file runtime envelope.
 - [ ] 3.3a Inspect the packed and installed dependency closure. It must exclude
   unused app-server, workflow, async-runtime, and Inngest packages without
   post-pack manifest rewriting. If `@rawr/hq-sdk` dependency metadata changes,
   run the legitimate `@rawr/server` typecheck and behavior tests.
-- [ ] 3.4 Install the package into a disposable prefix and prove `rawr --version`,
-  help, core command discovery, native external extension management, and one
-  read-only agent-plugin status call.
+- [ ] 3.4 Install the local packed tarballs into a disposable prefix before
+  landing. An acceptance-only package manifest names every release-group member
+  by `file:` tarball; it rewrites no packed metadata and emulates no registry.
+  Prove `rawr --version`, help, core command discovery, native external extension
+  management, and one read-only agent-plugin status call.
 - [ ] 3.5 Verify the package inventory, generated command manifests, installed
   first-party command ontology, and ordinary artifact checksums/provenance. Do
   not add a custom canonicalizer, build-twice byte-identity gate, selector, or
   retained release store.
 - [ ] 3.6 Run package-owner lint, typecheck, behavior, Habitat, and standing
-  Oclif/Nx/release reviews. Land this node before deleting the working custom
-  installation path.
+  Oclif/Nx/release reviews. Land this node after the rejected distribution,
+  persistent lifecycle stores, and obsolete Effect 3 family are absent from the
+  packed closure.
+- [ ] 3.7 Only after the package source lands on canonical `main` and its required
+  release gate passes, publish the versioned registry package and repeat the
+  version/help/command-inventory smoke from a registry-installed disposable
+  prefix. Repository release dispatch is not a pre-landing acceptance step.
 
 ## 4. Custom Controller Deletion
 
-- [ ] 4.1 Remove controller identity and paths from lifecycle CLI composition,
-  state layout, records, diagnostics, and service dependencies. Oclif may use
-  its ordinary application directories; curated lifecycle MUST introduce no
-  durable local data root.
-- [ ] 4.2 Delete `scripts/controller/**`, `packages/controller-release/**`,
-  `resources/controller-authority/**`, `apps/cli/src/lib/controller/**`, and
-  `packages/core/src/cli/controller-reentry.ts` with all readers, writers,
-  tests, exports, dependencies, and architecture gates.
-- [ ] 4.3 Delete controller publication/installation workflows and scripts.
-  Replace operator guidance with the conventional package/release/install path.
+- [ ] 4.1 Complete tasks 4.2a through 4.5 so no controller identity or path
+  remains in CLI composition, lifecycle state, diagnostics, service
+  dependencies, publication, or operator guidance. Oclif may use its ordinary
+  application directories; curated lifecycle MUST introduce no durable local
+  data root.
+- [ ] 4.2 Delete the custom controller in two independently green Graphite
+  nodes; do not combine distribution deletion with lifecycle context changes.
+- [ ] 4.2a Delete `scripts/controller/**`, `packages/controller-release/**`, the
+  controller publication workflow, controller-only CLI classification and
+  release-inspection commands/tests, root build/dependency wiring, and obsolete
+  architecture gates. Preserve no embedded copy of the custom extension manager.
+- [ ] 4.2b Delete `resources/controller-authority/**`,
+  `apps/cli/src/lib/controller/**`, and
+  `packages/core/src/cli/controller-reentry.ts` with every lifecycle reader,
+  writer, context field, export, dependency, and test. This node may compose with
+  task 5.5 only where the same reader genuinely owns both rejected identities.
+- [ ] 4.3 Replace controller installation, activation, selection, and rollback
+  guidance with the conventional package/release/install path. The workflow and
+  script deletion itself belongs to task 4.2a.
 - [ ] 4.4 Delete obsolete controller-specific diagnostics. `doctor global`, if retained, reports the
   installed CLI version/path, Oclif directories, loaded plugins, and provider
   reachability only.
 - [ ] 4.5 Remove controller requirements from active and
   canonical specifications. Do not add compatibility aliases or scan old local
   controller stores.
-- [ ] 4.6 Prove the conventional installed CLI covers every retained command and
-  that no tracked source imports or invokes the retired verticals. Run affected
-  lint/typecheck/build/test/Habitat plus standing deletion and architecture
-  reviews. Land coherent controller deletion nodes without reopening the
-  extension manager removed in task 2.2.
+- [ ] 4.6 Prove direct source and built Oclif execution cover every retained
+  command and that no tracked source imports or invokes the retired verticals.
+  Run affected lint/typecheck/build/test/Habitat plus standing deletion and
+  architecture reviews. Land coherent controller deletion nodes without
+  reopening the extension manager removed in task 2.2. Task 3.4 separately
+  proves the later conventional installed package.
 
 ## 5. Bounded Agent-Plugin Lifecycle Service
 

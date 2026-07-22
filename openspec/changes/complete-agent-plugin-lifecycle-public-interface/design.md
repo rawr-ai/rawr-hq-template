@@ -77,24 +77,37 @@ authority records.
 Nx projects declare build, lint, typecheck, behavior test,
 generated-manifest, and package targets. Top-level `nx.json#release`
 configuration defines the coherent runtime project group; `nx release` owns
-versioning and changelog, and `nx release publish` owns npm publication when npm
-is selected. If standalone archives are selected, Oclif's pack command creates
-them and the release workflow publishes them. The first replacement package may
-require an installed Bun runtime because surviving runtime code uses Bun-only
-APIs.
+versioning and changelog, and `nx release publish` owns npm publication. The
+selected release is an ordinary registry-published Oclif application backed by
+one fixed package group whose executable requires installed Bun because
+surviving runtime code uses Bun-only APIs.
 That yields a conventional package with a Bun hashbang, not a custom runtime
 store.
 
-Oclif's Node-bearing standalone archives become eligible only after the
-surviving CLI closure is proven Node-compatible. A Bun compiled executable is a
-separate bounded feasibility option only if Oclif plugin discovery and native
-extension loading behave unchanged. Neither option permits a local selector,
-retained private release store, or per-file runtime envelope.
+The release group is derived only after the rejected controller distribution,
+controller identity, persistent agent release/projection stores, and target
+records are deleted and the surviving filesystem/process family is coherently
+on Effect 4. The current pre-deletion runtime dependency closure is evidence for
+deletion, not a package inventory to version. A failed standard pack caused by an unversioned workspace
+dependency is repaired by making the final surviving closure publishable, never
+by publishing machinery already scheduled for removal.
+
+Oclif's Node-bearing standalone archives and a whole-application Bun compiled
+executable are not release alternatives in this workstream. A later initiative
+may evaluate either only after proving runtime and Oclif plugin-discovery
+compatibility. Neither may reintroduce a local selector, retained private
+release store, or per-file runtime envelope.
 
 Release integrity is artifact-level: ordinary checksums, repository release
 provenance, package inventory, generated-manifest validity, and installed-command
 equivalence. Per-file hostile-local-tamper attestation and custom archive
 canonicalization are out of scope.
+
+Pre-landing installed acceptance packs every release-group member, then uses one
+acceptance-only package manifest whose dependencies are `file:` references to
+those tarballs. The package manager therefore exercises the complete local group
+without unpublished registry dependencies, package-metadata rewriting, or a
+registry emulator. Canonical publication still occurs only from landed source.
 
 ### Habitat owns positive architecture policy
 
@@ -275,19 +288,25 @@ not widen this change.
 1. Land the corrected record and positive Habitat/Nx architecture ratchet.
 2. Restore ordinary Oclif development execution and direct external extension
    management.
-3. Add and smoke-test conventional package/release output in a disposable
-   prefix.
-4. Remove lifecycle dependence on controller identity and directories.
-5. Delete the custom distribution, selector, extension manager, diagnostics,
-   and their tests/workflows.
-6. Simplify the lifecycle service and surviving resources behind stable public
-   behavior.
-7. Recut Personal content records and required checks around the released CLI.
-8. Run disposable-home and approved-home convergence, then the read-only repeat.
-9. Archive superseded records and drain owned stacks/worktrees.
+3. Inventory the current closure and select the conventional release form, but
+   do not make rejected predecessor projects publishable.
+4. Delete the custom distribution, selector, embedded extension manager,
+   controller identity, diagnostics, and their tests/workflows in bounded green
+   nodes.
+5. Delete persistent lifecycle stores and simplify the lifecycle service and
+   surviving resources behind stable public behavior.
+6. Migrate the complete surviving filesystem/process resource family and CLI
+   adapter to one aligned Effect 4 family.
+7. Recompute the surviving runtime closure, then add and smoke-test the ordinary
+   Nx Release/Bun package in a disposable prefix.
+8. Recut Personal content records and required checks around the released CLI.
+9. Run disposable-home and approved-home convergence, then the read-only repeat.
+10. Archive superseded records and drain owned stacks/worktrees.
 
-The replacement precedes deletion only where it prevents loss of the working
-CLI. No compatibility layer connects the two models.
+Direct source and built Oclif execution already provide the working development
+replacement before deletion. The old installed controller may remain inert
+during the source cut, but it is never an implementation prerequisite or
+authority for the replacement. No compatibility layer connects the two models.
 
 ## Rejected Alternatives
 
