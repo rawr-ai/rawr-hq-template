@@ -78,6 +78,41 @@ builder, release format, selector/launcher, authority resource, CLI bootstrap,
 and custom extension manager. Their circular downstream references do not make
 them product authority.
 
+## Conventional Release Grounding
+
+The release-form audit selects one ordinary registry-published Oclif application
+whose fixed Nx Release package group requires installed Bun. Nx builds the
+workspace closure; Nx Release owns versioning, changelog, and publication;
+Bun/npm packing produces ordinary package archives. Oclif's Node-bearing
+standalone archives remain ineligible while surviving commands import
+`bun:sqlite`. Whole-application Bun compilation would require a separate Oclif
+filesystem plugin-discovery compatibility test that the ordinary package group
+does not need.
+
+The current Nx graph contains 22 workspace projects including `@rawr/cli`; 21
+are source-reachable. Removing only the four already-rejected controller,
+controller-authority, artifact-repository, and provider-record projects yields a
+preliminary 17-project closure after those named exclusions, not a final release
+group. `bun pm pack --dry-run`
+currently fails because `@rawr/agent-plugin-lifecycle` is an unversioned
+`workspace:*` dependency. That is an honest sequencing signal: the initiative
+will delete rejected owners, migrate the surviving Effect family, recompute the
+closure, and only then version and package its actual members. It will not make
+the current pre-deletion runtime dependency closure publishable to manufacture
+an early package acceptance result.
+
+The pre-landing installed-package acceptance uses local packed tarballs in one
+guarded disposable prefix. An acceptance-only package manifest binds every
+release-group member through a `file:` tarball dependency while public
+dependencies use ordinary registry resolution. It rewrites no packed metadata
+and emulates no registry. The acceptance proves version/help/command inventory,
+native external extension install-list-invoke-remove, package containment, one
+ordinary artifact checksum, and a read-only lifecycle status call. After that
+source lands and the required release gate passes, publication and one
+registry-installed smoke are separate release operations. Neither step
+introduces a retained release store, selector, per-file envelope, or
+source-checkout renaming.
+
 ## Durable Decisions
 
 | Concern | Decision |
@@ -319,7 +354,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
 | Positive Habitat/Nx ratchet | Required lifecycle topology active; broader generic live-tree policy remains task 1.5 |
 | Direct Oclif development and external extension path | Direct source/built entrypoints, app-local native extension ownership, and disposable round trip complete; controller-embedded residue pending task 4 |
-| Conventional CLI package/release | Pending |
+| Conventional CLI package/release | Bun-installed registry package selected; implementation waits for controller/state deletion and Effect 4 closure |
 | Custom controller/extension deletion | Pending |
 | Persistent agent artifact/projection store deletion | Pending |
 | Bounded lifecycle simplification | Pending |
