@@ -1,4 +1,4 @@
-import { createClient, type Client as HqOpsClient, type CreateClientOptions } from "@rawr/hq-ops";
+import { type CreateClientOptions, createClient, type Client as HqOpsClient } from "@rawr/hq-ops";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
   bindService,

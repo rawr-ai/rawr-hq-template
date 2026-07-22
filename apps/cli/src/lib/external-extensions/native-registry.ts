@@ -1,18 +1,17 @@
 import path from "node:path";
-
+import { parseNativeInstallProvenance } from "./install-provenance";
 import type {
   CandidateInspection,
   NativeExternalEntry,
   NativeRegistryEntry,
   NativeRegistryProjection,
-  QuarantineReason,
   QuarantinedExternalExtension,
+  QuarantineReason,
   ReservedControllerSurface,
 } from "./model";
-import { parseNativeInstallProvenance } from "./install-provenance";
 import { isCanonicalPackageId } from "./package-id";
-import { inspectStaticExternalExtension } from "./static-manifest";
 import type { StaticEvidencePort } from "./static-evidence";
+import { inspectStaticExternalExtension } from "./static-manifest";
 
 export interface ExternalExtensionStatePort {
   inspectRoot(root: string, expectedPackageId?: string): Promise<CandidateInspection>;

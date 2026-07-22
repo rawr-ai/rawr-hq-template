@@ -1,6 +1,5 @@
-import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { buildHqLifecyclePlan, runHqLifecycle } from "../../lib/hq";
-import { findWorkspaceRoot } from "@rawr/core";
 
 export default class HqDown extends RawrCommand {
   static description = "Stop the managed RAWR HQ runtime";

@@ -1,7 +1,7 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import os from "node:os";
 import { spawn } from "node:child_process";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { createClient } from "@rawr/hq-ops";
 

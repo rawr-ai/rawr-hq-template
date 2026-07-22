@@ -1,14 +1,14 @@
-import type { Config } from "@oclif/core";
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import type { Config } from "@oclif/core";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { executeNativeManagerInvocation } from "../../src/lib/external-extensions/native-manager-entry";
 import {
-  NATIVE_MANAGER_PROTOCOL_VERSION,
   encodeNativeManagerInvocation,
+  NATIVE_MANAGER_PROTOCOL_VERSION,
   sha256RegularFile,
 } from "../../src/lib/external-extensions/native-manager-protocol";
 import { GUARDED_NATIVE_MANAGER_CONTRACT } from "../../src/lib/external-extensions/native-mutation";

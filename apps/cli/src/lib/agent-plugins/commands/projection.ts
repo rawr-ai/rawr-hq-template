@@ -9,11 +9,11 @@ import type {
 import { preflightNodeControllerAuthority } from "@rawr/resource-controller-authority/providers/effect-platform-node";
 import { createProductionLifecycleClient } from "../service-runtime/client";
 import {
-  LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
+  LifecycleAuthorityBindingError,
   type LifecycleClientFactory,
-  type LifecycleOperationClient,
   type LifecycleOperation,
+  type LifecycleOperationClient,
 } from "./binding";
 
 import type {
@@ -23,8 +23,8 @@ import type {
   CurrentMainRecordRequest,
   CurrentMainSelectionRequest,
   PackageRequest,
-  ReleaseInputRefreshRequest,
   ReleaseInputRecordRequest,
+  ReleaseInputRefreshRequest,
   RepositoryCheckRequest,
   StatusRequest,
   SyncRequest,
@@ -59,11 +59,11 @@ export type LifecycleOperationRequest =
 type LifecycleCallOptions = NonNullable<Parameters<Client["releases"]["check"]>[1]>;
 
 export {
-  LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
+  LifecycleAuthorityBindingError,
   type LifecycleClientFactory,
-  type LifecycleOperationClient,
   type LifecycleOperation,
+  type LifecycleOperationClient,
 } from "./binding";
 
 export function parseControllerProjectionBinding(

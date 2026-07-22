@@ -1,23 +1,11 @@
-import { afterEach, describe, expect, it } from "vitest";
-import {
-  CONTROLLER_PAYLOAD_SCHEMA_VERSION,
-  canonicalSerializeControllerReleaseEnvelope,
-  computeControllerMemberPayloadDigest,
-  createControllerPayloadManifest,
-  createControllerReleaseEnvelope,
-  sha256,
-  type ControllerArchitecture,
-  type ControllerPayloadEntryInput,
-  type ControllerPlatform,
-} from "@rawr/controller-release";
 import {
   chmod,
   link,
   lstat,
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
+  readFile,
   readlink,
   realpath,
   rm,
@@ -27,10 +15,22 @@ import {
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import {
+  CONTROLLER_PAYLOAD_SCHEMA_VERSION,
+  type ControllerArchitecture,
+  type ControllerPayloadEntryInput,
+  type ControllerPlatform,
+  canonicalSerializeControllerReleaseEnvelope,
+  computeControllerMemberPayloadDigest,
+  createControllerPayloadManifest,
+  createControllerReleaseEnvelope,
+  sha256,
+} from "@rawr/controller-release";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
-  inspectGlobalController,
   type GlobalDoctorData,
+  inspectGlobalController,
 } from "../src/lib/controller/global-diagnostics";
 import {
   CONTROLLER_DEPENDENCY_LOCK_PATH,

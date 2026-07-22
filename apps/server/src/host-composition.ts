@@ -1,15 +1,15 @@
 import { createRawrHqManifest, type RawrHqManifest } from "@rawr/hq-app/manifest";
 import { materializeRawrHostBoundRolePlan } from "./host-realization";
 import {
-  createRawrHostBoundRolePlan,
-  type RawrHostBoundRolePlan,
-  type RawrHostDeclarations,
-} from "./host-seam";
-import {
   createRawrHostSatisfiers,
   type HostServiceLogger,
   type RawrHostSatisfiers,
 } from "./host-satisfiers";
+import {
+  createRawrHostBoundRolePlan,
+  type RawrHostBoundRolePlan,
+  type RawrHostDeclarations,
+} from "./host-seam";
 
 export type RawrHostComposition = Readonly<{
   manifest: RawrHqManifest;

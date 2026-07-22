@@ -1,9 +1,8 @@
-import { Flags } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
+import { spawnSync } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
-import { findWorkspaceRoot } from "@rawr/core";
+import { Flags } from "@oclif/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { resolveCliReentry } from "../../lib/subprocess";
 
 type Snapshot = {

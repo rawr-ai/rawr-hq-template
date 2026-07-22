@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 import process from "node:process";
-import { trace, type SpanContext } from "@opentelemetry/api";
+import { type SpanContext, trace } from "@opentelemetry/api";
 import pino, { type DestinationStream, type Logger as PinoLogger } from "pino";
 
 type ServiceLogger = {

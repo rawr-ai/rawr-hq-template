@@ -1,7 +1,6 @@
-import { RawrCommand } from "@rawr/core";
 import { Args } from "@oclif/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
-import { findWorkspaceRoot } from "@rawr/core";
 
 export default class JournalShow extends RawrCommand {
   static description = "Show a single journal snippet by id";

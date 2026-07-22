@@ -1,6 +1,5 @@
-import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { collectAndWriteHqStatus, formatHqStatusHuman } from "../../lib/hq-status";
-import { findWorkspaceRoot } from "@rawr/core";
 
 export default class HqStatus extends RawrCommand {
   static description = "Show machine-readable status for the managed RAWR HQ runtime";

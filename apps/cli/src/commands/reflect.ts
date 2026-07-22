@@ -1,7 +1,6 @@
 import { Flags } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../lib/hq-ops-client";
-import { findWorkspaceRoot } from "@rawr/core";
 
 type ReflectSuggestion = {
   kind: "promote-workflow" | "promote-command" | "note";

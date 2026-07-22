@@ -1,8 +1,8 @@
 import type React from "react";
 import { useEffect, useState } from "react";
-import { ThemeSwitcher } from "../theme/theme-switcher";
 import { Button } from "../components/ui";
 import { cn } from "../lib/cn";
+import { ThemeSwitcher } from "../theme/theme-switcher";
 
 const SIDEBAR_ID = "app-shell-sidebar";
 const MOBILE_MEDIA_QUERY = "(max-width: 960px)";

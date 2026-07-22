@@ -1,7 +1,7 @@
 import {
+  type CompleteOrderedWritePlan,
   completeOrderedWritePlan,
   qualifiedTextWrite,
-  type CompleteOrderedWritePlan,
   type VerifiedDestinationRoot,
 } from "../shared";
 import type { OfficialCommandAuthoringRequest } from "./request";
