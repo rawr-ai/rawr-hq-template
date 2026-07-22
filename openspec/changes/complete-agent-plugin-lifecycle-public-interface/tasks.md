@@ -62,7 +62,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   Typecheck the Habitat consumer against `bun-types@1.3.14`; derive its release
   manifest type and validation from one closed TypeBox schema; keep its asset
   cache fixed under the repository and reject non-basename asset filenames.
-- [ ] 1.5b Adopt Civ7's Biome `2.5.3` hygiene and formatting responsibilities,
+- [x] 1.5b Adopt Civ7's Biome `2.5.3` hygiene and formatting responsibilities,
   adapted to Template paths and generated outputs. Preserve ESLint as the
   separate boundary-rule leaf. Expose the Civ7 lintEffect configuration and
   patched dependency as an advisory command; do not put its cold full-corpus run
@@ -81,10 +81,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   keeping each adapter affected by shared-provider changes. Preserve serialized
   CLI file execution and verify its complete owner target with explicit stream
   output.
-- [ ] 1.6b Replace the sequential repository ratchet with Nx affected/cached
-  lint and typecheck plus one Habitat policy check. Preserve one non-skippable
+- [x] 1.6b Replace the sequential repository ratchet with one positive project
+  kind per project, Nx-owned admission tests, affected/cached lint and typecheck,
+  the complete Biome check, Habitat consumer integrity tests, repository
+  separation, and one live Habitat policy check. Preserve one non-skippable
   remote required result for the candidate revision.
-- [ ] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
+- [x] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable
   Graphite nodes if both change independently.
