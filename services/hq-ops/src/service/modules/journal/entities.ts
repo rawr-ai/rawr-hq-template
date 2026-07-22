@@ -14,7 +14,7 @@ export const JournalStepSchema = Type.Object(
     durationMs: Type.Optional(Type.Number()),
     exitCode: Type.Optional(Type.Number()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const JournalEventSchema = Type.Object(
@@ -29,7 +29,7 @@ export const JournalEventSchema = Type.Object(
     artifacts: Type.Optional(Type.Array(Type.String())),
     steps: Type.Optional(Type.Array(JournalStepSchema)),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const JournalSnippetSchema = Type.Object(
@@ -43,7 +43,7 @@ export const JournalSnippetSchema = Type.Object(
     tags: Type.Array(Type.String()),
     sourceEventId: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const JournalSearchRowSchema = Type.Object(
@@ -57,7 +57,7 @@ export const JournalSearchRowSchema = Type.Object(
     sourceEventId: Type.Optional(Type.String({ minLength: 1 })),
     score: Type.Optional(Type.Number()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type JournalEvent = Static<typeof JournalEventSchema>;

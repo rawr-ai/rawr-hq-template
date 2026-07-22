@@ -96,12 +96,13 @@ const executionContext: DerivedTypingService["ExecutionContext"] = {
 };
 void executionContext;
 
-const requiredExtensionExecutionContext: DerivedTypingService["RequiredExtensionExecutionContext"] = {
-  ...declaredContext,
-  invocation: {
-    traceId: "trace-typing",
-  },
-};
+const requiredExtensionExecutionContext: DerivedTypingService["RequiredExtensionExecutionContext"] =
+  {
+    ...declaredContext,
+    invocation: {
+      traceId: "trace-typing",
+    },
+  };
 void requiredExtensionExecutionContext;
 
 const derivedTypingExecutionContextAlias: DerivedTypingService["ExecutionContext"] = {
@@ -131,11 +132,12 @@ const invalidDeclaredContext: DerivedTypingService["DeclaredContext"] = {
 };
 void invalidDeclaredContext;
 
-const invalidRequiredExtensionExecutionContext: DerivedTypingService["RequiredExtensionExecutionContext"] = {
-  ...requiredExtensionExecutionContext,
-  // @ts-expect-error Required service extension execution context excludes provided.
-  provided: {},
-};
+const invalidRequiredExtensionExecutionContext: DerivedTypingService["RequiredExtensionExecutionContext"] =
+  {
+    ...requiredExtensionExecutionContext,
+    // @ts-expect-error Required service extension execution context excludes provided.
+    provided: {},
+  };
 void invalidRequiredExtensionExecutionContext;
 
 // @ts-expect-error initialContext must include deps, scope, and config lanes.
@@ -194,12 +196,13 @@ defineService<{
 });
 
 // Missing nested dependency fragment should fail at `.use(...)`.
-const missingSqlDeps = implement(contract).$context<{
-  deps: {};
-  scope: { workspaceId: string };
-  config: { readOnly: boolean; limits: { maxAssignmentsPerTask: number } };
-  invocation: { traceId: string };
-}>()
+const missingSqlDeps = implement(contract)
+  .$context<{
+    deps: {};
+    scope: { workspaceId: string };
+    config: { readOnly: boolean; limits: { maxAssignmentsPerTask: number } };
+    invocation: { traceId: string };
+  }>()
   // @ts-expect-error dbPool is required by the SQL provider.
   .use(sqlProvider);
 void missingSqlDeps;
@@ -275,7 +278,7 @@ typedClient.tasks.get({ id: "00000000-0000-0000-0000-000000000001" });
 
 typedClient.tasks.get(
   { id: "00000000-0000-0000-0000-000000000001" },
-  { context: { invocation: { traceId: "trace-123" } } },
+  { context: { invocation: { traceId: "trace-123" } } }
 );
 
 type TaskGetOptions = NonNullable<Parameters<typeof typedClient.tasks.get>[1]>;
@@ -288,10 +291,7 @@ const typedTaskGetOptions = {
   },
 } satisfies TaskGetOptions;
 
-typedClient.tasks.get(
-  { id: "00000000-0000-0000-0000-000000000001" },
-  typedTaskGetOptions,
-);
+typedClient.tasks.get({ id: "00000000-0000-0000-0000-000000000001" }, typedTaskGetOptions);
 
 const invalidTaskGetOptions = {
   context: {
@@ -411,13 +411,27 @@ const additiveService = defineService<{
 
 const additiveContract = {
   assign: additiveService.oc
-    .input(schema(Type.Object({
-      taskId: Type.String(),
-      tagId: Type.String(),
-    }, { additionalProperties: false })))
-    .output(schema(Type.Object({
-      ok: Type.Boolean(),
-    }, { additionalProperties: false }))),
+    .input(
+      schema(
+        Type.Object(
+          {
+            taskId: Type.String(),
+            tagId: Type.String(),
+          },
+          { additionalProperties: false }
+        )
+      )
+    )
+    .output(
+      schema(
+        Type.Object(
+          {
+            ok: Type.Boolean(),
+          },
+          { additionalProperties: false }
+        )
+      )
+    ),
 };
 
 const additiveObservability = additiveService.createObservabilityMiddleware({
@@ -436,7 +450,8 @@ const requiredExtensions = {
   analytics: additiveService.createRequiredAnalyticsMiddleware({}),
 };
 
-const additiveModuleBranch = additiveService.createImplementer(additiveContract, requiredExtensions)
+const additiveModuleBranch = additiveService
+  .createImplementer(additiveContract, requiredExtensions)
   .use(additiveObservability)
   .use(additiveAnalytics);
 void additiveModuleBranch;
@@ -444,8 +459,9 @@ void additiveModuleBranch;
 // @ts-expect-error required service middleware extensions must be supplied at implementer creation.
 additiveService.createImplementer(additiveContract);
 
-const additiveProcedureBranch = additiveService.createImplementer(additiveContract, requiredExtensions).assign
-  .use(additiveObservability)
+const additiveProcedureBranch = additiveService
+  .createImplementer(additiveContract, requiredExtensions)
+  .assign.use(additiveObservability)
   .use(additiveAnalytics);
 void additiveProcedureBranch;
 

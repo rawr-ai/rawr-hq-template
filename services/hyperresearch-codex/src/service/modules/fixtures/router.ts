@@ -21,8 +21,11 @@ import { module } from "./module";
 
 const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, input }) => {
   const { io, cli } = context;
-  const artifactRoot = input.artifactRoot ?? io.join(input.vaultRoot, "research", "temp", "codex-artifacts");
-  const ledgerPath = input.ledgerPath ?? io.join(input.vaultRoot, "research", "temp", "hyperresearch-codex-run.json");
+  const artifactRoot =
+    input.artifactRoot ?? io.join(input.vaultRoot, "research", "temp", "codex-artifacts");
+  const ledgerPath =
+    input.ledgerPath ??
+    io.join(input.vaultRoot, "research", "temp", "hyperresearch-codex-run.json");
 
   await io.ensureDir(input.vaultRoot);
   await io.ensureDir(artifactRoot);
@@ -82,11 +85,15 @@ const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, inp
           step,
           artifactRoot,
           fileName: "canonical-query.json",
-          content: `${JSON.stringify({
-            canonicalQuery: ledger.canonicalQuery,
-            tier: ledger.tier,
-            stepHash: loaded.sha256,
-          }, null, 2)}\n`,
+          content: `${JSON.stringify(
+            {
+              canonicalQuery: ledger.canonicalQuery,
+              tier: ledger.tier,
+              stepHash: loaded.sha256,
+            },
+            null,
+            2
+          )}\n`,
           io,
         });
       }
@@ -104,14 +111,18 @@ const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, inp
           step,
           artifactRoot,
           fileName: "source-note.json",
-          content: `${JSON.stringify({
-            title: "Synthetic Codex parity source",
-            provenance: {
-              capturedBy: "hyperresearch-codex",
-              suggestedBy: "synthetic-runtime-slice",
+          content: `${JSON.stringify(
+            {
+              title: "Synthetic Codex parity source",
+              provenance: {
+                capturedBy: "hyperresearch-codex",
+                suggestedBy: "synthetic-runtime-slice",
+              },
+              canonicalQuery: ledger.canonicalQuery,
             },
-            canonicalQuery: ledger.canonicalQuery,
-          }, null, 2)}\n`,
+            null,
+            2
+          )}\n`,
           io,
         });
       }

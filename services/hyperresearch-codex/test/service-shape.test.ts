@@ -15,9 +15,7 @@ describe("hyperresearch-codex service shell", () => {
     expect(createClient(createClientOptions())).toBeDefined();
     expect(router).toBeDefined();
     expect(Object.keys(contract)).toEqual(["fixtures", "runs"]);
-    expect(Object.keys(contract.fixtures)).toEqual([
-      "runSyntheticSlice",
-    ]);
+    expect(Object.keys(contract.fixtures)).toEqual(["runSyntheticSlice"]);
     expect(Object.keys(contract.runs)).toEqual([
       "startV8Run",
       "advanceV8Run",
@@ -30,16 +28,9 @@ describe("hyperresearch-codex service shell", () => {
     expect(Object.keys(publicApi).sort()).toEqual(["createClient", "router"]);
 
     const srcDir = path.resolve(dirname(fileURLToPath(import.meta.url)), "../src");
-    const rootTsFiles = (await fs.readdir(srcDir))
-      .filter((entry) => entry.endsWith(".ts"))
-      .sort();
+    const rootTsFiles = (await fs.readdir(srcDir)).filter((entry) => entry.endsWith(".ts")).sort();
 
-    expect(rootTsFiles).toEqual([
-      "client.ts",
-      "index.ts",
-      "router.ts",
-      "types.ts",
-    ]);
+    expect(rootTsFiles).toEqual(["client.ts", "index.ts", "router.ts", "types.ts"]);
   });
 
   it("rejects generic module buckets, module-root implementation files, and top-level common helpers", async () => {

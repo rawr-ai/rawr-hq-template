@@ -1,10 +1,7 @@
 import { schema } from "@rawr/hq-sdk";
 import type { ErrorMapItem } from "@orpc/server";
 import { Type } from "typebox";
-import {
-  INVALID_CONVERSATION_EXPORT,
-  INVALID_CONVERSATION_JSON,
-} from "../../common/errors";
+import { INVALID_CONVERSATION_EXPORT, INVALID_CONVERSATION_JSON } from "../../common/errors";
 import { ocBase } from "../../base";
 import { SourceSnapshotSchema } from "../source-materials/entities";
 import {
@@ -27,8 +24,8 @@ const ValidationFailedData = schema(
     {
       reason: Type.String({ minLength: 1 }),
     },
-    { additionalProperties: false },
-  ),
+    { additionalProperties: false }
+  )
 );
 
 const CORPUS_ARTIFACT_VALIDATION_FAILED: ErrorMapItem<typeof ValidationFailedData> = {
@@ -42,7 +39,7 @@ const BuildArtifactsInputSchema = Type.Object(
   {
     snapshot: SourceSnapshotSchema,
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 const BuildArtifactsOutputSchema = Type.Object(
   {
@@ -67,7 +64,7 @@ const BuildArtifactsOutputSchema = Type.Object(
     outputDirectories: Type.Array(OutputDirectoryEntrySchema),
     outputEntries: Type.Array(OutputEntrySchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 const MaterializeArtifactsOutputSchema = Type.Object(
   {
@@ -80,7 +77,7 @@ const MaterializeArtifactsOutputSchema = Type.Object(
     outputDirectories: Type.Array(OutputDirectoryEntrySchema),
     outputEntries: Type.Array(OutputEntrySchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const contract = {

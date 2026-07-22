@@ -20,11 +20,13 @@ export const module = impl.tasks
   .use(observability)
   .use(analytics)
   .use(repository)
-  .use(async ({ context, next }) => next({
-    context: {
-      clock: context.deps.clock,
-      logger: context.deps.logger,
-      workspaceId: context.scope.workspaceId,
-      repo: context.provided.repo,
-    },
-  }));
+  .use(async ({ context, next }) =>
+    next({
+      context: {
+        clock: context.deps.clock,
+        logger: context.deps.logger,
+        workspaceId: context.scope.workspaceId,
+        repo: context.provided.repo,
+      },
+    })
+  );

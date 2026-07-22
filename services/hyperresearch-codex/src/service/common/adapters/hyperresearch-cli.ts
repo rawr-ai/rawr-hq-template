@@ -3,10 +3,7 @@ import type {
   HyperresearchCliOperation,
   HyperresearchRunLedger,
 } from "../entities";
-import type {
-  HyperresearchCliBackend,
-  HyperresearchCodexIO,
-} from "../resources";
+import type { HyperresearchCliBackend, HyperresearchCodexIO } from "../resources";
 
 const allowedOperations = new Set<HyperresearchCliOperation>([
   "init",
@@ -22,7 +19,9 @@ const allowedOperations = new Set<HyperresearchCliOperation>([
   "export",
 ]);
 
-export function assertAllowedHyperresearchOperation(operation: string): asserts operation is HyperresearchCliOperation {
+export function assertAllowedHyperresearchOperation(
+  operation: string
+): asserts operation is HyperresearchCliOperation {
   if (!allowedOperations.has(operation as HyperresearchCliOperation)) {
     throw new Error(`Unsupported Hyperresearch CLI operation: ${operation}`);
   }
@@ -63,7 +62,9 @@ export async function runHyperresearchCli(input: {
       message: `Hyperresearch CLI ${input.operation} failed with exit code ${result.exitCode}`,
     });
     if (input.throwOnFailure) {
-      throw new Error(`Hyperresearch CLI ${input.operation} failed with exit code ${result.exitCode}`);
+      throw new Error(
+        `Hyperresearch CLI ${input.operation} failed with exit code ${result.exitCode}`
+      );
     }
   }
   return call;

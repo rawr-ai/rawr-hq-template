@@ -35,7 +35,8 @@ export function detectAnomalies(jsonRecords: JsonConversationSourceRecord[]): An
       continue;
     }
 
-    const lastResponse = [...messages].reverse().find((message) => message.role === "Response")?.say ?? "";
+    const lastResponse =
+      [...messages].reverse().find((message) => message.role === "Response")?.say ?? "";
     if (!lastResponse.trim()) {
       anomalies.push({
         anomaly_id: `anomaly-${slugify(filenameStem(record.relativePath))}-blank-final-response`,

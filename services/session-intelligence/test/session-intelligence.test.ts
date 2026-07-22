@@ -60,7 +60,7 @@ describe("@rawr/session-intelligence", () => {
     const client = createClient(createClientOptions());
     const result = await client.transcripts.detect(
       { path: CLAUDE_FIXTURE_PATH },
-      createInvocation("trace-root"),
+      createInvocation("trace-root")
     );
 
     expect(result.source).toBe("claude");
@@ -69,10 +69,20 @@ describe("@rawr/session-intelligence", () => {
   it("detects Claude and Codex JSONL formats through the source runtime", async () => {
     const client = createClient(createClientOptions());
 
-    await expect(client.transcripts.detect({ path: CLAUDE_FIXTURE_PATH }, createInvocation("trace-detect-claude"))).resolves.toEqual({
+    await expect(
+      client.transcripts.detect(
+        { path: CLAUDE_FIXTURE_PATH },
+        createInvocation("trace-detect-claude")
+      )
+    ).resolves.toEqual({
       source: "claude",
     });
-    await expect(client.transcripts.detect({ path: CODEX_FIXTURE_PATH }, createInvocation("trace-detect-codex"))).resolves.toEqual({
+    await expect(
+      client.transcripts.detect(
+        { path: CODEX_FIXTURE_PATH },
+        createInvocation("trace-detect-codex")
+      )
+    ).resolves.toEqual({
       source: "codex",
     });
   });
@@ -86,7 +96,7 @@ describe("@rawr/session-intelligence", () => {
         limit: 10,
         filters: {},
       },
-      createInvocation("trace-list"),
+      createInvocation("trace-list")
     );
 
     expect(result.sessions.map((session) => session.source)).toEqual(["codex", "claude"]);
@@ -114,7 +124,7 @@ describe("@rawr/session-intelligence", () => {
         session: CLAUDE_FIXTURE_PATH,
         source: "all",
       },
-      createInvocation("trace-resolve-path"),
+      createInvocation("trace-resolve-path")
     );
     expect(byPath.resolved.source).toBe("claude");
     expect(byPath.metadata).toMatchObject({
@@ -127,7 +137,7 @@ describe("@rawr/session-intelligence", () => {
         session: "019c21af-23f2",
         source: "codex",
       },
-      createInvocation("trace-resolve-codex"),
+      createInvocation("trace-resolve-codex")
     );
     expect(byCodexPartial.resolved).toMatchObject({
       path: CODEX_FIXTURE_PATH,
@@ -150,7 +160,7 @@ describe("@rawr/session-intelligence", () => {
           maxMessages: 0,
         },
       },
-      createInvocation("trace-extract"),
+      createInvocation("trace-extract")
     );
 
     expect(extracted.source).toBe("codex");
@@ -177,7 +187,7 @@ describe("@rawr/session-intelligence", () => {
           maxMessages: 0,
         },
       },
-      createInvocation("trace-extract-custom-tools"),
+      createInvocation("trace-extract-custom-tools")
     );
 
     const content = extracted.messages.map((message) => message.content).join("\n");
@@ -199,7 +209,7 @@ describe("@rawr/session-intelligence", () => {
         needle: "feat-sessions-plugin",
         limit: 10,
       },
-      createInvocation("trace-search-metadata"),
+      createInvocation("trace-search-metadata")
     );
 
     expect(result.hits).toHaveLength(1);
@@ -226,7 +236,7 @@ describe("@rawr/session-intelligence", () => {
         candidateLimit: 5,
         includeFacets: true,
       },
-      createInvocation("trace-search-facets"),
+      createInvocation("trace-search-facets")
     );
 
     expect(result.hits.map((hit) => hit.path)).toEqual([CODEX_STRUCTURED_FIXTURE_PATH]);
@@ -238,8 +248,12 @@ describe("@rawr/session-intelligence", () => {
     expect(facets?.directives).toContain("automation-update");
     expect(facets?.directives).not.toContain("hidden-directive");
     expect(facets?.toolCalls).toEqual(["apply_patch", "exec_command"]);
-    expect(facets?.payloadTypes).toEqual(expect.arrayContaining(["custom_tool_call", "custom_tool_call_output", "message"]));
-    expect(facets?.topLevelTypes).toEqual(expect.arrayContaining(["event_msg", "response_item", "session_meta"]));
+    expect(facets?.payloadTypes).toEqual(
+      expect.arrayContaining(["custom_tool_call", "custom_tool_call_output", "message"])
+    );
+    expect(facets?.topLevelTypes).toEqual(
+      expect.arrayContaining(["event_msg", "response_item", "session_meta"])
+    );
   });
 
   it("keeps metadata result limit separate from facet candidate scanning", async () => {
@@ -256,7 +270,7 @@ describe("@rawr/session-intelligence", () => {
         candidateLimit: 2,
         includeFacets: true,
       },
-      createInvocation("trace-metadata-facet-broad"),
+      createInvocation("trace-metadata-facet-broad")
     );
     expect(broadScan.hits.map((hit) => hit.path)).toEqual([CODEX_STRUCTURED_FIXTURE_PATH]);
     expect(broadScan.hits[0]?.facets?.xmlBlockTags).toContain("proposed_plan");
@@ -271,7 +285,7 @@ describe("@rawr/session-intelligence", () => {
         candidateLimit: 1,
         includeFacets: true,
       },
-      createInvocation("trace-metadata-facet-narrow"),
+      createInvocation("trace-metadata-facet-narrow")
     );
     expect(narrowScan.hits).toEqual([]);
   });
@@ -288,7 +302,7 @@ describe("@rawr/session-intelligence", () => {
         limit: 1,
         includeFacets: false,
       },
-      createInvocation("trace-facet-default"),
+      createInvocation("trace-facet-default")
     );
     expect(defaulted.hits.map((hit) => hit.path)).toEqual([CODEX_STRUCTURED_FIXTURE_PATH]);
 
@@ -301,22 +315,24 @@ describe("@rawr/session-intelligence", () => {
         candidateLimit: 1,
         includeFacets: false,
       },
-      createInvocation("trace-facet-bounded"),
+      createInvocation("trace-facet-bounded")
     );
     expect(bounded.hits).toEqual([]);
 
     for (const candidateLimit of [0, -1, 1.5, 50_001]) {
-      const result = await safe(client.search.facets(
-        {
-          source: "codex",
-          filters: {},
-          facetFilters: { tags: ["proposed_plan"] },
-          limit: 1,
-          candidateLimit,
-          includeFacets: false,
-        },
-        createInvocation(`trace-facet-invalid-${candidateLimit}`),
-      ));
+      const result = await safe(
+        client.search.facets(
+          {
+            source: "codex",
+            filters: {},
+            facetFilters: { tags: ["proposed_plan"] },
+            limit: 1,
+            candidateLimit,
+            includeFacets: false,
+          },
+          createInvocation(`trace-facet-invalid-${candidateLimit}`)
+        )
+      );
       expect(result.isSuccess).toBe(false);
     }
   });
@@ -339,7 +355,7 @@ describe("@rawr/session-intelligence", () => {
         includeTools: false,
         useIndex: false,
       },
-      createInvocation("trace-content-uncached"),
+      createInvocation("trace-content-uncached")
     );
 
     expect(uncached.hits).toHaveLength(1);
@@ -358,7 +374,7 @@ describe("@rawr/session-intelligence", () => {
         includeTools: false,
         useIndex: true,
       },
-      createInvocation("trace-content-cached"),
+      createInvocation("trace-content-cached")
     );
 
     expect(cached.hits).toHaveLength(1);
@@ -378,7 +394,7 @@ describe("@rawr/session-intelligence", () => {
         includeTools: false,
         useIndex: true,
       },
-      createInvocation("trace-content-cache-hit"),
+      createInvocation("trace-content-cache-hit")
     );
 
     expect(indexRuntime.getCalls).toBe(2);
@@ -406,7 +422,7 @@ describe("@rawr/session-intelligence", () => {
         candidateLimit: 2,
         includeFacets: true,
       },
-      createInvocation("trace-content-facet-uncached"),
+      createInvocation("trace-content-facet-uncached")
     );
 
     expect(uncached.hits.map((hit) => hit.path)).toEqual([CODEX_STRUCTURED_FIXTURE_PATH]);
@@ -429,7 +445,7 @@ describe("@rawr/session-intelligence", () => {
         candidateLimit: 2,
         includeFacets: true,
       },
-      createInvocation("trace-content-facet-cached"),
+      createInvocation("trace-content-facet-cached")
     );
 
     expect(cached.hits.map((hit) => hit.path)).toEqual([CODEX_STRUCTURED_FIXTURE_PATH]);
@@ -450,16 +466,13 @@ describe("@rawr/session-intelligence", () => {
         includeTools: false,
         limit: 0,
       },
-      createInvocation("trace-reindex"),
+      createInvocation("trace-reindex")
     );
 
     expect(result).toEqual({ indexed: 1, total: 1 });
     expect(indexRuntime.entries.size).toBe(1);
 
-    await client.search.clearIndex(
-      { path: CODEX_FIXTURE_PATH },
-      createInvocation("trace-clear"),
-    );
+    await client.search.clearIndex({ path: CODEX_FIXTURE_PATH }, createInvocation("trace-clear"));
     expect(indexRuntime.entries.size).toBe(0);
   });
 });

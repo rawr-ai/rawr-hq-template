@@ -1,17 +1,13 @@
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
-import {
-  JournalEventSchema,
-  JournalSearchRowSchema,
-  JournalSnippetSchema,
-} from "./entities";
+import { JournalEventSchema, JournalSearchRowSchema, JournalSnippetSchema } from "./entities";
 
 const JournalWriteResultSchema = Type.Object(
   {
     path: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const JournalSearchResultSchema = Type.Object(
@@ -20,21 +16,21 @@ const JournalSearchResultSchema = Type.Object(
     warning: Type.Optional(Type.String({ minLength: 1 })),
     snippets: Type.Array(JournalSearchRowSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const JournalGetSnippetResultSchema = Type.Object(
   {
     snippet: Type.Union([JournalSnippetSchema, Type.Null()]),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const JournalTailResultSchema = Type.Object(
   {
     snippets: Type.Array(JournalSearchRowSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const SnippetIdInputSchema = schema(
@@ -42,8 +38,8 @@ const SnippetIdInputSchema = schema(
     {
       id: Type.String({ minLength: 1 }),
     },
-    { additionalProperties: false },
-  ),
+    { additionalProperties: false }
+  )
 );
 
 const TailInputSchema = schema(
@@ -51,8 +47,8 @@ const TailInputSchema = schema(
     {
       limit: Type.Integer({ minimum: 1, maximum: 100 }),
     },
-    { additionalProperties: false },
-  ),
+    { additionalProperties: false }
+  )
 );
 
 const SearchInputSchema = schema(
@@ -62,8 +58,8 @@ const SearchInputSchema = schema(
       limit: Type.Integer({ minimum: 1, maximum: 100 }),
       mode: Type.Union([Type.Literal("fts"), Type.Literal("semantic")]),
     },
-    { additionalProperties: false },
-  ),
+    { additionalProperties: false }
+  )
 );
 
 export const contract = {

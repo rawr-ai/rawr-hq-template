@@ -17,7 +17,13 @@ export function stem(value: string): string {
 }
 
 export function looksLikePath(input: string): boolean {
-  return input.includes("/") || input.includes("\\") || input.endsWith(".jsonl") || input.endsWith(".json") || input.startsWith("~");
+  return (
+    input.includes("/") ||
+    input.includes("\\") ||
+    input.endsWith(".jsonl") ||
+    input.endsWith(".json") ||
+    input.startsWith("~")
+  );
 }
 
 export function inferProjectFromCwd(cwd?: string): string | undefined {

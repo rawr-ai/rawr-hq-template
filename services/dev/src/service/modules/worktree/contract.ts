@@ -1,8 +1,5 @@
 import { schema } from "@rawr/hq-sdk";
-import {
-  WorktreeCleanupInputSchema,
-  WorktreeCleanupResultSchema,
-} from "../../common/entities";
+import { WorktreeCleanupInputSchema, WorktreeCleanupResultSchema } from "../../common/entities";
 import { ocBase } from "../../base";
 
 export const contract = {

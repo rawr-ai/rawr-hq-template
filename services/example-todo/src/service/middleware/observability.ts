@@ -39,7 +39,8 @@ export const observability = createRequiredServiceObservabilityMiddleware({
   }),
   onError: ({ span, context, pathLabel, error, policyEvents }) => {
     const readOnlyRejected = policyEvents?.readOnlyRejected ?? policy.events.readOnlyRejected;
-    const assignmentLimitReached = policyEvents?.assignmentLimitReached ?? policy.events.assignmentLimitReached;
+    const assignmentLimitReached =
+      policyEvents?.assignmentLimitReached ?? policy.events.assignmentLimitReached;
 
     if (error.code === "READ_ONLY_MODE" && readOnlyRejected) {
       span?.addEvent(readOnlyRejected, {

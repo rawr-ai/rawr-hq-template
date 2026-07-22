@@ -48,7 +48,7 @@ export type ProcessResource = {
   exec(
     cmd: string,
     args: string[],
-    opts?: { cwd?: string; env?: Record<string, string | undefined>; timeoutMs?: number },
+    opts?: { cwd?: string; env?: Record<string, string | undefined>; timeoutMs?: number }
   ): Promise<ExecResult>;
 };
 

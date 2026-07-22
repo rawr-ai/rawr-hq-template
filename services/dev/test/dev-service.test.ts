@@ -42,7 +42,10 @@ describe("@rawr/dev service behavior", () => {
     });
     const client = createClient(createClientOptions({ resources }));
 
-    const result = await client.stack.drain({}, { context: { invocation: { traceId: "test.stack.drain" } } });
+    const result = await client.stack.drain(
+      {},
+      { context: { invocation: { traceId: "test.stack.drain" } } }
+    );
 
     expect(result.action).toBe("planned");
     expect(result.preflight.ok).toBe(true);
@@ -57,12 +60,20 @@ describe("@rawr/dev service behavior", () => {
       commands: [
         { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
         { command: "gt", args: ["ls"], stdout: "◉ agent/devops\n" },
-        { command: "gt", args: ["ss", "--publish", "--stack", "--ai", "--no-interactive"], exitCode: 1, stderr: "publish failed" },
+        {
+          command: "gt",
+          args: ["ss", "--publish", "--stack", "--ai", "--no-interactive"],
+          exitCode: 1,
+          stderr: "publish failed",
+        },
       ],
     });
     const client = createClient(createClientOptions({ resources }));
 
-    const result = await client.stack.drain({ apply: true }, { context: { invocation: { traceId: "test.stack.drain.apply-fail" } } });
+    const result = await client.stack.drain(
+      { apply: true },
+      { context: { invocation: { traceId: "test.stack.drain.apply-fail" } } }
+    );
 
     expect(result.action).toBe("applied");
     expect(result.execution.ok).toBe(false);
@@ -77,12 +88,19 @@ describe("@rawr/dev service behavior", () => {
       commands: [
         { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
         { command: "gt", args: ["ls"], stdout: "◉ agent/devops\n" },
-        { command: "gt", args: ["ss", "--publish", "--stack", "--ai", "--no-interactive"], throws: "spawn gt ENOENT" },
+        {
+          command: "gt",
+          args: ["ss", "--publish", "--stack", "--ai", "--no-interactive"],
+          throws: "spawn gt ENOENT",
+        },
       ],
     });
     const client = createClient(createClientOptions({ resources }));
 
-    const result = await client.stack.drain({ apply: true }, { context: { invocation: { traceId: "test.stack.drain.adapter-throw" } } });
+    const result = await client.stack.drain(
+      { apply: true },
+      { context: { invocation: { traceId: "test.stack.drain.adapter-throw" } } }
+    );
 
     expect(result.execution.ok).toBe(false);
     expect(result.cycles[0]?.publish.status).toBe("failed");
@@ -96,20 +114,36 @@ describe("@rawr/dev service behavior", () => {
       commands: [
         { command: "git", args: ["config", "--get", "rawr.upstreamRef"], exitCode: 1 },
         { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
-        { command: "git", args: ["rev-parse", "--verify", "origin/main"], exitCode: 1, stderr: "missing" },
-        { command: "git", args: ["show-ref", "--verify", "refs/heads/chore/upstream-sync-20260508123456"], exitCode: 1 },
+        {
+          command: "git",
+          args: ["rev-parse", "--verify", "origin/main"],
+          exitCode: 1,
+          stderr: "missing",
+        },
+        {
+          command: "git",
+          args: ["show-ref", "--verify", "refs/heads/chore/upstream-sync-20260508123456"],
+          exitCode: 1,
+        },
         { command: "git", args: ["worktree", "list", "--porcelain"], stdout: worktrees },
       ],
     });
     const client = createClient(createClientOptions({ resources }));
 
-    const result = await client.repo.syncUpstream({ apply: true }, { context: { invocation: { traceId: "test.repo.sync" } } });
+    const result = await client.repo.syncUpstream(
+      { apply: true },
+      { context: { invocation: { traceId: "test.repo.sync" } } }
+    );
 
     expect(result.action).toBe("planned");
     expect(result.upstreamRef).toEqual({ ref: "origin/main", source: "default" });
     expect(result.preflight.ok).toBe(false);
-    expect(result.preflight.issues.some((issue) => issue.code === "UPSTREAM_REF_MISSING")).toBe(true);
-    expect(calls.map((call) => call.args.join(" "))).not.toContain("switch -c chore/upstream-sync-20260508123456");
+    expect(result.preflight.issues.some((issue) => issue.code === "UPSTREAM_REF_MISSING")).toBe(
+      true
+    );
+    expect(calls.map((call) => call.args.join(" "))).not.toContain(
+      "switch -c chore/upstream-sync-20260508123456"
+    );
   });
 
   it("requires Graphite readability before repo sync mutation", async () => {
@@ -118,18 +152,27 @@ describe("@rawr/dev service behavior", () => {
         { command: "git", args: ["config", "--get", "rawr.upstreamRef"], exitCode: 1 },
         { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
         { command: "git", args: ["rev-parse", "--verify", "origin/main"], stdout: "abc\n" },
-        { command: "git", args: ["show-ref", "--verify", "refs/heads/chore/upstream-sync-20260508123456"], exitCode: 1 },
+        {
+          command: "git",
+          args: ["show-ref", "--verify", "refs/heads/chore/upstream-sync-20260508123456"],
+          exitCode: 1,
+        },
         { command: "git", args: ["worktree", "list", "--porcelain"], stdout: worktrees },
         { command: "gt", args: ["ls"], exitCode: 1, stderr: "no graphite" },
       ],
     });
     const client = createClient(createClientOptions({ resources }));
 
-    const result = await client.repo.syncUpstream({ apply: true }, { context: { invocation: { traceId: "test.repo.graphite-missing" } } });
+    const result = await client.repo.syncUpstream(
+      { apply: true },
+      { context: { invocation: { traceId: "test.repo.graphite-missing" } } }
+    );
 
     expect(result.action).toBe("planned");
     expect(result.preflight.ok).toBe(false);
-    expect(result.preflight.issues.some((issue) => issue.code === "GRAPHITE_UNAVAILABLE")).toBe(true);
+    expect(result.preflight.issues.some((issue) => issue.code === "GRAPHITE_UNAVAILABLE")).toBe(
+      true
+    );
     const rendered = calls.map((call) => `${call.command} ${call.args.join(" ")}`);
     expect(rendered).not.toContain("git fetch --all --prune");
     expect(rendered.some((line) => line.startsWith("git switch -c"))).toBe(false);
@@ -141,17 +184,33 @@ describe("@rawr/dev service behavior", () => {
         { command: "git", args: ["config", "--get", "rawr.upstreamRef"], exitCode: 1 },
         { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
         { command: "git", args: ["rev-parse", "--verify", "origin/main"], stdout: "abc\n" },
-        { command: "git", args: ["show-ref", "--verify", "refs/heads/chore/upstream-sync-20260508123456"], exitCode: 1 },
+        {
+          command: "git",
+          args: ["show-ref", "--verify", "refs/heads/chore/upstream-sync-20260508123456"],
+          exitCode: 1,
+        },
         { command: "git", args: ["worktree", "list", "--porcelain"], stdout: worktrees },
         { command: "gt", args: ["ls"], stdout: "◉ agent/devops\n" },
         { command: "git", args: ["fetch", "--all", "--prune"], stdout: "" },
-        { command: "git", args: ["switch", "-c", "chore/upstream-sync-20260508123456"], stdout: "" },
-        { command: "git", args: ["merge", "--no-ff", "origin/main"], exitCode: 1, stderr: "merge failed" },
+        {
+          command: "git",
+          args: ["switch", "-c", "chore/upstream-sync-20260508123456"],
+          stdout: "",
+        },
+        {
+          command: "git",
+          args: ["merge", "--no-ff", "origin/main"],
+          exitCode: 1,
+          stderr: "merge failed",
+        },
       ],
     });
     const client = createClient(createClientOptions({ resources }));
 
-    const result = await client.repo.syncUpstream({ apply: true }, { context: { invocation: { traceId: "test.repo.apply-fail" } } });
+    const result = await client.repo.syncUpstream(
+      { apply: true },
+      { context: { invocation: { traceId: "test.repo.apply-fail" } } }
+    );
 
     expect(result.execution.ok).toBe(false);
     expect(result.execution.issues[0]?.code).toBe("REPO_SYNC_COMMAND_FAILED");
@@ -162,20 +221,28 @@ describe("@rawr/dev service behavior", () => {
       commands: [
         { command: "pwd", args: ["-P"], stdout: "/repo/rawr\n" },
         { command: "git", args: ["worktree", "list", "--porcelain"], stdout: worktrees },
-        { command: "git", args: ["branch", "--merged", "main", "--list", "agent/devops-old"], stdout: "agent/devops-old\n" },
+        {
+          command: "git",
+          args: ["branch", "--merged", "main", "--list", "agent/devops-old"],
+          stdout: "agent/devops-old\n",
+        },
       ],
     });
     const client = createClient(createClientOptions({ resources }));
 
     const result = await client.worktree.cleanup(
       { prefix: "wt-agent", apply: false },
-      { context: { invocation: { traceId: "test.worktree.cleanup" } } },
+      { context: { invocation: { traceId: "test.worktree.cleanup" } } }
     );
 
     expect(result.action).toBe("planned");
-    expect(result.candidates.map((candidate) => candidate.path)).toEqual(["/repo/wt-agent-devops-old"]);
+    expect(result.candidates.map((candidate) => candidate.path)).toEqual([
+      "/repo/wt-agent-devops-old",
+    ]);
     expect(result.removed).toEqual([]);
-    expect(result.followUpCommands.map((command) => command.args.join(" "))).not.toContain("worktree prune");
+    expect(result.followUpCommands.map((command) => command.args.join(" "))).not.toContain(
+      "worktree prune"
+    );
   });
 
   it("reports failed worktree removals through execution status", async () => {
@@ -183,15 +250,24 @@ describe("@rawr/dev service behavior", () => {
       commands: [
         { command: "pwd", args: ["-P"], stdout: "/repo/rawr\n" },
         { command: "git", args: ["worktree", "list", "--porcelain"], stdout: worktrees },
-        { command: "git", args: ["branch", "--merged", "main", "--list", "agent/devops-old"], stdout: "agent/devops-old\n" },
-        { command: "git", args: ["worktree", "remove", "/repo/wt-agent-devops-old"], exitCode: 1, stderr: "remove failed" },
+        {
+          command: "git",
+          args: ["branch", "--merged", "main", "--list", "agent/devops-old"],
+          stdout: "agent/devops-old\n",
+        },
+        {
+          command: "git",
+          args: ["worktree", "remove", "/repo/wt-agent-devops-old"],
+          exitCode: 1,
+          stderr: "remove failed",
+        },
       ],
     });
     const client = createClient(createClientOptions({ resources }));
 
     const result = await client.worktree.cleanup(
       { prefix: "wt-agent", apply: true },
-      { context: { invocation: { traceId: "test.worktree.apply-fail" } } },
+      { context: { invocation: { traceId: "test.worktree.apply-fail" } } }
     );
 
     expect(result.execution.ok).toBe(false);

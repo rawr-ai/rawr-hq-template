@@ -22,11 +22,7 @@
  * observability or analytics behavior here; that belongs in
  * `src/service/middleware/*`.
  */
-import {
-  defineService,
-  type DbPool,
-  type ServiceOf,
-} from "@rawr/hq-sdk";
+import { defineService, type DbPool, type ServiceOf } from "@rawr/hq-sdk";
 
 /**
  * Host-owned time source used by task/tag creation and similar flows.
@@ -187,7 +183,8 @@ export const createServiceObservabilityMiddleware = service.createObservabilityM
  * This is the service-facing builder for the required service middleware
  * extension pattern.
  */
-export const createRequiredServiceObservabilityMiddleware = service.createRequiredObservabilityMiddleware;
+export const createRequiredServiceObservabilityMiddleware =
+  service.createRequiredObservabilityMiddleware;
 
 /**
  * Service-local additive analytics middleware builder.

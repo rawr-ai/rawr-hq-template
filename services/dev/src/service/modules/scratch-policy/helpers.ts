@@ -20,7 +20,8 @@ async function collectScratchFiles(input: {
   for (const entry of entries) {
     const abs = input.resources.path.join(input.root, entry.name);
     if (entry.isDirectory) {
-      if (entry.name === "node_modules" || entry.name === "dist" || entry.name.startsWith(".")) continue;
+      if (entry.name === "node_modules" || entry.name === "dist" || entry.name.startsWith("."))
+        continue;
       await collectScratchFiles({ ...input, root: abs, depth: input.depth - 1 });
       continue;
     }

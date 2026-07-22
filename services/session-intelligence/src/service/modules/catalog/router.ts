@@ -14,11 +14,7 @@ import {
   inferStatusFromPath,
 } from "../../common/normalization";
 import { looksLikePath, stem } from "../../common/path-utils";
-import type {
-  DiscoveredSessionFile,
-  SessionListItem,
-  SessionStatus,
-} from "../../common/entities";
+import type { DiscoveredSessionFile, SessionListItem, SessionStatus } from "../../common/entities";
 import { discoverCodexSessionsFromIndexOrNull } from "../../common/repositories/codex-indexed-discovery-repository";
 import {
   hasMetadataFilters,
@@ -44,11 +40,11 @@ const list = module.list.handler(async ({ context, input }) => {
     const out: DiscoveredSessionFile[] = [];
     if (input.source === "all") {
       out.push(
-        ...await context.sourceRuntime.discoverSessions({
+        ...(await context.sourceRuntime.discoverSessions({
           source: "claude",
           limit: limit > 0 && !hasMetadataFilters(filters) ? limit : undefined,
           project: filters.project,
-        }),
+        }))
       );
     }
 
@@ -56,15 +52,15 @@ const list = module.list.handler(async ({ context, input }) => {
     const indexed = await discoverCodexSessionsFromIndexOrNull(
       context.sourceRuntime,
       context.indexRuntime,
-      codexLimit,
+      codexLimit
     );
     if (indexed) out.push(...indexed);
     else {
       out.push(
-        ...await context.sourceRuntime.discoverSessions({
+        ...(await context.sourceRuntime.discoverSessions({
           source: "codex",
           limit: codexLimit || undefined,
-        }),
+        }))
       );
     }
 
@@ -111,9 +107,7 @@ const list = module.list.handler(async ({ context, input }) => {
     }
   }
 
-  sessions.sort((a, b) =>
-    a.modified < b.modified ? 1 : a.modified > b.modified ? -1 : 0,
-  );
+  sessions.sort((a, b) => (a.modified < b.modified ? 1 : a.modified > b.modified ? -1 : 0));
   const filtered = sessions.filter((session) => matchesListFilters(session, filters));
   return { sessions: limit ? filtered.slice(0, limit) : filtered };
 });
@@ -127,32 +121,33 @@ const resolve = module.resolve.handler(async ({ context, input, errors }) => {
     if (await context.sourceRuntime.statFile({ path: clean })) resolvedPath = clean;
   } else {
     const candidates = await (async (): Promise<DiscoveredSessionFile[]> => {
-      if (input.source === "claude") return context.sourceRuntime.discoverSessions({ source: "claude" });
+      if (input.source === "claude")
+        return context.sourceRuntime.discoverSessions({ source: "claude" });
 
       const out: DiscoveredSessionFile[] = [];
       if (input.source === "all") {
-        out.push(...await context.sourceRuntime.discoverSessions({ source: "claude" }));
+        out.push(...(await context.sourceRuntime.discoverSessions({ source: "claude" })));
       }
 
       const indexed = await discoverCodexSessionsFromIndexOrNull(
         context.sourceRuntime,
         context.indexRuntime,
-        0,
+        0
       );
       if (indexed) out.push(...indexed);
-      else out.push(...await context.sourceRuntime.discoverSessions({ source: "codex" }));
+      else out.push(...(await context.sourceRuntime.discoverSessions({ source: "codex" })));
 
       out.sort((a, b) => b.modifiedMs - a.modifiedMs);
       return out;
     })();
 
     const claude = candidates.find(
-      (candidate) => candidate.source === "claude" && stem(candidate.path) === clean,
+      (candidate) => candidate.source === "claude" && stem(candidate.path) === clean
     );
     const codex = candidates.find(
       (candidate) =>
         candidate.source === "codex" &&
-        stem(candidate.path).toLowerCase().includes(clean.toLowerCase()),
+        stem(candidate.path).toLowerCase().includes(clean.toLowerCase())
     );
     const candidate = claude ?? codex;
     if (candidate) {

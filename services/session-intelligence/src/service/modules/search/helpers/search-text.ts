@@ -10,7 +10,12 @@ import type { RoleFilter, SessionMessage } from "../../../common/entities";
  * a text blob for regex matching.
  */
 export function buildSearchText(messages: Array<Pick<SessionMessage, "role" | "content">>): string {
-  return messages.map((message) => `${message.role === "user" ? "U" : message.role === "assistant" ? "A" : "T"}: ${message.content}`).join("\n\n");
+  return messages
+    .map(
+      (message) =>
+        `${message.role === "user" ? "U" : message.role === "assistant" ? "A" : "T"}: ${message.content}`
+    )
+    .join("\n\n");
 }
 
 /**

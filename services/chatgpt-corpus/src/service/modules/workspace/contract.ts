@@ -1,10 +1,7 @@
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
-import {
-  WorkspaceManagedFileRefSchema,
-  WorkspaceTemplateSchema,
-} from "./entities";
+import { WorkspaceManagedFileRefSchema, WorkspaceTemplateSchema } from "./entities";
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 const InitializeWorkspaceOutputSchema = Type.Object(
@@ -14,7 +11,7 @@ const InitializeWorkspaceOutputSchema = Type.Object(
     existingEntries: Type.Array(Type.String({ minLength: 1 })),
     managedFiles: Type.Array(WorkspaceManagedFileRefSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const contract = {

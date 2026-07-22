@@ -43,7 +43,9 @@ const writeSnippet = module.writeSnippet.handler(async ({ context, input }) => {
 });
 
 const getSnippet = module.getSnippet.handler(async ({ context, input }) => {
-  return { snippet: await readSnippetJson(context.deps.resources, context.scope.repoRoot, input.id) };
+  return {
+    snippet: await readSnippetJson(context.deps.resources, context.scope.repoRoot, input.id),
+  };
 });
 
 const tailSnippets = module.tailSnippets.handler(async ({ context, input }) => {
@@ -70,7 +72,13 @@ const searchSnippets = module.searchSnippets.handler(async ({ context, input }) 
 
       return {
         mode: input.mode,
-        snippets: await searchSnippetsSemantic(context.deps.resources, db, config, input.query, input.limit),
+        snippets: await searchSnippetsSemantic(
+          context.deps.resources,
+          db,
+          config,
+          input.query,
+          input.limit
+        ),
       };
     }
 

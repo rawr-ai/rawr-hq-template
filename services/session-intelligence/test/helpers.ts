@@ -1,9 +1,5 @@
-import {
-  createEmbeddedPlaceholderAnalyticsAdapter,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import {
-  createEmbeddedPlaceholderLoggerAdapter,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
 import type {
   SessionIndexRuntime,
@@ -13,7 +9,12 @@ import type {
   DiscoverSessionsInput,
   SessionSourceRuntime,
 } from "../src/service/common/ports/session-source-runtime";
-import type { DiscoveredSessionFile, SessionFileStat, SessionSource, SessionStatus } from "../src/service/common/entities";
+import type {
+  DiscoveredSessionFile,
+  SessionFileStat,
+  SessionSource,
+  SessionStatus,
+} from "../src/service/common/entities";
 import {
   CLAUDE_FIXTURE,
   CLAUDE_FIXTURE_PATH,
@@ -44,16 +45,19 @@ export class MemorySessionIndexRuntime implements SessionIndexRuntime {
     if (normalized.startsWith("INSERT OR REPLACE INTO SESSION_CACHE")) {
       this.setCalls += 1;
       const [path, rolesKey, includeTools, modifiedMs, sizeBytes, content] = input.params ?? [];
-      this.entries.set(this.cacheKey({
-        indexPath: input.indexPath,
-        path: String(path ?? ""),
-        rolesKey: String(rolesKey ?? ""),
-        includeTools: Number(includeTools ?? 0) === 1,
-      }), {
-        modifiedMs: Number(modifiedMs ?? 0),
-        sizeBytes: Number(sizeBytes ?? 0),
-        content: String(content ?? ""),
-      });
+      this.entries.set(
+        this.cacheKey({
+          indexPath: input.indexPath,
+          path: String(path ?? ""),
+          rolesKey: String(rolesKey ?? ""),
+          includeTools: Number(includeTools ?? 0) === 1,
+        }),
+        {
+          modifiedMs: Number(modifiedMs ?? 0),
+          sizeBytes: Number(sizeBytes ?? 0),
+          content: String(content ?? ""),
+        }
+      );
       return;
     }
 
@@ -66,22 +70,31 @@ export class MemorySessionIndexRuntime implements SessionIndexRuntime {
     }
   }
 
-  async query<Row extends Record<string, unknown> = Record<string, unknown>>(input: SessionIndexStatement & { indexPath: string }): Promise<Row[]> {
+  async query<Row extends Record<string, unknown> = Record<string, unknown>>(
+    input: SessionIndexStatement & { indexPath: string }
+  ): Promise<Row[]> {
     const normalized = input.sql.replace(/\s+/g, " ").trim().toUpperCase();
     if (!normalized.startsWith("SELECT MTIME, SIZE, CONTENT FROM SESSION_CACHE")) return [];
     this.getCalls += 1;
     const [path, rolesKey, includeTools] = input.params ?? [];
-    const entry = this.entries.get(this.cacheKey({
-      indexPath: input.indexPath,
-      path: String(path ?? ""),
-      rolesKey: String(rolesKey ?? ""),
-      includeTools: Number(includeTools ?? 0) === 1,
-    }));
+    const entry = this.entries.get(
+      this.cacheKey({
+        indexPath: input.indexPath,
+        path: String(path ?? ""),
+        rolesKey: String(rolesKey ?? ""),
+        includeTools: Number(includeTools ?? 0) === 1,
+      })
+    );
     if (!entry) return [];
-    return [{ mtime: entry.modifiedMs, size: entry.sizeBytes, content: entry.content } as unknown as Row];
+    return [
+      { mtime: entry.modifiedMs, size: entry.sizeBytes, content: entry.content } as unknown as Row,
+    ];
   }
 
-  async transaction(input: { indexPath: string; statements: SessionIndexStatement[] }): Promise<void> {
+  async transaction(input: {
+    indexPath: string;
+    statements: SessionIndexStatement[];
+  }): Promise<void> {
     for (const statement of input.statements) {
       await this.execute({ ...statement, indexPath: input.indexPath });
     }
@@ -93,7 +106,12 @@ export class MemorySessionIndexRuntime implements SessionIndexRuntime {
     }
   }
 
-  private cacheKey(input: { indexPath: string; path: string; rolesKey: string; includeTools: boolean }): string {
+  private cacheKey(input: {
+    indexPath: string;
+    path: string;
+    rolesKey: string;
+    includeTools: boolean;
+  }): string {
     return `${input.indexPath}\0${input.path}\0${input.rolesKey}\0${input.includeTools ? "1" : "0"}`;
   }
 }
@@ -131,7 +149,10 @@ export class MemorySessionSourceRuntime implements SessionSourceRuntime {
   async discoverSessions(input: DiscoverSessionsInput): Promise<DiscoveredSessionFile[]> {
     const candidates = [...this.sessions.values()]
       .filter((session) => input.source === "all" || session.source === input.source)
-      .filter((session) => !input.project || session.project?.toLowerCase().includes(input.project.toLowerCase()))
+      .filter(
+        (session) =>
+          !input.project || session.project?.toLowerCase().includes(input.project.toLowerCase())
+      )
       .map((session) => ({
         path: session.path,
         source: session.source,
@@ -165,11 +186,13 @@ export function createFixtureSourceRuntime(): MemorySessionSourceRuntime {
   return runtime;
 }
 
-export function createClientOptions(input: {
-  sourceRuntime?: SessionSourceRuntime;
-  indexRuntime?: SessionIndexRuntime;
-  workspaceRef?: string;
-} = {}): CreateClientOptions {
+export function createClientOptions(
+  input: {
+    sourceRuntime?: SessionSourceRuntime;
+    indexRuntime?: SessionIndexRuntime;
+    workspaceRef?: string;
+  } = {}
+): CreateClientOptions {
   return {
     deps: {
       logger: createEmbeddedPlaceholderLoggerAdapter(),

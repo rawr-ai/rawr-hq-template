@@ -9,11 +9,7 @@
 import type { HqOpsResources } from "../../common/ports/resources";
 import { runBunAudit, runBunPmUntrusted } from "./helpers/audit";
 import { getRepoRoot } from "./helpers/process";
-import {
-  securityReport,
-  severityRank,
-  sortFindings,
-} from "./helpers/report-format";
+import { securityReport, severityRank, sortFindings } from "./helpers/report-format";
 import { readLatestSecurityReport, writeSecurityReport } from "./helpers/report-io";
 import { maxFindingSeverity, toleranceToMaxSeverity } from "./helpers/report-risk";
 import { scanSecretsRepo, scanSecretsStaged } from "./helpers/secrets";
@@ -23,7 +19,7 @@ import type { SecurityFinding, SecurityMode } from "./entities";
 async function collectSecurityFindings(
   resources: HqOpsResources,
   repoRoot: string,
-  mode: SecurityMode,
+  mode: SecurityMode
 ): Promise<SecurityFinding[]> {
   const findings: SecurityFinding[] = [];
   findings.push(...(await runBunAudit(resources, repoRoot)));
@@ -41,7 +37,8 @@ async function collectSecurityFindings(
 }
 
 const securityCheck = module.securityCheck.handler(async ({ context, input }) => {
-  const repoRoot = (await getRepoRoot(context.deps.resources, context.scope.repoRoot)) ?? context.scope.repoRoot;
+  const repoRoot =
+    (await getRepoRoot(context.deps.resources, context.scope.repoRoot)) ?? context.scope.repoRoot;
   const timestamp = new Date().toISOString();
   const findings = await collectSecurityFindings(context.deps.resources, repoRoot, input.mode);
   const report = securityReport({ findings, mode: input.mode, timestamp, repoRoot });
@@ -50,11 +47,15 @@ const securityCheck = module.securityCheck.handler(async ({ context, input }) =>
 });
 
 const gateEnable = module.gateEnable.handler(async ({ context, input }) => {
-  const repoRoot = (await getRepoRoot(context.deps.resources, context.scope.repoRoot)) ?? context.scope.repoRoot;
+  const repoRoot =
+    (await getRepoRoot(context.deps.resources, context.scope.repoRoot)) ?? context.scope.repoRoot;
   const timestamp = new Date().toISOString();
   const findings = await collectSecurityFindings(context.deps.resources, repoRoot, input.mode);
   const baseReport = securityReport({ findings, mode: input.mode, timestamp, repoRoot });
-  const { reportPath } = await writeSecurityReport(context.deps.resources, { repoRoot, report: baseReport });
+  const { reportPath } = await writeSecurityReport(context.deps.resources, {
+    repoRoot,
+    report: baseReport,
+  });
   const report = {
     ok: baseReport.ok,
     findings: baseReport.findings,
@@ -76,7 +77,8 @@ const gateEnable = module.gateEnable.handler(async ({ context, input }) => {
 });
 
 const getSecurityReport = module.getSecurityReport.handler(async ({ context }) => {
-  const repoRoot = (await getRepoRoot(context.deps.resources, context.scope.repoRoot)) ?? context.scope.repoRoot;
+  const repoRoot =
+    (await getRepoRoot(context.deps.resources, context.scope.repoRoot)) ?? context.scope.repoRoot;
   return await readLatestSecurityReport(context.deps.resources, repoRoot);
 });
 

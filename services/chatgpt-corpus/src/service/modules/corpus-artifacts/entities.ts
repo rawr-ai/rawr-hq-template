@@ -3,11 +3,17 @@ import { ARTIFACT_OUTPUT_DIRECTORIES, STATIC_ARTIFACT_FILE_REFS } from "../../..
 
 function literalUnion(values: readonly string[]): TSchema {
   if (values.length === 1) return Type.Literal(values[0]!);
-  return Type.Union(values.map((value) => Type.Literal(value)) as unknown as [TSchema, TSchema, ...TSchema[]]);
+  return Type.Union(
+    values.map((value) => Type.Literal(value)) as unknown as [TSchema, TSchema, ...TSchema[]]
+  );
 }
 
-const ArtifactDirectoryIdSchema = literalUnion(ARTIFACT_OUTPUT_DIRECTORIES.map((directory) => directory.directoryId));
-const StaticArtifactFileIdSchema = literalUnion(STATIC_ARTIFACT_FILE_REFS.map((file) => file.fileId));
+const ArtifactDirectoryIdSchema = literalUnion(
+  ARTIFACT_OUTPUT_DIRECTORIES.map((directory) => directory.directoryId)
+);
+const StaticArtifactFileIdSchema = literalUnion(
+  STATIC_ARTIFACT_FILE_REFS.map((file) => file.fileId)
+);
 const ArtifactFileIdSchema = Type.Union([
   StaticArtifactFileIdSchema,
   Type.String({ pattern: "^normalizedThread:.+$" }),
@@ -18,7 +24,7 @@ export const OutputDirectoryEntrySchema = Type.Object(
     directoryId: ArtifactDirectoryIdSchema,
     relativePath: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const OutputEntrySchema = Type.Object(
@@ -26,7 +32,7 @@ export const OutputEntrySchema = Type.Object(
     fileId: ArtifactFileIdSchema,
     relativePath: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const SourceCountsSchema = Type.Object(
@@ -35,7 +41,7 @@ export const SourceCountsSchema = Type.Object(
     markdownDocuments: Type.Number({ minimum: 0 }),
     totalSources: Type.Number({ minimum: 0 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const AnomalySchema = Type.Object(
@@ -43,14 +49,10 @@ export const AnomalySchema = Type.Object(
     anomaly_id: Type.String({ minLength: 1 }),
     type: Type.String({ minLength: 1 }),
     source_ids: Type.Array(Type.String({ minLength: 1 })),
-    severity: Type.Union([
-      Type.Literal("high"),
-      Type.Literal("medium"),
-      Type.Literal("low"),
-    ]),
+    severity: Type.Union([Type.Literal("high"), Type.Literal("medium"), Type.Literal("low")]),
     notes: Type.String(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const FamilyGraphSchema = Type.Object(
@@ -68,7 +70,7 @@ export const FamilyGraphSchema = Type.Object(
         Type.Literal("root"),
         Type.Literal("branch"),
         Type.Literal("duplicate"),
-      ]),
+      ])
     ),
     edges: Type.Array(
       Type.Object(
@@ -80,11 +82,11 @@ export const FamilyGraphSchema = Type.Object(
           shared_prefix_len: Type.Number({ minimum: 0 }),
           evidence: Type.Array(Type.String()),
         },
-        { additionalProperties: false },
-      ),
+        { additionalProperties: false }
+      )
     ),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const RelationshipSchema = Type.Object(
@@ -96,7 +98,7 @@ export const RelationshipSchema = Type.Object(
     evidence: Type.Array(Type.String()),
     notes: Type.String(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const JsonConversationInventoryItemSchema = Type.Object(
@@ -120,7 +122,7 @@ const JsonConversationInventoryItemSchema = Type.Object(
     first_prompt: Type.String(),
     last_response: Type.String(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const MarkdownInventoryItemSchema = Type.Object(
@@ -137,7 +139,7 @@ const MarkdownInventoryItemSchema = Type.Object(
     line_count: Type.Number({ minimum: 0 }),
     headings: Type.Array(Type.String()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const InventoryItemSchema = Type.Union([
@@ -160,7 +162,7 @@ export const ThreadSourceFileSchema = Type.Object(
     link: Type.Union([Type.String(), Type.Null()]),
     message_count: Type.Number({ minimum: 0 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const MessageNodeSchema = Type.Object(
@@ -174,7 +176,7 @@ export const MessageNodeSchema = Type.Object(
     source_title: Type.String({ minLength: 1 }),
     source_link: Type.Union([Type.String(), Type.Null()]),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const BranchPointNodeSchema = Type.Object(
@@ -188,13 +190,10 @@ export const BranchPointNodeSchema = Type.Object(
     evidence: Type.Array(Type.String()),
     confidence: Type.Number(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
-export const ThreadNodeSchema = Type.Union([
-  MessageNodeSchema,
-  BranchPointNodeSchema,
-]);
+export const ThreadNodeSchema = Type.Union([MessageNodeSchema, BranchPointNodeSchema]);
 
 export const ThreadEdgeSchema = Type.Object(
   {
@@ -206,7 +205,7 @@ export const ThreadEdgeSchema = Type.Object(
       Type.Literal("branches_at"),
     ]),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const BranchPointSchema = Type.Object(
@@ -219,7 +218,7 @@ export const BranchPointSchema = Type.Object(
     evidence: Type.Array(Type.String()),
     confidence: Type.Number(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const BranchSchema = Type.Object(
@@ -239,7 +238,7 @@ export const BranchSchema = Type.Object(
     confidence: Type.Number(),
     rationale: Type.String(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const NormalizedThreadSchema = Type.Object(
@@ -259,13 +258,16 @@ export const NormalizedThreadSchema = Type.Object(
       {
         default_reading_order: Type.Array(Type.String({ minLength: 1 })),
         root_path_order: Type.Array(Type.String({ minLength: 1 })),
-        branch_orders: Type.Record(Type.String({ minLength: 1 }), Type.Array(Type.String({ minLength: 1 }))),
+        branch_orders: Type.Record(
+          Type.String({ minLength: 1 }),
+          Type.Array(Type.String({ minLength: 1 }))
+        ),
       },
-      { additionalProperties: false },
+      { additionalProperties: false }
     ),
     anomalies: Type.Array(AnomalySchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const IntermediateGraphNodeSchema = Type.Object(
@@ -286,7 +288,7 @@ export const IntermediateGraphNodeSchema = Type.Object(
     evidence: Type.Optional(Type.Array(Type.String())),
     confidence: Type.Optional(Type.Number()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const IntermediateGraphEdgeSchema = Type.Object(
@@ -300,7 +302,7 @@ export const IntermediateGraphEdgeSchema = Type.Object(
       Type.Literal("branches_at"),
     ]),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const IntermediateGraphSchema = Type.Object(
@@ -311,7 +313,7 @@ export const IntermediateGraphSchema = Type.Object(
     edges: Type.Array(IntermediateGraphEdgeSchema),
     relationships: Type.Array(RelationshipSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const ManifestThreadSchema = Type.Object(
@@ -322,7 +324,7 @@ export const ManifestThreadSchema = Type.Object(
     branch_count: Type.Number({ minimum: 0 }),
     anomaly_count: Type.Number({ minimum: 0 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const ManifestDocumentSchema = Type.Object(
@@ -332,7 +334,7 @@ export const ManifestDocumentSchema = Type.Object(
     path: Type.String({ minLength: 1 }),
     summary: Type.String(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const ManifestSchema = Type.Object(
@@ -348,7 +350,7 @@ export const ManifestSchema = Type.Object(
         normalized_thread_count: Type.Number({ minimum: 0 }),
         anomaly_count: Type.Number({ minimum: 0 }),
       },
-      { additionalProperties: false },
+      { additionalProperties: false }
     ),
     source_items: Type.Array(InventoryItemSchema),
     thread_families: Type.Array(FamilyGraphSchema),
@@ -357,7 +359,7 @@ export const ManifestSchema = Type.Object(
     relationships: Type.Array(RelationshipSchema),
     anomalies: Type.Array(AnomalySchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const LowConfidenceRelationshipFlagSchema = Type.Object(
@@ -369,7 +371,7 @@ const LowConfidenceRelationshipFlagSchema = Type.Object(
     confidence: Type.Number(),
     notes: Type.String(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const WeakFamilyBranchingSignalFlagSchema = Type.Object(
@@ -378,7 +380,7 @@ const WeakFamilyBranchingSignalFlagSchema = Type.Object(
     family_id: Type.String({ minLength: 1 }),
     notes: Type.String(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const NoMarkdownDocsFlagSchema = Type.Object(
@@ -386,7 +388,7 @@ const NoMarkdownDocsFlagSchema = Type.Object(
     kind: Type.Literal("no_markdown_docs"),
     notes: Type.String(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const AmbiguityFlagSchema = Type.Union([
@@ -403,7 +405,7 @@ export const ValidationReportSchema = Type.Object(
     manifest_has_corpus_summary: Type.Boolean(),
     all_passed: Type.Boolean(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type Anomaly = Static<typeof AnomalySchema>;

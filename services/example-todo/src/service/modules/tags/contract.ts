@@ -16,7 +16,8 @@ import { READ_ONLY_MODE } from "../../common/errors";
 import { TagSchema } from "./schemas";
 
 export const contract = {
-  create: ocBase.meta({ idempotent: false })
+  create: ocBase
+    .meta({ idempotent: false })
     .input(
       schema(
         Type.Object(
@@ -34,9 +35,9 @@ export const contract = {
           {
             additionalProperties: false,
             description: "Input payload for creating a new tag.",
-          },
-        ),
-      ),
+          }
+        )
+      )
     )
     .output(schema(TagSchema))
     .errors({
@@ -51,18 +52,19 @@ export const contract = {
                 Type.String({
                   minLength: 1,
                   description: "Tag name that conflicts with an existing tag.",
-                }),
+                })
               ),
             },
             {
               additionalProperties: false,
               description: "Context for DUPLICATE_TAG errors.",
-            },
-          ),
+            }
+          )
         ),
       },
     }),
-  list: ocBase.meta({ idempotent: true })
+  list: ocBase
+    .meta({ idempotent: true })
     .input(
       schema(
         Type.Object(
@@ -70,15 +72,15 @@ export const contract = {
           {
             additionalProperties: false,
             description: "No-input payload for listing all tags.",
-          },
-        ),
-      ),
+          }
+        )
+      )
     )
     .output(
       schema(
         Type.Array(TagSchema, {
           description: "All tags currently available in the todo domain.",
-        }),
-      ),
+        })
+      )
     ),
 };

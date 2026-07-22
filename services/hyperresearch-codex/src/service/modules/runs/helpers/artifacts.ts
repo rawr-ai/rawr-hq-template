@@ -18,7 +18,10 @@ export async function writeVaultText(input: {
   content: string;
   io: HyperresearchCodexIO;
 }) {
-  await input.io.writeTextFile(input.io.join(input.ledger.vaultRoot, input.relativePath), input.content);
+  await input.io.writeTextFile(
+    input.io.join(input.ledger.vaultRoot, input.relativePath),
+    input.content
+  );
 }
 
 export async function readVaultText(input: {
@@ -35,9 +38,11 @@ export function finalReportPath(ledger: Pick<HyperresearchV8RunLedger, "vaultTag
 
 function relativeArtifactsFor(
   definition: HyperresearchStepDefinition,
-  ledger: Pick<HyperresearchV8RunLedger, "vaultTag">,
+  ledger: Pick<HyperresearchV8RunLedger, "vaultTag">
 ) {
-  return definition.requiredArtifacts.map((artifact) => expandV8ArtifactPath(artifact, ledger.vaultTag));
+  return definition.requiredArtifacts.map((artifact) =>
+    expandV8ArtifactPath(artifact, ledger.vaultTag)
+  );
 }
 
 function addArtifact(step: HyperresearchStepRecord, relativePath: string) {
@@ -124,8 +129,14 @@ function coverageMatrixContent(input: {
   const rows = [
     "| Item | Coverage Target | Status |",
     "| --- | --- | --- |",
-    ...atoms.map((atom, index) => `| query-${index + 1} | ${atom.replaceAll("|", "\\|")} | pending-source-evidence |`),
-    ...terms.map((term, index) => `| term-${index + 1} | ${term.replaceAll("|", "\\|")} | pending-source-evidence |`),
+    ...atoms.map(
+      (atom, index) =>
+        `| query-${index + 1} | ${atom.replaceAll("|", "\\|")} | pending-source-evidence |`
+    ),
+    ...terms.map(
+      (term, index) =>
+        `| term-${index + 1} | ${term.replaceAll("|", "\\|")} | pending-source-evidence |`
+    ),
     `| ${input.step.id} | ${input.step.title.replaceAll("|", "\\|")} | generated |`,
   ];
   return `${rows.join("\n")}\n`;
@@ -151,7 +162,9 @@ async function validateAgentArtifactWrites(input: {
     if (!isSafeRelativeArtifactPath(write.path)) {
       throw new Error(`Agent artifact path is not a safe relative path: ${write.path}`);
     }
-    const artifactText = await input.io.readTextFile(input.io.join(input.ledger.vaultRoot, write.path));
+    const artifactText = await input.io.readTextFile(
+      input.io.join(input.ledger.vaultRoot, write.path)
+    );
     if (artifactText === null) {
       throw new Error(`Agent artifact write is missing on disk: ${write.path}`);
     }
@@ -165,7 +178,9 @@ async function validateAgentArtifactWrites(input: {
 
   for (const artifact of requiredArtifacts) {
     if (!writtenPaths.has(artifact)) {
-      throw new Error(`Agent outputs did not declare required artifact for ${input.step.id}: ${artifact}`);
+      throw new Error(
+        `Agent outputs did not declare required artifact for ${input.step.id}: ${artifact}`
+      );
     }
   }
 }
@@ -176,7 +191,11 @@ async function snapshotFinalReport(input: {
   io: HyperresearchCodexIO;
 }) {
   const reportPath = finalReportPath(input.ledger);
-  const report = await readVaultText({ ledger: input.ledger, relativePath: reportPath, io: input.io });
+  const report = await readVaultText({
+    ledger: input.ledger,
+    relativePath: reportPath,
+    io: input.io,
+  });
   if (!report) return;
 
   const sha256 = input.io.sha256(report);
@@ -265,48 +284,55 @@ export async function writeStepArtifacts(input: {
 }) {
   const artifacts = relativeArtifactsFor(input.definition, input.ledger);
   for (const artifact of artifacts) {
-    if (artifact === finalReportPath(input.ledger) && await input.io.pathExists(input.io.join(input.ledger.vaultRoot, artifact))) {
+    if (
+      artifact === finalReportPath(input.ledger) &&
+      (await input.io.pathExists(input.io.join(input.ledger.vaultRoot, artifact)))
+    ) {
       addArtifact(input.step, artifact);
       continue;
     }
     const firstSource = input.ledger.sourceCaptures[0]?.url;
-    const fixtureClaim = input.ledger.tier === "full"
-      ? "This fixture report proves the full-tier V8 control plane with critic, patch, polish, and readability gates."
-      : "This fixture report proves the light-tier V8 control plane with source provenance placeholders and patch-only gates.";
-    const content = artifact === "research/prompt-decomposition.json"
-      ? promptDecompositionContent({ ledger: input.ledger, step: input.step })
-      : artifact === "research/temp/coverage-matrix.md"
-      ? coverageMatrixContent({ ledger: input.ledger, step: input.step })
-      : artifact === "research/claim-trace.json"
-      ? jsonContent({
-          claims: [
-            {
-              claim: fixtureClaim,
-              reportLocation: finalReportPath(input.ledger),
-              sources: firstSource ? [{ url: firstSource }] : [],
-              confidence: firstSource ? "high" : "low",
-              reviewerDisposition: "fixture-control-plane-proof",
-              uncertainty: firstSource ? undefined : "Fixture backend did not capture a real source URL.",
-            },
-          ],
-        })
-      : artifact.endsWith(".json")
-      ? jsonContent({
-          ok: true,
-          fixture: true,
-          stepId: input.step.id,
-          title: input.step.title,
-          canonicalQuery: input.ledger.canonicalQuery,
-          vaultTag: input.ledger.vaultTag,
-        })
-      : [
-          `# ${input.step.title}`,
-          "",
-          `Step: ${input.step.id}`,
-          `Query: ${input.ledger.canonicalQuery}`,
-          `Vault tag: ${input.ledger.vaultTag}`,
-          "",
-        ].join("\n");
+    const fixtureClaim =
+      input.ledger.tier === "full"
+        ? "This fixture report proves the full-tier V8 control plane with critic, patch, polish, and readability gates."
+        : "This fixture report proves the light-tier V8 control plane with source provenance placeholders and patch-only gates.";
+    const content =
+      artifact === "research/prompt-decomposition.json"
+        ? promptDecompositionContent({ ledger: input.ledger, step: input.step })
+        : artifact === "research/temp/coverage-matrix.md"
+          ? coverageMatrixContent({ ledger: input.ledger, step: input.step })
+          : artifact === "research/claim-trace.json"
+            ? jsonContent({
+                claims: [
+                  {
+                    claim: fixtureClaim,
+                    reportLocation: finalReportPath(input.ledger),
+                    sources: firstSource ? [{ url: firstSource }] : [],
+                    confidence: firstSource ? "high" : "low",
+                    reviewerDisposition: "fixture-control-plane-proof",
+                    uncertainty: firstSource
+                      ? undefined
+                      : "Fixture backend did not capture a real source URL.",
+                  },
+                ],
+              })
+            : artifact.endsWith(".json")
+              ? jsonContent({
+                  ok: true,
+                  fixture: true,
+                  stepId: input.step.id,
+                  title: input.step.title,
+                  canonicalQuery: input.ledger.canonicalQuery,
+                  vaultTag: input.ledger.vaultTag,
+                })
+              : [
+                  `# ${input.step.title}`,
+                  "",
+                  `Step: ${input.step.id}`,
+                  `Query: ${input.ledger.canonicalQuery}`,
+                  `Vault tag: ${input.ledger.vaultTag}`,
+                  "",
+                ].join("\n");
     await writeVaultText({ ledger: input.ledger, relativePath: artifact, content, io: input.io });
     addArtifact(input.step, artifact);
   }

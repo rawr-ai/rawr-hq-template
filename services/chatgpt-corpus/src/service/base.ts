@@ -45,7 +45,8 @@ export const ocBase = service.oc;
 export const createServiceMiddleware = service.createMiddleware;
 export const createServiceObservabilityMiddleware = service.createObservabilityMiddleware;
 export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddleware;
-export const createRequiredServiceObservabilityMiddleware = service.createRequiredObservabilityMiddleware;
+export const createRequiredServiceObservabilityMiddleware =
+  service.createRequiredObservabilityMiddleware;
 export const createRequiredServiceAnalyticsMiddleware = service.createRequiredAnalyticsMiddleware;
 export const createServiceProvider = service.createProvider;
 export const createServiceImplementer = service.createImplementer;

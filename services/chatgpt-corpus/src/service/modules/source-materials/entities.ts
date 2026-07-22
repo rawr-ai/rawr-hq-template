@@ -5,7 +5,7 @@ export const JsonConversationMessageSchema = Type.Object(
     role: Type.String({ minLength: 1 }),
     say: Type.String(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const RawConversationDatesSchema = Type.Object(
@@ -14,7 +14,7 @@ export const RawConversationDatesSchema = Type.Object(
     updated: Type.Optional(Type.String()),
     exported: Type.Optional(Type.String()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const RawConversationMetadataSchema = Type.Object(
@@ -23,7 +23,7 @@ export const RawConversationMetadataSchema = Type.Object(
     link: Type.Optional(Type.String()),
     dates: Type.Optional(RawConversationDatesSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const RawConversationExportSchema = Type.Object(
@@ -31,7 +31,7 @@ export const RawConversationExportSchema = Type.Object(
     metadata: Type.Optional(RawConversationMetadataSchema),
     messages: Type.Array(JsonConversationMessageSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const BaseSourceRecordFields = {
@@ -56,7 +56,7 @@ export const JsonConversationSourceRecordSchema = Type.Object(
     messagesHash: Type.String({ minLength: 1 }),
     normalizedTitle: Type.String({ minLength: 1 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const MarkdownDocumentSourceRecordSchema = Type.Object(
@@ -66,7 +66,7 @@ export const MarkdownDocumentSourceRecordSchema = Type.Object(
     lineCount: Type.Number({ minimum: 0 }),
     headings: Type.Array(Type.String()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const SourceRecordSchema = Type.Union([
@@ -81,7 +81,7 @@ export const SourceSnapshotSchema = Type.Object(
     jsonRecords: Type.Array(JsonConversationSourceRecordSchema),
     markdownDocCount: Type.Number({ minimum: 0 }),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type JsonConversationMessage = Static<typeof JsonConversationMessageSchema>;

@@ -2,10 +2,7 @@ import { schema } from "@rawr/hq-sdk";
 import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
 import { INVALID_REGEX } from "../../common/errors";
-import {
-  RoleFilterSchema,
-  SessionSourceFilterSchema,
-} from "../../common/entities";
+import { RoleFilterSchema, SessionSourceFilterSchema } from "../../common/entities";
 import {
   DEFAULT_FACET_CANDIDATE_LIMIT,
   FacetSearchHitSchema,
@@ -25,18 +22,20 @@ const SearchSessionFiltersSchema = Type.Object(
     since: Type.Optional(Type.String()),
     until: Type.Optional(Type.String()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type MetadataSearchHit = Static<typeof MetadataSearchHitSchema>;
 export type SearchHit = Static<typeof SearchHitSchema>;
 export type ReindexResult = Static<typeof ReindexResultSchema>;
 
-const CandidateLimitSchema = Type.Optional(Type.Integer({
-  minimum: 1,
-  maximum: MAX_FACET_CANDIDATE_LIMIT,
-  default: DEFAULT_FACET_CANDIDATE_LIMIT,
-}));
+const CandidateLimitSchema = Type.Optional(
+  Type.Integer({
+    minimum: 1,
+    maximum: MAX_FACET_CANDIDATE_LIMIT,
+    default: DEFAULT_FACET_CANDIDATE_LIMIT,
+  })
+);
 
 export const contract = {
   metadata: ocBase
@@ -53,11 +52,15 @@ export const contract = {
             includeFacets: Type.Optional(Type.Boolean()),
             candidateLimit: CandidateLimitSchema,
           },
-          { additionalProperties: false },
-        ),
-      ),
+          { additionalProperties: false }
+        )
+      )
     )
-    .output(schema(Type.Object({ hits: Type.Array(MetadataSearchHitSchema) }, { additionalProperties: false }))),
+    .output(
+      schema(
+        Type.Object({ hits: Type.Array(MetadataSearchHitSchema) }, { additionalProperties: false })
+      )
+    ),
   content: ocBase
     .meta({ idempotent: true, entity: "search" })
     .input(
@@ -78,11 +81,13 @@ export const contract = {
             includeFacets: Type.Optional(Type.Boolean()),
             candidateLimit: CandidateLimitSchema,
           },
-          { additionalProperties: false },
-        ),
-      ),
+          { additionalProperties: false }
+        )
+      )
     )
-    .output(schema(Type.Object({ hits: Type.Array(SearchHitSchema) }, { additionalProperties: false })))
+    .output(
+      schema(Type.Object({ hits: Type.Array(SearchHitSchema) }, { additionalProperties: false }))
+    )
     .errors({ INVALID_REGEX }),
   facets: ocBase
     .meta({ idempotent: true, entity: "search" })
@@ -97,11 +102,15 @@ export const contract = {
             candidateLimit: CandidateLimitSchema,
             includeFacets: Type.Optional(Type.Boolean()),
           },
-          { additionalProperties: false },
-        ),
-      ),
+          { additionalProperties: false }
+        )
+      )
     )
-    .output(schema(Type.Object({ hits: Type.Array(FacetSearchHitSchema) }, { additionalProperties: false }))),
+    .output(
+      schema(
+        Type.Object({ hits: Type.Array(FacetSearchHitSchema) }, { additionalProperties: false })
+      )
+    ),
   reindex: ocBase
     .meta({ idempotent: false, entity: "search" })
     .input(
@@ -114,13 +123,20 @@ export const contract = {
             includeTools: Type.Boolean(),
             limit: Type.Number(),
           },
-          { additionalProperties: false },
-        ),
-      ),
+          { additionalProperties: false }
+        )
+      )
     )
     .output(schema(ReindexResultSchema)),
   clearIndex: ocBase
     .meta({ idempotent: false, entity: "search" })
-    .input(schema(Type.Object({ path: Type.Optional(Type.String({ minLength: 1 })) }, { additionalProperties: false })))
+    .input(
+      schema(
+        Type.Object(
+          { path: Type.Optional(Type.String({ minLength: 1 })) },
+          { additionalProperties: false }
+        )
+      )
+    )
     .output(schema(Type.Object({ cleared: Type.Boolean() }, { additionalProperties: false }))),
 };

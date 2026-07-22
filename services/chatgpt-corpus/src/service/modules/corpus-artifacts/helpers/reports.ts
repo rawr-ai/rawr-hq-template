@@ -25,8 +25,10 @@ export function buildManifest(input: {
     generated_at: new Date().toISOString(),
     corpus_summary: {
       source_count: input.inventory.length,
-      json_conversation_count: input.inventory.filter((item) => item.type === "json_conversation").length,
-      markdown_document_count: input.inventory.filter((item) => item.type === "markdown_document").length,
+      json_conversation_count: input.inventory.filter((item) => item.type === "json_conversation")
+        .length,
+      markdown_document_count: input.inventory.filter((item) => item.type === "markdown_document")
+        .length,
       family_count: input.familyGraphs.length,
       normalized_thread_count: input.normalizedThreads.length,
       anomaly_count: input.anomalies.length,
@@ -56,7 +58,7 @@ export function buildManifest(input: {
 export function buildAmbiguityFlags(
   familyGraphs: FamilyGraph[],
   relationships: Relationship[],
-  markdownDocCount: number,
+  markdownDocCount: number
 ): AmbiguityFlag[] {
   const flags: AmbiguityFlag[] = [];
   for (const relationship of relationships) {
@@ -73,15 +75,19 @@ export function buildAmbiguityFlags(
   }
 
   for (const family of familyGraphs) {
-    const branchCount = Object.values(family.classification).filter((classification) =>
-      classification === "root" || classification === "branch" || classification === "standalone",
+    const branchCount = Object.values(family.classification).filter(
+      (classification) =>
+        classification === "root" || classification === "branch" || classification === "standalone"
     ).length;
-    const hasStrongEdge = family.edges.some((edge) => edge.type !== "duplicate_of" && edge.confidence >= 0.9);
+    const hasStrongEdge = family.edges.some(
+      (edge) => edge.type !== "duplicate_of" && edge.confidence >= 0.9
+    );
     if (branchCount > 1 && !hasStrongEdge) {
       flags.push({
         kind: "weak_family_branching_signal",
         family_id: family.family_id,
-        notes: "This family grouped multiple conversations without any high-confidence branch edge.",
+        notes:
+          "This family grouped multiple conversations without any high-confidence branch edge.",
       });
     }
   }
@@ -105,10 +111,13 @@ export function buildCanonicalitySummary(familyGraphs: FamilyGraph[]): string {
 
   for (const family of familyGraphs) {
     const rootIndex = family.member_source_ids.indexOf(family.root_source_id);
-    const rootFilename = rootIndex >= 0 ? family.member_filenames[rootIndex]! : family.member_filenames[0]!;
-    const duplicateCount = Object.values(family.classification).filter((classification) => classification === "duplicate").length;
+    const rootFilename =
+      rootIndex >= 0 ? family.member_filenames[rootIndex]! : family.member_filenames[0]!;
+    const duplicateCount = Object.values(family.classification).filter(
+      (classification) => classification === "duplicate"
+    ).length;
     lines.push(
-      `- \`${family.canonical_title}\`: root \`${rootFilename}\`, ${family.member_source_ids.length} source files, ${duplicateCount} duplicates.`,
+      `- \`${family.canonical_title}\`: root \`${rootFilename}\`, ${family.member_source_ids.length} source files, ${duplicateCount} duplicates.`
     );
   }
 
@@ -160,12 +169,16 @@ export function buildValidationReport(input: {
   const jsonSourceIds = new Set(
     input.inventory
       .filter((item) => item.type === "json_conversation")
-      .map((item) => item.source_id),
+      .map((item) => item.source_id)
   );
   const familySourceIds = new Set(input.familyGraphs.flatMap((family) => family.member_source_ids));
   const validation = {
-    source_inventory_complete: jsonSourceIds.size + input.inventory.filter((item) => item.type === "markdown_document").length === input.inventory.length,
-    every_json_in_one_family: jsonSourceIds.size === familySourceIds.size &&
+    source_inventory_complete:
+      jsonSourceIds.size +
+        input.inventory.filter((item) => item.type === "markdown_document").length ===
+      input.inventory.length,
+    every_json_in_one_family:
+      jsonSourceIds.size === familySourceIds.size &&
       [...jsonSourceIds].every((sourceId) => familySourceIds.has(sourceId)),
     one_normalized_thread_per_family: input.normalizedThreads.length === input.familyGraphs.length,
     manifest_has_corpus_summary: Boolean(input.manifest.corpus_summary),

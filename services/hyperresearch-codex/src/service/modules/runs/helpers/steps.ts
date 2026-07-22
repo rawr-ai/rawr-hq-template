@@ -150,10 +150,7 @@ export const v8HyperresearchSteps: HyperresearchStepDefinition[] = [
     fileName: "hyperresearch-14-patcher.md",
     tierGate: "full",
     agentRoles: ["hyperresearch-patcher"],
-    requiredArtifacts: [
-      "research/patch-log.json",
-      "research/notes/final_report_${vaultTag}.md",
-    ],
+    requiredArtifacts: ["research/patch-log.json", "research/notes/final_report_${vaultTag}.md"],
   },
   {
     id: "15-polish",
@@ -162,10 +159,7 @@ export const v8HyperresearchSteps: HyperresearchStepDefinition[] = [
     tierGate: "all",
     agentRoles: ["hyperresearch-polish-auditor"],
     requiredCliOperations: ["lint"],
-    requiredArtifacts: [
-      "research/polish-log.json",
-      "research/notes/final_report_${vaultTag}.md",
-    ],
+    requiredArtifacts: ["research/polish-log.json", "research/notes/final_report_${vaultTag}.md"],
   },
   {
     id: "16-readability-audit",
@@ -202,7 +196,10 @@ export function v8StepsForTier(tier: "light" | "full"): HyperresearchStepDefinit
     });
 }
 
-export function definitionForV8Step(stepId: string, tier?: HyperresearchTier): HyperresearchStepDefinition {
+export function definitionForV8Step(
+  stepId: string,
+  tier?: HyperresearchTier
+): HyperresearchStepDefinition {
   const definitions = tier ? v8StepsForTier(tier) : v8HyperresearchSteps;
   const definition = definitions.find((step) => step.id === stepId);
   if (!definition) throw new Error(`Unknown Hyperresearch V8 step: ${stepId}`);

@@ -3,14 +3,17 @@ import type { SessionIndexRuntime } from "../../../common/ports/session-index-ru
 import type { SessionSourceRuntime } from "../../../common/ports/session-source-runtime";
 import { extractClaudeMessages, extractCodexMessages } from "../../../common/normalization";
 import { buildSearchText, rolesKey } from "./search-text";
-import { readCachedSearchText, writeCachedSearchText } from "../repositories/search-cache-repository";
+import {
+  readCachedSearchText,
+  writeCachedSearchText,
+} from "../repositories/search-cache-repository";
 
 export async function getSearchTextUncached(
   runtime: SessionSourceRuntime,
   filePath: string,
   source: SessionSource,
   roles: RoleFilter[],
-  includeTools: boolean,
+  includeTools: boolean
 ): Promise<string> {
   const messages =
     source === "claude"
@@ -48,7 +51,7 @@ export async function getSearchTextCached(input: {
     input.filePath,
     input.source,
     input.roles,
-    input.includeTools,
+    input.includeTools
   );
 
   await writeCachedSearchText(input.indexRuntime, {

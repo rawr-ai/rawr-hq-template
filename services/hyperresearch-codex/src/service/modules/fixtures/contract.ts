@@ -21,7 +21,7 @@ const RunSyntheticSliceInputSchema = Type.Object(
     maxSteps: Type.Optional(Type.Number({ minimum: 1 })),
     resumeReason: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 const HyperresearchFixtureResultSchema = Type.Object(
@@ -30,7 +30,7 @@ const HyperresearchFixtureResultSchema = Type.Object(
     ledger: HyperresearchRunLedgerSchema,
     integrity: Type.Array(HyperresearchIntegrityFindingSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const contract = {
