@@ -4,16 +4,17 @@ level: error
 # Require Oclif Command Plugin Configuration
 
 A first-party command capability is a versioned host-composed Oclif plugin.
-The host owns the executable. The package-owned `manifest` script is an
-executable target inferred by Nx; workspace configuration owns build ordering
-and cache behavior, and top-level Nx Release owns versioning and publication.
+The host owns the executable. The package-owned `manifest` script invokes the
+official Oclif command through Bun and is an executable target inferred by Nx;
+workspace configuration owns build ordering and cache behavior, and top-level
+Nx Release owns versioning and publication.
 
 ```grit
 language json
 
 or {
   `{ $properties }` where {
-    $filename <: r".*plugins/cli/[^/]+/package\.json$",
+    $filename <: r".*plugins/cli/commands/[^/]+/package\.json$",
     or {
       not {
         $properties <: contains pair(key=`"name"`, value=$name),
@@ -44,11 +45,7 @@ or {
       },
       not {
         $properties <: contains pair(key=`"scripts"`, value=$scripts),
-        $scripts <: contains pair(key=`"manifest"`, value=`"oclif manifest"`)
-      },
-      not {
-        $properties <: contains pair(key=`"rawr"`, value=$rawr),
-        $rawr <: contains pair(key=`"kind"`, value=`"toolkit"`)
+        $scripts <: contains pair(key=`"manifest"`, value=`"bun --bun oclif manifest"`)
       },
       not {
         $properties <: contains pair(key=`"dependencies"`, value=$dependencies),
@@ -67,7 +64,7 @@ or {
     }
   },
   `{ $properties }` where {
-    $filename <: r".*plugins/cli/[^/]+/tsconfig\.json$",
+    $filename <: r".*plugins/cli/commands/[^/]+/tsconfig\.json$",
     not {
       $properties <: contains pair(key=`"compilerOptions"`, value=$compiler_options),
       $compiler_options <: contains pair(key=`"rootDir"`, value=`"src"`),
@@ -80,14 +77,13 @@ or {
 ## Matches a binary-bearing plugin
 
 ```json
-// @filename: plugins/cli/example/package.json
+// @filename: plugins/cli/commands/example/package.json
 {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
   "bin": { "example": "./bin/run.js" },
-  "scripts": { "manifest": "oclif manifest" },
-  "rawr": { "kind": "toolkit" },
+  "scripts": { "manifest": "bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
   "files": ["dist", "oclif.manifest.json"],
   "oclif": {
@@ -100,13 +96,12 @@ or {
 ## Matches a wrong installed command root
 
 ```json
-// @filename: plugins/cli/example/package.json
+// @filename: plugins/cli/commands/example/package.json
 {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "oclif manifest" },
-  "rawr": { "kind": "toolkit" },
+  "scripts": { "manifest": "bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
   "files": ["dist", "oclif.manifest.json"],
   "oclif": {
@@ -119,7 +114,7 @@ or {
 ## Matches an ambiguous plugin source-to-output mapping
 
 ```json
-// @filename: plugins/cli/example/tsconfig.json
+// @filename: plugins/cli/commands/example/tsconfig.json
 {
   "compilerOptions": { "outDir": "dist" },
   "include": ["src"]
@@ -129,13 +124,12 @@ or {
 ## Matches a runtime dependency on another command plugin
 
 ```json
-// @filename: plugins/cli/example/package.json
+// @filename: plugins/cli/commands/example/package.json
 {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "oclif manifest" },
-  "rawr": { "kind": "toolkit" },
+  "scripts": { "manifest": "bun --bun oclif manifest" },
   "dependencies": {
     "@oclif/core": "4.11.14",
     "@rawr/plugin-other": "1.0.0"
@@ -148,13 +142,12 @@ or {
 ## Matches a development dependency on another command plugin
 
 ```json
-// @filename: plugins/cli/example/package.json
+// @filename: plugins/cli/commands/example/package.json
 {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "oclif manifest" },
-  "rawr": { "kind": "toolkit" },
+  "scripts": { "manifest": "bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
   "devDependencies": { "@rawr/plugin-other": "1.0.0" },
   "files": ["dist", "oclif.manifest.json"],
@@ -165,13 +158,12 @@ or {
 ## Matches a peer dependency on another command plugin
 
 ```json
-// @filename: plugins/cli/example/package.json
+// @filename: plugins/cli/commands/example/package.json
 {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "oclif manifest" },
-  "rawr": { "kind": "toolkit" },
+  "scripts": { "manifest": "bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
   "peerDependencies": { "@rawr/plugin-other": "1.0.0" },
   "files": ["dist", "oclif.manifest.json"],
@@ -182,13 +174,12 @@ or {
 ## Matches an optional dependency on another command plugin
 
 ```json
-// @filename: plugins/cli/example/package.json
+// @filename: plugins/cli/commands/example/package.json
 {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "oclif manifest" },
-  "rawr": { "kind": "toolkit" },
+  "scripts": { "manifest": "bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
   "optionalDependencies": { "@rawr/plugin-other": "1.0.0" },
   "files": ["dist", "oclif.manifest.json"],
@@ -199,13 +190,12 @@ or {
 ## Ignores canonical plugin configuration
 
 ```json
-// @filename: plugins/cli/example/package.json
+// @filename: plugins/cli/commands/example/package.json
 {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "oclif manifest" },
-  "rawr": { "kind": "toolkit" },
+  "scripts": { "manifest": "bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
   "files": ["dist", "oclif.manifest.json"],
   "oclif": {
@@ -216,13 +206,12 @@ or {
 ```
 
 ```json
-// @filename: plugins/cli/example/package.json
+// @filename: plugins/cli/commands/example/package.json
 {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "oclif manifest" },
-  "rawr": { "kind": "toolkit" },
+  "scripts": { "manifest": "bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
   "files": ["dist", "oclif.manifest.json"],
   "oclif": {
@@ -235,7 +224,7 @@ or {
 ## Ignores the canonical plugin TypeScript command mapping
 
 ```json
-// @filename: plugins/cli/example/tsconfig.json
+// @filename: plugins/cli/commands/example/tsconfig.json
 {
   "compilerOptions": { "rootDir": "src", "outDir": "dist" },
   "include": ["src"]
@@ -243,7 +232,7 @@ or {
 ```
 
 ```json
-// @filename: plugins/cli/example/tsconfig.json
+// @filename: plugins/cli/commands/example/tsconfig.json
 {
   "compilerOptions": { "rootDir": "src", "outDir": "dist" },
   "include": ["src"]

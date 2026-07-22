@@ -14,12 +14,12 @@
   "lane": "enforced",
   "forbids": "a missing command-plugin package anchor, a second command root, an open source root, or a plugin-owned executable binary",
   "why": "Every first-party Oclif command capability has the same package shell and one source command root. Generated dependency and build directories remain admitted outputs, while the host application alone owns the executable.",
-  "remediate": "Keep package, test, and TypeScript anchors at each plugins/cli package root. Put commands under src/commands, shared private helpers under src/lib, and expose no package-local bin directory.",
+  "remediate": "Keep package, test, and TypeScript anchors at each plugins/cli/commands package root. Put commands under src/commands, shared private helpers under src/lib, and expose no package-local bin directory.",
   "message": "Every Oclif command plugin must retain one closed package and command-source topology.",
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": ["plugins/cli/*/**"]
+      "patterns": ["plugins/cli/commands/*/**"]
     }
   ],
   "supportFiles": {
