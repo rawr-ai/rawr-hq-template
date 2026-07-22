@@ -33,9 +33,9 @@ A standalone SDK repository would isolate dependencies but contradicts the
 current repository authority split: Template owns generic executable tooling
 and adapters. A subject vault would preserve proven code locality but make one
 study the accidental generic owner. Template is selected because a single
-isolated package can host the verified Effect 4 closure
-without upgrading Template's root closure or importing Template
-lifecycle/controller packages.
+isolated package can own a verified Effect closure without coupling that
+closure to unrelated packages or importing Template lifecycle/controller
+packages.
 
 ### Reframe Trigger
 
@@ -266,15 +266,19 @@ TypeBox properties for cases, treatments, prompts, rubrics, checks, and output
 interpretation, then closes the resulting public object once. No `unknown`
 extension bag or intersection of separately closed objects is added to core.
 
-The SDK owns an exact Effect 4 dependency while Template remains on Effect 3.
-Effect 4 `Effect`, `Layer`, `Context.Tag`, `Scope`, `Exit`, runtime, and service
-values MUST NOT cross into Effect 3 packages or be re-exported through neutral
-contracts. Only Effect-neutral, TypeBox-decoded data crosses that boundary.
+The SDK owns an exact, independently verified Effect dependency closure.
+`Effect`, `Layer`, `Context.Tag`, `Scope`, `Exit`, runtime, and service values
+MUST NOT be re-exported through neutral contracts or cross into unrelated
+packages. Only Effect-neutral, TypeBox-decoded data crosses the public package
+boundary. This remains the law whether Template's accepted root closure is on a
+different Effect major or later converges on Effect 4.
 
 The SDK also owns a standalone TypeScript 7 configuration and does not extend
 Template's root TypeScript configuration. Bun package scripts resolve the
 package-local compiler; Nx invokes those scripts without loading TypeScript 7
-through the Nx API. Root TypeScript, Nx, and Effect versions remain independent.
+through the Nx API. Root TypeScript, Nx, and Effect upgrades remain separately
+owned; alignment with an accepted upstream version is an explicit admission
+decision rather than an implicit float.
 
 ## Study Directory Topology
 
@@ -607,11 +611,15 @@ Tests target persistent behavioral guarantees, not implementation text:
     versus retry-exhaustion drops, in-flight flush, close-before-flush, and
     idempotent disposal without changing study outcomes.
 11. Nx package scripts resolve TypeScript `7.0.2` while root TypeScript remains
-    unchanged. SDK resolution proves Effect `4.0.0-beta.99`; Template remains on
-    Effect `3.21.3`; Habitat/GritQL rejects imports or re-exports of
-    Effect-bearing SDK subpaths from Effect-3 packages while permitting the
-    designated neutral decoded contract. The packed artifact imports and
-    typechecks in both model-free lane consumers, whose frozen locks and
+    unchanged. On the accepted BUILD base, SDK resolution proves Effect
+    `4.0.0-beta.99` and the current root remains on Effect `3.21.3`; this is
+    transitional isolation evidence, not a permanent product invariant. At the
+    required pre-landing restack, vendor admission rechecks the actual accepted
+    root closure and either aligns the exact SDK version or proves deliberate
+    package isolation from dependency evidence. Habitat/GritQL rejects imports
+    or re-exports of Effect-bearing SDK subpaths into unrelated packages while
+    permitting the designated neutral decoded contract. The packed artifact
+    imports and typechecks in both model-free lane consumers, whose frozen locks and
     installed graphs match the same embedded resolution/integrity manifest and
     tarball digest.
 12. Template Habitat proves SDK package shape and dependency direction; each
@@ -678,8 +686,8 @@ The design is wrong or too elaborate if any of these become true:
 - Telemetry availability becomes correctness authority.
 - A score is attached only to a trace summary or dataset run when the trial
   subject is the experiment-item root observation.
-- Effect 3 and Effect 4 exchange runtime values rather than neutral decoded
-  data.
+- SDK Effect runtime values cross public or unrelated package boundaries rather
+  than neutral decoded data.
 - OpenShell owns Codex semantics, Codex owns OpenShell lifecycle, or either lane
   duplicates the shared provider bridge.
 - Using the SDK requires moving historical evidence.

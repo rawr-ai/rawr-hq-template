@@ -5,8 +5,8 @@ RAWR HQ-Template MUST own one buildable `@rawr/research-sdk` package containing
 generic research execution contracts and named vendor adapters. SDK core MUST
 NOT contain oRPC, Inngest, skill-efficacy, challenge, corpus, rubric, or
 individual-study semantics. The package MUST isolate its dependency closure and
-MUST NOT require upgrading Template's root Effect 3 runtime. The package MUST
-NOT import or depend on Template lifecycle/controller packages. Its standalone
+MUST NOT require or perform a Template root Effect upgrade from this lane. The
+package MUST NOT import or depend on Template lifecycle/controller packages. Its standalone
 TypeScript 7 configuration MUST NOT extend Template's root TypeScript config or
 load TypeScript 7 through the Nx API.
 
@@ -200,9 +200,11 @@ that invocation exits; otherwise scoped release MUST end in explicit retained
 residue. Confirmed cleanup or retained residue MUST preserve primary and
 secondary failure precedence.
 The adapters MUST NOT race to terminate each other's directly owned resource.
-The SDK MUST own an exact Effect 4 closure. Effect 3 Template packages MUST NOT
-import or re-export SDK Effect runtime values; only Effect-neutral,
-TypeBox-decoded data MAY cross the major-version boundary.
+The SDK MUST own an exact, independently verified Effect closure. It MUST NOT
+export Effect runtime values through its neutral contract or into unrelated
+Template packages; only Effect-neutral, TypeBox-decoded data MAY cross that
+public package boundary. This law MUST remain invariant if the accepted
+Template root later converges on the same Effect major.
 
 #### Scenario: Interrupted sandbox work terminates or retains residue
 - **WHEN** an executing stage is interrupted after sandbox registration
@@ -243,9 +245,12 @@ lifecycle, and package-local
 compiler isolation. Tests MUST NOT assert source strings, helper counts, command
 spelling, or a preferred internal implementation.
 Dependency-direction enforcement MUST use GritQL import patterns rather than
-brittle text matching. It MUST also prove that SDK Effect 4 runtime subpaths do
-not cross into Effect 3 packages and that only the designated neutral decoded
-contract is eligible for cross-major consumption.
+brittle text matching. On the current BUILD base it MUST prove that SDK Effect
+4 runtime subpaths do not cross into Effect 3 packages and that only the
+designated neutral decoded contract is eligible for cross-major consumption.
+This is transitional evidence. After the required pre-landing restack, it MUST
+be replaced by same-major or deliberate-isolation checks derived from the
+actual accepted Template closure while preserving the neutral boundary.
 
 All automated BUILD checks MUST be model-free. They MUST use captured rollouts,
 local fixture servers, and injected command/provider boundaries rather than

@@ -68,9 +68,9 @@ removes duplicate ownership without moving research truth.
 - The SDK neither imports nor depends on Template lifecycle/controller
   packages. Simplification or deletion of that system remains owned by the
   primary Template lane.
-- Template's root Effect 3 dependency closure remains unchanged; the SDK
-  isolates its own compatible Effect 4 dependency closure. Effect runtime
-  values never cross between those majors; only TypeBox-decoded data does.
+- The SDK owns an exact, independently verified Effect dependency closure.
+  Public and cross-package contracts remain Effect-neutral, TypeBox-decoded
+  data; SDK runtime values are not re-exported into unrelated packages.
 
 ## Integration Condition
 
@@ -79,7 +79,12 @@ controller/distribution system on a separate Graphite stack. The accepted frame
 has been restacked onto checkpoint
 `911f319c3d3abdab5255d831e8e16ee16543c3bf`; the SDK branch MUST restack again
 before landing if the accepted upstream stack changes. The SDK does not
-preserve, replace, or depend on the retiring controller.
+preserve, replace, or depend on the retiring controller. Template's separately
+owned Effect/vendor migration is also a pre-landing restack condition: after
+that migration becomes authoritative, this change MUST re-run exact vendor
+admission against the resulting closure and replace transitional cross-major
+checks with the boundary checks appropriate to that accepted base. This lane
+does not upgrade Template root dependencies.
 
 ## Capabilities
 
