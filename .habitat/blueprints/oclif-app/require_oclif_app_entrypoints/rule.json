@@ -19,16 +19,10 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [
-        "apps/cli/bin/run.js",
-        "apps/cli/src/index.ts"
-      ]
+      "patterns": ["apps/cli/bin/run.js", "apps/cli/src/index.ts"]
     }
   ],
-  "scanRoots": [
-    "apps/cli/bin/run.js",
-    "apps/cli/src/index.ts"
-  ],
+  "scanRoots": ["apps/cli/bin/run.js", "apps/cli/src/index.ts"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/oclif-app/require_oclif_app_entrypoints/baseline.json"
