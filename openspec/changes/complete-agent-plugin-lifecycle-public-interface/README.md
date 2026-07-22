@@ -574,6 +574,27 @@ earlier controller work. It authorized no release dispatch. This correction
 does not churn the setting or perform another repository mutation; any future
 repository release action waits for the conventional CLI release container.
 
+The selected-content packaging checkpoint is
+`8f4ea80979776319279d6c68632b0515b154010c`. Packaging no longer reads a
+persistent artifact repository or accepts an artifact handle. The typed
+procedure takes one exact Git selection, derives the targeted release or
+complete release set in memory, renders deterministic Cowork ZIP bytes, then
+revalidates the exact Git selection before the explicit output can change.
+TypeBox owns the canonical non-root output path and every request/result shape;
+the Cowork helper accepts only releases plus an optional release set and carries
+no retired handle through its internal API.
+
+The focused lifecycle run passed 38 cases, including 20 packaging-owner cases
+that observe targeted and complete-set ZIP membership and bytes, unknown-member
+refusal before encoding or publication, read-only repeat, source-change
+rejection before output, and exact pre-mutation failure mapping. Two focused
+CLI parser cases, uncached CLI and service lint/typecheck, the service and Oclif
+Habitat topology checks, and diff hygiene are green. Standing TypeScript,
+TypeBox, oRPC-structure, testing, and state-transition reviews approved the
+slice. This closes only task 5.5a in
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service]]; persistent build,
+provider, retention, and controller readers remain open under task 5.5.
+
 ## Settlement Oracles
 
 The final product must prove:
