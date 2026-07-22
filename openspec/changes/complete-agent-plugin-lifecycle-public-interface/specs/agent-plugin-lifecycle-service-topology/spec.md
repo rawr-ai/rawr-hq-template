@@ -36,7 +36,23 @@ and broad DTO barrels MUST remain private.
 - **WHEN** Habitat and package export inventories run
 - **THEN** the root and each module match their closed positive topology
 - **AND** module-owned release/governance requests under root model, a sixth
-  module, or a public concrete provider fails the ratchet
+module, or a public concrete provider fails the ratchet
+
+Procedure handlers MUST be authored directly in each module's router surface and
+composed as a plain router object. A handler MAY call module-owned pure policy or
+ready resource capabilities, but MUST NOT delegate its operation to a parallel
+business entrypoint or acquire an ornamental `*Procedure` export name merely for
+root composition. Router files MUST consume the exact context inferred from the
+module handler and MUST NOT redeclare a local dependency bag or reconstruct root
+context. When a module needs several handler files, its closed
+`router/*.router.ts` leaves MUST compose through `router/index.ts`, then through
+the module `router.ts` boundary.
+
+#### Scenario: Procedure composition is direct
+- **WHEN** module router exports and procedure handler call sites are inspected
+- **THEN** the router object contains the directly authored handlers
+- **AND** no parallel operation function or individually named procedure wrapper
+  or router-local dependency bag impersonates the oRPC composition boundary
 
 ### Requirement: Runtime authorities are explicit and transport-neutral
 
