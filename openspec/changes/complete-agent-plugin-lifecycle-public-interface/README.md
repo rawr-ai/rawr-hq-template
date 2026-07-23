@@ -533,6 +533,17 @@ controller-authority resource. Task 4.2b removes that live identity together
 with the persistent lifecycle roots; task 4.6 remains open until direct status
 execution is green without it.
 
+The next bounded CLI checkpoint removes controller reentry from the unrelated
+`routine check`, `routine snapshot`, and `workflow harden` commands. Recursive
+commands now invoke the current Oclif entrypoint with the current process
+runtime, operator working directory, and inherited environment. Source and
+built Oclif entrypoints exercise this path without controller variables;
+`routine snapshot` reads the current Oclif version directly and avoids two
+redundant child processes. Focused behavior tests pass in 9.7 seconds, and
+uncached CLI lint and typecheck pass in 14.9 seconds. Agent-plugin lifecycle
+reentry remains explicitly pending under task 4.2b rather than being hidden by
+this generic CLI correction.
+
 The earlier owner-qualified lifecycle dependency mega-pattern is retired rather
 than carried into the corrected ratchet. It enumerated package names, exact
 composition files, and the now-rejected artifact/evidence repositories. Those
