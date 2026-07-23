@@ -345,6 +345,13 @@ project owns a `check` target or Habitat Nx inference supplies the missing
 targets. Likewise, the selected Habitat batch does not imply that all registered
 rules are active.
 
+The first [[tasks#1. Positive Habitat And Nx Checks|task 1.6c]] checkpoint now
+gives every one of the 38 non-root Nx projects an explicit `project.json` and
+public `nx:noop` `check` target. The CLI target retains its Oclif source/build
+parity dependency, and the Oclif app and command-plugin topology blueprints now
+require the project manifest. The root still uses the transitional scheduler;
+the one-scheduler cutover and native Habitat project-admission law remain open.
+
 The active policy batch now contains twelve green laws: packet topology,
 AGENTS placement and shape, Grit helper documentation, the API-plugin boundary,
 the lifecycle command-channel law, all three Oclif app laws, and all three Oclif

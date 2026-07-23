@@ -8,6 +8,7 @@ mode = "closed"
 required = [
   "bin",
   "package.json",
+  "project.json",
   "src",
   "test",
   "tsconfig.build.json",

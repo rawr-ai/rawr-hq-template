@@ -9,6 +9,9 @@
     "provider:git-effect-platform-node"
   ],
   "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

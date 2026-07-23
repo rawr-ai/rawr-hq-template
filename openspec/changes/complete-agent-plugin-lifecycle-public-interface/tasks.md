@@ -139,6 +139,10 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   applicable project owns a `check` target or Habitat Nx inference supplies
   one. Do not let `run-many -t check` silently omit projects during the
   transition.
+- [x] 1.6c1 Give all 38 non-root Nx projects an explicit `project.json` and
+  public `nx:noop` `check` target. Preserve the CLI's Oclif parity dependency,
+  and make both Oclif topology blueprints require a project manifest. Keep the
+  root scheduler cutover and native Habitat project-admission law in task 1.6c.
 - [x] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable

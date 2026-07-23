@@ -1,0 +1,9 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@rawr/runtime-context",
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    }
+  }
+}

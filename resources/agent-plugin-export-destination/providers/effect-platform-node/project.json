@@ -9,6 +9,9 @@
     "provider:effect-platform-node"
   ],
   "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
     "build": {
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/resources/agent-plugin-export-destination/dist"],
