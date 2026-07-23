@@ -1,0 +1,121 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.3/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": false
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "**",
+      "!**/node_modules/**",
+      "!**/dist/**",
+      "!**/coverage/**",
+      "!.turbo/**",
+      "!.nx/**",
+      "!.habitat/cache/**",
+      "!**/.tmp/**",
+      "!**/.rawr/**",
+      "!**/.semantica/**",
+      "!**/.scratch/**",
+      "!**/.context/**",
+      "!.claude/settings.local.json",
+      "!.claude/launch.json",
+      "!apps/server/openapi/**",
+      "!docs/_archive/**",
+      "!docs/quarantine/**",
+      "!docs/**/_archive/**",
+      "!docs/**/quarantine/**",
+      "!docs/**/_provenance/**",
+      "!openspec/changes/archive/**",
+      "!openspec/changes/**/workstream/**",
+      "!tools/architecture-inventory/**",
+      "!tools/runtime-realization-type-env/evidence/**",
+      "!tools/runtime-realization-type-env/fixtures/**",
+      "!tools/semantica-workbench/fixtures/**",
+      "!tools/eslint-fixtures/**",
+      "!apps/cli/test/external-extensions/fixtures/**",
+      "!scripts/chatgpt-corpus-template/source-material/conversations/raw-json/**",
+      "!scripts/chatgpt-corpus-template/work/docs/source/**",
+      "!scripts/chatgpt-corpus-template/work/generated/**",
+      "!scripts/chatgpt-corpus-template/work/README.md",
+      "!services/chatgpt-corpus/test/fixtures/**",
+      "!services/hyperresearch-codex/spec/evidence/**",
+      "!services/hyperresearch-codex/spec/fixtures/**"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "useEditorconfig": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf"
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "none",
+      "correctness": {
+        "noConstAssign": "error",
+        "noSelfAssign": "error",
+        "noUnreachable": "error",
+        "noUnreachableSuper": "error",
+        "noUnsafeFinally": "error",
+        "noUnsafeOptionalChaining": "error",
+        "useIsNan": "error",
+        "useValidTypeof": "error"
+      },
+      "suspicious": {
+        "noDebugger": "error",
+        "noDuplicateCase": "error",
+        "noDuplicateClassMembers": "error",
+        "noDuplicateJsxProps": "error",
+        "noDuplicateObjectKeys": "error",
+        "noDuplicateParameters": "error",
+        "noFallthroughSwitchClause": "error",
+        "noGlobalIsFinite": "error",
+        "noGlobalIsNan": "error",
+        "noSparseArray": "error",
+        "noWith": "error",
+        "useGetterReturn": "error"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["apps/web/src/**/*.{js,jsx,ts,tsx}"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useExhaustiveDependencies": "warn",
+            "useHookAtTopLevel": "error",
+            "useJsxKeyInIterable": "error"
+          }
+        }
+      }
+    }
+  ],
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "es5"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  }
+}
