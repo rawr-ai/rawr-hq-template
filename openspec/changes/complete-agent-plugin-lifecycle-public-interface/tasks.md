@@ -17,8 +17,9 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   falsifiers, positive ratchet, behavioral boundary, and standard vocabulary in
   [[authority-amendment]], [[proposal]], and [[design]].
 - [x] 0.4 Record Magic Migration and Civ7 Habitat provenance. The current
-  Template artifact already matches published `habitat-sdk-v0.1.1` built with
-  Bun 1.4.0; unreleased Civ7 source changes are not imported.
+  Template artifact is published `habitat-sdk-v0.1.5`, source
+  `54379b23adeff29bfb5213df77bda79e81edfc14`, compiled with Bun 1.4. SDK source
+  is not imported.
 - [x] 0.5 Run strict OpenSpec validation, backlinks/link checks where owned,
   `git diff --check`, and standing architecture/terminology reviews. Commit this
   record as one Graphite node.
@@ -27,16 +28,16 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 
 - [x] 1.1 Port the generic Magic Migration service, API server plugin, and
   agent-router blueprints from commit
-  `31c4e1ac1944d88b5ae867e46603eddff36142fc`, preserving pattern semantics and
+  `5a974f0047f0667c2e429fdb4193a0e237b067c4`, preserving pattern semantics and
   recording every identity-only adaptation.
 - [x] 1.1a Retire the owner-qualified lifecycle dependency mega-pattern. Its
   package-name and path exceptions encoded a transient implementation inventory,
   including the rejected artifact repository, rather than a reusable monotonic
   constraint. Generic service and Oclif blueprints, TypeScript package
   boundaries, and the Nx project graph own those relationships.
-- [ ] 1.2 Correct the generic service topology once so a module has either a
-  single `router.ts` or a closed composed `router/` directory behind its
-  `router.ts` boundary. Prove both accepted shapes and reject mixed/open forms.
+- [x] 1.2 Adopt the current generic service topology with one `router.ts` per
+  module. Keep procedure behavior on that oRPC surface and domain matter under
+  the module model; do not introduce a second router container.
 - [x] 1.3 Add generic positive Oclif app and Oclif command-plugin blueprints.
   Constrain direct entrypoints, app identity/binary/dependency/command discovery,
   TypeScript source-to-output mapping, command-plugin manifest/package roots, no
@@ -59,10 +60,10 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   prove that `rule.json` selects exactly one present runner source. Native Grit
   fixture automation and full live-tree `check:policy` activation also remain
   pending because the published standalone binary exposes no packet-fixture
-  runner and still performs an unbounded wildcard walk through installed
-  dependency trees. Do not hide these limitations behind another parser or
-  runner. Keep the compiled Bun 1.4 artifact consumer and reproducible update
-  recipe.
+  runner. Do not hide that limitation behind another parser or runner. Keep the
+  compiled Bun 1.4 artifact consumer and reproducible update recipe; the current
+  temporary release and required ratchet are Darwin arm64 until Habitat moves
+  into this repository as an npm package and proper binary.
 - [x] 1.5a Give every admitted code project an Nx lint and typecheck target.
   Keep content and fixture projects explicitly classified outside that law.
   Typecheck the Habitat consumer against `bun-types@1.3.14`; derive its release
@@ -248,10 +249,10 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   version proximity or mix family versions.
 - [ ] 5.4 Narrow root context to genuinely cross-cutting ready host capabilities,
   let module middleware acquire or project owner-specific capabilities, and give
-  each procedure only the exact context it consumes. Effect/Platform programs
-  terminate inside filesystem/process resource adapters and expose ready
-  capabilities. Use Effect-oRPC only if an Effect program genuinely crosses the
-  procedure boundary.
+  each procedure only the exact context it consumes. Use the generic
+  Effect-backed oRPC construction from the current Magic Migration service
+  blueprint; keep filesystem/process Effect programs inside their owning
+  resources and expose only ready capabilities into procedure context.
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical
@@ -281,15 +282,14 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   needed. Provider tests require each explicit home to be a strict descendant
   of an explicit non-root disposable root before native session acquisition.
 - [ ] 5.6a After tasks 4.2 and 5.5 remove the rejected Effect-owning runtime
-  surfaces, migrate the complete surviving resource/provider family and CLI
-  adapter to the current official Effect 4 line as one distinct reviewed
-  Graphite node. Re-query and pin exact aligned `effect` and
+  surfaces, migrate the lifecycle service, complete surviving resource/provider
+  family, and CLI adapter to the current official Effect 4 line as one distinct
+  reviewed Graphite node. Re-query and pin exact aligned `effect` and
   `@effect/platform-node` versions; remove `@effect/platform`; migrate Node
   services, process, filesystem, path, platform-error, concurrency, and
   finalization APIs without compatibility wrappers. Require one Effect 4
   runtime copy, no active Effect 3 copy, and no active `@effect/platform`
-  import. Keep the oRPC upgrade separate, keep TypeBox authoritative, and add no
-  Effect-oRPC while every Effect program terminates inside its resource adapter.
+  import. Keep the oRPC version upgrade separate and keep TypeBox authoritative.
 - [ ] 5.7 Seal one module at a time with owner-local behavior, schema, lint,
   typecheck, and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.

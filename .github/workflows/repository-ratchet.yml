@@ -18,7 +18,7 @@ permissions:
 jobs:
   required:
     name: Required lint, typecheck, and topology
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     timeout-minutes: 30
     steps:
       - name: Check out exact candidate

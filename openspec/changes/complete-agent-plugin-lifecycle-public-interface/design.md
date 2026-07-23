@@ -115,8 +115,8 @@ Habitat `structure.toml` files declare closed valid topologies. Grit patterns
 declare source relationships. Nx declares project imports, task dependencies,
 inputs, outputs, and release ordering. Behavior tests remain behavior tests.
 
-The generic source begins with Magic Migration commit
-`31c4e1ac1944d88b5ae867e46603eddff36142fc`:
+The generic source follows Magic Migration commit
+`5a974f0047f0667c2e429fdb4193a0e237b067c4`:
 
 - service spine and module topology;
 - service contract and oRPC relationship authority;
@@ -124,19 +124,20 @@ The generic source begins with Magic Migration commit
 - API server plugin boundary;
 - agent-router placement and shape.
 
-The service topology is adapted once to admit either a single `router.ts` or a
-closed `router/` directory composed by the module `router.ts` boundary. Magic's
-current Collect source already needs that form, so copying its older
-single-file-only constraint would encode a known contradiction.
+The service topology follows Magic's current single `router.ts` module
+boundary. Procedure logic remains in that oRPC router surface alongside
+module-owned `model/{dto,policy,helpers,repositories}` rather than moving into a
+second implementation container.
 
 RAWR adds generic Oclif app and command-plugin blueprints. These assert the
 kind's valid axes, not a list of retired filenames. A broad universal “plugin”
 rule is not invented without a stable common corpus.
 
-The compiled Habitat binary stays pinned to the already-adopted Civ7
-`habitat-sdk-v0.1.1` release built with Bun 1.4.0. Unreleased Civ7 SDK changes
-are not vendored or claimed. A later published artifact can update through the
-existing provenance and checksum recipe.
+The compiled Habitat binary is pinned to Civ7 `habitat-sdk-v0.1.5`, source
+`54379b23adeff29bfb5213df77bda79e81edfc14`, built natively with Bun 1.4. The
+temporary release is Darwin arm64 only, matching the active development and
+required-check host; a later in-repository npm package and binary will own
+multi-platform distribution. SDK source is not vendored here.
 
 ### Required checks follow the Nx graph
 

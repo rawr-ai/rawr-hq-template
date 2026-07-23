@@ -137,16 +137,12 @@ verification. None permits another selector or release store.
 
 ## Habitat Provenance
 
-Magic Migration commit `31c4e1ac1944d88b5ae867e46603eddff36142fc`
-is the committed source for generic service, API server plugin, and agent-router
-patterns. Its current `.habitat` tree is unchanged at the latest inspected
-worktree head.
-
-One generic correction is required before adoption: the older service structure
-allows only one module `router.ts`, while current Magic modules also use composed
-`router/` directories. RAWR will admit either sealed form and reject mixed/open
-forms. Magic-specific import aliases and constructor spellings are adapted to
-generic relationships rather than copied as false RAWR law.
+Magic Migration commit `5a974f0047f0667c2e429fdb4193a0e237b067c4`
+is the current source for generic service, API server plugin, and agent-router
+patterns. RAWR keeps their structure and Grit semantics, adapting only
+repository identity metadata and the local canonical packet filename. The
+lifecycle service follows that same Effect-backed oRPC service kind rather than
+introducing a native special case.
 
 A standing architecture review found that the first Oclif command-plugin
 blueprint had incorrectly classified every `plugins/cli/*` package and required
@@ -168,18 +164,20 @@ and the TypeScript mapping. Task 3.3 tightens generated-manifest packaging only
 when that behavior exists. The
 configuration fixtures and both live rules pass with zero diagnostics.
 
-The Template Habitat consumer already pins the newest published Civ7 artifact:
+The Template Habitat consumer pins the current published Civ7 artifact:
 
 | Field | Value |
 | --- | --- |
-| Release | `habitat-sdk-v0.1.1` |
-| Source commit | `177d08eafcaf270daec31d76524065de99aeaff8` |
-| Bun | `1.4.0` / `a215285063c9b7b0d4b3f87bd298d4fecfd93897` |
-| Darwin arm64 SHA-256 | `6a73c416233f2190c57ff4ff9236609e6611e953c3d18b16885052b7be2737fd` |
-| Linux x64 SHA-256 | `b795af90bb08384c4c1c606121ba4306c2cc700e1bd7ca686e1301508a8a72c5` |
+| Release | `habitat-sdk-v0.1.5` |
+| Source commit | `54379b23adeff29bfb5213df77bda79e81edfc14` |
+| Habitat tree | `6ca50bf370b0b44ef3bb938fe43078fec8619182` |
+| Bun | `1.4.0-canary.1+5b98630ac` / `5b98630ac045622ce9ddfe0b53a2c4f3a91f26c4` |
+| Darwin arm64 SHA-256 | `269db7016c49b943e4c806d246d16aed60e3470162466f3d100650a8fe585f0f` |
 
-Newer Civ7 SDK source is not yet published as a compiled artifact and is not
-claimed or vendored here.
+The temporary published tool is Darwin arm64 only, so the required repository
+ratchet runs on macOS. Linux packaging belongs to the later in-repository
+Habitat npm package and binary migration; this initiative neither vendors the
+SDK source nor holds current structural work behind that later distribution.
 
 ## Core Toolchain Grounding
 
@@ -212,11 +210,11 @@ current Effect 4 line as `4.0.0-beta.100`; `@effect/platform-node` exposes the
 same Effect 4 beta while `@effect/platform` has no Effect 4 release. Effect 4 is
 therefore an explicit prerelease adoption, not a claim that the major is stable.
 The migration waits until controller and persistent lifecycle-state deletion so
-dead owners are not ported. It then moves the surviving filesystem/process
-resource family and CLI adapter together in one distinct Graphite node, using
-the exact current Effect 4 versions at execution. The lifecycle service remains
-native oRPC/TypeBox over ready Promise ports; no Effect-oRPC dependency is added
-without an Effect program crossing that boundary.
+dead owners are not ported. It then moves the lifecycle service, surviving
+filesystem/process resource family, and CLI adapter together in one distinct
+Graphite node, using the exact current Effect 4 versions at execution. The
+service uses the Effect-backed oRPC construction required by the generic
+service blueprint while TypeBox remains public schema authority.
 
 The Biome tooling checkpoint pins Biome `2.5.3` and lintEffect `0.0.6`, carries
 the narrow upstream severity compatibility patch byte-for-byte from Civ7, and
@@ -361,24 +359,18 @@ skill. It cannot authorize HF01 materialization or release.
 | Approved-home settlement and read-only repeat | Pending |
 | Repository/stack/worktree closure | Pending |
 
-The generic Habitat blueprint port is a separate checkpoint. Twenty-six files
-come from Magic Migration commit `31c4e1ac1944d88b5ae867e46603eddff36142fc`;
-rule identity changes are limited to the RAWR niche and
-`@rawr/habitat-consumer` owner. The one intentional source-law extension admits
-a closed optional module `router/`, requires a plain map in `router/index.ts`,
-and validates a canonical authored import/use edge through module `router.ts`.
-The pinned Grit engine cannot prove optional cross-file participation without
-emitting collection diagnostics, so that remains an explicit native-tool gap
-and review responsibility rather than a custom parser.
+The generic Habitat blueprint port is a separate checkpoint. Twenty-six logical
+files follow Magic Migration commit
+`5a974f0047f0667c2e429fdb4193a0e237b067c4`; nineteen are byte-verbatim and the
+seven rule manifests adapt only RAWR identity, formatting, and the local
+canonical `pattern.md` source name. The service kind keeps one module
+`router.ts`, with domain matter under its owning module model.
 
-The first live generic-owner probe exposed the broader policy-execution gap that
-remains in task 1.5: the published Habitat v0.1.1 consumer ran longer than four
-minutes without completing a full generic check, and a structure-only probe ran
-longer than one minute. Both probes were interrupted without repository
-mutation. Civ7 has unreleased exact-root batching and traversal reuse, but no
-new compiled artifact exists; Template does not call a worktree or vendor that
-source. The source port therefore does not claim task 1.2 or ratchet activation
-complete before executable verification is both green and bounded.
+The former v0.1.1 live-tree probe exposed an unbounded wildcard walk and was
+interrupted without repository mutation. The current v0.1.5 binary contains
+Civ7's exact-root batching, traversal reuse, bounded cancellation, and cleanup
+work. Task 1.5 still owns live policy activation and the native packet-fixture
+gap; Template neither calls a worktree nor vendors SDK source.
 
 The RAWR-authored Oclif blueprint source is a separate positive checkpoint. It
 defines one closed executable app shell, one uniform host-composed
@@ -397,8 +389,7 @@ plugin-owned `bin` directory with exact closed-topology diagnostics. The
 app/plugin structure work completes in 7-19 ms inside the bounded fixture. The
 five command-plugin packages now inhabit the closed
 `plugins/cli/commands/<capability>` topology. Task 1.5 still owns the remaining
-workspace-wide Habitat activation and an honest disposition for the published
-SDK's unbounded wildcard walk on the live dependency tree.
+workspace-wide Habitat activation and native packet-fixture disposition.
 
 The package checkpoint uses the official Oclif pattern-discovery manifest
 generator as an Nx cached output after `build`. Oclif does not sort asynchronous

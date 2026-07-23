@@ -30,15 +30,14 @@ function fixtureManifest() {
     release: { tag: "habitat-sdk-v1" },
     assets: {
       "darwin-arm64": { filename: "darwin", bytes: 5, sha256: "0".repeat(64) },
-      "linux-x64": { filename: "linux", bytes: 5, sha256: "1".repeat(64) },
     },
   });
 }
 
 describe("Habitat standalone release consumer", () => {
   it("refuses an unsupported host", () => {
-    expect(() => selectReleaseAsset(fixtureManifest(), "win32", "x64")).toThrow(
-      "unavailable for win32-x64"
+    expect(() => selectReleaseAsset(fixtureManifest(), "linux", "x64")).toThrow(
+      "unavailable for linux-x64"
     );
   });
 

@@ -2,26 +2,21 @@
   "schemaVersion": 1,
   "owner": {
     "repository": "mateicanavra/civ7-modding-tools",
-    "sourceCommit": "177d08eafcaf270daec31d76524065de99aeaff8",
-    "habitatTree": "ee8c5d1b236c3de46684e06f089d859ab9a8f90e"
+    "sourceCommit": "54379b23adeff29bfb5213df77bda79e81edfc14",
+    "habitatTree": "6ca50bf370b0b44ef3bb938fe43078fec8619182"
   },
   "build": {
-    "bunVersion": "1.4.0",
-    "bunRevision": "a215285063c9b7b0d4b3f87bd298d4fecfd93897"
+    "bunVersion": "1.4.0-canary.1+5b98630ac",
+    "bunRevision": "5b98630ac045622ce9ddfe0b53a2c4f3a91f26c4"
   },
   "release": {
-    "tag": "habitat-sdk-v0.1.1"
+    "tag": "habitat-sdk-v0.1.5"
   },
   "assets": {
     "darwin-arm64": {
       "filename": "habitat-sdk-darwin-arm64",
-      "bytes": 63068786,
-      "sha256": "6a73c416233f2190c57ff4ff9236609e6611e953c3d18b16885052b7be2737fd"
-    },
-    "linux-x64": {
-      "filename": "habitat-sdk-linux-x64-baseline",
-      "bytes": 79978432,
-      "sha256": "b795af90bb08384c4c1c606121ba4306c2cc700e1bd7ca686e1301508a8a72c5"
+      "bytes": 63316850,
+      "sha256": "269db7016c49b943e4c806d246d16aed60e3470162466f3d100650a8fe585f0f"
     }
   }
 }
