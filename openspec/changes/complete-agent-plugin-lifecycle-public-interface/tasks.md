@@ -276,6 +276,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   `*Procedure` exports or parallel operation entrypoints that move handler
   behavior outside the oRPC router surface, and do not redeclare router-local
   dependency bags instead of using the module-projected handler context.
+- [x] 5.2a Normalize the standalone lifecycle root to the canonical `impl`
+  export without wrapping direct Effect-oRPC construction. Extend the generic
+  composition law to admit both `createServiceImplementer` and direct
+  `implementEffect` roots, require root context before middleware, and preserve
+  `service` as the embedded API-plugin interior name. Keep the remaining module
+  router migration under task 5.2 and owner-local sealing under task 5.7.
 - [ ] 5.3 Make TypeBox the sole public structural schema and generated-type
   source. Remove manual closed-object parsing while retaining canonical order,
   digest, uniqueness, and cross-field domain checks. Use the coherent current

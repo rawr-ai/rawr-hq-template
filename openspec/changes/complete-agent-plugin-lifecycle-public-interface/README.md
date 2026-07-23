@@ -467,6 +467,19 @@ Central activation remains governed by
 [[tasks#1. Positive Habitat And Nx Checks]] task 1.5e and cannot precede a green
 live corpus.
 
+The first lifecycle composition checkpoint closes the root and module-binding
+portion of that migration. The standalone Effect-oRPC root now exports `impl`,
+the root router and five modules consume that name directly, and middleware
+order is unchanged. The generic law admits direct
+`implementEffect(contract, runtime).$context<Context>()` construction through
+an AST relation; it neither requires `Layer.empty` nor permits another method
+before root context. Its focused live run now reports exactly eleven source
+files, all operation bindings below nested module router directories. The law
+therefore remains outside the selected policy batch until those module routers
+are sealed under [[tasks#5. Bounded Agent-Plugin Lifecycle Service]] tasks 5.2
+and 5.7. Owner-local lint/typecheck completed through Nx in 11.8 seconds, and
+the six service-spine and Effect-oRPC admission cases passed in 2.25 seconds.
+
 The former v0.1.1 live-tree probe exposed an unbounded wildcard walk and was
 interrupted without repository mutation. The current v0.1.6 binary adds a
 single fail-closed Git-visible inventory, bounded Picomatch-aware traversal,
