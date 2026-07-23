@@ -1,11 +1,5 @@
-import { canonicalStatus } from "./canonical-status.router";
-import { canonicalSync } from "./canonical-sync.router";
-import { completeTest } from "./complete-test.router";
-import { targetedTest } from "./targeted-test.router";
+import { status } from "./status.router";
+import { sync } from "./sync.router";
+import { test } from "./test.router";
 
-export const router = Object.freeze({
-  targetedTest,
-  completeTest,
-  canonicalSync,
-  canonicalStatus,
-});
+export const router = Object.freeze({ test, status, sync });

@@ -14,6 +14,10 @@
       "types": "./src/client.ts",
       "default": "./src/client.ts"
     },
+    "./host": {
+      "types": "./src/host.ts",
+      "default": "./src/host.ts"
+    },
     "./release": {
       "types": "./src/service/shared/release/index.ts",
       "default": "./src/service/shared/release/index.ts"
@@ -39,7 +43,6 @@
     "@rawr/hq-sdk": "workspace:*",
     "@rawr/resource-agent-plugin-artifact-repository": "workspace:*",
     "@rawr/resource-agent-plugin-package-output": "workspace:*",
-    "@rawr/resource-agent-provider-records": "workspace:*",
     "@rawr/resource-content-workspace": "workspace:*",
     "@rawr/resource-native-agent-provider": "workspace:*",
     "@opentelemetry/api": "^1.9.0",

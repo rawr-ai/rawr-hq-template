@@ -16,6 +16,7 @@ import {
 import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import { makeDeferredNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { createNodeNativeProviderSessionResolver } from "../bindings/providers";
 import {
   type ControllerProjectionBinding,
   LifecycleAuthorityBindingError,
@@ -24,11 +25,6 @@ import {
   type LifecycleOperationClient,
 } from "../commands/binding";
 import { deriveAgentPluginControllerLayout } from "../layout";
-import {
-  createNodeProviderLifecycleDeps,
-  createNodeProviderRecordState,
-  type NodeProviderRecordState,
-} from "./providers/node-runtime";
 
 type LifecycleBoundary = CreateClientOptions;
 type LifecycleProcess = ProcessView &
@@ -81,21 +77,17 @@ const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
     Object.freeze({
       packaging: Object.freeze({ package: client.packaging.package }),
     }),
-  "providers.targetedTest": (client) =>
+  "providers.test": (client) =>
     Object.freeze({
-      providers: Object.freeze({ targetedTest: client.providers.targetedTest }),
+      providers: Object.freeze({ test: client.providers.test }),
     }),
-  "providers.completeTest": (client) =>
+  "providers.sync": (client) =>
     Object.freeze({
-      providers: Object.freeze({ completeTest: client.providers.completeTest }),
+      providers: Object.freeze({ sync: client.providers.sync }),
     }),
-  "providers.canonicalSync": (client) =>
+  "providers.status": (client) =>
     Object.freeze({
-      providers: Object.freeze({ canonicalSync: client.providers.canonicalSync }),
-    }),
-  "providers.canonicalStatus": (client) =>
-    Object.freeze({
-      providers: Object.freeze({ canonicalStatus: client.providers.canonicalStatus }),
+      providers: Object.freeze({ status: client.providers.status }),
     }),
   "governance.currentMainRecord": (client) =>
     Object.freeze({
@@ -148,15 +140,6 @@ export function createProductionLifecycleDeps(
   const contentWorkspace = makeDeferredNodeContentWorkspacePort({
     acquireGitExecutable: () => requiredGitExecutable(binding),
   });
-  const providerState = createNodeProviderRecordState({
-    controllerDataRoot,
-    providerProjectionRoot: layout.providerProjectionRoot,
-    providerTargetStateRoot: layout.providerTargetStateRoot,
-  });
-  const providerDeps = createNodeProviderLifecycleDeps({
-    state: providerState,
-    providerExecutables: binding.providerExecutables,
-  });
 
   return Object.freeze({
     logger: createEmbeddedPlaceholderLoggerAdapter(),
@@ -166,7 +149,7 @@ export function createProductionLifecycleDeps(
     contentWorkspace,
     clock: Object.freeze({ now: () => new Date() }),
     packageOutput: makeNodePackageOutputAsyncPort(),
-    ...providerDeps,
+    providerNativeSessions: createNodeNativeProviderSessionResolver(binding.providerExecutables),
   } satisfies LifecycleDeps);
 }
 

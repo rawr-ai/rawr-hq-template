@@ -4,12 +4,17 @@ import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/p
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
-  CURRENT_MAIN_V2_RECORD_PATH,
+  CURRENT_MAIN_V3_RECORD_PATH,
   createExactGitBlobPointer,
   parseRepository,
 } from "../../../src/service/modules/governance/model";
 import { createResourceExactGitReader } from "../../../src/service/modules/governance/repository/content-workspace";
-import { decodeAgentPluginReleaseInput } from "../../../src/service/shared/release";
+import {
+  decodeAgentPluginReleaseInput,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseRepositoryIdentity,
+} from "../../../src/service/shared/release";
 
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
 import { createGeneratedGitRepository, GIT_EXECUTABLE, git } from "../../support/git-repository";
@@ -21,6 +26,7 @@ import {
 
 const REPOSITORY_IDENTITY = "git:github.com/example/personal-rawr-hq";
 const REMOTE_URL = "https://github.com/example/personal-rawr-hq.git";
+const SOURCE_REF = "refs/tags/agent-plugins/integration-content";
 const LEGACY_CURRENT_MAIN_RECORD_PATHS = [
   "plugins/agents/.lifecycle/current-main.json",
   "plugins/agents/.lifecycle/channels/current-main.json",
@@ -67,7 +73,7 @@ describe("governance exact-Git resource selection", () => {
       headTree: pointer.value.tree,
     });
     await expect(
-      reader.readBlob(locator, {
+      reader.readFileAtRevision(locator, {
         repositoryIdentity: pointer.value.repositoryIdentity,
         ref: pointer.value.ref,
         commit: pointer.value.commit,
@@ -82,13 +88,17 @@ describe("governance exact-Git resource selection", () => {
       },
     });
 
+    await git(repository.root, ["update-ref", SOURCE_REF, repository.policy.sourceCommit]);
     await commitCurrentMainRecord({
       repositoryRoot: repository.root,
       releaseInputFile: repository.releaseInputFile,
-      sourceCommit: repository.policy.sourceCommit,
-      sourceTree: repository.policy.sourceTree,
+      contentCommit: repository.policy.sourceCommit,
+      contentTree: repository.policy.sourceTree,
+      sourceRef: SOURCE_REF,
       commitMessage: "record eligible source selection",
     });
+    await git(repository.root, ["checkout", "-b", "unrelated-worktree"]);
+    await writeFile(join(repository.root, "untracked-local-note.txt"), "not lifecycle input\n");
     const client = createLifecycleTestClient({
       contentWorkspace: makeNodeContentWorkspacePort({
         gitExecutable: await realpath(GIT_EXECUTABLE),
@@ -109,32 +119,29 @@ describe("governance exact-Git resource selection", () => {
       kind: "CURRENT_ELIGIBLE",
       selection: {
         sourceRepositoryIdentity: repositoryIdentity.value,
-        sourceCommit: repository.policy.sourceCommit,
-        sourceTree: repository.policy.sourceTree,
+        sourceRef: SOURCE_REF,
+        contentCommit: repository.policy.sourceCommit,
+        contentTree: repository.policy.sourceTree,
       },
     });
   });
 
-  it("refuses a present selected commit that is unreachable from canonical main", async () => {
+  it("refuses a source tag moved away from the reviewed content commit", async () => {
     fixture = await createOwnedFixtureRoot();
     const repository = await createGeneratedGitRepository(fixture);
     await git(repository.root, ["remote", "set-url", "origin", REMOTE_URL]);
     const repositoryIdentity = parseRepository(REPOSITORY_IDENTITY, "fixture.repositoryIdentity");
     if (!repositoryIdentity.ok) throw new Error(repositoryIdentity.issues[0].message);
-    const selectedTree = await git(repository.root, ["rev-parse", "HEAD^{tree}"]);
-    const selectedCommit = await git(repository.root, [
-      "commit-tree",
-      selectedTree,
-      "-m",
-      "unreachable selected release input",
-    ]);
+    await git(repository.root, ["update-ref", SOURCE_REF, repository.policy.sourceCommit]);
     await commitCurrentMainRecord({
       repositoryRoot: repository.root,
       releaseInputFile: repository.releaseInputFile,
-      sourceCommit: selectedCommit,
-      sourceTree: selectedTree,
-      commitMessage: "record unreachable source selection",
+      contentCommit: repository.policy.sourceCommit,
+      contentTree: repository.policy.sourceTree,
+      sourceRef: SOURCE_REF,
+      commitMessage: "record tagged content selection",
     });
+    await git(repository.root, ["update-ref", SOURCE_REF, "HEAD"]);
     const client = createLifecycleTestClient({
       contentWorkspace: makeNodeContentWorkspacePort({
         gitExecutable: await realpath(GIT_EXECUTABLE),
@@ -153,7 +160,7 @@ describe("governance exact-Git resource selection", () => {
       )
     ).resolves.toMatchObject({
       kind: "FORGED_RECORD",
-      reason: expect.stringContaining("not reachable from opening canonical main"),
+      reason: "Selected Git ref resolves to another commit",
     });
   });
 
@@ -163,13 +170,15 @@ describe("governance exact-Git resource selection", () => {
     fixture = await createOwnedFixtureRoot();
     const repository = await createGeneratedGitRepository(fixture);
     await git(repository.root, ["remote", "set-url", "origin", REMOTE_URL]);
+    await git(repository.root, ["update-ref", SOURCE_REF, repository.policy.sourceCommit]);
     const repositoryIdentity = parseRepository(REPOSITORY_IDENTITY, "fixture.repositoryIdentity");
     if (!repositoryIdentity.ok) throw new Error(repositoryIdentity.issues[0].message);
     await commitCurrentMainRecord({
       repositoryRoot: repository.root,
       releaseInputFile: repository.releaseInputFile,
-      sourceCommit: repository.policy.sourceCommit,
-      sourceTree: repository.policy.sourceTree,
+      contentCommit: repository.policy.sourceCommit,
+      contentTree: repository.policy.sourceTree,
+      sourceRef: SOURCE_REF,
       recordPath,
       commitMessage: "record old-path-only source selection",
     });
@@ -199,8 +208,9 @@ async function commitCurrentMainRecord(
   input: Readonly<{
     repositoryRoot: string;
     releaseInputFile: string;
-    sourceCommit: string;
-    sourceTree: string;
+    contentCommit: string;
+    contentTree: string;
+    sourceRef: string;
     recordPath?: string;
     commitMessage: string;
   }>
@@ -213,40 +223,31 @@ async function commitCurrentMainRecord(
     {
       kind: "encode-body",
       body: {
-        schemaVersion: 2,
+        schemaVersion: 3,
         channel: "current-main",
         contentAuthority: releaseInput.value.body.contentAuthority,
-        sourceRepositoryIdentity: REPOSITORY_IDENTITY,
-        sourceCommit: input.sourceCommit,
-        sourceTree: input.sourceTree,
+        sourceRepositoryIdentity: mustParse(parseRepositoryIdentity(REPOSITORY_IDENTITY)),
+        sourceRepositoryUrl: REMOTE_URL,
+        sourceRef: input.sourceRef,
+        contentCommit: mustParse(parseGitCommitId(input.contentCommit)),
+        contentTree: mustParse(parseGitTreeId(input.contentTree)),
         releaseInputDigest: releaseInput.value.releaseInputDigest,
-        releaseSetDigest: `rs1_${"1".repeat(64)}`,
-        evaluationProfile: "provider-smoke@v1",
-        projections: [
-          {
-            provider: "claude",
-            projectionDigest: `ap1_${"2".repeat(64)}`,
-            rendererProtocol: "claude-projection@v1",
-            adapterProtocol: "claude-native-adapter@v1",
-            capabilityProfileDigest: `cp1_${"3".repeat(64)}`,
-          },
-          {
-            provider: "codex",
-            projectionDigest: `ap1_${"4".repeat(64)}`,
-            rendererProtocol: "codex-projection@v1",
-            adapterProtocol: "codex-native-adapter@v1",
-            capabilityProfileDigest: `cp1_${"5".repeat(64)}`,
-          },
-        ],
       },
     },
     testInvocation
   );
   if (!encoded.ok) throw new Error(encoded.failure.message);
-  const recordPath = input.recordPath ?? CURRENT_MAIN_V2_RECORD_PATH;
+  const recordPath = input.recordPath ?? CURRENT_MAIN_V3_RECORD_PATH;
   const recordFile = join(input.repositoryRoot, ...recordPath.split("/"));
   await mkdir(dirname(recordFile), { recursive: true });
   await writeFile(recordFile, encoded.value.bytes);
   await git(input.repositoryRoot, ["add", recordPath]);
   await git(input.repositoryRoot, ["commit", "-m", input.commitMessage]);
+}
+
+function mustParse<T>(
+  result: { readonly ok: true; readonly value: T } | { readonly ok: false }
+): T {
+  if (!result.ok) throw new Error("Invalid exact-Git fixture value");
+  return result.value;
 }

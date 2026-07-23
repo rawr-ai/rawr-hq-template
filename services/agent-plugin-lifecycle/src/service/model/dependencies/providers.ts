@@ -1,92 +1,79 @@
-import type { ArtifactTreeLocation } from "@rawr/resource-agent-plugin-artifact-repository";
+import type {
+  NativeAgentProviderFailure,
+  NativeMarketplaceSource,
+  NativeProviderCapabilities,
+  NativeProviderInventory,
+  NativeProviderMutationResult,
+  NativeProviderPluginFiles,
+  NativeProviderPluginFilesReadInput,
+  NativeProviderPluginSelectorInput,
+} from "@rawr/resource-native-agent-provider";
 
-/** Closed host binding for the native provider executables admitted to this service. */
-export interface NativeProviderExecutablePaths {
-  readonly claude?: string;
-  readonly codex?: string;
+import type {
+  NativeProviderSessionObservation,
+  NativeProviderSessionTarget,
+  SelectedContentChannelResolutionInput,
+  SelectedContentResolution,
+  SelectedContentWorkspaceResolutionInput,
+} from "../dto/provider-dependencies";
+
+/** Exact Git and release construction stay behind this owner boundary. */
+export interface SelectedContentResolver {
+  resolveWorkspace(
+    input: SelectedContentWorkspaceResolutionInput
+  ): Promise<SelectedContentResolution>;
+  resolveChannel(input: SelectedContentChannelResolutionInput): Promise<SelectedContentResolution>;
 }
 
-export interface NativeResourceSessionInput {
-  readonly executablePath: string;
-  readonly home: string;
+interface NativeProviderSessionOperations {
+  probe(): Promise<NativeProviderCapabilities>;
+  inventory(): Promise<NativeProviderInventory>;
+  readPluginFiles(input: NativeProviderPluginFilesReadInput): Promise<NativeProviderPluginFiles>;
+  addMarketplace(source: NativeMarketplaceSource): Promise<NativeProviderMutationResult>;
+  removeMarketplace(input: Readonly<{ identity: string }>): Promise<NativeProviderMutationResult>;
+  installPlugin(input: NativeProviderPluginSelectorInput): Promise<NativeProviderMutationResult>;
+  removePlugin(input: NativeProviderPluginSelectorInput): Promise<NativeProviderMutationResult>;
 }
 
-export interface NativeResourceCapabilityProbe {
-  readonly provider: "claude" | "codex";
-  readonly executablePath: string;
-  readonly home: string;
-  readonly pluginCommands: readonly string[];
-  readonly marketplaceCommands: readonly string[];
-  readonly appServerMethods: readonly string[];
+type NativeProviderSessionBase = Omit<NativeProviderSessionObservation, "provider"> &
+  NativeProviderSessionOperations;
+
+export type CodexNativeProviderSession = NativeProviderSessionBase &
+  Readonly<{ provider: "codex" }>;
+
+export type ClaudeNativeProviderSession = NativeProviderSessionBase &
+  Readonly<{
+    provider: "claude";
+    enablePlugin(input: NativeProviderPluginSelectorInput): Promise<NativeProviderMutationResult>;
+  }>;
+
+export type NativeProviderSession = CodexNativeProviderSession | ClaudeNativeProviderSession;
+
+/** Promise-facing session over the Effect-owned native resource. */
+export interface NativeProviderSessionResolver {
+  acquire(target: NativeProviderSessionTarget): Promise<NativeProviderSession>;
 }
 
-export interface NativeResourceJsonObservation {
-  readonly json: unknown;
-  readonly stdout: string;
-  readonly stderr: string;
-}
-
-export interface NativeResourcePackageEntry {
-  readonly path: string;
-  readonly mode: number;
-  readonly bytes: Uint8Array;
-}
-
-export interface NativeResourcePackageObservation {
-  readonly entries: readonly NativeResourcePackageEntry[];
-}
-
-export interface NativeResourcePackageReadLimits {
-  readonly maxEntries: number;
-  readonly maxBytes: number;
-}
-
-export interface NativeResourceMarketplaceReadInput extends NativeResourcePackageReadLimits {
-  readonly identity: string;
-}
-
-export interface NativeResourcePluginReadInput extends NativeResourcePackageReadLimits {
-  readonly selector: string;
-}
-
-interface NativeResourceSessionBase {
-  readonly executablePath: string;
-  readonly home: string;
-  probe(): Promise<NativeResourceCapabilityProbe>;
-  listMarketplaces(): Promise<NativeResourceJsonObservation>;
-  readMarketplace(
-    input: NativeResourceMarketplaceReadInput
-  ): Promise<NativeResourcePackageObservation>;
-  addMarketplace(input: ArtifactTreeLocation): Promise<unknown>;
-  removeMarketplace(input: Readonly<{ identity: string }>): Promise<unknown>;
-  listPlugins(): Promise<NativeResourceJsonObservation>;
-  readPlugin(input: NativeResourcePluginReadInput): Promise<NativeResourcePackageObservation>;
-}
-
-export interface CodexNativeResourceSession extends NativeResourceSessionBase {
-  readonly provider: "codex";
-  addPlugin(input: Readonly<{ selector: string }>): Promise<unknown>;
-  removePlugin(input: Readonly<{ selector: string }>): Promise<unknown>;
-  inspectAppServer(): Promise<Readonly<{ plugins: unknown; hooks: unknown }>>;
-  readConfiguration(): Promise<unknown>;
-  setMarketplaceSource(
-    input: Readonly<{
-      identity: string;
-      source: ArtifactTreeLocation;
-    }>
-  ): Promise<unknown>;
-}
-
-export interface ClaudeNativeResourceSession extends NativeResourceSessionBase {
-  readonly provider: "claude";
-  installPlugin(input: Readonly<{ selector: string }>): Promise<unknown>;
-  enablePlugin(input: Readonly<{ selector: string }>): Promise<unknown>;
-  uninstallPlugin(input: Readonly<{ selector: string }>): Promise<unknown>;
-  readConfiguration(): Promise<unknown | null>;
-}
-
-/** Mechanical acquisition only; provider semantics remain in the provider module. */
-export interface NativeProviderResourcePort {
-  acquireCodex(input: NativeResourceSessionInput): Promise<CodexNativeResourceSession>;
-  acquireClaude(input: NativeResourceSessionInput): Promise<ClaudeNativeResourceSession>;
-}
+export type {
+  NativeAgentProviderFailure,
+  NativeMarketplaceSource,
+  NativeProviderCapabilities,
+  NativeProviderInventory,
+  NativeProviderMutationResult,
+  NativeProviderPluginFiles,
+  NativeProviderPluginFilesReadInput,
+  NativeProviderPluginSelectorInput,
+} from "@rawr/resource-native-agent-provider";
+export type {
+  NativeProviderSessionObservation,
+  NativeProviderSessionTarget,
+  SelectedContent,
+  SelectedContentChannelResolutionInput,
+  SelectedContentFile,
+  SelectedContentIssue,
+  SelectedContentIssueCode,
+  SelectedContentMember,
+  SelectedContentResolution,
+  SelectedContentTestMode,
+  SelectedContentWorkspaceResolutionInput,
+} from "../dto/provider-dependencies";

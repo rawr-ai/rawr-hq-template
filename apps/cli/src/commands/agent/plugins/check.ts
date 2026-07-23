@@ -4,7 +4,7 @@ import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands
 import {
   checkModeFlag,
   currentMainBodyJsonFlag,
-  currentMainEnvelopeJsonFlag,
+  currentMainRecordJsonFlag,
   gitExecutableFlag,
   releaseMemberFlag,
   releaseWorkspaceFlags,
@@ -21,7 +21,7 @@ export default class AgentPluginsCheck extends AgentPluginLifecycleCommand {
     json: RawrCommand.baseFlags.json,
     mode: checkModeFlag,
     "current-main-body-json": currentMainBodyJsonFlag,
-    "current-main-envelope-json": currentMainEnvelopeJsonFlag,
+    "current-main-record-json": currentMainRecordJsonFlag,
     ...releaseWorkspaceFlags,
     member: releaseMemberFlag,
     "git-executable": gitExecutableFlag,

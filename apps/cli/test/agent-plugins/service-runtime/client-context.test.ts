@@ -25,9 +25,7 @@ const LIFECYCLE_OBJECT_DEP_KEYS = Object.freeze([
   "contentWorkspace",
   "clock",
   "packageOutput",
-  "providerRecords",
-  "providerNativeResource",
-  "providerExecutables",
+  "providerNativeSessions",
 ]);
 const OPERATION_CASES = Object.freeze([
   { operation: "releases.check", owner: "releases", procedure: "check" },
@@ -46,10 +44,9 @@ const OPERATION_CASES = Object.freeze([
   { operation: "vendors.status", owner: "vendors", procedure: "status" },
   { operation: "vendors.update", owner: "vendors", procedure: "update" },
   { operation: "packaging.package", owner: "packaging", procedure: "package" },
-  { operation: "providers.targetedTest", owner: "providers", procedure: "targetedTest" },
-  { operation: "providers.completeTest", owner: "providers", procedure: "completeTest" },
-  { operation: "providers.canonicalSync", owner: "providers", procedure: "canonicalSync" },
-  { operation: "providers.canonicalStatus", owner: "providers", procedure: "canonicalStatus" },
+  { operation: "providers.test", owner: "providers", procedure: "test" },
+  { operation: "providers.sync", owner: "providers", procedure: "sync" },
+  { operation: "providers.status", owner: "providers", procedure: "status" },
   {
     operation: "governance.currentMainRecord",
     owner: "governance",
@@ -137,9 +134,7 @@ describe("production lifecycle service context", () => {
     });
     const layout = deriveAgentPluginControllerLayout({ dataRoot: controllerDataRoot });
     expect(deps.artifactRepositoryRoot).toBe(layout.artifactStoreRoot);
-    expect(deps.providerProjectionRepositoryRoot).toBe(layout.providerProjectionRoot);
-    expect(deps.artifactRepositoryRoot).not.toBe(deps.providerProjectionRepositoryRoot);
-    expect(Object.values(deps)).toHaveLength(11);
+    expect(Object.values(deps)).toHaveLength(8);
     expect(await directoryNames(root.path)).toEqual(before);
   });
 
@@ -209,7 +204,7 @@ describe("production lifecycle service context", () => {
       )
     ).resolves.toMatchObject({
       kind: "RejectedBeforeOutputMutation",
-      primaryFailure: { code: "SourceReadFailed" },
+      primaryFailure: { code: "SourceIneligible" },
     });
     expect(await directoryNames(root.path)).toEqual(before);
 

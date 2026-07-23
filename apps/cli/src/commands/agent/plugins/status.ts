@@ -26,7 +26,7 @@ export default class AgentPluginsStatus extends AgentPluginLifecycleCommand {
     const input = this.parseInput(flags, parseStatusRequest);
     if (input === undefined) return;
     const providers = [...new Set(input.targets.map((target) => target.provider))];
-    await this.project({ operation: "providers.canonicalStatus", input }, flags, {
+    await this.project({ operation: "providers.status", input }, flags, {
       git: true,
       providers,
     });

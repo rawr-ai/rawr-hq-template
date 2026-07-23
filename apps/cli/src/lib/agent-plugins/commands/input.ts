@@ -1,19 +1,13 @@
 import path from "node:path";
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 import {
-  type ArtifactRef,
-  createCompleteSetArtifactRef,
-  createReleaseArtifactRef,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-  parseArtifactDigest,
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
   parsePluginId,
-  parseReleaseDigest,
   parseReleaseRelativePath,
-  parseReleaseSetDigest,
   parseRepositoryIdentity,
 } from "@rawr/agent-plugin-lifecycle/release";
 
@@ -31,10 +25,9 @@ export type BuildRequest = InputOf<Client["releases"]["build"]>;
 export type VendorStatusRequest = InputOf<Client["vendors"]["status"]>;
 export type VendorUpdateRequest = InputOf<Client["vendors"]["update"]>;
 export type PackageRequest = InputOf<Client["packaging"]["package"]>;
-export type TargetedTestRequest = InputOf<Client["providers"]["targetedTest"]>;
-export type CompleteTestRequest = InputOf<Client["providers"]["completeTest"]>;
-export type SyncRequest = InputOf<Client["providers"]["canonicalSync"]>;
-export type StatusRequest = InputOf<Client["providers"]["canonicalStatus"]>;
+export type TestRequest = InputOf<Client["providers"]["test"]>;
+export type SyncRequest = InputOf<Client["providers"]["sync"]>;
+export type StatusRequest = InputOf<Client["providers"]["status"]>;
 export type CurrentMainRecordRequest = InputOf<Client["governance"]["currentMainRecord"]>;
 export type CurrentMainSelectionRequest = InputOf<Client["governance"]["currentMainSelection"]>;
 
@@ -78,7 +71,7 @@ type CheckDomainFlag =
   | "complete-set"
   | "member"
   | "current-main-body-json"
-  | "current-main-envelope-json";
+  | "current-main-record-json";
 
 const CHECK_MODE_ADMITTED_FLAGS = {
   release: [
@@ -129,7 +122,7 @@ const CHECK_MODE_ADMITTED_FLAGS = {
     "plugin-root",
     "member",
   ],
-  "current-main-record": ["current-main-body-json", "current-main-envelope-json"],
+  "current-main-record": ["current-main-body-json", "current-main-record-json"],
   "current-main-selection": ["content-workspace", "repository-identity"],
 } as const satisfies Readonly<Record<CheckMode, readonly CheckDomainFlag[]>>;
 
@@ -204,9 +197,8 @@ export function parseCheckOperationRequest(
               flags["content-workspace"],
               "--content-workspace"
             ),
-            expectedRepositoryIdentity: requireString(
-              flags["repository-identity"],
-              "--repository-identity"
+            expectedRepositoryIdentity: requireReleaseValue(
+              parseRepositoryIdentity(flags["repository-identity"], "--repository-identity")
             ),
           }),
         }),
@@ -248,13 +240,13 @@ function parseCurrentMainRecordRequest(flags: RawFlags): CurrentMainRecordReques
     flags["current-main-body-json"],
     "--current-main-body-json"
   );
-  const envelopeJson = optionalBoundedJsonText(
-    flags["current-main-envelope-json"],
-    "--current-main-envelope-json"
+  const recordJson = optionalBoundedJsonText(
+    flags["current-main-record-json"],
+    "--current-main-record-json"
   );
-  if ((bodyJson === undefined) === (envelopeJson === undefined)) {
+  if ((bodyJson === undefined) === (recordJson === undefined)) {
     throw new LifecycleInputError(
-      "Select exactly one of --current-main-body-json or --current-main-envelope-json"
+      "Select exactly one of --current-main-body-json or --current-main-record-json"
     );
   }
   if (bodyJson !== undefined) {
@@ -267,8 +259,8 @@ function parseCurrentMainRecordRequest(flags: RawFlags): CurrentMainRecordReques
     return Object.freeze({ kind: "encode-body", body }) as CurrentMainRecordRequest;
   }
   return Object.freeze({
-    kind: "validate-envelope",
-    bytes: new TextEncoder().encode(envelopeJson),
+    kind: "validate-record",
+    bytes: new TextEncoder().encode(recordJson),
   });
 }
 
@@ -298,42 +290,37 @@ export function parsePackageRequest(flags: RawFlags): PackageRequest {
   });
 }
 
-export function parseTestRequest(flags: RawFlags): TargetedTestRequest | CompleteTestRequest {
-  const releaseHandles = optionalStringList(flags.release, "--release");
-  const releaseSetHandle = optionalString(flags["release-set"], "--release-set");
-  if ((releaseHandles.length === 0) === (releaseSetHandle === undefined)) {
-    throw new LifecycleInputError("Select exactly one of --release or --release-set");
+export function parseTestRequest(flags: RawFlags): TestRequest {
+  const pluginIds = optionalStringList(flags.plugin, "--plugin");
+  const completeSet = flags["complete-set"] === true;
+  if ((pluginIds.length === 0) === !completeSet) {
+    throw new LifecycleInputError("Select exactly one of --plugin or --complete-set");
   }
+  const mode: TestRequest["mode"] = completeSet
+    ? Object.freeze({ kind: "complete-set" })
+    : Object.freeze({
+        kind: "targeted",
+        pluginIds: requireNonEmpty(
+          requireStringList(pluginIds, "--plugin", {
+            maxItems: MAX_RELEASE_MEMBERS,
+            unique: true,
+          }).map((pluginId) => requireReleaseValue(parsePluginId(pluginId, "--plugin"))),
+          "--plugin"
+        ),
+      });
+  const disposableRoot = requireCanonicalAbsolute(flags["disposable-root"], "--disposable-root");
   const targets = parseProviderTargets(flags.target);
-  const evaluationProfile = requireString(flags["evaluation-profile"], "--evaluation-profile");
-  if (releaseSetHandle !== undefined) {
-    const releaseSet = parseArtifactHandle(releaseSetHandle);
-    if (releaseSet.kind !== "complete-set") {
-      throw new LifecycleInputError("--release-set requires a release-set handle");
-    }
-    return Object.freeze({
-      kind: "complete-test",
-      releaseSet,
-      evaluationProfile,
-      targets,
-    });
-  }
-  const releases = releaseHandles.map((handle) => {
-    const ref = parseArtifactHandle(handle);
-    if (ref.kind !== "release") throw new LifecycleInputError("--release requires release handles");
-    return ref;
-  });
+  assertStrictDescendants(disposableRoot, targets);
   return Object.freeze({
-    kind: "targeted-test",
-    releases,
-    evaluationProfile,
+    contentWorkspace: releaseContentWorkspacePolicy(flags),
+    disposableRoot,
+    mode,
     targets,
   });
 }
 
 export function parseSyncRequest(flags: RawFlags): SyncRequest {
   return Object.freeze({
-    kind: "canonical-sync",
     channel: "current-main",
     locator: contentRecordLocator(flags),
     targets: parseProviderTargets(flags.target),
@@ -342,36 +329,10 @@ export function parseSyncRequest(flags: RawFlags): SyncRequest {
 
 export function parseStatusRequest(flags: RawFlags): StatusRequest {
   return Object.freeze({
-    kind: "canonical-status",
     channel: "current-main",
     locator: contentRecordLocator(flags),
     targets: parseProviderTargets(flags.target),
   });
-}
-
-export function parseArtifactHandle(input: unknown): ArtifactRef {
-  const handle = requireString(input, "artifact handle", { max: 256 });
-  const release = /^release:(rd1_[0-9a-f]{64}):(ad1_[0-9a-f]{64})$/u.exec(handle);
-  if (release !== null) {
-    const releaseDigest = parseReleaseDigest(release[1], "artifact.releaseDigest");
-    const artifactDigest = parseArtifactDigest(release[2], "artifact.artifactDigest");
-    if (!releaseDigest.ok || !artifactDigest.ok) {
-      throw new LifecycleInputError(
-        "Artifact handle contains an invalid release or artifact digest"
-      );
-    }
-    return createReleaseArtifactRef(releaseDigest.value, artifactDigest.value);
-  }
-  const complete = /^release-set:(rs1_[0-9a-f]{64})$/u.exec(handle);
-  if (complete !== null) {
-    const releaseSetDigest = parseReleaseSetDigest(complete[1], "artifact.releaseSetDigest");
-    if (!releaseSetDigest.ok)
-      throw new LifecycleInputError("Artifact handle contains an invalid release-set digest");
-    return createCompleteSetArtifactRef(releaseSetDigest.value);
-  }
-  throw new LifecycleInputError(
-    "Artifact handle must be canonical release:<rd1>:<ad1> or release-set:<rs1>"
-  );
 }
 
 function parseReleaseWorkspaceRequest(flags: RawFlags): CheckRequest {
@@ -448,12 +409,14 @@ function vendorWorkspace(flags: RawFlags): VendorStatusRequest["contentWorkspace
 
 function contentRecordLocator(flags: RawFlags): SyncRequest["locator"] {
   return Object.freeze({
-    repositoryIdentity: requireString(flags["repository-identity"], "--repository-identity"),
-    workspaceRoot: requireCanonicalAbsolute(flags["content-workspace"], "--content-workspace"),
+    workspacePath: requireCanonicalAbsolute(flags["content-workspace"], "--content-workspace"),
+    expectedRepositoryIdentity: requireReleaseValue(
+      parseRepositoryIdentity(flags["repository-identity"], "--repository-identity")
+    ),
   });
 }
 
-function parseProviderTargets(input: unknown): TargetedTestRequest["targets"] {
+function parseProviderTargets(input: unknown): TestRequest["targets"] {
   const values = requireStringList(input, "--target", { unique: true });
   const targets = values.map((value) => {
     const separator = value.indexOf("=");
@@ -476,7 +439,29 @@ function parseProviderTargets(input: unknown): TargetedTestRequest["targets"] {
       throw new LifecycleInputError("--target contains a duplicate canonical target");
     identities.add(identity);
   }
-  return targets;
+  return requireNonEmpty(targets, "--target");
+}
+
+function assertStrictDescendants(disposableRoot: string, targets: TestRequest["targets"]): void {
+  for (const target of targets) {
+    const relative = path.relative(disposableRoot, target.home);
+    if (
+      relative.length === 0 ||
+      relative === ".." ||
+      relative.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(relative)
+    ) {
+      throw new LifecycleInputError(
+        `--target home for ${target.provider} must be a strict descendant of --disposable-root`
+      );
+    }
+  }
+}
+
+function requireNonEmpty<T>(values: readonly T[], label: string): readonly [T, ...T[]] {
+  const [first, ...rest] = values;
+  if (first === undefined) throw new LifecycleInputError(`${label} must be provided at least once`);
+  return Object.freeze([first, ...rest]);
 }
 
 function requireReleaseValue<T>(

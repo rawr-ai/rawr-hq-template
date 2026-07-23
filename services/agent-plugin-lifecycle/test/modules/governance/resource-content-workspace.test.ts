@@ -1,8 +1,4 @@
-import type {
-  ContentWorkspaceFailure,
-  GitWorkspaceAnchor,
-  GitWorkspaceEvidence,
-} from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceFailure, GitRefObservation } from "@rawr/resource-content-workspace";
 import { describe, expect, it } from "vitest";
 import {
   createExactGitBlobPointer,
@@ -46,13 +42,10 @@ const locator: GitLocator = {
   expectedRepositoryIdentity: pointer.repositoryIdentity,
 };
 
-const anchor: GitWorkspaceAnchor = Object.freeze({
+const refObservation: GitRefObservation = Object.freeze({
   root: workspacePath,
-  rootDevice: "16777234",
-  rootInode: "101",
   refName: ref,
   commit,
-  refCommit: commit,
   tree,
   objectFormat: "sha1",
   remoteUrls: Object.freeze([remoteUrl]),
@@ -70,7 +63,6 @@ describe("resource-backed exact Git governance reader", () => {
           blob,
           bytes,
         }),
-        isLocalGitAncestor: async () => true,
       }),
     });
 
@@ -81,35 +73,34 @@ describe("resource-backed exact Git governance reader", () => {
       headCommit: pointer.commit,
       headTree: pointer.tree,
     });
-    await expect(reader.readBlob(locator, selection)).resolves.toEqual({
+    await expect(reader.readFileAtRevision(locator, selection)).resolves.toEqual({
       ok: true,
       observation: { pointer, bytes },
     });
-    await expect(reader.isAncestor(locator, pointer.commit, pointer.commit)).resolves.toEqual({
-      ok: true,
-      value: true,
-    });
+    await expect(reader.isAncestor(locator, pointer.commit, pointer.commit)).resolves.toBe(true);
   });
 
-  it("refuses an inspection race and maps a missing resource object semantically", async () => {
-    const reader = createResourceExactGitReader({
+  it("maps exact-ref inspection and missing-object failures semantically", async () => {
+    const inspectionReader = createResourceExactGitReader({
       contentWorkspace: stubPort({
-        captureGitWorkspaceEvidence: async () =>
-          evidence({
-            ...anchor,
-            rootInode: "102",
-          }),
+        inspectGitRef: async () => {
+          throw failure("inspect-git-ref", "GitFailed", "selected ref is unavailable");
+        },
+      }),
+    });
+    const readReader = createResourceExactGitReader({
+      contentWorkspace: stubPort({
         readGitBlobAtPath: async () => {
           throw failure("read-git-blob-at-path", "Missing", "selected blob is absent");
         },
       }),
     });
 
-    await expect(reader.inspect(locator, pointer.ref)).resolves.toEqual({
+    await expect(inspectionReader.inspect(locator, pointer.ref)).resolves.toEqual({
       kind: "UnreachableRepository",
-      reason: "Repository changed during inspection",
+      reason: "selected ref is unavailable",
     });
-    await expect(reader.readBlob(locator, selection)).resolves.toEqual({
+    await expect(readReader.readFileAtRevision(locator, selection)).resolves.toEqual({
       ok: false,
       failure: { code: "MissingObject", message: "selected blob is absent" },
     });
@@ -132,7 +123,7 @@ describe("resource-backed exact Git governance reader", () => {
       }),
     });
 
-    await expect(reader.readBlob(locator, selection)).resolves.toEqual({
+    await expect(reader.readFileAtRevision(locator, selection)).resolves.toEqual({
       ok: false,
       failure: {
         code: "WrongObject",
@@ -151,15 +142,15 @@ describe("resource-backed exact Git governance reader", () => {
     if (!anotherPointerResult.ok) throw new Error("Invalid alternate repository fixture");
     const reader = createResourceExactGitReader({
       contentWorkspace: stubPort({
-        inspectGitWorkspace: async () => {
+        inspectGitRef: async () => {
           calls += 1;
-          return anchor;
+          return refObservation;
         },
       }),
     });
 
     await expect(
-      reader.readBlob(
+      reader.readFileAtRevision(
         {
           ...locator,
           expectedRepositoryIdentity: anotherPointerResult.value.repositoryIdentity,
@@ -176,7 +167,7 @@ describe("resource-backed exact Git governance reader", () => {
     expect(calls).toBe(0);
   });
 
-  it("refuses bytes when the selected ref changes during object observation", async () => {
+  it("refuses bytes when the selected ref resolves to another commit", async () => {
     const reader = createResourceExactGitReader({
       contentWorkspace: stubPort({
         readGitBlobAtPath: async () => ({
@@ -189,17 +180,19 @@ describe("resource-backed exact Git governance reader", () => {
       }),
     });
 
-    await expect(reader.readBlob(locator, selection)).resolves.toEqual({
+    await expect(reader.readFileAtRevision(locator, selection)).resolves.toEqual({
       ok: false,
       failure: {
-        code: "UnreachableObject",
-        message: "Selected Git ref changed during object observation",
+        code: "WrongObject",
+        message: "Selected Git ref resolves to another commit",
       },
     });
   });
 
   it("refuses relative locators", async () => {
-    const reader = createResourceExactGitReader({ contentWorkspace: stubPort() });
+    const reader = createResourceExactGitReader({
+      contentWorkspace: stubPort(),
+    });
     const relative = { ...locator, workspacePath: "relative/repository" };
 
     await expect(reader.inspect(relative, pointer.ref)).resolves.toMatchObject({
@@ -210,8 +203,7 @@ describe("resource-backed exact Git governance reader", () => {
 
 function stubPort(overrides: Partial<ResourceExactGitReadPort> = {}): ResourceExactGitReadPort {
   return Object.freeze({
-    inspectGitWorkspace: async () => anchor,
-    captureGitWorkspaceEvidence: async () => evidence(anchor),
+    inspectGitRef: async () => refObservation,
     readGitBlobAtPath: async () => ({
       refCommit: commit,
       commit,
@@ -219,21 +211,8 @@ function stubPort(overrides: Partial<ResourceExactGitReadPort> = {}): ResourceEx
       blob,
       bytes: new Uint8Array(),
     }),
-    isLocalGitAncestor: async () => false,
+    isLocalGitAncestor: async () => true,
     ...overrides,
-  });
-}
-
-function evidence(closingAnchor: GitWorkspaceAnchor): GitWorkspaceEvidence {
-  return Object.freeze({
-    openingAnchor: anchor,
-    openingStatus: new Uint8Array(),
-    openingTrackedFlags: new Uint8Array(),
-    worktreeObjectIds: Object.freeze([]),
-    indexEntries: new Uint8Array(),
-    closingAnchor,
-    closingStatus: new Uint8Array(),
-    closingTrackedFlags: new Uint8Array(),
   });
 }
 

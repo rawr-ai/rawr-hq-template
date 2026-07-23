@@ -24,8 +24,12 @@ export const providerTargetFlag = Flags.string({
   multiple: true,
 });
 
+export const providerTestDisposableRootFlag = Flags.string({
+  description: "Canonical absolute root containing every disposable provider home",
+});
+
 export const gitExecutableFlag = Flags.string({
-  description: "Absolute controller-bound Git executable",
+  description: "Absolute Git executable",
 });
 
 export const releaseMemberFlag = Flags.string({
@@ -52,11 +56,11 @@ export const checkModeFlag = Flags.string({
 });
 
 export const currentMainBodyJsonFlag = Flags.string({
-  description: "Inline current-main v2 body JSON",
+  description: "Inline current-main v3 record JSON",
 });
 
-export const currentMainEnvelopeJsonFlag = Flags.string({
-  description: "Exact inline current-main v2 envelope JSON",
+export const currentMainRecordJsonFlag = Flags.string({
+  description: "Exact inline current-main v3 record JSON",
 });
 
 export const providerExecutableFlag = Flags.string({
