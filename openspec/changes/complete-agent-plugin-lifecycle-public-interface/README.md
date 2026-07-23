@@ -184,13 +184,29 @@ The exact Nx migration pins `nx` and `@nx/eslint-plugin` to `23.1.0`, refreshes
 the lockfile, and applies the official required migration set. The only durable
 migration output outside dependency metadata is the official
 `.claude/worktrees` ignore entry; the release-tag migration made no semantic
-configuration change. The workspace remains at 47 projects with 35 build, 47
-lint, 44 typecheck, and 32 test owners. Project discovery, graph generation,
-sync checking, all applicable non-root affected lint/typecheck owners, the CLI build,
-and the Habitat consumer tests pass. The root `lint` owner exposed the already
+configuration change. At that migration checkpoint the workspace remained at
+47 projects with 35 build, 47 lint, 44 typecheck, and 32 test owners. Project
+discovery, graph generation, sync checking, all applicable non-root affected
+lint/typecheck owners, the CLI build, and the Habitat consumer tests pass. The
+root `lint` owner exposed the already
 present recursive aggregate that task 1.6 removes; it is not hidden as an Nx
 23 regression or folded into this dependency-only checkpoint. No Nx Release
 configuration or controller-coupled publication target was added.
+
+The following task-topology checkpoint removes the recursive root `lint` owner
+while retaining the root operator command over the 46 actual lint owners. Its
+cached full lint run completes in 3.1 seconds. The DevOps plugin test now
+declares and executes its build prerequisite; build plus four behavior tests
+complete in 6.0 seconds. Native-provider testing is disjoint: the resource owns
+seven contract tests while the Codex and Claude projects own eight adapter tests
+each, and all three owners complete together in 1.2 seconds. The CLI project
+retains serialized file execution; an explicit Nx stream run reports file-level
+progress, and all 254 tests complete in 89 seconds. The remaining duration is
+dominated by the 17-test controller artifact-store file scheduled for deletion,
+so this checkpoint does not optimize that rejected mechanism. The provider
+adapter projects also declare their dependency on the shared provider contract,
+so an affected run cannot omit their behavior tests after a shared change.
+Admission wiring remains task 1.6b.
 
 ## Native Marketplace Grounding
 
