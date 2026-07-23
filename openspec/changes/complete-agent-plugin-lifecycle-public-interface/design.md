@@ -117,23 +117,21 @@ inputs, outputs, and release ordering. Behavior tests remain behavior tests.
 
 The API server plugin and agent-router sources follow Magic Migration commit
 `5a974f0047f0667c2e429fdb4193a0e237b067c4`. The generic service source follows
-the user-authorized working tree on Magic branch
-`codex/add-native-authority-reviewer`, based at
-`5b8bc8a37cfdd3a382232261dd7ef73365713021`:
+Magic Migration commit `543e78eddd00ef6cfccfdf3ae366143b6034f012`,
+service-blueprint tree `2a9160183b80badacedbb6006b95829bd166470a`:
 
 - service spine and module topology;
-- boundary exports and native oRPC ownership hops;
+- generic anchor exports and native oRPC ownership hops;
 - context boundaries and module isolation;
-- declarative TypeBox input/output schemas;
+- declarative TypeBox input/output schemas and module-owned oRPC errors;
 - API server plugin boundary;
 - agent-router placement and shape.
 
-The first four rows come from the newer service snapshot; the final two remain
+The first four rows come from the committed service stack; the final two remain
 at the earlier committed provenance. RAWR preserves the positive topology and
-owner relationships while removing path, vendor, alias, naming, and adversarial
-heuristics that are not generic service law. The service topology follows
-Magic's current single `router.ts` module boundary. Procedure logic remains in
-that oRPC router surface alongside module-owned
+owner relationships while adapting only packet identity and the canonical
+TypeBox bridge. The service topology follows Magic's current single `router.ts`
+module boundary. Procedure logic remains in that oRPC router surface alongside module-owned
 `model/{dto,policy,helpers,repositories}` rather than moving into a second
 implementation container.
 
@@ -146,8 +144,8 @@ green local Habitat batch behind `check:policy`, with empty baselines.
 `habitat:check` composes that policy with owner lint, typecheck, tests, and
 hygiene; `repository:check` composes Habitat with repository admission and
 separation and the CLI Oclif boundary check. The selected Habitat batch owns
-the required Oclif structure laws and lifecycle command-channel law. The six
-generic service laws remain governed by [[tasks]] 1.5e and must not join the
+the required Oclif structure laws and lifecycle command-channel law. The seven
+generic service rules remain governed by [[tasks]] 1.5e and must not join the
 selected batch while their known live-corpus violations remain.
 
 RAWR adds generic Oclif app and command-plugin blueprints. These assert the

@@ -143,18 +143,15 @@ verification. None permits another selector or release store.
 
 Magic Migration commit `5a974f0047f0667c2e429fdb4193a0e237b067c4`
 remains the source for the API server plugin and agent-router patterns. The
-generic service law now follows the user-authorized working tree on Magic
-Migration branch `codex/add-native-authority-reviewer`, based at
-`5b8bc8a37cfdd3a382232261dd7ef73365713021`, with source manifest SHA-256
-`1b01f702c9cb1d4b11ca86251130af1d4f5fb077b15db9ceeeacb227db7d2f61`.
-That source replaces the broad service-relationship packet with independent
-boundary-export, native-oRPC-composition, context-boundary, module-isolation,
-and declarative-contract laws. RAWR keeps its positive
-topology and owner relationships, adapts local packet identity, and removes
-path, vendor, alias, naming, and adversarial heuristics that are not generic
-service law. The source reference will advance when Magic commits that same
-tree. The packet is imported, but it does not govern repository admission until
-the live service corpus conforms and the central Nx check is activated.
+generic service law follows committed Magic Migration source
+`543e78eddd00ef6cfccfdf3ae366143b6034f012`, service-blueprint tree
+`2a9160183b80badacedbb6006b95829bd166470a`. That stack owns one closed topology
+packet plus six bounded source laws for generic anchors, native Effect-oRPC
+composition, context flow, module isolation, declarative TypeBox contracts,
+and module-owned oRPC error authority. RAWR adaptations are limited to local
+packet identity and the canonical `@rawr/hq-sdk` TypeBox bridge. The packet is
+imported, but it does not govern repository admission until the admitted
+service corpus conforms and the owner-local Nx check is activated.
 
 The narrower API-plugin face and Grit-helper documentation laws are now active
 repository admission checks. The API kind positively requires only
@@ -432,7 +429,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Gate | State |
 | --- | --- |
 | Corrected authority record | Submitted in the active Template Graphite stack; required checks and landing remain open |
-| Generic Habitat blueprint port | Six generic service laws recut around topology, standard oRPC composition, context, module isolation, and TypeBox contracts; three source laws pass live, while topology, lifecycle composition, and module isolation remain red until the recorded corpus migration |
+| Generic Habitat blueprint port | Complete committed Magic service stack imported: one topology rule plus six source laws; lifecycle conformance and owner-local Nx activation remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx lint/typecheck target population | Complete and wired through affected admission on the active Template stack |
 | Typechecked Habitat project and TypeBox release manifest | Complete on the active Template stack |
@@ -453,35 +450,31 @@ The initial generic Habitat blueprint port remains a separate historical
 checkpoint: twenty-six logical files follow Magic Migration commit
 `5a974f0047f0667c2e429fdb4193a0e237b067c4`; nineteen are byte-verbatim and the
 seven historical rule manifests adapt only RAWR identity, formatting, and the
-local canonical `pattern.md` source name. The newer service-law checkpoint follows
-the authorized working snapshot identified above, but removes its path,
-vendor, alias, naming, and adversarial heuristics. The resulting stack is one
-closed topology plus five small source relationships. Three source laws pass the
-live Template corpus with empty baselines. The closed topology reports
-forty-nine concrete moves into `model`, optional `db`, middleware, or the one
-required `router.ts`; the module-isolation law reports twenty-three root-to-module
-or sibling-module implementation relationships. Standard oRPC composition
-reports seventeen lifecycle findings: one noncanonical root constructor, five
-modules bound to the wrong root export, and eleven operation bindings outside
-the required module `router.ts`. Those are migration inputs, not accepted debt
-or baseline entries. The service kind keeps one module `router.ts`, with domain
-matter under its owning module model.
+local canonical `pattern.md` source name. The committed service-law checkpoint
+identified above supersedes the later relaxed working-snapshot adaptation. Its
+seven empty-baseline packets keep one flat module `router.ts`, domain matter
+under the owning module model, direct Effect-oRPC construction, and one-way
+context flow. A static lifecycle audit found four illegal root-to-private-module
+imports, three sibling-module imports, module-to-root domain leakage, and a
+public root release surface. Those are migration inputs, not accepted debt or
+baseline entries.
 Central activation remains governed by
 [[tasks#1. Positive Habitat And Nx Checks]] task 1.5e and cannot precede a green
 live corpus.
 
-The first lifecycle composition checkpoint closes the root and module-binding
-portion of that migration. The standalone Effect-oRPC root now exports `impl`,
-the root router and five modules consume that name directly, and middleware
-order is unchanged. The generic law admits direct
-`implementEffect(contract, runtime).$context<Context>()` construction through
-an AST relation; it neither requires `Layer.empty` nor permits another method
-before root context. Its focused live run now reports exactly eleven source
-files, all operation bindings below nested module router directories. The law
-therefore remains outside the selected policy batch until those module routers
-are sealed under [[tasks#5. Bounded Agent-Plugin Lifecycle Service]] tasks 5.2
-and 5.7. Owner-local lint/typecheck completed through Nx in 11.8 seconds, and
-the six service-spine and Effect-oRPC admission cases passed in 2.25 seconds.
+The earlier lifecycle composition checkpoint implemented the now-superseded
+task 5.2a shape: the standalone Effect-oRPC root exported `impl`, the root
+router and five modules consumed that name, and middleware order remained
+unchanged. Its focused live run reported eleven source files below nested
+module router directories; owner-local lint/typecheck completed through Nx in
+11.8 seconds, and the then-current six service-spine and Effect-oRPC admission
+cases passed in 2.25 seconds. Those observations remain migration evidence, not
+current authority. The committed seven-rule service law instead requires
+`base.ts` to own direct `implementEffect(contract, ...)` construction,
+`impl.ts` to export `service` from the imported `base`, and each module to
+export its matching `service.<module>` branch. The lifecycle service does not
+yet conform, so the rules remain outside the selected policy batch until tasks
+5.2b and 5.7 seal the live corpus.
 
 The former v0.1.1 live-tree probe exposed an unbounded wildcard walk and was
 interrupted without repository mutation. The current v0.1.6 binary adds a

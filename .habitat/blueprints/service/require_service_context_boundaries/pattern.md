@@ -4,83 +4,197 @@ tags: [orpc, service, categorical, context]
 ---
 # Require Service Context Boundaries
 
-The root implementer establishes the service's initial oRPC context. A module
-inherits and narrows that context through middleware; its exported implementer
-branch does not call `$context` again because that would reset the accumulated
-context and middleware chain.
+Modules receive root context through the root `service` anchor. At any module
+depth, a current-owner alias must not expose root `base`, `context`, or root
+middleware. The module-isolation packet owns all parent-segment sources and the
+one exact `module.ts` `{ service }` exception, so this packet does not duplicate
+that path matching.
 
-Middleware APIs use named exports so imports retain a visible owner. Default
-exports are rejected. TypeScript and behavioral tests own context shape,
-contribution merging, request isolation, and middleware order.
+Every middleware source contains at least one named direct `const` export
+initialized from exact imported vendor `os` or an exact imported `base`,
+`service`, or `module` anchor. Default exports are rejected. Source legality
+for those anchors belongs to the module-boundary law; other declarations are
+outside this relation. TypeScript and behavior tests own callback context
+narrowing and request isolation.
 
 ```grit
 language js(typescript)
 
-// Assigns context inheritance to each module's implementation boundary.
-predicate service_context_is_module_boundary() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/module\.ts$"
-}
-
-// Includes both middleware.ts boundaries and files nested below middleware/.
-predicate service_context_is_middleware_source() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:.*/)?middleware(?:/.*)?\.ts$",
+// Applies root-context isolation to non-test module interiors.
+predicate is_service_context_module_source() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
-or {
-  program(statements=$body) where {
-    service_context_is_module_boundary(),
-    $body <: contains or {
-      `export const module = $value`,
-      `export const module: $type = $value`
-    } where {
-      $value <: contains or {
-        `$receiver.$method($...)`,
-        `$receiver.$method<$types>($...)`
-      },
-      $method <: r"^\$context$"
+// Identifies middleware files that must expose a named native entry.
+predicate is_middleware_source() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:middleware|modules/[^/]+/middleware)/.*\.ts$",
+  ! $filename <: r".*/(?:test|tests|__tests__)/.*"
+}
+
+// Prevents a module from recovering its owner's root context through aliases.
+predicate is_current_root_context_alias($source) {
+  or {
+    and {
+      $filename <: r".*services/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($owner),
+      $source <: r"^[\"']#([^/]+)-service/(?:base|context|middleware(?:/.*)?)[\"']$"($alias_owner),
+      $alias_owner <: $owner
+    },
+    and {
+      $filename <: r".*plugins/server/api/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($owner),
+      $source <: r"^[\"']#([^/]+)-api/(?:service/)?(?:base|context|middleware(?:/.*)?)[\"']$"($alias_owner),
+      $alias_owner <: $owner
     }
+  }
+}
+
+// Recognizes the vendor root that may directly author middleware.
+predicate imports_vendor_os($body) {
+  $body <: contains import_statement(source=$source) as $import where {
+    $source <: r"^[\"']@orpc/server[\"']$",
+    $import <: `import { os } from $source`
+  }
+}
+
+// Requires middleware owners to enter through runtime named anchors.
+predicate imports_exact_anchor($body, $anchor) {
+  $body <: contains import_specifier(name=$anchor) as $specifier where {
+    $specifier <: not contains type(),
+    $specifier <: $anchor
+  }
+}
+
+// Keeps middleware creation visibly rooted in its imported native owner.
+predicate is_direct_middleware($value, $owner) {
+  or {
+    $value <: `$receiver.middleware($handler)`,
+    $value <: `$receiver.middleware<$types>($handler)`
+  },
+  or {
+    $receiver <: $owner,
+    $receiver <: contains `$owner.$member`
+  }
+}
+
+// Admits middleware only when its receiver has native imported authority.
+predicate is_native_middleware($body, $value) {
+  or {
+    and {
+      imports_vendor_os(body=$body),
+      is_direct_middleware(value=$value, owner=`os`)
+    },
+    and {
+      imports_exact_anchor(body=$body, anchor=`base`),
+      is_direct_middleware(value=$value, owner=`base`)
+    },
+    and {
+      imports_exact_anchor(body=$body, anchor=`service`),
+      is_direct_middleware(value=$value, owner=`service`)
+    },
+    and {
+      imports_exact_anchor(body=$body, anchor=`module`),
+      is_direct_middleware(value=$value, owner=`module`)
+    }
+  }
+}
+
+// Requires each middleware file to publish a named native entry.
+predicate exports_named_native_middleware($body) {
+  or {
+    $body <: contains `export const $name = $value` where {
+      is_native_middleware(body=$body, value=$value)
+    },
+    $body <: contains `export const $name: $type = $value` where {
+      is_native_middleware(body=$body, value=$value)
+    }
+  }
+}
+
+or {
+  import_statement(source=$source) where {
+    is_service_context_module_source(),
+    is_current_root_context_alias(source=$source)
+  },
+  export_statement(source=$source) where {
+    is_service_context_module_source(),
+    $source <: string(),
+    is_current_root_context_alias(source=$source)
+  },
+  program(statements=$body) where {
+    is_middleware_source(),
+    not { exports_named_native_middleware(body=$body) }
   },
   or {
     `export default $value`,
     `export { $..., $value as default, $... }`,
-    `export { $..., $value as "default", $... }`,
-    `export { $..., $value as default, $... } from $source`,
-    `export { $..., $value as "default", $... } from $source`,
-    `export { $..., default, $... } from $source`,
-    `export { $..., "default", $... } from $source`
+    `export { $..., default, $... } from $source`
   } where {
-    service_context_is_middleware_source()
+    is_middleware_source()
   }
 }
 ```
 
-## Matches a module that resets inherited context
+## Matches a deep standalone root-context alias
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/module.ts
-import { impl } from "../../impl";
-export const module = impl.catalog.$context<CatalogContext>();
+// @filename: services/jobs/src/service/modules/catalog/model/policy/access.ts
+import type { Dependencies } from "#jobs-service/context";
+export const policy = buildPolicy<Dependencies>();
 ```
 
-## Matches default middleware exports
+## Matches a deep API root-context re-export
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/middleware.ts
-export const authentication = createAuthentication();
-export default authentication;
+// @filename: plugins/server/api/catalog/src/service/modules/search/model/policy/access.ts
+export type { Context } from "#catalog-api/service/middleware/context.middleware";
+```
+
+## Matches a middleware source without a named native const
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/middleware/factory.ts
+export function provideCatalog() { return ({ next }) => next(); }
+```
+
+## Matches a direct default middleware export
+
+```typescript
 // @filename: plugins/server/api/catalog/src/service/middleware/authentication.ts
-export { authentication as "default" } from "./legacy";
+import { os } from "@orpc/server";
+export const authentication = os.middleware(handler); export default authentication;
 ```
 
-## Ignores root context and named middleware exports
+## Matches a default middleware export specifier
 
 ```typescript
-// @filename: plugins/server/api/catalog/src/service/impl.ts
-import { implement } from "@orpc/server";
-import { contract } from "./contract";
-export const service = implement(contract).$context<Context>();
-// @filename: services/jobs/src/service/modules/catalog/middleware.ts
-export const authentication = createAuthentication();
-export { createAuthorization } from "./authorization";
+// @filename: services/jobs/src/service/middleware/context.ts
+import { base } from "../base";
+export const middleware = base.middleware(handler); export { middleware as default };
+```
+
+## Matches a default middleware re-export
+
+```typescript
+// @filename: services/jobs/src/service/middleware/context.ts
+import { base } from "../base";
+export const middleware = base.middleware(handler); export { default } from "./legacy";
+```
+
+## Ignores named direct native middleware
+
+```typescript
+// @filename: services/jobs/src/service/middleware/context.middleware.ts
+import { os } from "@orpc/server";
+export const provideContext = os.$context<InitialContext>().middleware(handler);
+// @filename: services/jobs/src/service/modules/catalog/middleware/access.middleware.ts
+import { module } from "#jobs-service/modules/catalog/module";
+export const requireRead = module.middleware(readAccess);
+```
+
+## Ignores relative root context for the module-boundary rule
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/model/policy/access.ts
+import type { Context } from "../../../../context";
+export const access = readAccess<Context>();
 ```

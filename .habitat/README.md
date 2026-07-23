@@ -14,8 +14,8 @@ The current generic kinds are:
 - `blueprint-packet`: the closed canonical policy packet shared by every
   generic blueprint rule.
 - `service`: the reusable contract-first oRPC service spine, with independent
-  laws for boundary exports, native oRPC composition, context boundaries,
-  module isolation, and declarative input/output schemas.
+  laws for generic anchors, native oRPC composition, context boundaries,
+  module isolation, declarative TypeBox contracts, and public error authority.
 - `plugin-server-api`: the additional `client.ts` and `api.ts` faces that
   expose client bindings and API operations around an embedded service.
 - `agent-router`: local `AGENTS.md` placement and positive routing anchors.
@@ -49,17 +49,12 @@ to simulate one.
 
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit
-`5a974f0047f0667c2e429fdb4193a0e237b067c4`. The current `service` packet stack
-follows the user-authorized working tree on Magic Migration branch
-`codex/add-native-authority-reviewer`, based at
-`5b8bc8a37cfdd3a382232261dd7ef73365713021`. That working tree replaces the
-older aggregate relationship rule with independent boundary-export, native
-oRPC-composition, context-boundary, module-isolation, and contract-schema
-constraints. RAWR preserves the positive topology and owner relationships,
-adapts local packet identity, and removes path, vendor, alias, naming, and
-adversarial heuristics that are not generic service law. The provenance
-reference will advance when Magic commits that same working tree; it does not
-make the moving tree repository authority.
+`5a974f0047f0667c2e429fdb4193a0e237b067c4`. The `service` packet stack follows
+Magic Migration commit `543e78eddd00ef6cfccfdf3ae366143b6034f012`,
+service-blueprint tree `2a9160183b80badacedbb6006b95829bd166470a`.
+RAWR preserves the committed topology and six source-law algorithms. Its
+adaptations are limited to local packet ownership and the canonical
+`@rawr/hq-sdk` TypeBox Standard Schema bridge name.
 
 The Oclif packets are RAWR-authored. They apply the same positive, closed-kind
 posture to the executable app and its command plugins without claiming Magic

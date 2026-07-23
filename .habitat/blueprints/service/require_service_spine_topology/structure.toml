@@ -15,8 +15,8 @@ required = [
 allowed = [
   "db",
   "middleware",
-  "middleware.ts",
   "model",
+  "project.json",
   "test",
 ]
 
@@ -34,7 +34,6 @@ required = [
 ]
 allowed = [
   "middleware",
-  "middleware.ts",
   "model",
   "test",
 ]
@@ -50,9 +49,10 @@ required = [
   "router.ts",
 ]
 allowed = [
+  "errors.ts",
   "middleware",
-  "middleware.ts",
   "model",
+  "project.json",
   "test",
 ]
 
@@ -67,8 +67,8 @@ required = [
   "router.ts",
 ]
 allowed = [
+  "errors.ts",
   "middleware",
-  "middleware.ts",
   "model",
   "test",
 ]
