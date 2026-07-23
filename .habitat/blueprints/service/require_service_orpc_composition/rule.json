@@ -12,9 +12,9 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "a standalone root outside the local createServiceImplementer contract relation, an API root outside native implement plus root context, a module disconnected from its imported root implementer, or a top-level operation terminal visibly rooted in that module outside its single router.ts",
-  "why": "The contract-to-implementer, implementer-to-module, and visible module-to-operation relations keep the standard oRPC service flow explicit and give every service the same construction boundary.",
-  "remediate": "Construct standalone impl through createServiceImplementer from ./base; construct embedded API service through native implement plus root context; derive each module directly from ../../impl; and place top-level operation bindings visibly rooted in that module in router.ts.",
+  "forbids": "a standalone root outside the local createServiceImplementer relation or direct Effect-oRPC implementEffect relation with immediate context, an API root outside native implement plus root context, a module disconnected from its imported root implementer, or a top-level operation terminal visibly rooted in that module outside its single router.ts",
+  "why": "The contract-to-implementer, implementer-to-module, and visible module-to-operation relations keep the standard oRPC service flow explicit while admitting direct Effect-oRPC construction without an extra wrapper.",
+  "remediate": "Export standalone impl through createServiceImplementer from ./base or direct implementEffect with immediate root context; construct embedded API service through native implement plus root context; derive each module directly from ../../impl; and place top-level operation bindings visibly rooted in that module in router.ts.",
   "message": "Service composition must preserve the contract, implementer, module, and operation flow.",
   "pathCoverage": [
     {

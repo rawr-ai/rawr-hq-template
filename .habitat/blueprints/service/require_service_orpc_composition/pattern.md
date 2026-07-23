@@ -4,10 +4,11 @@ tags: [orpc, service, positive, composition]
 ---
 # Require Service oRPC Composition
 
-A standalone service root imports `createServiceImplementer` from its local
-`base.ts`, applies it directly to the local contract, and exports the resulting
-`impl`. An embedded API service imports native oRPC `implement`, applies it
-directly to the local contract, establishes root context, and exports
+A standalone service root exports `impl` from either the local
+`createServiceImplementer` or native Effect-oRPC `implementEffect`. A direct
+Effect-oRPC root establishes context immediately after construction and before
+middleware. An embedded API service imports native oRPC `implement`, applies
+it directly to the local contract, establishes root context, and exports
 `service`.
 
 Each `module.ts` imports that root implementer and directly exports a module
@@ -79,17 +80,43 @@ predicate service_composition_is_chain_expression($value) {
   }
 }
 
+// Recognizes context established directly on native Effect-oRPC construction.
+predicate service_composition_is_direct_effect_root($value) {
+  $value <: contains or {
+    `$receiver.$method($...)`,
+    `$receiver.$method<$types>($...)`
+  } where {
+    $method <: r"^\$context$",
+    $receiver <: `implementEffect(contract, $runtime)`
+  }
+}
+
 // Recognizes the standard standalone root implementation relation.
 predicate service_composition_has_standalone_root($body) {
-  $body <: contains `import { createServiceImplementer } from "./base"`,
-  $body <: contains `import { contract } from "./contract"`,
-  $body <: contains or {
-    `export const impl = $value`,
-    `export const impl: $type = $value`
-  } where {
-    service_composition_is_chain_expression(value=$value),
-    $status = service_composition_starts_with_standalone_root(value=$value),
-    $status <: r"^yes$"
+  or {
+    and {
+      $body <: contains `import { createServiceImplementer } from "./base"`,
+      $body <: contains `import { contract } from "./contract"`,
+      $body <: contains or {
+        `export const impl = $value`,
+        `export const impl: $type = $value`
+      } where {
+        service_composition_is_chain_expression(value=$value),
+        $status = service_composition_starts_with_standalone_root(value=$value),
+        $status <: r"^yes$"
+      }
+    },
+    and {
+      $body <: contains `import { implementEffect } from "effect-orpc"`,
+      $body <: contains `import { contract } from "./contract"`,
+      $body <: contains or {
+        `export const impl = $value`,
+        `export const impl: $type = $value`
+      } where {
+        service_composition_is_chain_expression(value=$value),
+        service_composition_is_direct_effect_root(value=$value)
+      }
+    }
   }
 }
 
@@ -275,6 +302,38 @@ const configured = createServiceImplementer(contract, middleware);
 export const impl = configured;
 ```
 
+## Matches a disconnected direct Effect-oRPC root
+
+```typescript
+// @filename: services/jobs/src/service/impl.ts
+import { Layer } from "effect";
+import { implementEffect } from "effect-orpc";
+import { contract } from "./contract";
+const runtime = Layer.empty;
+const configured = implementEffect(contract, runtime).$context<Context>();
+export const impl = configured;
+```
+
+## Matches middleware applied before direct Effect-oRPC context
+
+```typescript
+// @filename: services/jobs/src/service/impl.ts
+import { Layer } from "effect";
+import { implementEffect } from "effect-orpc";
+import { contract } from "./contract";
+const runtime = Layer.empty;
+export const impl = implementEffect(contract, runtime).use(middleware).$context<Context>();
+```
+
+## Matches an intervening direct Effect-oRPC method before context
+
+```typescript
+// @filename: services/jobs/src/service/impl.ts
+import { implementEffect } from "effect-orpc";
+import { contract } from "./contract";
+export const impl = implementEffect(contract, runtime).other().$context<Context>();
+```
+
 ## Matches a disconnected module
 
 ```typescript
@@ -292,13 +351,21 @@ import { module } from "./module";
 export const find = module.find.effect(runFind);
 ```
 
-## Ignores the standard standalone and API roots
+## Ignores the standard standalone, direct Effect-oRPC, and API roots
 
 ```typescript
 // @filename: services/jobs/src/service/impl.ts
 import { createServiceImplementer } from "./base";
 import { contract } from "./contract";
 export const impl = createServiceImplementer(contract, middleware);
+// @filename: services/tasks/src/service/impl.ts
+import { Layer } from "effect";
+import { implementEffect } from "effect-orpc";
+import { contract } from "./contract";
+const runtime = Layer.empty;
+export const impl = implementEffect(contract, runtime)
+  .$context<Context>()
+  .use(middleware);
 // @filename: plugins/server/api/catalog/src/service/impl.ts
 import { implement } from "@orpc/server";
 import { contract } from "./contract";

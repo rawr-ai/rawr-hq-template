@@ -10,7 +10,7 @@ import { selectedContent } from "./middleware/selected-content";
 
 const baseline = createServiceBaselineMiddlewares();
 
-export const service = implementEffect(contract, Layer.empty)
+export const impl = implementEffect(contract, Layer.empty)
   .$context<ReadyLifecycleContext>()
   .use(baseline.observability)
   .use(baseline.analytics)
