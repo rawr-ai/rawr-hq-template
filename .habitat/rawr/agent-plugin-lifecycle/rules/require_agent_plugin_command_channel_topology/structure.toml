@@ -37,7 +37,6 @@ root = "apps/cli/src/commands/agent/plugins"
 kind = "directory"
 mode = "closed"
 required = [
-  "build.ts",
   "check.ts",
   "create.ts",
   "package.ts",
