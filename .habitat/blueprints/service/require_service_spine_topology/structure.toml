@@ -53,7 +53,6 @@ allowed = [
   "middleware",
   "model",
   "project.json",
-  "router",
   "test",
 ]
 
@@ -71,22 +70,5 @@ allowed = [
   "errors.ts",
   "middleware",
   "model",
-  "router",
   "test",
 ]
-
-[[scopes]]
-name = "standalone-service-module-router-interiors"
-root = "services/*/src/service/modules/*/router"
-kind = "directory"
-mode = "closed"
-required = ["index.ts"]
-allowed = ["*.router.ts"]
-
-[[scopes]]
-name = "api-embedded-service-module-router-interiors"
-root = "plugins/server/api/*/src/service/modules/*/router"
-kind = "directory"
-mode = "closed"
-required = ["index.ts"]
-allowed = ["*.router.ts"]

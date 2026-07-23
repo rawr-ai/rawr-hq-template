@@ -159,21 +159,8 @@ export type Tagged = ORPCTaggedError;
 export const builder = EffectORPC.eoc;
 ```
 
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import EffectORPC, { type ORPCTaggedError } from "effect-orpc";
-export type Tagged = ORPCTaggedError;
-export const builder = EffectORPC.eoc;
-```
-
 ## Ignores canonical named vendor imports
 
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { eoc, type ORPCTaggedError } from "effect-orpc";
-export type Tagged = ORPCTaggedError;
-export const builder = eoc;
-```
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/router.ts
