@@ -2,35 +2,37 @@
 
 ## Scope
 
-- Applies to `apps/cli/**`.
+- Applies to the Oclif application in `apps/cli/**`.
+- Owns command discovery, command-line parsing, projection bindings, and
+  operator-facing rendering.
 
-## Entry Points
+## Boundaries
 
-- Development Oclif entrypoint: `src/index.ts`.
-- Built Oclif executable: `bin/run.js`, which invokes Oclif under Bun and
-  discovers `dist/commands`.
-- Command tree root: `src/commands/`.
-- Shared command helpers: `src/lib/`.
+- `rawr plugins ...` is the native Oclif extension surface.
+- `rawr agent plugins ...` is the curated agent-plugin lifecycle surface.
+- Command classes stay thin: lifecycle policy belongs to its service and
+  concrete filesystem or provider behavior belongs to the bound resource.
+- Development and packaged execution must discover the same package-owned
+  command tree; neither may load commands from a content checkout.
 
-## Command Topology
+## Flow
 
-- General commands: `src/commands/{doctor,reflect,...}.ts`
-- Topic commands: `src/commands/<topic>/*.ts`
-- External extension commands: composed directly from `@oclif/plugin-plugins`
-- Curated agent-plugin lifecycle projections: `src/commands/agent/plugins/**`
-
-## Command Surface Invariant
-
-- `rawr plugins ...` manages external Oclif extensions only.
-- `rawr agent plugins ...` manages curated agent-plugin lifecycle only.
-- App composition does not install, release, reconcile, or repair either channel.
-- Development uses the source entrypoint; packaging and installation use the
-  compiled entrypoint. Both load the same package-owned Oclif command topology.
+- `src/index.ts` or `bin/run.js` starts Oclif and discovers `src/commands/**` or
+  its compiled equivalent.
+- A command parses input, creates its explicit package or service binding,
+  invokes the operation, and renders the returned result.
+- Shared command construction and binding code lives under `src/lib/**`; it
+  does not become a second domain implementation.
 
 ## Routing
 
-- `../../packages/core/AGENTS.md` for `RawrCommand` contract.
-- `../../packages/journal/AGENTS.md` for journal persistence/indexing.
-- `../../packages/security/AGENTS.md` for security gate/check surfaces.
-- `../../services/state/AGENTS.md` for repo state persistence.
-- `../../docs/process/HQ_USAGE.md` for operator-facing command usage.
+- [Apps router](../AGENTS.md)
+- [Core command primitives](../../packages/core/AGENTS.md)
+- [Agent-plugin lifecycle service](../../services/agent-plugin-lifecycle/AGENTS.md)
+
+## Validation
+
+- `bunx nx run @rawr/cli:lint`
+- `bunx nx run @rawr/cli:typecheck`
+- `bunx nx run @rawr/cli:test`
+- `bunx nx run @rawr/cli:test-oclif-boundary`
