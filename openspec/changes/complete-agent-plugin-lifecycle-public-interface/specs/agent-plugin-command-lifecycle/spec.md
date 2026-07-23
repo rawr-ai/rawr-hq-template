@@ -65,7 +65,7 @@ operations emit no capsule.
 ### Requirement: Status and convergence results remain truthful
 
 Qualified status MUST preserve every canonical repository/provider
-classification and exit `0` only when every selected target is `CONVERGED`, `1`
+classification and exit `0` only when every selected target is `Converged`, `1`
 for a valid observed non-converged state, and `2` for invalid input or authority
 binding. A converged canonical operation MAY inspect live state but MUST NOT
   publish lifecycle state, write receipts/ledgers/capsules/outputs, invoke
@@ -79,7 +79,7 @@ native mutation, or change bytes or metadata.
   mtimes are unchanged
 
 #### Scenario: Selection failure and provider drift use distinct exits
-- **WHEN** status observes `BLOCKED_SELECTION` versus a valid selected target
+- **WHEN** status observes `Blocked` with a selection issue versus a valid selected target
   whose live provider state is merely drifted
 - **THEN** authority-invalid selection exits `2` while observed drift exits `1`
 
@@ -107,7 +107,7 @@ application directory. Personal executable modules MUST never load.
 
 `rawr agent plugins check` MUST parse exactly one of release eligibility,
 staged/clean repository validation, release-input body/envelope
-canonicalization, release-input staged refresh, current-main v2 encode/validate,
+canonicalization, release-input staged refresh, current-main v3 direct-record encode/validate,
   or current-main selection validation before acquiring any Git, filesystem,
   provider, Oclif, app, or runtime port. Each selected mode MUST
 invoke exactly one typed `@rawr/agent-plugin-lifecycle` procedure once.
@@ -221,19 +221,19 @@ the release input. Staged mode MUST NOT authorize build or release.
 
 ### Requirement: Current-main codec is pure and canonical
 
-The current-main v2 encode/validate mode MUST return identical canonical bytes,
-protocol, digest, and byte length for one semantically identical body. It MUST
+The current-main v3 encode/validate mode MUST return identical canonical record
+bytes, protocol, and byte length for one semantically identical body. It MUST
 reject unknown fields, malformed or noncanonical bytes, missing/duplicate
-Personal-owned fields, wrong protocol/digest, and oversized input. The pure
+Personal-owned fields, inconsistent Git identities, and oversized input. The pure
 codec MUST take no dependency argument; the procedure MUST NOT call, read, or
 write a Git, provider, package-output, or other lifecycle port.
 
 #### Scenario: Equivalent record bodies encode
 - **WHEN** two semantically identical valid bodies differ only in input object
   insertion order
-- **THEN** encoding returns the same canonical envelope bytes and `cm2_` digest
+- **THEN** encoding returns the same direct canonical record bytes and v3 protocol
 
 #### Scenario: Invalid record is supplied
-- **WHEN** a body/envelope is malformed, noncanonical, surplus, duplicated, or
-  bound to another protocol/digest
+- **WHEN** a record is malformed, noncanonical, surplus, duplicated, or binds
+  inconsistent Git identities
 - **THEN** validation rejects with every exterior port cold

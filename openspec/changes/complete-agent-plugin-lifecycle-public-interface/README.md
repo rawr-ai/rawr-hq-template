@@ -46,7 +46,7 @@ Template source
      -> rawr agent plugins    (bounded oRPC lifecycle service)
         -> Personal closed release input
         -> exact selected Git objects
-        -> in-memory closed release model and provider projection
+        -> in-memory closed release model and selected native content
         -> native Codex/Claude inspect and reconcile
         -> verify live state
 ```
@@ -356,8 +356,8 @@ skill. It cannot authorize HF01 materialization or release.
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Conventional CLI package/release | Bun-installed registry package selected; implementation waits for controller/state deletion and Effect 4 closure |
 | Custom controller/extension deletion | Distribution, release package, installer/selector, workflow, and diagnostics deleted; lifecycle reentry/resource identity remains task 4.2b |
-| Persistent agent artifact/projection store deletion | Pending |
-| Bounded lifecycle simplification | Pending |
+| Persistent agent artifact/projection store deletion | Provider projection/target state deleted; release/evidence/controller stores pending |
+| Bounded lifecycle simplification | Direct exact-Git native reconciliation green; disposable local materialization and remaining store/context deletion pending |
 | Personal content-only recut | Pending |
 | Disposable provider acceptance | Pending |
 | Approved-home settlement and read-only repeat | Pending |
