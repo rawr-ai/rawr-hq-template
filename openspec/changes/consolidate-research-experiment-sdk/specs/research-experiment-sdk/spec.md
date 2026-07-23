@@ -195,8 +195,11 @@ maintained plugin source/build/configuration, carrier propagation,
 decoded-session projection, supplied per-turn prompt linkage, and observation
 parenting only; it MUST NOT select turns or own study/failure policy.
 Codex-OpenShell MUST own only the reusable provider/auth/profile bridge and MUST
-NOT persist secrets or own study policy. Git/Bun MUST own materialization and
-submitted artifacts. EVLog MUST own non-authoritative operational events.
+NOT persist secrets or own study policy. The Git/Bun subpath MUST expose two
+tool-local capabilities rather than a combined facade or configuration: Git
+MUST own exactly materialize, capture, and apply, while Bun MUST own exactly pack
+and verify. Git and Bun MUST NOT be required to admit or execute one another's
+operations. EVLog MUST own non-authoritative operational events.
 
 #### Scenario: Vendor behavior cannot decide study policy
 - **WHEN** an adapter returns a typed vendor result or failure
@@ -399,7 +402,13 @@ different Git identity or canonicalization configuration rather than compare
 unlike bytes. It MUST apply-check and apply against a fresh exact baseline, then
 regenerate and compare canonical bytes and digest. It MUST NOT use
 noncryptographic `Bun.hash`, three-way patch inference, or solver-authored tests
-as artifact authority.
+as artifact authority. History-free materialization MUST use admitted Git
+plumbing and MUST return its observed Git substrate identity. The lane MUST
+persist the complete portable identity and its digest in `FrozenInput`, and
+capture MUST accept that round-tripped envelope, validate its self-identity,
+and reject a reacquired substrate mismatch before scratch creation or
+baseline/product-tree access. Git-owned mechanics MUST NOT import or invoke
+semantic Bun APIs.
 
 #### Scenario: Patch substrate identity changes
 - **WHEN** an otherwise identical invocation resolves a different Git binary,
@@ -407,6 +416,13 @@ as artifact authority.
 - **THEN** artifact adoption rejects before comparing patch bytes
 - **AND** the lane must prepare a new explicitly governed input rather than
   reinterpret old bytes under new Git semantics
+
+#### Scenario: Materialization and capture substrates diverge
+- **WHEN** capture reacquires a Git substrate different from the one returned by
+  materialization and persisted in `FrozenInput`
+- **THEN** capture rejects before creating scratch state or reading either
+  product tree
+- **AND** it does not reinterpret the materialized tree under the new substrate
 
 #### Scenario: Patch contains every product change
 - **WHEN** a solver adds, deletes, renames, changes mode, or modifies binary and

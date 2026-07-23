@@ -49,6 +49,34 @@ const PackageManifestSchema = Type.Object(
         Type.Record(Type.String({ minLength: 1 }), Type.String({ minLength: 1 })),
       ])
     ),
+    os: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
+    cpu: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
+    peerDependenciesMeta: Type.Optional(
+      Type.Record(
+        Type.String({ minLength: 1 }),
+        Type.Object({ optional: Type.Optional(Type.Boolean()) }, { additionalProperties: true })
+      )
+    ),
+  },
+  { additionalProperties: true }
+);
+
+const WorkspaceManifestSchema = Type.Object(
+  {
+    name: Type.String({ minLength: 1 }),
+    version: Type.Optional(Type.String({ minLength: 1 })),
+    dependencies: Type.Optional(
+      Type.Record(Type.String({ minLength: 1 }), Type.String({ minLength: 1 }))
+    ),
+    optionalDependencies: Type.Optional(
+      Type.Record(Type.String({ minLength: 1 }), Type.String({ minLength: 1 }))
+    ),
+    peerDependencies: Type.Optional(
+      Type.Record(Type.String({ minLength: 1 }), Type.String({ minLength: 1 }))
+    ),
+    devDependencies: Type.Optional(
+      Type.Record(Type.String({ minLength: 1 }), Type.String({ minLength: 1 }))
+    ),
     peerDependenciesMeta: Type.Optional(
       Type.Record(
         Type.String({ minLength: 1 }),
@@ -60,6 +88,14 @@ const PackageManifestSchema = Type.Object(
 );
 
 type PackageManifest = Static<typeof PackageManifestSchema>;
+type WorkspaceManifest = Static<typeof WorkspaceManifestSchema>;
+interface DependencyManifest {
+  readonly dependencies?: Readonly<Record<string, string>>;
+  readonly optionalDependencies?: Readonly<Record<string, string>>;
+  readonly peerDependencies?: Readonly<Record<string, string>>;
+  readonly devDependencies?: Readonly<Record<string, string>>;
+  readonly peerDependenciesMeta?: Readonly<Record<string, { readonly optional?: boolean }>>;
+}
 type DependencyKind =
   | "Dependency"
   | "OptionalDependency"
@@ -74,6 +110,15 @@ interface BuildDependencyRequest {
   readonly name: string;
   readonly requested: string;
 }
+interface PackageExecutable {
+  readonly command: string;
+  readonly target: string;
+}
+interface RegistryPackageBehavior {
+  readonly os?: string;
+  readonly cpu?: string;
+  readonly bin: readonly PackageExecutable[];
+}
 interface WorkspaceLockRow {
   readonly name: string;
   readonly version?: string;
@@ -86,6 +131,7 @@ interface RegistryPackageLockRow {
   readonly resolution: string;
   readonly integrity: string;
   readonly dependencies: readonly DependencyRequest[];
+  readonly behavior: RegistryPackageBehavior;
 }
 interface WorkspacePackageLockRow {
   readonly kind: "Workspace";
@@ -98,6 +144,7 @@ interface ArtifactPackageLockRow {
   readonly resolution: string;
   readonly integrity: string;
   readonly dependencies: readonly DependencyRequest[];
+  readonly behavior: RegistryPackageBehavior;
 }
 type PackageLockRow = RegistryPackageLockRow | WorkspacePackageLockRow | ArtifactPackageLockRow;
 interface LoadedLock {
@@ -113,6 +160,7 @@ interface RegistryNode {
   readonly integrity: string;
   readonly dependencies: readonly DependencyRequest[];
   readonly contextPath: readonly string[];
+  readonly behavior: RegistryPackageBehavior;
 }
 interface NodeDraft {
   readonly root: string;
@@ -457,20 +505,8 @@ async function validatePackageBuildAccess(
     await requireExactPackageLink(packageLink, packageRoot, dependency.name);
     allowedLinks.set(packageLink, packageRoot);
     const manifest = await readPackageManifest(manifestPath);
-    for (const [command, declaredTarget] of packageBinEntries(manifest)) {
-      const portableTarget = normalizePortablePath(declaredTarget.replace(/^\.\//u, ""));
-      if (
-        portableTarget === undefined ||
-        command.length === 0 ||
-        command === "." ||
-        command === ".." ||
-        command.includes("/") ||
-        command.includes("\\") ||
-        command.includes("\0")
-      ) {
-        unsupported(`Build input ${dependency.name} has an unsupported executable declaration.`);
-      }
-      const expectedTarget = resolve(packageRoot, ...portableTarget.split("/"));
+    for (const { command, target } of normalizedPackageBinEntries(manifest)) {
+      const expectedTarget = resolve(packageRoot, ...target.split("/"));
       const commandLink = join(nodeModulesRoot, ".bin", command);
       const priorTarget = allowedLinks.get(commandLink);
       if (priorTarget !== undefined && priorTarget !== expectedTarget) {
@@ -555,15 +591,172 @@ async function requireExactPackageNodeModules(
   };
   await walk(nodeModulesRoot);
 }
-function packageBinEntries(manifest: PackageManifest): readonly (readonly [string, string])[] {
+function normalizedPackageBinEntries(manifest: PackageManifest): readonly PackageExecutable[] {
   if (manifest.bin === undefined) {
     return [];
   }
+  let entries: readonly (readonly [string, string])[];
   if (typeof manifest.bin === "string") {
     const segments = manifest.name.split("/");
-    return [[segments.at(-1) ?? manifest.name, manifest.bin]];
+    entries = [[segments.at(-1) ?? manifest.name, manifest.bin]];
+  } else {
+    entries = Object.entries(manifest.bin);
   }
-  return Object.entries(manifest.bin).sort(([left], [right]) => compareText(left, right));
+  return normalizePackageBinEntries(entries, `Installed package ${manifest.name}`);
+}
+function registryBehaviorFromLockMetadata(
+  metadata: Readonly<Record<string, unknown>>,
+  label: string
+): RegistryPackageBehavior {
+  const allowedFields = new Set([
+    "dependencies",
+    "optionalDependencies",
+    "peerDependencies",
+    "optionalPeers",
+    "os",
+    "cpu",
+    "bin",
+  ]);
+  for (const key of Object.keys(metadata)) {
+    if (key === "devDependencies" || key === "binDir" || key === "bundled") {
+      unsupported(`${label} contains unsupported registry package behavior ${key}.`);
+    }
+    if (!allowedFields.has(key)) {
+      unsupported(`${label} contains unknown registry package behavior ${key}.`);
+    }
+  }
+  let bin: readonly PackageExecutable[] = [];
+  if (Object.hasOwn(metadata, "bin")) {
+    const record = recordValue(metadata.bin, `${label} bin`);
+    const entries: Array<readonly [string, string]> = [];
+    for (const [command, target] of Object.entries(record)) {
+      if (typeof target !== "string" || target.length === 0) {
+        unsupported(`${label} bin is malformed.`);
+      }
+      entries.push([command, target]);
+    }
+    bin = normalizePackageBinEntries(entries, label);
+  }
+  const os = positiveRegistryConstraint(metadata, "os", label);
+  const cpu = positiveRegistryConstraint(metadata, "cpu", label);
+  return {
+    ...(os === undefined ? {} : { os }),
+    ...(cpu === undefined ? {} : { cpu }),
+    bin,
+  };
+}
+function positiveRegistryConstraint(
+  metadata: Readonly<Record<string, unknown>>,
+  key: "os" | "cpu",
+  label: string
+): string | undefined {
+  if (!Object.hasOwn(metadata, key)) {
+    return undefined;
+  }
+  const value = metadata[key];
+  if (typeof value !== "string" || !isPositivePackageConstraint(value)) {
+    unsupported(`${label} ${key} must be one positive scalar.`);
+  }
+  return value;
+}
+function normalizePackageBinEntries(
+  entries: readonly (readonly [string, string])[],
+  label: string
+): readonly PackageExecutable[] {
+  const commands = new Set<string>();
+  const normalized: PackageExecutable[] = [];
+  for (const [command, declaredTarget] of entries) {
+    const target = normalizePortablePath(declaredTarget.replace(/^\.\//u, ""));
+    if (
+      !isSafePackageCommand(command) ||
+      commands.has(command) ||
+      target === undefined ||
+      target === "."
+    ) {
+      unsupported(`${label} has an unsupported executable declaration.`);
+    }
+    commands.add(command);
+    normalized.push({ command, target });
+  }
+  return normalized.sort((left, right) => compareText(left.command, right.command));
+}
+function isSafePackageCommand(command: string): boolean {
+  return (
+    command.length > 0 &&
+    command !== "." &&
+    command !== ".." &&
+    !command.includes("/") &&
+    !command.includes("\\") &&
+    !command.includes("\0")
+  );
+}
+function isPositivePackageConstraint(value: string): boolean {
+  return value.length > 0 && !value.startsWith("!") && /^[A-Za-z0-9._-]+$/u.test(value);
+}
+function registryBehaviorSignature(behavior: RegistryPackageBehavior): string {
+  return stableJson({
+    ...(behavior.os === undefined ? {} : { os: behavior.os }),
+    ...(behavior.cpu === undefined ? {} : { cpu: behavior.cpu }),
+    bin: behavior.bin.map(({ command, target }) => ({ command, target })),
+  });
+}
+async function requirePackageBehavior(
+  behavior: RegistryPackageBehavior,
+  manifest: PackageManifest,
+  packageRoot: string
+): Promise<void> {
+  const manifestOs = singletonManifestConstraint(manifest.os, "os", manifest.name);
+  const manifestCpu = singletonManifestConstraint(manifest.cpu, "cpu", manifest.name);
+  if (
+    behavior.os !== manifestOs ||
+    behavior.cpu !== manifestCpu ||
+    (manifestOs !== undefined && manifestOs !== process.platform) ||
+    (manifestCpu !== undefined && manifestCpu !== process.arch)
+  ) {
+    graphMismatch(`Installed package ${manifest.name} has mismatched platform behavior.`);
+  }
+  const manifestBin = normalizedPackageBinEntries(manifest);
+  if (
+    stableJson(manifestBin.map(({ command, target }) => ({ command, target }))) !==
+    stableJson(behavior.bin.map(({ command, target }) => ({ command, target })))
+  ) {
+    graphMismatch(`Installed package ${manifest.name} has mismatched executable behavior.`);
+  }
+  for (const executable of behavior.bin) {
+    const target = resolve(packageRoot, ...executable.target.split("/"));
+    let stat;
+    try {
+      stat = await lstat(target);
+    } catch (error) {
+      if (hasErrorCode(error, "ENOENT")) {
+        graphMismatch(`Installed package ${manifest.name} has a missing executable.`);
+      }
+      throw error;
+    }
+    if (
+      target === packageRoot ||
+      !isAtOrBelow(target, packageRoot) ||
+      !stat.isFile() ||
+      stat.isSymbolicLink() ||
+      (await realpath(target)) !== target ||
+      regularFileMode(stat.mode) !== "Executable"
+    ) {
+      graphMismatch(`Installed package ${manifest.name} has a nonordinary executable.`);
+    }
+  }
+}
+function singletonManifestConstraint(
+  values: readonly string[] | undefined,
+  key: "os" | "cpu",
+  packageName: string
+): string | undefined {
+  if (values === undefined) {
+    return undefined;
+  }
+  if (values.length !== 1 || !isPositivePackageConstraint(values[0]!)) {
+    unsupported(`Installed package ${packageName} has an unsupported ${key} constraint.`);
+  }
+  return values[0]!;
 }
 async function populateRegistryClosure(
   lock: LoadedLock,
@@ -598,6 +791,7 @@ async function populateRegistryClosure(
       }
       const manifest = await readPackageManifest(canonicalManifest);
       const target = registryNode(lock, registry, parent.contextPath, dependency, manifest);
+      await requirePackageBehavior(target.behavior, manifest, packageRoot);
       const manifestDigest = await digestFile(canonicalManifest);
       const packageContentDigest = await digestPackageContent(packageRoot);
       const existing = drafts.get(target.nodeId);
@@ -700,19 +894,22 @@ async function bindInstalledRoot(
     unsupported("The installed SDK root lock row is patched or malformed.");
   }
   const consumer = workspaceLockRow(lock, "");
-  const consumerRequest = consumer?.dependencies.find(({ name }) => name === manifest.name);
-  if (
-    consumer === undefined ||
-    consumerRequest?.kind !== "Dependency" ||
-    consumerRequest.requested !== `file:${expectedRoot.artifactPath}`
-  ) {
+  if (consumer === undefined) {
     graphMismatch("The consumer workspace lock edge does not exactly bind the SDK artifact.");
   }
+  const consumerManifest = await readWorkspaceManifest(join(roots.workspaceRoot, "package.json"));
+  requireConsumerWorkspaceBinding(
+    consumer,
+    consumerManifest,
+    manifest.name,
+    expectedRoot.artifactPath
+  );
   requireDependencyAgreement(
     row.dependencies,
     dependenciesFromManifest(manifest),
     "The installed SDK lock dependency edges differ from its package manifest."
   );
+  await requirePackageBehavior(row.behavior, manifest, roots.packageRoot);
   return {
     runtimeDependencies: row.dependencies,
     buildInputDigest: sha256Portable("research-sdk.build-input-closure.v1", {
@@ -721,9 +918,48 @@ async function bindInstalledRoot(
     }),
   };
 }
+function requireConsumerWorkspaceBinding(
+  lockRow: WorkspaceLockRow,
+  manifest: WorkspaceManifest,
+  packageName: string,
+  artifactPath: string
+): void {
+  const manifestDependencies = dependenciesFromManifest(manifest, "Consumer package manifest");
+  const manifestDevelopmentDependencies = buildDependenciesFromManifest(manifest);
+  if (
+    lockRow.name !== manifest.name ||
+    (lockRow.version !== undefined && lockRow.version !== manifest.version)
+  ) {
+    graphMismatch("The consumer package manifest identity differs from its workspace lock row.");
+  }
+  requireDependencyAgreement(
+    lockRow.dependencies,
+    manifestDependencies,
+    "The consumer package manifest dependency edges differ from its workspace lock row."
+  );
+  requireBuildDependencyAgreement(
+    lockRow.developmentDependencies,
+    manifestDevelopmentDependencies,
+    "The consumer package manifest development edges differ from its workspace lock row."
+  );
+  const expectedRequest = `file:${artifactPath}`;
+  const lockRequest = lockRow.dependencies.find(({ name }) => name === packageName);
+  const manifestRequest = manifestDependencies.find(({ name }) => name === packageName);
+  if (
+    lockRequest?.kind !== "Dependency" ||
+    lockRequest.requested !== expectedRequest ||
+    manifestRequest?.kind !== "Dependency" ||
+    manifestRequest.requested !== expectedRequest ||
+    lockRow.developmentDependencies.some(({ name }) => name === packageName) ||
+    manifestDevelopmentDependencies.some(({ name }) => name === packageName)
+  ) {
+    graphMismatch("The consumer package manifest does not exactly bind the SDK artifact.");
+  }
+}
 interface RegistryAttestation {
   readonly integrities: ReadonlySet<string>;
   readonly dependencyMaps: ReadonlyMap<string, readonly DependencyRequest[]>;
+  readonly behaviors: ReadonlyMap<string, RegistryPackageBehavior>;
   readonly patched: boolean;
   readonly conflictingNonRegistryIdentity: boolean;
 }
@@ -754,12 +990,17 @@ function registryNode(
     attestation.patched ||
     attestation.integrities.size !== 1 ||
     attestation.dependencyMaps.size !== 1 ||
+    attestation.behaviors.size !== 1 ||
     attestation.conflictingNonRegistryIdentity
   ) {
     unsupported(`Resolution ${resolution} is not one exact admitted registry package.`);
   }
   const integrity = [...attestation.integrities][0]!;
   const dependencies = [...attestation.dependencyMaps.values()][0]!;
+  const behavior = [...attestation.behaviors.values()][0]!;
+  if (registryBehaviorSignature(contextual.row.behavior) !== registryBehaviorSignature(behavior)) {
+    unsupported(`Resolution ${resolution} has divergent contextual package behavior.`);
+  }
   requireDependencyAgreement(
     dependencies,
     dependenciesFromManifest(manifest),
@@ -779,6 +1020,7 @@ function registryNode(
     integrity,
     dependencies,
     contextPath: contextual.contextPath,
+    behavior,
   };
 }
 function attestRegistryResolution(
@@ -789,6 +1031,7 @@ function attestRegistryResolution(
 ): RegistryAttestation {
   const integrities = new Set<string>();
   const dependencyMaps = new Map<string, readonly DependencyRequest[]>();
+  const behaviors = new Map<string, RegistryPackageBehavior>();
   let conflictingNonRegistryIdentity = false;
   for (const [key, rawRow] of Object.entries(lock.packages)) {
     const candidateResolution = packageResolutionHint(rawRow);
@@ -811,6 +1054,7 @@ function attestRegistryResolution(
       if (row.resolution === resolution) {
         integrities.add(row.integrity);
         dependencyMaps.set(dependencySignature(row.dependencies), row.dependencies);
+        behaviors.set(registryBehaviorSignature(row.behavior), row.behavior);
       }
       continue;
     }
@@ -840,6 +1084,7 @@ function attestRegistryResolution(
   return {
     integrities,
     dependencyMaps,
+    behaviors,
     patched: Object.hasOwn(lock.patchedDependencies, resolution),
     conflictingNonRegistryIdentity,
   };
@@ -915,7 +1160,18 @@ function packageNameFromResolution(resolution: string): string | undefined {
   }
   return resolution.slice(0, delimiter);
 }
-function dependenciesFromManifest(manifest: PackageManifest): DependencyRequest[] {
+function dependenciesFromManifest(
+  manifest: DependencyManifest,
+  label = "Package manifest"
+): DependencyRequest[] {
+  requireDisjointDependencyGroups(
+    [
+      ["dependencies", manifest.dependencies ?? {}],
+      ["optionalDependencies", manifest.optionalDependencies ?? {}],
+      ["peerDependencies", manifest.peerDependencies ?? {}],
+    ],
+    label
+  );
   const requests = new Map<string, DependencyRequest>();
   for (const [name, requested] of Object.entries(manifest.dependencies ?? {})) {
     requests.set(name, { name, requested, kind: "Dependency" });
@@ -935,7 +1191,7 @@ function dependenciesFromManifest(manifest: PackageManifest): DependencyRequest[
   }
   return [...requests.values()].sort((left, right) => compareText(left.name, right.name));
 }
-function buildDependenciesFromManifest(manifest: PackageManifest): BuildDependencyRequest[] {
+function buildDependenciesFromManifest(manifest: DependencyManifest): BuildDependencyRequest[] {
   return Object.entries(manifest.devDependencies ?? {})
     .map(([name, requested]) => ({ name, requested }))
     .sort((left, right) => compareText(left.name, right.name));
@@ -947,6 +1203,14 @@ function dependenciesFromLockMetadata(
   const dependencies = dependencyRecord(metadata, "dependencies", label);
   const optionalDependencies = dependencyRecord(metadata, "optionalDependencies", label);
   const peerDependencies = dependencyRecord(metadata, "peerDependencies", label);
+  requireDisjointDependencyGroups(
+    [
+      ["dependencies", dependencies],
+      ["optionalDependencies", optionalDependencies],
+      ["peerDependencies", peerDependencies],
+    ],
+    label
+  );
   const optionalPeers = optionalPeerNames(metadata, peerDependencies, label);
   const requests = new Map<string, DependencyRequest>();
   for (const [name, requested] of Object.entries(dependencies)) {
@@ -963,6 +1227,21 @@ function dependenciesFromLockMetadata(
     });
   }
   return [...requests.values()].sort((left, right) => compareText(left.name, right.name));
+}
+function requireDisjointDependencyGroups(
+  groups: readonly (readonly [string, Readonly<Record<string, string>>])[],
+  label: string
+): void {
+  const owners = new Map<string, string>();
+  for (const [group, dependencies] of groups) {
+    for (const name of Object.keys(dependencies)) {
+      const owner = owners.get(name);
+      if (owner !== undefined) {
+        unsupported(`${label} dependency ${name} overlaps ${owner} and ${group}.`);
+      }
+      owners.set(name, group);
+    }
+  }
 }
 function dependencyRecord(
   metadata: Readonly<Record<string, unknown>>,
@@ -1214,6 +1493,7 @@ function parsePackageLockRow(value: unknown, label: string): PackageLockRow {
       resolution,
       integrity,
       dependencies: dependenciesFromLockMetadata(metadata, label),
+      behavior: registryBehaviorFromLockMetadata(metadata, label),
     };
   }
   if (value.length === 3) {
@@ -1225,6 +1505,7 @@ function parsePackageLockRow(value: unknown, label: string): PackageLockRow {
       resolution,
       integrity,
       dependencies: dependenciesFromLockMetadata(metadata, label),
+      behavior: registryBehaviorFromLockMetadata(metadata, label),
     };
   }
   unsupported(`${label} has an unsupported shape.`);
@@ -1316,6 +1597,17 @@ async function readPackageManifest(path: string): Promise<PackageManifest> {
   const decoded = decodeStructural(PackageManifestSchema, await Bun.file(path).json());
   if (decoded.kind === "Invalid") {
     throw invalidInput("read-package-manifest", "An installed package manifest is malformed.");
+  }
+  return decoded.value;
+}
+async function readWorkspaceManifest(path: string): Promise<WorkspaceManifest> {
+  const stat = await lstat(path);
+  if (!stat.isFile() || stat.isSymbolicLink() || (await realpath(path)) !== path) {
+    graphMismatch("The consumer package manifest is not an ordinary canonical file.");
+  }
+  const decoded = decodeStructural(WorkspaceManifestSchema, await Bun.file(path).json());
+  if (decoded.kind === "Invalid") {
+    throw invalidInput("read-package-manifest", "The consumer package manifest is malformed.");
   }
   return decoded.value;
 }

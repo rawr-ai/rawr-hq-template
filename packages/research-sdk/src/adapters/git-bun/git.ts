@@ -68,12 +68,42 @@ export function artifactPathMappingDigest(mapping: ArtifactPathMapping): DigestI
 }
 
 export function gitArtifactSubstrate(substrate: GitPatchSubstrateIdentity): ArtifactSubstrate {
+  const git =
+    substrate.git.revision === undefined
+      ? {
+          resolvedBinary: substrate.git.resolvedBinary,
+          version: substrate.git.version,
+        }
+      : {
+          resolvedBinary: substrate.git.resolvedBinary,
+          revision: substrate.git.revision,
+          version: substrate.git.version,
+        };
+  const identity = {
+    kind: substrate.kind,
+    git,
+    canonicalization: {
+      environment: substrate.canonicalization.environment.map(({ name, value }) => ({
+        name,
+        value,
+      })),
+      configuration: substrate.canonicalization.configuration.map(({ name, value }) => ({
+        name,
+        value,
+      })),
+      attributesPolicy: substrate.canonicalization.attributesPolicy,
+      stageArguments: [...substrate.canonicalization.stageArguments],
+      diffArguments: [...substrate.canonicalization.diffArguments],
+      applyArguments: [...substrate.canonicalization.applyArguments],
+    },
+    environmentDigest: { ...substrate.environmentDigest },
+    configurationDigest: { ...substrate.configurationDigest },
+  } as const;
+
   return {
     kind: substrate.kind,
-    resolvedBinary: substrate.git.resolvedBinary,
-    version: substrate.git.version,
-    environmentDigest: substrate.environmentDigest,
-    configurationDigest: substrate.configurationDigest,
+    identity,
+    identityDigest: sha256Portable("research-sdk.git-artifact-substrate.v1", identity),
   };
 }
 

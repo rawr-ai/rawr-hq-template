@@ -379,21 +379,23 @@ export function materializeOwnedRevision(
 ): Effect.Effect<void, GitBunError> {
   return Effect.gen(function* () {
     yield* ensureEmptyDirectory(context.worktree, "materializeRevision");
-    const treeExpression =
-      revision.subtree === undefined
-        ? revision.commitObjectId
-        : `${revision.commitObjectId}:${revision.subtree}`;
-    const archiveResult = yield* runOwnedGitCheckedAt(
+    yield* runOwnedGitCheckedAt(
       context.runner,
       context.substrate,
       context.repository,
       context.worktree,
-      undefined,
-      ["archive", "--format=tar", treeExpression],
-      "archiveRevision"
+      context.worktree,
+      ["read-tree", "--reset", revision.selectedTreeObjectId],
+      "loadMaterializationIndex"
     );
-    yield* tryFileSystem("materializeRevision", () =>
-      new Bun.Archive(archiveResult.stdout).extract(context.worktree).then(() => undefined)
+    yield* runOwnedGitCheckedAt(
+      context.runner,
+      context.substrate,
+      context.repository,
+      context.worktree,
+      context.worktree,
+      ["checkout-index", "--all", "--force"],
+      "checkoutMaterializedRevision"
     );
     yield* validateProductTree(context.worktree, "materializeRevision");
   });

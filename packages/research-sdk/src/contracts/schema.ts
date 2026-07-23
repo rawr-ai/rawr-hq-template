@@ -68,6 +68,20 @@ export type PortableData =
   | { readonly [key: string]: PortableData };
 export type JsonValue = PortableData;
 
+export const PortableDataSchema = Type.Cyclic(
+  {
+    PortableData: Type.Union([
+      Type.Null(),
+      Type.Boolean(),
+      Type.Number(),
+      Type.String(),
+      Type.Array(Type.Ref("PortableData")),
+      Type.Record(Type.String(), Type.Ref("PortableData")),
+    ]),
+  },
+  "PortableData"
+);
+
 type IsAny<Value> = 0 extends 1 & Value ? true : false;
 
 type ToPortable<Value> = Value extends JsonPrimitive

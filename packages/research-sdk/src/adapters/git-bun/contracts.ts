@@ -44,10 +44,18 @@ const GitBunCommandPolicySchema = closedObject(
   }
 );
 
-export const GitBunConfigSchema = closedObject(
+export const GitArtifactConfigSchema = closedObject(
   {},
   {
     git: GitToolRequirementSchema,
+    scratchRoot: NonEmptyStringSchema,
+    command: GitBunCommandPolicySchema,
+  }
+);
+
+export const BunPackageConfigSchema = closedObject(
+  {},
+  {
     bun: BunToolRequirementSchema,
     scratchRoot: NonEmptyStringSchema,
     command: GitBunCommandPolicySchema,
@@ -250,7 +258,8 @@ export const PackedPackageDescriptorSchema = closedObject(
 );
 
 export type ResolvedToolIdentity = Static<typeof ResolvedToolIdentitySchema>;
-export type GitBunConfig = Static<typeof GitBunConfigSchema>;
+export type GitArtifactConfig = Static<typeof GitArtifactConfigSchema>;
+export type BunPackageConfig = Static<typeof BunPackageConfigSchema>;
 export type GitCanonicalization = Static<typeof GitCanonicalizationSchema>;
 export type GitPatchSubstrateIdentity = Static<typeof GitPatchSubstrateIdentitySchema>;
 export type BunPackageCanonicalization = Static<typeof BunPackageCanonicalizationSchema>;

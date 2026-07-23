@@ -23,13 +23,15 @@
 - [x] 2.3 Implement exact-environment command execution and one Effect runtime
   composition boundary.
 - [ ] 2.4 Implement named OpenShell, Codex, Langfuse, Codex-Langfuse,
-  Codex-OpenShell, Git/Bun, and EVLog adapters.
+  Codex-OpenShell, Git/Bun, and EVLog adapters. The Git/Bun subpath exposes
+  separate tool-local Git and Bun capabilities with no combined facade or
+  configuration.
 - [ ] 2.5 Derive the Codex-Langfuse upstream manifest from official Git objects,
   freeze exact maintained-source/patch/lock identities, and reproduce the Node
   22 ESM bundle deterministically.
 - [ ] 2.6 Implement behavioral tests for resource release, interruption,
   unresolved process residue and same-instance re-entry blocking, canonical
-  Git-substrate artifact round-trip,
+  Git-substrate artifact round-trip through serialized `FrozenInput`,
   create-if-absent terminal publication and unknown-write reconciliation,
   adoption-before-admission continuation, concurrent exact-attempt admission,
   terminal/admission race adoption, admitted-attempt terminal binding,
@@ -40,7 +42,8 @@
   with one application root, selection-neutral incomplete-turn projection, and
   diagnostic event lifecycle.
 - [x] 2.7 Add only Template SDK package/dependency-direction Habitat rules and
-  define the owner-local lane mapping check contract.
+  define the owner-local lane mapping check contract, including a GritQL
+  prohibition on semantic Bun APIs in Git-owned mechanics.
 
 ## 3. Lane Compatibility
 

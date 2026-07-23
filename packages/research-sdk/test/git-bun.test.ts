@@ -19,17 +19,24 @@ import { Cause, Effect, Exit, Fiber, Layer, Option } from "effect";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
   type ArtifactPathMapping,
+  BunPackages,
   type ExactGitRevision,
-  GitBun,
+  GitArtifacts,
   type GitBunError,
   type GitPatchSubstrateIdentity,
   gitRepositoryIdentity,
-  makeGitBunLayer,
+  makeBunPackagesLayer,
+  makeGitArtifactsLayer,
   type PackedPackageDescriptor,
   type PatchDescriptor,
 } from "../src/adapters/git-bun/index.js";
 import { deriveRuntimeGraph } from "../src/adapters/git-bun/installed-package.js";
-import type { ProcessTerminationUnconfirmed } from "../src/contracts/index.js";
+import {
+  type ArtifactSubstrate,
+  decodeStructural,
+  FrozenInputSchema,
+  type ProcessTerminationUnconfirmed,
+} from "../src/contracts/index.js";
 import {
   BunCommandProcessLayer,
   CommandProcess,
@@ -73,9 +80,10 @@ let repositoryRoot = "";
 let repositoryGuardBefore: RepositoryGuard | undefined;
 let gitBinary = "";
 let bunBinary = "";
-let runtime: ResearchProcessRuntime<GitBun, GitBunError>;
+let runtime: ResearchProcessRuntime<GitArtifacts | BunPackages, GitBunError>;
 let gitFixture: GitFixture;
 let changedProductPromise: Promise<ChangedProduct> | undefined;
+const materializationSubstrates = new Map<string, ArtifactSubstrate>();
 
 describe.sequential("Git/Bun research artifact boundary", () => {
   beforeAll(async () => {
@@ -94,13 +102,17 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     repositoryGuardBefore = await repositoryGuard(repositoryRoot);
 
     runtime = makeResearchProcessRuntime(
-      makeGitBunLayer(gitBunConfig(scratchRoot)).pipe(Layer.provide(BunCommandProcessLayer))
+      Layer.merge(
+        makeGitArtifactsLayer(gitArtifactConfig(scratchRoot)),
+        makeBunPackagesLayer(bunPackageConfig(scratchRoot))
+      ).pipe(Layer.provide(BunCommandProcessLayer))
     );
     gitFixture = await createGitFixture(join(runRoot, "source-repository"));
   }, 60_000);
 
   afterAll(async () => {
     await runtime?.dispose();
+    materializationSubstrates.clear();
     if (runRoot.length > 0) {
       await rm(runRoot, { recursive: true, force: true });
     }
@@ -109,15 +121,22 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     }
   }, 60_000);
 
-  test("exposes one immutable five-operation artifact service", () => {
+  test("exposes two immutable tool-local capabilities with five operations", () => {
     return runAdapter(
-      Effect.map(GitBun, (service) => {
-        expect(Object.isFrozen(service)).toBe(true);
-        expect(service.materializeRevision).toBeTypeOf("function");
-        expect(service.capturePatch).toBeTypeOf("function");
-        expect(service.applyAndRegenerate).toBeTypeOf("function");
-        expect(service.packSdkPackage).toBeTypeOf("function");
-        expect(service.verifyInstalledSdkPackage).toBeTypeOf("function");
+      Effect.all({
+        git: Effect.map(GitArtifacts, (service) => {
+          expect(Object.isFrozen(service)).toBe(true);
+          expect(service.materializeRevision).toBeTypeOf("function");
+          expect(service.capturePatch).toBeTypeOf("function");
+          expect(service.applyAndRegenerate).toBeTypeOf("function");
+          expect(Object.keys(service)).toHaveLength(3);
+        }),
+        bun: Effect.map(BunPackages, (service) => {
+          expect(Object.isFrozen(service)).toBe(true);
+          expect(service.packSdkPackage).toBeTypeOf("function");
+          expect(service.verifyInstalledSdkPackage).toBeTypeOf("function");
+          expect(Object.keys(service)).toHaveLength(2);
+        }),
       })
     );
   });
@@ -126,19 +145,14 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const gitScratch = join(runRoot, "git-only-scratch");
     await mkdir(gitScratch);
     const gitOnlyRuntime = makeResearchProcessRuntime(
-      makeGitBunLayer({
-        ...gitBunConfig(await realpath(gitScratch)),
-        bun: {
-          executable: join(runRoot, "missing-non-owning-bun"),
-          expectedVersion: "unavailable",
-          expectedRevision: "unavailable",
-        },
-      }).pipe(Layer.provide(BunCommandProcessLayer))
+      makeGitArtifactsLayer(gitArtifactConfig(await realpath(gitScratch))).pipe(
+        Layer.provide(BunCommandProcessLayer)
+      )
     );
     try {
       const destinationPath = join(runRoot, "git-only-product");
       const materializeExit = await gitOnlyRuntime.runPromiseExit(
-        Effect.flatMap(GitBun, (service) =>
+        Effect.flatMap(GitArtifacts, (service) =>
           service.materializeRevision({
             sourceRepositoryPath: gitFixture.root,
             revision: gitFixture.revision,
@@ -147,17 +161,21 @@ describe.sequential("Git/Bun research artifact boundary", () => {
         )
       );
       expect(Exit.isSuccess(materializeExit)).toBe(true);
+      if (Exit.isFailure(materializeExit)) {
+        throw new Error("The Git-only materialization unexpectedly failed.");
+      }
       await expect(readFile(join(destinationPath, "src", "text.txt"), "utf8")).resolves.toBe(
         "baseline text\n"
       );
       await writeFile(join(destinationPath, "src", "text.txt"), "git-only product\n");
       const captureExit = await gitOnlyRuntime.runPromiseExit(
-        Effect.flatMap(GitBun, (service) =>
+        Effect.flatMap(GitArtifacts, (service) =>
           service.capturePatch({
             sourceRepositoryPath: gitFixture.root,
             baseline: gitFixture.revision,
             terminalProductPath: destinationPath,
             pathMapping,
+            materializationSubstrate: materializeExit.value,
           })
         )
       );
@@ -167,7 +185,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       }
       const reconstructedPath = join(runRoot, "git-only-reconstructed");
       const applyExit = await gitOnlyRuntime.runPromiseExit(
-        Effect.flatMap(GitBun, (service) =>
+        Effect.flatMap(GitArtifacts, (service) =>
           service.applyAndRegenerate({
             sourceRepositoryPath: gitFixture.root,
             baseline: gitFixture.revision,
@@ -194,17 +212,13 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const outputPath = join(runRoot, "artifacts", "bun-only-sdk.tgz");
     await Promise.all([mkdir(bunScratch), mkdir(dirname(outputPath), { recursive: true })]);
     const bunOnlyRuntime = makeResearchProcessRuntime(
-      makeGitBunLayer({
-        ...gitBunConfig(await realpath(bunScratch)),
-        git: {
-          executable: join(runRoot, "missing-non-owning-git"),
-          expectedVersion: "unavailable",
-        },
-      }).pipe(Layer.provide(BunCommandProcessLayer))
+      makeBunPackagesLayer(bunPackageConfig(await realpath(bunScratch))).pipe(
+        Layer.provide(BunCommandProcessLayer)
+      )
     );
     try {
       const packExit = await bunOnlyRuntime.runPromiseExit(
-        Effect.flatMap(GitBun, (service) =>
+        Effect.flatMap(BunPackages, (service) =>
           service.packSdkPackage({
             workspaceRoot: packageFixture.workspaceRoot,
             packageRoot: packageFixture.packageRoot,
@@ -229,7 +243,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       await runHost(bunBinary, ["install", "--offline", "--ignore-scripts"], consumer);
       const installedRoot = await realpath(join(consumer, "node_modules", "@rawr", "research-sdk"));
       const verifyExit = await bunOnlyRuntime.runPromiseExit(
-        Effect.flatMap(GitBun, (service) =>
+        Effect.flatMap(BunPackages, (service) =>
           service.verifyInstalledSdkPackage({
             workspaceRoot: consumer,
             packageRoot: installedRoot,
@@ -248,22 +262,17 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const gitScratch = join(runRoot, "wrong-git-scratch");
     await mkdir(gitScratch);
     const wrongGitRuntime = makeResearchProcessRuntime(
-      makeGitBunLayer({
-        ...gitBunConfig(await realpath(gitScratch)),
+      makeGitArtifactsLayer({
+        ...gitArtifactConfig(await realpath(gitScratch)),
         git: {
           executable: gitBinary,
           expectedVersion: "0.0.0-wrong",
-        },
-        bun: {
-          executable: join(runRoot, "missing-drift-probe-bun"),
-          expectedVersion: "unavailable",
-          expectedRevision: "unavailable",
         },
       }).pipe(Layer.provide(BunCommandProcessLayer))
     );
     try {
       const exit = await wrongGitRuntime.runPromiseExit(
-        Effect.flatMap(GitBun, (service) =>
+        Effect.flatMap(GitArtifacts, (service) =>
           service.materializeRevision({
             sourceRepositoryPath: gitFixture.root,
             revision: gitFixture.revision,
@@ -285,12 +294,8 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const bunScratch = join(runRoot, "wrong-bun-scratch");
     await mkdir(bunScratch);
     const wrongBunRuntime = makeResearchProcessRuntime(
-      makeGitBunLayer({
-        ...gitBunConfig(await realpath(bunScratch)),
-        git: {
-          executable: join(runRoot, "missing-drift-probe-git"),
-          expectedVersion: "unavailable",
-        },
+      makeBunPackagesLayer({
+        ...bunPackageConfig(await realpath(bunScratch)),
         bun: {
           executable: bunBinary,
           expectedVersion: expectedBunVersion,
@@ -300,7 +305,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     );
     try {
       const exit = await wrongBunRuntime.runPromiseExit(
-        Effect.flatMap(GitBun, (service) =>
+        Effect.flatMap(BunPackages, (service) =>
           service.packSdkPackage({
             workspaceRoot: runRoot,
             packageRoot: runRoot,
@@ -367,7 +372,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
 
     const reconstructed = join(runRoot, "reconstructed-product");
     await runAdapter(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(GitArtifacts, (service) =>
         service.applyAndRegenerate({
           sourceRepositoryPath: gitFixture.root,
           baseline: gitFixture.revision,
@@ -421,12 +426,13 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await mkdir(join(metadataProduct, ".git"));
     await writeFile(join(metadataProduct, ".git", "config"), "[core]\n\tbare = false\n");
     const metadataFailure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(GitArtifacts, (service) =>
         service.capturePatch({
           sourceRepositoryPath: gitFixture.root,
           baseline: gitFixture.revision,
           terminalProductPath: metadataProduct,
           pathMapping,
+          materializationSubstrate: materializationSubstrateFor(metadataProduct),
         })
       )
     );
@@ -437,12 +443,13 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await writeFile(join(protectedProduct, "protected", "authority.txt"), "mutated\n");
 
     const protectedFailure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(GitArtifacts, (service) =>
         service.capturePatch({
           sourceRepositoryPath: gitFixture.root,
           baseline: gitFixture.revision,
           terminalProductPath: protectedProduct,
           pathMapping,
+          materializationSubstrate: materializationSubstrateFor(protectedProduct),
         })
       )
     );
@@ -452,12 +459,13 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await materialize(symlinkProduct);
     await symlink("text.txt", join(symlinkProduct, "src", "new-link"));
     const symlinkFailure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(GitArtifacts, (service) =>
         service.capturePatch({
           sourceRepositoryPath: gitFixture.root,
           baseline: gitFixture.revision,
           terminalProductPath: symlinkProduct,
           pathMapping,
+          materializationSubstrate: materializationSubstrateFor(symlinkProduct),
         })
       )
     );
@@ -510,16 +518,49 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     );
   }, 30_000);
 
+  test("rejects a materialization/capture substrate mismatch before scratch or tree access", async () => {
+    const product = join(runRoot, "materialization-substrate-mismatch-product");
+    const materializationSubstrate = await materialize(product);
+    await writeFile(join(product, "src", "text.txt"), "must remain unread\n");
+    const scratchBefore = await readdir(scratchRoot);
+    const mismatchedSubstrate: ArtifactSubstrate = {
+      ...materializationSubstrate,
+      identityDigest: {
+        ...materializationSubstrate.identityDigest,
+        value: "0".repeat(64),
+      },
+    };
+
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitArtifacts, (service) =>
+        service.capturePatch({
+          sourceRepositoryPath: join(runRoot, "missing-source-must-not-be-read"),
+          baseline: gitFixture.revision,
+          terminalProductPath: join(runRoot, "missing-product-must-not-be-read"),
+          pathMapping,
+          materializationSubstrate: mismatchedSubstrate,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    expect(await readdir(scratchRoot)).toEqual(scratchBefore);
+    await expect(readFile(join(product, "src", "text.txt"), "utf8")).resolves.toBe(
+      "must remain unread\n"
+    );
+  });
+
   test("represents an unchanged product as an empty patch and round-trips it", async () => {
     const unchanged = join(runRoot, "unchanged-product");
     await materialize(unchanged);
     const capture = await runAdapter(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(GitArtifacts, (service) =>
         service.capturePatch({
           sourceRepositoryPath: gitFixture.root,
           baseline: gitFixture.revision,
           terminalProductPath: unchanged,
           pathMapping,
+          materializationSubstrate: materializationSubstrateFor(unchanged),
         })
       )
     );
@@ -528,7 +569,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     expect(capture.bytes).toHaveLength(0);
     const reconstructed = join(runRoot, "empty-reconstructed-product");
     await runAdapter(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(GitArtifacts, (service) =>
         service.applyAndRegenerate({
           sourceRepositoryPath: gitFixture.root,
           baseline: gitFixture.revision,
@@ -555,14 +596,14 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const isolatedScratch = join(runRoot, "diagnostic-scratch");
     await mkdir(isolatedScratch);
     const diagnosticRuntime = makeResearchProcessRuntime(
-      makeGitBunLayer(gitBunConfig(await realpath(isolatedScratch))).pipe(
+      makeGitArtifactsLayer(gitArtifactConfig(await realpath(isolatedScratch))).pipe(
         Layer.provide(Layer.succeed(CommandProcess, fakeProcess))
       )
     );
 
     try {
       const exit = await diagnosticRuntime.runPromiseExit(
-        Effect.flatMap(GitBun, (service) =>
+        Effect.flatMap(GitArtifacts, (service) =>
           service.materializeRevision({
             sourceRepositoryPath: gitFixture.root,
             revision: gitFixture.revision,
@@ -615,14 +656,15 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const isolatedScratch = join(runRoot, "unconfirmed-termination-scratch");
     await mkdir(isolatedScratch);
     const unconfirmedRuntime = makeResearchProcessRuntime(
-      makeGitBunLayer(gitBunConfig(await realpath(isolatedScratch))).pipe(
-        Layer.provide(Layer.succeed(CommandProcess, fakeProcess))
-      )
+      Layer.merge(
+        makeGitArtifactsLayer(gitArtifactConfig(await realpath(isolatedScratch))),
+        makeBunPackagesLayer(bunPackageConfig(await realpath(isolatedScratch)))
+      ).pipe(Layer.provide(Layer.succeed(CommandProcess, fakeProcess)))
     );
 
     try {
       const exit = await unconfirmedRuntime.runPromiseExit(
-        Effect.flatMap(GitBun, (service) =>
+        Effect.flatMap(GitArtifacts, (service) =>
           service.materializeRevision({
             sourceRepositoryPath: gitFixture.root,
             revision: gitFixture.revision,
@@ -640,7 +682,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       const outputPath = join(runRoot, "artifacts", "unconfirmed-sdk.tgz");
       await mkdir(dirname(outputPath), { recursive: true });
       const packageExit = await unconfirmedRuntime.runPromiseExit(
-        Effect.flatMap(GitBun, (service) =>
+        Effect.flatMap(BunPackages, (service) =>
           service.packSdkPackage({
             workspaceRoot: packageFixture.workspaceRoot,
             packageRoot: packageFixture.packageRoot,
@@ -682,16 +724,17 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const isolatedScratch = join(runRoot, "interruption-scratch");
     await mkdir(isolatedScratch);
     const interruptionRuntime = makeResearchProcessRuntime(
-      makeGitBunLayer(gitBunConfig(await realpath(isolatedScratch))).pipe(
-        Layer.provide(Layer.succeed(CommandProcess, fakeProcess))
-      )
+      Layer.merge(
+        makeGitArtifactsLayer(gitArtifactConfig(await realpath(isolatedScratch))),
+        makeBunPackagesLayer(bunPackageConfig(await realpath(isolatedScratch)))
+      ).pipe(Layer.provide(Layer.succeed(CommandProcess, fakeProcess)))
     );
 
     try {
       const productPath = join(runRoot, "interrupted-product");
       const gitExit = await interruptionRuntime.runPromiseExit(
         Effect.gen(function* () {
-          const service = yield* GitBun;
+          const service = yield* GitArtifacts;
           const fiber = yield* Effect.forkChild(
             service.materializeRevision({
               sourceRepositoryPath: gitFixture.root,
@@ -712,7 +755,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       await mkdir(dirname(outputPath), { recursive: true });
       const packageExit = await interruptionRuntime.runPromiseExit(
         Effect.gen(function* () {
-          const service = yield* GitBun;
+          const service = yield* BunPackages;
           const fiber = yield* Effect.forkChild(
             service.packSdkPackage({
               workspaceRoot: packageFixture.workspaceRoot,
@@ -761,7 +804,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
 
     const outerExit = await runtime.runPromiseExit(
       Effect.gen(function* () {
-        const service = yield* GitBun;
+        const service = yield* BunPackages;
         const fiber = yield* Effect.forkChild(
           service.packSdkPackage({
             workspaceRoot: fixture.workspaceRoot,
@@ -836,7 +879,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     );
 
     const replacementFailure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -859,7 +902,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await runHost(bunBinary, ["install", "--offline", "--ignore-scripts"], consumer);
     const installedRoot = await realpath(join(consumer, "node_modules", "@rawr", "research-sdk"));
     await runAdapter(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.verifyInstalledSdkPackage({
           workspaceRoot: consumer,
           packageRoot: installedRoot,
@@ -869,8 +912,59 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       )
     );
 
+    const consumerManifestPath = join(consumer, "package.json");
+    const consumerManifestBytes = await readFile(consumerManifestPath);
+    const consumerManifest = JSON.parse(decoder.decode(consumerManifestBytes));
     const consumerLockPath = join(consumer, "bun.lock");
     const consumerLockBytes = await readFile(consumerLockPath);
+    consumerManifest.dependencies["@rawr/research-sdk"] = "file:/stale-artifact.tgz";
+    await writeJson(consumerManifestPath, consumerManifest);
+    const staleConsumerManifest = await runAdapterFailure(
+      Effect.flatMap(BunPackages, (service) =>
+        service.verifyInstalledSdkPackage({
+          workspaceRoot: consumer,
+          packageRoot: installedRoot,
+          artifactPath: outputPath,
+          expected: descriptor,
+        })
+      )
+    );
+    expect(staleConsumerManifest).toEqual(
+      expect.objectContaining({ kind: "GitBunIdentityMismatch" })
+    );
+    await writeFile(consumerManifestPath, consumerManifestBytes);
+
+    delete consumerManifest.dependencies["@rawr/research-sdk"];
+    consumerManifest.devDependencies = {
+      "@rawr/research-sdk": `file:${outputPath}`,
+    };
+    const misplacedConsumerLock = Bun.JSONC.parse(decoder.decode(consumerLockBytes));
+    const misplacedConsumerWorkspace = mutableLockWorkspace(misplacedConsumerLock, "");
+    Reflect.deleteProperty(
+      mutableRecordField(misplacedConsumerWorkspace, "dependencies"),
+      "@rawr/research-sdk"
+    );
+    Reflect.set(misplacedConsumerWorkspace, "devDependencies", {
+      "@rawr/research-sdk": `file:${outputPath}`,
+    });
+    await writeJson(consumerManifestPath, consumerManifest);
+    await writeJson(consumerLockPath, misplacedConsumerLock);
+    const misplacedConsumerDependency = await runAdapterFailure(
+      Effect.flatMap(BunPackages, (service) =>
+        service.verifyInstalledSdkPackage({
+          workspaceRoot: consumer,
+          packageRoot: installedRoot,
+          artifactPath: outputPath,
+          expected: descriptor,
+        })
+      )
+    );
+    expect(misplacedConsumerDependency).toEqual(
+      expect.objectContaining({ kind: "GitBunIdentityMismatch" })
+    );
+    await writeFile(consumerManifestPath, consumerManifestBytes);
+    await writeFile(consumerLockPath, consumerLockBytes);
+
     const consumerLock = Bun.JSONC.parse(decoder.decode(consumerLockBytes));
     if (
       consumerLock === null ||
@@ -903,7 +997,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     Reflect.set(lockedDependencies, "effect", "0.0.0-lock-drift");
     await writeFile(consumerLockPath, `${JSON.stringify(consumerLock, null, 2)}\n`);
     const consumerEdgeMismatch = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.verifyInstalledSdkPackage({
           workspaceRoot: consumer,
           packageRoot: installedRoot,
@@ -922,7 +1016,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       Buffer.concat([immutablePackageBytes, Buffer.from("artifact mutation")])
     );
     const artifactMismatch = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.verifyInstalledSdkPackage({
           workspaceRoot: consumer,
           packageRoot: installedRoot,
@@ -941,7 +1035,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       Buffer.concat([installedManifestBytes, Buffer.from("\n")])
     );
     const manifestBytesMismatch = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.verifyInstalledSdkPackage({
           workspaceRoot: consumer,
           packageRoot: installedRoot,
@@ -963,7 +1057,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       },
     } satisfies PackedPackageDescriptor;
     const manifestDigestMismatch = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.verifyInstalledSdkPackage({
           workspaceRoot: consumer,
           packageRoot: installedRoot,
@@ -986,7 +1080,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       Buffer.concat([originalEffectEntry, Buffer.from("\n// reachable mutation\n")])
     );
     const contentMismatch = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.verifyInstalledSdkPackage({
           workspaceRoot: consumer,
           packageRoot: installedRoot,
@@ -1001,7 +1095,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const originalEffectMode = (await lstat(installedEffectEntry)).mode & 0o777;
     await chmod(installedEffectEntry, originalEffectMode ^ 0o020);
     await runAdapter(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.verifyInstalledSdkPackage({
           workspaceRoot: consumer,
           packageRoot: installedRoot,
@@ -1012,7 +1106,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     );
     await chmod(installedEffectEntry, originalEffectMode ^ 0o100);
     const modeMismatch = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.verifyInstalledSdkPackage({
           workspaceRoot: consumer,
           packageRoot: installedRoot,
@@ -1039,7 +1133,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       runtimeGraph: mutatedGraph,
     } satisfies PackedPackageDescriptor;
     const mismatch = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.verifyInstalledSdkPackage({
           workspaceRoot: consumer,
           packageRoot: installedRoot,
@@ -1058,7 +1152,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
 
     const result = await runAdapter(
       Effect.gen(function* () {
-        const service = yield* GitBun;
+        const service = yield* BunPackages;
         const pack = service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1097,7 +1191,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await mkdir(dirname(outputPath), { recursive: true });
 
     const missingBuildInput = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1115,13 +1209,13 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const unsafeScratch = join(unsafeRoot, "scratch");
     await Promise.all([mkdir(join(unsafeRoot, "node_modules")), mkdir(unsafeScratch)]);
     const unsafeRuntime = makeResearchProcessRuntime(
-      makeGitBunLayer(gitBunConfig(await realpath(unsafeScratch))).pipe(
+      makeBunPackagesLayer(bunPackageConfig(await realpath(unsafeScratch))).pipe(
         Layer.provide(BunCommandProcessLayer)
       )
     );
     try {
       const unsafeFailure = await unsafeRuntime.runPromiseExit(
-        Effect.flatMap(GitBun, (service) =>
+        Effect.flatMap(BunPackages, (service) =>
           service.packSdkPackage({
             workspaceRoot: fixture.workspaceRoot,
             packageRoot: fixture.packageRoot,
@@ -1174,7 +1268,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await mkdir(dirname(outputPath), { recursive: true });
 
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1217,7 +1311,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await mkdir(dirname(outputPath), { recursive: true });
 
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1247,7 +1341,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await mkdir(dirname(outputPath), { recursive: true });
 
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1286,7 +1380,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await mkdir(dirname(outputPath), { recursive: true });
 
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1332,7 +1426,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await mkdir(dirname(outputPath), { recursive: true });
 
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1372,7 +1466,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await mkdir(dirname(outputPath), { recursive: true });
 
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1456,7 +1550,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await mkdir(dirname(outputPath), { recursive: true });
 
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1494,7 +1588,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await mkdir(dirname(outputPath), { recursive: true });
 
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1558,7 +1652,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const outputPath = join(runRoot, "artifacts", "workspace-collision-sdk.tgz");
     await mkdir(dirname(outputPath), { recursive: true });
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1584,7 +1678,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await mkdir(dirname(outputPath), { recursive: true });
 
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1660,7 +1754,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const outputPath = join(runRoot, "artifacts", "contextual-resolution-sdk.tgz");
     await mkdir(dirname(outputPath), { recursive: true });
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1724,7 +1818,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const outputPath = join(runRoot, "artifacts", "contextual-request-sdk.tgz");
     await mkdir(dirname(outputPath), { recursive: true });
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1736,6 +1830,116 @@ describe.sequential("Git/Bun research artifact boundary", () => {
 
     expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
     await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
+  test("does not weaken a required runtime edge through an overlapping optional peer", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "overlapping-runtime-groups-package-fixture"),
+      false
+    );
+    const lockPath = join(fixture.workspaceRoot, "bun.lock");
+    const lock = Bun.JSONC.parse(await readFile(lockPath, "utf8"));
+    const workspace = mutableLockWorkspace(lock, "packages/research-sdk");
+    const dependencies = mutableRecordField(workspace, "dependencies");
+    const dependencyName = Reflect.ownKeys(dependencies).find(
+      (key): key is string => typeof key === "string"
+    );
+    if (dependencyName === undefined) {
+      throw new Error("The SDK workspace fixture has no required runtime dependency.");
+    }
+    const requested = Reflect.get(dependencies, dependencyName);
+    if (typeof requested !== "string") {
+      throw new Error("The SDK workspace dependency request is malformed.");
+    }
+    const packageManifestPath = join(fixture.packageRoot, "package.json");
+    const packageManifest = JSON.parse(await readFile(packageManifestPath, "utf8"));
+    packageManifest.peerDependencies = { [dependencyName]: requested };
+    packageManifest.peerDependenciesMeta = { [dependencyName]: { optional: true } };
+    await writeJson(packageManifestPath, packageManifest);
+    Reflect.set(workspace, "peerDependencies", { [dependencyName]: requested });
+    Reflect.set(workspace, "optionalPeers", [dependencyName]);
+    await writeJson(lockPath, lock);
+
+    const dependencyPath = join(fixture.packageRoot, "node_modules", ...dependencyName.split("/"));
+    await rm(dependencyPath, { force: true });
+    const failure = await Effect.runPromiseExit(
+      deriveRuntimeGraph({
+        workspaceRoot: fixture.workspaceRoot,
+        packageRoot: fixture.packageRoot,
+      })
+    );
+
+    expect(Exit.isFailure(failure)).toBe(true);
+    if (Exit.isSuccess(failure)) {
+      throw new Error("The overlapping dependency groups unexpectedly admitted.");
+    }
+    expect(Option.getOrThrow(Cause.findErrorOption(failure.cause))).toEqual(
+      expect.objectContaining({ kind: "GitBunInvalidInput" })
+    );
+  }, 60_000);
+
+  test("binds reachable Bun lock platform and executable behavior exactly", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "registry-behavior-package-fixture"),
+      false
+    );
+    const lockPath = join(fixture.workspaceRoot, "bun.lock");
+    const originalLockBytes = await readFile(lockPath);
+    const originalLock = Bun.JSONC.parse(decoder.decode(originalLockBytes));
+    const typescriptRow = mutableRegistryLockRow(originalLock, "typescript");
+    const originalTypeScriptManifestPath = await realpath(
+      Bun.resolveSync("typescript/package.json", fixture.packageRoot)
+    );
+    const originalTypeScriptManifestBytes = await readFile(originalTypeScriptManifestPath);
+
+    const selectedBinLock = structuredClone(originalLock);
+    Reflect.set(mutableRegistryLockRow(selectedBinLock, "typescript").metadata, "bin", {
+      "not-tsc": "bin/tsc",
+    });
+    await writeJson(lockPath, selectedBinLock);
+    await expectRuntimeGraphFailure(fixture, "GitBunIdentityMismatch");
+
+    const selectedPlatformLock = structuredClone(originalLock);
+    Reflect.set(
+      mutableRegistryLockRow(selectedPlatformLock, "typescript").metadata,
+      "os",
+      process.platform
+    );
+    await writeJson(lockPath, selectedPlatformLock);
+    await expectRuntimeGraphFailure(fixture, "GitBunIdentityMismatch");
+
+    const divergentLock = structuredClone(originalLock);
+    const divergentRow = mutableRegistryLockRow(divergentLock, "typescript");
+    const duplicateRow = structuredClone(divergentRow.row);
+    const duplicateMetadata = mutableRegistryMetadata(duplicateRow);
+    Reflect.set(duplicateMetadata, "bin", { tsc: "bin/not-tsc" });
+    Reflect.set(mutableLockPackages(divergentLock), "duplicate/typescript", duplicateRow);
+    await writeJson(lockPath, divergentLock);
+    await expectRuntimeGraphFailure(fixture, "GitBunInvalidInput");
+
+    const incompatibleLock = structuredClone(originalLock);
+    const incompatibleRow = mutableRegistryLockRow(incompatibleLock, "typescript");
+    Reflect.set(incompatibleRow.metadata, "os", "not-current");
+    await writeJson(lockPath, incompatibleLock);
+    const incompatibleManifest = JSON.parse(decoder.decode(originalTypeScriptManifestBytes));
+    incompatibleManifest.os = ["not-current"];
+    await writeJson(originalTypeScriptManifestPath, incompatibleManifest);
+    await expectRuntimeGraphFailure(fixture, "GitBunIdentityMismatch");
+    await writeFile(originalTypeScriptManifestPath, originalTypeScriptManifestBytes);
+
+    const bundledLock = structuredClone(originalLock);
+    Reflect.set(mutableRegistryLockRow(bundledLock, "typescript").metadata, "bundled", true);
+    await writeJson(lockPath, bundledLock);
+    await expectRuntimeGraphFailure(fixture, "GitBunInvalidInput");
+
+    await writeFile(lockPath, originalLockBytes);
+    expect(typescriptRow.resolution.startsWith("typescript@")).toBe(true);
+    await Effect.runPromise(
+      deriveRuntimeGraph({
+        workspaceRoot: fixture.workspaceRoot,
+        packageRoot: fixture.packageRoot,
+      })
+    );
   }, 60_000);
 
   test("packs concurrent immutable artifacts without sharing caller-owned build state", async () => {
@@ -1758,7 +1962,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const outputPath = join(runRoot, "artifacts", "drifting-fixture.tgz");
     await mkdir(dirname(outputPath), { recursive: true });
     const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: fixture.workspaceRoot,
           packageRoot: fixture.packageRoot,
@@ -1800,7 +2004,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await symlink(externalDistribution, join(distFixture.packageRoot, "dist"));
 
     const distFailure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
+      Effect.flatMap(BunPackages, (service) =>
         service.packSdkPackage({
           workspaceRoot: distFixture.workspaceRoot,
           packageRoot: distFixture.packageRoot,
@@ -1815,12 +2019,22 @@ describe.sequential("Git/Bun research artifact boundary", () => {
   }, 60_000);
 });
 
-function gitBunConfig(configuredScratchRoot: string) {
+function gitArtifactConfig(configuredScratchRoot: string) {
   return {
     git: {
       executable: gitBinary,
       expectedVersion: expectedGitVersion,
     },
+    scratchRoot: configuredScratchRoot,
+    command: {
+      timeoutMs: 20_000,
+      terminationGraceMs: 1_000,
+    },
+  };
+}
+
+function bunPackageConfig(configuredScratchRoot: string) {
+  return {
     bun: {
       executable: bunBinary,
       expectedVersion: expectedBunVersion,
@@ -1835,7 +2049,7 @@ function gitBunConfig(configuredScratchRoot: string) {
 }
 
 async function runAdapter<Output>(
-  effect: Effect.Effect<Output, GitBunError, GitBun>
+  effect: Effect.Effect<Output, GitBunError, GitArtifacts | BunPackages>
 ): Promise<Output> {
   const exit = await runtime.runPromiseExit(effect);
   if (Exit.isFailure(exit)) {
@@ -1845,7 +2059,7 @@ async function runAdapter<Output>(
 }
 
 async function runAdapterFailure<Output>(
-  effect: Effect.Effect<Output, GitBunError, GitBun>
+  effect: Effect.Effect<Output, GitBunError, GitArtifacts | BunPackages>
 ): Promise<GitBunError> {
   const exit = await runtime.runPromiseExit(effect);
   if (Exit.isSuccess(exit)) {
@@ -1854,9 +2068,9 @@ async function runAdapterFailure<Output>(
   return Option.getOrThrow(Cause.findErrorOption(exit.cause)) as GitBunError;
 }
 
-async function materialize(destinationPath: string): Promise<void> {
-  await runAdapter(
-    Effect.flatMap(GitBun, (service) =>
+async function materialize(destinationPath: string): Promise<ArtifactSubstrate> {
+  const substrate = await runAdapter(
+    Effect.flatMap(GitArtifacts, (service) =>
       service.materializeRevision({
         sourceRepositoryPath: gitFixture.root,
         revision: gitFixture.revision,
@@ -1864,6 +2078,37 @@ async function materialize(destinationPath: string): Promise<void> {
       })
     )
   );
+  const persisted: unknown = JSON.parse(
+    JSON.stringify({
+      canonicalInput: {
+        algorithm: "sha256",
+        preimageKind: "fixture.input.v1",
+        value: "a".repeat(64),
+      },
+      authorities: [
+        {
+          kind: "fixture",
+          identity: "git-bun",
+          revision: "1",
+        },
+      ],
+      artifactSubstrate: substrate,
+    })
+  );
+  const decoded = decodeStructural(FrozenInputSchema, persisted);
+  if (decoded.kind === "Invalid" || decoded.value.artifactSubstrate === undefined) {
+    throw new Error("The materialization substrate did not survive FrozenInput persistence.");
+  }
+  materializationSubstrates.set(destinationPath, decoded.value.artifactSubstrate);
+  return decoded.value.artifactSubstrate;
+}
+
+function materializationSubstrateFor(destinationPath: string): ArtifactSubstrate {
+  const substrate = materializationSubstrates.get(destinationPath);
+  if (substrate === undefined) {
+    throw new Error(`No materialization substrate was captured for ${destinationPath}.`);
+  }
+  return substrate;
 }
 
 async function changedProduct(): Promise<ChangedProduct> {
@@ -1891,12 +2136,13 @@ async function createChangedProduct(): Promise<ChangedProduct> {
   await writeFile(join(root, "ignored", "new.log"), "ignored transient\n");
 
   const capture = await runAdapter(
-    Effect.flatMap(GitBun, (service) =>
+    Effect.flatMap(GitArtifacts, (service) =>
       service.capturePatch({
         sourceRepositoryPath: gitFixture.root,
         baseline: gitFixture.revision,
         terminalProductPath: root,
         pathMapping,
+        materializationSubstrate: materializationSubstrateFor(root),
       })
     )
   );
@@ -1911,7 +2157,7 @@ async function rejectApply(
   baseline: ExactGitRevision
 ): Promise<GitBunError> {
   return runAdapterFailure(
-    Effect.flatMap(GitBun, (service) =>
+    Effect.flatMap(GitArtifacts, (service) =>
       service.applyAndRegenerate({
         sourceRepositoryPath: gitFixture.root,
         baseline,
@@ -2060,7 +2306,7 @@ async function packFixture(
 ): Promise<PackedPackageDescriptor> {
   await mkdir(dirname(outputPath), { recursive: true });
   return runAdapter(
-    Effect.flatMap(GitBun, (service) =>
+    Effect.flatMap(BunPackages, (service) =>
       service.packSdkPackage({
         workspaceRoot: fixture.workspaceRoot,
         packageRoot: fixture.packageRoot,
@@ -2068,6 +2314,101 @@ async function packFixture(
         outputPath,
       })
     )
+  );
+}
+
+function mutableLockPackages(lock: unknown): object {
+  if (lock === null || typeof lock !== "object" || Array.isArray(lock)) {
+    throw new Error("The Bun lock fixture is malformed.");
+  }
+  const packages = Reflect.get(lock, "packages");
+  if (packages === null || typeof packages !== "object" || Array.isArray(packages)) {
+    throw new Error("The Bun lock package rows are malformed.");
+  }
+  return packages;
+}
+
+function mutableLockWorkspace(lock: unknown, key: string): object {
+  if (lock === null || typeof lock !== "object" || Array.isArray(lock)) {
+    throw new Error("The Bun lock fixture is malformed.");
+  }
+  const workspaces = Reflect.get(lock, "workspaces");
+  if (workspaces === null || typeof workspaces !== "object" || Array.isArray(workspaces)) {
+    throw new Error("The Bun lock workspace rows are malformed.");
+  }
+  const workspace = Reflect.get(workspaces, key);
+  if (workspace === null || typeof workspace !== "object" || Array.isArray(workspace)) {
+    throw new Error(`The Bun lock workspace row ${key} is malformed.`);
+  }
+  return workspace;
+}
+
+function mutableRecordField(record: object, key: string): object {
+  const value = Reflect.get(record, key);
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`The Bun lock field ${key} is malformed.`);
+  }
+  return value;
+}
+
+function mutableRegistryLockRow(
+  lock: unknown,
+  packageName: string
+): {
+  readonly row: unknown[];
+  readonly metadata: object;
+  readonly resolution: string;
+} {
+  for (const key of Reflect.ownKeys(mutableLockPackages(lock))) {
+    if (typeof key !== "string") {
+      continue;
+    }
+    const row = Reflect.get(mutableLockPackages(lock), key);
+    if (
+      !Array.isArray(row) ||
+      row.length !== 4 ||
+      row[1] !== "" ||
+      typeof row[0] !== "string" ||
+      !row[0].startsWith(`${packageName}@`)
+    ) {
+      continue;
+    }
+    return {
+      row,
+      metadata: mutableRegistryMetadata(row),
+      resolution: row[0],
+    };
+  }
+  throw new Error(`No registry lock row was found for ${packageName}.`);
+}
+
+function mutableRegistryMetadata(row: readonly unknown[]): object {
+  const metadata = row[2];
+  if (metadata === null || typeof metadata !== "object" || Array.isArray(metadata)) {
+    throw new Error("The registry lock metadata is malformed.");
+  }
+  return metadata;
+}
+
+async function expectRuntimeGraphFailure(
+  fixture: {
+    readonly workspaceRoot: string;
+    readonly packageRoot: string;
+  },
+  kind: GitBunError["kind"]
+): Promise<void> {
+  const exit = await Effect.runPromiseExit(
+    deriveRuntimeGraph({
+      workspaceRoot: fixture.workspaceRoot,
+      packageRoot: fixture.packageRoot,
+    })
+  );
+  expect(Exit.isFailure(exit)).toBe(true);
+  if (Exit.isSuccess(exit)) {
+    throw new Error("The mutated runtime graph unexpectedly admitted.");
+  }
+  expect(Option.getOrThrow(Cause.findErrorOption(exit.cause))).toEqual(
+    expect.objectContaining({ kind })
   );
 }
 

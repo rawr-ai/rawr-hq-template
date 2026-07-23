@@ -1,5 +1,5 @@
 import { type Static, Type } from "typebox";
-import { closedObject } from "./schema.js";
+import { closedObject, PortableDataSchema } from "./schema.js";
 
 export const NonEmptyStringSchema = Type.String({ minLength: 1 });
 export const Sha256DigestSchema = Type.String({ pattern: "^[a-f0-9]{64}$" });
@@ -82,10 +82,8 @@ export const ArtifactSubstrateSchema = closedObject(
   {},
   {
     kind: NonEmptyStringSchema,
-    resolvedBinary: NonEmptyStringSchema,
-    version: NonEmptyStringSchema,
-    environmentDigest: DigestIdentitySchema,
-    configurationDigest: DigestIdentitySchema,
+    identity: PortableDataSchema,
+    identityDigest: DigestIdentitySchema,
   }
 );
 

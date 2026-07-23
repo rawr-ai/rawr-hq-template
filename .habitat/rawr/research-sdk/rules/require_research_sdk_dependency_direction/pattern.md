@@ -5,12 +5,14 @@ level: error
 
 The public package root and contracts remain Effect-neutral. Contracts do not
 depend on core or runtime, and core does not depend on runtime. Runtime may
-depend inward on contracts and core.
+depend inward on contracts and core. Git-owned artifact mechanics use admitted
+Git plumbing and tool-neutral helpers rather than semantic Bun APIs.
 
 ```grit
 language js(typescript)
 
 or {
+  or {
   import_statement(source=$source),
   export_statement(source=$source),
   `import($source)`,
@@ -106,7 +108,15 @@ or {
     and {
       $filename <: r".*packages/research-sdk/src/.*\.(?:[cm]?[jt]s|[jt]sx)$",
       $source <: r"^[\"'][^\"']*(?:agent-plugin-lifecycle|controller-release)[^\"']*[\"']$"
+    },
+    and {
+      $filename <: r".*packages/research-sdk/src/adapters/git-bun/git(?:-adapter|-repository|-patch)?\.(?:[cm]?[jt]s|[jt]sx)$",
+      $source <: r"^[\"']bun(?:(?:/|:)[^\"']*)?[\"']$"
     }
+  }
+},
+  `Bun` where {
+    $filename <: r".*packages/research-sdk/src/adapters/git-bun/git(?:-adapter|-repository|-patch)?\.(?:[cm]?[jt]s|[jt]sx)$"
   }
 }
 ```

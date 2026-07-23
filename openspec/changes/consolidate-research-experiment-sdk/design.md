@@ -419,10 +419,13 @@ service, custom package manager, or cross-repository source import.
   placeholder-auth harness, explicit provider attachment, and endpoint
   coverage. It owns no registry, persisted secret, study admission, or retry
   policy.
-- `git-bun`: history-free materialization, safe tree transfer, canonical
-  full-index binary patch capture/application, and one immutable research-SDK
-  pack/install compatibility boundary. Git patch identity and Bun package
-  identity remain separate artifact epochs.
+- `git-bun`: one explicit subpath with two tool-local capabilities and no
+  combined facade or configuration. The Git capability owns history-free
+  materialization plus canonical full-index binary patch capture/application;
+  the Bun capability owns one immutable research-SDK pack/install compatibility
+  boundary. The public surface remains exactly those three Git operations and
+  two Bun operations. Git patch identity and Bun package identity remain
+  separate artifact epochs.
 - `evlog`: bounded host-side phase/failure events. Drain failure is diagnostic
   and cannot reclassify study outcomes.
 
@@ -573,9 +576,14 @@ and [EVLog tag](https://github.com/HugoRCD/evlog/tree/evlog%402.22.3).
 ### Bun And Git Artifacts
 
 - Use `Bun.CryptoHasher("sha256")` for durable identities, never `Bun.hash`.
+  Git-owned mechanics consume the package's tool-neutral SHA-256 helper and
+  MUST NOT import or invoke semantic Bun archive, filesystem, process, or
+  package APIs.
 - `FrozenInput` binds an artifact-substrate identity containing the exact
   resolved Git binary and version plus the normalized environment and diff
-  configuration. At minimum that substrate
+  configuration. Its vendor-neutral envelope carries the complete portable
+  adapter identity and its digest, so persistence and re-entry cannot reduce
+  it to an in-process or digest-only projection. At minimum that substrate
   fixes `LC_ALL=C`, `LANG=C`, `TZ=UTC`, `GIT_CONFIG_NOSYSTEM=1`, and
   `GIT_CONFIG_GLOBAL` to an empty lane-owned file. It explicitly fixes path
   quoting, line-ending conversion, file-mode handling, rename detection, diff
@@ -590,8 +598,13 @@ and [EVLog tag](https://github.com/HugoRCD/evlog/tree/evlog%402.22.3).
   fresh exact baseline, regenerate it, and require identical bytes and digest.
   Adoption rejects a different Git identity or canonicalization configuration
   rather than comparing unlike patch bytes.
-- Git archive owns history-free materialization. Bun archive is not assumed
-  portable until mode and symlink behavior prove it for the target platform.
+- The Git capability materializes a selected tree with an adapter-owned Git
+  repository/index and admitted Git plumbing, then returns the observed Git
+  substrate identity. The lane persists its complete portable envelope in
+  `FrozenInput`; capture validates and requires that round-tripped envelope,
+  reacquires the current Git substrate, and rejects any mismatch before
+  creating scratch state or reading either product tree. Materialization
+  therefore has no semantic dependency on Bun archive behavior.
 - Build before `bun pm pack --ignore-scripts`; validate the staged source files
   selected by Bun's archive API, bind package version, protocol version,
   tarball SHA-256, and the resolution/integrity manifest derived from the frozen
@@ -688,10 +701,12 @@ Tests target persistent behavioral guarantees, not implementation text:
     lane's owner-local check proves its own study mapping. Neither tests runtime
     behavior by scanning another repository. GritQL mutation probes reject
     normalized and non-normalized sibling-adapter paths except the two declared
-    composition leaves.
+    composition leaves, and reject semantic Bun imports or globals in Git-owned
+    mechanics.
 
-Habitat dependency-direction checks use GritQL patterns over imports. They are
-structural law, not source-string assertions or a second runtime test suite.
+Habitat dependency-direction checks use GritQL patterns over imports and
+owner-specific API use. They are structural law, not source-string assertions
+or a second runtime test suite.
 
 Local fixture servers, captured rollouts, and injected command/provider
 boundaries force failures, but the SDK's anchors remain real TypeBox checking,
