@@ -143,12 +143,10 @@ identity.
 ### Requirement: Release lifecycle activates only through qualified procedures
 
 Release derivation MUST remain owned by the lifecycle `releases` module and
-become operator-reachable only through qualified `check` and `build`. Packaging
-and providers MAY consume its ready service-level derivation capability without
-making releases procedures or module internals reachable.
-`build` MAY return a deterministic derived release summary or canonical bytes
-but MUST NOT publish a persistent lifecycle artifact. The retained typed
-`check|build|package|test|sync|status` procedures and qualified vendor
+become operator-reachable only through qualified `check`. Packaging and
+providers MAY consume its ready service-level derivation capability without
+making release procedures or module internals reachable. The retained typed
+`check|package|test|sync|status` procedures and qualified vendor
 operations MUST be projected only at their exact `rawr agent plugins` commands.
 Export, undo, direct module-router imports, runtime scans, aliases, aggregate
 projections, compatibility fallbacks, and Personal executable code MUST remain

@@ -6,8 +6,6 @@ import {
 } from "../../base";
 import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
 import type { SelectedContentResolver } from "../../model/dependencies/providers";
-import type { ArtifactStore } from "../../model/dependencies/releases";
-import type { MechanicalEvidenceStore } from "../../shared/release";
 import { createResourceContentWorkspaceSnapshotReader } from "./repository/content-workspace";
 import { createResourceStagedContentWorkspaceObservationReader } from "./repository/staged-content-workspace";
 
@@ -16,9 +14,7 @@ export const repositories = createServiceProvider<{
     contentWorkspace: ContentWorkspaceNodeAsyncPort;
   };
   provided: {
-    artifactStore: ArtifactStore;
     currentMain: CurrentMainSelectionReader;
-    mechanicalEvidenceStore: MechanicalEvidenceStore;
     selectedContent: SelectedContentResolver;
   };
 }>().middleware<{
@@ -37,13 +33,12 @@ export const repositories = createServiceProvider<{
 
 export const observability = createServiceObservabilityMiddleware({
   spanAttributes: ({ context }) => ({
-    controller_identity: context.scope.controllerIdentity,
     invocation_trace_id: context.invocation.traceId,
   }),
 });
 
 export const analytics = createServiceAnalyticsMiddleware({
   payload: ({ context }) => ({
-    analytics_controller_identity: context.scope.controllerIdentity,
+    analytics_trace_id: context.invocation.traceId,
   }),
 });

@@ -1,7 +1,6 @@
 import { readdir, realpath, unlink } from "node:fs/promises";
 import path from "node:path";
 import { createClient } from "@rawr/agent-plugin-lifecycle/client";
-import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   commitGeneratedGitRepository,
@@ -9,7 +8,6 @@ import {
   GIT_EXECUTABLE,
 } from "../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
 import type { LifecycleOperation } from "../../../src/lib/agent-plugins/commands/binding";
-import { deriveAgentPluginControllerLayout } from "../../../src/lib/agent-plugins/layout";
 import {
   createProductionLifecycleClient,
   createProductionLifecycleDeps,
@@ -21,7 +19,6 @@ import {
 } from "./releases/owned-fixture-root";
 
 const LIFECYCLE_OBJECT_DEP_KEYS = Object.freeze([
-  "artifactRepository",
   "contentWorkspace",
   "clock",
   "packageOutput",
@@ -40,7 +37,6 @@ const OPERATION_CASES = Object.freeze([
     owner: "releases",
     procedure: "refreshReleaseInput",
   },
-  { operation: "releases.build", owner: "releases", procedure: "build" },
   { operation: "vendors.status", owner: "vendors", procedure: "status" },
   { operation: "vendors.update", owner: "vendors", procedure: "update" },
   { operation: "packaging.package", owner: "packaging", procedure: "package" },
@@ -73,21 +69,8 @@ const invocation = Object.freeze({
 });
 
 let fixture: OwnedFixtureRoot | undefined;
-let controllerDataRoot = "";
-
 beforeAll(async () => {
   fixture = await createOwnedFixtureRoot();
-  controllerDataRoot = path.join(fixture.path, "controller-data");
-  bindVerifiedControllerReentryAuthority({
-    runtimePath: "/usr/bin/false",
-    entryPath: path.join(fixture.path, "controller-entry.ts"),
-    releaseRoot: fixture.path,
-    dataRoot: controllerDataRoot,
-    controllerDigest: "0".repeat(64),
-    operatorCwd: fixture.path,
-    operatorHome: undefined,
-    operatorConfigHome: undefined,
-  });
 });
 
 afterAll(async () => {
@@ -98,10 +81,7 @@ describe("production lifecycle service context", () => {
   it("assembles root-owned raw resources as cold ordinary data properties", async () => {
     const root = requireFixture();
     const before = await directoryNames(root.path);
-    const deps = createProductionLifecycleDeps({
-      binding: EMPTY_BINDING,
-      controllerDataRoot,
-    });
+    const deps = createProductionLifecycleDeps({ binding: EMPTY_BINDING });
 
     expect(Object.isFrozen(deps)).toBe(true);
     for (const dependency of LIFECYCLE_OBJECT_DEP_KEYS) {
@@ -121,20 +101,11 @@ describe("production lifecycle service context", () => {
     expect(deps).not.toHaveProperty("releaseEvidence");
     expect(deps).not.toHaveProperty("providerArtifactRepository");
     expect(deps).not.toHaveProperty("providerEvidenceStore");
-    expect(deps.artifactRepository).toMatchObject({
-      locateTree: expect.any(Function),
-      readTree: expect.any(Function),
-      publishTree: expect.any(Function),
-      readEvidence: expect.any(Function),
-      publishEvidence: expect.any(Function),
-    });
     expect(deps.packageOutput).toMatchObject({
       encodeCoworkV1: expect.any(Function),
       publish: expect.any(Function),
     });
-    const layout = deriveAgentPluginControllerLayout({ dataRoot: controllerDataRoot });
-    expect(deps.artifactRepositoryRoot).toBe(layout.artifactStoreRoot);
-    expect(Object.values(deps)).toHaveLength(8);
+    expect(Object.values(deps)).toHaveLength(6);
     expect(await directoryNames(root.path)).toEqual(before);
   });
 
@@ -165,16 +136,10 @@ describe("production lifecycle service context", () => {
       "remove governed release input"
     );
     const before = await directoryNames(root.path);
-    const unboundDeps = createProductionLifecycleDeps({
-      binding: EMPTY_BINDING,
-      controllerDataRoot,
-    });
+    const unboundDeps = createProductionLifecycleDeps({ binding: EMPTY_BINDING });
     const unboundClient = createClient({
       deps: unboundDeps,
-      scope: {
-        controllerIdentity: "controller:production-context-test",
-        controllerDataRootIdentity: "controller-data:production-context-test",
-      },
+      scope: {},
       config: {},
     });
     const boundDeps = createProductionLifecycleDeps({
@@ -182,14 +147,10 @@ describe("production lifecycle service context", () => {
         gitExecutable: await realpath(GIT_EXECUTABLE),
         providerExecutables: Object.freeze({}),
       }),
-      controllerDataRoot,
     });
     const boundClient = createClient({
       deps: boundDeps,
-      scope: {
-        controllerIdentity: "controller:production-context-test",
-        controllerDataRootIdentity: "controller-data:production-context-test",
-      },
+      scope: {},
       config: {},
     });
     await expect(

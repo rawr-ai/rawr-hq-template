@@ -1,7 +1,5 @@
 import {
   type ArtifactDigest,
-  createCompleteSetArtifactRef,
-  createReleaseArtifactRef,
   type PayloadDigest,
   type ReleaseDigest,
   type ReleaseInputDigest,
@@ -25,8 +23,6 @@ acceptsPayloadDigest(payloadDigest);
 acceptsReleaseDigest(releaseDigest);
 acceptsArtifactDigest(artifactDigest);
 acceptsReleaseSetDigest(releaseSetDigest);
-createReleaseArtifactRef(releaseDigest, artifactDigest);
-createCompleteSetArtifactRef(releaseSetDigest);
 
 // @ts-expect-error Payload identity cannot substitute for release identity.
 acceptsReleaseDigest(payloadDigest);
@@ -36,10 +32,6 @@ acceptsReleaseDigest(releaseInputDigest);
 acceptsReleaseDigest(artifactDigest);
 // @ts-expect-error Release identity cannot substitute for artifact identity.
 acceptsArtifactDigest(releaseDigest);
-// @ts-expect-error Ref fields preserve both digest domains.
-createReleaseArtifactRef(artifactDigest, releaseDigest);
-// @ts-expect-error Complete sets accept only the set digest domain.
-createCompleteSetArtifactRef(releaseDigest);
 // @ts-expect-error Payload identity cannot substitute for release-input identity.
 acceptsReleaseInputDigest(payloadDigest);
 // @ts-expect-error Release identity cannot substitute for payload identity.

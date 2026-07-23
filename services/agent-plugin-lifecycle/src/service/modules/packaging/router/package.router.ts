@@ -5,7 +5,7 @@ import type {
 } from "@rawr/resource-agent-plugin-package-output";
 import type { ContentWorkspaceSnapshotReader } from "../../../model/dependencies/releases";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../shared/release";
-import { constructPlan } from "../../releases/model/policy/release-plan";
+import { deriveReleaseSelection } from "../../releases/model/policy/release-plan";
 import {
   COWORK_PACKAGE_FORMAT,
   MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
@@ -56,13 +56,13 @@ async function packageAgentPlugin(
     );
   }
 
-  const plan = constructPlan(inspected.snapshot, request.mode);
-  if (!plan.ok) {
+  const derivation = deriveReleaseSelection(inspected.snapshot, request.mode);
+  if (!derivation.ok) {
     return rejected(
       createFailure(
         "ReleaseConstructionFailed",
         "release-construct",
-        plan.issues
+        derivation.issues
           .map((issue) => issue.kind)
           .sort()
           .join(",")
@@ -73,7 +73,7 @@ async function packageAgentPlugin(
   let bytes: Uint8Array;
   try {
     bytes = await dependencies.packageOutput.encodeCoworkV1(
-      createCoworkV1ArchiveRequest(plan.value)
+      createCoworkV1ArchiveRequest(derivation.value)
     );
   } catch (error) {
     return rejected(
@@ -111,7 +111,7 @@ async function packageAgentPlugin(
     repositoryIdentity: inspected.snapshot.repositoryIdentity,
     sourceCommit: inspected.snapshot.sourceCommit,
     sourceTree: inspected.snapshot.sourceTree,
-    release: packagedReleaseIdentity(plan.value),
+    release: packagedReleaseIdentity(derivation.value),
     format: COWORK_PACKAGE_FORMAT,
     outputPath: request.outputPath,
     packageDigest,
@@ -160,7 +160,7 @@ async function packageAgentPlugin(
 }
 
 function packagedReleaseIdentity(
-  plan: Extract<ReturnType<typeof constructPlan>, { readonly ok: true }>["value"]
+  plan: Extract<ReturnType<typeof deriveReleaseSelection>, { readonly ok: true }>["value"]
 ): PackagedReleaseIdentity {
   if (plan.releaseSet !== undefined) {
     return Object.freeze({

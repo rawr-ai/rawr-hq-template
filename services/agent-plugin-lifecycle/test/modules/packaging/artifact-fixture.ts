@@ -8,12 +8,7 @@ import {
   createAgentPluginRelease,
   createAgentPluginReleaseInput,
   createAgentPluginReleaseSet,
-  createCompleteSetArtifactRef,
-  createReleaseArtifactRef,
-  payloadEntryBytes,
   type ReleaseResult,
-  type VerifiedArtifactSnapshotV1,
-  type VerifiedReleaseArtifactV1,
 } from "../../../src/service/shared/release/index";
 
 const encoder = new TextEncoder();
@@ -28,9 +23,6 @@ export interface PackagingArtifactFixture {
   readonly alphaRelease: AgentPluginRelease;
   readonly betaRelease: AgentPluginRelease;
   readonly releaseSet: AgentPluginReleaseSet;
-  readonly alphaSnapshot: VerifiedReleaseArtifactV1;
-  readonly betaSnapshot: VerifiedReleaseArtifactV1;
-  readonly setSnapshot: Extract<VerifiedArtifactSnapshotV1, { readonly kind: "complete-set" }>;
 }
 
 export function packagingArtifactFixture(
@@ -69,21 +61,11 @@ export function packagingArtifactFixture(
       releases: [betaRelease, alphaRelease],
     })
   );
-  const alphaSnapshot = snapshot(alphaRelease);
-  const betaSnapshot = snapshot(betaRelease);
   return {
     releaseInput,
     alphaRelease,
     betaRelease,
     releaseSet,
-    alphaSnapshot,
-    betaSnapshot,
-    setSnapshot: {
-      kind: "complete-set",
-      ref: createCompleteSetArtifactRef(releaseSet.releaseSetDigest),
-      releaseSet,
-      members: [alphaSnapshot, betaSnapshot],
-    },
   };
 }
 
@@ -139,20 +121,6 @@ function release(
       payload: pluginPayload,
     })
   );
-}
-
-function snapshot(releaseValue: AgentPluginRelease): VerifiedReleaseArtifactV1 {
-  return {
-    kind: "release",
-    ref: createReleaseArtifactRef(releaseValue.releaseDigest, releaseValue.artifactDigest),
-    release: releaseValue,
-    files: releaseValue.artifactBody.payloadEntries.map((entry) => ({
-      path: entry.path,
-      mode: entry.mode,
-      contentDigest: entry.contentDigest,
-      bytes: payloadEntryBytes(entry),
-    })),
-  };
 }
 
 function must<T, E>(result: ReleaseResult<T, E>): T {

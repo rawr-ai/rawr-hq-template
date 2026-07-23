@@ -1,6 +1,5 @@
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 import type {
   ContentWorkspaceAsyncPort,
   ContentWorkspaceNodeAsyncPort,
@@ -21,8 +20,6 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
   const deps: Deps = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    artifactRepository: unavailableArtifactRepository(),
-    artifactRepositoryRoot: "/tmp/rawr-agent-plugin-lifecycle-test-artifacts",
     contentWorkspace: unavailableContentWorkspace(),
     clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
     packageOutput: {
@@ -35,10 +32,7 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
 
   return createClient({
     deps,
-    scope: {
-      controllerIdentity: "controller://agent-plugin-lifecycle-test",
-      controllerDataRootIdentity: "controller-data://agent-plugin-lifecycle-test",
-    },
+    scope: {},
     config: {},
   });
 }
@@ -84,22 +78,6 @@ export function unavailableProviderResources() {
       acquire: async () => unavailableAsync("native provider acquisition"),
     },
   };
-}
-
-export function unavailableArtifactRepository(
-  onAccess: (operation: keyof ArtifactRepositoryAsyncPort) => void = () => {}
-): ArtifactRepositoryAsyncPort {
-  const refuse = async (operation: keyof ArtifactRepositoryAsyncPort): Promise<never> => {
-    onAccess(operation);
-    return unavailableAsync(`artifact repository ${operation}`);
-  };
-  return Object.freeze({
-    locateTree: async () => refuse("locateTree"),
-    readTree: async () => refuse("readTree"),
-    publishTree: async () => refuse("publishTree"),
-    readEvidence: async () => refuse("readEvidence"),
-    publishEvidence: async () => refuse("publishEvidence"),
-  });
 }
 
 function unavailable(label: string): never {

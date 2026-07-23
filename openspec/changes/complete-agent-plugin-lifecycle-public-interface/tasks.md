@@ -200,7 +200,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   diagnostics, and dead release inspection/context, root build/dependency wiring,
   and obsolete architecture gates. Preserve no embedded copy of the custom
   extension manager.
-- [ ] 4.2b Delete `resources/controller-authority/**`, the remaining
+- [x] 4.2b Delete `resources/controller-authority/**`, the remaining
   `apps/cli/src/lib/controller/**`, and
   `packages/core/src/cli/controller-reentry.ts` with every lifecycle reader,
   writer, context field, export, dependency, and test. This node may compose with
@@ -242,9 +242,8 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   dependency bags instead of using the module-projected handler context.
 - [ ] 5.3 Make TypeBox the sole public structural schema and generated-type
   source. Remove manual closed-object parsing while retaining canonical order,
-  digest, uniqueness, and cross-field domain checks. Upgrade the coherent oRPC
-  client/contract/server family from `1.13.5` to the grounded Civ7 baseline
-  `1.14.6` as its own dependency slice. Run the exact source, type, and behavior
+  digest, uniqueness, and cross-field domain checks. Use the coherent current
+  oRPC family pinned by task 5.6a and run the exact source, type, and behavior
   review required by the current oRPC skill; do not infer compatibility from
   version proximity or mix family versions.
 - [ ] 5.4 Narrow root context to genuinely cross-cutting ready host capabilities,
@@ -275,6 +274,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   return bounded inline results, and retain no provider lifecycle state between
   invocations. Task 5.5 still owns the invocation-local disposable test source
   as well as persistent release/evidence/controller store deletion.
+- [x] 5.5c Delete the remaining persistent release/set repository, custom
+  evidence publication, retention planner, controller-derived data root, and
+  qualified build command as one reader-and-writer checkpoint. Keep only
+  bounded in-memory derivation facts. Regenerate the workspace lockfile, update
+  active contracts and operator guidance, and prove no tracked executable
+  reader or writer remains before closing the subtask.
 - [x] 5.6 Keep native provider adapters thin and point-addressed. No provider
   home scan, direct cache/config write, rollback state, or ambient multi-home
   coordinator. Remove the orphan `.rawr-agent-plugin-owner.json` sentinel and
@@ -283,13 +288,17 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   of an explicit non-root disposable root before native session acquisition.
 - [ ] 5.6a After tasks 4.2 and 5.5 remove the rejected Effect-owning runtime
   surfaces, migrate the lifecycle service, complete surviving resource/provider
-  family, and CLI adapter to the current official Effect 4 line as one distinct
-  reviewed Graphite node. Re-query and pin exact aligned `effect` and
-  `@effect/platform-node` versions; remove `@effect/platform`; migrate Node
-  services, process, filesystem, path, platform-error, concurrency, and
-  finalization APIs without compatibility wrappers. Require one Effect 4
-  runtime copy, no active Effect 3 copy, and no active `@effect/platform`
-  import. Keep the oRPC version upgrade separate and keep TypeBox authoritative.
+  family, CLI adapter, and any active root-owned tool that consumes Effect to the
+  current official Effect 4 line as one distinct reviewed Graphite node.
+  Re-query and pin exact aligned `effect`, `@effect/platform-node`,
+  Effect-4-compatible `effect-orpc`, current `@orpc/*`, and TypeBox versions
+  as one root-vendor closure; remove `@effect/platform`;
+  migrate Node services, process, filesystem, path, platform-error,
+  concurrency, and finalization APIs without compatibility wrappers. Construct
+  the lifecycle service through the generic Effect-backed oRPC service
+  blueprint. Require one Effect 4 runtime copy, no active Effect 3 copy, and no
+  active `@effect/platform` import, and one coherent oRPC realm. Keep TypeBox
+  authoritative.
 - [ ] 5.7 Seal one module at a time with owner-local behavior, schema, lint,
   typecheck, and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.

@@ -10,11 +10,6 @@ export const module = impl.releases
       context: {
         source: context.provided.releaseSource,
         stagedSource: context.provided.stagedReleaseSource,
-        artifacts: context.provided.artifactStore,
-        evidence: context.provided.mechanicalEvidenceStore,
-        retention: context.deps.releaseRetention,
-        buildFailpoint: context.deps.releaseBuildFailpoint,
-        artifactFailpoint: context.deps.releaseArtifactFailpoint,
       },
     })
   );

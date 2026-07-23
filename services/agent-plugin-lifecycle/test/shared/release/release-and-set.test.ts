@@ -6,19 +6,14 @@ import {
   canonicalSerializeAgentPluginReleaseBody,
   canonicalSerializeAgentPluginReleaseSet,
   canonicalSerializeAgentPluginReleaseSetBody,
-  canonicalSerializeArtifactRef,
   createAgentPluginPayload,
   createAgentPluginRelease,
   createAgentPluginReleaseInput,
   createAgentPluginReleaseSet,
-  createCompleteSetArtifactRef,
-  createReleaseArtifactRef,
   decodeAgentPluginRelease,
   decodeAgentPluginReleaseInput,
   decodeAgentPluginReleaseSet,
-  decodeArtifactRef,
   parseArtifactDigest,
-  parseArtifactRef,
   parsePayloadDigest,
   parseReleaseDigest,
   parseReleaseInputDigest,
@@ -108,38 +103,8 @@ describe("release and complete-set integrity", () => {
     }
   });
 
-  it("exposes only the closed artifact-ref union and rejects digest substitution", () => {
+  it("keeps release identity digest domains distinct", () => {
     const fixture = productFixture();
-    const releaseRef = createReleaseArtifactRef(
-      fixture.alphaRelease.releaseDigest,
-      fixture.alphaRelease.artifactDigest
-    );
-    const setRef = createCompleteSetArtifactRef(fixture.releaseSet.releaseSetDigest);
-    expect(decodeArtifactRef(canonicalSerializeArtifactRef(releaseRef))).toEqual({
-      ok: true,
-      value: releaseRef,
-    });
-    expect(decodeArtifactRef(canonicalSerializeArtifactRef(setRef))).toEqual({
-      ok: true,
-      value: setRef,
-    });
-    expect(
-      parseArtifactRef({
-        kind: "release",
-        releaseDigest: fixture.alphaRelease.artifactDigest,
-        artifactDigest: fixture.alphaRelease.releaseDigest,
-      }).ok
-    ).toBe(false);
-    expect(
-      parseArtifactRef({
-        kind: "complete-set",
-        releaseSetDigest: fixture.alphaRelease.releaseDigest,
-      }).ok
-    ).toBe(false);
-    expect(
-      parseArtifactRef({ kind: "generic", digest: fixture.alphaRelease.artifactDigest }).ok
-    ).toBe(false);
-
     const domains = [
       [fixture.releaseInput.releaseInputDigest, parseReleaseInputDigest],
       [fixture.alphaPayload.payloadDigest, parsePayloadDigest],
@@ -325,8 +290,6 @@ describe("release and complete-set integrity", () => {
       () => verifyAgentPluginReleaseSet({ body: {}, releaseSetDigest: "", schemaVersion: 1 }),
       () => decodeAgentPluginReleaseSet({}),
       () => verifyCompleteReleaseSet({}, {}),
-      () => parseArtifactRef({}),
-      () => decodeArtifactRef({}),
     ];
     for (const call of calls) {
       expect(call).not.toThrow();

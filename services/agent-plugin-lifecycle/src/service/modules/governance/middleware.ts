@@ -7,8 +7,6 @@ import {
 } from "../../base";
 import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
 import type { SelectedContentResolver } from "../../model/dependencies/providers";
-import type { ArtifactStore } from "../../model/dependencies/releases";
-import type { MechanicalEvidenceStore } from "../../shared/release";
 import { createResourceExactGitReader } from "./repository/content-workspace";
 
 export const repositories = createServiceProvider<{
@@ -16,9 +14,7 @@ export const repositories = createServiceProvider<{
     contentWorkspace: ContentWorkspaceNodeAsyncPort;
   };
   provided: {
-    artifactStore: ArtifactStore;
     currentMain: CurrentMainSelectionReader;
-    mechanicalEvidenceStore: MechanicalEvidenceStore;
     selectedContent: SelectedContentResolver;
   };
 }>().middleware<{

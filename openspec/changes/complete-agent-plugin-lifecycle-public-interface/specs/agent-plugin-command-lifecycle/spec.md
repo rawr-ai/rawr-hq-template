@@ -8,7 +8,7 @@
 ### Requirement: Curated lifecycle has one exact qualified command ontology
 
 The installed Template CLI MUST expose curated lifecycle only as
-`rawr agent plugins check|create|status vendors|update vendors|build|test|package|sync|status`.
+`rawr agent plugins check|create|status vendors|update vendors|test|package|sync|status`.
 Every command and nested topic MUST be a declared first-party Oclif command. Bare
 `rawr plugins`, root `rawr undo`, `rawr agent sync`, retired
 `rawr agent plugins retire`, retired `rawr agent plugins attest-promotion`,
