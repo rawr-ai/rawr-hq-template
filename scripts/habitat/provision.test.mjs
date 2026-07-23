@@ -1,29 +1,23 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { lstat, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { basename, dirname, join } from "node:path";
+import { writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import {
   parseReleaseManifest,
   selectReleaseAsset,
   sha256File,
   verifyReleaseAsset,
 } from "./provision.mjs";
+import {
+  createHabitatTestRoot,
+  removeHabitatTestRoot,
+} from "./test-fixture.mjs";
 
+const TEMP_PREFIX = "rawr-habitat-provision-test-";
 const roots = [];
 
 afterEach(async () => {
   for (const root of roots.splice(0)) {
-    const canonicalRoot = await realpath(root);
-    const canonicalTemp = await realpath(tmpdir());
-    const status = await lstat(canonicalRoot);
-    if (
-      !status.isDirectory()
-      || dirname(canonicalRoot) !== canonicalTemp
-      || !basename(canonicalRoot).startsWith("rawr-habitat-provision-test-")
-    ) {
-      throw new Error(`Refusing unsafe Habitat fixture cleanup: ${canonicalRoot}`);
-    }
-    await rm(canonicalRoot, { recursive: true });
+    await removeHabitatTestRoot(root, TEMP_PREFIX);
   }
 });
 
@@ -51,7 +45,7 @@ describe("Habitat standalone release consumer", () => {
   });
 
   it("verifies exact bytes and rejects a corrupt asset", async () => {
-    const root = await mkdtemp(join(tmpdir(), "rawr-habitat-provision-test-"));
+    const root = await createHabitatTestRoot(TEMP_PREFIX);
     roots.push(root);
     const filename = join(root, "habitat");
     await writeFile(filename, "exact");

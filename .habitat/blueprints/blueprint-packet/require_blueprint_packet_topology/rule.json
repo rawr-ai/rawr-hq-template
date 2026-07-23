@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_blueprint_packet_topology",
+  "title": "Require Blueprint Packet Topology",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "blueprint-packet",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "an open blueprint packet, a missing rule or baseline, or a runner source outside the canonical pattern.md and structure.toml names",
+  "why": "Every generic blueprint rule is one closed policy packet. Stable packet names let Habitat validate topology and let native Grit tests execute the exact registered source without a parallel rule inventory.",
+  "remediate": "Keep rule.json and baseline.json in every blueprint packet, add only the runner source selected by the rule as pattern.md or structure.toml, and remove unrelated files from the packet.",
+  "message": "Blueprint packets must retain one closed canonical policy surface.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        ".habitat/blueprints/*/*/**"
+      ]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/blueprint-packet/require_blueprint_packet_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/blueprints/blueprint-packet/require_blueprint_packet_topology/structure.toml"
+    }
+  }
+}
