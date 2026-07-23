@@ -24,7 +24,8 @@
     "sync": "bun run --cwd ../../.. sync:check --project @rawr/plugin-session-tools",
     "structural": "bun ../../../scripts/phase-03/run-structural-suite.mjs --project @rawr/plugin-session-tools",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --project plugin-session-tools"
+    "test": "vitest run --project plugin-session-tools",
+    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
   },
   "rawr": {
     "kind": "toolkit",

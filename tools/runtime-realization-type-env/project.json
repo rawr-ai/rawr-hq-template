@@ -74,6 +74,12 @@
       "options": {
         "command": "bunx nx run runtime-realization-type-env:sync && bunx nx run runtime-realization-type-env:structural && bunx nx run runtime-realization-type-env:report && bunx nx run runtime-realization-type-env:typecheck && bunx nx run runtime-realization-type-env:negative && bunx nx run runtime-realization-type-env:vendor-effect && bunx nx run runtime-realization-type-env:vendor-boundaries && bunx nx run runtime-realization-type-env:oracle && bunx nx run runtime-realization-type-env:middle-spine && bunx nx run runtime-realization-type-env:simulate"
       }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"tools/runtime-realization-type-env/**/*.{js,jsx,ts,tsx}\""
+      }
     }
   }
 }
