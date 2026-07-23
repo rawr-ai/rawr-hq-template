@@ -118,7 +118,7 @@ describe("bin/run.js", () => {
     expect(result.stderr).toBe("");
   });
 
-  it("re-enters source and built Oclif entrypoints without controller state", () => {
+  it("re-enters source and built Oclif entrypoints directly", () => {
     for (const entrypoint of ["src/index.ts", "bin/run.js"] as const) {
       const result = runCli(entrypoint, ["routine", "check", "--json", "--dry-run"]);
 
@@ -185,7 +185,7 @@ describe("bin/run.js", () => {
     }
   });
 
-  it("rejects the retired global controller diagnostic", () => {
+  it("rejects the retired global installation diagnostic", () => {
     const result = runCli("bin/run.js", ["doctor", "global", "--help"]);
 
     expect(result.status).toBe(2);

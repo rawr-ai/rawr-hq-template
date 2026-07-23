@@ -14,7 +14,6 @@ import {
 import { describe, expect, it } from "vitest";
 
 import {
-  parseBuildRequest,
   parseCheckOperationRequest,
   parsePackageRequest,
   parseStatusRequest,
@@ -25,11 +24,10 @@ import {
 } from "../../src/lib/agent-plugins/commands/input";
 import * as projectionSurface from "../../src/lib/agent-plugins/commands/projection";
 import {
-  type ControllerProjectionBinding,
   invokeLifecycleProcedure,
   type LifecycleOperationRequest,
   lifecycleResultExitCode,
-  parseControllerProjectionBinding,
+  parseLifecycleExecutableBinding,
   projectLifecycleOperation,
 } from "../../src/lib/agent-plugins/commands/projection";
 import { productFixture } from "./service-runtime/providers/product-fixture";
@@ -98,7 +96,12 @@ describe("qualified lifecycle command boundary", () => {
     };
     for (const invalid of [
       () => parseCheckOperationRequest({ mode: "codec" }),
-      () => parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha", "complete-set": true }),
+      () =>
+        parseCheckOperationRequest({
+          ...releaseWorkspace(),
+          plugin: "alpha",
+          "complete-set": true,
+        }),
       () =>
         parsePackageRequest({
           ...releaseWorkspace(),
@@ -128,7 +131,7 @@ describe("qualified lifecycle command boundary", () => {
           target: ["codex=relative"],
         }),
       () =>
-        parseControllerProjectionBinding({
+        parseLifecycleExecutableBinding({
           "provider-executable": ["codex=/tmp/codex", "codex=/tmp/other-codex"],
         }),
     ]) {
@@ -343,9 +346,14 @@ describe("qualified lifecycle command boundary", () => {
       operation: "releases.releaseInputRecord",
       input: { kind: "validate-envelope", bytes: invalidUtf8 },
     });
-    expect(parseBuildRequest({ ...releaseWorkspace(), "complete-set": true })).toMatchObject({
-      mode: { kind: "complete-set" },
-      contentWorkspace: { locator: "/tmp/content", sourceCommit: hex40, sourceTree: hex64 },
+    expect(
+      parseCheckOperationRequest({ ...releaseWorkspace(), "complete-set": true })
+    ).toMatchObject({
+      operation: "releases.check",
+      input: {
+        mode: { kind: "complete-set" },
+        contentWorkspace: { locator: "/tmp/content", sourceCommit: hex40, sourceTree: hex64 },
+      },
     });
     expect(parseVendorStatusRequest(vendorWorkspace())).toMatchObject({
       contentWorkspace: { locator: "/tmp/content" },
@@ -406,7 +414,7 @@ describe("qualified lifecycle command boundary", () => {
     });
   });
 
-  it("executes the pure current-main record operation without executable authority", () => {
+  it("executes the pure current-main record operation without executable bindings", () => {
     const result = runRawr([
       "agent",
       "plugins",
@@ -467,7 +475,7 @@ describe("qualified lifecycle command boundary", () => {
     });
   });
 
-  it("authors and validates release-input records from bounded stdin without executable authority", () => {
+  it("authors and validates release-input records from bounded stdin without executable bindings", () => {
     const bodyText = JSON.stringify(productFixture().releaseInput.body);
     const args = ["agent", "plugins", "check", "--mode", "release-input-record"] as const;
     const result = runRawr([...args, "--json"], bodyText);
@@ -545,7 +553,7 @@ describe("qualified lifecycle command boundary", () => {
     });
   });
 
-  it("projects release-input refresh bytes exactly and requires only Git authority", async () => {
+  it("projects release-input refresh bytes exactly and requires only a Git binding", async () => {
     const fixture = await createOwnedFixtureRoot();
     try {
       const skillRoot = path.join(fixture.path, "plugins", "agents", "alpha", "skills", "alpha");
@@ -803,47 +811,25 @@ describe("qualified lifecycle command boundary", () => {
     expect(human.stdout).not.toBe("ok\n");
   });
 
-  it("rejects a missing Git executable before constructing lifecycle ports", async () => {
+  it("passes canonical executable bindings to their owning resources", async () => {
     const fixture = await createOwnedFixtureRoot();
     try {
       const missingGit = path.join(fixture.path, "missing-git");
-      const cases: readonly Readonly<{
-        label: string;
-        request: LifecycleOperationRequest;
-        binding: ControllerProjectionBinding;
-        command: readonly string[];
-      }>[] = [
-        {
-          label: "missing Git executable",
-          request: {
-            operation: "releases.check",
-            input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }),
-          },
-          binding: { gitExecutable: missingGit, providerExecutables: {} },
-          command: releaseCheckCommand(fixture.path, missingGit),
-        },
-      ];
-
-      for (const testCase of cases) {
-        let clientConstructions = 0;
-        const rejected = await captureRejection(
-          projectLifecycleOperation(testCase.request, testCase.binding, () => {
-            clientConstructions += 1;
-            return recordingClient([]);
-          })
-        );
-        expect.soft(rejected, testCase.label).toMatchObject({
-          code: "LIFECYCLE_AUTHORITY_BINDING_INVALID",
-        });
-        expect.soft(clientConstructions, testCase.label).toBe(0);
-
-        const command = runRawr([...testCase.command, "--json"]);
-        expect.soft(command.status, `${testCase.label}\n${command.stderr}`).toBe(2);
-        expect.soft(parseSingleJson(command.stdout), testCase.label).toMatchObject({
-          ok: false,
-          error: { code: "LIFECYCLE_AUTHORITY_BINDING_INVALID" },
-        });
-      }
+      const binding = parseLifecycleExecutableBinding(
+        { "git-executable": missingGit },
+        { git: true }
+      );
+      const request = parseCheckOperationRequest({ ...releaseWorkspace(), plugin: "alpha" });
+      const calls: string[] = [];
+      let clientConstructions = 0;
+      await expect(
+        projectLifecycleOperation(request, binding, () => {
+          clientConstructions += 1;
+          return recordingClient(calls);
+        })
+      ).resolves.toEqual({ kind: "Recorded" });
+      expect(clientConstructions).toBe(1);
+      expect(calls).toEqual(["releases.check"]);
     } finally {
       await removeOwnedFixtureRoot(fixture);
     }
@@ -851,7 +837,6 @@ describe("qualified lifecycle command boundary", () => {
 });
 
 const EXACT_CURATED_PLUGIN_COMMANDS = [
-  "agent:plugins:build",
   "agent:plugins:check",
   "agent:plugins:create",
   "agent:plugins:package",
@@ -895,7 +880,6 @@ function recordingClient(calls: string[]): Client {
       checkRepository: call("releases.checkRepository"),
       releaseInputRecord: call("releases.releaseInputRecord"),
       refreshReleaseInput: call("releases.refreshReleaseInput"),
-      build: call("releases.build"),
     },
     vendors: { status: call("vendors.status"), update: call("vendors.update") },
     packaging: { package: call("packaging.package") },
@@ -935,19 +919,12 @@ function operationRequests(): LifecycleOperationRequest[] {
     member: ["alpha"],
   });
   return [
-    {
-      operation: "releases.check",
-      input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }),
-    },
+    parseCheckOperationRequest({ ...releaseWorkspace(), plugin: "alpha" }),
     stagedCheck,
     releaseInputRecord,
     releaseInputRefresh,
     currentMainRecord,
     currentMainSelection,
-    {
-      operation: "releases.build",
-      input: parseBuildRequest({ ...releaseWorkspace(), plugin: "alpha" }),
-    },
     { operation: "vendors.status", input: parseVendorStatusRequest(vendorWorkspace()) },
     {
       operation: "vendors.update",
@@ -1086,38 +1063,6 @@ function git(cwd: string, args: readonly string[]): void {
   }
 }
 
-function releaseCheckCommand(contentWorkspace: string, gitExecutable: string): readonly string[] {
-  return [
-    "agent",
-    "plugins",
-    "check",
-    "--content-workspace",
-    contentWorkspace,
-    "--repository-identity",
-    "github:rawr/hq",
-    "--content-authority",
-    "rawr-hq",
-    "--remote-name",
-    "origin",
-    "--remote-url",
-    "https://example.invalid/rawr-hq.git",
-    "--ref",
-    "refs/heads/main",
-    "--source-commit",
-    hex40,
-    "--source-tree",
-    hex64,
-    "--release-input",
-    "records/release-input.json",
-    "--plugin-root",
-    "plugins/agents",
-    "--plugin",
-    "alpha",
-    "--git-executable",
-    gitExecutable,
-  ];
-}
-
 function providerStatusCommand(
   contentWorkspace: string,
   targets: readonly string[],
@@ -1141,15 +1086,6 @@ function providerStatusCommand(
       ? []
       : ["--provider-executable", `claude=${claudeExecutable}`]),
   ];
-}
-
-async function captureRejection(operation: Promise<unknown>): Promise<unknown> {
-  try {
-    await operation;
-    return null;
-  } catch (error) {
-    return error;
-  }
 }
 
 function parseSingleJson(output: string): unknown {

@@ -2,19 +2,16 @@ import { randomUUID } from "node:crypto";
 import path from "node:path";
 
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
-import type { ControllerExecutableAuthority } from "@rawr/resource-controller-authority";
-import { preflightNodeControllerAuthority } from "@rawr/resource-controller-authority/providers/effect-platform-node";
 import { createProductionLifecycleClient } from "../service-runtime/client";
 import {
-  type ControllerProjectionBinding,
-  LifecycleAuthorityBindingError,
   type LifecycleClientFactory,
+  type LifecycleExecutableBinding,
+  LifecycleExecutableBindingError,
   type LifecycleOperation,
   type LifecycleOperationClient,
 } from "./binding";
 
 import type {
-  BuildRequest,
   CheckRequest,
   CurrentMainRecordRequest,
   CurrentMainSelectionRequest,
@@ -38,7 +35,6 @@ export type LifecycleOperationRequest =
       operation: "releases.refreshReleaseInput";
       input: ReleaseInputRefreshRequest;
     }>
-  | Readonly<{ operation: "releases.build"; input: BuildRequest }>
   | Readonly<{ operation: "vendors.status"; input: VendorStatusRequest }>
   | Readonly<{ operation: "vendors.update"; input: VendorUpdateRequest }>
   | Readonly<{ operation: "packaging.package"; input: PackageRequest }>
@@ -54,21 +50,21 @@ export type LifecycleOperationRequest =
 type LifecycleCallOptions = NonNullable<Parameters<Client["releases"]["check"]>[1]>;
 
 export {
-  type ControllerProjectionBinding,
-  LifecycleAuthorityBindingError,
   type LifecycleClientFactory,
+  type LifecycleExecutableBinding,
+  LifecycleExecutableBindingError,
   type LifecycleOperation,
   type LifecycleOperationClient,
 } from "./binding";
 
-export function parseControllerProjectionBinding(
+export function parseLifecycleExecutableBinding(
   flags: Readonly<Record<string, unknown>>,
   requirements: Readonly<{
     git?: boolean;
     providers?: readonly ("claude" | "codex")[];
     admittedProviders?: readonly ("claude" | "codex")[];
   }> = {}
-): ControllerProjectionBinding {
+): LifecycleExecutableBinding {
   const gitExecutable = optionalAbsoluteExecutable(flags["git-executable"], "--git-executable");
   if (requirements.git && gitExecutable === undefined) {
     throw new LifecycleInputError("--git-executable is required for this command");
@@ -101,16 +97,15 @@ export function parseControllerProjectionBinding(
 
 export async function projectLifecycleOperation(
   request: LifecycleOperationRequest,
-  binding: ControllerProjectionBinding,
+  binding: LifecycleExecutableBinding,
   factory: LifecycleClientFactory = createProductionLifecycleClient
 ): Promise<unknown> {
-  await preflightLifecycleAuthority(request, binding);
   return invokeLifecycleProcedure(request, binding, factory);
 }
 
 export async function invokeLifecycleProcedure(
   request: LifecycleOperationRequest,
-  binding: ControllerProjectionBinding,
+  binding: LifecycleExecutableBinding,
   factory: LifecycleClientFactory
 ): Promise<unknown> {
   const callOptions = invocation(request.operation);
@@ -130,10 +125,6 @@ export async function invokeLifecycleProcedure(
     case "releases.refreshReleaseInput": {
       const client = await factory("releases.refreshReleaseInput", binding);
       return await client.releases.refreshReleaseInput(request.input, callOptions);
-    }
-    case "releases.build": {
-      const client = await factory("releases.build", binding);
-      return await client.releases.build(request.input, callOptions);
     }
     case "vendors.status": {
       const client = await factory("vendors.status", binding);
@@ -194,7 +185,6 @@ export function lifecycleResultExitCode(operation: LifecycleOperation, result: u
     "releases.checkRepository": ["StagedRepositoryEligible", "CleanRepositoryEligible"],
     "releases.releaseInputRecord": [],
     "releases.refreshReleaseInput": [],
-    "releases.build": ["Published", "ReadOnlyConverged"],
     "vendors.status": ["VendorStatus"],
     "vendors.update": ["ReadOnlyConverged", "AuthoredReviewableChanges"],
     "packaging.package": ["ReadOnlyConverged", "OutputReplacedVerified"],
@@ -249,40 +239,6 @@ function invocation(operation: LifecycleOperation) {
       },
     },
   } satisfies LifecycleCallOptions;
-}
-
-async function preflightLifecycleAuthority(
-  request: LifecycleOperationRequest,
-  binding: ControllerProjectionBinding
-): Promise<void> {
-  switch (request.operation) {
-    case "providers.test":
-    case "providers.sync":
-    case "providers.status":
-      return;
-    default:
-      await preflightBindingAuthority(binding);
-  }
-}
-
-async function preflightBindingAuthority(binding: ControllerProjectionBinding): Promise<void> {
-  const executables: ControllerExecutableAuthority[] = [];
-  if (binding.gitExecutable !== undefined) {
-    executables.push({ kind: "git", name: "git", path: binding.gitExecutable });
-  }
-  const providerNames: readonly ("claude" | "codex")[] = ["claude", "codex"];
-  for (const provider of providerNames) {
-    const executable = binding.providerExecutables[provider];
-    if (executable !== undefined) {
-      executables.push({ kind: "provider", name: provider, path: executable });
-    }
-  }
-  const result = await preflightNodeControllerAuthority({ executables, providerHomes: [] });
-  if (result.ok) return;
-  if (result.failure.boundary === "provider-home") {
-    throw new LifecycleInputError(result.failure.detail);
-  }
-  throw new LifecycleAuthorityBindingError(result.failure.detail);
 }
 
 function parseProviderExecutables(input: unknown): Partial<Record<"claude" | "codex", string>> {
