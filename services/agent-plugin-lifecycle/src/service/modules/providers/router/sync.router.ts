@@ -1,3 +1,4 @@
+import { awaitDependencyPromise } from "../../../base";
 import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
 import type {
   NativeProviderSessionResolver,
@@ -15,8 +16,8 @@ import {
   reconcileProviderTargets,
 } from "./reconcile.router";
 import {
-  collectTargetIssues,
   canonicalProviderTargets,
+  collectTargetIssues,
   mutationClassification,
   rejectedTargets,
   selectionObservation,
@@ -30,9 +31,9 @@ export interface ProviderSyncDependencies {
   readonly nativeSessions: NativeProviderSessionResolver;
 }
 
-export const sync = module.sync.handler(async ({ context, input }) =>
-  runProviderSync(input, context)
-);
+export const sync = module.sync.effect(function* ({ context, input }) {
+  return yield* awaitDependencyPromise(() => runProviderSync(input, context));
+});
 
 export async function runProviderSync(
   request: ProviderSyncRequest,

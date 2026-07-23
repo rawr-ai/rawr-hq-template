@@ -13,8 +13,9 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { NodeContext } from "@effect/platform-node";
-import { Effect, Exit, Fiber, TestClock, TestContext } from "effect";
+import { NodeServices } from "@effect/platform-node";
+import { Cause, Effect, Exit, Fiber } from "effect";
+import { TestClock } from "effect/testing";
 
 import { codexEffectPlatformNodeProvider } from "../index";
 
@@ -89,7 +90,7 @@ describe("codex-effect-platform-node", () => {
         kind: "git",
         repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
         revision: "0123456789abcdef",
-        sparsePaths: ["plugins/agents", ".codex-plugin"],
+        sparsePaths: [".codex-plugin", "plugins/agents"],
       })
     );
     await Effect.runPromise(session.removeMarketplace({ identity: "rawr-hq" }));
@@ -162,9 +163,7 @@ describe("codex-effect-platform-node", () => {
     ]);
     const environments = await lines(path.join(fixture.home, "env.log"));
     expect(new Set(environments)).toEqual(
-      new Set([
-        `${fixture.home}|${fixture.home}|${process.env.CLAUDE_CONFIG_DIR ?? ""}|set`,
-      ])
+      new Set([`${fixture.home}|${fixture.home}|${process.env.CLAUDE_CONFIG_DIR ?? ""}|set`])
     );
   });
 
@@ -187,7 +186,9 @@ describe("codex-effect-platform-node", () => {
     });
   });
 
-  it("reports command phase for spawn, exit, and timeout failures", async () => {
+  it("reports command phase for spawn, exit, and timeout failures", {
+    timeout: 15_000,
+  }, async () => {
     const spawnFixture = await makeFixture();
     const spawnSession = await acquire(spawnFixture);
     await rm(spawnFixture.executablePath);
@@ -213,18 +214,42 @@ describe("codex-effect-platform-node", () => {
           executablePath: timeoutFixture.executablePath,
           home: timeoutFixture.home,
         });
-        const fiber = yield* Effect.fork(
-          session.installPlugin({ selector: "hang@rawr-hq" })
-        );
-        yield* Effect.yieldNow();
+        const fiber = yield* session
+          .installPlugin({ selector: "hang@rawr-hq" })
+          .pipe(Effect.forkChild({ startImmediately: true }));
+        yield* waitForCommandStart(timeoutFixture.home, "plugin add hang@rawr-hq --json");
         yield* TestClock.adjust("3 minutes");
         return yield* Fiber.await(fiber);
-      }).pipe(Effect.provide(NodeContext.layer), Effect.provide(TestContext.TestContext))
+      }).pipe(Effect.provide(NodeServices.layer), Effect.provide(TestClock.layer()))
     );
     expect(failure(timedOut)).toMatchObject({
       reason: "CommandTimedOut",
       commandPhase: "started",
     });
+
+    const forceKillFixture = await makeFixture();
+    const forceKilled = await Effect.runPromise(
+      Effect.gen(function* () {
+        const session = yield* codexEffectPlatformNodeProvider.acquire({
+          executablePath: forceKillFixture.executablePath,
+          home: forceKillFixture.home,
+        });
+        const fiber = yield* session
+          .installPlugin({ selector: "ignore-term@rawr-hq" })
+          .pipe(Effect.forkChild({ startImmediately: true }));
+        yield* waitForCommandStart(forceKillFixture.home, "plugin add ignore-term@rawr-hq --json");
+        yield* waitForEvent(forceKillFixture.home, "ready:ignore-term\n");
+        yield* TestClock.adjust("186 seconds");
+        return yield* Fiber.await(fiber);
+      }).pipe(Effect.provide(NodeServices.layer), Effect.provide(TestClock.layer()))
+    );
+    expect(failure(forceKilled)).toMatchObject({
+      reason: "CommandTimedOut",
+      commandPhase: "started",
+    });
+    const forceKillEvents = await lines(path.join(forceKillFixture.home, "events.log"));
+    expect(forceKillEvents).toContain("ready:ignore-term");
+    expect(forceKillEvents).not.toContain("end:plugin add ignore-term@rawr-hq --json");
   });
 
   it("refuses the filesystem root as a provider home before native execution", async () => {
@@ -233,7 +258,7 @@ describe("codex-effect-platform-node", () => {
     const refused = await Effect.runPromiseExit(
       codexEffectPlatformNodeProvider
         .acquire({ executablePath: fixture.executablePath, home: rootHome })
-        .pipe(Effect.provide(NodeContext.layer))
+        .pipe(Effect.provide(NodeServices.layer))
     );
     expect(failure(refused)).toMatchObject({
       operation: "acquire",
@@ -273,17 +298,13 @@ describe("codex-effect-platform-node", () => {
 
   it("reads one bounded point-addressed file batch with one native inventory pair", async () => {
     const fixture = await makeFixture();
-    const pluginRoot = path.join(
-      fixture.home,
-      "plugins",
-      "cache",
-      "rawr-hq",
-      "cognition",
-      "1.2.3"
-    );
+    const pluginRoot = path.join(fixture.home, "plugins", "cache", "rawr-hq", "cognition", "1.2.3");
     await mkdir(path.join(pluginRoot, ".codex-plugin"), { recursive: true });
     await mkdir(path.join(pluginRoot, "skills", "state-machine-design"), { recursive: true });
-    await writeFile(path.join(pluginRoot, ".codex-plugin", "plugin.json"), '{"name":"cognition"}\n');
+    await writeFile(
+      path.join(pluginRoot, ".codex-plugin", "plugin.json"),
+      '{"name":"cognition"}\n'
+    );
     await writeFile(
       path.join(pluginRoot, "skills", "state-machine-design", "SKILL.md"),
       "state machine\n"
@@ -379,7 +400,7 @@ async function acquire(fixture: Readonly<{ executablePath: string; home: string 
   return Effect.runPromise(
     codexEffectPlatformNodeProvider
       .acquire({ executablePath: fixture.executablePath, home: fixture.home })
-      .pipe(Effect.provide(NodeContext.layer))
+      .pipe(Effect.provide(NodeServices.layer))
   );
 }
 
@@ -397,9 +418,45 @@ async function commandLines(home: string): Promise<readonly string[]> {
 }
 
 function failure<A>(exit: Exit.Exit<A, unknown>): Readonly<Record<string, unknown>> | undefined {
-  if (!Exit.isFailure(exit) || exit.cause._tag !== "Fail") return undefined;
-  const value = exit.cause.error;
+  if (!Exit.isFailure(exit)) return undefined;
+  const failed = exit.cause.reasons.find(Cause.isFailReason);
+  const value = failed?.error;
   return typeof value === "object" && value !== null ? value : undefined;
+}
+
+function waitForCommandStart(home: string, command: string): Effect.Effect<void> {
+  return waitForEvent(home, `start:${command}\n`);
+}
+
+function waitForEvent(home: string, expected: string): Effect.Effect<void> {
+  return Effect.callback<void>((resume) => {
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const eventsPath = path.join(home, "events.log");
+
+    const poll = () => {
+      void readFile(eventsPath, "utf8").then(
+        (events) => {
+          if (!active) return;
+          if (events.includes(expected)) {
+            active = false;
+            resume(Effect.void);
+            return;
+          }
+          timer = setTimeout(poll, 5);
+        },
+        () => {
+          if (active) timer = setTimeout(poll, 5);
+        }
+      );
+    };
+
+    poll();
+    return Effect.sync(() => {
+      active = false;
+      if (timer !== undefined) clearTimeout(timer);
+    });
+  });
 }
 
 function fakeCodexScript(): string {
@@ -419,6 +476,10 @@ case "$*" in
     if [ -f "$HOME/codex-plugins.json" ]; then cat "$HOME/codex-plugins.json"; else printf '%s\\n' '{"installed":[],"available":[]}'; fi ;;
   "plugin add fail@rawr-hq --json") printf '%s\\n' 'failed' >&2; exit 9 ;;
   "plugin add hang@rawr-hq --json") sleep 999 ;;
+  "plugin add ignore-term@rawr-hq --json")
+    trap 'printf "%s\\n" "received:SIGTERM" >> "$HOME/events.log"' TERM
+    printf "%s\\n" "ready:ignore-term" >> "$HOME/events.log"
+    while :; do sleep 1; done ;;
   "plugin marketplace add "*|"plugin marketplace remove "*|"plugin add "*|"plugin remove "*) printf '%s\\n' '{}' ;;
   *) printf 'unexpected command: %s\\n' "$*" >&2; exit 64 ;;
 esac

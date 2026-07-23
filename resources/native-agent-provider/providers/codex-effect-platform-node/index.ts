@@ -133,17 +133,18 @@ export const codexEffectPlatformNodeProvider: NativeAgentProviderResource<
                             validated.files,
                             (file) =>
                               kernel.readPluginEntry("plugin-files-read", root, file).pipe(
-                                Effect.catchAll((error) => {
-                                  if (error.reason !== "Missing" && error.reason !== "LimitExceeded") {
-                                    return Effect.fail(error);
+                                Effect.catchIf(
+                                  (error) =>
+                                    error.reason === "Missing" || error.reason === "LimitExceeded",
+                                  (error) => {
+                                    const missing: NativeProviderPluginFileObservation =
+                                      Object.freeze({
+                                        kind: error.reason === "Missing" ? "Missing" : "TooLarge",
+                                        relativePath: file.relativePath,
+                                      });
+                                    return Effect.succeed(missing);
                                   }
-                                  const missing: NativeProviderPluginFileObservation =
-                                    Object.freeze({
-                                      kind: error.reason === "Missing" ? "Missing" : "TooLarge",
-                                      relativePath: file.relativePath,
-                                    });
-                                  return Effect.succeed(missing);
-                                })
+                                )
                               ),
                             { concurrency: 1 }
                           ).pipe(
@@ -173,11 +174,7 @@ export const codexEffectPlatformNodeProvider: NativeAgentProviderResource<
           removeMarketplace: (request) =>
             kernel.serialized(
               "marketplace-remove",
-              requireMarketplaceIdentityInput(
-                "codex",
-                "marketplace-remove",
-                request
-              ).pipe(
+              requireMarketplaceIdentityInput("codex", "marketplace-remove", request).pipe(
                 Effect.flatMap((identity) =>
                   kernel.mutation("marketplace-remove", [
                     "plugin",
@@ -288,9 +285,7 @@ function normalizeMarketplace(
           "Codex marketplace source is incomplete or non-canonical"
         )
       )
-    : Effect.succeed(
-        Object.freeze({ identity: entry.name, source, installedRoot: entry.root })
-      );
+    : Effect.succeed(Object.freeze({ identity: entry.name, source, installedRoot: entry.root }));
 }
 
 function normalizePlugin(
@@ -377,9 +372,9 @@ function codexMarketplaceAddArgs(
   source: NativeMarketplaceSource
 ): Effect.Effect<readonly string[], NativeAgentProviderFailure> {
   if (source.kind === "local") {
-    return kernel.requireLocalDirectory("marketplace-add", source.root).pipe(
-      Effect.map((root) => Object.freeze(["plugin", "marketplace", "add", root, "--json"]))
-    );
+    return kernel
+      .requireLocalDirectory("marketplace-add", source.root)
+      .pipe(Effect.map((root) => Object.freeze(["plugin", "marketplace", "add", root, "--json"])));
   }
   return requireGitMarketplaceSource(
     "codex",
@@ -422,9 +417,7 @@ function observedCapabilities(
   return capabilities;
 }
 
-function requireVersion(
-  stdout: string
-): Effect.Effect<string, NativeAgentProviderFailure> {
+function requireVersion(stdout: string): Effect.Effect<string, NativeAgentProviderFailure> {
   const version = stdout.trim();
   return version.length > 0 && version.length <= 4_096
     ? Effect.succeed(version)

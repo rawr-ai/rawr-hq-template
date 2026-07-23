@@ -19,7 +19,7 @@ itself.
 
 - What it is: Effect runtime ownership, `ManagedRuntime`, `Layer`, `Scope`,
   finalization, interruption, and disposal.
-- Current evidence: real `effect@3.21.3` behavior is proven in the vendor lane;
+- Current evidence: real `effect@4.0.0-beta.100` behavior is proven in the vendor lane;
   the lab has a process-owned managed runtime wrapper.
 - System impact: grounds RAWR-owned runtime execution and finalization.
 - Proof ceiling: final RAWR-owned runtime substrate names, public/internal

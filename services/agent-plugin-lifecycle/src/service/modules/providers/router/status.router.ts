@@ -1,12 +1,10 @@
+import { awaitDependencyPromise } from "../../../base";
 import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
 import type {
   NativeProviderSessionResolver,
   SelectedContentResolver,
 } from "../../../model/dependencies/providers";
-import type {
-  ProviderStatusRequest,
-  ProviderStatusResult,
-} from "../model/dto/provider-lifecycle";
+import type { ProviderStatusRequest, ProviderStatusResult } from "../model/dto/provider-lifecycle";
 import { module } from "../module";
 import { inspectProviderTargets, statusTargetResult } from "./reconcile.router";
 import {
@@ -23,9 +21,9 @@ export interface ProviderStatusDependencies {
   readonly nativeSessions: NativeProviderSessionResolver;
 }
 
-export const status = module.status.handler(async ({ context, input }) =>
-  runProviderStatus(input, context)
-);
+export const status = module.status.effect(function* ({ context, input }) {
+  return yield* awaitDependencyPromise(() => runProviderStatus(input, context));
+});
 
 export async function runProviderStatus(
   request: ProviderStatusRequest,

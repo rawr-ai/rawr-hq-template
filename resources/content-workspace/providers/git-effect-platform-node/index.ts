@@ -1,11 +1,9 @@
+import { type ExecFileException, execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { execFile, type ExecFileException } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { FileSystem } from "@effect/platform";
-import type { PlatformError } from "@effect/platform/Error";
-import { NodeContext } from "@effect/platform-node";
+import { NodeServices } from "@effect/platform-node";
 import type {
   ContentFileMode,
   ContentTreeEntry,
@@ -32,7 +30,7 @@ import type {
   MaterializedRemoteContentTree,
   RemoteContentTree,
 } from "@rawr/resource-content-workspace";
-import { Effect, Equal, Exit, Option, Stream } from "effect";
+import { Effect, Equal, Exit, FileSystem, Option, PlatformError } from "effect";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const PRIVATE_GIT_PREFIX = "rawr-content-workspace-git-";
@@ -938,17 +936,17 @@ export function makeContentWorkspaceResource(
         );
       }
       authority.mutatedPaths.add(write.path);
-      const applied = yield* Effect.either(
+      const applied = yield* Effect.result(
         applyWrite(fs, root, write, makeCaptureBudget(authority))
       );
-      const postimage = yield* Effect.either(
+      const postimage = yield* Effect.result(
         observePreimage(fs, root, write.path, "apply", makeCaptureBudget(authority))
       );
-      if (postimage._tag === "Right") authority.postimages.set(write.path, postimage.right);
+      if (postimage._tag === "Success") authority.postimages.set(write.path, postimage.success);
       else authority.uncertainPaths.add(write.path);
-      if (applied._tag === "Left") {
+      if (applied._tag === "Failure") {
         authority.lifecycle = "Partial";
-        return yield* Effect.fail(applied.left);
+        return yield* Effect.fail(applied.failure);
       }
       changedPaths.push(write.path);
     }
@@ -1058,17 +1056,17 @@ export function makeContentWorkspaceResource(
           "Path changed immediately before restore"
         );
       }
-      const restoredPath = yield* Effect.either(
+      const restoredPath = yield* Effect.result(
         restorePreimage(fs, root, preimage, makeCaptureBudget(authority))
       );
-      if (restoredPath._tag === "Left") {
+      if (restoredPath._tag === "Failure") {
         authority.lifecycle = "Partial";
-        const observed = yield* Effect.either(
+        const observed = yield* Effect.result(
           observePreimage(fs, root, relative, "restore", makeCaptureBudget(authority))
         );
-        if (observed._tag === "Left") authority.uncertainPaths.add(relative);
-        else if (equalPreimage(observed.right, preimage)) authority.restoredPaths.add(relative);
-        return yield* Effect.fail(restoredPath.left);
+        if (observed._tag === "Failure") authority.uncertainPaths.add(relative);
+        else if (equalPreimage(observed.success, preimage)) authority.restoredPaths.add(relative);
+        return yield* Effect.fail(restoredPath.failure);
       }
       const verified = yield* observePreimage(
         fs,
@@ -1227,10 +1225,10 @@ export function runNodeContentWorkspace<A>(
   return Effect.runPromise(
     operation.pipe(
       Effect.map((value): NodeContentWorkspaceResult<A> => successfulNodeResult(value)),
-      Effect.catchAll((failure) =>
+      Effect.catch((failure) =>
         Effect.succeed<NodeContentWorkspaceResult<A>>(failedNodeResult(failure))
       ),
-      Effect.provide(NodeContext.layer)
+      Effect.provide(NodeServices.layer)
     )
   );
 }
@@ -1561,9 +1559,9 @@ function withPrivateGitRepository<A>(
           })
         )
       );
-      const cleanup = yield* Effect.either(removeOwnedPrivateGitRoot(fs, allocation));
-      if (cleanup._tag === "Left") return yield* Effect.fail(cleanup.left);
-      return yield* Exit.matchEffect(outcome, {
+      const cleanup = yield* Effect.result(removeOwnedPrivateGitRoot(fs, allocation));
+      if (cleanup._tag === "Failure") return yield* Effect.fail(cleanup.failure);
+      return yield* Exit.match(outcome, {
         onFailure: (cause) => Effect.failCause(cause),
         onSuccess: (value) => Effect.succeed(value),
       });
@@ -3255,7 +3253,7 @@ function runGitCommand(
 ) {
   const stderrLimit = 64 * 1024;
   const maxBuffer = Math.max(maxStdoutBytes, stderrLimit);
-  return Effect.async<
+  return Effect.callback<
     Readonly<{ stdout: Uint8Array; stderr: Uint8Array; exitCode: number }>,
     ContentWorkspaceFailure
   >((resume) => {
@@ -3304,9 +3302,7 @@ function runGitCommand(
       );
       child.stdin?.end(stdin);
     } catch (error) {
-      resume(
-        Effect.fail(failure(operation, "GitFailed", root, errorMessage(error)))
-      );
+      resume(Effect.fail(failure(operation, "GitFailed", root, errorMessage(error))));
       return;
     }
     return Effect.sync(() => {
@@ -3330,9 +3326,7 @@ function gitProcessArgs(
   ];
 }
 
-function gitProcessEnvironment(
-  operation: ContentWorkspaceFailure["operation"]
-): NodeJS.ProcessEnv {
+function gitProcessEnvironment(operation: ContentWorkspaceFailure["operation"]): NodeJS.ProcessEnv {
   if (!isExactLocalGitOperation(operation)) return process.env;
   return {
     ...process.env,
@@ -3447,17 +3441,17 @@ function pathsOverlap(left: string, right: string): boolean {
 }
 
 function mapPlatform(operation: ContentWorkspaceFailure["operation"], candidate: string) {
-  return <A, R>(effect: Effect.Effect<A, PlatformError, R>) =>
+  return <A, R>(effect: Effect.Effect<A, PlatformError.PlatformError, R>) =>
     effect.pipe(Effect.mapError((cause) => platformFailure(operation, candidate, cause)));
 }
 
 function platformFailure(
   operation: ContentWorkspaceFailure["operation"],
   candidate: string,
-  cause: PlatformError,
+  cause: PlatformError.PlatformError,
   fallback: ContentWorkspaceFailure["reason"] = "FilesystemFailed"
 ): ContentWorkspaceFailure {
-  const missing = cause._tag === "SystemError" && cause.reason === "NotFound";
+  const missing = cause.reason._tag === "NotFound";
   return failure(operation, missing ? "Missing" : fallback, candidate, cause.message);
 }
 

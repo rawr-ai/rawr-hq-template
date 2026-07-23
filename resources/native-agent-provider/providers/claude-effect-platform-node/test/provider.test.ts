@@ -1,19 +1,10 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import {
-  chmod,
-  lstat,
-  mkdir,
-  mkdtemp,
-  readFile,
-  realpath,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { chmod, lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { NodeContext } from "@effect/platform-node";
-import { Effect, Exit } from "effect";
+import { NodeServices } from "@effect/platform-node";
+import { Cause, Effect, Exit } from "effect";
 
 import { claudeEffectPlatformNodeProvider } from "../index";
 
@@ -80,7 +71,7 @@ describe("claude-effect-platform-node", () => {
         kind: "git",
         repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
         revision: "v2026.2.8",
-        sparsePaths: ["plugins/agents", ".claude-plugin"],
+        sparsePaths: [".claude-plugin", "plugins/agents"],
       })
     );
     await Effect.runPromise(session.removeMarketplace({ identity: "rawr-hq" }));
@@ -209,7 +200,10 @@ describe("claude-effect-platform-node", () => {
     await mkdir(path.join(pluginRoot, "skills", "state-machine-design", "references"), {
       recursive: true,
     });
-    await writeFile(path.join(pluginRoot, ".claude-plugin", "plugin.json"), '{"name":"cognition"}\n');
+    await writeFile(
+      path.join(pluginRoot, ".claude-plugin", "plugin.json"),
+      '{"name":"cognition"}\n'
+    );
     await writeFile(
       path.join(pluginRoot, "skills", "state-machine-design", "references", "guide.md"),
       "state machine guide\n"
@@ -297,7 +291,7 @@ async function acquire(fixture: Readonly<{ executablePath: string; home: string 
   return Effect.runPromise(
     claudeEffectPlatformNodeProvider
       .acquire({ executablePath: fixture.executablePath, home: fixture.home })
-      .pipe(Effect.provide(NodeContext.layer))
+      .pipe(Effect.provide(NodeServices.layer))
   );
 }
 
@@ -315,8 +309,9 @@ async function commandLines(home: string): Promise<readonly string[]> {
 }
 
 function failure<A>(exit: Exit.Exit<A, unknown>): Readonly<Record<string, unknown>> | undefined {
-  if (!Exit.isFailure(exit) || exit.cause._tag !== "Fail") return undefined;
-  const value = exit.cause.error;
+  if (!Exit.isFailure(exit)) return undefined;
+  const failed = exit.cause.reasons.find(Cause.isFailReason);
+  const value = failed?.error;
   return typeof value === "object" && value !== null ? value : undefined;
 }
 

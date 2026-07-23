@@ -48,7 +48,7 @@ Current materialization:
 ## Evidence Lanes And Proof Ceilings
 
 - Type/shape proof: authoring signatures, descriptor refs, portable artifacts, and negative misuse cases compile or fail as expected.
-- Vendor proof: real `effect@3.21.3`, TypeBox, oRPC, Inngest, and Bun boundary behavior is exercised only in narrow lab lanes.
+- Vendor proof: real `effect@4.0.0-beta.100`, TypeBox, oRPC, Inngest, and Bun boundary behavior is exercised only in narrow lab lanes.
 - Oracle proof: descriptor table/registry assembly,
   runtime-owned Effect execution, adapter delegation, deployment handoff, and
   invocation-time context binding run through Oracle. These Oracle tests are

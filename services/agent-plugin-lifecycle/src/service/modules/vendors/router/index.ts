@@ -1,4 +1,5 @@
 import type { ContentWorkspaceAsyncPort } from "@rawr/resource-content-workspace";
+import { awaitDependencyPromise } from "../../../base";
 import type {
   VendorSourceStatus,
   VendorStatusRequest,
@@ -48,8 +49,10 @@ interface PreparedCandidate {
   readonly upstream: VendorUpstreamObservation;
 }
 
-const status = module.status.handler(async ({ context, input: request }) => {
-  const workspace = await observeWorkspace(context.contentWorkspace, request);
+const status = module.status.effect(function* ({ context, input: request }) {
+  const workspace = yield* awaitDependencyPromise(() =>
+    observeWorkspace(context.contentWorkspace, request)
+  );
   if ("issues" in workspace) return { kind: "Rejected" as const, issues: workspace.issues };
 
   const statuses: VendorSourceStatus[] = [];
@@ -69,13 +72,18 @@ const status = module.status.handler(async ({ context, input: request }) => {
       });
       continue;
     }
-    statuses.push((await assessSource(context.contentWorkspace, source)).status);
+    const assessment = yield* awaitDependencyPromise(() =>
+      assessSource(context.contentWorkspace, source)
+    );
+    statuses.push(assessment.status);
   }
   return { kind: "VendorStatus" as const, sources: statuses };
 });
 
-const update = module.update.handler(async ({ context, input: request }) => {
-  const workspace = await observeWorkspace(context.contentWorkspace, request);
+const update = module.update.effect(function* ({ context, input: request }) {
+  const workspace = yield* awaitDependencyPromise(() =>
+    observeWorkspace(context.contentWorkspace, request)
+  );
   if ("issues" in workspace) return rejected(request.sourceIds, workspace.issues);
   const selected = selectSources(request, workspace.observation);
   if ("issues" in selected) return rejected(request.sourceIds, selected.issues);
@@ -83,7 +91,9 @@ const update = module.update.handler(async ({ context, input: request }) => {
   const candidates: PreparedCandidate[] = [];
   const assessmentIssues: VendorUpdateIssue[] = [];
   for (const source of selected.sources) {
-    const assessment = await assessSource(context.contentWorkspace, source);
+    const assessment = yield* awaitDependencyPromise(() =>
+      assessSource(context.contentWorkspace, source)
+    );
     if (assessment.issue !== undefined) assessmentIssues.push(assessment.issue);
     if (assessment.candidate !== undefined)
       candidates.push({ source, upstream: assessment.candidate });
@@ -96,11 +106,13 @@ const update = module.update.handler(async ({ context, input: request }) => {
   const changes: VendorSourceChange[] = [];
   const preparationIssues: VendorUpdateIssue[] = [];
   for (const candidate of candidates) {
-    const materialized = await materializeVendorUpstream(
-      context.contentWorkspace,
-      context.clock,
-      candidate.source,
-      candidate.upstream
+    const materialized = yield* awaitDependencyPromise(() =>
+      materializeVendorUpstream(
+        context.contentWorkspace,
+        context.clock,
+        candidate.source,
+        candidate.upstream
+      )
     );
     if (!materialized.ok) {
       preparationIssues.push(...materialized.issues);
@@ -119,7 +131,9 @@ const update = module.update.handler(async ({ context, input: request }) => {
     changes
   );
   if (!planned.ok) return rejected(request.sourceIds, planned.issues);
-  return executeVendorAuthoringPlan(context.contentWorkspace, request, planned.value);
+  return yield* awaitDependencyPromise(() =>
+    executeVendorAuthoringPlan(context.contentWorkspace, request, planned.value)
+  );
 });
 
 export const router = Object.freeze({ status, update });

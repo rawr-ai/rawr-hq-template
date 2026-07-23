@@ -562,8 +562,8 @@ assert(
 );
 
 assert(
-  rootPackage.devDependencies?.effect === "3.21.3",
-  "runtime type env must pin effect@3.21.3 as a root dev dependency"
+  rootPackage.devDependencies?.effect === "4.0.0-beta.100",
+  "runtime type env must pin effect@4.0.0-beta.100 as a root dev dependency"
 );
 assert(
   !("effect" in (rootPackage.dependencies ?? {})),
