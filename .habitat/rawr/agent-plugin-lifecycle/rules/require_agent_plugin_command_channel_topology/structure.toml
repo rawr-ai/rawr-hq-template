@@ -18,17 +18,6 @@ kind = "directory"
 mode = "closed"
 required = [
   "client.ts",
-  "providers",
-]
-allowed = []
-
-[[scopes]]
-name = "curated-agent-plugin-provider-runtime-binding"
-root = "apps/cli/src/lib/agent-plugins/service-runtime/providers"
-kind = "directory"
-mode = "closed"
-required = [
-  "node-runtime.ts",
 ]
 allowed = []
 

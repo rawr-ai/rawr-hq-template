@@ -4,7 +4,6 @@ import path from "node:path";
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 import type {
   ControllerExecutableAuthority,
-  ControllerProviderHomeAuthority,
 } from "@rawr/resource-controller-authority";
 import { preflightNodeControllerAuthority } from "@rawr/resource-controller-authority/providers/effect-platform-node";
 import { createProductionLifecycleClient } from "../service-runtime/client";
@@ -19,7 +18,6 @@ import {
 import type {
   BuildRequest,
   CheckRequest,
-  CompleteTestRequest,
   CurrentMainRecordRequest,
   CurrentMainSelectionRequest,
   PackageRequest,
@@ -28,7 +26,7 @@ import type {
   RepositoryCheckRequest,
   StatusRequest,
   SyncRequest,
-  TargetedTestRequest,
+  TestRequest,
   VendorStatusRequest,
   VendorUpdateRequest,
 } from "./input";
@@ -46,10 +44,9 @@ export type LifecycleOperationRequest =
   | Readonly<{ operation: "vendors.status"; input: VendorStatusRequest }>
   | Readonly<{ operation: "vendors.update"; input: VendorUpdateRequest }>
   | Readonly<{ operation: "packaging.package"; input: PackageRequest }>
-  | Readonly<{ operation: "providers.targetedTest"; input: TargetedTestRequest }>
-  | Readonly<{ operation: "providers.completeTest"; input: CompleteTestRequest }>
-  | Readonly<{ operation: "providers.canonicalSync"; input: SyncRequest }>
-  | Readonly<{ operation: "providers.canonicalStatus"; input: StatusRequest }>
+  | Readonly<{ operation: "providers.test"; input: TestRequest }>
+  | Readonly<{ operation: "providers.sync"; input: SyncRequest }>
+  | Readonly<{ operation: "providers.status"; input: StatusRequest }>
   | Readonly<{ operation: "governance.currentMainRecord"; input: CurrentMainRecordRequest }>
   | Readonly<{
       operation: "governance.currentMainSelection";
@@ -152,21 +149,17 @@ export async function invokeLifecycleProcedure(
       const client = await factory("packaging.package", binding);
       return await client.packaging.package(request.input, callOptions);
     }
-    case "providers.targetedTest": {
-      const client = await factory("providers.targetedTest", binding);
-      return await client.providers.targetedTest(request.input, callOptions);
+    case "providers.test": {
+      const client = await factory("providers.test", binding);
+      return await client.providers.test(request.input, callOptions);
     }
-    case "providers.completeTest": {
-      const client = await factory("providers.completeTest", binding);
-      return await client.providers.completeTest(request.input, callOptions);
+    case "providers.sync": {
+      const client = await factory("providers.sync", binding);
+      return await client.providers.sync(request.input, callOptions);
     }
-    case "providers.canonicalSync": {
-      const client = await factory("providers.canonicalSync", binding);
-      return await client.providers.canonicalSync(request.input, callOptions);
-    }
-    case "providers.canonicalStatus": {
-      const client = await factory("providers.canonicalStatus", binding);
-      return await client.providers.canonicalStatus(request.input, callOptions);
+    case "providers.status": {
+      const client = await factory("providers.status", binding);
+      return await client.providers.status(request.input, callOptions);
     }
     case "governance.currentMainRecord": {
       const client = await factory("governance.currentMainRecord", binding);
@@ -183,33 +176,11 @@ export async function invokeLifecycleProcedure(
 
 export function lifecycleResultExitCode(operation: LifecycleOperation, result: unknown): 0 | 1 | 2 {
   const record = asRecord(result);
-  if (operation === "providers.canonicalStatus") {
-    if (record.ok !== true || !Array.isArray(record.value)) return 1;
-    if (record.value.some((entry) => asRecord(entry).status === "BLOCKED_SELECTION")) return 2;
-    return record.value.every((entry) => asRecord(entry).status === "CONVERGED") ? 0 : 1;
-  }
-  if (operation === "providers.canonicalSync") {
-    if (record.ok !== true) return 1;
-    const value = asRecord(record.value);
-    if (
-      Array.isArray(value.targets) &&
-      value.targets.some((entry) => asRecord(entry).status === "BLOCKED_SELECTION")
-    )
-      return 2;
-    return value.status === "Blocked" ||
-      value.status === "Failed" ||
-      value.status === "PartialFailure"
-      ? 1
-      : 0;
-  }
   if (operation.startsWith("providers.")) {
-    if (record.ok !== true) return 1;
-    const value = asRecord(record.value);
-    return value.status === "Blocked" ||
-      value.status === "Failed" ||
-      value.status === "PartialFailure"
-      ? 1
-      : 0;
+    if (record.classification === "Blocked") return 2;
+    return record.classification === "Converged" || record.classification === "Changed"
+      ? 0
+      : 1;
   }
   if (operation === "releases.releaseInputRecord" || operation === "governance.currentMainRecord")
     return record.ok === true ? 0 : 1;
@@ -231,10 +202,9 @@ export function lifecycleResultExitCode(operation: LifecycleOperation, result: u
     "vendors.status": ["VendorStatus"],
     "vendors.update": ["ReadOnlyConverged", "AuthoredReviewableChanges"],
     "packaging.package": ["ReadOnlyConverged", "OutputReplacedVerified"],
-    "providers.targetedTest": [],
-    "providers.completeTest": [],
-    "providers.canonicalSync": [],
-    "providers.canonicalStatus": [],
+    "providers.test": [],
+    "providers.sync": [],
+    "providers.status": [],
     "governance.currentMainRecord": [],
     "governance.currentMainSelection": [],
   };
@@ -261,9 +231,12 @@ export function projectLifecycleResultForOutput(
   if (value === undefined) return result;
   if (!(value.bytes instanceof Uint8Array)) return result;
   const { bytes, ...projectedValue } = value;
+  const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   const projected = Object.freeze({
     ...projectedValue,
-    envelopeText: new TextDecoder("utf-8", { fatal: true }).decode(bytes),
+    ...(operation === "governance.currentMainRecord"
+      ? { recordText: text }
+      : { envelopeText: text }),
   });
   return operation === "releases.refreshReleaseInput"
     ? projected
@@ -286,13 +259,17 @@ async function preflightLifecycleAuthority(
   request: LifecycleOperationRequest,
   binding: ControllerProjectionBinding
 ): Promise<void> {
-  await preflightBindingAuthority(binding, providerHomes(request));
+  switch (request.operation) {
+    case "providers.test":
+    case "providers.sync":
+    case "providers.status":
+      return;
+    default:
+      await preflightBindingAuthority(binding);
+  }
 }
 
-async function preflightBindingAuthority(
-  binding: ControllerProjectionBinding,
-  homes: readonly ControllerProviderHomeAuthority[]
-): Promise<void> {
+async function preflightBindingAuthority(binding: ControllerProjectionBinding): Promise<void> {
   const executables: ControllerExecutableAuthority[] = [];
   if (binding.gitExecutable !== undefined) {
     executables.push({ kind: "git", name: "git", path: binding.gitExecutable });
@@ -304,29 +281,12 @@ async function preflightBindingAuthority(
       executables.push({ kind: "provider", name: provider, path: executable });
     }
   }
-  const result = await preflightNodeControllerAuthority({ executables, providerHomes: homes });
+  const result = await preflightNodeControllerAuthority({ executables, providerHomes: [] });
   if (result.ok) return;
   if (result.failure.boundary === "provider-home") {
     throw new LifecycleInputError(result.failure.detail);
   }
   throw new LifecycleAuthorityBindingError(result.failure.detail);
-}
-
-function providerHomes(
-  request: LifecycleOperationRequest
-): readonly ControllerProviderHomeAuthority[] {
-  switch (request.operation) {
-    case "providers.targetedTest":
-    case "providers.completeTest":
-    case "providers.canonicalSync":
-    case "providers.canonicalStatus":
-      return request.input.targets.map((target) => ({
-        provider: target.provider,
-        path: target.home,
-      }));
-    default:
-      return [];
-  }
 }
 
 function parseProviderExecutables(input: unknown): Partial<Record<"claude" | "codex", string>> {

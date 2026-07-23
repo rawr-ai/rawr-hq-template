@@ -12,14 +12,15 @@
   },
   "ownerProject": "@rawr/agent-plugin-lifecycle",
   "lane": "enforced",
-  "forbids": "lifecycle runtime bindings or curated commands outside their one closed root, or nested curated command aliases",
-  "why": "The CLI has one lifecycle runtime-binding root and one curated command root under rawr agent plugins; native Oclif extension commands are composed from @oclif/plugin-plugins rather than authored in this source tree.",
-  "remediate": "Keep lifecycle runtime bindings under the declared service-runtime roots, curated commands under agent/plugins, and vendor commands at agent/plugins/status/vendors.ts and agent/plugins/update/vendors.ts.",
+  "forbids": "lifecycle host composition or curated commands outside their one closed root, or nested curated command aliases",
+  "why": "The CLI has one lifecycle service host, one native-provider binding root, and one curated command root under rawr agent plugins; native Oclif extension commands are composed from @oclif/plugin-plugins rather than authored in this source tree.",
+  "remediate": "Keep lifecycle service composition in service-runtime/client.ts, native provider adaptation under bindings/providers, curated commands under agent/plugins, and vendor commands at agent/plugins/status/vendors.ts and agent/plugins/update/vendors.ts.",
   "message": "Agent-plugin lifecycle bindings and curated commands must remain in their closed topology.",
   "pathCoverage": [
     {
       "kind": "exact-path",
       "patterns": [
+        "apps/cli/src/lib/agent-plugins/bindings/providers/**",
         "apps/cli/src/lib/agent-plugins/service-runtime/**",
         "apps/cli/src/commands/agent/**"
       ]

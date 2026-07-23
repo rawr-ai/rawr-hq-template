@@ -6,30 +6,28 @@ import {
 } from "../../../shared/release";
 
 import {
-  type CanonicalChannelSelection,
-  CURRENT_MAIN_V2_CANONICAL_REF,
-  CURRENT_MAIN_V2_RECORD_PATH,
-  CURRENT_MAIN_V2_RELEASE_INPUT_PATH,
-  type CurrentMainBodyV2,
+  CURRENT_MAIN_V3_CANONICAL_REF,
+  CURRENT_MAIN_V3_RECORD_PATH,
+  CURRENT_MAIN_V3_RELEASE_INPUT_PATH,
   type CurrentMainSelectionFailureKind,
   type CurrentMainSelectionResult,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
 } from "../model/dto/current-main";
 import { parseCanonicalRef } from "../model/dto/primitives";
-import { validateCurrentMainEnvelopeV2 } from "../model/policy/current-main-record";
+import { validateCurrentMainRecordV3 } from "../model/policy/current-main-record";
 import type {
   ExactGitReader,
   GitReadFailureCode,
   RepositoryInspection,
 } from "../model/repositories/exact-git";
 
-const COMPILED_CANONICAL_REF = requireCanonicalRef();
+const COMPILED_CANONICAL_REF = requireCanonicalRef(CURRENT_MAIN_V3_CANONICAL_REF);
 const COMPILED_CURRENT_MAIN_PATH = requireRelativePath(
-  CURRENT_MAIN_V2_RECORD_PATH,
+  CURRENT_MAIN_V3_RECORD_PATH,
   "currentMain.path"
 );
 const COMPILED_RELEASE_INPUT_PATH = requireRelativePath(
-  CURRENT_MAIN_V2_RELEASE_INPUT_PATH,
+  CURRENT_MAIN_V3_RELEASE_INPUT_PATH,
   "currentMain.releaseInputPath"
 );
 const TRUNCATED_SELECTION_REASON_SUFFIX = "...[truncated]";
@@ -48,55 +46,59 @@ export async function resolveCurrentMainSelection(
     );
   }
 
-  const recordRead = await git.readBlob(locator, {
+  const recordRead = await git.readFileAtRevision(locator, {
     repositoryIdentity: opening.repositoryIdentity,
     ref: opening.canonicalRef,
     commit: opening.headCommit,
     tree: opening.headTree,
     path: COMPILED_CURRENT_MAIN_PATH,
   });
-  if (!recordRead.ok)
+  if (!recordRead.ok) {
     return classifyGitReadFailure(recordRead.failure.code, recordRead.failure.message);
-
-  const currentMain = validateCurrentMainEnvelopeV2(recordRead.observation.bytes);
-  if (!currentMain.ok) {
-    return refused("FORGED_RECORD", `Current-main v2 is invalid: ${currentMain.failure.message}`);
   }
-  const body = currentMain.value.record.body;
+
+  const currentMain = validateCurrentMainRecordV3(recordRead.observation.bytes);
+  if (!currentMain.ok) {
+    return refused("FORGED_RECORD", `Current-main v3 is invalid: ${currentMain.failure.message}`);
+  }
+  const record = currentMain.value.record;
   if (
-    body.sourceRepositoryIdentity !== locator.expectedRepositoryIdentity ||
-    body.sourceRepositoryIdentity !== opening.repositoryIdentity
+    record.sourceRepositoryIdentity !== locator.expectedRepositoryIdentity ||
+    record.sourceRepositoryIdentity !== opening.repositoryIdentity
   ) {
     return refused(
       "WRONG_REPOSITORY",
       "Current-main selects a repository other than the explicit locator"
     );
   }
-  const sourceCommit = parseGitCommitId(body.sourceCommit, "currentMain.body.sourceCommit");
-  const sourceTree = parseGitTreeId(body.sourceTree, "currentMain.body.sourceTree");
-  if (!sourceCommit.ok || !sourceTree.ok) {
-    return refused("FORGED_RECORD", "Current-main contains an invalid selected Git identity");
-  }
 
-  const reachable = await git.isAncestor(locator, sourceCommit.value, opening.headCommit);
-  if (!reachable.ok) {
+  const sourceRef = parseCanonicalRef(record.sourceRef, "currentMain.sourceRef");
+  const contentCommit = parseGitCommitId(record.contentCommit, "currentMain.contentCommit");
+  const contentTree = parseGitTreeId(record.contentTree, "currentMain.contentTree");
+  if (!sourceRef.ok || !contentCommit.ok || !contentTree.ok) {
+    return refused("FORGED_RECORD", "Current-main contains an invalid content revision");
+  }
+  if (contentCommit.value === opening.headCommit) {
+    return refused("FORGED_RECORD", "Current-main cannot select its containing record commit");
+  }
+  let landedOnMain: boolean;
+  try {
+    landedOnMain = await git.isAncestor(locator, contentCommit.value, opening.headCommit);
+  } catch {
     return refused(
-      "STALE_RECORD",
-      `Selected source ancestry cannot be established: ${reachable.failure.message}`
+      "UNREACHABLE_REPOSITORY",
+      "Could not verify selected content ancestry against canonical main"
     );
   }
-  if (!reachable.value) {
-    return refused(
-      "FORGED_RECORD",
-      "Selected source commit is not reachable from opening canonical main"
-    );
+  if (!landedOnMain) {
+    return refused("STALE_RECORD", "Selected content commit is not reachable from canonical main");
   }
 
-  const releaseInputRead = await git.readBlob(locator, {
+  const releaseInputRead = await git.readFileAtRevision(locator, {
     repositoryIdentity: opening.repositoryIdentity,
-    ref: opening.canonicalRef,
-    commit: sourceCommit.value,
-    tree: sourceTree.value,
+    ref: sourceRef.value,
+    commit: contentCommit.value,
+    tree: contentTree.value,
     path: COMPILED_RELEASE_INPUT_PATH,
   });
   if (!releaseInputRead.ok) {
@@ -106,10 +108,10 @@ export async function resolveCurrentMainSelection(
   if (!releaseInput.ok) {
     return refused("FORGED_RECORD", "Selected release input is invalid or noncanonical");
   }
-  if (releaseInput.value.releaseInputDigest !== body.releaseInputDigest) {
+  if (releaseInput.value.releaseInputDigest !== record.releaseInputDigest) {
     return refused("FORGED_RECORD", "Selected release-input digest differs from current-main");
   }
-  if (releaseInput.value.body.contentAuthority !== body.contentAuthority) {
+  if (releaseInput.value.body.contentAuthority !== record.contentAuthority) {
     return refused("FORGED_RECORD", "Selected release input declares another content authority");
   }
 
@@ -123,27 +125,7 @@ export async function resolveCurrentMainSelection(
     );
   }
 
-  return Object.freeze({
-    kind: "CURRENT_ELIGIBLE",
-    selection: freezeSelection(currentMain.value.currentMainDigest, body),
-  });
-}
-
-function freezeSelection(
-  currentMainDigest: `cm2_${string}`,
-  body: CurrentMainBodyV2
-): CanonicalChannelSelection {
-  return Object.freeze({
-    currentMainDigest,
-    contentAuthority: body.contentAuthority,
-    sourceRepositoryIdentity: body.sourceRepositoryIdentity,
-    sourceCommit: body.sourceCommit,
-    sourceTree: body.sourceTree,
-    releaseInputDigest: body.releaseInputDigest,
-    releaseSetDigest: body.releaseSetDigest,
-    evaluationProfile: body.evaluationProfile,
-    projections: body.projections,
-  });
+  return Object.freeze({ kind: "CURRENT_ELIGIBLE", selection: record });
 }
 
 function classifyInspection(
@@ -151,8 +133,6 @@ function classifyInspection(
   expectedRepositoryIdentity: string
 ): CurrentMainSelectionResult | undefined {
   switch (inspection.kind) {
-    case "DirtyRepository":
-      return refused("DIRTY_REPOSITORY", "Canonical content workspace is dirty");
     case "WrongRepository":
       return refused(
         "WRONG_REPOSITORY",
@@ -212,8 +192,8 @@ function boundedReason(reason: string): string {
     .join("")}${TRUNCATED_SELECTION_REASON_SUFFIX}`;
 }
 
-function requireCanonicalRef() {
-  const parsed = parseCanonicalRef(CURRENT_MAIN_V2_CANONICAL_REF, "currentMain.canonicalRef");
+function requireCanonicalRef(value: string) {
+  const parsed = parseCanonicalRef(value, "currentMain.canonicalRef");
   if (!parsed.ok) throw new Error("Compiled current-main ref is invalid");
   return parsed.value;
 }

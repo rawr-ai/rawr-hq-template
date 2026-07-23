@@ -1,8 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
+import { execFile, type ExecFileException } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { Command, CommandExecutor, FileSystem } from "@effect/platform";
+import { FileSystem } from "@effect/platform";
 import type { PlatformError } from "@effect/platform/Error";
 import { NodeContext } from "@effect/platform-node";
 import type {
@@ -19,6 +20,7 @@ import type {
   GitBlobAtPathObservation,
   GitBlobObservation,
   GitObjectFormat,
+  GitRefObservation,
   GitRemoteSelection,
   GitStagedBlobObservation,
   GitStagedIndexBinding,
@@ -38,7 +40,7 @@ const ATOMIC_FILE_PREFIX = ".rawr-content-workspace-";
 const OBJECT_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u;
 const REF_PATTERN = /^refs\/[A-Za-z0-9][A-Za-z0-9._/-]*$/u;
 
-type ProviderRequirements = FileSystem.FileSystem | CommandExecutor.CommandExecutor;
+type ProviderRequirements = FileSystem.FileSystem;
 
 export interface GitEffectPlatformNodeOptions {
   readonly gitExecutable: string;
@@ -203,11 +205,52 @@ export function makeContentWorkspaceResource(
     );
   });
 
+  const inspectGitRef = Effect.fn("contentWorkspace.inspectGitRef")(function* (
+    input: Readonly<{
+      locator: string;
+      remoteSelection: GitRemoteSelection;
+      refName: string;
+    }>
+  ) {
+    const fs = yield* FileSystem.FileSystem;
+    const operation = "inspect-git-ref" as const;
+    const executable = yield* requireCanonicalGitExecutable(fs, options.gitExecutable, operation);
+    yield* checked(operation, () => {
+      validateRefName(input.refName, operation);
+      validateRemoteSelection(input.remoteSelection, operation);
+    });
+    const root = yield* requireExactGitRoot(fs, executable, input.locator, operation);
+    const objectFormat = yield* gitObjectFormat(executable, root, operation);
+    const commit = yield* requireExactCommit(executable, root, input.refName, operation);
+    const tree = yield* gitText(
+      executable,
+      root,
+      ["rev-parse", "--verify", "--end-of-options", `${commit}^{tree}`],
+      operation
+    );
+    validateObjectForFormat(tree, objectFormat, "tree", operation);
+    const remoteUrls = yield* readSelectedRemoteUrls(
+      executable,
+      root,
+      input.remoteSelection,
+      operation
+    );
+    return Object.freeze({
+      root,
+      refName: input.refName,
+      commit,
+      tree,
+      objectFormat,
+      remoteUrls,
+    }) satisfies GitRefObservation;
+  });
+
   const readGitTree = Effect.fn("contentWorkspace.readGitTree")(function* (
     input: Readonly<{
       root: string;
       tree: string;
       objectFormat: GitObjectFormat;
+      paths: readonly string[];
       maxBytes: number;
     }>
   ) {
@@ -220,13 +263,22 @@ export function makeContentWorkspaceResource(
     const root = yield* requireExactGitRoot(fs, executable, input.root, "read-git-tree");
     yield* checked("read-git-tree", () => {
       validateObjectForFormat(input.tree, input.objectFormat, "tree", "read-git-tree");
+      validateGitTreePaths(input.paths);
       validateLimit(input.maxBytes, "maxBytes", "read-git-tree");
     });
     yield* requireGitObjectType(executable, root, input.tree, "tree", "read-git-tree");
     return yield* gitBytes(
       executable,
       root,
-      ["ls-tree", "-r", "-z", "--full-tree", input.tree],
+      [
+        "ls-tree",
+        "-r",
+        "-z",
+        "--full-tree",
+        input.tree,
+        "--",
+        ...input.paths.map((candidate) => `:(literal)${candidate}`),
+      ],
       "read-git-tree",
       input.maxBytes
     );
@@ -1142,6 +1194,7 @@ export function makeContentWorkspaceResource(
 
   return Object.freeze({
     inspectWorkspace,
+    inspectGitRef,
     inspectGitWorkspace,
     readGitTree,
     readGitBlob,
@@ -1189,6 +1242,8 @@ export function makeNodeContentWorkspacePort(
   return Object.freeze({
     inspectWorkspace: (input: Parameters<typeof resource.inspectWorkspace>[0]) =>
       runNodeOrReject(resource.inspectWorkspace(input)),
+    inspectGitRef: (input: Parameters<typeof resource.inspectGitRef>[0]) =>
+      runNodeOrReject(resource.inspectGitRef(input)),
     inspectGitWorkspace: (input: Parameters<typeof resource.inspectGitWorkspace>[0]) =>
       runNodeOrReject(resource.inspectGitWorkspace(input)),
     readGitTree: (input: Parameters<typeof resource.readGitTree>[0]) =>
@@ -1243,6 +1298,10 @@ export function makeDeferredNodeContentWorkspacePort(
     inspectWorkspace: (input: Parameters<ContentWorkspaceNodeAsyncPort["inspectWorkspace"]>[0]) =>
       runDeferredNodeOperation(acquire, "inspect", input.locator, (port) =>
         port.inspectWorkspace(input)
+      ),
+    inspectGitRef: (input: Parameters<ContentWorkspaceNodeAsyncPort["inspectGitRef"]>[0]) =>
+      runDeferredNodeOperation(acquire, "inspect-git-ref", input.locator, (port) =>
+        port.inspectGitRef(input)
       ),
     inspectGitWorkspace: (
       input: Parameters<ContentWorkspaceNodeAsyncPort["inspectGitWorkspace"]>[0]
@@ -1401,7 +1460,7 @@ function inspectFetchedTree(
     maxEntries: number;
   }>,
   operation: "observe-remote" | "materialize-remote"
-): Effect.Effect<RemoteContentTree, ContentWorkspaceFailure, CommandExecutor.CommandExecutor> {
+): Effect.Effect<RemoteContentTree, ContentWorkspaceFailure> {
   return Effect.gen(function* () {
     const commit = yield* gitText(
       gitExecutable,
@@ -1807,6 +1866,31 @@ function validateDistinctPaths(paths: readonly string[], operation: "capture"): 
       throw invalidInput(operation, relative, "Capture contains duplicate paths");
     if ([...seen].some((existing) => pathsOverlap(existing, relative))) {
       throw invalidInput(operation, relative, "Capture contains overlapping paths");
+    }
+    seen.add(relative);
+  }
+}
+
+function validateGitTreePaths(paths: readonly string[]): void {
+  if (paths.length === 0 || paths.length > 4_096) {
+    throw invalidInput(
+      "read-git-tree",
+      undefined,
+      "Git tree selection requires between 1 and 4,096 paths"
+    );
+  }
+  const seen = new Set<string>();
+  for (const relative of paths) {
+    validateRelativePath(relative, false, "read-git-tree");
+    if (seen.has(relative)) {
+      throw invalidInput("read-git-tree", relative, "Git tree selection contains a duplicate path");
+    }
+    if ([...seen].some((existing) => pathsOverlap(existing, relative))) {
+      throw invalidInput(
+        "read-git-tree",
+        relative,
+        "Git tree selection contains overlapping paths"
+      );
     }
     seen.add(relative);
   }
@@ -3093,7 +3177,7 @@ function gitObjectFormat(
   executable: string,
   root: string,
   operation: ContentWorkspaceFailure["operation"]
-): Effect.Effect<GitObjectFormat, ContentWorkspaceFailure, CommandExecutor.CommandExecutor> {
+): Effect.Effect<GitObjectFormat, ContentWorkspaceFailure> {
   return gitText(executable, root, ["rev-parse", "--show-object-format"], operation).pipe(
     Effect.flatMap((format) =>
       format === "sha1" || format === "sha256"
@@ -3146,10 +3230,6 @@ function gitBytes(
   );
 }
 
-function emptyByteAccumulator(): { chunks: Uint8Array[]; bytes: number } {
-  return { chunks: [], bytes: 0 };
-}
-
 function maxTreeListingBytes(maxEntries: number): number {
   return Math.min(Number.MAX_SAFE_INTEGER, maxEntries * 4_200);
 }
@@ -3173,62 +3253,120 @@ function runGitCommand(
   maxStdoutBytes: number,
   stdin?: string
 ) {
-  const baseCommand = makeGitCommand(executable, args, operation).pipe(
-    Command.workingDirectory(root)
-  );
-  const command = stdin === undefined ? baseCommand : baseCommand.pipe(Command.feed(stdin));
-  return Effect.scoped(
-    Effect.gen(function* () {
-      const process = yield* Command.start(command).pipe(
-        Effect.mapError((cause) => platformFailure(operation, root, cause, "GitFailed"))
+  const stderrLimit = 64 * 1024;
+  const maxBuffer = Math.max(maxStdoutBytes, stderrLimit);
+  return Effect.async<
+    Readonly<{ stdout: Uint8Array; stderr: Uint8Array; exitCode: number }>,
+    ContentWorkspaceFailure
+  >((resume) => {
+    let child: ReturnType<typeof execFile>;
+    try {
+      child = execFile(
+        executable,
+        gitProcessArgs(args, operation),
+        {
+          cwd: root,
+          encoding: null,
+          env: gitProcessEnvironment(operation),
+          maxBuffer,
+          windowsHide: true,
+        },
+        (error, stdout, stderr) => {
+          const stdoutBytes = new Uint8Array(stdout);
+          const stderrBytes = new Uint8Array(stderr);
+          if (stdoutBytes.byteLength > maxStdoutBytes) {
+            resume(
+              fail(operation, "LimitExceeded", root, `Git stdout exceeds ${maxStdoutBytes} bytes`)
+            );
+            return;
+          }
+          if (stderrBytes.byteLength > stderrLimit) {
+            resume(
+              fail(operation, "LimitExceeded", root, `Git stderr exceeds ${stderrLimit} bytes`)
+            );
+            return;
+          }
+          if (error !== null && typeof error.code !== "number") {
+            resume(Effect.fail(execFileFailure(operation, root, error, maxBuffer)));
+            return;
+          }
+          const exitCode = error === null ? 0 : Number(error.code);
+          resume(
+            Effect.succeed(
+              Object.freeze({
+                stdout: stdoutBytes,
+                stderr: stderrBytes,
+                exitCode,
+              })
+            )
+          );
+        }
       );
-      const [stdout, stderr, exitCode] = yield* Effect.all(
-        [
-          collectBoundedGitStream(process.stdout, maxStdoutBytes, operation, root, "stdout"),
-          collectBoundedGitStream(process.stderr, 64 * 1024, operation, root, "stderr"),
-          process.exitCode.pipe(
-            Effect.map((code) => Number(code)),
-            Effect.mapError((cause) => platformFailure(operation, root, cause, "GitFailed"))
-          ),
-        ],
-        { concurrency: "unbounded" }
+      child.stdin?.end(stdin);
+    } catch (error) {
+      resume(
+        Effect.fail(failure(operation, "GitFailed", root, errorMessage(error)))
       );
-      return Object.freeze({ stdout, stderr, exitCode });
-    })
-  );
+      return;
+    }
+    return Effect.sync(() => {
+      if (child.exitCode === null && child.signalCode === null) child.kill("SIGTERM");
+    });
+  });
 }
 
-function makeGitCommand(
-  executable: string,
+function gitProcessArgs(
   args: readonly string[],
   operation: ContentWorkspaceFailure["operation"]
-) {
-  if (!isExactLocalGitOperation(operation)) return Command.make(executable, ...args);
-  return Command.make(
-    executable,
+): string[] {
+  if (!isExactLocalGitOperation(operation)) return [...args];
+  return [
     "--no-optional-locks",
     "-c",
     "core.fsmonitor=false",
     "-c",
     "core.untrackedCache=false",
-    ...args
-  ).pipe(
-    Command.env({
-      GIT_CONFIG_GLOBAL: "/dev/null",
-      GIT_CONFIG_NOSYSTEM: "1",
-      GIT_CONFIG_SYSTEM: "/dev/null",
-      GIT_NO_LAZY_FETCH: "1",
-      GIT_NO_REPLACE_OBJECTS: "1",
-      GIT_OPTIONAL_LOCKS: "0",
-      GIT_TERMINAL_PROMPT: "0",
-      LANG: "C",
-      LC_ALL: "C",
-    })
+    ...args,
+  ];
+}
+
+function gitProcessEnvironment(
+  operation: ContentWorkspaceFailure["operation"]
+): NodeJS.ProcessEnv {
+  if (!isExactLocalGitOperation(operation)) return process.env;
+  return {
+    ...process.env,
+    GIT_CONFIG_GLOBAL: "/dev/null",
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_CONFIG_SYSTEM: "/dev/null",
+    GIT_NO_LAZY_FETCH: "1",
+    GIT_NO_REPLACE_OBJECTS: "1",
+    GIT_OPTIONAL_LOCKS: "0",
+    GIT_TERMINAL_PROMPT: "0",
+    LANG: "C",
+    LC_ALL: "C",
+  };
+}
+
+function execFileFailure(
+  operation: ContentWorkspaceFailure["operation"],
+  root: string,
+  error: ExecFileException,
+  maxBuffer: number
+): ContentWorkspaceFailure {
+  return failure(
+    operation,
+    error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" ? "LimitExceeded" : "GitFailed",
+    root,
+    error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER"
+      ? `Git output exceeds ${maxBuffer} bytes`
+      : errorMessage(error)
   );
 }
 
 function isExactLocalGitOperation(operation: ContentWorkspaceFailure["operation"]): boolean {
   return (
+    operation === "inspect-git-ref" ||
     operation === "inspect-git-workspace" ||
     operation === "read-git-tree" ||
     operation === "read-git-blob" ||
@@ -3237,28 +3375,6 @@ function isExactLocalGitOperation(operation: ContentWorkspaceFailure["operation"
     operation === "read-git-blob-at-path" ||
     operation === "local-git-ancestry" ||
     operation === "list-git-changed-paths"
-  );
-}
-
-function collectBoundedGitStream(
-  stream: Stream.Stream<Uint8Array, PlatformError>,
-  maxBytes: number,
-  operation: ContentWorkspaceFailure["operation"],
-  root: string,
-  channel: "stdout" | "stderr"
-) {
-  return stream.pipe(
-    Stream.mapError((cause) => platformFailure(operation, root, cause, "GitFailed")),
-    Stream.runFoldEffect(emptyByteAccumulator(), (state, chunk) => {
-      const nextBytes = state.bytes + chunk.byteLength;
-      if (nextBytes > maxBytes) {
-        return fail(operation, "LimitExceeded", root, `Git ${channel} exceeds ${maxBytes} bytes`);
-      }
-      state.chunks.push(chunk);
-      state.bytes = nextBytes;
-      return Effect.succeed(state);
-    }),
-    Effect.map((state) => concatenateBytes(state.chunks))
   );
 }
 
@@ -3279,16 +3395,6 @@ function gitFailureDetail(args: readonly string[], stderr: Uint8Array): string {
   } catch {
     return `Git ${args[0] ?? "command"} failed with non-UTF-8 stderr`;
   }
-}
-
-function concatenateBytes(chunks: readonly Uint8Array[]): Uint8Array {
-  const result = new Uint8Array(chunks.reduce((total, chunk) => total + chunk.byteLength, 0));
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return result;
 }
 
 function gitBlobId(bytes: Uint8Array, objectFormat: GitObjectFormat): string {

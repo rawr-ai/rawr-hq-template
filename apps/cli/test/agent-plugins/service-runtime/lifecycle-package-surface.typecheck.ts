@@ -3,6 +3,9 @@ import * as retiredExportBindingSurface from "@rawr/agent-plugin-lifecycle/bindi
 // @ts-expect-error Lifecycle host bindings are not a public package axis.
 import * as retiredBindingSurface from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type { Config, CreateClientOptions, Deps, Scope } from "@rawr/agent-plugin-lifecycle/client";
+import {
+  type NativeProviderSessionResolver,
+} from "@rawr/agent-plugin-lifecycle/host";
 // @ts-expect-error Retired export module ports cannot remain package-reachable.
 import * as retiredExportPortSurface from "@rawr/agent-plugin-lifecycle/ports/exports";
 // @ts-expect-error Lifecycle module ports are not a public package axis.
@@ -62,6 +65,14 @@ type RawArtifactRepositoryIsRequired =
     : never;
 const rawArtifactRepositoryIsRequired: RawArtifactRepositoryIsRequired = true;
 void rawArtifactRepositoryIsRequired;
+
+type NativeSessionHostPortIsExact = Deps["providerNativeSessions"] extends NativeProviderSessionResolver
+  ? NativeProviderSessionResolver extends Deps["providerNativeSessions"]
+    ? true
+    : never
+  : never;
+const nativeSessionHostPortIsExact: NativeSessionHostPortIsExact = true;
+void nativeSessionHostPortIsExact;
 
 type ArtifactRepositoryRootIsRequired = Deps["artifactRepositoryRoot"] extends string
   ? string extends Deps["artifactRepositoryRoot"]

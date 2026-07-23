@@ -1,65 +1,75 @@
 import { Command, CommandExecutor, FileSystem, Path } from "@effect/platform";
 import type { PlatformError } from "@effect/platform/Error";
-import { Effect, Queue, Stream } from "effect";
+import { Effect, Stream } from "effect";
+import type { Static, TSchema } from "typebox";
+import { Value } from "typebox/value";
 
 import type {
   NativeAgentProviderFailure,
   NativeAgentProviderId,
   NativeAgentProviderOperation,
-  NativeProviderCommandResult,
-  NativeProviderJsonObservation,
-  NativeProviderJsonValue,
-  NativeProviderPackageObservation,
-  NativeProviderPackageReadLimits,
+  NativeMarketplaceSource,
+  NativeProviderMarketplaceIdentityInput,
+  NativeProviderCommandPhase,
+  NativeProviderMutationResult,
+  NativeProviderPluginFileRead,
+  NativeProviderPluginFileRequest,
+  NativeProviderPluginFilesReadInput,
+  NativeProviderPluginSelectorInput,
   NativeProviderSessionInput,
 } from "../contract";
+import {
+  CanonicalGitRepositoryUrlSchema,
+  NativeMarketplaceSourceSchema,
+  NativeProviderMarketplaceIdentityInputSchema,
+  NativeProviderPluginFilesReadInputSchema,
+  NativeProviderPluginSelectorInputSchema,
+  NativeProviderSessionInputSchema,
+} from "../contract";
 
-const MAX_PROCESS_OUTPUT_BYTES = 4 * 1024 * 1024;
-const PROCESS_TIMEOUT = "30 seconds";
-const APP_SERVER_TIMEOUT = "20 seconds";
-const OWNER_SLOT = ".rawr-agent-plugin-owner.json";
+const MAX_PROCESS_OUTPUT_BYTES = 4 * 1_024 * 1_024;
+const PROCESS_START_TIMEOUT = "10 seconds";
+const PROCESS_RUN_TIMEOUT = "2 minutes";
+const MAX_FAILURE_DETAIL = 4_096;
+const processSemaphores = new Map<string, Effect.Semaphore>();
 
 export type EffectPlatformNodeRequirements =
   | CommandExecutor.CommandExecutor
   | FileSystem.FileSystem
   | Path.Path;
 
-export interface EffectPlatformNodeProviderKernel {
-  readonly provider: NativeAgentProviderId;
-  readonly executablePath: string;
-  readonly home: string;
-  readonly run: (
+type NativeCommandOutput = Readonly<{
+  stdout: string;
+  stderr: string;
+}>;
+
+export type EffectPlatformNodeProviderKernel = Readonly<{
+  provider: NativeAgentProviderId;
+  executablePath: string;
+  home: string;
+  serialized: <A, R>(
     operation: NativeAgentProviderOperation,
-    args: readonly string[],
-    stdin?: string
-  ) => Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure>;
-  readonly runCodexAppServer: (
+    effect: Effect.Effect<A, NativeAgentProviderFailure, R>
+  ) => Effect.Effect<A, NativeAgentProviderFailure, R>;
+  run: (
     operation: NativeAgentProviderOperation,
-    requests: readonly CodexAppServerRequest[]
-  ) => Effect.Effect<readonly NativeProviderJsonValue[], NativeAgentProviderFailure>;
-  readonly readMarketplacePackage: (
-    root: string,
-    limits: NativeProviderPackageReadLimits
-  ) => Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure>;
-  readonly readPluginPackage: (
-    root: string,
-    limits: NativeProviderPackageReadLimits
-  ) => Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure>;
-  readonly homePath: (...segments: readonly string[]) => string;
-  readonly readHomeJsonFile: (
-    relativePath: string,
-    maxBytes: number
-  ) => Effect.Effect<NativeProviderJsonValue | null, NativeAgentProviderFailure>;
-  readonly requireCanonicalDirectory: (
+    args: readonly string[]
+  ) => Effect.Effect<NativeCommandOutput, NativeAgentProviderFailure>;
+  mutation: (
+    operation: NativeAgentProviderOperation,
+    args: readonly string[]
+  ) => Effect.Effect<NativeProviderMutationResult, NativeAgentProviderFailure>;
+  requireLocalDirectory: (
     operation: NativeAgentProviderOperation,
     candidate: string
   ) => Effect.Effect<string, NativeAgentProviderFailure>;
-}
-
-export interface CodexAppServerRequest {
-  readonly method: string;
-  readonly params: NativeProviderJsonValue;
-}
+  readPluginEntry: (
+    operation: NativeAgentProviderOperation,
+    root: string,
+    input: NativeProviderPluginFileRequest
+  ) => Effect.Effect<NativeProviderPluginFileRead, NativeAgentProviderFailure>;
+  homePath: (...segments: readonly string[]) => string;
+}>;
 
 export function acquireEffectPlatformNodeProvider(
   provider: NativeAgentProviderId,
@@ -70,6 +80,16 @@ export function acquireEffectPlatformNodeProvider(
   EffectPlatformNodeRequirements
 > {
   return Effect.gen(function* () {
+    if (!Value.Check(NativeProviderSessionInputSchema, input)) {
+      return yield* fail(
+        provider,
+        "acquire",
+        "InvalidInput",
+        "not-started",
+        undefined,
+        "Provider session input is invalid"
+      );
+    }
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
     const executor = yield* CommandExecutor.CommandExecutor;
@@ -79,98 +99,103 @@ export function acquireEffectPlatformNodeProvider(
       provider,
       input.executablePath
     );
-    const home = yield* requireCanonicalDirectory(
-      fs,
-      paths,
-      provider,
-      "acquire",
-      input.home,
-      false
-    );
-    yield* requireVacantOwnerSlot(fs, paths, provider, "acquire", home);
-    const commandMutex = yield* Effect.makeSemaphore(1);
+    const home = yield* requireCanonicalDirectory(fs, paths, provider, "acquire", input.home);
+    const semaphore = processSemaphore(provider, home);
 
-    const run: EffectPlatformNodeProviderKernel["run"] = (operation, args, stdin = "") =>
-      commandMutex.withPermits(1)(
-        Effect.gen(function* () {
-          yield* requireCanonicalDirectory(fs, paths, provider, operation, home, false);
-          yield* requireVacantOwnerSlot(fs, paths, provider, operation, home);
-          return yield* runCommand({
-            provider,
-            operation,
-            executablePath,
-            home,
-            args,
-            stdin,
-            executor,
-          });
-        })
+    const serialized: EffectPlatformNodeProviderKernel["serialized"] = (operation, effect) =>
+      semaphore.withPermits(1)(
+        requireCanonicalDirectory(fs, paths, provider, operation, home).pipe(
+          Effect.andThen(effect)
+        )
       );
 
-    const runCodexAppServer: EffectPlatformNodeProviderKernel["runCodexAppServer"] = (
-      operation,
-      requests
-    ) =>
-      commandMutex.withPermits(1)(
-        Effect.gen(function* () {
-          yield* requireCanonicalDirectory(fs, paths, provider, operation, home, false);
-          yield* requireVacantOwnerSlot(fs, paths, provider, operation, home);
-          return yield* runCodexAppServerProcess({
+    const run: EffectPlatformNodeProviderKernel["run"] = (operation, args) =>
+      runCommand({ provider, operation, executablePath, home, args, executor });
+
+    const mutation: EffectPlatformNodeProviderKernel["mutation"] = (operation, args) =>
+      run(operation, args).pipe(
+        Effect.as(
+          Object.freeze({
             provider,
             operation,
-            executablePath,
-            home,
-            requests,
-            executor,
-          });
-        })
+            commandPhase: "command-returned",
+          }) satisfies NativeProviderMutationResult
+        )
       );
 
-    const readMarketplacePackage: EffectPlatformNodeProviderKernel["readMarketplacePackage"] = (
-      root,
-      limits
-    ) => readProviderPackage(fs, paths, provider, "marketplace-read", home, root, limits, false);
-
-    const readPluginPackage: EffectPlatformNodeProviderKernel["readPluginPackage"] = (
-      root,
-      limits
-    ) => readProviderPackage(fs, paths, provider, "plugin-read", home, root, limits, true);
-
-    const homePath: EffectPlatformNodeProviderKernel["homePath"] = (...segments) =>
-      paths.join(home, ...segments);
-
-    const readHomeJsonFile: EffectPlatformNodeProviderKernel["readHomeJsonFile"] = (
-      relativePath,
-      maxBytes
-    ) => readOptionalHomeJsonFile(fs, paths, provider, home, relativePath, maxBytes);
-
-    const requireDirectory: EffectPlatformNodeProviderKernel["requireCanonicalDirectory"] = (
+    const requireLocalDirectory: EffectPlatformNodeProviderKernel["requireLocalDirectory"] = (
       operation,
       candidate
-    ) => requireCanonicalDirectory(fs, paths, provider, operation, candidate, false);
+    ) => requireCanonicalDirectory(fs, paths, provider, operation, candidate);
+
+    const readPluginEntry: EffectPlatformNodeProviderKernel["readPluginEntry"] = (
+      operation,
+      root,
+      request
+    ) =>
+      readBoundedPluginFile(fs, paths, provider, operation, home, root, request);
 
     return Object.freeze({
       provider,
       executablePath,
       home,
+      serialized,
       run,
-      runCodexAppServer,
-      readMarketplacePackage,
-      readPluginPackage,
-      homePath,
-      readHomeJsonFile,
-      requireCanonicalDirectory: requireDirectory,
+      mutation,
+      requireLocalDirectory,
+      readPluginEntry,
+      homePath: (...segments: readonly string[]) => paths.join(home, ...segments),
     });
   });
 }
 
-export function parseJsonObservation(
+export function requireMarketplaceSource(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  result: NativeProviderCommandResult
-): Effect.Effect<NativeProviderJsonObservation, NativeAgentProviderFailure> {
-  return decodeJson(provider, operation, result.stdout).pipe(
-    Effect.map((json) => Object.freeze({ ...result, json }))
+  source: NativeMarketplaceSource
+): Effect.Effect<NativeMarketplaceSource, NativeAgentProviderFailure> {
+  return Value.Check(NativeMarketplaceSourceSchema, source)
+    ? Effect.succeed(source)
+    : fail(
+        provider,
+        operation,
+        "InvalidInput",
+        "not-started",
+        undefined,
+        "Marketplace source is invalid"
+      );
+}
+
+export function decodeProviderJson<const Schema extends TSchema>(
+  provider: NativeAgentProviderId,
+  operation: NativeAgentProviderOperation,
+  schema: Schema,
+  text: string
+): Effect.Effect<Static<Schema>, NativeAgentProviderFailure> {
+  return Effect.try({
+    try: (): unknown => JSON.parse(text),
+    catch: (cause) =>
+      failure(
+        provider,
+        operation,
+        "InvalidJson",
+        "command-returned",
+        undefined,
+        errorMessage(cause)
+      ),
+  }).pipe(
+    Effect.flatMap((value) =>
+      Value.Check(schema, value)
+        ? Effect.succeed(value)
+        : fail(
+            provider,
+            operation,
+            "ProtocolFailed",
+            "command-returned",
+            undefined,
+            "Provider JSON did not match the expected native response schema"
+          )
+    )
   );
 }
 
@@ -184,32 +209,123 @@ export function parseHelpCommands(stdout: string): readonly string[] {
   return Object.freeze([...commands].sort(compareText));
 }
 
-export function requireMarketplaceIdentity(
+export function requireMarketplaceIdentityInput(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  identity: string
+  input: NativeProviderMarketplaceIdentityInput
 ): Effect.Effect<string, NativeAgentProviderFailure> {
-  return /^[a-z0-9][a-z0-9_-]*$/u.test(identity)
-    ? Effect.succeed(identity)
-    : fail(provider, operation, "InvalidInput", undefined, "Marketplace identity is not canonical");
+  return Value.Check(NativeProviderMarketplaceIdentityInputSchema, input)
+    ? Effect.succeed(input.identity)
+    : fail(
+        provider,
+        operation,
+        "InvalidInput",
+        "not-started",
+        undefined,
+        "Marketplace identity is not canonical"
+      );
 }
 
-export function requirePluginSelector(
+export function requirePluginSelectorInput(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  selector: string
+  input: NativeProviderPluginSelectorInput
 ): Effect.Effect<string, NativeAgentProviderFailure> {
-  return /^[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9_-]*$/u.test(selector)
-    ? Effect.succeed(selector)
-    : fail(provider, operation, "InvalidInput", undefined, "Plugin selector is not canonical");
+  return Value.Check(NativeProviderPluginSelectorInputSchema, input)
+    ? Effect.succeed(input.selector)
+    : fail(
+        provider,
+        operation,
+        "InvalidInput",
+        "not-started",
+        undefined,
+        "Plugin selector is not canonical"
+      );
 }
 
-export function runCodexAppServerRequests(
-  kernel: EffectPlatformNodeProviderKernel,
+export function requirePluginFilesReadInput(
+  provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  requests: readonly Readonly<{ method: string; params: NativeProviderJsonValue }>[]
-): Effect.Effect<readonly NativeProviderJsonValue[], NativeAgentProviderFailure> {
-  return kernel.runCodexAppServer(operation, requests);
+  input: NativeProviderPluginFilesReadInput
+): Effect.Effect<NativeProviderPluginFilesReadInput, NativeAgentProviderFailure> {
+  return Value.Check(NativeProviderPluginFilesReadInputSchema, input)
+    ? Effect.succeed(input)
+    : fail(
+        provider,
+        operation,
+        "InvalidInput",
+        "not-started",
+        undefined,
+        "Plugin file batch request is invalid"
+      );
+}
+
+export function requireGitMarketplaceSource(
+  provider: NativeAgentProviderId,
+  operation: NativeAgentProviderOperation,
+  repositoryUrl: string,
+  revision: string,
+  sparsePaths: readonly string[]
+): Effect.Effect<Readonly<{ repositoryUrl: string; revision: string; sparsePaths: readonly string[] }>, NativeAgentProviderFailure> {
+  return Effect.gen(function* () {
+    if (!Value.Check(CanonicalGitRepositoryUrlSchema, repositoryUrl)) {
+      return yield* fail(
+        provider,
+        operation,
+        "InvalidInput",
+        "not-started",
+        undefined,
+        "Git marketplace repositoryUrl must be a canonical HTTPS .git URL"
+      );
+    }
+    if (!/^[^\s#]+$/u.test(revision) || revision.length > 256) {
+      return yield* fail(
+        provider,
+        operation,
+        "InvalidInput",
+        "not-started",
+        undefined,
+        "Git marketplace revision is not canonical"
+      );
+    }
+    if (sparsePaths.length > 64) {
+      return yield* fail(
+        provider,
+        operation,
+        "LimitExceeded",
+        "not-started",
+        undefined,
+        "Git marketplace sparse path count exceeds the resource limit"
+      );
+    }
+    const canonicalSparsePaths = sparsePaths.map((path) => canonicalSparsePath(path));
+    if (canonicalSparsePaths.some((path) => path === undefined)) {
+      return yield* fail(
+        provider,
+        operation,
+        "InvalidInput",
+        "not-started",
+        undefined,
+        "Git marketplace sparse paths must be canonical relative POSIX paths"
+      );
+    }
+    const present = canonicalSparsePaths.filter((path): path is string => path !== undefined);
+    if (new Set(present).size !== present.length) {
+      return yield* fail(
+        provider,
+        operation,
+        "InvalidInput",
+        "not-started",
+        undefined,
+        "Git marketplace sparse paths must be unique"
+      );
+    }
+    return Object.freeze({
+      repositoryUrl,
+      revision,
+      sparsePaths: Object.freeze([...present].sort(compareText)),
+    });
+  });
 }
 
 interface CommandRunInput {
@@ -218,510 +334,248 @@ interface CommandRunInput {
   readonly executablePath: string;
   readonly home: string;
   readonly args: readonly string[];
-  readonly stdin: string;
-  readonly executor: CommandExecutor.CommandExecutor;
-}
-
-interface CodexAppServerRunInput {
-  readonly provider: NativeAgentProviderId;
-  readonly operation: NativeAgentProviderOperation;
-  readonly executablePath: string;
-  readonly home: string;
-  readonly requests: readonly CodexAppServerRequest[];
   readonly executor: CommandExecutor.CommandExecutor;
 }
 
 function runCommand(
   input: CommandRunInput
-): Effect.Effect<NativeProviderCommandResult, NativeAgentProviderFailure> {
+): Effect.Effect<NativeCommandOutput, NativeAgentProviderFailure> {
   const command = Command.make(input.executablePath, ...input.args).pipe(
     Command.workingDirectory(input.home),
     Command.env(providerEnvironment(input.provider, input.home)),
-    Command.feed(input.stdin)
+    Command.feed("")
   );
-  const operation = Effect.scoped(
-    Effect.gen(function* () {
-      const process = yield* input.executor
-        .start(command)
-        .pipe(
-          Effect.mapError((cause) =>
-            platformFailure(
+  return Effect.scoped(
+    input.executor.start(command).pipe(
+      Effect.mapError((cause) =>
+        platformFailure(
+          input.provider,
+          input.operation,
+          input.executablePath,
+          cause,
+          "CommandFailed",
+          "not-started"
+        )
+      ),
+      Effect.timeoutFail({
+        duration: PROCESS_START_TIMEOUT,
+        onTimeout: () =>
+          failure(
+            input.provider,
+            input.operation,
+            "CommandTimedOut",
+            "not-started",
+            input.executablePath,
+            "Provider command did not start within its bounded timeout"
+          ),
+      }),
+      Effect.flatMap((process) =>
+        Effect.all(
+          [
+            collectBoundedOutput(
+              process.stdout,
               input.provider,
               input.operation,
-              input.executablePath,
-              cause,
-              "CommandFailed"
-            )
-          )
-        );
-      const [stdout, stderr, exitCode] = yield* Effect.all(
-        [
-          collectBoundedOutput(process.stdout, input.provider, input.operation),
-          collectBoundedOutput(process.stderr, input.provider, input.operation),
-          process.exitCode.pipe(
-            Effect.mapError((cause) =>
-              platformFailure(
+              "started"
+            ),
+            collectBoundedOutput(
+              process.stderr,
+              input.provider,
+              input.operation,
+              "started"
+            ),
+            process.exitCode.pipe(
+              Effect.mapError((cause) =>
+                platformFailure(
+                  input.provider,
+                  input.operation,
+                  input.executablePath,
+                  cause,
+                  "CommandFailed",
+                  "started"
+                )
+              )
+            ),
+          ],
+          { concurrency: "unbounded" }
+        ).pipe(
+          Effect.timeoutFail({
+            duration: PROCESS_RUN_TIMEOUT,
+            onTimeout: () =>
+              failure(
                 input.provider,
                 input.operation,
+                "CommandTimedOut",
+                "started",
                 input.executablePath,
-                cause,
-                "CommandFailed"
-              )
-            )
-          ),
-        ],
-        { concurrency: "unbounded" }
-      );
-      if (Number(exitCode) !== 0) {
-        return yield* fail(
-          input.provider,
-          input.operation,
-          "CommandFailed",
-          input.executablePath,
-          `Provider command exited ${Number(exitCode)}: ${stderr.trim() || stdout.trim()}`
-        );
-      }
-      return Object.freeze({ stdout, stderr });
-    })
-  );
-  return operation.pipe(
-    Effect.timeoutFail({
-      duration: PROCESS_TIMEOUT,
-      onTimeout: () =>
-        failure(
-          input.provider,
-          input.operation,
-          "CommandTimedOut",
-          input.executablePath,
-          "Provider command exceeded its bounded execution timeout"
-        ),
-    })
-  );
-}
-
-function runCodexAppServerProcess(
-  input: CodexAppServerRunInput
-): Effect.Effect<readonly NativeProviderJsonValue[], NativeAgentProviderFailure> {
-  const operation = Effect.scoped(
-    Effect.gen(function* () {
-      const inputLines = yield* Queue.unbounded<Uint8Array>();
-      const outputLines = yield* Queue.bounded<string>(1024);
-      const command = Command.make(input.executablePath, "app-server", "--listen", "stdio://").pipe(
-        Command.workingDirectory(input.home),
-        Command.env(providerEnvironment(input.provider, input.home)),
-        Command.stdin(Stream.fromQueue(inputLines))
-      );
-      const process = yield* input.executor
-        .start(command)
-        .pipe(
-          Effect.mapError((cause) =>
-            platformFailure(
-              input.provider,
-              input.operation,
-              input.executablePath,
-              cause,
-              "CommandFailed"
-            )
-          )
-        );
-      yield* process.stdout.pipe(
-        Stream.decodeText(),
-        Stream.splitLines,
-        Stream.runForEach((line) => Queue.offer(outputLines, line)),
-        Effect.mapError((cause) =>
-          platformFailure(
-            input.provider,
-            input.operation,
-            input.executablePath,
-            cause,
-            "ProtocolFailed"
-          )
-        ),
-        Effect.forkScoped
-      );
-      yield* process.stderr.pipe(
-        Stream.runDrain,
-        Effect.mapError((cause) =>
-          platformFailure(
-            input.provider,
-            input.operation,
-            input.executablePath,
-            cause,
-            "ProtocolFailed"
-          )
-        ),
-        Effect.forkScoped
-      );
-
-      const request = Effect.fn("nativeAgentProvider.codexAppServerRequest")(function* (
-        id: number,
-        method: string,
-        params: NativeProviderJsonValue
-      ) {
-        yield* offerAppServerLine(inputLines, Object.freeze({ id, method, params }));
-        while (true) {
-          const line = yield* Queue.take(outputLines);
-          const decoded = yield* decodeJson(input.provider, input.operation, line);
-          if (!isJsonRecord(decoded) || decoded.id !== id) continue;
-          if ("error" in decoded) {
-            return yield* fail(
-              input.provider,
-              input.operation,
-              "ProtocolFailed",
-              undefined,
-              `Codex app server rejected request ${id}: ${JSON.stringify(decoded.error)}`
-            );
-          }
-          if (!("result" in decoded)) {
-            return yield* fail(
-              input.provider,
-              input.operation,
-              "ProtocolFailed",
-              undefined,
-              `Codex app server response ${id} has no result`
-            );
-          }
-          return decoded.result;
-        }
-      });
-
-      yield* request(
-        1,
-        "initialize",
-        Object.freeze({
-          clientInfo: Object.freeze({
-            name: "rawr-native-agent-provider-resource",
-            version: "1.0.0",
-          }),
-          capabilities: Object.freeze({ experimentalApi: true }),
-        })
-      );
-      yield* offerAppServerLine(
-        inputLines,
-        Object.freeze({ method: "initialized", params: Object.freeze({}) })
-      );
-      const results: NativeProviderJsonValue[] = [];
-      for (let index = 0; index < input.requests.length; index += 1) {
-        const current = input.requests[index];
-        if (current === undefined) {
-          return yield* fail(
-            input.provider,
-            input.operation,
-            "ProtocolFailed",
-            undefined,
-            "Codex app server request set changed"
-          );
-        }
-        results.push(yield* request(index + 2, current.method, current.params));
-      }
-      yield* Queue.shutdown(inputLines);
-      const exitCode = yield* process.exitCode.pipe(
-        Effect.mapError((cause) =>
-          platformFailure(
-            input.provider,
-            input.operation,
-            input.executablePath,
-            cause,
-            "CommandFailed"
-          )
+                "Provider command exceeded its bounded execution timeout"
+              ),
+          })
         )
-      );
-      if (Number(exitCode) !== 0) {
-        return yield* fail(
-          input.provider,
-          input.operation,
-          "CommandFailed",
-          input.executablePath,
-          `Codex app server exited ${Number(exitCode)}`
-        );
-      }
-      return Object.freeze(results);
-    })
-  );
-  return operation.pipe(
-    Effect.timeoutFail({
-      duration: APP_SERVER_TIMEOUT,
-      onTimeout: () =>
-        failure(
-          input.provider,
-          input.operation,
-          "CommandTimedOut",
-          input.executablePath,
-          "Codex app server operation exceeded its bounded timeout"
-        ),
-    })
-  );
-}
-
-function offerAppServerLine(
-  queue: Queue.Queue<Uint8Array>,
-  message: NativeProviderJsonValue
-): Effect.Effect<void> {
-  return Queue.offer(queue, new TextEncoder().encode(`${JSON.stringify(message)}\n`)).pipe(
-    Effect.asVoid
+      ),
+      Effect.flatMap(([stdout, stderr, exitCode]) =>
+        Number(exitCode) === 0
+          ? Effect.succeed(Object.freeze({ stdout, stderr }))
+          : fail(
+              input.provider,
+              input.operation,
+              "CommandFailed",
+              "command-returned",
+              input.executablePath,
+              `Provider command exited ${Number(exitCode)}: ${stderr.trim() || stdout.trim()}`
+            )
+      )
+    )
   );
 }
 
 function collectBoundedOutput(
   stream: Stream.Stream<Uint8Array, PlatformError>,
   provider: NativeAgentProviderId,
-  operation: NativeAgentProviderOperation
+  operation: NativeAgentProviderOperation,
+  phase: NativeProviderCommandPhase
 ): Effect.Effect<string, NativeAgentProviderFailure> {
-  interface OutputState {
-    readonly chunks: readonly Uint8Array[];
-    readonly bytes: number;
-  }
+  type OutputState = Readonly<{ chunks: readonly Uint8Array[]; bytes: number }>;
   const initial: OutputState = Object.freeze({ chunks: Object.freeze([]), bytes: 0 });
-  const mapped = stream.pipe(
-    Stream.mapError((cause) => platformFailure(provider, operation, undefined, cause))
-  );
   return Stream.runFoldEffect(
-    mapped,
+    stream.pipe(
+      Stream.mapError((cause) =>
+        platformFailure(provider, operation, undefined, cause, "CommandFailed", phase)
+      )
+    ),
     initial,
     (state, chunk): Effect.Effect<OutputState, NativeAgentProviderFailure> => {
       const bytes = state.bytes + chunk.byteLength;
-      if (bytes > MAX_PROCESS_OUTPUT_BYTES) {
-        return fail(
-          provider,
-          operation,
-          "LimitExceeded",
-          undefined,
-          "Provider command exceeded its bounded output limit"
-        );
-      }
-      return Effect.succeed(
-        Object.freeze({ chunks: Object.freeze([...state.chunks, chunk]), bytes })
-      );
+      return bytes > MAX_PROCESS_OUTPUT_BYTES
+        ? fail(
+            provider,
+            operation,
+            "LimitExceeded",
+            phase,
+            undefined,
+            "Provider command exceeded its bounded output limit"
+          )
+        : Effect.succeed(
+            Object.freeze({ chunks: Object.freeze([...state.chunks, chunk]), bytes })
+          );
     }
-  ).pipe(Effect.flatMap((state) => decodeText(provider, operation, concatenate(state.chunks))));
+  ).pipe(
+    Effect.flatMap((state) =>
+      Effect.try({
+        try: () => new TextDecoder("utf-8", { fatal: true }).decode(concatenate(state.chunks)),
+        catch: (cause) =>
+          failure(
+            provider,
+            operation,
+            "ProtocolFailed",
+            phase,
+            undefined,
+            errorMessage(cause)
+          ),
+      })
+    )
+  );
 }
 
-function readProviderPackage(
+function readBoundedPluginFile(
   fs: FileSystem.FileSystem,
   paths: Path.Path,
   provider: NativeAgentProviderId,
-  operation: "marketplace-read" | "plugin-read",
+  operation: NativeAgentProviderOperation,
   home: string,
   rootInput: string,
-  limits: NativeProviderPackageReadLimits,
-  requireHomeContainment: boolean
-): Effect.Effect<NativeProviderPackageObservation, NativeAgentProviderFailure> {
+  input: NativeProviderPluginFileRequest
+): Effect.Effect<NativeProviderPluginFileRead, NativeAgentProviderFailure> {
   return Effect.gen(function* () {
-    if (!Number.isSafeInteger(limits.maxEntries) || limits.maxEntries <= 0) {
+    const relativePath = canonicalRelativeFile(input.relativePath);
+    if (relativePath === undefined) {
       return yield* fail(
         provider,
         operation,
         "InvalidInput",
-        rootInput,
-        "maxEntries must be a positive safe integer"
+        "not-started",
+        input.relativePath,
+        "Plugin file path must be one canonical relative POSIX file path"
       );
     }
-    if (!Number.isSafeInteger(limits.maxBytes) || limits.maxBytes <= 0) {
-      return yield* fail(
-        provider,
-        operation,
-        "InvalidInput",
-        rootInput,
-        "maxBytes must be a positive safe integer"
-      );
-    }
-    const root = yield* requireCanonicalDirectory(fs, paths, provider, operation, rootInput, false);
-    if (requireHomeContainment && !isContained(paths, home, root)) {
+    const root = yield* requireCanonicalDirectory(fs, paths, provider, operation, rootInput);
+    if (!isContained(paths, home, root)) {
       return yield* fail(
         provider,
         operation,
         "Aliased",
+        "not-started",
         root,
         "Installed plugin root escaped the explicit provider home"
       );
     }
-    const budget = { entries: 0, bytes: 0 };
-    const entries = yield* walkPackage(fs, paths, provider, operation, root, "", limits, budget);
-    entries.sort((left, right) => compareText(left.path, right.path));
-    return Object.freeze({ entries: Object.freeze(entries) });
-  });
-}
-
-function walkPackage(
-  fs: FileSystem.FileSystem,
-  paths: Path.Path,
-  provider: NativeAgentProviderId,
-  operation: "marketplace-read" | "plugin-read",
-  root: string,
-  relativeRoot: string,
-  limits: NativeProviderPackageReadLimits,
-  budget: { entries: number; bytes: number }
-): Effect.Effect<
-  NativeProviderPackageObservation["entries"][number][],
-  NativeAgentProviderFailure
-> {
-  const directory = relativeRoot === "" ? root : paths.join(root, relativeRoot);
-  return fs.readDirectory(directory).pipe(
-    mapPlatform(provider, operation, directory),
-    Effect.flatMap((names) =>
-      Effect.forEach(
-        [...names].sort(compareText),
-        (name) =>
-          Effect.gen(function* () {
-            const relativePath = relativeRoot === "" ? name : paths.join(relativeRoot, name);
-            const candidate = paths.join(root, relativePath);
-            budget.entries += 1;
-            if (budget.entries > limits.maxEntries) {
-              return yield* fail(
-                provider,
-                operation,
-                "LimitExceeded",
-                candidate,
-                "Package exceeds maxEntries"
-              );
-            }
-            const resolved = yield* fs
-              .realPath(candidate)
-              .pipe(mapPlatform(provider, operation, candidate));
-            if (resolved !== candidate) {
-              return yield* fail(
-                provider,
-                operation,
-                "UnsupportedEntry",
-                candidate,
-                "Package cannot contain aliases or symlinks"
-              );
-            }
-            const status = yield* fs
-              .stat(candidate)
-              .pipe(mapPlatform(provider, operation, candidate));
-            if (status.type === "Directory") {
-              return yield* walkPackage(
-                fs,
-                paths,
-                provider,
-                operation,
-                root,
-                relativePath,
-                limits,
-                budget
-              );
-            }
-            if (status.type !== "File") {
-              return yield* fail(
-                provider,
-                operation,
-                "UnsupportedEntry",
-                candidate,
-                "Package contains an unsupported entry"
-              );
-            }
-            const size = Number(status.size);
-            budget.bytes += size;
-            if (!Number.isSafeInteger(size) || size < 0 || budget.bytes > limits.maxBytes) {
-              return yield* fail(
-                provider,
-                operation,
-                "LimitExceeded",
-                candidate,
-                "Package exceeds maxBytes"
-              );
-            }
-            const bytes = yield* fs
-              .readFile(candidate)
-              .pipe(mapPlatform(provider, operation, candidate));
-            if (bytes.byteLength !== size) {
-              return yield* fail(
-                provider,
-                operation,
-                "FilesystemFailed",
-                candidate,
-                "Package file size changed while reading"
-              );
-            }
-            return [
-              Object.freeze({
-                path: relativePath.split(paths.sep).join("/"),
-                mode: status.mode & 0o777,
-                bytes,
-              }),
-            ];
-          }),
-        { concurrency: 1 }
-      )
-    ),
-    Effect.map((groups) => groups.flat())
-  );
-}
-
-function readOptionalHomeJsonFile(
-  fs: FileSystem.FileSystem,
-  paths: Path.Path,
-  provider: NativeAgentProviderId,
-  home: string,
-  relativePath: string,
-  maxBytes: number
-): Effect.Effect<NativeProviderJsonValue | null, NativeAgentProviderFailure> {
-  return Effect.gen(function* () {
-    if (
-      !Number.isSafeInteger(maxBytes) ||
-      maxBytes <= 0 ||
-      relativePath === "" ||
-      paths.isAbsolute(relativePath)
-    ) {
+    const candidate = paths.join(root, ...relativePath.split("/"));
+    if (!isContained(paths, root, candidate)) {
       return yield* fail(
         provider,
-        "config-read",
-        "InvalidInput",
-        relativePath,
-        "Configuration read input is invalid"
-      );
-    }
-    const candidate = paths.join(home, relativePath);
-    if (!isContained(paths, home, candidate)) {
-      return yield* fail(
-        provider,
-        "config-read",
+        operation,
         "Aliased",
+        "not-started",
         candidate,
-        "Configuration path escaped the explicit provider home"
+        "Plugin file path escaped its installed package root"
       );
     }
-    const present = yield* fs
-      .exists(candidate)
-      .pipe(mapPlatform(provider, "config-read", candidate));
-    if (!present) return null;
-    const resolved = yield* fs
-      .realPath(candidate)
-      .pipe(mapPlatform(provider, "config-read", candidate));
+    const resolved = yield* fs.realPath(candidate).pipe(
+      mapPlatform(provider, operation, candidate, "not-started")
+    );
     if (resolved !== candidate) {
       return yield* fail(
         provider,
-        "config-read",
+        operation,
         "Aliased",
+        "not-started",
         candidate,
-        "Configuration path is not canonical"
+        "Plugin file path is aliased"
       );
     }
-    const status = yield* fs.stat(candidate).pipe(mapPlatform(provider, "config-read", candidate));
-    if (status.type !== "File" || Number(status.size) > maxBytes) {
+    const status = yield* fs.stat(candidate).pipe(
+      mapPlatform(provider, operation, candidate, "not-started")
+    );
+    const size = Number(status.size);
+    if (status.type !== "File") {
       return yield* fail(
         provider,
-        "config-read",
-        status.type === "File" ? "LimitExceeded" : "UnsupportedEntry",
+        operation,
+        "UnsupportedEntry",
+        "not-started",
         candidate,
-        "Configuration file shape is invalid"
+        "Plugin package entry is not a regular file"
       );
     }
-    const bytes = yield* fs
-      .readFile(candidate)
-      .pipe(mapPlatform(provider, "config-read", candidate));
-    if (bytes.byteLength > maxBytes) {
+    if (!Number.isSafeInteger(size) || size < 0 || size > input.maxBytes) {
       return yield* fail(
         provider,
-        "config-read",
+        operation,
         "LimitExceeded",
+        "not-started",
         candidate,
-        "Configuration file exceeds maxBytes"
+        "Plugin package file exceeds maxBytes"
       );
     }
-    const text = yield* decodeText(provider, "config-read", bytes);
-    return yield* decodeJson(provider, "config-read", text);
+    const bytes = yield* fs.readFile(candidate).pipe(
+      mapPlatform(provider, operation, candidate, "not-started")
+    );
+    if (bytes.byteLength !== size) {
+      return yield* fail(
+        provider,
+        operation,
+        "FilesystemFailed",
+        "not-started",
+        candidate,
+        "Plugin package file size changed while reading"
+      );
+    }
+    return Object.freeze({
+      kind: "Read",
+      relativePath,
+      byteLength: bytes.byteLength,
+      contentBase64: Buffer.from(bytes).toString("base64"),
+    });
   });
 }
 
@@ -732,33 +586,38 @@ function requireCanonicalExecutable(
   candidate: string
 ): Effect.Effect<string, NativeAgentProviderFailure> {
   return Effect.gen(function* () {
-    if (!isCanonicalAbsolutePath(paths, candidate, false)) {
+    if (!isCanonicalAbsolutePath(paths, candidate)) {
       return yield* fail(
         provider,
         "acquire",
         "InvalidInput",
+        "not-started",
         candidate,
         "Provider executable must be an explicit canonical absolute path"
       );
     }
-    const resolved = yield* fs
-      .realPath(candidate)
-      .pipe(mapPlatform(provider, "acquire", candidate));
+    const resolved = yield* fs.realPath(candidate).pipe(
+      mapPlatform(provider, "acquire", candidate, "not-started")
+    );
     if (resolved !== candidate) {
       return yield* fail(
         provider,
         "acquire",
         "Aliased",
+        "not-started",
         candidate,
         "Provider executable path is aliased"
       );
     }
-    const status = yield* fs.stat(candidate).pipe(mapPlatform(provider, "acquire", candidate));
+    const status = yield* fs.stat(candidate).pipe(
+      mapPlatform(provider, "acquire", candidate, "not-started")
+    );
     if (status.type !== "File" || (status.mode & 0o111) === 0) {
       return yield* fail(
         provider,
         "acquire",
         "UnsupportedEntry",
+        "not-started",
         candidate,
         "Provider executable must be one executable regular file"
       );
@@ -772,31 +631,41 @@ function requireCanonicalDirectory(
   paths: Path.Path,
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  candidate: string,
-  allowRoot: boolean
+  candidate: string
 ): Effect.Effect<string, NativeAgentProviderFailure> {
   return Effect.gen(function* () {
-    if (!isCanonicalAbsolutePath(paths, candidate, allowRoot)) {
+    if (!isCanonicalAbsolutePath(paths, candidate)) {
       return yield* fail(
         provider,
         operation,
         "InvalidInput",
+        "not-started",
         candidate,
         "Directory must be an explicit canonical absolute path"
       );
     }
-    const resolved = yield* fs
-      .realPath(candidate)
-      .pipe(mapPlatform(provider, operation, candidate));
+    const resolved = yield* fs.realPath(candidate).pipe(
+      mapPlatform(provider, operation, candidate, "not-started")
+    );
     if (resolved !== candidate) {
-      return yield* fail(provider, operation, "Aliased", candidate, "Directory path is aliased");
+      return yield* fail(
+        provider,
+        operation,
+        "Aliased",
+        "not-started",
+        candidate,
+        "Directory path is aliased"
+      );
     }
-    const status = yield* fs.stat(candidate).pipe(mapPlatform(provider, operation, candidate));
+    const status = yield* fs.stat(candidate).pipe(
+      mapPlatform(provider, operation, candidate, "not-started")
+    );
     if (status.type !== "Directory") {
       return yield* fail(
         provider,
         operation,
         "UnsupportedEntry",
+        "not-started",
         candidate,
         "Path must be one existing directory"
       );
@@ -805,41 +674,26 @@ function requireCanonicalDirectory(
   });
 }
 
-function requireVacantOwnerSlot(
-  fs: FileSystem.FileSystem,
-  paths: Path.Path,
-  provider: NativeAgentProviderId,
-  operation: NativeAgentProviderOperation,
-  home: string
-): Effect.Effect<void, NativeAgentProviderFailure> {
-  const candidate = paths.join(home, OWNER_SLOT);
-  return Effect.matchEffect(fs.readLink(candidate), {
-    onFailure: (cause) =>
-      cause._tag === "SystemError" && cause.reason === "NotFound"
-        ? Effect.void
-        : fail(
-            provider,
-            operation,
-            "OwnershipConflict",
-            candidate,
-            "Provider ownership slot could not be proven absent"
-          ),
-    onSuccess: () =>
-      fail(
-        provider,
-        operation,
-        "OwnershipConflict",
-        candidate,
-        "Provider ownership slot is occupied"
-      ),
-  });
+function canonicalSparsePath(input: string): string | undefined {
+  if (input.length === 0 || input.length > 1_024 || input.includes("\\") || input.startsWith("/")) {
+    return undefined;
+  }
+  const segments = input.split("/");
+  return segments.some((segment) => segment === "" || segment === "." || segment === "..")
+    ? undefined
+    : segments.join("/");
 }
 
-function isCanonicalAbsolutePath(paths: Path.Path, candidate: string, allowRoot: boolean): boolean {
+function canonicalRelativeFile(input: string): string | undefined {
+  return canonicalSparsePath(input);
+}
+
+function isCanonicalAbsolutePath(paths: Path.Path, candidate: string): boolean {
   return (
+    candidate.length <= 16_384 &&
     paths.isAbsolute(candidate) &&
     paths.normalize(candidate) === candidate &&
-    (allowRoot || candidate !== paths.parse(candidate).root)
+    candidate !== paths.parse(candidate).root
   );
 }
 
@@ -857,56 +711,18 @@ function providerEnvironment(
   provider: NativeAgentProviderId,
   home: string
 ): Record<string, string | undefined> {
-  return {
-    HOME: home,
-    CODEX_HOME: provider === "codex" ? home : undefined,
-    CLAUDE_CONFIG_DIR: provider === "claude" ? home : undefined,
-    CODEX_FORK_HOME: undefined,
-    CODEX_SWITCHBOARD_HOME: undefined,
-    CODEX_SWITCHBOARD_TARGET: undefined,
-  };
+  return provider === "codex"
+    ? { HOME: home, CODEX_HOME: home }
+    : { HOME: home, CLAUDE_CONFIG_DIR: home };
 }
 
-function decodeJson(
-  provider: NativeAgentProviderId,
-  operation: NativeAgentProviderOperation,
-  text: string
-): Effect.Effect<NativeProviderJsonValue, NativeAgentProviderFailure> {
-  return Effect.try({
-    try: () => JSON.parse(text),
-    catch: (cause) => failure(provider, operation, "InvalidJson", undefined, errorMessage(cause)),
-  }).pipe(
-    Effect.flatMap((value: unknown) =>
-      isJsonValue(value)
-        ? Effect.succeed(value)
-        : fail(provider, operation, "InvalidJson", undefined, "Provider returned a non-JSON value")
-    )
-  );
-}
-
-function decodeText(
-  provider: NativeAgentProviderId,
-  operation: NativeAgentProviderOperation,
-  bytes: Uint8Array
-): Effect.Effect<string, NativeAgentProviderFailure> {
-  return Effect.try({
-    try: () => new TextDecoder("utf-8", { fatal: true }).decode(bytes),
-    catch: (cause) =>
-      failure(provider, operation, "ProtocolFailed", undefined, errorMessage(cause)),
-  });
-}
-
-function isJsonValue(value: unknown): value is NativeProviderJsonValue {
-  if (value === null || typeof value === "boolean" || typeof value === "string") return true;
-  if (typeof value === "number") return Number.isFinite(value);
-  if (Array.isArray(value)) return value.every(isJsonValue);
-  return typeof value === "object" && Object.values(value).every(isJsonValue);
-}
-
-function isJsonRecord(
-  value: NativeProviderJsonValue
-): value is Readonly<Record<string, NativeProviderJsonValue>> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
+function processSemaphore(provider: NativeAgentProviderId, home: string): Effect.Semaphore {
+  const key = `${provider}\u0000${home}`;
+  const existing = processSemaphores.get(key);
+  if (existing !== undefined) return existing;
+  const created = Effect.runSync(Effect.makeSemaphore(1));
+  processSemaphores.set(key, created);
+  return created;
 }
 
 function concatenate(chunks: readonly Uint8Array[]): Uint8Array {
@@ -923,10 +739,16 @@ function concatenate(chunks: readonly Uint8Array[]): Uint8Array {
 function mapPlatform(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
-  candidate: string | undefined
+  candidate: string | undefined,
+  phase: NativeProviderCommandPhase,
+  fallback: NativeAgentProviderFailure["reason"] = "FilesystemFailed"
 ) {
   return <A, R>(effect: Effect.Effect<A, PlatformError, R>) =>
-    effect.pipe(Effect.mapError((cause) => platformFailure(provider, operation, candidate, cause)));
+    effect.pipe(
+      Effect.mapError((cause) =>
+        platformFailure(provider, operation, candidate, cause, fallback, phase)
+      )
+    );
 }
 
 function platformFailure(
@@ -934,26 +756,36 @@ function platformFailure(
   operation: NativeAgentProviderOperation,
   candidate: string | undefined,
   cause: PlatformError,
-  fallback: NativeAgentProviderFailure["reason"] = "FilesystemFailed"
+  fallback: NativeAgentProviderFailure["reason"],
+  phase: NativeProviderCommandPhase
 ): NativeAgentProviderFailure {
   const missing = cause._tag === "SystemError" && cause.reason === "NotFound";
-  return failure(provider, operation, missing ? "Missing" : fallback, candidate, cause.message);
+  return failure(
+    provider,
+    operation,
+    missing ? "Missing" : fallback,
+    phase,
+    candidate,
+    cause.message
+  );
 }
 
 function fail(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
   reason: NativeAgentProviderFailure["reason"],
+  phase: NativeProviderCommandPhase,
   candidate: string | undefined,
   detail: string
 ) {
-  return Effect.fail(failure(provider, operation, reason, candidate, detail));
+  return Effect.fail(failure(provider, operation, reason, phase, candidate, detail));
 }
 
 function failure(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
   reason: NativeAgentProviderFailure["reason"],
+  commandPhase: NativeProviderCommandPhase,
   candidate: string | undefined,
   detail: string
 ): NativeAgentProviderFailure {
@@ -962,8 +794,9 @@ function failure(
     provider,
     operation,
     reason,
+    commandPhase,
     ...(candidate === undefined ? {} : { path: candidate }),
-    detail,
+    detail: detail.slice(0, MAX_FAILURE_DETAIL),
   });
 }
 

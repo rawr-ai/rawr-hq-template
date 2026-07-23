@@ -1,31 +1,26 @@
 import { schema } from "@rawr/hq-sdk";
+
 import { ocBase } from "../../base";
 import {
-  CanonicalStatusInputSchema,
-  CanonicalStatusResultSchema,
-  CanonicalSyncInputSchema,
-  CanonicalSyncResultSchema,
-  CompleteTestInputSchema,
-  CompleteTestResultSchema,
-  TargetedTestInputSchema,
-  TargetedTestResultSchema,
+  ProviderStatusRequestSchema,
+  ProviderStatusResultSchema,
+  ProviderSyncRequestSchema,
+  ProviderSyncResultSchema,
+  ProviderTestRequestSchema,
+  ProviderTestResultSchema,
 } from "./schemas";
 
 export const contract = {
-  targetedTest: ocBase
+  test: ocBase
     .meta({ idempotent: true, entity: "providers", audit: "full" })
-    .input(schema(TargetedTestInputSchema))
-    .output(schema(TargetedTestResultSchema)),
-  completeTest: ocBase
+    .input(schema(ProviderTestRequestSchema))
+    .output(schema(ProviderTestResultSchema)),
+  status: ocBase
+    .meta({ idempotent: true, entity: "providers", audit: "basic" })
+    .input(schema(ProviderStatusRequestSchema))
+    .output(schema(ProviderStatusResultSchema)),
+  sync: ocBase
     .meta({ idempotent: true, entity: "providers", audit: "full" })
-    .input(schema(CompleteTestInputSchema))
-    .output(schema(CompleteTestResultSchema)),
-  canonicalSync: ocBase
-    .meta({ idempotent: true, entity: "providers", audit: "full" })
-    .input(schema(CanonicalSyncInputSchema))
-    .output(schema(CanonicalSyncResultSchema)),
-  canonicalStatus: ocBase
-    .meta({ idempotent: true, entity: "providers", audit: "full" })
-    .input(schema(CanonicalStatusInputSchema))
-    .output(schema(CanonicalStatusResultSchema)),
+    .input(schema(ProviderSyncRequestSchema))
+    .output(schema(ProviderSyncResultSchema)),
 };

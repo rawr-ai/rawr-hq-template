@@ -12,8 +12,6 @@ describe("agent-plugin controller layout", () => {
     try {
       expect(deriveAgentPluginControllerLayout({ dataRoot: "/verified/controller-data" })).toEqual({
         artifactStoreRoot: "/verified/controller-data/agent-plugins/artifacts-v1",
-        providerProjectionRoot: "/verified/controller-data/agent-plugins/provider-projections-v1",
-        providerTargetStateRoot: "/verified/controller-data/agent-plugins/provider-target-state-v1",
       });
     } finally {
       if (originalHome === undefined) delete process.env.HOME;

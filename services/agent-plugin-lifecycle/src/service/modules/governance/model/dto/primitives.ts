@@ -31,8 +31,13 @@ export function parseCanonicalRef(
     !REF_PATTERN.test(value) ||
     value.includes("..") ||
     value.includes("//") ||
-    value.endsWith(".lock") ||
-    value.endsWith("/")
+    value.includes("@{") ||
+    /[\u0000-\u0020~^:?*\\[]/u.test(value) ||
+    value.endsWith("/") ||
+    value.endsWith(".") ||
+    value
+      .split("/")
+      .some((part) => part === "" || part.startsWith(".") || part.endsWith(".lock"))
   ) {
     return invalidGitIdentity(path, "Expected a qualified canonical Git ref");
   }

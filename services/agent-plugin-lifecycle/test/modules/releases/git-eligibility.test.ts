@@ -17,7 +17,6 @@ import {
   createGeneratedGitRepository,
   GIT_EXECUTABLE,
   git,
-  installCaseCollisionCommit,
   unsafeFixturePolicy,
 } from "../../support/git-repository";
 import {
@@ -486,8 +485,26 @@ describe("exact Git-object eligibility", () => {
     await disposeOwnedFixtureRoot(fixture!);
     fixture = undefined;
     const collision = await generated();
-    const collisionPolicy = await installCaseCollisionCommit(collision);
-    await expect(reader.inspect(collisionPolicy)).resolves.toMatchObject({
+    const delegate = await realPort();
+    const payloadPath = `plugins/agent/${collision.pluginId}/skills/example/SKILL.md`;
+    const payloadBlob = await git(collision.root, ["rev-parse", `HEAD:${payloadPath}`]);
+    const collidingRecord = new TextEncoder().encode(
+      `100644 blob ${payloadBlob}\tplugins/agent/${collision.pluginId}/skills/example/skill.md\0`
+    );
+    const collisionPort = overrideGitReadPort(delegate, {
+      async readGitTree(input) {
+        const original = await delegate.readGitTree(input);
+        const combined = new Uint8Array(original.byteLength + collidingRecord.byteLength);
+        combined.set(original);
+        combined.set(collidingRecord, original.byteLength);
+        return combined;
+      },
+    });
+    await expect(
+      createResourceContentWorkspaceSnapshotReader({ contentWorkspace: collisionPort }).inspect(
+        collision.policy
+      )
+    ).resolves.toMatchObject({
       kind: "Ineligible",
       issues: [{ code: "InvalidTree", detail: expect.stringContaining("collision") }],
     });

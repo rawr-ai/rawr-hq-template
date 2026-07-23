@@ -1,31 +1,35 @@
 import { schema } from "@rawr/hq-sdk";
-import type { Static } from "typebox";
+import { type Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
+
 import {
   type CanonicalChannelSelection,
   CanonicalChannelSelectionSchema,
+  type CurrentMainBodyV3,
+  CurrentMainBodyV3Schema,
   type CurrentMainSelectionResult,
-} from "../../../src/service/model/dto/current-main-selection";
-import { contract } from "../../../src/service/modules/governance/contract";
-import {
-  type CurrentMainBodyV2,
-  CurrentMainBodyV2Schema,
-  encodeCurrentMainBodyV2,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
-  MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH,
-  MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH,
+  MAX_CURRENT_MAIN_V3_CODEC_MESSAGE_LENGTH,
+  MAX_CURRENT_MAIN_V3_CODEC_PATH_LENGTH,
+  encodeCurrentMainBodyV3,
 } from "../../../src/service/modules/governance/model";
+import { contract } from "../../../src/service/modules/governance/contract";
 import {
   CurrentMainRecordInputSchema,
   CurrentMainRecordResultSchema,
   CurrentMainSelectionInputSchema,
   CurrentMainSelectionResultSchema,
 } from "../../../src/service/modules/governance/schemas";
-import { createLifecycleTestClient, testInvocation } from "../../support/client";
+import {
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseRepositoryIdentity,
+} from "../../../src/service/shared/release";
 
 describe("governance procedure schema boundary", () => {
-  it("keeps neutral selection observations exact with governance schemas", () => {
+  it("derives the public selection and result types from TypeBox", () => {
     type SelectionSchema = Readonly<Static<typeof CanonicalChannelSelectionSchema>>;
     type ResultSchema = Readonly<Static<typeof CurrentMainSelectionResultSchema>>;
     type Equal<TLeft, TRight> =
@@ -34,232 +38,99 @@ describe("governance procedure schema boundary", () => {
           ? true
           : false
         : false;
-    type Assert<TValue extends true> = TValue;
-    type ExactObject<TLeft, TRight> =
-      Equal<keyof TLeft, keyof TRight> extends true
-        ? {
-            [TKey in keyof TLeft]: TKey extends keyof TRight
-              ? Equal<TLeft[TKey], TRight[TKey]>
-              : false;
-          }[keyof TLeft] extends true
-          ? true
-          : false
-        : false;
-    type SelectionParity = Assert<Equal<CanonicalChannelSelection, SelectionSchema>>;
-    type ResultKindParity = Assert<Equal<CurrentMainSelectionResult["kind"], ResultSchema["kind"]>>;
-    type ResultBranchParity<TKind extends CurrentMainSelectionResult["kind"]> = ExactObject<
-      Extract<CurrentMainSelectionResult, { kind: TKind }>,
-      Extract<ResultSchema, { kind: TKind }>
-    >;
-    type EligibleParity = Assert<ResultBranchParity<"CURRENT_ELIGIBLE">>;
-    type DirtyParity = Assert<ResultBranchParity<"DIRTY_REPOSITORY">>;
-    type WrongParity = Assert<ResultBranchParity<"WRONG_REPOSITORY">>;
-    type UnreachableParity = Assert<ResultBranchParity<"UNREACHABLE_REPOSITORY">>;
-    type StaleParity = Assert<ResultBranchParity<"STALE_RECORD">>;
-    type ForgedParity = Assert<ResultBranchParity<"FORGED_RECORD">>;
+    type SelectionParity = Equal<CanonicalChannelSelection, SelectionSchema>;
+    type ResultParity = Equal<CurrentMainSelectionResult, ResultSchema>;
 
     expectTypeOf<SelectionParity>().toEqualTypeOf<true>();
-    expectTypeOf<ResultKindParity>().toEqualTypeOf<true>();
-    expectTypeOf<EligibleParity>().toEqualTypeOf<true>();
-    expectTypeOf<DirtyParity>().toEqualTypeOf<true>();
-    expectTypeOf<WrongParity>().toEqualTypeOf<true>();
-    expectTypeOf<UnreachableParity>().toEqualTypeOf<true>();
-    expectTypeOf<StaleParity>().toEqualTypeOf<true>();
-    expectTypeOf<ForgedParity>().toEqualTypeOf<true>();
+    expectTypeOf<ResultParity>().toEqualTypeOf<true>();
   });
 
-  it("exposes only the v2 record codec and current-main selector", () => {
+  it("exposes only the v3 record codec and current-main selector", () => {
     expect(Object.keys(contract).sort()).toEqual(["currentMainRecord", "currentMainSelection"]);
   });
 
-  it("closes both current-main codec actions", () => {
-    const body = currentMainBodyFixture();
-    const encoded = encodeCurrentMainBodyV2(body);
+  it("closes both codec actions around the direct v3 record", async () => {
+    const record = recordFixture();
+    const encoded = encodeCurrentMainBodyV3(record);
     expect(encoded.ok).toBe(true);
     if (!encoded.ok) throw new Error(encoded.failure.message);
 
     expect(
       Value.Check(CurrentMainRecordInputSchema, {
         kind: "encode-body",
-        body,
+        body: record,
       })
     ).toBe(true);
     expect(
       Value.Check(CurrentMainRecordInputSchema, {
-        kind: "validate-envelope",
+        kind: "validate-record",
         bytes: encoded.value.bytes,
       })
     ).toBe(true);
 
     for (const invalid of [
-      { kind: "encode-body", body, bytes: encoded.value.bytes },
-      { kind: "encode-body", body, ambientAuthority: true },
-      { kind: "encode-body", body: { ...body, approver: "person" } },
-      { kind: "encode-body", body: { ...body, schemaVersion: 1 } },
-      { kind: "validate-envelope", bytes: encoded.value.bytes, body },
+      { kind: "encode-body", body: record, bytes: encoded.value.bytes },
+      { kind: "encode-body", body: { ...record, schemaVersion: 2 } },
+      { kind: "encode-body", body: { ...record, projections: [] } },
+      { kind: "validate-record", bytes: encoded.value.bytes, body: record },
     ]) {
       expect(Value.Check(CurrentMainRecordInputSchema, invalid)).toBe(false);
+      expect(
+        await schema(CurrentMainRecordInputSchema)["~standard"].validate(invalid)
+      ).toHaveProperty("issues");
     }
 
     expect(Value.Check(CurrentMainRecordResultSchema, encoded)).toBe(true);
     expect(
       Value.Check(CurrentMainRecordResultSchema, {
         ...encoded,
-        value: { ...encoded.value, receipt: "state" },
+        value: { ...encoded.value, currentMainDigest: `cm2_${"0".repeat(64)}` },
       })
     ).toBe(false);
   });
 
-  it("routes traversal-shaped current-main identities through the typed codec result", async () => {
-    const body = currentMainBodyFixture();
-    const invalidBodies = [
-      {
-        ...body,
-        sourceRepositoryIdentity: "git:github.com/rawr-ai/../evil",
-      },
-      {
-        ...body,
-        evaluationProfile: "provider/../smoke",
-      },
-      {
-        ...body,
-        projections: [
-          { ...body.projections[0], rendererProtocol: "claude/./projection@v1" },
-          body.projections[1],
-        ],
-      },
-      {
-        ...body,
-        projections: [
-          body.projections[0],
-          { ...body.projections[1], adapterProtocol: "codex/../adapter@v1" },
-        ],
-      },
-    ];
-
-    for (const invalidBody of invalidBodies) {
-      const input = { kind: "encode-body", body: invalidBody };
-      expect(Value.Check(CurrentMainBodyV2Schema, invalidBody)).toBe(true);
-      expect(Value.Check(CurrentMainRecordInputSchema, input)).toBe(true);
-      expect(encodeCurrentMainBodyV2(invalidBody)).toMatchObject({
-        ok: false,
-        failure: { code: "InvalidSchema" },
-      });
-
-      const validated = await schema(CurrentMainRecordInputSchema)["~standard"].validate(input);
-      expect("value" in validated).toBe(true);
-    }
-  });
-
-  it("accepts only the v2 locator request for current-main selection", async () => {
+  it("accepts only the explicit repository locator for selection", async () => {
     const locator = {
       workspacePath: "/tmp/personal-rawr-hq",
       expectedRepositoryIdentity: "git:github.com/example/personal-rawr-hq",
     };
     expect(Value.Check(CurrentMainSelectionInputSchema, { locator })).toBe(true);
 
-    const v1Pointer = {
-      repositoryIdentity: locator.expectedRepositoryIdentity,
-      ref: "refs/heads/main",
-      commit: "a".repeat(40),
-      tree: "b".repeat(40),
-      path: "plugins/agents/.lifecycle/policy.json",
-      blob: "c".repeat(40),
-    };
-    const invalid = [
-      { locator, policyObject: v1Pointer },
-      {
-        locator,
-        policyObject: v1Pointer,
-        requestObject: v1Pointer,
-        acceptanceObject: v1Pointer,
-      },
+    for (const invalid of [
+      { locator, canonicalRef: "refs/heads/main" },
       { locator: { ...locator, canonicalRef: "refs/heads/main" } },
+      { locator: { ...locator, workspacePath: "relative/personal-rawr-hq" } },
+      { locator: { ...locator, expectedRepositoryIdentity: "file:tmp/personal-rawr-hq" } },
       {
         workspacePath: locator.workspacePath,
         expectedRepositoryIdentity: locator.expectedRepositoryIdentity,
       },
-    ];
-
-    for (const candidate of invalid) {
-      expect(Value.Check(CurrentMainSelectionInputSchema, candidate)).toBe(false);
-      const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(
-        candidate
-      );
-      expect("issues" in validated).toBe(true);
+    ]) {
+      expect(Value.Check(CurrentMainSelectionInputSchema, invalid)).toBe(false);
+      expect(
+        await schema(CurrentMainSelectionInputSchema)["~standard"].validate(invalid)
+      ).toHaveProperty("issues");
     }
   });
 
-  it("routes noncanonical current-main locators through the typed selection result", async () => {
-    const locator = {
-      workspacePath: "/tmp/personal-rawr-hq",
-      expectedRepositoryIdentity: "git:github.com/example/personal-rawr-hq",
-    };
-    const semanticRefusals = [
-      { ...locator, workspacePath: "relative/personal-rawr-hq" },
-      { ...locator, workspacePath: "/" },
-      { ...locator, workspacePath: "/tmp/../personal-rawr-hq" },
-      { ...locator, workspacePath: "/tmp//personal-rawr-hq" },
-      { ...locator, workspacePath: "/tmp/personal-rawr-hq/" },
-      {
-        ...locator,
-        expectedRepositoryIdentity: "git:github.com/example/../evil",
-      },
-    ];
-
-    for (const invalidLocator of semanticRefusals) {
-      const input = { locator: invalidLocator };
-      expect(Value.Check(CurrentMainSelectionInputSchema, input)).toBe(true);
-      const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(input);
-      expect("value" in validated).toBe(true);
-      await expect(
-        createLifecycleTestClient().governance.currentMainSelection(input, testInvocation)
-      ).resolves.toMatchObject({ kind: "WRONG_REPOSITORY" });
-    }
-
-    const oversized = { locator: { ...locator, workspacePath: `/${"a".repeat(4_096)}` } };
-    expect(Value.Check(CurrentMainSelectionInputSchema, oversized)).toBe(false);
-    const validated = await schema(CurrentMainSelectionInputSchema)["~standard"].validate(
-      oversized
-    );
-    expect("issues" in validated).toBe(true);
-  });
-
-  it("closes eligible and refused current-main selection results", () => {
-    const eligible = {
-      kind: "CURRENT_ELIGIBLE",
-      selection: {
-        currentMainDigest: `cm2_${"0".repeat(64)}`,
-        contentAuthority: "personal-rawr-hq",
-        sourceRepositoryIdentity: "git:github.com/example/personal-rawr-hq",
-        sourceCommit: "a".repeat(40),
-        sourceTree: "b".repeat(40),
-        releaseInputDigest: `ri1_${"c".repeat(64)}`,
-        releaseSetDigest: `rs1_${"d".repeat(64)}`,
-        evaluationProfile: "provider-smoke@v1",
-        projections: currentMainBodyFixture().projections,
-      },
-    };
-
+  it("closes the eligible result around exactly the nine-field v3 selection", () => {
+    const eligible = { kind: "CURRENT_ELIGIBLE", selection: recordFixture() };
     expect(Value.Check(CurrentMainSelectionResultSchema, eligible)).toBe(true);
-    expect(
-      Value.Check(CurrentMainSelectionResultSchema, {
-        kind: "STALE_RECORD",
-        reason: "selected source is unavailable",
-      })
-    ).toBe(true);
-    expect(
-      Value.Check(CurrentMainSelectionResultSchema, {
+
+    for (const invalid of [
+      { ...eligible, currentMainDigest: `cm2_${"0".repeat(64)}` },
+      {
         ...eligible,
-        observation: { legacy: true },
-      })
-    ).toBe(false);
-    expect(
-      Value.Check(CurrentMainSelectionResultSchema, {
-        kind: "ACCEPTED_PENDING_CONVERGENCE",
-        reason: "legacy state",
-      })
-    ).toBe(false);
+        selection: {
+          ...eligible.selection,
+          releaseSetDigest: `rs1_${"0".repeat(64)}`,
+        },
+      },
+      { ...eligible, selection: { ...eligible.selection, projections: [] } },
+      { kind: "ACCEPTED_PENDING_CONVERGENCE", reason: "legacy" },
+    ]) {
+      expect(Value.Check(CurrentMainSelectionResultSchema, invalid)).toBe(false);
+    }
   });
 
   it("bounds public selection and codec diagnostics", () => {
@@ -276,85 +147,46 @@ describe("governance procedure schema boundary", () => {
       })
     ).toBe(false);
 
-    const boundedCodecFailure = {
+    const boundedFailure = {
       ok: false,
       failure: {
         code: "InvalidSchema",
-        path: "p".repeat(MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH),
-        message: "m".repeat(MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH),
+        path: "p".repeat(MAX_CURRENT_MAIN_V3_CODEC_PATH_LENGTH),
+        message: "m".repeat(MAX_CURRENT_MAIN_V3_CODEC_MESSAGE_LENGTH),
       },
     };
-    expect(Value.Check(CurrentMainRecordResultSchema, boundedCodecFailure)).toBe(true);
+    expect(Value.Check(CurrentMainRecordResultSchema, boundedFailure)).toBe(true);
     expect(
       Value.Check(CurrentMainRecordResultSchema, {
-        ...boundedCodecFailure,
+        ...boundedFailure,
         failure: {
-          ...boundedCodecFailure.failure,
-          path: "p".repeat(MAX_CURRENT_MAIN_V2_CODEC_PATH_LENGTH + 1),
+          ...boundedFailure.failure,
+          path: "p".repeat(MAX_CURRENT_MAIN_V3_CODEC_PATH_LENGTH + 1),
         },
-      })
-    ).toBe(false);
-    expect(
-      Value.Check(CurrentMainRecordResultSchema, {
-        ...boundedCodecFailure,
-        failure: {
-          ...boundedCodecFailure.failure,
-          message: "m".repeat(MAX_CURRENT_MAIN_V2_CODEC_MESSAGE_LENGTH + 1),
-        },
-      })
-    ).toBe(false);
-  });
-
-  it("keeps current-main projections as the fixed Claude-then-Codex tuple", () => {
-    const body = currentMainBodyFixture();
-    expect(Value.Check(CurrentMainBodyV2Schema, body)).toBe(true);
-    expect(
-      Value.Check(CurrentMainBodyV2Schema, {
-        ...body,
-        projections: [body.projections[0]],
-      })
-    ).toBe(false);
-    expect(
-      Value.Check(CurrentMainBodyV2Schema, {
-        ...body,
-        projections: [...body.projections, body.projections[0]],
-      })
-    ).toBe(false);
-    expect(
-      Value.Check(CurrentMainBodyV2Schema, {
-        ...body,
-        projections: [body.projections[1], body.projections[0]],
       })
     ).toBe(false);
   });
 });
 
-function currentMainBodyFixture(): CurrentMainBodyV2 {
+function recordFixture(): CurrentMainBodyV3 {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     channel: "current-main",
-    contentAuthority: "rawr-hq",
-    sourceRepositoryIdentity: "git:github.com/rawr-ai/rawr-hq",
-    sourceCommit: "a".repeat(40),
-    sourceTree: "b".repeat(40),
+    contentAuthority: mustParse(parseContentAuthority("rawr-hq")),
+    sourceRepositoryIdentity: mustParse(
+      parseRepositoryIdentity("git:github.com/rawr-ai/rawr-hq")
+    ),
+    sourceRepositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
+    sourceRef: "refs/tags/agent-plugins/current-main-input",
+    contentCommit: mustParse(parseGitCommitId("a".repeat(40))),
+    contentTree: mustParse(parseGitTreeId("b".repeat(40))),
     releaseInputDigest: `ri1_${"c".repeat(64)}`,
-    releaseSetDigest: `rs1_${"d".repeat(64)}`,
-    evaluationProfile: "provider-smoke@v1",
-    projections: [
-      {
-        provider: "claude",
-        projectionDigest: `ap1_${"e".repeat(64)}`,
-        rendererProtocol: "claude-projection@v1",
-        adapterProtocol: "claude-native-adapter@v1",
-        capabilityProfileDigest: `cp1_${"f".repeat(64)}`,
-      },
-      {
-        provider: "codex",
-        projectionDigest: `ap1_${"1".repeat(64)}`,
-        rendererProtocol: "codex-projection@v1",
-        adapterProtocol: "codex-native-adapter@v1",
-        capabilityProfileDigest: `cp1_${"2".repeat(64)}`,
-      },
-    ],
   };
 }
+
+function mustParse<T>(result: { readonly ok: true; readonly value: T } | { readonly ok: false }): T {
+  if (!result.ok) throw new Error("Invalid current-main fixture value");
+  return result.value;
+}
+
+expectTypeOf<Static<typeof CurrentMainBodyV3Schema>>().toEqualTypeOf<CurrentMainBodyV3>();

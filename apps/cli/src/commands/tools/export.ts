@@ -48,7 +48,7 @@ const TOOLS: ToolExport[] = [
   { command: "agent plugins build", description: "Build immutable curated release artifacts" },
   {
     command: "agent plugins test",
-    description: "Test explicit release artifacts against explicit provider homes",
+    description: "Test exact Git-selected content against explicit provider homes",
   },
   {
     command: "agent plugins package",

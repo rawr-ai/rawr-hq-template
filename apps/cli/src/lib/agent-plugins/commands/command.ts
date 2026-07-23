@@ -97,9 +97,11 @@ function lifecycleHumanLines(
     (operation === "releases.releaseInputRecord" || operation === "governance.currentMainRecord") &&
     record.ok === true
   ) {
-    const envelopeText = asRecord(record.value).envelopeText;
-    if (typeof envelopeText === "string" && envelopeText.endsWith("\n")) {
-      return [envelopeText.slice(0, -1)];
+    const value = asRecord(record.value);
+    const text =
+      operation === "governance.currentMainRecord" ? value.recordText : value.envelopeText;
+    if (typeof text === "string" && text.endsWith("\n")) {
+      return [text.slice(0, -1)];
     }
   }
   if (
@@ -112,20 +114,22 @@ function lifecycleHumanLines(
     return [record.envelopeText.slice(0, -1)];
   }
   if (
-    operation === "providers.canonicalStatus" &&
-    record.ok === true &&
-    Array.isArray(record.value)
+    operation === "providers.status" &&
+    Array.isArray(record.targets)
   ) {
     return [
       `${operation}:`,
-      ...record.value.map((value) => {
+      ...record.targets.map((value) => {
         const outcome = asRecord(value);
         const target = asRecord(outcome.target);
-        return `${String(target.provider)} ${String(target.home)}: ${String(outcome.status)}`;
+        return `${String(target.provider)} ${String(target.home)}: ${String(outcome.classification)}`;
       }),
     ];
   }
   if (typeof record.kind === "string") return [`${operation}: ${record.kind}`];
+  if (typeof record.classification === "string") {
+    return [`${operation}: ${record.classification}`];
+  }
   if (record.ok === true) {
     const value = asRecord(record.value);
     if (typeof value.status === "string") return [`${operation}: ${value.status}`];

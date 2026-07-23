@@ -1,11 +1,9 @@
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
 import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
-import type { AgentProviderRecordsAsyncPort } from "@rawr/resource-agent-provider-records";
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
 import type {
-  NativeProviderExecutablePaths,
-  NativeProviderResourcePort,
+  NativeProviderSessionResolver,
 } from "./model/dependencies/providers";
 import type {
   ArtifactStoreFailpoint,
@@ -27,10 +25,7 @@ type InitialContext = {
     contentWorkspace: ContentWorkspaceNodeAsyncPort;
     clock: LifecycleClock;
     packageOutput: AgentPluginPackageOutputAsyncPort;
-    providerRecords: AgentProviderRecordsAsyncPort;
-    providerNativeResource: NativeProviderResourcePort;
-    providerExecutables: NativeProviderExecutablePaths;
-    providerProjectionRepositoryRoot: string;
+    providerNativeSessions: NativeProviderSessionResolver;
   };
   scope: {
     controllerIdentity: string;
