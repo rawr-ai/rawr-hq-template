@@ -15,7 +15,7 @@
 - Use Nx for workspace/project truth, this AGENTS lattice for routing/ownership truth, and Narsil for source/symbol/reference truth.
 - Do not add or rely on repo-local `.mcp.json` or repo `CLAUDE.md` here.
 
-## Repo Role Boundary
+## Boundaries
 
 - `RAWR HQ-Template` owns the executable Oclif CLI, official commands, provider
   adapters, generic lifecycle services, schemas/tooling implementations, and
@@ -28,7 +28,7 @@
   ordinary package artifacts. A Personal repository path is a Git content
   locator, never CLI installation identity, executable ancestry, or code-sharing
   authority.
-- Use [[AGENTS_SPLIT|the repository destination guide]] first for
+- Use [the repository destination guide](AGENTS_SPLIT.md) first for
   Template-vs-personal destination decisions.
 
 ## Command Surface Policy
@@ -39,11 +39,22 @@
   surfaces and must not become a fallback owner for either one.
 - Do not mix these command surfaces in guidance or examples.
 
+## Flow
+
+- Use Nx to locate the owning project, then follow the nearest `AGENTS.md`
+  inward before reading implementation details.
+- Oclif routes commands into their owning packages and services; concrete
+  filesystem and provider effects stay behind their declared resources.
+- Template tooling may read Personal through explicit data interfaces, but no
+  executable implementation or repository authority crosses that boundary.
+- Repository changes move through Graphite and the required repository
+  ratchet before branch protection admits them to `main`.
+
 ## Graphite Requirement
 
 - Graphite is required in this repo.
 - Trunk must remain `main` (`gt trunk`).
-- Follow [[docs/process/GRAPHITE|the Graphite branch and stack workflow]].
+- Follow [the Graphite branch and stack workflow](docs/process/GRAPHITE.md).
 - `bun install` configures the repository-owned hooks. Before a push, the local
   hook runs the required repository ratchet: one Nx project kind per project,
   affected lint and typecheck, the repository-wide Biome check, Habitat consumer
@@ -57,25 +68,43 @@
 
 ## Routing
 
-- [[AGENTS_SPLIT]] for "where should this change land?" (Template vs personal).
-- [[apps/AGENTS]] for runtime surfaces (`cli`, `server`, `web`).
-- [[packages/AGENTS]] for shared libraries and dependency direction.
-- [[plugins/AGENTS]] for plugin package contracts and enablement.
-- [[scripts/AGENTS]] for hook/script conventions.
-- [[docs/AGENTS]] for canonical documentation entrypoints.
-- [[docs/process/NX_AGENT_WORKFLOW]] for the integrated Nx CLI / Nx skills /
-  Narsil posture, plus the deferred note on a future hosted Nx integration.
+- [Repository destination guide](AGENTS_SPLIT.md) for "where should this
+  change land?" (Template vs personal).
+- [Apps router](apps/AGENTS.md) for runtime surfaces (`cli`, `hq`, `server`,
+  `web`).
+- [Packages router](packages/AGENTS.md) for shared libraries and dependency
+  direction.
+- [Plugins router](plugins/AGENTS.md) for plugin package contracts and
+  enablement.
+- [Scripts router](scripts/AGENTS.md) for hook and script conventions.
+- [Docs router](docs/AGENTS.md) for canonical documentation entrypoints.
+- [Nx agent workflow](docs/process/NX_AGENT_WORKFLOW.md) for the integrated Nx
+  CLI, Nx skills, and Narsil posture.
 
 ## Process Runbooks
 
-- CLI/plugin path index (start here): [[docs/process/RUNBOOKS]].
-- Nx-first agent workflow: [[docs/process/NX_AGENT_WORKFLOW]].
-- Graphite stack drain loop: [[docs/process/runbooks/STACK_DRAIN_LOOP]].
+- CLI/plugin path index (start here):
+  [Runbooks](docs/process/RUNBOOKS.md).
+- Nx-first agent workflow:
+  [Nx agent workflow](docs/process/NX_AGENT_WORKFLOW.md).
+- Graphite stack drain loop:
+  [Stack drain loop](docs/process/runbooks/STACK_DRAIN_LOOP.md).
 - Repository separation and artifact-interface workflow:
-  [[docs/process/CROSS_REPO_WORKFLOWS]].
-- Graphite-first branch/stack operations: [[docs/process/GRAPHITE]].
-- Ongoing doc/process health cadence: [[docs/process/MAINTENANCE_CADENCE]].
-- Operational usage conventions: [[docs/process/HQ_USAGE]] and
-  [[docs/process/HQ_OPERATIONS]].
-- Documentation architecture contract: [[docs/DOCS]].
+  [Cross-repository workflows](docs/process/CROSS_REPO_WORKFLOWS.md).
+- Graphite-first branch and stack operations:
+  [Graphite workflow](docs/process/GRAPHITE.md).
+- Ongoing doc and process health cadence:
+  [Maintenance cadence](docs/process/MAINTENANCE_CADENCE.md).
+- Operational usage conventions:
+  [HQ usage](docs/process/HQ_USAGE.md) and
+  [HQ operations](docs/process/HQ_OPERATIONS.md).
+- Documentation architecture contract: [Docs architecture](docs/DOCS.md).
 - Quarantined docs live under `quarantine/` directories and are provenance only.
+
+## Validation
+
+- Use `bunx nx show project <project-name> --json` to confirm project truth
+  before selecting checks.
+- Run the owning project's focused lint, typecheck, test, or build targets.
+- Before pushing, run `bun run ratchet:required`; remote branch protection is
+  the final merge authority.
