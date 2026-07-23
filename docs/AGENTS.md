@@ -4,6 +4,16 @@
 
 Applies to `docs/**`.
 
+## Boundaries
+
+- Canonical and evergreen guidance belongs in the gateway, product, system,
+  and process surfaces defined by `docs/DOCS.md`.
+- Time-bound initiative records belong under `docs/projects/**`.
+- Archived and quarantined material is provenance only; it cannot override
+  active product, system, or process guidance.
+- Documentation records system authority but does not create executable
+  ownership by itself.
+
 ## Canonical Entry Points
 
 - `docs/DOCS.md`
@@ -45,6 +55,22 @@ Use these names consistently:
 - `quarantine/` directories: preserved docs removed from active authority; do not use as current guidance.
 - `quarantine/AGENTS.md`: transient quarantine ledgers marked with `<!-- quarantine-ledger: true -->`.
 
+## Flow
+
+- New guidance enters the directory that owns its lifetime and authority.
+- Stable conclusions from project work are promoted into canonical product,
+  system, or process documents.
+- Superseded material moves to archive or quarantine without remaining on an
+  active routing path.
+
+## Routing
+
+- [Repository router](../AGENTS.md) for repo-wide boundaries and execution
+  routes.
+- [Documentation architecture](DOCS.md) for canonical placement and naming.
+- [Process gateway](PROCESS.md) for operating workflows.
+- [Product gateway](PRODUCT.md) for product semantics and value framing.
+
 ## Conventions
 
 - Nx is the first hop for workspace/project navigation; this docs tree should reinforce that rather than duplicate Nx skill content.
@@ -52,3 +78,12 @@ Use these names consistently:
 - Do not route active guidance through archived documents.
 - Do not route active guidance through quarantined documents; route through quarantine ledgers when mining is required.
 - Treat parked concepts as doc-only until explicitly un-parked.
+
+## Validation
+
+- Confirm every added or changed relative link resolves from its containing
+  document.
+- Verify active gateway and router paths do not traverse archived or
+  quarantined guidance.
+- Run the owning code project's Nx checks when documentation changes an
+  executable contract.

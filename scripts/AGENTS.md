@@ -2,13 +2,33 @@
 
 ## TOC
 - [Scope](#scope)
+- [Boundaries](#boundaries)
+- [Flow](#flow)
 - [Git Hooks](#git-hooks)
 - [Repository Ratchet](#repository-ratchet)
-- [Conventions](#conventions)
+- [Routing](#routing)
+- [Validation](#validation)
 
 ## Scope
 - Applies to `scripts/**`.
 - Keep scripts deterministic and fast (they often run in developer loops like hooks).
+
+## Boundaries
+
+- Scripts orchestrate declared owner commands; they do not become a second
+  implementation of domain policy.
+- Local hooks provide fast feedback. Remote branch protection remains merge
+  authority.
+- Habitat policy belongs in `.habitat/**`; scripts may provision and invoke
+  the pinned SDK but must not duplicate its evaluator.
+
+## Flow
+
+- Dependency installation configures the repository-owned Git hooks.
+- Pre-push invokes the required repository ratchet, which delegates admitted
+  work to Nx, Biome, and the provisioned Habitat SDK.
+- The repository workflow runs the same required ratchet before protected
+  branches admit a candidate SHA.
 
 ## Git Hooks
 - Shipped hooks live in `scripts/githooks/**`.
@@ -47,25 +67,33 @@
   `type:fixture` are exempt from those targets; the root command maintains no
   project-name list.
 - `.habitat/**` is RAWR HQ-Template's small, positive structural authority tree.
-  The required check currently closes the curated and external command-channel
-  topology. Generic service and Oclif blueprints remain native policy inputs,
-  but their full live-tree activation is tracked separately until the pinned
-  Habitat binary can execute it within a bounded gate. Nothing here expands
+  It constrains declared architectural kinds and relations without expanding
   into app composition or content-repository governance.
 - `scripts/habitat/release.json` pins the standalone Habitat asset by source
   provenance, byte size, and SHA-256. The Civ7 release owns the binary, which is
   compiled with Bun 1.4; this repository consumes it and does not vendor its SDK
   sources.
 - `scripts/habitat/provision.mjs` accepts only the manifest-selected platform
-  asset and verifies it before execution. `scripts/habitat/check.mjs` supplies
-  the Template root and local `.habitat` policies to that immutable binary.
+  asset and verifies it before execution.
 - The `Repository Ratchet` workflow runs for ordinary pull requests, merge
   groups, and pushes to `main`. Branch protection must require its exact job
   context, `Required lint, typecheck, and topology`.
-- Nx task ownership and cache behavior follow [[docs/process/NX_AGENT_WORKFLOW]].
+- Nx task ownership and cache behavior follow the
+  [Nx agent workflow](../docs/process/NX_AGENT_WORKFLOW.md).
 
-## Conventions
-- Hook output should be short and actionable (avoid noisy logs).
-- Security model reference: [[docs/system/SECURITY_MODEL]].
+## Routing
+
+- [Repository router](../AGENTS.md)
+- [Habitat scripts router](habitat/AGENTS.md)
+- [Nx scripts router](nx/AGENTS.md)
+- [Docs router](../docs/AGENTS.md)
+
+## Validation
+
+- Keep hook output short and actionable.
+- Run the focused Nx target for the script owner first.
+- Run `bun run ratchet:required` before pushing changes to hooks, admission, or
+  repository ratchet behavior.
 - Remote verifier: `scripts/dev/check-remotes.sh`.
 - Main-branch dependency refresh driver: `scripts/dev/auto-refresh-main.sh`.
+- [Security model](../docs/system/SECURITY_MODEL.md)

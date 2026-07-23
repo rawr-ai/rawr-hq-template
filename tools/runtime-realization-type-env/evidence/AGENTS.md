@@ -47,7 +47,7 @@ Do not recreate retired root paths: `evidence/focus-log.md`,
 `evidence/vendor-fidelity.md`, `evidence/phases/`, `evidence/workstreams/`,
 `evidence/handoffs/`, or `evidence/_archive/`.
 
-## Proof Boundary
+## Boundaries
 
 Runtime authority comes from the manifest-pinned runtime spec. Proof/status
 authority comes from the manifest, diagnostic, source, fixtures, tests, and
@@ -55,3 +55,27 @@ named gates.
 
 System maps and vendor maps are operational indexes. They explain why evidence
 matters and where it points, but they do not promote proof by themselves.
+
+## Flow
+
+- Named lab gates produce observations against explicit scenarios and
+  fixtures.
+- Accepted observations update the evidence manifest and derived diagnostic;
+  system and vendor maps then index the supporting evidence.
+- Production changes leave the lab only through separately owned Parent-Repo
+  Migration work.
+
+## Routing
+
+- [Runtime realization lab router](../AGENTS.md)
+- [Evidence index](README.md)
+- [System evidence maps](systems/README.md)
+- [Vendor evidence maps](vendors/README.md)
+
+## Validation
+
+- Run the focused gate that owns the changed evidence claim.
+- For meaningful evidence changes, run
+  `bunx nx run runtime-realization-type-env:gate`.
+- Keep `proof-manifest.json`, `current-lab-state.md`, and the runtime spine
+  diagnostic aligned when their shared state changes.
