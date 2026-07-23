@@ -362,6 +362,40 @@ input run completes in 5.9 seconds; the immediate unchanged run takes 171 ms in
 Nx and 0.54 seconds at the shell. Native Habitat project admission remains open
 as a separate policy checkpoint.
 
+Task 1.6c3 applies the target-composition law from Civ7 branch
+`codex/mapgen-final-ratchet-strategy-kind-law` at `64463d1abf` without copying
+repository-specific dependency edges. All project kinds use `build`, `lint`,
+`typecheck`, `test`, and `check` for foundational CI. Shared Nx defaults compose
+optional `check:test` and `check:tools` typecheck leaves, and qualified
+`acceptance:<capability>` names identify distinct acceptance behavior. The CLI
+now owns `acceptance:oclif` and `acceptance:oclif-native-plugins`; its `verify`
+edge reaches the former. The lifecycle service's standard `test` command runs
+the complete serial corpus, including both exact-Git suites, instead of routing
+through three target aliases. Five package-backed build projects now inherit
+the same build cache and output policy rather than repeating it locally. Each
+resolved task has one command owner. The lifecycle service retains an
+owner-local `cache: false` override for its standard `test` target because the
+exact-Git cases exercise the live Git executable; the package script remains
+the sole command owner.
+
+The normalized seven-project source/test typecheck graph passes fourteen tasks
+in 14.0 seconds with ten cache hits. Oclif source/build parity plus native
+extension install/list/invoke/remove passes in 13.5 seconds. The lifecycle
+service passes all 30 files and 209 tests in 88.39 seconds uncached, including
+16 Git-eligibility and four repository-selection cases. That target remains
+uncached because it observes the live Git executable. The complete required
+check passes 134 tasks in 57.3 seconds from the partially cold state. The final
+unchanged repeat restores 92 cacheable tasks and completes in 206 ms inside Nx
+and 0.70 seconds at the shell.
+
+This checkpoint does not claim the remaining cleanup early. Legacy `sync` and
+`structural` targets stay reachable until native Habitat laws replace their
+contracts. Native Habitat project inference awaits a published upgraded Civ7
+artifact. Two nested provider projects still duplicate their parent build
+output ownership; root `build`, `test`, and CI script normalization follows only
+after that separate owner correction. See
+[[design#Required checks follow the Nx graph|the target composition boundary]].
+
 The active policy batch now contains twelve green laws: packet topology,
 AGENTS placement and shape, Grit helper documentation, the API-plugin boundary,
 the lifecycle command-channel law, all three Oclif app laws, and all three Oclif
@@ -395,8 +429,9 @@ adjacent non-empty comment relation directly in GritQL over the Markdown AST.
 `habitat:check:policy` remains one twelve-rule repository batch that includes
 the lifecycle command-channel law, and its cache inputs include that law's
 owner tree. `repository:check` does not start a redundant owner process; the
-service's `structure-check` remains a focused owner target. Every rule remains
-required through the hierarchy described by
+service's required `check` path no longer starts its legacy `structural`
+Habitat invocation a second time. Every selected rule remains required through
+the hierarchy described by
 [[scripts/habitat/AGENTS#Flow|the Habitat execution boundary]]. Before the
 native-rule correction, the combined policy target passed uncached in 5.4
 seconds with one shared structure traversal across six laws. Three uncached
@@ -550,10 +585,10 @@ with the two structure rules sharing one 8.8-second traversal. The closed
 cannot return.
 
 Each package now exposes production and test typechecking as separate inferred
-Nx targets. The admitted `typecheck` target depends on `typecheck-tests`, while
-its production-only inputs keep a test edit from invalidating the source check.
-The ten-task uncached run passes in 12.8 seconds; after cache population, the
-unchanged repeat is a 100% cache hit in 25 ms.
+Nx targets. The standard `typecheck` target depends on `check:test` through the
+shared target defaults, so package manifests do not repeat the same graph or
+cache policy. The ten-task uncached run passes in 12.8 seconds; after cache
+population, the unchanged repeat is a 100% cache hit in 25 ms.
 
 The direct-entrypoint checkpoint replaces the controller bootstrap with Oclif's
 standard `execute` call in both development and compiled entrypoints. A focused

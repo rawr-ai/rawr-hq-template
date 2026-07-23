@@ -35,4 +35,6 @@
 - `bunx nx run @rawr/cli:lint`
 - `bunx nx run @rawr/cli:typecheck`
 - `bunx nx run @rawr/cli:test`
-- `bunx nx run @rawr/cli:test-oclif-boundary`
+- `bunx nx run @rawr/cli:acceptance:oclif`
+- `bunx nx run @rawr/cli:acceptance:oclif-native-plugins` when native extension
+  installation behavior changes

@@ -5,64 +5,8 @@
     "check": {
       "executor": "nx:noop"
     },
-    "structure-check": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun run --cwd ../.. habitat -- --owner @rawr/agent-plugin-lifecycle",
-        "cwd": "services/agent-plugin-lifecycle"
-      },
-      "cache": true,
-      "inputs": [
-        "{projectRoot}/src/**/*",
-        "{workspaceRoot}/apps/cli/src/**/*",
-        "{workspaceRoot}/.habitat/index.json",
-        "{workspaceRoot}/.habitat/blueprints/**/*",
-        "{workspaceRoot}/.habitat/rawr/agent-plugin-lifecycle/**/*",
-        "{workspaceRoot}/scripts/habitat/**/*",
-        "bunToolchain"
-      ],
-      "outputs": []
-    },
-    "typecheck-tests": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun ../../node_modules/typescript/bin/tsc -p tsconfig.test.json --noEmit",
-        "cwd": "services/agent-plugin-lifecycle"
-      },
-      "cache": true,
-      "inputs": ["default", "^default", "typescriptRuntime"],
-      "outputs": []
-    },
-    "test-unit": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun --bun ../../node_modules/.bin/vitest run --config vitest.config.ts --fileParallelism --exclude test/modules/releases/git-eligibility.test.ts --exclude test/modules/governance/git-resource-selection.integration.test.ts",
-        "cwd": "services/agent-plugin-lifecycle"
-      },
-      "dependsOn": ["lint", "typecheck", "structure-check"],
-      "cache": true,
-      "inputs": ["default", "^default", "typescriptRuntime", "{workspaceRoot}/vitest.config.ts"],
-      "outputs": []
-    },
-    "test-exact-git": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun --bun ../../node_modules/.bin/vitest run --config vitest.config.ts --no-file-parallelism test/modules/releases/git-eligibility.test.ts test/modules/governance/git-resource-selection.integration.test.ts",
-        "cwd": "services/agent-plugin-lifecycle"
-      },
-      "dependsOn": ["test-unit"],
-      "cache": false,
-      "inputs": ["default", "^default", "typescriptRuntime", "{workspaceRoot}/vitest.config.ts"],
-      "outputs": []
-    },
     "test": {
-      "executor": "nx:noop",
-      "dependsOn": ["test-exact-git"],
-      "cache": false,
-      "outputs": []
-    },
-    "typecheck": {
-      "dependsOn": ["typecheck-tests"]
+      "cache": false
     }
   }
 }

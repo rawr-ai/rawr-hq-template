@@ -151,6 +151,16 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   check on every non-root project in the bounded TypeBox project-graph
   admission until the native Habitat project law can replace it without an
   exact-path inventory.
+- [x] 1.6c3 Normalize package-backed CI targets around the shared operational
+  vocabulary: `build`, `lint`, `typecheck`, `test`, and `check`. Use
+  `check:test` and `check:tools` only as standard internal typecheck leaves,
+  and reserve `acceptance:<capability>` for distinct acceptance behavior.
+  Centralize cache and input policy in `targetDefaults`, remove duplicate
+  package-local target metadata, and require one command owner for each
+  resolved task. Preserve owner-specific behavior and exact-Git coverage.
+  Retire legacy `structural` and `sync` targets only after native Habitat law
+  owns their remaining contracts; defer root script normalization until
+  duplicate provider build outputs have one owner.
 - [x] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable

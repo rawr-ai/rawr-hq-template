@@ -47,23 +47,6 @@
       "type:app",
       "app:hq",
       "migration-slice:structural-tranche"
-    ],
-    "targets": {
-      "build": {
-        "cache": true,
-        "inputs": [
-          "production",
-          "^production",
-          "!{projectRoot}/test/**",
-          "!{projectRoot}/**/*.test.ts",
-          "!{projectRoot}/**/*.test.tsx",
-          "!{projectRoot}/**/*.spec.ts",
-          "!{projectRoot}/**/*.spec.tsx"
-        ],
-        "outputs": [
-          "{projectRoot}/dist"
-        ]
-      }
-    }
+    ]
   }
 }

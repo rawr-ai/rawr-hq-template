@@ -57,6 +57,28 @@ If the behavior still looks wrong after that, rerun once with `NX_DAEMON=false` 
 
 Do not add repo-local `.mcp.json` here.
 
+## Target Vocabulary
+
+Project kinds share the same foundational CI vocabulary:
+
+- `build`: produce the project's ordinary build output
+- `lint`: run source hygiene and static lint rules
+- `typecheck`: typecheck production source
+- `test`: run the project's behavior tests
+- `check`: compose the required project-quality prerequisites through Nx
+
+Use `check:test` and `check:tools` only as internal typecheck leaves when a
+project has separately compiled test or tool sources. Use
+`acceptance:<capability>` only for a distinct installed, native, or boundary
+behavior. Do not create package-specific synonyms for these targets.
+
+Shared dependencies, cache inputs, and outputs belong in
+`nx.json#targetDefaults`. Keep an explicit project target only when it declares
+real graph behavior that differs from the shared kind. Otherwise let Nx infer
+the package script. Each resolved task has one command owner; a leaf command
+must not start another Nx scheduler. See
+[[../../openspec/changes/complete-agent-plugin-lifecycle-public-interface/design#Required checks follow the Nx graph|the active Nx design record]].
+
 ## Repo Documentation Policy
 
 - Keep repo-owned routing and invariants in `AGENTS.md` and nested `AGENTS.md` files.
