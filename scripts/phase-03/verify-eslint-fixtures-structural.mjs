@@ -38,7 +38,7 @@ const [negativePluginSource, negativeServiceSource, negativePackageSource, posit
     fs.readFile(positiveServicePath, "utf8"),
   ]);
 
-const requiredTags = ["type:package", "migration-slice:structural-tranche"];
+const requiredTags = ["type:fixture", "migration-slice:structural-tranche"];
 for (const tag of requiredTags) {
   if (!(project.tags ?? []).includes(tag)) {
     console.error(`eslint-fixtures structural failed: missing tag ${tag}`);
@@ -59,7 +59,7 @@ if (
 
 if (
   !negativePluginSource.includes(
-    "../../services/hq-ops/src/service/modules/plugin-catalog/router.ts"
+    "../../services/hq-ops/src/service/modules/config/router.ts"
   )
 ) {
   console.error(

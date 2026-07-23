@@ -69,7 +69,7 @@
     "eslint-fixtures": {
       "config": "tools/eslint-fixtures/project.json",
       "tags": [
-        "type:package",
+        "type:fixture",
         "migration-slice:structural-tranche"
       ],
       "targets": [
