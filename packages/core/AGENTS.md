@@ -1,21 +1,35 @@
-# @rawr/core
+# Core Package Router (`@rawr/core`)
 
-## TOC
-- [Purpose](#purpose)
-- [Entry points](#entry-points)
-- [Tests](#tests)
-- [Consumers](#consumers)
+## Scope
 
-## Purpose
-- Shared command/runtime primitives for the RAWR CLI (Oclif base command + output conventions).
+- Applies to the shared CLI bootstrap and telemetry primitives in
+  `packages/core/**`.
 
-## Entry points
-- `src/index.ts`: exports `RAWR_CORE_VERSION` and re-exports everything from `src/cli/rawr-command.ts`.
-- `src/cli/rawr-command.ts`: `RawrCommand`, `RawrResult`, `RawrError`, `RawrBaseFlags`.
+## Boundaries
 
-## Tests
-- `test/core.test.ts` (Vitest).
+- Owns `RawrCommand`, common CLI result/output conventions, neutral workspace
+  discovery, and the exported telemetry installer.
+- Must not own command-specific behavior, plugin lifecycle policy, workspace
+  manifest semantics, or application composition.
+- Workspace discovery may locate a workspace for bootstrap; it does not make a
+  checkout the identity of an installed command.
 
-## Consumers
-- `apps/cli` (`@rawr/cli`).
+## Flow
 
+- CLI commands inherit `RawrCommand`, parse the shared base flags, and render a
+  `RawrResult`.
+- Entrypoints use `findWorkspaceRoot` before binding workspace-owned services.
+- Runtime hosts import the dedicated telemetry export and install it at their
+  process boundary.
+
+## Routing
+
+- [Packages router](../AGENTS.md)
+- [CLI application](../../apps/cli/AGENTS.md)
+
+## Validation
+
+- `bunx nx run @rawr/core:lint`
+- `bunx nx run @rawr/core:typecheck`
+- `bunx nx run @rawr/core:test`
+- `bunx nx run @rawr/core:build`

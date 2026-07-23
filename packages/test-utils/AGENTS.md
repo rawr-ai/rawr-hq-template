@@ -1,21 +1,31 @@
-# @rawr/test-utils
+# Test Utilities Router (`@rawr/test-utils`)
 
-## TOC
-- [Purpose](#purpose)
-- [Entry points](#entry-points)
-- [Tests](#tests)
-- [Consumers](#consumers)
+## Scope
 
-## Purpose
-- Small helpers for integration-style tests (currently: run a CLI command with Bun-or-Node fallback).
+- Applies to process-level test helpers in `packages/test-utils/**`.
 
-## Entry points
-- `src/index.ts`: exports `runCommand` + related types.
-- `src/run-command.ts`: `runCommand(command, args, { cwd, env, timeoutMs })`.
+## Boundaries
 
-## Tests
-- `test/rawr-cli.integration.test.ts` (Vitest).
+- Owns reusable test harness primitives, currently the bounded `runCommand`
+  process adapter and its result types.
+- Must not contain product policy, production command orchestration, or
+  mutable test state shared across suites.
+- Bun and Node execution branches expose the same completed-command result
+  contract. Each branch must reject after the requested timeout even when its
+  process-termination mechanics differ.
 
-## Consumers
-- None declared in workspace `package.json` dependencies (as of current repo state).
+## Flow
 
+- A test supplies a command, arguments, and optional environment or timeout.
+- The helper selects the available process runtime, captures stdout and
+  stderr, and returns the normalized exit result to the owning test.
+
+## Routing
+
+- [Packages router](../AGENTS.md)
+- [CLI application](../../apps/cli/AGENTS.md)
+
+## Validation
+
+- `bunx nx run @rawr/test-utils:lint`
+- `bunx nx run @rawr/test-utils:typecheck`
