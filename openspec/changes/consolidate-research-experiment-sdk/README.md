@@ -8,7 +8,7 @@ fixtures, results, and evidence.
 
 | Epoch | Repository + HEAD | Phase | Active writer | Claimed paths / slice | Review commit | Blockers | Next legal transition |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 5 | RAWR HQ-Template accepted core `bf1b50a5b1e2337a1426f03435dcfec2f9a18c77` | BUILD | oRPC director | Git/Bun adapter and deterministic tests only | Core through `bf1b50a5b1e2337a1426f03435dcfec2f9a18c77` accepted by both directors | None | Commit the Git/Bun adapter; exact Inngest review before the next adapter |
+| 6 | RAWR HQ-Template Git/Bun `66694d75a79c73ee11a4aac0d467ad64b9072adc` | BUILD | oRPC director | Git/Bun source-isolation, tool-independence, lock-edge corrections, and deterministic tests only | Exact original Inngest review blocked `66694d75a79c73ee11a4aac0d467ad64b9072adc` on three bounded P1s | Caller source mutation, eager cross-tool admission, and unbound lock edges | Commit the corrected Git/Bun slice; exact original Inngest review before the next adapter |
 
 ## Record
 
