@@ -63,7 +63,7 @@ and keeps the lifecycle behavior that solves the actual product problem.
 
 - `rawr-cli-distribution`: Nx builds and releases a conventional Oclif CLI
   package; ordinary installation exposes `rawr`.
-- `external-cli-extension-management`: `@oclif/plugin-plugins` directly owns the
+- `external-cli-extension-boundary`: `@oclif/plugin-plugins` directly owns the
   `rawr plugins` command surface.
 - `agent-plugin-command-lifecycle`: `rawr agent plugins` remains the only curated
   lifecycle surface.

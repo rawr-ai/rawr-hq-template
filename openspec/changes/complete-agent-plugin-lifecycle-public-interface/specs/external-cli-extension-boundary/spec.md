@@ -1,6 +1,6 @@
 ## REMOVED Requirements
 
-### Requirement: External-only Oclif state (B03, I08)
+### Requirement: External-only native Oclif state (B03, I08)
 **Reason**: Local RAWR projections around official Oclif plugin commands create a
 second extension manager.
 **Migration**: Enable `@oclif/plugin-plugins` directly as an Oclif core plugin.

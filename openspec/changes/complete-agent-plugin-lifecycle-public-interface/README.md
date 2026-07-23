@@ -439,9 +439,9 @@ skill. It cannot authorize HF01 materialization or release.
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
 | Required Habitat/Nx check hierarchy | Public `bun run check`, `repository:check`, `habitat:check`, hygiene, and the selected green policy batch are active; all-project `check` composition and generic service-rule inclusion remain pending |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
-| Conventional CLI package/release | Bun-installed registry package selected; rejected state deletion and Effect 4 closure are complete, so package-group derivation is the next owner |
-| Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; canonical-spec retirement and aggregate absence proof remain |
-| Persistent agent artifact/projection store deletion | Complete; release/set, projection, target receipt, identity, custom evidence, retention, and controller-root readers and writers are absent |
+| Conventional CLI package/release | Bun-installed registry package selected; fixed Nx Release group derivation waits for package-version metadata and closure of tasks 4 and 5.5 |
+| Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
+| Persistent agent artifact/projection store deletion | Persistent stores are absent; task 5.5d still owns the bounded lifetime of the disposable provider-test source |
 | Effect 4 vendor realm | Exact beta 100 Effect/Platform, stable oRPC 1.14.8, admitted Effect-oRPC v4.8, and TypeBox 1.3.6 are green as one physical realm |
 | Bounded lifecycle simplification | Direct exact-Git native reconciliation and state deletion are green; positive module topology, context narrowing, and procedure-use audit remain |
 | Personal content-only recut | Pending |
@@ -699,6 +699,39 @@ worktree-cleanup follow-up contract remains a separate capability. Owner lint,
 typecheck, behavior, manifest generation, closed TypeBox input/result checks,
 and the public [[scripts/habitat/AGENTS#Flow|repository check hierarchy]] are
 green; no command replacement or new state owner was introduced.
+
+### Canonical Spec Disposition
+
+The canonical-spec audit records this exact disposition:
+
+- Delete `rawr-controller-authority`, `agent-plugin-build-artifact-store`,
+  `agent-plugin-managed-export`, `agent-plugin-promotion`,
+  `agent-provider-projection`, and `agent-plugin-undo-capsule`.
+- Rewrite `agent-plugin-command-lifecycle`,
+  `agent-plugin-lifecycle-mode-selection`,
+  `agent-plugin-lifecycle-service-topology`, `agent-plugin-packaging`,
+  `agent-plugin-release-product`, `agent-provider-deployment`,
+  `external-cli-extension-boundary`, `legacy-membership-retirement`,
+  `mixed-plugin-lifecycle-retirement`, and `qualified-artifact-authoring` so
+  ownership belongs to native Oclif or provider state where applicable.
+- Retain `agent-plugin-vendor-management`.
+- Add `agent-plugin-channel-selection`, `agent-plugin-release-derivation`, and
+  `rawr-cli-distribution`.
+
+The active removal deltas now use the canonical requirement names exactly.
+Canonical specs remain unchanged while this change is active;
+[[tasks#8. Closure|task 8.3]] applies the complete validated delta set atomically
+when the change archives instead of maintaining duplicate active and canonical
+edits.
+
+The persistent-state audit found no remaining release/set repository,
+projection store, provider receipt or identity sidecar, custom evidence store,
+retention planner, or controller data root. Task 5.5 remains open for one
+different lifetime defect: provider testing can still register a caller's
+persistent checkout path as the local marketplace source in a disposable
+provider home. Task 5.5d moves the exact selected test marketplace below the
+explicit disposable root, retains it through final native observation, and
+retires it with that invocation without creating another handle or store.
 
 The earlier owner-qualified lifecycle dependency mega-pattern is retired rather
 than carried into the corrected required check. It enumerated package names, exact
