@@ -38,4 +38,4 @@ provenance, and Oclif directories when diagnostics need them.
 **Reason**: Oclif's core-plugin manifest already classifies official command
 packages.
 **Migration**: Keep first-party command plugins in the Oclif core-plugin list and
-external extensions in native Oclif user state.
+external extensions in Oclif user state.

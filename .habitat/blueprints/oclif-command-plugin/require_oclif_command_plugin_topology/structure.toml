@@ -1,0 +1,31 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "oclif-command-plugin-packages"
+root = "plugins/cli/*"
+kind = "directory"
+mode = "closed"
+required = [
+  "package.json",
+  "src",
+  "test",
+  "tsconfig.build.json",
+  "tsconfig.json",
+]
+allowed = [
+  "AGENTS.md",
+  "README.md",
+  "coverage",
+  "dist",
+  "node_modules",
+  "oclif.manifest.json",
+  "tsconfig.test.json",
+]
+
+[[scopes]]
+name = "oclif-command-plugin-sources"
+root = "plugins/cli/*/src"
+kind = "directory"
+mode = "closed"
+required = ["commands"]
+allowed = ["lib"]

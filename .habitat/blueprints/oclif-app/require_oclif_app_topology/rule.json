@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_oclif_app_topology",
+  "title": "Require Oclif App Topology",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "oclif-app",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "a missing Oclif package anchor, a second binary entrypoint, an open binary directory, or an alternate command source root",
+  "why": "One installed Oclif application has one package manifest, one rawr binary, and one command source root. Generated dependencies, build output, and the Oclif command manifest remain admitted outputs rather than executable authority.",
+  "remediate": "Keep the app package anchors at apps/cli, expose only bin/run.js as the binary entrypoint, and keep index.ts plus commands under src. Put shared implementation under src/lib rather than creating another command root.",
+  "message": "The Oclif application must retain one closed package, binary, and command-source topology.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "apps/cli/**"
+      ]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/oclif-app/require_oclif_app_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/blueprints/oclif-app/require_oclif_app_topology/structure.toml"
+    }
+  }
+}

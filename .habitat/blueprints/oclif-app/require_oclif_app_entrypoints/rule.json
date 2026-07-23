@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "id": "require_oclif_app_entrypoints",
+  "title": "Require Oclif App Entrypoints",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "oclif-app",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "a production or development entrypoint that delegates through a second launcher or performs work outside direct Oclif execution",
+  "why": "The executable and development paths are two direct projections of the same Oclif application. Production discovers compiled commands and development discovers TypeScript commands without another selector or bootstrap authority.",
+  "remediate": "Keep bin/run.js as the direct production execute call and src/index.ts as the direct development execute call. Move application behavior behind Oclif commands and public service boundaries.",
+  "message": "Oclif entrypoints must invoke the application directly without another launcher.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "apps/cli/bin/run.js",
+        "apps/cli/src/index.ts"
+      ]
+    }
+  ],
+  "scanRoots": [
+    "apps/cli/bin/run.js",
+    "apps/cli/src/index.ts"
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/oclif-app/require_oclif_app_entrypoints/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/oclif-app/require_oclif_app_entrypoints/pattern.md"
+    },
+    "patternName": "require_oclif_app_entrypoints"
+  }
+}
