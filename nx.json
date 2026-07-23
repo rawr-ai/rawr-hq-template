@@ -50,9 +50,15 @@
     },
     "typecheck": {
       "cache": true,
+      "dependsOn": ["check:test", "check:tools"],
       "inputs": ["default", "^default", "typescriptRuntime"]
     },
-    "typecheck-tests": {
+    "check:test": {
+      "cache": true,
+      "inputs": ["default", "^default", "typescriptRuntime"],
+      "outputs": []
+    },
+    "check:tools": {
       "cache": true,
       "inputs": ["default", "^default", "typescriptRuntime"],
       "outputs": []

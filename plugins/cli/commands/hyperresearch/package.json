@@ -30,7 +30,7 @@
     "build": "tsc -p tsconfig.build.json",
     "manifest": "bun --bun oclif manifest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "typecheck-tests": "tsc -p tsconfig.test.json --noEmit",
+    "check:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run --project plugin-hyperresearch",
     "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
   },
@@ -38,18 +38,6 @@
     "tags": [
       "type:plugin",
       "migration-slice:structural-tranche"
-    ],
-    "targets": {
-      "typecheck": {
-        "dependsOn": [
-          "typecheck-tests"
-        ],
-        "inputs": [
-          "production",
-          "^production",
-          "typescriptRuntime"
-        ]
-      }
-    }
+    ]
   }
 }

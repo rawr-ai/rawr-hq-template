@@ -180,6 +180,15 @@ that temporary reader when the upgraded compiled artifact is published. The
 current selected policy batch still does not activate registered rules with
 known live-corpus violations.
 
+Foundational target names are uniform across project kinds: `build`, `lint`,
+`typecheck`, `test`, and `check`. `check:test` and `check:tools` are internal
+typecheck leaves composed by the shared `typecheck` defaults; they are not
+additional public CI lifecycles. Distinct native or packaged behavior uses a
+qualified `acceptance:<capability>` target. Nx owns shared dependencies, cache
+inputs, and outputs. A package script may own the leaf command, or an explicit
+Nx target may own graph behavior, but the same command is never implemented by
+both. See [[tasks#1. Positive Habitat And Nx Checks|task 1.6c3]].
+
 ### One oRPC service owns curated lifecycle behavior
 
 `services/agent-plugin-lifecycle` remains one service with bounded modules. Its

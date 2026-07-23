@@ -39,7 +39,7 @@
     "manifest": "bun --bun oclif manifest",
     "sync": "bun run --cwd ../../../.. sync:check --project @rawr/plugin-devops",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "typecheck-tests": "tsc -p tsconfig.test.json --noEmit",
+    "check:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run --project plugin-devops"
   },
   "nx": {
@@ -48,16 +48,6 @@
       "migration-slice:workstream-b-devops"
     ],
     "targets": {
-      "typecheck": {
-        "dependsOn": [
-          "typecheck-tests"
-        ],
-        "inputs": [
-          "production",
-          "^production",
-          "typescriptRuntime"
-        ]
-      },
       "test": {
         "dependsOn": [
           "build"

@@ -57,6 +57,12 @@ fallbacks.
 - Every non-root project now owns a public check, and bounded graph admission
   rejects a new project without one. Native Habitat project admission replaces
   that temporary graph reader after the upgraded artifact is published.
+- Foundational project targets use `build`, `lint`, `typecheck`, `test`, and
+  `check`. Separately compiled test and tool sources use internal `check:test`
+  and `check:tools` leaves; distinct installed or native behavior uses
+  `acceptance:<capability>`. Shared Nx defaults own common dependencies and
+  cache policy, and each resolved task has one command owner. See
+  [[NX_AGENT_WORKFLOW#Target Vocabulary]].
 - The `Repository Ratchet` workflow publishes the job context
   `Required lint, typecheck, and topology` for pull requests, merge groups, and
   pushes to `main`.

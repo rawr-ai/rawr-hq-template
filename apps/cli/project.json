@@ -4,7 +4,7 @@
   "targets": {
     "verify": {
       "executor": "nx:noop",
-      "dependsOn": ["test-oclif-boundary"]
+      "dependsOn": ["acceptance:oclif"]
     },
     "check": {
       "executor": "nx:noop"
