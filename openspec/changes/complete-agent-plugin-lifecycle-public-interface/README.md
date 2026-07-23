@@ -121,6 +121,7 @@ source-checkout renaming.
 | External CLI extensions | Direct `@oclif/plugin-plugins` |
 | Build, cache, version, release | Nx and Nx Release |
 | Architecture policy | Habitat closed topology plus Grit source relationships |
+| Package classification | Pure support matter only; resource acquisition and process-scoped runtime composition belong to a service plus explicit resource/provider boundaries |
 | Curated desired state | Personal Git-reviewed closed release input/channel record |
 | Installed provider truth | Native Codex/Claude inventory in the explicit home |
 | Provider mutation | Native provider commands through thin adapters |
@@ -398,13 +399,22 @@ canonical `pattern.md` source name. The service kind keeps one module
 `router.ts`, with domain matter under its owning module model.
 
 The former v0.1.1 live-tree probe exposed an unbounded wildcard walk and was
-interrupted without repository mutation. The current v0.1.6 binary contains
-Civ7's exact-root batching, traversal reuse, bounded cancellation, and cleanup.
+interrupted without repository mutation. The current v0.1.6 binary adds a
+single fail-closed Git-visible inventory, bounded Picomatch-aware traversal,
+Effect Platform no-follow reads, and non-baselinable acquisition failures.
+The immutable Civ7 release workflow rebuilt and published the exact source with
+Bun 1.4. Template invokes the verified executable directly from Nx; no
+JavaScript check wrapper, SDK source, or worktree path remains in the gate.
 Habitat delegates pattern execution to the pinned Grit dependency, so the
-required workflow provisions that dependency explicitly after its
-`--ignore-scripts` install. The repository check remains read-only. Task 1.5
-still owns live policy activation and the native packet-fixture gap; Template
-neither calls a worktree nor vendors SDK source.
+required workflow provisions Grit explicitly after its `--ignore-scripts`
+install; the repository check itself remains read-only. The router packet runs
+cold in roughly 80-95 seconds and from the local Nx cache in under 50 ms. Its Nx
+input set covers every Git-visible tree the packet inspects, so adding a new
+routerless boundary invalidates the cached success rather than bypassing the
+structural gate. Live canaries proved that a new routerless package and an
+incomplete blueprint packet both miss the prior successful cache entry and fail
+their owning rule.
+Task 1.5 still owns the native packet-fixture gap.
 
 The RAWR-authored Oclif blueprint source is a separate positive checkpoint. It
 defines one closed executable app shell, one uniform host-composed

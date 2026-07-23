@@ -25,11 +25,17 @@
         "services/*/AGENTS.md",
         "plugins/server/api/*/AGENTS.md",
         "plugins/async/workflows/*/AGENTS.md",
+        "plugins/async/schedules/*/AGENTS.md",
+        "plugins/cli/commands/*/AGENTS.md",
+        "plugins/agents/*/AGENTS.md",
+        "plugins/web/*/AGENTS.md",
         "packages/!(*.*|adapters)/AGENTS.md",
         "packages/adapters/*/AGENTS.md",
         "resources/*/AGENTS.md",
         "resources/*/providers/*/AGENTS.md",
-        "tools/*/AGENTS.md"
+        "tools/*/AGENTS.md",
+        "scripts/habitat/AGENTS.md",
+        "scripts/nx/AGENTS.md"
       ]
     }
   ],

@@ -34,6 +34,37 @@ root = "plugins/async/workflows/!(*.*)"
 kind = "directory"
 mode = "open"
 required = ["AGENTS.md"]
+allowEmpty = true
+
+[[scopes]]
+name = "schedule-plugin-package-routers"
+root = "plugins/async/schedules/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+allowEmpty = true
+
+[[scopes]]
+name = "command-plugin-package-routers"
+root = "plugins/cli/commands/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "agent-plugin-package-routers"
+root = "plugins/agents/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "web-plugin-package-routers"
+root = "plugins/web/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+allowEmpty = true
 
 [[scopes]]
 name = "generic-package-routers"
@@ -48,6 +79,7 @@ root = "packages/adapters/!(*.*)"
 kind = "directory"
 mode = "open"
 required = ["AGENTS.md"]
+allowEmpty = true
 
 [[scopes]]
 name = "resource-package-routers"
@@ -66,6 +98,20 @@ required = ["AGENTS.md"]
 [[scopes]]
 name = "tool-package-routers"
 root = "tools/!(*.*)"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "habitat-consumer-router"
+root = "scripts/habitat"
+kind = "directory"
+mode = "open"
+required = ["AGENTS.md"]
+
+[[scopes]]
+name = "nx-admission-router"
+root = "scripts/nx"
 kind = "directory"
 mode = "open"
 required = ["AGENTS.md"]

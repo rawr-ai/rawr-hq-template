@@ -72,7 +72,8 @@ affected projects after an Nx-owned project-graph check proves that every
 project has exactly one `type:*` kind and every code project owns lint and
 typecheck targets. The same command runs the Nx admission tests, full Biome
 check, Habitat consumer integrity tests, repository separation, and the
-lifecycle service's live, non-cacheable Habitat `structure-check`; see
+lifecycle service's Habitat `structure-check`. Habitat targets are cacheable
+only when their Nx inputs cover every Git-visible tree the rule inspects; see
 [[NX_AGENT_WORKFLOW]]. Domain behavior tests remain owner-local verification
 rather than hidden merge-admission work.
 

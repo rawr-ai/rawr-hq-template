@@ -29,6 +29,8 @@
   the executable.
 - Nx-owned repository checks consume the verified executable; policy remains
   in the `.habitat` authority tree.
+- Package scripts invoke the provisioned executable directly. Do not restore a
+  JavaScript check wrapper or move pattern logic out of Habitat.
 
 ## Routing
 
@@ -40,3 +42,4 @@
 - `bunx nx run @rawr/habitat-consumer:lint`
 - `bunx nx run @rawr/habitat-consumer:typecheck`
 - `bunx nx run @rawr/habitat-consumer:test`
+- `bunx nx run @rawr/habitat-consumer:check:repository`
