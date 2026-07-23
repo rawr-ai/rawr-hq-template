@@ -15,7 +15,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun test scripts/habitat/provision.test.mjs scripts/habitat/dependency-direction.test.mjs"
+        "command": "bun test scripts/habitat/provision.test.mjs"
       }
     }
   }

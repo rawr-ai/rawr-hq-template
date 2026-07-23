@@ -25,10 +25,11 @@ The current generic kinds are:
   remains intentionally unconstrained.
 
 The `rawr/` tree carries owner-qualified constraints that are not generic
-package laws. Its current lifecycle rules preserve the curated command channel
-and service-to-resource dependency direction while that implementation is
-simplified. They remain governed by `@rawr/agent-plugin-lifecycle`; the generic
-blueprint owner does not absorb them.
+package laws. Its remaining lifecycle rule closes the curated command channel
+while that implementation is simplified. Generic service, Oclif, package,
+TypeScript, and Nx contracts own reusable dependency relationships; the
+lifecycle niche does not duplicate those laws as a package-name or path
+blacklist.
 
 Each enforced rule has a stable `rule.json` plus a locked `baseline.json`
 beside its `structure.toml` or Grit pattern. Structure rules own filesystem
