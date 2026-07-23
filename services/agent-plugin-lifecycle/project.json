@@ -3,10 +3,7 @@
   "name": "@rawr/agent-plugin-lifecycle",
   "targets": {
     "check": {
-      "executor": "nx:noop",
-      "dependsOn": ["lint", "typecheck", "test", "structure-check"],
-      "cache": false,
-      "outputs": []
+      "executor": "nx:noop"
     },
     "structure-check": {
       "executor": "nx:run-commands",

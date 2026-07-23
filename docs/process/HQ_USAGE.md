@@ -67,21 +67,21 @@ git config core.hooksPath scripts/githooks
 
 Then `post-merge` and `post-checkout` may refresh repository dependencies. They do
 not publish or install the CLI. `pre-push` preserves
-the remote-identity guard and runs `bun run check`. The root command runs
-affected Nx `lint` and `typecheck`, then invokes `repository:check`.
-`repository:check` composes project admission and repository separation,
-`habitat:check`, and the CLI Oclif boundary check. `habitat:check` composes its
-owner's lint, typecheck, and tests with repository hygiene and one selected
-green local Habitat policy batch; that batch owns the required Oclif structure
-laws and lifecycle command-channel law.
+the remote-identity guard and runs `bun run check`. The root command starts one
+Nx graph over every admitted non-root project's public check. Shared defaults
+connect each check to lint, typecheck, optional owner verification, Habitat
+policy, and dependency checks. Repository admission and separation, CLI Oclif
+parity, and the selected green Habitat policy batch remain qualified owner
+work. That batch owns the required Oclif structure laws and lifecycle
+command-channel law.
 Habitat targets are cacheable only when their Nx inputs cover every Git-visible
 tree the rule inspects; see [[NX_AGENT_WORKFLOW]]. Domain behavior tests remain
 owner-local verification rather than hidden merge-admission work.
 
-This is a deliberate transitional hierarchy. Do not claim that every Habitat
-rule or every project-owned `check` target is active. Civ-style all-project
-composition follows only after every applicable project has a `check` target
-or Habitat Nx inference supplies it.
+Every non-root project now owns a public check, and bounded graph admission
+rejects a new project without one. Do not claim that every registered Habitat
+rule is active; native Habitat project admission remains pending on the upgraded
+published artifact.
 
 Habitat evaluation uses a checksum-pinned standalone binary owned by a Civ7
 release and compiled with Bun 1.4. `scripts/habitat/release.json` binds its

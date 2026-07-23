@@ -135,7 +135,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   containing the required Oclif structure laws and lifecycle command-channel
   law. Preserve one non-skippable remote required result for the candidate
   revision.
-- [ ] 1.6c Move to Civ-style all-project `check` composition only after every
+- [x] 1.6c Move to Civ-style all-project `check` composition only after every
   applicable project owns a `check` target or Habitat Nx inference supplies
   one. Do not let `run-many -t check` silently omit projects during the
   transition.
@@ -143,6 +143,14 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   public `nx:noop` `check` target. Preserve the CLI's Oclif parity dependency,
   and make both Oclif topology blueprints require a project manifest. Keep the
   root scheduler cutover and native Habitat project-admission law in task 1.6c.
+- [x] 1.6c2 Replace the affected-plus-aggregate scheduler with one
+  `nx run-many -t check` graph. Give every public check the standard lint,
+  typecheck, owner-local verification, Habitat policy, and dependency-check
+  prerequisites; keep CLI source/build command parity owner-local; and stop the
+  repository project from scheduling Habitat or CLI work. Require a public
+  check on every non-root project in the bounded TypeBox project-graph
+  admission until the native Habitat project law can replace it without an
+  exact-path inventory.
 - [x] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable

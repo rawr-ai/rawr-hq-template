@@ -7,10 +7,10 @@
 ## Boundaries
 
 - Owns the TypeBox contract for the Nx project-graph facts it reads and the
-  admission policy for project-kind, lint-target, and typecheck-target
-  presence.
-- Owns repository-separation admission and composes the repository's required
-  owner checks. It does not reimplement the policies owned by Habitat, the
+  admission policy for project-kind, public-check, lint-target, and
+  typecheck-target presence.
+- Owns repository-separation admission and its bounded project-metadata
+  admission. It does not schedule or reimplement checks owned by Habitat, the
   lifecycle service, or the CLI.
 - Nx remains project and task-graph authority. This tool checks declared graph
   facts; it does not infer projects from the filesystem or create missing
@@ -24,12 +24,12 @@
   evaluates every non-root project against the quality-target policy.
 - Violations are sorted and reported together so the owning projects can
   repair their own metadata and targets.
-- `repository:check` composes this owner's lint, typecheck, tests,
-  `check:projects`, and `check:boundaries` with `habitat:check` and the CLI
-  Oclif boundary check. Required Oclif and lifecycle command-channel structure
-  laws belong to Habitat's selected policy batch.
-- The root `bun run check` runs affected `lint` and `typecheck` before entering
-  this repository-owned aggregate.
+- `repository:check` composes only this owner's lint, typecheck, tests,
+  project admission, and repository separation through its owner-local
+  `verify` target.
+- The root `bun run check` schedules every project check once. Required Oclif
+  and lifecycle command-channel structure laws enter that graph through the
+  Habitat owner, while CLI source/build parity enters through the CLI owner.
 
 ## Routing
 

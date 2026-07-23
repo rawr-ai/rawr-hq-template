@@ -56,11 +56,15 @@
 - Trunk must remain `main` (`gt trunk`).
 - Follow [the Graphite branch and stack workflow](docs/process/GRAPHITE.md).
 - `bun install` configures the repository-owned hooks. Before a push, the local
-  hook runs `bun run check`. The root command first runs affected Nx `lint` and
-  `typecheck`, then delegates repository policy to `repository:check`.
-  `repository:check` composes project admission and repository separation,
-  `habitat:check`, and the CLI Oclif boundary check. Oclif structure laws and
-  the lifecycle command-channel law run inside Habitat's selected policy batch.
+  hook runs `bun run check`. The root command schedules every admitted
+  non-root project's public `check` once through Nx. Shared defaults connect
+  those checks to foundational quality, optional owner verification, Habitat
+  policy, and dependency checks. The repository, Habitat, and CLI each retain
+  their qualified work. Oclif structure laws and the lifecycle command-channel
+  law run inside Habitat's selected policy batch.
+- `verify` is the optional owner-local extension for deterministic checks that
+  do not reduce to lint, typecheck, or Habitat policy. It is not release,
+  deployment, or acceptance authority and has no root aggregate.
 - `habitat:check` composes the Habitat owner's lint, typecheck, and tests with
   `check:hygiene` and `check:policy`. The policy target currently runs one
   selected green local rule batch; it does not claim that every Habitat rule is
@@ -113,7 +117,5 @@
 - Run the owning project's focused lint, typecheck, test, or build targets.
 - Before pushing, run `bun run check`; remote branch protection is the final
   merge authority.
-- A Civ-style all-project `check` graph remains pending until every applicable
-  project owns a `check` target or Habitat Nx inference supplies it. Until then,
-  the root affected-quality pass plus `repository:check` is the truthful
-  required composition.
+- The Civ-style all-project `check` graph is active. Do not add a root Nx
+  project target, nested scheduler, aggregate owner, or project-name batch.

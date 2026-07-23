@@ -85,12 +85,12 @@
         "command": "bun run habitat -- --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_agent_router_shape --rule require_grit_helper_comments --rule require_api_server_plugin_boundary --rule require_agent_plugin_command_channel_topology --rule require_oclif_app_configuration --rule require_oclif_app_entrypoints --rule require_oclif_app_topology --rule require_oclif_command_plugin_configuration --rule require_oclif_command_plugin_topology --rule require_oclif_command_source_relationships"
       }
     },
-    "check": {
+    "verify": {
       "executor": "nx:noop",
-      "cache": false,
-      "dependsOn": ["lint", "typecheck", "test", "check:hygiene", "check:policy"],
-      "outputs": [],
-      "options": {}
+      "dependsOn": ["test", "check:hygiene"]
+    },
+    "check": {
+      "executor": "nx:noop"
     }
   }
 }

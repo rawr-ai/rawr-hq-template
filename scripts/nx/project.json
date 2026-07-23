@@ -48,26 +48,12 @@
         "command": "bun scripts/architecture/verify-repository-separation.mjs"
       }
     },
-    "check": {
+    "verify": {
       "executor": "nx:noop",
-      "cache": false,
-      "dependsOn": [
-        "lint",
-        "typecheck",
-        "test",
-        "check:projects",
-        "check:boundaries",
-        {
-          "projects": ["habitat"],
-          "target": "check"
-        },
-        {
-          "projects": ["@rawr/cli"],
-          "target": "test-oclif-boundary"
-        }
-      ],
-      "outputs": [],
-      "options": {}
+      "dependsOn": ["test", "check:projects", "check:boundaries"]
+    },
+    "check": {
+      "executor": "nx:noop"
     }
   }
 }

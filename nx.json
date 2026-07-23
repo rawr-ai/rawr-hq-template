@@ -26,6 +26,11 @@
     "bunToolchain": ["{workspaceRoot}/package.json", "{workspaceRoot}/bun.lock"]
   },
   "targetDefaults": {
+    "check": {
+      "cache": false,
+      "dependsOn": ["lint", "typecheck", "verify", "check:policy", "^check"],
+      "outputs": []
+    },
     "build": {
       "cache": true,
       "inputs": ["production", "^production", "typescriptRuntime"],

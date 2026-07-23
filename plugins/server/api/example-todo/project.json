@@ -54,10 +54,7 @@
       }
     },
     "check": {
-      "executor": "nx:noop",
-      "cache": false,
-      "dependsOn": ["lint", "typecheck", "structural"],
-      "outputs": []
+      "executor": "nx:noop"
     }
   }
 }

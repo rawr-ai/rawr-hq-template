@@ -23,20 +23,20 @@ Interpretation:
   This is development verification, not installed-package acceptance. The fixed
   Nx Release group and ordinary installation path remain pending, and the
   obsolete predecessor distribution is not invoked, checked, or updated.
-- The root check must run affected Nx lint and typecheck before entering
-  `repository:check`; no hand-maintained project inventory may narrow the
-  affected population.
-- `repository:check` must prove project-kind and quality-target admission,
-  repository separation, `habitat:check`, and the CLI Oclif boundary behavior
-  through their Nx owners. Required Oclif structure laws and the lifecycle
-  command-channel law belong to Habitat's selected policy batch.
+- The root check must schedule every admitted non-root project's plain public
+  check once; no hand-maintained project inventory may narrow that population.
+- Shared defaults must preserve lint, typecheck, optional owner verification,
+  Habitat policy, and dependency checks. Project-kind and quality-target
+  admission, repository separation, and CLI Oclif parity remain qualified owner
+  work. Required Oclif structure laws and the lifecycle command-channel law
+  belong to Habitat's selected policy batch.
 - `habitat:check` must run Habitat-owner lint, typecheck, and tests,
   repository-wide hygiene, and the selected green local policy batch.
 - The selected Habitat batch must keep empty baselines. Do not claim that all
   registered Habitat rules are required while known live-corpus failures remain
   outside the batch.
-- The eventual all-project `check` graph remains pending until every applicable
-  project owns the target or Habitat Nx inference supplies it.
+- Bounded graph admission must reject every new non-root project without a
+  public check until native Habitat project admission replaces that reader.
 - The `rg` command is a quick markdown-link surface scan used before deeper audits.
 - Protected `main` must require the job context
   `Required lint, typecheck, and topology` published by the
