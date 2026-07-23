@@ -17,8 +17,8 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   falsifiers, positive ratchet, behavioral boundary, and standard vocabulary in
   [[authority-amendment]], [[proposal]], and [[design]].
 - [x] 0.4 Record Magic Migration and Civ7 Habitat provenance. The current
-  Template artifact is published `habitat-sdk-v0.1.5`, source
-  `54379b23adeff29bfb5213df77bda79e81edfc14`, compiled with Bun 1.4. SDK source
+  Template artifact is published `habitat-sdk-v0.1.6`, source
+  `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, compiled with Bun 1.4. SDK source
   is not imported.
 - [x] 0.5 Run strict OpenSpec validation, backlinks/link checks where owned,
   `git diff --check`, and standing architecture/terminology reviews. Commit this

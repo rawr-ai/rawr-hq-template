@@ -117,7 +117,7 @@ const suiteCommandsByProject = {
     default: ["bun scripts/phase-03/verify-hq-ops-resource-binding.mjs"],
   },
   "@rawr/agent-plugin-lifecycle": {
-    default: ["bun scripts/habitat/check.mjs --owner @rawr/agent-plugin-lifecycle"],
+    default: ["bun run habitat -- --owner @rawr/agent-plugin-lifecycle"],
   },
   "@rawr/chatgpt-corpus": {
     default: ["bun scripts/phase-03/verify-chatgpt-corpus-service-shape.mjs"],

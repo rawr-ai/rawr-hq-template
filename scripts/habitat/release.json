@@ -2,21 +2,21 @@
   "schemaVersion": 1,
   "owner": {
     "repository": "mateicanavra/civ7-modding-tools",
-    "sourceCommit": "54379b23adeff29bfb5213df77bda79e81edfc14",
-    "habitatTree": "6ca50bf370b0b44ef3bb938fe43078fec8619182"
+    "sourceCommit": "ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b",
+    "habitatTree": "d67b402583eb17eca9f1b76c8c753ab1f448451d"
   },
   "build": {
     "bunVersion": "1.4.0-canary.1+5b98630ac",
     "bunRevision": "5b98630ac045622ce9ddfe0b53a2c4f3a91f26c4"
   },
   "release": {
-    "tag": "habitat-sdk-v0.1.5"
+    "tag": "habitat-sdk-v0.1.6"
   },
   "assets": {
     "darwin-arm64": {
       "filename": "habitat-sdk-darwin-arm64",
       "bytes": 63316850,
-      "sha256": "269db7016c49b943e4c806d246d16aed60e3470162466f3d100650a8fe585f0f"
+      "sha256": "e3b172c897e57c2a787df6ab2b264901cd7554a7fb9ac86afffb91eda3d6704e"
     }
   }
 }

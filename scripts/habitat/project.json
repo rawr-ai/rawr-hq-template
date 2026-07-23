@@ -58,9 +58,46 @@
     },
     "check:packets": {
       "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/.habitat/blueprints/**/*",
+        "{workspaceRoot}/scripts/habitat/provision.mjs",
+        "{workspaceRoot}/scripts/habitat/release.json",
+        "bunToolchain"
+      ],
+      "outputs": [],
       "options": {
-        "command": "bun scripts/habitat/check.mjs --rule require_blueprint_packet_topology"
+        "command": "bun run habitat -- --rule require_blueprint_packet_topology"
       }
+    },
+    "check:agent-routers": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/AGENTS.md",
+        "{workspaceRoot}/apps/**/*",
+        "{workspaceRoot}/services/**/*",
+        "{workspaceRoot}/plugins/**/*",
+        "{workspaceRoot}/packages/**/*",
+        "{workspaceRoot}/resources/**/*",
+        "{workspaceRoot}/tools/**/*",
+        "{workspaceRoot}/scripts/**/*",
+        "{workspaceRoot}/**/AGENTS.md",
+        "{workspaceRoot}/.habitat/blueprints/agent-router/**/*",
+        "{workspaceRoot}/scripts/habitat/provision.mjs",
+        "{workspaceRoot}/scripts/habitat/release.json",
+        "bunToolchain"
+      ],
+      "outputs": [],
+      "options": {
+        "command": "bun run habitat -- --rule require_agent_router_placement --rule require_agent_router_shape"
+      }
+    },
+    "check:repository": {
+      "executor": "nx:noop",
+      "cache": false,
+      "dependsOn": ["check:packets", "check:agent-routers"],
+      "outputs": []
     }
   }
 }

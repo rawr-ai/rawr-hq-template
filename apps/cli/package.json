@@ -59,7 +59,7 @@
     "build": "tsc -p tsconfig.build.json",
     "sync": "bun run --cwd ../.. sync:check --project @rawr/cli",
     "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/cli",
-    "structure-oclif": "bun ../../scripts/habitat/check.mjs --rule require_oclif_app_configuration --rule require_oclif_app_topology",
+    "structure-oclif": "bun run --cwd ../.. habitat -- --rule require_oclif_app_configuration --rule require_oclif_app_topology",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli",
     "test-oclif-boundary": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli test/bin-run.test.ts --testNamePattern='discovers the same commands from source and compiled output'",

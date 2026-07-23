@@ -183,8 +183,8 @@ Magic Migration commit `5a974f0047f0667c2e429fdb4193a0e237b067c4`
 is the source for the generic service, API plugin, and agent-router patterns.
 RAWR adaptations are limited to repository identity, formatting, and the local
 canonical pattern-source filename. The compiled Habitat consumer pins Civ7
-`habitat-sdk-v0.1.5`, source
-`54379b23adeff29bfb5213df77bda79e81edfc14`, built natively with Bun 1.4 for the
+`habitat-sdk-v0.1.6`, source
+`ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, built natively with Bun 1.4 for the
 temporary Darwin arm64 lane.
 
 ## Behavioral Boundary

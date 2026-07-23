@@ -58,9 +58,11 @@
 - `bun run ratchet:required` validates the Nx project population, runs the Nx
   admission refusal tests, runs affected `lint` and `typecheck`, runs the full
   repository Biome check, verifies the Habitat consumer, enforces repository
-  separation, and evaluates the lifecycle service's live, non-cacheable Habitat
-  `structure-check`. Domain behavior tests and complete owner checks remain
-  explicit owner commands; they are not hidden inside merge admission.
+  separation, and evaluates the lifecycle service's Habitat `structure-check`.
+  Habitat checks are cacheable only when their Nx inputs cover every
+  Git-visible tree the rule inspects. Domain behavior tests and complete owner
+  checks remain explicit owner commands; they are not hidden inside merge
+  admission.
 - Nx derives the affected target population from the project graph. A positive
   graph law requires exactly one `type:*` kind on every non-root project, then
   requires `lint` and `typecheck` on every code project. Only `type:content` and
