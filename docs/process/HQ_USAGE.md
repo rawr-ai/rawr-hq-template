@@ -70,10 +70,10 @@ not publish or install the CLI. `pre-push` preserves
 the remote-identity guard and runs `bun run check`. The root command runs
 affected Nx `lint` and `typecheck`, then invokes `repository:check`.
 `repository:check` composes project admission and repository separation,
-`habitat:check`, lifecycle-service structure, and the CLI Oclif boundary check.
-`habitat:check` composes its owner's lint, typecheck, and tests with repository
-hygiene and one selected green local Habitat policy batch; that batch owns the
-required Oclif structure laws.
+`habitat:check`, and the CLI Oclif boundary check. `habitat:check` composes its
+owner's lint, typecheck, and tests with repository hygiene and one selected
+green local Habitat policy batch; that batch owns the required Oclif structure
+laws and lifecycle command-channel law.
 Habitat targets are cacheable only when their Nx inputs cover every Git-visible
 tree the rule inspects; see [[NX_AGENT_WORKFLOW]]. Domain behavior tests remain
 owner-local verification rather than hidden merge-admission work.

@@ -162,10 +162,10 @@ procedure vocabulary. Every named Grit helper carries a directly preceding
 semantic comment. Both checks have empty baselines and run in the selected
 green local batch behind `habitat:check`. The public `bun run check` command
 runs affected Nx lint/typecheck, then enters `repository:check`, which composes
-Habitat with repository admission/separation, lifecycle-service structure, and
-the CLI Oclif boundary check. Required Oclif structure laws run in the selected
-Habitat batch. Registered rules with known live-corpus violations are not yet
-required. See [[tasks]] 1.5f.
+Habitat with repository admission/separation and the CLI Oclif boundary check.
+Required Oclif structure laws and the lifecycle command-channel law run in the
+selected Habitat batch. Registered rules with known live-corpus violations are
+not yet required. See [[tasks]] 1.5f.
 
 A standing architecture review found that the first Oclif command-plugin
 blueprint had incorrectly classified every `plugins/cli/*` package and required
@@ -366,6 +366,23 @@ consumer tests in 14 ms. The project-graph law and repository-separation guard
 reran, as did live Habitat in 322 ms; total wall time was 3.25 seconds. A
 separate uncached run of the five Nx admission tests plus their lint and
 typecheck owners completed in 952 ms.
+
+The first restacked service-law candidate then exposed an integration defect in
+CI: the repository aggregate launched separate standalone Habitat processes
+for the lifecycle command-channel law and the selected policy batch, and Grit
+twice returned malformed diagnostic output for `require_grit_helper_comments`
+while those processes overlapped. The exact policy batch passed 12 consecutive
+local runs and the complete repository check passed six, so no rule, parser,
+retry, or scheduling lock was added. `habitat:check:policy` now runs one
+twelve-rule repository batch that includes the lifecycle command-channel law,
+and its cache inputs include that law's owner tree. `repository:check` no longer
+starts the redundant owner process; the service's `structure-check` remains a
+focused owner target. Every rule remains required through the hierarchy
+described by [[scripts/habitat/AGENTS#Flow|the Habitat execution boundary]].
+The combined policy target passed uncached in 5.4 seconds with one shared
+structure traversal across six laws. Three uncached repository checks passed
+in 15.3, 16.0, and 12.9 seconds with 17 dependencies instead of 18; the cached
+public `bun run check` completed in 7.7 seconds.
 
 The workflow remains named `Repository Ratchet`; its job publishes the context
 `Required lint, typecheck, and topology`. Full-history checkout plus

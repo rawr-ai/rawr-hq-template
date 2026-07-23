@@ -59,8 +59,8 @@
   hook runs `bun run check`. The root command first runs affected Nx `lint` and
   `typecheck`, then delegates repository policy to `repository:check`.
   `repository:check` composes project admission and repository separation,
-  `habitat:check`, lifecycle-service structure, and the CLI Oclif boundary
-  check. Oclif structure laws run inside Habitat's selected policy batch.
+  `habitat:check`, and the CLI Oclif boundary check. Oclif structure laws and
+  the lifecycle command-channel law run inside Habitat's selected policy batch.
 - `habitat:check` composes the Habitat owner's lint, typecheck, and tests with
   `check:hygiene` and `check:policy`. The policy target currently runs one
   selected green local rule batch; it does not claim that every Habitat rule is

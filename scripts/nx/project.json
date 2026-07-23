@@ -62,10 +62,6 @@
           "target": "check"
         },
         {
-          "projects": ["@rawr/agent-plugin-lifecycle"],
-          "target": "structure-check"
-        },
-        {
           "projects": ["@rawr/cli"],
           "target": "test-oclif-boundary"
         }

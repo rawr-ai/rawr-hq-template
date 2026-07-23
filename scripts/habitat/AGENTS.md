@@ -32,10 +32,10 @@
 - `habitat:check` composes this owner's lint, typecheck, and tests with
   `check:hygiene` and `check:policy`.
 - `check:policy` acquires the selected green repository rules once, including
-  the admitted Oclif app structure laws. Rules with known live-corpus
-  violations remain outside the required batch until their owning migration
-  burns them down; direct rule selection is diagnostic, not a second required
-  surface.
+  the admitted Oclif structure laws and agent-plugin command-channel law. Rules
+  with known live-corpus violations remain outside the required batch until
+  their owning migration burns them down; direct rule selection is diagnostic,
+  not a second required surface.
 - Package scripts invoke the provisioned executable directly. Do not restore a
   JavaScript check wrapper or move pattern logic out of Habitat.
 
