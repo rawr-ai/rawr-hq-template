@@ -6,9 +6,9 @@ import {
 } from "../../model/dto/current-main-selection";
 
 import {
-  CurrentMainBodyV2Schema,
+  CurrentMainBodyV3Schema,
   CurrentMainBytesSchema,
-  CurrentMainV2CodecResultSchema,
+  CurrentMainV3CodecResultSchema,
 } from "./model/dto/current-main";
 
 export const GitLocatorSchema = CurrentMainSelectionLocatorSchema;
@@ -22,20 +22,20 @@ export const CurrentMainRecordInputSchema = Type.Union([
   ReadonlyObject(
     Type.Object({
       kind: Type.Literal("encode-body"),
-      body: CurrentMainBodyV2Schema,
+      body: CurrentMainBodyV3Schema,
     }),
     { additionalProperties: false }
   ),
   ReadonlyObject(
     Type.Object({
-      kind: Type.Literal("validate-envelope"),
+      kind: Type.Literal("validate-record"),
       bytes: CurrentMainBytesSchema,
     }),
     { additionalProperties: false }
   ),
 ]);
 
-export const CurrentMainRecordResultSchema = CurrentMainV2CodecResultSchema;
+export const CurrentMainRecordResultSchema = CurrentMainV3CodecResultSchema;
 export type CurrentMainRecordProcedureResult = Static<typeof CurrentMainRecordResultSchema>;
 
 export type { GitLocatorInput } from "./model/dto/boundary";

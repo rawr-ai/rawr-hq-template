@@ -23,6 +23,9 @@ export interface GitWorkspaceAnchor extends ContentWorkspaceIdentity {
   readonly refCommit: string;
 }
 
+/** Exact full-ref observation, independent of the checked-out branch and worktree bytes. */
+export interface GitRefObservation extends ContentWorkspaceIdentity {}
+
 export interface GitWorktreeObjectId {
   readonly path: string;
   readonly objectId: string;
@@ -168,6 +171,7 @@ export interface ContentWorkspaceFailure {
   readonly _tag: "ContentWorkspaceFailure";
   readonly operation:
     | "inspect"
+    | "inspect-git-ref"
     | "inspect-git-workspace"
     | "read-git-tree"
     | "read-git-blob"
@@ -207,11 +211,20 @@ export interface ContentWorkspaceResource<R = never> {
     }>
   ) => Effect.Effect<GitWorkspaceAnchor, ContentWorkspaceFailure, R>;
 
+  readonly inspectGitRef: (
+    input: Readonly<{
+      locator: string;
+      remoteSelection: GitRemoteSelection;
+      refName: string;
+    }>
+  ) => Effect.Effect<GitRefObservation, ContentWorkspaceFailure, R>;
+
   readonly readGitTree: (
     input: Readonly<{
       root: string;
       tree: string;
       objectFormat: GitObjectFormat;
+      paths: readonly string[];
       maxBytes: number;
     }>
   ) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
@@ -428,6 +441,9 @@ export interface ContentWorkspaceAsyncPort {
 
 /** Promise projection of the exact read-only local Git capability set. */
 export interface ContentWorkspaceGitReadAsyncPort {
+  readonly inspectGitRef: (
+    input: Parameters<ContentWorkspaceResource["inspectGitRef"]>[0]
+  ) => Promise<GitRefObservation>;
   readonly inspectGitWorkspace: (
     input: Parameters<ContentWorkspaceResource["inspectGitWorkspace"]>[0]
   ) => Promise<GitWorkspaceAnchor>;

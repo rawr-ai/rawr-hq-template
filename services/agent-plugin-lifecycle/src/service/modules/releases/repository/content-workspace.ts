@@ -143,6 +143,7 @@ async function inspectWorkspace(
       root: anchor.root,
       tree,
       objectFormat,
+      paths: [policy.releaseInputPath, policy.pluginRoot],
       maxBytes: MAX_TREE_BYTES,
     });
     const treeEntries = parseTree(entriesResult, objectIdPattern);

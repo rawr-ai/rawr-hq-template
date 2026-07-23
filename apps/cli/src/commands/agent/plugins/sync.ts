@@ -26,7 +26,7 @@ export default class AgentPluginsSync extends AgentPluginLifecycleCommand {
     const input = this.parseInput(flags, parseSyncRequest);
     if (input === undefined) return;
     const providers = [...new Set(input.targets.map((target) => target.provider))];
-    await this.project({ operation: "providers.canonicalSync", input }, flags, {
+    await this.project({ operation: "providers.sync", input }, flags, {
       git: true,
       providers,
     });

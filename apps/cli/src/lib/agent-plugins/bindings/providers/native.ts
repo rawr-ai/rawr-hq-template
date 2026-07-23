@@ -1,70 +1,88 @@
 import { NodeContext } from "@effect/platform-node";
-import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
+import type {
+  ClaudeNativeProviderSession as ClaudePromiseSession,
+  CodexNativeProviderSession as CodexPromiseSession,
+  NativeProviderSession,
+  NativeProviderSessionResolver,
+} from "@rawr/agent-plugin-lifecycle/host";
 import type {
   ClaudeNativeAgentProviderSession,
   CodexNativeAgentProviderSession,
   NativeAgentProviderFailure,
+  NativeMarketplaceSource,
+  NativeProviderPluginFilesReadInput,
+  NativeProviderPluginSelectorInput,
 } from "@rawr/resource-native-agent-provider";
 import { claudeEffectPlatformNodeProvider } from "@rawr/resource-native-agent-provider/providers/claude-effect-platform-node";
 import { codexEffectPlatformNodeProvider } from "@rawr/resource-native-agent-provider/providers/codex-effect-platform-node";
 import { Effect } from "effect";
 
-type NativeProviderResourcePort = Deps["providerNativeResource"];
-type NativeResourceSessionInput = Parameters<NativeProviderResourcePort["acquireCodex"]>[0];
-type CodexNativeResourceSession = Awaited<ReturnType<NativeProviderResourcePort["acquireCodex"]>>;
-type ClaudeNativeResourceSession = Awaited<ReturnType<NativeProviderResourcePort["acquireClaude"]>>;
+type NativeProviderTarget = Parameters<NativeProviderSessionResolver["acquire"]>[0];
+type ProviderExecutables = Readonly<Partial<Record<"claude" | "codex", string>>>;
 
-/** Lowers the two native Effect Platform resources into the service's raw Promise port. */
-export function createNodeNativeProviderResource(): NativeProviderResourcePort {
+/** Lowers the exact native Effect resources into the service's Promise-facing sessions. */
+export function createNodeNativeProviderSessionResolver(
+  providerExecutables: ProviderExecutables
+): NativeProviderSessionResolver {
   return Object.freeze({
-    acquireCodex: async (input: NativeResourceSessionInput) =>
-      adaptCodexSession(await runNodeProvider(codexEffectPlatformNodeProvider.acquire(input))),
-    acquireClaude: async (input: NativeResourceSessionInput) =>
-      adaptClaudeSession(await runNodeProvider(claudeEffectPlatformNodeProvider.acquire(input))),
+    acquire: async (target: NativeProviderTarget): Promise<NativeProviderSession> => {
+      const executablePath = providerExecutables[target.provider];
+      if (executablePath === undefined) {
+        throw new Error(`Native ${target.provider} executable is not bound`);
+      }
+      const input = Object.freeze({ executablePath, home: target.home });
+      if (target.provider === "codex") {
+        return adaptCodexSession(
+          await runNodeProvider(codexEffectPlatformNodeProvider.acquire(input))
+        );
+      }
+      return adaptClaudeSession(
+        await runNodeProvider(claudeEffectPlatformNodeProvider.acquire(input))
+      );
+    },
   });
 }
 
-function adaptCodexSession(session: CodexNativeAgentProviderSession): CodexNativeResourceSession {
-  const adapted: CodexNativeResourceSession = {
+function adaptCodexSession(session: CodexNativeAgentProviderSession): CodexPromiseSession {
+  return Object.freeze({
     provider: session.provider,
     executablePath: session.executablePath,
     home: session.home,
     probe: () => runNodeProvider(session.probe()),
-    listMarketplaces: () => runNodeProvider(session.listMarketplaces()),
-    readMarketplace: (input) => runNodeProvider(session.readMarketplace(input)),
-    addMarketplace: (source) => runNodeProvider(session.addMarketplace(source)),
-    removeMarketplace: (input) => runNodeProvider(session.removeMarketplace(input)),
-    listPlugins: () => runNodeProvider(session.listPlugins()),
-    readPlugin: (input) => runNodeProvider(session.readPlugin(input)),
-    addPlugin: (input) => runNodeProvider(session.addPlugin(input)),
-    removePlugin: (input) => runNodeProvider(session.removePlugin(input)),
-    inspectAppServer: () => runNodeProvider(session.inspectAppServer()),
-    readConfiguration: () => runNodeProvider(session.readConfiguration()),
-    setMarketplaceSource: (input) => runNodeProvider(session.setMarketplaceSource(input)),
-  };
-  return Object.freeze(adapted);
+    inventory: () => runNodeProvider(session.inventory()),
+    readPluginFiles: (input: NativeProviderPluginFilesReadInput) =>
+      runNodeProvider(session.readPluginFiles(input)),
+    addMarketplace: (source: NativeMarketplaceSource) =>
+      runNodeProvider(session.addMarketplace(source)),
+    removeMarketplace: (input: Readonly<{ identity: string }>) =>
+      runNodeProvider(session.removeMarketplace(input)),
+    installPlugin: (input: NativeProviderPluginSelectorInput) =>
+      runNodeProvider(session.installPlugin(input)),
+    removePlugin: (input: NativeProviderPluginSelectorInput) =>
+      runNodeProvider(session.removePlugin(input)),
+  });
 }
 
-function adaptClaudeSession(
-  session: ClaudeNativeAgentProviderSession
-): ClaudeNativeResourceSession {
-  const adapted: ClaudeNativeResourceSession = {
+function adaptClaudeSession(session: ClaudeNativeAgentProviderSession): ClaudePromiseSession {
+  return Object.freeze({
     provider: session.provider,
     executablePath: session.executablePath,
     home: session.home,
     probe: () => runNodeProvider(session.probe()),
-    listMarketplaces: () => runNodeProvider(session.listMarketplaces()),
-    readMarketplace: (input) => runNodeProvider(session.readMarketplace(input)),
-    addMarketplace: (source) => runNodeProvider(session.addMarketplace(source)),
-    removeMarketplace: (input) => runNodeProvider(session.removeMarketplace(input)),
-    listPlugins: () => runNodeProvider(session.listPlugins()),
-    readPlugin: (input) => runNodeProvider(session.readPlugin(input)),
-    installPlugin: (input) => runNodeProvider(session.installPlugin(input)),
-    enablePlugin: (input) => runNodeProvider(session.enablePlugin(input)),
-    uninstallPlugin: (input) => runNodeProvider(session.uninstallPlugin(input)),
-    readConfiguration: () => runNodeProvider(session.readConfiguration()),
-  };
-  return Object.freeze(adapted);
+    inventory: () => runNodeProvider(session.inventory()),
+    readPluginFiles: (input: NativeProviderPluginFilesReadInput) =>
+      runNodeProvider(session.readPluginFiles(input)),
+    addMarketplace: (source: NativeMarketplaceSource) =>
+      runNodeProvider(session.addMarketplace(source)),
+    removeMarketplace: (input: Readonly<{ identity: string }>) =>
+      runNodeProvider(session.removeMarketplace(input)),
+    installPlugin: (input: NativeProviderPluginSelectorInput) =>
+      runNodeProvider(session.installPlugin(input)),
+    removePlugin: (input: NativeProviderPluginSelectorInput) =>
+      runNodeProvider(session.removePlugin(input)),
+    enablePlugin: (input: NativeProviderPluginSelectorInput) =>
+      runNodeProvider(session.enablePlugin(input)),
+  });
 }
 
 async function runNodeProvider<A>(
@@ -73,8 +91,6 @@ async function runNodeProvider<A>(
   const result = await Effect.runPromise(
     operation.pipe(Effect.either, Effect.provide(NodeContext.layer))
   );
-  if (result._tag === "Left") {
-    throw result.left;
-  }
+  if (result._tag === "Left") throw result.left;
   return result.right;
 }

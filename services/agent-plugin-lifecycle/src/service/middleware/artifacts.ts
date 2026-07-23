@@ -2,6 +2,7 @@ import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-ar
 
 import { createServiceProvider } from "../base";
 import type { CurrentMainSelectionReader } from "../model/dependencies/current-main";
+import type { SelectedContentResolver } from "../model/dependencies/providers";
 import type { ArtifactStore } from "../model/dependencies/releases";
 import { createResourceArtifactStore } from "../repository/artifact-repository";
 import { createResourceMechanicalEvidenceStore } from "../repository/mechanical-evidence";
@@ -15,6 +16,7 @@ export const artifacts = createServiceProvider<{
   };
   provided: {
     currentMain: CurrentMainSelectionReader;
+    selectedContent: SelectedContentResolver;
   };
 }>().middleware<{
   artifactStore: ArtifactStore;

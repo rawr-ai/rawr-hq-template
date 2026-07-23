@@ -9,10 +9,9 @@ export type LifecycleOperation =
   | "vendors.status"
   | "vendors.update"
   | "packaging.package"
-  | "providers.targetedTest"
-  | "providers.completeTest"
-  | "providers.canonicalSync"
-  | "providers.canonicalStatus"
+  | "providers.test"
+  | "providers.sync"
+  | "providers.status"
   | "governance.currentMainRecord"
   | "governance.currentMainSelection";
 
@@ -31,12 +30,9 @@ export type LifecycleClientByOperation = Readonly<{
   "vendors.status": Readonly<{ vendors: Pick<Client["vendors"], "status"> }>;
   "vendors.update": Readonly<{ vendors: Pick<Client["vendors"], "update"> }>;
   "packaging.package": Readonly<{ packaging: Pick<Client["packaging"], "package"> }>;
-  "providers.targetedTest": Readonly<{ providers: Pick<Client["providers"], "targetedTest"> }>;
-  "providers.completeTest": Readonly<{ providers: Pick<Client["providers"], "completeTest"> }>;
-  "providers.canonicalSync": Readonly<{ providers: Pick<Client["providers"], "canonicalSync"> }>;
-  "providers.canonicalStatus": Readonly<{
-    providers: Pick<Client["providers"], "canonicalStatus">;
-  }>;
+  "providers.test": Readonly<{ providers: Pick<Client["providers"], "test"> }>;
+  "providers.sync": Readonly<{ providers: Pick<Client["providers"], "sync"> }>;
+  "providers.status": Readonly<{ providers: Pick<Client["providers"], "status"> }>;
   "governance.currentMainRecord": Readonly<{
     governance: Pick<Client["governance"], "currentMainRecord">;
   }>;

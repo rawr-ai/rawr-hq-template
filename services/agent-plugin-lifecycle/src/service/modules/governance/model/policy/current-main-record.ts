@@ -1,7 +1,4 @@
-import { createHash } from "node:crypto";
-
 import { Value } from "typebox/value";
-import { isCanonicalId, isCanonicalRepositoryIdentity } from "../../../../model/dto/structural";
 import {
   type CanonicalJsonValue,
   canonicalJsonLine,
@@ -9,67 +6,48 @@ import {
   equalBytes,
 } from "../../../../shared/release/canonical";
 import {
-  type CanonicalCurrentMainV2,
-  CURRENT_MAIN_V2_PROTOCOL,
-  CURRENT_MAIN_V2_SCHEMA_VERSION,
-  type CurrentMainBodyV2,
-  CurrentMainBodyV2Schema,
-  type CurrentMainEnvelopeV2,
-  CurrentMainEnvelopeV2Schema,
-  type CurrentMainProjectionTupleV2,
-  type CurrentMainV2CodecFailureCode,
-  type CurrentMainV2CodecResult,
-  MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES,
+  type CanonicalCurrentMainV3,
+  CURRENT_MAIN_V3_PROTOCOL,
+  type CurrentMainBodyV3,
+  CurrentMainBodyV3Schema,
+  type CurrentMainV3CodecFailureCode,
+  type CurrentMainV3CodecResult,
+  MAX_CURRENT_MAIN_V3_RECORD_BYTES,
 } from "../dto/current-main";
 
-export function encodeCurrentMainBodyV2(input: unknown): CurrentMainV2CodecResult {
-  const body = normalizeBody(input);
-  if (body === undefined) {
-    return failed(
-      "InvalidSchema",
-      "currentMain.body",
-      "Current-main body does not match its closed schema"
-    );
-  }
-  return encodeBody(body);
+export function encodeCurrentMainBodyV3(input: unknown): CurrentMainV3CodecResult {
+  const record = normalizeRecord(input);
+  return record === undefined
+    ? failed(
+        "InvalidSchema",
+        "currentMain",
+        "Current-main record does not match its closed domain schema"
+      )
+    : encodeRecord(record);
 }
 
-export function validateCurrentMainEnvelopeV2(bytes: unknown): CurrentMainV2CodecResult {
-  const decoded = decodeCanonicalJson(bytes, "currentMain", MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES);
+export function validateCurrentMainRecordV3(bytes: unknown): CurrentMainV3CodecResult {
+  const decoded = decodeCanonicalJson(bytes, "currentMain", MAX_CURRENT_MAIN_V3_RECORD_BYTES);
   if (!decoded.ok) {
     const tooLarge = decoded.issues.some((entry) => entry.code === "ENVELOPE_TOO_LARGE");
     return failed(
-      tooLarge ? "EnvelopeTooLarge" : "InvalidSchema",
+      tooLarge ? "RecordTooLarge" : "InvalidSchema",
       "currentMain",
       tooLarge
-        ? "Current-main envelope exceeds 2,097,152 bytes"
-        : "Current-main envelope is not valid UTF-8 JSON"
+        ? "Current-main record exceeds 2,097,152 bytes"
+        : "Current-main record is not valid UTF-8 JSON"
     );
   }
-  if (!Value.Check(CurrentMainEnvelopeV2Schema, decoded.value)) {
+  const record = normalizeRecord(decoded.value);
+  if (record === undefined) {
     return failed(
       "InvalidSchema",
       "currentMain",
-      "Current-main envelope does not match its closed schema"
+      "Current-main record does not match its closed domain schema"
     );
   }
-  const body = normalizeBody(decoded.value.body);
-  if (body === undefined) {
-    return failed(
-      "InvalidSchema",
-      "currentMain.body",
-      "Current-main body violates its domain contract"
-    );
-  }
-  const canonical = encodeBody(body);
+  const canonical = encodeRecord(record);
   if (!canonical.ok) return canonical;
-  if (decoded.value.currentMainDigest !== canonical.value.currentMainDigest) {
-    return failed(
-      "DigestMismatch",
-      "currentMain.currentMainDigest",
-      "Current-main digest does not match the canonical body bytes"
-    );
-  }
   if (!(bytes instanceof Uint8Array) || !equalBytes(bytes, canonical.value.bytes)) {
     return failed(
       "NonCanonical",
@@ -80,113 +58,56 @@ export function validateCurrentMainEnvelopeV2(bytes: unknown): CurrentMainV2Code
   return canonical;
 }
 
-export function canonicalSerializeCurrentMainBodyV2(body: CurrentMainBodyV2): Uint8Array {
-  return canonicalJsonLine(currentMainBodyValue(body));
+export function canonicalSerializeCurrentMainBodyV3(record: CurrentMainBodyV3): Uint8Array {
+  return canonicalJsonLine(currentMainRecordValue(record));
 }
 
-export function canonicalSerializeCurrentMainEnvelopeV2(
-  envelope: CurrentMainEnvelopeV2
-): Uint8Array {
-  return canonicalJsonLine({
-    schemaVersion: envelope.schemaVersion,
-    currentMainDigest: envelope.currentMainDigest,
-    body: currentMainBodyValue(envelope.body),
-  });
-}
-
-function encodeBody(body: CurrentMainBodyV2): CurrentMainV2CodecResult {
-  const currentMainDigest = digestBody(canonicalSerializeCurrentMainBodyV2(body));
-  const record = Object.freeze({
-    schemaVersion: CURRENT_MAIN_V2_SCHEMA_VERSION,
-    currentMainDigest,
-    body,
-  }) satisfies CurrentMainEnvelopeV2;
-  const bytes = canonicalSerializeCurrentMainEnvelopeV2(record);
-  if (bytes.byteLength > MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES) {
-    return failed(
-      "EnvelopeTooLarge",
-      "currentMain",
-      "Current-main envelope exceeds 2,097,152 bytes"
-    );
+function encodeRecord(record: CurrentMainBodyV3): CurrentMainV3CodecResult {
+  const bytes = canonicalSerializeCurrentMainBodyV3(record);
+  if (bytes.byteLength > MAX_CURRENT_MAIN_V3_RECORD_BYTES) {
+    return failed("RecordTooLarge", "currentMain", "Current-main record exceeds 2,097,152 bytes");
   }
-  return Object.freeze({
-    ok: true,
-    value: Object.freeze({
-      protocol: CURRENT_MAIN_V2_PROTOCOL,
-      currentMainDigest,
-      byteLength: bytes.byteLength,
-      bytes: new Uint8Array(bytes),
-      record,
-    }),
+  const value: CanonicalCurrentMainV3 = Object.freeze({
+    protocol: CURRENT_MAIN_V3_PROTOCOL,
+    byteLength: bytes.byteLength,
+    bytes: new Uint8Array(bytes),
+    record,
   });
+  return Object.freeze({ ok: true, value });
 }
 
-function normalizeBody(input: unknown): CurrentMainBodyV2 | undefined {
-  if (!Value.Check(CurrentMainBodyV2Schema, input)) return undefined;
-  if (
-    !isCanonicalId(input.contentAuthority) ||
-    !isCanonicalRepositoryIdentity(input.sourceRepositoryIdentity) ||
-    !isCanonicalId(input.evaluationProfile) ||
-    input.projections.some((projection) => {
-      return (
-        !isCanonicalId(projection.rendererProtocol) || !isCanonicalId(projection.adapterProtocol)
-      );
-    })
-  )
+function normalizeRecord(input: unknown): CurrentMainBodyV3 | undefined {
+  if (!Value.Check(CurrentMainBodyV3Schema, input)) return undefined;
+  if (input.sourceRepositoryUrl !== canonicalRepositoryUrl(input.sourceRepositoryIdentity))
     return undefined;
-  return Object.freeze({
-    schemaVersion: input.schemaVersion,
-    channel: input.channel,
-    contentAuthority: input.contentAuthority,
-    sourceRepositoryIdentity: input.sourceRepositoryIdentity,
-    sourceCommit: input.sourceCommit,
-    sourceTree: input.sourceTree,
-    releaseInputDigest: input.releaseInputDigest,
-    releaseSetDigest: input.releaseSetDigest,
-    evaluationProfile: input.evaluationProfile,
-    projections: freezeProjections(input.projections),
-  });
+  return Object.freeze({ ...input });
 }
 
-function freezeProjections(
-  projections: CurrentMainProjectionTupleV2
-): CurrentMainProjectionTupleV2 {
-  return Object.freeze([
-    Object.freeze({ ...projections[0] }),
-    Object.freeze({ ...projections[1] }),
-  ]);
+function canonicalRepositoryUrl(repositoryIdentity: string): string | undefined {
+  if (!repositoryIdentity.startsWith("git:")) return undefined;
+  const repository = repositoryIdentity.slice("git:".length);
+  return repository.includes("/") ? `https://${repository}.git` : undefined;
 }
 
-function currentMainBodyValue(body: CurrentMainBodyV2): CanonicalJsonValue {
+function currentMainRecordValue(record: CurrentMainBodyV3): CanonicalJsonValue {
   return {
-    schemaVersion: body.schemaVersion,
-    channel: body.channel,
-    contentAuthority: body.contentAuthority,
-    sourceRepositoryIdentity: body.sourceRepositoryIdentity,
-    sourceCommit: body.sourceCommit,
-    sourceTree: body.sourceTree,
-    releaseInputDigest: body.releaseInputDigest,
-    releaseSetDigest: body.releaseSetDigest,
-    evaluationProfile: body.evaluationProfile,
-    projections: body.projections.map((projection) => ({
-      provider: projection.provider,
-      projectionDigest: projection.projectionDigest,
-      rendererProtocol: projection.rendererProtocol,
-      adapterProtocol: projection.adapterProtocol,
-      capabilityProfileDigest: projection.capabilityProfileDigest,
-    })),
+    schemaVersion: record.schemaVersion,
+    channel: record.channel,
+    contentAuthority: record.contentAuthority,
+    sourceRepositoryIdentity: record.sourceRepositoryIdentity,
+    sourceRepositoryUrl: record.sourceRepositoryUrl,
+    sourceRef: record.sourceRef,
+    contentCommit: record.contentCommit,
+    contentTree: record.contentTree,
+    releaseInputDigest: record.releaseInputDigest,
   };
 }
 
-function digestBody(bytes: Uint8Array): `cm2_${string}` {
-  return `cm2_${createHash("sha256").update(bytes).digest("hex")}`;
-}
-
 function failed(
-  code: CurrentMainV2CodecFailureCode,
+  code: CurrentMainV3CodecFailureCode,
   path: string,
   message: string
-): Extract<CurrentMainV2CodecResult, { readonly ok: false }> {
+): Extract<CurrentMainV3CodecResult, { readonly ok: false }> {
   return Object.freeze({
     ok: false,
     failure: Object.freeze({ code, path, message }),

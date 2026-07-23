@@ -1,30 +1,11 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import {
-  chmod,
-  lstat,
-  mkdir,
-  mkdtemp,
-  readFile,
-  realpath,
-  rm,
-  symlink,
-  writeFile,
-} from "node:fs/promises";
+import { chmod, lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { FileSystem } from "@effect/platform";
-import { SystemError } from "@effect/platform/Error";
 import { NodeContext } from "@effect/platform-node";
-import type {
-  ArtifactObjectAddress,
-  ArtifactTreeLocation,
-} from "@rawr/resource-agent-plugin-artifact-repository";
-import {
-  makeArtifactRepositoryResource,
-  runNodeArtifactRepository,
-} from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import { Effect, Exit } from "effect";
+
 import { claudeEffectPlatformNodeProvider } from "../index";
 
 const roots: string[] = [];
@@ -47,298 +28,249 @@ afterEach(async () => {
 });
 
 describe("claude-effect-platform-node", () => {
-  it("exposes exact native commands without a generic runner", async () => {
+  it("maps exact scoped native commands and normalized inventory", async () => {
     const fixture = await makeFixture();
-    const marketplace = await publishMarketplace(fixture.root, "claude-marketplace");
-    await writeFile(path.join(fixture.home, "expected-marketplace-source"), `${marketplace}\n`);
+    const localMarketplace = path.join(fixture.root, "local-marketplace");
+    const nativeMarketplace = path.join(fixture.home, "plugins", "marketplaces", "rawr-hq");
+    const pluginRoot = path.join(fixture.home, "plugins", "cache", "rawr-hq", "cognition", "1.2.3");
+    await mkdir(localMarketplace);
     await writeProviderJson(fixture.home, "claude-marketplaces.json", [
       {
-        name: "rawr-hq",
+        name: "local-hq",
         source: "directory",
-        path: marketplace,
-        installLocation: marketplace,
+        path: localMarketplace,
+        installLocation: path.join(fixture.home, "plugins", "marketplaces", "local-hq"),
       },
-    ]);
-    const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
-    );
-
-    const probe = await Effect.runPromise(session.probe());
-    expect(probe.pluginCommands).toEqual(["disable", "enable", "install", "list", "uninstall"]);
-    expect(probe.marketplaceCommands).toEqual(["add", "list", "remove"]);
-    expect((await Effect.runPromise(session.listMarketplaces())).json).toEqual([
       {
         name: "rawr-hq",
-        source: "directory",
-        path: marketplace,
-        installLocation: marketplace,
+        source: "git",
+        url: "https://github.com/rawr-ai/rawr-hq.git",
+        installLocation: nativeMarketplace,
+        ref: "v2026.2.8",
+      },
+      {
+        name: "unknown-hq",
+        installLocation: path.join(fixture.home, "plugins", "marketplaces", "unknown-hq"),
       },
     ]);
-    expect((await Effect.runPromise(session.listPlugins())).json).toEqual({ installed: [] });
-    expect(
-      (
-        await Effect.runPromise(
-          session.readMarketplace({
-            identity: "rawr-hq",
-            maxEntries: 4,
-            maxBytes: 1024,
-          })
-        )
-      ).entries.map((entry) => entry.path)
-    ).toEqual(["marketplace.json"]);
-    await Effect.runPromise(session.addMarketplace(marketplace));
+    await writeProviderJson(fixture.home, "claude-plugins.json", [
+      {
+        id: "cognition@rawr-hq",
+        version: "1.2.3",
+        enabled: true,
+        installPath: pluginRoot,
+      },
+    ]);
+    const session = await acquire(fixture);
+
+    const probe = await Effect.runPromise(session.probe());
+    const inventory = await Effect.runPromise(session.inventory());
+    await Effect.runPromise(session.addMarketplace({ kind: "local", root: localMarketplace }));
+    await Effect.runPromise(
+      session.addMarketplace({
+        kind: "git",
+        repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
+        revision: "v2026.2.8",
+        sparsePaths: ["plugins/agents", ".claude-plugin"],
+      })
+    );
     await Effect.runPromise(session.removeMarketplace({ identity: "rawr-hq" }));
-    await Effect.runPromise(session.installPlugin({ selector: "demo@rawr-hq" }));
-    await Effect.runPromise(session.enablePlugin({ selector: "demo@rawr-hq" }));
-    await Effect.runPromise(session.disablePlugin({ selector: "demo@rawr-hq" }));
-    await Effect.runPromise(session.uninstallPlugin({ selector: "demo@rawr-hq" }));
-    expect(await readLines(path.join(fixture.home, "commands.log"))).toEqual([
+    await Effect.runPromise(session.installPlugin({ selector: "cognition@rawr-hq" }));
+    await Effect.runPromise(session.enablePlugin({ selector: "cognition@rawr-hq" }));
+    await Effect.runPromise(session.removePlugin({ selector: "cognition@rawr-hq" }));
+
+    expect(probe).toEqual({
+      provider: "claude",
+      executablePath: fixture.executablePath,
+      home: fixture.home,
+      version: "2.1.215 (Claude Code)",
+      capabilities: [
+        "marketplace-list",
+        "marketplace-add",
+        "marketplace-remove",
+        "marketplace-update",
+        "plugin-list",
+        "plugin-install",
+        "plugin-enable",
+        "plugin-disable",
+        "plugin-remove",
+        "plugin-update",
+      ],
+    });
+    expect(inventory).toEqual({
+      provider: "claude",
+      marketplaces: [
+        {
+          identity: "local-hq",
+          source: {
+            kind: "local",
+            root: localMarketplace,
+          },
+          installedRoot: path.join(fixture.home, "plugins", "marketplaces", "local-hq"),
+        },
+        {
+          identity: "rawr-hq",
+          source: {
+            kind: "git",
+            repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
+            revision: "v2026.2.8",
+          },
+          installedRoot: nativeMarketplace,
+        },
+        {
+          identity: "unknown-hq",
+          source: null,
+          installedRoot: path.join(fixture.home, "plugins", "marketplaces", "unknown-hq"),
+        },
+      ],
+      plugins: [
+        {
+          selector: "cognition@rawr-hq",
+          marketplaceIdentity: "rawr-hq",
+          name: "cognition",
+          installed: true,
+          enabled: true,
+          version: "1.2.3",
+          root: pluginRoot,
+        },
+      ],
+    });
+    expect(await commandLines(fixture.home)).toEqual([
+      "--version",
       "plugin --help",
       "plugin marketplace --help",
       "plugin marketplace list --json",
-      "plugin list --available --json",
-      "plugin marketplace list --json",
-      `plugin marketplace add ${marketplace} --scope user`,
+      "plugin list --json",
+      `plugin marketplace add ${localMarketplace} --scope user`,
+      "plugin marketplace add https://github.com/rawr-ai/rawr-hq.git#v2026.2.8 --scope user --sparse .claude-plugin plugins/agents",
       "plugin marketplace remove rawr-hq --scope user",
-      "plugin install demo@rawr-hq --scope user",
-      "plugin enable demo@rawr-hq --scope user",
-      "plugin disable demo@rawr-hq --scope user",
-      "plugin uninstall demo@rawr-hq --scope user",
+      "plugin install cognition@rawr-hq --scope user",
+      "plugin enable cognition@rawr-hq --scope user",
+      "plugin uninstall cognition@rawr-hq --scope user",
     ]);
+    const environments = await lines(path.join(fixture.home, "env.log"));
+    expect(new Set(environments)).toEqual(
+      new Set([`${fixture.home}|${process.env.CODEX_HOME ?? ""}|${fixture.home}|set`])
+    );
   });
 
-  it("reads raw configuration and the uniquely selected bounded plugin cache", async () => {
+  it("rejects malformed and contradictory native inventory", async () => {
     const fixture = await makeFixture();
-    await writeFile(
-      path.join(fixture.home, "settings.json"),
-      '{"enabledPlugins":{"demo@rawr-hq":true}}'
+    const session = await acquire(fixture);
+    await writeProviderJson(fixture.home, "claude-marketplaces.json", {});
+    const invalidShape = await Effect.runPromiseExit(session.inventory());
+    expect(failure(invalidShape)).toMatchObject({
+      reason: "ProtocolFailed",
+      commandPhase: "command-returned",
+    });
+
+    await writeProviderJson(fixture.home, "claude-marketplaces.json", []);
+    await writeProviderJson(fixture.home, "claude-plugins.json", [
+      { id: "not-a-selector", enabled: true },
+    ]);
+    const invalidSelector = await Effect.runPromiseExit(session.inventory());
+    expect(failure(invalidSelector)).toMatchObject({
+      reason: "ProtocolFailed",
+      commandPhase: "command-returned",
+    });
+  });
+
+  it("maps native Claude command failures to ordinary execution phases", async () => {
+    const fixture = await makeFixture();
+    const session = await acquire(fixture);
+    const returned = await Effect.runPromiseExit(
+      session.enablePlugin({ selector: "fail@rawr-hq" })
     );
-    const packageRoot = path.join(fixture.home, "plugins", "cache", "rawr-hq", "demo", "1.0.0");
-    await mkdir(packageRoot, { recursive: true });
-    await writeFile(path.join(packageRoot, "README.md"), "readme\n", { mode: 0o644 });
-    await writeFile(path.join(packageRoot, "plugin.json"), "{}\n", { mode: 0o644 });
-    await writeProviderJson(fixture.home, "claude-installed.json", [
+    expect(failure(returned)).toMatchObject({
+      reason: "CommandFailed",
+      commandPhase: "command-returned",
+    });
+
+    await rm(fixture.executablePath);
+    const notStarted = await Effect.runPromiseExit(
+      session.removePlugin({ selector: "cognition@rawr-hq" })
+    );
+    expect(failure(notStarted)).toMatchObject({ reason: "Missing", commandPhase: "not-started" });
+  });
+
+  it("reads only one selected bounded native package batch per inventory pair", async () => {
+    const fixture = await makeFixture();
+    const pluginRoot = path.join(fixture.home, "plugins", "cache", "rawr-hq", "cognition", "1.2.3");
+    await mkdir(path.join(pluginRoot, ".claude-plugin"), { recursive: true });
+    await mkdir(path.join(pluginRoot, "skills", "state-machine-design", "references"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(pluginRoot, ".claude-plugin", "plugin.json"),
+      '{"name":"cognition"}\n'
+    );
+    await writeFile(
+      path.join(pluginRoot, "skills", "state-machine-design", "references", "guide.md"),
+      "state machine guide\n"
+    );
+    await writeProviderJson(fixture.home, "claude-plugins.json", [
       {
-        id: "demo@rawr-hq",
-        version: "1.0.0",
-        scope: "user",
+        id: "cognition@rawr-hq",
+        version: "1.2.3",
         enabled: true,
-        installPath: packageRoot,
+        installPath: pluginRoot,
       },
     ]);
-    const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
-    );
-
-    expect(await Effect.runPromise(session.readConfiguration())).toEqual({
-      enabledPlugins: { "demo@rawr-hq": true },
-    });
-    const observed = await Effect.runPromise(
-      session.readPlugin({
-        selector: "demo@rawr-hq",
-        maxEntries: 2,
-        maxBytes: 16,
-      })
-    );
-    expect(observed.entries.map((entry) => entry.path)).toEqual(["README.md", "plugin.json"]);
-
-    const entryOverflow = await Effect.runPromiseExit(
-      session.readPlugin({
-        selector: "demo@rawr-hq",
-        maxEntries: 1,
-        maxBytes: 1024,
-      })
-    );
-    expect(failureReason(entryOverflow)).toBe("LimitExceeded");
-
-    const byteOverflow = await Effect.runPromiseExit(
-      session.readPlugin({
-        selector: "demo@rawr-hq",
-        maxEntries: 2,
-        maxBytes: 1,
-      })
-    );
-    expect(Exit.isFailure(byteOverflow)).toBe(true);
-    if (Exit.isFailure(byteOverflow)) {
-      const failure = byteOverflow.cause._tag === "Fail" ? byteOverflow.cause.error : undefined;
-      expect(failure?.reason).toBe("LimitExceeded");
-    }
-
-    const target = path.join(fixture.root, "aliased-plugin-file");
-    await writeFile(target, "not admitted\n");
-    await symlink(target, path.join(packageRoot, "alias"));
-    const unsupported = await Effect.runPromiseExit(
-      session.readPlugin({
-        selector: "demo@rawr-hq",
-        maxEntries: 4,
-        maxBytes: 1024,
-      })
-    );
-    expect(failureReason(unsupported)).toBe("UnsupportedEntry");
-  });
-
-  it("counts empty directories against the package entry limit", async () => {
-    const fixture = await makeFixture();
-    const packageRoot = path.join(fixture.home, "plugins", "cache", "rawr-hq", "demo", "1.0.0");
-    await mkdir(path.join(packageRoot, "first", "second", "overflow"), { recursive: true });
-    await writeProviderJson(fixture.home, "claude-installed.json", [installedPlugin(packageRoot)]);
-    const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
-    );
-
-    const overflow = await Effect.runPromiseExit(
-      session.readPlugin({
-        selector: "demo@rawr-hq",
-        maxEntries: 2,
-        maxBytes: 1024,
-      })
-    );
-
-    expect(failureReason(overflow)).toBe("LimitExceeded");
-  });
-
-  it("rejects an oversized package file before reading its bytes", async () => {
-    const fixture = await makeFixture();
-    const packageRoot = path.join(fixture.home, "plugins", "cache", "rawr-hq", "demo", "1.0.0");
-    const oversizedFile = path.join(packageRoot, "plugin.json");
-    await mkdir(packageRoot, { recursive: true });
-    await writeFile(oversizedFile, "oversized\n");
-    await writeProviderJson(fixture.home, "claude-installed.json", [installedPlugin(packageRoot)]);
-    let packageReadCount = 0;
-    const session = await Effect.runPromise(
-      Effect.gen(function* () {
-        const fs = yield* FileSystem.FileSystem;
-        const observed: FileSystem.FileSystem = {
-          ...fs,
-          readFile: (candidate) => {
-            if (candidate === oversizedFile) packageReadCount += 1;
-            return fs.readFile(candidate);
+    const session = await acquire(fixture);
+    const batch = await Effect.runPromise(
+      session.readPluginFiles({
+        selector: "cognition@rawr-hq",
+        files: [
+          { relativePath: ".claude-plugin/plugin.json", maxBytes: 128 },
+          {
+            relativePath: "skills/state-machine-design/references/guide.md",
+            maxBytes: 128,
           },
-        };
-        return yield* claudeEffectPlatformNodeProvider
-          .acquire(fixture)
-          .pipe(Effect.provideService(FileSystem.FileSystem, observed));
-      }).pipe(Effect.provide(NodeContext.layer))
-    );
-
-    const overflow = await Effect.runPromiseExit(
-      session.readPlugin({
-        selector: "demo@rawr-hq",
-        maxEntries: 1,
-        maxBytes: 1,
+        ],
       })
     );
+    const guide = batch.files[1];
+    expect(guide?.kind).toBe("Read");
+    if (guide?.kind !== "Read") throw new Error("Expected the selected guide observation");
+    expect(Buffer.from(guide.contentBase64, "base64").toString("utf8")).toBe(
+      "state machine guide\n"
+    );
+    expect(await commandLines(fixture.home)).toEqual([
+      "plugin marketplace list --json",
+      "plugin list --json",
+    ]);
 
-    expect(failureReason(overflow)).toBe("LimitExceeded");
-    expect(packageReadCount).toBe(0);
+    const bounded = await Effect.runPromise(
+      session.readPluginFiles({
+        selector: "cognition@rawr-hq",
+        files: [
+          {
+            relativePath: "skills/state-machine-design/references/guide.md",
+            maxBytes: 1,
+          },
+        ],
+      })
+    );
+    expect(bounded.files).toEqual([
+      { kind: "TooLarge", relativePath: "skills/state-machine-design/references/guide.md" },
+    ]);
   });
 
-  it("rejects installed plugin roots outside the provider home or with a non-directory shape", async () => {
-    const fixture = await makeFixture();
-    const outside = path.join(fixture.root, "outside-plugin");
-    const unsupported = path.join(fixture.home, "unsupported-plugin");
-    await mkdir(outside);
-    await writeFile(path.join(outside, "plugin.json"), "{}\n");
-    await writeFile(unsupported, "not a directory\n");
-    const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
-    );
-
-    await writeProviderJson(fixture.home, "claude-installed.json", [installedPlugin(outside)]);
-    const escaped = await Effect.runPromiseExit(
-      session.readPlugin({
-        selector: "demo@rawr-hq",
-        maxEntries: 4,
-        maxBytes: 1024,
-      })
-    );
-    expect(failureReason(escaped)).toBe("Aliased");
-
-    await writeProviderJson(fixture.home, "claude-installed.json", [installedPlugin(unsupported)]);
-    const wrongShape = await Effect.runPromiseExit(
-      session.readPlugin({
-        selector: "demo@rawr-hq",
-        maxEntries: 4,
-        maxBytes: 1024,
-      })
-    );
-    expect(failureReason(wrongShape)).toBe("UnsupportedEntry");
-  });
-
-  it("rejects missing and ambiguous Claude marketplace identities", async () => {
-    const fixture = await makeFixture();
-    const marketplace = await publishMarketplace(fixture.root, "claude-ambiguous");
-    const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
-    );
-
-    const missing = await Effect.runPromiseExit(
-      session.readMarketplace({
-        identity: "rawr-hq",
-        maxEntries: 4,
-        maxBytes: 1024,
-      })
-    );
-    expect(failureReason(missing)).toBe("Missing");
-
-    const entry = Object.freeze({
-      name: "rawr-hq",
-      source: "directory",
-      path: marketplace,
-      installLocation: marketplace,
-    });
-    await writeProviderJson(fixture.home, "claude-marketplaces.json", [entry, entry]);
-    const ambiguous = await Effect.runPromiseExit(
-      session.readMarketplace({
-        identity: "rawr-hq",
-        maxEntries: 4,
-        maxBytes: 1024,
-      })
-    );
-    expect(failureReason(ambiguous)).toBe("ProtocolFailed");
-  });
-
-  it("rechecks the ownership slot before starting a Claude command", async () => {
-    const fixture = await makeFixture();
-    const session = await Effect.runPromise(
-      claudeEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
-    );
-    await writeFile(path.join(fixture.home, ".rawr-agent-plugin-owner.json"), "occupied\n");
-
-    const exit = await Effect.runPromiseExit(session.probe());
-
-    expect(failureReason(exit)).toBe("OwnershipConflict");
-    expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
-  });
-
-  it("maps an unreadable ownership slot to a collision before native execution", async () => {
-    const fixture = await makeFixture();
-    const ownerSlot = path.join(fixture.home, ".rawr-agent-plugin-owner.json");
-    const exit = await Effect.runPromiseExit(
-      Effect.gen(function* () {
-        const fs = yield* FileSystem.FileSystem;
-        const injected: FileSystem.FileSystem = {
-          ...fs,
-          readLink: (candidate) =>
-            candidate === ownerSlot
-              ? Effect.fail(
-                  new SystemError({
-                    reason: "PermissionDenied",
-                    module: "FileSystem",
-                    method: "readLink",
-                    pathOrDescriptor: candidate,
-                  })
-                )
-              : fs.readLink(candidate),
-        };
-        return yield* claudeEffectPlatformNodeProvider
-          .acquire(fixture)
-          .pipe(Effect.provideService(FileSystem.FileSystem, injected));
-      }).pipe(Effect.provide(NodeContext.layer))
-    );
-
-    expect(failureReason(exit)).toBe("OwnershipConflict");
-    expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
+  it("exposes enablement but no disable, update, config, or generic execution API", async () => {
+    const session = await acquire(await makeFixture());
+    expect(Object.keys(session).sort()).toEqual([
+      "addMarketplace",
+      "enablePlugin",
+      "executablePath",
+      "home",
+      "installPlugin",
+      "inventory",
+      "probe",
+      "provider",
+      "readPluginFiles",
+      "removeMarketplace",
+      "removePlugin",
+    ]);
   });
 });
 
@@ -355,100 +287,49 @@ async function makeFixture(): Promise<
   return Object.freeze({ root, executablePath, home });
 }
 
-async function publishMarketplace(root: string, objectId: string): Promise<ArtifactTreeLocation> {
-  const address: ArtifactObjectAddress = Object.freeze({
-    repositoryRoot: path.join(root, "artifacts"),
-    namespace: Object.freeze(["marketplaces"]),
-    objectId,
-  });
-  const resource = makeArtifactRepositoryResource();
-  const published = await runNodeArtifactRepository(
-    resource.publishTree({
-      address,
-      entries: Object.freeze([
-        Object.freeze({
-          path: "marketplace.json",
-          mode: 0o444,
-          bytes: new TextEncoder().encode('{"identity":"rawr-hq"}\n'),
-        }),
-      ]),
-      limits: Object.freeze({ maxEntries: 4, maxBytes: 1024 }),
-    })
+async function acquire(fixture: Readonly<{ executablePath: string; home: string }>) {
+  return Effect.runPromise(
+    claudeEffectPlatformNodeProvider
+      .acquire({ executablePath: fixture.executablePath, home: fixture.home })
+      .pipe(Effect.provide(NodeContext.layer))
   );
-  if (
-    !published.ok ||
-    published.value.kind === "Rejected" ||
-    published.value.kind === "Unsettled"
-  ) {
-    throw new Error("Failed to publish marketplace fixture");
-  }
-  const located = await runNodeArtifactRepository(
-    resource.locateTree({
-      address,
-      limits: Object.freeze({ maxEntries: 4, maxBytes: 1024 }),
-    })
-  );
-  if (!located.ok || located.value.kind !== "Present") {
-    throw new Error("Failed to locate marketplace fixture");
-  }
-  return located.value.location;
 }
 
 async function writeProviderJson(home: string, name: string, value: unknown): Promise<void> {
   await writeFile(path.join(home, name), `${JSON.stringify(value)}\n`);
 }
 
-async function readLines(file: string): Promise<readonly string[]> {
-  const contents = await readFile(file, "utf8");
-  return Object.freeze(contents.trim().split("\n"));
+async function lines(file: string): Promise<readonly string[]> {
+  const text = await readFile(file, "utf8");
+  return text.trim() === "" ? [] : text.trim().split("\n");
 }
 
-function installedPlugin(installPath: string): Readonly<Record<string, unknown>> {
-  return Object.freeze({
-    id: "demo@rawr-hq",
-    version: "1.0.0",
-    scope: "user",
-    enabled: true,
-    installPath,
-  });
+async function commandLines(home: string): Promise<readonly string[]> {
+  return lines(path.join(home, "commands.log"));
 }
 
-function failureReason<A>(exit: Exit.Exit<A, unknown>): string | undefined {
+function failure<A>(exit: Exit.Exit<A, unknown>): Readonly<Record<string, unknown>> | undefined {
   if (!Exit.isFailure(exit) || exit.cause._tag !== "Fail") return undefined;
-  const failure = exit.cause.error;
-  if (typeof failure !== "object" || failure === null || !("reason" in failure)) return undefined;
-  return typeof failure.reason === "string" ? failure.reason : undefined;
+  const value = exit.cause.error;
+  return typeof value === "object" && value !== null ? value : undefined;
 }
 
 function fakeClaudeScript(): string {
   return `#!/bin/sh
 set -eu
 printf '%s\\n' "$*" >> "$HOME/commands.log"
-if [ "$*" = "plugin --help" ]; then
-  printf 'Commands:\\n  list  list plugins\\n  install  install plugin\\n  enable  enable plugin\\n  disable  disable plugin\\n  uninstall  uninstall plugin\\n'
-elif [ "$*" = "plugin marketplace --help" ]; then
-  printf 'Commands:\\n  list  list markets\\n  add  add market\\n  remove  remove market\\n'
-elif [ "$*" = "plugin list --available --json" ]; then
-  printf '%s\\n' '{"installed":[]}'
-elif [ "$*" = "plugin list --json" ]; then
-  if [ -f "$HOME/claude-installed.json" ]; then cat "$HOME/claude-installed.json"; else printf '%s\\n' '[]'; fi
-elif [ "$*" = "plugin marketplace list --json" ]; then
-  if [ -f "$HOME/claude-marketplaces.json" ]; then cat "$HOME/claude-marketplaces.json"; else printf '%s\\n' '[]'; fi
-elif [ "$#" -eq 6 ] && [ "$1" = "plugin" ] && [ "$2" = "marketplace" ] && [ "$3" = "add" ] && [ "$4" = "$(cat "$HOME/expected-marketplace-source")" ] && [ "$5" = "--scope" ] && [ "$6" = "user" ]; then
-  printf '%s\\n' '{}'
-elif [ "$*" = "plugin marketplace remove rawr-hq --scope user" ]; then
-  printf '%s\\n' '{}'
-elif [ "$*" = "plugin install demo@rawr-hq --scope user" ]; then
-  printf '%s\\n' '{}'
-elif [ "$*" = "plugin enable demo@rawr-hq --scope user" ]; then
-  printf '%s\\n' '{}'
-elif [ "$*" = "plugin disable demo@rawr-hq --scope user" ]; then
-  printf '%s\\n' '{}'
-elif [ "$*" = "plugin uninstall demo@rawr-hq --scope user" ]; then
-  printf '%s\\n' '{}'
-else
-  printf 'unexpected command: %s\\n' "$*" >&2
-  exit 64
-fi
+printf '%s|%s|%s|%s\\n' "$HOME" "\${CODEX_HOME:-}" "$CLAUDE_CONFIG_DIR" "\${PATH:+set}" >> "$HOME/env.log"
+case "$*" in
+  "--version") printf '%s\\n' '2.1.215 (Claude Code)' ;;
+  "plugin --help") printf 'Commands:\\n  list  list plugins\\n  install  install plugin\\n  enable  enable plugin\\n  disable  disable plugin\\n  uninstall  uninstall plugin\\n  update  update plugin\\n' ;;
+  "plugin marketplace --help") printf 'Commands:\\n  list  list markets\\n  add  add market\\n  remove  remove market\\n  update  update market\\n' ;;
+  "plugin marketplace list --json")
+    if [ -f "$HOME/claude-marketplaces.json" ]; then cat "$HOME/claude-marketplaces.json"; else printf '%s\\n' '[]'; fi ;;
+  "plugin list --json")
+    if [ -f "$HOME/claude-plugins.json" ]; then cat "$HOME/claude-plugins.json"; else printf '%s\\n' '[]'; fi ;;
+  "plugin enable fail@rawr-hq --scope user") printf '%s\\n' 'failed' >&2; exit 7 ;;
+  "plugin marketplace add "*|"plugin marketplace remove "*|"plugin install "*|"plugin enable "*|"plugin uninstall "*) printf '%s\\n' '{}' ;;
+  *) printf 'unexpected command: %s\\n' "$*" >&2; exit 64 ;;
+esac
 `;
 }
