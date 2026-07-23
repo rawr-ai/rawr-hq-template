@@ -8,7 +8,7 @@ study content, fixtures, results, and evidence.
 
 | Epoch | Repository + HEAD | Phase | Active writer | Claimed paths / slice | Review commit | Blockers | Next legal transition |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 7 | RAWR HQ-Template `ce282cb062f0d4bdeb80117a021aa0c766537991` | DESIGN | oRPC director | Existing OpenSpec only; deletion-first recut to the canonical Habitat service/resource/provider architecture | Git/Bun exact counterpart ACCEPT at `ce282cb062f0d4bdeb80117a021aa0c766537991` | Exact checkpoint acceptance and restack onto the authoritative Template service/vendor closure | Commit one immutable checkpoint; exact Inngest and steward acceptance before service/resource BUILD |
+| 8 | RAWR HQ-Template accepted design `b826254d21d93538edd3f5436ccdc8dbf8500290` | DESIGN | none; shared writes held | Frozen deletion-first Habitat service/resource/provider checkpoint | Exact Inngest and architecture-steward ACCEPT at `b826254d21d93538edd3f5436ccdc8dbf8500290` / tree `256cdb6cc21be8ce7dab10457536a1f7c280d41a` | No accepted production runtime-provisioning restack target; canonical TypeBox bridge correction remains primary-owned upstream work | Receive exact reviewed upstream, restack with Graphite, re-admit closure, then enter BUILD |
 
 ## Record
 
