@@ -54,6 +54,10 @@ describe("rawr command surfaces", () => {
     expect(commands.some((command: string) => command.startsWith("plugins web"))).toBe(false);
     expect(commands.some((command: string) => command.startsWith("plugins scaffold"))).toBe(false);
     expect(commands).not.toContain("agent plugins retire");
+    expect(commands).toContain("agent plugins status vendors");
+    expect(commands).toContain("agent plugins update vendors");
+    expect(commands).not.toContain("agent plugins vendors status");
+    expect(commands).not.toContain("agent plugins vendors update");
     expect(commands.some((command: string) => command.startsWith("workflow forge-command"))).toBe(
       false
     );

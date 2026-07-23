@@ -52,21 +52,31 @@ required = [
   "check.ts",
   "create.ts",
   "package.ts",
+  "status",
   "status.ts",
   "sync.ts",
   "test.ts",
-  "vendors",
+  "update",
 ]
 allowed = []
 
 [[scopes]]
-name = "curated-agent-plugin-vendor-command-channel"
-root = "apps/cli/src/commands/agent/plugins/vendors"
+name = "curated-agent-plugin-status-command-channel"
+root = "apps/cli/src/commands/agent/plugins/status"
 kind = "directory"
 mode = "closed"
 required = [
-  "status.ts",
-  "update.ts",
+  "vendors.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "curated-agent-plugin-update-command-channel"
+root = "apps/cli/src/commands/agent/plugins/update"
+kind = "directory"
+mode = "closed"
+required = [
+  "vendors.ts",
 ]
 allowed = []
 

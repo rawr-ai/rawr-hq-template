@@ -25,7 +25,7 @@ artifact, channel, ledger, receipt, or provider identity.
 ## Qualified Command Contract
 
 - Source-only scaffold: `rawr agent plugins create`
-- Vendor records: `rawr agent plugins vendors status`, `rawr agent plugins vendors update`
+- Vendor records: `rawr agent plugins status vendors`, `rawr agent plugins update vendors`
 - Release: `rawr agent plugins check`, `rawr agent plugins build`
 - Artifact output: `rawr agent plugins package`
 - Native providers: `rawr agent plugins test`, `rawr agent plugins sync`, `rawr agent plugins status`

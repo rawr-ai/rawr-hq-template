@@ -41,7 +41,7 @@ for the complete operation selector.
   do not infer a set by scanning source.
 
 Invoke the exact literal qualified command selected by `OPERATION`. Keep
-`rawr agent plugins vendors status` and `rawr agent plugins vendors update` as
+`rawr agent plugins status vendors` and `rawr agent plugins update vendors` as
 two-word subcommand paths rather than treating `vendors` as an aggregate
 operation or shell-expanding a compound operation string.
 

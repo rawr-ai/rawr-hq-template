@@ -26,8 +26,8 @@ branch silently runs `check`, cleans a checkout, or starts another operation.
 - **Source authoring**: `rawr agent plugins create` takes an explicit content
   workspace as its output location and changes source only. It is outside the
   governed release transitions below.
-- **Vendor inspection or authoring**: `rawr agent plugins vendors status` and
-  `rawr agent plugins vendors update` take exact content-workspace repository
+- **Vendor inspection or authoring**: `rawr agent plugins status vendors` and
+  `rawr agent plugins update vendors` take exact content-workspace repository
   coordinates. Update also takes the explicitly selected vendor-source ids.
 - **Candidate check**: `rawr agent plugins check` takes exact content-workspace
   repository, commit, tree, release-input, plugin-root, and target-or-complete-set
