@@ -122,15 +122,16 @@ the user-authorized working tree on Magic branch
 `5b8bc8a37cfdd3a382232261dd7ef73365713021`:
 
 - service spine and module topology;
-- direct generic anchors and native oRPC ownership hops;
+- boundary exports and native oRPC ownership hops;
 - context boundaries and module isolation;
-- declarative TypeBox contract authority;
-- `ORPCTaggedError` and literal import authority;
+- declarative TypeBox input/output schemas;
 - API server plugin boundary;
 - agent-router placement and shape.
 
-Only the first five rows come from the newer service snapshot; the final two
-remain at the earlier committed provenance. The service topology follows
+The first four rows come from the newer service snapshot; the final two remain
+at the earlier committed provenance. RAWR preserves the positive topology and
+owner relationships while removing path, vendor, alias, naming, and adversarial
+heuristics that are not generic service law. The service topology follows
 Magic's current single `router.ts` module boundary. Procedure logic remains in
 that oRPC router surface alongside module-owned
 `model/{dto,policy,helpers,repositories}` rather than moving into a second
@@ -145,7 +146,7 @@ green local Habitat batch behind `check:policy`, with empty baselines.
 `habitat:check` composes that policy with owner lint, typecheck, tests, and
 hygiene; `repository:check` composes Habitat with repository admission and
 separation and the CLI Oclif boundary check. The selected Habitat batch owns
-the required Oclif structure laws and lifecycle command-channel law. The seven
+the required Oclif structure laws and lifecycle command-channel law. The six
 generic service laws remain governed by [[tasks]] 1.5e and must not join the
 selected batch while their known live-corpus violations remain.
 

@@ -20,23 +20,24 @@ relationships:
 
 ## Service Source Law
 
-The generic service kind narrows source construction along six independent
+The generic service kind narrows source construction along five independent
 axes:
 
-1. Every spine file directly exports the generic anchor for its role.
+1. Every contract, module, and router spine file directly exports the generic
+   boundary value for its role.
 2. Base, service, and module construction expose their first native oRPC
    ownership hop through named imports.
-3. Context stays behind the service anchor and named native middleware.
+3. Context stays behind the service implementation boundary and named native
+   middleware.
 4. Root composition imports only module contracts and routers; module
    implementation stays local, uses the declared service boundary, and does
    not reach into sibling modules.
 5. TypeBox schemas remain the declarative input and output authority in module
    contracts.
-6. Public tagged errors and their literal import lineage remain owned by the
-   module contract.
-
 TypeScript owns inferred types and complete object compatibility. Habitat does
-not simulate module resolution or runtime behavior.
+not simulate module resolution or runtime behavior. Public error declarations
+remain part of the module contract; TypeScript and behavioral tests own their
+schema compatibility and runtime mapping.
 
 Blueprints constrain monotonic structural axes shared by packages of a kind.
 They do not encode product inventories, retired names, historical migration

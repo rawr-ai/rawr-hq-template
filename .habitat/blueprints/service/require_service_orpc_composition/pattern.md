@@ -2,247 +2,316 @@
 level: error
 tags: [orpc, service, positive, composition]
 ---
-# Require Native Service oRPC Composition
+# Require Service oRPC Composition
 
-Standalone `base` is directly initialized by exact named
-`implementEffect(contract, ...)`. Exported standalone `service`, API-plugin
-`service`, and `module` initializers visibly contain their first native hop
-from imported `base`, exact named `implement(contract).$context<...>()`, or the
-imported service branch matching the module directory. Runtime namespaces from
-the oRPC composition vendors are rejected.
+A standalone service root imports `createServiceImplementer` from its local
+`base.ts`, applies it directly to the local contract, and exports the resulting
+`impl`. An embedded API service imports native oRPC `implement`, applies it
+directly to the local contract, establishes root context, and exports
+`service`.
 
-Any number of native `.use(...)` calls may follow the visible first hop. Grit
-does not prove that an outer wrapper preserves that owner. TypeScript and
-review own that ceiling plus router composition, assignability, and
-completeness. No root contract/router object-placement claim is made.
+Each `module.ts` imports that root implementer and directly exports a module
+whose initializer begins at one of its branches. A branch may be nested.
+Top-level operation bindings whose `.handler()` or `.effect()` terminal is
+rooted directly in the imported module, or in one local binding derived from
+that module, belong only in the module's single `router.ts`. TypeScript and
+review own deeper lexical and dataflow cases.
 
 ```grit
 language js(typescript)
 
-// Derives the service branch identity that must correspond to a module directory.
-function service_branch_name($value) js {
-  return `^${$value.text.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())}$`;
+// Proves a standalone initializer begins at the canonical local constructor.
+function service_composition_starts_with_standalone_root($value) js {
+  const value = $value.text.replace(/\s+/g, "");
+  return value.startsWith("createServiceImplementer(contract,") ||
+    value.startsWith("createServiceImplementer(contract)")
+    ? "yes"
+    : "no";
 }
 
-// Proves that a standalone base uses the named effect-orpc implementation authority.
-predicate imports_exact_implement_effect($body) {
-  $body <: contains import_statement(source=$source) as $import where {
-    $source <: r"^[\"']effect-orpc[\"']$",
-    $import <: `import { implementEffect } from $source`
-  }
+// Proves an embedded API initializer begins at native implement plus root context.
+function service_composition_starts_with_api_root($value) js {
+  const value = $value.text.replace(/\s+/g, "");
+  return value.startsWith("implement(contract).$context<") ? "yes" : "no";
 }
 
-// Proves that an embedded API service uses the named native oRPC implementer.
-predicate imports_exact_implement($body) {
-  $body <: contains import_statement(source=$source) as $import where {
-    $source <: r"^[\"']@orpc/server[\"']$",
-    $import <: `import { implement } from $source`
-  }
+// Proves a direct module initializer begins at the imported root implementer.
+function service_composition_starts_with_implementer($value, $implementer) js {
+  const value = $value.text.replace(/\s+/g, "");
+  const implementer = $implementer.text.replace(/\s+/g, "");
+  return value.startsWith(`${implementer}.`) ? "yes" : "no";
 }
 
-// Proves that a standalone root service composes from its local base authority.
-predicate imports_exact_base($body) {
-  $body <: contains import_statement(source=$source) as $import where {
-    $source <: r"^[\"']\./base[\"']$",
-    $import <: `import { base } from $source`
-  }
+// Proves an executable terminal's receiver is rooted in an imported module.
+function service_composition_receiver_is_module_owned($receiver, $module) js {
+  const receiver = $receiver.text.replace(/\s+/g, "");
+  const module = $module.text.replace(/\s+/g, "");
+  return receiver === module || receiver.startsWith(`${module}.`) ? "yes" : "no";
 }
 
-// Restricts a standalone service's first owner to its base or a native base middleware chain.
-predicate is_standalone_service_initializer($value) {
+// Proves a local binding remains rooted in the imported module implementer.
+function service_composition_value_is_module_owned($value, $module) js {
+  const value = $value.text.replace(/\s+/g, "");
+  const module = $module.text.replace(/\s+/g, "");
+  return value === module || value.startsWith(`${module}.`) ? "yes" : "no";
+}
+
+// Identifies the canonical standalone root export imported by a module.
+function service_composition_import_is_impl($imported) js {
+  return $imported.text.trim() === "impl" ? "yes" : "no";
+}
+
+// Identifies the canonical embedded-API root export imported by a module.
+function service_composition_import_is_service($imported) js {
+  return $imported.text.trim() === "service" ? "yes" : "no";
+}
+
+// Identifies the canonical module export imported by an operation source.
+function service_composition_import_is_module($imported) js {
+  return $imported.text.trim() === "module" ? "yes" : "no";
+}
+
+// Restricts a visible first-hop claim to a member or call expression.
+predicate service_composition_is_chain_expression($value) {
   or {
-    $value <: `base`,
-    $value <: contains or {
-      `base.use($middleware)`,
-      `base.use<$types>($middleware)`
-    }
+    $value <: call_expression(),
+    $value <: member_expression()
   }
 }
 
-// Requires an API service to establish its native contract and context in the first hop.
-predicate is_api_service_initializer($value) {
-  $value <: contains `implement(contract).$context_method<$context_type>()` where {
-    $context_method <: r"^\$context$"
+// Recognizes the standard standalone root implementation relation.
+predicate service_composition_has_standalone_root($body) {
+  $body <: contains `import { createServiceImplementer } from "./base"`,
+  $body <: contains `import { contract } from "./contract"`,
+  $body <: contains or {
+    `export const impl = $value`,
+    `export const impl: $type = $value`
+  } where {
+    service_composition_is_chain_expression(value=$value),
+    $status = service_composition_starts_with_standalone_root(value=$value),
+    $status <: r"^yes$"
   }
 }
 
-// Recognizes the current service root as the sole module-to-root composition dependency.
-predicate is_current_root_service_source($source) {
-  or {
+// Recognizes the native embedded-API root implementation relation.
+predicate service_composition_has_api_root($body) {
+  $body <: contains `import { implement } from "@orpc/server"`,
+  $body <: contains `import { contract } from "./contract"`,
+  $body <: contains or {
+    `export const service = $value`,
+    `export const service: $type = $value`
+  } where {
+    service_composition_is_chain_expression(value=$value),
+    $status = service_composition_starts_with_api_root(value=$value),
+    $status <: r"^yes$"
+  }
+}
+
+// Relates the canonical standalone root implementer to its module branch.
+predicate service_composition_exports_standalone_module($body) {
+  $body <: contains import_statement(source=$source) where {
     $source <: r"^[\"']\.\./\.\./impl[\"']$",
-    and {
-      $filename <: r".*services/([^/]+)/src/service/modules/[^/]+/module\.ts$"($owner),
-      $source <: r"^[\"']#([^/]+)-service/impl[\"']$"($alias_owner),
-      $alias_owner <: $owner
+    or {
+      $body <: contains `import { $..., $implementer, $... } from $source` where {
+        $importStatus = service_composition_import_is_impl(imported=$implementer),
+        $importStatus <: r"^yes$"
+      },
+      $body <: contains `import { $..., $imported as $implementer, $... } from $source` where {
+        $importStatus = service_composition_import_is_impl(imported=$imported),
+        $importStatus <: r"^yes$"
+      }
     },
-    and {
-      $filename <: r".*plugins/server/api/([^/]+)/src/service/modules/[^/]+/module\.ts$"($owner),
-      $source <: r"^[\"']#([^/]+)-api/(?:service/)?impl[\"']$"($alias_owner),
-      $alias_owner <: $owner
+    $body <: contains or {
+      `export const module = $value`,
+      `export const module: $type = $value`
+    } where {
+      service_composition_is_chain_expression(value=$value),
+      $status = service_composition_starts_with_implementer(
+        value=$value,
+        implementer=$implementer
+      ),
+      $status <: r"^yes$",
+      not {
+        $value <: or {
+          `$receiver.handler($...)`,
+          `$receiver.handler<$types>($...)`,
+          `$receiver.effect($...)`,
+          `$receiver.effect<$types>($...)`
+        }
+      }
     }
   }
 }
 
-// Restricts a module anchor to its corresponding service branch and native middleware chain.
-predicate is_matching_module_initializer($value, $branch_pattern) {
-  or {
-    $value <: `service.$branch` where {
-      $branch <: r`$branch_pattern`
+// Relates the canonical embedded-API root implementer to its module branch.
+predicate service_composition_exports_api_module($body) {
+  $body <: contains import_statement(source=$source) where {
+    $source <: r"^[\"']\.\./\.\./impl[\"']$",
+    or {
+      $body <: contains `import { $..., $implementer, $... } from $source` where {
+        $importStatus = service_composition_import_is_service(imported=$implementer),
+        $importStatus <: r"^yes$"
+      },
+      $body <: contains `import { $..., $imported as $implementer, $... } from $source` where {
+        $importStatus = service_composition_import_is_service(imported=$imported),
+        $importStatus <: r"^yes$"
+      }
+    },
+    $body <: contains or {
+      `export const module = $value`,
+      `export const module: $type = $value`
+    } where {
+      service_composition_is_chain_expression(value=$value),
+      $status = service_composition_starts_with_implementer(
+        value=$value,
+        implementer=$implementer
+      ),
+      $status <: r"^yes$",
+      not {
+        $value <: or {
+          `$receiver.handler($...)`,
+          `$receiver.handler<$types>($...)`,
+          `$receiver.effect($...)`,
+          `$receiver.effect<$types>($...)`
+        }
+      }
+    }
+  }
+}
+
+// Relates an operation terminal to the module binding imported by its source.
+predicate service_composition_terminal_has_module_owner($receiver) {
+  $program <: contains import_statement(source=$source) where {
+    $source <: r"^[\"'](?:\./|(?:\.\./)+)module[\"']$",
+    or {
+      $program <: contains `import { $..., $module, $... } from $source` where {
+        $importStatus = service_composition_import_is_module(imported=$module),
+        $importStatus <: r"^yes$"
+      },
+      $program <: contains `import { $..., $imported as $module, $... } from $source` where {
+        $importStatus = service_composition_import_is_module(imported=$imported),
+        $importStatus <: r"^yes$"
+      }
+    },
+    or {
+      and {
+        $status = service_composition_receiver_is_module_owned(
+          receiver=$receiver,
+          module=$module
+        ),
+        $status <: r"^yes$"
+      },
+      $program <: contains or {
+        `const $binding = $value`,
+        `const $binding: $type = $value`
+      } where {
+        $origin = service_composition_value_is_module_owned(
+          value=$value,
+          module=$module
+        ),
+        $origin <: r"^yes$",
+        $receiverStatus = service_composition_receiver_is_module_owned(
+          receiver=$receiver,
+          module=$binding
+        ),
+        $receiverStatus <: r"^yes$"
+      }
+    }
+  }
+}
+
+// Detects a top-level operation binding rooted in the module implementer.
+predicate service_composition_has_off_router_terminal($statements) {
+  $statements <: some $statement where {
+    $statement <: or {
+      `const $operation = $value`,
+      `const $operation: $type = $value`,
+      `export const $operation = $value`,
+      `export const $operation: $type = $value`
     },
     $value <: contains or {
-      `service.$branch.use($middleware)`,
-      `service.$branch.use<$types>($middleware)`
+      `$receiver.handler($...)`,
+      `$receiver.handler<$types>($...)`,
+      `$receiver.effect($...)`,
+      `$receiver.effect<$types>($...)`
     } where {
-      $branch <: r`$branch_pattern`
+      service_composition_terminal_has_module_owner(receiver=$receiver)
     }
   }
 }
 
 or {
   program(statements=$body) where {
-    $filename <: r".*services/[^/]+/src/service/base\.ts$",
-    not {
-      imports_exact_implement_effect(body=$body),
-      $body <: contains or {
-        `export const base = implementEffect(contract, $...)`,
-        `export const base: $type = implementEffect(contract, $...)`
-      }
-    }
-  },
-  program(statements=$body) where {
     $filename <: r".*services/[^/]+/src/service/impl\.ts$",
-    not {
-      imports_exact_base(body=$body),
-      $body <: contains or {
-        `export const service = $value`,
-        `export const service: $type = $value`
-      } where {
-        is_standalone_service_initializer(value=$value)
-      }
-    }
+    not { service_composition_has_standalone_root(body=$body) }
   },
   program(statements=$body) where {
     $filename <: r".*plugins/server/api/[^/]+/src/service/impl\.ts$",
-    not {
-      imports_exact_implement(body=$body),
-      $body <: contains or {
-        `export const service = $value`,
-        `export const service: $type = $value`
-      } where {
-        is_api_service_initializer(value=$value)
-      }
-    }
+    not { service_composition_has_api_root(body=$body) }
   },
   program(statements=$body) where {
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/([^/]+)/module\.ts$"($module_name),
-    $branch_pattern = service_branch_name(value=$module_name),
-    not {
-      $body <: contains import_statement(source=$source) as $import where {
-        is_current_root_service_source(source=$source),
-        $import <: `import { service } from $source`
-      },
-      $body <: contains or {
-        `export const module = $value`,
-        `export const module: $type = $value`
-      } where {
-        is_matching_module_initializer(value=$value, branch_pattern=$branch_pattern)
-      }
-    }
+    $filename <: r".*services/[^/]+/src/service/modules/[^/]+/module\.ts$",
+    not { service_composition_exports_standalone_module(body=$body) }
   },
-  import_statement(source=$source) as $import where {
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
-    ! $filename <: r".*/(?:test|tests|__tests__)/.*",
-    $source <: r"^[\"'](?:effect-orpc|@orpc/contract|@orpc/server)[\"']$",
-    $import <: `import * as $namespace from $source`,
-    not { $import <: import_statement(type=type()) }
+  program(statements=$body) where {
+    $filename <: r".*plugins/server/api/[^/]+/src/service/modules/[^/]+/module\.ts$",
+    not { service_composition_exports_api_module(body=$body) }
+  },
+  program(statements=$statements) where {
+    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/.*\.ts$",
+    ! $filename <: r".*/src/service/modules/[^/]+/router\.ts$",
+    service_composition_has_off_router_terminal(statements=$statements)
   }
 }
 ```
 
-## Matches a noncanonical standalone base vendor import
-
-```typescript
-// @filename: services/jobs/src/service/base.ts
-import { implementEffect as makeBase } from "effect-orpc";
-import { contract } from "./contract";
-export const base = makeBase(contract, Layer.empty);
-```
-
-## Matches a disconnected standalone base initializer
-
-```typescript
-// @filename: services/jobs/src/service/base.ts
-import { implementEffect } from "effect-orpc";
-import { contract } from "./contract";
-const configured = implementEffect(contract, Layer.empty);
-export const base = configured;
-```
-
-## Matches a disconnected standalone service
+## Matches a disconnected standalone root
 
 ```typescript
 // @filename: services/jobs/src/service/impl.ts
-import { base } from "./base";
-const configured = base.use(provider);
-export const service = configured;
+import { createServiceImplementer } from "./base";
+import { contract } from "./contract";
+const configured = createServiceImplementer(contract, middleware);
+export const impl = configured;
 ```
 
-## Matches a disconnected API service
+## Matches a disconnected module
 
 ```typescript
+// @filename: services/jobs/src/service/modules/catalog/module.ts
+import { impl } from "../../impl";
+const catalog = impl.catalog;
+export const module = catalog;
+```
+
+## Matches an operation terminal outside the module router
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/middleware.ts
+import { module } from "./module";
+export const find = module.find.effect(runFind);
+```
+
+## Ignores the standard standalone and API roots
+
+```typescript
+// @filename: services/jobs/src/service/impl.ts
+import { createServiceImplementer } from "./base";
+import { contract } from "./contract";
+export const impl = createServiceImplementer(contract, middleware);
 // @filename: plugins/server/api/catalog/src/service/impl.ts
 import { implement } from "@orpc/server";
 import { contract } from "./contract";
-const base = implement(contract).$context<Context>();
-export const service = base.use(authentication);
+export const service = implement(contract).$context<Context>();
 ```
 
-## Matches a disconnected module branch
+## Ignores nested module branches and router operations
 
 ```typescript
-// @filename: services/jobs/src/service/modules/job-search/module.ts
-import { service } from "#jobs-service/impl";
-const branch = service.jobSearch;
-export const module = branch.use(provider);
-```
-
-## Matches a runtime composition namespace
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import * as orpc from "@orpc/server";
-export const router = orpc.router({});
-```
-
-## Ignores root composers, native middleware depths, and long chains
-
-```typescript
-// @filename: services/jobs/src/service/contract.ts
-import { contract as catalog } from "./modules/catalog/contract";
-export const contract: Contract = { capabilities: { catalog } } satisfies Contract;
-// @filename: plugins/server/api/catalog/src/service/router.ts
-import { router as catalog } from "./modules/catalog/router";
-export const router: Router<typeof contract, Context> =
-  service.router({ capabilities: { catalog } });
-// @filename: services/jobs/src/service/impl.ts
-import { base } from "./base"; export const service = base;
-// @filename: services/catalog/src/service/impl.ts
-import { base } from "./base"; export const service = base.use(one);
-// @filename: services/search/src/service/impl.ts
-import { base } from "./base"; export const service = base.use(one).use(two);
-// @filename: services/applications/src/service/impl.ts
-import { base } from "./base";
-export const service = base.use(one).use(two).use(three).use(four);
-// @filename: plugins/server/api/pipeline/src/service/impl.ts
-import { implement } from "@orpc/server"; import { contract } from "./contract";
-export const service = implement(contract).$context<Context>()
-  .use(one).use(two).use(three);
-// @filename: services/jobs/src/service/modules/job-search/module.ts
-import { service } from "#jobs-service/impl";
-export const module = service.jobSearch.use(one).use(two).use(three);
-// @filename: services/jobs/src/service/modules/job-search/router.ts
+// @filename: plugins/server/api/catalog/src/service/modules/search/module.ts
+import { service as root } from "../../impl";
+export const module: SearchModule = root.catalog.search.use(authentication);
+// @filename: plugins/server/api/catalog/src/service/modules/search/router.ts
 import { module } from "./module";
-export const router: Router = {
-  find: module.find.use(one).use(two).use(three).effect(handler),
-} satisfies Router;
+export const router = { find: module.find.handler(runFind) };
 ```

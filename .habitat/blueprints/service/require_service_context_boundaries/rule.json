@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "require_service_context_boundaries",
-  "title": "Require Categorical Service Context Boundaries",
+  "title": "Require Service Context Boundaries",
   "placement": {
     "niche": "rawr",
     "blueprint": "service",
@@ -12,10 +12,10 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "a module current-owner alias import or re-export of root base, context, or middleware; a middleware source without a named direct native const; or a middleware default export",
-  "why": "Modules inherit root context through the service anchor, while a named native middleware export keeps the context projection visible without duplicating the module import-surface law.",
-  "remediate": "Keep root base, context, and middleware aliases out of modules. Give each middleware source a named direct const initialized from an exact imported os, base, service, or module binding, follow the module import-surface rule for its source, and remove default exports.",
-  "message": "Service context must remain behind the service anchor and named native middleware.",
+  "forbids": "a module that establishes a new initial oRPC context or a middleware file that exposes a default export",
+  "why": "Modules inherit context from the root implementer, and named middleware exports keep composition ownership visible.",
+  "remediate": "Establish initial context at the root implementer, narrow it through module middleware contributions, and replace middleware default exports with named exports.",
+  "message": "Service context must flow from the root implementer through named middleware.",
   "pathCoverage": [
     {
       "kind": "exact-path",

@@ -12,10 +12,10 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "a missing root or module anchor, a second service spine, or a module-owned context, implementer, host, or procedures container",
-  "why": "Standalone services and API-embedded service interiors share one stable oRPC spine. Closing only its semantic anchors makes alternate authority visible without requiring models, middleware, persistence, or tests that a service does not need.",
-  "remediate": "Keep base.ts, contract.ts, impl.ts, modules, and router.ts at the service root. Keep contract.ts, module.ts, and router.ts in every module. Add optional model, middleware, persistence, errors, tests, or Nx metadata only where the owning semantics require them.",
-  "message": "Every service interior must retain one generic root spine and generic module shells.",
+  "forbids": "a missing service or module spine boundary, or an undeclared top-level source category beside the admitted model, database, middleware, router, and test roots",
+  "why": "Standalone services and API-embedded service interiors share one closed oRPC topology. Stable spine files keep composition visible, while model, database, middleware, router, and test roots admit only the extension axes a service may need.",
+  "remediate": "Keep base.ts, contract.ts, impl.ts, modules, and router.ts at the service root. Keep contract.ts, module.ts, and one router.ts in every module. Move domain types, schemas, policy, ports, and helpers under model; keep database implementation under the optional root db directory; and split only middleware through the admitted file or directory forms.",
+  "message": "Every service interior must retain the closed service and module spine topology.",
   "pathCoverage": [
     {
       "kind": "exact-path",
