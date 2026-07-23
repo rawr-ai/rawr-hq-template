@@ -11,7 +11,7 @@ export type InternalClientTraceForwardingOptions = Readonly<{
 }>;
 
 export function createInternalTraceForwardingOptions(
-  context: CorrelationContext,
+  context: CorrelationContext
 ): InternalClientTraceForwardingOptions {
   return {
     context: {

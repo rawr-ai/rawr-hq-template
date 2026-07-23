@@ -19,7 +19,7 @@ export default class SecurityReport extends RawrCommand {
     const report =
       (await createHqOpsClient(workspaceRoot ?? process.cwd()).security.getSecurityReport(
         {},
-        createHqOpsCallOptions("cli.security.report"),
+        createHqOpsCallOptions("cli.security.report")
       )) ?? (await readLatestReportFromDisk());
     const result = this.ok({ report });
     this.outputResult(result, {

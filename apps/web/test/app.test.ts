@@ -6,4 +6,3 @@ describe("web baseline", () => {
     expect(typeof App).toBe("function");
   });
 });
-

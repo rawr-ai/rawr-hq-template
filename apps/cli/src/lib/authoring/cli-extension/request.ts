@@ -16,19 +16,29 @@ export type ExternalExtensionAuthoringRequest = Readonly<{
 
 export type ExternalExtensionRequestResult =
   | Readonly<{ ok: true; value: ExternalExtensionAuthoringRequest }>
-  | Readonly<{ ok: false; issues: readonly [ExternalExtensionIdentityIssue, ...ExternalExtensionIdentityIssue[]] }>;
+  | Readonly<{
+      ok: false;
+      issues: readonly [ExternalExtensionIdentityIssue, ...ExternalExtensionIdentityIssue[]];
+    }>;
 
-export function parseExternalExtensionAuthoringRequest(input: Readonly<{
-  extensionId: unknown;
-  destination: unknown;
-  operatorCwd: unknown;
-  dryRun: unknown;
-}>): ExternalExtensionRequestResult {
+export function parseExternalExtensionAuthoringRequest(
+  input: Readonly<{
+    extensionId: unknown;
+    destination: unknown;
+    operatorCwd: unknown;
+    dryRun: unknown;
+  }>
+): ExternalExtensionRequestResult {
   const extensionId = parseExternalExtensionIdentity(input.extensionId);
   const issues: ExternalExtensionIdentityIssue[] = [];
   if (isExternalExtensionIdentityIssue(extensionId)) issues.push(extensionId);
   if (typeof input.destination !== "string" || input.destination.length === 0) {
-    issues.push(Object.freeze({ path: "destination", message: "An explicit extension destination is required" }));
+    issues.push(
+      Object.freeze({
+        path: "destination",
+        message: "An explicit extension destination is required",
+      })
+    );
   }
   if (typeof input.operatorCwd !== "string" || input.operatorCwd.length === 0) {
     issues.push(Object.freeze({ path: "destination", message: "Operator cwd is required" }));
@@ -36,7 +46,10 @@ export function parseExternalExtensionAuthoringRequest(input: Readonly<{
   if (issues.length > 0 || isExternalExtensionIdentityIssue(extensionId)) {
     return Object.freeze({
       ok: false,
-      issues: Object.freeze(issues) as readonly [ExternalExtensionIdentityIssue, ...ExternalExtensionIdentityIssue[]],
+      issues: Object.freeze(issues) as readonly [
+        ExternalExtensionIdentityIssue,
+        ...ExternalExtensionIdentityIssue[],
+      ],
     });
   }
   const destination = path.resolve(input.operatorCwd as string, input.destination as string);
@@ -44,7 +57,10 @@ export function parseExternalExtensionAuthoringRequest(input: Readonly<{
     return Object.freeze({
       ok: false,
       issues: Object.freeze([
-        Object.freeze({ path: "destination", message: "Filesystem root is not an extension destination" }),
+        Object.freeze({
+          path: "destination",
+          message: "Filesystem root is not an extension destination",
+        }),
       ]) as readonly [ExternalExtensionIdentityIssue],
     });
   }

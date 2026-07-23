@@ -43,15 +43,14 @@ interface BuildExecutionRequest extends AgentPluginBuildRequest {
 export const build = module.build.handler(async ({ context, input: request }) => {
   const execution: BuildExecutionRequest = Object.freeze({
     ...request,
-    ...(context.buildFailpoint === undefined
-      ? {}
-      : { failpoint: context.buildFailpoint }),
+    ...(context.buildFailpoint === undefined ? {} : { failpoint: context.buildFailpoint }),
     ...(context.artifactFailpoint === undefined
       ? {}
       : { artifactFailpoint: context.artifactFailpoint }),
   });
   const inspected = await context.source.inspect(execution.contentWorkspace);
-  if (inspected.kind === "Ineligible") return rejected(execution.mode, sourceIssues(inspected.issues));
+  if (inspected.kind === "Ineligible")
+    return rejected(execution.mode, sourceIssues(inspected.issues));
   try {
     await hit(execution.failpoint, { kind: "AfterInitialInspection" });
   } catch (error) {
@@ -67,9 +66,10 @@ export const build = module.build.handler(async ({ context, input: request }) =>
   }
   const beforeStaging = await context.source.revalidate(
     execution.contentWorkspace,
-    inspected.snapshot.eligibilityBinding,
+    inspected.snapshot.eligibilityBinding
   );
-  if (beforeStaging.kind === "Ineligible") return rejected(execution.mode, sourceIssues(beforeStaging.issues));
+  if (beforeStaging.kind === "Ineligible")
+    return rejected(execution.mode, sourceIssues(beforeStaging.issues));
   try {
     await hit(execution.failpoint, { kind: "AfterStagingRevalidation" });
   } catch (error) {
@@ -92,7 +92,7 @@ async function publishTargeted(
   artifacts: ArtifactStore,
   release: AgentPluginRelease,
   request: BuildExecutionRequest,
-  finalGate: FinalEligibilityGate,
+  finalGate: FinalEligibilityGate
 ): Promise<BuildResult> {
   const result = await artifacts.publishRelease(release, publicationOptions(request, finalGate));
   if (!finalGate.called && result.kind === "ReadOnlyConverged") {
@@ -103,7 +103,8 @@ async function publishTargeted(
   if (result.kind === "Published") {
     return { kind: "Published", mode: request.mode, ref, newlyPublished: [ref], preExisting: [] };
   }
-  if (result.kind === "ReadOnlyConverged") return { kind: "ReadOnlyConverged", mode: request.mode, ref };
+  if (result.kind === "ReadOnlyConverged")
+    return { kind: "ReadOnlyConverged", mode: request.mode, ref };
   if (result.kind === "Unsettled") {
     return unsettled(request.mode, result.observation === "Verified" ? [ref] : [], result);
   }
@@ -114,7 +115,7 @@ async function publishComplete(
   artifacts: ArtifactStore,
   plan: ConstructedPlan,
   request: BuildExecutionRequest,
-  finalGate: FinalEligibilityGate,
+  finalGate: FinalEligibilityGate
 ): Promise<BuildResult> {
   const releaseSet = plan.releaseSet!;
   const setRef = createCompleteSetArtifactRef(releaseSet.releaseSetDigest);
@@ -125,9 +126,9 @@ async function publishComplete(
     return { kind: "ReadOnlyConverged", mode: request.mode, ref: setRef };
   }
   if (existingSet.kind === "Mismatch") {
-    return rejected(request.mode, [artifactStoreBuildIssue(
-      existingSet.issues.map((issue) => issue.detail).join("; "),
-    )]);
+    return rejected(request.mode, [
+      artifactStoreBuildIssue(existingSet.issues.map((issue) => issue.detail).join("; ")),
+    ]);
   }
 
   const newlyPublished: ReleaseArtifactRef[] = [];
@@ -142,60 +143,43 @@ async function publishComplete(
       return unsettled(
         request.mode,
         verifiedRefs(newlyPublished, preExisting, result.observation === "Verified" ? [ref] : []),
-        result,
+        result
       );
     } else {
-      return await classifyWouldBeIncomplete(
-        artifacts,
-        setRef,
-        newlyPublished,
-        preExisting,
-        [storeIssue(result)],
-      );
+      return await classifyWouldBeIncomplete(artifacts, setRef, newlyPublished, preExisting, [
+        storeIssue(result),
+      ]);
     }
     try {
       await hit(request.failpoint, { kind: "AfterMemberPublication", index, ref });
     } catch (error) {
-      return await classifyWouldBeIncomplete(
-        artifacts,
-        setRef,
-        newlyPublished,
-        preExisting,
-        [constructionIssue(errorMessage(error))],
-      );
+      return await classifyWouldBeIncomplete(artifacts, setRef, newlyPublished, preExisting, [
+        constructionIssue(errorMessage(error)),
+      ]);
     }
   }
 
   const verification = verifyCompleteReleaseSet(releaseSet, plan.releases);
   if (!verification.ok) {
-    return await classifyWouldBeIncomplete(
-      artifacts,
-      setRef,
-      newlyPublished,
-      preExisting,
-      [constructionIssue(verification.issues.map((issue) => issue.code).join(","))],
-    );
+    return await classifyWouldBeIncomplete(artifacts, setRef, newlyPublished, preExisting, [
+      constructionIssue(verification.issues.map((issue) => issue.code).join(",")),
+    ]);
   }
   try {
     await hit(request.failpoint, { kind: "BeforeSetPublication" });
   } catch (error) {
-    return await classifyWouldBeIncomplete(
-      artifacts,
-      setRef,
-      newlyPublished,
-      preExisting,
-      [constructionIssue(errorMessage(error))],
-    );
+    return await classifyWouldBeIncomplete(artifacts, setRef, newlyPublished, preExisting, [
+      constructionIssue(errorMessage(error)),
+    ]);
   }
-  const setResult = await artifacts.publishReleaseSet(releaseSet, publicationOptions(request, finalGate));
+  const setResult = await artifacts.publishReleaseSet(
+    releaseSet,
+    publicationOptions(request, finalGate)
+  );
   if (setResult.kind === "Rejected") {
-    return await classifyWouldBeIncomplete(
-      artifacts,
-      setRef,
-      newlyPublished,
-      preExisting,
-      [storeIssue(setResult)],
-    );
+    return await classifyWouldBeIncomplete(artifacts, setRef, newlyPublished, preExisting, [
+      storeIssue(setResult),
+    ]);
   }
   if (setResult.kind === "Unsettled") {
     return unsettled(request.mode, verifiedRefs(newlyPublished, preExisting), setResult);
@@ -208,7 +192,7 @@ async function publishComplete(
       setRef,
       newlyPublished,
       preExisting,
-      [constructionIssue(errorMessage(error))],
+      [constructionIssue(errorMessage(error))]
     );
     if (reclassified.kind !== "ReadOnlyConverged") return reclassified;
   }
@@ -219,7 +203,7 @@ function successfulCompleteSetResult(
   setResult: Extract<ArtifactPublicationResult, { kind: "Published" | "ReadOnlyConverged" }>,
   setRef: CompleteSetArtifactRef,
   newlyPublished: readonly ReleaseArtifactRef[],
-  preExisting: readonly ReleaseArtifactRef[],
+  preExisting: readonly ReleaseArtifactRef[]
 ): BuildResult {
   if (setResult.kind === "ReadOnlyConverged" && newlyPublished.length === 0) {
     return { kind: "ReadOnlyConverged", mode: { kind: "complete-set" }, ref: setRef };
@@ -253,14 +237,21 @@ function createFinalEligibilityGate(options: {
       if (result !== undefined) return result;
       try {
         await hit(options.failpoint, { kind: "BeforeFinalRevalidation" });
-        const revalidated = await options.source.revalidate(options.policy, options.eligibilityBinding);
-        result = revalidated.kind === "Eligible"
-          ? { kind: "Allowed" }
-          : {
-            kind: "Rejected",
-            failure: revalidated.issues.map((issue) => `${issue.code}:${issue.detail}`).join("; "),
-          };
-        if (result.kind === "Allowed") await hit(options.failpoint, { kind: "AfterFinalRevalidation" });
+        const revalidated = await options.source.revalidate(
+          options.policy,
+          options.eligibilityBinding
+        );
+        result =
+          revalidated.kind === "Eligible"
+            ? { kind: "Allowed" }
+            : {
+                kind: "Rejected",
+                failure: revalidated.issues
+                  .map((issue) => `${issue.code}:${issue.detail}`)
+                  .join("; "),
+              };
+        if (result.kind === "Allowed")
+          await hit(options.failpoint, { kind: "AfterFinalRevalidation" });
       } catch (error) {
         result = { kind: "Rejected", failure: errorMessage(error) };
       }
@@ -272,7 +263,7 @@ function createFinalEligibilityGate(options: {
 
 function publicationOptions(
   request: BuildExecutionRequest,
-  gate: FinalEligibilityGate,
+  gate: FinalEligibilityGate
 ): ArtifactPublicationOptions {
   return {
     failpoint: request.artifactFailpoint,
@@ -285,7 +276,7 @@ async function classifyWouldBeIncomplete(
   setRef: CompleteSetArtifactRef,
   newlyPublished: readonly ReleaseArtifactRef[],
   preExisting: readonly ReleaseArtifactRef[],
-  issues: readonly [BuildIssue, ...BuildIssue[]],
+  issues: readonly [BuildIssue, ...BuildIssue[]]
 ): Promise<BuildResult> {
   let observation;
   try {
@@ -294,18 +285,24 @@ async function classifyWouldBeIncomplete(
     return unsettledSetObservation(
       newlyPublished,
       preExisting,
-      appendIssue(issues, artifactObservationIssue(`set-marker read failed: ${errorMessage(error)}`)),
+      appendIssue(
+        issues,
+        artifactObservationIssue(`set-marker read failed: ${errorMessage(error)}`)
+      )
     );
   }
   if (observation.kind === "Verified") {
     if (
-      observation.snapshot.kind !== "complete-set"
-      || observation.snapshot.ref.releaseSetDigest !== setRef.releaseSetDigest
+      observation.snapshot.kind !== "complete-set" ||
+      observation.snapshot.ref.releaseSetDigest !== setRef.releaseSetDigest
     ) {
       return unsettledSetObservation(
         newlyPublished,
         preExisting,
-        appendIssue(issues, artifactObservationIssue("set-marker read returned another verified artifact")),
+        appendIssue(
+          issues,
+          artifactObservationIssue("set-marker read returned another verified artifact")
+        )
       );
     }
     if (newlyPublished.length === 0) {
@@ -335,16 +332,19 @@ async function classifyWouldBeIncomplete(
   return unsettledSetObservation(
     newlyPublished,
     preExisting,
-    appendIssue(issues, artifactObservationIssue(
-      `set-marker read mismatched: ${observation.issues.map((issue) => issue.detail).join("; ")}`,
-    )),
+    appendIssue(
+      issues,
+      artifactObservationIssue(
+        `set-marker read mismatched: ${observation.issues.map((issue) => issue.detail).join("; ")}`
+      )
+    )
   );
 }
 
 function unsettledSetObservation(
   newlyPublished: readonly ReleaseArtifactRef[],
   preExisting: readonly ReleaseArtifactRef[],
-  issues: readonly [BuildIssue, ...BuildIssue[]],
+  issues: readonly [BuildIssue, ...BuildIssue[]]
 ): BuildResult {
   return {
     kind: "PublicationUnsettled",
@@ -357,7 +357,7 @@ function unsettledSetObservation(
 
 function appendIssue(
   issues: readonly [BuildIssue, ...BuildIssue[]],
-  issue: BuildIssue,
+  issue: BuildIssue
 ): readonly [BuildIssue, ...BuildIssue[]] {
   return Object.freeze([issues[0], ...issues.slice(1), issue]);
 }
@@ -369,7 +369,7 @@ function artifactObservationIssue(detail: string): BuildIssue {
 function unsettled(
   mode: BuildMode,
   observed: readonly ReleaseArtifactRef[],
-  result: Extract<ArtifactPublicationResult, { kind: "Unsettled" }>,
+  result: Extract<ArtifactPublicationResult, { kind: "Unsettled" }>
 ): BuildResult {
   return {
     kind: "PublicationUnsettled",
@@ -380,13 +380,16 @@ function unsettled(
   };
 }
 
-function verifiedRefs(...groups: readonly (readonly ReleaseArtifactRef[])[]): readonly ReleaseArtifactRef[] {
+function verifiedRefs(
+  ...groups: readonly (readonly ReleaseArtifactRef[])[]
+): readonly ReleaseArtifactRef[] {
   const byArtifact = new Map<string, ReleaseArtifactRef>();
   for (const group of groups) for (const ref of group) byArtifact.set(ref.artifactDigest, ref);
-  return Object.freeze([...byArtifact.values()].sort((left, right) => compareCanonicalText(
-    left.artifactDigest,
-    right.artifactDigest,
-  )));
+  return Object.freeze(
+    [...byArtifact.values()].sort((left, right) =>
+      compareCanonicalText(left.artifactDigest, right.artifactDigest)
+    )
+  );
 }
 
 function rejected(mode: BuildMode, issues: readonly [BuildIssue, ...BuildIssue[]]): BuildResult {
@@ -394,9 +397,12 @@ function rejected(mode: BuildMode, issues: readonly [BuildIssue, ...BuildIssue[]
 }
 
 function sourceIssues(
-  issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]],
+  issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]]
 ): readonly [BuildIssue, ...BuildIssue[]] {
-  return issues.map((issue) => Object.freeze({ kind: "SourceEligibility", issue })) as [BuildIssue, ...BuildIssue[]];
+  return issues.map((issue) => Object.freeze({ kind: "SourceEligibility", issue })) as [
+    BuildIssue,
+    ...BuildIssue[],
+  ];
 }
 
 function constructionIssue(detail: string): BuildIssue {
@@ -404,12 +410,15 @@ function constructionIssue(detail: string): BuildIssue {
 }
 
 function storeIssue(
-  result: Extract<ArtifactPublicationResult, { kind: "Rejected" | "Unsettled" }>,
+  result: Extract<ArtifactPublicationResult, { kind: "Rejected" | "Unsettled" }>
 ): BuildIssue {
   return artifactStoreBuildIssue(result.failure, result.cleanupFailure);
 }
 
-async function hit(failpoint: BuildFailpoint | undefined, event: BuildFailpointEvent): Promise<void> {
+async function hit(
+  failpoint: BuildFailpoint | undefined,
+  event: BuildFailpointEvent
+): Promise<void> {
   await failpoint?.(event);
 }
 

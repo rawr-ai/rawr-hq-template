@@ -29,7 +29,14 @@ const rawrFile = path.join(root, "apps", "server", "src", "rawr.ts");
 const orpcFile = path.join(root, "apps", "server", "src", "orpc.ts");
 const openApiFile = path.join(root, "apps", "server", "scripts", "write-orpc-openapi.ts");
 const testingHostFile = path.join(root, "apps", "server", "src", "testing-host.ts");
-const supportProofFile = path.join(root, "apps", "server", "test", "support", "example-todo-proof-clients.ts");
+const supportProofFile = path.join(
+  root,
+  "apps",
+  "server",
+  "test",
+  "support",
+  "example-todo-proof-clients.ts"
+);
 const manifestFile = path.join(root, "apps", "hq", "src", "manifest.ts");
 const rawrHqManifestFile = path.join(root, "apps", "hq", "rawr.hq.ts");
 const legacyCutoverFile = path.join(root, "apps", "hq", "legacy-cutover.ts");
@@ -39,28 +46,26 @@ const orpcSource = await fs.readFile(orpcFile, "utf8");
 const openApiSource = await fs.readFile(openApiFile, "utf8");
 const testingHostSource = await fs.readFile(testingHostFile, "utf8");
 const supportProofSource = await fs.readFile(supportProofFile, "utf8");
-const legacyCutoverSource = mode === "completion" ? await fs.readFile(legacyCutoverFile, "utf8") : "";
+const legacyCutoverSource =
+  mode === "completion" ? await fs.readFile(legacyCutoverFile, "utf8") : "";
 const manifestEntrySource = mode === "completion" ? await fs.readFile(manifestFile, "utf8") : "";
-const manifestSource = mode === "completion" && manifestEntrySource.includes("../rawr.hq")
-  ? `${manifestEntrySource}\n${await fs.readFile(rawrHqManifestFile, "utf8")}`
-  : manifestEntrySource;
+const manifestSource =
+  mode === "completion" && manifestEntrySource.includes("../rawr.hq")
+    ? `${manifestEntrySource}\n${await fs.readFile(rawrHqManifestFile, "utf8")}`
+    : manifestEntrySource;
 const rawrAst = parseTypeScript(rawrFile, rawrSource);
 const orpcAst = parseTypeScript(orpcFile, orpcSource);
 const manifestAst = mode === "completion" ? parseTypeScript(manifestFile, manifestSource) : null;
 
 const hasPackageOwnedPluginDeclarations =
-  (
-    manifestSource.includes("plugins: {") &&
+  (manifestSource.includes("plugins: {") &&
     manifestSource.includes("api: apiPlugins") &&
-    manifestSource.includes("workflows: {} as const")
-  ) ||
-  (
-    manifestSource.includes("const api =") &&
+    manifestSource.includes("workflows: {} as const")) ||
+  (manifestSource.includes("const api =") &&
     manifestSource.includes("server:") &&
     manifestSource.includes("api: api") &&
     manifestSource.includes("async:") &&
-    manifestSource.includes("workflows: {} as const")
-  );
+    manifestSource.includes("workflows: {} as const"));
 
 function hasRegisterOrpcRoutesHostSeamRouter(rawrSourceFile) {
   let matched = false;
@@ -81,7 +86,9 @@ function hasRegisterOrpcRoutesHostSeamRouter(rawrSourceFile) {
 
 function isFunctionLikeExpression(node) {
   const unwrapped = unwrapExpression(node);
-  return Boolean(unwrapped && (ts.isArrowFunction(unwrapped) || ts.isFunctionExpression(unwrapped)));
+  return Boolean(
+    unwrapped && (ts.isArrowFunction(unwrapped) || ts.isFunctionExpression(unwrapped))
+  );
 }
 
 const requiredChecks = [
@@ -113,9 +120,7 @@ if (mode === "completion") {
   });
   requiredChecks.push({
     label: "manifest exposes declaration-only plugin groups instead of path-prefix authority",
-    ok:
-      !manifestSource.includes("rawrHqWorkflowCapabilities") &&
-      hasPackageOwnedPluginDeclarations,
+    ok: !manifestSource.includes("rawrHqWorkflowCapabilities") && hasPackageOwnedPluginDeclarations,
   });
   requiredChecks.push({
     label: "host consumes host-owned workflow route seam",
@@ -124,9 +129,15 @@ if (mode === "completion") {
       hasPropertyAccessChain(rawrAst, ["rawrHostSeam", "workflows", "published", "router"]),
   });
   requiredChecks.push({
-    label: "host composes workflow runtime from host-owned realization shells instead of host-local capability imports",
+    label:
+      "host composes workflow runtime from host-owned realization shells instead of host-local capability imports",
     ok:
-      hasPropertyAccessChain(rawrAst, ["rawrHostAuthority", "realization", "workflows", "createInngestFunctions"]) &&
+      hasPropertyAccessChain(rawrAst, [
+        "rawrHostAuthority",
+        "realization",
+        "workflows",
+        "createInngestFunctions",
+      ]) &&
       hasIdentifierCall(rawrAst, "createHostInngestBundle") &&
       !rawrSource.includes("rawrHqManifest.inngest"),
   });

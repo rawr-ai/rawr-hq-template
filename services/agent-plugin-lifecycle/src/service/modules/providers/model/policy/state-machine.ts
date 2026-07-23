@@ -9,7 +9,12 @@ import {
   type ProviderMarketplaceObservation,
   type ProviderMarketplaceRegistration,
 } from "./marketplace";
-import { targetRequestDigest, type ProviderRequestDigest, type TargetedTest, type CompleteTest } from "../dto/mode";
+import {
+  targetRequestDigest,
+  type ProviderRequestDigest,
+  type TargetedTest,
+  type CompleteTest,
+} from "../dto/mode";
 import type {
   AgentProviderProjection,
   CapabilityEvaluation,
@@ -36,8 +41,12 @@ import type { ProviderTarget, ProviderTargetDigest } from "../dto/provider-targe
 declare const inventoryFingerprintBrand: unique symbol;
 declare const targetIdentityDigestBrand: unique symbol;
 
-export type InventoryFingerprint = string & { readonly [inventoryFingerprintBrand]: "InventoryFingerprint" };
-export type TargetIdentityDigest = string & { readonly [targetIdentityDigestBrand]: "TargetIdentityDigest" };
+export type InventoryFingerprint = string & {
+  readonly [inventoryFingerprintBrand]: "InventoryFingerprint";
+};
+export type TargetIdentityDigest = string & {
+  readonly [targetIdentityDigestBrand]: "TargetIdentityDigest";
+};
 
 export interface NativeMemberObservation {
   readonly pluginId: PluginId;
@@ -59,11 +68,13 @@ interface NativeStandaloneExposureObservationBase {
   readonly visibleHooks: readonly string[];
 }
 
-export interface NativeConfiguredExposureObservation extends NativeStandaloneExposureObservationBase {
+export interface NativeConfiguredExposureObservation
+  extends NativeStandaloneExposureObservationBase {
   readonly exposureKind: "configured-only";
 }
 
-export interface NativeInstalledExposureObservation extends NativeStandaloneExposureObservationBase {
+export interface NativeInstalledExposureObservation
+  extends NativeStandaloneExposureObservationBase {
   readonly exposureKind: "installed";
 }
 
@@ -96,12 +107,42 @@ export type ReceiptObservation =
   | Readonly<{ kind: "present"; receipt: TargetReceipt }>;
 
 export type ProviderMutationAction =
-  | Readonly<{ kind: "AdmitTargetIdentity"; target: ProviderTarget; sidecar: TargetIdentitySidecar }>
-  | Readonly<{ kind: "SetMarketplace"; role: "transition" | "final"; target: ProviderTarget; expected: ProviderMarketplaceObservation; registration: ProviderMarketplaceRegistration | null }>
-  | Readonly<{ kind: "InstallMember"; target: ProviderTarget; activeMarketplace: ProviderMarketplaceRegistration | null; member: ProviderProjectionMember }>
-  | Readonly<{ kind: "EnableMember"; target: ProviderTarget; activeMarketplace: ProviderMarketplaceRegistration | null; member: ProviderProjectionMember }>
-  | Readonly<{ kind: "RetireMember"; target: ProviderTarget; activeMarketplace: ProviderMarketplaceRegistration | null; member: NativeMemberObservation }>
-  | Readonly<{ kind: "PublishReceipt"; target: ProviderTarget; prior: ReceiptObservation; receipt: TargetReceipt }>;
+  | Readonly<{
+      kind: "AdmitTargetIdentity";
+      target: ProviderTarget;
+      sidecar: TargetIdentitySidecar;
+    }>
+  | Readonly<{
+      kind: "SetMarketplace";
+      role: "transition" | "final";
+      target: ProviderTarget;
+      expected: ProviderMarketplaceObservation;
+      registration: ProviderMarketplaceRegistration | null;
+    }>
+  | Readonly<{
+      kind: "InstallMember";
+      target: ProviderTarget;
+      activeMarketplace: ProviderMarketplaceRegistration | null;
+      member: ProviderProjectionMember;
+    }>
+  | Readonly<{
+      kind: "EnableMember";
+      target: ProviderTarget;
+      activeMarketplace: ProviderMarketplaceRegistration | null;
+      member: ProviderProjectionMember;
+    }>
+  | Readonly<{
+      kind: "RetireMember";
+      target: ProviderTarget;
+      activeMarketplace: ProviderMarketplaceRegistration | null;
+      member: NativeMemberObservation;
+    }>
+  | Readonly<{
+      kind: "PublishReceipt";
+      target: ProviderTarget;
+      prior: ReceiptObservation;
+      receipt: TargetReceipt;
+    }>;
 
 export type NativeProviderMutationAction = Extract<
   ProviderMutationAction,
@@ -111,7 +152,12 @@ export type NativeProviderMutationAction = Extract<
 export type ProviderPlanStep =
   | Readonly<{ kind: "mutate"; action: ProviderMutationAction }>
   | Readonly<{ kind: "verify"; target: ProviderTarget; projection: AgentProviderProjection }>
-  | Readonly<{ kind: "verify-managed"; target: ProviderTarget; claims: readonly ManagedMemberClaim[]; marketplace: ProviderMarketplaceRegistration | null }>
+  | Readonly<{
+      kind: "verify-managed";
+      target: ProviderTarget;
+      claims: readonly ManagedMemberClaim[];
+      marketplace: ProviderMarketplaceRegistration | null;
+    }>
   | Readonly<{ kind: "verify-retired"; target: ProviderTarget; nativeIdentity: string }>;
 
 export interface ProviderTargetPlan {
@@ -138,7 +184,7 @@ export function createProviderInventory(
   target: ProviderTarget,
   members: readonly NativeMemberObservation[],
   standaloneExposures: readonly NativeStandaloneExposureObservation[] = [],
-  marketplace: ProviderMarketplaceObservation = Object.freeze({ kind: "absent" }),
+  marketplace: ProviderMarketplaceObservation = Object.freeze({ kind: "absent" })
 ): ProviderInventory {
   const sorted = [...members].sort(compareNativeMembers);
   const sortedExposures = [...standaloneExposures].sort(compareStandaloneExposures);
@@ -171,17 +217,23 @@ export function createTargetIdentitySidecar(target: ProviderTarget): TargetIdent
 
 export function hasProjectionExposureCollision(
   inventory: ProviderInventory,
-  projection: AgentProviderProjection,
+  projection: AgentProviderProjection
 ): boolean {
   for (const desired of projection.members) {
-    const members = inventory.members.filter((live) => memberConflictsWithProjection(live, desired));
-    if (members.length > 0 && (
-      members.length !== 1
-      || !memberHasProjectedIdentity(members[0]!, desired)
-    )) {
+    const members = inventory.members.filter((live) =>
+      memberConflictsWithProjection(live, desired)
+    );
+    if (
+      members.length > 0 &&
+      (members.length !== 1 || !memberHasProjectedIdentity(members[0]!, desired))
+    ) {
       return true;
     }
-    if (inventory.standaloneExposures.some((exposure) => standaloneConflictsWithProjection(exposure, desired))) {
+    if (
+      inventory.standaloneExposures.some((exposure) =>
+        standaloneConflictsWithProjection(exposure, desired)
+      )
+    ) {
       return true;
     }
   }
@@ -192,19 +244,25 @@ export function hasProjectionCollision(
   target: ProviderTarget,
   inventory: ProviderInventory,
   projection: AgentProviderProjection,
-  receipt: ReceiptObservation,
+  receipt: ReceiptObservation
 ): boolean {
   if (hasProjectionExposureCollision(inventory, projection)) return true;
-  const claims = new Map(receipt.kind === "present"
-    && receipt.receipt.body.provider === target.provider
-    && receipt.receipt.body.targetDigest === target.targetDigest
-    ? receipt.receipt.body.managedMembers.map((claim) => [claim.pluginId, claim])
-    : []);
+  const claims = new Map(
+    receipt.kind === "present" &&
+      receipt.receipt.body.provider === target.provider &&
+      receipt.receipt.body.targetDigest === target.targetDigest
+      ? receipt.receipt.body.managedMembers.map((claim) => [claim.pluginId, claim])
+      : []
+  );
   return projection.members.some((desired) => {
-    const live = inventory.members.find((candidate) => memberHasProjectedIdentity(candidate, desired));
-    return live !== undefined
-      && !projectionOwnsLiveMember(live, desired)
-      && !receiptOwnsLiveMember(live, claims.get(desired.pluginId));
+    const live = inventory.members.find((candidate) =>
+      memberHasProjectedIdentity(candidate, desired)
+    );
+    return (
+      live !== undefined &&
+      !projectionOwnsLiveMember(live, desired) &&
+      !receiptOwnsLiveMember(live, claims.get(desired.pluginId))
+    );
   });
 }
 
@@ -213,35 +271,65 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
   const target = inventory.target;
   const issues: ProviderDeploymentIssue[] = [];
   if (!input.capabilities.compatible) {
-    issues.push(issue("CAPABILITY_MISMATCH", "target.capabilities", "Provider does not satisfy the projection capability profile", input.capabilities.missing.join(","), "missing"));
+    issues.push(
+      issue(
+        "CAPABILITY_MISMATCH",
+        "target.capabilities",
+        "Provider does not satisfy the projection capability profile",
+        input.capabilities.missing.join(","),
+        "missing"
+      )
+    );
   }
-  if (receipt.kind === "present" && (
-    receipt.receipt.body.provider !== target.provider
-    || receipt.receipt.body.targetDigest !== target.targetDigest
-  )) {
-    issues.push(issue("RECEIPT_TARGET_MISMATCH", "target.receipt", "Receipt belongs to another provider home", target.targetDigest, receipt.receipt.body.targetDigest));
+  if (
+    receipt.kind === "present" &&
+    (receipt.receipt.body.provider !== target.provider ||
+      receipt.receipt.body.targetDigest !== target.targetDigest)
+  ) {
+    issues.push(
+      issue(
+        "RECEIPT_TARGET_MISMATCH",
+        "target.receipt",
+        "Receipt belongs to another provider home",
+        target.targetDigest,
+        receipt.receipt.body.targetDigest
+      )
+    );
   }
   if (authority.projection.provider !== target.provider) {
-    issues.push(issue("PROJECTION_MISMATCH", "target.projection.provider", "Projection provider does not match target", target.provider, authority.projection.provider));
+    issues.push(
+      issue(
+        "PROJECTION_MISMATCH",
+        "target.projection.provider",
+        "Projection provider does not match target",
+        target.provider,
+        authority.projection.provider
+      )
+    );
   }
 
   const currentReceipt = receipt.kind === "present" ? receipt.receipt : undefined;
   const desired = authority.projection.members;
-  const receiptClaims = new Map((currentReceipt?.body.managedMembers ?? []).map((member) => [member.pluginId, member]));
+  const receiptClaims = new Map(
+    (currentReceipt?.body.managedMembers ?? []).map((member) => [member.pluginId, member])
+  );
   const projectionIssue = projectionAuthorityIssue(authority.projection);
   if (projectionIssue !== undefined) issues.push(projectionIssue);
-  const receiptIssue = currentReceipt === undefined
-    ? undefined
-    : receiptWitnessIssue(target, authority.projection, currentReceipt);
+  const receiptIssue =
+    currentReceipt === undefined
+      ? undefined
+      : receiptWitnessIssue(target, authority.projection, currentReceipt);
   if (receiptIssue !== undefined) issues.push(receiptIssue);
 
   const hasCollision = hasProjectionCollision(target, inventory, authority.projection, receipt);
   if (hasCollision) {
-    issues.push(issue(
-      "BLOCKED_COLLISION",
-      "target.inventory",
-      "A native plugin, provider source, or standalone skill conflicts with the desired projection",
-    ));
+    issues.push(
+      issue(
+        "BLOCKED_COLLISION",
+        "target.inventory",
+        "A native plugin, provider source, or standalone skill conflicts with the desired projection"
+      )
+    );
   }
   if (issues.length > 0) return blockedPlan(target, authority.projection, issues);
 
@@ -249,7 +337,7 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
     desired,
     authority.projection.projectionDigest,
     currentReceipt,
-    inventory,
+    inventory
   );
   if (reconciledClaims.issues.length > 0) {
     return blockedPlan(target, authority.projection, reconciledClaims.issues);
@@ -263,149 +351,175 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
   try {
     nextMarketplace = registrationForClaims(authority, expectedClaims);
     transitionMarketplace = registrationForClaims(authority, transitionClaims);
-    currentMarketplace = currentReceipt === undefined
-      ? null
-      : receiptMarketplaceRegistration(currentReceipt);
+    currentMarketplace =
+      currentReceipt === undefined ? null : receiptMarketplaceRegistration(currentReceipt);
   } catch (error) {
-    return blockedPlan(target, authority.projection, [issue(
-      "PROJECTION_MISMATCH",
-      "target.marketplace",
-      error instanceof Error ? error.message : String(error),
-    )]);
+    return blockedPlan(target, authority.projection, [
+      issue(
+        "PROJECTION_MISMATCH",
+        "target.marketplace",
+        error instanceof Error ? error.message : String(error)
+      ),
+    ]);
   }
 
   const marketplacePhase = classifyForwardMarketplace(
     inventory.marketplace,
     currentMarketplace,
     transitionMarketplace,
-    nextMarketplace,
+    nextMarketplace
   );
   if (marketplacePhase.kind === "blocked") {
     return blockedPlan(target, authority.projection, [marketplacePhase.issue]);
   }
-  const phaseClaims = marketplacePhase.phase === "final"
-    ? expectedClaims
-    : marketplacePhase.phase === "transition"
-      ? transitionClaims
-      : currentReceipt?.body.managedMembers ?? Object.freeze([]);
-  const nativeStateIssue = forwardNativeStateIssue(
-    inventory,
-    authority.projection,
-    phaseClaims,
-  );
+  const phaseClaims =
+    marketplacePhase.phase === "final"
+      ? expectedClaims
+      : marketplacePhase.phase === "transition"
+        ? transitionClaims
+        : (currentReceipt?.body.managedMembers ?? Object.freeze([]));
+  const nativeStateIssue = forwardNativeStateIssue(inventory, authority.projection, phaseClaims);
   if (nativeStateIssue !== undefined) {
     return blockedPlan(target, authority.projection, [nativeStateIssue]);
   }
 
   const hasTransition = !sameMarketplaceState(transitionMarketplace, nextMarketplace);
-  const activeMemberMarketplace = marketplacePhase.phase === "final"
-    ? nextMarketplace
-    : hasTransition
-      ? transitionMarketplace
-      : nextMarketplace;
-  const currentActiveMarketplace = marketplacePhase.phase === "initial"
-    ? null
-    : marketplacePhase.phase === "prior"
-      ? currentMarketplace
-      : marketplacePhase.phase === "transition"
+  const activeMemberMarketplace =
+    marketplacePhase.phase === "final"
+      ? nextMarketplace
+      : hasTransition
         ? transitionMarketplace
         : nextMarketplace;
+  const currentActiveMarketplace =
+    marketplacePhase.phase === "initial"
+      ? null
+      : marketplacePhase.phase === "prior"
+        ? currentMarketplace
+        : marketplacePhase.phase === "transition"
+          ? transitionMarketplace
+          : nextMarketplace;
   const beforeMarketplaceActions: ProviderMutationAction[] = [];
   const afterMarketplaceActions: ProviderMutationAction[] = [];
 
   for (const member of desired) {
-    const live = inventory.members.find((candidate) => candidate.nativeIdentity === member.nativeIdentity);
+    const live = inventory.members.find(
+      (candidate) => candidate.nativeIdentity === member.nativeIdentity
+    );
     if (live === undefined) {
-      afterMarketplaceActions.push(Object.freeze({
-        kind: "InstallMember",
-        target,
-        activeMarketplace: activeMemberMarketplace,
-        member,
-      }));
+      afterMarketplaceActions.push(
+        Object.freeze({
+          kind: "InstallMember",
+          target,
+          activeMarketplace: activeMemberMarketplace,
+          member,
+        })
+      );
       continue;
     }
     const claim = receiptClaims.get(member.pluginId);
     const desiredOwned = projectionOwnsLiveMember(live, member);
     const priorOwned = receiptOwnsLiveMember(live, claim);
     if (live.pluginId !== member.pluginId || (!desiredOwned && !priorOwned)) {
-      issues.push(issue("BLOCKED_COLLISION", `target.members.${member.pluginId}`, "An unmanaged or differently owned native identity blocks deployment", member.nativeIdentity, live.nativeIdentity));
+      issues.push(
+        issue(
+          "BLOCKED_COLLISION",
+          `target.members.${member.pluginId}`,
+          "An unmanaged or differently owned native identity blocks deployment",
+          member.nativeIdentity,
+          live.nativeIdentity
+        )
+      );
       continue;
     }
     if (live.memberFingerprint !== member.memberFingerprint) {
-      beforeMarketplaceActions.push(Object.freeze({
-        kind: "RetireMember",
-        target,
-        activeMarketplace: currentActiveMarketplace,
-        member: live,
-      }));
-      afterMarketplaceActions.push(Object.freeze({
-        kind: "InstallMember",
-        target,
-        activeMarketplace: activeMemberMarketplace,
-        member,
-      }));
+      beforeMarketplaceActions.push(
+        Object.freeze({
+          kind: "RetireMember",
+          target,
+          activeMarketplace: currentActiveMarketplace,
+          member: live,
+        })
+      );
+      afterMarketplaceActions.push(
+        Object.freeze({
+          kind: "InstallMember",
+          target,
+          activeMarketplace: activeMemberMarketplace,
+          member,
+        })
+      );
       continue;
     }
     if (live.enablement !== "enabled") {
-      afterMarketplaceActions.push(Object.freeze({
-        kind: "EnableMember",
-        target,
-        activeMarketplace: activeMemberMarketplace,
-        member,
-      }));
+      afterMarketplaceActions.push(
+        Object.freeze({
+          kind: "EnableMember",
+          target,
+          activeMarketplace: activeMemberMarketplace,
+          member,
+        })
+      );
     }
   }
 
   if (issues.length > 0) return blockedPlan(target, authority.projection, issues);
 
   const retireActions: readonly ProviderMutationAction[] = Object.freeze([]);
-  const hasNativeMutation = beforeMarketplaceActions.length > 0
-    || afterMarketplaceActions.length > 0
-    || retireActions.length > 0;
-  let transitionMarketplaceAction: Extract<ProviderMutationAction, { kind: "SetMarketplace" }> | null;
+  const hasNativeMutation =
+    beforeMarketplaceActions.length > 0 ||
+    afterMarketplaceActions.length > 0 ||
+    retireActions.length > 0;
+  let transitionMarketplaceAction: Extract<
+    ProviderMutationAction,
+    { kind: "SetMarketplace" }
+  > | null;
   let finalMarketplaceAction: Extract<ProviderMutationAction, { kind: "SetMarketplace" }> | null;
   try {
-    transitionMarketplaceAction = marketplacePhase.phase === "final"
-      || marketplacePhase.phase === "transition"
-      ? null
-      : marketplaceMutation(
-          target,
-          hasTransition ? "transition" : "final",
-          inventory.marketplace,
-          hasTransition ? transitionMarketplace : nextMarketplace,
-        );
-    finalMarketplaceAction = !hasTransition || marketplacePhase.phase === "final"
-      ? null
-      : marketplaceMutation(
-          target,
-          "final",
-          Object.freeze({ kind: "present", state: marketplaceState(transitionMarketplace) }),
-          nextMarketplace,
-        );
+    transitionMarketplaceAction =
+      marketplacePhase.phase === "final" || marketplacePhase.phase === "transition"
+        ? null
+        : marketplaceMutation(
+            target,
+            hasTransition ? "transition" : "final",
+            inventory.marketplace,
+            hasTransition ? transitionMarketplace : nextMarketplace
+          );
+    finalMarketplaceAction =
+      !hasTransition || marketplacePhase.phase === "final"
+        ? null
+        : marketplaceMutation(
+            target,
+            "final",
+            Object.freeze({ kind: "present", state: marketplaceState(transitionMarketplace) }),
+            nextMarketplace
+          );
   } catch (error) {
-    return blockedPlan(target, authority.projection, [issue(
-      "INVALID_RECEIPT",
-      "target.receipt.marketplace",
-      error instanceof Error ? error.message : String(error),
-    )]);
+    return blockedPlan(target, authority.projection, [
+      issue(
+        "INVALID_RECEIPT",
+        "target.receipt.marketplace",
+        error instanceof Error ? error.message : String(error)
+      ),
+    ]);
   }
   if (hasTransition && marketplacePhase.phase !== "final" && finalMarketplaceAction === null) {
-    return blockedPlan(target, authority.projection, [issue(
-      "PROJECTION_MISMATCH",
-      "target.marketplace",
-      "Forward transition must converge to a distinct final marketplace",
-    )]);
+    return blockedPlan(target, authority.projection, [
+      issue(
+        "PROJECTION_MISMATCH",
+        "target.marketplace",
+        "Forward transition must converge to a distinct final marketplace"
+      ),
+    ]);
   }
-  const hasTargetMutation = hasNativeMutation
-    || transitionMarketplaceAction !== null
-    || finalMarketplaceAction !== null;
+  const hasTargetMutation =
+    hasNativeMutation || transitionMarketplaceAction !== null || finalMarketplaceAction !== null;
   const nextReceipt = createReceipt(
     authority,
     target,
     currentReceipt,
     expectedClaims,
     marketplaceState(nextMarketplace),
-    hasTargetMutation,
+    hasTargetMutation
   );
   const receiptMatches = currentReceipt?.receiptDigest === nextReceipt.receiptDigest;
   const shouldPublish = hasTargetMutation || currentReceipt === undefined || !receiptMatches;
@@ -417,7 +531,12 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
       projection: authority.projection,
       steps: Object.freeze([
         { kind: "verify" as const, target, projection: authority.projection },
-        { kind: "verify-managed" as const, target, claims: expectedClaims, marketplace: nextMarketplace },
+        {
+          kind: "verify-managed" as const,
+          target,
+          claims: expectedClaims,
+          marketplace: nextMarketplace,
+        },
       ]),
       issues: Object.freeze([]),
     });
@@ -425,15 +544,27 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
 
   const steps: ProviderPlanStep[] = [];
   if (targetIdentity.kind === "absent") {
-    steps.push(Object.freeze({
-      kind: "mutate",
-      action: Object.freeze({ kind: "AdmitTargetIdentity", target, sidecar: createTargetIdentitySidecar(target) }),
-    }));
+    steps.push(
+      Object.freeze({
+        kind: "mutate",
+        action: Object.freeze({
+          kind: "AdmitTargetIdentity",
+          target,
+          sidecar: createTargetIdentitySidecar(target),
+        }),
+      })
+    );
   }
   for (const action of beforeMarketplaceActions) {
     steps.push(Object.freeze({ kind: "mutate", action }));
     if (action.kind === "RetireMember") {
-      steps.push(Object.freeze({ kind: "verify-retired", target, nativeIdentity: action.member.nativeIdentity }));
+      steps.push(
+        Object.freeze({
+          kind: "verify-retired",
+          target,
+          nativeIdentity: action.member.nativeIdentity,
+        })
+      );
     }
   }
   if (transitionMarketplaceAction !== null) {
@@ -444,28 +575,59 @@ export function planTarget(input: PlanTargetInput): ProviderTargetPlan {
   }
   steps.push(Object.freeze({ kind: "verify", target, projection: authority.projection }));
   if (hasTransition && marketplacePhase.phase !== "final") {
-    steps.push(Object.freeze({
-      kind: "verify-managed",
-      target,
-      claims: transitionVerificationClaims,
-      marketplace: transitionMarketplace,
-    }));
+    steps.push(
+      Object.freeze({
+        kind: "verify-managed",
+        target,
+        claims: transitionVerificationClaims,
+        marketplace: transitionMarketplace,
+      })
+    );
   }
   for (const action of retireActions) {
     steps.push(Object.freeze({ kind: "mutate", action }));
     if (action.kind === "RetireMember") {
-      steps.push(Object.freeze({ kind: "verify-retired", target, nativeIdentity: action.member.nativeIdentity }));
+      steps.push(
+        Object.freeze({
+          kind: "verify-retired",
+          target,
+          nativeIdentity: action.member.nativeIdentity,
+        })
+      );
     }
   }
   if (finalMarketplaceAction !== null) {
     steps.push(Object.freeze({ kind: "mutate", action: finalMarketplaceAction }));
     steps.push(Object.freeze({ kind: "verify", target, projection: authority.projection }));
   }
-  steps.push(Object.freeze({ kind: "verify-managed", target, claims: expectedClaims, marketplace: nextMarketplace }));
+  steps.push(
+    Object.freeze({
+      kind: "verify-managed",
+      target,
+      claims: expectedClaims,
+      marketplace: nextMarketplace,
+    })
+  );
   if (shouldPublish) {
-    steps.push(Object.freeze({ kind: "mutate", action: Object.freeze({ kind: "PublishReceipt", target, prior: receipt, receipt: nextReceipt }) }));
+    steps.push(
+      Object.freeze({
+        kind: "mutate",
+        action: Object.freeze({
+          kind: "PublishReceipt",
+          target,
+          prior: receipt,
+          receipt: nextReceipt,
+        }),
+      })
+    );
   }
-  return Object.freeze({ target, state: "mutating", projection: authority.projection, steps: Object.freeze(steps), issues: Object.freeze([]) });
+  return Object.freeze({
+    target,
+    state: "mutating",
+    projection: authority.projection,
+    steps: Object.freeze(steps),
+    issues: Object.freeze([]),
+  });
 }
 
 export function nativeMemberValue(member: NativeMemberObservation): CanonicalValue {
@@ -481,7 +643,9 @@ export function nativeMemberValue(member: NativeMemberObservation): CanonicalVal
   };
 }
 
-export function standaloneExposureValue(exposure: NativeStandaloneExposureObservation): CanonicalValue {
+export function standaloneExposureValue(
+  exposure: NativeStandaloneExposureObservation
+): CanonicalValue {
   return {
     exposureKind: exposure.exposureKind,
     exposureIdentity: exposure.exposureIdentity,
@@ -499,7 +663,7 @@ function createReceipt(
   prior: TargetReceipt | undefined,
   managedMembers: readonly ManagedMemberClaim[],
   marketplace: ReturnType<typeof marketplaceState>,
-  forceSuccessor: boolean,
+  forceSuccessor: boolean
 ): TargetReceipt {
   const verifiedMembers = authority.projection.members.map(toVerifiedMember);
   const common = {
@@ -511,13 +675,21 @@ function createReceipt(
     verifiedMembers,
   } as const;
   const scope = createScope(authority, common);
-  if (!forceSuccessor && prior !== undefined && receiptSemanticsMatch(prior, marketplace, scope, managedMembers)) return prior;
+  if (
+    !forceSuccessor &&
+    prior !== undefined &&
+    receiptSemanticsMatch(prior, marketplace, scope, managedMembers)
+  )
+    return prior;
   return createTargetReceipt({
     schemaVersion: 1,
     provider: target.provider,
     targetDigest: target.targetDigest,
     generation: (prior?.body.generation ?? 0) + 1,
-    lineage: prior === undefined ? { kind: "initial" } : { kind: "successor", priorReceiptDigest: prior.receiptDigest },
+    lineage:
+      prior === undefined
+        ? { kind: "initial" }
+        : { kind: "successor", priorReceiptDigest: prior.receiptDigest },
     marketplace,
     scope,
     managedMembers,
@@ -526,19 +698,37 @@ function createReceipt(
 
 function createScope(
   authority: DeploymentAuthority,
-  common: Pick<TargetReceiptScope, "adapterProtocol" | "capabilityProfileDigest" | "projectionDigest" | "requestDigest" | "verifiedMembers" | "visibleFingerprint">,
+  common: Pick<
+    TargetReceiptScope,
+    | "adapterProtocol"
+    | "capabilityProfileDigest"
+    | "projectionDigest"
+    | "requestDigest"
+    | "verifiedMembers"
+    | "visibleFingerprint"
+  >
 ): TargetReceiptScope {
   switch (authority.kind) {
     case "targeted-test":
-      return Object.freeze({ kind: authority.kind, ...common, releases: authority.request.releases, evaluationProfile: authority.request.evaluationProfile } satisfies TargetedTestScope);
+      return Object.freeze({
+        kind: authority.kind,
+        ...common,
+        releases: authority.request.releases,
+        evaluationProfile: authority.request.evaluationProfile,
+      } satisfies TargetedTestScope);
     case "complete-test":
-      return Object.freeze({ kind: authority.kind, ...common, releaseSet: authority.request.releaseSet, evaluationProfile: authority.request.evaluationProfile } satisfies CompleteTestScope);
+      return Object.freeze({
+        kind: authority.kind,
+        ...common,
+        releaseSet: authority.request.releaseSet,
+        evaluationProfile: authority.request.evaluationProfile,
+      } satisfies CompleteTestScope);
   }
 }
 
 function registrationForClaims(
   authority: DeploymentAuthority,
-  claims: readonly ManagedMemberClaim[],
+  claims: readonly ManagedMemberClaim[]
 ): ProviderMarketplaceRegistration {
   return createProviderMarketplaceRegistration({
     provider: authority.projection.provider,
@@ -558,20 +748,19 @@ function marketplaceMutation(
   target: ProviderTarget,
   role: Extract<ProviderMutationAction, { kind: "SetMarketplace" }>["role"],
   expected: ProviderMarketplaceObservation,
-  registration: ProviderMarketplaceRegistration | null,
+  registration: ProviderMarketplaceRegistration | null
 ): Extract<ProviderMutationAction, { kind: "SetMarketplace" }> | null {
   if (registration === null) {
     return expected.kind === "absent"
       ? null
       : Object.freeze({ kind: "SetMarketplace", role, target, expected, registration });
   }
-  if (expected.kind === "present" && sameMarketplaceState(expected.state, registration)) return null;
+  if (expected.kind === "present" && sameMarketplaceState(expected.state, registration))
+    return null;
   return Object.freeze({ kind: "SetMarketplace", role, target, expected, registration });
 }
 
-function receiptMarketplaceRegistration(
-  receipt: TargetReceipt,
-): ProviderMarketplaceRegistration {
+function receiptMarketplaceRegistration(receipt: TargetReceipt): ProviderMarketplaceRegistration {
   return createProviderMarketplaceRegistration({
     provider: receipt.body.provider,
     adapterProtocol: receipt.body.scope.adapterProtocol,
@@ -587,21 +776,23 @@ function receiptMarketplaceRegistration(
 }
 
 function projectionAuthorityIssue(
-  projection: AgentProviderProjection,
+  projection: AgentProviderProjection
 ): ProviderDeploymentIssue | undefined {
   const owner = projection.marketplace.identity;
   if (
-    projection.artifactAuthority.contentAuthority !== owner
-    || projection.members.some((member) =>
-      member.providerSourceIdentity !== owner
-      || member.artifactAuthority.contentAuthority !== owner)
+    projection.artifactAuthority.contentAuthority !== owner ||
+    projection.members.some(
+      (member) =>
+        member.providerSourceIdentity !== owner ||
+        member.artifactAuthority.contentAuthority !== owner
+    )
   ) {
     return issue(
       "PROJECTION_MISMATCH",
       "target.projection.authority",
       "Projection marketplace, source, and artifact authorities must bind one content owner",
       owner,
-      "mixed authority",
+      "mixed authority"
     );
   }
   return undefined;
@@ -610,27 +801,30 @@ function projectionAuthorityIssue(
 function receiptWitnessIssue(
   target: ProviderTarget,
   projection: AgentProviderProjection,
-  receipt: TargetReceipt,
+  receipt: TargetReceipt
 ): ProviderDeploymentIssue | undefined {
   const owner = projection.marketplace.identity;
   if (
-    receipt.body.provider !== target.provider
-    || receipt.body.targetDigest !== target.targetDigest
-    || receipt.body.scope.adapterProtocol !== projection.adapterProtocol
-    || receipt.body.marketplace.marketplaceIdentity !== owner
-    || receipt.body.managedMembers.some((claim) =>
-      claim.providerSourceIdentity !== owner
-      || claim.artifactAuthority.contentAuthority !== owner)
-    || receipt.body.scope.verifiedMembers.some((member) =>
-      member.providerSourceIdentity !== owner
-      || member.artifactAuthority.contentAuthority !== owner)
+    receipt.body.provider !== target.provider ||
+    receipt.body.targetDigest !== target.targetDigest ||
+    receipt.body.scope.adapterProtocol !== projection.adapterProtocol ||
+    receipt.body.marketplace.marketplaceIdentity !== owner ||
+    receipt.body.managedMembers.some(
+      (claim) =>
+        claim.providerSourceIdentity !== owner || claim.artifactAuthority.contentAuthority !== owner
+    ) ||
+    receipt.body.scope.verifiedMembers.some(
+      (member) =>
+        member.providerSourceIdentity !== owner ||
+        member.artifactAuthority.contentAuthority !== owner
+    )
   ) {
     return issue(
       "INVALID_RECEIPT",
       "target.receipt.authority",
       "Receipt provenance does not bind the selected target and content owner",
       owner,
-      receipt.body.marketplace.marketplaceIdentity,
+      receipt.body.marketplace.marketplaceIdentity
     );
   }
   try {
@@ -641,14 +835,14 @@ function receiptWitnessIssue(
         "target.receipt.marketplace",
         "Receipt marketplace state does not match its managed member claims",
         registration.projectionDigest,
-        receipt.body.marketplace.projectionDigest,
+        receipt.body.marketplace.projectionDigest
       );
     }
   } catch (error) {
     return issue(
       "INVALID_RECEIPT",
       "target.receipt.marketplace",
-      error instanceof Error ? error.message : String(error),
+      error instanceof Error ? error.message : String(error)
     );
   }
   return undefined;
@@ -660,7 +854,7 @@ function classifyForwardMarketplace(
   live: ProviderMarketplaceObservation,
   prior: ProviderMarketplaceRegistration | null,
   transition: ProviderMarketplaceRegistration,
-  final: ProviderMarketplaceRegistration,
+  final: ProviderMarketplaceRegistration
 ): Readonly<
   | { kind: "accepted"; phase: ForwardMarketplacePhase }
   | { kind: "blocked"; issue: ProviderDeploymentIssue }
@@ -684,7 +878,7 @@ function classifyForwardMarketplace(
       "target.marketplace",
       "Live marketplace is not an exact prior, transition, or final registration for this request",
       final.projectionDigest,
-      live.state.projectionDigest,
+      live.state.projectionDigest
     ),
   });
 }
@@ -692,34 +886,37 @@ function classifyForwardMarketplace(
 function forwardNativeStateIssue(
   inventory: ProviderInventory,
   projection: AgentProviderProjection,
-  phaseClaims: readonly ManagedMemberClaim[],
+  phaseClaims: readonly ManagedMemberClaim[]
 ): ProviderDeploymentIssue | undefined {
   const owner = projection.marketplace.identity;
-  const ownedStandalone = inventory.standaloneExposures.find((exposure) =>
-    exposure.providerSourceIdentity === owner);
+  const ownedStandalone = inventory.standaloneExposures.find(
+    (exposure) => exposure.providerSourceIdentity === owner
+  );
   if (ownedStandalone !== undefined) {
     return issue(
       "BLOCKED_COLLISION",
       "target.inventory.standaloneExposures",
       "Selected-owner standalone state is outside the lifecycle projection",
       "native marketplace member",
-      ownedStandalone.exposureIdentity,
+      ownedStandalone.exposureIdentity
     );
   }
-  const ownedMembers = inventory.members.filter((member) =>
-    member.providerSourceIdentity === owner
-    || member.artifactAuthority.contentAuthority === owner);
+  const ownedMembers = inventory.members.filter(
+    (member) =>
+      member.providerSourceIdentity === owner || member.artifactAuthority.contentAuthority === owner
+  );
   for (const live of ownedMembers) {
-    const related = ownedMembers.filter((candidate) =>
-      candidate.pluginId === live.pluginId
-      || candidate.nativeIdentity === live.nativeIdentity);
+    const related = ownedMembers.filter(
+      (candidate) =>
+        candidate.pluginId === live.pluginId || candidate.nativeIdentity === live.nativeIdentity
+    );
     if (related.length !== 1 || !phaseClaims.some((claim) => receiptOwnsLiveMember(live, claim))) {
       return issue(
         "BLOCKED_COLLISION",
         `target.members.${live.pluginId}`,
         "Selected-owner native state is duplicate, ambiguous, or outside the admitted forward phase",
         "exact phase member",
-        live.nativeIdentity,
+        live.nativeIdentity
       );
     }
   }
@@ -730,7 +927,7 @@ function nextManagedClaims(
   desired: readonly ProviderProjectionMember[],
   desiredProjectionDigest: ProjectionDigest,
   receipt: TargetReceipt | undefined,
-  inventory: ProviderInventory,
+  inventory: ProviderInventory
 ): Readonly<{
   claims: readonly ManagedMemberClaim[];
   issues: readonly ProviderDeploymentIssue[];
@@ -740,24 +937,28 @@ function nextManagedClaims(
   const issues: ProviderDeploymentIssue[] = [];
   for (const claim of receipt?.body.managedMembers ?? []) {
     if (desiredClaims.some((desiredClaim) => desiredClaim.pluginId === claim.pluginId)) continue;
-    const related = inventory.members.filter((live) =>
-      live.pluginId === claim.pluginId || live.nativeIdentity === claim.nativeIdentity);
-    const standalone = inventory.standaloneExposures.some((exposure) =>
-      exposure.nativeIdentity === claim.nativeIdentity);
+    const related = inventory.members.filter(
+      (live) => live.pluginId === claim.pluginId || live.nativeIdentity === claim.nativeIdentity
+    );
+    const standalone = inventory.standaloneExposures.some(
+      (exposure) => exposure.nativeIdentity === claim.nativeIdentity
+    );
     if (related.length === 0 && !standalone) continue;
     if (
-      standalone
-      || related.length !== 1
-      || !receiptOwnsLiveMember(related[0]!, claim)
-      || related[0]!.enablement !== "enabled"
+      standalone ||
+      related.length !== 1 ||
+      !receiptOwnsLiveMember(related[0]!, claim) ||
+      related[0]!.enablement !== "enabled"
     ) {
-      issues.push(issue(
-        "BLOCKED_COLLISION",
-        `target.managedMembers.${claim.pluginId}`,
-        "Preserved receipt-owned member is ambiguous or drifted",
-        claim.memberFingerprint,
-        related[0]?.memberFingerprint ?? (standalone ? "standalone exposure" : "absent"),
-      ));
+      issues.push(
+        issue(
+          "BLOCKED_COLLISION",
+          `target.managedMembers.${claim.pluginId}`,
+          "Preserved receipt-owned member is ambiguous or drifted",
+          claim.memberFingerprint,
+          related[0]?.memberFingerprint ?? (standalone ? "standalone exposure" : "absent")
+        )
+      );
       continue;
     }
     preserved.push(claim);
@@ -770,32 +971,37 @@ function nextManagedClaims(
 
 function receiptOwnsLiveMember(
   live: NativeMemberObservation,
-  claim: ManagedMemberClaim | undefined,
+  claim: ManagedMemberClaim | undefined
 ): boolean {
-  return receiptClaimsLiveIdentity(live, claim)
-    && claim?.memberFingerprint === live.memberFingerprint;
+  return (
+    receiptClaimsLiveIdentity(live, claim) && claim?.memberFingerprint === live.memberFingerprint
+  );
 }
 
 function projectionOwnsLiveMember(
   live: NativeMemberObservation,
-  desired: ProviderProjectionMember,
+  desired: ProviderProjectionMember
 ): boolean {
-  return live.pluginId === desired.pluginId
-    && live.nativeIdentity === desired.nativeIdentity
-    && live.providerSourceIdentity === desired.providerSourceIdentity
-    && sameArtifactAuthority(live.artifactAuthority, desired.artifactAuthority)
-    && live.memberFingerprint === desired.memberFingerprint;
+  return (
+    live.pluginId === desired.pluginId &&
+    live.nativeIdentity === desired.nativeIdentity &&
+    live.providerSourceIdentity === desired.providerSourceIdentity &&
+    sameArtifactAuthority(live.artifactAuthority, desired.artifactAuthority) &&
+    live.memberFingerprint === desired.memberFingerprint
+  );
 }
 
 function receiptClaimsLiveIdentity(
   live: NativeMemberObservation,
-  claim: ManagedMemberClaim | undefined,
+  claim: ManagedMemberClaim | undefined
 ): boolean {
-  return claim !== undefined
-    && claim.nativeIdentity === live.nativeIdentity
-    && claim.pluginId === live.pluginId
-    && claim.providerSourceIdentity === live.providerSourceIdentity
-    && sameArtifactAuthority(claim.artifactAuthority, live.artifactAuthority);
+  return (
+    claim !== undefined &&
+    claim.nativeIdentity === live.nativeIdentity &&
+    claim.pluginId === live.pluginId &&
+    claim.providerSourceIdentity === live.providerSourceIdentity &&
+    sameArtifactAuthority(claim.artifactAuthority, live.artifactAuthority)
+  );
 }
 
 function toVerifiedMember(member: ProviderProjectionMember): VerifiedMemberIdentity {
@@ -810,60 +1016,86 @@ function toVerifiedMember(member: ProviderProjectionMember): VerifiedMemberIdent
 
 function toManagedMember(
   member: ProviderProjectionMember,
-  sourceProjectionDigest: ProjectionDigest,
+  sourceProjectionDigest: ProjectionDigest
 ): ManagedMemberClaim {
   return Object.freeze({ ...toVerifiedMember(member), sourceProjectionDigest });
 }
 
-function blockedPlan(target: ProviderTarget, projection: AgentProviderProjection | null, issues: readonly ProviderDeploymentIssue[]): ProviderTargetPlan {
-  return Object.freeze({ target, state: "blocked", projection, steps: Object.freeze([]), issues: Object.freeze([...issues]) });
+function blockedPlan(
+  target: ProviderTarget,
+  projection: AgentProviderProjection | null,
+  issues: readonly ProviderDeploymentIssue[]
+): ProviderTargetPlan {
+  return Object.freeze({
+    target,
+    state: "blocked",
+    projection,
+    steps: Object.freeze([]),
+    issues: Object.freeze([...issues]),
+  });
 }
 
-function compareNativeMembers(left: NativeMemberObservation, right: NativeMemberObservation): number {
-  return compareCanonical(left.pluginId, right.pluginId)
-    || compareCanonical(left.nativeIdentity, right.nativeIdentity)
-    || compareCanonical(left.providerSourceIdentity, right.providerSourceIdentity);
+function compareNativeMembers(
+  left: NativeMemberObservation,
+  right: NativeMemberObservation
+): number {
+  return (
+    compareCanonical(left.pluginId, right.pluginId) ||
+    compareCanonical(left.nativeIdentity, right.nativeIdentity) ||
+    compareCanonical(left.providerSourceIdentity, right.providerSourceIdentity)
+  );
 }
 
 function compareStandaloneExposures(
   left: NativeStandaloneExposureObservation,
-  right: NativeStandaloneExposureObservation,
+  right: NativeStandaloneExposureObservation
 ): number {
-  return compareCanonical(left.nativeIdentity, right.nativeIdentity)
-    || compareCanonical(left.providerSourceIdentity, right.providerSourceIdentity)
-    || compareCanonical(left.exposureIdentity, right.exposureIdentity);
+  return (
+    compareCanonical(left.nativeIdentity, right.nativeIdentity) ||
+    compareCanonical(left.providerSourceIdentity, right.providerSourceIdentity) ||
+    compareCanonical(left.exposureIdentity, right.exposureIdentity)
+  );
 }
 
 function compareClaims(left: ManagedMemberClaim, right: ManagedMemberClaim): number {
-  return compareCanonical(left.pluginId, right.pluginId) || compareCanonical(left.nativeIdentity, right.nativeIdentity);
+  return (
+    compareCanonical(left.pluginId, right.pluginId) ||
+    compareCanonical(left.nativeIdentity, right.nativeIdentity)
+  );
 }
 
 function memberConflictsWithProjection(
   live: NativeMemberObservation,
-  desired: ProviderProjectionMember,
+  desired: ProviderProjectionMember
 ): boolean {
-  return live.pluginId === desired.pluginId
-    || live.nativeIdentity === desired.nativeIdentity
-    || live.nativeIdentity === desired.visible.pluginIdentity
-    || namesOverlap(live.visibleSkills, desired.visible.skills);
+  return (
+    live.pluginId === desired.pluginId ||
+    live.nativeIdentity === desired.nativeIdentity ||
+    live.nativeIdentity === desired.visible.pluginIdentity ||
+    namesOverlap(live.visibleSkills, desired.visible.skills)
+  );
 }
 
 function memberHasProjectedIdentity(
   live: NativeMemberObservation,
-  desired: ProviderProjectionMember,
+  desired: ProviderProjectionMember
 ): boolean {
-  return live.pluginId === desired.pluginId
-    && live.nativeIdentity === desired.nativeIdentity
-    && live.providerSourceIdentity === desired.providerSourceIdentity;
+  return (
+    live.pluginId === desired.pluginId &&
+    live.nativeIdentity === desired.nativeIdentity &&
+    live.providerSourceIdentity === desired.providerSourceIdentity
+  );
 }
 
 function standaloneConflictsWithProjection(
   exposure: NativeStandaloneExposureObservation,
-  desired: ProviderProjectionMember,
+  desired: ProviderProjectionMember
 ): boolean {
-  return exposure.nativeIdentity === desired.nativeIdentity
-    || exposure.nativeIdentity === desired.visible.pluginIdentity
-    || namesOverlap(exposure.visibleSkills, desired.visible.skills);
+  return (
+    exposure.nativeIdentity === desired.nativeIdentity ||
+    exposure.nativeIdentity === desired.visible.pluginIdentity ||
+    namesOverlap(exposure.visibleSkills, desired.visible.skills)
+  );
 }
 
 function namesOverlap(left: readonly string[], right: readonly string[]): boolean {
@@ -879,15 +1111,20 @@ function artifactAuthorityValue(authority: ProviderArtifactAuthority): Canonical
   };
 }
 
-function sameArtifactAuthority(left: ProviderArtifactAuthority, right: ProviderArtifactAuthority): boolean {
-  return left.protocol === right.protocol
-    && left.contentAuthority === right.contentAuthority
-    && left.sourceCommit === right.sourceCommit;
+function sameArtifactAuthority(
+  left: ProviderArtifactAuthority,
+  right: ProviderArtifactAuthority
+): boolean {
+  return (
+    left.protocol === right.protocol &&
+    left.contentAuthority === right.contentAuthority &&
+    left.sourceCommit === right.sourceCommit
+  );
 }
 
 function projectedNativeMember(
   member: ProviderProjectionMember,
-  enablement: NativeMemberObservation["enablement"],
+  enablement: NativeMemberObservation["enablement"]
 ): NativeMemberObservation {
   return Object.freeze({
     pluginId: member.pluginId,
@@ -905,10 +1142,13 @@ function receiptSemanticsMatch(
   prior: TargetReceipt,
   marketplace: ReturnType<typeof marketplaceState>,
   scope: TargetReceiptScope,
-  managedMembers: readonly ManagedMemberClaim[],
+  managedMembers: readonly ManagedMemberClaim[]
 ): boolean {
   if (!sameMarketplaceState(prior.body.marketplace, marketplace)) return false;
-  if (canonicalDigest("scope_", receiptScopeValue(prior.body.scope)) !== canonicalDigest("scope_", receiptScopeValue(scope))) {
+  if (
+    canonicalDigest("scope_", receiptScopeValue(prior.body.scope)) !==
+    canonicalDigest("scope_", receiptScopeValue(scope))
+  ) {
     return false;
   }
   const priorMembers = [...prior.body.managedMembers].sort(compareClaims);
@@ -916,12 +1156,14 @@ function receiptSemanticsMatch(
   if (priorMembers.length !== nextMembers.length) return false;
   return priorMembers.every((member, index) => {
     const next = nextMembers[index];
-    return next !== undefined
-      && member.pluginId === next.pluginId
-      && member.nativeIdentity === next.nativeIdentity
-      && member.providerSourceIdentity === next.providerSourceIdentity
-      && sameArtifactAuthority(member.artifactAuthority, next.artifactAuthority)
-      && member.memberFingerprint === next.memberFingerprint
-      && member.sourceProjectionDigest === next.sourceProjectionDigest;
+    return (
+      next !== undefined &&
+      member.pluginId === next.pluginId &&
+      member.nativeIdentity === next.nativeIdentity &&
+      member.providerSourceIdentity === next.providerSourceIdentity &&
+      sameArtifactAuthority(member.artifactAuthority, next.artifactAuthority) &&
+      member.memberFingerprint === next.memberFingerprint &&
+      member.sourceProjectionDigest === next.sourceProjectionDigest
+    );
   });
 }

@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 import { mustExist, readFile, writeJsonIfChanged } from "./_verify-utils.mjs";
 
-const PASS_ROOT = "docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21";
+const PASS_ROOT =
+  "docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21";
 const RESULT_PATH = `${PASS_ROOT}/D4_DEDUPE_SCAN_RESULT.json`;
 
 await Promise.all([
@@ -37,7 +38,9 @@ const hasCentralizedHandlerDispatch =
   /async function handleRpcRoute\([\s\S]*rpcHandler\.handle\(/m.test(orpcSource);
 
 const stepCoverage = {
-  authGate: hasCentralizedAuthGate ? rpcHandlerCount : (orpcSource.match(/isRpcRequestAllowedWithDedupe\(/g) ?? []).length,
+  authGate: hasCentralizedAuthGate
+    ? rpcHandlerCount
+    : (orpcSource.match(/isRpcRequestAllowedWithDedupe\(/g) ?? []).length,
   contextFactory: hasCentralizedContextFactory
     ? rpcHandlerCount
     : (orpcSource.match(/const context = contextFactory\(/g) ?? []).length,
@@ -47,7 +50,9 @@ const stepCoverage = {
   contextCreatedHook: hasCentralizedContextCreatedHook
     ? rpcHandlerCount
     : (orpcSource.match(/options\.onContextCreated\?\.\(context\)/g) ?? []).length,
-  handlerDispatch: hasCentralizedHandlerDispatch ? rpcHandlerCount : (orpcSource.match(/rpcHandler\.handle\(/g) ?? []).length,
+  handlerDispatch: hasCentralizedHandlerDispatch
+    ? rpcHandlerCount
+    : (orpcSource.match(/rpcHandler\.handle\(/g) ?? []).length,
 };
 const measuredRpcMiddlewareChainDepth = [
   stepCoverage.authGate >= rpcHandlerCount ? 1 : 0,
@@ -101,7 +106,9 @@ const markerCheckIds = new Set([
   "orpc-dedupe-evaluation",
   "orpc-marker-assertions",
 ]);
-const failedMarkerCheckIds = failedChecks.filter((check) => markerCheckIds.has(check.id)).map((check) => check.id);
+const failedMarkerCheckIds = failedChecks
+  .filter((check) => markerCheckIds.has(check.id))
+  .map((check) => check.id);
 const missingExplicitMarker = failedMarkerCheckIds.length > 0;
 const triggered = heavyChainDepthCriterionMet && missingExplicitMarker;
 
@@ -134,11 +141,11 @@ if (triggered) {
   }
 } else if (!heavyChainDepthCriterionMet) {
   console.log(
-    `phase-d d4 dedupe scan: clear (measured middleware depth=${measuredRpcMiddlewareChainDepth}, threshold=${HEAVY_CHAIN_DEPTH_THRESHOLD})`,
+    `phase-d d4 dedupe scan: clear (measured middleware depth=${measuredRpcMiddlewareChainDepth}, threshold=${HEAVY_CHAIN_DEPTH_THRESHOLD})`
   );
 } else {
   console.log("phase-d d4 dedupe scan: clear");
 }
 console.log(
-  `wrote ${RESULT_PATH}${writeResult.changed ? "" : " (unchanged)"}; depth=${measuredRpcMiddlewareChainDepth}; heavyChain=${heavyChainDepthCriterionMet}; missingMarker=${missingExplicitMarker}`,
+  `wrote ${RESULT_PATH}${writeResult.changed ? "" : " (unchanged)"}; depth=${measuredRpcMiddlewareChainDepth}; heavyChain=${heavyChainDepthCriterionMet}; missingMarker=${missingExplicitMarker}`
 );

@@ -1,9 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
-import type {
-  ExecutionDescriptor,
-  WorkflowDispatcher,
-} from "@rawr/sdk/spine";
+import type { ExecutionDescriptor, WorkflowDispatcher } from "@rawr/sdk/spine";
 import {
   buildRuntimeTelemetryOtlpTracePayload,
   createDeploymentRuntimeHandoff,
@@ -47,11 +44,7 @@ interface InngestStepRunOp<T> {
 }
 
 function assertNoLiveHandles(value: unknown): void {
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
     throw new Error(`layer-disagreement proof leaked live handle: ${String(value)}`);
   }
 
@@ -85,13 +78,13 @@ function appendTelemetryRecords(
     readonly source: string;
     readonly runId: string;
     readonly events: readonly RuntimeTelemetryEventLike[];
-  },
+  }
 ) {
   records.push(
     ...projectRuntimeEventsToTelemetryRecords({
       ...input,
       startingSequence: records.length,
-    }),
+    })
   );
 }
 
@@ -139,10 +132,7 @@ function createServerInvocationContext(request: {
   };
 }
 
-function createAsyncInvocationContext(event: {
-  readonly name: string;
-  readonly data: unknown;
-}) {
+function createAsyncInvocationContext(event: { readonly name: string; readonly data: unknown }) {
   return {
     event: {
       name: event.name,
@@ -264,7 +254,7 @@ describe("phase three layer disagreement failure observation", () => {
             title: "Phase Three failure disagreement",
             secretToken: "server-request-secret",
           },
-        }),
+        })
       );
       expect(serverResult.matched).toBe(true);
       expect(serverResult.response.status).toBe(200);
@@ -272,31 +262,31 @@ describe("phase three layer disagreement failure observation", () => {
         (await serverResult.response.json()) as OrpcEncoded<RuntimeOrpcServerResponse>;
       expect(serverBody.json.status).toBe("failure");
       expect(serverBody.json.runtimeEvents.map((event) => event.name)).toContain(
-        "runtime.invoke.failure",
+        "runtime.invoke.failure"
       );
       expect(serverBody.json.adapterEvents).toContainEqual(
         expect.objectContaining({
           name: "adapter.delegate.finish",
           status: "failure",
-        }),
+        })
       );
       expect(serverBody.json.harnessRecords).toContainEqual(
         expect.objectContaining({
           phase: "harness.invoke.finished",
           status: "failure",
-        }),
+        })
       );
       expect(serverBoundary.records()).toContainEqual(
         expect.objectContaining({
           phase: "orpc.handler.finished",
           status: "failure",
-        }),
+        })
       );
       expect(serverBoundary.records()).toContainEqual(
         expect.objectContaining({
           phase: "orpc.fetch.matched",
           httpStatus: 200,
-        }),
+        })
       );
 
       const asyncResponse = await asyncBoundary.handle(
@@ -307,7 +297,7 @@ describe("phase three layer disagreement failure observation", () => {
             requestedBy: "actor-layer-disagreement",
             secretToken: "async-event-secret",
           },
-        }),
+        })
       );
       expect(asyncResponse.status).toBe(206);
       const asyncBody =
@@ -318,19 +308,19 @@ describe("phase three layer disagreement failure observation", () => {
       expect(asyncStep.name).toBe(SyncWorkItemStepRef.stepId);
       expect(asyncStep.data.status).toBe("failure");
       expect(asyncStep.data.runtimeEvents.map((event) => event.name)).toContain(
-        "runtime.invoke.failure",
+        "runtime.invoke.failure"
       );
       expect(asyncStep.data.adapterEvents).toContainEqual(
         expect.objectContaining({
           name: "adapter.delegate.finish",
           status: "failure",
-        }),
+        })
       );
       expect(asyncStep.data.harnessRecords).toContainEqual(
         expect.objectContaining({
           phase: "harness.invoke.finished",
           status: "failure",
-        }),
+        })
       );
       expect(asyncBoundary.records()).toContainEqual(
         expect.objectContaining({
@@ -339,7 +329,7 @@ describe("phase three layer disagreement failure observation", () => {
           status: "failure",
           protocolOperations: ["StepRun"],
           protocolPayloadRuntimeStatus: "failure",
-        }),
+        })
       );
 
       appendTelemetryRecords(telemetryRecords, {
@@ -387,61 +377,59 @@ describe("phase three layer disagreement failure observation", () => {
         telemetryRecords.map((record) => [
           `${record.source}:${record.name}:${record.sequence}`,
           record,
-        ]),
+        ])
       );
       expect(
         [...telemetryByName.values()].some(
           (record) =>
             record.name === "runtime.invoke.failure" &&
-            record.attributes.executionId === CreateWorkItemRef.executionId,
-        ),
+            record.attributes.executionId === CreateWorkItemRef.executionId
+        )
       ).toBe(true);
       expect(
         [...telemetryByName.values()].some(
           (record) =>
             record.source === "phase-three.layer.server.adapter" &&
             record.name === "adapter.delegate.finish" &&
-            record.attributes.status === "failure",
-        ),
+            record.attributes.status === "failure"
+        )
       ).toBe(true);
       expect(
         [...telemetryByName.values()].some(
           (record) =>
             record.source === "phase-three.layer.server.harness" &&
             record.name === "harness.invoke.finished" &&
-            record.attributes.status === "failure",
-        ),
+            record.attributes.status === "failure"
+        )
       ).toBe(true);
       expect(
         [...telemetryByName.values()].some(
           (record) =>
             record.source === "phase-three.layer.server.orpc" &&
             record.name === "orpc.handler.finished" &&
-            record.attributes.status === "failure",
-        ),
+            record.attributes.status === "failure"
+        )
       ).toBe(true);
       expect(
         [...telemetryByName.values()].some(
-          (record) =>
-            record.name === "orpc.fetch.matched" &&
-            record.attributes.httpStatus === 200,
-        ),
+          (record) => record.name === "orpc.fetch.matched" && record.attributes.httpStatus === 200
+        )
       ).toBe(true);
       expect(
         [...telemetryByName.values()].some(
           (record) =>
             record.source === "phase-three.layer.async.adapter" &&
             record.name === "adapter.delegate.finish" &&
-            record.attributes.status === "failure",
-        ),
+            record.attributes.status === "failure"
+        )
       ).toBe(true);
       expect(
         [...telemetryByName.values()].some(
           (record) =>
             record.source === "phase-three.layer.async.harness" &&
             record.name === "harness.invoke.finished" &&
-            record.attributes.status === "failure",
-        ),
+            record.attributes.status === "failure"
+        )
       ).toBe(true);
       expect(
         [...telemetryByName.values()].some(
@@ -449,8 +437,8 @@ describe("phase three layer disagreement failure observation", () => {
             record.name === "inngest.serve.responded" &&
             record.attributes.httpStatus === 206 &&
             record.attributes.status === "failure" &&
-            record.attributes.protocolPayloadRuntimeStatus === "failure",
-        ),
+            record.attributes.protocolPayloadRuntimeStatus === "failure"
+        )
       ).toBe(true);
 
       const payload = buildRuntimeTelemetryOtlpTracePayload({

@@ -1,7 +1,4 @@
-import {
-  normalizeCanonicalSyncRequest,
-  type CanonicalSyncInput,
-} from "../model/dto/mode";
+import { normalizeCanonicalSyncRequest, type CanonicalSyncInput } from "../model/dto/mode";
 import {
   canonicalMutationRecord,
   type CanonicalMutationRecord,
@@ -30,10 +27,7 @@ import type {
   ProviderMarketplaceMaterializer,
   ProviderProjectionMaterializer,
 } from "../model/repositories/state";
-import {
-  desiredForTarget,
-  resolveCanonicalOperationSelection,
-} from "./canonical-operation";
+import { desiredForTarget, resolveCanonicalOperationSelection } from "./canonical-operation";
 import { executeCanonicalConvergence } from "./canonical-convergence-executor";
 import { canonicalSyncResult } from "./procedure-result";
 
@@ -45,33 +39,32 @@ export interface CanonicalSyncDependencies {
   readonly marketplaceMaterializer: ProviderMarketplaceMaterializer;
 }
 
-export const canonicalSync = module.canonicalSync.handler(
-  async ({ context, input }) => canonicalSyncResult(executeCanonicalSync(input, {
-    currentMain: context.currentMain,
-    releases: context.releases,
-    native: context.native,
-    projectionMaterializer: context.projectionMaterializer,
-    marketplaceMaterializer: context.marketplaceMaterializer,
-  })),
+export const canonicalSync = module.canonicalSync.handler(async ({ context, input }) =>
+  canonicalSyncResult(
+    executeCanonicalSync(input, {
+      currentMain: context.currentMain,
+      releases: context.releases,
+      native: context.native,
+      projectionMaterializer: context.projectionMaterializer,
+      marketplaceMaterializer: context.marketplaceMaterializer,
+    })
+  )
 );
 
 export async function executeCanonicalSync(
   input: CanonicalSyncInput,
-  dependencies: CanonicalSyncDependencies,
+  dependencies: CanonicalSyncDependencies
 ): Promise<DeploymentResult<CanonicalSyncOutcome>> {
   const parsed = normalizeCanonicalSyncRequest(input);
   if (!parsed.ok) return parsed;
 
-  const selection = await resolveCanonicalOperationSelection(
-    parsed.value.locator,
-    dependencies,
-  );
+  const selection = await resolveCanonicalOperationSelection(parsed.value.locator, dependencies);
   if (selection.status === "BLOCKED_SELECTION") {
-    return success(aggregate(parsed.value.targets.map((target) => blocked(
-      target,
-      "BLOCKED_SELECTION",
-      selection.issues,
-    ))));
+    return success(
+      aggregate(
+        parsed.value.targets.map((target) => blocked(target, "BLOCKED_SELECTION", selection.issues))
+      )
+    );
   }
 
   const outcomes: CanonicalSyncTargetOutcome[] = [];
@@ -79,24 +72,30 @@ export async function executeCanonicalSync(
     const desired = desiredForTarget(selection.desired, target.provider);
     const capabilities = await dependencies.native.inspectCapabilities(
       target,
-      desired.projection.artifactAuthority.contentAuthority,
+      desired.projection.artifactAuthority.contentAuthority
     );
     if (!capabilities.ok) {
-      outcomes.push(blocked(
-        target,
-        hasOwnershipCollision(capabilities.issues) ? "BLOCKED_COLLISION" : "INCOMPATIBLE_PROVIDER",
-        capabilities.issues,
-      ));
+      outcomes.push(
+        blocked(
+          target,
+          hasOwnershipCollision(capabilities.issues)
+            ? "BLOCKED_COLLISION"
+            : "INCOMPATIBLE_PROVIDER",
+          capabilities.issues
+        )
+      );
       continue;
     }
     const observation = await dependencies.native.observe(
       target,
-      desired.projection.artifactAuthority.contentAuthority,
+      desired.projection.artifactAuthority.contentAuthority
     );
     if (!observation.ok) {
-      outcomes.push(hasOwnershipCollision(observation.issues)
-        ? blocked(target, "BLOCKED_COLLISION", observation.issues)
-        : failed(target, [], observation.issues));
+      outcomes.push(
+        hasOwnershipCollision(observation.issues)
+          ? blocked(target, "BLOCKED_COLLISION", observation.issues)
+          : failed(target, [], observation.issues)
+      );
       continue;
     }
 
@@ -121,10 +120,11 @@ export async function executeCanonicalSync(
 
     const execution = await executeCanonicalConvergence(plan, {
       observer: {
-        observe: async (nextTarget) => await dependencies.native.observe(
-          nextTarget,
-          desired.projection.artifactAuthority.contentAuthority,
-        ),
+        observe: async (nextTarget) =>
+          await dependencies.native.observe(
+            nextTarget,
+            desired.projection.artifactAuthority.contentAuthority
+          ),
       },
       mutator: {
         apply: async (action) => await dependencies.native.apply(action),
@@ -132,32 +132,37 @@ export async function executeCanonicalSync(
     });
     const prefix = execution.appliedPrefix.map(canonicalMutationRecord);
     if (execution.kind === "failed") {
-      outcomes.push(prefix.length === 0 && hasOwnershipCollision(execution.issues)
-        ? blocked(target, "BLOCKED_COLLISION", execution.issues)
-        : failed(target, prefix, execution.issues));
+      outcomes.push(
+        prefix.length === 0 && hasOwnershipCollision(execution.issues)
+          ? blocked(target, "BLOCKED_COLLISION", execution.issues)
+          : failed(target, prefix, execution.issues)
+      );
       continue;
     }
     if (execution.kind === "uncertain") {
-      outcomes.push(Object.freeze({
-        kind: "uncertain",
-        status: "DRIFTED",
-        target,
-        appliedPrefix: Object.freeze(prefix),
-        attempted: canonicalMutationRecord(execution.attempted),
-        lastKnown: execution.lastKnown,
-        issues: execution.issues,
-      }));
+      outcomes.push(
+        Object.freeze({
+          kind: "uncertain",
+          status: "DRIFTED",
+          target,
+          appliedPrefix: Object.freeze(prefix),
+          attempted: canonicalMutationRecord(execution.attempted),
+          lastKnown: execution.lastKnown,
+          issues: execution.issues,
+        })
+      );
       continue;
     }
     const firstApplied = prefix[0];
     if (firstApplied === undefined) {
-      const readOnly: Extract<CanonicalSyncTargetOutcome, { kind: "read-only-converged" }> = Object.freeze({
-        kind: "read-only-converged",
-        status: "CONVERGED",
-        target,
-        appliedPrefix: EMPTY,
-        issues: EMPTY,
-      });
+      const readOnly: Extract<CanonicalSyncTargetOutcome, { kind: "read-only-converged" }> =
+        Object.freeze({
+          kind: "read-only-converged",
+          status: "CONVERGED",
+          target,
+          appliedPrefix: EMPTY,
+          issues: EMPTY,
+        });
       outcomes.push(readOnly);
       continue;
     }
@@ -186,11 +191,12 @@ async function materializePlan(
   dependencies: Pick<
     CanonicalSyncDependencies,
     "marketplaceMaterializer" | "projectionMaterializer"
-  >,
+  >
 ): Promise<readonly ProviderDeploymentIssue[]> {
-  const actions = plan.steps.flatMap((step) => step.kind === "mutate" ? [step.action] : []);
-  const requiresProjection = actions.some((action) =>
-    action.kind === "SetMarketplace" || action.kind === "InstallMember");
+  const actions = plan.steps.flatMap((step) => (step.kind === "mutate" ? [step.action] : []));
+  const requiresProjection = actions.some(
+    (action) => action.kind === "SetMarketplace" || action.kind === "InstallMember"
+  );
   if (requiresProjection) {
     const projection = await dependencies.projectionMaterializer.materialize(plan.projection);
     if (!projection.ok) return projection.issues;
@@ -198,7 +204,7 @@ async function materializePlan(
   if (actions.some((action) => action.kind === "SetMarketplace")) {
     const marketplace = await dependencies.marketplaceMaterializer.materialize(
       plan.target.provider,
-      canonicalMarketplaceRegistration(plan.projection),
+      canonicalMarketplaceRegistration(plan.projection)
     );
     if (!marketplace.ok) return marketplace.issues;
   }
@@ -208,7 +214,7 @@ async function materializePlan(
 function blocked(
   target: CanonicalSyncTargetOutcome["target"],
   status: Extract<CanonicalSyncTargetOutcome, { kind: "blocked" }>["status"],
-  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>,
+  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>
 ): Extract<CanonicalSyncTargetOutcome, { kind: "blocked" }> {
   const outcome: Extract<CanonicalSyncTargetOutcome, { kind: "blocked" }> = Object.freeze({
     kind: "blocked",
@@ -220,9 +226,7 @@ function blocked(
   return outcome;
 }
 
-function isObservedPlan(
-  plan: CanonicalConvergencePlan,
-): plan is CanonicalObservedConvergencePlan {
+function isObservedPlan(plan: CanonicalConvergencePlan): plan is CanonicalObservedConvergencePlan {
   return plan.status === "CONVERGED" || plan.status === "DRIFTED";
 }
 
@@ -231,7 +235,7 @@ const EMPTY: readonly [] = Object.freeze([]);
 function failed(
   target: CanonicalSyncTargetOutcome["target"],
   appliedPrefix: readonly CanonicalMutationRecord[],
-  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>,
+  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>
 ): Extract<CanonicalSyncTargetOutcome, { kind: "failed" }> {
   return Object.freeze({
     kind: "failed",
@@ -244,19 +248,22 @@ function failed(
 
 function aggregate(targets: readonly CanonicalSyncTargetOutcome[]): CanonicalSyncOutcome {
   const issues = targets.flatMap((target) => target.issues);
-  const successes = targets.filter((target) =>
-    target.kind === "mutated" || target.kind === "read-only-converged");
-  const failures = targets.filter((target) =>
-    target.kind !== "mutated" && target.kind !== "read-only-converged");
-  const status = failures.length === 0
-    ? targets.some((target) => target.kind === "mutated")
-      ? "Mutated" as const
-      : "ReadOnlyConverged" as const
-    : successes.length > 0
-      ? "PartialFailure" as const
-      : targets.every((target) => target.kind === "blocked")
-        ? "Blocked" as const
-        : "Failed" as const;
+  const successes = targets.filter(
+    (target) => target.kind === "mutated" || target.kind === "read-only-converged"
+  );
+  const failures = targets.filter(
+    (target) => target.kind !== "mutated" && target.kind !== "read-only-converged"
+  );
+  const status =
+    failures.length === 0
+      ? targets.some((target) => target.kind === "mutated")
+        ? ("Mutated" as const)
+        : ("ReadOnlyConverged" as const)
+      : successes.length > 0
+        ? ("PartialFailure" as const)
+        : targets.every((target) => target.kind === "blocked")
+          ? ("Blocked" as const)
+          : ("Failed" as const);
   return Object.freeze({
     status,
     targets: Object.freeze([...targets]),

@@ -10,18 +10,18 @@ import {
 
 function graph(
   nodes: Record<string, string>,
-  dependencies: Record<string, readonly string[]>,
+  dependencies: Record<string, readonly string[]>
 ): unknown {
   return {
     graph: {
       nodes: Object.fromEntries(
-        Object.entries(nodes).map(([name, root]) => [name, { data: { root } }]),
+        Object.entries(nodes).map(([name, root]) => [name, { data: { root } }])
       ),
       dependencies: Object.fromEntries(
         Object.entries(dependencies).map(([name, targets]) => [
           name,
           targets.map((target) => ({ target })),
-        ]),
+        ])
       ),
     },
   };
@@ -40,7 +40,7 @@ describe("controller Nx closure", () => {
           "@rawr/cli": ["@rawr/plugin-devops"],
           "@rawr/plugin-devops": ["@rawr/core"],
           "@rawr/core": [],
-        },
+        }
       ),
       rootProjectNames: ["@rawr/cli"],
     });
@@ -63,10 +63,10 @@ describe("controller Nx closure", () => {
           {
             "@rawr/cli": ["@rawr/plugin-hello"],
             "@rawr/plugin-hello": [],
-          },
+          }
         ),
         rootProjectNames: ["@rawr/cli"],
-      }),
+      })
     ).toThrow("external fixture cannot enter");
   });
 
@@ -81,10 +81,10 @@ describe("controller Nx closure", () => {
           {
             "@rawr/cli": ["@rawr/protected-fixture"],
             "@rawr/protected-fixture": [],
-          },
+          }
         ),
         rootProjectNames: ["@rawr/cli"],
-      }),
+      })
     ).toThrow("protected project cannot enter");
   });
 
@@ -100,7 +100,7 @@ describe("controller Nx closure", () => {
       resolveControllerNxClosure({
         graph: graph({ "@rawr/cli": root }, { "@rawr/cli": [] }),
         rootProjectNames: ["@rawr/cli"],
-      }),
+      })
     ).toThrow("invalid root");
   });
 
@@ -108,12 +108,17 @@ describe("controller Nx closure", () => {
     const workspaceRoot = await realpath(await mkdtemp(join(tmpdir(), "rawr-nx-root-")));
     try {
       await mkdir(join(workspaceRoot, "packages", "real"), { recursive: true });
-      await symlink(join(workspaceRoot, "packages", "real"), join(workspaceRoot, "packages", "alias"));
+      await symlink(
+        join(workspaceRoot, "packages", "real"),
+        join(workspaceRoot, "packages", "alias")
+      );
 
-      await expect(assertCanonicalControllerNxProjectRoots({
-        workspaceRoot,
-        projects: [{ name: "@rawr/alias", root: "packages/alias" }],
-      })).rejects.toThrow("project root is an alias");
+      await expect(
+        assertCanonicalControllerNxProjectRoots({
+          workspaceRoot,
+          projects: [{ name: "@rawr/alias", root: "packages/alias" }],
+        })
+      ).rejects.toThrow("project root is an alias");
     } finally {
       await removeNxFixture(workspaceRoot);
     }
@@ -125,15 +130,15 @@ async function removeNxFixture(root: string): Promise<void> {
   const lexicalRoot = resolve(root);
   const offset = relative(canonicalTemporaryRoot, lexicalRoot);
   if (
-    dirname(lexicalRoot) !== canonicalTemporaryRoot
-    || !basename(lexicalRoot).startsWith("rawr-nx-root-")
-    || offset === ""
-    || offset === ".."
-    || offset.startsWith(`..${sep}`)
+    dirname(lexicalRoot) !== canonicalTemporaryRoot ||
+    !basename(lexicalRoot).startsWith("rawr-nx-root-") ||
+    offset === "" ||
+    offset === ".." ||
+    offset.startsWith(`..${sep}`)
   ) {
     throw new Error(`refusing unsafe Nx fixture cleanup: ${root}`);
   }
-  if (await realpath(lexicalRoot) !== lexicalRoot) {
+  if ((await realpath(lexicalRoot)) !== lexicalRoot) {
     throw new Error(`refusing aliased Nx fixture cleanup: ${root}`);
   }
   await rm(lexicalRoot, { force: true, recursive: true });

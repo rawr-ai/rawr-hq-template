@@ -46,8 +46,12 @@ describe("qualified authoring write plans", () => {
 
     expect((await executeAuthoringPlan({ plan, dryRun: true, port })).kind).toBe("AuthoringDryRun");
     await expect(fs.access(path.join(root, "a.txt"))).rejects.toThrow();
-    expect((await executeAuthoringPlan({ plan, dryRun: false, port })).kind).toBe("AuthoringAuthored");
-    expect((await executeAuthoringPlan({ plan, dryRun: false, port })).kind).toBe("AuthoringConverged");
+    expect((await executeAuthoringPlan({ plan, dryRun: false, port })).kind).toBe(
+      "AuthoringAuthored"
+    );
+    expect((await executeAuthoringPlan({ plan, dryRun: false, port })).kind).toBe(
+      "AuthoringConverged"
+    );
 
     await fs.writeFile(path.join(root, "b.txt"), "foreign\n");
     const rejected = await executeAuthoringPlan({ plan, dryRun: false, port });
@@ -117,7 +121,8 @@ describe("qualified authoring write plans", () => {
       },
       async publish(_root, write) {
         publications.push(write.relativePath);
-        if (write.relativePath === "c.txt" && failLast) return { kind: "Failed", message: "injected" };
+        if (write.relativePath === "c.txt" && failLast)
+          return { kind: "Failed", message: "injected" };
         present.add(write.relativePath);
         return { kind: "Published" };
       },
@@ -141,9 +146,15 @@ describe("qualified authoring write plans", () => {
     const root = verifiedDestinationRoot(await tempRoot());
     const outside = await tempRoot();
     await fs.symlink(outside, path.join(root, "linked"), "dir");
-    const plan = completeOrderedWritePlan(root, [qualifiedTextWrite("linked/file.txt", "blocked\n")]);
+    const plan = completeOrderedWritePlan(root, [
+      qualifiedTextWrite("linked/file.txt", "blocked\n"),
+    ]);
 
-    const result = await executeAuthoringPlan({ plan, dryRun: false, port: new NodeQualifiedWritePort() });
+    const result = await executeAuthoringPlan({
+      plan,
+      dryRun: false,
+      port: new NodeQualifiedWritePort(),
+    });
 
     expect(result).toMatchObject({
       kind: "AuthoringRejected",
@@ -171,73 +182,123 @@ describe("qualified authoring write plans", () => {
     expect(result).toMatchObject({
       kind: "AuthoringFailed",
       applied: [],
-      failure: { code: "PUBLICATION_NOT_VERIFIED", path: "a.txt", message: "verification unavailable" },
+      failure: {
+        code: "PUBLICATION_NOT_VERIFIED",
+        path: "a.txt",
+        message: "verification unavailable",
+      },
     });
   });
 });
 
 describe("qualified authoring owners", () => {
   it("reports missing Template workspace inputs at their owning boundary", () => {
-    expect(parseOfficialCommandAuthoringRequest({
-      topic: "sample", name: "inspect", workspaceCwd: "", dryRun: false,
-    })).toMatchObject({ ok: false, issues: [{ path: "workspaceCwd" }] });
+    expect(
+      parseOfficialCommandAuthoringRequest({
+        topic: "sample",
+        name: "inspect",
+        workspaceCwd: "",
+        dryRun: false,
+      })
+    ).toMatchObject({ ok: false, issues: [{ path: "workspaceCwd" }] });
   });
 
   it("creates official Template command source and behavior test under its exact owner", async () => {
     const root = verifiedDestinationRoot(await tempRoot());
-    expect(parseOfficialCommandAuthoringRequest({
-      topic: "plugins", name: "wrong-owner", workspaceCwd: root, dryRun: false,
-    }).ok).toBe(false);
-    const request = must(parseOfficialCommandAuthoringRequest({
-      topic: "sample", name: "inspect", workspaceCwd: root, dryRun: false,
-    }));
+    expect(
+      parseOfficialCommandAuthoringRequest({
+        topic: "plugins",
+        name: "wrong-owner",
+        workspaceCwd: root,
+        dryRun: false,
+      }).ok
+    ).toBe(false);
+    const request = must(
+      parseOfficialCommandAuthoringRequest({
+        topic: "sample",
+        name: "inspect",
+        workspaceCwd: root,
+        dryRun: false,
+      })
+    );
     const result = await authorOfficialCommand(request, { verifyWorkspace: async () => root });
     expect(result.kind).toBe("AuthoringAuthored");
     await fs.access(path.join(root, "apps", "cli", "src", "commands", "sample", "inspect.ts"));
-    await fs.access(path.join(root, "apps", "cli", "test", "generated", "sample", "inspect.test.ts"));
+    await fs.access(
+      path.join(root, "apps", "cli", "test", "generated", "sample", "inspect.test.ts")
+    );
     const firstSnapshot = await treeSnapshot(root);
-    expect((await authorOfficialCommand(request, { verifyWorkspace: async () => root })).kind)
-      .toBe("AuthoringConverged");
+    expect((await authorOfficialCommand(request, { verifyWorkspace: async () => root })).kind).toBe(
+      "AuthoringConverged"
+    );
     expect(await treeSnapshot(root)).toEqual(firstSnapshot);
   });
 
   it("keeps generated TypeScript identifiers valid for numeric-leading identities", async () => {
     const commandRoot = verifiedDestinationRoot(await tempRoot());
-    const commandRequest = must(parseOfficialCommandAuthoringRequest({
-      topic: "1demo", name: "inspect", workspaceCwd: commandRoot, dryRun: false,
-    }));
-    expect((await authorOfficialCommand(commandRequest, { verifyWorkspace: async () => commandRoot })).kind)
-      .toBe("AuthoringAuthored");
-    expect(await fs.readFile(
-      path.join(commandRoot, "apps", "cli", "src", "commands", "1demo", "inspect.ts"),
-      "utf8",
-    )).toContain("class Rawr1demoInspectCommand extends RawrCommand");
+    const commandRequest = must(
+      parseOfficialCommandAuthoringRequest({
+        topic: "1demo",
+        name: "inspect",
+        workspaceCwd: commandRoot,
+        dryRun: false,
+      })
+    );
+    expect(
+      (await authorOfficialCommand(commandRequest, { verifyWorkspace: async () => commandRoot }))
+        .kind
+    ).toBe("AuthoringAuthored");
+    expect(
+      await fs.readFile(
+        path.join(commandRoot, "apps", "cli", "src", "commands", "1demo", "inspect.ts"),
+        "utf8"
+      )
+    ).toContain("class Rawr1demoInspectCommand extends RawrCommand");
 
     const extensionParent = await tempRoot();
     const extensionRoot = path.join(extensionParent, "extension");
-    const extensionRequest = must(parseExternalExtensionAuthoringRequest({
-      extensionId: "123-tools", destination: extensionRoot, operatorCwd: extensionParent, dryRun: false,
-    }));
+    const extensionRequest = must(
+      parseExternalExtensionAuthoringRequest({
+        extensionId: "123-tools",
+        destination: extensionRoot,
+        operatorCwd: extensionParent,
+        dryRun: false,
+      })
+    );
     expect((await authorExternalExtension(extensionRequest)).kind).toBe("AuthoringAuthored");
-    expect(await fs.readFile(
-      path.join(extensionRoot, "src", "commands", "123-tools", "hello.ts"),
-      "utf8",
-    )).toContain("class Rawr123ToolsHello extends Command");
+    expect(
+      await fs.readFile(
+        path.join(extensionRoot, "src", "commands", "123-tools", "hello.ts"),
+        "utf8"
+      )
+    ).toContain("class Rawr123ToolsHello extends Command");
   });
 
   it("maps distinct command topic/name pairs to distinct behavior-test paths", async () => {
     const root = verifiedDestinationRoot(await tempRoot());
-    const first = must(parseOfficialCommandAuthoringRequest({
-      topic: "foo-bar", name: "baz", workspaceCwd: root, dryRun: false,
-    }));
-    const second = must(parseOfficialCommandAuthoringRequest({
-      topic: "foo", name: "bar-baz", workspaceCwd: root, dryRun: false,
-    }));
+    const first = must(
+      parseOfficialCommandAuthoringRequest({
+        topic: "foo-bar",
+        name: "baz",
+        workspaceCwd: root,
+        dryRun: false,
+      })
+    );
+    const second = must(
+      parseOfficialCommandAuthoringRequest({
+        topic: "foo",
+        name: "bar-baz",
+        workspaceCwd: root,
+        dryRun: false,
+      })
+    );
 
-    expect((await authorOfficialCommand(first, { verifyWorkspace: async () => root })).kind)
-      .toBe("AuthoringAuthored");
-    expect((await authorOfficialCommand(second, { verifyWorkspace: async () => root })).kind)
-      .toBe("AuthoringAuthored");
+    expect((await authorOfficialCommand(first, { verifyWorkspace: async () => root })).kind).toBe(
+      "AuthoringAuthored"
+    );
+    expect((await authorOfficialCommand(second, { verifyWorkspace: async () => root })).kind).toBe(
+      "AuthoringAuthored"
+    );
     await fs.access(path.join(root, "apps", "cli", "test", "generated", "foo-bar", "baz.test.ts"));
     await fs.access(path.join(root, "apps", "cli", "test", "generated", "foo", "bar-baz.test.ts"));
   });
@@ -245,11 +306,18 @@ describe("qualified authoring owners", () => {
   it("creates a portable external extension and blocks a divergent planned path", async () => {
     const parent = await tempRoot();
     const destination = path.join(parent, "extension");
-    const request = must(parseExternalExtensionAuthoringRequest({
-      extensionId: "demo-tools", destination, operatorCwd: parent, dryRun: false,
-    }));
+    const request = must(
+      parseExternalExtensionAuthoringRequest({
+        extensionId: "demo-tools",
+        destination,
+        operatorCwd: parent,
+        dryRun: false,
+      })
+    );
     expect((await authorExternalExtension(request)).kind).toBe("AuthoringAuthored");
-    const packageJson = JSON.parse(await fs.readFile(path.join(destination, "package.json"), "utf8"));
+    const packageJson = JSON.parse(
+      await fs.readFile(path.join(destination, "package.json"), "utf8")
+    );
     expect(packageJson.oclif.commands).toBe("./dist/commands");
     expect(JSON.stringify(packageJson)).not.toContain("workspace:");
     const firstSnapshot = await treeSnapshot(destination);
@@ -265,9 +333,14 @@ describe("qualified authoring owners", () => {
     await fs.mkdir(path.join(outside, "existing"));
     await fs.symlink(outside, path.join(operatorRoot, "alias"), "dir");
     const destination = path.join(operatorRoot, "alias", "existing", "extension");
-    const request = must(parseExternalExtensionAuthoringRequest({
-      extensionId: "demo-tools", destination, operatorCwd: operatorRoot, dryRun: false,
-    }));
+    const request = must(
+      parseExternalExtensionAuthoringRequest({
+        extensionId: "demo-tools",
+        destination,
+        operatorCwd: operatorRoot,
+        dryRun: false,
+      })
+    );
 
     expect(await authorExternalExtension(request)).toMatchObject({
       kind: "AuthoringRejected",
@@ -278,14 +351,19 @@ describe("qualified authoring owners", () => {
 
   it("authors content-only agent source through the versioned content-workspace interface", async () => {
     const root = verifiedDestinationRoot(await tempRoot());
-    const request = must(parseCuratedAgentPluginAuthoringRequest({
-      pluginId: "research-kit", contentWorkspace: root, dryRun: false,
-    }));
-    const verifyContentWorkspace = async () => Object.freeze({
-      protocol: CONTENT_WORKSPACE_PROTOCOL,
-      root,
-      repositoryIdentity: "rawr-ai/rawr-hq" as const,
-    });
+    const request = must(
+      parseCuratedAgentPluginAuthoringRequest({
+        pluginId: "research-kit",
+        contentWorkspace: root,
+        dryRun: false,
+      })
+    );
+    const verifyContentWorkspace = async () =>
+      Object.freeze({
+        protocol: CONTENT_WORKSPACE_PROTOCOL,
+        root,
+        repositoryIdentity: "rawr-ai/rawr-hq" as const,
+      });
     const authored = await authorCuratedAgentPlugin(request, { verifyContentWorkspace });
     expect(authored.kind).toBe("AuthoringAuthored");
     const pluginRoot = path.join(root, "plugins", "agents", "research-kit");
@@ -297,7 +375,9 @@ describe("qualified authoring owners", () => {
       "skills/research-kit/SKILL.md",
       "vendor/provenance.json",
     ]);
-    expect(JSON.parse(await fs.readFile(path.join(pluginRoot, "package.json"), "utf8"))).toMatchObject({
+    expect(
+      JSON.parse(await fs.readFile(path.join(pluginRoot, "package.json"), "utf8"))
+    ).toMatchObject({
       name: "@rawr/plugin-research-kit",
       rawr: {
         kind: "agent",
@@ -307,21 +387,28 @@ describe("qualified authoring owners", () => {
     });
     expect(files.some((file) => file.includes("release") || file.includes("provider"))).toBe(false);
     const firstSnapshot = await treeSnapshot(pluginRoot);
-    expect((await authorCuratedAgentPlugin(request, { verifyContentWorkspace })).kind).toBe("AuthoringConverged");
+    expect((await authorCuratedAgentPlugin(request, { verifyContentWorkspace })).kind).toBe(
+      "AuthoringConverged"
+    );
     expect(await treeSnapshot(pluginRoot)).toEqual(firstSnapshot);
   });
 
   it("rejects an agent plugin leaf already owned by another plugin root", async () => {
     const root = verifiedDestinationRoot(await tempRoot());
     await fs.mkdir(path.join(root, "plugins", "cli", "research-kit"), { recursive: true });
-    const request = must(parseCuratedAgentPluginAuthoringRequest({
-      pluginId: "research-kit", contentWorkspace: root, dryRun: false,
-    }));
-    const verifyContentWorkspace = async () => Object.freeze({
-      protocol: CONTENT_WORKSPACE_PROTOCOL,
-      root,
-      repositoryIdentity: "rawr-ai/rawr-hq" as const,
-    });
+    const request = must(
+      parseCuratedAgentPluginAuthoringRequest({
+        pluginId: "research-kit",
+        contentWorkspace: root,
+        dryRun: false,
+      })
+    );
+    const verifyContentWorkspace = async () =>
+      Object.freeze({
+        protocol: CONTENT_WORKSPACE_PROTOCOL,
+        root,
+        repositoryIdentity: "rawr-ai/rawr-hq" as const,
+      });
 
     expect(await authorCuratedAgentPlugin(request, { verifyContentWorkspace })).toMatchObject({
       kind: "AuthoringRejected",
@@ -372,8 +459,12 @@ describe("qualified authoring owners", () => {
     });
 
     await expect(verifyOfficialCommandTemplateWorkspace(template)).resolves.toBe(template);
-    await expect(verifyOfficialCommandTemplateWorkspace(personal)).rejects.toThrow(/exact RAWR HQ-Template/u);
-    await expect(verifyOfficialCommandTemplateWorkspace(foreign)).rejects.toThrow(/exact RAWR HQ-Template/u);
+    await expect(verifyOfficialCommandTemplateWorkspace(personal)).rejects.toThrow(
+      /exact RAWR HQ-Template/u
+    );
+    await expect(verifyOfficialCommandTemplateWorkspace(foreign)).rejects.toThrow(
+      /exact RAWR HQ-Template/u
+    );
   });
 });
 
@@ -389,10 +480,10 @@ async function removeTempRoot(root: string): Promise<void> {
   const actualParent = await fs.realpath(path.dirname(root));
   const stat = await fs.lstat(root);
   if (
-    actualParent !== expectedParent
-    || !path.basename(root).startsWith("rawr-authoring-test-")
-    || !stat.isDirectory()
-    || stat.isSymbolicLink()
+    actualParent !== expectedParent ||
+    !path.basename(root).startsWith("rawr-authoring-test-") ||
+    !stat.isDirectory() ||
+    stat.isSymbolicLink()
   ) {
     throw new Error("Refusing cleanup outside an owned authoring fixture root");
   }
@@ -430,18 +521,23 @@ async function recursiveFiles(root: string): Promise<string[]> {
   return output.sort();
 }
 
-async function gitFixture(input: Readonly<{
-  origin: string;
-  packageName: string;
-  cliPackageName?: string;
-}>): Promise<string> {
+async function gitFixture(
+  input: Readonly<{
+    origin: string;
+    packageName: string;
+    cliPackageName?: string;
+  }>
+): Promise<string> {
   const root = await tempRoot();
-  await fs.writeFile(path.join(root, "package.json"), `${JSON.stringify({ name: input.packageName })}\n`);
+  await fs.writeFile(
+    path.join(root, "package.json"),
+    `${JSON.stringify({ name: input.packageName })}\n`
+  );
   if (input.cliPackageName) {
     await fs.mkdir(path.join(root, "apps", "cli"), { recursive: true });
     await fs.writeFile(
       path.join(root, "apps", "cli", "package.json"),
-      `${JSON.stringify({ name: input.cliPackageName })}\n`,
+      `${JSON.stringify({ name: input.cliPackageName })}\n`
     );
   }
   for (const args of [
@@ -454,10 +550,17 @@ async function gitFixture(input: Readonly<{
   return root;
 }
 
-async function treeSnapshot(root: string): Promise<Readonly<Record<string, Readonly<{
-  bytes: readonly number[];
-  mtimeNs: string;
-}>>>> {
+async function treeSnapshot(root: string): Promise<
+  Readonly<
+    Record<
+      string,
+      Readonly<{
+        bytes: readonly number[];
+        mtimeNs: string;
+      }>
+    >
+  >
+> {
   const snapshot: Record<string, { bytes: readonly number[]; mtimeNs: string }> = {};
   for (const relativePath of await recursiveFiles(root)) {
     const absolutePath = path.join(root, ...relativePath.split("/"));

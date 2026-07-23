@@ -7,4 +7,3 @@ describe("ui-sdk baseline", () => {
     expect(typeof module.mount).toBe("function");
   });
 });
-

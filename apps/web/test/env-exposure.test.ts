@@ -42,4 +42,3 @@ describe("vite env hygiene", () => {
     }
   });
 });
-

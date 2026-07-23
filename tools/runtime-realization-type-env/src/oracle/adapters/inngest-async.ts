@@ -1,10 +1,7 @@
 import { Inngest } from "inngest";
 import { serve } from "inngest/bun";
 import type { AsyncStepBridgePayload } from "../../spine/artifacts";
-import type {
-  OracleHarnessRecord,
-  StartedOracleAsyncHarness,
-} from "../harnesses";
+import type { OracleHarnessRecord, StartedOracleAsyncHarness } from "../harnesses";
 import type { RuntimeSimulationEvent } from "../../runtime/process-runtime";
 import type { AdapterDelegationEvent } from "../../adapters/delegation";
 
@@ -67,7 +64,7 @@ export interface StartedRuntimeInngestAsyncBoundary {
 }
 
 function record(
-  input: Omit<RuntimeInngestAsyncBoundaryRecord, "kind">,
+  input: Omit<RuntimeInngestAsyncBoundaryRecord, "kind">
 ): RuntimeInngestAsyncBoundaryRecord {
   return {
     kind: "inngest.runtime-async-boundary-record",
@@ -105,16 +102,14 @@ interface RuntimeInngestProtocolObservation {
   readonly hasFailure: boolean;
 }
 
-function protocolPayloadRuntimeStatusFromData(
-  data: unknown,
-): "success" | "failure" | undefined {
+function protocolPayloadRuntimeStatusFromData(data: unknown): "success" | "failure" | undefined {
   if (!data || typeof data !== "object") return undefined;
   const status = (data as { readonly status?: unknown }).status;
   return status === "success" || status === "failure" ? status : undefined;
 }
 
 async function observeResponseProtocol(
-  response: Response,
+  response: Response
 ): Promise<RuntimeInngestProtocolObservation> {
   // Inngest can report step failure as protocol operations inside a 206
   // response, so boundary observations must inspect the protocol body.
@@ -141,15 +136,12 @@ async function observeResponseProtocol(
       }
 
       const dataStatus = protocolPayloadRuntimeStatusFromData(
-        (entry as { readonly data?: unknown }).data,
+        (entry as { readonly data?: unknown }).data
       );
       if (dataStatus === "failure") {
         hasFailure = true;
         protocolPayloadRuntimeStatus = "failure";
-      } else if (
-        dataStatus === "success" &&
-        protocolPayloadRuntimeStatus !== "failure"
-      ) {
+      } else if (dataStatus === "success" && protocolPayloadRuntimeStatus !== "failure") {
         protocolPayloadRuntimeStatus = "success";
       }
     }
@@ -192,7 +184,7 @@ export function mountRuntimeInngestAsyncBoundary(input: {
           boundaryId: input.boundaryId,
           phase: "inngest.handler.enter",
           executionId: input.payload.ref.executionId,
-        }),
+        })
       );
 
       if (eventName !== input.eventName) {
@@ -202,10 +194,10 @@ export function mountRuntimeInngestAsyncBoundary(input: {
             phase: "inngest.handler.failed",
             executionId: input.payload.ref.executionId,
             status: "failure",
-          }),
+          })
         );
         throw new Error(
-          `Inngest async boundary expected event ${input.eventName}, got ${eventName}`,
+          `Inngest async boundary expected event ${input.eventName}, got ${eventName}`
         );
       }
 
@@ -216,7 +208,7 @@ export function mountRuntimeInngestAsyncBoundary(input: {
             boundaryId: input.boundaryId,
             phase: "inngest.step.run",
             executionId: input.payload.ref.executionId,
-          }),
+          })
         );
 
         const result = await input.harness.runStep({
@@ -249,11 +241,11 @@ export function mountRuntimeInngestAsyncBoundary(input: {
           phase: "inngest.handler.finished",
           executionId: input.payload.ref.executionId,
           status: stepResponse.status,
-        }),
+        })
       );
 
       return stepResponse;
-    },
+    }
   );
   const handler = serve({ client, functions: [fn] });
   const absoluteFunctionId = fn.id(input.clientId);
@@ -270,9 +262,7 @@ export function mountRuntimeInngestAsyncBoundary(input: {
       return [...records];
     },
     createRequest(requestInput) {
-      const url = new URL(
-        requestInput.url ?? "http://runtime.test/api/inngest",
-      );
+      const url = new URL(requestInput.url ?? "http://runtime.test/api/inngest");
       url.searchParams.set("fnId", absoluteFunctionId);
 
       return new Request(url, {
@@ -305,7 +295,7 @@ export function mountRuntimeInngestAsyncBoundary(input: {
         record({
           boundaryId: input.boundaryId,
           phase: "inngest.serve.received",
-        }),
+        })
       );
 
       const response = await handler(request);
@@ -315,26 +305,21 @@ export function mountRuntimeInngestAsyncBoundary(input: {
           boundaryId: input.boundaryId,
           phase: "inngest.serve.responded",
           httpStatus: response.status,
-          status:
-            response.status >= 400 || protocolObservation.hasFailure
-              ? "failure"
-              : "success",
+          status: response.status >= 400 || protocolObservation.hasFailure ? "failure" : "success",
           ...(protocolObservation.protocolOperations
             ? { protocolOperations: protocolObservation.protocolOperations }
             : {}),
           ...(protocolObservation.protocolOperationStatus
             ? {
-                protocolOperationStatus:
-                  protocolObservation.protocolOperationStatus,
+                protocolOperationStatus: protocolObservation.protocolOperationStatus,
               }
             : {}),
           ...(protocolObservation.protocolPayloadRuntimeStatus
             ? {
-                protocolPayloadRuntimeStatus:
-                  protocolObservation.protocolPayloadRuntimeStatus,
+                protocolPayloadRuntimeStatus: protocolObservation.protocolPayloadRuntimeStatus,
               }
             : {}),
-        }),
+        })
       );
       return response;
     },

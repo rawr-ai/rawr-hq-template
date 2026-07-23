@@ -20,7 +20,11 @@ export type RawrRoutesOptions = {
   baseUrl?: string;
 };
 
-export const PHASE_A_HOST_MOUNT_ORDER = ["/api/inngest", "/api/workflows/<capability>/*", "/rpc + /api/orpc/*"] as const;
+export const PHASE_A_HOST_MOUNT_ORDER = [
+  "/api/inngest",
+  "/api/workflows/<capability>/*",
+  "/rpc + /api/orpc/*",
+] as const;
 
 const rawrHostAuthority = createRawrHqLegacyRouteAuthority();
 type HostWorkflowRuntimeInput = Parameters<
@@ -87,13 +91,20 @@ function normalizeSigningKey(signingKey: string): string {
 }
 
 function signIngressPayload(body: string, timestampSeconds: number, signingKey: string): string {
-  return createHmac("sha256", normalizeSigningKey(signingKey)).update(body).update(String(timestampSeconds)).digest("hex");
+  return createHmac("sha256", normalizeSigningKey(signingKey))
+    .update(body)
+    .update(String(timestampSeconds))
+    .digest("hex");
 }
 
 function signaturesMatch(expected: string, actual: string): boolean {
   const expectedHex = Buffer.from(expected, "hex");
   const actualHex = Buffer.from(actual, "hex");
-  if (expectedHex.length === 0 || actualHex.length === 0 || expectedHex.length !== actualHex.length) {
+  if (
+    expectedHex.length === 0 ||
+    actualHex.length === 0 ||
+    expectedHex.length !== actualHex.length
+  ) {
     return false;
   }
   return timingSafeEqual(expectedHex, actualHex);
@@ -192,7 +203,10 @@ export function createHostInngestBundle(input: { repoRoot: string }): HostInnges
  * - request/process materialization outside host-owned server surfaces
  * - restart authority outside `@rawr/hq-app/legacy-cutover`
  */
-export function registerRawrRoutes<TApp extends RawrServerApp>(app: TApp, opts: RawrRoutesOptions): TApp {
+export function registerRawrRoutes<TApp extends RawrServerApp>(
+  app: TApp,
+  opts: RawrRoutesOptions
+): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
   const hostLogger = createHostLoggerAdapter();
   const rawrHostSeam = rawrHostAuthority.realization;
@@ -223,7 +237,7 @@ export function registerRawrRoutes<TApp extends RawrServerApp>(app: TApp, opts: 
       }
       return hostInngest.handler(req);
     },
-    { parse: "none" },
+    { parse: "none" }
   );
 
   app.all(
@@ -231,7 +245,7 @@ export function registerRawrRoutes<TApp extends RawrServerApp>(app: TApp, opts: 
     async ({ request }) => {
       return workflowRoutes.handle(request as Request, boundaryContextDeps);
     },
-    { parse: "none" },
+    { parse: "none" }
   );
 
   registerOrpcRoutes(app, {

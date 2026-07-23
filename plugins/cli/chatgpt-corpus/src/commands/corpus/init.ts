@@ -1,7 +1,11 @@
 import path from "node:path";
 import { Args } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
-import { createCorpusClient, describeServiceError, type CorpusInitializeOptions } from "../../lib/client";
+import {
+  createCorpusClient,
+  describeServiceError,
+  type CorpusInitializeOptions,
+} from "../../lib/client";
 import { projectInitResult } from "../../lib/projection";
 
 export default class CorpusInit extends RawrCommand {
@@ -25,17 +29,16 @@ export default class CorpusInit extends RawrCommand {
       const options = {
         context: { invocation: { traceId: `corpus-init-${Date.now()}` } },
       } satisfies CorpusInitializeOptions;
-      const data = await client.workspace.initialize(
-        {},
-        options,
-      );
+      const data = await client.workspace.initialize({}, options);
       const resultData = projectInitResult(workspaceRoot, data);
       const result = this.ok(resultData);
       this.outputResult(result, {
         flags: baseFlags,
         human: () => {
           this.log(`initialized corpus workspace at ${workspaceRoot}`);
-          this.log(`created ${resultData.createdPaths.length} path(s), confirmed ${resultData.existingPaths.length} existing path(s)`);
+          this.log(
+            `created ${resultData.createdPaths.length} path(s), confirmed ${resultData.existingPaths.length} existing path(s)`
+          );
         },
       });
     } catch (error) {

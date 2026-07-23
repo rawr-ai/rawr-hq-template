@@ -1,9 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
-import type {
-  ExecutionDescriptor,
-  WorkflowDispatcher,
-} from "@rawr/sdk/spine";
+import type { ExecutionDescriptor, WorkflowDispatcher } from "@rawr/sdk/spine";
 import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
 import {
   buildRuntimeTelemetryOtlpTracePayload,
@@ -41,11 +38,7 @@ interface OrpcEncoded<T> {
 }
 
 function assertNoLiveHandles(value: unknown): void {
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
     throw new Error(`contained Elysia proof leaked live handle: ${String(value)}`);
   }
 
@@ -79,19 +72,17 @@ function appendTelemetryRecords(
     readonly source: string;
     readonly runId: string;
     readonly events: readonly RuntimeTelemetryEventLike[];
-  },
+  }
 ) {
   records.push(
     ...projectRuntimeEventsToTelemetryRecords({
       ...input,
       startingSequence: records.length,
-    }),
+    })
   );
 }
 
-function createClients(): ConstructionBoundServiceClients<
-  typeof WorkItemsServerApiServices
-> {
+function createClients(): ConstructionBoundServiceClients<typeof WorkItemsServerApiServices> {
   return {
     workItems: {
       withInvocation() {
@@ -165,9 +156,7 @@ function createInvocationContext(request: {
   };
 }
 
-function createRuntime(
-  descriptor: ExecutionDescriptor = CreateWorkItemDescriptor,
-) {
+function createRuntime(descriptor: ExecutionDescriptor = CreateWorkItemDescriptor) {
   const table = createExecutionDescriptorTable([
     {
       ref: CreateWorkItemRef,
@@ -238,11 +227,10 @@ describe("phase three contained Elysia host passage", () => {
             title: "Elysia host passage",
             secretToken: "elysia-request-secret",
           },
-        }),
+        })
       );
       expect(response.status).toBe(200);
-      const body =
-        (await response.json()) as OrpcEncoded<RuntimeOrpcServerResponse>;
+      const body = (await response.json()) as OrpcEncoded<RuntimeOrpcServerResponse>;
 
       expect(body.json.status).toBe("success");
       expect(body.json.output).toEqual({
@@ -263,7 +251,7 @@ describe("phase three contained Elysia host passage", () => {
           downstreamMatched: true,
           status: "success",
           httpStatus: 200,
-        }),
+        })
       );
       expect(serverBoundary.records().map((record) => record.phase)).toEqual([
         "orpc.fetch.received",
@@ -275,7 +263,7 @@ describe("phase three contained Elysia host passage", () => {
         expect.objectContaining({
           phase: "harness.invoke.finished",
           status: "success",
-        }),
+        })
       );
 
       const appHandledResponse = await host.app.handle(
@@ -285,7 +273,7 @@ describe("phase three contained Elysia host passage", () => {
           input: {
             title: "Elysia app direct passage",
           },
-        }),
+        })
       );
       expect(appHandledResponse.status).toBe(200);
       const appHandledBody =
@@ -297,13 +285,10 @@ describe("phase three contained Elysia host passage", () => {
         status: "open",
       });
       expect(
-        host.records().filter((record) => record.phase === "elysia.host.received")
-          .length,
+        host.records().filter((record) => record.phase === "elysia.host.received").length
       ).toBe(2);
       expect(
-        serverBoundary
-          .records()
-          .filter((record) => record.phase === "orpc.fetch.matched").length,
+        serverBoundary.records().filter((record) => record.phase === "orpc.fetch.matched").length
       ).toBe(2);
 
       appendTelemetryRecords(telemetryRecords, {
@@ -337,22 +322,21 @@ describe("phase three contained Elysia host passage", () => {
           (record) =>
             record.source === "phase-three.elysia.host" &&
             record.name === "elysia.host.delegate.finished" &&
-            record.attributes.downstreamBoundaryId === "orpc:hq:elysia-host",
-        ),
+            record.attributes.downstreamBoundaryId === "orpc:hq:elysia-host"
+        )
       ).toBe(true);
       expect(
         telemetryRecords.some(
           (record) =>
-            record.source === "phase-three.elysia.orpc" &&
-            record.name === "orpc.fetch.matched",
-        ),
+            record.source === "phase-three.elysia.orpc" && record.name === "orpc.fetch.matched"
+        )
       ).toBe(true);
       expect(
         telemetryRecords.some(
           (record) =>
             record.source === "phase-three.elysia.runtime" &&
-            record.name === "runtime.invoke.success",
-        ),
+            record.name === "runtime.invoke.success"
+        )
       ).toBe(true);
 
       const otlpPayload = buildRuntimeTelemetryOtlpTracePayload({
@@ -484,7 +468,7 @@ describe("phase three contained Elysia host passage", () => {
               input: { title: "should not delegate" },
             },
           }),
-        }),
+        })
       );
 
       expect(response.status).toBe(404);
@@ -498,12 +482,10 @@ describe("phase three contained Elysia host passage", () => {
           delegated: false,
           status: "unmatched",
           httpStatus: 404,
-        }),
+        })
       );
       expect(serverBoundary.records()).toEqual([]);
-      expect(harness.records().map((record) => record.phase)).toEqual([
-        "harness.start",
-      ]);
+      expect(harness.records().map((record) => record.phase)).toEqual(["harness.start"]);
     } finally {
       await harness.stop();
       await runtime.dispose();
@@ -543,27 +525,26 @@ describe("phase three contained Elysia host passage", () => {
             title: "runtime failure through host",
             secretToken: "elysia-runtime-request-secret",
           },
-        }),
+        })
       );
       expect(response.status).toBe(200);
-      const body =
-        (await response.json()) as OrpcEncoded<RuntimeOrpcServerResponse>;
+      const body = (await response.json()) as OrpcEncoded<RuntimeOrpcServerResponse>;
       expect(body.json.status).toBe("failure");
       expect(host.records()).toContainEqual(
         expect.objectContaining({
           phase: "elysia.host.delegate.finished",
           status: "success",
           httpStatus: 200,
-        }),
+        })
       );
       expect(serverBoundary.records()).toContainEqual(
         expect.objectContaining({
           phase: "orpc.handler.finished",
           status: "failure",
-        }),
+        })
       );
       expect(body.json.runtimeEvents.map((event) => event.name)).toContain(
-        "runtime.invoke.failure",
+        "runtime.invoke.failure"
       );
       expect(JSON.stringify(body)).not.toContain("elysia-runtime-failure-secret");
       expect(JSON.stringify(body)).not.toContain("elysia-runtime-request-secret");

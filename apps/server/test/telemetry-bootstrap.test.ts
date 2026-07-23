@@ -5,7 +5,9 @@ vi.mock("../src/rawr", () => ({
 }));
 
 describe("server telemetry bootstrap", () => {
-  it("installs telemetry before app creation and route registration", { timeout: 15000 }, async () => {
+  it("installs telemetry before app creation and route registration", {
+    timeout: 15000,
+  }, async () => {
     const { bootstrapServer } = await import("../src/bootstrap");
     const order: string[] = [];
     const app = { label: "app" } as never;
@@ -41,11 +43,7 @@ describe("server telemetry bootstrap", () => {
       },
     });
 
-    expect(order).toEqual([
-      "telemetry",
-      "create-app",
-      "register-routes",
-    ]);
+    expect(order).toEqual(["telemetry", "create-app", "register-routes"]);
     expect(bootstrapped.telemetry).toBe(telemetry);
   });
 });

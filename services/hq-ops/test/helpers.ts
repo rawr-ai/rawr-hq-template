@@ -13,7 +13,11 @@ import {
 import type { CreateClientOptions } from "../src/client";
 import type { RawrConfig } from "../src/service/modules/config/entities";
 import type { Service } from "../src/service/base";
-import type { ExecResult, HqOpsResources, SqliteDatabase } from "../src/service/common/ports/resources";
+import type {
+  ExecResult,
+  HqOpsResources,
+  SqliteDatabase,
+} from "../src/service/common/ports/resources";
 
 type ClientOptions = {
   deps?: Partial<Service["Deps"]>;
@@ -28,7 +32,11 @@ export type LogEntry = EmbeddedPlaceholderLogEntry;
 export type AnalyticsEntry = EmbeddedPlaceholderAnalyticsEntry;
 
 export async function writeRawrConfig(repoRoot: string, config: RawrConfig): Promise<void> {
-  await fs.writeFile(path.join(repoRoot, "rawr.config.ts"), `export default ${JSON.stringify(config, null, 2)};\n`, "utf8");
+  await fs.writeFile(
+    path.join(repoRoot, "rawr.config.ts"),
+    `export default ${JSON.stringify(config, null, 2)};\n`,
+    "utf8"
+  );
 }
 
 export async function writeGlobalRawrConfig(homeDir: string, config: RawrConfig): Promise<void> {
@@ -45,17 +53,21 @@ async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
     return new Database(dbPath);
   } catch {
     const mod = await import("node:sqlite");
-    const DatabaseSync = (mod as {
-      DatabaseSync: new (dbPath: string) => {
-        exec(sql: string): unknown;
-        prepare(sql: string): {
-          get(...params: unknown[]): unknown;
-          run(...params: unknown[]): unknown;
-          all(...params: unknown[]): unknown[];
+    const DatabaseSync = (
+      mod as {
+        DatabaseSync: new (
+          dbPath: string
+        ) => {
+          exec(sql: string): unknown;
+          prepare(sql: string): {
+            get(...params: unknown[]): unknown;
+            run(...params: unknown[]): unknown;
+            all(...params: unknown[]): unknown[];
+          };
+          close(): void;
         };
-        close(): void;
-      };
-    }).DatabaseSync;
+      }
+    ).DatabaseSync;
     const db = new DatabaseSync(dbPath);
     return {
       exec(sql: string) {
@@ -92,10 +104,9 @@ function emptyExecResult(): ExecResult {
   };
 }
 
-export function createTestHqOpsResources(input: {
-  homeDir?: string;
-  exec?: HqOpsResources["process"]["exec"];
-} = {}): HqOpsResources {
+export function createTestHqOpsResources(
+  input: { homeDir?: string; exec?: HqOpsResources["process"]["exec"] } = {}
+): HqOpsResources {
   const homeDir = input.homeDir ?? os.tmpdir();
 
   return {

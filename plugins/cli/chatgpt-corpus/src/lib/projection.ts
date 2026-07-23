@@ -23,7 +23,7 @@ function indexByFileId(entries: readonly FileEntry[]) {
         throw new Error("Service result included a non-string file id.");
       }
       return [entry.fileId, entry.relativePath] as const;
-    }),
+    })
   );
 }
 
@@ -34,11 +34,15 @@ function indexByDirectoryId(entries: readonly DirectoryEntry[]) {
         throw new Error("Service result included a non-string directory id.");
       }
       return [entry.directoryId, entry.relativePath] as const;
-    }),
+    })
   );
 }
 
-function requireRelativePath(map: Map<string, string>, id: string, kind: "file" | "directory"): string {
+function requireRelativePath(
+  map: Map<string, string>,
+  id: string,
+  kind: "file" | "directory"
+): string {
   const value = map.get(id);
   if (!value) {
     throw new Error(`Service result did not include expected ${kind} id: ${id}`);
@@ -46,11 +50,14 @@ function requireRelativePath(map: Map<string, string>, id: string, kind: "file" 
   return value;
 }
 
-export function projectInitResult(workspaceRoot: string, data: {
-  createdEntries: readonly string[];
-  existingEntries: readonly string[];
-  managedFiles: readonly FileEntry[];
-}) {
+export function projectInitResult(
+  workspaceRoot: string,
+  data: {
+    createdEntries: readonly string[];
+    existingEntries: readonly string[];
+    managedFiles: readonly FileEntry[];
+  }
+) {
   const files = indexByFileId(data.managedFiles);
 
   return {
@@ -58,25 +65,34 @@ export function projectInitResult(workspaceRoot: string, data: {
     createdPaths: data.createdEntries.map((entry) => resolveRelativePath(workspaceRoot, entry)),
     existingPaths: data.existingEntries.map((entry) => resolveRelativePath(workspaceRoot, entry)),
     files: {
-      readmePath: resolveRelativePath(workspaceRoot, requireRelativePath(files, "workspace-readme", "file")),
-      gitignorePath: resolveRelativePath(workspaceRoot, requireRelativePath(files, "workspace-gitignore", "file")),
+      readmePath: resolveRelativePath(
+        workspaceRoot,
+        requireRelativePath(files, "workspace-readme", "file")
+      ),
+      gitignorePath: resolveRelativePath(
+        workspaceRoot,
+        requireRelativePath(files, "workspace-gitignore", "file")
+      ),
     },
   };
 }
 
-export function projectConsolidateResult(workspaceRoot: string, data: {
-  sourceCounts: {
-    jsonConversations: number;
-    markdownDocuments: number;
-    totalSources: number;
-  };
-  familyCount: number;
-  normalizedThreadCount: number;
-  anomalyCount: number;
-  warnings: readonly string[];
-  outputDirectories: readonly DirectoryEntry[];
-  outputEntries: readonly FileEntry[];
-}) {
+export function projectConsolidateResult(
+  workspaceRoot: string,
+  data: {
+    sourceCounts: {
+      jsonConversations: number;
+      markdownDocuments: number;
+      totalSources: number;
+    };
+    familyCount: number;
+    normalizedThreadCount: number;
+    anomalyCount: number;
+    warnings: readonly string[];
+    outputDirectories: readonly DirectoryEntry[];
+    outputEntries: readonly FileEntry[];
+  }
+) {
   const files = indexByFileId(data.outputEntries);
   const directories = indexByDirectoryId(data.outputDirectories);
 
@@ -88,16 +104,31 @@ export function projectConsolidateResult(workspaceRoot: string, data: {
     anomalyCount: data.anomalyCount,
     warnings: [...data.warnings],
     outputPaths: {
-      inventory: resolveRelativePath(workspaceRoot, requireRelativePath(files, "inventory", "file")),
-      familyGraphs: resolveRelativePath(workspaceRoot, requireRelativePath(files, "familyGraphs", "file")),
-      intermediateGraph: resolveRelativePath(workspaceRoot, requireRelativePath(files, "intermediateGraph", "file")),
+      inventory: resolveRelativePath(
+        workspaceRoot,
+        requireRelativePath(files, "inventory", "file")
+      ),
+      familyGraphs: resolveRelativePath(
+        workspaceRoot,
+        requireRelativePath(files, "familyGraphs", "file")
+      ),
+      intermediateGraph: resolveRelativePath(
+        workspaceRoot,
+        requireRelativePath(files, "intermediateGraph", "file")
+      ),
       manifest: resolveRelativePath(workspaceRoot, requireRelativePath(files, "manifest", "file")),
-      reportsDir: resolveRelativePath(workspaceRoot, requireRelativePath(directories, "reports", "directory")),
+      reportsDir: resolveRelativePath(
+        workspaceRoot,
+        requireRelativePath(directories, "reports", "directory")
+      ),
       normalizedThreadsDir: resolveRelativePath(
         workspaceRoot,
-        requireRelativePath(directories, "normalizedThreads", "directory"),
+        requireRelativePath(directories, "normalizedThreads", "directory")
       ),
-      validationReport: resolveRelativePath(workspaceRoot, requireRelativePath(files, "validationReport", "file")),
+      validationReport: resolveRelativePath(
+        workspaceRoot,
+        requireRelativePath(files, "validationReport", "file")
+      ),
     },
   };
 }

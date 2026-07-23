@@ -21,10 +21,10 @@ import {
   type MechanicalEvidenceStoreFailpointEvent,
 } from "../shared/release";
 
-const EVIDENCE_NAMESPACE = Object.freeze([
-  "mechanical-evidence",
-  "sha256",
-] satisfies [string, string]);
+const EVIDENCE_NAMESPACE = Object.freeze(["mechanical-evidence", "sha256"] satisfies [
+  string,
+  string,
+]);
 
 export interface ResourceMechanicalEvidenceRepositoryOptions {
   readonly repositoryRoot: string;
@@ -33,7 +33,7 @@ export interface ResourceMechanicalEvidenceRepositoryOptions {
 
 /** Projects generic immutable evidence storage into the lifecycle evidence protocol. */
 export function createResourceMechanicalEvidenceStore(
-  binding: ResourceMechanicalEvidenceRepositoryOptions,
+  binding: ResourceMechanicalEvidenceRepositoryOptions
 ): MechanicalEvidenceStore {
   const reader = createResourceMechanicalEvidenceReader(binding);
   return Object.freeze({
@@ -41,14 +41,14 @@ export function createResourceMechanicalEvidenceStore(
     publish: (
       handle: MechanicalEvidenceHandleV1,
       bytes: Uint8Array,
-      options?: Parameters<MechanicalEvidenceStore["publish"]>[2],
+      options?: Parameters<MechanicalEvidenceStore["publish"]>[2]
     ) => publishEvidence(binding, reader, handle, bytes, options),
   });
 }
 
 /** Read-only projection for retention and governed release checks. */
 export function createResourceMechanicalEvidenceReader(
-  binding: ResourceMechanicalEvidenceRepositoryOptions,
+  binding: ResourceMechanicalEvidenceRepositoryOptions
 ): MechanicalEvidenceReader {
   return Object.freeze({
     read: (handle: MechanicalEvidenceHandleV1) => readEvidence(binding, handle),
@@ -57,12 +57,10 @@ export function createResourceMechanicalEvidenceReader(
 
 async function readEvidence(
   binding: ResourceMechanicalEvidenceRepositoryOptions,
-  handle: MechanicalEvidenceHandleV1,
+  handle: MechanicalEvidenceHandleV1
 ): Promise<MechanicalEvidenceReadResult> {
   const parsed = parseMechanicalEvidenceHandle(handle);
-  const stableHandle = parsed.ok
-    ? parsed.value
-    : createMechanicalEvidenceHandle(new Uint8Array());
+  const stableHandle = parsed.ok ? parsed.value : createMechanicalEvidenceHandle(new Uint8Array());
   if (!parsed.ok) return mismatch(stableHandle, parsed.issue);
 
   const address = addressFor(binding.repositoryRoot, stableHandle);
@@ -75,26 +73,27 @@ async function readEvidence(
   } catch (error) {
     return mismatch(stableHandle, issue("ReadFailure", errorDetail(error)));
   }
-  if (observation.kind === "Missing") return Object.freeze({ kind: "Missing", handle: stableHandle });
+  if (observation.kind === "Missing")
+    return Object.freeze({ kind: "Missing", handle: stableHandle });
   if (observation.kind === "Mismatch") {
     return mismatchFromRepository(stableHandle, observation.issues);
   }
   if (!sameAddress(observation.address, address)) {
     return mismatch(
       stableHandle,
-      issue("InvalidEntryType", "Artifact repository returned another evidence address"),
+      issue("InvalidEntryType", "Artifact repository returned another evidence address")
     );
   }
   if (observation.bytes.byteLength > MAX_MECHANICAL_EVIDENCE_BYTES) {
     return mismatch(
       stableHandle,
-      issue("EvidenceTooLarge", "Mechanical evidence exceeds its byte bound"),
+      issue("EvidenceTooLarge", "Mechanical evidence exceeds its byte bound")
     );
   }
   if (mechanicalEvidenceDigest(observation.bytes) !== stableHandle.digest) {
     return mismatch(
       stableHandle,
-      issue("DigestMismatch", "Mechanical evidence bytes do not match their handle"),
+      issue("DigestMismatch", "Mechanical evidence bytes do not match their handle")
     );
   }
   return Object.freeze({
@@ -109,12 +108,10 @@ async function publishEvidence(
   reader: MechanicalEvidenceReader,
   handle: MechanicalEvidenceHandleV1,
   bytes: Uint8Array,
-  options: Parameters<MechanicalEvidenceStore["publish"]>[2] = {},
+  options: Parameters<MechanicalEvidenceStore["publish"]>[2] = {}
 ): Promise<MechanicalEvidencePublicationResult> {
   const parsed = parseMechanicalEvidenceHandle(handle);
-  const stableHandle = parsed.ok
-    ? parsed.value
-    : createMechanicalEvidenceHandle(new Uint8Array());
+  const stableHandle = parsed.ok ? parsed.value : createMechanicalEvidenceHandle(new Uint8Array());
   if (!parsed.ok) {
     return Object.freeze({ kind: "Rejected", handle: stableHandle, failure: parsed.issue.detail });
   }
@@ -171,16 +168,17 @@ async function publishEvidence(
 }
 
 function relayPublicationEvent(
-  failpoint: (event: MechanicalEvidenceStoreFailpointEvent) => void | Promise<void>,
+  failpoint: (event: MechanicalEvidenceStoreFailpointEvent) => void | Promise<void>
 ): (event: ArtifactRepositoryPublicationEvent) => Promise<void> {
   return async (event) => {
-    const mapped: MechanicalEvidenceStoreFailpointEvent | undefined = event.kind === "AfterStagingWrite"
-      ? Object.freeze({ kind: "AfterStagingWrite" })
-      : event.kind === "BeforeNoReplacePublication"
-        ? Object.freeze({ kind: "BeforeNoReplacePublication" })
-        : event.kind === "AfterNoReplacePublication"
-          ? Object.freeze({ kind: "AfterNoReplacePublication" })
-          : undefined;
+    const mapped: MechanicalEvidenceStoreFailpointEvent | undefined =
+      event.kind === "AfterStagingWrite"
+        ? Object.freeze({ kind: "AfterStagingWrite" })
+        : event.kind === "BeforeNoReplacePublication"
+          ? Object.freeze({ kind: "BeforeNoReplacePublication" })
+          : event.kind === "AfterNoReplacePublication"
+            ? Object.freeze({ kind: "AfterNoReplacePublication" })
+            : undefined;
     if (mapped !== undefined) await failpoint(mapped);
   };
 }
@@ -189,7 +187,7 @@ async function mapPublicationResult(
   reader: MechanicalEvidenceReader,
   handle: MechanicalEvidenceHandleV1,
   publication: ResourcePublicationResult,
-  failpoint: ((event: MechanicalEvidenceStoreFailpointEvent) => void | Promise<void>) | undefined,
+  failpoint: ((event: MechanicalEvidenceStoreFailpointEvent) => void | Promise<void>) | undefined
 ): Promise<MechanicalEvidencePublicationResult> {
   if (publication.kind === "Published" || publication.kind === "ReadOnlyConverged") {
     const observed = await reader.read(handle);
@@ -217,14 +215,17 @@ async function mapPublicationResult(
     return Object.freeze({ kind: "Published", handle });
   }
   if (publication.kind === "Occupied" || publication.kind === "Rejected") {
-    const failure = publication.kind === "Occupied"
-      ? `Conflicting immutable evidence address is ${publication.observation.toLowerCase()}`
-      : publication.failure;
+    const failure =
+      publication.kind === "Occupied"
+        ? `Conflicting immutable evidence address is ${publication.observation.toLowerCase()}`
+        : publication.failure;
     return Object.freeze({
       kind: "Rejected",
       handle,
       failure,
-      ...(publication.cleanupFailure === undefined ? {} : { cleanupFailure: publication.cleanupFailure }),
+      ...(publication.cleanupFailure === undefined
+        ? {}
+        : { cleanupFailure: publication.cleanupFailure }),
     });
   }
 
@@ -234,14 +235,16 @@ async function mapPublicationResult(
     handle,
     failure: publication.failure,
     observation: observed.kind,
-    ...(publication.cleanupFailure === undefined ? {} : { cleanupFailure: publication.cleanupFailure }),
+    ...(publication.cleanupFailure === undefined
+      ? {}
+      : { cleanupFailure: publication.cleanupFailure }),
   });
 }
 
 async function classifyPublicationFailure(
   reader: MechanicalEvidenceReader,
   handle: MechanicalEvidenceHandleV1,
-  failure: string,
+  failure: string
 ): Promise<MechanicalEvidencePublicationResult> {
   const observed = await reader.read(handle);
   if (observed.kind === "Missing") return Object.freeze({ kind: "Rejected", handle, failure });
@@ -255,7 +258,7 @@ async function classifyPublicationFailure(
 
 function addressFor(
   repositoryRoot: string,
-  handle: MechanicalEvidenceHandleV1,
+  handle: MechanicalEvidenceHandleV1
 ): ArtifactObjectAddress {
   return Object.freeze({
     repositoryRoot,
@@ -266,17 +269,19 @@ function addressFor(
 
 function mismatchFromRepository(
   handle: MechanicalEvidenceHandleV1,
-  repositoryIssues: readonly [ArtifactRepositoryIssue, ...ArtifactRepositoryIssue[]],
+  repositoryIssues: readonly [ArtifactRepositoryIssue, ...ArtifactRepositoryIssue[]]
 ): MechanicalEvidenceReadResult {
-  const mapped = repositoryIssues.map((entry) => issue(
-    mapRepositoryIssueCode(entry.code),
-    entry.detail,
-  ));
+  const mapped = repositoryIssues.map((entry) =>
+    issue(mapRepositoryIssueCode(entry.code), entry.detail)
+  );
   const first = mapped[0];
   if (first === undefined) {
     return mismatch(handle, issue("ReadFailure", "Artifact repository reported no issue detail"));
   }
-  const issues: [MechanicalEvidenceIssue, ...MechanicalEvidenceIssue[]] = [first, ...mapped.slice(1)];
+  const issues: [MechanicalEvidenceIssue, ...MechanicalEvidenceIssue[]] = [
+    first,
+    ...mapped.slice(1),
+  ];
   return Object.freeze({
     kind: "Mismatch",
     handle,
@@ -284,7 +289,9 @@ function mismatchFromRepository(
   });
 }
 
-function mapRepositoryIssueCode(code: ArtifactRepositoryIssue["code"]): MechanicalEvidenceIssue["code"] {
+function mapRepositoryIssueCode(
+  code: ArtifactRepositoryIssue["code"]
+): MechanicalEvidenceIssue["code"] {
   switch (code) {
     case "UnexpectedEntry":
     case "ModeMismatch":
@@ -303,7 +310,7 @@ function mapRepositoryIssueCode(code: ArtifactRepositoryIssue["code"]): Mechanic
 
 function mismatch(
   handle: MechanicalEvidenceHandleV1,
-  first: MechanicalEvidenceIssue,
+  first: MechanicalEvidenceIssue
 ): MechanicalEvidenceReadResult {
   const issues: [MechanicalEvidenceIssue] = [first];
   return Object.freeze({
@@ -313,23 +320,27 @@ function mismatch(
   });
 }
 
-function issue(
-  code: MechanicalEvidenceIssue["code"],
-  detail: string,
-): MechanicalEvidenceIssue {
+function issue(code: MechanicalEvidenceIssue["code"], detail: string): MechanicalEvidenceIssue {
   return Object.freeze({ code, detail });
 }
 
 function sameAddress(left: ArtifactObjectAddress, right: ArtifactObjectAddress): boolean {
-  return left.repositoryRoot === right.repositoryRoot
-    && left.objectId === right.objectId
-    && left.namespace.length === right.namespace.length
-    && left.namespace.every((segment, index) => segment === right.namespace[index]);
+  return (
+    left.repositoryRoot === right.repositoryRoot &&
+    left.objectId === right.objectId &&
+    left.namespace.length === right.namespace.length &&
+    left.namespace.every((segment, index) => segment === right.namespace[index])
+  );
 }
 
 function errorDetail(error: unknown): string {
   if (error instanceof Error) return error.message;
-  if (typeof error === "object" && error !== null && "detail" in error && typeof error.detail === "string") {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "detail" in error &&
+    typeof error.detail === "string"
+  ) {
     return error.detail;
   }
   return String(error);

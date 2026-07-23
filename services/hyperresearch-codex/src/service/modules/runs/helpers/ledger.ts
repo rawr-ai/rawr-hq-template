@@ -56,7 +56,9 @@ export function createV8HyperresearchRunLedger(input: {
       status: "pending",
       tierGate: step.tierGate ?? "all",
       sourceFileName: step.fileName,
-      requiredArtifacts: step.requiredArtifacts.map((artifact) => artifact.replaceAll("${vaultTag}", input.vaultTag)),
+      requiredArtifacts: step.requiredArtifacts.map((artifact) =>
+        artifact.replaceAll("${vaultTag}", input.vaultTag)
+      ),
       artifacts: [],
     })),
     cliCalls: [],
@@ -78,7 +80,9 @@ export function createV8HyperresearchRunLedger(input: {
  * This is not a migration shim; incompatible versions fail loudly so resume
  * never proceeds against ambiguous durable state.
  */
-export function ensureV8LedgerState(ledger: HyperresearchRunLedger): asserts ledger is HyperresearchV8RunLedger {
+export function ensureV8LedgerState(
+  ledger: HyperresearchRunLedger
+): asserts ledger is HyperresearchV8RunLedger {
   if (ledger.version !== 2) {
     throw new Error(`Expected Hyperresearch V8 ledger version 2, received ${ledger.version}`);
   }
@@ -94,16 +98,20 @@ export function ensureV8LedgerState(ledger: HyperresearchRunLedger): asserts led
     job.attemptNumber ??= 1;
     job.activeAttemptId ??= job.attemptId;
     if (job.status === "complete") job.acceptedAttemptId ??= job.attemptId;
-    job.attempts ??= [{
-      attemptId: job.attemptId,
-      attemptNumber: job.attemptNumber,
-      status: job.status === "complete" ? "accepted" : job.status === "failed" ? "failed" : "pending",
-      classification: job.originalAttemptClassification ?? (job.status === "failed" ? job.failure : undefined),
-      outputPath: job.acceptedOutputPath ?? job.outputPath,
-      outputSha256: job.acceptedOutputSha256,
-      createdAt: job.createdAt,
-      completedAt: job.completedAt ?? job.acceptedAt,
-    }];
+    job.attempts ??= [
+      {
+        attemptId: job.attemptId,
+        attemptNumber: job.attemptNumber,
+        status:
+          job.status === "complete" ? "accepted" : job.status === "failed" ? "failed" : "pending",
+        classification:
+          job.originalAttemptClassification ?? (job.status === "failed" ? job.failure : undefined),
+        outputPath: job.acceptedOutputPath ?? job.outputPath,
+        outputSha256: job.acceptedOutputSha256,
+        createdAt: job.createdAt,
+        completedAt: job.completedAt ?? job.acceptedAt,
+      },
+    ];
   }
   ledger.reviewDispositions ??= [];
   ledger.reportSnapshots ??= [];
@@ -165,7 +173,9 @@ export function assertV8LedgerMatches(input: {
 }): void {
   const mismatch = (field: string, expected: string | undefined, actual: string | undefined) => {
     if (expected !== undefined && expected !== actual) {
-      throw new Error(`Cannot resume Hyperresearch V8 run with mismatched ${field}: ledger has ${actual}, received ${expected}`);
+      throw new Error(
+        `Cannot resume Hyperresearch V8 run with mismatched ${field}: ledger has ${actual}, received ${expected}`
+      );
     }
   };
   mismatch("canonicalQuery", input.canonicalQuery, input.ledger.canonicalQuery);

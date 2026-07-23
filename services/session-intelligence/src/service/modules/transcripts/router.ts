@@ -39,9 +39,20 @@ const extract = module.extract.handler(async ({ context, input, errors }) => {
     });
   }
 
-  let messages = format === "claude"
-    ? await extractClaudeMessages(context.sourceRuntime, input.path, input.options.roles, input.options.includeTools)
-    : await extractCodexMessages(context.sourceRuntime, input.path, input.options.roles, input.options.includeTools);
+  let messages =
+    format === "claude"
+      ? await extractClaudeMessages(
+          context.sourceRuntime,
+          input.path,
+          input.options.roles,
+          input.options.includeTools
+        )
+      : await extractCodexMessages(
+          context.sourceRuntime,
+          input.path,
+          input.options.roles,
+          input.options.includeTools
+        );
   if (input.options.dedupe) messages = dedupeMessages(messages);
   if (input.options.offset > 0) messages = messages.slice(input.options.offset);
   if (input.options.maxMessages > 0) messages = messages.slice(0, input.options.maxMessages);

@@ -8,15 +8,13 @@ import {
 } from "../contract";
 
 type Equal<Left, Right> =
-  (<Value>() => Value extends Left ? 1 : 2) extends
-  (<Value>() => Value extends Right ? 1 : 2)
+  (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2
     ? true
     : false;
 type Expect<Value extends true> = Value;
-export type NativeProviderFailureComesFromTypeBox = Expect<Equal<
-  NativeAgentProviderFailure,
-  Static<typeof NativeAgentProviderFailureSchema>
->>;
+export type NativeProviderFailureComesFromTypeBox = Expect<
+  Equal<NativeAgentProviderFailure, Static<typeof NativeAgentProviderFailureSchema>>
+>;
 
 const ownershipConflict: NativeAgentProviderFailure = Object.freeze({
   _tag: "NativeAgentProviderFailure",

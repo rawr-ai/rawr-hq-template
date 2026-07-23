@@ -19,15 +19,10 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [
-        "AGENTS.md",
-        "**/AGENTS.md"
-      ]
+      "patterns": ["AGENTS.md", "**/AGENTS.md"]
     }
   ],
-  "scanRoots": [
-    "."
-  ],
+  "scanRoots": ["."],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/agent-router/require_agent_router_shape/baseline.json"

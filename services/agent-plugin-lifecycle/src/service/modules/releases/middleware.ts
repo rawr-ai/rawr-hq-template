@@ -7,12 +7,8 @@ import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-works
 import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
 import type { ArtifactStore } from "../../model/dependencies/releases";
 import type { MechanicalEvidenceStore } from "../../shared/release";
-import {
-  createResourceContentWorkspaceSnapshotReader,
-} from "./repository/content-workspace";
-import {
-  createResourceStagedContentWorkspaceObservationReader,
-} from "./repository/staged-content-workspace";
+import { createResourceContentWorkspaceSnapshotReader } from "./repository/content-workspace";
+import { createResourceStagedContentWorkspaceObservationReader } from "./repository/staged-content-workspace";
 
 export const repositories = createServiceProvider<{
   deps: {
@@ -26,14 +22,16 @@ export const repositories = createServiceProvider<{
 }>().middleware<{
   releaseSource: ReturnType<typeof createResourceContentWorkspaceSnapshotReader>;
   stagedReleaseSource: ReturnType<typeof createResourceStagedContentWorkspaceObservationReader>;
-}>(async ({ context, next }) => next({
-  releaseSource: createResourceContentWorkspaceSnapshotReader({
-    contentWorkspace: context.deps.contentWorkspace,
-  }),
-  stagedReleaseSource: createResourceStagedContentWorkspaceObservationReader({
-    contentWorkspace: context.deps.contentWorkspace,
-  }),
-}));
+}>(async ({ context, next }) =>
+  next({
+    releaseSource: createResourceContentWorkspaceSnapshotReader({
+      contentWorkspace: context.deps.contentWorkspace,
+    }),
+    stagedReleaseSource: createResourceStagedContentWorkspaceObservationReader({
+      contentWorkspace: context.deps.contentWorkspace,
+    }),
+  })
+);
 
 export const observability = createServiceObservabilityMiddleware({
   spanAttributes: ({ context }) => ({

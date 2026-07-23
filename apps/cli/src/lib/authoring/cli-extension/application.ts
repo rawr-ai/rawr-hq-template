@@ -15,7 +15,7 @@ import { externalExtensionWritePlan } from "./template";
 
 export type ExternalExtensionDestinationVerifier = (
   destination: string,
-  operatorCwd: string,
+  operatorCwd: string
 ) => Promise<VerifiedDestinationRoot>;
 
 export async function authorExternalExtension(
@@ -23,12 +23,12 @@ export async function authorExternalExtension(
   dependencies: Readonly<{
     verifyDestination?: ExternalExtensionDestinationVerifier;
     port?: QualifiedWritePort;
-  }> = {},
+  }> = {}
 ): Promise<AuthoringExecutionResult> {
   try {
     const root = await (dependencies.verifyDestination ?? verifyExternalExtensionDestination)(
       request.destination,
-      request.operatorCwd,
+      request.operatorCwd
     );
     return await executeAuthoringPlan({
       plan: externalExtensionWritePlan(root, request),
@@ -36,17 +36,19 @@ export async function authorExternalExtension(
       port: dependencies.port ?? new NodeQualifiedWritePort(),
     });
   } catch (error) {
-    return rejectedAuthoringResult([Object.freeze({
-      code: "INVALID_DESTINATION",
-      path: "destination",
-      message: errorMessage(error),
-    })]);
+    return rejectedAuthoringResult([
+      Object.freeze({
+        code: "INVALID_DESTINATION",
+        path: "destination",
+        message: errorMessage(error),
+      }),
+    ]);
   }
 }
 
 export async function verifyExternalExtensionDestination(
   destination: string,
-  operatorCwd: string,
+  operatorCwd: string
 ): Promise<VerifiedDestinationRoot> {
   const root = path.resolve(destination);
   const baseline = deepestCommonAncestor(path.resolve(operatorCwd), root);
@@ -56,7 +58,9 @@ export async function verifyExternalExtensionDestination(
     try {
       const stat = await fs.lstat(existingAncestor);
       if (!stat.isDirectory() || stat.isSymbolicLink()) {
-        throw new Error("Extension destination must not cross a non-directory or symbolic-link ancestor");
+        throw new Error(
+          "Extension destination must not cross a non-directory or symbolic-link ancestor"
+        );
       }
       break;
     } catch (error) {
@@ -70,15 +74,14 @@ export async function verifyExternalExtensionDestination(
   const canonicalAncestor = await fs.realpath(existingAncestor);
   const expectedAncestor = path.resolve(
     canonicalBaseline,
-    path.relative(baseline, existingAncestor),
+    path.relative(baseline, existingAncestor)
   );
   if (canonicalAncestor !== expectedAncestor) {
-    throw new Error("Extension destination must use a canonical path without symbolic-link ancestors");
+    throw new Error(
+      "Extension destination must use a canonical path without symbolic-link ancestors"
+    );
   }
-  return verifiedDestinationRoot(path.resolve(
-    canonicalBaseline,
-    path.relative(baseline, root),
-  ));
+  return verifiedDestinationRoot(path.resolve(canonicalBaseline, path.relative(baseline, root)));
 }
 
 function deepestCommonAncestor(left: string, right: string): string {
@@ -93,10 +96,9 @@ function deepestCommonAncestor(left: string, right: string): string {
 
 function contains(parent: string, candidate: string): boolean {
   const relative = path.relative(parent, candidate);
-  return relative === "" || (
-    relative !== ".."
-    && !relative.startsWith(`..${path.sep}`)
-    && !path.isAbsolute(relative)
+  return (
+    relative === "" ||
+    (relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative))
   );
 }
 

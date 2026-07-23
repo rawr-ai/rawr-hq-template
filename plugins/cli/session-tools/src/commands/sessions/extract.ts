@@ -34,18 +34,38 @@ export default class SessionsExtract extends RawrCommand {
       multiple: true,
       default: ["user", "assistant"],
     }),
-    "include-tools": Flags.boolean({ description: "Include tool / non-dialog events", default: false }),
+    "include-tools": Flags.boolean({
+      description: "Include tool / non-dialog events",
+      default: false,
+    }),
     "no-dedupe": Flags.boolean({ description: "Disable message dedupe", default: false }),
     offset: Flags.integer({ description: "Skip this many messages", default: 0, min: 0 }),
-    "max-messages": Flags.integer({ description: "Cap messages returned (0 = unlimited)", default: 0, min: 0, max: 500_000 }),
-    "chunk-size": Flags.integer({ description: "Chunk size (0 = no chunking)", default: 0, min: 0, max: 50_000 }),
-    "chunk-overlap": Flags.integer({ description: "Chunk overlap", default: 0, min: 0, max: 50_000 }),
+    "max-messages": Flags.integer({
+      description: "Cap messages returned (0 = unlimited)",
+      default: 0,
+      min: 0,
+      max: 500_000,
+    }),
+    "chunk-size": Flags.integer({
+      description: "Chunk size (0 = no chunking)",
+      default: 0,
+      min: 0,
+      max: 50_000,
+    }),
+    "chunk-overlap": Flags.integer({
+      description: "Chunk overlap",
+      default: 0,
+      min: 0,
+      max: 50_000,
+    }),
     "chunk-output": Flags.string({
       description: "Chunk output: single stream or one file per chunk (requires --out-dir)",
       options: ["single", "split"],
       default: "single",
     }),
-    "out-dir": Flags.string({ description: "Write metadata.json + transcript file(s) to a directory" }),
+    "out-dir": Flags.string({
+      description: "Write metadata.json + transcript file(s) to a directory",
+    }),
     quiet: Flags.boolean({ description: "Suppress human output", default: false }),
   } as const;
 
@@ -66,7 +86,9 @@ export default class SessionsExtract extends RawrCommand {
     const outDir = flags["out-dir"] ? String(flags["out-dir"]) : null;
 
     if (chunkOutput === "split" && chunkSize > 0 && !outDir) {
-      const result = this.fail("--chunk-output split requires --out-dir", { code: "MISSING_OUT_DIR" });
+      const result = this.fail("--chunk-output split requires --out-dir", {
+        code: "MISSING_OUT_DIR",
+      });
       this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
@@ -98,17 +120,26 @@ export default class SessionsExtract extends RawrCommand {
           maxMessages,
         },
       },
-      extractOptions,
+      extractOptions
     );
 
     if ("error" in extracted) {
-      const result = this.fail(String(extracted.error), { code: "EXTRACT_FAILED", meta: { path: resolved.resolved.path } });
+      const result = this.fail(String(extracted.error), {
+        code: "EXTRACT_FAILED",
+        meta: { path: resolved.resolved.path },
+      });
       this.outputResult(result, { flags: baseFlags });
       this.exit(1);
       return;
     }
 
-    const outputs = buildTranscriptOutputs({ extracted, format, chunkSize, chunkOverlap, chunkOutput });
+    const outputs = buildTranscriptOutputs({
+      extracted,
+      format,
+      chunkSize,
+      chunkOverlap,
+      chunkOutput,
+    });
 
     let outFiles: string[] = [];
     if (outDir) {

@@ -18,17 +18,11 @@ export type ControllerReentryAuthority = Readonly<{
   operatorConfigHome: string | undefined;
 }>;
 
-const BUN_REENTRY_FLAGS = Object.freeze([
-  "--config=/dev/null",
-  "--no-env-file",
-  "--no-install",
-]);
+const BUN_REENTRY_FLAGS = Object.freeze(["--config=/dev/null", "--no-env-file", "--no-install"]);
 
 let verifiedAuthority: ControllerReentryAuthority | undefined;
 
-export function bindVerifiedControllerReentryAuthority(
-  input: ControllerReentryAuthority,
-): void {
+export function bindVerifiedControllerReentryAuthority(input: ControllerReentryAuthority): void {
   const authority = validateAuthority(input);
   if (verifiedAuthority !== undefined) {
     throw new Error("CONTROLLER_REENTRY_AUTHORITY_ALREADY_BOUND");
@@ -49,7 +43,8 @@ export function resolveControllerReentry(): ControllerReentry {
     "BUN_WORKSPACE",
     "NODE_OPTIONS",
     "NODE_PATH",
-  ]) delete env[name];
+  ])
+    delete env[name];
   Object.assign(env, {
     HOME: "/dev/null",
     XDG_CONFIG_HOME: "/dev/null",

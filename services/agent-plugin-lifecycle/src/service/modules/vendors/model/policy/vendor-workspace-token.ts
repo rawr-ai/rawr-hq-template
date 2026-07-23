@@ -1,9 +1,6 @@
 import type { ContentWorkspaceIdentity } from "@rawr/resource-content-workspace";
 
-import {
-  canonicalJsonLine,
-  type CanonicalJsonValue,
-} from "../../../../shared/release/canonical";
+import { canonicalJsonLine, type CanonicalJsonValue } from "../../../../shared/release/canonical";
 import { contentDigest } from "../../../../shared/release/primitives";
 import type {
   VendorDeclaredSourceObservation,
@@ -19,22 +16,24 @@ export interface VendorWorkspaceTokenInput {
 }
 
 export function vendorWorkspaceReadToken(input: VendorWorkspaceTokenInput): string {
-  return contentDigest(canonicalJsonLine({
-    contentAuthority: input.contentAuthority,
-    releaseInputContentDigest: input.releaseInputContentDigest,
-    releaseInputPath: input.releaseInputPath,
-    sources: [...input.sources]
-      .sort((left, right) => compareText(left.declaration.sourceId, right.declaration.sourceId))
-      .map(sourceTokenValue),
-    workspace: {
-      commit: input.workspaceIdentity.commit,
-      objectFormat: input.workspaceIdentity.objectFormat,
-      refName: input.workspaceIdentity.refName,
-      remoteUrls: [...input.workspaceIdentity.remoteUrls].sort(compareText),
-      root: input.workspaceIdentity.root,
-      tree: input.workspaceIdentity.tree,
-    },
-  }));
+  return contentDigest(
+    canonicalJsonLine({
+      contentAuthority: input.contentAuthority,
+      releaseInputContentDigest: input.releaseInputContentDigest,
+      releaseInputPath: input.releaseInputPath,
+      sources: [...input.sources]
+        .sort((left, right) => compareText(left.declaration.sourceId, right.declaration.sourceId))
+        .map(sourceTokenValue),
+      workspace: {
+        commit: input.workspaceIdentity.commit,
+        objectFormat: input.workspaceIdentity.objectFormat,
+        refName: input.workspaceIdentity.refName,
+        remoteUrls: [...input.workspaceIdentity.remoteUrls].sort(compareText),
+        root: input.workspaceIdentity.root,
+        tree: input.workspaceIdentity.tree,
+      },
+    })
+  );
 }
 
 function sourceTokenValue(source: VendorDeclaredSourceObservation): CanonicalJsonValue {

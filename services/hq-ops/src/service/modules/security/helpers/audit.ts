@@ -65,8 +65,14 @@ function bunAuditJsonToFindings(json: BunAuditJson): SecurityFinding[] {
   return findings;
 }
 
-export async function runBunAudit(resources: HqOpsResources, repoRoot: string): Promise<SecurityFinding[]> {
-  const result = await resources.process.exec("bun", ["audit", "--json"], { cwd: repoRoot, timeoutMs: 60_000 });
+export async function runBunAudit(
+  resources: HqOpsResources,
+  repoRoot: string
+): Promise<SecurityFinding[]> {
+  const result = await resources.process.exec("bun", ["audit", "--json"], {
+    cwd: repoRoot,
+    timeoutMs: 60_000,
+  });
   const auditOutput = `${bytesToText(result.stdout)}${bytesToText(result.stderr)}`;
   const json = parseBunAuditJsonOutput(auditOutput);
   return bunAuditJsonToFindings(json);
@@ -78,8 +84,14 @@ function parseUntrustedCount(output: string): number | null {
   return Number(match[1]);
 }
 
-export async function runBunPmUntrusted(resources: HqOpsResources, repoRoot: string): Promise<SecurityFinding | null> {
-  const result = await resources.process.exec("bun", ["pm", "untrusted"], { cwd: repoRoot, timeoutMs: 60_000 });
+export async function runBunPmUntrusted(
+  resources: HqOpsResources,
+  repoRoot: string
+): Promise<SecurityFinding | null> {
+  const result = await resources.process.exec("bun", ["pm", "untrusted"], {
+    cwd: repoRoot,
+    timeoutMs: 60_000,
+  });
   const untrustedOutput = `${bytesToText(result.stdout)}${bytesToText(result.stderr)}`.trim();
   const count = parseUntrustedCount(untrustedOutput);
 

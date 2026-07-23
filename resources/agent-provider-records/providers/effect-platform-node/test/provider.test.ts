@@ -77,19 +77,23 @@ describe("effect-platform-node agent provider records", () => {
     });
 
     await chmod(destination, 0o644);
-    const nonCanonicalRepeat = await run(resource.publishProjection({
-      address,
-      bytes,
-      maxBytes: MAX_BYTES,
-    }));
+    const nonCanonicalRepeat = await run(
+      resource.publishProjection({
+        address,
+        bytes,
+        maxBytes: MAX_BYTES,
+      })
+    );
     expect(nonCanonicalRepeat.ok).toBe(false);
     if (!nonCanonicalRepeat.ok) expect(nonCanonicalRepeat.failure.reason).toBe("Occupied");
 
-    const occupied = await run(resource.publishProjection({
-      address,
-      bytes: encoder.encode('{"projection":2}\n'),
-      maxBytes: MAX_BYTES,
-    }));
+    const occupied = await run(
+      resource.publishProjection({
+        address,
+        bytes: encoder.encode('{"projection":2}\n'),
+        maxBytes: MAX_BYTES,
+      })
+    );
     expect(occupied.ok).toBe(false);
     if (!occupied.ok) expect(occupied.failure.reason).toBe("Occupied");
     expect(new Uint8Array(await readFile(destination))).toEqual(bytes);
@@ -129,19 +133,23 @@ describe("effect-platform-node agent provider records", () => {
       mtimeMs: before.mtimeMs,
     });
 
-    const settled = await run(resource.settleTarget({
-      address,
-      planDigest: writeInput.planDigest,
-      readToken: captured.readToken,
-      captureHandle: captured.handle,
-    }));
+    const settled = await run(
+      resource.settleTarget({
+        address,
+        planDigest: writeInput.planDigest,
+        readToken: captured.readToken,
+        captureHandle: captured.handle,
+      })
+    );
     expect(settled).toMatchObject({ ok: true, value: { outcome: "Settled" } });
-    const reused = await run(resource.settleTarget({
-      address,
-      planDigest: writeInput.planDigest,
-      readToken: captured.readToken,
-      captureHandle: captured.handle,
-    }));
+    const reused = await run(
+      resource.settleTarget({
+        address,
+        planDigest: writeInput.planDigest,
+        readToken: captured.readToken,
+        captureHandle: captured.handle,
+      })
+    );
     expect(reused.ok).toBe(false);
     if (!reused.ok) expect(reused.failure.reason).toBe("HandleConsumed");
   });
@@ -157,10 +165,12 @@ describe("effect-platform-node agent provider records", () => {
       captureHandle: captured.handle,
     };
 
-    const wrongToken = await run(resource.releaseTarget({
-      ...releaseInput,
-      readToken: "wrong-read-release",
-    }));
+    const wrongToken = await run(
+      resource.releaseTarget({
+        ...releaseInput,
+        readToken: "wrong-read-release",
+      })
+    );
     expect(wrongToken.ok).toBe(false);
     if (!wrongToken.ok) expect(wrongToken.failure.reason).toBe("WrongToken");
 
@@ -176,11 +186,13 @@ describe("effect-platform-node agent provider records", () => {
     expect(repeated.ok).toBe(false);
     if (!repeated.ok) expect(repeated.failure.reason).toBe("HandleConsumed");
 
-    const writeAfterRelease = await run(resource.writeTarget({
-      ...releaseInput,
-      planDigest: "plan-after-release",
-      mutation: { kind: "Put", bytes: encoder.encode('{"identity":1}\n') },
-    }));
+    const writeAfterRelease = await run(
+      resource.writeTarget({
+        ...releaseInput,
+        planDigest: "plan-after-release",
+        mutation: { kind: "Put", bytes: encoder.encode('{"identity":1}\n') },
+      })
+    );
     expect(writeAfterRelease.ok).toBe(false);
     if (!writeAfterRelease.ok) expect(writeAfterRelease.failure.reason).toBe("HandleConsumed");
     expect(await readTarget(resource, address)).toEqual({ kind: "Absent", address });
@@ -224,12 +236,14 @@ describe("effect-platform-node agent provider records", () => {
     const address = targetAddress("Receipt", "pt1_unbound_settle");
     const captured = await capture(resource, address, "read-unbound-settle");
 
-    const manufactured = await run(resource.settleTarget({
-      address,
-      planDigest: "manufactured-plan",
-      readToken: captured.readToken,
-      captureHandle: captured.handle,
-    }));
+    const manufactured = await run(
+      resource.settleTarget({
+        address,
+        planDigest: "manufactured-plan",
+        readToken: captured.readToken,
+        captureHandle: captured.handle,
+      })
+    );
     expect(manufactured.ok).toBe(false);
     if (!manufactured.ok) expect(manufactured.failure.reason).toBe("HandleState");
 
@@ -306,10 +320,10 @@ describe("effect-platform-node agent provider records", () => {
       ...layout,
       onEvent(event: AgentProviderRecordsEvent) {
         if (
-          interruptBeforeCommit
-          && event.kind === "BeforeAtomicCommit"
-          && event.address.scope === "Target"
-          && event.address.targetKey === "pt1_partial_release"
+          interruptBeforeCommit &&
+          event.kind === "BeforeAtomicCommit" &&
+          event.address.scope === "Target" &&
+          event.address.targetKey === "pt1_partial_release"
         ) {
           interruptBeforeCommit = false;
           throw new Error("stop before partial write commit");
@@ -565,16 +579,20 @@ describe("effect-platform-node agent provider records", () => {
     const priorBytes = encoder.encode('{"generation":1}\n');
     const nextBytes = encoder.encode('{"generation":2}\n');
     await seedTarget(base, address, priorBytes, "seed-post-observation");
-    const destination = path.join(layout.targetRecordsRoot, "receipts", "pt1_post_observation.json");
+    const destination = path.join(
+      layout.targetRecordsRoot,
+      "receipts",
+      "pt1_post_observation.json"
+    );
     const parked = path.join(layout.targetRecordsRoot, "receipts", "pt1_post_observation.parked");
     let interruptPostObservation = true;
     const resource = makeAgentProviderRecordsResource({
       ...layout,
       async onEvent(event: AgentProviderRecordsEvent) {
         if (
-          interruptPostObservation
-          && event.kind === "AfterAtomicCommit"
-          && event.address.scope === "Target"
+          interruptPostObservation &&
+          event.kind === "AfterAtomicCommit" &&
+          event.address.scope === "Target"
         ) {
           interruptPostObservation = false;
           await rename(destination, parked);
@@ -611,10 +629,12 @@ describe("effect-platform-node agent provider records", () => {
     fixtureRoot = await createFixture();
     const layout = fixtureLayout(fixtureRoot.path);
     const resource = makeAgentProviderRecordsResource(layout);
-    const escaped = await run(resource.readTarget({
-      address: targetAddress("Receipt", "../escape"),
-      maxBytes: MAX_BYTES,
-    }));
+    const escaped = await run(
+      resource.readTarget({
+        address: targetAddress("Receipt", "../escape"),
+        maxBytes: MAX_BYTES,
+      })
+    );
     expect(escaped.ok).toBe(false);
     if (!escaped.ok) expect(escaped.failure.reason).toBe("InvalidInput");
     expect(await readdir(layout.controllerDataRoot)).toEqual([]);
@@ -623,10 +643,12 @@ describe("effect-platform-node agent provider records", () => {
       ...layout,
       projectionRoot: path.join(fixtureRoot.path, "outside"),
     });
-    const outsideRead = await run(outside.readProjection({
-      address: projectionAddress("Member", "pm1_member"),
-      maxBytes: MAX_BYTES,
-    }));
+    const outsideRead = await run(
+      outside.readProjection({
+        address: projectionAddress("Member", "pm1_member"),
+        maxBytes: MAX_BYTES,
+      })
+    );
     expect(outsideRead.ok).toBe(false);
     if (!outsideRead.ok) expect(outsideRead.failure.reason).toBe("InvalidInput");
 
@@ -638,10 +660,12 @@ describe("effect-platform-node agent provider records", () => {
       ...layout,
       targetRecordsRoot: aliasedTarget,
     });
-    const aliasedRead = await run(aliased.readTarget({
-      address: targetAddress("Identity", "pt1_alias"),
-      maxBytes: MAX_BYTES,
-    }));
+    const aliasedRead = await run(
+      aliased.readTarget({
+        address: targetAddress("Identity", "pt1_alias"),
+        maxBytes: MAX_BYTES,
+      })
+    );
     expect(aliasedRead.ok).toBe(false);
     if (!aliasedRead.ok) expect(aliasedRead.failure.reason).toBe("Aliased");
     expect(await readdir(actualTarget)).toEqual([]);
@@ -649,24 +673,24 @@ describe("effect-platform-node agent provider records", () => {
 
   it("refuses recursive fixture cleanup when the retained allocation identity does not match", async () => {
     fixtureRoot = await createFixture();
-    await expect(removeOwnedFixture({
-      ...fixtureRoot,
-      ino: fixtureRoot.ino + 1,
-    })).rejects.toThrow("Refusing fixture cleanup");
+    await expect(
+      removeOwnedFixture({
+        ...fixtureRoot,
+        ino: fixtureRoot.ino + 1,
+      })
+    ).rejects.toThrow("Refusing fixture cleanup");
     expect((await lstat(fixtureRoot.path)).isDirectory()).toBe(true);
   });
 });
 
-async function run<A>(
-  effect: Parameters<typeof runNodeAgentProviderRecords<A>>[0],
-) {
+async function run<A>(effect: Parameters<typeof runNodeAgentProviderRecords<A>>[0]) {
   return runNodeAgentProviderRecords(effect);
 }
 
 async function capture(
   resource: ReturnType<typeof makeAgentProviderRecordsResource>,
   address: ProviderTargetRecordAddress,
-  readToken: string,
+  readToken: string
 ) {
   const result = await run(resource.captureTarget({ address, readToken, maxBytes: MAX_BYTES }));
   if (!result.ok) throw new Error(result.failure.detail);
@@ -675,7 +699,7 @@ async function capture(
 
 async function readTarget(
   resource: ReturnType<typeof makeAgentProviderRecordsResource>,
-  address: ProviderTargetRecordAddress,
+  address: ProviderTargetRecordAddress
 ) {
   const result = await run(resource.readTarget({ address, maxBytes: MAX_BYTES }));
   if (!result.ok) throw new Error(result.failure.detail);
@@ -686,7 +710,7 @@ async function seedTarget(
   resource: ReturnType<typeof makeAgentProviderRecordsResource>,
   address: ProviderTargetRecordAddress,
   bytes: Uint8Array,
-  suffix: string,
+  suffix: string
 ): Promise<void> {
   const captured = await capture(resource, address, `read-${suffix}`);
   const input = {
@@ -704,14 +728,14 @@ async function seedTarget(
 
 function projectionAddress(
   kind: ProviderProjectionRecordAddress["kind"],
-  key: string,
+  key: string
 ): ProviderProjectionRecordAddress {
   return Object.freeze({ scope: "Projection", kind, key });
 }
 
 function targetAddress(
   kind: ProviderTargetRecordAddress["kind"],
-  targetKey: string,
+  targetKey: string
 ): ProviderTargetRecordAddress {
   return Object.freeze({ scope: "Target", kind, targetKey });
 }
@@ -738,18 +762,18 @@ function fixtureLayout(root: string) {
 async function removeOwnedFixture(allocation: OwnedFixture): Promise<void> {
   const temporaryRoot = await realpath(tmpdir());
   if (
-    path.dirname(allocation.path) !== temporaryRoot
-    || !path.basename(allocation.path).startsWith("rawr-agent-provider-records-")
+    path.dirname(allocation.path) !== temporaryRoot ||
+    !path.basename(allocation.path).startsWith("rawr-agent-provider-records-")
   ) {
     throw new Error("Refusing fixture cleanup outside the owned temporary family");
   }
   const info = await lstat(allocation.path);
   if (
-    !info.isDirectory()
-    || info.isSymbolicLink()
-    || await realpath(allocation.path) !== allocation.path
-    || info.dev !== allocation.dev
-    || info.ino !== allocation.ino
+    !info.isDirectory() ||
+    info.isSymbolicLink() ||
+    (await realpath(allocation.path)) !== allocation.path ||
+    info.dev !== allocation.dev ||
+    info.ino !== allocation.ino
   ) {
     throw new Error("Refusing fixture cleanup of a non-canonical owned directory");
   }

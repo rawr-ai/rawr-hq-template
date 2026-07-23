@@ -32,7 +32,8 @@ const pointerResult = createExactGitBlobPointer({
   path: "plugins/agents/release-input.json",
   blob,
 });
-if (!pointerResult.ok) throw new Error(`Invalid exact Git fixture: ${JSON.stringify(pointerResult.issues)}`);
+if (!pointerResult.ok)
+  throw new Error(`Invalid exact Git fixture: ${JSON.stringify(pointerResult.issues)}`);
 const pointer = pointerResult.value;
 const selection: GitBlobSelection = {
   repositoryIdentity: pointer.repositoryIdentity,
@@ -94,10 +95,11 @@ describe("resource-backed exact Git governance reader", () => {
   it("refuses an inspection race and maps a missing resource object semantically", async () => {
     const reader = createResourceExactGitReader({
       contentWorkspace: stubPort({
-        captureGitWorkspaceEvidence: async () => evidence({
-          ...anchor,
-          rootInode: "102",
-        }),
+        captureGitWorkspaceEvidence: async () =>
+          evidence({
+            ...anchor,
+            rootInode: "102",
+          }),
         readGitBlobAtPath: async () => {
           throw failure("read-git-blob-at-path", "Missing", "selected blob is absent");
         },
@@ -157,10 +159,15 @@ describe("resource-backed exact Git governance reader", () => {
       }),
     });
 
-    await expect(reader.readBlob({
-      ...locator,
-      expectedRepositoryIdentity: anotherPointerResult.value.repositoryIdentity,
-    }, selection)).resolves.toEqual({
+    await expect(
+      reader.readBlob(
+        {
+          ...locator,
+          expectedRepositoryIdentity: anotherPointerResult.value.repositoryIdentity,
+        },
+        selection
+      )
+    ).resolves.toEqual({
       ok: false,
       failure: {
         code: "WrongObject",
@@ -202,9 +209,7 @@ describe("resource-backed exact Git governance reader", () => {
   });
 });
 
-function stubPort(
-  overrides: Partial<ResourceExactGitReadPort> = {},
-): ResourceExactGitReadPort {
+function stubPort(overrides: Partial<ResourceExactGitReadPort> = {}): ResourceExactGitReadPort {
   return Object.freeze({
     inspectGitWorkspace: async () => anchor,
     captureGitWorkspaceEvidence: async () => evidence(anchor),
@@ -236,7 +241,7 @@ function evidence(closingAnchor: GitWorkspaceAnchor): GitWorkspaceEvidence {
 function failure(
   operation: ContentWorkspaceFailure["operation"],
   reason: ContentWorkspaceFailure["reason"],
-  detail: string,
+  detail: string
 ): ContentWorkspaceFailure {
   return { _tag: "ContentWorkspaceFailure", operation, reason, detail };
 }

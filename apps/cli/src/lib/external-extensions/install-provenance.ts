@@ -15,7 +15,7 @@ export function nativeInstallArtifactName(provenance: NativeInstallProvenance): 
 }
 
 export function parseNativeInstallProvenance(
-  url: string | undefined,
+  url: string | undefined
 ): NativeInstallProvenance | null {
   if (url === undefined) return null;
   let parsed: URL;
@@ -26,11 +26,10 @@ export function parseNativeInstallProvenance(
   }
   if (parsed.protocol !== "file:") return null;
   const match = ARTIFACT_NAME.exec(path.posix.basename(parsed.pathname));
-  return match
-    ? Object.freeze({ artifactSha256: match[1]!, staticFingerprint: match[2]! })
-    : null;
+  return match ? Object.freeze({ artifactSha256: match[1]!, staticFingerprint: match[2]! }) : null;
 }
 
 function requireDigest(value: string): void {
-  if (!/^[a-f0-9]{64}$/u.test(value)) throw new Error("EXTERNAL_EXTENSION_PROVENANCE_DIGEST_INVALID");
+  if (!/^[a-f0-9]{64}$/u.test(value))
+    throw new Error("EXTERNAL_EXTENSION_PROVENANCE_DIGEST_INVALID");
 }

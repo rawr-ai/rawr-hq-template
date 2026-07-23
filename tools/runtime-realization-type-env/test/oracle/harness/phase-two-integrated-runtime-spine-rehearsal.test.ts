@@ -66,11 +66,7 @@ interface InngestStepRunOp<T> {
 }
 
 function assertNoLiveHandles(value: unknown): void {
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
     throw new Error(`integrated rehearsal leaked live handle: ${String(value)}`);
   }
 
@@ -91,13 +87,11 @@ function collectFunctionPaths(value: unknown, path = "$"): string[] {
   if (!value || typeof value !== "object") return [];
 
   if (Array.isArray(value)) {
-    return value.flatMap((item, index) =>
-      collectFunctionPaths(item, `${path}[${index}]`),
-    );
+    return value.flatMap((item, index) => collectFunctionPaths(item, `${path}[${index}]`));
   }
 
   return Object.entries(value as Record<string, unknown>).flatMap(([key, entry]) =>
-    collectFunctionPaths(entry, `${path}.${key}`),
+    collectFunctionPaths(entry, `${path}.${key}`)
   );
 }
 
@@ -184,27 +178,22 @@ function deriveAndCompileSpine(): RuntimeSpineCompilation {
           ],
         },
       ],
-    }),
+    })
   );
 }
 
-function serverPayloadFrom(
-  compilation: RuntimeSpineCompilation,
-): ServerAdapterCallbackPayload {
+function serverPayloadFrom(compilation: RuntimeSpineCompilation): ServerAdapterCallbackPayload {
   const payload = compilation.adapterLoweringPlan.payloads.find(
     (entry): entry is ServerAdapterCallbackPayload =>
-      entry.kind === "adapter.server-callback-payload",
+      entry.kind === "adapter.server-callback-payload"
   );
   if (!payload) throw new Error("missing integrated server payload");
   return payload;
 }
 
-function asyncPayloadFrom(
-  compilation: RuntimeSpineCompilation,
-): AsyncStepBridgePayload {
+function asyncPayloadFrom(compilation: RuntimeSpineCompilation): AsyncStepBridgePayload {
   const payload = compilation.adapterLoweringPlan.payloads.find(
-    (entry): entry is AsyncStepBridgePayload =>
-      entry.kind === "adapter.async-step-bridge-payload",
+    (entry): entry is AsyncStepBridgePayload => entry.kind === "adapter.async-step-bridge-payload"
   );
   if (!payload) throw new Error("missing integrated async payload");
   return payload;
@@ -243,7 +232,7 @@ function createClients(): ConstructionBoundServiceClients<
 }
 
 function providerResourcesFromStartedValues(
-  startedValues: ReadonlyMap<string, unknown>,
+  startedValues: ReadonlyMap<string, unknown>
 ): readonly ContainedRuntimeResourceDefinition[] {
   return [...startedValues.values()].flatMap((started) => {
     const providerValue = started as ProviderProvisionedValue | undefined;
@@ -275,9 +264,7 @@ function workflowDispatcher(): WorkflowDispatcher {
   };
 }
 
-function createServerInvocationContext(
-  resources: readonly ContainedRuntimeResourceDefinition[],
-) {
+function createServerInvocationContext(resources: readonly ContainedRuntimeResourceDefinition[]) {
   return (request: { readonly input: unknown; readonly requestId?: string }) => ({
     input: request.input,
     context: {
@@ -300,9 +287,7 @@ function createServerInvocationContext(
   });
 }
 
-function createAsyncInvocationContext(
-  resources: readonly ContainedRuntimeResourceDefinition[],
-) {
+function createAsyncInvocationContext(resources: readonly ContainedRuntimeResourceDefinition[]) {
   return (event: { readonly name: string; readonly data: unknown }) => ({
     event: {
       name: event.name,
@@ -353,13 +338,13 @@ function appendTelemetryRecords(
     readonly source: string;
     readonly runId: string;
     readonly events: readonly RuntimeTelemetryEventLike[];
-  },
+  }
 ) {
   records.push(
     ...projectRuntimeEventsToTelemetryRecords({
       ...input,
       startingSequence: records.length,
-    }),
+    })
   );
 }
 
@@ -380,12 +365,9 @@ describe("phase two integrated runtime-spine rehearsal", () => {
       "adapter.server-callback-payload",
       "adapter.async-step-bridge-payload",
     ]);
-    expect(compilation.harnessPlans.map((plan) => plan.harness)).toEqual([
-      "server",
-      "async",
-    ]);
+    expect(compilation.harnessPlans.map((plan) => plan.harness)).toEqual(["server", "async"]);
     expect(compilation.bootgraphInput.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
-      "runtime.provider-effect-plan.lowering-reserved",
+      "runtime.provider-effect-plan.lowering-reserved"
     );
 
     if (!compilation.providerDependencyGraph) {
@@ -426,9 +408,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
       descriptorTable: compilation.registryInput.descriptorTable,
     });
     const runtime = createProcessExecutionRuntime({ registry });
-    const resources = providerResourcesFromStartedValues(
-      providerResult.startedValues(),
-    );
+    const resources = providerResourcesFromStartedValues(providerResult.startedValues());
     const serverHarness = mountOracleServerHarness({
       harnessId: "server:hq:integrated",
       runtime,
@@ -465,7 +445,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
             title: "Integrated rehearsal",
             secretToken: "integrated-server-request-secret",
           },
-        }),
+        })
       );
       expect(serverResult.response.status).toBe(200);
       const serverBody =
@@ -479,7 +459,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
             requestedBy: "actor-integrated",
             secretToken: "integrated-async-event-secret",
           },
-        }),
+        })
       );
       expect(asyncResponse.status).toBe(206);
       const asyncBody =
@@ -521,7 +501,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
           runId,
           catalog: providerResult.catalog(),
           startingSequence: telemetryRecords.length,
-        }),
+        })
       );
 
       const payload = buildRuntimeTelemetryOtlpTracePayload({
@@ -619,10 +599,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
       id: "integrated.config-resource",
       title: "Integrated config resource",
     });
-    const ConfigSchema = defineRuntimeSchema<
-      "integrated.config",
-      { readonly token: string }
-    >({
+    const ConfigSchema = defineRuntimeSchema<"integrated.config", { readonly token: string }>({
       id: "integrated.config",
       parse(value) {
         const record = value as { readonly token?: unknown } | undefined;
@@ -633,10 +610,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
       },
     });
     const buildEvents: string[] = [];
-    const Provider = defineRuntimeProvider<
-      typeof ConfigResource,
-      { readonly token: string }
-    >({
+    const Provider = defineRuntimeProvider<typeof ConfigResource, { readonly token: string }>({
       kind: "runtime.provider",
       id: "integrated.config-provider",
       title: "Integrated config provider",
@@ -682,9 +656,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
     });
     expect(providerFailure.status).toBe("failed");
     expect(buildEvents).toEqual([]);
-    expect(JSON.stringify(providerFailure.catalog)).not.toContain(
-      "invalid-provider-secret",
-    );
+    expect(JSON.stringify(providerFailure.catalog)).not.toContain("invalid-provider-secret");
     expect(JSON.stringify(trace.events)).not.toContain("invalid-provider-secret");
 
     const compilation = deriveAndCompileSpine();
@@ -726,7 +698,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
             },
           },
         }),
-      }),
+      })
     );
     expect(unmatched.matched).toBe(false);
     expect(unmatched.response.status).toBe(404);
@@ -787,7 +759,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
             },
           },
         }),
-      }),
+      })
     );
     expect(missingFunction.status).toBe(500);
     expect(asyncInvocationCount).toBe(0);
@@ -811,7 +783,7 @@ describe("phase two integrated runtime-spine rehearsal", () => {
             },
           },
         ],
-      }),
+      })
     ).toThrow("telemetry runId mismatch");
   });
 });

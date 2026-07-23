@@ -19,15 +19,10 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [
-        "plugins/cli/*/package.json",
-        "plugins/cli/*/tsconfig.json"
-      ]
+      "patterns": ["plugins/cli/*/package.json", "plugins/cli/*/tsconfig.json"]
     }
   ],
-  "scanRoots": [
-    "plugins/cli"
-  ],
+  "scanRoots": ["plugins/cli"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_plugin_configuration/baseline.json"

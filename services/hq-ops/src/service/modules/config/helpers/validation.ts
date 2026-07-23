@@ -26,7 +26,7 @@ export function formatIssues(issues: ConfigValidationIssue[]): string {
 }
 
 export function validateRawrConfig(
-  maybeConfig: unknown,
+  maybeConfig: unknown
 ): { ok: true; config: RawrConfig } | { ok: false; issues: ConfigValidationIssue[] } {
   if (!Value.Check(RawrConfigV1Schema, maybeConfig)) {
     return { ok: false, issues: formatTypeBoxIssues(maybeConfig) };
@@ -49,7 +49,10 @@ export function validateRawrConfig(
     server: cfg.server
       ? {
           ...cfg.server,
-          port: typeof cfg.server.port === "number" ? clampInt(cfg.server.port, 1, 65535) : cfg.server.port,
+          port:
+            typeof cfg.server.port === "number"
+              ? clampInt(cfg.server.port, 1, 65535)
+              : cfg.server.port,
           baseUrl: cfg.server.baseUrl,
         }
       : cfg.server,
@@ -57,7 +60,10 @@ export function validateRawrConfig(
 
   const model = normalized.journal?.semantic?.model;
   if (typeof model === "string" && model.trim().length === 0) {
-    return { ok: false, issues: [{ path: "journal.semantic.model", message: "model must be non-empty" }] };
+    return {
+      ok: false,
+      issues: [{ path: "journal.semantic.model", message: "model must be non-empty" }],
+    };
   }
 
   return { ok: true, config: normalized };

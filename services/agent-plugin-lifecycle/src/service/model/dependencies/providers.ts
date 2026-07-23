@@ -54,7 +54,9 @@ interface NativeResourceSessionBase {
   readonly home: string;
   probe(): Promise<NativeResourceCapabilityProbe>;
   listMarketplaces(): Promise<NativeResourceJsonObservation>;
-  readMarketplace(input: NativeResourceMarketplaceReadInput): Promise<NativeResourcePackageObservation>;
+  readMarketplace(
+    input: NativeResourceMarketplaceReadInput
+  ): Promise<NativeResourcePackageObservation>;
   addMarketplace(input: ArtifactTreeLocation): Promise<unknown>;
   removeMarketplace(input: Readonly<{ identity: string }>): Promise<unknown>;
   listPlugins(): Promise<NativeResourceJsonObservation>;
@@ -67,10 +69,12 @@ export interface CodexNativeResourceSession extends NativeResourceSessionBase {
   removePlugin(input: Readonly<{ selector: string }>): Promise<unknown>;
   inspectAppServer(): Promise<Readonly<{ plugins: unknown; hooks: unknown }>>;
   readConfiguration(): Promise<unknown>;
-  setMarketplaceSource(input: Readonly<{
-    identity: string;
-    source: ArtifactTreeLocation;
-  }>): Promise<unknown>;
+  setMarketplaceSource(
+    input: Readonly<{
+      identity: string;
+      source: ArtifactTreeLocation;
+    }>
+  ): Promise<unknown>;
 }
 
 export interface ClaudeNativeResourceSession extends NativeResourceSessionBase {

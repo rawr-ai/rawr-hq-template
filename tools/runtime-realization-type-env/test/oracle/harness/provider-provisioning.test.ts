@@ -1,14 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
 import { providerFx, defineRuntimeProvider } from "@rawr/sdk/runtime/providers";
-import {
-  defineRuntimeResource,
-  resourceRequirement,
-} from "@rawr/sdk/runtime/resources";
-import {
-  defineRuntimeProfile,
-  providerSelection,
-} from "@rawr/sdk/runtime/profiles";
+import { defineRuntimeResource, resourceRequirement } from "@rawr/sdk/runtime/resources";
+import { defineRuntimeProfile, providerSelection } from "@rawr/sdk/runtime/profiles";
 import { defineRuntimeSchema, type RuntimeSchema } from "@rawr/sdk/runtime/schema";
 import {
   createRuntimeBoundaryPolicy,
@@ -41,20 +35,13 @@ const ClockResource = defineRuntimeResource<"test.clock", TestClock>({
   title: "Test clock",
 });
 
-const EmailSenderResource = defineRuntimeResource<
-  "test.email-sender",
-  TestEmailSender
->({
+const EmailSenderResource = defineRuntimeResource<"test.email-sender", TestEmailSender>({
   id: "test.email-sender",
   title: "Test email sender",
 });
 
 function assertNoLiveHandles(value: unknown): void {
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
     throw new Error(`catalog leaked live handle value: ${String(value)}`);
   }
 
@@ -74,10 +61,10 @@ function assertNoLiveHandles(value: unknown): void {
 
 function providerIdsFor(
   modules: readonly RuntimeBootgraphModule[],
-  moduleIds: readonly string[],
+  moduleIds: readonly string[]
 ): readonly string[] {
   const providerByModuleId = new Map(
-    modules.map((module) => [module.id, String(module.metadata?.providerId)]),
+    modules.map((module) => [module.id, String(module.metadata?.providerId)])
   );
 
   return moduleIds.map((moduleId) => providerByModuleId.get(moduleId) ?? moduleId);
@@ -94,9 +81,7 @@ function providerTraceJson(trace: ReturnType<typeof createProviderProvisioningTr
   return JSON.stringify(trace);
 }
 
-function createEmailConfigSchema(
-  parseEvents?: string[],
-): RuntimeSchema<EmailConfig> {
+function createEmailConfigSchema(parseEvents?: string[]): RuntimeSchema<EmailConfig> {
   return defineRuntimeSchema({
     id: "test.email.config",
     parse(value) {
@@ -124,14 +109,13 @@ function emailProviderModuleId(providerId = "test.email.memory"): string {
       providerId,
       lifetime: "process",
       role: "server",
-    }),
+    })
   );
 }
 
-function createClockProvider(input: {
-  readonly events?: string[];
-  readonly releaseFails?: boolean;
-} = {}) {
+function createClockProvider(
+  input: { readonly events?: string[]; readonly releaseFails?: boolean } = {}
+) {
   return defineRuntimeProvider({
     kind: "runtime.provider",
     id: "test.clock.system",
@@ -160,16 +144,18 @@ function createClockProvider(input: {
   });
 }
 
-function createEmailProvider(input: {
-  readonly events?: string[];
-  readonly buildEvents?: string[];
-  readonly observedClock?: string[];
-  readonly observedConfig?: EmailConfig[];
-  readonly acquireFails?: boolean;
-  readonly releaseFails?: boolean;
-  readonly clockInstance?: string;
-  readonly configSchema?: RuntimeSchema<EmailConfig>;
-} = {}) {
+function createEmailProvider(
+  input: {
+    readonly events?: string[];
+    readonly buildEvents?: string[];
+    readonly observedClock?: string[];
+    readonly observedConfig?: EmailConfig[];
+    readonly acquireFails?: boolean;
+    readonly releaseFails?: boolean;
+    readonly clockInstance?: string;
+    readonly configSchema?: RuntimeSchema<EmailConfig>;
+  } = {}
+) {
   return defineRuntimeProvider<typeof EmailSenderResource, EmailConfig>({
     kind: "runtime.provider",
     id: "test.email.memory",
@@ -199,7 +185,7 @@ function createEmailProvider(input: {
           input.observedClock?.push(clock?.now().toISOString() ?? "missing");
 
           if (input.acquireFails) {
-            return yield* (Effect.fail(new Error("email acquire failed")) as never);
+            return yield* Effect.fail(new Error("email acquire failed")) as never;
           }
 
           return yield* Effect.succeed({
@@ -282,10 +268,7 @@ describe("provider provisioning lowering", () => {
       "test.clock.system",
       "test.email.memory",
     ]);
-    expect(events).toEqual([
-      "acquire:test.clock.system",
-      "acquire:test.email.memory",
-    ]);
+    expect(events).toEqual(["acquire:test.clock.system", "acquire:test.email.memory"]);
     expect(observedClock).toEqual(["1970-01-01T00:00:00.000Z"]);
 
     const startupCatalog = result.catalog();
@@ -297,10 +280,7 @@ describe("provider provisioning lowering", () => {
     assertNoLiveHandles(startupCatalog);
 
     const finalizedCatalog = await result.finalize();
-    expect(events.slice(2)).toEqual([
-      "release:test.email.memory",
-      "release:test.clock.system",
-    ]);
+    expect(events.slice(2)).toEqual(["release:test.email.memory", "release:test.clock.system"]);
     expect(providerIdsFor(modules, phasesFor(finalizedCatalog, "boot.finalize.finished"))).toEqual([
       "test.email.memory",
       "test.clock.system",
@@ -364,9 +344,7 @@ describe("provider provisioning lowering", () => {
     expect(startupCatalogJson).not.toContain("fallback-secret");
     expect(traceJson).not.toContain("module-secret");
     expect(traceJson).not.toContain("fallback-secret");
-    expect(trace.events.map((event) => event.name)).toContain(
-      "provider.config.validated",
-    );
+    expect(trace.events.map((event) => event.name)).toContain("provider.config.validated");
     assertNoLiveHandles(result.catalog());
   });
 
@@ -403,13 +381,10 @@ describe("provider provisioning lowering", () => {
     if (result.status !== "failed") return;
 
     expect(buildEvents).toEqual([]);
-    expect(events).toEqual([
-      "acquire:test.clock.system",
-      "release:test.clock.system",
-    ]);
+    expect(events).toEqual(["acquire:test.clock.system", "release:test.clock.system"]);
     expect(result.error).toBeInstanceOf(Error);
     expect(String((result.error as Error).message)).toBe(
-      "provider.config.invalid: provider test.email.memory config invalid for schema test.email.config",
+      "provider.config.invalid: provider test.email.memory config invalid for schema test.email.config"
     );
 
     const catalogJson = JSON.stringify(result.catalog);
@@ -459,17 +434,13 @@ describe("provider provisioning lowering", () => {
       providerDependencyGraph: graph,
       processId: "process-1",
     });
-    const emailModule = modules.find(
-      (module) => module.metadata?.providerId === emailProvider.id,
-    );
+    const emailModule = modules.find((module) => module.metadata?.providerId === emailProvider.id);
 
     expect(graph?.diagnostics).toEqual([]);
     expect(emailModule).toBeDefined();
     expect(emailModule?.dependencies).toHaveLength(1);
 
-    const dependencyModule = modules.find(
-      (module) => module.id === emailModule?.dependencies?.[0],
-    );
+    const dependencyModule = modules.find((module) => module.id === emailModule?.dependencies?.[0]);
 
     expect(dependencyModule?.metadata).toMatchObject({
       resourceId: ClockResource.id,
@@ -512,7 +483,7 @@ describe("provider provisioning lowering", () => {
         providerSelections: profile.providerSelections,
         providerDependencyGraph: graph,
         processId: "process-1",
-      }),
+      })
     ).toThrow("provider dependency graph has diagnostics: provider.coverage.missing");
   });
 
@@ -555,9 +526,7 @@ describe("provider provisioning lowering", () => {
       "test.clock.system",
       "test.email.memory",
     ]);
-    expect(providerIdsFor(modules, result.rollbackOrder)).toEqual([
-      "test.clock.system",
-    ]);
+    expect(providerIdsFor(modules, result.rollbackOrder)).toEqual(["test.clock.system"]);
     expect(events).toEqual([
       "acquire:test.clock.system",
       "acquire:test.email.memory",
@@ -571,8 +540,8 @@ describe("provider provisioning lowering", () => {
         (event) =>
           event.name === "boundary.policy.exit" &&
           event.attributes?.boundaryPolicy === "provider.acquire" &&
-          event.attributes?.subjectId === emailProviderModuleId(),
-      )?.attributes,
+          event.attributes?.subjectId === emailProviderModuleId()
+      )?.attributes
     ).toMatchObject({
       exit: {
         exit: "failure",
@@ -620,10 +589,7 @@ describe("provider provisioning lowering", () => {
 
     const finalizedCatalog = await result.finalize();
 
-    expect(events.slice(2)).toEqual([
-      "release:test.email.memory",
-      "release:test.clock.system",
-    ]);
+    expect(events.slice(2)).toEqual(["release:test.email.memory", "release:test.clock.system"]);
     expect(providerIdsFor(modules, phasesFor(finalizedCatalog, "boot.finalize.failed"))).toEqual([
       "test.email.memory",
     ]);
@@ -635,8 +601,8 @@ describe("provider provisioning lowering", () => {
         (event) =>
           event.name === "boundary.policy.exit" &&
           event.attributes?.boundaryPolicy === "provider.release" &&
-          event.attributes?.subjectId === emailProviderModuleId(),
-      )?.attributes,
+          event.attributes?.subjectId === emailProviderModuleId()
+      )?.attributes
     ).toMatchObject({
       exit: {
         exit: "failure",
@@ -686,9 +652,7 @@ describe("provider provisioning lowering", () => {
 
     await result.finalize();
 
-    const policyEvents = trace.events.filter((event) =>
-      event.name.startsWith("boundary.policy."),
-    );
+    const policyEvents = trace.events.filter((event) => event.name.startsWith("boundary.policy."));
     expect(policyEvents.map((event) => event.name)).toEqual([
       "boundary.policy.enter",
       "boundary.policy.exit",
@@ -699,12 +663,12 @@ describe("provider provisioning lowering", () => {
       "boundary.policy.enter",
       "boundary.policy.exit",
     ]);
-    expect(
-      policyEvents.map((event) => event.attributes?.boundaryPolicy),
-    ).toContain("provider.acquire");
-    expect(
-      policyEvents.map((event) => event.attributes?.boundaryPolicy),
-    ).toContain("provider.release");
+    expect(policyEvents.map((event) => event.attributes?.boundaryPolicy)).toContain(
+      "provider.acquire"
+    );
+    expect(policyEvents.map((event) => event.attributes?.boundaryPolicy)).toContain(
+      "provider.release"
+    );
     expect(policyEvents.at(1)?.attributes).toMatchObject({
       timeoutMs: 500,
       retry: { maxAttempts: 2, attempt: 1 },
@@ -756,9 +720,7 @@ describe("provider provisioning lowering", () => {
     if (result.status !== "failed") return;
 
     expect(result.error).toBeInstanceOf(Error);
-    expect(String((result.error as Error).message)).toContain(
-      "unlowerable ProviderEffectPlan",
-    );
+    expect(String((result.error as Error).message)).toContain("unlowerable ProviderEffectPlan");
     expect(phasesFor(result.catalog, "boot.failed")).toEqual([modules[0]?.id]);
   });
 });

@@ -1,9 +1,6 @@
 import { type Static, Type } from "typebox";
 
-export const DevopsActionSchema = Type.Union([
-  Type.Literal("planned"),
-  Type.Literal("applied"),
-]);
+export const DevopsActionSchema = Type.Union([Type.Literal("planned"), Type.Literal("applied")]);
 
 export const DevCommandStepSchema = Type.Object(
   {
@@ -19,7 +16,7 @@ export const DevCommandStepSchema = Type.Object(
     stdout: Type.Optional(Type.String()),
     stderr: Type.Optional(Type.String()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const DevIssueSchema = Type.Object(
@@ -29,7 +26,7 @@ export const DevIssueSchema = Type.Object(
     severity: Type.Union([Type.Literal("error"), Type.Literal("warning")]),
     details: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const DevPreflightSchema = Type.Object(
@@ -37,7 +34,7 @@ export const DevPreflightSchema = Type.Object(
     ok: Type.Boolean(),
     issues: Type.Array(DevIssueSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const DevExecutionSchema = Type.Object(
@@ -45,7 +42,7 @@ export const DevExecutionSchema = Type.Object(
     ok: Type.Boolean(),
     issues: Type.Array(DevIssueSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const ScratchPolicyModeSchema = Type.Union([
@@ -63,7 +60,7 @@ export const ScratchPolicyInputSchema = Type.Object(
     workingPadFileNames: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
     enforce: Type.Optional(Type.Boolean()),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const ScratchPolicyCheckSchema = Type.Object(
@@ -75,7 +72,7 @@ export const ScratchPolicyCheckSchema = Type.Object(
         planScratch: Type.Boolean(),
         workingPad: Type.Boolean(),
       },
-      { additionalProperties: false },
+      { additionalProperties: false }
     ),
     missing: Type.Array(Type.String()),
     matches: Type.Object(
@@ -83,11 +80,11 @@ export const ScratchPolicyCheckSchema = Type.Object(
         planScratchPaths: Type.Array(Type.String()),
         workingPadPaths: Type.Array(Type.String()),
       },
-      { additionalProperties: false },
+      { additionalProperties: false }
     ),
     blocked: Type.Boolean(),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const StackDoctorInputSchema = Type.Object(
@@ -95,7 +92,7 @@ export const StackDoctorInputSchema = Type.Object(
     branch: Type.Optional(Type.String({ minLength: 1 })),
     repo: Type.Optional(Type.String({ minLength: 1 })),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const StackDoctorResultSchema = Type.Object(
@@ -115,15 +112,17 @@ export const StackDoctorResultSchema = Type.Object(
             needsRestack: Type.Boolean(),
             graphShowsStack: Type.Boolean(),
           },
-          { additionalProperties: false },
+          { additionalProperties: false }
         ),
-        actions: Type.Array(Type.Object(
-          {
-            command: Type.String({ minLength: 1 }),
-            reason: Type.String({ minLength: 1 }),
-          },
-          { additionalProperties: false },
-        )),
+        actions: Type.Array(
+          Type.Object(
+            {
+              command: Type.String({ minLength: 1 }),
+              reason: Type.String({ minLength: 1 }),
+            },
+            { additionalProperties: false }
+          )
+        ),
         raw: Type.Object(
           {
             branch: Type.String(),
@@ -131,13 +130,13 @@ export const StackDoctorResultSchema = Type.Object(
             gtLs: Type.String(),
             worktreeList: Type.String(),
           },
-          { additionalProperties: false },
+          { additionalProperties: false }
         ),
       },
-      { additionalProperties: false },
+      { additionalProperties: false }
     ),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const StackDrainInputSchema = Type.Object(
@@ -147,7 +146,7 @@ export const StackDrainInputSchema = Type.Object(
     sleepSeconds: Type.Optional(Type.Number({ minimum: 0 })),
     scratchPolicy: Type.Optional(ScratchPolicyInputSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const StackDrainResultSchema = Type.Object(
@@ -155,22 +154,24 @@ export const StackDrainResultSchema = Type.Object(
     workspaceRoot: Type.String({ minLength: 1 }),
     action: DevopsActionSchema,
     converged: Type.Boolean(),
-    cycles: Type.Array(Type.Object(
-      {
-        cycle: Type.Number(),
-        publish: DevCommandStepSchema,
-        merge: DevCommandStepSchema,
-        sync: DevCommandStepSchema,
-        gtLs: Type.String(),
-      },
-      { additionalProperties: false },
-    )),
+    cycles: Type.Array(
+      Type.Object(
+        {
+          cycle: Type.Number(),
+          publish: DevCommandStepSchema,
+          merge: DevCommandStepSchema,
+          sync: DevCommandStepSchema,
+          gtLs: Type.String(),
+        },
+        { additionalProperties: false }
+      )
+    ),
     plannedCommands: Type.Array(DevCommandStepSchema),
     preflight: DevPreflightSchema,
     execution: DevExecutionSchema,
     scratchPolicy: ScratchPolicyCheckSchema,
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const RepoSyncUpstreamInputSchema = Type.Object(
@@ -181,7 +182,7 @@ export const RepoSyncUpstreamInputSchema = Type.Object(
     inspectAfter: Type.Optional(Type.Boolean()),
     scratchPolicy: Type.Optional(ScratchPolicyInputSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const RepoSyncUpstreamResultSchema = Type.Object(
@@ -192,9 +193,13 @@ export const RepoSyncUpstreamResultSchema = Type.Object(
     upstreamRef: Type.Object(
       {
         ref: Type.String({ minLength: 1 }),
-        source: Type.Union([Type.Literal("flag"), Type.Literal("git-config"), Type.Literal("default")]),
+        source: Type.Union([
+          Type.Literal("flag"),
+          Type.Literal("git-config"),
+          Type.Literal("default"),
+        ]),
       },
-      { additionalProperties: false },
+      { additionalProperties: false }
     ),
     currentBranch: Type.Union([Type.String(), Type.Null()]),
     steps: Type.Array(DevCommandStepSchema),
@@ -203,7 +208,7 @@ export const RepoSyncUpstreamResultSchema = Type.Object(
     execution: DevExecutionSchema,
     scratchPolicy: ScratchPolicyCheckSchema,
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const WorktreeCleanupInputSchema = Type.Object(
@@ -216,7 +221,7 @@ export const WorktreeCleanupInputSchema = Type.Object(
     pinnedBranches: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
     scratchPolicy: Type.Optional(ScratchPolicyInputSchema),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export const WorktreeCleanupResultSchema = Type.Object(
@@ -224,28 +229,32 @@ export const WorktreeCleanupResultSchema = Type.Object(
     workspaceRoot: Type.String({ minLength: 1 }),
     action: DevopsActionSchema,
     prefix: Type.String({ minLength: 1 }),
-    candidates: Type.Array(Type.Object(
-      {
-        path: Type.String({ minLength: 1 }),
-        branch: Type.Union([Type.String(), Type.Null()]),
-        reason: Type.String({ minLength: 1 }),
-      },
-      { additionalProperties: false },
-    )),
-    skipped: Type.Array(Type.Object(
-      {
-        path: Type.String({ minLength: 1 }),
-        reason: Type.String({ minLength: 1 }),
-      },
-      { additionalProperties: false },
-    )),
+    candidates: Type.Array(
+      Type.Object(
+        {
+          path: Type.String({ minLength: 1 }),
+          branch: Type.Union([Type.String(), Type.Null()]),
+          reason: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false }
+      )
+    ),
+    skipped: Type.Array(
+      Type.Object(
+        {
+          path: Type.String({ minLength: 1 }),
+          reason: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false }
+      )
+    ),
     removed: Type.Array(DevCommandStepSchema),
     followUpCommands: Type.Array(DevCommandStepSchema),
     preflight: DevPreflightSchema,
     execution: DevExecutionSchema,
     scratchPolicy: ScratchPolicyCheckSchema,
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 
 export type DevopsAction = Static<typeof DevopsActionSchema>;

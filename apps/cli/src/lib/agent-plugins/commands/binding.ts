@@ -34,7 +34,9 @@ export type LifecycleClientByOperation = Readonly<{
   "providers.targetedTest": Readonly<{ providers: Pick<Client["providers"], "targetedTest"> }>;
   "providers.completeTest": Readonly<{ providers: Pick<Client["providers"], "completeTest"> }>;
   "providers.canonicalSync": Readonly<{ providers: Pick<Client["providers"], "canonicalSync"> }>;
-  "providers.canonicalStatus": Readonly<{ providers: Pick<Client["providers"], "canonicalStatus"> }>;
+  "providers.canonicalStatus": Readonly<{
+    providers: Pick<Client["providers"], "canonicalStatus">;
+  }>;
   "governance.currentMainRecord": Readonly<{
     governance: Pick<Client["governance"], "currentMainRecord">;
   }>;
@@ -53,7 +55,7 @@ export type ControllerProjectionBinding = Readonly<{
 
 export type LifecycleClientFactory = <TOperation extends LifecycleOperation>(
   operation: TOperation,
-  binding: ControllerProjectionBinding,
+  binding: ControllerProjectionBinding
 ) => LifecycleOperationClient<TOperation> | Promise<LifecycleOperationClient<TOperation>>;
 
 export class LifecycleAuthorityBindingError extends Error {

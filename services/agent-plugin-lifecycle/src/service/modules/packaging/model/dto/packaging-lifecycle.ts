@@ -30,26 +30,28 @@ export const PackagingFailureCodeSchema = Type.Union([
   Type.Literal("FailpointFailed"),
 ]);
 
-export const PackagingFailureSchema = ReadonlyObject(Type.Object(
-  {
+export const PackagingFailureSchema = ReadonlyObject(
+  Type.Object({
     code: PackagingFailureCodeSchema,
     phase: Type.String({ maxLength: MAX_PACKAGING_FAILURE_PHASE_LENGTH }),
     message: Type.String({ maxLength: MAX_PACKAGING_FAILURE_MESSAGE_LENGTH }),
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 export const PackageOutputPathSchema = Type.String({
   minLength: 1,
   maxLength: MAX_PACKAGING_OUTPUT_PATH_LENGTH,
 });
 
-export const PackageAgentPluginRequestSchema = ReadonlyObject(Type.Object(
-  {
+export const PackageAgentPluginRequestSchema = ReadonlyObject(
+  Type.Object({
     artifactRef: ArtifactRefInputSchema,
     format: Type.Literal(COWORK_PACKAGE_FORMAT),
     outputPath: PackageOutputPathSchema,
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 const packageResultIdentityProperties = {
   artifactRef: ArtifactRefInputSchema,
@@ -59,34 +61,38 @@ const packageResultIdentityProperties = {
 } as const;
 
 export const PackageAgentPluginResultSchema = Type.Union([
-  ReadonlyObject(Type.Object(
-    {
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("RejectedBeforeOutputMutation"),
       primaryFailure: PackagingFailureSchema,
       cleanupFailure: Type.Optional(PackagingFailureSchema),
-    },
-  ), { additionalProperties: false }),
-  ReadonlyObject(Type.Object(
-    {
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("ReadOnlyConverged"),
       ...packageResultIdentityProperties,
-    },
-  ), { additionalProperties: false }),
-  ReadonlyObject(Type.Object(
-    {
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("OutputReplacedVerified"),
       ...packageResultIdentityProperties,
       priorOutput: Type.Union([Type.Literal("Absent"), Type.Literal("Replaced")]),
-    },
-  ), { additionalProperties: false }),
-  ReadonlyObject(Type.Object(
-    {
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("OutputUnsettled"),
       ...packageResultIdentityProperties,
       primaryFailure: PackagingFailureSchema,
       cleanupFailure: Type.Optional(PackagingFailureSchema),
-    },
-  ), { additionalProperties: false }),
+    }),
+    { additionalProperties: false }
+  ),
 ]);
 
 export type PackageDigest = Static<typeof PackageDigestSchema>;

@@ -34,10 +34,7 @@ export function resolveRawrWorkflowInngestBaseUrl(): string {
   );
 }
 
-export function createRawrWorkflowRuntime(input: {
-  repoRoot: string;
-  inngestBaseUrl?: string;
-}) {
+export function createRawrWorkflowRuntime(input: { repoRoot: string; inngestBaseUrl?: string }) {
   return {
     repoRoot: input.repoRoot,
     inngestBaseUrl: input.inngestBaseUrl ?? resolveRawrWorkflowInngestBaseUrl(),

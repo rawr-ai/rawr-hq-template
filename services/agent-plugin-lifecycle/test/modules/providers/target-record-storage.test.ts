@@ -14,9 +14,7 @@ import {
   visibleFingerprint,
   type TargetReceipt,
 } from "../../../src/service/modules/providers/model/policy/receipt";
-import {
-  createTargetIdentitySidecar,
-} from "../../../src/service/modules/providers/model/policy/state-machine";
+import { createTargetIdentitySidecar } from "../../../src/service/modules/providers/model/policy/state-machine";
 import type {
   EvaluationProfile,
   ProviderRequestDigest,
@@ -41,7 +39,11 @@ import type {
   TargetRecordPlanInput,
   TargetRecordReadToken,
 } from "../../../src/service/modules/providers/model/repositories/target-record-storage";
-import { failure, issue, success } from "../../../src/service/modules/providers/model/errors/deployment-result";
+import {
+  failure,
+  issue,
+  success,
+} from "../../../src/service/modules/providers/model/errors/deployment-result";
 import {
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
@@ -73,15 +75,16 @@ describe("pathless target-record storage", () => {
       ok: true,
       value: { kind: "present", receipt },
     });
-    expect(decodeTargetIdentitySidecar(
-      canonicalSerializeTargetIdentitySidecar(sidecar),
-    )).toEqual({ ok: true, value: sidecar });
+    expect(decodeTargetIdentitySidecar(canonicalSerializeTargetIdentitySidecar(sidecar))).toEqual({
+      ok: true,
+      value: sidecar,
+    });
 
     records.seed(
       identityKey(target),
-      new TextEncoder().encode(`${new TextDecoder().decode(
-        canonicalSerializeTargetIdentitySidecar(sidecar),
-      )}\n`),
+      new TextEncoder().encode(
+        `${new TextDecoder().decode(canonicalSerializeTargetIdentitySidecar(sidecar))}\n`
+      )
     );
     const nonCanonical = await state.identities.read(target);
     expect(nonCanonical.ok).toBe(false);
@@ -94,9 +97,9 @@ describe("pathless target-record storage", () => {
 
     records.seed(
       receiptKey(target),
-      new TextEncoder().encode(`${new TextDecoder().decode(
-        canonicalSerializeTargetReceipt(receipt),
-      )}\n`),
+      new TextEncoder().encode(
+        `${new TextDecoder().decode(canonicalSerializeTargetReceipt(receipt))}\n`
+      )
     );
     const nonCanonicalReceipt = await state.receipts.read(target);
     expect(nonCanonicalReceipt.ok).toBe(false);
@@ -197,10 +200,7 @@ describe("pathless target-record storage", () => {
     const sidecar = createTargetIdentitySidecar(target);
     const convergedRecords = new FakeTargetRecords();
     const convergedState = createPathlessTargetState(convergedRecords);
-    convergedRecords.seed(
-      identityKey(target),
-      canonicalSerializeTargetIdentitySidecar(sidecar),
-    );
+    convergedRecords.seed(identityKey(target), canonicalSerializeTargetIdentitySidecar(sidecar));
     convergedRecords.failNextRelease = true;
 
     expect((await convergedState.identities.admit(target, sidecar)).ok).toBe(false);
@@ -214,11 +214,9 @@ describe("pathless target-record storage", () => {
     mismatchedRecords.seed(receiptKey(target), canonicalSerializeTargetReceipt(successor));
     mismatchedRecords.failNextRelease = true;
 
-    expect((await mismatchedState.receipts.publish(
-      target,
-      { kind: "absent" },
-      prior,
-    )).ok).toBe(false);
+    expect((await mismatchedState.receipts.publish(target, { kind: "absent" }, prior)).ok).toBe(
+      false
+    );
     expect(mismatchedRecords.operations()).toEqual(["capture", "release", "retain-unreleased"]);
     expectRetainedUnreleased(mismatchedRecords, receiptKey(target));
   });
@@ -236,7 +234,7 @@ describe("pathless target-record storage", () => {
     const result = await state.receipts.publish(
       target,
       { kind: "present", receipt: prior },
-      successor,
+      successor
     );
 
     expect(result.ok).toBe(false);
@@ -250,7 +248,7 @@ describe("pathless target-record storage", () => {
     const settleFailure = await settleFailureState.receipts.publish(
       target,
       { kind: "present", receipt: prior },
-      successor,
+      successor
     );
     expect(settleFailure.ok).toBe(false);
     expect(settleFailureRecords.operations()).toEqual([
@@ -277,7 +275,7 @@ describe("pathless target-record storage", () => {
     const result = await state.receipts.publish(
       target,
       { kind: "present", receipt: prior },
-      successor,
+      successor
     );
 
     expect(result.ok).toBe(false);
@@ -299,7 +297,7 @@ describe("pathless target-record storage", () => {
     const result = await state.receipts.publish(
       target,
       { kind: "present", receipt: prior },
-      successor,
+      successor
     );
 
     expect(result.ok).toBe(false);
@@ -316,7 +314,8 @@ describe("pathless target-record storage", () => {
 
     expect((await state.identities.admit(target, sidecar)).ok).toBe(true);
     const controlJournal = JSON.stringify(records.events, (_key, value) =>
-      value instanceof Uint8Array ? `<${value.byteLength} bytes>` : value);
+      value instanceof Uint8Array ? `<${value.byteLength} bytes>` : value
+    );
     expect(controlJournal).not.toContain(target.home);
     expect(controlJournal).not.toMatch(/"(?:address|locator|path)"/u);
     expect(controlJournal).toContain(target.targetDigest);
@@ -381,10 +380,16 @@ class FakeTargetRecords implements PathlessTargetRecordCollection {
   }
 
   async write(input: TargetRecordPlanInput & Readonly<{ mutation: TargetRecordMutation }>) {
-    this.events.push(Object.freeze({
-      operation: "write",
-      input: { ...captureAuthority(input.capture), planDigest: input.planDigest, mutation: input.mutation },
-    }));
+    this.events.push(
+      Object.freeze({
+        operation: "write",
+        input: {
+          ...captureAuthority(input.capture),
+          planDigest: input.planDigest,
+          mutation: input.mutation,
+        },
+      })
+    );
     const state = this.requireCapture(input.capture, "captured");
     if (!state.ok) return state;
     if (input.mutation.kind === "remove") this.records.delete(recordKeyText(input.capture.key));
@@ -398,10 +403,12 @@ class FakeTargetRecords implements PathlessTargetRecordCollection {
   }
 
   async restore(input: TargetRecordPlanInput) {
-    this.events.push(Object.freeze({
-      operation: "restore",
-      input: { ...captureAuthority(input.capture), planDigest: input.planDigest },
-    }));
+    this.events.push(
+      Object.freeze({
+        operation: "restore",
+        input: { ...captureAuthority(input.capture), planDigest: input.planDigest },
+      })
+    );
     if (this.failNextRestore) {
       this.failNextRestore = false;
       return transactionFailure("restore-before-mutation");
@@ -415,17 +422,21 @@ class FakeTargetRecords implements PathlessTargetRecordCollection {
       this.records.set(recordKeyText(input.capture.key), cloneBytes(state.value.preimage.bytes));
     }
     state.value.state = "restored";
-    return success(Object.freeze({
-      kind: "restored" as const,
-      changed: !sameObservation(before, state.value.preimage),
-    }));
+    return success(
+      Object.freeze({
+        kind: "restored" as const,
+        changed: !sameObservation(before, state.value.preimage),
+      })
+    );
   }
 
   async settle(input: TargetRecordPlanInput) {
-    this.events.push(Object.freeze({
-      operation: "settle",
-      input: { ...captureAuthority(input.capture), planDigest: input.planDigest },
-    }));
+    this.events.push(
+      Object.freeze({
+        operation: "settle",
+        input: { ...captureAuthority(input.capture), planDigest: input.planDigest },
+      })
+    );
     if (this.failNextSettle) {
       this.failNextSettle = false;
       return transactionFailure("settle-before-consumption");
@@ -437,18 +448,22 @@ class FakeTargetRecords implements PathlessTargetRecordCollection {
   }
 
   retainUnsettled(input: TargetRecordPlanInput): void {
-    this.events.push(Object.freeze({
-      operation: "retain",
-      input: { ...captureAuthority(input.capture), planDigest: input.planDigest },
-    }));
+    this.events.push(
+      Object.freeze({
+        operation: "retain",
+        input: { ...captureAuthority(input.capture), planDigest: input.planDigest },
+      })
+    );
     this.retained.push(input);
   }
 
   retainUnreleased(capture: TargetRecordCapture): void {
-    this.events.push(Object.freeze({
-      operation: "retain-unreleased",
-      input: captureAuthority(capture),
-    }));
+    this.events.push(
+      Object.freeze({
+        operation: "retain-unreleased",
+        input: captureAuthority(capture),
+      })
+    );
     this.retainedUnreleased.push(capture);
   }
 
@@ -471,9 +486,9 @@ class FakeTargetRecords implements PathlessTargetRecordCollection {
 
   liveCaptureState(capture: TargetRecordCapture): CaptureState["state"] | null {
     const state = this.captures.get(capture.captureHandle);
-    return state !== undefined
-      && state.capture.readToken === capture.readToken
-      && recordKeyText(state.capture.key) === recordKeyText(capture.key)
+    return state !== undefined &&
+      state.capture.readToken === capture.readToken &&
+      recordKeyText(state.capture.key) === recordKeyText(capture.key)
       ? state.state
       : null;
   }
@@ -483,10 +498,7 @@ class FakeTargetRecords implements PathlessTargetRecordCollection {
     return bytes === undefined ? ABSENT_RECORD : presentRecord(bytes);
   }
 
-  private requireCapture(
-    capture: TargetRecordCapture,
-    expected: CaptureState["state"],
-  ) {
+  private requireCapture(capture: TargetRecordCapture, expected: CaptureState["state"]) {
     const state = this.captures.get(capture.captureHandle);
     return state === undefined || state.state !== expected
       ? transactionFailure("capture-state")
@@ -497,17 +509,21 @@ class FakeTargetRecords implements PathlessTargetRecordCollection {
 function receiptFixture(target: ProviderTarget, prior?: TargetReceipt): TargetReceipt {
   const fixture = productFixture();
   const projection = completeProjection();
-  const verifiedMembers = projection.members.map((member) => Object.freeze({
-    pluginId: member.pluginId,
-    nativeIdentity: member.nativeIdentity,
-    artifactAuthority: member.artifactAuthority,
-    providerSourceIdentity: member.providerSourceIdentity,
-    memberFingerprint: member.memberFingerprint,
-  }));
-  const managedMembers = verifiedMembers.map((member) => Object.freeze({
-    ...member,
-    sourceProjectionDigest: projection.projectionDigest,
-  }));
+  const verifiedMembers = projection.members.map((member) =>
+    Object.freeze({
+      pluginId: member.pluginId,
+      nativeIdentity: member.nativeIdentity,
+      artifactAuthority: member.artifactAuthority,
+      providerSourceIdentity: member.providerSourceIdentity,
+      memberFingerprint: member.memberFingerprint,
+    })
+  );
+  const managedMembers = verifiedMembers.map((member) =>
+    Object.freeze({
+      ...member,
+      sourceProjectionDigest: projection.projectionDigest,
+    })
+  );
   const registration = createProviderMarketplaceRegistration({
     provider: projection.provider,
     adapterProtocol: projection.adapterProtocol,
@@ -525,9 +541,10 @@ function receiptFixture(target: ProviderTarget, prior?: TargetReceipt): TargetRe
     provider: target.provider,
     targetDigest: target.targetDigest,
     generation: prior === undefined ? 1 : prior.body.generation + 1,
-    lineage: prior === undefined
-      ? Object.freeze({ kind: "initial" })
-      : Object.freeze({ kind: "successor", priorReceiptDigest: prior.receiptDigest }),
+    lineage:
+      prior === undefined
+        ? Object.freeze({ kind: "initial" })
+        : Object.freeze({ kind: "successor", priorReceiptDigest: prior.receiptDigest }),
     marketplace: marketplaceState(registration),
     scope: Object.freeze({
       kind: "complete-test",
@@ -607,7 +624,7 @@ function captureAuthority(capture: TargetRecordCapture) {
 function expectRetainedPlan(
   records: FakeTargetRecords,
   expectedKey: TargetRecordKey,
-  expectedLiveState: CaptureState["state"],
+  expectedLiveState: CaptureState["state"]
 ): void {
   expect(records.retained).toHaveLength(1);
   const retained = records.retained[0];
@@ -622,10 +639,7 @@ function expectRetainedPlan(
   expect(records.liveCaptureState(retained.capture)).toBe(expectedLiveState);
 }
 
-function expectRetainedUnreleased(
-  records: FakeTargetRecords,
-  expectedKey: TargetRecordKey,
-): void {
+function expectRetainedUnreleased(records: FakeTargetRecords, expectedKey: TargetRecordKey): void {
   expect(records.retainedUnreleased).toHaveLength(1);
   const retained = records.retainedUnreleased[0];
   if (retained === undefined) throw new Error("retained unreleased capture missing");
@@ -657,17 +671,19 @@ function cloneBytes(bytes: Uint8Array): Uint8Array {
 function sameObservation(left: TargetRecordObservation, right: TargetRecordObservation): boolean {
   return left.kind === "absent"
     ? right.kind === "absent"
-    : right.kind === "present"
-      && left.bytes.length === right.bytes.length
-      && left.bytes.every((value, index) => value === right.bytes[index]);
+    : right.kind === "present" &&
+        left.bytes.length === right.bytes.length &&
+        left.bytes.every((value, index) => value === right.bytes[index]);
 }
 
 function transactionFailure(phase: string) {
-  return failure([issue(
-    "MUTATION_FAILED",
-    "targetRecordResource",
-    `Synthetic target-record failure during ${phase}`,
-  )]);
+  return failure([
+    issue(
+      "MUTATION_FAILED",
+      "targetRecordResource",
+      `Synthetic target-record failure during ${phase}`
+    ),
+  ]);
 }
 
 const ABSENT_RECORD = Object.freeze({ kind: "absent" } as const);

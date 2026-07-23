@@ -52,14 +52,14 @@ export abstract class RawrCommand extends Command {
   protected ok<TData>(
     data?: TData,
     meta?: Record<string, unknown>,
-    warnings?: string[],
+    warnings?: string[]
   ): RawrResult<TData> {
     return { ok: true, data, meta, warnings };
   }
 
   protected fail(
     message: string,
-    opts?: { code?: string; details?: unknown; meta?: Record<string, unknown> },
+    opts?: { code?: string; details?: unknown; meta?: Record<string, unknown> }
   ): RawrResult<never> {
     return {
       ok: false,
@@ -70,7 +70,7 @@ export abstract class RawrCommand extends Command {
 
   protected outputResult<TData>(
     result: RawrResult<TData>,
-    opts?: { flags?: RawrBaseFlags; human?: (result: RawrResult<TData>) => void },
+    opts?: { flags?: RawrBaseFlags; human?: (result: RawrResult<TData>) => void }
   ): void {
     const flags = opts?.flags ?? this.rawrBaseFlags ?? { json: false, dryRun: false, yes: false };
 

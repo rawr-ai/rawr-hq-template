@@ -21,7 +21,7 @@ function retainedLineRatio(snapshot: string, current: string): number {
     current
       .split(/\r?\n/)
       .map((line) => line.trim())
-      .filter((line) => line.length > 0),
+      .filter((line) => line.length > 0)
   );
   const retained = snapshotLines.filter((line) => currentLines.has(line)).length;
   return retained / snapshotLines.length;
@@ -45,7 +45,11 @@ function sourceUrlsInClaimTrace(value: unknown): string[] {
 
 function claimTraceEntries(value: unknown): unknown[] {
   if (Array.isArray(value)) return value;
-  if (value && typeof value === "object" && Array.isArray((value as Record<string, unknown>).claims)) {
+  if (
+    value &&
+    typeof value === "object" &&
+    Array.isArray((value as Record<string, unknown>).claims)
+  ) {
     return (value as { claims: unknown[] }).claims;
   }
   return [];
@@ -62,12 +66,18 @@ function reportPathFromLocation(value: string): string {
 
 function sourceObjects(value: unknown): Array<Record<string, unknown>> {
   if (!Array.isArray(value)) return [];
-  return value.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object");
+  return value.filter(
+    (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object"
+  );
 }
 
 function patchLogEntries(value: unknown): unknown[] {
   if (Array.isArray(value)) return value;
-  if (value && typeof value === "object" && Array.isArray((value as Record<string, unknown>).patches)) {
+  if (
+    value &&
+    typeof value === "object" &&
+    Array.isArray((value as Record<string, unknown>).patches)
+  ) {
     return (value as { patches: unknown[] }).patches;
   }
   return [];
@@ -78,10 +88,11 @@ function changedLinesCovered(input: {
   currentReport: string;
   hunks: Array<Record<string, unknown>>;
 }): boolean {
-  const normalizeLines = (text: string) => text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+  const normalizeLines = (text: string) =>
+    text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
   const snapshotLines = normalizeLines(input.snapshotText);
   const currentLines = normalizeLines(input.currentReport);
   const snapshotSet = new Set(snapshotLines);
@@ -96,8 +107,10 @@ function changedLinesCovered(input: {
     .map((hunk) => hunk.after)
     .filter((value): value is string => typeof value === "string")
     .join("\n");
-  return removedLines.every((line) => beforeText.includes(line))
-    && addedLines.every((line) => afterText.includes(line));
+  return (
+    removedLines.every((line) => beforeText.includes(line)) &&
+    addedLines.every((line) => afterText.includes(line))
+  );
 }
 
 async function patchLogCoversReportChange(input: {
@@ -108,7 +121,9 @@ async function patchLogCoversReportChange(input: {
   snapshotText: string;
   currentReport: string;
 }): Promise<boolean> {
-  const patchLogText = await input.io.readTextFile(input.io.join(input.ledger.vaultRoot, "research", "patch-log.json"));
+  const patchLogText = await input.io.readTextFile(
+    input.io.join(input.ledger.vaultRoot, "research", "patch-log.json")
+  );
   if (!patchLogText) return false;
   let parsed: unknown;
   try {
@@ -120,31 +135,36 @@ async function patchLogCoversReportChange(input: {
     if (!entry || typeof entry !== "object") return false;
     const record = entry as Record<string, unknown>;
     const hunks = Array.isArray(record.hunks) ? record.hunks : [];
-    return record.beforeSha256 === input.beforeSha256
-      && record.afterSha256 === input.afterSha256
-      && typeof record.criticId === "string"
-      && record.criticId.length > 0
-      && Array.isArray(record.findingIds)
-      && record.findingIds.length > 0
-      && record.findingIds.every((item) => typeof item === "string" && item.length > 0)
-      && record.status === "accepted"
-      && typeof record.rationale === "string"
-      && record.rationale.length > 0
-      && hunks.length > 0
-      && changedLinesCovered({
+    return (
+      record.beforeSha256 === input.beforeSha256 &&
+      record.afterSha256 === input.afterSha256 &&
+      typeof record.criticId === "string" &&
+      record.criticId.length > 0 &&
+      Array.isArray(record.findingIds) &&
+      record.findingIds.length > 0 &&
+      record.findingIds.every((item) => typeof item === "string" && item.length > 0) &&
+      record.status === "accepted" &&
+      typeof record.rationale === "string" &&
+      record.rationale.length > 0 &&
+      hunks.length > 0 &&
+      changedLinesCovered({
         snapshotText: input.snapshotText,
         currentReport: input.currentReport,
         hunks: hunks as Array<Record<string, unknown>>,
-      })
-      && hunks.every((hunk) => {
+      }) &&
+      hunks.every((hunk) => {
         if (!hunk || typeof hunk !== "object") return false;
         const hunkRecord = hunk as Record<string, unknown>;
         if (typeof hunkRecord.section !== "string" || hunkRecord.section.length === 0) return false;
-        if (typeof hunkRecord.before !== "string" || typeof hunkRecord.after !== "string") return false;
-        const beforeMatches = hunkRecord.before.length === 0 || input.snapshotText.includes(hunkRecord.before);
-        const afterMatches = hunkRecord.after.length === 0 || input.currentReport.includes(hunkRecord.after);
+        if (typeof hunkRecord.before !== "string" || typeof hunkRecord.after !== "string")
+          return false;
+        const beforeMatches =
+          hunkRecord.before.length === 0 || input.snapshotText.includes(hunkRecord.before);
+        const afterMatches =
+          hunkRecord.after.length === 0 || input.currentReport.includes(hunkRecord.after);
         return beforeMatches && afterMatches;
-      });
+      })
+    );
   });
 }
 
@@ -217,7 +237,9 @@ export async function validateHyperresearchRunIntegrity(input: {
       });
     }
     if (job.status === "complete" && job.acceptedOutputPath && job.acceptedOutputSha256) {
-      const acceptedOutput = await input.io.readTextFile(input.io.join(input.ledger.vaultRoot, job.acceptedOutputPath));
+      const acceptedOutput = await input.io.readTextFile(
+        input.io.join(input.ledger.vaultRoot, job.acceptedOutputPath)
+      );
       if (acceptedOutput === null) {
         findings.push({
           severity: "blocking",
@@ -248,7 +270,9 @@ export async function validateHyperresearchRunIntegrity(input: {
           message: `Completed agent job is missing accepted attempt metadata: ${job.id}`,
         });
       }
-      const acceptedAttempt = job.attempts?.find((attempt) => attempt.attemptId === job.acceptedAttemptId);
+      const acceptedAttempt = job.attempts?.find(
+        (attempt) => attempt.attemptId === job.acceptedAttemptId
+      );
       if (!acceptedAttempt) {
         findings.push({
           severity: "blocking",
@@ -257,8 +281,14 @@ export async function validateHyperresearchRunIntegrity(input: {
           message: `Completed agent job is missing accepted attempt record: ${job.id}`,
         });
       } else if (acceptedAttempt.replacesAttemptId) {
-        const replacedAttempt = job.attempts?.find((attempt) => attempt.attemptId === acceptedAttempt.replacesAttemptId);
-        if (!replacedAttempt || replacedAttempt.status !== "non_clean" || replacedAttempt.classification === "clean_completed") {
+        const replacedAttempt = job.attempts?.find(
+          (attempt) => attempt.attemptId === acceptedAttempt.replacesAttemptId
+        );
+        if (
+          !replacedAttempt ||
+          replacedAttempt.status !== "non_clean" ||
+          replacedAttempt.classification === "clean_completed"
+        ) {
           findings.push({
             severity: "blocking",
             code: "invalid-replacement-attempt",
@@ -282,7 +312,9 @@ export async function validateHyperresearchRunIntegrity(input: {
 
   if (input.ledger.version === 2 && input.ledger.completed) {
     const claimTracePath = "research/claim-trace.json";
-    const claimTraceText = await input.io.readTextFile(input.io.join(input.ledger.vaultRoot, claimTracePath));
+    const claimTraceText = await input.io.readTextFile(
+      input.io.join(input.ledger.vaultRoot, claimTracePath)
+    );
     if (!claimTraceText) {
       findings.push({
         severity: "blocking",
@@ -312,11 +344,18 @@ export async function validateHyperresearchRunIntegrity(input: {
             message: "Claim trace must include at least one claim entry",
           });
         }
-        const capturedUrls = new Set((input.ledger.sourceCaptures ?? []).map((capture) => capture.url));
-        const capturedNoteIds = new Set((input.ledger.sourceCaptures ?? []).flatMap((capture) => capture.noteIds ?? []));
-        const capturedSourceIds = new Set((input.ledger.sourceCaptures ?? []).flatMap((capture) => capture.sourceIds ?? []));
+        const capturedUrls = new Set(
+          (input.ledger.sourceCaptures ?? []).map((capture) => capture.url)
+        );
+        const capturedNoteIds = new Set(
+          (input.ledger.sourceCaptures ?? []).flatMap((capture) => capture.noteIds ?? [])
+        );
+        const capturedSourceIds = new Set(
+          (input.ledger.sourceCaptures ?? []).flatMap((capture) => capture.sourceIds ?? [])
+        );
         for (const [index, claim] of claims.entries()) {
-          const record = claim && typeof claim === "object" ? claim as Record<string, unknown> : {};
+          const record =
+            claim && typeof claim === "object" ? (claim as Record<string, unknown>) : {};
           if (typeof record.claim !== "string" || record.claim.length === 0) {
             findings.push({
               severity: "blocking",
@@ -325,7 +364,11 @@ export async function validateHyperresearchRunIntegrity(input: {
               message: `Claim trace entry ${index + 1} is missing claim text`,
             });
           }
-          if (typeof record.reportLocation !== "string" || record.reportLocation.length === 0 || !safeRelativePath(reportPathFromLocation(record.reportLocation))) {
+          if (
+            typeof record.reportLocation !== "string" ||
+            record.reportLocation.length === 0 ||
+            !safeRelativePath(reportPathFromLocation(record.reportLocation))
+          ) {
             findings.push({
               severity: "blocking",
               code: "missing-claim-trace",
@@ -334,7 +377,9 @@ export async function validateHyperresearchRunIntegrity(input: {
             });
           } else {
             const reportPath = reportPathFromLocation(record.reportLocation);
-            const reportText = await input.io.readTextFile(input.io.join(input.ledger.vaultRoot, reportPath));
+            const reportText = await input.io.readTextFile(
+              input.io.join(input.ledger.vaultRoot, reportPath)
+            );
             if (!reportText) {
               findings.push({
                 severity: "blocking",
@@ -342,7 +387,11 @@ export async function validateHyperresearchRunIntegrity(input: {
                 artifact: claimTracePath,
                 message: `Claim trace entry ${index + 1} references a missing report location: ${reportPath}`,
               });
-            } else if (typeof record.claim === "string" && record.claim.length > 0 && !reportText.includes(record.claim)) {
+            } else if (
+              typeof record.claim === "string" &&
+              record.claim.length > 0 &&
+              !reportText.includes(record.claim)
+            ) {
               findings.push({
                 severity: "blocking",
                 code: "missing-claim-trace",
@@ -351,7 +400,11 @@ export async function validateHyperresearchRunIntegrity(input: {
               });
             }
           }
-          if (record.confidence !== "high" && record.confidence !== "medium" && record.confidence !== "low") {
+          if (
+            record.confidence !== "high" &&
+            record.confidence !== "medium" &&
+            record.confidence !== "low"
+          ) {
             findings.push({
               severity: "blocking",
               code: "missing-claim-trace",
@@ -359,7 +412,10 @@ export async function validateHyperresearchRunIntegrity(input: {
               message: `Claim trace entry ${index + 1} is missing confidence`,
             });
           }
-          if (typeof record.reviewerDisposition !== "string" || record.reviewerDisposition.length === 0) {
+          if (
+            typeof record.reviewerDisposition !== "string" ||
+            record.reviewerDisposition.length === 0
+          ) {
             findings.push({
               severity: "blocking",
               code: "missing-claim-trace",
@@ -367,7 +423,8 @@ export async function validateHyperresearchRunIntegrity(input: {
               message: `Claim trace entry ${index + 1} is missing reviewerDisposition`,
             });
           }
-          const hasUncertainty = typeof record.uncertainty === "string" && record.uncertainty.length > 0;
+          const hasUncertainty =
+            typeof record.uncertainty === "string" && record.uncertainty.length > 0;
           const sources = sourceObjects(record.sources);
           const urls = sourceUrlsInClaimTrace(sources);
           const noteIds = sources
@@ -376,7 +433,12 @@ export async function validateHyperresearchRunIntegrity(input: {
           const sourceIds = sources
             .map((source) => source.sourceId)
             .filter((value): value is string => typeof value === "string" && value.length > 0);
-          if (!hasUncertainty && urls.length === 0 && noteIds.length === 0 && sourceIds.length === 0) {
+          if (
+            !hasUncertainty &&
+            urls.length === 0 &&
+            noteIds.length === 0 &&
+            sourceIds.length === 0
+          ) {
             findings.push({
               severity: "blocking",
               code: "missing-claim-trace",
@@ -429,11 +491,14 @@ export async function validateHyperresearchRunIntegrity(input: {
 
   const patchGuard = input.ledger.patchGuard;
   if (patchGuard?.snapshotPath && patchGuard.snapshotSha256) {
-    const currentReport = await input.io.readTextFile(input.io.join(input.ledger.vaultRoot, patchGuard.snapshotPath));
+    const currentReport = await input.io.readTextFile(
+      input.io.join(input.ledger.vaultRoot, patchGuard.snapshotPath)
+    );
     if (currentReport) {
       const currentSha = input.io.sha256(currentReport);
       if (currentSha !== patchGuard.snapshotSha256) {
-        const snapshot = [...(input.ledger.reportSnapshots ?? [])].reverse()
+        const snapshot = [...(input.ledger.reportSnapshots ?? [])]
+          .reverse()
           .find((item) => item.sha256 === patchGuard.snapshotSha256);
         const snapshotText = snapshot
           ? await input.io.readTextFile(input.io.join(input.ledger.vaultRoot, snapshot.path))
@@ -452,14 +517,16 @@ export async function validateHyperresearchRunIntegrity(input: {
             message: `Final report appears to be a wholesale rewrite after snapshot: ${patchGuard.snapshotPath}`,
           });
         }
-        if (!await patchLogCoversReportChange({
-          ledger: input.ledger,
-          io: input.io,
-          beforeSha256: patchGuard.snapshotSha256,
-          afterSha256: currentSha,
-          snapshotText: snapshotText ?? "",
-          currentReport,
-        })) {
+        if (
+          !(await patchLogCoversReportChange({
+            ledger: input.ledger,
+            io: input.io,
+            beforeSha256: patchGuard.snapshotSha256,
+            afterSha256: currentSha,
+            snapshotText: snapshotText ?? "",
+            currentReport,
+          }))
+        ) {
           findings.push({
             severity: "blocking",
             code: "patch-only-violation",

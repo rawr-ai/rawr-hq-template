@@ -1,20 +1,14 @@
 import { resolveControllerReentry } from "@rawr/core";
-import { createClient, type Client, type CreateClientOptions } from "@rawr/agent-plugin-lifecycle/client";
 import {
-  createEmbeddedPlaceholderAnalyticsAdapter,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import {
-  createEmbeddedPlaceholderLoggerAdapter,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import {
-  makeDeferredNodeContentWorkspacePort,
-} from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
-import {
-  makeNodeArtifactRepositoryAsyncPort,
-} from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
-import {
-  makeNodePackageOutputAsyncPort,
-} from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+  createClient,
+  type Client,
+  type CreateClientOptions,
+} from "@rawr/agent-plugin-lifecycle/client";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { makeDeferredNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import {
   bindService,
   type ProcessView,
@@ -23,9 +17,7 @@ import {
   type ServiceBindingContext,
 } from "@rawr/hq-sdk/plugins";
 
-import {
-  deriveAgentPluginControllerLayout,
-} from "../layout";
+import { deriveAgentPluginControllerLayout } from "../layout";
 import {
   LifecycleAuthorityBindingError,
   type ControllerProjectionBinding,
@@ -40,71 +32,85 @@ import {
 } from "./providers/node-runtime";
 
 type LifecycleBoundary = CreateClientOptions;
-type LifecycleProcess = ProcessView & Readonly<{
-  processId: "rawr-cli";
-}>;
-type LifecycleRole = RoleView & Readonly<{
-  roleId: "agent-plugin-lifecycle";
-  capability: "agent-plugin-lifecycle";
-}>;
+type LifecycleProcess = ProcessView &
+  Readonly<{
+    processId: "rawr-cli";
+  }>;
+type LifecycleRole = RoleView &
+  Readonly<{
+    roleId: "agent-plugin-lifecycle";
+    capability: "agent-plugin-lifecycle";
+  }>;
 type LifecycleBindingContext = ServiceBindingContext<LifecycleProcess, LifecycleRole>;
 
 type LifecycleDeps = CreateClientOptions["deps"];
 
 type LifecycleClientSelectors = Readonly<{
-  [TOperation in LifecycleOperation]: (
-    client: Client,
-  ) => LifecycleOperationClient<TOperation>;
+  [TOperation in LifecycleOperation]: (client: Client) => LifecycleOperationClient<TOperation>;
 }>;
 
 const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
-  "releases.check": (client) => Object.freeze({
-    releases: Object.freeze({ check: client.releases.check }),
-  }),
-  "releases.checkRepository": (client) => Object.freeze({
-    releases: Object.freeze({ checkRepository: client.releases.checkRepository }),
-  }),
-  "releases.releaseInputRecord": (client) => Object.freeze({
-    releases: Object.freeze({ releaseInputRecord: client.releases.releaseInputRecord }),
-  }),
-  "releases.refreshReleaseInput": (client) => Object.freeze({
-    releases: Object.freeze({ refreshReleaseInput: client.releases.refreshReleaseInput }),
-  }),
-  "releases.build": (client) => Object.freeze({
-    releases: Object.freeze({ build: client.releases.build }),
-  }),
-  "vendors.status": (client) => Object.freeze({
-    vendors: Object.freeze({ status: client.vendors.status }),
-  }),
-  "vendors.update": (client) => Object.freeze({
-    vendors: Object.freeze({ update: client.vendors.update }),
-  }),
-  "packaging.package": (client) => Object.freeze({
-    packaging: Object.freeze({ package: client.packaging.package }),
-  }),
-  "providers.targetedTest": (client) => Object.freeze({
-    providers: Object.freeze({ targetedTest: client.providers.targetedTest }),
-  }),
-  "providers.completeTest": (client) => Object.freeze({
-    providers: Object.freeze({ completeTest: client.providers.completeTest }),
-  }),
-  "providers.canonicalSync": (client) => Object.freeze({
-    providers: Object.freeze({ canonicalSync: client.providers.canonicalSync }),
-  }),
-  "providers.canonicalStatus": (client) => Object.freeze({
-    providers: Object.freeze({ canonicalStatus: client.providers.canonicalStatus }),
-  }),
-  "governance.currentMainRecord": (client) => Object.freeze({
-    governance: Object.freeze({ currentMainRecord: client.governance.currentMainRecord }),
-  }),
-  "governance.currentMainSelection": (client) => Object.freeze({
-    governance: Object.freeze({ currentMainSelection: client.governance.currentMainSelection }),
-  }),
+  "releases.check": (client) =>
+    Object.freeze({
+      releases: Object.freeze({ check: client.releases.check }),
+    }),
+  "releases.checkRepository": (client) =>
+    Object.freeze({
+      releases: Object.freeze({ checkRepository: client.releases.checkRepository }),
+    }),
+  "releases.releaseInputRecord": (client) =>
+    Object.freeze({
+      releases: Object.freeze({ releaseInputRecord: client.releases.releaseInputRecord }),
+    }),
+  "releases.refreshReleaseInput": (client) =>
+    Object.freeze({
+      releases: Object.freeze({ refreshReleaseInput: client.releases.refreshReleaseInput }),
+    }),
+  "releases.build": (client) =>
+    Object.freeze({
+      releases: Object.freeze({ build: client.releases.build }),
+    }),
+  "vendors.status": (client) =>
+    Object.freeze({
+      vendors: Object.freeze({ status: client.vendors.status }),
+    }),
+  "vendors.update": (client) =>
+    Object.freeze({
+      vendors: Object.freeze({ update: client.vendors.update }),
+    }),
+  "packaging.package": (client) =>
+    Object.freeze({
+      packaging: Object.freeze({ package: client.packaging.package }),
+    }),
+  "providers.targetedTest": (client) =>
+    Object.freeze({
+      providers: Object.freeze({ targetedTest: client.providers.targetedTest }),
+    }),
+  "providers.completeTest": (client) =>
+    Object.freeze({
+      providers: Object.freeze({ completeTest: client.providers.completeTest }),
+    }),
+  "providers.canonicalSync": (client) =>
+    Object.freeze({
+      providers: Object.freeze({ canonicalSync: client.providers.canonicalSync }),
+    }),
+  "providers.canonicalStatus": (client) =>
+    Object.freeze({
+      providers: Object.freeze({ canonicalStatus: client.providers.canonicalStatus }),
+    }),
+  "governance.currentMainRecord": (client) =>
+    Object.freeze({
+      governance: Object.freeze({ currentMainRecord: client.governance.currentMainRecord }),
+    }),
+  "governance.currentMainSelection": (client) =>
+    Object.freeze({
+      governance: Object.freeze({ currentMainSelection: client.governance.currentMainSelection }),
+    }),
 });
 
 export const createProductionLifecycleClient: LifecycleClientFactory = (
   operation,
-  binding,
+  binding
 ): LifecycleOperationClient<typeof operation> => {
   const authority = controllerAuthority();
   const deps = createProductionLifecycleDeps({
@@ -131,10 +137,12 @@ export const createProductionLifecycleClient: LifecycleClientFactory = (
   return selectLifecycleOperationClient(operation, client);
 };
 
-export function createProductionLifecycleDeps(input: Readonly<{
-  binding: ControllerProjectionBinding;
-  controllerDataRoot: string;
-}>): LifecycleDeps {
+export function createProductionLifecycleDeps(
+  input: Readonly<{
+    binding: ControllerProjectionBinding;
+    controllerDataRoot: string;
+  }>
+): LifecycleDeps {
   const { binding, controllerDataRoot } = input;
   const layout = deriveAgentPluginControllerLayout({ dataRoot: controllerDataRoot });
   const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
@@ -178,17 +186,15 @@ function controllerAuthority(): Readonly<{
 
 function selectLifecycleOperationClient<TOperation extends LifecycleOperation>(
   operation: TOperation,
-  client: Client,
+  client: Client
 ): LifecycleOperationClient<TOperation> {
   return lifecycleClientSelectors[operation](client);
 }
 
-function requiredGitExecutable(
-  binding: ControllerProjectionBinding,
-): string {
+function requiredGitExecutable(binding: ControllerProjectionBinding): string {
   if (binding.gitExecutable === undefined) {
     throw new LifecycleAuthorityBindingError(
-      "Agent-plugin lifecycle requires an explicit Git executable binding",
+      "Agent-plugin lifecycle requires an explicit Git executable binding"
     );
   }
   return binding.gitExecutable;

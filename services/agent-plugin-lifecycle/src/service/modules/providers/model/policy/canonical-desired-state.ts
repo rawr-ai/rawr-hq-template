@@ -14,23 +14,22 @@ import {
   type NonEmptyReadonlyArray,
   type ProviderDeploymentIssue,
 } from "../errors/deployment-result";
-import {
-  parseAdapterProtocol,
-  renderCompleteProjection,
-} from "./projection";
+import { parseAdapterProtocol, renderCompleteProjection } from "./projection";
 
 export function resolveCanonicalDesiredStates(
   selection: CanonicalChannelSelection,
-  snapshot: VerifiedArtifactSnapshotV1,
+  snapshot: VerifiedArtifactSnapshotV1
 ): CanonicalDesiredStateResolution {
   if (snapshot.kind !== "complete-set") {
-    return blocked([issue(
-      "ARTIFACT_KIND_MISMATCH",
-      "artifact",
-      "Canonical selection requires one verified complete-set artifact",
-      "complete-set",
-      snapshot.kind,
-    )]);
+    return blocked([
+      issue(
+        "ARTIFACT_KIND_MISMATCH",
+        "artifact",
+        "Canonical selection requires one verified complete-set artifact",
+        "complete-set",
+        snapshot.kind
+      ),
+    ]);
   }
 
   const identityIssues = selectionIdentityIssues(selection, snapshot);
@@ -39,37 +38,24 @@ export function resolveCanonicalDesiredStates(
     return blocked([firstIdentityIssue, ...identityIssues.slice(1)]);
   }
 
-  const claude = resolveProvider(
-    "claude",
-    selection.projections[0],
-    selection,
-    snapshot,
-  );
-  const codex = resolveProvider(
-    "codex",
-    selection.projections[1],
-    selection,
-    snapshot,
-  );
+  const claude = resolveProvider("claude", selection.projections[0], selection, snapshot);
+  const codex = resolveProvider("codex", selection.projections[1], selection, snapshot);
   if (!claude.ok || !codex.ok) {
-    const issues = [
-      ...(claude.ok ? [] : claude.issues),
-      ...(codex.ok ? [] : codex.issues),
-    ];
+    const issues = [...(claude.ok ? [] : claude.issues), ...(codex.ok ? [] : codex.issues)];
     const first = issues[0];
     return first === undefined
-      ? blocked([issue(
-          "PROJECTION_MISMATCH",
-          "selection.projections",
-          "Canonical selection did not resolve both provider projections",
-        )])
+      ? blocked([
+          issue(
+            "PROJECTION_MISMATCH",
+            "selection.projections",
+            "Canonical selection did not resolve both provider projections"
+          ),
+        ])
       : blocked([first, ...issues.slice(1)]);
   }
 
-  const desired: readonly [CanonicalDesiredState<"claude">, CanonicalDesiredState<"codex">] = Object.freeze([
-    claude.value,
-    codex.value,
-  ]);
+  const desired: readonly [CanonicalDesiredState<"claude">, CanonicalDesiredState<"codex">] =
+    Object.freeze([claude.value, codex.value]);
   return Object.freeze({
     status: "RESOLVED",
     desired,
@@ -80,20 +66,22 @@ function resolveProvider<TProvider extends ProviderId>(
   expectedProvider: TProvider,
   binding: CanonicalChannelSelection["projections"][number],
   selection: CanonicalChannelSelection,
-  snapshot: Extract<VerifiedArtifactSnapshotV1, { kind: "complete-set" }>,
+  snapshot: Extract<VerifiedArtifactSnapshotV1, { kind: "complete-set" }>
 ): DeploymentResult<CanonicalDesiredState<TProvider>> {
   if (binding.provider !== expectedProvider) {
-    return failure([issue(
-      "PROJECTION_MISMATCH",
-      `selection.projections.${expectedProvider}.provider`,
-      "Canonical provider binding is out of order or belongs to another provider",
-      expectedProvider,
-      binding.provider,
-    )]);
+    return failure([
+      issue(
+        "PROJECTION_MISMATCH",
+        `selection.projections.${expectedProvider}.provider`,
+        "Canonical provider binding is out of order or belongs to another provider",
+        expectedProvider,
+        binding.provider
+      ),
+    ]);
   }
   const adapter = parseAdapterProtocol(
     binding.adapterProtocol,
-    `selection.projections.${expectedProvider}.adapterProtocol`,
+    `selection.projections.${expectedProvider}.adapterProtocol`
   );
   if (!adapter.ok) return adapter;
 
@@ -104,18 +92,20 @@ function resolveProvider<TProvider extends ProviderId>(
   const first = issues[0];
   if (first !== undefined) return failure([first, ...issues.slice(1)]);
 
-  return success(Object.freeze({
-    selection,
-    projection: Object.freeze({
-      ...projection,
-      provider: expectedProvider,
-    }),
-  }));
+  return success(
+    Object.freeze({
+      selection,
+      projection: Object.freeze({
+        ...projection,
+        provider: expectedProvider,
+      }),
+    })
+  );
 }
 
 function selectionIdentityIssues(
   selection: CanonicalChannelSelection,
-  snapshot: Extract<VerifiedArtifactSnapshotV1, { kind: "complete-set" }>,
+  snapshot: Extract<VerifiedArtifactSnapshotV1, { kind: "complete-set" }>
 ): readonly ProviderDeploymentIssue[] {
   const body = snapshot.releaseSet.body;
   const issues: ProviderDeploymentIssue[] = [];
@@ -124,7 +114,7 @@ function selectionIdentityIssues(
     "sourceRepositoryIdentity",
     selection.sourceRepositoryIdentity,
     body.sourceRepository,
-    issues,
+    issues
   );
   compareIdentity("sourceCommit", selection.sourceCommit, body.sourceCommit, issues);
   compareIdentity("sourceTree", selection.sourceTree, body.sourceTree, issues);
@@ -132,19 +122,19 @@ function selectionIdentityIssues(
     "releaseInputDigest",
     selection.releaseInputDigest,
     body.releaseInputDigest,
-    issues,
+    issues
   );
   compareIdentity(
     "releaseSetDigest",
     selection.releaseSetDigest,
     snapshot.releaseSet.releaseSetDigest,
-    issues,
+    issues
   );
   compareIdentity(
     "artifactRef.releaseSetDigest",
     selection.releaseSetDigest,
     snapshot.ref.releaseSetDigest,
-    issues,
+    issues
   );
   return Object.freeze(issues);
 }
@@ -152,7 +142,7 @@ function selectionIdentityIssues(
 function projectionBindingIssues(
   provider: "claude" | "codex",
   binding: CanonicalChannelSelection["projections"][number],
-  projection: CanonicalDesiredState["projection"],
+  projection: CanonicalDesiredState["projection"]
 ): readonly ProviderDeploymentIssue[] {
   const issues: ProviderDeploymentIssue[] = [];
   compareProjectionBinding(
@@ -160,28 +150,28 @@ function projectionBindingIssues(
     "rendererProtocol",
     binding.rendererProtocol,
     projection.rendererProtocol,
-    issues,
+    issues
   );
   compareProjectionBinding(
     provider,
     "adapterProtocol",
     binding.adapterProtocol,
     projection.adapterProtocol,
-    issues,
+    issues
   );
   compareProjectionBinding(
     provider,
     "capabilityProfileDigest",
     binding.capabilityProfileDigest,
     projection.capabilityProfile.capabilityProfileDigest,
-    issues,
+    issues
   );
   compareProjectionBinding(
     provider,
     "projectionDigest",
     binding.projectionDigest,
     projection.projectionDigest,
-    issues,
+    issues
   );
   return Object.freeze(issues);
 }
@@ -190,16 +180,18 @@ function compareIdentity(
   field: string,
   selected: string,
   artifact: string,
-  issues: ProviderDeploymentIssue[],
+  issues: ProviderDeploymentIssue[]
 ): void {
   if (selected === artifact) return;
-  issues.push(issue(
-    "PROJECTION_MISMATCH",
-    `selection.${field}`,
-    "Selected channel identity differs from the verified complete-set artifact",
-    selected,
-    artifact,
-  ));
+  issues.push(
+    issue(
+      "PROJECTION_MISMATCH",
+      `selection.${field}`,
+      "Selected channel identity differs from the verified complete-set artifact",
+      selected,
+      artifact
+    )
+  );
 }
 
 function compareProjectionBinding(
@@ -207,20 +199,22 @@ function compareProjectionBinding(
   field: string,
   selected: string,
   rendered: string,
-  issues: ProviderDeploymentIssue[],
+  issues: ProviderDeploymentIssue[]
 ): void {
   if (selected === rendered) return;
-  issues.push(issue(
-    field === "adapterProtocol" ? "ADAPTER_PROTOCOL_MISMATCH" : "PROJECTION_MISMATCH",
-    `selection.projections.${provider}.${field}`,
-    "Selected provider binding differs from the verified complete-set projection",
-    selected,
-    rendered,
-  ));
+  issues.push(
+    issue(
+      field === "adapterProtocol" ? "ADAPTER_PROTOCOL_MISMATCH" : "PROJECTION_MISMATCH",
+      `selection.projections.${provider}.${field}`,
+      "Selected provider binding differs from the verified complete-set projection",
+      selected,
+      rendered
+    )
+  );
 }
 
 function blocked(
-  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>,
+  issues: NonEmptyReadonlyArray<ProviderDeploymentIssue>
 ): Extract<CanonicalDesiredStateResolution, { status: "BLOCKED_SELECTION" }> {
   return Object.freeze({
     status: "BLOCKED_SELECTION",

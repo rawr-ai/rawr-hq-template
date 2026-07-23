@@ -83,9 +83,7 @@ export type NativeRegistryUserEntry = NativeUserEntryMetadata & {
 
 export type NativeExternalEntry = NativeLinkEntry | NativeUserEntry;
 
-export type NativeRegistryEntry =
-  | NativeLinkEntry
-  | NativeRegistryUserEntry;
+export type NativeRegistryEntry = NativeLinkEntry | NativeRegistryUserEntry;
 
 export type ActiveExternalExtension = {
   entry: NativeExternalEntry;
@@ -142,12 +140,7 @@ export type CandidateInspection =
   | { accepted: true; extension: StaticExternalExtension }
   | { accepted: false; quarantine: QuarantinedExternalExtension };
 
-export type ExternalExtensionOperation =
-  | "install"
-  | "link"
-  | "uninstall"
-  | "update"
-  | "reset";
+export type ExternalExtensionOperation = "install" | "link" | "uninstall" | "update" | "reset";
 
 export type ExternalExtensionOperationResult = {
   operation: ExternalExtensionOperation;

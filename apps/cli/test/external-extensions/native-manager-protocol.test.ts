@@ -28,7 +28,9 @@ describe("native manager request protocol", () => {
       },
     } as const;
 
-    expect(decodeNativeManagerInvocation(encodeNativeManagerInvocation(invocation))).toEqual(invocation);
+    expect(decodeNativeManagerInvocation(encodeNativeManagerInvocation(invocation))).toEqual(
+      invocation
+    );
   });
 
   it("rejects commands and contract fields outside the closed protocol", () => {
@@ -42,15 +44,21 @@ describe("native manager request protocol", () => {
         contract: GUARDED_NATIVE_MANAGER_CONTRACT,
       },
     };
-    expect(() => decodeNativeManagerInvocation(JSON.stringify(base))).toThrow("NATIVE_MANAGER_COMMAND_REJECTED");
-    expect(() => decodeNativeManagerInvocation(JSON.stringify({
-      ...base,
-      request: {
-        commandExport: "plugins:update",
-        argv: [],
-        contract: { ...GUARDED_NATIVE_MANAGER_CONTRACT, autoInstall: true },
-      },
-    }))).toThrow("NATIVE_MANAGER_CONTRACT_INVALID");
+    expect(() => decodeNativeManagerInvocation(JSON.stringify(base))).toThrow(
+      "NATIVE_MANAGER_COMMAND_REJECTED"
+    );
+    expect(() =>
+      decodeNativeManagerInvocation(
+        JSON.stringify({
+          ...base,
+          request: {
+            commandExport: "plugins:update",
+            argv: [],
+            contract: { ...GUARDED_NATIVE_MANAGER_CONTRACT, autoInstall: true },
+          },
+        })
+      )
+    ).toThrow("NATIVE_MANAGER_CONTRACT_INVALID");
   });
 
   it("rehashes the exact bound install artifact before native dispatch", async () => {
@@ -68,7 +76,7 @@ describe("native manager request protocol", () => {
     await expect(verifyInspectedInstallArtifact(request)).resolves.toBeUndefined();
     writeFileSync(artifact, "changed");
     await expect(verifyInspectedInstallArtifact(request)).rejects.toThrow(
-      "NATIVE_MANAGER_ARTIFACT_HASH_MISMATCH",
+      "NATIVE_MANAGER_ARTIFACT_HASH_MISMATCH"
     );
   });
 });

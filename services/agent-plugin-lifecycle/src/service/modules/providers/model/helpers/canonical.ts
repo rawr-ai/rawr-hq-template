@@ -54,6 +54,8 @@ function sortCanonical(value: CanonicalValue): CanonicalValue {
   return sorted;
 }
 
-function isCanonicalRecord(value: CanonicalValue): value is { readonly [key: string]: CanonicalValue } {
+function isCanonicalRecord(
+  value: CanonicalValue
+): value is { readonly [key: string]: CanonicalValue } {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }

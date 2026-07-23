@@ -19,7 +19,8 @@ const presets = {
   layered: {
     label: "Layered Graph",
     layout: "cose",
-    description: "Canonical graph plus explicit overlays. Candidate queue remains hidden unless selected.",
+    description:
+      "Canonical graph plus explicit overlays. Candidate queue remains hidden unless selected.",
     matchNode: (data) => data.status !== "candidate",
     matchEdge: () => true,
   },
@@ -32,9 +33,16 @@ const presets = {
       ["RuntimeArtifact", "RuntimeMachinery", "RuntimePhase", "ValidationGate"].includes(data.type),
     matchEdge: (data) =>
       data.layer === "runtime-realization-overlay" ||
-      ["produces", "requires", "orders", "provisions", "compiles_to", "validated_by", "finalizes", "lowers_to"].includes(
-        data.predicate,
-      ),
+      [
+        "produces",
+        "requires",
+        "orders",
+        "provisions",
+        "compiles_to",
+        "validated_by",
+        "finalizes",
+        "lowers_to",
+      ].includes(data.predicate),
   },
   authority: {
     label: "Ownership And Authority",
@@ -42,17 +50,28 @@ const presets = {
     description: "Document authority, ownership, projection, replacement, and prohibition edges.",
     matchNode: (data) =>
       data.layer === "authority-and-document-overlay" ||
-      ["DocumentAuthority", "ArchitectureRoot", "ConstructionLaw", "ForbiddenPattern"].includes(data.type),
+      ["DocumentAuthority", "ArchitectureRoot", "ConstructionLaw", "ForbiddenPattern"].includes(
+        data.type
+      ),
     matchEdge: (data) =>
       data.layer === "authority-and-document-overlay" ||
-      ["is_authority_for", "owns_truth", "owns_projection", "does_not_own", "replaces", "forbids"].includes(data.predicate),
+      [
+        "is_authority_for",
+        "owns_truth",
+        "owns_projection",
+        "does_not_own",
+        "replaces",
+        "forbids",
+      ].includes(data.predicate),
   },
   gates: {
     label: "Gates And Validation",
     layout: "breadthfirst",
     description: "Validation gates and the requirements that connect to them.",
-    matchNode: (data) => data.type === "ValidationGate" || data.diffKinds.includes("underrepresented_gate"),
-    matchEdge: (data) => ["requires", "validated_by", "observes", "supports"].includes(data.predicate),
+    matchNode: (data) =>
+      data.type === "ValidationGate" || data.diffKinds.includes("underrepresented_gate"),
+    matchEdge: (data) =>
+      ["requires", "validated_by", "observes", "supports"].includes(data.predicate),
   },
   forbidden: {
     label: "Forbidden And Replacement",
@@ -64,9 +83,12 @@ const presets = {
   "testing-plan-diff": {
     label: "Semantic Evidence",
     layout: "concentric",
-    description: "Semantic comparison findings from parsed evidence claims, plus legacy diff overlays when present.",
+    description:
+      "Semantic comparison findings from parsed evidence claims, plus legacy diff overlays when present.",
     matchNode: (data) => data.diffKinds.length > 0 || data.type === "ValidationGate",
-    matchEdge: (data) => data.diffKinds.length > 0 || ["requires", "validated_by", "observes", "supports"].includes(data.predicate),
+    matchEdge: (data) =>
+      data.diffKinds.length > 0 ||
+      ["requires", "validated_by", "observes", "supports"].includes(data.predicate),
   },
   classifier: {
     label: "Classifier Readiness",
@@ -167,7 +189,10 @@ const cy = cytoscape({
 });
 
 function esc(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+  return String(value ?? "").replace(
+    /[&<>"']/g,
+    (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]
+  );
 }
 
 function listValues(items, key) {
@@ -184,14 +209,16 @@ function renderCheckboxes(id, items, key) {
   container.innerHTML = listValues(items, key)
     .map(
       ([value, count]) =>
-        `<label><input type="checkbox" value="${esc(value)}" checked><span>${esc(value)}</span><span class="count">${count}</span></label>`,
+        `<label><input type="checkbox" value="${esc(value)}" checked><span>${esc(value)}</span><span class="count">${count}</span></label>`
     )
     .join("");
   container.addEventListener("change", applyFilters);
 }
 
 function checkedValues(id) {
-  return new Set([...document.querySelectorAll(`#${id} input:checked`)].map((input) => input.value));
+  return new Set(
+    [...document.querySelectorAll(`#${id} input:checked`)].map((input) => input.value)
+  );
 }
 
 function selectedPreset() {
@@ -199,7 +226,16 @@ function selectedPreset() {
 }
 
 function elementSearchText(data) {
-  return [data.id, data.label, data.type, data.layer, data.status, data.predicate, data.definition, ...(data.aliases || [])]
+  return [
+    data.id,
+    data.label,
+    data.type,
+    data.layer,
+    data.status,
+    data.predicate,
+    data.definition,
+    ...(data.aliases || []),
+  ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
@@ -234,14 +270,14 @@ function applyFilters() {
       data.diffKinds.includes("review_needed") ||
         data.diffKinds.includes("underrepresented_gate") ||
         data.diffKinds.includes("ambiguous") ||
-        data.diffKinds.includes("candidate_new"),
+        data.diffKinds.includes("candidate_new")
     );
     node.toggleClass(
       "diffStale",
       data.diffKinds.includes("stale") ||
         data.diffKinds.includes("forbidden") ||
         data.diffKinds.includes("conflict") ||
-        data.diffKinds.includes("deprecated_use"),
+        data.diffKinds.includes("deprecated_use")
     );
   });
 
@@ -269,7 +305,9 @@ function visibleElements() {
 
 function runLayout(name = document.getElementById("layout").value) {
   const layoutName = name === "preset" ? selectedPreset().layout : name;
-  visibleElements().layout({ name: layoutName, animate: false, fit: true, padding: 50, directed: true }).run();
+  visibleElements()
+    .layout({ name: layoutName, animate: false, fit: true, padding: 50, directed: true })
+    .run();
 }
 
 function updateStatus() {
@@ -294,8 +332,8 @@ function renderSearchResults() {
     .map(
       (node) =>
         `<button class="search-result" data-id="${esc(node.id())}"><strong>${esc(node.data("label") || node.id())}</strong><small>${esc(
-          node.data("type"),
-        )} · ${esc(node.data("layer"))}</small></button>`,
+          node.data("type")
+        )} · ${esc(node.data("layer"))}</small></button>`
     )
     .join("");
 }
@@ -324,7 +362,9 @@ function renderDetails(element) {
   const refs = data.source_refs || [];
   const consequences = data.operational_consequence || [];
   const diffKinds = data.diffKinds || [];
-  const relatedFindings = (payload.diff?.semantic_findings || []).filter((finding) => finding.entity_id === data.id).slice(0, 12);
+  const relatedFindings = (payload.diff?.semantic_findings || [])
+    .filter((finding) => finding.entity_id === data.id)
+    .slice(0, 12);
   document.getElementById("details").innerHTML = `
     <div class="detail-block">
       <h2>${esc(data.label || data.id)}</h2>
@@ -337,10 +377,14 @@ function renderDetails(element) {
     ${data.definition ? `<div class="detail-block"><h3>Definition</h3><p>${esc(data.definition)}</p></div>` : ""}
     ${data.subject ? `<div class="detail-block"><h3>Relation</h3><p class="mono">${esc(data.subject)} --${esc(data.predicate)}--> ${esc(data.object)}</p></div>` : ""}
     <div class="detail-block"><h3>Operational Consequence</h3>${
-      consequences.length ? consequences.map((value) => `<span class="pill">${esc(value)}</span>`).join("") : '<p class="muted">None recorded.</p>'
+      consequences.length
+        ? consequences.map((value) => `<span class="pill">${esc(value)}</span>`).join("")
+        : '<p class="muted">None recorded.</p>'
     }</div>
     <div class="detail-block"><h3>Source References</h3>${
-      refs.length ? refs.map(renderSourceRef).join("") : '<p class="muted">No source refs recorded.</p>'
+      refs.length
+        ? refs.map(renderSourceRef).join("")
+        : '<p class="muted">No source refs recorded.</p>'
     }</div>
     ${relatedFindings.length ? `<div class="detail-block"><h3>Semantic Findings</h3>${relatedFindings.map(renderSemanticFinding).join("")}</div>` : ""}
     <div class="detail-block"><h3>Connected Relations</h3>${renderConnected(element)}</div>
@@ -359,17 +403,23 @@ function renderSemanticFinding(finding) {
 }
 
 function renderSourceRef(ref) {
-  const lines = ref.line_start ? `:${ref.line_start}${ref.line_end && ref.line_end !== ref.line_start ? `-${ref.line_end}` : ""}` : "";
+  const lines = ref.line_start
+    ? `:${ref.line_start}${ref.line_end && ref.line_end !== ref.line_start ? `-${ref.line_end}` : ""}`
+    : "";
   return `<div class="source-ref"><strong>${esc(ref.path)}${esc(lines)}</strong><br><span>${esc(ref.section || "")}</span></div>`;
 }
 
 function renderConnected(element) {
-  const connected = element.isNode() ? element.connectedEdges().slice(0, 20) : element.connectedNodes();
+  const connected = element.isNode()
+    ? element.connectedEdges().slice(0, 20)
+    : element.connectedNodes();
   if (!connected.length) return '<p class="muted">No connected visible relations.</p>';
   return connected
     .map((item) => {
       const data = item.data();
-      const label = item.isEdge() ? `${data.subject} --${data.predicate}--> ${data.object}` : `${data.label || data.id}`;
+      const label = item.isEdge()
+        ? `${data.subject} --${data.predicate}--> ${data.object}`
+        : `${data.label || data.id}`;
       return `<button class="search-result" data-id="${esc(item.id())}"><span class="mono">${esc(label)}</span></button>`;
     })
     .join("");
@@ -377,7 +427,9 @@ function renderConnected(element) {
 
 function showNeighborhood() {
   if (!selectedItem || !selectedItem.isNode()) return;
-  const neighborhood = selectedItem.closedNeighborhood().union(selectedItem.closedNeighborhood().connectedNodes());
+  const neighborhood = selectedItem
+    .closedNeighborhood()
+    .union(selectedItem.closedNeighborhood().connectedNodes());
   cy.elements().addClass("dim");
   neighborhood.removeClass("dim hidden").addClass("focus");
   cy.animate({ fit: { eles: neighborhood, padding: 60 } }, { duration: 180 });
@@ -468,4 +520,5 @@ initControls();
 renderSummary();
 applyFilters();
 runLayout("preset");
-document.getElementById("details").innerHTML = '<div class="notice">Select a node or edge to inspect provenance, semantics, and connected relations.</div>';
+document.getElementById("details").innerHTML =
+  '<div class="notice">Select a node or edge to inspect provenance, semantics, and connected relations.</div>';

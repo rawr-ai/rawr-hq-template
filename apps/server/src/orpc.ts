@@ -7,7 +7,11 @@ import type { Router } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { createTestingRawrHostSeam } from "./testing-host";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
-import { createHostLoggingContext, withHostLoggingContext, withHostLoggingSpanContext } from "./logging";
+import {
+  createHostLoggingContext,
+  withHostLoggingContext,
+  withHostLoggingSpanContext,
+} from "./logging";
 import type { RawrServerApp } from "./app";
 import {
   assertHeavyMiddlewareDedupeMarkers,
@@ -56,8 +60,13 @@ export function __resetOrpcRouteTelemetryForTests() {
  * Canonical:
  * - `testing-host -> host-seam -> host-realization`
  */
-export function createOrpcRouter<TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext>() {
-  return createTestingRawrHostSeam().realization.orpc.router as unknown as Router<AnyContractRouter, TContext>;
+export function createOrpcRouter<
+  TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext,
+>() {
+  return createTestingRawrHostSeam().realization.orpc.router as unknown as Router<
+    AnyContractRouter,
+    TContext
+  >;
 }
 
 /**
@@ -73,12 +82,19 @@ export function createOrpcRouter<TContext extends HostRuntimeSupportContext = Ho
  * Canonical:
  * - `testing-host -> host-seam -> host-realization`
  */
-export function createPublishedOpenApiRouter<TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext>() {
-  return createTestingRawrHostSeam().realization.orpc.published.router as unknown as Router<AnyContractRouter, TContext>;
+export function createPublishedOpenApiRouter<
+  TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext,
+>() {
+  return createTestingRawrHostSeam().realization.orpc.published.router as unknown as Router<
+    AnyContractRouter,
+    TContext
+  >;
 }
 
 function isRpcRequestAllowedWithDedupe(request: Request, policy: RpcAuthPolicy): boolean {
-  return resolveRequestScopedMiddlewareValue(request, RPC_AUTH_DEDUPE_MARKER, () => isRpcRequestAllowed(request, policy));
+  return resolveRequestScopedMiddlewareValue(request, RPC_AUTH_DEDUPE_MARKER, () =>
+    isRpcRequestAllowed(request, policy)
+  );
 }
 
 function assertRpcAuthDedupeMarker(context: RawrBoundaryContext): void {
@@ -127,7 +143,7 @@ function recordRoutedRequestMetrics(args: {
 async function withRouteSpan(
   name: string,
   attributes: Record<string, string | boolean | number>,
-  fn: () => Promise<Response>,
+  fn: () => Promise<Response>
 ): Promise<Response> {
   // Every caller-facing proof path must cross this host span so traces, metrics,
   // and runtime logs describe the same routed execution.
@@ -164,50 +180,55 @@ async function handleRpcRoute<
   rpcAuthPolicy: RpcAuthPolicy;
   onContextCreated?: (context: TRequestContext) => void;
 }): Promise<Response> {
-  const { request, rpcHandler, contextFactory, contextDeps, rpcAuthPolicy, onContextCreated } = args;
+  const { request, rpcHandler, contextFactory, contextDeps, rpcAuthPolicy, onContextCreated } =
+    args;
   const startedAt = Date.now();
-  return withRouteSpan("rawr.orpc.rpc.request", {
-    "rawr.orpc.surface": "rpc",
-    "url.full": request.url,
-  }, async () => {
-    if (!isRpcRequestAllowedWithDedupe(request, rpcAuthPolicy)) {
-      const response = new Response("forbidden", { status: 403 });
+  return withRouteSpan(
+    "rawr.orpc.rpc.request",
+    {
+      "rawr.orpc.surface": "rpc",
+      "url.full": request.url,
+    },
+    async () => {
+      if (!isRpcRequestAllowedWithDedupe(request, rpcAuthPolicy)) {
+        const response = new Response("forbidden", { status: 403 });
+        recordRoutedRequestMetrics({
+          surface: "rpc",
+          statusCode: response.status,
+          durationMs: Date.now() - startedAt,
+          attributes: { "rawr.orpc.authorized": false, "rawr.orpc.router": "rpc" },
+        });
+        return response;
+      }
+
+      const context = contextFactory(request, contextDeps);
+      assertRpcAuthDedupeMarker(context);
+      onContextCreated?.(context);
+      // Request-scoped logging context is established at the shared host boundary,
+      // not inside the service package, so in-process execution still correlates
+      // logs with the routed RPC request.
+      const loggingContext = createHostLoggingContext({
+        request,
+        repoRoot: context.repoRoot,
+        requestId: context.requestId,
+        correlationId: context.correlationId,
+        surface: "rpc",
+      });
+
+      const response = await withHostLoggingContext(loggingContext, async () => {
+        const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
+        return result.matched ? result.response : new Response("not found", { status: 404 });
+      });
+
       recordRoutedRequestMetrics({
         surface: "rpc",
         statusCode: response.status,
         durationMs: Date.now() - startedAt,
-        attributes: { "rawr.orpc.authorized": false, "rawr.orpc.router": "rpc" },
+        attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": "rpc" },
       });
       return response;
     }
-
-    const context = contextFactory(request, contextDeps);
-    assertRpcAuthDedupeMarker(context);
-    onContextCreated?.(context);
-    // Request-scoped logging context is established at the shared host boundary,
-    // not inside the service package, so in-process execution still correlates
-    // logs with the routed RPC request.
-    const loggingContext = createHostLoggingContext({
-      request,
-      repoRoot: context.repoRoot,
-      requestId: context.requestId,
-      correlationId: context.correlationId,
-      surface: "rpc",
-    });
-
-    const response = await withHostLoggingContext(loggingContext, async () => {
-      const result = await rpcHandler.handle(request, { prefix: "/rpc", context });
-      return result.matched ? result.response : new Response("not found", { status: 404 });
-    });
-
-    recordRoutedRequestMetrics({
-      surface: "rpc",
-      statusCode: response.status,
-      durationMs: Date.now() - startedAt,
-      attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": "rpc" },
-    });
-    return response;
-  }).catch((error) => {
+  ).catch((error) => {
     recordRoutedRequestMetrics({
       surface: "rpc",
       statusCode: 500,
@@ -230,37 +251,38 @@ async function handleOpenApiRoute<
 }): Promise<Response> {
   const { request, openapiHandler, contextFactory, contextDeps, onContextCreated } = args;
   const startedAt = Date.now();
-  return withRouteSpan("rawr.orpc.openapi.request", {
-    "rawr.orpc.surface": "openapi",
-    "url.full": request.url,
-  }, async () => {
-    const context = contextFactory(request, contextDeps);
-    onContextCreated?.(context);
-    // OpenAPI requests must carry the same host-owned logging correlation model
-    // as RPC so the two public surfaces stay observably consistent.
-    const loggingContext = createHostLoggingContext({
-      request,
-      repoRoot: context.repoRoot,
-      requestId: context.requestId,
-      correlationId: context.correlationId,
-      surface: "openapi",
-    });
+  return withRouteSpan(
+    "rawr.orpc.openapi.request",
+    {
+      "rawr.orpc.surface": "openapi",
+      "url.full": request.url,
+    },
+    async () => {
+      const context = contextFactory(request, contextDeps);
+      onContextCreated?.(context);
+      // OpenAPI requests must carry the same host-owned logging correlation model
+      // as RPC so the two public surfaces stay observably consistent.
+      const loggingContext = createHostLoggingContext({
+        request,
+        repoRoot: context.repoRoot,
+        requestId: context.requestId,
+        correlationId: context.correlationId,
+        surface: "openapi",
+      });
 
-    const response = await withHostLoggingContext(
-      loggingContext,
-      async () => {
+      const response = await withHostLoggingContext(loggingContext, async () => {
         const result = await openapiHandler.handle(request, { prefix: "/api/orpc", context });
         return result.matched ? result.response : new Response("not found", { status: 404 });
-      },
-    );
-    recordRoutedRequestMetrics({
-      surface: "openapi",
-      statusCode: response.status,
-      durationMs: Date.now() - startedAt,
-      attributes: { "rawr.orpc.router": "openapi" },
-    });
-    return response;
-  }).catch((error) => {
+      });
+      recordRoutedRequestMetrics({
+        surface: "openapi",
+        statusCode: response.status,
+        durationMs: Date.now() - startedAt,
+        attributes: { "rawr.orpc.router": "openapi" },
+      });
+      return response;
+    }
+  ).catch((error) => {
     recordRoutedRequestMetrics({
       surface: "openapi",
       statusCode: 500,
@@ -273,7 +295,7 @@ async function handleOpenApiRoute<
 
 async function createOpenApiSpec<TContext extends HostRuntimeSupportContext>(
   router: Router<AnyContractRouter, TContext>,
-  baseUrl: string,
+  baseUrl: string
 ) {
   const typeBoxSchemaConverter: ConditionalSchemaConverter = {
     condition: (schema) => Boolean(schema && typeof schema === "object" && "__typebox" in schema),
@@ -300,7 +322,7 @@ async function createOpenApiSpec<TContext extends HostRuntimeSupportContext>(
 
 export async function generateOrpcOpenApiSpec(
   baseUrl: string,
-  router: Router<AnyContractRouter, any> = createPublishedOpenApiRouter(),
+  router: Router<AnyContractRouter, any> = createPublishedOpenApiRouter()
 ) {
   return createOpenApiSpec(router, baseUrl);
 }
@@ -322,11 +344,11 @@ export function registerOrpcRoutes<
   TApp extends RawrServerApp,
   TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext,
   TRequestContext extends RawrBoundaryContext & TContext = RawrBoundaryContext & TContext,
->(
-  app: TApp,
-  options: RegisterOrpcRoutesOptions<TContext, TRequestContext>,
-): TApp {
-  const router = (options.router ?? createOrpcRouter<TContext>()) as Router<AnyContractRouter, TContext>;
+>(app: TApp, options: RegisterOrpcRoutesOptions<TContext, TRequestContext>): TApp {
+  const router = (options.router ?? createOrpcRouter<TContext>()) as Router<
+    AnyContractRouter,
+    TContext
+  >;
   const openApiRouter = (options.openApiRouter ?? router) as Router<AnyContractRouter, TContext>;
   const rpcHandler = new RPCHandler<TContext>(router);
   const openapiHandler = new OpenAPIHandler<TContext>(openApiRouter);
@@ -373,7 +395,7 @@ export function registerOrpcRoutes<
         onContextCreated: options.onContextCreated,
       });
     },
-    { parse: "none" },
+    { parse: "none" }
   );
 
   app.all(
@@ -389,7 +411,7 @@ export function registerOrpcRoutes<
         onContextCreated: options.onContextCreated,
       });
     },
-    { parse: "none" },
+    { parse: "none" }
   );
 
   app.all(
@@ -404,7 +426,7 @@ export function registerOrpcRoutes<
         onContextCreated: options.onContextCreated,
       });
     },
-    { parse: "none" },
+    { parse: "none" }
   );
 
   app.all(
@@ -419,7 +441,7 @@ export function registerOrpcRoutes<
         onContextCreated: options.onContextCreated,
       });
     },
-    { parse: "none" },
+    { parse: "none" }
   );
 
   return app;

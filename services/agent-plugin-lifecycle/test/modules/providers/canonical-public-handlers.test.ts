@@ -17,7 +17,10 @@ import type {
 } from "../../../src/service/modules/providers/model/dto/canonical-convergence";
 import type { CanonicalTargetStatus } from "../../../src/service/modules/providers/model/dto/outcome";
 import type { NativeMutationAttempt } from "../../../src/service/modules/providers/model/repositories/provider";
-import { parseProviderTarget, type ProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
+import {
+  parseProviderTarget,
+  type ProviderTarget,
+} from "../../../src/service/modules/providers/model/dto/provider-target";
 import {
   createProviderMarketplaceRegistration,
   marketplaceState,
@@ -114,7 +117,7 @@ describe("canonical provider public handlers", () => {
           Object.freeze({
             kind: "present",
             state: marketplaceState(marketplaceForProjection(projection)),
-          }),
+          })
         );
       },
     },
@@ -153,21 +156,21 @@ describe("canonical provider public handlers", () => {
         harness.observationOwnershipConflicts.add(harness.codexTarget.targetDigest);
       },
     },
-  ] satisfies readonly StatusScenario[])(
-    "classifies $label without opening a mutation or legacy port",
-    async ({ configure, expected }) => {
-      const harness = new CanonicalHarness();
-      configure(harness);
+  ] satisfies readonly StatusScenario[])("classifies $label without opening a mutation or legacy port", async ({
+    configure,
+    expected,
+  }) => {
+    const harness = new CanonicalHarness();
+    configure(harness);
 
-      const result = await harness.status();
+    const result = await harness.status();
 
-      expect(result).toMatchObject({
-        ok: true,
-        value: [{ status: expected }],
-      });
-      harness.expectMutationPortsCold();
-    },
-  );
+    expect(result).toMatchObject({
+      ok: true,
+      value: [{ status: expected }],
+    });
+    harness.expectMutationPortsCold();
+  });
 
   it.each([
     {
@@ -184,34 +187,36 @@ describe("canonical provider public handlers", () => {
       },
       timeline: ["materialize:projection", "materialize:marketplace"],
     },
-  ] as const)(
-    "short-circuits native convergence when $label materialization fails",
-    async ({ configure, timeline }) => {
-      const harness = new CanonicalHarness();
-      harness.setMarketplaceOnlyDrift();
-      configure(harness);
+  ] as const)("short-circuits native convergence when $label materialization fails", async ({
+    configure,
+    timeline,
+  }) => {
+    const harness = new CanonicalHarness();
+    harness.setMarketplaceOnlyDrift();
+    configure(harness);
 
-      const result = await harness.sync();
+    const result = await harness.sync();
 
-      expect(result).toMatchObject({
-        ok: true,
-        value: {
-          status: "Failed",
-          targets: [{
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        status: "Failed",
+        targets: [
+          {
             kind: "failed",
             status: "DRIFTED",
             appliedPrefix: [],
             issues: [{ code: "PROJECTION_MISMATCH" }],
-          }],
-        },
-      });
-      expect(harness.timeline).toEqual(timeline);
-      expect(harness.capabilities).toHaveBeenCalledOnce();
-      expect(harness.observe).toHaveBeenCalledOnce();
-      expect(harness.apply).not.toHaveBeenCalled();
-      harness.expectLegacyStateCold();
-    },
-  );
+          },
+        ],
+      },
+    });
+    expect(harness.timeline).toEqual(timeline);
+    expect(harness.capabilities).toHaveBeenCalledOnce();
+    expect(harness.observe).toHaveBeenCalledOnce();
+    expect(harness.apply).not.toHaveBeenCalled();
+    harness.expectLegacyStateCold();
+  });
 
   it("rebuilds derived projection inputs before marketplace-only native drift", async () => {
     const harness = new CanonicalHarness();
@@ -224,11 +229,13 @@ describe("canonical provider public handlers", () => {
       ok: true,
       value: {
         status: "Mutated",
-        targets: [{
-          kind: "mutated",
-          status: "CONVERGED",
-          appliedPrefix: [{ kind: "SetMarketplace" }],
-        }],
+        targets: [
+          {
+            kind: "mutated",
+            status: "CONVERGED",
+            appliedPrefix: [{ kind: "SetMarketplace" }],
+          },
+        ],
       },
     });
     expect(harness.timeline).toEqual([
@@ -237,7 +244,7 @@ describe("canonical provider public handlers", () => {
       "apply:SetMarketplace",
     ]);
     expect(harness.materializedProjectionDigests).toEqual(
-      new Set([harness.projection("codex").projectionDigest]),
+      new Set([harness.projection("codex").projectionDigest])
     );
 
     const counts = harness.readCounts();
@@ -276,7 +283,7 @@ describe("canonical provider public handlers", () => {
     harness.setInventory(
       harness.codexTarget,
       liveMembers,
-      marketplaceForMembers(projection, liveMembers),
+      marketplaceForMembers(projection, liveMembers)
     );
 
     const first = await harness.sync();
@@ -285,16 +292,18 @@ describe("canonical provider public handlers", () => {
       ok: true,
       value: {
         status: "Mutated",
-        targets: [{
-          kind: "mutated",
-          status: "CONVERGED",
-          appliedPrefix: [
-            { kind: "SetMarketplace" },
-            { kind: "RetireMember", nativeIdentity: alpha.nativeIdentity },
-            { kind: "InstallMember", nativeIdentity: alpha.nativeIdentity },
-            { kind: "RetireMember", nativeIdentity: omitted.nativeIdentity },
-          ],
-        }],
+        targets: [
+          {
+            kind: "mutated",
+            status: "CONVERGED",
+            appliedPrefix: [
+              { kind: "SetMarketplace" },
+              { kind: "RetireMember", nativeIdentity: alpha.nativeIdentity },
+              { kind: "InstallMember", nativeIdentity: alpha.nativeIdentity },
+              { kind: "RetireMember", nativeIdentity: omitted.nativeIdentity },
+            ],
+          },
+        ],
       },
     });
     expect(harness.timeline.slice(0, 2)).toEqual([
@@ -307,8 +316,9 @@ describe("canonical provider public handlers", () => {
       "InstallMember",
       "RetireMember",
     ]);
-    expect(harness.inventory(harness.codexTarget).members.map((member) => member.pluginId))
-      .toEqual(projection.members.map((member) => member.pluginId));
+    expect(harness.inventory(harness.codexTarget).members.map((member) => member.pluginId)).toEqual(
+      projection.members.map((member) => member.pluginId)
+    );
 
     const counts = harness.readCounts();
     const second = await harness.sync();
@@ -345,7 +355,7 @@ describe("canonical provider public handlers", () => {
     harness.setInventory(
       harness.codexTarget,
       liveMembers,
-      marketplaceForMembers(projection, liveMembers),
+      marketplaceForMembers(projection, liveMembers)
     );
     harness.failRetireNativeIdentity = omitted.nativeIdentity;
 
@@ -355,12 +365,14 @@ describe("canonical provider public handlers", () => {
       ok: true,
       value: {
         status: "Failed",
-        targets: [{
-          kind: "failed",
-          status: "DRIFTED",
-          appliedPrefix: [{ kind: "SetMarketplace" }],
-          issues: [{ code: "MUTATION_FAILED" }],
-        }],
+        targets: [
+          {
+            kind: "failed",
+            status: "DRIFTED",
+            appliedPrefix: [{ kind: "SetMarketplace" }],
+            issues: [{ code: "MUTATION_FAILED" }],
+          },
+        ],
       },
     });
     expect(harness.apply.mock.calls.map(([action]) => action.kind)).toEqual([
@@ -369,10 +381,12 @@ describe("canonical provider public handlers", () => {
     ]);
     expect(harness.observe).toHaveBeenCalledTimes(2);
     expect(harness.inventory(harness.codexTarget).members).toContainEqual(omitted);
-    expect(harness.inventory(harness.codexTarget).marketplace).toEqual(Object.freeze({
-      kind: "present",
-      state: marketplaceState(marketplaceForProjection(projection)),
-    }));
+    expect(harness.inventory(harness.codexTarget).marketplace).toEqual(
+      Object.freeze({
+        kind: "present",
+        state: marketplaceState(marketplaceForProjection(projection)),
+      })
+    );
 
     const failedCounts = harness.readCounts();
     harness.failRetireNativeIdentity = null;
@@ -382,21 +396,28 @@ describe("canonical provider public handlers", () => {
       ok: true,
       value: {
         status: "Mutated",
-        targets: [{
-          kind: "mutated",
-          status: "CONVERGED",
-          appliedPrefix: [{
-            kind: "RetireMember",
-            nativeIdentity: omitted.nativeIdentity,
-          }],
-        }],
+        targets: [
+          {
+            kind: "mutated",
+            status: "CONVERGED",
+            appliedPrefix: [
+              {
+                kind: "RetireMember",
+                nativeIdentity: omitted.nativeIdentity,
+              },
+            ],
+          },
+        ],
       },
     });
     expect(harness.observe.mock.calls.length).toBeGreaterThan(failedCounts.observe);
-    expect(harness.inventory(harness.codexTarget).members.map((member) => member.pluginId))
-      .toEqual(projection.members.map((member) => member.pluginId));
+    expect(harness.inventory(harness.codexTarget).members.map((member) => member.pluginId)).toEqual(
+      projection.members.map((member) => member.pluginId)
+    );
     expect(harness.projectionMaterialize).toHaveBeenCalledTimes(failedCounts.projectionMaterialize);
-    expect(harness.marketplaceMaterialize).toHaveBeenCalledTimes(failedCounts.marketplaceMaterialize);
+    expect(harness.marketplaceMaterialize).toHaveBeenCalledTimes(
+      failedCounts.marketplaceMaterialize
+    );
 
     const convergedCounts = harness.readCounts();
     const repeat = await harness.sync();
@@ -409,8 +430,12 @@ describe("canonical provider public handlers", () => {
       },
     });
     expect(harness.apply).toHaveBeenCalledTimes(convergedCounts.apply);
-    expect(harness.projectionMaterialize).toHaveBeenCalledTimes(convergedCounts.projectionMaterialize);
-    expect(harness.marketplaceMaterialize).toHaveBeenCalledTimes(convergedCounts.marketplaceMaterialize);
+    expect(harness.projectionMaterialize).toHaveBeenCalledTimes(
+      convergedCounts.projectionMaterialize
+    );
+    expect(harness.marketplaceMaterialize).toHaveBeenCalledTimes(
+      convergedCounts.marketplaceMaterialize
+    );
     harness.expectLegacyStateCold();
   });
 
@@ -430,7 +455,10 @@ describe("canonical provider public handlers", () => {
       harness.codexTarget,
       projection.members.map(native),
       [configured],
-      Object.freeze({ kind: "present", state: marketplaceState(marketplaceForProjection(projection)) }),
+      Object.freeze({
+        kind: "present",
+        state: marketplaceState(marketplaceForProjection(projection)),
+      })
     );
     harness.setInventory(harness.codexTarget, initial);
     harness.failRetireExposureIdentity = configured.exposureIdentity;
@@ -453,16 +481,20 @@ describe("canonical provider public handlers", () => {
       ok: true,
       value: {
         status: "Mutated",
-        targets: [{
-          kind: "mutated",
-          status: "CONVERGED",
-          appliedPrefix: [{
-            kind: "RetireConfiguredExposure",
-            exposureIdentity: configured.exposureIdentity,
-            nativeIdentity: configured.nativeIdentity,
-            providerSourceIdentity: configured.providerSourceIdentity,
-          }],
-        }],
+        targets: [
+          {
+            kind: "mutated",
+            status: "CONVERGED",
+            appliedPrefix: [
+              {
+                kind: "RetireConfiguredExposure",
+                exposureIdentity: configured.exposureIdentity,
+                nativeIdentity: configured.nativeIdentity,
+                providerSourceIdentity: configured.providerSourceIdentity,
+              },
+            ],
+          },
+        ],
       },
     });
     expect(Value.Check(CanonicalSyncResultSchema, retry)).toBe(true);
@@ -529,14 +561,16 @@ describe("canonical provider public handlers", () => {
       ok: true,
       value: {
         status: "Failed",
-        targets: [{
-          kind: "uncertain",
-          status: "DRIFTED",
-          appliedPrefix: [],
-          attempted: { kind: "SetMarketplace" },
-          lastKnown: "bridge-invoked",
-          issues: [{ code: "BLOCKED_COLLISION", path: "target.home" }],
-        }],
+        targets: [
+          {
+            kind: "uncertain",
+            status: "DRIFTED",
+            appliedPrefix: [],
+            attempted: { kind: "SetMarketplace" },
+            lastKnown: "bridge-invoked",
+            issues: [{ code: "BLOCKED_COLLISION", path: "target.home" }],
+          },
+        ],
       },
     });
     expect(harness.apply).toHaveBeenCalledOnce();
@@ -574,192 +608,217 @@ class CanonicalHarness {
 
   readonly selectionResolve = vi.fn(async () => this.selectionResult);
   readonly releaseRead = vi.fn(async () => success(this.artifact));
-  readonly capabilities = vi.fn(async (
-    target: ProviderTarget,
-    contentAuthority: ContentAuthority,
-  ) => {
-    this.requireAuthority(contentAuthority);
-    if (this.ownershipConflicts.has(target.targetDigest)) {
-      return failure([issue(
-        "BLOCKED_COLLISION",
-        "target.home",
-        "injected provider-home ownership collision",
-      )]);
+  readonly capabilities = vi.fn(
+    async (target: ProviderTarget, contentAuthority: ContentAuthority) => {
+      this.requireAuthority(contentAuthority);
+      if (this.ownershipConflicts.has(target.targetDigest)) {
+        return failure([
+          issue("BLOCKED_COLLISION", "target.home", "injected provider-home ownership collision"),
+        ]);
+      }
+      if (this.incompatible.has(target.targetDigest)) {
+        return Object.freeze({
+          ok: false as const,
+          issues: [
+            Object.freeze({
+              code: "CAPABILITY_MISMATCH" as const,
+              path: "target.capabilities",
+              message: "injected incompatible provider",
+              expected: "selected capabilities",
+              actual: "missing",
+            }),
+          ] as const,
+        });
+      }
+      const projection = this.projection(target.provider);
+      return success(
+        Object.freeze({
+          provider: target.provider,
+          adapterProtocol: projection.adapterProtocol,
+          available: projection.capabilityProfile.required,
+        })
+      );
     }
-    if (this.incompatible.has(target.targetDigest)) {
-      return Object.freeze({
-        ok: false as const,
-        issues: [Object.freeze({
-          code: "CAPABILITY_MISMATCH" as const,
-          path: "target.capabilities",
-          message: "injected incompatible provider",
-          expected: "selected capabilities",
-          actual: "missing",
-        })] as const,
-      });
-    }
-    const projection = this.projection(target.provider);
-    return success(Object.freeze({
-      provider: target.provider,
-      adapterProtocol: projection.adapterProtocol,
-      available: projection.capabilityProfile.required,
-    }));
-  });
-  readonly observe = vi.fn(async (
-    target: ProviderTarget,
-    contentAuthority: ContentAuthority,
-  ) => {
+  );
+  readonly observe = vi.fn(async (target: ProviderTarget, contentAuthority: ContentAuthority) => {
     this.requireAuthority(contentAuthority);
     if (this.observationOwnershipConflicts.has(target.targetDigest)) {
-      return failure([issue(
-        "BLOCKED_COLLISION",
-        "target.home",
-        "injected provider-home ownership collision",
-      )]);
+      return failure([
+        issue("BLOCKED_COLLISION", "target.home", "injected provider-home ownership collision"),
+      ]);
     }
     if (this.observationFailures.has(target.targetDigest)) {
-      return failure([issue(
-        "VISIBILITY_FAILED",
-        "target.inventory",
-        "injected native observation failure",
-      )]);
+      return failure([
+        issue("VISIBILITY_FAILED", "target.inventory", "injected native observation failure"),
+      ]);
     }
     if (this.ambiguousProvenance.has(target.targetDigest)) {
-      return success<CanonicalNativeObservation>(Object.freeze({
-        kind: "ambiguous-provenance",
-        target,
-        reason: "injected ambiguous native provenance",
-      }));
-    }
-    return success<CanonicalNativeObservation>(Object.freeze({
-      kind: "observed",
-      inventory: this.inventory(target),
-    }));
-  });
-  readonly apply = vi.fn(async (action: CanonicalNativeMutationAction): Promise<NativeMutationAttempt> => {
-    this.timeline.push(`apply:${action.kind}`);
-    const before = this.inventory(action.target);
-    if (action.kind === "SetMarketplace" && this.failMarketplaceWithOwnershipCollision) {
-      return Object.freeze({
-        kind: "uncertain",
-        lastKnown: "bridge-invoked",
-        issues: [issue(
-          "BLOCKED_COLLISION",
-          "target.home",
-          "injected apply-edge provider-home ownership collision",
-        )] as const,
-      });
-    }
-    if (
-      action.kind === "RetireMember"
-      && action.member.nativeIdentity === this.failRetireNativeIdentity
-    ) {
-      return Object.freeze({
-        kind: "not-applied",
-        issues: [issue(
-          "MUTATION_FAILED",
-          "target.retire",
-          "injected omitted-member retirement failure",
-        )] as const,
-      });
-    }
-    if (
-      action.kind === "RetireConfiguredExposure"
-      && action.exposure.exposureIdentity === this.failRetireExposureIdentity
-    ) {
-      return Object.freeze({
-        kind: "not-applied",
-        issues: [issue(
-          "MUTATION_FAILED",
-          "target.retireConfiguredExposure",
-          "injected configured-selector retirement failure",
-        )] as const,
-      });
-    }
-    if (action.kind === "SetMarketplace") {
-      const marketplace: ProviderMarketplaceObservation = action.registration === null
-        ? Object.freeze({ kind: "absent" })
-        : Object.freeze({ kind: "present", state: marketplaceState(action.registration) });
-      this.setInventory(action.target, before.members, marketplace);
-      return Object.freeze({ kind: "applied" });
-    }
-    if (action.kind === "RetireMember") {
-      this.setInventory(
-        action.target,
-        before.members.filter((member) => member.nativeIdentity !== action.member.nativeIdentity),
-        before.marketplace,
+      return success<CanonicalNativeObservation>(
+        Object.freeze({
+          kind: "ambiguous-provenance",
+          target,
+          reason: "injected ambiguous native provenance",
+        })
       );
-      return Object.freeze({ kind: "applied" });
     }
-    if (action.kind === "InstallMember") {
-      this.setInventory(
-        action.target,
-        [...before.members, native(action.member)],
-        before.marketplace,
-      );
-      return Object.freeze({ kind: "applied" });
-    }
-    if (action.kind === "RetireConfiguredExposure") {
-      this.inventories.set(action.target.targetDigest, createProviderInventory(
-        action.target,
-        before.members,
-        before.standaloneExposures.filter((exposure) =>
-          exposure.exposureIdentity !== action.exposure.exposureIdentity
-          || exposure.providerSourceIdentity !== action.exposure.providerSourceIdentity),
-        before.marketplace,
-      ));
-      return Object.freeze({ kind: "applied" });
-    }
-    this.setInventory(
-      action.target,
-      before.members.map((member) => member.nativeIdentity === action.member.nativeIdentity
-        ? Object.freeze({ ...member, enablement: "enabled" as const })
-        : member),
-      before.marketplace,
+    return success<CanonicalNativeObservation>(
+      Object.freeze({
+        kind: "observed",
+        inventory: this.inventory(target),
+      })
     );
-    return Object.freeze({ kind: "applied" });
   });
+  readonly apply = vi.fn(
+    async (action: CanonicalNativeMutationAction): Promise<NativeMutationAttempt> => {
+      this.timeline.push(`apply:${action.kind}`);
+      const before = this.inventory(action.target);
+      if (action.kind === "SetMarketplace" && this.failMarketplaceWithOwnershipCollision) {
+        return Object.freeze({
+          kind: "uncertain",
+          lastKnown: "bridge-invoked",
+          issues: [
+            issue(
+              "BLOCKED_COLLISION",
+              "target.home",
+              "injected apply-edge provider-home ownership collision"
+            ),
+          ] as const,
+        });
+      }
+      if (
+        action.kind === "RetireMember" &&
+        action.member.nativeIdentity === this.failRetireNativeIdentity
+      ) {
+        return Object.freeze({
+          kind: "not-applied",
+          issues: [
+            issue("MUTATION_FAILED", "target.retire", "injected omitted-member retirement failure"),
+          ] as const,
+        });
+      }
+      if (
+        action.kind === "RetireConfiguredExposure" &&
+        action.exposure.exposureIdentity === this.failRetireExposureIdentity
+      ) {
+        return Object.freeze({
+          kind: "not-applied",
+          issues: [
+            issue(
+              "MUTATION_FAILED",
+              "target.retireConfiguredExposure",
+              "injected configured-selector retirement failure"
+            ),
+          ] as const,
+        });
+      }
+      if (action.kind === "SetMarketplace") {
+        const marketplace: ProviderMarketplaceObservation =
+          action.registration === null
+            ? Object.freeze({ kind: "absent" })
+            : Object.freeze({ kind: "present", state: marketplaceState(action.registration) });
+        this.setInventory(action.target, before.members, marketplace);
+        return Object.freeze({ kind: "applied" });
+      }
+      if (action.kind === "RetireMember") {
+        this.setInventory(
+          action.target,
+          before.members.filter((member) => member.nativeIdentity !== action.member.nativeIdentity),
+          before.marketplace
+        );
+        return Object.freeze({ kind: "applied" });
+      }
+      if (action.kind === "InstallMember") {
+        this.setInventory(
+          action.target,
+          [...before.members, native(action.member)],
+          before.marketplace
+        );
+        return Object.freeze({ kind: "applied" });
+      }
+      if (action.kind === "RetireConfiguredExposure") {
+        this.inventories.set(
+          action.target.targetDigest,
+          createProviderInventory(
+            action.target,
+            before.members,
+            before.standaloneExposures.filter(
+              (exposure) =>
+                exposure.exposureIdentity !== action.exposure.exposureIdentity ||
+                exposure.providerSourceIdentity !== action.exposure.providerSourceIdentity
+            ),
+            before.marketplace
+          )
+        );
+        return Object.freeze({ kind: "applied" });
+      }
+      this.setInventory(
+        action.target,
+        before.members.map((member) =>
+          member.nativeIdentity === action.member.nativeIdentity
+            ? Object.freeze({ ...member, enablement: "enabled" as const })
+            : member
+        ),
+        before.marketplace
+      );
+      return Object.freeze({ kind: "applied" });
+    }
+  );
   readonly projectionMaterialize = vi.fn(async (projection: AgentProviderProjection) => {
     this.timeline.push("materialize:projection");
     if (this.failProjectionMaterialization) {
-      return failure([issue(
-        "PROJECTION_MISMATCH",
-        "projection.materialization",
-        "injected projection materialization failure",
-      )]);
+      return failure([
+        issue(
+          "PROJECTION_MISMATCH",
+          "projection.materialization",
+          "injected projection materialization failure"
+        ),
+      ]);
     }
     this.materializedProjectionDigests.add(projection.projectionDigest);
-    return success(Object.freeze({
-      kind: "published" as const,
-      projectionDigest: projection.projectionDigest,
-    }));
+    return success(
+      Object.freeze({
+        kind: "published" as const,
+        projectionDigest: projection.projectionDigest,
+      })
+    );
   });
-  readonly marketplaceMaterialize = vi.fn(async (
-    _provider: ProviderTarget["provider"],
-    registration: ReturnType<typeof createProviderMarketplaceRegistration>,
-  ) => {
-    this.timeline.push("materialize:marketplace");
-    if (this.failMarketplaceMaterialization) {
-      return failure([issue(
-        "PROJECTION_MISMATCH",
-        "marketplace.materialization",
-        "injected marketplace materialization failure",
-      )]);
+  readonly marketplaceMaterialize = vi.fn(
+    async (
+      _provider: ProviderTarget["provider"],
+      registration: ReturnType<typeof createProviderMarketplaceRegistration>
+    ) => {
+      this.timeline.push("materialize:marketplace");
+      if (this.failMarketplaceMaterialization) {
+        return failure([
+          issue(
+            "PROJECTION_MISMATCH",
+            "marketplace.materialization",
+            "injected marketplace materialization failure"
+          ),
+        ]);
+      }
+      if (
+        registration.members.some(
+          (member) => !this.materializedProjectionDigests.has(member.sourceProjectionDigest)
+        )
+      ) {
+        return failure([
+          issue(
+            "PROJECTION_MISMATCH",
+            "marketplace.materialization",
+            "marketplace materialization requires freshly derived projection inputs"
+          ),
+        ]);
+      }
+      return success(
+        Object.freeze({
+          kind: "published" as const,
+          projectionDigest: registration.projectionDigest,
+          sourceDigest: registration.sourceDigest,
+        })
+      );
     }
-    if (registration.members.some((member) =>
-      !this.materializedProjectionDigests.has(member.sourceProjectionDigest))) {
-      return failure([issue(
-        "PROJECTION_MISMATCH",
-        "marketplace.materialization",
-        "marketplace materialization requires freshly derived projection inputs",
-      )]);
-    }
-    return success(Object.freeze({
-      kind: "published" as const,
-      projectionDigest: registration.projectionDigest,
-      sourceDigest: registration.sourceDigest,
-    }));
-  });
+  );
 
   readonly receiptRead = vi.fn(async () => unexpected("receipt read"));
   readonly receiptWrite = vi.fn(async () => unexpected("receipt write"));
@@ -772,32 +831,38 @@ class CanonicalHarness {
   constructor() {
     this.setInventory(
       this.codexTarget,
-      nativeProjectionInventory(this.codexTarget, this.projection("codex")),
+      nativeProjectionInventory(this.codexTarget, this.projection("codex"))
     );
   }
 
   async sync(targets: readonly ProviderTarget[] = [this.codexTarget]) {
-    return await executeCanonicalSync({
-      kind: "canonical-sync",
-      channel: "current-main",
-      locator: {
-        repositoryIdentity: this.fixture.selection.sourceRepositoryIdentity,
-        workspaceRoot: "/tmp/rawr-content",
+    return await executeCanonicalSync(
+      {
+        kind: "canonical-sync",
+        channel: "current-main",
+        locator: {
+          repositoryIdentity: this.fixture.selection.sourceRepositoryIdentity,
+          workspaceRoot: "/tmp/rawr-content",
+        },
+        targets: targets.map((target) => ({ provider: target.provider, home: target.home })),
       },
-      targets: targets.map((target) => ({ provider: target.provider, home: target.home })),
-    }, this.dependencies());
+      this.dependencies()
+    );
   }
 
   async status(targets: readonly ProviderTarget[] = [this.codexTarget]) {
-    return await executeCanonicalStatus({
-      kind: "canonical-status",
-      channel: "current-main",
-      locator: {
-        repositoryIdentity: this.fixture.selection.sourceRepositoryIdentity,
-        workspaceRoot: "/tmp/rawr-content",
+    return await executeCanonicalStatus(
+      {
+        kind: "canonical-status",
+        channel: "current-main",
+        locator: {
+          repositoryIdentity: this.fixture.selection.sourceRepositoryIdentity,
+          workspaceRoot: "/tmp/rawr-content",
+        },
+        targets: targets.map((target) => ({ provider: target.provider, home: target.home })),
       },
-      targets: targets.map((target) => ({ provider: target.provider, home: target.home })),
-    }, this.dependencies());
+      this.dependencies()
+    );
   }
 
   dependencies() {
@@ -822,28 +887,26 @@ class CanonicalHarness {
     return required(this.inventories.get(target.targetDigest), `inventory ${target.home}`);
   }
 
-  setInventory(
-    target: ProviderTarget,
-    inventory: ProviderInventory,
-  ): void;
+  setInventory(target: ProviderTarget, inventory: ProviderInventory): void;
   setInventory(
     target: ProviderTarget,
     members: readonly NativeMemberObservation[],
-    marketplace: ProviderMarketplaceObservation,
+    marketplace: ProviderMarketplaceObservation
   ): void;
   setInventory(
     target: ProviderTarget,
     inventoryOrMembers: ProviderInventory | readonly NativeMemberObservation[],
-    marketplace?: ProviderMarketplaceObservation,
+    marketplace?: ProviderMarketplaceObservation
   ): void {
-    const inventory = "inventoryFingerprint" in inventoryOrMembers
-      ? inventoryOrMembers
-      : createProviderInventory(
-          target,
-          inventoryOrMembers,
-          this.inventory(target).standaloneExposures,
-          required(marketplace, "marketplace"),
-        );
+    const inventory =
+      "inventoryFingerprint" in inventoryOrMembers
+        ? inventoryOrMembers
+        : createProviderInventory(
+            target,
+            inventoryOrMembers,
+            this.inventory(target).standaloneExposures,
+            required(marketplace, "marketplace")
+          );
     this.inventories.set(target.targetDigest, inventory);
   }
 
@@ -853,7 +916,7 @@ class CanonicalHarness {
     this.setInventory(
       this.codexTarget,
       projection.members.map(native),
-      marketplaceForMembers(projection, [native(first)]),
+      marketplaceForMembers(projection, [native(first)])
     );
   }
 
@@ -904,7 +967,7 @@ class CanonicalHarness {
 
 function nativeProjectionInventory(
   target: ProviderTarget,
-  projection: AgentProviderProjection,
+  projection: AgentProviderProjection
 ): ProviderInventory {
   return createProviderInventory(
     target,
@@ -913,7 +976,7 @@ function nativeProjectionInventory(
     Object.freeze({
       kind: "present",
       state: marketplaceState(marketplaceForProjection(projection)),
-    }),
+    })
   );
 }
 
@@ -932,7 +995,7 @@ function native(member: ProviderProjectionMember): NativeMemberObservation {
 
 function nativeWithEnablement(
   member: ProviderProjectionMember,
-  enablement: NativeMemberObservation["enablement"],
+  enablement: NativeMemberObservation["enablement"]
 ): NativeMemberObservation {
   return Object.freeze({ ...native(member), enablement });
 }
@@ -954,22 +1017,24 @@ function marketplaceForProjection(projection: AgentProviderProjection) {
 
 function marketplaceForMembers(
   projection: AgentProviderProjection,
-  members: readonly NativeMemberObservation[],
+  members: readonly NativeMemberObservation[]
 ): ProviderMarketplaceObservation {
   return Object.freeze({
     kind: "present",
-    state: marketplaceState(createProviderMarketplaceRegistration({
-      provider: projection.provider,
-      adapterProtocol: projection.adapterProtocol,
-      marketplaceIdentity: projection.marketplace.identity,
-      members: members.map((member) => ({
-        pluginId: member.pluginId,
-        nativeIdentity: member.nativeIdentity,
-        providerSourceIdentity: member.providerSourceIdentity,
-        sourceProjectionDigest: projection.projectionDigest,
-        memberFingerprint: member.memberFingerprint,
-      })),
-    })),
+    state: marketplaceState(
+      createProviderMarketplaceRegistration({
+        provider: projection.provider,
+        adapterProtocol: projection.adapterProtocol,
+        marketplaceIdentity: projection.marketplace.identity,
+        members: members.map((member) => ({
+          pluginId: member.pluginId,
+          nativeIdentity: member.nativeIdentity,
+          providerSourceIdentity: member.providerSourceIdentity,
+          sourceProjectionDigest: projection.projectionDigest,
+          memberFingerprint: member.memberFingerprint,
+        })),
+      })
+    ),
   });
 }
 

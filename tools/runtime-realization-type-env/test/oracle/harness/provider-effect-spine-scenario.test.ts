@@ -1,14 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { Effect, type RawrEffect } from "@rawr/sdk/effect";
 import { providerFx, defineRuntimeProvider } from "@rawr/sdk/runtime/providers";
-import {
-  defineRuntimeProfile,
-  providerSelection,
-} from "@rawr/sdk/runtime/profiles";
-import {
-  defineRuntimeResource,
-  resourceRequirement,
-} from "@rawr/sdk/runtime/resources";
+import { defineRuntimeProfile, providerSelection } from "@rawr/sdk/runtime/profiles";
+import { defineRuntimeResource, resourceRequirement } from "@rawr/sdk/runtime/resources";
 import { defineRuntimeSchema } from "@rawr/sdk/runtime/schema";
 import type {
   CompiledExecutionPlan,
@@ -37,10 +31,7 @@ interface ScenarioClock {
 }
 
 interface ScenarioEmailSender {
-  send(input: {
-    readonly to: string;
-    readonly subject: string;
-  }): Promise<{
+  send(input: { readonly to: string; readonly subject: string }): Promise<{
     readonly accepted: true;
     readonly from: string;
     readonly at: string;
@@ -53,45 +44,38 @@ interface ScenarioEmailConfig {
   readonly liveHandle?: () => void;
 }
 
-const ScenarioClockResource = defineRuntimeResource<
-  "scenario.clock",
-  ScenarioClock
->({
+const ScenarioClockResource = defineRuntimeResource<"scenario.clock", ScenarioClock>({
   id: "scenario.clock",
   title: "Scenario clock",
 });
 
-const ScenarioEmailResource = defineRuntimeResource<
-  "scenario.email",
-  ScenarioEmailSender
->({
+const ScenarioEmailResource = defineRuntimeResource<"scenario.email", ScenarioEmailSender>({
   id: "scenario.email",
   title: "Scenario email sender",
 });
 
-const ScenarioEmailConfigSchema = defineRuntimeSchema<
-  "scenario.email.config",
-  ScenarioEmailConfig
->({
-  id: "scenario.email.config",
-  parse(value) {
-    const record = value as Partial<ScenarioEmailConfig> | undefined;
-    if (!record || typeof record !== "object") {
-      throw new Error("scenario email config must be an object");
-    }
-    if (typeof record.from !== "string" || !record.from.includes("@")) {
-      throw new Error("scenario email config requires an email from address");
-    }
-    if (typeof record.apiKey !== "string" || record.apiKey.length === 0) {
-      throw new Error("scenario email config requires an api key");
-    }
-    return {
-      from: record.from.toLowerCase(),
-      apiKey: record.apiKey,
-      liveHandle: record.liveHandle,
-    };
-  },
-});
+const ScenarioEmailConfigSchema = defineRuntimeSchema<"scenario.email.config", ScenarioEmailConfig>(
+  {
+    id: "scenario.email.config",
+    parse(value) {
+      const record = value as Partial<ScenarioEmailConfig> | undefined;
+      if (!record || typeof record !== "object") {
+        throw new Error("scenario email config must be an object");
+      }
+      if (typeof record.from !== "string" || !record.from.includes("@")) {
+        throw new Error("scenario email config requires an email from address");
+      }
+      if (typeof record.apiKey !== "string" || record.apiKey.length === 0) {
+        throw new Error("scenario email config requires an api key");
+      }
+      return {
+        from: record.from.toLowerCase(),
+        apiKey: record.apiKey,
+        liveHandle: record.liveHandle,
+      };
+    },
+  }
+);
 
 const SendScenarioEmailRef = {
   kind: "execution.descriptor-ref",
@@ -114,11 +98,7 @@ const SendScenarioEmailPlan = {
 } as const satisfies CompiledExecutionPlan;
 
 function assertNoLiveHandles(value: unknown): void {
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
     throw new Error(`observation leaked live handle value: ${String(value)}`);
   }
 
@@ -157,7 +137,7 @@ function createCountingEffectRuntime(): {
 }
 
 function providerResourceDefinitionsFromStartedValues(
-  startedValues: ReadonlyMap<string, unknown>,
+  startedValues: ReadonlyMap<string, unknown>
 ): readonly ContainedRuntimeResourceDefinition[] {
   return [...startedValues.values()].flatMap((started) => {
     const providerValue = started as ProviderProvisionedValue | undefined;
@@ -211,10 +191,7 @@ describe("phase two provider/config/effect spine scenario", () => {
       },
     });
 
-    const emailProvider = defineRuntimeProvider<
-      typeof ScenarioEmailResource,
-      ScenarioEmailConfig
-    >({
+    const emailProvider = defineRuntimeProvider<typeof ScenarioEmailResource, ScenarioEmailConfig>({
       kind: "runtime.provider",
       id: "scenario.email.memory",
       title: "Scenario memory email sender",
@@ -234,7 +211,7 @@ describe("phase two provider/config/effect spine scenario", () => {
             secretObservations.push(
               context.config.apiKey === "scenario-secret"
                 ? "secret-seen-during-acquire"
-                : "secret-missing",
+                : "secret-missing"
             );
             const clock = context.resources.get(ScenarioClockResource.id) as
               | ScenarioClock
@@ -316,7 +293,7 @@ describe("phase two provider/config/effect spine scenario", () => {
     if (boot.status !== "started") throw boot.error;
 
     const resources = createContainedRuntimeResourceAccess(
-      providerResourceDefinitionsFromStartedValues(boot.startedValues()),
+      providerResourceDefinitionsFromStartedValues(boot.startedValues())
     );
     const descriptor = {
       kind: "execution.descriptor",
@@ -330,14 +307,12 @@ describe("phase two provider/config/effect spine scenario", () => {
 
         return Effect.tryPromise({
           try: async () => {
-            const email =
-              context.resources.requireResource<ScenarioEmailSender>(
-                ScenarioEmailResource.id,
-              );
-            const clock =
-              context.resources.requireResource<ScenarioClock>(
-                ScenarioClockResource.id,
-              );
+            const email = context.resources.requireResource<ScenarioEmailSender>(
+              ScenarioEmailResource.id
+            );
+            const clock = context.resources.requireResource<ScenarioClock>(
+              ScenarioClockResource.id
+            );
 
             context.resources.telemetry().event("scenario.email.send", {
               traceId: context.execution.traceId,
@@ -372,9 +347,7 @@ describe("phase two provider/config/effect spine scenario", () => {
         >;
       },
     } satisfies ExecutionDescriptor;
-    const table = createExecutionDescriptorTable([
-      { ref: SendScenarioEmailRef, descriptor },
-    ]);
+    const table = createExecutionDescriptorTable([{ ref: SendScenarioEmailRef, descriptor }]);
     const registry = createExecutionRegistry({
       plans: [SendScenarioEmailPlan],
       descriptorTable: table,
@@ -430,7 +403,7 @@ describe("phase two provider/config/effect spine scenario", () => {
       expect(
         invocation.events
           .filter((event) => event.name.startsWith("boundary.policy."))
-          .map((event) => event.attributes?.boundaryPolicy),
+          .map((event) => event.attributes?.boundaryPolicy)
       ).toEqual(["service.procedure", "service.procedure"]);
 
       const observationJson = JSON.stringify({

@@ -42,6 +42,6 @@ export interface ControllerAuthorityFailure {
 
 export interface ControllerAuthorityResource<R = never> {
   readonly preflight: (
-    input: ControllerAuthorityPreflightInput,
+    input: ControllerAuthorityPreflightInput
   ) => Effect.Effect<ControllerAuthorityPreflight, ControllerAuthorityFailure, R>;
 }

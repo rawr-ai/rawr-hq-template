@@ -16,9 +16,7 @@ import {
 } from "@rawr/controller-release";
 
 // The shipped inspector is the sole filesystem-to-product verification adapter.
-import {
-  requireVerifiedControllerRelease,
-} from "../../apps/cli/src/lib/controller/release-inspector.ts";
+import { requireVerifiedControllerRelease } from "../../apps/cli/src/lib/controller/release-inspector.ts";
 import { sha256File } from "./lib/filesystem.ts";
 import {
   CONTROLLER_DEPENDENCY_LOCK_PATH,
@@ -58,7 +56,7 @@ function describeIssues(issues: readonly ControllerIssue[]): string {
 }
 
 async function observePlannedEntries(
-  sources: readonly ControllerPayloadSource[],
+  sources: readonly ControllerPayloadSource[]
 ): Promise<readonly ControllerPayloadEntryInput[]> {
   const entries: ControllerPayloadEntryInput[] = [];
   for (const source of sources) {
@@ -70,7 +68,7 @@ async function observePlannedEntries(
       entries.push({
         kind: "file",
         path: source.releasePath,
-        mode: source.mode ?? (status.mode & 0o777),
+        mode: source.mode ?? status.mode & 0o777,
         digest: await sha256File(source.sourcePath),
       });
     } else {
@@ -86,7 +84,7 @@ async function observePlannedEntries(
 }
 
 export async function buildControllerRelease(
-  input: ControllerReleaseBuildInput,
+  input: ControllerReleaseBuildInput
 ): Promise<ControllerMaterializationResult> {
   const dependencyLockDigest = await sha256File(input.dependencyLockPath);
   const sources: readonly ControllerPayloadSource[] = Object.freeze([
@@ -100,7 +98,7 @@ export async function buildControllerRelease(
   ]);
   const entries = await observePlannedEntries(sources);
   const runtimeEntry = entries.find(
-    (entry) => entry.kind === "file" && entry.path === CONTROLLER_RUNTIME_PATH,
+    (entry) => entry.kind === "file" && entry.path === CONTROLLER_RUNTIME_PATH
   );
   if (runtimeEntry === undefined || runtimeEntry.kind !== "file") {
     throw new Error(`controller payload is missing bundled runtime: ${CONTROLLER_RUNTIME_PATH}`);
@@ -109,7 +107,7 @@ export async function buildControllerRelease(
     const payloadDigest = computeControllerMemberPayloadDigest(entries, member.root);
     if (!payloadDigest.ok) {
       throw new Error(
-        `invalid official member payload ${member.packageId}: ${describeIssues(payloadDigest.issues)}`,
+        `invalid official member payload ${member.packageId}: ${describeIssues(payloadDigest.issues)}`
       );
     }
     return Object.freeze({ ...member, payloadDigest: payloadDigest.value });
@@ -119,7 +117,7 @@ export async function buildControllerRelease(
     rootProjectNames: input.nxRootProjectNames,
   });
   const nxClosureDigest = sha256(
-    JSON.stringify(nxClosure.map((project) => [project.name, project.root])),
+    JSON.stringify(nxClosure.map((project) => [project.name, project.root]))
   );
   const manifest = createControllerPayloadManifest({
     schemaVersion: CONTROLLER_PAYLOAD_SCHEMA_VERSION,

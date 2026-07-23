@@ -5,4 +5,3 @@ describe("@rawr/plugin-hello", () => {
     expect(true).toBe(true);
   });
 });
-

@@ -69,13 +69,13 @@ describe("external extension operation policy", () => {
     const preparation = new FixedPreparation(
       inspectedInstall(extension),
       emptyUpdate(),
-      stagedInstall(),
+      stagedInstall()
     );
     const mutation = new RecordingMutation();
     const subject = new ExternalExtensionService(
       new MutableState(immutableInstallState(extension), accepted(extension)),
       preparation,
-      mutation,
+      mutation
     );
 
     const result = await subject.install("/tmp/fixture.tgz");
@@ -124,7 +124,7 @@ describe("external extension operation policy", () => {
     const preparation = new FixedPreparation(
       inspectedInstall(extension, artifactPath),
       emptyUpdate(),
-      stagedInstall(async () => {}, artifactPath),
+      stagedInstall(async () => {}, artifactPath)
     );
     const subject = new ExternalExtensionService(state, preparation, mutation);
 
@@ -141,51 +141,51 @@ describe("external extension operation policy", () => {
     ]);
   });
 
-  it.each(["success", "failure"] as const)(
-    "keeps the staged artifact alive through deferred native dispatch %s",
-    async (outcome) => {
-      const extension = staticExtension();
-      const artifactPath = path.resolve("/tmp/deferred-external-fixture.tgz");
-      const state = new MutableState(emptyState(), accepted(extension));
-      let cleaned = false;
-      let dispatchStarted!: () => void;
-      const started = new Promise<void>((resolve) => {
-        dispatchStarted = resolve;
-      });
-      let releaseDispatch!: () => void;
-      const released = new Promise<void>((resolve) => {
-        releaseDispatch = resolve;
-      });
-      const mutation = new RecordingMutation(async () => {
-        expect(cleaned).toBe(false);
-        dispatchStarted();
-        await released;
-        expect(cleaned).toBe(false);
-        if (outcome === "failure") throw new Error("fixture native failure");
-        state.current = immutableInstallState(extension);
-      });
-      const subject = new ExternalExtensionService(
-        state,
-        new FixedPreparation(
-          inspectedInstall(extension, artifactPath),
-          emptyUpdate(),
-          stagedInstall(async () => {
-            cleaned = true;
-          }, artifactPath),
-        ),
-        mutation,
-      );
-
-      const pending = subject.install(artifactPath);
-      await started;
+  it.each([
+    "success",
+    "failure",
+  ] as const)("keeps the staged artifact alive through deferred native dispatch %s", async (outcome) => {
+    const extension = staticExtension();
+    const artifactPath = path.resolve("/tmp/deferred-external-fixture.tgz");
+    const state = new MutableState(emptyState(), accepted(extension));
+    let cleaned = false;
+    let dispatchStarted!: () => void;
+    const started = new Promise<void>((resolve) => {
+      dispatchStarted = resolve;
+    });
+    let releaseDispatch!: () => void;
+    const released = new Promise<void>((resolve) => {
+      releaseDispatch = resolve;
+    });
+    const mutation = new RecordingMutation(async () => {
       expect(cleaned).toBe(false);
-      releaseDispatch();
-      const result = await pending;
+      dispatchStarted();
+      await released;
+      expect(cleaned).toBe(false);
+      if (outcome === "failure") throw new Error("fixture native failure");
+      state.current = immutableInstallState(extension);
+    });
+    const subject = new ExternalExtensionService(
+      state,
+      new FixedPreparation(
+        inspectedInstall(extension, artifactPath),
+        emptyUpdate(),
+        stagedInstall(async () => {
+          cleaned = true;
+        }, artifactPath)
+      ),
+      mutation
+    );
 
-      expect(cleaned).toBe(true);
-      expect(result.nativeStatus).toBe(outcome === "success" ? "completed" : "failed");
-    },
-  );
+    const pending = subject.install(artifactPath);
+    await started;
+    expect(cleaned).toBe(false);
+    releaseDispatch();
+    const result = await pending;
+
+    expect(cleaned).toBe(true);
+    expect(result.nativeStatus).toBe(outcome === "success" ? "completed" : "failed");
+  });
 
   it("preserves a completed native install result when staging cleanup fails", async () => {
     const extension = staticExtension();
@@ -201,9 +201,9 @@ describe("external extension operation policy", () => {
         emptyUpdate(),
         stagedInstall(async () => {
           throw new Error("fixture install staging cleanup failure");
-        }, artifactPath),
+        }, artifactPath)
       ),
-      mutation,
+      mutation
     );
 
     const result = await subject.install(artifactPath);
@@ -225,11 +225,14 @@ describe("external extension operation policy", () => {
 
   it("replaces a matching mutable link when installing an immutable artifact", async () => {
     const extension = staticExtension();
-    const state = new MutableState(activeState(extension, {
-      name: extension.packageId,
-      type: "link",
-      root: extension.canonicalRoot,
-    }), accepted(extension));
+    const state = new MutableState(
+      activeState(extension, {
+        name: extension.packageId,
+        type: "link",
+        root: extension.canonicalRoot,
+      }),
+      accepted(extension)
+    );
     const mutation = new RecordingMutation(async () => {
       state.current = immutableInstallState(extension);
     });
@@ -306,12 +309,12 @@ describe("external extension operation policy", () => {
         candidate: { accepted: false, quarantine },
       },
       emptyUpdate(),
-      stagedInstall(cleanup.increment, "/tmp/rejected.tgz"),
+      stagedInstall(cleanup.increment, "/tmp/rejected.tgz")
     );
     const subject = new ExternalExtensionService(
       new MutableState(emptyState(), { accepted: false, quarantine }),
       preparation,
-      mutation,
+      mutation
     );
 
     const result = await subject.install("/tmp/rejected.tgz");
@@ -324,11 +327,18 @@ describe("external extension operation policy", () => {
   it("rejects reset --reinstall before native dispatch", async () => {
     const extension = staticExtension();
     const mutation = new RecordingMutation();
-    const subject = service({ state: activeState(extension), inspection: accepted(extension), mutation });
+    const subject = service({
+      state: activeState(extension),
+      inspection: accepted(extension),
+      mutation,
+    });
 
     const result = await subject.reset({ hard: false, reinstall: true });
 
-    expect(result).toMatchObject({ disposition: "reject", reason: expect.stringContaining("not permitted") });
+    expect(result).toMatchObject({
+      disposition: "reject",
+      reason: expect.stringContaining("not permitted"),
+    });
     expect(mutation.requests).toEqual([]);
   });
 
@@ -357,11 +367,14 @@ describe("external extension operation policy", () => {
       root: "/aliased/external",
       canonicalRoot: "/canonical/external",
     };
-    const state = new MutableState(activeState(extension, {
-      name: extension.packageId,
-      type: "link",
-      root: extension.root,
-    }), accepted(extension));
+    const state = new MutableState(
+      activeState(extension, {
+        name: extension.packageId,
+        type: "link",
+        root: extension.root,
+      }),
+      accepted(extension)
+    );
     const mutation = new RecordingMutation(async () => {
       state.current = emptyState();
     });
@@ -389,11 +402,14 @@ describe("external extension operation policy", () => {
       packageId: "@fixture/unrelated",
       root: collidingRoot,
     });
-    const state = new MutableState(activeState(extension, {
-      name: extension.packageId,
-      type: "link",
-      root: collidingRoot,
-    }), accepted(extension));
+    const state = new MutableState(
+      activeState(extension, {
+        name: extension.packageId,
+        type: "link",
+        root: collidingRoot,
+      }),
+      accepted(extension)
+    );
     const mutation = new RecordingMutation();
     const subject = makeService(state, mutation);
 
@@ -411,11 +427,14 @@ describe("external extension operation policy", () => {
     const canonicalRoot = path.join(process.cwd(), "fixture-relative-extension");
     const relativeRoot = "./fixture-relative-extension";
     const extension = staticExtension({ root: canonicalRoot });
-    const state = new MutableState(activeState(extension, {
-      name: extension.packageId,
-      type: "link",
-      root: canonicalRoot,
-    }), accepted(extension));
+    const state = new MutableState(
+      activeState(extension, {
+        name: extension.packageId,
+        type: "link",
+        root: canonicalRoot,
+      }),
+      accepted(extension)
+    );
     const mutation = new RecordingMutation(async () => {
       state.current = emptyState();
     });
@@ -446,7 +465,10 @@ describe("external extension operation policy", () => {
       active: [],
       quarantined: [quarantineFixture("registry-malformed")],
     };
-    const state = new MutableState(malformed, { accepted: false, quarantine: malformed.quarantined[0]! });
+    const state = new MutableState(malformed, {
+      accepted: false,
+      quarantine: malformed.quarantined[0]!,
+    });
     const mutation = new RecordingMutation(async () => {
       state.current = emptyState();
     });
@@ -455,7 +477,10 @@ describe("external extension operation policy", () => {
     const result = await subject.reset({ hard: false, reinstall: false });
 
     expect(result.disposition).toBe("delegate-native");
-    expect(mutation.requests[0]).toMatchObject({ commandExport: "plugins:reset", argv: ["--hard"] });
+    expect(mutation.requests[0]).toMatchObject({
+      commandExport: "plugins:reset",
+      argv: ["--hard"],
+    });
   });
 
   it("does not claim update convergence from malformed state with no known entries", async () => {
@@ -470,7 +495,10 @@ describe("external extension operation policy", () => {
 
     const result = await service({ state: malformed, mutation }).update();
 
-    expect(result).toMatchObject({ disposition: "reject", reason: expect.stringContaining("incomplete") });
+    expect(result).toMatchObject({
+      disposition: "reject",
+      reason: expect.stringContaining("incomplete"),
+    });
     expect(mutation.requests).toEqual([]);
   });
 
@@ -482,7 +510,10 @@ describe("external extension operation policy", () => {
       active: [],
       quarantined: [quarantineFixture("native-package-residue")],
     };
-    const state = new MutableState(residue, { accepted: false, quarantine: residue.quarantined[0]! });
+    const state = new MutableState(residue, {
+      accepted: false,
+      quarantine: residue.quarantined[0]!,
+    });
     const mutation = new RecordingMutation(async () => {
       state.current = emptyState();
     });
@@ -503,7 +534,10 @@ describe("external extension operation policy", () => {
       active: [],
       quarantined: [quarantineFixture("registry-malformed")],
     };
-    const state = new MutableState(malformed, { accepted: false, quarantine: malformed.quarantined[0]! });
+    const state = new MutableState(malformed, {
+      accepted: false,
+      quarantine: malformed.quarantined[0]!,
+    });
     const mutation = new RecordingMutation(async () => {
       state.current = emptyState();
     });
@@ -531,7 +565,10 @@ describe("external extension operation policy", () => {
 
     const result = await service({ state: malformed, mutation }).uninstall("/deleted/link");
 
-    expect(result).toMatchObject({ disposition: "reject", reason: expect.stringContaining("cannot resolve") });
+    expect(result).toMatchObject({
+      disposition: "reject",
+      reason: expect.stringContaining("cannot resolve"),
+    });
     expect(mutation.requests).toEqual([]);
   });
 
@@ -682,11 +719,13 @@ describe("external extension operation policy", () => {
       state: quarantinedState(quarantine),
       mutation,
       updatePreparation: {
-        entries: [{
-          kind: "reject",
-          entry,
-          reason: `Native user entry ${entry.name} has no matching package dependency`,
-        }],
+        entries: [
+          {
+            kind: "reject",
+            entry,
+            reason: `Native user entry ${entry.name} has no matching package dependency`,
+          },
+        ],
       },
     });
 
@@ -705,7 +744,7 @@ class MutableState implements ExternalExtensionStatePort {
 
   constructor(
     public current: NativeRegistryProjection,
-    private readonly inspection: CandidateInspection,
+    private readonly inspection: CandidateInspection
   ) {}
 
   async inspectRoot(): Promise<CandidateInspection> {
@@ -738,7 +777,7 @@ class FixedPreparation implements ExternalExtensionPreparationPort {
   constructor(
     private readonly inspectionValue: InspectedInstallArtifact,
     private readonly updateValue: PreparedUpdate,
-    private readonly stagingValue: PreparedInstallArtifact = stagedInstall(),
+    private readonly stagingValue: PreparedInstallArtifact = stagedInstall()
   ) {}
 
   async inspectInstall(): Promise<InspectedInstallArtifact> {
@@ -773,9 +812,9 @@ function service(input: {
     new FixedPreparation(
       input.installInspection ?? inspectedInstall(extension),
       input.updatePreparation ?? emptyUpdate(),
-      input.installStaging ?? stagedInstall(),
+      input.installStaging ?? stagedInstall()
     ),
-    input.mutation,
+    input.mutation
   );
 }
 
@@ -784,13 +823,13 @@ function makeService(state: MutableState, mutation: NativeMutationPort): Externa
   return new ExternalExtensionService(
     state,
     new FixedPreparation(inspectedInstall(extension), emptyUpdate()),
-    mutation,
+    mutation
   );
 }
 
 function inspectedInstall(
   extension: StaticExternalExtension,
-  artifactPath = "/tmp/fixture.tgz",
+  artifactPath = "/tmp/fixture.tgz"
 ): InspectedInstallArtifact {
   return {
     sourcePath: artifactPath,
@@ -801,7 +840,7 @@ function inspectedInstall(
 
 function stagedInstall(
   cleanup: () => Promise<void> = async () => {},
-  artifactPath = "/tmp/fixture.tgz",
+  artifactPath = "/tmp/fixture.tgz"
 ): PreparedInstallArtifact {
   return { artifactPath, artifactSha256: "b".repeat(64), cleanup };
 }
@@ -818,15 +857,17 @@ function localUpdate(extension: StaticExternalExtension): PreparedUpdate {
 
 function nativeUpdate(extension: StaticExternalExtension): PreparedUpdate {
   return {
-    entries: [{
-      kind: "delegate-native",
-      entry: {
-        name: extension.packageId,
-        type: "user",
-        tag: "latest",
-        dependencySpec: extension.version,
+    entries: [
+      {
+        kind: "delegate-native",
+        entry: {
+          name: extension.packageId,
+          type: "user",
+          tag: "latest",
+          dependencySpec: extension.version,
+        },
       },
-    }],
+    ],
   };
 }
 
@@ -836,14 +877,14 @@ function accepted(extension: StaticExternalExtension): CandidateInspection {
 
 function immutableInstallState(
   extension: StaticExternalExtension,
-  artifactSha256 = "b".repeat(64),
+  artifactSha256 = "b".repeat(64)
 ): NativeRegistryProjection {
   const artifactName = nativeInstallArtifactName({
     artifactSha256,
     staticFingerprint: extension.fingerprint,
   });
   const artifactUrl = pathToFileURL(
-    path.join("/tmp/rawr-external-artifact-fixture", artifactName),
+    path.join("/tmp/rawr-external-artifact-fixture", artifactName)
   ).href;
   return activeState(extension, {
     name: extension.packageId,
@@ -861,7 +902,7 @@ function quarantineFixture(
     | "registry-malformed"
     | "reserved-surface-collision"
     | "root-missing",
-  entry?: QuarantinedExternalExtension["entry"],
+  entry?: QuarantinedExternalExtension["entry"]
 ): QuarantinedExternalExtension {
   return {
     identity: entry?.name ?? "@fixture/external",

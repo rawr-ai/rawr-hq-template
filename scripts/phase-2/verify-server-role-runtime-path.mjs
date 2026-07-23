@@ -1,5 +1,11 @@
 #!/usr/bin/env bun
-import { finishVerification, parseAllowFindings, pathExists, readFile, readJson } from "./_verify-utils.mjs";
+import {
+  finishVerification,
+  parseAllowFindings,
+  pathExists,
+  readFile,
+  readJson,
+} from "./_verify-utils.mjs";
 
 const allowFindings = parseAllowFindings();
 const failures = [];
@@ -19,10 +25,18 @@ if (!serverEntrypoint.includes("@rawr/hq-sdk")) {
 if (serverEntrypoint.includes("./legacy-cutover")) {
   failures.push("apps/hq/server.ts must not import ./legacy-cutover.");
 }
-if (serverEntrypoint.includes("@rawr/runtime/") || serverEntrypoint.includes("../server/src/bootstrap")) {
-  failures.push("apps/hq/server.ts must not reach into runtime internals or legacy server bootstrap directly.");
+if (
+  serverEntrypoint.includes("@rawr/runtime/") ||
+  serverEntrypoint.includes("../server/src/bootstrap")
+) {
+  failures.push(
+    "apps/hq/server.ts must not reach into runtime internals or legacy server bootstrap directly."
+  );
 }
-if (!/role:\s*["']server["']/u.test(serverEntrypoint) && !/roles:\s*\[[^\]]*["']server["']/u.test(serverEntrypoint)) {
+if (
+  !/role:\s*["']server["']/u.test(serverEntrypoint) &&
+  !/roles:\s*\[[^\]]*["']server["']/u.test(serverEntrypoint)
+) {
   failures.push("apps/hq/server.ts must select the server role explicitly.");
 }
 

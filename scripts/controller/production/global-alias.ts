@@ -46,9 +46,7 @@ export type GlobalAliasPreparation =
     }>;
 
 export type GlobalAliasWritePhase = "before-replace" | "before-commit" | "after-replace";
-export type GlobalAliasWriteObserver = (
-  phase: GlobalAliasWritePhase,
-) => void | Promise<void>;
+export type GlobalAliasWriteObserver = (phase: GlobalAliasWritePhase) => void | Promise<void>;
 
 export async function installGlobalControllerAlias(options: {
   globalBinDir: string;
@@ -88,7 +86,9 @@ export async function prepareGlobalControllerAlias(options: {
       throw new Error(`global rawr path is not a replaceable symlink: ${destination}`);
     }
   } catch (error) {
-    if (!(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")) {
+    if (
+      !(typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT")
+    ) {
       throw error;
     }
   }
@@ -103,7 +103,7 @@ export async function prepareGlobalControllerAlias(options: {
     } catch (cleanupError) {
       throw new AggregateError(
         [primaryError, cleanupError],
-        "global alias preparation failed and temporary cleanup also failed",
+        "global alias preparation failed and temporary cleanup also failed"
       );
     }
     throw primaryError;
@@ -117,14 +117,14 @@ export async function prepareGlobalControllerAlias(options: {
 }
 
 export async function abortPreparedGlobalControllerAlias(
-  prepared: GlobalAliasPreparation,
+  prepared: GlobalAliasPreparation
 ): Promise<void> {
   if (prepared.kind === "prepared") await rm(prepared.temporaryPath, { force: true });
 }
 
 export async function commitPreparedGlobalControllerAlias(
   prepared: GlobalAliasPreparation,
-  observe?: GlobalAliasWriteObserver,
+  observe?: GlobalAliasWriteObserver
 ): Promise<GlobalAliasInstallResult> {
   if (prepared.kind === "converged") return prepared.result;
   try {
@@ -201,7 +201,7 @@ export async function inspectGlobalControllerAlias(options: {
 function drifted(
   path: string,
   target: string,
-  reason: Extract<GlobalAliasInstallResult, { kind: "drifted" }>["reason"],
+  reason: Extract<GlobalAliasInstallResult, { kind: "drifted" }>["reason"]
 ): GlobalAliasInstallResult {
   return Object.freeze({ kind: "drifted", path, target, durability: "unchanged", reason });
 }

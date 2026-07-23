@@ -8,7 +8,7 @@ const MARKETPLACE_TREE_NAMESPACE = Object.freeze(["marketplaces"] satisfies [str
 /** One address law shared by provider projection publication and native lookup. */
 export function providerTreeAddress(
   repositoryRoot: string,
-  key: ImmutableProviderTreeKey,
+  key: ImmutableProviderTreeKey
 ): ArtifactObjectAddress {
   return key.kind === "member"
     ? Object.freeze({
@@ -25,10 +25,12 @@ export function providerTreeAddress(
 
 export function sameProviderTreeAddress(
   left: ArtifactObjectAddress,
-  right: ArtifactObjectAddress,
+  right: ArtifactObjectAddress
 ): boolean {
-  return left.repositoryRoot === right.repositoryRoot
-    && left.objectId === right.objectId
-    && left.namespace.length === right.namespace.length
-    && left.namespace.every((segment, index) => segment === right.namespace[index]);
+  return (
+    left.repositoryRoot === right.repositoryRoot &&
+    left.objectId === right.objectId &&
+    left.namespace.length === right.namespace.length &&
+    left.namespace.every((segment, index) => segment === right.namespace[index])
+  );
 }

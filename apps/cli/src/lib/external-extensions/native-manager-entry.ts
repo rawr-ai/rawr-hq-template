@@ -26,7 +26,7 @@ const DEFAULT_DEPENDENCIES: NativeManagerEntryDependencies = Object.freeze({
 
 export async function executeNativeManagerInvocation(
   invocation: NativeManagerInvocation,
-  dependencies: NativeManagerEntryDependencies = DEFAULT_DEPENDENCIES,
+  dependencies: NativeManagerEntryDependencies = DEFAULT_DEPENDENCIES
 ): Promise<void> {
   validateNativeManagerInvocation(invocation);
   const releaseRoot = requiredEnvironment("RAWR_CONTROLLER_RELEASE_ROOT");
@@ -71,13 +71,17 @@ async function requireControllerCliRoot(releaseRoot: string, cliRoot: string): P
 
 function requiredEnvironment(name: string): string {
   const value = process.env[name];
-  if (value === undefined || value.length === 0) throw new Error(`NATIVE_MANAGER_ENV_REQUIRED:${name}`);
+  if (value === undefined || value.length === 0)
+    throw new Error(`NATIVE_MANAGER_ENV_REQUIRED:${name}`);
   return value;
 }
 
 function isContained(root: string, candidate: string): boolean {
   const relative = path.relative(root, candidate);
-  return relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative));
+  return (
+    relative === "" ||
+    (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative))
+  );
 }
 
 if (import.meta.main) {

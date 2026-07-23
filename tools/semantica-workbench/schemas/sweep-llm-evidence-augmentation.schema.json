@@ -3,7 +3,17 @@
   "$id": "https://rawr.dev/schemas/sweep-llm-evidence-augmentation.schema.json",
   "title": "RAWR Sweep LLM Evidence Augmentation",
   "type": "object",
-  "required": ["schema_version", "source_index", "authority_boundary", "status", "selection", "summary", "selected_rows", "suggestions", "diagnostics"],
+  "required": [
+    "schema_version",
+    "source_index",
+    "authority_boundary",
+    "status",
+    "selection",
+    "summary",
+    "selected_rows",
+    "suggestions",
+    "diagnostics"
+  ],
   "properties": {
     "schema_version": { "const": "rawr-sweep-llm-evidence-augmentation-v1" },
     "run": { "type": "string" },
@@ -87,7 +97,15 @@
   "$defs": {
     "sourceSpan": {
       "type": "object",
-      "required": ["source_path", "line_start", "line_end", "char_start", "char_end", "char_span_kind", "text"],
+      "required": [
+        "source_path",
+        "line_start",
+        "line_end",
+        "char_start",
+        "char_end",
+        "char_span_kind",
+        "text"
+      ],
       "properties": {
         "source_path": { "type": "string", "minLength": 1 },
         "line_start": { "type": "integer", "minimum": 1 },

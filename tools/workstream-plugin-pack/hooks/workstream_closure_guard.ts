@@ -29,6 +29,11 @@ if (!isWorkstreamPackRepo(root)) {
   if (!issues.length) {
     silent();
   } else {
-    warn(`Workstream mechanical note:\n${[...new Set(issues)].slice(0, 16).map((issue) => `- ${issue}`).join("\n")}`);
+    warn(
+      `Workstream mechanical note:\n${[...new Set(issues)]
+        .slice(0, 16)
+        .map((issue) => `- ${issue}`)
+        .join("\n")}`
+    );
   }
 }

@@ -62,7 +62,9 @@ function buildSourceId(prefix: "json" | "md", relativePath: string, hash: string
   return `src-${prefix}-${slugify(relativePath)}-${hash.slice(0, 12)}`;
 }
 
-function parseConversationExport(source: WorkspaceTextEntry): RawConversationExport | SourceRecordNormalizationError {
+function parseConversationExport(
+  source: WorkspaceTextEntry
+): RawConversationExport | SourceRecordNormalizationError {
   let parsed: unknown;
   try {
     parsed = JSON.parse(source.contents) as unknown;
@@ -86,7 +88,9 @@ function parseConversationExport(source: WorkspaceTextEntry): RawConversationExp
   };
 }
 
-export async function createConversationRecord(source: WorkspaceTextEntry): Promise<
+export async function createConversationRecord(
+  source: WorkspaceTextEntry
+): Promise<
   | { ok: true; record: JsonConversationSourceRecord }
   | { ok: false; error: SourceRecordNormalizationError }
 > {
@@ -99,7 +103,8 @@ export async function createConversationRecord(source: WorkspaceTextEntry): Prom
       ? metadata.title
       : filenameStem(source.relativePath);
   const firstPrompt = parsed.messages.find((message) => message.role === "Prompt")?.say ?? "";
-  const lastResponse = [...parsed.messages].reverse().find((message) => message.role === "Response")?.say ?? "";
+  const lastResponse =
+    [...parsed.messages].reverse().find((message) => message.role === "Response")?.say ?? "";
   const dates = metadata.dates ?? {};
   const normalizedContents = normalizeLineEndings(source.contents);
   const hash = await sha256Hex(normalizedContents);
@@ -126,7 +131,9 @@ export async function createConversationRecord(source: WorkspaceTextEntry): Prom
   };
 }
 
-export async function createDocumentRecord(source: WorkspaceTextEntry): Promise<MarkdownDocumentSourceRecord> {
+export async function createDocumentRecord(
+  source: WorkspaceTextEntry
+): Promise<MarkdownDocumentSourceRecord> {
   const normalizedContents = normalizeLineEndings(source.contents);
   const lines = normalizedContents.split("\n");
   const title = filenameStem(source.relativePath);
@@ -144,7 +151,7 @@ export async function createDocumentRecord(source: WorkspaceTextEntry): Promise<
         .slice(0, 10)
         .map((line) => line.trim())
         .filter(Boolean)
-        .join(" ") || title,
+        .join(" ") || title
     ),
     lineCount: lines.length,
     headings: lines
@@ -156,16 +163,22 @@ export async function createDocumentRecord(source: WorkspaceTextEntry): Promise<
 }
 
 export async function buildSnapshotRecords(materials: RawSourceMaterials): Promise<
-  | { ok: true; conversationRecords: JsonConversationSourceRecord[]; documentRecords: MarkdownDocumentSourceRecord[]; records: SourceRecord[] }
+  | {
+      ok: true;
+      conversationRecords: JsonConversationSourceRecord[];
+      documentRecords: MarkdownDocumentSourceRecord[];
+      records: SourceRecord[];
+    }
   | { ok: false; error: SourceRecordNormalizationError }
 > {
   const conversationResults = await Promise.all(
     [...materials.conversations]
       .sort((left, right) => left.relativePath.localeCompare(right.relativePath))
-      .map(createConversationRecord),
+      .map(createConversationRecord)
   );
   const failedConversation = conversationResults.find((result) => !result.ok);
-  if (failedConversation && !failedConversation.ok) return { ok: false, error: failedConversation.error };
+  if (failedConversation && !failedConversation.ok)
+    return { ok: false, error: failedConversation.error };
 
   const conversationRecords = conversationResults
     .filter((result): result is { ok: true; record: JsonConversationSourceRecord } => result.ok)
@@ -174,13 +187,12 @@ export async function buildSnapshotRecords(materials: RawSourceMaterials): Promi
   const documentRecords = await Promise.all(
     [...materials.documents]
       .sort((left, right) => left.relativePath.localeCompare(right.relativePath))
-      .map(createDocumentRecord),
+      .map(createDocumentRecord)
   );
 
   const records: SourceRecord[] = [...conversationRecords, ...documentRecords].sort((left, right) =>
-    left.relativePath.localeCompare(right.relativePath),
+    left.relativePath.localeCompare(right.relativePath)
   );
 
   return { ok: true, conversationRecords, documentRecords, records };
 }
-

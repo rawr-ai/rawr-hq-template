@@ -50,9 +50,7 @@ import { WorkItemsRuntimeProfile } from "../../../scenarios/work-items/resource-
 import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
 import { WorkItemsServerApiServices } from "../../../scenarios/work-items/server-api-plugin";
 
-function createClients(): ConstructionBoundServiceClients<
-  typeof WorkItemsServerApiServices
-> {
+function createClients(): ConstructionBoundServiceClients<typeof WorkItemsServerApiServices> {
   return {
     workItems: {
       withInvocation() {
@@ -136,11 +134,11 @@ function createAsyncInvocationContext() {
   };
 }
 
-function createRuntime(input: {
-  readonly boundaryPolicy?: Parameters<
-    typeof createProcessExecutionRuntime
-  >[0]["boundaryPolicy"];
-} = {}) {
+function createRuntime(
+  input: {
+    readonly boundaryPolicy?: Parameters<typeof createProcessExecutionRuntime>[0]["boundaryPolicy"];
+  } = {}
+) {
   const table = createExecutionDescriptorTable([
     {
       ref: CreateWorkItemRef,
@@ -193,11 +191,7 @@ function createTestServiceBindingPlan(input: {
 }
 
 function assertNoLiveHandles(value: unknown): void {
-  if (
-    value === undefined ||
-    typeof value === "function" ||
-    typeof value === "symbol"
-  ) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
     throw new Error(`catalog leaked live handle value: ${String(value)}`);
   }
 
@@ -266,7 +260,7 @@ describe("runtime realization Oracle", () => {
           adapter: event.adapter,
           name: event.name,
           status: event.status,
-        })),
+        }))
       ).toEqual([
         {
           adapter: "server",
@@ -298,14 +292,10 @@ describe("runtime realization Oracle", () => {
     });
 
     try {
-      const serverResult = await lowerServerAdapterCallback<WorkItem>(
-        runtime,
-        payload,
-        {
-          context: createInvocationContext(),
-          instrumentation,
-        },
-      );
+      const serverResult = await lowerServerAdapterCallback<WorkItem>(runtime, payload, {
+        context: createInvocationContext(),
+        instrumentation,
+      });
 
       expect(payload.routeDescriptor).toBe(CreateWorkItemRouteDescriptor);
       expect(serverResult.status).toBe("success");
@@ -351,7 +341,7 @@ describe("runtime realization Oracle", () => {
           executionId: event.executionId,
           name: event.name,
           status: event.status,
-        })),
+        }))
       ).toEqual([
         {
           adapter: "async-step",
@@ -397,12 +387,8 @@ describe("runtime realization Oracle", () => {
 
   test("classifies boundary exits without choosing production error payloads", async () => {
     const success = await VendorEffect.runPromiseExit(VendorEffect.succeed("ok"));
-    const failure = await VendorEffect.runPromiseExit(
-      VendorEffect.fail("typed-failure"),
-    );
-    const defect = await VendorEffect.runPromiseExit(
-      VendorEffect.die(new Error("defect-failure")),
-    );
+    const failure = await VendorEffect.runPromiseExit(VendorEffect.fail("typed-failure"));
+    const defect = await VendorEffect.runPromiseExit(VendorEffect.die(new Error("defect-failure")));
     const controller = new AbortController();
     const interrupted = VendorEffect.runPromiseExit(VendorEffect.never, {
       signal: controller.signal,
@@ -468,7 +454,7 @@ describe("runtime realization Oracle", () => {
         boundary: "plugin.server-api",
         subjectId: CreateWorkItemRef.executionId,
         timeoutMs: 0,
-      }),
+      })
     ).toThrow("boundary timeoutMs must be a positive integer");
     expect(() =>
       createRuntimeBoundaryPolicy({
@@ -476,7 +462,7 @@ describe("runtime realization Oracle", () => {
         boundary: "plugin.server-api",
         subjectId: CreateWorkItemRef.executionId,
         retry: { maxAttempts: 2, attempt: 3 },
-      }),
+      })
     ).toThrow("boundary retry.attempt cannot exceed retry.maxAttempts");
   });
 
@@ -490,9 +476,7 @@ describe("runtime realization Oracle", () => {
         return Effect.fail("policy-failure");
       },
     } satisfies ExecutionDescriptor;
-    const table = createExecutionDescriptorTable([
-      { ref: CreateWorkItemRef, descriptor },
-    ]);
+    const table = createExecutionDescriptorTable([{ ref: CreateWorkItemRef, descriptor }]);
     const registry = createExecutionRegistry({
       plans: [
         {
@@ -515,9 +499,7 @@ describe("runtime realization Oracle", () => {
             route: "work-items.create",
             apiKey: "runtime-policy-secret",
           },
-          ...(plan.policy?.timeoutMs !== undefined
-            ? { timeoutMs: plan.policy.timeoutMs }
-            : {}),
+          ...(plan.policy?.timeoutMs !== undefined ? { timeoutMs: plan.policy.timeoutMs } : {}),
         });
       },
     });
@@ -533,11 +515,9 @@ describe("runtime realization Oracle", () => {
       expect(
         result.events
           .filter((event) => event.name.startsWith("boundary.policy."))
-          .map((event) => event.name),
+          .map((event) => event.name)
       ).toEqual(["boundary.policy.enter", "boundary.policy.exit"]);
-      const exitEvent = result.events.find(
-        (event) => event.name === "boundary.policy.exit",
-      );
+      const exitEvent = result.events.find((event) => event.name === "boundary.policy.exit");
       expect(exitEvent?.attributes).toMatchObject({
         policyId: "policy:server:create",
         boundaryPolicy: "plugin.server-api",
@@ -577,11 +557,9 @@ describe("runtime realization Oracle", () => {
     const asyncPayload = createAsyncStepBridgePayload({ ref: SyncWorkItemStepRef });
 
     try {
-      const serverResult = await lowerServerAdapterCallback<WorkItem>(
-        runtime,
-        serverPayload,
-        { context: createInvocationContext() },
-      );
+      const serverResult = await lowerServerAdapterCallback<WorkItem>(runtime, serverPayload, {
+        context: createInvocationContext(),
+      });
       const asyncResult = await lowerAsyncStepBridge<
         { readonly skipped: true } | { readonly synced: true }
       >(runtime, asyncPayload, {
@@ -591,19 +569,15 @@ describe("runtime realization Oracle", () => {
       expect(
         serverResult.events
           .filter((event) => event.name.startsWith("boundary.policy."))
-          .map((event) => event.attributes?.boundaryPolicy),
+          .map((event) => event.attributes?.boundaryPolicy)
       ).toEqual(["plugin.server-api", "plugin.server-api"]);
       expect(
         asyncResult.events
           .filter((event) => event.name.startsWith("boundary.policy."))
-          .map((event) => event.attributes?.boundaryPolicy),
+          .map((event) => event.attributes?.boundaryPolicy)
       ).toEqual(["plugin.async-step", "plugin.async-step"]);
-      expect(JSON.stringify(serverResult.events)).not.toContain(
-        "adapter-policy-secret",
-      );
-      expect(JSON.stringify(asyncResult.events)).not.toContain(
-        "adapter-policy-secret",
-      );
+      expect(JSON.stringify(serverResult.events)).not.toContain("adapter-policy-secret");
+      expect(JSON.stringify(asyncResult.events)).not.toContain("adapter-policy-secret");
     } finally {
       await runtime.dispose();
     }
@@ -626,16 +600,14 @@ describe("runtime realization Oracle", () => {
               (resource, exit) =>
                 VendorEffect.sync(() => {
                   finalizerEvents.push(`release:${resource}:${exit._tag}`);
-                }),
+                })
             );
             yield* VendorEffect.never;
-          }),
+          })
         );
       },
     } satisfies ExecutionDescriptor;
-    const table = createExecutionDescriptorTable([
-      { ref: SyncWorkItemStepRef, descriptor },
-    ]);
+    const table = createExecutionDescriptorTable([{ ref: SyncWorkItemStepRef, descriptor }]);
     const registry = createExecutionRegistry({
       plans: [
         {
@@ -658,9 +630,7 @@ describe("runtime realization Oracle", () => {
             stepId: SyncWorkItemStepRef.stepId,
             secretToken: "interrupt-secret",
           },
-          ...(plan.policy?.timeoutMs !== undefined
-            ? { timeoutMs: plan.policy.timeoutMs }
-            : {}),
+          ...(plan.policy?.timeoutMs !== undefined ? { timeoutMs: plan.policy.timeoutMs } : {}),
         });
       },
     });
@@ -677,13 +647,8 @@ describe("runtime realization Oracle", () => {
       const result = await pending;
 
       expect(result.status).toBe("failure");
-      expect(finalizerEvents).toEqual([
-        "acquire",
-        "release:interruptible-resource:Failure",
-      ]);
-      const exitEvent = result.events.find(
-        (event) => event.name === "boundary.policy.exit",
-      );
+      expect(finalizerEvents).toEqual(["acquire", "release:interruptible-resource:Failure"]);
+      const exitEvent = result.events.find((event) => event.name === "boundary.policy.exit");
       expect(exitEvent?.attributes).toMatchObject({
         policyId: "policy:async:interrupt",
         boundaryPolicy: "plugin.async-step",
@@ -756,10 +721,7 @@ describe("runtime realization Oracle", () => {
     expect(serverResult.status).toBe("success");
     expect(asyncResult.status).toBe("success");
     expect(descriptorRan).toBe(false);
-    expect(delegatedRefs).toEqual([
-      CreateWorkItemRef.executionId,
-      SyncWorkItemStepRef.executionId,
-    ]);
+    expect(delegatedRefs).toEqual([CreateWorkItemRef.executionId, SyncWorkItemStepRef.executionId]);
     expect(adapterEvents.map((event) => `${event.adapter}:${event.name}`)).toEqual([
       "server:adapter.delegate.start",
       "server:adapter.delegate.finish",
@@ -796,16 +758,12 @@ describe("runtime realization Oracle", () => {
     });
     const asyncPayload = createAsyncStepBridgePayload({ ref: SyncWorkItemStepRef });
 
-    const serverResult = await lowerServerAdapterCallback<WorkItem>(
-      fakeRuntime,
-      serverPayload,
-      { context: createInvocationContext() },
-    );
-    const asyncResult = await lowerAsyncStepBridge<WorkItem>(
-      fakeRuntime,
-      asyncPayload,
-      { context: createAsyncInvocationContext() },
-    );
+    const serverResult = await lowerServerAdapterCallback<WorkItem>(fakeRuntime, serverPayload, {
+      context: createInvocationContext(),
+    });
+    const asyncResult = await lowerAsyncStepBridge<WorkItem>(fakeRuntime, asyncPayload, {
+      context: createAsyncInvocationContext(),
+    });
 
     expect(serverResult.status).toBe("success");
     expect(asyncResult.status).toBe("success");
@@ -840,14 +798,14 @@ describe("runtime realization Oracle", () => {
         ref: SyncWorkItemStepRef as any,
         context: {},
         instrumentation,
-      }),
+      })
     ).rejects.toThrow("server adapter cannot invoke plugin.async-step");
     await expect(
       lowerAsyncStepCallback(fakeRuntime, {
         ref: CreateWorkItemRef as any,
         context: {},
         instrumentation,
-      }),
+      })
     ).rejects.toThrow("async-step adapter cannot invoke plugin.server-api");
 
     expect(invocationCount).toBe(0);
@@ -867,7 +825,7 @@ describe("runtime realization Oracle", () => {
           routePath: ["items", "rename"],
         },
         ref: CreateWorkItemRef,
-      }),
+      })
     ).toThrow("route descriptor does not match its execution ref");
 
     expect(() =>
@@ -876,7 +834,7 @@ describe("runtime realization Oracle", () => {
           ...SyncWorkItemStepRef,
           scheduleId: "work-items.hourly",
         } as any,
-      }),
+      })
     ).toThrow("must declare exactly one workflow, schedule, or consumer owner");
   });
 
@@ -944,17 +902,13 @@ describe("runtime realization Oracle", () => {
     });
 
     try {
-      const result = await harness.runStep<
-        { readonly skipped: true } | { readonly synced: true }
-      >({
+      const result = await harness.runStep<{ readonly skipped: true } | { readonly synced: true }>({
         executionId: SyncWorkItemStepRef.executionId,
         context: createAsyncInvocationContext(),
       });
 
       expect(harness.kind).toBe("runtime.started-harness");
-      expect(harness.payloadExecutionIds).toEqual([
-        SyncWorkItemStepRef.executionId,
-      ]);
+      expect(harness.payloadExecutionIds).toEqual([SyncWorkItemStepRef.executionId]);
       expect(result.status).toBe("success");
       if (result.status !== "success") throw result.error;
       expect(result.output).toEqual({ synced: true });
@@ -982,14 +936,14 @@ describe("runtime realization Oracle", () => {
           harnessId: "server:bad",
           runtime,
           payloads: [CreateWorkItemDescriptor as any],
-        }),
+        })
       ).toThrow("server harness accepts only adapter.server-callback-payload");
       expect(() =>
         mountOracleServerHarness({
           harnessId: "server:duplicate",
           runtime,
           payloads: [serverPayload, serverPayload],
-        }),
+        })
       ).toThrow(`duplicate harness payload for ${CreateWorkItemRef.executionId}`);
       expect(() =>
         mountOracleAsyncHarness({
@@ -1002,7 +956,7 @@ describe("runtime realization Oracle", () => {
               executionPlans: [SyncWorkItemStepPlan],
             } as any,
           ],
-        }),
+        })
       ).toThrow("async harness accepts only adapter.async-step-bridge-payload");
     } finally {
       await runtime.dispose();
@@ -1035,7 +989,7 @@ describe("runtime realization Oracle", () => {
       harness.handleRoute({
         executionId: CreateWorkItemRef.executionId,
         context: createInvocationContext(),
-      }),
+      })
     ).rejects.toThrow("server harness server:stopped is stopped");
 
     expect(invocationCount).toBe(0);
@@ -1067,7 +1021,7 @@ describe("runtime realization Oracle", () => {
       harness.runStep({
         executionId: SyncWorkItemStepRef.executionId,
         context: createAsyncInvocationContext(),
-      }),
+      })
     ).rejects.toThrow("async harness async:stopped is stopped");
 
     expect(invocationCount).toBe(0);
@@ -1106,13 +1060,13 @@ describe("runtime realization Oracle", () => {
       serverHarness.handleRoute({
         executionId: CreateWorkItemRef.executionId,
         context: createInvocationContext(),
-      }),
+      })
     ).rejects.toThrow("delegation failed");
     await expect(
       asyncHarness.runStep({
         executionId: SyncWorkItemStepRef.executionId,
         context: createAsyncInvocationContext(),
-      }),
+      })
     ).rejects.toThrow("delegation failed");
 
     expect(serverHarness.records().map((record) => record.phase)).toEqual([
@@ -1196,7 +1150,7 @@ describe("runtime realization Oracle", () => {
       harness.runStep({
         executionId: "exec:async:missing-step",
         context: createAsyncInvocationContext(),
-      }),
+      })
     ).rejects.toThrow("async harness missing payload exec:async:missing-step");
 
     expect(invocationCount).toBe(0);
@@ -1276,7 +1230,7 @@ describe("runtime realization Oracle", () => {
     expect(
       finalizedCatalog.records
         .filter((record) => record.phase === "boot.finalize.finished")
-        .map((record) => record.subjectId),
+        .map((record) => record.subjectId)
     ).toEqual(["api", "email", "clock"]);
     expect(JSON.stringify(finalizedCatalog)).not.toContain("super-secret");
     assertNoLiveHandles(finalizedCatalog);
@@ -1318,15 +1272,12 @@ describe("runtime realization Oracle", () => {
     expect(finalizeLog).toEqual(["api", "database"]);
     expect(
       catalog.records
-        .filter((record) =>
-          record.phase === "boot.finalize.failed" ||
-          record.phase === "boot.finalize.finished"
+        .filter(
+          (record) =>
+            record.phase === "boot.finalize.failed" || record.phase === "boot.finalize.finished"
         )
-        .map((record) => `${record.subjectId}:${record.phase}`),
-    ).toEqual([
-      "api:boot.finalize.failed",
-      "database:boot.finalize.finished",
-    ]);
+        .map((record) => `${record.subjectId}:${record.phase}`)
+    ).toEqual(["api:boot.finalize.failed", "database:boot.finalize.finished"]);
   });
 
   test("rolls back started boot modules in reverse order after startup failure", async () => {
@@ -1381,7 +1332,7 @@ describe("runtime realization Oracle", () => {
     expect(
       result.catalog.records
         .filter((record) => record.phase === "boot.rollback.finished")
-        .map((record) => record.subjectId),
+        .map((record) => record.subjectId)
     ).toEqual(["email", "clock"]);
     assertNoLiveHandles(result.catalog);
   });
@@ -1399,7 +1350,7 @@ describe("runtime realization Oracle", () => {
             },
           },
         ],
-      }),
+      })
     ).rejects.toThrow("boot module api depends on missing module missing");
 
     await expect(
@@ -1422,7 +1373,7 @@ describe("runtime realization Oracle", () => {
             },
           },
         ],
-      }),
+      })
     ).rejects.toThrow("bootgraph dependency cycle at api");
   });
 
@@ -1673,7 +1624,9 @@ describe("runtime realization Oracle", () => {
       "db:main",
       "api:work-items",
     ]);
-    expect(factoryCalls.map((call) => parseConstructionIdentity(call.constructionIdentity))).toEqual([
+    expect(
+      factoryCalls.map((call) => parseConstructionIdentity(call.constructionIdentity))
+    ).toEqual([
       {
         capability: "secrets",
         configHash: "config:secret:primary",
@@ -1733,7 +1686,7 @@ describe("runtime realization Oracle", () => {
           factoryCalls += 1;
           return { id: "should-not-construct" };
         },
-      }),
+      })
     ).toThrow("runtime.service-binding.dependency.missing: work-items -> database");
     expect(factoryCalls).toBe(0);
   });
@@ -1761,9 +1714,9 @@ describe("runtime realization Oracle", () => {
           factoryCalls += 1;
           return { id: "should-not-construct" };
         },
-      }),
+      })
     ).toThrow(
-      "runtime.service-binding.dependency.cycle: billing -> entitlements -> workspace -> billing",
+      "runtime.service-binding.dependency.cycle: billing -> entitlements -> workspace -> billing"
     );
     expect(factoryCalls).toBe(0);
   });
@@ -1793,7 +1746,7 @@ describe("runtime realization Oracle", () => {
           factoryCalls += 1;
           return { id: "should-not-construct" };
         },
-      }),
+      })
     ).toThrow("runtime.service-binding.dependency.ambiguous: work-items -> billing");
     expect(factoryCalls).toBe(0);
   });
@@ -1819,9 +1772,7 @@ describe("runtime realization Oracle", () => {
 
     expect(access.requireResource("database")).toBe(liveDatabaseHandle);
     expect(access.optionalResource("missing")).toBeUndefined();
-    expect(() => access.requireResource("missing")).toThrow(
-      "missing runtime resource: missing",
-    );
+    expect(() => access.requireResource("missing")).toThrow("missing runtime resource: missing");
     expect("resources" in access).toBe(false);
     expect("runtime" in access).toBe(false);
     expect("getRaw" in access).toBe(false);
@@ -1936,7 +1887,7 @@ describe("runtime realization Oracle", () => {
           descriptorTable: createExecutionDescriptorTable([]),
         } as unknown as PortableRuntimePlanArtifact,
         compiledProcessPlan,
-      }),
+      })
     ).toThrow("descriptorTable");
 
     expect(() =>
@@ -1953,7 +1904,7 @@ describe("runtime realization Oracle", () => {
           ],
         } as unknown as PortableRuntimePlanArtifact,
         compiledProcessPlan,
-      }),
+      })
     ).toThrow("rawSecret");
 
     expect(() =>
@@ -1963,7 +1914,7 @@ describe("runtime realization Oracle", () => {
           ...compiledProcessPlan,
           runtimeAccess: createContainedRuntimeResourceAccess([]),
         } as unknown as CompiledProcessPlan,
-      }),
+      })
     ).toThrow("runtimeAccess");
 
     expect(() =>
@@ -1973,7 +1924,7 @@ describe("runtime realization Oracle", () => {
           ...compiledProcessPlan,
           appId: "other-app",
         },
-      }),
+      })
     ).toThrow("appId mismatch");
   });
 });

@@ -46,10 +46,9 @@ const HEAD_COMMIT = oid("a");
 const HEAD_TREE = oid("b");
 const SOURCE_COMMIT = oid("c");
 const SOURCE_TREE = oid("d");
-const GIT_READ_FAILURE_PARTITION: ReadonlyArray<readonly [
-  GitReadFailure["code"],
-  "STALE_RECORD" | "FORGED_RECORD",
-]> = [
+const GIT_READ_FAILURE_PARTITION: ReadonlyArray<
+  readonly [GitReadFailure["code"], "STALE_RECORD" | "FORGED_RECORD"]
+> = [
   ["MissingObject", "STALE_RECORD"],
   ["UnreachableObject", "STALE_RECORD"],
   ["ReadFailed", "STALE_RECORD"],
@@ -72,13 +71,18 @@ describe("observed-Git current-main v2 selection", () => {
       }),
     });
 
-    await expect(client.governance.currentMainSelection({
-      locator: {
-        workspacePath: fixture.locator.workspacePath,
-        expectedRepositoryIdentity: fixture.locator.expectedRepositoryIdentity,
-      },
-      policyObject: { legacy: true },
-    } as never, testInvocation)).rejects.toThrow();
+    await expect(
+      client.governance.currentMainSelection(
+        {
+          locator: {
+            workspacePath: fixture.locator.workspacePath,
+            expectedRepositoryIdentity: fixture.locator.expectedRepositoryIdentity,
+          },
+          policyObject: { legacy: true },
+        } as never,
+        testInvocation
+      )
+    ).rejects.toThrow();
 
     expect(inspections).toBe(0);
   });
@@ -113,14 +117,17 @@ describe("observed-Git current-main v2 selection", () => {
       sourceTree: SOURCE_TREE,
     });
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator))
-      .resolves.toMatchObject({ kind: "CURRENT_ELIGIBLE" });
+    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toMatchObject({
+      kind: "CURRENT_ELIGIBLE",
+    });
 
-    expect(fixture.git.reads.map((selection) => ({
-      commit: selection.commit,
-      tree: selection.tree,
-      path: selection.path,
-    }))).toEqual([
+    expect(
+      fixture.git.reads.map((selection) => ({
+        commit: selection.commit,
+        tree: selection.tree,
+        path: selection.path,
+      }))
+    ).toEqual([
       {
         commit: oid("e"),
         tree: oid("f"),
@@ -136,10 +143,7 @@ describe("observed-Git current-main v2 selection", () => {
 
   it("refuses once when canonical main changes before the selection closes", async () => {
     const fixture = selectionFixture();
-    fixture.git.inspections = [
-      ready(HEAD_COMMIT, HEAD_TREE),
-      ready(oid("e"), oid("f")),
-    ];
+    fixture.git.inspections = [ready(HEAD_COMMIT, HEAD_TREE), ready(oid("e"), oid("f"))];
 
     await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toEqual({
       kind: "UNREACHABLE_REPOSITORY",
@@ -151,7 +155,7 @@ describe("observed-Git current-main v2 selection", () => {
   it("retains and deterministically bounds an oversized content-workspace diagnostic", async () => {
     const suffix = "...[truncated]";
     const detail = `content-workspace unavailable: ${"x".repeat(
-      MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
+      MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH
     )}`;
     const failure = Object.freeze({
       _tag: "ContentWorkspaceFailure",
@@ -169,18 +173,21 @@ describe("observed-Git current-main v2 selection", () => {
       }),
     });
 
-    const result = await client.governance.currentMainSelection({
-      locator: {
-        workspacePath: "/tmp/personal-rawr-hq",
-        expectedRepositoryIdentity: REPOSITORY,
+    const result = await client.governance.currentMainSelection(
+      {
+        locator: {
+          workspacePath: "/tmp/personal-rawr-hq",
+          expectedRepositoryIdentity: REPOSITORY,
+        },
       },
-    }, testInvocation);
+      testInvocation
+    );
 
     expect(result).toEqual({
       kind: "UNREACHABLE_REPOSITORY",
       reason: `${detail.slice(
         0,
-        MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH - suffix.length,
+        MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH - suffix.length
       )}${suffix}`,
     });
     if (result.kind === "CURRENT_ELIGIBLE") throw new Error("Expected a refused selection");
@@ -190,8 +197,9 @@ describe("observed-Git current-main v2 selection", () => {
   it("rejects a record that selects another repository before reading its source input", async () => {
     const fixture = selectionFixture({ sourceRepositoryIdentity: "git:github.com/example/other" });
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator))
-      .resolves.toMatchObject({ kind: "WRONG_REPOSITORY" });
+    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toMatchObject({
+      kind: "WRONG_REPOSITORY",
+    });
     expect(fixture.git.calls.readBlob).toBe(1);
   });
 
@@ -229,20 +237,21 @@ describe("observed-Git current-main v2 selection", () => {
     expect(fixture.git.calls.readBlob).toBe(1);
   });
 
-  it.each(GIT_READ_FAILURE_PARTITION)(
-    "classifies %s consistently for record and selected-input reads",
-    async (code, expectedKind) => {
-      for (const target of GIT_READ_TARGETS) {
-        const fixture = selectionFixture();
-        const selection = target === "record" ? fixture.recordSelection : fixture.sourceSelection;
-        const reason = `${code} ${target}`;
-        fixture.git.fail(selection, { code, message: reason });
+  it.each(
+    GIT_READ_FAILURE_PARTITION
+  )("classifies %s consistently for record and selected-input reads", async (code, expectedKind) => {
+    for (const target of GIT_READ_TARGETS) {
+      const fixture = selectionFixture();
+      const selection = target === "record" ? fixture.recordSelection : fixture.sourceSelection;
+      const reason = `${code} ${target}`;
+      fixture.git.fail(selection, { code, message: reason });
 
-        await expect(resolveCurrentMainSelection(fixture.git, fixture.locator))
-          .resolves.toEqual({ kind: expectedKind, reason });
-      }
-    },
-  );
+      await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toEqual({
+        kind: expectedKind,
+        reason,
+      });
+    }
+  });
 
   it.each([
     ["invalid input", new TextEncoder().encode("not-json\n"), "invalid or noncanonical"],
@@ -279,7 +288,7 @@ function selectionFixture(options: SelectionFixtureOptions = {}) {
   const repositoryIdentity = repository(REPOSITORY);
   const releaseInput = releaseInputFixture(
     "selected\n",
-    options.selectedContentAuthority ?? CONTENT_AUTHORITY,
+    options.selectedContentAuthority ?? CONTENT_AUTHORITY
   );
   const body: CurrentMainBodyV2 = {
     schemaVersion: 2,
@@ -365,8 +374,12 @@ class SelectionGitReader implements ExactGitReader {
 
   inspect: ExactGitReader["inspect"] = async () => {
     this.calls.inspect += 1;
-    return this.inspections[Math.min(this.calls.inspect - 1, this.inspections.length - 1)]
-      ?? { kind: "UnreachableRepository", reason: "missing inspection fixture" };
+    return (
+      this.inspections[Math.min(this.calls.inspect - 1, this.inspections.length - 1)] ?? {
+        kind: "UnreachableRepository",
+        reason: "missing inspection fixture",
+      }
+    );
   };
 
   readBlob: ExactGitReader["readBlob"] = async (_locator, selection) => {
@@ -384,58 +397,72 @@ class SelectionGitReader implements ExactGitReader {
     this.calls.isAncestor += 1;
     return this.ancestry;
   };
-
 }
 
 function releaseInputFixture(
   payloadText: string,
-  contentAuthority = CONTENT_AUTHORITY,
+  contentAuthority = CONTENT_AUTHORITY
 ): AgentPluginReleaseInput {
-  const payload = mustRelease(createAgentPluginPayload([
-    { path: "skills/alpha/SKILL.md", mode: 0o644, bytes: encoder.encode(payloadText) },
-  ]));
-  return mustRelease(createAgentPluginReleaseInput({
-    schemaVersion: 1,
-    contentAuthority,
-    members: [{
-      kind: "agent-plugin",
-      pluginId: "alpha",
-      skillInventory: [{ identity: "alpha-skill", manifestPath: "skills/alpha/SKILL.md" }],
-      payload: {
-        protocolVersion: payload.protocolVersion,
-        manifest: payload.manifest,
-        payloadDigest: payload.payloadDigest,
-      },
-      vendor: [{
-        id: "vendor-alpha",
-        protocol: "vendor-v1",
-        contentDigest: contentDigest(encoder.encode("vendor\n")),
-      }],
-      curation: [{
-        id: "curation-alpha",
-        protocol: "curation-v1",
-        contentDigest: contentDigest(encoder.encode("curation\n")),
-      }],
-    }],
-    ownershipClaims: [
-      { kind: "skill", identity: "alpha-skill", ownerPluginId: "alpha" },
-      { kind: "provider-identity", identity: "codex:alpha", ownerPluginId: "alpha" },
-    ],
-    locks: [{
-      id: "vendor-lock",
-      protocol: "vendor-lock-v1",
-      contentDigest: contentDigest(encoder.encode("lock\n")),
-    }],
-    qualityPolicies: [{
-      id: "quality-policy",
-      protocol: "quality-v1",
-      contentDigest: contentDigest(encoder.encode("quality\n")),
-    }],
-  }));
+  const payload = mustRelease(
+    createAgentPluginPayload([
+      { path: "skills/alpha/SKILL.md", mode: 0o644, bytes: encoder.encode(payloadText) },
+    ])
+  );
+  return mustRelease(
+    createAgentPluginReleaseInput({
+      schemaVersion: 1,
+      contentAuthority,
+      members: [
+        {
+          kind: "agent-plugin",
+          pluginId: "alpha",
+          skillInventory: [{ identity: "alpha-skill", manifestPath: "skills/alpha/SKILL.md" }],
+          payload: {
+            protocolVersion: payload.protocolVersion,
+            manifest: payload.manifest,
+            payloadDigest: payload.payloadDigest,
+          },
+          vendor: [
+            {
+              id: "vendor-alpha",
+              protocol: "vendor-v1",
+              contentDigest: contentDigest(encoder.encode("vendor\n")),
+            },
+          ],
+          curation: [
+            {
+              id: "curation-alpha",
+              protocol: "curation-v1",
+              contentDigest: contentDigest(encoder.encode("curation\n")),
+            },
+          ],
+        },
+      ],
+      ownershipClaims: [
+        { kind: "skill", identity: "alpha-skill", ownerPluginId: "alpha" },
+        { kind: "provider-identity", identity: "codex:alpha", ownerPluginId: "alpha" },
+      ],
+      locks: [
+        {
+          id: "vendor-lock",
+          protocol: "vendor-lock-v1",
+          contentDigest: contentDigest(encoder.encode("lock\n")),
+        },
+      ],
+      qualityPolicies: [
+        {
+          id: "quality-policy",
+          protocol: "quality-v1",
+          contentDigest: contentDigest(encoder.encode("quality\n")),
+        },
+      ],
+    })
+  );
 }
 
 function mustRelease<T, E>(result: ReleaseResult<T, E>): T {
-  if (!result.ok) throw new Error(`Expected release fixture success: ${JSON.stringify(result.issues)}`);
+  if (!result.ok)
+    throw new Error(`Expected release fixture success: ${JSON.stringify(result.issues)}`);
   return result.value;
 }
 

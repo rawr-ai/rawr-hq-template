@@ -1,19 +1,17 @@
 #!/usr/bin/env bun
 import { pathExists, writeJsonIfChanged } from "./_verify-utils.mjs";
 
-const PASS_ROOT = "docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21";
+const PASS_ROOT =
+  "docs/projects/orpc-ingest-workflows-spec/_phase-d-runtime-execution-pass-01-2026-02-21";
 const RESULT_PATH = `${PASS_ROOT}/D4_FINISHED_HOOK_SCAN_RESULT.json`;
 
-const archivedPaths = [
-  "services/coordination",
-  "plugins/workflows/coordination",
-];
+const archivedPaths = ["services/coordination", "plugins/workflows/coordination"];
 
 const archivedPathStates = await Promise.all(
   archivedPaths.map(async (relPath) => ({
     relPath,
     exists: await pathExists(relPath),
-  })),
+  }))
 );
 
 const checks = [

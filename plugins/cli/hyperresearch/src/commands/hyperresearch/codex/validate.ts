@@ -15,7 +15,8 @@ export default class HyperresearchCodexValidate extends RawrCommand {
     backend: Flags.string({
       options: ["real", "fixture"],
       default: "fixture",
-      description: "Accepted for start/advance command symmetry; validation reads the existing ledger and does not execute backend CLI calls",
+      description:
+        "Accepted for start/advance command symmetry; validation reads the existing ledger and does not execute backend CLI calls",
     }),
   } as const;
 
@@ -28,15 +29,18 @@ export default class HyperresearchCodexValidate extends RawrCommand {
     });
 
     try {
-      const resultData = await client.runs.validateV8Run({
-        ledgerPath: String(flags.ledger),
-      }, {
-        context: {
-          invocation: {
-            traceId: `hyperresearch-codex-v8-validate-${Date.now()}`,
-          },
+      const resultData = await client.runs.validateV8Run(
+        {
+          ledgerPath: String(flags.ledger),
         },
-      });
+        {
+          context: {
+            invocation: {
+              traceId: `hyperresearch-codex-v8-validate-${Date.now()}`,
+            },
+          },
+        }
+      );
       const responseData = summarizeV8ValidationResult(resultData);
       const result = !resultData.passed
         ? this.fail("Hyperresearch Codex V8 validation blocked by integrity findings", {

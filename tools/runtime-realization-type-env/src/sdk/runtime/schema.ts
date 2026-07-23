@@ -8,8 +8,7 @@ export type RuntimeSchemaValue<TSchema extends RuntimeSchema<unknown>> =
   TSchema extends RuntimeSchema<infer TValue> ? TValue : never;
 
 export namespace RuntimeSchema {
-  export type Infer<TSchema extends RuntimeSchema<unknown>> =
-    RuntimeSchemaValue<TSchema>;
+  export type Infer<TSchema extends RuntimeSchema<unknown>> = RuntimeSchemaValue<TSchema>;
 }
 
 export function defineRuntimeSchema<const TId extends string, TValue>(input: {
@@ -28,9 +27,7 @@ export const schema = {
     return defineRuntimeSchema({ id, parse: String });
   },
 
-  object<const TId extends string, TValue>(
-    id: TId,
-  ): RuntimeSchema<TValue> {
+  object<const TId extends string, TValue>(id: TId): RuntimeSchema<TValue> {
     return defineRuntimeSchema({
       id,
       parse: (value) => value as TValue,

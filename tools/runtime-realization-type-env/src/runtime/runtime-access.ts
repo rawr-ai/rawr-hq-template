@@ -4,10 +4,7 @@ import type {
   RuntimeTelemetry,
   RuntimeTopologyRecord,
 } from "../spine/artifacts";
-import {
-  redactRuntimeRecordAttributes,
-  type RuntimeRecordAttributes,
-} from "./catalog";
+import { redactRuntimeRecordAttributes, type RuntimeRecordAttributes } from "./catalog";
 
 export interface ContainedRuntimeResourceDefinition<TValue = unknown> {
   readonly id: string;
@@ -53,9 +50,11 @@ export type ContainedRuntimeResourceAccess = RuntimeResourceAccess & {
   resourceMetadata(resourceId: string): RuntimeRecordAttributes | undefined;
   telemetry(): RuntimeTelemetry;
   emitTopology(record: RuntimeTopologyRecord): void;
-  emitDiagnostic(diagnostic: RuntimeDiagnostic & {
-    readonly attributes?: Record<string, unknown>;
-  }): void;
+  emitDiagnostic(
+    diagnostic: RuntimeDiagnostic & {
+      readonly attributes?: Record<string, unknown>;
+    }
+  ): void;
 };
 
 export type ContainedRuntimeResourceAccessProbe = ContainedRuntimeResourceAccess & {
@@ -75,7 +74,7 @@ export type ContainedRuntimeResourceAccessProbe = ContainedRuntimeResourceAccess
  * container.
  */
 export function createContainedRuntimeResourceAccess(
-  resources: readonly ContainedRuntimeResourceDefinition[],
+  resources: readonly ContainedRuntimeResourceDefinition[]
 ): ContainedRuntimeResourceAccessProbe {
   const byId = new Map<string, ContainedRuntimeResourceDefinition>();
   const topologyRecords: ContainedRuntimeTopologyRecord[] = [];
@@ -125,9 +124,11 @@ export function createContainedRuntimeResourceAccess(
         record: redactRuntimeRecordAttributes(record),
       });
     },
-    emitDiagnostic(diagnostic: RuntimeDiagnostic & {
-      readonly attributes?: Record<string, unknown>;
-    }): void {
+    emitDiagnostic(
+      diagnostic: RuntimeDiagnostic & {
+        readonly attributes?: Record<string, unknown>;
+      }
+    ): void {
       diagnosticRecords.push({
         kind: "runtime.diagnostic-record",
         code: diagnostic.code,

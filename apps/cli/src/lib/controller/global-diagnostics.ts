@@ -5,12 +5,7 @@ import {
 } from "@rawr/controller-release";
 import { createHash } from "node:crypto";
 import { constants, createReadStream } from "node:fs";
-import {
-  access,
-  lstat,
-  readFile,
-  realpath,
-} from "node:fs/promises";
+import { access, lstat, readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 
 import type { NativeRegistryProjection } from "../external-extensions/model";
@@ -179,7 +174,7 @@ export type GlobalDoctorInspectionOptions = Readonly<{
 const CONTROLLER_DIGEST_PATTERN = /^[0-9a-f]{64}$/u;
 
 export async function inspectGlobalController(
-  options: GlobalDoctorInspectionOptions,
+  options: GlobalDoctorInspectionOptions
 ): Promise<GlobalDoctorData> {
   const issues: GlobalDoctorIssue[] = [];
   const invocationResult = parseInvocationContext(options.env);
@@ -187,11 +182,14 @@ export async function inspectGlobalController(
 
   const configured = configuredDataRoot(options.env);
   const requestedDataRoot = invocationResult.dataRoot ?? configured.path;
-  const dataRoot = await inspectDataRoot(requestedDataRoot, configured.path, invocationResult.dataRoot ? "release-context" : configured.source);
+  const dataRoot = await inspectDataRoot(
+    requestedDataRoot,
+    configured.path,
+    invocationResult.dataRoot ? "release-context" : configured.source
+  );
   if (dataRoot.issue) issues.push(dataRoot.issue);
-  const effectiveDataRoot = dataRoot.value.status === "available"
-    ? dataRoot.value.realpath
-    : dataRoot.value.path;
+  const effectiveDataRoot =
+    dataRoot.value.status === "available" ? dataRoot.value.realpath : dataRoot.value.path;
 
   const selector = await inspectSelector(effectiveDataRoot);
   issues.push(...selector.issues);
@@ -206,14 +204,16 @@ export async function inspectGlobalController(
         : null,
   });
   if (invocation.selectorMatchesInvocation === false) {
-    issues.push(issue(
-      "selector",
-      "CONTROLLER_INVOCATION_SELECTION_MISMATCH",
-      selector.path ?? "controller/current",
-      "The running controller release does not match the current selector",
-      selector.controllerDigest,
-      invocation.controllerDigest,
-    ));
+    issues.push(
+      issue(
+        "selector",
+        "CONTROLLER_INVOCATION_SELECTION_MISMATCH",
+        selector.path ?? "controller/current",
+        "The running controller release does not match the current selector",
+        selector.controllerDigest,
+        invocation.controllerDigest
+      )
+    );
   }
 
   const release = await inspectSelectedRelease({
@@ -228,57 +228,65 @@ export async function inspectGlobalController(
     ? await inspectFile(controllerLauncherPath(effectiveDataRoot), true, effectiveDataRoot)
     : null;
   if (launcher && (launcher.status !== "regular" || !launcher.executable)) {
-    issues.push(issue(
-      "launcher",
-      "CONTROLLER_LAUNCHER_INVALID",
-      launcher.path,
-      "Stable controller launcher must be one executable regular file",
-      "executable regular file",
-      `${launcher.status}${launcher.executable ? ", executable" : ", not executable"}`,
-    ));
+    issues.push(
+      issue(
+        "launcher",
+        "CONTROLLER_LAUNCHER_INVALID",
+        launcher.path,
+        "Stable controller launcher must be one executable regular file",
+        "executable regular file",
+        `${launcher.status}${launcher.executable ? ", executable" : ", not executable"}`
+      )
+    );
   }
 
   const command = await resolveExecutable("rawr", options.env.PATH, options.cwd);
   const matchesLauncher = Boolean(
-    command.realpath
-      && launcher?.realpath
-      && launcher.status === "regular"
-      && command.realpath === launcher.realpath,
+    command.realpath &&
+      launcher?.realpath &&
+      launcher.status === "regular" &&
+      command.realpath === launcher.realpath
   );
   if (!matchesLauncher) {
-    issues.push(issue(
-      "global-resolution",
-      "GLOBAL_RAWR_RESOLUTION_MISMATCH",
-      "PATH",
-      "Global rawr must resolve to the stable selector launcher",
-      launcher?.realpath ?? launcher?.path ?? null,
-      command.realpath ?? command.path,
-    ));
+    issues.push(
+      issue(
+        "global-resolution",
+        "GLOBAL_RAWR_RESOLUTION_MISMATCH",
+        "PATH",
+        "Global rawr must resolve to the stable selector launcher",
+        launcher?.realpath ?? launcher?.path ?? null,
+        command.realpath ?? command.path
+      )
+    );
   }
 
-  if (
-    effectiveDataRoot !== null
-    && path.resolve(options.oclifDataDir) !== effectiveDataRoot
-  ) {
-    issues.push(issue(
-      "external-extensions",
-      "EXTERNAL_EXTENSION_DATA_ROOT_MISMATCH",
-      options.oclifDataDir,
-      "Native external extension state must share the canonical controller data root",
-      effectiveDataRoot,
-      path.resolve(options.oclifDataDir),
-    ));
+  if (effectiveDataRoot !== null && path.resolve(options.oclifDataDir) !== effectiveDataRoot) {
+    issues.push(
+      issue(
+        "external-extensions",
+        "EXTERNAL_EXTENSION_DATA_ROOT_MISMATCH",
+        options.oclifDataDir,
+        "Native external extension state must share the canonical controller data root",
+        effectiveDataRoot,
+        path.resolve(options.oclifDataDir)
+      )
+    );
   }
-  const external = await inspectExternalExtensions(options.oclifDataDir, options.readExternalExtensions);
+  const external = await inspectExternalExtensions(
+    options.oclifDataDir,
+    options.readExternalExtensions
+  );
   if (!external.healthy) {
-    issues.push(issue(
-      "external-extensions",
-      "EXTERNAL_EXTENSION_STATE_UNHEALTHY",
-      external.registryPath,
-      "Native external extension state contains unreadable or quarantined entries",
-      "missing or valid registry with no quarantine",
-      `${external.status}; quarantined=${external.quarantined.length}`,
-    ));
+    issues.push(
+      issue(
+        "external-extensions",
+        "EXTERNAL_EXTENSION_STATE_UNHEALTHY",
+        external.registryPath,
+        "Native external extension state contains unreadable or quarantined entries",
+        "missing or valid registry with no quarantine",
+        `${external.status}; quarantined=${external.quarantined.length}`
+      )
+    );
   }
 
   return Object.freeze({
@@ -310,45 +318,62 @@ function parseInvocationContext(env: NodeJS.ProcessEnv): Readonly<{
   const rawDigest = nonEmpty(env.RAWR_CONTROLLER_DIGEST);
   const rawReleaseRoot = nonEmpty(env.RAWR_CONTROLLER_RELEASE_ROOT);
   if (!rawDigest && !rawReleaseRoot) {
-    return { status: "absent", controllerDigest: null, releaseRoot: null, dataRoot: null, issues: [] };
+    return {
+      status: "absent",
+      controllerDigest: null,
+      releaseRoot: null,
+      dataRoot: null,
+      issues: [],
+    };
   }
 
   const contextIssues: GlobalDoctorIssue[] = [];
   if (!rawDigest || !CONTROLLER_DIGEST_PATTERN.test(rawDigest)) {
-    contextIssues.push(issue(
-      "release",
-      "INVOCATION_DIGEST_INVALID",
-      "RAWR_CONTROLLER_DIGEST",
-      "Invocation controller digest must be 64 lowercase hexadecimal characters",
-      "<64-lowercase-hex>",
-      rawDigest,
-    ));
+    contextIssues.push(
+      issue(
+        "release",
+        "INVOCATION_DIGEST_INVALID",
+        "RAWR_CONTROLLER_DIGEST",
+        "Invocation controller digest must be 64 lowercase hexadecimal characters",
+        "<64-lowercase-hex>",
+        rawDigest
+      )
+    );
   }
   if (!rawReleaseRoot || !path.isAbsolute(rawReleaseRoot)) {
-    contextIssues.push(issue(
-      "release",
-      "INVOCATION_RELEASE_ROOT_INVALID",
-      "RAWR_CONTROLLER_RELEASE_ROOT",
-      "Invocation release root must be absolute",
-      "absolute path",
-      rawReleaseRoot,
-    ));
+    contextIssues.push(
+      issue(
+        "release",
+        "INVOCATION_RELEASE_ROOT_INVALID",
+        "RAWR_CONTROLLER_RELEASE_ROOT",
+        "Invocation release root must be absolute",
+        "absolute path",
+        rawReleaseRoot
+      )
+    );
   }
 
   let dataRoot: string | null = null;
-  if (rawDigest && CONTROLLER_DIGEST_PATTERN.test(rawDigest) && rawReleaseRoot && path.isAbsolute(rawReleaseRoot)) {
+  if (
+    rawDigest &&
+    CONTROLLER_DIGEST_PATTERN.test(rawDigest) &&
+    rawReleaseRoot &&
+    path.isAbsolute(rawReleaseRoot)
+  ) {
     const normalizedRoot = path.resolve(rawReleaseRoot);
     dataRoot = controllerDataRootFromRelease(normalizedRoot);
     const expectedRoot = controllerReleasePath(dataRoot, rawDigest);
     if (normalizedRoot !== expectedRoot) {
-      contextIssues.push(issue(
-        "release",
-        "INVOCATION_RELEASE_LAYOUT_MISMATCH",
-        "RAWR_CONTROLLER_RELEASE_ROOT",
-        "Invocation release root must match its digest-qualified controller layout",
-        expectedRoot,
-        normalizedRoot,
-      ));
+      contextIssues.push(
+        issue(
+          "release",
+          "INVOCATION_RELEASE_LAYOUT_MISMATCH",
+          "RAWR_CONTROLLER_RELEASE_ROOT",
+          "Invocation release root must match its digest-qualified controller layout",
+          expectedRoot,
+          normalizedRoot
+        )
+      );
       dataRoot = null;
     }
   }
@@ -374,7 +399,8 @@ function configuredDataRoot(env: NodeJS.ProcessEnv): Readonly<{
 
   if (env.RAWR_OPERATOR_HOME_SET === "1") {
     const operatorHome = nonEmpty(env.RAWR_OPERATOR_HOME);
-    if (operatorHome) return { path: path.join(operatorHome, ".local", "share", "rawr"), source: "operator-home" };
+    if (operatorHome)
+      return { path: path.join(operatorHome, ".local", "share", "rawr"), source: "operator-home" };
   }
 
   const home = nonEmpty(env.HOME);
@@ -386,27 +412,46 @@ function configuredDataRoot(env: NodeJS.ProcessEnv): Readonly<{
 async function inspectDataRoot(
   requestedPath: string | null,
   configuredPath: string | null,
-  source: DataRootSource,
-): Promise<Readonly<{
-  value: GlobalDoctorData["dataRoot"];
-  issue: GlobalDoctorIssue | null;
-}>> {
+  source: DataRootSource
+): Promise<
+  Readonly<{
+    value: GlobalDoctorData["dataRoot"];
+    issue: GlobalDoctorIssue | null;
+  }>
+> {
   if (!requestedPath) {
     return {
-      value: Object.freeze({ path: null, configuredPath, source, status: "unresolved", realpath: null }),
-      issue: issue("data-root", "CONTROLLER_DATA_ROOT_UNRESOLVED", "dataRoot", "Controller data root is unavailable"),
+      value: Object.freeze({
+        path: null,
+        configuredPath,
+        source,
+        status: "unresolved",
+        realpath: null,
+      }),
+      issue: issue(
+        "data-root",
+        "CONTROLLER_DATA_ROOT_UNRESOLVED",
+        "dataRoot",
+        "Controller data root is unavailable"
+      ),
     };
   }
   if (!path.isAbsolute(requestedPath)) {
     return {
-      value: Object.freeze({ path: requestedPath, configuredPath, source, status: "invalid", realpath: null }),
+      value: Object.freeze({
+        path: requestedPath,
+        configuredPath,
+        source,
+        status: "invalid",
+        realpath: null,
+      }),
       issue: issue(
         "data-root",
         "CONTROLLER_DATA_ROOT_INVALID",
         "dataRoot",
         "Controller data root must be absolute",
         "absolute path",
-        requestedPath,
+        requestedPath
       ),
     };
   }
@@ -416,13 +461,30 @@ async function inspectDataRoot(
     const status = await lstat(normalized);
     if (!status.isDirectory()) {
       return {
-        value: Object.freeze({ path: normalized, configuredPath, source, status: "invalid", realpath: null }),
-        issue: issue("data-root", "CONTROLLER_DATA_ROOT_INVALID", normalized, "Controller data root is not a directory"),
+        value: Object.freeze({
+          path: normalized,
+          configuredPath,
+          source,
+          status: "invalid",
+          realpath: null,
+        }),
+        issue: issue(
+          "data-root",
+          "CONTROLLER_DATA_ROOT_INVALID",
+          normalized,
+          "Controller data root is not a directory"
+        ),
       };
     }
     const canonical = await realpath(normalized);
     return {
-      value: Object.freeze({ path: canonical, configuredPath, source, status: "available", realpath: canonical }),
+      value: Object.freeze({
+        path: canonical,
+        configuredPath,
+        source,
+        status: "available",
+        realpath: canonical,
+      }),
       issue: null,
     };
   } catch (error) {
@@ -439,7 +501,7 @@ async function inspectDataRoot(
         "data-root",
         missing ? "CONTROLLER_DATA_ROOT_MISSING" : "CONTROLLER_DATA_ROOT_UNREADABLE",
         normalized,
-        errorMessage(error),
+        errorMessage(error)
       ),
     };
   }
@@ -447,7 +509,12 @@ async function inspectDataRoot(
 
 async function inspectSelector(dataRoot: string | null): Promise<SelectorDiagnostics> {
   if (!dataRoot) {
-    return Object.freeze({ path: null, status: "unavailable", controllerDigest: null, issues: Object.freeze([]) });
+    return Object.freeze({
+      path: null,
+      status: "unavailable",
+      controllerDigest: null,
+      issues: Object.freeze([]),
+    });
   }
   const selectorPath = controllerSelectorPath(dataRoot);
   const parentViolation = await inspectCanonicalContainedParent(dataRoot, selectorPath);
@@ -463,7 +530,7 @@ async function inspectSelector(dataRoot: string | null): Promise<SelectorDiagnos
           parentViolation.path,
           "Controller selection parent chain must remain canonical and inside the data root",
           "canonical contained directory",
-          parentViolation.actual,
+          parentViolation.actual
         ),
       ]),
     });
@@ -482,7 +549,7 @@ async function inspectSelector(dataRoot: string | null): Promise<SelectorDiagnos
             selectorPath,
             "Controller selection must be one independent regular file",
             "regular file with one link",
-            status.isSymbolicLink() ? "symlink" : `${String(status.nlink)} links`,
+            status.isSymbolicLink() ? "symlink" : `${String(status.nlink)} links`
           ),
         ]),
       });
@@ -499,7 +566,7 @@ async function inspectSelector(dataRoot: string | null): Promise<SelectorDiagnos
             selectorPath,
             "Controller selection must have the exact bounded wire length",
             CONTROLLER_SELECTION_BYTES,
-            status.size,
+            status.size
           ),
         ]),
       });
@@ -530,19 +597,21 @@ async function inspectSelector(dataRoot: string | null): Promise<SelectorDiagnos
           "selector",
           missing ? "CONTROLLER_SELECTION_MISSING" : "CONTROLLER_SELECTION_UNREADABLE",
           selectorPath,
-          errorMessage(error),
+          errorMessage(error)
         ),
       ]),
     });
   }
 }
 
-async function inspectSelectedRelease(input: Readonly<{
-  dataRoot: string | null;
-  controllerDigest: string | null;
-  hostPlatform: string;
-  hostArchitecture: string;
-}>): Promise<ReleaseDiagnostics> {
+async function inspectSelectedRelease(
+  input: Readonly<{
+    dataRoot: string | null;
+    controllerDigest: string | null;
+    hostPlatform: string;
+    hostArchitecture: string;
+  }>
+): Promise<ReleaseDiagnostics> {
   if (!input.dataRoot || !input.controllerDigest) {
     return Object.freeze({
       status: "unavailable",
@@ -580,7 +649,7 @@ async function inspectSelectedRelease(input: Readonly<{
           parentViolation.path,
           "Controller release parent chain must remain canonical and inside the data root",
           "canonical contained directory",
-          parentViolation.actual,
+          parentViolation.actual
         ),
       ]),
     });
@@ -612,24 +681,28 @@ async function inspectSelectedRelease(input: Readonly<{
   const architectureMatchesHost = manifest.runtime.architecture === input.hostArchitecture;
   const releaseIssues: GlobalDoctorIssue[] = [];
   if (!platformMatchesHost) {
-    releaseIssues.push(issue(
-      "runtime",
-      "CONTROLLER_RUNTIME_PLATFORM_MISMATCH",
-      "manifest.runtime.platform",
-      "Bundled Bun platform differs from the current host",
-      input.hostPlatform,
-      manifest.runtime.platform,
-    ));
+    releaseIssues.push(
+      issue(
+        "runtime",
+        "CONTROLLER_RUNTIME_PLATFORM_MISMATCH",
+        "manifest.runtime.platform",
+        "Bundled Bun platform differs from the current host",
+        input.hostPlatform,
+        manifest.runtime.platform
+      )
+    );
   }
   if (!architectureMatchesHost) {
-    releaseIssues.push(issue(
-      "runtime",
-      "CONTROLLER_RUNTIME_ARCHITECTURE_MISMATCH",
-      "manifest.runtime.architecture",
-      "Bundled Bun architecture differs from the current host",
-      input.hostArchitecture,
-      manifest.runtime.architecture,
-    ));
+    releaseIssues.push(
+      issue(
+        "runtime",
+        "CONTROLLER_RUNTIME_ARCHITECTURE_MISMATCH",
+        "manifest.runtime.architecture",
+        "Bundled Bun architecture differs from the current host",
+        input.hostArchitecture,
+        manifest.runtime.architecture
+      )
+    );
   }
 
   return Object.freeze({
@@ -662,21 +735,25 @@ async function inspectSelectedRelease(input: Readonly<{
       digest: manifest.dependencyLock.digest,
       verified: true,
     }),
-    officialMembers: Object.freeze(manifest.officialMembers.map((member) => Object.freeze({
-      packageId: member.packageId,
-      version: member.version,
-      root: member.root,
-      payloadDigest: member.payloadDigest,
-      commandIds: member.commandIds,
-      topics: member.topics,
-      aliases: member.aliases,
-      hiddenAliases: member.hiddenAliases,
-      hooks: member.hooks,
-      entryCount: inspection.entries.filter(
-        (entry) => entry.path === member.root || entry.path.startsWith(`${member.root}/`),
-      ).length,
-      verified: true,
-    }))),
+    officialMembers: Object.freeze(
+      manifest.officialMembers.map((member) =>
+        Object.freeze({
+          packageId: member.packageId,
+          version: member.version,
+          root: member.root,
+          payloadDigest: member.payloadDigest,
+          commandIds: member.commandIds,
+          topics: member.topics,
+          aliases: member.aliases,
+          hiddenAliases: member.hiddenAliases,
+          hooks: member.hooks,
+          entryCount: inspection.entries.filter(
+            (entry) => entry.path === member.root || entry.path.startsWith(`${member.root}/`)
+          ).length,
+          verified: true,
+        })
+      )
+    ),
     issues: Object.freeze(releaseIssues),
   });
 }
@@ -684,7 +761,7 @@ async function inspectSelectedRelease(input: Readonly<{
 async function inspectFile(
   filePath: string,
   computeDigest: boolean,
-  containmentRoot?: string,
+  containmentRoot?: string
 ): Promise<FileEvidence> {
   if (containmentRoot) {
     const parentViolation = await inspectCanonicalContainedParent(containmentRoot, filePath);
@@ -707,13 +784,14 @@ async function inspectFile(
     } catch {
       // Lexical path evidence below remains useful when resolution fails.
     }
-    const kind = status.isFile() && status.nlink === 1 && canonical === filePath
-      ? "regular"
-      : canonical !== null && canonical !== filePath
-        ? "alias"
-        : status.isSymbolicLink()
-          ? "symlink"
-          : "other";
+    const kind =
+      status.isFile() && status.nlink === 1 && canonical === filePath
+        ? "regular"
+        : canonical !== null && canonical !== filePath
+          ? "alias"
+          : status.isSymbolicLink()
+            ? "symlink"
+            : "other";
     if (kind === "regular") {
       try {
         await access(filePath, constants.X_OK);
@@ -747,16 +825,16 @@ type CanonicalParentViolation = Readonly<{
 
 async function inspectCanonicalContainedParent(
   root: string,
-  candidate: string,
+  candidate: string
 ): Promise<CanonicalParentViolation | null> {
   const normalizedRoot = path.resolve(root);
   const normalizedCandidate = path.resolve(candidate);
   const candidateOffset = path.relative(normalizedRoot, normalizedCandidate);
   if (
-    candidateOffset === ""
-    || candidateOffset === ".."
-    || candidateOffset.startsWith(`..${path.sep}`)
-    || path.isAbsolute(candidateOffset)
+    candidateOffset === "" ||
+    candidateOffset === ".." ||
+    candidateOffset.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(candidateOffset)
   ) {
     return Object.freeze({ path: normalizedCandidate, actual: "outside data root" });
   }
@@ -803,7 +881,9 @@ function unverifiedRuntime(releaseRoot: string | null): ReleaseDiagnostics["runt
   });
 }
 
-function unverifiedDependencyLock(releaseRoot: string | null): ReleaseDiagnostics["dependencyLock"] {
+function unverifiedDependencyLock(
+  releaseRoot: string | null
+): ReleaseDiagnostics["dependencyLock"] {
   return Object.freeze({
     path: releaseRoot ? path.join(releaseRoot, CONTROLLER_DEPENDENCY_LOCK_PATH) : null,
     releasePath: CONTROLLER_DEPENDENCY_LOCK_PATH,
@@ -815,7 +895,7 @@ function unverifiedDependencyLock(releaseRoot: string | null): ReleaseDiagnostic
 async function resolveExecutable(
   name: string,
   pathValue: string | undefined,
-  cwd: string,
+  cwd: string
 ): Promise<Readonly<{ path: string | null; realpath: string | null }>> {
   for (const entry of (pathValue ?? "").split(path.delimiter)) {
     const directory = entry.length > 0 ? entry : cwd;
@@ -832,27 +912,33 @@ async function resolveExecutable(
 
 async function inspectExternalExtensions(
   oclifDataDir: string,
-  readProjection: () => Promise<NativeRegistryProjection>,
+  readProjection: () => Promise<NativeRegistryProjection>
 ): Promise<ExternalExtensionDiagnostics> {
   try {
     const projection = await readProjection();
-    const quarantined = projection.quarantined.map((entry) => Object.freeze({
-      identity: entry.identity,
-      root: entry.root ?? null,
-      code: entry.reason.code,
-      message: entry.reason.message,
-    }));
+    const quarantined = projection.quarantined.map((entry) =>
+      Object.freeze({
+        identity: entry.identity,
+        root: entry.root ?? null,
+        code: entry.reason.code,
+        message: entry.reason.message,
+      })
+    );
     return Object.freeze({
       registryPath: projection.registryPath,
       status: projection.status,
       hasResidue: projection.hasResidue,
-      active: Object.freeze(projection.active.map((entry) => Object.freeze({
-        packageId: entry.extension.packageId,
-        version: entry.extension.version,
-        type: entry.entry.type,
-        root: entry.extension.canonicalRoot,
-        fingerprint: entry.extension.fingerprint,
-      }))),
+      active: Object.freeze(
+        projection.active.map((entry) =>
+          Object.freeze({
+            packageId: entry.extension.packageId,
+            version: entry.extension.version,
+            type: entry.entry.type,
+            root: entry.extension.canonicalRoot,
+            fingerprint: entry.extension.fingerprint,
+          })
+        )
+      ),
       quarantined: Object.freeze(quarantined),
       healthy: projection.status !== "malformed" && quarantined.length === 0,
     });
@@ -862,12 +948,14 @@ async function inspectExternalExtensions(
       status: "unavailable",
       hasResidue: false,
       active: Object.freeze([]),
-      quarantined: Object.freeze([{
-        identity: "native-registry",
-        root: null,
-        code: "registry-unavailable",
-        message: errorMessage(error),
-      }]),
+      quarantined: Object.freeze([
+        {
+          identity: "native-registry",
+          root: null,
+          code: "registry-unavailable",
+          message: errorMessage(error),
+        },
+      ]),
       healthy: false,
     });
   }
@@ -887,7 +975,7 @@ function issue(
   issuePath: string,
   message: string,
   expected?: unknown,
-  actual?: unknown,
+  actual?: unknown
 ): GlobalDoctorIssue {
   return Object.freeze({
     domain,

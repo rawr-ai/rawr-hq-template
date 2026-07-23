@@ -16,7 +16,7 @@ export const InngestFunctionProbe = InngestClientProbe.createFunction(
     step.run("lower-to-process-runtime", () => ({
       eventName: event.name,
       lowered: true as const,
-    })),
+    }))
 );
 
 export const InngestServeProbe = serve({

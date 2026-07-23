@@ -145,13 +145,15 @@ describe("route boundary matrix", () => {
       "suite:runtime:ingress",
       "suite:cross-surface:metadata-import-boundary",
     ]);
-    expect(REQUIRED_NEGATIVE_ASSERTION_KEYS).toEqual(expect.arrayContaining([
-      "assertion:reject-api-inngest-from-caller-paths",
-      "assertion:reject-rpc-from-external-callers",
-      "assertion:reject-rpc-workflows-route-family",
-      "assertion:runtime-ingress-no-caller-boundary-semantics",
-      "assertion:in-process-no-local-http-self-call",
-    ]));
+    expect(REQUIRED_NEGATIVE_ASSERTION_KEYS).toEqual(
+      expect.arrayContaining([
+        "assertion:reject-api-inngest-from-caller-paths",
+        "assertion:reject-rpc-from-external-callers",
+        "assertion:reject-rpc-workflows-route-family",
+        "assertion:runtime-ingress-no-caller-boundary-semantics",
+        "assertion:in-process-no-local-http-self-call",
+      ])
+    );
   });
 
   it("keeps the positive route families on their canonical surfaces", async () => {
@@ -164,7 +166,7 @@ describe("route boundary matrix", () => {
           method: testCase.method,
           headers: testCase.headers,
           body: testCase.body,
-        }),
+        })
       );
 
       expect(response.status, testCase.assertionKey).toBe(200);
@@ -181,7 +183,7 @@ describe("route boundary matrix", () => {
           method: testCase.method,
           headers: testCase.headers,
           body: testCase.body,
-        }),
+        })
       );
 
       expect(response.status, testCase.assertionKey).toBe(testCase.expectedStatus);

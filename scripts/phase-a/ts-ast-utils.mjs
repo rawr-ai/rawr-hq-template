@@ -136,7 +136,8 @@ export function hasStringLiteral(sourceFile, predicate) {
 export function namedImportInfo(sourceFile, moduleName) {
   const result = new Map();
   for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier))
+      continue;
     if (statement.moduleSpecifier.text !== moduleName) continue;
     const clause = statement.importClause;
     if (!clause || !clause.namedBindings || !ts.isNamedImports(clause.namedBindings)) continue;
@@ -151,7 +152,8 @@ export function namedImportInfo(sourceFile, moduleName) {
 export function importModuleSet(sourceFile) {
   const modules = new Set();
   for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier))
+      continue;
     modules.add(statement.moduleSpecifier.text);
   }
   return modules;

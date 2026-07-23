@@ -13,11 +13,12 @@ import { Effect } from "effect";
 
 export const controllerAuthorityResource: ControllerAuthorityResource<FileSystem.FileSystem> = {
   preflight: Effect.fn("controllerAuthority.preflight")(function* (
-    input: ControllerAuthorityPreflightInput,
+    input: ControllerAuthorityPreflightInput
   ) {
     const fs = yield* FileSystem.FileSystem;
     const executables = yield* Effect.forEach(input.executables, (executable) =>
-      validateExecutable(fs, executable));
+      validateExecutable(fs, executable)
+    );
     const providerHomes = yield* validateProviderHomes(fs, input.providerHomes);
     return Object.freeze({
       executables: Object.freeze(executables),
@@ -31,7 +32,7 @@ export type NodeControllerAuthorityPreflightResult =
   | Readonly<{ ok: false; failure: ControllerAuthorityFailure }>;
 
 export function preflightNodeControllerAuthority(
-  input: ControllerAuthorityPreflightInput,
+  input: ControllerAuthorityPreflightInput
 ): Promise<NodeControllerAuthorityPreflightResult> {
   return Effect.runPromise(
     controllerAuthorityResource.preflight(input).pipe(
@@ -39,14 +40,14 @@ export function preflightNodeControllerAuthority(
         onFailure: (failure) => Object.freeze({ ok: false, failure }),
         onSuccess: (value) => Object.freeze({ ok: true, value }),
       }),
-      Effect.provide(NodeContext.layer),
-    ),
+      Effect.provide(NodeContext.layer)
+    )
   );
 }
 
 const validateExecutable = Effect.fn("controllerAuthority.validateExecutable")(function* (
   fs: FileSystem.FileSystem,
-  executable: ControllerExecutableAuthority,
+  executable: ControllerExecutableAuthority
 ) {
   const canonical = yield* canonicalPath(fs, executable.path, "executable");
   if (canonical !== executable.path) {
@@ -54,18 +55,18 @@ const validateExecutable = Effect.fn("controllerAuthority.validateExecutable")(f
       "executable",
       "Aliased",
       executable.path,
-      `${executable.name} executable must be its exact canonical path`,
+      `${executable.name} executable must be its exact canonical path`
     );
   }
-  const info = yield* fs.stat(executable.path).pipe(
-    Effect.mapError((cause) => platformFailure("executable", executable.path, cause)),
-  );
+  const info = yield* fs
+    .stat(executable.path)
+    .pipe(Effect.mapError((cause) => platformFailure("executable", executable.path, cause)));
   if (info.type !== "File") {
     return yield* rejected(
       "executable",
       "NotRegularFile",
       executable.path,
-      `${executable.name} executable must be a regular file`,
+      `${executable.name} executable must be a regular file`
     );
   }
   if ((info.mode & 0o111) === 0) {
@@ -73,7 +74,7 @@ const validateExecutable = Effect.fn("controllerAuthority.validateExecutable")(f
       "executable",
       "NotExecutable",
       executable.path,
-      `${executable.name} executable has no executable mode bit`,
+      `${executable.name} executable has no executable mode bit`
     );
   }
   return executable;
@@ -81,57 +82,59 @@ const validateExecutable = Effect.fn("controllerAuthority.validateExecutable")(f
 
 const validateProviderHomes = Effect.fn("controllerAuthority.validateProviderHomes")(function* (
   fs: FileSystem.FileSystem,
-  homes: readonly ControllerProviderHomeAuthority[],
+  homes: readonly ControllerProviderHomeAuthority[]
 ) {
   const canonicalHomes = new Set<string>();
-  return yield* Effect.forEach(homes, (home) => Effect.gen(function* () {
-    const canonical = yield* canonicalPath(fs, home.path, "provider-home");
-    if (canonical !== home.path) {
-      return yield* rejected(
-        "provider-home",
-        "Aliased",
-        home.path,
-        `${home.provider} provider home must be its exact canonical path`,
-      );
-    }
-    const info = yield* fs.stat(home.path).pipe(
-      Effect.mapError((cause) => platformFailure("provider-home", home.path, cause)),
-    );
-    if (info.type !== "Directory") {
-      return yield* rejected(
-        "provider-home",
-        "NotDirectory",
-        home.path,
-        `${home.provider} provider home must be a directory`,
-      );
-    }
-    if (canonicalHomes.has(canonical)) {
-      return yield* rejected(
-        "provider-home",
-        "DuplicateHome",
-        home.path,
-        `Provider homes must have distinct canonical identities: ${canonical}`,
-      );
-    }
-    canonicalHomes.add(canonical);
-    return home;
-  }));
+  return yield* Effect.forEach(homes, (home) =>
+    Effect.gen(function* () {
+      const canonical = yield* canonicalPath(fs, home.path, "provider-home");
+      if (canonical !== home.path) {
+        return yield* rejected(
+          "provider-home",
+          "Aliased",
+          home.path,
+          `${home.provider} provider home must be its exact canonical path`
+        );
+      }
+      const info = yield* fs
+        .stat(home.path)
+        .pipe(Effect.mapError((cause) => platformFailure("provider-home", home.path, cause)));
+      if (info.type !== "Directory") {
+        return yield* rejected(
+          "provider-home",
+          "NotDirectory",
+          home.path,
+          `${home.provider} provider home must be a directory`
+        );
+      }
+      if (canonicalHomes.has(canonical)) {
+        return yield* rejected(
+          "provider-home",
+          "DuplicateHome",
+          home.path,
+          `Provider homes must have distinct canonical identities: ${canonical}`
+        );
+      }
+      canonicalHomes.add(canonical);
+      return home;
+    })
+  );
 });
 
 function canonicalPath(
   fs: FileSystem.FileSystem,
   candidate: string,
-  boundary: ControllerAuthorityFailure["boundary"],
+  boundary: ControllerAuthorityFailure["boundary"]
 ) {
-  return fs.realPath(candidate).pipe(
-    Effect.mapError((cause) => platformFailure(boundary, candidate, cause)),
-  );
+  return fs
+    .realPath(candidate)
+    .pipe(Effect.mapError((cause) => platformFailure(boundary, candidate, cause)));
 }
 
 function platformFailure(
   boundary: ControllerAuthorityFailure["boundary"],
   candidate: string,
-  cause: PlatformError,
+  cause: PlatformError
 ): ControllerAuthorityFailure {
   const missing = cause._tag === "SystemError" && cause.reason === "NotFound";
   return Object.freeze({
@@ -149,13 +152,15 @@ function rejected(
   boundary: ControllerAuthorityFailure["boundary"],
   reason: ControllerAuthorityFailure["reason"],
   candidate: string,
-  detail: string,
+  detail: string
 ) {
-  return Effect.fail<ControllerAuthorityFailure>(Object.freeze({
-    _tag: "ControllerAuthorityFailure",
-    boundary,
-    reason,
-    path: candidate,
-    detail,
-  }));
+  return Effect.fail<ControllerAuthorityFailure>(
+    Object.freeze({
+      _tag: "ControllerAuthorityFailure",
+      boundary,
+      reason,
+      path: candidate,
+      detail,
+    })
+  );
 }

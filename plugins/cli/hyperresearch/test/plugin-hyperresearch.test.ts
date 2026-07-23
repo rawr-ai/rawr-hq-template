@@ -51,18 +51,20 @@ async function makeV8Fixture() {
   const steps = path.join(root, "steps");
   const vault = path.join(root, "vault");
   await fs.mkdir(steps, { recursive: true });
-  await Promise.all(v8StepFiles.map((fileName) => fs.writeFile(
-    path.join(steps, fileName),
-    `# ${fileName}\n`,
-    "utf8",
-  )));
+  await Promise.all(
+    v8StepFiles.map((fileName) =>
+      fs.writeFile(path.join(steps, fileName), `# ${fileName}\n`, "utf8")
+    )
+  );
   return { steps, vault };
 }
 
 describe("@rawr/plugin-hyperresearch", () => {
   it("runs the codex-slice command with fixture backend and returns structured json", async () => {
     const fixture = await makeFixture();
-    const outputSpy = vi.spyOn(HyperresearchCodexSlice.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    const outputSpy = vi
+      .spyOn(HyperresearchCodexSlice.prototype as any, "outputResult" as any)
+      .mockImplementation(() => {});
 
     await HyperresearchCodexSlice.run([
       "--query",
@@ -74,14 +76,16 @@ describe("@rawr/plugin-hyperresearch", () => {
       "--json",
     ]);
 
-    const [parsed] = outputSpy.mock.calls[0] as unknown as [{
-      ok: boolean;
-      data: {
-        completed: boolean;
-        completedSteps: string[];
-        cliCalls: Array<{ operation: string; exitCode: number; args?: string[] }>;
-      };
-    }];
+    const [parsed] = outputSpy.mock.calls[0] as unknown as [
+      {
+        ok: boolean;
+        data: {
+          completed: boolean;
+          completedSteps: string[];
+          cliCalls: Array<{ operation: string; exitCode: number; args?: string[] }>;
+        };
+      },
+    ];
 
     expect(parsed.ok).toBe(true);
     expect(parsed.data.completed).toBe(true);
@@ -90,48 +94,63 @@ describe("@rawr/plugin-hyperresearch", () => {
       "02-source-capture",
       "03-final-artifact",
     ]);
-    expect(parsed.data.cliCalls.map((call) => call.operation)).toEqual(["init", "note", "lint", "export"]);
+    expect(parsed.data.cliCalls.map((call) => call.operation)).toEqual([
+      "init",
+      "note",
+      "lint",
+      "export",
+    ]);
   });
 
   it("returns a failed result when integrity gates block acceptance", async () => {
     const fixture = await makeFixture();
     await fs.rm(path.join(fixture.steps, "02-source-capture.md"));
-    const outputSpy = vi.spyOn(HyperresearchCodexSlice.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    const outputSpy = vi
+      .spyOn(HyperresearchCodexSlice.prototype as any, "outputResult" as any)
+      .mockImplementation(() => {});
 
-    await expect(HyperresearchCodexSlice.run([
-      "--query",
-      "Codex parity proof",
-      "--vault",
-      fixture.vault,
-      "--steps",
-      fixture.steps,
-      "--backend",
-      "fixture",
-      "--json",
-    ])).rejects.toThrow();
+    await expect(
+      HyperresearchCodexSlice.run([
+        "--query",
+        "Codex parity proof",
+        "--vault",
+        fixture.vault,
+        "--steps",
+        fixture.steps,
+        "--backend",
+        "fixture",
+        "--json",
+      ])
+    ).rejects.toThrow();
 
-    const [parsed] = outputSpy.mock.calls[0] as unknown as [{
-      ok: boolean;
-      error: {
-        code: string;
-        details: {
-          integrity: Array<{ severity: string; code: string; stepId?: string }>;
+    const [parsed] = outputSpy.mock.calls[0] as unknown as [
+      {
+        ok: boolean;
+        error: {
+          code: string;
+          details: {
+            integrity: Array<{ severity: string; code: string; stepId?: string }>;
+          };
         };
-      };
-    }];
+      },
+    ];
 
     expect(parsed.ok).toBe(false);
     expect(parsed.error.code).toBe("HYPERRESEARCH_CODEX_INTEGRITY_BLOCKED");
-    expect(parsed.error.details.integrity).toContainEqual(expect.objectContaining({
-      severity: "blocking",
-      code: "failed-step",
-      stepId: "02-source-capture",
-    }));
+    expect(parsed.error.details.integrity).toContainEqual(
+      expect.objectContaining({
+        severity: "blocking",
+        code: "failed-step",
+        stepId: "02-source-capture",
+      })
+    );
   });
 
   it("runs the V8 fixture command with the service-owned start/advance loop", async () => {
     const fixture = await makeV8Fixture();
-    const outputSpy = vi.spyOn(HyperresearchCodexRunFixture.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    const outputSpy = vi
+      .spyOn(HyperresearchCodexRunFixture.prototype as any, "outputResult" as any)
+      .mockImplementation(() => {});
 
     await HyperresearchCodexRunFixture.run([
       "--query",
@@ -145,14 +164,16 @@ describe("@rawr/plugin-hyperresearch", () => {
       "--json",
     ]);
 
-    const [parsed] = outputSpy.mock.calls[0] as unknown as [{
-      ok: boolean;
-      data: {
-        status: string;
-        completed: boolean;
-        completedSteps: string[];
-      };
-    }];
+    const [parsed] = outputSpy.mock.calls[0] as unknown as [
+      {
+        ok: boolean;
+        data: {
+          status: string;
+          completed: boolean;
+          completedSteps: string[];
+        };
+      },
+    ];
 
     expect(parsed.ok).toBe(true);
     expect(parsed.data.status).toBe("complete");
@@ -168,7 +189,9 @@ describe("@rawr/plugin-hyperresearch", () => {
 
   it("starts and advances a V8 ledger through thin CLI commands", async () => {
     const fixture = await makeV8Fixture();
-    const startSpy = vi.spyOn(HyperresearchCodexStart.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    const startSpy = vi
+      .spyOn(HyperresearchCodexStart.prototype as any, "outputResult" as any)
+      .mockImplementation(() => {});
     await HyperresearchCodexStart.run([
       "--query",
       "Codex V8 command proof",
@@ -180,18 +203,22 @@ describe("@rawr/plugin-hyperresearch", () => {
       "light",
       "--json",
     ]);
-    const [started] = startSpy.mock.calls[0] as unknown as [{
-      ok: boolean;
-      data: {
-        ledgerPath: string;
-        status: string;
-      };
-    }];
+    const [started] = startSpy.mock.calls[0] as unknown as [
+      {
+        ok: boolean;
+        data: {
+          ledgerPath: string;
+          status: string;
+        };
+      },
+    ];
     expect(started.ok).toBe(true);
     expect(started.data.status).toBe("running");
 
     vi.restoreAllMocks();
-    const advanceSpy = vi.spyOn(HyperresearchCodexAdvance.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    const advanceSpy = vi
+      .spyOn(HyperresearchCodexAdvance.prototype as any, "outputResult" as any)
+      .mockImplementation(() => {});
     await HyperresearchCodexAdvance.run([
       "--ledger",
       started.data.ledgerPath,
@@ -199,13 +226,15 @@ describe("@rawr/plugin-hyperresearch", () => {
       "synthesize",
       "--json",
     ]);
-    const [advanced] = advanceSpy.mock.calls[0] as unknown as [{
-      ok: boolean;
-      data: {
-        status: string;
-        completed: boolean;
-      };
-    }];
+    const [advanced] = advanceSpy.mock.calls[0] as unknown as [
+      {
+        ok: boolean;
+        data: {
+          status: string;
+          completed: boolean;
+        };
+      },
+    ];
     expect(advanced.ok).toBe(true);
     expect(advanced.data.status).toBe("complete");
     expect(advanced.data.completed).toBe(true);
@@ -213,7 +242,9 @@ describe("@rawr/plugin-hyperresearch", () => {
 
   it("accepts backend on V8 validation for command-surface symmetry", async () => {
     const fixture = await makeV8Fixture();
-    const startSpy = vi.spyOn(HyperresearchCodexStart.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    const startSpy = vi
+      .spyOn(HyperresearchCodexStart.prototype as any, "outputResult" as any)
+      .mockImplementation(() => {});
     await HyperresearchCodexStart.run([
       "--query",
       "Codex V8 validate proof",
@@ -225,15 +256,19 @@ describe("@rawr/plugin-hyperresearch", () => {
       "light",
       "--json",
     ]);
-    const [started] = startSpy.mock.calls[0] as unknown as [{
-      ok: boolean;
-      data: {
-        ledgerPath: string;
-      };
-    }];
+    const [started] = startSpy.mock.calls[0] as unknown as [
+      {
+        ok: boolean;
+        data: {
+          ledgerPath: string;
+        };
+      },
+    ];
 
     vi.restoreAllMocks();
-    const advanceSpy = vi.spyOn(HyperresearchCodexAdvance.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    const advanceSpy = vi
+      .spyOn(HyperresearchCodexAdvance.prototype as any, "outputResult" as any)
+      .mockImplementation(() => {});
     await HyperresearchCodexAdvance.run([
       "--ledger",
       started.data.ledgerPath,
@@ -244,7 +279,9 @@ describe("@rawr/plugin-hyperresearch", () => {
     expect((advanceSpy.mock.calls[0] as unknown as [{ ok: boolean }])[0].ok).toBe(true);
 
     vi.restoreAllMocks();
-    const validateSpy = vi.spyOn(HyperresearchCodexValidate.prototype as any, "outputResult" as any).mockImplementation(() => {});
+    const validateSpy = vi
+      .spyOn(HyperresearchCodexValidate.prototype as any, "outputResult" as any)
+      .mockImplementation(() => {});
     await HyperresearchCodexValidate.run([
       "--ledger",
       started.data.ledgerPath,
@@ -252,13 +289,15 @@ describe("@rawr/plugin-hyperresearch", () => {
       "real",
       "--json",
     ]);
-    const [validated] = validateSpy.mock.calls[0] as unknown as [{
-      ok: boolean;
-      data: {
-        status: string;
-        passed: boolean;
-      };
-    }];
+    const [validated] = validateSpy.mock.calls[0] as unknown as [
+      {
+        ok: boolean;
+        data: {
+          status: string;
+          passed: boolean;
+        };
+      },
+    ];
     expect(validated.ok).toBe(true);
     expect(validated.data.status).toBe("complete");
     expect(validated.data.passed).toBe(true);

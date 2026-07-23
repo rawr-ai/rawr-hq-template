@@ -14,10 +14,22 @@ type PairMetrics = {
 
 const keyForPair = (leftId: string, rightId: string) => [leftId, rightId].sort().join("::");
 
-function sortedByRootPreference(records: JsonConversationSourceRecord[]): JsonConversationSourceRecord[] {
+function sortedByRootPreference(
+  records: JsonConversationSourceRecord[]
+): JsonConversationSourceRecord[] {
   return [...records].sort((left, right) => {
-    const leftTuple = [left.branchDepth, parseDate(left.created), left.messages.length, left.relativePath];
-    const rightTuple = [right.branchDepth, parseDate(right.created), right.messages.length, right.relativePath];
+    const leftTuple = [
+      left.branchDepth,
+      parseDate(left.created),
+      left.messages.length,
+      left.relativePath,
+    ];
+    const rightTuple = [
+      right.branchDepth,
+      parseDate(right.created),
+      right.messages.length,
+      right.relativePath,
+    ];
     return String(leftTuple).localeCompare(String(rightTuple));
   });
 }
@@ -31,7 +43,8 @@ function buildPairMetrics(jsonRecords: JsonConversationSourceRecord[]): Map<stri
       const leftMessages = left.messages;
       const rightMessages = right.messages;
       const leftFirstPrompt = leftMessages.find((message) => message.role === "Prompt")?.say ?? "";
-      const rightFirstPrompt = rightMessages.find((message) => message.role === "Prompt")?.say ?? "";
+      const rightFirstPrompt =
+        rightMessages.find((message) => message.role === "Prompt")?.say ?? "";
       pairMetrics.set(keyForPair(left.sourceId, right.sourceId), {
         exactPrefixLen: sharedPrefix(leftMessages, rightMessages),
         fuzzyPrefixLen: sharedPrefix(leftMessages, rightMessages, true),
@@ -48,7 +61,7 @@ function buildPairMetrics(jsonRecords: JsonConversationSourceRecord[]): Map<stri
 
 function groupRelatedSources(
   jsonRecords: JsonConversationSourceRecord[],
-  pairMetrics: Map<string, PairMetrics>,
+  pairMetrics: Map<string, PairMetrics>
 ): string[][] {
   const parent = new Map(jsonRecords.map((record) => [record.sourceId, record.sourceId]));
   const find = (sourceId: string): string => {
@@ -84,7 +97,7 @@ function groupRelatedSources(
 
 function splitDuplicates(
   memberRecords: JsonConversationSourceRecord[],
-  pairMetrics: Map<string, PairMetrics>,
+  pairMetrics: Map<string, PairMetrics>
 ): {
   nonDuplicates: JsonConversationSourceRecord[];
   duplicates: Map<string, string>;
@@ -189,7 +202,9 @@ export function buildFamilyGraphs(jsonRecords: JsonConversationSourceRecord[]): 
         evidence: [
           `exact_shared_prefix_messages=${fallbackMetrics.exactPrefixLen}`,
           `fuzzy_shared_prefix_messages=${fallbackMetrics.fuzzyPrefixLen}`,
-          ...(fallbackMetrics.sameNormalizedTitle ? [`normalized_title_match=${record.normalizedTitle}`] : []),
+          ...(fallbackMetrics.sameNormalizedTitle
+            ? [`normalized_title_match=${record.normalizedTitle}`]
+            : []),
           ...(fallbackMetrics.sameFirstPrompt ? ["same_first_prompt=true"] : []),
           ...(fallbackMetrics.sameLink ? ["same_export_link=true"] : []),
         ],
@@ -241,6 +256,6 @@ export function buildRelationships(familyGraphs: FamilyGraph[]): Relationship[] 
       confidence: edge.confidence,
       evidence: edge.evidence,
       notes: `Shared prefix length: ${edge.shared_prefix_len}`,
-    })),
+    }))
   );
 }

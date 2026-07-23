@@ -20,12 +20,7 @@ function metadataMatchScore(session: SessionListItem, needle: string): number {
     const raw = session[field as keyof SessionListItem];
     if (raw != null && String(raw).toLowerCase().includes(normalizedNeedle)) {
       score +=
-        field === "title" ||
-        field === "cwd" ||
-        field === "path" ||
-        field === "sessionId"
-          ? 2
-          : 1;
+        field === "title" || field === "cwd" || field === "path" || field === "sessionId" ? 2 : 1;
     }
   }
 
@@ -43,7 +38,7 @@ function metadataMatchScore(session: SessionListItem, needle: string): number {
 export function searchSessionsByMetadata(
   sessions: SessionListItem[],
   needle: string,
-  limit: number,
+  limit: number
 ): MetadataSearchHit[] {
   const trimmed = needle.trim();
   if (!trimmed) return [];
@@ -53,11 +48,7 @@ export function searchSessionsByMetadata(
     .filter((session) => session.matchScore > 0);
 
   ranked.sort((a, b) =>
-    a.matchScore === b.matchScore
-      ? a.modified < b.modified
-        ? 1
-        : -1
-      : b.matchScore - a.matchScore,
+    a.matchScore === b.matchScore ? (a.modified < b.modified ? 1 : -1) : b.matchScore - a.matchScore
   );
 
   return limit > 0 ? ranked.slice(0, limit) : ranked;

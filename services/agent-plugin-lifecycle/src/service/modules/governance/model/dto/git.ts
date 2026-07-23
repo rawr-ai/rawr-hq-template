@@ -38,20 +38,20 @@ export interface ExactGitBlobObservation {
 }
 
 export function createGitBlobSelection(
-  input: unknown,
+  input: unknown
 ): ReleaseResult<GitBlobSelection, ReleaseIssue> {
   return parseGitBlobSelection(input, "gitObject");
 }
 
 export function createExactGitBlobPointer(
-  input: unknown,
+  input: unknown
 ): ReleaseResult<ExactGitBlobPointer, ReleaseIssue> {
   return parseExactGitBlobPointer(input, "gitObject");
 }
 
 export function parseGitBlobSelection(
   input: unknown,
-  path: string,
+  path: string
 ): ReleaseResult<GitBlobSelection, ReleaseIssue> {
   const record = exactRecord(input, ["commit", "path", "ref", "repositoryIdentity", "tree"], path);
   if (!record.ok) return record;
@@ -63,7 +63,7 @@ export function parseGitBlobSelection(
     parseTree(record.value.tree, `${path}.tree`),
     parseRelativePath(record.value.path, `${path}.path`),
   ] as const;
-  const issues = fields.flatMap((result) => result.ok ? [] : result.issues);
+  const issues = fields.flatMap((result) => (result.ok ? [] : result.issues));
   if (issues.length > 0) return failed(issues);
   if (!fields[0].ok || !fields[1].ok || !fields[2].ok || !fields[3].ok || !fields[4].ok) {
     return invalid(path, "Git selection fields did not produce a value");
@@ -82,40 +82,46 @@ export function parseGitBlobSelection(
 
 export function parseExactGitBlobPointer(
   input: unknown,
-  path: string,
+  path: string
 ): ReleaseResult<ExactGitBlobPointer, ReleaseIssue> {
   const record = exactRecord(
     input,
     ["blob", "commit", "path", "ref", "repositoryIdentity", "tree"],
-    path,
+    path
   );
   if (!record.ok) return record;
-  const selection = parseGitBlobSelection({
-    repositoryIdentity: record.value.repositoryIdentity,
-    ref: record.value.ref,
-    commit: record.value.commit,
-    tree: record.value.tree,
-    path: record.value.path,
-  }, path);
+  const selection = parseGitBlobSelection(
+    {
+      repositoryIdentity: record.value.repositoryIdentity,
+      ref: record.value.ref,
+      commit: record.value.commit,
+      tree: record.value.tree,
+      path: record.value.path,
+    },
+    path
+  );
   const blob = parseGitBlobId(record.value.blob, `${path}.blob`);
-  const issues = [selection, blob].flatMap((result) => result.ok ? [] : result.issues);
+  const issues = [selection, blob].flatMap((result) => (result.ok ? [] : result.issues));
   if (issues.length > 0) return failed(issues);
-  if (!selection.ok || !blob.ok) return invalid(path, "Exact Git pointer fields did not produce a value");
+  if (!selection.ok || !blob.ok)
+    return invalid(path, "Exact Git pointer fields did not produce a value");
   return { ok: true, value: Object.freeze({ ...selection.value, blob: blob.value }) };
 }
 
 export function sameGitSelection(left: GitBlobSelection, right: GitBlobSelection): boolean {
-  return left.repositoryIdentity === right.repositoryIdentity
-    && left.ref === right.ref
-    && left.commit === right.commit
-    && left.tree === right.tree
-    && left.path === right.path;
+  return (
+    left.repositoryIdentity === right.repositoryIdentity &&
+    left.ref === right.ref &&
+    left.commit === right.commit &&
+    left.tree === right.tree &&
+    left.path === right.path
+  );
 }
 
 function exactRecord(
   input: unknown,
   keys: readonly string[],
-  path: string,
+  path: string
 ): ReleaseResult<Record<string, unknown>, ReleaseIssue> {
   if (input === null || typeof input !== "object" || Array.isArray(input)) {
     return invalid(path, `Expected exactly: ${keys.join(", ")}`);
@@ -132,10 +138,12 @@ function invalid(path: string, message: string): ReleaseResult<never, ReleaseIss
 }
 
 function failed(issues: readonly ReleaseIssue[]): ReleaseResult<never, ReleaseIssue> {
-  const first = issues[0] ?? Object.freeze({
-    code: "UNKNOWN_FIELD" as const,
-    path: "gitObject",
-    message: "Git pointer validation did not produce a value",
-  });
+  const first =
+    issues[0] ??
+    Object.freeze({
+      code: "UNKNOWN_FIELD" as const,
+      path: "gitObject",
+      message: "Git pointer validation did not produce a value",
+    });
   return { ok: false, issues: [first, ...issues.slice(1)] };
 }

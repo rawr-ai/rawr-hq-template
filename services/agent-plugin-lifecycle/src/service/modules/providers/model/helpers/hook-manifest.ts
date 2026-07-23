@@ -5,11 +5,11 @@ const HOOK_EVENT_NAME_PATTERN_SOURCE = "^[A-Za-z][A-Za-z0-9]*$";
 const HOOK_EVENT_NAME_PATTERN = new RegExp(HOOK_EVENT_NAME_PATTERN_SOURCE, "u");
 const HookHandlerSchema = Type.Object(
   { type: Type.String({ minLength: 1 }) },
-  { additionalProperties: true },
+  { additionalProperties: true }
 );
 const HookMatcherGroupSchema = Type.Object(
   { hooks: Type.Array(HookHandlerSchema, { minItems: 1 }) },
-  { additionalProperties: true },
+  { additionalProperties: true }
 );
 const HookManifestSchema = Type.Object(
   {
@@ -17,10 +17,10 @@ const HookManifestSchema = Type.Object(
     hooks: Type.Record(
       Type.String({ pattern: HOOK_EVENT_NAME_PATTERN_SOURCE }),
       Type.Array(HookMatcherGroupSchema, { minItems: 1 }),
-      { additionalProperties: false },
+      { additionalProperties: false }
     ),
   },
-  { additionalProperties: false },
+  { additionalProperties: false }
 );
 type HookManifest = Static<typeof HookManifestSchema>;
 
@@ -32,9 +32,7 @@ export interface HookManifestFile {
 }
 
 /** Reads provider-discoverable hook manifests into plugin-local event claims. */
-export function hookEventSlugsFromManifests(
-  files: readonly HookManifestFile[],
-): readonly string[] {
+export function hookEventSlugsFromManifests(files: readonly HookManifestFile[]): readonly string[] {
   const eventSlugs = new Set<string>();
   for (const file of files) {
     if (file.path !== NATIVE_HOOK_MANIFEST_PATH) continue;

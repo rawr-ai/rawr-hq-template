@@ -86,16 +86,13 @@ for (const relRoot of activeRuntimeRoots) {
   for (const relPath of await sourceFilesUnder(relRoot)) {
     const source = await read(relPath);
     for (const token of retiredRuntimeTokens) {
-      if (source.includes(token)) findings.push(`${relPath} retains retired runtime token ${token}`);
+      if (source.includes(token))
+        findings.push(`${relPath} retains retired runtime token ${token}`);
     }
   }
 }
 
-const activeToolAndGuidanceRoots = [
-  "apps/cli/src",
-  "plugins/agents/hq/skills",
-  "docs",
-];
+const activeToolAndGuidanceRoots = ["apps/cli/src", "plugins/agents/hq/skills", "docs"];
 const retiredActiveGuidance = [
   ["legacy web-membership command", /\b(?:rawr\s+)?plugins\s+web\b/u],
   ["legacy scaffold command", /\b(?:rawr\s+)?plugins\s+scaffold\b/u],
@@ -136,7 +133,10 @@ for (const [relPath, owner] of Object.entries(retainedCommands)) {
     findings.push(`${relPath} does not delegate to its exact authoring owner ${owner}`);
   }
   for (const sibling of authoringKinds) {
-    if (sibling !== owner && specifiers.some((specifier) => specifier.includes(`/authoring/${sibling}`))) {
+    if (
+      sibling !== owner &&
+      specifiers.some((specifier) => specifier.includes(`/authoring/${sibling}`))
+    ) {
       findings.push(`${relPath} imports sibling authoring kind ${sibling}`);
     }
   }
@@ -149,19 +149,29 @@ for (const [relPath, owner] of Object.entries(retainedCommands)) {
 
 for (const relPath of await sourceFilesUnder("apps/cli/src/lib/authoring/shared")) {
   const source = await read(relPath);
-  for (const forbidden of ["productKind", "outputKind", "parsePlugin", "parseProjection", "parseCommand", "parseExtension"]) {
-    if (source.includes(forbidden)) findings.push(`${relPath} dispatches raw product kinds through ${forbidden}`);
+  for (const forbidden of [
+    "productKind",
+    "outputKind",
+    "parsePlugin",
+    "parseProjection",
+    "parseCommand",
+    "parseExtension",
+  ]) {
+    if (source.includes(forbidden))
+      findings.push(`${relPath} dispatches raw product kinds through ${forbidden}`);
   }
 }
 
 const governedCreatorFiles = [
-  ...await sourceFilesUnder("apps/cli/src/commands/agent"),
-  ...await sourceFilesUnder("apps/cli/src/commands/cli"),
-].filter((relPath) => path.posix.basename(relPath) === "create.ts").sort();
+  ...(await sourceFilesUnder("apps/cli/src/commands/agent")),
+  ...(await sourceFilesUnder("apps/cli/src/commands/cli")),
+]
+  .filter((relPath) => path.posix.basename(relPath) === "create.ts")
+  .sort();
 const expectedCreatorFiles = Object.keys(retainedCommands).sort();
 if (JSON.stringify(governedCreatorFiles) !== JSON.stringify(expectedCreatorFiles)) {
   findings.push(
-    `qualified creator command set must be exact: expected ${expectedCreatorFiles.join(", ")}; found ${governedCreatorFiles.join(", ")}`,
+    `qualified creator command set must be exact: expected ${expectedCreatorFiles.join(", ")}; found ${governedCreatorFiles.join(", ")}`
   );
 }
 
@@ -199,7 +209,8 @@ async function exists(relPath) {
     await fs.stat(path.join(root, relPath));
     return true;
   } catch (error) {
-    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") return false;
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT")
+      return false;
     throw error;
   }
 }
@@ -231,7 +242,11 @@ async function activeTextFilesUnder(relRoot) {
     for (const entry of await fs.readdir(directory, { withFileTypes: true })) {
       const child = path.join(directory, entry.name);
       if (entry.isDirectory()) {
-        if (!inactiveEvidenceDirectories.has(entry.name.toLowerCase()) && entry.name !== "dist" && entry.name !== "node_modules") {
+        if (
+          !inactiveEvidenceDirectories.has(entry.name.toLowerCase()) &&
+          entry.name !== "dist" &&
+          entry.name !== "node_modules"
+        ) {
           await visit(child);
         }
       } else if (entry.isFile() && /\.(?:[cm]?[jt]sx?|mdx?|json|ya?ml|toml)$/u.test(entry.name)) {

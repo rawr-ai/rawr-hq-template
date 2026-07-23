@@ -20,15 +20,11 @@ const hiddenScaffoldingTags = new Set([
 ]);
 
 function asRecord(value: unknown): JsonRecord | null {
-  return value && typeof value === "object" ? value as JsonRecord : null;
+  return value && typeof value === "object" ? (value as JsonRecord) : null;
 }
 
 export function normalizeFacetToken(input: string): string {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/_+/g, "_");
+  return input.trim().toLowerCase().replace(/\s+/g, "_").replace(/_+/g, "_");
 }
 
 function addNormalized(target: Set<string>, input: unknown): void {
@@ -99,7 +95,7 @@ function scanTextForMarkers(text: string, state: ScanState): void {
 
 export async function extractSessionFacets(
   runtime: SessionSourceRuntime,
-  filePath: string,
+  filePath: string
 ): Promise<SessionFacets> {
   const xmlBlockTags = new Set<string>();
   const directives = new Set<string>();
@@ -173,13 +169,14 @@ export function facetFiltersHaveValues(filters?: SessionFacetFilters): boolean {
       normalized.directives?.length ||
       normalized.tools?.length ||
       normalized.payloadTypes?.length ||
-      normalized.topTypes?.length,
+      normalized.topTypes?.length
   );
 }
 
 export function facetsMatchAll(facets: SessionFacets, filters?: SessionFacetFilters): boolean {
   const normalized = normalizeFacetFilters(filters);
-  const containsAll = (actual: string[], expected?: string[]) => !expected?.length || expected.every((value) => actual.includes(value));
+  const containsAll = (actual: string[], expected?: string[]) =>
+    !expected?.length || expected.every((value) => actual.includes(value));
 
   return (
     containsAll(facets.xmlBlockTags, normalized.tags) &&

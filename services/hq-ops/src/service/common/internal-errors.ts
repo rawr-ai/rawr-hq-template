@@ -7,7 +7,10 @@
  * typed caller-actionable errors by default.
  */
 export class UnexpectedInternalError extends Error {
-  constructor(message: string, readonly cause?: unknown) {
+  constructor(
+    message: string,
+    readonly cause?: unknown
+  ) {
     super(message);
   }
 }

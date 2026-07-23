@@ -38,7 +38,7 @@ export const AssignmentSchema = Type.Object(
   {
     additionalProperties: false,
     description: "Canonical persisted task-tag assignment entity.",
-  },
+  }
 );
 
 export type Assignment = Static<typeof AssignmentSchema>;

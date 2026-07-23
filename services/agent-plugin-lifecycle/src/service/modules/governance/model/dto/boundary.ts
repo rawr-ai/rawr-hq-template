@@ -16,7 +16,10 @@ export function decodeGitLocator(input: GitLocatorInput): GovernanceBoundaryResu
       reason: "locator.workspacePath must be a canonical non-root absolute path",
     };
   }
-  const repository = parseRepository(input.expectedRepositoryIdentity, "locator.expectedRepositoryIdentity");
+  const repository = parseRepository(
+    input.expectedRepositoryIdentity,
+    "locator.expectedRepositoryIdentity"
+  );
   if (!repository.ok) {
     return {
       ok: false,

@@ -1,12 +1,26 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { chmod, lstat, mkdir, mkdtemp, readFile, realpath, rm, rmdir, symlink, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  rmdir,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { NodeContext } from "@effect/platform-node";
 import { Effect, Exit } from "effect";
 
-import type { ArtifactObjectAddress, ArtifactTreeLocation } from "@rawr/resource-agent-plugin-artifact-repository";
+import type {
+  ArtifactObjectAddress,
+  ArtifactTreeLocation,
+} from "@rawr/resource-agent-plugin-artifact-repository";
 import {
   makeArtifactRepositoryResource,
   runNodeArtifactRepository,
@@ -20,11 +34,11 @@ afterEach(async () => {
   for (const root of roots.splice(0)) {
     const status = await lstat(root);
     if (
-      path.dirname(root) !== canonicalTemp
-      || !path.basename(root).startsWith("rawr-native-provider-test-")
-      || !status.isDirectory()
-      || status.isSymbolicLink()
-      || await realpath(root) !== root
+      path.dirname(root) !== canonicalTemp ||
+      !path.basename(root).startsWith("rawr-native-provider-test-") ||
+      !status.isDirectory() ||
+      status.isSymbolicLink() ||
+      (await realpath(root)) !== root
     ) {
       throw new Error(`Refusing to remove unexpected test root: ${root}`);
     }
@@ -36,7 +50,7 @@ describe("codex-effect-platform-node", () => {
   it("acquires explicit canonical authority and serializes fresh-home commands", async () => {
     const fixture = await makeFixture();
     const session = await Effect.runPromise(
-      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
 
     const probe = await Effect.runPromise(session.probe());
@@ -45,10 +59,9 @@ describe("codex-effect-platform-node", () => {
     expect(probe.marketplaceCommands).toEqual(["add", "list", "remove"]);
     expect(probe.appServerMethods).toContain("plugin/list");
 
-    await Effect.runPromise(Effect.all([
-      session.listPlugins(),
-      session.listMarketplaces(),
-    ], { concurrency: "unbounded" }));
+    await Effect.runPromise(
+      Effect.all([session.listPlugins(), session.listMarketplaces()], { concurrency: "unbounded" })
+    );
     const events = (await readFile(path.join(fixture.home, "events.log"), "utf8"))
       .trim()
       .split("\n");
@@ -73,50 +86,62 @@ describe("codex-effect-platform-node", () => {
     await mkdir(path.join(pluginRoot, "skills", "sample"), { recursive: true });
     await mkdir(ignoredNativeSource);
     await writeFile(path.join(fixture.home, "expected-marketplace-source"), `${marketplace}\n`);
-    await writeFile(path.join(pluginRoot, "skills", "sample", "SKILL.md"), "sample\n", { mode: 0o644 });
+    await writeFile(path.join(pluginRoot, "skills", "sample", "SKILL.md"), "sample\n", {
+      mode: 0o644,
+    });
     await writeProviderJson(fixture.home, "codex-marketplaces.json", {
       marketplaces: [{ name: "rawr-hq", root: marketplace }],
     });
     await writeProviderJson(fixture.home, "codex-plugins.json", {
-      installed: [{
-        pluginId: "demo@rawr-hq",
-        name: "demo",
-        marketplaceName: "rawr-hq",
-        version: "1.0.0",
-        installed: true,
-        enabled: true,
-        source: { source: "local", path: ignoredNativeSource },
-      }],
+      installed: [
+        {
+          pluginId: "demo@rawr-hq",
+          name: "demo",
+          marketplaceName: "rawr-hq",
+          version: "1.0.0",
+          installed: true,
+          enabled: true,
+          source: { source: "local", path: ignoredNativeSource },
+        },
+      ],
       available: [],
     });
 
     const session = await Effect.runPromise(
-      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
     const observed = await Effect.runPromise(session.inspectAppServer());
     expect(observed.plugins).toEqual({ marketplaces: [] });
     expect(observed.hooks).toEqual({ hooks: [] });
     expect(await Effect.runPromise(session.readConfiguration())).toEqual({ config: true });
     await Effect.runPromise(session.setPluginEnabled({ selector: "demo@rawr-hq", enabled: false }));
-    await Effect.runPromise(session.setMarketplaceSource({ identity: "rawr-hq", source: marketplace }));
+    await Effect.runPromise(
+      session.setMarketplaceSource({ identity: "rawr-hq", source: marketplace })
+    );
     await Effect.runPromise(session.addMarketplace(marketplace));
     await Effect.runPromise(session.removeMarketplace({ identity: "rawr-hq" }));
     await Effect.runPromise(session.addPlugin({ selector: "demo@rawr-hq" }));
     await Effect.runPromise(session.removePlugin({ selector: "demo@rawr-hq" }));
 
-    const marketplaceObservation = await Effect.runPromise(session.readMarketplace({
-      identity: "rawr-hq",
-      maxEntries: 4,
-      maxBytes: 1024,
-    }));
+    const marketplaceObservation = await Effect.runPromise(
+      session.readMarketplace({
+        identity: "rawr-hq",
+        maxEntries: 4,
+        maxBytes: 1024,
+      })
+    );
     expect(marketplaceObservation.entries.map((entry) => entry.path)).toEqual(["marketplace.json"]);
 
-    const pluginObservation = await Effect.runPromise(session.readPlugin({
-      selector: "demo@rawr-hq",
-      maxEntries: 4,
-      maxBytes: 1024,
-    }));
-    expect(pluginObservation.entries.map((entry) => entry.path)).toEqual(["skills/sample/SKILL.md"]);
+    const pluginObservation = await Effect.runPromise(
+      session.readPlugin({
+        selector: "demo@rawr-hq",
+        maxEntries: 4,
+        maxBytes: 1024,
+      })
+    );
+    expect(pluginObservation.entries.map((entry) => entry.path)).toEqual([
+      "skills/sample/SKILL.md",
+    ]);
     expect(new TextDecoder().decode(pluginObservation.entries[0]?.bytes)).toBe("sample\n");
     expect(await readLines(path.join(fixture.home, "commands.log"))).toEqual([
       "app-server --listen stdio://",
@@ -134,33 +159,42 @@ describe("codex-effect-platform-node", () => {
       ...appServerSessionLines([
         Object.freeze({
           method: "plugin/list",
-          params: Object.freeze({ cwds: Object.freeze([]), marketplaceKinds: Object.freeze(["local"]) }),
+          params: Object.freeze({
+            cwds: Object.freeze([]),
+            marketplaceKinds: Object.freeze(["local"]),
+          }),
         }),
         Object.freeze({
           method: "hooks/list",
           params: Object.freeze({ cwds: Object.freeze([fixture.home]) }),
         }),
       ]),
-      ...appServerSessionLines([Object.freeze({
-        method: "config/read",
-        params: Object.freeze({ cwd: fixture.home, includeLayers: true }),
-      })]),
-      ...appServerSessionLines([Object.freeze({
-        method: "config/value/write",
-        params: Object.freeze({
-          keyPath: "plugins.demo@rawr-hq.enabled",
-          value: false,
-          mergeStrategy: "upsert",
+      ...appServerSessionLines([
+        Object.freeze({
+          method: "config/read",
+          params: Object.freeze({ cwd: fixture.home, includeLayers: true }),
         }),
-      })]),
-      ...appServerSessionLines([Object.freeze({
-        method: "config/value/write",
-        params: Object.freeze({
-          keyPath: "marketplaces.rawr-hq.source",
-          value: marketplace,
-          mergeStrategy: "upsert",
+      ]),
+      ...appServerSessionLines([
+        Object.freeze({
+          method: "config/value/write",
+          params: Object.freeze({
+            keyPath: "plugins.demo@rawr-hq.enabled",
+            value: false,
+            mergeStrategy: "upsert",
+          }),
         }),
-      })]),
+      ]),
+      ...appServerSessionLines([
+        Object.freeze({
+          method: "config/value/write",
+          params: Object.freeze({
+            keyPath: "marketplaces.rawr-hq.source",
+            value: marketplace,
+            mergeStrategy: "upsert",
+          }),
+        }),
+      ]),
     ]);
   });
 
@@ -170,14 +204,16 @@ describe("codex-effect-platform-node", () => {
     const alias = path.join(fixture.root, "marketplace-alias");
     await symlink(marketplace, alias, "dir");
     const session = await Effect.runPromise(
-      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
 
-    const missing = await Effect.runPromiseExit(session.readPlugin({
-      selector: "missing@rawr-hq",
-      maxEntries: 4,
-      maxBytes: 1024,
-    }));
+    const missing = await Effect.runPromiseExit(
+      session.readPlugin({
+        selector: "missing@rawr-hq",
+        maxEntries: 4,
+        maxBytes: 1024,
+      })
+    );
     expect(failureReason(missing)).toBe("Missing");
 
     await writeProviderJson(fixture.home, "codex-marketplaces.json", {
@@ -186,28 +222,32 @@ describe("codex-effect-platform-node", () => {
         { name: "rawr-hq", root: marketplace },
       ],
     });
-    const duplicate = await Effect.runPromiseExit(session.readMarketplace({
-      identity: "rawr-hq",
-      maxEntries: 4,
-      maxBytes: 1024,
-    }));
+    const duplicate = await Effect.runPromiseExit(
+      session.readMarketplace({
+        identity: "rawr-hq",
+        maxEntries: 4,
+        maxBytes: 1024,
+      })
+    );
     expect(failureReason(duplicate)).toBe("ProtocolFailed");
 
     await writeProviderJson(fixture.home, "codex-marketplaces.json", {
       marketplaces: [{ name: "rawr-hq", root: alias }],
     });
-    const aliased = await Effect.runPromiseExit(session.readMarketplace({
-      identity: "rawr-hq",
-      maxEntries: 4,
-      maxBytes: 1024,
-    }));
+    const aliased = await Effect.runPromiseExit(
+      session.readMarketplace({
+        identity: "rawr-hq",
+        maxEntries: 4,
+        maxBytes: 1024,
+      })
+    );
     expect(failureReason(aliased)).toBe("Aliased");
   });
 
   it("fails closed before executing a noncanonical selector or marketplace identity", async () => {
     const fixture = await makeFixture();
     const session = await Effect.runPromise(
-      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
     const exit = await Effect.runPromiseExit(session.addPlugin({ selector: "../../wrong" }));
     expect(Exit.isFailure(exit)).toBe(true);
@@ -216,7 +256,9 @@ describe("codex-effect-platform-node", () => {
       expect(failure?._tag).toBe("NativeAgentProviderFailure");
       expect(failure?.reason).toBe("InvalidInput");
     }
-    const invalidIdentity = await Effect.runPromiseExit(session.removeMarketplace({ identity: "../../wrong" }));
+    const invalidIdentity = await Effect.runPromiseExit(
+      session.removeMarketplace({ identity: "../../wrong" })
+    );
     expect(failureReason(invalidIdentity)).toBe("InvalidInput");
     expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
   });
@@ -224,16 +266,18 @@ describe("codex-effect-platform-node", () => {
   it("refuses missing or occupied homes before starting a native command", async () => {
     const fixture = await makeFixture();
     const missing = await Effect.runPromiseExit(
-      codexEffectPlatformNodeProvider.acquire({
-        ...fixture,
-        home: path.join(fixture.root, "missing-home"),
-      }).pipe(Effect.provide(NodeContext.layer)),
+      codexEffectPlatformNodeProvider
+        .acquire({
+          ...fixture,
+          home: path.join(fixture.root, "missing-home"),
+        })
+        .pipe(Effect.provide(NodeContext.layer))
     );
     expect(failureReason(missing)).toBe("Missing");
 
     await mkdir(path.join(fixture.home, ".rawr-agent-plugin-owner.json"));
     const occupied = await Effect.runPromiseExit(
-      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
     expect(failureReason(occupied)).toBe("OwnershipConflict");
     expect(await Bun.file(path.join(fixture.home, "commands.log")).exists()).toBe(false);
@@ -242,7 +286,7 @@ describe("codex-effect-platform-node", () => {
   it("rechecks the ownership slot before starting the Codex app server", async () => {
     const fixture = await makeFixture();
     const session = await Effect.runPromise(
-      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
     await writeFile(path.join(fixture.home, ".rawr-agent-plugin-owner.json"), "occupied\n");
 
@@ -256,11 +300,11 @@ describe("codex-effect-platform-node", () => {
     const fixture = await makeFixture();
     await symlink(
       path.join(fixture.root, "missing-owner-marker-target"),
-      path.join(fixture.home, ".rawr-agent-plugin-owner.json"),
+      path.join(fixture.home, ".rawr-agent-plugin-owner.json")
     );
 
     const exit = await Effect.runPromiseExit(
-      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
 
     expect(failureReason(exit)).toBe("OwnershipConflict");
@@ -270,7 +314,7 @@ describe("codex-effect-platform-node", () => {
   it("revalidates the explicit home before command and app-server processes", async () => {
     const fixture = await makeFixture();
     const session = await Effect.runPromise(
-      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer)),
+      codexEffectPlatformNodeProvider.acquire(fixture).pipe(Effect.provide(NodeContext.layer))
     );
     await rmdir(fixture.home);
 
@@ -283,7 +327,9 @@ describe("codex-effect-platform-node", () => {
   });
 });
 
-async function makeFixture(): Promise<Readonly<{ root: string; executablePath: string; home: string }>> {
+async function makeFixture(): Promise<
+  Readonly<{ root: string; executablePath: string; home: string }>
+> {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-native-provider-test-")));
   roots.push(root);
   const home = path.join(root, "home");
@@ -301,22 +347,32 @@ async function publishMarketplace(root: string, objectId: string): Promise<Artif
     objectId,
   });
   const resource = makeArtifactRepositoryResource();
-  const published = await runNodeArtifactRepository(resource.publishTree({
-    address,
-    entries: Object.freeze([Object.freeze({
-      path: "marketplace.json",
-      mode: 0o444,
-      bytes: new TextEncoder().encode('{"identity":"rawr-hq"}\n'),
-    })]),
-    limits: Object.freeze({ maxEntries: 4, maxBytes: 1024 }),
-  }));
-  if (!published.ok || published.value.kind === "Rejected" || published.value.kind === "Unsettled") {
+  const published = await runNodeArtifactRepository(
+    resource.publishTree({
+      address,
+      entries: Object.freeze([
+        Object.freeze({
+          path: "marketplace.json",
+          mode: 0o444,
+          bytes: new TextEncoder().encode('{"identity":"rawr-hq"}\n'),
+        }),
+      ]),
+      limits: Object.freeze({ maxEntries: 4, maxBytes: 1024 }),
+    })
+  );
+  if (
+    !published.ok ||
+    published.value.kind === "Rejected" ||
+    published.value.kind === "Unsettled"
+  ) {
     throw new Error("Failed to publish marketplace fixture");
   }
-  const located = await runNodeArtifactRepository(resource.locateTree({
-    address,
-    limits: Object.freeze({ maxEntries: 4, maxBytes: 1024 }),
-  }));
+  const located = await runNodeArtifactRepository(
+    resource.locateTree({
+      address,
+      limits: Object.freeze({ maxEntries: 4, maxBytes: 1024 }),
+    })
+  );
   if (!located.ok || located.value.kind !== "Present") {
     throw new Error("Failed to locate marketplace fixture");
   }
@@ -333,7 +389,7 @@ async function readLines(file: string): Promise<readonly string[]> {
 }
 
 function appServerSessionLines(
-  requests: readonly Readonly<{ method: string; params: unknown }>[],
+  requests: readonly Readonly<{ method: string; params: unknown }>[]
 ): readonly string[] {
   return Object.freeze([
     JSON.stringify({
@@ -345,11 +401,13 @@ function appServerSessionLines(
       },
     }),
     JSON.stringify({ method: "initialized", params: {} }),
-    ...requests.map((request, index) => JSON.stringify({
-      id: index + 2,
-      method: request.method,
-      params: request.params,
-    })),
+    ...requests.map((request, index) =>
+      JSON.stringify({
+        id: index + 2,
+        method: request.method,
+        params: request.params,
+      })
+    ),
   ]);
 }
 

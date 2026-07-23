@@ -11,10 +11,7 @@ import type {
   ProviderTargetRecordAddress,
 } from "@rawr/resource-agent-provider-records";
 
-import {
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
-  parseReleaseRelativePath,
-} from "../../../shared/release";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES, parseReleaseRelativePath } from "../../../shared/release";
 import { failure, issue, success, type DeploymentResult } from "../model/errors/deployment-result";
 import type {
   FlatProjectionRecordCollection,
@@ -43,14 +40,8 @@ import {
   createPathlessProjectionStorage,
   type PathlessProjectionStorage,
 } from "./projection-storage";
-import {
-  createPathlessTargetState,
-  type PathlessTargetState,
-} from "./target-records";
-import {
-  providerTreeAddress,
-  sameProviderTreeAddress,
-} from "./resource-tree-address";
+import { createPathlessTargetState, type PathlessTargetState } from "./target-records";
+import { providerTreeAddress, sameProviderTreeAddress } from "./resource-tree-address";
 
 const MAX_RECORD_BYTES = MAX_RELEASE_SET_PAYLOAD_BYTES;
 const PROVIDER_TREE_LIMITS = Object.freeze({
@@ -81,7 +72,7 @@ const statesByRecords = new WeakMap<
  * projection and target-state semantics to lifecycle applications.
  */
 export function createResourceProviderRecordState(
-  options: ResourceProviderRecordStateOptions,
+  options: ResourceProviderRecordStateOptions
 ): ProviderRecordState {
   let statesByTrees = statesByRecords.get(options.records);
   if (statesByTrees === undefined) {
@@ -107,7 +98,7 @@ export function createResourceProviderRecordState(
 }
 
 function createProjectionRecordCollection(
-  port: AgentProviderRecordsAsyncPort,
+  port: AgentProviderRecordsAsyncPort
 ): FlatProjectionRecordCollection {
   return Object.freeze({
     async read(key: ProjectionRecordKey): Promise<DeploymentResult<ProjectionRecordObservation>> {
@@ -115,7 +106,10 @@ function createProjectionRecordCollection(
       try {
         const observed = await port.readProjection({ address, maxBytes: MAX_RECORD_BYTES });
         if (!sameAddress(observed.address, address)) {
-          return recordFailure("projection.read", "Provider record resource returned a foreign address");
+          return recordFailure(
+            "projection.read",
+            "Provider record resource returned a foreign address"
+          );
         }
         return success(observationFromResource(observed));
       } catch (error) {
@@ -124,7 +118,7 @@ function createProjectionRecordCollection(
     },
     async publish(
       key: ProjectionRecordKey,
-      bytes: Uint8Array,
+      bytes: Uint8Array
     ): Promise<DeploymentResult<ProjectionRecordPublication>> {
       const address = projectionAddress(key);
       try {
@@ -134,11 +128,16 @@ function createProjectionRecordCollection(
           maxBytes: MAX_RECORD_BYTES,
         });
         if (!sameAddress(published.address, address)) {
-          return recordFailure("projection.publish", "Provider record resource published a foreign address");
+          return recordFailure(
+            "projection.publish",
+            "Provider record resource published a foreign address"
+          );
         }
-        return success(Object.freeze({
-          kind: published.outcome === "Published" ? "published" : "existing",
-        }));
+        return success(
+          Object.freeze({
+            kind: published.outcome === "Published" ? "published" : "existing",
+          })
+        );
       } catch (error) {
         return recordFailure("projection.publish", resourceFailureDetail(error));
       }
@@ -147,7 +146,7 @@ function createProjectionRecordCollection(
 }
 
 function createTargetRecordCollection(
-  port: AgentProviderRecordsAsyncPort,
+  port: AgentProviderRecordsAsyncPort
 ): PathlessTargetRecordCollection {
   let readSequence = 0;
   const retainedCaptures: TargetRecordCapture[] = [];
@@ -159,7 +158,10 @@ function createTargetRecordCollection(
       try {
         const observed = await port.readTarget({ address, maxBytes: MAX_RECORD_BYTES });
         if (!sameAddress(observed.address, address)) {
-          return recordFailure("target.read", "Provider record resource returned a foreign address");
+          return recordFailure(
+            "target.read",
+            "Provider record resource returned a foreign address"
+          );
         }
         return success(observationFromResource(observed));
       } catch (error) {
@@ -176,17 +178,22 @@ function createTargetRecordCollection(
           maxBytes: MAX_RECORD_BYTES,
         });
         if (
-          captured.readToken !== readToken
-          || !sameAddress(captured.observation.address, address)
+          captured.readToken !== readToken ||
+          !sameAddress(captured.observation.address, address)
         ) {
-          return recordFailure("target.capture", "Provider record capture returned foreign authority");
+          return recordFailure(
+            "target.capture",
+            "Provider record capture returned foreign authority"
+          );
         }
-        return success(Object.freeze({
-          captureHandle: captured.handle as TargetRecordCaptureHandle,
-          readToken: captured.readToken as TargetRecordReadToken,
-          key,
-          observation: observationFromResource(captured.observation),
-        }));
+        return success(
+          Object.freeze({
+            captureHandle: captured.handle as TargetRecordCaptureHandle,
+            readToken: captured.readToken as TargetRecordReadToken,
+            key,
+            observation: observationFromResource(captured.observation),
+          })
+        );
       } catch (error) {
         return recordFailure("target.capture", resourceFailureDetail(error));
       }
@@ -206,7 +213,7 @@ function createTargetRecordCollection(
       }
     },
     async write(
-      input: TargetRecordPlanInput & Readonly<{ mutation: TargetRecordMutation }>,
+      input: TargetRecordPlanInput & Readonly<{ mutation: TargetRecordMutation }>
     ): Promise<DeploymentResult<TargetRecordWriteObservation>> {
       try {
         const written = await port.writeTarget({
@@ -214,25 +221,33 @@ function createTargetRecordCollection(
           planDigest: input.planDigest,
           readToken: input.capture.readToken,
           captureHandle: input.capture.captureHandle,
-          mutation: input.mutation.kind === "remove"
-            ? Object.freeze({ kind: "Remove" as const })
-            : Object.freeze({ kind: "Put" as const, bytes: new Uint8Array(input.mutation.bytes) }),
+          mutation:
+            input.mutation.kind === "remove"
+              ? Object.freeze({ kind: "Remove" as const })
+              : Object.freeze({
+                  kind: "Put" as const,
+                  bytes: new Uint8Array(input.mutation.bytes),
+                }),
         });
         if (
-          written.planDigest !== input.planDigest
-          || written.readToken !== input.capture.readToken
-          || !sameAddress(written.address, targetAddress(input.capture.key))
+          written.planDigest !== input.planDigest ||
+          written.readToken !== input.capture.readToken ||
+          !sameAddress(written.address, targetAddress(input.capture.key))
         ) {
           return recordFailure("target.write", "Provider record write returned foreign authority");
         }
-        return success(Object.freeze({
-          kind: written.outcome === "Applied" ? "applied" : "read-only-converged",
-        }));
+        return success(
+          Object.freeze({
+            kind: written.outcome === "Applied" ? "applied" : "read-only-converged",
+          })
+        );
       } catch (error) {
         return recordFailure("target.write", resourceFailureDetail(error));
       }
     },
-    async restore(input: TargetRecordPlanInput): Promise<DeploymentResult<TargetRecordRestoreObservation>> {
+    async restore(
+      input: TargetRecordPlanInput
+    ): Promise<DeploymentResult<TargetRecordRestoreObservation>> {
       try {
         const restored = await port.restoreTarget({
           address: targetAddress(input.capture.key),
@@ -241,11 +256,14 @@ function createTargetRecordCollection(
           captureHandle: input.capture.captureHandle,
         });
         if (
-          restored.planDigest !== input.planDigest
-          || restored.readToken !== input.capture.readToken
-          || !sameAddress(restored.address, targetAddress(input.capture.key))
+          restored.planDigest !== input.planDigest ||
+          restored.readToken !== input.capture.readToken ||
+          !sameAddress(restored.address, targetAddress(input.capture.key))
         ) {
-          return recordFailure("target.restore", "Provider record restore returned foreign authority");
+          return recordFailure(
+            "target.restore",
+            "Provider record restore returned foreign authority"
+          );
         }
         return success(Object.freeze({ kind: "restored", changed: restored.changed }));
       } catch (error) {
@@ -260,9 +278,9 @@ function createTargetRecordCollection(
           readToken: input.capture.readToken,
           captureHandle: input.capture.captureHandle,
         });
-        return settled.planDigest === input.planDigest
-          && settled.readToken === input.capture.readToken
-          && settled.handle === input.capture.captureHandle
+        return settled.planDigest === input.planDigest &&
+          settled.readToken === input.capture.readToken &&
+          settled.handle === input.capture.captureHandle
           ? success(null)
           : recordFailure("target.settle", "Provider record settlement returned foreign authority");
       } catch (error) {
@@ -281,11 +299,11 @@ function createTargetRecordCollection(
 
 function createProviderTreeCollection(
   port: ArtifactRepositoryAsyncPort,
-  repositoryRoot: string,
+  repositoryRoot: string
 ): ImmutableProviderTreeCollection {
   return Object.freeze({
     async read(
-      key: ImmutableProviderTreeKey,
+      key: ImmutableProviderTreeKey
     ): Promise<DeploymentResult<ImmutableProviderTreeObservation>> {
       const address = providerTreeAddress(repositoryRoot, key);
       try {
@@ -294,23 +312,28 @@ function createProviderTreeCollection(
         if (observed.kind === "Mismatch") {
           return recordFailure(
             "projection.tree",
-            observed.issues.map((entry) => entry.detail).join("; "),
+            observed.issues.map((entry) => entry.detail).join("; ")
           );
         }
         if (!sameProviderTreeAddress(observed.snapshot.address, address)) {
-          return recordFailure("projection.tree", "Artifact repository returned a foreign tree address");
+          return recordFailure(
+            "projection.tree",
+            "Artifact repository returned a foreign tree address"
+          );
         }
-        return success(Object.freeze({
-          kind: "present" as const,
-          files: Object.freeze(observed.snapshot.entries.map(treeFileFromResource)),
-        }));
+        return success(
+          Object.freeze({
+            kind: "present" as const,
+            files: Object.freeze(observed.snapshot.entries.map(treeFileFromResource)),
+          })
+        );
       } catch (error) {
         return recordFailure("projection.tree", resourceFailureDetail(error));
       }
     },
     async publish(
       key: ImmutableProviderTreeKey,
-      files: readonly ImmutableProviderTreeFile[],
+      files: readonly ImmutableProviderTreeFile[]
     ): Promise<DeploymentResult<ImmutableProviderTreePublication>> {
       const address = providerTreeAddress(repositoryRoot, key);
       try {
@@ -320,13 +343,16 @@ function createProviderTreeCollection(
           limits: PROVIDER_TREE_LIMITS,
         });
         if (published.kind === "Published" || published.kind === "ReadOnlyConverged") {
-          return success(Object.freeze({
-            kind: published.kind === "Published" ? "published" as const : "existing" as const,
-          }));
+          return success(
+            Object.freeze({
+              kind: published.kind === "Published" ? ("published" as const) : ("existing" as const),
+            })
+          );
         }
-        const detail = published.kind === "Occupied"
-          ? `Immutable provider tree is occupied by ${published.observation}`
-          : published.failure;
+        const detail =
+          published.kind === "Occupied"
+            ? `Immutable provider tree is occupied by ${published.observation}`
+            : published.failure;
         return recordFailure("projection.tree", detail);
       } catch (error) {
         return recordFailure("projection.tree", resourceFailureDetail(error));
@@ -350,7 +376,7 @@ function targetAddress(key: TargetRecordKey): ProviderTargetRecordAddress {
 }
 
 function observationFromResource(
-  observation: ProviderRecordObservation,
+  observation: ProviderRecordObservation
 ): TargetRecordObservation | ProjectionRecordObservation {
   return observation.kind === "Absent"
     ? Object.freeze({ kind: "absent" })
@@ -393,17 +419,20 @@ function resourceFailureDetail(error: unknown): string {
   }
   if (error instanceof Error) return error.message;
   if (
-    error !== null
-    && typeof error === "object"
-    && "detail" in error
-    && typeof error.detail === "string"
-  ) return error.detail;
+    error !== null &&
+    typeof error === "object" &&
+    "detail" in error &&
+    typeof error.detail === "string"
+  )
+    return error.detail;
   return String(error);
 }
 
 function isProviderRecordsFailure(error: unknown): error is AgentProviderRecordsFailure {
-  return error !== null
-    && typeof error === "object"
-    && "_tag" in error
-    && error._tag === "AgentProviderRecordsFailure";
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "_tag" in error &&
+    error._tag === "AgentProviderRecordsFailure"
+  );
 }

@@ -19,16 +19,10 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [
-        "apps/cli/package.json",
-        "apps/cli/tsconfig.json"
-      ]
+      "patterns": ["apps/cli/package.json", "apps/cli/tsconfig.json"]
     }
   ],
-  "scanRoots": [
-    "apps/cli/package.json",
-    "apps/cli/tsconfig.json"
-  ],
+  "scanRoots": ["apps/cli/package.json", "apps/cli/tsconfig.json"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/oclif-app/require_oclif_app_configuration/baseline.json"

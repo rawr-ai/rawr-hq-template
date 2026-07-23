@@ -40,7 +40,7 @@ async function temporaryDirectory(label: string): Promise<string> {
 
 async function run(
   arguments_: readonly string[],
-  options: { cwd: string; env: NodeJS.ProcessEnv },
+  options: { cwd: string; env: NodeJS.ProcessEnv }
 ): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return await new Promise((resolveProcess, rejectProcess) => {
     const child = spawn(scriptPath, arguments_, {
@@ -88,7 +88,7 @@ async function materializeFixture(dataRoot: string, digest: string): Promise<str
       operatorHomeSet: process.env.RAWR_OPERATOR_HOME_SET,
       operatorXdgConfigHome: process.env.RAWR_OPERATOR_XDG_CONFIG_HOME,
       operatorXdgConfigHomeSet: process.env.RAWR_OPERATOR_XDG_CONFIG_HOME_SET,
-    }));\n`,
+    }));\n`
   );
   await mkdir(dirname(controllerSelectorPath(dataRoot)), { recursive: true });
   await writeFile(controllerSelectorPath(dataRoot), `${digest}\n`);
@@ -99,24 +99,27 @@ async function materializeBlockingRuntimeFixture(
   dataRoot: string,
   digest: string,
   readyPath: string,
-  proceedPath: string,
+  proceedPath: string
 ): Promise<string> {
   const releaseRoot = controllerReleasePath(dataRoot, digest);
   const runtime = join(releaseRoot, CONTROLLER_RUNTIME_PATH);
   const entry = join(releaseRoot, CONTROLLER_ENTRY_PATH);
   await mkdir(dirname(runtime), { recursive: true });
   await mkdir(dirname(entry), { recursive: true });
-  await writeFile(runtime, [
-    "#!/bin/sh",
-    `touch ${shellQuote(readyPath)}`,
-    `while [ ! -f ${shellQuote(proceedPath)} ]; do sleep 0.01; done`,
-    `exec ${shellQuote(process.execPath)} "$@"`,
-    "",
-  ].join("\n"));
+  await writeFile(
+    runtime,
+    [
+      "#!/bin/sh",
+      `touch ${shellQuote(readyPath)}`,
+      `while [ ! -f ${shellQuote(proceedPath)} ]; do sleep 0.01; done`,
+      `exec ${shellQuote(process.execPath)} "$@"`,
+      "",
+    ].join("\n")
+  );
   await chmod(runtime, 0o755);
   await writeFile(
     entry,
-    "console.log(JSON.stringify({ digest: process.env.RAWR_CONTROLLER_DIGEST, releaseRoot: process.env.RAWR_CONTROLLER_RELEASE_ROOT }));\n",
+    "console.log(JSON.stringify({ digest: process.env.RAWR_CONTROLLER_DIGEST, releaseRoot: process.env.RAWR_CONTROLLER_RELEASE_ROOT }));\n"
   );
   return releaseRoot;
 }
@@ -263,29 +266,29 @@ describe("stable controller launcher", () => {
     expect(result.stderr).not.toContain("CONTROLLER_RUNTIME_REQUIRED");
   });
 
-  test.each(["symlink", "hardlink"] as const)(
-    "rejects a byte-identical %s selector before release lookup",
-    async (aliasKind) => {
-      const dataRoot = await temporaryDirectory(`launcher-${aliasKind}`);
-      const cwd = await temporaryDirectory(`launcher-${aliasKind}-cwd`);
-      const digest = "f".repeat(64);
-      await materializeFixture(dataRoot, digest);
-      const selectorPath = controllerSelectorPath(dataRoot);
-      const outsidePath = join(await temporaryDirectory(`${aliasKind}-selector-outside`), "current");
-      await writeFile(outsidePath, `${digest}\n`);
-      await rm(selectorPath);
-      if (aliasKind === "symlink") await symlink(outsidePath, selectorPath);
-      else await link(outsidePath, selectorPath);
+  test.each([
+    "symlink",
+    "hardlink",
+  ] as const)("rejects a byte-identical %s selector before release lookup", async (aliasKind) => {
+    const dataRoot = await temporaryDirectory(`launcher-${aliasKind}`);
+    const cwd = await temporaryDirectory(`launcher-${aliasKind}-cwd`);
+    const digest = "f".repeat(64);
+    await materializeFixture(dataRoot, digest);
+    const selectorPath = controllerSelectorPath(dataRoot);
+    const outsidePath = join(await temporaryDirectory(`${aliasKind}-selector-outside`), "current");
+    await writeFile(outsidePath, `${digest}\n`);
+    await rm(selectorPath);
+    if (aliasKind === "symlink") await symlink(outsidePath, selectorPath);
+    else await link(outsidePath, selectorPath);
 
-      const result = await run([], {
-        cwd,
-        env: { ...process.env, RAWR_DATA_DIR: dataRoot },
-      });
+    const result = await run([], {
+      cwd,
+      env: { ...process.env, RAWR_DATA_DIR: dataRoot },
+    });
 
-      expect(result.code).toBe(78);
-      expect(result.stderr).toContain("CONTROLLER_SELECTION_INVALID");
-    },
-  );
+    expect(result.code).toBe(78);
+    expect(result.stderr).toContain("CONTROLLER_SELECTION_INVALID");
+  });
 
   test("pins release A when selection changes after the one launcher read but before Bun exec", async () => {
     const dataRoot = await temporaryDirectory("selector-interleaving");
@@ -298,7 +301,7 @@ describe("stable controller launcher", () => {
       dataRoot,
       firstDigest,
       readyPath,
-      proceedPath,
+      proceedPath
     );
     const secondRelease = await materializeFixture(dataRoot, secondDigest);
     await writeFile(controllerSelectorPath(dataRoot), `${firstDigest}\n`);

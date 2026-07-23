@@ -35,7 +35,7 @@ describe("example-todo proof clients", () => {
       {
         title: "In-process proof path",
       },
-      createExampleTodoInvocation("trace-in-process"),
+      createExampleTodoInvocation("trace-in-process")
     );
 
     const rpcTask = await rpc.createTask({

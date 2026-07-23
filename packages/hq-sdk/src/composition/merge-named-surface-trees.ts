@@ -6,7 +6,7 @@ export function mergeNamedSurfaceTrees<TTree extends object>(
   input: Readonly<{
     kind: NamedSurfaceKind;
     surface: NamedSurface;
-  }>,
+  }>
 ): TTree {
   const result: Record<string, unknown> = {};
 

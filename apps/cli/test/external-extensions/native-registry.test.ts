@@ -46,7 +46,9 @@ describe("guarded native registry projection", () => {
     const projection = await new NativeRegistryState(dataDir, reserved, evidence).read();
 
     expect(projection.status).toBe("valid");
-    expect(projection.active.map((entry) => entry.extension.packageId)).toEqual(["@fixture/active"]);
+    expect(projection.active.map((entry) => entry.extension.packageId)).toEqual([
+      "@fixture/active",
+    ]);
     expect(projection.quarantined).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -57,7 +59,7 @@ describe("guarded native registry projection", () => {
           identity: "@fixture/missing",
           reason: expect.objectContaining({ code: "root-missing" }),
         }),
-      ]),
+      ])
     );
     expect(readFileSync(registryPath, "utf8")).toBe(before);
     expect(() => readFileSync(sentinel, "utf8")).toThrow();
@@ -101,7 +103,9 @@ describe("guarded native registry projection", () => {
       hasResidue: true,
       active: [],
       quarantined: [
-        expect.objectContaining({ reason: expect.objectContaining({ code: "registry-malformed" }) }),
+        expect.objectContaining({
+          reason: expect.objectContaining({ code: "registry-malformed" }),
+        }),
       ],
     });
   });
@@ -120,15 +124,23 @@ describe("guarded native registry projection", () => {
       hasResidue: true,
       active: [],
       quarantined: [
-        expect.objectContaining({ reason: expect.objectContaining({ code: "registry-malformed" }) }),
+        expect.objectContaining({
+          reason: expect.objectContaining({ code: "registry-malformed" }),
+        }),
       ],
     });
   });
 
   it("quarantines every duplicate identity instead of selecting an arbitrary winner", async () => {
     const dataDir = tempRoot("duplicate-native-registry");
-    const first = writeExtensionFixture({ packageId: "@fixture/duplicate", commandId: "fixture:first" });
-    const second = writeExtensionFixture({ packageId: "@fixture/duplicate", commandId: "fixture:second" });
+    const first = writeExtensionFixture({
+      packageId: "@fixture/duplicate",
+      commandId: "fixture:first",
+    });
+    const second = writeExtensionFixture({
+      packageId: "@fixture/duplicate",
+      commandId: "fixture:second",
+    });
     writeRegistry(dataDir, [
       { name: "@fixture/duplicate", type: "link", root: first },
       { name: "@fixture/duplicate", type: "link", root: second },
@@ -138,7 +150,9 @@ describe("guarded native registry projection", () => {
 
     expect(projection.active).toEqual([]);
     expect(projection.quarantined).toHaveLength(2);
-    expect(projection.quarantined.every((entry) => entry.reason.code === "entry-duplicate")).toBe(true);
+    expect(projection.quarantined.every((entry) => entry.reason.code === "entry-duplicate")).toBe(
+      true
+    );
   });
 
   it("treats a registry package-name mismatch as quarantine evidence", async () => {
@@ -157,7 +171,12 @@ describe("guarded native registry projection", () => {
 
     const projection = await new NativeRegistryState(dataDir, reserved, evidence).read();
 
-    expect(projection).toMatchObject({ status: "missing", hasResidue: false, active: [], quarantined: [] });
+    expect(projection).toMatchObject({
+      status: "missing",
+      hasResidue: false,
+      active: [],
+      quarantined: [],
+    });
   });
 
   it.each([
@@ -192,7 +211,9 @@ describe("guarded native registry projection", () => {
       hasResidue: true,
       active: [],
       quarantined: [
-        expect.objectContaining({ reason: expect.objectContaining({ code: "native-package-residue" }) }),
+        expect.objectContaining({
+          reason: expect.objectContaining({ code: "native-package-residue" }),
+        }),
       ],
     });
   });
@@ -209,7 +230,9 @@ describe("guarded native registry projection", () => {
       hasResidue: true,
       active: [],
       quarantined: [
-        expect.objectContaining({ reason: expect.objectContaining({ code: "native-package-residue" }) }),
+        expect.objectContaining({
+          reason: expect.objectContaining({ code: "native-package-residue" }),
+        }),
       ],
     });
   });
@@ -221,11 +244,10 @@ describe("guarded native registry projection", () => {
       root: path.join(dataDir, "node_modules", ...packageId.split("/")),
       packageId,
     });
-    writeRegistry(
-      dataDir,
-      [{ name: packageId, type: "user", tag: "latest" }],
-      { [packageId]: "1.0.0", "@fixture/orphan": "file:/tmp/orphan.tgz" },
-    );
+    writeRegistry(dataDir, [{ name: packageId, type: "user", tag: "latest" }], {
+      [packageId]: "1.0.0",
+      "@fixture/orphan": "file:/tmp/orphan.tgz",
+    });
     writeFileSync(path.join(dataDir, "package-lock.json"), "{}\n");
 
     const projection = await new NativeRegistryState(dataDir, reserved, evidence).read();
@@ -268,11 +290,9 @@ describe("guarded native registry projection", () => {
       root: path.join(dataDir, "node_modules", ...packageId.split("/")),
       packageId,
     });
-    writeRegistry(
-      dataDir,
-      [{ name: packageId, type: "user", url: provenanceUrl("a", "b") }],
-      { [packageId]: provenanceUrl("c", "b") },
-    );
+    writeRegistry(dataDir, [{ name: packageId, type: "user", url: provenanceUrl("a", "b") }], {
+      [packageId]: provenanceUrl("c", "b"),
+    });
 
     const projection = await new NativeRegistryState(dataDir, reserved, evidence).read();
 
@@ -294,11 +314,9 @@ describe("guarded native registry projection", () => {
     });
     const entryUrl = provenanceUrl("a", "b", "/tmp/removed-entry-stage");
     const dependencySpec = provenanceUrl("a", "b", "/tmp/removed-dependency-stage");
-    writeRegistry(
-      dataDir,
-      [{ name: packageId, type: "user", url: entryUrl }],
-      { [packageId]: dependencySpec },
-    );
+    writeRegistry(dataDir, [{ name: packageId, type: "user", url: entryUrl }], {
+      [packageId]: dependencySpec,
+    });
 
     const projection = await new NativeRegistryState(dataDir, reserved, evidence).read();
 
@@ -315,23 +333,32 @@ describe("guarded native registry projection", () => {
 function provenanceUrl(
   artifactDigest: string,
   fingerprint: string,
-  parent = "/tmp/removed-stage",
+  parent = "/tmp/removed-stage"
 ): string {
-  return pathToFileURL(path.join(parent, nativeInstallArtifactName({
-    artifactSha256: artifactDigest.repeat(64),
-    staticFingerprint: fingerprint.repeat(64),
-  }))).href;
+  return pathToFileURL(
+    path.join(
+      parent,
+      nativeInstallArtifactName({
+        artifactSha256: artifactDigest.repeat(64),
+        staticFingerprint: fingerprint.repeat(64),
+      })
+    )
+  ).href;
 }
 
 function writeRegistry(
   dataDir: string,
   plugins: readonly unknown[],
-  dependencies: Readonly<Record<string, string>> = {},
+  dependencies: Readonly<Record<string, string>> = {}
 ): string {
   const registryPath = path.join(dataDir, "package.json");
   writeFileSync(
     registryPath,
-    JSON.stringify({ name: "rawr", private: true, dependencies, oclif: { schema: 1, plugins } }, null, 2),
+    JSON.stringify(
+      { name: "rawr", private: true, dependencies, oclif: { schema: 1, plugins } },
+      null,
+      2
+    )
   );
   return registryPath;
 }

@@ -19,7 +19,7 @@ export interface ControllerSelectorStore {
 }
 
 export function createNodeControllerSelectorStore(
-  observe?: AtomicWriteObserver,
+  observe?: AtomicWriteObserver
 ): ControllerSelectorStore {
   return Object.freeze({
     async read(path: string) {
@@ -33,10 +33,10 @@ export function createNodeControllerSelectorStore(
         return Object.freeze({ kind: "regular", bytes: new Uint8Array(await readFile(path)) });
       } catch (error) {
         if (
-          typeof error === "object"
-          && error !== null
-          && "code" in error
-          && error.code === "ENOENT"
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === "ENOENT"
         ) {
           return Object.freeze({ kind: "missing" });
         }
@@ -50,7 +50,7 @@ export function createNodeControllerSelectorStore(
         path,
         bytes,
         constants.S_IRUSR | constants.S_IWUSR,
-        observe,
+        observe
       );
     },
   });

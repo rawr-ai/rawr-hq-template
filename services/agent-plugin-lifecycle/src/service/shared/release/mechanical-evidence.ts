@@ -16,16 +16,17 @@ export interface MechanicalEvidenceHandleV1 {
   readonly digest: MechanicalEvidenceDigest;
 }
 
-export const MechanicalEvidenceHandleInputSchema = ReadonlyObject(Type.Object(
-  {
+export const MechanicalEvidenceHandleInputSchema = ReadonlyObject(
+  Type.Object({
     kind: Type.Literal("mechanical-evidence"),
     protocolVersion: Type.Literal(MECHANICAL_EVIDENCE_PROTOCOL_VERSION),
     digest: Type.String({ pattern: "^me1_[0-9a-f]{64}$" }),
-  },
-), { additionalProperties: false });
+  }),
+  { additionalProperties: false }
+);
 
 export const MechanicalEvidenceHandleSchema = Type.Unsafe<MechanicalEvidenceHandleV1>(
-  MechanicalEvidenceHandleInputSchema,
+  MechanicalEvidenceHandleInputSchema
 );
 
 export type MechanicalEvidenceHandleInput = Static<typeof MechanicalEvidenceHandleInputSchema>;
@@ -46,16 +47,16 @@ export interface MechanicalEvidenceIssue {
 
 export type MechanicalEvidenceReadResult =
   | Readonly<{
-    kind: "Verified";
-    handle: MechanicalEvidenceHandleV1;
-    bytes: Uint8Array;
-  }>
+      kind: "Verified";
+      handle: MechanicalEvidenceHandleV1;
+      bytes: Uint8Array;
+    }>
   | Readonly<{ kind: "Missing"; handle: MechanicalEvidenceHandleV1 }>
   | Readonly<{
-    kind: "Mismatch";
-    handle: MechanicalEvidenceHandleV1;
-    issues: readonly [MechanicalEvidenceIssue, ...MechanicalEvidenceIssue[]];
-  }>;
+      kind: "Mismatch";
+      handle: MechanicalEvidenceHandleV1;
+      issues: readonly [MechanicalEvidenceIssue, ...MechanicalEvidenceIssue[]];
+    }>;
 
 export interface MechanicalEvidenceReader {
   read(handle: MechanicalEvidenceHandleV1): Promise<MechanicalEvidenceReadResult>;
@@ -65,18 +66,18 @@ export type MechanicalEvidencePublicationResult =
   | Readonly<{ kind: "Published"; handle: MechanicalEvidenceHandleV1 }>
   | Readonly<{ kind: "ReadOnlyConverged"; handle: MechanicalEvidenceHandleV1 }>
   | Readonly<{
-    kind: "Rejected";
-    handle: MechanicalEvidenceHandleV1;
-    failure: string;
-    cleanupFailure?: string;
-  }>
+      kind: "Rejected";
+      handle: MechanicalEvidenceHandleV1;
+      failure: string;
+      cleanupFailure?: string;
+    }>
   | Readonly<{
-    kind: "Unsettled";
-    handle: MechanicalEvidenceHandleV1;
-    failure: string;
-    observation: "Verified" | "Missing" | "Mismatch" | "Unknown";
-    cleanupFailure?: string;
-  }>;
+      kind: "Unsettled";
+      handle: MechanicalEvidenceHandleV1;
+      failure: string;
+      observation: "Verified" | "Missing" | "Mismatch" | "Unknown";
+      cleanupFailure?: string;
+    }>;
 
 export type MechanicalEvidenceStoreFailpointEvent =
   | Readonly<{ kind: "AfterStagingWrite" }>
@@ -90,7 +91,7 @@ export interface MechanicalEvidenceStore extends MechanicalEvidenceReader {
     bytes: Uint8Array,
     options?: Readonly<{
       failpoint?: (event: MechanicalEvidenceStoreFailpointEvent) => void | Promise<void>;
-    }>,
+    }>
   ): Promise<MechanicalEvidencePublicationResult>;
 }
 
@@ -108,7 +109,7 @@ export function createMechanicalEvidenceHandle(bytes: Uint8Array): MechanicalEvi
 }
 
 export function normalizeMechanicalEvidenceHandle(
-  input: MechanicalEvidenceHandleInput,
+  input: MechanicalEvidenceHandleInput
 ): MechanicalEvidenceHandleV1 {
   return Object.freeze({
     kind: input.kind,
@@ -117,11 +118,15 @@ export function normalizeMechanicalEvidenceHandle(
   });
 }
 
-export function parseMechanicalEvidenceHandle(input: unknown):
+export function parseMechanicalEvidenceHandle(
+  input: unknown
+):
   | Readonly<{ ok: true; value: MechanicalEvidenceHandleV1 }>
   | Readonly<{ ok: false; issue: MechanicalEvidenceIssue }> {
   if (!Value.Check(MechanicalEvidenceHandleInputSchema, input)) {
-    return invalidHandle("Mechanical evidence handle must be a closed object matching its protocol schema");
+    return invalidHandle(
+      "Mechanical evidence handle must be a closed object matching its protocol schema"
+    );
   }
   return {
     ok: true,

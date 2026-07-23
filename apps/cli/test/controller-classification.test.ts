@@ -46,19 +46,18 @@ describe("controller command-package classification", () => {
         "@rawr/plugin-hyperresearch",
         "@rawr/plugin-session-tools",
         "@rawr/plugin-chatgpt-corpus",
-      ]),
+      ])
     );
   });
 
   it("makes static Oclif discovery exactly the classified discoverable set", () => {
     const cliManifest = JSON.parse(
-      fs.readFileSync(path.join(workspaceRoot, "apps", "cli", "package.json"), "utf8"),
+      fs.readFileSync(path.join(workspaceRoot, "apps", "cli", "package.json"), "utf8")
     ) as { oclif?: { plugins?: string[] } };
     const expected = controllerCommandPackages
-      .filter((row) =>
-        row.disposition === "controller-member"
-        && row.discoverCommands
-        && row.role !== "cli-root"
+      .filter(
+        (row) =>
+          row.disposition === "controller-member" && row.discoverCommands && row.role !== "cli-root"
       )
       .map((row) => row.packageId)
       .sort();
@@ -69,7 +68,7 @@ describe("controller command-package classification", () => {
 
   it("rejects duplicate identities instead of choosing an owner", () => {
     expect(() =>
-      assertControllerClassification([controllerCommandPackages[0], controllerCommandPackages[0]]),
+      assertControllerClassification([controllerCommandPackages[0], controllerCommandPackages[0]])
     ).toThrow("CONTROLLER_CLASSIFICATION_DUPLICATE:@rawr/cli");
   });
 });

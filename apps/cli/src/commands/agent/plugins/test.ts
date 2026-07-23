@@ -9,7 +9,8 @@ import {
 import { parseTestRequest } from "../../../lib/agent-plugins/commands/input";
 
 export default class AgentPluginsTest extends AgentPluginLifecycleCommand {
-  static description = "Test a targeted release selection or complete release set in explicit provider homes";
+  static description =
+    "Test a targeted release selection or complete release set in explicit provider homes";
 
   static flags = {
     json: RawrCommand.baseFlags.json,

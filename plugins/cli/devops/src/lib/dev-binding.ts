@@ -2,7 +2,13 @@ import { createClient, type Client, type CreateClientOptions } from "@rawr/dev";
 import { createNodeDevResources } from "@rawr/dev-node/resources";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import { bindService, type ProcessView, type RoleView, type ServiceBinding, type ServiceBindingContext } from "@rawr/hq-sdk/plugins";
+import {
+  bindService,
+  type ProcessView,
+  type RoleView,
+  type ServiceBinding,
+  type ServiceBindingContext,
+} from "@rawr/hq-sdk/plugins";
 
 type DevopsProcess = ProcessView & {
   processId: "plugin-devops";

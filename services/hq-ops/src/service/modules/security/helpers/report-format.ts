@@ -17,7 +17,9 @@ export function severityRank(severity: SecurityFinding["severity"]): number {
 
 export function summarize(findings: SecurityFinding[]): string {
   const vulns = findings.filter((finding) => finding.kind === "vulnerability").length;
-  const untrusted = findings.filter((finding) => finding.kind === "untrustedDependencyScripts").length;
+  const untrusted = findings.filter(
+    (finding) => finding.kind === "untrustedDependencyScripts"
+  ).length;
   const secrets = findings.filter((finding) => finding.kind === "secret").length;
   return `vulns=${vulns}, untrusted=${untrusted}, secrets=${secrets}`;
 }
@@ -72,4 +74,3 @@ export function securityReport(input: {
     meta: { repoRoot: input.repoRoot },
   };
 }
-

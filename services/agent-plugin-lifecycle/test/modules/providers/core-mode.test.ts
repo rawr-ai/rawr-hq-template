@@ -27,20 +27,135 @@ const LOCATOR = Object.freeze({
   workspaceRoot: "/tmp/personal-rawr-hq",
 });
 const STRUCTURALLY_INVALID_REQUESTS = [
-  ["release+set", { kind: "targeted-test", releases: [RELEASE], releaseSet: SET, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
-  ["release+channel", { kind: "targeted-test", releases: [RELEASE], channel: "current-main", locator: LOCATOR, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
-  ["set+release", { kind: "complete-test", releaseSet: SET, releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
-  ["set+channel", { kind: "complete-test", releaseSet: SET, channel: "current-main", locator: LOCATOR, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
-  ["canonical release override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, releases: [RELEASE], targets: [TARGET] }],
-  ["canonical set override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, releaseSet: SET, targets: [TARGET] }],
-  ["canonical acceptance override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, acceptanceDigest: `ac1_${"d".repeat(64)}`, targets: [TARGET] }],
-  ["canonical evidence override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, evidenceDigest: `ev1_${"e".repeat(64)}`, targets: [TARGET] }],
-  ["canonical projection override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, projectionDigest: `pd1_${"f".repeat(64)}`, targets: [TARGET] }],
-  ["canonical promotion override", { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, promotionDigest: `pm1_${"0".repeat(64)}`, targets: [TARGET] }],
-  ["unknown channel", { kind: "canonical-sync", channel: "next", locator: LOCATOR, targets: [TARGET] }],
-  ["path-shaped channel", { kind: "canonical-sync", channel: "/tmp/current-main", locator: LOCATOR, targets: [TARGET] }],
-  ["unsupported home", { kind: "targeted-test", releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [{ provider: "cowork", home: "/tmp/cowork" }] }],
-  ["status set override", { kind: "canonical-status", channel: "current-main", locator: LOCATOR, targets: [TARGET], releaseSet: SET }],
+  [
+    "release+set",
+    {
+      kind: "targeted-test",
+      releases: [RELEASE],
+      releaseSet: SET,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [TARGET],
+    },
+  ],
+  [
+    "release+channel",
+    {
+      kind: "targeted-test",
+      releases: [RELEASE],
+      channel: "current-main",
+      locator: LOCATOR,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [TARGET],
+    },
+  ],
+  [
+    "set+release",
+    {
+      kind: "complete-test",
+      releaseSet: SET,
+      releases: [RELEASE],
+      evaluationProfile: "provider-smoke@v1",
+      targets: [TARGET],
+    },
+  ],
+  [
+    "set+channel",
+    {
+      kind: "complete-test",
+      releaseSet: SET,
+      channel: "current-main",
+      locator: LOCATOR,
+      evaluationProfile: "provider-smoke@v1",
+      targets: [TARGET],
+    },
+  ],
+  [
+    "canonical release override",
+    {
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator: LOCATOR,
+      releases: [RELEASE],
+      targets: [TARGET],
+    },
+  ],
+  [
+    "canonical set override",
+    {
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator: LOCATOR,
+      releaseSet: SET,
+      targets: [TARGET],
+    },
+  ],
+  [
+    "canonical acceptance override",
+    {
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator: LOCATOR,
+      acceptanceDigest: `ac1_${"d".repeat(64)}`,
+      targets: [TARGET],
+    },
+  ],
+  [
+    "canonical evidence override",
+    {
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator: LOCATOR,
+      evidenceDigest: `ev1_${"e".repeat(64)}`,
+      targets: [TARGET],
+    },
+  ],
+  [
+    "canonical projection override",
+    {
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator: LOCATOR,
+      projectionDigest: `pd1_${"f".repeat(64)}`,
+      targets: [TARGET],
+    },
+  ],
+  [
+    "canonical promotion override",
+    {
+      kind: "canonical-sync",
+      channel: "current-main",
+      locator: LOCATOR,
+      promotionDigest: `pm1_${"0".repeat(64)}`,
+      targets: [TARGET],
+    },
+  ],
+  [
+    "unknown channel",
+    { kind: "canonical-sync", channel: "next", locator: LOCATOR, targets: [TARGET] },
+  ],
+  [
+    "path-shaped channel",
+    { kind: "canonical-sync", channel: "/tmp/current-main", locator: LOCATOR, targets: [TARGET] },
+  ],
+  [
+    "unsupported home",
+    {
+      kind: "targeted-test",
+      releases: [RELEASE],
+      evaluationProfile: "provider-smoke@v1",
+      targets: [{ provider: "cowork", home: "/tmp/cowork" }],
+    },
+  ],
+  [
+    "status set override",
+    {
+      kind: "canonical-status",
+      channel: "current-main",
+      locator: LOCATOR,
+      targets: [TARGET],
+      releaseSet: SET,
+    },
+  ],
   ["retired managed-retire mode", { kind: "managed-retire", pluginId: "alpha", targets: [TARGET] }],
 ] as const;
 
@@ -55,20 +170,41 @@ describe("closed lifecycle request contracts", () => {
   });
 
   it.each([
-    [TargetedTestInputSchema, { kind: "targeted-test", releases: [RELEASE], evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
-    [CompleteTestInputSchema, { kind: "complete-test", releaseSet: SET, evaluationProfile: "provider-smoke@v1", targets: [TARGET] }],
-    [CanonicalSyncInputSchema, { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, targets: [TARGET] }],
+    [
+      TargetedTestInputSchema,
+      {
+        kind: "targeted-test",
+        releases: [RELEASE],
+        evaluationProfile: "provider-smoke@v1",
+        targets: [TARGET],
+      },
+    ],
+    [
+      CompleteTestInputSchema,
+      {
+        kind: "complete-test",
+        releaseSet: SET,
+        evaluationProfile: "provider-smoke@v1",
+        targets: [TARGET],
+      },
+    ],
+    [
+      CanonicalSyncInputSchema,
+      { kind: "canonical-sync", channel: "current-main", locator: LOCATOR, targets: [TARGET] },
+    ],
   ] as const)("accepts each legal deployment request at its TypeBox boundary", (schema, input) => {
     expect(Value.Check(schema, input)).toBe(true);
   });
 
   it("accepts status only through its separate TypeBox boundary", () => {
-    expect(Value.Check(CanonicalStatusInputSchema, {
-      kind: "canonical-status",
-      channel: "current-main",
-      locator: LOCATOR,
-      targets: [TARGET],
-    })).toBe(true);
+    expect(
+      Value.Check(CanonicalStatusInputSchema, {
+        kind: "canonical-status",
+        channel: "current-main",
+        locator: LOCATOR,
+        targets: [TARGET],
+      })
+    ).toBe(true);
   });
 
   it("normalizes complete-test targets once with stable ordering and request identity", () => {
@@ -208,16 +344,19 @@ describe("closed lifecycle request contracts", () => {
     });
   });
 
-  it.each(STRUCTURALLY_INVALID_REQUESTS)("rejects %s at the owning TypeBox boundary", (_label, input) => {
-    const valid = input.kind === "targeted-test"
-      ? Value.Check(TargetedTestInputSchema, input)
-      : input.kind === "complete-test"
-        ? Value.Check(CompleteTestInputSchema, input)
-        : input.kind === "canonical-sync"
-          ? Value.Check(CanonicalSyncInputSchema, input)
-          : input.kind === "canonical-status"
-            ? Value.Check(CanonicalStatusInputSchema, input)
-            : false;
+  it.each(
+    STRUCTURALLY_INVALID_REQUESTS
+  )("rejects %s at the owning TypeBox boundary", (_label, input) => {
+    const valid =
+      input.kind === "targeted-test"
+        ? Value.Check(TargetedTestInputSchema, input)
+        : input.kind === "complete-test"
+          ? Value.Check(CompleteTestInputSchema, input)
+          : input.kind === "canonical-sync"
+            ? Value.Check(CanonicalSyncInputSchema, input)
+            : input.kind === "canonical-status"
+              ? Value.Check(CanonicalStatusInputSchema, input)
+              : false;
     expect(valid).toBe(false);
   });
 });

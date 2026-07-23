@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 import { mustExist, readFile, writeJsonIfChanged } from "./_verify-utils.mjs";
 
-const PASS_ROOT = "docs/projects/orpc-ingest-workflows-spec/_phase-f-runtime-execution-pass-01-2026-02-21";
+const PASS_ROOT =
+  "docs/projects/orpc-ingest-workflows-spec/_phase-f-runtime-execution-pass-01-2026-02-21";
 const RESULT_PATH = `${PASS_ROOT}/F4_TRIGGER_SCAN_RESULT.json`;
 
 const THRESHOLDS = {
@@ -26,7 +27,9 @@ const workflowPublicationEmpty = /workflows:\s*\{\s*\}\s*as const/u.test(manifes
 const workflowsBlockMatch = manifestSource.match(/workflows:\s*\{([\s\S]*?)\}\s*(?:as const)?/u);
 const workflowsBlock = workflowsBlockMatch?.[1] ?? "";
 
-const capabilitiesBlockMatch = manifestSource.match(/workflows:\s*\{[\s\S]*?capabilities:\s*\{([\s\S]*?)\}\s*,\s*triggerRouter:/u);
+const capabilitiesBlockMatch = manifestSource.match(
+  /workflows:\s*\{[\s\S]*?capabilities:\s*\{([\s\S]*?)\}\s*,\s*triggerRouter:/u
+);
 const capabilitiesBlock = capabilitiesBlockMatch?.[1] ?? "";
 const nestedCapabilitySurfaceIds =
   capabilitiesBlock.length > 0
@@ -38,7 +41,8 @@ const fallbackWorkflowSurfaceIds =
     : [...workflowsBlock.matchAll(/^\s*([A-Za-z0-9_-]+)\s*:\s*\{/gmu)]
         .map((match) => match[1])
         .filter((id) => id !== "capabilities" && id !== "triggerRouter");
-const capabilitySurfaceIds = nestedCapabilitySurfaceIds.length > 0 ? nestedCapabilitySurfaceIds : fallbackWorkflowSurfaceIds;
+const capabilitySurfaceIds =
+  nestedCapabilitySurfaceIds.length > 0 ? nestedCapabilitySurfaceIds : fallbackWorkflowSurfaceIds;
 const uniqueCapabilitySurfaceIds = [...new Set(capabilitySurfaceIds)].sort();
 const capabilitySurfaceCount = uniqueCapabilitySurfaceIds.length;
 
@@ -68,18 +72,15 @@ const repeatedBoilerplateSignals = boilerplateSignals
   })
   .filter((signal) => signal.occurrences >= 2);
 
-const duplicatedBoilerplateClusterCount = capabilitySurfaceCount >= 2 ? repeatedBoilerplateSignals.length : 0;
+const duplicatedBoilerplateClusterCount =
+  capabilitySurfaceCount >= 2 ? repeatedBoilerplateSignals.length : 0;
 
-const correctnessSignalMatchers = [
-  /hard-fails/u,
-  /drift/u,
-  /route-family/u,
-  /reject/u,
-];
+const correctnessSignalMatchers = [/hard-fails/u, /drift/u, /route-family/u, /reject/u];
 
 const correctnessSignalHits = correctnessSignalMatchers.reduce((sum, matcher) => {
   const hqMatches = (hqDriftTestSource.match(new RegExp(matcher.source, "gu")) ?? []).length;
-  const triggerMatches = (triggerDriftTestSource.match(new RegExp(matcher.source, "gu")) ?? []).length;
+  const triggerMatches = (triggerDriftTestSource.match(new RegExp(matcher.source, "gu")) ?? [])
+    .length;
   return sum + hqMatches + triggerMatches;
 }, 0);
 
@@ -125,5 +126,5 @@ if (triggered) {
   console.log("phase-f f4 trigger scan: deferred posture");
 }
 console.log(
-  `wrote ${RESULT_PATH}${writeResult.changed ? "" : " (unchanged)"}; capabilitySurfaceCount=${capabilitySurfaceCount}; duplicatedBoilerplateClusterCount=${duplicatedBoilerplateClusterCount}; correctnessSignalCount=${correctnessSignalCount}`,
+  `wrote ${RESULT_PATH}${writeResult.changed ? "" : " (unchanged)"}; capabilitySurfaceCount=${capabilitySurfaceCount}; duplicatedBoilerplateClusterCount=${duplicatedBoilerplateClusterCount}; correctnessSignalCount=${correctnessSignalCount}`
 );

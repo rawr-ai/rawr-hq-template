@@ -9,11 +9,13 @@ import {
   type SourceEligibilityIssue,
 } from "../../../../model/dto/releases/content-workspace";
 
-export function validateDeclaredPluginTree(input: Readonly<{
-  pluginRoot: ReleaseRelativePath;
-  paths: readonly ReleaseRelativePath[];
-  declaredPluginIds: readonly PluginId[];
-}>): SourceEligibilityIssue | undefined {
+export function validateDeclaredPluginTree(
+  input: Readonly<{
+    pluginRoot: ReleaseRelativePath;
+    paths: readonly ReleaseRelativePath[];
+    declaredPluginIds: readonly PluginId[];
+  }>
+): SourceEligibilityIssue | undefined {
   const rootPrefix = `${input.pluginRoot}/`;
   const observedChildren = new Set<string>();
   const rootFileChildren = new Set<string>();
@@ -32,7 +34,7 @@ export function validateDeclaredPluginTree(input: Readonly<{
     if (!parsed.ok || parsed.value !== child || rootFileChildren.has(child)) {
       return sourceEligibilityIssue(
         "PayloadMismatch",
-        `plugin tree contains noncanonical child ${child}`,
+        `plugin tree contains noncanonical child ${child}`
       );
     }
     observedPluginIds.push(parsed.value);
@@ -44,7 +46,7 @@ export function validateDeclaredPluginTree(input: Readonly<{
   return undeclaredPluginId === undefined
     ? undefined
     : sourceEligibilityIssue(
-      "PayloadMismatch",
-      `plugin tree contains undeclared member ${undeclaredPluginId}`,
-    );
+        "PayloadMismatch",
+        `plugin tree contains undeclared member ${undeclaredPluginId}`
+      );
 }

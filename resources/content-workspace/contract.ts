@@ -193,188 +193,269 @@ export interface ContentWorkspaceFailure {
 }
 
 export interface ContentWorkspaceResource<R = never> {
-  readonly inspectWorkspace: (input: Readonly<{
-    locator: string;
-  }>) => Effect.Effect<ContentWorkspaceIdentity, ContentWorkspaceFailure, R>;
+  readonly inspectWorkspace: (
+    input: Readonly<{
+      locator: string;
+    }>
+  ) => Effect.Effect<ContentWorkspaceIdentity, ContentWorkspaceFailure, R>;
 
-  readonly inspectGitWorkspace: (input: Readonly<{
-    locator: string;
-    remoteSelection: GitRemoteSelection;
-    refName: string;
-  }>) => Effect.Effect<GitWorkspaceAnchor, ContentWorkspaceFailure, R>;
+  readonly inspectGitWorkspace: (
+    input: Readonly<{
+      locator: string;
+      remoteSelection: GitRemoteSelection;
+      refName: string;
+    }>
+  ) => Effect.Effect<GitWorkspaceAnchor, ContentWorkspaceFailure, R>;
 
-  readonly readGitTree: (input: Readonly<{
-    root: string;
-    tree: string;
-    objectFormat: GitObjectFormat;
-    maxBytes: number;
-  }>) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
+  readonly readGitTree: (
+    input: Readonly<{
+      root: string;
+      tree: string;
+      objectFormat: GitObjectFormat;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
 
-  readonly readGitBlob: (input: Readonly<{
-    root: string;
-    blob: string;
-    objectFormat: GitObjectFormat;
-    maxBytes: number;
-  }>) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
+  readonly readGitBlob: (
+    input: Readonly<{
+      root: string;
+      blob: string;
+      objectFormat: GitObjectFormat;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
 
-  readonly readGitBlobs: (input: Readonly<{
-    root: string;
-    blobs: readonly string[];
-    objectFormat: GitObjectFormat;
-    maxBlobs: number;
-    maxBlobBytes: number;
-    maxTotalBytes: number;
-  }>) => Effect.Effect<readonly GitBlobObservation[], ContentWorkspaceFailure, R>;
+  readonly readGitBlobs: (
+    input: Readonly<{
+      root: string;
+      blobs: readonly string[];
+      objectFormat: GitObjectFormat;
+      maxBlobs: number;
+      maxBlobBytes: number;
+      maxTotalBytes: number;
+    }>
+  ) => Effect.Effect<readonly GitBlobObservation[], ContentWorkspaceFailure, R>;
 
-  readonly captureGitWorkspaceEvidence: (input: Readonly<{
-    root: string;
-    remoteSelection: GitRemoteSelection;
-    refName: string;
-    admittedPaths: readonly string[];
-    consumedRoots: readonly string[];
-    objectFormat: GitObjectFormat;
-    maxPaths: number;
-    /** Per-file bound for each admitted worktree path. */
-    maxWorktreeFileBytes: number;
-    /** Aggregate bound for all admitted worktree file bytes. */
-    maxWorktreeBytes: number;
-    /** Independent bound for each Git status, tracked-flag, or index output. */
-    maxBytes: number;
-  }>) => Effect.Effect<GitWorkspaceEvidence, ContentWorkspaceFailure, R>;
+  readonly captureGitWorkspaceEvidence: (
+    input: Readonly<{
+      root: string;
+      remoteSelection: GitRemoteSelection;
+      refName: string;
+      admittedPaths: readonly string[];
+      consumedRoots: readonly string[];
+      objectFormat: GitObjectFormat;
+      maxPaths: number;
+      /** Per-file bound for each admitted worktree path. */
+      maxWorktreeFileBytes: number;
+      /** Aggregate bound for all admitted worktree file bytes. */
+      maxWorktreeBytes: number;
+      /** Independent bound for each Git status, tracked-flag, or index output. */
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<GitWorkspaceEvidence, ContentWorkspaceFailure, R>;
 
-  readonly observeGitStagedIndex: (input: Readonly<{
-    locator: string;
-    remoteSelection: GitRemoteSelection;
-    refName: string;
-    materializedPaths: readonly string[];
-    materializedRoots: readonly string[];
-    maxEntries: number;
-    maxIndexBytes: number;
-    maxBlobBytes: number;
-  }>) => Effect.Effect<GitStagedIndexObservation, ContentWorkspaceFailure, R>;
+  readonly observeGitStagedIndex: (
+    input: Readonly<{
+      locator: string;
+      remoteSelection: GitRemoteSelection;
+      refName: string;
+      materializedPaths: readonly string[];
+      materializedRoots: readonly string[];
+      maxEntries: number;
+      maxIndexBytes: number;
+      maxBlobBytes: number;
+    }>
+  ) => Effect.Effect<GitStagedIndexObservation, ContentWorkspaceFailure, R>;
 
-  readonly readGitBlobAtPath: (input: Readonly<{
-    root: string;
-    refName: string;
-    commit: string;
-    tree: string;
-    path: string;
-    maxBytes: number;
-  }>) => Effect.Effect<GitBlobAtPathObservation, ContentWorkspaceFailure, R>;
+  readonly readGitBlobAtPath: (
+    input: Readonly<{
+      root: string;
+      refName: string;
+      commit: string;
+      tree: string;
+      path: string;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<GitBlobAtPathObservation, ContentWorkspaceFailure, R>;
 
-  readonly isLocalGitAncestor: (input: Readonly<{
-    root: string;
-    ancestorCommit: string;
-    descendantCommit: string;
-  }>) => Effect.Effect<boolean, ContentWorkspaceFailure, R>;
+  readonly isLocalGitAncestor: (
+    input: Readonly<{
+      root: string;
+      ancestorCommit: string;
+      descendantCommit: string;
+    }>
+  ) => Effect.Effect<boolean, ContentWorkspaceFailure, R>;
 
-  readonly listGitChangedPaths: (input: Readonly<{
-    root: string;
-    fromCommit: string;
-    toCommit: string;
-    maxBytes: number;
-  }>) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
+  readonly listGitChangedPaths: (
+    input: Readonly<{
+      root: string;
+      fromCommit: string;
+      toCommit: string;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
 
-  readonly readFile: (input: Readonly<{
-    root: string;
-    path: string;
-    maxBytes: number;
-  }>) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
+  readonly readFile: (
+    input: Readonly<{
+      root: string;
+      path: string;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
 
-  readonly readTree: (input: Readonly<{
-    root: string;
-    path: string;
-    objectFormat: GitObjectFormat;
-    maxEntries: number;
-    maxBytes: number;
-  }>) => Effect.Effect<readonly ContentTreeEntry[], ContentWorkspaceFailure, R>;
+  readonly readTree: (
+    input: Readonly<{
+      root: string;
+      path: string;
+      objectFormat: GitObjectFormat;
+      maxEntries: number;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<readonly ContentTreeEntry[], ContentWorkspaceFailure, R>;
 
-  readonly observeRemote: (input: Readonly<{
-    repositoryIdentity: string;
-    refName: string;
-    sourcePath: string;
-    maxEntries: number;
-  }>) => Effect.Effect<RemoteContentTree, ContentWorkspaceFailure, R>;
+  readonly observeRemote: (
+    input: Readonly<{
+      repositoryIdentity: string;
+      refName: string;
+      sourcePath: string;
+      maxEntries: number;
+    }>
+  ) => Effect.Effect<RemoteContentTree, ContentWorkspaceFailure, R>;
 
-  readonly materializeRemote: (input: Readonly<{
-    repositoryIdentity: string;
-    refName: string;
-    sourcePath: string;
-    maxEntries: number;
-    maxBytes: number;
-  }>) => Effect.Effect<MaterializedRemoteContentTree, ContentWorkspaceFailure, R>;
+  readonly materializeRemote: (
+    input: Readonly<{
+      repositoryIdentity: string;
+      refName: string;
+      sourcePath: string;
+      maxEntries: number;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<MaterializedRemoteContentTree, ContentWorkspaceFailure, R>;
 
-  readonly isAncestor: (input: Readonly<{
-    repositoryIdentity: string;
-    refName: string;
-    ancestorCommit: string;
-    descendantCommit: string;
-  }>) => Effect.Effect<boolean, ContentWorkspaceFailure, R>;
+  readonly isAncestor: (
+    input: Readonly<{
+      repositoryIdentity: string;
+      refName: string;
+      ancestorCommit: string;
+      descendantCommit: string;
+    }>
+  ) => Effect.Effect<boolean, ContentWorkspaceFailure, R>;
 
-  readonly capture: (input: Readonly<{
-    root: string;
-    readToken: string;
-    paths: readonly string[];
-    maxEntries: number;
-    maxBytes: number;
-  }>) => Effect.Effect<ContentWorkspaceCapture, ContentWorkspaceFailure, R>;
+  readonly capture: (
+    input: Readonly<{
+      root: string;
+      readToken: string;
+      paths: readonly string[];
+      maxEntries: number;
+      maxBytes: number;
+    }>
+  ) => Effect.Effect<ContentWorkspaceCapture, ContentWorkspaceFailure, R>;
 
-  readonly apply: (input: Readonly<{
-    root: string;
-    planDigest: string;
-    readToken: string;
-    captureHandle: string;
-    writes: readonly ContentWorkspaceWrite[];
-  }>) => Effect.Effect<ContentWorkspaceWriteReceipt, ContentWorkspaceFailure, R>;
+  readonly apply: (
+    input: Readonly<{
+      root: string;
+      planDigest: string;
+      readToken: string;
+      captureHandle: string;
+      writes: readonly ContentWorkspaceWrite[];
+    }>
+  ) => Effect.Effect<ContentWorkspaceWriteReceipt, ContentWorkspaceFailure, R>;
 
-  readonly restore: (input: Readonly<{
-    root: string;
-    planDigest: string;
-    readToken: string;
-    captureHandle: string;
-  }>) => Effect.Effect<ContentWorkspaceWriteReceipt, ContentWorkspaceFailure, R>;
+  readonly restore: (
+    input: Readonly<{
+      root: string;
+      planDigest: string;
+      readToken: string;
+      captureHandle: string;
+    }>
+  ) => Effect.Effect<ContentWorkspaceWriteReceipt, ContentWorkspaceFailure, R>;
 
-  readonly settle: (input: Readonly<{
-    root: string;
-    planDigest: string;
-    readToken: string;
-    captureHandle: string;
-  }>) => Effect.Effect<ContentWorkspaceSettleReceipt, ContentWorkspaceFailure, R>;
+  readonly settle: (
+    input: Readonly<{
+      root: string;
+      planDigest: string;
+      readToken: string;
+      captureHandle: string;
+    }>
+  ) => Effect.Effect<ContentWorkspaceSettleReceipt, ContentWorkspaceFailure, R>;
 
-  readonly release: (input: Readonly<{
-    root: string;
-    readToken: string;
-    captureHandle: string;
-    disposition: "NoMutation" | "UnsettledRecovery";
-  }>) => Effect.Effect<ContentWorkspaceReleaseReceipt, ContentWorkspaceFailure, R>;
+  readonly release: (
+    input: Readonly<{
+      root: string;
+      readToken: string;
+      captureHandle: string;
+      disposition: "NoMutation" | "UnsettledRecovery";
+    }>
+  ) => Effect.Effect<ContentWorkspaceReleaseReceipt, ContentWorkspaceFailure, R>;
 }
 
 /** Promise projection for non-Effect callers; providers bind runtime requirements at the edge. */
 export interface ContentWorkspaceAsyncPort {
-  readonly inspectWorkspace: (input: Parameters<ContentWorkspaceResource["inspectWorkspace"]>[0]) => Promise<ContentWorkspaceIdentity>;
-  readonly readFile: (input: Parameters<ContentWorkspaceResource["readFile"]>[0]) => Promise<Uint8Array>;
-  readonly readTree: (input: Parameters<ContentWorkspaceResource["readTree"]>[0]) => Promise<readonly ContentTreeEntry[]>;
-  readonly observeRemote: (input: Parameters<ContentWorkspaceResource["observeRemote"]>[0]) => Promise<RemoteContentTree>;
-  readonly materializeRemote: (input: Parameters<ContentWorkspaceResource["materializeRemote"]>[0]) => Promise<MaterializedRemoteContentTree>;
-  readonly isAncestor: (input: Parameters<ContentWorkspaceResource["isAncestor"]>[0]) => Promise<boolean>;
-  readonly capture: (input: Parameters<ContentWorkspaceResource["capture"]>[0]) => Promise<ContentWorkspaceCapture>;
-  readonly apply: (input: Parameters<ContentWorkspaceResource["apply"]>[0]) => Promise<ContentWorkspaceWriteReceipt>;
-  readonly restore: (input: Parameters<ContentWorkspaceResource["restore"]>[0]) => Promise<ContentWorkspaceWriteReceipt>;
-  readonly settle: (input: Parameters<ContentWorkspaceResource["settle"]>[0]) => Promise<ContentWorkspaceSettleReceipt>;
-  readonly release: (input: Parameters<ContentWorkspaceResource["release"]>[0]) => Promise<ContentWorkspaceReleaseReceipt>;
+  readonly inspectWorkspace: (
+    input: Parameters<ContentWorkspaceResource["inspectWorkspace"]>[0]
+  ) => Promise<ContentWorkspaceIdentity>;
+  readonly readFile: (
+    input: Parameters<ContentWorkspaceResource["readFile"]>[0]
+  ) => Promise<Uint8Array>;
+  readonly readTree: (
+    input: Parameters<ContentWorkspaceResource["readTree"]>[0]
+  ) => Promise<readonly ContentTreeEntry[]>;
+  readonly observeRemote: (
+    input: Parameters<ContentWorkspaceResource["observeRemote"]>[0]
+  ) => Promise<RemoteContentTree>;
+  readonly materializeRemote: (
+    input: Parameters<ContentWorkspaceResource["materializeRemote"]>[0]
+  ) => Promise<MaterializedRemoteContentTree>;
+  readonly isAncestor: (
+    input: Parameters<ContentWorkspaceResource["isAncestor"]>[0]
+  ) => Promise<boolean>;
+  readonly capture: (
+    input: Parameters<ContentWorkspaceResource["capture"]>[0]
+  ) => Promise<ContentWorkspaceCapture>;
+  readonly apply: (
+    input: Parameters<ContentWorkspaceResource["apply"]>[0]
+  ) => Promise<ContentWorkspaceWriteReceipt>;
+  readonly restore: (
+    input: Parameters<ContentWorkspaceResource["restore"]>[0]
+  ) => Promise<ContentWorkspaceWriteReceipt>;
+  readonly settle: (
+    input: Parameters<ContentWorkspaceResource["settle"]>[0]
+  ) => Promise<ContentWorkspaceSettleReceipt>;
+  readonly release: (
+    input: Parameters<ContentWorkspaceResource["release"]>[0]
+  ) => Promise<ContentWorkspaceReleaseReceipt>;
 }
 
 /** Promise projection of the exact read-only local Git capability set. */
 export interface ContentWorkspaceGitReadAsyncPort {
-  readonly inspectGitWorkspace: (input: Parameters<ContentWorkspaceResource["inspectGitWorkspace"]>[0]) => Promise<GitWorkspaceAnchor>;
-  readonly readGitTree: (input: Parameters<ContentWorkspaceResource["readGitTree"]>[0]) => Promise<Uint8Array>;
-  readonly readGitBlob: (input: Parameters<ContentWorkspaceResource["readGitBlob"]>[0]) => Promise<Uint8Array>;
-  readonly readGitBlobs: (input: Parameters<ContentWorkspaceResource["readGitBlobs"]>[0]) => Promise<readonly GitBlobObservation[]>;
-  readonly captureGitWorkspaceEvidence: (input: Parameters<ContentWorkspaceResource["captureGitWorkspaceEvidence"]>[0]) => Promise<GitWorkspaceEvidence>;
-  readonly observeGitStagedIndex: (input: Parameters<ContentWorkspaceResource["observeGitStagedIndex"]>[0]) => Promise<GitStagedIndexObservation>;
-  readonly readGitBlobAtPath: (input: Parameters<ContentWorkspaceResource["readGitBlobAtPath"]>[0]) => Promise<GitBlobAtPathObservation>;
-  readonly isLocalGitAncestor: (input: Parameters<ContentWorkspaceResource["isLocalGitAncestor"]>[0]) => Promise<boolean>;
-  readonly listGitChangedPaths: (input: Parameters<ContentWorkspaceResource["listGitChangedPaths"]>[0]) => Promise<Uint8Array>;
+  readonly inspectGitWorkspace: (
+    input: Parameters<ContentWorkspaceResource["inspectGitWorkspace"]>[0]
+  ) => Promise<GitWorkspaceAnchor>;
+  readonly readGitTree: (
+    input: Parameters<ContentWorkspaceResource["readGitTree"]>[0]
+  ) => Promise<Uint8Array>;
+  readonly readGitBlob: (
+    input: Parameters<ContentWorkspaceResource["readGitBlob"]>[0]
+  ) => Promise<Uint8Array>;
+  readonly readGitBlobs: (
+    input: Parameters<ContentWorkspaceResource["readGitBlobs"]>[0]
+  ) => Promise<readonly GitBlobObservation[]>;
+  readonly captureGitWorkspaceEvidence: (
+    input: Parameters<ContentWorkspaceResource["captureGitWorkspaceEvidence"]>[0]
+  ) => Promise<GitWorkspaceEvidence>;
+  readonly observeGitStagedIndex: (
+    input: Parameters<ContentWorkspaceResource["observeGitStagedIndex"]>[0]
+  ) => Promise<GitStagedIndexObservation>;
+  readonly readGitBlobAtPath: (
+    input: Parameters<ContentWorkspaceResource["readGitBlobAtPath"]>[0]
+  ) => Promise<GitBlobAtPathObservation>;
+  readonly isLocalGitAncestor: (
+    input: Parameters<ContentWorkspaceResource["isLocalGitAncestor"]>[0]
+  ) => Promise<boolean>;
+  readonly listGitChangedPaths: (
+    input: Parameters<ContentWorkspaceResource["listGitChangedPaths"]>[0]
+  ) => Promise<Uint8Array>;
 }
 
-export type ContentWorkspaceNodeAsyncPort = ContentWorkspaceAsyncPort & ContentWorkspaceGitReadAsyncPort;
+export type ContentWorkspaceNodeAsyncPort = ContentWorkspaceAsyncPort &
+  ContentWorkspaceGitReadAsyncPort;

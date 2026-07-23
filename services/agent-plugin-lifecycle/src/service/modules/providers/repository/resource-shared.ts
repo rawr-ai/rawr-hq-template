@@ -24,7 +24,7 @@ import type {
 
 export function createSessionCache<Session>(
   executablePath: string,
-  acquire: (input: NativeResourceSessionInput) => Promise<Session>,
+  acquire: (input: NativeResourceSessionInput) => Promise<Session>
 ): (home: string) => Promise<Session> {
   const sessions = new Map<string, Promise<Session>>();
   return (home) => {
@@ -42,7 +42,7 @@ export function createSessionCache<Session>(
 export async function readMarketplaceSource(
   observation: NativeResourcePackageObservation,
   provider: ProviderId,
-  adapterProtocol: AdapterProtocol,
+  adapterProtocol: AdapterProtocol
 ): Promise<ProviderMarketplaceRegistration> {
   return inspectMarketplaceSource({
     observation,
@@ -54,7 +54,7 @@ export async function readMarketplaceSource(
 export function capabilitiesFromCommands(
   provider: ProviderId,
   pluginCommands: readonly string[],
-  marketplaceCommands: readonly string[],
+  marketplaceCommands: readonly string[]
 ): readonly ProviderCapability[] {
   const plugin = new Set(pluginCommands);
   const marketplace = new Set(marketplaceCommands);
@@ -78,7 +78,8 @@ export function capabilitiesFromCommands(
 }
 
 export function pluginIdFromNativeIdentity(nativeIdentity: string, provider: ProviderId): PluginId {
-  if (!nativeIdentity.startsWith("rawr:")) throw new Error(`${provider} native identity is invalid`);
+  if (!nativeIdentity.startsWith("rawr:"))
+    throw new Error(`${provider} native identity is invalid`);
   const parsed = parsePluginId(nativeIdentity.slice("rawr:".length), "nativeIdentity");
   if (!parsed.ok) throw new Error(`${provider} native identity has no canonical plugin ID`);
   return parsed.value;
@@ -87,14 +88,15 @@ export function pluginIdFromNativeIdentity(nativeIdentity: string, provider: Pro
 export function pluginSelector(
   nativeIdentity: string,
   authority: ContentAuthority,
-  provider: ProviderId,
+  provider: ProviderId
 ): string {
   return `${pluginIdFromNativeIdentity(nativeIdentity, provider)}@${authority}`;
 }
 
 export function parseSourceIdentity(value: string, provider: ProviderId): ProviderSourceIdentity {
   const parsed = parseContentAuthority(value, "marketplaceName");
-  if (!parsed.ok) throw new Error(`${provider} marketplace name is not a canonical source identity`);
+  if (!parsed.ok)
+    throw new Error(`${provider} marketplace name is not a canonical source identity`);
   return parsed.value;
 }
 
@@ -103,7 +105,7 @@ export function requireManagedRequest(
   marketplace: string,
   authority: string,
   expected: ContentAuthority,
-  provider: ProviderId,
+  provider: ProviderId
 ): void {
   if (source !== expected || marketplace !== expected || authority !== expected) {
     throw new Error(`${provider} mutation authority does not match the configured content owner`);
@@ -112,7 +114,7 @@ export function requireManagedRequest(
 
 export function sameMarketplaceObservation(
   left: ProviderMarketplaceObservation,
-  right: ProviderMarketplaceObservation,
+  right: ProviderMarketplaceObservation
 ): boolean {
   return left.kind === "absent"
     ? right.kind === "absent"
@@ -120,7 +122,7 @@ export function sameMarketplaceObservation(
 }
 
 export function desiredMarketplace(
-  registration: ProviderMarketplaceRegistration | null,
+  registration: ProviderMarketplaceRegistration | null
 ): ProviderMarketplaceObservation {
   return registration === null
     ? Object.freeze({ kind: "absent" })

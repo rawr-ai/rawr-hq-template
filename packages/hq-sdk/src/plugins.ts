@@ -88,7 +88,7 @@ export function bindService<
   TRole extends RoleView = RoleView,
 >(
   createClient: (boundary: TBoundary) => TClient,
-  binding: ServiceBinding<TBoundary, TProcess, TRole>,
+  binding: ServiceBinding<TBoundary, TProcess, TRole>
 ): BoundService<TClient, TProcess, TRole> {
   const clientsByKey = new Map<string, TClient>();
 
@@ -115,7 +115,7 @@ export function bindService<
 
 function resolveBindingValue<TValue, TContext>(
   value: BindingValue<TValue, TContext>,
-  context: TContext,
+  context: TContext
 ): TValue {
   return typeof value === "function" ? (value as (context: TContext) => TValue)(context) : value;
 }

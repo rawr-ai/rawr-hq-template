@@ -3,10 +3,7 @@ import { readFileSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const BUILTINS = new Set([
-  ...builtinModules,
-  ...builtinModules.map((name) => `node:${name}`),
-]);
+const BUILTINS = new Set([...builtinModules, ...builtinModules.map((name) => `node:${name}`)]);
 const DENIED_NAMESPACE = "rawr-native-manager-denied";
 const DENIED_PATH = "outside-controller";
 const DENIED_SPECIFIER = `${DENIED_NAMESPACE}:${DENIED_PATH}`;
@@ -24,7 +21,9 @@ export type NativeImportSandboxInput = Readonly<{
   canonicalize(path: string): string;
 }>;
 
-export function resolveNativeManagerImport(input: NativeImportSandboxInput): NativeImportResolution {
+export function resolveNativeManagerImport(
+  input: NativeImportSandboxInput
+): NativeImportResolution {
   if (isBuiltin(input.specifier)) return { kind: "builtin", specifier: input.specifier };
 
   const canonicalRoot = input.canonicalize(input.releaseRoot);
@@ -48,14 +47,14 @@ export function resolveNativeManagerImport(input: NativeImportSandboxInput): Nat
   return { kind: "file", path: resolvedPath };
 }
 
-export function validateNativeManagerImportRequest(input: Omit<
-  NativeImportSandboxInput,
-  "resolveSync"
->): void {
+export function validateNativeManagerImportRequest(
+  input: Omit<NativeImportSandboxInput, "resolveSync">
+): void {
   if (isBuiltin(input.specifier)) return;
   const canonicalRoot = input.canonicalize(input.releaseRoot);
   requireContainedReference(canonicalRoot, input.importer, "importer", input.canonicalize);
-  if (input.resolveDir) requireContainedPath(canonicalRoot, input.resolveDir, "resolve directory", input.canonicalize);
+  if (input.resolveDir)
+    requireContainedPath(canonicalRoot, input.resolveDir, "resolve directory", input.canonicalize);
 
   const lexicalRequest = lexicalFileRequest(input.specifier, input.resolveDir);
   if (lexicalRequest !== undefined) {
@@ -80,11 +79,7 @@ export function installNativeManagerImportSandbox(releaseRoot: string): void {
           return { path: DENIED_PATH, namespace: DENIED_NAMESPACE };
         }
         try {
-          const resolveDir = runtimeResolveDirectory(
-            args.resolveDir,
-            args.importer,
-            canonicalRoot,
-          );
+          const resolveDir = runtimeResolveDirectory(args.resolveDir, args.importer, canonicalRoot);
           validateNativeManagerImportRequest({
             specifier: args.path,
             importer: args.importer,
@@ -104,12 +99,14 @@ export function installNativeManagerImportSandbox(releaseRoot: string): void {
           return undefined;
         } catch (error) {
           if (process.env.RAWR_NATIVE_MANAGER_SANDBOX_DIAGNOSTICS === "1") {
-            process.stderr.write(`native-manager sandbox denied: ${errorMessage(error)} ${JSON.stringify({
-              importer: args.importer,
-              namespace: args.namespace,
-              path: args.path,
-              resolveDir: args.resolveDir,
-            })}\n`);
+            process.stderr.write(
+              `native-manager sandbox denied: ${errorMessage(error)} ${JSON.stringify({
+                importer: args.importer,
+                namespace: args.namespace,
+                path: args.path,
+                resolveDir: args.resolveDir,
+              })}\n`
+            );
           }
           return { path: DENIED_PATH, namespace: DENIED_NAMESPACE };
         }
@@ -126,11 +123,12 @@ function requireContainedReference(
   root: string,
   reference: string,
   label: string,
-  canonicalize: (path: string) => string,
+  canonicalize: (path: string) => string
 ): void {
   if (reference === "" || isBuiltin(reference)) return;
   const pathValue = lexicalFileRequest(reference, root);
-  if (pathValue === undefined) throw new Error(`NATIVE_MANAGER_IMPORT_${label.toUpperCase()}_INVALID`);
+  if (pathValue === undefined)
+    throw new Error(`NATIVE_MANAGER_IMPORT_${label.toUpperCase()}_INVALID`);
   requireContainedPath(root, pathValue, label, canonicalize);
 }
 
@@ -138,7 +136,7 @@ function requireContainedPath(
   root: string,
   requestedPath: string,
   label: string,
-  canonicalize: (path: string) => string,
+  canonicalize: (path: string) => string
 ): void {
   const normalized = path.resolve(requestedPath);
   if (!isContained(root, normalized)) {
@@ -170,7 +168,12 @@ function lexicalFileRequest(specifier: string, resolveDir: string): string | und
     }
   }
   if (path.isAbsolute(specifier)) return path.normalize(specifier);
-  if (specifier === "." || specifier === ".." || specifier.startsWith("./") || specifier.startsWith("../")) {
+  if (
+    specifier === "." ||
+    specifier === ".." ||
+    specifier.startsWith("./") ||
+    specifier.startsWith("../")
+  ) {
     return path.resolve(resolveDir, specifier);
   }
   return undefined;
@@ -198,7 +201,10 @@ function hasScheme(specifier: string): boolean {
 
 function isContained(root: string, candidate: string): boolean {
   const relative = path.relative(root, candidate);
-  return relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative));
+  return (
+    relative === "" ||
+    (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative))
+  );
 }
 
 function errorMessage(error: unknown): string {
@@ -229,14 +235,18 @@ function resolveControllerFilesystemImport(input: {
     return resolveFileOrDirectory(
       path.join(packageRoot, ...parsed.subpath.split("/")),
       input.kind,
-      input.releaseRoot,
+      input.releaseRoot
     );
   }
   for (const field of importKind(input.kind) === "require" ? ["main"] : ["module", "main"]) {
     const target = manifest[field];
     if (typeof target === "string" && target.length > 0) {
       try {
-        return resolveFileOrDirectory(path.resolve(packageRoot, target), input.kind, input.releaseRoot);
+        return resolveFileOrDirectory(
+          path.resolve(packageRoot, target),
+          input.kind,
+          input.releaseRoot
+        );
       } catch {
         // Try the package index fallback.
       }
@@ -249,7 +259,7 @@ function resolvePackageImport(
   specifier: string,
   resolveDir: string,
   kind: string,
-  releaseRoot: string,
+  releaseRoot: string
 ): string {
   const packageRoot = findNearestPackageRoot(resolveDir, releaseRoot);
   const manifest = readPackageManifest(packageRoot);
@@ -262,7 +272,7 @@ function resolvePackageTarget(
   packageRoot: string,
   target: string,
   kind: string,
-  releaseRoot: string,
+  releaseRoot: string
 ): string {
   if (!target.startsWith("./")) throw new Error("NATIVE_MANAGER_IMPORT_PACKAGE_TARGET_REJECTED");
   const lexical = path.resolve(packageRoot, target);
@@ -377,7 +387,10 @@ function resolveFileOrDirectory(candidate: string, kind: string, releaseRoot: st
 function parsePackageSpecifier(specifier: string): { packageId: string; subpath: string } {
   const segments = specifier.split("/");
   const packageSegments = specifier.startsWith("@") ? segments.slice(0, 2) : segments.slice(0, 1);
-  if (packageSegments.some((segment) => segment.length === 0) || (specifier.startsWith("@") && packageSegments.length !== 2)) {
+  if (
+    packageSegments.some((segment) => segment.length === 0) ||
+    (specifier.startsWith("@") && packageSegments.length !== 2)
+  ) {
     throw new Error(`NATIVE_MANAGER_IMPORT_PACKAGE_INVALID:${specifier}`);
   }
   return {
@@ -423,7 +436,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function runtimeResolveDirectory(
   resolveDir: string | undefined,
   importer: string,
-  releaseRoot: string,
+  releaseRoot: string
 ): string {
   if (resolveDir) return resolveDir;
   if (importer && !isBuiltin(importer)) {

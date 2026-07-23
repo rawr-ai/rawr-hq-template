@@ -75,7 +75,8 @@ export type Service = ServiceOf<typeof service>;
 export const ocBase = service.oc;
 export const createServiceMiddleware = service.createMiddleware;
 export const createServiceObservabilityMiddleware = service.createObservabilityMiddleware;
-export const createRequiredServiceObservabilityMiddleware = service.createRequiredObservabilityMiddleware;
+export const createRequiredServiceObservabilityMiddleware =
+  service.createRequiredObservabilityMiddleware;
 export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddleware;
 export const createRequiredServiceAnalyticsMiddleware = service.createRequiredAnalyticsMiddleware;
 export const createServiceProvider = service.createProvider;

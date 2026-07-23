@@ -7,4 +7,5 @@ import { module } from "../module";
 export const currentMainRecord = module.currentMainRecord.handler(async ({ input }) =>
   input.kind === "encode-body"
     ? encodeCurrentMainBodyV2(input.body)
-    : validateCurrentMainEnvelopeV2(input.bytes));
+    : validateCurrentMainEnvelopeV2(input.bytes)
+);

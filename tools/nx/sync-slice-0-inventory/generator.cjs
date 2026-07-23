@@ -50,7 +50,9 @@ const INVENTORY = {
 
 module.exports = async function syncSlice0Inventory(tree) {
   const nextContents = `${JSON.stringify(INVENTORY, null, 2)}\n`;
-  const currentContents = tree.exists(INVENTORY_PATH) ? tree.read(INVENTORY_PATH).toString("utf8") : null;
+  const currentContents = tree.exists(INVENTORY_PATH)
+    ? tree.read(INVENTORY_PATH).toString("utf8")
+    : null;
 
   if (currentContents !== nextContents) {
     tree.write(INVENTORY_PATH, nextContents);
@@ -58,6 +60,8 @@ module.exports = async function syncSlice0Inventory(tree) {
 
   return {
     outOfSyncMessage: "The Node 1 first-cohort inventory is out of sync.",
-    outOfSyncDetails: [`Expected ${INVENTORY_PATH} to match the checked-in Slice 0 ownership contract.`],
+    outOfSyncDetails: [
+      `Expected ${INVENTORY_PATH} to match the checked-in Slice 0 ownership contract.`,
+    ],
   };
 };

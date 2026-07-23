@@ -12,7 +12,12 @@ import {
   type ReleaseArtifactRef,
   type ReleaseRelativePath,
 } from "../../../shared/release";
-import { canonicalBytes, canonicalDigest, equalBytes, type CanonicalValue } from "../model/helpers/canonical";
+import {
+  canonicalBytes,
+  canonicalDigest,
+  equalBytes,
+  type CanonicalValue,
+} from "../model/helpers/canonical";
 import { hookEventSlugsFromManifests } from "../model/helpers/hook-manifest";
 import {
   PROVIDER_ARTIFACT_AUTHORITY_PROTOCOL,
@@ -49,7 +54,7 @@ export interface NativePluginVisibilityObservation {
 }
 
 export function inspectNativePluginVisibility(
-  observation: NativeResourcePackageObservation,
+  observation: NativeResourcePackageObservation
 ): NativePluginVisibilityObservation {
   const files = validatePackageFiles(observation);
   return Object.freeze({
@@ -60,12 +65,11 @@ export function inspectNativePluginVisibility(
 
 export function inspectNativePluginPackage(
   observation: NativeResourcePackageObservation,
-  provider: ProviderId,
+  provider: ProviderId
 ): NativePluginPackageObservation {
   const files = validatePackageFiles(observation);
-  const manifestPath = provider === "codex"
-    ? ".codex-plugin/plugin.json"
-    : ".claude-plugin/plugin.json";
+  const manifestPath =
+    provider === "codex" ? ".codex-plugin/plugin.json" : ".claude-plugin/plugin.json";
   const manifestFile = files.find((file) => file.path === manifestPath);
   if (manifestFile === undefined) throw new Error("Native plugin package has no provider manifest");
   const manifest = parseManifest(manifestFile.bytes);
@@ -107,7 +111,7 @@ type NativePackageFile = Readonly<{
 }>;
 
 function validatePackageFiles(
-  observation: NativeResourcePackageObservation,
+  observation: NativeResourcePackageObservation
 ): readonly NativePackageFile[] {
   const paths = new Set<string>();
   const files = [...observation.entries]
@@ -146,31 +150,41 @@ function parseManifest(bytes: Uint8Array): Readonly<{
   }
   requireKeys(input, ["description", "name", "rawr", "skills", "version"]);
   const rawr = requireRecord(input.rawr, "native plugin rawr metadata");
-  requireKeys(rawr, ["artifactAuthority", "artifactDigest", "nativeIdentity", "providerSourceIdentity", "releaseDigest"]);
+  requireKeys(rawr, [
+    "artifactAuthority",
+    "artifactDigest",
+    "nativeIdentity",
+    "providerSourceIdentity",
+    "releaseDigest",
+  ]);
   const authorityInput = requireRecord(rawr.artifactAuthority, "native plugin artifact authority");
   requireKeys(authorityInput, ["contentAuthority", "protocol", "sourceCommit"]);
   if (authorityInput.protocol !== PROVIDER_ARTIFACT_AUTHORITY_PROTOCOL) {
     throw new Error("Native plugin artifact authority protocol is invalid");
   }
   const pluginId = requireParsed(parsePluginId(input.name, "manifest.name"));
-  const contentAuthority = requireParsed(parseContentAuthority(
-    authorityInput.contentAuthority,
-    "manifest.rawr.artifactAuthority.contentAuthority",
-  ));
-  const sourceCommit = requireParsed(parseGitCommitId(
-    authorityInput.sourceCommit,
-    "manifest.rawr.artifactAuthority.sourceCommit",
-  ));
-  const releaseRef = requireParsed(parseArtifactRef({
-    kind: "release",
-    releaseDigest: rawr.releaseDigest,
-    artifactDigest: rawr.artifactDigest,
-  }));
-  if (releaseRef.kind !== "release") throw new Error("Native plugin manifest must bind a release artifact");
+  const contentAuthority = requireParsed(
+    parseContentAuthority(
+      authorityInput.contentAuthority,
+      "manifest.rawr.artifactAuthority.contentAuthority"
+    )
+  );
+  const sourceCommit = requireParsed(
+    parseGitCommitId(authorityInput.sourceCommit, "manifest.rawr.artifactAuthority.sourceCommit")
+  );
+  const releaseRef = requireParsed(
+    parseArtifactRef({
+      kind: "release",
+      releaseDigest: rawr.releaseDigest,
+      artifactDigest: rawr.artifactDigest,
+    })
+  );
+  if (releaseRef.kind !== "release")
+    throw new Error("Native plugin manifest must bind a release artifact");
   if (
-    rawr.providerSourceIdentity !== contentAuthority
-    || rawr.nativeIdentity !== `rawr:${pluginId}`
-    || input.version !== `0.0.0-rawr.${sourceCommit.slice(0, 12)}`
+    rawr.providerSourceIdentity !== contentAuthority ||
+    rawr.nativeIdentity !== `rawr:${pluginId}` ||
+    input.version !== `0.0.0-rawr.${sourceCommit.slice(0, 12)}`
   ) {
     throw new Error("Native plugin manifest identity does not match its artifact authority");
   }
@@ -187,7 +201,10 @@ function parseManifest(bytes: Uint8Array): Readonly<{
   });
 }
 
-function visibleNames(files: readonly Pick<NativePackageFile, "path">[], pattern: RegExp): readonly string[] {
+function visibleNames(
+  files: readonly Pick<NativePackageFile, "path">[],
+  pattern: RegExp
+): readonly string[] {
   const names = new Set<string>();
   for (const file of files) {
     const match = pattern.exec(file.path);

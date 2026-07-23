@@ -28,9 +28,7 @@ interface InngestStepRunOp<T> {
   readonly data: T;
 }
 
-function createClients(): ConstructionBoundServiceClients<
-  typeof WorkItemsServerApiServices
-> {
+function createClients(): ConstructionBoundServiceClients<typeof WorkItemsServerApiServices> {
   return {
     workItems: {
       withInvocation() {
@@ -60,10 +58,7 @@ function createClients(): ConstructionBoundServiceClients<
   };
 }
 
-function createInvocationContext(event: {
-  readonly name: string;
-  readonly data: unknown;
-}) {
+function createInvocationContext(event: { readonly name: string; readonly data: unknown }) {
   const dispatcher: WorkflowDispatcher = {
     kind: "workflow.dispatcher",
     async dispatch() {
@@ -151,7 +146,7 @@ describe("phase two async Inngest live boundary", () => {
             requestedBy: "actor-inngest",
             secretToken: "async-event-secret",
           },
-        }),
+        })
       );
 
       expect(response.status).toBe(206);
@@ -267,7 +262,7 @@ describe("phase two async Inngest live boundary", () => {
             },
           },
         }),
-      }),
+      })
     );
 
     expect(response.status).toBe(500);

@@ -13,13 +13,11 @@ import type { NativeMutationAttempt } from "./provider";
 export interface CanonicalNativeRuntime {
   inspectCapabilities(
     target: ProviderTarget,
-    contentAuthority: ContentAuthority,
+    contentAuthority: ContentAuthority
   ): Promise<DeploymentResult<CapabilityObservation>>;
   observe(
     target: ProviderTarget,
-    contentAuthority: ContentAuthority,
+    contentAuthority: ContentAuthority
   ): Promise<DeploymentResult<CanonicalNativeObservation>>;
-  apply(
-    action: CanonicalNativeMutationAction,
-  ): Promise<NativeMutationAttempt>;
+  apply(action: CanonicalNativeMutationAction): Promise<NativeMutationAttempt>;
 }

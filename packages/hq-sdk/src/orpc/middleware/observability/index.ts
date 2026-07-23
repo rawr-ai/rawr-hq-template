@@ -36,10 +36,7 @@ export type {
   ServiceObservabilityMiddlewareInput,
 } from "./types";
 
-function getProcedureMeta<TMeta extends BaseMetadata>(
-  procedure: unknown,
-  fallback: TMeta,
-): TMeta {
+function getProcedureMeta<TMeta extends BaseMetadata>(procedure: unknown, fallback: TMeta): TMeta {
   const anyProcedure = procedure as { ["~orpc"]?: { meta?: TMeta } };
   return anyProcedure?.["~orpc"]?.meta ?? fallback;
 }
@@ -48,15 +45,12 @@ function getBaseProcedureMeta(procedure: unknown): BaseMetadata {
   return getProcedureMeta(procedure, { idempotent: true });
 }
 
-function brandRequiredObservabilityMiddleware<
-  TContext extends object,
-  TMeta extends BaseMetadata,
->(
+function brandRequiredObservabilityMiddleware<TContext extends object, TMeta extends BaseMetadata>(
   middleware: ReturnType<typeof createNormalMiddlewareBuilder<TContext, TMeta>> extends {
     middleware(callback: infer _T): infer TMiddleware;
   }
     ? TMiddleware
-    : never,
+    : never
 ) {
   return Object.assign(middleware, {
     [requiredObservabilityMiddlewareBrand]: "observability" as const,
@@ -76,11 +70,13 @@ export function createBaseObservabilityMiddleware() {
     deps: {
       logger: Logger;
     };
-  }>().middleware(createObservabilityHandler({
-    getMeta: getBaseProcedureMeta,
-    profile: createBaseObservabilityProfile(),
-    policyEvents: undefined,
-  }));
+  }>().middleware(
+    createObservabilityHandler({
+      getMeta: getBaseProcedureMeta,
+      profile: createBaseObservabilityProfile(),
+      policyEvents: undefined,
+    })
+  );
 }
 
 /**
@@ -111,7 +107,7 @@ export function createRequiredServiceObservabilityMiddleware<
 >(
   baseMetadata: TMeta,
   input: RequiredServiceObservabilityMiddlewareInput<TMeta, TContext, TPolicyEvents>,
-  policyEvents: TPolicyEvents,
+  policyEvents: TPolicyEvents
 ) {
   const profile = resolveRequiredServiceObservabilityProfile(baseMetadata, input);
   const handler = createObservabilityHandler({
@@ -140,10 +136,7 @@ export function createRequiredServiceObservabilityMiddleware<
 export function createServiceObservabilityMiddleware<
   TMeta extends BaseMetadata,
   TContext extends object,
->(
-  baseMetadata: TMeta,
-  input: ServiceObservabilityMiddlewareInput<TMeta, TContext>,
-) {
+>(baseMetadata: TMeta, input: ServiceObservabilityMiddlewareInput<TMeta, TContext>) {
   const names = deriveServiceNames(baseMetadata);
 
   return createNormalMiddlewareBuilder<TContext, TMeta>({
@@ -154,15 +147,17 @@ export function createServiceObservabilityMiddleware<
     const meta = getProcedureMeta(procedure, baseMetadata);
     const pathLabel = path.join(".");
 
-    span?.setAttributes(prefixAttributes(
-      names.attributePrefix,
-      input.spanAttributes?.({
-        context,
-        meta,
-        path,
-        pathLabel,
-      }),
-    ));
+    span?.setAttributes(
+      prefixAttributes(
+        names.attributePrefix,
+        input.spanAttributes?.({
+          context,
+          meta,
+          path,
+          pathLabel,
+        })
+      )
+    );
     input.onStart?.({
       span,
       context,
@@ -184,8 +179,7 @@ export function createServiceObservabilityMiddleware<
       });
 
       return result;
-    }
-    catch (error) {
+    } catch (error) {
       input.onError?.({
         span,
         context,

@@ -1,5 +1,12 @@
 import { Link } from "../routing/router";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, buttonVariants } from "../components/ui";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  buttonVariants,
+} from "../components/ui";
 
 export function NotFoundPage() {
   return (

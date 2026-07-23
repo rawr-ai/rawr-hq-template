@@ -1,12 +1,10 @@
 import type { ControllerPayloadManifest } from "@rawr/controller-release";
 
-import {
-  createReservedControllerSurface,
-} from "../external-extensions/reserved-surface";
+import { createReservedControllerSurface } from "../external-extensions/reserved-surface";
 import type { ReservedControllerSurface } from "../external-extensions/model";
 
 export function reservedSurfaceFromControllerManifest(
-  manifest: ControllerPayloadManifest,
+  manifest: ControllerPayloadManifest
 ): ReservedControllerSurface {
   return createReservedControllerSurface({
     packageIds: manifest.officialMembers.map((member) => member.packageId),

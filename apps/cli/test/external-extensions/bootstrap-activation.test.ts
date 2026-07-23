@@ -36,7 +36,7 @@ describe("guarded external activation", () => {
 
     expect(dispatchedConfig).not.toBe(config);
     expect(dispatchedConfig.plugins.get(dispatchedConfig.pjson.name)).toBe(
-      config.plugins.get(config.pjson.name),
+      config.plugins.get(config.pjson.name)
     );
     expect(resolveExternalExtensionRuntime(dispatchedConfig)).toBe(runtime);
   });
@@ -51,23 +51,28 @@ describe("guarded external activation", () => {
     });
     const cliRoot = writeCliFixture();
     const packagePath = path.join(extensionRoot, "package.json");
-    const packageManifest = JSON.parse(readFileSync(packagePath, "utf8")) as Record<string, unknown>;
+    const packageManifest = JSON.parse(readFileSync(packagePath, "utf8")) as Record<
+      string,
+      unknown
+    >;
     packageManifest.type = "module";
     writeFileSync(packagePath, `${JSON.stringify(packageManifest, null, 2)}\n`);
 
     mkdirSync(dataDir, { recursive: true });
     writeFileSync(
       path.join(dataDir, "package.json"),
-      `${JSON.stringify({
-        name: "@rawr/cli",
-        private: true,
-        dependencies: {},
-        oclif: {
-          plugins: [
-            { name: "@fixture/swapped", type: "link", root: extensionRoot },
-          ],
+      `${JSON.stringify(
+        {
+          name: "@rawr/cli",
+          private: true,
+          dependencies: {},
+          oclif: {
+            plugins: [{ name: "@fixture/swapped", type: "link", root: extensionRoot }],
+          },
         },
-      }, null, 2)}\n`,
+        null,
+        2
+      )}\n`
     );
 
     const priorDataDir = process.env.RAWR_DATA_DIR;
@@ -77,9 +82,7 @@ describe("guarded external activation", () => {
         argv: ["fixture", "swapped"],
         cliRoot,
         reserved: createReservedControllerSurface({}),
-        evidence: new ManifestSwapEvidence(
-          path.join(extensionRoot, "oclif.manifest.json"),
-        ),
+        evidence: new ManifestSwapEvidence(path.join(extensionRoot, "oclif.manifest.json")),
         createRuntime: () => unavailableRuntime(),
       });
 
@@ -115,16 +118,18 @@ describe("guarded external activation", () => {
     mkdirSync(dataDir, { recursive: true });
     writeFileSync(
       path.join(dataDir, "package.json"),
-      `${JSON.stringify({
-        name: "@rawr/cli",
-        private: true,
-        dependencies: {},
-        oclif: {
-          plugins: [
-            { name: "@fixture/permuted", type: "link", root: extensionRoot },
-          ],
+      `${JSON.stringify(
+        {
+          name: "@rawr/cli",
+          private: true,
+          dependencies: {},
+          oclif: {
+            plugins: [{ name: "@fixture/permuted", type: "link", root: extensionRoot }],
+          },
         },
-      }, null, 2)}\n`,
+        null,
+        2
+      )}\n`
     );
 
     const priorDataDir = process.env.RAWR_DATA_DIR;
@@ -156,14 +161,18 @@ describe("guarded external activation", () => {
     mkdirSync(dataDir, { recursive: true });
     writeFileSync(
       path.join(dataDir, "package.json"),
-      `${JSON.stringify({
-        name: "rawr",
-        private: true,
-        dependencies: {},
-        oclif: {
-          plugins: [{ name: "rawr", type: "link", root: extensionRoot }],
+      `${JSON.stringify(
+        {
+          name: "rawr",
+          private: true,
+          dependencies: {},
+          oclif: {
+            plugins: [{ name: "rawr", type: "link", root: extensionRoot }],
+          },
         },
-      }, null, 2)}\n`,
+        null,
+        2
+      )}\n`
     );
 
     const priorDataDir = process.env.RAWR_DATA_DIR;
@@ -198,19 +207,23 @@ function writeCliFixture(name = "@fixture/cli"): string {
   mkdirSync(path.join(root, "dist", "commands"), { recursive: true });
   writeFileSync(
     path.join(root, "package.json"),
-    `${JSON.stringify({
-      name,
-      version: "1.0.0",
-      type: "module",
-      oclif: {
-        bin: "rawr",
-        commands: "./dist/commands",
+    `${JSON.stringify(
+      {
+        name,
+        version: "1.0.0",
+        type: "module",
+        oclif: {
+          bin: "rawr",
+          commands: "./dist/commands",
+        },
       },
-    }, null, 2)}\n`,
+      null,
+      2
+    )}\n`
   );
   writeFileSync(
     path.join(root, "oclif.manifest.json"),
-    `${JSON.stringify({ version: "1.0.0", commands: {} }, null, 2)}\n`,
+    `${JSON.stringify({ version: "1.0.0", commands: {} }, null, 2)}\n`
   );
   return root;
 }

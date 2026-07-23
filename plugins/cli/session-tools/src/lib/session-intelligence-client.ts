@@ -13,7 +13,7 @@ export { defaultSessionIndexPathSync };
 
 export type SessionIntelligenceClient = Client;
 export type SessionIntelligenceClientFactory = (
-  options: Readonly<{ indexPath?: string }>,
+  options: Readonly<{ indexPath?: string }>
 ) => Promise<SessionIntelligenceClient>;
 
 type SessionToolsProcess = {
@@ -50,16 +50,21 @@ const sessionIntelligenceService = bindService(createClient, {
     workspaceRef: context.process.workspaceRef,
   }),
   config: {},
-  cacheKey: (context) => `${context.process.processId}:${context.role.roleId}:${context.process.sessionIndexPath ?? "default"}`,
+  cacheKey: (context) =>
+    `${context.process.processId}:${context.role.roleId}:${context.process.sessionIndexPath ?? "default"}`,
 } satisfies ServiceBinding<CreateClientOptions, SessionToolsProcess, SessionToolsRole>);
 
 let clientFactoryOverride: SessionIntelligenceClientFactory | null = null;
 
-export function setSessionIntelligenceClientFactoryForTest(factory: SessionIntelligenceClientFactory | null): void {
+export function setSessionIntelligenceClientFactoryForTest(
+  factory: SessionIntelligenceClientFactory | null
+): void {
   clientFactoryOverride = factory;
 }
 
-export async function createSessionIntelligenceClient(options: { indexPath?: string } = {}): Promise<SessionIntelligenceClient> {
+export async function createSessionIntelligenceClient(
+  options: { indexPath?: string } = {}
+): Promise<SessionIntelligenceClient> {
   if (clientFactoryOverride) return clientFactoryOverride(options);
   return sessionIntelligenceService.resolve({
     ...bindingContext,

@@ -24,15 +24,18 @@ export default class HyperresearchCodexInspect extends RawrCommand {
     });
 
     try {
-      const resultData = await client.runs.inspectV8Run({
-        ledgerPath: String(flags.ledger),
-      }, {
-        context: {
-          invocation: {
-            traceId: `hyperresearch-codex-v8-inspect-${Date.now()}`,
-          },
+      const resultData = await client.runs.inspectV8Run(
+        {
+          ledgerPath: String(flags.ledger),
         },
-      });
+        {
+          context: {
+            invocation: {
+              traceId: `hyperresearch-codex-v8-inspect-${Date.now()}`,
+            },
+          },
+        }
+      );
       const result = this.ok(summarizeV8Result(resultData));
       this.outputResult(result, {
         flags: baseFlags,

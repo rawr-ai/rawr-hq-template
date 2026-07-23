@@ -26,7 +26,10 @@ describe("controller release envelope", () => {
       releaseDirectoryName: envelope.controllerDigest,
     });
 
-    expect(decoded).toMatchObject({ ok: true, value: { controllerDigest: envelope.controllerDigest } });
+    expect(decoded).toMatchObject({
+      ok: true,
+      value: { controllerDigest: envelope.controllerDigest },
+    });
     expect(envelope.controllerDigest).toBe(computeControllerDigest(manifest));
   });
 
@@ -38,7 +41,9 @@ describe("controller release envelope", () => {
     expect(computeControllerDigest(tampered.manifest)).toBe(envelope.controllerDigest);
     expect(verifyControllerReleaseEnvelope(tampered)).toMatchObject({
       ok: false,
-      issues: expect.arrayContaining([expect.objectContaining({ code: "CONTROLLER_DIGEST_MISMATCH" })]),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ code: "CONTROLLER_DIGEST_MISMATCH" }),
+      ]),
     });
   });
 
@@ -48,15 +53,19 @@ describe("controller release envelope", () => {
       ...envelope,
       manifest: {
         ...envelope.manifest,
-        officialMembers: envelope.manifest.officialMembers.map((member) => member.packageId === "@rawr/plugin-devops"
-          ? { ...member, commandIds: ["deploy"] }
-          : member),
+        officialMembers: envelope.manifest.officialMembers.map((member) =>
+          member.packageId === "@rawr/plugin-devops"
+            ? { ...member, commandIds: ["deploy"] }
+            : member
+        ),
       },
     };
 
     expect(verifyControllerReleaseEnvelope(tampered)).toMatchObject({
       ok: false,
-      issues: expect.arrayContaining([expect.objectContaining({ code: "CONTROLLER_DIGEST_MISMATCH" })]),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ code: "CONTROLLER_DIGEST_MISMATCH" }),
+      ]),
     });
   });
 
@@ -67,15 +76,21 @@ describe("controller release envelope", () => {
       ok: false,
       issues: [{ code: "NON_CANONICAL_ENVELOPE" }],
     });
-    expect(verifyControllerReleaseEnvelope(envelope, { releaseDirectoryName: DIGEST_A })).toMatchObject({
+    expect(
+      verifyControllerReleaseEnvelope(envelope, { releaseDirectoryName: DIGEST_A })
+    ).toMatchObject({
       ok: false,
-      issues: expect.arrayContaining([expect.objectContaining({ code: "RELEASE_DIRECTORY_MISMATCH" })]),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ code: "RELEASE_DIRECTORY_MISMATCH" }),
+      ]),
     });
   });
 
   it("rejects unknown envelope fields", () => {
     const { envelope } = releaseFixture();
-    expect(verifyControllerReleaseEnvelope({ ...envelope, fallbackPath: "/tmp/source" })).toMatchObject({
+    expect(
+      verifyControllerReleaseEnvelope({ ...envelope, fallbackPath: "/tmp/source" })
+    ).toMatchObject({
       ok: false,
       issues: [{ code: "UNKNOWN_FIELD", path: "envelope.fallbackPath" }],
     });

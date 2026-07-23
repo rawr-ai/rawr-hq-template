@@ -75,33 +75,39 @@ describe("Hyperresearch Codex hook guardrails", () => {
   });
 
   it("rejects unsupported hook events", () => {
-    expect(decidePreToolUse({
-      payload: basePayload({ hook_event_name: "PostToolUse" }),
-    })).toEqual({
+    expect(
+      decidePreToolUse({
+        payload: basePayload({ hook_event_name: "PostToolUse" }),
+      })
+    ).toEqual({
       action: "error",
       reason: "Unsupported hook event: PostToolUse",
     });
   });
 
   it("accepts event/session/turn aliases from observed Codex payloads", () => {
-    expect(decidePreToolUse({
-      payload: {
-        event: "PreToolUse",
-        session: "session-1",
-        turn: "turn-1",
-        cwd: "/tmp/hyperresearch-hooks-test",
-        permission_mode: "default",
-        model: "gpt-5.5",
-        tool_name: "Bash",
-        tool_input: { command: "echo ok" },
-      },
-    })).toEqual({ action: "allow" });
+    expect(
+      decidePreToolUse({
+        payload: {
+          event: "PreToolUse",
+          session: "session-1",
+          turn: "turn-1",
+          cwd: "/tmp/hyperresearch-hooks-test",
+          permission_mode: "default",
+          model: "gpt-5.5",
+          tool_name: "Bash",
+          tool_input: { command: "echo ok" },
+        },
+      })
+    ).toEqual({ action: "allow" });
   });
 
   it("requires Bash command text for PreToolUse Bash payloads", () => {
-    expect(decidePreToolUse({
-      payload: basePayload({ tool_name: "Bash", tool_input: {} }),
-    })).toEqual({
+    expect(
+      decidePreToolUse({
+        payload: basePayload({ tool_name: "Bash", tool_input: {} }),
+      })
+    ).toEqual({
       action: "error",
       reason: "PreToolUse Bash payload missing tool_input.command",
     });
@@ -130,54 +136,73 @@ describe("Hyperresearch Codex hook guardrails", () => {
   });
 
   it("blocks python URL fetches", () => {
-    expect(decidePreToolUse({
-      payload: basePayload({
-        tool_name: "Bash",
-        tool_input: { command: "python -c \"import urllib.request; urllib.request.urlopen('https://example.com')\"" },
-      }),
-    }).action).toBe("block");
+    expect(
+      decidePreToolUse({
+        payload: basePayload({
+          tool_name: "Bash",
+          tool_input: {
+            command:
+              "python -c \"import urllib.request; urllib.request.urlopen('https://example.com')\"",
+          },
+        }),
+      }).action
+    ).toBe("block");
   });
 
   it("blocks direct URL commands even without curl or wget", () => {
-    expect(decidePreToolUse({
-      payload: basePayload({
-        tool_name: "Bash",
-        tool_input: { command: "node ./tools/read-source.js https://example.com/source" },
-      }),
-    }).action).toBe("block");
+    expect(
+      decidePreToolUse({
+        payload: basePayload({
+          tool_name: "Bash",
+          tool_input: { command: "node ./tools/read-source.js https://example.com/source" },
+        }),
+      }).action
+    ).toBe("block");
   });
 
   it("allows Hyperresearch service commands", () => {
-    expect(decidePreToolUse({
-      payload: basePayload({
-        tool_name: "Bash",
-        tool_input: { command: "bun run --cwd apps/cli rawr hyperresearch codex validate --ledger /tmp/run.json --backend fixture --json" },
-      }),
-    })).toEqual({ action: "allow" });
+    expect(
+      decidePreToolUse({
+        payload: basePayload({
+          tool_name: "Bash",
+          tool_input: {
+            command:
+              "bun run --cwd apps/cli rawr hyperresearch codex validate --ledger /tmp/run.json --backend fixture --json",
+          },
+        }),
+      })
+    ).toEqual({ action: "allow" });
   });
 
   it("allows explicitly routed source URLs", () => {
-    expect(decidePreToolUse({
-      payload: basePayload({
-        tool_name: "Bash",
-        tool_input: { command: "curl https://example.com/source" },
-      }),
-      options: {
-        allowedSourceUrls: ["https://example.com/source"],
-      },
-    })).toEqual({
+    expect(
+      decidePreToolUse({
+        payload: basePayload({
+          tool_name: "Bash",
+          tool_input: { command: "curl https://example.com/source" },
+        }),
+        options: {
+          allowedSourceUrls: ["https://example.com/source"],
+        },
+      })
+    ).toEqual({
       action: "allow",
       reason: "Source URL is explicitly routed through Hyperresearch packet capture",
     });
   });
 
   it("allows source commands explicitly marked by Hyperresearch capture env convention", () => {
-    expect(decidePreToolUse({
-      payload: basePayload({
-        tool_name: "Bash",
-        tool_input: { command: "HYPERRESEARCH_CODEX_CAPTURE=1 python -c \"print('https://example.com/source')\"" },
-      }),
-    })).toEqual({
+    expect(
+      decidePreToolUse({
+        payload: basePayload({
+          tool_name: "Bash",
+          tool_input: {
+            command:
+              "HYPERRESEARCH_CODEX_CAPTURE=1 python -c \"print('https://example.com/source')\"",
+          },
+        }),
+      })
+    ).toEqual({
       action: "allow",
       reason: "Command is explicitly marked as routed through Hyperresearch capture",
     });
@@ -197,10 +222,13 @@ describe("Hyperresearch Codex hook guardrails", () => {
 
   it("blocks Stop when the ledger is incomplete", async () => {
     const root = await makeTempDir();
-    await writeLedger(root, greenLedger({
-      completed: false,
-      steps: [{ id: "01-decompose", status: "complete" }],
-    }));
+    await writeLedger(
+      root,
+      greenLedger({
+        completed: false,
+        steps: [{ id: "01-decompose", status: "complete" }],
+      })
+    );
 
     const decision = decideStop({ payload: stopPayload(root) });
     expect(decision.action).toBe("block");
@@ -210,13 +238,18 @@ describe("Hyperresearch Codex hook guardrails", () => {
 
   it("blocks Stop when validation state is red", async () => {
     const root = await makeTempDir();
-    await writeLedger(root, greenLedger({
-      reviewDispositions: [{
-        id: "finding-1",
-        severity: "blocking",
-        status: "open",
-      }],
-    }));
+    await writeLedger(
+      root,
+      greenLedger({
+        reviewDispositions: [
+          {
+            id: "finding-1",
+            severity: "blocking",
+            status: "open",
+          },
+        ],
+      })
+    );
 
     const decision = decideStop({ payload: stopPayload(root) });
     expect(decision.action).toBe("block");
@@ -226,10 +259,13 @@ describe("Hyperresearch Codex hook guardrails", () => {
 
   it("blocks Stop when completed ledger is missing a passed validation marker", async () => {
     const root = await makeTempDir();
-    await writeLedger(root, greenLedger({
-      validation: undefined,
-      validationPassed: false,
-    }));
+    await writeLedger(
+      root,
+      greenLedger({
+        validation: undefined,
+        validationPassed: false,
+      })
+    );
 
     const decision = decideStop({ payload: stopPayload(root) });
     expect(decision.action).toBe("block");
@@ -279,11 +315,13 @@ describe("Hyperresearch Codex hook guardrails", () => {
   });
 
   it("classifies hook timeout as diagnostic error", () => {
-    expect(classifyHookTimeout({
-      startedAtMs: 0,
-      completedAtMs: 5_001,
-      timeoutMs: 5_000,
-    })).toEqual({
+    expect(
+      classifyHookTimeout({
+        startedAtMs: 0,
+        completedAtMs: 5_001,
+        timeoutMs: 5_000,
+      })
+    ).toEqual({
       action: "error",
       reason: "Hook exceeded timeout of 5000ms",
     });

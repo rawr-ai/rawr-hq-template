@@ -4,7 +4,12 @@ import { findWorkspaceRoot } from "@rawr/core";
 
 type ValidationResult =
   | { ok: true; path: string | null; config: unknown | null; issues?: never }
-  | { ok: false; path: string; config: unknown | null; issues: Array<{ path: string; message: string }> };
+  | {
+      ok: false;
+      path: string;
+      config: unknown | null;
+      issues: Array<{ path: string; message: string }>;
+    };
 
 export default class ConfigValidate extends RawrCommand {
   static description = "Validate rawr.config.ts (if present)";
@@ -27,7 +32,7 @@ export default class ConfigValidate extends RawrCommand {
 
     const loaded = await createHqOpsClient(workspaceRoot).config.getWorkspaceConfig(
       {},
-      createHqOpsCallOptions("cli.config.validate"),
+      createHqOpsCallOptions("cli.config.validate")
     );
 
     if (!loaded.path) {
@@ -43,9 +48,15 @@ export default class ConfigValidate extends RawrCommand {
 
     const loadError = loaded.error;
     if (loadError) {
-      const issues =
-        loadError.issues ?? [{ path: "(root)", message: loadError.cause ?? loadError.message }];
-      const payload: ValidationResult = { ok: false, path: loaded.path, config: loaded.config, issues };
+      const issues = loadError.issues ?? [
+        { path: "(root)", message: loadError.cause ?? loadError.message },
+      ];
+      const payload: ValidationResult = {
+        ok: false,
+        path: loaded.path,
+        config: loaded.config,
+        issues,
+      };
       const result = this.fail(loadError.message, { details: payload });
       this.outputResult(result, {
         flags: baseFlags,

@@ -35,14 +35,16 @@ function blobToFloat32(blob: Uint8Array): Float32Array {
 async function ensureSnippetEmbedding(
   resources: HqOpsResources,
   db: SqliteDatabase,
-  input: { id: string; model: string; content: string; config: SemanticEmbeddingConfig },
+  input: { id: string; model: string; content: string; config: SemanticEmbeddingConfig }
 ): Promise<Float32Array> {
   const contentHash = await sha256Hex(input.content);
-  const row = db.prepare(
-    `SELECT provider, model, dims, contentHash, vector
+  const row = db
+    .prepare(
+      `SELECT provider, model, dims, contentHash, vector
      FROM snippet_embeddings
-     WHERE id = $id`,
-  ).get({ $id: input.id }) as
+     WHERE id = $id`
+    )
+    .get({ $id: input.id }) as
     | { provider: string; model: string; dims: number; contentHash: string; vector: Uint8Array }
     | undefined;
 
@@ -59,7 +61,7 @@ async function ensureSnippetEmbedding(
   const vec = await resources.embeddings.embedText({ text: input.content, config: input.config });
   db.prepare(
     `INSERT OR REPLACE INTO snippet_embeddings (id, provider, model, dims, contentHash, vector, updatedAt)
-     VALUES ($id, $provider, $model, $dims, $contentHash, $vector, $updatedAt)`,
+     VALUES ($id, $provider, $model, $dims, $contentHash, $vector, $updatedAt)`
   ).run({
     $id: input.id,
     $provider: input.config.provider,
@@ -97,7 +99,7 @@ export async function searchSnippetsSemantic(
   config: SemanticEmbeddingConfig,
   query: string,
   limit: number,
-  opts?: { candidateLimit?: number },
+  opts?: { candidateLimit?: number }
 ): Promise<Array<JournalSearchRow & { score: number }>> {
   const candidateLimit = Math.max(1, Math.min(opts?.candidateLimit ?? 200, 500));
   const candidates = listRecentSnippetsFull(db, candidateLimit);

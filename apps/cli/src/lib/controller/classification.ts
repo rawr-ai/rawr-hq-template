@@ -96,7 +96,7 @@ export const controllerCommandPackages = [
 ] as const satisfies readonly ControllerCommandPackageClassification[];
 
 export function assertControllerClassification(
-  rows: readonly ControllerCommandPackageClassification[] = controllerCommandPackages,
+  rows: readonly ControllerCommandPackageClassification[] = controllerCommandPackages
 ): void {
   const seen = new Set<string>();
 
@@ -119,7 +119,7 @@ export function controllerMemberIds(): ReadonlySet<string> {
   return new Set(
     controllerCommandPackages
       .filter((row) => row.disposition === "controller-member")
-      .map((row) => row.packageId),
+      .map((row) => row.packageId)
   );
 }
 
@@ -127,6 +127,6 @@ export function externalFixtureIds(): ReadonlySet<string> {
   return new Set(
     controllerCommandPackages
       .filter((row) => row.disposition === "external-fixture")
-      .map((row) => row.packageId),
+      .map((row) => row.packageId)
   );
 }

@@ -18,7 +18,10 @@ function parseStaticDefaultConfig(source: string): unknown | null {
   }
 }
 
-export async function loadRawrConfig(resources: ConfigResources, repoRoot: string): Promise<LoadRawrConfigResult> {
+export async function loadRawrConfig(
+  resources: ConfigResources,
+  repoRoot: string
+): Promise<LoadRawrConfigResult> {
   const configPath = rawrConfigPath(resources, repoRoot);
 
   let st: { mtimeMs: number } | null = null;
@@ -79,7 +82,9 @@ export async function loadRawrConfig(resources: ConfigResources, repoRoot: strin
   }
 }
 
-export async function loadGlobalRawrConfig(resources: ConfigResources): Promise<LoadRawrConfigResult> {
+export async function loadGlobalRawrConfig(
+  resources: ConfigResources
+): Promise<LoadRawrConfigResult> {
   const configPath = rawrGlobalConfigPath(resources);
 
   const stat = await resources.fs.stat(configPath);

@@ -85,7 +85,13 @@ export async function listSourceFiles() {
 }
 
 function collectModuleSpecifiers(filePath, source) {
-  const sourceFile = ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX
+  );
   const specifiers = new Set();
 
   function visit(node) {
@@ -135,7 +141,9 @@ export async function listFilesUnder(relPath) {
   const entries = await fs.readdir(absPath, { recursive: true, withFileTypes: true });
   return entries
     .filter((entry) => entry.isFile())
-    .map((entry) => toPosix(path.join(relPath, entry.parentPath.slice(absPath.length + 1), entry.name)))
+    .map((entry) =>
+      toPosix(path.join(relPath, entry.parentPath.slice(absPath.length + 1), entry.name))
+    )
     .sort();
 }
 

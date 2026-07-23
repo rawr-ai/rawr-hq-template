@@ -26,17 +26,13 @@ import {
   type GlobalAliasInstallResult,
   type GlobalAliasWriteObserver,
 } from "./global-alias.ts";
-import {
-  type CommandRunner,
-  runCommand,
-  scrubbedBunEnvironment,
-} from "./process.ts";
+import { type CommandRunner, runCommand, scrubbedBunEnvironment } from "./process.ts";
 import { requireVerifiedOfficialControllerRelease } from "./verify-official.ts";
 import type { ControllerSelectorStore } from "../selector-store.ts";
 
 const ACTIVATION_PROBE_PREFIX = "rawr-controller-activation-probe-";
 const AMBIENT_ENV_ASSERTION = [
-  'if (process.env.RAWR_HOSTILE_ENV !== undefined) {',
+  "if (process.env.RAWR_HOSTILE_ENV !== undefined) {",
   '  console.error("RAWR_HOSTILE_ENV was loaded");',
   "  process.exit(78);",
   "}",
@@ -76,10 +72,7 @@ export type ProductionControllerActivationOptions = Readonly<{
 }>;
 
 function isMissing(error: unknown): boolean {
-  return typeof error === "object"
-    && error !== null
-    && "code" in error
-    && error.code === "ENOENT";
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }
 
 async function removeActivationProbeRoot(probeRoot: string): Promise<void> {
@@ -87,10 +80,10 @@ async function removeActivationProbeRoot(probeRoot: string): Promise<void> {
   const canonicalProbeRoot = await realpath(probeRoot);
   const status = await lstat(probeRoot);
   if (
-    !status.isDirectory()
-    || canonicalProbeRoot !== probeRoot
-    || dirname(canonicalProbeRoot) !== canonicalTemporaryRoot
-    || !basename(canonicalProbeRoot).startsWith(ACTIVATION_PROBE_PREFIX)
+    !status.isDirectory() ||
+    canonicalProbeRoot !== probeRoot ||
+    dirname(canonicalProbeRoot) !== canonicalTemporaryRoot ||
+    !basename(canonicalProbeRoot).startsWith(ACTIVATION_PROBE_PREFIX)
   ) {
     throw new Error(`refusing to remove invalid controller activation probe root: ${probeRoot}`);
   }
@@ -144,7 +137,7 @@ export async function probeControllerCleanStart(options: {
 }): Promise<void> {
   const canonicalTemporaryRoot = await realpath(tmpdir());
   const probeRoot = await realpath(
-    await mkdtemp(join(canonicalTemporaryRoot, ACTIVATION_PROBE_PREFIX)),
+    await mkdtemp(join(canonicalTemporaryRoot, ACTIVATION_PROBE_PREFIX))
   );
   let primaryError: unknown;
   try {
@@ -164,7 +157,10 @@ export async function probeControllerCleanStart(options: {
       writeFile(preloadPath, preloadSource),
       writeFile(join(operatorCwd, "bunfig.toml"), `preload = [${JSON.stringify(preloadPath)}]\n`),
       writeFile(join(operatorCwd, ".env"), "RAWR_HOSTILE_ENV=loaded\n"),
-      writeFile(join(operatorConfigHome, "bunfig.toml"), `preload = [${JSON.stringify(preloadPath)}]\n`),
+      writeFile(
+        join(operatorConfigHome, "bunfig.toml"),
+        `preload = [${JSON.stringify(preloadPath)}]\n`
+      ),
     ]);
 
     const runtimePath = join(options.releaseRoot, CONTROLLER_RUNTIME_PATH);
@@ -190,14 +186,8 @@ export async function probeControllerCleanStart(options: {
     try {
       await options.runner(
         runtimePath,
-        [
-          "--config=/dev/null",
-          "--no-env-file",
-          "--no-install",
-          "-e",
-          AMBIENT_ENV_ASSERTION,
-        ],
-        { cwd: operatorCwd, env: environment },
+        ["--config=/dev/null", "--no-env-file", "--no-install", "-e", AMBIENT_ENV_ASSERTION],
+        { cwd: operatorCwd, env: environment }
       );
     } catch (error) {
       throw new Error("CONTROLLER_CLEAN_START_FAILED:ambient-env", { cause: error });
@@ -208,11 +198,13 @@ export async function probeControllerCleanStart(options: {
         await options.runner(
           runtimePath,
           ["--config=/dev/null", "--no-env-file", "--no-install", entryPath, ...command.argv],
-          { cwd: options.releaseRoot, env: environment },
+          { cwd: options.releaseRoot, env: environment }
         );
       } catch (error) {
         const detail = error instanceof Error ? error.message : String(error);
-        throw new Error(`CONTROLLER_CLEAN_START_FAILED:${command.name}: ${detail}`, { cause: error });
+        throw new Error(`CONTROLLER_CLEAN_START_FAILED:${command.name}: ${detail}`, {
+          cause: error,
+        });
       }
       await assertNoAmbientStartup(command.name);
     }
@@ -228,7 +220,7 @@ export async function probeControllerCleanStart(options: {
   if (primaryError !== undefined && cleanupError !== undefined) {
     throw new AggregateError(
       [primaryError, cleanupError],
-      "controller clean-start probe failed and guarded cleanup also failed",
+      "controller clean-start probe failed and guarded cleanup also failed"
     );
   }
   if (primaryError !== undefined) throw primaryError;
@@ -236,7 +228,7 @@ export async function probeControllerCleanStart(options: {
 }
 
 export async function selectProductionControllerRelease(
-  input: ProductionControllerActivationOptions,
+  input: ProductionControllerActivationOptions
 ): Promise<ProductionControllerSelectionResult> {
   const runner = input.commandRunner ?? runCommand;
   const dataRoot = await realpath(resolve(input.dataRoot));
@@ -256,28 +248,32 @@ export async function selectProductionControllerRelease(
   });
   if (inspection.kind === "converged") {
     const launcherInspection = await inspectStableControllerLauncher({ dataRoot });
-    const aliasInspection = input.globalBinDir === undefined
-      ? null
-      : await inspectGlobalControllerAlias({
-          globalBinDir: resolve(input.globalBinDir),
-          launcherPath: launcherInspection.path,
-        });
-    const auxiliariesConverged = launcherInspection.kind === "converged"
-      && (aliasInspection === null || aliasInspection.kind === "converged");
-    if (!auxiliariesConverged) {
-      const launcher = launcherInspection.kind === "converged"
-        ? launcherInspection
-        : await installStableControllerLauncher({
-            dataRoot,
-            observe: input.launcherWriteObserver,
-          });
-      const preparedGlobalAlias = input.globalBinDir === undefined
+    const aliasInspection =
+      input.globalBinDir === undefined
         ? null
-        : await prepareGlobalControllerAlias({
+        : await inspectGlobalControllerAlias({
             globalBinDir: resolve(input.globalBinDir),
-            launcherPath: launcher.path,
-            observe: input.globalAliasWriteObserver,
+            launcherPath: launcherInspection.path,
           });
+    const auxiliariesConverged =
+      launcherInspection.kind === "converged" &&
+      (aliasInspection === null || aliasInspection.kind === "converged");
+    if (!auxiliariesConverged) {
+      const launcher =
+        launcherInspection.kind === "converged"
+          ? launcherInspection
+          : await installStableControllerLauncher({
+              dataRoot,
+              observe: input.launcherWriteObserver,
+            });
+      const preparedGlobalAlias =
+        input.globalBinDir === undefined
+          ? null
+          : await prepareGlobalControllerAlias({
+              globalBinDir: resolve(input.globalBinDir),
+              launcherPath: launcher.path,
+              observe: input.globalAliasWriteObserver,
+            });
       let beforeCommit;
       try {
         beforeCommit = await inspectControllerActivation({
@@ -293,7 +289,7 @@ export async function selectProductionControllerRelease(
           } catch (cleanupError) {
             throw new AggregateError(
               [inspectionError, cleanupError],
-              "controller selection inspection failed and prepared global alias cleanup also failed",
+              "controller selection inspection failed and prepared global alias cleanup also failed"
             );
           }
         }
@@ -307,18 +303,19 @@ export async function selectProductionControllerRelease(
           } catch (cleanupError) {
             throw new AggregateError(
               [selectionError, cleanupError],
-              "controller selection changed and prepared global alias cleanup also failed",
+              "controller selection changed and prepared global alias cleanup also failed"
             );
           }
         }
         throw selectionError;
       }
-      const globalAlias = preparedGlobalAlias === null
-        ? null
-        : await commitPreparedGlobalControllerAlias(
-            preparedGlobalAlias,
-            input.globalAliasWriteObserver,
-          );
+      const globalAlias =
+        preparedGlobalAlias === null
+          ? null
+          : await commitPreparedGlobalControllerAlias(
+              preparedGlobalAlias,
+              input.globalAliasWriteObserver
+            );
       const aliasSettlementError = unhealthyGlobalAliasSettlement(globalAlias);
       let afterCommit;
       try {
@@ -332,7 +329,7 @@ export async function selectProductionControllerRelease(
         if (aliasSettlementError !== undefined) {
           throw new AggregateError(
             [aliasSettlementError, inspectionError],
-            "global alias settlement and final controller selection inspection both failed",
+            "global alias settlement and final controller selection inspection both failed"
           );
         }
         throw inspectionError;
@@ -342,7 +339,7 @@ export async function selectProductionControllerRelease(
         if (aliasSettlementError !== undefined) {
           throw new AggregateError(
             [aliasSettlementError, selectionError],
-            "global alias settlement failed while the controller selection changed",
+            "global alias settlement failed while the controller selection changed"
           );
         }
         throw selectionError;
@@ -374,7 +371,11 @@ export async function selectProductionControllerRelease(
       replaced: null,
       selectorDurability: "unchanged",
     });
-    return Object.freeze({ launcher: launcherInspection, activation, globalAlias: aliasInspection });
+    return Object.freeze({
+      launcher: launcherInspection,
+      activation,
+      globalAlias: aliasInspection,
+    });
   }
 
   await probeControllerCleanStart({
@@ -387,13 +388,14 @@ export async function selectProductionControllerRelease(
     dataRoot,
     observe: input.launcherWriteObserver,
   });
-  const preparedGlobalAlias = input.globalBinDir === undefined
-    ? null
-    : await prepareGlobalControllerAlias({
-        globalBinDir: resolve(input.globalBinDir),
-        launcherPath: launcher.path,
-        observe: input.globalAliasWriteObserver,
-      });
+  const preparedGlobalAlias =
+    input.globalBinDir === undefined
+      ? null
+      : await prepareGlobalControllerAlias({
+          globalBinDir: resolve(input.globalBinDir),
+          launcherPath: launcher.path,
+          observe: input.globalAliasWriteObserver,
+        });
   let activation: ControllerActivationResult;
   try {
     activation = await activateControllerRelease({
@@ -409,23 +411,24 @@ export async function selectProductionControllerRelease(
       } catch (cleanupError) {
         throw new AggregateError(
           [activationError, cleanupError],
-          "controller selector failed and prepared global alias cleanup also failed",
+          "controller selector failed and prepared global alias cleanup also failed"
         );
       }
     }
     throw activationError;
   }
-  const globalAlias = preparedGlobalAlias === null
-    ? null
-    : await commitPreparedGlobalControllerAlias(
-        preparedGlobalAlias,
-        input.globalAliasWriteObserver,
-      );
+  const globalAlias =
+    preparedGlobalAlias === null
+      ? null
+      : await commitPreparedGlobalControllerAlias(
+          preparedGlobalAlias,
+          input.globalAliasWriteObserver
+        );
   return Object.freeze({ launcher, activation, globalAlias });
 }
 
 export async function activateProductionController(
-  input: ProductionControllerActivationOptions,
+  input: ProductionControllerActivationOptions
 ): Promise<ProductionControllerActivationResult> {
   const dataRoot = await realpath(resolve(input.dataRoot));
   const releaseRoot = controllerReleasePath(dataRoot, input.controllerDigest);
@@ -446,19 +449,21 @@ export async function activateProductionController(
   });
 }
 
-function assertHostCompatibleRelease(runtime: Readonly<{
-  platform: string;
-  architecture: string;
-}>): void {
+function assertHostCompatibleRelease(
+  runtime: Readonly<{
+    platform: string;
+    architecture: string;
+  }>
+): void {
   if (runtime.platform !== process.platform || runtime.architecture !== process.arch) {
     throw new Error(
-      `CONTROLLER_RUNTIME_HOST_MISMATCH: release ${runtime.platform}/${runtime.architecture}, host ${process.platform}/${process.arch}`,
+      `CONTROLLER_RUNTIME_HOST_MISMATCH: release ${runtime.platform}/${runtime.architecture}, host ${process.platform}/${process.arch}`
     );
   }
 }
 
 function unhealthyGlobalAliasSettlement(
-  result: GlobalAliasInstallResult | null,
+  result: GlobalAliasInstallResult | null
 ): Error | undefined {
   if (result === null) return undefined;
   if (result.kind === "failed") return new Error(`GLOBAL_ALIAS_SETTLEMENT_FAILED:${result.error}`);

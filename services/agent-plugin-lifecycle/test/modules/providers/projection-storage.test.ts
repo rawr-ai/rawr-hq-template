@@ -17,7 +17,11 @@ import type {
   ImmutableProviderTreeKey,
   ProjectionRecordKey,
 } from "../../../src/service/modules/providers/model/repositories/projection-storage";
-import { failure, issue, success } from "../../../src/service/modules/providers/model/errors/deployment-result";
+import {
+  failure,
+  issue,
+  success,
+} from "../../../src/service/modules/providers/model/errors/deployment-result";
 import {
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
@@ -43,8 +47,12 @@ describe("pathless projection storage", () => {
     const completion = journal.findIndex((event) => event.startsWith("record:manifest:"));
     expect(completion).toBe(journal.length - 1);
     expect(trees.events).toHaveLength(projection.members.length);
-    expect(journal.slice(0, completion).some((event) => event.startsWith("tree:member:"))).toBe(true);
-    expect(journal.slice(0, completion).some((event) => event.startsWith("record:member:"))).toBe(true);
+    expect(journal.slice(0, completion).some((event) => event.startsWith("tree:member:"))).toBe(
+      true
+    );
+    expect(journal.slice(0, completion).some((event) => event.startsWith("record:member:"))).toBe(
+      true
+    );
 
     const memberRecord = records.require(memberRecordKey(projection.members[0]!.memberFingerprint));
     const manifest = records.require(manifestRecordKey(projection.projectionDigest));
@@ -72,9 +80,13 @@ describe("pathless projection storage", () => {
     const partial = await storage.projectionMaterializer.materialize(projection);
     expect(partial.ok).toBe(false);
     expect(records.has(manifestRecordKey(projection.projectionDigest))).toBe(false);
-    expect(projection.members.every((member) =>
-      records.has(memberRecordKey(member.memberFingerprint))
-      && trees.has(memberTreeKey(member.memberFingerprint)))).toBe(true);
+    expect(
+      projection.members.every(
+        (member) =>
+          records.has(memberRecordKey(member.memberFingerprint)) &&
+          trees.has(memberTreeKey(member.memberFingerprint))
+      )
+    ).toBe(true);
     const memberPublications = records.events.length + trees.events.length;
     const retried = await storage.projectionMaterializer.materialize(projection);
     expect(retried).toEqual({
@@ -89,11 +101,13 @@ describe("pathless projection storage", () => {
     const records = new FakeRecords();
     const trees = new FakeTrees();
     const firstMember = projection.members[0]!;
-    trees.seed(memberTreeKey(firstMember.memberFingerprint), [{
-      path: firstMember.files[0]!.path,
-      mode: firstMember.files[0]!.mode,
-      bytes: new TextEncoder().encode("substituted\n"),
-    }]);
+    trees.seed(memberTreeKey(firstMember.memberFingerprint), [
+      {
+        path: firstMember.files[0]!.path,
+        mode: firstMember.files[0]!.mode,
+        bytes: new TextEncoder().encode("substituted\n"),
+      },
+    ]);
     const storage = createPathlessProjectionStorage({ records, trees });
 
     const result = await storage.projectionMaterializer.materialize(projection);
@@ -146,10 +160,7 @@ describe("pathless projection storage", () => {
         sourceDigest: registration.sourceDigest,
       },
     });
-    const source = await storage.marketplaceSources.read(
-      target,
-      registration,
-    );
+    const source = await storage.marketplaceSources.read(target, registration);
     expect(source).toEqual({
       ok: true,
       value: {
@@ -192,16 +203,20 @@ class FakeRecords implements FlatProjectionRecordCollection {
 
   async read(key: ProjectionRecordKey) {
     const bytes = this.#records.get(recordKey(key));
-    return success(bytes === undefined
-      ? { kind: "absent" as const }
-      : { kind: "present" as const, bytes: new Uint8Array(bytes) });
+    return success(
+      bytes === undefined
+        ? { kind: "absent" as const }
+        : { kind: "present" as const, bytes: new Uint8Array(bytes) }
+    );
   }
 
   async publish(key: ProjectionRecordKey, bytes: Uint8Array) {
     this.publishAttempts.push(recordKey(key));
     if (key.kind === "manifest" && this.failNextManifest) {
       this.failNextManifest = false;
-      return failure([issue("MUTATION_FAILED", "projection.manifest", "Injected manifest publication failure")]);
+      return failure([
+        issue("MUTATION_FAILED", "projection.manifest", "Injected manifest publication failure"),
+      ]);
     }
     const identity = recordKey(key);
     const existing = this.#records.get(identity);
@@ -236,9 +251,11 @@ class FakeTrees implements ImmutableProviderTreeCollection {
 
   async read(key: ImmutableProviderTreeKey) {
     const files = this.#trees.get(treeKey(key));
-    return success(files === undefined
-      ? { kind: "absent" as const }
-      : { kind: "present" as const, files: cloneTree(files) });
+    return success(
+      files === undefined
+        ? { kind: "absent" as const }
+        : { kind: "present" as const, files: cloneTree(files) }
+    );
   }
 
   async publish(key: ImmutableProviderTreeKey, files: readonly ImmutableProviderTreeFile[]) {
@@ -287,7 +304,9 @@ function completeProjection(): AgentProviderProjection {
   return rendered.value;
 }
 
-function marketplaceRegistration(projection: AgentProviderProjection): ProviderMarketplaceRegistration {
+function marketplaceRegistration(
+  projection: AgentProviderProjection
+): ProviderMarketplaceRegistration {
   return createProviderMarketplaceRegistration({
     provider: projection.provider,
     adapterProtocol: projection.adapterProtocol,
@@ -307,7 +326,9 @@ function mustTargetProjection(projection: AgentProviderProjection) {
     provider: projection.provider,
     home: "/provider-home",
     targetDigest: `pt1_${"a".repeat(64)}`,
-  } as Parameters<ReturnType<typeof createPathlessProjectionStorage>["marketplaceSources"]["read"]>[0];
+  } as Parameters<
+    ReturnType<typeof createPathlessProjectionStorage>["marketplaceSources"]["read"]
+  >[0];
 }
 
 function snapshot(release: AgentPluginRelease): VerifiedReleaseArtifactV1 {
@@ -324,23 +345,27 @@ function snapshot(release: AgentPluginRelease): VerifiedReleaseArtifactV1 {
   };
 }
 
-function manifestRecordKey(projectionDigest: AgentProviderProjection["projectionDigest"]): ProjectionRecordKey {
+function manifestRecordKey(
+  projectionDigest: AgentProviderProjection["projectionDigest"]
+): ProjectionRecordKey {
   return { kind: "manifest", projectionDigest };
 }
 
 function memberRecordKey(
-  memberFingerprint: AgentProviderProjection["members"][number]["memberFingerprint"],
+  memberFingerprint: AgentProviderProjection["members"][number]["memberFingerprint"]
 ): ProjectionRecordKey {
   return { kind: "member", memberFingerprint };
 }
 
 function memberTreeKey(
-  memberFingerprint: AgentProviderProjection["members"][number]["memberFingerprint"],
+  memberFingerprint: AgentProviderProjection["members"][number]["memberFingerprint"]
 ): ImmutableProviderTreeKey {
   return { kind: "member", memberFingerprint };
 }
 
-function marketplaceTreeKey(registration: ProviderMarketplaceRegistration): ImmutableProviderTreeKey {
+function marketplaceTreeKey(
+  registration: ProviderMarketplaceRegistration
+): ImmutableProviderTreeKey {
   return {
     kind: "marketplace",
     projectionDigest: registration.projectionDigest,
@@ -360,23 +385,34 @@ function treeKey(key: ImmutableProviderTreeKey): string {
     : `marketplace:${key.projectionDigest}:${key.sourceDigest}`;
 }
 
-function cloneTree(files: readonly ImmutableProviderTreeFile[]): readonly ImmutableProviderTreeFile[] {
-  return Object.freeze(files.map((file) => Object.freeze({ ...file, bytes: new Uint8Array(file.bytes) })));
+function cloneTree(
+  files: readonly ImmutableProviderTreeFile[]
+): readonly ImmutableProviderTreeFile[] {
+  return Object.freeze(
+    files.map((file) => Object.freeze({ ...file, bytes: new Uint8Array(file.bytes) }))
+  );
 }
 
 function sameTree(
   left: readonly ImmutableProviderTreeFile[],
-  right: readonly ImmutableProviderTreeFile[],
+  right: readonly ImmutableProviderTreeFile[]
 ): boolean {
-  return left.length === right.length && left.every((file, index) => {
-    const other = right[index];
-    return other !== undefined
-      && file.path === other.path
-      && file.mode === other.mode
-      && sameBytes(file.bytes, other.bytes);
-  });
+  return (
+    left.length === right.length &&
+    left.every((file, index) => {
+      const other = right[index];
+      return (
+        other !== undefined &&
+        file.path === other.path &&
+        file.mode === other.mode &&
+        sameBytes(file.bytes, other.bytes)
+      );
+    })
+  );
 }
 
 function sameBytes(left: Uint8Array, right: Uint8Array): boolean {
-  return left.byteLength === right.byteLength && left.every((value, index) => value === right[index]);
+  return (
+    left.byteLength === right.byteLength && left.every((value, index) => value === right[index])
+  );
 }

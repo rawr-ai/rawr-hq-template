@@ -19,16 +19,10 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [
-        "services/*/src/service/**/*.ts",
-        "plugins/server/api/*/src/service/**/*.ts"
-      ]
+      "patterns": ["services/*/src/service/**/*.ts", "plugins/server/api/*/src/service/**/*.ts"]
     }
   ],
-  "scanRoots": [
-    "services",
-    "plugins/server/api"
-  ],
+  "scanRoots": ["services", "plugins/server/api"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_orpc_relationships/baseline.json"

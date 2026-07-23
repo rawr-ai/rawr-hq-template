@@ -17,10 +17,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { module } from "./module";
-import {
-  createProcedureAnalytics,
-  createProcedureObservability,
-} from "./middleware";
+import { createProcedureAnalytics, createProcedureObservability } from "./middleware";
 import { type Tag } from "./schemas";
 
 /**
@@ -42,27 +39,31 @@ import { type Tag } from "./schemas";
  * additive middleware in the package.
  */
 const create = module.create
-  .use(createProcedureObservability({
-    onStart: ({ span, context }) => {
-      span?.addEvent("todo.tags.create.normalization.started", {
-        workspace_id: context.workspaceId,
-      });
-    },
-    onSuccess: ({ span, context }) => {
-      span?.addEvent("todo.tags.create.normalization.succeeded", {
-        workspace_id: context.workspaceId,
-      });
-    },
-  }))
-  .use(createProcedureAnalytics({
-    payload: ({ context, outcome }) => ({
-      analytics_layer: "procedure",
-      analytics_procedure: "tags.create",
-      analytics_outcome: outcome,
-      analytics_workspace_id: context.workspaceId,
-      analytics_trace_id: context.traceId,
-    }),
-  }))
+  .use(
+    createProcedureObservability({
+      onStart: ({ span, context }) => {
+        span?.addEvent("todo.tags.create.normalization.started", {
+          workspace_id: context.workspaceId,
+        });
+      },
+      onSuccess: ({ span, context }) => {
+        span?.addEvent("todo.tags.create.normalization.succeeded", {
+          workspace_id: context.workspaceId,
+        });
+      },
+    })
+  )
+  .use(
+    createProcedureAnalytics({
+      payload: ({ context, outcome }) => ({
+        analytics_layer: "procedure",
+        analytics_procedure: "tags.create",
+        analytics_outcome: outcome,
+        analytics_workspace_id: context.workspaceId,
+        analytics_trace_id: context.traceId,
+      }),
+    })
+  )
   .handler(async ({ context, input, errors }) => {
     const normalizedName = input.name.trim();
     const normalizedColor = input.color.toLowerCase();
@@ -93,5 +94,5 @@ const list = module.list.handler(async ({ context }) => {
 /** Contract-enforced module router (fails typecheck if contract and router drift). */
 export const router = module.router({
   create,
-  list
+  list,
 });

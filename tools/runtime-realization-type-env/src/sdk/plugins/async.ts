@@ -1,8 +1,5 @@
 import type { EffectBody, RawrEffectYield } from "../effect";
-import type {
-  InvocationBoundEffectServiceClients,
-  ServiceUses,
-} from "../service";
+import type { InvocationBoundEffectServiceClients, ServiceUses } from "../service";
 import type {
   BoundaryTelemetry,
   EffectBoundaryContext,
@@ -77,24 +74,18 @@ export interface AsyncStepBridgeInput<
 
 export interface AsyncStepEffectFacade {
   run<TOutput, TError, TRequirements>(
-    descriptor: AsyncStepEffectDescriptor<TOutput, TError, TRequirements, any, any>,
+    descriptor: AsyncStepEffectDescriptor<TOutput, TError, TRequirements, any, any>
   ): Promise<TOutput>;
 }
 
-export function stepEffect(
-  input: AsyncStepBridgeInput,
-): AsyncStepEffectFacade {
+export function stepEffect(input: AsyncStepBridgeInput): AsyncStepEffectFacade {
   return {
     async run(descriptor) {
       const result = descriptor.effect(input);
       if (Symbol.iterator in Object(result)) {
         const iterator = (result as Iterable<RawrEffectYield<unknown, unknown>>)[
           Symbol.iterator
-        ]() as Iterator<
-          RawrEffectYield<unknown, unknown>,
-          unknown,
-          unknown
-        >;
+        ]() as Iterator<RawrEffectYield<unknown, unknown>, unknown, unknown>;
         let next = iterator.next();
         while (!next.done) next = iterator.next(undefined);
         return next.value as never;
@@ -111,7 +102,7 @@ export interface WorkflowDefinition<TContext = any> {
 }
 
 export function defineWorkflow<const TDefinition extends WorkflowDefinition>(
-  definition: TDefinition,
+  definition: TDefinition
 ): TDefinition {
   return definition;
 }
@@ -123,7 +114,7 @@ export interface AsyncWorkflowPluginDefinition {
 }
 
 export function defineAsyncWorkflowPlugin<const TInput extends AsyncWorkflowPluginDefinition>(
-  input: TInput,
+  input: TInput
 ): TInput {
   return input;
 }

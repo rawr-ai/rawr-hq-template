@@ -100,7 +100,10 @@ describe("vendor lifecycle applications", () => {
 
   it("keeps held and already-current sources read-only", async () => {
     const current = new VendorHarness();
-    const currentResult = await createVendorUpdate(current)({ contentWorkspace, sourceIds: [sourceId] });
+    const currentResult = await createVendorUpdate(current)({
+      contentWorkspace,
+      sourceIds: [sourceId],
+    });
     expect(currentResult).toEqual({ kind: "ReadOnlyConverged", sourceIds: [sourceId] });
     expect(current.counters.materializeRemote).toBe(0);
     expect(current.counters.capture).toBe(0);
@@ -245,10 +248,7 @@ describe("vendor lifecycle applications", () => {
     expect(result).toMatchObject({
       kind: "RestorationFailed",
       sourceIds: [sourceId],
-      issues: [
-        { code: "AuthoringFailed" },
-        { code: "RestorationFailed" },
-      ],
+      issues: [{ code: "AuthoringFailed" }, { code: "RestorationFailed" }],
     });
     expect(harness.counters.restore).toBe(1);
     expect(harness.releasedDisposition).toBe("UnsettledRecovery");
@@ -321,26 +321,26 @@ describe("vendor lifecycle applications", () => {
     expect(harness.counters.settle).toBe(0);
   });
 
-  it.each(["observe", "ancestry"] as const)(
-    "classifies an unavailable upstream %s authority without authoring",
-    async (stage) => {
-      const harness = new VendorHarness();
-      harness.setRemote("next payload\n", "7");
-      harness.failUpstream(stage, "private provider diagnostic");
+  it.each([
+    "observe",
+    "ancestry",
+  ] as const)("classifies an unavailable upstream %s authority without authoring", async (stage) => {
+    const harness = new VendorHarness();
+    harness.setRemote("next payload\n", "7");
+    harness.failUpstream(stage, "private provider diagnostic");
 
-      const result = await createVendorStatus(harness)({ contentWorkspace });
+    const result = await createVendorStatus(harness)({ contentWorkspace });
 
-      expect(result).toMatchObject({
-        kind: "VendorStatus",
-        sources: [{ sourceId, classification: "Unavailable" }],
-      });
-      expect(Value.Check(VendorStatusResultSchema, result)).toBe(true);
-      expect(JSON.stringify(result)).not.toContain("private provider diagnostic");
-      expect(harness.counters.materializeRemote).toBe(0);
-      expect(harness.counters.capture).toBe(0);
-      expect(harness.counters.apply).toBe(0);
-    },
-  );
+    expect(result).toMatchObject({
+      kind: "VendorStatus",
+      sources: [{ sourceId, classification: "Unavailable" }],
+    });
+    expect(Value.Check(VendorStatusResultSchema, result)).toBe(true);
+    expect(JSON.stringify(result)).not.toContain("private provider diagnostic");
+    expect(harness.counters.materializeRemote).toBe(0);
+    expect(harness.counters.capture).toBe(0);
+    expect(harness.counters.apply).toBe(0);
+  });
 
   it("keeps status read-only when update materialization is unavailable", async () => {
     const harness = new VendorHarness();
@@ -451,7 +451,10 @@ class VendorHarness {
     this.files.set(declarationPath, fileImage(declarationBytes));
     this.files.set(provenancePath, fileImage(provenanceBytes));
     this.files.set(lockPath, fileImage(lockBytes));
-    this.files.set(releaseInputPath, fileImage(releaseInputBytes(declarationBytes, provenanceBytes, lockBytes)));
+    this.files.set(
+      releaseInputPath,
+      fileImage(releaseInputBytes(declarationBytes, provenanceBytes, lockBytes))
+    );
     this.trees.set(destinationPath, admittedEntries);
     this.remote = remoteTree(admitted.sourceCommit, admitted.sourceTree, admittedEntries);
 
@@ -470,7 +473,9 @@ class VendorHarness {
         this.counters.readTree += 1;
         const tree = this.trees.get(path);
         if (tree === undefined) throw resourceFailure("read-tree", "Missing", path);
-        return tree.map(({ path: entryPath, mode, blob }) => Object.freeze({ path: entryPath, mode, blob }));
+        return tree.map(({ path: entryPath, mode, blob }) =>
+          Object.freeze({ path: entryPath, mode, blob })
+        );
       },
       observeRemote: async () => {
         this.counters.observeRemote += 1;
@@ -485,10 +490,12 @@ class VendorHarness {
         if (!this.corruptMaterializedBytes) return cloneRemote(this.remote);
         return Object.freeze({
           ...this.remote,
-          entries: this.remote.entries.map((entry) => Object.freeze({
-            ...entry,
-            bytes: encoder.encode("wrong bytes\n"),
-          })),
+          entries: this.remote.entries.map((entry) =>
+            Object.freeze({
+              ...entry,
+              bytes: encoder.encode("wrong bytes\n"),
+            })
+          ),
         });
       },
       isAncestor: async () => {
@@ -550,9 +557,13 @@ class VendorHarness {
       },
       release: async ({ readToken, captureHandle, disposition }) => {
         this.counters.release += 1;
-        const noMutation = this.captureLifecycle === "Captured" || this.captureLifecycle === "Converged";
+        const noMutation =
+          this.captureLifecycle === "Captured" || this.captureLifecycle === "Converged";
         const unsettled = this.captureLifecycle === "Partial";
-        if ((disposition === "NoMutation" && !noMutation) || (disposition === "UnsettledRecovery" && !unsettled)) {
+        if (
+          (disposition === "NoMutation" && !noMutation) ||
+          (disposition === "UnsettledRecovery" && !unsettled)
+        ) {
           throw resourceFailure("release", "HandleState");
         }
         this.releasedDisposition = disposition;
@@ -577,11 +588,12 @@ class VendorHarness {
   }
 
   failUpstream(stage: UpstreamFailureStage, detail: string): void {
-    const operation = stage === "observe"
-      ? "observe-remote"
-      : stage === "materialize"
-        ? "materialize-remote"
-        : "ancestry";
+    const operation =
+      stage === "observe"
+        ? "observe-remote"
+        : stage === "materialize"
+          ? "materialize-remote"
+          : "ancestry";
     this.upstreamFailures.set(stage, resourceFailure(operation, "GitFailed", undefined, detail));
   }
 
@@ -606,7 +618,8 @@ class VendorHarness {
 
   private snapshot(path: string): PathImage {
     const file = this.files.get(path);
-    if (file !== undefined) return Object.freeze({ kind: "File", value: fileImage(file.bytes, file.mode) });
+    if (file !== undefined)
+      return Object.freeze({ kind: "File", value: fileImage(file.bytes, file.mode) });
     const tree = this.trees.get(path);
     return tree === undefined
       ? Object.freeze({ kind: "Missing" })
@@ -635,42 +648,48 @@ class VendorHarness {
 function releaseInputBytes(
   declarationBytes: Uint8Array,
   provenanceBytes: Uint8Array,
-  lockBytes: Uint8Array,
+  lockBytes: Uint8Array
 ): Uint8Array {
   const skillBytes = encoder.encode("declared skill\n");
-  const releaseInput = must(createAgentPluginReleaseInput({
-    schemaVersion: 1,
-    contentAuthority: contentWorkspace.contentAuthority,
-    members: [{
-      kind: "agent-plugin",
-      pluginId: "cognition",
-      skillInventory: [{ identity: sourceId, manifestPath: `skills/${sourceId}/SKILL.md` }],
-      payload: {
-        protocolVersion: 1,
-        manifest: [{
-          path: `skills/${sourceId}/SKILL.md`,
-          mode: 0o644,
-          byteLength: skillBytes.byteLength,
-          contentDigest: contentDigest(skillBytes),
-        }],
-        payloadDigest: `pd1_${"1".repeat(64)}`,
-      },
-      vendor: [
-        binding(declarationPath, VENDOR_SOURCE_PROTOCOL, declarationBytes),
-        binding(provenancePath, VENDOR_PROVENANCE_PROTOCOL, provenanceBytes),
+  const releaseInput = must(
+    createAgentPluginReleaseInput({
+      schemaVersion: 1,
+      contentAuthority: contentWorkspace.contentAuthority,
+      members: [
+        {
+          kind: "agent-plugin",
+          pluginId: "cognition",
+          skillInventory: [{ identity: sourceId, manifestPath: `skills/${sourceId}/SKILL.md` }],
+          payload: {
+            protocolVersion: 1,
+            manifest: [
+              {
+                path: `skills/${sourceId}/SKILL.md`,
+                mode: 0o644,
+                byteLength: skillBytes.byteLength,
+                contentDigest: contentDigest(skillBytes),
+              },
+            ],
+            payloadDigest: `pd1_${"1".repeat(64)}`,
+          },
+          vendor: [
+            binding(declarationPath, VENDOR_SOURCE_PROTOCOL, declarationBytes),
+            binding(provenancePath, VENDOR_PROVENANCE_PROTOCOL, provenanceBytes),
+          ],
+          curation: [],
+        },
       ],
-      curation: [],
-    }],
-    ownershipClaims: [{ kind: "skill", identity: sourceId, ownerPluginId: "cognition" }],
-    locks: [binding(lockPath, VENDOR_LOCK_PROTOCOL, lockBytes)],
-    qualityPolicies: [],
-  }));
+      ownershipClaims: [{ kind: "skill", identity: sourceId, ownerPluginId: "cognition" }],
+      locks: [binding(lockPath, VENDOR_LOCK_PROTOCOL, lockBytes)],
+      qualityPolicies: [],
+    })
+  );
   return canonicalSerializeAgentPluginReleaseInput(releaseInput);
 }
 
 function expectCanonicalBindingRewrites(writes: readonly ContentWorkspaceWrite[]): void {
   const files = new Map(
-    writes.filter((write) => write.kind === "ReplaceFile").map((write) => [write.path, write.bytes]),
+    writes.filter((write) => write.kind === "ReplaceFile").map((write) => [write.path, write.bytes])
   );
   const releaseBytes = files.get(releaseInputPath);
   const declarationBytes = files.get(declarationPath);
@@ -681,22 +700,27 @@ function expectCanonicalBindingRewrites(writes: readonly ContentWorkspaceWrite[]
   expect(provenanceBytes).toBeDefined();
   expect(lockBytes).toBeDefined();
   const decoded = decodeAgentPluginReleaseInput(releaseBytes);
-  if (!decoded.ok || declarationBytes === undefined || provenanceBytes === undefined || lockBytes === undefined) {
+  if (
+    !decoded.ok ||
+    declarationBytes === undefined ||
+    provenanceBytes === undefined ||
+    lockBytes === undefined
+  ) {
     throw new Error("Expected exact canonical vendor authoring bytes");
   }
   const member = decoded.value.body.members[0];
-  expect(member?.vendor.find((candidate) => candidate.protocol === VENDOR_SOURCE_PROTOCOL)?.contentDigest)
-    .toBe(contentDigest(declarationBytes));
-  expect(member?.vendor.find((candidate) => candidate.protocol === VENDOR_PROVENANCE_PROTOCOL)?.contentDigest)
-    .toBe(contentDigest(provenanceBytes));
+  expect(
+    member?.vendor.find((candidate) => candidate.protocol === VENDOR_SOURCE_PROTOCOL)?.contentDigest
+  ).toBe(contentDigest(declarationBytes));
+  expect(
+    member?.vendor.find((candidate) => candidate.protocol === VENDOR_PROVENANCE_PROTOCOL)
+      ?.contentDigest
+  ).toBe(contentDigest(provenanceBytes));
   expect(decoded.value.body.locks[0]?.contentDigest).toBe(contentDigest(lockBytes));
   expect(decoder.decode(declarationBytes).endsWith("\n")).toBe(true);
 }
 
-function sourceIdentity(
-  seed: string,
-  entries: readonly ContentTreeEntry[],
-): VendorSourceIdentity {
+function sourceIdentity(seed: string, entries: readonly ContentTreeEntry[]): VendorSourceIdentity {
   return Object.freeze({
     repositoryIdentity: "git:vendor-upstream",
     refName: "refs/heads/main",
@@ -708,18 +732,20 @@ function sourceIdentity(
 
 function materializedEntries(text: string): readonly MaterializedContentTreeEntry[] {
   const bytes = encoder.encode(text);
-  return Object.freeze([Object.freeze({
-    path: "SKILL.md",
-    mode: "100644" as const,
-    blob: gitBlobId(bytes),
-    bytes,
-  })]);
+  return Object.freeze([
+    Object.freeze({
+      path: "SKILL.md",
+      mode: "100644" as const,
+      blob: gitBlobId(bytes),
+      bytes,
+    }),
+  ]);
 }
 
 function remoteTree(
   commit: string,
   tree: string,
-  entries: readonly MaterializedContentTreeEntry[],
+  entries: readonly MaterializedContentTreeEntry[]
 ): MaterializedRemoteContentTree {
   return Object.freeze({
     repositoryIdentity: "git:vendor-upstream",
@@ -749,26 +775,31 @@ function cloneRemote(remote: MaterializedRemoteContentTree): MaterializedRemoteC
 }
 
 function cloneEntries(
-  entries: readonly MaterializedContentTreeEntry[],
+  entries: readonly MaterializedContentTreeEntry[]
 ): readonly MaterializedContentTreeEntry[] {
-  return Object.freeze(entries.map((entry) => Object.freeze({
-    path: entry.path,
-    mode: entry.mode,
-    blob: entry.blob,
-    bytes: new Uint8Array(entry.bytes),
-  })));
+  return Object.freeze(
+    entries.map((entry) =>
+      Object.freeze({
+        path: entry.path,
+        mode: entry.mode,
+        blob: entry.blob,
+        bytes: new Uint8Array(entry.bytes),
+      })
+    )
+  );
 }
 
 function cloneWrites(writes: readonly ContentWorkspaceWrite[]): readonly ContentWorkspaceWrite[] {
-  return Object.freeze(writes.map((write) => write.kind === "ReplaceFile"
-    ? Object.freeze({ ...write, bytes: new Uint8Array(write.bytes) })
-    : Object.freeze({ ...write, entries: cloneEntries(write.entries) })));
+  return Object.freeze(
+    writes.map((write) =>
+      write.kind === "ReplaceFile"
+        ? Object.freeze({ ...write, bytes: new Uint8Array(write.bytes) })
+        : Object.freeze({ ...write, entries: cloneEntries(write.entries) })
+    )
+  );
 }
 
-function fileImage(
-  bytes: Uint8Array,
-  mode: "100644" | "100755" = "100644",
-): FileImage {
+function fileImage(bytes: Uint8Array, mode: "100644" | "100755" = "100644"): FileImage {
   return Object.freeze({ mode, bytes: new Uint8Array(bytes) });
 }
 
@@ -787,7 +818,7 @@ function resourceFailure(
   operation: ContentWorkspaceFailure["operation"],
   reason: ContentWorkspaceFailure["reason"],
   path?: string,
-  detail = `${operation} failed: ${reason}`,
+  detail = `${operation} failed: ${reason}`
 ): ContentWorkspaceFailure {
   return Object.freeze({
     _tag: "ContentWorkspaceFailure",
@@ -799,7 +830,8 @@ function resourceFailure(
 }
 
 function must<T, E>(result: ReleaseResult<T, E>): T {
-  if (!result.ok) throw new Error(`Expected release fixture success: ${JSON.stringify(result.issues)}`);
+  if (!result.ok)
+    throw new Error(`Expected release fixture success: ${JSON.stringify(result.issues)}`);
   return result.value;
 }
 

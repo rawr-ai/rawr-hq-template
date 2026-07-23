@@ -17,18 +17,14 @@ type ClaudeNativeResourceSession = Awaited<ReturnType<NativeProviderResourcePort
 /** Lowers the two native Effect Platform resources into the service's raw Promise port. */
 export function createNodeNativeProviderResource(): NativeProviderResourcePort {
   return Object.freeze({
-    acquireCodex: async (input: NativeResourceSessionInput) => adaptCodexSession(
-      await runNodeProvider(codexEffectPlatformNodeProvider.acquire(input)),
-    ),
-    acquireClaude: async (input: NativeResourceSessionInput) => adaptClaudeSession(
-      await runNodeProvider(claudeEffectPlatformNodeProvider.acquire(input)),
-    ),
+    acquireCodex: async (input: NativeResourceSessionInput) =>
+      adaptCodexSession(await runNodeProvider(codexEffectPlatformNodeProvider.acquire(input))),
+    acquireClaude: async (input: NativeResourceSessionInput) =>
+      adaptClaudeSession(await runNodeProvider(claudeEffectPlatformNodeProvider.acquire(input))),
   });
 }
 
-function adaptCodexSession(
-  session: CodexNativeAgentProviderSession,
-): CodexNativeResourceSession {
+function adaptCodexSession(session: CodexNativeAgentProviderSession): CodexNativeResourceSession {
   const adapted: CodexNativeResourceSession = {
     provider: session.provider,
     executablePath: session.executablePath,
@@ -50,7 +46,7 @@ function adaptCodexSession(
 }
 
 function adaptClaudeSession(
-  session: ClaudeNativeAgentProviderSession,
+  session: ClaudeNativeAgentProviderSession
 ): ClaudeNativeResourceSession {
   const adapted: ClaudeNativeResourceSession = {
     provider: session.provider,
@@ -72,12 +68,11 @@ function adaptClaudeSession(
 }
 
 async function runNodeProvider<A>(
-  operation: Effect.Effect<A, NativeAgentProviderFailure, NodeContext.NodeContext>,
+  operation: Effect.Effect<A, NativeAgentProviderFailure, NodeContext.NodeContext>
 ): Promise<A> {
-  const result = await Effect.runPromise(operation.pipe(
-    Effect.either,
-    Effect.provide(NodeContext.layer),
-  ));
+  const result = await Effect.runPromise(
+    operation.pipe(Effect.either, Effect.provide(NodeContext.layer))
+  );
   if (result._tag === "Left") {
     throw result.left;
   }

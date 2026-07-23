@@ -4,33 +4,18 @@ import type {
 } from "../../../model/dependencies/providers";
 import type { ContentAuthority } from "../../../shared/release";
 
-import {
-  failure,
-  issue,
-  success,
-} from "../model/errors/deployment-result";
+import { failure, issue, success } from "../model/errors/deployment-result";
 import { NativeProviderPreMutationRefusal } from "../model/errors/native-resource";
 import type { CanonicalNativeMutationAction } from "../model/dto/canonical-convergence";
 import type { ProviderId, ProviderTarget } from "../model/dto/provider-target";
 import type { AgentProviderProjection } from "../model/policy/projection";
 import type { NativeProviderMutationAction } from "../model/repositories/provider";
 import type { ProviderMarketplaceLocationResolver } from "../model/repositories/marketplace-location";
-import type {
-  CanonicalNativeRuntime,
-} from "../model/repositories/canonical-native";
-import type {
-  ProviderTargetMutator,
-  ProviderTargetReader,
-} from "../model/repositories/provider";
+import type { CanonicalNativeRuntime } from "../model/repositories/canonical-native";
+import type { ProviderTargetMutator, ProviderTargetReader } from "../model/repositories/provider";
 import type { ProviderMarketplaceSourceReader } from "../model/repositories/state";
-import {
-  CLAUDE_ADAPTER_PROTOCOL,
-  type ClaudeProviderAdapter,
-} from "./claude";
-import {
-  CODEX_ADAPTER_PROTOCOL,
-  type CodexProviderAdapter,
-} from "./codex";
+import { CLAUDE_ADAPTER_PROTOCOL, type ClaudeProviderAdapter } from "./claude";
+import { CODEX_ADAPTER_PROTOCOL, type CodexProviderAdapter } from "./codex";
 import {
   createResourceClaudeCanonicalObserver,
   createResourceClaudeProviderAdapter,
@@ -42,16 +27,13 @@ import {
   createResourceCodexProviderObserver,
 } from "./resource-codex";
 import type { CanonicalNativeObserver } from "./canonical-native-observer";
-import type {
-  NativeProviderAdapter,
-  NativeProviderObserver,
-} from "./native";
+import type { NativeProviderAdapter, NativeProviderObserver } from "./native";
 
 export function createResourceNativeProviderAdapterResolver(
   executables: NativeProviderExecutablePaths,
   resource: NativeProviderResourcePort,
   marketplaceSources: ProviderMarketplaceSourceReader,
-  marketplaceLocations: ProviderMarketplaceLocationResolver,
+  marketplaceLocations: ProviderMarketplaceLocationResolver
 ): (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter {
   const adapters = new Map<string, NativeProviderAdapter>();
   return (provider, contentAuthority) => {
@@ -65,9 +47,10 @@ export function createResourceNativeProviderAdapterResolver(
       marketplaceLocations,
       resource,
     });
-    const created: CodexProviderAdapter | ClaudeProviderAdapter = provider === "codex"
-      ? createResourceCodexProviderAdapter(common)
-      : createResourceClaudeProviderAdapter(common);
+    const created: CodexProviderAdapter | ClaudeProviderAdapter =
+      provider === "codex"
+        ? createResourceCodexProviderAdapter(common)
+        : createResourceClaudeProviderAdapter(common);
     adapters.set(key, created);
     return created;
   };
@@ -75,7 +58,7 @@ export function createResourceNativeProviderAdapterResolver(
 
 export function createResourceNativeProviderObserverResolver(
   executables: NativeProviderExecutablePaths,
-  resource: NativeProviderResourcePort,
+  resource: NativeProviderResourcePort
 ): (provider: ProviderId) => NativeProviderObserver {
   const observers = new Map<ProviderId, NativeProviderObserver>();
   return (provider) => {
@@ -85,9 +68,10 @@ export function createResourceNativeProviderObserverResolver(
       resource,
       executablePath: requireExecutable(executables, provider),
     });
-    const created = provider === "codex"
-      ? createResourceCodexProviderObserver(common)
-      : createResourceClaudeProviderObserver(common);
+    const created =
+      provider === "codex"
+        ? createResourceCodexProviderObserver(common)
+        : createResourceClaudeProviderObserver(common);
     observers.set(provider, created);
     return created;
   };
@@ -95,7 +79,7 @@ export function createResourceNativeProviderObserverResolver(
 
 export function createResourceCanonicalNativeObserverResolver(
   executables: NativeProviderExecutablePaths,
-  resource: NativeProviderResourcePort,
+  resource: NativeProviderResourcePort
 ): (provider: ProviderId, contentAuthority: ContentAuthority) => CanonicalNativeObserver {
   const observers = new Map<string, CanonicalNativeObserver>();
   return (provider, contentAuthority) => {
@@ -107,9 +91,10 @@ export function createResourceCanonicalNativeObserverResolver(
       executablePath: requireExecutable(executables, provider),
       contentAuthority,
     });
-    const created = provider === "codex"
-      ? createResourceCodexCanonicalObserver(common)
-      : createResourceClaudeCanonicalObserver(common);
+    const created =
+      provider === "codex"
+        ? createResourceCodexCanonicalObserver(common)
+        : createResourceClaudeCanonicalObserver(common);
     observers.set(key, created);
     return created;
   };
@@ -117,7 +102,7 @@ export function createResourceCanonicalNativeObserverResolver(
 
 export function createResourceProviderTargetReader(
   adapter: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter,
-  observer: (provider: ProviderId) => NativeProviderObserver,
+  observer: (provider: ProviderId) => NativeProviderObserver
 ): ProviderTargetReader {
   const reader: ProviderTargetReader = {
     projectionAdapterProtocol(target) {
@@ -125,30 +110,35 @@ export function createResourceProviderTargetReader(
         ? success(CODEX_ADAPTER_PROTOCOL)
         : target.provider === "claude"
           ? success(CLAUDE_ADAPTER_PROTOCOL)
-          : failure([issue(
-              "UNSUPPORTED_PROVIDER",
-              "target.provider",
-              "Unsupported native provider",
-            )]);
+          : failure([
+              issue("UNSUPPORTED_PROVIDER", "target.provider", "Unsupported native provider"),
+            ]);
     },
     async inspectCapabilities(target, contentAuthority) {
-      return await inspectionAdapter(adapter, observer, target, contentAuthority)
-        .inspectCapabilities(target);
+      return await inspectionAdapter(
+        adapter,
+        observer,
+        target,
+        contentAuthority
+      ).inspectCapabilities(target);
     },
     async readInventory(target, contentAuthority) {
-      return await inspectionAdapter(adapter, observer, target, contentAuthority)
-        .readInventory(target);
+      return await inspectionAdapter(adapter, observer, target, contentAuthority).readInventory(
+        target
+      );
     },
     async verifyProjection(target, projection: AgentProviderProjection) {
-      return await adapter(target.provider, projection.artifactAuthority.contentAuthority)
-        .verifyProjection(target, projection);
+      return await adapter(
+        target.provider,
+        projection.artifactAuthority.contentAuthority
+      ).verifyProjection(target, projection);
     },
   };
   return Object.freeze(reader);
 }
 
 export function createResourceProviderTargetMutator(
-  adapter: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter,
+  adapter: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter
 ): ProviderTargetMutator {
   const mutator: ProviderTargetMutator = {
     async apply(action) {
@@ -160,10 +150,7 @@ export function createResourceProviderTargetMutator(
 
 export function createResourceCanonicalNativeRuntime(
   adapter: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter,
-  observer: (
-    provider: ProviderId,
-    contentAuthority: ContentAuthority,
-  ) => CanonicalNativeObserver,
+  observer: (provider: ProviderId, contentAuthority: ContentAuthority) => CanonicalNativeObserver
 ): CanonicalNativeRuntime {
   const runtime: CanonicalNativeRuntime = {
     async inspectCapabilities(target, contentAuthority) {
@@ -173,8 +160,10 @@ export function createResourceCanonicalNativeRuntime(
       return await observer(target.provider, contentAuthority).observe(target, contentAuthority);
     },
     async apply(action) {
-      return await adapter(action.target.provider, canonicalMutationAuthority(action))
-        .applyCanonical(action);
+      return await adapter(
+        action.target.provider,
+        canonicalMutationAuthority(action)
+      ).applyCanonical(action);
     },
   };
   return Object.freeze(runtime);
@@ -184,7 +173,7 @@ function inspectionAdapter(
   factory: (provider: ProviderId, contentAuthority: ContentAuthority) => NativeProviderAdapter,
   observer: (provider: ProviderId) => NativeProviderObserver,
   target: ProviderTarget,
-  contentAuthority: ContentAuthority | undefined,
+  contentAuthority: ContentAuthority | undefined
 ): NativeProviderObserver {
   return contentAuthority === undefined
     ? observer(target.provider)
@@ -193,11 +182,12 @@ function inspectionAdapter(
 
 function mutationAuthority(action: NativeProviderMutationAction): ContentAuthority {
   if (action.kind === "SetMarketplace") {
-    const authority = action.registration?.marketplaceIdentity
-      ?? (action.expected.kind === "present" ? action.expected.state.marketplaceIdentity : undefined);
+    const authority =
+      action.registration?.marketplaceIdentity ??
+      (action.expected.kind === "present" ? action.expected.state.marketplaceIdentity : undefined);
     if (authority === undefined) {
       throw new NativeProviderPreMutationRefusal(
-        "Marketplace mutation has no admitted content authority",
+        "Marketplace mutation has no admitted content authority"
       );
     }
     return authority;
@@ -213,11 +203,11 @@ function canonicalMutationAuthority(action: CanonicalNativeMutationAction): Cont
 
 function requireExecutable(
   executables: NativeProviderExecutablePaths,
-  provider: ProviderId,
+  provider: ProviderId
 ): string {
   const executablePath = executables[provider];
   if (executablePath !== undefined) return executablePath;
   throw new NativeProviderPreMutationRefusal(
-    `${provider} requires an explicit provider executable binding`,
+    `${provider} requires an explicit provider executable binding`
   );
 }
