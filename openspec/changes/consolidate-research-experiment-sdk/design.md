@@ -383,13 +383,18 @@ package.
 
 Lane compatibility consumes an immutable locally packed SDK artifact. The
 artifact binds the package version, protocol version, content digest, and a
-machine-readable resolution/integrity manifest for the SDK's complete runtime
-dependency closure derived from the frozen workspace lock. A Template Git SHA
+machine-readable rooted runtime graph derived from the frozen workspace lock.
+Every reachable node binds its resolution, integrity, package-manifest bytes,
+and actual installed package-content tree, including regular-file executable
+identity, while excluding nested
+`node_modules`; the producer lock and embedded manifest bytes have independent
+digests. A Template Git SHA
 remains provenance but is not the package interface. Standard local build
 followed by `bun pm pack --ignore-scripts` into an external artifact directory
 supplies this boundary. Each lane installs the tarball in an isolated
 compatibility consumer under a frozen owner-local lock that resolves exactly
-that manifest, then a Bun-native preflight compares the resolved lock and
+those immutable tarball bytes, then a Bun-native preflight compares the
+artifact digest, resolved lock, and
 installed package graph to the embedded manifest before any SDK adapter import.
 The root module does not re-export adapters; consumers import explicit package
 subpaths. This change adds no registry publication, release plane, artifact
@@ -414,8 +419,10 @@ service, custom package manager, or cross-repository source import.
   placeholder-auth harness, explicit provider attachment, and endpoint
   coverage. It owns no registry, persisted secret, study admission, or retry
   policy.
-- `git-bun`: history-free materialization, safe tree transfer, full-index
-  binary patch capture, patch application, and artifact hashing.
+- `git-bun`: history-free materialization, safe tree transfer, canonical
+  full-index binary patch capture/application, and one immutable research-SDK
+  pack/install compatibility boundary. Git patch identity and Bun package
+  identity remain separate artifact epochs.
 - `evlog`: bounded host-side phase/failure events. Drain failure is diagnostic
   and cannot reclassify study outcomes.
 
@@ -573,7 +580,7 @@ and [EVLog tag](https://github.com/HugoRCD/evlog/tree/evlog%402.22.3).
   `GIT_CONFIG_GLOBAL` to an empty lane-owned file. It explicitly fixes path
   quoting, line-ending conversion, file-mode handling, rename detection, diff
   prefixes, diff algorithm, color, and the indent heuristic.
-- Git creates the submission with that substrate: `git add -A`, then
+- Git creates the submission with that substrate: `git add -A -f`, then
   `git diff --cached` with config overrides `core.quotePath=true`,
   `core.autocrlf=false`, `core.fileMode=true`, and `color.ui=false`, plus
   `--binary`, `--full-index`, `--no-ext-diff`, `--no-textconv`, `--no-renames`,
@@ -585,11 +592,17 @@ and [EVLog tag](https://github.com/HugoRCD/evlog/tree/evlog%402.22.3).
   rather than comparing unlike patch bytes.
 - Git archive owns history-free materialization. Bun archive is not assumed
   portable until mode and symlink behavior prove it for the target platform.
-- Build before `bun pm pack --ignore-scripts`; inspect the archive, bind package
-  version, protocol version, SHA-256, and the resolution/integrity manifest
-  derived from the frozen SDK lock. Both lane consumers import the same tarball
-  bytes and prove their own frozen locks and installed graphs match that
-  manifest before importing an adapter.
+- Build before `bun pm pack --ignore-scripts`; validate the staged source files
+  selected by Bun's archive API, bind package version, protocol version,
+  tarball SHA-256, and the resolution/integrity manifest derived from the frozen
+  SDK lock. File identity records ordinary-file bytes and executable state, not
+  umask-dependent read/write bits. Both lane consumers bind the exact tarball
+  bytes into their owner locks and prove their installed graphs match that
+  manifest before importing an adapter. A reachable registry identity is
+  admitted only when the flat lock attestation has no workspace, file, link,
+  patched, or otherwise non-registry candidate for that package; ambiguity
+  rejects rather than triggering contextual resolution logic. Bun owns its
+  archive format; the SDK does not implement a second tar parser.
 
 ## Testing Strategy
 
@@ -624,9 +637,16 @@ Tests target persistent behavioral guarantees, not implementation text:
    between the initial adoption read and atomic admission is surfaced by the
    port and adopted rather than permitting a second execution.
 5. Submitted artifacts round-trip add/delete/rename/binary/mode changes through
-   a fresh baseline and regenerate identical canonical patch bytes. A different
-   Git binary, version, environment, or diff configuration rejects adoption
-   before comparing bytes.
+   a fresh baseline and regenerate identical canonical patch bytes despite
+   hostile repository attributes and ignore rules. A different Git binary,
+   version, environment, or diff configuration rejects adoption before
+   comparing bytes. The SDK package builds and packs without lifecycle scripts,
+   publishes without replacement, embeds the exact rooted runtime graph, and
+   verifies the consumed tarball bytes, manifest bytes, and reachable installed
+   package contents including executable identity. Lock drift, dependency-byte
+   or executable-state mutation, registry/non-registry identity ambiguity,
+   unsafe output paths, and hostile distribution or manifest symlinks fail
+   closed without escaping owned roots.
 6. Composition attempts exact terminal adoption before execution-attempt
    admission. On a miss, only an atomically persisted exact `Admitted` fence
    permits observation acquisition or execution; `Occupied`, `Conflict`, and
@@ -666,7 +686,9 @@ Tests target persistent behavioral guarantees, not implementation text:
     tarball digest.
 12. Template Habitat proves SDK package shape and dependency direction; each
     lane's owner-local check proves its own study mapping. Neither tests runtime
-    behavior by scanning another repository.
+    behavior by scanning another repository. GritQL mutation probes reject
+    normalized and non-normalized sibling-adapter paths except the two declared
+    composition leaves.
 
 Habitat dependency-direction checks use GritQL patterns over imports. They are
 structural law, not source-string assertions or a second runtime test suite.

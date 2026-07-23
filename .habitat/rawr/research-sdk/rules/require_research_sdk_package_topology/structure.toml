@@ -25,6 +25,7 @@ root = "packages/research-sdk/src"
 kind = "directory"
 mode = "closed"
 required = [
+  "adapters",
   "contracts",
   "core",
   "index.ts",

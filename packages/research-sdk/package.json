@@ -30,6 +30,11 @@
       "import": "./dist/runtime/index.js",
       "default": "./dist/runtime/index.js"
     },
+    "./adapters/git-bun": {
+      "types": "./dist/adapters/git-bun/index.d.ts",
+      "import": "./dist/adapters/git-bun/index.js",
+      "default": "./dist/adapters/git-bun/index.js"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

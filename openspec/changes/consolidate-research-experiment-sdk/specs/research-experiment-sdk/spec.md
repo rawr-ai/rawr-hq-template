@@ -292,7 +292,9 @@ subjects, effective Codex rollout envelopes, deterministic projection, EVLog
 lifecycle, and package-local compiler isolation. Tests MUST NOT assert source
 strings, helper counts, command spelling, or a preferred internal implementation.
 Dependency-direction enforcement MUST use GritQL import patterns rather than
-brittle text matching. On the current BUILD base it MUST prove that SDK Effect
+brittle text matching and MUST reject equivalent normalized or non-normalized
+sibling-adapter import paths outside the two declared composition leaves. On
+the current BUILD base it MUST prove that SDK Effect
 4 runtime subpaths do not cross into Effect 3 packages and that only the
 designated neutral decoded contract is eligible for cross-major consumption.
 This is transitional evidence. After the required pre-landing restack, it MUST
@@ -316,11 +318,25 @@ provider-free sandbox against a caller-supplied running gateway.
 ### Requirement: Immutable local package compatibility
 Lane compatibility MUST consume an immutable locally packed SDK artifact that
 is built before `bun pm pack --ignore-scripts` and binds package version,
-protocol version, content digest, and a resolution/integrity manifest for the
-SDK's complete runtime dependency closure derived from the frozen workspace
-lock. Each isolated lane consumer MUST use a frozen owner-local lock that
-resolves exactly that manifest and MUST compare its resolved lock and installed
-graph to the embedded manifest before any SDK adapter import. A Template Git
+protocol version, tarball digest, embedded-manifest digest, producer-lock
+identity, exact Bun package substrate, and a rooted runtime graph for the SDK's
+complete runtime dependency closure derived from the frozen workspace lock.
+Each reachable node MUST bind resolution, integrity, package-manifest bytes,
+and the actual installed package-content tree, including regular-file
+executable identity and excluding nested `node_modules`.
+An installed registry node MUST be rejected when the frozen lock also admits a
+workspace, file, link, patched, or otherwise non-registry candidate for the
+same reachable package identity; the adapter MUST NOT resolve that ambiguity
+by implementing contextual package placement.
+Each isolated lane consumer MUST use a frozen owner-local lock that resolves
+the exact immutable artifact bytes and MUST compare the artifact digest,
+embedded manifest bytes, resolved graph, and installed package contents before
+any SDK adapter import. Build and
+pack MUST stage under parent-owned control, suppress package lifecycle scripts,
+create the embedded manifest without following symbolic links, and publish the
+external artifact without replacing an existing path. Git patch substrate and
+Bun package substrate identities MUST remain independent so an unrelated tool
+version change does not invalidate bytes from the other artifact epoch. A Template Git
 SHA MAY provide provenance but MUST NOT
 be the cross-repository package interface. This change MUST NOT introduce
 registry publication, a release plane, artifact service, custom package
@@ -332,8 +348,18 @@ and checks own its local mutations.
 - **WHEN** oRPC and Inngest run their model-free compatibility checks
 - **THEN** both consume the same locally packed artifact identity and protocol
 - **AND** both installed dependency graphs match its exact resolution/integrity
-  manifest
+  and installed-content manifest, including executable-file identity
 - **AND** neither imports the Template source checkout or relocates evidence
+
+#### Scenario: Installed package bytes or publication boundary drift
+- **WHEN** a reachable installed dependency's bytes or executable identity
+  change without a manifest or lock change, the consumed tarball or embedded
+  manifest bytes change, a registry identity collides with a non-registry lock
+  candidate, the producer lock changes during build, or an output/distribution
+  path is a hostile symbolic link
+- **THEN** compatibility fails closed before SDK adapter import
+- **AND** no existing artifact or path outside the package/control roots is
+  overwritten
 
 ### Requirement: Verified exact vendor closure
 The SDK MUST use the exact package/dependency closure accepted in the DESIGN

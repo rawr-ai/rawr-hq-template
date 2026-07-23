@@ -13,6 +13,11 @@
   scheduler, controller, or study policy.
 - `runtime` owns process-scoped resource composition and depends only on
   `contracts`, `core`, Effect, and Bun.
+- `adapters` owns named vendor/tool integrations behind explicit package
+  subpaths. Adapters may depend on `runtime`; the package root does not export
+  them. Adapters do not import siblings except the explicit
+  `codex-langfuse -> codex + langfuse` and
+  `codex-openshell -> codex + openshell` composition leaves.
 - Subject studies, fixtures, rubrics, evidence, and result interpretation stay
   in their owning research repositories.
 
@@ -27,6 +32,7 @@ contracts <- core <- runtime
 - Public data and schema changes: `src/contracts/`
 - Capability and continuation-law changes: `src/core/`
 - Process resource and command changes: `src/runtime/`
+- Named vendor/tool integrations: `src/adapters/<adapter>/`
 - Behavioral verification: `test/`
 
 ## Validation

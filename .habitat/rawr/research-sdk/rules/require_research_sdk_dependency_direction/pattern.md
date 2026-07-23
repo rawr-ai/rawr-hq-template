@@ -21,15 +21,67 @@ or {
       $filename <: r".*packages/research-sdk/src/(?:index|contracts/.*)\.(?:[cm]?[jt]s|[jt]sx)$",
       or {
         $source <: r"^[\"'](?:effect(?:/[^\"']*)?|@effect/[^\"']+)[\"']$",
-        $source <: r"^[\"']@rawr/research-sdk/(?:core|runtime)(?:/[^\"']*)?[\"']$",
-        $source <: r"^[\"'](?:\.\.?/)+(?:core|runtime)(?:/[^\"']*)?[\"']$"
+        $source <: r"^[\"']@rawr/research-sdk/(?:adapters|core|runtime)(?:/[^\"']*)?[\"']$",
+        $source <: r"^[\"'](?:\.\.?/)+(?:adapters|core|runtime)(?:/[^\"']*)?[\"']$"
       }
     },
     and {
       $filename <: r".*packages/research-sdk/src/core/.*\.(?:[cm]?[jt]s|[jt]sx)$",
       or {
-        $source <: r"^[\"']@rawr/research-sdk/runtime(?:/[^\"']*)?[\"']$",
-        $source <: r"^[\"'](?:\.\.?/)+runtime(?:/[^\"']*)?[\"']$"
+        $source <: r"^[\"']@rawr/research-sdk/(?:adapters|runtime)(?:/[^\"']*)?[\"']$",
+        $source <: r"^[\"'](?:\.\.?/)+(?:adapters|runtime)(?:/[^\"']*)?[\"']$"
+      }
+    },
+    and {
+      $filename <: r".*packages/research-sdk/src/runtime/.*\.(?:[cm]?[jt]s|[jt]sx)$",
+      or {
+        $source <: r"^[\"']@rawr/research-sdk/adapters(?:/[^\"']*)?[\"']$",
+        $source <: r"^[\"'](?:\.\.?/)+adapters(?:/[^\"']*)?[\"']$"
+      }
+    },
+    and {
+      $filename <: r".*packages/research-sdk/src/adapters/.*\.(?:[cm]?[jt]s|[jt]sx)$",
+      not {
+        $filename <: r".*packages/research-sdk/src/adapters/(?:codex-langfuse|codex-openshell)/.*\.(?:[cm]?[jt]s|[jt]sx)$"
+      },
+      or {
+        $source <: r"^[\"']@rawr/research-sdk/adapters/[^\"']+[\"']$",
+        and {
+          $source <: r"^[\"'](?:\.\./[^\"']*|\.[^\"']*/\.\.(?:/[^\"']*)?)[\"']$",
+          not {
+            $source <: r"^[\"'](?:\.\./){2,}(?:contracts|core|runtime)(?:/[^\"']*)?[\"']$"
+          }
+        }
+      }
+    },
+    and {
+      $filename <: r".*packages/research-sdk/src/adapters/codex-langfuse/.*\.(?:[cm]?[jt]s|[jt]sx)$",
+      or {
+        $source <: r"^[\"']@rawr/research-sdk/adapters/[^\"']+[\"']$",
+        and {
+          $source <: r"^[\"'](?:\.\./[^\"']*|\.[^\"']*/\.\.(?:/[^\"']*)?)[\"']$",
+          not {
+            $source <: r"^[\"'](?:\.\./){2,}(?:contracts|core|runtime)(?:/[^\"']*)?[\"']$"
+          }
+        }
+      },
+      not {
+        $source <: r"^[\"'](?:\.\./(?:codex|langfuse)|@rawr/research-sdk/adapters/(?:codex|langfuse))(?:/[^\"']*)?[\"']$"
+      }
+    },
+    and {
+      $filename <: r".*packages/research-sdk/src/adapters/codex-openshell/.*\.(?:[cm]?[jt]s|[jt]sx)$",
+      or {
+        $source <: r"^[\"']@rawr/research-sdk/adapters/[^\"']+[\"']$",
+        and {
+          $source <: r"^[\"'](?:\.\./[^\"']*|\.[^\"']*/\.\.(?:/[^\"']*)?)[\"']$",
+          not {
+            $source <: r"^[\"'](?:\.\./){2,}(?:contracts|core|runtime)(?:/[^\"']*)?[\"']$"
+          }
+        }
+      },
+      not {
+        $source <: r"^[\"'](?:\.\./(?:codex|openshell)|@rawr/research-sdk/adapters/(?:codex|openshell))(?:/[^\"']*)?[\"']$"
       }
     },
     and {
@@ -46,6 +98,10 @@ or {
     and {
       $filename <: r".*packages/research-sdk/src/(?:contracts|core|runtime)/.*\.(?:[cm]?[jt]s|[jt]sx)$",
       $source <: r"^[\"'](?:\.\./){2,}"
+    },
+    and {
+      $filename <: r".*packages/research-sdk/src/.*\.(?:[cm]?[jt]s|[jt]sx)$",
+      $source <: r"^[\"'](?:\.\.?/)*(?:[^./\"']|\.[^./\"']|\.\.[^/\"'])[^/\"']*(?:/[^\"']*)*/\.\.?(?:/[^\"']*)?[\"']$"
     },
     and {
       $filename <: r".*packages/research-sdk/src/.*\.(?:[cm]?[jt]s|[jt]sx)$",
