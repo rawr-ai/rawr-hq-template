@@ -8,7 +8,7 @@ import {
   RepositoryIdentitySchema,
 } from "../../../../model/dto/releases/content-workspace";
 import { isCanonicalAbsolutePath } from "../../../../model/dto/structural";
-import { BuildModeSchema } from "../../../releases/model/dto/release-lifecycle";
+import { ReleaseSelectionSchema } from "../../../releases/model/dto/release-lifecycle";
 
 const ReleaseDigestSchema = Type.String({ pattern: "^rd1_[0-9a-f]{64}$" });
 const ReleaseSetDigestSchema = Type.String({ pattern: "^rs1_[0-9a-f]{64}$" });
@@ -64,7 +64,7 @@ export const PackageOutputPathSchema = Refine(
 export const PackageAgentPluginRequestSchema = ReadonlyObject(
   Type.Object({
     contentWorkspace: ContentWorkspacePolicySchema,
-    mode: BuildModeSchema,
+    mode: ReleaseSelectionSchema,
     format: Type.Literal(COWORK_PACKAGE_FORMAT),
     outputPath: PackageOutputPathSchema,
   }),

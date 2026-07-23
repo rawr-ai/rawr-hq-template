@@ -24,10 +24,8 @@
     "@rawr/plugin-devops": "workspace:*",
     "@rawr/plugin-hyperresearch": "workspace:*",
     "@rawr/plugin-session-tools": "workspace:*",
-    "@rawr/resource-agent-plugin-artifact-repository": "workspace:*",
     "@rawr/resource-agent-plugin-package-output": "workspace:*",
     "@rawr/resource-content-workspace": "workspace:*",
-    "@rawr/resource-controller-authority": "workspace:*",
     "@rawr/resource-native-agent-provider": "workspace:*",
     "effect": "3.21.3",
     "zod": "^3.24.3"

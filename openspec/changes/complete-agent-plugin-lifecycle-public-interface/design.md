@@ -168,20 +168,24 @@ Root context contains only ready host capabilities that are genuinely
 cross-cutting. Module middleware acquires or projects owner-specific
 capabilities, and each procedure receives only the exact context it consumes.
 Leaf modules do not import sibling internals or concrete resource providers.
-Effect/Platform programs terminate inside resource adapters and expose ready
-capabilities. Effect-oRPC is used only when an Effect program genuinely crosses
-the procedure boundary, not merely because an adapter uses Effect internally.
+Effect/Platform filesystem and process programs terminate inside resource
+adapters and expose ready capabilities. The service uses the same
+Effect-backed oRPC construction as the generic Magic Migration service
+blueprint; this is the standard service shape, not a lifecycle-specific
+exception or a reason to move provider mechanics into handlers.
 
-The surviving filesystem/process resource family migrates coherently to Effect
-4 only after controller authority, persistent artifact/projection state, target
-records, and other rejected owners are deleted. The lifecycle service itself
-has no direct Effect dependency and is not made Effectful to justify the
-upgrade. At migration opening, re-query the official Effect 4 line and pin one
-exact aligned `effect` and `@effect/platform-node` release; remove
-`@effect/platform`, whose filesystem, path, platform-error, and process
-capabilities moved in Effect 4. Keep the oRPC family upgrade separate. TypeBox
-remains the public schema authority, and Effect-oRPC remains absent unless an
-Effect program actually crosses a procedure boundary.
+The surviving filesystem/process resource family and lifecycle service migrate
+coherently to Effect 4 only after controller authority, persistent
+artifact/projection state, target records, and other rejected owners are
+deleted. At migration opening, re-query the official Effect 4 line and pin one
+exact aligned `effect`, `@effect/platform-node`, and Effect-4-compatible
+`effect-orpc` release together with the current coherent `@orpc/*` and
+TypeBox versions; remove `@effect/platform`, whose filesystem, path,
+platform-error, and process capabilities moved in Effect 4. Migrate any active
+root-owned tool that consumes the root Effect version in the same checkpoint so
+the workspace has no hidden Effect 3 consumer. The root-vendor checkpoint must
+leave one Effect realm and one oRPC realm. TypeBox remains the public schema
+authority.
 
 The canonical public product operations are:
 

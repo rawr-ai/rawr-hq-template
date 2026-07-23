@@ -2,32 +2,30 @@ import type { ContentWorkspaceSnapshot } from "../../../../model/dto/releases/co
 import {
   type AgentPluginRelease,
   type AgentPluginReleaseSet,
-  type ArtifactRef,
   createAgentPluginRelease,
   createAgentPluginReleaseSet,
-  createCompleteSetArtifactRef,
-  createReleaseArtifactRef,
 } from "../../../../shared/release";
 import {
-  type BuildIssue,
-  type BuildMode,
-  releaseConstructionBuildIssue,
+  type ReleaseCheckIssue,
+  type ReleaseDerivationIdentity,
+  type ReleaseSelection,
+  releaseConstructionIssue,
 } from "../dto/release-lifecycle";
 
-export interface ConstructedPlan {
+export interface DerivedReleaseSelection {
   readonly releases: readonly AgentPluginRelease[];
   readonly releaseSet?: AgentPluginReleaseSet;
-  readonly finalRef: ArtifactRef;
+  readonly identity: ReleaseDerivationIdentity;
 }
 
-export function constructPlan(
+export function deriveReleaseSelection(
   snapshot: ContentWorkspaceSnapshot,
-  mode: BuildMode
+  mode: ReleaseSelection
 ):
-  | { readonly ok: true; readonly value: ConstructedPlan }
+  | { readonly ok: true; readonly value: DerivedReleaseSelection }
   | {
       readonly ok: false;
-      readonly issues: readonly [BuildIssue, ...BuildIssue[]];
+      readonly issues: readonly [ReleaseCheckIssue, ...ReleaseCheckIssue[]];
     } {
   const members =
     mode.kind === "targeted"
@@ -72,7 +70,12 @@ export function constructPlan(
       ok: true,
       value: Object.freeze({
         releases: Object.freeze(releases),
-        finalRef: createReleaseArtifactRef(release.releaseDigest, release.artifactDigest),
+        identity: Object.freeze({
+          kind: "release",
+          pluginId: release.artifactBody.releaseBody.pluginId,
+          releaseDigest: release.releaseDigest,
+          artifactDigest: release.artifactDigest,
+        }),
       }),
     };
   }
@@ -87,11 +90,23 @@ export function constructPlan(
     value: Object.freeze({
       releases: Object.freeze(releases),
       releaseSet: set.value,
-      finalRef: createCompleteSetArtifactRef(set.value.releaseSetDigest),
+      identity: Object.freeze({
+        kind: "complete-set",
+        releaseSetDigest: set.value.releaseSetDigest,
+        members: Object.freeze(
+          set.value.body.members.map((member) =>
+            Object.freeze({
+              pluginId: member.pluginId,
+              releaseDigest: member.releaseDigest,
+              artifactDigest: member.artifactDigest,
+            })
+          )
+        ),
+      }),
     }),
   };
 }
 
-function constructionIssue(detail: string): BuildIssue {
-  return releaseConstructionBuildIssue(detail);
+function constructionIssue(detail: string): ReleaseCheckIssue {
+  return releaseConstructionIssue(detail);
 }

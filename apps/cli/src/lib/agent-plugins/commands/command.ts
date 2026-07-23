@@ -3,10 +3,10 @@ import { RawrCommand } from "@rawr/core";
 
 import { LifecycleInputError } from "./input";
 import {
-  LifecycleAuthorityBindingError,
+  LifecycleExecutableBindingError,
   type LifecycleOperationRequest,
   lifecycleResultExitCode,
-  parseControllerProjectionBinding,
+  parseLifecycleExecutableBinding,
   projectLifecycleOperation,
   projectLifecycleResultForOutput,
 } from "./projection";
@@ -49,7 +49,7 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
     }
     let exitCode: 0 | 1 | 2;
     try {
-      const binding = parseControllerProjectionBinding(flags, requirements);
+      const binding = parseLifecycleExecutableBinding(flags, requirements);
       const result = await projectLifecycleOperation(request, binding);
       exitCode = lifecycleResultExitCode(request.operation, result);
       const projectedResult = projectLifecycleResultForOutput(request.operation, result);
@@ -61,7 +61,10 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
         },
       });
     } catch (error) {
-      if (error instanceof LifecycleInputError || error instanceof LifecycleAuthorityBindingError) {
+      if (
+        error instanceof LifecycleInputError ||
+        error instanceof LifecycleExecutableBindingError
+      ) {
         this.rejectInput(error.message, baseFlags, error.code);
         return;
       }
@@ -113,10 +116,7 @@ function lifecycleHumanLines(
   ) {
     return [record.envelopeText.slice(0, -1)];
   }
-  if (
-    operation === "providers.status" &&
-    Array.isArray(record.targets)
-  ) {
+  if (operation === "providers.status" && Array.isArray(record.targets)) {
     return [
       `${operation}:`,
       ...record.targets.map((value) => {

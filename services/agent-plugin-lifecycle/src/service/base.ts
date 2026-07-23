@@ -1,15 +1,7 @@
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
-import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
-import type {
-  NativeProviderSessionResolver,
-} from "./model/dependencies/providers";
-import type {
-  ArtifactStoreFailpoint,
-  BuildFailpoint,
-  ReleaseRetentionReaders,
-} from "./model/dependencies/releases";
+import type { NativeProviderSessionResolver } from "./model/dependencies/providers";
 
 export interface LifecycleClock {
   readonly now: () => Date;
@@ -17,20 +9,12 @@ export interface LifecycleClock {
 
 type InitialContext = {
   deps: {
-    artifactRepository: ArtifactRepositoryAsyncPort;
-    artifactRepositoryRoot: string;
-    releaseRetention?: ReleaseRetentionReaders;
-    releaseBuildFailpoint?: BuildFailpoint;
-    releaseArtifactFailpoint?: ArtifactStoreFailpoint;
     contentWorkspace: ContentWorkspaceNodeAsyncPort;
     clock: LifecycleClock;
     packageOutput: AgentPluginPackageOutputAsyncPort;
     providerNativeSessions: NativeProviderSessionResolver;
   };
-  scope: {
-    controllerIdentity: string;
-    controllerDataRootIdentity: string;
-  };
+  scope: {};
   config: {};
 };
 

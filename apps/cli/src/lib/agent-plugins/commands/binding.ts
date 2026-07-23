@@ -5,7 +5,6 @@ export type LifecycleOperation =
   | "releases.checkRepository"
   | "releases.releaseInputRecord"
   | "releases.refreshReleaseInput"
-  | "releases.build"
   | "vendors.status"
   | "vendors.update"
   | "packaging.package"
@@ -26,7 +25,6 @@ export type LifecycleClientByOperation = Readonly<{
   "releases.refreshReleaseInput": Readonly<{
     releases: Pick<Client["releases"], "refreshReleaseInput">;
   }>;
-  "releases.build": Readonly<{ releases: Pick<Client["releases"], "build"> }>;
   "vendors.status": Readonly<{ vendors: Pick<Client["vendors"], "status"> }>;
   "vendors.update": Readonly<{ vendors: Pick<Client["vendors"], "update"> }>;
   "packaging.package": Readonly<{ packaging: Pick<Client["packaging"], "package"> }>;
@@ -44,21 +42,21 @@ export type LifecycleClientByOperation = Readonly<{
 export type LifecycleOperationClient<TOperation extends LifecycleOperation> =
   LifecycleClientByOperation[TOperation];
 
-export type ControllerProjectionBinding = Readonly<{
+export type LifecycleExecutableBinding = Readonly<{
   gitExecutable?: string;
   providerExecutables: Readonly<Partial<Record<"claude" | "codex", string>>>;
 }>;
 
 export type LifecycleClientFactory = <TOperation extends LifecycleOperation>(
   operation: TOperation,
-  binding: ControllerProjectionBinding
+  binding: LifecycleExecutableBinding
 ) => LifecycleOperationClient<TOperation> | Promise<LifecycleOperationClient<TOperation>>;
 
-export class LifecycleAuthorityBindingError extends Error {
-  readonly code = "LIFECYCLE_AUTHORITY_BINDING_INVALID";
+export class LifecycleExecutableBindingError extends Error {
+  readonly code = "LIFECYCLE_EXECUTABLE_BINDING_INVALID";
 
   constructor(message: string) {
     super(message);
-    this.name = "LifecycleAuthorityBindingError";
+    this.name = "LifecycleExecutableBindingError";
   }
 }

@@ -1,49 +1,10 @@
 export {
-  type ArtifactRef,
-  type ArtifactRefInput,
-  ArtifactRefInputSchema,
-  ArtifactRefSchema,
-  type CompleteSetArtifactRef,
-  type CompleteSetArtifactRefInput,
-  CompleteSetArtifactRefInputSchema,
-  CompleteSetArtifactRefSchema,
-  canonicalSerializeArtifactRef,
-  createCompleteSetArtifactRef,
-  createReleaseArtifactRef,
-  decodeArtifactRef,
-  normalizeArtifactRef,
-  parseArtifactRef,
-  type ReleaseArtifactRef,
-  type ReleaseArtifactRefInput,
-  ReleaseArtifactRefInputSchema,
-  ReleaseArtifactRefSchema,
-} from "./artifact-ref";
-export {
   RELEASE_ISSUE_CODES,
   type ReleaseIssue,
   type ReleaseIssueCode,
   ReleaseIssueCodeSchema,
   ReleaseIssueSchema,
 } from "./issues";
-export {
-  createMechanicalEvidenceHandle,
-  MAX_MECHANICAL_EVIDENCE_BYTES,
-  MECHANICAL_EVIDENCE_PROTOCOL_VERSION,
-  type MechanicalEvidenceDigest,
-  type MechanicalEvidenceHandleInput,
-  MechanicalEvidenceHandleInputSchema,
-  MechanicalEvidenceHandleSchema,
-  type MechanicalEvidenceHandleV1,
-  type MechanicalEvidenceIssue,
-  type MechanicalEvidencePublicationResult,
-  type MechanicalEvidenceReader,
-  type MechanicalEvidenceReadResult,
-  type MechanicalEvidenceStore,
-  type MechanicalEvidenceStoreFailpointEvent,
-  mechanicalEvidenceDigest,
-  normalizeMechanicalEvidenceHandle,
-  parseMechanicalEvidenceHandle,
-} from "./mechanical-evidence";
 export {
   createDistributionOwnershipIndex,
   type DeclaredOwnershipClaimKind,
@@ -164,9 +125,3 @@ export {
   verifyCompleteReleaseSet,
 } from "./release-set";
 export type { NonEmptyReadonlyArray, ReleaseResult } from "./result";
-
-export type {
-  VerifiedArtifactSnapshotV1,
-  VerifiedPayloadFileV1,
-  VerifiedReleaseArtifactV1,
-} from "./snapshot";

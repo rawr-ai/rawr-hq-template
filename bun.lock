@@ -58,10 +58,8 @@
         "@rawr/plugin-devops": "workspace:*",
         "@rawr/plugin-hyperresearch": "workspace:*",
         "@rawr/plugin-session-tools": "workspace:*",
-        "@rawr/resource-agent-plugin-artifact-repository": "workspace:*",
         "@rawr/resource-agent-plugin-package-output": "workspace:*",
         "@rawr/resource-content-workspace": "workspace:*",
-        "@rawr/resource-controller-authority": "workspace:*",
         "@rawr/resource-native-agent-provider": "workspace:*",
         "effect": "3.21.3",
         "zod": "^3.24.3",
@@ -297,17 +295,6 @@
         "@rawr/runtime-context": "workspace:*",
       },
     },
-    "resources/agent-plugin-artifact-repository": {
-      "name": "@rawr/resource-agent-plugin-artifact-repository",
-      "dependencies": {
-        "@effect/platform": "0.96.1",
-        "@effect/platform-node": "0.107.0",
-        "effect": "3.21.3",
-      },
-      "devDependencies": {
-        "typescript": "^5.9.3",
-      },
-    },
     "resources/agent-plugin-export-destination": {
       "name": "@rawr/resource-agent-plugin-export-destination",
       "dependencies": {
@@ -344,17 +331,6 @@
         "typescript": "^5.9.3",
       },
     },
-    "resources/controller-authority": {
-      "name": "@rawr/resource-controller-authority",
-      "dependencies": {
-        "@effect/platform": "0.96.1",
-        "@effect/platform-node": "0.107.0",
-        "effect": "3.21.3",
-      },
-      "devDependencies": {
-        "typescript": "^5.9.3",
-      },
-    },
     "resources/native-agent-provider": {
       "name": "@rawr/resource-native-agent-provider",
       "dependencies": {
@@ -374,7 +350,6 @@
         "@orpc/contract": "^1.13.5",
         "@orpc/server": "^1.13.5",
         "@rawr/hq-sdk": "workspace:*",
-        "@rawr/resource-agent-plugin-artifact-repository": "workspace:*",
         "@rawr/resource-agent-plugin-package-output": "workspace:*",
         "@rawr/resource-content-workspace": "workspace:*",
         "@rawr/resource-native-agent-provider": "workspace:*",
@@ -1322,15 +1297,11 @@
 
     "@rawr/plugin-session-tools": ["@rawr/plugin-session-tools@workspace:plugins/cli/commands/session-tools"],
 
-    "@rawr/resource-agent-plugin-artifact-repository": ["@rawr/resource-agent-plugin-artifact-repository@workspace:resources/agent-plugin-artifact-repository"],
-
     "@rawr/resource-agent-plugin-export-destination": ["@rawr/resource-agent-plugin-export-destination@workspace:resources/agent-plugin-export-destination"],
 
     "@rawr/resource-agent-plugin-package-output": ["@rawr/resource-agent-plugin-package-output@workspace:resources/agent-plugin-package-output"],
 
     "@rawr/resource-content-workspace": ["@rawr/resource-content-workspace@workspace:resources/content-workspace"],
-
-    "@rawr/resource-controller-authority": ["@rawr/resource-controller-authority@workspace:resources/controller-authority"],
 
     "@rawr/resource-native-agent-provider": ["@rawr/resource-native-agent-provider@workspace:resources/native-agent-provider"],
 

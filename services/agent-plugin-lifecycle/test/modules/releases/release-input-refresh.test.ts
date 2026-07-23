@@ -19,7 +19,6 @@ import {
 import {
   createLifecycleTestClient,
   testInvocation,
-  unavailableArtifactRepository,
   unavailableContentWorkspace,
 } from "../../support/client";
 
@@ -48,7 +47,6 @@ describe("releases.refreshReleaseInput", () => {
     const firstObservation = stagedObservation(entries);
     const selections: Array<Readonly<{ paths: readonly string[]; roots: readonly string[] }>> = [];
     let currentObservation = firstObservation;
-    let artifactAccesses = 0;
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
@@ -57,9 +55,6 @@ describe("releases.refreshReleaseInput", () => {
           return currentObservation;
         },
       },
-      artifactRepository: unavailableArtifactRepository(() => {
-        artifactAccesses += 1;
-      }),
     });
 
     const first = await client.releases.refreshReleaseInput(refreshRequest(), testInvocation);
@@ -131,7 +126,6 @@ describe("releases.refreshReleaseInput", () => {
         roots: memberIds.map((memberId) => `plugins/agents/${memberId}`).sort(codeUnitCompare),
       },
     ]);
-    expect(artifactAccesses).toBe(0);
   });
 
   it("preserves surviving explicit ancillary bindings without inferring new ones", async () => {
@@ -274,15 +268,11 @@ describe("releases.refreshReleaseInput", () => {
         indexEntries: encoder.encode("100644 " + "f".repeat(40) + " 0\tchanged\0"),
       },
     };
-    let artifactAccesses = 0;
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
         observeGitStagedIndex: async () => changed,
       },
-      artifactRepository: unavailableArtifactRepository(() => {
-        artifactAccesses += 1;
-      }),
     });
 
     await expect(
@@ -292,7 +282,6 @@ describe("releases.refreshReleaseInput", () => {
       mode: "staged",
       detail: "Git HEAD, ref, repository, or index changed during staged observation",
     });
-    expect(artifactAccesses).toBe(0);
   });
 
   it("owns one request snapshot across deferred Git observation", async () => {
@@ -348,15 +337,11 @@ describe("releases.refreshReleaseInput", () => {
         bytes: sharedBytes,
       })
     );
-    let artifactAccesses = 0;
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
         observeGitStagedIndex: async () => stagedObservation(entries),
       },
-      artifactRepository: unavailableArtifactRepository(() => {
-        artifactAccesses += 1;
-      }),
     });
 
     const result = await client.releases.refreshReleaseInput(
@@ -380,7 +365,6 @@ describe("releases.refreshReleaseInput", () => {
         }),
       ]),
     });
-    expect(artifactAccesses).toBe(0);
   });
 
   it("refuses a noncanonical derived member root before Git observation", async () => {

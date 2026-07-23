@@ -21,7 +21,6 @@ export type CheckRequest = InputOf<Client["releases"]["check"]>;
 export type RepositoryCheckRequest = InputOf<Client["releases"]["checkRepository"]>;
 export type ReleaseInputRecordRequest = InputOf<Client["releases"]["releaseInputRecord"]>;
 export type ReleaseInputRefreshRequest = InputOf<Client["releases"]["refreshReleaseInput"]>;
-export type BuildRequest = InputOf<Client["releases"]["build"]>;
 export type VendorStatusRequest = InputOf<Client["vendors"]["status"]>;
 export type VendorUpdateRequest = InputOf<Client["vendors"]["update"]>;
 export type PackageRequest = InputOf<Client["packaging"]["package"]>;
@@ -198,10 +197,7 @@ export function parseCheckOperationRequest(
               "--content-workspace"
             ),
             expectedRepositoryIdentity: requireReleaseValue(
-              parseRepositoryIdentity(
-                flags["repository-identity"],
-                "--repository-identity"
-              )
+              parseRepositoryIdentity(flags["repository-identity"], "--repository-identity")
             ),
           }),
         }),
@@ -265,10 +261,6 @@ function parseCurrentMainRecordRequest(flags: RawFlags): CurrentMainRecordReques
     kind: "validate-record",
     bytes: new TextEncoder().encode(recordJson),
   });
-}
-
-export function parseBuildRequest(flags: RawFlags): BuildRequest {
-  return parseReleaseWorkspaceRequest(flags);
 }
 
 export function parseVendorStatusRequest(flags: RawFlags): VendorStatusRequest {
@@ -445,10 +437,7 @@ function parseProviderTargets(input: unknown): TestRequest["targets"] {
   return requireNonEmpty(targets, "--target");
 }
 
-function assertStrictDescendants(
-  disposableRoot: string,
-  targets: TestRequest["targets"]
-): void {
+function assertStrictDescendants(disposableRoot: string, targets: TestRequest["targets"]): void {
   for (const target of targets) {
     const relative = path.relative(disposableRoot, target.home);
     if (

@@ -235,7 +235,6 @@ async function adjacentAuthorityFixture(): Promise<AdjacentAuthorityFixture> {
   const root = await commandTempRoot();
   const roots = {
     nativeOclif: path.join(root, "native-oclif-config"),
-    controller: path.join(root, "controller-selection-home"),
     release: path.join(root, "agent-release-state"),
     build: path.join(root, "agent-build-state"),
     package: path.join(root, "agent-package-state"),
@@ -281,7 +280,6 @@ async function adjacentAuthorityFixture(): Promise<AdjacentAuthorityFixture> {
       XDG_DATA_HOME: xdgDataHome,
       XDG_STATE_HOME: xdgStateHome,
       XDG_CACHE_HOME: xdgCacheHome,
-      RAWR_DATA_DIR: roots.controller,
       CODEX_HOME: codexHome,
       CLAUDE_CONFIG_DIR: claudeHome,
       RAWR_HYPERRESEARCH_CODEX_LEDGER: path.join(roots.process, "hyperresearch-ledger.json"),

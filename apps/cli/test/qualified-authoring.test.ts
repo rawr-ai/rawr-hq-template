@@ -441,7 +441,7 @@ describe("qualified authoring owners", () => {
     await expect(verifyContentWorkspaceV1(foreign)).rejects.toThrow(/exact personal/u);
   });
 
-  it("accepts only the exact Template controller repository identity", async () => {
+  it("accepts only the exact Template executable repository identity", async () => {
     const template = await gitFixture({
       origin: "https://github.com/rawr-ai/rawr-hq-template.git",
       packageName: "rawr-hq-template",

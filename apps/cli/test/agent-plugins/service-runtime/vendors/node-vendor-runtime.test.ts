@@ -14,7 +14,6 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
 } from "@rawr/agent-plugin-lifecycle/release";
-import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createProductionLifecycleClient } from "../../../../src/lib/agent-plugins/service-runtime/client";
@@ -36,17 +35,6 @@ type VendorStatusResult = Awaited<ReturnType<Client["vendors"]["status"]>>;
 type VendorSourceIdentity = NonNullable<
   Extract<VendorStatusResult, { kind: "VendorStatus" }>["sources"][number]["admitted"]
 >;
-
-bindVerifiedControllerReentryAuthority({
-  runtimePath: "/usr/bin/false",
-  entryPath: "/tmp/rawr-vendor-controller/entry.ts",
-  releaseRoot: "/tmp/rawr-vendor-controller",
-  dataRoot: "/tmp/rawr-vendor-controller/data",
-  controllerDigest: "0".repeat(64),
-  operatorCwd: "/tmp",
-  operatorHome: undefined,
-  operatorConfigHome: undefined,
-});
 
 const invocation = {
   context: {
