@@ -255,9 +255,11 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   global` and the DevOps `--inspect-after` input/result path that still emitted
   it alongside the retired `plugins list` command. Do not replace either path
   with another distribution authority read model.
-- [ ] 4.5 Remove controller requirements from active and
-  canonical specifications. Do not add compatibility aliases or scan old local
-  controller stores.
+- [x] 4.5 Verify the complete controller-removal deltas against their exact
+  canonical requirement names and record the exhaustive canonical disposition.
+  Task 8.3 applies those deltas atomically when this change archives; do not
+  hand-edit canonical specifications in parallel, add compatibility aliases, or
+  scan old local controller stores.
 - [ ] 4.6 Prove direct source and built Oclif execution cover every retained
   command and that no tracked source imports or invokes the retired verticals.
   Run affected lint/typecheck/build/test/Habitat plus standing deletion and
@@ -331,6 +333,10 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   bounded in-memory derivation facts. Regenerate the workspace lockfile, update
   active contracts and operator guidance, and prove no tracked executable
   reader or writer remains before closing the subtask.
+- [ ] 5.5d Materialize the exact selected provider-test marketplace below the
+  explicit disposable root, keep it alive through final provider observation,
+  and retire it with the disposable homes using exact ownership and containment
+  checks. Persist no projection, receipt, or lifecycle handle.
 - [x] 5.6 Keep native provider adapters thin and point-addressed. No provider
   home scan, direct cache/config write, rollback state, or ambient multi-home
   coordinator. Remove the orphan `.rawr-agent-plugin-owner.json` sentinel and
@@ -435,8 +441,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 - [ ] 8.2 Close every standing review with no unresolved finding that threatens
   an invariant. The newest Personal-worktree Inngest review must confirm HF01
   exclusion; it does not authorize release.
-- [ ] 8.3 Archive superseded controller, extension-manager, export, promotion,
-  and undo specifications without rewriting historical Git evidence.
+- [ ] 8.3 Archive this change so its canonical deltas atomically delete the
+  six capabilities, rewrite the ten capabilities, retain vendor management, and
+  add the three capabilities recorded exactly in
+  [[README#Canonical Spec Disposition|the canonical spec disposition]]. Generic
+  export remains owned by the dedicated destination architecture. Do not rewrite
+  historical Git evidence or leave duplicate active deltas.
 - [ ] 8.4 Land all Graphite nodes through required remote checks with `--ai`.
   Do not bypass externally blocked checks.
 - [ ] 8.5 Drain owned branches, PR stacks, temporary worktrees, package prefixes,
