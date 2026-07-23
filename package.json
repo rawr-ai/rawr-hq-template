@@ -55,7 +55,7 @@
     "habitat:provision": "bun scripts/habitat/provision.mjs",
     "habitat:grit:provision": "bun node_modules/@getgrit/cli/install.js",
     "format": "bunx nx run habitat:format",
-    "check": "bunx nx affected -t lint,typecheck --parallel=6 --nxBail && bunx nx run repository:check",
+    "check": "nx run-many -t check",
     "architecture:gate:no-old-operational-packages": "bun scripts/architecture/verify-no-old-operational-packages.mjs",
     "architecture:gate:no-legacy-hq-imports": "bun scripts/architecture/verify-no-legacy-hq-imports.mjs",
     "architecture:gate:canonical-plugin-topology": "bun scripts/architecture/verify-canonical-plugin-topology.mjs",

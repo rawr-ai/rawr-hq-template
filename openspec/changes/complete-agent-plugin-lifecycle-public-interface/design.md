@@ -142,11 +142,12 @@ The independent Grit-helper documentation law is also active and requires a
 semantic comment immediately above each named helper. Both run in one selected
 green local Habitat batch behind `check:policy`, with empty baselines.
 `habitat:check` composes that policy with owner lint, typecheck, tests, and
-hygiene; `repository:check` composes Habitat with repository admission and
-separation and the CLI Oclif boundary check. The selected Habitat batch owns
-the required Oclif structure laws and lifecycle command-channel law. The seven
-generic service rules remain governed by [[tasks]] 1.5e and must not join the
-selected batch while their known live-corpus violations remain.
+hygiene. The one root Nx graph reaches repository admission and separation,
+Habitat policy, and CLI Oclif parity through their qualified owners. The
+selected Habitat batch owns the required Oclif structure laws and lifecycle
+command-channel law. The seven generic service rules remain governed by
+[[tasks]] 1.5e and must not join the selected batch while their known
+live-corpus violations remain.
 
 RAWR adds generic Oclif app and command-plugin blueprints. These assert the
 kind's valid axes, not a list of retired filenames. A broad universal “plugin”
@@ -164,20 +165,20 @@ The repository required result remains non-skippable for the candidate
 revision. Its implementation stops running every project sequentially on every
 local push.
 
-Public `bun run check` first uses affected-project scheduling for cacheable lint
-and typecheck, then invokes `repository:check`. The repository owner composes
-project admission and separation, `habitat:check`, and the CLI Oclif boundary
-check. Habitat composes its owner checks, repository hygiene, and a single
-selected green policy batch containing the required Oclif structure laws and
-lifecycle command-channel law. The required CI job publishes one stable status.
-Local hooks provide fast feedback; remote branch protection remains merge
-authority.
+Public `bun run check` starts one Nx graph over every admitted non-root
+project's plain public check. Shared defaults connect those checks to lint,
+typecheck, optional owner verification, Habitat policy, and dependency checks.
+Repository admission and separation, CLI Oclif parity, and the selected Habitat
+policy batch remain qualified owner work. That policy batch contains the
+required Oclif structure laws and lifecycle command-channel law. The required
+CI job publishes one stable status. Local hooks provide fast feedback; remote
+branch protection remains merge authority.
 
-This hierarchy intentionally stops short of Civ's final all-project `check`
-graph. That composition becomes valid only after every applicable project owns
-a `check` target or Habitat Nx inference supplies one. The current selected
-policy batch likewise does not activate registered rules with known
-live-corpus violations.
+Every non-root project owns a public check, and the bounded TypeBox graph reader
+rejects a new project without one. Native Habitat project admission replaces
+that temporary reader when the upgraded compiled artifact is published. The
+current selected policy batch still does not activate registered rules with
+known live-corpus violations.
 
 ### One oRPC service owns curated lifecycle behavior
 

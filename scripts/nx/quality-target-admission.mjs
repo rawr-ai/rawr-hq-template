@@ -49,18 +49,19 @@ export function assertQualityTargetAdmission(value) {
       );
       continue;
     }
-    if (EXEMPT_PROJECT_KINDS.has(projectKinds[0])) continue;
-
-    const missing = ["lint", "typecheck"].filter((target) => !(target in node.data.targets));
+    const requiredTargets = EXEMPT_PROJECT_KINDS.has(projectKinds[0])
+      ? ["check"]
+      : ["check", "lint", "typecheck"];
+    const missing = requiredTargets.filter((target) => !(target in node.data.targets));
     if (missing.length > 0) {
-      violations.push(`${name} (${node.data.root}) is missing ${missing.join(" and ")}`);
+      violations.push(`${name} (${node.data.root}) is missing ${missing.join(", ")}`);
     }
   }
 
   if (violations.length > 0) {
     throw new Error(
       `QUALITY_TARGET_ADMISSION_FAILED\n${violations.sort().join("\n")}\n` +
-        "Declare exactly one project kind and add lint and typecheck targets unless it is content or a fixture."
+        "Declare exactly one project kind and a check target; code projects also require lint and typecheck."
     );
   }
 }
@@ -82,7 +83,7 @@ if (import.meta.main) {
   try {
     assertQualityTargetAdmission(readProjectGraph());
     console.log(
-      "quality target admission: all projects have one kind and all code projects own lint and typecheck"
+      "quality target admission: all projects have one kind and check; all code projects own lint and typecheck"
     );
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);

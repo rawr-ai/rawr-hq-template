@@ -15,9 +15,11 @@ describe("quality target admission", () => {
   test("accepts code projects and uniquely classified exemptions", () => {
     const value = graph({
       root: project(".", {}),
-      service: project("services/example", { lint: {}, typecheck: {} }, ["type:service"]),
-      content: project("plugins/agents/example", {}, ["type:content"]),
-      fixture: project("tools/example-fixture", {}, ["type:fixture"]),
+      service: project("services/example", { check: {}, lint: {}, typecheck: {} }, [
+        "type:service",
+      ]),
+      content: project("plugins/agents/example", { check: {} }, ["type:content"]),
+      fixture: project("tools/example-fixture", { check: {} }, ["type:fixture"]),
     });
 
     expect(() => assertQualityTargetAdmission(value)).not.toThrow();
@@ -48,7 +50,16 @@ describe("quality target admission", () => {
     });
 
     expect(() => assertQualityTargetAdmission(value)).toThrow(
-      "alpha (packages/alpha) is missing lint and typecheck\nbeta (packages/beta) is missing typecheck"
+      "alpha (packages/alpha) is missing check, lint, typecheck\n" +
+        "beta (packages/beta) is missing check, typecheck"
+    );
+  });
+
+  test("refuses an exempt project without a public check", () => {
+    const value = graph({ content: project("plugins/agents/example", {}, ["type:content"]) });
+
+    expect(() => assertQualityTargetAdmission(value)).toThrow(
+      "content (plugins/agents/example) is missing check"
     );
   });
 

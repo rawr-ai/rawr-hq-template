@@ -38,12 +38,12 @@ fallbacks.
 ## Required Repository Check
 
 - Local pre-push feedback and remote CI both run `bun run check`.
-- The root command first runs affected Nx `lint` and `typecheck`, then invokes
-  `repository:check`.
-- `repository:check` composes repository project admission and separation,
-  `habitat:check`, and the CLI Oclif boundary check. The repository owner also
-  runs its own lint, typecheck, and tests; Habitat's selected policy batch owns
-  the required Oclif structure laws and lifecycle command-channel law.
+- The root command starts one Nx `check` graph over every admitted non-root
+  project. Shared defaults connect each plain public check to lint, typecheck,
+  optional owner verification, Habitat policy, and dependency checks.
+- Repository project admission and separation, Habitat policy, and CLI Oclif
+  parity remain qualified owner work. Habitat's selected policy batch owns the
+  required Oclif structure laws and lifecycle command-channel law.
 - `habitat:check` composes Habitat-owner lint, typecheck, and tests with
   `check:hygiene` and `check:policy`. The policy target runs one
   selected green local rule batch with empty baselines. Registered rules with
@@ -54,9 +54,9 @@ fallbacks.
 - Habitat evaluates the RAWR-owned positive `.habitat` topology through a
   checksum-pinned standalone Civ7 release compiled with Bun 1.4. The SDK source
   is not vendored here.
-- Civ's final all-project `check` composition remains the destination, not
-  current fact. It becomes truthful only after every applicable project owns a
-  `check` target or Habitat Nx inference supplies the missing targets.
+- Every non-root project now owns a public check, and bounded graph admission
+  rejects a new project without one. Native Habitat project admission replaces
+  that temporary graph reader after the upgraded artifact is published.
 - The `Repository Ratchet` workflow publishes the job context
   `Required lint, typecheck, and topology` for pull requests, merge groups, and
   pushes to `main`.
