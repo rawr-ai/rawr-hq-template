@@ -63,7 +63,6 @@ export const createRequiredServiceObservabilityMiddleware =
 export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddleware;
 export const createRequiredServiceAnalyticsMiddleware = service.createRequiredAnalyticsMiddleware;
 export const createServiceProvider = service.createProvider;
-export const createServiceImplementer = service.createImplementer;
 
 export function awaitDependencyPromise<A>(operation: () => PromiseLike<A>) {
   return Effect.uninterruptible(
