@@ -345,15 +345,16 @@ project owns a `check` target or Habitat Nx inference supplies the missing
 targets. Likewise, the selected Habitat batch does not imply that all registered
 rules are active.
 
-The active policy batch now contains eleven green laws: packet topology,
+The active policy batch now contains twelve green laws: packet topology,
 AGENTS placement and shape, Grit helper documentation, the API-plugin boundary,
-all three Oclif app laws, and all three Oclif command-plugin laws. Rewriting the
-AGENTS shape query from six repository traversals to one reduced its uncached
-runtime from 71.3 seconds to 2.7 seconds; the complete eleven-rule policy target
-passes uncached in 5.2 seconds. The Example Todo public client now calls through
-the real external API boundary, and explicit Nx edges connect both app hosts to
-the package-less API project and that project to its service, SDK, and runtime
-context owners. A change to the API face therefore selects both consumers.
+the lifecycle command-channel law, all three Oclif app laws, and all three Oclif
+command-plugin laws. Rewriting the AGENTS shape query from six repository
+traversals to one reduced its uncached runtime from 71.3 seconds to 2.7 seconds;
+the complete policy target passes uncached in 5.2 seconds. The Example Todo
+public client now calls through the real external API boundary, and explicit Nx
+edges connect both app hosts to the package-less API project and that project
+to its service, SDK, and runtime context owners. A change to the API face
+therefore selects both consumers.
 
 Before this hierarchy-only recut, the first recorded complete run covered 47
 projects and restored all 93 lint/typecheck tasks in 85 ms. The Nx admission
@@ -367,22 +368,23 @@ reran, as did live Habitat in 322 ms; total wall time was 3.25 seconds. A
 separate uncached run of the five Nx admission tests plus their lint and
 typecheck owners completed in 952 ms.
 
-The first restacked service-law candidate then exposed an integration defect in
-CI: the repository aggregate launched separate standalone Habitat processes
-for the lifecycle command-channel law and the selected policy batch, and Grit
-twice returned malformed diagnostic output for `require_grit_helper_comments`
-while those processes overlapped. The exact policy batch passed 12 consecutive
-local runs and the complete repository check passed six, so no rule, parser,
-retry, or scheduling lock was added. `habitat:check:policy` now runs one
-twelve-rule repository batch that includes the lifecycle command-channel law,
-and its cache inputs include that law's owner tree. `repository:check` no longer
-starts the redundant owner process; the service's `structure-check` remains a
-focused owner target. Every rule remains required through the hierarchy
-described by [[scripts/habitat/AGENTS#Flow|the Habitat execution boundary]].
-The combined policy target passed uncached in 5.4 seconds with one shared
-structure traversal across six laws. Three uncached repository checks passed
-in 15.3, 16.0, and 12.9 seconds with 17 dependencies instead of 18; the cached
-public `bun run check` completed in 7.7 seconds.
+The first restacked service-law candidate exposed a nondeterministic provider
+failure in `require_grit_helper_comments`: identical Git trees both passed and
+failed when pinned Grit returned malformed diagnostic output. The helper law
+already ran in its own native Grit invocation, so no Nx split, retry, scheduling
+lock, or parser recovery was added. The law instead removed
+its embedded JavaScript parser and now expresses first-fence selection and the
+adjacent non-empty comment relation directly in GritQL over the Markdown AST.
+`habitat:check:policy` remains one twelve-rule repository batch that includes
+the lifecycle command-channel law, and its cache inputs include that law's
+owner tree. `repository:check` does not start a redundant owner process; the
+service's `structure-check` remains a focused owner target. Every rule remains
+required through the hierarchy described by
+[[scripts/habitat/AGENTS#Flow|the Habitat execution boundary]]. Before the
+native-rule correction, the combined policy target passed uncached in 5.4
+seconds with one shared structure traversal across six laws. Three uncached
+repository checks passed in 15.3, 16.0, and 12.9 seconds with 17 dependencies
+instead of 18; the cached public `bun run check` completed in 7.7 seconds.
 
 The workflow remains named `Repository Ratchet`; its job publishes the context
 `Required lint, typecheck, and topology`. Full-history checkout plus
