@@ -1,6 +1,16 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "@rawr/resource-agent-plugin-package-output",
+  "namedInputs": {
+    "production": [
+      "default",
+      "{workspaceRoot}/resources/agent-plugin-package-output/providers/**/*.ts",
+      "!{workspaceRoot}/resources/agent-plugin-package-output/providers/**/test/**",
+      "!{workspaceRoot}/resources/agent-plugin-package-output/providers/**/*.test.*",
+      "!{workspaceRoot}/resources/agent-plugin-package-output/providers/**/*.spec.*",
+      "!{workspaceRoot}/resources/agent-plugin-package-output/providers/**/vitest.config.*"
+    ]
+  },
   "targets": {
     "check": {
       "executor": "nx:noop"
