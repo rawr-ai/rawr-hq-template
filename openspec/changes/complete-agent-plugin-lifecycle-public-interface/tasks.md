@@ -189,6 +189,13 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   unversioned `@rawr/agent-plugin-lifecycle` workspace dependency. Do not repair
   that failure until tasks 4, 5.5, 5.6, and 5.6a remove rejected owners and land
   the coherent Effect 4 family; then recompute the actual surviving closure.
+- [x] 3.1b Delete the unconsumed `@rawr/orpc-client` package, its stale CLI
+  dependency, root build references, and lockfile entries without an alias or
+  replacement. Remove the CLI's duplicate `@rawr/dev` and `@rawr/dev-node`
+  dependencies; the DevOps command plugin remains their qualified consumer.
+  Recompute the CLI plus four first-party Oclif plugin roots as an exact
+  seventeen-project source closure; keep `@rawr/plugin-hello` outside as the
+  external-install acceptance fixture.
 - [ ] 3.2 Give `@rawr/cli` a real version and release metadata. Configure the
   coherent publishable runtime group under top-level `nx.json#release`; private
   workspace dependencies must be versioned, bundled by a standard tool, or
