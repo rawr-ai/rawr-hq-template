@@ -38,7 +38,9 @@
 
 ### Requirement: Provider actions bind exact target and receipt truth
 **Reason**: Provider actions no longer enter rollback authority.
-**Migration**: Targeted and complete-test receipts remain mode-local observations; canonical ownership uses native marketplace identity and embedded provenance.
+**Migration**: Targeted and complete tests return bounded inline observations
+only; canonical ownership uses native marketplace identity and embedded
+provenance. No receipt or sidecar remains.
 
 ### Requirement: Partial multi-target application retains complete inverse coverage
 **Reason**: Partial truth is represented by per-target outcomes, not a controller rollback transaction.

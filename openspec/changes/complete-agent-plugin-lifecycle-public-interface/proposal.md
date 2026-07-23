@@ -1,109 +1,98 @@
 ## Why
 
-Template `main` already owns the controller, release construction, qualified
-agent-plugin commands, and native Codex/Claude adapters. Personal RAWR HQ needs
-a narrow external interface for repository validation and one reviewed
-`current-main` selection. It does not need controller-store transport, a second
-launcher, or an issuer/promotion protocol layered over Git review.
+RAWR needs one normally installed CLI and one bounded desired-state reconciler
+for curated agent plugins. It does not need a private CLI package manager,
+runtime selector, retained content-addressed application store, per-file runtime
+attestation envelope, or reconstructed Oclif extension manager.
 
-The initial C6 design overfit proof mechanics. [[authority-amendment]] narrows
-the remaining work to thin convergence while preserving unrelated landed C1-C5
-behavior.
+The previous implementation made those mechanisms self-authorizing by wiring
+later behavior to their identities. [[authority-amendment]] rejects that model.
+This continuation removes the machinery, restores native Oclif and Nx ownership,
+and keeps the lifecycle behavior that solves the actual product problem.
 
 ## What Changes
 
-- Keep the closed staged/clean repository checks under
-  `rawr agent plugins check`.
-- Add one releases-owned `release-input-record` mode beneath that existing
-  command. It canonicalizes a bounded stdin body or validates exact envelope
-  bytes through one pure procedure; it does not write Personal records or
-  acquire repository, filesystem, artifact, or provider authority.
-- Add one releases-owned `release-input-refresh` mode beneath the same command.
-  An explicit closed member list selects staged Git roots; the procedure derives
-  payload manifests and exact skill ownership, preserves surviving explicit
-  ancillary declarations, and emits canonical bytes without writing or building.
-- Replace the acceptance-request/evidence/promotion chain with one canonical
-  `current-main` record that binds landed personal Git identity, release input,
-  complete release-set identity, provider projections, and evaluation profile.
-- Make canonical provider sync resolve that record directly, then delegate all
-  provider mutation and inventory reads to the native Codex and Claude adapters.
-- Retire the old `attest-promotion` command and v1 current-main resolution path;
-  no alias, fallback, or compatibility route remains.
-- Retire receipt-owned `rawr agent plugins retire`; canonical closed-set sync is
-  the only provider cleanup path and bounds omission cleanup by native
-  provenance.
-- Retire `rawr agent plugins export` and `rawr agent plugins undo` from command
-  discovery, the oRPC contract, router, client, controller composition, and
-  public package surfaces. Add no stub, alias, forwarding route, or fallback.
-- Remove `completeNativeHomes`, its target-record scan, and the caller bridge.
-  Provider lifecycle remains explicit and point-addressed; it does not aggregate
-  homes for another owner.
-- Canonicalize generated Oclif manifest objects so equivalent controller builds
-  produce the same bytes and digest.
-- Keep the owner-local DevOps CLI fixture and the serialized owning CLI test
-  target as independent test-boundary corrections.
+- Make `@rawr/cli` an ordinary Oclif application for development and release.
+- Restore `@oclif/plugin-plugins` as the direct owner of `rawr plugins`.
+- Add Nx project targets for build, generated Oclif manifests, and packaging;
+  use top-level Nx Release configuration for version/changelog/publication of
+  the CLI's actual runtime closure. Use a registry-published Oclif package whose
+  executable requires installed Bun while Bun-only first-party commands remain;
+  adopt Oclif standalone archives only after Node compatibility is proven.
+- Delete the custom controller builder, archive format, release store, selector,
+  launcher, installer, per-file runtime envelope, controller diagnostics, and
+  release workflow.
+- Delete the custom Oclif extension bootstrap and local command wrappers.
+- Retain one oRPC agent-plugin lifecycle service behind
+  `rawr agent plugins`; simplify it to closed release membership, unique skill
+  ownership, in-memory provider projection from exact selected Git objects,
+  native inspection/reconciliation, and justified owner-local authoring/test
+  capabilities.
+- Delete the persistent agent release/set repository, projection store,
+  publication/retention machinery, and digest-addressed handles. Canonical
+  mutation uses the selected Personal Git marketplace through native provider
+  commands; local marketplace materialization is disposable-test-only.
+- Keep Codex and Claude mutation behind thin native provider adapters. Provider
+  homes remain installed-state authority.
+- Replace lifecycle-specific source-shape scripts with positive Habitat
+  blueprints for services, API plugins, agent routers, the Oclif app, and Oclif
+  command plugins. Use Grit only for source relationships.
+- Route required lint, typecheck, and Habitat policy through the Nx project graph
+  so cacheable work is reused and the candidate revision still receives one
+  non-skippable required result.
+- Recut Personal RAWR HQ to curated content, provenance, declarative policy and
+  evaluation inputs, and its own governed release/channel records. Remove
+  Template controller pins, executable copies, and per-file runtime envelopes.
+- Prove native Codex and Claude convergence in disposable homes, then approved
+  homes, followed by a mutation-free repeat.
 
-## Explicitly Removed From C6
+## Explicitly Removed
 
-- Controller-store artifact transfer and cross-store A/B proof.
-- A second immutable launcher, caller-echoed digest/protocol bindings, and the
-  installed refusal matrix built around them.
-- Public mechanical-evidence handles as channel authority.
-- Protected-lane runtime machinery beyond closed release-input exclusion.
-- New issuer lineage, hosted approval replay, promotion attestations,
-  app/runtime composition, destination/export realization, undo capsules, or
-  provider installation logic.
+- The “controller” as a CLI distribution or local version-selection concept.
+- Custom Oclif plugin installation, registry reconstruction, and official-command
+  shadowing.
+- Controller digests in Personal lifecycle authority.
+- CLI release identity as an input to desired agent-plugin membership.
+- App/runtime composition and legacy destination/export work.
+- Personal/Template executable equivalence or ancestry.
+- HF01/Inngest candidate materialization or release.
+- New receipts, ledgers, aggregates, launchers, compatibility readers, and
+  adversarial local-tamper machinery.
 
 ## Modified Capabilities
 
-- `agent-plugin-command-lifecycle`: exposes repository checks, one pure
-  release-input record codec, one read-only staged-index refresh, and one closed
-  current-main record codec without adding a command ID, and retires the
-  receipt-owned explicit provider-retire command.
-- `agent-plugin-lifecycle-mode-selection`: canonical sync/status consume one
-  resolved selector and the managed-retire request is removed.
-- `agent-plugin-promotion`: the issuer/acceptance/promotion capability is
-  removed rather than adapted.
-- `agent-provider-projection`: projection compatibility binds directly to the
-  reviewed selector rather than accepted/promotion facts.
-- `agent-provider-deployment`: canonical sync consumes that record and continues
-  to use native provider commands and live inventory without canonical receipts,
-  target-identity sidecars, or undo capsules.
-- `agent-plugin-build-artifact-store`: mechanical evidence remains optional
-  complete-test proof and is not channel/deployment/retention authority.
-- `agent-plugin-managed-export`: removed from the curated lifecycle controller.
-  Useful destination/publication requirements transfer to the dedicated full
-  architecture migration rather than being repaired here.
-- `agent-plugin-undo-capsule`: removed from the reachable controller and service
-  surfaces after a read-only installed-state check proves no live capsule is
-  stranded.
-- `agent-provider-deployment`: removes the complete-home aggregate and scan;
-  targeted, complete-test, canonical sync, and status remain explicitly
-  point-addressed.
-- `rawr-controller-authority`: generated official manifests are canonical, so
-  equivalent controller builds have one digest.
-
-### New Capabilities
-
-- `agent-plugin-channel-selection`: one Git-reviewed current-main v2 record is
-  the complete channel-selection authority.
+- `rawr-cli-distribution`: Nx builds and releases a conventional Oclif CLI
+  package; ordinary installation exposes `rawr`.
+- `external-cli-extension-management`: `@oclif/plugin-plugins` directly owns the
+  `rawr plugins` command surface.
+- `agent-plugin-command-lifecycle`: `rawr agent plugins` remains the only curated
+  lifecycle surface.
+- `agent-plugin-channel-selection`: one Personal Git-reviewed record selects one
+  closed release input without binding the installed CLI package.
+- `agent-provider-projection`: deterministic provider-native bytes derive from
+  the selected release set.
+- `agent-provider-deployment`: explicit Codex and Claude homes converge through
+  native commands and live observation.
+- `repository-policy`: Habitat owns positive topology and Grit source
+  relationships; Nx owns project/task dependency and required-check scheduling.
 
 ## Impact
 
-- Template implementation only. Personal remains content and governed-data
-  authority and invokes the installed Template controller externally.
-- The repositories share no source, history, runtime paths, or synchronization
-  dependency.
-- Inngest candidate work remains `HF01_PENDING`. This settlement's exact
-  canonical-main invocation supplies no external candidate locator or member
-  and therefore requests no candidate bytes. Generic Template tooling does not
-  infer protected status from a caller's explicit workspace.
-- App/runtime composition remains owned by the separate architecture migration.
+- RAWR HQ-Template loses a large custom distribution and extension-management
+  surface while retaining executable code and generic lifecycle tooling.
+- Personal RAWR HQ becomes independently content-focused; no Template merge,
+  copy, equivalence, or executable pin is introduced.
+- Existing controller installations become obsolete local bytes. The corrected
+  product does not scan or mutate them after conventional CLI installation is
+  verified.
+- Inngest remains `HF01_PENDING` and is excluded from this workstream's selected
+  Personal release input and every initiative provider mutation while pending.
+- The dedicated architecture migration retains ownership of application/runtime
+  composition and destination realization.
 
 ## Related
 
-- Corrected authority: [[authority-amendment]].
-- Decisions and state law: [[design]].
-- Execution record: [[tasks]] and [[README]].
-- Landed service topology:
-  [[openspec/changes/archive/2026-07-18-retire-mixed-plugin-lifecycle/SERVICE_TOPOLOGY]].
+- Controlling amendment: [[authority-amendment]].
+- Architecture: [[design]].
+- Execution: [[tasks]].
+- Durable status and verification: [[README]].

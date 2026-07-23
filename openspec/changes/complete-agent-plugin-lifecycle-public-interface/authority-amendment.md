@@ -1,125 +1,233 @@
-# C6 Thin-Convergence Authority Amendment
+# Native CLI And Bounded Reconciler Authority Amendment
 
 ## Authority
 
-This amendment records the user's accepted correction after the proportionality
-audit. It supersedes the artifact-transfer, public-evidence, issuer/promotion,
-and terminal-launcher portions of the initial active C6 design. It does not
-reopen unrelated lifecycle behavior already landed through C1-C5.
+This amendment records the user's categorical correction after the installed
+CLI distribution audit. It supersedes every active or archived initiative
+clause that makes a custom RAWR controller, controller release store,
+controller selector, per-file runtime envelope, or reconstructed Oclif plugin
+manager part of the target architecture.
 
-The original packet and repository-separation identities remain recorded in
-[[README]]. This amendment controls the remaining implementation and closure.
+The accepted design-packet provenance and repository-separation amendment remain
+historical inputs. They do not preserve an implementation after its underlying
+model has been rejected. This amendment controls the remaining implementation,
+review, landing, settlement, and closure recorded in [[README]], [[proposal]],
+[[design]], and [[tasks]].
 
-## Corrected Frame
+## Categorical Correction
 
-- **Objective:** finish the first real closed-world curated release through the
-  installed Template controller and providers' native lifecycle commands, then
-  prove a repeated converged operation inspects live state and performs no
-  native or lifecycle-owned write.
-- **Hard core:** one installed controller; one complete release set; one owner
-  per skill; one reviewed `current-main` record; native Codex/Claude truth;
-  separate Template and personal repositories.
-- **Exterior:** app/runtime composition, destination/export realization,
-  controller-store transport, alternate launchers, issuer lineage, hosted
-  replay, promotion attestations, undo capsules, global coordination, and
-  protected candidate materialization.
-- **Falsifiers:** a second selector, cross-store artifact transfer, personal controller code,
-  non-native provider mutation, stale omitted member, mutating repeat, reachable
-  lifecycle export/undo, or a native-home aggregate/scan.
-- **Closure:** retained Template interface landed/installed; personal content
-  and channel landed independently; cognition-containing set converged in
-  disposable and approved native homes; repeat with every lifecycle-owned write
-  counter and native mutating-call counter at zero; repositories,
-  stacks, and worktrees clean and drained.
+The initiative conflated three different concerns:
 
-## State And Capability Owners
+1. installation and versioning of the RAWR CLI;
+2. lifecycle selection for curated agent plugins; and
+3. native provider reconciliation.
 
-| Concern | Truth owner |
+The bespoke controller distribution then made its own digest, launcher, release
+store, retained versions, per-file manifest, and Oclif extension reconstruction
+look authoritative because later code was written to consume them. That is
+circular complexity, not a product requirement.
+
+The ordinary requirement is narrower: install one versioned RAWR Oclif CLI from
+RAWR HQ-Template, run one bounded agent-plugin reconciler inside it, and delegate
+provider mutation to the providers' native commands. Local accidental
+checkout/worktree confusion does not justify a private package manager or a
+hostile-local-tamper model.
+
+## Director Frame
+
+- **Objective:** make RAWR HQ-Template a normal Nx-built Oclif application with
+  uniform command plugins and one bounded oRPC agent-plugin lifecycle service;
+  keep Personal RAWR HQ content-only; then prove native Codex and Claude
+  convergence and a mutation-free repeat.
+- **Hard core:** Oclif owns CLI dispatch and external extension mechanics; Nx
+  owns project builds, checks, and releases; Habitat owns positive source and
+  topology policy; Personal review selects desired curated membership; the
+  lifecycle service validates and derives it; provider homes and native provider
+  commands own installed state.
+- **Exterior:** custom CLI selectors and release stores, app/runtime
+  composition, destination/export realization, provider installer
+  reimplementation, repository equivalence, protected candidate release, and
+  adversarial local-tamper resistance.
+- **Falsifiers:** a reachable custom launcher or controller store; RAWR wrapping
+  Oclif's extension registry; lifecycle records that bind CLI-install identity;
+  provider mutation outside native commands; Template executable code in
+  Personal; an omitted managed member left reachable; or a converged repeat
+  that mutates.
+- **Closure:** conventional CLI package is landed and installable; custom
+  controller and extension-manager code is unreachable and deleted; Habitat,
+  lint, typecheck, and focused behavior checks are required and green; Personal
+  contains only its content and governed records; disposable and approved homes
+  converge through native commands; the repeat is read-only; repositories,
+  Graphite stacks, and owned worktrees are clean and drained.
+
+## Working Vocabulary
+
+Use standard operational engineering terms. A compound term is permitted only
+when it establishes a different kind of object or invariant.
+
+| Bag | Terms |
 | --- | --- |
-| Controller and generic lifecycle tooling | RAWR HQ-Template stable installed controller |
-| Curated content, provenance, policy/evaluation, channel | Personal RAWR HQ and its Git review |
-| Complete set and skill ownership | Immutable release set built from exact landed personal Git identity |
-| Codex installation/state | Native Codex marketplace/plugin commands and live inventory |
-| Claude installation/state | Native Claude marketplace/plugin commands and live inventory |
-| Destination/export realization | Dedicated full architecture migration; not the curated lifecycle controller |
-| Inngest candidate | `HF01_PENDING`; outside the exact landed release input and therefore not an admitted source/destination |
+| Identity | CLI, package, version, plugin, content, provider, source |
+| Boundary | app, service, resource, plugin, repository, provider home |
+| Flow | build, package, install, invoke, inspect, reconcile, verify |
+| Authority | Oclif package configuration, Nx project/release configuration, Git record, native provider state |
+| Guarantee | closed, explicit, deterministic, idempotent, observable |
+| Derived artifact | release set, provider projection, generated Oclif command manifest |
+| Evidence | caller-retained test result, CI artifact, release verification record |
+| Cache/index | standard-tool generated manifest or build cache |
+| Retired mechanism | controller, selector, launcher, runtime envelope, aggregate, fallback |
+| State | source, built, released, installed, selected, converged |
 
-## Proportionality Ratchet
+Do not use semantically ambiguous project vocabulary. Use test result,
+verification record, evidence artifact, dependency graph, release manifest, or
+another standard term that names the actual thing.
 
-The categorical error that produced the retired C6 branches was turning proof
-of an operation into durable authority for the next operation. Git identity
-became issuer evidence and hosted replay; provider verification became receipts
-and transfer state; installed-controller proof became another launcher. That
-also widened ordinary accidental-failure protection into an adversarial local
-tampering problem excluded by the initiative.
+## Authority Ledger
 
-The correction is monotonic:
-
-- Native Codex and Claude commands are trusted as the provider mutation
-  mechanism. RAWR selects one reviewed complete set and asks those commands for
-  the exact delta; it does not sandbox or reproduce their installers.
-- A test fixture, disposable home, acceptance transcript, or controller build
-  root never becomes runtime identity or next-invocation authority.
-- No persistent record is added unless product behavior must consume it on a
-  later invocation and no existing owner already exposes the required truth.
-- Safety guards cover the concrete supported destructive operation. Recursive
-  cleanup is limited to an owner-created disposable root after exact temp-parent,
-  prefix, directory, non-symlink, and containment checks; it is not a general
-  anti-obfuscation subsystem.
-- A slice closes when its behavior, types, lint, positive topology, and bounded
-  real-resource oracle pass. More ceremony is not stronger proof.
-
-This ratchet governs [[tasks#3B. Observed-Git Selection And Cutover]],
-[[tasks#4. T6C2: Thin Canonical Provider Path]], and the remaining settlement.
-
-## Keep / Retire
-
-| Slice | Disposition |
+| Concern | Owner |
 | --- | --- |
-| Staged/clean repository checks | Keep |
-| Protected-lane runtime mode | Retire; exact release-input exclusion is sufficient |
-| One canonical current-main v2 record | Build |
-| Native provider adapters and closed-set projection | Keep |
-| Canonical receipts, target sidecars, and undo capsule | Retire from canonical sync/status |
-| Qualified capsule application | Retire; no lifecycle command owns rollback state |
-| Managed export and destination realization | Retire from this lifecycle; transfer useful requirements to the dedicated full architecture migration |
-| Provider/export overlap aggregate | Retire; provider operations remain explicit and point-addressed |
-| Receipt-owned explicit provider retire | Retire; canonical closed-set sync owns omission cleanup |
-| Deterministic official manifest | Keep |
-| Owner-local CLI test corrections | Keep |
-| Controller-build hostile/native acceptance harness | Retire; stable install/reentry tests and owner-scoped native settlement replace it |
-| Cross-store artifact transfer and A/B harness | Retire |
-| Public evidence handle as channel authority | Retire |
-| Second launcher/caller bindings/refusal matrix | Retire |
-| Issuer/hosted/promotion selection chain | Retire from reachable lifecycle |
-| App/runtime and destination/export composition | Closed; separate migration owns them |
+| CLI command discovery and dispatch | Oclif package configuration, core-plugin composition, and installed plugin state |
+| External Oclif extension install/update/remove | `@oclif/plugin-plugins` |
+| Workspace build, task dependencies, and caching | Nx project targets |
+| Versioning, changelog, and publication orchestration | Top-level Nx Release configuration and commands |
+| Source topology and source relationship policy | Habitat blueprints and Grit patterns |
+| Executable implementation and generic lifecycle tooling | RAWR HQ-Template |
+| Curated agent content, provenance, policy/evaluation, channel records | Personal RAWR HQ and its Git review |
+| Desired curated release membership and unique skill ownership | One closed Personal release input selected by its governed record |
+| Closed desired content | Exact immutable Git objects selected by the reviewed Personal record |
+| Provider-specific installable bytes | Selected Personal Git marketplace; native provider owns its snapshot/cache |
+| Codex installed state | Native Codex marketplace/plugin commands and live inventory |
+| Claude installed state | Native Claude marketplace/plugin commands and live inventory |
+| Operational evidence | Caller or ordinary CI/release tooling; never a lifecycle store or selector |
+| Inngest candidate | `HF01_PENDING`; excluded from this workstream's selected Personal release input and every initiative mutation path while pending |
 
-## State Law
+A repository path is a content locator. It is never CLI identity, provider
+identity, release identity, or Git ancestry between repositories.
+
+## Target Flow
 
 ```text
-landed content
-  -> built complete set
-  -> disposable complete-test proof (omissions preserved)
-  -> reviewed current-main
-  -> disposable canonical convergence and read-only repeat
-  -> approved-home convergence
-  -> read-only repeat
+RAWR HQ-Template source
+  -> Nx build and release
+  -> registry-published Oclif package requiring installed Bun, or Oclif standalone package
+  -> normal installer exposes `rawr`
+     -> `rawr plugins` delegates to @oclif/plugin-plugins
+     -> `rawr agent plugins` calls one oRPC lifecycle service
+        -> read the selected Personal content record
+        -> read exact selected Personal Git objects
+        -> derive one closed release model and unique ownership in memory
+        -> derive and verify the provider-native projection in memory
+        -> inspect the explicit provider home
+        -> reconcile the selected immutable Git marketplace through native Codex or Claude commands
+        -> inspect and verify the result
 ```
 
-Failure and retry are operation results, not new durable authority layers. Git
-history records review. Native inventory is re-read after mutation. A future
-provider may earn a minimal sidecar only if its native state cannot expose RAWR
-provenance; Codex and Claude do not earn one pre-emptively.
+Development uses the same Oclif application through Nx without an installed
+controller. Packaging may initially require Bun because existing first-party
+runtime code uses Bun-only APIs. That is a bounded release decision: either ship
+a registry-published Oclif package whose executable requires installed Bun, or
+remove those runtime dependencies before using Oclif's Node-bearing standalone
+archives. It does not authorize another selector or version store.
 
-## Proof Boundary
+## Component Disposition
 
-Focused service/CLI/resource behavior, TypeScript, lint, positive Habitat
-topology, strict OpenSpec, and deterministic build-twice proof gate Template.
-Real Codex and Claude binaries in explicit disposable homes gate provider
-behavior through owner-scoped lifecycle/provider acceptance, never the
-controller-build acceptance target. Approved-home settlement is explicit
-operational proof followed by a mutation-counted repeat. The standing review
-roles are TypeScript/refactor,
-architecture/authority, behavior/testing, and structural code quality.
+| Component | Disposition |
+| --- | --- |
+| `scripts/controller/**` | Delete after conventional CLI smoke verification |
+| `packages/controller-release/**` | Delete |
+| `resources/controller-authority/**` | Delete; rehome only narrow surviving checks at their actual owner |
+| `apps/cli/src/lib/controller/**` | Delete |
+| `packages/core/src/cli/controller-reentry.ts` | Delete |
+| Controller release workflow, installer, selector, launcher, diagnostics | Replace with Nx/Oclif build, package, release, and ordinary installation |
+| `apps/cli/src/lib/external-extensions/**` | Delete |
+| Local wrappers for Oclif `plugins` commands | Delete; enable `@oclif/plugin-plugins` directly |
+| `apps/cli/bin/run.js` and `apps/cli/src/index.ts` | Restore to ordinary Oclif entrypoints |
+| `services/agent-plugin-lifecycle` | Keep one service; simplify to bounded desired-set validation, projection, native reconciliation, and justified adjacent capabilities |
+| `resources/native-agent-provider` | Keep as thin native Codex/Claude process adapters |
+| `resources/content-workspace` | Keep only explicit Git read and repository validation |
+| Persistent agent artifact repository, projection store, and retention planner | Delete; canonical operations derive from selected immutable Git objects and use native Git marketplace distribution |
+| Provider target receipts and identity sidecars | Delete; disposable tests return inline per-target observations |
+| Custom mechanical-evidence store | Delete; ordinary CI may retain the command result as an external artifact |
+| Export destination resource | Transfer to the dedicated destination architecture or delete after its owner decides; never revive legacy export here |
+| Personal controller pinning and per-file runtime envelope | Delete and replace with content membership, ownership, and governed records |
 
-See [[proposal]], [[design]], [[tasks]], and [[README]].
+Delete each obsolete writer and reader in the same semantic change. Add no
+compatibility alias, dual format, migration state, cleanup authority, or
+fallback. Existing obsolete bytes on disk may become inert; the corrected
+product does not acquire a scanner merely to erase them.
+
+## Positive Architecture Ratchet
+
+The ratchet narrows possibility by kind rather than listing forbidden legacy
+names.
+
+- **Service:** one closed service spine; module-owned `model/{dto,policy,schema}`;
+  module contracts and routers; root contract, implementation, context, and
+  router composition. Procedure handlers own domain behavior. Effect remains at
+  resource/provider boundaries unless a procedure genuinely requires an Effect
+  program.
+- **CLI app:** one Oclif entrypoint, one binary declaration, one Oclif package
+  configuration and core-plugin composition; Nx project targets own build,
+  generated-manifest, and package work, while top-level Nx Release configuration
+  owns version/changelog/publish orchestration.
+- **CLI command plugin:** one closed package shell and command root; no binary;
+  no cross-plugin internal import; commands project through public service or
+  client boundaries.
+- **Resource:** one capability contract with provider implementations under
+  `providers/`; provider mechanics do not become service policy.
+- **Repository checks:** Nx owns project relationships and schedules cached
+  lint/typecheck work; Habitat owns live-tree policy; required CI exposes one
+  non-skippable result for the candidate revision.
+
+Magic Migration commit `31c4e1ac1944d88b5ae867e46603eddff36142fc`
+is the source for the generic service, API plugin, and agent-router patterns.
+Identity-only adaptations and one generic correction for composed module router
+directories must be explicit; a copied rule that fails its own current source
+is not authoritative merely because its bytes were copied. The compiled Habitat
+consumer remains the pinned Civ7 `habitat-sdk-v0.1.1` Bun 1.4.0 artifact until a
+newer artifact is actually published.
+
+## Behavioral Boundary
+
+Tests assert the product transitions:
+
+- ordinary Oclif development invocation and packaged invocation expose the
+  same core commands;
+- `rawr plugins` uses native Oclif extension state in a disposable home;
+- `rawr agent plugins status` inspects without mutation;
+- sync refreshes a stale same-ID selected plugin;
+- sync removes omitted RAWR-managed residue, including native enablement state;
+- unmanaged collisions block without mutation;
+- partial native failure reports the exact applied prefix and retry converges
+  from live state;
+- a repeated converged operation invokes no native mutating command and writes
+  no lifecycle-owned state.
+
+Source-shape tests are not substitutes for these behaviors. Habitat owns
+topology, TypeBox owns public structure and generated types, module policy owns
+cross-field semantics, and behavior tests own transitions and outcomes.
+
+## Standing Review Roles
+
+Standing architecture, TypeScript/structural-quality, and behavior/testing roles
+review every semantic slice. Subject roles remain standing and are invoked when
+the slice touches their boundary:
+
+- Oclif/Nx for CLI composition, build, package, or release;
+- oRPC and Effect-oRPC for contracts, routers, context, or integration;
+- Effect/Platform for resource, filesystem, process, or lifetime mechanics;
+- TypeBox for schema and generated-type changes;
+- protected-lane/Inngest for release-input, dependency-closure, or provider
+  settlement changes.
+
+The Inngest role is compatibility-only. It cannot materialize, package, export,
+release, or mutate HF01 candidate bytes.
+
+## Execution Rule
+
+The next durable changes follow [[tasks]]. First land this correction, then the
+positive Habitat/Nx ratchet, then conventional Oclif execution and packaging,
+then delete the superseded distribution and extension systems, then simplify
+the lifecycle service and Personal records. No provider or repository release
+mutation occurs until the replacement path is landed and its owning behavior
+checks pass.
