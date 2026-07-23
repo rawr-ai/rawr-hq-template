@@ -43,7 +43,6 @@ export type LifecycleOperationClient<TOperation extends LifecycleOperation> =
   LifecycleClientByOperation[TOperation];
 
 export type LifecycleExecutableBinding = Readonly<{
-  gitExecutable?: string;
   providerExecutables: Readonly<Partial<Record<"claude" | "codex", string>>>;
 }>;
 
@@ -51,12 +50,3 @@ export type LifecycleClientFactory = <TOperation extends LifecycleOperation>(
   operation: TOperation,
   binding: LifecycleExecutableBinding
 ) => LifecycleOperationClient<TOperation> | Promise<LifecycleOperationClient<TOperation>>;
-
-export class LifecycleExecutableBindingError extends Error {
-  readonly code = "LIFECYCLE_EXECUTABLE_BINDING_INVALID";
-
-  constructor(message: string) {
-    super(message);
-    this.name = "LifecycleExecutableBindingError";
-  }
-}

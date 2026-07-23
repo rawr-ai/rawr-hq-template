@@ -1,11 +1,10 @@
-import { readdir, realpath, unlink } from "node:fs/promises";
+import { readdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { createClient } from "@rawr/agent-plugin-lifecycle/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   commitGeneratedGitRepository,
   createGeneratedGitRepository,
-  GIT_EXECUTABLE,
 } from "../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
 import type { LifecycleOperation } from "../../../src/lib/agent-plugins/commands/binding";
 import {
@@ -127,7 +126,7 @@ describe("production lifecycle service context", () => {
     }
   });
 
-  it("distinguishes deferred absent Git from a bound repository outcome", async () => {
+  it("uses the operator Git command without a lifecycle executable binding", async () => {
     const root = requireFixture();
     const repository = await createGeneratedGitRepository(root);
     await unlink(repository.releaseInputFile);
@@ -136,25 +135,13 @@ describe("production lifecycle service context", () => {
       "remove governed release input"
     );
     const before = await directoryNames(root.path);
-    const unboundDeps = createProductionLifecycleDeps({ binding: EMPTY_BINDING });
-    const unboundClient = createClient({
-      deps: unboundDeps,
-      scope: {},
-      config: {},
-    });
-    const boundDeps = createProductionLifecycleDeps({
-      binding: Object.freeze({
-        gitExecutable: await realpath(GIT_EXECUTABLE),
-        providerExecutables: Object.freeze({}),
-      }),
-    });
-    const boundClient = createClient({
-      deps: boundDeps,
+    const client = createClient({
+      deps: createProductionLifecycleDeps({ binding: EMPTY_BINDING }),
       scope: {},
       config: {},
     });
     await expect(
-      unboundClient.packaging.package(
+      client.packaging.package(
         {
           contentWorkspace,
           mode: { kind: "complete-set" },
@@ -173,7 +160,7 @@ describe("production lifecycle service context", () => {
       contentWorkspace,
       mode: Object.freeze({ kind: "complete-set" }),
     });
-    await expect(boundClient.releases.check(request, invocation)).resolves.toMatchObject({
+    await expect(client.releases.check(request, invocation)).resolves.toMatchObject({
       kind: "IneligibleReport",
       issues: [
         {
@@ -183,19 +170,6 @@ describe("production lifecycle service context", () => {
       ],
     });
     expect(await directoryNames(root.path)).toEqual(before);
-
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      await expect(unboundClient.releases.check(request, invocation)).resolves.toMatchObject({
-        kind: "IneligibleReport",
-        issues: [
-          {
-            kind: "SourceEligibility",
-            issue: { code: "GitFailure" },
-          },
-        ],
-      });
-      expect(await directoryNames(root.path)).toEqual(before);
-    }
   });
 });
 

@@ -3,7 +3,6 @@ import { RawrCommand } from "@rawr/core";
 
 import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands/command";
 import {
-  gitExecutableFlag,
   providerExecutableFlag,
   providerTargetFlag,
 } from "../../../lib/agent-plugins/commands/flags";
@@ -17,7 +16,6 @@ export default class AgentPluginsSync extends AgentPluginLifecycleCommand {
     "content-workspace": Flags.string({ description: "Canonical content record workspace" }),
     "repository-identity": Flags.string({ description: "Expected content repository identity" }),
     target: providerTargetFlag,
-    "git-executable": gitExecutableFlag,
     "provider-executable": providerExecutableFlag,
   } as const;
 
@@ -27,7 +25,6 @@ export default class AgentPluginsSync extends AgentPluginLifecycleCommand {
     if (input === undefined) return;
     const providers = [...new Set(input.targets.map((target) => target.provider))];
     await this.project({ operation: "providers.sync", input }, flags, {
-      git: true,
       providers,
     });
   }

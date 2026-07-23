@@ -28,10 +28,6 @@ export const providerTestDisposableRootFlag = Flags.string({
   description: "Canonical absolute root containing every disposable provider home",
 });
 
-export const gitExecutableFlag = Flags.string({
-  description: "Absolute Git executable",
-});
-
 export const releaseMemberFlag = Flags.string({
   description: "Explicit curated release member identity",
   multiple: true,

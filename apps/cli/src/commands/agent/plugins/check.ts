@@ -5,7 +5,6 @@ import {
   checkModeFlag,
   currentMainBodyJsonFlag,
   currentMainRecordJsonFlag,
-  gitExecutableFlag,
   releaseMemberFlag,
   releaseWorkspaceFlags,
 } from "../../../lib/agent-plugins/commands/flags";
@@ -24,7 +23,6 @@ export default class AgentPluginsCheck extends AgentPluginLifecycleCommand {
     "current-main-record-json": currentMainRecordJsonFlag,
     ...releaseWorkspaceFlags,
     member: releaseMemberFlag,
-    "git-executable": gitExecutableFlag,
   } as const;
 
   async run(): Promise<void> {
@@ -44,13 +42,7 @@ export default class AgentPluginsCheck extends AgentPluginLifecycleCommand {
       parseCheckOperationRequest(inputFlags, releaseInputRecord?.bytes)
     );
     if (request === undefined) return;
-    await this.project(request, flags, {
-      git:
-        request.operation === "releases.check" ||
-        request.operation === "releases.checkRepository" ||
-        request.operation === "releases.refreshReleaseInput" ||
-        request.operation === "governance.currentMainSelection",
-    });
+    await this.project(request, flags);
   }
 }
 

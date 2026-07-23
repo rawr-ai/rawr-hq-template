@@ -322,6 +322,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   second schema adapter or traversal heuristic. Prove the public adapter returns
   the native TypeBox message list without invented paths through its owner-local
   Nx test target.
+- [x] 5.6c Use the operator's ordinary `git` command at the concrete
+  content-workspace provider boundary. Remove the public `--git-executable`
+  flag, executable realpath/permission checks, Git configuration neutralization,
+  injected command configuration, and the deferred executable-binding state
+  machine. Keep an optional provider-construction seam for focused tests, and
+  preserve repository locator, ref, object, bound, and opening/closing checks.
 - [ ] 5.7 Seal one module at a time with owner-local behavior, schema, lint,
   typecheck, and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.

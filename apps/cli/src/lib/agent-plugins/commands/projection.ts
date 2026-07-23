@@ -6,7 +6,6 @@ import { createProductionLifecycleClient } from "../service-runtime/client";
 import {
   type LifecycleClientFactory,
   type LifecycleExecutableBinding,
-  LifecycleExecutableBindingError,
   type LifecycleOperation,
   type LifecycleOperationClient,
 } from "./binding";
@@ -52,7 +51,6 @@ type LifecycleCallOptions = NonNullable<Parameters<Client["releases"]["check"]>[
 export {
   type LifecycleClientFactory,
   type LifecycleExecutableBinding,
-  LifecycleExecutableBindingError,
   type LifecycleOperation,
   type LifecycleOperationClient,
 } from "./binding";
@@ -60,18 +58,10 @@ export {
 export function parseLifecycleExecutableBinding(
   flags: Readonly<Record<string, unknown>>,
   requirements: Readonly<{
-    git?: boolean;
     providers?: readonly ("claude" | "codex")[];
     admittedProviders?: readonly ("claude" | "codex")[];
   }> = {}
 ): LifecycleExecutableBinding {
-  const gitExecutable = optionalAbsoluteExecutable(flags["git-executable"], "--git-executable");
-  if (requirements.git && gitExecutable === undefined) {
-    throw new LifecycleInputError("--git-executable is required for this command");
-  }
-  if (!requirements.git && gitExecutable !== undefined) {
-    throw new LifecycleInputError("--git-executable is not admitted by this command");
-  }
   const providerExecutables = parseProviderExecutables(flags["provider-executable"]);
   const requiredProviders = requirements.providers ?? [];
   const admittedProviders = requirements.admittedProviders ?? requiredProviders;
@@ -90,7 +80,6 @@ export function parseLifecycleExecutableBinding(
     }
   }
   return Object.freeze({
-    ...(gitExecutable === undefined ? {} : { gitExecutable }),
     providerExecutables: Object.freeze(providerExecutables),
   });
 }
@@ -260,10 +249,6 @@ function parseProviderExecutables(input: unknown): Partial<Record<"claude" | "co
     result[provider] = requireAbsoluteExecutable(raw.slice(separator + 1), "--provider-executable");
   }
   return result;
-}
-
-function optionalAbsoluteExecutable(input: unknown, label: string): string | undefined {
-  return input === undefined ? undefined : requireAbsoluteExecutable(input, label);
 }
 
 function requireAbsoluteExecutable(input: unknown, label: string): string {

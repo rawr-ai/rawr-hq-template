@@ -13,12 +13,11 @@ import {
   type ServiceBindingContext,
 } from "@rawr/hq-sdk/plugins";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
-import { makeDeferredNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { createNodeNativeProviderSessionResolver } from "../bindings/providers";
 import {
   type LifecycleClientFactory,
   type LifecycleExecutableBinding,
-  LifecycleExecutableBindingError,
   type LifecycleOperation,
   type LifecycleOperationClient,
 } from "../commands/binding";
@@ -120,9 +119,7 @@ export function createProductionLifecycleDeps(
   }>
 ): LifecycleDeps {
   const { binding } = input;
-  const contentWorkspace = makeDeferredNodeContentWorkspacePort({
-    acquireGitExecutable: () => requiredGitExecutable(binding),
-  });
+  const contentWorkspace = makeNodeContentWorkspacePort();
 
   return Object.freeze({
     logger: createEmbeddedPlaceholderLoggerAdapter(),
@@ -139,13 +136,4 @@ function selectLifecycleOperationClient<TOperation extends LifecycleOperation>(
   client: Client
 ): LifecycleOperationClient<TOperation> {
   return lifecycleClientSelectors[operation](client);
-}
-
-function requiredGitExecutable(binding: LifecycleExecutableBinding): string {
-  if (binding.gitExecutable === undefined) {
-    throw new LifecycleExecutableBindingError(
-      "Agent-plugin lifecycle requires an explicit Git executable binding"
-    );
-  }
-  return binding.gitExecutable;
 }

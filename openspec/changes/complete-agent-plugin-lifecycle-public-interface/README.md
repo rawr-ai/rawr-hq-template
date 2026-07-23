@@ -678,6 +678,17 @@ message mapping with no invented paths; build, lint, typecheck, Biome, and diff
 checks are green. See
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service]] task 5.6b.
 
+The content-workspace provider now resolves `git` through the ordinary process
+environment. The CLI no longer accepts or requires `--git-executable`, and the
+resource no longer authenticates an executable path, rewrites Git
+configuration, injects local-read command configuration, or defers command
+binding through a retry state machine. The optional constructor command remains
+only as a focused-test seam. Provider tests pass 25 cases; the affected CLI
+tests pass 19 cases; the exact-Git service target passes 209 behavior cases
+including its declared dependencies. CLI and provider lint/typecheck, CLI
+build, Biome, and diff hygiene are green. See
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service]] task 5.6c.
+
 ## Settlement Oracles
 
 The final product must prove:
