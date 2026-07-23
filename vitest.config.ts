@@ -65,6 +65,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/hq-sdk"),
+        test: { name: "hq-sdk", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("services/dev"),
         test: { name: "dev", environment: "node", include: [...includes] },
       },

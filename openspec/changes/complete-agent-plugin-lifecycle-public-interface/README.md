@@ -668,6 +668,16 @@ slice. This closes only task 5.5a in
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service]]; persistent build,
 provider, retention, and controller readers remain open under task 5.5.
 
+The canonical `@rawr/hq-sdk` TypeBox bridge now uses TypeBox 1.3.6 native
+`Value.Check` and `Value.Errors` without reconstructing Standard Schema paths.
+That TypeBox version emits raw, unescaped `instancePath` strings, so slash keys
+and nested keys as well as numeric keys and array indices are observationally
+ambiguous. The bridge therefore returns message-only issues instead of
+URI-decoding or guessing. Its owner-local Nx test proves exact native TypeBox
+message mapping with no invented paths; build, lint, typecheck, Biome, and diff
+checks are green. See
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service]] task 5.6b.
+
 ## Settlement Oracles
 
 The final product must prove:
