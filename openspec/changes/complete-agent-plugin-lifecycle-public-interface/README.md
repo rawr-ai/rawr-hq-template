@@ -126,6 +126,32 @@ The Template Habitat consumer already pins the newest published Civ7 artifact:
 Newer Civ7 SDK source is not yet published as a compiled artifact and is not
 claimed or vendored here.
 
+## Core Toolchain Grounding
+
+The current Civ7 studio-refactor and final-ratchet tips (`f9345ee958` and
+`80c1637f5e`) share one core toolchain baseline. RAWR adopts the responsibilities
+rather than copying configuration blindly:
+
+| Concern | Civ7 baseline | Template disposition |
+| --- | --- | --- |
+| Bun runtime | `1.3.14` | Keep; the separately pinned Habitat artifact remains a Bun 1.4 build |
+| Biome | `2.5.3` | Adopt required workspace hygiene and formatting |
+| lintEffect | `@catenarycloud/linteffect@0.0.6` | Expose as an advisory owner command, not a universal push gate |
+| Nx | `23.1.0` | Adopt in one migration after Biome configuration is stable |
+| TypeScript compiler | native `7.0.2` | Make normal `tsc`/typecheck authority |
+| TypeScript compiler API | `6.0.3` | Keep as the `typescript` package for build-tool consumers |
+| TypeScript fallback | `6.0.2` | Expose only the narrow `tsc6` compatibility command |
+| ESLint / parser | `9.39.2` / `8.54.0` | Keep Template's newer `10.0.3` / `8.57.1`; do not downgrade for parity |
+| TypeBox | `1.3.6` | Already aligned |
+| oRPC | `1.14.6` | Upgrade as a separate behavior-reviewed vendor change |
+| Effect / Platform | `3.21.3` / `0.96.1` | Already aligned; add Effect-oRPC only where consumed |
+
+TypeScript 6 and 7 are a split of responsibilities, not a doubled CI matrix.
+Biome owns fast general hygiene; ESLint remains the boundary-rule leaf; Habitat
+owns positive architecture topology and source relationships. Full-corpus
+lintEffect is intentionally not part of the required push ratchet because its
+cold-run cost is an upstream limitation rather than repository admission logic.
+
 ## Native Marketplace Grounding
 
 A disposable Codex 0.144.6 probe used the absolute native binary and an isolated
@@ -163,6 +189,9 @@ skill. It cannot authorize HF01 materialization or release.
 | Corrected authority record | Complete on the active Template branch; pending Graphite submission |
 | Generic Habitat source port | Complete on the active Template stack; execution wiring pending |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
+| Complete Nx lint/typecheck target population | Complete on the active Template stack; final ratchet wiring pending |
+| Typechecked Habitat consumer and TypeBox release manifest | Complete on the active Template stack |
+| Civ-aligned Biome/Nx/TypeScript toolchain | Pending as separate semantic nodes |
 | Positive Habitat/Nx ratchet | Pending |
 | Direct Oclif development and external extension path | Pending |
 | Conventional CLI package/release | Pending |
@@ -222,14 +251,16 @@ project graph now carry the applicable reusable constraints; the remaining
 lifecycle niche rule is limited to the curated command channel until task 2
 replaces that topology.
 
-The generic blueprint packet itself is now closed: every packet contains its
-rule and locked baseline plus only the selected canonical `pattern.md` or
-`structure.toml` runner source. The pinned Habitat binary checks that topology.
-It does not expose a native packet-fixture runner, and its live wildcard walk is
-not bounded against installed dependency trees, so this repository does not add
-a parallel Markdown fixture parser or wrapper. Native pattern execution and
-full live-tree policy activation remain open until a suitable standalone asset
-is published.
+The generic blueprint packet filename set is now closed: every current packet
+contains its rule, locked baseline, and one canonical `pattern.md` or
+`structure.toml` runner source. The current structure rule proves only the
+closed allowed filename set; it cannot prove that `rule.json` selects exactly
+one present runner source. The pinned Habitat binary also does not expose a
+native packet-fixture runner, and its live wildcard walk is not bounded against
+installed dependency trees, so this repository does not add a parallel
+Markdown fixture parser or wrapper. Exact selected-runner participation, native
+pattern fixtures, and full live-tree policy activation remain open until a
+suitable standalone asset is published.
 
 Personal PR #182 (`9378d33b`) and child PR #183 (`852702b8`) are not valid
 settlement inputs in their controller-bound form. They remain unlanded; prior
