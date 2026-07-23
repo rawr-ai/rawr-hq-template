@@ -99,7 +99,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 
 ## 2. Direct Oclif Development And Extension Management
 
-- [ ] 2.1 Restore `apps/cli/bin/run.js` and `apps/cli/src/index.ts` as ordinary
+- [x] 2.1 Restore `apps/cli/bin/run.js` and `apps/cli/src/index.ts` as ordinary
   Oclif entrypoints. Development and built invocation must discover the same
   core command set without controller environment variables.
 - [ ] 2.2 Enable `@oclif/plugin-plugins` directly in the Oclif core-plugin list.
