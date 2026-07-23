@@ -255,8 +255,9 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical
-  operations read exact selected Git objects and derive release/projection
-  values in memory. Canonical mutation uses the provider's native Git marketplace
+  operations read exact selected Git objects and derive the release model,
+  native marketplace source, and declared provider-visible files in memory.
+  Canonical mutation uses the provider's native Git marketplace
   source at the selected immutable Personal revision; a disposable local source
   must share one bounded lifetime with its disposable home. Test returns inline
   results and ordinary CI may retain them externally.
@@ -266,11 +267,19 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   revalidates the selected Git state immediately before writing, and mutates
   only the explicit package output. This checkpoint does not complete task 5.5;
   build, provider, retention, and controller readers remain to be deleted.
-- [ ] 5.6 Keep native provider adapters thin and point-addressed. No provider
+- [x] 5.5b Delete provider projection publication, target receipts and identity
+  sidecars, provider-local evidence persistence, and the provider-record
+  resource. Provider test/status/sync now derive the selection and expected
+  bytes from exact Git through service-owned context, inspect live native state,
+  return bounded inline results, and retain no provider lifecycle state between
+  invocations. Task 5.5 still owns the invocation-local disposable test source
+  as well as persistent release/evidence/controller store deletion.
+- [x] 5.6 Keep native provider adapters thin and point-addressed. No provider
   home scan, direct cache/config write, rollback state, or ambient multi-home
   coordinator. Remove the orphan `.rawr-agent-plugin-owner.json` sentinel and
   its veto authority unconditionally; retain process-local serialization where
-  needed.
+  needed. Provider tests require each explicit home to be a strict descendant
+  of an explicit non-root disposable root before native session acquisition.
 - [ ] 5.6a After tasks 4.2 and 5.5 remove the rejected Effect-owning runtime
   surfaces, migrate the complete surviving resource/provider family and CLI
   adapter to the current official Effect 4 line as one distinct reviewed

@@ -72,7 +72,7 @@ when it establishes a different kind of object or invariant.
 | Flow | build, package, install, invoke, inspect, reconcile, verify |
 | Authority | Oclif package configuration, Nx project/release configuration, Git record, native provider state |
 | Guarantee | closed, explicit, deterministic, idempotent, observable |
-| Derived artifact | release set, provider projection, generated Oclif command manifest |
+| Derived artifact | in-memory release set, generated Oclif command manifest |
 | Evidence | caller-retained test result, CI artifact, release verification record |
 | Cache/index | standard-tool generated manifest or build cache |
 | Retired mechanism | controller, selector, launcher, runtime envelope, aggregate, fallback |
@@ -116,7 +116,7 @@ RAWR HQ-Template source
         -> read the selected Personal content record
         -> read exact selected Personal Git objects
         -> derive one closed release model and unique ownership in memory
-        -> derive and verify the provider-native projection in memory
+        -> select and verify declared provider-visible content in memory
         -> inspect the explicit provider home
         -> reconcile the selected immutable Git marketplace through native Codex or Claude commands
         -> inspect and verify the result
@@ -142,7 +142,7 @@ authorize another selector or version store.
 | `apps/cli/src/lib/external-extensions/**` | Delete |
 | Local wrappers for Oclif `plugins` commands | Delete; enable `@oclif/plugin-plugins` directly |
 | `apps/cli/bin/run.js` and `apps/cli/src/index.ts` | Restore to ordinary Oclif entrypoints |
-| `services/agent-plugin-lifecycle` | Keep one service; simplify to bounded desired-set validation, projection, native reconciliation, and justified adjacent capabilities |
+| `services/agent-plugin-lifecycle` | Keep one service; simplify to bounded desired-set validation, native reconciliation, and justified adjacent capabilities |
 | `resources/native-agent-provider` | Keep as thin native Codex/Claude process adapters |
 | `resources/content-workspace` | Keep only explicit Git read and repository validation |
 | Persistent agent artifact repository, projection store, and retention planner | Delete; canonical operations derive from selected immutable Git objects and use native Git marketplace distribution |

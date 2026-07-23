@@ -1,14 +1,14 @@
 ## REMOVED Requirements
 
 ### Requirement: Mechanical evidence cannot authorize acceptance
-**Reason**: Repository review of one current-main v2 record is the selection authority; an independent acceptance system is disproportionate.
+**Reason**: Repository review of one direct current-main v3 record is the selection authority; an independent acceptance system is disproportionate.
 **Migration**: Test evidence remains an ordinary CI artifact and cannot enter channel authority.
 
 ### Requirement: Acceptance request and evidence are digest-bound and bounded
 **Reason**: The request/evidence chain duplicates release, projection, and Git identities without improving this non-adversarial selection boundary.
-**Migration**: Bind only Personal-owned source selection and evaluation input in
-`agent-plugin-current-main@v2`; Template derives release and projection values at
-invocation time.
+**Migration**: Bind only the reviewed Personal-owned Git selection in
+`agent-plugin-current-main@v3`; Template derives the release model and selected
+native content at invocation time.
 
 ### Requirement: Governed acceptance requires repository authority
 **Reason**: Hosted approval replay and independent issuer identity duplicate the repository review that lands the channel record.
@@ -21,11 +21,11 @@ immutable Git identity and release input.
 
 ### Requirement: Current-main resolution is fixed, transitive, and read-only
 **Reason**: The v1 transitive policy, request, evidence, and promotion chain is replaced by one direct selector.
-**Migration**: Use the `agent-plugin-channel-selection` v2 resolution requirement.
+**Migration**: Use the `agent-plugin-channel-selection` v3 resolution requirement.
 
 ### Requirement: Promotion and status never mutate
-**Reason**: Promotion is removed; its read-only channel concern moves to direct v2 selection.
-**Migration**: Current-main v2 codec/resolution remains read-only and provider status remains non-mutating.
+**Reason**: Promotion is removed; its read-only channel concern moves to direct v3 selection.
+**Migration**: Current-main v3 codec/resolution remains read-only and provider status remains non-mutating.
 
 ### Requirement: Governance has one read-only qualified promotion procedure
 **Reason**: `attest-promotion` preserves the retired ceremony and creates a second route to channel authority.
