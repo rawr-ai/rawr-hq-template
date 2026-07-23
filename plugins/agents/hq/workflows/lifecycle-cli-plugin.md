@@ -20,7 +20,7 @@ argument-hint: "EXTENSION=<package-id|path>"
 
 ```bash
 rawr plugins inspect "$EXTENSION"
-rawr plugins list
+rawr plugins
 ```
 
 5. Only when the user explicitly requests native mutation, choose the exact

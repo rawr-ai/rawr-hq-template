@@ -13,7 +13,7 @@ const inventoryEntrypoint = path.join(
   cliRoot,
   "test",
   "command-fixture",
-  "discover-command-ids.ts"
+  "discover-command-inventory.ts"
 );
 const pluginInventoryEntrypoint = path.join(
   cliRoot,
@@ -78,7 +78,9 @@ function runCli(entrypoint: "bin/run.js" | "src/index.ts", args: string[]) {
   });
 }
 
-function discoverCommandIds(nodeEnv: "development" | "production"): string[] {
+type CommandInventoryEntry = Readonly<{ id: string; pluginName: string | null }>;
+
+function discoverCommandInventory(nodeEnv: "development" | "production"): CommandInventoryEntry[] {
   const result = spawnSync("bun", [inventoryEntrypoint, cliRoot], {
     cwd: cliRoot,
     encoding: "utf8",
@@ -86,7 +88,7 @@ function discoverCommandIds(nodeEnv: "development" | "production"): string[] {
   });
   expect(result.status, result.stderr).toBe(0);
   expect(result.stderr).toBe("");
-  return JSON.parse(result.stdout) as string[];
+  return JSON.parse(result.stdout) as CommandInventoryEntry[];
 }
 
 function discoverPluginCommands(
@@ -121,20 +123,35 @@ describe("bin/run.js", () => {
 
     const source = runCli("src/index.ts", ["--help"]);
     const built = runCli("bin/run.js", ["--help"]);
-    const sourceCommandIds = discoverCommandIds("development");
-    const builtCommandIds = discoverCommandIds("production");
+    const sourceInventory = discoverCommandInventory("development");
+    const builtInventory = discoverCommandInventory("production");
+    const sourceCommandIds = sourceInventory.map(({ id }) => id);
 
     expect(source.status).toBe(0);
     expect(built.status).toBe(0);
     expect(source.stdout).toBe(built.stdout);
     expect(source.stderr).toBe("");
     expect(built.stderr).toBe("");
-    expect(sourceCommandIds).toEqual(builtCommandIds);
+    expect(sourceInventory).toEqual(builtInventory);
     expect(sourceCommandIds).toContain("agent:plugins:status");
     expect(sourceCommandIds).toContain("agent:plugins:status:vendors");
     expect(sourceCommandIds).toContain("agent:plugins:update:vendors");
     expect(sourceCommandIds).not.toContain("agent:plugins:vendors:status");
     expect(sourceCommandIds).not.toContain("agent:plugins:vendors:update");
+    expect(sourceCommandIds).toContain("plugins");
+    expect(sourceCommandIds).toContain("plugins:install");
+    expect(sourceCommandIds).not.toContain("plugins:list");
+    for (const id of REQUIRED_EXTERNAL_PLUGIN_COMMANDS) {
+      expect(sourceCommandIds).toContain(id);
+    }
+    for (const id of RETIRED_COMMANDS) {
+      expect(sourceCommandIds).not.toContain(id);
+    }
+    const external = sourceInventory.filter(
+      ({ id }) => id === "plugins" || id.startsWith("plugins:")
+    );
+    expect(external.length).toBeGreaterThan(0);
+    expect(external.every(({ pluginName }) => pluginName === "@oclif/plugin-plugins")).toBe(true);
   });
 
   it("discovers every command plugin from source and compiled output without a manifest", () => {
@@ -150,3 +167,31 @@ describe("bin/run.js", () => {
     }
   });
 });
+
+const REQUIRED_EXTERNAL_PLUGIN_COMMANDS = [
+  "plugins",
+  "plugins:inspect",
+  "plugins:install",
+  "plugins:link",
+  "plugins:reset",
+  "plugins:uninstall",
+  "plugins:update",
+] as const;
+
+const RETIRED_COMMANDS = [
+  "agent:sync",
+  "agent:plugins:attest-promotion",
+  "agent:plugins:export",
+  "agent:plugins:retire",
+  "agent:plugins:undo",
+  "agent:plugins:vendors:status",
+  "agent:plugins:vendors:update",
+  "undo",
+  "plugins:list",
+  "plugins:sync",
+  "plugins:status",
+  "plugins:export",
+  "plugins:scaffold",
+  "plugins:web",
+  "app",
+] as const;

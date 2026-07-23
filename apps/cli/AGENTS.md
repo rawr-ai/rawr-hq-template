@@ -16,7 +16,7 @@
 
 - General commands: `src/commands/{doctor,reflect,...}.ts`
 - Topic commands: `src/commands/<topic>/*.ts`
-- External extension projections: `src/commands/plugins/**`
+- External extension commands: composed directly from `@oclif/plugin-plugins`
 - Curated agent-plugin lifecycle projections: `src/commands/agent/plugins/**`
 
 ## Command Surface Invariant

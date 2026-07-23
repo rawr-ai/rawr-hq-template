@@ -12,7 +12,7 @@ required = [
 allowed = []
 
 [[scopes]]
-name = "curated-agent-plugin-controller-projection"
+name = "curated-agent-plugin-lifecycle-service-binding"
 root = "apps/cli/src/lib/agent-plugins/service-runtime"
 kind = "directory"
 mode = "closed"
@@ -23,7 +23,7 @@ required = [
 allowed = []
 
 [[scopes]]
-name = "curated-agent-plugin-provider-projection"
+name = "curated-agent-plugin-provider-runtime-binding"
 root = "apps/cli/src/lib/agent-plugins/service-runtime/providers"
 kind = "directory"
 mode = "closed"
@@ -77,21 +77,5 @@ kind = "directory"
 mode = "closed"
 required = [
   "vendors.ts",
-]
-allowed = []
-
-[[scopes]]
-name = "external-oclif-extension-command-channel"
-root = "apps/cli/src/commands/plugins"
-kind = "directory"
-mode = "closed"
-required = [
-  "inspect.ts",
-  "install.ts",
-  "link.ts",
-  "list.ts",
-  "reset.ts",
-  "uninstall.ts",
-  "update.ts",
 ]
 allowed = []

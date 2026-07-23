@@ -3,10 +3,10 @@ level: error
 ---
 # Require Oclif App Configuration
 
-The package describes one conventional Oclif application. This first ratchet
-locks the installed identity, binary, Oclif dependency, compiled command root,
-and TypeScript source-to-output mapping. Native extension composition and the
-generated release manifest tighten this same rule when those behaviors land.
+The package describes one conventional Oclif application. This ratchet locks
+the installed identity, binary, Oclif dependency and native extension
+composition, compiled command root, and TypeScript source-to-output mapping.
+The generated release manifest tightens this same rule when packaging lands.
 
 ```grit
 language json
@@ -31,7 +31,9 @@ or {
         $properties <: some pair(key=`"oclif"`, value=`{ $oclif }`),
         $oclif <: some pair(key=`"bin"`, value=`"rawr"`),
         $oclif <: some pair(key=`"dirname"`, value=`"rawr"`),
-        $oclif <: some pair(key=`"commands"`, value=`"./dist/commands"`)
+        $oclif <: some pair(key=`"commands"`, value=`"./dist/commands"`),
+        $oclif <: some pair(key=`"plugins"`, value=`[$plugins]`),
+        $plugins <: some `"@oclif/plugin-plugins"`
       }
     }
   },
@@ -137,24 +139,7 @@ or {
 }
 ```
 
-## Ignores the pre-activation app configuration
-
-```json
-// @filename: apps/cli/package.json
-{
-  "name": "@rawr/cli",
-  "version": "1.0.0",
-  "type": "module",
-  "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
-  "bin": { "rawr": "./bin/run.js" },
-  "oclif": {
-    "bin": "rawr",
-    "dirname": "rawr",
-    "commands": "./dist/commands",
-    "plugins": ["@oclif/plugin-help"]
-  }
-}
-```
+## Matches an app without native extension composition
 
 ```json
 // @filename: apps/cli/package.json
