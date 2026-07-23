@@ -13,12 +13,12 @@ import {
   unlink,
   writeFile,
 } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { tmpdir } from "node:os";
+import { dirname, join, relative } from "node:path";
 import { Cause, Effect, Exit, Fiber, Layer, Option } from "effect";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
   type ArtifactPathMapping,
-  type BunPackageSubstrateIdentity,
   type ExactGitRevision,
   GitBun,
   type GitBunError,
@@ -28,6 +28,7 @@ import {
   type PackedPackageDescriptor,
   type PatchDescriptor,
 } from "../src/adapters/git-bun/index.js";
+import { deriveRuntimeGraph } from "../src/adapters/git-bun/installed-package.js";
 import type { ProcessTerminationUnconfirmed } from "../src/contracts/index.js";
 import {
   BunCommandProcessLayer,
@@ -73,17 +74,13 @@ let repositoryGuardBefore: RepositoryGuard | undefined;
 let gitBinary = "";
 let bunBinary = "";
 let runtime: ResearchProcessRuntime<GitBun, GitBunError>;
-let gitSubstrate: GitPatchSubstrateIdentity;
-let packageSubstrate: BunPackageSubstrateIdentity;
 let gitFixture: GitFixture;
 let changedProductPromise: Promise<ChangedProduct> | undefined;
 
 describe.sequential("Git/Bun research artifact boundary", () => {
   beforeAll(async () => {
     repositoryRoot = await realpath(join(import.meta.dirname, "..", "..", ".."));
-    const scratchParent = join(repositoryRoot, ".context", ".scratch", "research-sdk");
-    await mkdir(scratchParent, { recursive: true });
-    runRoot = await realpath(await mkdtemp(join(scratchParent, "git-bun-test-")));
+    runRoot = await realpath(await mkdtemp(join(tmpdir(), "rawr-research-sdk-git-bun-")));
     scratchRoot = join(runRoot, "adapter-scratch");
     await mkdir(scratchRoot);
     scratchRoot = await realpath(scratchRoot);
@@ -99,12 +96,6 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     runtime = makeResearchProcessRuntime(
       makeGitBunLayer(gitBunConfig(scratchRoot)).pipe(Layer.provide(BunCommandProcessLayer))
     );
-    ({ gitSubstrate, packageSubstrate } = await runAdapter(
-      Effect.map(GitBun, ({ gitSubstrate: git, packageSubstrate: package_ }) => ({
-        gitSubstrate: git,
-        packageSubstrate: package_,
-      }))
-    ));
     gitFixture = await createGitFixture(join(runRoot, "source-repository"));
   }, 60_000);
 
@@ -118,38 +109,216 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     }
   }, 60_000);
 
-  test("admits the exact resolved Git patch and Bun package substrates", () => {
-    expect(gitSubstrate.git).toEqual({
-      resolvedBinary: gitBinary,
-      version: expectedGitVersion,
-    });
-    expect(packageSubstrate.bun).toEqual({
-      resolvedBinary: bunBinary,
-      version: expectedBunVersion,
-      revision: expectedBunRevision,
-    });
-    expect(gitSubstrate.canonicalization.attributesPolicy).toContain("!filter");
-    expect(gitSubstrate.canonicalization.diffArguments).toContain("--no-renames");
-    expect(packageSubstrate.canonicalization.packArguments).toContain("--ignore-scripts");
-    expect(Object.isFrozen(gitSubstrate)).toBe(true);
-    expect(Object.isFrozen(gitSubstrate.git)).toBe(true);
-    expect(Object.isFrozen(gitSubstrate.canonicalization)).toBe(true);
-    expect(Object.isFrozen(gitSubstrate.canonicalization.diffArguments)).toBe(true);
-    expect(Object.isFrozen(gitSubstrate.canonicalization.environment[0])).toBe(true);
-    expect(Object.isFrozen(packageSubstrate)).toBe(true);
-    expect(Object.isFrozen(packageSubstrate.bun)).toBe(true);
-    expect(Object.isFrozen(packageSubstrate.canonicalization)).toBe(true);
-    expect(Object.isFrozen(packageSubstrate.canonicalization.packArguments)).toBe(true);
-    expect(Reflect.set(gitSubstrate.canonicalization.diffArguments, 0, "--evil")).toBe(false);
-    expect(Reflect.set(packageSubstrate.canonicalization.environment[0]!, "value", "evil")).toBe(
-      false
-    );
+  test("exposes one immutable five-operation artifact service", () => {
     return runAdapter(
       Effect.map(GitBun, (service) => {
         expect(Object.isFrozen(service)).toBe(true);
-        expect(Reflect.set(service, "packageSubstrate", gitSubstrate)).toBe(false);
+        expect(service.materializeRevision).toBeTypeOf("function");
+        expect(service.capturePatch).toBeTypeOf("function");
+        expect(service.applyAndRegenerate).toBeTypeOf("function");
+        expect(service.packSdkPackage).toBeTypeOf("function");
+        expect(service.verifyInstalledSdkPackage).toBeTypeOf("function");
       })
     );
+  });
+
+  test("admits only the tool that owns each artifact operation", async () => {
+    const gitScratch = join(runRoot, "git-only-scratch");
+    await mkdir(gitScratch);
+    const gitOnlyRuntime = makeResearchProcessRuntime(
+      makeGitBunLayer({
+        ...gitBunConfig(await realpath(gitScratch)),
+        bun: {
+          executable: join(runRoot, "missing-non-owning-bun"),
+          expectedVersion: "unavailable",
+          expectedRevision: "unavailable",
+        },
+      }).pipe(Layer.provide(BunCommandProcessLayer))
+    );
+    try {
+      const destinationPath = join(runRoot, "git-only-product");
+      const materializeExit = await gitOnlyRuntime.runPromiseExit(
+        Effect.flatMap(GitBun, (service) =>
+          service.materializeRevision({
+            sourceRepositoryPath: gitFixture.root,
+            revision: gitFixture.revision,
+            destinationPath,
+          })
+        )
+      );
+      expect(Exit.isSuccess(materializeExit)).toBe(true);
+      await expect(readFile(join(destinationPath, "src", "text.txt"), "utf8")).resolves.toBe(
+        "baseline text\n"
+      );
+      await writeFile(join(destinationPath, "src", "text.txt"), "git-only product\n");
+      const captureExit = await gitOnlyRuntime.runPromiseExit(
+        Effect.flatMap(GitBun, (service) =>
+          service.capturePatch({
+            sourceRepositoryPath: gitFixture.root,
+            baseline: gitFixture.revision,
+            terminalProductPath: destinationPath,
+            pathMapping,
+          })
+        )
+      );
+      expect(Exit.isSuccess(captureExit)).toBe(true);
+      if (Exit.isFailure(captureExit)) {
+        throw new Error("The Git-only capture unexpectedly failed.");
+      }
+      const reconstructedPath = join(runRoot, "git-only-reconstructed");
+      const applyExit = await gitOnlyRuntime.runPromiseExit(
+        Effect.flatMap(GitBun, (service) =>
+          service.applyAndRegenerate({
+            sourceRepositoryPath: gitFixture.root,
+            baseline: gitFixture.revision,
+            descriptor: captureExit.value.descriptor,
+            patchBytes: captureExit.value.bytes,
+            pathMapping,
+            productPath: reconstructedPath,
+          })
+        )
+      );
+      expect(Exit.isSuccess(applyExit)).toBe(true);
+      await expect(readFile(join(reconstructedPath, "src", "text.txt"), "utf8")).resolves.toBe(
+        "git-only product\n"
+      );
+    } finally {
+      await gitOnlyRuntime.dispose();
+    }
+
+    const packageFixture = await createPackageFixture(
+      join(runRoot, "bun-only-package-fixture"),
+      false
+    );
+    const bunScratch = join(runRoot, "bun-only-scratch");
+    const outputPath = join(runRoot, "artifacts", "bun-only-sdk.tgz");
+    await Promise.all([mkdir(bunScratch), mkdir(dirname(outputPath), { recursive: true })]);
+    const bunOnlyRuntime = makeResearchProcessRuntime(
+      makeGitBunLayer({
+        ...gitBunConfig(await realpath(bunScratch)),
+        git: {
+          executable: join(runRoot, "missing-non-owning-git"),
+          expectedVersion: "unavailable",
+        },
+      }).pipe(Layer.provide(BunCommandProcessLayer))
+    );
+    try {
+      const packExit = await bunOnlyRuntime.runPromiseExit(
+        Effect.flatMap(GitBun, (service) =>
+          service.packSdkPackage({
+            workspaceRoot: packageFixture.workspaceRoot,
+            packageRoot: packageFixture.packageRoot,
+            protocolVersion: "fixture-protocol-1",
+            outputPath,
+          })
+        )
+      );
+      expect(Exit.isSuccess(packExit)).toBe(true);
+      if (Exit.isFailure(packExit)) {
+        throw new Error("The Bun-only pack unexpectedly failed.");
+      }
+      await expect(pathExists(outputPath)).resolves.toBe(true);
+      const consumer = join(runRoot, "bun-only-consumer");
+      await mkdir(consumer);
+      await writeJson(join(consumer, "package.json"), {
+        name: "bun-only-consumer",
+        version: "1.0.0",
+        private: true,
+        dependencies: { "@rawr/research-sdk": `file:${outputPath}` },
+      });
+      await runHost(bunBinary, ["install", "--offline", "--ignore-scripts"], consumer);
+      const installedRoot = await realpath(join(consumer, "node_modules", "@rawr", "research-sdk"));
+      const verifyExit = await bunOnlyRuntime.runPromiseExit(
+        Effect.flatMap(GitBun, (service) =>
+          service.verifyInstalledSdkPackage({
+            workspaceRoot: consumer,
+            packageRoot: installedRoot,
+            artifactPath: outputPath,
+            expected: packExit.value,
+          })
+        )
+      );
+      expect(Exit.isSuccess(verifyExit)).toBe(true);
+    } finally {
+      await bunOnlyRuntime.dispose();
+    }
+  }, 60_000);
+
+  test("fails closed on drift in the owning tool without consulting the other tool", async () => {
+    const gitScratch = join(runRoot, "wrong-git-scratch");
+    await mkdir(gitScratch);
+    const wrongGitRuntime = makeResearchProcessRuntime(
+      makeGitBunLayer({
+        ...gitBunConfig(await realpath(gitScratch)),
+        git: {
+          executable: gitBinary,
+          expectedVersion: "0.0.0-wrong",
+        },
+        bun: {
+          executable: join(runRoot, "missing-drift-probe-bun"),
+          expectedVersion: "unavailable",
+          expectedRevision: "unavailable",
+        },
+      }).pipe(Layer.provide(BunCommandProcessLayer))
+    );
+    try {
+      const exit = await wrongGitRuntime.runPromiseExit(
+        Effect.flatMap(GitBun, (service) =>
+          service.materializeRevision({
+            sourceRepositoryPath: gitFixture.root,
+            revision: gitFixture.revision,
+            destinationPath: join(runRoot, "wrong-git-product"),
+          })
+        )
+      );
+      expect(Exit.isFailure(exit)).toBe(true);
+      if (Exit.isSuccess(exit)) {
+        throw new Error("The wrong Git identity unexpectedly passed.");
+      }
+      expect(Option.getOrThrow(Cause.findErrorOption(exit.cause))).toEqual(
+        expect.objectContaining({ kind: "GitBunIdentityMismatch" })
+      );
+    } finally {
+      await wrongGitRuntime.dispose();
+    }
+
+    const bunScratch = join(runRoot, "wrong-bun-scratch");
+    await mkdir(bunScratch);
+    const wrongBunRuntime = makeResearchProcessRuntime(
+      makeGitBunLayer({
+        ...gitBunConfig(await realpath(bunScratch)),
+        git: {
+          executable: join(runRoot, "missing-drift-probe-git"),
+          expectedVersion: "unavailable",
+        },
+        bun: {
+          executable: bunBinary,
+          expectedVersion: expectedBunVersion,
+          expectedRevision: "0".repeat(expectedBunRevision.length),
+        },
+      }).pipe(Layer.provide(BunCommandProcessLayer))
+    );
+    try {
+      const exit = await wrongBunRuntime.runPromiseExit(
+        Effect.flatMap(GitBun, (service) =>
+          service.packSdkPackage({
+            workspaceRoot: runRoot,
+            packageRoot: runRoot,
+            protocolVersion: "unreachable",
+            outputPath: join(runRoot, "wrong-bun.tgz"),
+          })
+        )
+      );
+      expect(Exit.isFailure(exit)).toBe(true);
+      if (Exit.isSuccess(exit)) {
+        throw new Error("The wrong Bun identity unexpectedly passed.");
+      }
+      expect(Option.getOrThrow(Cause.findErrorOption(exit.cause))).toEqual(
+        expect.objectContaining({ kind: "GitBunIdentityMismatch" })
+      );
+    } finally {
+      await wrongBunRuntime.dispose();
+    }
   });
 
   test("materializes the exact history-free revision despite hostile repository policy", async () => {
@@ -181,6 +350,15 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const { descriptor, bytes } = changed.capture;
     expect(descriptor.kind).toBe("Captured");
     expect(bytes.byteLength).toBeGreaterThan(0);
+    expect(descriptor.substrate.git).toEqual({
+      resolvedBinary: gitBinary,
+      version: expectedGitVersion,
+    });
+    expect(descriptor.substrate.canonicalization.attributesPolicy).toContain("!filter");
+    expect(descriptor.substrate.canonicalization.diffArguments).toContain("--no-renames");
+    expect(Object.isFrozen(descriptor.substrate)).toBe(true);
+    expect(Object.isFrozen(descriptor.substrate.git)).toBe(true);
+    expect(Object.isFrozen(descriptor.substrate.canonicalization)).toBe(true);
 
     const patchText = decoder.decode(bytes);
     expect(patchText).not.toContain("rename from");
@@ -413,6 +591,11 @@ describe.sequential("Git/Bun research artifact boundary", () => {
   });
 
   test("preserves an unconfirmed process termination with its exact locator", async () => {
+    const packageFixture = await createPackageFixture(
+      join(runRoot, "unconfirmed-package-fixture"),
+      false
+    );
+    const packageIdentityBefore = await callerPackageIdentity(packageFixture);
     const unconfirmed = {
       kind: "ProcessTerminationUnconfirmed",
       processLocator: "sandbox:fixture/process:42",
@@ -453,16 +636,38 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       }
       expect(Option.getOrThrow(Cause.findErrorOption(exit.cause))).toEqual(unconfirmed);
       expect(await readdir(isolatedScratch)).toEqual([]);
+
+      const outputPath = join(runRoot, "artifacts", "unconfirmed-sdk.tgz");
+      await mkdir(dirname(outputPath), { recursive: true });
+      const packageExit = await unconfirmedRuntime.runPromiseExit(
+        Effect.flatMap(GitBun, (service) =>
+          service.packSdkPackage({
+            workspaceRoot: packageFixture.workspaceRoot,
+            packageRoot: packageFixture.packageRoot,
+            protocolVersion: "fixture-protocol-1",
+            outputPath,
+          })
+        )
+      );
+      expect(Exit.isFailure(packageExit)).toBe(true);
+      if (Exit.isSuccess(packageExit)) {
+        throw new Error("The unconfirmed package process unexpectedly succeeded.");
+      }
+      expect(Option.getOrThrow(Cause.findErrorOption(packageExit.cause))).toEqual(unconfirmed);
+      await expect(pathExists(outputPath)).resolves.toBe(false);
+      expect(await callerPackageIdentity(packageFixture)).toEqual(packageIdentityBefore);
+      expect(await readdir(isolatedScratch)).toEqual([]);
     } finally {
       await unconfirmedRuntime.dispose();
     }
-  });
+  }, 60_000);
 
   test("interruption publishes no product or package and removes operation controls", async () => {
     const packageFixture = await createPackageFixture(
       join(runRoot, "interrupted-package-fixture"),
       false
     );
+    const packageIdentityBefore = await callerPackageIdentity(packageFixture);
     let started = Promise.withResolvers<void>();
     const fakeProcess: CommandProcessShape = {
       run(request) {
@@ -525,17 +730,82 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       await expect(
         pathExists(join(packageFixture.packageRoot, "dist", "research-sdk-runtime-graph.json"))
       ).resolves.toBe(false);
+      expect(await callerPackageIdentity(packageFixture)).toEqual(packageIdentityBefore);
       expect(await readdir(isolatedScratch)).toEqual([]);
     } finally {
       await interruptionRuntime.dispose();
     }
   }, 60_000);
 
+  test("rolls back package publication when interruption arrives during outer cleanup", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "publication-interruption-package-fixture"),
+      false
+    );
+    await writeFile(
+      join(fixture.packageRoot, "build.ts"),
+      [
+        'import { mkdir } from "node:fs/promises";',
+        'await mkdir("dist", { recursive: true });',
+        'await Bun.write("dist/index.js", "export const fixture = true;\\n");',
+        'await Bun.write("dist/index.d.ts", "export declare const fixture: true;\\n");',
+        "const cleanupRoot = `${process.env.HOME}/cleanup-load`;",
+        "await mkdir(cleanupRoot, { recursive: true });",
+        "for (let index = 0; index < 10_000; index += 1) {",
+        "  await Bun.write(`${cleanupRoot}/${index}.txt`, 'x');",
+        "}",
+      ].join("\n")
+    );
+    const outputPath = join(runRoot, "artifacts", "publication-interruption-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const outerExit = await runtime.runPromiseExit(
+      Effect.gen(function* () {
+        const service = yield* GitBun;
+        const fiber = yield* Effect.forkChild(
+          service.packSdkPackage({
+            workspaceRoot: fixture.workspaceRoot,
+            packageRoot: fixture.packageRoot,
+            protocolVersion: "fixture-protocol-1",
+            outputPath,
+          })
+        );
+        yield* Effect.promise(() => waitForPath(outputPath, 60_000));
+        yield* Fiber.interrupt(fiber);
+        return yield* Fiber.await(fiber);
+      })
+    );
+
+    expect(Exit.isSuccess(outerExit)).toBe(true);
+    if (Exit.isFailure(outerExit)) {
+      throw new Error("The publication interruption probe failed outside its child fiber.");
+    }
+    expect(Exit.isFailure(outerExit.value)).toBe(true);
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+    expect(await readdir(scratchRoot)).toEqual([]);
+  }, 120_000);
+
   test("builds, packs, embeds, and verifies one exact installed registry closure", async () => {
     const fixture = await createPackageFixture(join(runRoot, "package-fixture"), false);
+    await mkdir(join(fixture.packageRoot, "dist"));
+    await writeFile(
+      join(fixture.packageRoot, "dist", "stale-output.js"),
+      "export const stale = true;\n"
+    );
+    const callerIdentityBefore = await callerPackageIdentity(fixture);
     const outputPath = join(runRoot, "artifacts", "fixture-research-sdk.tgz");
     const descriptor = await packFixture(fixture, outputPath);
+    expect(await callerPackageIdentity(fixture)).toEqual(callerIdentityBefore);
     const graph = descriptor.runtimeGraph;
+    expect(descriptor.substrate.bun).toEqual({
+      resolvedBinary: bunBinary,
+      version: expectedBunVersion,
+      revision: expectedBunRevision,
+    });
+    expect(descriptor.substrate.canonicalization.packArguments).toContain("--ignore-scripts");
+    expect(Object.isFrozen(descriptor.substrate)).toBe(true);
+    expect(Object.isFrozen(descriptor.substrate.bun)).toBe(true);
+    expect(Object.isFrozen(descriptor.substrate.canonicalization)).toBe(true);
     expect(graph.nodes.map(({ name }) => name)).toEqual(
       expect.arrayContaining(["@rawr/research-sdk", "effect", "msgpackr", "typebox"])
     );
@@ -553,6 +823,7 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     const archive = await new Bun.Archive(immutablePackageBytes).files();
     const embedded = archive.get("package/dist/research-sdk-runtime-graph.json");
     expect(embedded).toBeDefined();
+    expect(archive.has("package/dist/stale-output.js")).toBe(false);
     const embeddedValue = JSON.parse(await embedded!.text());
     expect(embeddedValue).toEqual(
       expect.objectContaining({
@@ -597,6 +868,54 @@ describe.sequential("Git/Bun research artifact boundary", () => {
         })
       )
     );
+
+    const consumerLockPath = join(consumer, "bun.lock");
+    const consumerLockBytes = await readFile(consumerLockPath);
+    const consumerLock = Bun.JSONC.parse(decoder.decode(consumerLockBytes));
+    if (
+      consumerLock === null ||
+      typeof consumerLock !== "object" ||
+      !("packages" in consumerLock) ||
+      consumerLock.packages === null ||
+      typeof consumerLock.packages !== "object" ||
+      Array.isArray(consumerLock.packages)
+    ) {
+      throw new Error("The consumer fixture lock is malformed.");
+    }
+    const installedSdkRow = Reflect.get(consumerLock.packages, "@rawr/research-sdk");
+    if (
+      !Array.isArray(installedSdkRow) ||
+      installedSdkRow.length !== 3 ||
+      installedSdkRow[1] === null ||
+      typeof installedSdkRow[1] !== "object" ||
+      Array.isArray(installedSdkRow[1])
+    ) {
+      throw new Error("The installed SDK lock row is malformed.");
+    }
+    const lockedDependencies = Reflect.get(installedSdkRow[1], "dependencies");
+    if (
+      lockedDependencies === null ||
+      typeof lockedDependencies !== "object" ||
+      Array.isArray(lockedDependencies)
+    ) {
+      throw new Error("The installed SDK lock dependency map is malformed.");
+    }
+    Reflect.set(lockedDependencies, "effect", "0.0.0-lock-drift");
+    await writeFile(consumerLockPath, `${JSON.stringify(consumerLock, null, 2)}\n`);
+    const consumerEdgeMismatch = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.verifyInstalledSdkPackage({
+          workspaceRoot: consumer,
+          packageRoot: installedRoot,
+          artifactPath: outputPath,
+          expected: descriptor,
+        })
+      )
+    );
+    expect(consumerEdgeMismatch).toEqual(
+      expect.objectContaining({ kind: "GitBunIdentityMismatch" })
+    );
+    await writeFile(consumerLockPath, consumerLockBytes);
 
     await writeFile(
       outputPath,
@@ -732,6 +1051,464 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     expect(mismatch).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
   }, 60_000);
 
+  test("keeps a valid immutable package when the same pack effect is retried", async () => {
+    const fixture = await createPackageFixture(join(runRoot, "pack-retry-package-fixture"), false);
+    const outputPath = join(runRoot, "artifacts", "pack-retry-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const result = await runAdapter(
+      Effect.gen(function* () {
+        const service = yield* GitBun;
+        const pack = service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        });
+        const descriptor = yield* pack;
+        const publishedBytes = yield* Effect.promise(() => Bun.file(outputPath).bytes());
+        const retry = yield* Effect.exit(pack);
+        const retainedBytes = yield* Effect.promise(() => Bun.file(outputPath).bytes());
+        return { descriptor, publishedBytes, retainedBytes, retry };
+      })
+    );
+
+    expect(Exit.isFailure(result.retry)).toBe(true);
+    expect(result.retainedBytes).toEqual(result.publishedBytes);
+    expect(result.retainedBytes.byteLength).toBe(result.descriptor.byteLength);
+  }, 60_000);
+
+  test("does not resolve package builds through ambient dependency ancestors", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "ambient-build-package-fixture"),
+      false
+    );
+    const manifestPath = join(fixture.packageRoot, "package.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    manifest.scripts.build = "bunx --bun tsc --version";
+    delete manifest.devDependencies;
+    await writeJson(manifestPath, manifest);
+    await runHost(bunBinary, ["install", "--offline", "--ignore-scripts"], fixture.workspaceRoot);
+    await rm(join(fixture.packageRoot, "node_modules", "typescript"), {
+      recursive: true,
+      force: true,
+    });
+    const outputPath = join(runRoot, "artifacts", "ambient-build-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const missingBuildInput = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+    expect(missingBuildInput).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+
+    const unsafeRoot = await realpath(
+      await mkdtemp(join(tmpdir(), "rawr-research-sdk-ambient-scratch-"))
+    );
+    const unsafeScratch = join(unsafeRoot, "scratch");
+    await Promise.all([mkdir(join(unsafeRoot, "node_modules")), mkdir(unsafeScratch)]);
+    const unsafeRuntime = makeResearchProcessRuntime(
+      makeGitBunLayer(gitBunConfig(await realpath(unsafeScratch))).pipe(
+        Layer.provide(BunCommandProcessLayer)
+      )
+    );
+    try {
+      const unsafeFailure = await unsafeRuntime.runPromiseExit(
+        Effect.flatMap(GitBun, (service) =>
+          service.packSdkPackage({
+            workspaceRoot: fixture.workspaceRoot,
+            packageRoot: fixture.packageRoot,
+            protocolVersion: "fixture-protocol-1",
+            outputPath,
+          })
+        )
+      );
+      expect(Exit.isFailure(unsafeFailure)).toBe(true);
+      if (Exit.isSuccess(unsafeFailure)) {
+        throw new Error("The ambient dependency ancestor unexpectedly passed admission.");
+      }
+      expect(Option.getOrThrow(Cause.findErrorOption(unsafeFailure.cause))).toEqual(
+        expect.objectContaining({ kind: "GitBunInvalidInput" })
+      );
+    } finally {
+      await unsafeRuntime.dispose();
+      await rm(unsafeRoot, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  test("rejects a package-local build tool that differs from its frozen lock edge", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "wrong-build-tool-package-fixture"),
+      false
+    );
+    const workspaceManifestPath = join(fixture.workspaceRoot, "package.json");
+    const workspaceManifest = JSON.parse(await readFile(workspaceManifestPath, "utf8"));
+    workspaceManifest.devDependencies = { typescript: "5.9.3" };
+    await writeJson(workspaceManifestPath, workspaceManifest);
+    await runHost(bunBinary, ["install", "--offline", "--ignore-scripts"], fixture.workspaceRoot);
+
+    const packageCompilerManifest = await realpath(
+      join(fixture.packageRoot, "node_modules", "typescript", "package.json")
+    );
+    const workspaceCompilerManifest = await realpath(
+      join(fixture.workspaceRoot, "node_modules", "typescript", "package.json")
+    );
+    expect(JSON.parse(await readFile(packageCompilerManifest, "utf8")).version).toBe("7.0.2");
+    expect(JSON.parse(await readFile(workspaceCompilerManifest, "utf8")).version).toBe("5.9.3");
+
+    const packageCompilerLink = join(fixture.packageRoot, "node_modules", "typescript");
+    await unlink(packageCompilerLink);
+    await symlink(
+      relative(dirname(packageCompilerLink), dirname(workspaceCompilerManifest)),
+      packageCompilerLink,
+      "dir"
+    );
+    const outputPath = join(runRoot, "artifacts", "wrong-build-tool-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
+  test("rejects a package-local executable link that bypasses its admitted build tool", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "wrong-build-executable-package-fixture"),
+      false
+    );
+    const workspaceManifestPath = join(fixture.workspaceRoot, "package.json");
+    const workspaceManifest = JSON.parse(await readFile(workspaceManifestPath, "utf8"));
+    workspaceManifest.devDependencies = { typescript: "5.9.3" };
+    await writeJson(workspaceManifestPath, workspaceManifest);
+    await runHost(bunBinary, ["install", "--offline", "--ignore-scripts"], fixture.workspaceRoot);
+
+    const packageCompilerManifest = await realpath(
+      join(fixture.packageRoot, "node_modules", "typescript", "package.json")
+    );
+    const workspaceCompilerTarget = await realpath(
+      join(fixture.workspaceRoot, "node_modules", "typescript", "bin", "tsc")
+    );
+    expect(JSON.parse(await readFile(packageCompilerManifest, "utf8")).version).toBe("7.0.2");
+
+    const packageCompilerLink = join(fixture.packageRoot, "node_modules", ".bin", "tsc");
+    await unlink(packageCompilerLink);
+    await symlink(
+      relative(dirname(packageCompilerLink), workspaceCompilerTarget),
+      packageCompilerLink
+    );
+    const outputPath = join(runRoot, "artifacts", "wrong-build-executable-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
+  test("rejects an undeclared package-local build input", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "undeclared-build-input-package-fixture"),
+      false
+    );
+    const nodeModulesRoot = join(fixture.packageRoot, "node_modules");
+    const declaredTarget = await realpath(join(nodeModulesRoot, "typescript"));
+    await symlink(
+      relative(nodeModulesRoot, declaredTarget),
+      join(nodeModulesRoot, "undeclared-tool"),
+      "dir"
+    );
+    const outputPath = join(runRoot, "artifacts", "undeclared-build-input-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
+  test("rejects a build that mutates the physical build-input closure", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "build-input-content-package-fixture"),
+      false
+    );
+    const compilerRoot = dirname(
+      await realpath(join(fixture.packageRoot, "node_modules", "typescript", "package.json"))
+    );
+    const compilerEntry = join(compilerRoot, "lib", "tsc.js");
+    const callerCompilerBytes = await readFile(compilerEntry);
+    await writeFile(
+      join(fixture.packageRoot, "build.ts"),
+      [
+        'import { mkdir, readFile, writeFile } from "node:fs/promises";',
+        'await mkdir("dist", { recursive: true });',
+        'const compiler = "node_modules/typescript/lib/tsc.js";',
+        'await writeFile(compiler, Buffer.concat([await readFile(compiler), Buffer.from("\\n// staged mutation\\n")]));',
+        'await Bun.write("dist/index.js", "export const fixture = true;\\n");',
+        'await Bun.write("dist/index.d.ts", "export declare const fixture: true;\\n");',
+      ].join("\n")
+    );
+    const outputPath = join(runRoot, "artifacts", "build-input-content-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    expect(await readFile(compilerEntry)).toEqual(callerCompilerBytes);
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
+  test("binds the complete copied Bun materialization surface", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "materialization-surface-package-fixture"),
+      false
+    );
+    const compilerRoot = dirname(
+      await realpath(join(fixture.packageRoot, "node_modules", "typescript", "package.json"))
+    );
+    const containerInput = join(dirname(compilerRoot), "adapter-surface.txt");
+    await writeFile(containerInput, "baseline\n");
+    const before = await Effect.runPromise(deriveRuntimeGraph(fixture));
+    await writeFile(containerInput, "changed\n");
+    const after = await Effect.runPromise(deriveRuntimeGraph(fixture));
+    expect(after.buildInputDigest).not.toEqual(before.buildInputDigest);
+
+    await writeFile(
+      join(fixture.packageRoot, "build.ts"),
+      [
+        'import { dirname, join } from "node:path";',
+        'import { mkdir, realpath, writeFile } from "node:fs/promises";',
+        'await mkdir("dist", { recursive: true });',
+        'const compiler = await realpath("node_modules/typescript");',
+        'await writeFile(join(dirname(compiler), "adapter-surface.txt"), "staged mutation\\n");',
+        'await Bun.write("dist/index.js", "export const fixture = true;\\n");',
+        'await Bun.write("dist/index.d.ts", "export declare const fixture: true;\\n");',
+      ].join("\n")
+    );
+    const outputPath = join(runRoot, "artifacts", "materialization-surface-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    expect(await readFile(containerInput, "utf8")).toBe("changed\n");
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
+  test("rejects a rewired transitive package-local build input", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "transitive-build-input-package-fixture"),
+      false
+    );
+    const workspaceManifestPath = join(fixture.workspaceRoot, "package.json");
+    const workspaceManifest = JSON.parse(await readFile(workspaceManifestPath, "utf8"));
+    workspaceManifest.devDependencies = { "bun-types": "1.3.9" };
+    await writeJson(workspaceManifestPath, workspaceManifest);
+    await runHost(bunBinary, ["install", "--offline", "--ignore-scripts"], fixture.workspaceRoot);
+
+    const typesManifest = await realpath(
+      join(fixture.packageRoot, "node_modules", "@types", "bun", "package.json")
+    );
+    const typesContainerNodeModules = dirname(dirname(dirname(typesManifest)));
+    const transitiveLink = join(typesContainerNodeModules, "bun-types");
+    const wrongTarget = dirname(
+      await realpath(join(fixture.workspaceRoot, "node_modules", "bun-types", "package.json"))
+    );
+    await unlink(transitiveLink);
+    await symlink(relative(typesContainerNodeModules, wrongTarget), transitiveLink, "dir");
+    const outputPath = join(runRoot, "artifacts", "transitive-build-input-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
+  test("limits lock admission to the exact SDK-rooted identities", async () => {
+    const fixture = await createPackageFixture(join(runRoot, "rooted-lock-package-fixture"), false);
+    const shadowRoot = join(fixture.workspaceRoot, "packages", "effect-shadow");
+    await mkdir(shadowRoot);
+    await writeJson(join(shadowRoot, "package.json"), {
+      name: "effect",
+      version: "3.0.0",
+      type: "module",
+    });
+    await runHost(bunBinary, ["install", "--offline", "--ignore-scripts"], fixture.workspaceRoot);
+    const resolvedEffect = JSON.parse(
+      await readFile(
+        await realpath(join(fixture.packageRoot, "node_modules", "effect", "package.json")),
+        "utf8"
+      )
+    );
+    expect(resolvedEffect.version).toBe("4.0.0-beta.99");
+
+    const descriptor = await packFixture(
+      fixture,
+      join(runRoot, "artifacts", "rooted-lock-sdk.tgz")
+    );
+
+    expect(descriptor.packageName).toBe("@rawr/research-sdk");
+    const lockPath = join(fixture.workspaceRoot, "bun.lock");
+    const lock = Bun.JSONC.parse(await readFile(lockPath, "utf8"));
+    if (
+      lock === null ||
+      typeof lock !== "object" ||
+      !("packages" in lock) ||
+      lock.packages === null ||
+      typeof lock.packages !== "object" ||
+      Array.isArray(lock.packages)
+    ) {
+      throw new Error("The rooted-lock fixture lock is malformed.");
+    }
+    Reflect.set(lock.packages, "unreachable/effect", [
+      "effect@3",
+      "",
+      { dependencies: [] },
+      "sha512-AA==",
+    ]);
+    await writeJson(lockPath, lock);
+    const rooted = await Effect.runPromise(
+      deriveRuntimeGraph({
+        workspaceRoot: fixture.workspaceRoot,
+        packageRoot: fixture.packageRoot,
+      })
+    );
+    expect(rooted.graph.nodes.find(({ nodeId }) => nodeId === rooted.graph.rootNodeId)?.name).toBe(
+      "@rawr/research-sdk"
+    );
+  }, 60_000);
+
+  test("rejects dependency links that target the owner of the Bun install store", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "install-store-parent-package-fixture"),
+      false
+    );
+    const packageNodeModules = join(fixture.packageRoot, "node_modules");
+    const ownerNodeModules = join(fixture.workspaceRoot, "node_modules");
+    await symlink(
+      relative(packageNodeModules, ownerNodeModules),
+      join(packageNodeModules, "store-parent-escape"),
+      "dir"
+    );
+    const outputPath = join(runRoot, "artifacts", "install-store-parent-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
+  test("rechecks physical dependency targets after the staged build", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "build-rewire-package-fixture"),
+      false
+    );
+    await writeFile(
+      join(fixture.packageRoot, "build.ts"),
+      [
+        'import { mkdir, readlink, rm, symlink } from "node:fs/promises";',
+        'await mkdir("dist", { recursive: true });',
+        'const replacement = await readlink("node_modules/typebox");',
+        'await rm("node_modules/effect", { force: true });',
+        'await symlink(replacement, "node_modules/effect", "dir");',
+        'await Bun.write("dist/index.js", "export const fixture = true;\\n");',
+        'await Bun.write("dist/index.d.ts", "export declare const fixture: true;\\n");',
+      ].join("\n")
+    );
+    const callerEffectManifest = await realpath(
+      join(fixture.packageRoot, "node_modules", "effect", "package.json")
+    );
+    const outputPath = join(runRoot, "artifacts", "build-rewire-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    expect(JSON.parse(await readFile(callerEffectManifest, "utf8")).version).toBe("4.0.0-beta.99");
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
   test("rejects workspace package bytes despite a colliding registry attestation", async () => {
     const fixture = await createPackageFixture(
       join(runRoot, "workspace-collision-package-fixture"),
@@ -794,8 +1571,190 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await expect(pathExists(outputPath)).resolves.toBe(false);
   }, 60_000);
 
+  test("rejects producer manifest dependency edges that differ from the frozen lock", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "producer-edge-drift-package-fixture"),
+      false
+    );
+    const manifestPath = join(fixture.packageRoot, "package.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    manifest.dependencies.effect = "0.0.0-manifest-drift";
+    await writeJson(manifestPath, manifest);
+    const outputPath = join(runRoot, "artifacts", "producer-edge-drift-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
+  test("rejects an installed target that differs from its contextual lock row", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "contextual-resolution-package-fixture"),
+      false
+    );
+    const workspaceManifestPath = join(fixture.workspaceRoot, "package.json");
+    const workspaceManifest = JSON.parse(await readFile(workspaceManifestPath, "utf8"));
+    workspaceManifest.dependencies = { effect: "3.21.3" };
+    await writeJson(workspaceManifestPath, workspaceManifest);
+    await runHost(bunBinary, ["install", "--offline", "--ignore-scripts"], fixture.workspaceRoot);
+
+    const packageEffectManifest = await realpath(
+      join(fixture.packageRoot, "node_modules", "effect", "package.json")
+    );
+    const workspaceEffectManifest = await realpath(
+      join(fixture.workspaceRoot, "node_modules", "effect", "package.json")
+    );
+    expect(JSON.parse(await readFile(packageEffectManifest, "utf8")).version).toBe("4.0.0-beta.99");
+    expect(JSON.parse(await readFile(workspaceEffectManifest, "utf8")).version).toBe("3.21.3");
+
+    const sharedRange = ">=3.0.0 || 4.0.0-beta.99";
+    const packageManifestPath = join(fixture.packageRoot, "package.json");
+    const packageManifest = JSON.parse(await readFile(packageManifestPath, "utf8"));
+    packageManifest.dependencies.effect = sharedRange;
+    await writeJson(packageManifestPath, packageManifest);
+    const lockPath = join(fixture.workspaceRoot, "bun.lock");
+    const lock = Bun.JSONC.parse(await readFile(lockPath, "utf8"));
+    if (
+      lock === null ||
+      typeof lock !== "object" ||
+      !("workspaces" in lock) ||
+      lock.workspaces === null ||
+      typeof lock.workspaces !== "object" ||
+      Array.isArray(lock.workspaces)
+    ) {
+      throw new Error("The contextual-resolution fixture lock is malformed.");
+    }
+    const packageWorkspace = Reflect.get(lock.workspaces, "packages/research-sdk");
+    if (
+      packageWorkspace === null ||
+      typeof packageWorkspace !== "object" ||
+      !("dependencies" in packageWorkspace) ||
+      packageWorkspace.dependencies === null ||
+      typeof packageWorkspace.dependencies !== "object" ||
+      Array.isArray(packageWorkspace.dependencies)
+    ) {
+      throw new Error("The contextual-resolution fixture package row is malformed.");
+    }
+    Reflect.set(packageWorkspace.dependencies, "effect", sharedRange);
+    await writeFile(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
+
+    const packageEffectLink = join(fixture.packageRoot, "node_modules", "effect");
+    await unlink(packageEffectLink);
+    await symlink(
+      relative(dirname(packageEffectLink), dirname(workspaceEffectManifest)),
+      packageEffectLink,
+      "dir"
+    );
+
+    const outputPath = join(runRoot, "artifacts", "contextual-resolution-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunInvalidInput" }));
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
+  test("rejects contextual lock drift that violates the frozen dependency request", async () => {
+    const fixture = await createPackageFixture(
+      join(runRoot, "contextual-request-package-fixture"),
+      false
+    );
+    const workspaceManifestPath = join(fixture.workspaceRoot, "package.json");
+    const workspaceManifest = JSON.parse(await readFile(workspaceManifestPath, "utf8"));
+    workspaceManifest.dependencies = { typebox: "1.0.81" };
+    await writeJson(workspaceManifestPath, workspaceManifest);
+    await runHost(bunBinary, ["install", "--offline", "--ignore-scripts"], fixture.workspaceRoot);
+
+    const packageTypeBoxManifest = await realpath(
+      join(fixture.packageRoot, "node_modules", "typebox", "package.json")
+    );
+    const workspaceTypeBoxManifest = await realpath(
+      join(fixture.workspaceRoot, "node_modules", "typebox", "package.json")
+    );
+    expect(JSON.parse(await readFile(packageTypeBoxManifest, "utf8")).version).toBe("1.3.6");
+    expect(JSON.parse(await readFile(workspaceTypeBoxManifest, "utf8")).version).toBe("1.0.81");
+
+    const packageTypeBoxLink = join(fixture.packageRoot, "node_modules", "typebox");
+    await unlink(packageTypeBoxLink);
+    await symlink(
+      relative(dirname(packageTypeBoxLink), dirname(workspaceTypeBoxManifest)),
+      packageTypeBoxLink,
+      "dir"
+    );
+
+    const lockPath = join(fixture.workspaceRoot, "bun.lock");
+    const lock = Bun.JSONC.parse(await readFile(lockPath, "utf8"));
+    if (
+      lock === null ||
+      typeof lock !== "object" ||
+      !("packages" in lock) ||
+      lock.packages === null ||
+      typeof lock.packages !== "object" ||
+      Array.isArray(lock.packages)
+    ) {
+      throw new Error("The contextual-request fixture lock is malformed.");
+    }
+    const rootTypeBoxRow = Reflect.get(lock.packages, "typebox");
+    if (rootTypeBoxRow === undefined) {
+      throw new Error("The contextual-request fixture omits its root TypeBox row.");
+    }
+    Reflect.set(lock.packages, "@rawr/research-sdk/typebox", rootTypeBoxRow);
+    await writeFile(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
+
+    const outputPath = join(runRoot, "artifacts", "contextual-request-sdk.tgz");
+    await mkdir(dirname(outputPath), { recursive: true });
+    const failure = await runAdapterFailure(
+      Effect.flatMap(GitBun, (service) =>
+        service.packSdkPackage({
+          workspaceRoot: fixture.workspaceRoot,
+          packageRoot: fixture.packageRoot,
+          protocolVersion: "fixture-protocol-1",
+          outputPath,
+        })
+      )
+    );
+
+    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    await expect(pathExists(outputPath)).resolves.toBe(false);
+  }, 60_000);
+
+  test("packs concurrent immutable artifacts without sharing caller-owned build state", async () => {
+    const fixture = await createPackageFixture(join(runRoot, "concurrent-package-fixture"), false);
+    const callerIdentityBefore = await callerPackageIdentity(fixture);
+    const [left, right] = await Promise.all([
+      packFixture(fixture, join(runRoot, "artifacts", "concurrent-left.tgz")),
+      packFixture(fixture, join(runRoot, "artifacts", "concurrent-right.tgz")),
+    ]);
+
+    expect(left.packageName).toBe("@rawr/research-sdk");
+    expect(right.packageName).toBe("@rawr/research-sdk");
+    expect(left.runtimeGraph).toEqual(right.runtimeGraph);
+    expect(await callerPackageIdentity(fixture)).toEqual(callerIdentityBefore);
+  }, 60_000);
+
   test("rejects a build that mutates its owner lock before packing", async () => {
     const fixture = await createPackageFixture(join(runRoot, "drifting-package-fixture"), true);
+    const callerIdentityBefore = await callerPackageIdentity(fixture);
     const outputPath = join(runRoot, "artifacts", "drifting-fixture.tgz");
     await mkdir(dirname(outputPath), { recursive: true });
     const failure = await runAdapterFailure(
@@ -809,9 +1768,10 @@ describe.sequential("Git/Bun research artifact boundary", () => {
       )
     );
     expect(failure).toEqual(expect.objectContaining({ kind: "GitBunIdentityMismatch" }));
+    expect(await callerPackageIdentity(fixture)).toEqual(callerIdentityBefore);
   }, 60_000);
 
-  test("does not traverse a hostile dist symlink or overwrite a final manifest symlink", async () => {
+  test("ignores caller dist contents without traversing a hostile dist root", async () => {
     const fixture = await createPackageFixture(
       join(runRoot, "manifest-symlink-package-fixture"),
       false
@@ -824,21 +1784,10 @@ describe.sequential("Git/Bun research artifact boundary", () => {
     await writeFile(target, "owner-controlled sentinel\n");
     await symlink(target, manifest);
 
-    const failure = await runAdapterFailure(
-      Effect.flatMap(GitBun, (service) =>
-        service.packSdkPackage({
-          workspaceRoot: fixture.workspaceRoot,
-          packageRoot: fixture.packageRoot,
-          protocolVersion: "fixture-protocol-1",
-          outputPath,
-        })
-      )
-    );
-
-    expect(failure).toEqual(expect.objectContaining({ kind: "GitBunInvalidInput" }));
+    await packFixture(fixture, outputPath);
     await expect(readFile(target, "utf8")).resolves.toBe("owner-controlled sentinel\n");
     await expect(readlink(manifest)).resolves.toBe(target);
-    await expect(pathExists(outputPath)).resolves.toBe(false);
+    await expect(pathExists(outputPath)).resolves.toBe(true);
     await expect(pathExists(join(fixture.packageRoot, "prepack-ran.txt"))).resolves.toBe(false);
 
     const distFixture = await createPackageFixture(
@@ -1075,6 +2024,11 @@ async function createPackageFixture(
       prepack: "bun -e \"await Bun.write('prepack-ran.txt', 'ran')\"",
     },
     dependencies: { effect: "4.0.0-beta.99", typebox: "1.3.6" },
+    devDependencies: {
+      "@types/bun": "1.3.14",
+      "@types/node": "22.20.1",
+      typescript: "7.0.2",
+    },
   });
   await writeFile(
     join(packageRoot, "build.ts"),
@@ -1195,6 +2149,16 @@ async function pathExists(path: string): Promise<boolean> {
   }
 }
 
+async function waitForPath(path: string, timeoutMs: number): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!(await pathExists(path))) {
+    if (Date.now() >= deadline) {
+      throw new Error(`Timed out waiting for ${path}.`);
+    }
+    await Bun.sleep(1);
+  }
+}
+
 async function firstRegularJavaScriptFile(root: string): Promise<string> {
   const entries = (await readdir(root, { withFileTypes: true })).sort((left, right) =>
     left.name.localeCompare(right.name)
@@ -1220,6 +2184,71 @@ async function firstRegularJavaScriptFile(root: string): Promise<string> {
 interface RepositoryGuard {
   readonly status: string;
   readonly rootSymlinks: readonly { readonly path: string; readonly target: string }[];
+}
+
+interface CallerPackageIdentity {
+  readonly workspaceManifestDigest: string;
+  readonly ownerLockDigest: string;
+  readonly packageEntries: readonly {
+    readonly path: string;
+    readonly kind: "Directory" | "File" | "SymbolicLink";
+    readonly mode: number;
+    readonly identity: string;
+  }[];
+}
+
+async function callerPackageIdentity(fixture: {
+  readonly workspaceRoot: string;
+  readonly packageRoot: string;
+}): Promise<CallerPackageIdentity> {
+  const packageEntries: CallerPackageIdentity["packageEntries"][number][] = [];
+  const walk = async (directory: string): Promise<void> => {
+    for (const entry of (await readdir(directory, { withFileTypes: true })).sort((left, right) =>
+      left.name.localeCompare(right.name)
+    )) {
+      if (entry.name === "node_modules") {
+        continue;
+      }
+      const path = join(directory, entry.name);
+      const relativePath = relative(fixture.packageRoot, path);
+      const stat = await lstat(path);
+      if (entry.isDirectory()) {
+        packageEntries.push({
+          path: relativePath,
+          kind: "Directory",
+          mode: stat.mode & 0o777,
+          identity: "",
+        });
+        await walk(path);
+      } else if (entry.isFile()) {
+        packageEntries.push({
+          path: relativePath,
+          kind: "File",
+          mode: stat.mode & 0o777,
+          identity: new Bun.CryptoHasher("sha256")
+            .update(await Bun.file(path).bytes())
+            .digest("hex"),
+        });
+      } else if (entry.isSymbolicLink()) {
+        packageEntries.push({
+          path: relativePath,
+          kind: "SymbolicLink",
+          mode: stat.mode & 0o777,
+          identity: await readlink(path),
+        });
+      } else {
+        throw new Error(`Unsupported caller-package fixture entry: ${relativePath}`);
+      }
+    }
+  };
+  await walk(fixture.packageRoot);
+  const digest = async (path: string): Promise<string> =>
+    new Bun.CryptoHasher("sha256").update(await Bun.file(path).bytes()).digest("hex");
+  return {
+    workspaceManifestDigest: await digest(join(fixture.workspaceRoot, "package.json")),
+    ownerLockDigest: await digest(join(fixture.workspaceRoot, "bun.lock")),
+    packageEntries,
+  };
 }
 
 async function repositoryGuard(root: string): Promise<RepositoryGuard> {

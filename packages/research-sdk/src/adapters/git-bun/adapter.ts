@@ -1,7 +1,7 @@
 import { lstat, mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
-import { isAbsolute, join } from "node:path";
+import { dirname, isAbsolute, join } from "node:path";
 import { cwd, execPath } from "node:process";
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Exit, Layer } from "effect";
 import {
   type CommandPolicy,
   decodeStructural,
@@ -41,6 +41,7 @@ import {
   type VerifyInstalledSdkPackageRequest,
   verifyInstalledSdkPackage,
 } from "./package.js";
+import { type PackagePublicationState, rollbackPackagePublication } from "./package-build.js";
 
 export interface MaterializeRevisionRequest {
   readonly sourceRepositoryPath: string;
@@ -70,8 +71,6 @@ export interface CapturedPatchResult {
 }
 
 export interface GitBunShape {
-  readonly gitSubstrate: GitPatchSubstrateIdentity;
-  readonly packageSubstrate: BunPackageSubstrateIdentity;
   readonly materializeRevision: (
     request: MaterializeRevisionRequest
   ) => Effect.Effect<void, GitBunError>;
@@ -100,71 +99,78 @@ export function makeGitBunLayer(
       const process = yield* CommandProcess;
       const config = yield* decodeConfig(rawConfig);
       const scratchRoot = yield* canonicalDirectory(config.scratchRoot, "configure");
-      const gitBinary = yield* canonicalBinary(config.git.executable, "resolve-git");
-      const bunBinary = yield* canonicalBinary(config.bun.executable, "resolve-bun");
       const commandPolicy: CommandPolicy = { ...config.command, environment: {} };
-      const identities = yield* configureAdapter(
-        config,
-        commandPolicy,
-        process,
-        gitBinary,
-        bunBinary
-      );
       const mechanics = makeGitMechanics(process, commandPolicy);
 
       return Object.freeze({
-        gitSubstrate: identities.gitSubstrate,
-        packageSubstrate: identities.packageSubstrate,
         materializeRevision: (request) =>
-          withControlRoot(scratchRoot, "materialize", (controlRoot) =>
-            mechanics.materializeRevision({
-              ...request,
-              substrate: identities.gitSubstrate,
-              controlRoot,
-            })
-          ),
-        capturePatch: (request) =>
-          withControlRoot(scratchRoot, "capture", (controlRoot) =>
-            mechanics.capturePatch({
-              ...request,
-              substrate: identities.gitSubstrate,
-              controlRoot,
-            })
-          ),
-        applyAndRegenerate: (request) =>
-          withControlRoot(scratchRoot, "apply", (controlRoot) =>
-            mechanics.applyAndRegenerate({
-              ...request,
-              substrate: identities.gitSubstrate,
-              controlRoot,
-            })
-          ),
-        packSdkPackage: (request) =>
-          withControlRoot(scratchRoot, "pack", (controlRoot) =>
-            Effect.flatMap(preparePackageEnvironment(controlRoot), (environment) =>
-              buildAndPackSdkPackage({
-                request,
-                substrate: identities.packageSubstrate,
-                runner: process,
-                environment,
-                timeoutMs: commandPolicy.timeoutMs,
-                terminationGraceMs: commandPolicy.terminationGraceMs,
+          Effect.flatMap(acquireGitSubstrate(config.git, commandPolicy, process), (substrate) =>
+            withControlRoot(scratchRoot, "materialize", (controlRoot) =>
+              mechanics.materializeRevision({
+                ...request,
+                substrate,
+                controlRoot,
               })
             )
           ),
+        capturePatch: (request) =>
+          Effect.flatMap(acquireGitSubstrate(config.git, commandPolicy, process), (substrate) =>
+            withControlRoot(scratchRoot, "capture", (controlRoot) =>
+              mechanics.capturePatch({
+                ...request,
+                substrate,
+                controlRoot,
+              })
+            )
+          ),
+        applyAndRegenerate: (request) =>
+          Effect.flatMap(acquireGitSubstrate(config.git, commandPolicy, process), (substrate) =>
+            withControlRoot(scratchRoot, "apply", (controlRoot) =>
+              mechanics.applyAndRegenerate({
+                ...request,
+                substrate,
+                controlRoot,
+              })
+            )
+          ),
+        packSdkPackage: (request) =>
+          Effect.suspend(() => {
+            const publicationState: PackagePublicationState = { outputPublished: false };
+            return Effect.flatMap(acquirePackageSubstrate(config.bun), (substrate) =>
+              withControlRoot(scratchRoot, "pack", (controlRoot) =>
+                Effect.flatMap(
+                  preparePackageEnvironment(controlRoot, substrate.bun.resolvedBinary),
+                  (environment) =>
+                    buildAndPackSdkPackage({
+                      request,
+                      substrate,
+                      runner: process,
+                      controlRoot,
+                      environment,
+                      timeoutMs: commandPolicy.timeoutMs,
+                      terminationGraceMs: commandPolicy.terminationGraceMs,
+                      publicationState,
+                    })
+                )
+              )
+            ).pipe(
+              Effect.onExit((exit) =>
+                Exit.isFailure(exit) && publicationState.outputPublished
+                  ? rollbackPackagePublication(request.outputPath)
+                  : Effect.void
+              )
+            );
+          }),
         verifyInstalledSdkPackage: (request) =>
-          Effect.andThen(
-            requirePackageSubstrate(request.expected.substrate, identities.packageSubstrate),
-            verifyInstalledSdkPackage(request)
+          Effect.flatMap(acquirePackageSubstrate(config.bun), (substrate) =>
+            Effect.andThen(
+              requirePackageSubstrate(request.expected.substrate, substrate),
+              verifyInstalledSdkPackage(request)
+            )
           ),
       } satisfies GitBunShape);
     })
   );
-}
-
-interface AdapterIdentities {
-  readonly gitSubstrate: GitPatchSubstrateIdentity;
-  readonly packageSubstrate: BunPackageSubstrateIdentity;
 }
 
 function decodeConfig(rawConfig: unknown): Effect.Effect<GitBunConfig, GitBunError> {
@@ -183,33 +189,16 @@ function decodeConfig(rawConfig: unknown): Effect.Effect<GitBunConfig, GitBunErr
   return Effect.succeed(decoded.value);
 }
 
-function configureAdapter(
-  config: GitBunConfig,
+function acquireGitSubstrate(
+  requirement: GitBunConfig["git"],
   policy: CommandPolicy,
-  process: CommandProcessShape,
-  gitBinary: string,
-  bunBinary: string
-): Effect.Effect<AdapterIdentities, GitBunError> {
+  process: CommandProcessShape
+): Effect.Effect<GitPatchSubstrateIdentity, GitBunError> {
   return Effect.gen(function* () {
-    const runningBun = yield* canonicalBinary(execPath, "resolve-running-bun");
-    if (runningBun !== bunBinary) {
-      return yield* Effect.fail(
-        identityMismatch(
-          "configure",
-          "The adapter process does not use the admitted Bun runtime identity."
-        )
-      );
-    }
+    const gitBinary = yield* canonicalBinary(requirement.executable, "resolve-git");
     const git = yield* observeGit(process, policy, gitBinary);
-    const bun = {
-      resolvedBinary: bunBinary,
-      version: Bun.version,
-      revision: Bun.revision,
-    } satisfies ResolvedToolIdentity;
-    yield* requireGitTool(config.git, git);
-    yield* requireBunTool(config.bun, bun);
-
-    const gitSubstrate = freezeGitSubstrate({
+    yield* requireGitTool(requirement, git);
+    return freezeGitSubstrate({
       kind: "CanonicalGitPatchV1",
       git,
       canonicalization: canonicalGitCanonicalization,
@@ -225,7 +214,30 @@ function configureAdapter(
         stageArguments: canonicalGitCanonicalization.stageArguments,
       }),
     });
-    const packageSubstrate = freezePackageSubstrate({
+  });
+}
+
+function acquirePackageSubstrate(
+  requirement: GitBunConfig["bun"]
+): Effect.Effect<BunPackageSubstrateIdentity, GitBunError> {
+  return Effect.gen(function* () {
+    const bunBinary = yield* canonicalBinary(requirement.executable, "resolve-bun");
+    const runningBun = yield* canonicalBinary(execPath, "resolve-running-bun");
+    if (runningBun !== bunBinary) {
+      return yield* Effect.fail(
+        identityMismatch(
+          "configure",
+          "The adapter process does not use the admitted Bun runtime identity."
+        )
+      );
+    }
+    const bun = {
+      resolvedBinary: bunBinary,
+      version: Bun.version,
+      revision: Bun.revision,
+    } satisfies ResolvedToolIdentity;
+    yield* requireBunTool(requirement, bun);
+    return freezePackageSubstrate({
       kind: "ImmutableBunPackageV1",
       bun,
       canonicalization: canonicalBunPackageCanonicalization,
@@ -238,7 +250,6 @@ function configureAdapter(
         packArguments: canonicalBunPackageCanonicalization.packArguments,
       }),
     });
-    return { gitSubstrate, packageSubstrate };
   });
 }
 
@@ -345,7 +356,8 @@ function canonicalBinary(path: string, operation: string): Effect.Effect<string,
 }
 
 function preparePackageEnvironment(
-  root: string
+  root: string,
+  bunBinary: string
 ): Effect.Effect<Readonly<Record<string, string>>, GitBunError> {
   return Effect.uninterruptible(
     Effect.tryPromise({
@@ -353,6 +365,7 @@ function preparePackageEnvironment(
         const substitutions: Readonly<Record<string, string>> = {
           "<adapter-owned-home>": join(root, "home"),
           "<adapter-owned-tmp>": join(root, "tmp"),
+          "<admitted-tool-path>": `${dirname(bunBinary)}:/usr/bin:/bin`,
         };
         await Promise.all([
           mkdir(substitutions["<adapter-owned-home>"]!),

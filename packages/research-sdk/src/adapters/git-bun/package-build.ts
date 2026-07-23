@@ -1,6 +1,6 @@
 import { constants } from "node:fs";
-import { link, lstat, mkdir, mkdtemp, open, realpath, rm } from "node:fs/promises";
-import { basename, dirname, join, resolve } from "node:path";
+import { copyFile, cp, link, lstat, mkdir, mkdtemp, open, realpath, rm } from "node:fs/promises";
+import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { Effect } from "effect";
 import { Type } from "typebox";
 import { type DigestIdentity, decodeStructural } from "../../contracts/index.js";
@@ -17,6 +17,7 @@ import {
   finalizeRootContent,
   type PackageContentEntry,
   packageContentDigest,
+  type RuntimeGraphResult,
   regularFileMode,
   researchSdkPackageName,
   runtimeManifestBytes,
@@ -36,6 +37,7 @@ import {
   stableJson,
 } from "./internal.js";
 import type { PackSdkPackageRequest } from "./package.js";
+import { collectInstallContainers, symlinksBelow } from "./package-materialization.js";
 
 const PackedPackageJsonSchema = Type.Object(
   {
@@ -47,9 +49,11 @@ const PackedPackageJsonSchema = Type.Object(
 export const canonicalBunPackageCanonicalization: BunPackageCanonicalization =
   freezeBunPackageCanonicalization({
     environment: [
+      { name: "BUN_OPTIONS", value: "--no-env-file --no-install" },
       { name: "HOME", value: "<adapter-owned-home>" },
       { name: "LANG", value: "C" },
       { name: "LC_ALL", value: "C" },
+      { name: "PATH", value: "<admitted-tool-path>" },
       { name: "TMPDIR", value: "<adapter-owned-tmp>" },
       { name: "TZ", value: "UTC" },
     ],
@@ -72,15 +76,26 @@ interface PackageOperationInput {
   readonly request: PackSdkPackageRequest;
   readonly substrate: BunPackageSubstrateIdentity;
   readonly runner: CommandProcessShape;
+  readonly controlRoot: string;
   readonly environment: Readonly<Record<string, string>>;
   readonly timeoutMs: number;
   readonly terminationGraceMs: number;
+  readonly publicationState: PackagePublicationState;
+}
+export interface PackagePublicationState {
+  outputPublished: boolean;
+}
+interface StagedPackageView {
+  readonly workspaceRoot: string;
+  readonly packageRoot: string;
+  readonly archiveRoot: string;
 }
 export function buildAndPackSdkPackage(
   input: PackageOperationInput
 ): Effect.Effect<PackedPackageDescriptor, GitBunError> {
   return Effect.gen(function* () {
     const request = yield* validatePackRequest(input.request);
+    yield* requireIsolatedPackageControlRoot(input.controlRoot, request.workspaceRoot);
     yield* preflightBunPackage(input);
     const before = yield* deriveRuntimeGraph(request);
     const root = before.graph.nodes.find(({ nodeId }) => nodeId === before.graph.rootNodeId);
@@ -89,93 +104,458 @@ export function buildAndPackSdkPackage(
         identityMismatch("pack-package", "The package root is not @rawr/research-sdk.")
       );
     }
-    yield* prepareDistributionRoot(request.packageRoot);
-    yield* runChecked(
-      input.runner,
-      commandRequest(
-        input,
-        request.packageRoot,
-        canonicalBunPackageCanonicalization.buildArguments
-      ),
-      "build-package"
-    );
-
-    const after = yield* deriveRuntimeGraph(request);
-    if (
-      !equalDigest(before.ownerLockDigest, after.ownerLockDigest) ||
-      stableJson(before.graph) !== stableJson(after.graph)
-    ) {
-      return yield* Effect.fail(
-        identityMismatch(
-          "build-package",
-          "The build mutated the frozen package manifest, lock, or runtime closure."
-        )
-      );
-    }
-    const manifestOutput = yield* prepareEmbeddedManifestOutput(request);
-    return yield* withPackageStage(request.outputPath, (stageRoot) =>
-      Effect.gen(function* () {
-        const provisionalPath = join(stageRoot, "provisional.tgz");
-        yield* packTo(input, request.packageRoot, provisionalPath);
-        const provisional = yield* inspectPackedPackage({
-          archivePath: provisionalPath,
-          packageRoot: request.packageRoot,
-          embeddedManifestPath: embeddedRuntimeManifestPath,
-        });
-        const runtimeGraph = finalizeRootContent(after.graph, provisional.packageContentDigest);
-        const manifestBytes = runtimeManifestBytes({
-          packageName: root.name,
-          packageVersion: root.version,
-          protocolVersion: request.protocolVersion,
-          substrate: input.substrate,
-          ownerLockDigest: after.ownerLockDigest,
-          runtimeGraph,
-        });
-        return yield* withExclusiveManifest(manifestOutput, manifestBytes, () =>
-          Effect.gen(function* () {
-            const finalPath = join(stageRoot, "final.tgz");
-            yield* packTo(input, request.packageRoot, finalPath);
-            const packed = yield* inspectPackedPackage({
-              archivePath: finalPath,
-              packageRoot: request.packageRoot,
-              embeddedManifestPath: embeddedRuntimeManifestPath,
-              expectedManifestBytes: manifestBytes,
-            });
-            if (
-              packed.packageName !== root.name ||
-              packed.packageVersion !== root.version ||
-              !equalDigest(packed.packageContentDigest, provisional.packageContentDigest)
-            ) {
-              return yield* Effect.fail(
-                identityMismatch(
-                  "pack-package",
-                  "The final package content differs from the admitted provisional package."
-                )
+    return yield* withPackagePublication(request.outputPath, (publicationRoot) =>
+      withStagedPackageView(input, request, (view) =>
+        Effect.gen(function* () {
+          const stagedRequest: PackSdkPackageRequest = {
+            ...request,
+            workspaceRoot: view.workspaceRoot,
+            packageRoot: view.packageRoot,
+          };
+          const stagedBefore = yield* deriveRuntimeGraph(stagedRequest);
+          yield* requireRuntimeGraphIdentity(
+            before,
+            stagedBefore,
+            "stage-package",
+            "The staged package manifest, lock, or runtime closure differs from its owner."
+          );
+          yield* prepareDistributionRoot(view.packageRoot);
+          yield* runChecked(
+            input.runner,
+            commandRequest(
+              input,
+              view.packageRoot,
+              canonicalBunPackageCanonicalization.buildArguments
+            ),
+            "build-package"
+          );
+          const stagedAfter = yield* deriveRuntimeGraph(stagedRequest);
+          yield* requireRuntimeGraphIdentity(
+            stagedBefore,
+            stagedAfter,
+            "build-package",
+            "The build mutated the frozen staged package manifest, lock, or runtime closure."
+          );
+          const callerAfter = yield* deriveRuntimeGraph(request);
+          yield* requireRuntimeGraphIdentity(
+            before,
+            callerAfter,
+            "build-package",
+            "The caller-owned package manifest, lock, or runtime closure changed during the build."
+          );
+          const manifestOutput = yield* prepareEmbeddedManifestOutput(stagedRequest);
+          const provisionalPath = join(view.archiveRoot, "provisional.tgz");
+          yield* packTo(input, view.packageRoot, provisionalPath);
+          const provisional = yield* inspectPackedPackage({
+            archivePath: provisionalPath,
+            packageRoot: view.packageRoot,
+            embeddedManifestPath: embeddedRuntimeManifestPath,
+          });
+          const runtimeGraph = finalizeRootContent(
+            stagedAfter.graph,
+            provisional.packageContentDigest
+          );
+          const manifestBytes = runtimeManifestBytes({
+            packageName: root.name,
+            packageVersion: root.version,
+            protocolVersion: request.protocolVersion,
+            substrate: input.substrate,
+            ownerLockDigest: stagedAfter.ownerLockDigest,
+            runtimeGraph,
+          });
+          return yield* withExclusiveManifest(manifestOutput, manifestBytes, () =>
+            Effect.gen(function* () {
+              const finalPath = join(view.archiveRoot, "final.tgz");
+              yield* packTo(input, view.packageRoot, finalPath);
+              const packed = yield* inspectPackedPackage({
+                archivePath: finalPath,
+                packageRoot: view.packageRoot,
+                embeddedManifestPath: embeddedRuntimeManifestPath,
+                expectedManifestBytes: manifestBytes,
+              });
+              if (
+                packed.packageName !== root.name ||
+                packed.packageVersion !== root.version ||
+                !equalDigest(packed.packageContentDigest, provisional.packageContentDigest)
+              ) {
+                return yield* Effect.fail(
+                  identityMismatch(
+                    "pack-package",
+                    "The final package content differs from the admitted provisional package."
+                  )
+                );
+              }
+              const descriptor: PackedPackageDescriptor = {
+                kind: "PackedPackage",
+                packageName: researchSdkPackageName,
+                packageVersion: packed.packageVersion,
+                protocolVersion: request.protocolVersion,
+                embeddedManifestPath: embeddedRuntimeManifestPath,
+                substrate: input.substrate,
+                contentDigest: sha256Digest("research-sdk.package-tarball.v1", packed.bytes),
+                embeddedManifestDigest: sha256Digest(
+                  "research-sdk.runtime-graph-manifest.v1",
+                  manifestBytes
+                ),
+                byteLength: packed.bytes.byteLength,
+                ownerLockDigest: stagedAfter.ownerLockDigest,
+                runtimeGraph,
+              };
+              yield* publishPackage(
+                finalPath,
+                packed.bytes,
+                request.outputPath,
+                publicationRoot,
+                () => {
+                  input.publicationState.outputPublished = true;
+                }
               );
-            }
-            const descriptor: PackedPackageDescriptor = {
-              kind: "PackedPackage",
-              packageName: researchSdkPackageName,
-              packageVersion: packed.packageVersion,
-              protocolVersion: request.protocolVersion,
-              embeddedManifestPath: embeddedRuntimeManifestPath,
-              substrate: input.substrate,
-              contentDigest: sha256Digest("research-sdk.package-tarball.v1", packed.bytes),
-              embeddedManifestDigest: sha256Digest(
-                "research-sdk.runtime-graph-manifest.v1",
-                manifestBytes
-              ),
-              byteLength: packed.bytes.byteLength,
-              ownerLockDigest: after.ownerLockDigest,
-              runtimeGraph,
-            };
-            yield* publishPackage(finalPath, request.outputPath);
-            return descriptor;
-          })
-        );
-      })
+              return descriptor;
+            })
+          );
+        })
+      )
     );
   });
+}
+function requireIsolatedPackageControlRoot(
+  controlRoot: string,
+  workspaceRoot: string
+): Effect.Effect<void, GitBunError> {
+  return uninterruptiblePackageFs("preflight-package", async () => {
+    const canonicalControlRoot = await realpath(controlRoot);
+    const canonicalWorkspaceRoot = await realpath(workspaceRoot);
+    if (
+      canonicalControlRoot !== controlRoot ||
+      canonicalWorkspaceRoot !== workspaceRoot ||
+      isAtOrBelow(canonicalControlRoot, canonicalWorkspaceRoot) ||
+      isAtOrBelow(canonicalWorkspaceRoot, canonicalControlRoot)
+    ) {
+      throw invalidInput(
+        "preflight-package",
+        "The package control root must be isolated from the caller workspace."
+      );
+    }
+    let ancestor = canonicalControlRoot;
+    while (true) {
+      try {
+        await lstat(join(ancestor, "node_modules"));
+        throw invalidInput(
+          "preflight-package",
+          "The package control root has an ambient dependency ancestor."
+        );
+      } catch (error) {
+        if (!hasErrorCode(error, "ENOENT")) {
+          throw error;
+        }
+      }
+      const parent = dirname(ancestor);
+      if (parent === ancestor) {
+        break;
+      }
+      ancestor = parent;
+    }
+  });
+}
+function requireRuntimeGraphIdentity(
+  expected: RuntimeGraphResult,
+  actual: RuntimeGraphResult,
+  operation: string,
+  message: string
+): Effect.Effect<void, GitBunError> {
+  return equalDigest(expected.ownerLockDigest, actual.ownerLockDigest) &&
+    equalDigest(expected.buildInputDigest, actual.buildInputDigest) &&
+    stableJson(expected.graph) === stableJson(actual.graph)
+    ? Effect.void
+    : Effect.fail(identityMismatch(operation, message));
+}
+function withStagedPackageView<Output>(
+  input: PackageOperationInput,
+  request: PackSdkPackageRequest,
+  use: (view: StagedPackageView) => Effect.Effect<Output, GitBunError>
+): Effect.Effect<Output, GitBunError> {
+  return Effect.acquireUseRelease(
+    uninterruptiblePackageFs("acquire-package-view", async () => {
+      return realpath(await mkdtemp(join(input.controlRoot, "package-view-")));
+    }),
+    (root) => Effect.flatMap(materializePackageView(request, root), use),
+    (root) =>
+      uninterruptiblePackageFs("release-package-view", () =>
+        rm(root, { recursive: true, force: true })
+      )
+  );
+}
+function materializePackageView(
+  request: PackSdkPackageRequest,
+  root: string
+): Effect.Effect<StagedPackageView, GitBunError> {
+  return uninterruptiblePackageFs("materialize-package-view", async () => {
+    const relativePackageRoot = relative(request.workspaceRoot, request.packageRoot);
+    const portablePackageRoot =
+      relativePackageRoot.length === 0
+        ? ""
+        : normalizePortablePath(relativePackageRoot.split(sep).join("/"));
+    if (portablePackageRoot === undefined) {
+      throw invalidInput(
+        "materialize-package-view",
+        "The package root must remain within its owner workspace."
+      );
+    }
+    const workspaceRoot = join(root, "workspace");
+    const packageRoot =
+      portablePackageRoot.length === 0
+        ? workspaceRoot
+        : join(workspaceRoot, ...portablePackageRoot.split("/"));
+    const archiveRoot = join(root, "archives");
+    await Promise.all([mkdir(dirname(packageRoot), { recursive: true }), mkdir(archiveRoot)]);
+    await copyPackageTree(request.packageRoot, packageRoot);
+    if (request.workspaceRoot !== request.packageRoot) {
+      await copyWorkspaceControls(request.workspaceRoot, workspaceRoot);
+    }
+    await copyPackageDependencies(request.workspaceRoot, request.packageRoot, workspaceRoot);
+    const canonicalWorkspaceRoot = await realpath(workspaceRoot);
+    const canonicalPackageRoot = await realpath(packageRoot);
+    const canonicalArchiveRoot = await realpath(archiveRoot);
+    if (
+      canonicalWorkspaceRoot !== workspaceRoot ||
+      canonicalPackageRoot !== packageRoot ||
+      canonicalArchiveRoot !== archiveRoot ||
+      !isAtOrBelow(canonicalPackageRoot, canonicalWorkspaceRoot)
+    ) {
+      throw invalidInput("materialize-package-view", "The staged package view is not canonical.");
+    }
+    await requireContainedSymlinks(canonicalWorkspaceRoot, [
+      canonicalPackageRoot,
+      join(canonicalWorkspaceRoot, "node_modules", ".bun"),
+    ]);
+    return {
+      workspaceRoot: canonicalWorkspaceRoot,
+      packageRoot: canonicalPackageRoot,
+      archiveRoot: canonicalArchiveRoot,
+    };
+  });
+}
+async function copyPackageTree(source: string, destination: string): Promise<void> {
+  await requireOptionalOrdinaryDirectory(join(source, "dist"), "distribution");
+  await cp(source, destination, {
+    recursive: true,
+    dereference: false,
+    errorOnExist: true,
+    force: false,
+    mode: constants.COPYFILE_FICLONE,
+    preserveTimestamps: true,
+    verbatimSymlinks: true,
+    filter: (path) => {
+      const pathRelativeToPackage = relative(source, path);
+      if (pathRelativeToPackage.length === 0) {
+        return true;
+      }
+      const [topLevel] = pathRelativeToPackage.split(sep);
+      return (
+        topLevel !== "node_modules" &&
+        topLevel !== "dist" &&
+        topLevel !== ".vite" &&
+        topLevel !== ".vite-temp"
+      );
+    },
+  });
+}
+async function requireOptionalOrdinaryDirectory(path: string, label: string): Promise<void> {
+  let stat;
+  try {
+    stat = await lstat(path);
+  } catch (error) {
+    if (hasErrorCode(error, "ENOENT")) {
+      return;
+    }
+    throw error;
+  }
+  if (!stat.isDirectory() || stat.isSymbolicLink() || (await realpath(path)) !== path) {
+    throw invalidInput(
+      "materialize-package-view",
+      `The caller-owned ${label} directory is not ordinary.`
+    );
+  }
+}
+async function copyWorkspaceControls(source: string, destination: string): Promise<void> {
+  await Promise.all([
+    copyOrdinaryFile(join(source, "package.json"), join(destination, "package.json"), false),
+    copyOrdinaryFile(join(source, "bun.lock"), join(destination, "bun.lock"), false),
+    copyOrdinaryFile(join(source, "bunfig.toml"), join(destination, "bunfig.toml"), true),
+  ]);
+}
+async function copyOrdinaryFile(
+  source: string,
+  destination: string,
+  optional: boolean
+): Promise<void> {
+  let stat;
+  try {
+    stat = await lstat(source);
+  } catch (error) {
+    if (optional && hasErrorCode(error, "ENOENT")) {
+      return;
+    }
+    throw error;
+  }
+  if (!stat.isFile() || stat.isSymbolicLink() || (await realpath(source)) !== source) {
+    throw invalidInput(
+      "materialize-package-view",
+      "A workspace package control is not an ordinary canonical file."
+    );
+  }
+  await copyFile(source, destination, constants.COPYFILE_EXCL | constants.COPYFILE_FICLONE);
+}
+async function copyPackageDependencies(
+  sourceWorkspaceRoot: string,
+  sourcePackageRoot: string,
+  stagedWorkspaceRoot: string
+): Promise<void> {
+  const sourceNodeModules = join(sourcePackageRoot, "node_modules");
+  let nodeModulesStat;
+  try {
+    nodeModulesStat = await lstat(sourceNodeModules);
+  } catch (error) {
+    if (hasErrorCode(error, "ENOENT")) {
+      return;
+    }
+    throw error;
+  }
+  if (
+    !nodeModulesStat.isDirectory() ||
+    nodeModulesStat.isSymbolicLink() ||
+    (await realpath(sourceNodeModules)) !== sourceNodeModules
+  ) {
+    throw invalidInput(
+      "materialize-package-view",
+      "The package dependency directory must be an ordinary canonical directory."
+    );
+  }
+  const stagedNodeModules = join(
+    stagedWorkspaceRoot,
+    relative(sourceWorkspaceRoot, sourceNodeModules)
+  );
+  await mkdir(dirname(stagedNodeModules), { recursive: true });
+  await cp(sourceNodeModules, stagedNodeModules, {
+    recursive: true,
+    dereference: false,
+    errorOnExist: true,
+    force: false,
+    mode: constants.COPYFILE_FICLONE,
+    preserveTimestamps: true,
+    verbatimSymlinks: true,
+    filter: (path) => {
+      const pathRelativeToNodeModules = relative(sourceNodeModules, path);
+      return pathRelativeToNodeModules.split(sep)[0] !== ".bun";
+    },
+  });
+  const sourceStore = join(sourceWorkspaceRoot, "node_modules", ".bun");
+  const containers = await collectInstallContainers(
+    sourceNodeModules,
+    sourceStore,
+    "materialize-package-view"
+  );
+  await Promise.all(
+    containers.map(async (container) => {
+      const destination = join(stagedWorkspaceRoot, relative(sourceWorkspaceRoot, container));
+      await mkdir(dirname(destination), { recursive: true });
+      await cp(container, destination, {
+        recursive: true,
+        dereference: false,
+        errorOnExist: true,
+        force: false,
+        mode: constants.COPYFILE_FICLONE,
+        preserveTimestamps: true,
+        verbatimSymlinks: true,
+      });
+    })
+  );
+}
+async function requireContainedSymlinks(
+  workspaceRoot: string,
+  roots: readonly string[]
+): Promise<void> {
+  for (const root of roots) {
+    let stat;
+    try {
+      stat = await lstat(root);
+    } catch (error) {
+      if (hasErrorCode(error, "ENOENT")) {
+        continue;
+      }
+      throw error;
+    }
+    if (!stat.isDirectory() || stat.isSymbolicLink()) {
+      throw invalidInput(
+        "materialize-package-view",
+        "A staged dependency root is not an ordinary directory."
+      );
+    }
+    for (const linkPath of await symlinksBelow(root)) {
+      if (!isAtOrBelow(await realpath(linkPath), workspaceRoot)) {
+        throw invalidInput(
+          "materialize-package-view",
+          "A staged package dependency link escapes into caller-owned state."
+        );
+      }
+    }
+  }
+}
+function hasErrorCode(error: unknown, code: string): boolean {
+  return error !== null && typeof error === "object" && Reflect.get(error, "code") === code;
+}
+function withPackagePublication<Output>(
+  outputPath: string,
+  use: (publicationRoot: string) => Effect.Effect<Output, GitBunError>
+): Effect.Effect<Output, GitBunError> {
+  return Effect.acquireUseRelease(
+    uninterruptiblePackageFs("prepare-package-output", async () => {
+      const parent = await realpath(dirname(outputPath));
+      if (resolve(outputPath) !== outputPath || join(parent, basename(outputPath)) !== outputPath) {
+        throw invalidInput(
+          "pack-package",
+          "The immutable package output path must use its canonical parent realpath."
+        );
+      }
+      await requireAbsent(outputPath);
+      return mkdtemp(join(parent, ".research-sdk-publish-"));
+    }),
+    use,
+    (publicationRoot) =>
+      uninterruptiblePackageFs("release-package-publication", () =>
+        rm(publicationRoot, { recursive: true, force: true })
+      )
+  );
+}
+function publishPackage(
+  stagedPath: string,
+  expectedBytes: Uint8Array,
+  outputPath: string,
+  publicationRoot: string,
+  markPublished: () => void
+): Effect.Effect<void, GitBunError> {
+  return uninterruptiblePackageFs("publish-package", async () => {
+    const publicationPath = join(publicationRoot, "final.tgz");
+    await copyFile(
+      stagedPath,
+      publicationPath,
+      constants.COPYFILE_EXCL | constants.COPYFILE_FICLONE
+    );
+    const publishedBytes = await Bun.file(publicationPath).bytes();
+    if (!equalBytes(publishedBytes, expectedBytes)) {
+      throw identityMismatch(
+        "publish-package",
+        "The immutable package bytes changed while crossing into the publication filesystem."
+      );
+    }
+    await link(publicationPath, outputPath);
+    markPublished();
+  });
+}
+export function rollbackPackagePublication(outputPath: string): Effect.Effect<void, GitBunError> {
+  return uninterruptiblePackageFs("rollback-package-publication", () =>
+    rm(outputPath, { force: true })
+  );
 }
 function validatePackRequest(
   request: PackSdkPackageRequest
@@ -194,32 +574,6 @@ function validatePackRequest(
     );
   }
   return Effect.succeed(request);
-}
-function withPackageStage<Output>(
-  outputPath: string,
-  use: (stageRoot: string) => Effect.Effect<Output, GitBunError>
-): Effect.Effect<Output, GitBunError> {
-  return Effect.acquireUseRelease(
-    uninterruptiblePackageFs("prepare-package-output", async () => {
-      const parent = await realpath(dirname(outputPath));
-      if (resolve(outputPath) !== outputPath || join(parent, basename(outputPath)) !== outputPath) {
-        throw invalidInput(
-          "pack-package",
-          "The immutable package output path must use its canonical parent realpath."
-        );
-      }
-      await requireAbsent(outputPath);
-      return mkdtemp(join(parent, ".research-sdk-pack-"));
-    }),
-    use,
-    (stageRoot) =>
-      uninterruptiblePackageFs("release-package-stage", () =>
-        rm(stageRoot, { recursive: true, force: true })
-      )
-  );
-}
-function publishPackage(stagedPath: string, outputPath: string): Effect.Effect<void, GitBunError> {
-  return uninterruptiblePackageFs("publish-package", () => link(stagedPath, outputPath));
 }
 function prepareEmbeddedManifestOutput(
   request: PackSdkPackageRequest
@@ -243,7 +597,7 @@ function prepareDistributionRoot(packageRoot: string): Effect.Effect<void, GitBu
     try {
       await mkdir(distributionRoot);
     } catch (error) {
-      if (Reflect.get(error as object, "code") !== "EEXIST") {
+      if (!hasErrorCode(error, "EEXIST")) {
         throw error;
       }
     }
