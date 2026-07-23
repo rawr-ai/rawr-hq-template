@@ -286,7 +286,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   its veto authority unconditionally; retain process-local serialization where
   needed. Provider tests require each explicit home to be a strict descendant
   of an explicit non-root disposable root before native session acquisition.
-- [ ] 5.6a After tasks 4.2 and 5.5 remove the rejected Effect-owning runtime
+- [x] 5.6a After tasks 4.2 and 5.5 remove the rejected Effect-owning runtime
   surfaces, migrate the lifecycle service, complete surviving resource/provider
   family, CLI adapter, and any active root-owned tool that consumes Effect to the
   current official Effect 4 line as one distinct reviewed Graphite node.

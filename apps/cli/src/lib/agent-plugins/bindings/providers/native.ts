@@ -1,4 +1,4 @@
-import { NodeContext } from "@effect/platform-node";
+import { NodeServices } from "@effect/platform-node";
 import type {
   ClaudeNativeProviderSession as ClaudePromiseSession,
   CodexNativeProviderSession as CodexPromiseSession,
@@ -15,7 +15,7 @@ import type {
 } from "@rawr/resource-native-agent-provider";
 import { claudeEffectPlatformNodeProvider } from "@rawr/resource-native-agent-provider/providers/claude-effect-platform-node";
 import { codexEffectPlatformNodeProvider } from "@rawr/resource-native-agent-provider/providers/codex-effect-platform-node";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 
 type NativeProviderTarget = Parameters<NativeProviderSessionResolver["acquire"]>[0];
 type ProviderExecutables = Readonly<Partial<Record<"claude" | "codex", string>>>;
@@ -86,11 +86,11 @@ function adaptClaudeSession(session: ClaudeNativeAgentProviderSession): ClaudePr
 }
 
 async function runNodeProvider<A>(
-  operation: Effect.Effect<A, NativeAgentProviderFailure, NodeContext.NodeContext>
+  operation: Effect.Effect<A, NativeAgentProviderFailure, NodeServices.NodeServices>
 ): Promise<A> {
   const result = await Effect.runPromise(
-    operation.pipe(Effect.either, Effect.provide(NodeContext.layer))
+    operation.pipe(Effect.result, Effect.provide(NodeServices.layer))
   );
-  if (result._tag === "Left") throw result.left;
-  return result.right;
+  if (Result.isFailure(result)) throw result.failure;
+  return result.success;
 }

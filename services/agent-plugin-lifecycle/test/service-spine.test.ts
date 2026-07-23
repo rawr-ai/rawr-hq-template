@@ -1,8 +1,17 @@
+import {
+  createEmbeddedPlaceholderAnalyticsAdapter,
+  type EmbeddedPlaceholderAnalyticsEntry,
+} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import {
+  createEmbeddedPlaceholderLoggerAdapter,
+  type EmbeddedPlaceholderLogEntry,
+} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import { describe, expect, it } from "vitest";
 
 import { router } from "../src/service/router";
 import { parseReleaseRelativePath } from "../src/service/shared/release";
 import { testRequest } from "./modules/providers/fixture";
+import { productFixture } from "./shared/release/fixtures";
 import {
   createLifecycleTestClient,
   testInvocation,
@@ -60,5 +69,42 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     expect(selectionCalls).toBe(1);
     expect(nativeCalls).toBe(0);
     expect(Object.keys(router.providers).sort()).toEqual(["status", "sync", "test"]);
+  });
+
+  it("preserves baseline analytics and logging around Effect-backed procedures", async () => {
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const client = createLifecycleTestClient({
+      analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+      logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+    });
+
+    await client.releases.releaseInputRecord(
+      {
+        kind: "encode-body",
+        body: productFixture().releaseInput.body,
+      },
+      testInvocation
+    );
+
+    expect(analyticsEntries).toContainEqual({
+      event: "orpc.procedure",
+      payload: expect.objectContaining({
+        app: "agent-plugin-lifecycle",
+        path: "releases.releaseInputRecord",
+        outcome: "success",
+        analytics_trace_id: "trace-agent-plugin-lifecycle-test",
+        analytics_command_id: "command-agent-plugin-lifecycle-test",
+      }),
+    });
+    expect(logEntries).toContainEqual({
+      level: "info",
+      event: "orpc.procedure",
+      payload: expect.objectContaining({
+        path: "releases.releaseInputRecord",
+        outcome: "success",
+        domain: "agent-plugin-lifecycle",
+      }),
+    });
   });
 });

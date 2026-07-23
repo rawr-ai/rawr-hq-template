@@ -216,6 +216,36 @@ Graphite node, using the exact current Effect 4 versions at execution. The
 service uses the Effect-backed oRPC construction required by the generic
 service blueprint while TypeBox remains public schema authority.
 
+That migration now resolves one physical vendor realm:
+
+| Package family | Exact selected version |
+| --- | --- |
+| Effect | `effect@4.0.0-beta.100` |
+| Effect Platform | `@effect/platform-node@4.0.0-beta.100`; transitive `@effect/platform-node-shared@4.0.0-beta.100` |
+| Effect-oRPC bridge | `effect-orpc@1.0.0-effect-v4.8` |
+| oRPC | `@orpc/client`, `@orpc/contract`, `@orpc/server`, and `@orpc/shared` at `1.14.8` |
+| TypeBox | `typebox@1.3.6` |
+
+oRPC `1.14.8` remains the stable N1 profile in the current `dev:orpc` skill.
+The `2.0.0-beta` family is a separate preview with different bridge, context,
+error, and provider semantics, so it is not imported into this checkpoint.
+Published bridge `v4.8` is byte-identical to the skill-frozen `v4.7` source,
+tests, and distribution; only its Effect peer floor moves from beta 83 to beta
+98, which directly admits the selected beta 100 runtime. The focused admission
+fixture proves TypeBox input and output validation, local dependency-cause
+preservation, exactly one baseline error emission, and settle-before-return
+cancellation for Promise-backed dependency mutations. This is an exact
+E3-compatible admission, not a claim that `v4.8` is the frozen profile or that a
+local cause crosses a wire boundary.
+
+The surviving filesystem and process providers now use Effect 4 Node services,
+filesystem, path, child-process, semaphore, result, and finalization APIs.
+Provider process timeout cleanup has an explicit force-kill bound. A frozen Bun
+install, the lifecycle suite (210 tests), resource/provider suites (71 tests),
+CLI binding/context tests (8 tests), the full runtime-realization gate, and
+uncached owner lint/typecheck/build all pass. The installed dependency inventory
+contains no Effect 3 runtime, direct `@effect/platform`, or mixed oRPC version.
+
 The Biome tooling checkpoint pins Biome `2.5.3` and lintEffect `0.0.6`, carries
 the narrow upstream severity compatibility patch byte-for-byte from Civ7, and
 exposes both commands through the Habitat consumer's Nx project. A frozen Bun
@@ -350,10 +380,11 @@ skill. It cannot authorize HF01 materialization or release.
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
 | Positive Habitat/Nx ratchet | Required lifecycle topology active; broader generic live-tree policy remains task 1.5 |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
-| Conventional CLI package/release | Bun-installed registry package selected; implementation waits for controller/state deletion and Effect 4 closure |
-| Custom controller/extension deletion | Distribution, release package, installer/selector, workflow, and diagnostics deleted; lifecycle reentry/resource identity remains task 4.2b |
-| Persistent agent artifact/projection store deletion | Provider projection/target state deleted; release/evidence/controller stores pending |
-| Bounded lifecycle simplification | Direct exact-Git native reconciliation green; disposable local materialization and remaining store/context deletion pending |
+| Conventional CLI package/release | Bun-installed registry package selected; rejected state deletion and Effect 4 closure are complete, so package-group derivation is the next owner |
+| Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; canonical-spec retirement and aggregate absence proof remain |
+| Persistent agent artifact/projection store deletion | Complete; release/set, projection, target receipt, identity, custom evidence, retention, and controller-root readers and writers are absent |
+| Effect 4 vendor realm | Exact beta 100 Effect/Platform, stable oRPC 1.14.8, admitted Effect-oRPC v4.8, and TypeBox 1.3.6 are green as one physical realm |
+| Bounded lifecycle simplification | Direct exact-Git native reconciliation and state deletion are green; positive module topology, context narrowing, and procedure-use audit remain |
 | Personal content-only recut | Pending |
 | Disposable provider acceptance | Pending |
 | Approved-home settlement and read-only repeat | Pending |

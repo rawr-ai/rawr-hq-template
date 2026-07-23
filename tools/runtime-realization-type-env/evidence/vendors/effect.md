@@ -11,8 +11,10 @@
 
 ## Current Vendor Facts
 
-- Installed package: `effect@3.21.3` as a root `devDependency` only. It is
-  not a production dependency and the tool is not a workspace package.
+- Installed package: `effect@4.0.0-beta.100`. The runtime-realization tool
+  consumes the root development dependency; the lifecycle service and its
+  filesystem/process resources consume the same exact package as a production
+  dependency. The tool is not a workspace package.
 - `@rawr/sdk/effect` remains a RAWR facade, but `RawrEffect<A, E, R>` is backed
   by real `Effect.Effect<A, E, R>`.
 - The facade exposes curated authoring helpers, root `pipe`, value
@@ -25,8 +27,8 @@
   `Effect.pipe`.
 - `Effect.repeat(effect, Schedule.recurs(n))` returns schedule output; examples
   must not assume the repeated action output is returned.
-- `Stream.runCollect(...)` returns a `Chunk`, so lab code converts with
-  `Chunk.toArray(...)` at boundaries.
+- `Stream.runCollect(...)` returns an array in this Effect 4 release, so the lab
+  uses the returned array directly at boundaries.
 - Root/subpath exports inspected and used where relevant include `Effect`,
   `Layer`, `Scope`, `ManagedRuntime`, `Queue`, `PubSub`, `Ref`, `Deferred`,
   `Schedule`, `Stream`, `Fiber`, `FiberRef`, `Config`, `Logger`, `Tracer`,

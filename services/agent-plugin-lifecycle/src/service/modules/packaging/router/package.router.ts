@@ -3,6 +3,7 @@ import type {
   PackageOutputFailure,
   PackageOutputPublicationResult,
 } from "@rawr/resource-agent-plugin-package-output";
+import { awaitDependencyPromise } from "../../../base";
 import type { ContentWorkspaceSnapshotReader } from "../../../model/dependencies/releases";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../shared/release";
 import { deriveReleaseSelection } from "../../releases/model/policy/release-plan";
@@ -27,11 +28,13 @@ interface PackagingDependencies {
 const TRUNCATED_PACKAGING_DIAGNOSTIC_SUFFIX = "...[truncated]";
 const UNREADABLE_EXTERNAL_DIAGNOSTIC = "External dependency failed without a readable diagnostic";
 
-export const packageProcedure = module.package.handler(async ({ context, input }) => {
-  return packageAgentPlugin(input, {
-    source: context.source,
-    packageOutput: context.packageOutput,
-  });
+export const packageProcedure = module.package.effect(function* ({ context, input }) {
+  return yield* awaitDependencyPromise(() =>
+    packageAgentPlugin(input, {
+      source: context.source,
+      packageOutput: context.packageOutput,
+    })
+  );
 });
 
 async function packageAgentPlugin(

@@ -10,8 +10,8 @@ import {
 } from "../../src/vendor/effect/runtime";
 
 describe("Effect vendor-native runtime lane", () => {
-  test("uses the pinned Effect 3 runtime and proves gen plus pipe spelling", async () => {
-    expect(effectVersionProof).toBe("3.21.3");
+  test("uses the pinned Effect 4 runtime and proves gen plus pipe spelling", async () => {
+    expect(effectVersionProof).toBe("4.0.0-beta.100");
 
     const program = Effect.gen(function* () {
       const one = yield* Effect.succeed(1);
@@ -37,13 +37,13 @@ describe("Effect vendor-native runtime lane", () => {
     const failure = await Effect.runPromiseExit(Effect.fail("typed-failure"));
     expect(Exit.isFailure(failure)).toBe(true);
     if (Exit.isFailure(failure)) {
-      expect(Cause.isFailure(failure.cause)).toBe(true);
+      expect(Cause.hasFails(failure.cause)).toBe(true);
     }
 
     const defect = await Effect.runPromiseExit(Effect.die(new Error("defect-failure")));
     expect(Exit.isFailure(defect)).toBe(true);
     if (Exit.isFailure(defect)) {
-      expect(Cause.isDie(defect.cause)).toBe(true);
+      expect(Cause.hasDies(defect.cause)).toBe(true);
     }
 
     const controller = new AbortController();
@@ -52,7 +52,7 @@ describe("Effect vendor-native runtime lane", () => {
     });
     controller.abort();
     const interruptedExit = await interrupted;
-    expect(Exit.isInterrupted(interruptedExit)).toBe(true);
+    expect(Exit.hasInterrupts(interruptedExit)).toBe(true);
   });
 
   test("runs scoped acquire/release and finalizers on success and interruption", async () => {
@@ -104,7 +104,7 @@ describe("Effect vendor-native runtime lane", () => {
 
     interruptController.abort();
     const interruptedExit = await interrupted;
-    expect(Exit.isInterrupted(interruptedExit)).toBe(true);
+    expect(Exit.hasInterrupts(interruptedExit)).toBe(true);
     expect(interruptEvents).toEqual(["acquire", "release:interrupt-resource:Failure"]);
   });
 

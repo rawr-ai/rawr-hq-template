@@ -1,6 +1,5 @@
-import { Command, CommandExecutor, FileSystem, Path } from "@effect/platform";
-import type { PlatformError } from "@effect/platform/Error";
-import { Effect, Stream } from "effect";
+import { Effect, FileSystem, Path, PlatformError, Semaphore, Stream } from "effect";
+import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
 
@@ -30,11 +29,12 @@ import {
 const MAX_PROCESS_OUTPUT_BYTES = 4 * 1_024 * 1_024;
 const PROCESS_START_TIMEOUT = "10 seconds";
 const PROCESS_RUN_TIMEOUT = "2 minutes";
+const PROCESS_FORCE_KILL_AFTER = "5 seconds";
 const MAX_FAILURE_DETAIL = 4_096;
-const processSemaphores = new Map<string, Effect.Semaphore>();
+const processSemaphores = new Map<string, Semaphore.Semaphore>();
 
 export type EffectPlatformNodeRequirements =
-  | CommandExecutor.CommandExecutor
+  | ChildProcessSpawner.ChildProcessSpawner
   | FileSystem.FileSystem
   | Path.Path;
 
@@ -92,7 +92,7 @@ export function acquireEffectPlatformNodeProvider(
     }
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
-    const executor = yield* CommandExecutor.CommandExecutor;
+    const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
     const executablePath = yield* requireCanonicalExecutable(
       fs,
       paths,
@@ -108,7 +108,7 @@ export function acquireEffectPlatformNodeProvider(
       );
 
     const run: EffectPlatformNodeProviderKernel["run"] = (operation, args) =>
-      runCommand({ provider, operation, executablePath, home, args, executor });
+      runCommand({ provider, operation, executablePath, home, args, spawner });
 
     const mutation: EffectPlatformNodeProviderKernel["mutation"] = (operation, args) =>
       run(operation, args).pipe(
@@ -334,19 +334,21 @@ interface CommandRunInput {
   readonly executablePath: string;
   readonly home: string;
   readonly args: readonly string[];
-  readonly executor: CommandExecutor.CommandExecutor;
+  readonly spawner: ChildProcessSpawner.ChildProcessSpawner["Service"];
 }
 
 function runCommand(
   input: CommandRunInput
 ): Effect.Effect<NativeCommandOutput, NativeAgentProviderFailure> {
-  const command = Command.make(input.executablePath, ...input.args).pipe(
-    Command.workingDirectory(input.home),
-    Command.env(providerEnvironment(input.provider, input.home)),
-    Command.feed("")
-  );
+  const command = ChildProcess.make(input.executablePath, input.args, {
+    cwd: input.home,
+    env: providerEnvironment(input.provider, input.home),
+    extendEnv: true,
+    stdin: "ignore",
+    forceKillAfter: PROCESS_FORCE_KILL_AFTER,
+  });
   return Effect.scoped(
-    input.executor.start(command).pipe(
+    input.spawner.spawn(command).pipe(
       Effect.mapError((cause) =>
         platformFailure(
           input.provider,
@@ -357,10 +359,10 @@ function runCommand(
           "not-started"
         )
       ),
-      Effect.timeoutFail({
+      Effect.timeoutOrElse({
         duration: PROCESS_START_TIMEOUT,
-        onTimeout: () =>
-          failure(
+        orElse: () =>
+          fail(
             input.provider,
             input.operation,
             "CommandTimedOut",
@@ -389,10 +391,10 @@ function runCommand(
           ],
           { concurrency: "unbounded" }
         ).pipe(
-          Effect.timeoutFail({
+          Effect.timeoutOrElse({
             duration: PROCESS_RUN_TIMEOUT,
-            onTimeout: () =>
-              failure(
+            orElse: () =>
+              fail(
                 input.provider,
                 input.operation,
                 "CommandTimedOut",
@@ -420,7 +422,7 @@ function runCommand(
 }
 
 function collectBoundedOutput(
-  stream: Stream.Stream<Uint8Array, PlatformError>,
+  stream: Stream.Stream<Uint8Array, PlatformError.PlatformError>,
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
   phase: NativeProviderCommandPhase
@@ -433,7 +435,7 @@ function collectBoundedOutput(
         platformFailure(provider, operation, undefined, cause, "CommandFailed", phase)
       )
     ),
-    initial,
+    () => initial,
     (state, chunk): Effect.Effect<OutputState, NativeAgentProviderFailure> => {
       const bytes = state.bytes + chunk.byteLength;
       return bytes > MAX_PROCESS_OUTPUT_BYTES
@@ -697,11 +699,11 @@ function providerEnvironment(
     : { HOME: home, CLAUDE_CONFIG_DIR: home };
 }
 
-function processSemaphore(provider: NativeAgentProviderId, home: string): Effect.Semaphore {
+function processSemaphore(provider: NativeAgentProviderId, home: string): Semaphore.Semaphore {
   const key = `${provider}\u0000${home}`;
   const existing = processSemaphores.get(key);
   if (existing !== undefined) return existing;
-  const created = Effect.runSync(Effect.makeSemaphore(1));
+  const created = Semaphore.makeUnsafe(1);
   processSemaphores.set(key, created);
   return created;
 }
@@ -724,7 +726,7 @@ function mapPlatform(
   phase: NativeProviderCommandPhase,
   fallback: NativeAgentProviderFailure["reason"] = "FilesystemFailed"
 ) {
-  return <A, R>(effect: Effect.Effect<A, PlatformError, R>) =>
+  return <A, R>(effect: Effect.Effect<A, PlatformError.PlatformError, R>) =>
     effect.pipe(
       Effect.mapError((cause) =>
         platformFailure(provider, operation, candidate, cause, fallback, phase)
@@ -736,11 +738,11 @@ function platformFailure(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
   candidate: string | undefined,
-  cause: PlatformError,
+  cause: PlatformError.PlatformError,
   fallback: NativeAgentProviderFailure["reason"],
   phase: NativeProviderCommandPhase
 ): NativeAgentProviderFailure {
-  const missing = cause._tag === "SystemError" && cause.reason === "NotFound";
+  const missing = cause.reason._tag === "NotFound";
   return failure(
     provider,
     operation,

@@ -1,13 +1,4 @@
-import {
-  Chunk,
-  Deferred,
-  PubSub,
-  Queue,
-  Ref,
-  Schedule,
-  Stream,
-  Effect as VendorEffect,
-} from "effect";
+import { Deferred, PubSub, Queue, Ref, Schedule, Stream, Effect as VendorEffect } from "effect";
 
 export interface ProcessLocalResourceProbeResult {
   readonly queueValue: number;
@@ -28,7 +19,7 @@ export const processLocalResourceProbe = VendorEffect.gen(function* () {
     VendorEffect.gen(function* () {
       const subscription = yield* PubSub.subscribe(pubSub);
       yield* PubSub.publish(pubSub, "local-message");
-      return yield* Queue.take(subscription);
+      return yield* PubSub.take(subscription);
     })
   );
 
@@ -57,6 +48,6 @@ export const processLocalResourceProbe = VendorEffect.gen(function* () {
     refValue,
     deferredValue,
     scheduleOutput,
-    streamValues: Chunk.toArray(streamChunk),
+    streamValues: streamChunk,
   } satisfies ProcessLocalResourceProbeResult;
 });

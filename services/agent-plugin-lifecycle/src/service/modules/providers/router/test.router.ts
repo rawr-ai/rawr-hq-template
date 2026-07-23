@@ -1,3 +1,4 @@
+import { awaitDependencyPromise } from "../../../base";
 import type {
   NativeProviderSessionResolver,
   SelectedContentResolver,
@@ -28,9 +29,9 @@ export interface ProviderTestDependencies {
   readonly nativeSessions: NativeProviderSessionResolver;
 }
 
-export const test = module.test.handler(async ({ context, input }) =>
-  runProviderTest(input, context)
-);
+export const test = module.test.effect(function* ({ context, input }) {
+  return yield* awaitDependencyPromise(() => runProviderTest(input, context));
+});
 
 export async function runProviderTest(
   request: ProviderTestRequest,

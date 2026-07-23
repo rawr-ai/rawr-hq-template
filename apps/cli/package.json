@@ -9,11 +9,11 @@
     "node": "^20.17.0 || >=22.9.0"
   },
   "dependencies": {
-    "@effect/platform-node": "0.107.0",
+    "@effect/platform-node": "4.0.0-beta.100",
     "@oclif/core": "^4.11.4",
     "@oclif/plugin-help": "^6.2.27",
     "@oclif/plugin-plugins": "^5.4.36",
-    "@orpc/client": "^1.13.5",
+    "@orpc/client": "1.14.8",
     "@rawr/agent-plugin-lifecycle": "workspace:*",
     "@rawr/core": "workspace:*",
     "@rawr/dev": "workspace:*",
@@ -27,7 +27,7 @@
     "@rawr/resource-agent-plugin-package-output": "workspace:*",
     "@rawr/resource-content-workspace": "workspace:*",
     "@rawr/resource-native-agent-provider": "workspace:*",
-    "effect": "3.21.3",
+    "effect": "4.0.0-beta.100",
     "zod": "^3.24.3"
   },
   "devDependencies": {
