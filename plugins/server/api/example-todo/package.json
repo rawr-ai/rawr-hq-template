@@ -20,8 +20,8 @@
     "capability": "example-todo"
   },
   "dependencies": {
-    "@orpc/contract": "^1.13.5",
-    "@orpc/server": "^1.13.5",
+    "@orpc/contract": "1.14.8",
+    "@orpc/server": "1.14.8",
     "@rawr/example-todo": "workspace:*",
     "@rawr/runtime-context": "workspace:*"
   }

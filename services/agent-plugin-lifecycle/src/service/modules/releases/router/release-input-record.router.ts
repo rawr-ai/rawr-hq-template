@@ -5,7 +5,7 @@ import {
 } from "../../../shared/release";
 import { module } from "../module";
 
-export const releaseInputRecord = module.releaseInputRecord.handler(async ({ input }) => {
+export const releaseInputRecord = module.releaseInputRecord.effect(function* ({ input }) {
   const result =
     input.kind === "encode-body"
       ? createAgentPluginReleaseInput(input.body)

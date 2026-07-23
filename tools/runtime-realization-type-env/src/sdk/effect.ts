@@ -1,5 +1,4 @@
 import { Data, pipe, Effect as VendorEffect } from "effect";
-import type { YieldWrap } from "effect/Utils";
 
 /**
  * Curated RAWR Effect facade for authoring/runtime seams. It is backed by real
@@ -12,8 +11,10 @@ export type RawrEffect<TSuccess, TError = never, TRequirements = never> = Vendor
   TRequirements
 >;
 
-export type RawrEffectYield<TError = never, TRequirements = never> = YieldWrap<
-  RawrEffect<unknown, TError, TRequirements>
+export type RawrEffectYield<TError = never, TRequirements = never> = RawrEffect<
+  unknown,
+  TError,
+  TRequirements
 >;
 
 export type RawrEffectSuccess<TEffect> =
@@ -54,7 +55,7 @@ export const Effect = {
   map: VendorEffect.map,
   flatMap: VendorEffect.flatMap,
   catchTag: VendorEffect.catchTag,
-  catchAll: VendorEffect.catchAll,
+  catchIf: VendorEffect.catchIf,
 } as const;
 
 export { pipe };

@@ -15,14 +15,12 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { FileSystem, Path } from "@effect/platform";
-import { SystemError } from "@effect/platform/Error";
-import { NodeContext } from "@effect/platform-node";
+import { NodeServices } from "@effect/platform-node";
 import type {
   CoworkV1ArchiveEncodingRequest,
   PackageOutputFailure,
 } from "@rawr/resource-agent-plugin-package-output";
-import { Effect } from "effect";
+import { Effect, FileSystem, Path, PlatformError } from "effect";
 import {
   makeAgentPluginPackageOutputResource,
   type PackageOutputProviderFailpoints,
@@ -415,9 +413,9 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
         })
     );
 
-    expect(attempted._tag).toBe("Right");
-    if (attempted._tag === "Left") throw attempted.left;
-    expect(attempted.right).toMatchObject({
+    expect(attempted._tag).toBe("Success");
+    if (attempted._tag === "Failure") throw attempted.failure;
+    expect(attempted.success).toMatchObject({
       kind: "RejectedBeforeOutputMutation",
       primaryFailure: {
         phase: "temporary-mode",
@@ -467,9 +465,9 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
         })
     );
 
-    expect(attempted._tag).toBe("Right");
-    if (attempted._tag === "Left") throw attempted.left;
-    expect(attempted.right).toMatchObject({
+    expect(attempted._tag).toBe("Success");
+    if (attempted._tag === "Failure") throw attempted.failure;
+    expect(attempted.success).toMatchObject({
       kind: "RejectedBeforeOutputMutation",
       primaryFailure: { detail: expect.stringContaining("persistent preparation probe") },
       cleanupFailure: {
@@ -612,9 +610,9 @@ async function runWithFileSystem<A>(
       const base = yield* FileSystem.FileSystem;
       return yield* operation.pipe(
         Effect.provideService(FileSystem.FileSystem, transform(base)),
-        Effect.either
+        Effect.result
       );
-    }).pipe(Effect.provide(NodeContext.layer))
+    }).pipe(Effect.provide(NodeServices.layer))
   );
 }
 
@@ -639,9 +637,9 @@ function injectedFileSystemFailure(
   method: string,
   candidate: string,
   description: string
-): SystemError {
-  return new SystemError({
-    reason: "Unknown",
+): PlatformError.PlatformError {
+  return PlatformError.systemError({
+    _tag: "Unknown",
     module: "FileSystem",
     method,
     pathOrDescriptor: candidate,

@@ -164,7 +164,7 @@ export function classifyRuntimeBoundaryExit(
     };
   }
 
-  if (Cause.isInterrupted(exit.cause)) {
+  if (Cause.hasInterrupts(exit.cause)) {
     return {
       kind: "runtime.boundary-exit-classification",
       exit: "interrupted",
@@ -173,7 +173,7 @@ export function classifyRuntimeBoundaryExit(
     };
   }
 
-  if (Cause.isDie(exit.cause)) {
+  if (Cause.hasDies(exit.cause)) {
     return {
       kind: "runtime.boundary-exit-classification",
       exit: "defect",
@@ -182,7 +182,7 @@ export function classifyRuntimeBoundaryExit(
     };
   }
 
-  if (Cause.isFailure(exit.cause)) {
+  if (Cause.hasFails(exit.cause)) {
     return {
       kind: "runtime.boundary-exit-classification",
       exit: "failure",

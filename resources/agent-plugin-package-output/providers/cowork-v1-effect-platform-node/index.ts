@@ -1,8 +1,6 @@
 import { Buffer } from "node:buffer";
 
-import { FileSystem, Path } from "@effect/platform";
-import type { PlatformError } from "@effect/platform/Error";
-import { NodeContext } from "@effect/platform-node";
+import { NodeServices } from "@effect/platform-node";
 import type {
   AgentPluginPackageOutputAsyncPort,
   AgentPluginPackageOutputResource,
@@ -13,7 +11,7 @@ import type {
   PackageOutputPublicationRequest,
   PackageOutputPublicationResult,
 } from "@rawr/resource-agent-plugin-package-output";
-import { Effect, Option, Random } from "effect";
+import { Effect, FileSystem, Option, Path, PlatformError, Random, Semaphore } from "effect";
 import yazl from "yazl";
 
 const OUTPUT_MODE = 0o644;
@@ -74,7 +72,7 @@ type CapturedOutput =
 export function makeAgentPluginPackageOutputResource(
   options: CoworkV1EffectPlatformNodeOptions = {}
 ): AgentPluginPackageOutputResource<ProviderRequirements> {
-  const publicationSemaphore = Effect.runSync(Effect.makeSemaphore(1));
+  const publicationSemaphore = Semaphore.makeUnsafe(1);
   return {
     encodeCoworkV1: Effect.fn("agentPluginPackageOutput.encodeCoworkV1")(encodeCoworkV1),
     publish: (input) => publicationSemaphore.withPermits(1)(publishOutput(input, options)),
@@ -94,7 +92,7 @@ export function runNodePackageOutput<A>(
         onFailure: (failure): NodePackageOutputResult<A> => Object.freeze({ ok: false, failure }),
         onSuccess: (value): NodePackageOutputResult<A> => Object.freeze({ ok: true, value }),
       }),
-      Effect.provide(NodeContext.layer)
+      Effect.provide(NodeServices.layer)
     )
   );
 }
@@ -173,7 +171,7 @@ function publishOutput(
     let temporary: OwnedTemporaryFile | undefined;
     let temporaryLinks: 1 | 2 = 1;
 
-    const attempted = yield* Effect.either(
+    const attempted = yield* Effect.result(
       Effect.gen(function* () {
         yield* validatePublicationInput(input);
         const parent = yield* captureParent(fs, paths, input.outputPath);
@@ -230,10 +228,10 @@ function publishOutput(
           committed = true;
           temporaryLinks = 2;
           cleanupAttempted = true;
-          const released = yield* Effect.either(
+          const released = yield* Effect.result(
             releaseOwnedTemporaryFile(fs, paths, temporary, temporaryLinks)
           );
-          if (released._tag === "Left") {
+          if (released._tag === "Failure") {
             return Object.freeze({
               kind: "OutputUnsettled",
               primaryFailure: failure(
@@ -243,7 +241,7 @@ function publishOutput(
                 input.outputPath,
                 "Output committed but the owned temporary link did not settle"
               ),
-              cleanupFailure: released.left,
+              cleanupFailure: released.failure,
             }) satisfies PackageOutputPublicationResult;
           }
           temporary = undefined;
@@ -279,17 +277,17 @@ function publishOutput(
     const cleanup =
       (temporary === undefined && createdTemporary === undefined) || cleanupAttempted
         ? undefined
-        : yield* Effect.either(
+        : yield* Effect.result(
             releaseTemporaryAllocation(fs, paths, createdTemporary, temporary, temporaryLinks)
           );
-    if (attempted._tag === "Left") {
+    if (attempted._tag === "Failure") {
       return Object.freeze({
         kind: committed ? "OutputUnsettled" : "RejectedBeforeOutputMutation",
-        primaryFailure: attempted.left,
-        ...(cleanup?._tag === "Left" ? { cleanupFailure: cleanup.left } : {}),
+        primaryFailure: attempted.failure,
+        ...(cleanup?._tag === "Failure" ? { cleanupFailure: cleanup.failure } : {}),
       }) satisfies PackageOutputPublicationResult;
     }
-    if (cleanup?._tag === "Left") {
+    if (cleanup?._tag === "Failure") {
       return Object.freeze({
         kind: committed ? "OutputUnsettled" : "RejectedBeforeOutputMutation",
         primaryFailure: failure(
@@ -299,10 +297,10 @@ function publishOutput(
           temporary?.path ?? createdTemporary?.path,
           "Package output operation completed but its owned temporary did not settle"
         ),
-        cleanupFailure: cleanup.left,
+        cleanupFailure: cleanup.failure,
       }) satisfies PackageOutputPublicationResult;
     }
-    return attempted.right;
+    return attempted.success;
   });
 }
 
@@ -910,7 +908,7 @@ function mapPlatform(
   phase: string,
   candidate: string
 ) {
-  return <A, R>(effect: Effect.Effect<A, PlatformError, R>) =>
+  return <A, R>(effect: Effect.Effect<A, PlatformError.PlatformError, R>) =>
     effect.pipe(
       Effect.mapError((cause) => failure(operation, reason, phase, candidate, cause.message))
     );

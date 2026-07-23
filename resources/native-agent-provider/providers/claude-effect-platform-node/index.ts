@@ -113,20 +113,18 @@ export const claudeEffectPlatformNodeProvider: NativeAgentProviderResource<
                             validated.files,
                             (file) =>
                               kernel.readPluginEntry("plugin-files-read", root, file).pipe(
-                                Effect.catchAll((error) => {
-                                  if (
-                                    error.reason !== "Missing" &&
-                                    error.reason !== "LimitExceeded"
-                                  ) {
-                                    return Effect.fail(error);
+                                Effect.catchIf(
+                                  (error) =>
+                                    error.reason === "Missing" || error.reason === "LimitExceeded",
+                                  (error) => {
+                                    const missing: NativeProviderPluginFileObservation =
+                                      Object.freeze({
+                                        kind: error.reason === "Missing" ? "Missing" : "TooLarge",
+                                        relativePath: file.relativePath,
+                                      });
+                                    return Effect.succeed(missing);
                                   }
-                                  const missing: NativeProviderPluginFileObservation =
-                                    Object.freeze({
-                                      kind: error.reason === "Missing" ? "Missing" : "TooLarge",
-                                      relativePath: file.relativePath,
-                                    });
-                                  return Effect.succeed(missing);
-                                })
+                                )
                               ),
                             { concurrency: 1 }
                           ).pipe(

@@ -2,9 +2,7 @@ import { randomUUID } from "node:crypto";
 import { fstatSync } from "node:fs";
 import { lstat, rmdir } from "node:fs/promises";
 
-import { FileSystem, Path } from "@effect/platform";
-import type { PlatformError } from "@effect/platform/Error";
-import { NodeContext } from "@effect/platform-node";
+import { NodeServices } from "@effect/platform-node";
 import type {
   ExportDestinationApplyReceipt,
   ExportDestinationAsyncPort,
@@ -21,7 +19,7 @@ import type {
   ExportDestinationSettleReceipt,
   ExportDestinationSnapshot,
 } from "@rawr/resource-agent-plugin-export-destination";
-import { Effect, Option } from "effect";
+import { Effect, FileSystem, Option, Path, PlatformError, Semaphore } from "effect";
 
 type ProviderRequirements = FileSystem.FileSystem | Path.Path;
 type Operation = ExportDestinationFailure["operation"];
@@ -73,7 +71,7 @@ interface CaptureAuthority {
 export function makeExportDestinationResource(): ExportDestinationResource<ProviderRequirements> {
   const captures = new Map<string, CaptureAuthority>();
   const consumedHandles = new Set<string>();
-  const mutationGate = Effect.runSync(Effect.makeSemaphore(1));
+  const mutationGate = Semaphore.makeUnsafe(1);
 
   const inspect = Effect.fn("exportDestination.inspect")(function* (
     input: Readonly<{
@@ -265,24 +263,24 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       );
       if (mutationConverged(before, mutation)) continue;
       authority.mutatedPaths.push(mutation.path);
-      const result = yield* Effect.either(
+      const result = yield* Effect.result(
         applyMutation(fs, path, authority.destination, mutation, authority)
       );
-      if (result._tag === "Left") {
+      if (result._tag === "Failure") {
         authority.lifecycle = "Partial";
-        const partial = yield* Effect.either(observeAuthority(fs, path, authority, "apply"));
-        if (partial._tag === "Right") replaceMap(authority.postimages, partial.right);
-        return yield* Effect.fail(result.left);
+        const partial = yield* Effect.result(observeAuthority(fs, path, authority, "apply"));
+        if (partial._tag === "Success") replaceMap(authority.postimages, partial.success);
+        return yield* Effect.fail(result.failure);
       }
       changedPaths.push(mutation.path);
     }
 
-    const observedPostimages = yield* Effect.either(observeAuthority(fs, path, authority, "apply"));
-    if (observedPostimages._tag === "Left") {
+    const observedPostimages = yield* Effect.result(observeAuthority(fs, path, authority, "apply"));
+    if (observedPostimages._tag === "Failure") {
       authority.lifecycle = "Partial";
-      return yield* Effect.fail(observedPostimages.left);
+      return yield* Effect.fail(observedPostimages.failure);
     }
-    const postimages = observedPostimages.right;
+    const postimages = observedPostimages.success;
     if (!allMutationsConverged(postimages, input.mutations)) {
       authority.lifecycle = "Partial";
       return yield* fail(
@@ -357,12 +355,12 @@ export function makeExportDestinationResource(): ExportDestinationResource<Provi
       }
       const observed = current.get(relative);
       if (observed !== undefined && sameObservation(observed, preimage, true)) continue;
-      const restored = yield* Effect.either(
+      const restored = yield* Effect.result(
         restoreObservation(fs, path, authority.destination, preimage, authority)
       );
-      if (restored._tag === "Left") {
+      if (restored._tag === "Failure") {
         authority.lifecycle = "Partial";
-        return yield* Effect.fail(restored.left);
+        return yield* Effect.fail(restored.failure);
       }
       restoredPaths.push(relative);
     }
@@ -454,10 +452,10 @@ export function runNodeExportDestination<A>(
   return Effect.runPromise(
     operation.pipe(
       Effect.map((value): NodeExportDestinationResult<A> => Object.freeze({ ok: true, value })),
-      Effect.catchAll((failure) =>
+      Effect.catch((failure) =>
         Effect.succeed<NodeExportDestinationResult<A>>(Object.freeze({ ok: false, failure }))
       ),
-      Effect.provide(NodeContext.layer)
+      Effect.provide(NodeServices.layer)
     )
   );
 }
@@ -1093,9 +1091,9 @@ function rejectSymbolicLink(
   candidate: string,
   operation: Operation
 ): Effect.Effect<void, ExportDestinationFailure> {
-  return Effect.either(fs.readLink(candidate)).pipe(
+  return Effect.result(fs.readLink(candidate)).pipe(
     Effect.flatMap((result) =>
-      result._tag === "Right"
+      result._tag === "Success"
         ? fail(
             operation,
             "Aliased",
@@ -1114,12 +1112,11 @@ function statIfPresent(
 ): Effect.Effect<FileSystem.File.Info | undefined, ExportDestinationFailure> {
   return fs.stat(candidate).pipe(
     Effect.map((info): FileSystem.File.Info | undefined => info),
-    Effect.catchTag("SystemError", (error) =>
-      error.reason === "NotFound"
+    Effect.catch((error) =>
+      error.reason._tag === "NotFound"
         ? Effect.succeed(undefined)
         : Effect.fail(toFailure(operation, candidate, error))
-    ),
-    Effect.catchTag("BadArgument", (error) => Effect.fail(toFailure(operation, candidate, error)))
+    )
   );
 }
 
@@ -1693,7 +1690,7 @@ function writeAtomic(
 
     let temporaryOpened = false;
     let temporaryIdentity: OwnedTemporaryIdentity | undefined;
-    const attempted = yield* Effect.either(
+    const attempted = yield* Effect.result(
       Effect.scoped(
         Effect.gen(function* () {
           const file = yield* fs
@@ -1711,29 +1708,29 @@ function writeAtomic(
         )
       )
     );
-    if (attempted._tag === "Right") return;
-    if (!temporaryOpened) return yield* Effect.fail(attempted.left);
+    if (attempted._tag === "Success") return;
+    if (!temporaryOpened) return yield* Effect.fail(attempted.failure);
     if (temporaryIdentity === undefined) {
       return yield* fail(
         operation,
         "CleanupFailed",
         temporary,
-        `${attempted.left.detail}; temporary cleanup refused because exact ownership identity was unavailable`
+        `${attempted.failure.detail}; temporary cleanup refused because exact ownership identity was unavailable`
       );
     }
 
-    const cleanup = yield* Effect.either(
+    const cleanup = yield* Effect.result(
       cleanupOwnedTemporary(fs, path, destination, temporary, temporaryIdentity)
     );
-    if (cleanup._tag === "Left") {
+    if (cleanup._tag === "Failure") {
       return yield* fail(
         operation,
         "CleanupFailed",
         temporary,
-        `${attempted.left.detail}; temporary cleanup also failed: ${cleanup.left.detail}`
+        `${attempted.failure.detail}; temporary cleanup also failed: ${cleanup.failure.detail}`
       );
     }
-    return yield* Effect.fail(attempted.left);
+    return yield* Effect.fail(attempted.failure);
   });
 }
 
@@ -1870,7 +1867,7 @@ function nativeErrorCode(error: unknown): string | undefined {
 
 function mapPlatform(operation: Operation, path?: string) {
   return <A, R>(
-    effect: Effect.Effect<A, PlatformError, R>
+    effect: Effect.Effect<A, PlatformError.PlatformError, R>
   ): Effect.Effect<A, ExportDestinationFailure, R> =>
     effect.pipe(Effect.mapError((error) => toFailure(operation, path, error)));
 }
@@ -1878,10 +1875,10 @@ function mapPlatform(operation: Operation, path?: string) {
 function toFailure(
   operation: Operation,
   path: string | undefined,
-  error: PlatformError
+  error: PlatformError.PlatformError
 ): ExportDestinationFailure {
   const reason: ExportDestinationFailureReason =
-    error._tag === "SystemError" && error.reason === "NotFound" ? "Missing" : "FilesystemFailed";
+    error.reason._tag === "NotFound" ? "Missing" : "FilesystemFailed";
   return Object.freeze({
     _tag: "ExportDestinationFailure",
     operation,
