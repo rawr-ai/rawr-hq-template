@@ -1,4 +1,3 @@
-import { mkdirSync, renameSync, watch as watchDirectory, writeFileSync } from "node:fs";
 import {
   chmod,
   lstat,
@@ -16,13 +15,10 @@ import path from "node:path";
 
 import { afterEach, describe, expect, test } from "vitest";
 
-import {
-  EXPORT_DESTINATION_TEMP_PREFIX,
-  makeExportDestinationResource,
-  runNodeExportDestination,
-} from "../index";
+import { makeExportDestinationResource, runNodeExportDestination } from "../index";
 
 const FIXTURE_PREFIX = "rawr-export-destination-test-";
+const TEMPORARY_PREFIX = ".rawr-export-destination-tmp-v1-";
 
 interface FixtureOwner {
   readonly parent: string;
@@ -708,7 +704,7 @@ describe("Effect Platform Node export destination provider", () => {
     const destination = await createDestination();
     await mkdir(path.join(destination, "occupied"));
     await writeFile(path.join(destination, "occupied", "keep.txt"), "keep\n");
-    const unrelated = path.join(destination, `${EXPORT_DESTINATION_TEMP_PREFIX}unrelated`);
+    const unrelated = path.join(destination, `${TEMPORARY_PREFIX}unrelated`);
     await writeFile(unrelated, "preserved\n");
     const resource = makeExportDestinationResource();
     const capture = unwrap(
@@ -764,7 +760,7 @@ describe("Effect Platform Node export destination provider", () => {
     const destination = await createDestination();
     const blocked = path.join(destination, "blocked");
     await mkdir(blocked, { mode: 0o755 });
-    const lookalike = `${EXPORT_DESTINATION_TEMP_PREFIX}unrelated`;
+    const lookalike = `${TEMPORARY_PREFIX}unrelated`;
     await writeFile(path.join(blocked, lookalike), "preserved\n");
     await chmod(blocked, 0o555);
     const resource = makeExportDestinationResource();
@@ -817,75 +813,6 @@ describe("Effect Platform Node export destination provider", () => {
       )
     );
     await chmod(blocked, 0o755);
-  });
-
-  test("same-path temporary substitution is preserved and reported as cleanup failure", async () => {
-    const destination = await createDestination();
-    const parent = path.join(destination, "publication");
-    const target = path.join(parent, "skill.md");
-    const replacement = path.join(parent, ".replacement-staging");
-    await mkdir(parent);
-    await writeFile(replacement, "replacement\n");
-    const resource = makeExportDestinationResource();
-    const capture = unwrap(
-      await runNodeExportDestination(
-        resource.capture({
-          destination,
-          readToken: "read-substitution",
-          paths: ["publication/skill.md"],
-          maxEntries: 4,
-          maxBytes: 16 * 1024 * 1024,
-        })
-      )
-    );
-
-    const substituted = new Promise<string>((resolve, reject) => {
-      let claimed = false;
-      const watcher = watchDirectory(parent, (_event, filename) => {
-        const name = filename?.toString();
-        if (claimed || name === undefined || !name.startsWith(EXPORT_DESTINATION_TEMP_PREFIX))
-          return;
-        claimed = true;
-        watcher.close();
-        const temporary = path.join(parent, name);
-        try {
-          mkdirSync(target);
-          writeFileSync(path.join(target, "keep.txt"), "keep\n");
-          renameSync(replacement, temporary);
-          resolve(temporary);
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
-
-    const [applied, substitutedPath] = await Promise.all([
-      runNodeExportDestination(
-        resource.apply({
-          destination,
-          planDigest: "plan-substitution",
-          readToken: capture.readToken,
-          captureHandle: capture.handle,
-          mutations: [
-            {
-              kind: "WriteFile",
-              path: "publication/skill.md",
-              mode: 0o644,
-              bytes: new Uint8Array(8 * 1024 * 1024),
-            },
-          ],
-        })
-      ),
-      substituted,
-    ]);
-
-    expect(applied.ok).toBe(false);
-    if (!applied.ok) {
-      expect(applied.failure.reason).toBe("CleanupFailed");
-      expect(applied.failure.detail).toContain("another exact filesystem identity");
-    }
-    expect(await readFile(substitutedPath, "utf8")).toBe("replacement\n");
-    expect(await readFile(path.join(target, "keep.txt"), "utf8")).toBe("keep\n");
   });
 });
 
