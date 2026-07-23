@@ -145,13 +145,13 @@ Migration branch `codex/add-native-authority-reviewer`, based at
 `5b8bc8a37cfdd3a382232261dd7ef73365713021`, with source manifest SHA-256
 `1b01f702c9cb1d4b11ca86251130af1d4f5fb077b15db9ceeeacb227db7d2f61`.
 That source replaces the broad service-relationship packet with independent
-direct-anchor, native-oRPC-composition, context-boundary, module-isolation,
-declarative-contract, and public-error-authority laws. RAWR keeps the working
-structure and Grit semantics, adapting only `ownerProject`, `placement.niche`,
-the local canonical `pattern.md` name/path, and RAWR prose identity. The source
-reference will advance when Magic commits that same tree. The packet is
-imported, but it does not govern repository admission until the live service
-corpus conforms and the central Nx check is activated.
+boundary-export, native-oRPC-composition, context-boundary, module-isolation,
+and declarative-contract laws. RAWR keeps its positive
+topology and owner relationships, adapts local packet identity, and removes
+path, vendor, alias, naming, and adversarial heuristics that are not generic
+service law. The source reference will advance when Magic commits that same
+tree. The packet is imported, but it does not govern repository admission until
+the live service corpus conforms and the central Nx check is activated.
 
 The narrower API-plugin face and Grit-helper documentation laws are now active
 repository admission checks. The API kind positively requires only
@@ -429,7 +429,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Gate | State |
 | --- | --- |
 | Corrected authority record | Submitted in the active Template Graphite stack; required checks and landing remain open |
-| Generic Habitat blueprint port | Six-law service source port complete; live source conformance and central activation remain pending |
+| Generic Habitat blueprint port | Six generic service laws recut around topology, standard oRPC composition, context, module isolation, and TypeBox contracts; three source laws pass live, while topology, lifecycle composition, and module isolation remain red until the recorded corpus migration |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx lint/typecheck target population | Complete and wired through affected admission on the active Template stack |
 | Typechecked Habitat project and TypeBox release manifest | Complete on the active Template stack |
@@ -449,13 +449,23 @@ skill. It cannot authorize HF01 materialization or release.
 The initial generic Habitat blueprint port remains a separate historical
 checkpoint: twenty-six logical files follow Magic Migration commit
 `5a974f0047f0667c2e429fdb4193a0e237b067c4`; nineteen are byte-verbatim and the
-seven rule manifests adapt only RAWR identity, formatting, and the local
-canonical `pattern.md` source name. The newer service-law checkpoint follows
-the authorized working snapshot identified above and replaces one aggregate
-relationship rule with six independent source constraints. The service kind
-keeps one module `router.ts`, with domain matter under its owning module model.
-Its packet topology is green; live Template service conformance, the one
-central cached Nx target, and required-aggregate activation remain open.
+seven historical rule manifests adapt only RAWR identity, formatting, and the
+local canonical `pattern.md` source name. The newer service-law checkpoint follows
+the authorized working snapshot identified above, but removes its path,
+vendor, alias, naming, and adversarial heuristics. The resulting stack is one
+closed topology plus five small source relationships. Three source laws pass the
+live Template corpus with empty baselines. The closed topology reports
+forty-nine concrete moves into `model`, optional `db`, middleware, or the one
+required `router.ts`; the module-isolation law reports twenty-three root-to-module
+or sibling-module implementation relationships. Standard oRPC composition
+reports seventeen lifecycle findings: one noncanonical root constructor, five
+modules bound to the wrong root export, and eleven operation bindings outside
+the required module `router.ts`. Those are migration inputs, not accepted debt
+or baseline entries. The service kind keeps one module `router.ts`, with domain
+matter under its owning module model.
+Central activation remains governed by
+[[tasks#1. Positive Habitat And Nx Checks]] task 1.5e and cannot precede a green
+live corpus.
 
 The former v0.1.1 live-tree probe exposed an unbounded wildcard walk and was
 interrupted without repository mutation. The current v0.1.6 binary adds a

@@ -38,11 +38,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 - [x] 1.1b Refresh the generic service blueprint from the user-authorized Magic
   Migration working tree on branch `codex/add-native-authority-reviewer`, based
   at `5b8bc8a37cfdd3a382232261dd7ef73365713021`. Replace the broad relationship
-  rule with the direct-anchor, native-oRPC-composition, context-boundary, and
-  module-isolation packets. Preserve the working pattern semantics and adapt
-  only repository identity and the canonical local `pattern.md` filename.
+  rule with the boundary-export, native-oRPC-composition, context-boundary,
+  module-isolation, and declarative-contract packets. Preserve the positive
+  topology and owner relationships while deleting path, vendor, alias, naming,
+  and adversarial heuristics that are not generic service law.
   Advance the provenance reference when Magic commits the same working tree;
-  do not delay enforcement or author a divergent RAWR copy.
+  do not delay enforcement or introduce a second RAWR architecture.
 - [x] 1.2 Adopt the current generic service topology with one `router.ts` per
   module. Keep procedure behavior on that oRPC surface and domain matter under
   the module model; do not introduce a second router container.
@@ -93,9 +94,14 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 - [ ] 1.5e After every selected service rule passes the live Template corpus,
   extend the one `check:policy` batch with exact service-source,
   service-packet, provisioner, release-manifest, and Bun-toolchain inputs.
-  Invoke the seven service rules in the existing single Habitat acquisition.
+  Invoke the six service rules in the existing single Habitat acquisition.
   Do not create a service-specific target, activate a knowingly red required
   rule, or duplicate rule discovery in a script.
+- [ ] 1.5g Make TypeScript/Knip identify the declared public cross-package
+  surface, then add one Habitat source law for useful JSDoc on that surface.
+  Require purpose, ownership, and behavioral-flow context without demanding
+  ceremonial comments on local exports or implementing another reachability
+  resolver in Habitat.
 - [x] 1.5f Activate the closed API-plugin public-face topology and the
   Grit-helper documentation law in the selected green local batch behind
   `habitat:check`. Rename the public server face to `api.ts`, use API-operation

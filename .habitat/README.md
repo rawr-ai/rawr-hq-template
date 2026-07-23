@@ -14,8 +14,8 @@ The current generic kinds are:
 - `blueprint-packet`: the closed canonical policy packet shared by every
   generic blueprint rule.
 - `service`: the reusable contract-first oRPC service spine, with independent
-  laws for direct anchors, native oRPC composition, context boundaries, module
-  isolation, declarative contracts, and public error authority.
+  laws for boundary exports, native oRPC composition, context boundaries,
+  module isolation, and declarative input/output schemas.
 - `plugin-server-api`: the additional `client.ts` and `api.ts` faces that
   expose client bindings and API operations around an embedded service.
 - `agent-router`: local `AGENTS.md` placement and positive routing anchors.
@@ -53,13 +53,13 @@ follow Magic Migration commit
 follows the user-authorized working tree on Magic Migration branch
 `codex/add-native-authority-reviewer`, based at
 `5b8bc8a37cfdd3a382232261dd7ef73365713021`. That working tree replaces the
-older aggregate relationship rule with direct anchor, native oRPC composition,
-context-boundary, and module-isolation constraints. RAWR preserves those
-structure and Grit semantics while adapting only repository identity metadata
-and the canonical `pattern.md` packet filename required by the local
-`blueprint-packet` law. The provenance reference will advance to the Magic
-checkpoint once that same working tree is committed; its absence does not
-authorize a divergent local pattern.
+older aggregate relationship rule with independent boundary-export, native
+oRPC-composition, context-boundary, module-isolation, and contract-schema
+constraints. RAWR preserves the positive topology and owner relationships,
+adapts local packet identity, and removes path, vendor, alias, naming, and
+adversarial heuristics that are not generic service law. The provenance
+reference will advance when Magic commits that same working tree; it does not
+make the moving tree repository authority.
 
 The Oclif packets are RAWR-authored. They apply the same positive, closed-kind
 posture to the executable app and its command plugins without claiming Magic
