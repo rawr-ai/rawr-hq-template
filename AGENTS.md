@@ -45,12 +45,15 @@
 - Trunk must remain `main` (`gt trunk`).
 - Follow [[docs/process/GRAPHITE|the Graphite branch and stack workflow]].
 - `bun install` configures the repository-owned hooks. Before a push, the local
-  hook runs the required repository ratchet: every admitted Nx lint and
-  typecheck target plus the positive Habitat lifecycle topology check.
+  hook runs the required repository ratchet: one Nx project kind per project,
+  affected lint and typecheck, the repository-wide Biome check, Habitat consumer
+  integrity tests, repository separation, and the live Habitat lifecycle topology
+  check.
 - The ordinary `pull_request`, `merge_group`, and `push`-to-`main` workflow
-  publishes `Repository Ratchet / Required lint, typecheck, and topology` for
-  the candidate SHA. Remote branch protection requiring that check is merge
-  authority; the local pre-push pass is fast feedback, not proof.
+  named `Repository Ratchet` publishes the job context
+  `Required lint, typecheck, and topology` for the candidate SHA. Remote branch
+  protection requiring that exact job context is merge authority; the local
+  pre-push pass is fast feedback, not merge authority.
 
 ## Routing
 

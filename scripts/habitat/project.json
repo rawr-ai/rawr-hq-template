@@ -34,15 +34,10 @@
     "lint:biome": {
       "executor": "nx:run-commands",
       "cache": true,
-      "inputs": [
-        "{workspaceRoot}/**/*.{js,jsx,ts,tsx,cjs,mjs,cts,mts,json,jsonc,css,html}",
-        "{workspaceRoot}/biome.json",
-        "{workspaceRoot}/package.json",
-        "{workspaceRoot}/bun.lock"
-      ],
+      "inputs": ["{workspaceRoot}/**/*"],
       "outputs": [],
       "options": {
-        "command": "biome lint --diagnostic-level=error ."
+        "command": "biome ci --diagnostic-level=error ."
       }
     },
     "lint:effect": {

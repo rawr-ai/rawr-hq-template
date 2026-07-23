@@ -69,19 +69,22 @@ git config core.hooksPath scripts/githooks
 
 Then `post-merge` and `post-checkout` may refresh repository dependencies. They do
 not build, activate, or relink the installed controller. `pre-push` preserves
-the remote-identity guard and runs `bun run ratchet:required`. Root lint and
-typecheck dynamically cover every Nx project that declares the corresponding
-target. The lifecycle service's Nx `check` target also requires test typing,
-behavior tests, and the RAWR-owned positive Habitat topology; see
-[[NX_AGENT_WORKFLOW]].
+the remote-identity guard and runs `bun run ratchet:required`. Nx selects the
+affected projects after an Nx-owned project-graph check proves that every
+project has exactly one `type:*` kind and every code project owns lint and
+typecheck targets. The same command runs the Nx admission tests, full Biome
+check, Habitat consumer integrity tests, repository separation, and the
+lifecycle service's live, non-cacheable Habitat `structure-check`; see
+[[NX_AGENT_WORKFLOW]]. Domain behavior tests remain owner-local verification
+rather than hidden merge-admission work.
 
 Habitat evaluation uses a checksum-pinned standalone binary owned by a Civ7
 release and compiled with Bun 1.4. `scripts/habitat/release.json` binds its
 source provenance, platform asset, byte size, and SHA-256; this repository owns
 only the consumer and `.habitat` policy tree and does not vendor SDK sources.
 
-The ordinary repository-ratchet workflow runs the same command for pull
-requests, merge groups, and pushes to `main`. Local hooks are useful feedback
-but can be bypassed. Protected `main` must therefore require
-`Repository Ratchet / Required lint, typecheck, and topology`; remote branch
-protection is the enforcement authority for merging.
+The `Repository Ratchet` workflow runs the same command for pull requests,
+merge groups, and pushes to `main`. Local hooks are useful feedback but can be
+bypassed. Protected `main` must therefore require the exact job context
+`Required lint, typecheck, and topology`; remote branch protection is the
+enforcement authority for merging.

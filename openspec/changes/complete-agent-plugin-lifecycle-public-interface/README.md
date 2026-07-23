@@ -176,9 +176,12 @@ owner pass. A separate semantic checkpoint realigned the stale
 runtime-realization structural and evidence literals from Effect `3.21.2` to
 the installed `3.21.3`; its structural gate and focused vendor behavior now
 pass together. The full CLI test target remained live without output beyond
-three minutes and was stopped;
-its focused 40-test command smoke passed. Task 1.5b therefore remains open until
-task 1.6 supplies bounded full-owner proof and makes Biome an admission gate.
+three minutes and was stopped; its focused 40-test command smoke passed. The
+following Nx topology checkpoint made the same complete owner observable and
+green in 89 seconds without weakening its serialized filesystem execution. The
+admission checkpoint now makes the complete Biome formatting, lint, and import
+organization check required, so task 1.5b is complete without putting advisory
+lintEffect in the required gate.
 
 The exact Nx migration pins `nx` and `@nx/eslint-plugin` to `23.1.0`, refreshes
 the lockfile, and applies the official required migration set. The only durable
@@ -206,7 +209,40 @@ dominated by the 17-test controller artifact-store file scheduled for deletion,
 so this checkpoint does not optimize that rejected mechanism. The provider
 adapter projects also declare their dependency on the shared provider contract,
 so an affected run cannot omit their behavior tests after a shared change.
-Admission wiring remains task 1.6b.
+
+The required admission command now has explicit owner boundaries. A
+TypeBox-validated Nx project-graph check requires exactly one `type:*` kind on
+every non-root project, then requires lint and typecheck on every code project;
+only content and fixture projects are exempt from those targets. Five Nx-owned
+tests prove accepted, missing-kind, ambiguous-kind, missing-target, and
+invalid-graph transitions. Nx then selects the affected lint/typecheck task set.
+Biome verifies repository formatting, lint, and import organization; its cache
+key covers the complete candidate tree so formatter configuration and supported
+file classes cannot restore a stale result. Four Habitat consumer tests protect
+manifest validation and provisioning; the repository-separation guard preserves
+the independent-repository boundary; and the lifecycle Habitat rule evaluates
+the live command-channel topology without using the Nx cache. Domain behavior
+and exact-Git tests remain owner-local rather than hidden inside merge admission.
+
+Against the final owner topology, the first recorded complete run covered 47
+projects and restored all 93 lint/typecheck tasks in 85 ms. The Nx admission
+tests restored in 19 ms; Biome checked all 1,184 admitted files in 652 ms after
+the record changed; the Habitat consumer tests restored in 17 ms; repository
+separation passed; and live Habitat completed in 577 ms. Total wall time was
+4.9 seconds. The immediate unchanged repeat restored the Nx admission tests in
+15 ms, all 93 lint/typecheck tasks in 77 ms, Biome in 15 ms, and the Habitat
+consumer tests in 14 ms. The project-graph law and repository-separation guard
+reran, as did live Habitat in 322 ms; total wall time was 3.25 seconds. A
+separate uncached run of the five Nx admission tests plus their lint and
+typecheck owners completed in 952 ms.
+
+The workflow remains named `Repository Ratchet`; its job publishes the context
+`Required lint, typecheck, and topology`. Full-history checkout plus
+`nrwl/nx-set-shas@v5` provides the candidate comparison for pull requests,
+merge groups, and main pushes. Live ruleset `19508824` is active on `main`,
+strictly requires that exact job context, has no bypass actors, and reports that
+the current user can never bypass it. Local pre-push remains feedback; the
+remote result is merge authority.
 
 ## Native Marketplace Grounding
 
@@ -243,12 +279,12 @@ skill. It cannot authorize HF01 materialization or release.
 | Gate | State |
 | --- | --- |
 | Corrected authority record | Complete on the active Template branch; pending Graphite submission |
-| Generic Habitat source port | Complete on the active Template stack; execution wiring pending |
+| Generic Habitat blueprint port | Complete on the active Template stack; bounded generic live-tree activation remains pending |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
-| Complete Nx lint/typecheck target population | Complete on the active Template stack; final ratchet wiring pending |
+| Complete Nx lint/typecheck target population | Complete and wired through affected admission on the active Template stack |
 | Typechecked Habitat consumer and TypeBox release manifest | Complete on the active Template stack |
-| Civ-aligned Biome/Nx/TypeScript toolchain | Biome and exact Nx 23.1 migration implemented; admission wiring, bounded CLI proof, and TypeScript remain pending |
-| Positive Habitat/Nx ratchet | Pending |
+| Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
+| Positive Habitat/Nx ratchet | Required lifecycle topology active; broader generic live-tree policy remains task 1.5 |
 | Direct Oclif development and external extension path | Pending |
 | Conventional CLI package/release | Pending |
 | Custom controller/extension deletion | Pending |
@@ -259,7 +295,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Approved-home settlement and read-only repeat | Pending |
 | Repository/stack/worktree closure | Pending |
 
-The generic Habitat source port is a separate checkpoint. Twenty-six files
+The generic Habitat blueprint port is a separate checkpoint. Twenty-six files
 come from Magic Migration commit `31c4e1ac1944d88b5ae867e46603eddff36142fc`;
 rule identity changes are limited to the RAWR niche and
 `@rawr/habitat-consumer` owner. The one intentional source-law extension admits
@@ -269,8 +305,8 @@ The pinned Grit engine cannot prove optional cross-file participation without
 emitting collection diagnostics, so that remains an explicit native-tool gap
 and review responsibility rather than a custom parser.
 
-The first live generic-owner probe exposed the performance problem task 1.6 is
-meant to remove: the published Habitat v0.1.1 consumer ran longer than four
+The first live generic-owner probe exposed the broader policy-execution gap that
+remains in task 1.5: the published Habitat v0.1.1 consumer ran longer than four
 minutes without completing a full generic check, and a structure-only probe ran
 longer than one minute. Both probes were interrupted without repository
 mutation. Civ7 has unreleased exact-root batching and traversal reuse, but no
