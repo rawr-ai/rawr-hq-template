@@ -172,11 +172,11 @@ being hidden in the mechanical change: the DevOps Oclif fixture requires its
 build output but its test target does not declare that prerequisite, and the
 native-provider aggregate duplicates its nested provider test ownership when Nx
 runs both scopes in parallel. Build-then-test and each non-overlapping provider
-owner pass. Separately, the runtime-realization structural oracle still demands
-Effect `3.21.2` although the repository already pins `3.21.3`; its lint,
-typecheck, negative types, vendor, 69-test runtime oracle, middle-spine, and
-simulation targets pass, but the stale structural oracle does not. The full CLI
-test target remained live without output beyond three minutes and was stopped;
+owner pass. A separate semantic checkpoint realigned the stale
+runtime-realization structural and evidence literals from Effect `3.21.2` to
+the installed `3.21.3`; its structural gate and focused vendor behavior now
+pass together. The full CLI test target remained live without output beyond
+three minutes and was stopped;
 its focused 40-test command smoke passed. Task 1.5b therefore remains open until
 task 1.6 supplies bounded full-owner proof and makes Biome an admission gate.
 
